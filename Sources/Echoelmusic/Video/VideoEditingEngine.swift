@@ -101,8 +101,15 @@ class VideoEditingEngine: ObservableObject {
         timeline.audioTracks.flatMap { $0.clips }
     }
 
+    /// Check if there's any content in the timeline (for UI display)
+    var currentProject: String? {
+        let hasContent = !videoClips.isEmpty || !audioClips.isEmpty
+        return hasContent ? timeline.name : nil
+    }
+
     deinit {
-        stopPlayback()
+        // ARC handles cleanup of player, playerItem, etc.
+        // No need to call stopPlayback() - objects will be released automatically
     }
 
     // MARK: - Timeline Management

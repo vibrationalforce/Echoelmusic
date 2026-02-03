@@ -89,8 +89,9 @@ struct VideoEditorView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(VaporwaveColors.deepBlack)
 
-                // Preview content
-                if let _ = engine.currentProject {
+                // Preview content - check if timeline has any clips
+                if !engine.timeline.videoTracks.flatMap({ $0.clips }).isEmpty ||
+                   !engine.timeline.audioTracks.flatMap({ $0.clips }).isEmpty {
                     // Video preview would render here
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 60))

@@ -355,14 +355,7 @@ struct GlassCard: ViewModifier {
                 if showAccentBar {
                     VaporwaveGradients.cardAccent
                         .frame(height: 3)
-                        .clipShape(
-                            UnevenRoundedRectangle(
-                                topLeadingRadius: cornerRadius,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: cornerRadius
-                            )
-                        )
+                        .clipShape(TopRoundedRectangle(cornerRadius: cornerRadius))
                 }
             }
             .shadow(
@@ -1199,5 +1192,36 @@ struct VaporwaveEmptyState: View {
             }
             .padding()
         }
+    }
+}
+
+// MARK: - iOS 15 Compatible Shapes
+
+/// A rectangle with only the top corners rounded (iOS 15 compatible)
+struct TopRoundedRectangle: Shape {
+    var cornerRadius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + cornerRadius))
+        path.addArc(
+            center: CGPoint(x: rect.minX + cornerRadius, y: rect.minY + cornerRadius),
+            radius: cornerRadius,
+            startAngle: .degrees(180),
+            endAngle: .degrees(270),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: rect.maxX - cornerRadius, y: rect.minY))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - cornerRadius, y: rect.minY + cornerRadius),
+            radius: cornerRadius,
+            startAngle: .degrees(270),
+            endAngle: .degrees(0),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }

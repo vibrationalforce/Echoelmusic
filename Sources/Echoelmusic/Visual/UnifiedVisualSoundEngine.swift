@@ -783,34 +783,7 @@ struct UnifiedVisualizer: View {
             Color.black
 
             // Active visualization mode
-            Group {
-                switch engine.currentMode {
-                case .liquidLight:
-                    LiquidLightVisualizer(params: engine.visualParams)
-                case .rainbow:
-                    RainbowSpectrumVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
-                case .particles:
-                    ParticleVisualizer(params: engine.visualParams)
-                case .spectrum:
-                    SpectrumVisualizer(data: engine.spectrumData, params: engine.visualParams)
-                case .waveform:
-                    WaveformVisualizer(data: engine.waveformData, params: engine.visualParams)
-                case .mandala:
-                    MandalaVisualizer(params: engine.visualParams)
-                case .cymatics:
-                    CymaticsVisualizer(params: engine.visualParams)
-                case .vaporwave:
-                    VaporwaveVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
-                case .nebula:
-                    NebulaVisualizer(params: engine.visualParams)
-                case .kaleidoscope:
-                    KaleidoscopeVisualizer(params: engine.visualParams)
-                case .flowField:
-                    FlowFieldVisualizer(params: engine.visualParams)
-                case .octaveMap:
-                    OctaveTranspositionVisualizer(params: engine.visualParams)
-                }
-            }
+            visualizerForCurrentMode
 
             // Beat flash overlay
             if engine.beatDetected {
@@ -820,5 +793,35 @@ struct UnifiedVisualizer: View {
             }
         }
         .clipped()
+    }
+
+    @ViewBuilder
+    private var visualizerForCurrentMode: some View {
+        switch engine.currentMode {
+        case .liquidLight:
+            LiquidLightVisualizer(params: engine.visualParams)
+        case .rainbow:
+            RainbowSpectrumVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
+        case .particles:
+            ParticleVisualizer(params: engine.visualParams)
+        case .spectrum:
+            SpectrumVisualizer(data: engine.spectrumData, params: engine.visualParams)
+        case .waveform:
+            WaveformVisualizer(data: engine.waveformData, params: engine.visualParams)
+        case .mandala:
+            MandalaVisualizer(params: engine.visualParams)
+        case .cymatics:
+            CymaticsVisualizer(params: engine.visualParams)
+        case .vaporwave:
+            VaporwaveVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
+        case .nebula:
+            NebulaVisualizer(params: engine.visualParams)
+        case .kaleidoscope:
+            KaleidoscopeVisualizer(params: engine.visualParams)
+        case .flowField:
+            FlowFieldVisualizer(params: engine.visualParams)
+        case .octaveMap:
+            OctaveTranspositionVisualizer(params: engine.visualParams)
+        }
     }
 }
