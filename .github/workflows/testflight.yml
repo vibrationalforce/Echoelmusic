@@ -267,6 +267,51 @@ jobs:
           echo "Project generated successfully"
           ls -la *.xcodeproj
 
+      - name: "Verify Project Compiles"
+        run: |
+          echo "=== Verifying Project Generation ==="
+
+          # List all schemes to confirm project was generated
+          echo "Available schemes:"
+          xcodebuild -project Echoelmusic.xcodeproj -list
+
+          # Verify the main scheme exists
+          if ! xcodebuild -project Echoelmusic.xcodeproj -list | grep -q "Echoelmusic$"; then
+            echo "::error::Scheme 'Echoelmusic' not found in project!"
+            exit 1
+          fi
+          echo "Scheme 'Echoelmusic' found"
+
+          echo ""
+          echo "=== Testing Build (Simulator, No Signing) ==="
+
+          # Do a quick simulator build to verify code compiles
+          # This catches compilation errors without needing code signing
+          xcodebuild build \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -configuration Release \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath ./build/DerivedData \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/xcodebuild_test.log
+
+          BUILD_EXIT=$?
+
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo ""
+            echo "::error::Project failed to compile! See build errors above."
+            echo "=== Last 100 lines of build log ==="
+            tail -100 /tmp/xcodebuild_test.log
+            exit 1
+          fi
+
+          echo ""
+          echo "=== Project compiles successfully ==="
+          echo "Proceeding to signed build..."
+
       - name: "Setup Keychain"
         id: keychain
         run: |
