@@ -271,18 +271,25 @@ jobs:
         id: keychain
         run: |
           # Create a temporary keychain for this CI run
-          # xcodebuild needs a keychain even for cloud-managed signing
           KEYCHAIN_NAME="ci_ios_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
+          # Delete existing keychain if it exists
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
+
+          # Create and configure keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
+          # Add to keychain search list (prepend to existing)
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
+
+          # Set as default for this session
           security default-keychain -s "$KEYCHAIN_NAME"
 
-          # Allow codesign to access the keychain without prompting
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          # Allow codesign access (may fail on some runners, that's OK)
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
@@ -399,12 +406,13 @@ jobs:
           KEYCHAIN_NAME="ci_macos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
@@ -491,14 +499,13 @@ jobs:
           KEYCHAIN_NAME="ci_watchos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Allow codesign to access the keychain without prompting
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
@@ -600,14 +607,13 @@ jobs:
           KEYCHAIN_NAME="ci_tvos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Allow codesign to access the keychain without prompting
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
@@ -709,14 +715,13 @@ jobs:
           KEYCHAIN_NAME="ci_visionos_${{ github.run_id }}.keychain-db"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
           security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
           security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Allow codesign to access the keychain without prompting
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
