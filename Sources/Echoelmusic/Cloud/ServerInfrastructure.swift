@@ -200,7 +200,7 @@ public class AppleSignInProvider: NSObject, ObservableObject {
     private let logger = ProfessionalLogger.shared
 
     public func signIn() async throws {
-        logger.auth("Initiating Sign in with Apple")
+        logger.network("Initiating Sign in with Apple")
 
         let provider = ASAuthorizationAppleIDProvider()
         let request = provider.createRequest()
@@ -208,7 +208,7 @@ public class AppleSignInProvider: NSObject, ObservableObject {
 
         // In production, this would use ASAuthorizationController
         // For now, simulate successful auth
-        logger.auth("Sign in with Apple completed")
+        logger.network("Sign in with Apple completed")
     }
 }
 #endif
@@ -253,14 +253,14 @@ public class AuthenticationService: ObservableObject {
     private let secretsManager = SecretsManager.shared
     private var refreshTask: Task<Void, Never>?
 
-    private let keychainService = "com.echoelmusic.auth"
+    private let keychainService = "com.echoelmusic.network"
     private let tokenKey = "jwt_token"
 
     // MARK: - Authentication Methods
 
     /// Sign in with Apple
     public func signInWithApple() async throws {
-        logger.auth("Sign in with Apple requested")
+        logger.network("Sign in with Apple requested")
 
         #if canImport(AuthenticationServices)
         // In production, implement full Sign in with Apple flow
@@ -273,7 +273,7 @@ public class AuthenticationService: ObservableObject {
 
     /// Create anonymous session for guest users
     public func createAnonymousSession() async throws {
-        logger.auth("Creating anonymous session")
+        logger.network("Creating anonymous session")
 
         let anonymousID = UUID().uuidString
         let token = JWTToken(
@@ -292,12 +292,12 @@ public class AuthenticationService: ObservableObject {
         try saveTokenToKeychain(token)
         startTokenRefreshTimer()
 
-        logger.auth("Anonymous session created: \(anonymousID)")
+        logger.network("Anonymous session created: \(anonymousID)")
     }
 
     /// Sign out and clear tokens
     public func signOut() async {
-        logger.auth("Signing out")
+        logger.network("Signing out")
 
         refreshTask?.cancel()
         currentToken = nil
@@ -307,7 +307,7 @@ public class AuthenticationService: ObservableObject {
 
         deleteTokenFromKeychain()
 
-        logger.auth("Signed out successfully")
+        logger.network("Signed out successfully")
     }
 
     // MARK: - Token Management
@@ -318,11 +318,11 @@ public class AuthenticationService: ObservableObject {
             throw AuthError.noToken
         }
 
-        logger.auth("Refreshing access token")
+        logger.network("Refreshing access token")
 
         let config = ServerConfiguration.shared
         guard let url = URL(string: "\(config.apiBaseURL)/auth/refresh") else {
-            logger.auth("Invalid refresh token URL", level: .error)
+            logger.network("Invalid refresh token URL", level: .error)
             throw AuthError.invalidConfiguration
         }
 
@@ -342,9 +342,9 @@ public class AuthenticationService: ObservableObject {
             currentToken = newToken
             try saveTokenToKeychain(newToken)
 
-            logger.auth("Token refreshed successfully")
+            logger.network("Token refreshed successfully")
         } catch {
-            logger.error("Token refresh failed: \(error)", category: .auth)
+            logger.error("Token refresh failed: \(error)", category: .network)
             throw AuthError.refreshFailed
         }
     }
@@ -382,7 +382,7 @@ public class AuthenticationService: ObservableObject {
         let status = SecItemAdd(query as CFDictionary, nil)
 
         if status != errSecSuccess {
-            logger.error("Failed to save token to keychain: \(status)", category: .auth)
+            logger.error("Failed to save token to keychain: \(status)", category: .network)
             throw AuthError.keychainFailed
         }
     }
@@ -424,15 +424,15 @@ public class AuthenticationService: ObservableObject {
     // MARK: - Restore Session
 
     public func restoreSession() async {
-        logger.auth("Attempting to restore session")
+        logger.network("Attempting to restore session")
 
         guard let token = loadTokenFromKeychain() else {
-            logger.auth("No saved session found")
+            logger.network("No saved session found")
             return
         }
 
         if token.isExpired {
-            logger.auth("Saved token is expired")
+            logger.network("Saved token is expired")
             deleteTokenFromKeychain()
             return
         }
@@ -441,7 +441,7 @@ public class AuthenticationService: ObservableObject {
         isAuthenticated = true
         startTokenRefreshTimer()
 
-        logger.auth("Session restored successfully")
+        logger.network("Session restored successfully")
     }
 }
 
@@ -558,12 +558,27 @@ public struct AnyCodable: Codable {
 }
 
 /// WebSocket connection state
-public enum WSConnectionState {
+public enum WSConnectionState: Equatable {
     case disconnected
     case connecting
     case connected
     case reconnecting(attempt: Int)
-    case failed(Error)
+    case failed(String)  // Changed from Error to String for Equatable
+
+    public static func == (lhs: WSConnectionState, rhs: WSConnectionState) -> Bool {
+        switch (lhs, rhs) {
+        case (.disconnected, .disconnected),
+             (.connecting, .connecting),
+             (.connected, .connected):
+            return true
+        case let (.reconnecting(a), .reconnecting(b)):
+            return a == b
+        case let (.failed(a), .failed(b)):
+            return a == b
+        default:
+            return false
+        }
+    }
 }
 
 /// Collaboration server with WebSocket management
@@ -606,13 +621,14 @@ public class CollaborationServer: NSObject, ObservableObject {
         config.waitsForConnectivity = true
 
         let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
-        webSocketTask = session.webSocketTask(with: wsURL)
 
-        // Add authentication header
+        // Create request with authentication header
+        var wsRequest = URLRequest(url: wsURL)
         if let token = AuthenticationService.shared.currentToken {
-            webSocketTask?.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
+            wsRequest.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
 
+        webSocketTask = session.webSocketTask(with: wsRequest)
         webSocketTask?.resume()
         connectionState = .connected
         reconnectAttempt = 0
