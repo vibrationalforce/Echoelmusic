@@ -142,6 +142,7 @@ public class UnifiedControlHub: ObservableObject {
         let handManager = HandTrackingManager()
         let gestureRec = GestureRecognizer(handTracker: handManager)
         let conflictRes = GestureConflictResolver(
+            gestureRecognizer: gestureRec,
             handTracker: handManager,
             faceTracker: faceTrackingManager
         )
@@ -455,14 +456,9 @@ public class UnifiedControlHub: ObservableObject {
     public func enableHardwareEcosystem() {
         hardwareEcosystem = HardwareEcosystem.shared
 
-        // Auto-discover connected devices
-        Task {
-            await hardwareEcosystem?.discoverAllDevices()
-
-            // Log discovered devices
-            if let ecosystem = hardwareEcosystem {
-                Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.supportedInterfaces.count)\n  - MIDI controllers available: \(ecosystem.midiControllers.supportedControllers.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.supportedDevices.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.supportedDevices.count)\n  - Wearables available: \(ecosystem.wearables.supportedDevices.count)", category: .system)
-            }
+        // Log ecosystem status
+        if let ecosystem = hardwareEcosystem {
+            Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.interfaces.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.cameras.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.devices.count)\n  - Wearables available: \(ecosystem.wearables.devices.count)", category: .system)
         }
     }
 
@@ -513,13 +509,14 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Get recommended audio interface for current platform
     public func getRecommendedAudioInterface() -> AudioInterfaceRegistry.AudioInterface? {
-        return hardwareEcosystem?.audioInterfaces.getRecommendedInterface()
+        // Return first available interface for the current platform
+        return hardwareEcosystem?.audioInterfaces.interfaces.first
     }
 
     /// Get all connected MIDI controllers
     public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
-        return hardwareEcosystem?.midiControllers.supportedControllers.filter { controller in
-            // Check if controller is actually connected
+        // Return controllers that match connected device names
+        return hardwareEcosystem?.midiControllers.controllers.filter { controller in
             hardwareEcosystem?.connectedDevices.contains { $0.name == controller.name } ?? false
         } ?? []
     }
@@ -726,7 +723,7 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     /// Get current light field for visualization
-    public var currentEmulatorLightField: QuantumLightEmulator.EmulatorLightField? {
+    public var currentEmulatorLightField: EmulatorLightField? {
         quantumLightEmulator?.currentEmulatorLightField
     }
 
