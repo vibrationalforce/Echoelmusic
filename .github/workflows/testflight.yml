@@ -401,6 +401,7 @@ jobs:
           echo "=== Step 1: Creating Archive ==="
 
           set +e  # Don't exit on error, we need to capture the exit code
+          # Archive without signing - will sign during export
           xcodebuild archive \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
@@ -409,15 +410,10 @@ jobs:
             -archivePath build/Echoelmusic.xcarchive \
             -derivedDataPath build/DerivedData \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGNING_REQUIRED=YES \
-            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            -allowProvisioningUpdates \
-            -allowProvisioningDeviceRegistration \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "${ASC_KEY_ID}" \
-            -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
             2>&1 | tee build/logs/archive.log
           ARCHIVE_EXIT=${PIPESTATUS[0]}
           set -e
