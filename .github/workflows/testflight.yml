@@ -369,14 +369,24 @@ jobs:
           echo "IPA files found: $IPA_COUNT"
           find . -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA files"
 
+          # Extract key errors from fastlane output
+          echo "=== Checking for errors in fastlane output ==="
+          grep -i "error\|fail\|exception\|unable to\|cannot\|could not" /tmp/fastlane_output.log | tail -30 || echo "No obvious errors found"
+
+          # Output as GitHub annotation for visibility
           if [ $FASTLANE_EXIT -eq 0 ] && [ "$IPA_COUNT" -gt 0 ]; then
-            echo "iOS deployment completed successfully! IPA created."
+            echo "::notice::iOS deployment completed successfully! IPA created."
           elif [ $FASTLANE_EXIT -eq 0 ]; then
-            echo "WARNING: Fastlane reported success but NO IPA file was created!"
-            echo "This means the build did not actually produce an artifact."
+            echo "::error::Fastlane reported success but NO IPA file was created!"
+            # Show last 50 lines containing build info
+            echo "::group::Build Output Details"
+            grep -i "build\|compil\|sign\|export\|archiv" /tmp/fastlane_output.log | tail -50 || echo "No build output found"
+            echo "::endgroup::"
             exit 1
           else
-            echo "iOS deployment FAILED with exit code $FASTLANE_EXIT"
+            # Show the error from fastlane
+            ERROR_MSG=$(grep -i "error" /tmp/fastlane_output.log | tail -5 | tr '\n' ' ' || echo "Unknown error")
+            echo "::error::iOS deployment FAILED: $ERROR_MSG"
             exit $FASTLANE_EXIT
           fi
 
