@@ -888,6 +888,8 @@ public enum CollaborationError: Error, LocalizedError {
             return "Please wait a moment and try reconnecting"
         case .sendFailed:
             return "Check your connection and try again"
+        case .encodingFailed:
+            return "Please try again with valid data"
         }
     }
 }
@@ -1144,7 +1146,7 @@ public class RealtimeBioSync: ObservableObject {
     public func start() async throws {
         guard !isActive else { return }
 
-        logger.biosync("Starting real-time bio sync")
+        logger.biofeedback("Starting real-time bio sync")
 
         guard let wsURL = ServerConfiguration.shared.bioSyncWebSocketURL else {
             throw CollaborationError.invalidURL
@@ -1157,25 +1159,26 @@ public class RealtimeBioSync: ObservableObject {
         config.waitsForConnectivity = true
 
         let session = URLSession(configuration: config)
-        bioWebSocketTask = session.webSocketTask(with: wsURL)
 
-        // Add authentication
+        // Create request with authentication header
+        var wsRequest = URLRequest(url: wsURL)
         if let token = AuthenticationService.shared.currentToken {
-            bioWebSocketTask?.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
+            wsRequest.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
 
+        bioWebSocketTask = session.webSocketTask(with: wsRequest)
         bioWebSocketTask?.resume()
         isActive = true
 
         startPeriodicSync()
         startReceiving()
 
-        logger.biosync("Real-time bio sync started")
+        logger.biofeedback("Real-time bio sync started")
     }
 
     /// Stop bio sync
     public func stop() {
-        logger.biosync("Stopping real-time bio sync")
+        logger.biofeedback("Stopping real-time bio sync")
 
         updateTimer?.invalidate()
         bioWebSocketTask?.cancel(with: .goingAway, reason: nil)
@@ -1218,7 +1221,7 @@ public class RealtimeBioSync: ObservableObject {
         do {
             try await bioWebSocketTask?.send(.data(data))
         } catch {
-            logger.error("Failed to send bio data: \(error)", category: .biosync)
+            logger.error("Failed to send bio data: \(error)", category: .biofeedback)
         }
     }
 
@@ -1232,7 +1235,7 @@ public class RealtimeBioSync: ObservableObject {
                     await handleBioMessage(message)
                 }
             } catch {
-                logger.error("Bio WebSocket receive error: \(error)", category: .biosync)
+                logger.error("Bio WebSocket receive error: \(error)", category: .biofeedback)
             }
         }
     }
@@ -1243,7 +1246,7 @@ public class RealtimeBioSync: ObservableObject {
             if let aggregated = try? JSONDecoder().decode(AggregatedBioData.self, from: data) {
                 await MainActor.run {
                     self.aggregatedData = aggregated
-                    logger.biosync("Received aggregated bio data: \(aggregated.participantCount) participants")
+                    logger.biofeedback("Received aggregated bio data: \(aggregated.participantCount) participants")
                 }
             }
 
