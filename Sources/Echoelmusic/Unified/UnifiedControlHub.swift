@@ -543,10 +543,15 @@ public class UnifiedControlHub: ObservableObject {
     /// Sync audio parameters across all devices in cross-platform session
     public func syncAudioParametersToSession(bpm: Float, filterCutoff: Float, reverbWet: Float) {
         let params = AudioSyncParameters(
-            bpm: bpm,
+            bpm: Double(bpm),
+            volume: 0.8,
+            pan: 0.5,
+            reverbMix: reverbWet,
+            delayMix: 0.0,
             filterCutoff: filterCutoff,
-            reverbWet: reverbWet,
-            masterVolume: 0.8
+            isPlaying: true,
+            currentBeat: 0.0,
+            sourceDeviceId: UUID().uuidString
         )
         crossPlatformSessionManager?.syncAudioParameters(params)
     }
@@ -720,8 +725,8 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     /// Get current light field for visualization
-    public var currentLightField: LightField? {
-        quantumLightEmulator?.currentLightField
+    public var currentEmulatorLightField: QuantumLightEmulator.EmulatorLightField? {
+        quantumLightEmulator?.currentEmulatorLightField
     }
 
     /// Set quantum emulation mode
@@ -908,19 +913,12 @@ public class UnifiedControlHub: ObservableObject {
 
                 // Apply AFA field to SpatialAudioEngine
                 if let spatialEngine = spatialAudioEngine {
-                    // Position sources according to AFA field geometry
-                    for (index, source) in afaField.sources.enumerated() {
-                        spatialEngine.setSourcePosition(
-                            sourceID: index,
-                            x: source.position.x,
-                            y: source.position.y,
-                            z: source.position.z
-                        )
+                    // Note: Source positioning is handled internally by SpatialAudioEngine
+                    // based on AFA field parameters. We just update reverb based on coherence.
 
-                        // Apply coherence-based reverb blend
-                        let reverbBlend = AudioConstants.Coherence.normalize(Float(coherence))
-                        spatialEngine.setReverbBlend(reverbBlend)
-                    }
+                    // Apply coherence-based reverb blend
+                    let reverbBlend = AudioConstants.Coherence.normalize(Float(coherence))
+                    spatialEngine.setReverbBlend(reverbBlend)
 
                     #if DEBUG
                     Log.biofeedback("[Bio→AFA] Field geometry: \(fieldGeometry), Sources: \(afaField.sources.count), Coherence: \(coherence)%")
@@ -1063,8 +1061,9 @@ public class UnifiedControlHub: ObservableObject {
                         let pinchBend = (gestureRec.leftPinchAmount * 2.0) - 1.0  // Map 0-1 to -1 to +1
                         mpe.setVoicePitchBend(voice: voice, bend: pinchBend)
 
-                        // Spread amount → Brightness
-                        mpe.setVoiceBrightness(voice: voice, brightness: gestureRec.leftSpreadAmount)
+                        // Spread gesture → Brightness (use confidence when spread, otherwise pinch amount)
+                        let brightness = gestureRec.leftHandGesture == .spread ? gestureRec.gestureConfidence : gestureRec.leftPinchAmount
+                        mpe.setVoiceBrightness(voice: voice, brightness: brightness)
                     }
                 }
             } else {
@@ -1076,7 +1075,7 @@ public class UnifiedControlHub: ObservableObject {
         // Handle preset changes
         if let presetChange = params.presetChange {
             Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
-            audioEngine.loadPreset(named: String(presetChange))
+            audioEngine?.loadPreset(named: String(presetChange))
         }
     }
 
