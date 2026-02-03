@@ -45,6 +45,7 @@ enum WidgetVisualizationType: String, CaseIterable, Sendable {
 
 // MARK: - Widget Bundle
 
+@main
 @available(iOS 17.0, macOS 14.0, watchOS 10.0, *)
 public struct EchoelmusicWidgets: WidgetBundle {
     public init() {}
