@@ -14,6 +14,7 @@ class SpatialAudioEngine: ObservableObject {
     // MARK: - Published State
 
     @Published var isActive: Bool = false
+    @Published var isAvailable: Bool = true  // Spatial audio is generally available on iOS
     @Published var currentMode: SpatialMode = .stereo
     @Published var headTrackingEnabled: Bool = false
     @Published var spatialSources: [SpatialSource] = []
