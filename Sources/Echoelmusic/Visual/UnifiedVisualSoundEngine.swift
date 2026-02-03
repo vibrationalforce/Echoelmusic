@@ -598,7 +598,7 @@ class UnifiedVisualSoundEngine: ObservableObject {
         }
 
         // Spectral Flatness - Tonalität vs. Rauschen (Wiener Entropy)
-        let geometricMean = exp(magnitudes.map { log($0 + 1e-10) }.reduce(0, +) / Float(magnitudes.count))
+        let geometricMean = exp(magnitudes.map { Darwin.log($0 + 1e-10) }.reduce(0, +) / Float(magnitudes.count))
         let arithmeticMean = magnitudes.reduce(0, +) / Float(magnitudes.count)
         if arithmeticMean > 0 {
             visualParams.spectralFlatness = geometricMean / arithmeticMean
@@ -811,7 +811,7 @@ struct UnifiedVisualizer: View {
         case .mandala:
             MandalaVisualizer(params: engine.visualParams)
         case .cymatics:
-            CymaticsVisualizer(params: engine.visualParams)
+            SimpleCymaticsVisualizer(params: engine.visualParams)
         case .vaporwave:
             VaporwaveVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
         case .nebula:

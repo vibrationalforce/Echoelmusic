@@ -134,7 +134,7 @@ struct VideoEditorView: View {
             HStack(spacing: VaporwaveSpacing.lg) {
                 metricDisplay(value: "1920x1080", label: "Resolution", color: VaporwaveColors.neonCyan)
                 metricDisplay(value: "30 fps", label: "Frame Rate", color: VaporwaveColors.neonPurple)
-                metricDisplay(value: formatDuration(engine.duration), label: "Duration", color: VaporwaveColors.neonPink)
+                metricDisplay(value: formatDuration(engine.timeline.duration.seconds), label: "Duration", color: VaporwaveColors.neonPink)
             }
         }
     }
