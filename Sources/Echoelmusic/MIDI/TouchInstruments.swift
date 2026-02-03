@@ -21,8 +21,8 @@ class TouchInstrumentsHub: ObservableObject {
 
     // MARK: - Dependencies
 
-    private var midi2Manager: MIDI2Manager?
-    private var mpeZoneManager: MPEZoneManager?
+    internal var midi2Manager: MIDI2Manager?
+    internal var mpeZoneManager: MPEZoneManager?
     private var hapticEngine: CHHapticEngine?
 
     // MARK: - Instruments
@@ -1249,4 +1249,4 @@ class TouchKeyboardViewModel: ObservableObject {
     }
 }
 
-// Note: mpeZoneManager and midi2Manager are defined as private vars in TouchInstrumentsHub
+// Note: mpeZoneManager and midi2Manager are defined as internal vars in TouchInstrumentsHub

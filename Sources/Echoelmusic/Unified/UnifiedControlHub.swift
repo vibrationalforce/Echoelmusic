@@ -458,7 +458,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Log ecosystem status
         if let ecosystem = hardwareEcosystem {
-            Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.interfaces.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.cameras.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.devices.count)\n  - Wearables available: \(ecosystem.wearables.devices.count)", category: .system)
+            Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.interfaces.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.cameras.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.devices.count)\n  - Wearables available: \(ecosystem.wearableDevices.devices.count)", category: .system)
         }
     }
 
@@ -515,9 +515,9 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Get all connected MIDI controllers
     public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
-        // Return controllers that match connected device names
+        // Return controllers that match connected device model names
         return hardwareEcosystem?.midiControllers.controllers.filter { controller in
-            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.name } ?? false
+            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.model } ?? false
         } ?? []
     }
 
