@@ -187,19 +187,20 @@ public struct ExposureCorrection: Codable, Equatable {
     public var blacks: Float            // Clip point (-1 to +1)
     public var clarity: Float           // Local contrast (-1 to +1)
     public var dehaze: Float            // Haze removal (-1 to +1)
+    public var saturation: Float        // Saturation multiplier (0-2)
     public var autoDetected: Bool
     public var confidence: Float
 
     public static let neutral = ExposureCorrection(
         exposure: 0, contrast: 1, highlights: 0, shadows: 0,
-        whites: 0, blacks: 0, clarity: 0, dehaze: 0,
+        whites: 0, blacks: 0, clarity: 0, dehaze: 0, saturation: 1,
         autoDetected: false, confidence: 1.0
     )
 
     public init(
         exposure: Float = 0, contrast: Float = 1, highlights: Float = 0,
         shadows: Float = 0, whites: Float = 0, blacks: Float = 0,
-        clarity: Float = 0, dehaze: Float = 0,
+        clarity: Float = 0, dehaze: Float = 0, saturation: Float = 1,
         autoDetected: Bool = false, confidence: Float = 1.0
     ) {
         self.exposure = exposure
@@ -210,6 +211,7 @@ public struct ExposureCorrection: Codable, Equatable {
         self.blacks = blacks
         self.clarity = clarity
         self.dehaze = dehaze
+        self.saturation = saturation
         self.autoDetected = autoDetected
         self.confidence = confidence
     }

@@ -399,6 +399,7 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
     case audioSFX = "Sound Effects AI"
     case audioDub = "Auto Dubbing"
     case autoSubtitles = "Auto Subtitles"
+    case beatSync = "Beat Sync"
 
     // === CREATIVE AI (15) ===
     case creativeGlitch = "Glitch Art"
@@ -452,7 +453,7 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
              .motionFreeze, .motionReverse, .motionLoop, .motionMorph, .motionClone:
             return "Motion AI"
         case .audioEnhance, .audioNoise, .audioSeparate, .audioTranscribe, .audioTranslate,
-             .audioClone, .audioSync, .audioMusic, .audioSFX, .audioDub:
+             .audioClone, .audioSync, .audioMusic, .audioSFX, .audioDub, .autoSubtitles, .beatSync:
             return "Audio AI"
         case .creativeGlitch, .creativeKaleidoscope, .creativeMirror, .creativeFractal,
              .creativeParticles, .creativeLiquid, .creativeFire, .creativeSmoke,

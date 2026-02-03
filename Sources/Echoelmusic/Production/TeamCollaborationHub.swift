@@ -323,8 +323,8 @@ class TeamCollaborationHub: ObservableObject {
         }
 
         // If no break found, use session start times
-        if let oldestSession = activeSessions.min(by: { $0.startedAt < $1.startedAt }) {
-            return now.timeIntervalSince(oldestSession.startedAt)
+        if let oldestSession = activeSessions.min(by: { $0.createdAt < $1.createdAt }) {
+            return now.timeIntervalSince(oldestSession.createdAt)
         }
 
         return 3600 // Default 1 hour if no data
