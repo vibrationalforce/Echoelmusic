@@ -15,6 +15,10 @@ import SwiftUI
 import ActivityKit
 #endif
 
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
+
 // MARK: - Live Activity Attributes
 
 #if canImport(ActivityKit)
