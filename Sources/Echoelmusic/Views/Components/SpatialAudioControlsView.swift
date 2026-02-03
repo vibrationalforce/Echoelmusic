@@ -78,7 +78,7 @@ struct SpatialAudioControlsView: View {
                                 .foregroundColor(VaporwaveColors.textTertiary)
 
                             Picker("Spatial Mode", selection: $spatialAudioEngine.currentMode) {
-                                ForEach(SpatialMode.allCases, id: \.self) { mode in
+                                ForEach(SpatialAudioEngine.SpatialMode.allCases, id: \.self) { mode in
                                     Text(mode.rawValue).tag(mode)
                                 }
                             }
