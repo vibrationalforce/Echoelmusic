@@ -71,14 +71,13 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # For App Store/TestFlight distribution, we need:
-  # 1. CODE_SIGN_STYLE='Manual' - Override automatic signing to allow Distribution
-  # 2. CODE_SIGN_IDENTITY='Apple Distribution' - Use Distribution certificates
-  # 3. -allowProvisioningUpdates with API auth will auto-create/download the profiles
+  # For App Store/TestFlight with cloud-managed signing:
+  # - Keep CODE_SIGN_STYLE automatic (from project.yml)
+  # - Let Xcode choose the correct identity based on export_method
+  # - -allowProvisioningUpdates with API auth will auto-create/download profiles
+  # - Do NOT set CODE_SIGN_IDENTITY - Xcode selects Distribution for app-store export
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-    "CODE_SIGN_STYLE='Manual'",
-    "CODE_SIGN_IDENTITY='Apple Distribution'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
     "-allowProvisioningUpdates",
     "-allowProvisioningDeviceRegistration"
@@ -88,6 +87,7 @@ def build_xcargs_with_auth
   if File.exist?(api_key_path)
     UI.message("Using App Store Connect API for cloud-managed signing")
     UI.message("API key: #{ENV['ASC_KEY_ID']}")
+    UI.message("Xcode will automatically select Distribution identity for app-store export")
     args += [
       "-authenticationKeyPath '#{api_key_path}'",
       "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
