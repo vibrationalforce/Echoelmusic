@@ -51,7 +51,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Stream Destinations
 
-    enum StreamDestination: String, CaseIterable, Identifiable {
+    public enum StreamDestination: String, CaseIterable, Identifiable {
         case twitch = "Twitch"
         case youtube = "YouTube"
         case facebook = "Facebook"
@@ -119,6 +119,15 @@ public class StreamEngine: ObservableObject {
     }
 
     // MARK: - Initialization
+
+    /// Convenience initializer with default device
+    convenience init?() {
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            log.streaming("❌ StreamEngine: No Metal device available", level: .error)
+            return nil
+        }
+        self.init(device: device, sceneManager: SceneManager(), chatAggregator: ChatAggregator(), analytics: StreamAnalytics())
+    }
 
     init?(device: MTLDevice, sceneManager: SceneManager, chatAggregator: ChatAggregator, analytics: StreamAnalytics) {
         self.device = device

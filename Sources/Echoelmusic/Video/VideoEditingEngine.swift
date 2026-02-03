@@ -89,6 +89,18 @@ class VideoEditingEngine: ObservableObject {
         undoManager.redoActionName
     }
 
+    // MARK: - Convenience Accessors for Views
+
+    /// All video clips from all video tracks (for timeline display)
+    var videoClips: [VideoClip] {
+        timeline.videoTracks.flatMap { $0.clips }
+    }
+
+    /// All audio clips from all audio tracks (for timeline display)
+    var audioClips: [VideoClip] {
+        timeline.audioTracks.flatMap { $0.clips }
+    }
+
     deinit {
         stopPlayback()
     }
