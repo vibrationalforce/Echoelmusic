@@ -450,16 +450,24 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          echo "=== macOS Debug Info ==="
+          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
+          echo "========================"
+
           MAX_RETRIES=3
           RETRY_DELAY=30
 
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Attempt $i of $MAX_RETRIES..."
-            if fastlane mac beta; then
+            if fastlane mac beta --verbose 2>&1 | tee /tmp/fastlane_output.log; then
               echo "macOS deployment successful!"
               exit 0
             fi
+            echo "=== Last 100 lines of output ==="
+            tail -100 /tmp/fastlane_output.log || true
+            echo "================================"
             if [ $i -lt $MAX_RETRIES ]; then
               echo "Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
@@ -553,21 +561,29 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
-          # Retry logic for flaky Apple APIs
+          echo "=== watchOS Debug Info ==="
+          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
+          echo "==========================="
+
           MAX_RETRIES=3
           RETRY_DELAY=30
 
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Attempt $i of $MAX_RETRIES..."
 
-            if fastlane ios beta_watchos; then
+            if fastlane ios beta_watchos --verbose 2>&1 | tee /tmp/fastlane_output.log; then
               echo "watchOS deployment successful!"
               exit 0
             fi
 
+            echo "=== Last 100 lines of output ==="
+            tail -100 /tmp/fastlane_output.log || true
+            echo "================================"
+
             if [ $i -lt $MAX_RETRIES ]; then
-              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
+              echo "Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
               RETRY_DELAY=$((RETRY_DELAY * 2))
             fi
@@ -661,21 +677,29 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
-          # Retry logic for flaky Apple APIs
+          echo "=== tvOS Debug Info ==="
+          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
+          echo "========================"
+
           MAX_RETRIES=3
           RETRY_DELAY=30
 
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Attempt $i of $MAX_RETRIES..."
 
-            if fastlane ios beta_tvos; then
+            if fastlane ios beta_tvos --verbose 2>&1 | tee /tmp/fastlane_output.log; then
               echo "tvOS deployment successful!"
               exit 0
             fi
 
+            echo "=== Last 100 lines of output ==="
+            tail -100 /tmp/fastlane_output.log || true
+            echo "================================"
+
             if [ $i -lt $MAX_RETRIES ]; then
-              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
+              echo "Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
               RETRY_DELAY=$((RETRY_DELAY * 2))
             fi
@@ -769,21 +793,29 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
-          # Retry logic for flaky Apple APIs
+          echo "=== visionOS Debug Info ==="
+          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
+          echo "============================"
+
           MAX_RETRIES=3
           RETRY_DELAY=30
 
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Attempt $i of $MAX_RETRIES..."
 
-            if fastlane ios beta_visionos; then
+            if fastlane ios beta_visionos --verbose 2>&1 | tee /tmp/fastlane_output.log; then
               echo "visionOS deployment successful!"
               exit 0
             fi
 
+            echo "=== Last 100 lines of output ==="
+            tail -100 /tmp/fastlane_output.log || true
+            echo "================================"
+
             if [ $i -lt $MAX_RETRIES ]; then
-              echo "Attempt $i failed, retrying in ${RETRY_DELAY}s..."
+              echo "Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
               RETRY_DELAY=$((RETRY_DELAY * 2))
             fi
