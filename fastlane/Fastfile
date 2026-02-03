@@ -329,7 +329,9 @@ platform :ios do
     UI.message("Xcode will create/download certificates and profiles as needed")
 
     # Build iOS app with cloud-managed signing
-    # xcodebuild with -allowProvisioningUpdates and API auth handles everything
+    # Both archive and export steps need API authentication for cloud signing
+    UI.message("Build xcargs: #{build_xcargs_with_auth}")
+
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -342,11 +344,13 @@ platform :ios do
       output_directory: "./build",
       output_name: "Echoelmusic",
       buildlog_path: "./build/logs",
+      include_bitcode: false,
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth,
+      export_xcargs: build_xcargs_with_auth
     )
 
     # Verify IPA was created
