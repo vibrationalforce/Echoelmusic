@@ -371,8 +371,8 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -e  # Exit on error
           set -x  # Enable command echoing for debugging
 
           # Show debug info
@@ -380,72 +380,111 @@ jobs:
           echo "Xcode version: $(xcodebuild -version)"
           echo "Team ID: ${APPLE_TEAM_ID:0:4}****"
           echo "API Key ID: ${ASC_KEY_ID}"
-          echo "API Key file exists: $(test -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 && echo 'YES' || echo 'NO')"
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          echo "API Key file exists: $(test -f $API_KEY_PATH && echo 'YES' || echo 'NO')"
+
+          # Create directories
+          mkdir -p build/logs
+
+          # === Step 1: Archive ===
           echo ""
-          echo "=== Project Info ==="
-          ls -la *.xcodeproj 2>/dev/null || echo "No .xcodeproj found!"
+          echo "=== Step 1: Creating Archive ==="
+
+          xcodebuild archive \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/Echoelmusic.xcarchive \
+            -derivedDataPath build/DerivedData \
+            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "${ASC_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
+            2>&1 | tee build/logs/archive.log
+
+          # Verify archive was created
+          if [ ! -d "build/Echoelmusic.xcarchive" ]; then
+            echo "::error::Archive was not created!"
+            exit 1
+          fi
+          echo "Archive created at: build/Echoelmusic.xcarchive"
+          ls -la build/Echoelmusic.xcarchive/
+
+          # === Step 2: Create ExportOptions.plist ===
           echo ""
-          echo "=== Schemes Available ==="
-          xcodebuild -list -project Echoelmusic.xcodeproj 2>&1 || echo "Failed to list schemes"
-          echo "=========================="
+          echo "=== Step 2: Creating ExportOptions.plist ==="
 
-          # Run fastlane with verbose output
-          echo "=== Starting fastlane ios beta ==="
-          fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log
-          FASTLANE_EXIT=$?
+          cat > build/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>${APPLE_TEAM_ID}</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>uploadBitcode</key>
+              <false/>
+          </dict>
+          </plist>
+          EOF
 
+          cat build/ExportOptions.plist
+
+          # === Step 3: Export IPA ===
           echo ""
-          echo "=== Fastlane Exit Code: $FASTLANE_EXIT ==="
+          echo "=== Step 3: Exporting IPA ==="
 
-          # Show build artifacts
-          echo "=== Build Artifacts ==="
-          find . -name "*.ipa" -o -name "*.app" 2>/dev/null | head -20 || echo "No artifacts found"
-          ls -la build/ 2>/dev/null || echo "No build directory"
-          echo "======================="
-
-          # Show last 200 lines of output
-          echo "=== Last 200 lines of fastlane output ==="
-          tail -200 /tmp/fastlane_output.log
-          echo "=========================================="
+          xcodebuild -exportArchive \
+            -archivePath build/Echoelmusic.xcarchive \
+            -exportPath build/Export \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "${ASC_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
+            2>&1 | tee build/logs/export.log
 
           # Verify IPA was created
-          echo "=== Verifying Build Output ==="
-          IPA_COUNT=$(find . -name "*.ipa" 2>/dev/null | wc -l)
-          echo "IPA files found: $IPA_COUNT"
-          find . -name "*.ipa" -exec ls -la {} \; 2>/dev/null || echo "No IPA files"
-
-          # Extract key errors from fastlane output
-          echo "=== Checking for errors in fastlane output ==="
-          grep -i "error\|fail\|exception\|unable to\|cannot\|could not" /tmp/fastlane_output.log | tail -30 || echo "No obvious errors found"
-
-          # Output as GitHub annotation for visibility
-          if [ $FASTLANE_EXIT -eq 0 ] && [ "$IPA_COUNT" -gt 0 ]; then
-            echo "::notice::iOS deployment completed successfully! IPA created."
-          elif [ $FASTLANE_EXIT -eq 0 ]; then
-            echo "::error::Fastlane reported success but NO IPA file was created!"
-            # Show last 50 lines containing build info
-            echo "::group::Build Output Details"
-            grep -i "build\|compil\|sign\|export\|archiv" /tmp/fastlane_output.log | tail -50 || echo "No build output found"
-            echo "::endgroup::"
+          IPA_PATH=$(find build/Export -name "*.ipa" | head -1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "::error::IPA was not created!"
+            ls -la build/Export/ || echo "Export directory doesn't exist"
             exit 1
-          else
-            # Show the error from fastlane
-            ERROR_MSG=$(grep -i "error" /tmp/fastlane_output.log | tail -5 | tr '\n' ' ' || echo "Unknown error")
-            echo "::error::iOS deployment FAILED: $ERROR_MSG"
-            exit $FASTLANE_EXIT
           fi
+          echo "IPA created at: $IPA_PATH"
+          ls -la "$IPA_PATH"
 
-      - name: "Upload Fastlane Logs"
+          # === Step 4: Upload to TestFlight ===
+          echo ""
+          echo "=== Step 4: Uploading to TestFlight ==="
+
+          fastlane pilot upload \
+            --ipa "$IPA_PATH" \
+            --skip_waiting_for_build_processing \
+            --skip_submission \
+            2>&1 | tee build/logs/upload.log
+
+          echo ""
+          echo "::notice::iOS deployment completed successfully! IPA uploaded to TestFlight."
+
+      - name: "Upload Build Logs"
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fastlane-ios-logs
+          name: ios-build-logs
           path: |
-            /tmp/fastlane_output.log
             /tmp/xcodebuild_test.log
-            *.ipa
-            build/**/*.ipa
-            build/logs/**/*
+            build/logs/*.log
+            build/Export/*.ipa
+            build/ExportOptions.plist
             build/Echoelmusic.xcarchive/Info.plist
           retention-days: 7
           if-no-files-found: warn
