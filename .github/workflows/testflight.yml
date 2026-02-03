@@ -442,8 +442,11 @@ jobs:
           name: fastlane-ios-logs
           path: |
             /tmp/fastlane_output.log
+            /tmp/xcodebuild_test.log
             *.ipa
             build/**/*.ipa
+            build/logs/**/*
+            build/Echoelmusic.xcarchive/Info.plist
           retention-days: 7
           if-no-files-found: warn
 
