@@ -71,13 +71,14 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # With automatic signing + API authentication, we let Xcode determine the
-  # correct code signing identity automatically. Do NOT specify CODE_SIGN_IDENTITY
-  # as it conflicts with automatic signing when targets are configured for development.
-  # The -allowProvisioningUpdates flag + API auth lets Xcode handle everything.
+  # With automatic signing + API authentication, we use CODE_SIGN_IDENTITY='-' (dash)
+  # which tells Xcode to automatically determine the correct signing identity.
+  # The dash is a special value meaning "infer identity from provisioning profile".
+  # Combined with -allowProvisioningUpdates and API auth, Xcode handles everything.
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
     "CODE_SIGN_STYLE='Automatic'",
+    "CODE_SIGN_IDENTITY='-'",
     "COMPILER_INDEX_STORE_ENABLE=NO",
     "-allowProvisioningUpdates",
     "-allowProvisioningDeviceRegistration"
