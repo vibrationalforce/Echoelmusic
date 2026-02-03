@@ -771,8 +771,9 @@ public final class VideoProcessingEngine: ObservableObject {
         }
 
         // Render CIImage to input texture
+        guard let context = ciContext else { return nil }
         let colorSpace = CGColorSpaceCreateDeviceRGB()
-        ciContext.render(image, to: inputTexture, commandBuffer: nil, bounds: extent, colorSpace: colorSpace)
+        context.render(image, to: inputTexture, commandBuffer: nil, bounds: extent, colorSpace: colorSpace)
 
         // Create command buffer and compute encoder
         guard let commandBuffer = commandQueue.makeCommandBuffer(),
@@ -788,8 +789,8 @@ public final class VideoProcessingEngine: ObservableObject {
         // Set effect parameters
         var params = EffectParameters(
             time: Float(Date().timeIntervalSince(startTime ?? Date())),
-            coherence: bioCoherence,
-            heartRate: bioHeartRate,
+            coherence: currentCoherence,
+            heartRate: currentHeartRate,
             intensity: 1.0
         )
         computeEncoder.setBytes(&params, length: MemoryLayout<EffectParameters>.size, index: 0)
