@@ -241,25 +241,26 @@ class MIDIToVisualMapper: ObservableObject {
         // Map gaze to visual focal point
         let focalPoint = SIMD2<Float>(gazeX * 2.0 - 1.0, gazeY * 2.0 - 1.0)
 
-        // Shift cymatics patterns toward gaze point
-        for i in 0..<cymaticsParameters.patterns.count {
+        // Recreate patterns shifted toward gaze point
+        cymaticsParameters.patterns = cymaticsParameters.patterns.map { pattern in
             let attraction = focus * 0.05
-            let dx = focalPoint.x - cymaticsParameters.patterns[i].position.x
-            let dy = focalPoint.y - cymaticsParameters.patterns[i].position.y
-            cymaticsParameters.patterns[i].position.x += dx * attraction
-            cymaticsParameters.patterns[i].position.y += dy * attraction
+            let dx = focalPoint.x - pattern.position.x
+            let dy = focalPoint.y - pattern.position.y
+            let newPosition = SIMD2<Float>(
+                pattern.position.x + dx * attraction,
+                pattern.position.y + dy * attraction
+            )
+            return CymaticsParameters.ChladniPattern(
+                frequency: pattern.frequency,
+                amplitude: pattern.amplitude,
+                position: newPosition,
+                phase: pattern.phase
+            )
         }
 
         // Attention modulates mandala complexity
-        mandalaParameters.symmetry = Int(6.0 + attention * 6.0)  // 6-12 fold symmetry
-        mandalaParameters.rotationSpeed = Double(0.1 + focus * 0.4)
-
-        // Update particle behavior based on gaze
-        particleSystemParameters.emissionPosition = SIMD3<Float>(
-            gazeX * 2.0 - 1.0,
-            gazeY * 2.0 - 1.0,
-            0.0
-        )
+        mandalaParameters.petalCount = Int(6.0 + attention * 6.0)  // 6-12 fold symmetry
+        mandalaParameters.rotationSpeed = 0.1 + focus * 0.4
     }
 
     /// Set overall visual intensity
