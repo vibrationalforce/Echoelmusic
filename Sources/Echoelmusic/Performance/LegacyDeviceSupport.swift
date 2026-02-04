@@ -182,12 +182,19 @@ class LegacyDeviceSupport: ObservableObject {
 
     // MARK: - Performance Level
 
-    enum PerformanceLevel: String, CaseIterable {
+    enum PerformanceLevel: String, CaseIterable, Comparable {
         case minimal = "Minimal (Emergency)"
         case low = "Low (Legacy Devices)"
         case medium = "Medium (Mid-Range)"
         case high = "High (Modern Devices)"
         case ultra = "Ultra (Current Devices)"
+
+        static func < (lhs: PerformanceLevel, rhs: PerformanceLevel) -> Bool {
+            let order: [PerformanceLevel] = [.minimal, .low, .medium, .high, .ultra]
+            let lhsIndex = order.firstIndex(of: lhs) ?? 0
+            let rhsIndex = order.firstIndex(of: rhs) ?? 0
+            return lhsIndex < rhsIndex
+        }
 
         var particleCount: Int {
             switch self {
@@ -505,15 +512,19 @@ class LegacyDeviceSupport: ObservableObject {
             deviceGeneration: .legacy,
             chip: .a10,
             ramGB: ram,
-            gpuGeneration: .a10,
-            supportedFeatures: [.basicAudio, .simpleVisuals],
-            recommendedSettings: RecommendedSettings(
+            gpuGeneration: .legacy,
+            maxFPS: 30,
+            recommendedSettings: DeviceProfile.RecommendedSettings(
                 targetFPS: 30,
                 maxParticles: 512,
-                textureQuality: .low,
                 audioSampleRate: 22050,
-                enableMetalEffects: false,
-                maxConcurrentEffects: 2
+                audioBufferSize: 1024,
+                textureQuality: .low,
+                shadowQuality: .off,
+                effectsQuality: .low,
+                enableBloom: false,
+                enableMotionBlur: false,
+                enableAO: false
             )
         )
 
