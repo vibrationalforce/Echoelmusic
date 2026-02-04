@@ -269,16 +269,11 @@ class MIDIToVisualMapper: ObservableObject {
 
         // Scale all visual parameters by intensity
         cymaticsParameters.amplitude = clampedIntensity
-        mandalaParameters.rotationSpeed = Double(clampedIntensity) * 0.5
-        particleSystemParameters.particleSize = clampedIntensity * 10.0
+        mandalaParameters.rotationSpeed = clampedIntensity * 0.5
+        mandalaParameters.petalSize = clampedIntensity
 
-        // Adjust color saturation based on intensity
-        let saturation = 0.5 + clampedIntensity * 0.5  // 50-100%
-        mandalaParameters.color = Color(
-            hue: mandalaParameters.color.hueComponent,
-            saturation: saturation,
-            brightness: Double(clampedIntensity)
-        )
+        // Adjust hue based on intensity
+        mandalaParameters.hue = clampedIntensity
     }
 
     // MARK: - Cymatics Mapping
