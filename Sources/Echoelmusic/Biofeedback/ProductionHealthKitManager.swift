@@ -845,8 +845,8 @@ public class ProductionHealthKitManager {
         let oldCount = rrIntervalBuffer.count
         // In a full implementation, we would filter by timestamp
         // For now, we just trim excess data
-        if rrIntervalBuffer.count > maxRRIntervals {
-            rrIntervalBuffer.removeFirst(rrIntervalBuffer.count - maxRRIntervals)
+        if rrIntervalBuffer.count > maxBufferSize {
+            rrIntervalBuffer.removeFirst(rrIntervalBuffer.count - maxBufferSize)
         }
 
         logger.debug("🧹 Privacy cleanup: retention=\(privacy.dataRetentionDays) days, cutoff=\(cutoffDate)", category: .biofeedback)
@@ -889,9 +889,9 @@ public class ProductionHealthKitManager {
         calculateHRVMetrics()
 
         let heartData = ProductionHeartData(
+            timestamp: Date(),
             heartRate: heartRate,
-            rrIntervals: rrIntervals,
-            timestamp: Date()
+            rrIntervals: rrIntervals
         )
 
         DispatchQueue.main.async { [weak self] in
