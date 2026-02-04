@@ -220,10 +220,8 @@ public class FileAnalyticsProvider: AnalyticsProvider {
         do {
             try fileHandle?.close()
         } catch {
-            // Can't use log in deinit, but file close failure is rare
-            #if DEBUG
-            print("⚠️ [Analytics] Failed to close file handle: \(error)")
-            #endif
+            // Use global logger instance since self.log may not be safe in deinit
+            echoelLog.warning("Failed to close analytics file handle: \(error)", category: .system)
         }
     }
 
