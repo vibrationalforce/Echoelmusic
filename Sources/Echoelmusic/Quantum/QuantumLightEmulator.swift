@@ -13,6 +13,9 @@ import Foundation
 import Combine
 import Accelerate
 import simd
+#if canImport(QuartzCore)
+import QuartzCore
+#endif
 
 // MARK: - Quantum State Representation
 

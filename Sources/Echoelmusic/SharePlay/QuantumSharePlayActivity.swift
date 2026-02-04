@@ -291,7 +291,7 @@ public class QuantumSharePlayManager: ObservableObject {
     }
 
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
-    private func updateParticipantsList<T: Collection>(from activeParticipants: T) where T.Element == Participant {
+    private func updateParticipantsList(from activeParticipants: some Collection<GroupActivities.Participant>) {
         // Update or add participants
         for participant in activeParticipants {
             if let index = participants.firstIndex(where: { $0.id == participant.id.uuidString }) {
