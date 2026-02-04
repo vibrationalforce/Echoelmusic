@@ -4,7 +4,6 @@
 
 import Foundation
 import Combine
-import os.log
 
 // MARK: - Compliance Manager
 
@@ -191,7 +190,6 @@ public final class ComplianceManager: ObservableObject {
 
     // MARK: - Configuration
 
-    private let logger = Logger(subsystem: "com.echoelmusic.compliance", category: "Manager")
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
@@ -212,7 +210,7 @@ public final class ComplianceManager: ObservableObject {
         isChecking = true
         defer { isChecking = false }
 
-        logger.info("Starting comprehensive compliance check")
+        log.info("Starting comprehensive compliance check", category: .system)
 
         // Run all checks in parallel
         async let gemaCheck = checkGEMACompliance(content)
@@ -320,7 +318,7 @@ public final class ComplianceManager: ObservableObject {
         lastCheckResult = result
         activeWarnings = warnings
 
-        logger.info("Compliance check completed: \(overallStatus.rawValue)")
+        log.info("Compliance check completed: \(overallStatus.rawValue)", category: .system)
 
         return result
     }
@@ -346,7 +344,7 @@ public final class ComplianceManager: ObservableObject {
         biometricConsents.append(consent)
         saveConsents()
 
-        logger.info("Biometric consent recorded for user: \(userID)")
+        log.info("Biometric consent recorded for user: \(userID)", category: .system)
 
         return consent
     }
@@ -355,7 +353,7 @@ public final class ComplianceManager: ObservableObject {
     public func revokeConsent(consentID: UUID) {
         biometricConsents.removeAll { $0.id == consentID }
         saveConsents()
-        logger.info("Consent revoked: \(consentID)")
+        log.info("Consent revoked: \(consentID)", category: .system)
     }
 
     /// Check if consent exists and is valid

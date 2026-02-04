@@ -70,6 +70,7 @@ public struct WaveNode: Identifiable, Sendable {
 // MARK: - Cymatics Visualizer
 
 /// Engine for creating cymatics-inspired visualizations
+@MainActor
 public final class CymaticsVisualizer: ObservableObject {
 
     // MARK: - Published Properties

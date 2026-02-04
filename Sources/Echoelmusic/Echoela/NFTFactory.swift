@@ -5,7 +5,6 @@
 import Foundation
 import Combine
 import CryptoKit
-import os.log
 
 // MARK: - NFT Factory
 
@@ -215,7 +214,6 @@ public final class NFTFactory: ObservableObject {
 
     // MARK: - Configuration
 
-    private let logger = Logger(subsystem: "com.echoelmusic.nft", category: "Factory")
     private var cancellables = Set<AnyCancellable>()
 
     /// Platform fee percentage
@@ -234,7 +232,7 @@ public final class NFTFactory: ObservableObject {
 
     /// Connect wallet
     public func connectWallet(provider: WalletConnection.WalletProvider, network: BlockchainNetwork) async throws -> WalletConnection {
-        logger.info("Connecting wallet via \(provider.rawValue) on \(network.rawValue)")
+        log.info("Connecting wallet via \(provider.rawValue) on \(network.rawValue)")
 
         // For Secure Enclave, use device's hardware security
         if provider == .secureEnclave {
@@ -258,7 +256,7 @@ public final class NFTFactory: ObservableObject {
     /// Disconnect wallet
     public func disconnectWallet() {
         connectedWallet = nil
-        logger.info("Wallet disconnected")
+        log.info("Wallet disconnected")
     }
 
     /// Create a pending mint
@@ -292,7 +290,7 @@ public final class NFTFactory: ObservableObject {
         )
 
         pendingMints.append(pendingMint)
-        logger.info("Prepared mint: \(pendingMint.id)")
+        log.info("Prepared mint: \(pendingMint.id)")
 
         return pendingMint
     }
@@ -325,19 +323,19 @@ public final class NFTFactory: ObservableObject {
 
         if !aiActResult.passed {
             complianceStatus = .warning
-            logger.warning("EU AI Act compliance warning: \(aiActResult.message)")
+            log.warning("EU AI Act compliance warning: \(aiActResult.message)")
         }
 
         if !micaResult.passed {
             complianceStatus = .warning
-            logger.warning("MiCA compliance warning: \(micaResult.message)")
+            log.warning("MiCA compliance warning: \(micaResult.message)")
         }
 
         if complianceStatus != .warning {
             complianceStatus = .passed
         }
 
-        logger.info("Compliance check completed: \(complianceStatus.rawValue)")
+        log.info("Compliance check completed: \(complianceStatus.rawValue)")
         return complianceStatus
     }
 
@@ -428,7 +426,7 @@ public final class NFTFactory: ObservableObject {
         // Remove from pending
         pendingMints.removeAll { $0.id == mintID }
 
-        logger.info("NFT minted successfully: \(mintedNFT.tokenID)")
+        log.info("NFT minted successfully: \(mintedNFT.tokenID)")
 
         return mintedNFT
     }
@@ -437,7 +435,7 @@ public final class NFTFactory: ObservableObject {
     public func requestBiometricConsent(for usage: BiometricDataUsage) async -> Bool {
         // This would present a consent dialog to the user
         // For now, return placeholder
-        logger.info("Requesting biometric consent for: \(usage.rawValue)")
+        log.info("Requesting biometric consent for: \(usage.rawValue)")
         return true
     }
 
@@ -544,7 +542,7 @@ public final class NFTFactory: ObservableObject {
     private func uploadContent(_ content: NFTContent) async throws -> String {
         // Upload to IPFS via Pinata/Infura or Arweave
         // Return CID (Content Identifier)
-        logger.info("Uploading content to IPFS...")
+        log.info("Uploading content to IPFS...")
 
         // Placeholder - would use actual IPFS SDK
         let cid = "Qm" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(44)
@@ -576,14 +574,14 @@ public final class NFTFactory: ObservableObject {
         ]
 
         // Upload to IPFS
-        logger.info("Uploading metadata to IPFS...")
+        log.info("Uploading metadata to IPFS...")
         let cid = "Qm" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(44)
         return String(cid)
     }
 
     private func deploySplitsContract(_ splits: RevenueSplit, on network: BlockchainNetwork) async throws -> String {
         // Deploy 0xSplits contract
-        logger.info("Deploying 0xSplits contract on \(network.rawValue)...")
+        log.info("Deploying 0xSplits contract on \(network.rawValue)...")
 
         // Placeholder - would use actual 0xSplits SDK
         let address = "0x" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(40).lowercased()
@@ -602,7 +600,7 @@ public final class NFTFactory: ObservableObject {
 
     private func submitTransaction(_ transaction: Transaction, signature: Data, network: BlockchainNetwork) async throws -> String {
         // Submit to blockchain
-        logger.info("Submitting transaction to \(network.rawValue)...")
+        log.info("Submitting transaction to \(network.rawValue)...")
 
         // Placeholder - would use actual Web3 SDK
         let txHash = "0x" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
@@ -611,7 +609,7 @@ public final class NFTFactory: ObservableObject {
 
     private func waitForConfirmation(txHash: String, network: BlockchainNetwork) async throws -> TransactionReceipt {
         // Wait for transaction confirmation
-        logger.info("Waiting for confirmation: \(txHash)")
+        log.info("Waiting for confirmation: \(txHash)")
 
         // Placeholder
         try await Task.sleep(nanoseconds: 2_000_000_000)  // Simulate wait
@@ -625,7 +623,7 @@ public final class NFTFactory: ObservableObject {
 
     private func deployTokenBoundAccount(tokenID: String, contractAddress: String, network: BlockchainNetwork) async throws -> String {
         // Deploy ERC-6551 Token Bound Account
-        logger.info("Deploying Token Bound Account for token \(tokenID)...")
+        log.info("Deploying Token Bound Account for token \(tokenID)...")
 
         // Placeholder
         let tbaAddress = "0x" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(40).lowercased()
@@ -684,11 +682,9 @@ public final class NFTFactory: ObservableObject {
 /// Uses Secure Enclave for key management
 final class PQCCryptoManager {
 
-    private let logger = Logger(subsystem: "com.echoelmusic.nft", category: "PQC")
-
     /// Sign transaction with PQC-safe hybrid signature
     func signTransaction(_ transaction: NFTFactory.Transaction, wallet: NFTFactory.WalletConnection) async throws -> Data {
-        logger.info("Signing transaction with PQC hybrid scheme")
+        log.info("Signing transaction with PQC hybrid scheme")
 
         // For Secure Enclave wallets, use hardware signing
         if wallet.provider == .secureEnclave {

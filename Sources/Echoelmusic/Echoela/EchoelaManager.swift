@@ -4,7 +4,6 @@
 
 import Foundation
 import Combine
-import os.log
 
 // MARK: - Echoela Manager
 
@@ -122,7 +121,6 @@ public final class EchoelaManager: ObservableObject {
 
     // MARK: - Configuration
 
-    private let logger = Logger(subsystem: "com.echoelmusic.echoela", category: "Manager")
     private var cancellables = Set<AnyCancellable>()
 
     /// Deep link URL scheme
@@ -226,27 +224,27 @@ public final class EchoelaManager: ObservableObject {
     public func activate(in context: EchoelaContext = .idle) {
         isActive = true
         currentContext = context
-        logger.info("Echoela activated in context: \(context.rawValue)")
+        log.info("Echoela activated in context: \(context.rawValue)")
     }
 
     /// Deactivate Echoela assistant
     public func deactivate() {
         isActive = false
         highlightedElement = nil
-        logger.info("Echoela deactivated")
+        log.info("Echoela deactivated")
     }
 
     /// Set the current context
     public func setContext(_ context: EchoelaContext) {
         currentContext = context
-        logger.info("Echoela context changed to: \(context.rawValue)")
+        log.info("Echoela context changed to: \(context.rawValue)")
     }
 
     /// Highlight a UI element
     public func highlight(elementID: String?) {
         highlightedElement = elementID
         if let id = elementID {
-            logger.debug("Highlighting element: \(id)")
+            log.debug("Highlighting element: \(id)")
         }
     }
 
@@ -282,11 +280,11 @@ public final class EchoelaManager: ObservableObject {
     /// Execute a deep link action
     public func executeDeepLink(_ url: URL) {
         guard url.scheme == Self.deepLinkScheme else {
-            logger.warning("Invalid deep link scheme: \(url.scheme ?? "nil")")
+            log.warning("Invalid deep link scheme: \(url.scheme ?? "nil")")
             return
         }
 
-        logger.info("Executing deep link: \(url.absoluteString)")
+        log.info("Executing deep link: \(url.absoluteString)")
 
         // Parse and execute action
         if let host = url.host, host == "action" {
@@ -499,7 +497,7 @@ public final class EchoelaManager: ObservableObject {
             dict[item.name] = item.value ?? ""
         }
 
-        logger.info("Handling action: \(category)/\(action) with params: \(params)")
+        log.info("Handling action: \(category)/\(action) with params: \(params)")
 
         // Dispatch to appropriate handler
         switch category {
@@ -516,7 +514,7 @@ public final class EchoelaManager: ObservableObject {
         case "compliance":
             handleComplianceAction(action, params: params)
         default:
-            logger.warning("Unknown action category: \(category)")
+            log.warning("Unknown action category: \(category)")
         }
     }
 
