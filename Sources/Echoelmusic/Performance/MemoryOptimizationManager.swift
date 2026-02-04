@@ -151,7 +151,7 @@ class MemoryOptimizationManager: ObservableObject {
             let fd = open(path, O_RDONLY)
             guard fd >= 0 else { return nil }
 
-            mappedData = mmap(nil, size, PROT_READ, MAP_PRIVATE, fd, 0)
+            mappedData = mmap(nil, Int(size), PROT_READ, MAP_PRIVATE, fd, 0)
             close(fd)
 
             if mappedData == MAP_FAILED {

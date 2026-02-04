@@ -110,7 +110,7 @@ enum EchoelmusicMLModels: String, CaseIterable {
 
 // MARK: - ML Model Configuration
 
-struct MLModelConfiguration {
+struct EchoelMLModelConfiguration {
     let modelType: EchoelmusicMLModels
     let version: String
     let localURL: URL?
@@ -126,7 +126,7 @@ struct MLModelConfiguration {
     let outputDimensions: [String: [Int]]
 
     /// Returns nil if documents directory is inaccessible (shouldn't happen on iOS/macOS)
-    static func defaultConfiguration(for model: EchoelmusicMLModels) -> MLModelConfiguration {
+    static func defaultConfiguration(for model: EchoelmusicMLModels) -> EchoelMLModelConfiguration {
         // Use fallback to temporary directory if documents unavailable
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
@@ -134,7 +134,7 @@ struct MLModelConfiguration {
 
         switch model {
         case .soundStyleTransfer:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "1.0.0",
                 localURL: modelsPath.appendingPathComponent("SoundStyleTransfer.mlmodelc"),
@@ -151,7 +151,7 @@ struct MLModelConfiguration {
             )
 
         case .voiceToMIDI:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "1.2.0",
                 localURL: modelsPath.appendingPathComponent("VoiceToMIDI.mlmodelc"),
@@ -168,7 +168,7 @@ struct MLModelConfiguration {
             )
 
         case .emotionRecognition:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "2.0.0",
                 localURL: modelsPath.appendingPathComponent("EmotionRecognition.mlmodelc"),
@@ -185,7 +185,7 @@ struct MLModelConfiguration {
             )
 
         case .hrvCoherencePredictor:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "1.1.0",
                 localURL: modelsPath.appendingPathComponent("HRVCoherencePredictor.mlmodelc"),
@@ -202,7 +202,7 @@ struct MLModelConfiguration {
             )
 
         case .musicGeneration:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "1.5.0",
                 localURL: modelsPath.appendingPathComponent("MusicGeneration.mlmodelc"),
@@ -219,7 +219,7 @@ struct MLModelConfiguration {
             )
 
         case .visualStyleTransfer:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "2.1.0",
                 localURL: modelsPath.appendingPathComponent("VisualStyleTransfer.mlmodelc"),
@@ -236,7 +236,7 @@ struct MLModelConfiguration {
             )
 
         case .gestureRecognition:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "1.3.0",
                 localURL: modelsPath.appendingPathComponent("GestureRecognition.mlmodelc"),
@@ -253,7 +253,7 @@ struct MLModelConfiguration {
             )
 
         case .breathingPatternAnalysis:
-            return MLModelConfiguration(
+            return EchoelMLModelConfiguration(
                 modelType: model,
                 version: "1.0.0",
                 localURL: modelsPath.appendingPathComponent("BreathingPatternAnalysis.mlmodelc"),
@@ -276,7 +276,7 @@ struct MLModelConfiguration {
 
 private struct MLModelCacheEntry {
     let model: MLModel
-    let configuration: MLModelConfiguration
+    let configuration: EchoelMLModelConfiguration
     let loadedAt: Date
     var lastAccessedAt: Date
     var accessCount: Int
@@ -315,7 +315,7 @@ class MLModelCache {
         return entry.model
     }
 
-    func set(_ model: MLModel, configuration: MLModelConfiguration) {
+    func set(_ model: MLModel, configuration: EchoelMLModelConfiguration) {
         let entry = MLModelCacheEntry(
             model: model,
             configuration: configuration,
@@ -391,7 +391,7 @@ actor MLModelDownloadManager {
     }()
 
     func downloadModel(
-        configuration: MLModelConfiguration,
+        configuration: EchoelMLModelConfiguration,
         progressHandler: @escaping @Sendable (MLModelDownloadProgress) -> Void
     ) async throws -> URL {
         guard let remoteURL = configuration.remoteURL else {
@@ -536,7 +536,8 @@ struct MLInferenceResult {
     }
 
     func getInt(for key: String) -> Int? {
-        output.featureValue(for: key)?.int64Value.map { Int($0) }
+        guard let value = output.featureValue(for: key)?.int64Value else { return nil }
+        return Int(value)
     }
 }
 
@@ -668,7 +669,7 @@ class MLModelManager {
 
     private let cache = MLModelCache.shared
     private let downloadManager = MLModelDownloadManager.shared
-    private var configurations: [EchoelmusicMLModels: MLModelConfiguration] = [:]
+    private var configurations: [EchoelmusicMLModels: EchoelMLModelConfiguration] = [:]
     private var loadingTasks: [EchoelmusicMLModels: Task<MLModel, Error>] = [:]
 
     // Publishers for SwiftUI/Combine
@@ -678,7 +679,7 @@ class MLModelManager {
     private init() {
         // Load default configurations
         for modelType in EchoelmusicMLModels.allCases {
-            configurations[modelType] = MLModelConfiguration.defaultConfiguration(for: modelType)
+            configurations[modelType] = EchoelMLModelConfiguration.defaultConfiguration(for: modelType)
         }
 
         // Start idle model eviction timer
@@ -692,11 +693,11 @@ class MLModelManager {
 
     // MARK: - Model Configuration
 
-    func getConfiguration(for modelType: EchoelmusicMLModels) -> MLModelConfiguration? {
+    func getConfiguration(for modelType: EchoelmusicMLModels) -> EchoelMLModelConfiguration? {
         configurations[modelType]
     }
 
-    func setConfiguration(_ configuration: MLModelConfiguration) {
+    func setConfiguration(_ configuration: EchoelMLModelConfiguration) {
         configurations[configuration.modelType] = configuration
     }
 
@@ -752,11 +753,11 @@ class MLModelManager {
             let compiledURL = try await compileModelIfNeeded(at: finalURL)
 
             // Load model
-            let mlConfiguration = MLModelConfiguration()
-            mlConfiguration.computeUnits = configuration.computeUnits
+            let mlConfig = CoreML.MLModelConfiguration()
+            mlConfig.computeUnits = configuration.computeUnits
 
             do {
-                let model = try MLModel(contentsOf: compiledURL, configuration: mlConfiguration)
+                let model = try MLModel(contentsOf: compiledURL, configuration: mlConfig)
 
                 // Cache the model
                 cache.set(model, configuration: configuration)
@@ -796,7 +797,7 @@ class MLModelManager {
 
     // MARK: - Model Download
 
-    private func downloadModel(_ configuration: MLModelConfiguration) async throws -> URL {
+    private func downloadModel(_ configuration: EchoelMLModelConfiguration) async throws -> URL {
         return try await downloadManager.downloadModel(configuration: configuration) { [weak self] progress in
             Task { @MainActor [weak self] in
                 self?.downloadProgress[configuration.modelType] = progress
@@ -811,7 +812,7 @@ class MLModelManager {
 
     // MARK: - Validation
 
-    private func checkPlatformCompatibility(_ configuration: MLModelConfiguration) throws {
+    private func checkPlatformCompatibility(_ configuration: EchoelMLModelConfiguration) throws {
         #if os(iOS)
         let currentVersion = ProcessInfo.processInfo.operatingSystemVersion
         let minimumVersion = parseVersion(configuration.minimumIOSVersion)
@@ -829,7 +830,7 @@ class MLModelManager {
         #endif
     }
 
-    private func checkMemoryAvailability(_ configuration: MLModelConfiguration) throws {
+    private func checkMemoryAvailability(_ configuration: EchoelMLModelConfiguration) throws {
         let available = ProcessInfo.processInfo.physicalMemory
         let required = configuration.memoryRequirements
 
@@ -839,7 +840,7 @@ class MLModelManager {
         }
     }
 
-    private func validateModelFile(at url: URL, configuration: MLModelConfiguration) throws {
+    private func validateModelFile(at url: URL, configuration: EchoelMLModelConfiguration) throws {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw MLModelError.modelNotFound(configuration.modelType)
         }
@@ -916,7 +917,7 @@ class MLModelManager {
             do {
                 try await loadModel(modelType)
             } catch {
-                log.ai("⚠️ Failed to preload critical model \(modelType): \(error.localizedDescription)", level: .warning)
+                log.warning("⚠️ Failed to preload critical model \(modelType): \(error.localizedDescription)")
                 // Continue loading other models - don't fail entire preload
             }
         }
