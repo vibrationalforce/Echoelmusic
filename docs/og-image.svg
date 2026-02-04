@@ -36,30 +36,26 @@
   <!-- Subtle brand glow overlay -->
   <rect width="1200" height="630" fill="url(#brand-gradient)" opacity="0.06"/>
 
-  <!-- Heart icon - left side -->
-  <g transform="translate(80, 140) scale(0.35)" filter="url(#glow)">
-    <path d="M512 800
-             C370 680 205 555 205 390
-             C205 290 285 205 390 205
-             C450 205 512 245 512 245
-             C512 245 574 205 634 205
-             C739 205 819 290 819 390
-             C819 555 654 680 512 800Z"
-          fill="url(#brand-gradient)"
-          opacity="0.9"/>
-    <!-- Sound wave inside heart -->
-    <path d="M310 455
-             Q375 455 395 415
-             Q415 375 445 415
-             Q475 455 512 375
-             Q549 455 579 415
-             Q609 375 629 415
-             Q649 455 714 455"
-          fill="none"
-          stroke="white"
-          stroke-width="36"
-          stroke-linecap="round"
-          opacity="0.95"/>
+  <!-- Atom icon - left side (Quantum Light Theme) -->
+  <g transform="translate(180, 315)" filter="url(#glow)">
+    <!-- Quantum rings -->
+    <circle cx="0" cy="0" r="120" fill="none" stroke="url(#brand-gradient)" stroke-width="1.5" opacity="0.15"/>
+    <circle cx="0" cy="0" r="95" fill="none" stroke="url(#brand-gradient)" stroke-width="1.5" opacity="0.12"/>
+    <!-- Pink glow behind nucleus -->
+    <circle cx="0" cy="0" r="60" fill="#FF1494" opacity="0.15"/>
+    <!-- Electron orbits -->
+    <ellipse cx="0" cy="0" rx="105" ry="40" fill="none" stroke="#00FFFF" stroke-width="3" opacity="0.5"/>
+    <ellipse cx="0" cy="0" rx="105" ry="40" fill="none" stroke="#FF1494" stroke-width="3" opacity="0.5"
+             transform="rotate(60)"/>
+    <ellipse cx="0" cy="0" rx="105" ry="40" fill="none" stroke="#9933FF" stroke-width="3" opacity="0.5"
+             transform="rotate(120)"/>
+    <!-- Nucleus -->
+    <circle cx="0" cy="0" r="16" fill="white" opacity="0.95"/>
+    <circle cx="0" cy="0" r="20" fill="#FF1494" opacity="0.2"/>
+    <!-- Electrons -->
+    <circle cx="105" cy="0" r="8" fill="white" opacity="0.9"/>
+    <circle cx="-52" cy="-91" r="8" fill="white" opacity="0.9"/>
+    <circle cx="-52" cy="91" r="8" fill="white" opacity="0.9"/>
   </g>
 
   <!-- App name -->
