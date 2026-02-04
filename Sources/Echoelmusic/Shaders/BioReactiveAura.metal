@@ -172,7 +172,7 @@ float fbm(float2 p, int octaves) {
 
     // Additive blend for glow effect
     half4 result;
-    result.rgb = half3(original.rgb + glowColor * glowAlpha);
+    result.rgb = original.rgb + half3(glowColor * glowAlpha);
     result.a = original.a;
 
     return result;
@@ -218,7 +218,7 @@ float fbm(float2 p, int octaves) {
 
     half4 original = layer.sample(position);
     half4 result;
-    result.rgb = half3(original.rgb + ringColor * ring * 0.5);
+    result.rgb = original.rgb + half3(ringColor * ring * 0.5);
     result.a = original.a;
 
     return result;
@@ -258,7 +258,7 @@ float fbm(float2 p, int octaves) {
 
     half4 original = layer.sample(position);
     half4 result;
-    result.rgb = half3(original.rgb + quantumColor * visibility * abs(interference));
+    result.rgb = original.rgb + half3(quantumColor * visibility * abs(interference));
     result.a = original.a;
 
     return result;
@@ -312,7 +312,7 @@ float fbm(float2 p, int octaves) {
 
     half4 original = layer.sample(position);
     half4 result;
-    result.rgb = half3(original.rgb * (1.0 - innerFill) + fillColor * (circle * 0.8 + innerFill));
+    result.rgb = half3(float3(original.rgb) * (1.0 - innerFill) + fillColor * (circle * 0.8 + innerFill));
     result.a = original.a;
 
     return result;
@@ -366,7 +366,7 @@ float fbm(float2 p, int octaves) {
 
     half4 original = layer.sample(position);
     half4 result;
-    result.rgb = half3(original.rgb + particleColor * particles * 0.5);
+    result.rgb = original.rgb + half3(particleColor * particles * 0.5);
     result.a = original.a;
 
     return result;
