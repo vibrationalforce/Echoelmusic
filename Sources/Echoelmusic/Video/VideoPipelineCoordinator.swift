@@ -112,7 +112,7 @@ public final class VideoPipelineCoordinator: ObservableObject {
     public func setupStreaming() {
         guard streamEngine == nil else { return }
 
-        streamEngine = StreamEngine()
+        streamEngine = StreamEngine(device: device)
         log.video("VideoPipelineCoordinator: Stream engine set up")
     }
 

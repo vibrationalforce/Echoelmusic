@@ -251,7 +251,7 @@ class SceneRenderer {
     // MARK: - Rendering
 
     /// Render a complete scene to texture
-    func renderScene(_ scene: Scene, size: CGSize, time: Float) -> MTLTexture? {
+    func renderScene(_ scene: StreamScene, size: CGSize, time: Float) -> MTLTexture? {
         // Create or reuse output texture
         if outputTexture == nil ||
            outputTexture?.width != Int(size.width) ||
@@ -337,7 +337,7 @@ class SceneRenderer {
 
     // MARK: - Source Renderers
 
-    private func renderCameraSource(_ source: CameraSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
+    private func renderCameraSource(_ source: StreamCameraSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
         guard let sourceTexture = sourceTextures[source.id],
               let pipeline = compositePipeline else { return }
 
@@ -587,7 +587,7 @@ class SceneRenderer {
 extension SceneRenderer {
 
     /// Render transition between two scenes
-    func renderTransition(from: Scene?, to: Scene, progress: Float, transition: SceneTransition, size: CGSize, time: Float) -> MTLTexture? {
+    func renderTransition(from: StreamScene?, to: StreamScene, progress: Float, transition: SceneTransition, size: CGSize, time: Float) -> MTLTexture? {
         guard let toTexture = renderScene(to, size: size, time: time) else { return nil }
 
         guard let fromScene = from,
