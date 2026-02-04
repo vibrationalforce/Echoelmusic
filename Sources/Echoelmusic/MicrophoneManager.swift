@@ -195,9 +195,9 @@ class MicrophoneManager: NSObject, ObservableObject {
         let mean = sum / Float(frameLength)
 
         var sumSquares: Float = 0.0
-        var meanNegative = -mean
-        vDSP_vsq(channelDataValue, 1, &sumSquares, vDSP_Length(frameLength))
-        let rms = sqrt(sumSquares / Float(frameLength) - mean * mean)
+        vDSP_svesq(channelDataValue, 1, &sumSquares, vDSP_Length(frameLength))
+        let variance = sumSquares / Float(frameLength) - mean * mean
+        let rms = sqrt(max(variance, 0))
 
         // Normalize to 0-1 range with better sensitivity
         let normalizedLevel = min(rms * 15.0, 1.0)

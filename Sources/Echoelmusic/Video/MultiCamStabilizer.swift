@@ -485,11 +485,11 @@ class VideoStabilizer: ObservableObject {
         var scale: CGFloat = 1.0
 
         // Use Vision for optical flow
-        let request = VNGenerateOpticalFlowRequest()
-
         if let reference = referenceFrame {
+            let request = VNGenerateOpticalFlowRequest(targetedCVPixelBuffer: reference, options: [:])
+
             do {
-                try sequenceHandler.perform([request], on: pixelBuffer, against: reference)
+                try sequenceHandler.perform([request], on: pixelBuffer)
 
                 if let result = request.results?.first as? VNPixelBufferObservation {
                     // Analyze flow field
