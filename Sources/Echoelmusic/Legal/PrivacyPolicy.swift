@@ -2267,7 +2267,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 // MARK: - Compact Legal Banner
 
 /// Compact legal banner for onboarding or settings
-@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, visionOS 1.0, *)
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct LegalBanner: View {
 
     @State private var showLegalViewer = false
@@ -2309,7 +2309,7 @@ public struct LegalBanner: View {
 // MARK: - Preview
 
 #if DEBUG
-@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, visionOS 1.0, *)
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 struct LegalDocumentViewer_Previews: PreviewProvider {
     static var previews: some View {
         Group {
