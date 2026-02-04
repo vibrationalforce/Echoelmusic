@@ -1,6 +1,10 @@
 import Foundation
 import Combine
 import Accelerate
+import Compression
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Memory Optimization Manager für Low-RAM-Geräte
 ///
