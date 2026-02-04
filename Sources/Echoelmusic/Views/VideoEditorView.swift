@@ -16,7 +16,7 @@ struct VideoEditorView: View {
     @State private var appliedEffects: [String] = []
 
     /// Video playhead synced from engine
-    private var currentTime: TimeInterval { engine.playhead }
+    private var currentTime: TimeInterval { engine.playheadSeconds }
     private var isPlaying: Bool { engine.isPlaying }
 
     var body: some View {
@@ -491,16 +491,6 @@ struct VideoEditorView: View {
                 .font(VaporwaveTypography.label())
                 .foregroundColor(VaporwaveColors.textTertiary)
         }
-    }
-
-    // MARK: - Formatting
-
-    private func formatTimecode(_ time: TimeInterval) -> String {
-        let hours = Int(time) / 3600
-        let minutes = (Int(time) % 3600) / 60
-        let seconds = Int(time) % 60
-        let frames = Int((time.truncatingRemainder(dividingBy: 1)) * 30)
-        return String(format: "%02d:%02d:%02d:%02d", hours, minutes, seconds, frames)
     }
 
     private func formatDuration(_ duration: TimeInterval) -> String {

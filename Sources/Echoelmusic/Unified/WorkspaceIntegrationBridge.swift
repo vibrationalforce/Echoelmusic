@@ -46,8 +46,8 @@ public final class WorkspaceIntegrationBridge: ObservableObject {
     // MARK: - Engine References
 
     public weak var audioEngine: AudioEngine?
-    public weak var recordingEngine: RecordingEngine?
-    public weak var healthKitManager: HealthKitManager?
+    weak var recordingEngine: RecordingEngine?
+    weak var healthKitManager: HealthKitManager?
     public weak var unifiedControlHub: UnifiedControlHub?
 
     // MARK: - Cancellables
@@ -64,7 +64,7 @@ public final class WorkspaceIntegrationBridge: ObservableObject {
     // MARK: - Configuration
 
     /// Configure with engine references from app initialization
-    public func configure(
+    func configure(
         audioEngine: AudioEngine?,
         recordingEngine: RecordingEngine?,
         healthKitManager: HealthKitManager?,
