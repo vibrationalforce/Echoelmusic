@@ -75,11 +75,17 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
 
     // MARK: - Configuration
 
-    /// Sample rate for biometric data (Hz)
-    public static let sampleRateHz: Double = 1.0
+    /// Sample rate for biometric data (Hz) - High frequency for Physical AI
+    public static let sampleRateHz: Double = 50.0  // 50Hz for < 20ms latency
 
     /// Coherence calculation window (seconds)
     public static let coherenceWindow: TimeInterval = 60
+
+    /// High-frequency mode for Physical AI integration
+    public var highFrequencyMode: Bool = true
+
+    /// Target latency for Physical AI (ms)
+    public static let targetLatencyMs: Double = 20.0
 
     /// HRV types to query
     private let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
@@ -160,10 +166,14 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
         startHeartRateQuery()
         startHRVQuery()
 
-        // Start timer for coherence calculation
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / Self.sampleRateHz, repeats: true) { [weak self] _ in
+        // Start high-frequency timer for Physical AI integration
+        let interval = highFrequencyMode ? (1.0 / Self.sampleRateHz) : 1.0
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateSession()
+                if self?.highFrequencyMode == true {
+                    self?.streamHighFrequencyData()
+                }
             }
         }
 
@@ -423,6 +433,50 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
     private func sendMessageToPhone(_ message: [String: Any]) {
         guard let session = wcSession, session.isReachable else { return }
         session.sendMessage(message, replyHandler: nil, errorHandler: nil)
+    }
+
+    /// Stream high-frequency sensor data for Physical AI Engine
+    /// Target: < 20ms latency for real-time aura response
+    private func streamHighFrequencyData() {
+        guard let session = wcSession, session.isReachable else { return }
+
+        // Package RR intervals for RMSSD calculation on phone
+        let recentRR = Array(rrIntervals.suffix(5)).map { Float($0) }
+
+        let sensorData: [String: Any] = [
+            "type": "highFrequencySensor",
+            "timestamp": Date().timeIntervalSince1970,
+            "heartRate": currentHeartRate,
+            "rrIntervals": recentRR,
+            "coherence": currentCoherence,
+            "hrv": currentHRV,
+            "breathingRate": breathingRate,
+            "source": "appleWatch"
+        ]
+
+        // Use sendMessage for lowest latency (vs transferUserInfo)
+        session.sendMessage(sensorData, replyHandler: nil) { error in
+            // Silently handle - high frequency means some drops are OK
+        }
+    }
+
+    /// Enable/disable high-frequency mode
+    public func setHighFrequencyMode(_ enabled: Bool) {
+        highFrequencyMode = enabled
+
+        // Restart timer with new interval if session is active
+        if isSessionActive {
+            timer?.invalidate()
+            let interval = enabled ? (1.0 / Self.sampleRateHz) : 1.0
+            timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    self?.updateSession()
+                    if self?.highFrequencyMode == true {
+                        self?.streamHighFrequencyData()
+                    }
+                }
+            }
+        }
     }
 
     private func sendDataToPhone(_ data: Data, description: String) {
