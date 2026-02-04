@@ -299,6 +299,17 @@ public enum BreathingPattern: String, Codable, Sendable {
     case boxBreathing = "Box Breathing"
     case fourSevenEight = "4-7-8 Breath"
     case energizingBreath = "Energizing Breath"
+
+    /// Duration of one breathing cycle in seconds
+    public var cycleDurationSeconds: Int {
+        switch self {
+        case .coherenceBreath: return 10   // 5s inhale, 5s exhale
+        case .relaxingBreath: return 12    // 4s inhale, 8s exhale
+        case .boxBreathing: return 16      // 4s each: inhale, hold, exhale, hold
+        case .fourSevenEight: return 19    // 4s inhale, 7s hold, 8s exhale
+        case .energizingBreath: return 6   // 2s inhale, 2s exhale, 2s hold
+        }
+    }
 }
 
 public struct WellnessPreset: EnginePreset {

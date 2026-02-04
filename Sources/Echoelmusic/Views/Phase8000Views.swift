@@ -13,6 +13,7 @@ import Combine
 // MARK: - Video Processing View
 
 /// Complete video processing interface
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct VideoProcessingView: View {
     @StateObject private var engine = VideoProcessingEngine()
     @State private var selectedResolution: VideoResolution = .uhd4k
@@ -176,6 +177,7 @@ public struct VideoProcessingView: View {
 // MARK: - Creative Studio View
 
 /// AI-powered creative studio interface
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct CreativeStudioView: View {
     @StateObject private var engine = CreativeStudioEngine()
     @State private var prompt = ""
@@ -308,6 +310,7 @@ public struct CreativeStudioView: View {
 // MARK: - Scientific Dashboard View
 
 /// Scientific visualization and analysis dashboard
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct ScientificDashboardView: View {
     @StateObject private var engine = ScientificVisualizationEngine()
     @State private var selectedVisualization: ScientificVisualizationType = .quantumField
@@ -418,6 +421,7 @@ public struct ScientificDashboardView: View {
 // MARK: - Collaboration Lobby View
 
 /// Worldwide collaboration session browser and manager
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct CollaborationLobbyView: View {
     @StateObject private var hub = WorldwideCollaborationHub()
     @State private var sessionCode = ""
@@ -623,6 +627,7 @@ struct CollaborationActiveSessionView: View {
 // MARK: - Developer Console View
 
 /// In-app developer console
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct DeveloperConsoleView: View {
     @ObservedObject private var console = DeveloperConsole.shared
     @ObservedObject private var monitor = PerformanceMonitor.shared
@@ -895,9 +900,9 @@ struct BreathingPatternCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading) {
-                Text(pattern.name)
+                Text(pattern.rawValue)
                     .font(.headline)
-                Text("\(Int(pattern.cycleDuration))s cycle")
+                Text("\(pattern.cycleDurationSeconds)s cycle")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -907,7 +912,7 @@ struct BreathingPatternCard: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(pattern.name) breathing pattern, \(Int(pattern.cycleDuration)) second cycle")
+        .accessibilityLabel("\(pattern.rawValue) breathing pattern, \(pattern.cycleDurationSeconds) second cycle")
         .accessibilityHint("Double tap to start this breathing exercise")
     }
 }
@@ -1031,6 +1036,7 @@ struct QuantumFieldVisualization: View {
     }
 }
 
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 struct VideoEffectPicker: View {
     @ObservedObject var engine: VideoProcessingEngine
     @Environment(\.dismiss) var dismiss
@@ -1100,6 +1106,7 @@ struct EffectRow: View {
 // MARK: - Main Demo View
 
 /// Unified demo view showcasing all 8000% features
+@available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, visionOS 1.0, *)
 public struct Phase8000DemoView: View {
     @State private var selectedTab = 0
 
@@ -1125,7 +1132,7 @@ public struct Phase8000DemoView: View {
                 }
                 .tag(2)
 
-            WellnessSessionView()
+            BiophysicalWellnessView()
                 .tabItem {
                     Label("Wellness", systemImage: "heart.fill")
                 }
