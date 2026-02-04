@@ -601,14 +601,18 @@ public final class QuantumMIDIBridgePlugin: EchoelmusicPlugin {
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Quantum MIDI Bridge loaded - Channel: \(configuration.midiChannel)", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("Quantum MIDI Bridge loaded - Channel: \(configuration.midiChannel)", source: identifier)
+        }
     }
 
     public func onUnload() async {
         // Send all notes off
         let allNotesOff = MIDIMessage.controlChange(channel: configuration.midiChannel, cc: 123, value: 0)
         outputMessages.append(allNotesOff)
-        DeveloperConsole.shared.info("Quantum MIDI Bridge unloaded", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("Quantum MIDI Bridge unloaded", source: identifier)
+        }
     }
 
     public func onFrame(deltaTime: TimeInterval) {
@@ -658,7 +662,9 @@ public final class QuantumMIDIBridgePlugin: EchoelmusicPlugin {
         outputMessages.append(.controlChange(channel: configuration.midiChannel, cc: configuration.quantumNoiseCC, value: noiseValue))
 
         // Log for debugging
-        DeveloperConsole.shared.debug("MIDI: Coh=\(coherenceValue) Ent=\(entanglementValue) Bio=\(bioValue)", source: identifier)
+        Task { @MainActor in
+            DeveloperConsole.shared.debug("MIDI: Coh=\(coherenceValue) Ent=\(entanglementValue) Bio=\(bioValue)", source: self.identifier)
+        }
     }
 
     // MARK: - Public API
@@ -680,7 +686,9 @@ public final class QuantumMIDIBridgePlugin: EchoelmusicPlugin {
         let noteOff = MIDIMessage.noteOff(channel: configuration.midiChannel, note: 60)
         outputMessages.append(noteOff)
 
-        DeveloperConsole.shared.info("Quantum trigger sent", source: identifier)
+        Task { @MainActor in
+            DeveloperConsole.shared.info("Quantum trigger sent", source: self.identifier)
+        }
     }
 
     /// Get OSC message bundle for external routing
@@ -775,7 +783,9 @@ public final class DMXLightShowPlugin: EchoelmusicPlugin {
 
     public func onLoad(context: PluginContext) async throws {
         fixtures = Array(repeating: DMXFixture(), count: configuration.fixtureCount)
-        DeveloperConsole.shared.info("DMX Light Show loaded - \(configuration.fixtureCount) fixtures", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("DMX Light Show loaded - \(configuration.fixtureCount) fixtures", source: identifier)
+        }
     }
 
     public func onUnload() async {
@@ -783,7 +793,9 @@ public final class DMXLightShowPlugin: EchoelmusicPlugin {
         for i in 0..<fixtures.count {
             fixtures[i] = DMXFixture()
         }
-        DeveloperConsole.shared.info("DMX Light Show unloaded - blackout", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("DMX Light Show unloaded - blackout", source: identifier)
+        }
     }
 
     public func onFrame(deltaTime: TimeInterval) {
