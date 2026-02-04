@@ -89,6 +89,46 @@ class VideoEditingEngine: ObservableObject {
         undoManager.redoActionName
     }
 
+    // MARK: - Computed Properties for Views
+
+    /// Video clips from all video tracks (as EditorVideoClip for timeline display)
+    var videoClips: [EditorVideoClip] {
+        timeline.videoTracks.flatMap { track in
+            track.clips.map { clip in
+                EditorVideoClip(
+                    name: clip.name,
+                    startTime: clip.startTime.seconds,
+                    duration: clip.duration.seconds
+                )
+            }
+        }
+    }
+
+    /// Audio clips from all audio tracks (as EditorVideoClip for timeline display)
+    var audioClips: [EditorVideoClip] {
+        timeline.audioTracks.flatMap { track in
+            track.clips.map { clip in
+                EditorVideoClip(
+                    name: clip.name,
+                    startTime: clip.startTime.seconds,
+                    duration: clip.duration.seconds
+                )
+            }
+        }
+    }
+
+    /// Total timeline duration in seconds
+    var duration: TimeInterval {
+        timeline.duration.seconds
+    }
+
+    /// Current project name (nil if no clips loaded)
+    var currentProject: String? {
+        let hasClips = timeline.videoTracks.contains(where: { !$0.clips.isEmpty }) ||
+                       timeline.audioTracks.contains(where: { !$0.clips.isEmpty })
+        return hasClips ? timeline.name : nil
+    }
+
     deinit {
         stopPlayback()
     }
