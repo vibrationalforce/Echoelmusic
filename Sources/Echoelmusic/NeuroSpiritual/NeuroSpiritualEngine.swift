@@ -502,7 +502,7 @@ public final class NeuroSpiritualEngine: ObservableObject {
         #endif
     }
 
-    private func stopMotionTracking() {
+    nonisolated private func stopMotionTracking() {
         #if canImport(CoreMotion)
         motionManager.stopDeviceMotionUpdates()
         #endif
