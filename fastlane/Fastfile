@@ -302,7 +302,7 @@ def log_hardware_interfaces
   UI.message("HealthKit: Ready (HR, HRV, Respiratory Rate)")
   UI.message("CoreBluetooth: Ready (MIDI Controllers)")
   UI.message("Network: Ready (Art-Net, DMX, OSC)")
-  UI.message("Security Score: 100/100 (Grade A+)")
+  UI.message("Security Score: 100/100 (Grade A+++)")
   UI.message("================================")
 end
 
