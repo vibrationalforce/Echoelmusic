@@ -15,8 +15,8 @@ public class StreamEngine: ObservableObject {
 
     @Published var isStreaming: Bool = false
     @Published var activeStreams: [StreamDestination: StreamStatus] = [:]
-    @Published var currentScene: Scene?
-    @Published var availableScenes: [Scene] = []
+    @Published var currentScene: StreamScene?
+    @Published var availableScenes: [StreamScene] = []
     @Published var bitrate: Int = 6000 // kbps
     @Published var resolution: Resolution = .hd1920x1080
     @Published var frameRate: Int = 60
@@ -51,7 +51,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Stream Destinations
 
-    enum StreamDestination: String, CaseIterable, Identifiable {
+    public enum StreamDestination: String, CaseIterable, Identifiable, Sendable {
         case twitch = "Twitch"
         case youtube = "YouTube"
         case facebook = "Facebook"
@@ -85,7 +85,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Resolution Presets
 
-    enum Resolution: String, CaseIterable {
+    public enum Resolution: String, CaseIterable {
         case hd1280x720 = "720p"
         case hd1920x1080 = "1080p"
         case uhd3840x2160 = "4K"
@@ -119,6 +119,11 @@ public class StreamEngine: ObservableObject {
     }
 
     // MARK: - Initialization
+
+    /// Convenience initializer with default dependencies
+    convenience init?(device: MTLDevice) {
+        self.init(device: device, sceneManager: SceneManager(), chatAggregator: ChatAggregator(), analytics: StreamAnalytics())
+    }
 
     init?(device: MTLDevice, sceneManager: SceneManager, chatAggregator: ChatAggregator, analytics: StreamAnalytics) {
         self.device = device
@@ -338,7 +343,7 @@ public class StreamEngine: ObservableObject {
 
     private var renderTime: Float = 0.0
 
-    private func renderScene(_ scene: Scene) -> MTLTexture? {
+    private func renderScene(_ scene: StreamScene) -> MTLTexture? {
         // Update render time
         renderTime += 1.0 / Float(frameRate)
 
@@ -429,7 +434,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Scene Management
 
-    func switchScene(to scene: Scene, transition: SceneTransition = .cut) async {
+    func switchScene(to scene: StreamScene, transition: SceneTransition = .cut) async {
         guard currentScene?.id != scene.id else { return }
 
         let previousScene = currentScene
@@ -447,7 +452,7 @@ public class StreamEngine: ObservableObject {
     private var transitionProgress: Float = 0.0
     private var transitionStartTime: Date?
 
-    private func applyTransition(from: Scene?, to: Scene, transition: SceneTransition) async {
+    private func applyTransition(from: StreamScene?, to: StreamScene, transition: SceneTransition) async {
         let duration = transition.duration
         transitionStartTime = Date()
 
@@ -480,7 +485,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Crossfade Transition
 
-    private func performCrossfade(from: Scene?, to: Scene, duration: TimeInterval) async {
+    private func performCrossfade(from: StreamScene?, to: StreamScene, duration: TimeInterval) async {
         let frameInterval: TimeInterval = 1.0 / 60.0  // 60 FPS
         let totalFrames = Int(duration / frameInterval)
 
@@ -503,7 +508,7 @@ public class StreamEngine: ObservableObject {
         log.streaming("🎬 Crossfade transition completed (\(String(format: "%.1f", duration))s)")
     }
 
-    private func renderCrossfadeFrame(fromScene: Scene?, toScene: Scene, blendFactor: Float) async {
+    private func renderCrossfadeFrame(fromScene: StreamScene?, toScene: StreamScene, blendFactor: Float) async {
         // Mix the two scenes based on blend factor
         // fromScene * (1 - blendFactor) + toScene * blendFactor
         // This would be implemented with Metal compute shader in production
@@ -516,7 +521,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Slide Transition
 
-    private func performSlideTransition(from: Scene?, to: Scene, duration: TimeInterval) async {
+    private func performSlideTransition(from: StreamScene?, to: StreamScene, duration: TimeInterval) async {
         let frameInterval: TimeInterval = 1.0 / 60.0
         let totalFrames = Int(duration / frameInterval)
 
@@ -539,14 +544,14 @@ public class StreamEngine: ObservableObject {
         log.streaming("🎬 Slide transition completed (\(String(format: "%.1f", duration))s)")
     }
 
-    private func renderSlideFrame(fromScene: Scene?, toScene: Scene, offset: Float) async {
+    private func renderSlideFrame(fromScene: StreamScene?, toScene: StreamScene, offset: Float) async {
         // fromScene.x = -offset * screenWidth
         // toScene.x = (1 - offset) * screenWidth
     }
 
     // MARK: - Zoom Transition
 
-    private func performZoomTransition(from: Scene?, to: Scene, duration: TimeInterval) async {
+    private func performZoomTransition(from: StreamScene?, to: StreamScene, duration: TimeInterval) async {
         let frameInterval: TimeInterval = 1.0 / 60.0
         let totalFrames = Int(duration / frameInterval)
 
@@ -575,13 +580,13 @@ public class StreamEngine: ObservableObject {
         log.streaming("🎬 Zoom transition completed (\(String(format: "%.1f", duration))s)")
     }
 
-    private func renderZoomFrame(fromScene: Scene?, toScene: Scene, fromScale: Float, toScale: Float, fromAlpha: Float) async {
+    private func renderZoomFrame(fromScene: StreamScene?, toScene: StreamScene, fromScale: Float, toScale: Float, fromAlpha: Float) async {
         // Apply scale transforms and alpha blending
     }
 
     // MARK: - Stinger Transition
 
-    private func performStingerTransition(from: Scene?, to: Scene, duration: TimeInterval) async {
+    private func performStingerTransition(from: StreamScene?, to: StreamScene, duration: TimeInterval) async {
         // Stinger: play custom video overlay during transition
         let halfDuration = duration / 2.0
 
