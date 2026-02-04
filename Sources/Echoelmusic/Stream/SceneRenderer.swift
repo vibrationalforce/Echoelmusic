@@ -4,6 +4,7 @@ import Metal
 import MetalKit
 import CoreImage
 import simd
+import SwiftUI
 
 #if os(iOS) || os(macOS) || os(tvOS)
 
@@ -337,7 +338,7 @@ class SceneRenderer {
 
     // MARK: - Source Renderers
 
-    private func renderCameraSource(_ source: CameraSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
+    private func renderCameraSource(_ source: StreamCameraSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
         guard let sourceTexture = sourceTextures[source.id],
               let pipeline = compositePipeline else { return }
 
@@ -400,13 +401,16 @@ class SceneRenderer {
             resolution: SIMD2<Float>(Float(output.width), Float(output.height))
         )
 
-        if let visualTexture = shaderManager.generateTexture(
-            size: CGSize(width: output.width, height: output.height),
-            shaderType: shaderType,
-            uniforms: uniforms
-        ) {
-            if let pipeline = compositePipeline {
-                renderTextureToOutput(visualTexture, to: output, pipeline: pipeline, opacity: 0.8, time: time, commandBuffer: commandBuffer)
+        // Run texture generation on main actor asynchronously
+        Task { @MainActor in
+            if let visualTexture = shaderManager.generateTexture(
+                size: CGSize(width: output.width, height: output.height),
+                shaderType: shaderType,
+                uniforms: uniforms
+            ) {
+                if let pipeline = self.compositePipeline {
+                    self.renderTextureToOutput(visualTexture, to: output, pipeline: pipeline, opacity: 0.8, time: time, commandBuffer: commandBuffer)
+                }
             }
         }
         #endif
@@ -515,7 +519,7 @@ class SceneRenderer {
         encoder.endEncoding()
     }
 
-    private func renderTextToImage(_ text: String, font: String, fontSize: CGFloat, color: SwiftUI.Color, scrolling: Bool, time: Float) -> CGImage? {
+    private func renderTextToImage(_ text: String, font: String, fontSize: CGFloat, color: Color, scrolling: Bool, time: Float) -> CGImage? {
         #if os(iOS) || os(tvOS)
         let uiColor = UIColor(color)
         let uiFont = UIFont(name: font, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
@@ -587,7 +591,7 @@ class SceneRenderer {
 extension SceneRenderer {
 
     /// Render transition between two scenes
-    func renderTransition(from: Scene?, to: Scene, progress: Float, transition: SceneTransition, size: CGSize, time: Float) -> MTLTexture? {
+    func renderTransition(from: StreamScene?, to: StreamScene, progress: Float, transition: SceneTransition, size: CGSize, time: Float) -> MTLTexture? {
         guard let toTexture = renderScene(to, size: size, time: time) else { return nil }
 
         guard let fromScene = from,
