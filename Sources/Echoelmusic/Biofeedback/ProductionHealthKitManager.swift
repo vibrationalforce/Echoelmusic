@@ -5,6 +5,24 @@
 //  Created by Claude on 2026-01-07.
 //  Production-ready HealthKit integration with real-time streaming
 //
+// ============================================================================
+// DEPRECATION NOTICE
+// ============================================================================
+// This file is DEPRECATED. Please use UnifiedHealthKitEngine instead.
+//
+// Migration guide:
+// - Replace: ProductionHealthKitManager() with UnifiedHealthKitEngine.shared
+// - Replace: manager.onHeartRateUpdate with engine.onHeartUpdate
+// - Replace: ProductionHeartData with UnifiedHeartData
+// - Replace: HRVMetrics fields are available directly on engine
+//
+// UnifiedHealthKitEngine combines features from:
+// - HealthKitManager
+// - ProductionHealthKitManager (this file)
+// - RealTimeHealthKitEngine
+//
+// This file will be removed in a future version.
+// ============================================================================
 
 import Foundation
 #if canImport(HealthKit)

@@ -49,7 +49,7 @@ public class UnifiedControlHub: ObservableObject {
     private var gestureRecognizer: GestureRecognizer?
     private var gestureConflictResolver: GestureConflictResolver?
     private var gestureToAudioMapper: GestureToAudioMapper?
-    private var healthKitManager: HealthKitManager?
+    private var healthKitEngine: UnifiedHealthKitEngine?
     private var bioParameterMapper: BioParameterMapper?
     private var midi2Manager: MIDI2Manager?
     private var mpeZoneManager: MPEZoneManager?
@@ -184,7 +184,8 @@ public class UnifiedControlHub: ObservableObject {
         // Clear previous subscriptions to prevent leaks
         bioFeedbackCancellables.removeAll()
 
-        let healthKit = HealthKitManager()
+        // Use unified HealthKit engine (singleton)
+        let healthKit = UnifiedHealthKitEngine.shared
         let bioMapper = BioParameterMapper()
 
         // Request HealthKit authorization
@@ -198,12 +199,12 @@ public class UnifiedControlHub: ObservableObject {
             )
         }
 
-        self.healthKitManager = healthKit
+        self.healthKitEngine = healthKit
         self.bioParameterMapper = bioMapper
 
         // Event-driven bio updates (replaces polling pattern)
         // Debounce prevents excessive updates while maintaining responsiveness
-        healthKit.$hrvCoherence
+        healthKit.$coherence
             .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
@@ -217,8 +218,8 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &bioFeedbackCancellables)
 
-        // Start monitoring
-        healthKit.startMonitoring()
+        // Start streaming
+        healthKit.startStreaming()
 
         Log.biofeedback("💓 Biometric monitoring enabled")
     }
@@ -226,8 +227,8 @@ public class UnifiedControlHub: ObservableObject {
     /// Disable biometric monitoring
     public func disableBiometricMonitoring() {
         bioFeedbackCancellables.removeAll()
-        healthKitManager?.stopMonitoring()
-        healthKitManager = nil
+        healthKitEngine?.stopStreaming()
+        healthKitEngine = nil
         bioParameterMapper = nil
         Log.biofeedback("💓 Biometric monitoring disabled")
     }
@@ -827,13 +828,13 @@ public class UnifiedControlHub: ObservableObject {
     // MARK: - Input Updates
 
     private func updateFromBioSignals() {
-        guard let healthKit = healthKitManager,
+        guard let healthKit = healthKitEngine,
               let mapper = bioParameterMapper else {
             return
         }
 
-        // Get current biometric data
-        let hrvCoherence = healthKit.hrvCoherence
+        // Get current biometric data (coherence is 0-1, convert to 0-100 for compatibility)
+        let hrvCoherence = healthKit.coherence * 100.0
         let heartRate = healthKit.heartRate
 
         // FIXED: Hole echte Audio-Analyse-Daten
@@ -888,7 +889,7 @@ public class UnifiedControlHub: ObservableObject {
 
             // Morph AFA field geometry based on HRV coherence
             let fieldGeometry: MIDIToSpatialMapper.AFAField.FieldGeometry
-            let coherence = healthKitManager?.hrvCoherence ?? 50.0
+            let coherence = (healthKitEngine?.coherence ?? 0.5) * 100.0  // Convert 0-1 to 0-100
 
             if coherence < 40 {
                 // Low coherence (stress) = Grid (structured, grounding)

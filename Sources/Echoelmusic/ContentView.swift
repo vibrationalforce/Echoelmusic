@@ -8,7 +8,7 @@ struct ContentView: View {
 
     @EnvironmentObject var microphoneManager: MicrophoneManager
     @EnvironmentObject var audioEngine: AudioEngine
-    @EnvironmentObject var healthKitManager: HealthKitManager
+    @EnvironmentObject var healthKitEngine: UnifiedHealthKitEngine
     @EnvironmentObject var recordingEngine: RecordingEngine
 
     // MARK: - State
@@ -87,7 +87,7 @@ struct ContentView: View {
                 }
 
                 // HRV Biofeedback Display
-                if healthKitManager.isAuthorized && isRecording {
+                if healthKitEngine.isAuthorized && isRecording {
                     bioMetricsPanel
                         .transition(.opacity.combined(with: .scale))
                 }
@@ -128,7 +128,7 @@ struct ContentView: View {
             checkPermissions()
             Task {
                 do {
-                    try await healthKitManager.requestAuthorization()
+                    try await healthKitEngine.requestAuthorization()
                 } catch {
                     log.error("HealthKit authorization failed: \(error)")
                 }
@@ -146,7 +146,7 @@ struct ContentView: View {
         .sheet(isPresented: $showRecordingControls) {
             RecordingControlsView()
                 .environmentObject(recordingEngine)
-                .environmentObject(healthKitManager)
+                .environmentObject(healthKitEngine)
                 .environmentObject(microphoneManager)
                 .presentationDetents([.medium, .large])
         }
@@ -179,34 +179,34 @@ struct ContentView: View {
                 audioLevel: microphoneManager.audioLevel,
                 frequency: microphoneManager.frequency > 0 ? microphoneManager.frequency : nil,
                 voicePitch: microphoneManager.currentPitch,
-                hrvCoherence: healthKitManager.hrvCoherence,
-                heartRate: healthKitManager.heartRate
+                hrvCoherence: healthKitEngine.coherence * 100,
+                heartRate: healthKitEngine.heartRate
             )
         case .cymatics:
             CymaticsView(
                 audioLevel: microphoneManager.audioLevel,
                 frequency: microphoneManager.frequency,
-                hrvCoherence: healthKitManager.hrvCoherence,
-                heartRate: healthKitManager.heartRate
+                hrvCoherence: healthKitEngine.coherence * 100,
+                heartRate: healthKitEngine.heartRate
             )
         case .waveform:
             WaveformMode(
                 audioBuffer: microphoneManager.audioBuffer ?? [],
                 audioLevel: microphoneManager.audioLevel,
-                hrvCoherence: healthKitManager.hrvCoherence
+                hrvCoherence: healthKitEngine.coherence * 100
             )
         case .spectral:
             SpectralMode(
                 fftMagnitudes: microphoneManager.fftMagnitudes ?? [],
                 audioLevel: microphoneManager.audioLevel,
-                hrvCoherence: healthKitManager.hrvCoherence
+                hrvCoherence: healthKitEngine.coherence * 100
             )
         case .mandala:
             MandalaMode(
                 audioLevel: microphoneManager.audioLevel,
                 frequency: microphoneManager.frequency,
-                hrvCoherence: healthKitManager.hrvCoherence,
-                heartRate: healthKitManager.heartRate
+                hrvCoherence: healthKitEngine.coherence * 100,
+                heartRate: healthKitEngine.heartRate
             )
         }
     }
@@ -345,7 +345,7 @@ struct ContentView: View {
         HStack(spacing: VaporwaveSpacing.xl) {
             // Heart Rate
             VStack(spacing: VaporwaveSpacing.xs) {
-                Text("\(Int(healthKitManager.heartRate))")
+                Text("\(Int(healthKitEngine.heartRate))")
                     .font(VaporwaveTypography.dataSmall())
                     .foregroundColor(VaporwaveColors.heartRate)
                     .neonGlow(color: VaporwaveColors.heartRate, radius: 6)
@@ -353,11 +353,11 @@ struct ContentView: View {
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
-            .accessibilityLabel("Heart rate: \(Int(healthKitManager.heartRate)) beats per minute")
+            .accessibilityLabel("Heart rate: \(Int(healthKitEngine.heartRate)) beats per minute")
 
             // HRV RMSSD
             VStack(spacing: VaporwaveSpacing.xs) {
-                Text(String(format: "%.1f", healthKitManager.hrvRMSSD))
+                Text(String(format: "%.1f", healthKitEngine.hrvSDNN))
                     .font(VaporwaveTypography.dataSmall())
                     .foregroundColor(VaporwaveColors.hrv)
                     .neonGlow(color: VaporwaveColors.hrv, radius: 6)
@@ -365,19 +365,19 @@ struct ContentView: View {
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
-            .accessibilityLabel("Heart rate variability: \(String(format: "%.1f", healthKitManager.hrvRMSSD)) milliseconds")
+            .accessibilityLabel("Heart rate variability: \(String(format: "%.1f", healthKitEngine.hrvSDNN)) milliseconds")
 
             // Coherence Score
             VStack(spacing: VaporwaveSpacing.xs) {
-                Text("\(Int(healthKitManager.hrvCoherence))")
+                Text("\(Int(healthKitEngine.coherence * 100))")
                     .font(VaporwaveTypography.dataSmall())
-                    .foregroundColor(coherenceColor(healthKitManager.hrvCoherence))
-                    .neonGlow(color: coherenceColor(healthKitManager.hrvCoherence), radius: 6)
+                    .foregroundColor(coherenceColor(healthKitEngine.coherence * 100))
+                    .neonGlow(color: coherenceColor(healthKitEngine.coherence * 100), radius: 6)
                 Text("coherence")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
-            .accessibilityLabel("Coherence score: \(Int(healthKitManager.hrvCoherence))")
+            .accessibilityLabel("Coherence score: \(Int(healthKitEngine.coherence * 100))")
         }
         .padding(VaporwaveSpacing.md)
         .glassCard()
@@ -595,15 +595,15 @@ struct ContentView: View {
         if isRecording {
             // Stop via AudioEngine (handles all components)
             audioEngine.stop()
-            healthKitManager.stopMonitoring()
+            healthKitEngine.stopStreaming()
         } else {
             if microphoneManager.hasPermission {
                 // Start via AudioEngine (handles all components)
                 audioEngine.start()
 
                 // Start HealthKit monitoring if authorized
-                if healthKitManager.isAuthorized {
-                    healthKitManager.startMonitoring()
+                if healthKitEngine.isAuthorized {
+                    healthKitEngine.startStreaming()
                 }
 
                 // Provide haptic feedback
@@ -653,6 +653,6 @@ struct ContentView: View {
     ContentView()
         .environmentObject(MicrophoneManager())
         .environmentObject(AudioEngine())
-        .environmentObject(HealthKitManager())
+        .environmentObject(UnifiedHealthKitEngine.shared)
         .environmentObject(RecordingEngine())
 }

@@ -14,8 +14,8 @@ struct EchoelmusicApp: App {
     /// Central AudioEngine coordinates all audio components
     @StateObject private var audioEngine: AudioEngine
 
-    /// HealthKit manager for biofeedback
-    @StateObject private var healthKitManager = HealthKitManager()
+    /// HealthKit engine for biofeedback (unified engine)
+    @ObservedObject private var healthKitEngine = UnifiedHealthKitEngine.shared
 
     /// Recording engine for multi-track recording
     @StateObject private var recordingEngine = RecordingEngine()
@@ -78,13 +78,13 @@ struct EchoelmusicApp: App {
             ContentView()
                 .environmentObject(microphoneManager)      // Makes mic manager available to all views
                 .environmentObject(audioEngine)             // Makes audio engine available
-                .environmentObject(healthKitManager)        // Makes health data available
+                .environmentObject(healthKitEngine)        // Makes health data available
                 .environmentObject(recordingEngine)         // Makes recording engine available
                 .environmentObject(unifiedControlHub)       // Makes unified control available
                 .preferredColorScheme(.dark)                // Force dark theme
                 .onAppear {
                     // Connect HealthKit to AudioEngine for bio-parameter mapping
-                    audioEngine.connectHealthKit(healthKitManager)
+                    audioEngine.connectHealthKit(healthKitEngine)
 
                     // Connect RecordingEngine to AudioEngine for audio routing
                     recordingEngine.connectAudioEngine(audioEngine)
