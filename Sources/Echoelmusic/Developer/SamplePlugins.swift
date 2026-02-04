@@ -81,12 +81,16 @@ public final class SacredGeometryVisualizerPlugin: EchoelmusicPlugin {
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Sacred Geometry plugin loaded - Pattern: \(configuration.pattern.rawValue)", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("Sacred Geometry plugin loaded - Pattern: \(configuration.pattern.rawValue)", source: identifier)
+        }
         generateVertices()
     }
 
     public func onUnload() async {
-        DeveloperConsole.shared.info("Sacred Geometry plugin unloaded", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("Sacred Geometry plugin unloaded", source: identifier)
+        }
     }
 
     public func onFrame(deltaTime: TimeInterval) {
@@ -274,7 +278,9 @@ public final class SacredGeometryVisualizerPlugin: EchoelmusicPlugin {
     public func setPattern(_ pattern: GeometryPattern) {
         configuration.pattern = pattern
         generateVertices()
-        DeveloperConsole.shared.debug("Pattern changed to: \(pattern.rawValue)", source: identifier)
+        Task { @MainActor in
+            DeveloperConsole.shared.debug("Pattern changed to: \(pattern.rawValue)", source: self.identifier)
+        }
     }
 
     public func getVertices() -> [SIMD2<Float>] {
@@ -377,11 +383,15 @@ public final class BioAudioGeneratorPlugin: EchoelmusicPlugin {
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Bio Audio Generator loaded - Base freq: \(configuration.baseFrequency)Hz", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("Bio Audio Generator loaded - Base freq: \(configuration.baseFrequency)Hz", source: identifier)
+        }
     }
 
     public func onUnload() async {
-        DeveloperConsole.shared.info("Bio Audio Generator unloaded", source: identifier)
+        await MainActor.run {
+            DeveloperConsole.shared.info("Bio Audio Generator unloaded", source: identifier)
+        }
     }
 
     public func onFrame(deltaTime: TimeInterval) {
