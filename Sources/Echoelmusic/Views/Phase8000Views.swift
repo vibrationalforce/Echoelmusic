@@ -320,35 +320,40 @@ public struct ScientificDashboardView: View {
 
     public var body: some View {
         NavigationStack {
-            #if os(macOS)
-            HSplitView {
-                // Sidebar
-                sidebarContent
-
-                // Main visualization
-                mainVisualization
-            }
-            #else
-            HStack(spacing: 0) {
-                // Sidebar
-                sidebarContent
-                    .frame(width: 200)
-
-                // Main visualization
-                mainVisualization
-            }
-            #endif
-            .navigationTitle("Scientific Lab")
-            .toolbar {
-                ToolbarItem {
-                    Button {
-                        showingDataImport = true
-                    } label: {
-                        Label("Import Data", systemImage: "square.and.arrow.down")
+            scientificContent
+                .navigationTitle("Scientific Lab")
+                .toolbar {
+                    ToolbarItem {
+                        Button {
+                            showingDataImport = true
+                        } label: {
+                            Label("Import Data", systemImage: "square.and.arrow.down")
+                        }
                     }
                 }
-            }
         }
+    }
+
+    @ViewBuilder
+    private var scientificContent: some View {
+        #if os(macOS)
+        HSplitView {
+            // Sidebar
+            sidebarContent
+
+            // Main visualization
+            mainVisualization
+        }
+        #else
+        HStack(spacing: 0) {
+            // Sidebar
+            sidebarContent
+                .frame(width: 200)
+
+            // Main visualization
+            mainVisualization
+        }
+        #endif
     }
 
     private var sidebarContent: some View {

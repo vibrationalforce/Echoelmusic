@@ -331,8 +331,9 @@ class PerformanceOptimizer: ObservableObject {
     private func adjustForBattery() {
         guard batteryLevel < 0.2 else { return }  // < 20%
 
-        if performanceMode != .echoelmusic && performanceMode != .batterySaver {
-            logger.info("🔋 Low battery (\(self.batteryLevel * 100, privacy: .public)%) - switching to Battery Saver")
+        if performanceMode != .batterySaver {
+            let batteryPercent = Int(self.batteryLevel * 100)
+            logger.info("🔋 Low battery (\(batteryPercent)%) - switching to Battery Saver")
             performanceMode = .batterySaver
             targetFPS = performanceMode.targetFPS
         }
@@ -400,7 +401,7 @@ struct PerformanceReport: Codable {
     let batteryLevel: Float
     let thermalState: String
     let performanceMode: String
-    let deviceCapabilities: DeviceCapabilities
+    let deviceCapabilities: PerformanceOptimizer.DeviceCapabilities
 
     func summary() -> String {
         return """
