@@ -67,6 +67,12 @@ struct UMPPacket64 {
     let word1: UInt32
     let word2: UInt32
 
+    /// Initialize with raw word values
+    init(word1: UInt32, word2: UInt32) {
+        self.word1 = word1
+        self.word2 = word2
+    }
+
     init(messageType: UInt8, group: UInt8, status: UInt8, channel: UInt8,
          index: UInt8, data: UInt32) {
         // Word 1: [MT:4][Group:4][Status:4][Channel:4][Index:8][Reserved:8]

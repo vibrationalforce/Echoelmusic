@@ -118,7 +118,9 @@ public class MIDIToLightMapper: ObservableObject {
     }
 
     deinit {
-        stop()
+        // Note: stop() is MainActor-isolated and can't be called from deinit
+        // Resources will be cleaned up automatically when socket is deallocated
+        artNetSocket?.close()
     }
 
     // MARK: - Setup

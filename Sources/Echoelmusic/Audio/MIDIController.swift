@@ -101,7 +101,18 @@ class MIDIController: ObservableObject {
     }
 
     deinit {
-        cleanup()
+        cleanupResources()
+    }
+
+    /// Cleanup MIDI resources - nonisolated for deinit
+    nonisolated private func cleanupResources() {
+        // MIDI dispose functions are thread-safe
+        if inputPort != 0 {
+            MIDIPortDispose(inputPort)
+        }
+        if midiClient != 0 {
+            MIDIClientDispose(midiClient)
+        }
     }
 
     // MARK: - MIDI Setup

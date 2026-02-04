@@ -244,7 +244,7 @@ class MIDIToSpatialMapper: ObservableObject {
 
         case .sphere(let radius, _):
             // Fibonacci sphere distribution
-            let phi = .pi * (3.0 - sqrt(5.0))  // Golden angle
+            let phi = Float.pi * (3.0 - sqrt(5.0))  // Golden angle
             let y = 1.0 - (Float(index) / Float(total - 1)) * 2.0
             let radiusAtY = sqrt(1.0 - y * y)
             let theta = phi * Float(index)
@@ -277,7 +277,7 @@ class MIDIToSpatialMapper: ObservableObject {
 
         case .fibonacci(_):
             // Same as sphere case
-            let phi = .pi * (3.0 - sqrt(5.0))
+            let phi = Float.pi * (3.0 - sqrt(5.0))
             let y = 1.0 - (Float(index) / Float(total - 1)) * 2.0
             let radiusAtY = sqrt(1.0 - y * y)
             let theta = phi * Float(index)
