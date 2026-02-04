@@ -49,7 +49,7 @@ public class AudioEngine: ObservableObject {
     private let bioParameterMapper = BioParameterMapper()
 
     /// HealthKit manager for HRV-based adaptations
-    private var healthKitManager: HealthKitManager?
+    private var healthKitEngine: UnifiedHealthKitEngine?
 
     /// Head tracking manager
     private var headTrackingManager: HeadTrackingManager?
@@ -246,15 +246,15 @@ public class AudioEngine: ObservableObject {
         }
     }
 
-    /// Connect to HealthKit manager for HRV-based adaptations
-    /// - Parameter healthKitManager: HealthKit manager instance
-    func connectHealthKit(_ healthKitManager: HealthKitManager) {
-        self.healthKitManager = healthKitManager
+    /// Connect to HealthKit engine for HRV-based adaptations
+    /// - Parameter healthKitEngine: UnifiedHealthKitEngine instance
+    func connectHealthKit(_ healthKitEngine: UnifiedHealthKitEngine) {
+        self.healthKitEngine = healthKitEngine
 
-        // Subscribe to HRV coherence changes
-        healthKitManager.$hrvCoherence
+        // Subscribe to HRV coherence changes (coherence is 0-1, convert to 0-100)
+        healthKitEngine.$coherence
             .sink { [weak self] coherence in
-                self?.adaptToBiofeedback(coherence: coherence)
+                self?.adaptToBiofeedback(coherence: coherence * 100.0)
             }
             .store(in: &cancellables)
     }
@@ -285,7 +285,7 @@ public class AudioEngine: ObservableObject {
 
     /// Start bio-parameter mapping (HRV/HR → Audio)
     private func startBioParameterMapping() {
-        guard let healthKit = healthKitManager else {
+        guard let healthKit = healthKitEngine else {
             log.audio("⚠️  Bio-parameter mapping: HealthKit not connected", level: .warning)
             return
         }
@@ -316,7 +316,7 @@ public class AudioEngine: ObservableObject {
 
     /// Update bio-parameters from current biometric data
     private func updateBioParameters() {
-        guard let healthKit = healthKitManager else { return }
+        guard let healthKit = healthKitEngine else { return }
 
         // Get current biometric data
         let hrvCoherence = healthKit.hrvCoherence

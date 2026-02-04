@@ -34,6 +34,7 @@ private enum RTMPConstants {
 // MARK: - RTMP Client
 /// Complete RTMP Client for live streaming to Twitch, YouTube, Facebook, Custom servers
 /// Implements full RTMP handshake, connection, AMF commands, and FLV transmission
+@MainActor
 class RTMPClient: ObservableObject {
 
     // MARK: - Published State

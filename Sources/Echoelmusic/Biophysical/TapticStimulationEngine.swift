@@ -84,6 +84,7 @@ public struct HapticStimulationConfig: Codable, Sendable {
 
 /// Engine for generating precise haptic patterns using CoreHaptics
 /// Supports frequencies in the 30-50 Hz range for LMHFV applications
+@MainActor
 public final class TapticStimulationEngine: ObservableObject {
 
     // MARK: - Published Properties

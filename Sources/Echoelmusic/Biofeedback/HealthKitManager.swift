@@ -10,6 +10,24 @@ import HealthKit
 import UIKit
 #endif
 
+// ============================================================================
+// DEPRECATION NOTICE
+// ============================================================================
+// This file is DEPRECATED. Please use UnifiedHealthKitEngine instead.
+//
+// Migration guide:
+// - Replace: HealthKitManager() with UnifiedHealthKitEngine.shared
+// - Replace: manager.hrvCoherence with engine.coherence
+// - Replace: manager.hrvRMSSD with engine.hrvSDNN
+//
+// UnifiedHealthKitEngine combines features from:
+// - HealthKitManager (this file)
+// - ProductionHealthKitManager
+// - RealTimeHealthKitEngine
+//
+// This file will be removed in a future version.
+// ============================================================================
+
 // MARK: - Optimized Circular Buffer for HRV Data
 
 /// High-performance circular buffer for real-time biometric data

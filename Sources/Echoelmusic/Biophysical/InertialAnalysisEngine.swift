@@ -95,6 +95,7 @@ struct AccelerometerSample {
 
 /// Inertial measurement analysis using CoreMotion accelerometer
 /// Performs real-time FFT to detect vibration frequencies (30-50 Hz target)
+@MainActor
 public final class InertialAnalysisEngine: ObservableObject {
 
     // MARK: - Published Properties

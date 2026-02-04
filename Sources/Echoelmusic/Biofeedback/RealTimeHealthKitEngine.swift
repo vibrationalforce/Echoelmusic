@@ -11,6 +11,26 @@
 // informational purposes only. NOT for health monitoring or medical decisions.
 // Consult healthcare providers for all health concerns.
 // ═══════════════════════════════════════════════════════════════════════════════
+//
+// ============================================================================
+// DEPRECATION NOTICE
+// ============================================================================
+// This file is DEPRECATED. Please use UnifiedHealthKitEngine instead.
+//
+// Migration guide:
+// - Replace: RealTimeHealthKitEngine() with UnifiedHealthKitEngine.shared
+// - Replace: RealTimeHeartData with UnifiedHeartData
+// - Replace: RealTimeRespiratoryData with UnifiedRespiratoryData
+// - Replace: HealthKitStreamDelegate with UnifiedHealthKitDelegate
+// - Replace: HealthKitStreamView with UnifiedHealthKitView
+//
+// UnifiedHealthKitEngine combines features from:
+// - HealthKitManager
+// - ProductionHealthKitManager
+// - RealTimeHealthKitEngine (this file)
+//
+// This file will be removed in a future version.
+// ============================================================================
 
 import Foundation
 import SwiftUI
