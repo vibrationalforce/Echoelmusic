@@ -76,7 +76,7 @@ class StreamAnalytics: ObservableObject {
         }
     }
 
-    func recordSceneSwitch(to scene: Scene) {
+    func recordSceneSwitch(to scene: StreamScene) {
         log.streaming("📊 StreamAnalytics: Scene switched to '\(scene.name)'")
     }
 
