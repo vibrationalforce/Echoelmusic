@@ -327,10 +327,7 @@ public final class TR808BassSynth: ObservableObject {
             do {
                 try audioEngine?.start()
             } catch {
-                // Engine failed to start - logging suppressed in release
-                #if DEBUG
-                print("[TR808BassSynth] Failed to start audio engine: \(error)")
-                #endif
+                echoelLog.audio("TR808BassSynth failed to start audio engine: \(error)", level: .error)
             }
         }
 
