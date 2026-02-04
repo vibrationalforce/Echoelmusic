@@ -11,7 +11,7 @@ struct StreamingView: View {
 
     // MARK: - Engine
 
-    @StateObject private var streamEngine = StreamEngine()
+    @State private var streamEngine: StreamEngine?
     @ObservedObject private var bridge = WorkspaceIntegrationBridge.shared
 
     // MARK: - State
@@ -30,7 +30,7 @@ struct StreamingView: View {
     @State private var errorMessage: String?
 
     /// Stream state synced from engine
-    private var isStreaming: Bool { streamEngine.isStreaming }
+    private var isStreaming: Bool { streamEngine?.isStreaming ?? false }
 
     // MARK: - Body
 
@@ -84,6 +84,11 @@ struct StreamingView: View {
                     set: { streamKeys[destination] = $0 }
                 )
             )
+        }
+        .onAppear {
+            if streamEngine == nil {
+                streamEngine = StreamEngine()
+            }
         }
     }
 
@@ -539,9 +544,14 @@ struct StreamingView: View {
     /// Toggle streaming on/off - WIRED TO ENGINE
     private func toggleStreaming() {
         Task {
-            if streamEngine.isStreaming {
+            guard let engine = streamEngine else {
+                errorMessage = "Stream engine not available"
+                return
+            }
+
+            if engine.isStreaming {
                 // Stop streaming
-                await streamEngine.stopStreaming()
+                await engine.stopStreaming()
                 log.streaming("⏹️ StreamingView: Stopped stream")
             } else {
                 // Validate destinations
@@ -559,7 +569,7 @@ struct StreamingView: View {
                 }
 
                 // Configure stream quality
-                streamEngine.updateConfiguration(
+                engine.updateConfiguration(
                     resolution: selectedResolution,
                     frameRate: frameRate,
                     bitrate: bitrate
@@ -567,7 +577,7 @@ struct StreamingView: View {
 
                 // Start streaming
                 do {
-                    try await streamEngine.startStreaming(
+                    try await engine.startStreaming(
                         destinations: Array(selectedDestinations),
                         streamKeys: streamKeys
                     )
@@ -608,17 +618,17 @@ struct StreamingView: View {
 
     /// Get total viewers across all streams
     private var totalViewers: Int {
-        streamEngine.activeStreams.values.reduce(0) { $0 + $1.viewers }
+        streamEngine?.activeStreams.values.reduce(0) { $0 + $1.viewers } ?? 0
     }
 
     /// Get total frames sent
     private var totalFramesSent: Int {
-        streamEngine.activeStreams.values.reduce(0) { $0 + $1.framesSent }
+        streamEngine?.activeStreams.values.reduce(0) { $0 + $1.framesSent } ?? 0
     }
 
     /// Get total dropped frames
     private var totalDroppedFrames: Int {
-        streamEngine.activeStreams.values.reduce(0) { $0 + $1.droppedFrames }
+        streamEngine?.activeStreams.values.reduce(0) { $0 + $1.droppedFrames } ?? 0
     }
 }
 

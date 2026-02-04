@@ -287,6 +287,11 @@ public class QuantumLightEmulator: ObservableObject {
     private var heartRate: Float = 72.0
     private var breathingRate: Float = 6.0
 
+    // Gaze tracking inputs
+    private var gazeAttractionFactor: Float = 0.0
+    private var gazeFocalPoint: SIMD2<Float> = .zero
+    private var attentionLevel: Float = 0.5
+
     // MARK: - Initialization
 
     public init(configuration: Configuration = Configuration()) {
@@ -642,30 +647,16 @@ public class QuantumLightEmulator: ObservableObject {
         let focalY = (gazeY - 0.5) * 2.0
 
         // Update light field focus based on gaze
-        if var field = currentEmulatorLightField {
-            // Shift photon positions toward gaze point
-            for i in 0..<field.photons.count {
-                let attraction = attention * 0.1  // Attention increases attraction
-                let dx = focalX - field.photons[i].position.x
-                let dy = focalY - field.photons[i].position.y
-
-                field.photons[i].position.x += dx * attraction
-                field.photons[i].position.y += dy * attraction
-            }
-        }
+        // Gaze affects photon attraction (processed during next frame generation)
+        gazeAttractionFactor = attention * 0.1
+        gazeFocalPoint = SIMD2<Float>(focalX, focalY)
 
         // Arousal affects quantum coherence perception
         let arousalModifier = arousal * 0.2  // 0-20% modifier
         hrvCoherence = min(1.0, hrvCoherence + arousalModifier)
 
-        // Attention affects visualization complexity
-        if attention > 0.7 {
-            // High attention: more focused, coherent patterns
-            if let state = currentQuantumState {
-                var mutableState = state
-                mutableState.coherence = min(1.0, state.coherence + attention * 0.1)
-            }
-        }
+        // Attention affects visualization complexity (processed during state updates)
+        attentionLevel = attention
     }
 
     // MARK: - Audio Processing

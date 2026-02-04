@@ -122,7 +122,13 @@ class QuantumIntelligenceEngine: ObservableObject {
         }
 
         var phase: T {
-            return atan2(imaginary, real)
+            // Compute atan2 for common floating point types
+            if let y = imaginary as? Double, let x = real as? Double {
+                return Darwin.atan2(y, x) as! T
+            } else if let y = imaginary as? Float, let x = real as? Float {
+                return Darwin.atan2f(y, x) as! T
+            }
+            return T.zero
         }
 
         static func + (lhs: Complex, rhs: Complex) -> Complex {
