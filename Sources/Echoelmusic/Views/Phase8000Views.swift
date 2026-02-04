@@ -320,6 +320,7 @@ public struct ScientificDashboardView: View {
 
     public var body: some View {
         NavigationStack {
+            #if os(macOS)
             HSplitView {
                 // Sidebar
                 sidebarContent
@@ -327,6 +328,16 @@ public struct ScientificDashboardView: View {
                 // Main visualization
                 mainVisualization
             }
+            #else
+            HStack(spacing: 0) {
+                // Sidebar
+                sidebarContent
+                    .frame(width: 200)
+
+                // Main visualization
+                mainVisualization
+            }
+            #endif
             .navigationTitle("Scientific Lab")
             .toolbar {
                 ToolbarItem {
@@ -435,7 +446,7 @@ public struct CollaborationLobbyView: View {
         NavigationStack {
             Group {
                 if hub.currentSession != nil {
-                    ActiveSessionView(hub: hub)
+                    CollaborationActiveSessionView(hub: hub)
                 } else {
                     lobbyContent
                 }
@@ -589,7 +600,7 @@ struct CollaborationActiveSessionView: View {
                 ScrollView(.horizontal) {
                     HStack {
                         ForEach(session.participants) { participant in
-                            ParticipantAvatar(participant: participant)
+                            Phase8000ParticipantAvatar(participant: participant)
                         }
                     }
                 }
