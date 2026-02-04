@@ -86,20 +86,21 @@ struct RecordingWaveformView: View {
             waveformPath,
             with: .linearGradient(
                 gradient,
-                startPoint: .leading,
-                endPoint: .trailing
+                startPoint: CGPoint(x: 0, y: midY),
+                endPoint: CGPoint(x: width, y: midY)
             ),
             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         )
 
         // Add glow effect based on level
         if level > 0.1 {
-            context.stroke(
+            var glowContext = context
+            glowContext.blendMode = .plusLighter
+            glowContext.stroke(
                 waveformPath,
                 with: .color(.cyan.opacity(Double(level))),
                 style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
             )
-            .blendMode = .plusLighter
         }
     }
 
