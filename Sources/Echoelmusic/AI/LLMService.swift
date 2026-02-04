@@ -109,7 +109,7 @@ class LLMService: ObservableObject {
     // MARK: - System Prompts
 
     private let systemPrompt = """
-    You are Echoel, a creative AI assistant embedded in Echoelmusic - a bio-reactive music creation platform.
+    You are Echoela, the creative AI assistant embedded in Echoelmusic - a bio-reactive music creation platform.
 
     Your role is to:
     1. Guide users through meditation and music creation sessions based on their biometric state
@@ -669,7 +669,7 @@ struct LLMChatView: View {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundStyle(.purple)
-                Text("Echoel AI")
+                Text("Echoela AI")
                     .font(.headline)
                 Spacer()
                 Button {
@@ -703,7 +703,7 @@ struct LLMChatView: View {
 
             // Input
             HStack(spacing: 12) {
-                TextField("Ask Echoel...", text: $inputText)
+                TextField("Ask Echoela...", text: $inputText)
                     .textFieldStyle(.roundedBorder)
                     .disabled(llm.isProcessing)
 
