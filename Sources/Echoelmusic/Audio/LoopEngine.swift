@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import SwiftUI
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
@@ -25,7 +26,7 @@ class LoopEngine: ObservableObject {
     @Published var tempo: Double = 120.0
 
     /// Time signature
-    @Published var timeSignature: TimeSignature = TimeSignature(beats: 4, noteValue: 4)
+    @Published var timeSignature: TimeSignature = TimeSignature(numerator: 4, denominator: 4)
 
     /// Metronome enabled
     @Published var metronomeEnabled: Bool = false
@@ -330,12 +331,12 @@ class LoopEngine: ObservableObject {
 
     /// Set time signature
     func setTimeSignature(beats: Int, noteValue: Int) {
-        timeSignature = TimeSignature(beats: beats, noteValue: noteValue)
+        timeSignature = TimeSignature(numerator: beats, denominator: noteValue)
     }
 
     /// Calculate bar duration in seconds
     func barDurationSeconds() -> TimeInterval {
-        let beatsPerBar = Double(timeSignature.beats)
+        let beatsPerBar = Double(timeSignature.numerator)
         let secondsPerBeat = 60.0 / tempo
         return beatsPerBar * secondsPerBeat
     }
@@ -348,7 +349,7 @@ class LoopEngine: ObservableObject {
     /// Get current beat position (0-based within loop)
     func currentBeat() -> Int {
         let beatDuration = beatDurationSeconds()
-        let beatsPerBar = Double(timeSignature.beats)
+        let beatsPerBar = Double(timeSignature.numerator)
 
         if let startTime = loopStartTime {
             let elapsed = Date().timeIntervalSince(startTime)
