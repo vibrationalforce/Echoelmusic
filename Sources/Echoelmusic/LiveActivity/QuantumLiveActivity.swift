@@ -321,7 +321,7 @@ struct StatPill: View {
 
 // MARK: - Live Activity Manager
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 @MainActor
 public class QuantumLiveActivityManager: ObservableObject {
 

@@ -865,11 +865,11 @@ public final class QuantumMIDIOut: ObservableObject {
             bend: voice.pitchBend
         )
 
-        // Per-note pressure (CC74 for brightness in MPE)
+        // Per-note pressure (CC71 for brightness in MPE)
         midi2.sendPerNoteController(
             channel: voice.channel,
             note: voice.midiNote,
-            controller: .brightness,
+            controller: .sound2Brightness,
             value: voice.brightness
         )
     }
