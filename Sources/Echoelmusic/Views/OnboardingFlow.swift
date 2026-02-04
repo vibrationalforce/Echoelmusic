@@ -135,7 +135,7 @@ public struct OnboardingView: View {
                     .padding(.bottom, 100)
             }
         }
-        .onChange(of: showMainApp) { _, newValue in
+        .onChange(of: showMainApp) { newValue in
             if newValue {
                 manager.completeOnboarding()
                 dismiss()

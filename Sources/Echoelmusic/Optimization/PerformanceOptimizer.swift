@@ -282,19 +282,18 @@ class PerformanceOptimizer: ObservableObject {
     private func adaptiveQualityAdjustment() {
         // If FPS drops below target, reduce quality
         if currentFPS < Double(targetFPS) * 0.9 {
-            if performanceMode != .echoelmusic {
-                logger.warning("⚠️ FPS drop detected: \(self.currentFPS, privacy: .public) < \(self.targetFPS)")
-                // Auto-adjust mode
-                switch performanceMode {
-                case .maxPerformance:
-                    performanceMode = .balanced
-                case .balanced:
-                    performanceMode = .batterySaver
-                default:
-                    break
-                }
-                logger.info("   → Adjusted to \(self.performanceMode.rawValue)")
+            let fpsValue = Int(self.currentFPS)
+            logger.warning("⚠️ FPS drop detected: \(fpsValue) < \(self.targetFPS)")
+            // Auto-adjust mode
+            switch performanceMode {
+            case .maxPerformance:
+                performanceMode = .balanced
+            case .balanced:
+                performanceMode = .batterySaver
+            default:
+                break
             }
+            logger.info("   → Adjusted to \(self.performanceMode.rawValue)")
         }
 
         // If thermal throttling, reduce load
