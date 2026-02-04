@@ -568,12 +568,10 @@ struct StreamingView: View {
                     }
                 }
 
-                // Configure stream quality
-                engine.updateConfiguration(
-                    resolution: selectedResolution,
-                    frameRate: frameRate,
-                    bitrate: bitrate
-                )
+                // Configure stream quality by setting published properties
+                engine.resolution = selectedResolution
+                engine.frameRate = frameRate
+                engine.bitrate = bitrate
 
                 // Start streaming
                 do {
@@ -616,19 +614,20 @@ struct StreamingView: View {
         }
     }
 
-    /// Get total viewers across all streams
+    /// Get total viewers (placeholder - would come from analytics)
     private var totalViewers: Int {
-        streamEngine?.activeStreams.values.reduce(0) { $0 + $1.viewers } ?? 0
+        // Viewer count not available in StreamStatus - use 0 placeholder
+        0
     }
 
-    /// Get total frames sent
+    /// Get total frames sent across all streams
     private var totalFramesSent: Int {
         streamEngine?.activeStreams.values.reduce(0) { $0 + $1.framesSent } ?? 0
     }
 
-    /// Get total dropped frames
+    /// Get total dropped frames from engine
     private var totalDroppedFrames: Int {
-        streamEngine?.activeStreams.values.reduce(0) { $0 + $1.droppedFrames } ?? 0
+        streamEngine?.droppedFrames ?? 0
     }
 }
 
