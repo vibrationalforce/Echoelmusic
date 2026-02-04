@@ -107,7 +107,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         self.quantumEmulator = emulator
 
         // Subscribe to emulator updates
-        emulator.$currentLightField
+        emulator.$currentEmulatorLightField
             .receive(on: DispatchQueue.main)
             .sink { [weak self] field in
                 if let field = field {
@@ -153,7 +153,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
     /// Generate interference pattern texture
     public func generateInterferenceTexture() -> [[SIMD4<Float>]] {
-        guard let field = quantumEmulator?.currentLightField else {
+        guard let field = quantumEmulator?.currentEmulatorLightField else {
             return frameBuffer
         }
 
@@ -174,10 +174,11 @@ public class PhotonicsVisualizationEngine: ObservableObject {
                     0
                 )
 
-                let interference = field.interferencePattern(at: point)
+                // Calculate interference from photon positions
+                let interference = calculateInterference(at: point, in: field)
                 let normalizedIntensity = (interference + 1) / 2
 
-                let color = colorFromIntensity(normalizedIntensity, coherence: field.fieldCoherence)
+                let color = colorFromIntensity(normalizedIntensity, coherence: field.coherenceLevel)
                 texture[y][x] = SIMD4<Float>(color.x, color.y, color.z, normalizedIntensity)
             }
         }
@@ -197,6 +198,21 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
     private func initializeParticleSystem() {
         particleSystem = PhotonParticleSystem(particleCount: 1000)
+    }
+
+    /// Calculate interference pattern at a point based on photon positions in the field
+    private func calculateInterference(at point: SIMD3<Float>, in field: LightField) -> Float {
+        guard !field.photons.isEmpty else { return 0 }
+
+        var totalInterference: Float = 0
+        for photon in field.photons.prefix(32) {  // Limit for performance
+            let distance = simd_distance(point, photon.position)
+            let wavelengthNorm = photon.wavelength / 700.0  // Normalize wavelength
+            let phase = distance / wavelengthNorm * 2 * Float.pi
+            totalInterference += cosf(phase) * photon.coherence
+        }
+
+        return totalInterference / Float(min(32, field.photons.count))
     }
 
     private func startDisplayLink() {
@@ -269,7 +285,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func renderInterferencePattern() {
-        guard let field = quantumEmulator?.currentLightField else { return }
+        guard let field = quantumEmulator?.currentEmulatorLightField else { return }
 
         let time = Float(CACurrentMediaTime())
         let centerX = Float(configuration.width) / 2
@@ -291,7 +307,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
                     let wavelengthNorm = photon.wavelength / 1000.0
                     let phase = distance / wavelengthNorm * 2 * Float.pi + time + photon.polarization
-                    let amplitude = photon.intensity * exp(-distance * 2)
+                    let amplitude = photon.intensity * expf(-distance * 2.0)
 
                     totalIntensity += amplitude * (1 + cos(phase)) / 2
                     totalColor += photon.color * amplitude
@@ -300,7 +316,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
                 totalIntensity /= Float(min(32, field.photons.count))
                 totalColor = simd_clamp(totalColor / Float(min(32, field.photons.count)), .zero, SIMD3<Float>(1, 1, 1))
 
-                let alpha = totalIntensity * field.fieldCoherence
+                let alpha = totalIntensity * field.coherenceLevel
                 frameBuffer[y][x] = SIMD4<Float>(totalColor.x, totalColor.y, totalColor.z, alpha)
             }
         }
@@ -367,7 +383,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func renderPhotonFlow(deltaTime: Float) {
-        particleSystem?.update(deltaTime: deltaTime, field: quantumEmulator?.currentLightField)
+        particleSystem?.update(deltaTime: deltaTime, field: quantumEmulator?.currentEmulatorLightField)
 
         // Clear with fade
         for y in 0..<configuration.height {
@@ -553,7 +569,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func renderHolographicDisplay() {
-        guard let field = quantumEmulator?.currentLightField else { return }
+        guard let field = quantumEmulator?.currentEmulatorLightField else { return }
 
         let time = Float(CACurrentMediaTime())
 
@@ -584,7 +600,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
                 // Holographic shimmer
                 let shimmer = sin(nx * 100 + ny * 50 + time * 10) * 0.1 + 0.9
-                intensity *= shimmer * field.fieldCoherence
+                intensity *= shimmer * field.coherenceLevel
 
                 frameBuffer[y][x] = SIMD4<Float>(color.x, color.y, color.z, intensity)
             }
@@ -832,7 +848,7 @@ private class PhotonParticleSystem {
 
             // Apply field influence
             if let field = field {
-                let fieldInfluence = field.interferencePattern(at: particles[i].position)
+                let fieldInfluence = calculateInterference(at: particles[i].position, in: field)
                 particles[i].velocity += SIMD3<Float>(fieldInfluence, fieldInfluence, 0) * 0.01
             }
         }
