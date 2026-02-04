@@ -433,6 +433,64 @@ class VideoEditingEngine: ObservableObject {
         player?.seek(to: time)
     }
 
+    /// Seek using TimeInterval for convenience
+    func seek(to time: TimeInterval) {
+        seek(to: CMTime(seconds: time, preferredTimescale: 600))
+    }
+
+    /// Playhead as TimeInterval for convenience
+    var playheadSeconds: TimeInterval {
+        playhead.seconds
+    }
+
+    // MARK: - Effect Management
+
+    /// Global effects applied to entire composition
+    @Published var globalEffects: [VideoEffect] = []
+
+    /// Apply effect to a specific clip
+    func applyEffect(_ effect: VideoEffect, toClipAt index: Int) {
+        // Find clip across all tracks
+        for trackIndex in timeline.videoTracks.indices {
+            if index < timeline.videoTracks[trackIndex].clips.count {
+                timeline.videoTracks[trackIndex].clips[index].effects.append(effect)
+                log.video("🎬 VideoEditingEngine: Applied effect '\(effect.type)' to clip \(index)")
+                return
+            }
+        }
+    }
+
+    /// Apply global effect to entire composition
+    func applyGlobalEffect(_ effect: VideoEffect) {
+        globalEffects.append(effect)
+        log.video("🌐 VideoEditingEngine: Applied global effect '\(effect.type)'")
+    }
+
+    /// Remove effect by name
+    func removeEffect(named name: String) {
+        // Remove from global effects
+        globalEffects.removeAll { $0.type.rawValue == name }
+
+        // Remove from clips
+        for trackIndex in timeline.videoTracks.indices {
+            for clipIndex in timeline.videoTracks[trackIndex].clips.indices {
+                timeline.videoTracks[trackIndex].clips[clipIndex].effects.removeAll { $0.type.rawValue == name }
+            }
+        }
+        log.video("🗑️ VideoEditingEngine: Removed effect '\(name)'")
+    }
+
+    /// Remove all effects
+    func clearAllEffects() {
+        globalEffects.removeAll()
+        for trackIndex in timeline.videoTracks.indices {
+            for clipIndex in timeline.videoTracks[trackIndex].clips.indices {
+                timeline.videoTracks[trackIndex].clips[clipIndex].effects.removeAll()
+            }
+        }
+        log.video("🗑️ VideoEditingEngine: Cleared all effects")
+    }
+
     // MARK: - Time Observer
 
     private func startTimeObserver() {
@@ -667,7 +725,57 @@ enum MarkerColor: String, CaseIterable {
 
 // MARK: - Video Effect Model
 
-enum VideoEffect {
+/// Unified video effect with type and intensity
+struct VideoEffect: Identifiable {
+    let id = UUID()
+    let type: VideoEffectCategory
+    var intensity: Float
+    var parameters: [String: Any] = [:]
+
+    init(type: VideoEffectCategory, intensity: Float = 1.0, parameters: [String: Any] = [:]) {
+        self.type = type
+        self.intensity = intensity
+        self.parameters = parameters
+    }
+}
+
+/// Video effect categories for unified effect handling
+enum VideoEffectCategory: String, CaseIterable {
+    // None
+    case none = "None"
+
+    // Color effects
+    case autoColor = "Auto Color"
+    case lut = "LUT"
+    case colorGrade = "Color Grade"
+    case hdr = "HDR"
+
+    // Style effects
+    case cinematic = "Cinematic"
+    case vintage = "Vintage"
+    case neonGlow = "Neon Glow"
+    case glitch = "Glitch"
+
+    // Bio-reactive effects
+    case bioCoherence = "Coherence Pulse"
+    case bioHeartbeat = "Heart Sync"
+    case bioBreathing = "Breath Flow"
+
+    // AI effects
+    case aiStyleTransfer = "Style Transfer"
+    case aiFaceEnhance = "Face Enhance"
+    case aiBackgroundRemove = "Background Remove"
+
+    // Basic effects
+    case blur = "Blur"
+    case sharpen = "Sharpen"
+    case brightness = "Brightness"
+    case contrast = "Contrast"
+    case saturation = "Saturation"
+}
+
+/// Legacy effect types for compatibility
+enum VideoEffectLegacy {
     case colorGrade(ColorGradeEffect)
     case blur(BlurEffect)
     case distortion(DistortionEffect)

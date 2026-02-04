@@ -6,13 +6,14 @@ import SwiftUI
 /// Professional DAW arrangement interface with bio-reactive features
 struct DAWArrangementView: View {
     @StateObject private var engine = ArrangementDAWProductionEngine()
+    @EnvironmentObject var healthKitManager: HealthKitManager
+    @EnvironmentObject var recordingEngine: RecordingEngine
+    @ObservedObject private var bridge = WorkspaceIntegrationBridge.shared
+
     @State private var selectedTrackIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showMixer = false
     @State private var showInstrumentBrowser = false
-    @State private var currentBeat: Double = 0
-    @State private var isPlaying = false
-    @State private var bpm: Double = 120
 
     var body: some View {
         ZStack {
@@ -63,18 +64,35 @@ struct DAWArrangementView: View {
 
             Spacer()
 
-            // BPM Display
+            // BPM Display - INTERACTIVE
             HStack(spacing: VaporwaveSpacing.sm) {
+                Button {
+                    bridge.setBPM(bridge.currentBPM - 1)
+                } label: {
+                    Image(systemName: "minus.circle")
+                        .foregroundColor(VaporwaveColors.neonPink.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+
                 Image(systemName: "metronome")
                     .foregroundColor(VaporwaveColors.neonPink)
 
-                Text("\(Int(bpm))")
+                Text("\(Int(bridge.currentBPM))")
                     .font(VaporwaveTypography.data())
                     .foregroundColor(VaporwaveColors.textPrimary)
+                    .frame(minWidth: 40)
 
                 Text("BPM")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textSecondary)
+
+                Button {
+                    bridge.setBPM(bridge.currentBPM + 1)
+                } label: {
+                    Image(systemName: "plus.circle")
+                        .foregroundColor(VaporwaveColors.neonPink.opacity(0.7))
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, VaporwaveSpacing.md)
             .padding(.vertical, VaporwaveSpacing.sm)
@@ -157,10 +175,20 @@ struct DAWArrangementView: View {
 
             Spacer()
 
-            // Mute/Solo buttons
+            // Mute/Solo buttons - WIRED TO ENGINE
             HStack(spacing: 4) {
-                miniButton(label: "M", isActive: track.isMuted, color: VaporwaveColors.coral)
-                miniButton(label: "S", isActive: track.isSolo, color: VaporwaveColors.neonCyan)
+                miniButton(label: "M", isActive: track.isMuted, color: VaporwaveColors.coral) {
+                    engine.tracks[index].isMuted.toggle()
+                    if let trackID = UUID(uuidString: track.id.uuidString) {
+                        bridge.setTrackMuted(trackID: trackID, muted: engine.tracks[index].isMuted)
+                    }
+                }
+                miniButton(label: "S", isActive: track.isSolo, color: VaporwaveColors.neonCyan) {
+                    engine.tracks[index].isSolo.toggle()
+                    if let trackID = UUID(uuidString: track.id.uuidString) {
+                        bridge.setTrackSoloed(trackID: trackID, soloed: engine.tracks[index].isSolo)
+                    }
+                }
             }
         }
         .padding(VaporwaveSpacing.sm)
@@ -177,19 +205,22 @@ struct DAWArrangementView: View {
         }
     }
 
-    private func miniButton(label: String, isActive: Bool, color: Color) -> some View {
-        Text(label)
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(isActive ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
-            .frame(width: 20, height: 20)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isActive ? color : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(color.opacity(0.5), lineWidth: 1)
-            )
+    private func miniButton(label: String, isActive: Bool, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(isActive ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                .frame(width: 20, height: 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(isActive ? color : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(color.opacity(0.5), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Arrangement Section
@@ -287,7 +318,7 @@ struct DAWArrangementView: View {
         HStack(spacing: VaporwaveSpacing.lg) {
             // Position display
             VStack(spacing: 2) {
-                Text(formatPosition(currentBeat))
+                Text(formatPosition(bridge.currentBeat))
                     .font(VaporwaveTypography.dataSmall())
                     .foregroundColor(VaporwaveColors.textPrimary)
                 Text("POSITION")
@@ -301,41 +332,45 @@ struct DAWArrangementView: View {
             // Transport controls
             HStack(spacing: VaporwaveSpacing.md) {
                 transportButton(icon: "backward.end.fill") {
-                    currentBeat = 0
+                    bridge.seekToBeat(0)
                 }
 
                 transportButton(icon: "backward.fill") {
-                    currentBeat = max(0, currentBeat - 4)
+                    bridge.seekToBeat(max(0, bridge.currentBeat - 4))
                 }
 
-                // Play button
+                // Play button - WIRED TO ENGINE
                 Button {
-                    isPlaying.toggle()
+                    bridge.togglePlayback()
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(isPlaying ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.neonCyan.opacity(0.2))
+                            .fill(bridge.isPlaying ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.neonCyan.opacity(0.2))
                             .frame(width: 56, height: 56)
 
                         Circle()
-                            .stroke(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, lineWidth: 2)
+                            .stroke(bridge.isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, lineWidth: 2)
                             .frame(width: 56, height: 56)
 
-                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                        Image(systemName: bridge.isPlaying ? "stop.fill" : "play.fill")
                             .font(.system(size: 22))
-                            .foregroundColor(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan)
+                            .foregroundColor(bridge.isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan)
                     }
-                    .modifier(NeonGlow(color: isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: 12))
+                    .modifier(NeonGlow(color: bridge.isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: 12))
                 }
                 .buttonStyle(.plain)
 
-                // Record button
+                // Record button - WIRED TO ENGINE
                 Button {
-                    engine.isRecording.toggle()
+                    if bridge.isRecording {
+                        bridge.stopRecording()
+                    } else {
+                        bridge.startRecording(trackType: .audio)
+                    }
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(engine.isRecording ? VaporwaveColors.recordingActive.opacity(0.3) : Color.clear)
+                            .fill(bridge.isRecording ? VaporwaveColors.recordingActive.opacity(0.3) : Color.clear)
                             .frame(width: 44, height: 44)
 
                         Circle()
@@ -346,36 +381,56 @@ struct DAWArrangementView: View {
                             .fill(VaporwaveColors.recordingActive)
                             .frame(width: 16, height: 16)
                     }
-                    .modifier(engine.isRecording ? NeonGlow(color: VaporwaveColors.recordingActive, radius: 15) : NeonGlow(color: .clear, radius: 0))
+                    .modifier(bridge.isRecording ? NeonGlow(color: VaporwaveColors.recordingActive, radius: 15) : NeonGlow(color: .clear, radius: 0))
                 }
                 .buttonStyle(.plain)
 
                 transportButton(icon: "forward.fill") {
-                    currentBeat += 4
+                    bridge.seekToBeat(bridge.currentBeat + 4)
                 }
 
                 transportButton(icon: "forward.end.fill") {
-                    currentBeat = Double(engine.projectLength)
+                    bridge.seekToBeat(Double(engine.projectLength))
                 }
             }
 
             Spacer()
 
-            // Bio-reactive indicator
+            // Bio-reactive indicator - WIRED TO HEALTHKIT
             HStack(spacing: VaporwaveSpacing.sm) {
                 Circle()
-                    .fill(VaporwaveColors.coherenceHigh)
+                    .fill(bioSyncColor)
                     .frame(width: 8, height: 8)
-                    .modifier(NeonGlow(color: VaporwaveColors.coherenceHigh, radius: 5))
+                    .modifier(NeonGlow(color: bioSyncColor, radius: 5))
 
-                Text("Bio-Sync Active")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(bridge.bioSyncEnabled ? "Bio-Sync Active" : "Bio-Sync Off")
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(VaporwaveColors.textSecondary)
+                    Text("\(Int(bridge.hrvCoherence * 100))% coherence")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(bioSyncColor)
+                }
             }
-            .frame(width: 120)
+            .frame(width: 130)
+            .onTapGesture {
+                bridge.toggleBioSync()
+            }
         }
         .padding(VaporwaveSpacing.md)
         .background(VaporwaveColors.deepBlack.opacity(0.8))
+    }
+
+    /// Bio-sync color based on HRV coherence
+    private var bioSyncColor: Color {
+        let coherence = bridge.hrvCoherence
+        if coherence > 0.7 {
+            return VaporwaveColors.coherenceHigh
+        } else if coherence > 0.4 {
+            return VaporwaveColors.coherenceMedium
+        } else {
+            return VaporwaveColors.coherenceLow
+        }
     }
 
     // MARK: - Instrument Browser Overlay

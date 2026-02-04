@@ -6,12 +6,18 @@ import SwiftUI
 /// Professional video editing interface with bio-reactive features
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
+    @EnvironmentObject var healthKitManager: HealthKitManager
+    @ObservedObject private var bridge = WorkspaceIntegrationBridge.shared
+
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showEffectsPanel = false
     @State private var showExportSheet = false
-    @State private var currentTime: TimeInterval = 0
-    @State private var isPlaying = false
+    @State private var appliedEffects: [String] = []
+
+    /// Video playhead synced from engine
+    private var currentTime: TimeInterval { engine.playhead }
+    private var isPlaying: Bool { engine.isPlaying }
 
     var body: some View {
         ZStack {
@@ -169,16 +175,17 @@ struct VideoEditorView: View {
                 .foregroundColor(VaporwaveColors.neonCyan)
 
             ForEach(effects, id: \.self) { effect in
+                let isApplied = appliedEffects.contains(effect)
                 Button {
-                    // Apply effect
+                    applyEffect(effect, category: title)
                 } label: {
                     HStack {
                         Text(effect)
                             .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.textPrimary)
+                            .foregroundColor(isApplied ? VaporwaveColors.neonCyan : VaporwaveColors.textPrimary)
                         Spacer()
-                        Image(systemName: "plus.circle")
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                        Image(systemName: isApplied ? "checkmark.circle.fill" : "plus.circle")
+                            .foregroundColor(isApplied ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
                     }
                     .padding(.vertical, VaporwaveSpacing.xs)
                 }
@@ -190,6 +197,61 @@ struct VideoEditorView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(VaporwaveColors.deepBlack.opacity(0.5))
         )
+    }
+
+    /// Apply an effect to the selected clip or globally
+    private func applyEffect(_ effect: String, category: String) {
+        // Toggle effect
+        if appliedEffects.contains(effect) {
+            appliedEffects.removeAll { $0 == effect }
+            engine.removeEffect(named: effect)
+        } else {
+            appliedEffects.append(effect)
+
+            // Map UI effect names to engine effect types
+            let videoEffect = mapEffectToEngine(effect, category: category)
+            if let clipIndex = selectedClipIndex {
+                engine.applyEffect(videoEffect, toClipAt: clipIndex)
+            } else {
+                engine.applyGlobalEffect(videoEffect)
+            }
+        }
+
+        #if DEBUG
+        print("[VideoEditor] Effect '\(effect)' \(appliedEffects.contains(effect) ? "applied" : "removed")")
+        #endif
+    }
+
+    /// Map UI effect name to VideoEffect using VideoEffectCategory
+    private func mapEffectToEngine(_ effect: String, category: String) -> VideoEffect {
+        switch effect {
+        // Color effects
+        case "Auto Color": return VideoEffect(type: VideoEffectCategory.autoColor, intensity: 1.0)
+        case "LUT": return VideoEffect(type: VideoEffectCategory.lut, intensity: 1.0)
+        case "Color Grade": return VideoEffect(type: VideoEffectCategory.colorGrade, intensity: 1.0)
+        case "HDR": return VideoEffect(type: VideoEffectCategory.hdr, intensity: 1.0)
+
+        // Style effects
+        case "Cinematic": return VideoEffect(type: VideoEffectCategory.cinematic, intensity: 1.0)
+        case "Vintage": return VideoEffect(type: VideoEffectCategory.vintage, intensity: 0.8)
+        case "Neon Glow": return VideoEffect(type: VideoEffectCategory.neonGlow, intensity: 1.0)
+        case "Glitch": return VideoEffect(type: VideoEffectCategory.glitch, intensity: 0.5)
+
+        // Bio-reactive effects
+        case "Coherence Pulse":
+            return VideoEffect(type: VideoEffectCategory.bioCoherence, intensity: Float(bridge.hrvCoherence))
+        case "Heart Sync":
+            return VideoEffect(type: VideoEffectCategory.bioHeartbeat, intensity: Float(bridge.heartRate / 200))
+        case "Breath Flow":
+            return VideoEffect(type: VideoEffectCategory.bioBreathing, intensity: Float(bridge.breathingRate / 30))
+
+        // AI effects
+        case "Style Transfer": return VideoEffect(type: VideoEffectCategory.aiStyleTransfer, intensity: 1.0)
+        case "Face Enhance": return VideoEffect(type: VideoEffectCategory.aiFaceEnhance, intensity: 1.0)
+        case "Background Remove": return VideoEffect(type: VideoEffectCategory.aiBackgroundRemove, intensity: 1.0)
+
+        default: return VideoEffect(type: VideoEffectCategory.none, intensity: 0)
+        }
     }
 
     // MARK: - Timeline Section
@@ -304,19 +366,36 @@ struct VideoEditorView: View {
 
     private var transportControls: some View {
         HStack(spacing: VaporwaveSpacing.lg) {
-            // Skip back
+            // Timecode display
+            VStack(spacing: 2) {
+                Text(formatTimecode(currentTime))
+                    .font(VaporwaveTypography.data())
+                    .foregroundColor(VaporwaveColors.neonCyan)
+                Text("TIMECODE")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+            .frame(width: 100)
+
+            Spacer()
+
+            // Skip back - WIRED TO ENGINE
             transportButton(icon: "backward.fill") {
-                currentTime = max(0, currentTime - 5)
+                engine.seek(to: max(0, currentTime - 5))
             }
 
-            // Previous frame
+            // Previous frame - WIRED TO ENGINE
             transportButton(icon: "backward.frame.fill") {
-                currentTime = max(0, currentTime - 1/30)
+                engine.seek(to: max(0, currentTime - 1/30))
             }
 
-            // Play/Pause
+            // Play/Pause - WIRED TO ENGINE
             Button {
-                isPlaying.toggle()
+                if isPlaying {
+                    engine.pause()
+                } else {
+                    engine.play()
+                }
             } label: {
                 ZStack {
                     Circle()
@@ -335,17 +414,41 @@ struct VideoEditorView: View {
             }
             .buttonStyle(.plain)
 
-            // Next frame
+            // Next frame - WIRED TO ENGINE
             transportButton(icon: "forward.frame.fill") {
-                currentTime += 1/30
+                engine.seek(to: currentTime + 1/30)
             }
 
-            // Skip forward
+            // Skip forward - WIRED TO ENGINE
             transportButton(icon: "forward.fill") {
-                currentTime += 5
+                engine.seek(to: currentTime + 5)
             }
+
+            Spacer()
+
+            // Bio-sync indicator for video
+            HStack(spacing: VaporwaveSpacing.sm) {
+                Circle()
+                    .fill(bridge.bioSyncEnabled ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary)
+                    .frame(width: 8, height: 8)
+
+                Text("\(Int(bridge.hrvCoherence * 100))%")
+                    .font(VaporwaveTypography.dataSmall())
+                    .foregroundColor(VaporwaveColors.neonPink)
+            }
+            .frame(width: 60)
         }
         .padding(VaporwaveSpacing.md)
+        .background(VaporwaveColors.deepBlack.opacity(0.8))
+    }
+
+    /// Format timecode as HH:MM:SS:FF
+    private func formatTimecode(_ time: TimeInterval) -> String {
+        let hours = Int(time) / 3600
+        let minutes = (Int(time) % 3600) / 60
+        let seconds = Int(time) % 60
+        let frames = Int((time - floor(time)) * 30)
+        return String(format: "%02d:%02d:%02d:%02d", hours, minutes, seconds, frames)
     }
 
     // MARK: - Helper Views
