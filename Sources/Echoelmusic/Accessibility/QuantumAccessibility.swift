@@ -234,7 +234,7 @@ public class QuantumAccessibilityManager: ObservableObject {
     public func describeLightField(_ field: LightField) -> String {
         let photonCount = field.photons.count
         let geometry = field.geometry.rawValue
-        let coherencePercent = Int(field.fieldCoherence * 100)
+        let coherencePercent = Int(field.coherenceLevel * 100)
 
         var description = "\(geometry) light field with \(photonCount) photons. "
         description += "Field coherence: \(coherencePercent) percent. "

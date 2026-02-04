@@ -424,13 +424,14 @@ public final class PerformanceTracer: Sendable {
     /// Start a performance trace
     public func beginTrace(_ name: String) -> TraceHandle {
         let signpostID = signposter.makeSignpostID()
-        let state = signposter.beginInterval(name, id: signpostID)
+        // Use a generic static name since OSSignposter requires StaticString
+        let state = signposter.beginInterval("Trace", id: signpostID)
         return TraceHandle(name: name, signpostID: signpostID, state: state, startTime: CFAbsoluteTimeGetCurrent())
     }
 
     /// End a performance trace
     public func endTrace(_ handle: TraceHandle) {
-        signposter.endInterval(handle.name, handle.state)
+        signposter.endInterval("Trace", handle.state)
         let duration = CFAbsoluteTimeGetCurrent() - handle.startTime
 
         if duration > 0.1 { // Log slow operations (>100ms)

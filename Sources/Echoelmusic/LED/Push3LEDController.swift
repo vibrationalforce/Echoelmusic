@@ -82,7 +82,8 @@ class Push3LEDController: ObservableObject {
     }
 
     deinit {
-        disconnect()
+        // MIDI resources will be cleaned up when the client reference is released
+        // Cannot call MainActor-isolated methods from nonisolated deinit
     }
 
     // MARK: - MIDI Setup
