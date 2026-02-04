@@ -89,8 +89,10 @@ class MIDIController: ObservableObject {
 
     // MARK: - Private Properties
 
-    private var midiClient: MIDIClientRef = 0
-    private var inputPort: MIDIPortRef = 0
+    /// MIDI client reference - nonisolated(unsafe) for deinit access
+    nonisolated(unsafe) private var midiClient: MIDIClientRef = 0
+    /// MIDI input port reference - nonisolated(unsafe) for deinit access
+    nonisolated(unsafe) private var inputPort: MIDIPortRef = 0
     private var mappings: [MIDIMapping] = []
     private var messageHandlers: [(MIDIMessage) -> Void] = []
 

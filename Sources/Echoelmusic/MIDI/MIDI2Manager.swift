@@ -33,9 +33,12 @@ class MIDI2Manager: ObservableObject {
 
     // MARK: - Private Properties
 
-    private var midiClient: MIDIClientRef = 0
-    private var virtualSource: MIDIEndpointRef = 0
-    private var outputPort: MIDIPortRef = 0
+    /// MIDI client reference - nonisolated(unsafe) for deinit access
+    nonisolated(unsafe) private var midiClient: MIDIClientRef = 0
+    /// Virtual MIDI source - nonisolated(unsafe) for deinit access
+    nonisolated(unsafe) private var virtualSource: MIDIEndpointRef = 0
+    /// MIDI output port - nonisolated(unsafe) for deinit access
+    nonisolated(unsafe) private var outputPort: MIDIPortRef = 0
 
     // Active notes tracking (for per-note controllers)
     private var activeNotes: Set<NoteIdentifier> = []
@@ -330,7 +333,21 @@ class MIDI2Manager: ObservableObject {
     }
 
     deinit {
-        cleanup()
+        cleanupResources()
+    }
+
+    /// Cleanup MIDI resources - nonisolated for deinit access
+    nonisolated private func cleanupResources() {
+        // MIDI dispose functions are thread-safe
+        if virtualSource != 0 {
+            MIDIEndpointDispose(virtualSource)
+        }
+        if outputPort != 0 {
+            MIDIPortDispose(outputPort)
+        }
+        if midiClient != 0 {
+            MIDIClientDispose(midiClient)
+        }
     }
 }
 
