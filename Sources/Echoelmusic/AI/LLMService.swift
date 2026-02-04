@@ -85,6 +85,27 @@ class LLMService: ObservableObject {
     private let session: URLSession
     private var cancellables = Set<AnyCancellable>()
 
+    // MARK: - Retry Configuration
+
+    /// Retry policy for API calls
+    struct RetryPolicy {
+        let maxRetries: Int
+        let initialDelay: TimeInterval
+        let maxDelay: TimeInterval
+        let multiplier: Double
+        let retryableStatusCodes: Set<Int>
+
+        static let `default` = RetryPolicy(
+            maxRetries: 3,
+            initialDelay: 1.0,
+            maxDelay: 30.0,
+            multiplier: 2.0,
+            retryableStatusCodes: [408, 429, 500, 502, 503, 504]
+        )
+    }
+
+    private let retryPolicy = RetryPolicy.default
+
     // MARK: - System Prompts
 
     private let systemPrompt = """
@@ -270,7 +291,7 @@ class LLMService: ObservableObject {
         }
     }
 
-    private func sendClaudeRequest(messages: [Message], bioContext: Message.BioContext?, apiKey: String) async throws -> String {
+    private func sendClaudeRequest(messages: [Message], bioContext: Message.BioContext?, apiKey: String, retryCount: Int = 0) async throws -> String {
         guard let url = URL(string: "\(LLMProvider.claude.baseURL)/messages") else {
             throw LLMError.apiError("Invalid Claude API URL")
         }
@@ -301,33 +322,57 @@ class LLMService: ObservableObject {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        do {
+            let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw LLMError.invalidResponse
-        }
-
-        if httpResponse.statusCode != 200 {
-            if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let error = errorData["error"] as? [String: Any],
-               let message = error["message"] as? String {
-                throw LLMError.apiError(message)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw LLMError.invalidResponse
             }
-            throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
-        }
 
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = json["content"] as? [[String: Any]],
-              let firstContent = content.first,
-              let text = firstContent["text"] as? String else {
-            throw LLMError.invalidResponse
-        }
+            // Handle retryable status codes (500, 502, 503, 504, 429, 408)
+            if retryPolicy.retryableStatusCodes.contains(httpResponse.statusCode) && retryCount < retryPolicy.maxRetries {
+                let delay = min(retryPolicy.initialDelay * pow(retryPolicy.multiplier, Double(retryCount)), retryPolicy.maxDelay)
+                log.warning("Claude API returned \(httpResponse.statusCode), retrying in \(delay)s (attempt \(retryCount + 1)/\(retryPolicy.maxRetries))", category: .intelligence)
 
-        connectionStatus = .connected
-        return text
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await sendClaudeRequest(messages: messages, bioContext: bioContext, apiKey: apiKey, retryCount: retryCount + 1)
+            }
+
+            if httpResponse.statusCode != 200 {
+                if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let error = errorData["error"] as? [String: Any],
+                   let message = error["message"] as? String {
+                    throw LLMError.apiError(message)
+                }
+                throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
+            }
+
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let content = json["content"] as? [[String: Any]],
+                  let firstContent = content.first,
+                  let text = firstContent["text"] as? String else {
+                throw LLMError.invalidResponse
+            }
+
+            connectionStatus = .connected
+            return text
+
+        } catch let error as LLMError {
+            throw error
+        } catch {
+            // Network errors - retry if possible
+            if retryCount < retryPolicy.maxRetries {
+                let delay = min(retryPolicy.initialDelay * pow(retryPolicy.multiplier, Double(retryCount)), retryPolicy.maxDelay)
+                log.warning("Claude API network error, retrying in \(delay)s (attempt \(retryCount + 1)/\(retryPolicy.maxRetries)): \(error.localizedDescription)", category: .intelligence)
+
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await sendClaudeRequest(messages: messages, bioContext: bioContext, apiKey: apiKey, retryCount: retryCount + 1)
+            }
+            throw LLMError.networkError(error)
+        }
     }
 
-    private func sendOpenAIRequest(messages: [Message], bioContext: Message.BioContext?, apiKey: String) async throws -> String {
+    private func sendOpenAIRequest(messages: [Message], bioContext: Message.BioContext?, apiKey: String, retryCount: Int = 0) async throws -> String {
         guard let url = URL(string: "\(LLMProvider.openAI.baseURL)/chat/completions") else {
             throw LLMError.apiError("Invalid OpenAI API URL")
         }
@@ -359,31 +404,55 @@ class LLMService: ObservableObject {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        do {
+            let (data, response) = try await session.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw LLMError.invalidResponse
-        }
-
-        if httpResponse.statusCode != 200 {
-            if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let error = errorData["error"] as? [String: Any],
-               let message = error["message"] as? String {
-                throw LLMError.apiError(message)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw LLMError.invalidResponse
             }
-            throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
-        }
 
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let choices = json["choices"] as? [[String: Any]],
-              let firstChoice = choices.first,
-              let message = firstChoice["message"] as? [String: Any],
-              let content = message["content"] as? String else {
-            throw LLMError.invalidResponse
-        }
+            // Handle retryable status codes (500, 502, 503, 504, 429, 408)
+            if retryPolicy.retryableStatusCodes.contains(httpResponse.statusCode) && retryCount < retryPolicy.maxRetries {
+                let delay = min(retryPolicy.initialDelay * pow(retryPolicy.multiplier, Double(retryCount)), retryPolicy.maxDelay)
+                log.warning("OpenAI API returned \(httpResponse.statusCode), retrying in \(delay)s (attempt \(retryCount + 1)/\(retryPolicy.maxRetries))", category: .intelligence)
 
-        connectionStatus = .connected
-        return content
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await sendOpenAIRequest(messages: messages, bioContext: bioContext, apiKey: apiKey, retryCount: retryCount + 1)
+            }
+
+            if httpResponse.statusCode != 200 {
+                if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let error = errorData["error"] as? [String: Any],
+                   let message = error["message"] as? String {
+                    throw LLMError.apiError(message)
+                }
+                throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
+            }
+
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let choices = json["choices"] as? [[String: Any]],
+                  let firstChoice = choices.first,
+                  let message = firstChoice["message"] as? [String: Any],
+                  let content = message["content"] as? String else {
+                throw LLMError.invalidResponse
+            }
+
+            connectionStatus = .connected
+            return content
+
+        } catch let error as LLMError {
+            throw error
+        } catch {
+            // Network errors - retry if possible
+            if retryCount < retryPolicy.maxRetries {
+                let delay = min(retryPolicy.initialDelay * pow(retryPolicy.multiplier, Double(retryCount)), retryPolicy.maxDelay)
+                log.warning("OpenAI API network error, retrying in \(delay)s (attempt \(retryCount + 1)/\(retryPolicy.maxRetries)): \(error.localizedDescription)", category: .intelligence)
+
+                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                return try await sendOpenAIRequest(messages: messages, bioContext: bioContext, apiKey: apiKey, retryCount: retryCount + 1)
+            }
+            throw LLMError.networkError(error)
+        }
     }
 
     private func sendOllamaRequest(messages: [Message], bioContext: Message.BioContext?) async throws -> String {
@@ -497,6 +566,8 @@ enum LLMError: LocalizedError {
     case missingAPIKey
     case invalidResponse
     case apiError(String)
+    case serverError(Int)  // For 5xx errors after retries exhausted
+    case rateLimited       // For 429 errors after retries exhausted
     case networkError(Error)
 
     var errorDescription: String? {
@@ -507,8 +578,29 @@ enum LLMError: LocalizedError {
             return "Received invalid response from LLM service"
         case .apiError(let message):
             return "API Error: \(message)"
+        case .serverError(let code):
+            return "Server Error (\(code)): The AI service is temporarily unavailable. Please try again in a few moments."
+        case .rateLimited:
+            return "Rate Limited: Too many requests. Please wait a moment before trying again."
         case .networkError(let error):
             return "Network Error: \(error.localizedDescription)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .missingAPIKey:
+            return "Go to Settings > AI to configure your API key."
+        case .invalidResponse:
+            return "Try again. If the problem persists, the AI service may be experiencing issues."
+        case .apiError:
+            return "Check your API key and try again."
+        case .serverError:
+            return "The AI service is experiencing high load. Please wait 30 seconds and try again."
+        case .rateLimited:
+            return "You've made too many requests. Wait 1 minute before trying again."
+        case .networkError:
+            return "Check your internet connection and try again."
         }
     }
 }
