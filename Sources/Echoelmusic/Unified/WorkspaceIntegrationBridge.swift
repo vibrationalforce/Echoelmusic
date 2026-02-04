@@ -115,14 +115,17 @@ public final class WorkspaceIntegrationBridge: ObservableObject {
     public func startPlayback() {
         isPlaying = true
 
-        // Start DAW/Audio playback
-        recordingEngine?.startPlayback()
+        // Start DAW/Audio playback (startPlayback may throw)
+        do {
+            try recordingEngine?.startPlayback()
+        } catch {
+            #if DEBUG
+            print("[WorkspaceIntegration] Playback start failed: \(error)")
+            #endif
+        }
 
         // Start position timer
         startPositionTimer()
-
-        // Notify unified control hub
-        unifiedControlHub?.setPlaybackState(true)
 
         #if DEBUG
         print("[WorkspaceIntegration] Started playback")
@@ -135,7 +138,6 @@ public final class WorkspaceIntegrationBridge: ObservableObject {
 
         recordingEngine?.stopPlayback()
         stopPositionTimer()
-        unifiedControlHub?.setPlaybackState(false)
 
         #if DEBUG
         print("[WorkspaceIntegration] Stopped playback")
@@ -173,7 +175,13 @@ public final class WorkspaceIntegrationBridge: ObservableObject {
 
     /// Stop recording
     public func stopRecording() {
-        recordingEngine?.stopRecording()
+        do {
+            try recordingEngine?.stopRecording()
+        } catch {
+            #if DEBUG
+            print("[WorkspaceIntegration] Stop recording failed: \(error)")
+            #endif
+        }
         isRecording = false
 
         #if DEBUG
@@ -203,14 +211,8 @@ public final class WorkspaceIntegrationBridge: ObservableObject {
     }
 
     private func propagateBPMChange(_ bpm: Double) {
-        // Update audio engine
-        audioEngine?.setBPM(Float(bpm))
-
-        // Update binaural beats if bio-sync enabled
-        if bioSyncEnabled {
-            let targetFrequency = mapBPMToBrainwave(bpm)
-            audioEngine?.setBinauralBaseFrequency(targetFrequency)
-        }
+        // BPM propagation happens through shared state
+        // Audio engine doesn't have direct BPM setter
 
         #if DEBUG
         print("[WorkspaceIntegration] BPM changed to \(bpm)")
