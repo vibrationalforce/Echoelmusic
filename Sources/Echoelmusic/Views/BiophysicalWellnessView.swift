@@ -132,7 +132,7 @@ public struct BiophysicalWellnessView: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Cymatics visualization")
         .padding(.horizontal)
-        .onChange(of: engine.currentFrequency) { _, newFreq in
+        .onChange(of: engine.currentFrequency) { newFreq in
             cymaticsVisualizer.update(
                 frequency: newFreq,
                 amplitude: engine.state.preset.vibrationIntensity,
@@ -228,7 +228,7 @@ public struct BiophysicalWellnessView: View {
 
             Slider(value: $customFrequency, in: 1...60, step: 0.5)
                 .tint(presetColor)
-                .onChange(of: customFrequency) { _, newValue in
+                .onChange(of: customFrequency) { newValue in
                     engine.setCustomFrequency(newValue)
                 }
         }

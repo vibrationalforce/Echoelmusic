@@ -714,7 +714,7 @@ struct ParameterSlider: View {
 
             Slider(value: $parameter.value, in: parameter.min...parameter.max)
                 .accentColor(VaporwaveColors.neonCyan)
-                .onChange(of: parameter.value) { _, _ in onChanged() }
+                .onChange(of: parameter.value) { _ in onChanged() }
         }
         .padding(VaporwaveSpacing.sm)
         .glassCard()

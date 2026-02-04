@@ -613,7 +613,7 @@ public struct OctaveCreativeStudioView: View {
                 step: 1
             )
             .tint(color)
-            .onChange(of: value.wrappedValue) { _, _ in
+            .onChange(of: value.wrappedValue) { _ in
                 studio.updateResult()
             }
 
