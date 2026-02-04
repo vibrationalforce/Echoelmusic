@@ -140,7 +140,7 @@ struct EchoelMLModelConfiguration {
                 localURL: modelsPath.appendingPathComponent("SoundStyleTransfer.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/sound_style_transfer_v1.mlmodelc.zip"),
                 checksum: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
-                computeUnits: .cpuAndNeuralEngine,
+                computeUnits: .all,
                 memoryRequirements: 150_000_000, // 150MB
                 minimumIOSVersion: "15.0",
                 minimumMacOSVersion: "12.0",
@@ -157,7 +157,7 @@ struct EchoelMLModelConfiguration {
                 localURL: modelsPath.appendingPathComponent("VoiceToMIDI.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/voice_to_midi_v1.2.mlmodelc.zip"),
                 checksum: "b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7",
-                computeUnits: .cpuAndNeuralEngine,
+                computeUnits: .all,
                 memoryRequirements: 80_000_000, // 80MB
                 minimumIOSVersion: "15.0",
                 minimumMacOSVersion: "12.0",
@@ -174,7 +174,7 @@ struct EchoelMLModelConfiguration {
                 localURL: modelsPath.appendingPathComponent("EmotionRecognition.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/emotion_recognition_v2.mlmodelc.zip"),
                 checksum: "c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8",
-                computeUnits: .cpuAndNeuralEngine,
+                computeUnits: .all,
                 memoryRequirements: 120_000_000, // 120MB
                 minimumIOSVersion: "15.0",
                 minimumMacOSVersion: "12.0",
@@ -191,7 +191,7 @@ struct EchoelMLModelConfiguration {
                 localURL: modelsPath.appendingPathComponent("HRVCoherencePredictor.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/hrv_coherence_v1.1.mlmodelc.zip"),
                 checksum: "d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9",
-                computeUnits: .cpuAndNeuralEngine,
+                computeUnits: .all,
                 memoryRequirements: 50_000_000, // 50MB
                 minimumIOSVersion: "15.0",
                 minimumMacOSVersion: "12.0",
@@ -242,7 +242,7 @@ struct EchoelMLModelConfiguration {
                 localURL: modelsPath.appendingPathComponent("GestureRecognition.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/gesture_recognition_v1.3.mlmodelc.zip"),
                 checksum: "g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2",
-                computeUnits: .cpuAndNeuralEngine,
+                computeUnits: .all,
                 memoryRequirements: 90_000_000, // 90MB
                 minimumIOSVersion: "15.0",
                 minimumMacOSVersion: "12.0",
@@ -259,7 +259,7 @@ struct EchoelMLModelConfiguration {
                 localURL: modelsPath.appendingPathComponent("BreathingPatternAnalysis.mlmodelc"),
                 remoteURL: URL(string: "https://models.echoelmusic.com/breathing_pattern_v1.mlmodelc.zip"),
                 checksum: "h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3",
-                computeUnits: .cpuAndNeuralEngine,
+                computeUnits: .all,
                 memoryRequirements: 60_000_000, // 60MB
                 minimumIOSVersion: "15.0",
                 minimumMacOSVersion: "12.0",
@@ -522,7 +522,25 @@ struct MLInferenceResult {
 
     func getValue<T>(for key: String) -> T? {
         if let feature = output.featureValue(for: key) {
-            return feature.value as? T
+            // Extract value based on feature type
+            switch feature.type {
+            case .double:
+                return feature.doubleValue as? T
+            case .int64:
+                return feature.int64Value as? T
+            case .string:
+                return feature.stringValue as? T
+            case .multiArray:
+                return feature.multiArrayValue as? T
+            case .dictionary:
+                return feature.dictionaryValue as? T
+            case .image:
+                return feature.imageBufferValue as? T
+            case .sequence:
+                return feature.sequenceValue as? T
+            @unknown default:
+                return nil
+            }
         }
         return metadata[key] as? T
     }
