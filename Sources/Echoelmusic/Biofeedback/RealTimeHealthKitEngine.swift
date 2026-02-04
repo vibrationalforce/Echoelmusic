@@ -460,10 +460,11 @@ public final class RealTimeHealthKitEngine: ObservableObject {
         }
     }
 
-    private func processHeartRateSamples(_ samples: [HKSample]?) {
+    nonisolated private func processHeartRateSamples(_ samples: [HKSample]?) {
         guard let samples = samples as? [HKQuantitySample], !samples.isEmpty else { return }
 
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             for sample in samples {
                 let heartRate = sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
 
@@ -486,10 +487,11 @@ public final class RealTimeHealthKitEngine: ObservableObject {
         }
     }
 
-    private func processHRVSamples(_ samples: [HKSample]?) {
+    nonisolated private func processHRVSamples(_ samples: [HKSample]?) {
         guard let samples = samples as? [HKQuantitySample], !samples.isEmpty else { return }
 
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             for sample in samples {
                 let hrv = sample.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
                 heartData.heartRateVariability = hrv

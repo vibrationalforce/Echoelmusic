@@ -669,7 +669,7 @@ struct VisualizationProvider: TimelineProvider {
             ))
         }
 
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+        let timeline = Timeline(entries: entries, policy: TimelineReloadPolicy.atEnd)
         completion(timeline)
     }
 }

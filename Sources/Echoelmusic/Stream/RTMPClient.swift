@@ -41,13 +41,28 @@ class RTMPClient: ObservableObject {
     @Published private(set) var bytesWritten: Int64 = 0
     @Published private(set) var currentBitrate: Int = 0
 
-    enum ConnectionState {
+    enum ConnectionState: Equatable {
         case disconnected
         case connecting
         case handshaking
         case connected
         case streaming
         case error(String)
+
+        static func == (lhs: ConnectionState, rhs: ConnectionState) -> Bool {
+            switch (lhs, rhs) {
+            case (.disconnected, .disconnected),
+                 (.connecting, .connecting),
+                 (.handshaking, .handshaking),
+                 (.connected, .connected),
+                 (.streaming, .streaming):
+                return true
+            case (.error(let l), .error(let r)):
+                return l == r
+            default:
+                return false
+            }
+        }
     }
 
     // MARK: - Properties
