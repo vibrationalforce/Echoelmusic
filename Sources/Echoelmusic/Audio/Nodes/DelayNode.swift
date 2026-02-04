@@ -27,7 +27,7 @@ class DelayNode: BaseEchoelmusicNode {
     init() {
         self.delayUnit = AVAudioUnitDelay()
 
-        super.init(name: "Bio-Reactive Delay", type: .effect)
+        super.init(name: "Bio-Reactive Delay", type: .delay)
 
         // Setup parameters
         parameters = [

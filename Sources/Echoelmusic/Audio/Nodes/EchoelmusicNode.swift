@@ -88,10 +88,14 @@ protocol EchoelmusicNode: AnyObject {
 /// Node type classification
 enum NodeType: String, Codable {
     case generator  // Generates audio (oscillators, samplers)
-    case effect     // Processes audio (reverb, delay, filter)
+    case effect     // Processes audio (generic effect)
+    case filter     // Filter effect (LP, HP, BP, etc.)
+    case reverb     // Reverb effect
+    case delay      // Delay effect
     case analyzer   // Analyzes audio (FFT, pitch detection)
     case mixer      // Mixes multiple audio sources
     case utility    // Utility functions (gain, pan, etc.)
+    case output     // Output node
 }
 
 

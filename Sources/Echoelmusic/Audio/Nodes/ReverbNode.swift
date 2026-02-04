@@ -57,7 +57,7 @@ class ReverbNode: BaseEchoelmusicNode {
     // MARK: - Initialization
 
     init() {
-        super.init(name: "Bio-Reactive Reverb", type: .effect)
+        super.init(name: "Bio-Reactive Reverb", type: .reverb)
 
         // Setup parameters
         parameters = [

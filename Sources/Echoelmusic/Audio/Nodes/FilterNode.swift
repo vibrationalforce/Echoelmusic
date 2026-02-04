@@ -47,7 +47,7 @@ class FilterNode: BaseEchoelmusicNode {
     // MARK: - Initialization
 
     init() {
-        super.init(name: "Bio-Reactive Filter", type: .effect)
+        super.init(name: "Bio-Reactive Filter", type: .filter)
 
         // Setup parameters
         parameters = [
