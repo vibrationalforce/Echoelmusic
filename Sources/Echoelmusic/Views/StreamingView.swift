@@ -9,6 +9,11 @@ struct StreamingView: View {
 
     @EnvironmentObject var healthKitManager: HealthKitManager
 
+    // MARK: - Engine
+
+    @StateObject private var streamEngine = StreamEngine()
+    @ObservedObject private var bridge = WorkspaceIntegrationBridge.shared
+
     // MARK: - State
 
     @State private var selectedDestinations: Set<StreamEngine.StreamDestination> = []
@@ -19,11 +24,13 @@ struct StreamingView: View {
     @State private var adaptiveBitrateEnabled: Bool = true
     @State private var bioReactiveEnabled: Bool = true
     @State private var showingKeyInput: StreamEngine.StreamDestination?
-    @State private var isStreaming: Bool = false
     @State private var showingScenePicker: Bool = false
     @State private var showingAnalytics: Bool = false
     @State private var currentScene: Scene?
     @State private var errorMessage: String?
+
+    /// Stream state synced from engine
+    private var isStreaming: Bool { streamEngine.isStreaming }
 
     // MARK: - Body
 
@@ -529,16 +536,89 @@ struct StreamingView: View {
         }
     }
 
+    /// Toggle streaming on/off - WIRED TO ENGINE
     private func toggleStreaming() {
-        withAnimation(VaporwaveAnimation.smooth) {
-            isStreaming.toggle()
-        }
+        Task {
+            if streamEngine.isStreaming {
+                // Stop streaming
+                await streamEngine.stopStreaming()
+                log.streaming("⏹️ StreamingView: Stopped stream")
+            } else {
+                // Validate destinations
+                guard !selectedDestinations.isEmpty else {
+                    errorMessage = "Please select at least one streaming destination"
+                    return
+                }
 
-        if isStreaming {
-            log.streaming("▶️ StreamingView: Starting stream to \(selectedDestinations.count) destination(s)")
-        } else {
-            log.streaming("⏹️ StreamingView: Stopping stream")
+                // Validate stream keys
+                for destination in selectedDestinations {
+                    if streamKeys[destination]?.isEmpty ?? true {
+                        errorMessage = "Please enter stream key for \(destination.rawValue)"
+                        return
+                    }
+                }
+
+                // Configure stream quality
+                streamEngine.updateConfiguration(
+                    resolution: selectedResolution,
+                    frameRate: frameRate,
+                    bitrate: bitrate
+                )
+
+                // Start streaming
+                do {
+                    try await streamEngine.startStreaming(
+                        destinations: Array(selectedDestinations),
+                        streamKeys: streamKeys
+                    )
+                    log.streaming("▶️ StreamingView: Started stream to \(selectedDestinations.count) destination(s)")
+
+                    // Start bio-reactive updates if enabled
+                    if bioReactiveEnabled {
+                        startBioReactiveUpdates()
+                    }
+                } catch {
+                    errorMessage = "Failed to start stream: \(error.localizedDescription)"
+                    log.streaming("❌ StreamingView: Stream failed - \(error)", level: .error)
+                }
+            }
         }
+    }
+
+    /// Start continuous bio-reactive updates during streaming
+    private func startBioReactiveUpdates() {
+        // Create a timer to update bio parameters
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak streamEngine] timer in
+            guard let engine = streamEngine, engine.isStreaming else {
+                timer.invalidate()
+                return
+            }
+
+            Task { @MainActor in
+                // Update stream engine with current bio data
+                engine.updateBioParameters(
+                    coherence: Float(bridge.hrvCoherence),
+                    heartRate: Float(bridge.heartRate),
+                    hrv: Float(healthKitManager.hrvRMSSD),
+                    breathingPhase: Float(bridge.breathingRate / 30.0)
+                )
+            }
+        }
+    }
+
+    /// Get total viewers across all streams
+    private var totalViewers: Int {
+        streamEngine.activeStreams.values.reduce(0) { $0 + $1.viewers }
+    }
+
+    /// Get total frames sent
+    private var totalFramesSent: Int {
+        streamEngine.activeStreams.values.reduce(0) { $0 + $1.framesSent }
+    }
+
+    /// Get total dropped frames
+    private var totalDroppedFrames: Int {
+        streamEngine.activeStreams.values.reduce(0) { $0 + $1.droppedFrames }
     }
 }
 
