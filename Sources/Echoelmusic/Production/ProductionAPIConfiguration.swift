@@ -1281,18 +1281,18 @@ public final class ProductionAPIManager {
  // 3. Validate all keys are present
  let missingKeys = apiManager.validateAPIKeys()
  if !missingKeys.isEmpty {
-     print("Missing API keys: \(missingKeys)")
+     echoelLog.warning("Missing API keys: \(missingKeys)", category: .network)
  }
 
  // 4. Perform health checks
  let healthResults = await apiManager.performHealthCheck()
  for result in healthResults {
-     print("\(result.apiName): \(result.isHealthy ? "✅" : "❌")")
+     echoelLog.info("\(result.apiName): \(result.isHealthy ? "healthy" : "unhealthy")", category: .network)
  }
 
  // 5. Generate health report
  let report = await apiManager.generateHealthReport()
- print(report)
+ echoelLog.info(report, category: .network)
 
  // 6. Environment variable support
  // Set in Xcode scheme or CI/CD:

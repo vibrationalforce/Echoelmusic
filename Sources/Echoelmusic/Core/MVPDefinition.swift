@@ -695,13 +695,13 @@ public struct LaunchReadinessChecker {
 
  // Create checklist
  let checklist = MVPChecklist(features: features)
- print(checklist.markdownReport())
+ echoelLog.info(checklist.markdownReport(), category: .system)
 
  // Check readiness
  let checker = LaunchReadinessChecker(checklist: checklist)
  let readiness = checker.isReadyToLaunch()
- print(readiness.message)
+ echoelLog.info(readiness.message, category: .system)
 
  // Generate full report
- print(checker.generateReport())
+ echoelLog.info(checker.generateReport(), category: .system)
  */
