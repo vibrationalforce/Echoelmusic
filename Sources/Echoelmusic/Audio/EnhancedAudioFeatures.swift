@@ -1459,7 +1459,7 @@ class VoiceProcessor {
         var logSum: Float = 0
         var count = 0
         for mag in spectrum where mag > 0 {
-            logSum += log(mag)
+            logSum += Darwin.log(mag)
             count += 1
         }
         let geometricMean = exp(logSum / Float(count))

@@ -759,7 +759,7 @@ class EnhancedMLModels: ObservableObject {
                 }
 
                 // Apply log compression
-                filterOutput[m] = log(max(filterOutput[m], 1e-10))
+                filterOutput[m] = Darwin.log(max(filterOutput[m], 1e-10))
             }
 
             // Step 3: DCT to get MFCCs

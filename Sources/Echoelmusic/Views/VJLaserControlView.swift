@@ -1193,8 +1193,8 @@ struct KeystoneKnob: View {
         .gesture(
             DragGesture()
                 .onChanged { drag in
-                    x = Float(drag.translation.width / 50).clamped(to: -1...1)
-                    y = Float(drag.translation.height / 50).clamped(to: -1...1)
+                    x = CGFloat(drag.translation.width / 50).clamped(to: -1...1)
+                    y = CGFloat(drag.translation.height / 50).clamped(to: -1...1)
                 }
         )
     }
