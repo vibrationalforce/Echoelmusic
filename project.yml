@@ -63,7 +63,7 @@ settings:
     Release:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
       SWIFT_COMPILATION_MODE: "wholemodule"
-      # CODE_SIGN_IDENTITY is not set - let automatic signing determine identity
+      CODE_SIGN_IDENTITY: "Apple Distribution"
 
 # =============================================================================
 # TARGETS
@@ -156,11 +156,15 @@ targets:
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
     # No separate extension needed - same approach as macOS
-    dependencies:
-      - target: EchoelmusicWidgets
-        embed: true
-      - target: EchoelmusicClip
-        embed: false
+    # Dependencies temporarily disabled for initial TestFlight build
+    # Re-enable after registering App IDs in Developer Portal:
+    #   - com.echoelmusic.app.widgets
+    #   - com.echoelmusic.app.clip
+    # dependencies:
+    #   - target: EchoelmusicWidgets
+    #     embed: true
+    #   - target: EchoelmusicClip
+    #     embed: false
     entitlements:
       path: Echoelmusic.entitlements
 
