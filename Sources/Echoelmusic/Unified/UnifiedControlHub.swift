@@ -411,7 +411,7 @@ public class UnifiedControlHub: ObservableObject {
     @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
     public func updateLambdaModeWithBioData() {
         guard let lambda = lambdaModeEngine,
-              let healthKit = healthKitManager else { return }
+              let healthKit = healthKitEngine else { return }
 
         var bioData = UnifiedBioData()
         bioData.heartRate = healthKit.heartRate
@@ -1095,9 +1095,9 @@ public class UnifiedControlHub: ObservableObject {
                 // Gaze-derived parameters can be synced as part of biometric data
                 let hrvModifier = params.attention * 20  // Attention affects coherence perception
                 syncBiometricsToSession(
-                    hrvCoherence: healthKitManager?.hrvCoherence ?? 50 + Float(hrvModifier),
-                    heartRate: Float(healthKitManager?.heartRate ?? 72),
-                    breathingRate: Float(healthKitManager?.breathingRate ?? 12)
+                    hrvCoherence: healthKitEngine?.hrvCoherence ?? 50 + Float(hrvModifier),
+                    heartRate: Float(healthKitEngine?.heartRate ?? 72),
+                    breathingRate: Float(healthKitEngine?.breathingRate ?? 12)
                 )
             }
         }
@@ -1137,7 +1137,7 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateVisualEngine() {
-        guard let healthKit = healthKitManager else {
+        guard let healthKit = healthKitEngine else {
             return
         }
 
@@ -1175,7 +1175,7 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     private func updateLightSystems() {
-        guard let healthKit = healthKitManager else {
+        guard let healthKit = healthKitEngine else {
             return
         }
 
@@ -1187,10 +1187,9 @@ public class UnifiedControlHub: ObservableObject {
 
         // Update Push 3 LED patterns
         if let push3 = push3LEDController {
-            push3.updateBioReactive(
-                hrvCoherence: bioData.hrvCoherence,
-                heartRate: bioData.heartRate,
-                breathingRate: bioData.breathingRate
+            push3.updateFromBioSignals(
+                hrvCoherence: Double(bioData.hrvCoherence),
+                heartRate: Double(bioData.heartRate)
             )
         }
 
