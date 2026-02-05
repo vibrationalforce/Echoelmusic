@@ -786,29 +786,29 @@ struct UnifiedVisualizer: View {
             Group {
                 switch engine.currentMode {
                 case .liquidLight:
-                    LiquidLightVisualizer(params: engine.visualParams)
+                    AnyView(LiquidLightVisualizer(params: engine.visualParams))
                 case .rainbow:
-                    RainbowSpectrumVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
+                    AnyView(RainbowSpectrumVisualizer(params: engine.visualParams, spectrum: engine.spectrumData))
                 case .particles:
-                    ParticleVisualizer(params: engine.visualParams)
+                    AnyView(ParticleVisualizer(params: engine.visualParams))
                 case .spectrum:
-                    SpectrumVisualizer(data: engine.spectrumData, params: engine.visualParams)
+                    AnyView(SpectrumVisualizer(data: engine.spectrumData, params: engine.visualParams))
                 case .waveform:
-                    WaveformVisualizer(data: engine.waveformData, params: engine.visualParams)
+                    AnyView(WaveformVisualizer(data: engine.waveformData, params: engine.visualParams))
                 case .mandala:
-                    MandalaVisualizer(params: engine.visualParams)
+                    AnyView(MandalaVisualizer(params: engine.visualParams))
                 case .cymatics:
-                    CymaticsVisualizer(params: engine.visualParams)
+                    AnyView(CymaticsVisualizer(params: engine.visualParams))
                 case .vaporwave:
-                    VaporwaveVisualizer(params: engine.visualParams, spectrum: engine.spectrumData)
+                    AnyView(VaporwaveVisualizer(params: engine.visualParams, spectrum: engine.spectrumData))
                 case .nebula:
-                    NebulaVisualizer(params: engine.visualParams)
+                    AnyView(NebulaVisualizer(params: engine.visualParams))
                 case .kaleidoscope:
-                    KaleidoscopeVisualizer(params: engine.visualParams)
+                    AnyView(KaleidoscopeVisualizer(params: engine.visualParams))
                 case .flowField:
-                    FlowFieldVisualizer(params: engine.visualParams)
+                    AnyView(FlowFieldVisualizer(params: engine.visualParams))
                 case .octaveMap:
-                    OctaveTranspositionVisualizer(params: engine.visualParams)
+                    AnyView(OctaveTranspositionVisualizer(params: engine.visualParams))
                 }
             }
 

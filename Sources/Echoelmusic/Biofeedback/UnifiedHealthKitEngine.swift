@@ -1124,7 +1124,7 @@ public struct UnifiedHealthKitView: View {
     @State private var showDisclaimer = true
 
     public init(engine: UnifiedHealthKitEngine = .shared) {
-        self.engine = engine
+        _engine = ObservedObject(wrappedValue: engine)
     }
 
     public var body: some View {
@@ -1215,7 +1215,8 @@ public struct UnifiedHealthKitView: View {
     }
 
     private var coherenceColor: Color {
-        switch engine.coherenceLevel {
+        let level: CoherenceLevel = engine.coherenceLevel
+        switch level {
         case .high: return .green
         case .medium: return .yellow
         case .low: return .orange
