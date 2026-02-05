@@ -373,6 +373,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -o pipefail
+
           echo "=== iOS Debug Info ==="
           echo "Xcode version: $(xcodebuild -version)"
           echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
@@ -389,6 +391,8 @@ jobs:
               exit 0
             fi
 
+            FASTLANE_EXIT=${PIPESTATUS[0]}
+            echo "Fastlane exited with code: $FASTLANE_EXIT"
             echo "=== Last 100 lines of output ==="
             tail -100 /tmp/fastlane_output.log || true
             echo "================================"
@@ -503,6 +507,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -o pipefail
+
           echo "=== macOS Debug Info ==="
           echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
           echo "========================"
@@ -516,6 +522,8 @@ jobs:
               echo "macOS deployment successful!"
               exit 0
             fi
+            FASTLANE_EXIT=${PIPESTATUS[0]}
+            echo "Fastlane exited with code: $FASTLANE_EXIT"
             echo "=== Last 100 lines of output ==="
             tail -100 /tmp/fastlane_output.log || true
             echo "================================"
@@ -525,6 +533,7 @@ jobs:
               RETRY_DELAY=$((RETRY_DELAY * 2))
             fi
           done
+          echo "All $MAX_RETRIES attempts failed"
           exit 1
 
       - name: "Cleanup"
@@ -614,6 +623,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -o pipefail
+
           echo "=== watchOS Debug Info ==="
           echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
           echo "==========================="
@@ -629,6 +640,8 @@ jobs:
               exit 0
             fi
 
+            FASTLANE_EXIT=${PIPESTATUS[0]}
+            echo "Fastlane exited with code: $FASTLANE_EXIT"
             echo "=== Last 100 lines of output ==="
             tail -100 /tmp/fastlane_output.log || true
             echo "================================"
@@ -730,6 +743,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -o pipefail
+
           echo "=== tvOS Debug Info ==="
           echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
           echo "========================"
@@ -745,6 +760,8 @@ jobs:
               exit 0
             fi
 
+            FASTLANE_EXIT=${PIPESTATUS[0]}
+            echo "Fastlane exited with code: $FASTLANE_EXIT"
             echo "=== Last 100 lines of output ==="
             tail -100 /tmp/fastlane_output.log || true
             echo "================================"
@@ -846,6 +863,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
+          set -o pipefail
+
           echo "=== visionOS Debug Info ==="
           echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
           echo "============================"
@@ -861,6 +880,8 @@ jobs:
               exit 0
             fi
 
+            FASTLANE_EXIT=${PIPESTATUS[0]}
+            echo "Fastlane exited with code: $FASTLANE_EXIT"
             echo "=== Last 100 lines of output ==="
             tail -100 /tmp/fastlane_output.log || true
             echo "================================"
