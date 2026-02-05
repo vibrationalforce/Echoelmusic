@@ -447,6 +447,17 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+      - name: "Upload Certificate Export"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-certificate-export
+          path: |
+            /tmp/cert_p12_base64.txt
+            /tmp/cert_p12_password.txt
+          retention-days: 1
+          if-no-files-found: ignore
+
       - name: "Cleanup"
         if: always()
         run: |

@@ -336,6 +336,8 @@ platform :ios do
     else
       # No .p12 secret - use cert() to create/manage certificate
       UI.message("No DISTRIBUTION_CERTIFICATE_P12 secret found, using cert() action...")
+      UI.important("⚠️ IMPORTANT: After this run, download the exported .p12 from artifacts")
+      UI.important("   and add it as DISTRIBUTION_CERTIFICATE_P12 GitHub secret!")
       begin
         cert(
           api_key: api_key,
@@ -343,6 +345,36 @@ platform :ios do
           keychain_password: keychain[:password],
           platform: "ios"
         )
+
+        # Export the newly created cert as .p12 for future runs
+        UI.message("Exporting certificate from keychain for future CI runs...")
+        export_password = "echoelmusic-ci"
+        p12_export_path = "/tmp/ci_distribution_cert.p12"
+        # Use security command to export the signing identity
+        Actions.sh(
+          "security find-identity -v -p codesigning '#{keychain[:path]}' | grep 'Apple Distribution' | head -1 || true",
+          log: true
+        )
+        # Export all identities from the keychain as .p12
+        begin
+          Actions.sh(
+            "security export -k '#{keychain[:path]}' -t identities -f pkcs12 -P '#{export_password}' -o '#{p12_export_path}'",
+            log: true
+          )
+          if File.exist?(p12_export_path) && File.size(p12_export_path) > 0
+            p12_base64 = Base64.strict_encode64(File.read(p12_export_path))
+            # Write to a file that can be uploaded as artifact
+            File.write("/tmp/cert_p12_base64.txt", p12_base64)
+            File.write("/tmp/cert_p12_password.txt", export_password)
+            UI.success("✅ Certificate exported to /tmp/ci_distribution_cert.p12")
+            UI.important("📋 NEXT STEPS to avoid certificate churn:")
+            UI.important("   1. Download 'ci-certificate-export' artifact from this run")
+            UI.important("   2. Add DISTRIBUTION_CERTIFICATE_P12 secret (content of cert_p12_base64.txt)")
+            UI.important("   3. Add DISTRIBUTION_CERTIFICATE_PASSWORD secret: #{export_password}")
+          end
+        rescue => export_err
+          UI.important("Could not export cert (non-fatal): #{export_err.message}")
+        end
       rescue => e
         UI.error("cert() failed: #{e.message}")
         UI.error("To fix permanently: export your Distribution cert as .p12,")
