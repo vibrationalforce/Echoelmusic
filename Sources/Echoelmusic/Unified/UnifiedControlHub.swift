@@ -533,10 +533,10 @@ public class UnifiedControlHub: ObservableObject {
     /// Sync biometric data across all devices in cross-platform session
     public func syncBiometricsToSession(hrvCoherence: Float, heartRate: Float, breathingRate: Float) {
         let bioData = BiometricSyncData(
-            hrvCoherence: hrvCoherence,
-            heartRate: heartRate,
-            breathingRate: breathingRate,
-            timestamp: Date()
+            heartRate: Double(heartRate),
+            coherence: Double(hrvCoherence),
+            breathingRate: Double(breathingRate),
+            sourceDeviceId: UUID().uuidString
         )
         crossPlatformSessionManager?.syncBiometricData(bioData)
     }
