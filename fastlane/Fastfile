@@ -365,13 +365,26 @@ platform :ios do
       platform: "ios"
     )
 
-    profile_path = ENV["sigh_profile_path"]
-    profile_uuid = ENV["sigh_udid"]
-    UI.message("Using profile: #{profile_path} (#{profile_uuid})")
+    profile_path = ENV["sigh_profile_path"] || lane_context[SharedValues::SIGH_PROFILE_PATH]
+    profile_uuid = ENV["sigh_udid"] || lane_context[SharedValues::SIGH_UDID]
+    profile_name = ENV["sigh_name"] || lane_context[SharedValues::SIGH_NAME] || ""
+
+    UI.message("=== Provisioning Profile Info ===")
+    UI.message("  Path: #{profile_path}")
+    UI.message("  UUID: #{profile_uuid}")
+    UI.message("  Name: #{profile_name}")
+    UI.message("  ENV sigh_profile_path: #{ENV['sigh_profile_path']}")
+    UI.message("  ENV SIGH_PROFILE_PATH: #{ENV['SIGH_PROFILE_PATH']}")
+    UI.message("  ENV sigh_udid: #{ENV['sigh_udid']}")
+    UI.message("  ENV SIGH_UDID: #{ENV['SIGH_UDID']}")
+    UI.message("================================")
+
+    if profile_uuid.nil? || profile_uuid.empty?
+      UI.user_error!("Failed to get provisioning profile UUID! Check sigh output above.")
+    end
 
     # Step 3: Build with manual signing using fetched cert + profile
-    profile_name = ENV["sigh_profile_name"] || profile_uuid
-
+    # Use PROVISIONING_PROFILE (UUID) instead of PROVISIONING_PROFILE_SPECIFIER (name)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -390,10 +403,10 @@ platform :ios do
         signingStyle: "manual",
         teamID: TEAM_ID,
         provisioningProfiles: {
-          "com.echoelmusic.app" => profile_name
+          "com.echoelmusic.app" => profile_name.empty? ? profile_uuid : profile_name
         }
       },
-      xcargs: "DEVELOPMENT_TEAM='#{TEAM_ID}' CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' PROVISIONING_PROFILE_SPECIFIER='#{profile_name}' COMPILER_INDEX_STORE_ENABLE=NO"
+      xcargs: "DEVELOPMENT_TEAM='#{TEAM_ID}' CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' PROVISIONING_PROFILE='#{profile_uuid}' COMPILER_INDEX_STORE_ENABLE=NO"
     )
 
     # Verify IPA was created
