@@ -806,7 +806,7 @@ struct UnifiedVisualizer: View {
         case .mandala:
             return AnyView(MandalaVisualizer(params: params))
         case .cymatics:
-            return AnyView(CymaticsVisualizer(params: params))
+            return AnyView(SimpleCymaticsVisualizer(params: params))
         case .vaporwave:
             return AnyView(VaporwaveVisualizer(params: params, spectrum: engine.spectrumData))
         case .nebula:
