@@ -130,7 +130,9 @@ class VideoEditingEngine: ObservableObject {
     }
 
     deinit {
-        stopPlayback()
+        player?.pause()
+        player = nil
+        playerItem = nil
     }
 
     // MARK: - Timeline Management

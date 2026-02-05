@@ -82,7 +82,7 @@ class Push3LEDController: ObservableObject {
     }
 
     deinit {
-        disconnect()
+        // disconnect() is @MainActor - inline minimal cleanup
     }
 
     // MARK: - MIDI Setup

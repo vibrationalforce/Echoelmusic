@@ -305,6 +305,9 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Clean up when the object is destroyed
     deinit {
-        stopRecording()
+        if let engine = audioEngine, engine.isRunning {
+            engine.stop()
+        }
+        audioEngine = nil
     }
 }

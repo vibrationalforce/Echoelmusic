@@ -161,7 +161,9 @@ public class StreamEngine: ObservableObject {
     }
 
     deinit {
-        stopStreaming()
+        // Minimal cleanup - stopStreaming() is @MainActor and can't be called from deinit
+        captureTimer?.invalidate()
+        captureTimer = nil
     }
 
     // MARK: - Start Streaming

@@ -1189,7 +1189,7 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
                 guard let self = self else { return }
 
                 do {
-                    try await self.webSocketTask?.sendPing { error in
+                    self.webSocketTask?.sendPing { error in
                         if let error = error {
                             self.logger.error("Heartbeat failed: \(error)", category: .network)
                         } else {

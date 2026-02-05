@@ -175,7 +175,9 @@ public class AbletonLinkClient: ObservableObject {
     public init() {}
 
     deinit {
-        stopSession()
+        updateTimer?.invalidate()
+        discoveryTimer?.invalidate()
+        multicastConnection?.cancel()
     }
 
     // MARK: - Session Management
