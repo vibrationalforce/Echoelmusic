@@ -658,13 +658,14 @@ targets:
 
 schemes:
 
-  # iOS Development (with Widgets and App Clip)
+  # iOS Development
+  # Note: Widgets and Clip temporarily excluded until App IDs registered in Developer Portal
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
-        EchoelmusicWidgets: all
-        EchoelmusicClip: all
+        # EchoelmusicWidgets: all
+        # EchoelmusicClip: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
