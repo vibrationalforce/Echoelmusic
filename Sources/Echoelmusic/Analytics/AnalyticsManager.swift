@@ -21,7 +21,7 @@ public enum AnalyticsEvent: Equatable {
     case sessionEnded(duration: TimeInterval)
     case presetSelected(name: String)
     case presetApplied(name: String)
-    case coherenceAchieved(level: CoherenceLevel)
+    case coherenceAchieved(level: AnalyticsCoherenceLevel)
     case featureUsed(name: String)
     case errorOccurred(type: String, message: String)
     case subscriptionViewed(tier: String)
@@ -117,8 +117,8 @@ public enum AnalyticsEvent: Equatable {
     }
 }
 
-/// Coherence level for analytics
-public enum CoherenceLevel: String {
+/// Coherence level for analytics tracking
+public enum AnalyticsCoherenceLevel: String {
     case low = "low"
     case medium = "medium"
     case high = "high"
@@ -1359,7 +1359,7 @@ extension AnalyticsManager {
 
     /// Track coherence achievement
     public func trackCoherenceAchieved(percentage: Double) {
-        let level: CoherenceLevel
+        let level: AnalyticsCoherenceLevel
         switch percentage {
         case 0..<40:
             level = .low

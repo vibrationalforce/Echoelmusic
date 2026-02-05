@@ -779,40 +779,8 @@ struct UnifiedVisualizer: View {
 
     var body: some View {
         ZStack {
-            // Background
             Color.black
-
-            // Active visualization mode
-            Group {
-                switch engine.currentMode {
-                case .liquidLight:
-                    AnyView(LiquidLightVisualizer(params: engine.visualParams))
-                case .rainbow:
-                    AnyView(RainbowSpectrumVisualizer(params: engine.visualParams, spectrum: engine.spectrumData))
-                case .particles:
-                    AnyView(ParticleVisualizer(params: engine.visualParams))
-                case .spectrum:
-                    AnyView(SpectrumVisualizer(data: engine.spectrumData, params: engine.visualParams))
-                case .waveform:
-                    AnyView(WaveformVisualizer(data: engine.waveformData, params: engine.visualParams))
-                case .mandala:
-                    AnyView(MandalaVisualizer(params: engine.visualParams))
-                case .cymatics:
-                    AnyView(CymaticsVisualizer(params: engine.visualParams))
-                case .vaporwave:
-                    AnyView(VaporwaveVisualizer(params: engine.visualParams, spectrum: engine.spectrumData))
-                case .nebula:
-                    AnyView(NebulaVisualizer(params: engine.visualParams))
-                case .kaleidoscope:
-                    AnyView(KaleidoscopeVisualizer(params: engine.visualParams))
-                case .flowField:
-                    AnyView(FlowFieldVisualizer(params: engine.visualParams))
-                case .octaveMap:
-                    AnyView(OctaveTranspositionVisualizer(params: engine.visualParams))
-                }
-            }
-
-            // Beat flash overlay
+            currentVisualization
             if engine.beatDetected {
                 Rectangle()
                     .fill(Color.white.opacity(0.1))
@@ -820,5 +788,35 @@ struct UnifiedVisualizer: View {
             }
         }
         .clipped()
+    }
+
+    private var currentVisualization: AnyView {
+        let params = engine.visualParams
+        switch engine.currentMode {
+        case .liquidLight:
+            return AnyView(LiquidLightVisualizer(params: params))
+        case .rainbow:
+            return AnyView(RainbowSpectrumVisualizer(params: params, spectrum: engine.spectrumData))
+        case .particles:
+            return AnyView(ParticleVisualizer(params: params))
+        case .spectrum:
+            return AnyView(SpectrumVisualizer(data: engine.spectrumData, params: params))
+        case .waveform:
+            return AnyView(WaveformVisualizer(data: engine.waveformData, params: params))
+        case .mandala:
+            return AnyView(MandalaVisualizer(params: params))
+        case .cymatics:
+            return AnyView(CymaticsVisualizer(params: params))
+        case .vaporwave:
+            return AnyView(VaporwaveVisualizer(params: params, spectrum: engine.spectrumData))
+        case .nebula:
+            return AnyView(NebulaVisualizer(params: params))
+        case .kaleidoscope:
+            return AnyView(KaleidoscopeVisualizer(params: params))
+        case .flowField:
+            return AnyView(FlowFieldVisualizer(params: params))
+        case .octaveMap:
+            return AnyView(OctaveTranspositionVisualizer(params: params))
+        }
     }
 }
