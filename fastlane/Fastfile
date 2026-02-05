@@ -71,28 +71,18 @@ end
 def build_xcargs_with_auth
   api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
 
-  # For App Store/TestFlight with cloud-managed signing:
-  # - Set CODE_SIGN_IDENTITY to Apple Distribution to skip Development signing
-  # - -allowProvisioningUpdates with API auth will auto-create/download profiles
+  # For App Store/TestFlight - use manual signing with Fastlane-managed certs
+  # Certificates and profiles are handled by get_certificates/get_provisioning_profile
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
-    "CODE_SIGN_IDENTITY='Apple Distribution'",
-    "CODE_SIGN_STYLE=Automatic",
-    "COMPILER_INDEX_STORE_ENABLE=NO",
-    "-allowProvisioningUpdates",
-    "-allowProvisioningDeviceRegistration"
+    "COMPILER_INDEX_STORE_ENABLE=NO"
   ]
 
-  # Add API authentication if key file exists (CI environment)
+  # Note: API authentication is handled by Fastlane's cert/sigh actions
+  # xcodebuild auth flags removed - using manual signing with Fastlane-managed certs
   if File.exist?(api_key_path)
-    UI.message("Using App Store Connect API for cloud-managed signing")
-    UI.message("API key: #{ENV['ASC_KEY_ID']}")
-    UI.message("Xcode will automatically select Distribution identity for app-store export")
-    args += [
-      "-authenticationKeyPath '#{api_key_path}'",
-      "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
-      "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'"
-    ]
+    UI.message("API key file found at: #{api_key_path}")
+    UI.message("Signing managed by Fastlane cert/sigh (not xcodebuild cloud signing)")
   else
     UI.message("No API key file found, using local signing")
   end
@@ -317,20 +307,43 @@ platform :ios do
   # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
-    UI.header "iOS TestFlight Build (with Widgets + App Clip)"
+    UI.header "iOS TestFlight Build"
 
     api_key = setup_api_key
     keychain = setup_keychain
 
-    # With xcodebuild API authentication (-authenticationKey* flags), we let
-    # Xcode handle certificate and profile management automatically.
-    # The API key file at ~/.appstoreconnect/private_keys/ enables this.
-    UI.message("Using xcodebuild automatic signing with API authentication")
-    UI.message("Xcode will create/download certificates and profiles as needed")
+    UI.message("Setting up certificates and provisioning profiles...")
 
-    # Build iOS app with cloud-managed signing
-    # Both archive and export steps need API authentication for cloud signing
-    UI.message("Build xcargs: #{build_xcargs_with_auth}")
+    # Step 1: Get/create iOS Distribution certificate
+    cert(
+      api_key: api_key,
+      keychain_path: keychain[:path],
+      keychain_password: keychain[:password],
+      platform: "ios"
+    )
+
+    # Step 2: Get/create App Store provisioning profile for main app
+    profile_info = sigh(
+      api_key: api_key,
+      app_identifier: "com.echoelmusic.app",
+      adhoc: false,
+      readonly: false,
+      platform: "ios"
+    )
+
+    profile_path = ENV["sigh_profile_path"]
+    profile_uuid = ENV["sigh_udid"]
+    UI.message("Using profile: #{profile_path} (#{profile_uuid})")
+
+    # Step 3: Build with the fetched certificate and profile
+    update_code_signing_settings(
+      path: "Echoelmusic.xcodeproj",
+      use_automatic_signing: false,
+      team_id: TEAM_ID,
+      targets: ["Echoelmusic"],
+      code_sign_identity: "Apple Distribution",
+      profile_uuid: profile_uuid
+    )
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -346,11 +359,13 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          "com.echoelmusic.app" => ENV["sigh_profile_name"] || profile_uuid
+        }
       },
-      xcargs: build_xcargs_with_auth,
-      export_xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth
     )
 
     # Verify IPA was created

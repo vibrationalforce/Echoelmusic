@@ -63,7 +63,7 @@ settings:
     Release:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
       SWIFT_COMPILATION_MODE: "wholemodule"
-      CODE_SIGN_IDENTITY: "Apple Distribution"
+      # CODE_SIGN_IDENTITY not set globally - Fastlane manages signing per-target in CI
 
 # =============================================================================
 # TARGETS
