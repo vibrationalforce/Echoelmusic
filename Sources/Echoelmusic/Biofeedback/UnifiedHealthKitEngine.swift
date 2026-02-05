@@ -1215,8 +1215,7 @@ public struct UnifiedHealthKitView: View {
     }
 
     private var coherenceColor: Color {
-        let level: CoherenceLevel = engine.coherenceLevel
-        switch level {
+        switch engine.coherenceLevel {
         case .high: return .green
         case .medium: return .yellow
         case .low: return .orange
