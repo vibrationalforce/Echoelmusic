@@ -283,7 +283,7 @@ class PerformanceOptimizer: ObservableObject {
         // If FPS drops below target, reduce quality
         if currentFPS < Double(targetFPS) * 0.9 {
             if performanceMode != .echoelmusic {
-                logger.warning("⚠️ FPS drop detected: \(self.currentFPS, privacy: .public) < \(self.targetFPS)")
+                logger.warning("⚠️ FPS drop detected: \(self.currentFPS) < \(self.targetFPS)")
                 // Auto-adjust mode
                 switch performanceMode {
                 case .maxPerformance:
@@ -332,7 +332,7 @@ class PerformanceOptimizer: ObservableObject {
         guard batteryLevel < 0.2 else { return }  // < 20%
 
         if performanceMode != .echoelmusic && performanceMode != .batterySaver {
-            logger.info("🔋 Low battery (\(self.batteryLevel * 100, privacy: .public)%) - switching to Battery Saver")
+            logger.info("🔋 Low battery (\(self.batteryLevel * 100)%) - switching to Battery Saver")
             performanceMode = .batterySaver
             targetFPS = performanceMode.targetFPS
         }
