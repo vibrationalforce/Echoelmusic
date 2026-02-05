@@ -315,72 +315,67 @@ platform :ios do
     UI.message("Setting up certificates and provisioning profiles...")
 
     # Step 1: Get iOS Distribution certificate
-    # Priority: .p12 secret > cert() to create new cert with private key in CI keychain
+    # Strategy: Import .p12 to seed keychain, then always run cert() to validate
+    require 'base64'
     p12_content = ENV["DISTRIBUTION_CERTIFICATE_P12"]
     p12_password = ENV["DISTRIBUTION_CERTIFICATE_PASSWORD"] || ""
 
+    # 1a: Import .p12 if available (seeds keychain with cert + private key)
     if p12_content && !p12_content.empty?
-      # Best path: import stored .p12 certificate (contains cert + private key)
-      UI.message("Importing distribution certificate from DISTRIBUTION_CERTIFICATE_P12 secret...")
-      p12_path = "/tmp/distribution.p12"
-      require 'base64'
-      File.write(p12_path, Base64.decode64(p12_content))
-      import_certificate(
-        certificate_path: p12_path,
-        certificate_password: p12_password,
-        keychain_path: keychain[:path],
-        keychain_password: keychain[:password]
-      )
-      File.delete(p12_path) if File.exist?(p12_path)
-      UI.success("Certificate imported from .p12 secret")
-    else
-      # No .p12 secret - use cert() to create/manage certificate
-      UI.message("No DISTRIBUTION_CERTIFICATE_P12 secret found, using cert() action...")
-      UI.important("⚠️ IMPORTANT: After this run, download the exported .p12 from artifacts")
-      UI.important("   and add it as DISTRIBUTION_CERTIFICATE_P12 GitHub secret!")
+      UI.message("Importing distribution certificate from .p12 secret...")
       begin
-        cert(
-          api_key: api_key,
+        p12_path = "/tmp/distribution.p12"
+        File.write(p12_path, Base64.decode64(p12_content))
+        import_certificate(
+          certificate_path: p12_path,
+          certificate_password: p12_password,
           keychain_path: keychain[:path],
-          keychain_password: keychain[:password],
-          platform: "ios"
+          keychain_password: keychain[:password]
         )
-
-        # Export the newly created cert as .p12 for future runs
-        UI.message("Exporting certificate from keychain for future CI runs...")
-        export_password = "echoelmusic-ci"
-        p12_export_path = "/tmp/ci_distribution_cert.p12"
-        # Use security command to export the signing identity
-        Actions.sh(
-          "security find-identity -v -p codesigning '#{keychain[:path]}' | grep 'Apple Distribution' | head -1 || true",
-          log: true
-        )
-        # Export all identities from the keychain as .p12
-        begin
-          Actions.sh(
-            "security export -k '#{keychain[:path]}' -t identities -f pkcs12 -P '#{export_password}' -o '#{p12_export_path}'",
-            log: true
-          )
-          if File.exist?(p12_export_path) && File.size(p12_export_path) > 0
-            p12_base64 = Base64.strict_encode64(File.read(p12_export_path))
-            # Write to a file that can be uploaded as artifact
-            File.write("/tmp/cert_p12_base64.txt", p12_base64)
-            File.write("/tmp/cert_p12_password.txt", export_password)
-            UI.success("✅ Certificate exported to /tmp/ci_distribution_cert.p12")
-            UI.important("📋 NEXT STEPS to avoid certificate churn:")
-            UI.important("   1. Download 'ci-certificate-export' artifact from this run")
-            UI.important("   2. Add DISTRIBUTION_CERTIFICATE_P12 secret (content of cert_p12_base64.txt)")
-            UI.important("   3. Add DISTRIBUTION_CERTIFICATE_PASSWORD secret: #{export_password}")
-          end
-        rescue => export_err
-          UI.important("Could not export cert (non-fatal): #{export_err.message}")
-        end
+        File.delete(p12_path) if File.exist?(p12_path)
+        UI.success("Certificate imported from .p12 secret")
       rescue => e
-        UI.error("cert() failed: #{e.message}")
-        UI.error("To fix permanently: export your Distribution cert as .p12,")
-        UI.error("base64-encode it, and add as DISTRIBUTION_CERTIFICATE_P12 GitHub secret")
-        raise e
+        UI.important("Could not import .p12 (will try cert()): #{e.message}")
       end
+    else
+      UI.message("No DISTRIBUTION_CERTIFICATE_P12 secret found")
+    end
+
+    # 1b: Always run cert() to ensure a valid distribution cert exists
+    # If .p12 cert is still valid in portal, cert() reuses it (no new cert created)
+    # If .p12 cert was revoked, cert() creates a new one
+    begin
+      cert(
+        api_key: api_key,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        platform: "ios"
+      )
+    rescue => e
+      UI.error("cert() failed: #{e.message}")
+      raise e
+    end
+
+    # 1c: Export cert as .p12 for future runs (always, so secret stays up to date)
+    begin
+      export_password = "echoelmusic-ci"
+      p12_export_path = "/tmp/ci_distribution_cert.p12"
+      Actions.sh(
+        "security find-identity -v -p codesigning '#{keychain[:path]}' | grep 'Apple Distribution' | head -1 || true",
+        log: true
+      )
+      Actions.sh(
+        "security export -k '#{keychain[:path]}' -t identities -f pkcs12 -P '#{export_password}' -o '#{p12_export_path}'",
+        log: true
+      )
+      if File.exist?(p12_export_path) && File.size(p12_export_path) > 0
+        p12_base64 = Base64.strict_encode64(File.read(p12_export_path))
+        File.write("/tmp/cert_p12_base64.txt", p12_base64)
+        File.write("/tmp/cert_p12_password.txt", export_password)
+        UI.success("✅ Certificate exported - update DISTRIBUTION_CERTIFICATE_P12 secret if changed")
+      end
+    rescue => export_err
+      UI.important("Could not export cert (non-fatal): #{export_err.message}")
     end
 
     # Step 2: Get/create App Store provisioning profile for main app
