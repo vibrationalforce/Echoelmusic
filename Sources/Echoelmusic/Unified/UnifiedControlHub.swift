@@ -456,13 +456,11 @@ public class UnifiedControlHub: ObservableObject {
     public func enableHardwareEcosystem() {
         hardwareEcosystem = HardwareEcosystem.shared
 
-        // Auto-discover connected devices
+        // Log ecosystem status
         Task {
-            await hardwareEcosystem?.discoverAllDevices()
-
             // Log discovered devices
             if let ecosystem = hardwareEcosystem {
-                Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.supportedInterfaces.count)\n  - MIDI controllers available: \(ecosystem.midiControllers.supportedControllers.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)\n  - Video hardware available: \(ecosystem.videoHardware.supportedDevices.count)\n  - VR/AR devices available: \(ecosystem.vrArDevices.supportedDevices.count)\n  - Wearables available: \(ecosystem.wearables.supportedDevices.count)", category: .system)
+                Log.info("🔌 Hardware Ecosystem enabled\n  - Connected devices: \(ecosystem.connectedDevices.count)\n  - Audio interfaces available: \(ecosystem.audioInterfaces.interfaces.count)\n  - MIDI controllers available: \(ecosystem.midiControllers.controllers.count)\n  - Lighting fixtures available: \(ecosystem.lightingHardware.supportedFixtures.count)", category: .system)
             }
         }
     }
@@ -514,12 +512,12 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Get recommended audio interface for current platform
     public func getRecommendedAudioInterface() -> AudioInterfaceRegistry.AudioInterface? {
-        return hardwareEcosystem?.audioInterfaces.getRecommendedInterface()
+        return hardwareEcosystem?.audioInterfaces.interfaces.first
     }
 
     /// Get all connected MIDI controllers
     public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
-        return hardwareEcosystem?.midiControllers.supportedControllers.filter { controller in
+        return hardwareEcosystem?.midiControllers.controllers.filter { controller in
             // Check if controller is actually connected
             hardwareEcosystem?.connectedDevices.contains { $0.name == controller.name } ?? false
         } ?? []
