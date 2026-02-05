@@ -407,6 +407,15 @@ jobs:
           echo "All $MAX_RETRIES attempts failed"
           exit 1
 
+      - name: "Dump Fastlane Errors to Summary"
+        if: failure()
+        run: |
+          echo "## iOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No fastlane log found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
       - name: "Upload Build Logs"
         if: always()
         uses: actions/upload-artifact@v4
