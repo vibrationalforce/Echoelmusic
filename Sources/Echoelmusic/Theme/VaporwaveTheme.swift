@@ -355,14 +355,7 @@ struct GlassCard: ViewModifier {
                 if showAccentBar {
                     VaporwaveGradients.cardAccent
                         .frame(height: 3)
-                        .clipShape(
-                            UnevenRoundedRectangle(
-                                topLeadingRadius: cornerRadius,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: cornerRadius
-                            )
-                        )
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                 }
             }
             .shadow(

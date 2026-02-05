@@ -1172,8 +1172,8 @@ struct SurfaceRowView: View {
 }
 
 struct KeystoneKnob: View {
-    @Binding var x: Float
-    @Binding var y: Float
+    @Binding var x: CGFloat
+    @Binding var y: CGFloat
 
     var body: some View {
         ZStack {
