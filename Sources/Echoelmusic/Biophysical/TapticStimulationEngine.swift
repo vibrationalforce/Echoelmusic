@@ -193,7 +193,7 @@ public final class TapticStimulationEngine: ObservableObject {
         }
 
         // Ensure engine is started
-        try hapticEngine?.start()
+        try await hapticEngine?.start()
 
         config.frequency = frequency
         config.intensity = min(Double(maxIntensity), intensity)

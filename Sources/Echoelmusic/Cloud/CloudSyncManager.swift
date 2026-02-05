@@ -54,8 +54,8 @@ class CloudSyncManager: ObservableObject {
         let record = CKRecord(recordType: "Session")
         record["name"] = session.name as CKRecordValue
         record["duration"] = session.duration as CKRecordValue
-        record["avgHRV"] = session.avgHRV as CKRecordValue
-        record["avgCoherence"] = session.avgCoherence as CKRecordValue
+        record["avgHRV"] = session.averageHRV as CKRecordValue
+        record["avgCoherence"] = session.averageCoherence as CKRecordValue
 
         // Save to private database
         try await privateDatabase.save(record)
@@ -221,15 +221,18 @@ class CloudSyncManager: ObservableObject {
         let avgHRV = sessionData.hrvReadings.reduce(0, +) / Float(max(sessionData.hrvReadings.count, 1))
         let avgCoherence = sessionData.coherenceReadings.reduce(0, +) / Float(max(sessionData.coherenceReadings.count, 1))
 
-        // Save as complete session
-        let session = Session(
-            name: sessionData.name,
-            duration: sessionData.currentDuration,
-            avgHRV: avgHRV,
-            avgCoherence: avgCoherence
-        )
+        // Save directly to CloudKit with computed averages
+        isSyncing = true
+        defer { isSyncing = false }
 
-        try await saveSession(session)
+        let record = CKRecord(recordType: "Session")
+        record["name"] = sessionData.name as CKRecordValue
+        record["duration"] = sessionData.currentDuration as CKRecordValue
+        record["avgHRV"] = Double(avgHRV) as CKRecordValue
+        record["avgCoherence"] = Double(avgCoherence) as CKRecordValue
+
+        try await privateDatabase.save(record)
+        lastSyncDate = Date()
 
         // Clear current session data
         currentSessionData = nil

@@ -544,11 +544,15 @@ public final class UnifiedHealthKitEngine: ObservableObject {
                 anchor: lastAnchor,
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, anchor, error in
-                self?.handleHeartRateSamples(samples: samples, anchor: anchor, error: error)
+                Task { @MainActor in
+                    self?.handleHeartRateSamples(samples: samples, anchor: anchor, error: error)
+                }
             }
 
             query.updateHandler = { [weak self] _, samples, _, anchor, error in
-                self?.handleHeartRateSamples(samples: samples, anchor: anchor, error: error)
+                Task { @MainActor in
+                    self?.handleHeartRateSamples(samples: samples, anchor: anchor, error: error)
+                }
             }
 
             store.execute(query)
@@ -563,11 +567,15 @@ public final class UnifiedHealthKitEngine: ObservableObject {
                 anchor: nil,
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, _, error in
-                self?.handleHRVSamples(samples: samples, error: error)
+                Task { @MainActor in
+                    self?.handleHRVSamples(samples: samples, error: error)
+                }
             }
 
             query.updateHandler = { [weak self] _, samples, _, _, error in
-                self?.handleHRVSamples(samples: samples, error: error)
+                Task { @MainActor in
+                    self?.handleHRVSamples(samples: samples, error: error)
+                }
             }
 
             store.execute(query)
