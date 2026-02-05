@@ -315,7 +315,7 @@ platform :ios do
     UI.message("Setting up certificates and provisioning profiles...")
 
     # Step 1: Get iOS Distribution certificate
-    # Priority: .p12 secret > cert(force) to auto-revoke oldest and create new
+    # Priority: .p12 secret > cert() to create new cert with private key in CI keychain
     p12_content = ENV["DISTRIBUTION_CERTIFICATE_P12"]
     p12_password = ENV["DISTRIBUTION_CERTIFICATE_PASSWORD"] || ""
 
@@ -341,8 +341,7 @@ platform :ios do
           api_key: api_key,
           keychain_path: keychain[:path],
           keychain_password: keychain[:password],
-          platform: "ios",
-          force: true  # Revoke oldest cert if limit reached, then create new
+          platform: "ios"
         )
       rescue => e
         UI.error("cert() failed: #{e.message}")
