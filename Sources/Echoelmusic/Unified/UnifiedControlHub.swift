@@ -544,10 +544,11 @@ public class UnifiedControlHub: ObservableObject {
     /// Sync audio parameters across all devices in cross-platform session
     public func syncAudioParametersToSession(bpm: Float, filterCutoff: Float, reverbWet: Float) {
         let params = AudioSyncParameters(
-            bpm: bpm,
+            bpm: Double(bpm),
+            volume: 0.8,
+            reverbMix: reverbWet,
             filterCutoff: filterCutoff,
-            reverbWet: reverbWet,
-            masterVolume: 0.8
+            sourceDeviceId: UUID().uuidString
         )
         crossPlatformSessionManager?.syncAudioParameters(params)
     }
@@ -721,8 +722,8 @@ public class UnifiedControlHub: ObservableObject {
     }
 
     /// Get current light field for visualization
-    public var currentLightField: LightField? {
-        quantumLightEmulator?.currentLightField
+    public var currentEmulatorLightField: EmulatorLightField? {
+        quantumLightEmulator?.currentEmulatorLightField
     }
 
     /// Set quantum emulation mode
@@ -910,12 +911,10 @@ public class UnifiedControlHub: ObservableObject {
                 // Apply AFA field to SpatialAudioEngine
                 if let spatialEngine = spatialAudioEngine {
                     // Position sources according to AFA field geometry
-                    for (index, source) in afaField.sources.enumerated() {
-                        spatialEngine.setSourcePosition(
-                            sourceID: index,
-                            x: source.position.x,
-                            y: source.position.y,
-                            z: source.position.z
+                    for source in afaField.sources {
+                        spatialEngine.updateSourcePosition(
+                            id: source.id,
+                            position: SIMD3<Float>(source.position.x, source.position.y, source.position.z)
                         )
 
                         // Apply coherence-based reverb blend
