@@ -92,7 +92,7 @@ class SpatialAudioEngine: ObservableObject {
     }
 
     deinit {
-        stop()
+        audioEngine.stop()
     }
 
     // MARK: - Audio Engine Setup
