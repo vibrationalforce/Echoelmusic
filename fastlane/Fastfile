@@ -314,13 +314,47 @@ platform :ios do
 
     UI.message("Setting up certificates and provisioning profiles...")
 
-    # Step 1: Get/create iOS Distribution certificate
-    cert(
-      api_key: api_key,
-      keychain_path: keychain[:path],
-      keychain_password: keychain[:password],
-      platform: "ios"
-    )
+    # Step 1: Get existing iOS Distribution certificate (don't create new ones)
+    # If this fails, you need to either:
+    # a) Revoke an old certificate at https://developer.apple.com/account/resources/certificates/list
+    # b) Export the existing cert's .p12 and add as DISTRIBUTION_CERTIFICATE_P12 secret
+    begin
+      cert(
+        api_key: api_key,
+        keychain_path: keychain[:path],
+        keychain_password: keychain[:password],
+        platform: "ios",
+        generate_apple_certs: false  # Don't create new, only download existing
+      )
+    rescue => e
+      UI.important("cert with generate_apple_certs=false failed: #{e.message}")
+      UI.message("Checking if a .p12 certificate is provided as secret...")
+
+      # Fallback: import .p12 certificate from secret if available
+      p12_content = ENV["DISTRIBUTION_CERTIFICATE_P12"]
+      p12_password = ENV["DISTRIBUTION_CERTIFICATE_PASSWORD"] || ""
+
+      if p12_content && !p12_content.empty?
+        UI.message("Importing distribution certificate from DISTRIBUTION_CERTIFICATE_P12 secret...")
+        p12_path = "/tmp/distribution.p12"
+        require 'base64'
+        File.write(p12_path, Base64.decode64(p12_content))
+        import_certificate(
+          certificate_path: p12_path,
+          certificate_password: p12_password,
+          keychain_path: keychain[:path],
+          keychain_password: keychain[:password]
+        )
+        File.delete(p12_path) if File.exist?(p12_path)
+        UI.success("Certificate imported from secret")
+      else
+        UI.error("No existing certificate could be downloaded and no .p12 secret provided")
+        UI.error("Please do ONE of the following:")
+        UI.error("1. Revoke an old distribution cert at https://developer.apple.com/account/resources/certificates/list")
+        UI.error("2. Export the existing cert as .p12, base64-encode it, and add as DISTRIBUTION_CERTIFICATE_P12 GitHub secret")
+        raise e
+      end
+    end
 
     # Step 2: Get/create App Store provisioning profile for main app
     profile_info = sigh(
