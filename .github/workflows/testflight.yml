@@ -418,19 +418,17 @@ jobs:
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No fastlane log found" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          # Extract key errors and post as annotations (readable via API)
-          ERROR_LINES=$(grep -iE "error|failed|fatal|user_error|Could not|No valid|signing" /tmp/fastlane_output.log 2>/dev/null | tail -20 || echo "Unknown error")
-          echo "::error title=Fastlane iOS Deploy Failed::${ERROR_LINES//$'\n'/ | }"
+          # Extract xcodebuild errors (the actual build failure, not Fastlane wrapper)
+          XCODE_ERRORS=$(grep -iE "error:|❌|BUILD FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for" /tmp/fastlane_output.log 2>/dev/null | head -20 || echo "No xcodebuild errors found")
+          echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
 
-          # Post error details as a comment on the commit (readable via API)
-          COMMIT_SHA="${{ github.sha }}"
-          ERROR_BODY=$(tail -100 /tmp/fastlane_output.log 2>/dev/null | head -80 || echo "No log available")
-          gh api "repos/${{ github.repository }}/commits/${COMMIT_SHA}/comments" \
-            -f "body=## TestFlight iOS Deploy Failed (Run #${{ github.run_number }})
+          # Also capture the Fastlane summary error
+          FASTLANE_ERRORS=$(grep -iE "error\[|user_error|build_failure" /tmp/fastlane_output.log 2>/dev/null | tail -10 || echo "Unknown error")
+          echo "::error title=Fastlane Summary::${FASTLANE_ERRORS//$'\n'/ | }"
 
-          \`\`\`
-          ${ERROR_BODY}
-          \`\`\`" 2>/dev/null || echo "Could not post commit comment"
+          # Capture the xcodebuild command that was used
+          XCBUILD_CMD=$(grep -A2 "xcodebuild.*-archivePath\|xcodebuild.*archive" /tmp/fastlane_output.log 2>/dev/null | head -5 || echo "xcodebuild command not found")
+          echo "::warning title=Xcodebuild Command::${XCBUILD_CMD//$'\n'/ | }"
 
       - name: "Upload Build Logs"
         if: always()
