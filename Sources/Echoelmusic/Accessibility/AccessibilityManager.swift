@@ -632,7 +632,7 @@ class AccessibilityManager: ObservableObject {
             voiceOverEnabled: isVoiceOverEnabled,
             reduceMotionEnabled: isReduceMotionEnabled,
             increasedContrastEnabled: isIncreasedContrastEnabled,
-            textSize: preferredContentSizeCategory.description,
+            textSize: "\(preferredContentSizeCategory)",
             colorBlindnessMode: colorBlindnessMode.rawValue,
             touchTargetSize: preferredTouchTargetSize.description,
             hapticLevel: hapticFeedbackLevel.rawValue,
