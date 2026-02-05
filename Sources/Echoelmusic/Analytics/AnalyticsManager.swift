@@ -315,7 +315,7 @@ public class FirebaseAnalyticsProvider: AnalyticsProvider {
             guard let self = self else { return }
 
             // Create analytics event
-            let analyticsEvent = AnalyticsEvent(
+            let storedEvent = StoredAnalyticsEvent(
                 name: event,
                 properties: properties,
                 userId: self.userId,
@@ -325,7 +325,7 @@ public class FirebaseAnalyticsProvider: AnalyticsProvider {
             )
 
             // Store locally
-            self.storage.store(event: analyticsEvent)
+            self.storage.store(event: storedEvent)
 
             // Log for debugging
             self.log.analytics("📊 Track: \(event) | props: \(properties.keys.joined(separator: ", "))")

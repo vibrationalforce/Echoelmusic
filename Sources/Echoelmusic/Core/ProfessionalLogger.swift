@@ -83,6 +83,7 @@ public enum LogCategory: String, CaseIterable, Sendable {
     case social = "Social"
     case science = "Science"
     case wellness = "Wellness"
+    case analytics = "Analytics"
 
     public var osLog: OSLog {
         OSLog(subsystem: "com.echoelmusic", category: rawValue)
@@ -390,6 +391,14 @@ public final class EchoelLogger: @unchecked Sendable {
 
     public func wellness(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
         log(level, category: .wellness, message, file: file, function: function, line: line)
+    }
+
+    public func accessibility(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .accessibility, message, file: file, function: function, line: line)
+    }
+
+    public func analytics(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level, category: .analytics, message, file: file, function: function, line: line)
     }
 
     // MARK: - Log Retrieval
