@@ -418,13 +418,17 @@ jobs:
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No fastlane log found" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          # Extract xcodebuild errors (the actual build failure, not Fastlane wrapper)
-          XCODE_ERRORS=$(grep -iE "error:|❌|BUILD FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for" /tmp/fastlane_output.log 2>/dev/null | head -20 || echo "No xcodebuild errors found")
+          # Extract xcodebuild errors (broad pattern to catch all error types)
+          XCODE_ERRORS=$(grep -iE "error:|error\b|❌|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No xcodebuild errors found")
           echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
 
           # Also capture the Fastlane summary error
           FASTLANE_ERRORS=$(grep -iE "error\[|user_error|build_failure" /tmp/fastlane_output.log 2>/dev/null | tail -10 || echo "Unknown error")
           echo "::error title=Fastlane Summary::${FASTLANE_ERRORS//$'\n'/ | }"
+
+          # Capture last 50 lines of build log (usually contains the actual failure)
+          TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail available")
+          echo "::error title=Build Log Tail (last 50 lines)::${TAIL_LOG//$'\n'/ | }"
 
           # Capture the xcodebuild command that was used
           XCBUILD_CMD=$(grep -A2 "xcodebuild.*-archivePath\|xcodebuild.*archive" /tmp/fastlane_output.log 2>/dev/null | head -5 || echo "xcodebuild command not found")
