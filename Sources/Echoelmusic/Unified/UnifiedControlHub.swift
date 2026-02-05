@@ -415,7 +415,7 @@ public class UnifiedControlHub: ObservableObject {
 
         var bioData = UnifiedBioData()
         bioData.heartRate = healthKit.heartRate
-        bioData.hrvCoherence = AudioConstants.Coherence.normalize(healthKit.hrvCoherence)
+        bioData.hrvCoherence = AudioConstants.Coherence.normalize(healthKit.coherence)
         bioData.breathingRate = healthKit.breathingRate
         lambda.updateBioData(bioData)
     }
@@ -1095,7 +1095,7 @@ public class UnifiedControlHub: ObservableObject {
                 // Gaze-derived parameters can be synced as part of biometric data
                 let hrvModifier = params.attention * 20  // Attention affects coherence perception
                 syncBiometricsToSession(
-                    hrvCoherence: healthKitEngine?.hrvCoherence ?? 50 + Float(hrvModifier),
+                    hrvCoherence: Float(healthKitEngine?.coherence ?? 0.5) * 100 + Float(hrvModifier),
                     heartRate: Float(healthKitEngine?.heartRate ?? 72),
                     breathingRate: Float(healthKitEngine?.breathingRate ?? 12)
                 )
@@ -1143,7 +1143,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Update visual parameters from bio-signals
         let bioParams = MIDIToVisualMapper.BioParameters(
-            hrvCoherence: healthKit.hrvCoherence,
+            hrvCoherence: healthKit.coherence,
             heartRate: healthKit.heartRate,
             breathingRate: healthKit.breathingRate,
             audioLevel: Double(audioEngine?.currentLevel ?? 0.5)
@@ -1156,7 +1156,7 @@ public class UnifiedControlHub: ObservableObject {
         // Update Quantum Light Emulator with bio-inputs
         if let quantumEmulator = quantumLightEmulator {
             quantumEmulator.updateBioInputs(
-                hrvCoherence: Float(healthKit.hrvCoherence),
+                hrvCoherence: Float(healthKit.coherence),
                 heartRate: Float(healthKit.heartRate),
                 breathingRate: Float(healthKit.breathingRate)
             )
@@ -1167,7 +1167,7 @@ public class UnifiedControlHub: ObservableObject {
             if let lambda = lambdaModeEngine {
                 var bioData = UnifiedBioData()
                 bioData.heartRate = healthKit.heartRate
-                bioData.hrvCoherence = AudioConstants.Coherence.normalize(healthKit.hrvCoherence)
+                bioData.hrvCoherence = AudioConstants.Coherence.normalize(healthKit.coherence)
                 bioData.breathingRate = healthKit.breathingRate
                 lambda.updateBioData(bioData)
             }
@@ -1180,7 +1180,7 @@ public class UnifiedControlHub: ObservableObject {
         }
 
         let bioData = MIDIToLightMapper.BioData(
-            hrvCoherence: healthKit.hrvCoherence,
+            hrvCoherence: healthKit.coherence,
             heartRate: healthKit.heartRate,
             breathingRate: healthKit.breathingRate
         )
