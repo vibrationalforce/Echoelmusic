@@ -72,7 +72,7 @@ class GestureToAudioMapper {
         params = applyLeftHandGesture(
             gesture: gestureRecognizer.leftHandGesture,
             pinchAmount: gestureRecognizer.leftPinchAmount,
-            spreadAmount: gestureRecognizer.leftSpreadAmount,
+            spreadAmount: gestureRecognizer.rightPinchAmount,
             to: params
         )
 

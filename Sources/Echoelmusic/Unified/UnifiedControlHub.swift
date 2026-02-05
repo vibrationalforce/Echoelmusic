@@ -1065,7 +1065,7 @@ public class UnifiedControlHub: ObservableObject {
                         mpe.setVoicePitchBend(voice: voice, bend: pinchBend)
 
                         // Spread amount → Brightness
-                        mpe.setVoiceBrightness(voice: voice, brightness: gestureRec.leftSpreadAmount)
+                        mpe.setVoiceBrightness(voice: voice, brightness: gestureRec.rightPinchAmount)
                     }
                 }
             } else {
@@ -1077,7 +1077,7 @@ public class UnifiedControlHub: ObservableObject {
         // Handle preset changes
         if let presetChange = params.presetChange {
             Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
-            audioEngine.loadPreset(named: presetChange)
+            audioEngine?.loadPreset(named: String(presetChange))
         }
     }
 
@@ -1146,7 +1146,7 @@ public class UnifiedControlHub: ObservableObject {
             hrvCoherence: healthKit.coherence,
             heartRate: healthKit.heartRate,
             breathingRate: healthKit.breathingRate,
-            audioLevel: Double(audioEngine?.currentLevel ?? 0.5)
+            audioLevel: Float(audioEngine?.currentLevel ?? 0.5)
         )
 
         if let visualMapper = midiToVisualMapper {
