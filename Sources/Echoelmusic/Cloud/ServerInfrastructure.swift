@@ -1157,12 +1157,14 @@ public class RealtimeBioSync: ObservableObject {
         config.waitsForConnectivity = true
 
         let session = URLSession(configuration: config)
-        bioWebSocketTask = session.webSocketTask(with: wsURL)
 
-        // Add authentication
+        // Add authentication to the request before creating WebSocket task
+        var wsRequest = URLRequest(url: wsURL)
         if let token = AuthenticationService.shared.currentToken {
-            bioWebSocketTask?.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
+            wsRequest.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
+
+        bioWebSocketTask = session.webSocketTask(with: wsRequest)
 
         bioWebSocketTask?.resume()
         isActive = true
