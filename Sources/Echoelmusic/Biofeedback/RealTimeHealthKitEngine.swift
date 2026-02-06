@@ -576,7 +576,7 @@ public final class RealTimeHealthKitEngine: ObservableObject {
     private func calculateHRVMetrics() {
         guard rrIntervalBuffer.count >= 10 else { return }
 
-        let intervals = rrIntervalBuffer
+        let intervals = rrIntervalBuffer.toArray()
 
         // SDNN (Standard Deviation of NN intervals)
         let mean = intervals.reduce(0, +) / Double(intervals.count)
