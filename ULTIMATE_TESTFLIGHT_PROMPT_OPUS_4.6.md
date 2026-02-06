@@ -20,6 +20,14 @@ KONTEXT:
 - Profil: sigh() Auto-Provisioning
 - Token: Im Repository Secret GH_TOKEN
 
+BUNDLE IDS (alle 8 Targets):
+- com.echoelmusic.app          (iOS Haupt-App)
+- com.echoelmusic.app.auv3     (AUv3 Audio Unit)
+- com.echoelmusic.app.clip     (App Clip)
+- com.echoelmusic.app.widgets  (WidgetKit)
+- com.echoelmusic.app.watchkitapp (watchOS)
+- com.echoelmusic.app (macOS, tvOS, visionOS teilen Bundle ID)
+
 AUFGABE:
 Analysiere die aktuelle CI/CD-Situation und führe alle notwendigen Schritte durch, um einen erfolgreichen TestFlight Build zu erreichen:
 
