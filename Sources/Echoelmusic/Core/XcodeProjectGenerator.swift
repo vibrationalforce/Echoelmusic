@@ -27,6 +27,7 @@ public struct XcodeProjectConfiguration {
             .visionOSApp,
             .auv3Extension,
             .widgetExtension,
+            .appClipExtension,
             .liveActivityExtension,
             .sharePlayExtension,
             .shortcutsExtension
@@ -98,6 +99,7 @@ public struct XcodeTargetConfiguration {
         case appExtension = "com.apple.product-type.app-extension"
         case audioUnitExtension = "com.apple.product-type.app-extension.audio-unit"
         case widgetExtension = "com.apple.product-type.app-extension.widgetkit"
+        case appClip = "com.apple.product-type.application.on-demand-install-capable"
     }
 }
 
@@ -448,6 +450,33 @@ extension XcodeTargetConfiguration {
     )
 }
 
+// MARK: - App Clip Target
+
+extension XcodeTargetConfiguration {
+    public static let appClipExtension = XcodeTargetConfiguration(
+        name: "EchoelmusicClip",
+        bundleIdentifier: "com.echoelmusic.app.clip",
+        platform: .iOS,
+        deploymentTarget: "16.0",
+        productType: .appClip,
+        capabilities: [
+            .appGroups,
+            .dataProtection,
+            .healthKit
+        ],
+        frameworks: [
+            .swiftUI,
+            .healthKit,
+            .storeKit,
+            .appClip
+        ],
+        infoPlistKeys: .appClipKeys,
+        entitlements: .appClipEntitlements,
+        buildPhases: .appClipBuildPhases,
+        dependencies: ["Echoelmusic"]
+    )
+}
+
 // MARK: - Live Activity Extension Target
 
 extension XcodeTargetConfiguration {
@@ -697,6 +726,7 @@ public enum Framework: String {
     // Commerce
     case storeKit = "StoreKit"
     case passKit = "PassKit"
+    case appClip = "AppClip"
 
     // Security
     case authenticationServices = "AuthenticationServices"
@@ -1022,6 +1052,23 @@ extension Dictionary where Key == String, Value == Any {
             "NSExtensionPointIdentifier": "com.apple.intents-service"
         ]
     ]
+
+    public static let appClipKeys: [String: Any] = [
+        "CFBundleName": "Echoelmusic Clip",
+        "CFBundleDisplayName": "Echoelmusic",
+        "CFBundleIdentifier": "$(PRODUCT_BUNDLE_IDENTIFIER)",
+        "CFBundleVersion": "1",
+        "CFBundleShortVersionString": "10000.0.0",
+        "UILaunchScreen": [:],
+        "NSAppClip": [
+            "NSAppClipRequestEphemeralUserNotification": false,
+            "NSAppClipRequestLocationConfirmation": false
+        ],
+        "UIApplicationSceneManifest": [
+            "UIApplicationSupportsMultipleScenes": true,
+            "UISceneConfigurations": [:]
+        ]
+    ]
 }
 
 // MARK: - Entitlements
@@ -1225,6 +1272,18 @@ extension Dictionary where Key == String, Value == Any {
         ],
         "com.apple.developer.siri": true
     ]
+
+    public static let appClipEntitlements: [String: Any] = [
+        "com.apple.security.application-groups": [
+            "group.com.echoelmusic.shared"
+        ],
+        "com.apple.developer.parent-application-identifiers": [
+            "$(AppIdentifierPrefix)com.echoelmusic.app"
+        ],
+        "com.apple.developer.on-demand-install-capable": true,
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
+    ]
 }
 
 // MARK: - Build Phases
@@ -1311,6 +1370,11 @@ extension Array where Element == BuildPhase {
     public static let shortcutsBuildPhases: [BuildPhase] = [
         .sources(SourceFiles.shortcuts),
         .frameworks([.appIntents, .swiftUI])
+    ]
+
+    public static let appClipBuildPhases: [BuildPhase] = [
+        .sources(SourceFiles.appClip),
+        .frameworks([.swiftUI, .healthKit, .storeKit, .appClip])
     ]
 }
 
@@ -1468,6 +1532,11 @@ public struct SourceFiles {
     public static let shortcuts: [BuildPhase.SourceFile] = [
         .init(path: "Sources/Echoelmusic/Shortcuts/EchoelmusicIntents.swift")
     ]
+    public static let appClip: [BuildPhase.SourceFile] = [
+        .init(path: "Sources/Echoelmusic/Targets/AppClip/EchoelmusicClip.swift"),
+        .init(path: "Sources/Echoelmusic/Targets/AppClip/EchoelaAppClip.swift"),
+        .init(path: "Sources/Echoelmusic/AppClips/EchoelAppClip.swift")
+    ]
 }
 
 // MARK: - Build Settings
@@ -1594,6 +1663,7 @@ public struct CodeSigningConfiguration {
             "EchoelmusicVision": "Echoelmusic visionOS App Store",
             "EchoelmusicAUv3": "Echoelmusic Audio Unit",
             "EchoelmusicWidgets": "Echoelmusic Widgets",
+            "EchoelmusicClip": "Echoelmusic App Clip",
             "EchoelmusicLiveActivity": "Echoelmusic Live Activity",
             "EchoelmusicSharePlay": "Echoelmusic SharePlay",
             "EchoelmusicShortcuts": "Echoelmusic Shortcuts"

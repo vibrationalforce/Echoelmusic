@@ -857,7 +857,7 @@ public class SuperIntelligenceEngine: ObservableObject {
             activeEffects = [.styleNeon, .beatSync, .creativeGlitch, .audioMusic]
 
         case .documentary:
-            activeEffects = [.autoColor, .autoStabilize, .audioEnhance, .autoSubtitles]
+            activeEffects = [.autoColor, .autoStabilize, .audioEnhance, .audioTranscribe]
 
         case .gaming:
             activeEffects = [.autoUpscale, .autoFrameRate, .creativeGlitch]
@@ -1021,7 +1021,7 @@ extension SuperIntelligenceEngine {
 
         return try await processVideo(
             source: .iPhone,
-            effects: activeEffects + [.autoSubtitles, .autoCrop],
+            effects: activeEffects + [.audioTranscribe, .autoCrop],
             outputFormat: .mp4H264,
             resolution: resolution
         )
