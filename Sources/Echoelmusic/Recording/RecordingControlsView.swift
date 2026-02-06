@@ -466,7 +466,7 @@ struct RecordingControlsView: View {
             }
 
             recEngine.addBioDataPoint(
-                hrv: hkManager.hrv,
+                hrv: hkManager.hrvRMSSD,
                 heartRate: hkManager.heartRate,
                 coherence: hkManager.hrvCoherence,
                 audioLevel: micManager.audioLevel,
