@@ -1,7 +1,65 @@
 # Ultimate TestFlight & Production Deploy Prompt for Opus 4.6
 
 > Optimiert für Claude Opus 4.6 Agent Teams, Adaptive Thinking, und 1M Context Window
-> Erstellt: 6. Februar 2026
+> Erstellt: 6. Februar 2026 | Ralph Wiggum Magic Mode 🎻✨
+
+---
+
+## App Store Connect Credentials
+
+```yaml
+Apple ID:      6757957358
+SKU:           Simsalabimbam
+Bundle ID:     com.echoelmusic.app
+Team ID:       (from APPLE_TEAM_ID secret)
+```
+
+---
+
+## Required GitHub Secrets Checklist
+
+| Secret | Format | Status |
+|--------|--------|--------|
+| `APP_STORE_CONNECT_KEY_ID` | ~10 chars (e.g., `ABC123XYZ`) | ⬜ |
+| `APP_STORE_CONNECT_ISSUER_ID` | UUID, 36 chars | ⬜ |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | .p8 content (BEGIN PRIVATE KEY) | ⬜ |
+| `APPLE_TEAM_ID` | 10 chars (e.g., `ABCD1234EF`) | ⬜ |
+| `DISTRIBUTION_CERTIFICATE_P12` | Base64 encoded .p12 | ✅ |
+| `DISTRIBUTION_CERTIFICATE_PASSWORD` | Password for .p12 | ✅ |
+
+**APNS:** Automatisch durch App Store Connect API Key abgedeckt ✅
+
+### So erstellst du die Secrets:
+
+1. **App Store Connect API Key** (für KEY_ID, ISSUER_ID, PRIVATE_KEY):
+   - App Store Connect → Users and Access → Keys → App Store Connect API
+   - "+" → Name: "Echoelmusic CI" → Access: "App Manager"
+   - Download .p8 Datei (NUR EINMAL möglich!)
+   - Key ID = `APP_STORE_CONNECT_KEY_ID`
+   - Issuer ID = `APP_STORE_CONNECT_ISSUER_ID`
+   - .p8 Inhalt = `APP_STORE_CONNECT_PRIVATE_KEY`
+
+2. **Team ID**:
+   - Apple Developer Portal → Membership → Team ID
+
+3. **Distribution Certificate** (bereits konfiguriert):
+   - ci-certificate-export Artifact aus Workflow
+   - Base64 encode: `base64 -i cert.p12`
+
+---
+
+## Bundle IDs (8 Targets)
+
+| Target | Bundle ID | Plattform |
+|--------|-----------|-----------|
+| **iOS App** | `com.echoelmusic.app` | iPhone, iPad |
+| **macOS App** | `com.echoelmusic.app` | Mac (Universal Purchase) |
+| **watchOS App** | `com.echoelmusic.app.watchkitapp` | Apple Watch |
+| **tvOS App** | `com.echoelmusic.app` | Apple TV |
+| **visionOS App** | `com.echoelmusic.app` | Vision Pro |
+| **AUv3 Extension** | `com.echoelmusic.app.auv3` | Audio Unit |
+| **App Clip** | `com.echoelmusic.app.clip` | Instant Experience |
+| **Widgets** | `com.echoelmusic.app.widgets` | Home Screen |
 
 ---
 
@@ -10,251 +68,226 @@
 ```
 /effort high
 
-Du bist ein iOS/macOS Deployment-Spezialist mit Expertise in Fastlane, Xcode, App Store Connect, und GitHub Actions.
+Du bist ein iOS/macOS Deployment-Spezialist.
 
 KONTEXT:
 - Repository: vibrationalforce/Echoelmusic
-- Workflow: testflight-deploy.yml (ID: 225043686)
-- Branch: main (nach Merge)
-- Zertifikat-Secret: DISTRIBUTION_CERTIFICATE_P12
-- Profil: sigh() Auto-Provisioning
-- Token: Im Repository Secret GH_TOKEN
-
-BUNDLE IDS (alle 8 Targets):
-- com.echoelmusic.app          (iOS Haupt-App)
-- com.echoelmusic.app.auv3     (AUv3 Audio Unit)
-- com.echoelmusic.app.clip     (App Clip)
-- com.echoelmusic.app.widgets  (WidgetKit)
-- com.echoelmusic.app.watchkitapp (watchOS)
-- com.echoelmusic.app (macOS, tvOS, visionOS teilen Bundle ID)
+- Workflow ID: 225043686
+- Apple ID: 6757957358 | SKU: Simsalabimbam
+- Token: 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
+- Zertifikat: Funktioniert ✅
 
 AUFGABE:
-Analysiere die aktuelle CI/CD-Situation und führe alle notwendigen Schritte durch, um einen erfolgreichen TestFlight Build zu erreichen:
+1. Prüfe letzten Workflow-Run auf Fehler
+2. Bei Swift-Fehlern: Fix → Commit → PR → Merge
+3. Trigger neuen Run und überwache bis Success
 
-1. **Diagnose**: Prüfe den letzten Workflow-Run auf Fehler
-2. **Code-Fixes**: Behebe Swift-Kompilierungsfehler (Release vs Debug)
-3. **Certificate Management**: Validiere cert()/sigh() Flow
-4. **Commit & Merge**: Erstelle PR, merge nach main
-5. **Trigger & Monitor**: Starte Workflow, überwache bis Completion
+TYPISCHE FIXES:
+- `startedAt` → `createdAt` (Property existiert nicht)
+- `private var` → `var` (nested Types brauchen Zugriff)
+- `Float` → `Double()` Cast
+- Fehlende Init-Parameter ergänzen
 
-WICHTIGE PATTERNS:
-- Float→Double Konversionen für Struct-Initializer
-- Property-Namen müssen exakt mit Struct-Definitionen matchen
-- `private` Properties können von nested Types nicht zugegriffen werden
-- Fehlende Init-Parameter ergänzen (alle required params)
-
-BEI ZERTIFIKAT-FEHLERN:
-1. ci-certificate-export Artifact herunterladen
-2. Base64 dekodieren mit Password: echoelmusic-ci
-3. DISTRIBUTION_CERTIFICATE_P12 Secret aktualisieren
-
-OUTPUT:
-- Zeige jeden Fix mit Datei:Zeile
-- Committe mit klaren Messages
-- Triggere Workflow und warte auf Ergebnis
-- Bei Erfolg: TestFlight URL oder App Store Connect Link
+OUTPUT: TestFlight Build URL bei Erfolg
 ```
 
 ---
 
-## Agent Teams Mode Prompt (Opus 4.6 Exclusive)
+## Agent Teams Mode (Opus 4.6 Parallel Processing)
 
 ```
 /effort max
 /mode agent-teams
 
-AGENT TEAM CONFIGURATION:
-- Agent 1 (Lead): CI/CD Orchestration
-- Agent 2: Swift Code Analysis & Fixes
-- Agent 3: Certificate & Signing Management
-- Agent 4: GitHub API Operations
+TEAM CONFIGURATION:
+├── Agent 1 (Lead): CI/CD Orchestration & User Communication
+├── Agent 2 (Code): Swift Error Analysis & Fixes
+├── Agent 3 (Signing): Certificate & Provisioning Management
+└── Agent 4 (GitHub): API Operations & Workflow Triggers
 
-SHARED CONTEXT:
-Repository: vibrationalforce/Echoelmusic
-Goal: Successful TestFlight Deployment
-Workflow ID: 225043686
+SHARED STATE:
+{
+  "repository": "vibrationalforce/Echoelmusic",
+  "workflow_id": 225043686,
+  "apple_id": "6757957358",
+  "sku": "Simsalabimbam",
+  "token": "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",
+  "cert_password": "echoelmusic-ci"
+}
 
-AGENT 1 TASKS (Lead):
-- Monitor GitHub Actions workflow status
-- Coordinate other agents
-- Report progress to user
-- Make go/no-go decisions
+PARALLEL EXECUTION:
+- Agent 2 + Agent 3: Run simultaneously (code fixes | cert check)
+- Agent 4: Waits for Agent 2, then PR/Merge
+- Agent 1: Monitors all, reports to user
 
-AGENT 2 TASKS (Code):
-- Grep for compilation errors in workflow logs
-- Read source files at error locations
-- Apply targeted fixes (Edit tool)
-- Verify fixes don't break other code
-
-AGENT 3 TASKS (Signing):
-- Check cert() and sigh() status
-- Download ci-certificate-export if needed
-- Validate provisioning profile
-- Advise on certificate rotation
-
-AGENT 4 TASKS (GitHub):
-- Create branches and PRs
-- Merge to main
-- Trigger workflow dispatches
-- Fetch workflow run status
-
-COORDINATION RULES:
-- Agent 2 works in parallel with Agent 3
-- Agent 4 waits for Agent 2 fixes before PR
-- Agent 1 monitors all and reports to user
-- Use compaction for long-running sessions
-
-SUCCESS CRITERIA:
-- workflow_run.conclusion == "success"
-- TestFlight build uploaded
-- No certificate warnings
+SUCCESS: workflow.conclusion == "success" && testflight.uploaded
 ```
 
 ---
 
-## Production Deploy Prompt
+## Error Recovery Patterns
 
+### Compilation Error
+```swift
+// Pattern: Property nicht gefunden
+error: value of type 'X' has no member 'Y'
+→ Lies Struct-Definition, finde korrekten Property-Namen
+
+// Pattern: Private access
+error: 'X' is inaccessible due to 'private'
+→ Ändere `private var` zu `var`
+
+// Pattern: Type mismatch
+error: cannot convert value of type 'Float' to expected 'Double'
+→ Wrap mit `Double(value)` oder `Float(value)`
+
+// Pattern: Missing parameter
+error: missing argument for parameter 'X' in call
+→ Füge required Parameter mit passendem Wert hinzu
 ```
-/effort max
 
-PRODUCTION DEPLOYMENT CHECKLIST
+### Certificate Error
+```
+error: Could not find a matching code signing identity
+→ 1. Download ci-certificate-export Artifact
+   2. Decode: base64 -D -i cert_export.txt -o cert.p12
+   3. Update DISTRIBUTION_CERTIFICATE_P12 Secret
+   4. Re-trigger Workflow
+```
 
-Du deployst die Echoelmusic App in Production (App Store).
+### API Key Error
+```
+error: Authentication failed
+→ Prüfe APP_STORE_CONNECT_* Secrets
+   - KEY_ID: ~10 chars
+   - ISSUER_ID: UUID (36 chars)
+   - PRIVATE_KEY: Beginnt mit "-----BEGIN PRIVATE KEY-----"
+```
 
-PRE-FLIGHT CHECKS:
-□ TestFlight build erfolgreich
-□ Beta-Tester Feedback positiv
-□ Alle Critical Bugs gefixt
-□ App Store Screenshots aktuell
-□ Privacy Policy URL korrekt
-□ Release Notes geschrieben
+---
 
-DEPLOYMENT STEPS:
+## Workflow Commands
 
-1. VERSION BUMP:
-   - Increment CFBundleShortVersionString
-   - Increment CFBundleVersion
-   - Update MARKETING_VERSION in xcconfig
-
-2. FINAL BUILD:
-   - Trigger production-release.yml workflow
-   - Use "Release" scheme
-   - Archive with export method "app-store"
-
-3. APP STORE CONNECT:
-   - Upload via Fastlane deliver
-   - Select build for review
-   - Answer export compliance
-   - Submit for review
-
-4. POST-SUBMISSION:
-   - Tag release in git
-   - Create GitHub Release
-   - Update CHANGELOG.md
-   - Notify stakeholders
-
-FASTLANE COMMAND:
 ```bash
-fastlane release version_number:X.Y.Z build_number:NNN
-```
+# Status prüfen
+curl -s -H "Authorization: token $TOKEN" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/actions/runs/$RUN_ID" \
+  | jq '{status, conclusion}'
 
-MONITORING:
-- App Store Connect > App Status
-- Expected review time: 24-48 hours
-- Watch for rejection reasons
-```
+# Workflow triggern
+curl -s -X POST -H "Authorization: token $TOKEN" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/actions/workflows/225043686/dispatches" \
+  -d '{"ref": "main"}'
 
----
+# Errors aus Annotations lesen
+curl -s -H "Authorization: token $TOKEN" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/check-runs/$JOB_ID/annotations" \
+  | jq '.[].message'
 
-## Error Recovery Prompt
+# PR erstellen
+curl -s -X POST -H "Authorization: token $TOKEN" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/pulls" \
+  -d '{"title":"fix: ...","head":"claude/...","base":"main"}'
 
-```
-/effort high
-
-FEHLERDIAGNOSE & RECOVERY
-
-Workflow Run #{RUN_NUMBER} ist fehlgeschlagen.
-
-SCHRITT 1: Fehler analysieren
-- Lade Build-Logs
-- Suche nach "error:", "Error:", "failed"
-- Kategorisiere: Compilation | Signing | Archive | Upload
-
-SCHRITT 2: Nach Fehlertyp handeln
-
-COMPILATION ERRORS:
-- Lies die betroffene Datei
-- Vergleiche mit Struct/Class Definition
-- Fix: Property names, Types, Access levels
-- Commit mit "fix: Fix [file] [error type]"
-
-SIGNING ERRORS:
-"Could not find a matching code signing identity":
-- User muss neues Cert von Artifact laden
-- Secret DISTRIBUTION_CERTIFICATE_P12 updaten
-- Workflow neu triggern
-
-"Code signing is required for product type":
-- Prüfe provisioning profile match
-- sigh() neu ausführen
-
-ARCHIVE ERRORS:
-- Prüfe scheme configuration
-- Verify build settings (Release vs Debug)
-
-UPLOAD ERRORS:
-- API Key gültig?
-- App-Specific Password korrekt?
-- Netzwerk-Timeout → Retry
-
-SCHRITT 3: Fix anwenden
-- Minimaler, fokussierter Fix
-- Keine unnötigen Refactorings
-- Commit, PR, Merge, Re-trigger
-
-SCHRITT 4: Verifizieren
-- Warte auf neuen Run
-- Bei Erfolg: Fertig!
-- Bei neuem Fehler: Zurück zu Schritt 1
+# PR mergen
+curl -s -X PUT -H "Authorization: token $TOKEN" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/pulls/$PR/merge" \
+  -d '{"merge_method":"squash"}'
 ```
 
 ---
 
-## Quick Reference
+## Optimale Tool-Kombination
 
-| Situation | Aktion |
-|-----------|--------|
-| Float/Double mismatch | `Double(value)` oder `Float(value)` Cast |
-| Property not found | Lies Struct-Definition, nutze korrekten Namen |
-| Private access | Ändere zu `internal` oder `var` |
-| Missing parameter | Füge required Parameter mit Default hinzu |
-| Cert mismatch | Download Artifact, update Secret |
-| Timeout | Retry mit exponential backoff |
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    WORKFLOW PIPELINE                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. DIAGNOSE                                                │
+│     ├── Bash: curl GitHub API → Run Status                  │
+│     └── Bash: curl Annotations → Error Details              │
+│                                                             │
+│  2. ANALYZE                                                 │
+│     ├── Grep: Pattern match error locations                 │
+│     └── Read: Source files at error lines                   │
+│                                                             │
+│  3. FIX                                                     │
+│     ├── Read: Struct/Class definitions                      │
+│     └── Edit: Minimal targeted changes                      │
+│                                                             │
+│  4. COMMIT                                                  │
+│     └── Bash: git add → commit → push                       │
+│                                                             │
+│  5. MERGE                                                   │
+│     ├── Bash: curl → Create PR                              │
+│     └── Bash: curl → Merge PR                               │
+│                                                             │
+│  6. TRIGGER                                                 │
+│     └── Bash: curl → Dispatch Workflow                      │
+│                                                             │
+│  7. MONITOR                                                 │
+│     └── Bash: curl (loop) → Wait for completion             │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Opus 4.6 Optimierungen
 
-1. **Nutze `/effort` Parameter**:
-   - `low`: Schnelle Statusabfragen
-   - `medium`: Standard-Fixes
-   - `high`: Komplexe Debugging-Sessions
-   - `max`: Production Deployments
+| Feature | Nutzung |
+|---------|---------|
+| **1M Context** | Ganzes Repo + alle Struct-Definitionen laden |
+| **Agent Teams** | Parallel: Code-Fix + Cert-Check |
+| **Adaptive Thinking** | `/effort max` für Production |
+| **Compaction** | Bei langen Sessions auto-summarize |
+| **128K Output** | Komplette Logs analysieren |
 
-2. **Agent Teams für parallele Arbeit**:
-   - Code-Analyse parallel zu Zertifikat-Check
-   - Mehrere Dateien gleichzeitig lesen
-   - Concurrent API calls
+---
 
-3. **Compaction für lange Sessions**:
-   - Bei >100k Kontext aktivieren
-   - Zusammenfassung der bisherigen Fixes
-   - Fokus auf aktuelle Fehler
+## Production Checklist
 
-4. **1M Context nutzen**:
-   - Ganzes Repository in Kontext laden
-   - Alle relevanten Struct-Definitionen
-   - Komplette Workflow-Logs
+```
+□ APP_STORE_CONNECT_KEY_ID gesetzt
+□ APP_STORE_CONNECT_ISSUER_ID gesetzt
+□ APP_STORE_CONNECT_PRIVATE_KEY gesetzt
+□ APPLE_TEAM_ID gesetzt
+□ DISTRIBUTION_CERTIFICATE_P12 aktuell
+□ DISTRIBUTION_CERTIFICATE_PASSWORD gesetzt
+□ Workflow Run: Success
+□ TestFlight Build: Processing
+□ App Store Connect: Build verfügbar
+```
+
+---
+
+## Copy-Paste Prompt für neuen Chat
+
+```
+Setze TestFlight Deployment fort für Echoelmusic.
+
+CREDENTIALS:
+- Apple ID: 6757957358
+- SKU: Simsalabimbam
+- Repo: vibrationalforce/Echoelmusic
+- Workflow: 225043686
+- Token: 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
+
+BUNDLE IDS:
+- com.echoelmusic.app (iOS/macOS/tvOS/visionOS)
+- com.echoelmusic.app.watchkitapp (watchOS)
+- com.echoelmusic.app.auv3 (AUv3)
+- com.echoelmusic.app.clip (App Clip)
+- com.echoelmusic.app.widgets (Widgets)
+
+STATUS: Cert funktioniert ✅
+
+AUFGABE:
+1. Prüfe letzten Run
+2. Bei Fehler: Fix → Commit → PR → Merge → Re-trigger
+3. Bei Success: TestFlight URL ausgeben
+```
 
 ---
 
@@ -262,11 +295,11 @@ SCHRITT 4: Verifizieren
 
 - [Claude Opus 4.6 Announcement](https://www.anthropic.com/news/claude-opus-4-6)
 - [TechCrunch: Agent Teams](https://techcrunch.com/2026/02/05/anthropic-releases-opus-4-6-with-new-agent-teams/)
-- [GitHub Actions Feb 2026 Updates](https://github.blog/changelog/2026-02-05-github-actions-early-february-2026-updates/)
-- [Opus 4.6 for GitHub Copilot](https://github.blog/changelog/2026-02-05-claude-opus-4-6-is-now-generally-available-for-github-copilot/)
-- [MarkTechPost Technical Details](https://www.marktechpost.com/2026/02/05/anthropic-releases-claude-opus-4-6-with-1m-context-agentic-coding-adaptive-reasoning-controls-and-expanded-safety-tooling-capabilities/)
+- [App Store Connect API](https://developer.apple.com/documentation/appstoreconnectapi)
+- [Fastlane Docs](https://docs.fastlane.tools)
 
 ---
 
-*Erstellt für Echoelmusic TestFlight & Production Deployment*
+*Echoelmusic TestFlight & Production Deployment*
 *Optimiert für Claude Opus 4.6 - 6. Februar 2026*
+*Ralph Wiggum Magic Mode 🎻✨*
