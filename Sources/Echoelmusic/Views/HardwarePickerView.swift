@@ -10,7 +10,7 @@ struct HardwarePickerView: View {
     @State private var showingSessionSetup = false
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 0) {
                 // Category Picker
                 categoryPicker
@@ -806,7 +806,7 @@ struct SessionSetupView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack {
                 Text("Create Cross-Platform Session")
                     .font(.title2)

@@ -1081,7 +1081,7 @@ public class SuperIntelligenceImageMatchingEngine: ObservableObject {
 
     /// Apply all corrections to an image
     public func applyCorrections(_ cgImage: CGImage, corrections: ImageVideoCorrections) -> CGImage? {
-        guard let ciImage = CIImage(cgImage: cgImage) else { return nil }
+        let ciImage = CIImage(cgImage: cgImage)
 
         var outputImage = ciImage
 
