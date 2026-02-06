@@ -48,6 +48,7 @@ public class StreamEngine: ObservableObject {
 
     private let captureQueue = DispatchQueue(label: "com.echoelmusic.stream.capture", qos: .userInteractive)
     private var displayLink: CADisplayLink?
+    private var captureTimer: Timer?
 
     // MARK: - Stream Destinations
 
@@ -510,7 +511,7 @@ public class StreamEngine: ObservableObject {
         log.streaming("🎬 Crossfade transition completed (\(String(format: "%.1f", duration))s)")
     }
 
-    private func renderCrossfadeFrame(fromScene: StreamScene?, toScene: StreamScene, blendFactor: Float) async {
+    private func renderCrossfadeFrame(fromScene: StreamScene?, toScene: StreamScene?, blendFactor: Float) async {
         // Mix the two scenes based on blend factor
         // fromScene * (1 - blendFactor) + toScene * blendFactor
         // This would be implemented with Metal compute shader in production
