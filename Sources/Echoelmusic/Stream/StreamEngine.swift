@@ -186,7 +186,7 @@ public class StreamEngine: ObservableObject {
             let client = RTMPClient(
                 url: destination.rtmpURL,
                 streamKey: streamKey,
-                port: destination.defaultPort
+                port: UInt16(destination.defaultPort)
             )
 
             // Connect
@@ -487,7 +487,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Crossfade Transition
 
-    private func performCrossfade(from: StreamScene?, to: StreamScene, duration: TimeInterval) async {
+    private func performCrossfade(from: StreamScene?, to: StreamScene?, duration: TimeInterval) async {
         let frameInterval: TimeInterval = 1.0 / 60.0  // 60 FPS
         let totalFrames = Int(duration / frameInterval)
 

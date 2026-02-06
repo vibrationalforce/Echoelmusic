@@ -550,7 +550,7 @@ struct StreamKeyInputSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: VaporwaveSpacing.xl) {
                 Image(systemName: "key.fill")
                     .font(.system(size: 50))
@@ -582,15 +582,16 @@ struct StreamKeyInputSheet: View {
             .navigationTitle("Configure \(destination.rawValue)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") { dismiss() }
                         .disabled(streamKey.isEmpty)
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 

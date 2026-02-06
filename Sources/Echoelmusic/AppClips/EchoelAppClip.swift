@@ -270,7 +270,7 @@ struct AppClipRootView: View {
     @EnvironmentObject var appClipManager: AppClipManager
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 // Background gradient
                 LinearGradient(
@@ -556,7 +556,7 @@ struct UpgradePromptView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 24) {
                 Image(systemName: "star.circle.fill")
                     .font(.system(size: 80))
