@@ -81,12 +81,12 @@ public final class SacredGeometryVisualizerPlugin: EchoelmusicPlugin {
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Sacred Geometry plugin loaded - Pattern: \(configuration.pattern.rawValue)", source: identifier)
+        await DeveloperConsole.shared.info("Sacred Geometry plugin loaded - Pattern: \(configuration.pattern.rawValue)", source: identifier)
         generateVertices()
     }
 
     public func onUnload() async {
-        DeveloperConsole.shared.info("Sacred Geometry plugin unloaded", source: identifier)
+        await DeveloperConsole.shared.info("Sacred Geometry plugin unloaded", source: identifier)
     }
 
     public func onFrame(deltaTime: TimeInterval) {
@@ -377,11 +377,11 @@ public final class BioAudioGeneratorPlugin: EchoelmusicPlugin {
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Bio Audio Generator loaded - Base freq: \(configuration.baseFrequency)Hz", source: identifier)
+        await DeveloperConsole.shared.info("Bio Audio Generator loaded - Base freq: \(configuration.baseFrequency)Hz", source: identifier)
     }
 
     public func onUnload() async {
-        DeveloperConsole.shared.info("Bio Audio Generator unloaded", source: identifier)
+        await DeveloperConsole.shared.info("Bio Audio Generator unloaded", source: identifier)
     }
 
     public func onFrame(deltaTime: TimeInterval) {
@@ -601,14 +601,14 @@ public final class QuantumMIDIBridgePlugin: EchoelmusicPlugin {
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Quantum MIDI Bridge loaded - Channel: \(configuration.midiChannel)", source: identifier)
+        await DeveloperConsole.shared.info("Quantum MIDI Bridge loaded - Channel: \(configuration.midiChannel)", source: identifier)
     }
 
     public func onUnload() async {
         // Send all notes off
         let allNotesOff = MIDIMessage.controlChange(channel: configuration.midiChannel, cc: 123, value: 0)
         outputMessages.append(allNotesOff)
-        DeveloperConsole.shared.info("Quantum MIDI Bridge unloaded", source: identifier)
+        await DeveloperConsole.shared.info("Quantum MIDI Bridge unloaded", source: identifier)
     }
 
     public func onFrame(deltaTime: TimeInterval) {
@@ -775,7 +775,7 @@ public final class DMXLightShowPlugin: EchoelmusicPlugin {
 
     public func onLoad(context: PluginContext) async throws {
         fixtures = Array(repeating: DMXFixture(), count: configuration.fixtureCount)
-        DeveloperConsole.shared.info("DMX Light Show loaded - \(configuration.fixtureCount) fixtures", source: identifier)
+        await DeveloperConsole.shared.info("DMX Light Show loaded - \(configuration.fixtureCount) fixtures", source: identifier)
     }
 
     public func onUnload() async {
@@ -783,7 +783,7 @@ public final class DMXLightShowPlugin: EchoelmusicPlugin {
         for i in 0..<fixtures.count {
             fixtures[i] = DMXFixture()
         }
-        DeveloperConsole.shared.info("DMX Light Show unloaded - blackout", source: identifier)
+        await DeveloperConsole.shared.info("DMX Light Show unloaded - blackout", source: identifier)
     }
 
     public func onFrame(deltaTime: TimeInterval) {
