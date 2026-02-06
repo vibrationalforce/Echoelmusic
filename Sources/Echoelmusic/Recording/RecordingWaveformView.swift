@@ -76,18 +76,12 @@ struct RecordingWaveformView: View {
             .blue.opacity(0.8)
         ])
 
-        let gradientFill = LinearGradient(
-            gradient: gradient,
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-
         context.stroke(
             waveformPath,
             with: .linearGradient(
                 gradient,
-                startPoint: .leading,
-                endPoint: .trailing
+                startPoint: CGPoint(x: 0, y: midY),
+                endPoint: CGPoint(x: width, y: midY)
             ),
             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         )
