@@ -5,6 +5,9 @@ import MetalPerformanceShaders
 import Accelerate
 import Combine
 import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Performance Optimizer - Guarantees 120 FPS on supported devices
 /// Adaptive quality, thermal management, battery optimization

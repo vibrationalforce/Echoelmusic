@@ -2,6 +2,9 @@ import Foundation
 import SwiftUI
 import Combine
 import os
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ECHOELMUSIC SELF-HEALING ENGINE

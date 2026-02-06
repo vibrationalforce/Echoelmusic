@@ -1,6 +1,9 @@
 import Foundation
 import Metal
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Energy Efficiency Manager - Green Computing & Carbon Footprint Tracking
 /// Sustainable software design for minimal environmental impact

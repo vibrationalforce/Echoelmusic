@@ -13,6 +13,9 @@
 import Foundation
 import SwiftUI
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 #if canImport(ARKit)
 import ARKit
 #endif
