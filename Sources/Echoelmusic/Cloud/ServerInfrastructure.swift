@@ -344,7 +344,7 @@ public class AuthenticationService: ObservableObject {
 
             logger.auth("Token refreshed successfully")
         } catch {
-            logger.error("Token refresh failed: \(error)", category: .auth)
+            logger.error("Token refresh failed: \(error)", category: .network)
             throw AuthError.refreshFailed
         }
     }
@@ -382,7 +382,7 @@ public class AuthenticationService: ObservableObject {
         let status = SecItemAdd(query as CFDictionary, nil)
 
         if status != errSecSuccess {
-            logger.error("Failed to save token to keychain: \(status)", category: .auth)
+            logger.error("Failed to save token to keychain: \(status)", category: .network)
             throw AuthError.keychainFailed
         }
     }
