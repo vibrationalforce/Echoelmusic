@@ -78,15 +78,15 @@ struct SpatialAudioControlsView: View {
                                 .foregroundColor(VaporwaveColors.textTertiary)
 
                             Picker("Spatial Mode", selection: Binding(
-                                get: { spatialAudioEngine.spatialMode },
-                                set: { spatialAudioEngine.setSpatialMode($0) }
+                                get: { spatialAudioEngine.currentMode },
+                                set: { spatialAudioEngine.setMode($0) }
                             )) {
                                 ForEach(SpatialAudioEngine.SpatialMode.allCases, id: \.self) { mode in
                                     Text(mode.rawValue).tag(mode)
                                 }
                             }
                             .pickerStyle(.segmented)
-                            .accessibilityLabel("Spatial mode: \(spatialAudioEngine.spatialMode.rawValue)")
+                            .accessibilityLabel("Spatial mode: \(spatialAudioEngine.currentMode.rawValue)")
                         }
                     }
 
