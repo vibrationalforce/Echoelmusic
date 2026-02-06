@@ -200,7 +200,7 @@ public class AppleSignInProvider: NSObject, ObservableObject {
     private let logger = ProfessionalLogger.shared
 
     public func signIn() async throws {
-        logger.auth("Initiating Sign in with Apple")
+        logger.network("Initiating Sign in with Apple")
 
         let provider = ASAuthorizationAppleIDProvider()
         let request = provider.createRequest()
@@ -208,7 +208,7 @@ public class AppleSignInProvider: NSObject, ObservableObject {
 
         // In production, this would use ASAuthorizationController
         // For now, simulate successful auth
-        logger.auth("Sign in with Apple completed")
+        logger.network("Sign in with Apple completed")
     }
 }
 #endif
@@ -260,7 +260,7 @@ public class AuthenticationService: ObservableObject {
 
     /// Sign in with Apple
     public func signInWithApple() async throws {
-        logger.auth("Sign in with Apple requested")
+        logger.network("Sign in with Apple requested")
 
         #if canImport(AuthenticationServices)
         // In production, implement full Sign in with Apple flow
@@ -273,7 +273,7 @@ public class AuthenticationService: ObservableObject {
 
     /// Create anonymous session for guest users
     public func createAnonymousSession() async throws {
-        logger.auth("Creating anonymous session")
+        logger.network("Creating anonymous session")
 
         let anonymousID = UUID().uuidString
         let token = JWTToken(
@@ -292,12 +292,12 @@ public class AuthenticationService: ObservableObject {
         try saveTokenToKeychain(token)
         startTokenRefreshTimer()
 
-        logger.auth("Anonymous session created: \(anonymousID)")
+        logger.network("Anonymous session created: \(anonymousID)")
     }
 
     /// Sign out and clear tokens
     public func signOut() async {
-        logger.auth("Signing out")
+        logger.network("Signing out")
 
         refreshTask?.cancel()
         currentToken = nil
@@ -307,7 +307,7 @@ public class AuthenticationService: ObservableObject {
 
         deleteTokenFromKeychain()
 
-        logger.auth("Signed out successfully")
+        logger.network("Signed out successfully")
     }
 
     // MARK: - Token Management
@@ -318,11 +318,11 @@ public class AuthenticationService: ObservableObject {
             throw AuthError.noToken
         }
 
-        logger.auth("Refreshing access token")
+        logger.network("Refreshing access token")
 
         let config = ServerConfiguration.shared
         guard let url = URL(string: "\(config.apiBaseURL)/auth/refresh") else {
-            logger.auth("Invalid refresh token URL", level: .error)
+            logger.network("Invalid refresh token URL", level: .error)
             throw AuthError.invalidConfiguration
         }
 
@@ -342,7 +342,7 @@ public class AuthenticationService: ObservableObject {
             currentToken = newToken
             try saveTokenToKeychain(newToken)
 
-            logger.auth("Token refreshed successfully")
+            logger.network("Token refreshed successfully")
         } catch {
             logger.error("Token refresh failed: \(error)", category: .network)
             throw AuthError.refreshFailed
@@ -406,7 +406,7 @@ public class AuthenticationService: ObservableObject {
         do {
             return try JSONDecoder().decode(JWTToken.self, from: data)
         } catch {
-            log.error("Failed to decode JWT token from Keychain: \(error)")
+            logger.error("Failed to decode JWT token from Keychain: \(error)")
             return nil
         }
     }
@@ -424,15 +424,15 @@ public class AuthenticationService: ObservableObject {
     // MARK: - Restore Session
 
     public func restoreSession() async {
-        logger.auth("Attempting to restore session")
+        logger.network("Attempting to restore session")
 
         guard let token = loadTokenFromKeychain() else {
-            logger.auth("No saved session found")
+            logger.network("No saved session found")
             return
         }
 
         if token.isExpired {
-            logger.auth("Saved token is expired")
+            logger.network("Saved token is expired")
             deleteTokenFromKeychain()
             return
         }
@@ -441,7 +441,7 @@ public class AuthenticationService: ObservableObject {
         isAuthenticated = true
         startTokenRefreshTimer()
 
-        logger.auth("Session restored successfully")
+        logger.network("Session restored successfully")
     }
 }
 
@@ -450,6 +450,7 @@ public enum AuthError: Error, LocalizedError {
     case refreshFailed
     case keychainFailed
     case invalidCredentials
+    case invalidConfiguration
 
     public var errorDescription: String? {
         switch self {
@@ -461,6 +462,8 @@ public enum AuthError: Error, LocalizedError {
             return "Keychain access failed"
         case .invalidCredentials:
             return "Invalid credentials provided"
+        case .invalidConfiguration:
+            return "Invalid authentication configuration"
         }
     }
 
@@ -472,6 +475,8 @@ public enum AuthError: Error, LocalizedError {
             return "Check your network connection and try again"
         case .keychainFailed:
             return "Please restart the app and try again"
+        case .invalidConfiguration:
+            return "Please check the server configuration"
         }
     }
 }
@@ -598,7 +603,7 @@ public class CollaborationServer: NSObject, ObservableObject {
         guard !connectionState.isConnected else { return }
 
         connectionState = .connecting
-        logger.collaboration("Connecting to collaboration server")
+        logger.social("Connecting to collaboration server")
 
         guard let wsURL = ServerConfiguration.shared.collaborationWebSocketURL else {
             throw CollaborationError.invalidURL
@@ -626,12 +631,12 @@ public class CollaborationServer: NSObject, ObservableObject {
         startReceiving()
         startHeartbeat()
 
-        logger.collaboration("Connected to collaboration server")
+        logger.social("Connected to collaboration server")
     }
 
     /// Disconnect from server
     public func disconnect() {
-        logger.collaboration("Disconnecting from collaboration server")
+        logger.social("Disconnecting from collaboration server")
 
         heartbeatTimer?.invalidate()
         webSocketTask?.cancel(with: .goingAway, reason: nil)
@@ -653,7 +658,7 @@ public class CollaborationServer: NSObject, ObservableObject {
         connectionState = .reconnecting(attempt: reconnectAttempt)
 
         let delay = min(pow(2.0, Double(reconnectAttempt)), 60.0) // Max 60s
-        logger.collaboration("Reconnecting in \(Int(delay))s (attempt \(reconnectAttempt))")
+        logger.social("Reconnecting in \(Int(delay))s (attempt \(reconnectAttempt))")
 
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
 
@@ -677,7 +682,7 @@ public class CollaborationServer: NSObject, ObservableObject {
             throw CollaborationError.notAuthenticated
         }
 
-        logger.collaboration("Joining session: \(sessionID)")
+        logger.social("Joining session: \(sessionID)")
 
         let message = WSMessage(
             type: .join,
@@ -697,7 +702,7 @@ public class CollaborationServer: NSObject, ObservableObject {
             return
         }
 
-        logger.collaboration("Leaving session: \(sessionID)")
+        logger.social("Leaving session: \(sessionID)")
 
         let message = WSMessage(
             type: .leave,
@@ -740,7 +745,7 @@ public class CollaborationServer: NSObject, ObservableObject {
         }
 
         try await webSocketTask.send(.string(messageString))
-        logger.collaboration("Sent message: \(message.type.rawValue)")
+        logger.social("Sent message: \(message.type.rawValue)")
     }
 
     private func startReceiving() {
@@ -794,19 +799,19 @@ public class CollaborationServer: NSObject, ObservableObject {
         case .join:
             if !participants.contains(message.userID) {
                 participants.append(message.userID)
-                logger.collaboration("User joined: \(message.userID)")
+                logger.social("User joined: \(message.userID)")
             }
 
         case .leave:
             participants.removeAll { $0 == message.userID }
-            logger.collaboration("User left: \(message.userID)")
+            logger.social("User left: \(message.userID)")
 
         case .heartbeat:
             // Server heartbeat received
             break
 
         default:
-            logger.collaboration("Received message: \(message.type.rawValue)")
+            logger.social("Received message: \(message.type.rawValue)")
         }
     }
 
@@ -838,14 +843,14 @@ public class CollaborationServer: NSObject, ObservableObject {
 extension CollaborationServer: URLSessionWebSocketDelegate {
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         Task { @MainActor in
-            logger.collaboration("WebSocket opened")
+            logger.social("WebSocket opened")
             connectionState = .connected
         }
     }
 
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         Task { @MainActor in
-            logger.collaboration("WebSocket closed: \(closeCode.rawValue)")
+            logger.social("WebSocket closed: \(closeCode.rawValue)")
             connectionState = .disconnected
             await reconnect()
         }
@@ -945,25 +950,25 @@ public class CloudSyncService: ObservableObject {
 
     /// Upload session to cloud
     public func uploadSession(_ session: ServerCollaborationSession) async throws {
-        logger.cloud("Uploading session: \(session.id)")
+        logger.network("Uploading session: \(session.id)")
 
         let data = try JSONEncoder().encode(session)
         let endpoint = "/sync/sessions/\(session.id)"
 
         try await apiClient.put(endpoint: endpoint, body: data)
 
-        logger.cloud("Session uploaded successfully")
+        logger.network("Session uploaded successfully")
     }
 
     /// Download session from cloud
     public func downloadSession(_ sessionID: String) async throws -> ServerCollaborationSession {
-        logger.cloud("Downloading session: \(sessionID)")
+        logger.network("Downloading session: \(sessionID)")
 
         let endpoint = "/sync/sessions/\(sessionID)"
         let data = try await apiClient.get(endpoint: endpoint)
 
         let session = try JSONDecoder().decode(ServerCollaborationSession.self, from: data)
-        logger.cloud("Session downloaded successfully")
+        logger.network("Session downloaded successfully")
 
         return session
     }
@@ -972,26 +977,26 @@ public class CloudSyncService: ObservableObject {
 
     /// Upload preset to cloud
     public func uploadPreset(_ preset: Codable, type: SyncDataType) async throws {
-        logger.cloud("Uploading preset")
+        logger.network("Uploading preset")
 
         let data = try JSONEncoder().encode(preset)
         let endpoint = "/sync/presets"
 
         try await apiClient.post(endpoint: endpoint, body: data)
 
-        logger.cloud("Preset uploaded successfully")
+        logger.network("Preset uploaded successfully")
     }
 
     /// Download all presets from cloud
     public func downloadPresets() async throws -> [Data] {
-        logger.cloud("Downloading presets")
+        logger.network("Downloading presets")
 
         let endpoint = "/sync/presets"
         let data = try await apiClient.get(endpoint: endpoint)
 
         // Parse array of presets
         let presets = try JSONDecoder().decode([Data].self, from: data)
-        logger.cloud("Downloaded \(presets.count) presets")
+        logger.network("Downloaded \(presets.count) presets")
 
         return presets
     }
@@ -1000,7 +1005,7 @@ public class CloudSyncService: ObservableObject {
 
     /// Upload settings to cloud
     public func uploadSettings(_ settings: [String: Any]) async throws {
-        logger.cloud("Uploading settings")
+        logger.network("Uploading settings")
 
         let codableSettings = settings.mapValues { AnyCodable($0) }
         let data = try JSONEncoder().encode(codableSettings)
@@ -1008,12 +1013,12 @@ public class CloudSyncService: ObservableObject {
 
         try await apiClient.put(endpoint: endpoint, body: data)
 
-        logger.cloud("Settings uploaded successfully")
+        logger.network("Settings uploaded successfully")
     }
 
     /// Download settings from cloud
     public func downloadSettings() async throws -> [String: Any] {
-        logger.cloud("Downloading settings")
+        logger.network("Downloading settings")
 
         let endpoint = "/sync/settings"
         let data = try await apiClient.get(endpoint: endpoint)
@@ -1021,7 +1026,7 @@ public class CloudSyncService: ObservableObject {
         let codableSettings = try JSONDecoder().decode([String: AnyCodable].self, from: data)
         let settings = codableSettings.mapValues { $0.value }
 
-        logger.cloud("Settings downloaded successfully")
+        logger.network("Settings downloaded successfully")
         return settings
     }
 
@@ -1030,14 +1035,14 @@ public class CloudSyncService: ObservableObject {
     /// Perform full sync of all data
     public func performFullSync() async -> SyncResult {
         guard !isSyncing else {
-            logger.cloud("Sync already in progress")
+            logger.network("Sync already in progress")
             return SyncResult(uploaded: 0, downloaded: 0, conflicts: 0, errors: [])
         }
 
         isSyncing = true
         syncProgress = 0.0
 
-        logger.cloud("Starting full sync")
+        logger.network("Starting full sync")
 
         var uploaded = 0
         var downloaded = 0
@@ -1056,7 +1061,7 @@ public class CloudSyncService: ObservableObject {
         isSyncing = false
         lastSyncDate = Date()
 
-        logger.cloud("Full sync completed: ↑\(uploaded) ↓\(downloaded) ⚠️\(conflicts)")
+        logger.network("Full sync completed: ↑\(uploaded) ↓\(downloaded) ⚠️\(conflicts)")
 
         return SyncResult(
             uploaded: uploaded,
@@ -1070,7 +1075,7 @@ public class CloudSyncService: ObservableObject {
 
     /// Perform efficient delta sync (only changed items)
     public func performDeltaSync(since: Date) async -> SyncResult {
-        logger.cloud("Performing delta sync since \(since)")
+        logger.network("Performing delta sync since \(since)")
 
         // In production, this would use delta/change tracking
         // For now, defer to full sync
@@ -1152,7 +1157,7 @@ public class RealtimeBioSync: ObservableObject {
     public func start() async throws {
         guard !isActive else { return }
 
-        logger.biosync("Starting real-time bio sync")
+        logger.biofeedback("Starting real-time bio sync")
 
         guard let wsURL = ServerConfiguration.shared.bioSyncWebSocketURL else {
             throw CollaborationError.invalidURL
@@ -1180,12 +1185,12 @@ public class RealtimeBioSync: ObservableObject {
         startPeriodicSync()
         startReceiving()
 
-        logger.biosync("Real-time bio sync started")
+        logger.biofeedback("Real-time bio sync started")
     }
 
     /// Stop bio sync
     public func stop() {
-        logger.biosync("Stopping real-time bio sync")
+        logger.biofeedback("Stopping real-time bio sync")
 
         updateTimer?.invalidate()
         bioWebSocketTask?.cancel(with: .goingAway, reason: nil)
@@ -1228,7 +1233,7 @@ public class RealtimeBioSync: ObservableObject {
         do {
             try await bioWebSocketTask?.send(.data(data))
         } catch {
-            logger.error("Failed to send bio data: \(error)", category: .biosync)
+            logger.error("Failed to send bio data: \(error)", category: .biofeedback)
         }
     }
 
@@ -1242,7 +1247,7 @@ public class RealtimeBioSync: ObservableObject {
                     await handleBioMessage(message)
                 }
             } catch {
-                logger.error("Bio WebSocket receive error: \(error)", category: .biosync)
+                logger.error("Bio WebSocket receive error: \(error)", category: .biofeedback)
             }
         }
     }
@@ -1253,7 +1258,7 @@ public class RealtimeBioSync: ObservableObject {
             if let aggregated = try? JSONDecoder().decode(AggregatedBioData.self, from: data) {
                 await MainActor.run {
                     self.aggregatedData = aggregated
-                    logger.biosync("Received aggregated bio data: \(aggregated.participantCount) participants")
+                    logger.biofeedback("Received aggregated bio data: \(aggregated.participantCount) participants")
                 }
             }
 
