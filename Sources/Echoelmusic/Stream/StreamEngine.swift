@@ -59,7 +59,7 @@ public class StreamEngine: ObservableObject {
         case custom1 = "Custom RTMP 1"
         case custom2 = "Custom RTMP 2"
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
 
         var rtmpURL: String {
             switch self {
