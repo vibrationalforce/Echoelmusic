@@ -677,6 +677,7 @@ class AutomaticVocalAligner: ObservableObject {
         case invalidBuffer
         case noAlignmentResult
         case playbackFailed(Error)
+        case processingError(String)
 
         var errorDescription: String? {
             switch self {
@@ -692,6 +693,8 @@ class AutomaticVocalAligner: ObservableObject {
                 return "No alignment result available for this track."
             case .playbackFailed(let error):
                 return "Playback failed: \(error.localizedDescription)"
+            case .processingError(let message):
+                return "Processing error: \(message)"
             }
         }
     }

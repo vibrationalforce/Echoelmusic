@@ -462,6 +462,7 @@ enum ScriptError: LocalizedError {
     case missingProcessFunction
     case compilationFailed(String)
     case scriptNotFound
+    case executionFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -473,6 +474,8 @@ enum ScriptError: LocalizedError {
             return "Compilation failed: \(message)"
         case .scriptNotFound:
             return "Script not found"
+        case .executionFailed(let message):
+            return "Execution failed: \(message)"
         }
     }
 }
