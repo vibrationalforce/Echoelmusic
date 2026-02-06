@@ -2,6 +2,9 @@ import Foundation
 import Combine
 import Metal
 import MetalKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Adaptive Quality Manager für automatische Performance-Optimierung
 ///

@@ -7,6 +7,9 @@
 import Foundation
 import os.log
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - Production Monitoring
 
@@ -620,7 +623,3 @@ public final class HealthDashboard: ObservableObject {
 }
 
 // MARK: - UIApplication Extension (iOS)
-
-#if canImport(UIKit)
-import UIKit
-#endif

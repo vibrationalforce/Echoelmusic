@@ -8,6 +8,9 @@
 
 import Foundation
 import CryptoKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - Security Hardening Configuration
 
@@ -438,7 +441,3 @@ public final class SecurityAuditTrail: @unchecked Sendable {
         }
     }
 }
-
-#if canImport(UIKit)
-import UIKit
-#endif

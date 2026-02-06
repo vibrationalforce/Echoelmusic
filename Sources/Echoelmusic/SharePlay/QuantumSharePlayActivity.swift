@@ -10,6 +10,9 @@
 
 import Foundation
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 #if canImport(GroupActivities)
 import GroupActivities
