@@ -564,6 +564,11 @@ public enum WSConnectionState {
     case connected
     case reconnecting(attempt: Int)
     case failed(Error)
+
+    public var isConnected: Bool {
+        if case .connected = self { return true }
+        return false
+    }
 }
 
 /// Collaboration server with WebSocket management
@@ -590,7 +595,7 @@ public class CollaborationServer: NSObject, ObservableObject {
 
     /// Connect to collaboration server
     public func connect() async throws {
-        guard connectionState != .connected else { return }
+        guard !connectionState.isConnected else { return }
 
         connectionState = .connecting
         logger.collaboration("Connecting to collaboration server")
@@ -606,13 +611,14 @@ public class CollaborationServer: NSObject, ObservableObject {
         config.waitsForConnectivity = true
 
         let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
-        webSocketTask = session.webSocketTask(with: wsURL)
 
-        // Add authentication header
+        // Add authentication header to request before creating WebSocket task
+        var wsRequest = URLRequest(url: wsURL)
         if let token = AuthenticationService.shared.currentToken {
-            webSocketTask?.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
+            wsRequest.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
 
+        webSocketTask = session.webSocketTask(with: wsRequest)
         webSocketTask?.resume()
         connectionState = .connected
         reconnectAttempt = 0
@@ -663,7 +669,7 @@ public class CollaborationServer: NSObject, ObservableObject {
 
     /// Join or create a collaboration session
     public func joinSession(_ sessionID: String) async throws {
-        guard connectionState == .connected else {
+        guard connectionState.isConnected else {
             throw CollaborationError.notConnected
         }
 
@@ -888,6 +894,8 @@ public enum CollaborationError: Error, LocalizedError {
             return "Please wait a moment and try reconnecting"
         case .sendFailed:
             return "Check your connection and try again"
+        case .encodingFailed:
+            return "Please try again with valid data"
         }
     }
 }
