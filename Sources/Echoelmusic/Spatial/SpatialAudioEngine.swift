@@ -14,6 +14,7 @@ class SpatialAudioEngine: ObservableObject {
     // MARK: - Published State
 
     @Published var isActive: Bool = false
+    @Published var isAvailable: Bool = true
     @Published var currentMode: SpatialMode = .stereo
     @Published var headTrackingEnabled: Bool = false
     @Published var spatialSources: [SpatialSource] = []
@@ -347,8 +348,8 @@ class SpatialAudioEngine: ObservableObject {
     public func setReverbBlend(_ blend: Float) {
         let clampedBlend = max(0.0, min(1.0, blend))
 
-        if #available(iOS 17.0, *), let environment = environmentNode {
-            environment.reverbParameters.wetDryMix = clampedBlend * 50.0  // Scale to 0-50%
+        if let environment = environmentNode {
+            environment.reverbParameters.level = clampedBlend * 40.0 - 40.0  // Scale to -40..0 dB
         }
     }
 
@@ -492,7 +493,9 @@ class SpatialAudioEngine: ObservableObject {
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self = self, let motion = motion else { return }
             Task { @MainActor in
-                self.updateListenerOrientation(attitude: motion.attitude)
+                if #available(iOS 17.0, *) {
+                    self.updateListenerOrientation(attitude: motion.attitude)
+                }
             }
         }
 
