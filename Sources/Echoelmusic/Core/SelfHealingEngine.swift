@@ -571,7 +571,7 @@ class HealthMonitor {
 
         for i in 0..<Int(threadCount) {
             var threadInfo = thread_basic_info()
-            var count = mach_msg_type_number_t(THREAD_BASIC_INFO_COUNT)
+            var count = mach_msg_type_number_t(MemoryLayout<thread_basic_info_data_t>.size / MemoryLayout<integer_t>.size)
 
             let infoResult = withUnsafeMutablePointer(to: &threadInfo) {
                 $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
