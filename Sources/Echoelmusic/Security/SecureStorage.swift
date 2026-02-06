@@ -666,6 +666,7 @@ public enum KeychainError: Error, LocalizedError {
 // MARK: - Secure Data Wrapper
 
 /// Property wrapper for secure storage
+@MainActor
 @propertyWrapper
 public struct SecureStored<T: Codable> {
     private let key: String
