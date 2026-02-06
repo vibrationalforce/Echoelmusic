@@ -812,11 +812,11 @@ public final class SampleVisualizerPlugin: EchoelmusicPlugin {
     public init() {}
 
     public func onLoad(context: PluginContext) async throws {
-        DeveloperConsole.shared.info("Sample Visualizer loaded", source: identifier)
+        await DeveloperConsole.shared.info("Sample Visualizer loaded", source: identifier)
     }
 
     public func onUnload() async {
-        DeveloperConsole.shared.info("Sample Visualizer unloaded", source: identifier)
+        await DeveloperConsole.shared.info("Sample Visualizer unloaded", source: identifier)
     }
 
     public func onFrame(deltaTime: TimeInterval) {
