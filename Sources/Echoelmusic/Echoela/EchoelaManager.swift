@@ -183,6 +183,39 @@ public final class EchoelaManager: ObservableObject {
             category: .nft,
             deepLinkScheme: "echoelmusic://action/nft/splits",
             requiredPermissions: [.blockchain]
+        ),
+        // Morphic Engine tools
+        EchoelaTool(
+            id: "morphic_create",
+            name: "Create Morphic Effect",
+            description: "Generate a custom DSP effect from a natural language description",
+            category: .production,
+            deepLinkScheme: "echoelmusic://action/morphic/create",
+            requiredPermissions: []
+        ),
+        EchoelaTool(
+            id: "morphic_preset",
+            name: "Load Morphic Preset",
+            description: "Load a built-in Morphic effect preset",
+            category: .production,
+            deepLinkScheme: "echoelmusic://action/morphic/preset",
+            requiredPermissions: []
+        ),
+        EchoelaTool(
+            id: "morphic_bio",
+            name: "Bio-Bind Morphic Effect",
+            description: "Connect biometric signals to effect parameters",
+            category: .biometric,
+            deepLinkScheme: "echoelmusic://action/morphic/bio",
+            requiredPermissions: [.healthKit]
+        ),
+        EchoelaTool(
+            id: "morphic_sandbox",
+            name: "Sandbox Status",
+            description: "Check Morphic sandbox health and active sessions",
+            category: .production,
+            deepLinkScheme: "echoelmusic://action/morphic/status",
+            requiredPermissions: []
         )
     ]
 
@@ -463,6 +496,17 @@ public final class EchoelaManager: ObservableObject {
             }
         }
 
+        if text.lowercased().contains("effect") || text.lowercased().contains("morphic") || text.lowercased().contains("create") || text.lowercased().contains("custom") {
+            if let url = generateDeepLink(action: "morphic/create") {
+                actions.append(EchoelaResponse.SuggestedAction(
+                    title: "Create Morphic Effect",
+                    icon: "wand.and.stars",
+                    deepLink: url,
+                    isDestructive: false
+                ))
+            }
+        }
+
         return actions
     }
 
@@ -513,6 +557,8 @@ public final class EchoelaManager: ObservableObject {
             handleCollaborationAction(action, params: params)
         case "compliance":
             handleComplianceAction(action, params: params)
+        case "morphic":
+            handleMorphicAction(action, params: params)
         default:
             log.warning("Unknown action category: \(category)")
         }
@@ -564,6 +610,46 @@ public final class EchoelaManager: ObservableObject {
             object: nil,
             userInfo: ["category": "compliance", "action": action, "params": params]
         )
+    }
+
+    private func handleMorphicAction(_ action: String, params: [String: String]) {
+        switch action {
+        case "create":
+            // Compile a new Morphic effect from description
+            if let description = params["description"] {
+                Task {
+                    do {
+                        let session = try await MorphicSandboxManager.shared.compileAndRun(
+                            description: description,
+                            name: params["name"]
+                        )
+                        log.info("Morphic: created and activated effect '\(session.graph.name)'")
+                    } catch {
+                        log.error("Morphic create failed: \(error.localizedDescription)")
+                    }
+                }
+            }
+        case "preset":
+            // Load a Morphic preset
+            NotificationCenter.default.post(
+                name: .echoelaAction,
+                object: nil,
+                userInfo: ["category": "morphic", "action": "preset", "params": params]
+            )
+        case "bio":
+            // Toggle bio-reactive binding
+            MorphicSandboxManager.shared.config.bioReactiveEnabled = params["enabled"] != "false"
+        case "status":
+            // Report sandbox health
+            let report = MorphicSandboxManager.shared.healthReport
+            log.info("Morphic sandbox: \(report.activeSessions)/\(report.maxSessions) sessions, CPU: \(String(format: "%.0f", report.averageCPU * 100))%, healthy: \(report.isHealthy)")
+        default:
+            NotificationCenter.default.post(
+                name: .echoelaAction,
+                object: nil,
+                userInfo: ["category": "morphic", "action": action, "params": params]
+            )
+        }
     }
 }
 
