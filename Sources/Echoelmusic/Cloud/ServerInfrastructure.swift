@@ -1308,7 +1308,7 @@ public class APIClient: ObservableObject {
 
     // MARK: - Core Request
 
-    private func request(endpoint: String, method: HTTPMethod, body: Data? = nil, retryCount: Int = 0) async throws -> Data {
+    func request(endpoint: String, method: HTTPMethod, body: Data? = nil, retryCount: Int = 0) async throws -> Data {
         let config = ServerConfiguration.shared
         let urlString = endpoint.starts(with: "http") ? endpoint : "\(config.apiBaseURL)\(endpoint)"
 
@@ -1316,18 +1316,18 @@ public class APIClient: ObservableObject {
             throw APIError.invalidURL
         }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Echoelmusic/1.0", forHTTPHeaderField: "User-Agent")
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = method.rawValue
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("Echoelmusic/1.0", forHTTPHeaderField: "User-Agent")
 
         // Add authentication
         if let token = AuthenticationService.shared.currentToken {
-            request.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
+            urlRequest.setValue("Bearer \(token.accessToken)", forHTTPHeaderField: "Authorization")
         }
 
         if let body = body {
-            request.httpBody = body
+            urlRequest.httpBody = body
         }
 
         if loggingEnabled {
@@ -1335,7 +1335,7 @@ public class APIClient: ObservableObject {
         }
 
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await session.data(for: urlRequest)
 
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw APIError.invalidResponse
