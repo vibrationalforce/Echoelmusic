@@ -274,7 +274,7 @@ public final class SacredGeometryVisualizerPlugin: EchoelmusicPlugin {
     public func setPattern(_ pattern: GeometryPattern) {
         configuration.pattern = pattern
         generateVertices()
-        DeveloperConsole.shared.debug("Pattern changed to: \(pattern.rawValue)", source: identifier)
+        Task { @MainActor in DeveloperConsole.shared.debug("Pattern changed to: \(pattern.rawValue)", source: identifier) }
     }
 
     public func getVertices() -> [SIMD2<Float>] {
@@ -658,7 +658,7 @@ public final class QuantumMIDIBridgePlugin: EchoelmusicPlugin {
         outputMessages.append(.controlChange(channel: configuration.midiChannel, cc: configuration.quantumNoiseCC, value: noiseValue))
 
         // Log for debugging
-        DeveloperConsole.shared.debug("MIDI: Coh=\(coherenceValue) Ent=\(entanglementValue) Bio=\(bioValue)", source: identifier)
+        Task { @MainActor in DeveloperConsole.shared.debug("MIDI: Coh=\(coherenceValue) Ent=\(entanglementValue) Bio=\(bioValue)", source: identifier) }
     }
 
     // MARK: - Public API
@@ -680,7 +680,7 @@ public final class QuantumMIDIBridgePlugin: EchoelmusicPlugin {
         let noteOff = MIDIMessage.noteOff(channel: configuration.midiChannel, note: 60)
         outputMessages.append(noteOff)
 
-        DeveloperConsole.shared.info("Quantum trigger sent", source: identifier)
+        Task { @MainActor in DeveloperConsole.shared.info("Quantum trigger sent", source: identifier) }
     }
 
     /// Get OSC message bundle for external routing
