@@ -142,6 +142,7 @@ public class UnifiedControlHub: ObservableObject {
         let handManager = HandTrackingManager()
         let gestureRec = GestureRecognizer(handTracker: handManager)
         let conflictRes = GestureConflictResolver(
+            gestureRecognizer: gestureRec,
             handTracker: handManager,
             faceTracker: faceTrackingManager
         )
@@ -519,7 +520,7 @@ public class UnifiedControlHub: ObservableObject {
     public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
         return hardwareEcosystem?.midiControllers.controllers.filter { controller in
             // Check if controller is actually connected
-            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.name } ?? false
+            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.model } ?? false
         } ?? []
     }
 

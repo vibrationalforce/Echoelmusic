@@ -22,7 +22,7 @@ class TouchInstrumentsHub: ObservableObject {
     // MARK: - Dependencies
 
     private var midi2Manager: MIDI2Manager?
-    private var mpeZoneManager: MPEZoneManager?
+    var mpeZoneManager: MPEZoneManager?
     private var hapticEngine: CHHapticEngine?
 
     // MARK: - Instruments
