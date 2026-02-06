@@ -436,11 +436,15 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             anchor: nil,
             limit: HKObjectQueryNoLimit
         ) { [weak self] query, samples, deleted, anchor, error in
-            self?.processHeartRateSamples(samples)
+            Task { @MainActor in
+                self?.processHeartRateSamples(samples)
+            }
         }
 
         heartRateQuery?.updateHandler = { [weak self] query, samples, deleted, anchor, error in
-            self?.processHeartRateSamples(samples)
+            Task { @MainActor in
+                self?.processHeartRateSamples(samples)
+            }
         }
 
         if let query = heartRateQuery {
@@ -459,11 +463,15 @@ public final class RealTimeHealthKitEngine: ObservableObject {
             anchor: nil,
             limit: HKObjectQueryNoLimit
         ) { [weak self] query, samples, deleted, anchor, error in
-            self?.processHRVSamples(samples)
+            Task { @MainActor in
+                self?.processHRVSamples(samples)
+            }
         }
 
         hrvQuery?.updateHandler = { [weak self] query, samples, deleted, anchor, error in
-            self?.processHRVSamples(samples)
+            Task { @MainActor in
+                self?.processHRVSamples(samples)
+            }
         }
 
         if let query = hrvQuery {

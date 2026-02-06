@@ -396,7 +396,9 @@ class HealthKitManager: ObservableObject {
                 return
             }
 
-            self.processHeartRateSamples(samples)
+            Task { @MainActor in
+                self.processHeartRateSamples(samples)
+            }
         }
 
         // Set update handler for continuous monitoring
@@ -410,7 +412,9 @@ class HealthKitManager: ObservableObject {
                 return
             }
 
-            self.processHeartRateSamples(samples)
+            Task { @MainActor in
+                self.processHeartRateSamples(samples)
+            }
         }
 
         heartRateQuery = query
@@ -456,7 +460,9 @@ class HealthKitManager: ObservableObject {
                 return
             }
 
-            self.processHRVSamples(samples)
+            Task { @MainActor in
+                self.processHRVSamples(samples)
+            }
         }
 
         query.updateHandler = { [weak self] query, samples, deletedObjects, anchor, error in
@@ -469,7 +475,9 @@ class HealthKitManager: ObservableObject {
                 return
             }
 
-            self.processHRVSamples(samples)
+            Task { @MainActor in
+                self.processHRVSamples(samples)
+            }
         }
 
         hrvQuery = query

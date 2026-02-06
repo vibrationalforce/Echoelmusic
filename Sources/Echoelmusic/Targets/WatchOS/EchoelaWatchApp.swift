@@ -249,11 +249,15 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
             anchor: nil,
             limit: HKObjectQueryNoLimit
         ) { [weak self] _, samples, _, _, _ in
-            self?.processHeartRateSamples(samples)
+            Task { @MainActor in
+                self?.processHeartRateSamples(samples)
+            }
         }
 
         heartRateQuery?.updateHandler = { [weak self] _, samples, _, _, _ in
-            self?.processHeartRateSamples(samples)
+            Task { @MainActor in
+                self?.processHeartRateSamples(samples)
+            }
         }
 
         if let query = heartRateQuery {
@@ -274,11 +278,15 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
             anchor: nil,
             limit: HKObjectQueryNoLimit
         ) { [weak self] _, samples, _, _, _ in
-            self?.processHRVSamples(samples)
+            Task { @MainActor in
+                self?.processHRVSamples(samples)
+            }
         }
 
         hrvQuery?.updateHandler = { [weak self] _, samples, _, _, _ in
-            self?.processHRVSamples(samples)
+            Task { @MainActor in
+                self?.processHRVSamples(samples)
+            }
         }
 
         if let query = hrvQuery {
