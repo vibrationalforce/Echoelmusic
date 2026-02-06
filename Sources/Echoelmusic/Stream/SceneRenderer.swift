@@ -3,6 +3,7 @@ import AVFoundation
 import Metal
 import MetalKit
 import CoreImage
+import SwiftUI
 import simd
 
 #if os(iOS) || os(macOS) || os(tvOS)
@@ -11,6 +12,7 @@ import simd
 
 /// GPU-accelerated scene compositor for live streaming
 /// Composites multiple layers: camera, visuals, overlays, and bio-data widgets
+@MainActor
 class SceneRenderer {
 
     // MARK: - Metal Objects
