@@ -328,6 +328,7 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
     case autoVignette = "Auto Vignette"
     case autoFilmGrain = "Auto Film Grain"
     case autoLensFlare = "Auto Lens Flare"
+    case autoSubtitles = "Auto Subtitles"
 
     // === STYLE TRANSFER (15) ===
     case styleVanGogh = "Van Gogh Style"
@@ -398,6 +399,7 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
     case audioMusic = "Music Generation"
     case audioSFX = "Sound Effects AI"
     case audioDub = "Auto Dubbing"
+    case beatSync = "Beat Sync"
 
     // === CREATIVE AI (15) ===
     case creativeGlitch = "Glitch Art"
@@ -434,7 +436,8 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
         case .autoColor, .autoExposure, .autoWhiteBalance, .autoContrast, .autoSaturation,
              .autoSharpness, .autoNoise, .autoStabilize, .autoHDR, .autoUpscale,
              .autoFrameRate, .autoSlowMo, .autoTimelapse, .autoCrop, .autoZoom,
-             .autoFocus, .autoDepthOfField, .autoVignette, .autoFilmGrain, .autoLensFlare:
+             .autoFocus, .autoDepthOfField, .autoVignette, .autoFilmGrain, .autoLensFlare,
+             .autoSubtitles:
             return "Auto Enhancement"
         case .styleVanGogh, .stylePicasso, .styleMonet, .styleAnime, .stylePixar,
              .styleCyberpunk, .styleNoir, .styleVintage, .styleNeon, .styleWatercolor,
@@ -451,7 +454,7 @@ public enum AIVideoEffect: String, CaseIterable, Codable {
              .motionFreeze, .motionReverse, .motionLoop, .motionMorph, .motionClone:
             return "Motion AI"
         case .audioEnhance, .audioNoise, .audioSeparate, .audioTranscribe, .audioTranslate,
-             .audioClone, .audioSync, .audioMusic, .audioSFX, .audioDub:
+             .audioClone, .audioSync, .audioMusic, .audioSFX, .audioDub, .beatSync:
             return "Audio AI"
         case .creativeGlitch, .creativeKaleidoscope, .creativeMirror, .creativeFractal,
              .creativeParticles, .creativeLiquid, .creativeFire, .creativeSmoke,

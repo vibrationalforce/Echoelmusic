@@ -154,6 +154,7 @@ struct ExposureCorrection {
     float blacks = 0.0f;               // Clip point (-1 to +1)
     float clarity = 0.0f;              // Local contrast (-1 to +1)
     float dehaze = 0.0f;               // Haze removal (-1 to +1)
+    float saturation = 1.0f;           // Saturation multiplier (0-2.0)
     bool autoDetected = false;
     float confidence = 1.0f;
 
