@@ -425,7 +425,7 @@ public extension View {
 // MARK: - Accessible Color Extensions
 
 public extension Color {
-    static func accessibleQuantumColor(
+    @MainActor static func accessibleQuantumColor(
         hue: Double,
         saturation: Double = 0.8,
         brightness: Double = 0.8
