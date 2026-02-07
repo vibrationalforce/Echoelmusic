@@ -299,6 +299,18 @@ public enum BreathingPattern: String, Codable, Sendable {
     case boxBreathing = "Box Breathing"
     case fourSevenEight = "4-7-8 Breath"
     case energizingBreath = "Energizing Breath"
+
+    public var name: String { rawValue }
+
+    public var cycleDuration: Double {
+        switch self {
+        case .coherenceBreath: return 10
+        case .relaxingBreath: return 12
+        case .boxBreathing: return 16
+        case .fourSevenEight: return 19
+        case .energizingBreath: return 6
+        }
+    }
 }
 
 public struct WellnessPreset: EnginePreset {
