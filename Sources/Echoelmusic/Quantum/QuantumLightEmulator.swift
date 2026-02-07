@@ -13,6 +13,9 @@ import Foundation
 import Combine
 import Accelerate
 import simd
+#if canImport(QuartzCore)
+import QuartzCore
+#endif
 
 // MARK: - Quantum State Representation
 
@@ -657,11 +660,8 @@ public class QuantumLightEmulator: ObservableObject {
 
         // Attention affects visualization complexity
         if attention > 0.7 {
-            // High attention: more focused, coherent patterns
-            if let state = currentQuantumState {
-                var mutableState = state
-                mutableState.coherence = min(1.0, state.coherence + attention * 0.1)
-            }
+            // High attention: boost coherence level for more focused patterns
+            coherenceLevel = min(1.0, coherenceLevel + Float(attention) * 0.1)
         }
     }
 

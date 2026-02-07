@@ -12,6 +12,10 @@ import Foundation
 import Combine
 import simd
 
+#if canImport(QuartzCore)
+import QuartzCore
+#endif
+
 #if canImport(SwiftUI)
 import SwiftUI
 #endif
