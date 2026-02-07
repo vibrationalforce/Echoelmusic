@@ -374,7 +374,7 @@ struct QuantumCanvasView: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1/60)) { timeline in
             Canvas { context, size in
-                let visualization = emulator.generateLightFieldVisualization(
+                let visualization = emulator.generateEmulatorLightFieldVisualization(
                     width: Int(size.width / 4),
                     height: Int(size.height / 4)
                 )
