@@ -419,9 +419,8 @@ public class QuantumLiveActivityManager: ObservableObject {
 
         stopUpdateTimer()
 
-        let finalState = activity.content.state
-
-        if showSummary {
+        if showSummary, #available(iOS 16.2, *) {
+            let finalState = activity.content.state
             // Show final state for a few seconds
             let content = ActivityContent(state: finalState, staleDate: Date().addingTimeInterval(5))
             await activity.end(content, dismissalPolicy: .after(Date().addingTimeInterval(5)))
@@ -455,7 +454,10 @@ public class QuantumLiveActivityManager: ObservableObject {
         guard isActive, let activity = currentActivity else { return }
 
         let dataStore = QuantumDataStore.shared
-        let currentDuration = activity.content.state.sessionDuration + 1
+        var currentDuration: TimeInterval = 0
+        if #available(iOS 16.2, *) {
+            currentDuration = activity.content.state.sessionDuration + 1
+        }
 
         await updateState(
             coherenceLevel: Float(dataStore.coherenceLevel),
