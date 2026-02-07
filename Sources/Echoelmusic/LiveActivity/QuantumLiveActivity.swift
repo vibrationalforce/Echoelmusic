@@ -22,7 +22,7 @@ import WidgetKit
 // MARK: - Live Activity Attributes
 
 #if canImport(ActivityKit)
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 public struct QuantumSessionAttributes: ActivityAttributes {
 
     public struct ContentState: Codable, Hashable {
@@ -200,7 +200,7 @@ public struct QuantumLiveActivityWidget: Widget {
 
 // MARK: - Lock Screen View
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 struct QuantumLockScreenView: View {
     let context: ActivityViewContext<QuantumSessionAttributes>
 
@@ -297,7 +297,7 @@ struct QuantumLockScreenView: View {
     }
 }
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 struct StatPill: View {
     let icon: String
     let value: String
@@ -321,7 +321,7 @@ struct StatPill: View {
 
 // MARK: - Live Activity Manager
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 @MainActor
 public class QuantumLiveActivityManager: ObservableObject {
 
@@ -419,7 +419,7 @@ public class QuantumLiveActivityManager: ObservableObject {
 
         stopUpdateTimer()
 
-        if showSummary, #available(iOS 16.2, *) {
+        if showSummary {
             let finalState = activity.content.state
             // Show final state for a few seconds
             let content = ActivityContent(state: finalState, staleDate: Date().addingTimeInterval(5))
@@ -454,10 +454,7 @@ public class QuantumLiveActivityManager: ObservableObject {
         guard isActive, let activity = currentActivity else { return }
 
         let dataStore = QuantumDataStore.shared
-        var currentDuration: TimeInterval = 0
-        if #available(iOS 16.2, *) {
-            currentDuration = activity.content.state.sessionDuration + 1
-        }
+        let currentDuration = activity.content.state.sessionDuration + 1
 
         await updateState(
             coherenceLevel: Float(dataStore.coherenceLevel),
@@ -472,7 +469,7 @@ public class QuantumLiveActivityManager: ObservableObject {
 
 // MARK: - Live Activity Push Notification Support
 
-@available(iOS 16.1, *)
+@available(iOS 16.2, *)
 public struct QuantumLiveActivityPushToken {
     public let token: Data
 
