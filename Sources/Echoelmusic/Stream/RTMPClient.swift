@@ -100,7 +100,7 @@ class RTMPClient: ObservableObject {
             connection?.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready:
-                    Task { [weak self] in
+                    Task { @MainActor [weak self] in
                         do {
                             try await self?.performHandshake()
                             try await self?.sendConnect(app: app)
@@ -112,10 +112,14 @@ class RTMPClient: ObservableObject {
                         }
                     }
                 case .failed(let error):
-                    self?.connectionState = .error(error.localizedDescription)
-                    continuation.resume(throwing: RTMPError.connectionFailed)
+                    Task { @MainActor [weak self] in
+                        self?.connectionState = .error(error.localizedDescription)
+                        continuation.resume(throwing: RTMPError.connectionFailed)
+                    }
                 case .cancelled:
-                    self?.connectionState = .disconnected
+                    Task { @MainActor [weak self] in
+                        self?.connectionState = .disconnected
+                    }
                 default:
                     break
                 }

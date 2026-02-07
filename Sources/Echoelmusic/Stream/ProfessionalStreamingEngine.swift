@@ -215,7 +215,7 @@ public final class RTMPClientComplete: @unchecked Sendable {
             connection?.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready:
-                    Task {
+                    Task { @MainActor in
                         do {
                             try await self?.performHandshake()
                             continuation.resume()
