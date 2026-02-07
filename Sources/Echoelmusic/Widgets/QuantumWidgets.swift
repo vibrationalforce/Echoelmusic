@@ -146,7 +146,7 @@ struct CoherenceTimelineProvider: AppIntentTimelineProvider {
         )
     }
 
-    func timeline(for configuration: CoherenceWidgetIntent, in context: Context) async -> Timeline<CoherenceEntry> {
+    func timeline(for configuration: CoherenceWidgetIntent, in context: Context) async -> WidgetKit.Timeline<CoherenceEntry> {
         var entries: [CoherenceEntry] = []
         let currentDate = Date()
         let store = QuantumDataStore.shared
@@ -165,7 +165,7 @@ struct CoherenceTimelineProvider: AppIntentTimelineProvider {
             entries.append(entry)
         }
 
-        return Timeline(entries: entries, policy: .atEnd)
+        return WidgetKit.Timeline(entries: entries, policy: .atEnd)
     }
 }
 
@@ -431,9 +431,9 @@ struct QuickSessionProvider: TimelineProvider {
         completion(QuickSessionEntry(date: Date(), isActive: false))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<QuickSessionEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<QuickSessionEntry>) -> Void) {
         let entry = QuickSessionEntry(date: Date(), isActive: QuantumDataStore.shared.isQuantumActive)
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
+        let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
         completion(timeline)
     }
 }
@@ -523,10 +523,10 @@ struct PresetTimelineProvider: AppIntentTimelineProvider {
         return PresetEntry(date: Date(), preset: preset, configuration: configuration)
     }
 
-    func timeline(for configuration: PresetWidgetIntent, in context: Context) async -> Timeline<PresetEntry> {
+    func timeline(for configuration: PresetWidgetIntent, in context: Context) async -> WidgetKit.Timeline<PresetEntry> {
         let preset = findPreset(id: configuration.presetId) ?? BuiltInPresets.deepMeditation
         let entry = PresetEntry(date: Date(), preset: preset, configuration: configuration)
-        return Timeline(entries: [entry], policy: .never)
+        return WidgetKit.Timeline(entries: [entry], policy: .never)
     }
 
     private func findPreset(id: String?) -> QuantumPreset? {
@@ -653,7 +653,7 @@ struct VisualizationProvider: TimelineProvider {
         completion(VisualizationEntry(date: Date(), visualizationType: .coherenceField, coherence: 0.7))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<VisualizationEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<VisualizationEntry>) -> Void) {
         var entries: [VisualizationEntry] = []
         let currentDate = Date()
         let visualizations = WidgetVisualizationType.allCases
@@ -668,7 +668,7 @@ struct VisualizationProvider: TimelineProvider {
             ))
         }
 
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+        let timeline = WidgetKit.Timeline(entries: entries, policy: .atEnd)
         completion(timeline)
     }
 }
