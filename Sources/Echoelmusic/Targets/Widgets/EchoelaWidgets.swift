@@ -43,7 +43,7 @@ struct EchoelaTimelineProvider<Entry: TimelineEntry>: TimelineProvider {
         fatalError("Subclass must implement")
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<Entry>) -> Void) {
         fatalError("Subclass must implement")
     }
 }
@@ -92,7 +92,7 @@ struct ArtistStatsProvider: TimelineProvider {
         completion(entry)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<ArtistStatsEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<ArtistStatsEntry>) -> Void) {
         // Fetch actual data from shared storage
         let entry = ArtistStatsEntry(
             date: Date(),
@@ -104,7 +104,7 @@ struct ArtistStatsProvider: TimelineProvider {
             coherenceAverage: UserDefaults(suiteName: "group.com.echoelmusic")?.double(forKey: "coherenceAverage") ?? 0.5
         )
 
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(300)))
+        let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(300)))
         completion(timeline)
     }
 }
@@ -115,7 +115,7 @@ struct ArtistStatsWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: ArtistStatsProvider()) { entry in
             ArtistStatsWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Artist Stats")
         .description("Track your mints, revenue, and activity")
@@ -321,9 +321,9 @@ struct NFTTrackingProvider: TimelineProvider {
         completion(placeholder(in: context))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<NFTTrackingEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<NFTTrackingEntry>) -> Void) {
         let entry = placeholder(in: context)
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
+        let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900)))
         completion(timeline)
     }
 }
@@ -334,7 +334,7 @@ struct NFTTrackingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NFTTrackingProvider()) { entry in
             NFTTrackingWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("NFT Tracker")
         .description("Track your Echoelmusic NFT portfolio")
@@ -380,7 +380,7 @@ struct NFTTrackingWidgetView: View {
 
 // MARK: - Coherence Widget
 
-struct CoherenceEntry: TimelineEntry {
+struct EchoelaCoherenceEntry: TimelineEntry {
     let date: Date
     let currentCoherence: Double
     let trend: Trend
@@ -394,18 +394,18 @@ struct CoherenceEntry: TimelineEntry {
 }
 
 struct CoherenceProvider: TimelineProvider {
-    func placeholder(in context: Context) -> CoherenceEntry {
-        CoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .stable, sessionActive: false)
+    func placeholder(in context: Context) -> EchoelaCoherenceEntry {
+        EchoelaCoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .stable, sessionActive: false)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (CoherenceEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping (EchoelaCoherenceEntry) -> Void) {
         completion(placeholder(in: context))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<CoherenceEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<EchoelaCoherenceEntry>) -> Void) {
         let coherence = UserDefaults(suiteName: "group.com.echoelmusic")?.double(forKey: "currentCoherence") ?? 0.5
-        let entry = CoherenceEntry(date: Date(), currentCoherence: coherence, trend: .stable, sessionActive: false)
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
+        let entry = EchoelaCoherenceEntry(date: Date(), currentCoherence: coherence, trend: .stable, sessionActive: false)
+        let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
         completion(timeline)
     }
 }
@@ -416,7 +416,7 @@ struct CoherenceWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CoherenceProvider()) { entry in
             CoherenceWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Coherence")
         .description("Your current heart coherence level")
@@ -425,7 +425,7 @@ struct CoherenceWidget: Widget {
 }
 
 struct CoherenceWidgetView: View {
-    let entry: CoherenceEntry
+    let entry: EchoelaCoherenceEntry
 
     @Environment(\.widgetFamily) var family
 
@@ -531,9 +531,9 @@ struct QuickActionProvider: TimelineProvider {
         completion(QuickActionEntry(date: Date()))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<QuickActionEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<QuickActionEntry>) -> Void) {
         let entry = QuickActionEntry(date: Date())
-        let timeline = Timeline(entries: [entry], policy: .never)
+        let timeline = WidgetKit.Timeline(entries: [entry], policy: .never)
         completion(timeline)
     }
 }
@@ -544,7 +544,7 @@ struct QuickActionWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: QuickActionProvider()) { entry in
             QuickActionWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Quick Actions")
         .description("Quick access to Echoelmusic features")
@@ -627,9 +627,9 @@ struct SpatialCoherenceProvider: TimelineProvider {
         completion(placeholder(in: context))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<SpatialCoherenceEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<SpatialCoherenceEntry>) -> Void) {
         let entry = placeholder(in: context)
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
+        let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
         completion(timeline)
     }
 }
@@ -707,5 +707,5 @@ struct SpatialCoherenceWidgetView: View {
 #Preview("Coherence", as: .accessoryCircular) {
     CoherenceWidget()
 } timeline: {
-    CoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .increasing, sessionActive: false)
+    EchoelaCoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .increasing, sessionActive: false)
 }
