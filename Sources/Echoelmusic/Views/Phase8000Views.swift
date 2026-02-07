@@ -585,7 +585,7 @@ struct CollaborationActiveSessionView: View {
                 ScrollView(.horizontal) {
                     HStack {
                         ForEach(session.participants) { participant in
-                            ParticipantAvatar(participant: participant)
+                            Phase8000ParticipantAvatar(participant: participant)
                         }
                     }
                 }
