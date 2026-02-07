@@ -108,7 +108,7 @@ class QuantumIntelligenceEngine: ObservableObject {
 
     // MARK: - Complex Number
 
-    struct Complex<T: FloatingPoint> {
+    struct Complex<T: BinaryFloatingPoint> {
         var real: T
         var imaginary: T
 
@@ -118,11 +118,11 @@ class QuantumIntelligenceEngine: ObservableObject {
         }
 
         var magnitude: T {
-            return sqrt(real * real + imaginary * imaginary)
+            return (real * real + imaginary * imaginary).squareRoot()
         }
 
         var phase: T {
-            return atan2(imaginary, real)
+            return T(atan2(Double(imaginary), Double(real)))
         }
 
         static func + (lhs: Complex, rhs: Complex) -> Complex {
