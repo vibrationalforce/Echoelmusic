@@ -901,15 +901,22 @@ public class ProductionHealthKitManager {
 
         // Simulate heart data from RR interval
         let rrInterval = rrIntervalBuffer[replayIndex]
-        heartData.heartRate = 60000.0 / rrInterval  // Convert RR to BPM
-        heartData.rrIntervals = Array(rrIntervalBuffer.prefix(replayIndex + 1))
-        heartData.timestamp = Date()
+        let heartRate = 60000.0 / rrInterval  // Convert RR to BPM
+        let rrIntervals = Array(rrIntervalBuffer.prefix(replayIndex + 1))
 
-        calculateHRVMetrics()
+        let hrvMetrics = calculateHRVMetrics()
+        let replayData = ProductionHeartData(
+            timestamp: Date(),
+            heartRate: heartRate,
+            heartRateVariability: hrvMetrics?.sdnn,
+            rrIntervals: rrIntervals,
+            coherenceScore: hrvMetrics?.coherenceScore ?? 0.5,
+            lfHfRatio: hrvMetrics?.lfHfRatio,
+            source: .simulation
+        )
 
         DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.onHeartRateUpdate?(self.heartData)
+            self?.onHeartRateUpdate?(replayData)
         }
 
         replayIndex += 1
