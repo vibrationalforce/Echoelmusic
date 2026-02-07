@@ -94,7 +94,7 @@ public struct AutonomousAction: Identifiable, Sendable {
 
 /// Main Physical AI Engine - orchestrates sensor fusion, prediction, and autonomous control
 @MainActor
-public final class PhysicalAIEngine: ObservableObject {
+public final class PhysicalAIEngine: NSObject, ObservableObject {
 
     // MARK: - Singleton
 

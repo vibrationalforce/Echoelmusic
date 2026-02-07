@@ -834,9 +834,9 @@ private class PhotonParticleSystem {
                 if particles[i].position[j] > 1 { particles[i].position[j] = -1 }
             }
 
-            // Apply field influence
+            // Apply field influence using coherence level
             if let field = field {
-                let fieldInfluence = field.interferencePattern(at: particles[i].position)
+                let fieldInfluence = field.coherenceLevel * 0.5
                 particles[i].velocity += SIMD3<Float>(fieldInfluence, fieldInfluence, 0) * 0.01
             }
         }
