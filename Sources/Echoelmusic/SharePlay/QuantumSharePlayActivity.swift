@@ -18,6 +18,10 @@ import UIKit
 import GroupActivities
 #endif
 
+#if canImport(QuartzCore)
+import QuartzCore
+#endif
+
 // MARK: - Quantum SharePlay Activity
 
 #if canImport(GroupActivities)
