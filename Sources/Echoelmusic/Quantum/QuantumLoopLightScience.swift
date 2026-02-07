@@ -468,7 +468,7 @@ public final class QuantumLoopLightScienceEngine: ObservableObject {
 
     private func updatePhotons(deltaTime: Double) {
         // Rotate photons based on geometry
-        let rotationAngle = Float(lightField.rotationRate * deltaTime)
+        let rotationAngle = lightField.rotationRate * Float(deltaTime)
         let cosR = cos(rotationAngle)
         let sinR = sin(rotationAngle)
 
