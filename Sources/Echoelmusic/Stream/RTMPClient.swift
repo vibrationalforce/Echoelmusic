@@ -42,7 +42,7 @@ class RTMPClient: ObservableObject {
     @Published private(set) var bytesWritten: Int64 = 0
     @Published private(set) var currentBitrate: Int = 0
 
-    enum ConnectionState {
+    enum ConnectionState: Equatable {
         case disconnected
         case connecting
         case handshaking
