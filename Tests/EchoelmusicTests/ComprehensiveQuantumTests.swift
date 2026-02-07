@@ -270,7 +270,7 @@ final class ComprehensiveQuantumTests: XCTestCase {
         let emulator = QuantumLightEmulator()
         emulator.start()
 
-        XCTAssertNotNil(emulator.currentLightField)
+        XCTAssertNotNil(emulator.currentEmulatorLightField)
 
         emulator.stop()
     }
@@ -527,7 +527,7 @@ final class ComprehensiveQuantumTests: XCTestCase {
 
         // 6. Verify state is valid
         XCTAssertNotNil(emulator.currentQuantumState)
-        XCTAssertNotNil(emulator.currentLightField)
+        XCTAssertNotNil(emulator.currentEmulatorLightField)
         XCTAssertGreaterThanOrEqual(emulator.coherenceLevel, 0)
         XCTAssertLessThanOrEqual(emulator.coherenceLevel, 1)
 
@@ -546,7 +546,7 @@ final class ComprehensiveQuantumTests: XCTestCase {
         for vizType in PhotonicsVisualizationEngine.VisualizationType.allCases {
             vizEngine.setVisualizationType(vizType)
 
-            if let field = emulator.currentLightField {
+            if let field = emulator.currentEmulatorLightField {
                 vizEngine.setLightField(field)
             }
 
