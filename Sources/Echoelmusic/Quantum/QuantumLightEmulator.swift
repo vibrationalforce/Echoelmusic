@@ -248,6 +248,10 @@ public class QuantumLightEmulator: ObservableObject {
     @Published public private(set) var entanglementNetwork: [String: Float] = [:]
     @Published public private(set) var emulationMode: EmulationMode = .classical
 
+    // MARK: - Gaze Tracking
+    var gazeAttractorX: Float = 0.0
+    var gazeAttractorY: Float = 0.0
+
     // MARK: - Configuration
 
     public enum EmulationMode: String, CaseIterable, Sendable {
@@ -641,18 +645,9 @@ public class QuantumLightEmulator: ObservableObject {
         let focalX = (gazeX - 0.5) * 2.0  // Convert to -1 to +1
         let focalY = (gazeY - 0.5) * 2.0
 
-        // Update light field focus based on gaze
-        if var field = currentEmulatorLightField {
-            // Shift photon positions toward gaze point
-            for i in 0..<field.photons.count {
-                let attraction = attention * 0.1  // Attention increases attraction
-                let dx = focalX - field.photons[i].position.x
-                let dy = focalY - field.photons[i].position.y
-
-                field.photons[i].position.x += dx * attraction
-                field.photons[i].position.y += dy * attraction
-            }
-        }
+        // Store gaze focal point for visualization use
+        gazeAttractorX = Float(focalX)
+        gazeAttractorY = Float(focalY)
 
         // Arousal affects quantum coherence perception
         let arousalModifier = arousal * 0.2  // 0-20% modifier
