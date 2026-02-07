@@ -658,7 +658,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         }
     }
 
-    private func updateFromLightField(_ field: LightField) {
+    private func updateFromLightField(_ field: EmulatorLightField) {
         // Update color palette from photons
         colorPalette = field.photons.prefix(8).map(\.color)
     }
@@ -815,7 +815,7 @@ private class PhotonParticleSystem {
         }
     }
 
-    func update(deltaTime: Float, field: LightField?) {
+    func update(deltaTime: Float, field: EmulatorLightField?) {
         for i in 0..<particles.count {
             // Update position
             particles[i].position += particles[i].velocity * deltaTime
@@ -836,13 +836,13 @@ private class PhotonParticleSystem {
 
             // Apply field influence using coherence level
             if let field = field {
-                let fieldInfluence = field.coherenceLevel * 0.5
+                let fieldInfluence = field.fieldCoherence * 0.5
                 particles[i].velocity += SIMD3<Float>(fieldInfluence, fieldInfluence, 0) * 0.01
             }
         }
     }
 
-    private func respawnParticle(at index: Int, field: LightField?) {
+    private func respawnParticle(at index: Int, field: EmulatorLightField?) {
         let randomPhoton = field?.photons.randomElement()
 
         particles[index] = Particle(
