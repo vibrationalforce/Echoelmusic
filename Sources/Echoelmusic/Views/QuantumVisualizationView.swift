@@ -171,7 +171,8 @@ public struct QuantumVisualizationView: View {
     }
 
     private var photonCount: Int {
-        emulator.currentLightField?.photons.count ?? 0
+        let field = emulator.currentLightField
+        return field?.photons.count ?? 0
     }
 
     private var photonCounter: some View {
