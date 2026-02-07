@@ -1493,7 +1493,7 @@ public struct SourceFiles {
         .init(path: "Sources/Echoelmusic/Views/VideoProcessingView.swift"),
         .init(path: "Sources/Echoelmusic/Views/CreativeStudioView.swift"),
         .init(path: "Sources/Echoelmusic/Views/ScientificDashboardView.swift"),
-        .init(path: "Sources/Echoelmusic/Views/WellnessSessionView.swift"),
+        .init(path: "Sources/Echoelmusic/Views/BiophysicalWellnessView.swift"),
         .init(path: "Sources/Echoelmusic/Views/CollaborationLobbyView.swift"),
         .init(path: "Sources/Echoelmusic/Views/DeveloperConsoleView.swift"),
         .init(path: "Sources/Echoelmusic/Views/HardwarePickerView.swift"),
