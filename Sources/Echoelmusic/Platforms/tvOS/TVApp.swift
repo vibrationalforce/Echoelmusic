@@ -526,7 +526,7 @@ class GroupActivityManager {
         }
     }
 
-    private func handleParticipantsChanged(_ participants: Set<Participant>) async {
+    private func handleParticipantsChanged(_ participants: Set<GroupActivities.Participant>) async {
         log.info("📺 SharePlay participants: \(participants.count)", category: .ui)
     }
 

@@ -869,7 +869,7 @@ public final class QuantumMIDIOut: ObservableObject {
         midi2.sendPerNoteController(
             channel: voice.channel,
             note: voice.midiNote,
-            controller: .brightness,
+            controller: .sound2Brightness,
             value: voice.brightness
         )
     }
