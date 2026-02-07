@@ -1125,7 +1125,7 @@ public struct Phase8000DemoView: View {
                 }
                 .tag(2)
 
-            WellnessSessionView()
+            BiophysicalWellnessView()
                 .tabItem {
                     Label("Wellness", systemImage: "heart.fill")
                 }
