@@ -70,7 +70,7 @@ struct CoherenceWidget: Widget {
             provider: CoherenceTimelineProvider()
         ) { entry in
             CoherenceWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Quantum Coherence")
         .description("Track your quantum coherence level in real-time")
@@ -413,7 +413,7 @@ struct QuickSessionWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: QuickSessionProvider()) { entry in
             QuickSessionWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Quick Session")
         .description("Start a quantum session with one tap")
@@ -489,7 +489,7 @@ struct PresetWidget: Widget {
             provider: PresetTimelineProvider()
         ) { entry in
             PresetWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Quantum Preset")
         .description("Quick access to your favorite preset")
@@ -635,7 +635,7 @@ struct VisualizationWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: VisualizationProvider()) { entry in
             VisualizationWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Quantum Visualization")
         .description("Beautiful quantum-inspired patterns")
