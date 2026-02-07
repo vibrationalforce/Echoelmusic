@@ -170,17 +170,21 @@ public struct QuantumVisualizationView: View {
             .clipShape(Capsule())
     }
 
+    private var photonCount: Int {
+        emulator.currentLightField?.photons.count ?? 0
+    }
+
     private var photonCounter: some View {
         HStack(spacing: 4) {
             Image(systemName: "sparkles")
-            Text("\(emulator.currentLightField?.photons.count ?? 0)")
+            Text("\(photonCount)")
         }
         .font(.caption)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(.ultraThinMaterial)
         .clipShape(Capsule())
-        .accessibilityLabel("\(emulator.currentLightField?.photons.count ?? 0) photons active")
+        .accessibilityLabel("\(photonCount) photons active")
     }
 
     private var bottomControls: some View {
