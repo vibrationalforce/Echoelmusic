@@ -315,7 +315,7 @@ final class QuantumIntegrationTests: XCTestCase {
         XCTAssertNotNil(state, "Should have a quantum state after processing")
 
         // 6. Get light field
-        let field = emulator.currentLightField
+        let field = emulator.currentEmulatorLightField
         XCTAssertNotNil(field, "Should have a light field")
 
         // 7. Stop emulator

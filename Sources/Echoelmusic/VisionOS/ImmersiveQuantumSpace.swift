@@ -112,7 +112,7 @@ public struct ImmersiveQuantumSpace: View {
     private func createPhotonParticles() -> [Entity] {
         var particles: [Entity] = []
 
-        guard let field = emulator.currentLightField else {
+        guard let field = emulator.currentEmulatorLightField else {
             // Create default particles
             for i in 0..<64 {
                 let particle = createSinglePhoton(index: i, wavelength: 550)
@@ -225,7 +225,7 @@ public struct ImmersiveQuantumSpace: View {
         }
 
         // Update photon positions based on light field
-        if let field = emulator.currentLightField {
+        if let field = emulator.currentEmulatorLightField {
             for (index, entity) in photonEntities.enumerated() {
                 guard index < field.photons.count else { continue }
 

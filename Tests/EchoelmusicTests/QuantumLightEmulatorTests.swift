@@ -295,7 +295,7 @@ final class QuantumLightEmulatorTests: XCTestCase {
         // Wait for field generation
         try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
 
-        XCTAssertNotNil(emulator.currentLightField)
+        XCTAssertNotNil(emulator.currentEmulatorLightField)
         XCTAssertNotNil(emulator.currentQuantumState)
 
         emulator.stop()

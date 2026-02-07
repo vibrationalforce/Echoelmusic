@@ -410,7 +410,7 @@ public struct AccessibleQuantumModifier: ViewModifier {
 
     private func generateAccessibilityValue() -> String {
         let coherence = Int(emulator.coherenceLevel * 100)
-        let photons = emulator.currentLightField?.photons.count ?? 0
+        let photons = emulator.currentEmulatorLightField?.photons.count ?? 0
         return "Coherence \(coherence) percent, \(photons) photons active"
     }
 }

@@ -107,7 +107,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         self.quantumEmulator = emulator
 
         // Subscribe to emulator updates
-        emulator.$currentLightField
+        emulator.$currentEmulatorLightField
             .receive(on: DispatchQueue.main)
             .sink { [weak self] field in
                 if let field = field {
@@ -153,7 +153,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
 
     /// Generate interference pattern texture
     public func generateInterferenceTexture() -> [[SIMD4<Float>]] {
-        guard let field = quantumEmulator?.currentLightField else {
+        guard let field = quantumEmulator?.currentEmulatorLightField else {
             return frameBuffer
         }
 
@@ -269,7 +269,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func renderInterferencePattern() {
-        guard let field = quantumEmulator?.currentLightField else { return }
+        guard let field = quantumEmulator?.currentEmulatorLightField else { return }
 
         let time = Float(CACurrentMediaTime())
         let centerX = Float(configuration.width) / 2
@@ -367,7 +367,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func renderPhotonFlow(deltaTime: Float) {
-        particleSystem?.update(deltaTime: deltaTime, field: quantumEmulator?.currentLightField)
+        particleSystem?.update(deltaTime: deltaTime, field: quantumEmulator?.currentEmulatorLightField)
 
         // Clear with fade
         for y in 0..<configuration.height {
@@ -553,7 +553,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func renderHolographicDisplay() {
-        guard let field = quantumEmulator?.currentLightField else { return }
+        guard let field = quantumEmulator?.currentEmulatorLightField else { return }
 
         let time = Float(CACurrentMediaTime())
 
