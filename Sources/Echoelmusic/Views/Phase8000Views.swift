@@ -255,7 +255,7 @@ public struct CreativeStudioView: View {
                 .font(.headline)
             TextField("Describe your creation...", text: $prompt, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
-                .lineLimit(3...6)
+                .lineLimit(6)
         }
     }
 
@@ -317,9 +317,10 @@ public struct ScientificDashboardView: View {
 
     public var body: some View {
         NavigationView {
-            HSplitView {
+            HStack(spacing: 0) {
                 // Sidebar
                 sidebarContent
+                    .frame(width: 280)
 
                 // Main visualization
                 mainVisualization
@@ -431,7 +432,7 @@ public struct CollaborationLobbyView: View {
         NavigationView {
             Group {
                 if hub.currentSession != nil {
-                    ActiveSessionView(hub: hub)
+                    CollaborationActiveSessionView(hub: hub)
                 } else {
                     lobbyContent
                 }
