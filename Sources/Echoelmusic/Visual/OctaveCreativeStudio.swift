@@ -613,7 +613,7 @@ public struct OctaveCreativeStudioView: View {
                 step: 1
             )
             .tint(color)
-            .onChange(of: value.wrappedValue) { _, _ in
+            .onChange(of: value.wrappedValue) { _ in
                 studio.updateResult()
             }
 
@@ -686,7 +686,7 @@ public struct OctaveCreativeStudioView: View {
 
                 Slider(value: $studio.colorTemperature, in: -1...1)
                     .tint(studio.colorTemperature < 0 ? .orange : .cyan)
-                    .onChange(of: studio.colorTemperature) { _, _ in
+                    .onChange(of: studio.colorTemperature) { _ in
                         studio.updateResult()
                     }
 

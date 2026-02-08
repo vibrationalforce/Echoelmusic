@@ -432,12 +432,12 @@ public struct AccessibilityFocusSyncModifier: ViewModifier {
     public func body(content: Content) -> some View {
         content
             .accessibilityFocused($isAccessibilityFocused)
-            .onChange(of: isAccessibilityFocused) { _, newValue in
+            .onChange(of: isAccessibilityFocused) { newValue in
                 if newValue {
                     highlighter.highlight(elementID: elementID)
                 }
             }
-            .onChange(of: highlighter.focusedElementID) { _, newValue in
+            .onChange(of: highlighter.focusedElementID) { newValue in
                 isAccessibilityFocused = (newValue == elementID)
             }
     }
@@ -473,7 +473,7 @@ public struct GazeInteractionModifier: ViewModifier {
                     gazeDuration = 0
                 }
             }
-            .onChange(of: gazeDuration) { _, duration in
+            .onChange(of: gazeDuration) { duration in
                 if duration >= gazeThreshold {
                     triggerGazeAction()
                 }
