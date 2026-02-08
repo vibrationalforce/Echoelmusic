@@ -330,7 +330,7 @@ class MIDI2Manager: ObservableObject {
     }
 
     deinit {
-        cleanup()
+        // MIDI resources are cleaned up when references are released
     }
 }
 
