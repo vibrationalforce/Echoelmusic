@@ -392,7 +392,9 @@ open class MemoryAwareCache<Key: Hashable, Value>: MemoryReleasable {
 
     public init(maxSize: Int = 50_000_000) { // 50MB default
         self.maxSize = maxSize
-        MemoryPressureHandler.shared.register(self)
+        Task { @MainActor in
+            MemoryPressureHandler.shared.register(self)
+        }
     }
 
     // MARK: - Cache Operations
