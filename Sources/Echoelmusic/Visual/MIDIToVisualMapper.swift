@@ -274,11 +274,7 @@ class MIDIToVisualMapper: ObservableObject {
 
         // Adjust color saturation based on intensity
         let saturation = 0.5 + clampedIntensity * 0.5  // 50-100%
-        mandalaParameters.color = Color(
-            hue: mandalaParameters.color.hueComponent,
-            saturation: saturation,
-            brightness: Double(clampedIntensity)
-        )
+        mandalaParameters.hue = Float(saturation)
     }
 
     // MARK: - Cymatics Mapping
