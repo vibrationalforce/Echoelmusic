@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import SwiftUI
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
