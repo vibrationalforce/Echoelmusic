@@ -101,7 +101,7 @@ class MIDIController: ObservableObject {
     }
 
     deinit {
-        cleanup()
+        // MIDI resources are cleaned up when references are released
     }
 
     // MARK: - MIDI Setup
