@@ -5,6 +5,7 @@
 // update prompts, changelog management, and migration handling
 
 import Foundation
+import Combine
 import os.log
 #if canImport(UIKit)
 import UIKit

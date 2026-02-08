@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 #if canImport(AVFoundation)
 import AVFoundation
 #endif

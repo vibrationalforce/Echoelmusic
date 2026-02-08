@@ -11,6 +11,7 @@
 // Copyright © 2026 Echoelmusic. All rights reserved.
 
 import Foundation
+import Combine
 import CoreMotion
 import Accelerate
 import Combine

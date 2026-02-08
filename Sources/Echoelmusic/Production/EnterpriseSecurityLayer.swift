@@ -5,6 +5,7 @@
 // certificate pinning, jailbreak detection, integrity verification
 
 import Foundation
+import Combine
 import CryptoKit
 import Security
 import LocalAuthentication
