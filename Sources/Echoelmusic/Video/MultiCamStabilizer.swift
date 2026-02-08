@@ -961,17 +961,22 @@ extension VideoEditingEngine {
 
     /// Add multi-cam clip to timeline
     func addMultiCamClip(_ clip: MultiCamClip) {
-        // Create video track from active angle
+        // Create video clip from active angle
         guard let url = clip.angleURLs[clip.activeAngle] else { return }
 
         let asset = AVURLAsset(url: url)
-        let track = VideoTrack(
+        let videoClip = VideoClip(
+            name: "MultiCam \(clip.id.uuidString.prefix(4))",
             asset: asset,
             startTime: clip.startTime,
-            duration: clip.duration
+            duration: clip.duration,
+            inPoint: .zero,
+            outPoint: clip.duration
         )
 
-        videoTracks.append(track)
+        if let firstTrack = timeline.videoTracks.first {
+            firstTrack.clips.append(videoClip)
+        }
 
         log.video("VideoEditingEngine: Added multi-cam clip with \(clip.angleURLs.count) angles")
     }
