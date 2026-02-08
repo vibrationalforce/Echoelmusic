@@ -92,6 +92,11 @@ enum NodeType: String, Codable {
     case analyzer   // Analyzes audio (FFT, pitch detection)
     case mixer      // Mixes multiple audio sources
     case utility    // Utility functions (gain, pan, etc.)
+    case output     // Output node (final in chain)
+    case input      // Input node (microphone, line in)
+    case reverb     // Reverb processor
+    case delay      // Delay processor
+    case filter     // Filter processor
 }
 
 
