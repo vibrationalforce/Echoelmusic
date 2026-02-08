@@ -251,14 +251,13 @@ class MIDIToVisualMapper: ObservableObject {
         }
 
         // Attention modulates mandala complexity
-        mandalaParameters.symmetry = Int(6.0 + attention * 6.0)  // 6-12 fold symmetry
-        mandalaParameters.rotationSpeed = Double(0.1 + focus * 0.4)
+        mandalaParameters.petalCount = Int(6.0 + attention * 6.0)  // 6-12 fold symmetry
+        mandalaParameters.rotationSpeed = Float(0.1 + focus * 0.4)
 
         // Update particle behavior based on gaze
-        particleSystemParameters.emissionPosition = SIMD3<Float>(
+        particleParameters.velocity = SIMD2<Float>(
             gazeX * 2.0 - 1.0,
-            gazeY * 2.0 - 1.0,
-            0.0
+            gazeY * 2.0 - 1.0
         )
     }
 
@@ -269,8 +268,8 @@ class MIDIToVisualMapper: ObservableObject {
 
         // Scale all visual parameters by intensity
         cymaticsParameters.amplitude = clampedIntensity
-        mandalaParameters.rotationSpeed = Double(clampedIntensity) * 0.5
-        particleSystemParameters.particleSize = clampedIntensity * 10.0
+        mandalaParameters.rotationSpeed = Float(clampedIntensity * 0.5)
+        particleParameters.particleSize = clampedIntensity * 10.0
 
         // Adjust color saturation based on intensity
         let saturation = 0.5 + clampedIntensity * 0.5  // 50-100%
