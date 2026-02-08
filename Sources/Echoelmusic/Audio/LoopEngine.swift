@@ -25,7 +25,7 @@ class LoopEngine: ObservableObject {
     @Published var tempo: Double = 120.0
 
     /// Time signature
-    @Published var timeSignature: TimeSignature = TimeSignature(beats: 4, noteValue: 4)
+    @Published var timeSignature: TimeSignature = TimeSignature(numerator: 4, denominator: 4)
 
     /// Metronome enabled
     @Published var metronomeEnabled: Bool = false
