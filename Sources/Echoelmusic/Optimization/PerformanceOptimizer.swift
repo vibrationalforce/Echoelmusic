@@ -403,7 +403,7 @@ struct PerformanceReport: Codable {
     let batteryLevel: Float
     let thermalState: String
     let performanceMode: String
-    let deviceCapabilities: DeviceCapabilities
+    let deviceCapabilities: PerformanceOptimizer.DeviceCapabilities
 
     func summary() -> String {
         return """
