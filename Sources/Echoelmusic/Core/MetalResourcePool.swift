@@ -219,14 +219,14 @@ public final class MetalTexturePool {
     private struct TextureKey: Hashable {
         let width: Int
         let height: Int
-        let pixelFormat: MTLPixelFormat
-        let usage: MTLTextureUsage
+        let pixelFormatRawValue: UInt
+        let usageRawValue: UInt
 
         init(_ descriptor: MTLTextureDescriptor) {
             self.width = descriptor.width
             self.height = descriptor.height
-            self.pixelFormat = descriptor.pixelFormat
-            self.usage = descriptor.usage
+            self.pixelFormatRawValue = descriptor.pixelFormat.rawValue
+            self.usageRawValue = descriptor.usage.rawValue
         }
     }
 
