@@ -752,7 +752,7 @@ class MLModelManager {
             let compiledURL = try await compileModelIfNeeded(at: finalURL)
 
             // Load model
-            let mlConfiguration = MLModelConfiguration()
+            let mlConfiguration = CoreML.MLModelConfiguration()
             mlConfiguration.computeUnits = configuration.computeUnits
 
             do {
