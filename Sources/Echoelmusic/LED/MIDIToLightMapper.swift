@@ -118,7 +118,7 @@ public class MIDIToLightMapper: ObservableObject {
     }
 
     deinit {
-        stop()
+        // Network connections will be cleaned up when references are released
     }
 
     // MARK: - Setup
