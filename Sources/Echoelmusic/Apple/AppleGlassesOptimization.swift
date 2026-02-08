@@ -387,7 +387,7 @@ public struct GlassesBreathingIndicator: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
             )
-            .onChange(of: phase) { _, newPhase in
+            .onChange(of: phase) { newPhase in
                 withAnimation(.easeInOut(duration: 0.5)) {
                     switch newPhase {
                     case .inhale:

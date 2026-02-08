@@ -189,9 +189,22 @@ public final class PQCMetaRegistry: ObservableObject {
         )
     }
 
+    /// NFT metadata for registry entries
+    public struct NFTRegistryMetadata {
+        public let name: String
+        public let artist: String
+        public let network: NFTFactory.BlockchainNetwork
+
+        public init(name: String, artist: String, network: NFTFactory.BlockchainNetwork) {
+            self.name = name
+            self.artist = artist
+            self.network = network
+        }
+    }
+
     /// Sign and register an NFT preparation
     public func registerNFTPreparation(
-        metadata: NFTFactory.NFTMetadata,
+        metadata: NFTRegistryMetadata,
         contentHash: String
     ) async throws -> RegistryEntry {
         let payload = NFTPreparationPayload(

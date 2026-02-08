@@ -69,14 +69,14 @@ public struct EchoelaHighlightModifier: ViewModifier {
             .accessibilityLabel(isActive ? "Echoela is highlighting this element" : "")
             .accessibilityAddTraits(isActive ? .isSelected : [])
             .accessibilityFocused($isAccessibilityFocused)
-            .onChange(of: isActive) { _, newValue in
+            .onChange(of: isActive) { newValue in
                 if newValue {
                     activateHighlight()
                 } else {
                     deactivateHighlight()
                 }
             }
-            .onChange(of: echoelaManager.highlightedElement) { _, newValue in
+            .onChange(of: echoelaManager.highlightedElement) { newValue in
                 if newValue == elementID {
                     isActive = true
                 } else if isActive && newValue != elementID {
@@ -176,7 +176,7 @@ struct EchoelaHighlightWrapper<Content: View>: View {
                 elementID: elementID,
                 glowColor: glowColor
             )
-            .onChange(of: echoelaManager.highlightedElement) { _, newValue in
+            .onChange(of: echoelaManager.highlightedElement) { newValue in
                 isHighlighted = (newValue == elementID)
             }
     }
