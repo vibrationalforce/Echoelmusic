@@ -15,6 +15,7 @@
 // Keine religiösen oder medizinischen Ansprüche.
 
 import Foundation
+import Combine
 #if canImport(Vision)
 import Vision
 #endif

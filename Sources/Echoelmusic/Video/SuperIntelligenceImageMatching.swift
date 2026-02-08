@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import CoreImage
 import CoreGraphics
 #if canImport(UIKit)

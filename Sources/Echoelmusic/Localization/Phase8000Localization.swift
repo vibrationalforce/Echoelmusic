@@ -8,6 +8,7 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
+import SwiftUI
 
 // MARK: - Supported Languages
 
