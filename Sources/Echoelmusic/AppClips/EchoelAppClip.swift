@@ -14,6 +14,7 @@ import SwiftUI
 import AppClip
 import CoreLocation
 import StoreKit
+import UIKit
 
 /// Logger alias for App Clip operations
 private var appClipLog: EchoelLogger { echoelLog }

@@ -6,6 +6,9 @@
 import SwiftUI
 import AppClip
 import StoreKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - App Clip Manager
 
