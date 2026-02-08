@@ -536,7 +536,8 @@ struct MLInferenceResult {
     }
 
     func getInt(for key: String) -> Int? {
-        output.featureValue(for: key)?.int64Value.map { Int($0) }
+        guard let value = output.featureValue(for: key) else { return nil }
+        return Int(value.int64Value)
     }
 }
 
