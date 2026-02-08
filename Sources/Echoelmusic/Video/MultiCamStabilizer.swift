@@ -444,7 +444,7 @@ class VideoStabilizer: ObservableObject {
 
     // MARK: - Vision
 
-    private let sequenceHandler = VNSequenceRequestHandler()
+
     private var previousObservation: VNFeaturePrintObservation?
     private var referenceFrame: CVPixelBuffer?
 
@@ -484,19 +484,15 @@ class VideoStabilizer: ObservableObject {
         var rotation: CGFloat = 0
         var scale: CGFloat = 1.0
 
-        // Use Vision for optical flow
-        let request = VNGenerateOpticalFlowRequest()
-
+        // Use Vision for translational image registration (iOS 11+)
         if let reference = referenceFrame {
+            let request = VNTranslationalImageRegistrationRequest(targetedCVPixelBuffer: reference)
             do {
-                try sequenceHandler.perform([request], on: pixelBuffer, against: reference)
+                let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer)
+                try handler.perform([request])
 
-                if let result = request.results?.first as? VNPixelBufferObservation {
-                    // Analyze flow field
-                    let flowData = analyzeFlowField(result.pixelBuffer)
-                    translation = flowData.translation
-                    rotation = flowData.rotation
-                    scale = flowData.scale
+                if let result = request.results?.first as? VNImageTranslationAlignmentObservation {
+                    translation = CGPoint(x: result.alignmentTransform.tx, y: result.alignmentTransform.ty)
                 }
             } catch {
                 // Motion analysis failed, use zero motion
