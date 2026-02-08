@@ -86,6 +86,8 @@ public enum LogCategory: String, CaseIterable, Sendable {
     case analytics = "Analytics"
     case ai = "AI"
     case biosync = "Biosync"
+    case security = "Security"
+    case interface = "Interface"
 
     public var osLog: OSLog {
         OSLog(subsystem: "com.echoelmusic", category: rawValue)
