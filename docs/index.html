@@ -23,6 +23,21 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="app-icon.svg">
     <link rel="canonical" href="https://echoelmusic.com">
+    <link rel="manifest" href="manifest.json">
+    <meta property="og:locale" content="en_US">
+    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/">
+    <link rel="alternate" hreflang="de" href="https://echoelmusic.com/de/">
+    <link rel="alternate" hreflang="ja" href="https://echoelmusic.com/ja/">
+    <link rel="alternate" hreflang="es" href="https://echoelmusic.com/es/">
+    <link rel="alternate" hreflang="fr" href="https://echoelmusic.com/fr/">
+    <link rel="alternate" hreflang="zh" href="https://echoelmusic.com/zh/">
+    <link rel="alternate" hreflang="ko" href="https://echoelmusic.com/ko/">
+    <link rel="alternate" hreflang="pt" href="https://echoelmusic.com/pt/">
+    <link rel="alternate" hreflang="it" href="https://echoelmusic.com/it/">
+    <link rel="alternate" hreflang="ru" href="https://echoelmusic.com/ru/">
+    <link rel="alternate" hreflang="ar" href="https://echoelmusic.com/ar/">
+    <link rel="alternate" hreflang="hi" href="https://echoelmusic.com/hi/">
+    <link rel="alternate" hreflang="x-default" href="https://echoelmusic.com/">
 
     <script type="application/ld+json">
     {
@@ -124,7 +139,7 @@
             --bg: #050510;
             --text: rgba(255,255,255,0.92);
             --text-secondary: rgba(255,255,255,0.65);
-            --text-muted: rgba(255,255,255,0.4);
+            --text-muted: rgba(255,255,255,0.6);
             --border: rgba(255,255,255,0.08);
         }
 
@@ -1119,6 +1134,13 @@
             currentLangName.textContent = langData ? langData.name : 'English';
             applyTranslations(currentLang);
         })();
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').catch(function() {});
+            });
+        }
     </script>
 </body>
 </html>

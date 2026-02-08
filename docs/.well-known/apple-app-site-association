@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "VFFORCE.com.echoelmusic.app",
+        "paths": ["*"]
+      }
+    ]
+  },
+  "appclips": {
+    "apps": [
+      "VFFORCE.com.echoelmusic.app.clip"
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "VFFORCE.com.echoelmusic.app"
+    ]
+  }
+}
