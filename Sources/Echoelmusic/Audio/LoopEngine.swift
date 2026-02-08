@@ -330,7 +330,7 @@ class LoopEngine: ObservableObject {
 
     /// Set time signature
     func setTimeSignature(beats: Int, noteValue: Int) {
-        timeSignature = TimeSignature(beats: beats, noteValue: noteValue)
+        timeSignature = TimeSignature(numerator: beats, denominator: noteValue)
     }
 
     /// Calculate bar duration in seconds
