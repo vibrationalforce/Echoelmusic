@@ -394,7 +394,6 @@ public final class NeuroSpiritualEngine: ObservableObject {
     }
 
     deinit {
-        stopMotionTracking()
         updateTimer?.invalidate()
     }
 

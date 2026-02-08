@@ -313,10 +313,17 @@ class NodeGraph: ObservableObject {
             (node as? BaseEchoelmusicNode)?.createManifest()
         }.compactMap { $0 }
 
+        let connectionManifests = connections.map { conn in
+            NodeGraphPreset.ConnectionManifest(
+                sourceNodeID: conn.sourceNodeID.uuidString,
+                destinationNodeID: conn.destinationNodeID.uuidString
+            )
+        }
+
         return NodeGraphPreset(
             name: name,
             nodes: nodeManifests,
-            connections: connections
+            connections: connectionManifests
         )
     }
 
