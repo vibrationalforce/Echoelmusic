@@ -253,9 +253,8 @@ public struct CreativeStudioView: View {
         VStack(alignment: .leading) {
             Text("Prompt")
                 .font(.headline)
-            TextField("Describe your creation...", text: $prompt, axis: .vertical)
+            TextField("Describe your creation...", text: $prompt)
                 .textFieldStyle(.roundedBorder)
-                .lineLimit(6)
         }
     }
 
