@@ -40,7 +40,7 @@ class MIDIToVisualMapper: ObservableObject {
         struct ChladniPattern {
             let frequency: Float
             let amplitude: Float
-            let position: SIMD2<Float>
+            var position: SIMD2<Float>
             let phase: Float
         }
     }
