@@ -124,7 +124,7 @@ public actor OfflineFirstSyncEngine<Entity: SyncableEntity> {
         /// Maximum operations per sync batch
         public var batchSize: Int = 50
 
-        public static let `default` = Configuration()
+        public static var `default`: Configuration { Configuration() }
     }
 
     public let config: Configuration
