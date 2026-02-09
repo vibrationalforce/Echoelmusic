@@ -26,19 +26,6 @@
     <link rel="canonical" href="https://echoelmusic.com">
     <link rel="manifest" href="manifest.json">
     <meta property="og:locale" content="en_US">
-    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/">
-    <link rel="alternate" hreflang="de" href="https://echoelmusic.com/de/">
-    <link rel="alternate" hreflang="ja" href="https://echoelmusic.com/ja/">
-    <link rel="alternate" hreflang="es" href="https://echoelmusic.com/es/">
-    <link rel="alternate" hreflang="fr" href="https://echoelmusic.com/fr/">
-    <link rel="alternate" hreflang="zh" href="https://echoelmusic.com/zh/">
-    <link rel="alternate" hreflang="ko" href="https://echoelmusic.com/ko/">
-    <link rel="alternate" hreflang="pt" href="https://echoelmusic.com/pt/">
-    <link rel="alternate" hreflang="it" href="https://echoelmusic.com/it/">
-    <link rel="alternate" hreflang="ru" href="https://echoelmusic.com/ru/">
-    <link rel="alternate" hreflang="ar" href="https://echoelmusic.com/ar/">
-    <link rel="alternate" hreflang="hi" href="https://echoelmusic.com/hi/">
-    <link rel="alternate" hreflang="x-default" href="https://echoelmusic.com/">
 
     <script type="application/ld+json">
     {
@@ -51,7 +38,7 @@
           "name": "Echoelmusic",
           "description": "Create from Within — Bio-reactive creative platform for music, film, visuals and light",
           "publisher": {"@id": "https://echoelmusic.com/#organization"},
-          "inLanguage": ["en", "de", "ja", "es", "fr", "zh", "ko", "pt", "it", "ru", "ar", "hi"]
+          "inLanguage": "en"
         },
         {
           "@type": "Organization",
@@ -92,7 +79,7 @@
             "DMX Lighting Control",
             "Echoela AI Assistant",
             "WCAG AAA Accessibility",
-            "38 Languages"
+            "100% Free"
           ]
         },
         {
@@ -526,48 +513,6 @@
         .footer-legal a { font-size: 12px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
         .footer-legal a:hover { color: var(--text-secondary); }
 
-        /* Language Selector */
-        .lang-selector { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
-        .lang-btn {
-            display: flex; align-items: center; gap: 6px; padding: 10px 16px;
-            background: rgba(5,5,16,0.92); border: 1px solid var(--border); border-radius: 10px;
-            color: #fff; font-size: 13px; font-weight: 500; cursor: pointer;
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: border-color 0.2s;
-        }
-        .lang-btn:hover { border-color: var(--border-hover); }
-        .lang-btn svg { width: 16px; height: 16px; color: var(--cyan); }
-        .lang-btn .arrow { width: 10px; height: 10px; transition: transform 0.2s; }
-        .lang-selector.open .lang-btn .arrow { transform: rotate(180deg); }
-        .lang-dropdown {
-            position: absolute; bottom: calc(100% + 8px); right: 0;
-            width: 260px; max-height: 360px; overflow-y: auto;
-            background: rgba(5,5,16,0.96); border: 1px solid var(--border); border-radius: 12px;
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            opacity: 0; visibility: hidden; transform: translateY(8px);
-            transition: all 0.2s; padding: 8px;
-        }
-        .lang-selector.open .lang-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
-        .lang-dropdown::-webkit-scrollbar { width: 5px; }
-        .lang-dropdown::-webkit-scrollbar-track { background: transparent; }
-        .lang-dropdown::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 3px; }
-        .lang-option {
-            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-            border-radius: 8px; cursor: pointer; border: none; background: transparent;
-            width: 100%; text-align: left; color: var(--text-secondary); font-size: 13px; transition: background 0.15s;
-        }
-        .lang-option:hover { background: rgba(255,255,255,0.06); color: #fff; }
-        .lang-option.active { background: rgba(255,20,148,0.12); color: var(--cyan); }
-        .lang-option .flag { font-size: 18px; }
-        .lang-option .name { flex: 1; }
-        .lang-option .code { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .lang-search {
-            width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border); border-radius: 8px; color: #fff;
-            font-size: 13px; margin-bottom: 6px; outline: none;
-        }
-        .lang-search:focus { border-color: rgba(0,255,255,0.3); }
-        .lang-search::placeholder { color: var(--text-muted); }
-
         /* Focus States */
         a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 
@@ -609,11 +554,6 @@
             .stats { grid-template-columns: repeat(2, 1fr); }
             .hero-cta-group { flex-direction: column; align-items: center; }
         }
-        @media (max-width: 380px) {
-            .lang-selector { bottom: 12px; right: 12px; }
-            .lang-btn span { display: none; }
-        }
-
         /* High Contrast */
         @media (prefers-contrast: high) {
             :root { --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.7); --border: rgba(255,255,255,0.25); }
@@ -729,8 +669,8 @@
                 <span class="stat-label">Effects</span>
             </div>
             <div class="stat">
-                <span class="stat-num">38</span>
-                <span class="stat-label">Languages</span>
+                <span class="stat-num">$0</span>
+                <span class="stat-label">Forever Free</span>
             </div>
             <div class="stat">
                 <span class="stat-num">6</span>
@@ -962,19 +902,6 @@
         </div>
     </footer>
 
-    <!-- Language Selector -->
-    <div class="lang-selector" id="langSelector">
-        <button class="lang-btn" id="langBtn" aria-expanded="false" aria-haspopup="listbox" aria-label="Select language">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-            <span id="currentLangName">English</span>
-            <svg class="arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
-        </button>
-        <div class="lang-dropdown" id="langDropdown" role="listbox">
-            <input type="text" class="lang-search" id="langSearch" placeholder="Search language..." aria-label="Search languages">
-            <div id="langOptions"></div>
-        </div>
-    </div>
-
     <script>
         // Scroll Animations
         (function() {
@@ -986,80 +913,6 @@
                 });
             }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
             document.querySelectorAll('.fade-in').forEach(function(el) { observer.observe(el); });
-        })();
-    </script>
-    <script>
-        // Language System
-        (function() {
-            var languages = [
-                { code: 'en', name: 'English', flag: '\ud83c\uddec\ud83c\udde7' },
-                { code: 'de', name: 'Deutsch', flag: '\ud83c\udde9\ud83c\uddea', url: '/de/' },
-                { code: 'ja', name: '\u65e5\u672c\u8a9e', flag: '\ud83c\uddef\ud83c\uddf5', url: '/ja/' },
-                { code: 'es', name: 'Espa\u00f1ol', flag: '\ud83c\uddea\ud83c\uddf8', url: '/es/' },
-                { code: 'fr', name: 'Fran\u00e7ais', flag: '\ud83c\uddeb\ud83c\uddf7', url: '/fr/' },
-                { code: 'zh', name: '\u4e2d\u6587', flag: '\ud83c\udde8\ud83c\uddf3', url: '/zh/' },
-                { code: 'ko', name: '\ud55c\uad6d\uc5b4', flag: '\ud83c\uddf0\ud83c\uddf7', url: '/ko/' },
-                { code: 'pt', name: 'Portugu\u00eas', flag: '\ud83c\udde7\ud83c\uddf7', url: '/pt/' },
-                { code: 'it', name: 'Italiano', flag: '\ud83c\uddee\ud83c\uddf9', url: '/it/' },
-                { code: 'ru', name: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439', flag: '\ud83c\uddf7\ud83c\uddfa', url: '/ru/' },
-                { code: 'ar', name: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629', flag: '\ud83c\uddf8\ud83c\udde6', url: '/ar/' },
-                { code: 'hi', name: '\u0939\u093f\u0928\u094d\u0926\u0940', flag: '\ud83c\uddee\ud83c\uddf3', url: '/hi/' }
-            ];
-
-            var currentLang = 'en';
-            var selector = document.getElementById('langSelector');
-            var btn = document.getElementById('langBtn');
-            var dropdown = document.getElementById('langDropdown');
-            var optionsContainer = document.getElementById('langOptions');
-            var search = document.getElementById('langSearch');
-            var currentLangName = document.getElementById('currentLangName');
-
-            function renderOptions(filter) {
-                filter = filter || '';
-                var filtered = languages.filter(function(l) {
-                    return l.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1 ||
-                           l.code.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
-                });
-                optionsContainer.innerHTML = filtered.map(function(l) {
-                    return '<button class="lang-option ' + (l.code === currentLang ? 'active' : '') + '" data-lang="' + l.code + '" data-url="' + (l.url || '') + '">' +
-                        '<span class="flag">' + l.flag + '</span>' +
-                        '<span class="name">' + l.name + '</span>' +
-                        '<span class="code">' + l.code + '</span>' +
-                    '</button>';
-                }).join('');
-            }
-
-            function setLanguage(code, url) {
-                if (url) { window.location.href = url; return; }
-                currentLang = code;
-                var langData = languages.find(function(l) { return l.code === code; });
-                currentLangName.textContent = langData ? langData.name : 'English';
-                renderOptions(search.value);
-                selector.classList.remove('open');
-                btn.setAttribute('aria-expanded', 'false');
-            }
-
-            btn.addEventListener('click', function() {
-                var isOpen = selector.classList.toggle('open');
-                btn.setAttribute('aria-expanded', isOpen);
-                if (isOpen) { search.focus(); search.value = ''; renderOptions(); }
-            });
-
-            search.addEventListener('input', function(e) { renderOptions(e.target.value); });
-
-            optionsContainer.addEventListener('click', function(e) {
-                var option = e.target.closest('.lang-option');
-                if (option) setLanguage(option.dataset.lang, option.dataset.url);
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!selector.contains(e.target)) {
-                    selector.classList.remove('open');
-                    btn.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            renderOptions();
         })();
     </script>
     <script>

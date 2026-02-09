@@ -6,23 +6,10 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v3.1.0';
+const CACHE_NAME = 'echoelmusic-v4.0.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  // All 12 language versions
-  '/de/index.html',
-  '/ja/index.html',
-  '/es/index.html',
-  '/fr/index.html',
-  '/zh/index.html',
-  '/ko/index.html',
-  '/pt/index.html',
-  '/it/index.html',
-  '/ru/index.html',
-  '/ar/index.html',
-  '/hi/index.html',
-  // Static assets
   '/favicon.svg',
   '/app-icon.svg',
   '/manifest.json',
