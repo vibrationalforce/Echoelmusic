@@ -102,6 +102,9 @@ class LocalizationManager: ObservableObject {
         case telugu = "te"          // South India - 80M+ speakers
         case marathi = "mr"         // India - 90M+ speakers
 
+        // Tier 6: Oceania / Indigenous Languages
+        case maori = "mi"           // New Zealand - Te Reo Māori
+
         var displayName: String {
             switch self {
             case .german: return "Deutsch"
@@ -143,6 +146,8 @@ class LocalizationManager: ObservableObject {
             case .swahili: return "Kiswahili"
             case .telugu: return "తెలుగు"
             case .marathi: return "मराठी"
+            // Oceania / Indigenous
+            case .maori: return "Te Reo Māori"
             }
         }
 
@@ -167,6 +172,11 @@ class LocalizationManager: ObservableObject {
     // MARK: - Translation Keys
 
     enum TranslationKey: String {
+        // App Taglines
+        case taglineSound = "app.tagline.sound"
+        case taglineSoul = "app.tagline.soul"
+        case taglineMind = "app.tagline.mind"
+
         // General
         case appName = "app.name"
         case welcome = "general.welcome"
@@ -526,6 +536,8 @@ class LocalizationManager: ObservableObject {
             return teluguTranslations
         case .marathi:
             return marathiTranslations
+        case .maori:
+            return maoriTranslations
         }
     }
 
@@ -534,6 +546,9 @@ class LocalizationManager: ObservableObject {
     private var germanTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Finde Deinen Sound",
+            "app.tagline.soul": "Fühle Deine Seele",
+            "app.tagline.mind": "Fokussiere Deinen Geist",
             "general.welcome": "Willkommen",
             "general.ok": "OK",
             "general.cancel": "Abbrechen",
@@ -599,6 +614,9 @@ class LocalizationManager: ObservableObject {
     private var englishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Find Your Sound",
+            "app.tagline.soul": "Feel Your Soul",
+            "app.tagline.mind": "Focus Your Mind",
             "general.welcome": "Welcome",
             "general.ok": "OK",
             "general.cancel": "Cancel",
@@ -664,6 +682,9 @@ class LocalizationManager: ObservableObject {
     private var spanishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Encuentra Tu Sonido",
+            "app.tagline.soul": "Siente Tu Alma",
+            "app.tagline.mind": "Enfoca Tu Mente",
             "general.welcome": "Bienvenido",
             "general.ok": "Aceptar",
             "general.cancel": "Cancelar",
@@ -685,6 +706,9 @@ class LocalizationManager: ObservableObject {
     private var frenchTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Trouve Ton Son",
+            "app.tagline.soul": "Ressens Ton Âme",
+            "app.tagline.mind": "Concentre Ton Esprit",
             "general.welcome": "Bienvenue",
             "general.ok": "OK",
             "general.cancel": "Annuler",
@@ -704,6 +728,9 @@ class LocalizationManager: ObservableObject {
     private var chineseSimplifiedTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "找到你的声音",
+            "app.tagline.soul": "感受你的灵魂",
+            "app.tagline.mind": "专注你的心灵",
             "general.welcome": "欢迎",
             "general.ok": "确定",
             "general.cancel": "取消",
@@ -724,6 +751,9 @@ class LocalizationManager: ObservableObject {
     private var japaneseTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "あなたのサウンドを見つけよう",
+            "app.tagline.soul": "あなたの魂を感じよう",
+            "app.tagline.mind": "あなたの心を集中しよう",
             "general.welcome": "ようこそ",
             "general.ok": "OK",
             "general.cancel": "キャンセル",
@@ -744,6 +774,9 @@ class LocalizationManager: ObservableObject {
     private var arabicTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "اعثر على صوتك",
+            "app.tagline.soul": "اشعر بروحك",
+            "app.tagline.mind": "ركّز عقلك",
             "general.welcome": "مرحبا",
             "general.ok": "موافق",
             "general.cancel": "إلغاء",
@@ -776,6 +809,9 @@ class LocalizationManager: ObservableObject {
     private var koreanTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "당신의 소리를 찾으세요",
+            "app.tagline.soul": "당신의 영혼을 느끼세요",
+            "app.tagline.mind": "당신의 마음을 집중하세요",
             "general.welcome": "환영합니다",
             "general.ok": "확인",
             "general.cancel": "취소",
@@ -835,6 +871,9 @@ class LocalizationManager: ObservableObject {
     private var portugueseTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Encontra o Teu Som",
+            "app.tagline.soul": "Sente a Tua Alma",
+            "app.tagline.mind": "Foca a Tua Mente",
             "general.welcome": "Bem-vindo",
             "general.ok": "OK",
             "general.cancel": "Cancelar",
@@ -894,6 +933,9 @@ class LocalizationManager: ObservableObject {
     private var italianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Trova il Tuo Suono",
+            "app.tagline.soul": "Senti la Tua Anima",
+            "app.tagline.mind": "Focalizza la Tua Mente",
             "general.welcome": "Benvenuto",
             "general.ok": "OK",
             "general.cancel": "Annulla",
@@ -953,6 +995,9 @@ class LocalizationManager: ObservableObject {
     private var russianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Найди Свой Звук",
+            "app.tagline.soul": "Почувствуй Свою Душу",
+            "app.tagline.mind": "Сфокусируй Свой Разум",
             "general.welcome": "Добро пожаловать",
             "general.ok": "ОК",
             "general.cancel": "Отмена",
@@ -1012,6 +1057,9 @@ class LocalizationManager: ObservableObject {
     private var hindiTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "अपनी ध्वनि खोजें",
+            "app.tagline.soul": "अपनी आत्मा महसूस करें",
+            "app.tagline.mind": "अपने मन को केंद्रित करें",
             "general.welcome": "स्वागत है",
             "general.ok": "ठीक है",
             "general.cancel": "रद्द करें",
@@ -1073,6 +1121,9 @@ class LocalizationManager: ObservableObject {
     private var polishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Znajdź Swój Dźwięk",
+            "app.tagline.soul": "Poczuj Swoją Duszę",
+            "app.tagline.mind": "Skup Swój Umysł",
             "general.welcome": "Witamy",
             "general.ok": "OK",
             "general.cancel": "Anuluj",
@@ -1109,6 +1160,9 @@ class LocalizationManager: ObservableObject {
     private var turkishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Sesini Bul",
+            "app.tagline.soul": "Ruhunu Hisset",
+            "app.tagline.mind": "Zihnini Odakla",
             "general.welcome": "Hoş geldiniz",
             "general.ok": "Tamam",
             "general.cancel": "İptal",
@@ -1145,6 +1199,9 @@ class LocalizationManager: ObservableObject {
     private var chineseTraditionalTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "找到你的聲音",
+            "app.tagline.soul": "感受你的靈魂",
+            "app.tagline.mind": "專注你的心靈",
             "general.welcome": "歡迎",
             "general.ok": "確定",
             "general.cancel": "取消",
@@ -1181,6 +1238,9 @@ class LocalizationManager: ObservableObject {
     private var bengaliTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "তোমার সুর খুঁজো",
+            "app.tagline.soul": "তোমার আত্মা অনুভব করো",
+            "app.tagline.mind": "তোমার মন ফোকাস করো",
             "general.welcome": "স্বাগতম",
             "general.ok": "ঠিক আছে",
             "general.cancel": "বাতিল",
@@ -1217,6 +1277,9 @@ class LocalizationManager: ObservableObject {
     private var tamilTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "உன் ஒலியைக் கண்டுபிடி",
+            "app.tagline.soul": "உன் ஆன்மாவை உணர்",
+            "app.tagline.mind": "உன் மனதைக் கவனி",
             "general.welcome": "வரவேற்கிறோம்",
             "general.ok": "சரி",
             "general.cancel": "ரத்து",
@@ -1253,6 +1316,9 @@ class LocalizationManager: ObservableObject {
     private var thaiTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "ค้นหาเสียงของคุณ",
+            "app.tagline.soul": "สัมผัสจิตวิญญาณของคุณ",
+            "app.tagline.mind": "โฟกัสจิตใจของคุณ",
             "general.welcome": "ยินดีต้อนรับ",
             "general.ok": "ตกลง",
             "general.cancel": "ยกเลิก",
@@ -1289,6 +1355,9 @@ class LocalizationManager: ObservableObject {
     private var vietnameseTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Tìm Âm Thanh Của Bạn",
+            "app.tagline.soul": "Cảm Nhận Tâm Hồn Bạn",
+            "app.tagline.mind": "Tập Trung Tâm Trí Bạn",
             "general.welcome": "Chào mừng",
             "general.ok": "OK",
             "general.cancel": "Hủy",
@@ -1325,6 +1394,9 @@ class LocalizationManager: ObservableObject {
     private var hebrewTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "מצא את הצליל שלך",
+            "app.tagline.soul": "הרגש את הנשמה שלך",
+            "app.tagline.mind": "מקד את המחשבה שלך",
             "general.welcome": "ברוכים הבאים",
             "general.ok": "אישור",
             "general.cancel": "ביטול",
@@ -1361,6 +1433,9 @@ class LocalizationManager: ObservableObject {
     private var persianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "صدای خود را پیدا کن",
+            "app.tagline.soul": "روح خود را حس کن",
+            "app.tagline.mind": "ذهن خود را متمرکز کن",
             "general.welcome": "خوش آمدید",
             "general.ok": "تایید",
             "general.cancel": "لغو",
@@ -1397,6 +1472,9 @@ class LocalizationManager: ObservableObject {
     private var indonesianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Temukan Suaramu",
+            "app.tagline.soul": "Rasakan Jiwamu",
+            "app.tagline.mind": "Fokuskan Pikiranmu",
             "general.welcome": "Selamat datang",
             "general.ok": "OK",
             "general.cancel": "Batal",
@@ -1433,6 +1511,9 @@ class LocalizationManager: ObservableObject {
     private var malayTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Cari Bunyimu",
+            "app.tagline.soul": "Rasai Jiwamu",
+            "app.tagline.mind": "Fokuskan Fikiranmu",
             "general.welcome": "Selamat datang",
             "general.ok": "OK",
             "general.cancel": "Batal",
@@ -1469,6 +1550,9 @@ class LocalizationManager: ObservableObject {
     private var finnishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Löydä Äänesi",
+            "app.tagline.soul": "Tunne Sielusi",
+            "app.tagline.mind": "Keskitä Mielesi",
             "general.welcome": "Tervetuloa",
             "general.ok": "OK",
             "general.cancel": "Peruuta",
@@ -1505,6 +1589,9 @@ class LocalizationManager: ObservableObject {
     private var greekTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Βρες τον Ήχο σου",
+            "app.tagline.soul": "Νιώσε την Ψυχή σου",
+            "app.tagline.mind": "Εστίασε το Μυαλό σου",
             "general.welcome": "Καλώς ήρθατε",
             "general.ok": "OK",
             "general.cancel": "Ακύρωση",
@@ -1541,6 +1628,9 @@ class LocalizationManager: ObservableObject {
     private var czechTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Najdi Svůj Zvuk",
+            "app.tagline.soul": "Pocit' Svou Duši",
+            "app.tagline.mind": "Zaměř Svou Mysl",
             "general.welcome": "Vítejte",
             "general.ok": "OK",
             "general.cancel": "Zrušit",
@@ -1577,6 +1667,9 @@ class LocalizationManager: ObservableObject {
     private var romanianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Găsește-ți Sunetul",
+            "app.tagline.soul": "Simte-ți Sufletul",
+            "app.tagline.mind": "Concentrează-ți Mintea",
             "general.welcome": "Bine ați venit",
             "general.ok": "OK",
             "general.cancel": "Anulare",
@@ -1613,6 +1706,9 @@ class LocalizationManager: ObservableObject {
     private var hungarianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Találd Meg a Hangod",
+            "app.tagline.soul": "Érezd a Lelked",
+            "app.tagline.mind": "Fókuszáld az Elméd",
             "general.welcome": "Üdvözöljük",
             "general.ok": "OK",
             "general.cancel": "Mégse",
@@ -1649,6 +1745,9 @@ class LocalizationManager: ObservableObject {
     private var ukrainianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Знайди Свій Звук",
+            "app.tagline.soul": "Відчуй Свою Душу",
+            "app.tagline.mind": "Сфокусуй Свій Розум",
             "general.welcome": "Ласкаво просимо",
             "general.ok": "OK",
             "general.cancel": "Скасувати",
@@ -1685,6 +1784,9 @@ class LocalizationManager: ObservableObject {
     private var filipinoTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Hanapin ang Tunog Mo",
+            "app.tagline.soul": "Damhin ang Kaluluwa Mo",
+            "app.tagline.mind": "Ituon ang Isip Mo",
             "general.welcome": "Maligayang pagdating",
             "general.ok": "OK",
             "general.cancel": "Kanselahin",
@@ -1721,6 +1823,9 @@ class LocalizationManager: ObservableObject {
     private var swahiliTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Pata Sauti Yako",
+            "app.tagline.soul": "Hisi Roho Yako",
+            "app.tagline.mind": "Lenga Akili Yako",
             "general.welcome": "Karibu",
             "general.ok": "Sawa",
             "general.cancel": "Ghairi",
@@ -1757,6 +1862,9 @@ class LocalizationManager: ObservableObject {
     private var teluguTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "నీ శబ్దాన్ని కనుగొను",
+            "app.tagline.soul": "నీ ఆత్మను అనుభవించు",
+            "app.tagline.mind": "నీ మనసును కేంద్రీకరించు",
             "general.welcome": "స్వాగతం",
             "general.ok": "సరే",
             "general.cancel": "రద్దు",
@@ -1793,6 +1901,9 @@ class LocalizationManager: ObservableObject {
     private var marathiTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "तुझा आवाज शोध",
+            "app.tagline.soul": "तुझ्या आत्म्याला अनुभव",
+            "app.tagline.mind": "तुझ्या मनावर लक्ष केंद्रित कर",
             "general.welcome": "स्वागत आहे",
             "general.ok": "ठीक आहे",
             "general.cancel": "रद्द करा",
@@ -1829,6 +1940,9 @@ class LocalizationManager: ObservableObject {
     private var dutchTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Vind Je Geluid",
+            "app.tagline.soul": "Voel Je Ziel",
+            "app.tagline.mind": "Focus Je Geest",
             "general.welcome": "Welkom",
             "general.ok": "OK",
             "general.cancel": "Annuleren",
@@ -1865,6 +1979,9 @@ class LocalizationManager: ObservableObject {
     private var danishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Find Din Lyd",
+            "app.tagline.soul": "Mærk Din Sjæl",
+            "app.tagline.mind": "Fokusér Dit Sind",
             "general.welcome": "Velkommen",
             "general.ok": "OK",
             "general.cancel": "Annuller",
@@ -1901,6 +2018,9 @@ class LocalizationManager: ObservableObject {
     private var swedishTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Hitta Ditt Ljud",
+            "app.tagline.soul": "Känn Din Själ",
+            "app.tagline.mind": "Fokusera Ditt Sinne",
             "general.welcome": "Välkommen",
             "general.ok": "OK",
             "general.cancel": "Avbryt",
@@ -1937,6 +2057,9 @@ class LocalizationManager: ObservableObject {
     private var norwegianTranslations: [String: String] {
         [
             "app.name": "Echoelmusic",
+            "app.tagline.sound": "Finn Din Lyd",
+            "app.tagline.soul": "Kjenn Din Sjel",
+            "app.tagline.mind": "Fokusér Din Tanke",
             "general.welcome": "Velkommen",
             "general.ok": "OK",
             "general.cancel": "Avbryt",
@@ -1965,6 +2088,76 @@ class LocalizationManager: ObservableObject {
             "error.network": "Nettverksfeil",
             "error.permission": "Tillatelse kreves",
             "error.file_not_found": "Fil ikke funnet"
+        ]
+    }
+
+    // MARK: - Māori Translations (Te Reo Māori)
+
+    private var maoriTranslations: [String: String] {
+        [
+            "app.name": "Echoelmusic",
+            "app.tagline.sound": "Kimihia Tō Oro",
+            "app.tagline.soul": "Rongo i Tō Wairua",
+            "app.tagline.mind": "Arotahi i Tō Hinengaro",
+            "general.welcome": "Nau mai",
+            "general.ok": "Āe",
+            "general.cancel": "Whakakore",
+            "general.save": "Tiaki",
+            "general.delete": "Muku",
+            "general.edit": "Whakatika",
+            "general.done": "Kua oti",
+            "general.close": "Kati",
+            "general.settings": "Ngā Tautuhinga",
+
+            "bio.hrv": "Rerekētanga Manawa",
+            "bio.coherence": "Kotahitanga",
+            "bio.heart_rate": "Tere Manawa",
+            "bio.breathing_rate": "Tere Hā",
+            "bio.stress": "Āwangawanga",
+            "bio.relaxation": "Whakaokioki",
+            "bio.meditation": "Whakaaroaro",
+
+            "music.scale": "Āwhata Puoro",
+            "music.chord": "Rangi Tahi",
+            "music.rhythm": "Taki",
+            "music.tempo": "Tere",
+            "music.key": "Kī",
+            "music.mode": "Āhua",
+            "music.interval": "Takiwā",
+
+            "emotion.neutral": "Tūpato",
+            "emotion.happy": "Harikoa",
+            "emotion.sad": "Pōuri",
+            "emotion.energetic": "Hihiri",
+            "emotion.calm": "Mārie",
+            "emotion.anxious": "Māharahara",
+            "emotion.focused": "Arotahi",
+            "emotion.relaxed": "Āniwaniwa",
+
+            "effect.reverb": "Haruru",
+            "effect.delay": "Tārewa",
+            "effect.distortion": "Whakahīanga",
+            "effect.compressor": "Kōpere",
+            "effect.eq": "Ōritenga",
+            "effect.filter": "Tātari",
+            "effect.limiter": "Rāhui",
+
+            "export.title": "Kaweake",
+            "export.format": "Hōputu",
+            "export.quality": "Kounga",
+            "export.success": "Kaweake angitū",
+            "export.failed": "Kaweake rahunga",
+
+            "performance.title": "Mahinga",
+            "performance.fps": "Ataata ia hēkona",
+            "performance.cpu": "Whakamahinga Rorohiko",
+            "performance.memory": "Whakamahinga Maharatanga",
+            "performance.quality": "Kounga",
+
+            "error.generic": "He hapa i puta",
+            "error.network": "Hapa whatunga",
+            "error.permission": "Me whiwhi whakaaetanga",
+            "error.file_not_found": "Kāore i kitea te kōnae"
         ]
     }
 

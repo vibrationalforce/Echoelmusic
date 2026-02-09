@@ -25,28 +25,24 @@ public struct EchoelBrand {
 
     // MARK: - Brand Tagline
 
-    /// Primary tagline (3-line poetic)
+    /// Primary tagline
     public static let tagline = [
-        "Find your Sound",
-        "Feel your Soul",
-        "Focus your Spirit"
+        "Create from Within"
     ]
 
     /// Tagline joined
-    public static let taglineJoined = "Find your Sound · Feel your Soul · Focus your Spirit"
+    public static let taglineJoined = "Create from Within"
 
     /// German tagline
     public static let taglineDE = [
-        "Finde deinen Klang",
-        "Fühle deine Seele",
-        "Fokussiere deinen Geist"
+        "Erschaffe aus dir heraus"
     ]
 
-    /// Brand slogan (tagline is the main headline now)
-    public static let slogan = "Find your Sound · Feel your Soul · Focus your Spirit"
+    /// Brand slogan
+    public static let slogan = "Create from Within"
 
     /// Description
-    public static let description = "Create immersive sound, music, video, visuals & light via bio-reactive tools."
+    public static let description = "Create music, film, visuals & light from your body's own signals — bio-reactive performance tools for artists."
 
     // MARK: - Primary Brand Colors (Bio-Green Theme 💚)
 

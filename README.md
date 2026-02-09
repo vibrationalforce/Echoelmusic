@@ -1,13 +1,13 @@
 # Echoelmusic
 
-**Bio-Reactive Audio-Visual Platform with Quantum AI**
+**Create from Within — Bio-Reactive Platform for Music, Film, Visuals & Light**
 
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](../../actions)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> Bio-reactive music creation and performance system combining voice, biofeedback, spatial audio, and light control
+> Bio-reactive creative performance platform — turn your heartbeat, breath, and body into music, film, visuals, and light
 
 ---
 
