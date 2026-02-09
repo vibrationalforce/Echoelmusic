@@ -712,8 +712,8 @@ public final class LambdaModeEngine: ObservableObject {
     private func hueFromColor(_ color: Color) -> Double {
         // Konvertiere Color zu RGB-Komponenten
         #if canImport(UIKit)
-        guard let cgColor = UIColor(color).cgColor,
-              let components = cgColor.components,
+        let cgColor = UIColor(color).cgColor
+        guard let components = cgColor.components,
               components.count >= 3 else {
             return 0.5
         }
