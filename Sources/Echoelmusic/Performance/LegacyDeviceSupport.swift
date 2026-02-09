@@ -191,6 +191,13 @@ class LegacyDeviceSupport: ObservableObject {
         case high = "High (Modern Devices)"
         case ultra = "Ultra (Current Devices)"
 
+        static func < (lhs: PerformanceLevel, rhs: PerformanceLevel) -> Bool {
+            let order: [PerformanceLevel] = [.minimal, .low, .medium, .high, .ultra]
+            let lhsIndex = order.firstIndex(of: lhs) ?? 0
+            let rhsIndex = order.firstIndex(of: rhs) ?? 0
+            return lhsIndex < rhsIndex
+        }
+
         var particleCount: Int {
             switch self {
             case .minimal: return 256
