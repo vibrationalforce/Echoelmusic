@@ -165,7 +165,7 @@ public actor LazyShaderCompiler {
             throw CompilationError.functionNotFound(name: functionName)
         }
 
-        return try device.makeComputePipelineState(function: function)
+        return try await device.makeComputePipelineState(function: function)
     }
 
     // MARK: - Compilation
@@ -200,7 +200,7 @@ public actor LazyShaderCompiler {
         // Create pipeline state
         let pipelineState: MTLRenderPipelineState
         do {
-            pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
+            pipelineState = try await device.makeRenderPipelineState(descriptor: descriptor)
         } catch {
             throw CompilationError.pipelineCreationFailed(error)
         }
