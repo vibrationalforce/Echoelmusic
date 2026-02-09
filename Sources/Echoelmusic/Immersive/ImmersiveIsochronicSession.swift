@@ -569,7 +569,8 @@ public final class ImmersiveIsochronicSession: ObservableObject {
     // MARK: - Cleanup
 
     deinit {
-        stopSession()
+        // stopSession() is @MainActor-isolated, cannot call from deinit
+        // Audio engine and timers will stop when references are released
     }
 }
 
