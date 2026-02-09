@@ -449,9 +449,14 @@ public struct LiquidGlassTabBar: View {
                     generator.impactOccurred()
                 } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: selectedTab == index ? "\(tab.icon).fill" : tab.icon)
-                            .font(.system(size: 22))
-                            .symbolEffect(.bounce, value: selectedTab == index)
+                        if #available(iOS 17.0, *) {
+                            Image(systemName: selectedTab == index ? "\(tab.icon).fill" : tab.icon)
+                                .font(.system(size: 22))
+                                .symbolEffect(.bounce, value: selectedTab == index)
+                        } else {
+                            Image(systemName: selectedTab == index ? "\(tab.icon).fill" : tab.icon)
+                                .font(.system(size: 22))
+                        }
 
                         Text(tab.title)
                             .font(.caption2)
