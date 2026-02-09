@@ -184,7 +184,7 @@ class LegacyDeviceSupport: ObservableObject {
 
     // MARK: - Performance Level
 
-    enum PerformanceLevel: String, CaseIterable {
+    enum PerformanceLevel: String, CaseIterable, Comparable {
         case minimal = "Minimal (Emergency)"
         case low = "Low (Legacy Devices)"
         case medium = "Medium (Mid-Range)"
