@@ -69,23 +69,22 @@ end
 
 # Build xcargs with App Store Connect API authentication for cloud-managed signing
 def build_xcargs_with_auth
-  api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+  # Write the ASC API key to disk so xcodebuild can use it for automatic signing
+  key_dir = File.expand_path("~/.private_keys")
+  FileUtils.mkdir_p(key_dir)
+  key_path = File.join(key_dir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+  File.write(key_path, ENV['ASC_KEY_CONTENT'])
+  UI.message("API key written to: #{key_path}")
 
-  # For App Store/TestFlight - use manual signing with Fastlane-managed certs
-  # Certificates and profiles are handled by get_certificates/get_provisioning_profile
   args = [
     "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+    "CODE_SIGN_STYLE=Automatic",
+    "-allowProvisioningUpdates",
+    "-authenticationKeyPath '#{key_path}'",
+    "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
+    "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'",
     "COMPILER_INDEX_STORE_ENABLE=NO"
   ]
-
-  # Note: API authentication is handled by Fastlane's cert/sigh actions
-  # xcodebuild auth flags removed - using manual signing with Fastlane-managed certs
-  if File.exist?(api_key_path)
-    UI.message("API key file found at: #{api_key_path}")
-    UI.message("Signing managed by Fastlane cert/sigh (not xcodebuild cloud signing)")
-  else
-    UI.message("No API key file found, using local signing")
-  end
 
   args.join(" ")
 end
@@ -310,103 +309,11 @@ platform :ios do
     UI.header "iOS TestFlight Build"
 
     api_key = setup_api_key
-    keychain = setup_keychain
 
-    UI.message("Setting up certificates and provisioning profiles...")
+    UI.message("Using xcodebuild automatic cloud signing with App Store Connect API...")
 
-    # Step 1: Get iOS Distribution certificate
-    # Strategy: Import .p12 to seed keychain, then always run cert() to validate
-    require 'base64'
-    p12_content = ENV["DISTRIBUTION_CERTIFICATE_P12"]
-    p12_password = ENV["DISTRIBUTION_CERTIFICATE_PASSWORD"] || ""
-
-    # 1a: Import .p12 if available (seeds keychain with cert + private key)
-    if p12_content && !p12_content.empty?
-      UI.message("Importing distribution certificate from .p12 secret...")
-      begin
-        p12_path = "/tmp/distribution.p12"
-        File.write(p12_path, Base64.decode64(p12_content))
-        import_certificate(
-          certificate_path: p12_path,
-          certificate_password: p12_password,
-          keychain_path: keychain[:path],
-          keychain_password: keychain[:password]
-        )
-        File.delete(p12_path) if File.exist?(p12_path)
-        UI.success("Certificate imported from .p12 secret")
-      rescue => e
-        UI.important("Could not import .p12 (will try cert()): #{e.message}")
-      end
-    else
-      UI.message("No DISTRIBUTION_CERTIFICATE_P12 secret found")
-    end
-
-    # 1b: Always run cert() to ensure a valid distribution cert exists
-    # If .p12 cert is still valid in portal, cert() reuses it (no new cert created)
-    # If .p12 cert was revoked, cert() creates a new one
-    begin
-      cert(
-        api_key: api_key,
-        keychain_path: keychain[:path],
-        keychain_password: keychain[:password],
-        platform: "ios"
-      )
-    rescue => e
-      UI.error("cert() failed: #{e.message}")
-      raise e
-    end
-
-    # 1c: Export cert as .p12 for future runs (always, so secret stays up to date)
-    begin
-      export_password = "echoelmusic-ci"
-      p12_export_path = "/tmp/ci_distribution_cert.p12"
-      Actions.sh(
-        "security find-identity -v -p codesigning '#{keychain[:path]}' | grep 'Apple Distribution' | head -1 || true",
-        log: true
-      )
-      Actions.sh(
-        "security export -k '#{keychain[:path]}' -t identities -f pkcs12 -P '#{export_password}' -o '#{p12_export_path}'",
-        log: true
-      )
-      if File.exist?(p12_export_path) && File.size(p12_export_path) > 0
-        p12_base64 = Base64.strict_encode64(File.read(p12_export_path))
-        File.write("/tmp/cert_p12_base64.txt", p12_base64)
-        File.write("/tmp/cert_p12_password.txt", export_password)
-        UI.success("✅ Certificate exported - update DISTRIBUTION_CERTIFICATE_P12 secret if changed")
-      end
-    rescue => export_err
-      UI.important("Could not export cert (non-fatal): #{export_err.message}")
-    end
-
-    # Step 2: Get/create App Store provisioning profile for main app
-    profile_info = sigh(
-      api_key: api_key,
-      app_identifier: "com.echoelmusic.app",
-      adhoc: false,
-      readonly: false,
-      platform: "ios"
-    )
-
-    profile_path = ENV["sigh_profile_path"] || lane_context[SharedValues::SIGH_PROFILE_PATH]
-    profile_uuid = ENV["sigh_udid"] || lane_context[SharedValues::SIGH_UDID]
-    profile_name = ENV["sigh_name"] || lane_context[SharedValues::SIGH_NAME] || ""
-
-    UI.message("=== Provisioning Profile Info ===")
-    UI.message("  Path: #{profile_path}")
-    UI.message("  UUID: #{profile_uuid}")
-    UI.message("  Name: #{profile_name}")
-    UI.message("  ENV sigh_profile_path: #{ENV['sigh_profile_path']}")
-    UI.message("  ENV SIGH_PROFILE_PATH: #{ENV['SIGH_PROFILE_PATH']}")
-    UI.message("  ENV sigh_udid: #{ENV['sigh_udid']}")
-    UI.message("  ENV SIGH_UDID: #{ENV['SIGH_UDID']}")
-    UI.message("================================")
-
-    if profile_uuid.nil? || profile_uuid.empty?
-      UI.user_error!("Failed to get provisioning profile UUID! Check sigh output above.")
-    end
-
-    # Step 3: Build with manual signing using fetched cert + profile
-    # Use PROVISIONING_PROFILE (UUID) instead of PROVISIONING_PROFILE_SPECIFIER (name)
+    # Build iOS app with automatic cloud-managed signing
+    # xcodebuild handles certificates and profiles automatically via ASC API key
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -420,15 +327,11 @@ platform :ios do
       output_name: "Echoelmusic",
       buildlog_path: "./build/logs",
       include_bitcode: false,
-      codesigning_identity: "Apple Distribution",
       export_options: {
-        signingStyle: "manual",
-        teamID: TEAM_ID,
-        provisioningProfiles: {
-          "com.echoelmusic.app" => profile_name.empty? ? profile_uuid : profile_name
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
-      xcargs: "DEVELOPMENT_TEAM='#{TEAM_ID}' CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' PROVISIONING_PROFILE='#{profile_uuid}' COMPILER_INDEX_STORE_ENABLE=NO"
+      xcargs: build_xcargs_with_auth
     )
 
     # Verify IPA was created
@@ -438,7 +341,7 @@ platform :ios do
     end
     UI.success("IPA created at: #{ipa_path}")
 
-    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER} - Phase 10000 ULTIMATE MODE")
+    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER}")
   end
 
   # ---------------------------------------------------------------------------
