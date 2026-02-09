@@ -6,10 +6,12 @@ import SwiftUI
 /// Professional video editing interface with bio-reactive features
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
+    @StateObject private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showEffectsPanel = false
     @State private var showExportSheet = false
+    @State private var showBPMGrid = true
     @State private var currentTime: TimeInterval = 0
     @State private var isPlaying = false
 
@@ -57,15 +59,26 @@ struct VideoEditorView: View {
                     .font(VaporwaveTypography.sectionTitle())
                     .foregroundColor(VaporwaveColors.textPrimary)
 
-                Text("Bio-Reactive Editing")
+                Text(workspace.mode.rawValue)
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
 
             Spacer()
 
+            // Workspace mode switcher
+            workspaceModePicker
+
+            Spacer()
+
             // Toolbar buttons
             HStack(spacing: VaporwaveSpacing.sm) {
+                toolbarButton(icon: "metronome", label: "BPM", isActive: showBPMGrid) {
+                    withAnimation(VaporwaveAnimation.smooth) {
+                        showBPMGrid.toggle()
+                    }
+                }
+
                 toolbarButton(icon: "square.stack.3d.up", label: "Effects", isActive: showEffectsPanel) {
                     withAnimation(VaporwaveAnimation.smooth) {
                         showEffectsPanel.toggle()
@@ -78,6 +91,35 @@ struct VideoEditorView: View {
             }
         }
         .padding(VaporwaveSpacing.md)
+    }
+
+    // MARK: - Workspace Mode Picker
+
+    private var workspaceModePicker: some View {
+        HStack(spacing: VaporwaveSpacing.xs) {
+            ForEach(WorkspaceMode.allCases, id: \.self) { mode in
+                Button {
+                    withAnimation(VaporwaveAnimation.smooth) {
+                        workspace.switchMode(mode)
+                    }
+                } label: {
+                    VStack(spacing: 2) {
+                        Image(systemName: mode.icon)
+                            .font(.system(size: 14))
+                        Text(mode.rawValue)
+                            .font(VaporwaveTypography.label())
+                    }
+                    .foregroundColor(workspace.mode == mode ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
+                    .padding(.horizontal, VaporwaveSpacing.sm)
+                    .padding(.vertical, VaporwaveSpacing.xs)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(workspace.mode == mode ? VaporwaveColors.neonCyan.opacity(0.15) : Color.clear)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     // MARK: - Preview Section
@@ -195,14 +237,24 @@ struct VideoEditorView: View {
 
     private var timelineSection: some View {
         VStack(spacing: VaporwaveSpacing.sm) {
-            // Timeline header
+            // Timeline header with BPM controls
             HStack {
                 Text("TIMELINE")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textSecondary)
                     .tracking(2)
 
+                // BPM Grid controls (inline)
+                if showBPMGrid {
+                    bpmGridControls
+                }
+
                 Spacer()
+
+                // Snap mode selector
+                if showBPMGrid {
+                    snapModeSelector
+                }
 
                 // Zoom control
                 HStack(spacing: VaporwaveSpacing.xs) {
@@ -224,23 +276,156 @@ struct VideoEditorView: View {
             }
             .padding(.horizontal, VaporwaveSpacing.md)
 
-            // Timeline tracks
+            // Timeline tracks with beat grid overlay
             ScrollView(.horizontal, showsIndicators: false) {
-                VStack(spacing: VaporwaveSpacing.xs) {
-                    // Video track
-                    timelineTrack(name: "Video", color: VaporwaveColors.neonCyan, clips: engine.videoClips)
+                ZStack(alignment: .leading) {
+                    // Beat grid markers (behind tracks)
+                    if showBPMGrid {
+                        beatGridOverlay
+                    }
 
-                    // Audio track
-                    timelineTrack(name: "Audio", color: VaporwaveColors.neonPurple, clips: engine.audioClips)
+                    VStack(spacing: VaporwaveSpacing.xs) {
+                        // Video track
+                        timelineTrack(name: "Video", color: VaporwaveColors.neonCyan, clips: engine.videoClips)
 
-                    // Bio track
-                    timelineTrack(name: "Bio-Sync", color: VaporwaveColors.neonPink, clips: [])
+                        // Audio track
+                        timelineTrack(name: "Audio", color: VaporwaveColors.neonPurple, clips: engine.audioClips)
+
+                        // Bio track
+                        timelineTrack(name: "Bio-Sync", color: VaporwaveColors.neonPink, clips: [])
+                    }
                 }
                 .padding(.horizontal, VaporwaveSpacing.md)
             }
             .frame(height: 150)
             .modifier(GlassCard())
             .padding(.horizontal, VaporwaveSpacing.md)
+        }
+    }
+
+    // MARK: - BPM Grid Controls
+
+    private var bpmGridControls: some View {
+        HStack(spacing: VaporwaveSpacing.sm) {
+            // BPM display + tap tempo
+            Button {
+                // Tap tempo — record tap times for BPM detection
+                workspace.bpmGrid.tapTempo()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "metronome.fill")
+                        .font(.system(size: 12))
+                    Text("\(Int(workspace.globalBPM))")
+                        .font(VaporwaveTypography.dataSmall())
+                    Text("BPM")
+                        .font(VaporwaveTypography.label())
+                }
+                .foregroundColor(VaporwaveColors.neonPink)
+                .padding(.horizontal, VaporwaveSpacing.sm)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(VaporwaveColors.neonPink.opacity(0.15))
+                        .overlay(Capsule().stroke(VaporwaveColors.neonPink.opacity(0.4), lineWidth: 1))
+                )
+            }
+            .buttonStyle(.plain)
+
+            // BPM adjust buttons
+            HStack(spacing: 2) {
+                Button { workspace.setGlobalBPM(workspace.globalBPM - 1) } label: {
+                    Image(systemName: "minus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.plain)
+
+                Button { workspace.setGlobalBPM(workspace.globalBPM + 1) } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Time signature
+            Menu {
+                ForEach(TimeSignature.common, id: \.displayString) { ts in
+                    Button(ts.displayString) {
+                        workspace.setGlobalTimeSignature(ts)
+                    }
+                }
+            } label: {
+                Text(workspace.globalTimeSignature.displayString)
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .padding(.horizontal, VaporwaveSpacing.xs)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(VaporwaveColors.neonCyan.opacity(0.1))
+                    )
+            }
+        }
+    }
+
+    // MARK: - Snap Mode Selector
+
+    private var snapModeSelector: some View {
+        Menu {
+            ForEach(SnapMode.allCases, id: \.self) { mode in
+                Button {
+                    workspace.bpmGrid.snapMode = mode
+                } label: {
+                    HStack {
+                        Text(mode.rawValue)
+                        if workspace.bpmGrid.snapMode == mode {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "magnet")
+                    .font(.system(size: 11))
+                Text(workspace.bpmGrid.snapMode.rawValue)
+                    .font(VaporwaveTypography.caption())
+            }
+            .foregroundColor(workspace.bpmGrid.snapMode != .off ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
+            .padding(.horizontal, VaporwaveSpacing.sm)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(workspace.bpmGrid.snapMode != .off ? VaporwaveColors.neonCyan.opacity(0.1) : Color.clear)
+            )
+        }
+        .padding(.trailing, VaporwaveSpacing.sm)
+    }
+
+    // MARK: - Beat Grid Overlay
+
+    private var beatGridOverlay: some View {
+        GeometryReader { geometry in
+            let bpm = workspace.globalBPM
+            let beatsPerSecond = bpm / 60.0
+            let pixelsPerSecond = 10.0 * timelineZoom
+            let pixelsPerBeat = pixelsPerSecond / beatsPerSecond
+            let beatsPerBar = Double(workspace.globalTimeSignature.beatsPerBar)
+            let totalWidth = geometry.size.width
+            let beatCount = Int(totalWidth / pixelsPerBeat) + 1
+
+            ForEach(0..<beatCount, id: \.self) { beat in
+                let x = Double(beat) * pixelsPerBeat + 70 // offset for track label
+                let isBar = beat % Int(beatsPerBar) == 0
+
+                Rectangle()
+                    .fill(isBar ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.textTertiary.opacity(0.15))
+                    .frame(width: isBar ? 1.5 : 0.5, height: geometry.size.height)
+                    .offset(x: x)
+            }
         }
     }
 
@@ -303,19 +488,63 @@ struct VideoEditorView: View {
 
     private var transportControls: some View {
         HStack(spacing: VaporwaveSpacing.lg) {
+            // Output target selector
+            Menu {
+                ForEach(OutputTarget.allCases, id: \.self) { target in
+                    Button {
+                        workspace.outputTarget = target
+                    } label: {
+                        HStack {
+                            Image(systemName: target.icon)
+                            Text(target.rawValue)
+                            if workspace.outputTarget == target {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: workspace.outputTarget.icon)
+                        .font(.system(size: 12))
+                    Text(workspace.outputTarget.rawValue)
+                        .font(VaporwaveTypography.caption())
+                }
+                .foregroundColor(VaporwaveColors.neonPurple)
+                .padding(.horizontal, VaporwaveSpacing.sm)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(VaporwaveColors.neonPurple.opacity(0.1))
+                )
+            }
+
+            Spacer()
+
+            // Beat-snap cut (previous beat)
+            if showBPMGrid {
+                transportButton(icon: "scissors") {
+                    currentTime = workspace.cutVideoOnBeat(at: currentTime)
+                }
+            }
+
             // Skip back
             transportButton(icon: "backward.fill") {
                 currentTime = max(0, currentTime - 5)
             }
 
-            // Previous frame
-            transportButton(icon: "backward.frame.fill") {
-                currentTime = max(0, currentTime - 1/30)
+            // Previous beat
+            if showBPMGrid {
+                transportButton(icon: "backward.end.fill") {
+                    let beatDuration = 60.0 / workspace.globalBPM
+                    currentTime = max(0, currentTime - beatDuration)
+                }
             }
 
             // Play/Pause
             Button {
-                isPlaying.toggle()
+                workspace.togglePlayback()
+                isPlaying = workspace.isPlaying
             } label: {
                 ZStack {
                     Circle()
@@ -334,14 +563,38 @@ struct VideoEditorView: View {
             }
             .buttonStyle(.plain)
 
-            // Next frame
-            transportButton(icon: "forward.frame.fill") {
-                currentTime += 1/30
+            // Next beat
+            if showBPMGrid {
+                transportButton(icon: "forward.end.fill") {
+                    let beatDuration = 60.0 / workspace.globalBPM
+                    currentTime += beatDuration
+                }
             }
 
             // Skip forward
             transportButton(icon: "forward.fill") {
                 currentTime += 5
+            }
+
+            Spacer()
+
+            // Beat position display
+            if showBPMGrid {
+                let position = workspace.bpmGrid.beatPosition(at: currentTime)
+                HStack(spacing: 4) {
+                    Text("Bar \(position.bar)")
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(VaporwaveColors.neonPink)
+                    Text("Beat \(position.beat)")
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(VaporwaveColors.textSecondary)
+                }
+                .padding(.horizontal, VaporwaveSpacing.sm)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(VaporwaveColors.deepBlack.opacity(0.6))
+                )
             }
         }
         .padding(VaporwaveSpacing.md)

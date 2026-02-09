@@ -111,7 +111,7 @@ final class EchoelUniversalCore: ObservableObject {
         aiEngine.delegate = self
 
         // Register all modules
-        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .selfHealing, .video, .tools]
+        connectedModules = [.audio, .visual, .bio, .quantum, .sync, .analog, .ai, .selfHealing, .video, .tools, .workspace, .collaboration]
     }
 
     /// NEU: Verbindet alle Systeme bidirektional
@@ -284,10 +284,13 @@ extension EchoelUniversalCore {
         var superpositionState: [Float] = []
         var entanglementStrength: Float = 0
 
-        // Timing
+        // Timing & Tempo
         var globalTime: Double = 0
         var beatPhase: Float = 0
         var breathPhase: Float = 0
+        var bpm: Double = 120.0
+        var bioTempo: Double = 0       // Heart rate as tempo suggestion
+        var heartRate: Double = 0
 
         // Device State
         var connectedDevices: Int = 0
@@ -322,6 +325,8 @@ extension EchoelUniversalCore {
         case quantum = "Quantum Processor"
         case sync = "Device Sync"
         case analog = "Analog Bridge"
+        case workspace = "Creative Workspace"
+        case collaboration = "Collaboration"
         case ai = "AI Creative"
         case selfHealing = "Self-Healing"
         case video = "Video AI"

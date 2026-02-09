@@ -51,6 +51,11 @@ public struct TimeSignature: Codable, Equatable, Hashable {
     public static let sevenEight = TimeSignature(numerator: 7, denominator: 8)
     public static let twelveEight = TimeSignature(numerator: 12, denominator: 8)
 
+    /// All common time signatures for UI pickers
+    public static let common: [TimeSignature] = [
+        .fourFour, .threeFour, .twoFour, .sixEight, .fiveFour, .sevenEight, .twelveEight
+    ]
+
     /// Display string (e.g., "4/4")
     public var displayString: String {
         return "\(numerator)/\(denominator)"
