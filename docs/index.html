@@ -56,7 +56,7 @@
           "@id": "https://echoelmusic.com/#app",
           "name": "Echoelmusic",
           "applicationCategory": "MultimediaApplication",
-          "operatingSystem": ["iOS", "macOS", "watchOS", "tvOS", "visionOS"],
+          "operatingSystem": ["iOS", "macOS", "watchOS", "tvOS", "visionOS", "Android", "Web"],
           "description": "Bio-reactive creative platform that transforms your heartbeat, breath, and body into music, visuals, and light.",
           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"}
         }
@@ -160,12 +160,15 @@
         .menu-overlay.open a {
             transform: translateY(0); opacity: 1;
         }
-        .menu-overlay.open a:nth-child(1) { transition-delay: 0.05s; }
-        .menu-overlay.open a:nth-child(2) { transition-delay: 0.1s; }
-        .menu-overlay.open a:nth-child(3) { transition-delay: 0.15s; }
-        .menu-overlay.open a:nth-child(4) { transition-delay: 0.2s; }
-        .menu-overlay.open a:nth-child(5) { transition-delay: 0.25s; }
-        .menu-overlay.open a:nth-child(6) { transition-delay: 0.3s; }
+        .menu-overlay.open a:nth-child(1) { transition-delay: 0.03s; }
+        .menu-overlay.open a:nth-child(2) { transition-delay: 0.06s; }
+        .menu-overlay.open a:nth-child(3) { transition-delay: 0.09s; }
+        .menu-overlay.open a:nth-child(4) { transition-delay: 0.12s; }
+        .menu-overlay.open a:nth-child(5) { transition-delay: 0.15s; }
+        .menu-overlay.open a:nth-child(6) { transition-delay: 0.18s; }
+        .menu-overlay.open a:nth-child(7) { transition-delay: 0.21s; }
+        .menu-overlay.open a:nth-child(8) { transition-delay: 0.24s; }
+        .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
         .menu-overlay a:hover { color: #fff; background: rgba(255,255,255,0.05); }
         .menu-overlay .menu-cta {
             margin-top: 24px; font-size: 16px; font-weight: 600;
@@ -174,7 +177,7 @@
             transform: translateY(20px); opacity: 0;
         }
         .menu-overlay.open .menu-cta {
-            transform: translateY(0); opacity: 1; transition-delay: 0.35s;
+            transform: translateY(0); opacity: 1; transition-delay: 0.32s;
         }
         .menu-overlay .menu-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,20,148,0.3); color: #000; }
 
@@ -318,16 +321,7 @@
             0%, 100% { height: 16px; opacity: 0.3; }
             50% { height: var(--h, 50px); opacity: 1; }
         }
-        .light-grid {
-            width: 100%; height: 100%; display: grid;
-            grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6px;
-            padding: 20px;
-        }
-        .light-grid .dot {
-            border-radius: 8px; border: 1px solid var(--border);
-            background: var(--bg-card); transition: all 0.4s;
-        }
-        .light-grid .dot.on { border-color: var(--cyan); background: rgba(0,255,255,0.06); box-shadow: 0 0 12px rgba(0,255,255,0.15); }
+        .fractal-canvas { width: 100%; height: 100%; display: block; border-radius: 16px; }
 
         /* ── BOTTOM CTA ── */
         .bottom-cta {
@@ -416,7 +410,10 @@
             <a href="faq.html">FAQ</a>
             <a href="support.html">Support</a>
             <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
             <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
             <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="menu-cta">Download Free</a>
         </nav>
     </div>
@@ -438,7 +435,7 @@
                     Download Free
                 </a>
                 <p class="hero-platforms">
-                    iPhone &middot; iPad &middot; Mac &middot; Apple Watch &middot; Vision Pro
+                    iPhone &middot; iPad &middot; Mac &middot; Apple Watch &middot; Apple TV &middot; Vision Pro &middot; Android &middot; Web
                     <span class="badge">Free for a Limited Time</span>
                 </p>
             </div>
@@ -447,15 +444,15 @@
         <!-- Stats -->
         <div class="stats fade-in">
             <div class="stat">
-                <div class="stat-num">100+</div>
-                <div class="stat-label">Instruments</div>
+                <div class="stat-num">90+</div>
+                <div class="stat-label">Effects &amp; Processors</div>
             </div>
             <div class="stat">
-                <div class="stat-num">60+</div>
-                <div class="stat-label">Effects</div>
+                <div class="stat-num">30+</div>
+                <div class="stat-label">Visual Modes</div>
             </div>
             <div class="stat">
-                <div class="stat-num">6</div>
+                <div class="stat-num">7</div>
                 <div class="stat-label">Platforms</div>
             </div>
         </div>
@@ -470,7 +467,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     </div>
                     <h2>Your body is the controller</h2>
-                    <p>Echoelmusic connects to your Apple Watch and reads your heart rate, HRV, and breathing in real time. These signals drive everything — the audio, the visuals, the light. When you're in coherence, the sound opens up. When you breathe deep, the visuals expand. It's your biology shaping art.</p>
+                    <p>Echoelmusic connects to Apple Watch or Android wearables and reads your heart rate, HRV, and breathing in real time. These signals drive everything — filters, reverb, tempo, visuals, and lighting. When you're in coherence, the sound opens up. When you breathe deep, the visuals expand. Play with touch instruments — chord pads, drum pads, keyboards, XY controllers, and strum pads — all responding to your body. It's your biology shaping art.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
                     <div class="bio-rings">
@@ -489,8 +486,8 @@
                     <div class="feature-icon fi-cyan">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                     </div>
-                    <h2>Full orchestra to raw synthesis</h2>
-                    <p>100+ instruments. A cinematic scoring engine with 27 articulations. Granular, FM, wavetable, and analog-modeled synthesis. 60+ effects inspired by SSL, Neve, and Fairchild hardware. Everything runs natively on your device. No dependencies. No compromise.</p>
+                    <h2>From synthesis to spatial audio</h2>
+                    <p>Six core synth engines (subtractive, FM, wavetable, granular, additive, physical modeling) plus genetic sound evolution, a TR-808 bass synth, and 6 drum kits. 90+ real DSP effects — from SSL, Neve, and Pultec analog emulations to creative delays, convolution reverb, and spectral processing. A composing engine helps you learn musical styles and evolve your own unique melodies — you create, the app inspires. MIDI 2.0 with MPE, Ableton Link sync, brainwave entrainment, and 25+ export formats including Dolby Atmos. Everything runs natively — zero external dependencies.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
                     <div class="wave-bars">
@@ -522,11 +519,11 @@
                     <div class="feature-icon fi-purple">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                     </div>
-                    <h2>Visuals and light that breathe with you</h2>
-                    <p>Metal-powered GPU visuals respond to your biometrics and audio. Sacred geometry, cymatics, fractals. Control DMX and Art-Net lighting directly from your body. Process video with AI effects. Everything synced to your state in real time.</p>
+                    <h2>Visuals, light, video, and immersive spaces</h2>
+                    <p>30+ GPU-accelerated visual modes — particles, cymatics, mandalas, fractals, quantum fields, neural networks, nebulas, and more — all driven by your biometrics and audio. Control DMX/Art-Net lighting and ILDA laser systems directly from your body. A 16-step visual sequencer syncs everything to the beat. Process and stream video in real time with an AI live production engine. Collaborate worldwide with up to 1000 participants. Step into 360&deg; immersive spaces on Vision Pro. Available on iPhone, iPad, Mac, Apple Watch, Apple TV, Vision Pro, Android, and as a Web PWA.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
-                    <div class="light-grid" id="lightGrid"></div>
+                    <canvas class="fractal-canvas" id="fractalCanvas"></canvas>
                 </div>
             </div>
 
@@ -560,9 +557,12 @@
     <footer>
         <span class="footer-copy">&copy; 2026 Echoelmusic</span>
         <div class="footer-links">
+            <a href="faq.html">FAQ</a>
+            <a href="support.html">Support</a>
             <a href="privacy.html">Privacy</a>
             <a href="terms.html">Terms</a>
             <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
             <a href="accessibility.html">Accessibility</a>
             <a href="impressum.html">Impressum</a>
         </div>
@@ -596,22 +596,56 @@
             if (e.key === 'Escape' && burger.classList.contains('active')) toggleMenu();
         });
 
-        // Light grid animation
-        var grid = document.getElementById('lightGrid');
-        if (grid) {
-            for (var i = 0; i < 15; i++) {
-                var d = document.createElement('div');
-                d.className = 'dot';
-                grid.appendChild(d);
-            }
-            var dots = grid.querySelectorAll('.dot');
-            setInterval(function() {
-                dots.forEach(function(d) { d.classList.remove('on'); });
-                var count = 3 + Math.floor(Math.random() * 5);
-                for (var j = 0; j < count; j++) {
-                    dots[Math.floor(Math.random() * dots.length)].classList.add('on');
+        // Fractal canvas animation (Julia set)
+        var fc = document.getElementById('fractalCanvas');
+        if (fc) {
+            var fctx = fc.getContext('2d');
+            var fSize = 180;
+            fc.width = fSize; fc.height = fSize;
+            var fTime = 0, fRunning = false;
+            function drawFractal() {
+                if (!fRunning) return;
+                fTime += 0.004;
+                var cRe = -0.7 + 0.15 * Math.sin(fTime);
+                var cIm = 0.27015 + 0.1 * Math.cos(fTime * 0.7);
+                var img = fctx.createImageData(fSize, fSize);
+                var d = img.data;
+                for (var y = 0; y < fSize; y++) {
+                    for (var x = 0; x < fSize; x++) {
+                        var zr = (x - fSize/2) / (fSize/3);
+                        var zi = (y - fSize/2) / (fSize/3);
+                        var it = 0, max = 28;
+                        while (zr*zr + zi*zi < 4 && it < max) {
+                            var t = zr*zr - zi*zi + cRe;
+                            zi = 2*zr*zi + cIm; zr = t; it++;
+                        }
+                        var idx = (y * fSize + x) * 4;
+                        if (it === max) { d[idx]=5; d[idx+1]=5; d[idx+2]=16; }
+                        else {
+                            var n = it / max;
+                            if (n < 0.5) {
+                                var s = n*2;
+                                d[idx] = (255-102*s)|0;
+                                d[idx+1] = (20+31*s)|0;
+                                d[idx+2] = (148+107*s)|0;
+                            } else {
+                                var s = (n-0.5)*2;
+                                d[idx] = (153-153*s)|0;
+                                d[idx+1] = (51+204*s)|0;
+                                d[idx+2] = 255;
+                            }
+                        }
+                        d[idx+3] = 255;
+                    }
                 }
-            }, 1200);
+                fctx.putImageData(img, 0, 0);
+                setTimeout(function() { requestAnimationFrame(drawFractal); }, 60);
+            }
+            var fObs = new IntersectionObserver(function(e) {
+                fRunning = e[0].isIntersecting;
+                if (fRunning) drawFractal();
+            }, { threshold: 0.1 });
+            fObs.observe(fc);
         }
     })();
     </script>

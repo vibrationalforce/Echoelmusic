@@ -6,7 +6,7 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v5.0.0';
+const CACHE_NAME = 'echoelmusic-v7.0.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -14,13 +14,14 @@ const STATIC_ASSETS = [
   '/app-icon.svg',
   '/manifest.json',
   '/version.json',
-  // Legal pages
   '/privacy.html',
   '/terms.html',
   '/impressum.html',
   '/faq.html',
   '/support.html',
-  '/health.html'
+  '/health.html',
+  '/security.html',
+  '/accessibility.html'
 ];
 
 // Install: Cache static assets
