@@ -507,15 +507,19 @@ class LegacyDeviceSupport: ObservableObject {
             deviceGeneration: .legacy,
             chip: .a10,
             ramGB: ram,
-            gpuGeneration: .a10,
-            supportedFeatures: [.basicAudio, .simpleVisuals],
-            recommendedSettings: RecommendedSettings(
+            gpuGeneration: .legacy,
+            maxFPS: 60,
+            recommendedSettings: DeviceProfile.RecommendedSettings(
                 targetFPS: 30,
                 maxParticles: 512,
-                textureQuality: .low,
                 audioSampleRate: 22050,
-                enableMetalEffects: false,
-                maxConcurrentEffects: 2
+                audioBufferSize: 1024,
+                textureQuality: .low,
+                shadowQuality: .off,
+                effectsQuality: .minimal,
+                enableBloom: false,
+                enableMotionBlur: false,
+                enableAO: false
             )
         )
 
