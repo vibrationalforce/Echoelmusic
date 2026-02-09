@@ -33,8 +33,7 @@ const STATIC_ASSETS = [
   '/impressum.html',
   '/faq.html',
   '/support.html',
-  '/health.html',
-  '/use-cases.html'
+  '/health.html'
 ];
 
 // Install: Cache static assets
