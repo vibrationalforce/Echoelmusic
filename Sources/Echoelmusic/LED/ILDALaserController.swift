@@ -681,15 +681,15 @@ public class ILDALaserController: ObservableObject {
             connection?.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready:
-                    self?.isConnected = true
+                    Task { @MainActor in self?.isConnected = true }
                     log.led("🔦 ILDA Laser: Connected to \(self?.dacType.rawValue ?? "DAC") @ \(self?.dacAddress ?? "")")
                     continuation.resume()
                 case .failed(let error):
-                    self?.isConnected = false
+                    Task { @MainActor in self?.isConnected = false }
                     log.led("❌ ILDA Laser: Connection failed - \(error)", level: .error)
                     continuation.resume(throwing: error)
                 case .cancelled:
-                    self?.isConnected = false
+                    Task { @MainActor in self?.isConnected = false }
                 default:
                     break
                 }
