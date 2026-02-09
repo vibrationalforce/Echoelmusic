@@ -205,11 +205,12 @@
 
         /* Navigation */
         nav {
-            position: sticky; top: 0; z-index: 100;
-            background: rgba(5,5,16,0.85);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(5,5,16,0.88);
             backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
             border-bottom: 1px solid var(--border);
         }
+        body { padding-top: 57px; }
         .nav-inner {
             max-width: var(--max-w); margin: 0 auto;
             display: flex; align-items: center; justify-content: space-between;
@@ -347,7 +348,7 @@
         .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
         .card-icon {
             width: 44px; height: 44px; border-radius: 12px; margin-bottom: 18px;
-            display: flex; align-items: center; justify-content: center; font-size: 22px;
+            display: flex; align-items: center; justify-content: center;
         }
         .card-icon-pink { background: rgba(255,20,148,0.12); }
         .card-icon-cyan { background: rgba(0,255,255,0.1); }
@@ -444,10 +445,11 @@
         .grid-visual .cell {
             border-radius: 10px; border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; transition: all 0.3s;
-            background: var(--bg-card);
+            font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+            color: var(--text-secondary); text-transform: uppercase;
+            transition: all 0.3s; background: var(--bg-card);
         }
-        .grid-visual .cell:hover { border-color: var(--cyan); transform: scale(1.05); }
+        .grid-visual .cell:hover { border-color: var(--cyan); color: var(--cyan); transform: scale(1.05); }
 
         /* Use Cases */
         .use-cases {
@@ -458,7 +460,7 @@
             padding: 28px 22px; text-align: center; transition: all 0.3s;
         }
         .use-case:hover { border-color: var(--border-hover); transform: translateY(-3px); }
-        .use-case-icon { font-size: 32px; margin-bottom: 14px; }
+        .use-case-icon { margin-bottom: 14px; display: flex; justify-content: center; }
         .use-case h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
         .use-case p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 
@@ -746,8 +748,8 @@
                 <div class="feature-text">
                     <div class="section-label">Bio-Reactive</div>
                     <h2>Your body becomes the instrument</h2>
-                    <p>Echoelmusic reads your heart rate, HRV, breathing, and coherence through Apple Watch. These signals shape spatial audio, real-time visuals, and DMX lighting in real time.</p>
-                    <p>When you reach high coherence, the sound becomes harmonic and luminous. When your breathing deepens, the visuals expand. Your body's natural rhythm drives the entire creative experience.</p>
+                    <p>Apple Watch reads your heart rate, HRV, breathing, and coherence. These signals shape spatial audio, visuals, and DMX lighting in real time.</p>
+                    <p>High coherence makes the sound harmonic. Deep breathing expands the visuals. Your body's natural rhythm drives the experience.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
                     <div class="bio-visual">
@@ -765,14 +767,14 @@
                 <div class="feature-text">
                     <div class="section-label">Sound</div>
                     <h2>From symphony orchestras to electronic synthesis</h2>
-                    <p>Play a full orchestra with 27 articulations. Shape granular textures with your breath. Layer analog-modeled effects that react to your biometric state.</p>
-                    <p>100+ instruments spanning orchestral, global acoustic, synthesis engines, and touch instruments. 60+ DSP effects from SSL and Neve emulations to bio-reactive processors. All native, zero dependencies.</p>
+                    <p>100+ instruments from orchestral to global acoustic, synthesis engines, and touch instruments. 60+ DSP effects including SSL and Neve emulations.</p>
+                    <p>27 articulations. Granular textures shaped by breath. Analog-modeled effects reacting to your biometric state. All native, zero dependencies.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
                     <div class="grid-visual">
-                        <div class="cell">🎻</div><div class="cell">🎺</div><div class="cell">🎹</div><div class="cell">🥁</div>
-                        <div class="cell">🎸</div><div class="cell">🪕</div><div class="cell">🎵</div><div class="cell">🎷</div>
-                        <div class="cell">🪘</div><div class="cell">🎶</div><div class="cell">🎤</div><div class="cell">🪗</div>
+                        <div class="cell">Violin</div><div class="cell">Trumpet</div><div class="cell">Piano</div><div class="cell">Drums</div>
+                        <div class="cell">Guitar</div><div class="cell">Sitar</div><div class="cell">Synth</div><div class="cell">Sax</div>
+                        <div class="cell">Erhu</div><div class="cell">Harp</div><div class="cell">Voice</div><div class="cell">Oud</div>
                     </div>
                 </div>
             </div>
@@ -782,8 +784,8 @@
                 <div class="feature-text">
                     <div class="section-label">Visual</div>
                     <h2>Music you can see, light you can feel</h2>
-                    <p>GPU-powered visuals react to your biometrics and audio in real time. Sacred geometry, quantum light patterns, cymatics, and fractal mandalas rendered with Metal shaders.</p>
-                    <p>Control DMX and Art-Net lighting directly from your body's signals. Process video up to 16K with 50+ AI-powered effects. Score cinematic films with a full orchestral engine.</p>
+                    <p>GPU-powered visuals react to biometrics and audio. Sacred geometry, quantum light patterns, and fractal mandalas rendered with Metal shaders.</p>
+                    <p>DMX and Art-Net lighting controlled by your body. Video processing up to 16K with 50+ AI effects. Cinematic scoring with a full orchestral engine.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
                     <div class="wave-visual">
@@ -824,24 +826,24 @@
                 </div>
                 <div class="cards-grid">
                     <div class="card fade-in">
-                        <div class="card-icon card-icon-pink">&#x1F9E0;</div>
+                        <div class="card-icon card-icon-pink"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M12 2a4 4 0 014 4v2a4 4 0 01-8 0V6a4 4 0 014-4z"/><path d="M9 12h6l1 10H8l1-10z"/><circle cx="10" cy="6" r="0.5" fill="var(--pink)"/><circle cx="14" cy="6" r="0.5" fill="var(--pink)"/></svg></div>
                         <h3>Echoela AI</h3>
-                        <p>Describe any sound in words. Echoela generates patches, presets, and compositions directly on your device. It learns from your biometric state and adapts in real time.</p>
+                        <p>Describe any sound in words. Echoela generates patches, presets, and compositions on your device in real time.</p>
                     </div>
                     <div class="card fade-in fade-in-delay-1">
-                        <div class="card-icon card-icon-cyan">&#x1F30D;</div>
+                        <div class="card-icon card-icon-cyan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
                         <h3>Worldwide Collaboration</h3>
-                        <p>Join real-time sessions with artists across the globe. Music jams, coherence circles, guided meditations, and research studies with zero-latency sync.</p>
+                        <p>Real-time sessions with artists globally. Music jams, coherence circles, and meditations with zero-latency sync.</p>
                     </div>
                     <div class="card fade-in fade-in-delay-2">
-                        <div class="card-icon card-icon-purple">&#x1F3AC;</div>
+                        <div class="card-icon card-icon-purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/></svg></div>
                         <h3>Cinematic Scoring</h3>
-                        <p>A full orchestral scoring engine with 27 articulations, leitmotif system, and bio-reactive dynamics. Compose film scores that respond to your emotions.</p>
+                        <p>Full orchestral scoring engine with 27 articulations and bio-reactive dynamics. Film scores that respond to your emotions.</p>
                     </div>
                     <div class="card fade-in fade-in-delay-3">
-                        <div class="card-icon card-icon-green">&#x1F512;</div>
+                        <div class="card-icon card-icon-green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
                         <h3>Private & Secure</h3>
-                        <p>AES-256 encryption, Face ID authentication, GDPR and HIPAA compliant. All processing happens on-device. Your biometric data never leaves your phone.</p>
+                        <p>AES-256 encryption, Face ID, GDPR compliant. All processing on-device. Your data never leaves your phone.</p>
                     </div>
                 </div>
             </section>
@@ -855,24 +857,24 @@
                 </div>
                 <div class="use-cases">
                     <div class="use-case fade-in">
-                        <div class="use-case-icon">&#x1F3B5;</div>
+                        <div class="use-case-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.5"><circle cx="12" cy="18" r="4"/><path d="M16 18V6a4 4 0 00-4-4"/><path d="M8 6v4"/></svg></div>
                         <h3>Musicians & Producers</h3>
-                        <p>100+ instruments, 60+ effects, MIDI 2.0 + MPE support. Create music shaped by your body.</p>
+                        <p>100+ instruments, 60+ effects, MIDI 2.0 + MPE. Music shaped by your body.</p>
                     </div>
                     <div class="use-case fade-in fade-in-delay-1">
-                        <div class="use-case-icon">&#x1F3AC;</div>
+                        <div class="use-case-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
                         <h3>Filmmakers & Composers</h3>
-                        <p>Score films with a full orchestral engine. 27 articulations, bio-reactive dynamics, leitmotif system.</p>
+                        <p>Full orchestral scoring, 27 articulations, bio-reactive dynamics.</p>
                     </div>
                     <div class="use-case fade-in fade-in-delay-2">
-                        <div class="use-case-icon">&#x1F4A1;</div>
+                        <div class="use-case-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
                         <h3>VJs & Live Performers</h3>
-                        <p>GPU-powered visuals, DMX lighting control, multi-platform streaming. Your body is the controller.</p>
+                        <p>GPU visuals, DMX lighting, multi-platform streaming. Your body is the controller.</p>
                     </div>
                     <div class="use-case fade-in fade-in-delay-3">
-                        <div class="use-case-icon">&#x1F9D8;</div>
+                        <div class="use-case-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--magenta)" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
                         <h3>Wellness & Meditation</h3>
-                        <p>Guided breathing, coherence training, binaural beats, and sound baths. Creative expression meets wellbeing.</p>
+                        <p>Coherence training, binaural beats, sound baths. Creativity meets wellbeing.</p>
                     </div>
                 </div>
             </section>
