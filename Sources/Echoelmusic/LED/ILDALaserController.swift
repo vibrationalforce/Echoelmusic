@@ -677,12 +677,16 @@ public class ILDALaserController: ObservableObject {
 
         connection = NWConnection(to: endpoint, using: .tcp)
 
+        // Capture @MainActor properties before Sendable closure
+        let dacTypeDesc = dacType.rawValue
+        let dacAddr = dacAddress
+
         return try await withCheckedThrowingContinuation { continuation in
             connection?.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready:
                     Task { @MainActor in self?.isConnected = true }
-                    log.led("🔦 ILDA Laser: Connected to \(self?.dacType.rawValue ?? "DAC") @ \(self?.dacAddress ?? "")")
+                    log.led("🔦 ILDA Laser: Connected to \(dacTypeDesc) @ \(dacAddr)")
                     continuation.resume()
                 case .failed(let error):
                     Task { @MainActor in self?.isConnected = false }
