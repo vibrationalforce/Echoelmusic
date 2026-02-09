@@ -228,7 +228,7 @@ public struct EchoelGradients {
 // Fallback: System font (SF Pro on Apple, Roboto on Android)
 // Benefits: Distinguishable letterforms (I/l/1, O/0), optimal for Vision Pro & Quest
 
-public struct EchoelTypography {
+public struct EchoelBrandFont {
 
     /// Preferred font name for VR/AR readability
     /// Install from: https://fonts.google.com/specimen/Atkinson+Hyperlegible
@@ -388,7 +388,7 @@ public struct EchoelPrimaryButton: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(EchoelTypography.body().weight(.semibold))
+            .font(EchoelBrandFont.body().weight(.semibold))
             .foregroundColor(EchoelBrand.bgDeep)
             .padding(.horizontal, EchoelSpacing.lg)
             .padding(.vertical, EchoelSpacing.md)
@@ -411,7 +411,7 @@ public struct EchoelSecondaryButton: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(EchoelTypography.body().weight(.medium))
+            .font(EchoelBrandFont.body().weight(.medium))
             .foregroundColor(EchoelBrand.primary)
             .padding(.horizontal, EchoelSpacing.lg)
             .padding(.vertical, EchoelSpacing.md)

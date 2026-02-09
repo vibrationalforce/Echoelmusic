@@ -359,10 +359,10 @@ public struct SessionClip: Identifiable, Codable, Equatable {
     }
 }
 
-// MARK: - TrackType
+// MARK: - SessionTrackType
 
-/// The kind of track (Reaper-style: any track can be anything)
-public enum TrackType: String, Codable, CaseIterable, Sendable {
+/// The kind of session track (Reaper-style: any track can be anything)
+public enum SessionTrackType: String, Codable, CaseIterable, Sendable {
     case audio
     case midi
     case instrument
@@ -380,10 +380,10 @@ public typealias TrackColor = ClipColor
 /// Scene trigger color
 public typealias SceneColor = ClipColor
 
-// MARK: - MonitorMode
+// MARK: - SessionMonitorMode
 
 /// Input monitoring mode
-public enum MonitorMode: String, Codable, CaseIterable, Sendable {
+public enum SessionMonitorMode: String, Codable, CaseIterable, Sendable {
     /// Monitor only when track is armed and not playing
     case auto
     /// Always monitor input
@@ -415,10 +415,10 @@ public enum CrossfadeAssign: String, Codable, CaseIterable, Sendable {
     case b
 }
 
-// MARK: - TrackSend
+// MARK: - SessionTrackSend
 
 /// A send from one track to a return/bus track
-public struct TrackSend: Identifiable, Codable, Equatable, Sendable {
+public struct SessionTrackSend: Identifiable, Codable, Equatable, Sendable {
     public let id: UUID
     /// Destination return track
     public var returnTrackID: UUID
@@ -452,14 +452,14 @@ public struct SessionTrack: Identifiable, Codable, Equatable {
     public var clips: [SessionClip?]
 
     /// Track type (audio, midi, instrument, return, master)
-    public var type: TrackType
+    public var type: SessionTrackType
 
     // MARK: Recording
 
     /// Whether the track is armed for recording
     public var isArmed: Bool
     /// Input monitoring mode
-    public var monitorMode: MonitorMode
+    public var monitorMode: SessionMonitorMode
 
     // MARK: Mixer
 
@@ -479,7 +479,7 @@ public struct SessionTrack: Identifiable, Codable, Equatable {
     /// Output routing destination (nil = master)
     public var outputRouting: UUID?
     /// Sends to return tracks
-    public var sends: [TrackSend]
+    public var sends: [SessionTrackSend]
 
     // MARK: Session View Controls
 
@@ -494,16 +494,16 @@ public struct SessionTrack: Identifiable, Codable, Equatable {
         name: String = "Track",
         color: TrackColor = .blue,
         clips: [SessionClip?] = [],
-        type: TrackType = .audio,
+        type: SessionTrackType = .audio,
         isArmed: Bool = false,
-        monitorMode: MonitorMode = .auto,
+        monitorMode: SessionMonitorMode = .auto,
         volume: Float = 0.85,
         pan: Float = 0.0,
         mute: Bool = false,
         solo: Bool = false,
         inputRouting: TrackInput = .none,
         outputRouting: UUID? = nil,
-        sends: [TrackSend] = [],
+        sends: [SessionTrackSend] = [],
         stopButton: Bool = true,
         crossfadeAssign: CrossfadeAssign = .none
     ) {
@@ -903,7 +903,7 @@ public class ProSessionEngine: ObservableObject {
 
     /// Add a new track to the session
     @discardableResult
-    public func addTrack(type: TrackType, name: String) -> SessionTrack {
+    public func addTrack(type: SessionTrackType, name: String) -> SessionTrack {
         var track = SessionTrack(
             name: name,
             type: type
@@ -913,7 +913,7 @@ public class ProSessionEngine: ObservableObject {
 
         // Auto-assign sends for each return track
         for returnTrack in returnTracks {
-            track.sends.append(TrackSend(returnTrackID: returnTrack.id, level: 0.0))
+            track.sends.append(SessionTrackSend(returnTrackID: returnTrack.id, level: 0.0))
         }
 
         tracks.append(track)
@@ -957,7 +957,7 @@ public class ProSessionEngine: ObservableObject {
 
         // Add a default send to all existing tracks pointing at this return
         for i in tracks.indices {
-            tracks[i].sends.append(TrackSend(returnTrackID: returnTrack.id, level: 0.0))
+            tracks[i].sends.append(SessionTrackSend(returnTrackID: returnTrack.id, level: 0.0))
         }
 
         log.info("Return track added: \(name)", category: .audio)
@@ -1236,7 +1236,7 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // 8 tracks with varied types
-        let trackConfigs: [(TrackType, String, ClipColor)] = [
+        let trackConfigs: [(SessionTrackType, String, ClipColor)] = [
             (.audio, "1 - Drums", .orange),
             (.audio, "2 - Bass", .blue),
             (.midi, "3 - Synth Lead", .green),
@@ -1322,7 +1322,7 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // Instrument tracks
-        let trackConfigs: [(TrackType, String, ClipColor)] = [
+        let trackConfigs: [(SessionTrackType, String, ClipColor)] = [
             (.instrument, "Bio Synth", .green),
             (.instrument, "Pad Layer", .cyan),
             (.midi, "Arpeggio", .purple),

@@ -495,10 +495,10 @@ public struct OuraStatusView: View {
                 Image(systemName: "circle.hexagongrid.fill")
                     .foregroundColor(oura.isOuraConnected ? EchoelBrand.primary : EchoelBrand.textTertiary)
                 Text("Oura Ring")
-                    .font(EchoelTypography.cardTitle())
+                    .font(EchoelBrandFont.cardTitle())
                 Spacer()
                 Text(oura.isOuraConnected ? "Connected" : "Not found")
-                    .font(EchoelTypography.caption())
+                    .font(EchoelBrandFont.caption())
                     .foregroundColor(oura.isOuraConnected ? EchoelBrand.primary : EchoelBrand.textTertiary)
             }
 
@@ -516,12 +516,12 @@ public struct OuraStatusView: View {
                 }
 
                 Text("Last sync: \(lastSync.formatted())")
-                    .font(EchoelTypography.caption())
+                    .font(EchoelBrandFont.caption())
                     .foregroundColor(EchoelBrand.textTertiary)
             }
 
             Text("Oura data is used for session recommendations, not real-time audio.")
-                .font(EchoelTypography.caption())
+                .font(EchoelBrandFont.caption())
                 .foregroundColor(EchoelBrand.textTertiary)
         }
         .padding()
@@ -541,10 +541,10 @@ private struct MetricBadge: View {
     var body: some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(EchoelTypography.dataSmall())
+                .font(EchoelBrandFont.dataSmall())
                 .foregroundColor(EchoelBrand.primary)
             Text(label)
-                .font(EchoelTypography.label())
+                .font(EchoelBrandFont.label())
                 .foregroundColor(EchoelBrand.textTertiary)
         }
         .padding(.horizontal, 12)

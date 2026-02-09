@@ -259,21 +259,21 @@ public class CueList: Identifiable, ObservableObject, Codable {
     }
 }
 
-// MARK: - SceneTransition
+// MARK: - CueSceneTransition
 
 /// Transition type between scenes (OBS-style)
-public struct SceneTransition: Codable, Sendable {
-    public var type: TransitionType
+public struct CueSceneTransition: Codable, Sendable {
+    public var type: CueTransitionType
     public var duration: TimeInterval
 
-    public init(type: TransitionType = .cut, duration: TimeInterval = 0.5) {
+    public init(type: CueTransitionType = .cut, duration: TimeInterval = 0.5) {
         self.type = type
         self.duration = duration
     }
 }
 
 /// Available scene transition types
-public enum TransitionType: String, Codable, CaseIterable, Sendable {
+public enum CueTransitionType: String, Codable, CaseIterable, Sendable {
     case cut
     case fade
     case slideLeft
@@ -291,10 +291,10 @@ public enum TransitionType: String, Codable, CaseIterable, Sendable {
     case beatSync
 }
 
-// MARK: - SourceType
+// MARK: - CueSourceType
 
 /// The type of a source element within a scene
-public enum SourceType: String, Codable, CaseIterable, Sendable {
+public enum CueSourceType: String, Codable, CaseIterable, Sendable {
     case camera
     case mediaFile
     case visualLayer
@@ -309,18 +309,18 @@ public enum SourceType: String, Codable, CaseIterable, Sendable {
     case imageSlideshow
 }
 
-// MARK: - SourceFilter
+// MARK: - CueSourceFilter
 
 /// Filter applied to a scene source
-public struct SourceFilter: Identifiable, Codable, Sendable {
+public struct CueSourceFilter: Identifiable, Codable, Sendable {
     public let id: UUID
-    public var type: SourceFilterType
+    public var type: CueSourceFilterType
     public var isEnabled: Bool
     public var parameters: [String: Double]
 
     public init(
         id: UUID = UUID(),
-        type: SourceFilterType,
+        type: CueSourceFilterType,
         isEnabled: Bool = true,
         parameters: [String: Double] = [:]
     ) {
@@ -332,7 +332,7 @@ public struct SourceFilter: Identifiable, Codable, Sendable {
 }
 
 /// Available source filter types
-public enum SourceFilterType: String, Codable, CaseIterable, Sendable {
+public enum CueSourceFilterType: String, Codable, CaseIterable, Sendable {
     case chromaKey
     case colorCorrection
     case blur
@@ -346,26 +346,26 @@ public enum SourceFilterType: String, Codable, CaseIterable, Sendable {
 public struct SceneSource: Identifiable, Codable, Sendable {
     public let id: UUID
     public var name: String
-    public var type: SourceType
+    public var type: CueSourceType
     public var position: CGRect
     public var rotation: Float
     public var scale: Float
     public var opacity: Float
     public var isVisible: Bool
     public var cropRect: CGRect?
-    public var filters: [SourceFilter]
+    public var filters: [CueSourceFilter]
 
     public init(
         id: UUID = UUID(),
         name: String,
-        type: SourceType,
+        type: CueSourceType,
         position: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1),
         rotation: Float = 0,
         scale: Float = 1.0,
         opacity: Float = 1.0,
         isVisible: Bool = true,
         cropRect: CGRect? = nil,
-        filters: [SourceFilter] = []
+        filters: [CueSourceFilter] = []
     ) {
         self.id = id
         self.name = name
@@ -410,7 +410,7 @@ public struct ShowScene: Identifiable, Codable, Sendable {
     public var name: String
     public var thumbnail: String?
     public var sources: [SceneSource]
-    public var transition: SceneTransition
+    public var transition: CueSceneTransition
     public var isActive: Bool
     public var isPreview: Bool
     public var audioConfig: SceneAudioConfig
@@ -420,7 +420,7 @@ public struct ShowScene: Identifiable, Codable, Sendable {
         name: String,
         thumbnail: String? = nil,
         sources: [SceneSource] = [],
-        transition: SceneTransition = SceneTransition(),
+        transition: CueSceneTransition = CueSceneTransition(),
         isActive: Bool = false,
         isPreview: Bool = false,
         audioConfig: SceneAudioConfig = SceneAudioConfig()

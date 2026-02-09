@@ -570,10 +570,10 @@ public struct BPMControlView: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text("BPM")
-                        .font(EchoelTypography.label())
+                        .font(EchoelBrandFont.label())
                         .foregroundColor(EchoelBrand.textTertiary)
                     Text(String(format: "%.1f", engine.currentBPM))
-                        .font(EchoelTypography.data())
+                        .font(EchoelBrandFont.data())
                         .foregroundColor(EchoelBrand.primary)
                 }
 
@@ -590,7 +590,7 @@ public struct BPMControlView: View {
                 Button(action: { showSituationPicker.toggle() }) {
                     HStack {
                         Text(engine.situation.rawValue)
-                            .font(EchoelTypography.caption())
+                            .font(EchoelBrandFont.caption())
                         Image(systemName: "chevron.down")
                     }
                     .padding(.horizontal, 12)
@@ -604,10 +604,10 @@ public struct BPMControlView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Target")
-                        .font(EchoelTypography.label())
+                        .font(EchoelBrandFont.label())
                     Spacer()
                     Text(String(format: "%.0f", engine.targetBPM))
-                        .font(EchoelTypography.dataSmall())
+                        .font(EchoelBrandFont.dataSmall())
                 }
                 .foregroundColor(EchoelBrand.textSecondary)
 
@@ -620,10 +620,10 @@ public struct BPMControlView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Bio Influence")
-                        .font(EchoelTypography.label())
+                        .font(EchoelBrandFont.label())
                     Spacer()
                     Text(String(format: "%.0f%%", engine.bioInfluence * 100))
-                        .font(EchoelTypography.dataSmall())
+                        .font(EchoelBrandFont.dataSmall())
                 }
                 .foregroundColor(EchoelBrand.textSecondary)
 
@@ -635,10 +635,10 @@ public struct BPMControlView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Humanize")
-                        .font(EchoelTypography.label())
+                        .font(EchoelBrandFont.label())
                     Spacer()
                     Text(String(format: "%.0f%%", engine.humanize * 100))
-                        .font(EchoelTypography.dataSmall())
+                        .font(EchoelBrandFont.dataSmall())
                 }
                 .foregroundColor(EchoelBrand.textSecondary)
 
@@ -649,7 +649,7 @@ public struct BPMControlView: View {
             // Tap Tempo Button
             Button(action: { engine.tap() }) {
                 Text("TAP")
-                    .font(EchoelTypography.body().weight(.semibold))
+                    .font(EchoelBrandFont.body().weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(EchoelBrand.bgSurface)
@@ -684,9 +684,9 @@ private struct SituationPickerView: View {
                     HStack {
                         VStack(alignment: .leading) {
                             Text(situation.rawValue)
-                                .font(EchoelTypography.body())
+                                .font(EchoelBrandFont.body())
                             Text("\(Int(situation.bpmRange.lowerBound))-\(Int(situation.bpmRange.upperBound)) BPM")
-                                .font(EchoelTypography.caption())
+                                .font(EchoelBrandFont.caption())
                                 .foregroundColor(EchoelBrand.textTertiary)
                         }
                         Spacer()

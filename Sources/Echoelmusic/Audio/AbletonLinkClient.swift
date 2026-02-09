@@ -686,7 +686,7 @@ public struct AbletonLinkView: View {
         VStack(spacing: EchoelSpacing.md) {
             // Enable Toggle
             Toggle("Ableton Link", isOn: $client.isEnabled)
-                .font(EchoelTypography.body())
+                .font(EchoelBrandFont.body())
                 .toggleStyle(SwitchToggleStyle(tint: EchoelBrand.primary))
 
             if client.isEnabled {
@@ -697,13 +697,13 @@ public struct AbletonLinkView: View {
                         .frame(width: 8, height: 8)
 
                     Text(client.isConnected ? "Connected" : "Searching...")
-                        .font(EchoelTypography.caption())
+                        .font(EchoelBrandFont.caption())
                         .foregroundColor(EchoelBrand.textSecondary)
 
                     Spacer()
 
                     Text("\(client.peers.count) peer\(client.peers.count == 1 ? "" : "s")")
-                        .font(EchoelTypography.caption())
+                        .font(EchoelBrandFont.caption())
                         .foregroundColor(EchoelBrand.textTertiary)
                 }
 
@@ -711,11 +711,11 @@ public struct AbletonLinkView: View {
                 HStack {
                     VStack(alignment: .leading) {
                         Text("TEMPO")
-                            .font(EchoelTypography.label())
+                            .font(EchoelBrandFont.label())
                             .foregroundColor(EchoelBrand.textTertiary)
 
                         Text(String(format: "%.1f", client.sessionState.tempo))
-                            .font(EchoelTypography.data())
+                            .font(EchoelBrandFont.data())
                             .foregroundColor(EchoelBrand.primary)
                     }
 
@@ -735,7 +735,7 @@ public struct AbletonLinkView: View {
 
                 // Start/Stop Sync Toggle
                 Toggle("Start/Stop Sync", isOn: $client.startStopSyncEnabled)
-                    .font(EchoelTypography.caption())
+                    .font(EchoelBrandFont.caption())
                     .toggleStyle(SwitchToggleStyle(tint: EchoelBrand.accent))
             }
         }

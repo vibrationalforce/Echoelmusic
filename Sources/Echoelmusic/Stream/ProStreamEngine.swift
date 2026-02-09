@@ -142,7 +142,7 @@ public enum FilterType: Sendable {
 // MARK: - Source Filter
 
 /// A named, toggleable filter instance attached to a source
-public struct SourceFilter: Identifiable, Sendable {
+public struct StreamSourceFilter: Identifiable, Sendable {
     public let id: UUID
     public var name: String
     public var isEnabled: Bool
@@ -177,7 +177,7 @@ public struct SceneAudioMix: Sendable {
 // MARK: - Transition Type
 
 /// The visual transition used when switching between scenes
-public enum TransitionType: Sendable {
+public enum StreamTransitionType: Sendable {
     case cut
     case fade
     case swipe(direction: SwipeDirection)
@@ -199,13 +199,13 @@ public enum TransitionType: Sendable {
 // MARK: - Scene Transition
 
 /// A transition configuration with type, duration, and audio crossfade
-public struct SceneTransition: Sendable {
-    public var type: TransitionType
+public struct StreamSceneTransition: Sendable {
+    public var type: StreamTransitionType
     public var duration: TimeInterval
     public var audioFade: Bool
 
     public init(
-        type: TransitionType = .fade,
+        type: StreamTransitionType = .fade,
         duration: TimeInterval = 0.3,
         audioFade: Bool = true
     ) {
@@ -227,7 +227,7 @@ public struct StreamSource: Identifiable, Sendable {
     public var isVisible: Bool
     public var isLocked: Bool
     public var blendMode: SourceBlendMode
-    public var filters: [SourceFilter]
+    public var filters: [StreamSourceFilter]
     public var groupID: UUID?
 
     public init(
@@ -239,7 +239,7 @@ public struct StreamSource: Identifiable, Sendable {
         isVisible: Bool = true,
         isLocked: Bool = false,
         blendMode: SourceBlendMode = .normal,
-        filters: [SourceFilter] = [],
+        filters: [StreamSourceFilter] = [],
         groupID: UUID? = nil
     ) {
         self.id = id
@@ -258,14 +258,14 @@ public struct StreamSource: Identifiable, Sendable {
 // MARK: - Stream Scene
 
 /// An OBS-style scene containing an ordered list of sources (bottom to top)
-public struct StreamScene: Identifiable, Sendable {
+public struct ProStreamScene: Identifiable, Sendable {
     public let id: UUID
     public var name: String
     public var color: SceneColor
     public var sources: [StreamSource]
     public var isActive: Bool
     public var isPreview: Bool
-    public var transition: SceneTransition
+    public var transition: StreamSceneTransition
     public var audioMix: SceneAudioMix
 
     public init(
@@ -275,7 +275,7 @@ public struct StreamScene: Identifiable, Sendable {
         sources: [StreamSource] = [],
         isActive: Bool = false,
         isPreview: Bool = false,
-        transition: SceneTransition = SceneTransition(),
+        transition: StreamSceneTransition = StreamSceneTransition(),
         audioMix: SceneAudioMix = SceneAudioMix()
     ) {
         self.id = id
@@ -865,7 +865,7 @@ public struct StreamHotkey: Identifiable, Sendable {
 // MARK: - Monitor Mode
 
 /// Audio monitoring mode per mixer channel
-public enum MonitorMode: String, CaseIterable, Sendable {
+public enum StreamMonitorMode: String, CaseIterable, Sendable {
     case off = "Off"
     case monitorOnly = "Monitor Only"
     case monitorAndOutput = "Monitor and Output"
@@ -880,8 +880,8 @@ public struct AudioMixerChannel: Identifiable, Sendable {
     public var sourceID: UUID
     public var volume: Float
     public var mute: Bool
-    public var monitorMode: MonitorMode
-    public var filters: [SourceFilter]
+    public var monitorMode: StreamMonitorMode
+    public var filters: [StreamSourceFilter]
 
     public init(
         id: UUID = UUID(),
@@ -889,8 +889,8 @@ public struct AudioMixerChannel: Identifiable, Sendable {
         sourceID: UUID,
         volume: Float = 1.0,
         mute: Bool = false,
-        monitorMode: MonitorMode = .off,
-        filters: [SourceFilter] = []
+        monitorMode: StreamMonitorMode = .off,
+        filters: [StreamSourceFilter] = []
     ) {
         self.id = id
         self.name = name
@@ -908,12 +908,12 @@ public struct AudioMixerChannel: Identifiable, Sendable {
 public struct StreamAudioMixer: Sendable {
     public var channels: [AudioMixerChannel]
     public var monitorVolume: Float
-    public var audioFilters: [SourceFilter]
+    public var audioFilters: [StreamSourceFilter]
 
     public init(
         channels: [AudioMixerChannel] = [],
         monitorVolume: Float = 1.0,
-        audioFilters: [SourceFilter] = []
+        audioFilters: [StreamSourceFilter] = []
     ) {
         self.channels = channels
         self.monitorVolume = monitorVolume
@@ -1009,9 +1009,9 @@ public final class ProStreamEngine: ObservableObject {
 
     // MARK: - Published Properties
 
-    @Published public var scenes: [StreamScene] = []
-    @Published public var programScene: StreamScene?
-    @Published public var previewScene: StreamScene?
+    @Published public var scenes: [ProStreamScene] = []
+    @Published public var programScene: ProStreamScene?
+    @Published public var previewScene: ProStreamScene?
     @Published public var outputs: [StreamOutput] = []
     @Published public var isLive: Bool = false
     @Published public var isRecording: Bool = false
@@ -1022,7 +1022,7 @@ public final class ProStreamEngine: ObservableObject {
 
     public var replayBuffer: ReplayBuffer = ReplayBuffer()
     public var hotkeys: [StreamHotkey] = []
-    public var globalTransition: SceneTransition = SceneTransition(type: .fade, duration: 0.3, audioFade: true)
+    public var globalTransition: StreamSceneTransition = StreamSceneTransition(type: .fade, duration: 0.3, audioFade: true)
     public var audioMixer: StreamAudioMixer = StreamAudioMixer()
     public var multiStreamConfig: MultiStreamConfig = MultiStreamConfig()
 
@@ -1047,8 +1047,8 @@ public final class ProStreamEngine: ObservableObject {
 
     /// Create a new scene and add it to the scene list
     @discardableResult
-    public func addScene(name: String, color: SceneColor = .blue) -> StreamScene {
-        let scene = StreamScene(name: name, color: color)
+    public func addScene(name: String, color: SceneColor = .blue) -> ProStreamScene {
+        let scene = ProStreamScene(name: name, color: color)
         scenes.append(scene)
         log.log(level: .info, category: .streaming, message: "Scene added: \(name)")
 
@@ -1076,7 +1076,7 @@ public final class ProStreamEngine: ObservableObject {
     }
 
     /// Switch the live (program) output to a scene using the global transition
-    public func switchScene(_ scene: StreamScene) {
+    public func switchScene(_ scene: ProStreamScene) {
         switchScene(scene, transition: globalTransition)
     }
 
@@ -1088,7 +1088,7 @@ public final class ProStreamEngine: ObservableObject {
     }
 
     /// Switch the live (program) output to a scene with a specific transition
-    public func switchScene(_ scene: StreamScene, transition: SceneTransition) {
+    public func switchScene(_ scene: ProStreamScene, transition: StreamSceneTransition) {
         let previousID = programScene?.id
 
         // Deactivate old program scene
@@ -1111,7 +1111,7 @@ public final class ProStreamEngine: ObservableObject {
     }
 
     /// Set a scene as the studio mode preview
-    public func setPreviewScene(_ scene: StreamScene) {
+    public func setPreviewScene(_ scene: ProStreamScene) {
         // Deactivate old preview
         if let prevID = previewScene?.id, let index = scenes.firstIndex(where: { $0.id == prevID }) {
             scenes[index].isPreview = false
@@ -1137,9 +1137,9 @@ public final class ProStreamEngine: ObservableObject {
     }
 
     /// Studio mode: quick transition with a specific type (bypasses scene transition setting)
-    public func quickTransition(type: TransitionType) {
+    public func quickTransition(type: StreamTransitionType) {
         guard studioMode, let preview = previewScene else { return }
-        let transition = SceneTransition(type: type, duration: 0.3, audioFade: true)
+        let transition = StreamSceneTransition(type: type, duration: 0.3, audioFade: true)
         switchScene(preview, transition: transition)
         previewScene = nil
     }
@@ -1196,7 +1196,7 @@ public final class ProStreamEngine: ObservableObject {
 
     /// Add a filter to a source
     @discardableResult
-    public func addFilter(to sceneID: UUID, sourceID: UUID, filter: SourceFilter) -> Bool {
+    public func addFilter(to sceneID: UUID, sourceID: UUID, filter: StreamSourceFilter) -> Bool {
         guard let sceneIndex = scenes.firstIndex(where: { $0.id == sceneID }),
               let sourceIndex = scenes[sceneIndex].sources.firstIndex(where: { $0.id == sourceID }) else {
             return false

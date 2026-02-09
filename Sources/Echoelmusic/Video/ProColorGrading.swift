@@ -132,10 +132,10 @@ public enum TransitionEasing: String, CaseIterable, Codable, Sendable {
     }
 }
 
-// MARK: - TransitionType
+// MARK: - GradeTransitionType
 
 /// Professional video transition types.
-public enum TransitionType: String, CaseIterable, Codable, Sendable {
+public enum GradeTransitionType: String, CaseIterable, Codable, Sendable {
     case cut
     case crossDissolve
     case dipToBlack
@@ -208,13 +208,13 @@ public enum TransitionType: String, CaseIterable, Codable, Sendable {
 
 /// A fully configured professional transition instance.
 public struct ProTransition: Codable, Equatable, Sendable {
-    public var type: TransitionType
+    public var type: GradeTransitionType
     public var duration: TimeInterval
     public var easing: TransitionEasing
     public var parameters: [String: Float]
 
     public init(
-        type: TransitionType = .crossDissolve,
+        type: GradeTransitionType = .crossDissolve,
         duration: TimeInterval? = nil,
         easing: TransitionEasing = .easeInOut,
         parameters: [String: Float] = [:]

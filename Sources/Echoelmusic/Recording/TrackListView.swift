@@ -330,6 +330,11 @@ extension Track.TrackType {
         case .binaural: return "headphones"
         case .spatial: return "airpodspro"
         case .master: return "slider.horizontal.3"
+        case .instrument: return "pianokeys"
+        case .aux: return "arrow.triangle.branch"
+        case .bus: return "arrow.triangle.merge"
+        case .send: return "arrow.up.right"
+        case .midi: return "pianokeys.inverse"
         }
     }
 
@@ -340,6 +345,11 @@ extension Track.TrackType {
         case .binaural: return .purple
         case .spatial: return .blue
         case .master: return .orange
+        case .instrument: return .pink
+        case .aux: return .yellow
+        case .bus: return .teal
+        case .send: return .mint
+        case .midi: return .indigo
         }
     }
 }

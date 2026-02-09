@@ -455,7 +455,7 @@ public struct MonetizationImplementationStatus: Sendable {
 // MARK: - Apple App Store Compliance
 
 /// App Store monetization compliance (April 28, 2026 deadline)
-public struct AppStoreCompliance: Sendable {
+public struct AppStoreMonetizationCompliance: Sendable {
 
     /// Required for IAP
     public static let requirements = [
