@@ -643,7 +643,7 @@ struct EffectsBrowserSheet: View {
             EffectInfo(name: "Tube Saturation", icon: "flame.fill", category: "Dist"),
             EffectInfo(name: "Tape Warmth", icon: "sparkle", category: "Dist"),
             EffectInfo(name: "Bit Crusher", icon: "square.stack.3d.up", category: "Dist"),
-            EffectInfo(name: "Decapitator", icon: "bolt.fill", category: "Dist")
+            EffectInfo(name: "ThePunisher", icon: "bolt.fill", category: "Dist")
         ]),
         ("EchoelCore (AI)", "brain.head.profile", [
             EffectInfo(name: "Bio Modulator", icon: "heart.fill", category: "AI"),
@@ -651,13 +651,13 @@ struct EffectsBrowserSheet: View {
             EffectInfo(name: "Smart EQ", icon: "sparkles", category: "AI"),
             EffectInfo(name: "Coherence FX", icon: "waveform.path.ecg", category: "AI")
         ]),
-        ("Analog Console", "dial.high", [
-            EffectInfo(name: "SSL 4000G", icon: "dial.high", category: "Console"),
-            EffectInfo(name: "Neve 1073", icon: "dial.medium", category: "Console"),
-            EffectInfo(name: "API 2500", icon: "dial.low", category: "Console"),
-            EffectInfo(name: "Pultec EQ", icon: "slider.horizontal.3", category: "Console"),
-            EffectInfo(name: "LA-2A", icon: "gauge", category: "Console"),
-            EffectInfo(name: "1176", icon: "speedometer", category: "Console")
+        ("EchoelWarmth", "dial.high", [
+            EffectInfo(name: "Console Glue", icon: "dial.high", category: "Console"),
+            EffectInfo(name: "Silk", icon: "dial.medium", category: "Console"),
+            EffectInfo(name: "Thrust", icon: "dial.low", category: "Console"),
+            EffectInfo(name: "Air", icon: "slider.horizontal.3", category: "Console"),
+            EffectInfo(name: "Opto", icon: "gauge", category: "Console"),
+            EffectInfo(name: "Bite", icon: "speedometer", category: "Console")
         ])
     ]
 

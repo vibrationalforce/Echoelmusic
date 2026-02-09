@@ -47,14 +47,14 @@ public enum EchoelWarmth {
 
         /// Which legend are we channeling today?
         public enum Legend: String, CaseIterable {
-            case ssl = "SSL Glue"           // 🇬🇧 Solid State Logic
-            case api = "API Punch"          // 🇺🇸 API 2500
-            case neve = "Neve Magic"        // 🇬🇧 Rupert's Secret Sauce
-            case pultec = "Pultec Silk"     // 🇺🇸 The Boost/Cut Trick
-            case fairchild = "Fairchild Dream" // 🇺🇸 Variable-Mu Heaven
-            case la2a = "LA-2A Love"        // 🇺🇸 Optical Smoothness
-            case eleven76 = "1176 Bite"     // 🇺🇸 FET Aggression
-            case manley = "Manley Velvet"   // 🇺🇸 Tube Mastering
+            case ssl = "Console Glue"       // Punchy bus compression
+            case api = "Thrust"             // Aggressive punch
+            case neve = "Silk"              // Warm transformer magic
+            case pultec = "Air"             // The boost/cut trick
+            case fairchild = "Dream"        // Variable-mu smoothness
+            case la2a = "Opto"              // Optical warmth
+            case eleven76 = "Bite"          // FET aggression
+            case manley = "Velvet"          // Tube mastering
 
             public var emoji: String {
                 switch self {
