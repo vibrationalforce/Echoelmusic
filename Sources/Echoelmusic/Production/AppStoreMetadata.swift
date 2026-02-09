@@ -229,13 +229,13 @@ public struct LocalizedMetadata {
     public static let english = LocalizedMetadata(
         locale: "en-US",
         name: "Echoelmusic",
-        subtitle: "Find your Sound · Feel your Soul",
+        subtitle: "Create from Within",
         description: """
-Find your Sound. Feel your Soul. Force your Spirit.
+Create from Within.
 
-Create immersive sound, music, video, visuals & light via bio-reactive tools. Transform your heartbeat, breath, and consciousness into stunning spatial audio and immersive visuals.
+Turn your heartbeat, breath, and body into music, film, visuals, and light. Echoelmusic is the world's first bio-reactive creative platform — a performance tool where your biometric signals drive spatial audio, real-time visuals, cinematic scoring, and DMX lighting simultaneously.
 
-Echoelmusic is the world's first bio-reactive audio-visual platform that turns your biometric signals into art. Experience music creation through your body's natural rhythms, powered by cutting-edge AI and quantum-inspired processing.
+Whether you're a musician, filmmaker, VJ, or live performer — create directly from your body's own rhythms, powered by cutting-edge AI and quantum-inspired processing.
 
 ✨ KEY FEATURES
 
@@ -331,19 +331,20 @@ HARDWARE ECOSYSTEM
 
 🎵 PERFECT FOR
 • Musicians & producers
-• Meditation practitioners
+• Filmmakers & composers
 • VJs & visual artists
+• Live performers & DJs
+• Meditation practitioners
 • Researchers & educators
 • Wellness coaches
-• Live performers
 • Content creators
 
-Experience the future of bio-reactive creativity. Download Echoelmusic today and turn your heartbeat into a symphony.
+Create from Within. Download Echoelmusic today and turn your body into a creative instrument for music, film, visuals, and light.
 
 HEALTH DISCLAIMER: Echoelmusic is designed for creative expression, relaxation, and general wellness. It is NOT a medical device and does not diagnose, treat, cure, or prevent any disease. Biometric readings are for informational and creative purposes only. Consult a healthcare professional for medical advice.
 """,
         keywords: "biofeedback,HRV,spatial audio,meditation,quantum,music creation,visual art,wellness,binaural,coherence",
-        promotionalText: "Turn your heartbeat into a symphony. Bio-reactive audio meets quantum visuals. Experience the future of creative wellness.",
+        promotionalText: "Create from Within. Your heartbeat drives the music, your breath shapes the visuals, your body controls the light. Bio-reactive performance for music, film & beyond.",
         whatsNew: """
 🎬 PHASE 10000 ULTIMATE UPDATE
 
@@ -392,13 +393,13 @@ Ready for App Store & Play Store deployment!
     public static let german = LocalizedMetadata(
         locale: "de-DE",
         name: "Echoelmusic",
-        subtitle: "Finde deinen Klang · Fühle deine Seele",
+        subtitle: "Erschaffe aus dir heraus",
         description: """
-Finde deinen Klang. Fühle deine Seele. Entfache deinen Geist.
+Erschaffe aus dir heraus.
 
-Erschaffe immersive Klänge, Musik, Video, Visuals & Licht mit bio-reaktiven Tools. Verwandeln Sie Ihren Herzschlag, Atem und Bewusstsein in atemberaubende räumliche Klänge und immersive Visuals.
+Verwandle deinen Herzschlag, Atem und Körper in Musik, Film, Visuals und Licht. Echoelmusic ist die weltweit erste bio-reaktive Kreativ-Plattform — ein Performance-Tool, bei dem deine biometrischen Signale gleichzeitig Spatial Audio, Echtzeit-Visuals, filmische Kompositionen und DMX-Beleuchtung steuern.
 
-Echoelmusic ist die weltweit erste bio-reaktive Audio-Visual-Plattform, die Ihre biometrischen Signale in Kunst verwandelt. Erleben Sie Musikkreation durch die natürlichen Rhythmen Ihres Körpers, angetrieben von modernster KI und quanten-inspirierter Verarbeitung.
+Ob Musiker, Filmemacher, VJ oder Live-Performer — erschaffe direkt aus den Rhythmen deines eigenen Körpers, angetrieben von modernster KI und quanten-inspirierter Verarbeitung.
 
 ✨ HAUPTFUNKTIONEN
 
@@ -439,7 +440,7 @@ BARRIEREFREIHEIT (WCAG AAA)
 GESUNDHEITSHINWEIS: Echoelmusic ist KEIN medizinisches Gerät. Nur für kreative und Wellness-Zwecke.
 """,
         keywords: "Biofeedback,HRV,Meditation,Musik,Wellness,Quantenphysik,Raumklang,Kohärenz,Achtsamkeit,Kreativ",
-        promotionalText: "Verwandeln Sie Ihren Herzschlag in eine Symphonie. Bio-reaktive Kreativität trifft Quantenvisualisierung.",
+        promotionalText: "Erschaffe aus dir heraus. Dein Herzschlag treibt die Musik, dein Atem formt die Visuals, dein Körper steuert das Licht. Bio-reaktive Performance für Musik, Film & mehr.",
         whatsNew: "🎬 NEU: Orchestrales Scoring, professionelles Streaming, erweiterte Hardware-Integration, Enterprise-Sicherheit"
     )
 
@@ -448,7 +449,7 @@ GESUNDHEITSHINWEIS: Echoelmusic ist KEIN medizinisches Gerät. Nur für kreative
     public static let japanese = LocalizedMetadata(
         locale: "ja-JP",
         name: "Echoelmusic",
-        subtitle: "バイオリアクティブ音響映像",
+        subtitle: "内なるものから創造する",
         description: """
 心拍、呼吸、意識を驚異的な空間オーディオとイマーシブビジュアルに変換します。
 
@@ -502,7 +503,7 @@ AIクリエイティブスタジオ
     public static let spanish = LocalizedMetadata(
         locale: "es-ES",
         name: "Echoelmusic",
-        subtitle: "Audio y Visuales Bio-Reactivos",
+        subtitle: "Crea desde tu Interior",
         description: """
 Transforma tu ritmo cardíaco, respiración y conciencia en impresionante audio espacial y visuales inmersivos.
 
@@ -556,7 +557,7 @@ AVISO DE SALUD: Echoelmusic NO es un dispositivo médico. Solo para uso creativo
     public static let french = LocalizedMetadata(
         locale: "fr-FR",
         name: "Echoelmusic",
-        subtitle: "Audio et Visuels Bio-Réactifs",
+        subtitle: "Créez de l'Intérieur",
         description: """
 Transformez votre rythme cardiaque, votre respiration et votre conscience en audio spatial époustouflant et visuels immersifs.
 
@@ -610,7 +611,7 @@ AVERTISSEMENT SANTÉ: Echoelmusic N'EST PAS un dispositif médical. Usage créat
     public static let chineseSimplified = LocalizedMetadata(
         locale: "zh-Hans",
         name: "Echoelmusic",
-        subtitle: "生物反应式音频与视觉",
+        subtitle: "从内心创造",
         description: """
 将您的心跳、呼吸和意识转化为令人惊叹的空间音频和沉浸式视觉效果。
 
@@ -664,7 +665,7 @@ AI 创意工作室
     public static let korean = LocalizedMetadata(
         locale: "ko-KR",
         name: "Echoelmusic",
-        subtitle: "생체 반응형 오디오 및 비주얼",
+        subtitle: "내면에서 창조하다",
         description: """
 심박, 호흡, 의식을 놀라운 공간 오디오와 몰입형 비주얼로 변환하세요.
 
@@ -718,7 +719,7 @@ AI 크리에이티브 스튜디오
     public static let portugueseBrazil = LocalizedMetadata(
         locale: "pt-BR",
         name: "Echoelmusic",
-        subtitle: "Áudio e Visuais Bio-Reativos",
+        subtitle: "Crie de Dentro",
         description: """
 Transforme seu batimento cardíaco, respiração e consciência em áudio espacial deslumbrante e visuais imersivos.
 
@@ -772,7 +773,7 @@ AVISO DE SAÚDE: Echoelmusic NÃO é um dispositivo médico. Apenas para uso cri
     public static let italian = LocalizedMetadata(
         locale: "it-IT",
         name: "Echoelmusic",
-        subtitle: "Audio e Visual Bio-Reattivi",
+        subtitle: "Crea dall'Interno",
         description: """
 Trasforma il tuo battito cardiaco, respiro e coscienza in straordinario audio spaziale e visual immersivi.
 
@@ -826,7 +827,7 @@ AVVISO SANITARIO: Echoelmusic NON è un dispositivo medico. Solo per uso creativ
     public static let russian = LocalizedMetadata(
         locale: "ru-RU",
         name: "Echoelmusic",
-        subtitle: "Биореактивное аудио и визуалы",
+        subtitle: "Творите изнутри",
         description: """
 Превратите свое сердцебиение, дыхание и сознание в потрясающее пространственное аудио и иммерсивные визуальные эффекты.
 
@@ -880,7 +881,7 @@ Echoelmusic — первая в мире биореактивная аудиов
     public static let arabic = LocalizedMetadata(
         locale: "ar-SA",
         name: "Echoelmusic",
-        subtitle: "صوت ومرئيات تفاعلية حيوياً",
+        subtitle: "ابدع من داخلك",
         description: """
 حوّل نبضات قلبك وتنفسك ووعيك إلى صوت مكاني مذهل ومرئيات غامرة.
 
@@ -934,7 +935,7 @@ Echoelmusic هي أول منصة صوتية-مرئية تفاعلية حيويا
     public static let hindi = LocalizedMetadata(
         locale: "hi-IN",
         name: "Echoelmusic",
-        subtitle: "जैव-प्रतिक्रियात्मक ऑडियो और विजुअल",
+        subtitle: "अंतर से रचना करें",
         description: """
 अपने दिल की धड़कन, सांस और चेतना को शानदार स्थानिक ऑडियो और इमर्सिव विजुअल में बदलें।
 
