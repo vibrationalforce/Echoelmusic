@@ -654,7 +654,8 @@ public class ILDALaserController: ObservableObject {
     public init() {}
 
     deinit {
-        disconnect()
+        // deinit is nonisolated, so directly cancel the connection
+        connection?.cancel()
     }
 
     // MARK: - Connection

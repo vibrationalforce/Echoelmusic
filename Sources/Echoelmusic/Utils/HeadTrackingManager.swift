@@ -113,10 +113,7 @@ public class HeadTrackingManager: ObservableObject {
             return
         }
 
-        // Configure motion manager
-        motionManager.deviceMotionUpdateInterval = 1.0 / updateFrequency
-
-        // Start receiving motion updates
+        // Start receiving motion updates (CMHeadphoneMotionManager uses system update rate)
         motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self = self else { return }
 
