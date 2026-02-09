@@ -24,25 +24,25 @@ class AnalogConsole {
 
     /// Available analog hardware styles
     enum HardwareStyle: String, CaseIterable {
-        case ssl = "Console Glue"
-        case api = "Thrust"
-        case neve = "Silk"
-        case pultec = "Air"
-        case fairchild = "Dream"
-        case la2a = "Opto"
-        case urei1176 = "Bite"
-        case manley = "Velvet"
+        case ssl = "EchoelGlue"
+        case api = "EchoelThrust"
+        case neve = "EchoelSilk"
+        case pultec = "EchoelAir"
+        case fairchild = "EchoelDream"
+        case la2a = "EchoelOpto"
+        case urei1176 = "EchoelBite"
+        case manley = "EchoelVelvet"
 
         var fullName: String {
             switch self {
-            case .ssl: return "EchoelWarmth Console Glue"
-            case .api: return "EchoelWarmth Thrust"
-            case .neve: return "EchoelWarmth Silk"
-            case .pultec: return "EchoelWarmth Air"
-            case .fairchild: return "EchoelWarmth Dream"
-            case .la2a: return "EchoelWarmth Opto"
-            case .urei1176: return "EchoelWarmth Bite"
-            case .manley: return "EchoelWarmth Velvet"
+            case .ssl: return "EchoelGlue"
+            case .api: return "EchoelThrust"
+            case .neve: return "EchoelSilk"
+            case .pultec: return "EchoelAir"
+            case .fairchild: return "EchoelDream"
+            case .la2a: return "EchoelOpto"
+            case .urei1176: return "EchoelBite"
+            case .manley: return "EchoelVelvet"
             }
         }
 

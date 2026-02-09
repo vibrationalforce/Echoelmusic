@@ -47,14 +47,14 @@ public enum EchoelWarmth {
 
         /// Which legend are we channeling today?
         public enum Legend: String, CaseIterable {
-            case ssl = "Console Glue"       // Punchy bus compression
-            case api = "Thrust"             // Aggressive punch
-            case neve = "Silk"              // Warm transformer magic
-            case pultec = "Air"             // The boost/cut trick
-            case fairchild = "Dream"        // Variable-mu smoothness
-            case la2a = "Opto"              // Optical warmth
-            case eleven76 = "Bite"          // FET aggression
-            case manley = "Velvet"          // Tube mastering
+            case ssl = "EchoelGlue"         // Punchy bus compression
+            case api = "EchoelThrust"       // Aggressive punch
+            case neve = "EchoelSilk"        // Warm transformer magic
+            case pultec = "EchoelAir"       // The boost/cut trick
+            case fairchild = "EchoelDream"  // Variable-mu smoothness
+            case la2a = "EchoelOpto"        // Optical warmth
+            case eleven76 = "EchoelBite"    // FET aggression
+            case manley = "EchoelVelvet"    // Tube mastering
 
             public var emoji: String {
                 switch self {
@@ -443,9 +443,9 @@ public enum EchoelVibe {
         }
     }
 
-    /// The Punisher - Saturation that goes to 11
+    /// EchoelPunish - Saturation that goes to 11
     @MainActor
-    public class ThePunisher {
+    public class EchoelPunish {
 
         public var drive: Float = 50.0      // How much pain
         public var flavor: SaturationFlavor = .warm
@@ -502,7 +502,7 @@ public enum EchoelVibe {
         }
     }
 
-    /// Echo style for The Time Machine
+    /// Echo style for EchoelTime
     public enum EchoStyle: String, CaseIterable {
         case digital = "Crystal Clear"      // 💎 Digital
         case tape = "Grandpa's Reel"        // 📼 Tape
@@ -521,9 +521,9 @@ public enum EchoelVibe {
         }
     }
 
-    /// The Time Machine - Delay with character
+    /// EchoelTime - Delay with character
     @MainActor
-    public class TheTimeMachine {
+    public class EchoelTime {
 
         public var time: Float = 500.0       // Delay time ms
         public var feedback: Float = 40.0    // Repeats
@@ -586,9 +586,9 @@ public enum EchoelVibe {
         }
     }
 
-    /// The Voice Changer - Formant & pitch fun
+    /// EchoelMorph - Formant & pitch fun
     @MainActor
-    public class TheVoiceChanger {
+    public class EchoelMorph {
 
         public var pitch: Float = 0.0        // Semitones
         public var formant: Float = 0.0      // -100 to +100
