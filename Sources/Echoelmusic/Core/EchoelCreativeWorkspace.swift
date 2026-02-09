@@ -117,6 +117,28 @@ public final class EchoelCreativeWorkspace: ObservableObject {
     /// Video AI Hub — already connected to UniversalCore
     private let videoAIHub = VideoAICreativeHub.shared
 
+    // MARK: - Pro Engines (Professional Producer Grade)
+
+    /// Pro Mix Engine — channel strips, sends, returns, buses, sidechain, automation
+    /// (Best of Ableton + Reaper + Pro Tools mixer)
+    public let proMixer: ProMixEngine
+
+    /// Pro Session Engine — clip launcher, patterns, scene launching, warping
+    /// (Best of Ableton Session View + FL Studio Channel Rack)
+    public let proSession: ProSessionEngine
+
+    /// Pro Color Grading — curves, wheels, LUTs, scopes, node-based grading
+    /// (Best of DaVinci Resolve color page)
+    public let proColor: ProColorGrading
+
+    /// Pro Cue System — cue lists, show files, DMX fixtures, timecode sync
+    /// (Best of Resolume Arena + grandMA lighting console)
+    public let proCue: ProCueSystem
+
+    /// Pro Stream Engine — scenes, sources, multi-stream, replay buffer
+    /// (Best of OBS Studio + Restream)
+    public let proStream: ProStreamEngine
+
     // MARK: - Private
 
     private var cancellables = Set<AnyCancellable>()
@@ -124,14 +146,21 @@ public final class EchoelCreativeWorkspace: ObservableObject {
     // MARK: - Initialization
 
     private init() {
-        // Initialize engines
+        // Initialize core engines
         self.bpmGrid = BPMGridEditEngine(bpm: 120, timeSignature: .fourFour)
         self.videoEditor = VideoEditingEngine()
         self.creativeStudio = CreativeStudioEngine()
         self.collaboration = WorldwideCollaborationHub()
 
+        // Initialize pro engines (professional producer grade)
+        self.proMixer = ProMixEngine.defaultSession()
+        self.proSession = ProSessionEngine.defaultSession()
+        self.proColor = ProColorGrading()
+        self.proCue = ProCueSystem()
+        self.proStream = ProStreamEngine.defaultSetup()
+
         setupBridges()
-        log.info("✅ EchoelCreativeWorkspace: All engines connected", category: .system)
+        log.info("EchoelCreativeWorkspace: All engines connected (core + pro)", category: .system)
     }
 
     // MARK: - Bridge Setup
@@ -141,6 +170,43 @@ public final class EchoelCreativeWorkspace: ObservableObject {
         bridgeBPMGridToUniversalCore()
         bridgeCollaborationToUniversalCore()
         bridgeBioToBPM()
+        bridgeProMixerToSession()
+        bridgeProCueToStream()
+        bridgeBPMToSessionEngine()
+    }
+
+    /// Bridge 5: Pro Mixer ↔ Session Engine
+    /// Session clip launches feed through the mixer routing
+    private func bridgeProMixerToSession() {
+        proSession.$globalBPM
+            .removeDuplicates()
+            .sink { [weak self] bpm in
+                self?.setGlobalBPM(bpm)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Bridge 6: Cue System → Stream Engine
+    /// Cue triggers can switch stream scenes (Resolume → OBS link)
+    private func bridgeProCueToStream() {
+        proCue.$activeScene
+            .compactMap { $0 }
+            .sink { [weak self] cueScene in
+                // When a cue activates a scene, the stream engine can match
+                self?.proStream.switchSceneByName(cueScene.name)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Bridge 7: BPM Grid → Session Engine
+    /// Global tempo syncs to session clip playback
+    private func bridgeBPMToSessionEngine() {
+        $globalBPM
+            .removeDuplicates()
+            .sink { [weak self] bpm in
+                self?.proSession.globalBPM = bpm
+            }
+            .store(in: &cancellables)
     }
 
     /// Bridge 1: BPM Grid ↔ Video Editor Timeline
