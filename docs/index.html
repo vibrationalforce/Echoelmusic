@@ -321,7 +321,7 @@
             0%, 100% { height: 16px; opacity: 0.3; }
             50% { height: var(--h, 50px); opacity: 1; }
         }
-        .fractal-canvas { width: 100%; height: 100%; display: block; border-radius: 16px; }
+        .quantum-canvas { width: 100%; height: 100%; display: block; border-radius: 16px; background: var(--bg); }
 
         /* ── BOTTOM CTA ── */
         .bottom-cta {
@@ -523,7 +523,7 @@
                     <p>30+ GPU-accelerated visual modes — particles, cymatics, mandalas, fractals, quantum fields, neural networks, nebulas, and more — all driven by your biometrics and audio. Control smart home lights, DMX/Art-Net fixtures, and ILDA laser systems directly from your body — from your living room to the stage. A 16-step visual sequencer syncs everything to the beat. Process and stream video in real time with an AI live production engine. Collaborate worldwide with up to 1000 participants. Step into 360&deg; immersive spaces on Vision Pro. Available on iPhone, iPad, Mac, Apple Watch, Apple TV, and Vision Pro. Android, Web PWA, Windows, and Linux may follow in the future.</p>
                 </div>
                 <div class="feature-visual" aria-hidden="true">
-                    <canvas class="fractal-canvas" id="fractalCanvas"></canvas>
+                    <canvas class="quantum-canvas" id="quantumCanvas"></canvas>
                 </div>
             </div>
 
@@ -596,56 +596,151 @@
             if (e.key === 'Escape' && burger.classList.contains('active')) toggleMenu();
         });
 
-        // Fractal canvas animation (Julia set)
-        var fc = document.getElementById('fractalCanvas');
-        if (fc) {
-            var fctx = fc.getContext('2d');
-            var fSize = 180;
-            fc.width = fSize; fc.height = fSize;
-            var fTime = 0, fRunning = false;
-            function drawFractal() {
-                if (!fRunning) return;
-                fTime += 0.004;
-                var cRe = -0.7 + 0.15 * Math.sin(fTime);
-                var cIm = 0.27015 + 0.1 * Math.cos(fTime * 0.7);
-                var img = fctx.createImageData(fSize, fSize);
-                var d = img.data;
-                for (var y = 0; y < fSize; y++) {
-                    for (var x = 0; x < fSize; x++) {
-                        var zr = (x - fSize/2) / (fSize/3);
-                        var zi = (y - fSize/2) / (fSize/3);
-                        var it = 0, max = 28;
-                        while (zr*zr + zi*zi < 4 && it < max) {
-                            var t = zr*zr - zi*zi + cRe;
-                            zi = 2*zr*zi + cIm; zr = t; it++;
+        // Quantum Visuals — particles, interference rings, entanglement
+        var qc = document.getElementById('quantumCanvas');
+        if (qc) {
+            var ctx = qc.getContext('2d');
+            var dpr = Math.min(window.devicePixelRatio || 1, 2);
+            var qRun = false, qT = 0, W = 0, H = 0;
+            var pts = [], NUM = 55;
+            var cols = [[255,20,148],[153,51,255],[0,255,255]];
+
+            function qResize() {
+                var r = qc.parentElement.getBoundingClientRect();
+                W = r.width; H = r.height;
+                qc.width = W * dpr; qc.height = H * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            function qInit() {
+                qResize();
+                pts = [];
+                for (var i = 0; i < NUM; i++) {
+                    pts.push({
+                        cx: 0.5 + (Math.random() - 0.5) * 0.3,
+                        cy: 0.5 + (Math.random() - 0.5) * 0.3,
+                        r: 0.08 + Math.random() * 0.34,
+                        a: Math.random() * Math.PI * 2,
+                        da: (0.3 + Math.random() * 0.8) * (Math.random() < 0.5 ? 1 : -1),
+                        sz: 1.2 + Math.random() * 2.2,
+                        ph: Math.random() * Math.PI * 2,
+                        col: cols[i % 3],
+                        op: 0.4 + Math.random() * 0.6,
+                        wb: 0.3 + Math.random() * 1.2,
+                        sx: 0, sy: 0
+                    });
+                }
+            }
+
+            function qDraw() {
+                if (!qRun) return;
+                qT += 0.01;
+                var cx = W * 0.5, cy = H * 0.5;
+                var mn = Math.min(W, H);
+
+                // Trail fade
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'rgba(5,5,16,0.14)';
+                ctx.fillRect(0, 0, W, H);
+
+                // Central coherence glow
+                var pulse = 0.7 + 0.3 * Math.sin(qT * 0.7);
+                var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, mn * 0.38 * pulse);
+                grd.addColorStop(0, 'rgba(153,51,255,0.07)');
+                grd.addColorStop(0.4, 'rgba(255,20,148,0.03)');
+                grd.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grd;
+                ctx.fillRect(0, 0, W, H);
+
+                // Wave function probability rings
+                ctx.globalCompositeOperation = 'lighter';
+                for (var r = 0; r < 5; r++) {
+                    var rr = (20 + r * mn * 0.065) * pulse + Math.sin(qT * 0.9 + r * 1.2) * 8;
+                    var al = (0.07 - r * 0.011) * (0.6 + 0.4 * Math.sin(qT + r * 0.8));
+                    if (al <= 0) continue;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+                    ctx.strokeStyle = r % 2 === 0
+                        ? 'rgba(0,255,255,' + al.toFixed(3) + ')'
+                        : 'rgba(153,51,255,' + al.toFixed(3) + ')';
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+
+                // Interference wave pattern (two sources)
+                var s1x = cx - mn * 0.15, s1y = cy;
+                var s2x = cx + mn * 0.15, s2y = cy;
+                for (var wr = 0; wr < 3; wr++) {
+                    var wrad = (qT * 25 + wr * 35) % (mn * 0.5);
+                    var wa = 0.04 * (1 - wrad / (mn * 0.5));
+                    if (wa <= 0) continue;
+                    ctx.beginPath();
+                    ctx.arc(s1x, s1y, wrad, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255,20,148,' + wa.toFixed(3) + ')';
+                    ctx.lineWidth = 0.6;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(s2x, s2y, wrad, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(0,255,255,' + wa.toFixed(3) + ')';
+                    ctx.stroke();
+                }
+
+                // Update and draw particles
+                for (var i = 0; i < pts.length; i++) {
+                    var p = pts[i];
+                    p.a += p.da * 0.008;
+                    var px = p.cx * W + Math.cos(p.a) * p.r * mn + Math.sin(qT * p.wb + p.ph) * 6;
+                    var py = p.cy * H + Math.sin(p.a) * p.r * mn + Math.cos(qT * p.wb + p.ph) * 6;
+                    var s = p.sz * (1 + 0.3 * Math.sin(qT * 2.2 + p.ph));
+
+                    // Glow
+                    var g = ctx.createRadialGradient(px, py, 0, px, py, s * 5);
+                    g.addColorStop(0, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.6).toFixed(2) + ')');
+                    g.addColorStop(0.4, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.15).toFixed(2) + ')');
+                    g.addColorStop(1, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',0)');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(px - s * 5, py - s * 5, s * 10, s * 10);
+
+                    // Core
+                    ctx.beginPath();
+                    ctx.arc(px, py, s * 0.5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,' + (p.op * 0.85).toFixed(2) + ')';
+                    ctx.fill();
+
+                    p.sx = px; p.sy = py;
+                }
+
+                // Entanglement connections
+                ctx.lineWidth = 0.4;
+                var maxD = mn * 0.18;
+                for (var i = 0; i < pts.length; i++) {
+                    for (var j = i + 1; j < pts.length; j++) {
+                        var dx = pts[i].sx - pts[j].sx;
+                        var dy = pts[i].sy - pts[j].sy;
+                        var d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < maxD) {
+                            var a = (1 - d / maxD) * 0.12;
+                            ctx.beginPath();
+                            ctx.moveTo(pts[i].sx, pts[i].sy);
+                            ctx.lineTo(pts[j].sx, pts[j].sy);
+                            var mc = pts[i].col[2] > 200 ? '0,255,255' : pts[i].col[0] > 200 ? '255,20,148' : '153,51,255';
+                            ctx.strokeStyle = 'rgba(' + mc + ',' + a.toFixed(3) + ')';
+                            ctx.stroke();
                         }
-                        var idx = (y * fSize + x) * 4;
-                        if (it === max) { d[idx]=5; d[idx+1]=5; d[idx+2]=16; }
-                        else {
-                            var n = it / max;
-                            if (n < 0.5) {
-                                var s = n*2;
-                                d[idx] = (255-102*s)|0;
-                                d[idx+1] = (20+31*s)|0;
-                                d[idx+2] = (148+107*s)|0;
-                            } else {
-                                var s = (n-0.5)*2;
-                                d[idx] = (153-153*s)|0;
-                                d[idx+1] = (51+204*s)|0;
-                                d[idx+2] = 255;
-                            }
-                        }
-                        d[idx+3] = 255;
                     }
                 }
-                fctx.putImageData(img, 0, 0);
-                setTimeout(function() { requestAnimationFrame(drawFractal); }, 60);
+
+                ctx.globalCompositeOperation = 'source-over';
+                requestAnimationFrame(qDraw);
             }
-            var fObs = new IntersectionObserver(function(e) {
-                fRunning = e[0].isIntersecting;
-                if (fRunning) drawFractal();
+
+            qInit();
+            var qObs = new IntersectionObserver(function(e) {
+                qRun = e[0].isIntersecting;
+                if (qRun) { qResize(); qDraw(); }
             }, { threshold: 0.1 });
-            fObs.observe(fc);
+            qObs.observe(qc);
+            window.addEventListener('resize', function() { if (qRun) qResize(); });
         }
     })();
     </script>
