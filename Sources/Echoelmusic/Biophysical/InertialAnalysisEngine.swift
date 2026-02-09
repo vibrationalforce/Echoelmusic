@@ -360,7 +360,8 @@ public final class InertialAnalysisEngine: ObservableObject {
     // MARK: - Cleanup
 
     deinit {
-        stopAnalysis()
+        // stopAnalysis() is @MainActor-isolated, cannot call from deinit
+        // Motion manager will stop when reference is released
         if let fftSetup = fftSetup {
             vDSP_DFT_DestroySetup(fftSetup)
         }
