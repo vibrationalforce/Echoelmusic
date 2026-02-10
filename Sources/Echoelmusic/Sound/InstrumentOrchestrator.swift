@@ -115,8 +115,8 @@ class InstrumentOrchestrator: ObservableObject {
             try engine.start()
             isPlaying = true
             log.audio("🎵 InstrumentOrchestrator: Audio engine started")
-        } catch {
-            log.audio("❌ InstrumentOrchestrator: Failed to start audio engine: \(error)", level: LogLevel.error)
+        } catch let engineError {
+            log.audio("❌ InstrumentOrchestrator: Failed to start audio engine: \(engineError)", level: .error)
         }
     }
 

@@ -982,11 +982,13 @@ struct VaporwavePrimaryButton: View {
             .scaleEffect(isHovered ? 1.02 : 1.0)
         }
         .buttonStyle(.plain)
+        #if !os(watchOS)
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
+        #endif
     }
 }
 
@@ -1032,11 +1034,13 @@ struct VaporwaveSecondaryButton: View {
             )
         }
         .buttonStyle(.plain)
+        #if !os(watchOS)
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
+        #endif
     }
 }
 

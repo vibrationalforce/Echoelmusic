@@ -345,6 +345,7 @@ targets:
           - "**/*.metal"
           - "AudioConstants.swift"
           - "EchoelCreativeWorkspace.swift"
+          - "UndoRedoManager.swift"
       - path: Sources/Echoelmusic/Biofeedback
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Accessibility
