@@ -257,6 +257,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
     /// Update Watch complication with latest data
     func updateComplication(heartRate: Double, coherence: Double) {
+        #if os(iOS)
         guard let session = session, session.isComplicationEnabled else { return }
 
         let userInfo: [String: Any] = [
@@ -269,6 +270,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
         session.transferCurrentComplicationUserInfo(userInfo)
         watchLog.info("⌚ Complication updated", category: .system)
+        #endif
     }
 
     // MARK: - Private Methods
@@ -366,7 +368,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
             } else {
                 watchLog.info("⌚ WCSession activated: \(activationState.rawValue)", category: .system)
                 isWatchReachable = session.isReachable
+                #if os(iOS)
                 isWatchAppInstalled = session.isWatchAppInstalled
+                #else
+                isWatchAppInstalled = true  // On watchOS, the watch app is always "installed"
+                #endif
                 syncStatus = .synced
             }
         }

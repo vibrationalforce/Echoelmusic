@@ -1080,11 +1080,13 @@ struct VaporwaveWorkspaceCard: View {
             .offset(y: isHovered ? -4 : 0)
         }
         .buttonStyle(.plain)
+        #if !os(watchOS)
         .onHover { hovering in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 isHovered = hovering
             }
         }
+        #endif
     }
 }
 
