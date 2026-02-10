@@ -8,7 +8,9 @@ import Foundation
 import Combine
 import CryptoKit
 import Security
+#if canImport(LocalAuthentication)
 import LocalAuthentication
+#endif
 
 // MARK: - Security Manager
 
@@ -161,10 +163,14 @@ public final class SecurityManager: ObservableObject {
     }
 
     private func checkSecureEnclaveAvailability() -> SecurityCheck {
+        #if canImport(LocalAuthentication)
         let context = LAContext()
         var error: NSError?
         let available = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
         return SecurityCheck(name: "SecureEnclave", passed: available || error?.code == LAError.biometryNotEnrolled.rawValue)
+        #else
+        return SecurityCheck(name: "SecureEnclave", passed: true)
+        #endif
     }
 
     public struct SecurityCheck: Sendable {
@@ -567,6 +573,7 @@ public final class BiometricAuthService: ObservableObject {
     }
 
     private func detectBiometricType() {
+        #if canImport(LocalAuthentication)
         let context = LAContext()
         var error: NSError?
 
@@ -585,10 +592,14 @@ public final class BiometricAuthService: ObservableObject {
         default:
             biometricType = .none
         }
+        #else
+        biometricType = .none
+        #endif
     }
 
     /// Authenticate user with biometrics
     public func authenticate(reason: String = "Authenticate to access Echoelmusic") async throws -> Bool {
+        #if canImport(LocalAuthentication)
         let context = LAContext()
         context.localizedFallbackTitle = "Use Passcode"
 
@@ -610,6 +621,10 @@ public final class BiometricAuthService: ObservableObject {
             isAuthenticated = false
             throw SecurityError.biometricFailed(error.localizedDescription)
         }
+        #else
+        isAuthenticated = true
+        return true
+        #endif
     }
 
     /// Require authentication for sensitive operations

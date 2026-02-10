@@ -462,7 +462,7 @@ struct StatCard: View {
                 .font(.caption)
 
             Text(value)
-                .font(.system(.body, design: .rounded, weight: .semibold))
+                .font(.system(.body, design: .rounded))
 
             Text(unit)
                 .font(.caption2)

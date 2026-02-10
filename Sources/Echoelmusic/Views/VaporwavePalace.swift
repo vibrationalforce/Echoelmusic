@@ -448,8 +448,10 @@ struct VaporwavePalace: View {
         }
 
         // Haptic feedback
+        #if os(iOS)
         let impact = UIImpactFeedbackGenerator(style: isActive ? .heavy : .medium)
         impact.impactOccurred()
+        #endif
     }
 
     private func startAnimations() {

@@ -12,7 +12,9 @@
 
 import Foundation
 import Combine
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 #if canImport(WatchConnectivity)
 import WatchConnectivity
 #endif
@@ -145,7 +147,9 @@ public final class PhysicalAIEngine: NSObject, ObservableObject {
     private var sensorBuffer: [SensorReading] = []
     private let bufferSize = 50
 
+    #if canImport(CoreMotion)
     private var motionManager: CMMotionManager?
+    #endif
     private var sensorTimer: Timer?
     private var predictionTimer: Timer?
 

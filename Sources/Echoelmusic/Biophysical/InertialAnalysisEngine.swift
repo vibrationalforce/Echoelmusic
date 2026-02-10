@@ -12,9 +12,10 @@
 
 import Foundation
 import Combine
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 import Accelerate
-import Combine
 
 // MARK: - Inertial Configuration
 
@@ -109,7 +110,9 @@ public final class InertialAnalysisEngine: ObservableObject {
     // MARK: - Private Properties
 
     private var configuration: InertialConfiguration
+    #if canImport(CoreMotion)
     private let motionManager = CMMotionManager()
+    #endif
     private let analysisQueue = DispatchQueue(label: "com.echoelmusic.inertial.analysis", qos: .userInteractive)
 
     // Sample buffer for FFT
@@ -153,11 +156,16 @@ public final class InertialAnalysisEngine: ObservableObject {
 
     /// Check if accelerometer is available
     public var isAccelerometerAvailable: Bool {
-        motionManager.isAccelerometerAvailable
+        #if canImport(CoreMotion)
+        return motionManager.isAccelerometerAvailable
+        #else
+        return false
+        #endif
     }
 
     /// Start inertial analysis with specified sample rate
     public func startAnalysis(sampleRate: Double = 100.0) async throws {
+        #if canImport(CoreMotion)
         guard isAccelerometerAvailable else {
             throw BiophysicalError.sensorNotAvailable
         }
@@ -190,11 +198,14 @@ public final class InertialAnalysisEngine: ObservableObject {
         await MainActor.run {
             isAnalyzing = true
         }
+        #endif
     }
 
     /// Stop inertial analysis
     public func stopAnalysis() {
+        #if canImport(CoreMotion)
         motionManager.stopAccelerometerUpdates()
+        #endif
 
         Task { @MainActor in
             isAnalyzing = false

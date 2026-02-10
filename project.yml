@@ -347,6 +347,8 @@ targets:
           - "AudioConstants.swift"
           - "EchoelCreativeWorkspace.swift"
           - "UndoRedoManager.swift"
+          - "SPSCQueue.swift"
+          - "SelfHealingEngine.swift"
       - path: Sources/Echoelmusic/Biofeedback
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Accessibility

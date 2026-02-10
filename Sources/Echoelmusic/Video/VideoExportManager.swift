@@ -66,7 +66,11 @@ class VideoExportManager: ObservableObject {
             case .prores422:
                 return .proRes422
             case .prores4444:
+                #if os(visionOS)
+                return .proRes422 // proRes4444 unavailable on visionOS
+                #else
                 return .proRes4444
+                #endif
             case .spatial_video:
                 return .hevc // MV-HEVC
             case .dolby_vision:
@@ -572,7 +576,12 @@ class VideoExportManager: ObservableObject {
             let time = CMTime(seconds: Double(frameIndex) * frameInterval, preferredTimescale: 600)
 
             do {
+                #if os(visionOS)
+                // copyCGImage is unavailable on visionOS — use async image API
+                let (cgImage, _) = try await imageGenerator.image(at: time)
+                #else
                 let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+                #endif
 
                 // Create UIImage and save as PNG
                 let uiImage = UIImage(cgImage: cgImage)
@@ -654,7 +663,11 @@ class VideoExportManager: ObservableObject {
             let time = CMTime(seconds: Double(frameIndex) * frameInterval, preferredTimescale: 600)
 
             do {
+                #if os(visionOS)
+                let (cgImage, _) = try await imageGenerator.image(at: time)
+                #else
                 let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
+                #endif
                 CGImageDestinationAddImage(destination, cgImage, frameProperties as CFDictionary)
 
                 // Update progress
