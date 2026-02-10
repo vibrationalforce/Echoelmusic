@@ -1,7 +1,9 @@
 import Foundation
 import SwiftUI
 import Combine
+#if canImport(CoreHaptics)
 import CoreHaptics
+#endif
 
 // MARK: - Touch Instruments Hub
 /// Collection of professional touch interfaces for iOS/iPadOS

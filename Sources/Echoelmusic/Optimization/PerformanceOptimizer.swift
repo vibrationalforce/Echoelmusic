@@ -1,7 +1,9 @@
 import Foundation
 import SwiftUI
+#if canImport(Metal)
 import Metal
 import MetalPerformanceShaders
+#endif
 import Accelerate
 import Combine
 import os

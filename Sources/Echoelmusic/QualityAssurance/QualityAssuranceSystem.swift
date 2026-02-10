@@ -1,6 +1,8 @@
 import Foundation
+#if canImport(Metal)
 import Metal
 import MetalPerformanceShaders
+#endif
 import Accelerate
 import Combine
 

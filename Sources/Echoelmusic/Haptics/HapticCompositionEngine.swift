@@ -9,7 +9,9 @@
 
 import Foundation
 import Combine
+#if canImport(CoreHaptics)
 import CoreHaptics
+#endif
 
 // MARK: - Haptic Constants
 

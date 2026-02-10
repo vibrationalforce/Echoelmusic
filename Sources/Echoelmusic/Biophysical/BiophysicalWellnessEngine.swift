@@ -14,7 +14,9 @@
 import Foundation
 import Combine
 import CoreMotion
+#if canImport(CoreHaptics)
 import CoreHaptics
+#endif
 import AVFoundation
 
 // MARK: - Biophysical Wellness Disclaimer

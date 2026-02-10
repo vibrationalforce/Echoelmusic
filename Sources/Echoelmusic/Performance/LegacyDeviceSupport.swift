@@ -2,7 +2,9 @@ import Foundation
 #if canImport(UIKit)
 import UIKit
 #endif
+#if canImport(Metal)
 import Metal
+#endif
 import os.log
 
 /// Legacy Device Support & Adaptive Performance System

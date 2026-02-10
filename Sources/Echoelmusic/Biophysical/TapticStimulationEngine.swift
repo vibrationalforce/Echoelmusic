@@ -13,7 +13,9 @@
 
 import Foundation
 import Combine
+#if canImport(CoreHaptics)
 import CoreHaptics
+#endif
 import AVFoundation
 
 // MARK: - Haptic Pattern Type
