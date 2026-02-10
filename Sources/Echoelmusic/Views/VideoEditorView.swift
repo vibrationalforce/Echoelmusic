@@ -580,7 +580,7 @@ struct VideoEditorView: View {
 
             // Beat position display
             if showBPMGrid {
-                let position = workspace.bpmGrid.beatPosition(at: currentTime)
+                let position = workspace.bpmGrid.grid.beatPosition(at: currentTime)
                 HStack(spacing: 4) {
                     Text("Bar \(position.bar)")
                         .font(VaporwaveTypography.caption())

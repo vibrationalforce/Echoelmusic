@@ -589,7 +589,7 @@ extension Track {
         drums.trackColor = .red
 
         var bio = Track(name: "Bio-Reactive", type: .spatial)
-        bio.trackColor = .green
+        bio.trackColor = TrackColor.green
         bio.addSend(to: auxReverb.id, level: 0.4)
 
         var vocals = Track(name: "Vocals", type: .voice)
