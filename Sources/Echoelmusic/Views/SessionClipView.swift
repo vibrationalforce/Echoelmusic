@@ -27,13 +27,13 @@ private struct SessionClipContent: View {
 
             VStack(spacing: 0) {
                 // Header
-                headerView
+                makeHeaderView(session)
 
                 // Main Content
                 GeometryReader { geo in
                     HStack(spacing: 0) {
                         // Track Headers
-                        trackHeaderColumn
+                        makeTrackHeaderColumn(session)
 
                         // Clip Grid
                         ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -67,14 +67,21 @@ private struct SessionClipContent: View {
 
     // MARK: - Header
 
-    private var headerView: some View {
+    @ViewBuilder
+    private func makeHeaderView(_ vm: SessionClipViewModel) -> some View {
+        let trackCount = vm.tracks.count
+        let sceneCount = vm.scenes.count
+        let bpm = vm.bpm
+        let bioSync = vm.bioSyncEnabled
+        let coherence = vm.coherence
+        let coherenceColor = vm.coherenceColor
         HStack {
             VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
                 Text("SESSION")
                     .font(VaporwaveTypography.sectionTitle())
                     .foregroundColor(VaporwaveColors.textPrimary)
 
-                Text("\(session.tracks.count) Tracks • \(session.scenes.count) Scenes")
+                Text("\(trackCount) Tracks • \(sceneCount) Scenes")
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.neonCyan)
             }
@@ -86,7 +93,7 @@ private struct SessionClipContent: View {
                 Image(systemName: "metronome")
                     .foregroundColor(VaporwaveColors.neonPink)
 
-                Text(String(format: "%.1f", session.bpm))
+                Text(String(format: "%.1f", bpm))
                     .font(VaporwaveTypography.dataSmall())
                     .foregroundColor(VaporwaveColors.textPrimary)
 
@@ -99,31 +106,31 @@ private struct SessionClipContent: View {
             .glassCard()
 
             // Bio Sync
-            Button(action: { session.bioSyncEnabled.toggle() }) {
+            Button(action: { vm.bioSyncEnabled.toggle() }) {
                 HStack(spacing: VaporwaveSpacing.sm) {
                     Image(systemName: "heart.fill")
                     Text("Bio")
                 }
                 .font(VaporwaveTypography.caption())
-                .foregroundColor(session.bioSyncEnabled ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary)
+                .foregroundColor(bioSync ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary)
             }
             .padding(.horizontal, VaporwaveSpacing.md)
             .padding(.vertical, VaporwaveSpacing.sm)
-            .background(session.bioSyncEnabled ? VaporwaveColors.neonPink.opacity(0.2) : Color.clear)
+            .background(bioSync ? VaporwaveColors.neonPink.opacity(0.2) : Color.clear)
             .glassCard()
 
             // Coherence Display
-            if session.bioSyncEnabled {
+            if bioSync {
                 VStack(spacing: 2) {
-                    Text("\(Int(session.coherence * 100))")
+                    Text("\(Int(coherence * 100))")
                         .font(VaporwaveTypography.dataSmall())
-                        .foregroundColor(session.coherenceColor)
+                        .foregroundColor(coherenceColor)
 
                     Text("FLOW")
                         .font(VaporwaveTypography.label())
                         .foregroundColor(VaporwaveColors.textTertiary)
                 }
-                .neonGlow(color: session.coherenceColor, radius: 6)
+                .neonGlow(color: coherenceColor, radius: 6)
             }
         }
         .padding(VaporwaveSpacing.md)
@@ -131,10 +138,13 @@ private struct SessionClipContent: View {
 
     // MARK: - Track Header Column
 
-    private var trackHeaderColumn: some View {
+    @ViewBuilder
+    private func makeTrackHeaderColumn(_ vm: SessionClipViewModel) -> some View {
+        let tracks = vm.tracks
+        let trackCount = tracks.count
         VStack(spacing: 2) {
             // Add Track Button
-            Button(action: { session.addTrack() }) {
+            Button(action: { vm.addTrack() }) {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(VaporwaveColors.neonCyan)
             }
@@ -142,14 +152,14 @@ private struct SessionClipContent: View {
             .glassCard()
 
             // Track Headers
-            ForEach(Array(session.tracks.enumerated()), id: \.element.id) { index, track in
+            ForEach(0..<trackCount, id: \.self) { index in
                 TrackHeaderCell(
-                    track: track,
+                    track: tracks[index],
                     isSelected: selectedTrack == index,
                     onSelect: { selectedTrack = index },
-                    onMute: { session.toggleMute(index) },
-                    onSolo: { session.toggleSolo(index) },
-                    onArm: { session.toggleArm(index) },
+                    onMute: { vm.toggleMute(index) },
+                    onSolo: { vm.toggleSolo(index) },
+                    onArm: { vm.toggleArm(index) },
                     onInstrument: {
                         selectedTrack = index
                         showInstrumentBrowser = true
@@ -315,7 +325,7 @@ private struct SessionClipContent: View {
 // MARK: - Track Header Cell
 
 struct TrackHeaderCell: View {
-    let track: SessionTrack
+    let track: ClipViewTrack
     let isSelected: Bool
     let onSelect: () -> Void
     let onMute: () -> Void
@@ -401,7 +411,7 @@ struct TrackHeaderCell: View {
 // MARK: - Clip Slot Cell
 
 struct ClipSlotCell: View {
-    let clip: SessionClip?
+    let clip: ClipViewClip?
     let trackColor: Color
     let isPlaying: Bool
     let onTap: () -> Void
@@ -485,7 +495,7 @@ struct ClipWaveformPreview: View {
 // MARK: - Scene Launch Button
 
 struct SceneLaunchButton: View {
-    let scene: SessionScene
+    let scene: ClipViewScene
     let isPlaying: Bool
     let onLaunch: () -> Void
 
@@ -756,9 +766,9 @@ struct EffectCard: View {
 
 @MainActor
 class SessionClipViewModel: ObservableObject {
-    @Published var tracks: [SessionTrack] = []
-    @Published var scenes: [SessionScene] = []
-    @Published var clips: [[SessionClip?]] = []
+    @Published var tracks: [ClipViewTrack] = []
+    @Published var scenes: [ClipViewScene] = []
+    @Published var clips: [[ClipViewClip?]] = []
     @Published var isPlaying = false
     @Published var isRecording = false
     @Published var bpm: Double = 120.0
@@ -784,24 +794,24 @@ class SessionClipViewModel: ObservableObject {
     init() {
         // Sample data
         tracks = [
-            SessionTrack(name: "Drums", color: VaporwaveColors.neonPink, instrumentName: "TR-808", instrumentIcon: "square.grid.3x3"),
-            SessionTrack(name: "Bass", color: VaporwaveColors.neonCyan, instrumentName: "EchoSynth", instrumentIcon: "waveform"),
-            SessionTrack(name: "Lead", color: VaporwaveColors.neonPurple, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
-            SessionTrack(name: "Pad", color: VaporwaveColors.lavender, instrumentName: "Granular", instrumentIcon: "sparkles"),
-            SessionTrack(name: "Bio", color: VaporwaveColors.coherenceHigh, instrumentName: "Coherence", instrumentIcon: "heart.fill")
+            ClipViewTrack(name: "Drums", color: VaporwaveColors.neonPink, instrumentName: "TR-808", instrumentIcon: "square.grid.3x3"),
+            ClipViewTrack(name: "Bass", color: VaporwaveColors.neonCyan, instrumentName: "EchoSynth", instrumentIcon: "waveform"),
+            ClipViewTrack(name: "Lead", color: VaporwaveColors.neonPurple, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
+            ClipViewTrack(name: "Pad", color: VaporwaveColors.lavender, instrumentName: "Granular", instrumentIcon: "sparkles"),
+            ClipViewTrack(name: "Bio", color: VaporwaveColors.coherenceHigh, instrumentName: "Coherence", instrumentIcon: "heart.fill")
         ]
 
-        scenes = (1...8).map { SessionScene(name: "Scene \($0)") }
+        scenes = (1...8).map { ClipViewScene(name: "Scene \($0)") }
 
         clips = tracks.map { _ in
             scenes.map { _ in
-                Bool.random() ? SessionClip(name: "Clip") : nil
+                Bool.random() ? ClipViewClip(name: "Clip") : nil
             }
         }
     }
 
-    func addTrack() { tracks.append(SessionTrack(name: "Track \(tracks.count + 1)", color: VaporwaveColors.neonCyan, instrumentName: "Empty", instrumentIcon: "questionmark")) }
-    func addScene() { scenes.append(SessionScene(name: "Scene \(scenes.count + 1)")) }
+    func addTrack() { tracks.append(ClipViewTrack(name: "Track \(tracks.count + 1)", color: VaporwaveColors.neonCyan, instrumentName: "Empty", instrumentIcon: "questionmark")) }
+    func addScene() { scenes.append(ClipViewScene(name: "Scene \(scenes.count + 1)")) }
     func toggleMute(_ index: Int) { tracks[index].isMuted.toggle() }
     func toggleSolo(_ index: Int) { tracks[index].isSoloed.toggle() }
     func toggleArm(_ index: Int) { tracks[index].isArmed.toggle() }
@@ -810,7 +820,7 @@ class SessionClipViewModel: ObservableObject {
     func stop() { isPlaying = false; isRecording = false }
     func stopAll() { activeScene = nil }
     func launchScene(_ index: Int) { activeScene = index; isPlaying = true }
-    func clipAt(track: Int, scene: Int) -> SessionClip? { clips[track][scene] }
+    func clipAt(track: Int, scene: Int) -> ClipViewClip? { clips[track][scene] }
     func isClipPlaying(track: Int, scene: Int) -> Bool { activeScene == scene && clips[track][scene] != nil }
     func toggleClip(track: Int, scene: Int) { if clips[track][scene] != nil { isPlaying = true } }
     func editClip(track: Int, scene: Int) { /* Open editor */ }
@@ -819,7 +829,7 @@ class SessionClipViewModel: ObservableObject {
     func addEffectToTrack(_ track: Int, effect: EffectInfo) { tracks[track].effectCount += 1 }
 }
 
-struct SessionTrack: Identifiable {
+struct ClipViewTrack: Identifiable {
     let id = UUID()
     var name: String
     var color: Color
@@ -831,12 +841,12 @@ struct SessionTrack: Identifiable {
     var isArmed: Bool = false
 }
 
-struct SessionScene: Identifiable {
+struct ClipViewScene: Identifiable {
     let id = UUID()
     var name: String
 }
 
-struct SessionClip: Identifiable {
+struct ClipViewClip: Identifiable {
     let id = UUID()
     var name: String
 }
