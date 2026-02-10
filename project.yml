@@ -352,7 +352,10 @@ targets:
       - path: Sources/Echoelmusic/Biofeedback
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Accessibility
-        excludes: ["**/*.md", "**/*.metal"]
+        excludes:
+          - "**/*.md"
+          - "**/*.metal"
+          - "QuantumAccessibility.swift"
       - path: Sources/Echoelmusic/Localization
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Presets
