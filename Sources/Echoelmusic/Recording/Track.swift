@@ -440,7 +440,7 @@ struct Track: Identifiable, Codable {
         case createdAt, modifiedAt, type
         case sends, outputBusID, inputSource, sidechainSourceID
         case isArmed, monitorMode, trackColor, groupID
-        case automationLanes, isFrozen
+        case automationLanes, isFrozen, isPlaying
     }
 }
 

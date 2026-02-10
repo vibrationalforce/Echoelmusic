@@ -132,7 +132,7 @@ struct SessionClipView: View {
             .glassCard()
 
             // Track Headers
-            ForEach(session.tracks.indices, id: \.self) { index in
+            ForEach(0..<session.tracks.count, id: \.self) { index in
                 TrackHeaderCell(
                     track: session.tracks[index],
                     isSelected: selectedTrack == index,
@@ -160,10 +160,12 @@ struct SessionClipView: View {
     // MARK: - Clip Grid
 
     private var clipGrid: some View {
-        VStack(spacing: 2) {
+        let sceneCount = session.scenes.count
+        let trackCount = session.tracks.count
+        return VStack(spacing: 2) {
             // Scene Headers
             HStack(spacing: 2) {
-                ForEach(session.scenes.indices, id: \.self) { sceneIndex in
+                ForEach(0..<sceneCount, id: \.self) { sceneIndex in
                     Text("Scene \(sceneIndex + 1)")
                         .font(VaporwaveTypography.label())
                         .foregroundColor(VaporwaveColors.textTertiary)
@@ -172,19 +174,23 @@ struct SessionClipView: View {
             }
 
             // Clip Slots
-            ForEach(session.tracks.indices, id: \.self) { trackIndex in
-                HStack(spacing: 2) {
-                    ForEach(session.scenes.indices, id: \.self) { sceneIndex in
-                        ClipSlotCell(
-                            clip: session.clipAt(track: trackIndex, scene: sceneIndex),
-                            trackColor: session.tracks[trackIndex].color,
-                            isPlaying: session.isClipPlaying(track: trackIndex, scene: sceneIndex),
-                            onTap: { session.toggleClip(track: trackIndex, scene: sceneIndex) },
-                            onDoubleTap: { session.editClip(track: trackIndex, scene: sceneIndex) },
-                            onStop: { session.stopClip(track: trackIndex, scene: sceneIndex) }
-                        )
-                    }
-                }
+            ForEach(0..<trackCount, id: \.self) { trackIndex in
+                clipRow(trackIndex: trackIndex, sceneCount: sceneCount)
+            }
+        }
+    }
+
+    private func clipRow(trackIndex: Int, sceneCount: Int) -> some View {
+        HStack(spacing: 2) {
+            ForEach(0..<sceneCount, id: \.self) { sceneIndex in
+                ClipSlotCell(
+                    clip: session.clipAt(track: trackIndex, scene: sceneIndex),
+                    trackColor: session.tracks[trackIndex].color,
+                    isPlaying: session.isClipPlaying(track: trackIndex, scene: sceneIndex),
+                    onTap: { session.toggleClip(track: trackIndex, scene: sceneIndex) },
+                    onDoubleTap: { session.editClip(track: trackIndex, scene: sceneIndex) },
+                    onStop: { session.stopClip(track: trackIndex, scene: sceneIndex) }
+                )
             }
         }
     }
@@ -192,7 +198,8 @@ struct SessionClipView: View {
     // MARK: - Scene Launch Column
 
     private var sceneLaunchColumn: some View {
-        VStack(spacing: 2) {
+        let sceneCount = session.scenes.count
+        return VStack(spacing: 2) {
             // Master Stop
             Button(action: { session.stopAll() }) {
                 Image(systemName: "stop.fill")
@@ -202,7 +209,7 @@ struct SessionClipView: View {
             .glassCard()
 
             // Scene Launch Buttons
-            ForEach(session.scenes.indices, id: \.self) { index in
+            ForEach(0..<sceneCount, id: \.self) { index in
                 SceneLaunchButton(
                     scene: session.scenes[index],
                     isPlaying: session.activeScene == index,
