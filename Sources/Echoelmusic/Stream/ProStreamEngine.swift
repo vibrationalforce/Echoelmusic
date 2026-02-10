@@ -1432,18 +1432,18 @@ public final class ProStreamEngine: ObservableObject {
         let engine = ProStreamEngine()
 
         // Scene 1: Main
-        let mainScene = engine.addScene(name: "Main", color: .green)
+        let mainScene = engine.addScene(name: "Main", color: SceneColor.green)
         engine.addSource(to: mainScene.id, type: .camera(index: 0), name: "Camera")
         engine.addSource(to: mainScene.id, type: .audioInput(device: "default"), name: "Microphone")
         engine.addSource(to: mainScene.id, type: .screenCapture, name: "Desktop Capture")
 
         // Scene 2: BRB
-        let brbScene = engine.addScene(name: "BRB", color: .yellow)
+        let brbScene = engine.addScene(name: "BRB", color: SceneColor.yellow)
         engine.addSource(to: brbScene.id, type: .imageFile(URL(fileURLWithPath: "/brb.png")), name: "BRB Image")
         engine.addSource(to: brbScene.id, type: .audioInput(device: "default"), name: "Microphone")
 
         // Scene 3: Ending
-        let endScene = engine.addScene(name: "Ending", color: .red)
+        let endScene = engine.addScene(name: "Ending", color: SceneColor.red)
         engine.addSource(to: endScene.id, type: .colorSource(color: "#000000"), name: "Black Background")
         engine.addSource(to: endScene.id, type: .textGDI, name: "Thanks for Watching")
 
@@ -1456,7 +1456,7 @@ public final class ProStreamEngine: ObservableObject {
         let engine = ProStreamEngine()
 
         // Scene 1: Performance
-        let perfScene = engine.addScene(name: "Performance", color: .purple)
+        let perfScene = engine.addScene(name: "Performance", color: SceneColor.purple)
         engine.addSource(to: perfScene.id, type: .windowCapture, name: "DAW Capture")
         engine.addSource(to: perfScene.id, type: .camera(index: 0), name: "Artist Camera")
         engine.addSource(to: perfScene.id, type: .visualizer, name: "Audio Visualizer")
@@ -1464,12 +1464,12 @@ public final class ProStreamEngine: ObservableObject {
         engine.addSource(to: perfScene.id, type: .audioOutput(device: "default"), name: "DAW Audio")
 
         // Scene 2: Close-Up
-        let closeScene = engine.addScene(name: "Close-Up", color: .cyan)
+        let closeScene = engine.addScene(name: "Close-Up", color: SceneColor.cyan)
         engine.addSource(to: closeScene.id, type: .camera(index: 0), name: "Artist Camera")
         engine.addSource(to: closeScene.id, type: .audioOutput(device: "default"), name: "DAW Audio")
 
         // Scene 3: Visualizer Full
-        let vizScene = engine.addScene(name: "Visualizer", color: .blue)
+        let vizScene = engine.addScene(name: "Visualizer", color: SceneColor.blue)
         engine.addSource(to: vizScene.id, type: .visualizer, name: "Full Screen Visualizer")
         engine.addSource(to: vizScene.id, type: .audioOutput(device: "default"), name: "DAW Audio")
 
@@ -1482,27 +1482,27 @@ public final class ProStreamEngine: ObservableObject {
         let engine = ProStreamEngine()
 
         // Scene 1: Main Show
-        let showScene = engine.addScene(name: "Main Show", color: .purple)
+        let showScene = engine.addScene(name: "Main Show", color: SceneColor.purple)
         engine.addSource(to: showScene.id, type: .vjLayer, name: "VJ Layer A")
         engine.addSource(to: showScene.id, type: .vjLayer, name: "VJ Layer B")
         engine.addSource(to: showScene.id, type: .dmxPreview, name: "DMX Preview")
         engine.addSource(to: showScene.id, type: .audioInput(device: "default"), name: "Main Audio")
 
         // Scene 2: Laser Show
-        let laserScene = engine.addScene(name: "Laser Show", color: .green)
+        let laserScene = engine.addScene(name: "Laser Show", color: SceneColor.green)
         engine.addSource(to: laserScene.id, type: .vjLayer, name: "Laser Preview")
         engine.addSource(to: laserScene.id, type: .dmxPreview, name: "DMX Lighting")
         engine.addSource(to: laserScene.id, type: .audioInput(device: "default"), name: "Main Audio")
 
         // Scene 3: Multi-Cam
-        let multiScene = engine.addScene(name: "Multi-Cam", color: .orange)
+        let multiScene = engine.addScene(name: "Multi-Cam", color: SceneColor.orange)
         engine.addSource(to: multiScene.id, type: .camera(index: 0), name: "Camera 1")
         engine.addSource(to: multiScene.id, type: .camera(index: 1), name: "Camera 2")
         engine.addSource(to: multiScene.id, type: .camera(index: 2), name: "Camera 3")
         engine.addSource(to: multiScene.id, type: .audioInput(device: "default"), name: "Main Audio")
 
         // Scene 4: PiP (Crowd + VJ)
-        let pipScene = engine.addScene(name: "PiP Crowd", color: .cyan)
+        let pipScene = engine.addScene(name: "PiP Crowd", color: SceneColor.cyan)
         engine.addSource(to: pipScene.id, type: .vjLayer, name: "VJ Background")
         engine.addSource(to: pipScene.id, type: .camera(index: 0), name: "Crowd Camera")
         engine.addSource(to: pipScene.id, type: .audioInput(device: "default"), name: "Main Audio")
@@ -1516,7 +1516,7 @@ public final class ProStreamEngine: ObservableObject {
         let engine = ProStreamEngine()
 
         // Scene 1: Dual Camera
-        let dualScene = engine.addScene(name: "Dual Camera", color: .blue)
+        let dualScene = engine.addScene(name: "Dual Camera", color: SceneColor.blue)
         engine.addSource(to: dualScene.id, type: .camera(index: 0), name: "Host Camera")
         engine.addSource(to: dualScene.id, type: .camera(index: 1), name: "Guest Camera")
         engine.addSource(to: dualScene.id, type: .audioInput(device: "mic-host"), name: "Host Mic")
@@ -1524,19 +1524,19 @@ public final class ProStreamEngine: ObservableObject {
         engine.addSource(to: dualScene.id, type: .imageFile(URL(fileURLWithPath: "/overlay.png")), name: "Lower Third")
 
         // Scene 2: Host Solo
-        let hostScene = engine.addScene(name: "Host Solo", color: .green)
+        let hostScene = engine.addScene(name: "Host Solo", color: SceneColor.green)
         engine.addSource(to: hostScene.id, type: .camera(index: 0), name: "Host Camera")
         engine.addSource(to: hostScene.id, type: .audioInput(device: "mic-host"), name: "Host Mic")
         engine.addSource(to: hostScene.id, type: .audioInput(device: "mic-guest"), name: "Guest Mic")
 
         // Scene 3: Guest Solo
-        let guestScene = engine.addScene(name: "Guest Solo", color: .orange)
+        let guestScene = engine.addScene(name: "Guest Solo", color: SceneColor.orange)
         engine.addSource(to: guestScene.id, type: .camera(index: 1), name: "Guest Camera")
         engine.addSource(to: guestScene.id, type: .audioInput(device: "mic-host"), name: "Host Mic")
         engine.addSource(to: guestScene.id, type: .audioInput(device: "mic-guest"), name: "Guest Mic")
 
         // Scene 4: Screen Share
-        let screenScene = engine.addScene(name: "Screen Share", color: .yellow)
+        let screenScene = engine.addScene(name: "Screen Share", color: SceneColor.yellow)
         engine.addSource(to: screenScene.id, type: .screenCapture, name: "Screen Capture")
         engine.addSource(to: screenScene.id, type: .camera(index: 0), name: "Host Camera PiP")
         engine.addSource(to: screenScene.id, type: .audioInput(device: "mic-host"), name: "Host Mic")
