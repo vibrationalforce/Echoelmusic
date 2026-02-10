@@ -185,6 +185,7 @@ targets:
           - "**/*.xcassets"
           - "**/VisionOS/**"
           - "**/WatchOS/**"
+          - "**/WatchSync/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
           - "**/Targets/**"
@@ -419,6 +420,7 @@ targets:
           - "**/*.xcassets"
           - "**/VisionOS/**"
           - "**/WatchOS/**"
+          - "**/WatchSync/**"
           - "**/Platforms/**"
           - "**/Targets/**"
           - "**/Widgets/**"
@@ -477,6 +479,7 @@ targets:
         excludes:
           - "**/*.xcassets"
           - "**/WatchOS/**"
+          - "**/WatchSync/**"
           - "**/tvOS/**"
           - "**/Platforms/**"
           - "**/Targets/**"

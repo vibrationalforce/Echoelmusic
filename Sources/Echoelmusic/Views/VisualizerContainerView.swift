@@ -58,7 +58,9 @@ struct VisualizerContainerView: View {
                                 withAnimation(VaporwaveAnimation.smooth) {
                                     visualEngine.currentMode = modes[newIndex]
                                 }
+                                #if os(iOS)
                                 impactFeedback(.light)
+                                #endif
                             }
                         }
                     }
@@ -239,7 +241,9 @@ struct VisualizerContainerView: View {
                                 visualEngine.currentMode = mode
                                 showModeSelector = false
                             }
+                            #if os(iOS)
                             impactFeedback(.medium)
+                            #endif
                         }
                     }
                 }
@@ -293,10 +297,12 @@ struct VisualizerContainerView: View {
 
     // MARK: - Haptic Feedback
 
+    #if os(iOS)
     private func impactFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         let impact = UIImpactFeedbackGenerator(style: style)
         impact.impactOccurred()
     }
+    #endif
 }
 
 // MARK: - Mode Button

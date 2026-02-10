@@ -13,7 +13,9 @@
 
 import Foundation
 import Combine
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 #if canImport(CoreHaptics)
 import CoreHaptics
 #endif
