@@ -132,23 +132,8 @@ struct SessionClipView: View {
             .glassCard()
 
             // Track Headers
-            ForEach(0..<session.tracks.count, id: \.self) { index in
-                TrackHeaderCell(
-                    track: session.tracks[index],
-                    isSelected: selectedTrack == index,
-                    onSelect: { selectedTrack = index },
-                    onMute: { session.toggleMute(index) },
-                    onSolo: { session.toggleSolo(index) },
-                    onArm: { session.toggleArm(index) },
-                    onInstrument: {
-                        selectedTrack = index
-                        showInstrumentBrowser = true
-                    },
-                    onEffects: {
-                        selectedTrack = index
-                        showEffectsBrowser = true
-                    }
-                )
+            ForEach(session.tracks) { track in
+                trackHeaderView(for: track)
             }
 
             Spacer()
@@ -170,11 +155,32 @@ struct SessionClipView: View {
         }
     }
 
+    private func trackHeaderView(for track: SessionTrack) -> some View {
+        let index = session.tracks.firstIndex(where: { $0.id == track.id }) ?? 0
+        return TrackHeaderCell(
+            track: track,
+            isSelected: selectedTrack == index,
+            onSelect: { selectedTrack = index },
+            onMute: { session.toggleMute(index) },
+            onSolo: { session.toggleSolo(index) },
+            onArm: { session.toggleArm(index) },
+            onInstrument: {
+                selectedTrack = index
+                showInstrumentBrowser = true
+            },
+            onEffects: {
+                selectedTrack = index
+                showEffectsBrowser = true
+            }
+        )
+    }
+
     @ViewBuilder
     private var clipSceneHeaders: some View {
         HStack(spacing: 2) {
-            ForEach(Array(session.scenes.enumerated()), id: \.offset) { index, _ in
-                Text("Scene \(index + 1)")
+            ForEach(session.scenes) { scene in
+                let idx = session.scenes.firstIndex(where: { $0.id == scene.id }) ?? 0
+                Text("Scene \(idx + 1)")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
                     .frame(width: 100, height: 30)
@@ -184,9 +190,11 @@ struct SessionClipView: View {
 
     @ViewBuilder
     private var clipSlotRows: some View {
-        ForEach(Array(session.tracks.enumerated()), id: \.offset) { trackIndex, _ in
+        ForEach(session.tracks) { track in
+            let trackIndex = session.tracks.firstIndex(where: { $0.id == track.id }) ?? 0
             HStack(spacing: 2) {
-                ForEach(Array(session.scenes.enumerated()), id: \.offset) { sceneIndex, _ in
+                ForEach(session.scenes) { scene in
+                    let sceneIndex = session.scenes.firstIndex(where: { $0.id == scene.id }) ?? 0
                     ClipSlotCell(
                         clip: session.clipAt(track: trackIndex, scene: sceneIndex),
                         trackColor: session.tracks[trackIndex].color,
@@ -214,7 +222,8 @@ struct SessionClipView: View {
             .glassCard()
 
             // Scene Launch Buttons
-            ForEach(Array(session.scenes.enumerated()), id: \.offset) { index, scene in
+            ForEach(session.scenes) { scene in
+                let index = session.scenes.firstIndex(where: { $0.id == scene.id }) ?? 0
                 SceneLaunchButton(
                     scene: scene,
                     isPlaying: session.activeScene == index,

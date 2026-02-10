@@ -442,6 +442,62 @@ struct Track: Identifiable, Codable {
         case isArmed, monitorMode, trackColor, groupID
         case automationLanes, isFrozen, isPlaying
     }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(url, forKey: .url)
+        try container.encode(duration, forKey: .duration)
+        try container.encode(volume, forKey: .volume)
+        try container.encode(pan, forKey: .pan)
+        try container.encode(isMuted, forKey: .isMuted)
+        try container.encode(isSoloed, forKey: .isSoloed)
+        try container.encode(effects, forKey: .effects)
+        try container.encodeIfPresent(waveformData, forKey: .waveformData)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(modifiedAt, forKey: .modifiedAt)
+        try container.encode(type, forKey: .type)
+        try container.encode(sends, forKey: .sends)
+        try container.encodeIfPresent(outputBusID, forKey: .outputBusID)
+        try container.encode(inputSource, forKey: .inputSource)
+        try container.encodeIfPresent(sidechainSourceID, forKey: .sidechainSourceID)
+        try container.encode(isArmed, forKey: .isArmed)
+        try container.encode(monitorMode, forKey: .monitorMode)
+        try container.encode(trackColor, forKey: .trackColor)
+        try container.encodeIfPresent(groupID, forKey: .groupID)
+        try container.encode(automationLanes, forKey: .automationLanes)
+        try container.encode(isFrozen, forKey: .isFrozen)
+        try container.encode(isPlaying, forKey: .isPlaying)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        url = try container.decodeIfPresent(URL.self, forKey: .url)
+        duration = try container.decode(TimeInterval.self, forKey: .duration)
+        volume = try container.decode(Float.self, forKey: .volume)
+        pan = try container.decode(Float.self, forKey: .pan)
+        isMuted = try container.decode(Bool.self, forKey: .isMuted)
+        isSoloed = try container.decode(Bool.self, forKey: .isSoloed)
+        effects = try container.decode([String].self, forKey: .effects)
+        waveformData = try container.decodeIfPresent([Float].self, forKey: .waveformData)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        modifiedAt = try container.decode(Date.self, forKey: .modifiedAt)
+        type = try container.decode(TrackType.self, forKey: .type)
+        sends = try container.decode([TrackSend].self, forKey: .sends)
+        outputBusID = try container.decodeIfPresent(UUID.self, forKey: .outputBusID)
+        inputSource = try container.decode(TrackInputSource.self, forKey: .inputSource)
+        sidechainSourceID = try container.decodeIfPresent(UUID.self, forKey: .sidechainSourceID)
+        isArmed = try container.decode(Bool.self, forKey: .isArmed)
+        monitorMode = try container.decode(MonitorMode.self, forKey: .monitorMode)
+        trackColor = try container.decode(TrackColor.self, forKey: .trackColor)
+        groupID = try container.decodeIfPresent(UUID.self, forKey: .groupID)
+        automationLanes = try container.decode([TrackAutomationLane].self, forKey: .automationLanes)
+        isFrozen = try container.decode(Bool.self, forKey: .isFrozen)
+        isPlaying = try container.decodeIfPresent(Bool.self, forKey: .isPlaying) ?? false
+    }
 }
 
 
