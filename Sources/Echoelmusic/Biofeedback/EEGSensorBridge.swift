@@ -14,7 +14,6 @@
 
 import Foundation
 import Combine
-import Combine
 import CoreBluetooth
 
 // MARK: - EEG Data Types

@@ -104,7 +104,14 @@ public final class CrossPlatformDisplayLink {
     }
 
     deinit {
-        stop()
+        // stop() is @MainActor-isolated, cannot call from deinit
+        #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
+        displayLink?.invalidate()
+        #elseif os(macOS)
+        if let link = displayLink { CVDisplayLinkStop(link) }
+        #else
+        timer?.cancel()
+        #endif
     }
 
     // MARK: - Setup

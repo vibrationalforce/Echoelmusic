@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,12 +16,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.echoelmusic.app.EchoelmusicApplication
+import com.echoelmusic.app.viewmodel.EchoelmusicViewModel
 import com.echoelmusic.app.ui.screens.*
 
 /**
@@ -31,28 +29,15 @@ import com.echoelmusic.app.ui.screens.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EchoelmusicApp() {
+fun EchoelmusicApp(viewModel: EchoelmusicViewModel) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Bio-reactive state
-    var heartRate by remember { mutableFloatStateOf(70f) }
-    var coherence by remember { mutableFloatStateOf(0.5f) }
-    var isPlaying by remember { mutableStateOf(false) }
-
-    // Update from bio engine with proper cleanup
-    DisposableEffect(Unit) {
-        EchoelmusicApplication.bioReactiveEngine.setHeartRateCallback { hr, _, coh ->
-            heartRate = hr
-            coherence = coh
-        }
-
-        // Clean up callback when composable is disposed to prevent memory leaks
-        onDispose {
-            EchoelmusicApplication.bioReactiveEngine.clearCallback()
-        }
-    }
+    // Bio-reactive state from ViewModel
+    val heartRate by viewModel.heartRate.collectAsState()
+    val coherence by viewModel.coherence.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
     // Animated background based on coherence
     val backgroundColor by animateColorAsState(
@@ -135,11 +120,10 @@ fun EchoelmusicApp() {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    isPlaying = !isPlaying
                     if (isPlaying) {
-                        EchoelmusicApplication.audioEngine.start()
+                        viewModel.stopAudio()
                     } else {
-                        EchoelmusicApplication.audioEngine.stop()
+                        viewModel.startAudio()
                     }
                 },
                 containerColor = if (isPlaying)
@@ -172,10 +156,10 @@ fun EchoelmusicApp() {
                 navController = navController,
                 startDestination = "synth"
             ) {
-                composable("synth") { SynthScreen() }
-                composable("tr808") { TR808Screen() }
+                composable("synth") { SynthScreen(viewModel) }
+                composable("tr808") { TR808Screen(viewModel) }
                 composable("stems") { StemSeparationScreen() }
-                composable("bio") { BioReactiveScreen() }
+                composable("bio") { BioReactiveScreen(viewModel) }
                 composable("quantum") { QuantumAIScreen() }
                 composable("settings") { SettingsScreen() }
             }

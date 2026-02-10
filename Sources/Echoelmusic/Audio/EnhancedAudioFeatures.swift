@@ -66,7 +66,7 @@ class AdaptiveAudioEngine: ObservableObject {
     }
 
     deinit {
-        stopMonitoring()
+        // stopMonitoring() is @MainActor-isolated, cannot call from deinit
     }
 
     // MARK: - Public Methods

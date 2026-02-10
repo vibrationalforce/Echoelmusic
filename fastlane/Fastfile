@@ -78,8 +78,7 @@ def build_xcargs_with_auth
 
   args = [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Manual",
-    "CODE_SIGN_IDENTITY=Apple\\ Distribution",
+    "CODE_SIGN_STYLE=Automatic",
     "-allowProvisioningUpdates",
     "-authenticationKeyPath #{key_path}",
     "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
@@ -313,8 +312,8 @@ platform :ios do
 
     UI.message("Using xcodebuild automatic cloud signing with App Store Connect API...")
 
-    # Build iOS app with manual signing + cloud-managed certs via ASC API key
-    # CODE_SIGN_STYLE=Manual + Apple Distribution + -allowProvisioningUpdates
+    # Build iOS app with automatic signing + cloud-managed certs via ASC API key
+    # CODE_SIGN_STYLE=Automatic + -allowProvisioningUpdates + distribution cert in keychain
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -329,7 +328,7 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "manual",
+        signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -367,7 +366,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=watchOS",
       export_options: {
-        signingStyle: "manual",
+        signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -398,7 +397,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=tvOS",
       export_options: {
-        signingStyle: "manual",
+        signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -429,7 +428,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=visionOS",
       export_options: {
-        signingStyle: "manual",
+        signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -551,7 +550,7 @@ platform :mac do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        signingStyle: "manual",
+        signingStyle: "automatic",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,

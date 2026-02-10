@@ -128,7 +128,9 @@ class BinauralBeatGenerator: ObservableObject {
     }
 
     deinit {
-        stop()
+        // stop() is @MainActor-isolated, cannot call from deinit
+        bufferTimer?.invalidate()
+        audioEngine.stop()
     }
 
 

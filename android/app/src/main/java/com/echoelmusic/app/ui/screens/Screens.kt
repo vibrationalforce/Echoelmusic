@@ -9,14 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.echoelmusic.app.EchoelmusicApplication
 import com.echoelmusic.app.audio.AudioEngine
+import com.echoelmusic.app.viewmodel.EchoelmusicViewModel
 
 /**
  * Synth Screen - Main polyphonic synthesizer
  */
 @Composable
-fun SynthScreen() {
+fun SynthScreen(viewModel: EchoelmusicViewModel) {
     var filterCutoff by remember { mutableFloatStateOf(5000f) }
     var filterRes by remember { mutableFloatStateOf(0.3f) }
     var oscMix by remember { mutableFloatStateOf(0.5f) }
@@ -43,7 +43,7 @@ fun SynthScreen() {
                     value = filterCutoff,
                     onValueChange = {
                         filterCutoff = it
-                        EchoelmusicApplication.audioEngine.setParameter(
+                        viewModel.audioEngine.setParameter(
                             AudioEngine.Params.FILTER_CUTOFF, it
                         )
                     },
@@ -55,7 +55,7 @@ fun SynthScreen() {
                     value = filterRes,
                     onValueChange = {
                         filterRes = it
-                        EchoelmusicApplication.audioEngine.setParameter(
+                        viewModel.audioEngine.setParameter(
                             AudioEngine.Params.FILTER_RESONANCE, it
                         )
                     },
@@ -76,7 +76,7 @@ fun SynthScreen() {
                     value = oscMix,
                     onValueChange = {
                         oscMix = it
-                        EchoelmusicApplication.audioEngine.setParameter(
+                        viewModel.audioEngine.setParameter(
                             AudioEngine.Params.OSC2_MIX, it
                         )
                     },
@@ -97,7 +97,7 @@ fun SynthScreen() {
             notes.forEach { note ->
                 Button(
                     onClick = {
-                        EchoelmusicApplication.audioEngine.noteOn(note, 100)
+                        viewModel.noteOn(note, 100)
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -112,7 +112,7 @@ fun SynthScreen() {
  * TR-808 Screen - 808 Bass with pitch glide
  */
 @Composable
-fun TR808Screen() {
+fun TR808Screen(viewModel: EchoelmusicViewModel) {
     var decay by remember { mutableFloatStateOf(1.5f) }
     var drive by remember { mutableFloatStateOf(0.2f) }
     var glideTime by remember { mutableFloatStateOf(0.08f) }
@@ -137,7 +137,7 @@ fun TR808Screen() {
                     value = decay,
                     onValueChange = {
                         decay = it
-                        EchoelmusicApplication.audioEngine.set808Parameter(
+                        viewModel.audioEngine.set808Parameter(
                             AudioEngine.Params.BASS_DECAY, it
                         )
                     },
@@ -149,7 +149,7 @@ fun TR808Screen() {
                     value = drive,
                     onValueChange = {
                         drive = it
-                        EchoelmusicApplication.audioEngine.set808Parameter(
+                        viewModel.audioEngine.set808Parameter(
                             AudioEngine.Params.BASS_DRIVE, it
                         )
                     },
@@ -161,7 +161,7 @@ fun TR808Screen() {
                     value = glideTime,
                     onValueChange = {
                         glideTime = it
-                        EchoelmusicApplication.audioEngine.set808Parameter(
+                        viewModel.audioEngine.set808Parameter(
                             AudioEngine.Params.BASS_GLIDE_TIME, it
                         )
                     },
@@ -173,7 +173,7 @@ fun TR808Screen() {
                     value = glideRange,
                     onValueChange = {
                         glideRange = it
-                        EchoelmusicApplication.audioEngine.set808Parameter(
+                        viewModel.audioEngine.set808Parameter(
                             AudioEngine.Params.BASS_GLIDE_RANGE, it
                         )
                     },
@@ -192,7 +192,7 @@ fun TR808Screen() {
             listOf(36, 38, 40, 41, 43).forEach { note ->
                 Button(
                     onClick = {
-                        EchoelmusicApplication.audioEngine.trigger808(note, 127)
+                        viewModel.audioEngine.trigger808(note, 127)
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -251,12 +251,11 @@ fun StemSeparationScreen() {
  * Bio-Reactive Screen
  */
 @Composable
-fun BioReactiveScreen() {
-    val bioEngine = EchoelmusicApplication.bioReactiveEngine
-    val heartRate by bioEngine.heartRate.collectAsState()
-    val hrv by bioEngine.hrv.collectAsState()
-    val coherence by bioEngine.coherence.collectAsState()
-    val isConnected by bioEngine.isConnected.collectAsState()
+fun BioReactiveScreen(viewModel: EchoelmusicViewModel) {
+    val heartRate by viewModel.heartRate.collectAsState()
+    val hrv by viewModel.hrv.collectAsState()
+    val coherence by viewModel.coherence.collectAsState()
+    val isConnected by viewModel.bioReactiveEngine.isConnected.collectAsState()
 
     Column(
         modifier = Modifier
@@ -340,7 +339,7 @@ fun BioReactiveScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            "HRV → Filter Cutoff\nHeart Rate → LFO Rate\nCoherence → 808 Decay",
+            "HRV \u2192 Filter Cutoff\nHeart Rate \u2192 LFO Rate\nCoherence \u2192 808 Decay",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

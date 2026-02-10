@@ -249,7 +249,7 @@ struct VaporwaveVisualizer: View {
         let lineSpacing: CGFloat = 3
 
         context.withCGContext { cg in
-            cg.setFillColor(UIColor.black.withAlphaComponent(0.15).cgColor)
+            cg.setFillColor(CGColor(gray: 0, alpha: 0.15))
 
             var y: CGFloat = 0
             while y < size.height {

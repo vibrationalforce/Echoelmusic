@@ -169,7 +169,8 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
     }
 
     deinit {
-        stop()
+        // stop() is @MainActor-isolated, cannot call from deinit
+        arSession?.pause()
     }
 
     // MARK: - Lifecycle

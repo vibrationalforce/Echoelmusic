@@ -161,7 +161,7 @@ class ChromaKeyEngine: ObservableObject {
     }
 
     deinit {
-        stop()
+        // stop() is @MainActor-isolated, cannot call from deinit
     }
 
     // MARK: - Pipeline Compilation

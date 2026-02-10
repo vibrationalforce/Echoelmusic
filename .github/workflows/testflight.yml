@@ -314,6 +314,9 @@ jobs:
 
       - name: "Setup Keychain"
         id: keychain
+        env:
+          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
+          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
         run: |
           # Create a temporary keychain for this CI run
           KEYCHAIN_NAME="ci_ios_${{ github.run_id }}.keychain-db"
@@ -321,6 +324,16 @@ jobs:
 
           # Delete existing keychain if it exists
           security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
+
+          # Clean stale signing certificates from all keychains to prevent conflicts
+          echo "Cleaning stale signing certificates..."
+          for CERT_NAME in "Apple Development" "Apple Distribution" "iPhone Distribution" "iPhone Developer" "3rd Party Mac Developer"; do
+            security find-certificate -c "$CERT_NAME" -a -Z 2>/dev/null | grep "SHA-1" | awk '{print $NF}' | while read -r HASH; do
+              echo "Removing stale cert: $CERT_NAME ($HASH)"
+              security delete-certificate -Z "$HASH" 2>/dev/null || true
+            done
+          done
+          echo "Stale certificates cleaned"
 
           # Create and configure keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
@@ -333,8 +346,31 @@ jobs:
           # Set as default for this session
           security default-keychain -s "$KEYCHAIN_NAME"
 
-          # Allow codesign access (may fail on some runners, that's OK)
+          # Import distribution certificate if available
+          if [ -n "$DISTRIBUTION_CERTIFICATE_P12" ]; then
+            echo "Importing distribution certificate into CI keychain..."
+            echo "$DISTRIBUTION_CERTIFICATE_P12" | base64 --decode > /tmp/dist_cert.p12
+
+            security import /tmp/dist_cert.p12 \
+              -k "$KEYCHAIN_NAME" \
+              -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
+              -T /usr/bin/codesign \
+              -T /usr/bin/security \
+              -T /usr/bin/productbuild
+
+            rm -f /tmp/dist_cert.p12
+            echo "Distribution certificate imported successfully"
+          else
+            echo "No DISTRIBUTION_CERTIFICATE_P12 secret found, relying on cloud-managed signing"
+          fi
+
+          # Allow codesign access
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
+
+          # Verify keychain contents
+          echo "=== Keychain certificates ==="
+          security find-identity -v -p codesigning "$KEYCHAIN_NAME" || echo "No signing identities yet (will be created by xcodebuild)"
+          echo "============================="
 
           echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
           echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV

@@ -139,7 +139,7 @@ public class CameraManager: NSObject, ObservableObject {
     }
 
     deinit {
-        stopCapture()
+        // stopCapture() is @MainActor-isolated, cannot call from deinit
     }
 
     // MARK: - Discover Cameras

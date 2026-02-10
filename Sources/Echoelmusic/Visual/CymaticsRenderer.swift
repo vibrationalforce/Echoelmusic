@@ -201,6 +201,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 // MARK: - SwiftUI Integration
 
 /// SwiftUI view wrapper for Metal Cymatics Renderer
+#if canImport(UIKit)
 struct MetalCymaticsView: UIViewRepresentable {
 
     /// Audio level (0.0 - 1.0)
@@ -247,6 +248,41 @@ struct MetalCymaticsView: UIViewRepresentable {
         let renderer = CymaticsRenderer()
     }
 }
+#elseif os(macOS)
+struct MetalCymaticsView: NSViewRepresentable {
+
+    var audioLevel: Float
+    var frequency: Float
+    var hrvCoherence: Double
+    var heartRate: Double
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeNSView(context: Context) -> MTKView {
+        let mtkView = MTKView()
+        mtkView.device = MTLCreateSystemDefaultDevice()
+        mtkView.delegate = context.coordinator.renderer
+        mtkView.preferredFramesPerSecond = 60
+        mtkView.enableSetNeedsDisplay = false
+        mtkView.isPaused = false
+        mtkView.clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.15, alpha: 1.0)
+        return mtkView
+    }
+
+    func updateNSView(_ mtkView: MTKView, context: Context) {
+        context.coordinator.renderer.audioLevel = audioLevel
+        context.coordinator.renderer.frequency = frequency
+        context.coordinator.renderer.hrvCoherence = hrvCoherence
+        context.coordinator.renderer.heartRate = heartRate
+    }
+
+    class Coordinator {
+        let renderer = CymaticsRenderer()
+    }
+}
+#endif
 
 
 // MARK: - Preview

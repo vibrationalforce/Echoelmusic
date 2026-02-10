@@ -642,9 +642,11 @@ struct ContentView: View {
 
     /// Open iOS Settings app
     private func openSettings() {
+        #if canImport(UIKit)
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)
         }
+        #endif
     }
 }
 

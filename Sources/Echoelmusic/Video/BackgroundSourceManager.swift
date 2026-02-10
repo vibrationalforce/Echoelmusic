@@ -156,8 +156,8 @@ class BackgroundSourceManager: ObservableObject {
     }
 
     deinit {
-        stopVideoPlayback()
-        stopDisplayLink()
+        // stopVideoPlayback()/stopDisplayLink() are @MainActor-isolated, cannot call from deinit
+        // AVPlayer and display link will be cleaned up on deallocation
     }
 
     // MARK: - Initialize Default Sources

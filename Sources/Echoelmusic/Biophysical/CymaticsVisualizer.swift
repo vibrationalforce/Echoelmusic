@@ -327,7 +327,7 @@ public final class CymaticsVisualizer: ObservableObject {
     // MARK: - Cleanup
 
     deinit {
-        stop()
+        // stop() is @MainActor-isolated, cannot call from deinit
     }
 }
 
