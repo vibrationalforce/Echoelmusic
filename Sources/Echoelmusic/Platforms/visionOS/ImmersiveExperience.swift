@@ -19,7 +19,7 @@ final class ImmersiveExperienceManager: ObservableObject {
     // MARK: - State
 
     /// Current immersive mode
-    @Published var currentMode: ImmersiveMode = .passthrough
+    @Published var currentMode: VisionImmersiveMode = .passthrough
 
     /// Active experience
     @Published var activeExperience: ImmersiveExperience?
@@ -91,7 +91,7 @@ final class ImmersiveExperienceManager: ObservableObject {
         isImmersive = false
     }
 
-    func setMode(_ mode: ImmersiveMode) async {
+    func setMode(_ mode: VisionImmersiveMode) async {
         log.spatial("🥽 Setting immersive mode: \(mode.rawValue)")
         currentMode = mode
     }
@@ -154,7 +154,7 @@ final class ImmersiveExperienceManager: ObservableObject {
 
 // MARK: - Immersive Mode
 
-enum ImmersiveMode: String, CaseIterable {
+enum VisionImmersiveMode: String, CaseIterable {
     case passthrough = "Passthrough"
     case mixed = "Mixed Reality"
     case full = "Full Immersion"

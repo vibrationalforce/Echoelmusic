@@ -340,10 +340,10 @@ public enum CueSourceFilterType: String, Codable, CaseIterable, Sendable {
     case crop
 }
 
-// MARK: - SceneSource
+// MARK: - CueSceneSource
 
 /// An element (layer) within a scene
-public struct SceneSource: Identifiable, Codable, Sendable {
+public struct CueSceneSource: Identifiable, Codable, Sendable {
     public let id: UUID
     public var name: String
     public var type: CueSourceType
@@ -409,7 +409,7 @@ public struct ShowScene: Identifiable, Codable, Sendable {
     public let id: UUID
     public var name: String
     public var thumbnail: String?
-    public var sources: [SceneSource]
+    public var sources: [CueSceneSource]
     public var transition: CueSceneTransition
     public var isActive: Bool
     public var isPreview: Bool
@@ -419,7 +419,7 @@ public struct ShowScene: Identifiable, Codable, Sendable {
         id: UUID = UUID(),
         name: String,
         thumbnail: String? = nil,
-        sources: [SceneSource] = [],
+        sources: [CueSceneSource] = [],
         transition: CueSceneTransition = CueSceneTransition(),
         isActive: Bool = false,
         isPreview: Bool = false,
