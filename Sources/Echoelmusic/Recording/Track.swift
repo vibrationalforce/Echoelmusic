@@ -298,7 +298,7 @@ struct Track: Identifiable, Codable {
         self.sidechainSourceID = nil
         self.isArmed = false
         self.monitorMode = .auto
-        self.trackColor = .cyan
+        self.trackColor = TrackColor.cyan
         self.groupID = nil
         self.automationLanes = []
         self.isFrozen = false
@@ -453,7 +453,7 @@ extension Track {
         var track = Track(name: "Voice", type: .voice)
         track.volume = 0.9
         track.inputSource = .mic
-        track.trackColor = .orange
+        track.trackColor = TrackColor.orange
         return track
     }
 
@@ -461,7 +461,7 @@ extension Track {
     static func binauralTrack() -> Track {
         var track = Track(name: "Multidimensional Brainwave Entrainment", type: .binaural)
         track.volume = 0.3
-        track.trackColor = .purple
+        track.trackColor = TrackColor.purple
         return track
     }
 
@@ -469,7 +469,7 @@ extension Track {
     static func spatialTrack() -> Track {
         var track = Track(name: "Spatial", type: .spatial)
         track.volume = 0.7
-        track.trackColor = .cyan
+        track.trackColor = TrackColor.cyan
         return track
     }
 
@@ -477,7 +477,7 @@ extension Track {
     static func masterTrack() -> Track {
         var track = Track(name: "Master", type: .master)
         track.volume = 1.0
-        track.trackColor = .red
+        track.trackColor = TrackColor.red
         return track
     }
 
@@ -486,7 +486,7 @@ extension Track {
         var track = Track(name: name, type: .instrument)
         track.volume = 0.8
         track.inputSource = .virtual
-        track.trackColor = .green
+        track.trackColor = TrackColor.green
         return track
     }
 
@@ -494,7 +494,7 @@ extension Track {
     static func auxTrack(name: String = "Aux") -> Track {
         var track = Track(name: name, type: .aux)
         track.volume = 0.7
-        track.trackColor = .teal
+        track.trackColor = TrackColor.teal
         return track
     }
 
@@ -502,7 +502,7 @@ extension Track {
     static func busTrack(name: String = "Bus") -> Track {
         var track = Track(name: name, type: .bus)
         track.volume = 0.9
-        track.trackColor = .amber
+        track.trackColor = TrackColor.amber
         return track
     }
 
@@ -511,7 +511,7 @@ extension Track {
         var track = Track(name: name, type: .midi)
         track.volume = 0.8
         track.inputSource = .midi
-        track.trackColor = .blue
+        track.trackColor = TrackColor.blue
         return track
     }
 
@@ -525,33 +525,33 @@ extension Track {
         let master = masterTrack()
 
         var kick = Track(name: "Kick", type: .audio)
-        kick.trackColor = .red
+        kick.trackColor = TrackColor.red
         kick.outputBusID = drumBus.id
 
         var snare = Track(name: "Snare", type: .audio)
-        snare.trackColor = .orange
+        snare.trackColor = TrackColor.orange
         snare.outputBusID = drumBus.id
 
         var hihat = Track(name: "Hi-Hat", type: .audio)
-        hihat.trackColor = .yellow
+        hihat.trackColor = TrackColor.yellow
         hihat.outputBusID = drumBus.id
 
         var bass = instrumentTrack(name: "Bass")
-        bass.trackColor = .blue
+        bass.trackColor = TrackColor.blue
         bass.addSend(to: auxReverb.id, level: 0.1)
         bass.sidechainSourceID = kick.id  // sidechain to kick
 
         var lead = instrumentTrack(name: "Lead Synth")
-        lead.trackColor = .cyan
+        lead.trackColor = TrackColor.cyan
         lead.addSend(to: auxReverb.id, level: 0.3)
         lead.addSend(to: auxDelay.id, level: 0.2)
 
         var pad = instrumentTrack(name: "Pad")
-        pad.trackColor = .purple
+        pad.trackColor = TrackColor.purple
         pad.addSend(to: auxReverb.id, level: 0.5)
 
         var vocals = Track(name: "Vocals", type: .voice)
-        vocals.trackColor = .pink
+        vocals.trackColor = TrackColor.pink
         vocals.inputSource = .mic
         vocals.addSend(to: auxReverb.id, level: 0.2)
         vocals.addSend(to: auxDelay.id, level: 0.15)
@@ -562,9 +562,9 @@ extension Track {
     /// DJ session with 2 decks + effects
     static func djSession() -> [Track] {
         var deckA = Track(name: "Deck A", type: .audio)
-        deckA.trackColor = .cyan
+        deckA.trackColor = TrackColor.cyan
         var deckB = Track(name: "Deck B", type: .audio)
-        deckB.trackColor = .pink
+        deckB.trackColor = TrackColor.pink
         let fxReturn = auxTrack(name: "FX Return")
         let master = masterTrack()
 
@@ -586,7 +586,7 @@ extension Track {
         synth2.addSend(to: auxDelay.id, level: 0.2)
 
         var drums = Track(name: "Drums", type: .audio)
-        drums.trackColor = .red
+        drums.trackColor = TrackColor.red
 
         var bio = Track(name: "Bio-Reactive", type: .spatial)
         bio.trackColor = TrackColor.green
