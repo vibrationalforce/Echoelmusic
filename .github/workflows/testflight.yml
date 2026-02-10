@@ -191,7 +191,8 @@ jobs:
         run: |
           PLATFORM="${{ github.event.inputs.platform }}"
           if [ "$PLATFORM" = "all" ]; then
-            echo 'platforms=["ios","macos","watchos","tvos","visionos"]' >> $GITHUB_OUTPUT
+            # All Apple platforms EXCEPT macOS (saves 10x macOS runner minutes)
+            echo 'platforms=["ios","watchos","tvos","visionos"]' >> $GITHUB_OUTPUT
           else
             echo "platforms=[\"$PLATFORM\"]" >> $GITHUB_OUTPUT
           fi
@@ -267,7 +268,7 @@ jobs:
           echo "Project generated successfully"
           ls -la *.xcodeproj
 
-      - name: "Verify Project Compiles"
+      - name: "Verify Project"
         run: |
           echo "=== Verifying Project Generation ==="
 
@@ -282,35 +283,17 @@ jobs:
           fi
           echo "Scheme 'Echoelmusic' found"
 
+          # Resolve dependencies only (fast, catches SPM issues without full build)
           echo ""
-          echo "=== Testing Build (Simulator, No Signing) ==="
-
-          # Do a quick simulator build to verify code compiles
-          # This catches compilation errors without needing code signing
-          xcodebuild build \
+          echo "=== Resolving Dependencies ==="
+          xcodebuild -resolvePackageDependencies \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
-            -configuration Release \
-            -destination "generic/platform=iOS Simulator" \
             -derivedDataPath ./build/DerivedData \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/xcodebuild_test.log
-
-          BUILD_EXIT=$?
-
-          if [ $BUILD_EXIT -ne 0 ]; then
-            echo ""
-            echo "::error::Project failed to compile! See build errors above."
-            echo "=== Last 100 lines of build log ==="
-            tail -100 /tmp/xcodebuild_test.log
-            exit 1
-          fi
+            2>&1 | tail -20
 
           echo ""
-          echo "=== Project compiles successfully ==="
-          echo "Proceeding to signed build..."
+          echo "=== Project verified, proceeding to signed archive build ==="
 
       - name: "Setup Keychain"
         id: keychain
@@ -413,37 +396,21 @@ jobs:
         run: |
           set -o pipefail
 
-          echo "=== iOS Debug Info ==="
-          echo "Xcode version: $(xcodebuild -version)"
-          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
-          echo "======================"
+          echo "=== iOS Deploy ==="
+          echo "Xcode: $(xcodebuild -version | head -1)"
+          echo "=================="
 
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          # Single attempt to conserve macOS runner minutes
+          fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log
+          RESULT=${PIPESTATUS[0]}
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
-
-            if fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log; then
-              echo "iOS deployment successful!"
-              exit 0
-            fi
-
-            FASTLANE_EXIT=${PIPESTATUS[0]}
-            echo "Fastlane exited with code: $FASTLANE_EXIT"
-            echo "=== Last 100 lines of output ==="
+          if [ $RESULT -eq 0 ]; then
+            echo "iOS deployment successful!"
+          else
+            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
-            echo "================================"
-
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
-
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+            exit 1
+          fi
 
       - name: "Dump Fastlane Errors to Summary"
         if: failure()
@@ -587,32 +554,18 @@ jobs:
         run: |
           set -o pipefail
 
-          echo "=== macOS Debug Info ==="
-          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
-          echo "========================"
+          echo "=== macOS Deploy ==="
 
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          fastlane mac beta --verbose 2>&1 | tee /tmp/fastlane_output.log
+          RESULT=${PIPESTATUS[0]}
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
-            if fastlane mac beta --verbose 2>&1 | tee /tmp/fastlane_output.log; then
-              echo "macOS deployment successful!"
-              exit 0
-            fi
-            FASTLANE_EXIT=${PIPESTATUS[0]}
-            echo "Fastlane exited with code: $FASTLANE_EXIT"
-            echo "=== Last 100 lines of output ==="
+          if [ $RESULT -eq 0 ]; then
+            echo "macOS deployment successful!"
+          else
+            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
-            echo "================================"
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+            exit 1
+          fi
 
       - name: "Cleanup"
         if: always()
@@ -705,36 +658,18 @@ jobs:
         run: |
           set -o pipefail
 
-          echo "=== watchOS Debug Info ==="
-          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
-          echo "==========================="
+          echo "=== watchOS Deploy ==="
 
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          fastlane ios beta_watchos --verbose 2>&1 | tee /tmp/fastlane_output.log
+          RESULT=${PIPESTATUS[0]}
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
-
-            if fastlane ios beta_watchos --verbose 2>&1 | tee /tmp/fastlane_output.log; then
-              echo "watchOS deployment successful!"
-              exit 0
-            fi
-
-            FASTLANE_EXIT=${PIPESTATUS[0]}
-            echo "Fastlane exited with code: $FASTLANE_EXIT"
-            echo "=== Last 100 lines of output ==="
+          if [ $RESULT -eq 0 ]; then
+            echo "watchOS deployment successful!"
+          else
+            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
-            echo "================================"
-
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
-
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+            exit 1
+          fi
 
       - name: "Cleanup"
         if: always()
@@ -827,36 +762,18 @@ jobs:
         run: |
           set -o pipefail
 
-          echo "=== tvOS Debug Info ==="
-          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
-          echo "========================"
+          echo "=== tvOS Deploy ==="
 
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          fastlane ios beta_tvos --verbose 2>&1 | tee /tmp/fastlane_output.log
+          RESULT=${PIPESTATUS[0]}
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
-
-            if fastlane ios beta_tvos --verbose 2>&1 | tee /tmp/fastlane_output.log; then
-              echo "tvOS deployment successful!"
-              exit 0
-            fi
-
-            FASTLANE_EXIT=${PIPESTATUS[0]}
-            echo "Fastlane exited with code: $FASTLANE_EXIT"
-            echo "=== Last 100 lines of output ==="
+          if [ $RESULT -eq 0 ]; then
+            echo "tvOS deployment successful!"
+          else
+            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
-            echo "================================"
-
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
-
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+            exit 1
+          fi
 
       - name: "Cleanup"
         if: always()
@@ -949,36 +866,18 @@ jobs:
         run: |
           set -o pipefail
 
-          echo "=== visionOS Debug Info ==="
-          echo "Schemes: $(xcodebuild -list -project Echoelmusic.xcodeproj 2>/dev/null | grep -A 50 'Schemes:' | head -20 || echo 'N/A')"
-          echo "============================"
+          echo "=== visionOS Deploy ==="
 
-          MAX_RETRIES=3
-          RETRY_DELAY=30
+          fastlane ios beta_visionos --verbose 2>&1 | tee /tmp/fastlane_output.log
+          RESULT=${PIPESTATUS[0]}
 
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i of $MAX_RETRIES..."
-
-            if fastlane ios beta_visionos --verbose 2>&1 | tee /tmp/fastlane_output.log; then
-              echo "visionOS deployment successful!"
-              exit 0
-            fi
-
-            FASTLANE_EXIT=${PIPESTATUS[0]}
-            echo "Fastlane exited with code: $FASTLANE_EXIT"
-            echo "=== Last 100 lines of output ==="
+          if [ $RESULT -eq 0 ]; then
+            echo "visionOS deployment successful!"
+          else
+            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
-            echo "================================"
-
-            if [ $i -lt $MAX_RETRIES ]; then
-              echo "Retrying in ${RETRY_DELAY}s..."
-              sleep $RETRY_DELAY
-              RETRY_DELAY=$((RETRY_DELAY * 2))
-            fi
-          done
-
-          echo "All $MAX_RETRIES attempts failed"
-          exit 1
+            exit 1
+          fi
 
       - name: "Cleanup"
         if: always()
