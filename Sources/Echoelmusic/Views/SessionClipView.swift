@@ -31,7 +31,7 @@ struct SessionClipView: View {
                         }
 
                         // Scene Launch
-                        sceneLaunchColumn
+                        makeSceneLaunchColumn(scenes: session.scenes, activeScene: session.activeScene)
                     }
                 }
 
@@ -122,7 +122,8 @@ struct SessionClipView: View {
     // MARK: - Track Header Column
 
     private var trackHeaderColumn: some View {
-        VStack(spacing: 2) {
+        let tracks = session.tracks
+        return VStack(spacing: 2) {
             // Add Track Button
             Button(action: { session.addTrack() }) {
                 Image(systemName: "plus.circle.fill")
@@ -132,7 +133,7 @@ struct SessionClipView: View {
             .glassCard()
 
             // Track Headers
-            ForEach(session.tracks) { track in
+            ForEach(tracks) { track in
                 trackHeaderView(for: track)
             }
 
@@ -144,14 +145,15 @@ struct SessionClipView: View {
 
     // MARK: - Clip Grid
 
-    @ViewBuilder
     private var clipGrid: some View {
-        VStack(spacing: 2) {
+        let tracks = session.tracks
+        let scenes = session.scenes
+        return VStack(spacing: 2) {
             // Scene Headers
-            clipSceneHeaders
+            makeClipSceneHeaders(scenes: scenes)
 
             // Clip Slots
-            clipSlotRows
+            makeClipSlotRows(tracks: tracks, scenes: scenes)
         }
     }
 
@@ -175,11 +177,9 @@ struct SessionClipView: View {
         )
     }
 
-    @ViewBuilder
-    private var clipSceneHeaders: some View {
+    private func makeClipSceneHeaders(scenes: [SessionScene]) -> some View {
         HStack(spacing: 2) {
-            ForEach(session.scenes) { scene in
-                let idx = session.scenes.firstIndex(where: { $0.id == scene.id }) ?? 0
+            ForEach(0..<scenes.count, id: \.self) { idx in
                 Text("Scene \(idx + 1)")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
@@ -188,16 +188,13 @@ struct SessionClipView: View {
         }
     }
 
-    @ViewBuilder
-    private var clipSlotRows: some View {
-        ForEach(session.tracks) { track in
-            let trackIndex = session.tracks.firstIndex(where: { $0.id == track.id }) ?? 0
+    private func makeClipSlotRows(tracks: [SessionTrack], scenes: [SessionScene]) -> some View {
+        ForEach(0..<tracks.count, id: \.self) { trackIndex in
             HStack(spacing: 2) {
-                ForEach(session.scenes) { scene in
-                    let sceneIndex = session.scenes.firstIndex(where: { $0.id == scene.id }) ?? 0
+                ForEach(0..<scenes.count, id: \.self) { sceneIndex in
                     ClipSlotCell(
                         clip: session.clipAt(track: trackIndex, scene: sceneIndex),
-                        trackColor: session.tracks[trackIndex].color,
+                        trackColor: tracks[trackIndex].color,
                         isPlaying: session.isClipPlaying(track: trackIndex, scene: sceneIndex),
                         onTap: { session.toggleClip(track: trackIndex, scene: sceneIndex) },
                         onDoubleTap: { session.editClip(track: trackIndex, scene: sceneIndex) },
@@ -210,8 +207,7 @@ struct SessionClipView: View {
 
     // MARK: - Scene Launch Column
 
-    @ViewBuilder
-    private var sceneLaunchColumn: some View {
+    private func makeSceneLaunchColumn(scenes: [SessionScene], activeScene: Int?) -> some View {
         VStack(spacing: 2) {
             // Master Stop
             Button(action: { session.stopAll() }) {
@@ -222,11 +218,10 @@ struct SessionClipView: View {
             .glassCard()
 
             // Scene Launch Buttons
-            ForEach(session.scenes) { scene in
-                let index = session.scenes.firstIndex(where: { $0.id == scene.id }) ?? 0
+            ForEach(0..<scenes.count, id: \.self) { index in
                 SceneLaunchButton(
-                    scene: scene,
-                    isPlaying: session.activeScene == index,
+                    scene: scenes[index],
+                    isPlaying: activeScene == index,
                     onLaunch: { session.launchScene(index) }
                 )
             }
