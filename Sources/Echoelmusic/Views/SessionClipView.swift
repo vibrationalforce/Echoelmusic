@@ -12,7 +12,11 @@ struct SessionClipView: View {
     @State private var showEffectsBrowser = false
 
     var body: some View {
-        ZStack {
+        let tracks = session.tracks
+        let scenes = session.scenes
+        let clips = session.clips
+        let activeScene = session.activeScene
+        return ZStack {
             VaporwaveGradients.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -23,15 +27,15 @@ struct SessionClipView: View {
                 GeometryReader { geo in
                     HStack(spacing: 0) {
                         // Track Headers
-                        trackHeaderColumn
+                        makeTrackHeaderColumn(tracks: tracks)
 
                         // Clip Grid
                         ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                            clipGrid
+                            makeClipGrid(tracks: tracks, scenes: scenes, clips: clips, activeScene: activeScene)
                         }
 
                         // Scene Launch
-                        makeSceneLaunchColumn(scenes: session.scenes, activeScene: session.activeScene)
+                        makeSceneLaunchColumn(scenes: scenes, activeScene: activeScene)
                     }
                 }
 
@@ -121,11 +125,10 @@ struct SessionClipView: View {
 
     // MARK: - Track Header Column
 
-    private var trackHeaderColumn: some View {
-        let tracks = session.tracks
-        return VStack(spacing: 2) {
+    private func makeTrackHeaderColumn(tracks: [SessionTrack]) -> some View {
+        VStack(spacing: 2) {
             // Add Track Button
-            Button(action: { session.addTrack() }) {
+            Button(action: { self.session.addTrack() }) {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(VaporwaveColors.neonCyan)
             }
@@ -145,12 +148,8 @@ struct SessionClipView: View {
 
     // MARK: - Clip Grid
 
-    private var clipGrid: some View {
-        let tracks = session.tracks
-        let scenes = session.scenes
-        let clips = session.clips
-        let activeScene = session.activeScene
-        return VStack(spacing: 2) {
+    private func makeClipGrid(tracks: [SessionTrack], scenes: [SessionScene], clips: [[SessionClip?]], activeScene: Int?) -> some View {
+        VStack(spacing: 2) {
             // Scene Headers
             makeClipSceneHeaders(scenes: scenes)
 
