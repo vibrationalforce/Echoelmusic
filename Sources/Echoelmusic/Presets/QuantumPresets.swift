@@ -478,8 +478,8 @@ public class PresetManager: ObservableObject {
         }
     }
 
-    #if !WIDGET_EXTENSION
-    /// Apply a preset to the UnifiedControlHub (not available in Widget extension)
+    #if !WIDGET_EXTENSION && !os(watchOS)
+    /// Apply a preset to the UnifiedControlHub (not available in Widget extension or watchOS)
     public func apply(_ preset: QuantumPreset, to hub: UnifiedControlHub) {
         // Apply quantum mode
         if let mode = QuantumLightEmulator.EmulationMode(rawValue: preset.emulationMode) {

@@ -332,15 +332,20 @@ targets:
     type: application
     platform: watchOS
     sources:
-      # watchOS: only include directories compatible with watchOS SDK
-      # (no Metal, CoreImage, CoreHaptics, AVFoundation cameras, heavy ML)
+      # watchOS: MINIMAL set of directories for watch companion app
+      # Only include what the watch app actually needs — HealthKit, UI, shared types
+      # EXCLUDED: Audio/, MIDI/, Sound/, Spatial/, Unified/ (AVFoundation/CoreMIDI/AudioToolbox)
+      # EXCLUDED: Social/, Lambda/, Shortcuts/, Quantum/, Collaboration/, MusicTheory/,
+      #           SharePlay/ (reference types from excluded dirs or too heavy for watch)
       - path: Sources/Echoelmusic/WatchOS
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Core
-        excludes: ["**/*.md", "**/*.metal"]
+        excludes:
+          - "**/*.md"
+          - "**/*.metal"
+          - "AudioConstants.swift"
+          - "EchoelCreativeWorkspace.swift"
       - path: Sources/Echoelmusic/Biofeedback
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Audio
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Accessibility
         excludes: ["**/*.md", "**/*.metal"]
@@ -352,33 +357,11 @@ targets:
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Business
         excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Unified
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Spatial
-        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Privacy
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Legal
         excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Quantum
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Collaboration
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Social
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Lambda
-        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/WatchSync
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/SharePlay
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Shortcuts
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/MusicTheory
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/Sound
-        excludes: ["**/*.md", "**/*.metal"]
-      - path: Sources/Echoelmusic/MIDI
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Analytics
         excludes: ["**/*.md", "**/*.metal"]
