@@ -948,7 +948,7 @@ public class ProSessionEngine: ObservableObject {
     public func addReturnTrack(name: String) -> SessionTrack {
         var returnTrack = SessionTrack(
             name: name,
-            color: .purple,
+            color: TrackColor.purple,
             type: .returnBus,
             volume: 0.7
         )
@@ -1026,7 +1026,7 @@ public class ProSessionEngine: ObservableObject {
             name: "\(tracks[trackIndex].name) Rec \(sceneIndex + 1)",
             type: clipType,
             state: .recording,
-            color: .red,
+            color: ClipColor.red,
             length: recordLength,
             loopEnabled: true,
             quantization: recordQuantization
@@ -1150,7 +1150,7 @@ public class ProSessionEngine: ObservableObject {
             name: name,
             type: .pattern,
             state: .stopped,
-            color: .orange,
+            color: ClipColor.orange,
             length: lengthSeconds,
             loopEnabled: true,
             patternSteps: patternSteps
@@ -1236,7 +1236,7 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // 8 tracks with varied types
-        let trackConfigs: [(SessionTrackType, String, ClipColor)] = [
+        let trackConfigs: [(SessionTrackType, String, TrackColor)] = [
             (.audio, "1 - Drums", .orange),
             (.audio, "2 - Bass", .blue),
             (.midi, "3 - Synth Lead", .green),
@@ -1285,14 +1285,14 @@ public class ProSessionEngine: ObservableObject {
         // Deck A
         var deckA = engine.addTrack(type: .audio, name: "Deck A")
         if let idx = engine.tracks.firstIndex(where: { $0.id == deckA.id }) {
-            engine.tracks[idx].color = .cyan
+            engine.tracks[idx].color = TrackColor.cyan
             engine.tracks[idx].crossfadeAssign = .a
         }
 
         // Deck B
         var deckB = engine.addTrack(type: .audio, name: "Deck B")
         if let idx = engine.tracks.firstIndex(where: { $0.id == deckB.id }) {
-            engine.tracks[idx].color = .magenta
+            engine.tracks[idx].color = TrackColor.magenta
             engine.tracks[idx].crossfadeAssign = .b
         }
 
@@ -1322,7 +1322,7 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // Instrument tracks
-        let trackConfigs: [(SessionTrackType, String, ClipColor)] = [
+        let trackConfigs: [(SessionTrackType, String, TrackColor)] = [
             (.instrument, "Bio Synth", .green),
             (.instrument, "Pad Layer", .cyan),
             (.midi, "Arpeggio", .purple),
