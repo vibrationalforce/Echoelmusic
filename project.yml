@@ -335,34 +335,55 @@ targets:
       # watchOS: only include directories compatible with watchOS SDK
       # (no Metal, CoreImage, CoreHaptics, AVFoundation cameras, heavy ML)
       - path: Sources/Echoelmusic/WatchOS
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Core
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Biofeedback
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Audio
-        excludes:
-          - "**/*.metal"
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Accessibility
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Localization
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Presets
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Wellness
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Business
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Unified
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Spatial
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Privacy
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Legal
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Quantum
-        excludes:
-          - "**/*.metal"
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Collaboration
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Social
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Lambda
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/WatchSync
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/SharePlay
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Shortcuts
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/MusicTheory
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Sound
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/MIDI
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Analytics
+        excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Theme
+        excludes: ["**/*.md", "**/*.metal"]
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
