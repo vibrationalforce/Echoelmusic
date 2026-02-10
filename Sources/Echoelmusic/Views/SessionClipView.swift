@@ -170,10 +170,12 @@ private struct SessionClipContent: View {
     // MARK: - Clip Grid
 
     private var clipGrid: some View {
-        VStack(spacing: 2) {
+        let tracks = session.tracks
+        let scenes = session.scenes
+        return VStack(spacing: 2) {
             // Scene Headers
             HStack(spacing: 2) {
-                ForEach(Array(session.scenes.enumerated()), id: \.element.id) { idx, _ in
+                ForEach(Array(scenes.enumerated()), id: \.element.id) { idx, _ in
                     Text("Scene \(idx + 1)")
                         .font(VaporwaveTypography.label())
                         .foregroundColor(VaporwaveColors.textTertiary)
@@ -182,12 +184,12 @@ private struct SessionClipContent: View {
             }
 
             // Clip Slots
-            ForEach(Array(session.tracks.enumerated()), id: \.element.id) { trackIndex, _ in
+            ForEach(Array(tracks.enumerated()), id: \.element.id) { trackIndex, _ in
                 HStack(spacing: 2) {
-                    ForEach(Array(session.scenes.enumerated()), id: \.element.id) { sceneIndex, _ in
+                    ForEach(Array(scenes.enumerated()), id: \.element.id) { sceneIndex, _ in
                         ClipSlotCell(
                             clip: session.clipAt(track: trackIndex, scene: sceneIndex),
-                            trackColor: session.tracks[trackIndex].color,
+                            trackColor: tracks[trackIndex].color,
                             isPlaying: session.isClipPlaying(track: trackIndex, scene: sceneIndex),
                             onTap: { session.toggleClip(track: trackIndex, scene: sceneIndex) },
                             onDoubleTap: { session.editClip(track: trackIndex, scene: sceneIndex) },
@@ -202,7 +204,9 @@ private struct SessionClipContent: View {
     // MARK: - Scene Launch Column
 
     private var sceneLaunchColumn: some View {
-        VStack(spacing: 2) {
+        let scenes = session.scenes
+        let activeScene = session.activeScene
+        return VStack(spacing: 2) {
             // Master Stop
             Button(action: { session.stopAll() }) {
                 Image(systemName: "stop.fill")
@@ -212,10 +216,10 @@ private struct SessionClipContent: View {
             .glassCard()
 
             // Scene Launch Buttons
-            ForEach(Array(session.scenes.enumerated()), id: \.element.id) { index, scene in
+            ForEach(Array(scenes.enumerated()), id: \.element.id) { index, scene in
                 SceneLaunchButton(
                     scene: scene,
-                    isPlaying: session.activeScene == index,
+                    isPlaying: activeScene == index,
                     onLaunch: { session.launchScene(index) }
                 )
             }
