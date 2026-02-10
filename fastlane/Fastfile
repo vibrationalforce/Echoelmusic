@@ -212,6 +212,7 @@ def cleanup_certificates(api_key)
     all_certs = Spaceship::ConnectAPI::Certificate.all
 
     # Revoke stale DEVELOPMENT certs (CI runners are ephemeral, dev certs become orphaned)
+    # This covers iOS, macOS, watchOS, tvOS, visionOS development certs
     dev_certs = all_certs.select { |c| c.certificate_type.include?("DEVELOPMENT") }
     if dev_certs.any?
       UI.message("Found #{dev_certs.count} development certificate(s) — revoking stale ones for CI...")
@@ -224,7 +225,10 @@ def cleanup_certificates(api_key)
 
     # Check distribution certs (keep max 2)
     dist_certs = all_certs.select do |cert|
-      cert.certificate_type == "DISTRIBUTION" || cert.certificate_type == "IOS_DISTRIBUTION"
+      cert.certificate_type == "DISTRIBUTION" ||
+      cert.certificate_type == "IOS_DISTRIBUTION" ||
+      cert.certificate_type == "MAC_APP_DISTRIBUTION" ||
+      cert.certificate_type.include?("DISTRIBUTION")
     end
 
     UI.message("Found #{dist_certs.count} distribution certificate(s)")
@@ -370,6 +374,7 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
+    cleanup_certificates(api_key)
 
     UI.message("Using xcodebuild automatic signing with API authentication")
 
@@ -401,6 +406,7 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
+    cleanup_certificates(api_key)
 
     UI.message("Using xcodebuild automatic signing with API authentication")
 
@@ -432,6 +438,7 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
+    cleanup_certificates(api_key)
 
     UI.message("Using xcodebuild automatic signing with API authentication")
 
@@ -554,6 +561,7 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
+    cleanup_certificates(api_key)
 
     UI.message("Using xcodebuild automatic signing with API authentication")
     UI.message("Xcode will create/download certificates and profiles for main app + AUv3")
