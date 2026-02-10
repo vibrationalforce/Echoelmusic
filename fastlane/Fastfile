@@ -78,7 +78,7 @@ def build_xcargs_with_auth
 
   args = [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Automatic",
+    "CODE_SIGN_STYLE=Manual",
     "CODE_SIGN_IDENTITY=Apple\\ Distribution",
     "-allowProvisioningUpdates",
     "-authenticationKeyPath #{key_path}",
@@ -313,8 +313,8 @@ platform :ios do
 
     UI.message("Using xcodebuild automatic cloud signing with App Store Connect API...")
 
-    # Build iOS app with automatic cloud-managed signing
-    # Fastlane handles certificates and profiles automatically via ASC API key
+    # Build iOS app with manual signing + cloud-managed certs via ASC API key
+    # CODE_SIGN_STYLE=Manual + Apple Distribution + -allowProvisioningUpdates
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -329,7 +329,7 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "automatic",
+        signingStyle: "manual",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -367,7 +367,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=watchOS",
       export_options: {
-        signingStyle: "automatic",
+        signingStyle: "manual",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -398,7 +398,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=tvOS",
       export_options: {
-        signingStyle: "automatic",
+        signingStyle: "manual",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -429,7 +429,7 @@ platform :ios do
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=visionOS",
       export_options: {
-        signingStyle: "automatic",
+        signingStyle: "manual",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
@@ -551,7 +551,7 @@ platform :mac do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       export_options: {
-        signingStyle: "automatic",
+        signingStyle: "manual",
         teamID: TEAM_ID
       },
       xcargs: build_xcargs_with_auth,
