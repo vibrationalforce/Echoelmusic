@@ -198,7 +198,7 @@ def get_or_create_certificates(api_key, platform, keychain)
 end
 
 def cleanup_certificates(api_key)
-  UI.message("Checking Distribution certificates...")
+  UI.message("Checking certificates at Apple Developer Portal...")
   begin
     require 'spaceship'
     require 'time'
@@ -209,26 +209,39 @@ def cleanup_certificates(api_key)
       key: ENV["ASC_KEY_CONTENT"]
     )
 
-    all_certs = Spaceship::ConnectAPI::Certificate.all.select do |cert|
+    all_certs = Spaceship::ConnectAPI::Certificate.all
+
+    # Revoke stale DEVELOPMENT certs (CI runners are ephemeral, dev certs become orphaned)
+    dev_certs = all_certs.select { |c| c.certificate_type.include?("DEVELOPMENT") }
+    if dev_certs.any?
+      UI.message("Found #{dev_certs.count} development certificate(s) — revoking stale ones for CI...")
+      dev_certs.each do |cert|
+        UI.message("  Revoking: #{cert.id} (#{cert.certificate_type})")
+        cert.delete!
+      end
+      UI.success("Revoked #{dev_certs.count} stale development certificate(s)")
+    end
+
+    # Check distribution certs (keep max 2)
+    dist_certs = all_certs.select do |cert|
       cert.certificate_type == "DISTRIBUTION" || cert.certificate_type == "IOS_DISTRIBUTION"
     end
 
-    UI.message("Found #{all_certs.count} distribution certificate(s)")
+    UI.message("Found #{dist_certs.count} distribution certificate(s)")
 
-    # Only cleanup if we have more than 2 (shouldn't happen normally)
-    if all_certs.count > 2
-      sorted = all_certs.sort_by { |c| parse_cert_date(c.expiration_date) }.reverse
+    if dist_certs.count > 2
+      sorted = dist_certs.sort_by { |c| parse_cert_date(c.expiration_date) }.reverse
       to_revoke = sorted[2..-1]
       to_revoke.each do |cert|
-        UI.message("Revoking old certificate: #{cert.id}")
+        UI.message("Revoking old distribution certificate: #{cert.id}")
         cert.delete!
       end
-      UI.success("Cleaned up #{to_revoke.count} old certificate(s)")
+      UI.success("Cleaned up #{to_revoke.count} old distribution certificate(s)")
     else
-      UI.message("Certificate count OK (#{all_certs.count}/2 max)")
+      UI.message("Distribution certificate count OK (#{dist_certs.count}/2 max)")
     end
   rescue => e
-    UI.important("Certificate check skipped: #{e.message}")
+    UI.important("Certificate cleanup skipped: #{e.message}")
   end
 end
 
@@ -310,10 +323,14 @@ platform :ios do
 
     api_key = setup_api_key
 
+    # Revoke stale development certificates from Apple portal
+    # (CI runners are ephemeral — old dev certs become orphaned and block automatic signing)
+    cleanup_certificates(api_key)
+
     UI.message("Using xcodebuild automatic cloud signing with App Store Connect API...")
 
     # Build iOS app with automatic signing + cloud-managed certs via ASC API key
-    # CODE_SIGN_STYLE=Automatic + -allowProvisioningUpdates + distribution cert in keychain
+    # Distribution cert imported in keychain, -allowProvisioningUpdates handles profiles
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
