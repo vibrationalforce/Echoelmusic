@@ -211,21 +211,19 @@ def cleanup_certificates(api_key)
 
     all_certs = Spaceship::ConnectAPI::Certificate.all
 
-    # Clean up stale DEVELOPMENT certs (CI runners are ephemeral, dev certs become orphaned)
-    # Only revoke if over the limit (Apple allows ~5 per type) to avoid race conditions
-    # when multiple platform builds run concurrently
+    # Revoke ALL stale DEVELOPMENT certs (CI runners are ephemeral, private keys are lost)
+    # xcodebuild -allowProvisioningUpdates will create fresh ones during archive
+    # IMPORTANT: Only run ONE platform build at a time to avoid race conditions
     dev_certs = all_certs.select { |c| c.certificate_type.include?("DEVELOPMENT") }
-    UI.message("Found #{dev_certs.count} development certificate(s)")
-    if dev_certs.count > 4
-      sorted_dev = dev_certs.sort_by { |c| parse_cert_date(c.expiration_date) }.reverse
-      to_revoke_dev = sorted_dev[2..-1]  # Keep the 2 newest
-      to_revoke_dev.each do |cert|
-        UI.message("  Revoking stale dev cert: #{cert.id} (#{cert.certificate_type})")
+    if dev_certs.any?
+      UI.message("Found #{dev_certs.count} stale development certificate(s) — revoking for CI...")
+      dev_certs.each do |cert|
+        UI.message("  Revoking: #{cert.id} (#{cert.certificate_type})")
         cert.delete!
       end
-      UI.success("Revoked #{to_revoke_dev.count} stale development certificate(s), kept 2 newest")
+      UI.success("Revoked #{dev_certs.count} development certificate(s) — xcodebuild will create fresh ones")
     else
-      UI.message("Development certificate count OK (#{dev_certs.count} total)")
+      UI.message("No development certificates to clean up")
     end
 
     # Check distribution certs (keep max 2)
