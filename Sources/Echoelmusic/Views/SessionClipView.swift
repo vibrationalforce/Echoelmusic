@@ -133,8 +133,8 @@ struct SessionClipView: View {
             .glassCard()
 
             // Track Headers
-            ForEach(tracks) { track in
-                trackHeaderView(for: track)
+            ForEach(0..<tracks.count, id: \.self) { index in
+                makeTrackHeader(track: tracks[index], index: index)
             }
 
             Spacer()
@@ -159,15 +159,14 @@ struct SessionClipView: View {
         }
     }
 
-    private func trackHeaderView(for track: SessionTrack) -> some View {
-        let index = session.tracks.firstIndex(where: { $0.id == track.id }) ?? 0
-        return TrackHeaderCell(
+    private func makeTrackHeader(track: SessionTrack, index: Int) -> some View {
+        TrackHeaderCell(
             track: track,
             isSelected: selectedTrack == index,
             onSelect: { selectedTrack = index },
-            onMute: { session.toggleMute(index) },
-            onSolo: { session.toggleSolo(index) },
-            onArm: { session.toggleArm(index) },
+            onMute: { self.session.toggleMute(index) },
+            onSolo: { self.session.toggleSolo(index) },
+            onArm: { self.session.toggleArm(index) },
             onInstrument: {
                 selectedTrack = index
                 showInstrumentBrowser = true
@@ -190,14 +189,24 @@ struct SessionClipView: View {
         }
     }
 
+    private func clipForSlot(_ trackIndex: Int, _ sceneIndex: Int, _ clips: [[SessionClip?]]) -> SessionClip? {
+        guard trackIndex < clips.count, sceneIndex < clips[trackIndex].count else { return nil }
+        return clips[trackIndex][sceneIndex]
+    }
+
+    private func isSlotPlaying(_ trackIndex: Int, _ sceneIndex: Int, _ clips: [[SessionClip?]], _ activeScene: Int?) -> Bool {
+        guard activeScene == sceneIndex else { return false }
+        return clipForSlot(trackIndex, sceneIndex, clips) != nil
+    }
+
     private func makeClipSlotRows(tracks: [SessionTrack], scenes: [SessionScene], clips: [[SessionClip?]], activeScene: Int?) -> some View {
         ForEach(0..<tracks.count, id: \.self) { trackIndex in
             HStack(spacing: 2) {
                 ForEach(0..<scenes.count, id: \.self) { sceneIndex in
                     ClipSlotCell(
-                        clip: (trackIndex < clips.count && sceneIndex < clips[trackIndex].count) ? clips[trackIndex][sceneIndex] : nil,
+                        clip: clipForSlot(trackIndex, sceneIndex, clips),
                         trackColor: tracks[trackIndex].color,
-                        isPlaying: activeScene == sceneIndex && (trackIndex < clips.count && sceneIndex < clips[trackIndex].count && clips[trackIndex][sceneIndex] != nil),
+                        isPlaying: isSlotPlaying(trackIndex, sceneIndex, clips, activeScene),
                         onTap: { self.session.toggleClip(track: trackIndex, scene: sceneIndex) },
                         onDoubleTap: { self.session.editClip(track: trackIndex, scene: sceneIndex) },
                         onStop: { self.session.stopClip(track: trackIndex, scene: sceneIndex) }
