@@ -148,12 +148,14 @@ struct SessionClipView: View {
     private var clipGrid: some View {
         let tracks = session.tracks
         let scenes = session.scenes
+        let clips = session.clips
+        let activeScene = session.activeScene
         return VStack(spacing: 2) {
             // Scene Headers
             makeClipSceneHeaders(scenes: scenes)
 
             // Clip Slots
-            makeClipSlotRows(tracks: tracks, scenes: scenes)
+            makeClipSlotRows(tracks: tracks, scenes: scenes, clips: clips, activeScene: activeScene)
         }
     }
 
@@ -188,17 +190,17 @@ struct SessionClipView: View {
         }
     }
 
-    private func makeClipSlotRows(tracks: [SessionTrack], scenes: [SessionScene]) -> some View {
+    private func makeClipSlotRows(tracks: [SessionTrack], scenes: [SessionScene], clips: [[SessionClip?]], activeScene: Int?) -> some View {
         ForEach(0..<tracks.count, id: \.self) { trackIndex in
             HStack(spacing: 2) {
                 ForEach(0..<scenes.count, id: \.self) { sceneIndex in
                     ClipSlotCell(
-                        clip: session.clipAt(track: trackIndex, scene: sceneIndex),
+                        clip: (trackIndex < clips.count && sceneIndex < clips[trackIndex].count) ? clips[trackIndex][sceneIndex] : nil,
                         trackColor: tracks[trackIndex].color,
-                        isPlaying: session.isClipPlaying(track: trackIndex, scene: sceneIndex),
-                        onTap: { session.toggleClip(track: trackIndex, scene: sceneIndex) },
-                        onDoubleTap: { session.editClip(track: trackIndex, scene: sceneIndex) },
-                        onStop: { session.stopClip(track: trackIndex, scene: sceneIndex) }
+                        isPlaying: activeScene == sceneIndex && (trackIndex < clips.count && sceneIndex < clips[trackIndex].count && clips[trackIndex][sceneIndex] != nil),
+                        onTap: { self.session.toggleClip(track: trackIndex, scene: sceneIndex) },
+                        onDoubleTap: { self.session.editClip(track: trackIndex, scene: sceneIndex) },
+                        onStop: { self.session.stopClip(track: trackIndex, scene: sceneIndex) }
                     )
                 }
             }

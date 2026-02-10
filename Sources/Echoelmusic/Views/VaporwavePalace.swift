@@ -463,19 +463,21 @@ struct VaporwavePalace: View {
         bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak healthKitManager] _ in
             guard let hkManager = healthKitManager else { return }
 
-            withAnimation(.easeInOut(duration: 0.5)) {
-                glowIntensity = CGFloat(hkManager.hrvCoherence / 100.0)
+            Task { @MainActor in
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    glowIntensity = CGFloat(hkManager.hrvCoherence / 100.0)
+                }
+
+                // Route Bio-Daten durch UniversalCore - verteilt automatisch an ALLE Systeme
+                EchoelUniversalCore.shared.receiveBioData(
+                    heartRate: hkManager.heartRate,
+                    hrv: hkManager.hrvRMSSD,
+                    coherence: hkManager.hrvCoherence
+                )
+
+                // Update System Status für UI
+                systemStatus = EchoelUniversalCore.shared.getSystemStatus()
             }
-
-            // Route Bio-Daten durch UniversalCore - verteilt automatisch an ALLE Systeme
-            EchoelUniversalCore.shared.receiveBioData(
-                heartRate: hkManager.heartRate,
-                hrv: hkManager.hrvRMSSD,
-                coherence: hkManager.hrvCoherence
-            )
-
-            // Update System Status für UI
-            systemStatus = EchoelUniversalCore.shared.getSystemStatus()
         }
     }
 
