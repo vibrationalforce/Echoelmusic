@@ -96,6 +96,7 @@ extension MainNavigationHub.Workspace {
     }
 
     /// Keyboard shortcut for workspace (for macOS)
+    #if os(macOS) || os(iOS)
     var keyboardShortcut: KeyEquivalent? {
         switch self {
         case .palace: return "1"
@@ -112,6 +113,7 @@ extension MainNavigationHub.Workspace {
         case .settings: return ","
         }
     }
+    #endif
 }
 
 // MARK: - Preview

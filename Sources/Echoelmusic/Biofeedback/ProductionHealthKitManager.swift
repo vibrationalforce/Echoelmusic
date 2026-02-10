@@ -688,7 +688,6 @@ public class ProductionHealthKitManager {
 
     #if os(watchOS)
     /// Start a workout session for better real-time data
-    @available(watchOS 3.0, *)
     public func startWorkoutSession(activityType: HKWorkoutActivityType = .mindAndBody) {
         guard isAuthorized else {
             logger.warning("⚠️ Not authorized for workout sessions", category: .biofeedback)
@@ -731,7 +730,6 @@ public class ProductionHealthKitManager {
     }
 
     /// Stop current workout session
-    @available(watchOS 3.0, *)
     public func stopWorkoutSession(completion: ((HKWorkout?) -> Void)? = nil) {
         guard let session = workoutSession, let builder = workoutBuilder else {
             logger.warning("⚠️ No active workout session", category: .biofeedback)

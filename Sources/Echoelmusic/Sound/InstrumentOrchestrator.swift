@@ -89,7 +89,7 @@ class InstrumentOrchestrator: ObservableObject {
         audioEngine = AVAudioEngine()
 
         guard let engine = audioEngine else {
-            log.log(LogLevel.error, category: LogCategory.audio, "❌ InstrumentOrchestrator: Failed to create AVAudioEngine")
+            print("[Echoelmusic] ❌ InstrumentOrchestrator: Failed to create AVAudioEngine")
             return
         }
 
@@ -105,7 +105,7 @@ class InstrumentOrchestrator: ObservableObject {
 
         // Connect player → mixer → output (SAFE: ohne force unwrap)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
-            log.log(LogLevel.error, category: LogCategory.audio, "❌ InstrumentOrchestrator: Failed to create audio format")
+            print("[Echoelmusic] ❌ InstrumentOrchestrator: Failed to create audio format")
             return
         }
         engine.connect(player, to: mixer, format: format)
@@ -116,7 +116,7 @@ class InstrumentOrchestrator: ObservableObject {
             isPlaying = true
             log.audio("🎵 InstrumentOrchestrator: Audio engine started")
         } catch let engineError {
-            log.log(LogLevel.error, category: LogCategory.audio, "❌ InstrumentOrchestrator: Failed to start audio engine: \(engineError)")
+            print("[Echoelmusic] ❌ InstrumentOrchestrator: Failed to start audio engine: \(engineError)")
         }
     }
 

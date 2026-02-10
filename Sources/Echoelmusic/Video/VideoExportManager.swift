@@ -64,10 +64,14 @@ class VideoExportManager: ObservableObject {
             case .hevc_main, .hevc_main10:
                 return .hevc
             case .prores422:
+                #if os(visionOS)
+                return .hevc // ProRes unavailable on visionOS
+                #else
                 return .proRes422
+                #endif
             case .prores4444:
                 #if os(visionOS)
-                return .proRes422 // proRes4444 unavailable on visionOS
+                return .hevc // ProRes unavailable on visionOS
                 #else
                 return .proRes4444
                 #endif
