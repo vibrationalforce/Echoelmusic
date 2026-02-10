@@ -753,7 +753,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|BUILD FAILED|ARCHIVE FAILED|No signing certificate|Code Sign error|undefined symbol|ld:|linker|fatal" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
+          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
           echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
           TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail")
           echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
@@ -898,7 +898,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|BUILD FAILED|ARCHIVE FAILED|No signing certificate|Code Sign error|undefined symbol|ld:|linker|fatal" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
+          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
           echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
           TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail")
           echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
@@ -1043,7 +1043,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|BUILD FAILED|ARCHIVE FAILED|No signing certificate|Code Sign error|undefined symbol|ld:|linker|fatal" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
+          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
           echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
           TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail")
           echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
