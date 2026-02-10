@@ -1036,7 +1036,7 @@ public final class ProStreamEngine: ObservableObject {
     // MARK: - Initialization
 
     public init() {
-        log.log(level: .info, category: .streaming, message: "ProStreamEngine initialized")
+        log.log(.info, category: .streaming, "ProStreamEngine initialized")
     }
 
     deinit {
@@ -1050,7 +1050,7 @@ public final class ProStreamEngine: ObservableObject {
     public func addScene(name: String, color: SceneColor = .blue) -> ProStreamScene {
         let scene = ProStreamScene(name: name, color: color)
         scenes.append(scene)
-        log.log(level: .info, category: .streaming, message: "Scene added: \(name)")
+        log.log(.info, category: .streaming, "Scene added: \(name)")
 
         // If this is the first scene, make it the program scene
         if scenes.count == 1 {
@@ -1072,7 +1072,7 @@ public final class ProStreamEngine: ObservableObject {
         if previewScene?.id == id {
             previewScene = nil
         }
-        log.log(level: .info, category: .streaming, message: "Scene removed: \(id)")
+        log.log(.info, category: .streaming, "Scene removed: \(id)")
     }
 
     /// Switch the live (program) output to a scene using the global transition
@@ -1122,18 +1122,18 @@ public final class ProStreamEngine: ObservableObject {
         }
 
         previewScene = scene
-        log.log(level: .debug, category: .streaming, message: "Preview set to '\(scene.name)'")
+        log.log(.debug, category: .streaming, "Preview set to '\(scene.name)'")
     }
 
     /// Studio mode: send the preview scene to program using the global transition
     public func transitionToProgram() {
         guard studioMode, let preview = previewScene else {
-            log.log(level: .warning, category: .streaming, message: "Cannot transition: studio mode off or no preview")
+            log.log(.warning, category: .streaming, "Cannot transition: studio mode off or no preview")
             return
         }
         switchScene(preview, transition: preview.transition)
         previewScene = nil
-        log.log(level: .info, category: .streaming, message: "Preview transitioned to program")
+        log.log(.info, category: .streaming, "Preview transitioned to program")
     }
 
     /// Studio mode: quick transition with a specific type (bypasses scene transition setting)
@@ -1150,7 +1150,7 @@ public final class ProStreamEngine: ObservableObject {
     @discardableResult
     public func addSource(to sceneID: UUID, type: StreamSourceType, name: String) -> StreamSource? {
         guard let sceneIndex = scenes.firstIndex(where: { $0.id == sceneID }) else {
-            log.log(level: .error, category: .streaming, message: "Scene not found: \(sceneID)")
+            log.log(.error, category: .streaming, "Scene not found: \(sceneID)")
             return nil
         }
 
@@ -1166,7 +1166,7 @@ public final class ProStreamEngine: ObservableObject {
             break
         }
 
-        log.log(level: .info, category: .streaming, message: "Source '\(name)' added to scene")
+        log.log(.info, category: .streaming, "Source '\(name)' added to scene")
         return source
     }
 
@@ -1175,7 +1175,7 @@ public final class ProStreamEngine: ObservableObject {
         guard let sceneIndex = scenes.firstIndex(where: { $0.id == sceneID }) else { return }
         scenes[sceneIndex].sources.removeAll { $0.id == sourceID }
         audioMixer.channels.removeAll { $0.sourceID == sourceID }
-        log.log(level: .info, category: .streaming, message: "Source removed: \(sourceID)")
+        log.log(.info, category: .streaming, "Source removed: \(sourceID)")
     }
 
     /// Toggle visibility of a source within its scene
@@ -1210,7 +1210,7 @@ public final class ProStreamEngine: ObservableObject {
     /// Start streaming on a specific output
     public func startStream(output: inout StreamOutput) {
         guard output.state == .idle || output.state == .error("") else {
-            log.log(level: .warning, category: .streaming, message: "Output '\(output.name)' already active")
+            log.log(.warning, category: .streaming, "Output '\(output.name)' already active")
             return
         }
 
@@ -1224,7 +1224,7 @@ public final class ProStreamEngine: ObservableObject {
             self.updateOutput(output)
             self.refreshLiveState()
             self.startStatsCollection()
-            self.log.log(level: .info, category: .streaming, message: "Stream started: \(output.name)")
+            self.log.log(.info, category: .streaming, "Stream started: \(output.name)")
         }
     }
 
@@ -1234,7 +1234,7 @@ public final class ProStreamEngine: ObservableObject {
         output.stats = OutputStats()
         updateOutput(output)
         refreshLiveState()
-        log.log(level: .info, category: .streaming, message: "Stream stopped: \(output.name)")
+        log.log(.info, category: .streaming, "Stream stopped: \(output.name)")
     }
 
     /// Start all configured stream outputs
@@ -1254,7 +1254,7 @@ public final class ProStreamEngine: ObservableObject {
             }
             self.refreshLiveState()
             self.startStatsCollection()
-            self.log.log(level: .info, category: .streaming, message: "All streams started (\(self.outputs.count) outputs)")
+            self.log.log(.info, category: .streaming, "All streams started (\(self.outputs.count) outputs)")
         }
     }
 
@@ -1266,7 +1266,7 @@ public final class ProStreamEngine: ObservableObject {
         }
         refreshLiveState()
         stopStatsCollection()
-        log.log(level: .info, category: .streaming, message: "All streams stopped")
+        log.log(.info, category: .streaming, "All streams stopped")
     }
 
     /// Start local recording
@@ -1287,7 +1287,7 @@ public final class ProStreamEngine: ObservableObject {
         }
 
         startStatsCollection()
-        log.log(level: .info, category: .recording, message: "Recording started")
+        log.log(.info, category: .recording, "Recording started")
     }
 
     /// Stop local recording
@@ -1299,7 +1299,7 @@ public final class ProStreamEngine: ObservableObject {
             outputs[index].state = .idle
         }
 
-        log.log(level: .info, category: .recording, message: "Recording stopped")
+        log.log(.info, category: .recording, "Recording stopped")
     }
 
     /// Toggle the replay buffer on/off
@@ -1326,7 +1326,7 @@ public final class ProStreamEngine: ObservableObject {
         } else if let index = outputs.firstIndex(where: { $0.type == .virtualCamera }) {
             outputs[index].state = .active
         }
-        log.log(level: .info, category: .streaming, message: "Virtual camera started")
+        log.log(.info, category: .streaming, "Virtual camera started")
     }
 
     /// Stop the virtual camera output
@@ -1334,7 +1334,7 @@ public final class ProStreamEngine: ObservableObject {
         if let index = outputs.firstIndex(where: { $0.type == .virtualCamera }) {
             outputs[index].state = .idle
         }
-        log.log(level: .info, category: .streaming, message: "Virtual camera stopped")
+        log.log(.info, category: .streaming, "Virtual camera stopped")
     }
 
     // MARK: - Hotkey Management
@@ -1345,7 +1345,7 @@ public final class ProStreamEngine: ObservableObject {
         let hotkeyName = name.isEmpty ? "Hotkey \(hotkeys.count + 1)" : name
         let hotkey = StreamHotkey(name: hotkeyName, trigger: trigger, action: action)
         hotkeys.append(hotkey)
-        log.log(level: .debug, category: .streaming, message: "Hotkey registered: \(hotkeyName)")
+        log.log(.debug, category: .streaming, "Hotkey registered: \(hotkeyName)")
         return hotkey
     }
 
@@ -1359,7 +1359,7 @@ public final class ProStreamEngine: ObservableObject {
         for hotkey in hotkeys {
             if triggersMatch(hotkey.trigger, trigger) {
                 executeAction(hotkey.action)
-                log.log(level: .debug, category: .streaming, message: "Hotkey fired: \(hotkey.name)")
+                log.log(.debug, category: .streaming, "Hotkey fired: \(hotkey.name)")
             }
         }
     }
@@ -1406,7 +1406,7 @@ public final class ProStreamEngine: ObservableObject {
                 scenes[i].isPreview = false
             }
         }
-        log.log(level: .info, category: .streaming, message: "Studio mode \(studioMode ? "enabled" : "disabled")")
+        log.log(.info, category: .streaming, "Studio mode \(studioMode ? "enabled" : "disabled")")
     }
 
     // MARK: - Output Management
@@ -1416,7 +1416,7 @@ public final class ProStreamEngine: ObservableObject {
     public func addOutput(name: String, type: OutputType, config: OutputConfig = OutputConfig()) -> StreamOutput {
         let output = StreamOutput(name: name, type: type, config: config)
         outputs.append(output)
-        log.log(level: .info, category: .streaming, message: "Output added: \(name) (\(type.rawValue))")
+        log.log(.info, category: .streaming, "Output added: \(name) (\(type.rawValue))")
         return output
     }
 
@@ -1447,7 +1447,7 @@ public final class ProStreamEngine: ObservableObject {
         engine.addSource(to: endScene.id, type: .colorSource(color: "#000000"), name: "Black Background")
         engine.addSource(to: endScene.id, type: .textGDI, name: "Thanks for Watching")
 
-        engine.log.log(level: .info, category: .streaming, message: "Default setup created (3 scenes)")
+        engine.log.log(.info, category: .streaming, "Default setup created (3 scenes)")
         return engine
     }
 
@@ -1473,7 +1473,7 @@ public final class ProStreamEngine: ObservableObject {
         engine.addSource(to: vizScene.id, type: .visualizer, name: "Full Screen Visualizer")
         engine.addSource(to: vizScene.id, type: .audioOutput(device: "default"), name: "DAW Audio")
 
-        engine.log.log(level: .info, category: .streaming, message: "Music stream setup created (3 scenes)")
+        engine.log.log(.info, category: .streaming, "Music stream setup created (3 scenes)")
         return engine
     }
 
@@ -1507,7 +1507,7 @@ public final class ProStreamEngine: ObservableObject {
         engine.addSource(to: pipScene.id, type: .camera(index: 0), name: "Crowd Camera")
         engine.addSource(to: pipScene.id, type: .audioInput(device: "default"), name: "Main Audio")
 
-        engine.log.log(level: .info, category: .streaming, message: "VJ stream setup created (4 scenes)")
+        engine.log.log(.info, category: .streaming, "VJ stream setup created (4 scenes)")
         return engine
     }
 
@@ -1543,11 +1543,11 @@ public final class ProStreamEngine: ObservableObject {
         engine.addSource(to: screenScene.id, type: .audioInput(device: "mic-guest"), name: "Guest Mic")
 
         // Scene 5: BRB
-        let brbScene = engine.addScene(name: "BRB", color: .red)
+        let brbScene = engine.addScene(name: "BRB", color: SceneColor.red)
         engine.addSource(to: brbScene.id, type: .imageFile(URL(fileURLWithPath: "/podcast-brb.png")), name: "BRB Card")
         engine.addSource(to: brbScene.id, type: .audioInput(device: "default"), name: "Background Music")
 
-        engine.log.log(level: .info, category: .streaming, message: "Podcast setup created (5 scenes)")
+        engine.log.log(.info, category: .streaming, "Podcast setup created (5 scenes)")
         return engine
     }
 

@@ -610,7 +610,7 @@ public class ProMixEngine: ObservableObject {
             inputSource: .bus,
             color: .slate
         )
-        logger.log(level: .info, category: .audio, message: "ProMixEngine initialized (\(sampleRate)Hz, \(bufferSize) frames)")
+        logger.log(.info, category: .audio, "ProMixEngine initialized (\(sampleRate)Hz, \(bufferSize) frames)")
     }
 
     // MARK: - Channel Management
@@ -634,7 +634,7 @@ public class ProMixEngine: ObservableObject {
         // Route to master by default
         routingMatrix.addConnection(from: channel.id, to: masterChannel.id)
 
-        logger.log(level: .debug, category: .audio, message: "Added channel '\(name)' (\(type.rawValue))")
+        logger.log(.debug, category: .audio, "Added channel '\(name)' (\(type.rawValue))")
         return channel
     }
 
@@ -657,7 +657,7 @@ public class ProMixEngine: ObservableObject {
         automationLanes.removeAll { $0.channelID == id }
 
         channels.remove(at: index)
-        logger.log(level: .debug, category: .audio, message: "Removed channel '\(name)'")
+        logger.log(.debug, category: .audio, "Removed channel '\(name)'")
     }
 
     // MARK: - Insert Effects
@@ -674,14 +674,14 @@ public class ProMixEngine: ObservableObject {
     public func addInsert(to channelID: UUID, effect: ProEffectType) -> InsertSlot? {
         guard let index = channelIndex(for: channelID) else { return nil }
         guard channels[index].inserts.count < ChannelStrip.maxInserts else {
-            logger.log(level: .warning, category: .audio, message: "Insert limit reached on '\(channels[index].name)'")
+            logger.log(.warning, category: .audio, "Insert limit reached on '\(channels[index].name)'")
             return nil
         }
 
         let slot = InsertSlot(effectType: effect, parameters: defaultParameters(for: effect))
         channels[index].inserts.append(slot)
 
-        logger.log(level: .debug, category: .audio, message: "Added \(effect.rawValue) insert to '\(channels[index].name)'")
+        logger.log(.debug, category: .audio, "Added \(effect.rawValue) insert to '\(channels[index].name)'")
         return slot
     }
 
@@ -697,7 +697,7 @@ public class ProMixEngine: ObservableObject {
     public func addSend(from sourceID: UUID, to destinationID: UUID, level: Float = 0.5, preFader: Bool = false) {
         guard let index = channelIndex(for: sourceID) else { return }
         guard channels[index].sends.count < ChannelStrip.maxSends else {
-            logger.log(level: .warning, category: .audio, message: "Send limit reached on '\(channels[index].name)'")
+            logger.log(.warning, category: .audio, "Send limit reached on '\(channels[index].name)'")
             return
         }
 
@@ -709,7 +709,7 @@ public class ProMixEngine: ObservableObject {
         )
         channels[index].sends.append(send)
 
-        logger.log(level: .debug, category: .audio, message: "Added send from '\(channels[index].name)' to destination (level: \(level))")
+        logger.log(.debug, category: .audio, "Added send from '\(channels[index].name)' to destination (level: \(level))")
     }
 
     // MARK: - Bus & Aux Management
@@ -721,7 +721,7 @@ public class ProMixEngine: ObservableObject {
     @discardableResult
     public func createAuxBus(name: String) -> ChannelStrip {
         let aux = addChannel(name: name, type: .aux)
-        logger.log(level: .info, category: .audio, message: "Created aux bus '\(name)'")
+        logger.log(.info, category: .audio, "Created aux bus '\(name)'")
         return aux
     }
 
@@ -744,7 +744,7 @@ public class ProMixEngine: ObservableObject {
             channels[index].outputDestination = bus.id
         }
 
-        logger.log(level: .info, category: .audio, message: "Created bus group '\(name)' with \(channelIDs.count) channels")
+        logger.log(.info, category: .audio, "Created bus group '\(name)' with \(channelIDs.count) channels")
         return bus
     }
 
@@ -769,7 +769,7 @@ public class ProMixEngine: ObservableObject {
 
         routingMatrix.addConnection(from: sidechainSourceID, to: compressorChannelID, level: 1.0)
 
-        logger.log(level: .debug, category: .audio, message: "Sidechain: source -> '\(channels[index].name)'")
+        logger.log(.debug, category: .audio, "Sidechain: source -> '\(channels[index].name)'")
     }
 
     // MARK: - Solo
@@ -793,7 +793,7 @@ public class ProMixEngine: ObservableObject {
             channels[targetIndex].solo = true
         }
 
-        logger.log(level: .debug, category: .audio, message: "Solo exclusive: '\(channels[targetIndex].name)' = \(!wasAlreadySoloed)")
+        logger.log(.debug, category: .audio, "Solo exclusive: '\(channels[targetIndex].name)' = \(!wasAlreadySoloed)")
     }
 
     // MARK: - Audio Processing
@@ -962,7 +962,7 @@ public class ProMixEngine: ObservableObject {
         channelSnapshots.append(masterSnap)
 
         let snapshot = MixSnapshot(name: snapshotName, channelStates: channelSnapshots)
-        logger.log(level: .info, category: .audio, message: "Mix snapshot saved: '\(snapshotName)' (\(channelSnapshots.count) channels)")
+        logger.log(.info, category: .audio, "Mix snapshot saved: '\(snapshotName)' (\(channelSnapshots.count) channels)")
         return snapshot
     }
 
@@ -994,7 +994,7 @@ public class ProMixEngine: ObservableObject {
             channels[index].inserts = state.inserts
         }
 
-        logger.log(level: .info, category: .audio, message: "Mix snapshot recalled: '\(snapshot.name)'")
+        logger.log(.info, category: .audio, "Mix snapshot recalled: '\(snapshot.name)'")
     }
 
     // MARK: - Default Session
@@ -1074,7 +1074,7 @@ public class ProMixEngine: ObservableObject {
             }
         }
 
-        engine.logger.log(level: .info, category: .audio, message: "Default session created: 8 tracks, 2 aux buses, master")
+        engine.logger.log(.info, category: .audio, "Default session created: 8 tracks, 2 aux buses, master")
         return engine
     }
 
