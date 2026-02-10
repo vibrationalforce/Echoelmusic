@@ -58,7 +58,7 @@ enum TrackColor: String, Codable, CaseIterable {
 struct TrackAutomationLane: Identifiable, Codable {
     let id: UUID
     var parameter: AutomatedParameter
-    var points: [AutomationPoint]
+    var points: [TrackAutomationPoint]
     var isVisible: Bool
     var isEnabled: Bool
     var isRecording: Bool
@@ -107,7 +107,7 @@ struct TrackAutomationLane: Identifiable, Codable {
 
 // MARK: - Automation Point
 
-struct AutomationPoint: Identifiable, Codable {
+struct TrackAutomationPoint: Identifiable, Codable {
     let id: UUID
     var time: TimeInterval
     var value: Float      // 0.0 to 1.0 normalized
@@ -401,9 +401,9 @@ struct Track: Identifiable, Codable {
         modifiedAt = Date()
     }
 
-    mutating func addAutomationPoint(laneID: UUID, time: TimeInterval, value: Float, curve: AutomationPoint.CurveType = .linear) {
+    mutating func addAutomationPoint(laneID: UUID, time: TimeInterval, value: Float, curve: TrackAutomationPoint.CurveType = .linear) {
         if let index = automationLanes.firstIndex(where: { $0.id == laneID }) {
-            let point = AutomationPoint(time: time, value: value, curveType: curve)
+            let point = TrackAutomationPoint(time: time, value: value, curveType: curve)
             automationLanes[index].points.append(point)
             automationLanes[index].points.sort { $0.time < $1.time }
             modifiedAt = Date()
