@@ -786,9 +786,9 @@ public struct ReplayBuffer: Sendable {
         let url = URL(fileURLWithPath: outputPath).appendingPathComponent(fileName)
         lastSavedURL = url
         ProfessionalLogger.shared.log(
-            level: .info,
+            .info,
             category: .streaming,
-            message: "Replay saved to \(url.lastPathComponent)"
+            "Replay saved to \(url.lastPathComponent)"
         )
         return url
     }
@@ -1104,9 +1104,9 @@ public final class ProStreamEngine: ObservableObject {
         programScene = scene
 
         log.log(
-            level: .info,
+            .info,
             category: .streaming,
-            message: "Scene switched to '\(scene.name)' (transition: \(transition.duration)s)"
+            "Scene switched to '\(scene.name)' (transition: \(transition.duration)s)"
         )
     }
 
@@ -1306,9 +1306,9 @@ public final class ProStreamEngine: ObservableObject {
     public func toggleReplayBuffer() {
         replayBuffer.isActive.toggle()
         log.log(
-            level: .info,
+            .info,
             category: .streaming,
-            message: "Replay buffer \(replayBuffer.isActive ? "enabled" : "disabled") (\(replayBuffer.bufferDuration)s)"
+            "Replay buffer \(replayBuffer.isActive ? "enabled" : "disabled") (\(replayBuffer.bufferDuration)s)"
         )
     }
 
