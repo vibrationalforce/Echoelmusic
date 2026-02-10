@@ -332,25 +332,37 @@ targets:
     type: application
     platform: watchOS
     sources:
-      - path: Sources/Echoelmusic
-        type: group
+      # watchOS: only include directories compatible with watchOS SDK
+      # (no Metal, CoreImage, CoreHaptics, AVFoundation cameras, heavy ML)
+      - path: Sources/Echoelmusic/WatchOS
+      - path: Sources/Echoelmusic/Core
+      - path: Sources/Echoelmusic/Biofeedback
+      - path: Sources/Echoelmusic/Audio
         excludes:
-          - "**/*.xcassets"
-          - "**/VisionOS/**"
-          - "**/tvOS/**"
-          - "**/Platforms/**"
-          - "**/Targets/**"
-          - "**/Widgets/**"
-          - "**/LiveActivity/**"
-          - "**/AppClips/**"
-          - "**/LED/**"
-          - "**/Stream/**"
-          - "**/Recording/**"
-          - "**/Video/**"
-          - "**/Shaders/**"
           - "**/*.metal"
-          - "**/README.md"
-          - "**/*.md"
+      - path: Sources/Echoelmusic/Accessibility
+      - path: Sources/Echoelmusic/Localization
+      - path: Sources/Echoelmusic/Presets
+      - path: Sources/Echoelmusic/Wellness
+      - path: Sources/Echoelmusic/Business
+      - path: Sources/Echoelmusic/Unified
+      - path: Sources/Echoelmusic/Spatial
+      - path: Sources/Echoelmusic/Privacy
+      - path: Sources/Echoelmusic/Legal
+      - path: Sources/Echoelmusic/Quantum
+        excludes:
+          - "**/*.metal"
+      - path: Sources/Echoelmusic/Collaboration
+      - path: Sources/Echoelmusic/Social
+      - path: Sources/Echoelmusic/Lambda
+      - path: Sources/Echoelmusic/WatchSync
+      - path: Sources/Echoelmusic/SharePlay
+      - path: Sources/Echoelmusic/Shortcuts
+      - path: Sources/Echoelmusic/MusicTheory
+      - path: Sources/Echoelmusic/Sound
+      - path: Sources/Echoelmusic/MIDI
+      - path: Sources/Echoelmusic/Analytics
+      - path: Sources/Echoelmusic/Theme
     resources:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
         type: folder
