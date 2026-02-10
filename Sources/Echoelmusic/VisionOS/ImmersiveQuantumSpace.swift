@@ -11,7 +11,9 @@
 #if os(visionOS)
 import SwiftUI
 import RealityKit
+#if canImport(RealityKitContent)
 import RealityKitContent
+#endif
 
 // MARK: - Immersive Quantum Space
 
