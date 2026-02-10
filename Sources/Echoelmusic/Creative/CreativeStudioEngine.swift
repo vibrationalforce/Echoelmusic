@@ -9,7 +9,9 @@
 
 import Foundation
 import Combine
+#if canImport(CoreML)
 import CoreML
+#endif
 import CoreGraphics
 
 #if canImport(UIKit)

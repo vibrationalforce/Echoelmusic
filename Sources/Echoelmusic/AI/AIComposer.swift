@@ -1,6 +1,8 @@
 import Foundation
 import Combine
+#if canImport(CoreML)
 import CoreML
+#endif
 import Accelerate
 
 /// AI Composer - CoreML-powered Music Generation

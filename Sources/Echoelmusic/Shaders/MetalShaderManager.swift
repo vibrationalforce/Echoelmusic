@@ -1,6 +1,8 @@
 import Foundation
+#if canImport(Metal)
 import Metal
 import MetalKit
+#endif
 import simd
 
 #if os(iOS) || os(macOS) || os(tvOS) || os(visionOS)

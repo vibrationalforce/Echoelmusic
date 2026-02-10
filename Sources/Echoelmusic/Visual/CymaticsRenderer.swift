@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(Metal)
 import MetalKit
+#endif
 import SwiftUI
 
 /// Metal-based Cymatics Renderer

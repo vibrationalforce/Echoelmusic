@@ -9,7 +9,9 @@
 import Foundation
 import SwiftUI
 import Combine
+#if canImport(MapKit)
 import MapKit
+#endif
 import CoreLocation
 import AuthenticationServices
 import CloudKit

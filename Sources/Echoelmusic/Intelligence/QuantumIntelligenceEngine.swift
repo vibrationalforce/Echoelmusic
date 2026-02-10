@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(CoreML)
 import CoreML
+#endif
 import Accelerate
 import simd
 import Combine

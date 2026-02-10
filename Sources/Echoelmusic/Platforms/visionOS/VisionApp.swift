@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
+#if canImport(RealityKit)
 import RealityKit
+#endif
 import AVFoundation
 import Combine
 

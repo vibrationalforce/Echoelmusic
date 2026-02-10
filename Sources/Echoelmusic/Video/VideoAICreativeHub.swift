@@ -1,6 +1,8 @@
 import SwiftUI
 import AVFoundation
+#if canImport(CoreML)
 import CoreML
+#endif
 #if canImport(Vision)
 import Vision
 #endif

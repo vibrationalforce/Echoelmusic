@@ -1,6 +1,8 @@
 import Foundation
+#if canImport(Metal)
 import Metal
 import MetalKit
+#endif
 import CoreImage
 import AVFoundation
 import Combine

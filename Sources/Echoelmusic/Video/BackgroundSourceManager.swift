@@ -1,7 +1,9 @@
 import Foundation
 import AVFoundation
+#if canImport(Metal)
 import Metal
 import MetalKit
+#endif
 import CoreImage
 import SwiftUI
 import Combine

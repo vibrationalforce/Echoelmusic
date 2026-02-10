@@ -10,8 +10,10 @@
 import Foundation
 import AVFoundation
 import CoreImage
+#if canImport(Metal)
 import Metal
 import MetalKit
+#endif
 import Combine
 import CoreMedia
 

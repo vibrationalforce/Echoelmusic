@@ -1,7 +1,9 @@
 import Foundation
 import Combine
+#if canImport(Metal)
 import Metal
 import MetalKit
+#endif
 #if canImport(UIKit)
 import UIKit
 #endif
