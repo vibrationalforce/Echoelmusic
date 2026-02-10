@@ -77,12 +77,12 @@ def build_xcargs_with_auth
   UI.message("API key written to: #{key_path}")
 
   args = [
-    "DEVELOPMENT_TEAM='#{TEAM_ID}'",
+    "DEVELOPMENT_TEAM=#{TEAM_ID}",
     "CODE_SIGN_STYLE=Automatic",
     "-allowProvisioningUpdates",
-    "-authenticationKeyPath '#{key_path}'",
-    "-authenticationKeyID '#{ENV['ASC_KEY_ID']}'",
-    "-authenticationKeyIssuerID '#{ENV['ASC_ISSUER_ID']}'",
+    "-authenticationKeyPath #{key_path}",
+    "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
+    "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
     "COMPILER_INDEX_STORE_ENABLE=NO"
   ]
 
@@ -313,7 +313,7 @@ platform :ios do
     UI.message("Using xcodebuild automatic cloud signing with App Store Connect API...")
 
     # Build iOS app with automatic cloud-managed signing
-    # xcodebuild handles certificates and profiles automatically via ASC API key
+    # Fastlane handles certificates and profiles automatically via ASC API key
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -331,7 +331,8 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth,
+      skip_profile_detection: true
     )
 
     # Verify IPA was created
@@ -368,7 +369,8 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth,
+      skip_profile_detection: true
     )
 
     upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER} - Bio-Reactive HRV")
@@ -398,7 +400,8 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth,
+      skip_profile_detection: true
     )
 
     upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER} - Big Screen Experience")
@@ -428,7 +431,8 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth,
+      skip_profile_detection: true
     )
 
     upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER} - Spatial Audio Immersive")
@@ -549,7 +553,8 @@ platform :mac do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth
+      xcargs: build_xcargs_with_auth,
+      skip_profile_detection: true
     )
 
     upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Standalone + AUv3 Plugins")
