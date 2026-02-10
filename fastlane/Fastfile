@@ -67,20 +67,43 @@ def setup_keychain
   { path: keychain_path, password: keychain_password }
 end
 
-# Build xcargs with App Store Connect API authentication for cloud-managed signing
-def build_xcargs_with_auth
-  # Write the ASC API key to disk so xcodebuild can use it for automatic signing
+# Write ASC API key to disk for xcodebuild authentication
+def write_api_key_to_disk
   key_dir = File.expand_path("~/.private_keys")
   FileUtils.mkdir_p(key_dir)
   key_path = File.join(key_dir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
   File.write(key_path, ENV['ASC_KEY_CONTENT'])
   UI.message("API key written to: #{key_path}")
+  key_path
+end
+
+# Build xcargs with App Store Connect API authentication for cloud-managed signing
+def build_xcargs_with_auth
+  key_path = write_api_key_to_disk
 
   args = [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
     "CODE_SIGN_STYLE=Automatic",
     "-allowProvisioningUpdates",
     "-allowProvisioningDeviceRegistration",
+    "-authenticationKeyPath #{key_path}",
+    "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
+    "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
+    "COMPILER_INDEX_STORE_ENABLE=NO"
+  ]
+
+  args.join(" ")
+end
+
+# Build xcargs that skip code signing during archive (for platforms without registered devices)
+# The export step handles signing with distribution cert + App Store profile
+def build_xcargs_no_sign
+  key_path = write_api_key_to_disk
+
+  args = [
+    "DEVELOPMENT_TEAM=#{TEAM_ID}",
+    "CODE_SIGNING_REQUIRED=NO",
+    "CODE_SIGNING_ALLOWED=NO",
     "-authenticationKeyPath #{key_path}",
     "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
     "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
@@ -380,9 +403,10 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
+    UI.message("Building watchOS without signing, export will handle distribution signing")
 
-    # Build watchOS app with cloud-managed signing
+    # Build watchOS app — skip signing during archive (no registered watchOS devices in CI)
+    # Export step uses distribution cert + App Store profile
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
@@ -395,7 +419,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_no_sign,
       skip_profile_detection: true
     )
 
@@ -412,9 +436,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
+    UI.message("Building tvOS without signing, export will handle distribution signing")
 
-    # Build tvOS app with cloud-managed signing
+    # Build tvOS app — skip signing during archive (no registered tvOS devices in CI)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-tvOS",
@@ -427,7 +451,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_no_sign,
       skip_profile_detection: true
     )
 
@@ -444,9 +468,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
+    UI.message("Building visionOS without signing, export will handle distribution signing")
 
-    # Build visionOS app with cloud-managed signing
+    # Build visionOS app — skip signing during archive (no registered visionOS devices in CI)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-visionOS",
@@ -459,7 +483,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_no_sign,
       skip_profile_detection: true
     )
 
@@ -567,10 +591,9 @@ platform :mac do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Using xcodebuild automatic signing with API authentication")
-    UI.message("Xcode will create/download certificates and profiles for main app + AUv3")
+    UI.message("Building macOS without signing, export will handle distribution signing")
 
-    # Build macOS app with cloud-managed signing
+    # Build macOS app — skip signing during archive (no registered Mac devices in CI)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -582,7 +605,7 @@ platform :mac do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_no_sign,
       skip_profile_detection: true
     )
 
