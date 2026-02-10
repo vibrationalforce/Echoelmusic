@@ -37,11 +37,11 @@ private struct SessionClipContent: View {
 
                         // Clip Grid
                         ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                            clipGrid
+                            makeClipGrid(session)
                         }
 
                         // Scene Launch
-                        sceneLaunchColumn
+                        makeSceneLaunchColumn(session)
                     }
                 }
 
@@ -169,13 +169,16 @@ private struct SessionClipContent: View {
 
     // MARK: - Clip Grid
 
-    private var clipGrid: some View {
-        let tracks = session.tracks
-        let scenes = session.scenes
-        return VStack(spacing: 2) {
+    @ViewBuilder
+    private func makeClipGrid(_ vm: SessionClipViewModel) -> some View {
+        let tracks = vm.tracks
+        let scenes = vm.scenes
+        let sceneCount = scenes.count
+        let trackCount = tracks.count
+        VStack(spacing: 2) {
             // Scene Headers
             HStack(spacing: 2) {
-                ForEach(Array(scenes.enumerated()), id: \.element.id) { idx, _ in
+                ForEach(0..<sceneCount, id: \.self) { idx in
                     Text("Scene \(idx + 1)")
                         .font(VaporwaveTypography.label())
                         .foregroundColor(VaporwaveColors.textTertiary)
@@ -184,16 +187,16 @@ private struct SessionClipContent: View {
             }
 
             // Clip Slots
-            ForEach(Array(tracks.enumerated()), id: \.element.id) { trackIndex, _ in
+            ForEach(0..<trackCount, id: \.self) { trackIndex in
                 HStack(spacing: 2) {
-                    ForEach(Array(scenes.enumerated()), id: \.element.id) { sceneIndex, _ in
+                    ForEach(0..<sceneCount, id: \.self) { sceneIndex in
                         ClipSlotCell(
-                            clip: session.clipAt(track: trackIndex, scene: sceneIndex),
+                            clip: vm.clipAt(track: trackIndex, scene: sceneIndex),
                             trackColor: tracks[trackIndex].color,
-                            isPlaying: session.isClipPlaying(track: trackIndex, scene: sceneIndex),
-                            onTap: { session.toggleClip(track: trackIndex, scene: sceneIndex) },
-                            onDoubleTap: { session.editClip(track: trackIndex, scene: sceneIndex) },
-                            onStop: { session.stopClip(track: trackIndex, scene: sceneIndex) }
+                            isPlaying: vm.isClipPlaying(track: trackIndex, scene: sceneIndex),
+                            onTap: { vm.toggleClip(track: trackIndex, scene: sceneIndex) },
+                            onDoubleTap: { vm.editClip(track: trackIndex, scene: sceneIndex) },
+                            onStop: { vm.stopClip(track: trackIndex, scene: sceneIndex) }
                         )
                     }
                 }
@@ -203,12 +206,14 @@ private struct SessionClipContent: View {
 
     // MARK: - Scene Launch Column
 
-    private var sceneLaunchColumn: some View {
-        let scenes = session.scenes
-        let activeScene = session.activeScene
-        return VStack(spacing: 2) {
+    @ViewBuilder
+    private func makeSceneLaunchColumn(_ vm: SessionClipViewModel) -> some View {
+        let scenes = vm.scenes
+        let activeScene = vm.activeScene
+        let sceneCount = scenes.count
+        VStack(spacing: 2) {
             // Master Stop
-            Button(action: { session.stopAll() }) {
+            Button(action: { vm.stopAll() }) {
                 Image(systemName: "stop.fill")
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
@@ -216,16 +221,16 @@ private struct SessionClipContent: View {
             .glassCard()
 
             // Scene Launch Buttons
-            ForEach(Array(scenes.enumerated()), id: \.element.id) { index, scene in
+            ForEach(0..<sceneCount, id: \.self) { index in
                 SceneLaunchButton(
-                    scene: scene,
+                    scene: scenes[index],
                     isPlaying: activeScene == index,
-                    onLaunch: { session.launchScene(index) }
+                    onLaunch: { vm.launchScene(index) }
                 )
             }
 
             // Add Scene
-            Button(action: { session.addScene() }) {
+            Button(action: { vm.addScene() }) {
                 Image(systemName: "plus")
                     .foregroundColor(VaporwaveColors.neonPurple)
             }
