@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import simd
 import os.log
 
 /// Resolves conflicts between gestures and other input sources
@@ -185,7 +186,7 @@ class GestureConflictResolver: ObservableObject {
         }
 
         // Check if face tracking is active
-        if let face = faceTracker, face.isFaceDetected {
+        if let face = faceTracker, face.isTracking {
             return .face
         }
 
