@@ -171,7 +171,13 @@ final class EchoelUniversalCore: ObservableObject {
     private func universalUpdate() {
         // 1. Collect all inputs
         let bioData = bioProcessor.currentState
-        let audioData = visualEngine.visualParams
+        let visualParams = visualEngine.visualParams
+        let audioData = AudioState(
+            level: Float(visualParams.energy),
+            spectralFlatness: Float(1.0 - visualParams.energy),
+            dominantFrequency: 440,
+            beatPhase: 0
+        )
         let quantumState = quantumProcessor.currentState
 
         // 2. Calculate global coherence
@@ -431,6 +437,19 @@ struct QuantumField {
         }
         return options - 1
     }
+
+    /// Record a wave function collapse event
+    mutating func recordCollapse(choice: Int) {
+        collapseProbability = 0
+        // Reinforce the chosen amplitude, reduce others
+        for i in 0..<amplitudes.count {
+            if i == choice % amplitudes.count {
+                amplitudes[i] = simd_float4(1, 0, 0, 0)
+            } else {
+                amplitudes[i] *= 0.5
+            }
+        }
+    }
 }
 
 // MARK: - Bio-Reactive Processor
@@ -439,6 +458,7 @@ struct BioState {
     var heartRate: Float = 70
     var hrv: Float = 50
     var coherence: Float = 0.5
+    var energy: Float = 0.5
     var stress: Float = 0.5
     var breathRate: Float = 12
     var breathPhase: Float = 0
@@ -466,6 +486,12 @@ class BioReactiveProcessor {
         currentState.hrv = Float(hrv)
 
         // Calculate coherence using HeartMath algorithm
+        currentState.coherence = calculateCoherence()
+        currentState.stress = 1.0 - currentState.coherence
+    }
+
+    func updateState(_ state: BioState) {
+        currentState = state
         currentState.coherence = calculateCoherence()
         currentState.stress = 1.0 - currentState.coherence
     }
