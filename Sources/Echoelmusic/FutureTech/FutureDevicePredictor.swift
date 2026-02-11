@@ -443,10 +443,10 @@ class FutureDevicePredictor: ObservableObject {
         for prediction in predictions {
             // Check if we have preparation for this device
             let preparationCount = Float(prediction.preparationRequired.count)
-            let deviceReady = preparationCount > 0 ? 1.0 : 0.0
+            let deviceReady: Float = preparationCount > 0 ? 1.0 : 0.0
 
             // Weight by confidence and impact
-            let weight = prediction.confidence * (prediction.impact == .revolutionary ? 1.0 : 0.5)
+            let weight: Float = prediction.confidence * (prediction.impact == .revolutionary ? 1.0 : 0.5)
 
             score += deviceReady * weight
         }
