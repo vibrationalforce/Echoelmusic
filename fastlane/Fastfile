@@ -115,38 +115,68 @@ def setup_manual_signing(api_key, platform = "ios")
 
   UI.message("Setting up Manual signing for #{platform} (#{bundle_id})...")
 
-  # Step 1: Create Apple Distribution certificate with private key in keychain
-  UI.message("Creating Apple Distribution certificate (force: true)...")
+  # Step 1: Revoke stale certs via Spaceship, then create fresh ones
+  UI.message("Revoking stale development certificates via Spaceship...")
   begin
-    cert(
-      force: true,
-      api_key: api_key,
-      keychain_path: keychain_path,
-      keychain_password: keychain_password
+    require 'spaceship'
+    token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key: ENV["ASC_KEY_CONTENT"]
     )
-    UI.success("Apple Distribution cert created with private key in keychain")
+    Spaceship::ConnectAPI.token = token
+    all_certs = Spaceship::ConnectAPI::Certificate.all
+    UI.message("Certificates at Apple portal: #{all_certs.count}")
+    all_certs.each do |c|
+      UI.message("  #{c.id}: #{c.certificate_type}")
+    end
+    # Revoke ALL development certs (stale from previous CI runs)
+    dev_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DEVELOPMENT") }
+    dev_certs.each do |c|
+      begin
+        c.delete!
+        UI.success("  Revoked dev cert: #{c.id}")
+      rescue => e
+        UI.important("  Could not revoke #{c.id}: #{e.message}")
+      end
+    end
+    # Keep only 1 distribution cert (revoke extras to make room)
+    dist_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DISTRIBUTION") }
+    if dist_certs.count > 2
+      dist_certs.sort_by { |c| c.expiration_date.to_s }.first(dist_certs.count - 1).each do |c|
+        begin
+          c.delete!
+          UI.success("  Revoked old dist cert: #{c.id}")
+        rescue => e
+          UI.important("  Could not revoke dist #{c.id}: #{e.message}")
+        end
+      end
+    end
   rescue => e
-    UI.important("cert(force:true) note: #{e.message}")
-    UI.message("Trying without force (reuse existing)...")
-    cert(
-      api_key: api_key,
-      keychain_path: keychain_path,
-      keychain_password: keychain_password
-    )
+    UI.important("Spaceship cleanup: #{e.message}")
   end
+
+  # Step 2: Create Apple Distribution certificate with private key in keychain
+  UI.message("Creating Apple Distribution certificate...")
+  cert(
+    force: true,
+    api_key: api_key,
+    keychain_path: keychain_path,
+    keychain_password: keychain_password
+  )
+  UI.success("Apple Distribution cert created with private key in keychain")
 
   # Log keychain identities to confirm cert is installed
   if keychain_path
     Actions.sh("security find-identity -v -p codesigning '#{keychain_path}' 2>/dev/null || echo 'No identities'", log: true)
   end
 
-  # Step 2: Create/download App Store provisioning profile
+  # Step 3: Create/download App Store provisioning profile
   UI.message("Getting App Store provisioning profile for #{bundle_id}...")
   sigh(
     app_identifier: bundle_id,
     api_key: api_key,
     force: true,
-    readonly: false,
     platform: sigh_platform
   )
 
