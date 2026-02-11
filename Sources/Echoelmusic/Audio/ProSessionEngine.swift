@@ -357,6 +357,29 @@ public struct SessionClip: Identifiable, Equatable, Sendable {
         self.midiNotes = midiNotes
         self.patternSteps = patternSteps
     }
+
+    public static func == (lhs: SessionClip, rhs: SessionClip) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.name == rhs.name &&
+        lhs.type == rhs.type &&
+        lhs.state == rhs.state &&
+        lhs.color == rhs.color &&
+        lhs.length == rhs.length &&
+        lhs.loopEnabled == rhs.loopEnabled &&
+        lhs.launchMode == rhs.launchMode &&
+        lhs.quantization == rhs.quantization &&
+        lhs.followAction == rhs.followAction &&
+        lhs.followActionTime == rhs.followActionTime &&
+        lhs.warpMode == rhs.warpMode &&
+        lhs.warpMarkers == rhs.warpMarkers &&
+        lhs.playbackSpeed == rhs.playbackSpeed &&
+        lhs.startOffset == rhs.startOffset &&
+        lhs.endOffset == rhs.endOffset &&
+        lhs.audioURL == rhs.audioURL &&
+        lhs.gain == rhs.gain &&
+        lhs.midiNotes == rhs.midiNotes &&
+        lhs.patternSteps == rhs.patternSteps
+    }
 }
 
 // MARK: - SessionTrackType
@@ -531,6 +554,25 @@ public struct SessionTrack: Identifiable, Equatable {
             clips.append(nil)
         }
     }
+
+    public static func == (lhs: SessionTrack, rhs: SessionTrack) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.name == rhs.name &&
+        lhs.color == rhs.color &&
+        lhs.clips == rhs.clips &&
+        lhs.type == rhs.type &&
+        lhs.isArmed == rhs.isArmed &&
+        lhs.monitorMode == rhs.monitorMode &&
+        lhs.volume == rhs.volume &&
+        lhs.pan == rhs.pan &&
+        lhs.mute == rhs.mute &&
+        lhs.solo == rhs.solo &&
+        lhs.inputRouting == rhs.inputRouting &&
+        lhs.outputRouting == rhs.outputRouting &&
+        lhs.sends == rhs.sends &&
+        lhs.stopButton == rhs.stopButton &&
+        lhs.crossfadeAssign == rhs.crossfadeAssign
+    }
 }
 
 // MARK: - SessionScene
@@ -562,6 +604,15 @@ public struct SessionScene: Identifiable, Equatable {
         self.tempo = tempo
         self.timeSignature = timeSignature
         self.color = color
+    }
+
+    public static func == (lhs: SessionScene, rhs: SessionScene) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.name == rhs.name &&
+        lhs.number == rhs.number &&
+        lhs.tempo == rhs.tempo &&
+        lhs.timeSignature == rhs.timeSignature &&
+        lhs.color == rhs.color
     }
 }
 

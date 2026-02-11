@@ -1466,13 +1466,9 @@ public final class ProColorGrading: ObservableObject {
     }
 }
 
-// MARK: - Float Clamping Extension
+// MARK: - Float Convenience Extension
 
 private extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
-    }
-
     var clamped01: Float {
         clamped(to: 0...1)
     }
