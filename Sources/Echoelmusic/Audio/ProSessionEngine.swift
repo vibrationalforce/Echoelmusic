@@ -253,7 +253,7 @@ public enum WarpMode: String, Codable, CaseIterable, Sendable {
 // MARK: - SessionClip
 
 /// A launchable clip in session view, combining Ableton clips with FL Studio patterns
-public struct SessionClip: Identifiable, Equatable, Sendable {
+public struct SessionClip: Identifiable, Codable, Equatable, Sendable {
     public let id: UUID
     public var name: String
     public var type: ClipType
@@ -370,11 +370,7 @@ public struct SessionClip: Identifiable, Equatable, Sendable {
         self.midiNotes = midiNotes
         self.patternSteps = patternSteps
     }
-}
 
-// MARK: - SessionClip + Codable
-
-extension SessionClip: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
