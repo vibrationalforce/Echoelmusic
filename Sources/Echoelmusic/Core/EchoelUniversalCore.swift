@@ -300,6 +300,12 @@ extension EchoelUniversalCore {
         var systemHealth: SystemHealth = .optimal
         var performanceMode: PerformanceMode = .balanced
 
+        // Creative AI State
+        var lastQuantumChoice: Int = 0
+        var creativeDirection: CreativeDirection = .harmonic
+        var analogFeedback: [Float] = []
+        var aiSuggestion: AICreativeEngine.CreativeSuggestion?
+
         mutating func update(coherence: Float, energy: Float, quantumField: QuantumField) {
             self.coherence = coherence
             self.energy = energy
@@ -316,6 +322,10 @@ extension EchoelUniversalCore {
         case balanced = "Balanced"
         case reduced = "Reduced"
         case minimal = "Minimal"
+    }
+
+    enum CreativeDirection: String {
+        case harmonic, rhythmic, textural, structural
     }
 
     enum ModuleType: String, CaseIterable {
