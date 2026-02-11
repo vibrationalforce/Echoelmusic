@@ -102,9 +102,10 @@ def ensure_distribution_cert(api_key)
   UI.message("🔐 Ensuring distribution certificate is available...")
 
   begin
+    # cert action without explicit type creates the default distribution cert
+    # (Apple Distribution / iOS Distribution) based on the API key's team
     cert(
       api_key: api_key,
-      type: "distribution",
       keychain_path: keychain_info[:path],
       keychain_password: keychain_info[:password],
       generate_apple_certs: true,
@@ -118,7 +119,6 @@ def ensure_distribution_cert(api_key)
     begin
       cert(
         api_key: api_key,
-        type: "distribution",
         keychain_path: keychain_info[:path],
         keychain_password: keychain_info[:password],
         generate_apple_certs: true,
