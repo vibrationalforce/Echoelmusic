@@ -276,7 +276,7 @@ final class EchoelCreativeWorkspace: ObservableObject {
     // MARK: - Workspace Actions
 
     /// Start a new creative session
-    funcnewSession(mode: WorkspaceMode, bpm: Double = 120, timeSignature: TimeSignature = .fourFour) {
+    func newSession(mode: WorkspaceMode, bpm: Double = 120, timeSignature: TimeSignature = .fourFour) {
         self.mode = mode
         bpmGrid.setBPM(bpm)
         bpmGrid.setTimeSignature(timeSignature)
@@ -288,7 +288,7 @@ final class EchoelCreativeWorkspace: ObservableObject {
     }
 
     /// Detect BPM from audio file and sync everything
-    funcdetectAndSyncBPM(from audioURL: URL) async {
+    func detectAndSyncBPM(from audioURL: URL) async {
         let result = await bpmGrid.detectBeats(from: audioURL)
         if result.confidence > 0.5 {
             globalBPM = result.bpm
@@ -298,7 +298,7 @@ final class EchoelCreativeWorkspace: ObservableObject {
     }
 
     /// Set BPM globally — updates all engines at once
-    funcsetGlobalBPM(_ bpm: Double) {
+    func setGlobalBPM(_ bpm: Double) {
         bpmGrid.setBPM(bpm)
         videoEditor.timeline.tempo = bpm
         globalBPM = bpm
@@ -306,41 +306,41 @@ final class EchoelCreativeWorkspace: ObservableObject {
     }
 
     /// Set time signature globally
-    funcsetGlobalTimeSignature(_ ts: TimeSignature) {
+    func setGlobalTimeSignature(_ ts: TimeSignature) {
         bpmGrid.setTimeSignature(ts)
         globalTimeSignature = ts
     }
 
     /// Snap video cut to next beat
-    funccutVideoOnBeat(at currentTime: Double) -> Double {
+    func cutVideoOnBeat(at currentTime: Double) -> Double {
         return bpmGrid.cutAtNextBeat(from: currentTime)
     }
 
     /// Snap video cut to next bar
-    funccutVideoOnBar(at currentTime: Double) -> Double {
+    func cutVideoOnBar(at currentTime: Double) -> Double {
         return bpmGrid.cutAtNextBar(from: currentTime)
     }
 
     /// Generate auto-cuts on beats for a video range
-    funcautoEditOnBeats(from start: Double, to end: Double, every: SnapMode = .beat) -> [Double] {
+    func autoEditOnBeats(from start: Double, to end: Double, every: SnapMode = .beat) -> [Double] {
         return bpmGrid.generateAutoCuts(from: start, to: end, every: every)
     }
 
     /// Switch workspace mode seamlessly
-    funcswitchMode(_ newMode: WorkspaceMode) {
+    func switchMode(_ newMode: WorkspaceMode) {
         let previousMode = mode
         mode = newMode
         log.info("🔄 Workspace: \(previousMode.rawValue) → \(newMode.rawValue)", category: .system)
     }
 
     /// Update playback position — syncs BPM grid + video
-    funcupdatePlaybackPosition(_ seconds: Double) {
+    func updatePlaybackPosition(_ seconds: Double) {
         bpmGrid.updatePosition(seconds)
         videoEditor.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
     }
 
     /// Play/pause toggle — syncs all engines
-    functogglePlayback() {
+    func togglePlayback() {
         if isPlaying {
             videoEditor.pause()
         } else {
