@@ -407,7 +407,7 @@ class GlobalMusicTheoryDatabase: ObservableObject {
                 name: "Maqam Bayati",
                 culture: .arabic,
                 baseScale: "Bayati",
-                characteristicNotes: [0.0, 1.5, 3.0, 5.0, 7.0, 8.0, 10.0],
+                characteristicNotes: [0, 2, 3, 5, 7, 8, 10],  // Bayati approximated to semitones
                 raga: nil,
                 maqam: Mode.Maqam(
                     name: "Bayati",
