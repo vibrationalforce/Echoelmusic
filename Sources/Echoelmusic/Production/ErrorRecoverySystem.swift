@@ -515,7 +515,7 @@ public enum RecoveryError: Error, LocalizedError, Sendable {
 public func safeExecute<T>(
     _ operation: String,
     service: String? = nil,
-    retryPolicy: ErrorRecoverySystem.RetryPolicy = .default,
+    retryPolicy: RetryPolicy = .default,
     fallback: (() async throws -> T)? = nil,
     task: () async throws -> T
 ) async throws -> T {
