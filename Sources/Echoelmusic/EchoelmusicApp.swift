@@ -75,7 +75,7 @@ struct EchoelmusicApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            EchoelUnifiedExperience()
                 .environmentObject(microphoneManager)      // Makes mic manager available to all views
                 .environmentObject(audioEngine)             // Makes audio engine available
                 .environmentObject(healthKitEngine)        // Makes health data available
@@ -89,30 +89,38 @@ struct EchoelmusicApp: App {
                     // Connect RecordingEngine to AudioEngine for audio routing
                     recordingEngine.connectAudioEngine(audioEngine)
 
+                    // Initialize Unified Experience systems
+                    Task { @MainActor in
+                        _ = AdaptiveDesignTokens.shared
+                        _ = FeatureInterconnectionEngine.shared
+                        _ = UniversalAccessibilityEngine.shared
+                        _ = AdaptiveNavigationManager.shared
+                    }
+
                     // Enable biometric monitoring through UnifiedControlHub
                     Task {
                         do {
                             try await unifiedControlHub.enableBiometricMonitoring()
-                            log.info("✅ Biometric monitoring enabled via UnifiedControlHub", category: .system)
+                            log.info("Biometric monitoring enabled via UnifiedControlHub", category: .system)
                         } catch {
-                            log.warning("⚠️ Biometric monitoring not available: \(error.localizedDescription)", category: .system)
+                            log.warning("Biometric monitoring not available: \(error.localizedDescription)", category: .system)
                         }
 
                         // Enable MIDI 2.0 + MPE
                         do {
                             try await unifiedControlHub.enableMIDI2()
-                            log.info("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub", category: .system)
+                            log.info("MIDI 2.0 + MPE enabled via UnifiedControlHub", category: .system)
                         } catch {
-                            log.warning("⚠️ MIDI 2.0 not available: \(error.localizedDescription)", category: .system)
+                            log.warning("MIDI 2.0 not available: \(error.localizedDescription)", category: .system)
                         }
                     }
 
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
-                    log.info("🎵 Echoelmusic Started - All Systems Connected!", category: .system)
-                    log.info("🎹 MIDI 2.0 + MPE + Spatial Audio Ready", category: .system)
-                    log.info("🌊 Bio-Reactive Audio-Visual Platform Ready", category: .system)
+                    log.info("Echoelmusic Unified Experience Started - All Systems Connected!", category: .system)
+                    log.info("Adaptive Accessibility + Feature Interconnection Active", category: .system)
+                    log.info("Bio-Reactive Audio-Visual Platform Ready", category: .system)
                 }
         }
     }
