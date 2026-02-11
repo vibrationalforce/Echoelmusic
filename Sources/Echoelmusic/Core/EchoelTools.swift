@@ -191,6 +191,7 @@ extension EchoelTools {
 
 // MARK: - Harmonic Intelligence
 
+@MainActor
 class HarmonicIntelligence: ObservableObject {
     @Published var suggestedChord: Chord?
     @Published var suggestedScale: Scale?
@@ -269,6 +270,7 @@ class HarmonicIntelligence: ObservableObject {
 
 // MARK: - Rhythmic Intelligence
 
+@MainActor
 class RhythmicIntelligence: ObservableObject {
     @Published var suggestedPattern: RhythmPattern?
     @Published var syncedToHeartbeat: Bool = true
@@ -396,6 +398,7 @@ class BioSonifier: ObservableObject {
 
 // MARK: - Quantum Composer
 
+@MainActor
 class QuantumComposer: ObservableObject {
     @Published var creativityLevel: Float = 0.5
     @Published var superpositionStrength: Float = 0.5

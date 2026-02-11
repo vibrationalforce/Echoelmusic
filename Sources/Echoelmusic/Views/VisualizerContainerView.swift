@@ -282,11 +282,13 @@ struct VisualizerContainerView: View {
         // (VisualEngine, SelfHealingEngine, MultiPlatformBridge, VideoAIHub, etc.)
         bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak healthKitManager] _ in
             guard let hkManager = healthKitManager else { return }
-            EchoelUniversalCore.shared.receiveBioData(
-                heartRate: hkManager.heartRate,
-                hrv: hkManager.hrvRMSSD,
-                coherence: hkManager.hrvCoherence
-            )
+            Task { @MainActor in
+                EchoelUniversalCore.shared.receiveBioData(
+                    heartRate: hkManager.heartRate,
+                    hrv: hkManager.hrvRMSSD,
+                    coherence: hkManager.hrvCoherence
+                )
+            }
         }
     }
 
