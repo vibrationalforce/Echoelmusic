@@ -78,88 +78,98 @@ def write_api_key_to_disk
 end
 
 # =============================================================================
-# SIGNING STRATEGY: Fresh Certs via cert(force:true) + Automatic Signing
+# SIGNING STRATEGY: Manual Signing with cert + sigh (Industry Standard CI)
 # =============================================================================
-# Problem: Stale cloud-managed development certs at Apple portal — their
-# private keys are lost (ephemeral CI runners). Xcode finds the cert but
-# can't use it because the private key isn't in the keychain.
+# Problem: Xcode Automatic signing on ephemeral CI runners ALWAYS fails.
+# It finds stale cloud-managed development certs in the Apple portal whose
+# private keys are on destroyed runners. This cannot be fixed by:
+# - Revoking certs (Spaceship can't revoke cloud-managed certs)
+# - Creating new certs (Xcode still prefers cloud-managed ones)
+# - Skipping signing (export step needs a signed archive)
 #
-# Solution: Use Fastlane cert action with force:true BEFORE the build.
-# 1. cert(force:true) generates a NEW private key locally
-# 2. Submits CSR to Apple, gets a fresh certificate back
-# 3. Installs BOTH the cert AND private key in the CI keychain
-# 4. xcodebuild finds this cert (with private key) and uses it
-# 5. Developer-managed certs don't conflict with cloud-managed ones
+# Solution: MANUAL signing with Fastlane cert + sigh.
+# 1. cert(force:true) creates an Apple Distribution cert + private key
+# 2. sigh creates/downloads an App Store provisioning profile
+# 3. Manual signing bypasses cloud-managed cert lookup entirely
+# 4. xcodebuild uses exactly the cert + profile we specify
 # =============================================================================
 
-# Create fresh signing certificates with private keys in CI keychain
-def ensure_fresh_certs(api_key)
+# Setup Manual signing: create cert + provisioning profile for a platform
+def setup_manual_signing(api_key, platform = "ios")
   keychain_path = ENV['KEYCHAIN_PATH']
   keychain_password = ENV['KEYCHAIN_PASSWORD'] || ""
 
-  UI.message("Creating fresh signing certificates (force: true)...")
+  # Map platform to sigh platform parameter
+  sigh_platform = case platform
+  when "ios", "watchos", "visionos" then "ios"
+  when "macos" then "macos"
+  when "tvos" then "tvos"
+  else "ios"
+  end
 
-  # Create fresh Apple Development certificate
-  # force: true ensures we get a NEW cert with private key in THIS keychain
+  # Map platform to bundle ID
+  bundle_id = case platform
+  when "watchos" then "com.echoelmusic.app.watchkitapp"
+  else "com.echoelmusic.app"
+  end
+
+  UI.message("Setting up Manual signing for #{platform} (#{bundle_id})...")
+
+  # Step 1: Create Apple Distribution certificate with private key in keychain
+  UI.message("Creating Apple Distribution certificate (force: true)...")
   begin
     cert(
-      development: true,
       force: true,
       api_key: api_key,
       keychain_path: keychain_path,
       keychain_password: keychain_password
     )
-    UI.success("Apple Development certificate created and installed in keychain")
+    UI.success("Apple Distribution cert created with private key in keychain")
   rescue => e
-    UI.important("Dev cert note: #{e.message}")
-    UI.message("This is non-fatal — xcodebuild may manage dev cert via -allowProvisioningUpdates")
-  end
-
-  # Create fresh Apple Distribution certificate (REQUIRED for App Store)
-  begin
+    UI.important("cert(force:true) note: #{e.message}")
+    UI.message("Trying without force (reuse existing)...")
     cert(
-      force: true,
       api_key: api_key,
       keychain_path: keychain_path,
       keychain_password: keychain_password
     )
-    UI.success("Apple Distribution certificate created and installed in keychain")
-  rescue => e
-    UI.error("Distribution cert failed: #{e.message}")
-    UI.important("Attempting without force to reuse existing cert...")
-    begin
-      cert(
-        api_key: api_key,
-        keychain_path: keychain_path,
-        keychain_password: keychain_password
-      )
-      UI.success("Reused existing distribution certificate")
-    rescue => e2
-      UI.error("All cert attempts failed: #{e2.message}")
-      UI.important("Continuing — xcodebuild may handle cert via cloud signing")
-    end
   end
 
-  # Log keychain identities to confirm certs are installed
+  # Log keychain identities to confirm cert is installed
   if keychain_path
-    UI.message("Signing identities in CI keychain:")
-    Actions.sh("security find-identity -v -p codesigning '#{keychain_path}' 2>/dev/null || echo 'No identities found'", log: true)
+    Actions.sh("security find-identity -v -p codesigning '#{keychain_path}' 2>/dev/null || echo 'No identities'", log: true)
   end
+
+  # Step 2: Create/download App Store provisioning profile
+  UI.message("Getting App Store provisioning profile for #{bundle_id}...")
+  sigh(
+    app_identifier: bundle_id,
+    api_key: api_key,
+    force: true,
+    readonly: false,
+    platform: sigh_platform
+  )
+
+  profile_name = Actions.lane_context[SharedValues::SIGH_NAME]
+  profile_uuid = Actions.lane_context[SharedValues::SIGH_UDID]
+
+  UI.success("Profile ready: #{profile_name} (UUID: #{profile_uuid})")
+
+  { name: profile_name, uuid: profile_uuid, bundle_id: bundle_id }
 end
 
-# Build xcargs with Automatic signing + API key auth
-def build_xcargs_distribution
-  key_path = write_api_key_to_disk
-
+# Build xcargs for Manual signing with specific cert + profile
+def build_xcargs_manual(profile_specifier = nil)
   args = [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Automatic",
-    "-allowProvisioningUpdates",
-    "-authenticationKeyPath #{key_path}",
-    "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
-    "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
+    "CODE_SIGN_STYLE=Manual",
+    "CODE_SIGN_IDENTITY='Apple Distribution'",
     "COMPILER_INDEX_STORE_ENABLE=NO"
   ]
+
+  if profile_specifier
+    args << "PROVISIONING_PROFILE_SPECIFIER='#{profile_specifier}'"
+  end
 
   args.join(" ")
 end
@@ -407,10 +417,10 @@ platform :ios do
 
     api_key = setup_api_key
 
-    # Create fresh signing certs with private keys in CI keychain
-    ensure_fresh_certs(api_key)
+    # Manual signing: create cert + provisioning profile
+    signing = setup_manual_signing(api_key, "ios")
 
-    UI.message("Building iOS with Automatic signing + fresh certificates...")
+    UI.message("Building iOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -426,10 +436,13 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          signing[:bundle_id] => signing[:name]
+        }
       },
-      xcargs: build_xcargs_distribution,
+      xcargs: build_xcargs_manual(signing[:name]),
       skip_profile_detection: true
     )
 
@@ -451,8 +464,8 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
-    ensure_fresh_certs(api_key)
-    UI.message("Building watchOS with Automatic signing + fresh certificates...")
+    signing = setup_manual_signing(api_key, "watchos")
+    UI.message("Building watchOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -468,10 +481,13 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          signing[:bundle_id] => signing[:name]
+        }
       },
-      xcargs: build_xcargs_distribution,
+      xcargs: build_xcargs_manual(signing[:name]),
       skip_profile_detection: true
     )
 
@@ -486,8 +502,8 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
-    ensure_fresh_certs(api_key)
-    UI.message("Building tvOS with Automatic signing + fresh certificates...")
+    signing = setup_manual_signing(api_key, "tvos")
+    UI.message("Building tvOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -503,10 +519,13 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          signing[:bundle_id] => signing[:name]
+        }
       },
-      xcargs: build_xcargs_distribution,
+      xcargs: build_xcargs_manual(signing[:name]),
       skip_profile_detection: true
     )
 
@@ -521,8 +540,8 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
-    ensure_fresh_certs(api_key)
-    UI.message("Building visionOS with Automatic signing + fresh certificates...")
+    signing = setup_manual_signing(api_key, "visionos")
+    UI.message("Building visionOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -538,10 +557,13 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          signing[:bundle_id] => signing[:name]
+        }
       },
-      xcargs: build_xcargs_distribution,
+      xcargs: build_xcargs_manual(signing[:name]),
       skip_profile_detection: true
     )
 
@@ -647,8 +669,8 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
-    ensure_fresh_certs(api_key)
-    UI.message("Building macOS with Automatic signing + fresh certificates...")
+    signing = setup_manual_signing(api_key, "macos")
+    UI.message("Building macOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -662,10 +684,13 @@ platform :mac do
       output_name: "Echoelmusic-macOS",
       buildlog_path: "./build/logs",
       export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
+        signingStyle: "manual",
+        teamID: TEAM_ID,
+        provisioningProfiles: {
+          signing[:bundle_id] => signing[:name]
+        }
       },
-      xcargs: build_xcargs_distribution,
+      xcargs: build_xcargs_manual(signing[:name]),
       skip_profile_detection: true
     )
 
