@@ -643,6 +643,7 @@ extension EEGSensorBridge: CBPeripheralDelegate {
 // MARK: - SwiftUI View
 
 /// EEG visualization view
+@MainActor
 public struct EEGVisualizationView: View {
     @ObservedObject var bridge: EEGSensorBridge
 
