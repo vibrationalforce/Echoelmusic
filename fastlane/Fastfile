@@ -140,16 +140,16 @@ def setup_manual_signing(api_key, platform = "ios")
         UI.important("  Could not revoke #{c.id}: #{e.message}")
       end
     end
-    # Keep only 1 distribution cert (revoke extras to make room)
+    # Revoke ALL distribution certs to make room for fresh one
+    # (none of the existing ones have private keys on this CI runner)
     dist_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DISTRIBUTION") }
-    if dist_certs.count > 2
-      dist_certs.sort_by { |c| c.expiration_date.to_s }.first(dist_certs.count - 1).each do |c|
-        begin
-          c.delete!
-          UI.success("  Revoked old dist cert: #{c.id}")
-        rescue => e
-          UI.important("  Could not revoke dist #{c.id}: #{e.message}")
-        end
+    UI.message("Found #{dist_certs.count} distribution cert(s) — revoking ALL to make room for fresh one")
+    dist_certs.each do |c|
+      begin
+        c.delete!
+        UI.success("  Revoked dist cert: #{c.id} (#{c.certificate_type})")
+      rescue => e
+        UI.important("  Could not revoke dist #{c.id}: #{e.message}")
       end
     end
   rescue => e
