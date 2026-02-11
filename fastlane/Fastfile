@@ -403,10 +403,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building watchOS without signing, export will handle distribution signing")
+    UI.message("Building watchOS with automatic cloud signing via App Store Connect API...")
 
-    # Build watchOS app — skip signing during archive (no registered watchOS devices in CI)
-    # Export step uses distribution cert + App Store profile
+    # Build watchOS app with automatic cloud-managed signing (same as iOS)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
@@ -415,11 +414,16 @@ platform :ios do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=watchOS",
+      archive_path: "./build/Echoelmusic-watchOS.xcarchive",
+      output_directory: "./build",
+      output_name: "Echoelmusic-watchOS",
+      buildlog_path: "./build/logs",
+      include_bitcode: false,
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_no_sign,
+      xcargs: build_xcargs_with_auth,
       skip_profile_detection: true
     )
 
@@ -436,9 +440,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building tvOS without signing, export will handle distribution signing")
+    UI.message("Building tvOS with automatic cloud signing via App Store Connect API...")
 
-    # Build tvOS app — skip signing during archive (no registered tvOS devices in CI)
+    # Build tvOS app with automatic cloud-managed signing (same as iOS)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-tvOS",
@@ -447,11 +451,16 @@ platform :ios do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=tvOS",
+      archive_path: "./build/Echoelmusic-tvOS.xcarchive",
+      output_directory: "./build",
+      output_name: "Echoelmusic-tvOS",
+      buildlog_path: "./build/logs",
+      include_bitcode: false,
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_no_sign,
+      xcargs: build_xcargs_with_auth,
       skip_profile_detection: true
     )
 
@@ -468,9 +477,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building visionOS without signing, export will handle distribution signing")
+    UI.message("Building visionOS with automatic cloud signing via App Store Connect API...")
 
-    # Build visionOS app — skip signing during archive (no registered visionOS devices in CI)
+    # Build visionOS app with automatic cloud-managed signing (same as iOS)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-visionOS",
@@ -479,11 +488,16 @@ platform :ios do
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
       destination: "generic/platform=visionOS",
+      archive_path: "./build/Echoelmusic-visionOS.xcarchive",
+      output_directory: "./build",
+      output_name: "Echoelmusic-visionOS",
+      buildlog_path: "./build/logs",
+      include_bitcode: false,
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_no_sign,
+      xcargs: build_xcargs_with_auth,
       skip_profile_detection: true
     )
 
@@ -591,9 +605,9 @@ platform :mac do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building macOS without signing, export will handle distribution signing")
+    UI.message("Building macOS with automatic cloud signing via App Store Connect API...")
 
-    # Build macOS app — skip signing during archive (no registered Mac devices in CI)
+    # Build macOS app with automatic cloud-managed signing (same as iOS)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -601,11 +615,15 @@ platform :mac do
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
       derived_data_path: "./build/DerivedData",
+      archive_path: "./build/Echoelmusic-macOS.xcarchive",
+      output_directory: "./build",
+      output_name: "Echoelmusic-macOS",
+      buildlog_path: "./build/logs",
       export_options: {
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_no_sign,
+      xcargs: build_xcargs_with_auth,
       skip_profile_detection: true
     )
 
