@@ -359,7 +359,10 @@ targets:
       - path: Sources/Echoelmusic/Localization
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Presets
-        excludes: ["**/*.md", "**/*.metal"]
+        excludes:
+          - "**/*.md"
+          - "**/*.metal"
+          - "Phase8000Presets.swift"
       - path: Sources/Echoelmusic/Wellness
         excludes: ["**/*.md", "**/*.metal"]
       - path: Sources/Echoelmusic/Business

@@ -113,6 +113,28 @@ def build_xcargs_no_sign
   args.join(" ")
 end
 
+# Build xcargs for platforms that need App Store distribution but may not have
+# registered development devices (watchOS, tvOS, visionOS, macOS).
+# Uses -allowProvisioningUpdates for automatic profile download but does NOT
+# use -allowProvisioningDeviceRegistration (avoids "no devices" error).
+# CODE_SIGN_IDENTITY is set to distribution to skip development signing.
+def build_xcargs_distribution
+  key_path = write_api_key_to_disk
+
+  args = [
+    "DEVELOPMENT_TEAM=#{TEAM_ID}",
+    "CODE_SIGN_STYLE=Manual",
+    "CODE_SIGN_IDENTITY=Apple Distribution",
+    "-allowProvisioningUpdates",
+    "-authenticationKeyPath #{key_path}",
+    "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
+    "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
+    "COMPILER_INDEX_STORE_ENABLE=NO"
+  ]
+
+  args.join(" ")
+end
+
 # Helper to safely parse certificate expiration date
 def parse_cert_date(date_value)
   return date_value if date_value.is_a?(Time)
@@ -403,9 +425,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building watchOS with automatic cloud signing via App Store Connect API...")
+    UI.message("Building watchOS with distribution signing via App Store Connect API...")
 
-    # Build watchOS app with automatic cloud-managed signing (same as iOS)
+    # Build watchOS app with distribution signing (skip development cert requirement)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-watchOS",
@@ -423,7 +445,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_distribution,
       skip_profile_detection: true
     )
 
@@ -440,9 +462,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building tvOS with automatic cloud signing via App Store Connect API...")
+    UI.message("Building tvOS with distribution signing via App Store Connect API...")
 
-    # Build tvOS app with automatic cloud-managed signing (same as iOS)
+    # Build tvOS app with distribution signing (skip development cert requirement)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-tvOS",
@@ -460,7 +482,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_distribution,
       skip_profile_detection: true
     )
 
@@ -477,9 +499,9 @@ platform :ios do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building visionOS with automatic cloud signing via App Store Connect API...")
+    UI.message("Building visionOS with distribution signing via App Store Connect API...")
 
-    # Build visionOS app with automatic cloud-managed signing (same as iOS)
+    # Build visionOS app with distribution signing (skip development cert requirement)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-visionOS",
@@ -497,7 +519,7 @@ platform :ios do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_distribution,
       skip_profile_detection: true
     )
 
@@ -605,9 +627,9 @@ platform :mac do
     api_key = setup_api_key
     cleanup_certificates(api_key)
 
-    UI.message("Building macOS with automatic cloud signing via App Store Connect API...")
+    UI.message("Building macOS with distribution signing via App Store Connect API...")
 
-    # Build macOS app with automatic cloud-managed signing (same as iOS)
+    # Build macOS app with distribution signing (skip development cert requirement)
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -623,7 +645,7 @@ platform :mac do
         signingStyle: "automatic",
         teamID: TEAM_ID
       },
-      xcargs: build_xcargs_with_auth,
+      xcargs: build_xcargs_distribution,
       skip_profile_detection: true
     )
 
