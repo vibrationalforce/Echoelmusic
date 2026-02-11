@@ -8,6 +8,9 @@
 //  Created: 2026-01-05
 //
 
+// Widget extension code - only compiles in widget target
+#if ECHOELMUSIC_WIDGET_TARGET
+
 import Foundation
 import SwiftUI
 import WidgetKit
@@ -800,3 +803,5 @@ struct CircularCoherenceGauge: View {
         }
     }
 }
+
+#endif // ECHOELMUSIC_WIDGET_TARGET

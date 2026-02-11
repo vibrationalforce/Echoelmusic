@@ -8,6 +8,9 @@
 //  Created: 2026-01-05
 //
 
+// Live Activity code - only compiles in widget extension target
+#if ECHOELMUSIC_WIDGET_TARGET
+
 import Foundation
 import SwiftUI
 
@@ -551,3 +554,5 @@ public class QuantumLiveActivityManager: ObservableObject {
     }
 }
 #endif
+
+#endif // ECHOELMUSIC_WIDGET_TARGET

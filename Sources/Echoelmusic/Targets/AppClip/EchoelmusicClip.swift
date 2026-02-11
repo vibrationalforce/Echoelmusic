@@ -8,6 +8,9 @@
 // "I'm a unitard!" - Ralph Wiggum, Event Coordinator
 //
 // Created 2026-02-04
+
+// App Clip code - only compiles in dedicated App Clip target
+#if ECHOELMUSIC_CLIP_TARGET
 // Copyright (c) 2026 Echoelmusic. All rights reserved.
 
 import SwiftUI
@@ -25,7 +28,7 @@ import CoreLocation
 /// - Instant NFT minting of "Coherence Moments"
 /// - Event-specific visualizations
 /// - Seamless handoff to full app
-@main
+// Note: @main removed - App Clip uses separate Xcode target with its own entry point
 struct EchoelmusicClipApp: App {
     @StateObject private var clipManager = AppClipManager()
     @StateObject private var healthKit = UnifiedHealthKitEngine.shared
@@ -699,3 +702,5 @@ struct MintingSheet: View {
         .environmentObject(AppClipManager())
         .environmentObject(UnifiedHealthKitEngine.shared)
 }
+
+#endif // ECHOELMUSIC_CLIP_TARGET

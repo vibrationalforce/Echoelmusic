@@ -8,7 +8,7 @@
 
 // App Clips are only available on iOS and built as a separate target
 // This guard prevents compilation conflicts when building other platforms
-#if os(iOS) && canImport(AppClip)
+#if ECHOELMUSIC_CLIP_TARGET && os(iOS) && canImport(AppClip)
 
 import SwiftUI
 import AppClip

@@ -3,12 +3,16 @@
 // Bundle ID: com.echoelmusic.app.widgets
 // Copyright 2026 Echoelmusic. All rights reserved.
 
+// Widget extension code - only compiles when ECHOELMUSIC_WIDGET_TARGET is defined
+// In the main app target, this entire file is excluded
+#if ECHOELMUSIC_WIDGET_TARGET
+
 import SwiftUI
 import WidgetKit
 
 // MARK: - Widget Bundle
 
-@main
+// Note: @main removed - Widget extension uses separate Xcode target
 struct EchoelaWidgetBundle: WidgetBundle {
     var body: some Widget {
         // Artist stats widget
@@ -709,3 +713,5 @@ struct SpatialEchoelaEchoelaCoherenceWidgetView: View {
 } timeline: {
     EchoelaCoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .increasing, sessionActive: false)
 }
+
+#endif // ECHOELMUSIC_WIDGET_TARGET
