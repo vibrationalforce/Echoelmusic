@@ -721,7 +721,7 @@ public class ProSessionEngine: ObservableObject {
         for trackIndex in tracks.indices {
             for sceneIndex in tracks[trackIndex].clips.indices {
                 guard var clip = tracks[trackIndex].clips[sceneIndex],
-                      clip.state == .playing,
+                      clip.state == ClipState.playing,
                       let followAction = clip.followAction else { continue }
 
                 // Check if follow action time has elapsed
@@ -845,8 +845,8 @@ public class ProSessionEngine: ObservableObject {
     public func stopTrack(trackIndex: Int) {
         guard trackIndex < tracks.count else { return }
         for sceneIndex in tracks[trackIndex].clips.indices {
-            if tracks[trackIndex].clips[sceneIndex]?.state == .playing ||
-               tracks[trackIndex].clips[sceneIndex]?.state == .queued {
+            if tracks[trackIndex].clips[sceneIndex]?.state == ClipState.playing ||
+               tracks[trackIndex].clips[sceneIndex]?.state == ClipState.queued {
                 stopClip(trackIndex: trackIndex, sceneIndex: sceneIndex)
             }
         }
@@ -876,7 +876,7 @@ public class ProSessionEngine: ObservableObject {
 
         // Stop any other playing clip on this track (exclusive)
         for i in tracks[trackIndex].clips.indices {
-            if i != sceneIndex, tracks[trackIndex].clips[i]?.state == .playing {
+            if i != sceneIndex, tracks[trackIndex].clips[i]?.state == ClipState.playing {
                 tracks[trackIndex].clips[i]?.state = .stopped
             }
         }
@@ -987,7 +987,7 @@ public class ProSessionEngine: ObservableObject {
             id: UUID(),
             name: sourceClip.name + " (copy)",
             type: sourceClip.type,
-            state: .stopped,
+            state: ClipState.stopped,
             color: sourceClip.color,
             length: sourceClip.length,
             loopEnabled: sourceClip.loopEnabled,
@@ -1025,7 +1025,7 @@ public class ProSessionEngine: ObservableObject {
         let newClip = SessionClip(
             name: "\(tracks[trackIndex].name) Rec \(sceneIndex + 1)",
             type: clipType,
-            state: .recording,
+            state: ClipState.recording,
             color: ClipColor.red,
             length: recordLength,
             loopEnabled: true,
@@ -1043,7 +1043,7 @@ public class ProSessionEngine: ObservableObject {
         let newSceneIndex = scenes.count - 1
         for trackIndex in tracks.indices {
             // Find the currently playing clip on this track
-            let playingClip = tracks[trackIndex].clips.first(where: { $0?.state == .playing })
+            let playingClip = tracks[trackIndex].clips.first(where: { $0?.state == ClipState.playing })
             if let clip = playingClip, let unwrapped = clip {
                 tracks[trackIndex].ensureSlots(count: newSceneIndex + 1)
                 var captured = unwrapped
@@ -1052,7 +1052,7 @@ public class ProSessionEngine: ObservableObject {
                     id: UUID(),
                     name: unwrapped.name,
                     type: unwrapped.type,
-                    state: .stopped,
+                    state: ClipState.stopped,
                     color: unwrapped.color,
                     length: unwrapped.length,
                     loopEnabled: unwrapped.loopEnabled,
