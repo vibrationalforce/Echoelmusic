@@ -686,7 +686,7 @@ public final class HapticCompositionEngine: ObservableObject {
 
     /// Stop playback
     public func stop() {
-        continuousPlayer?.cancel()
+        try? continuousPlayer?.cancel()
         continuousPlayer = nil
         currentComposition = nil
         state = .idle
