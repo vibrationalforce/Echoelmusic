@@ -433,7 +433,7 @@ struct NodeRow: View {
 
             Spacer()
 
-            Button(action: { nodeGraph.removeNode(node.id) }) {
+            Button(action: { nodeGraph.removeNode(id: node.id) }) {
                 Image(systemName: "trash")
                     .font(.system(size: 14))
                     .foregroundColor(VaporwaveColors.coherenceLow.opacity(0.7))
