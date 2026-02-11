@@ -78,64 +78,28 @@ def write_api_key_to_disk
 end
 
 # =============================================================================
-# SIGNING STRATEGY: Automatic Signing with Fresh Certificates
+# SIGNING STRATEGY: Skip Archive Signing, Sign During Export
 # =============================================================================
-# Problem: CI runners are ephemeral — cloud-managed development certs from
-# previous runs have no private key in the new runner's keychain.
-# Error: "Apple Development signing certificate...private key not installed"
+# Problem: Stale cloud-managed development certs at Apple portal cannot be
+# revoked via Spaceship API. Automatic signing fails because xcodebuild finds
+# a dev cert for "this machine" but its private key is lost (ephemeral CI).
 #
-# Solution:
-# 1. cleanup_certificates() revokes ALL stale dev certs at Apple portal
-# 2. ensure_signing_certs() creates FRESH dev + dist certs with private keys
-# 3. Automatic signing finds the fresh certs and auto-manages profiles
+# Solution: Don't sign during archive at all.
+# - CODE_SIGNING_REQUIRED=NO skips signing during build/archive
+# - CODE_SIGNING_ALLOWED=YES allows signing during export step
+# - export_options signingStyle: "automatic" + cloud auth handles signing
+# - This is the standard CI approach used by fastlane documentation
 # =============================================================================
 
-# Create fresh signing certificates with private keys in CI keychain.
-# After cleanup_certificates revokes stale certs, this creates new ones.
-def ensure_signing_certs(api_key)
-  keychain_info = setup_keychain
-
-  UI.message("🔐 Creating fresh signing certificates in CI keychain...")
-
-  # Create development cert (needed by Automatic signing for archive step)
-  begin
-    cert(
-      api_key: api_key,
-      development: true,
-      keychain_path: keychain_info[:path],
-      keychain_password: keychain_info[:password],
-      generate_apple_certs: true,
-      output_path: "./build/certs"
-    )
-    UI.success("✅ Development certificate ready")
-  rescue => e
-    UI.important("Dev cert: #{e.message} — cloud signing will handle it")
-  end
-
-  # Create distribution cert (needed for export/upload step)
-  begin
-    cert(
-      api_key: api_key,
-      keychain_path: keychain_info[:path],
-      keychain_password: keychain_info[:password],
-      generate_apple_certs: true,
-      output_path: "./build/certs"
-    )
-    UI.success("✅ Distribution certificate ready")
-  rescue => e
-    UI.important("Dist cert: #{e.message} — cloud signing will handle it")
-  end
-end
-
-# Build xcargs with Automatic signing + cloud-managed profiles.
-# Fresh certs from ensure_signing_certs() are in the keychain.
-# -allowProvisioningUpdates auto-downloads provisioning profiles.
+# Build xcargs that skip signing during archive.
+# The export step handles all signing via cloud-managed automatic signing.
 def build_xcargs_distribution
   key_path = write_api_key_to_disk
 
   args = [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Automatic",
+    "CODE_SIGNING_REQUIRED=NO",
+    "CODE_SIGNING_ALLOWED=YES",
     "-allowProvisioningUpdates",
     "-authenticationKeyPath #{key_path}",
     "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
@@ -389,17 +353,9 @@ platform :ios do
 
     api_key = setup_api_key
 
-    # Clean stale development certs and manage distribution cert count
-    cleanup_certificates(api_key)
+    UI.message("Building iOS (archive unsigned, export with cloud signing)...")
 
-    # Ensure distribution certificate with private key is in CI keychain
-    # This bypasses the stale cloud-managed dev cert issue entirely
-    ensure_signing_certs(api_key)
-
-    UI.message("Building iOS with Automatic signing + fresh certificates...")
-
-    # Build iOS app with Manual signing using distribution certificate
-    # -allowProvisioningUpdates handles App Store provisioning profiles via cloud
+    # Archive without signing, export with cloud-managed automatic signing
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
@@ -439,10 +395,7 @@ platform :ios do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
-    cleanup_certificates(api_key)
-    ensure_signing_certs(api_key)
-
-    UI.message("Building watchOS with Automatic signing + fresh certificates...")
+    UI.message("Building watchOS (archive unsigned, export with cloud signing)...")
 
     # Build watchOS app with distribution signing (skip development cert requirement)
     build_app(
@@ -477,10 +430,7 @@ platform :ios do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
-    cleanup_certificates(api_key)
-    ensure_signing_certs(api_key)
-
-    UI.message("Building tvOS with Automatic signing + fresh certificates...")
+    UI.message("Building tvOS (archive unsigned, export with cloud signing)...")
 
     # Build tvOS app with distribution signing (skip development cert requirement)
     build_app(
@@ -515,10 +465,7 @@ platform :ios do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
-    cleanup_certificates(api_key)
-    ensure_signing_certs(api_key)
-
-    UI.message("Building visionOS with Automatic signing + fresh certificates...")
+    UI.message("Building visionOS (archive unsigned, export with cloud signing)...")
 
     # Build visionOS app with distribution signing (skip development cert requirement)
     build_app(
@@ -644,10 +591,7 @@ platform :mac do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
-    cleanup_certificates(api_key)
-    ensure_signing_certs(api_key)
-
-    UI.message("Building macOS with Automatic signing + fresh certificates...")
+    UI.message("Building macOS (archive unsigned, export with cloud signing)...")
 
     # Build macOS app with distribution signing (skip development cert requirement)
     build_app(

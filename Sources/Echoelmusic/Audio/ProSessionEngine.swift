@@ -1148,8 +1148,8 @@ public class ProSessionEngine: ObservableObject {
 
         let clip = SessionClip(
             name: name,
-            type: .pattern,
-            state: .stopped,
+            type: ClipType.pattern,
+            state: ClipState.stopped,
             color: ClipColor.orange,
             length: lengthSeconds,
             loopEnabled: true,
