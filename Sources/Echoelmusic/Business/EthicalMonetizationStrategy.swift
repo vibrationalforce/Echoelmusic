@@ -478,7 +478,7 @@ public struct AppStoreMonetizationCompliance: Sendable {
 
 import os.log
 
-private let monetizationLog = Logger(
+private let monetizationLog = os.Logger(
     subsystem: "com.echoelmusic",
     category: "Monetization"
 )
