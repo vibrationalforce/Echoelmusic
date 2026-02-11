@@ -2,6 +2,9 @@ import Foundation
 #if canImport(CoreMotion)
 import CoreMotion
 #endif
+#if canImport(UIKit)
+import UIKit
+#endif
 import AVFoundation
 import Combine
 

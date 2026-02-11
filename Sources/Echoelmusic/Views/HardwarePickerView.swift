@@ -840,7 +840,7 @@ final class HardwarePickerViewModel: ObservableObject {
     let audioInterfaces: [AudioInterfaceRegistry.AudioInterface]
     let midiControllers: [MIDIControllerRegistry.MIDIController]
     let dmxControllers: [LightingHardwareRegistry.DMXController]
-    let smartLights: [(name: String, protocol: LightingHardwareRegistry.LightingProtocol)]
+    let smartLights: [(name: String, protocol: LightingHardwareRegistry.LightingProtocol, maxDevices: Int)]
     let cameras: [VideoHardwareRegistry.Camera]
     let captureCards: [VideoHardwareRegistry.CaptureCard]
     let videoSwitchers: [BroadcastEquipmentRegistry.VideoSwitcher]
