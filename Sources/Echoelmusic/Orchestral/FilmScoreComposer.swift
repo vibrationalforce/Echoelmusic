@@ -788,7 +788,7 @@ public final class FilmScoreComposer: ObservableObject {
             keyCenter: 52,
             mode: .phrygian,
             primaryInstrument: "Strings",
-            dynamics: .crescendo,
+            dynamics: .mf,
             tempo: 80
         ))
 

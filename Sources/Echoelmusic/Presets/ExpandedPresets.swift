@@ -1311,7 +1311,7 @@ extension PresetManager {
 
     /// Total count of all presets including expanded
     public var expandedPresetCount: Int {
-        totalPresetCount +
+        Phase8000PresetManager.shared.totalPresetCount +
         BioReactivePreset.all.count +
         MusicalPreset.all.count +
         VisualPreset.all.count +
