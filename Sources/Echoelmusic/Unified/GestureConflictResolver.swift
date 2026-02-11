@@ -121,7 +121,7 @@ class GestureConflictResolver: ObservableObject {
     private func isHandNearFace(_ hand: HandTrackingManager.Hand) -> Bool {
         guard let handTracker = handTracker,
               let faceTracker = faceTracker,
-              faceTracker.isFaceDetected else {
+              faceTracker.isTracking else {
             return false // Can't detect conflict without face tracking
         }
 
