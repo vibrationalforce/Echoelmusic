@@ -344,7 +344,7 @@ public final class EchoelCreativeWorkspace: ObservableObject {
         if isPlaying {
             videoEditor.pause()
         } else {
-            videoEditor.play()
+            Task { await videoEditor.play() }
         }
         isPlaying.toggle()
     }
