@@ -278,7 +278,8 @@ public final class GazeTracker: NSObject, ObservableObject {
     // MARK: - Initialization
     //==========================================================================
 
-    public init() {
+    public override init() {
+        super.init()
         checkAvailability()
     }
 
