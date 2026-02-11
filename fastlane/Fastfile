@@ -115,16 +115,15 @@ end
 
 # Build xcargs for platforms that need App Store distribution but may not have
 # registered development devices (watchOS, tvOS, visionOS, macOS).
-# Uses -allowProvisioningUpdates for automatic profile download but does NOT
-# use -allowProvisioningDeviceRegistration (avoids "no devices" error).
-# CODE_SIGN_IDENTITY is set to distribution to skip development signing.
+# Uses Automatic cloud-managed signing via App Store Connect API key.
+# Does NOT use -allowProvisioningDeviceRegistration (avoids "no devices" error).
+# xcodebuild handles all certificate/profile creation via cloud signing.
 def build_xcargs_distribution
   key_path = write_api_key_to_disk
 
   args = [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Manual",
-    "CODE_SIGN_IDENTITY=Apple Distribution",
+    "CODE_SIGN_STYLE=Automatic",
     "-allowProvisioningUpdates",
     "-authenticationKeyPath #{key_path}",
     "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
