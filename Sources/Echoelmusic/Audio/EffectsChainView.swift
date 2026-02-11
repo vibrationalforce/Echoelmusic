@@ -190,15 +190,15 @@ struct EffectsChainView: View {
 
             HStack(spacing: VaporwaveSpacing.md) {
                 presetButton("Biofeedback", icon: "heart.fill", color: VaporwaveColors.neonPink) {
-                    nodeGraph = NodeGraph.createBiofeedbackChain()
+                    nodeGraph.loadFromPreset(NodeGraph.createBiofeedbackChain())
                 }
 
                 presetButton("Healing", icon: "leaf.fill", color: VaporwaveColors.coherenceHigh) {
-                    nodeGraph = NodeGraph.createHealingPreset()
+                    nodeGraph.loadFromPreset(NodeGraph.createHealingPreset())
                 }
 
                 presetButton("Energizing", icon: "bolt.fill", color: VaporwaveColors.coral) {
-                    nodeGraph = NodeGraph.createEnergizingPreset()
+                    nodeGraph.loadFromPreset(NodeGraph.createEnergizingPreset())
                 }
             }
         }
@@ -297,17 +297,17 @@ struct EffectsChainView: View {
             List {
                 Section(header: Text("Bio-Reactive Presets")) {
                     presetRow("Biofeedback Chain", description: "Filter → Reverb optimized for biofeedback") {
-                        nodeGraph = NodeGraph.createBiofeedbackChain()
+                        nodeGraph.loadFromPreset(NodeGraph.createBiofeedbackChain())
                         showPresets = false
                     }
 
                     presetRow("Healing", description: "Deep reverb with gentle compression") {
-                        nodeGraph = NodeGraph.createHealingPreset()
+                        nodeGraph.loadFromPreset(NodeGraph.createHealingPreset())
                         showPresets = false
                     }
 
                     presetRow("Energizing", description: "Bright filter with rhythmic delay") {
-                        nodeGraph = NodeGraph.createEnergizingPreset()
+                        nodeGraph.loadFromPreset(NodeGraph.createEnergizingPreset())
                         showPresets = false
                     }
                 }

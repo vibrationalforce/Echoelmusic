@@ -459,6 +459,18 @@ extension NodeGraph {
 extension NodeGraph {
 
     /// Create default biofeedback processing chain
+    /// Load preset data from another graph instance
+    func loadFromPreset(_ preset: NodeGraph) {
+        nodes.removeAll()
+        connections.removeAll()
+        for node in preset.nodes {
+            nodes.append(node)
+        }
+        for connection in preset.connections {
+            connections.append(connection)
+        }
+    }
+
     static func createBiofeedbackChain() -> NodeGraph {
         let graph = NodeGraph()
 
