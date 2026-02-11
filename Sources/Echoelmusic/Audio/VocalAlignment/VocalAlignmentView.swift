@@ -464,9 +464,15 @@ struct DubTrackRow: View {
             }
         }
         .padding()
+        #if os(tvOS)
+        .background(isSelected ? Color.purple.opacity(0.1) : Color.gray.opacity(0.15))
+        #else
         .background(isSelected ? Color.purple.opacity(0.1) : Color(.tertiarySystemBackground))
+        #endif
         .cornerRadius(12)
+        #if !os(tvOS)
         .onTapGesture(perform: onSelect)
+        #endif
     }
 
     private var statusColor: Color {

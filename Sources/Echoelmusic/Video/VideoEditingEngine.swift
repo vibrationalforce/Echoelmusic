@@ -402,12 +402,12 @@ class VideoEditingEngine: ObservableObject {
 
     // MARK: - Playback
 
-    func play() {
+    func play() async {
         guard !isPlaying else { return }
 
         // Build composition
         do {
-            let composition = try buildComposition()
+            let composition = try await buildComposition()
             playerItem = AVPlayerItem(asset: composition)
             player = AVPlayer(playerItem: playerItem)
 
@@ -475,11 +475,15 @@ class VideoEditingEngine: ObservableObject {
 
     // MARK: - Build Composition
 
-    func buildComposition() throws -> AVMutableComposition {
+    private func loadFirstTrack(from asset: AVAsset, mediaType: AVMediaType) async throws -> AVAssetTrack? {
+        return try await asset.loadTracks(withMediaType: mediaType).first
+    }
+
+    func buildComposition() async throws -> AVMutableComposition {
         let composition = AVMutableComposition()
 
         // Add video tracks
-        for (trackIndex, track) in timeline.videoTracks.enumerated() {
+        for (_, track) in timeline.videoTracks.enumerated() {
             guard let compositionTrack = composition.addMutableTrack(
                 withMediaType: .video,
                 preferredTrackID: kCMPersistentTrackID_Invalid
@@ -490,7 +494,7 @@ class VideoEditingEngine: ObservableObject {
             // Insert clips
             for clip in track.clips {
                 guard let asset = clip.asset else { continue }
-                guard let assetTrack = asset.tracks(withMediaType: .video).first else { continue }
+                guard let assetTrack = try? await loadFirstTrack(from: asset, mediaType: .video) else { continue }
 
                 let timeRange = CMTimeRange(start: clip.inPoint, duration: clip.duration)
 
@@ -503,7 +507,7 @@ class VideoEditingEngine: ObservableObject {
         }
 
         // Add audio tracks
-        for (trackIndex, track) in timeline.audioTracks.enumerated() {
+        for (_, track) in timeline.audioTracks.enumerated() {
             guard let compositionTrack = composition.addMutableTrack(
                 withMediaType: .audio,
                 preferredTrackID: kCMPersistentTrackID_Invalid
@@ -514,7 +518,7 @@ class VideoEditingEngine: ObservableObject {
             // Insert clips
             for clip in track.clips {
                 guard let asset = clip.asset else { continue }
-                guard let assetTrack = asset.tracks(withMediaType: .audio).first else { continue }
+                guard let assetTrack = try? await loadFirstTrack(from: asset, mediaType: .audio) else { continue }
 
                 let timeRange = CMTimeRange(start: clip.inPoint, duration: clip.duration)
 

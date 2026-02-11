@@ -1880,7 +1880,9 @@ public struct LegalDocumentViewer: View {
                         if showFullText {
                             Text(selectedDocument.fullText)
                                 .font(.system(.body, design: .default))
+                                #if !os(watchOS)
                                 .textSelection(.enabled)
+                                #endif
                         } else if let summary = selectedDocument.summary {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Summary")

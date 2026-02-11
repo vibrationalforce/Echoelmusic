@@ -150,8 +150,10 @@ struct VaporwaveApp: View {
             }
 
             // Haptic
+            #if os(iOS)
             let impact = UIImpactFeedbackGenerator(style: .light)
             impact.impactOccurred()
+            #endif
         }) {
             VStack(spacing: 4) {
                 Image(systemName: selectedTab == tab ? tab.iconFilled : tab.icon)
