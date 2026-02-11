@@ -89,7 +89,7 @@ public struct Camera: Identifiable, Equatable, Sendable {
 // MARK: - Scene
 
 /// A composed scene with visual elements
-public struct Scene: Identifiable, Equatable, Sendable {
+public struct DirectorScene: Identifiable, Equatable, Sendable {
     public let id: UUID
     public var name: String
     public var cameras: [Camera]
@@ -223,7 +223,7 @@ public struct PerformanceContext: Sendable {
     public var participantCount: Int = 1
     public var timeInCurrentShot: TimeInterval = 0
     public var sessionDuration: TimeInterval = 0
-    public var mood: Scene.SceneMood = .calm
+    public var mood: DirectorScene.SceneMood = .calm
     public var isClimax: Bool = false
     public var isTransition: Bool = false
 
@@ -258,7 +258,7 @@ public final class AISceneDirector: ObservableObject {
     // MARK: - Published Properties
 
     @Published public private(set) var isDirecting: Bool = false
-    @Published public private(set) var currentScene: Scene?
+    @Published public private(set) var currentScene: DirectorScene?
     @Published public private(set) var activeCamera: Camera?
     @Published public private(set) var decisions: [DirectionDecision] = []
     @Published public private(set) var context = PerformanceContext()
@@ -285,7 +285,7 @@ public final class AISceneDirector: ObservableObject {
     private var updateTimer: Timer?
     private var lastCameraSwitch: Date = Date()
     private var shotHistory: [(camera: UUID, duration: TimeInterval)] = []
-    private var moodHistory: [Scene.SceneMood] = []
+    private var moodHistory: [DirectorScene.SceneMood] = []
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
@@ -295,7 +295,7 @@ public final class AISceneDirector: ObservableObject {
     }
 
     private func setupDefaultScene() {
-        var scene = Scene(name: "Default Scene", mood: .calm)
+        var scene = DirectorScene(name: "Default Scene", mood: .calm)
 
         // Add default cameras
         scene.cameras = [
@@ -308,8 +308,8 @@ public final class AISceneDirector: ObservableObject {
 
         // Add default visual layers
         scene.visualLayers = [
-            Scene.VisualLayer(type: .gradient, opacity: 0.5, blendMode: .normal),
-            Scene.VisualLayer(type: .particles, opacity: 0.3, blendMode: .add)
+            DirectorScene.VisualLayer(type: .gradient, opacity: 0.5, blendMode: .normal),
+            DirectorScene.VisualLayer(type: .particles, opacity: 0.3, blendMode: .add)
         ]
 
         scene.activeCamera = scene.cameras.first?.id
@@ -350,7 +350,7 @@ public final class AISceneDirector: ObservableObject {
     }
 
     /// Manual mood change
-    public func setMood(_ mood: Scene.SceneMood) {
+    public func setMood(_ mood: DirectorScene.SceneMood) {
         currentScene?.mood = mood
         moodHistory.append(mood)
         logDecision(.changeMood, confidence: 1.0, reason: "Manual mood change to \(mood.rawValue)")
@@ -538,7 +538,7 @@ public final class AISceneDirector: ObservableObject {
 
     private func decideVisualChange() -> DirectionDecision {
         // Decide what visual layers to add/remove based on context
-        let visualType: Scene.VisualLayer.VisualType
+        let visualType: DirectorScene.VisualLayer.VisualType
 
         if context.coherence > 0.7 {
             visualType = .sacredGeometry
@@ -561,7 +561,7 @@ public final class AISceneDirector: ObservableObject {
     }
 
     private func decideMoodChange() -> DirectionDecision {
-        let newMood: Scene.SceneMood
+        let newMood: DirectorScene.SceneMood
 
         if context.coherence > 0.8 {
             newMood = .meditative
@@ -596,7 +596,7 @@ public final class AISceneDirector: ObservableObject {
 
         case .addVisual:
             if let typeString = decision.parameters["visualType"] as? String,
-               let type = Scene.VisualLayer.VisualType(rawValue: typeString) {
+               let type = DirectorScene.VisualLayer.VisualType(rawValue: typeString) {
                 addVisualLayer(type: type)
             }
 
@@ -608,7 +608,7 @@ public final class AISceneDirector: ObservableObject {
 
         case .changeMood:
             if let moodString = decision.parameters["mood"] as? String,
-               let mood = Scene.SceneMood(rawValue: moodString) {
+               let mood = DirectorScene.SceneMood(rawValue: moodString) {
                 currentScene?.mood = mood
                 moodHistory.append(mood)
             }
@@ -643,8 +643,8 @@ public final class AISceneDirector: ObservableObject {
         log.video("AISceneDirector: Switched to \(camera.name)")
     }
 
-    private func addVisualLayer(type: Scene.VisualLayer.VisualType) {
-        let layer = Scene.VisualLayer(type: type, opacity: 0.5, blendMode: .add)
+    private func addVisualLayer(type: DirectorScene.VisualLayer.VisualType) {
+        let layer = DirectorScene.VisualLayer(type: type, opacity: 0.5, blendMode: .add)
         currentScene?.visualLayers.append(layer)
 
         // Limit layer count
@@ -695,7 +695,7 @@ public final class AISceneDirector: ObservableObject {
     // MARK: - Scene Management
 
     /// Load a new scene
-    public func loadScene(_ scene: Scene) {
+    public func loadScene(_ scene: DirectorScene) {
         currentScene = scene
         activeCamera = scene.cameras.first { $0.id == scene.activeCamera } ?? scene.cameras.first
         logDecision(.hold, confidence: 1.0, reason: "Loaded scene: \(scene.name)")

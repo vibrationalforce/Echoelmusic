@@ -22,7 +22,7 @@ struct StreamingView: View {
     @State private var isStreaming: Bool = false
     @State private var showingScenePicker: Bool = false
     @State private var showingAnalytics: Bool = false
-    @State private var currentScene: Scene?
+    @State private var currentScene: DirectorScene?
     @State private var errorMessage: String?
 
     // MARK: - Body
