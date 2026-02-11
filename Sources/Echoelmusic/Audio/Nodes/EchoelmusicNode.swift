@@ -44,6 +44,9 @@ protocol EchoelmusicNode: AnyObject {
 
     // MARK: - Bio-Reactivity
 
+    /// Whether this node reacts to bio-signals
+    var isBioReactive: Bool { get }
+
     /// React to bio-signal changes (HRV, heart rate, etc.)
     /// This method is called on main thread, must be non-blocking
     /// - Parameter signal: Bio-signal data
@@ -222,6 +225,7 @@ class BaseEchoelmusicNode: EchoelmusicNode {
 
     var isBypassed: Bool = false
     var isActive: Bool = false
+    var isBioReactive: Bool = false
 
     var parameters: [NodeParameter] = []
 

@@ -272,6 +272,10 @@ final class EchoelUniversalCore: ObservableObject {
 
 extension EchoelUniversalCore {
 
+    enum CreativeDirection {
+        case harmonic, rhythmic, textural, structural
+    }
+
     struct SystemState {
         // Core Parameters
         var coherence: Float = 0.5
@@ -295,6 +299,9 @@ extension EchoelUniversalCore {
         // Device State
         var connectedDevices: Int = 0
         var syncLatency: Double = 0
+
+        // Creative AI Direction
+        var creativeDirection: CreativeDirection = .harmonic
 
         // NEU: System Health & Performance
         var systemHealth: SystemHealth = .optimal
