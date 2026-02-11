@@ -18,14 +18,14 @@ struct EchoelaWidgetBundle: WidgetBundle {
         NFTTrackingWidget()
 
         // Coherence widget
-        CoherenceWidget()
+        EchoelaCoherenceWidget()
 
         // Quick action widget
         QuickActionWidget()
 
         #if os(visionOS)
         // Spatial widget for visionOS
-        SpatialCoherenceWidget()
+        SpatialEchoelaCoherenceWidget()
         #endif
     }
 }
@@ -410,12 +410,12 @@ struct CoherenceProvider: TimelineProvider {
     }
 }
 
-struct CoherenceWidget: Widget {
-    let kind = "CoherenceWidget"
+struct EchoelaCoherenceWidget: Widget {
+    let kind = "EchoelaCoherenceWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CoherenceProvider()) { entry in
-            CoherenceWidgetView(entry: entry)
+            EchoelaEchoelaCoherenceWidgetView(entry: entry)
                 .containerBackground(.fill.tertiary, for: ContainerBackgroundPlacement.widget)
         }
         .configurationDisplayName("Coherence")
@@ -424,7 +424,7 @@ struct CoherenceWidget: Widget {
     }
 }
 
-struct CoherenceWidgetView: View {
+struct EchoelaEchoelaCoherenceWidgetView: View {
     let entry: EchoelaCoherenceEntry
 
     @Environment(\.widgetFamily) var family
@@ -634,12 +634,12 @@ struct SpatialCoherenceProvider: TimelineProvider {
     }
 }
 
-struct SpatialCoherenceWidget: Widget {
-    let kind = "SpatialCoherenceWidget"
+struct SpatialEchoelaCoherenceWidget: Widget {
+    let kind = "SpatialEchoelaCoherenceWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: SpatialCoherenceProvider()) { entry in
-            SpatialCoherenceWidgetView(entry: entry)
+            SpatialEchoelaEchoelaCoherenceWidgetView(entry: entry)
         }
         .configurationDisplayName("Spatial Coherence")
         .description("3D coherence visualization for your workspace")
@@ -647,7 +647,7 @@ struct SpatialCoherenceWidget: Widget {
     }
 }
 
-struct SpatialCoherenceWidgetView: View {
+struct SpatialEchoelaEchoelaCoherenceWidgetView: View {
     let entry: SpatialCoherenceEntry
 
     var body: some View {
@@ -705,7 +705,7 @@ struct SpatialCoherenceWidgetView: View {
 }
 
 #Preview("Coherence", as: .accessoryCircular) {
-    CoherenceWidget()
+    EchoelaCoherenceWidget()
 } timeline: {
     EchoelaCoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .increasing, sessionActive: false)
 }

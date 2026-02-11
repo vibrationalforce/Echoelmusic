@@ -32,7 +32,7 @@ struct EchoelmusicClipApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppClipRootView()
+            EchoelmusicClipRootView()
                 .environmentObject(clipManager)
                 .environmentObject(healthKit)
                 .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
@@ -270,7 +270,7 @@ final class AppClipManager: ObservableObject {
 
 // MARK: - App Clip Root View
 
-struct AppClipRootView: View {
+struct EchoelmusicClipRootView: View {
     @EnvironmentObject var clipManager: AppClipManager
     @EnvironmentObject var healthKit: UnifiedHealthKitEngine
 
@@ -695,7 +695,7 @@ struct MintingSheet: View {
 // MARK: - Preview
 
 #Preview("App Clip") {
-    AppClipRootView()
+    EchoelmusicClipRootView()
         .environmentObject(AppClipManager())
         .environmentObject(UnifiedHealthKitEngine.shared)
 }

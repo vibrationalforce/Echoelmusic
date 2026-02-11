@@ -603,7 +603,7 @@ public struct EchoelaWatchView: View {
     public var body: some View {
         TabView {
             // Main metrics view
-            MetricsView()
+            EchoelaMetricsView()
 
             // Session control
             SessionControlView()
@@ -615,7 +615,7 @@ public struct EchoelaWatchView: View {
     }
 }
 
-struct MetricsView: View {
+struct EchoelaMetricsView: View {
     @StateObject private var watchManager = EchoelaWatchManager.shared
 
     var body: some View {

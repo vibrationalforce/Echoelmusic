@@ -15,7 +15,7 @@ import Combine
 // MARK: - MIDI Note Event
 
 /// A single MIDI note event extracted from audio
-public struct MIDINoteEvent: Identifiable, Codable, Sendable {
+public struct AudioMIDINoteEvent: Identifiable, Codable, Sendable {
     public let id: UUID
     public let noteNumber: Int      // 0-127
     public let velocity: Int        // 0-127
@@ -111,7 +111,7 @@ public struct AudioToMIDIConfiguration: Codable, Sendable {
 // MARK: - Conversion Result
 
 public struct AudioToMIDIResult: Sendable {
-    public let notes: [MIDINoteEvent]
+    public let notes: [AudioMIDINoteEvent]
     public let duration: Double
     public let tempo: Double?
     public let averageVelocity: Int
@@ -473,10 +473,10 @@ public final class AudioToMIDIConverter: ObservableObject {
         samples: [Float],
         sampleRate: Double,
         tempo: Double
-    ) -> [MIDINoteEvent] {
+    ) -> [AudioMIDINoteEvent] {
         guard !pitchTrack.isEmpty else { return [] }
 
-        var notes: [MIDINoteEvent] = []
+        var notes: [AudioMIDINoteEvent] = []
         var currentNote: Int? = nil
         var noteStartTime: Double = 0
         var noteAmplitudes: [Double] = []
@@ -488,7 +488,7 @@ public final class AudioToMIDIConverter: ObservableObject {
                     let duration = frame.time - noteStartTime
                     if duration >= configuration.minimumNoteLength {
                         let velocity = amplitudeToVelocity(noteAmplitudes)
-                        notes.append(MIDINoteEvent(
+                        notes.append(AudioMIDINoteEvent(
                             noteNumber: note,
                             velocity: velocity,
                             startTime: noteStartTime,
@@ -513,7 +513,7 @@ public final class AudioToMIDIConverter: ObservableObject {
                 let duration = frame.time - noteStartTime
                 if duration >= configuration.minimumNoteLength {
                     let velocity = amplitudeToVelocity(noteAmplitudes)
-                    notes.append(MIDINoteEvent(
+                    notes.append(AudioMIDINoteEvent(
                         noteNumber: currentNote!,
                         velocity: velocity,
                         startTime: noteStartTime,
@@ -533,7 +533,7 @@ public final class AudioToMIDIConverter: ObservableObject {
             let duration = lastFrame.time - noteStartTime
             if duration >= configuration.minimumNoteLength {
                 let velocity = amplitudeToVelocity(noteAmplitudes)
-                notes.append(MIDINoteEvent(
+                notes.append(AudioMIDINoteEvent(
                     noteNumber: note,
                     velocity: velocity,
                     startTime: noteStartTime,
@@ -569,14 +569,14 @@ public final class AudioToMIDIConverter: ObservableObject {
     }
 
     /// Quantize notes to grid
-    private func quantizeNotes(_ notes: [MIDINoteEvent], tempo: Double) -> [MIDINoteEvent] {
+    private func quantizeNotes(_ notes: [AudioMIDINoteEvent], tempo: Double) -> [AudioMIDINoteEvent] {
         let beatDuration = 60.0 / tempo
         let gridSize = beatDuration * configuration.quantizeValue
 
         return notes.map { note in
             let quantizedStart = round(note.startTime / gridSize) * gridSize
             let quantizedDuration = max(gridSize, round(note.duration / gridSize) * gridSize)
-            return MIDINoteEvent(
+            return AudioMIDINoteEvent(
                 id: note.id,
                 noteNumber: note.noteNumber,
                 velocity: note.velocity,

@@ -76,7 +76,7 @@ public enum MusicalScale: String, CaseIterable, Identifiable, Sendable {
 // MARK: - Musical Note
 
 /// A musical note with pitch, velocity, and duration
-public struct MusicalNote: Identifiable, Equatable, Sendable {
+public struct BioMusicalNote: Identifiable, Equatable, Sendable {
     public let id = UUID()
     public var pitch: Int      // MIDI note number (0-127)
     public var velocity: Float // 0-1
@@ -270,13 +270,13 @@ public struct GeneratorConfiguration: Sendable {
 /// A phrase of generated music
 public struct GeneratedPhrase: Identifiable, Sendable {
     public let id = UUID()
-    public var notes: [MusicalNote]
+    public var notes: [BioMusicalNote]
     public var chords: [Chord]
     public var duration: TimeInterval
     public var tempo: Double
     public var timestamp: Date
 
-    public init(notes: [MusicalNote] = [], chords: [Chord] = [], duration: TimeInterval = 4.0, tempo: Double = 120.0) {
+    public init(notes: [BioMusicalNote] = [], chords: [Chord] = [], duration: TimeInterval = 4.0, tempo: Double = 120.0) {
         self.notes = notes
         self.chords = chords
         self.duration = duration
@@ -297,7 +297,7 @@ public final class BiometricMusicGenerator: ObservableObject {
     @Published public private(set) var currentPhrase: GeneratedPhrase?
     @Published public private(set) var currentTempo: Double = 120.0
     @Published public private(set) var currentScale: MusicalScale = .pentatonicMajor
-    @Published public private(set) var activeNotes: [MusicalNote] = []
+    @Published public private(set) var activeNotes: [BioMusicalNote] = []
 
     @Published public var configuration = GeneratorConfiguration()
     @Published public var bioData = BioMusicalData()
@@ -507,7 +507,7 @@ public final class BiometricMusicGenerator: ObservableObject {
         let velocity = 0.5 + bioData.dynamicEnvelope * 0.3 + Float.random(in: -0.1...0.1)
         let duration = (60.0 / currentTempo) * Double.random(in: 0.5...1.5)
 
-        let note = MusicalNote(
+        let note = BioMusicalNote(
             pitch: finalPitch,
             velocity: velocity,
             duration: duration,
@@ -558,7 +558,7 @@ public final class BiometricMusicGenerator: ObservableObject {
         for pitch in chord.notes {
             let octavePitch = pitch + (configuration.octaveRange.lowerBound - 1) * 12
 
-            let note = MusicalNote(
+            let note = BioMusicalNote(
                 pitch: octavePitch,
                 velocity: velocity,
                 duration: duration,
@@ -586,7 +586,7 @@ public final class BiometricMusicGenerator: ObservableObject {
         let velocity: Float = 0.6 + bioData.intensity * 0.2
         let duration = (60.0 / currentTempo) * 4  // Whole note
 
-        let note = MusicalNote(
+        let note = BioMusicalNote(
             pitch: bassPitch,
             velocity: velocity,
             duration: duration,
@@ -599,7 +599,7 @@ public final class BiometricMusicGenerator: ObservableObject {
 
         // Octave bass on higher energy
         if bioData.intensity > 0.6 {
-            let octaveNote = MusicalNote(
+            let octaveNote = BioMusicalNote(
                 pitch: bassPitch + 12,
                 velocity: velocity * 0.7,
                 duration: duration * 0.5,
@@ -630,7 +630,7 @@ public final class BiometricMusicGenerator: ObservableObject {
         let velocity: Float = 0.3 + bioData.dynamicEnvelope * 0.2
         let duration = (60.0 / currentTempo) * 0.25
 
-        let note = MusicalNote(
+        let note = BioMusicalNote(
             pitch: pitch,
             velocity: velocity,
             duration: duration,
