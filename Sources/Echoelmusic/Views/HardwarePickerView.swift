@@ -3,6 +3,7 @@ import SwiftUI
 /// SwiftUI Hardware Picker View - Phase 10000 ULTIMATE
 /// Select and configure audio interfaces, MIDI controllers, lighting, and more
 /// Supports ALL cross-platform device combinations
+@MainActor
 struct HardwarePickerView: View {
 
     @StateObject private var viewModel = HardwarePickerViewModel()

@@ -4,6 +4,7 @@ import SwiftUI
 // Integration der Unified Visual Engine in die VaporwavePalace UI
 // "Flüssiges Licht für deine Musik"
 
+@MainActor
 struct VisualizerContainerView: View {
 
     // MARK: - Environment

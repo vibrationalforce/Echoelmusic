@@ -4,6 +4,7 @@ import SwiftUI
 // Homogeneous GUI with VaporwaveTheme - "Flüssiges Licht"
 
 /// Professional video editing interface with bio-reactive features
+@MainActor
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
     @StateObject private var workspace = EchoelCreativeWorkspace.shared

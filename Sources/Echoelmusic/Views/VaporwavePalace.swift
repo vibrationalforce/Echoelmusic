@@ -4,6 +4,7 @@ import SwiftUI
 // Das Mutterschiff - Die Hauptansicht für Echoelmusic
 // "Flüssiges Licht für deine Musik"
 
+@MainActor
 struct VaporwavePalace: View {
 
     // MARK: - Environment

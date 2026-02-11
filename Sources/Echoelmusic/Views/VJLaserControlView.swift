@@ -4,6 +4,7 @@ import SwiftUI
 // Resolume Arena inspired visual layer & lighting control
 // Full VaporwaveTheme Corporate Identity
 
+@MainActor
 struct VJLaserControlView: View {
     @StateObject private var vjEngine = VJEngineViewModel()
     @State private var selectedLayer: Int = 0

@@ -4,6 +4,7 @@ import SwiftUI
 // Professional audio routing inspired by Reaper/Pro Tools
 // Full VaporwaveTheme Corporate Identity
 
+@MainActor
 struct AudioRoutingMatrixView: View {
     @StateObject private var audioRouter = AudioRouterViewModel()
     @State private var selectedChannel: AudioChannel?

@@ -5,6 +5,7 @@ import SwiftUI
 // Full VaporwaveTheme Corporate Identity
 
 // Wrapper view that owns the @StateObject, passes it to content via @ObservedObject
+@MainActor
 struct SessionClipView: View {
     @StateObject private var session = SessionClipViewModel()
 
@@ -14,6 +15,7 @@ struct SessionClipView: View {
 }
 
 // Content view receives view model via @ObservedObject (no wrapper ambiguity)
+@MainActor
 private struct SessionClipContent: View {
     @ObservedObject var session: SessionClipViewModel
     @State private var selectedTrack: Int?

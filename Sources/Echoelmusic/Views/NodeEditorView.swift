@@ -4,6 +4,7 @@ import SwiftUI
 // TouchDesigner/DaVinci Resolve inspired node-based visual programming
 // Full VaporwaveTheme Corporate Identity
 
+@MainActor
 struct NodeEditorView: View {
     @StateObject private var nodeEditor = NodeEditorViewModel()
     @State private var canvasOffset: CGSize = .zero

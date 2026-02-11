@@ -4,6 +4,7 @@ import SwiftUI
 // Professional MIDI 1.0/2.0/MPE routing matrix inspired by Ableton/Reaper
 // Full VaporwaveTheme Corporate Identity
 
+@MainActor
 struct MIDIRoutingView: View {
     @StateObject private var midiRouter = MIDIRouterViewModel()
     @State private var selectedTab: MIDITab = .devices

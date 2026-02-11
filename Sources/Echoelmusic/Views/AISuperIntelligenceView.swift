@@ -4,6 +4,7 @@ import SwiftUI
 // Unified AI Control Panel for all EchoelTools
 // Full VaporwaveTheme Corporate Identity
 
+@MainActor
 struct AISuperIntelligenceView: View {
     @StateObject private var aiEngine = AISuperIntelligenceViewModel()
     @State private var selectedCategory: AICategory = .composition
