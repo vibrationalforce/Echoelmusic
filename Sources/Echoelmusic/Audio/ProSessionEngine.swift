@@ -253,7 +253,7 @@ public enum WarpMode: String, Codable, CaseIterable, Sendable {
 // MARK: - SessionClip
 
 /// A launchable clip in session view, combining Ableton clips with FL Studio patterns
-public struct SessionClip: Identifiable, Codable, Equatable {
+public struct SessionClip: Identifiable, Equatable, Sendable {
     public let id: UUID
     public var name: String
     public var type: ClipType
@@ -314,6 +314,19 @@ public struct SessionClip: Identifiable, Codable, Equatable {
     /// Step sequencer pattern
     public var patternSteps: [PatternStep]
 
+    // MARK: Codable
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, type, state, color
+        case length, loopEnabled
+        case launchMode, quantization
+        case followAction, followActionTime
+        case warpMode, warpMarkers, playbackSpeed
+        case startOffset, endOffset
+        case audioURL, gain
+        case midiNotes, patternSteps
+    }
+
     public init(
         id: UUID = UUID(),
         name: String = "Clip",
@@ -356,6 +369,58 @@ public struct SessionClip: Identifiable, Codable, Equatable {
         self.gain = gain
         self.midiNotes = midiNotes
         self.patternSteps = patternSteps
+    }
+}
+
+// MARK: - SessionClip + Codable
+
+extension SessionClip: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        type = try container.decode(ClipType.self, forKey: .type)
+        state = try container.decode(ClipState.self, forKey: .state)
+        color = try container.decode(ClipColor.self, forKey: .color)
+        length = try container.decode(TimeInterval.self, forKey: .length)
+        loopEnabled = try container.decode(Bool.self, forKey: .loopEnabled)
+        launchMode = try container.decode(LaunchMode.self, forKey: .launchMode)
+        quantization = try container.decode(LaunchQuantize.self, forKey: .quantization)
+        followAction = try container.decodeIfPresent(FollowAction.self, forKey: .followAction)
+        followActionTime = try container.decode(TimeInterval.self, forKey: .followActionTime)
+        warpMode = try container.decode(WarpMode.self, forKey: .warpMode)
+        warpMarkers = try container.decode([WarpMarker].self, forKey: .warpMarkers)
+        playbackSpeed = try container.decode(Double.self, forKey: .playbackSpeed)
+        startOffset = try container.decode(TimeInterval.self, forKey: .startOffset)
+        endOffset = try container.decode(TimeInterval.self, forKey: .endOffset)
+        audioURL = try container.decodeIfPresent(URL.self, forKey: .audioURL)
+        gain = try container.decode(Float.self, forKey: .gain)
+        midiNotes = try container.decode([MIDINoteEvent].self, forKey: .midiNotes)
+        patternSteps = try container.decode([PatternStep].self, forKey: .patternSteps)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(type, forKey: .type)
+        try container.encode(state, forKey: .state)
+        try container.encode(color, forKey: .color)
+        try container.encode(length, forKey: .length)
+        try container.encode(loopEnabled, forKey: .loopEnabled)
+        try container.encode(launchMode, forKey: .launchMode)
+        try container.encode(quantization, forKey: .quantization)
+        try container.encodeIfPresent(followAction, forKey: .followAction)
+        try container.encode(followActionTime, forKey: .followActionTime)
+        try container.encode(warpMode, forKey: .warpMode)
+        try container.encode(warpMarkers, forKey: .warpMarkers)
+        try container.encode(playbackSpeed, forKey: .playbackSpeed)
+        try container.encode(startOffset, forKey: .startOffset)
+        try container.encode(endOffset, forKey: .endOffset)
+        try container.encodeIfPresent(audioURL, forKey: .audioURL)
+        try container.encode(gain, forKey: .gain)
+        try container.encode(midiNotes, forKey: .midiNotes)
+        try container.encode(patternSteps, forKey: .patternSteps)
     }
 }
 
