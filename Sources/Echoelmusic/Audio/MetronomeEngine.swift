@@ -254,7 +254,7 @@ public final class MetronomeEngine: ObservableObject {
             try audioEngine.start()
             playerNode.play()
         } catch {
-            print("[Echoelmusic] Metronome audio engine start failed: \(error)")
+            ProfessionalLogger.log(.error, category: .audio, "Metronome audio engine start failed: \(error)")
             return
         }
 

@@ -337,7 +337,9 @@ public final class TrackFreezeEngine: ObservableObject {
         }
 
         // Read source buffer
-        let sourceBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        guard let sourceBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            throw FreezeError.noAudioToFreeze
+        }
         try sourceFile.read(into: sourceBuffer)
 
         // Create offline audio engine for rendering
@@ -387,7 +389,9 @@ public final class TrackFreezeEngine: ObservableObject {
         )
 
         // Render loop
-        let renderBuffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat, frameCapacity: maxFrames)!
+        guard let renderBuffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat, frameCapacity: maxFrames) else {
+            throw FreezeError.noAudioToFreeze
+        }
         var framesRendered: AVAudioFrameCount = 0
         var peakLevel: Float = 0
         var sumSquares: Float = 0

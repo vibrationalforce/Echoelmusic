@@ -401,7 +401,9 @@ public final class AIStemSeparationEngine: ObservableObject {
             throw SeparationError.emptyAudio
         }
 
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            throw SeparationError.invalidFormat
+        }
         try audioFile.read(into: buffer)
 
         guard let floatData = buffer.floatChannelData else {

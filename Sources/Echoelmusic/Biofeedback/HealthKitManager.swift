@@ -28,6 +28,12 @@ import UIKit
 // This file will be removed in a future version.
 // ============================================================================
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISCLAIMER: This is NOT a medical device. Biometric data is for creative and
+// informational purposes only. NOT for health monitoring or medical decisions.
+// Consult healthcare providers for all health concerns.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 // MARK: - Optimized Circular Buffer for HRV Data
 
 /// High-performance circular buffer for real-time biometric data

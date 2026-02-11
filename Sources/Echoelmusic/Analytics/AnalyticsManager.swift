@@ -1120,6 +1120,12 @@ public class AnalyticsManager: ObservableObject {
         log.analytics("✅ Analytics providers initialized: \(providers.count)")
     }
 
+    // MARK: - Cleanup
+
+    nonisolated deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     // MARK: - Session Tracking
 
     private func setupSessionTracking() {

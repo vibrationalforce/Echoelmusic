@@ -571,7 +571,7 @@ public final class StemRenderingEngine: ObservableObject {
 
         guard frameCount > 0 else { return (0, 0) }
 
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: min(frameCount, 65536))!
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: min(frameCount, 65536)) else { return (0, 0) }
         try audioFile.read(into: buffer)
 
         guard let floatData = buffer.floatChannelData else { return (0, 0) }

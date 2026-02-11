@@ -16,6 +16,12 @@ import Foundation
 import Combine
 import CoreBluetooth
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISCLAIMER: This is NOT a medical device. Biometric data is for creative and
+// informational purposes only. NOT for health monitoring or medical decisions.
+// Consult healthcare providers for all health concerns.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 // MARK: - EEG Data Types
 
 /// EEG frequency bands with power values

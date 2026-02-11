@@ -32,6 +32,12 @@ import HealthKit
 import Combine
 #endif
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISCLAIMER: This is NOT a medical device. Biometric data is for creative and
+// informational purposes only. NOT for health monitoring or medical decisions.
+// Consult healthcare providers for all health concerns.
+// ═══════════════════════════════════════════════════════════════════════════════
+
 // MARK: - HealthKit Data Source
 
 /// Data source for HealthKit biometric data

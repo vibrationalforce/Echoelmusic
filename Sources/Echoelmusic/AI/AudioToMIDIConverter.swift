@@ -168,7 +168,9 @@ public final class AudioToMIDIConverter: ObservableObject {
         }
 
         // Read all samples
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            throw AudioToMIDIError.invalidFormat
+        }
         try audioFile.read(into: buffer)
 
         guard let channelData = buffer.floatChannelData?[0] else {

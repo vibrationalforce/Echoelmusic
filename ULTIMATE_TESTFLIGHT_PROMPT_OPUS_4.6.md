@@ -74,7 +74,7 @@ KONTEXT:
 - Repository: vibrationalforce/Echoelmusic
 - Workflow ID: 225043686
 - Apple ID: 6757957358 | SKU: Simsalabimbam
-- Token: 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
+- Token: ${{ secrets.GH_TOKEN }}  ← NEVER hardcode tokens!
 - Zertifikat: Funktioniert ✅
 
 AUFGABE:
@@ -111,8 +111,8 @@ SHARED STATE:
   "workflow_id": 225043686,
   "apple_id": "6757957358",
   "sku": "Simsalabimbam",
-  "token": "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",
-  "cert_password": "echoelmusic-ci"
+  "token": "${{ secrets.GH_TOKEN }}",
+  "cert_password": "${{ secrets.CERT_PASSWORD }}"
 }
 
 PARALLEL EXECUTION:
@@ -272,7 +272,7 @@ CREDENTIALS:
 - SKU: Simsalabimbam
 - Repo: vibrationalforce/Echoelmusic
 - Workflow: 225043686
-- Token: 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
+- Token: ${{ secrets.GH_TOKEN }}  ← NEVER hardcode tokens!
 
 BUNDLE IDS:
 - com.echoelmusic.app (iOS/macOS/tvOS/visionOS)
