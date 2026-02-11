@@ -393,16 +393,6 @@ public enum SessionTrackType: String, Codable, CaseIterable, Sendable {
     case master
 }
 
-// MARK: - TrackColor
-
-/// Track header color
-public typealias TrackColor = ClipColor
-
-// MARK: - SceneColor
-
-/// Scene trigger color
-public typealias SceneColor = ClipColor
-
 // MARK: - SessionMonitorMode
 
 /// Input monitoring mode
@@ -469,7 +459,7 @@ public struct SessionTrackSend: Identifiable, Codable, Equatable, Sendable {
 public struct SessionTrack: Identifiable, Equatable {
     public let id: UUID
     public var name: String
-    public var color: TrackColor
+    public var color: ClipColor
 
     /// Clip slots indexed by scene. nil means the slot is empty.
     public var clips: [SessionClip?]
@@ -515,7 +505,7 @@ public struct SessionTrack: Identifiable, Equatable {
     public init(
         id: UUID = UUID(),
         name: String = "Track",
-        color: TrackColor = .blue,
+        color: ClipColor = .blue,
         clips: [SessionClip?] = [],
         type: SessionTrackType = .audio,
         isArmed: Bool = false,
@@ -588,7 +578,7 @@ public struct SessionScene: Identifiable, Equatable {
     /// Optional time signature change (e.g. "4/4", "7/8")
     public var timeSignature: String?
     /// Scene trigger button color
-    public var color: SceneColor
+    public var color: ClipColor
 
     public init(
         id: UUID = UUID(),
@@ -596,7 +586,7 @@ public struct SessionScene: Identifiable, Equatable {
         number: Int = 1,
         tempo: Double? = nil,
         timeSignature: String? = nil,
-        color: SceneColor = .amber
+        color: ClipColor = .amber
     ) {
         self.id = id
         self.name = name
@@ -999,7 +989,7 @@ public class ProSessionEngine: ObservableObject {
     public func addReturnTrack(name: String) -> SessionTrack {
         var returnTrack = SessionTrack(
             name: name,
-            color: TrackColor.purple,
+            color: ClipColor.purple,
             type: SessionTrackType.returnBus,
             volume: 0.7
         )
@@ -1287,7 +1277,7 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // 8 tracks with varied types
-        let trackConfigs: [(SessionTrackType, String, TrackColor)] = [
+        let trackConfigs: [(SessionTrackType, String, ClipColor)] = [
             (.audio, "1 - Drums", .orange),
             (.audio, "2 - Bass", .blue),
             (.midi, "3 - Synth Lead", .green),
@@ -1336,14 +1326,14 @@ public class ProSessionEngine: ObservableObject {
         // Deck A
         var deckA = engine.addTrack(type: SessionTrackType.audio, name: "Deck A")
         if let idx = engine.tracks.firstIndex(where: { $0.id == deckA.id }) {
-            engine.tracks[idx].color = TrackColor.cyan
+            engine.tracks[idx].color = ClipColor.cyan
             engine.tracks[idx].crossfadeAssign = CrossfadeAssign.a
         }
 
         // Deck B
         var deckB = engine.addTrack(type: SessionTrackType.audio, name: "Deck B")
         if let idx = engine.tracks.firstIndex(where: { $0.id == deckB.id }) {
-            engine.tracks[idx].color = TrackColor.magenta
+            engine.tracks[idx].color = ClipColor.magenta
             engine.tracks[idx].crossfadeAssign = CrossfadeAssign.b
         }
 
@@ -1373,7 +1363,7 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // Instrument tracks
-        let trackConfigs: [(SessionTrackType, String, TrackColor)] = [
+        let trackConfigs: [(SessionTrackType, String, ClipColor)] = [
             (.instrument, "Bio Synth", .green),
             (.instrument, "Pad Layer", .cyan),
             (.midi, "Arpeggio", .purple),
