@@ -633,8 +633,8 @@ public class ProSessionEngine: ObservableObject {
     public init() {
         self.masterTrack = SessionTrack(
             name: "Master",
-            color: .sand,
-            type: .master,
+            color: ClipColor.sand,
+            type: SessionTrackType.master,
             volume: 1.0
         )
         log.info("ProSessionEngine initialized", category: .audio)
@@ -794,12 +794,12 @@ public class ProSessionEngine: ObservableObject {
         }
 
         let quantize = tracks[trackIndex].clips[sceneIndex]?.quantization ?? clipLaunchQuantize
-        if quantize == .none || !isPlaying {
+        if quantize == LaunchQuantize.none || !isPlaying {
             executeLaunch(trackIndex: trackIndex, sceneIndex: sceneIndex)
         } else {
             // Queue for next quantize boundary
             let nextBoundary = nextQuantizeBeat(for: quantize)
-            tracks[trackIndex].clips[sceneIndex]?.state = .queued
+            tracks[trackIndex].clips[sceneIndex]?.state = ClipState.queued
             pendingLaunches.append((trackIndex: trackIndex, sceneIndex: sceneIndex, atBeat: nextBoundary))
             log.info("Clip queued: \(tracks[trackIndex].clips[sceneIndex]?.name ?? "?") at beat \(nextBoundary)", category: .audio)
         }
@@ -833,7 +833,7 @@ public class ProSessionEngine: ObservableObject {
               tracks[trackIndex].clips[sceneIndex] != nil else { return }
 
         let quantize = clipLaunchQuantize
-        if quantize == .none || !isPlaying {
+        if quantize == LaunchQuantize.none || !isPlaying {
             executeStop(trackIndex: trackIndex, sceneIndex: sceneIndex)
         } else {
             let nextBoundary = nextQuantizeBeat(for: quantize)
@@ -860,7 +860,7 @@ public class ProSessionEngine: ObservableObject {
         for trackIndex in tracks.indices {
             for sceneIndex in tracks[trackIndex].clips.indices {
                 if tracks[trackIndex].clips[sceneIndex] != nil {
-                    tracks[trackIndex].clips[sceneIndex]?.state = .stopped
+                    tracks[trackIndex].clips[sceneIndex]?.state = ClipState.stopped
                 }
             }
         }
@@ -877,18 +877,18 @@ public class ProSessionEngine: ObservableObject {
         // Stop any other playing clip on this track (exclusive)
         for i in tracks[trackIndex].clips.indices {
             if i != sceneIndex, tracks[trackIndex].clips[i]?.state == ClipState.playing {
-                tracks[trackIndex].clips[i]?.state = .stopped
+                tracks[trackIndex].clips[i]?.state = ClipState.stopped
             }
         }
 
-        tracks[trackIndex].clips[sceneIndex]?.state = .playing
+        tracks[trackIndex].clips[sceneIndex]?.state = ClipState.playing
         log.info("Clip playing: \(tracks[trackIndex].clips[sceneIndex]?.name ?? "?")", category: .audio)
     }
 
     private func executeStop(trackIndex: Int, sceneIndex: Int) {
         guard trackIndex < tracks.count,
               sceneIndex < tracks[trackIndex].clips.count else { return }
-        tracks[trackIndex].clips[sceneIndex]?.state = .stopped
+        tracks[trackIndex].clips[sceneIndex]?.state = ClipState.stopped
     }
 
     /// Calculate the next beat boundary for a given quantization
@@ -949,7 +949,7 @@ public class ProSessionEngine: ObservableObject {
         var returnTrack = SessionTrack(
             name: name,
             color: TrackColor.purple,
-            type: .returnBus,
+            type: SessionTrackType.returnBus,
             volume: 0.7
         )
         returnTrack.ensureSlots(count: scenes.count)
@@ -1020,7 +1020,7 @@ public class ProSessionEngine: ObservableObject {
         tracks[trackIndex].isArmed = true
 
         let recordLength = Double(loopLength) * 4.0 * (60.0 / globalBPM)
-        let clipType: ClipType = tracks[trackIndex].type == .audio ? .audio : .midi
+        let clipType: ClipType = tracks[trackIndex].type == SessionTrackType.audio ? ClipType.audio : ClipType.midi
 
         let newClip = SessionClip(
             name: "\(tracks[trackIndex].name) Rec \(sceneIndex + 1)",
@@ -1283,17 +1283,17 @@ public class ProSessionEngine: ObservableObject {
         }
 
         // Deck A
-        var deckA = engine.addTrack(type: .audio, name: "Deck A")
+        var deckA = engine.addTrack(type: SessionTrackType.audio, name: "Deck A")
         if let idx = engine.tracks.firstIndex(where: { $0.id == deckA.id }) {
             engine.tracks[idx].color = TrackColor.cyan
-            engine.tracks[idx].crossfadeAssign = .a
+            engine.tracks[idx].crossfadeAssign = CrossfadeAssign.a
         }
 
         // Deck B
-        var deckB = engine.addTrack(type: .audio, name: "Deck B")
+        var deckB = engine.addTrack(type: SessionTrackType.audio, name: "Deck B")
         if let idx = engine.tracks.firstIndex(where: { $0.id == deckB.id }) {
             engine.tracks[idx].color = TrackColor.magenta
-            engine.tracks[idx].crossfadeAssign = .b
+            engine.tracks[idx].crossfadeAssign = CrossfadeAssign.b
         }
 
         engine.crossfaderPosition = 0.0
@@ -1335,7 +1335,7 @@ public class ProSessionEngine: ObservableObject {
             let track = engine.addTrack(type: type, name: name)
             if let idx = engine.tracks.firstIndex(where: { $0.id == track.id }) {
                 engine.tracks[idx].color = color
-                engine.tracks[idx].monitorMode = type == .instrument ? .always : .auto
+                engine.tracks[idx].monitorMode = type == SessionTrackType.instrument ? SessionMonitorMode.always : SessionMonitorMode.auto
             }
         }
 
