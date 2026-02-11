@@ -466,7 +466,7 @@ public final class PerformanceTracer: Sendable {
         return try await operation()
     }
 
-    public struct TraceHandle: Sendable {
+    public struct TraceHandle: @unchecked Sendable {
         let name: String
         let signpostID: OSSignpostID
         let state: OSSignpostIntervalState
