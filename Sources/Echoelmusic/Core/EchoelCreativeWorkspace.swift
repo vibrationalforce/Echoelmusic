@@ -41,14 +41,14 @@ import AVFoundation
 // MARK: - Creative Workspace Mode
 
 /// What the user is focused on right now
-public enum WorkspaceMode: String, CaseIterable {
+enum WorkspaceMode: String, CaseIterable {
     case audio = "Audio"
     case video = "Video"
     case audioVideo = "Audio + Video"
     case immersive = "Immersive"
     case live = "Live Performance"
 
-    public var icon: String {
+    var icon: String {
         switch self {
         case .audio: return "waveform"
         case .video: return "film"
@@ -60,14 +60,14 @@ public enum WorkspaceMode: String, CaseIterable {
 }
 
 /// Output target for the final result
-public enum OutputTarget: String, CaseIterable {
+enum OutputTarget: String, CaseIterable {
     case home = "Home"
     case social = "Social Media"
     case stage = "Stage / Event"
     case immersive = "Immersive / VR"
     case broadcast = "Broadcast / Stream"
 
-    public var icon: String {
+    var icon: String {
         switch self {
         case .home: return "house.fill"
         case .social: return "square.and.arrow.up"
@@ -83,7 +83,7 @@ public enum OutputTarget: String, CaseIterable {
 /// Unified workspace that bridges ALL engines into one seamless creative flow.
 /// Build a track → edit video on the beat → add immersive audio → export.
 @MainActor
-public final class EchoelCreativeWorkspace: ObservableObject {
+final class EchoelCreativeWorkspace: ObservableObject {
 
     // MARK: - Singleton
 
@@ -91,25 +91,25 @@ public final class EchoelCreativeWorkspace: ObservableObject {
 
     // MARK: - Published State
 
-    @Published public var mode: WorkspaceMode = .audioVideo
-    @Published public var outputTarget: OutputTarget = .home
-    @Published public var isPlaying: Bool = false
-    @Published public var globalBPM: Double = 120.0
-    @Published public var globalTimeSignature: TimeSignature = .fourFour
+    @Published var mode: WorkspaceMode = .audioVideo
+    @Published var outputTarget: OutputTarget = .home
+    @Published var isPlaying: Bool = false
+    @Published var globalBPM: Double = 120.0
+    @Published var globalTimeSignature: TimeSignature = .fourFour
 
     // MARK: - Connected Engines
 
     /// BPM Grid — beat detection, snap, quantize, tempo automation
-    public let bpmGrid: BPMGridEditEngine
+    let bpmGrid: BPMGridEditEngine
 
     /// Video Editor — NLE timeline, clips, keyframes, undo/redo
-    public let videoEditor: VideoEditingEngine
+    let videoEditor: VideoEditingEngine
 
     /// Creative Studio — art styles, music genres, creative modes
-    public let creativeStudio: CreativeStudioEngine
+    let creativeStudio: CreativeStudioEngine
 
     /// Collaboration — worldwide sessions, streaming
-    public let collaboration: WorldwideCollaborationHub
+    let collaboration: WorldwideCollaborationHub
 
     /// Universal Core — bio-reactive, quantum, sync, AI (already connected)
     private let universalCore = EchoelUniversalCore.shared
@@ -121,23 +121,23 @@ public final class EchoelCreativeWorkspace: ObservableObject {
 
     /// Pro Mix Engine — channel strips, sends, returns, buses, sidechain, automation
     /// (Best of Ableton + Reaper + Pro Tools mixer)
-    public let proMixer: ProMixEngine
+    let proMixer: ProMixEngine
 
     /// Pro Session Engine — clip launcher, patterns, scene launching, warping
     /// (Best of Ableton Session View + FL Studio Channel Rack)
-    public let proSession: ProSessionEngine
+    let proSession: ProSessionEngine
 
     /// Pro Color Grading — curves, wheels, LUTs, scopes, node-based grading
     /// (Best of DaVinci Resolve color page)
-    public let proColor: ProColorGrading
+    let proColor: ProColorGrading
 
     /// Pro Cue System — cue lists, show files, DMX fixtures, timecode sync
     /// (Best of Resolume Arena + grandMA lighting console)
-    public let proCue: ProCueSystem
+    let proCue: ProCueSystem
 
     /// Pro Stream Engine — scenes, sources, multi-stream, replay buffer
     /// (Best of OBS Studio + Restream)
-    public let proStream: ProStreamEngine
+    let proStream: ProStreamEngine
 
     // MARK: - Private
 
@@ -276,7 +276,7 @@ public final class EchoelCreativeWorkspace: ObservableObject {
     // MARK: - Workspace Actions
 
     /// Start a new creative session
-    public func newSession(mode: WorkspaceMode, bpm: Double = 120, timeSignature: TimeSignature = .fourFour) {
+    funcnewSession(mode: WorkspaceMode, bpm: Double = 120, timeSignature: TimeSignature = .fourFour) {
         self.mode = mode
         bpmGrid.setBPM(bpm)
         bpmGrid.setTimeSignature(timeSignature)
@@ -288,7 +288,7 @@ public final class EchoelCreativeWorkspace: ObservableObject {
     }
 
     /// Detect BPM from audio file and sync everything
-    public func detectAndSyncBPM(from audioURL: URL) async {
+    funcdetectAndSyncBPM(from audioURL: URL) async {
         let result = await bpmGrid.detectBeats(from: audioURL)
         if result.confidence > 0.5 {
             globalBPM = result.bpm
@@ -298,7 +298,7 @@ public final class EchoelCreativeWorkspace: ObservableObject {
     }
 
     /// Set BPM globally — updates all engines at once
-    public func setGlobalBPM(_ bpm: Double) {
+    funcsetGlobalBPM(_ bpm: Double) {
         bpmGrid.setBPM(bpm)
         videoEditor.timeline.tempo = bpm
         globalBPM = bpm
@@ -306,41 +306,41 @@ public final class EchoelCreativeWorkspace: ObservableObject {
     }
 
     /// Set time signature globally
-    public func setGlobalTimeSignature(_ ts: TimeSignature) {
+    funcsetGlobalTimeSignature(_ ts: TimeSignature) {
         bpmGrid.setTimeSignature(ts)
         globalTimeSignature = ts
     }
 
     /// Snap video cut to next beat
-    public func cutVideoOnBeat(at currentTime: Double) -> Double {
+    funccutVideoOnBeat(at currentTime: Double) -> Double {
         return bpmGrid.cutAtNextBeat(from: currentTime)
     }
 
     /// Snap video cut to next bar
-    public func cutVideoOnBar(at currentTime: Double) -> Double {
+    funccutVideoOnBar(at currentTime: Double) -> Double {
         return bpmGrid.cutAtNextBar(from: currentTime)
     }
 
     /// Generate auto-cuts on beats for a video range
-    public func autoEditOnBeats(from start: Double, to end: Double, every: SnapMode = .beat) -> [Double] {
+    funcautoEditOnBeats(from start: Double, to end: Double, every: SnapMode = .beat) -> [Double] {
         return bpmGrid.generateAutoCuts(from: start, to: end, every: every)
     }
 
     /// Switch workspace mode seamlessly
-    public func switchMode(_ newMode: WorkspaceMode) {
+    funcswitchMode(_ newMode: WorkspaceMode) {
         let previousMode = mode
         mode = newMode
         log.info("🔄 Workspace: \(previousMode.rawValue) → \(newMode.rawValue)", category: .system)
     }
 
     /// Update playback position — syncs BPM grid + video
-    public func updatePlaybackPosition(_ seconds: Double) {
+    funcupdatePlaybackPosition(_ seconds: Double) {
         bpmGrid.updatePosition(seconds)
         videoEditor.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
     }
 
     /// Play/pause toggle — syncs all engines
-    public func togglePlayback() {
+    functogglePlayback() {
         if isPlaying {
             videoEditor.pause()
         } else {

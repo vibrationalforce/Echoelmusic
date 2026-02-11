@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Combine
+import Security
 
 // MARK: - RTMP Constants
 private enum RTMPConstants {

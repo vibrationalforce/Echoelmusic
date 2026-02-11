@@ -12,6 +12,7 @@ import Combine
 import AVFoundation
 import VideoToolbox
 import Network
+import Security
 
 // MARK: - Streaming Constants
 
