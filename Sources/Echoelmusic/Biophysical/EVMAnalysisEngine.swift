@@ -177,7 +177,7 @@ public final class EVMAnalysisEngine: NSObject {
         // Create compute pipeline for Laplacian pyramid
         do {
             let library = try device.makeDefaultLibrary(bundle: Bundle.main)
-            if let function = library?.makeFunction(name: "laplacianPyramidDownsample") {
+            if let function = library.makeFunction(name: "laplacianPyramidDownsample") {
                 computePipelineState = try device.makeComputePipelineState(function: function)
             }
         } catch {
