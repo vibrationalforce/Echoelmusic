@@ -290,7 +290,7 @@ public final class StemRenderingEngine: ObservableObject {
     // MARK: - Public API
 
     /// Render stems from a session using a preset
-    public func renderStems(
+    func renderStems(
         session: Session,
         preset: StemExportPreset,
         format: StemAudioFormat = .wav24,
@@ -338,7 +338,7 @@ public final class StemRenderingEngine: ObservableObject {
     }
 
     /// Render stems with custom configurations
-    public func renderStems(
+    func renderStems(
         session: Session,
         configs: [StemConfiguration],
         outputDirectory: URL? = nil

@@ -295,7 +295,7 @@ public class OuraRingIntegration: ObservableObject {
                     let duration = sample.endDate.timeIntervalSince(sample.startDate)
                     totalSleep += duration
 
-                    if #available(iOS 16.0, *) {
+                    if #available(iOS 16.0, watchOS 9.0, *) {
                         switch sample.value {
                         case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
                             deepSleep += duration
