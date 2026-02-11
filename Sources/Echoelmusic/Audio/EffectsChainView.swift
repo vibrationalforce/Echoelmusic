@@ -398,69 +398,69 @@ struct NodeRow: View {
 
     var body: some View {
         VStack(spacing: VaporwaveSpacing.md) {
-            HStack(spacing: VaporwaveSpacing.md) {
-                // Node icon
-                Image(systemName: nodeIcon)
-                    .font(.system(size: 18))
-                    .foregroundColor(nodeColor)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(nodeColor.opacity(0.2))
-                    )
-                    .neonGlow(color: nodeColor, radius: 5)
-
-                // Node info
-                VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
-                    Text(node.name)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(VaporwaveColors.textPrimary)
-
-                    Text(nodeDescription)
-                        .font(.system(size: 11))
-                        .foregroundColor(VaporwaveColors.textTertiary)
-                }
-
-                Spacer()
-
-                // Delete button
-                Button(action: {
-                    nodeGraph.removeNode(node.id)
-                }) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 14))
-                        .foregroundColor(VaporwaveColors.coherenceLow.opacity(0.7))
-                }
-                .accessibilityLabel("Delete \(node.name)")
-            }
-
-            // Bio-reactive indicator
+            nodeHeader
             if node.isBioReactive {
-                HStack(spacing: VaporwaveSpacing.xs) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(VaporwaveColors.neonPink)
-
-                    Text("Bio-Reactive")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(VaporwaveColors.neonPink)
-
-                    Spacer()
-                }
+                bioReactiveIndicator
             }
         }
         .padding(VaporwaveSpacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isSelected ? VaporwaveColors.neonCyan.opacity(0.1) : Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(isSelected ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 1)
-                )
-        )
+        .background(nodeBackground)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(node.name), \(nodeDescription)\(node.isBioReactive ? ", bio-reactive" : "")")
         .accessibilityHint(isSelected ? "Selected" : "Double tap to select")
+    }
+
+    private var nodeHeader: some View {
+        HStack(spacing: VaporwaveSpacing.md) {
+            Image(systemName: nodeIcon)
+                .font(.system(size: 18))
+                .foregroundColor(nodeColor)
+                .frame(width: 40, height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(nodeColor.opacity(0.2))
+                )
+                .neonGlow(color: nodeColor, radius: 5)
+
+            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+                Text(node.name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(VaporwaveColors.textPrimary)
+                Text(nodeDescription)
+                    .font(.system(size: 11))
+                    .foregroundColor(VaporwaveColors.textTertiary)
+            }
+
+            Spacer()
+
+            Button(action: { nodeGraph.removeNode(node.id) }) {
+                Image(systemName: "trash")
+                    .font(.system(size: 14))
+                    .foregroundColor(VaporwaveColors.coherenceLow.opacity(0.7))
+            }
+            .accessibilityLabel("Delete \(node.name)")
+        }
+    }
+
+    private var bioReactiveIndicator: some View {
+        HStack(spacing: VaporwaveSpacing.xs) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 10))
+                .foregroundColor(VaporwaveColors.neonPink)
+            Text("Bio-Reactive")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(VaporwaveColors.neonPink)
+            Spacer()
+        }
+    }
+
+    private var nodeBackground: some View {
+        RoundedRectangle(cornerRadius: 10)
+            .fill(isSelected ? VaporwaveColors.neonCyan.opacity(0.1) : Color.white.opacity(0.05))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 1)
+            )
     }
 
     private var nodeIcon: String {
