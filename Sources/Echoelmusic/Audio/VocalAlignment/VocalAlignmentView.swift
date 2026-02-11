@@ -219,12 +219,20 @@ struct VocalAlignmentView: View {
                             .font(.subheadline)
                     }
                 }
+                #if os(tvOS)
+                .toggleStyle(.automatic)
+                #else
                 .toggleStyle(SwitchToggleStyle(tint: .green))
+                #endif
             }
             .padding(.horizontal)
             .padding(.bottom, 12)
         }
+        #if os(tvOS)
+        .background(Color.gray.opacity(0.15))
+        #else
         .background(Color(.secondarySystemBackground))
+        #endif
     }
 
     // MARK: - Action Buttons Section
@@ -288,7 +296,11 @@ struct VocalAlignmentView: View {
             .padding(.horizontal)
             .padding(.vertical, 12)
         }
+        #if os(tvOS)
+        .background(Color.black)
+        #else
         .background(Color(.systemBackground))
+        #endif
     }
 
     // MARK: - Actions

@@ -496,7 +496,8 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - AUAudioUnit Overrides
 
     open override var parameterTree: AUParameterTree? {
-        return _parameterTree
+        get { return _parameterTree }
+        set { _parameterTree = newValue }
     }
 
     open override var outputBusses: AUAudioUnitBusArray {

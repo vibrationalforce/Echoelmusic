@@ -404,6 +404,7 @@ public struct WellnessPreset: EnginePreset {
 
 // MARK: - Collaboration Presets
 
+#if !os(watchOS)
 public struct CollaborationPreset: EnginePreset {
     public let id: UUID
     public var name: String
@@ -492,6 +493,7 @@ public struct CollaborationPreset: EnginePreset {
         .musicJamSession, .globalMeditation, .artStudio, .researchLab, .coherenceCircle
     ]
 }
+#endif
 
 // MARK: - Phase 8000 Preset Manager
 
@@ -503,11 +505,18 @@ public final class Phase8000PresetManager: ObservableObject {
     @Published public var creativePresets: [CreativePreset] = CreativePreset.all
     @Published public var scientificPresets: [ScientificPreset] = ScientificPreset.all
     @Published public var wellnessPresets: [WellnessPreset] = WellnessPreset.all
+    #if !os(watchOS)
     @Published public var collaborationPresets: [CollaborationPreset] = CollaborationPreset.all
+    #endif
 
     public var totalPresetCount: Int {
-        videoPresets.count + creativePresets.count + scientificPresets.count +
-        wellnessPresets.count + collaborationPresets.count
+        #if os(watchOS)
+        return videoPresets.count + creativePresets.count + scientificPresets.count +
+            wellnessPresets.count
+        #else
+        return videoPresets.count + creativePresets.count + scientificPresets.count +
+            wellnessPresets.count + collaborationPresets.count
+        #endif
     }
 
     private init() {}

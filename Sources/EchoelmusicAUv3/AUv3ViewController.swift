@@ -212,7 +212,7 @@ struct TR808AUv3View: View {
     }
 
     private func loadParameters() {
-        guard let tree = (audioUnit as AUAudioUnit).parameterTree else { return }
+        guard let tree = audioUnit.parameterTree else { return }
 
         if let param = tree.parameter(withAddress: EchoelmusicParameterAddress.pitchGlideTime.rawValue) {
             pitchGlideTime = param.value
@@ -267,8 +267,8 @@ struct TR808AUv3View: View {
                 .frame(width: 50, alignment: .leading)
 
             Slider(value: value, in: range)
-                .onChange(of: value.wrappedValue) { _, newValue in
-                    (audioUnit as AUAudioUnit).parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
+                .onChange(of: value.wrappedValue) { newValue in
+                    audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
                 }
 
             Text(String(format: format, value.wrappedValue * multiplier))
@@ -328,8 +328,8 @@ struct StemSeparationAUv3View: View {
                     .font(.caption)
 
                 Slider(value: $mix, in: 0...1)
-                    .onChange(of: mix) { _, newValue in
-                        (audioUnit as AUAudioUnit).parameterTree?.parameter(withAddress: EchoelmusicParameterAddress.mix.rawValue)?.value = newValue
+                    .onChange(of: mix) { newValue in
+                        audioUnit.parameterTree?.parameter(withAddress: EchoelmusicParameterAddress.mix.rawValue)?.value = newValue
                     }
 
                 Text(String(format: "%.0f%%", mix * 100))
@@ -345,7 +345,7 @@ struct StemSeparationAUv3View: View {
     }
 
     private func loadParameters() {
-        guard let tree = (audioUnit as AUAudioUnit).parameterTree else { return }
+        guard let tree = audioUnit.parameterTree else { return }
 
         if let param = tree.parameter(withAddress: EchoelmusicParameterAddress.vocalLevel.rawValue) {
             vocalLevel = param.value
@@ -386,7 +386,7 @@ struct StemSeparationAUv3View: View {
                     .onChanged { gesture in
                         let newValue = Float(1 - gesture.location.y / 150)
                         value.wrappedValue = max(0, min(2, newValue))
-                        (audioUnit as AUAudioUnit).parameterTree?.parameter(withAddress: address.rawValue)?.value = value.wrappedValue
+                        audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = value.wrappedValue
                     }
             )
 

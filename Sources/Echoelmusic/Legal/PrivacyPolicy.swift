@@ -1844,7 +1844,11 @@ public struct LegalDocumentViewer: View {
                             .tag(doc)
                     }
                 }
+                #if os(watchOS)
+                .pickerStyle(.wheel)
+                #else
                 .pickerStyle(.segmented)
+                #endif
                 .padding()
 
                 // Content

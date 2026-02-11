@@ -412,7 +412,7 @@ class VideoEditingEngine: ObservableObject {
             player = AVPlayer(playerItem: playerItem)
 
             // Seek to playhead
-            player?.seek(to: playhead)
+            await player?.seek(to: playhead)
 
             // Start playback
             player?.play()

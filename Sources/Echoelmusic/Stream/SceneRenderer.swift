@@ -8,7 +8,7 @@ import CoreImage
 import SwiftUI
 import simd
 
-#if os(iOS) || os(macOS) || os(tvOS)
+#if os(iOS) || os(macOS) || os(tvOS) || os(visionOS)
 
 // MARK: - Scene Renderer
 
@@ -376,7 +376,7 @@ class SceneRenderer {
 
     private func renderEchoelVisualSource(_ source: EchoelVisualSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
         // Use Metal shader manager for bio-reactive visuals
-        #if os(iOS) || os(macOS) || os(tvOS) || os(visionOS)
+        #if os(iOS) || os(macOS) || os(tvOS) || os(visionOS) || os(visionOS)
         let shaderManager = MetalShaderManager.shared
 
         // Map visual type to shader type
