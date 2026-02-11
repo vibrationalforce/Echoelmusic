@@ -1360,10 +1360,4 @@ public class ProSessionEngine: ObservableObject {
     }
 }
 
-// MARK: - Comparable Clamping Extension
-
-private extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        return min(max(self, range.lowerBound), range.upperBound)
-    }
-}
+// NOTE: clamped(to:) is defined in NumericExtensions.swift
