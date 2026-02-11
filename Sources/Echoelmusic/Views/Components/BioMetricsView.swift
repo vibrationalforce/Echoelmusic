@@ -188,6 +188,7 @@ struct BioMetricsView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     ZStack {
         VaporwaveGradients.background
@@ -226,3 +227,4 @@ struct BioMetricsView: View {
         }
     }
 }
+#endif

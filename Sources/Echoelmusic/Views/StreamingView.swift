@@ -599,7 +599,9 @@ struct StreamKeyInputSheet: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     StreamingView()
         .environmentObject(HealthKitManager())
 }
+#endif

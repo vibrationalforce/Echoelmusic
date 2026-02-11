@@ -825,6 +825,8 @@ struct PlatformButton: View {
     }
 }
 
+#if DEBUG
 #Preview {
     OneClickPublishView()
 }
+#endif

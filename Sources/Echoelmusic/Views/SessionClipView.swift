@@ -873,6 +873,8 @@ enum QuantizeValue: String {
     case off = "Off"
 }
 
+#if DEBUG
 #Preview {
     SessionClipView()
 }
+#endif

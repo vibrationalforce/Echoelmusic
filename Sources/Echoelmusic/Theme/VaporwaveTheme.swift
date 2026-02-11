@@ -562,9 +562,11 @@ struct VaporwavePreview: View {
     }
 }
 
+#if DEBUG
 #Preview {
     VaporwavePreview()
 }
+#endif
 
 
 // MARK: - Reusable UI Components
@@ -1145,6 +1147,7 @@ struct VaporwaveEmptyState: View {
 
 // MARK: - Component Previews
 
+#if DEBUG
 #Preview("Components") {
     ZStack {
         VaporwaveGradients.background
@@ -1200,3 +1203,4 @@ struct VaporwaveEmptyState: View {
         }
     }
 }
+#endif

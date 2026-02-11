@@ -222,6 +222,7 @@ struct LiquidParticle {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     LiquidLightVisualizer(params: UnifiedVisualSoundEngine.VisualParameters(
         audioLevel: 0.6,
@@ -235,3 +236,4 @@ struct LiquidParticle {
     .frame(height: 400)
     .background(Color.black)
 }
+#endif

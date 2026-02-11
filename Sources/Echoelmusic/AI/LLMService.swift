@@ -851,6 +851,8 @@ struct LLMSettingsView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     LLMChatView()
 }
+#endif

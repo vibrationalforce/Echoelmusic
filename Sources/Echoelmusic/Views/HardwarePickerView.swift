@@ -864,6 +864,8 @@ final class HardwarePickerViewModel: ObservableObject {
     }
 }
 
+#if DEBUG
 #Preview {
     HardwarePickerView()
 }
+#endif

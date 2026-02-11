@@ -562,9 +562,11 @@ struct VaporwaveGrid: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VaporwavePalace()
         .environmentObject(HealthKitManager())
         .environmentObject(AudioEngine())
         .environmentObject(MicrophoneManager())
 }
+#endif

@@ -466,6 +466,7 @@ struct ProfileView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VaporwaveApp()
         .environmentObject(HealthKitManager())
@@ -473,3 +474,4 @@ struct ProfileView: View {
         .environmentObject(MicrophoneManager())
         .environmentObject(RecordingEngine())
 }
+#endif

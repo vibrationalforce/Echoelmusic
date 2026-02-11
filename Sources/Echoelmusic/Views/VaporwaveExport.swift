@@ -515,6 +515,8 @@ struct VaporwaveExport: View {
     }
 }
 
+#if DEBUG
 #Preview {
     VaporwaveExport(sessionName: "Morning Flow")
 }
+#endif

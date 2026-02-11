@@ -708,6 +708,8 @@ struct MixerSheet: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     DAWArrangementView()
 }
+#endif

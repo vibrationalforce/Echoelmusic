@@ -133,6 +133,7 @@ struct HeadTrackingVisualization: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     ZStack {
         LinearGradient(
@@ -172,3 +173,4 @@ struct HeadTrackingVisualization: View {
         .padding()
     }
 }
+#endif

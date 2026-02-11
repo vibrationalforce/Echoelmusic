@@ -417,6 +417,7 @@ struct VisualizerCoherenceRing: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VisualizerContainerView(
         visualEngine: UnifiedVisualSoundEngine(),
@@ -425,3 +426,4 @@ struct VisualizerCoherenceRing: View {
     .environmentObject(HealthKitManager())
     .environmentObject(AudioEngine())
 }
+#endif

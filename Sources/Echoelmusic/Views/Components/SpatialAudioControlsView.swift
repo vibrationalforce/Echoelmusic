@@ -191,6 +191,7 @@ struct SpatialAudioControlsView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     ZStack {
         LinearGradient(
@@ -218,3 +219,4 @@ struct SpatialAudioControlsView: View {
         .padding()
     }
 }
+#endif

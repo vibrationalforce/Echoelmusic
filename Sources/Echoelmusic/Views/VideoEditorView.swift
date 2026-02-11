@@ -754,6 +754,8 @@ struct VideoExportSheet: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VideoEditorView()
 }
+#endif

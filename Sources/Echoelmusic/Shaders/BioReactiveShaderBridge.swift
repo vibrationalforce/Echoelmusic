@@ -369,6 +369,7 @@ extension View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Bio-Reactive Aura") {
     if #available(iOS 17.0, *) {
         VStack(spacing: 30) {
@@ -407,3 +408,4 @@ extension View {
         .background(Color.black)
     }
 }
+#endif

@@ -929,6 +929,8 @@ enum VoiceAllocationMode: String, CaseIterable {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     MIDIRoutingView()
 }
+#endif

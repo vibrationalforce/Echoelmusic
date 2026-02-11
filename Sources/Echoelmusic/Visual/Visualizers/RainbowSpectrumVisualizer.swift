@@ -479,9 +479,11 @@ struct OctaveTranspositionVisualizer: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     RainbowSpectrumVisualizer(
         params: UnifiedVisualSoundEngine.VisualParameters(),
         spectrum: (0..<64).map { _ in Float.random(in: 0...1) }
     )
 }
+#endif

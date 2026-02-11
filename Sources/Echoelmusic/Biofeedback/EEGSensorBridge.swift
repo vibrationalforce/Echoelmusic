@@ -796,6 +796,8 @@ public struct EEGVisualizationView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("EEG Visualization") {
     EEGVisualizationView()
 }
+#endif

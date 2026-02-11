@@ -651,6 +651,7 @@ struct ContentView: View {
 }
 
 /// Preview for Xcode canvas
+#if DEBUG
 #Preview {
     ContentView()
         .environmentObject(MicrophoneManager())
@@ -658,3 +659,4 @@ struct ContentView: View {
         .environmentObject(UnifiedHealthKitEngine.shared)
         .environmentObject(RecordingEngine())
 }
+#endif

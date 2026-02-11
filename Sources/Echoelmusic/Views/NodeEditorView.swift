@@ -1084,6 +1084,8 @@ enum BioSource {
     case heartRate, hrv, coherence, breathing, gsr
 }
 
+#if DEBUG
 #Preview {
     NodeEditorView()
 }
+#endif

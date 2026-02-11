@@ -962,6 +962,7 @@ struct QuickActionsMenu: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Desktop") {
     MainNavigationHub()
         .environmentObject(HealthKitManager())
@@ -970,7 +971,9 @@ struct QuickActionsMenu: View {
         .environmentObject(RecordingEngine())
         .frame(width: 1400, height: 900)
 }
+#endif
 
+#if DEBUG
 #Preview("Mobile") {
     MainNavigationHub()
         .environmentObject(HealthKitManager())
@@ -979,3 +982,4 @@ struct QuickActionsMenu: View {
         .environmentObject(RecordingEngine())
         .frame(width: 390, height: 844)
 }
+#endif
