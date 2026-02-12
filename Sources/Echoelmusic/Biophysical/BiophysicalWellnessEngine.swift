@@ -611,7 +611,7 @@ public final class BiophysicalWellnessEngine: ObservableObject {
 
     deinit {
         sessionTimer?.invalidate()
-        updateTimer?.invalidate()
+        updateTimer?.cancel()
     }
 }
 

@@ -40,7 +40,12 @@ public struct BioModulatorVisualizationView: View {
 
             // Content
             TabView(selection: $selectedTab) {
-                BioMetricsView(bioData: bioModulator.currentBioData)
+                BioMetricsView(
+                        heartRate: bioModulator.currentBioData.heartRate,
+                        hrvCoherence: bioModulator.currentBioData.coherence * 100,
+                        voicePitch: 0,
+                        isActive: true
+                    )
                     .tag(0)
 
                 ModulationMatrixView(bioModulator: bioModulator)

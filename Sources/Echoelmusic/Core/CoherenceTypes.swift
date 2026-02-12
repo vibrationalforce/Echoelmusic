@@ -36,7 +36,7 @@ public struct HeartMathCoherence: Sendable, Hashable {
     /// - Parameter value: Coherence on 0-100 scale (clamped automatically)
     @inline(__always)
     public init(_ value: Double) {
-        self.value = max(0, min(100, value))
+        self.value = Swift.max(0, Swift.min(100, value))
     }
 
     /// Create from Float
@@ -126,7 +126,7 @@ public struct NormalizedCoherence: Sendable, Hashable {
     /// - Parameter value: Coherence on 0-1 scale (clamped automatically)
     @inline(__always)
     public init(_ value: Double) {
-        self.value = max(0, min(1, value))
+        self.value = Swift.max(0, Swift.min(1, value))
     }
 
     /// Create from Float

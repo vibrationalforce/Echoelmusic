@@ -144,8 +144,8 @@ class BioParameterMapper: ObservableObject {
         )
 
         return lerp(
-            from: reverbRange.min,
-            to: reverbRange.max,
+            from: Float(reverbRange.min),
+            to: Float(reverbRange.max),
             t: normalized
         )
     }
@@ -160,8 +160,8 @@ class BioParameterMapper: ObservableObject {
         )
 
         return lerp(
-            from: filterRange.min,
-            to: filterRange.max,
+            from: Float(filterRange.min),
+            to: Float(filterRange.max),
             t: normalized
         )
     }
@@ -183,8 +183,8 @@ class BioParameterMapper: ObservableObject {
         let combined = hrvContribution + audioContribution
 
         return lerp(
-            from: amplitudeRange.min,
-            to: amplitudeRange.max,
+            from: Float(amplitudeRange.min),
+            to: Float(amplitudeRange.max),
             t: combined
         )
     }

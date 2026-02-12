@@ -322,7 +322,7 @@ public struct BioConfiguration: Sendable, Codable, Hashable {
 
     /// Performance configuration (fast response)
     public static let performance = BioConfiguration(
-        mapping: .linear,
+        mapping: .standard,
         smoothingFactor: 0.1
     )
 

@@ -94,7 +94,7 @@ extension ShaderLibrary {
         ShaderLibrary.default.coherenceParticles(
             .float(time),
             .float(coherence),
-            .int(Int32(particleCount))
+            .float(Float(particleCount))
         )
     }
 }

@@ -380,7 +380,7 @@ public class CameraManager: NSObject, ObservableObject {
 
     // MARK: - Create Texture from Pixel Buffer (Zero-Copy)
 
-    private func createTexture(from pixelBuffer: CVPixelBuffer) -> MTLTexture? {
+    private nonisolated func createTexture(from pixelBuffer: CVPixelBuffer) -> MTLTexture? {
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
 
@@ -411,7 +411,7 @@ public class CameraManager: NSObject, ObservableObject {
 
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
 
-    nonisolated func captureOutput(
+    public nonisolated func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
@@ -444,7 +444,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 
-    nonisolated func captureOutput(
+    public nonisolated func captureOutput(
         _ output: AVCaptureOutput,
         didDrop sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
