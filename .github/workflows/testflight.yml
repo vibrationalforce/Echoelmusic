@@ -278,6 +278,17 @@ jobs:
             echo ""
             echo "--- Errors ---"
             grep -E "error:" /tmp/compile_check.log | head -30
+
+            # Output errors to step summary so they're visible in the UI
+            echo "## Compile Check Failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "error:" /tmp/compile_check.log | head -40 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+
+            # Output as annotations
+            ERRORS=$(grep -E "error:" /tmp/compile_check.log | head -20 || echo "No error lines found")
+            echo "::error title=Compile Errors::${ERRORS//$'\n'/ | }"
+
             exit 1
           fi
 
