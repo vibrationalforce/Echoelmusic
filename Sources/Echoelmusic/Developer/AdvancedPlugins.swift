@@ -173,7 +173,7 @@ public final class AISoundDesignerPlugin: EchoelmusicPlugin {
 
     public func onBioDataUpdate(_ bioData: BioData) {
         coherence = bioData.coherence
-        if let h = bioData.hrv { hrv = h }
+        if let h = bioData.hrvSDNN { hrv = h }
         if let br = bioData.breathingRate {
             breathPhase = Float(fmod(Date().timeIntervalSince1970 * Double(br) / 60.0, 1.0))
         }
@@ -181,9 +181,9 @@ public final class AISoundDesignerPlugin: EchoelmusicPlugin {
 
     public func onQuantumStateChange(_ state: QuantumPluginState) {
         // Map quantum state to neural latent space
-        if state.collapsed {
+        if state.superpositionCount == 0 {
             for i in 0..<min(neuralLatent.count, 64) {
-                neuralLatent[i] = Float.random(in: -1...1) * state.coherence
+                neuralLatent[i] = Float.random(in: -1...1) * state.coherenceLevel
             }
         }
     }

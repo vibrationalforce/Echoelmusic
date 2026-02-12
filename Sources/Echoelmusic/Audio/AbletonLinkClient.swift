@@ -618,12 +618,6 @@ public class AbletonLinkClient: ObservableObject {
         return remainingFraction * getBeatDuration()
     }
 
-    /// Time until next downbeat (bar start)
-    public func timeUntilNextDownbeat() -> TimeInterval {
-        let beatsUntilDownbeat = sessionState.quantum - sessionState.beat.truncatingRemainder(dividingBy: sessionState.quantum)
-        return beatsUntilDownbeat * getBeatDuration()
-    }
-
     // MARK: - Debug Info
 
     public var debugInfo: String {

@@ -144,7 +144,7 @@ public final class ARHandTrackingBridge: ObservableObject {
             do {
                 try await session.run([handTracking])
             } catch {
-                ProfessionalLogger.log(.error, category: .audio, "Hand tracking failed to start: \(error)")
+                log(.error, category: .audio, "Hand tracking failed to start: \(error)")
                 return
             }
 
@@ -272,7 +272,7 @@ public final class ARHandTrackingBridge: ObservableObject {
             .store(in: &cancellables)
 
         state.isAvailable = true
-        ProfessionalLogger.log(.info, category: .audio, "Vision framework hand tracking bridge active (2D + depth estimation)")
+        log(.info, category: .audio, "Vision framework hand tracking bridge active (2D + depth estimation)")
     }
 
     /// Bridge Vision framework 21-joint landmarks into our 25-joint HandSkeleton

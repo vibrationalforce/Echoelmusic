@@ -265,7 +265,7 @@ public final class EchoelEngine: ObservableObject {
         isRunning = true
         activateSubsystems(for: mode)
         startUpdateLoop()
-        ProfessionalLogger.log(.info, category: .audio, "EchoelEngine started in \(mode.rawValue) mode")
+        log(.info, category: .audio, "EchoelEngine started in \(mode.rawValue) mode")
     }
 
     public func stop() {
@@ -273,7 +273,7 @@ public final class EchoelEngine: ObservableObject {
         displayLink?.invalidate()
         displayLink = nil
         deactivateAllSubsystems()
-        ProfessionalLogger.log(.info, category: .audio, "EchoelEngine stopped")
+        log(.info, category: .audio, "EchoelEngine stopped")
     }
 
     // MARK: - Mode Switching
@@ -489,7 +489,7 @@ final class AudioSubsystem: EngineSubsystem {
     func activate() {
         isActive = true
         audioEngine.start()
-        ProfessionalLogger.log(.info, category: .audio, "Audio subsystem activated")
+        log(.info, category: .audio, "Audio subsystem activated")
     }
 
     func deactivate() {
@@ -515,7 +515,7 @@ final class VideoSubsystem: EngineSubsystem {
     func activate() {
         isActive = true
         videoEngine.start()
-        ProfessionalLogger.log(.info, category: .video, "Video subsystem activated")
+        log(.info, category: .video, "Video subsystem activated")
     }
 
     func deactivate() {
@@ -545,7 +545,7 @@ final class BioSubsystem: EngineSubsystem {
     func activate() {
         isActive = true
         healthKit.startMonitoring()
-        ProfessionalLogger.log(.info, category: .audio, "Bio subsystem activated - HealthKit monitoring started")
+        log(.info, category: .audio, "Bio subsystem activated - HealthKit monitoring started")
     }
 
     func deactivate() {
@@ -583,7 +583,7 @@ final class VisualSubsystem: EngineSubsystem {
 
     func activate() {
         isActive = true
-        ProfessionalLogger.log(.info, category: .video, "Visual subsystem activated")
+        log(.info, category: .video, "Visual subsystem activated")
     }
 
     func deactivate() {
@@ -627,10 +627,10 @@ final class SpatialSubsystem: EngineSubsystem {
         do {
             try spatialEngine.start()
         } catch {
-            ProfessionalLogger.log(.error, category: .audio, "Spatial audio start failed: \(error)")
+            log(.error, category: .audio, "Spatial audio start failed: \(error)")
         }
         hrtf.activate()
-        ProfessionalLogger.log(.info, category: .audio, "Spatial subsystem activated with HRTF")
+        log(.info, category: .audio, "Spatial subsystem activated with HRTF")
     }
 
     func deactivate() {
@@ -677,11 +677,11 @@ final class MIDISubsystem: EngineSubsystem {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] endpoints in
                 if !endpoints.isEmpty {
-                    ProfessionalLogger.log(.info, category: .audio, "MIDI: \(endpoints.count) endpoints connected")
+                    log(.info, category: .audio, "MIDI: \(endpoints.count) endpoints connected")
                 }
             }
             .store(in: &cancellables)
-        ProfessionalLogger.log(.info, category: .audio, "MIDI subsystem activated")
+        log(.info, category: .audio, "MIDI subsystem activated")
     }
 
     func deactivate() {
@@ -720,7 +720,7 @@ final class MixingSubsystem: EngineSubsystem {
                 channelStrips.append(strip)
             }
         }
-        ProfessionalLogger.log(.info, category: .audio, "Mixing subsystem activated with \(channelStrips.count) channels")
+        log(.info, category: .audio, "Mixing subsystem activated with \(channelStrips.count) channels")
     }
 
     func deactivate() {
@@ -773,7 +773,7 @@ final class RecordingSubsystem: EngineSubsystem {
                 }
             }
             .store(in: &cancellables)
-        ProfessionalLogger.log(.info, category: .audio, "Recording subsystem activated")
+        log(.info, category: .audio, "Recording subsystem activated")
     }
 
     func deactivate() {
@@ -803,7 +803,7 @@ final class StreamingSubsystem: EngineSubsystem {
 
     func activate() {
         isActive = true
-        ProfessionalLogger.log(.info, category: .streaming, "Streaming subsystem activated - ready to broadcast")
+        log(.info, category: .streaming, "Streaming subsystem activated - ready to broadcast")
     }
 
     func deactivate() {
@@ -849,7 +849,7 @@ final class LightingSubsystem: EngineSubsystem {
     func activate() {
         isActive = true
         lightMapper.start()
-        ProfessionalLogger.log(.info, category: .audio, "Lighting subsystem activated - DMX/Art-Net ready")
+        log(.info, category: .audio, "Lighting subsystem activated - DMX/Art-Net ready")
     }
 
     func deactivate() {
@@ -891,9 +891,9 @@ final class HapticSubsystem: EngineSubsystem {
         do {
             hapticEngine = try CHHapticEngine()
             try hapticEngine?.start()
-            ProfessionalLogger.log(.info, category: .audio, "Haptic subsystem activated - CoreHaptics ready")
+            log(.info, category: .audio, "Haptic subsystem activated - CoreHaptics ready")
         } catch {
-            ProfessionalLogger.log(.warning, category: .audio, "Haptics not available: \(error)")
+            log(.warning, category: .audio, "Haptics not available: \(error)")
         }
         #endif
     }
@@ -987,7 +987,7 @@ final class CollaborationSubsystem: EngineSubsystem {
             }
             .store(in: &cancellables)
 
-        ProfessionalLogger.log(.info, category: .streaming, "Collaboration subsystem activated")
+        log(.info, category: .streaming, "Collaboration subsystem activated")
     }
 
     func deactivate() {
@@ -1036,7 +1036,7 @@ final class HandTrackingSubsystem: EngineSubsystem {
             engine.eventBus.send(.handTrackingUpdated(handData))
         }
 
-        ProfessionalLogger.log(.info, category: .audio, "Hand tracking subsystem activated")
+        log(.info, category: .audio, "Hand tracking subsystem activated")
     }
 
     func deactivate() {
@@ -1073,7 +1073,7 @@ final class ComfortSubsystem: EngineSubsystem {
 
     func activate() {
         isActive = true
-        ProfessionalLogger.log(.info, category: .audio, "Comfort subsystem activated - motion sickness prevention on")
+        log(.info, category: .audio, "Comfort subsystem activated - motion sickness prevention on")
     }
 
     func deactivate() {
@@ -1111,7 +1111,7 @@ final class OrchestralSubsystem: EngineSubsystem {
 
     func activate() {
         isActive = true
-        ProfessionalLogger.log(.info, category: .audio, "Orchestral subsystem activated - 27 articulations ready")
+        log(.info, category: .audio, "Orchestral subsystem activated - 27 articulations ready")
     }
 
     func deactivate() {
@@ -1150,12 +1150,12 @@ final class CreativeSubsystem: EngineSubsystem {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] processing in
                 if processing {
-                    ProfessionalLogger.log(.info, category: .audio, "Creative AI processing...")
+                    log(.info, category: .audio, "Creative AI processing...")
                 }
             }
             .store(in: &cancellables)
 
-        ProfessionalLogger.log(.info, category: .audio, "Creative subsystem activated - 30+ AI modes ready")
+        log(.info, category: .audio, "Creative subsystem activated - 30+ AI modes ready")
     }
 
     func deactivate() {
@@ -1183,7 +1183,7 @@ final class QuantumSubsystem: EngineSubsystem {
         isActive = true
         quantumEmulator.setMode(.bioCoherent)
         quantumEmulator.start()
-        ProfessionalLogger.log(.info, category: .audio, "Quantum subsystem activated - bioCoherent mode")
+        log(.info, category: .audio, "Quantum subsystem activated - bioCoherent mode")
     }
 
     func deactivate() {
@@ -1218,7 +1218,7 @@ final class WellnessSubsystem: EngineSubsystem {
         isActive = true
         circadianEngine.updateCurrentPhase()
         syncToEngine()
-        ProfessionalLogger.log(.info, category: .audio, "Wellness subsystem activated - circadian tracking on")
+        log(.info, category: .audio, "Wellness subsystem activated - circadian tracking on")
     }
 
     func deactivate() {
