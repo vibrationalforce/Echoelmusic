@@ -117,6 +117,8 @@ public final class ARHandTrackingBridge: ObservableObject {
         #if canImport(UIKit) && !os(watchOS) && !os(tvOS) && !os(visionOS)
         visionBridgeTask?.cancel()
         visionBridgeTask = nil
+        visionHandManager?.stopTracking()
+        visionHandManager = nil
         cancellables.removeAll()
         #endif
         #if os(visionOS)
@@ -208,10 +210,12 @@ public final class ARHandTrackingBridge: ObservableObject {
 
     #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
     private var visionBridgeTask: Task<Void, Never>?
+    private var visionHandManager: HandTrackingManager?
 
     private func startVisionFrameworkTracking() {
         // Bridge HandTrackingManager's published properties into our unified HandTrackingState
         let handManager = HandTrackingManager()
+        visionHandManager = handManager
         handManager.startTracking()
 
         // Subscribe to left hand landmark updates
@@ -274,7 +278,7 @@ public final class ARHandTrackingBridge: ObservableObject {
     /// Bridge Vision framework 21-joint landmarks into our 25-joint HandSkeleton
     /// Vision uses VNHumanHandPoseObservation with 21 joints, ARKit uses 25.
     /// We map the 21 available joints and estimate the 4 missing metacarpals.
-    private func bridgeVisionLandmarks(_ landmarks: [HandLandmark], to skeleton: inout HandSkeleton, isLeft: Bool) {
+    private func bridgeVisionLandmarks(_ landmarks: [HandTrackingManager.HandLandmark], to skeleton: inout HandSkeleton, isLeft: Bool) {
         skeleton.isTracked = !landmarks.isEmpty
 
         // Vision framework joint name → our skeleton index mapping

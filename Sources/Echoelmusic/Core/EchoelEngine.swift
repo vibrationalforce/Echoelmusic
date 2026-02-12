@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 import Accelerate
 import AVFoundation
+import QuartzCore
 
 #if canImport(CoreMotion)
 import CoreMotion
@@ -171,7 +172,7 @@ public struct EngineState: Equatable {
 /// Lightweight event system replacing scattered Combine publishers
 public enum EngineEvent {
     // Transport
-    case play, pause, stop
+    case play, pause, stop, record
     case bpmChanged(Double)
     case positionChanged(TimeInterval)
 
@@ -244,7 +245,7 @@ public final class EchoelEngine: ObservableObject {
     // MARK: - Performance
 
     private let autoScaler = PerformanceAutoScaler()
-    private let comfortSystem = MotionComfortSystem()
+    let comfortSystem = MotionComfortSystem()
 
     // MARK: - Lifecycle
 
