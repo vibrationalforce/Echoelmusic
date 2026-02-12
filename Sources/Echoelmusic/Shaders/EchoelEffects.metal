@@ -145,7 +145,7 @@ void bloomExtract(
 
 // Step 3: Composite bloom onto original
 [[kernel]]
-void bloomComposite(
+void echoelBloomComposite(
     texture2d<float, access::read> originalTexture [[texture(0)]],
     texture2d<float, access::read> bloomTexture [[texture(1)]],
     texture2d<float, access::write> outTexture [[texture(2)]],
@@ -186,7 +186,7 @@ void bloomComposite(
 // 16 ray march steps for real-time performance (60+ FPS on A12+)
 
 // Simplex noise for fog turbulence
-float hash(float2 p) {
+float echoelHash(float2 p) {
     float3 p3 = fract(float3(p.xyx) * 0.13);
     p3 += dot(p3, p3.yzx + 3.333);
     return fract((p3.x + p3.y) * p3.z);
@@ -197,10 +197,10 @@ float noise2D(float2 p) {
     float2 f = fract(p);
     f = f * f * (3.0 - 2.0 * f); // smoothstep
 
-    float a = hash(i);
-    float b = hash(i + float2(1.0, 0.0));
-    float c = hash(i + float2(0.0, 1.0));
-    float d = hash(i + float2(1.0, 1.0));
+    float a = echoelHash(i);
+    float b = echoelHash(i + float2(1.0, 0.0));
+    float c = echoelHash(i + float2(0.0, 1.0));
+    float d = echoelHash(i + float2(1.0, 1.0));
 
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
