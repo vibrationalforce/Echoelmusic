@@ -384,7 +384,7 @@ public actor CircuitBreaker {
 
     private func withTimeout<T>(
         _ timeout: TimeInterval,
-        operation: @Sendable () async throws -> T
+        operation: @escaping @Sendable () async throws -> T
     ) async throws -> T {
         try await withThrowingTaskGroup(of: T.self) { group in
             group.addTask {

@@ -2370,7 +2370,8 @@ public final class ContentCreatorPlugin: EchoelmusicPlugin {
 
     /// Update viewer count
     public func updateViewerCount(_ count: Int) {
-        currentSession?.viewers = max(currentSession?.viewers ?? 0, count)
+        let currentViewers = currentSession?.viewers ?? 0
+        currentSession?.viewers = max(currentViewers, count)
     }
 
     /// Update chat message count

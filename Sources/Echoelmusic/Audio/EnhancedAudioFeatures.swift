@@ -496,7 +496,9 @@ class SpectralAnalyzer {
         }
 
         // Forward FFT
-        vDSP_DFT_Execute(setup, &real, &imaginary, &real, &imaginary)
+        var realIn = real
+        var imagIn = imaginary
+        vDSP_DFT_Execute(setup, &realIn, &imagIn, &real, &imaginary)
 
         // Zero out bins outside desired frequency range
         let lowBin = Int((lowFreq / nyquistFrequency) * Float(fftSize / 2))
@@ -517,13 +519,16 @@ class SpectralAnalyzer {
         )
 
         if let invSetup = inverseSetup {
-            vDSP_DFT_Execute(invSetup, &real, &imaginary, &real, &imaginary)
+            var invRealIn = real
+            var invImagIn = imaginary
+            vDSP_DFT_Execute(invSetup, &invRealIn, &invImagIn, &real, &imaginary)
             vDSP_DFT_DestroySetup(invSetup)
         }
 
         // Normalize and copy back
         var scale = 1.0 / Float(fftSize)
-        vDSP_vsmul(real, 1, &scale, &real, 1, vDSP_Length(copyLength))
+        var scaledReal = real
+        vDSP_vsmul(scaledReal, 1, &scale, &real, 1, vDSP_Length(copyLength))
 
         for i in 0..<copyLength {
             samples[i] = real[i]
@@ -545,7 +550,9 @@ class SpectralAnalyzer {
         }
 
         // Perform FFT
-        vDSP_DFT_Execute(setup, &real, &imaginary, &real, &imaginary)
+        var fftRealIn = real
+        var fftImagIn = imaginary
+        vDSP_DFT_Execute(setup, &fftRealIn, &fftImagIn, &real, &imaginary)
 
         // Calculate magnitudes
         var magnitudes = [Float](repeating: 0, count: fftSize / 2)

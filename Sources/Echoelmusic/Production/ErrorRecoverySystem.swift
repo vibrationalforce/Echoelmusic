@@ -517,7 +517,7 @@ public func safeExecute<T>(
     service: String? = nil,
     retryPolicy: ErrorRecoverySystem.RecoveryRetryPolicy = .default,
     fallback: (() async throws -> T)? = nil,
-    task: () async throws -> T
+    task: @escaping () async throws -> T
 ) async throws -> T {
     let recovery = ErrorRecoverySystem.shared
 

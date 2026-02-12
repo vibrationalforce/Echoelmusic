@@ -180,6 +180,7 @@ public final class PhysicalAIEngine: NSObject, ObservableObject {
 
     private init(config: Configuration = .default) {
         self.config = config
+        super.init()
         setupMotionManager()
         setupWatchConnectivity()
         setupWorldModelBinding()

@@ -260,7 +260,9 @@ class MicrophoneManager: NSObject, ObservableObject {
         vDSP_vmul(realParts, 1, window, 1, &realParts, 1, vDSP_Length(fftSize))
 
         // Perform FFT
-        vDSP_DFT_Execute(setup, &realParts, &imagParts, &realParts, &imagParts)
+        var realIn = realParts
+        var imagIn = imagParts
+        vDSP_DFT_Execute(setup, &realIn, &imagIn, &realParts, &imagParts)
 
         // Calculate magnitudes (power spectrum)
         var magnitudes = [Float](repeating: 0, count: fftSize / 2)

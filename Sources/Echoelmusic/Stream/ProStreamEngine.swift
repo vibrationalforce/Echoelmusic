@@ -1218,13 +1218,14 @@ public final class ProStreamEngine: ObservableObject {
         updateOutput(output)
 
         // Simulate connection establishment
+        var localOutput = output
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
-            output.state = .active
-            self.updateOutput(output)
+            localOutput.state = .active
+            self.updateOutput(localOutput)
             self.refreshLiveState()
             self.startStatsCollection()
-            self.log.log(.info, category: .streaming, "Stream started: \(output.name)")
+            self.log.log(.info, category: .streaming, "Stream started: \(localOutput.name)")
         }
     }
 

@@ -633,7 +633,9 @@ class HealthKitManager: ObservableObject {
         }
 
         // Perform FFT using cached setup
-        vDSP_DFT_Execute(fftSetup, &realParts, &imagParts, &realParts, &imagParts)
+        var realIn = realParts
+        var imagIn = imagParts
+        vDSP_DFT_Execute(fftSetup, &realIn, &imagIn, &realParts, &imagParts)
 
         // OPTIMIZATION: Use vDSP for magnitude calculation
         var powerSpectrum = [Float](repeating: 0, count: fftSize / 2)

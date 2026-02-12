@@ -867,7 +867,9 @@ public final class UnifiedHealthKitEngine: ObservableObject {
 
         guard let fftSetup = cachedFFTSetup else { return [] }
 
-        vDSP_DFT_Execute(fftSetup, &realParts, &imagParts, &realParts, &imagParts)
+        var realIn = realParts
+        var imagIn = imagParts
+        vDSP_DFT_Execute(fftSetup, &realIn, &imagIn, &realParts, &imagParts)
 
         var powerSpectrum = [Float](repeating: 0, count: fftSize / 2)
         var splitComplex = DSPSplitComplex(realp: &realParts, imagp: &imagParts)
