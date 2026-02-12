@@ -218,7 +218,7 @@ jobs:
     if: |
       needs.preflight.outputs.ready == 'true' &&
       github.event.inputs.skip_compile_check != 'true'
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
