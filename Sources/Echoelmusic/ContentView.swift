@@ -148,7 +148,7 @@ struct ContentView: View {
                 .environmentObject(recordingEngine)
                 .environmentObject(healthKitEngine)
                 .environmentObject(microphoneManager)
-                .presentationDetents([.medium, .large])
+                .presentationDetentsIfAvailable()
         }
     }
 
@@ -647,6 +647,19 @@ struct ContentView: View {
             UIApplication.shared.open(url)
         }
         #endif
+    }
+}
+
+// MARK: - iOS 16+ Compatibility
+
+private extension View {
+    @ViewBuilder
+    func presentationDetentsIfAvailable() -> some View {
+        if #available(iOS 16.0, *) {
+            self.presentationDetents([.medium, .large])
+        } else {
+            self
+        }
     }
 }
 

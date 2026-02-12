@@ -86,7 +86,7 @@ public enum EchoelTypography {
     /// For UI elements that absolutely cannot scale (meters, controls)
     /// These still use relative sizing but with tighter bounds
     public static func fixed(_ style: Font.TextStyle, weight: Font.Weight = .regular) -> Font {
-        .system(style, design: .default, weight: weight)
+        .system(style, design: .default).weight(weight)
     }
 
     /// Minimum readable size for critical UI (clips, meters)
@@ -96,7 +96,7 @@ public enum EchoelTypography {
 
     /// For large display numbers (BPM, coherence %)
     public static var displayNumber: Font {
-        .system(.largeTitle, design: .rounded, weight: .bold)
+        .system(.largeTitle, design: .rounded).weight(.bold)
     }
 }
 
