@@ -649,7 +649,7 @@ class DeviceTestingFramework: ObservableObject {
         let baselineFlops: Float = 2.0  // iPhone 15 Pro baseline
         let ratio = device.gpu.teraflops / baselineFlops
 
-        let maxFPS: Float = device.display?.refreshRateHz ?? 60
+        let maxFPS: Float = Float(device.display?.refreshRateHz ?? 60)
         let estimatedFPS = min(maxFPS, ratio * Float(maxFPS))
 
         return estimatedFPS
