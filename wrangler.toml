@@ -1,0 +1,16 @@
+# =============================================================================
+# ECHOELMUSIC - Cloudflare Workers Configuration
+# =============================================================================
+# Static site deployment from docs/ folder
+# Use: npx wrangler deploy (requires CLOUDFLARE_API_TOKEN)
+# For Cloudflare Pages: set build output directory to "docs" instead
+# =============================================================================
+
+name = "echoelmusic"
+compatibility_date = "2026-02-12"
+
+# Serve static assets from docs/
+[assets]
+directory = "./docs"
+html_handling = "auto-trailing-slash"
+not_found_handling = "single-page-application"
