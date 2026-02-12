@@ -126,7 +126,7 @@ public class MorphicGraph: Identifiable {
         switch curve {
         case .linear:      shaped = value
         case .exponential: shaped = pow(value, 2.0)
-        case .logarithmic: shaped = log(1.0 + value * 9.0) / log(10.0)
+        case .logarithmic: shaped = Foundation.log(1.0 + value * 9.0) / Foundation.log(10.0)
         case .sCurve:      shaped = value * value * (3.0 - 2.0 * value)
         case .sine:        shaped = (1.0 - cos(value * Float.pi)) / 2.0
         case .stepped:     shaped = (value * 8.0).rounded(.down) / 8.0

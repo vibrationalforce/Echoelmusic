@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var selectedBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
     @State private var binauralAmplitude: Float = 0.3
     @State private var pulseAnimation = false
+    @StateObject private var cymaticsVisualizer = CymaticsVisualizer()
 
     /// Computed property - single source of truth for recording state
     private var isRecording: Bool {
@@ -184,10 +185,8 @@ struct ContentView: View {
             )
         case .cymatics:
             CymaticsView(
-                audioLevel: microphoneManager.audioLevel,
-                frequency: microphoneManager.frequency,
-                hrvCoherence: healthKitEngine.coherence * 100,
-                heartRate: healthKitEngine.heartRate
+                visualizer: cymaticsVisualizer,
+                coherence: healthKitEngine.coherence * 100
             )
         case .waveform:
             WaveformMode(

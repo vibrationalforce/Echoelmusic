@@ -33,7 +33,7 @@ public struct AuraConfiguration: Sendable {
     )
 
     public static let creative = AuraConfiguration(
-        baseColor: .magenta,
+        baseColor: Color(red: 1, green: 0, blue: 1),
         secondaryColor: .purple,
         pulseSpeed: 1.5,
         glowRadius: 25,

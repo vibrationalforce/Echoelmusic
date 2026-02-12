@@ -46,7 +46,8 @@ import CoreHaptics
 // MARK: - Engine Protocol
 
 /// Standard lifecycle for all engine subsystems
-protocol EngineSubsystem: AnyObject {
+@MainActor
+public protocol EngineSubsystem: AnyObject {
     var isActive: Bool { get }
     func activate()
     func deactivate()
@@ -105,7 +106,7 @@ public enum EngineMode: String, CaseIterable, Identifiable, Codable {
 }
 
 /// Identifiers for lazy-loaded subsystems
-enum SubsystemID: String, CaseIterable {
+public enum SubsystemID: String, CaseIterable {
     case audio, video, bio, visual, spatial, midi
     case mixing, recording, streaming, lighting
     case haptic, collaboration, handTracking, comfort
@@ -479,6 +480,7 @@ public final class EchoelEngine: ObservableObject {
 
 // MARK: - Audio Subsystem → AudioEngine
 
+@MainActor
 final class AudioSubsystem: EngineSubsystem {
     var isActive = false
     private weak var engine: EchoelEngine?
@@ -505,6 +507,7 @@ final class AudioSubsystem: EngineSubsystem {
 
 // MARK: - Video Subsystem → VideoProcessingEngine
 
+@MainActor
 final class VideoSubsystem: EngineSubsystem {
     var isActive = false
     private weak var engine: EchoelEngine?
@@ -573,6 +576,7 @@ final class BioSubsystem: EngineSubsystem {
 
 // MARK: - Visual Subsystem → UnifiedVisualSoundEngine + PhotonicsVisualizationEngine
 
+@MainActor
 final class VisualSubsystem: EngineSubsystem {
     var isActive = false
     private weak var engine: EchoelEngine?

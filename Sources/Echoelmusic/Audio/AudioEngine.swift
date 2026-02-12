@@ -43,7 +43,7 @@ public class AudioEngine: ObservableObject {
     private let binauralGenerator = BinauralBeatGenerator()
 
     /// Spatial audio engine for 3D audio
-    private var spatialAudioEngine: SpatialAudioEngine?
+    var spatialAudioEngine: SpatialAudioEngine?
 
     /// Bio-parameter mapper (HRV/HR → Audio parameters)
     private let bioParameterMapper = BioParameterMapper()
@@ -55,7 +55,7 @@ public class AudioEngine: ObservableObject {
     private var headTrackingManager: HeadTrackingManager?
 
     /// Device capabilities
-    private var deviceCapabilities: DeviceCapabilities?
+    var deviceCapabilities: DeviceCapabilities?
 
     /// Node graph for effects processing
     private var nodeGraph: NodeGraph?
