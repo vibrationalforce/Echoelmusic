@@ -94,7 +94,7 @@
             --pink: #FF1494;
             --cyan: #00FFFF;
             --purple: #9933FF;
-            --bg: #050510;
+            --bg: #000000;
             --bg-card: rgba(255,255,255,0.03);
             --text: rgba(255,255,255,0.93);
             --text-dim: rgba(255,255,255,0.55);
@@ -125,7 +125,7 @@
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             padding: 16px 24px;
-            background: rgba(5,5,16,0.6);
+            background: rgba(0,0,0,0.7);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         }
         .nav-bar {
@@ -161,7 +161,7 @@
         /* ── OVERLAY MENU ── */
         .menu-overlay {
             position: fixed; inset: 0; z-index: 999;
-            background: rgba(5,5,16,0.97);
+            background: rgba(0,0,0,0.97);
             backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
             display: flex; align-items: center; justify-content: center;
             opacity: 0; visibility: hidden;
@@ -405,7 +405,8 @@
             0%, 100% { height: 16px; opacity: 0.3; }
             50% { height: var(--h, 50px); opacity: 1; }
         }
-        .quantum-canvas { width: 100%; height: 100%; display: block; border-radius: 20px; background: var(--bg); }
+        .quantum-canvas { width: 100%; height: 100%; display: block; border-radius: 20px; background: #000; }
+        .feature-visual.quantum-visual { background: #000; border-color: rgba(255,255,255,0.04); }
 
         /* ── INSTRUMENTS SECTION ── */
         .instruments {
@@ -717,7 +718,7 @@
                         <span class="feature-bullet purple">SharePlay</span>
                     </div>
                 </div>
-                <div class="feature-visual" aria-hidden="true">
+                <div class="feature-visual quantum-visual" aria-hidden="true">
                     <canvas class="quantum-canvas" id="quantumCanvas"></canvas>
                 </div>
             </div>
@@ -843,14 +844,14 @@
             if (e.key === 'Escape' && burger.classList.contains('active')) toggleMenu();
         });
 
-        // Quantum Visuals — particles, interference rings, entanglement
+        // Quantum Visuals — optimized: true black, smooth 60fps, more particles
         var qc = document.getElementById('quantumCanvas');
         if (qc) {
-            var ctx = qc.getContext('2d');
+            var ctx = qc.getContext('2d', { alpha: false });
             var dpr = Math.min(window.devicePixelRatio || 1, 2);
-            var qRun = false, qT = 0, W = 0, H = 0;
-            var pts = [], NUM = 55;
-            var cols = [[255,20,148],[153,51,255],[0,255,255]];
+            var qRun = false, qT = 0, W = 0, H = 0, lastTime = 0;
+            var pts = [], NUM = 80;
+            var cols = [[255,20,148],[153,51,255],[0,255,255],[80,200,255],[200,50,200]];
 
             function qResize() {
                 var r = qc.parentElement.getBoundingClientRect();
@@ -863,107 +864,128 @@
                 qResize();
                 pts = [];
                 for (var i = 0; i < NUM; i++) {
+                    var layer = i < NUM * 0.3 ? 0 : i < NUM * 0.7 ? 1 : 2;
                     pts.push({
-                        cx: 0.5 + (Math.random() - 0.5) * 0.3,
-                        cy: 0.5 + (Math.random() - 0.5) * 0.3,
-                        r: 0.08 + Math.random() * 0.34,
+                        cx: 0.5 + (Math.random() - 0.5) * 0.4,
+                        cy: 0.5 + (Math.random() - 0.5) * 0.4,
+                        r: 0.06 + Math.random() * 0.36,
                         a: Math.random() * Math.PI * 2,
-                        da: (0.3 + Math.random() * 0.8) * (Math.random() < 0.5 ? 1 : -1),
-                        sz: 1.2 + Math.random() * 2.2,
+                        da: (0.2 + Math.random() * 0.6) * (Math.random() < 0.5 ? 1 : -1),
+                        sz: 0.8 + Math.random() * 2.5,
                         ph: Math.random() * Math.PI * 2,
-                        col: cols[i % 3],
-                        op: 0.4 + Math.random() * 0.6,
-                        wb: 0.3 + Math.random() * 1.2,
+                        col: cols[i % cols.length],
+                        op: 0.3 + Math.random() * 0.7,
+                        wb: 0.2 + Math.random() * 0.8,
+                        layer: layer,
                         sx: 0, sy: 0
                     });
                 }
             }
 
-            function qDraw() {
+            function qDraw(timestamp) {
                 if (!qRun) return;
-                qT += 0.01;
+                var dt = lastTime ? Math.min((timestamp - lastTime) / 1000, 0.05) : 0.016;
+                lastTime = timestamp;
+                qT += dt * 0.6;
+
                 var cx = W * 0.5, cy = H * 0.5;
                 var mn = Math.min(W, H);
 
+                // True black clear
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.fillStyle = 'rgba(5,5,16,0.14)';
+                ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, W, H);
 
-                var pulse = 0.7 + 0.3 * Math.sin(qT * 0.7);
-                var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, mn * 0.38 * pulse);
-                grd.addColorStop(0, 'rgba(153,51,255,0.07)');
-                grd.addColorStop(0.4, 'rgba(255,20,148,0.03)');
+                // Subtle center glow
+                var pulse = 0.7 + 0.3 * Math.sin(qT * 1.1);
+                var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, mn * 0.4 * pulse);
+                grd.addColorStop(0, 'rgba(100,30,180,0.06)');
+                grd.addColorStop(0.5, 'rgba(255,20,148,0.02)');
                 grd.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = grd;
                 ctx.fillRect(0, 0, W, H);
 
                 ctx.globalCompositeOperation = 'lighter';
-                for (var r = 0; r < 5; r++) {
-                    var rr = (20 + r * mn * 0.065) * pulse + Math.sin(qT * 0.9 + r * 1.2) * 8;
-                    var al = (0.07 - r * 0.011) * (0.6 + 0.4 * Math.sin(qT + r * 0.8));
-                    if (al <= 0) continue;
+
+                // Interference rings - smoother
+                for (var r = 0; r < 6; r++) {
+                    var rr = (16 + r * mn * 0.06) * pulse + Math.sin(qT * 1.2 + r * 1.1) * 6;
+                    var al = (0.055 - r * 0.008) * (0.5 + 0.5 * Math.sin(qT * 0.8 + r * 0.9));
+                    if (al <= 0.003) continue;
                     ctx.beginPath();
                     ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-                    ctx.strokeStyle = r % 2 === 0
-                        ? 'rgba(0,255,255,' + al.toFixed(3) + ')'
-                        : 'rgba(153,51,255,' + al.toFixed(3) + ')';
-                    ctx.lineWidth = 0.8;
+                    ctx.strokeStyle = r % 3 === 0
+                        ? 'rgba(0,255,255,' + al.toFixed(4) + ')'
+                        : r % 3 === 1
+                        ? 'rgba(153,51,255,' + al.toFixed(4) + ')'
+                        : 'rgba(255,20,148,' + al.toFixed(4) + ')';
+                    ctx.lineWidth = 0.6;
                     ctx.stroke();
                 }
 
-                var s1x = cx - mn * 0.15, s1y = cy;
-                var s2x = cx + mn * 0.15, s2y = cy;
-                for (var wr = 0; wr < 3; wr++) {
-                    var wrad = (qT * 25 + wr * 35) % (mn * 0.5);
-                    var wa = 0.04 * (1 - wrad / (mn * 0.5));
-                    if (wa <= 0) continue;
+                // Double-slit interference waves
+                var s1x = cx - mn * 0.14, s1y = cy;
+                var s2x = cx + mn * 0.14, s2y = cy;
+                for (var wr = 0; wr < 4; wr++) {
+                    var wrad = (qT * 20 + wr * 30) % (mn * 0.55);
+                    var wa = 0.03 * (1 - wrad / (mn * 0.55));
+                    if (wa <= 0.002) continue;
+                    ctx.lineWidth = 0.5;
                     ctx.beginPath();
                     ctx.arc(s1x, s1y, wrad, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(255,20,148,' + wa.toFixed(3) + ')';
-                    ctx.lineWidth = 0.6;
+                    ctx.strokeStyle = 'rgba(255,20,148,' + wa.toFixed(4) + ')';
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.arc(s2x, s2y, wrad, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(0,255,255,' + wa.toFixed(3) + ')';
+                    ctx.strokeStyle = 'rgba(0,255,255,' + wa.toFixed(4) + ')';
                     ctx.stroke();
                 }
 
+                // Particles with smooth motion
                 for (var i = 0; i < pts.length; i++) {
                     var p = pts[i];
-                    p.a += p.da * 0.008;
-                    var px = p.cx * W + Math.cos(p.a) * p.r * mn + Math.sin(qT * p.wb + p.ph) * 6;
-                    var py = p.cy * H + Math.sin(p.a) * p.r * mn + Math.cos(qT * p.wb + p.ph) * 6;
-                    var s = p.sz * (1 + 0.3 * Math.sin(qT * 2.2 + p.ph));
+                    p.a += p.da * dt * 0.5;
+                    var wobble = Math.sin(qT * p.wb + p.ph);
+                    var px = p.cx * W + Math.cos(p.a) * p.r * mn + wobble * 5;
+                    var py = p.cy * H + Math.sin(p.a) * p.r * mn + Math.cos(qT * p.wb + p.ph) * 5;
+                    var breathe = 1 + 0.25 * Math.sin(qT * 1.8 + p.ph);
+                    var s = p.sz * breathe;
 
-                    var g = ctx.createRadialGradient(px, py, 0, px, py, s * 5);
-                    g.addColorStop(0, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.6).toFixed(2) + ')');
-                    g.addColorStop(0.4, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.15).toFixed(2) + ')');
+                    // Glow halo
+                    var glowR = s * 6;
+                    var g = ctx.createRadialGradient(px, py, 0, px, py, glowR);
+                    g.addColorStop(0, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.5).toFixed(3) + ')');
+                    g.addColorStop(0.3, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.12).toFixed(3) + ')');
                     g.addColorStop(1, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',0)');
                     ctx.fillStyle = g;
-                    ctx.fillRect(px - s * 5, py - s * 5, s * 10, s * 10);
+                    ctx.fillRect(px - glowR, py - glowR, glowR * 2, glowR * 2);
 
+                    // Bright core
                     ctx.beginPath();
-                    ctx.arc(px, py, s * 0.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255,255,255,' + (p.op * 0.85).toFixed(2) + ')';
+                    ctx.arc(px, py, s * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,' + (p.op * 0.9).toFixed(3) + ')';
                     ctx.fill();
 
                     p.sx = px; p.sy = py;
                 }
 
-                ctx.lineWidth = 0.4;
-                var maxD = mn * 0.18;
+                // Entanglement connections - only nearby particles
+                ctx.lineWidth = 0.3;
+                var maxD = mn * 0.16;
+                var maxDSq = maxD * maxD;
                 for (var i = 0; i < pts.length; i++) {
                     for (var j = i + 1; j < pts.length; j++) {
                         var dx = pts[i].sx - pts[j].sx;
                         var dy = pts[i].sy - pts[j].sy;
-                        var d = Math.sqrt(dx * dx + dy * dy);
-                        if (d < maxD) {
-                            var a = (1 - d / maxD) * 0.12;
+                        var dSq = dx * dx + dy * dy;
+                        if (dSq < maxDSq) {
+                            var d = Math.sqrt(dSq);
+                            var a = (1 - d / maxD) * 0.1;
                             ctx.beginPath();
                             ctx.moveTo(pts[i].sx, pts[i].sy);
                             ctx.lineTo(pts[j].sx, pts[j].sy);
                             var mc = pts[i].col[2] > 200 ? '0,255,255' : pts[i].col[0] > 200 ? '255,20,148' : '153,51,255';
-                            ctx.strokeStyle = 'rgba(' + mc + ',' + a.toFixed(3) + ')';
+                            ctx.strokeStyle = 'rgba(' + mc + ',' + a.toFixed(4) + ')';
                             ctx.stroke();
                         }
                     }
@@ -976,8 +998,8 @@
             qInit();
             var qObs = new IntersectionObserver(function(e) {
                 qRun = e[0].isIntersecting;
-                if (qRun) { qResize(); qDraw(); }
-            }, { threshold: 0.1 });
+                if (qRun) { qResize(); lastTime = 0; requestAnimationFrame(qDraw); }
+            }, { threshold: 0.05 });
             qObs.observe(qc);
             window.addEventListener('resize', function() { if (qRun) qResize(); });
         }
