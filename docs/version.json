@@ -1,6 +1,6 @@
 {
-  "version": "4.0.0",
-  "build": "2026-02-12T22:00:00Z",
+  "version": "4.1.0",
+  "build": "2026-02-12T22:05:00Z",
   "features": {
     "liquidGlassIcon": true,
     "desktopNav": true,
@@ -29,6 +29,12 @@
     "Animated gradient borders on hover for all cards",
     "Social media links section (Instagram, TikTok, YouTube)",
     "Consistent Liquid Glass nav logo across all subpages",
-    "Service worker cache bumped to v4.0.0"
+    "Service worker cache bumped to v4.0.0",
+    "Security headers: HSTS, CSP, COOP, CORP added",
+    "Caching: optimized for SVG (1 month), sitemap, robots, .well-known",
+    "Redirects: /app, /download shortcuts, German page aliases",
+    "Twitter Cards added to all subpages",
+    "Preconnect hint for App Store",
+    "Service worker cache bumped to v4.1.0"
   ]
 }
