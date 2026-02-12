@@ -349,6 +349,8 @@ public final class Intelligent360VisualEngine: ObservableObject {
     private var dimensionalOffset: SIMD4<Double> = .zero
     private var quantumPhase: Double = 0.0
     private var coherenceHistory: [Double] = []
+    private var coherenceHistoryIndex: Int = 0
+    private static let coherenceHistoryCapacity = 100
 
     //==========================================================================
     // MARK: - Initialization
@@ -422,11 +424,13 @@ public final class Intelligent360VisualEngine: ObservableObject {
         // AI evolution
         evolveVisuals(deltaTime: deltaTime)
 
-        // Track coherence history
-        coherenceHistory.append(coherence)
-        if coherenceHistory.count > 100 {
-            coherenceHistory.removeFirst()
+        // Track coherence history using circular buffer pattern
+        if coherenceHistory.count < Self.coherenceHistoryCapacity {
+            coherenceHistory.append(coherence)
+        } else {
+            coherenceHistory[coherenceHistoryIndex % Self.coherenceHistoryCapacity] = coherence
         }
+        coherenceHistoryIndex += 1
     }
 
     private func updateDimensionalState(deltaTime: Double) {
@@ -452,12 +456,14 @@ public final class Intelligent360VisualEngine: ObservableObject {
     }
 
     private func calculateCoherenceTrend() -> Double {
-        guard coherenceHistory.count >= 10 else { return 0 }
-        let recent = Array(coherenceHistory.suffix(10))
-        let older = Array(coherenceHistory.prefix(10))
-        let recentAvg = recent.reduce(0, +) / Double(recent.count)
-        let olderAvg = older.reduce(0, +) / Double(older.count)
-        return recentAvg - olderAvg
+        let count = coherenceHistory.count
+        guard count >= 10 else { return 0 }
+        // Calculate in-place without array copies
+        var recentSum: Double = 0
+        var olderSum: Double = 0
+        for i in (count - 10)..<count { recentSum += coherenceHistory[i] }
+        for i in 0..<10 { olderSum += coherenceHistory[i] }
+        return (recentSum - olderSum) * 0.1  // / 10.0
     }
 
     //==========================================================================

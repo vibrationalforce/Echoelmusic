@@ -490,11 +490,17 @@ class UnifiedVisualSoundEngine: ObservableObject {
         // Perform DFT
         vDSP_DFT_Execute(setup, &realIn, &imagIn, &realOut, &imagOut)
 
-        // Calculate magnitudes (Power Spectrum)
+        // Calculate magnitudes (Power Spectrum) using vDSP for vectorized computation
         var magnitudes = [Float](repeating: 0, count: fftSize/2)
-        for i in 0..<fftSize/2 {
-            magnitudes[i] = sqrt(realOut[i] * realOut[i] + imagOut[i] * imagOut[i])
-        }
+        var squaredReal = [Float](repeating: 0, count: fftSize/2)
+        var squaredImag = [Float](repeating: 0, count: fftSize/2)
+        vDSP_vsq(Array(realOut.prefix(fftSize/2)), 1, &squaredReal, 1, vDSP_Length(fftSize/2))
+        vDSP_vsq(Array(imagOut.prefix(fftSize/2)), 1, &squaredImag, 1, vDSP_Length(fftSize/2))
+        vDSP_vadd(squaredReal, 1, squaredImag, 1, &magnitudes, 1, vDSP_Length(fftSize/2))
+        var sqrtMagnitudes = [Float](repeating: 0, count: fftSize/2)
+        var count = Int32(fftSize/2)
+        vvsqrtf(&sqrtMagnitudes, magnitudes, &count)
+        magnitudes = sqrtMagnitudes
 
         // === Physikalisch korrekte Frequenzband-Berechnung ===
 
@@ -585,14 +591,14 @@ class UnifiedVisualSoundEngine: ObservableObject {
             visualParams.pitch = 69 + 12 * log2(visualParams.frequency / 440.0)
         }
 
-        // Spectral Centroid - "Helligkeit" des Sounds
+        // Spectral Centroid - "Helligkeit" des Sounds (vDSP optimized)
+        var freqBins = (0..<magnitudes.count).map { Float($0) * binWidth }
+        var weightedMagnitudes = [Float](repeating: 0, count: magnitudes.count)
+        vDSP_vmul(freqBins, 1, magnitudes, 1, &weightedMagnitudes, 1, vDSP_Length(magnitudes.count))
         var weightedSum: Float = 0
+        vDSP_sve(weightedMagnitudes, 1, &weightedSum, vDSP_Length(magnitudes.count))
         var magnitudeSum: Float = 0
-        for i in 0..<magnitudes.count {
-            let freq = Float(i) * binWidth
-            weightedSum += freq * magnitudes[i]
-            magnitudeSum += magnitudes[i]
-        }
+        vDSP_sve(magnitudes, 1, &magnitudeSum, vDSP_Length(magnitudes.count))
         if magnitudeSum > 0 {
             visualParams.spectralCentroid = weightedSum / magnitudeSum
         }
@@ -605,20 +611,18 @@ class UnifiedVisualSoundEngine: ObservableObject {
         }
     }
 
-    /// Berechnet die Energie in einem Frequenzband
+    /// Berechnet die Energie in einem Frequenzband using vDSP
     private func calculateBandEnergy(magnitudes: [Float], minFreq: Float, maxFreq: Float, binWidth: Float) -> Float {
         let minBin = max(0, Int(minFreq / binWidth))
         let maxBin = min(magnitudes.count - 1, Int(maxFreq / binWidth))
 
         guard maxBin > minBin else { return 0 }
 
-        // RMS der Magnitudes im Band
-        var sumSquares: Float = 0
-        for i in minBin...maxBin {
-            sumSquares += magnitudes[i] * magnitudes[i]
-        }
-
-        return sqrt(sumSquares / Float(maxBin - minBin + 1))
+        // RMS der Magnitudes im Band using vDSP
+        let length = vDSP_Length(maxBin - minBin + 1)
+        var rms: Float = 0
+        vDSP_rmsqv(Array(magnitudes[minBin...maxBin]), 1, &rms, length)
+        return rms
     }
 
     private func mapToLogBands(_ linear: [Float], bandCount: Int) -> [Float] {
@@ -626,20 +630,24 @@ class UnifiedVisualSoundEngine: ObservableObject {
         let minFreq: Float = 20
         let maxFreq: Float = 20000
         let sampleRate: Float = 44100
+        let freqRatio = maxFreq / minFreq
+        let binScale = Float(fftSize) / sampleRate
+        let linearCount = linear.count
 
         for band in 0..<bandCount {
             // Logarithmic frequency mapping
-            let lowFreq = minFreq * pow(maxFreq / minFreq, Float(band) / Float(bandCount))
-            let highFreq = minFreq * pow(maxFreq / minFreq, Float(band + 1) / Float(bandCount))
+            let lowFreq = minFreq * pow(freqRatio, Float(band) / Float(bandCount))
+            let highFreq = minFreq * pow(freqRatio, Float(band + 1) / Float(bandCount))
 
-            let lowBin = Int(lowFreq * Float(fftSize) / sampleRate)
-            let highBin = Int(highFreq * Float(fftSize) / sampleRate)
-
-            let clampedLow = max(0, min(lowBin, linear.count - 1))
-            let clampedHigh = max(clampedLow, min(highBin, linear.count - 1))
+            let clampedLow = max(0, min(Int(lowFreq * binScale), linearCount - 1))
+            let clampedHigh = max(clampedLow, min(Int(highFreq * binScale), linearCount - 1))
 
             if clampedHigh > clampedLow {
-                bands[band] = linear[clampedLow...clampedHigh].reduce(0, +) / Float(clampedHigh - clampedLow + 1)
+                // Use vDSP for averaging
+                let length = vDSP_Length(clampedHigh - clampedLow + 1)
+                var mean: Float = 0
+                vDSP_meanv(Array(linear[clampedLow...clampedHigh]), 1, &mean, length)
+                bands[band] = mean
             }
         }
 
@@ -656,9 +664,12 @@ class UnifiedVisualSoundEngine: ObservableObject {
 
         guard beatHistory.count >= beatHistorySize else { return }
 
-        let average = beatHistory.reduce(0, +) / Float(beatHistory.count)
-        let variance = beatHistory.map { ($0 - average) * ($0 - average) }.reduce(0, +) / Float(beatHistory.count)
-        let threshold = average + sqrt(variance) * 1.5
+        var average: Float = 0
+        vDSP_meanv(beatHistory, 1, &average, vDSP_Length(beatHistory.count))
+        var meanSquare: Float = 0
+        vDSP_measqv(beatHistory, 1, &meanSquare, vDSP_Length(beatHistory.count))
+        let variance = meanSquare - average * average
+        let threshold = average + sqrt(max(0, variance)) * 1.5
 
         let timeSinceLastBeat = Date().timeIntervalSince(lastBeatTime)
 

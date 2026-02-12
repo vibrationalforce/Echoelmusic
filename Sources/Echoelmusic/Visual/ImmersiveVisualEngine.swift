@@ -611,32 +611,34 @@ public final class ImmersiveVisualEngine: ObservableObject {
     }
 
     private func updateBioReactiveElements(deltaTime: Double) {
+        // Pre-compute shared bio values outside loop
+        let coherenceF = coherence
+        let breathPhaseF = breathPhase
+        let hue = Float(0.55 + coherenceF * 0.15)
+        let rgb = hsvToRGB(h: hue, s: 0.7, v: 0.9)
+        let bioColor = SIMD4<Float>(rgb.0, rgb.1, rgb.2, 1.0)
+
         for i in currentScene.elements.indices where currentScene.elements[i].isBioReactive {
             let amount = currentScene.elements[i].bioReactivityAmount
 
             // Scale based on coherence
-            let coherenceScale = Float(0.8 + coherence * 0.4 * Double(amount))
+            let coherenceScale = Float(0.8 + coherenceF * 0.4 * Double(amount))
             currentScene.elements[i].scale = SIMD3(coherenceScale, coherenceScale, coherenceScale)
 
-            // Color based on coherence (blue to purple to gold)
-            let hue = Float(0.55 + coherence * 0.15)
-            let rgb = hsvToRGB(h: hue, s: 0.7, v: 0.9)
-            currentScene.elements[i].material.color = SIMD4(rgb.0, rgb.1, rgb.2, 1.0)
+            // Color (pre-computed above)
+            currentScene.elements[i].material.color = bioColor
 
             // Emissive based on breath
-            let breathEmissive = Float(0.3 + breathPhase * 0.7 * Double(amount))
-            currentScene.elements[i].material.emissiveIntensity = breathEmissive
+            currentScene.elements[i].material.emissiveIntensity = Float(0.3 + breathPhaseF * 0.7 * Double(amount))
         }
 
-        // Update bio-reactive lights
-        for i in currentScene.lights.indices where currentScene.lights[i].isBioReactive {
-            let baseIntensity: Float = 800
-            let coherenceBoost = Float(coherence * 400)
-            currentScene.lights[i].intensity = baseIntensity + coherenceBoost
+        // Pre-compute heartbeat phase once for all lights
+        let heartbeatPhase = Float(sin(time * (heartRate / 60.0) * .pi * 2))
+        let lightPulse = 1.0 + heartbeatPhase * 0.1
+        let coherenceBoost = Float(coherenceF * 400)
 
-            // Pulsate with heartbeat
-            let heartbeatPhase = Float(sin(time * (heartRate / 60.0) * .pi * 2))
-            currentScene.lights[i].intensity *= (1.0 + heartbeatPhase * 0.1)
+        for i in currentScene.lights.indices where currentScene.lights[i].isBioReactive {
+            currentScene.lights[i].intensity = (800 + coherenceBoost) * lightPulse
         }
     }
 

@@ -546,65 +546,79 @@ public class QuantumLightEmulator: ObservableObject {
 
     private func evolvePhotonField() {
         let time = CACurrentMediaTime()
-        let breathPhase = sin(Float(time) * breathingRate / 60.0 * 2 * Float.pi)
-        let heartPhase = sin(Float(time) * heartRate / 60.0 * 2 * Float.pi)
+        let timeFloat = Float(time)
+        let breathPhase = sin(timeFloat * breathingRate / 60.0 * 2 * Float.pi)
+        let heartPhase = sin(timeFloat * heartRate / 60.0 * 2 * Float.pi)
 
-        photonBuffer = photonBuffer.enumerated().map { (i, photon) in
+        // Pre-compute shared values
+        let bufferCount = Float(photonBuffer.count)
+        let invBufferCount = 1.0 / bufferCount
+        let goldenAngle = Float.pi * (3 - sqrt(5))
+        let timeOffset = timeFloat * 0.5
+        let toroidalTimeU = timeFloat * 0.3
+        let toroidalTimeV = timeFloat * 0.5
+        let merkabaPhase = timeFloat * 0.3
+        let bioIntensityScale = 0.7 + hrvCoherence * 0.3
+        let polarizationOffset = timeFloat * 0.1
+        let currentCoherence = coherenceLevel
+        let currentGeometry = configuration.lightFieldGeometry
+
+        for i in 0..<photonBuffer.count {
+            let photon = photonBuffer[i]
             var newPosition = photon.position
             var newIntensity = photon.intensity
+            let fi = Float(i)
 
             // Geometry-specific evolution
-            switch configuration.lightFieldGeometry {
+            switch currentGeometry {
             case .fibonacci:
-                let goldenAngle = Float.pi * (3 - sqrt(5))
-                let angle = Float(i) * goldenAngle + Float(time) * 0.5
-                let radius = sqrt(Float(i) / Float(photonBuffer.count))
+                let angle = fi * goldenAngle + timeOffset
+                let radius = sqrt(fi * invBufferCount)
                 newPosition = SIMD3<Float>(cos(angle) * radius, sin(angle) * radius, 0)
 
             case .toroidal:
                 let majorRadius: Float = 0.7
                 let minorRadius: Float = 0.3
-                let u = Float(i) / Float(photonBuffer.count) * 2 * Float.pi + Float(time) * 0.3
-                let v = Float(i % 8) / 8 * 2 * Float.pi + Float(time) * 0.5
+                let u = fi * invBufferCount * 2 * Float.pi + toroidalTimeU
+                let v = Float(i % 8) / 8 * 2 * Float.pi + toroidalTimeV
+                let cosV = cos(v)
+                let sinV = sin(v)
+                let cosU = cos(u)
+                let sinU = sin(u)
                 newPosition = SIMD3<Float>(
-                    (majorRadius + minorRadius * cos(v)) * cos(u),
-                    (majorRadius + minorRadius * cos(v)) * sin(u),
-                    minorRadius * sin(v)
+                    (majorRadius + minorRadius * cosV) * cosU,
+                    (majorRadius + minorRadius * cosV) * sinU,
+                    minorRadius * sinV
                 )
 
             case .vortex:
-                let angle = Float(i) * 0.1 + Float(time)
-                let radius = Float(i) / Float(photonBuffer.count) * 0.8
-                let z = Float(i) / Float(photonBuffer.count) - 0.5
+                let angle = fi * 0.1 + timeFloat
+                let radius = fi * invBufferCount * 0.8
+                let z = fi * invBufferCount - 0.5
                 newPosition = SIMD3<Float>(cos(angle) * radius, sin(angle) * radius, z)
 
             case .merkaba:
-                // Two interlocking tetrahedra
-                let phase = Float(time) * 0.3
                 let scale: Float = 0.6
                 if i % 2 == 0 {
-                    // Upward tetrahedron
-                    let angle = Float(i % 3) * 2 * Float.pi / 3 + phase
+                    let angle = Float(i % 3) * 2 * Float.pi / 3 + merkabaPhase
                     newPosition = SIMD3<Float>(cos(angle) * scale, breathPhase * 0.1, sin(angle) * scale)
                 } else {
-                    // Downward tetrahedron
-                    let angle = Float(i % 3) * 2 * Float.pi / 3 - phase
+                    let angle = Float(i % 3) * 2 * Float.pi / 3 - merkabaPhase
                     newPosition = SIMD3<Float>(cos(angle) * scale, -breathPhase * 0.1, sin(angle) * scale)
                 }
 
             default:
-                // Gaussian beam - pulsate with heart
                 newIntensity = 0.5 + heartPhase * 0.3
             }
 
             // Bio-modulate intensity
-            newIntensity *= (0.7 + hrvCoherence * 0.3)
+            newIntensity *= bioIntensityScale
 
-            return Photon(
+            photonBuffer[i] = Photon(
                 wavelength: photon.wavelength,
-                polarization: photon.polarization + Float(time) * 0.1,
+                polarization: photon.polarization + polarizationOffset,
                 intensity: newIntensity,
-                coherence: coherenceLevel,
+                coherence: currentCoherence,
                 position: newPosition,
                 direction: photon.direction
             )

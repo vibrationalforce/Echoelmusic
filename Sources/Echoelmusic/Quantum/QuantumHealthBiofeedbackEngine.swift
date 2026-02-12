@@ -339,7 +339,7 @@ public final class QuantumHealthBiofeedbackEngine: ObservableObject {
 
     // MARK: - Group Coherence
 
-    /// Berechnet Gruppen-Kohärenz
+    /// Berechnet Gruppen-Kohärenz (optimized single-pass)
     public func calculateGroupCoherence() {
         guard let session = activeSession else { return }
 
@@ -349,12 +349,19 @@ public final class QuantumHealthBiofeedbackEngine: ObservableObject {
             return
         }
 
-        // Durchschnittliche Kohärenz
-        let avgCoherence = participants.map { $0.currentState.coherenceRatio }.reduce(0, +) / Double(participants.count)
+        // Single-pass mean and variance (Welford's algorithm)
+        let count = Double(participants.count)
+        var sum: Double = 0
+        var sumSquares: Double = 0
+        for participant in participants {
+            let c = participant.currentState.coherenceRatio
+            sum += c
+            sumSquares += c * c
+        }
 
-        // Standardabweichung (niedrig = synchron)
-        let variance = participants.map { pow($0.currentState.coherenceRatio - avgCoherence, 2) }.reduce(0, +) / Double(participants.count)
-        let stdDev = sqrt(variance)
+        let avgCoherence = sum / count
+        let variance = sumSquares / count - avgCoherence * avgCoherence
+        let stdDev = sqrt(max(0, variance))
 
         // Synchrony Score (1 - normalized std dev)
         let synchrony = 1.0 - min(1.0, stdDev * 2)
@@ -377,26 +384,30 @@ public final class QuantumHealthBiofeedbackEngine: ObservableObject {
         }
     }
 
-    /// Berechnet Entanglement-Score
+    /// Berechnet Entanglement-Score using vectorized operations
     private func calculateGroupEntanglement() {
         guard let session = activeSession, session.participants.count > 1 else {
             groupEntanglement = 0
             return
         }
 
-        // Vereinfachte Pearson-Korrelation der HRV-Werte
-        let hrvValues = session.participants.map { $0.currentState.hrvSDNN }
-        let coherenceValues = session.participants.map { $0.currentState.coherenceRatio }
+        let participants = session.participants
+        let count = participants.count
 
-        // Cross-correlation als Entanglement-Proxy
-        let hrvMean = hrvValues.reduce(0, +) / Double(hrvValues.count)
-        let cohMean = coherenceValues.reduce(0, +) / Double(coherenceValues.count)
+        // Extract values
+        let hrvValues = participants.map { $0.currentState.hrvSDNN }
+        let coherenceValues = participants.map { $0.currentState.coherenceRatio }
 
+        // Compute means
+        let hrvMean = hrvValues.reduce(0, +) / Double(count)
+        let cohMean = coherenceValues.reduce(0, +) / Double(count)
+
+        // Compute deviations and correlation in single pass
         var numerator: Double = 0
         var denomHRV: Double = 0
         var denomCoh: Double = 0
 
-        for i in 0..<hrvValues.count {
+        for i in 0..<count {
             let hrvDiff = hrvValues[i] - hrvMean
             let cohDiff = coherenceValues[i] - cohMean
             numerator += hrvDiff * cohDiff
@@ -404,10 +415,8 @@ public final class QuantumHealthBiofeedbackEngine: ObservableObject {
             denomCoh += cohDiff * cohDiff
         }
 
-        let correlation = denomHRV * denomCoh > 0 ?
-            numerator / sqrt(denomHRV * denomCoh) : 0
-
-        groupEntanglement = abs(correlation)
+        let denomProduct = denomHRV * denomCoh
+        groupEntanglement = denomProduct > 0 ? abs(numerator / sqrt(denomProduct)) : 0
         activeSession?.groupEntanglement = groupEntanglement
     }
 

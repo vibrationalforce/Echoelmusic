@@ -11,6 +11,7 @@
 import Foundation
 import Combine
 import simd
+import Accelerate
 
 #if canImport(QuartzCore)
 import QuartzCore
@@ -95,6 +96,23 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     private var previousFrame: [[SIMD4<Float>]] = []
     private var particleSystem: PhotonParticleSystem?
     private var cancellables = Set<AnyCancellable>()
+
+    // Pre-computed sin/cos lookup table for performance
+    private static let trigTableSize = 1024
+    private static let sinTable: [Float] = (0..<1024).map { Float(sin(Double($0) / 1024.0 * 2.0 * .pi)) }
+    private static let cosTable: [Float] = (0..<1024).map { Float(cos(Double($0) / 1024.0 * 2.0 * .pi)) }
+
+    private static func fastSin(_ x: Float) -> Float {
+        let normalized = (x / (2 * Float.pi)).truncatingRemainder(dividingBy: 1.0)
+        let index = Int((normalized < 0 ? normalized + 1 : normalized) * Float(trigTableSize)) % trigTableSize
+        return sinTable[index]
+    }
+
+    private static func fastCos(_ x: Float) -> Float {
+        let normalized = (x / (2 * Float.pi)).truncatingRemainder(dividingBy: 1.0)
+        let index = Int((normalized < 0 ? normalized + 1 : normalized) * Float(trigTableSize)) % trigTableSize
+        return cosTable[index]
+    }
 
     // MARK: - Initialization
 
@@ -675,42 +693,51 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     }
 
     private func clearFrameBuffer() {
+        let zero = SIMD4<Float>.zero
         for y in 0..<configuration.height {
-            for x in 0..<configuration.width {
-                frameBuffer[y][x] = .zero
+            for i in frameBuffer[y].indices {
+                frameBuffer[y][i] = zero
             }
         }
     }
 
     private func applyMotionBlur() {
         let blur = configuration.motionBlur
+        let retain = 1 - blur
         for y in 0..<configuration.height {
             for x in 0..<configuration.width {
-                frameBuffer[y][x] = frameBuffer[y][x] * (1 - blur) + previousFrame[y][x] * blur
+                frameBuffer[y][x] = frameBuffer[y][x] * retain + previousFrame[y][x] * blur
             }
         }
     }
 
     private func applyGlowEffect() {
-        // Simple box blur for glow
+        // Separable box blur for glow - O(n*r) instead of O(n*r^2)
         let intensity = configuration.glowIntensity
         let radius = 2
+        let kernelSize = Float(radius * 2 + 1)
 
-        var glowBuffer = frameBuffer
+        // Horizontal pass
+        var tempBuffer = frameBuffer
+        for y in 0..<configuration.height {
+            for x in radius..<(configuration.width - radius) {
+                var sum = SIMD4<Float>.zero
+                for dx in -radius...radius {
+                    sum += frameBuffer[y][x + dx]
+                }
+                tempBuffer[y][x] = sum / kernelSize
+            }
+        }
 
+        // Vertical pass
+        var glowBuffer = tempBuffer
         for y in radius..<(configuration.height - radius) {
             for x in radius..<(configuration.width - radius) {
                 var sum = SIMD4<Float>.zero
-                var count: Float = 0
-
                 for dy in -radius...radius {
-                    for dx in -radius...radius {
-                        sum += frameBuffer[y + dy][x + dx]
-                        count += 1
-                    }
+                    sum += tempBuffer[y + dy][x]
                 }
-
-                let blur = sum / count
+                let blur = sum / kernelSize
                 glowBuffer[y][x] = frameBuffer[y][x] + blur * intensity
             }
         }

@@ -15,6 +15,7 @@ import Foundation
 import SwiftUI
 import Combine
 import simd
+import Accelerate
 
 //==============================================================================
 // MARK: - Quantum Light Constants
@@ -219,34 +220,61 @@ public struct WaveFunction: Sendable {
         self.imaginaryPart = Array(repeating: 0, count: gridSize * gridSize)
     }
 
-    /// Get probability density |ψ|²
+    /// Get probability density |ψ|² (vDSP optimized)
     public var probabilityDensity: [Float] {
-        zip(realPart, imaginaryPart).map { r, i in
-            r * r + i * i
-        }
+        var realSq = [Float](repeating: 0, count: realPart.count)
+        var imagSq = [Float](repeating: 0, count: realPart.count)
+        vDSP_vsq(realPart, 1, &realSq, 1, vDSP_Length(realPart.count))
+        vDSP_vsq(imaginaryPart, 1, &imagSq, 1, vDSP_Length(imaginaryPart.count))
+        var result = [Float](repeating: 0, count: realPart.count)
+        vDSP_vadd(realSq, 1, imagSq, 1, &result, 1, vDSP_Length(realPart.count))
+        return result
     }
 
-    /// Normalize the wave function
+    /// Normalize the wave function (vDSP optimized)
     public mutating func normalize() {
-        let total = probabilityDensity.reduce(0, +)
+        // Compute |ψ|² = real² + imag² using vDSP
+        var realSquared = [Float](repeating: 0, count: realPart.count)
+        var imagSquared = [Float](repeating: 0, count: imaginaryPart.count)
+        vDSP_vsq(realPart, 1, &realSquared, 1, vDSP_Length(realPart.count))
+        vDSP_vsq(imaginaryPart, 1, &imagSquared, 1, vDSP_Length(imaginaryPart.count))
+
+        var probDensity = [Float](repeating: 0, count: realPart.count)
+        vDSP_vadd(realSquared, 1, imagSquared, 1, &probDensity, 1, vDSP_Length(realPart.count))
+
+        var total: Float = 0
+        vDSP_sve(probDensity, 1, &total, vDSP_Length(realPart.count))
         guard total > 0 else { return }
-        let factor = 1.0 / sqrt(total)
-        for i in realPart.indices {
-            realPart[i] *= factor
-            imaginaryPart[i] *= factor
-        }
+
+        var factor = 1.0 / sqrt(total)
+        vDSP_vsmul(realPart, 1, &factor, &realPart, 1, vDSP_Length(realPart.count))
+        vDSP_vsmul(imaginaryPart, 1, &factor, &imaginaryPart, 1, vDSP_Length(imaginaryPart.count))
     }
 
-    /// Apply phase rotation
+    /// Apply phase rotation (vDSP optimized)
     public mutating func applyPhase(_ phase: Float) {
         let cosP = cos(phase)
         let sinP = sin(phase)
-        for i in realPart.indices {
-            let r = realPart[i]
-            let im = imaginaryPart[i]
-            realPart[i] = r * cosP - im * sinP
-            imaginaryPart[i] = r * sinP + im * cosP
-        }
+        let count = vDSP_Length(realPart.count)
+
+        // newReal = real * cos - imag * sin
+        // newImag = real * sin + imag * cos
+        var cosReal = [Float](repeating: 0, count: realPart.count)
+        var sinReal = [Float](repeating: 0, count: realPart.count)
+        var cosImag = [Float](repeating: 0, count: realPart.count)
+        var sinImag = [Float](repeating: 0, count: realPart.count)
+
+        var cosVal = cosP
+        var sinVal = sinP
+        vDSP_vsmul(realPart, 1, &cosVal, &cosReal, 1, count)
+        vDSP_vsmul(imaginaryPart, 1, &sinVal, &sinImag, 1, count)
+        vDSP_vsmul(realPart, 1, &sinVal, &sinReal, 1, count)
+        vDSP_vsmul(imaginaryPart, 1, &cosVal, &cosImag, 1, count)
+
+        // real = cosReal - sinImag
+        vDSP_vsub(sinImag, 1, cosReal, 1, &realPart, 1, count)
+        // imag = sinReal + cosImag
+        vDSP_vadd(sinReal, 1, cosImag, 1, &imaginaryPart, 1, count)
     }
 }
 
@@ -467,28 +495,26 @@ public final class QuantumLoopLightScienceEngine: ObservableObject {
     }
 
     private func updatePhotons(deltaTime: Double) {
-        // Rotate photons based on geometry
+        // Pre-compute rotation values
         let rotationAngle = lightField.rotationRate * Float(deltaTime)
         let cosR = cos(rotationAngle)
         let sinR = sin(rotationAngle)
+        let phaseIncrement = Float(deltaTime * 2 * .pi * heartRateFrequency)
+        let twoPi = Float.pi * 2
+        let newCoherence = Float(0.5 + bioCoherence * 0.5)
 
         for i in lightField.photons.indices {
-            var photon = lightField.photons[i]
-
-            // Rotate around Z axis
-            let x = photon.position.x
-            let y = photon.position.y
-            photon.position.x = x * cosR - y * sinR
-            photon.position.y = x * sinR + y * cosR
+            // Rotate around Z axis (in-place)
+            let x = lightField.photons[i].position.x
+            let y = lightField.photons[i].position.y
+            lightField.photons[i].position.x = x * cosR - y * sinR
+            lightField.photons[i].position.y = x * sinR + y * cosR
 
             // Update phase
-            photon.phase += Float(deltaTime * 2 * .pi * heartRateFrequency)
-            photon.phase = photon.phase.truncatingRemainder(dividingBy: Float.pi * 2)
+            lightField.photons[i].phase = (lightField.photons[i].phase + phaseIncrement).truncatingRemainder(dividingBy: twoPi)
 
-            // Update coherence based on bio
-            photon.coherence = Float(0.5 + bioCoherence * 0.5)
-
-            lightField.photons[i] = photon
+            // Update coherence
+            lightField.photons[i].coherence = newCoherence
         }
     }
 
