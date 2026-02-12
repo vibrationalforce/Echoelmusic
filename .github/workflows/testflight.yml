@@ -44,6 +44,16 @@ on:
         required: false
         default: true
         type: boolean
+      build_only:
+        description: 'Build only (no TestFlight upload) - for compile testing'
+        required: false
+        default: false
+        type: boolean
+      skip_compile_check:
+        description: 'Skip simulator compile check (faster but riskier)'
+        required: false
+        default: false
+        type: boolean
 
 # Prevent concurrent deployments of the SAME platform
 concurrency:
@@ -199,15 +209,99 @@ jobs:
           echo "Building: $PLATFORM"
 
   # ===========================================================================
+  # COMPILE CHECK - Fast simulator build to catch errors before signing
+  # ===========================================================================
+  compile_check:
+    name: "Compile Check"
+    runs-on: macos-14
+    needs: preflight
+    if: |
+      needs.preflight.outputs.ready == 'true' &&
+      github.event.inputs.skip_compile_check != 'true'
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: "Cache Swift PM"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-spm-compile-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-compile-
+            ${{ runner.os }}-spm-ios-
+
+      - name: "Install XcodeGen"
+        run: brew install xcodegen || true
+
+      - name: "Generate Project"
+        run: |
+          # Use placeholder Team ID for simulator builds
+          sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"PLACEHOLDER1\"/" project.yml
+          sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
+          xcodegen generate --spec project.yml
+
+      - name: "Compile for iOS Simulator (no signing)"
+        run: |
+          echo "=== Compile Check: iOS Simulator ==="
+          echo "This catches compile errors BEFORE expensive signing steps"
+          echo ""
+
+          xcodebuild build \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination "generic/platform=iOS Simulator" \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/compile_check.log | tail -50
+
+          RESULT=${PIPESTATUS[0]}
+          if [ $RESULT -eq 0 ]; then
+            echo ""
+            echo "=== COMPILE CHECK PASSED ==="
+            echo "Code compiles successfully. Proceeding to signed builds."
+          else
+            echo ""
+            echo "=== COMPILE CHECK FAILED ==="
+            echo "Fix compile errors before attempting TestFlight deploy."
+            echo ""
+            echo "--- Errors ---"
+            grep -E "error:" /tmp/compile_check.log | head -30
+            exit 1
+          fi
+
+      - name: "Upload Compile Log"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-check-log
+          path: /tmp/compile_check.log
+          retention-days: 3
+
+  # ===========================================================================
   # iOS DEPLOYMENT (includes Widgets + App Clip)
   # ===========================================================================
   ios:
     name: "iOS"
     runs-on: macos-14
-    needs: preflight
+    needs: [preflight, compile_check]
     if: |
+      always() &&
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all')
+      (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
+      (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all') &&
+      github.event.inputs.build_only != 'true'
     timeout-minutes: 60
 
     steps:
@@ -475,10 +569,13 @@ jobs:
   macos:
     name: "macOS"
     runs-on: macos-14
-    needs: preflight
+    needs: [preflight, compile_check]
     if: |
+      always() &&
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all')
+      (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
+      (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all') &&
+      github.event.inputs.build_only != 'true'
     timeout-minutes: 60
 
     steps:
@@ -636,10 +733,14 @@ jobs:
   watchos:
     name: "watchOS"
     runs-on: macos-14
-    needs: preflight
+    needs: [preflight, compile_check, ios]
     if: |
+      always() &&
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all')
+      (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
+      (needs.ios.result == 'success' || needs.ios.result == 'skipped') &&
+      (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all') &&
+      github.event.inputs.build_only != 'true'
     timeout-minutes: 60
 
     steps:
@@ -781,10 +882,14 @@ jobs:
   tvos:
     name: "tvOS"
     runs-on: macos-14
-    needs: preflight
+    needs: [preflight, compile_check, watchos]
     if: |
+      always() &&
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all')
+      (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
+      (needs.watchos.result == 'success' || needs.watchos.result == 'skipped') &&
+      (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all') &&
+      github.event.inputs.build_only != 'true'
     timeout-minutes: 60
 
     steps:
@@ -926,10 +1031,14 @@ jobs:
   visionos:
     name: "visionOS"
     runs-on: macos-14
-    needs: preflight
+    needs: [preflight, compile_check, tvos]
     if: |
+      always() &&
       needs.preflight.outputs.ready == 'true' &&
-      (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all')
+      (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
+      (needs.tvos.result == 'success' || needs.tvos.result == 'skipped') &&
+      (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all') &&
+      github.event.inputs.build_only != 'true'
     timeout-minutes: 60
 
     steps:
@@ -1072,7 +1181,7 @@ jobs:
     name: "Summary"
     runs-on: ubuntu-latest
     if: always()
-    needs: [preflight, ios, macos, watchos, tvos, visionos]
+    needs: [preflight, compile_check, ios, macos, watchos, tvos, visionos]
 
     steps:
       - name: "Generate Report"
@@ -1085,18 +1194,32 @@ jobs:
           echo "| Build | ${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Only | ${{ github.event.inputs.build_only }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Preflight | ${{ needs.preflight.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Compile Check | ${{ needs.compile_check.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| iOS | ${{ needs.ios.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| macOS | ${{ needs.macos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| watchOS | ${{ needs.watchos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| tvOS | ${{ needs.tvos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| visionOS | ${{ needs.visionos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
+
+          # Provide actionable next steps
+          if [ "${{ needs.compile_check.result }}" = "failure" ]; then
+            echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "Compile check failed. Fix build errors before retrying." >> $GITHUB_STEP_SUMMARY
+            echo "Download the **compile-check-log** artifact for error details." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ github.event.inputs.build_only }}" = "true" ]; then
+            echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "Build-only mode: Compile check passed!" >> $GITHUB_STEP_SUMMARY
+            echo "Re-run with **build_only=false** to deploy to TestFlight." >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
           echo "[Open App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY

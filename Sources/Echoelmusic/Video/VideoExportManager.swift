@@ -4,7 +4,9 @@ import VideoToolbox
 import Combine
 import ImageIO
 import MobileCoreServices
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Video Export Manager with H.264/H.265/ProRes/Dolby Vision HDR support
 /// Optimized for hardware encoding on A12+ chips

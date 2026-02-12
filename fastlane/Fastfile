@@ -95,6 +95,7 @@ end
 # =============================================================================
 
 # Setup Manual signing: create cert + provisioning profile for a platform
+# Optimized: Only revokes certs when necessary (avoids cert race conditions)
 def setup_manual_signing(api_key, platform = "ios")
   keychain_path = ENV['KEYCHAIN_PATH']
   keychain_password = ENV['KEYCHAIN_PASSWORD'] || ""
@@ -113,12 +114,16 @@ def setup_manual_signing(api_key, platform = "ios")
   else "com.echoelmusic.app"
   end
 
-  UI.message("Setting up Manual signing for #{platform} (#{bundle_id})...")
+  UI.message("=" * 60)
+  UI.message("Manual Signing Setup: #{platform} (#{bundle_id})")
+  UI.message("Keychain: #{keychain_path || 'default'}")
+  UI.message("=" * 60)
 
-  # Step 1: Revoke stale certs via Spaceship, then create fresh ones
-  UI.message("Revoking stale development certificates via Spaceship...")
+  # Step 1: Smart cert cleanup - only revoke what's necessary
+  UI.message("Checking certificates at Apple Developer Portal...")
   begin
     require 'spaceship'
+    require 'time'
     token = Spaceship::ConnectAPI::Token.create(
       key_id: ENV["ASC_KEY_ID"],
       issuer_id: ENV["ASC_ISSUER_ID"],
@@ -126,37 +131,52 @@ def setup_manual_signing(api_key, platform = "ios")
     )
     Spaceship::ConnectAPI.token = token
     all_certs = Spaceship::ConnectAPI::Certificate.all
-    UI.message("Certificates at Apple portal: #{all_certs.count}")
+    UI.message("Portal certificates (#{all_certs.count} total):")
     all_certs.each do |c|
-      UI.message("  #{c.id}: #{c.certificate_type}")
+      exp = parse_cert_date(c.expiration_date).strftime('%Y-%m-%d') rescue "unknown"
+      UI.message("  #{c.id}: #{c.certificate_type} (expires #{exp})")
     end
-    # Revoke ALL development certs (stale from previous CI runs)
+
+    # Revoke ALL development certs (stale from ephemeral CI runners, always safe)
     dev_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DEVELOPMENT") }
-    dev_certs.each do |c|
-      begin
-        c.delete!
-        UI.success("  Revoked dev cert: #{c.id}")
-      rescue => e
-        UI.important("  Could not revoke #{c.id}: #{e.message}")
+    if dev_certs.any?
+      UI.message("Revoking #{dev_certs.count} stale development cert(s)...")
+      dev_certs.each do |c|
+        begin
+          c.delete!
+          UI.success("  Revoked dev cert: #{c.id}")
+        rescue => e
+          UI.important("  Could not revoke #{c.id}: #{e.message}")
+        end
       end
     end
-    # Revoke ALL distribution certs to make room for fresh one
-    # (none of the existing ones have private keys on this CI runner)
+
+    # For distribution certs: only revoke if at or over the 2-cert limit
+    # This is safer than revoking ALL, especially for serialized multi-platform builds
     dist_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DISTRIBUTION") }
-    UI.message("Found #{dist_certs.count} distribution cert(s) — revoking ALL to make room for fresh one")
-    dist_certs.each do |c|
-      begin
-        c.delete!
-        UI.success("  Revoked dist cert: #{c.id} (#{c.certificate_type})")
-      rescue => e
-        UI.important("  Could not revoke dist #{c.id}: #{e.message}")
+    max_dist_certs = 2
+    if dist_certs.count >= max_dist_certs
+      # Sort by expiration, revoke oldest to make room for 1 new cert
+      sorted = dist_certs.sort_by { |c| parse_cert_date(c.expiration_date) }
+      to_revoke = sorted.first(dist_certs.count - max_dist_certs + 1)
+      UI.message("At cert limit (#{dist_certs.count}/#{max_dist_certs}), revoking #{to_revoke.count} oldest...")
+      to_revoke.each do |c|
+        begin
+          c.delete!
+          UI.success("  Revoked dist cert: #{c.id}")
+        rescue => e
+          UI.important("  Could not revoke #{c.id}: #{e.message}")
+        end
       end
+    else
+      UI.message("Distribution cert count OK (#{dist_certs.count}/#{max_dist_certs} max)")
     end
   rescue => e
-    UI.important("Spaceship cleanup: #{e.message}")
+    UI.important("Spaceship cert check: #{e.message}")
+    UI.message("Continuing — cert() will handle creation")
   end
 
-  # Step 2: Create Apple Distribution certificate with private key in keychain
+  # Step 2: Create Apple Distribution certificate with private key in CI keychain
   UI.message("Creating Apple Distribution certificate...")
   cert(
     force: true,
@@ -183,7 +203,9 @@ def setup_manual_signing(api_key, platform = "ios")
   profile_name = Actions.lane_context[SharedValues::SIGH_NAME]
   profile_uuid = Actions.lane_context[SharedValues::SIGH_UDID]
 
-  UI.success("Profile ready: #{profile_name} (UUID: #{profile_uuid})")
+  UI.success("=" * 60)
+  UI.success("Signing ready: #{profile_name} (UUID: #{profile_uuid})")
+  UI.success("=" * 60)
 
   { name: profile_name, uuid: profile_uuid, bundle_id: bundle_id }
 end
