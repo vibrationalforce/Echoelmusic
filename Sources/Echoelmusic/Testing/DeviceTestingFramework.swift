@@ -162,6 +162,7 @@ class DeviceTestingFramework: ObservableObject {
             case fingerprint
             case eyeTracking
             case brainWaves  // Future
+            case quantumSensor  // Far future
         }
 
         enum ConnectivityType: String, Codable, CaseIterable {
@@ -469,7 +470,7 @@ class DeviceTestingFramework: ObservableObject {
             storage: .init(capacityGB: 10000, type: "Holographic", speedMBps: 1000000),
             display: .init(sizeInches: 8.0, resolutionWidth: 10000, resolutionHeight: 7000, refreshRateHz: 240, brightnessCdM2: 10000, isOLED: false, isHDR: true),
             battery: .init(capacityWh: 100.0, supportsWirelessCharging: true, supportsFastCharging: true),
-            sensors: [.accelerometer, .gyroscope, .camera, .microphone, .temperature, .quantumSensor].compactMap { DeviceProfile.SensorType(rawValue: $0.rawValue) },
+            sensors: [.accelerometer, .gyroscope, .camera, .microphone, .temperature, .quantumSensor],
             connectivity: [.wifi7, .bluetooth6, .cellular6G, .quantumEntanglement],
             supportsHealthKit: true,
             supportsMetalFX: false,
