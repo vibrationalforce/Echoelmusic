@@ -2,5 +2,21 @@
 # Cloudflare Pages Redirects
 # =============================================================================
 
-# www to non-www
+# www to non-www (canonical)
 https://www.echoelmusic.com/* https://echoelmusic.com/:splat 301
+
+# HTTP to HTTPS (fallback, Cloudflare handles this but belt-and-suspenders)
+http://echoelmusic.com/* https://echoelmusic.com/:splat 301
+http://www.echoelmusic.com/* https://echoelmusic.com/:splat 301
+
+# App Store shortcut
+/app https://apps.apple.com/app/echoelmusic/id6757957358 302
+/download https://apps.apple.com/app/echoelmusic/id6757957358 302
+
+# Common page aliases
+/datenschutz /privacy.html 301
+/agb /terms.html 301
+/hilfe /support.html 301
+/barrierefreiheit /accessibility.html 301
+/gesundheit /health.html 301
+/sicherheit /security.html 301
