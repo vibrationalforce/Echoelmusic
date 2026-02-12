@@ -332,7 +332,7 @@ class DeviceCapabilities: ObservableObject {
     // MARK: - Cleanup
 
     deinit {
-        stopMonitoringAudioRoute()
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
