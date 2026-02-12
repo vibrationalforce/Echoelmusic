@@ -885,7 +885,10 @@ class BackgroundSourceManager: ObservableObject {
             currentTexture = try createTexture(from: ciImage)
         }
 
-        return currentTexture ?? (try await renderStaticSource(.solidColor(.black), size: size))
+        if let texture = currentTexture {
+            return texture
+        }
+        return try await renderStaticSource(.solidColor(.black), size: size)
     }
 
     private func updateEchoelmusicVisual(type: EchoelmusicVisualType, size: CGSize) async throws -> MTLTexture {

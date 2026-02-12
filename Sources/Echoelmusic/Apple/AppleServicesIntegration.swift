@@ -626,7 +626,7 @@ public final class EchoelWeatherService: ObservableObject {
             return .full
         case .waningGibbous:
             return .waningGibbous
-        case .thirdQuarter:
+        case .lastQuarter:
             return .lastQuarter
         case .waningCrescent:
             return .waningCrescent

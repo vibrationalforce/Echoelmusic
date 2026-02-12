@@ -438,7 +438,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
         }
 
         // Schedule file playback
-        player.scheduleFile(file, at: nil)
+        await player.scheduleFile(file, at: nil)
 
         try engine.start()
         player.play()

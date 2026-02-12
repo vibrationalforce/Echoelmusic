@@ -93,8 +93,8 @@ public struct AudioGraph {
 @resultBuilder
 public struct AudioGraphBuilder {
 
-    public static func buildBlock(_ components: AudioGraphNode...) -> [AudioGraphNode] {
-        components
+    public static func buildBlock(_ components: [AudioGraphNode]...) -> [AudioGraphNode] {
+        components.flatMap { $0 }
     }
 
     public static func buildArray(_ components: [[AudioGraphNode]]) -> [AudioGraphNode] {
