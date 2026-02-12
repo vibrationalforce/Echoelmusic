@@ -838,6 +838,8 @@ enum PerNoteExpression: String, CaseIterable {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     PianoRollView()
 }
+#endif

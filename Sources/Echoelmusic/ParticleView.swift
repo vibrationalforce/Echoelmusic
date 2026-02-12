@@ -317,6 +317,7 @@ struct Particle: Identifiable {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
@@ -349,3 +350,4 @@ struct Particle: Identifiable {
         }
     }
 }
+#endif

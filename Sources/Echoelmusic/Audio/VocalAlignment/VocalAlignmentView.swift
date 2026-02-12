@@ -510,7 +510,9 @@ struct DubTrackRow: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VocalAlignmentView()
         .preferredColorScheme(.dark)
 }
+#endif

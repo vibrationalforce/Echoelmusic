@@ -555,6 +555,7 @@ public extension View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VStack(spacing: 20) {
         Text("Filter Cutoff")
@@ -575,3 +576,4 @@ public extension View {
     }
     .padding()
 }
+#endif

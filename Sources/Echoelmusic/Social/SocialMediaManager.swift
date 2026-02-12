@@ -1,7 +1,9 @@
 import Foundation
 import SwiftUI
 import Combine
+#if canImport(UIKit)
 import UIKit
+#endif
 import AuthenticationServices
 
 /// SocialMediaManager - One-Click Multi-Platform Publishing
@@ -825,6 +827,8 @@ struct PlatformButton: View {
     }
 }
 
+#if DEBUG
 #Preview {
     OneClickPublishView()
 }
+#endif

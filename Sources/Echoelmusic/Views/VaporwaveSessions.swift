@@ -424,7 +424,9 @@ struct VaporwaveSessions: View {
     }
 }
 
+#if DEBUG
 #Preview {
     VaporwaveSessions()
         .environmentObject(RecordingEngine())
 }
+#endif

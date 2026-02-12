@@ -533,17 +533,19 @@ struct BreathingGuideView: View {
     private func startBreathingCycle() {
         // 4-4-4-4 Box Breathing
         Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { _ in
-            switch breathPhase {
-            case .inhale:
-                breathPhase = .hold1
-                scale = 1.0
-            case .hold1:
-                breathPhase = .exhale
-            case .exhale:
-                breathPhase = .hold2
-                scale = 0.6
-            case .hold2:
-                breathPhase = .inhale
+            Task { @MainActor in
+                switch breathPhase {
+                case .inhale:
+                    breathPhase = .hold1
+                    scale = 1.0
+                case .hold1:
+                    breathPhase = .exhale
+                case .exhale:
+                    breathPhase = .hold2
+                    scale = 0.6
+                case .hold2:
+                    breathPhase = .inhale
+                }
             }
         }
         scale = 1.0

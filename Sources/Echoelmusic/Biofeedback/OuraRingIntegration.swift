@@ -9,7 +9,9 @@
 // Oura data is used for: preset suggestions, session planning, recovery tracking.
 
 import Foundation
+#if canImport(HealthKit)
 import HealthKit
+#endif
 
 // MARK: - Oura Ring Data Types
 

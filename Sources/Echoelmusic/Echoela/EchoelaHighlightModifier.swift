@@ -480,6 +480,7 @@ public struct EchoelaAssistantView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VStack {
         Text("Test Element")
@@ -492,3 +493,4 @@ public struct EchoelaAssistantView: View {
     }
     .padding()
 }
+#endif

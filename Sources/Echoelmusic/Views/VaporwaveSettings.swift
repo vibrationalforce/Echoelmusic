@@ -372,8 +372,10 @@ struct VaporwaveSettings: View {
     }
 }
 
+#if DEBUG
 #Preview {
     VaporwaveSettings()
         .environmentObject(HealthKitManager())
         .environmentObject(AudioEngine())
 }
+#endif

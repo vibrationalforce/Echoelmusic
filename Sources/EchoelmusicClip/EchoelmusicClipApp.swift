@@ -131,6 +131,8 @@ struct ClipContentView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     ClipContentView()
 }
+#endif

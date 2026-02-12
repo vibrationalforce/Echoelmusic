@@ -262,6 +262,7 @@ struct VaporwaveVisualizer: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     VaporwaveVisualizer(
         params: UnifiedVisualSoundEngine.VisualParameters(
@@ -276,3 +277,4 @@ struct VaporwaveVisualizer: View {
     )
     .frame(height: 400)
 }
+#endif

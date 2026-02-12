@@ -1692,6 +1692,8 @@ enum BioModSource: String {
     case breath = "Breath"
 }
 
+#if DEBUG
 #Preview {
     VJLaserControlView()
 }
+#endif

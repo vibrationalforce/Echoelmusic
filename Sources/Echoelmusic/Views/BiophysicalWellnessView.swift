@@ -605,6 +605,8 @@ struct SettingsView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     BiophysicalWellnessView()
 }
+#endif

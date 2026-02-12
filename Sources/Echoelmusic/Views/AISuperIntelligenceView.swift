@@ -1147,6 +1147,8 @@ enum EchoelTool: String, CaseIterable {
     }
 }
 
+#if DEBUG
 #Preview {
     AISuperIntelligenceView()
 }
+#endif

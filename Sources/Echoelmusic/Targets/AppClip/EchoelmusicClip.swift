@@ -697,10 +697,12 @@ struct MintingSheet: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("App Clip") {
     EchoelmusicClipRootView()
         .environmentObject(AppClipManager())
         .environmentObject(UnifiedHealthKitEngine.shared)
 }
+#endif
 
 #endif // ECHOELMUSIC_CLIP_TARGET

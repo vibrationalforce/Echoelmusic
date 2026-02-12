@@ -694,6 +694,7 @@ struct SpatialEchoelaEchoelaCoherenceWidgetView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 #Preview("Artist Stats Small", as: .systemSmall) {
     ArtistStatsWidget()
 } timeline: {
@@ -707,11 +708,14 @@ struct SpatialEchoelaEchoelaCoherenceWidgetView: View {
         coherenceAverage: 0.72
     )
 }
+#endif
 
+#if DEBUG
 #Preview("Coherence", as: .accessoryCircular) {
     EchoelaCoherenceWidget()
 } timeline: {
     EchoelaCoherenceEntry(date: Date(), currentCoherence: 0.72, trend: .increasing, sessionActive: false)
 }
+#endif
 
 #endif // ECHOELMUSIC_WIDGET_TARGET

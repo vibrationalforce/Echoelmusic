@@ -1341,6 +1341,8 @@ struct HealthDisclaimerView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     UnifiedHealthKitView()
 }
+#endif

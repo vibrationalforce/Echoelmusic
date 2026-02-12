@@ -971,6 +971,8 @@ enum EffectType: String {
     }
 }
 
+#if DEBUG
 #Preview {
     AudioRoutingMatrixView()
 }
+#endif

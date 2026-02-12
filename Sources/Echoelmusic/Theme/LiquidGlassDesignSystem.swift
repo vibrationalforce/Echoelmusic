@@ -571,6 +571,7 @@ public struct CoherenceOrb: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Liquid Glass Components") {
     ZStack {
         // Background
@@ -610,3 +611,4 @@ public struct CoherenceOrb: View {
         .padding()
     }
 }
+#endif
