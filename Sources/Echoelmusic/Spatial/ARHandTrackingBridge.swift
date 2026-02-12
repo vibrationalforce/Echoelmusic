@@ -5,6 +5,10 @@ import Combine
 import ARKit
 #endif
 
+#if canImport(Vision)
+import Vision
+#endif
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // AR HAND TRACKING BRIDGE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -110,6 +114,16 @@ public final class ARHandTrackingBridge: ObservableObject {
     }
 
     public func stop() {
+        #if canImport(UIKit) && !os(watchOS) && !os(tvOS) && !os(visionOS)
+        visionBridgeTask?.cancel()
+        visionBridgeTask = nil
+        cancellables.removeAll()
+        #endif
+        #if os(visionOS)
+        handTrackingTask?.cancel()
+        handTrackingTask = nil
+        #endif
+        state = HandTrackingState()
         isRunning = false
     }
 
@@ -193,11 +207,152 @@ public final class ARHandTrackingBridge: ObservableObject {
     // MARK: - iOS/macOS Vision Framework (Fallback)
 
     #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
+    private var visionBridgeTask: Task<Void, Never>?
+
     private func startVisionFrameworkTracking() {
-        // Existing HandTrackingManager handles this via VNDetectHumanHandPoseRequest
-        // Bridge its output into our unified HandTrackingState
+        // Bridge HandTrackingManager's published properties into our unified HandTrackingState
+        let handManager = HandTrackingManager()
+        handManager.startTracking()
+
+        // Subscribe to left hand landmark updates
+        handManager.$leftHandLandmarks
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] landmarks in
+                guard let self, !landmarks.isEmpty else { return }
+                self.bridgeVisionLandmarks(landmarks, to: &self.state.leftHand, isLeft: true)
+                self.state.leftPinchAmount = self.calculatePinch(self.state.leftHand)
+                self.state.leftGrabAmount = self.calculateGrab(self.state.leftHand)
+                self.onPinch?(self.state.leftPinchAmount, true)
+                self.onGrab?(self.state.leftGrabAmount, true)
+            }
+            .store(in: &cancellables)
+
+        // Subscribe to right hand landmark updates
+        handManager.$rightHandLandmarks
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] landmarks in
+                guard let self, !landmarks.isEmpty else { return }
+                self.bridgeVisionLandmarks(landmarks, to: &self.state.rightHand, isLeft: false)
+                self.state.rightPinchAmount = self.calculatePinch(self.state.rightHand)
+                self.state.rightGrabAmount = self.calculateGrab(self.state.rightHand)
+                self.onPinch?(self.state.rightPinchAmount, false)
+                self.onGrab?(self.state.rightGrabAmount, false)
+            }
+            .store(in: &cancellables)
+
+        // Subscribe to hand detection states
+        handManager.$leftHandDetected
+            .combineLatest(handManager.$rightHandDetected)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] leftDetected, rightDetected in
+                guard let self else { return }
+                self.state.leftHand.isTracked = leftDetected
+                self.state.rightHand.isTracked = rightDetected
+                self.state.isAvailable = leftDetected || rightDetected
+            }
+            .store(in: &cancellables)
+
+        // Subscribe to 3D position updates for pointing gesture
+        handManager.$leftHandPosition
+            .combineLatest(handManager.$rightHandPosition)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] leftPos, rightPos in
+                guard let self else { return }
+                if self.state.leftHand.isTracked {
+                    self.onPoint?(leftPos, true)
+                }
+                if self.state.rightHand.isTracked {
+                    self.onPoint?(rightPos, false)
+                }
+            }
+            .store(in: &cancellables)
+
         state.isAvailable = true
-        ProfessionalLogger.log(.info, category: .audio, "Using Vision framework for hand tracking (2D + depth)")
+        ProfessionalLogger.log(.info, category: .audio, "Vision framework hand tracking bridge active (2D + depth estimation)")
+    }
+
+    /// Bridge Vision framework 21-joint landmarks into our 25-joint HandSkeleton
+    /// Vision uses VNHumanHandPoseObservation with 21 joints, ARKit uses 25.
+    /// We map the 21 available joints and estimate the 4 missing metacarpals.
+    private func bridgeVisionLandmarks(_ landmarks: [HandLandmark], to skeleton: inout HandSkeleton, isLeft: Bool) {
+        skeleton.isTracked = !landmarks.isEmpty
+
+        // Vision framework joint name → our skeleton index mapping
+        // Our 25-joint order: wrist, thumb(4), index(5), middle(5), ring(5), little(5)
+        // Vision 21-joint order: wrist, thumb(4), index(4), middle(4), ring(4), little(4)
+        // Missing from Vision: metacarpal joints for index/middle/ring/little (indices 5, 10, 15, 20)
+
+        for landmark in landmarks {
+            let jointName = landmark.jointName
+            let pos3D = estimateDepth(from: landmark.position, confidence: landmark.confidence)
+
+            // Map Vision joint names to our skeleton indices
+            let index = visionJointToSkeletonIndex(jointName)
+            if index >= 0 && index < skeleton.joints.count {
+                skeleton.joints[index].position = pos3D
+                skeleton.joints[index].isTracked = landmark.confidence > 0.3
+                skeleton.joints[index].confidence = landmark.confidence
+            }
+        }
+
+        // Estimate missing metacarpal joints by interpolation (wrist → knuckle midpoint)
+        let wristPos = skeleton.joints[0].position
+        let metacarpalIndices = [5, 10, 15, 20] // index, middle, ring, little metacarpals
+        let knuckleIndices = [6, 11, 16, 21]     // corresponding knuckle joints
+
+        for (metaIdx, knuckleIdx) in zip(metacarpalIndices, knuckleIndices) {
+            if metaIdx < skeleton.joints.count && knuckleIdx < skeleton.joints.count {
+                let knucklePos = skeleton.joints[knuckleIdx].position
+                skeleton.joints[metaIdx].position = (wristPos + knucklePos) * 0.5
+                skeleton.joints[metaIdx].isTracked = skeleton.joints[knuckleIdx].isTracked
+                skeleton.joints[metaIdx].confidence = skeleton.joints[knuckleIdx].confidence * 0.7
+            }
+        }
+    }
+
+    /// Map VNHumanHandPoseObservation.JointName to our 25-joint skeleton index
+    private func visionJointToSkeletonIndex(_ jointName: VNHumanHandPoseObservation.JointName) -> Int {
+        switch jointName {
+        case .wrist: return 0
+        // Thumb (4 joints, indices 1-4)
+        case .thumbCMC: return 1
+        case .thumbMP: return 2
+        case .thumbIP: return 3
+        case .thumbTip: return 4
+        // Index finger (knuckle→tip, indices 6-9, skip metacarpal at 5)
+        case .indexMCP: return 6
+        case .indexPIP: return 7
+        case .indexDIP: return 8
+        case .indexTip: return 9
+        // Middle finger (indices 11-14, skip metacarpal at 10)
+        case .middleMCP: return 11
+        case .middlePIP: return 12
+        case .middleDIP: return 13
+        case .middleTip: return 14
+        // Ring finger (indices 16-19, skip metacarpal at 15)
+        case .ringMCP: return 16
+        case .ringPIP: return 17
+        case .ringDIP: return 18
+        case .ringTip: return 19
+        // Little finger (indices 21-24, skip metacarpal at 20)
+        case .littleMCP: return 21
+        case .littlePIP: return 22
+        case .littleDIP: return 23
+        case .littleTip: return 24
+        default: return -1
+        }
+    }
+
+    /// Estimate 3D position from 2D Vision landmark + confidence-based depth
+    private func estimateDepth(from point: CGPoint, confidence: Float) -> SIMD3<Float> {
+        // Convert normalized screen coordinates to 3D space estimate
+        // X: -1 (left) to +1 (right)
+        // Y: -1 (bottom) to +1 (top)
+        // Z: depth estimated from confidence + hand scale (0 to 1)
+        let x = Float(point.x) * 2.0 - 1.0
+        let y = Float(point.y) * 2.0 - 1.0
+        let z = confidence * 0.5 // rough depth: higher confidence = closer
+        return SIMD3<Float>(x, y, z)
     }
     #endif
 
