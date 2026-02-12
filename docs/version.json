@@ -1,6 +1,6 @@
 {
-  "version": "3.1.0",
-  "build": "2026-02-12T12:00:00Z",
+  "version": "3.2.0",
+  "build": "2026-02-12T18:00:00Z",
   "features": {
     "uspFocused": true,
     "minimalDesign": true,
@@ -12,12 +12,12 @@
     "customDomain": true
   },
   "changelog": [
-    "Custom domain echoelmusic.com configured",
-    "Updated all canonical URLs to echoelmusic.com",
-    "Sitemap updated with all 16 pages",
-    "PWA manifest updated for custom domain",
-    "Version synced to 3.0.0 across all files",
-    "German version synchronized",
-    "Added hreflang tags for SEO"
+    "Optimized landing page with stats, how-it-works, and instruments sections",
+    "Improved SEO with og:locale, dns-prefetch, enhanced structured data",
+    "Added feature bullet tags for scannable feature highlights",
+    "Better bottom CTA with trust badges",
+    "Synced service worker cache version",
+    "Improved scroll animations with rootMargin",
+    "Enhanced responsive design for all breakpoints"
   ]
 }
