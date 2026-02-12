@@ -1,0 +1,18 @@
+# =============================================================================
+# ECHOELMUSIC - Cloudflare Workers Configuration
+# =============================================================================
+# Static site deployment from docs/ folder
+# =============================================================================
+
+name = "echoelmusic"
+compatibility_date = "2026-01-01"
+
+# Serve static assets from docs/
+[assets]
+directory = "./docs"
+
+# Custom domain routing
+routes = [
+  { pattern = "echoelmusic.com/*", zone_name = "echoelmusic.com" },
+  { pattern = "www.echoelmusic.com/*", zone_name = "echoelmusic.com" }
+]
