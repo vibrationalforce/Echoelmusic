@@ -15,6 +15,7 @@
 import Foundation
 import Combine
 import CoreBluetooth
+import SwiftUI
 
 // MARK: - EEG Data Types
 
