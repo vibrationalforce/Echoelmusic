@@ -1,35 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
   <defs>
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0A0A1E"/>
-      <stop offset="50%" stop-color="#12102A"/>
-      <stop offset="100%" stop-color="#0D0820"/>
+      <stop offset="0%" stop-color="#030712"/>
+      <stop offset="50%" stop-color="#041a0e"/>
+      <stop offset="100%" stop-color="#030712"/>
     </linearGradient>
     <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF1494"/>
-      <stop offset="50%" stop-color="#9933FF"/>
-      <stop offset="100%" stop-color="#00FFFF"/>
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
     </linearGradient>
     <linearGradient id="glass" x1="0%" y1="0%" x2="80%" y2="80%">
       <stop offset="0%" stop-color="white" stop-opacity="0.1"/>
       <stop offset="100%" stop-color="white" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="oc" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#00FFFF" stop-opacity="0.2"/>
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/>
     </linearGradient>
     <linearGradient id="op" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF1494" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#FF1494" stop-opacity="0.7"/>
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.7"/>
     </linearGradient>
     <linearGradient id="ov" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#9933FF" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#9933FF" stop-opacity="0.2"/>
+      <stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#34D399" stop-opacity="0.2"/>
     </linearGradient>
     <radialGradient id="nuc" cx="50%" cy="45%" r="50%">
       <stop offset="0%" stop-color="white" stop-opacity="0.98"/>
       <stop offset="40%" stop-color="white" stop-opacity="0.7"/>
-      <stop offset="70%" stop-color="#FF1494" stop-opacity="0.3"/>
+      <stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
     <filter id="gb" x="-20%" y="-20%" width="140%" height="140%">
@@ -45,11 +45,11 @@
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <radialGradient id="soft1" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FF1494" stop-opacity="0.08"/>
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
     <radialGradient id="soft2" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.06"/>
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.06"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
   </defs>
@@ -81,56 +81,56 @@
 
     <g filter="url(#eg)">
       <circle cx="95" cy="0" r="7" fill="white" opacity="0.92"/>
-      <circle cx="95" cy="0" r="10" fill="#00FFFF" opacity="0.25"/>
+      <circle cx="95" cy="0" r="10" fill="#22C55E" opacity="0.25"/>
       <circle cx="-47" cy="-82" r="7" fill="white" opacity="0.92"/>
-      <circle cx="-47" cy="-82" r="10" fill="#FF1494" opacity="0.25"/>
+      <circle cx="-47" cy="-82" r="10" fill="#10B981" opacity="0.25"/>
       <circle cx="-47" cy="82" r="7" fill="white" opacity="0.92"/>
-      <circle cx="-47" cy="82" r="10" fill="#9933FF" opacity="0.25"/>
+      <circle cx="-47" cy="82" r="10" fill="#34D399" opacity="0.25"/>
     </g>
   </g>
 
   <!-- App name -->
-  <text x="420" y="268" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
-        font-size="82" font-weight="800" fill="white" filter="url(#tg)" letter-spacing="-2">
+  <text x="420" y="268" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+        font-size="82" font-weight="700" fill="white" filter="url(#tg)" letter-spacing="-2">
     Echoelmusic
   </text>
 
   <!-- Tagline -->
-  <text x="420" y="325" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
-        font-size="30" fill="url(#brand)" font-weight="600" letter-spacing="-0.3">
+  <text x="420" y="325" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+        font-size="30" fill="url(#brand)" font-weight="700" letter-spacing="-0.3">
     Create from Within
   </text>
 
   <!-- Description -->
-  <text x="420" y="378" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+  <text x="420" y="378" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="18" fill="rgba(255,255,255,0.5)" font-weight="400">
     Your heartbeat drives the music. Your body controls the light.
   </text>
 
   <!-- Feature badges -->
   <g transform="translate(420, 418)">
-    <rect x="0" y="0" width="100" height="32" rx="16" fill="#FF1494" opacity="0.12"/>
-    <text x="50" y="21" font-family="SF Pro Text, sans-serif" font-size="12" fill="#FF1494" text-anchor="middle" font-weight="600">6 Synths</text>
+    <rect x="0" y="0" width="100" height="32" rx="16" fill="#22C55E" opacity="0.12"/>
+    <text x="50" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700">6 Synths</text>
 
-    <rect x="112" y="0" width="108" height="32" rx="16" fill="#00FFFF" opacity="0.1"/>
-    <text x="166" y="21" font-family="SF Pro Text, sans-serif" font-size="12" fill="#00FFFF" text-anchor="middle" font-weight="600">90+ Effects</text>
+    <rect x="112" y="0" width="108" height="32" rx="16" fill="#10B981" opacity="0.1"/>
+    <text x="166" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#10B981" text-anchor="middle" font-weight="700">90+ Effects</text>
 
-    <rect x="232" y="0" width="120" height="32" rx="16" fill="#9933FF" opacity="0.1"/>
-    <text x="292" y="21" font-family="SF Pro Text, sans-serif" font-size="12" fill="#9933FF" text-anchor="middle" font-weight="600">30+ Visuals</text>
+    <rect x="232" y="0" width="120" height="32" rx="16" fill="#34D399" opacity="0.1"/>
+    <text x="292" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#34D399" text-anchor="middle" font-weight="700">30+ Visuals</text>
 
     <rect x="364" y="0" width="118" height="32" rx="16" fill="url(#brand)" opacity="0.1"/>
-    <text x="423" y="21" font-family="SF Pro Text, sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="600">Bio-Reactive</text>
+    <text x="423" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Bio-Reactive</text>
   </g>
 
   <!-- Platforms -->
-  <text x="420" y="508" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif"
+  <text x="420" y="508" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="14" fill="rgba(255,255,255,0.35)" font-weight="400" letter-spacing="0.5">
     iPhone  ·  iPad  ·  Mac  ·  Apple Watch  ·  Apple TV  ·  Vision Pro
   </text>
 
   <!-- Free badge -->
-  <rect x="420" y="528" width="165" height="30" rx="15" fill="#00FFFF" opacity="0.1"/>
-  <text x="502.5" y="548" font-family="SF Pro Text, sans-serif" font-size="12" fill="#00FFFF" text-anchor="middle" font-weight="600" letter-spacing="1">FREE FOR A LIMITED TIME</text>
+  <rect x="420" y="528" width="165" height="30" rx="15" fill="#22C55E" opacity="0.1"/>
+  <text x="502.5" y="548" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700" letter-spacing="1">FREE FOR A LIMITED TIME</text>
 
   <!-- Bottom line -->
   <line x1="0" y1="620" x2="1200" y2="620" stroke="url(#brand)" stroke-width="1" opacity="0.15"/>

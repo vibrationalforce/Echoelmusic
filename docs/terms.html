@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service - Echoelmusic</title>
     <meta name="description" content="Terms of Service for Echoelmusic bio-reactive creative platform.">
-    <meta name="theme-color" content="#FF1494">
+    <meta name="theme-color" content="#22C55E">
     <meta property="og:title" content="Terms of Service - Echoelmusic">
     <meta property="og:description" content="Free to use. You own your creations. Not a medical device.">
     <meta property="og:url" content="https://echoelmusic.com/terms.html">
@@ -19,28 +19,31 @@
     <meta name="twitter:image" content="https://echoelmusic.com/og-image.svg">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="canonical" href="https://echoelmusic.com/terms.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <style>
-        :root { --pink: #FF1494; --cyan: #00FFFF; --purple: #9933FF; --bg: #050510; }
+        :root { --green: #22C55E; --emerald: #10B981; --mint: #34D399; --bg: #030712; --text: #F8FAFC; --text-dim: rgba(248,250,252,0.55); --border: rgba(34,197,94,0.08); --border-subtle: rgba(255,255,255,0.06); --bg-glass: rgba(34,197,94,0.04); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif; background: var(--bg); color: #fff; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+        body { font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-        .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 24px; background: rgba(5,5,16,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 24px; background: rgba(3,7,18,0.75); border-bottom: 1px solid rgba(34,197,94,0.06); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); }
         .nav-bar { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; z-index: 1001; text-decoration: none; color: #fff; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; z-index: 1001; text-decoration: none; color: var(--text); }
         .nav-logo svg { width: 30px; height: 30px; }
-        .nav-logo span { background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-logo span { background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .burger { width: 40px; height: 40px; background: none; border: none; cursor: pointer; z-index: 1001; position: relative; display: flex; align-items: center; justify-content: center; }
-        .burger span { display: block; width: 20px; height: 1.5px; background: #fff; position: absolute; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+        .burger span { display: block; width: 20px; height: 1.5px; background: var(--text); position: absolute; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
         .burger span:nth-child(1) { transform: translateY(-6px); }
         .burger span:nth-child(3) { transform: translateY(6px); }
         .burger.active span:nth-child(1) { transform: rotate(45deg); }
         .burger.active span:nth-child(2) { opacity: 0; }
         .burger.active span:nth-child(3) { transform: rotate(-45deg); }
-        .menu-overlay { position: fixed; inset: 0; z-index: 999; background: rgba(5,5,16,0.97); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.4,0,0.2,1), visibility 0.4s; }
+        .menu-overlay { position: fixed; inset: 0; z-index: 999; background: rgba(3,7,18,0.97); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.4,0,0.2,1), visibility 0.4s; }
         .menu-overlay.open { opacity: 1; visibility: visible; }
         .menu-overlay nav { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .menu-overlay a { font-size: clamp(20px, 4vw, 30px); font-weight: 700; letter-spacing: -0.5px; color: rgba(255,255,255,0.55); padding: 8px 20px; border-radius: 12px; transition: color 0.2s, background 0.2s, transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.5s; transform: translateY(20px); opacity: 0; text-decoration: none; }
+        .menu-overlay a { font-size: clamp(20px, 4vw, 30px); font-weight: 700; letter-spacing: -0.5px; color: var(--text-dim); padding: 8px 20px; border-radius: 12px; transition: color 0.2s, background 0.2s, transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.5s; transform: translateY(20px); opacity: 0; text-decoration: none; }
         .menu-overlay.open a { transform: translateY(0); opacity: 1; }
         .menu-overlay.open a:nth-child(1) { transition-delay: 0.03s; }
         .menu-overlay.open a:nth-child(2) { transition-delay: 0.06s; }
@@ -51,45 +54,45 @@
         .menu-overlay.open a:nth-child(7) { transition-delay: 0.21s; }
         .menu-overlay.open a:nth-child(8) { transition-delay: 0.24s; }
         .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
-        .menu-overlay a:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .menu-overlay .menu-cta { margin-top: 16px; font-size: 16px; font-weight: 600; background: #fff; color: #000; padding: 14px 32px; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s, opacity 0.5s; transform: translateY(20px); opacity: 0; }
+        .menu-overlay a:hover { color: var(--text); background: rgba(34,197,94,0.06); }
+        .menu-overlay .menu-cta { margin-top: 16px; font-size: 16px; font-weight: 600; background: var(--green); color: var(--bg); padding: 14px 32px; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s, opacity 0.5s; transform: translateY(20px); opacity: 0; }
         .menu-overlay.open .menu-cta { transform: translateY(0); opacity: 1; transition-delay: 0.32s; }
-        .menu-overlay .menu-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,20,148,0.3); color: #000; }
+        .menu-overlay .menu-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(34,197,94,0.3); color: var(--bg); }
 
         main { max-width: 700px; margin: 0 auto; padding: 80px 24px 80px; }
         .hero { text-align: center; margin-bottom: 48px; }
         .hero h1 { font-size: clamp(32px, 7vw, 42px); font-weight: 700; margin-bottom: 16px; }
-        .hero h1 span { background: linear-gradient(135deg, var(--purple), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero .date { color: rgba(255,255,255,0.4); font-size: 13px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--green), var(--emerald)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero .date { color: var(--text-dim); font-size: 13px; }
 
-        .summary { background: rgba(153,51,255,0.08); border: 1px solid rgba(153,51,255,0.2); padding: 20px; border-radius: 12px; margin-bottom: 40px; text-align: center; }
-        .summary strong { color: var(--purple); }
+        .summary { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); padding: 20px; border-radius: 12px; margin-bottom: 40px; text-align: center; }
+        .summary strong { color: var(--green); }
 
         section { margin-bottom: 32px; }
-        section h2 { color: var(--purple); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(153,51,255,0.2); }
-        p { color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+        section h2 { color: var(--emerald); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(34,197,94,0.2); }
+        p { color: rgba(248,250,252,0.7); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
         ul { padding-left: 20px; margin-bottom: 16px; }
-        li { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 8px; }
-        strong { color: #fff; }
-        a { color: var(--cyan); }
+        li { color: rgba(248,250,252,0.7); font-size: 14px; margin-bottom: 8px; }
+        strong { color: var(--text); }
+        a { color: var(--emerald); }
 
         .warning-box { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); padding: 20px; border-radius: 12px; margin: 24px 0; }
         .warning-box strong { color: #FF6B6B; }
 
-        .contact-box { background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.2); border-radius: 12px; padding: 24px; text-align: center; margin-top: 40px; }
+        .contact-box { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 24px; text-align: center; margin-top: 40px; }
         .contact-box h3 { font-size: 16px; margin-bottom: 12px; }
-        .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--cyan); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--cyan); border-radius: 8px; transition: all 0.2s; }
-        .contact-box a:hover { background: var(--cyan); color: var(--bg); }
+        .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--emerald); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--emerald); border-radius: 8px; transition: all 0.2s; }
+        .contact-box a:hover { background: var(--emerald); color: var(--bg); }
 
-        footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 32px 24px; max-width: 1080px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-        .footer-copy { font-size: 12px; color: rgba(255,255,255,0.55); }
+        footer { border-top: 1px solid var(--border); padding: 32px 24px; max-width: 1080px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .footer-copy { font-size: 12px; color: var(--text-dim); }
         .footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
-        .footer-links a { font-size: 12px; color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.2s; }
-        .footer-links a:hover { color: #fff; }
+        .footer-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--text); }
 
         @media (max-width: 640px) { main { padding: 80px 16px 60px; } footer { flex-direction: column; text-align: center; } .footer-links { justify-content: center; } }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-        a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
+        a:focus-visible { outline: 3px solid var(--emerald); outline-offset: 4px; }
     </style>
 </head>
 <body>
@@ -97,7 +100,7 @@
     <div class="nav">
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
-                <svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="nc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FFFF" stop-opacity="0.7"/><stop offset="100%" stop-color="#00FFFF" stop-opacity="0.2"/></linearGradient><linearGradient id="np" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1494" stop-opacity="0.2"/><stop offset="100%" stop-color="#FF1494" stop-opacity="0.7"/></linearGradient><linearGradient id="nv" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9933FF" stop-opacity="0.6"/><stop offset="100%" stop-color="#9933FF" stop-opacity="0.2"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="#0A0A1E"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nc)" stroke-width="1.4" opacity="0.6"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#np)" stroke-width="1.4" opacity="0.6" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nv)" stroke-width="1.4" opacity="0.6" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="5" fill="white" opacity="0.95"/><ellipse cx="49" cy="48.5" rx="2" ry="1" fill="white" opacity="0.4"/></svg>
+                <svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.7"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient><linearGradient id="ne" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="100%" stop-color="#10B981" stop-opacity="0.7"/></linearGradient><linearGradient id="nm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.6"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.2"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="#030712"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ng)" stroke-width="1.4" opacity="0.6"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ne)" stroke-width="1.4" opacity="0.6" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nm)" stroke-width="1.4" opacity="0.6" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="5" fill="white" opacity="0.95"/><ellipse cx="49" cy="48.5" rx="2" ry="1" fill="white" opacity="0.4"/></svg>
                 <span>Echoelmusic</span>
             </a>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic — Create from Within</title>
     <meta name="description" content="Turn your heartbeat, breath, and body into music, visuals, and light. Bio-reactive creative platform with 6 synth engines, 90+ effects, and 30+ visual modes. Free for a limited time.">
-    <meta name="theme-color" content="#FF1494">
+    <meta name="theme-color" content="#22C55E">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Echoelmusic — Create from Within">
@@ -36,6 +36,11 @@
     <link rel="apple-touch-icon" href="app-icon.svg">
     <link rel="canonical" href="https://echoelmusic.com">
     <link rel="manifest" href="manifest.json">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
     <!-- Performance hints -->
     <link rel="preconnect" href="https://apps.apple.com" crossorigin>
@@ -92,52 +97,57 @@
 
     <style>
         :root {
-            --pink: #FF1494;
-            --cyan: #00FFFF;
-            --purple: #9933FF;
-            --bg: #000000;
-            --bg-card: rgba(255,255,255,0.03);
-            --text: rgba(255,255,255,0.93);
-            --text-dim: rgba(255,255,255,0.55);
-            --border: rgba(255,255,255,0.08);
+            --green: #22C55E;
+            --emerald: #10B981;
+            --mint: #34D399;
+            --rose: #F472B6;
+            --violet: #A78BFA;
+            --sky: #38BDF8;
+            --bg: #030712;
+            --bg-card: rgba(255,255,255,0.025);
+            --bg-glass: rgba(34,197,94,0.04);
+            --text: #F8FAFC;
+            --text-dim: rgba(248,250,252,0.55);
+            --border: rgba(34,197,94,0.08);
+            --border-subtle: rgba(255,255,255,0.06);
             --max-w: 1080px;
-            --glow-pink: rgba(255,20,148,0.4);
-            --glow-cyan: rgba(0,255,255,0.3);
-            --glow-purple: rgba(153,51,255,0.35);
+            --glow: rgba(34,197,94,0.35);
+            --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; overflow-x: hidden; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            font-family: var(--font);
             background: var(--bg); color: var(--text);
-            -webkit-font-smoothing: antialiased; line-height: 1.6; overflow-x: hidden;
+            -webkit-font-smoothing: antialiased; line-height: 1.6;
+            overflow-x: hidden; max-width: 100vw;
         }
 
-        /* Noise texture overlay for premium feel */
+        /* Noise texture overlay */
         body::after {
-            content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.025;
+            content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.02;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         a { color: inherit; text-decoration: none; }
-        a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        a:focus-visible, button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 
         .skip-link {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: var(--pink); color: #fff; padding: 10px 20px; border-radius: 8px;
-            z-index: 10001; transition: top 0.3s; font-weight: 600;
+            background: var(--green); color: #000; padding: 10px 20px; border-radius: 8px;
+            z-index: 10001; transition: top 0.3s; font-weight: 700;
         }
         .skip-link:focus { top: 16px; }
 
-        /* ── NAV ── */
+        /* -- NAV -- */
         .nav {
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             padding: 14px 24px;
-            background: rgba(5,5,16,0.7);
+            background: rgba(3,7,18,0.75);
             backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(34,197,94,0.06);
         }
         .nav-bar {
             max-width: var(--max-w); margin: 0 auto;
@@ -149,7 +159,7 @@
         }
         .nav-logo svg { width: 30px; height: 30px; }
         .nav-logo span {
-            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+            background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
 
@@ -164,12 +174,12 @@
         }
         .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
         .nav-links .nav-cta {
-            background: #fff; color: #000; font-weight: 600;
+            background: var(--green); color: #000; font-weight: 700;
             padding: 8px 18px; border-radius: 10px; margin-left: 8px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .nav-links .nav-cta:hover {
-            transform: translateY(-1px); box-shadow: 0 6px 24px var(--glow-pink); color: #000; background: #fff;
+            transform: translateY(-1px); box-shadow: 0 6px 24px var(--glow); color: #000; background: var(--green);
         }
 
         @media (min-width: 900px) {
@@ -193,10 +203,10 @@
         .burger.active span:nth-child(2) { opacity: 0; }
         .burger.active span:nth-child(3) { transform: rotate(-45deg); }
 
-        /* ── OVERLAY MENU ── */
+        /* -- OVERLAY MENU -- */
         .menu-overlay {
             position: fixed; inset: 0; z-index: 999;
-            background: rgba(0,0,0,0.97);
+            background: rgba(3,7,18,0.97);
             backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
             display: flex; align-items: center; justify-content: center;
             opacity: 0; visibility: hidden;
@@ -224,60 +234,30 @@
         .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
         .menu-overlay a:hover { color: #fff; background: rgba(255,255,255,0.05); }
         .menu-overlay .menu-cta {
-            margin-top: 24px; font-size: 16px; font-weight: 600;
-            background: #fff; color: #000; padding: 14px 32px; border-radius: 12px;
+            margin-top: 24px; font-size: 16px; font-weight: 700;
+            background: var(--green); color: #000; padding: 14px 32px; border-radius: 12px;
             transition: transform 0.2s, box-shadow 0.2s;
             transform: translateY(20px); opacity: 0;
         }
         .menu-overlay.open .menu-cta {
             transform: translateY(0); opacity: 1; transition-delay: 0.32s;
         }
-        .menu-overlay .menu-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--glow-pink); color: #000; }
+        .menu-overlay .menu-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--glow); color: #000; }
 
-        /* ── HERO ── */
+        /* -- HERO -- */
         .hero {
             position: relative; text-align: center;
             padding: 160px 24px 70px;
             max-width: 780px; margin: 0 auto;
         }
-        .hero-bg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -55%);
-            width: 700px; height: 700px; pointer-events: none;
-        }
-        .hero-bg .orb {
-            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.25;
-            animation: pulse 8s ease-in-out infinite;
-        }
-        .orb-1 { width: 350px; height: 350px; background: var(--pink); top: 5%; left: -5%; }
-        .orb-2 { width: 300px; height: 300px; background: var(--purple); top: 15%; right: -5%; animation-delay: 2.5s; }
-        .orb-3 { width: 250px; height: 250px; background: var(--cyan); bottom: 5%; left: 15%; animation-delay: 5s; }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.2; }
-            50% { transform: scale(1.2); opacity: 0.35; }
-        }
-
         .hero-content { position: relative; z-index: 1; }
 
-        /* Animated heartbeat ECG line */
-        .hero-ecg {
-            width: 100%; max-width: 400px; height: 40px; margin: 0 auto 32px;
-            overflow: hidden; position: relative;
-        }
-        .hero-ecg svg {
-            width: 200%; height: 100%;
-            animation: ecg-scroll 3s linear infinite;
-        }
-        @keyframes ecg-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
         .hero h1 {
-            font-size: clamp(48px, 11vw, 88px); font-weight: 800;
+            font-size: clamp(48px, 11vw, 88px); font-weight: 700;
             letter-spacing: -3.5px; line-height: 0.92; margin-bottom: 28px;
         }
         .hero h1 span {
-            background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 40%, var(--cyan) 100%);
+            background: linear-gradient(135deg, var(--green) 0%, var(--emerald) 40%, var(--mint) 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         .hero-sub {
@@ -289,38 +269,29 @@
         .hero-cta-group { display: flex; flex-direction: column; align-items: center; gap: 14px; }
         .hero-cta {
             display: inline-flex; align-items: center; gap: 10px;
-            background: #fff; color: #000; padding: 17px 36px; border-radius: 14px;
+            background: var(--green); color: #000; padding: 17px 36px; border-radius: 14px;
             font-weight: 700; font-size: 17px;
             transition: transform 0.2s, box-shadow 0.2s;
             position: relative; overflow: hidden;
         }
-        .hero-cta::before {
-            content: ''; position: absolute; inset: -1px; border-radius: 15px; padding: 1px;
-            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor; mask-composite: exclude;
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .hero-cta:hover { transform: translateY(-3px); box-shadow: 0 16px 48px var(--glow-pink); }
-        .hero-cta:hover::before { opacity: 1; }
+        .hero-cta:hover { transform: translateY(-3px); box-shadow: 0 16px 48px var(--glow); }
         .hero-cta svg { width: 22px; height: 22px; }
         .hero-platforms {
             margin-top: 4px; font-size: 13px; color: var(--text-dim); letter-spacing: 0.3px;
         }
         .badge-free {
-            display: inline-block; background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(153,51,255,0.15));
-            color: var(--cyan); border: 1px solid rgba(0,255,255,0.2);
-            padding: 4px 14px; border-radius: 20px; font-weight: 600; font-size: 11px;
+            display: inline-block; background: rgba(34,197,94,0.12);
+            color: var(--green); border: 1px solid rgba(34,197,94,0.2);
+            padding: 4px 14px; border-radius: 20px; font-weight: 700; font-size: 11px;
             letter-spacing: 1.2px; text-transform: uppercase; margin-left: 8px;
             animation: badge-glow 3s ease-in-out infinite;
         }
         @keyframes badge-glow {
-            0%, 100% { box-shadow: 0 0 8px rgba(0,255,255,0.1); }
-            50% { box-shadow: 0 0 16px rgba(0,255,255,0.25); }
+            0%, 100% { box-shadow: 0 0 8px rgba(34,197,94,0.1); }
+            50% { box-shadow: 0 0 16px rgba(34,197,94,0.25); }
         }
 
-        /* ── STATS ── */
+        /* -- STATS -- */
         .stats {
             max-width: var(--max-w); margin: 0 auto;
             padding: 40px 24px 70px;
@@ -328,55 +299,42 @@
         }
         .stat {
             text-align: center; padding: 28px 12px;
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 16px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-            position: relative; overflow: hidden;
         }
-        .stat::before {
-            content: ''; position: absolute; inset: -1px; border-radius: 17px; padding: 1px;
-            background: linear-gradient(135deg, transparent 40%, var(--pink), var(--cyan));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor; mask-composite: exclude;
-            opacity: 0; transition: opacity 0.4s;
-        }
-        .stat:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-        .stat:hover::before { opacity: 1; }
+        .stat:hover { transform: translateY(-4px); border-color: rgba(34,197,94,0.2); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
         .stat-num {
-            font-size: clamp(32px, 4.5vw, 44px); font-weight: 800; letter-spacing: -1px;
-            line-height: 1;
+            font-size: clamp(32px, 4.5vw, 44px); font-weight: 700; letter-spacing: -1px;
+            line-height: 1; color: var(--green);
         }
-        .stat-num.pink { color: var(--pink); }
-        .stat-num.cyan { color: var(--cyan); }
-        .stat-num.purple { color: var(--purple); }
-        .stat-num.white { color: #fff; }
         .stat-label {
             font-size: 11px; color: var(--text-dim); margin-top: 10px;
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px; font-weight: 700;
         }
 
-        /* ── SECTION DIVIDER ── */
+        /* -- SECTION DIVIDER -- */
         .divider {
             max-width: var(--max-w); margin: 0 auto; padding: 0 24px;
         }
         .divider-line {
             height: 1px;
-            background: linear-gradient(90deg, transparent, var(--pink), var(--purple), var(--cyan), transparent);
-            opacity: 0.3;
+            background: linear-gradient(90deg, transparent, var(--green), var(--emerald), var(--mint), transparent);
+            opacity: 0.2;
         }
 
-        /* ── HOW IT WORKS ── */
+        /* -- HOW IT WORKS -- */
         .how-it-works {
             max-width: var(--max-w); margin: 0 auto;
             padding: 70px 24px 80px;
         }
         .section-label {
             font-size: 12px; text-transform: uppercase; letter-spacing: 3px;
-            color: var(--cyan); font-weight: 700; text-align: center;
+            color: var(--emerald); font-weight: 700; text-align: center;
             margin-bottom: 12px;
         }
         .section-title {
-            font-size: clamp(28px, 5vw, 42px); font-weight: 800;
+            font-size: clamp(28px, 5vw, 42px); font-weight: 700;
             letter-spacing: -1.5px; text-align: center; margin-bottom: 52px; line-height: 1.1;
         }
         .steps {
@@ -384,48 +342,43 @@
         }
         .step {
             text-align: center; padding: 36px 24px;
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-            position: relative;
         }
-        .step:hover { border-color: rgba(255,20,148,0.3); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .step:hover { border-color: rgba(34,197,94,0.25); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .step-icon {
             width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 20px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 20px;
         }
-        .step-icon.s1 { background: rgba(255,20,148,0.12); color: var(--pink); }
-        .step-icon.s2 { background: rgba(153,51,255,0.12); color: var(--purple); }
-        .step-icon.s3 { background: rgba(0,255,255,0.1); color: var(--cyan); }
+        .step-icon.s1 { background: rgba(34,197,94,0.1); color: var(--green); }
+        .step-icon.s2 { background: rgba(16,185,129,0.1); color: var(--emerald); }
+        .step-icon.s3 { background: rgba(52,211,153,0.1); color: var(--mint); }
         .step-icon svg { width: 26px; height: 26px; }
         .step h3 {
             font-size: 19px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.3px;
         }
         .step p { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
 
-        /* ── FEATURES ── */
+        /* -- FEATURES -- */
         .features {
             max-width: var(--max-w); margin: 0 auto;
             padding: 40px 24px 80px;
         }
         .feature {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
             padding: 56px 0;
         }
-        .feature + .feature { border-top: 1px solid var(--border); }
-        .feature { contain: layout style; }
-        .feature.reverse { direction: rtl; }
-        .feature.reverse > * { direction: ltr; }
+        .feature + .feature { border-top: 1px solid var(--border-subtle); }
         .feature-icon {
             width: 48px; height: 48px; border-radius: 14px; margin-bottom: 18px;
             display: flex; align-items: center; justify-content: center;
         }
         .feature-icon svg { width: 24px; height: 24px; }
-        .fi-pink { background: rgba(255,20,148,0.12); color: var(--pink); }
-        .fi-cyan { background: rgba(0,255,255,0.1); color: var(--cyan); }
-        .fi-purple { background: rgba(153,51,255,0.12); color: var(--purple); }
+        .fi-rose { background: rgba(244,114,182,0.1); color: var(--rose); }
+        .fi-sky { background: rgba(56,189,248,0.1); color: var(--sky); }
+        .fi-violet { background: rgba(167,139,250,0.1); color: var(--violet); }
         .feature h2 {
-            font-size: clamp(26px, 4vw, 34px); font-weight: 800;
+            font-size: clamp(26px, 4vw, 34px); font-weight: 700;
             letter-spacing: -0.5px; line-height: 1.12; margin-bottom: 14px;
         }
         .feature p {
@@ -436,67 +389,20 @@
         }
         .feature-bullet {
             display: inline-flex; align-items: center; gap: 6px;
-            font-size: 12px; font-weight: 600; color: var(--text-dim);
-            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            font-size: 12px; font-weight: 700; color: var(--text-dim);
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);
             padding: 6px 14px; border-radius: 20px;
             letter-spacing: 0.3px; transition: border-color 0.3s, color 0.3s;
         }
-        .feature-bullet.pink { color: var(--pink); border-color: rgba(255,20,148,0.2); }
-        .feature-bullet.pink:hover { border-color: rgba(255,20,148,0.5); }
-        .feature-bullet.cyan { color: var(--cyan); border-color: rgba(0,255,255,0.15); }
-        .feature-bullet.cyan:hover { border-color: rgba(0,255,255,0.4); }
-        .feature-bullet.purple { color: var(--purple); border-color: rgba(153,51,255,0.2); }
-        .feature-bullet.purple:hover { border-color: rgba(153,51,255,0.5); }
+        .fb-rose { color: var(--rose); border-color: rgba(244,114,182,0.2); }
+        .fb-rose:hover { border-color: rgba(244,114,182,0.5); }
+        .fb-sky { color: var(--sky); border-color: rgba(56,189,248,0.15); }
+        .fb-sky:hover { border-color: rgba(56,189,248,0.4); }
+        .fb-violet { color: var(--violet); border-color: rgba(167,139,250,0.2); }
+        .fb-violet:hover { border-color: rgba(167,139,250,0.5); }
 
-        /* Feature visuals */
-        .feature-visual {
-            aspect-ratio: 4/3; border-radius: 20px; overflow: hidden;
-            background: var(--bg-card); border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center; position: relative;
-        }
-        .bio-rings {
-            width: 100%; height: 100%; position: relative;
-        }
-        .bio-rings .ring {
-            position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px solid;
-            transform: translate(-50%, -50%);
-        }
-        .ring-1 { width: 60px; height: 60px; border-color: rgba(255,20,148,0.5); animation: ringp 3s ease-in-out infinite; }
-        .ring-2 { width: 110px; height: 110px; border-color: rgba(153,51,255,0.4); animation: ringp 3s ease-in-out 0.4s infinite; }
-        .ring-3 { width: 160px; height: 160px; border-color: rgba(0,255,255,0.3); animation: ringp 3s ease-in-out 0.8s infinite; }
-        .ring-4 { width: 210px; height: 210px; border-color: rgba(255,20,148,0.15); animation: ringp 3s ease-in-out 1.2s infinite; }
-        .ring-core {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 20px; height: 20px; border-radius: 50%;
-            background: radial-gradient(circle, #fff, var(--pink));
-            box-shadow: 0 0 30px rgba(255,20,148,0.5);
-            animation: cp 1.2s ease-in-out infinite;
-        }
-        @keyframes ringp {
-            0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
-            50% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; }
-        }
-        @keyframes cp {
-            0%, 100% { transform: translate(-50%,-50%) scale(1); }
-            50% { transform: translate(-50%,-50%) scale(1.25); }
-        }
-        .wave-bars {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 3px;
-            padding: 0 32px;
-        }
-        .wave-bars .b {
-            width: 3px; border-radius: 2px;
-            background: linear-gradient(to top, var(--pink), var(--cyan));
-            animation: wb 1.5s ease-in-out infinite;
-        }
-        @keyframes wb {
-            0%, 100% { height: 16px; opacity: 0.3; }
-            50% { height: var(--h, 50px); opacity: 1; }
-        }
-        .quantum-canvas { width: 100%; height: 100%; display: block; border-radius: 20px; background: #000; }
-        .feature-visual.quantum-visual { background: #000; border-color: rgba(255,255,255,0.04); }
 
-        /* ── WHO IT'S FOR ── */
+        /* -- WHO IT'S FOR -- */
         .personas {
             max-width: var(--max-w); margin: 0 auto;
             padding: 70px 24px 80px;
@@ -507,22 +413,28 @@
         }
         .persona-card {
             text-align: center; padding: 32px 20px;
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
         }
         .persona-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(0,0,0,0.3); }
-        .persona-card:nth-child(1):hover { border-color: rgba(255,20,148,0.4); }
-        .persona-card:nth-child(2):hover { border-color: rgba(0,255,255,0.4); }
-        .persona-card:nth-child(3):hover { border-color: rgba(153,51,255,0.4); }
-        .persona-card:nth-child(4):hover { border-color: rgba(255,20,148,0.4); }
-        .persona-emoji {
-            font-size: 40px; margin-bottom: 16px; display: block;
-            filter: grayscale(0.2);
+        .persona-card:nth-child(1):hover { border-color: rgba(34,197,94,0.3); }
+        .persona-card:nth-child(2):hover { border-color: rgba(56,189,248,0.3); }
+        .persona-card:nth-child(3):hover { border-color: rgba(244,114,182,0.3); }
+        .persona-card:nth-child(4):hover { border-color: rgba(167,139,250,0.3); }
+        .persona-icon {
+            width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
         }
+        .persona-icon svg { width: 26px; height: 26px; }
+        .pi-1 { background: rgba(34,197,94,0.1); color: var(--green); }
+        .pi-2 { background: rgba(56,189,248,0.1); color: var(--sky); }
+        .pi-3 { background: rgba(244,114,182,0.1); color: var(--rose); }
+        .pi-4 { background: rgba(167,139,250,0.1); color: var(--violet); }
         .persona-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
         .persona-card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
 
-        /* ── INSTRUMENTS SECTION ── */
+        /* -- INSTRUMENTS SECTION -- */
         .instruments {
             max-width: var(--max-w); margin: 0 auto;
             padding: 70px 24px 80px;
@@ -533,10 +445,11 @@
         }
         .instrument-card {
             padding: 28px 22px;
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 16px;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
         }
-        .instrument-card:hover { border-color: rgba(255,20,148,0.3); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+        .instrument-card:hover { border-color: rgba(34,197,94,0.25); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
         .instrument-card h3 {
             font-size: 16px; font-weight: 700; margin-bottom: 8px;
         }
@@ -544,15 +457,15 @@
             font-size: 13px; color: var(--text-dim); line-height: 1.6;
         }
         .instrument-card .tag {
-            display: inline-block; font-size: 11px; font-weight: 600;
+            display: inline-block; font-size: 11px; font-weight: 700;
             padding: 4px 10px; border-radius: 6px; margin-top: 12px;
             text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .tag-synth { background: rgba(255,20,148,0.1); color: var(--pink); }
-        .tag-fx { background: rgba(0,255,255,0.1); color: var(--cyan); }
-        .tag-visual { background: rgba(153,51,255,0.1); color: var(--purple); }
+        .tag-synth { background: rgba(34,197,94,0.1); color: var(--green); }
+        .tag-fx { background: rgba(16,185,129,0.1); color: var(--emerald); }
+        .tag-visual { background: rgba(167,139,250,0.1); color: var(--violet); }
 
-        /* ── BOTTOM CTA ── */
+        /* -- BOTTOM CTA -- */
         .bottom-cta {
             text-align: center; padding: 90px 24px 70px;
             max-width: 660px; margin: 0 auto;
@@ -561,17 +474,17 @@
         .bottom-cta::before {
             content: ''; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 500px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,20,148,0.1), rgba(153,51,255,0.05) 50%, transparent 70%);
+            width: min(500px, 100vw); height: min(500px, 100vw); border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,0.08), rgba(16,185,129,0.04) 50%, transparent 70%);
             pointer-events: none;
         }
         .bottom-cta h2 {
-            font-size: clamp(32px, 6vw, 48px); font-weight: 800;
+            font-size: clamp(32px, 6vw, 48px); font-weight: 700;
             letter-spacing: -2px; margin-bottom: 16px; line-height: 1.08;
             position: relative;
         }
         .bottom-cta h2 span {
-            background: linear-gradient(135deg, var(--pink), var(--purple), var(--cyan));
+            background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         .bottom-cta p { font-size: 16px; color: var(--text-dim); margin-bottom: 36px; position: relative; line-height: 1.7; }
@@ -587,22 +500,22 @@
         }
         .bottom-badge svg { width: 14px; height: 14px; opacity: 0.5; }
 
-        /* ── SOCIAL ── */
+        /* -- SOCIAL -- */
         .social {
             display: flex; justify-content: center; gap: 16px; padding: 28px;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--border-subtle);
         }
         .social a {
-            width: 48px; height: 48px; border-radius: 14px; border: 1px solid var(--border);
+            width: 48px; height: 48px; border-radius: 14px; border: 1px solid var(--border-subtle);
             display: flex; align-items: center; justify-content: center;
             color: var(--text-dim); transition: all 0.2s;
         }
-        .social a:hover { color: var(--cyan); border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,255,255,0.15); }
+        .social a:hover { color: var(--green); border-color: var(--green); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(34,197,94,0.15); }
         .social a svg { width: 18px; height: 18px; }
 
-        /* ── FOOTER ── */
+        /* -- FOOTER -- */
         footer {
-            border-top: 1px solid var(--border); padding: 36px 24px;
+            border-top: 1px solid var(--border-subtle); padding: 36px 24px;
             max-width: var(--max-w); margin: 0 auto;
             display: flex; justify-content: space-between; align-items: center;
             flex-wrap: wrap; gap: 16px;
@@ -612,37 +525,35 @@
         .footer-links a { font-size: 12px; color: var(--text-dim); transition: color 0.2s; }
         .footer-links a:hover { color: var(--text); }
 
-        /* ── FLOATING MOBILE CTA ── */
+        /* -- FLOATING MOBILE CTA -- */
         .mobile-cta {
             display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 998;
             padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom));
-            background: rgba(5,5,16,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(3,7,18,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(34,197,94,0.08);
         }
         .mobile-cta a {
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: #fff; color: #000; padding: 14px; border-radius: 12px;
+            background: var(--green); color: #000; padding: 14px; border-radius: 12px;
             font-weight: 700; font-size: 15px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .mobile-cta a:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--glow-pink); }
+        .mobile-cta a:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--glow); }
         .mobile-cta a svg { width: 18px; height: 18px; }
         .mobile-cta .sub { text-align: center; margin-top: 6px; font-size: 11px; color: var(--text-dim); }
 
-        /* ── SCROLL ANIMATION ── */
+        /* -- SCROLL ANIMATION -- */
         .fade-in {
             opacity: 0; transform: translateY(28px);
             transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
         }
         .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-        /* ── RESPONSIVE ── */
+        /* -- RESPONSIVE -- */
         @media (max-width: 900px) {
             .persona-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 768px) {
-            .feature { grid-template-columns: 1fr; gap: 28px; }
-            .feature.reverse { direction: ltr; }
             .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .steps { grid-template-columns: 1fr; gap: 16px; }
             .hero { padding: 130px 20px 50px; }
@@ -666,7 +577,7 @@
         }
 
         @media (prefers-contrast: high) {
-            :root { --text-dim: rgba(255,255,255,0.8); --border: rgba(255,255,255,0.25); }
+            :root { --text-dim: rgba(248,250,252,0.8); --border: rgba(34,197,94,0.25); }
         }
     </style>
 </head>
@@ -677,7 +588,7 @@
     <div class="nav">
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
-                <svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="nc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FFFF" stop-opacity="0.7"/><stop offset="100%" stop-color="#00FFFF" stop-opacity="0.2"/></linearGradient><linearGradient id="np" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF1494" stop-opacity="0.2"/><stop offset="100%" stop-color="#FF1494" stop-opacity="0.7"/></linearGradient><linearGradient id="nv" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9933FF" stop-opacity="0.6"/><stop offset="100%" stop-color="#9933FF" stop-opacity="0.2"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="#0A0A1E"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nc)" stroke-width="1.4" opacity="0.6"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#np)" stroke-width="1.4" opacity="0.6" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nv)" stroke-width="1.4" opacity="0.6" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="5" fill="white" opacity="0.95"/><ellipse cx="49" cy="48.5" rx="2" ry="1" fill="white" opacity="0.4"/></svg>
+                <svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.7"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient><linearGradient id="ne" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="100%" stop-color="#10B981" stop-opacity="0.7"/></linearGradient><linearGradient id="nm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.6"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.2"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="#030712"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ng)" stroke-width="1.4" opacity="0.6"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ne)" stroke-width="1.4" opacity="0.6" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nm)" stroke-width="1.4" opacity="0.6" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="5" fill="white" opacity="0.95"/><ellipse cx="49" cy="48.5" rx="2" ry="1" fill="white" opacity="0.4"/></svg>
                 <span>Echoelmusic</span>
             </a>
 
@@ -718,30 +629,9 @@
 
         <!-- Hero -->
         <header class="hero">
-            <div class="hero-bg" aria-hidden="true">
-                <div class="orb orb-1"></div>
-                <div class="orb orb-2"></div>
-                <div class="orb orb-3"></div>
-            </div>
             <div class="hero-content">
-                <!-- Animated ECG heartbeat line -->
-                <div class="hero-ecg" aria-hidden="true">
-                    <svg viewBox="0 0 800 40" preserveAspectRatio="none">
-                        <path d="M0 20 L60 20 L70 20 L80 8 L90 32 L100 4 L110 36 L120 20 L140 20 L200 20 L260 20 L270 20 L280 8 L290 32 L300 4 L310 36 L320 20 L340 20 L400 20 L460 20 L470 20 L480 8 L490 32 L500 4 L510 36 L520 20 L540 20 L600 20 L660 20 L670 20 L680 8 L690 32 L700 4 L710 36 L720 20 L740 20 L800 20" fill="none" stroke="url(#ecg-grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <defs>
-                            <linearGradient id="ecg-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#FF1494" stop-opacity="0.1"/>
-                                <stop offset="25%" stop-color="#FF1494" stop-opacity="0.8"/>
-                                <stop offset="50%" stop-color="#9933FF" stop-opacity="0.6"/>
-                                <stop offset="75%" stop-color="#00FFFF" stop-opacity="0.8"/>
-                                <stop offset="100%" stop-color="#00FFFF" stop-opacity="0.1"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-
                 <h1><span>Create from Within</span></h1>
-                <p class="hero-sub">Your heartbeat drives the music. Your breath shapes the visuals. Your body controls the light. <strong>Echoelmusic</strong> turns what's inside you into art.</p>
+                <p class="hero-sub">Your heartbeat, breath, and body become music, visuals, and light. <strong>Echoelmusic</strong> turns biology into art.</p>
                 <div class="hero-cta-group">
                     <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="hero-cta">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
@@ -758,19 +648,19 @@
         <!-- Stats -->
         <div class="stats fade-in">
             <div class="stat">
-                <div class="stat-num pink" data-count="6">0</div>
+                <div class="stat-num" data-count="6">0</div>
                 <div class="stat-label">Synth Engines</div>
             </div>
             <div class="stat">
-                <div class="stat-num cyan" data-count="90" data-suffix="+">0</div>
+                <div class="stat-num" data-count="90" data-suffix="+">0</div>
                 <div class="stat-label">DSP Effects</div>
             </div>
             <div class="stat">
-                <div class="stat-num purple" data-count="30" data-suffix="+">0</div>
+                <div class="stat-num" data-count="30" data-suffix="+">0</div>
                 <div class="stat-label">Visual Modes</div>
             </div>
             <div class="stat">
-                <div class="stat-num white" data-count="6">0</div>
+                <div class="stat-num" data-count="6">0</div>
                 <div class="stat-label">Platforms</div>
             </div>
         </div>
@@ -788,21 +678,21 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/></svg>
                     </div>
                     <h3>Connect</h3>
-                    <p>Use your iPhone camera, Apple Watch, or any Bluetooth heart rate monitor to capture your biometrics in real time.</p>
+                    <p>Pair your Apple Watch, iPhone camera, or Bluetooth heart rate monitor to capture biometrics in real time.</p>
                 </div>
                 <div class="step">
                     <div class="step-icon s2">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                     </div>
                     <h3>Create</h3>
-                    <p>Play touch instruments. Your heart rate shapes the tempo, HRV modulates effects, and breathing controls spatial audio.</p>
+                    <p>Play instruments shaped by your heart rate, HRV, and breathing. Your biology modulates everything in real time.</p>
                 </div>
                 <div class="step">
                     <div class="step-icon s3">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     </div>
                     <h3>Experience</h3>
-                    <p>Watch as your biology drives 30+ visual modes, controls smart lights and DMX fixtures, and creates art that is uniquely yours.</p>
+                    <p>30+ visual modes, smart lights, and DMX fixtures respond to your biology. Art that is uniquely yours.</p>
                 </div>
             </div>
         </div>
@@ -816,67 +706,36 @@
             <!-- Bio-Reactive -->
             <div class="feature fade-in">
                 <div>
-                    <div class="feature-icon fi-pink">
+                    <div class="feature-icon fi-rose">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     </div>
                     <h2>Your body is the controller</h2>
-                    <p>Echoelmusic reads your heart rate, HRV, and breathing in real time. These signals drive everything &mdash; filters, reverb, tempo, visuals, and lighting. When you're in coherence, the sound opens up. Play chord pads, drum pads, keyboards, XY controllers, and strum pads &mdash; all responding to your biology.</p>
+                    <p>Heart rate, HRV, and breathing drive filters, reverb, tempo, visuals, and lighting in real time. High coherence opens the sound. Play chord pads, drum pads, keyboards, XY controllers, and strum pads &mdash; all responding to you.</p>
                     <div class="feature-bullets">
-                        <span class="feature-bullet pink">Heart Rate</span>
-                        <span class="feature-bullet pink">HRV</span>
-                        <span class="feature-bullet pink">Breathing</span>
-                        <span class="feature-bullet pink">Face Tracking</span>
-                        <span class="feature-bullet pink">Coherence</span>
-                    </div>
-                </div>
-                <div class="feature-visual" aria-hidden="true">
-                    <div class="bio-rings">
-                        <div class="ring ring-1"></div>
-                        <div class="ring ring-2"></div>
-                        <div class="ring ring-3"></div>
-                        <div class="ring ring-4"></div>
-                        <div class="ring-core"></div>
+                        <span class="feature-bullet fb-rose">Heart Rate</span>
+                        <span class="feature-bullet fb-rose">HRV</span>
+                        <span class="feature-bullet fb-rose">Breathing</span>
+                        <span class="feature-bullet fb-rose">Face Tracking</span>
+                        <span class="feature-bullet fb-rose">Coherence</span>
                     </div>
                 </div>
             </div>
 
             <!-- Sound -->
-            <div class="feature reverse fade-in">
+            <div class="feature fade-in">
                 <div>
-                    <div class="feature-icon fi-cyan">
+                    <div class="feature-icon fi-sky">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                     </div>
                     <h2>From synthesis to spatial audio</h2>
-                    <p>Six synth engines, a 808 bass synth, and 6 drum kits. 90+ real DSP effects with our EchoelWarmth analog-inspired engine. A composing engine that helps you learn musical styles and evolve your own melodies. MIDI 2.0 with MPE, brainwave entrainment, and 25+ export formats including Dolby Atmos.</p>
+                    <p>Six synth engines, 808 bass, 6 drum kits, 90+ DSP effects. EchoelWarmth analog-inspired processing. MIDI 2.0 with MPE, brainwave entrainment, and 25+ export formats including Dolby Atmos.</p>
                     <div class="feature-bullets">
-                        <span class="feature-bullet cyan">Subtractive</span>
-                        <span class="feature-bullet cyan">FM</span>
-                        <span class="feature-bullet cyan">Wavetable</span>
-                        <span class="feature-bullet cyan">Granular</span>
-                        <span class="feature-bullet cyan">Physical Modeling</span>
-                        <span class="feature-bullet cyan">Dolby Atmos</span>
-                    </div>
-                </div>
-                <div class="feature-visual" aria-hidden="true">
-                    <div class="wave-bars">
-                        <div class="b" style="--h:25px;animation-delay:0s"></div>
-                        <div class="b" style="--h:45px;animation-delay:0.08s"></div>
-                        <div class="b" style="--h:65px;animation-delay:0.12s"></div>
-                        <div class="b" style="--h:85px;animation-delay:0.18s"></div>
-                        <div class="b" style="--h:100px;animation-delay:0.22s"></div>
-                        <div class="b" style="--h:85px;animation-delay:0.28s"></div>
-                        <div class="b" style="--h:110px;animation-delay:0.32s"></div>
-                        <div class="b" style="--h:75px;animation-delay:0.38s"></div>
-                        <div class="b" style="--h:95px;animation-delay:0.42s"></div>
-                        <div class="b" style="--h:55px;animation-delay:0.48s"></div>
-                        <div class="b" style="--h:100px;animation-delay:0.52s"></div>
-                        <div class="b" style="--h:65px;animation-delay:0.58s"></div>
-                        <div class="b" style="--h:85px;animation-delay:0.62s"></div>
-                        <div class="b" style="--h:45px;animation-delay:0.68s"></div>
-                        <div class="b" style="--h:75px;animation-delay:0.72s"></div>
-                        <div class="b" style="--h:90px;animation-delay:0.78s"></div>
-                        <div class="b" style="--h:55px;animation-delay:0.82s"></div>
-                        <div class="b" style="--h:35px;animation-delay:0.88s"></div>
+                        <span class="feature-bullet fb-sky">Subtractive</span>
+                        <span class="feature-bullet fb-sky">FM</span>
+                        <span class="feature-bullet fb-sky">Wavetable</span>
+                        <span class="feature-bullet fb-sky">Granular</span>
+                        <span class="feature-bullet fb-sky">Physical Modeling</span>
+                        <span class="feature-bullet fb-sky">Dolby Atmos</span>
                     </div>
                 </div>
             </div>
@@ -884,22 +743,19 @@
             <!-- Visual & Light -->
             <div class="feature fade-in">
                 <div>
-                    <div class="feature-icon fi-purple">
+                    <div class="feature-icon fi-violet">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                     </div>
                     <h2>Visuals, light, and immersive spaces</h2>
-                    <p>30+ GPU-accelerated visual modes driven by your biometrics and audio. Control smart lights, DMX fixtures, and ILDA lasers from your body. A 16-step visual sequencer syncs everything. Stream and produce video with an AI live engine. Collaborate with up to 1000 participants. Step into 360&deg; spaces on Vision Pro.</p>
+                    <p>30+ GPU-accelerated visual modes driven by biometrics and audio. Control smart lights, DMX, and ILDA lasers. Stream and produce video with AI. Step into 360&deg; spaces on Vision Pro.</p>
                     <div class="feature-bullets">
-                        <span class="feature-bullet purple">Particles</span>
-                        <span class="feature-bullet purple">Fractals</span>
-                        <span class="feature-bullet purple">DMX</span>
-                        <span class="feature-bullet purple">Lasers</span>
-                        <span class="feature-bullet purple">Vision Pro</span>
-                        <span class="feature-bullet purple">SharePlay</span>
+                        <span class="feature-bullet fb-violet">Particles</span>
+                        <span class="feature-bullet fb-violet">Fractals</span>
+                        <span class="feature-bullet fb-violet">DMX</span>
+                        <span class="feature-bullet fb-violet">Lasers</span>
+                        <span class="feature-bullet fb-violet">Vision Pro</span>
+                        <span class="feature-bullet fb-violet">SharePlay</span>
                     </div>
-                </div>
-                <div class="feature-visual quantum-visual" aria-hidden="true">
-                    <canvas class="quantum-canvas" id="quantumCanvas"></canvas>
                 </div>
             </div>
 
@@ -914,24 +770,32 @@
             <h2 class="section-title">Built for creators who feel</h2>
             <div class="persona-grid">
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#127911;</span>
+                    <div class="persona-icon pi-1" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    </div>
                     <h3>Musicians &amp; Producers</h3>
-                    <p>6 synth engines, 90+ DSP effects, MIDI 2.0 with MPE, Dolby Atmos export. Your biology adds a layer no plugin can.</p>
+                    <p>6 synth engines, 90+ effects, MIDI 2.0, Dolby Atmos. Biology adds a layer no plugin can.</p>
                 </div>
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#127917;</span>
+                    <div class="persona-icon pi-2" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
                     <h3>Live Performers</h3>
-                    <p>DMX lighting, ILDA lasers, 30+ visual modes, live streaming. Your heartbeat drives the show in real time.</p>
+                    <p>DMX lighting, lasers, 30+ visuals, live streaming. Your heartbeat drives the show.</p>
                 </div>
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#129504;</span>
+                    <div class="persona-icon pi-3" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
                     <h3>Wellness &amp; Coaches</h3>
-                    <p>HRV coherence scoring, guided breathing, brainwave entrainment. Biofeedback meets creative expression.</p>
+                    <p>HRV coherence, guided breathing, brainwave entrainment. Biofeedback meets creative expression.</p>
                 </div>
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#127912;</span>
+                    <div class="persona-icon pi-4" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+                    </div>
                     <h3>Visual Artists</h3>
-                    <p>GPU-accelerated particles, fractals, sacred geometry. Biology-driven generative art across 6 platforms.</p>
+                    <p>GPU particles, fractals, sacred geometry. Biology-driven generative art across 6 platforms.</p>
                 </div>
             </div>
         </div>
@@ -942,36 +806,36 @@
         <!-- Instruments Grid -->
         <div class="instruments fade-in">
             <div class="section-label">Built-in</div>
-            <h2 class="section-title">Everything you need, nothing you don't</h2>
+            <h2 class="section-title">Everything you need</h2>
             <div class="instrument-grid">
                 <div class="instrument-card">
                     <h3>Touch Instruments</h3>
-                    <p>Chord pads, drum pads, keyboards, XY controllers, and strum pads with MIDI 2.0 MPE.</p>
+                    <p>Chord pads, drum pads, keyboards, XY controllers, strum pads. MIDI 2.0 MPE.</p>
                     <span class="tag tag-synth">5 Instruments</span>
                 </div>
                 <div class="instrument-card">
                     <h3>EchoelWarmth</h3>
-                    <p>9 analog-inspired processors modeled after classic studio hardware. EchoelGlue, EchoelSilk, EchoelAir, and more.</p>
+                    <p>9 analog-inspired processors: EchoelGlue, EchoelSilk, EchoelAir, and more.</p>
                     <span class="tag tag-fx">Analog Character</span>
                 </div>
                 <div class="instrument-card">
                     <h3>Orchestral</h3>
-                    <p>21 instruments across strings, brass, woodwinds, choir, keyboards, and percussion. 30 articulation types.</p>
+                    <p>21 instruments across strings, brass, woodwinds, choir, keyboards, percussion. 30 articulations.</p>
                     <span class="tag tag-synth">21 Instruments</span>
                 </div>
                 <div class="instrument-card">
                     <h3>Smart Lighting</h3>
-                    <p>Control smart home lights, DMX512, Art-Net, and ILDA lasers. Bio-reactive from living room to stage.</p>
+                    <p>Smart home lights, DMX512, Art-Net, ILDA lasers. Bio-reactive from living room to stage.</p>
                     <span class="tag tag-visual">Stage Ready</span>
                 </div>
                 <div class="instrument-card">
                     <h3>Video &amp; Streaming</h3>
-                    <p>50+ real-time video effects, AI live production, multi-platform RTMP streaming up to 50 Mbps.</p>
+                    <p>50+ real-time video effects, AI live production, multi-platform RTMP up to 50 Mbps.</p>
                     <span class="tag tag-visual">Live Production</span>
                 </div>
                 <div class="instrument-card">
                     <h3>Export Anywhere</h3>
-                    <p>25+ formats: WAV, FLAC, AAC, MP3, Dolby Atmos 7.1.4, DTS:X, ProRes, H.265. Streaming presets included.</p>
+                    <p>25+ formats: WAV, FLAC, Dolby Atmos 7.1.4, DTS:X, ProRes, H.265. Streaming presets included.</p>
                     <span class="tag tag-fx">25+ Formats</span>
                 </div>
             </div>
@@ -980,7 +844,7 @@
         <!-- Bottom CTA -->
         <div class="bottom-cta fade-in">
             <h2>Your next creation<br>starts with a <span>heartbeat</span></h2>
-            <p>No ads. No tracking. No accounts. Everything you create is yours.<br>Echoelmusic is free for a limited time.</p>
+            <p>No ads. No tracking. No accounts. Everything you create is yours.<br>Free for a limited time.</p>
             <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="hero-cta">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                 Download Free
@@ -1108,165 +972,6 @@
             }
         }
 
-        // Quantum Visuals
-        var qc = document.getElementById('quantumCanvas');
-        if (qc) {
-            var ctx = qc.getContext('2d', { alpha: false });
-            var dpr = Math.min(window.devicePixelRatio || 1, 2);
-            var qRun = false, qT = 0, W = 0, H = 0, lastTime = 0;
-            var pts = [], NUM = 80;
-            var cols = [[255,20,148],[153,51,255],[0,255,255],[80,200,255],[200,50,200]];
-
-            function qResize() {
-                var r = qc.parentElement.getBoundingClientRect();
-                W = r.width; H = r.height;
-                qc.width = W * dpr; qc.height = H * dpr;
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            }
-
-            function qInit() {
-                qResize();
-                pts = [];
-                for (var i = 0; i < NUM; i++) {
-                    var layer = i < NUM * 0.3 ? 0 : i < NUM * 0.7 ? 1 : 2;
-                    pts.push({
-                        cx: 0.5 + (Math.random() - 0.5) * 0.4,
-                        cy: 0.5 + (Math.random() - 0.5) * 0.4,
-                        r: 0.06 + Math.random() * 0.36,
-                        a: Math.random() * Math.PI * 2,
-                        da: (0.2 + Math.random() * 0.6) * (Math.random() < 0.5 ? 1 : -1),
-                        sz: 0.8 + Math.random() * 2.5,
-                        ph: Math.random() * Math.PI * 2,
-                        col: cols[i % cols.length],
-                        op: 0.3 + Math.random() * 0.7,
-                        wb: 0.2 + Math.random() * 0.8,
-                        layer: layer,
-                        sx: 0, sy: 0
-                    });
-                }
-            }
-
-            function qDraw(timestamp) {
-                if (!qRun) return;
-                var dt = lastTime ? Math.min((timestamp - lastTime) / 1000, 0.05) : 0.016;
-                lastTime = timestamp;
-                qT += dt * 0.6;
-
-                var cx = W * 0.5, cy = H * 0.5;
-                var mn = Math.min(W, H);
-
-                // True black clear
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, W, H);
-
-                // Subtle center glow
-                var pulse = 0.7 + 0.3 * Math.sin(qT * 1.1);
-                var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, mn * 0.4 * pulse);
-                grd.addColorStop(0, 'rgba(100,30,180,0.06)');
-                grd.addColorStop(0.5, 'rgba(255,20,148,0.02)');
-                grd.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = grd;
-                ctx.fillRect(0, 0, W, H);
-
-                ctx.globalCompositeOperation = 'lighter';
-
-                // Interference rings - smoother
-                for (var r = 0; r < 6; r++) {
-                    var rr = (16 + r * mn * 0.06) * pulse + Math.sin(qT * 1.2 + r * 1.1) * 6;
-                    var al = (0.055 - r * 0.008) * (0.5 + 0.5 * Math.sin(qT * 0.8 + r * 0.9));
-                    if (al <= 0.003) continue;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-                    ctx.strokeStyle = r % 3 === 0
-                        ? 'rgba(0,255,255,' + al.toFixed(4) + ')'
-                        : r % 3 === 1
-                        ? 'rgba(153,51,255,' + al.toFixed(4) + ')'
-                        : 'rgba(255,20,148,' + al.toFixed(4) + ')';
-                    ctx.lineWidth = 0.6;
-                    ctx.stroke();
-                }
-
-                // Double-slit interference waves
-                var s1x = cx - mn * 0.14, s1y = cy;
-                var s2x = cx + mn * 0.14, s2y = cy;
-                for (var wr = 0; wr < 4; wr++) {
-                    var wrad = (qT * 20 + wr * 30) % (mn * 0.55);
-                    var wa = 0.03 * (1 - wrad / (mn * 0.55));
-                    if (wa <= 0.002) continue;
-                    ctx.lineWidth = 0.5;
-                    ctx.beginPath();
-                    ctx.arc(s1x, s1y, wrad, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(255,20,148,' + wa.toFixed(4) + ')';
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(s2x, s2y, wrad, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(0,255,255,' + wa.toFixed(4) + ')';
-                    ctx.stroke();
-                }
-
-                // Particles with smooth motion
-                for (var i = 0; i < pts.length; i++) {
-                    var p = pts[i];
-                    p.a += p.da * dt * 0.5;
-                    var wobble = Math.sin(qT * p.wb + p.ph);
-                    var px = p.cx * W + Math.cos(p.a) * p.r * mn + wobble * 5;
-                    var py = p.cy * H + Math.sin(p.a) * p.r * mn + Math.cos(qT * p.wb + p.ph) * 5;
-                    var breathe = 1 + 0.25 * Math.sin(qT * 1.8 + p.ph);
-                    var s = p.sz * breathe;
-
-                    // Glow halo
-                    var glowR = s * 6;
-                    var g = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-                    g.addColorStop(0, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.5).toFixed(3) + ')');
-                    g.addColorStop(0.3, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.12).toFixed(3) + ')');
-                    g.addColorStop(1, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',0)');
-                    ctx.fillStyle = g;
-                    ctx.fillRect(px - glowR, py - glowR, glowR * 2, glowR * 2);
-
-                    // Bright core
-                    ctx.beginPath();
-                    ctx.arc(px, py, s * 0.4, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255,255,255,' + (p.op * 0.9).toFixed(3) + ')';
-                    ctx.fill();
-
-                    p.sx = px; p.sy = py;
-                }
-
-                // Entanglement connections - only nearby particles
-                ctx.lineWidth = 0.3;
-                var maxD = mn * 0.16;
-                var maxDSq = maxD * maxD;
-                for (var i = 0; i < pts.length; i++) {
-                    for (var j = i + 1; j < pts.length; j++) {
-                        var dx = pts[i].sx - pts[j].sx;
-                        var dy = pts[i].sy - pts[j].sy;
-                        var dSq = dx * dx + dy * dy;
-                        if (dSq < maxDSq) {
-                            var d = Math.sqrt(dSq);
-                            var a = (1 - d / maxD) * 0.1;
-                            ctx.beginPath();
-                            ctx.moveTo(pts[i].sx, pts[i].sy);
-                            ctx.lineTo(pts[j].sx, pts[j].sy);
-                            var mc = pts[i].col[2] > 200 ? '0,255,255' : pts[i].col[0] > 200 ? '255,20,148' : '153,51,255';
-                            ctx.strokeStyle = 'rgba(' + mc + ',' + a.toFixed(4) + ')';
-                            ctx.stroke();
-                        }
-                    }
-                }
-
-                ctx.globalCompositeOperation = 'source-over';
-                requestAnimationFrame(qDraw);
-            }
-
-            qInit();
-            var qObs = new IntersectionObserver(function(e) {
-                qRun = e[0].isIntersecting;
-                if (qRun) { qResize(); lastTime = 0; requestAnimationFrame(qDraw); }
-            }, { threshold: 0.05 });
-            qObs.observe(qc);
-            window.addEventListener('resize', function() { if (qRun) qResize(); });
-        }
     })();
 
     if ('serviceWorker' in navigator) {
