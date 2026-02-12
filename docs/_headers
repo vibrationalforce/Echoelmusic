@@ -1,0 +1,30 @@
+# =============================================================================
+# Cloudflare Pages Headers
+# =============================================================================
+
+# All pages - security and performance
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=()
+
+# HTML pages - no cache (always fresh)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# SVG/images - cache 1 week
+/*.svg
+  Cache-Control: public, max-age=604800, immutable
+
+# Service worker - no cache (must update immediately)
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Manifest - cache 1 hour
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# Version - no cache
+/version.json
+  Cache-Control: public, max-age=0, must-revalidate
