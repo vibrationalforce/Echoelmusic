@@ -79,7 +79,7 @@ class AIModelLoader: ObservableObject {
     struct ModelInfo {
         let type: ModelType
         let model: MLModel
-        let configuration: MLModelConfiguration
+        let configuration: CoreML.MLModelConfiguration
         let loadedAt: Date
         let fileSize: Int64
         var inferenceCount: Int = 0
@@ -214,8 +214,8 @@ class AIModelLoader: ObservableObject {
     }
 
     /// Create optimal configuration for model type
-    private func createConfiguration(for type: ModelType) -> MLModelConfiguration {
-        let config = MLModelConfiguration()
+    private func createConfiguration(for type: ModelType) -> CoreML.MLModelConfiguration {
+        let config = CoreML.MLModelConfiguration()
 
         switch type {
         case .melodyGenerator, .chordPredictor, .drumPatternGenerator:

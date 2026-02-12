@@ -859,8 +859,8 @@ public struct OctaveCreativeStudioView: View {
 
 // MARK: - Preview
 
-@available(iOS 16.0, macOS 13.0, *)
 #if DEBUG
+@available(iOS 16.0, macOS 13.0, *)
 #Preview {
     NavigationStack {
         OctaveCreativeStudioView()

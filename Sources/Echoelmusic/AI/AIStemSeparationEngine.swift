@@ -798,7 +798,9 @@ public final class AIStemSeparationEngine: ObservableObject {
         let divisor = Float(shifts)
         for ch in 0..<accumulated.count {
             var div = divisor
-            vDSP_vsdiv(accumulated[ch], 1, &div, &accumulated[ch], 1, vDSP_Length(accumulated[ch].count))
+            var channel = accumulated[ch]
+            vDSP_vsdiv(channel, 1, &div, &channel, 1, vDSP_Length(channel.count))
+            accumulated[ch] = channel
         }
 
         return accumulated
@@ -883,9 +885,10 @@ public final class AIStemSeparationEngine: ObservableObject {
                 var peak: Float = 0
                 vDSP_maxmgv(processedSamples[ch], 1, &peak, vDSP_Length(processedSamples[ch].count))
                 if peak > 0.001 {
-                    var targetPeak: Float = 0.95
-                    var scale = targetPeak / peak
-                    vDSP_vsmul(processedSamples[ch], 1, &scale, &processedSamples[ch], 1, vDSP_Length(processedSamples[ch].count))
+                    var scale = Float(0.95) / peak
+                    var channel = processedSamples[ch]
+                    vDSP_vsmul(channel, 1, &scale, &channel, 1, vDSP_Length(channel.count))
+                    processedSamples[ch] = channel
                 }
             }
         }

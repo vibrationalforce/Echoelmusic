@@ -383,7 +383,7 @@ class AdaptiveQualityManager: ObservableObject {
         let actualFrameTime = 1000.0 / Double(metrics.currentFPS)
 
         let usage = Float(min(actualFrameTime / targetFrameTime, 1.0))
-        metrics.gpuUsage = metrics.gpuUsage * 0.8 + usage * 0.2
+        metrics.gpuUsage = metrics.gpuUsage * Float(0.8) + usage * Float(0.2)
     }
 
     private func updateMemoryUsage() {

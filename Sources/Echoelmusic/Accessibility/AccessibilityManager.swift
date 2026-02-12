@@ -484,7 +484,7 @@ class AccessibilityManager: ObservableObject {
         case .high:
             announcement = NSAttributedString(
                 string: message,
-                attributes: [.accessibilitySpeechAnnouncementPriority: UIAccessibility.SpeechPriority.high]
+                attributes: [.accessibilitySpeechQueueAnnouncement: false]
             )
         }
 
