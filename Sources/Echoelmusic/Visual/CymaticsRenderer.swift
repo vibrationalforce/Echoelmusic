@@ -246,6 +246,7 @@ struct MetalCymaticsView: UIViewRepresentable {
 
     // MARK: - Coordinator
 
+    @MainActor
     class Coordinator {
         let renderer = CymaticsRenderer()
     }
@@ -280,6 +281,7 @@ struct MetalCymaticsView: NSViewRepresentable {
         context.coordinator.renderer.heartRate = heartRate
     }
 
+    @MainActor
     class Coordinator {
         let renderer = CymaticsRenderer()
     }
