@@ -716,7 +716,7 @@ public final class CreativeStudioEngine: ObservableObject {
             baseFreq = 110.0  // A2
         case .classical, .jazz:
             baseFreq = 220.0  // A3
-        case .electronic, .house, .techno, .trance:
+        case .house, .techno, .trance, .dubstep, .drumAndBass:
             baseFreq = 440.0  // A4
         default:
             baseFreq = 220.0

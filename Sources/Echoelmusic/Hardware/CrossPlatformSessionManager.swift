@@ -2,8 +2,7 @@ import Foundation
 import Combine
 import Network
 
-/// Logger alias for CrossPlatformSessionManager
-private let log = echoelLog
+// Logger: uses global 'log' from ProfessionalLogger
 
 // MARK: - Cross-Platform Session Manager
 // Phase 10000 ULTIMATE - ANY Device Combination Works Together
