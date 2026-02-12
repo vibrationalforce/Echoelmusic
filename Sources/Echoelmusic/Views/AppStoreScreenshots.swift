@@ -1820,7 +1820,7 @@ private struct StarData: Identifiable {
     static let stars: [StarData] = (0..<50).map { index in
         // Use deterministic values based on index to create star-like distribution
         let seed = Double(index)
-        StarData(
+        return StarData(
             id: index,
             x: CGFloat((seed * 31.415) .truncatingRemainder(dividingBy: 400)),
             y: CGFloat((seed * 17.32) .truncatingRemainder(dividingBy: 800)),

@@ -163,7 +163,8 @@ public struct DataStatistics: Sendable {
         min = sorted.first ?? 0
         max = sorted.last ?? 0
         sum = values.reduce(0, +)
-        mean = sum / Double(count)
+        let meanValue = sum / Double(count)
+        mean = meanValue
         range = max - min
 
         if count % 2 == 0 {
@@ -172,7 +173,7 @@ public struct DataStatistics: Sendable {
             median = sorted[count/2]
         }
 
-        let squaredDiffs = values.map { pow($0 - mean, 2) }
+        let squaredDiffs = values.map { pow($0 - meanValue, 2) }
         variance = squaredDiffs.reduce(0, +) / Double(count)
         standardDeviation = sqrt(variance)
     }

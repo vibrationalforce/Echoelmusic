@@ -170,7 +170,7 @@ public actor CircuitBreaker {
     /// - Throws: CircuitBreakerError if circuit is open or operation fails
     public func execute<T>(
         timeout: TimeInterval? = nil,
-        _ operation: @Sendable () async throws -> T
+        _ operation: @escaping @Sendable () async throws -> T
     ) async throws -> T {
         // Check if circuit allows execution
         try await checkCircuit()
@@ -203,7 +203,7 @@ public actor CircuitBreaker {
     public func executeWithRetry<T>(
         maxRetries: Int = 3,
         retryDelay: TimeInterval = 1.0,
-        _ operation: @Sendable () async throws -> T
+        _ operation: @escaping @Sendable () async throws -> T
     ) async throws -> T {
         var lastError: Error?
 

@@ -622,7 +622,7 @@ public struct DMXFixtureProfile: Identifiable, Codable, Sendable {
             .strobe, .colorWheel, .gobo, .goboRotation, .prism,
             .focus, .zoom, .frost, .macro, .macro
         ]
-        DMXFixtureProfile(
+        return DMXFixtureProfile(
             name: "Moving Head Spot 16ch",
             manufacturer: "Generic",
             channelCount: 16,
@@ -656,7 +656,7 @@ public struct DMXFixtureProfile: Identifiable, Codable, Sendable {
             .pan, .panFine, .tilt, .tiltFine, .speed, .dimmer,
             .strobe, .red, .green, .blue, .white, .zoom, .macro, .macro
         ]
-        DMXFixtureProfile(
+        return DMXFixtureProfile(
             name: "Moving Head Wash 14ch",
             manufacturer: "Generic",
             channelCount: 14,
@@ -690,7 +690,7 @@ public struct DMXFixtureProfile: Identifiable, Codable, Sendable {
             .red, .green, .blue,
             .red, .green, .blue
         ]
-        DMXFixtureProfile(
+        return DMXFixtureProfile(
             name: "LED Bar 12ch",
             manufacturer: "Generic",
             channelCount: 12,
@@ -719,7 +719,7 @@ public struct DMXFixtureProfile: Identifiable, Codable, Sendable {
         let layout: [DMXChannelType] = [
             .red, .green, .blue, .dimmer, .strobe, .macro, .speed
         ]
-        DMXFixtureProfile(
+        return DMXFixtureProfile(
             name: "LED Strip Controller 7ch",
             manufacturer: "Generic",
             channelCount: 7,
@@ -743,7 +743,7 @@ public struct DMXFixtureProfile: Identifiable, Codable, Sendable {
         let layout: [DMXChannelType] = [
             .pan, .tilt, .dimmer, .colorWheel, .macro, .speed, .zoom, .goboRotation
         ]
-        DMXFixtureProfile(
+        return DMXFixtureProfile(
             name: "Laser ILDA 8ch",
             manufacturer: "Generic",
             channelCount: 8,
