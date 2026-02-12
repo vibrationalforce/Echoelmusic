@@ -266,7 +266,7 @@ struct DAWArrangementView: View {
     private func regionView(region: DAWRegion, color: Color) -> some View {
         RoundedRectangle(cornerRadius: 4)
             .fill(color.opacity(0.4))
-            .frame(width: CGFloat(region.length * 50 * timelineZoom), height: 46)
+            .frame(width: CGFloat(Double(region.length) * 50 * timelineZoom), height: 46)
             .overlay(
                 RoundedRectangle(cornerRadius: 4)
                     .stroke(color, lineWidth: 1)
@@ -278,7 +278,7 @@ struct DAWArrangementView: View {
                     .padding(.horizontal, 4)
                 , alignment: .leading
             )
-            .offset(x: CGFloat(region.startBar * 50 * timelineZoom))
+            .offset(x: CGFloat(Double(region.startBar) * 50 * timelineZoom))
     }
 
     // MARK: - Transport Bar
