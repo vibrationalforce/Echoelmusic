@@ -174,8 +174,8 @@ public extension AsyncBioStream {
     }
 
     /// Smooth coherence values
-    func smoothedCoherence(factor: Double = 0.3) -> AsyncSmoothingSequence<AsyncBioStream, NormalizedCoherence> {
-        AsyncSmoothingSequence(base: self, factor: factor) { $0.normalizedCoherence }
+    func smoothedCoherence(factor: Double = 0.3) -> AsyncSmoothingSequence<AsyncBioStream, Double> {
+        AsyncSmoothingSequence(base: self, factor: factor) { $0.normalizedCoherence.value }
     }
 }
 

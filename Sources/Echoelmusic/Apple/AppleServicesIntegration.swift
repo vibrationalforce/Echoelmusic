@@ -533,6 +533,33 @@ public final class EchoelWeatherService: ObservableObject {
     /// Fetch weather for location
     public func fetchWeather(for coordinate: CLLocationCoordinate2D) async throws {
         #if canImport(WeatherKit)
+        if #available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, *) {
+            try await fetchWeatherKit(for: coordinate)
+            return
+        }
+        #endif
+        // Fallback for older platforms or no WeatherKit
+        // Fallback for simulators or unsupported platforms
+        currentWeather = WeatherData(
+            temperature: 18.0,
+            humidity: 65.0,
+            condition: .clear,
+            uvIndex: 3,
+            pressure: 1013.0,
+            windSpeed: 12.0
+        )
+
+        let now = Date()
+        let calendar = Calendar.current
+        sunriseTime = calendar.date(bySettingHour: 7, minute: 30, second: 0, of: now)
+        sunsetTime = calendar.date(bySettingHour: 17, minute: 45, second: 0, of: now)
+
+        circadianRecommendation = generateCircadianRecommendation()
+    }
+
+    #if canImport(WeatherKit)
+    @available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, *)
+    private func fetchWeatherKit(for coordinate: CLLocationCoordinate2D) async throws {
         let weatherService = WeatherService.shared
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 
@@ -562,28 +589,9 @@ public final class EchoelWeatherService: ObservableObject {
             appleServicesLog.error("WeatherKit error: \(error)", category: .system)
             throw error
         }
-        #else
-        // Fallback for simulators or unsupported platforms
-        currentWeather = WeatherData(
-            temperature: 18.0,
-            humidity: 65.0,
-            condition: .clear,
-            uvIndex: 3,
-            pressure: 1013.0,
-            windSpeed: 12.0
-        )
-
-        let now = Date()
-        let calendar = Calendar.current
-        sunriseTime = calendar.date(bySettingHour: 7, minute: 30, second: 0, of: now)
-        sunsetTime = calendar.date(bySettingHour: 17, minute: 45, second: 0, of: now)
-
-        circadianRecommendation = generateCircadianRecommendation()
-        #endif
     }
 
-    #if canImport(WeatherKit)
-    @available(iOS 16.0, macOS 13.0, *)
+    @available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, *)
     private func mapCondition(_ condition: WeatherCondition) -> WeatherData.WeatherCondition {
         switch condition {
         case .clear, .mostlyClear:
@@ -603,7 +611,8 @@ public final class EchoelWeatherService: ObservableObject {
         }
     }
 
-    private func mapMoonPhase(_ phase: MoonPhase) -> MoonPhase {
+    @available(iOS 16.0, macOS 13.0, watchOS 9.0, tvOS 16.0, *)
+    private func mapMoonPhase(_ phase: WeatherKit.MoonPhase) -> EchoelWeatherService.MoonPhase {
         switch phase {
         case .new:
             return .new
@@ -617,7 +626,7 @@ public final class EchoelWeatherService: ObservableObject {
             return .full
         case .waningGibbous:
             return .waningGibbous
-        case .lastQuarter:
+        case .thirdQuarter:
             return .lastQuarter
         case .waningCrescent:
             return .waningCrescent
@@ -726,7 +735,6 @@ public final class EchoelCallService: NSObject, ObservableObject {
     #if canImport(CallKit) && !os(tvOS) && !os(watchOS)
     private func setupCallKit() {
         let configuration = CXProviderConfiguration()
-        configuration.localizedName = "Echoelmusic"
         configuration.supportsVideo = false
         configuration.maximumCallsPerCallGroup = 50 // Group sessions
         configuration.supportedHandleTypes = [.generic]

@@ -331,9 +331,9 @@ public class FirebaseAnalyticsProvider: AnalyticsProvider {
             // Log for debugging
             self.log.analytics("📊 Track: \(event) | props: \(properties.keys.joined(separator: ", "))")
 
-            // Attempt network sync
+            // Network sync handled by batch syncPendingEvents
             Task {
-                await self.networkSync.sendEvent(storedEvent)
+                await self.networkSync.syncPendingEvents(from: self.storage)
             }
         }
     }
@@ -916,7 +916,11 @@ public class AnalyticsPerformanceMonitor {
             log.performance("⏱️ Stopped timer: \(name) - Duration: \(String(format: "%.3f", duration))s")
 
             // Track in analytics
-            AnalyticsManager.shared.trackPerformance(metric: name, duration: duration)
+            let metricName = name
+            let metricDuration = duration
+            Task { @MainActor in
+                AnalyticsManager.shared.trackPerformance(metric: metricName, duration: metricDuration)
+            }
 
             return duration
         }
@@ -926,36 +930,44 @@ public class AnalyticsPerformanceMonitor {
     public func measureAppLaunch(from launchDate: Date) {
         let launchTime = Date().timeIntervalSince(launchDate)
         log.performance("🚀 App Launch Time: \(String(format: "%.3f", launchTime))s")
-        AnalyticsManager.shared.trackPerformance(metric: "app_launch", duration: launchTime)
+        Task { @MainActor in
+            AnalyticsManager.shared.trackPerformance(metric: "app_launch", duration: launchTime)
+        }
     }
 
     /// Measure screen render time
     public func measureScreenRender(screenName: String, duration: TimeInterval) {
         log.performance("🖼️ Screen Render: \(screenName) - \(String(format: "%.3f", duration))s")
-        AnalyticsManager.shared.trackPerformance(metric: "screen_render_\(screenName)", duration: duration)
+        Task { @MainActor in
+            AnalyticsManager.shared.trackPerformance(metric: "screen_render_\(screenName)", duration: duration)
+        }
     }
 
     /// Measure network request
     public func measureNetworkRequest(endpoint: String, duration: TimeInterval, success: Bool) {
         log.performance("🌐 Network: \(endpoint) - \(String(format: "%.3f", duration))s - Success: \(success)")
-        AnalyticsManager.shared.trackPerformance(
-            metric: "network_request",
-            duration: duration,
-            properties: [
-                "endpoint": endpoint,
-                "success": success
-            ]
-        )
+        Task { @MainActor in
+            AnalyticsManager.shared.trackPerformance(
+                metric: "network_request",
+                duration: duration,
+                properties: [
+                    "endpoint": endpoint,
+                    "success": success
+                ]
+            )
+        }
     }
 
     /// Report custom metric
     public func reportMetric(name: String, value: Double, unit: String = "") {
         log.performance("📈 Metric: \(name) = \(value)\(unit)")
-        AnalyticsManager.shared.trackPerformance(
-            metric: name,
-            value: value,
-            properties: ["unit": unit]
-        )
+        Task { @MainActor in
+            AnalyticsManager.shared.trackPerformance(
+                metric: name,
+                value: value,
+                properties: ["unit": unit]
+            )
+        }
     }
 }
 
@@ -1037,7 +1049,9 @@ public class PrivacyCompliance {
         log.analytics("🗑️ Deleting all analytics data")
 
         // Reset all providers
-        AnalyticsManager.shared.reset()
+        Task { @MainActor in
+            AnalyticsManager.shared.reset()
+        }
 
         // Clear crash reporter
         CrashReporter.shared.clearBreadcrumbs()

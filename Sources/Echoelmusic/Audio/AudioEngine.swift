@@ -108,13 +108,10 @@ public class AudioEngine: ObservableObject {
         headTrackingManager = HeadTrackingManager()
 
         // Initialize spatial audio if available (iOS 15+)
-        if let headTracking = headTrackingManager,
+        if let _ = headTrackingManager,
            let capabilities = deviceCapabilities,
            capabilities.canUseSpatialAudioEngine {
-            spatialAudioEngine = SpatialAudioEngine(
-                headTrackingManager: headTracking,
-                deviceCapabilities: capabilities
-            )
+            spatialAudioEngine = SpatialAudioEngine()
         } else {
             log.audio("⚠️  Spatial audio engine requires iOS 15+", level: .warning)
         }
@@ -319,7 +316,7 @@ public class AudioEngine: ObservableObject {
         guard let healthKit = healthKitEngine else { return }
 
         // Get current biometric data
-        let hrvCoherence = healthKit.hrvCoherence
+        let hrvCoherence = healthKit.coherence
         let heartRate = healthKit.heartRate
         let voicePitch = microphoneManager.currentPitch
         let audioLevel = microphoneManager.audioLevel
@@ -342,9 +339,9 @@ public class AudioEngine: ObservableObject {
         if let spatial = spatialAudioEngine, spatialAudioEnabled {
             spatial.setReverbBlend(bioParameterMapper.reverbWet)
 
-            // Apply spatial positioning based on HRV
+            // Apply spatial panning based on HRV
             let pos = bioParameterMapper.spatialPosition
-            spatial.positionSource(x: pos.x, y: pos.y, z: pos.z)
+            spatial.setPan(Float(pos.x))
         }
 
         // Apply frequency/amplitude to binaural generator
@@ -377,7 +374,7 @@ public class AudioEngine: ObservableObject {
         if spatialAudioEnabled {
             description += "\nSpatial Audio: Active"
             if let spatial = spatialAudioEngine {
-                description += " (\(spatial.spatialMode.rawValue))"
+                description += " (\(spatial.currentMode.rawValue))"
             }
         } else {
             description += "\nSpatial Audio: Off"
@@ -510,15 +507,15 @@ public class AudioEngine: ObservableObject {
         // Map preset spatial mode strings to SpatialAudioEngine modes
         switch mode.lowercased() {
         case "binaural":
-            spatial.setSpatialMode(.binaural)
+            spatial.setMode(.binaural)
         case "stereo":
-            spatial.setSpatialMode(.stereo)
+            spatial.setMode(.stereo)
         case "ambisonics":
-            spatial.setSpatialMode(.ambisonics)
+            spatial.setMode(.ambisonics)
         case "surround_3d", "surround3d":
-            spatial.setSpatialMode(.surround3D)
+            spatial.setMode(.surround_3d)
         case "surround_4d", "surround4d", "afa":
-            spatial.setSpatialMode(.surround4D)
+            spatial.setMode(.afa)
         default:
             log.audio("⚠️  Unknown spatial mode: \(mode), using default", level: .warning)
         }
