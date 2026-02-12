@@ -298,7 +298,7 @@ struct SimpleCymaticsVisualizer: View {
                     path.addLine(to: CGPoint(x: x, y: y))
                 }
             }
-            path.closeSubPath()
+            path.closeSubpath()
 
             let color = Color(hue: hue + Double(ring) * 0.02, saturation: 0.7, brightness: 0.9)
             context.stroke(path, with: .color(color.opacity(alpha)), lineWidth: 1.5)

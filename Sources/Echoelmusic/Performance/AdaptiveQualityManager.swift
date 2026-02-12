@@ -379,7 +379,7 @@ class AdaptiveQualityManager: ObservableObject {
 
     private func updateGPUUsage() {
         // GPU-Auslastungsschätzung basierend auf Frame-Zeiten
-        let targetFrameTime = 1000.0 / currentQuality.targetFPS
+        let targetFrameTime = 1000.0 / Double(currentQuality.targetFPS)
         let actualFrameTime = 1000.0 / Double(metrics.currentFPS)
 
         let usage = Float(min(actualFrameTime / targetFrameTime, 1.0))

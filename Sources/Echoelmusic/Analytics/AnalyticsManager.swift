@@ -333,7 +333,7 @@ public class FirebaseAnalyticsProvider: AnalyticsProvider {
 
             // Attempt network sync
             Task {
-                await self.networkSync.sendEvent(analyticsEvent)
+                await self.networkSync.sendEvent(storedEvent)
             }
         }
     }

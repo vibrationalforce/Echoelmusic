@@ -434,8 +434,8 @@ public final class LaserVisualDesignerPlugin: EchoelmusicPlugin {
     }
 
     public func onQuantumStateChange(_ state: QuantumPluginState) {
-        quantumCoherence = state.coherence
-        if state.collapsed {
+        quantumCoherence = state.coherenceLevel
+        if state.superpositionCount == 0 {
             // Trigger special effect on quantum collapse
             triggerQuantumBurst()
         }
@@ -451,9 +451,17 @@ public final class LaserVisualDesignerPlugin: EchoelmusicPlugin {
     }
 
     public func renderVisual(context: RenderContext) -> VisualOutput? {
+        // Laser points are rendered via the plugin's own point system, not SDKVisualOutput
+        guard !points.isEmpty else { return nil }
         return VisualOutput(
-            points: points.map { CGPoint(x: CGFloat($0.x / 32768.0), y: CGFloat($0.y / 32768.0)) },
-            colors: points.map { SIMD4<Float>(Float($0.red) / 255.0, Float($0.green) / 255.0, Float($0.blue) / 255.0, 1.0) }
+            pixelData: nil,
+            textureId: nil,
+            shaderUniforms: [
+                "pointCount": Float(points.count),
+                "intensity": configuration.intensity,
+                "coherence": quantumCoherence
+            ],
+            blendMode: .add
         )
     }
 
@@ -936,7 +944,7 @@ public final class OrganicScoreInstrumentPlugin: EchoelmusicPlugin {
 
     public func onBioDataUpdate(_ bioData: BioData) {
         coherence = bioData.coherence
-        if let h = bioData.hrv { hrv = h }
+        if let h = bioData.hrvSDNN { hrv = h }
         if let hr = bioData.heartRate { heartRate = hr }
         if let br = bioData.breathingRate {
             breathPhase = Float(sin(Date().timeIntervalSince1970 * Double(br) / 60.0 * .pi * 2.0) * 0.5 + 0.5)
@@ -945,7 +953,7 @@ public final class OrganicScoreInstrumentPlugin: EchoelmusicPlugin {
 
     public func onQuantumStateChange(_ state: QuantumPluginState) {
         // Quantum state can affect harmonics/timbre
-        if state.collapsed {
+        if state.superpositionCount == 0 {
             // Add special harmonic coloring
         }
     }
@@ -974,10 +982,13 @@ public final class OrganicScoreInstrumentPlugin: EchoelmusicPlugin {
     public func renderVisual(context: RenderContext) -> VisualOutput? { nil }
 
     public func handleInteraction(_ interaction: UserInteraction) {
-        if interaction.type == .noteOn {
-            noteOn(note: interaction.note, velocity: interaction.velocity)
-        } else if interaction.type == .noteOff {
-            noteOff(note: interaction.note)
+        if interaction.type == .midi {
+            let note = Int(interaction.position?.x ?? 60)
+            if let velocity = interaction.value, velocity > 0 {
+                noteOn(note: note, velocity: velocity)
+            } else {
+                noteOff(note: note)
+            }
         }
     }
 

@@ -461,7 +461,7 @@ public final class HRTFProcessor: ObservableObject {
         prevLeftFilter = [Float](repeating: 0, count: filterLength)
         prevRightFilter = [Float](repeating: 0, count: filterLength)
 
-        log(.info, category: .audio,
+        log.log(.info, category: .audio,
             "HRTF processor initialized (analytical model, \(filterLength) taps, \(azimuthSteps * elevationSteps) directions per ear)")
     }
 
