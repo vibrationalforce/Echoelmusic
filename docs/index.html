@@ -116,12 +116,13 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; overflow-x: hidden; }
 
         body {
             font-family: var(--font);
             background: var(--bg); color: var(--text);
-            -webkit-font-smoothing: antialiased; line-height: 1.6; overflow-x: hidden;
+            -webkit-font-smoothing: antialiased; line-height: 1.6;
+            overflow-x: hidden; max-width: 100vw;
         }
 
         /* Noise texture overlay */
@@ -249,37 +250,7 @@
             padding: 160px 24px 70px;
             max-width: 780px; margin: 0 auto;
         }
-        .hero-bg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -55%);
-            width: 700px; height: 700px; pointer-events: none;
-        }
-        .hero-bg .orb {
-            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.2;
-            animation: pulse 8s ease-in-out infinite;
-        }
-        .orb-1 { width: 350px; height: 350px; background: var(--green); top: 5%; left: -5%; }
-        .orb-2 { width: 300px; height: 300px; background: var(--emerald); top: 15%; right: -5%; animation-delay: 2.5s; }
-        .orb-3 { width: 250px; height: 250px; background: var(--mint); bottom: 5%; left: 15%; animation-delay: 5s; }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.15; }
-            50% { transform: scale(1.2); opacity: 0.3; }
-        }
-
         .hero-content { position: relative; z-index: 1; }
-
-        /* Animated heartbeat ECG line */
-        .hero-ecg {
-            width: 100%; max-width: 400px; height: 40px; margin: 0 auto 32px;
-            overflow: hidden; position: relative;
-        }
-        .hero-ecg svg {
-            width: 200%; height: 100%;
-            animation: ecg-scroll 3s linear infinite;
-        }
-        @keyframes ecg-scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
 
         .hero h1 {
             font-size: clamp(48px, 11vw, 88px); font-weight: 700;
@@ -395,13 +366,9 @@
             padding: 40px 24px 80px;
         }
         .feature {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
             padding: 56px 0;
         }
         .feature + .feature { border-top: 1px solid var(--border-subtle); }
-        .feature { contain: layout style; }
-        .feature.reverse { direction: rtl; }
-        .feature.reverse > * { direction: ltr; }
         .feature-icon {
             width: 48px; height: 48px; border-radius: 14px; margin-bottom: 18px;
             display: flex; align-items: center; justify-content: center;
@@ -434,53 +401,6 @@
         .fb-violet { color: var(--violet); border-color: rgba(167,139,250,0.2); }
         .fb-violet:hover { border-color: rgba(167,139,250,0.5); }
 
-        /* Feature visuals */
-        .feature-visual {
-            aspect-ratio: 4/3; border-radius: 20px; overflow: hidden;
-            background: var(--bg-glass); border: 1px solid var(--border);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center; position: relative;
-        }
-        .bio-rings {
-            width: 100%; height: 100%; position: relative;
-        }
-        .bio-rings .ring {
-            position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1px solid;
-            transform: translate(-50%, -50%);
-        }
-        .ring-1 { width: 60px; height: 60px; border-color: rgba(244,114,182,0.5); animation: ringp 3s ease-in-out infinite; }
-        .ring-2 { width: 110px; height: 110px; border-color: rgba(34,197,94,0.4); animation: ringp 3s ease-in-out 0.4s infinite; }
-        .ring-3 { width: 160px; height: 160px; border-color: rgba(16,185,129,0.3); animation: ringp 3s ease-in-out 0.8s infinite; }
-        .ring-4 { width: 210px; height: 210px; border-color: rgba(52,211,153,0.15); animation: ringp 3s ease-in-out 1.2s infinite; }
-        .ring-core {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 20px; height: 20px; border-radius: 50%;
-            background: radial-gradient(circle, #fff, var(--rose));
-            box-shadow: 0 0 30px rgba(244,114,182,0.4);
-            animation: cp 1.2s ease-in-out infinite;
-        }
-        @keyframes ringp {
-            0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
-            50% { transform: translate(-50%,-50%) scale(1.1); opacity: 1; }
-        }
-        @keyframes cp {
-            0%, 100% { transform: translate(-50%,-50%) scale(1); }
-            50% { transform: translate(-50%,-50%) scale(1.25); }
-        }
-        .wave-bars {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 3px;
-            padding: 0 32px;
-        }
-        .wave-bars .b {
-            width: 3px; border-radius: 2px;
-            background: linear-gradient(to top, var(--green), var(--mint));
-            animation: wb 1.5s ease-in-out infinite;
-        }
-        @keyframes wb {
-            0%, 100% { height: 16px; opacity: 0.3; }
-            50% { height: var(--h, 50px); opacity: 1; }
-        }
-        .quantum-canvas { width: 100%; height: 100%; display: block; border-radius: 20px; background: var(--bg); }
 
         /* -- WHO IT'S FOR -- */
         .personas {
@@ -554,7 +474,7 @@
         .bottom-cta::before {
             content: ''; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 500px; height: 500px; border-radius: 50%;
+            width: min(500px, 100vw); height: min(500px, 100vw); border-radius: 50%;
             background: radial-gradient(circle, rgba(34,197,94,0.08), rgba(16,185,129,0.04) 50%, transparent 70%);
             pointer-events: none;
         }
@@ -634,8 +554,6 @@
             .persona-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 768px) {
-            .feature { grid-template-columns: 1fr; gap: 28px; }
-            .feature.reverse { direction: ltr; }
             .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .steps { grid-template-columns: 1fr; gap: 16px; }
             .hero { padding: 130px 20px 50px; }
@@ -711,28 +629,7 @@
 
         <!-- Hero -->
         <header class="hero">
-            <div class="hero-bg" aria-hidden="true">
-                <div class="orb orb-1"></div>
-                <div class="orb orb-2"></div>
-                <div class="orb orb-3"></div>
-            </div>
             <div class="hero-content">
-                <!-- Animated ECG heartbeat line -->
-                <div class="hero-ecg" aria-hidden="true">
-                    <svg viewBox="0 0 800 40" preserveAspectRatio="none">
-                        <path d="M0 20 L60 20 L70 20 L80 8 L90 32 L100 4 L110 36 L120 20 L140 20 L200 20 L260 20 L270 20 L280 8 L290 32 L300 4 L310 36 L320 20 L340 20 L400 20 L460 20 L470 20 L480 8 L490 32 L500 4 L510 36 L520 20 L540 20 L600 20 L660 20 L670 20 L680 8 L690 32 L700 4 L710 36 L720 20 L740 20 L800 20" fill="none" stroke="url(#ecg-grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <defs>
-                            <linearGradient id="ecg-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#22C55E" stop-opacity="0.1"/>
-                                <stop offset="25%" stop-color="#22C55E" stop-opacity="0.8"/>
-                                <stop offset="50%" stop-color="#10B981" stop-opacity="0.6"/>
-                                <stop offset="75%" stop-color="#34D399" stop-opacity="0.8"/>
-                                <stop offset="100%" stop-color="#34D399" stop-opacity="0.1"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-
                 <h1><span>Create from Within</span></h1>
                 <p class="hero-sub">Your heartbeat, breath, and body become music, visuals, and light. <strong>Echoelmusic</strong> turns biology into art.</p>
                 <div class="hero-cta-group">
@@ -822,19 +719,10 @@
                         <span class="feature-bullet fb-rose">Coherence</span>
                     </div>
                 </div>
-                <div class="feature-visual" aria-hidden="true">
-                    <div class="bio-rings">
-                        <div class="ring ring-1"></div>
-                        <div class="ring ring-2"></div>
-                        <div class="ring ring-3"></div>
-                        <div class="ring ring-4"></div>
-                        <div class="ring-core"></div>
-                    </div>
-                </div>
             </div>
 
             <!-- Sound -->
-            <div class="feature reverse fade-in">
+            <div class="feature fade-in">
                 <div>
                     <div class="feature-icon fi-sky">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
@@ -848,28 +736,6 @@
                         <span class="feature-bullet fb-sky">Granular</span>
                         <span class="feature-bullet fb-sky">Physical Modeling</span>
                         <span class="feature-bullet fb-sky">Dolby Atmos</span>
-                    </div>
-                </div>
-                <div class="feature-visual" aria-hidden="true">
-                    <div class="wave-bars">
-                        <div class="b" style="--h:25px;animation-delay:0s"></div>
-                        <div class="b" style="--h:45px;animation-delay:0.08s"></div>
-                        <div class="b" style="--h:65px;animation-delay:0.12s"></div>
-                        <div class="b" style="--h:85px;animation-delay:0.18s"></div>
-                        <div class="b" style="--h:100px;animation-delay:0.22s"></div>
-                        <div class="b" style="--h:85px;animation-delay:0.28s"></div>
-                        <div class="b" style="--h:110px;animation-delay:0.32s"></div>
-                        <div class="b" style="--h:75px;animation-delay:0.38s"></div>
-                        <div class="b" style="--h:95px;animation-delay:0.42s"></div>
-                        <div class="b" style="--h:55px;animation-delay:0.48s"></div>
-                        <div class="b" style="--h:100px;animation-delay:0.52s"></div>
-                        <div class="b" style="--h:65px;animation-delay:0.58s"></div>
-                        <div class="b" style="--h:85px;animation-delay:0.62s"></div>
-                        <div class="b" style="--h:45px;animation-delay:0.68s"></div>
-                        <div class="b" style="--h:75px;animation-delay:0.72s"></div>
-                        <div class="b" style="--h:90px;animation-delay:0.78s"></div>
-                        <div class="b" style="--h:55px;animation-delay:0.82s"></div>
-                        <div class="b" style="--h:35px;animation-delay:0.88s"></div>
                     </div>
                 </div>
             </div>
@@ -890,9 +756,6 @@
                         <span class="feature-bullet fb-violet">Vision Pro</span>
                         <span class="feature-bullet fb-violet">SharePlay</span>
                     </div>
-                </div>
-                <div class="feature-visual" aria-hidden="true">
-                    <canvas class="quantum-canvas" id="quantumCanvas"></canvas>
                 </div>
             </div>
 
@@ -1109,144 +972,6 @@
             }
         }
 
-        // Quantum Visuals
-        var qc = document.getElementById('quantumCanvas');
-        if (qc) {
-            var ctx = qc.getContext('2d');
-            var dpr = Math.min(window.devicePixelRatio || 1, 2);
-            var qRun = false, qT = 0, W = 0, H = 0;
-            var pts = [], NUM = 55;
-            var cols = [[34,197,94],[16,185,129],[52,211,153]];
-
-            function qResize() {
-                var r = qc.parentElement.getBoundingClientRect();
-                W = r.width; H = r.height;
-                qc.width = W * dpr; qc.height = H * dpr;
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            }
-
-            function qInit() {
-                qResize();
-                pts = [];
-                for (var i = 0; i < NUM; i++) {
-                    pts.push({
-                        cx: 0.5 + (Math.random() - 0.5) * 0.3,
-                        cy: 0.5 + (Math.random() - 0.5) * 0.3,
-                        r: 0.08 + Math.random() * 0.34,
-                        a: Math.random() * Math.PI * 2,
-                        da: (0.3 + Math.random() * 0.8) * (Math.random() < 0.5 ? 1 : -1),
-                        sz: 1.2 + Math.random() * 2.2,
-                        ph: Math.random() * Math.PI * 2,
-                        col: cols[i % 3],
-                        op: 0.4 + Math.random() * 0.6,
-                        wb: 0.3 + Math.random() * 1.2,
-                        sx: 0, sy: 0
-                    });
-                }
-            }
-
-            function qDraw() {
-                if (!qRun) return;
-                qT += 0.01;
-                var cx = W * 0.5, cy = H * 0.5;
-                var mn = Math.min(W, H);
-
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.fillStyle = 'rgba(3,7,18,0.14)';
-                ctx.fillRect(0, 0, W, H);
-
-                var pulse = 0.7 + 0.3 * Math.sin(qT * 0.7);
-                var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, mn * 0.38 * pulse);
-                grd.addColorStop(0, 'rgba(16,185,129,0.07)');
-                grd.addColorStop(0.4, 'rgba(34,197,94,0.03)');
-                grd.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = grd;
-                ctx.fillRect(0, 0, W, H);
-
-                ctx.globalCompositeOperation = 'lighter';
-                for (var r = 0; r < 5; r++) {
-                    var rr = (20 + r * mn * 0.065) * pulse + Math.sin(qT * 0.9 + r * 1.2) * 8;
-                    var al = (0.07 - r * 0.011) * (0.6 + 0.4 * Math.sin(qT + r * 0.8));
-                    if (al <= 0) continue;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-                    ctx.strokeStyle = r % 2 === 0
-                        ? 'rgba(34,197,94,' + al.toFixed(3) + ')'
-                        : 'rgba(16,185,129,' + al.toFixed(3) + ')';
-                    ctx.lineWidth = 0.8;
-                    ctx.stroke();
-                }
-
-                var s1x = cx - mn * 0.15, s1y = cy;
-                var s2x = cx + mn * 0.15, s2y = cy;
-                for (var wr = 0; wr < 3; wr++) {
-                    var wrad = (qT * 25 + wr * 35) % (mn * 0.5);
-                    var wa = 0.04 * (1 - wrad / (mn * 0.5));
-                    if (wa <= 0) continue;
-                    ctx.beginPath();
-                    ctx.arc(s1x, s1y, wrad, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(244,114,182,' + wa.toFixed(3) + ')';
-                    ctx.lineWidth = 0.6;
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(s2x, s2y, wrad, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(34,197,94,' + wa.toFixed(3) + ')';
-                    ctx.stroke();
-                }
-
-                for (var i = 0; i < pts.length; i++) {
-                    var p = pts[i];
-                    p.a += p.da * 0.008;
-                    var px = p.cx * W + Math.cos(p.a) * p.r * mn + Math.sin(qT * p.wb + p.ph) * 6;
-                    var py = p.cy * H + Math.sin(p.a) * p.r * mn + Math.cos(qT * p.wb + p.ph) * 6;
-                    var s = p.sz * (1 + 0.3 * Math.sin(qT * 2.2 + p.ph));
-
-                    var g = ctx.createRadialGradient(px, py, 0, px, py, s * 5);
-                    g.addColorStop(0, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.6).toFixed(2) + ')');
-                    g.addColorStop(0.4, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',' + (p.op * 0.15).toFixed(2) + ')');
-                    g.addColorStop(1, 'rgba(' + p.col[0] + ',' + p.col[1] + ',' + p.col[2] + ',0)');
-                    ctx.fillStyle = g;
-                    ctx.fillRect(px - s * 5, py - s * 5, s * 10, s * 10);
-
-                    ctx.beginPath();
-                    ctx.arc(px, py, s * 0.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255,255,255,' + (p.op * 0.85).toFixed(2) + ')';
-                    ctx.fill();
-
-                    p.sx = px; p.sy = py;
-                }
-
-                ctx.lineWidth = 0.4;
-                var maxD = mn * 0.18;
-                for (var i = 0; i < pts.length; i++) {
-                    for (var j = i + 1; j < pts.length; j++) {
-                        var dx = pts[i].sx - pts[j].sx;
-                        var dy = pts[i].sy - pts[j].sy;
-                        var d = Math.sqrt(dx * dx + dy * dy);
-                        if (d < maxD) {
-                            var a = (1 - d / maxD) * 0.12;
-                            ctx.beginPath();
-                            ctx.moveTo(pts[i].sx, pts[i].sy);
-                            ctx.lineTo(pts[j].sx, pts[j].sy);
-                            var mc = pts[i].col[2] > 150 ? '52,211,153' : pts[i].col[0] > 30 ? '34,197,94' : '16,185,129';
-                            ctx.strokeStyle = 'rgba(' + mc + ',' + a.toFixed(3) + ')';
-                            ctx.stroke();
-                        }
-                    }
-                }
-
-                ctx.globalCompositeOperation = 'source-over';
-                requestAnimationFrame(qDraw);
-            }
-
-            qInit();
-            var qObs = new IntersectionObserver(function(e) {
-                qRun = e[0].isIntersecting;
-                if (qRun) { qResize(); qDraw(); }
-            }, { threshold: 0.1 });
-            qObs.observe(qc);
-            window.addEventListener('resize', function() { if (qRun) qResize(); });
-        }
     })();
 
     if ('serviceWorker' in navigator) {
