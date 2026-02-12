@@ -547,13 +547,13 @@ final class BioSubsystem: EngineSubsystem {
 
     func activate() {
         isActive = true
-        healthKit.startMonitoring()
-        log.log(.info, category: .audio, "Bio subsystem activated - HealthKit monitoring started")
+        healthKit.startStreaming()
+        log.log(.info, category: .audio, "Bio subsystem activated - HealthKit streaming started")
     }
 
     func deactivate() {
         isActive = false
-        healthKit.stopMonitoring()
+        healthKit.stopStreaming()
     }
 
     func update(deltaTime: TimeInterval) {
@@ -606,11 +606,10 @@ final class VisualSubsystem: EngineSubsystem {
         engine.state.visualIntensity += (targetIntensity - engine.state.visualIntensity) * smoothing
 
         // Feed bio data into visual engine for reactive visuals
-        visualEngine.updateBioParameters(
-            coherence: engine.state.coherence,
-            heartRate: Float(engine.state.heartRate),
-            breathPhase: engine.state.breathPhase,
-            audioLevel: engine.state.audioLevel
+        visualEngine.updateBioData(
+            hrv: Double(engine.state.hrv),
+            coherence: Double(engine.state.coherence),
+            heartRate: Double(engine.state.heartRate)
         )
     }
 }
@@ -704,7 +703,7 @@ final class MIDISubsystem: EngineSubsystem {
 final class MixingSubsystem: EngineSubsystem {
     var isActive = false
     private weak var engine: EchoelEngine?
-    var channelStrips: [ProMixEngine.ChannelStrip] = []
+    var channelStrips: [ChannelStrip] = []
     private let maxChannels = 32
 
     init(engine: EchoelEngine) { self.engine = engine }
@@ -714,13 +713,13 @@ final class MixingSubsystem: EngineSubsystem {
         // Initialize master + 7 default channels if empty
         if channelStrips.isEmpty {
             for i in 0..<8 {
-                var strip = ProMixEngine.ChannelStrip(
+                var strip = ChannelStrip(
                     id: UUID(),
                     name: i == 0 ? "Master" : "Ch \(i)",
                     type: i == 0 ? .master : .audio
                 )
-                strip.volume = i == 0 ? 0.0 : -6.0 // dB
-                strip.isMuted = false
+                strip.volume = i == 0 ? 0.8 : 0.6
+                strip.mute = false
                 channelStrips.append(strip)
             }
         }
@@ -735,15 +734,15 @@ final class MixingSubsystem: EngineSubsystem {
         guard isActive, let engine else { return }
         // Update meter states based on audio level
         let level = engine.state.audioLevel
-        for i in 0..<channelStrips.count where !channelStrips[i].isMuted {
+        for i in 0..<channelStrips.count where !channelStrips[i].mute {
             // Simulate per-channel levels with slight variation
             let variation = Float.random(in: -3...3)
             let channelLevel = level + variation * 0.01
-            channelStrips[i].meterState = ProMixEngine.MeterState(
-                peakL: channelLevel,
-                peakR: channelLevel * 0.95,
-                rmsL: channelLevel * 0.7,
-                rmsR: channelLevel * 0.68
+            channelStrips[i].metering = MeterState(
+                peak: channelLevel,
+                rms: channelLevel * 0.7,
+                peakHold: channelLevel * 0.95,
+                isClipping: channelLevel > 0.95
             )
         }
     }
@@ -800,7 +799,7 @@ final class RecordingSubsystem: EngineSubsystem {
 final class StreamingSubsystem: EngineSubsystem {
     var isActive = false
     private weak var engine: EchoelEngine?
-    private lazy var videoEngine = VideoProcessingEngine()
+    private lazy var streamingManager = VideoStreamingManager()
     private(set) var isStreamingLive = false
 
     init(engine: EchoelEngine) { self.engine = engine }
@@ -813,7 +812,7 @@ final class StreamingSubsystem: EngineSubsystem {
     func deactivate() {
         isActive = false
         if isStreamingLive {
-            videoEngine.stopStream()
+            streamingManager.stopStream()
             isStreamingLive = false
         }
     }
@@ -821,7 +820,7 @@ final class StreamingSubsystem: EngineSubsystem {
     func startStream() {
         guard isActive else { return }
         Task {
-            await videoEngine.startStream(to: [.youTube])
+            await streamingManager.startStream(to: [.youtube])
             await MainActor.run {
                 isStreamingLive = true
                 engine?.state.isStreaming = true
@@ -830,7 +829,7 @@ final class StreamingSubsystem: EngineSubsystem {
     }
 
     func stopStream() {
-        videoEngine.stopStream()
+        streamingManager.stopStream()
         isStreamingLive = false
         engine?.state.isStreaming = false
     }
@@ -1128,9 +1127,9 @@ final class OrchestralSubsystem: EngineSubsystem {
         // High coherence → legato strings, soft dynamics
         // Low coherence → staccato, louder dynamics
         let coherence = engine.state.coherence
-        let _ = coherence > 0.7 ? CinematicScoringEngine.ArticulationType.legato :
-                coherence > 0.4 ? CinematicScoringEngine.ArticulationType.sustain :
-                CinematicScoringEngine.ArticulationType.staccato
+        let _: ArticulationType = coherence > 0.7 ? .legato :
+                coherence > 0.4 ? .sustain :
+                .staccato
     }
 }
 
@@ -1442,15 +1441,4 @@ public final class MotionComfortSystem {
 }
 
 // MARK: - Clamping Utility
-
-private extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        return min(max(self, range.lowerBound), range.upperBound)
-    }
-}
-
-private extension Float {
-    func clamped(to range: ClosedRange<Float>) -> Float {
-        return Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
-    }
-}
+// Uses Comparable.clamped(to:) from NumericExtensions.swift

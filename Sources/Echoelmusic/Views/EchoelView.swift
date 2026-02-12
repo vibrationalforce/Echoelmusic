@@ -71,7 +71,7 @@ public struct EchoelView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 ForEach(EngineMode.allCases) { mode in
-                    ModeButton(
+                    EngineModeButton(
                         mode: mode,
                         isSelected: engine.mode == mode,
                         action: { engine.mode = mode }
@@ -486,7 +486,7 @@ enum RightTab: String, CaseIterable {
 
 // MARK: - Mode Button
 
-private struct ModeButton: View {
+private struct EngineModeButton: View {
     let mode: EngineMode
     let isSelected: Bool
     let action: () -> Void
