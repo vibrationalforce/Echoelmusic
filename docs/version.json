@@ -1,6 +1,6 @@
 {
-  "version": "3.0.0",
-  "build": "2026-01-24T12:00:00Z",
+  "version": "3.1.0",
+  "build": "2026-02-12T12:00:00Z",
   "features": {
     "uspFocused": true,
     "minimalDesign": true,

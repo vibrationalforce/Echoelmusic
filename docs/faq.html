@@ -227,6 +227,7 @@
         document.querySelectorAll('.faq-question').forEach(function(q) {
             q.addEventListener('click', function() { q.parentElement.classList.toggle('open'); });
         });
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function() {}); }
     })();
     </script>
 </body>

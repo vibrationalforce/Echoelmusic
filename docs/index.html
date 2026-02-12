@@ -10,14 +10,14 @@
     <meta property="og:description" content="Your heartbeat drives the music. Your breath shapes the visuals. Your body controls the light.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://echoelmusic.com">
-    <meta property="og:image" content="https://echoelmusic.com/og-image.png">
-    <meta property="og:image:type" content="image/png">
+    <meta property="og:image" content="https://echoelmusic.com/og-image.svg">
+    <meta property="og:image:type" content="image/svg+xml">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Echoelmusic — Create from Within">
     <meta name="twitter:description" content="Your heartbeat drives the music. Your breath shapes the visuals. Your body controls the light.">
-    <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-image.svg">
     <meta name="apple-itunes-app" content="app-id=6757957358">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -245,6 +245,7 @@
             padding: 48px 0;
         }
         .feature + .feature { border-top: 1px solid var(--border); }
+        .feature { contain: layout style; }
         .feature.reverse { direction: rtl; }
         .feature.reverse > * { direction: ltr; }
         .feature-icon {
@@ -714,6 +715,11 @@
             window.addEventListener('resize', function() { if (qRun) qResize(); });
         }
     })();
+
+    // Register Service Worker for offline support
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(function() {});
+    }
     </script>
 </body>
 </html>
