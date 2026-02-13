@@ -1,28 +1,12 @@
 # =============================================================================
-# ECHOELMUSIC - MULTI-PLATFORM FASTLANE CONFIGURATION
+# ECHOELMUSIC - FASTLANE CONFIGURATION (Upload Only)
 # =============================================================================
-# Pure API Key Authentication - Automatic Signing
-#
-# Supported Platforms:
-# - iOS (iPhone + iPad)
-# - macOS (Apple Silicon + Intel) with AUv3
-# - watchOS (Apple Watch)
-# - tvOS (Apple TV)
-# - visionOS (Apple Vision Pro)
-#
-# Usage:
-#   fastlane ios beta              # Upload iOS to TestFlight
-#   fastlane mac beta              # Upload macOS to TestFlight
-#   fastlane ios beta_watchos      # Upload watchOS to TestFlight
-#   fastlane ios beta_tvos         # Upload tvOS to TestFlight
-#   fastlane ios beta_visionos     # Upload visionOS to TestFlight
-#   fastlane ios beta_all_ios      # Upload ALL iOS platforms to TestFlight
-#   fastlane beta_all              # Upload ALL platforms to TestFlight
+# xcodebuild handles archive + export directly in CI workflow
+# Fastlane only handles TestFlight upload with retry logic
 # =============================================================================
 
 default_platform(:ios)
 
-# Shared configuration
 TEAM_ID = ENV["APPLE_TEAM_ID"]
 BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
 
@@ -47,7 +31,6 @@ def setup_api_key
     UI.important("Warning: ASC_KEY_CONTENT may not be in correct PEM format")
   end
 
-  UI.message("Setting up App Store Connect API key...")
   app_store_connect_api_key(
     key_id: ENV["ASC_KEY_ID"],
     issuer_id: ENV["ASC_ISSUER_ID"],
@@ -55,21 +38,6 @@ def setup_api_key
     is_key_content_base64: false,
     in_house: false
   )
-end
-
-# Build xcargs for Automatic signing with API Key authentication
-# xcodebuild will automatically create/download certs and profiles
-def build_xcargs_automatic
-  api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
-  [
-    "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Automatic",
-    "-allowProvisioningUpdates",
-    "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
-    "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
-    "-authenticationKeyPath #{api_key_path}",
-    "COMPILER_INDEX_STORE_ENABLE=NO"
-  ].join(" ")
 end
 
 def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
@@ -107,125 +75,37 @@ end
 
 platform :ios do
 
-  desc "Build and upload iOS app to TestFlight"
-  lane :beta do
-    UI.header "iOS TestFlight Build"
-
+  desc "Upload iOS IPA to TestFlight (archive built by xcodebuild in CI)"
+  lane :upload do
+    UI.header "iOS TestFlight Upload"
     api_key = setup_api_key
 
-    build_app(
-      project: "Echoelmusic.xcodeproj",
-      scheme: "Echoelmusic",
-      configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",
-      export_method: "app-store",
-      destination: "generic/platform=iOS",
-      derived_data_path: "./build/DerivedData",
-      archive_path: "./build/Echoelmusic.xcarchive",
-      output_directory: "./build",
-      output_name: "Echoelmusic",
-      buildlog_path: "./build/logs",
-      include_bitcode: false,
-      export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
-      },
-      xcargs: build_xcargs_automatic
-    )
-
-    ipa_path = "./build/Echoelmusic.ipa"
+    ipa_path = ENV["IPA_PATH"] || "./build/Echoelmusic.ipa"
     unless File.exist?(ipa_path)
-      UI.user_error!("IPA not created at #{ipa_path}!")
+      UI.user_error!("IPA not found at #{ipa_path}!")
     end
-    UI.success("IPA created: #{ipa_path}")
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER}")
   end
 
-  desc "Build and upload watchOS app to TestFlight"
-  lane :beta_watchos do
-    UI.header "watchOS TestFlight Build"
-
+  desc "Upload watchOS to TestFlight"
+  lane :upload_watchos do
+    UI.header "watchOS TestFlight Upload"
     api_key = setup_api_key
-
-    build_app(
-      project: "Echoelmusic.xcodeproj",
-      scheme: "Echoelmusic-watchOS",
-      configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",
-      export_method: "app-store",
-      destination: "generic/platform=watchOS",
-      derived_data_path: "./build/DerivedData",
-      archive_path: "./build/Echoelmusic-watchOS.xcarchive",
-      output_directory: "./build",
-      output_name: "Echoelmusic-watchOS",
-      buildlog_path: "./build/logs",
-      include_bitcode: false,
-      export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
-      },
-      xcargs: build_xcargs_automatic
-    )
-
     upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER}")
   end
 
-  desc "Build and upload tvOS app to TestFlight"
-  lane :beta_tvos do
-    UI.header "tvOS TestFlight Build"
-
+  desc "Upload tvOS to TestFlight"
+  lane :upload_tvos do
+    UI.header "tvOS TestFlight Upload"
     api_key = setup_api_key
-
-    build_app(
-      project: "Echoelmusic.xcodeproj",
-      scheme: "Echoelmusic-tvOS",
-      configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",
-      export_method: "app-store",
-      destination: "generic/platform=tvOS",
-      derived_data_path: "./build/DerivedData",
-      archive_path: "./build/Echoelmusic-tvOS.xcarchive",
-      output_directory: "./build",
-      output_name: "Echoelmusic-tvOS",
-      buildlog_path: "./build/logs",
-      include_bitcode: false,
-      export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
-      },
-      xcargs: build_xcargs_automatic
-    )
-
     upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER}")
   end
 
-  desc "Build and upload visionOS app to TestFlight"
-  lane :beta_visionos do
-    UI.header "visionOS TestFlight Build"
-
+  desc "Upload visionOS to TestFlight"
+  lane :upload_visionos do
+    UI.header "visionOS TestFlight Upload"
     api_key = setup_api_key
-
-    build_app(
-      project: "Echoelmusic.xcodeproj",
-      scheme: "Echoelmusic-visionOS",
-      configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",
-      export_method: "app-store",
-      destination: "generic/platform=visionOS",
-      derived_data_path: "./build/DerivedData",
-      archive_path: "./build/Echoelmusic-visionOS.xcarchive",
-      output_directory: "./build",
-      output_name: "Echoelmusic-visionOS",
-      buildlog_path: "./build/logs",
-      include_bitcode: false,
-      export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
-      },
-      xcargs: build_xcargs_automatic
-    )
-
     upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER}")
   end
 
@@ -244,56 +124,14 @@ platform :ios do
     )
   end
 
-  desc "Build and upload ALL iOS platforms to TestFlight"
-  lane :beta_all_ios do
-    UI.header "Building ALL iOS Platforms for TestFlight"
-    beta
-    beta_watchos
-    beta_tvos
-    beta_visionos
-    UI.success("All iOS platforms uploaded to TestFlight!")
-  end
-
   desc "Run iOS tests"
   lane :test do
-    UI.header "Running iOS tests"
     run_tests(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic",
       device: "iPhone 15 Pro",
       clean: false,
       derived_data_path: "./build/DerivedData"
-    )
-  end
-
-  desc "Capture screenshots for all devices and languages"
-  lane :screenshots do
-    UI.header "Capturing App Store Screenshots"
-    capture_screenshots(
-      scheme: "EchoelmusicScreenshots",
-      output_directory: "./fastlane/screenshots",
-      clear_previous_screenshots: true,
-      concurrent_simulators: true,
-      languages: ["en-US", "de-DE", "ja", "es-ES", "fr-FR", "zh-Hans", "ko", "pt-BR", "it", "ru", "ar", "hi"],
-      devices: ["iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone SE (3rd generation)", "iPad Pro 13-inch (M4)", "iPad Pro 11-inch (M4)"],
-      dark_mode: false,
-      override_status_bar: true,
-      derived_data_path: "./build/DerivedData"
-    )
-  end
-
-  desc "Upload screenshots to App Store Connect"
-  lane :upload_screenshots do
-    UI.header "Uploading Screenshots"
-    api_key = setup_api_key
-    deliver(
-      api_key: api_key,
-      skip_binary_upload: true,
-      skip_metadata: true,
-      skip_app_version_update: true,
-      screenshots_path: "./fastlane/screenshots",
-      overwrite_screenshots: true,
-      force: true
     )
   end
 end
@@ -304,36 +142,15 @@ end
 
 platform :mac do
 
-  desc "Build and upload macOS app to TestFlight"
-  lane :beta do
-    UI.header "macOS TestFlight Build (with AUv3 Extension)"
-
+  desc "Upload macOS app to TestFlight"
+  lane :upload do
+    UI.header "macOS TestFlight Upload"
     api_key = setup_api_key
-
-    build_app(
-      project: "Echoelmusic.xcodeproj",
-      scheme: "Echoelmusic-macOS",
-      configuration: "Release",
-      clean: ENV["CLEAN_BUILD"] == "true",
-      export_method: "app-store",
-      derived_data_path: "./build/DerivedData",
-      archive_path: "./build/Echoelmusic-macOS.xcarchive",
-      output_directory: "./build",
-      output_name: "Echoelmusic-macOS",
-      buildlog_path: "./build/logs",
-      export_options: {
-        signingStyle: "automatic",
-        teamID: TEAM_ID
-      },
-      xcargs: build_xcargs_automatic
-    )
-
     upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER}")
   end
 
   desc "Just build macOS without signing"
   lane :build_only do
-    UI.header "Building macOS (no signing)"
     build_app(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -347,7 +164,6 @@ platform :mac do
 
   desc "Run macOS tests"
   lane :test do
-    UI.header "Running macOS tests"
     run_tests(
       project: "Echoelmusic.xcodeproj",
       scheme: "Echoelmusic-macOS",
@@ -355,21 +171,4 @@ platform :mac do
       derived_data_path: "./build/DerivedData"
     )
   end
-end
-
-# =============================================================================
-# UNIVERSAL LANE - ALL PLATFORMS
-# =============================================================================
-
-desc "Build and upload ALL platforms to TestFlight"
-lane :beta_all do
-  UI.header "Building ALL Platforms for TestFlight"
-
-  Fastlane::LaneManager.cruise_lane("ios", "beta")
-  Fastlane::LaneManager.cruise_lane("ios", "beta_watchos")
-  Fastlane::LaneManager.cruise_lane("ios", "beta_tvos")
-  Fastlane::LaneManager.cruise_lane("ios", "beta_visionos")
-  Fastlane::LaneManager.cruise_lane("mac", "beta")
-
-  UI.success("ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
 end
