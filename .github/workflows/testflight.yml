@@ -1,15 +1,9 @@
 # =============================================================================
 # ECHOELMUSIC - TESTFLIGHT DEPLOYMENT
 # =============================================================================
-# Pure API Key Authentication - No manual cert/keychain management
-#
-# Required Secrets (4):
-#   APP_STORE_CONNECT_KEY_ID      - ASC API Key ID (~10 chars)
-#   APP_STORE_CONNECT_ISSUER_ID   - ASC Issuer UUID (36 chars)
-#   APP_STORE_CONNECT_PRIVATE_KEY - .p8 PEM content
-#   APPLE_TEAM_ID                 - 10-char Team ID
-#
-# xcodebuild -allowProvisioningUpdates handles certs & profiles automatically
+# Pure API Key Auth + xcodebuild direct (no Fastlane build_app)
+# xcodebuild archive + exportArchive with -allowProvisioningUpdates
+# Fastlane used ONLY for upload_to_testflight
 # =============================================================================
 
 name: "TestFlight"
@@ -45,7 +39,7 @@ on:
         default: false
         type: boolean
       skip_compile_check:
-        description: 'Skip simulator compile check (faster but riskier)'
+        description: 'Skip simulator compile check'
         required: false
         default: false
         type: boolean
@@ -56,8 +50,6 @@ concurrency:
 
 env:
   XCODE_VERSION: '16.2'
-  XCODEGEN_VERSION: '2.42.0'
-  FASTLANE_VERSION: '2.225.0'
   BUILD_NUMBER: ${{ github.run_number }}
   CLEAN_BUILD: ${{ github.event.inputs.clean_build }}
 
@@ -71,11 +63,9 @@ jobs:
     timeout-minutes: 3
     outputs:
       ready: ${{ steps.validate.outputs.ready }}
-      platforms: ${{ steps.parse.outputs.platforms }}
 
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
@@ -89,75 +79,25 @@ jobs:
         run: |
           set +e
           ERRORS=0
+          echo "=== TESTFLIGHT PREFLIGHT ==="
+          echo "Platform: ${{ github.event.inputs.platform }} | Build: ${{ github.run_number }}"
 
-          echo "============================================"
-          echo "  TESTFLIGHT PREFLIGHT CHECK"
-          echo "============================================"
-          echo "Platform: ${{ github.event.inputs.platform }}"
-          echo "Build: ${{ github.run_number }}"
-          echo ""
+          [ -z "$ASC_KEY_ID" ] && echo "[FAIL] KEY_ID" && ERRORS=$((ERRORS+1)) || echo "[OK] KEY_ID (${#ASC_KEY_ID} chars)"
+          [ -z "$ASC_ISSUER_ID" ] && echo "[FAIL] ISSUER_ID" && ERRORS=$((ERRORS+1)) || echo "[OK] ISSUER_ID (${#ASC_ISSUER_ID} chars)"
+          [ -z "$ASC_KEY" ] && echo "[FAIL] PRIVATE_KEY" && ERRORS=$((ERRORS+1)) || echo "[OK] PRIVATE_KEY (${#ASC_KEY} chars)"
+          [ -z "$TEAM_ID" ] && echo "[FAIL] TEAM_ID" && ERRORS=$((ERRORS+1)) || echo "[OK] TEAM_ID (${#TEAM_ID} chars)"
 
-          if [ -z "$ASC_KEY_ID" ]; then
-            echo "[FAIL] APP_STORE_CONNECT_KEY_ID: Not set"
-            ERRORS=$((ERRORS + 1))
-          elif [ ${#ASC_KEY_ID} -lt 8 ]; then
-            echo "[FAIL] APP_STORE_CONNECT_KEY_ID: Too short (${#ASC_KEY_ID} chars)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "[OK] APP_STORE_CONNECT_KEY_ID: ${#ASC_KEY_ID} chars"
-          fi
-
-          if [ -z "$ASC_ISSUER_ID" ]; then
-            echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID: Not set"
-            ERRORS=$((ERRORS + 1))
-          elif [ ${#ASC_ISSUER_ID} -lt 32 ]; then
-            echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID: Too short (${#ASC_ISSUER_ID} chars)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "[OK] APP_STORE_CONNECT_ISSUER_ID: ${#ASC_ISSUER_ID} chars"
-          fi
-
-          if [ -z "$ASC_KEY" ]; then
-            echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY: Not set"
-            ERRORS=$((ERRORS + 1))
-          elif [ ${#ASC_KEY} -lt 200 ]; then
-            echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY: Too short (${#ASC_KEY} chars)"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY: ${#ASC_KEY} chars"
-          fi
-
-          if [ -z "$TEAM_ID" ]; then
-            echo "[FAIL] APPLE_TEAM_ID: Not set"
-            ERRORS=$((ERRORS + 1))
-          else
-            echo "[OK] APPLE_TEAM_ID: ${#TEAM_ID} chars"
-          fi
-
-          echo ""
           for f in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
-            if [ -f "$f" ]; then echo "[OK] $f"; else echo "[FAIL] $f: Missing"; ERRORS=$((ERRORS + 1)); fi
+            [ -f "$f" ] && echo "[OK] $f" || { echo "[FAIL] $f missing"; ERRORS=$((ERRORS+1)); }
           done
 
-          echo ""
           if [ $ERRORS -gt 0 ]; then
-            echo "FAILED: $ERRORS error(s)"
-            echo "Configure secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            echo "FAILED: $ERRORS errors"
             echo "ready=false" >> $GITHUB_OUTPUT
             exit 1
           fi
-          echo "PASSED: All checks OK"
+          echo "PASSED"
           echo "ready=true" >> $GITHUB_OUTPUT
-
-      - name: "Parse Platforms"
-        id: parse
-        run: |
-          PLATFORM="${{ github.event.inputs.platform }}"
-          if [ "$PLATFORM" = "all" ]; then
-            echo 'platforms=["ios","watchos","tvos","visionos"]' >> $GITHUB_OUTPUT
-          else
-            echo "platforms=[\"$PLATFORM\"]" >> $GITHUB_OUTPUT
-          fi
 
   # ===========================================================================
   # COMPILE CHECK
@@ -166,16 +106,12 @@ jobs:
     name: "Compile Check"
     runs-on: macos-14
     needs: preflight
-    if: |
-      needs.preflight.outputs.ready == 'true' &&
-      github.event.inputs.skip_compile_check != 'true'
+    if: needs.preflight.outputs.ready == 'true' && github.event.inputs.skip_compile_check != 'true'
     timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
@@ -186,20 +122,16 @@ jobs:
             ~/.swiftpm
             .build
           key: ${{ runner.os }}-spm-compile-${{ hashFiles('Package.swift', 'Package.resolved') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-compile-
-            ${{ runner.os }}-spm-ios-
+          restore-keys: ${{ runner.os }}-spm-compile-
 
-      - name: "Install XcodeGen"
-        run: brew install xcodegen || true
-
-      - name: "Generate Project"
+      - name: "Install XcodeGen & Generate Project"
         run: |
+          brew install xcodegen || true
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"PLACEHOLDER1\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Compile for iOS Simulator (no signing)"
+      - name: "Compile (iOS Simulator, no signing)"
         run: |
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
@@ -207,30 +139,22 @@ jobs:
             -destination "generic/platform=iOS Simulator" \
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
-            2>&1 | tee /tmp/compile_check.log | tail -50
-
-          RESULT=${PIPESTATUS[0]}
-          if [ $RESULT -eq 0 ]; then
-            echo "=== COMPILE CHECK PASSED ==="
-          else
-            echo "=== COMPILE CHECK FAILED ==="
-            grep -E "error:" /tmp/compile_check.log | head -30
-            echo "## Compile Check Failed" >> $GITHUB_STEP_SUMMARY
+            2>&1 | tee /tmp/compile.log | tail -50
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "## Compile Failed" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -E "error:" /tmp/compile_check.log | head -40 >> $GITHUB_STEP_SUMMARY
+            grep -E "error:" /tmp/compile.log | head -40 >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
 
-      - name: "Upload Compile Log"
-        if: failure()
+      - if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: compile-check-log
-          path: /tmp/compile_check.log
+          path: /tmp/compile.log
           retention-days: 3
 
   # ===========================================================================
@@ -250,9 +174,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
@@ -272,13 +194,10 @@ jobs:
           key: ${{ runner.os }}-derived-ios-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-derived-ios-
 
-      - name: "Install Tools"
+      - name: "Install Tools & Generate Project"
         run: |
           brew install xcodegen || true
-          gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
-
-      - name: "Generate Project"
-        run: |
+          gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
@@ -291,36 +210,110 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "API Key ready for automatic signing"
 
-      - name: "Deploy to TestFlight"
+      - name: "Archive"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+
+          xcodebuild archive \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic \
+            -destination "generic/platform=iOS" \
+            -archivePath ./build/Echoelmusic.xcarchive \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/archive.log | tail -50
+
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "Archive failed!"
+            grep -iE "error:" /tmp/archive.log | tail -20
+            exit 1
+          fi
+          echo "Archive successful!"
+
+      - name: "Export IPA"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+
+          # Generate ExportOptions.plist
+          cat > /tmp/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>destination</key>
+              <string>export</string>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath ./build/Echoelmusic.xcarchive \
+            -exportPath ./build \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            2>&1 | tee /tmp/export.log
+
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "Export failed!"
+            cat /tmp/export.log
+            exit 1
+          fi
+
+          echo "Export successful!"
+          ls -la ./build/*.ipa 2>/dev/null || echo "No IPA found"
+
+      - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
-          set -o pipefail
-          echo "=== iOS Deploy (Automatic Signing) ==="
-          fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log
-          RESULT=${PIPESTATUS[0]}
-          if [ $RESULT -eq 0 ]; then
-            echo "iOS deployment successful!"
-          else
-            tail -100 /tmp/fastlane_output.log || true
+          IPA=$(ls ./build/*.ipa 2>/dev/null | head -1)
+          if [ -z "$IPA" ]; then
+            echo "No IPA found in ./build/"
             exit 1
           fi
+          echo "Uploading $IPA to TestFlight..."
+          IPA_PATH="$IPA" fastlane ios upload
 
       - name: "Error Summary"
         if: failure()
         run: |
           echo "## iOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|undefined symbol|duplicate symbol|framework not found|library not found" /tmp/fastlane_output.log 2>/dev/null | tail -30 || echo "No errors found")
-          echo "::error title=Build Errors::${XCODE_ERRORS//$'\n'/ | }"
+          for logfile in /tmp/archive.log /tmp/export.log; do
+            if [ -f "$logfile" ]; then
+              echo "### $(basename $logfile)" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              tail -100 "$logfile" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          done
 
       - name: "Upload Build Logs"
         if: always()
@@ -328,7 +321,8 @@ jobs:
         with:
           name: ios-build-logs
           path: |
-            /tmp/fastlane_output.log
+            /tmp/archive.log
+            /tmp/export.log
             build/logs/**
             build/*.ipa
           retention-days: 7
@@ -355,9 +349,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: "Setup Xcode ${{ env.XCODE_VERSION }}"
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
@@ -370,13 +362,10 @@ jobs:
           key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
           restore-keys: ${{ runner.os }}-spm-macos-
 
-      - name: "Install Tools"
+      - name: "Install Tools & Generate Project"
         run: |
           brew install xcodegen || true
-          gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
-
-      - name: "Generate Project"
-        run: |
+          gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
@@ -390,46 +379,87 @@ jobs:
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-      - name: "Deploy to TestFlight"
+      - name: "Archive"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          xcodebuild archive \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic-macOS \
+            -destination "generic/platform=macOS" \
+            -archivePath ./build/Echoelmusic-macOS.xcarchive \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/archive.log | tail -50
+          [ ${PIPESTATUS[0]} -ne 0 ] && { grep -iE "error:" /tmp/archive.log | tail -20; exit 1; }
+
+      - name: "Export"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          cat > /tmp/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key><string>app-store</string>
+              <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>uploadSymbols</key><true/>
+              <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath ./build/Echoelmusic-macOS.xcarchive \
+            -exportPath ./build \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            2>&1 | tee /tmp/export.log
+          [ ${PIPESTATUS[0]} -ne 0 ] && { cat /tmp/export.log; exit 1; }
+
+      - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
-        run: |
-          set -o pipefail
-          echo "=== macOS Deploy (Automatic Signing) ==="
-          fastlane mac beta --verbose 2>&1 | tee /tmp/fastlane_output.log
-          RESULT=${PIPESTATUS[0]}
-          if [ $RESULT -eq 0 ]; then
-            echo "macOS deployment successful!"
-          else
-            tail -100 /tmp/fastlane_output.log || true
-            exit 1
-          fi
+        run: fastlane mac upload
 
       - name: "Error Summary"
         if: failure()
         run: |
           echo "## macOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          for f in /tmp/archive.log /tmp/export.log; do
+            [ -f "$f" ] && { echo "### $(basename $f)" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; tail -100 "$f" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; }
+          done
 
-      - name: "Upload Build Logs"
-        if: always()
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: macos-build-logs
           path: |
-            /tmp/fastlane_output.log
+            /tmp/archive.log
+            /tmp/export.log
             build/logs/**
           retention-days: 7
           if-no-files-found: warn
 
-      - name: "Cleanup"
-        if: always()
+      - if: always()
         run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
@@ -453,20 +483,15 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Cache Swift PM"
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.swiftpm
           key: ${{ runner.os }}-spm-watchos-${{ hashFiles('Package.swift') }}
 
-      - name: "Install Tools"
+      - name: "Install Tools & Generate Project"
         run: |
           brew install xcodegen || true
-          gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
-
-      - name: "Generate Project"
-        run: |
+          gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
@@ -480,46 +505,86 @@ jobs:
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-      - name: "Deploy to TestFlight"
+      - name: "Archive"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          xcodebuild archive \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic-watchOS \
+            -destination "generic/platform=watchOS" \
+            -archivePath ./build/Echoelmusic-watchOS.xcarchive \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/archive.log | tail -50
+          [ ${PIPESTATUS[0]} -ne 0 ] && { grep -iE "error:" /tmp/archive.log | tail -20; exit 1; }
+
+      - name: "Export"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          cat > /tmp/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key><string>app-store</string>
+              <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>uploadSymbols</key><true/>
+              <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath ./build/Echoelmusic-watchOS.xcarchive \
+            -exportPath ./build \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            2>&1 | tee /tmp/export.log
+          [ ${PIPESTATUS[0]} -ne 0 ] && { cat /tmp/export.log; exit 1; }
+
+      - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
-        run: |
-          set -o pipefail
-          echo "=== watchOS Deploy (Automatic Signing) ==="
-          fastlane ios beta_watchos --verbose 2>&1 | tee /tmp/fastlane_output.log
-          RESULT=${PIPESTATUS[0]}
-          if [ $RESULT -eq 0 ]; then
-            echo "watchOS deployment successful!"
-          else
-            tail -100 /tmp/fastlane_output.log || true
-            exit 1
-          fi
+        run: fastlane ios upload_watchos
 
       - name: "Error Summary"
         if: failure()
         run: |
           echo "## watchOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          for f in /tmp/archive.log /tmp/export.log; do
+            [ -f "$f" ] && { echo "### $(basename $f)" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; tail -100 "$f" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; }
+          done
 
-      - name: "Upload Build Logs"
-        if: always()
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: watchos-build-logs
           path: |
-            /tmp/fastlane_output.log
-            build/logs/**
+            /tmp/archive.log
+            /tmp/export.log
           retention-days: 7
           if-no-files-found: warn
 
-      - name: "Cleanup"
-        if: always()
+      - if: always()
         run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
@@ -543,20 +608,15 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Cache Swift PM"
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.swiftpm
           key: ${{ runner.os }}-spm-tvos-${{ hashFiles('Package.swift') }}
 
-      - name: "Install Tools"
+      - name: "Install Tools & Generate Project"
         run: |
           brew install xcodegen || true
-          gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
-
-      - name: "Generate Project"
-        run: |
+          gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
@@ -570,46 +630,86 @@ jobs:
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-      - name: "Deploy to TestFlight"
+      - name: "Archive"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          xcodebuild archive \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic-tvOS \
+            -destination "generic/platform=tvOS" \
+            -archivePath ./build/Echoelmusic-tvOS.xcarchive \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/archive.log | tail -50
+          [ ${PIPESTATUS[0]} -ne 0 ] && { grep -iE "error:" /tmp/archive.log | tail -20; exit 1; }
+
+      - name: "Export"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          cat > /tmp/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key><string>app-store</string>
+              <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>uploadSymbols</key><true/>
+              <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath ./build/Echoelmusic-tvOS.xcarchive \
+            -exportPath ./build \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            2>&1 | tee /tmp/export.log
+          [ ${PIPESTATUS[0]} -ne 0 ] && { cat /tmp/export.log; exit 1; }
+
+      - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
-        run: |
-          set -o pipefail
-          echo "=== tvOS Deploy (Automatic Signing) ==="
-          fastlane ios beta_tvos --verbose 2>&1 | tee /tmp/fastlane_output.log
-          RESULT=${PIPESTATUS[0]}
-          if [ $RESULT -eq 0 ]; then
-            echo "tvOS deployment successful!"
-          else
-            tail -100 /tmp/fastlane_output.log || true
-            exit 1
-          fi
+        run: fastlane ios upload_tvos
 
       - name: "Error Summary"
         if: failure()
         run: |
           echo "## tvOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          for f in /tmp/archive.log /tmp/export.log; do
+            [ -f "$f" ] && { echo "### $(basename $f)" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; tail -100 "$f" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; }
+          done
 
-      - name: "Upload Build Logs"
-        if: always()
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tvos-build-logs
           path: |
-            /tmp/fastlane_output.log
-            build/logs/**
+            /tmp/archive.log
+            /tmp/export.log
           retention-days: 7
           if-no-files-found: warn
 
-      - name: "Cleanup"
-        if: always()
+      - if: always()
         run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
@@ -633,20 +733,15 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Cache Swift PM"
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.swiftpm
           key: ${{ runner.os }}-spm-visionos-${{ hashFiles('Package.swift') }}
 
-      - name: "Install Tools"
+      - name: "Install Tools & Generate Project"
         run: |
           brew install xcodegen || true
-          gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
-
-      - name: "Generate Project"
-        run: |
+          gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
@@ -660,46 +755,86 @@ jobs:
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-      - name: "Deploy to TestFlight"
+      - name: "Archive"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          xcodebuild archive \
+            -project Echoelmusic.xcodeproj \
+            -scheme Echoelmusic-visionOS \
+            -destination "generic/platform=visionOS" \
+            -archivePath ./build/Echoelmusic-visionOS.xcarchive \
+            -configuration Release \
+            -derivedDataPath ./build/DerivedData \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE=Automatic \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee /tmp/archive.log | tail -50
+          [ ${PIPESTATUS[0]} -ne 0 ] && { grep -iE "error:" /tmp/archive.log | tail -20; exit 1; }
+
+      - name: "Export"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          cat > /tmp/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key><string>app-store</string>
+              <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>uploadSymbols</key><true/>
+              <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath ./build/Echoelmusic-visionOS.xcarchive \
+            -exportPath ./build \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            2>&1 | tee /tmp/export.log
+          [ ${PIPESTATUS[0]} -ne 0 ] && { cat /tmp/export.log; exit 1; }
+
+      - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
-        run: |
-          set -o pipefail
-          echo "=== visionOS Deploy (Automatic Signing) ==="
-          fastlane ios beta_visionos --verbose 2>&1 | tee /tmp/fastlane_output.log
-          RESULT=${PIPESTATUS[0]}
-          if [ $RESULT -eq 0 ]; then
-            echo "visionOS deployment successful!"
-          else
-            tail -100 /tmp/fastlane_output.log || true
-            exit 1
-          fi
+        run: fastlane ios upload_visionos
 
       - name: "Error Summary"
         if: failure()
         run: |
           echo "## visionOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          for f in /tmp/archive.log /tmp/export.log; do
+            [ -f "$f" ] && { echo "### $(basename $f)" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; tail -100 "$f" >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY; }
+          done
 
-      - name: "Upload Build Logs"
-        if: always()
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: visionos-build-logs
           path: |
-            /tmp/fastlane_output.log
-            build/logs/**
+            /tmp/archive.log
+            /tmp/export.log
           retention-days: 7
           if-no-files-found: warn
 
-      - name: "Cleanup"
-        if: always()
+      - if: always()
         run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
@@ -712,27 +847,24 @@ jobs:
     needs: [preflight, compile_check, ios, macos, watchos, tvos, visionos]
 
     steps:
-      - name: "Generate Report"
+      - name: "Report"
         run: |
           echo "# TestFlight Deployment Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | ${{ github.event.inputs.platform }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Preflight | ${{ needs.preflight.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Compile Check | ${{ needs.compile_check.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Compile | ${{ needs.compile_check.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| iOS | ${{ needs.ios.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| macOS | ${{ needs.macos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| watchOS | ${{ needs.watchos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| tvOS | ${{ needs.tvos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| visionOS | ${{ needs.visionos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[Open App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY
+          echo "[App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY
