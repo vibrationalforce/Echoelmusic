@@ -219,11 +219,7 @@ jobs:
           API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
 
           echo "=== Diagnostics ==="
-          echo "API Key Path: $API_KEY_PATH"
           ls -la "$API_KEY_PATH" || echo "KEY FILE NOT FOUND!"
-          echo "Key ID: ${ASC_KEY_ID:0:4}..."
-          echo "Issuer ID: ${ASC_ISSUER_ID:0:8}..."
-          echo "Team ID: ${{ secrets.APPLE_TEAM_ID }}"
           xcodebuild -version
           echo "=== Starting Archive ==="
 
@@ -241,6 +237,7 @@ jobs:
             -authenticationKeyPath "$API_KEY_PATH" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
@@ -423,6 +420,7 @@ jobs:
             -authenticationKeyPath "$API_KEY_PATH" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
@@ -560,6 +558,7 @@ jobs:
             -authenticationKeyPath "$API_KEY_PATH" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
@@ -696,6 +695,7 @@ jobs:
             -authenticationKeyPath "$API_KEY_PATH" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
@@ -832,6 +832,7 @@ jobs:
             -authenticationKeyPath "$API_KEY_PATH" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
