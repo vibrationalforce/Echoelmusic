@@ -57,7 +57,9 @@
           "name": "Echoelmusic",
           "description": "Bio-reactive creative platform for music, visuals and light",
           "publisher": {"@id": "https://echoelmusic.com/#organization"},
-          "inLanguage": "en"
+          "inLanguage": "en",
+          "datePublished": "2024-01-01",
+          "dateModified": "2026-02-13"
         },
         {
           "@type": "Organization",
@@ -121,7 +123,7 @@
             --bg-card: rgba(255,255,255,0.025);
             --bg-glass: rgba(34,197,94,0.04);
             --text: #F8FAFC;
-            --text-dim: rgba(248,250,252,0.55);
+            --text-dim: rgba(248,250,252,0.65);
             --border: rgba(34,197,94,0.08);
             --border-subtle: rgba(255,255,255,0.06);
             --max-w: 1080px;
@@ -301,8 +303,8 @@
             animation: badge-glow 3s ease-in-out infinite;
         }
         @keyframes badge-glow {
-            0%, 100% { box-shadow: 0 0 8px rgba(34,197,94,0.1); }
-            50% { box-shadow: 0 0 16px rgba(34,197,94,0.25); }
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(34,197,94,0.1)); }
+            50% { filter: drop-shadow(0 0 8px rgba(34,197,94,0.25)); }
         }
 
         /* -- STATS -- */
@@ -662,19 +664,19 @@
         <!-- Stats -->
         <div class="stats fade-in">
             <div class="stat">
-                <div class="stat-num" data-count="6">0</div>
+                <div class="stat-num" data-count="6" role="text" aria-label="6 Synth Engines">0</div>
                 <div class="stat-label">Synth Engines</div>
             </div>
             <div class="stat">
-                <div class="stat-num" data-count="90" data-suffix="+">0</div>
+                <div class="stat-num" data-count="90" data-suffix="+" role="text" aria-label="90+ DSP Effects">0</div>
                 <div class="stat-label">DSP Effects</div>
             </div>
             <div class="stat">
-                <div class="stat-num" data-count="30" data-suffix="+">0</div>
+                <div class="stat-num" data-count="30" data-suffix="+" role="text" aria-label="30+ Visual Modes">0</div>
                 <div class="stat-label">Visual Modes</div>
             </div>
             <div class="stat">
-                <div class="stat-num" data-count="6">0</div>
+                <div class="stat-num" data-count="6" role="text" aria-label="6 Platforms">0</div>
                 <div class="stat-label">Platforms</div>
             </div>
         </div>
@@ -919,16 +921,15 @@
 
     <script>
     (function() {
-        // Scroll animations
+        // Scroll animations & animated counters (single observer)
         var obs = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-        document.querySelectorAll('.fade-in').forEach(function(el) { obs.observe(el); });
-
-        // Animated counters
-        var counterObs = new IntersectionObserver(function(entries) {
             entries.forEach(function(e) {
                 if (!e.isIntersecting) return;
+                // Fade-in animation
+                if (e.target.classList.contains('fade-in')) {
+                    e.target.classList.add('visible');
+                }
+                // Animated counters (for the stats section)
                 var nums = e.target.querySelectorAll('[data-count]');
                 nums.forEach(function(el) {
                     if (el.dataset.counted) return;
@@ -948,9 +949,8 @@
                     requestAnimationFrame(step);
                 });
             });
-        }, { threshold: 0.3 });
-        var statsEl = document.querySelector('.stats');
-        if (statsEl) counterObs.observe(statsEl);
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.fade-in').forEach(function(el) { obs.observe(el); });
 
         // Burger menu
         var burger = document.getElementById('burger');
@@ -970,6 +970,23 @@
         });
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && burger.classList.contains('active')) toggleMenu();
+            // Focus trap when menu is open
+            if (e.key === 'Tab' && burger.classList.contains('active')) {
+                var focusable = overlay.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])');
+                var first = focusable[0];
+                var last = focusable[focusable.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === first || !overlay.contains(document.activeElement)) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last || !overlay.contains(document.activeElement)) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
         });
 
         // Mobile CTA: show after scrolling past hero
@@ -989,7 +1006,7 @@
     })();
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(function() {});
+        navigator.serviceWorker.register('/sw.js').catch(function(e) { console.warn('[SW] Registration failed:', e); });
     }
     </script>
 </body>

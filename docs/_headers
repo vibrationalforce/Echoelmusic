@@ -13,6 +13,7 @@
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+  X-Robots-Tag: index, follow
 
 # HTML pages - no cache (always fresh)
 /*.html
@@ -55,3 +56,7 @@
 /.well-known/*
   Cache-Control: public, max-age=3600
   Access-Control-Allow-Origin: *
+
+# Screenshots - cache 1 week
+/screenshots/*
+  Cache-Control: public, max-age=604800

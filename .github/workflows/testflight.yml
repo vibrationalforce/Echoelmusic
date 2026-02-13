@@ -572,12 +572,11 @@ jobs:
   watchos:
     name: "watchOS"
     runs-on: macos-14
-    needs: [preflight, compile_check, ios]
+    needs: [preflight, compile_check]
     if: |
       always() &&
       needs.preflight.outputs.ready == 'true' &&
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
-      (needs.ios.result == 'success' || needs.ios.result == 'skipped') &&
       (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
     timeout-minutes: 120
@@ -744,12 +743,11 @@ jobs:
   tvos:
     name: "tvOS"
     runs-on: macos-14
-    needs: [preflight, compile_check, watchos]
+    needs: [preflight, compile_check]
     if: |
       always() &&
       needs.preflight.outputs.ready == 'true' &&
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
-      (needs.watchos.result == 'success' || needs.watchos.result == 'skipped') &&
       (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
     timeout-minutes: 120
@@ -916,12 +914,11 @@ jobs:
   visionos:
     name: "visionOS"
     runs-on: macos-14
-    needs: [preflight, compile_check, tvos]
+    needs: [preflight, compile_check]
     if: |
       always() &&
       needs.preflight.outputs.ready == 'true' &&
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
-      (needs.tvos.result == 'success' || needs.tvos.result == 'skipped') &&
       (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
     timeout-minutes: 120

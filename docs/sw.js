@@ -6,7 +6,7 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v5.1.0';
+const CACHE_NAME = 'echoelmusic-v5.2.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -26,6 +26,15 @@ const STATIC_ASSETS = [
   '/security.html',
   '/accessibility.html'
 ];
+
+const MAX_CACHE_ITEMS = 50;
+async function trimCache(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxItems) {
+    await Promise.all(keys.slice(0, keys.length - maxItems).map(k => cache.delete(k)));
+  }
+}
 
 // Install: Cache static assets
 self.addEventListener('install', (event) => {
@@ -50,10 +59,22 @@ self.addEventListener('activate', (event) => {
             return caches.delete(key);
           })
       );
+    }).then(() => {
+      trimCache(CACHE_NAME, MAX_CACHE_ITEMS);
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME }));
+      });
     })
   );
   self.clients.claim();
 });
+
+function fetchWithTimeout(request, timeout = 5000) {
+  return Promise.race([
+    fetch(request),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), timeout))
+  ]);
+}
 
 // Fetch: Network-first with cache fallback
 self.addEventListener('fetch', (event) => {
@@ -82,7 +103,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    fetch(event.request)
+    fetchWithTimeout(event.request)
       .then((response) => {
         // Cache successful responses
         if (response.status === 200) {

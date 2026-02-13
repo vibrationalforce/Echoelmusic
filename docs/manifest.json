@@ -84,5 +84,16 @@
       "protocol": "web+echoelmusic",
       "url": "/?protocol=%s"
     }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "audio/wav": [".wav"],
+        "audio/mpeg": [".mp3"],
+        "audio/flac": [".flac"],
+        "audio/aac": [".aac", ".m4a"]
+      }
+    }
   ]
 }
