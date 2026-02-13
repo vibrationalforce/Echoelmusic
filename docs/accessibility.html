@@ -19,10 +19,12 @@
     <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="canonical" href="https://echoelmusic.com/accessibility.html">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
         :root { --green: #22C55E; --emerald: #10B981; --mint: #34D399; --rose: #F472B6; --violet: #A78BFA; --sky: #38BDF8; --bg: #030712; --text: #F8FAFC; --text-dim: rgba(248,250,252,0.55); --border: rgba(34,197,94,0.08); --border-subtle: rgba(255,255,255,0.06); --bg-glass: rgba(34,197,94,0.04); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; scroll-padding-top: 80px; }
@@ -33,6 +35,12 @@
         .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; z-index: 1001; text-decoration: none; color: var(--text); }
         .nav-logo svg { width: 30px; height: 30px; }
         .nav-logo span { background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-links { display: none; align-items: center; gap: 6px; }
+        .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-dim); padding: 6px 12px; border-radius: 8px; transition: color 0.2s, background 0.2s; letter-spacing: 0.2px; text-decoration: none; }
+        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .nav-links .nav-cta { background: var(--green); color: #000; font-weight: 700; padding: 8px 18px; border-radius: 10px; margin-left: 8px; transition: transform 0.2s, box-shadow 0.2s; }
+        .nav-links .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,197,94,0.25); color: #000; background: var(--green); }
+        @media (min-width: 900px) { .nav-links { display: flex; } .burger { display: none; } }
         .burger { width: 40px; height: 40px; background: none; border: none; cursor: pointer; z-index: 1001; position: relative; display: flex; align-items: center; justify-content: center; }
         .burger span { display: block; width: 20px; height: 1.5px; background: var(--text); position: absolute; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
         .burger span:nth-child(1) { transform: translateY(-6px); }
@@ -122,6 +130,12 @@
                 <svg viewBox="0 0 100 100" fill="none"><defs><linearGradient id="nc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient><linearGradient id="np" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="100%" stop-color="#10B981" stop-opacity="0.7"/></linearGradient><linearGradient id="nv" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/></linearGradient><radialGradient id="nu" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.98"/><stop offset="40%" stop-color="white" stop-opacity="0.7"/><stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></radialGradient></defs><rect width="100" height="100" rx="22" fill="#030712"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nc)" stroke-width="1.6" opacity="0.65"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#np)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nv)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="7" fill="url(#nu)"/><circle cx="50" cy="50" r="4.5" fill="white" opacity="0.95"/><ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.5"/><circle cx="84" cy="50" r="2.8" fill="white" opacity="0.92"/><circle cx="84" cy="50" r="4" fill="#22C55E" opacity="0.25"/><circle cx="33" cy="20.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="20.5" r="4" fill="#10B981" opacity="0.25"/><circle cx="33" cy="79.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="79.5" r="4" fill="#34D399" opacity="0.25"/></svg>
                 <span>Echoelmusic</span>
             </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="faq.html">FAQ</a>
+                <a href="support.html">Support</a>
+                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">Download Free</a>
+            </div>
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
         </div>
     </div>

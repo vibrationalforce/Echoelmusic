@@ -6,7 +6,7 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v5.0.0';
+const CACHE_NAME = 'echoelmusic-v5.1.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -14,6 +14,9 @@ const STATIC_ASSETS = [
   '/app-icon.svg',
   '/manifest.json',
   '/version.json',
+  '/fonts/atkinson-regular.woff2',
+  '/fonts/atkinson-bold.woff2',
+  '/fonts/atkinson-italic.woff2',
   '/privacy.html',
   '/terms.html',
   '/impressum.html',
@@ -59,6 +62,24 @@ self.addEventListener('fetch', (event) => {
 
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
+
+  // Cache-first for immutable assets (fonts, images)
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/fonts/') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)

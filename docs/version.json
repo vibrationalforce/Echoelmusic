@@ -1,6 +1,6 @@
 {
-  "version": "5.0.0",
-  "build": "2026-02-12T23:00:00Z",
+  "version": "5.1.0",
+  "build": "2026-02-13T16:00:00Z",
   "features": {
     "liquidGlassIcon": true,
     "bioGreenTheme": true,
@@ -16,9 +16,13 @@
     "offlineMode": true,
     "noiseTexture": true,
     "glassCards": true,
-    "customDomain": true
+    "customDomain": true,
+    "selfHostedFonts": true,
+    "cacheFirstFonts": true,
+    "subpageDesktopNav": true
   },
   "changelog": [
+    "v5.1.0: Performance optimization — self-hosted fonts, desktop nav on all pages, cache-first strategy",
     "v5.0.0: Complete redesign — Liquid Glass + Bio-Green + Vaporwave identity",
     "New color system: Bio-Green (#22C55E), Emerald (#10B981), Mint (#34D399)",
     "Typography: Atkinson Hyperlegible font for accessibility and VR readability",

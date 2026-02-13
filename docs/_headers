@@ -25,6 +25,13 @@
 # SVG/images - cache 1 month
 /*.svg
   Cache-Control: public, max-age=2592000, immutable
+/*.png
+  Cache-Control: public, max-age=2592000, immutable
+
+# Fonts - cache 1 year (immutable, versioned by filename)
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
 
 # Service worker - no cache (must update immediately)
 /sw.js
