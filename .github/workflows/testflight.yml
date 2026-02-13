@@ -338,19 +338,30 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          echo "=== Files in ./build/ ==="
+          ls -la ./build/ 2>/dev/null || echo "No build directory"
           IPA=$(ls ./build/*.ipa 2>/dev/null | head -1)
           if [ -z "$IPA" ]; then
-            echo "No IPA found in ./build/"
+            echo "::error title=No IPA::No IPA found in ./build/"
             exit 1
           fi
           echo "Uploading $IPA to TestFlight..."
-          IPA_PATH="$IPA" fastlane ios upload
+          set +eo pipefail
+          IPA_PATH="$IPA" fastlane ios upload 2>&1 | tee /tmp/upload.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(tail -30 /tmp/upload.log | tr '\n' ' | ')
+            echo "::error title=Upload Failed::${ERRORS}"
+            exit 1
+          fi
+          echo "=== UPLOAD SUCCESSFUL ==="
 
       - name: "Error Summary"
         if: failure()
         run: |
           echo "## iOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          for logfile in /tmp/archive.log /tmp/export.log; do
+          for logfile in /tmp/archive.log /tmp/export.log /tmp/upload.log; do
             if [ -f "$logfile" ]; then
               echo "### $(basename $logfile)" >> $GITHUB_STEP_SUMMARY
               echo '```' >> $GITHUB_STEP_SUMMARY

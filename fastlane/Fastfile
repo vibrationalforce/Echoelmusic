@@ -40,19 +40,22 @@ def setup_api_key
   )
 end
 
-def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
+def upload_to_testflight_with_retry(api_key, changelog, ipa_path: nil, max_retries: 3)
   UI.message("Uploading to TestFlight...")
+  UI.message("IPA path: #{ipa_path || '(auto-detect)'}")
 
   retries = 0
   begin
-    upload_to_testflight(
+    params = {
       api_key: api_key,
       skip_waiting_for_build_processing: true,
       distribute_external: false,
       notify_external_testers: false,
       changelog: changelog,
       reject_build_waiting_for_review: false
-    )
+    }
+    params[:ipa] = ipa_path if ipa_path
+    upload_to_testflight(params)
     UI.success("Successfully uploaded to TestFlight!")
   rescue => e
     retries += 1
@@ -135,12 +138,15 @@ platform :ios do
     UI.header "iOS TestFlight Upload"
     api_key = setup_api_key
 
-    ipa_path = ENV["IPA_PATH"] || "./build/Echoelmusic.ipa"
+    ipa_path = ENV["IPA_PATH"] || Dir["./build/*.ipa"].first || "./build/Echoelmusic.ipa"
+    UI.message("Looking for IPA at: #{ipa_path}")
     unless File.exist?(ipa_path)
+      UI.message("Available files in ./build/:")
+      Dir["./build/*"].each { |f| UI.message("  #{f}") }
       UI.user_error!("IPA not found at #{ipa_path}!")
     end
 
-    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER}")
+    upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER}", ipa_path: ipa_path)
   end
 
   desc "Upload watchOS to TestFlight"
