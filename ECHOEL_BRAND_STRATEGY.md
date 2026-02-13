@@ -430,7 +430,7 @@ technologies including EchoSync, EchoAI, EchoSpatial, and
 EchoCloud. With over [number] users worldwide, Echoelmusic is
 democratizing music production for everyone.
 
-Contact: press@echoelmusic.io
+Contact: michaelterbuyken@gmail.com
 ```
 
 ### Social Media Strategy
