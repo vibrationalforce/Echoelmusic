@@ -77,12 +77,18 @@ def setup_signing_certs
   api_key = setup_api_key
   UI.message("Revoking stale Development certs and creating fresh ones...")
 
+  keychain_path = "#{ENV['HOME']}/Library/Keychains/build.keychain-db"
+  keychain_password = ""
+
   # Force-create a new Apple Development cert (revokes existing ones)
   cert(
     development: true,
     force: true,
     api_key: api_key,
-    generate_apple_certs: true
+    generate_apple_certs: true,
+    keychain_path: keychain_path,
+    keychain_password: keychain_password,
+    platform: "ios"
   )
   UI.success("Fresh Development certificate installed in keychain")
 end
