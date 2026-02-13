@@ -55,8 +55,10 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offs
 .menu-overlay.open a:nth-child(7){transition-delay:0.21s}
 .menu-overlay.open a:nth-child(8){transition-delay:0.24s}
 .menu-overlay.open a:nth-child(9){transition-delay:0.27s}
+.menu-overlay.open a:nth-child(10){transition-delay:0.30s}
+.menu-overlay.open a:nth-child(11){transition-delay:0.33s}
 .menu-overlay a:hover{color:#fff;background:rgba(255,255,255,0.05)}
-.menu-overlay .menu-cta{margin-top:16px;font-size:16px;font-weight:700;background:var(--green);color:#000;padding:14px 32px;border-radius:12px;transition:transform 0.2s,box-shadow 0.2s;transform:translateY(20px);opacity:0}
+.menu-overlay .menu-cta{margin-top:16px;font-size:16px;font-weight:600;background:var(--green);color:#000;padding:14px 32px;border-radius:12px;transition:transform 0.2s,box-shadow 0.2s,opacity 0.5s;transform:translateY(20px);opacity:0}
 .menu-overlay.open .menu-cta{transform:translateY(0);opacity:1;transition-delay:0.32s}
 .menu-overlay .menu-cta:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--glow);color:#000}
 
