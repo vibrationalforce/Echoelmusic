@@ -137,7 +137,7 @@ public struct BioReactiveAuraModifier: ViewModifier {
                         coherence: Float(healthKit.coherence),
                         heartRate: Float(healthKit.heartRate),
                         breathPhase: Float(healthKit.respiratoryData.breathPhase),
-                        confidence: 0.8,  // TODO: Get from WorldModel
+                        confidence: Float(min(1.0, healthKit.coherence * 1.2 + 0.2)),
                         glowRadius: Float(glowRadius)
                     ),
                     maxSampleOffset: CGSize(width: glowRadius, height: glowRadius)
