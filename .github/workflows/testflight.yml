@@ -340,9 +340,9 @@ jobs:
         run: |
           echo "=== Files in ./build/ ==="
           ls -la ./build/ 2>/dev/null || echo "No build directory"
-          IPA=$(ls ./build/*.ipa 2>/dev/null | head -1)
+          IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
           if [ -z "$IPA" ]; then
-            echo "::error title=No IPA::No IPA found in ./build/"
+            echo "::error title=No IPA::No IPA found in $(pwd)/build/"
             exit 1
           fi
           echo "Uploading $IPA to TestFlight..."
