@@ -75,15 +75,41 @@ end
 
 def setup_signing_certs
   api_key = setup_api_key
-  UI.message("Revoking stale Development certs and creating fresh ones...")
-
   keychain_path = "#{ENV['HOME']}/Library/Keychains/build.keychain-db"
   keychain_password = ""
 
-  # Force-create a new Apple Development cert (revokes existing ones)
+  # Step 1: Revoke ALL development certificates to clear the limit
+  # Fastlane's cert --force only revokes one, but the limit may already be maxed
+  UI.message("Revoking ALL development certificates via API...")
+  begin
+    token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key: ENV["ASC_KEY_CONTENT"]
+    )
+    Spaceship::ConnectAPI.token = token
+
+    certs = Spaceship::ConnectAPI::Certificate.all
+    dev_certs = certs.select { |c|
+      t = c.certificate_type
+      t == "DEVELOPMENT" || t == "IOS_DEVELOPMENT" || t == "MAC_APP_DEVELOPMENT"
+    }
+
+    UI.message("Found #{dev_certs.count} development certificate(s), revoking all...")
+    dev_certs.each do |c|
+      UI.message("  Revoking #{c.id} (#{c.certificate_type})")
+      c.delete!
+    end
+    UI.success("All #{dev_certs.count} development certificates revoked")
+  rescue => e
+    UI.important("Warning during cert revocation: #{e.message}")
+    UI.important("Continuing anyway - cert action will try to create/reuse...")
+  end
+
+  # Step 2: Create a fresh Development certificate
+  UI.message("Creating fresh Development certificate...")
   cert(
     development: true,
-    force: true,
     api_key: api_key,
     generate_apple_certs: true,
     keychain_path: keychain_path,
