@@ -19,53 +19,11 @@
     <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="canonical" href="https://echoelmusic.com/accessibility.html">
+    <link rel="stylesheet" href="shared.css">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-        :root { --green: #22C55E; --emerald: #10B981; --mint: #34D399; --rose: #F472B6; --violet: #A78BFA; --sky: #38BDF8; --bg: #030712; --text: #F8FAFC; --text-dim: rgba(248,250,252,0.65); --border: rgba(34,197,94,0.08); --border-subtle: rgba(255,255,255,0.06); --bg-glass: rgba(34,197,94,0.04); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
-        body { font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-
-        .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 24px; background: rgba(3,7,18,0.75); border-bottom: 1px solid rgba(34,197,94,0.06); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); }
-        .nav-bar { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; z-index: 1001; text-decoration: none; color: var(--text); }
-        .nav-logo svg { width: 30px; height: 30px; }
-        .nav-logo span { background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .nav-links { display: none; align-items: center; gap: 6px; }
-        .nav-links a { font-size: 13px; font-weight: 500; color: var(--text-dim); padding: 6px 12px; border-radius: 8px; transition: color 0.2s, background 0.2s; letter-spacing: 0.2px; text-decoration: none; }
-        .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.06); }
-        .nav-links .nav-cta { background: var(--green); color: #000; font-weight: 700; padding: 8px 18px; border-radius: 10px; margin-left: 8px; transition: transform 0.2s, box-shadow 0.2s; }
-        .nav-links .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(34,197,94,0.25); color: #000; background: var(--green); }
-        @media (min-width: 900px) { .nav-links { display: flex; } .burger { display: none; } }
-        .burger { width: 40px; height: 40px; background: none; border: none; cursor: pointer; z-index: 1001; position: relative; display: flex; align-items: center; justify-content: center; }
-        .burger span { display: block; width: 20px; height: 1.5px; background: var(--text); position: absolute; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
-        .burger span:nth-child(1) { transform: translateY(-6px); }
-        .burger span:nth-child(3) { transform: translateY(6px); }
-        .burger.active span:nth-child(1) { transform: rotate(45deg); }
-        .burger.active span:nth-child(2) { opacity: 0; }
-        .burger.active span:nth-child(3) { transform: rotate(-45deg); }
-        .menu-overlay { position: fixed; inset: 0; z-index: 999; background: rgba(3,7,18,0.97); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.4,0,0.2,1), visibility 0.4s; }
-        .menu-overlay.open { opacity: 1; visibility: visible; }
-        .menu-overlay nav { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .menu-overlay a { font-size: clamp(20px, 4vw, 30px); font-weight: 700; letter-spacing: -0.5px; color: var(--text-dim); padding: 8px 20px; border-radius: 12px; transition: color 0.2s, background 0.2s, transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.5s; transform: translateY(20px); opacity: 0; text-decoration: none; }
-        .menu-overlay.open a { transform: translateY(0); opacity: 1; }
-        .menu-overlay.open a:nth-child(1) { transition-delay: 0.03s; }
-        .menu-overlay.open a:nth-child(2) { transition-delay: 0.06s; }
-        .menu-overlay.open a:nth-child(3) { transition-delay: 0.09s; }
-        .menu-overlay.open a:nth-child(4) { transition-delay: 0.12s; }
-        .menu-overlay.open a:nth-child(5) { transition-delay: 0.15s; }
-        .menu-overlay.open a:nth-child(6) { transition-delay: 0.18s; }
-        .menu-overlay.open a:nth-child(7) { transition-delay: 0.21s; }
-        .menu-overlay.open a:nth-child(8) { transition-delay: 0.24s; }
-        .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
-        .menu-overlay a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-        .menu-overlay .menu-cta { margin-top: 16px; font-size: 16px; font-weight: 600; background: var(--green); color: var(--bg); padding: 14px 32px; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s, opacity 0.5s; transform: translateY(20px); opacity: 0; }
-        .menu-overlay.open .menu-cta { transform: translateY(0); opacity: 1; transition-delay: 0.32s; }
-        .menu-overlay .menu-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(34,197,94,0.3); color: var(--bg); }
+        :root { --rose: #F472B6; --violet: #A78BFA; --sky: #38BDF8; }
 
         main { max-width: 900px; margin: 0 auto; padding: 80px 24px 80px; }
         .hero { text-align: center; margin-bottom: 60px; }
@@ -111,17 +69,6 @@
         .contact-box p { color: var(--text-dim); margin-bottom: 20px; font-size: 14px; }
         .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--emerald); text-decoration: none; font-weight: 600; padding: 12px 24px; border: 1px solid var(--emerald); border-radius: 10px; transition: all 0.2s; }
         .contact-box a:hover { background: var(--emerald); color: var(--bg); }
-
-        footer { border-top: 1px solid var(--border); padding: 32px 24px; max-width: 1080px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-        .footer-copy { font-size: 12px; color: var(--text-dim); }
-        .footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
-        .footer-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
-        .footer-links a:hover { color: var(--text); }
-
-        @media (max-width: 640px) { main { padding: 80px 16px 60px; } footer { flex-direction: column; text-align: center; } .footer-links { justify-content: center; } }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-        a:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
-        .skip-link { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #22C55E; color: #000; padding: 10px 20px; border-radius: 8px; z-index: 10001; transition: top 0.3s; font-weight: 700; } .skip-link:focus { top: 16px; }
     </style>
 </head>
 <body>
@@ -255,26 +202,6 @@
         <div class="footer-links"><a href="faq.html">FAQ</a><a href="support.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="health.html">Health</a><a href="security.html">Security</a><a href="accessibility.html">Accessibility</a><a href="impressum.html">Impressum</a></div>
     </footer>
 
-    <script>
-    (function() {
-        var burger = document.getElementById('burger');
-        var overlay = document.getElementById('menuOverlay');
-        function toggleMenu() {
-            var open = burger.classList.toggle('active');
-            overlay.classList.toggle('open');
-            burger.setAttribute('aria-expanded', open);
-            burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-            document.body.style.overflow = open ? 'hidden' : '';
-        }
-        burger.addEventListener('click', toggleMenu);
-        overlay.querySelectorAll('a').forEach(function(a) {
-            a.addEventListener('click', function() { if (burger.classList.contains('active')) toggleMenu(); });
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && burger.classList.contains('active')) toggleMenu();
-        });
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(e) { console.warn('[SW]', e); }); }
-    })();
-    </script>
+    <script src="shared.js"></script>
 </body>
 </html>

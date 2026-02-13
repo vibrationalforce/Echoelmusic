@@ -19,6 +19,10 @@
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
+# 404 page
+/404.html
+  Cache-Control: public, max-age=3600
+
 # Root page
 /
   Cache-Control: public, max-age=0, must-revalidate
@@ -33,6 +37,12 @@
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
+
+# Shared CSS/JS - cache 1 week (versioned via SW cache name)
+/shared.css
+  Cache-Control: public, max-age=604800
+/shared.js
+  Cache-Control: public, max-age=604800
 
 # Service worker - no cache (must update immediately)
 /sw.js

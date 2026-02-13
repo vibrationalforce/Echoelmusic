@@ -10,6 +10,9 @@ const CACHE_NAME = 'echoelmusic-v5.2.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/404.html',
+  '/shared.css',
+  '/shared.js',
   '/favicon.svg',
   '/app-icon.svg',
   '/manifest.json',
@@ -120,9 +123,9 @@ self.addEventListener('fetch', (event) => {
           if (response) {
             return response;
           }
-          // Fallback to main page for navigation requests
+          // Fallback to 404 page for navigation requests
           if (event.request.mode === 'navigate') {
-            return caches.match('/');
+            return caches.match('/404.html');
           }
         });
       })
