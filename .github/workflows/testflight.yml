@@ -1,20 +1,15 @@
 # =============================================================================
-# ECHOELMUSIC - UNIFIED TESTFLIGHT DEPLOYMENT (RALPH WIGGUM OPTIMIZED)
+# ECHOELMUSIC - TESTFLIGHT DEPLOYMENT
 # =============================================================================
-# Single source of truth for ALL TestFlight deployments
+# Pure API Key Authentication - No manual cert/keychain management
 #
-# Usage:
-#   1. Go to Actions -> "TestFlight" -> Run workflow
-#   2. Select platform(s) and options
-#   3. Click green "Run workflow" button
+# Required Secrets (4):
+#   APP_STORE_CONNECT_KEY_ID      - ASC API Key ID (~10 chars)
+#   APP_STORE_CONNECT_ISSUER_ID   - ASC Issuer UUID (36 chars)
+#   APP_STORE_CONNECT_PRIVATE_KEY - .p8 PEM content
+#   APPLE_TEAM_ID                 - 10-char Team ID
 #
-# Features:
-#   - Consolidated 3 workflows into 1
-#   - Robust secret validation with format checks
-#   - Swift PM & DerivedData caching (40% faster builds)
-#   - Retry logic for flaky Apple APIs
-#   - Version pinning for reproducibility
-#   - Parallel platform builds for "all" selection
+# xcodebuild -allowProvisioningUpdates handles certs & profiles automatically
 # =============================================================================
 
 name: "TestFlight"
@@ -55,25 +50,20 @@ on:
         default: false
         type: boolean
 
-# Prevent concurrent deployments of the SAME platform
 concurrency:
   group: testflight-${{ github.event.inputs.platform }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  # Pin versions for reproducibility
   XCODE_VERSION: '16.2'
   XCODEGEN_VERSION: '2.42.0'
   FASTLANE_VERSION: '2.225.0'
-  RUBY_VERSION: '3.2'
-
-  # Build configuration
   BUILD_NUMBER: ${{ github.run_number }}
   CLEAN_BUILD: ${{ github.event.inputs.clean_build }}
 
 jobs:
   # ===========================================================================
-  # PREFLIGHT - Fast validation before expensive builds
+  # PREFLIGHT
   # ===========================================================================
   preflight:
     name: "Preflight"
@@ -99,101 +89,64 @@ jobs:
         run: |
           set +e
           ERRORS=0
-          WARNINGS=0
 
           echo "============================================"
           echo "  TESTFLIGHT PREFLIGHT CHECK"
           echo "============================================"
-          echo ""
           echo "Platform: ${{ github.event.inputs.platform }}"
           echo "Build: ${{ github.run_number }}"
-          echo "Actor: ${{ github.actor }}"
           echo ""
-          echo "--- Validating Secrets ---"
 
-          # APP_STORE_CONNECT_KEY_ID (should be ~10 chars)
           if [ -z "$ASC_KEY_ID" ]; then
             echo "[FAIL] APP_STORE_CONNECT_KEY_ID: Not set"
             ERRORS=$((ERRORS + 1))
           elif [ ${#ASC_KEY_ID} -lt 8 ]; then
-            echo "[FAIL] APP_STORE_CONNECT_KEY_ID: Too short (${#ASC_KEY_ID} chars, need 8+)"
+            echo "[FAIL] APP_STORE_CONNECT_KEY_ID: Too short (${#ASC_KEY_ID} chars)"
             ERRORS=$((ERRORS + 1))
           else
             echo "[OK] APP_STORE_CONNECT_KEY_ID: ${#ASC_KEY_ID} chars"
           fi
 
-          # APP_STORE_CONNECT_ISSUER_ID (UUID format, 36 chars)
           if [ -z "$ASC_ISSUER_ID" ]; then
             echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID: Not set"
             ERRORS=$((ERRORS + 1))
           elif [ ${#ASC_ISSUER_ID} -lt 32 ]; then
-            echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID: Too short (${#ASC_ISSUER_ID} chars, need 32+)"
+            echo "[FAIL] APP_STORE_CONNECT_ISSUER_ID: Too short (${#ASC_ISSUER_ID} chars)"
             ERRORS=$((ERRORS + 1))
           else
             echo "[OK] APP_STORE_CONNECT_ISSUER_ID: ${#ASC_ISSUER_ID} chars"
           fi
 
-          # APP_STORE_CONNECT_PRIVATE_KEY (PEM format, ~300+ chars)
           if [ -z "$ASC_KEY" ]; then
             echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY: Not set"
             ERRORS=$((ERRORS + 1))
           elif [ ${#ASC_KEY} -lt 200 ]; then
-            echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY: Too short (${#ASC_KEY} chars, need 200+)"
+            echo "[FAIL] APP_STORE_CONNECT_PRIVATE_KEY: Too short (${#ASC_KEY} chars)"
             ERRORS=$((ERRORS + 1))
-          elif ! echo "$ASC_KEY" | grep -q "BEGIN.*PRIVATE KEY"; then
-            echo "[WARN] APP_STORE_CONNECT_PRIVATE_KEY: Missing PEM header"
-            echo "       Should start with '-----BEGIN PRIVATE KEY-----'"
-            WARNINGS=$((WARNINGS + 1))
           else
-            echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY: ${#ASC_KEY} chars (PEM format)"
+            echo "[OK] APP_STORE_CONNECT_PRIVATE_KEY: ${#ASC_KEY} chars"
           fi
 
-          # APPLE_TEAM_ID (10 alphanumeric chars)
           if [ -z "$TEAM_ID" ]; then
             echo "[FAIL] APPLE_TEAM_ID: Not set"
             ERRORS=$((ERRORS + 1))
-          elif [ ${#TEAM_ID} -ne 10 ]; then
-            echo "[WARN] APPLE_TEAM_ID: Unexpected length (${#TEAM_ID} chars, expected 10)"
-            WARNINGS=$((WARNINGS + 1))
           else
             echo "[OK] APPLE_TEAM_ID: ${#TEAM_ID} chars"
           fi
 
           echo ""
-          echo "--- Validating Files ---"
-
           for f in Package.swift project.yml fastlane/Fastfile fastlane/Appfile; do
-            if [ -f "$f" ]; then
-              echo "[OK] $f"
-            else
-              echo "[FAIL] $f: Missing"
-              ERRORS=$((ERRORS + 1))
-            fi
+            if [ -f "$f" ]; then echo "[OK] $f"; else echo "[FAIL] $f: Missing"; ERRORS=$((ERRORS + 1)); fi
           done
 
           echo ""
-          echo "============================================"
-
           if [ $ERRORS -gt 0 ]; then
-            echo "FAILED: $ERRORS error(s), $WARNINGS warning(s)"
-            echo ""
-            echo "Configure secrets at:"
-            echo "https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo ""
-            echo "Required secrets:"
-            echo "  - APP_STORE_CONNECT_KEY_ID"
-            echo "  - APP_STORE_CONNECT_ISSUER_ID"
-            echo "  - APP_STORE_CONNECT_PRIVATE_KEY"
-            echo "  - APPLE_TEAM_ID"
+            echo "FAILED: $ERRORS error(s)"
+            echo "Configure secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
             echo "ready=false" >> $GITHUB_OUTPUT
             exit 1
           fi
-
-          if [ $WARNINGS -gt 0 ]; then
-            echo "PASSED with $WARNINGS warning(s)"
-          else
-            echo "PASSED: All checks OK"
-          fi
+          echo "PASSED: All checks OK"
           echo "ready=true" >> $GITHUB_OUTPUT
 
       - name: "Parse Platforms"
@@ -201,15 +154,13 @@ jobs:
         run: |
           PLATFORM="${{ github.event.inputs.platform }}"
           if [ "$PLATFORM" = "all" ]; then
-            # All Apple platforms EXCEPT macOS (saves 10x macOS runner minutes)
             echo 'platforms=["ios","watchos","tvos","visionos"]' >> $GITHUB_OUTPUT
           else
             echo "platforms=[\"$PLATFORM\"]" >> $GITHUB_OUTPUT
           fi
-          echo "Building: $PLATFORM"
 
   # ===========================================================================
-  # COMPILE CHECK - Fast simulator build to catch errors before signing
+  # COMPILE CHECK
   # ===========================================================================
   compile_check:
     name: "Compile Check"
@@ -244,17 +195,12 @@ jobs:
 
       - name: "Generate Project"
         run: |
-          # Use placeholder Team ID for simulator builds
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"PLACEHOLDER1\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
       - name: "Compile for iOS Simulator (no signing)"
         run: |
-          echo "=== Compile Check: iOS Simulator ==="
-          echo "This catches compile errors BEFORE expensive signing steps"
-          echo ""
-
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
@@ -268,27 +214,14 @@ jobs:
 
           RESULT=${PIPESTATUS[0]}
           if [ $RESULT -eq 0 ]; then
-            echo ""
             echo "=== COMPILE CHECK PASSED ==="
-            echo "Code compiles successfully. Proceeding to signed builds."
           else
-            echo ""
             echo "=== COMPILE CHECK FAILED ==="
-            echo "Fix compile errors before attempting TestFlight deploy."
-            echo ""
-            echo "--- Errors ---"
             grep -E "error:" /tmp/compile_check.log | head -30
-
-            # Output errors to step summary so they're visible in the UI
             echo "## Compile Check Failed" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             grep -E "error:" /tmp/compile_check.log | head -40 >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-
-            # Output as annotations
-            ERRORS=$(grep -E "error:" /tmp/compile_check.log | head -20 || echo "No error lines found")
-            echo "::error title=Compile Errors::${ERRORS//$'\n'/ | }"
-
             exit 1
           fi
 
@@ -301,7 +234,7 @@ jobs:
           retention-days: 3
 
   # ===========================================================================
-  # iOS DEPLOYMENT (includes Widgets + App Clip)
+  # iOS DEPLOYMENT
   # ===========================================================================
   ios:
     name: "iOS"
@@ -330,164 +263,35 @@ jobs:
             ~/.swiftpm
             .build
           key: ${{ runner.os }}-spm-ios-${{ hashFiles('Package.swift', 'Package.resolved') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-ios-
+          restore-keys: ${{ runner.os }}-spm-ios-
 
       - name: "Cache DerivedData"
         uses: actions/cache@v4
         with:
           path: build/DerivedData
           key: ${{ runner.os }}-derived-ios-${{ hashFiles('project.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-derived-ios-
+          restore-keys: ${{ runner.os }}-derived-ios-
 
       - name: "Install Tools"
         run: |
-          # XcodeGen (pinned version)
           brew install xcodegen || true
-
-          # Fastlane (pinned version)
           gem install fastlane:${{ env.FASTLANE_VERSION }} -N --no-document
-
-          echo "Installed versions:"
-          xcodegen --version || echo "xcodegen: installed"
-          fastlane --version
 
       - name: "Generate Project"
         run: |
-          # Update Team ID
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-
-          # Verify sed worked
-          if ! grep -q "DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"" project.yml; then
-            echo "ERROR: Failed to set DEVELOPMENT_TEAM in project.yml"
-            exit 1
-          fi
-
-          # Update Build Number
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
-
-          # Generate Xcode project
           xcodegen generate --spec project.yml
 
-          echo "Project generated successfully"
-          ls -la *.xcodeproj
-
-      - name: "Verify Project"
-        run: |
-          echo "=== Verifying Project Generation ==="
-
-          # List all schemes to confirm project was generated
-          echo "Available schemes:"
-          xcodebuild -project Echoelmusic.xcodeproj -list
-
-          # Verify the main scheme exists
-          if ! xcodebuild -project Echoelmusic.xcodeproj -list | grep -q "Echoelmusic$"; then
-            echo "::error::Scheme 'Echoelmusic' not found in project!"
-            exit 1
-          fi
-          echo "Scheme 'Echoelmusic' found"
-
-          # Resolve dependencies only (fast, catches SPM issues without full build)
-          echo ""
-          echo "=== Resolving Dependencies ==="
-          xcodebuild -resolvePackageDependencies \
-            -project Echoelmusic.xcodeproj \
-            -scheme Echoelmusic \
-            -derivedDataPath ./build/DerivedData \
-            2>&1 | tail -20
-
-          echo ""
-          echo "=== Project verified, proceeding to signed archive build ==="
-
-      - name: "Setup Keychain"
-        id: keychain
-        env:
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
-        run: |
-          # Create a temporary keychain for this CI run
-          KEYCHAIN_NAME="ci_ios_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          # Delete existing keychain if it exists
-          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
-
-          # Clean stale signing certificates from all keychains to prevent conflicts
-          echo "Cleaning stale signing certificates..."
-          for CERT_NAME in "Apple Development" "Apple Distribution" "iPhone Distribution" "iPhone Developer" "3rd Party Mac Developer"; do
-            security find-certificate -c "$CERT_NAME" -a -Z 2>/dev/null | grep "SHA-1" | awk '{print $NF}' | while read -r HASH; do
-              echo "Removing stale cert: $CERT_NAME ($HASH)"
-              security delete-certificate -Z "$HASH" 2>/dev/null || true
-            done
-          done
-          echo "Stale certificates cleaned"
-
-          # Create and configure keychain
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-
-          # Add to keychain search list (prepend to existing)
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-
-          # Set as default for this session
-          security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Import distribution certificate if available
-          if [ -n "$DISTRIBUTION_CERTIFICATE_P12" ]; then
-            echo "Importing distribution certificate into CI keychain..."
-            echo "$DISTRIBUTION_CERTIFICATE_P12" | base64 --decode > /tmp/dist_cert.p12
-
-            security import /tmp/dist_cert.p12 \
-              -k "$KEYCHAIN_NAME" \
-              -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
-              -T /usr/bin/codesign \
-              -T /usr/bin/security \
-              -T /usr/bin/productbuild
-
-            rm -f /tmp/dist_cert.p12
-            echo "Distribution certificate imported successfully"
-          else
-            echo "No DISTRIBUTION_CERTIFICATE_P12 secret found, relying on cloud-managed signing"
-          fi
-
-          # Allow codesign access
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
-
-          # Verify keychain contents
-          echo "=== Keychain certificates ==="
-          security find-identity -v -p codesigning "$KEYCHAIN_NAME" || echo "No signing identities yet (will be created by xcodebuild)"
-          echo "============================="
-
-          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-          echo "Keychain ready: $KEYCHAIN_NAME"
-
-      - name: "Setup App Store Connect API Key"
+      - name: "Setup API Key"
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
-          # Create API key file for xcodebuild cloud-managed signing
-          # With -authenticationKeyPath, xcodebuild will:
-          # 1. Automatically create/download distribution certificates
-          # 2. Create/download provisioning profiles for all bundle IDs
-          # 3. Handle all code signing without local certificates
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-
-          # Verify the key file was created correctly
-          if [ ! -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 ]; then
-            echo "ERROR: Failed to create API key file"
-            exit 1
-          fi
-
-          echo "API Key file created at ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
+          echo "API Key ready for automatic signing"
 
       - name: "Deploy to TestFlight"
         env:
@@ -495,54 +299,28 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
           set -o pipefail
-
-          echo "=== iOS Deploy ==="
-          echo "Xcode: $(xcodebuild -version | head -1)"
-          echo "=================="
-
-          # Single attempt to conserve macOS runner minutes
+          echo "=== iOS Deploy (Automatic Signing) ==="
           fastlane ios beta --verbose 2>&1 | tee /tmp/fastlane_output.log
           RESULT=${PIPESTATUS[0]}
-
           if [ $RESULT -eq 0 ]; then
             echo "iOS deployment successful!"
           else
-            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
             exit 1
           fi
 
-      - name: "Dump Fastlane Errors to Summary"
+      - name: "Error Summary"
         if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           echo "## iOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No fastlane log found" >> $GITHUB_STEP_SUMMARY
+          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-          # Extract xcodebuild errors (broad pattern to catch all error types)
-          XCODE_ERRORS=$(grep -iE "error:|error\b|❌|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No xcodebuild errors found")
-          echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
-
-          # Also capture the Fastlane summary error
-          FASTLANE_ERRORS=$(grep -iE "error\[|user_error|build_failure" /tmp/fastlane_output.log 2>/dev/null | tail -10 || echo "Unknown error")
-          echo "::error title=Fastlane Summary::${FASTLANE_ERRORS//$'\n'/ | }"
-
-          # Capture last 50 lines of build log (usually contains the actual failure)
-          TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail available")
-          echo "::error title=Build Log Tail (last 50 lines)::${TAIL_LOG//$'\n'/ | }"
-
-          # Capture the xcodebuild command that was used
-          XCBUILD_CMD=$(grep -A2 "xcodebuild.*-archivePath\|xcodebuild.*archive" /tmp/fastlane_output.log 2>/dev/null | head -5 || echo "xcodebuild command not found")
-          echo "::warning title=Xcodebuild Command::${XCBUILD_CMD//$'\n'/ | }"
+          XCODE_ERRORS=$(grep -iE "error:|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|undefined symbol|duplicate symbol|framework not found|library not found" /tmp/fastlane_output.log 2>/dev/null | tail -30 || echo "No errors found")
+          echo "::error title=Build Errors::${XCODE_ERRORS//$'\n'/ | }"
 
       - name: "Upload Build Logs"
         if: always()
@@ -550,32 +328,18 @@ jobs:
         with:
           name: ios-build-logs
           path: |
-            /tmp/xcodebuild_test.log
             /tmp/fastlane_output.log
             build/logs/**
             build/*.ipa
           retention-days: 7
           if-no-files-found: warn
 
-      - name: "Upload Certificate Export"
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-certificate-export
-          path: |
-            /tmp/cert_p12_base64.txt
-            /tmp/cert_p12_password.txt
-          retention-days: 1
-          if-no-files-found: ignore
-
       - name: "Cleanup"
         if: always()
-        run: |
-          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
-          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
+        run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
-  # macOS DEPLOYMENT (includes AUv3 Extension)
+  # macOS DEPLOYMENT
   # ===========================================================================
   macos:
     name: "macOS"
@@ -604,8 +368,7 @@ jobs:
             ~/.swiftpm
             .build
           key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
-          restore-keys: |
-            ${{ runner.os }}-spm-macos-
+          restore-keys: ${{ runner.os }}-spm-macos-
 
       - name: "Install Tools"
         run: |
@@ -615,66 +378,10 @@ jobs:
       - name: "Generate Project"
         run: |
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
-          if ! grep -q "DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"" project.yml; then
-            echo "ERROR: Failed to set DEVELOPMENT_TEAM"
-            exit 1
-          fi
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
-        id: keychain
-        env:
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
-        run: |
-          KEYCHAIN_NAME="ci_macos_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
-
-          # Clean stale signing certificates
-          echo "Cleaning stale signing certificates..."
-          for CERT_NAME in "Apple Development" "Apple Distribution" "3rd Party Mac Developer" "Developer ID"; do
-            security find-certificate -c "$CERT_NAME" -a -Z 2>/dev/null | grep "SHA-1" | awk '{print $NF}' | while read -r HASH; do
-              echo "Removing stale cert: $CERT_NAME ($HASH)"
-              security delete-certificate -Z "$HASH" 2>/dev/null || true
-            done
-          done
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-
-          # Import distribution certificate if available
-          if [ -n "$DISTRIBUTION_CERTIFICATE_P12" ]; then
-            echo "Importing distribution certificate into CI keychain..."
-            echo "$DISTRIBUTION_CERTIFICATE_P12" | base64 --decode > /tmp/dist_cert.p12
-            security import /tmp/dist_cert.p12 \
-              -k "$KEYCHAIN_NAME" \
-              -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
-              -T /usr/bin/codesign \
-              -T /usr/bin/security \
-              -T /usr/bin/productbuild
-            rm -f /tmp/dist_cert.p12
-            echo "Distribution certificate imported successfully"
-          else
-            echo "No DISTRIBUTION_CERTIFICATE_P12 secret found, relying on cloud-managed signing"
-          fi
-
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || echo "Partition list not set (OK for cloud signing)"
-
-          echo "=== Keychain certificates ==="
-          security find-identity -v -p codesigning "$KEYCHAIN_NAME" || echo "No signing identities yet"
-          echo "============================="
-
-          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Setup App Store Connect API Key"
+      - name: "Setup API Key"
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -682,7 +389,6 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "xcodebuild will use cloud-managed signing (no local certificates needed)"
 
       - name: "Deploy to TestFlight"
         env:
@@ -690,36 +396,26 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
           set -o pipefail
-
-          echo "=== macOS Deploy ==="
-
+          echo "=== macOS Deploy (Automatic Signing) ==="
           fastlane mac beta --verbose 2>&1 | tee /tmp/fastlane_output.log
           RESULT=${PIPESTATUS[0]}
-
           if [ $RESULT -eq 0 ]; then
             echo "macOS deployment successful!"
           else
-            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
             exit 1
           fi
 
-      - name: "Dump Fastlane Errors to Summary"
+      - name: "Error Summary"
         if: failure()
         run: |
           echo "## macOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No fastlane log found" >> $GITHUB_STEP_SUMMARY
+          tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|no such module|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
-          echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
-          TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail available")
-          echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
 
       - name: "Upload Build Logs"
         if: always()
@@ -734,9 +430,7 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: |
-          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
-          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
+        run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # watchOS DEPLOYMENT
@@ -777,53 +471,7 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
-        id: keychain
-        env:
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
-        run: |
-          KEYCHAIN_NAME="ci_watchos_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
-
-          echo "Cleaning stale signing certificates..."
-          for CERT_NAME in "Apple Development" "Apple Distribution" "iPhone Distribution" "iPhone Developer"; do
-            security find-certificate -c "$CERT_NAME" -a -Z 2>/dev/null | grep "SHA-1" | awk '{print $NF}' | while read -r HASH; do
-              security delete-certificate -Z "$HASH" 2>/dev/null || true
-            done
-          done
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-
-          if [ -n "$DISTRIBUTION_CERTIFICATE_P12" ]; then
-            echo "Importing distribution certificate into CI keychain..."
-            echo "$DISTRIBUTION_CERTIFICATE_P12" | base64 --decode > /tmp/dist_cert.p12
-            security import /tmp/dist_cert.p12 \
-              -k "$KEYCHAIN_NAME" \
-              -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
-              -T /usr/bin/codesign \
-              -T /usr/bin/security \
-              -T /usr/bin/productbuild
-            rm -f /tmp/dist_cert.p12
-            echo "Distribution certificate imported successfully"
-          else
-            echo "No DISTRIBUTION_CERTIFICATE_P12, relying on cloud-managed signing"
-          fi
-
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
-          security find-identity -v -p codesigning "$KEYCHAIN_NAME" || echo "No signing identities yet"
-
-          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Setup App Store Connect API Key"
+      - name: "Setup API Key"
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -831,7 +479,6 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "xcodebuild will use cloud-managed signing"
 
       - name: "Deploy to TestFlight"
         env:
@@ -839,36 +486,26 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
           set -o pipefail
-
-          echo "=== watchOS Deploy ==="
-
+          echo "=== watchOS Deploy (Automatic Signing) ==="
           fastlane ios beta_watchos --verbose 2>&1 | tee /tmp/fastlane_output.log
           RESULT=${PIPESTATUS[0]}
-
           if [ $RESULT -eq 0 ]; then
             echo "watchOS deployment successful!"
           else
-            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
             exit 1
           fi
 
-      - name: "Dump Fastlane Errors to Summary"
+      - name: "Error Summary"
         if: failure()
         run: |
           echo "## watchOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
-          echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
-          TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail")
-          echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
 
       - name: "Upload Build Logs"
         if: always()
@@ -883,9 +520,7 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: |
-          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
-          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
+        run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # tvOS DEPLOYMENT
@@ -926,53 +561,7 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
-        id: keychain
-        env:
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
-        run: |
-          KEYCHAIN_NAME="ci_tvos_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
-
-          echo "Cleaning stale signing certificates..."
-          for CERT_NAME in "Apple Development" "Apple Distribution" "iPhone Distribution" "iPhone Developer"; do
-            security find-certificate -c "$CERT_NAME" -a -Z 2>/dev/null | grep "SHA-1" | awk '{print $NF}' | while read -r HASH; do
-              security delete-certificate -Z "$HASH" 2>/dev/null || true
-            done
-          done
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-
-          if [ -n "$DISTRIBUTION_CERTIFICATE_P12" ]; then
-            echo "Importing distribution certificate into CI keychain..."
-            echo "$DISTRIBUTION_CERTIFICATE_P12" | base64 --decode > /tmp/dist_cert.p12
-            security import /tmp/dist_cert.p12 \
-              -k "$KEYCHAIN_NAME" \
-              -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
-              -T /usr/bin/codesign \
-              -T /usr/bin/security \
-              -T /usr/bin/productbuild
-            rm -f /tmp/dist_cert.p12
-            echo "Distribution certificate imported successfully"
-          else
-            echo "No DISTRIBUTION_CERTIFICATE_P12, relying on cloud-managed signing"
-          fi
-
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
-          security find-identity -v -p codesigning "$KEYCHAIN_NAME" || echo "No signing identities yet"
-
-          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Setup App Store Connect API Key"
+      - name: "Setup API Key"
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -980,7 +569,6 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "xcodebuild will use cloud-managed signing"
 
       - name: "Deploy to TestFlight"
         env:
@@ -988,36 +576,26 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
           set -o pipefail
-
-          echo "=== tvOS Deploy ==="
-
+          echo "=== tvOS Deploy (Automatic Signing) ==="
           fastlane ios beta_tvos --verbose 2>&1 | tee /tmp/fastlane_output.log
           RESULT=${PIPESTATUS[0]}
-
           if [ $RESULT -eq 0 ]; then
             echo "tvOS deployment successful!"
           else
-            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
             exit 1
           fi
 
-      - name: "Dump Fastlane Errors to Summary"
+      - name: "Error Summary"
         if: failure()
         run: |
           echo "## tvOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
-          echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
-          TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail")
-          echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
 
       - name: "Upload Build Logs"
         if: always()
@@ -1032,9 +610,7 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: |
-          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
-          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
+        run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # visionOS DEPLOYMENT
@@ -1075,53 +651,7 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Setup Keychain"
-        id: keychain
-        env:
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
-        run: |
-          KEYCHAIN_NAME="ci_visionos_${{ github.run_id }}.keychain-db"
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
-
-          echo "Cleaning stale signing certificates..."
-          for CERT_NAME in "Apple Development" "Apple Distribution" "iPhone Distribution" "iPhone Developer"; do
-            security find-certificate -c "$CERT_NAME" -a -Z 2>/dev/null | grep "SHA-1" | awk '{print $NF}' | while read -r HASH; do
-              security delete-certificate -Z "$HASH" 2>/dev/null || true
-            done
-          done
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
-          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | tr -d '"')
-          security default-keychain -s "$KEYCHAIN_NAME"
-
-          if [ -n "$DISTRIBUTION_CERTIFICATE_P12" ]; then
-            echo "Importing distribution certificate into CI keychain..."
-            echo "$DISTRIBUTION_CERTIFICATE_P12" | base64 --decode > /tmp/dist_cert.p12
-            security import /tmp/dist_cert.p12 \
-              -k "$KEYCHAIN_NAME" \
-              -P "$DISTRIBUTION_CERTIFICATE_PASSWORD" \
-              -T /usr/bin/codesign \
-              -T /usr/bin/security \
-              -T /usr/bin/productbuild
-            rm -f /tmp/dist_cert.p12
-            echo "Distribution certificate imported successfully"
-          else
-            echo "No DISTRIBUTION_CERTIFICATE_P12, relying on cloud-managed signing"
-          fi
-
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME" 2>/dev/null || true
-          security find-identity -v -p codesigning "$KEYCHAIN_NAME" || echo "No signing identities yet"
-
-          echo "keychain_name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
-          echo "KEYCHAIN_PATH=$HOME/Library/Keychains/$KEYCHAIN_NAME" >> $GITHUB_ENV
-          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
-
-      - name: "Setup App Store Connect API Key"
+      - name: "Setup API Key"
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -1129,7 +659,6 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_KEY_CONTENT" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "xcodebuild will use cloud-managed signing"
 
       - name: "Deploy to TestFlight"
         env:
@@ -1137,36 +666,26 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.DISTRIBUTION_CERTIFICATE_P12 }}
-          DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
         run: |
           set -o pipefail
-
-          echo "=== visionOS Deploy ==="
-
+          echo "=== visionOS Deploy (Automatic Signing) ==="
           fastlane ios beta_visionos --verbose 2>&1 | tee /tmp/fastlane_output.log
           RESULT=${PIPESTATUS[0]}
-
           if [ $RESULT -eq 0 ]; then
             echo "visionOS deployment successful!"
           else
-            echo "=== Last 100 lines ==="
             tail -100 /tmp/fastlane_output.log || true
             exit 1
           fi
 
-      - name: "Dump Fastlane Errors to Summary"
+      - name: "Error Summary"
         if: failure()
         run: |
           echo "## visionOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           tail -200 /tmp/fastlane_output.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "No log" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          XCODE_ERRORS=$(grep -iE "error:|error\b|BUILD FAILED|ARCHIVE FAILED|No signing certificate|no provisioning profile|Code Sign error|No account|certificate.*not found|profile.*not found|Signing for|No profiles|Revoke certificate|undefined symbol|ld:|linker|fatal|duplicate symbol|framework not found|library not found|clang:" /tmp/fastlane_output.log 2>/dev/null | grep -v "::warning" | tail -30 || echo "No errors found")
-          echo "::error title=Xcodebuild Errors::${XCODE_ERRORS//$'\n'/ | }"
-          TAIL_LOG=$(tail -50 /tmp/fastlane_output.log 2>/dev/null || echo "No log tail")
-          echo "::error title=Build Log Tail::${TAIL_LOG//$'\n'/ | }"
 
       - name: "Upload Build Logs"
         if: always()
@@ -1181,9 +700,7 @@ jobs:
 
       - name: "Cleanup"
         if: always()
-        run: |
-          security delete-keychain "${{ steps.keychain.outputs.keychain_name }}" 2>/dev/null || true
-          rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
+        run: rm -rf ~/.appstoreconnect/private_keys 2>/dev/null || true
 
   # ===========================================================================
   # SUMMARY
@@ -1205,7 +722,6 @@ jobs:
           echo "| Build | ${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Only | ${{ github.event.inputs.build_only }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -1219,18 +735,4 @@ jobs:
           echo "| tvOS | ${{ needs.tvos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| visionOS | ${{ needs.visionos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Provide actionable next steps
-          if [ "${{ needs.compile_check.result }}" = "failure" ]; then
-            echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
-            echo "Compile check failed. Fix build errors before retrying." >> $GITHUB_STEP_SUMMARY
-            echo "Download the **compile-check-log** artifact for error details." >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ github.event.inputs.build_only }}" = "true" ]; then
-            echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
-            echo "Build-only mode: Compile check passed!" >> $GITHUB_STEP_SUMMARY
-            echo "Re-run with **build_only=false** to deploy to TestFlight." >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
           echo "[Open App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY

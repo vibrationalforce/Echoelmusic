@@ -1,10 +1,10 @@
 # =============================================================================
 # ECHOELMUSIC - MULTI-PLATFORM FASTLANE CONFIGURATION
 # =============================================================================
-# Version: 3.0.0 - Phase 10000 ULTIMATE MODE
+# Pure API Key Authentication - Automatic Signing
 #
 # Supported Platforms:
-# - iOS (iPhone + iPad) with AUv3
+# - iOS (iPhone + iPad)
 # - macOS (Apple Silicon + Intel) with AUv3
 # - watchOS (Apple Watch)
 # - tvOS (Apple TV)
@@ -16,7 +16,8 @@
 #   fastlane ios beta_watchos      # Upload watchOS to TestFlight
 #   fastlane ios beta_tvos         # Upload tvOS to TestFlight
 #   fastlane ios beta_visionos     # Upload visionOS to TestFlight
-#   fastlane ios beta_all          # Upload ALL platforms to TestFlight
+#   fastlane ios beta_all_ios      # Upload ALL iOS platforms to TestFlight
+#   fastlane beta_all              # Upload ALL platforms to TestFlight
 # =============================================================================
 
 default_platform(:ios)
@@ -30,7 +31,6 @@ BUILD_NUMBER = ENV["BUILD_NUMBER"] || "1"
 # =============================================================================
 
 def setup_api_key
-  # Validate all required environment variables with helpful messages
   missing = []
   missing << "ASC_KEY_ID" unless ENV["ASC_KEY_ID"]&.length.to_i > 0
   missing << "ASC_ISSUER_ID" unless ENV["ASC_ISSUER_ID"]&.length.to_i > 0
@@ -39,15 +39,12 @@ def setup_api_key
 
   unless missing.empty?
     UI.error("Missing required environment variables: #{missing.join(', ')}")
-    UI.error("Set these in GitHub Secrets or environment")
     UI.user_error!("Cannot proceed without App Store Connect credentials")
   end
 
-  # Validate key format
   key_content = ENV["ASC_KEY_CONTENT"]
   unless key_content.include?("BEGIN") && key_content.include?("PRIVATE KEY")
     UI.important("Warning: ASC_KEY_CONTENT may not be in correct PEM format")
-    UI.message("Expected format: -----BEGIN PRIVATE KEY-----...-----END PRIVATE KEY-----")
   end
 
   UI.message("Setting up App Store Connect API key...")
@@ -60,335 +57,19 @@ def setup_api_key
   )
 end
 
-def setup_keychain
-  keychain_path = ENV["KEYCHAIN_PATH"] || "~/Library/Keychains/login.keychain-db"
-  keychain_password = ENV["KEYCHAIN_PASSWORD"] || ""
-  UI.message("Using keychain: #{keychain_path}")
-  { path: keychain_path, password: keychain_password }
-end
-
-# Write ASC API key to disk for xcodebuild authentication
-def write_api_key_to_disk
-  key_dir = File.expand_path("~/.private_keys")
-  FileUtils.mkdir_p(key_dir)
-  key_path = File.join(key_dir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
-  File.write(key_path, ENV['ASC_KEY_CONTENT'])
-  UI.message("API key written to: #{key_path}")
-  key_path
-end
-
-# =============================================================================
-# SIGNING STRATEGY: Manual Signing with cert + sigh (Industry Standard CI)
-# =============================================================================
-# Problem: Xcode Automatic signing on ephemeral CI runners ALWAYS fails.
-# It finds stale cloud-managed development certs in the Apple portal whose
-# private keys are on destroyed runners. This cannot be fixed by:
-# - Revoking certs (Spaceship can't revoke cloud-managed certs)
-# - Creating new certs (Xcode still prefers cloud-managed ones)
-# - Skipping signing (export step needs a signed archive)
-#
-# Solution: MANUAL signing with Fastlane cert + sigh.
-# 1. cert(force:true) creates an Apple Distribution cert + private key
-# 2. sigh creates/downloads an App Store provisioning profile
-# 3. Manual signing bypasses cloud-managed cert lookup entirely
-# 4. xcodebuild uses exactly the cert + profile we specify
-# =============================================================================
-
-# Setup Manual signing: create cert + provisioning profile for a platform
-# Optimized: Only revokes certs when necessary (avoids cert race conditions)
-def setup_manual_signing(api_key, platform = "ios")
-  keychain_path = ENV['KEYCHAIN_PATH']
-  keychain_password = ENV['KEYCHAIN_PASSWORD'] || ""
-
-  # Map platform to sigh platform parameter
-  sigh_platform = case platform
-  when "ios", "watchos", "visionos" then "ios"
-  when "macos" then "macos"
-  when "tvos" then "tvos"
-  else "ios"
-  end
-
-  # Map platform to bundle ID
-  bundle_id = case platform
-  when "watchos" then "com.echoelmusic.app.watchkitapp"
-  else "com.echoelmusic.app"
-  end
-
-  UI.message("=" * 60)
-  UI.message("Manual Signing Setup: #{platform} (#{bundle_id})")
-  UI.message("Keychain: #{keychain_path || 'default'}")
-  UI.message("=" * 60)
-
-  # Step 1: Smart cert cleanup - only revoke what's necessary
-  UI.message("Checking certificates at Apple Developer Portal...")
-  begin
-    require 'spaceship'
-    require 'time'
-    token = Spaceship::ConnectAPI::Token.create(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key: ENV["ASC_KEY_CONTENT"]
-    )
-    Spaceship::ConnectAPI.token = token
-    all_certs = Spaceship::ConnectAPI::Certificate.all
-    UI.message("Portal certificates (#{all_certs.count} total):")
-    all_certs.each do |c|
-      exp = parse_cert_date(c.expiration_date).strftime('%Y-%m-%d') rescue "unknown"
-      UI.message("  #{c.id}: #{c.certificate_type} (expires #{exp})")
-    end
-
-    # Revoke ALL development certs (stale from ephemeral CI runners, always safe)
-    dev_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DEVELOPMENT") }
-    if dev_certs.any?
-      UI.message("Revoking #{dev_certs.count} stale development cert(s)...")
-      dev_certs.each do |c|
-        begin
-          c.delete!
-          UI.success("  Revoked dev cert: #{c.id}")
-        rescue => e
-          UI.important("  Could not revoke #{c.id}: #{e.message}")
-        end
-      end
-    end
-
-    # For distribution certs: only revoke if at or over the 2-cert limit
-    # This is safer than revoking ALL, especially for serialized multi-platform builds
-    dist_certs = all_certs.select { |c| c.certificate_type.to_s.include?("DISTRIBUTION") }
-    max_dist_certs = 2
-    if dist_certs.count >= max_dist_certs
-      # Sort by expiration, revoke oldest to make room for 1 new cert
-      sorted = dist_certs.sort_by { |c| parse_cert_date(c.expiration_date) }
-      to_revoke = sorted.first(dist_certs.count - max_dist_certs + 1)
-      UI.message("At cert limit (#{dist_certs.count}/#{max_dist_certs}), revoking #{to_revoke.count} oldest...")
-      to_revoke.each do |c|
-        begin
-          c.delete!
-          UI.success("  Revoked dist cert: #{c.id}")
-        rescue => e
-          UI.important("  Could not revoke #{c.id}: #{e.message}")
-        end
-      end
-    else
-      UI.message("Distribution cert count OK (#{dist_certs.count}/#{max_dist_certs} max)")
-    end
-  rescue => e
-    UI.important("Spaceship cert check: #{e.message}")
-    UI.message("Continuing — cert() will handle creation")
-  end
-
-  # Step 2: Create Apple Distribution certificate with private key in CI keychain
-  UI.message("Creating Apple Distribution certificate...")
-  cert(
-    force: true,
-    api_key: api_key,
-    keychain_path: keychain_path,
-    keychain_password: keychain_password
-  )
-  UI.success("Apple Distribution cert created with private key in keychain")
-
-  # Log keychain identities to confirm cert is installed
-  if keychain_path
-    Actions.sh("security find-identity -v -p codesigning '#{keychain_path}' 2>/dev/null || echo 'No identities'", log: true)
-  end
-
-  # Step 3: Create/download App Store provisioning profile
-  UI.message("Getting App Store provisioning profile for #{bundle_id}...")
-  sigh(
-    app_identifier: bundle_id,
-    api_key: api_key,
-    force: true,
-    platform: sigh_platform
-  )
-
-  profile_name = Actions.lane_context[SharedValues::SIGH_NAME]
-  profile_uuid = Actions.lane_context[SharedValues::SIGH_UDID]
-
-  UI.success("=" * 60)
-  UI.success("Signing ready: #{profile_name} (UUID: #{profile_uuid})")
-  UI.success("=" * 60)
-
-  { name: profile_name, uuid: profile_uuid, bundle_id: bundle_id }
-end
-
-# Build xcargs for Manual signing with specific cert + profile
-def build_xcargs_manual(profile_specifier = nil)
-  args = [
+# Build xcargs for Automatic signing with API Key authentication
+# xcodebuild will automatically create/download certs and profiles
+def build_xcargs_automatic
+  api_key_path = File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+  [
     "DEVELOPMENT_TEAM=#{TEAM_ID}",
-    "CODE_SIGN_STYLE=Manual",
-    "CODE_SIGN_IDENTITY='Apple Distribution'",
+    "CODE_SIGN_STYLE=Automatic",
+    "-allowProvisioningUpdates",
+    "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}",
+    "-authenticationKeyID #{ENV['ASC_KEY_ID']}",
+    "-authenticationKeyPath #{api_key_path}",
     "COMPILER_INDEX_STORE_ENABLE=NO"
-  ]
-
-  if profile_specifier
-    args << "PROVISIONING_PROFILE_SPECIFIER='#{profile_specifier}'"
-  end
-
-  args.join(" ")
-end
-
-# Helper to safely parse certificate expiration date
-def parse_cert_date(date_value)
-  return date_value if date_value.is_a?(Time)
-  return Time.parse(date_value.to_s) if date_value.respond_to?(:to_s)
-  Time.now # Fallback to now if unparseable
-rescue
-  Time.now
-end
-
-# Improved certificate management - reuses existing certificates
-def get_or_create_certificates(api_key, platform, keychain)
-  UI.message("🔐 Managing certificates for #{platform}...")
-
-  begin
-    require 'spaceship'
-    require 'time'  # For Time.parse
-
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key: ENV["ASC_KEY_CONTENT"]
-    )
-
-    # Determine certificate type based on platform
-    cert_types = case platform
-    when "ios", "tvos", "watchos"
-      ["IOS_DISTRIBUTION", "DISTRIBUTION"]
-    when "macos"
-      ["MAC_APP_DISTRIBUTION", "DEVELOPER_ID_APPLICATION"]
-    else
-      ["DISTRIBUTION"]
-    end
-
-    # Find existing valid certificates
-    all_certs = Spaceship::ConnectAPI::Certificate.all
-    dist_certs = all_certs.select { |c| cert_types.include?(c.certificate_type) }
-
-    UI.message("Found #{dist_certs.count} distribution certificate(s) at Apple")
-
-    # Log certificate details
-    dist_certs.each do |cert|
-      exp_time = parse_cert_date(cert.expiration_date)
-      UI.message("  - #{cert.id}: expires #{exp_time.strftime('%Y-%m-%d')}")
-    end
-
-    # Find certificates valid for at least 30 more days
-    thirty_days_from_now = Time.now + (30 * 24 * 60 * 60)
-    valid_certs = dist_certs.select do |cert|
-      parse_cert_date(cert.expiration_date) > thirty_days_from_now
-    end
-
-    UI.message("Found #{valid_certs.count} certificate(s) valid for 30+ days")
-
-    if valid_certs.any?
-      UI.success("✅ Reusing existing certificate: #{valid_certs.first.id}")
-      # Download and install the existing certificate (don't create new)
-      get_certificates(
-        api_key: api_key,
-        platform: platform,
-        keychain_path: keychain[:path],
-        keychain_password: keychain[:password],
-        generate_apple_certs: false
-      )
-    elsif dist_certs.any?
-      # Have certificates but they expire soon - still use them rather than hit limit
-      UI.important("⚠️ Existing certificates expire within 30 days, but using them anyway")
-      get_certificates(
-        api_key: api_key,
-        platform: platform,
-        keychain_path: keychain[:path],
-        keychain_password: keychain[:password],
-        generate_apple_certs: false
-      )
-    else
-      # No certificates at all - create one
-      UI.message("No distribution certificates found, creating new one...")
-      get_certificates(
-        api_key: api_key,
-        platform: platform,
-        keychain_path: keychain[:path],
-        keychain_password: keychain[:password],
-        generate_apple_certs: true
-      )
-    end
-
-    UI.success("✅ Certificate ready for #{platform}")
-
-  rescue => e
-    UI.important("Certificate management error: #{e.message}")
-    UI.message("Falling back to get_certificates with generate_apple_certs: false...")
-
-    # Fallback: try to download existing certs without creating new ones
-    begin
-      get_certificates(
-        api_key: api_key,
-        platform: platform,
-        keychain_path: keychain[:path],
-        keychain_password: keychain[:password],
-        generate_apple_certs: false
-      )
-    rescue => fallback_error
-      UI.error("Fallback also failed: #{fallback_error.message}")
-      UI.error("Please check your certificates at https://developer.apple.com/account/resources/certificates/list")
-      raise fallback_error
-    end
-  end
-end
-
-def cleanup_certificates(api_key)
-  UI.message("Checking certificates at Apple Developer Portal...")
-  begin
-    require 'spaceship'
-    require 'time'
-
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id: ENV["ASC_KEY_ID"],
-      issuer_id: ENV["ASC_ISSUER_ID"],
-      key: ENV["ASC_KEY_CONTENT"]
-    )
-
-    all_certs = Spaceship::ConnectAPI::Certificate.all
-
-    # Revoke ALL stale DEVELOPMENT certs (CI runners are ephemeral, private keys are lost)
-    # xcodebuild -allowProvisioningUpdates will create fresh ones during archive
-    # IMPORTANT: Only run ONE platform build at a time to avoid race conditions
-    dev_certs = all_certs.select { |c| c.certificate_type.include?("DEVELOPMENT") }
-    if dev_certs.any?
-      UI.message("Found #{dev_certs.count} stale development certificate(s) — revoking for CI...")
-      dev_certs.each do |cert|
-        UI.message("  Revoking: #{cert.id} (#{cert.certificate_type})")
-        cert.delete!
-      end
-      UI.success("Revoked #{dev_certs.count} development certificate(s) — xcodebuild will create fresh ones")
-    else
-      UI.message("No development certificates to clean up")
-    end
-
-    # Check distribution certs (keep max 2)
-    dist_certs = all_certs.select do |cert|
-      cert.certificate_type == "DISTRIBUTION" ||
-      cert.certificate_type == "IOS_DISTRIBUTION" ||
-      cert.certificate_type == "MAC_APP_DISTRIBUTION" ||
-      cert.certificate_type.include?("DISTRIBUTION")
-    end
-
-    UI.message("Found #{dist_certs.count} distribution certificate(s)")
-
-    if dist_certs.count > 1
-      sorted = dist_certs.sort_by { |c| parse_cert_date(c.expiration_date) }.reverse
-      to_revoke = sorted[1..-1]
-      to_revoke.each do |cert|
-        UI.message("Revoking old distribution certificate: #{cert.id}")
-        cert.delete!
-      end
-      UI.success("Cleaned up #{to_revoke.count} old distribution certificate(s)")
-    else
-      UI.message("Distribution certificate count OK (#{dist_certs.count}/2 max)")
-    end
-  rescue => e
-    UI.error("❌ Certificate cleanup FAILED: #{e.message}")
-    UI.error("Stack: #{e.backtrace&.first(3)&.join("\n")}")
-    UI.important("Continuing without cleanup — signing may fail if stale certs exist")
-  end
+  ].join(" ")
 end
 
 def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
@@ -408,7 +89,7 @@ def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
   rescue => e
     retries += 1
     if retries <= max_retries
-      delay = 30 * retries  # 30s, 60s, 90s
+      delay = 30 * retries
       UI.important("Upload failed (attempt #{retries}/#{max_retries}): #{e.message}")
       UI.message("Retrying in #{delay} seconds...")
       sleep(delay)
@@ -421,58 +102,16 @@ def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
 end
 
 # =============================================================================
-# CRASHLYTICS & HARDWARE LOGGING
-# =============================================================================
-
-def upload_symbols_to_crashlytics
-  UI.message("Uploading dSYM symbols to Crashlytics...")
-  begin
-    # Firebase Crashlytics dSYM upload
-    if ENV["FIREBASE_APP_ID"]
-      upload_symbols_to_crashlytics(
-        gsp_path: "./GoogleService-Info.plist",
-        binary_path: "./Pods/FirebaseCrashlytics/upload-symbols"
-      )
-      UI.success("dSYM symbols uploaded to Crashlytics")
-    else
-      UI.message("FIREBASE_APP_ID not set, skipping Crashlytics upload")
-    end
-  rescue => e
-    UI.important("Crashlytics upload skipped: #{e.message}")
-  end
-end
-
-def log_hardware_interfaces
-  UI.message("=== Hardware Interface Status ===")
-  UI.message("CoreAudio: Ready (48kHz, 256 frames, 5.33ms latency)")
-  UI.message("AVFoundation: Ready (Camera, Microphone, Face Tracking)")
-  UI.message("ARKit: Ready (52 Blend Shapes, Eye Tracking)")
-  UI.message("HealthKit: Ready (HR, HRV, Respiratory Rate)")
-  UI.message("CoreBluetooth: Ready (MIDI Controllers)")
-  UI.message("Network: Ready (Art-Net, DMX, OSC)")
-  UI.message("Security Score: 100/100 (Grade A+++)")
-  UI.message("================================")
-end
-
-# =============================================================================
 # iOS PLATFORM
 # =============================================================================
 
 platform :ios do
 
-  # ---------------------------------------------------------------------------
-  # iOS App (with Widgets Extension and App Clip)
-  # ---------------------------------------------------------------------------
   desc "Build and upload iOS app to TestFlight"
   lane :beta do
     UI.header "iOS TestFlight Build"
 
     api_key = setup_api_key
-
-    # Manual signing: create cert + provisioning profile
-    signing = setup_manual_signing(api_key, "ios")
-
-    UI.message("Building iOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -488,36 +127,26 @@ platform :ios do
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "manual",
-        teamID: TEAM_ID,
-        provisioningProfiles: {
-          signing[:bundle_id] => signing[:name]
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
-      xcargs: build_xcargs_manual(signing[:name]),
-      skip_profile_detection: true
+      xcargs: build_xcargs_automatic
     )
 
-    # Verify IPA was created
     ipa_path = "./build/Echoelmusic.ipa"
     unless File.exist?(ipa_path)
-      UI.user_error!("IPA file was not created at #{ipa_path}! Check build logs in ./build/logs/")
+      UI.user_error!("IPA not created at #{ipa_path}!")
     end
-    UI.success("IPA created at: #{ipa_path}")
+    UI.success("IPA created: #{ipa_path}")
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER}")
   end
 
-  # ---------------------------------------------------------------------------
-  # watchOS App
-  # ---------------------------------------------------------------------------
   desc "Build and upload watchOS app to TestFlight"
   lane :beta_watchos do
     UI.header "watchOS TestFlight Build"
 
     api_key = setup_api_key
-    signing = setup_manual_signing(api_key, "watchos")
-    UI.message("Building watchOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -525,37 +154,28 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      derived_data_path: "./build/DerivedData",
       destination: "generic/platform=watchOS",
+      derived_data_path: "./build/DerivedData",
       archive_path: "./build/Echoelmusic-watchOS.xcarchive",
       output_directory: "./build",
       output_name: "Echoelmusic-watchOS",
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "manual",
-        teamID: TEAM_ID,
-        provisioningProfiles: {
-          signing[:bundle_id] => signing[:name]
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
-      xcargs: build_xcargs_manual(signing[:name]),
-      skip_profile_detection: true
+      xcargs: build_xcargs_automatic
     )
 
-    upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER} - Bio-Reactive HRV")
+    upload_to_testflight_with_retry(api_key, "watchOS Build #{BUILD_NUMBER}")
   end
 
-  # ---------------------------------------------------------------------------
-  # tvOS App
-  # ---------------------------------------------------------------------------
   desc "Build and upload tvOS app to TestFlight"
   lane :beta_tvos do
     UI.header "tvOS TestFlight Build"
 
     api_key = setup_api_key
-    signing = setup_manual_signing(api_key, "tvos")
-    UI.message("Building tvOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -563,37 +183,28 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      derived_data_path: "./build/DerivedData",
       destination: "generic/platform=tvOS",
+      derived_data_path: "./build/DerivedData",
       archive_path: "./build/Echoelmusic-tvOS.xcarchive",
       output_directory: "./build",
       output_name: "Echoelmusic-tvOS",
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "manual",
-        teamID: TEAM_ID,
-        provisioningProfiles: {
-          signing[:bundle_id] => signing[:name]
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
-      xcargs: build_xcargs_manual(signing[:name]),
-      skip_profile_detection: true
+      xcargs: build_xcargs_automatic
     )
 
-    upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER} - Big Screen Experience")
+    upload_to_testflight_with_retry(api_key, "tvOS Build #{BUILD_NUMBER}")
   end
 
-  # ---------------------------------------------------------------------------
-  # visionOS App
-  # ---------------------------------------------------------------------------
   desc "Build and upload visionOS app to TestFlight"
   lane :beta_visionos do
     UI.header "visionOS TestFlight Build"
 
     api_key = setup_api_key
-    signing = setup_manual_signing(api_key, "visionos")
-    UI.message("Building visionOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -601,30 +212,23 @@ platform :ios do
       configuration: "Release",
       clean: ENV["CLEAN_BUILD"] == "true",
       export_method: "app-store",
-      derived_data_path: "./build/DerivedData",
       destination: "generic/platform=visionOS",
+      derived_data_path: "./build/DerivedData",
       archive_path: "./build/Echoelmusic-visionOS.xcarchive",
       output_directory: "./build",
       output_name: "Echoelmusic-visionOS",
       buildlog_path: "./build/logs",
       include_bitcode: false,
       export_options: {
-        signingStyle: "manual",
-        teamID: TEAM_ID,
-        provisioningProfiles: {
-          signing[:bundle_id] => signing[:name]
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
-      xcargs: build_xcargs_manual(signing[:name]),
-      skip_profile_detection: true
+      xcargs: build_xcargs_automatic
     )
 
-    upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER} - Spatial Audio Immersive")
+    upload_to_testflight_with_retry(api_key, "visionOS Build #{BUILD_NUMBER}")
   end
 
-  # ---------------------------------------------------------------------------
-  # Build Only (No Upload)
-  # ---------------------------------------------------------------------------
   desc "Just build without signing (for CI testing)"
   lane :build_only do
     UI.header "Building iOS for simulator (no signing)"
@@ -640,24 +244,16 @@ platform :ios do
     )
   end
 
-  # ---------------------------------------------------------------------------
-  # All iOS Platforms
-  # ---------------------------------------------------------------------------
   desc "Build and upload ALL iOS platforms to TestFlight"
   lane :beta_all_ios do
     UI.header "Building ALL iOS Platforms for TestFlight"
-
     beta
     beta_watchos
     beta_tvos
     beta_visionos
-
     UI.success("All iOS platforms uploaded to TestFlight!")
   end
 
-  # ---------------------------------------------------------------------------
-  # Tests
-  # ---------------------------------------------------------------------------
   desc "Run iOS tests"
   lane :test do
     UI.header "Running iOS tests"
@@ -670,9 +266,6 @@ platform :ios do
     )
   end
 
-  # ---------------------------------------------------------------------------
-  # Screenshots
-  # ---------------------------------------------------------------------------
   desc "Capture screenshots for all devices and languages"
   lane :screenshots do
     UI.header "Capturing App Store Screenshots"
@@ -687,7 +280,6 @@ platform :ios do
       override_status_bar: true,
       derived_data_path: "./build/DerivedData"
     )
-    UI.success("Screenshots captured!")
   end
 
   desc "Upload screenshots to App Store Connect"
@@ -703,7 +295,6 @@ platform :ios do
       overwrite_screenshots: true,
       force: true
     )
-    UI.success("Screenshots uploaded!")
   end
 end
 
@@ -713,16 +304,11 @@ end
 
 platform :mac do
 
-  # ---------------------------------------------------------------------------
-  # macOS App (with AUv3 Audio Unit Extension)
-  # ---------------------------------------------------------------------------
   desc "Build and upload macOS app to TestFlight"
   lane :beta do
     UI.header "macOS TestFlight Build (with AUv3 Extension)"
 
     api_key = setup_api_key
-    signing = setup_manual_signing(api_key, "macos")
-    UI.message("Building macOS with Manual signing (cert + profile in keychain)...")
 
     build_app(
       project: "Echoelmusic.xcodeproj",
@@ -736,22 +322,15 @@ platform :mac do
       output_name: "Echoelmusic-macOS",
       buildlog_path: "./build/logs",
       export_options: {
-        signingStyle: "manual",
-        teamID: TEAM_ID,
-        provisioningProfiles: {
-          signing[:bundle_id] => signing[:name]
-        }
+        signingStyle: "automatic",
+        teamID: TEAM_ID
       },
-      xcargs: build_xcargs_manual(signing[:name]),
-      skip_profile_detection: true
+      xcargs: build_xcargs_automatic
     )
 
-    upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER} - Standalone + AUv3 Plugins")
+    upload_to_testflight_with_retry(api_key, "macOS Build #{BUILD_NUMBER}")
   end
 
-  # ---------------------------------------------------------------------------
-  # Build Only (No Upload)
-  # ---------------------------------------------------------------------------
   desc "Just build macOS without signing"
   lane :build_only do
     UI.header "Building macOS (no signing)"
@@ -766,9 +345,6 @@ platform :mac do
     )
   end
 
-  # ---------------------------------------------------------------------------
-  # Tests
-  # ---------------------------------------------------------------------------
   desc "Run macOS tests"
   lane :test do
     UI.header "Running macOS tests"
@@ -788,34 +364,12 @@ end
 desc "Build and upload ALL platforms to TestFlight"
 lane :beta_all do
   UI.header "Building ALL Platforms for TestFlight"
-  UI.message("This will build: iOS, macOS, watchOS, tvOS, visionOS")
 
-  # iOS family
   Fastlane::LaneManager.cruise_lane("ios", "beta")
   Fastlane::LaneManager.cruise_lane("ios", "beta_watchos")
   Fastlane::LaneManager.cruise_lane("ios", "beta_tvos")
   Fastlane::LaneManager.cruise_lane("ios", "beta_visionos")
-
-  # macOS
   Fastlane::LaneManager.cruise_lane("mac", "beta")
 
-  UI.success("")
-  UI.success("=" * 60)
-  UI.success("  ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
-  UI.success("=" * 60)
-  UI.success("")
-  UI.success("  Unified Bundle ID: com.echoelmusic.app")
-  UI.success("  (Universal Purchase enabled across all platforms)")
-  UI.success("")
-  UI.success("  iOS:      com.echoelmusic.app (standalone + integrated AUv3)")
-  UI.success("  AUv3:     com.echoelmusic.app.auv3 (Audio Unit Extension)")
-  UI.success("  Clip:     com.echoelmusic.app.clip (App Clip)")
-  UI.success("  Widgets:  com.echoelmusic.app.widgets (WidgetKit)")
-  UI.success("  macOS:    com.echoelmusic.app (standalone + embedded AUv3)")
-  UI.success("  watchOS:  com.echoelmusic.app.watchkitapp")
-  UI.success("  tvOS:     com.echoelmusic.app")
-  UI.success("  visionOS: com.echoelmusic.app")
-  UI.success("")
-  UI.success("Check App Store Connect for build processing status.")
-  UI.success("=" * 60)
+  UI.success("ALL PLATFORMS UPLOADED TO TESTFLIGHT!")
 end
