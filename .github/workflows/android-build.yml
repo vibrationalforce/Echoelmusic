@@ -1,42 +1,39 @@
 # =============================================================================
-# ECHOELMUSIC ANDROID CI/CD PIPELINE (DISABLED)
+# ECHOELMUSIC ANDROID CI/CD PIPELINE
 # =============================================================================
-# DISABLED - Apple-first release strategy
-# Android support planned for later phase
+# Full Android build pipeline: lint, test, build, security scan
+# Triggers on android/** changes and manual dispatch
 # =============================================================================
 
-name: Android Build & Test (Disabled)
-
-# DISABLED - uncomment to re-enable Android builds
-# on:
-#   push:
-#     branches: [ main ]
-#     paths:
-#       - 'android/**'
-#       - '.github/workflows/android-build.yml'
-#   pull_request:
-#     branches: [ main, develop ]
-#     paths:
-#       - 'android/**'
-#   workflow_dispatch:
+name: Android Build & Test
 
 on:
+  push:
+    branches: [ main, develop, 'feature/**', 'claude/**' ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-build.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'android/**'
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Type ENABLE to run Android build'
-        required: true
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   JAVA_VERSION: '17'
-  ANDROID_COMPILE_SDK: '34'
-  ANDROID_BUILD_TOOLS: '34.0.0'
+  ANDROID_COMPILE_SDK: '35'
+  ANDROID_BUILD_TOOLS: '35.0.0'
 
 jobs:
   # Job 1: Code Quality
   lint:
     name: Lint & Code Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - name: Checkout code
@@ -75,12 +72,14 @@ jobs:
       with:
         name: lint-results
         path: android/app/build/reports/lint-results*.html
+        if-no-files-found: warn
 
   # Job 2: Unit Tests
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: lint
+    timeout-minutes: 20
 
     steps:
     - name: Checkout code
@@ -109,7 +108,6 @@ jobs:
     - name: Run Unit Tests
       working-directory: android
       run: ./gradlew test --continue
-      continue-on-error: true
 
     - name: Upload Test Results
       if: always()
@@ -117,6 +115,7 @@ jobs:
       with:
         name: unit-test-results
         path: android/app/build/reports/tests/
+        if-no-files-found: warn
 
     - name: Upload Test Reports
       if: always()
@@ -124,12 +123,14 @@ jobs:
       with:
         name: test-reports
         path: android/app/build/test-results/
+        if-no-files-found: warn
 
   # Job 3: Build Debug APK
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
     needs: lint
+    timeout-minutes: 30
 
     steps:
     - name: Checkout code
@@ -165,12 +166,13 @@ jobs:
         name: debug-apk
         path: android/app/build/outputs/apk/debug/*.apk
 
-  # Job 4: Build Release APK (for main branch only)
+  # Job 4: Build Release APK (main branch or manual dispatch)
   build-release:
     name: Build Release APK
     runs-on: ubuntu-latest
     needs: [unit-tests, build-debug]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
 
     steps:
     - name: Checkout code
@@ -197,7 +199,7 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Decode Keystore
-      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      if: env.ANDROID_KEYSTORE_BASE64 != ''
       env:
         ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       run: |
@@ -239,6 +241,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-debug
     continue-on-error: true
+    timeout-minutes: 30
 
     steps:
     - name: Checkout code
@@ -274,12 +277,14 @@ jobs:
       with:
         name: instrumented-test-results
         path: android/app/build/reports/androidTests/
+        if-no-files-found: warn
 
   # Job 6: Security Scan
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: lint
+    timeout-minutes: 10
 
     steps:
     - name: Checkout code
@@ -288,32 +293,41 @@ jobs:
     - name: Check for hardcoded secrets
       run: |
         echo "Scanning for hardcoded secrets in Android code..."
-        grep -rn "password\s*=\s*[\"']" android --include='*.kt' 2>/dev/null | grep -v '//' | head -5 || true
-        grep -rn "apiKey\s*=\s*[\"']" android --include='*.kt' 2>/dev/null | grep -v '//' | head -5 || true
+        FOUND=0
+        if grep -rn "password\s*=\s*[\"']" android --include='*.kt' 2>/dev/null | grep -v '//'; then
+          FOUND=1
+        fi
+        if grep -rn "apiKey\s*=\s*[\"']" android --include='*.kt' 2>/dev/null | grep -v '//'; then
+          FOUND=1
+        fi
+        if [ "$FOUND" -eq 0 ]; then
+          echo "No hardcoded secrets found"
+        fi
         echo "Security scan completed"
-      continue-on-error: true
 
   # Job 7: Build Summary
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests, build-debug, build-release, instrumented-tests]
+    needs: [lint, unit-tests, build-debug, build-release, instrumented-tests, security-scan]
     if: always()
 
     steps:
     - name: Build Status Summary
       run: |
-        echo "Android Build Summary:"
-        echo "======================"
-        echo "Lint: ${{ needs.lint.result }}"
-        echo "Unit Tests: ${{ needs.unit-tests.result }}"
-        echo "Debug Build: ${{ needs.build-debug.result }}"
-        echo "Release Build: ${{ needs.build-release.result }}"
-        echo "Instrumented Tests: ${{ needs.instrumented-tests.result }}"
+        echo "## Android Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Debug Build | ${{ needs.build-debug.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Release Build | ${{ needs.build-release.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Instrumented Tests | ${{ needs.instrumented-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
 
         if [ "${{ needs.build-debug.result }}" == "failure" ]; then
           echo "Debug build failed"
           exit 1
         fi
 
-        echo "Build pipeline completed successfully"
+        echo "Build pipeline completed"

@@ -57,7 +57,7 @@ public enum MVPDefinition {
             description: "Map HRV coherence to audio parameters (reverb, filter, tempo)",
             files: [
                 "Sources/Echoelmusic/Audio/AudioEngine.swift",
-                "Sources/Echoelmusic/Audio/BioModulator.swift"
+                "Sources/Echoelmusic/Unified/UnifiedControlHub.swift"
             ],
             estimatedDays: 7,
             dependencies: ["AVFoundation", "Accelerate"],

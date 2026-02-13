@@ -1,0 +1,136 @@
+# =============================================================================
+# ECHOELMUSIC PERFORMANCE BENCHMARKING
+# =============================================================================
+# Tracks build times, binary size, and test performance over time.
+# Runs on main branch pushes and can be triggered manually.
+# =============================================================================
+
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Sources/**'
+      - 'Package.swift'
+      - 'project.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_VERSION: '16.2'
+  XCODEGEN_VERSION: '2.42.0'
+
+jobs:
+  benchmark:
+    name: Build & Size Benchmarks
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+
+    - name: Setup XcodeGen
+      uses: ./.github/actions/setup-xcodegen
+      with:
+        version: ${{ env.XCODEGEN_VERSION }}
+
+    - name: Generate Xcode Project
+      run: |
+        sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
+        sed -i '' "s/\${BUILD_NUMBER:=1}/${{ github.run_number }}/" project.yml
+        xcodegen generate --spec project.yml
+
+    - name: "Benchmark: Clean Build Time"
+      id: build_time
+      run: |
+        echo "=== Clean Build Benchmark ==="
+        START=$(date +%s)
+
+        xcodebuild build \
+          -project Echoelmusic.xcodeproj \
+          -scheme Echoelmusic \
+          -destination "generic/platform=iOS Simulator" \
+          -configuration Release \
+          -derivedDataPath ./build/DerivedData \
+          CODE_SIGNING_ALLOWED=NO \
+          COMPILER_INDEX_STORE_ENABLE=NO \
+          2>&1 | tail -5
+
+        END=$(date +%s)
+        BUILD_TIME=$((END - START))
+        echo "build_seconds=$BUILD_TIME" >> $GITHUB_OUTPUT
+        echo "Build time: ${BUILD_TIME}s"
+
+    - name: "Benchmark: Binary Size"
+      id: binary_size
+      run: |
+        echo "=== Binary Size Benchmark ==="
+        BINARY=$(find ./build/DerivedData -name "Echoelmusic" -type f -not -path "*/Intermediates/*" 2>/dev/null | head -1)
+        if [ -n "$BINARY" ]; then
+          SIZE_BYTES=$(stat -f%z "$BINARY" 2>/dev/null || stat -c%s "$BINARY" 2>/dev/null || echo "0")
+          SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1048576" | bc)
+          echo "binary_size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
+          echo "Binary size: ${SIZE_MB} MB ($SIZE_BYTES bytes)"
+        else
+          echo "Binary not found (build may have failed)"
+          echo "binary_size_mb=0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: "Benchmark: Swift Package Resolution"
+      id: spm_time
+      run: |
+        echo "=== SPM Resolution Benchmark ==="
+        START=$(date +%s)
+        swift package resolve 2>&1 || true
+        END=$(date +%s)
+        SPM_TIME=$((END - START))
+        echo "spm_seconds=$SPM_TIME" >> $GITHUB_OUTPUT
+        echo "SPM resolution: ${SPM_TIME}s"
+
+    - name: "Benchmark: Source Statistics"
+      id: source_stats
+      run: |
+        echo "=== Source Code Statistics ==="
+        SWIFT_FILES=$(find Sources -name "*.swift" | wc -l | tr -d ' ')
+        SWIFT_LINES=$(find Sources -name "*.swift" -exec cat {} + | wc -l | tr -d ' ')
+        TEST_FILES=$(find Tests -name "*.swift" | wc -l | tr -d ' ')
+        TEST_LINES=$(find Tests -name "*.swift" -exec cat {} + | wc -l | tr -d ' ')
+
+        echo "swift_files=$SWIFT_FILES" >> $GITHUB_OUTPUT
+        echo "swift_lines=$SWIFT_LINES" >> $GITHUB_OUTPUT
+        echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
+        echo "test_lines=$TEST_LINES" >> $GITHUB_OUTPUT
+
+        echo "Swift files: $SWIFT_FILES"
+        echo "Swift lines: $SWIFT_LINES"
+        echo "Test files: $TEST_FILES"
+        echo "Test lines: $TEST_LINES"
+
+    - name: "Report: Performance Summary"
+      run: |
+        echo "## Performance Benchmarks - Build #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Clean Build Time | ${{ steps.build_time.outputs.build_seconds }}s |" >> $GITHUB_STEP_SUMMARY
+        echo "| Binary Size | ${{ steps.binary_size.outputs.binary_size_mb }} MB |" >> $GITHUB_STEP_SUMMARY
+        echo "| SPM Resolution | ${{ steps.spm_time.outputs.spm_seconds }}s |" >> $GITHUB_STEP_SUMMARY
+        echo "| Swift Source Files | ${{ steps.source_stats.outputs.swift_files }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Swift Source Lines | ${{ steps.source_stats.outputs.swift_lines }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Files | ${{ steps.source_stats.outputs.test_files }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Lines | ${{ steps.source_stats.outputs.test_lines }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Targets" >> $GITHUB_STEP_SUMMARY
+        echo "- Build: < 1800s (30 min)" >> $GITHUB_STEP_SUMMARY
+        echo "- Binary: < 100 MB" >> $GITHUB_STEP_SUMMARY
+        echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

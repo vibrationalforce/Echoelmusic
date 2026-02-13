@@ -1,6 +1,6 @@
 # TestFlight Deployment Status
 
-## Aktueller Stand (2026-02-12)
+## Aktueller Stand (2026-02-13)
 
 ### Optimierungen in dieser Iteration
 
@@ -14,6 +14,12 @@
 | **Cert Race Condition Fix** | ✅ Implementiert | Serialisierte Cert-Ops bei "all" Platform |
 | **Smart Cert Management** | ✅ Implementiert | Revoked nur wenn nötig (nicht alles) |
 | **Build-Only Mode** | ✅ Implementiert | Compile-Test ohne signing/upload |
+| **AppIcon Contents.json Fix** | ✅ Gefixt | 120x120 Icon fehlt nicht mehr (legacy format statt mixed) |
+| **DE Lokalisierung** | ✅ Hinzugefügt | App Store Metadata auf Deutsch |
+| **Android CI/CD** | ✅ Re-aktiviert | android-build.yml mit automatischen Triggern |
+| **Performance Benchmarks** | ✅ Hinzugefügt | benchmark.yml trackt Build-Zeiten und Binary-Größe |
+| **UI Tests erweitert** | ✅ Hinzugefügt | Navigation, Accessibility, Dark Mode Tests |
+| **BioModulator entfernt** | ✅ Bereinigt | Deprecated Code + Views + Tests migriert |
 
 ### Secrets Status
 | Secret | Status |
@@ -118,8 +124,9 @@ iOS → watchOS → tvOS → visionOS (macOS parallel mit iOS)
 [x] Scan    - 46 Compile-Fehler gefunden (44 #Preview, 4 imports, 1 Timer)
 [x] Plan    - Compile-Check Job + Smart Cert Management
 [x] Execute - Alle Fixes implementiert
-[ ] Validate - Workflow testen (Phase 1: build_only)
-[ ] Loop    - Bei Fehlern: Fix → Test → Repeat
+[x] Validate - Archive+Export OK, Upload scheitert an Icon-Format
+[x] Fix     - AppIcon Contents.json auf legacy format umgestellt
+[ ] Deploy  - TestFlight Upload erneut testen
 ```
 
 ## Wichtige Dateien

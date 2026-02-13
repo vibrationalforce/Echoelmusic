@@ -1401,7 +1401,7 @@ public struct SourceFiles {
 
         // Biofeedback
         .init(path: "Sources/Echoelmusic/Biofeedback/HealthKitManager.swift"),
-        .init(path: "Sources/Echoelmusic/Biofeedback/BioModulator.swift"),
+        // BioModulator removed - superseded by UnifiedControlHub
         .init(path: "Sources/Echoelmusic/Biofeedback/RealTimeHealthKitEngine.swift"),
 
         // Unified Control
