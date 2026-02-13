@@ -138,13 +138,30 @@ platform :ios do
     UI.header "iOS TestFlight Upload"
     api_key = setup_api_key
 
-    ipa_path = ENV["IPA_PATH"] || Dir["./build/*.ipa"].first || "./build/Echoelmusic.ipa"
-    UI.message("Looking for IPA at: #{ipa_path}")
-    unless File.exist?(ipa_path)
-      UI.message("Available files in ./build/:")
-      Dir["./build/*"].each { |f| UI.message("  #{f}") }
-      UI.user_error!("IPA not found at #{ipa_path}!")
+    # Use absolute path from ENV, or search common locations
+    ipa_path = ENV["IPA_PATH"]
+    ipa_path = File.expand_path(ipa_path) if ipa_path
+
+    unless ipa_path && File.exist?(ipa_path)
+      UI.message("IPA_PATH='#{ipa_path}' not found, searching...")
+      UI.message("CWD: #{Dir.pwd}")
+
+      # Search in common locations
+      candidates = Dir["#{Dir.pwd}/build/*.ipa"] +
+                   Dir["#{Dir.pwd}/../build/*.ipa"] +
+                   Dir["./build/*.ipa"]
+      UI.message("Found IPA candidates: #{candidates}")
+      ipa_path = candidates.first
     end
+
+    unless ipa_path && File.exist?(ipa_path)
+      UI.message("Contents of build dir:")
+      Dir["#{Dir.pwd}/build/**/*"].each { |f| UI.message("  #{f}") } rescue nil
+      Dir["./build/**/*"].each { |f| UI.message("  #{f}") } rescue nil
+      UI.user_error!("No IPA found! CWD=#{Dir.pwd}")
+    end
+
+    UI.message("Using IPA: #{ipa_path}")
 
     upload_to_testflight_with_retry(api_key, "iOS Build #{BUILD_NUMBER}", ipa_path: ipa_path)
   end
