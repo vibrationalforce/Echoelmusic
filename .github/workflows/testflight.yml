@@ -247,13 +247,17 @@ jobs:
           set -eo pipefail
 
           if [ $RESULT -ne 0 ]; then
-            echo ""
-            echo "=== ARCHIVE FAILED (exit code $RESULT) ==="
-            echo "=== Last 50 lines ==="
-            tail -50 /tmp/archive.log
-            echo ""
-            echo "=== Errors ==="
-            grep -iE "error:|failed|signing|provision|certificate" /tmp/archive.log | tail -30
+            echo "=== ARCHIVE FAILED (exit $RESULT) ==="
+            # Write errors as GitHub annotations (visible via API)
+            LAST_LINES=$(tail -30 /tmp/archive.log | tr '\n' ' | ')
+            echo "::error title=Archive Failed::${LAST_LINES}"
+            ERRORS=$(grep -iE "error:|failed|signing|provision|certificate|not found" /tmp/archive.log | tail -10 | tr '\n' ' | ')
+            echo "::error title=Build Errors::${ERRORS}"
+            # Also write full tail to step summary
+            echo "## Archive Failed (exit $RESULT)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 /tmp/archive.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
           echo "=== ARCHIVE SUCCESSFUL ==="
