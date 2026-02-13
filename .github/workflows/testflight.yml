@@ -221,45 +221,13 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Revoke Stale Certificates"
+      - name: "Setup Signing Certificates"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-
-          # Generate JWT for App Store Connect API
-          b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
-          HEADER=$(printf '{"alg":"ES256","kid":"%s","typ":"JWT"}' "$ASC_KEY_ID" | b64url)
-          NOW=$(date +%s)
-          EXP=$((NOW + 300))
-          PAYLOAD=$(printf '{"iss":"%s","iat":%d,"exp":%d,"aud":"appstoreconnect-v1"}' "$ASC_ISSUER_ID" "$NOW" "$EXP" | b64url)
-          SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" | openssl dgst -sha256 -sign "$API_KEY_PATH" -binary | b64url)
-          JWT="$HEADER.$PAYLOAD.$SIGNATURE"
-
-          # Revoke all Development certs (stale on CI runners - will be recreated by xcodebuild)
-          for CERT_TYPE in DEVELOPMENT IOS_DEVELOPMENT MAC_APP_DEVELOPMENT; do
-            echo "Checking $CERT_TYPE certificates..."
-            RESPONSE=$(curl -s -H "Authorization: Bearer $JWT" \
-              "https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=$CERT_TYPE" 2>/dev/null || echo '{"data":[]}')
-
-            CERT_IDS=$(echo "$RESPONSE" | python3 -c "
-          import json, sys
-          try:
-              data = json.load(sys.stdin)
-              for c in data.get('data', []):
-                  print(c['id'])
-          except: pass
-          " 2>/dev/null)
-
-            for CID in $CERT_IDS; do
-              echo "  Revoking cert $CID ($CERT_TYPE)..."
-              curl -s -X DELETE -H "Authorization: Bearer $JWT" \
-                "https://api.appstoreconnect.apple.com/v1/certificates/$CID" >/dev/null 2>&1 || true
-              echo "  Done"
-            done
-          done
-          echo "Stale certificates cleared - xcodebuild will create fresh ones"
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: fastlane ios setup_signing
 
       - name: "Archive"
         env:
@@ -457,31 +425,13 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Revoke Stale Certificates"
+      - name: "Setup Signing Certificates"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
-          HEADER=$(printf '{"alg":"ES256","kid":"%s","typ":"JWT"}' "$ASC_KEY_ID" | b64url)
-          NOW=$(date +%s); EXP=$((NOW + 300))
-          PAYLOAD=$(printf '{"iss":"%s","iat":%d,"exp":%d,"aud":"appstoreconnect-v1"}' "$ASC_ISSUER_ID" "$NOW" "$EXP" | b64url)
-          SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" | openssl dgst -sha256 -sign "$API_KEY_PATH" -binary | b64url)
-          JWT="$HEADER.$PAYLOAD.$SIGNATURE"
-          for CERT_TYPE in DEVELOPMENT IOS_DEVELOPMENT MAC_APP_DEVELOPMENT; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer $JWT" \
-              "https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=$CERT_TYPE" 2>/dev/null || echo '{"data":[]}')
-            for CID in $(echo "$RESPONSE" | python3 -c "
-          import json, sys
-          try:
-              for c in json.load(sys.stdin).get('data', []): print(c['id'])
-          except: pass" 2>/dev/null); do
-              echo "Revoking $CERT_TYPE cert $CID..."
-              curl -s -X DELETE -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/certificates/$CID" >/dev/null 2>&1 || true
-            done
-          done
-          echo "Stale certificates cleared"
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: fastlane ios setup_signing
 
       - name: "Archive"
         env:
@@ -639,31 +589,13 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Revoke Stale Certificates"
+      - name: "Setup Signing Certificates"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
-          HEADER=$(printf '{"alg":"ES256","kid":"%s","typ":"JWT"}' "$ASC_KEY_ID" | b64url)
-          NOW=$(date +%s); EXP=$((NOW + 300))
-          PAYLOAD=$(printf '{"iss":"%s","iat":%d,"exp":%d,"aud":"appstoreconnect-v1"}' "$ASC_ISSUER_ID" "$NOW" "$EXP" | b64url)
-          SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" | openssl dgst -sha256 -sign "$API_KEY_PATH" -binary | b64url)
-          JWT="$HEADER.$PAYLOAD.$SIGNATURE"
-          for CERT_TYPE in DEVELOPMENT IOS_DEVELOPMENT MAC_APP_DEVELOPMENT; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer $JWT" \
-              "https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=$CERT_TYPE" 2>/dev/null || echo '{"data":[]}')
-            for CID in $(echo "$RESPONSE" | python3 -c "
-          import json, sys
-          try:
-              for c in json.load(sys.stdin).get('data', []): print(c['id'])
-          except: pass" 2>/dev/null); do
-              echo "Revoking $CERT_TYPE cert $CID..."
-              curl -s -X DELETE -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/certificates/$CID" >/dev/null 2>&1 || true
-            done
-          done
-          echo "Stale certificates cleared"
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: fastlane ios setup_signing
 
       - name: "Archive"
         env:
@@ -820,31 +752,13 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Revoke Stale Certificates"
+      - name: "Setup Signing Certificates"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
-          HEADER=$(printf '{"alg":"ES256","kid":"%s","typ":"JWT"}' "$ASC_KEY_ID" | b64url)
-          NOW=$(date +%s); EXP=$((NOW + 300))
-          PAYLOAD=$(printf '{"iss":"%s","iat":%d,"exp":%d,"aud":"appstoreconnect-v1"}' "$ASC_ISSUER_ID" "$NOW" "$EXP" | b64url)
-          SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" | openssl dgst -sha256 -sign "$API_KEY_PATH" -binary | b64url)
-          JWT="$HEADER.$PAYLOAD.$SIGNATURE"
-          for CERT_TYPE in DEVELOPMENT IOS_DEVELOPMENT MAC_APP_DEVELOPMENT; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer $JWT" \
-              "https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=$CERT_TYPE" 2>/dev/null || echo '{"data":[]}')
-            for CID in $(echo "$RESPONSE" | python3 -c "
-          import json, sys
-          try:
-              for c in json.load(sys.stdin).get('data', []): print(c['id'])
-          except: pass" 2>/dev/null); do
-              echo "Revoking $CERT_TYPE cert $CID..."
-              curl -s -X DELETE -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/certificates/$CID" >/dev/null 2>&1 || true
-            done
-          done
-          echo "Stale certificates cleared"
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: fastlane ios setup_signing
 
       - name: "Archive"
         env:
@@ -1001,31 +915,13 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Revoke Stale Certificates"
+      - name: "Setup Signing Certificates"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-        run: |
-          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
-          HEADER=$(printf '{"alg":"ES256","kid":"%s","typ":"JWT"}' "$ASC_KEY_ID" | b64url)
-          NOW=$(date +%s); EXP=$((NOW + 300))
-          PAYLOAD=$(printf '{"iss":"%s","iat":%d,"exp":%d,"aud":"appstoreconnect-v1"}' "$ASC_ISSUER_ID" "$NOW" "$EXP" | b64url)
-          SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" | openssl dgst -sha256 -sign "$API_KEY_PATH" -binary | b64url)
-          JWT="$HEADER.$PAYLOAD.$SIGNATURE"
-          for CERT_TYPE in DEVELOPMENT IOS_DEVELOPMENT MAC_APP_DEVELOPMENT; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer $JWT" \
-              "https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=$CERT_TYPE" 2>/dev/null || echo '{"data":[]}')
-            for CID in $(echo "$RESPONSE" | python3 -c "
-          import json, sys
-          try:
-              for c in json.load(sys.stdin).get('data', []): print(c['id'])
-          except: pass" 2>/dev/null); do
-              echo "Revoking $CERT_TYPE cert $CID..."
-              curl -s -X DELETE -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/certificates/$CID" >/dev/null 2>&1 || true
-            done
-          done
-          echo "Stale certificates cleared"
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: fastlane ios setup_signing
 
       - name: "Archive"
         env:

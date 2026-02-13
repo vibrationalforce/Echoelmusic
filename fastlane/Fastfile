@@ -70,10 +70,33 @@ def upload_to_testflight_with_retry(api_key, changelog, max_retries: 3)
 end
 
 # =============================================================================
+# SIGNING HELPER — Revokes stale certs and creates fresh ones
+# =============================================================================
+
+def setup_signing_certs
+  api_key = setup_api_key
+  UI.message("Revoking stale Development certs and creating fresh ones...")
+
+  # Force-create a new Apple Development cert (revokes existing ones)
+  cert(
+    development: true,
+    force: true,
+    api_key: api_key,
+    generate_apple_certs: true
+  )
+  UI.success("Fresh Development certificate installed in keychain")
+end
+
+# =============================================================================
 # iOS PLATFORM
 # =============================================================================
 
 platform :ios do
+
+  desc "Setup signing certificates (revoke stale, create fresh)"
+  lane :setup_signing do
+    setup_signing_certs
+  end
 
   desc "Upload iOS IPA to TestFlight (archive built by xcodebuild in CI)"
   lane :upload do
