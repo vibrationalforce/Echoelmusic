@@ -33,6 +33,12 @@ class SpatialAudioEngine: ObservableObject {
     #endif
     private var headTrackingCancellable: AnyCancellable?
 
+    // MARK: - Spatial Processing Modules
+
+    private(set) var dopplerProcessor = DopplerProcessor()
+    private(set) var ambisonicsProcessor = AmbisonicsProcessor()
+    private(set) var roomSimulation = RoomSimulation()
+
     // MARK: - Position Cache (30-40% frame drop reduction)
 
     private var positionCache: [String: [SIMD3<Float>]] = [:]
@@ -302,10 +308,11 @@ class SpatialAudioEngine: ObservableObject {
             }
 
         case .ambisonics:
-            // Higher-order ambisonics (future implementation)
+            // Route through AmbisonicsProcessor for FOA/HOA rendering
             if #available(iOS 17.0, *), let environment = environmentNode {
                 apply3DPosition(node: playerNode, environment: environment, position: position)
             }
+            // Ambisonics encoding is handled per-buffer in processAmbisonics()
         }
     }
 
@@ -543,6 +550,62 @@ class SpatialAudioEngine: ObservableObject {
         }
 
         log.spatial("🎚️ Spatial mode: \(mode.rawValue)")
+    }
+
+    // MARK: - Ambisonics Processing
+
+    /// Process a mono audio buffer through the ambisonics pipeline.
+    /// Encodes based on source position, decodes to stereo.
+    func processAmbisonics(_ input: [Float], sourcePosition: SIMD3<Float>) -> (left: [Float], right: [Float]) {
+        let bFormat = ambisonicsProcessor.encode(input, position: sourcePosition)
+        return ambisonicsProcessor.decodeToStereo(bFormat)
+    }
+
+    /// Process with head-tracked B-format rotation.
+    func processAmbisonicsHeadTracked(
+        _ input: [Float],
+        sourcePosition: SIMD3<Float>,
+        listenerYaw: Float,
+        listenerPitch: Float
+    ) -> (left: [Float], right: [Float]) {
+        let bFormat = ambisonicsProcessor.encode(input, position: sourcePosition)
+        let rotated = ambisonicsProcessor.rotateBFormat(bFormat, yaw: listenerYaw, pitch: listenerPitch, roll: 0)
+        return ambisonicsProcessor.decodeToStereo(rotated)
+    }
+
+    // MARK: - Doppler Processing
+
+    /// Apply Doppler effect to a source's audio buffer based on its velocity.
+    func processDoppler(
+        _ input: [Float],
+        sourceID: UUID,
+        sourcePosition: SIMD3<Float>,
+        sourceVelocity: SIMD3<Float>,
+        listenerPosition: SIMD3<Float> = .zero
+    ) -> [Float] {
+        dopplerProcessor.processSource(
+            input,
+            sourceID: sourceID,
+            sourcePosition: sourcePosition,
+            sourceVelocity: sourceVelocity,
+            listenerPosition: listenerPosition
+        )
+    }
+
+    // MARK: - Room Simulation
+
+    /// Set up room simulation for a given space.
+    func configureRoom(_ geometry: RoomSimulation.RoomGeometry, materials: RoomSimulation.WallMaterials = .wood) {
+        roomSimulation = RoomSimulation(
+            sampleRate: 48000,
+            configuration: RoomSimulation.Configuration(room: geometry, materials: materials)
+        )
+    }
+
+    /// Process audio through room simulation with early reflections.
+    func processRoom(_ input: [Float], sourcePosition: SIMD3<Float>, listenerPosition: SIMD3<Float>) -> [Float] {
+        roomSimulation.computeImageSources(sourcePosition: sourcePosition, listenerPosition: listenerPosition)
+        return roomSimulation.processBuffer(input)
     }
 
     // MARK: - Debug Info
