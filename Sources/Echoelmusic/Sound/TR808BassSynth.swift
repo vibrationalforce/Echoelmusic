@@ -327,7 +327,7 @@ public final class TR808BassSynth: ObservableObject {
             do {
                 try audioEngine?.start()
             } catch let engineError {
-                print("[Echoelmusic] TR808BassSynth failed to start audio engine: \(engineError)")
+                log.audio("TR808BassSynth failed to start audio engine: \(engineError)")
             }
         }
 

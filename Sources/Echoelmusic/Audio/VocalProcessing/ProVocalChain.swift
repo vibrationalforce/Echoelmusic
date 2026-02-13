@@ -43,6 +43,9 @@ class ProVocalChain: ObservableObject {
     @Published var bioReactiveEnabled: Bool = true
     @Published var deEsserEnabled: Bool = false
     @Published var compressorEnabled: Bool = false
+    @Published var breathDetectionEnabled: Bool = false
+    @Published var harmonyEnabled: Bool = false
+    @Published var doublingEnabled: Bool = false
 
     // MARK: - Processing Chain Components
 
@@ -51,6 +54,9 @@ class ProVocalChain: ObservableObject {
     let phaseVocoder: PhaseVocoder
     let postProcessor: VocalPostProcessor
     let bioReactiveEngine: BioReactiveVocalEngine
+    let breathDetector: BreathDetector
+    let harmonyGenerator: VocalHarmonyGenerator
+    let doublingEngine: VocalDoublingEngine
 
     // MARK: - Types
 
@@ -111,6 +117,9 @@ class ProVocalChain: ObservableObject {
         ))
         self.postProcessor = VocalPostProcessor(sampleRate: config.sampleRate)
         self.bioReactiveEngine = BioReactiveVocalEngine()
+        self.breathDetector = BreathDetector(sampleRate: Double(config.sampleRate), fftSize: config.fftSize)
+        self.harmonyGenerator = VocalHarmonyGenerator(sampleRate: Double(config.sampleRate), fftSize: config.fftSize)
+        self.doublingEngine = VocalDoublingEngine(sampleRate: Double(config.sampleRate))
 
         setupBindings()
     }
@@ -166,9 +175,25 @@ class ProVocalChain: ObservableObject {
             )
         }
 
-        // 4. Bio-Reactive Processing
+        // 4. Breath Detection/Removal
+        if breathDetectionEnabled {
+            output = breathDetector.processBuffer(output)
+        }
+
+        // 5. Bio-Reactive Processing
         if bioReactiveEnabled {
             output = bioReactiveEngine.processAudio(output, modValues: bioReactiveEngine.modulationValues)
+        }
+
+        // 6. Harmony Generation
+        if harmonyEnabled {
+            let detectedPitch = pitchCorrector.currentInputPitch
+            output = harmonyGenerator.processBuffer(output, detectedPitchHz: detectedPitch)
+        }
+
+        // 7. Vocal Doubling
+        if doublingEnabled {
+            output = doublingEngine.processMono(output)
         }
 
         return output
