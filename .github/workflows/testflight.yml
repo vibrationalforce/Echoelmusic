@@ -227,7 +227,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: fastlane ios setup_signing
+        run: |
+          set +eo pipefail
+          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(tail -30 /tmp/signing.log | tr '\n' ' | ')
+            echo "::error title=Signing Setup Failed::${ERRORS}"
+            exit 1
+          fi
 
       - name: "Archive"
         env:
@@ -431,7 +440,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: fastlane ios setup_signing
+        run: |
+          set +eo pipefail
+          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(tail -30 /tmp/signing.log | tr '\n' ' | ')
+            echo "::error title=Signing Setup Failed::${ERRORS}"
+            exit 1
+          fi
 
       - name: "Archive"
         env:
@@ -595,7 +613,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: fastlane ios setup_signing
+        run: |
+          set +eo pipefail
+          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(tail -30 /tmp/signing.log | tr '\n' ' | ')
+            echo "::error title=Signing Setup Failed::${ERRORS}"
+            exit 1
+          fi
 
       - name: "Archive"
         env:
@@ -758,7 +785,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: fastlane ios setup_signing
+        run: |
+          set +eo pipefail
+          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(tail -30 /tmp/signing.log | tr '\n' ' | ')
+            echo "::error title=Signing Setup Failed::${ERRORS}"
+            exit 1
+          fi
 
       - name: "Archive"
         env:
@@ -921,7 +957,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: fastlane ios setup_signing
+        run: |
+          set +eo pipefail
+          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(tail -30 /tmp/signing.log | tr '\n' ' | ')
+            echo "::error title=Signing Setup Failed::${ERRORS}"
+            exit 1
+          fi
 
       - name: "Archive"
         env:
