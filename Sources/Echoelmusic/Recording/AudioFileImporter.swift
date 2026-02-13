@@ -225,7 +225,6 @@ enum ImportError: LocalizedError {
 // MARK: - SwiftUI Document Picker Helper
 
 #if os(iOS)
-import SwiftUI
 
 struct AudioFilePicker: UIViewControllerRepresentable {
     @Binding var selectedURLs: [URL]

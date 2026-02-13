@@ -88,9 +88,9 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
     public static let targetLatencyMs: Double = 20.0
 
     /// HRV types to query
-    private let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!
-    private let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
-    private let respirationRateType = HKQuantityType.quantityType(forIdentifier: .respiratoryRate)!
+    private let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)
+    private let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)
+    private let respirationRateType = HKQuantityType.quantityType(forIdentifier: .respiratoryRate)
 
     // MARK: - Initialization
 
@@ -126,11 +126,9 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
 
     /// Request HealthKit authorization
     public func requestAuthorization() async throws {
-        let typesToRead: Set<HKSampleType> = [
-            heartRateType,
-            hrvType,
-            respirationRateType
-        ]
+        let typesToRead: Set<HKSampleType> = Set(
+            [heartRateType, hrvType, respirationRateType].compactMap { $0 }
+        )
 
         try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
     }
@@ -243,8 +241,9 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
             options: .strictStartDate
         )
 
+        guard let hrType = heartRateType else { return }
         heartRateQuery = HKAnchoredObjectQuery(
-            type: heartRateType,
+            type: hrType,
             predicate: predicate,
             anchor: nil,
             limit: HKObjectQueryNoLimit
@@ -272,8 +271,9 @@ public final class EchoelaWatchManager: NSObject, ObservableObject {
             options: .strictStartDate
         )
 
+        guard let hrvTypeUnwrapped = hrvType else { return }
         hrvQuery = HKAnchoredObjectQuery(
-            type: hrvType,
+            type: hrvTypeUnwrapped,
             predicate: predicate,
             anchor: nil,
             limit: HKObjectQueryNoLimit

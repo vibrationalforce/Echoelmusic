@@ -77,10 +77,10 @@ class ObjectBasedAudioRenderer {
             }
 
             var effectiveTime = time
-            if isLooping {
-                let duration = keyframes.last!.time - keyframes.first!.time
+            if isLooping, let first = keyframes.first, let last = keyframes.last {
+                let duration = last.time - first.time
                 if duration > 0 {
-                    effectiveTime = keyframes.first!.time + fmod(time - keyframes.first!.time, duration)
+                    effectiveTime = first.time + fmod(time - first.time, duration)
                 }
             }
 

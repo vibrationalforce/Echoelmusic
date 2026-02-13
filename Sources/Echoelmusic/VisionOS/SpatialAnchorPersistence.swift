@@ -136,7 +136,8 @@ class SpatialAnchorPersistence: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         self.storageURL = documentsDir.appendingPathComponent("SpatialAnchors", isDirectory: true)
 
         // Ensure storage directory exists

@@ -651,8 +651,6 @@ private enum KeychainHelper {
 
 // MARK: - SwiftUI Views
 
-import SwiftUI
-
 /// Chat interface for LLM assistant
 struct LLMChatView: View {
     @StateObject private var llm = LLMService.shared

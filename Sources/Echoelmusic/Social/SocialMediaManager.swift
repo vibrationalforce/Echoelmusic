@@ -682,8 +682,6 @@ class SocialMediaManager: ObservableObject {
 
 // MARK: - SwiftUI View
 
-import SwiftUI
-
 struct OneClickPublishView: View {
     @StateObject private var manager = SocialMediaManager.shared
     @State private var title: String = ""

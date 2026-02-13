@@ -472,8 +472,3 @@ public final class SyncManager: ObservableObject {
     }
 }
 
-// MARK: - Network Import for Monitoring
-
-#if canImport(Network)
-import Network
-#endif

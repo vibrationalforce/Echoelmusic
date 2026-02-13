@@ -105,7 +105,6 @@ class NativePluginBridge: ObservableObject {
 // MARK: - SwiftUI Integration
 
 #if canImport(SwiftUI)
-import SwiftUI
 
 struct NativePluginStatusView: View {
     @StateObject private var bridge = NativePluginBridge.shared

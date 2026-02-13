@@ -416,8 +416,9 @@ public struct CurvesEditor: Codable, Equatable, Sendable {
         let sorted = curve.sorted { $0.input < $1.input }
 
         // Clamp to endpoints
-        if t <= sorted.first!.input { return sorted.first!.output }
-        if t >= sorted.last!.input { return sorted.last!.output }
+        guard let first = sorted.first, let last = sorted.last else { return t }
+        if t <= first.input { return first.output }
+        if t >= last.input { return last.output }
 
         // Find the segment
         var segIndex = 0

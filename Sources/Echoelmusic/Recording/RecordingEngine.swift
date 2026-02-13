@@ -142,8 +142,14 @@ class RecordingEngine: ObservableObject {
         ) else {
             log.recording("❌ Failed to create recording format - using fallback", level: .error)
             // Fallback to standard format
-            self.recordingFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)
-                ?? AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
+            if let fallback48 = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) {
+                self.recordingFormat = fallback48
+            } else if let fallback44 = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2) {
+                self.recordingFormat = fallback44
+            } else {
+                log.recording("❌ Cannot create any audio format", level: .error)
+                self.recordingFormat = AVAudioFormat()
+            }
             return
         }
         self.recordingFormat = format

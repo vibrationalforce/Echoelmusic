@@ -1770,7 +1770,6 @@ public struct HealthDisclaimer {
 // MARK: - Legal Document Viewer (SwiftUI)
 
 #if canImport(SwiftUI)
-import SwiftUI
 
 /// SwiftUI view for displaying legal documents in-app
 @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, visionOS 1.0, *)

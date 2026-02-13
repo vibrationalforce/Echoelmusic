@@ -515,7 +515,8 @@ public final class WorldModel: ObservableObject {
 
         if stateHistory.count >= 10 {
             let recentCoherence = stateHistory.suffix(10).map { $0.biometrics.coherence }
-            let trend = recentCoherence.last! - recentCoherence.first!
+            guard let lastCoherence = recentCoherence.last, let firstCoherence = recentCoherence.first else { return (currentMood, 0.5) }
+            let trend = lastCoherence - firstCoherence
 
             if trend > 0.1 {
                 predictedMood = currentMood == .tense ? .focused : .energized

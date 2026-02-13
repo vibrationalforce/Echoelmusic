@@ -2176,7 +2176,6 @@ class LocalizationManager: ObservableObject {
 // MARK: - SwiftUI Extension
 
 #if canImport(SwiftUI)
-import SwiftUI
 
 extension LocalizationManager {
     static let shared = LocalizationManager()

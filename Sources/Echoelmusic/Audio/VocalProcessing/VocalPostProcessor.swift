@@ -536,7 +536,8 @@ class VocalPostProcessor: ObservableObject {
         if time <= points[0].time { return denormalize(points[0].value, range: range) }
 
         // After last point
-        if time >= points.last!.time { return denormalize(points.last!.value, range: range) }
+        guard let lastPoint = points.last else { return denormalize(0.5, range: range) }
+        if time >= lastPoint.time { return denormalize(lastPoint.value, range: range) }
 
         // Find surrounding points
         for i in 0..<points.count - 1 {
