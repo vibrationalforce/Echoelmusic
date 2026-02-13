@@ -42,6 +42,7 @@ class RTMPClient: ObservableObject {
     @Published private(set) var connectionState: ConnectionState = .disconnected
     @Published private(set) var bytesWritten: Int64 = 0
     @Published private(set) var currentBitrate: Int = 0
+    @Published private(set) var reconnectAttempt: Int = 0
 
     enum ConnectionState: Equatable {
         case disconnected
@@ -49,8 +50,27 @@ class RTMPClient: ObservableObject {
         case handshaking
         case connected
         case streaming
+        case reconnecting
         case error(String)
     }
+
+    // MARK: - Reconnection Configuration
+    struct ReconnectConfig {
+        var maxRetries: Int = 5
+        var baseDelaySeconds: Double = 2.0
+        var maxDelaySeconds: Double = 30.0
+        var jitterFactor: Double = 0.2
+
+        func delay(for attempt: Int) -> Double {
+            let exponential = min(baseDelaySeconds * pow(2.0, Double(attempt)), maxDelaySeconds)
+            let jitter = exponential * jitterFactor * Double.random(in: -1...1)
+            return max(0.5, exponential + jitter)
+        }
+    }
+
+    var reconnectConfig = ReconnectConfig()
+    private var shouldReconnect = false
+    private var lastApp: String = ""
 
     // MARK: - Properties
     private let url: String
@@ -114,7 +134,13 @@ class RTMPClient: ObservableObject {
                     }
                 case .failed(let error):
                     Task { @MainActor [weak self] in
-                        self?.connectionState = .error(error.localizedDescription)
+                        guard let self = self else { return }
+                        if self.shouldReconnect {
+                            self.connectionState = .reconnecting
+                            try? await self.reconnect()
+                        } else {
+                            self.connectionState = .error(error.localizedDescription)
+                        }
                         continuation.resume(throwing: RTMPError.connectionFailed)
                     }
                 case .cancelled:
@@ -131,10 +157,47 @@ class RTMPClient: ObservableObject {
     }
 
     func disconnect() {
+        shouldReconnect = false
+        reconnectAttempt = 0
         connection?.cancel()
         connection = nil
         connectionState = .disconnected
         bytesWritten = 0
+    }
+
+    // MARK: - Auto-Reconnection
+
+    /// Attempt to reconnect with exponential backoff.
+    /// Called automatically on unexpected disconnection during streaming.
+    func reconnect() async throws {
+        guard reconnectAttempt < reconnectConfig.maxRetries else {
+            connectionState = .error("Max reconnection attempts (\(reconnectConfig.maxRetries)) reached")
+            shouldReconnect = false
+            return
+        }
+
+        shouldReconnect = true
+        connectionState = .reconnecting
+        reconnectAttempt += 1
+
+        let delay = reconnectConfig.delay(for: reconnectAttempt - 1)
+        log.streaming("RTMP reconnect attempt \(reconnectAttempt)/\(reconnectConfig.maxRetries) in \(String(format: "%.1f", delay))s")
+
+        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+
+        guard shouldReconnect else { return }
+
+        do {
+            try await connect()
+            reconnectAttempt = 0
+            log.streaming("RTMP reconnected successfully")
+        } catch {
+            if shouldReconnect && reconnectAttempt < reconnectConfig.maxRetries {
+                try await reconnect()
+            } else {
+                connectionState = .error("Reconnection failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     // MARK: - RTMP Handshake

@@ -186,6 +186,105 @@ enum AudioConfiguration {
         return inputLatency + outputLatency + ioBufferDuration
     }
 
+    // MARK: - Audio Interruption Handling
+
+    /// Callback invoked when audio session should resume after interruption
+    static var onInterruptionResume: (() -> Void)?
+
+    /// Callback invoked when audio session is interrupted (phone call, Siri, etc.)
+    static var onInterruptionBegan: (() -> Void)?
+
+    /// Register for audio session interruption and route change notifications.
+    /// Call once during app startup after configureAudioSession().
+    static func registerInterruptionHandlers() {
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { notification in
+            handleAudioInterruption(notification)
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { notification in
+            handleRouteChange(notification)
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.mediaServicesWereResetNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { _ in
+            handleMediaServicesReset()
+        }
+
+        log.audio("Audio interruption handlers registered")
+    }
+
+    private static func handleAudioInterruption(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return
+        }
+
+        switch type {
+        case .began:
+            log.audio("Audio session interrupted (phone call, Siri, etc.)", level: .warning)
+            onInterruptionBegan?()
+
+        case .ended:
+            guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
+                return
+            }
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            if options.contains(.shouldResume) {
+                do {
+                    try AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+                    log.audio("Audio session resumed after interruption")
+                    onInterruptionResume?()
+                } catch {
+                    log.audio("Failed to reactivate audio session: \(error)", level: .error)
+                }
+            }
+
+        @unknown default:
+            break
+        }
+    }
+
+    private static func handleRouteChange(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+            return
+        }
+
+        switch reason {
+        case .oldDeviceUnavailable:
+            log.audio("Audio device disconnected (headphones removed)", level: .warning)
+        case .newDeviceAvailable:
+            log.audio("New audio device connected")
+        case .categoryChange:
+            log.audio("Audio category changed")
+        default:
+            break
+        }
+    }
+
+    private static func handleMediaServicesReset() {
+        log.audio("Media services were reset - reinitializing audio", level: .warning)
+        do {
+            try configureAudioSession()
+            onInterruptionResume?()
+        } catch {
+            log.audio("Failed to reconfigure audio after media services reset: \(error)", level: .error)
+        }
+    }
+
     /// Get latency statistics
     static func latencyStats() -> String {
         let audioSession = AVAudioSession.sharedInstance()

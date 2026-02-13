@@ -190,7 +190,10 @@ public final class MetronomeEngine: ObservableObject {
     private func setupAudio() {
         audioEngine.attach(playerNode)
 
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
+            log.audio("MetronomeEngine: Failed to create audio format")
+            return
+        }
         audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: format)
 
         audioEngine.mainMixerNode.outputVolume = configuration.volume
@@ -198,7 +201,10 @@ public final class MetronomeEngine: ObservableObject {
 
     /// Generate synthesized click buffers
     private func generateClickBuffers() {
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
+            log.audio("MetronomeEngine: Failed to create format for click buffers")
+            return
+        }
 
         downbeatBuffer = generateClick(
             frequency: configuration.sound.downbeatFrequency,

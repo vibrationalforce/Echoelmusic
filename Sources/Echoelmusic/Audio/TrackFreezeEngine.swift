@@ -337,7 +337,9 @@ public final class TrackFreezeEngine: ObservableObject {
         }
 
         // Read source buffer
-        let sourceBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        guard let sourceBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            throw FreezeError.renderingFailed("Failed to allocate source audio buffer")
+        }
         try sourceFile.read(into: sourceBuffer)
 
         // Create offline audio engine for rendering
@@ -387,7 +389,9 @@ public final class TrackFreezeEngine: ObservableObject {
         )
 
         // Render loop
-        let renderBuffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat, frameCapacity: maxFrames)!
+        guard let renderBuffer = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat, frameCapacity: maxFrames) else {
+            throw FreezeError.renderingFailed("Failed to allocate render buffer")
+        }
         var framesRendered: AVAudioFrameCount = 0
         var peakLevel: Float = 0
         var sumSquares: Float = 0
@@ -421,7 +425,8 @@ public final class TrackFreezeEngine: ObservableObject {
 
             case .cannotDoInCurrentContext:
                 // Retry
-                Thread.sleep(forTimeInterval: 0.001)
+                // Yield to allow audio engine to catch up (non-blocking)
+                try await Task.sleep(nanoseconds: 1_000_000)
 
             case .error:
                 throw FreezeError.renderingFailed("Render error at frame \(framesRendered)")
