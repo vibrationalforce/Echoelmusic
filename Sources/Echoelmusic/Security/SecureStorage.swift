@@ -512,23 +512,19 @@ extension CertificatePinningManager: URLSessionDelegate {
         }
 
         // Check certificate chain
-        let certificateCount = SecTrustGetCertificateCount(serverTrust)
+        if let certificates = SecTrustCopyCertificateChain(serverTrust) as? [SecCertificate] {
+            for certificate in certificates {
+                let publicKey = SecCertificateCopyKey(certificate)
+                if let key = publicKey,
+                   let publicKeyData = SecKeyCopyExternalRepresentation(key, nil) as Data? {
+                    let hash = SHA256.hash(data: publicKeyData)
+                    let hashString = Data(hash).base64EncodedString()
 
-        for i in 0..<certificateCount {
-            guard let certificate = SecTrustGetCertificateAtIndex(serverTrust, i) else {
-                continue
-            }
-
-            let publicKey = SecCertificateCopyKey(certificate)
-            if let key = publicKey,
-               let publicKeyData = SecKeyCopyExternalRepresentation(key, nil) as Data? {
-                let hash = SHA256.hash(data: publicKeyData)
-                let hashString = Data(hash).base64EncodedString()
-
-                if expectedHashes.contains(hashString) {
-                    SecurityAuditLogger.shared.log(event: .certificatePinning(host: host, success: true))
-                    completionHandler(.useCredential, URLCredential(trust: serverTrust))
-                    return
+                    if expectedHashes.contains(hashString) {
+                        SecurityAuditLogger.shared.log(event: .certificatePinning(host: host, success: true))
+                        completionHandler(.useCredential, URLCredential(trust: serverTrust))
+                        return
+                    }
                 }
             }
         }

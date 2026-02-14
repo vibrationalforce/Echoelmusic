@@ -425,8 +425,8 @@ public final class TrackFreezeEngine: ObservableObject {
 
             case .cannotDoInCurrentContext:
                 // Retry
-                // Yield to allow audio engine to catch up (non-blocking)
-                try await Task.sleep(nanoseconds: 1_000_000)
+                // Yield to allow audio engine to catch up
+                Thread.sleep(forTimeInterval: 0.001)
 
             case .error:
                 throw FreezeError.renderingFailed("Render error at frame \(framesRendered)")
