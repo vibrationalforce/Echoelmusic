@@ -218,7 +218,7 @@ class VibratoEngine: ObservableObject {
     ///   - noteDuration: Total note duration (seconds, 0 if unknown/real-time)
     ///   - frameCount: Number of samples to generate
     /// - Returns: Pitch modulation in cents for each sample
-    nonisolated func generateVibrato(
+    func generateVibrato(
         noteId: UUID,
         params: VibratoParameters,
         noteTime: Float,
