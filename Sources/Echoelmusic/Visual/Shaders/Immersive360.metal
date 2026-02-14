@@ -357,7 +357,7 @@ kernel void equirectToCubemap(
 
 /// Cubemap to equirectangular conversion (for export/streaming)
 kernel void cubemapToEquirect(
-    texturecube<float, access::read> cubemap [[texture(0)]],
+    texturecube<float, access::sample> cubemap [[texture(0)]],
     texture2d<float, access::write> equirect [[texture(1)]],
     sampler textureSampler [[sampler(0)]],
     uint2 gid [[thread_position_in_grid]]
