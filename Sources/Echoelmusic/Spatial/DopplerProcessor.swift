@@ -1,5 +1,6 @@
 import Foundation
 import Accelerate
+import simd
 
 /// Real-time Doppler effect processor for spatial audio sources.
 ///

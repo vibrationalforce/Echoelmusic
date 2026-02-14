@@ -1,5 +1,6 @@
 import Foundation
 import Accelerate
+import simd
 
 /// Room acoustics simulation using the Image Source Method (ISM).
 ///
@@ -247,7 +248,8 @@ class RoomSimulation {
         var output = [Float](repeating: 0, count: count)
 
         // Add dry signal
-        vDSP_vsma(input, 1, [configuration.dryGain], output, 1, &output, 1, vDSP_Length(count))
+        var dryGain = configuration.dryGain
+        vDSP_vsma(input, 1, &dryGain, output, 1, &output, 1, vDSP_Length(count))
 
         // Add each image source reflection
         for (index, source) in imageSources.enumerated() {
@@ -277,7 +279,8 @@ class RoomSimulation {
         var direct = [Float](repeating: 0, count: count)
         var early = [Float](repeating: 0, count: count)
 
-        vDSP_vsma(input, 1, [configuration.dryGain], direct, 1, &direct, 1, vDSP_Length(count))
+        var dryGainSep = configuration.dryGain
+        vDSP_vsma(input, 1, &dryGainSep, direct, 1, &direct, 1, vDSP_Length(count))
 
         for (index, source) in imageSources.enumerated() {
             guard index < delayBuffers.count else { break }

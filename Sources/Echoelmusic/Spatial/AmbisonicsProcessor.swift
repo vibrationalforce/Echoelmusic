@@ -1,5 +1,6 @@
 import Foundation
 import Accelerate
+import simd
 
 /// First and Higher Order Ambisonics (FOA/HOA) encoder and decoder.
 ///
@@ -113,14 +114,14 @@ class AmbisonicsProcessor {
 
         // Encode: each B-format channel = input * SH coefficient
         for ch in 0..<min(channelCount, coefficients.count) {
-            let coeff = coefficients[ch]
-            vDSP_vsma(input, 1, [coeff], bFormat[ch], 1, &bFormat[ch], 1, vDSP_Length(sampleCount))
+            var coeff = coefficients[ch]
+            vDSP_vsma(input, 1, &coeff, bFormat[ch], 1, &bFormat[ch], 1, vDSP_Length(sampleCount))
         }
 
         // Near-field compensation (distance attenuation for W channel)
         if configuration.nearFieldCompensation && distance > 0.01 {
-            let distGain = 1.0 / max(distance, 0.1)
-            vDSP_vsmul(bFormat[0], 1, [distGain], &bFormat[0], 1, vDSP_Length(sampleCount))
+            var distGain = 1.0 / max(distance, 0.1)
+            vDSP_vsmul(bFormat[0], 1, &distGain, &bFormat[0], 1, vDSP_Length(sampleCount))
         }
 
         return bFormat
@@ -177,9 +178,9 @@ class AmbisonicsProcessor {
         for s in 0..<speakerCount {
             for ch in 0..<channelCount {
                 guard s < decoderMatrix.count, ch < decoderMatrix[s].count else { continue }
-                let gain = decoderMatrix[s][ch]
+                var gain = decoderMatrix[s][ch]
                 guard abs(gain) > 0.0001 else { continue }
-                vDSP_vsma(bFormat[ch], 1, [gain], speakerFeeds[s], 1, &speakerFeeds[s], 1, vDSP_Length(sampleCount))
+                vDSP_vsma(bFormat[ch], 1, &gain, speakerFeeds[s], 1, &speakerFeeds[s], 1, vDSP_Length(sampleCount))
             }
         }
 
@@ -207,20 +208,20 @@ class AmbisonicsProcessor {
         let x = bFormat[3] // Front-Back (X axis)
 
         // Simple stereo decode: L = 0.5*W + 0.5*Y + 0.35*X, R = 0.5*W - 0.5*Y + 0.35*X
-        let wGain: Float = 0.5
-        let yGain: Float = 0.5
-        let xGain: Float = 0.35
+        var wGain: Float = 0.5
+        var yGain: Float = 0.5
+        var xGain: Float = 0.35
 
         // Left = wGain*W + yGain*Y + xGain*X
-        vDSP_vsma(w, 1, [wGain], left, 1, &left, 1, vDSP_Length(sampleCount))
-        vDSP_vsma(y, 1, [yGain], left, 1, &left, 1, vDSP_Length(sampleCount))
-        vDSP_vsma(x, 1, [xGain], left, 1, &left, 1, vDSP_Length(sampleCount))
+        vDSP_vsma(w, 1, &wGain, left, 1, &left, 1, vDSP_Length(sampleCount))
+        vDSP_vsma(y, 1, &yGain, left, 1, &left, 1, vDSP_Length(sampleCount))
+        vDSP_vsma(x, 1, &xGain, left, 1, &left, 1, vDSP_Length(sampleCount))
 
         // Right = wGain*W - yGain*Y + xGain*X
-        vDSP_vsma(w, 1, [wGain], right, 1, &right, 1, vDSP_Length(sampleCount))
+        vDSP_vsma(w, 1, &wGain, right, 1, &right, 1, vDSP_Length(sampleCount))
         var negYGain = -yGain
-        vDSP_vsma(y, 1, [negYGain], right, 1, &right, 1, vDSP_Length(sampleCount))
-        vDSP_vsma(x, 1, [xGain], right, 1, &right, 1, vDSP_Length(sampleCount))
+        vDSP_vsma(y, 1, &negYGain, right, 1, &right, 1, vDSP_Length(sampleCount))
+        vDSP_vsma(x, 1, &xGain, right, 1, &right, 1, vDSP_Length(sampleCount))
 
         return (left, right)
     }

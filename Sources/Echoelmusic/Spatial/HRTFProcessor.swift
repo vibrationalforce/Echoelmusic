@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Accelerate
+import simd
 
 #if canImport(CoreMotion)
 import CoreMotion
@@ -418,8 +419,8 @@ public final class HRTFProcessor: ObservableObject {
         var energy: Float = 0
         vDSP_dotpr(taps, 1, taps, 1, &energy, vDSP_Length(n))
         if energy > 0 {
-            let scale = 1.0 / sqrt(energy)
-            vDSP_vsmul(taps, 1, [scale], &taps, 1, vDSP_Length(n))
+            var scale = 1.0 / sqrt(energy)
+            vDSP_vsmul(taps, 1, &scale, &taps, 1, vDSP_Length(n))
         }
 
         return taps
