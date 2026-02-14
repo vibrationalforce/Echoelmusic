@@ -275,12 +275,11 @@
         .hero h1 span {
             background: linear-gradient(135deg, var(--green) 0%, var(--emerald) 40%, var(--mint) 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            filter: drop-shadow(0 0 20px rgba(255,105,180,0.6)) drop-shadow(0 0 40px rgba(255,20,147,0.4)) drop-shadow(0 0 80px rgba(255,105,180,0.2));
-            animation: pink-aura 3s ease-in-out infinite;
+            animation: pink-aura 4s ease-in-out infinite;
         }
         @keyframes pink-aura {
-            0%, 100% { filter: drop-shadow(0 0 15px rgba(255,105,180,0.5)) drop-shadow(0 0 30px rgba(255,20,147,0.3)) drop-shadow(0 0 60px rgba(255,105,180,0.15)); }
-            50% { filter: drop-shadow(0 0 25px rgba(255,105,180,0.8)) drop-shadow(0 0 50px rgba(255,20,147,0.5)) drop-shadow(0 0 100px rgba(255,105,180,0.3)); }
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(244,114,182,0.5)) drop-shadow(0 0 30px rgba(244,114,182,0.3)) drop-shadow(0 0 60px rgba(244,114,182,0.15)); }
+            50% { filter: drop-shadow(0 0 25px rgba(244,114,182,0.8)) drop-shadow(0 0 50px rgba(244,114,182,0.5)) drop-shadow(0 0 100px rgba(244,114,182,0.3)); }
         }
         .hero-sub {
             font-size: clamp(17px, 2.5vw, 20px); color: var(--text-dim);
@@ -618,7 +617,7 @@
         .animated-logo-wrap {
             width: 160px; height: 160px;
             position: relative; z-index: 1;
-            animation: logo-float 6s ease-in-out infinite;
+            animation: logo-float 4s ease-in-out infinite;
             filter: drop-shadow(0 0 30px rgba(34,197,94,0.3));
         }
         .animated-logo-wrap svg {
@@ -637,14 +636,14 @@
             transform-origin: 50px 50px;
         }
         .animated-logo-wrap .core-dot {
-            animation: core-pulse 3s ease-in-out infinite;
+            animation: core-pulse 1s ease-in-out infinite;
             transform-origin: 50px 50px;
         }
         .animated-logo-wrap .node {
-            animation: node-glow 4s ease-in-out infinite;
+            animation: node-glow 2s ease-in-out infinite;
         }
-        .animated-logo-wrap .node:nth-child(2) { animation-delay: 1.3s; }
-        .animated-logo-wrap .node:nth-child(3) { animation-delay: 2.6s; }
+        .animated-logo-wrap .node:nth-child(2) { animation-delay: 0.67s; }
+        .animated-logo-wrap .node:nth-child(3) { animation-delay: 1.33s; }
         @keyframes logo-float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-12px); }
@@ -655,7 +654,7 @@
         }
         @keyframes core-pulse {
             0%, 100% { transform: scale(1); opacity: 0.95; }
-            50% { transform: scale(1.15); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
         @keyframes node-glow {
             0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }
@@ -883,26 +882,32 @@
                         </radialGradient>
                     </defs>
                     <!-- Background glow -->
-                    <circle cx="50" cy="50" r="48" fill="url(#albg)"/>
-                    <!-- Orbits -->
+                    <circle cx="50" cy="50" r="42" fill="url(#albg)"/>
+                    <!-- Outer ring -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="url(#alg)" stroke-width="0.4" opacity="0.2"/>
+                    <!-- Orbits (matching nav logo: rx=34, ry=13) -->
                     <g class="orbit-1">
-                        <ellipse cx="50" cy="50" rx="40" ry="15" fill="none" stroke="url(#alg)" stroke-width="1.2" opacity="0.6"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#alg)" stroke-width="1.6" opacity="0.65"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.2"/>
                     </g>
                     <g class="orbit-2">
-                        <ellipse cx="50" cy="50" rx="40" ry="15" fill="none" stroke="url(#ale)" stroke-width="1.2" opacity="0.6" transform="rotate(60 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ale)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(60 50 50)"/>
                     </g>
                     <g class="orbit-3">
-                        <ellipse cx="50" cy="50" rx="40" ry="15" fill="none" stroke="url(#alm)" stroke-width="1.2" opacity="0.6" transform="rotate(120 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#alm)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(120 50 50)"/>
                     </g>
-                    <!-- Core -->
+                    <!-- Core (matching nav logo: r=7 glow, r=4.5 core) -->
                     <g class="core-dot">
-                        <circle cx="50" cy="50" r="8" fill="url(#alcore)"/>
-                        <circle cx="50" cy="50" r="5" fill="white" opacity="0.95"/>
+                        <circle cx="50" cy="50" r="7" fill="url(#alcore)"/>
+                        <circle cx="50" cy="50" r="4.5" fill="white" opacity="0.95"/>
+                        <ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.5"/>
                     </g>
-                    <!-- Orbital nodes -->
-                    <g class="node"><circle cx="90" cy="50" r="3" fill="white" opacity="0.9"/><circle cx="90" cy="50" r="5" fill="#22C55E" opacity="0.2"/></g>
-                    <g class="node"><circle cx="30" cy="15.4" r="3" fill="white" opacity="0.9"/><circle cx="30" cy="15.4" r="5" fill="#10B981" opacity="0.2"/></g>
-                    <g class="node"><circle cx="30" cy="84.6" r="3" fill="white" opacity="0.9"/><circle cx="30" cy="84.6" r="5" fill="#34D399" opacity="0.2"/></g>
+                    <!-- Orbital nodes (matching nav logo positions & sizes) -->
+                    <g class="node"><circle cx="84" cy="50" r="2.8" fill="white" opacity="0.92"/><circle cx="84" cy="50" r="4" fill="#22C55E" opacity="0.25"/></g>
+                    <g class="node"><circle cx="33" cy="20.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="20.5" r="4" fill="#10B981" opacity="0.25"/></g>
+                    <g class="node"><circle cx="33" cy="79.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="79.5" r="4" fill="#34D399" opacity="0.25"/></g>
                 </svg>
             </div>
             <div class="animated-logo-tagline">Echoelmusic</div>
