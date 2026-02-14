@@ -128,7 +128,7 @@
             --border-subtle: rgba(255,255,255,0.06);
             --max-w: 1080px;
             --glow: rgba(34,197,94,0.35);
-            --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'Inter', 'Atkinson Hyperlegible', sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -263,7 +263,7 @@
         /* -- HERO -- */
         .hero {
             position: relative; text-align: center;
-            padding: 160px 24px 70px;
+            padding: 100px 24px 70px;
             max-width: 780px; margin: 0 auto;
         }
         .hero-content { position: relative; z-index: 1; }
@@ -275,11 +275,11 @@
         .hero h1 span {
             background: linear-gradient(135deg, var(--green) 0%, var(--emerald) 40%, var(--mint) 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            animation: pink-aura 4s ease-in-out infinite;
         }
-        @keyframes pink-aura {
-            0%, 100% { filter: drop-shadow(0 0 15px rgba(244,114,182,0.5)) drop-shadow(0 0 30px rgba(244,114,182,0.3)) drop-shadow(0 0 60px rgba(244,114,182,0.15)); }
-            50% { filter: drop-shadow(0 0 25px rgba(244,114,182,0.8)) drop-shadow(0 0 50px rgba(244,114,182,0.5)) drop-shadow(0 0 100px rgba(244,114,182,0.3)); }
+        .hero-subtitle {
+            font-size: 13px; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 4px; font-weight: 600;
+            margin-bottom: 20px; opacity: 0.7;
         }
         .hero-sub {
             font-size: clamp(17px, 2.5vw, 20px); color: var(--text-dim);
@@ -577,7 +577,7 @@
         @media (max-width: 768px) {
             .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .steps { grid-template-columns: 1fr; gap: 16px; }
-            .hero { padding: 130px 20px 50px; }
+            .hero { padding: 90px 20px 50px; }
             .hero h1 { letter-spacing: -2px; }
             footer { flex-direction: column; text-align: center; padding-bottom: 100px; }
             .footer-links { justify-content: center; }
@@ -601,69 +601,62 @@
             :root { --text-dim: rgba(248,250,252,0.8); --border: rgba(34,197,94,0.25); }
         }
 
-        /* -- ANIMATED LOGO SECTION -- */
-        .animated-logo-section {
-            padding: 80px 24px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative;
-        }
-        .animated-logo-section::before {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px; height: 400px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(34,197,94,0.1), rgba(16,185,129,0.05) 50%, transparent 70%);
-            pointer-events: none;
-        }
-        .animated-logo-wrap {
-            width: 160px; height: 160px;
+        /* -- QUANTUM ATOM HERO ANIMATION -- */
+        .hero-atom-wrap {
+            width: 200px; height: 200px;
             position: relative; z-index: 1;
-            animation: logo-float 4s ease-in-out infinite;
-            filter: drop-shadow(0 0 30px rgba(34,197,94,0.3));
+            margin: 0 auto 32px;
+            animation: logo-float 5s ease-in-out infinite;
+            filter: drop-shadow(0 0 40px rgba(34,197,94,0.25));
         }
-        .animated-logo-wrap svg {
+        .hero-atom-wrap svg {
             width: 100%; height: 100%;
         }
-        .animated-logo-wrap .orbit-1 {
-            animation: orbit-spin 12s linear infinite;
+        .hero-atom-wrap .core-dot {
+            animation: core-pulse 2s ease-in-out infinite;
             transform-origin: 50px 50px;
         }
-        .animated-logo-wrap .orbit-2 {
-            animation: orbit-spin 12s linear infinite reverse;
+        /* Quantum probability cloud around nucleus */
+        .hero-atom-wrap .quantum-cloud {
+            animation: quantum-breathe 3s ease-in-out infinite;
             transform-origin: 50px 50px;
         }
-        .animated-logo-wrap .orbit-3 {
-            animation: orbit-spin 16s linear infinite;
-            transform-origin: 50px 50px;
+        /* Electron nodes - animated via JS along orbital paths */
+        .hero-atom-wrap .electron {
+            transition: filter 0.3s;
         }
-        .animated-logo-wrap .core-dot {
-            animation: core-pulse 1s ease-in-out infinite;
-            transform-origin: 50px 50px;
+        .hero-atom-wrap .electron-glow {
+            animation: electron-pulse 1.5s ease-in-out infinite;
         }
-        .animated-logo-wrap .node {
-            animation: node-glow 2s ease-in-out infinite;
+        .hero-atom-wrap .electron-glow:nth-of-type(2) { animation-delay: 0.5s; }
+        .hero-atom-wrap .electron-glow:nth-of-type(3) { animation-delay: 1s; }
+        /* Electron trail effect */
+        .hero-atom-wrap .electron-trail {
+            opacity: 0;
+            animation: trail-fade 0.8s ease-out forwards;
         }
-        .animated-logo-wrap .node:nth-child(2) { animation-delay: 0.67s; }
-        .animated-logo-wrap .node:nth-child(3) { animation-delay: 1.33s; }
         @keyframes logo-float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
-        @keyframes orbit-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            50% { transform: translateY(-10px); }
         }
         @keyframes core-pulse {
             0%, 100% { transform: scale(1); opacity: 0.95; }
-            50% { transform: scale(1.1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 1; }
         }
-        @keyframes node-glow {
-            0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); }
-            50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)); }
+        @keyframes quantum-breathe {
+            0%, 100% { opacity: 0.08; transform: scale(1); }
+            50% { opacity: 0.15; transform: scale(1.05); }
         }
-        .animated-logo-tagline {
-            margin-top: 28px; font-size: 14px; color: var(--text-dim);
-            text-transform: uppercase; letter-spacing: 4px; font-weight: 700;
-            position: relative; z-index: 1;
+        @keyframes electron-pulse {
+            0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); }
+            50% { opacity: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.9)) drop-shadow(0 0 20px rgba(34,197,94,0.4)); }
+        }
+        @keyframes trail-fade {
+            0% { opacity: 0.4; }
+            100% { opacity: 0; }
+        }
+        @media (max-width: 768px) {
+            .hero-atom-wrap { width: 160px; height: 160px; margin-bottom: 24px; }
         }
     </style>
 </head>
@@ -718,8 +711,77 @@
         <!-- Hero -->
         <header class="hero">
             <div class="hero-content">
-                <h1><span>Create from Within</span></h1>
-                <p class="hero-sub">Your heartbeat, breath, and body become music, visuals, and light. <strong>Echoelmusic</strong> turns biology into art.</p>
+                <!-- Quantum Atom Animation -->
+                <div class="hero-atom-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="hag" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/>
+                                <stop offset="50%" stop-color="#1da750" stop-opacity="0.5"/>
+                                <stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/>
+                            </linearGradient>
+                            <linearGradient id="hae" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
+                                <stop offset="50%" stop-color="#10B981" stop-opacity="0.7"/>
+                                <stop offset="100%" stop-color="#0ea374" stop-opacity="0.8"/>
+                            </linearGradient>
+                            <linearGradient id="ham" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/>
+                                <stop offset="50%" stop-color="#2bc48a" stop-opacity="0.5"/>
+                                <stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/>
+                            </linearGradient>
+                            <radialGradient id="hacore" cx="50%" cy="45%" r="50%">
+                                <stop offset="0%" stop-color="white" stop-opacity="0.98"/>
+                                <stop offset="40%" stop-color="white" stop-opacity="0.7"/>
+                                <stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/>
+                                <stop offset="100%" stop-color="#22C55E" stop-opacity="0"/>
+                            </radialGradient>
+                            <radialGradient id="habg" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/>
+                                <stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/>
+                                <stop offset="100%" stop-color="transparent"/>
+                            </radialGradient>
+                            <filter id="quantum-blur">
+                                <feGaussianBlur stdDeviation="0.8"/>
+                            </filter>
+                        </defs>
+                        <!-- Quantum probability cloud -->
+                        <circle class="quantum-cloud" cx="50" cy="50" r="42" fill="url(#habg)"/>
+                        <!-- Orbital paths (Bohr-Sommerfeld ellipses) -->
+                        <ellipse id="orbit-path-1" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#hag)" stroke-width="0.8" opacity="0.4"/>
+                        <ellipse id="orbit-path-2" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#hae)" stroke-width="0.8" opacity="0.4" transform="rotate(60 50 50)"/>
+                        <ellipse id="orbit-path-3" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ham)" stroke-width="0.8" opacity="0.4" transform="rotate(120 50 50)"/>
+                        <!-- Faint secondary orbital lines (quantum shell structure) -->
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.2" opacity="0.1"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.2" opacity="0.08" transform="rotate(60 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.2" opacity="0.08" transform="rotate(120 50 50)"/>
+                        <!-- Nucleus (core) -->
+                        <g class="core-dot">
+                            <circle cx="50" cy="50" r="7" fill="url(#hacore)"/>
+                            <circle cx="50" cy="50" r="4.5" fill="white" opacity="0.95"/>
+                            <ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.5"/>
+                        </g>
+                        <!-- Electron trail containers (populated by JS) -->
+                        <g id="electron-trails"></g>
+                        <!-- Electrons (positioned by JS along orbital paths) -->
+                        <g id="electron-1" class="electron">
+                            <circle class="electron-glow" r="4.5" fill="#22C55E" opacity="0.2"/>
+                            <circle r="2.8" fill="white" opacity="0.92"/>
+                        </g>
+                        <g id="electron-2" class="electron">
+                            <circle class="electron-glow" r="4.5" fill="#10B981" opacity="0.2"/>
+                            <circle r="2.8" fill="white" opacity="0.92"/>
+                        </g>
+                        <g id="electron-3" class="electron">
+                            <circle class="electron-glow" r="4.5" fill="#34D399" opacity="0.2"/>
+                            <circle r="2.8" fill="white" opacity="0.92"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <h1><span>Echoelmusic</span></h1>
+                <p class="hero-subtitle">Create from Within</p>
+                <p class="hero-sub">Your heartbeat, breath, and body become music, visuals, and light. Biology becomes art.</p>
                 <div class="hero-cta-group">
                     <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="hero-cta">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
@@ -848,73 +910,6 @@
             </div>
 
         </div>
-
-        <!-- Animated Logo -->
-        <div class="animated-logo-section fade-in">
-            <div class="animated-logo-wrap">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="alg" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/>
-                            <stop offset="50%" stop-color="#1da750" stop-opacity="0.5"/>
-                            <stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/>
-                        </linearGradient>
-                        <linearGradient id="ale" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
-                            <stop offset="50%" stop-color="#10B981" stop-opacity="0.7"/>
-                            <stop offset="100%" stop-color="#0ea374" stop-opacity="0.8"/>
-                        </linearGradient>
-                        <linearGradient id="alm" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/>
-                            <stop offset="50%" stop-color="#2bc48a" stop-opacity="0.5"/>
-                            <stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/>
-                        </linearGradient>
-                        <radialGradient id="alcore" cx="50%" cy="45%" r="50%">
-                            <stop offset="0%" stop-color="white" stop-opacity="0.98"/>
-                            <stop offset="40%" stop-color="white" stop-opacity="0.7"/>
-                            <stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/>
-                            <stop offset="100%" stop-color="#22C55E" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="albg" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/>
-                            <stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/>
-                            <stop offset="100%" stop-color="transparent"/>
-                        </radialGradient>
-                    </defs>
-                    <!-- Background glow -->
-                    <circle cx="50" cy="50" r="42" fill="url(#albg)"/>
-                    <!-- Outer ring -->
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="url(#alg)" stroke-width="0.4" opacity="0.2"/>
-                    <!-- Orbits (matching nav logo: rx=34, ry=13) -->
-                    <g class="orbit-1">
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#alg)" stroke-width="1.6" opacity="0.65"/>
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.2"/>
-                    </g>
-                    <g class="orbit-2">
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ale)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)"/>
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(60 50 50)"/>
-                    </g>
-                    <g class="orbit-3">
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#alm)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)"/>
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(120 50 50)"/>
-                    </g>
-                    <!-- Core (matching nav logo: r=7 glow, r=4.5 core) -->
-                    <g class="core-dot">
-                        <circle cx="50" cy="50" r="7" fill="url(#alcore)"/>
-                        <circle cx="50" cy="50" r="4.5" fill="white" opacity="0.95"/>
-                        <ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.5"/>
-                    </g>
-                    <!-- Orbital nodes (matching nav logo positions & sizes) -->
-                    <g class="node"><circle cx="84" cy="50" r="2.8" fill="white" opacity="0.92"/><circle cx="84" cy="50" r="4" fill="#22C55E" opacity="0.25"/></g>
-                    <g class="node"><circle cx="33" cy="20.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="20.5" r="4" fill="#10B981" opacity="0.25"/></g>
-                    <g class="node"><circle cx="33" cy="79.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="79.5" r="4" fill="#34D399" opacity="0.25"/></g>
-                </svg>
-            </div>
-            <div class="animated-logo-tagline">Echoelmusic</div>
-        </div>
-
-        <!-- Divider -->
-        <div class="divider"><div class="divider-line"></div></div>
 
         <!-- Who It's For -->
         <div id="who" class="personas fade-in">
@@ -1124,6 +1119,59 @@
                 }
             }
         });
+
+        // Quantum orbital animation — electrons orbit along Bohr-Sommerfeld ellipses
+        (function quantumOrbit() {
+            var CX = 50, CY = 50, RX = 34, RY = 13;
+            var orbits = [
+                { el: document.getElementById('electron-1'), angle: 0, speed: 0.015, rotation: 0 },
+                { el: document.getElementById('electron-2'), angle: 2.094, speed: 0.012, rotation: 60 * Math.PI / 180 },
+                { el: document.getElementById('electron-3'), angle: 4.189, speed: 0.018, rotation: 120 * Math.PI / 180 }
+            ];
+            var trailContainer = document.getElementById('electron-trails');
+            var trailColors = ['#22C55E', '#10B981', '#34D399'];
+            var trailCounter = 0;
+
+            function posOnEllipse(angle, rotAngle) {
+                var x = RX * Math.cos(angle);
+                var y = RY * Math.sin(angle);
+                // Apply orbital rotation
+                var cosR = Math.cos(rotAngle), sinR = Math.sin(rotAngle);
+                var rx = x * cosR - y * sinR;
+                var ry = x * sinR + y * cosR;
+                return { x: CX + rx, y: CY + ry };
+            }
+
+            function addTrail(x, y, colorIdx) {
+                if (trailCounter++ % 3 !== 0) return; // Only every 3rd frame
+                var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                c.setAttribute('cx', x);
+                c.setAttribute('cy', y);
+                c.setAttribute('r', '1.2');
+                c.setAttribute('fill', trailColors[colorIdx]);
+                c.setAttribute('opacity', '0.3');
+                c.classList.add('electron-trail');
+                trailContainer.appendChild(c);
+                setTimeout(function() { if (c.parentNode) c.parentNode.removeChild(c); }, 800);
+            }
+
+            function tick() {
+                for (var i = 0; i < orbits.length; i++) {
+                    var o = orbits[i];
+                    // Quantum uncertainty: tiny positional jitter (Heisenberg)
+                    var jitter = (Math.random() - 0.5) * 0.4;
+                    var pos = posOnEllipse(o.angle, o.rotation);
+                    o.el.setAttribute('transform', 'translate(' + (pos.x + jitter) + ',' + (pos.y + jitter) + ')');
+                    addTrail(pos.x, pos.y, i);
+                    // Variable speed — electrons accelerate near nucleus (Kepler's 2nd law)
+                    var dist = Math.sqrt((pos.x - CX) * (pos.x - CX) + (pos.y - CY) * (pos.y - CY));
+                    var speedMod = 1 + (RX - dist) / (RX * 2.5);
+                    o.angle += o.speed * speedMod;
+                }
+                requestAnimationFrame(tick);
+            }
+            if (orbits[0].el) requestAnimationFrame(tick);
+        })();
 
         // Mobile CTA: show after scrolling past hero
         var mobileCta = document.getElementById('mobileCta');

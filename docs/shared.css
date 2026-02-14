@@ -10,7 +10,7 @@
 /* Reset */
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:80px}
-body{font-family:'Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.6}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Helvetica Neue','Inter','Atkinson Hyperlegible',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.6}
 a{color:inherit;text-decoration:none}
 a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 
