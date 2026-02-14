@@ -79,9 +79,9 @@ Certifié WCAG 2.2 AAA. VoiceOver, Contrôle vocal, Contrôle de sélection, Eye
 La créativité n'a pas de prérequis.
 
 
-MONDIAL
+38 LANGUES
 
-Disponible en plus de 40 langues grâce à la traduction intégrée d'Apple. Interface en anglais, universellement comprise.
+EN, DE, ES, FR, JA, ZH, KO, PT, IT, RU, AR, HI, NL, SV, DA, NO, PL, TR et 20 autres. Détecte automatiquement la langue de votre système.
 
 Votre langue. Votre expérience.
 

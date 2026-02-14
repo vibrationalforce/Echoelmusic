@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "Echoelmusic",
+    defaultLocalization: "en",
     platforms: [
         .iOS(.v16),        // iPhone & iPad - iOS 16+ for modern APIs
         .macOS(.v13),      // macOS Ventura+ for Apple Silicon & Intel

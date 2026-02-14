@@ -79,9 +79,9 @@ WCAG 2.2 AAA certified. VoiceOver, Voice Control, Switch Control, Eye Tracking, 
 Creativity has no prerequisites.
 
 
-WORLDWIDE
+38 LANGUAGES
 
-Available in 40+ languages through Apple's built-in translation. English interface, universally understood.
+EN, DE, ES, FR, JA, ZH, KO, PT, IT, RU, AR, HI, NL, SV, DA, NO, PL, TR and 20 more. Auto-detects your system language.
 
 Your language. Your experience.
 

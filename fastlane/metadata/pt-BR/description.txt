@@ -79,9 +79,9 @@ Certificação WCAG 2.2 AAA. VoiceOver, Controle por Voz, Controle Assistivo, Ey
 Criatividade não tem pré-requisitos.
 
 
-MUNDIAL
+38 IDIOMAS
 
-Disponível em mais de 40 idiomas através da tradução integrada da Apple. Interface em inglês, universalmente compreensível.
+EN, DE, ES, FR, JA, ZH, KO, PT, IT, RU, AR, HI, NL, SV, DA, NO, PL, TR e mais 20. Detecta automaticamente o idioma do seu sistema.
 
 Seu idioma. Sua experiência.
 

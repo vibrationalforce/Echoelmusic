@@ -79,9 +79,9 @@ Certificazione WCAG 2.2 AAA. VoiceOver, Controllo Vocale, Controllo Interruttori
 La creatività non ha prerequisiti.
 
 
-MONDIALE
+38 LINGUE
 
-Disponibile in oltre 40 lingue tramite la traduzione integrata di Apple. Interfaccia in inglese, universalmente comprensibile.
+EN, DE, ES, FR, JA, ZH, KO, PT, IT, RU, AR, HI, NL, SV, DA, NO, PL, TR e altre 20. Rileva automaticamente la lingua del tuo sistema.
 
 La tua lingua. La tua esperienza.
 

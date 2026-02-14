@@ -29,7 +29,7 @@ class LocalizationManager: ObservableObject {
     // MARK: - Published Properties
 
     /// Aktuelle Sprache
-    @Published var currentLanguage: Language = .german {
+    @Published var currentLanguage: Language = .english {
         didSet {
             if currentLanguage != oldValue {
                 languageDidChange.send(currentLanguage)
