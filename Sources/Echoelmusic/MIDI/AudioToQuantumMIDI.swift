@@ -571,7 +571,9 @@ public final class AudioToQuantumMIDI: ObservableObject {
         fftRealBuffer = windowedBuffer
         fftImagBuffer = [Float](repeating: 0, count: fftSize)
 
-        vDSP_DFT_Execute(fft, fftRealBuffer, fftImagBuffer, &fftRealBuffer, &fftImagBuffer)
+        var realInput = fftRealBuffer
+        var imagInput = fftImagBuffer
+        vDSP_DFT_Execute(fft, &realInput, &imagInput, &fftRealBuffer, &fftImagBuffer)
 
         // Calculate magnitude spectrum
         for i in 0..<fftSize/2 {

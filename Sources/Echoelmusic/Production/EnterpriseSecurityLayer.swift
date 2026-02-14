@@ -471,7 +471,8 @@ public final class CertificatePinning: Sendable {
             return true
         }
 
-        guard let serverCertificate = SecTrustGetCertificateAtIndex(trust, 0) else {
+        guard let certificates = SecTrustCopyCertificateChain(trust) as? [SecCertificate],
+              let serverCertificate = certificates.first else {
             return false
         }
 
