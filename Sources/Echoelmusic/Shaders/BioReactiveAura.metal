@@ -10,8 +10,14 @@
 //  Copyright (c) 2026 Echoelmusic. All rights reserved.
 
 #include <metal_stdlib>
-#include <SwiftUI/SwiftUI_Metal.h>
 using namespace metal;
+
+// SwiftUI Metal shaders ([[stitchable]]) require iOS 17.0+ / macOS 14.0+
+// Guard with __has_include to prevent compile errors on unsupported targets
+#if __has_include(<SwiftUI/SwiftUI_Metal.h>)
+#include <SwiftUI/SwiftUI_Metal.h>
+#define SWIFTUI_METAL_AVAILABLE 1
+#endif
 
 // MARK: - Constants
 
@@ -73,6 +79,10 @@ float fbm(float2 p, int octaves) {
 
     return value;
 }
+
+// MARK: - SwiftUI Stitchable Shaders (iOS 17.0+ only)
+
+#if defined(SWIFTUI_METAL_AVAILABLE)
 
 // MARK: - Bio-Reactive Aura Shader
 
@@ -371,3 +381,5 @@ float fbm(float2 p, int octaves) {
 
     return result;
 }
+
+#endif // SWIFTUI_METAL_AVAILABLE
