@@ -115,13 +115,17 @@ class AmbisonicsProcessor {
         // Encode: each B-format channel = input * SH coefficient
         for ch in 0..<min(channelCount, coefficients.count) {
             var coeff = coefficients[ch]
-            vDSP_vsma(input, 1, &coeff, bFormat[ch], 1, &bFormat[ch], 1, vDSP_Length(sampleCount))
+            var channelAccum = bFormat[ch]
+            vDSP_vsma(input, 1, &coeff, &channelAccum, 1, &channelAccum, 1, vDSP_Length(sampleCount))
+            bFormat[ch] = channelAccum
         }
 
         // Near-field compensation (distance attenuation for W channel)
         if configuration.nearFieldCompensation && distance > 0.01 {
             var distGain = 1.0 / max(distance, 0.1)
-            vDSP_vsmul(bFormat[0], 1, &distGain, &bFormat[0], 1, vDSP_Length(sampleCount))
+            var wChannel = bFormat[0]
+            vDSP_vsmul(&wChannel, 1, &distGain, &wChannel, 1, vDSP_Length(sampleCount))
+            bFormat[0] = wChannel
         }
 
         return bFormat
@@ -150,7 +154,9 @@ class AmbisonicsProcessor {
         }
 
         for ch in 0..<min(encoded.count, bFormatBuffer.count) {
-            vDSP_vadd(bFormatBuffer[ch], 1, encoded[ch], 1, &bFormatBuffer[ch], 1, vDSP_Length(input.count))
+            var accum = bFormatBuffer[ch]
+            vDSP_vadd(&accum, 1, encoded[ch], 1, &accum, 1, vDSP_Length(input.count))
+            bFormatBuffer[ch] = accum
         }
     }
 
@@ -176,12 +182,14 @@ class AmbisonicsProcessor {
 
         // Matrix decode: speaker[s] = sum( decoderMatrix[s][ch] * bFormat[ch] )
         for s in 0..<speakerCount {
+            var feed = speakerFeeds[s]
             for ch in 0..<channelCount {
                 guard s < decoderMatrix.count, ch < decoderMatrix[s].count else { continue }
                 var gain = decoderMatrix[s][ch]
                 guard abs(gain) > 0.0001 else { continue }
-                vDSP_vsma(bFormat[ch], 1, &gain, speakerFeeds[s], 1, &speakerFeeds[s], 1, vDSP_Length(sampleCount))
+                vDSP_vsma(bFormat[ch], 1, &gain, &feed, 1, &feed, 1, vDSP_Length(sampleCount))
             }
+            speakerFeeds[s] = feed
         }
 
         return speakerFeeds
