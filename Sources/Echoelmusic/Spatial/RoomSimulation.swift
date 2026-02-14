@@ -1,6 +1,5 @@
 import Foundation
 import Accelerate
-import simd
 
 /// Room acoustics simulation using the Image Source Method (ISM).
 ///
