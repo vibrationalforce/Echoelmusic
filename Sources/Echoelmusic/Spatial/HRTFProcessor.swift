@@ -420,7 +420,9 @@ public final class HRTFProcessor: ObservableObject {
         vDSP_dotpr(taps, 1, taps, 1, &energy, vDSP_Length(n))
         if energy > 0 {
             var scale = 1.0 / sqrt(energy)
-            vDSP_vsmul(taps, 1, &scale, &taps, 1, vDSP_Length(n))
+            taps.withUnsafeMutableBufferPointer { buf in
+                vDSP_vsmul(buf.baseAddress!, 1, &scale, buf.baseAddress!, 1, vDSP_Length(n))
+            }
         }
 
         return taps
