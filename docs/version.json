@@ -1,6 +1,6 @@
 {
-  "version": "5.2.0",
-  "build": "2026-02-13T17:05:00Z",
+  "version": "5.3.0",
+  "build": "2026-02-14T12:00:00Z",
   "features": {
     "liquidGlassIcon": true,
     "bioGreenTheme": true,
@@ -21,9 +21,14 @@
     "cacheFirstFonts": true,
     "subpageDesktopNav": true,
     "custom404Page": true,
-    "proper404Handling": true
+    "proper404Handling": true,
+    "hreflangSupport": true,
+    "breadcrumbStructuredData": true,
+    "faqFullStructuredData": true,
+    "faqKeyboardAccessibility": true
   },
   "changelog": [
+    "v5.3.0: SEO & accessibility optimization — full FAQ structured data (18 questions), hreflang tags for DE aliases, breadcrumb JSON-LD on all subpages, FAQ keyboard accessibility (role=button, aria-expanded), 404 page now uses shared.css/js with OG tags and skip-link, accessibility.html SVG titles for screen readers, Impressum skip-link in German",
     "v5.2.0: Custom 404 page, proper 404 handling, version sync, reduced CSS duplication",
     "v5.1.0: Performance optimization — self-hosted fonts, desktop nav on all pages, cache-first strategy",
     "v5.0.0: Complete redesign — Liquid Glass + Bio-Green + Vaporwave identity",

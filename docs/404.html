@@ -7,19 +7,29 @@
     <meta name="description" content="Page not found. Return to Echoelmusic.">
     <meta name="theme-color" content="#22C55E">
     <meta name="robots" content="noindex">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="404 — Echoelmusic">
+    <meta property="og:description" content="Page not found. Return to Echoelmusic — bio-reactive creative platform.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://echoelmusic.com/404.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-image.png">
+    <meta property="og:site_name" content="Echoelmusic">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="404 — Echoelmusic">
+    <meta name="twitter:description" content="Page not found. Return to Echoelmusic.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
+
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
-    <link rel="preload" href="/fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="/fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="shared.css">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('/fonts/atkinson-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('/fonts/atkinson-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-        :root { --green: #22C55E; --emerald: #10B981; --mint: #34D399; --bg: #030712; --text: #F8FAFC; --text-dim: rgba(248,250,252,0.65); --glow: rgba(34,197,94,0.35); }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; -webkit-font-smoothing: antialiased; text-align: center; padding: 24px; }
-        a { color: inherit; text-decoration: none; }
-        a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+        body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
         .code { font-size: clamp(80px, 20vw, 140px); font-weight: 700; letter-spacing: -4px; line-height: 1; background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
         h1 { font-size: clamp(22px, 4vw, 32px); font-weight: 700; margin-bottom: 12px; letter-spacing: -0.5px; }
         p { color: var(--text-dim); font-size: 16px; line-height: 1.6; max-width: 400px; margin-bottom: 36px; }
@@ -32,25 +42,31 @@
         .logo { margin-top: 48px; opacity: 0.4; transition: opacity 0.2s; }
         .logo:hover { opacity: 0.7; }
         .logo svg { width: 36px; height: 36px; }
-        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; } }
     </style>
 </head>
 <body>
-    <div class="code">404</div>
-    <h1>Lost in the frequency spectrum</h1>
-    <p>This page doesn't exist. Maybe it was a different wavelength.</p>
-    <div class="actions">
-        <a href="/" class="btn btn-primary">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12l9-9 9 9"/><path d="M9 21V9"/></svg>
-            Back Home
-        </a>
-        <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-secondary">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            Download App
-        </a>
-    </div>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <main id="main">
+        <div class="code" aria-hidden="true">404</div>
+        <h1>Lost in the frequency spectrum</h1>
+        <p>This page doesn't exist. Maybe it was a different wavelength.</p>
+        <div class="actions">
+            <a href="/" class="btn btn-primary" aria-label="Go back to the homepage">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12l9-9 9 9"/><path d="M9 21V9"/></svg>
+                Back Home
+            </a>
+            <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="btn btn-secondary" aria-label="Download Echoelmusic on the App Store">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                Download App
+            </a>
+        </div>
+    </main>
+
     <a href="/" class="logo" aria-label="Echoelmusic Home">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bg404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#030712"/><stop offset="50%" stop-color="#041a0e"/><stop offset="100%" stop-color="#030712"/></linearGradient><linearGradient id="gs404" x1="0%" y1="0%" x2="80%" y2="80%"><stop offset="0%" stop-color="white" stop-opacity="0.18"/><stop offset="50%" stop-color="white" stop-opacity="0.03"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="og404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/><stop offset="50%" stop-color="#1da750" stop-opacity="0.5"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient><linearGradient id="oe404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="50%" stop-color="#10B981" stop-opacity="0.7"/><stop offset="100%" stop-color="#0ea374" stop-opacity="0.8"/></linearGradient><linearGradient id="om404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/><stop offset="50%" stop-color="#2bc48a" stop-opacity="0.5"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/></linearGradient><radialGradient id="nuc404" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.98"/><stop offset="40%" stop-color="white" stop-opacity="0.7"/><stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></radialGradient><radialGradient id="amb404" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/><stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><rect width="100" height="100" rx="22" fill="url(#bg404)"/><circle cx="50" cy="50" r="42" fill="url(#amb404)"/><rect width="100" height="100" rx="22" fill="url(#gs404)"/><circle cx="50" cy="50" r="40" fill="none" stroke="url(#og404)" stroke-width="0.4" opacity="0.2"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#og404)" stroke-width="1.6" opacity="0.65"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.2"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#oe404)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#om404)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="7" fill="url(#nuc404)"/><circle cx="50" cy="50" r="4.5" fill="white" opacity="0.95"/><ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.5"/><circle cx="84" cy="50" r="2.8" fill="white" opacity="0.92"/><circle cx="84" cy="50" r="4" fill="#22C55E" opacity="0.25"/><circle cx="33" cy="20.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="20.5" r="4" fill="#10B981" opacity="0.25"/><circle cx="33" cy="79.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="79.5" r="4" fill="#34D399" opacity="0.25"/><circle cx="50" cy="16" r="0.8" fill="white" opacity="0.35"/><circle cx="78" cy="25" r="0.7" fill="#22C55E" opacity="0.3"/><circle cx="78" cy="75" r="0.7" fill="#10B981" opacity="0.3"/><circle cx="50" cy="84" r="0.8" fill="white" opacity="0.35"/><circle cx="22" cy="75" r="0.7" fill="#34D399" opacity="0.3"/><circle cx="22" cy="25" r="0.7" fill="#22C55E" opacity="0.3"/></svg>
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="bg404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#030712"/><stop offset="50%" stop-color="#041a0e"/><stop offset="100%" stop-color="#030712"/></linearGradient><linearGradient id="gs404" x1="0%" y1="0%" x2="80%" y2="80%"><stop offset="0%" stop-color="white" stop-opacity="0.18"/><stop offset="50%" stop-color="white" stop-opacity="0.03"/><stop offset="100%" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="og404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/><stop offset="50%" stop-color="#1da750" stop-opacity="0.5"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient><linearGradient id="oe404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="50%" stop-color="#10B981" stop-opacity="0.7"/><stop offset="100%" stop-color="#0ea374" stop-opacity="0.8"/></linearGradient><linearGradient id="om404" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/><stop offset="50%" stop-color="#2bc48a" stop-opacity="0.5"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/></linearGradient><radialGradient id="nuc404" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.98"/><stop offset="40%" stop-color="white" stop-opacity="0.7"/><stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></radialGradient><radialGradient id="amb404" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/><stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><rect width="100" height="100" rx="22" fill="url(#bg404)"/><circle cx="50" cy="50" r="42" fill="url(#amb404)"/><rect width="100" height="100" rx="22" fill="url(#gs404)"/><circle cx="50" cy="50" r="40" fill="none" stroke="url(#og404)" stroke-width="0.4" opacity="0.2"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#og404)" stroke-width="1.6" opacity="0.65"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.2"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#oe404)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#om404)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(120 50 50)"/><circle cx="50" cy="50" r="7" fill="url(#nuc404)"/><circle cx="50" cy="50" r="4.5" fill="white" opacity="0.95"/><ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.5"/><circle cx="84" cy="50" r="2.8" fill="white" opacity="0.92"/><circle cx="84" cy="50" r="4" fill="#22C55E" opacity="0.25"/><circle cx="33" cy="20.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="20.5" r="4" fill="#10B981" opacity="0.25"/><circle cx="33" cy="79.5" r="2.8" fill="white" opacity="0.92"/><circle cx="33" cy="79.5" r="4" fill="#34D399" opacity="0.25"/></svg>
     </a>
+
+    <script src="shared.js"></script>
 </body>
 </html>
