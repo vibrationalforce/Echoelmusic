@@ -142,7 +142,7 @@ class ProVocalChain: ObservableObject {
     /// Process a block of audio in real-time
     /// - Parameter input: Mono audio samples
     /// - Returns: Processed audio samples
-    nonisolated func processBlock(_ input: [Float]) -> [Float] {
+    func processBlock(_ input: [Float]) -> [Float] {
         guard input.count > 0 else { return input }
 
         var output = input

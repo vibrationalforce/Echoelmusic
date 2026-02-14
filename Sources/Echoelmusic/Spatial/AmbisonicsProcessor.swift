@@ -1,5 +1,6 @@
 import Foundation
 import Accelerate
+import simd
 
 /// First and Higher Order Ambisonics (FOA/HOA) encoder and decoder.
 ///

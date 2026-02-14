@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Accelerate
+import simd
 
 #if canImport(CoreMotion)
 import CoreMotion

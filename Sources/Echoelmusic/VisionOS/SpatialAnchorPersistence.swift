@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import simd
 
 #if canImport(RealityKit)
 import RealityKit

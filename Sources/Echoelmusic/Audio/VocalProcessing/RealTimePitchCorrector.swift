@@ -177,7 +177,7 @@ class RealTimePitchCorrector: ObservableObject {
     /// Process a block of audio with pitch correction
     /// - Parameter buffer: Input audio samples (mono)
     /// - Returns: Pitch-corrected audio samples
-    nonisolated func processBlock(_ buffer: [Float], sampleRate: Float) -> [Float] {
+    func processBlock(_ buffer: [Float], sampleRate: Float) -> [Float] {
         guard buffer.count > 0 else { return buffer }
 
         // Detect pitch
@@ -205,7 +205,7 @@ class RealTimePitchCorrector: ObservableObject {
     // MARK: - Pitch Detection
 
     /// Detect pitch from raw samples using YIN
-    private nonisolated func detectPitchFromSamples(_ samples: [Float], sampleRate: Float) -> Float {
+    private func detectPitchFromSamples(_ samples: [Float], sampleRate: Float) -> Float {
         // RMS check for silence
         var rms: Float = 0
         vDSP_rmsqv(samples, 1, &rms, vDSP_Length(samples.count))
@@ -264,7 +264,7 @@ class RealTimePitchCorrector: ObservableObject {
     // MARK: - Note Finding
 
     /// Find the target note for correction
-    nonisolated func findCorrectionTarget(inputFrequency: Float) -> CorrectionTarget {
+    func findCorrectionTarget(inputFrequency: Float) -> CorrectionTarget {
         // Convert frequency to MIDI note number (fractional)
         let midiNote = 69.0 + 12.0 * Foundation.log(inputFrequency / 440.0) / Foundation.log(2.0)
 
@@ -327,7 +327,7 @@ class RealTimePitchCorrector: ObservableObject {
     }
 
     /// Find nearest note in the current scale
-    private nonisolated func findNearestScaleNote(midiNote: Int) -> Int {
+    private func findNearestScaleNote(midiNote: Int) -> Int {
         let noteClass = ((midiNote % 12) + 12) % 12
         let octave = (midiNote - noteClass) // MIDI note at octave start
 
@@ -357,7 +357,7 @@ class RealTimePitchCorrector: ObservableObject {
     }
 
     /// Find nearest MIDI target note
-    private nonisolated func findNearestMidiTarget(to midiNote: Int) -> Int {
+    private func findNearestMidiTarget(to midiNote: Int) -> Int {
         var nearest = midiNote
         var minDist = Int.max
         for target in midiTargetNotes {
@@ -373,7 +373,7 @@ class RealTimePitchCorrector: ObservableObject {
     // MARK: - Smoothing
 
     /// Smooth pitch correction for natural transitions
-    private nonisolated func smoothPitchShift(_ targetShift: Float) -> Float {
+    private func smoothPitchShift(_ targetShift: Float) -> Float {
         // Simple exponential smoothing
         // correctionSpeed: 0ms = instant, higher = slower
         let alpha: Float
