@@ -79,9 +79,9 @@ WCAG 2.2 AAA 인증. VoiceOver, 음성 제어, 스위치 제어, Eye Tracking, 6
 창의성에 전제 조건은 없습니다.
 
 
-37개 언어
+전 세계
 
-EN, DE, ES, FR, JA, ZH, KO, PT, IT, AR, HI 외 26개 언어.
+Apple 내장 번역을 통해 40개 이상의 언어로 이용 가능. 영어 인터페이스, 전 세계 공통.
 
 당신의 언어. 당신의 경험.
 
