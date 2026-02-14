@@ -36,6 +36,23 @@
       <stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
+    <!-- Electron probability cloud gradient -->
+    <radialGradient id="prob-cloud" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.12"/>
+      <stop offset="50%" stop-color="#22C55E" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- Nucleon gradients (protons/neutrons) -->
+    <radialGradient id="proton" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.98"/>
+      <stop offset="60%" stop-color="#e0fbe8" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#22C55E" stop-opacity="0.4"/>
+    </radialGradient>
+    <radialGradient id="neutron" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#d4e8dc" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.3"/>
+    </radialGradient>
     <filter id="gb" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="8" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -44,14 +61,30 @@
       <feGaussianBlur stdDeviation="16" result="g"/>
       <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <!-- Subtle nucleus glow -->
+    <filter id="nucglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="ng"/>
+      <feMerge><feMergeNode in="ng"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
 
+  <!-- Background -->
   <rect width="1024" height="1024" rx="225" fill="url(#bg)"/>
   <circle cx="512" cy="512" r="430" fill="url(#amb)"/>
   <rect width="1024" height="1024" rx="225" fill="url(#glass)"/>
 
+  <!-- Outer quantum boundary (n=3 shell) -->
   <circle cx="512" cy="512" r="410" fill="none" stroke="url(#oc)" stroke-width="3" opacity="0.15"/>
 
+  <!-- Inner quantized energy level (n=2 shell, faint) -->
+  <circle cx="512" cy="512" r="260" fill="none" stroke="url(#oc)" stroke-width="1.5" opacity="0.06" stroke-dasharray="8 12"/>
+
+  <!-- de Broglie standing wave overlay on orbits (quantized wavelength visualization) -->
+  <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="url(#oc)" stroke-width="2" opacity="0.12" stroke-dasharray="18 8"/>
+  <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="url(#op)" stroke-width="2" opacity="0.12" stroke-dasharray="18 8" transform="rotate(60 512 512)"/>
+  <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="url(#ov)" stroke-width="2" opacity="0.12" stroke-dasharray="18 8" transform="rotate(120 512 512)"/>
+
+  <!-- Primary orbital paths (Bohr-Sommerfeld) -->
   <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="url(#oc)" stroke-width="16" opacity="0.65" filter="url(#gb)"/>
   <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="white" stroke-width="3" opacity="0.15"/>
 
@@ -61,19 +94,37 @@
   <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="url(#ov)" stroke-width="16" opacity="0.65" transform="rotate(120 512 512)" filter="url(#gb)"/>
   <ellipse cx="512" cy="512" rx="348" ry="133" fill="none" stroke="white" stroke-width="3" opacity="0.12" transform="rotate(120 512 512)"/>
 
+  <!-- Nucleus: clustered nucleons (protons + neutrons) -->
   <circle cx="512" cy="512" r="72" fill="url(#nuc)"/>
-  <circle cx="512" cy="512" r="46" fill="white" opacity="0.95"/>
-  <ellipse cx="497" cy="500" rx="20" ry="12" fill="white" opacity="0.45"/>
+  <g filter="url(#nucglow)">
+    <!-- Proton cluster (tight arrangement) -->
+    <circle cx="500" cy="502" r="18" fill="url(#proton)"/>
+    <circle cx="524" cy="502" r="18" fill="url(#proton)"/>
+    <circle cx="512" cy="522" r="18" fill="url(#neutron)"/>
+    <circle cx="512" cy="498" r="16" fill="url(#neutron)"/>
+    <!-- Nuclear binding highlight -->
+    <circle cx="512" cy="508" r="10" fill="white" opacity="0.6"/>
+  </g>
+  <!-- Glass highlight on nucleus -->
+  <ellipse cx="497" cy="496" rx="20" ry="12" fill="white" opacity="0.35"/>
 
+  <!-- Electrons with probability clouds -->
   <g filter="url(#eg)">
+    <!-- Electron 1 (green orbit) + probability cloud -->
+    <circle cx="860" cy="512" r="52" fill="url(#prob-cloud)"/>
     <circle cx="860" cy="512" r="29" fill="white" opacity="0.92"/>
     <circle cx="860" cy="512" r="42" fill="#22C55E" opacity="0.25"/>
+    <!-- Electron 2 (emerald orbit) + probability cloud -->
+    <circle cx="338" cy="210" r="52" fill="url(#prob-cloud)"/>
     <circle cx="338" cy="210" r="29" fill="white" opacity="0.92"/>
     <circle cx="338" cy="210" r="42" fill="#10B981" opacity="0.25"/>
+    <!-- Electron 3 (mint orbit) + probability cloud -->
+    <circle cx="338" cy="814" r="52" fill="url(#prob-cloud)"/>
     <circle cx="338" cy="814" r="29" fill="white" opacity="0.92"/>
     <circle cx="338" cy="814" r="42" fill="#34D399" opacity="0.25"/>
   </g>
 
+  <!-- Ambient photon particles (virtual photons / vacuum fluctuations) -->
   <circle cx="512" cy="164" r="8" fill="white" opacity="0.3"/>
   <circle cx="800" cy="256" r="7" fill="#22C55E" opacity="0.25"/>
   <circle cx="870" cy="530" r="6" fill="white" opacity="0.2"/>
@@ -82,4 +133,12 @@
   <circle cx="225" cy="770" r="7" fill="#34D399" opacity="0.25"/>
   <circle cx="154" cy="512" r="6" fill="white" opacity="0.2"/>
   <circle cx="225" cy="256" r="7" fill="#22C55E" opacity="0.25"/>
+
+  <!-- Additional quantum field particles (finer detail) -->
+  <circle cx="650" cy="200" r="4" fill="#22C55E" opacity="0.12"/>
+  <circle cx="380" cy="340" r="3.5" fill="white" opacity="0.1"/>
+  <circle cx="700" cy="700" r="4" fill="#34D399" opacity="0.12"/>
+  <circle cx="320" cy="680" r="3.5" fill="#10B981" opacity="0.1"/>
+  <circle cx="620" cy="400" r="3" fill="white" opacity="0.08"/>
+  <circle cx="400" cy="620" r="3" fill="#22C55E" opacity="0.08"/>
 </svg>
