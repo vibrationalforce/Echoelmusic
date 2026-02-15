@@ -35,9 +35,8 @@
         .hero p { font-size: 18px; color: var(--text-dim); max-width: 600px; margin: 0 auto 24px; line-height: 1.6; }
         .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
         .badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-        .badge.emerald { background: rgba(255,255,255,0.06); color: var(--text); }
-        .badge.rose { background: rgba(255,255,255,0.06); color: var(--text-dim); }
-        .badge.mint { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+        .badge { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+        .badge:first-child { color: var(--text); }
 
         section { margin-bottom: 48px; }
         section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; }
@@ -58,12 +57,9 @@
         .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
         .profile-category { background: var(--bg-glass); border-radius: 16px; padding: 20px; }
         .profile-category h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
-        .profile-category h3.vision { color: var(--text); }
-        .profile-category h3.hearing { color: var(--text-dim); }
-        .profile-category h3.motor { color: var(--text-dim); }
-        .profile-category h3.cognitive { color: var(--text-dim); }
+        .profile-category h3 { color: var(--text); }
         .profile-category ul { list-style: none; }
-        .profile-category li { font-size: 13px; color: rgba(248,250,252,0.7); padding: 6px 0; }
+        .profile-category li { font-size: 13px; color: rgba(224,224,224,0.7); padding: 6px 0; }
         .profile-category li strong { color: var(--text); }
 
         .contact-box { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 32px; text-align: center; }
@@ -104,9 +100,9 @@
             <h1><span>Accessibility</span></h1>
             <p>Echoelmusic is designed for everyone. We believe music creation and biofeedback experiences should be accessible to all, regardless of ability.</p>
             <div class="badges">
-                <span class="badge emerald">WCAG 2.2 AAA</span>
-                <span class="badge rose">20+ Profiles</span>
-                <span class="badge mint">6 Platforms</span>
+                <span class="badge">WCAG 2.2 AAA</span>
+                <span class="badge">20+ Profiles</span>
+                <span class="badge">6 Platforms</span>
             </div>
         </div>
 
@@ -152,7 +148,7 @@
             <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 14px;">One-tap profiles optimized for specific needs</p>
             <div class="profile-grid">
                 <div class="profile-category">
-                    <h3 class="vision">Vision</h3>
+                    <h3>Vision</h3>
                     <ul>
                         <li><strong>Low Vision</strong> - Large text, high contrast</li>
                         <li><strong>Blind</strong> - VoiceOver with spatial audio</li>
@@ -160,14 +156,14 @@
                     </ul>
                 </div>
                 <div class="profile-category">
-                    <h3 class="hearing">Hearing</h3>
+                    <h3>Hearing</h3>
                     <ul>
                         <li><strong>Deaf</strong> - Visual alerts, live captions</li>
                         <li><strong>Hard of Hearing</strong> - Audio boost, visual beats</li>
                     </ul>
                 </div>
                 <div class="profile-category">
-                    <h3 class="motor">Motor</h3>
+                    <h3>Motor</h3>
                     <ul>
                         <li><strong>Limited Mobility</strong> - Large targets, voice</li>
                         <li><strong>Tremor Support</strong> - Stabilized input</li>
@@ -176,7 +172,7 @@
                     </ul>
                 </div>
                 <div class="profile-category">
-                    <h3 class="cognitive">Cognitive</h3>
+                    <h3>Cognitive</h3>
                     <ul>
                         <li><strong>ADHD</strong> - Focus mode</li>
                         <li><strong>Dyslexia</strong> - OpenDyslexic font</li>

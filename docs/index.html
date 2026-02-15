@@ -432,7 +432,7 @@
             font-size: clamp(36px, 5vw, 52px); font-weight: 700; letter-spacing: -2px;
             line-height: 1;
         }
-        .stat-num.c-green, .stat-num.c-sky, .stat-num.c-violet, .stat-num.c-rose {
+        .stat-num {
             color: var(--white);
         }
         .stat-label {
@@ -527,7 +527,7 @@
             font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
             letter-spacing: 0.3px;
         }
-        .bt-rose, .bt-sky, .bt-violet, .bt-green, .bt-amber {
+        .bento-tag {
             background: var(--white-06); color: var(--white-60);
         }
 
@@ -557,7 +557,7 @@
             background: var(--bg-glass); border-radius: 12px;
             display: flex; align-items: center; gap: 14px;
         }
-        .spec-item:hover { }
+        .spec-item:hover { background: rgba(255,255,255,0.04); }
         .spec-val {
             font-size: 20px; font-weight: 700; color: var(--white);
             letter-spacing: -0.5px; white-space: nowrap;
@@ -803,31 +803,31 @@
         <div class="signal-chain reveal">
             <div class="signal-flow reveal-stagger">
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-bio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+                    <div class="signal-node-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
                     <div class="signal-node-label">Body</div>
                     <div class="signal-node-sub">HRV, HR, Breath, Dance</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-engine"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
+                    <div class="signal-node-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
                     <div class="signal-node-label">6 Engines</div>
                     <div class="signal-node-sub">90+ DSP Effects</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-visual"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
+                    <div class="signal-node-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
                     <div class="signal-node-label">30+ Visuals</div>
                     <div class="signal-node-sub">GPU Particles, Fractals</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-light"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
+                    <div class="signal-node-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
                     <div class="signal-node-label">Light</div>
                     <div class="signal-node-sub">DMX, Lasers, Smart Home</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-out"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M2 12h20"/></svg></div>
+                    <div class="signal-node-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M2 12h20"/></svg></div>
                     <div class="signal-node-label">Output</div>
                     <div class="signal-node-sub">Stream, Film, Atmos</div>
                 </div>
@@ -837,19 +837,19 @@
         <!-- ========== STATS ========== -->
         <div class="stats reveal reveal-stagger">
             <div class="stat">
-                <div class="stat-num c-green" data-count="6" role="text" aria-label="6 Synth Engines">0</div>
+                <div class="stat-num" data-count="6" role="text" aria-label="6 Synth Engines">0</div>
                 <div class="stat-label">Synth Engines</div>
             </div>
             <div class="stat">
-                <div class="stat-num c-sky" data-count="90" data-suffix="+" role="text" aria-label="90+ DSP Effects">0</div>
+                <div class="stat-num" data-count="90" data-suffix="+" role="text" aria-label="90+ DSP Effects">0</div>
                 <div class="stat-label">DSP Effects</div>
             </div>
             <div class="stat">
-                <div class="stat-num c-violet" data-count="30" data-suffix="+" role="text" aria-label="30+ Visual Modes">0</div>
+                <div class="stat-num" data-count="30" data-suffix="+" role="text" aria-label="30+ Visual Modes">0</div>
                 <div class="stat-label">Visual Modes</div>
             </div>
             <div class="stat">
-                <div class="stat-num c-rose" data-count="6" role="text" aria-label="6 Platforms">0</div>
+                <div class="stat-num" data-count="6" role="text" aria-label="6 Platforms">0</div>
                 <div class="stat-label">Platforms</div>
             </div>
         </div>
@@ -887,66 +887,66 @@
             <div class="bento reveal reveal-stagger">
                 <!-- Bio-Reactive -->
                 <div class="bento-card span2">
-                    <div class="bento-icon bi-rose"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+                    <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
                     <h3>Your body is the instrument</h3>
                     <p>Heart rate, HRV, breathing, dance, and movement shape every parameter in real time. 10ms latency. Faster than conscious thought. Every vibration becomes a creative signal.</p>
                     <div class="bento-tags">
-                        <span class="bento-tag bt-rose">Heart Rate</span>
-                        <span class="bento-tag bt-rose">HRV</span>
-                        <span class="bento-tag bt-rose">Breathing</span>
-                        <span class="bento-tag bt-rose">Dance</span>
-                        <span class="bento-tag bt-rose">Coherence</span>
+                        <span class="bento-tag">Heart Rate</span>
+                        <span class="bento-tag">HRV</span>
+                        <span class="bento-tag">Breathing</span>
+                        <span class="bento-tag">Dance</span>
+                        <span class="bento-tag">Coherence</span>
                     </div>
                 </div>
 
                 <!-- Sound -->
                 <div class="bento-card">
-                    <div class="bento-icon bi-green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
+                    <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
                     <h3>Six engines. One sound field.</h3>
                     <p>Subtractive, FM, wavetable, granular, physical modeling, additive. 808 bass, 6 drum kits, 90+ DSP effects. MIDI 2.0. Dolby Atmos.</p>
                     <div class="bento-tags">
-                        <span class="bento-tag bt-green">FM</span>
-                        <span class="bento-tag bt-green">Wavetable</span>
-                        <span class="bento-tag bt-green">Granular</span>
-                        <span class="bento-tag bt-green">Atmos</span>
+                        <span class="bento-tag">FM</span>
+                        <span class="bento-tag">Wavetable</span>
+                        <span class="bento-tag">Granular</span>
+                        <span class="bento-tag">Atmos</span>
                     </div>
                 </div>
 
                 <!-- Visuals -->
                 <div class="bento-card">
-                    <div class="bento-icon bi-violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
+                    <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
                     <h3>30+ visual worlds</h3>
                     <p>GPU-accelerated particles, fractals, audio-reactive geometry. Metal shaders at 120fps. Your biology paints in real time.</p>
                     <div class="bento-tags">
-                        <span class="bento-tag bt-violet">Particles</span>
-                        <span class="bento-tag bt-violet">Fractals</span>
-                        <span class="bento-tag bt-violet">120fps</span>
+                        <span class="bento-tag">Particles</span>
+                        <span class="bento-tag">Fractals</span>
+                        <span class="bento-tag">120fps</span>
                     </div>
                 </div>
 
                 <!-- Video & Streaming -->
                 <div class="bento-card">
-                    <div class="bento-icon bi-sky"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+                    <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
                     <h3>Video &amp; live streaming</h3>
                     <p>50+ real-time video effects. AI live production. Multi-platform RTMP up to 50 Mbps. ProRes, H.265, 25+ export formats.</p>
                     <div class="bento-tags">
-                        <span class="bento-tag bt-sky">Video</span>
-                        <span class="bento-tag bt-sky">Streaming</span>
-                        <span class="bento-tag bt-sky">ProRes</span>
+                        <span class="bento-tag">Video</span>
+                        <span class="bento-tag">Streaming</span>
+                        <span class="bento-tag">ProRes</span>
                     </div>
                 </div>
 
                 <!-- Light -->
                 <div class="bento-card span2">
-                    <div class="bento-icon bi-amber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
+                    <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
                     <h3>From living room to main stage</h3>
                     <p>Smart home lights, DMX512, Art-Net, ILDA lasers, projection mapping. Your heart rate controls the room. Bio-reactive from bedroom to arena. Vision Pro immersive spaces.</p>
                     <div class="bento-tags">
-                        <span class="bento-tag bt-amber">DMX512</span>
-                        <span class="bento-tag bt-amber">Lasers</span>
-                        <span class="bento-tag bt-amber">Mapping</span>
-                        <span class="bento-tag bt-amber">Vision Pro</span>
-                        <span class="bento-tag bt-amber">Smart Home</span>
+                        <span class="bento-tag">DMX512</span>
+                        <span class="bento-tag">Lasers</span>
+                        <span class="bento-tag">Mapping</span>
+                        <span class="bento-tag">Vision Pro</span>
+                        <span class="bento-tag">Smart Home</span>
                     </div>
                 </div>
             </div>
