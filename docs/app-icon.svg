@@ -1,31 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <defs>
-    <!-- Echoelmusic — App Icon: "3" Logo, White on Black -->
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="8" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="dotGlow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="4" result="g"/>
-      <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-
-  <!-- Background -->
+  <!-- Echoelmusic — App Icon: Atkinson Bold "3", White on Black -->
   <rect width="1024" height="1024" rx="225" fill="#000000"/>
-
-  <!-- "3" waveform path — the number 3, drawn as a continuous stroke -->
-  <!-- Soft glow layer -->
-  <path d="M 290 230 C 290 230 390 165 512 165 C 676 165 757 268 757 370 C 757 452 690 512 576 512 C 690 512 780 576 780 680 C 780 800 680 885 512 885 C 390 885 290 825 290 825"
-        fill="none" stroke="white" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"
-        opacity="0.06"/>
-
-  <!-- Main stroke -->
-  <path d="M 290 230 C 290 230 390 165 512 165 C 676 165 757 268 757 370 C 757 452 690 512 576 512 C 690 512 780 576 780 680 C 780 800 680 885 512 885 C 390 885 290 825 290 825"
-        fill="none" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"
-        filter="url(#glow)"/>
-
-  <!-- Pulse dot at upper apex -->
-  <circle cx="757" cy="370" r="18" fill="white" opacity="0.25" filter="url(#dotGlow)"/>
-  <circle cx="757" cy="370" r="8" fill="white" opacity="0.9"/>
+  <g transform="translate(512 512) scale(1.127 -1.127) translate(-293.5 -334)">
+    <path d="M291-12Q235-12 183.5 4Q132 20 93 53.5Q54 87 33 140L171 190Q184 141 219 121Q254 101 295 101Q342 101 370 124Q398 147 398 188Q398 229 372 251.5Q346 274 303.5 282.5Q261 291 211 291V397Q297 397 343.5 421Q390 445 390 489Q390 528 358.5 547.5Q327 567 286 567Q249 567 218 549Q187 531 177 485L40 535Q60 586 99 618Q138 650 189 665Q240 680 295 680Q341 680 385 670Q429 660 464.5 638.5Q500 617 521.5 584.5Q543 552 543 507Q543 453 514 412.5Q485 372 450 352Q483 340 506.5 314Q530 288 542 257Q554 226 554 195Q554 125 517 79.5Q480 34 420 11Q360-12 291-12Z" fill="white"/>
+  </g>
 </svg>
