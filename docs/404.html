@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 — Echoelmusic</title>
     <meta name="description" content="Page not found. Return to Echoelmusic.">
-    <meta name="theme-color" content="#22C55E">
+    <meta name="theme-color" content="#000000">
     <meta name="robots" content="noindex">
 
     <!-- Open Graph -->
@@ -30,12 +30,12 @@
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
-        .code { font-size: clamp(80px, 20vw, 140px); font-weight: 700; letter-spacing: -4px; line-height: 1; background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
+        .code { font-size: clamp(80px, 20vw, 140px); font-weight: 700; letter-spacing: -4px; line-height: 1; background: var(--text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
         h1 { font-size: clamp(22px, 4vw, 32px); font-weight: 700; margin-bottom: 12px; letter-spacing: -0.5px; }
         p { color: var(--text-dim); font-size: 16px; line-height: 1.6; max-width: 400px; margin-bottom: 36px; }
         .actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
         .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; transition: transform 0.2s, box-shadow 0.2s; }
-        .btn-primary { background: var(--green); color: #000; }
+        .btn-primary { background: var(--text); color: #000; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 36px var(--glow); }
         .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); }
         .btn-secondary:hover { color: var(--text); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
@@ -64,7 +64,7 @@
     </main>
 
     <a href="/" class="logo" aria-label="Echoelmusic Home">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="52" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,66 C29,61 36,61 41,66 C46,71 54,71 59,66 C64,61 71,61 76,66" opacity="0.8"/><path d="M24,77 C29,72 36,72 41,77 C46,82 54,82 59,77 C64,72 71,72 76,77" opacity="0.4"/><path d="M24,88 C29,83 36,83 41,88 C46,93 54,93 59,88 C64,83 71,83 76,88" opacity="0.15"/></g></svg>
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="48" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="49" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3.5" stroke-linecap="round"><path d="M22,61 C27,55 35,55 40,61 C45,67 55,67 60,61 C65,55 73,55 78,61" opacity="0.9"/><path d="M22,71 C27,65 35,65 40,71 C45,77 55,77 60,71 C65,65 73,65 78,71" opacity="0.5"/><path d="M22,81 C27,75 35,75 40,81 C45,87 55,87 60,81 C65,75 73,75 78,81" opacity="0.3"/></g></svg>
     </a>
 
     <script src="shared.js"></script>

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic — Create from Within</title>
-    <meta name="description" content="Your body's vibrations become music, visuals, film, and light. Bio-reactive creative platform — 6 synth engines, 90+ effects, 30+ visual modes, video, streaming, mapping. Free.">
+    <title>Echoelmusic — Bio-Reactive Music, Visuals &amp; Lighting App | Free</title>
+    <meta name="description" content="Turn your heartbeat, breath, and movement into music, visuals, film, and light. 6 synth engines, 90+ DSP effects, 30+ visual modes, Dolby Atmos, MIDI 2.0, DMX lighting, live streaming. Free on iPhone, iPad, Mac, Apple Watch, Apple TV, and Vision Pro.">
     <meta name="theme-color" content="#000000">
 
     <!-- Open Graph -->
@@ -57,7 +57,7 @@
           "name": "Echoelmusic",
           "description": "Create from Within. Bio-reactive platform for music, visuals, film, streaming, and light.",
           "publisher": {"@id": "https://echoelmusic.com/#organization"},
-          "inLanguage": "en",
+          "inLanguage": "en-US",
           "datePublished": "2024-01-01",
           "dateModified": "2026-02-15"
         },
@@ -86,13 +86,15 @@
           "operatingSystem": ["iOS 15+", "macOS 12+", "watchOS 8+", "tvOS 15+", "visionOS 1+"],
           "description": "Create from Within. Your heartbeat, breath, dance, and movement become music, visuals, film, and light.",
           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
-          "featureList": "Bio-reactive, 6 synth engines, 90+ DSP effects, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio"
+          "downloadUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
+          "installUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
+          "featureList": "Bio-reactive music, 6 synth engines, 90+ DSP effects, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio, Apple Watch HRV"
         }
       ]
     }
     </script>
 
-    <meta name="keywords" content="Echoelmusic, bio-reactive music, HRV music, heartbeat music, spatial audio, biofeedback, Gesamtkunstwerk, synthesizer, music production, live visuals, video production, streaming, projection mapping, DMX, visionOS">
+    <meta name="keywords" content="Echoelmusic, bio-reactive music app, HRV music, heartbeat music, biofeedback music, synthesizer app, music production app, live visuals, video production, live streaming app, projection mapping, DMX lighting, spatial audio, Dolby Atmos, MIDI 2.0, Apple Watch music, Vision Pro music, free music app iOS">
     <meta name="author" content="Echoelmusic">
     <meta name="robots" content="index, follow, max-image-preview:large">
 
@@ -401,20 +403,12 @@
             position: relative;
         }
         .signal-node-icon {
-            width: 52px; height: 52px; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
-            border: 1px solid var(--border);
-            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            color: var(--white-40);
+            transition: color 0.3s, transform 0.3s;
         }
         .signal-node:hover .signal-node-icon {
-            transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.4);
-        }
-        .sn-bio, .sn-engine, .sn-visual, .sn-light, .sn-out {
-            background: var(--white-03); border-color: var(--white-10) !important;
-        }
-        .sn-bio:hover, .sn-engine:hover, .sn-visual:hover, .sn-light:hover, .sn-out:hover {
-            border-color: var(--white-20) !important;
+            transform: translateY(-2px); color: var(--white-60);
         }
         .signal-node-label { font-size: 13px; font-weight: 600; color: var(--text-mid); letter-spacing: -0.2px; }
         .signal-node-sub { font-size: 11px; color: var(--text-dim); text-align: center; }
@@ -519,12 +513,9 @@
         .bento-card.span-row { grid-row: span 2; }
 
         .bento-icon {
-            width: 48px; height: 48px; border-radius: 14px; margin-bottom: 20px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-        }
-        .bi-rose, .bi-sky, .bi-violet, .bi-green, .bi-amber {
-            background: var(--white-03); --card-glow: rgba(255,255,255,0.02);
+            margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: flex-start;
+            color: var(--white-40);
         }
 
         .bento-card h3 {
@@ -552,9 +543,9 @@
             transition: border-color 0.3s, transform 0.3s;
         }
         .persona-card:hover { border-color: var(--border-hover); transform: translateY(-4px); }
-        .persona-emoji {
-            font-size: 36px; margin-bottom: 16px; display: block;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+        .persona-icon {
+            margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;
+            color: var(--white-40); opacity: 0.7;
         }
         .persona-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
         .persona-card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
@@ -722,11 +713,11 @@
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <text x="50" y="52" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
-                    <g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round">
-                        <path d="M24,66 C29,61 36,61 41,66 C46,71 54,71 59,66 C64,61 71,61 76,66" opacity="0.8"/>
-                        <path d="M24,77 C29,72 36,72 41,77 C46,82 54,82 59,77 C64,72 71,72 76,77" opacity="0.4"/>
-                        <path d="M24,88 C29,83 36,83 41,88 C46,93 54,93 59,88 C64,83 71,83 76,88" opacity="0.15"/>
+                    <text x="50" y="48" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="49" fill="#e0e0e0">E</text>
+                    <g stroke="#e0e0e0" fill="none" stroke-width="3.5" stroke-linecap="round">
+                        <path d="M22,61 C27,55 35,55 40,61 C45,67 55,67 60,61 C65,55 73,55 78,61" opacity="0.9"/>
+                        <path d="M22,71 C27,65 35,65 40,71 C45,77 55,77 60,71 C65,65 73,65 78,71" opacity="0.5"/>
+                        <path d="M22,81 C27,75 35,75 40,81 C45,87 55,87 60,81 C65,75 73,75 78,81" opacity="0.3"/>
                     </g>
                 </svg>
                 <span>Echoelmusic</span>
@@ -775,11 +766,11 @@
             <div class="hero-content">
                 <div class="hero-mark" aria-hidden="true">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <text x="50" y="52" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
+                        <text x="50" y="48" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="49" fill="#e0e0e0">E</text>
                         <g stroke="#e0e0e0" fill="none" stroke-width="2.5" stroke-linecap="round">
-                            <path class="echo-w1" d="M24,66 C29,61 36,61 41,66 C46,71 54,71 59,66 C64,61 71,61 76,66"/>
-                            <path class="echo-w2" d="M24,77 C29,72 36,72 41,77 C46,82 54,82 59,77 C64,72 71,72 76,77"/>
-                            <path class="echo-w3" d="M24,88 C29,83 36,83 41,88 C46,93 54,93 59,88 C64,83 71,83 76,88"/>
+                            <path class="echo-w1" d="M22,61 C27,55 35,55 40,61 C45,67 55,67 60,61 C65,55 73,55 78,61"/>
+                            <path class="echo-w2" d="M22,71 C27,65 35,65 40,71 C45,77 55,77 60,71 C65,65 73,65 78,71"/>
+                            <path class="echo-w3" d="M22,81 C27,75 35,75 40,81 C45,87 55,87 60,81 C65,75 73,75 78,81"/>
                         </g>
                     </svg>
                 </div>
@@ -816,31 +807,31 @@
         <div class="signal-chain reveal">
             <div class="signal-flow reveal-stagger">
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-bio">&#x1F49A;</div>
+                    <div class="signal-node-icon sn-bio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
                     <div class="signal-node-label">Body</div>
                     <div class="signal-node-sub">HRV, HR, Breath, Dance</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-engine">&#x1F3B9;</div>
+                    <div class="signal-node-icon sn-engine"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
                     <div class="signal-node-label">6 Engines</div>
                     <div class="signal-node-sub">90+ DSP Effects</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-visual">&#x2728;</div>
+                    <div class="signal-node-icon sn-visual"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
                     <div class="signal-node-label">30+ Visuals</div>
                     <div class="signal-node-sub">GPU Particles, Fractals</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-light">&#x1F4A1;</div>
+                    <div class="signal-node-icon sn-light"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
                     <div class="signal-node-label">Light</div>
                     <div class="signal-node-sub">DMX, Lasers, Smart Home</div>
                 </div>
                 <div class="signal-arrow">&rarr;</div>
                 <div class="signal-node">
-                    <div class="signal-node-icon sn-out">&#x1F30D;</div>
+                    <div class="signal-node-icon sn-out"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M2 12h20"/></svg></div>
                     <div class="signal-node-label">Output</div>
                     <div class="signal-node-sub">Stream, Film, Atmos</div>
                 </div>
@@ -900,7 +891,7 @@
             <div class="bento reveal reveal-stagger">
                 <!-- Bio-Reactive -->
                 <div class="bento-card span2">
-                    <div class="bento-icon bi-rose">&#x1F49C;</div>
+                    <div class="bento-icon bi-rose"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
                     <h3>Your body is the instrument</h3>
                     <p>Heart rate, HRV, breathing, dance, and movement shape every parameter in real time. 10ms latency. Faster than conscious thought. Every vibration becomes a creative signal.</p>
                     <div class="bento-tags">
@@ -914,7 +905,7 @@
 
                 <!-- Sound -->
                 <div class="bento-card">
-                    <div class="bento-icon bi-green">&#x1F3B5;</div>
+                    <div class="bento-icon bi-green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
                     <h3>Six engines. One Klangfeld.</h3>
                     <p>Subtractive, FM, wavetable, granular, physical modeling, additive. 808 bass, 6 drum kits, 90+ DSP effects. MIDI 2.0. Dolby Atmos.</p>
                     <div class="bento-tags">
@@ -927,7 +918,7 @@
 
                 <!-- Visuals -->
                 <div class="bento-card">
-                    <div class="bento-icon bi-violet">&#x1F308;</div>
+                    <div class="bento-icon bi-violet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
                     <h3>30+ visual worlds</h3>
                     <p>GPU-accelerated particles, fractals, audio-reactive geometry. Metal shaders at 120fps. Your biology paints in real time.</p>
                     <div class="bento-tags">
@@ -939,7 +930,7 @@
 
                 <!-- Video & Streaming -->
                 <div class="bento-card">
-                    <div class="bento-icon bi-sky">&#x1F3AC;</div>
+                    <div class="bento-icon bi-sky"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
                     <h3>Video &amp; live streaming</h3>
                     <p>50+ real-time video effects. AI live production. Multi-platform RTMP up to 50 Mbps. ProRes, H.265, 25+ export formats.</p>
                     <div class="bento-tags">
@@ -951,7 +942,7 @@
 
                 <!-- Light -->
                 <div class="bento-card span2">
-                    <div class="bento-icon bi-amber">&#x1F4A1;</div>
+                    <div class="bento-icon bi-amber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
                     <h3>From living room to main stage</h3>
                     <p>Smart home lights, DMX512, Art-Net, ILDA lasers, projection mapping. Your heart rate controls the room. Bio-reactive from bedroom to arena. Vision Pro immersive spaces.</p>
                     <div class="bento-tags">
@@ -973,22 +964,22 @@
 
             <div class="persona-grid reveal reveal-stagger">
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#x1F3B9;</span>
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
                     <h3>Musicians &amp; Producers</h3>
                     <p>6 synth engines. 90+ effects. MIDI 2.0. Dolby Atmos. Your biology adds a dimension no plugin can.</p>
                 </div>
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#x26A1;</span>
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
                     <h3>DJs &amp; Performers</h3>
                     <p>DMX lighting, lasers, 30+ visuals, live streaming, mapping. Your pulse drives the show. Every set is unrepeatable.</p>
                 </div>
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#x1F49A;</span>
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
                     <h3>Therapists &amp; Coaches</h3>
                     <p>HRV coherence. Guided breathing. Brainwave entrainment. Where biofeedback becomes creative expression.</p>
                 </div>
                 <div class="persona-card">
-                    <span class="persona-emoji" aria-hidden="true">&#x1F3AC;</span>
+                    <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     <h3>Filmmakers &amp; Artists</h3>
                     <p>GPU particles, fractals, video production, projection mapping. Biology-driven generative art and film.</p>
                 </div>
