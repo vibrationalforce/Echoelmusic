@@ -165,24 +165,56 @@ public struct AppIconGenerator {
         }
     }
 
-    // MARK: - Icon Design Constants (Bio-Audio Waveform Theme)
+    // MARK: - Icon Design Constants (Rainbow Spectrum Waveform Theme)
+    // Physics: CIE 1931 octave transposition — audio frequency → light wavelength → color
 
     public struct Design {
-        /// Green - Primary (#22C55E)
+        /// Green - Primary (#22C55E) — Mid frequency, 530nm
         public static let primaryColor = Color(red: 0.133, green: 0.773, blue: 0.369)
-        /// Emerald - Secondary (#10B981)
-        public static let secondaryColor = Color(red: 0.063, green: 0.725, blue: 0.506)
-        /// Mint - Accent (#34D399)
-        public static let accentColor = Color(red: 0.204, green: 0.827, blue: 0.6)
         /// Rose - Heart (#F472B6)
         public static let heartColor = Color(red: 0.957, green: 0.447, blue: 0.714)
         /// Deep Space - Background (#030712)
         public static let backgroundColor = Color(red: 0.012, green: 0.027, blue: 0.071)
 
-        public static let gradientColors: [Color] = [
-            Color(red: 0.133, green: 0.773, blue: 0.369),  // green
-            Color(red: 0.063, green: 0.725, blue: 0.506),  // emerald
-            Color(red: 0.204, green: 0.827, blue: 0.6)     // mint
+        // Rainbow spectrum colors (octave transposition: audio → light)
+        /// Red (#EF4444) — Sub-Bass ~40Hz, 700nm
+        public static let spectrumRed = Color(red: 0.937, green: 0.267, blue: 0.267)
+        /// Orange (#F97316) — Bass ~125Hz, 640nm
+        public static let spectrumOrange = Color(red: 0.976, green: 0.451, blue: 0.086)
+        /// Yellow (#EAB308) — Low-Mid ~355Hz, 585nm
+        public static let spectrumYellow = Color(red: 0.918, green: 0.702, blue: 0.031)
+        /// Green (#22C55E) — Mid ~1kHz, 530nm
+        public static let spectrumGreen = Color(red: 0.133, green: 0.773, blue: 0.369)
+        /// Cyan (#06B6D4) — Upper-Mid ~2.8kHz, 485nm
+        public static let spectrumCyan = Color(red: 0.024, green: 0.714, blue: 0.831)
+        /// Blue (#3B82F6) — High ~5.6kHz, 440nm
+        public static let spectrumBlue = Color(red: 0.231, green: 0.510, blue: 0.965)
+        /// Violet (#8B5CF6) — Air ~12.6kHz, 410nm
+        public static let spectrumViolet = Color(red: 0.545, green: 0.361, blue: 0.965)
+
+        /// Full rainbow spectrum gradient (bio → spectrum)
+        public static let spectrumGradient: [Color] = [
+            Color.white.opacity(0.6),
+            Color(red: 0.957, green: 0.447, blue: 0.714),  // rose (heart)
+            Color(red: 0.937, green: 0.267, blue: 0.267),  // red (700nm)
+            Color(red: 0.976, green: 0.451, blue: 0.086),  // orange (640nm)
+            Color(red: 0.918, green: 0.702, blue: 0.031),  // yellow (585nm)
+            Color(red: 0.133, green: 0.773, blue: 0.369),  // green (530nm)
+            Color(red: 0.024, green: 0.714, blue: 0.831),  // cyan (485nm)
+            Color(red: 0.231, green: 0.510, blue: 0.965),  // blue (440nm)
+            Color(red: 0.545, green: 0.361, blue: 0.965)   // violet (410nm)
+        ]
+
+        /// Glow spectrum (lower opacity)
+        public static let glowGradient: [Color] = [
+            Color(red: 0.957, green: 0.447, blue: 0.714).opacity(0.2),
+            Color(red: 0.937, green: 0.267, blue: 0.267).opacity(0.35),
+            Color(red: 0.976, green: 0.451, blue: 0.086).opacity(0.4),
+            Color(red: 0.918, green: 0.702, blue: 0.031).opacity(0.4),
+            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5),
+            Color(red: 0.024, green: 0.714, blue: 0.831).opacity(0.4),
+            Color(red: 0.231, green: 0.510, blue: 0.965).opacity(0.35),
+            Color(red: 0.545, green: 0.361, blue: 0.965).opacity(0.25)
         ]
     }
 }
@@ -209,13 +241,13 @@ public struct AppIconView: View {
                 endPoint: .bottomTrailing
             )
 
-            // Ambient glow
+            // Ambient glow — subtle spectrum tint
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.12),
-                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.05),
+                            AppIconGenerator.Design.spectrumGreen.opacity(0.08),
+                            AppIconGenerator.Design.spectrumCyan.opacity(0.04),
                             Color.clear
                         ],
                         center: .center,
@@ -261,20 +293,21 @@ struct EchoRings: View {
 
     var body: some View {
         ZStack {
+            // Spectrum-tinted rings: warm inner → cool outer
             Circle()
-                .stroke(Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.10), lineWidth: size * 0.002)
+                .stroke(AppIconGenerator.Design.spectrumOrange.opacity(0.08), lineWidth: size * 0.002)
                 .frame(width: size * 0.2, height: size * 0.2)
                 .offset(x: -size * 0.03)
             Circle()
-                .stroke(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.07), lineWidth: size * 0.002)
+                .stroke(AppIconGenerator.Design.spectrumGreen.opacity(0.07), lineWidth: size * 0.002)
                 .frame(width: size * 0.36, height: size * 0.36)
                 .offset(x: -size * 0.03)
             Circle()
-                .stroke(Color(red: 0.204, green: 0.827, blue: 0.6).opacity(0.05), lineWidth: size * 0.0015)
+                .stroke(AppIconGenerator.Design.spectrumCyan.opacity(0.05), lineWidth: size * 0.0015)
                 .frame(width: size * 0.54, height: size * 0.54)
                 .offset(x: -size * 0.03)
             Circle()
-                .stroke(Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.03), lineWidth: size * 0.0012)
+                .stroke(AppIconGenerator.Design.spectrumViolet.opacity(0.03), lineWidth: size * 0.0012)
                 .frame(width: size * 0.74, height: size * 0.74)
                 .offset(x: -size * 0.03)
         }
@@ -288,15 +321,11 @@ struct WaveformSymbol: View {
 
     var body: some View {
         ZStack {
-            // Glow layer
+            // Glow layer — rainbow spectrum
             WaveformPath()
                 .stroke(
                     LinearGradient(
-                        colors: [
-                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5),
-                            Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.4),
-                            Color(red: 0.204, green: 0.827, blue: 0.6).opacity(0.25)
-                        ],
+                        colors: AppIconGenerator.Design.glowGradient,
                         startPoint: .leading,
                         endPoint: .trailing
                     ),
@@ -305,28 +334,23 @@ struct WaveformSymbol: View {
                 .blur(radius: size * 0.03)
                 .frame(width: size, height: size)
 
-            // Main waveform stroke
+            // Main waveform stroke — rainbow spectrum
             WaveformPath()
                 .stroke(
                     LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.6),
-                            Color(red: 0.133, green: 0.773, blue: 0.369),
-                            Color(red: 0.063, green: 0.725, blue: 0.506),
-                            Color(red: 0.204, green: 0.827, blue: 0.6)
-                        ],
+                        colors: AppIconGenerator.Design.spectrumGradient,
                         startPoint: .leading,
                         endPoint: .trailing
                     ),
                     style: StrokeStyle(lineWidth: size * 0.016, lineCap: .round, lineJoin: .round)
                 )
-                .shadow(color: Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5), radius: size * 0.01)
+                .shadow(color: AppIconGenerator.Design.spectrumGreen.opacity(0.4), radius: size * 0.01)
                 .frame(width: size, height: size)
 
             // White specular highlight
             WaveformPath()
                 .stroke(
-                    Color.white.opacity(0.2),
+                    Color.white.opacity(0.18),
                     style: StrokeStyle(lineWidth: size * 0.004, lineCap: .round, lineJoin: .round)
                 )
                 .frame(width: size, height: size)
@@ -334,7 +358,7 @@ struct WaveformSymbol: View {
             // Heart pulse dot at EKG R-peak
             ZStack {
                 Circle()
-                    .fill(Color(red: 0.957, green: 0.447, blue: 0.714).opacity(0.6))
+                    .fill(AppIconGenerator.Design.heartColor.opacity(0.6))
                     .frame(width: size * 0.04, height: size * 0.04)
                     .blur(radius: size * 0.008)
                 Circle()
@@ -425,24 +449,29 @@ struct WaveformPath: Shape {
 struct AmbientParticles: View {
     let size: CGFloat
 
+    // Spectrum-distributed particles: position maps to frequency → color
     private let particles: [(x: CGFloat, y: CGFloat, color: Int, opacity: Double)] = [
-        (0.20, 0.34, 3, 0.18),  // rose (bio side)
-        (0.24, 0.66, 0, 0.14),  // green
-        (0.36, 0.25, 2, 0.18),  // white
-        (0.31, 0.74, 3, 0.10),  // rose
-        (0.51, 0.30, 1, 0.15),  // emerald
-        (0.55, 0.70, 2, 0.12),  // mint
-        (0.65, 0.37, 1, 0.16),  // emerald
-        (0.71, 0.64, 2, 0.14),  // mint
-        (0.81, 0.42, 0, 0.14),  // green
-        (0.83, 0.61, 2, 0.10),  // white
+        (0.20, 0.34, 0, 0.18),  // rose (bio side)
+        (0.24, 0.66, 1, 0.12),  // red
+        (0.36, 0.25, 7, 0.18),  // white
+        (0.31, 0.74, 0, 0.10),  // rose
+        (0.51, 0.30, 2, 0.14),  // orange
+        (0.55, 0.70, 3, 0.12),  // yellow
+        (0.65, 0.37, 4, 0.16),  // green
+        (0.71, 0.64, 5, 0.14),  // cyan
+        (0.81, 0.42, 6, 0.14),  // blue
+        (0.83, 0.61, 7, 0.12),  // violet
     ]
 
     private let colors: [Color] = [
-        Color(red: 0.133, green: 0.773, blue: 0.369), // 0: green
-        Color(red: 0.063, green: 0.725, blue: 0.506), // 1: emerald
-        Color(red: 0.204, green: 0.827, blue: 0.6),   // 2: mint/white
-        Color(red: 0.957, green: 0.447, blue: 0.714),  // 3: rose
+        Color(red: 0.957, green: 0.447, blue: 0.714), // 0: rose (heart)
+        Color(red: 0.937, green: 0.267, blue: 0.267), // 1: red (700nm)
+        Color(red: 0.976, green: 0.451, blue: 0.086), // 2: orange (640nm)
+        Color(red: 0.918, green: 0.702, blue: 0.031), // 3: yellow (585nm)
+        Color(red: 0.133, green: 0.773, blue: 0.369), // 4: green (530nm)
+        Color(red: 0.024, green: 0.714, blue: 0.831), // 5: cyan (485nm)
+        Color(red: 0.231, green: 0.510, blue: 0.965), // 6: blue (440nm)
+        Color(red: 0.545, green: 0.361, blue: 0.965), // 7: violet (410nm)
     ]
 
     var body: some View {
@@ -473,15 +502,20 @@ public struct LaunchScreenView: View {
             Color(red: 0.012, green: 0.027, blue: 0.071)
                 .ignoresSafeArea()
 
-            // Animated pulse rings
+            // Animated pulse rings — spectrum tinted
             ForEach(0..<5, id: \.self) { ring in
                 Circle()
                     .stroke(
                         AngularGradient(
                             colors: [
-                                Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3),
-                                Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.2),
-                                Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3)
+                                AppIconGenerator.Design.spectrumRed.opacity(0.2),
+                                AppIconGenerator.Design.spectrumOrange.opacity(0.25),
+                                AppIconGenerator.Design.spectrumYellow.opacity(0.25),
+                                AppIconGenerator.Design.spectrumGreen.opacity(0.3),
+                                AppIconGenerator.Design.spectrumCyan.opacity(0.25),
+                                AppIconGenerator.Design.spectrumBlue.opacity(0.25),
+                                AppIconGenerator.Design.spectrumViolet.opacity(0.2),
+                                AppIconGenerator.Design.spectrumRed.opacity(0.2)
                             ],
                             center: .center
                         ),
@@ -501,7 +535,7 @@ public struct LaunchScreenView: View {
             VStack(spacing: 30) {
                 // App icon
                 AppIconView(size: 120)
-                    .shadow(color: Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5), radius: 20)
+                    .shadow(color: AppIconGenerator.Design.spectrumGreen.opacity(0.5), radius: 20)
 
                 // App name
                 Text("Echoelmusic")
@@ -510,11 +544,25 @@ public struct LaunchScreenView: View {
 
                 Text("Create from Within")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.8))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                AppIconGenerator.Design.spectrumRed,
+                                AppIconGenerator.Design.spectrumOrange,
+                                AppIconGenerator.Design.spectrumYellow,
+                                AppIconGenerator.Design.spectrumGreen,
+                                AppIconGenerator.Design.spectrumCyan,
+                                AppIconGenerator.Design.spectrumBlue,
+                                AppIconGenerator.Design.spectrumViolet
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
 
                 // Loading indicator
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: Color(red: 0.063, green: 0.725, blue: 0.506)))
+                    .progressViewStyle(CircularProgressViewStyle(tint: AppIconGenerator.Design.spectrumGreen))
                     .scaleEffect(1.2)
                     .padding(.top, 40)
             }

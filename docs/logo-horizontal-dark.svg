@@ -1,30 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 100">
   <defs>
-    <!-- Echoel Branding System v8.0 — Horizontal Logo Dark (for light backgrounds) -->
-    <!-- Waveform stroke gradient (darker for light bg) -->
+    <!-- Echoelmusic Branding v9.0 — Horizontal Logo Dark (for light backgrounds): Rainbow Spectrum -->
+    <!-- Waveform stroke: darker spectrum for light bg -->
     <linearGradient id="ws" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#030712" stop-opacity="0.5"/>
-      <stop offset="15%" stop-color="#16a34a"/>
-      <stop offset="40%" stop-color="#16a34a"/>
-      <stop offset="70%" stop-color="#059669"/>
-      <stop offset="100%" stop-color="#0d9488"/>
+      <stop offset="12%" stop-color="#DB2777"/>
+      <stop offset="25%" stop-color="#DC2626"/>
+      <stop offset="40%" stop-color="#EA580C"/>
+      <stop offset="52%" stop-color="#CA8A04"/>
+      <stop offset="64%" stop-color="#16A34A"/>
+      <stop offset="76%" stop-color="#0891B2"/>
+      <stop offset="88%" stop-color="#2563EB"/>
+      <stop offset="98%" stop-color="#7C3AED"/>
     </linearGradient>
     <!-- Glow gradient (subtle on light bg) -->
     <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.15"/>
-      <stop offset="50%" stop-color="#10B981" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#34D399" stop-opacity="0.1"/>
+      <stop offset="0%" stop-color="#DB2777" stop-opacity="0.1"/>
+      <stop offset="25%" stop-color="#DC2626" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#16A34A" stop-opacity="0.2"/>
+      <stop offset="75%" stop-color="#2563EB" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0.1"/>
     </linearGradient>
     <!-- Ambient (reduced for light bg) -->
     <radialGradient id="amb" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#10B981" stop-opacity="0.06"/>
+      <stop offset="0%" stop-color="#16A34A" stop-opacity="0.05"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
     <!-- Heart pulse (dark variant) -->
     <radialGradient id="hp" cx="50%" cy="40%" r="50%">
       <stop offset="0%" stop-color="#030712" stop-opacity="0.9"/>
-      <stop offset="40%" stop-color="#e11d48" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#e11d48" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#DB2777" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#DB2777" stop-opacity="0"/>
     </radialGradient>
     <!-- Filters -->
     <filter id="gb" x="-20%" y="-50%" width="140%" height="200%">
@@ -44,10 +50,10 @@
   <g transform="translate(50, 50)">
     <circle cx="0" cy="0" r="42" fill="url(#amb)"/>
 
-    <!-- Echo rings (subtle on light bg) -->
-    <circle cx="-3" cy="0" r="12" fill="none" stroke="#16a34a" stroke-width="0.3" opacity="0.06"/>
-    <circle cx="-3" cy="0" r="22" fill="none" stroke="#059669" stroke-width="0.25" opacity="0.04"/>
-    <circle cx="-3" cy="0" r="33" fill="none" stroke="#0d9488" stroke-width="0.2" opacity="0.03"/>
+    <!-- Echo rings — spectrum tinted (subtle on light bg) -->
+    <circle cx="-3" cy="0" r="12" fill="none" stroke="#EA580C" stroke-width="0.3" opacity="0.05"/>
+    <circle cx="-3" cy="0" r="22" fill="none" stroke="#16A34A" stroke-width="0.25" opacity="0.04"/>
+    <circle cx="-3" cy="0" r="33" fill="none" stroke="#7C3AED" stroke-width="0.2" opacity="0.03"/>
 
     <!-- Background glow -->
     <path d="M -38 0 L -25 0 L -19 -22 L -13 19 L -8 -11 C -5 -4 0 0 5 0 L 9 0 C 12 0 15 -10 19 -10 C 23 -10 25 0 28 0 C 31 0 33 9 36 9 C 38.5 9 39 2 40 0"

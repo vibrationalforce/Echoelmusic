@@ -1,33 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
   <defs>
-    <!-- Echoel Branding System v8.0 — OG Image (Social Share 1200x630): Bio-Audio Waveform -->
+    <!-- Echoelmusic Branding v9.0 — OG Image (Social Share 1200x630): Rainbow Spectrum Waveform -->
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#030712"/>
-      <stop offset="50%" stop-color="#041a0e"/>
+      <stop offset="50%" stop-color="#040d12"/>
       <stop offset="100%" stop-color="#030712"/>
     </linearGradient>
-    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#22C55E"/>
-      <stop offset="50%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#34D399"/>
+    <!-- Brand gradient: rainbow spectrum -->
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="20%" stop-color="#F97316"/>
+      <stop offset="35%" stop-color="#EAB308"/>
+      <stop offset="50%" stop-color="#22C55E"/>
+      <stop offset="65%" stop-color="#06B6D4"/>
+      <stop offset="80%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
     </linearGradient>
     <linearGradient id="glass" x1="0%" y1="0%" x2="80%" y2="80%">
       <stop offset="0%" stop-color="white" stop-opacity="0.1"/>
       <stop offset="100%" stop-color="white" stop-opacity="0"/>
     </linearGradient>
-    <!-- Waveform stroke gradient -->
+    <!-- Waveform stroke: Bio → Rainbow Spectrum -->
     <linearGradient id="ws" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="white" stop-opacity="0.6"/>
-      <stop offset="15%" stop-color="#22C55E"/>
-      <stop offset="40%" stop-color="#22C55E"/>
-      <stop offset="70%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#34D399"/>
+      <stop offset="12%" stop-color="#F472B6"/>
+      <stop offset="25%" stop-color="#EF4444"/>
+      <stop offset="40%" stop-color="#F97316"/>
+      <stop offset="52%" stop-color="#EAB308"/>
+      <stop offset="64%" stop-color="#22C55E"/>
+      <stop offset="76%" stop-color="#06B6D4"/>
+      <stop offset="88%" stop-color="#3B82F6"/>
+      <stop offset="98%" stop-color="#8B5CF6"/>
     </linearGradient>
-    <!-- Waveform glow -->
+    <!-- Waveform glow: spectrum -->
     <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.35"/>
-      <stop offset="50%" stop-color="#10B981" stop-opacity="0.45"/>
-      <stop offset="100%" stop-color="#34D399" stop-opacity="0.25"/>
+      <stop offset="0%" stop-color="#F472B6" stop-opacity="0.2"/>
+      <stop offset="25%" stop-color="#EF4444" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#22C55E" stop-opacity="0.45"/>
+      <stop offset="75%" stop-color="#3B82F6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.2"/>
     </linearGradient>
     <!-- Heart pulse -->
     <radialGradient id="hp" cx="50%" cy="40%" r="50%">
@@ -37,11 +48,11 @@
     </radialGradient>
     <!-- Ambient orbs -->
     <radialGradient id="soft1" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.08"/>
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.06"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
     <radialGradient id="soft2" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#10B981" stop-opacity="0.06"/>
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.04"/>
       <stop offset="100%" stop-color="transparent"/>
     </radialGradient>
     <!-- Filters -->
@@ -73,14 +84,14 @@
   <circle cx="200" cy="280" r="200" fill="url(#soft1)"/>
   <circle cx="950" cy="380" r="160" fill="url(#soft2)"/>
 
-  <!-- Bio-Audio Waveform Mark (centered at 190, 315 — matching old atom position) -->
+  <!-- Bio-Audio Waveform Mark (centered at 190, 315) -->
   <g transform="translate(190, 315)">
-    <!-- Echo rings -->
-    <circle cx="-8" cy="0" r="40" fill="none" stroke="#22C55E" stroke-width="1" opacity="0.08" filter="url(#eb)"/>
-    <circle cx="-8" cy="0" r="70" fill="none" stroke="#10B981" stroke-width="0.8" opacity="0.06" filter="url(#eb)"/>
-    <circle cx="-8" cy="0" r="105" fill="none" stroke="#34D399" stroke-width="0.6" opacity="0.04" filter="url(#eb)"/>
+    <!-- Echo rings — spectrum tinted -->
+    <circle cx="-8" cy="0" r="40" fill="none" stroke="#F97316" stroke-width="1" opacity="0.07" filter="url(#eb)"/>
+    <circle cx="-8" cy="0" r="70" fill="none" stroke="#22C55E" stroke-width="0.8" opacity="0.06" filter="url(#eb)"/>
+    <circle cx="-8" cy="0" r="105" fill="none" stroke="#8B5CF6" stroke-width="0.6" opacity="0.04" filter="url(#eb)"/>
 
-    <!-- Waveform: EKG spike → sine waves, span -110 to +110 -->
+    <!-- Waveform: EKG spike → sine waves (rainbow), span -110 to +110 -->
     <!-- Background glow -->
     <path d="M -110 0 L -70 0 L -54 -62 L -36 54 L -22 -32 C -14 -12 0 0 14 0 L 26 0 C 34 0 42 -28 54 -28 C 66 -28 70 0 80 0 C 88 0 94 26 102 26 C 108 26 110 6 114 0"
           fill="none" stroke="url(#wg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"
@@ -97,7 +108,7 @@
 
     <!-- White highlight -->
     <path d="M -110 0 L -70 0 L -54 -62 L -36 54 L -22 -32 C -14 -12 0 0 14 0 L 26 0 C 34 0 42 -28 54 -28 C 66 -28 70 0 80 0 C 88 0 94 26 102 26 C 108 26 110 6 114 0"
-          fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.2"/>
+          fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.18"/>
 
     <!-- Heart pulse dot at R-peak -->
     <circle cx="-54" cy="-62" r="6" fill="url(#hp)" filter="url(#dg)"/>
@@ -110,7 +121,7 @@
     Echoelmusic
   </text>
 
-  <!-- Tagline -->
+  <!-- Tagline — rainbow spectrum -->
   <text x="420" y="325" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="30" fill="url(#brand)" font-weight="700" letter-spacing="-0.3">
     Create from Within
@@ -122,19 +133,19 @@
     Your body's vibrations become music, visuals, film, and light.
   </text>
 
-  <!-- Feature badges -->
+  <!-- Feature badges — spectrum colored -->
   <g transform="translate(420, 418)">
-    <rect x="0" y="0" width="100" height="32" rx="16" fill="#22C55E" opacity="0.12"/>
-    <text x="50" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700">6 Synths</text>
+    <rect x="0" y="0" width="100" height="32" rx="16" fill="#EF4444" opacity="0.1"/>
+    <text x="50" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#EF4444" text-anchor="middle" font-weight="700">6 Synths</text>
 
-    <rect x="112" y="0" width="108" height="32" rx="16" fill="#10B981" opacity="0.1"/>
-    <text x="166" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#10B981" text-anchor="middle" font-weight="700">90+ Effects</text>
+    <rect x="112" y="0" width="108" height="32" rx="16" fill="#F97316" opacity="0.1"/>
+    <text x="166" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#F97316" text-anchor="middle" font-weight="700">90+ Effects</text>
 
-    <rect x="232" y="0" width="120" height="32" rx="16" fill="#34D399" opacity="0.1"/>
-    <text x="292" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#34D399" text-anchor="middle" font-weight="700">30+ Visuals</text>
+    <rect x="232" y="0" width="120" height="32" rx="16" fill="#22C55E" opacity="0.1"/>
+    <text x="292" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700">30+ Visuals</text>
 
-    <rect x="364" y="0" width="118" height="32" rx="16" fill="url(#brand)" opacity="0.1"/>
-    <text x="423" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Bio-Reactive</text>
+    <rect x="364" y="0" width="118" height="32" rx="16" fill="#3B82F6" opacity="0.1"/>
+    <text x="423" y="21" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#3B82F6" text-anchor="middle" font-weight="700">Bio-Reactive</text>
   </g>
 
   <!-- Platforms -->
@@ -147,6 +158,6 @@
   <rect x="420" y="528" width="165" height="30" rx="15" fill="#22C55E" opacity="0.1"/>
   <text x="502.5" y="548" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700" letter-spacing="1">FREE FOR A LIMITED TIME</text>
 
-  <!-- Bottom brand line -->
-  <line x1="0" y1="620" x2="1200" y2="620" stroke="url(#brand)" stroke-width="1" opacity="0.15"/>
+  <!-- Bottom brand line — rainbow spectrum -->
+  <line x1="0" y1="620" x2="1200" y2="620" stroke="url(#brand)" stroke-width="1.5" opacity="0.2"/>
 </svg>
