@@ -3,9 +3,10 @@
 //  Echoelmusic
 //
 //  Programmatic App Icon Generation for All Platforms
-//  A+++ Icon Design - Quantum Light Theme
+//  Bio-Audio Waveform Theme — EKG morphing into sine wave
 //
 //  Created: 2026-01-05
+//  Updated: 2026-02-14
 //
 
 import Foundation
@@ -164,7 +165,7 @@ public struct AppIconGenerator {
         }
     }
 
-    // MARK: - Icon Design Constants (Liquid Glass Theme)
+    // MARK: - Icon Design Constants (Bio-Audio Waveform Theme)
 
     public struct Design {
         /// Green - Primary (#22C55E)
@@ -173,6 +174,8 @@ public struct AppIconGenerator {
         public static let secondaryColor = Color(red: 0.063, green: 0.725, blue: 0.506)
         /// Mint - Accent (#34D399)
         public static let accentColor = Color(red: 0.204, green: 0.827, blue: 0.6)
+        /// Rose - Heart (#F472B6)
+        public static let heartColor = Color(red: 0.957, green: 0.447, blue: 0.714)
         /// Deep Space - Background (#030712)
         public static let backgroundColor = Color(red: 0.012, green: 0.027, blue: 0.071)
 
@@ -195,7 +198,7 @@ public struct AppIconView: View {
 
     public var body: some View {
         ZStack {
-            // Background gradient - Liquid glass deep space
+            // Background gradient - Deep space
             LinearGradient(
                 colors: [
                     Color(red: 0.012, green: 0.027, blue: 0.071),  // #030712
@@ -211,8 +214,8 @@ public struct AppIconView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.15), // emerald
-                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.08), // green
+                            Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.12),
+                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.05),
                             Color.clear
                         ],
                         center: .center,
@@ -227,8 +230,8 @@ public struct AppIconView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.18),
-                            Color.white.opacity(0.03),
+                            Color.white.opacity(0.14),
+                            Color.white.opacity(0.02),
                             Color.clear
                         ],
                         startPoint: .topLeading,
@@ -237,154 +240,222 @@ public struct AppIconView: View {
                 )
                 .frame(width: size, height: size)
 
-            // Outer quantum ring
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.2),
-                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.05)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ),
-                    lineWidth: size * 0.004
-                )
-                .frame(width: size * 0.8, height: size * 0.8)
+            // Echo resonance rings
+            EchoRings(size: size)
 
-            // Center atom symbol
-            AtomSymbol(size: size * 0.68)
+            // Bio-Audio Waveform
+            WaveformSymbol(size: size * 0.72)
 
-            // Photon particles
-            PhotonParticles(size: size)
+            // Ambient particles
+            AmbientParticles(size: size)
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
     }
 }
 
-struct AtomSymbol: View {
-    let size: CGFloat
+// MARK: - Echo Resonance Rings
 
-    private let orbitColors: [(primary: Color, highlight: Color)] = [
-        (Color(red: 0.133, green: 0.773, blue: 0.369), Color(red: 0.133, green: 0.773, blue: 0.369)), // green
-        (Color(red: 0.063, green: 0.725, blue: 0.506), Color(red: 0.063, green: 0.725, blue: 0.506)), // emerald
-        (Color(red: 0.204, green: 0.827, blue: 0.6), Color(red: 0.204, green: 0.827, blue: 0.6))      // mint
-    ]
+struct EchoRings: View {
+    let size: CGFloat
 
     var body: some View {
         ZStack {
-            // Nucleus glow
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.white.opacity(0.98),
-                            Color.white.opacity(0.7),
-                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3), // green
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: size * 0.1
-                    )
-                )
-                .frame(width: size * 0.14, height: size * 0.14)
-
-            // Nucleus core
+                .stroke(Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.10), lineWidth: size * 0.002)
+                .frame(width: size * 0.2, height: size * 0.2)
+                .offset(x: -size * 0.03)
             Circle()
-                .fill(Color.white.opacity(0.95))
-                .frame(width: size * 0.09, height: size * 0.09)
-
-            // Glass highlight on nucleus
-            Ellipse()
-                .fill(Color.white.opacity(0.5))
-                .frame(width: size * 0.05, height: size * 0.03)
-                .offset(x: -size * 0.015, y: -size * 0.02)
-
-            // Electron orbits
-            ForEach(0..<3, id: \.self) { orbit in
-                ElectronOrbit(
-                    size: size,
-                    rotation: Double(orbit) * 60,
-                    orbitColor: orbitColors[orbit].primary,
-                    electronGlow: orbitColors[orbit].highlight
-                )
-            }
+                .stroke(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.07), lineWidth: size * 0.002)
+                .frame(width: size * 0.36, height: size * 0.36)
+                .offset(x: -size * 0.03)
+            Circle()
+                .stroke(Color(red: 0.204, green: 0.827, blue: 0.6).opacity(0.05), lineWidth: size * 0.0015)
+                .frame(width: size * 0.54, height: size * 0.54)
+                .offset(x: -size * 0.03)
+            Circle()
+                .stroke(Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.03), lineWidth: size * 0.0012)
+                .frame(width: size * 0.74, height: size * 0.74)
+                .offset(x: -size * 0.03)
         }
     }
 }
 
-struct ElectronOrbit: View {
+// MARK: - Bio-Audio Waveform Symbol
+
+struct WaveformSymbol: View {
     let size: CGFloat
-    let rotation: Double
-    let orbitColor: Color
-    let electronGlow: Color
 
     var body: some View {
         ZStack {
-            // Orbit path - gradient
-            Ellipse()
+            // Glow layer
+            WaveformPath()
                 .stroke(
                     LinearGradient(
                         colors: [
-                            orbitColor.opacity(0.8),
-                            orbitColor.opacity(0.5),
-                            orbitColor.opacity(0.2)
+                            Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5),
+                            Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.4),
+                            Color(red: 0.204, green: 0.827, blue: 0.6).opacity(0.25)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
                     ),
-                    lineWidth: size * 0.016
+                    style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round, lineJoin: .round)
                 )
-                .frame(width: size * 0.96, height: size * 0.37)
+                .blur(radius: size * 0.03)
+                .frame(width: size, height: size)
 
-            // White glass highlight stroke
-            Ellipse()
-                .stroke(Color.white.opacity(0.2), lineWidth: size * 0.003)
-                .frame(width: size * 0.96, height: size * 0.37)
+            // Main waveform stroke
+            WaveformPath()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.6),
+                            Color(red: 0.133, green: 0.773, blue: 0.369),
+                            Color(red: 0.063, green: 0.725, blue: 0.506),
+                            Color(red: 0.204, green: 0.827, blue: 0.6)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(lineWidth: size * 0.016, lineCap: .round, lineJoin: .round)
+                )
+                .shadow(color: Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5), radius: size * 0.01)
+                .frame(width: size, height: size)
 
-            // Electron with glow halo
+            // White specular highlight
+            WaveformPath()
+                .stroke(
+                    Color.white.opacity(0.2),
+                    style: StrokeStyle(lineWidth: size * 0.004, lineCap: .round, lineJoin: .round)
+                )
+                .frame(width: size, height: size)
+
+            // Heart pulse dot at EKG R-peak
             ZStack {
                 Circle()
-                    .fill(electronGlow.opacity(0.25))
-                    .frame(width: size * 0.08, height: size * 0.08)
+                    .fill(Color(red: 0.957, green: 0.447, blue: 0.714).opacity(0.6))
+                    .frame(width: size * 0.04, height: size * 0.04)
+                    .blur(radius: size * 0.008)
                 Circle()
-                    .fill(Color.white.opacity(0.92))
-                    .frame(width: size * 0.056, height: size * 0.056)
+                    .fill(Color.white.opacity(0.95))
+                    .frame(width: size * 0.016, height: size * 0.016)
             }
-            .offset(x: size * 0.48)
+            .offset(x: -size * 0.3, y: -size * 0.22)
         }
-        .rotationEffect(.degrees(rotation))
     }
 }
 
-struct PhotonParticles: View {
+// MARK: - Waveform Path Shape
+
+/// Bio-signal (EKG) morphing into audio sine wave.
+/// Left: sharp angular QRS complex. Right: smooth sine curves.
+struct WaveformPath: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let cy = h * 0.5  // center baseline
+
+        var path = Path()
+
+        // Flat baseline lead-in
+        path.move(to: CGPoint(x: w * 0.02, y: cy))
+        path.addLine(to: CGPoint(x: w * 0.16, y: cy))
+
+        // EKG QRS complex — sharp angular spikes
+        path.addLine(to: CGPoint(x: w * 0.20, y: h * 0.28))   // R peak (sharp up)
+        path.addLine(to: CGPoint(x: w * 0.24, y: h * 0.68))   // S valley (sharp down)
+        path.addLine(to: CGPoint(x: w * 0.27, y: h * 0.39))   // secondary peak
+
+        // Smooth return to baseline
+        path.addCurve(
+            to: CGPoint(x: w * 0.35, y: cy),
+            control1: CGPoint(x: w * 0.29, y: h * 0.44),
+            control2: CGPoint(x: w * 0.32, y: cy)
+        )
+
+        // Flat transition gap
+        path.addLine(to: CGPoint(x: w * 0.40, y: cy))
+
+        // Sine wave 1 — crest
+        path.addCurve(
+            to: CGPoint(x: w * 0.50, y: h * 0.40),
+            control1: CGPoint(x: w * 0.43, y: cy),
+            control2: CGPoint(x: w * 0.47, y: h * 0.40)
+        )
+        path.addCurve(
+            to: CGPoint(x: w * 0.56, y: cy),
+            control1: CGPoint(x: w * 0.53, y: h * 0.40),
+            control2: CGPoint(x: w * 0.55, y: cy)
+        )
+
+        // Sine wave 1 — trough
+        path.addCurve(
+            to: CGPoint(x: w * 0.65, y: h * 0.60),
+            control1: CGPoint(x: w * 0.58, y: cy),
+            control2: CGPoint(x: w * 0.62, y: h * 0.60)
+        )
+        path.addCurve(
+            to: CGPoint(x: w * 0.71, y: cy),
+            control1: CGPoint(x: w * 0.68, y: h * 0.60),
+            control2: CGPoint(x: w * 0.70, y: cy)
+        )
+
+        // Sine wave 2 — crest (slightly larger amplitude)
+        path.addCurve(
+            to: CGPoint(x: w * 0.80, y: h * 0.38),
+            control1: CGPoint(x: w * 0.73, y: cy),
+            control2: CGPoint(x: w * 0.77, y: h * 0.38)
+        )
+        path.addCurve(
+            to: CGPoint(x: w * 0.86, y: cy),
+            control1: CGPoint(x: w * 0.83, y: h * 0.38),
+            control2: CGPoint(x: w * 0.85, y: cy)
+        )
+
+        // Flat ending
+        path.addLine(to: CGPoint(x: w * 0.98, y: cy))
+
+        return path
+    }
+}
+
+// MARK: - Ambient Particles
+
+struct AmbientParticles: View {
     let size: CGFloat
 
-    private let particleColors: [Color] = [
-        Color(red: 0.133, green: 0.773, blue: 0.369), // green
-        Color(red: 0.063, green: 0.725, blue: 0.506), // emerald
-        Color(red: 0.204, green: 0.827, blue: 0.6),   // mint
-        Color(red: 0.133, green: 0.773, blue: 0.369),
-        Color(red: 0.063, green: 0.725, blue: 0.506),
-        Color(red: 0.204, green: 0.827, blue: 0.6),
-        Color(red: 0.133, green: 0.773, blue: 0.369),
-        Color(red: 0.063, green: 0.725, blue: 0.506)
+    private let particles: [(x: CGFloat, y: CGFloat, color: Int, opacity: Double)] = [
+        (0.20, 0.34, 3, 0.18),  // rose (bio side)
+        (0.24, 0.66, 0, 0.14),  // green
+        (0.36, 0.25, 2, 0.18),  // white
+        (0.31, 0.74, 3, 0.10),  // rose
+        (0.51, 0.30, 1, 0.15),  // emerald
+        (0.55, 0.70, 2, 0.12),  // mint
+        (0.65, 0.37, 1, 0.16),  // emerald
+        (0.71, 0.64, 2, 0.14),  // mint
+        (0.81, 0.42, 0, 0.14),  // green
+        (0.83, 0.61, 2, 0.10),  // white
+    ]
+
+    private let colors: [Color] = [
+        Color(red: 0.133, green: 0.773, blue: 0.369), // 0: green
+        Color(red: 0.063, green: 0.725, blue: 0.506), // 1: emerald
+        Color(red: 0.204, green: 0.827, blue: 0.6),   // 2: mint/white
+        Color(red: 0.957, green: 0.447, blue: 0.714),  // 3: rose
     ]
 
     var body: some View {
-        ForEach(0..<8, id: \.self) { i in
-            let angle = Double(i) * (360.0 / 8.0)
-            let distance = size * 0.38
-            let x = cos(angle * .pi / 180) * distance
-            let y = sin(angle * .pi / 180) * distance
-
+        ForEach(0..<particles.count, id: \.self) { i in
+            let p = particles[i]
             Circle()
-                .fill(Color.white.opacity(0.3))
-                .frame(width: size * 0.012, height: size * 0.012)
-                .shadow(color: particleColors[i].opacity(0.4), radius: size * 0.008)
-                .offset(x: x, y: y)
+                .fill(p.color < 3 ? colors[p.color] : colors[p.color])
+                .opacity(p.opacity)
+                .frame(width: size * 0.008, height: size * 0.008)
+                .offset(
+                    x: (p.x - 0.5) * size,
+                    y: (p.y - 0.5) * size
+                )
         }
     }
 }
@@ -398,19 +469,19 @@ public struct LaunchScreenView: View {
 
     public var body: some View {
         ZStack {
-            // Background - Liquid glass deep space
-            Color(red: 0.012, green: 0.027, blue: 0.071) // #030712
+            // Background
+            Color(red: 0.012, green: 0.027, blue: 0.071)
                 .ignoresSafeArea()
 
-            // Animated rings - Green liquid glass
+            // Animated pulse rings
             ForEach(0..<5, id: \.self) { ring in
                 Circle()
                     .stroke(
                         AngularGradient(
                             colors: [
-                                Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3), // green
-                                Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.2), // emerald
-                                Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3)  // green
+                                Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3),
+                                Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.2),
+                                Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.3)
                             ],
                             center: .center
                         ),
@@ -430,7 +501,7 @@ public struct LaunchScreenView: View {
             VStack(spacing: 30) {
                 // App icon
                 AppIconView(size: 120)
-                    .shadow(color: Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5), radius: 20) // green
+                    .shadow(color: Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.5), radius: 20)
 
                 // App name
                 Text("Echoelmusic")
@@ -439,9 +510,9 @@ public struct LaunchScreenView: View {
 
                 Text("Create from Within")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.8)) // emerald
+                    .foregroundColor(Color(red: 0.063, green: 0.725, blue: 0.506).opacity(0.8))
 
-                // Loading indicator - emerald
+                // Loading indicator
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: Color(red: 0.063, green: 0.725, blue: 0.506)))
                     .scaleEffect(1.2)
