@@ -1,15 +1,16 @@
 <!DOCTYPE html>
+<!-- v2026.02.15 — monochrome rebuild -->
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoelmusic — Bio-Reactive Music, Visuals &amp; Lighting App | Free</title>
+    <title>Echoelmusic — Immersive Multimedia Art Production, Streaming &amp; Global Collab</title>
     <meta name="description" content="Turn your heartbeat, breath, and movement into music, visuals, film, and light. 6 synth engines, 90+ DSP effects, 30+ visual modes, Dolby Atmos, MIDI 2.0, DMX lighting, live streaming. Free on iPhone, iPad, Mac, Apple Watch, Apple TV, and Vision Pro.">
     <meta name="theme-color" content="#000000">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Echoelmusic — Create from Within">
-    <meta property="og:description" content="Your heartbeat, breath, dance, and movement become music, visuals, film, and light. The bio-reactive Gesamtkunstwerk. Free.">
+    <meta property="og:description" content="Immersive Multimedia Art Production, Streaming and Global Collab with Biofeedback and Physical Computing. Free.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://echoelmusic.com">
     <meta property="og:image" content="https://echoelmusic.com/og-image.png">
@@ -22,7 +23,7 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Echoelmusic — Create from Within">
-    <meta name="twitter:description" content="Your heartbeat, breath, dance, and movement become music, visuals, film, and light. Bio-reactive creative platform.">
+    <meta name="twitter:description" content="Immersive Multimedia Art Production, Streaming and Global Collab with Biofeedback and Physical Computing.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
 
     <!-- Apple -->
@@ -55,7 +56,7 @@
           "@id": "https://echoelmusic.com/#website",
           "url": "https://echoelmusic.com",
           "name": "Echoelmusic",
-          "description": "Create from Within. Bio-reactive platform for music, visuals, film, streaming, and light.",
+          "description": "Create from Within. Immersive Multimedia Art Production, Streaming and Global Collab with Biofeedback and Physical Computing.",
           "publisher": {"@id": "https://echoelmusic.com/#organization"},
           "inLanguage": "en-US",
           "datePublished": "2024-01-01",
@@ -84,7 +85,7 @@
           "name": "Echoelmusic",
           "applicationCategory": "MultimediaApplication",
           "operatingSystem": ["iOS 15+", "macOS 12+", "watchOS 8+", "tvOS 15+", "visionOS 1+"],
-          "description": "Create from Within. Your heartbeat, breath, dance, and movement become music, visuals, film, and light.",
+          "description": "Create from Within. Immersive Multimedia Art Production, Streaming and Global Collab with Biofeedback and Physical Computing.",
           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
           "downloadUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
           "installUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
@@ -128,8 +129,7 @@
             --text: #e0e0e0;
             --text-dim: rgba(255,255,255,0.5);
             --text-mid: rgba(255,255,255,0.7);
-            --border: rgba(255,255,255,0.08);
-            --border-hover: rgba(255,255,255,0.16);
+            --bg-glass: rgba(255,255,255,0.02);
             --max-w: 1120px;
             --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
         }
@@ -166,13 +166,11 @@
             padding: 0 24px;
             background: rgba(5,10,14,0);
             backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
-            border-bottom: 1px solid transparent;
-            transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+            transition: background 0.4s, backdrop-filter 0.4s;
         }
         .nav.scrolled {
             background: rgba(0,0,0,0.85);
             backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
-            border-bottom-color: var(--white-06);
         }
         .nav-bar {
             max-width: var(--max-w); margin: 0 auto; height: 64px;
@@ -273,7 +271,7 @@
 
         .hero-tagline {
             display: inline-flex; align-items: center; gap: 8px;
-            background: var(--white-03); border: 1px solid var(--white-10);
+            background: var(--white-03);
             padding: 6px 16px 6px 10px; border-radius: 100px;
             font-size: 13px; font-weight: 600; color: var(--white-60);
             letter-spacing: 0.3px; margin-bottom: 32px;
@@ -327,7 +325,7 @@
         }
         .badge-free {
             display: inline-block; background: var(--white-06);
-            color: var(--white-60); border: 1px solid var(--white-10);
+            color: var(--white-60);
             padding: 3px 12px; border-radius: 20px; font-weight: 700; font-size: 11px;
             letter-spacing: 1px; text-transform: uppercase; margin-left: 6px;
         }
@@ -426,10 +424,10 @@
         }
         .stat {
             text-align: center; padding: 32px 16px;
-            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 16px;
-            transition: border-color 0.3s, transform 0.3s;
+            background: var(--bg-glass); border-radius: 16px;
+            transition: transform 0.3s;
         }
-        .stat:hover { transform: translateY(-4px); border-color: var(--border-hover); }
+        .stat:hover { transform: translateY(-4px); }
         .stat-num {
             font-size: clamp(36px, 5vw, 52px); font-weight: 700; letter-spacing: -2px;
             line-height: 1;
@@ -468,8 +466,8 @@
         }
         .step {
             text-align: center; padding: 40px 28px;
-            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px;
-            transition: border-color 0.3s, transform 0.3s;
+            background: var(--bg-glass); border-radius: 20px;
+            transition: transform 0.3s;
             position: relative; overflow: hidden;
         }
         .step::before {
@@ -478,7 +476,7 @@
             opacity: 0; transition: opacity 0.3s;
         }
         .step:hover::before { opacity: 0.5; }
-        .step:hover { border-color: var(--white-10); transform: translateY(-4px); }
+        .step:hover { transform: translateY(-4px); }
         .step-num {
             font-size: 48px; font-weight: 700; letter-spacing: -2px;
             background: linear-gradient(to bottom, var(--white-20), rgba(255,255,255,0.03));
@@ -497,17 +495,17 @@
             grid-template-rows: auto auto;
         }
         .bento-card {
-            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px;
+            background: var(--bg-glass); border-radius: 20px;
             padding: 40px 32px;
             position: relative; overflow: hidden;
-            transition: border-color 0.4s, transform 0.4s;
+            transition: transform 0.4s;
         }
         .bento-card::after {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: radial-gradient(ellipse at 50% 0%, var(--card-glow, transparent) 0%, transparent 70%);
             opacity: 0; transition: opacity 0.4s; pointer-events: none;
         }
-        .bento-card:hover { border-color: var(--border-hover); transform: translateY(-4px); }
+        .bento-card:hover { transform: translateY(-4px); }
         .bento-card:hover::after { opacity: 1; }
         .bento-card.span2 { grid-column: span 2; }
         .bento-card.span-row { grid-row: span 2; }
@@ -539,10 +537,10 @@
         }
         .persona-card {
             padding: 36px 24px; text-align: center;
-            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px;
-            transition: border-color 0.3s, transform 0.3s;
+            background: var(--bg-glass); border-radius: 20px;
+            transition: transform 0.3s;
         }
-        .persona-card:hover { border-color: var(--border-hover); transform: translateY(-4px); }
+        .persona-card:hover { transform: translateY(-4px); }
         .persona-icon {
             margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;
             color: var(--white-40); opacity: 0.7;
@@ -556,11 +554,10 @@
         }
         .spec-item {
             padding: 20px 24px;
-            background: var(--bg-glass); border: 1px solid var(--border); border-radius: 12px;
+            background: var(--bg-glass); border-radius: 12px;
             display: flex; align-items: center; gap: 14px;
-            transition: border-color 0.3s;
         }
-        .spec-item:hover { border-color: var(--border-hover); }
+        .spec-item:hover { }
         .spec-val {
             font-size: 20px; font-weight: 700; color: var(--white);
             letter-spacing: -0.5px; white-space: nowrap;
@@ -607,16 +604,16 @@
             position: relative; z-index: 1;
         }
         .social a {
-            width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border);
+            width: 44px; height: 44px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             color: var(--text-dim); transition: all 0.2s;
         }
-        .social a:hover { color: var(--white); border-color: var(--white-20); transform: translateY(-2px); }
+        .social a:hover { color: var(--white); transform: translateY(-2px); }
         .social a svg { width: 18px; height: 18px; }
 
         /* ============ FOOTER ============ */
         footer {
-            border-top: 1px solid var(--border); padding: 36px 24px;
+            padding: 36px 24px;
             max-width: var(--max-w); margin: 0 auto;
             display: flex; justify-content: space-between; align-items: center;
             flex-wrap: wrap; gap: 16px;
@@ -632,7 +629,6 @@
             display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 998;
             padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom));
             background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border);
         }
         .mobile-cta a {
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -698,7 +694,7 @@
             #bgCanvas { display: none; }
         }
         @media (prefers-contrast: high) {
-            :root { --text-dim: rgba(255,255,255,0.85); --border: rgba(255,255,255,0.25); }
+            :root { --text-dim: rgba(255,255,255,0.85); }
         }
     </style>
 </head>
@@ -776,7 +772,7 @@
                 </div>
                 <div class="hero-tagline">
                     <span class="dot"></span>
-                    Bio-reactive. Free. Zero dependencies.
+                    Immersive Multimedia Art Production, Streaming and Global Collab with Biofeedback and Physical Computing
                 </div>
 
                 <h1>
@@ -860,8 +856,8 @@
 
         <!-- ========== HOW IT WORKS ========== -->
         <div id="how" class="section">
-            <div class="section-label reveal">Resonanz</div>
-            <h2 class="section-title reveal">From heartbeat to Gesamtkunstwerk</h2>
+            <div class="section-label reveal">Resonance</div>
+            <h2 class="section-title reveal">From heartbeat to total art form</h2>
             <p class="section-sub reveal">Three steps. One living signal chain. Your biology becomes the instrument, the score, and the conductor.</p>
             <div class="steps reveal reveal-stagger">
                 <div class="step">
@@ -884,7 +880,7 @@
 
         <!-- ========== FEATURES (BENTO) ========== -->
         <div id="features" class="section">
-            <div class="section-label reveal">Schwingung</div>
+            <div class="section-label reveal">Vibration</div>
             <h2 class="section-title reveal">Everything. Built in.</h2>
             <p class="section-sub reveal">Pro-level creative tools. Zero subscriptions. Zero external dependencies. Your art stays yours.</p>
 
@@ -906,7 +902,7 @@
                 <!-- Sound -->
                 <div class="bento-card">
                     <div class="bento-icon bi-green"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
-                    <h3>Six engines. One Klangfeld.</h3>
+                    <h3>Six engines. One sound field.</h3>
                     <p>Subtractive, FM, wavetable, granular, physical modeling, additive. 808 bass, 6 drum kits, 90+ DSP effects. MIDI 2.0. Dolby Atmos.</p>
                     <div class="bento-tags">
                         <span class="bento-tag bt-green">FM</span>
@@ -958,7 +954,7 @@
 
         <!-- ========== WHO IT'S FOR ========== -->
         <div id="who" class="section">
-            <div class="section-label reveal">Einklang</div>
+            <div class="section-label reveal">Harmony</div>
             <h2 class="section-title reveal">For those who listen inward</h2>
             <p class="section-sub reveal">Whether you fill stadiums or your living room. Whether you produce beats or heal with sound.</p>
 
@@ -988,7 +984,7 @@
 
         <!-- ========== TECH SPECS ========== -->
         <div class="section">
-            <div class="section-label reveal">Technik</div>
+            <div class="section-label reveal">Specs</div>
             <h2 class="section-title reveal">Built different</h2>
             <p class="section-sub reveal">Native performance. No wrappers. No Electron. Pure Apple frameworks on every platform.</p>
 

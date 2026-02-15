@@ -28,20 +28,18 @@
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        :root { --warning: #FF6B6B; }
-
         main { max-width: 700px; margin: 0 auto; padding: 80px 24px 80px; }
         .hero { text-align: center; margin-bottom: 48px; }
         .hero h1 { font-size: clamp(32px, 7vw, 42px); font-weight: 700; margin-bottom: 16px; }
-        .hero h1 span { background: linear-gradient(135deg, var(--warning), #FF8C42); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero h1 span { color: var(--text); }
         .hero .date { color: var(--text-dim); font-size: 13px; }
 
-        .warning-box { background: rgba(255,107,107,0.1); border: 2px solid var(--warning); padding: 24px; border-radius: 12px; margin: 24px 0; }
-        .warning-box h3 { color: var(--warning); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .warning-box { background: rgba(255,255,255,0.03); padding: 24px; border-radius: 12px; margin: 24px 0; }
+        .warning-box h3 { color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
         .warning-box p { margin: 0; font-size: 14px; color: rgba(248,250,252,0.8); line-height: 1.7; }
 
         section { margin-bottom: 32px; }
-        section h2 { color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        section h2 { color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
         p { color: rgba(248,250,252,0.7); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
         ul { padding-left: 20px; margin-bottom: 16px; }
         li { color: rgba(248,250,252,0.7); font-size: 14px; margin-bottom: 8px; line-height: 1.6; }
@@ -49,12 +47,12 @@
         strong { color: var(--text); }
         a { color: var(--text); }
 
-        .info-box { background: rgba(255,255,255,0.03); border-left: 3px solid rgba(255,255,255,0.2); padding: 20px; border-radius: 0 12px 12px 0; margin: 24px 0; }
+        .info-box { background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin: 24px 0; }
         .info-box p { margin: 0; font-size: 13px; line-height: 1.6; }
 
-        .contact-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; text-align: center; margin-top: 40px; }
+        .contact-box { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 24px; text-align: center; margin-top: 40px; }
         .contact-box h3 { font-size: 16px; margin-bottom: 12px; }
-        .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; transition: all 0.2s; }
+        .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 600; padding: 10px 20px; border-radius: 8px; transition: all 0.2s; }
         .contact-box a:hover { background: var(--text); color: var(--bg); }
     </style>
 </head>
