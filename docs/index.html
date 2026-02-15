@@ -144,8 +144,9 @@
             overflow-x: hidden; max-width: 100vw;
         }
 
-        a { color: inherit; text-decoration: none; }
-        a:focus-visible, button:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
+        a, a:visited, a:active { color: inherit; text-decoration: none; }
+        a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+        input:focus, textarea:focus, select:focus { outline-color: var(--text); }
 
         .skip-link {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
@@ -176,23 +177,24 @@
             max-width: var(--max-w); margin: 0 auto; height: 64px;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .nav-logo {
+        .nav-logo, .nav-logo:visited, .nav-logo:active, .nav-logo:link {
             display: flex; align-items: center; gap: 10px;
             font-weight: 700; font-size: 16px; z-index: 1001;
+            color: var(--text); text-decoration: none;
         }
         .nav-logo svg { width: 28px; height: 28px; }
-        .nav-logo span { color: var(--white); }
+        .nav-logo span { color: var(--text); }
 
         .nav-links {
             display: none; align-items: center; gap: 4px;
         }
-        .nav-links a {
+        .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {
             font-size: 13px; font-weight: 500; color: var(--text-dim);
             padding: 7px 14px; border-radius: 8px; transition: color 0.2s, background 0.2s;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.2px; text-decoration: none;
         }
         .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
-        .nav-links .nav-cta {
+        .nav-links .nav-cta, .nav-links .nav-cta:visited, .nav-links .nav-cta:active {
             background: var(--white); color: #000; font-weight: 700;
             padding: 8px 20px; border-radius: 10px; margin-left: 8px;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -232,10 +234,10 @@
         }
         .menu-overlay.open { opacity: 1; visibility: visible; }
         .menu-overlay nav { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .menu-overlay a {
+        .menu-overlay a, .menu-overlay a:visited, .menu-overlay a:active, .menu-overlay a:link {
             font-size: clamp(20px, 4vw, 30px); font-weight: 700; letter-spacing: -0.5px;
             color: var(--text-dim); padding: 8px 20px; border-radius: 12px;
-            transform: translateY(20px); opacity: 0;
+            transform: translateY(20px); opacity: 0; text-decoration: none;
             transition: color 0.2s, background 0.2s, transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.5s;
         }
         .menu-overlay.open a { transform: translateY(0); opacity: 1; }
@@ -249,11 +251,11 @@
         .menu-overlay.open a:nth-child(8) { transition-delay: 0.24s; }
         .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
         .menu-overlay a:hover { color: #e0e0e0; background: rgba(255,255,255,0.05); }
-        .menu-overlay .menu-cta {
+        .menu-overlay .menu-cta, .menu-overlay .menu-cta:visited, .menu-overlay .menu-cta:active {
             margin-top: 16px; font-size: 16px; font-weight: 700;
             background: var(--white); color: #000; padding: 14px 32px; border-radius: 12px;
             transition: transform 0.2s, box-shadow 0.2s;
-            transform: translateY(20px); opacity: 0;
+            transform: translateY(20px); opacity: 0; text-decoration: none;
         }
         .menu-overlay.open .menu-cta {
             transform: translateY(0); opacity: 1; transition-delay: 0.32s;
@@ -308,10 +310,10 @@
             display: flex; flex-direction: column; align-items: center; gap: 16px;
             animation: hero-fade 1s cubic-bezier(0.16,1,0.3,1) 0.5s both;
         }
-        .hero-cta {
+        .hero-cta, .hero-cta:visited, .hero-cta:active, .hero-cta:link {
             display: inline-flex; align-items: center; gap: 10px;
             background: #e0e0e0; color: #000; padding: 16px 36px; border-radius: 14px;
-            font-weight: 700; font-size: 16px;
+            font-weight: 700; font-size: 16px; text-decoration: none;
             transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s;
             position: relative;
         }
@@ -603,10 +605,10 @@
             display: flex; justify-content: center; gap: 12px; padding: 40px 24px;
             position: relative; z-index: 1;
         }
-        .social a {
+        .social a, .social a:visited, .social a:active, .social a:link {
             width: 44px; height: 44px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            color: var(--text-dim); transition: all 0.2s;
+            color: var(--text-dim); transition: all 0.2s; text-decoration: none;
         }
         .social a:hover { color: var(--white); transform: translateY(-2px); }
         .social a svg { width: 18px; height: 18px; }
@@ -621,7 +623,7 @@
         }
         .footer-copy { font-size: 12px; color: var(--text-dim); }
         .footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
-        .footer-links a { font-size: 12px; color: var(--text-dim); transition: color 0.2s; }
+        .footer-links a, .footer-links a:visited, .footer-links a:active, .footer-links a:link { font-size: 12px; color: var(--text-dim); transition: color 0.2s; text-decoration: none; }
         .footer-links a:hover { color: var(--text); }
 
         /* ============ MOBILE CTA ============ */
@@ -630,10 +632,10 @@
             padding: 12px 20px; padding-bottom: max(12px, env(safe-area-inset-bottom));
             background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
         }
-        .mobile-cta a {
+        .mobile-cta a, .mobile-cta a:visited, .mobile-cta a:active, .mobile-cta a:link {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             background: #e0e0e0; color: #000; padding: 14px; border-radius: 12px;
-            font-weight: 700; font-size: 15px;
+            font-weight: 700; font-size: 15px; text-decoration: none;
             transition: transform 0.2s;
         }
         .mobile-cta a:hover { transform: translateY(-1px); }
@@ -720,14 +722,10 @@
             </a>
 
             <div class="nav-links">
-                <a href="#how">How it works</a>
-                <a href="#features">Features</a>
-                <a href="#who">Who it's for</a>
+                <a href="/">Home</a>
                 <a href="faq.html">FAQ</a>
                 <a href="support.html">Support</a>
-                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">
-                    Download Free
-                </a>
+                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">Download Free</a>
             </div>
 
             <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
@@ -740,9 +738,6 @@
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
             <a href="/">Home</a>
-            <a href="#how">How it works</a>
-            <a href="#features">Features</a>
-            <a href="#who">Who it's for</a>
             <a href="faq.html">FAQ</a>
             <a href="support.html">Support</a>
             <a href="privacy.html">Privacy</a>

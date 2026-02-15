@@ -44,12 +44,12 @@
         li { color: rgba(224,224,224,0.7); font-size: 14px; margin-bottom: 12px; }
         li strong { color: var(--text); }
         p { color: rgba(224,224,224,0.7); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
-        a, a:visited { color: var(--text); }
+        a, a:visited, a:active, a:link { color: var(--text); text-decoration: none; }
 
         .contact-box { text-align: center; margin-top: 40px; }
         .contact-box h3 { font-size: 16px; margin-bottom: 8px; }
         .contact-box p { margin-bottom: 16px; font-size: 13px; }
-        .contact-box a, .contact-box a:visited { color: var(--text); text-decoration: none; font-weight: 600; }
+        .contact-box a, .contact-box a:visited, .contact-box a:active, .contact-box a:link { color: var(--text); text-decoration: none; font-weight: 600; }
 
         @media (max-width: 640px) { .score-card { flex-direction: column; text-align: center; } .score-info { text-align: center; } }
     </style>
