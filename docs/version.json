@@ -1,9 +1,11 @@
 {
-  "version": "5.4.0",
-  "build": "2026-02-14T16:10:00Z",
+  "version": "6.0.0",
+  "build": "2026-02-15T12:00:00Z",
   "features": {
     "liquidGlassIcon": true,
-    "bioGreenTheme": true,
+    "bioGreenTheme": false,
+    "monochromeDesign": true,
+    "maximumRalphWiggumLoopMode": true,
     "atkinsonFont": true,
     "desktopNav": true,
     "animatedECG": true,
@@ -28,6 +30,7 @@
     "faqKeyboardAccessibility": true
   },
   "changelog": [
+    "v6.0.0: Maximum Ralph Wiggum Loop Mode — monochrome consistency, font-size reduction (-3px), hero-tagline frame removed, tagline period fix, bioGreenTheme disabled, all color/text inconsistencies resolved",
     "v5.4.0: Premium animation overhaul — cache bust for updated SVGs/logos, branding consistency across all assets",
     "v5.3.0: SEO & accessibility optimization — full FAQ structured data (18 questions), hreflang tags for DE aliases, breadcrumb JSON-LD on all subpages, FAQ keyboard accessibility (role=button, aria-expanded), 404 page now uses shared.css/js with OG tags and skip-link, accessibility.html SVG titles for screen readers, Impressum skip-link in German",
     "v5.2.0: Custom 404 page, proper 404 handling, version sync, reduced CSS duplication",
