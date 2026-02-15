@@ -28,8 +28,6 @@
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        :root { --rose: #F472B6; --violet: #A78BFA; --sky: #38BDF8; }
-
         main { max-width: 900px; margin: 0 auto; padding: 80px 24px 80px; }
         .hero { text-align: center; margin-bottom: 60px; }
         .hero h1 { font-size: clamp(32px, 7vw, 48px); font-weight: 700; margin-bottom: 16px; }
@@ -37,42 +35,41 @@
         .hero p { font-size: 18px; color: var(--text-dim); max-width: 600px; margin: 0 auto 24px; line-height: 1.6; }
         .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
         .badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-        .badge.emerald { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid rgba(255,255,255,0.15); }
-        .badge.rose { background: rgba(244,114,182,0.12); color: var(--rose); border: 1px solid rgba(244,114,182,0.3); }
-        .badge.mint { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.15); }
+        .badge.emerald { background: rgba(255,255,255,0.06); color: var(--text); }
+        .badge.rose { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+        .badge.mint { background: rgba(255,255,255,0.06); color: var(--text-dim); }
 
         section { margin-bottom: 48px; }
-        section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; }
 
         .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
-        .platform-card { background: var(--bg-glass); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .platform-card:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
+        .platform-card { background: var(--bg-glass); border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .platform-card:hover { background: rgba(255,255,255,0.04); }
         .platform-card h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
         .platform-card p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
 
         .feature-list { display: grid; gap: 12px; }
-        .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 20px; background: var(--bg-glass); border: 1px solid var(--border-subtle); border-radius: 12px; transition: all 0.2s; }
-        .feature-item:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+        .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 20px; background: var(--bg-glass); border-radius: 12px; transition: all 0.2s; }
+        .feature-item:hover { background: rgba(255,255,255,0.04); }
         .feature-icon { width: 24px; height: 24px; color: var(--text); flex-shrink: 0; margin-top: 2px; }
         .feature-content h4 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
         .feature-content p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 
         .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-        .profile-category { background: var(--bg-glass); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 20px; }
+        .profile-category { background: var(--bg-glass); border-radius: 16px; padding: 20px; }
         .profile-category h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
         .profile-category h3.vision { color: var(--text); }
-        .profile-category h3.hearing { color: var(--rose); }
+        .profile-category h3.hearing { color: var(--text-dim); }
         .profile-category h3.motor { color: var(--text-dim); }
-        .profile-category h3.cognitive { color: #FBBF24; }
+        .profile-category h3.cognitive { color: var(--text-dim); }
         .profile-category ul { list-style: none; }
-        .profile-category li { font-size: 13px; color: rgba(248,250,252,0.7); padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        .profile-category li:last-child { border: none; }
+        .profile-category li { font-size: 13px; color: rgba(248,250,252,0.7); padding: 6px 0; }
         .profile-category li strong { color: var(--text); }
 
-        .contact-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px; text-align: center; }
+        .contact-box { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 32px; text-align: center; }
         .contact-box h3 { font-size: 20px; margin-bottom: 12px; }
         .contact-box p { color: var(--text-dim); margin-bottom: 20px; font-size: 14px; }
-        .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 600; padding: 12px 24px; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; transition: all 0.2s; }
+        .contact-box a { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 10px; transition: all 0.2s; }
         .contact-box a:hover { background: var(--text); color: var(--bg); }
     </style>
 </head>

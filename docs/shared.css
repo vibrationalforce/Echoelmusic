@@ -5,7 +5,7 @@
 @font-face{font-family:'Atkinson Hyperlegible';src:url('fonts/atkinson-italic.woff2') format('woff2');font-weight:400;font-style:italic;font-display:swap}
 
 /* Variables */
-:root{--bg:#000000;--text:#e0e0e0;--text-dim:rgba(224,224,224,0.5);--text-mid:rgba(224,224,224,0.7);--border:rgba(255,255,255,0.08);--border-subtle:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.16)}
+:root{--bg:#000000;--text:#e0e0e0;--text-dim:rgba(224,224,224,0.5);--text-mid:rgba(224,224,224,0.7);--bg-glass:rgba(255,255,255,0.02)}
 
 /* Reset */
 *{margin:0;padding:0;box-sizing:border-box}
@@ -19,7 +19,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--text);outline-offse
 .skip-link:focus{top:16px}
 
 /* Nav */
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:14px 24px;background:rgba(0,0,0,0.85);border-bottom:1px solid var(--border-subtle);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2)}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:14px 24px;background:rgba(0,0,0,0.85);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2)}
 .nav-bar{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
 .nav-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;z-index:1001;text-decoration:none;color:var(--text)}
 .nav-logo svg{width:30px;height:30px}
@@ -63,7 +63,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--text);outline-offse
 .menu-overlay .menu-cta:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,255,255,0.15);color:#000}
 
 /* Footer */
-footer{border-top:1px solid var(--border-subtle);padding:32px 24px;max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+footer{padding:32px 24px;max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
 .footer-copy{font-size:12px;color:var(--text-dim)}
 .footer-links{display:flex;gap:16px;flex-wrap:wrap}
 .footer-links a{font-size:12px;color:var(--text-dim);text-decoration:none;transition:color 0.2s}
@@ -75,18 +75,18 @@ footer{border-top:1px solid var(--border-subtle);padding:32px 24px;max-width:108
 .subpage-hero h1{font-size:clamp(32px,7vw,42px);font-weight:700;margin-bottom:16px}
 .subpage-hero h1 span{color:var(--text)}
 .subpage-hero .date{color:var(--text-dim);font-size:13px}
-.subpage-summary{background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:20px;border-radius:12px;margin-bottom:40px;text-align:center}
+.subpage-summary{background:rgba(255,255,255,0.03);padding:20px;border-radius:12px;margin-bottom:40px;text-align:center}
 .subpage-summary strong{color:var(--text)}
 .subpage-section{margin-bottom:32px}
-.subpage-section h2{color:var(--text-mid);font-size:14px;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.subpage-section h2{color:var(--text-mid);font-size:14px;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
 .subpage-section p{color:rgba(224,224,224,0.7);font-size:14px;line-height:1.7;margin-bottom:12px}
 .subpage-section ul{padding-left:20px;margin-bottom:16px}
 .subpage-section li{color:rgba(224,224,224,0.7);font-size:14px;margin-bottom:8px}
 .subpage-section strong{color:var(--text)}
 .subpage-section a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
-.contact-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center;margin-top:40px}
+.contact-box{background:rgba(255,255,255,0.03);border-radius:12px;padding:24px;text-align:center;margin-top:40px}
 .contact-box h3{font-size:16px;margin-bottom:12px}
-.contact-box a{display:inline-flex;align-items:center;gap:8px;color:var(--text);text-decoration:none;font-weight:600;padding:10px 20px;border:1px solid var(--border-hover);border-radius:8px;transition:all 0.2s}
+.contact-box a{display:inline-flex;align-items:center;gap:8px;color:var(--text);text-decoration:none;font-weight:600;padding:10px 20px;border-radius:8px;transition:all 0.2s}
 .contact-box a:hover{background:var(--text);color:var(--bg)}
 
 /* Responsive */

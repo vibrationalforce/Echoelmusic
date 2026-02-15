@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <title>Echoelmusic OG Image</title>
@@ -11,7 +11,7 @@
             width: 1200px;
             height: 630px;
             font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, #030712 0%, #041a0e 50%, #030712 100%);
+            background: #000000;
             color: #e0e0e0;
             display: flex;
             align-items: center;
@@ -22,13 +22,13 @@
         .ambient1 {
             position: absolute;
             width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
             top: -80px; left: -60px;
         }
         .ambient2 {
             position: absolute;
             width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
             bottom: -80px; right: -40px;
         }
         .content {
@@ -43,8 +43,7 @@
         h1 {
             font-size: 72px; font-weight: 700; line-height: 1;
             margin-bottom: 16px; letter-spacing: -2px;
-            background: linear-gradient(135deg, #22C55E, #10B981, #34D399);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            color: #e0e0e0; -webkit-text-fill-color: #e0e0e0;
         }
         .tagline {
             font-size: 26px; font-weight: 700; margin-bottom: 12px;
@@ -59,23 +58,23 @@
             padding: 6px 16px; border-radius: 20px; font-size: 12px;
             font-weight: 700; letter-spacing: 0.3px;
         }
-        .badge-green { background: rgba(34,197,94,0.12); color: #22C55E; }
-        .badge-emerald { background: rgba(16,185,129,0.1); color: #10B981; }
-        .badge-mint { background: rgba(52,211,153,0.1); color: #34D399; }
+        .badge-green { background: rgba(255,255,255,0.06); color: rgba(224,224,224,0.7); }
+        .badge-emerald { background: rgba(255,255,255,0.06); color: rgba(224,224,224,0.7); }
+        .badge-mint { background: rgba(255,255,255,0.06); color: rgba(224,224,224,0.7); }
         .badge-white { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); }
         .platforms {
             font-size: 13px; color: rgba(255,255,255,0.35); letter-spacing: 0.5px;
         }
         .free-badge {
             position: absolute; bottom: 36px; right: 56px;
-            background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2);
+            background: rgba(255,255,255,0.06);
             padding: 8px 20px; border-radius: 20px;
-            font-size: 12px; font-weight: 700; color: #22C55E;
+            font-size: 12px; font-weight: 700; color: rgba(224,224,224,0.5);
             letter-spacing: 1px;
         }
         .bottom-line {
             position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, #22C55E, #10B981, #34D399, transparent);
+            background: linear-gradient(90deg, transparent, rgba(224,224,224,0.1), transparent);
             opacity: 0.2;
         }
     </style>
@@ -88,15 +87,15 @@
         <div class="waveform-mark">
             <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="ws" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#e0e0e0" stop-opacity="0.6"/><stop offset="15%" stop-color="#22C55E"/><stop offset="50%" stop-color="#10B981"/><stop offset="100%" stop-color="#34D399"/></linearGradient>
-                    <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="50%" stop-color="#10B981" stop-opacity="0.4"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.2"/></linearGradient>
+                    <linearGradient id="ws" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#e0e0e0" stop-opacity="0.6"/><stop offset="15%" stop-color="#e0e0e0"/><stop offset="50%" stop-color="#e0e0e0" stop-opacity="0.8"/><stop offset="100%" stop-color="#e0e0e0" stop-opacity="0.6"/></linearGradient>
+                    <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#e0e0e0" stop-opacity="0.3"/><stop offset="50%" stop-color="#e0e0e0" stop-opacity="0.4"/><stop offset="100%" stop-color="#e0e0e0" stop-opacity="0.2"/></linearGradient>
                     <filter id="glow"><feGaussianBlur stdDeviation="4"/></filter>
                     <filter id="gb"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                 </defs>
                 <!-- Echo rings -->
-                <circle cx="92" cy="100" r="30" fill="none" stroke="#22C55E" stroke-width="0.5" opacity="0.08"/>
-                <circle cx="92" cy="100" r="55" fill="none" stroke="#10B981" stroke-width="0.4" opacity="0.06"/>
-                <circle cx="92" cy="100" r="82" fill="none" stroke="#34D399" stroke-width="0.3" opacity="0.04"/>
+                <circle cx="92" cy="100" r="30" fill="none" stroke="#e0e0e0" stroke-width="0.5" opacity="0.08"/>
+                <circle cx="92" cy="100" r="55" fill="none" stroke="#e0e0e0" stroke-width="0.4" opacity="0.06"/>
+                <circle cx="92" cy="100" r="82" fill="none" stroke="#e0e0e0" stroke-width="0.3" opacity="0.04"/>
                 <!-- Glow -->
                 <path d="M 15 100 L 48 100 L 60 62 L 72 136 L 82 76 C 86 88 92 100 100 100 L 110 100 C 116 100 122 78 130 78 C 138 78 142 100 148 100 C 154 100 158 120 164 120 C 168 120 172 104 185 100" fill="none" stroke="url(#wg)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
                 <!-- Main waveform -->
@@ -104,7 +103,7 @@
                 <!-- Crisp -->
                 <path d="M 15 100 L 48 100 L 60 62 L 72 136 L 82 76 C 86 88 92 100 100 100 L 110 100 C 116 100 122 78 130 78 C 138 78 142 100 148 100 C 154 100 158 120 164 120 C 168 120 172 104 185 100" fill="none" stroke="url(#ws)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <!-- Heart pulse dot -->
-                <circle cx="60" cy="62" r="4" fill="#22C55E" opacity="0.5"/>
+                <circle cx="60" cy="62" r="4" fill="#e0e0e0" opacity="0.5"/>
                 <circle cx="60" cy="62" r="2" fill="#e0e0e0" opacity="0.9"/>
             </svg>
         </div>
