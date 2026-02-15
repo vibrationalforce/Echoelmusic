@@ -30,38 +30,38 @@
     <style>
         main { max-width: 900px; margin: 0 auto; padding: 80px 24px 80px; }
         .hero { text-align: center; margin-bottom: 60px; }
-        .hero h1 { font-size: clamp(32px, 7vw, 48px); font-weight: 700; margin-bottom: 16px; }
+        .hero h1 { font-size: clamp(29px, 7vw, 45px); font-weight: 700; margin-bottom: 16px; }
         .hero h1 span { background: var(--text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero p { font-size: 18px; color: var(--text-dim); max-width: 600px; margin: 0 auto 24px; line-height: 1.6; }
+        .hero p { font-size: 15px; color: var(--text-dim); max-width: 600px; margin: 0 auto 24px; line-height: 1.6; }
         .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+        .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--text-dim); }
         .badge:first-child { color: var(--text); }
         .badge + .badge::before { content: '\00B7'; margin-right: 6px; }
 
         section { margin-bottom: 48px; }
-        section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; }
+        section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; }
 
         .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
         .platform-card { padding: 20px 0; }
-        .platform-card h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
-        .platform-card p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+        .platform-card h3 { font-size: 13px; margin-bottom: 8px; color: var(--text); }
+        .platform-card p { font-size: 9px; color: var(--text-dim); line-height: 1.5; }
 
         .feature-list { display: grid; gap: 12px; }
         .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; }
         .feature-icon { width: 24px; height: 24px; color: var(--text); flex-shrink: 0; margin-top: 2px; }
-        .feature-content h4 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
-        .feature-content p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+        .feature-content h4 { font-size: 12px; margin-bottom: 4px; color: var(--text); }
+        .feature-content p { font-size: 10px; color: var(--text-dim); line-height: 1.5; }
 
         .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
         .profile-category { padding: 20px 0; }
-        .profile-category h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; color: var(--text); }
+        .profile-category h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; color: var(--text); }
         .profile-category ul { list-style: none; }
-        .profile-category li { font-size: 13px; color: rgba(224,224,224,0.7); padding: 6px 0; }
+        .profile-category li { font-size: 10px; color: rgba(224,224,224,0.7); padding: 6px 0; }
         .profile-category li strong { color: var(--text); }
 
         .contact-box { text-align: center; margin-top: 40px; }
-        .contact-box h3 { font-size: 20px; margin-bottom: 12px; }
-        .contact-box p { color: var(--text-dim); margin-bottom: 20px; font-size: 14px; }
+        .contact-box h3 { font-size: 17px; margin-bottom: 12px; }
+        .contact-box p { color: var(--text-dim); margin-bottom: 20px; font-size: 11px; }
         .contact-box a, .contact-box a:visited, .contact-box a:active, .contact-box a:link { color: var(--text); text-decoration: none; font-weight: 600; }
     </style>
 </head>
@@ -140,7 +140,7 @@
 
         <section>
             <h2>Accessibility Profiles</h2>
-            <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 14px;">One-tap profiles optimized for specific needs</p>
+            <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 11px;">One-tap profiles optimized for specific needs</p>
             <div class="profile-grid">
                 <div class="profile-category">
                     <h3>Vision</h3>
