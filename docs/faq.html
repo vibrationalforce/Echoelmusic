@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAQ - Echoelmusic</title>
     <meta name="description" content="Frequently asked questions about Echoelmusic bio-reactive audio-visual platform.">
-    <meta name="theme-color" content="#22C55E">
+    <meta name="theme-color" content="#000000">
     <meta property="og:title" content="FAQ - Echoelmusic">
     <meta property="og:description" content="Frequently asked questions about Echoelmusic bio-reactive audio-visual platform.">
     <meta property="og:url" content="https://echoelmusic.com/faq.html">
@@ -27,33 +27,33 @@
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        :root { --glow: rgba(34,197,94,0.35); }
+        :root { --glow: rgba(255,255,255,0.15); }
 
         main { position: relative; z-index: 1; padding: 80px 24px 80px; max-width: 800px; margin: 0 auto; }
         h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 700; margin-bottom: 16px; }
-        h1 span { background: linear-gradient(135deg, var(--green), var(--emerald)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        h1 span { background: var(--text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .subtitle { color: var(--text-dim); font-size: 16px; margin-bottom: 48px; }
 
         .faq-section { margin-bottom: 40px; }
-        .faq-section h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--emerald); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(16,185,129,0.2); }
+        .faq-section h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .faq-item { background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: all 0.3s; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .faq-item:hover { border-color: rgba(34,197,94,0.3); }
+        .faq-item:hover { border-color: rgba(255,255,255,0.15); }
         .faq-question { padding: 18px 22px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 15px; }
         .faq-question:hover { background: var(--bg-glass); }
-        .faq-question::after { content: '+'; font-size: 22px; color: var(--green); transition: transform 0.3s; flex-shrink: 0; margin-left: 16px; }
+        .faq-question::after { content: '+'; font-size: 22px; color: var(--text); transition: transform 0.3s; flex-shrink: 0; margin-left: 16px; }
         .faq-item.open .faq-question::after { transform: rotate(45deg); }
         .faq-answer { padding: 0 22px 18px; color: rgba(248,250,252,0.7); font-size: 14px; line-height: 1.7; display: none; }
         .faq-item.open .faq-answer { display: block; }
-        .faq-answer a { color: var(--emerald); }
+        .faq-answer a { color: var(--text); }
         .faq-answer a:hover { text-decoration: underline; }
         .faq-answer ul { margin: 10px 0; padding-left: 20px; }
         .faq-answer li { margin-bottom: 6px; }
         .faq-answer strong { color: var(--text); }
 
-        .cta-box { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: 16px; padding: 32px; text-align: center; margin-top: 48px; }
+        .cta-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px; text-align: center; margin-top: 48px; }
         .cta-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
         .cta-box p { color: var(--text-dim); margin-bottom: 20px; font-size: 14px; }
-        .cta-box a.btn { display: inline-block; background: var(--green); color: #000; padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; transition: transform 0.2s, box-shadow 0.2s; }
+        .cta-box a.btn { display: inline-block; background: var(--text); color: #000; padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; transition: transform 0.2s, box-shadow 0.2s; }
         .cta-box a.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--glow); }
 
         @media (max-width: 640px) {
@@ -66,7 +66,7 @@
     <div class="nav">
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="52" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,66 C29,61 36,61 41,66 C46,71 54,71 59,66 C64,61 71,61 76,66" opacity="0.8"/><path d="M24,77 C29,72 36,72 41,77 C46,82 54,82 59,77 C64,72 71,72 76,77" opacity="0.4"/><path d="M24,88 C29,83 36,83 41,88 C46,93 54,93 59,88 C64,83 71,83 76,88" opacity="0.15"/></g></svg>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="48" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="49" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3.5" stroke-linecap="round"><path d="M22,61 C27,55 35,55 40,61 C45,67 55,67 60,61 C65,55 73,55 78,61" opacity="0.9"/><path d="M22,71 C27,65 35,65 40,71 C45,77 55,77 60,71 C65,65 73,65 78,71" opacity="0.5"/><path d="M22,81 C27,75 35,75 40,81 C45,87 55,87 60,81 C65,75 73,75 78,81" opacity="0.3"/></g></svg>
                 <span>Echoelmusic</span>
             </a>
             <div class="nav-links">

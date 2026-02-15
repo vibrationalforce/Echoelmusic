@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Echoelmusic — App Icon: E + echo waves, White on Black -->
-  <rect width="1024" height="1024" rx="225" fill="#000"/>
-  <text x="512" y="533" text-anchor="middle" font-family="'Atkinson Hyperlegible',Arial,sans-serif" font-weight="700" font-size="533" fill="#e0e0e0">E</text>
-  <g stroke="#e0e0e0" fill="none" stroke-width="30" stroke-linecap="round">
-    <path d="M246,676 C297,625 369,625 420,676 C471,727 553,727 604,676 C655,625 727,625 778,676" opacity="0.8"/>
-    <path d="M246,789 C297,738 369,738 420,789 C471,840 553,840 604,789 C655,738 727,738 778,789" opacity="0.4"/>
-    <path d="M246,901 C297,850 369,850 420,901 C471,953 553,953 604,901 C655,850 727,850 778,901" opacity="0.15"/>
+  <!-- Echoelmusic App Icon — optimized for App Store (Apple masks corners) -->
+  <rect width="1024" height="1024" fill="#000"/>
+  <text x="512" y="490" text-anchor="middle" font-family="'Atkinson Hyperlegible','SF Pro Display',Arial,sans-serif" font-weight="700" font-size="500" fill="#e0e0e0">E</text>
+  <g stroke="#e0e0e0" fill="none" stroke-width="38" stroke-linecap="round">
+    <path d="M220,620 C275,565 355,565 410,620 C465,675 559,675 614,620 C669,565 749,565 804,620" opacity="0.9"/>
+    <path d="M220,720 C275,665 355,665 410,720 C465,775 559,775 614,720 C669,665 749,665 804,720" opacity="0.5"/>
+    <path d="M220,820 C275,765 355,765 410,820 C465,875 559,875 614,820 C669,765 749,765 804,820" opacity="0.3"/>
   </g>
 </svg>
