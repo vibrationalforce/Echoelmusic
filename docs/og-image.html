@@ -35,10 +35,10 @@
             position: relative; z-index: 1;
             display: flex; align-items: center; gap: 56px; padding: 60px;
         }
-        .atom {
+        .waveform-mark {
             width: 200px; height: 200px; position: relative; flex-shrink: 0;
         }
-        .atom svg { width: 100%; height: 100%; }
+        .waveform-mark svg { width: 100%; height: 100%; }
         .text { max-width: 680px; }
         h1 {
             font-size: 72px; font-weight: 700; line-height: 1;
@@ -85,22 +85,27 @@
     <div class="ambient2"></div>
 
     <div class="content">
-        <div class="atom">
-            <svg viewBox="0 0 200 200" fill="none">
+        <div class="waveform-mark">
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="og" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient>
-                    <linearGradient id="oe" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="100%" stop-color="#10B981" stop-opacity="0.7"/></linearGradient>
-                    <linearGradient id="om" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/></linearGradient>
-                    <radialGradient id="nuc" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.98"/><stop offset="40%" stop-color="white" stop-opacity="0.7"/><stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></radialGradient>
+                    <linearGradient id="ws" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="white" stop-opacity="0.6"/><stop offset="15%" stop-color="#22C55E"/><stop offset="50%" stop-color="#10B981"/><stop offset="100%" stop-color="#34D399"/></linearGradient>
+                    <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="50%" stop-color="#10B981" stop-opacity="0.4"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.2"/></linearGradient>
+                    <filter id="glow"><feGaussianBlur stdDeviation="4"/></filter>
+                    <filter id="gb"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                 </defs>
-                <ellipse cx="100" cy="100" rx="75" ry="28" fill="none" stroke="url(#og)" stroke-width="3" opacity="0.65"/>
-                <ellipse cx="100" cy="100" rx="75" ry="28" fill="none" stroke="url(#oe)" stroke-width="3" opacity="0.65" transform="rotate(60 100 100)"/>
-                <ellipse cx="100" cy="100" rx="75" ry="28" fill="none" stroke="url(#om)" stroke-width="3" opacity="0.65" transform="rotate(120 100 100)"/>
-                <circle cx="100" cy="100" r="16" fill="url(#nuc)"/>
-                <circle cx="100" cy="100" r="10" fill="white" opacity="0.95"/>
-                <circle cx="175" cy="100" r="6" fill="white" opacity="0.92"/>
-                <circle cx="62" cy="34" r="6" fill="white" opacity="0.92"/>
-                <circle cx="62" cy="166" r="6" fill="white" opacity="0.92"/>
+                <!-- Echo rings -->
+                <circle cx="92" cy="100" r="30" fill="none" stroke="#22C55E" stroke-width="0.5" opacity="0.08"/>
+                <circle cx="92" cy="100" r="55" fill="none" stroke="#10B981" stroke-width="0.4" opacity="0.06"/>
+                <circle cx="92" cy="100" r="82" fill="none" stroke="#34D399" stroke-width="0.3" opacity="0.04"/>
+                <!-- Glow -->
+                <path d="M 15 100 L 48 100 L 60 62 L 72 136 L 82 76 C 86 88 92 100 100 100 L 110 100 C 116 100 122 78 130 78 C 138 78 142 100 148 100 C 154 100 158 120 164 120 C 168 120 172 104 185 100" fill="none" stroke="url(#wg)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+                <!-- Main waveform -->
+                <path d="M 15 100 L 48 100 L 60 62 L 72 136 L 82 76 C 86 88 92 100 100 100 L 110 100 C 116 100 122 78 130 78 C 138 78 142 100 148 100 C 154 100 158 120 164 120 C 168 120 172 104 185 100" fill="none" stroke="url(#ws)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#gb)"/>
+                <!-- Crisp -->
+                <path d="M 15 100 L 48 100 L 60 62 L 72 136 L 82 76 C 86 88 92 100 100 100 L 110 100 C 116 100 122 78 130 78 C 138 78 142 100 148 100 C 154 100 158 120 164 120 C 168 120 172 104 185 100" fill="none" stroke="url(#ws)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Heart pulse dot -->
+                <circle cx="60" cy="62" r="4" fill="#22C55E" opacity="0.5"/>
+                <circle cx="60" cy="62" r="2" fill="white" opacity="0.9"/>
             </svg>
         </div>
         <div class="text">

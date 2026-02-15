@@ -178,10 +178,10 @@
             background: linear-gradient(135deg, var(--green), var(--emerald), var(--mint));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
-        /* Nav atom animations — match hero atom */
+        /* Nav waveform animations — match hero waveform */
         .nav-logo svg .nav-core { animation: core-pulse 2s ease-in-out infinite; transform-origin: 50px 50px; }
-        .nav-logo svg .nav-qcloud { animation: quantum-breathe 3s ease-in-out infinite; transform-origin: 50px 50px; }
-        .nav-logo svg .nav-eglow { animation: electron-pulse 1.5s ease-in-out infinite; }
+        .nav-logo svg .nav-glow { animation: wave-pulse 2s ease-in-out infinite; }
+        .nav-logo svg .nav-dot { animation: core-pulse 2s ease-in-out infinite; }
 
         /* Desktop nav links */
         .nav-links {
@@ -605,81 +605,60 @@
             :root { --text-dim: rgba(248,250,252,0.8); --border: rgba(34,197,94,0.25); }
         }
 
-        /* -- QUANTUM ATOM HERO ANIMATION -- */
-        .hero-atom-wrap {
+        /* -- BIO-AUDIO WAVEFORM HERO ANIMATION -- */
+        .hero-waveform-wrap {
             width: 200px; height: 200px;
             position: relative; z-index: 1;
             margin: 0 auto 32px;
-            animation: atom-entrance 1s cubic-bezier(0.16,1,0.3,1) both, logo-float 5s ease-in-out 1s infinite;
+            animation: waveform-entrance 1s cubic-bezier(0.16,1,0.3,1) both, logo-float 5s ease-in-out 1s infinite;
             filter: drop-shadow(0 0 40px rgba(34,197,94,0.25));
         }
-        .hero-atom-wrap svg {
+        .hero-waveform-wrap svg {
             width: 100%; height: 100%;
         }
-        .hero-atom-wrap .core-dot {
+        .hero-waveform-wrap .pulse-dot {
             animation: core-pulse 2s ease-in-out infinite;
-            transform-origin: 50px 50px;
         }
-        /* Quantum probability cloud around nucleus */
-        .hero-atom-wrap .quantum-cloud {
-            animation: quantum-breathe 3s ease-in-out infinite;
-            transform-origin: 50px 50px;
+        .hero-waveform-wrap .wave-glow {
+            animation: wave-pulse 2s ease-in-out infinite;
         }
-        /* Electron nodes - animated via JS along orbital paths */
-        .hero-atom-wrap .electron {
-            transition: filter 0.3s;
+        .hero-waveform-wrap .echo-ring {
+            animation: echo-breathe 3s ease-in-out infinite;
+            transform-origin: 46px 50px;
         }
-        .hero-atom-wrap .electron-glow {
-            animation: electron-pulse 1.5s ease-in-out infinite;
-        }
-        .hero-atom-wrap .electron-glow:nth-of-type(2) { animation-delay: 0.5s; }
-        .hero-atom-wrap .electron-glow:nth-of-type(3) { animation-delay: 1s; }
-        /* Electron trail effect */
-        .hero-atom-wrap .electron-trail {
-            opacity: 0;
-            animation: trail-fade 0.8s ease-out forwards;
-        }
+        .hero-waveform-wrap .echo-ring:nth-of-type(2) { animation-delay: 0.5s; }
+        .hero-waveform-wrap .echo-ring:nth-of-type(3) { animation-delay: 1s; }
         @keyframes logo-float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
         @keyframes core-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.95; }
-            50% { transform: scale(1.08); opacity: 1; }
+            0%, 100% { opacity: 0.9; r: 1.2; }
+            50% { opacity: 1; r: 1.5; }
         }
-        @keyframes quantum-breathe {
-            0%, 100% { opacity: 0.08; transform: scale(1); }
-            50% { opacity: 0.15; transform: scale(1.05); }
+        @keyframes wave-pulse {
+            0%, 100% { opacity: 0.65; }
+            50% { opacity: 0.85; }
         }
-        @keyframes electron-pulse {
-            0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); }
-            50% { opacity: 1; filter: drop-shadow(0 0 10px rgba(255,255,255,0.9)) drop-shadow(0 0 20px rgba(34,197,94,0.4)); }
+        @keyframes echo-breathe {
+            0%, 100% { opacity: 0.06; transform: scale(1); }
+            50% { opacity: 0.12; transform: scale(1.03); }
         }
-        @keyframes trail-fade {
-            0% { opacity: 0.4; }
-            100% { opacity: 0; }
+        /* Waveform entrance */
+        @keyframes waveform-entrance {
+            0% { opacity: 0; transform: scale(0.92) translateY(12px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-        /* Orbit energy flow — de Broglie standing wave propagation */
-        @keyframes orbit-flow {
-            from { stroke-dashoffset: 0; }
-            to { stroke-dashoffset: -30; }
-        }
-        /* Ambient photon particle drift — vacuum fluctuations */
+        /* Ambient particle drift */
         @keyframes particle-drift {
             0%, 100% { transform: translate(0, 0); }
             25% { transform: translate(0.5px, -0.6px); }
             50% { transform: translate(-0.3px, 0.5px); }
             75% { transform: translate(0.4px, 0.3px); }
         }
-        /* Atom entrance — quantum materialization */
-        @keyframes atom-entrance {
-            0% { opacity: 0; transform: scale(0.92) translateY(12px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .orbit-wave { animation: orbit-flow 8s linear infinite; }
         .particle-ambient { animation: particle-drift 6s ease-in-out infinite; transform-origin: center; }
         @media (max-width: 768px) {
-            .hero-atom-wrap { width: 160px; height: 160px; margin-bottom: 24px; }
+            .hero-waveform-wrap { width: 160px; height: 160px; margin-bottom: 24px; }
         }
     </style>
 </head>
@@ -690,7 +669,7 @@
     <div class="nav">
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/><stop offset="50%" stop-color="#1da750" stop-opacity="0.5"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/></linearGradient><linearGradient id="ne" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/><stop offset="50%" stop-color="#10B981" stop-opacity="0.7"/><stop offset="100%" stop-color="#0ea374" stop-opacity="0.8"/></linearGradient><linearGradient id="nm" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/><stop offset="50%" stop-color="#2bc48a" stop-opacity="0.5"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/></linearGradient><radialGradient id="nn" cx="50%" cy="45%" r="50%"><stop offset="0%" stop-color="white" stop-opacity="0.98"/><stop offset="40%" stop-color="white" stop-opacity="0.7"/><stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0"/></radialGradient><radialGradient id="nab" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/><stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/><stop offset="100%" stop-color="transparent"/></radialGradient><radialGradient id="np" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="white" stop-opacity="0.98"/><stop offset="60%" stop-color="#e0fbe8" stop-opacity="0.9"/><stop offset="100%" stop-color="#22C55E" stop-opacity="0.4"/></radialGradient><radialGradient id="nnt" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="white" stop-opacity="0.95"/><stop offset="60%" stop-color="#d4e8dc" stop-opacity="0.85"/><stop offset="100%" stop-color="#10B981" stop-opacity="0.3"/></radialGradient><radialGradient id="npc" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.12"/><stop offset="50%" stop-color="#22C55E" stop-opacity="0.04"/><stop offset="100%" stop-color="transparent"/></radialGradient><filter id="ngb" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="neg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.5" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle class="nav-qcloud" cx="50" cy="50" r="42" fill="url(#nab)"/><circle cx="50" cy="50" r="40" fill="none" stroke="url(#ng)" stroke-width="0.4" opacity="0.2"/><circle cx="50" cy="50" r="25" fill="none" stroke="url(#ng)" stroke-width="0.2" opacity="0.06" stroke-dasharray="1 1.5"/><ellipse class="orbit-wave" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ng)" stroke-width="0.4" opacity="0.15" stroke-dasharray="3 2"/><ellipse class="orbit-wave" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ne)" stroke-width="0.4" opacity="0.15" stroke-dasharray="3 2" transform="rotate(60 50 50)" style="animation-delay:-2.7s"/><ellipse class="orbit-wave" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nm)" stroke-width="0.4" opacity="0.15" stroke-dasharray="3 2" transform="rotate(120 50 50)" style="animation-delay:-5.3s"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ng)" stroke-width="1.6" opacity="0.65" filter="url(#ngb)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.2"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ne)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)" filter="url(#ngb)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#nm)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)" filter="url(#ngb)"/><ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(120 50 50)"/><g class="nav-core"><circle cx="50" cy="50" r="7" fill="url(#nn)"/><circle cx="48.8" cy="49.5" r="1.8" fill="url(#np)"/><circle cx="51.2" cy="49.5" r="1.8" fill="url(#np)"/><circle cx="50" cy="51.5" r="1.8" fill="url(#nnt)"/><circle cx="50" cy="48.5" r="1.5" fill="url(#nnt)"/><circle cx="50" cy="50" r="1" fill="white" opacity="0.6"/><ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.4"/></g><g filter="url(#neg)"><circle cx="84" cy="50" r="6" fill="url(#npc)"/><circle cx="84" cy="50" r="5.5" fill="none" stroke="#22C55E" stroke-width="0.3" opacity="0.1"/><circle class="nav-eglow" cx="84" cy="50" r="4" fill="#22C55E" opacity="0.2"/><circle cx="84" cy="50" r="2.8" fill="white" opacity="0.94"/><circle cx="83.4" cy="49.5" r="1.2" fill="white" opacity="0.35"/><circle cx="33" cy="20.5" r="6" fill="url(#npc)"/><circle cx="33" cy="20.5" r="5.5" fill="none" stroke="#10B981" stroke-width="0.3" opacity="0.1"/><circle class="nav-eglow" cx="33" cy="20.5" r="4" fill="#10B981" opacity="0.2"/><circle cx="33" cy="20.5" r="2.8" fill="white" opacity="0.94"/><circle cx="32.4" cy="20" r="1.2" fill="white" opacity="0.35"/><circle cx="33" cy="79.5" r="6" fill="url(#npc)"/><circle cx="33" cy="79.5" r="5.5" fill="none" stroke="#34D399" stroke-width="0.3" opacity="0.1"/><circle class="nav-eglow" cx="33" cy="79.5" r="4" fill="#34D399" opacity="0.2"/><circle cx="33" cy="79.5" r="2.8" fill="white" opacity="0.94"/><circle cx="32.4" cy="79" r="1.2" fill="white" opacity="0.35"/></g><circle class="particle-ambient" cx="50" cy="16" r="0.8" fill="white" opacity="0.35" style="animation-delay:0s;animation-duration:7s"/><circle class="particle-ambient" cx="78" cy="25" r="0.7" fill="#22C55E" opacity="0.3" style="animation-delay:-1.5s;animation-duration:8s"/><circle class="particle-ambient" cx="78" cy="75" r="0.7" fill="#10B981" opacity="0.3" style="animation-delay:-4.5s;animation-duration:7.5s"/><circle class="particle-ambient" cx="22" cy="75" r="0.7" fill="#34D399" opacity="0.3" style="animation-delay:-2.2s;animation-duration:6s"/><circle class="particle-ambient" cx="22" cy="25" r="0.7" fill="#22C55E" opacity="0.3" style="animation-delay:-5.1s;animation-duration:9s"/></svg>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="nws" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="white" stop-opacity="0.5"/><stop offset="20%" stop-color="#22C55E"/><stop offset="50%" stop-color="#10B981"/><stop offset="100%" stop-color="#34D399"/></linearGradient><linearGradient id="nwg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22C55E" stop-opacity="0.4"/><stop offset="50%" stop-color="#10B981" stop-opacity="0.5"/><stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/></linearGradient><radialGradient id="namb" cx="50%" cy="50%" r="45%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.12"/><stop offset="100%" stop-color="transparent"/></radialGradient><filter id="ngb" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="nbg" x="-25%" y="-60%" width="150%" height="220%"><feGaussianBlur stdDeviation="3"/></filter></defs><circle cx="50" cy="50" r="42" fill="url(#namb)"/><circle cx="46" cy="50" r="20" fill="none" stroke="#22C55E" stroke-width="0.4" opacity="0.08"/><path class="nav-glow" d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="url(#nwg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#nbg)"/><path d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="url(#nws)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#ngb)"/><path d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="url(#nws)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="white" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.2"/><circle cx="32" cy="28" r="2.5" fill="#22C55E" opacity="0.5"/><circle class="nav-dot" cx="32" cy="28" r="1.2" fill="white" opacity="0.9"/></svg>
                 <span>Echoelmusic</span>
             </a>
 
@@ -734,135 +713,58 @@
         <!-- Hero -->
         <header class="hero">
             <div class="hero-content">
-                <!-- Quantum Atom Animation -->
-                <div class="hero-atom-wrap" aria-hidden="true">
+                <!-- Bio-Audio Waveform Animation -->
+                <div class="hero-waveform-wrap" aria-hidden="true">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                         <defs>
-                            <linearGradient id="hag" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#22C55E" stop-opacity="0.8"/>
-                                <stop offset="50%" stop-color="#1da750" stop-opacity="0.5"/>
-                                <stop offset="100%" stop-color="#22C55E" stop-opacity="0.2"/>
+                            <linearGradient id="hws" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="white" stop-opacity="0.5"/>
+                                <stop offset="20%" stop-color="#22C55E"/>
+                                <stop offset="50%" stop-color="#10B981"/>
+                                <stop offset="100%" stop-color="#34D399"/>
                             </linearGradient>
-                            <linearGradient id="hae" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#10B981" stop-opacity="0.2"/>
-                                <stop offset="50%" stop-color="#10B981" stop-opacity="0.7"/>
-                                <stop offset="100%" stop-color="#0ea374" stop-opacity="0.8"/>
-                            </linearGradient>
-                            <linearGradient id="ham" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#34D399" stop-opacity="0.7"/>
-                                <stop offset="50%" stop-color="#2bc48a" stop-opacity="0.5"/>
+                            <linearGradient id="hwg" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#22C55E" stop-opacity="0.4"/>
+                                <stop offset="50%" stop-color="#10B981" stop-opacity="0.5"/>
                                 <stop offset="100%" stop-color="#34D399" stop-opacity="0.3"/>
                             </linearGradient>
-                            <radialGradient id="hacore" cx="50%" cy="45%" r="50%">
-                                <stop offset="0%" stop-color="white" stop-opacity="0.98"/>
-                                <stop offset="40%" stop-color="white" stop-opacity="0.7"/>
-                                <stop offset="70%" stop-color="#22C55E" stop-opacity="0.3"/>
-                                <stop offset="100%" stop-color="#22C55E" stop-opacity="0"/>
-                            </radialGradient>
-                            <radialGradient id="habg" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="#10B981" stop-opacity="0.15"/>
-                                <stop offset="60%" stop-color="#22C55E" stop-opacity="0.08"/>
+                            <radialGradient id="hamb" cx="50%" cy="50%" r="45%">
+                                <stop offset="0%" stop-color="#10B981" stop-opacity="0.12"/>
                                 <stop offset="100%" stop-color="transparent"/>
                             </radialGradient>
-                            <filter id="quantum-blur" x="-20%" y="-20%" width="140%" height="140%">
-                                <feGaussianBlur stdDeviation="1" result="blur"/>
-                                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            <filter id="hero-gb" x="-20%" y="-50%" width="140%" height="200%">
+                                <feGaussianBlur stdDeviation="1" result="b"/>
+                                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
                             </filter>
-                            <filter id="hero-electron-glow" x="-50%" y="-50%" width="200%" height="200%">
-                                <feGaussianBlur stdDeviation="2" result="glow"/>
-                                <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            <filter id="hero-bglow" x="-25%" y="-60%" width="150%" height="220%">
+                                <feGaussianBlur stdDeviation="3"/>
                             </filter>
-                            <!-- Luminous trail glow filter -->
-                            <filter id="trail-glow" x="-30%" y="-30%" width="160%" height="160%">
-                                <feGaussianBlur stdDeviation="1.5" result="tg"/>
-                                <feMerge><feMergeNode in="tg"/><feMergeNode in="SourceGraphic"/></feMerge>
-                            </filter>
-                            <!-- Nucleon gradients -->
-                            <radialGradient id="ha-proton" cx="40%" cy="35%" r="60%">
-                                <stop offset="0%" stop-color="white" stop-opacity="0.98"/>
-                                <stop offset="60%" stop-color="#e0fbe8" stop-opacity="0.9"/>
-                                <stop offset="100%" stop-color="#22C55E" stop-opacity="0.4"/>
-                            </radialGradient>
-                            <radialGradient id="ha-neutron" cx="40%" cy="35%" r="60%">
-                                <stop offset="0%" stop-color="white" stop-opacity="0.95"/>
-                                <stop offset="60%" stop-color="#d4e8dc" stop-opacity="0.85"/>
-                                <stop offset="100%" stop-color="#10B981" stop-opacity="0.3"/>
-                            </radialGradient>
-                            <!-- Electron probability cloud -->
-                            <radialGradient id="ha-prob-cloud" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="#22C55E" stop-opacity="0.12"/>
-                                <stop offset="50%" stop-color="#22C55E" stop-opacity="0.04"/>
-                                <stop offset="100%" stop-color="transparent"/>
-                            </radialGradient>
                         </defs>
-                        <!-- Quantum probability cloud -->
-                        <circle class="quantum-cloud" cx="50" cy="50" r="42" fill="url(#habg)"/>
-                        <!-- Outer quantum ring (n=3 shell) -->
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="url(#hag)" stroke-width="0.4" opacity="0.2"/>
-                        <!-- Inner energy level (n=2 shell, faint dashed) -->
-                        <circle cx="50" cy="50" r="25" fill="none" stroke="url(#hag)" stroke-width="0.2" opacity="0.06" stroke-dasharray="1 1.5"/>
-                        <!-- de Broglie standing wave overlay (quantized wavelength, animated energy flow) -->
-                        <ellipse class="orbit-wave" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#hag)" stroke-width="0.4" opacity="0.15" stroke-dasharray="3 2"/>
-                        <ellipse class="orbit-wave" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#hae)" stroke-width="0.4" opacity="0.15" stroke-dasharray="3 2" transform="rotate(60 50 50)" style="animation-delay:-2.7s"/>
-                        <ellipse class="orbit-wave" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ham)" stroke-width="0.4" opacity="0.15" stroke-dasharray="3 2" transform="rotate(120 50 50)" style="animation-delay:-5.3s"/>
-                        <!-- Orbital paths (Bohr-Sommerfeld ellipses) — match original icon -->
-                        <ellipse id="orbit-path-1" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#hag)" stroke-width="1.6" opacity="0.65" filter="url(#quantum-blur)"/>
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.2"/>
-                        <ellipse id="orbit-path-2" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#hae)" stroke-width="1.6" opacity="0.65" transform="rotate(60 50 50)" filter="url(#quantum-blur)"/>
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(60 50 50)"/>
-                        <ellipse id="orbit-path-3" cx="50" cy="50" rx="34" ry="13" fill="none" stroke="url(#ham)" stroke-width="1.6" opacity="0.65" transform="rotate(120 50 50)" filter="url(#quantum-blur)"/>
-                        <ellipse cx="50" cy="50" rx="34" ry="13" fill="none" stroke="white" stroke-width="0.3" opacity="0.15" transform="rotate(120 50 50)"/>
-                        <!-- Nucleus with nucleon substructure -->
-                        <g class="core-dot">
-                            <circle cx="50" cy="50" r="7" fill="url(#hacore)"/>
-                            <!-- Nucleon cluster (protons + neutrons) -->
-                            <circle cx="48.8" cy="49.5" r="1.8" fill="url(#ha-proton)"/>
-                            <circle cx="51.2" cy="49.5" r="1.8" fill="url(#ha-proton)"/>
-                            <circle cx="50" cy="51.5" r="1.8" fill="url(#ha-neutron)"/>
-                            <circle cx="50" cy="48.5" r="1.5" fill="url(#ha-neutron)"/>
-                            <!-- Nuclear binding highlight -->
-                            <circle cx="50" cy="50" r="1" fill="white" opacity="0.6"/>
-                            <!-- Glass highlight -->
-                            <ellipse cx="48.5" cy="48" rx="2" ry="1.2" fill="white" opacity="0.4"/>
-                        </g>
-                        <!-- Electron trail containers (populated by JS) -->
-                        <g id="electron-trails"></g>
-                        <!-- Electrons with probability clouds + corona rings (positioned by JS) -->
-                        <g id="electron-1" class="electron" filter="url(#hero-electron-glow)">
-                            <circle r="6" fill="url(#ha-prob-cloud)"/>
-                            <circle r="5.5" fill="none" stroke="#22C55E" stroke-width="0.3" opacity="0.1"/>
-                            <circle class="electron-glow" r="4" fill="#22C55E" opacity="0.2"/>
-                            <circle r="2.8" fill="white" opacity="0.94"/>
-                            <circle r="1.2" cx="-0.6" cy="-0.5" fill="white" opacity="0.35"/>
-                        </g>
-                        <g id="electron-2" class="electron" filter="url(#hero-electron-glow)">
-                            <circle r="6" fill="url(#ha-prob-cloud)"/>
-                            <circle r="5.5" fill="none" stroke="#10B981" stroke-width="0.3" opacity="0.1"/>
-                            <circle class="electron-glow" r="4" fill="#10B981" opacity="0.2"/>
-                            <circle r="2.8" fill="white" opacity="0.94"/>
-                            <circle r="1.2" cx="-0.6" cy="-0.5" fill="white" opacity="0.35"/>
-                        </g>
-                        <g id="electron-3" class="electron" filter="url(#hero-electron-glow)">
-                            <circle r="6" fill="url(#ha-prob-cloud)"/>
-                            <circle r="5.5" fill="none" stroke="#34D399" stroke-width="0.3" opacity="0.1"/>
-                            <circle class="electron-glow" r="4" fill="#34D399" opacity="0.2"/>
-                            <circle r="2.8" fill="white" opacity="0.94"/>
-                            <circle r="1.2" cx="-0.6" cy="-0.5" fill="white" opacity="0.35"/>
-                        </g>
-                        <!-- Ambient photon particles — vacuum fluctuations with drift -->
-                        <circle class="particle-ambient" cx="50" cy="16" r="0.8" fill="white" opacity="0.35" style="animation-delay:0s;animation-duration:7s"/>
-                        <circle class="particle-ambient" cx="78" cy="25" r="0.7" fill="#22C55E" opacity="0.3" style="animation-delay:-1.5s;animation-duration:8s"/>
-                        <circle class="particle-ambient" cx="85" cy="52" r="0.6" fill="white" opacity="0.25" style="animation-delay:-3s;animation-duration:6.5s"/>
-                        <circle class="particle-ambient" cx="78" cy="75" r="0.7" fill="#10B981" opacity="0.3" style="animation-delay:-4.5s;animation-duration:7.5s"/>
-                        <circle class="particle-ambient" cx="50" cy="84" r="0.8" fill="white" opacity="0.35" style="animation-delay:-0.8s;animation-duration:8.5s"/>
-                        <circle class="particle-ambient" cx="22" cy="75" r="0.7" fill="#34D399" opacity="0.3" style="animation-delay:-2.2s;animation-duration:6s"/>
-                        <circle class="particle-ambient" cx="15" cy="50" r="0.6" fill="white" opacity="0.25" style="animation-delay:-3.7s;animation-duration:7s"/>
-                        <circle class="particle-ambient" cx="22" cy="25" r="0.7" fill="#22C55E" opacity="0.3" style="animation-delay:-5.1s;animation-duration:9s"/>
-                        <!-- Quantum field particles — finer structure -->
-                        <circle class="particle-ambient" cx="63" cy="20" r="0.4" fill="#22C55E" opacity="0.12" style="animation-delay:-1s;animation-duration:10s"/>
-                        <circle class="particle-ambient" cx="37" cy="34" r="0.35" fill="white" opacity="0.1" style="animation-delay:-2.5s;animation-duration:11s"/>
-                        <circle class="particle-ambient" cx="68" cy="68" r="0.4" fill="#34D399" opacity="0.12" style="animation-delay:-4s;animation-duration:9.5s"/>
-                        <circle class="particle-ambient" cx="31" cy="66" r="0.35" fill="#10B981" opacity="0.1" style="animation-delay:-5.5s;animation-duration:10.5s"/>
+                        <!-- Ambient glow -->
+                        <circle cx="50" cy="50" r="42" fill="url(#hamb)"/>
+                        <!-- Echo resonance rings -->
+                        <circle class="echo-ring" cx="46" cy="50" r="12" fill="none" stroke="#22C55E" stroke-width="0.4" opacity="0.08"/>
+                        <circle class="echo-ring" cx="46" cy="50" r="22" fill="none" stroke="#10B981" stroke-width="0.35" opacity="0.06"/>
+                        <circle class="echo-ring" cx="46" cy="50" r="33" fill="none" stroke="#34D399" stroke-width="0.3" opacity="0.04"/>
+                        <!-- Waveform: EKG spike → sine waves -->
+                        <!-- Background glow -->
+                        <path class="wave-glow" d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="url(#hwg)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#hero-bglow)"/>
+                        <!-- Main waveform with glow -->
+                        <path d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="url(#hws)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#hero-gb)"/>
+                        <!-- Crisp top layer -->
+                        <path d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="url(#hws)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- White highlight -->
+                        <path d="M 12 50 L 26 50 L 32 28 L 38 70 L 43 38 C 46 45 50 50 55 50 L 60 50 C 63 50 67 40 72 40 C 77 40 79 50 82 50 L 88 50" fill="none" stroke="white" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.2"/>
+                        <!-- Heart pulse dot at EKG R-peak -->
+                        <circle cx="32" cy="28" r="2.5" fill="#22C55E" opacity="0.5"/>
+                        <circle class="pulse-dot" cx="32" cy="28" r="1.2" fill="white" opacity="0.9"/>
+                        <!-- Ambient particles -->
+                        <circle class="particle-ambient" cx="20" cy="35" r="0.5" fill="#F472B6" opacity="0.18" style="animation-delay:0s;animation-duration:7s"/>
+                        <circle class="particle-ambient" cx="35" cy="22" r="0.4" fill="white" opacity="0.15" style="animation-delay:-1.5s;animation-duration:8s"/>
+                        <circle class="particle-ambient" cx="55" cy="30" r="0.45" fill="#10B981" opacity="0.15" style="animation-delay:-3s;animation-duration:7.5s"/>
+                        <circle class="particle-ambient" cx="70" cy="38" r="0.5" fill="#10B981" opacity="0.16" style="animation-delay:-4.5s;animation-duration:6.5s"/>
+                        <circle class="particle-ambient" cx="75" cy="65" r="0.4" fill="#34D399" opacity="0.14" style="animation-delay:-2.2s;animation-duration:9s"/>
+                        <circle class="particle-ambient" cx="85" cy="43" r="0.45" fill="#22C55E" opacity="0.14" style="animation-delay:-5.1s;animation-duration:8.5s"/>
                     </svg>
                 </div>
 
@@ -1206,90 +1108,6 @@
                 }
             }
         });
-
-        // Quantum orbital animation — luminous trail system (Bohr-Sommerfeld dynamics)
-        // Replaces discrete dot trails with continuous polyline streams + glow
-        (function quantumOrbit() {
-            var CX = 50, CY = 50, RX = 34, RY = 13;
-            var TRAIL_LEN = 32;
-            var orbits = [
-                { angle: 0, speed: 0.015, rotation: 0, trail: [] },
-                { angle: 2.094, speed: 0.012, rotation: Math.PI / 3, trail: [] },
-                { angle: 4.189, speed: 0.018, rotation: 2 * Math.PI / 3, trail: [] }
-            ];
-            var els = [
-                document.getElementById('electron-1'),
-                document.getElementById('electron-2'),
-                document.getElementById('electron-3')
-            ];
-            var trailContainer = document.getElementById('electron-trails');
-            var colors = ['#22C55E', '#10B981', '#34D399'];
-            var frame = 0;
-
-            // Pre-create luminous trail polylines: outer glow + inner core per electron
-            var trailGlows = [], trailCores = [];
-            for (var i = 0; i < 3; i++) {
-                var glow = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-                glow.setAttribute('fill', 'none');
-                glow.setAttribute('stroke', colors[i]);
-                glow.setAttribute('stroke-width', '3.5');
-                glow.setAttribute('stroke-linecap', 'round');
-                glow.setAttribute('stroke-linejoin', 'round');
-                glow.setAttribute('opacity', '0.1');
-                glow.setAttribute('filter', 'url(#trail-glow)');
-                trailContainer.appendChild(glow);
-                trailGlows.push(glow);
-
-                var core = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-                core.setAttribute('fill', 'none');
-                core.setAttribute('stroke', colors[i]);
-                core.setAttribute('stroke-width', '1.2');
-                core.setAttribute('stroke-linecap', 'round');
-                core.setAttribute('stroke-linejoin', 'round');
-                core.setAttribute('opacity', '0.3');
-                trailContainer.appendChild(core);
-                trailCores.push(core);
-            }
-
-            function posOnEllipse(angle, rot) {
-                var x = RX * Math.cos(angle), y = RY * Math.sin(angle);
-                var cr = Math.cos(rot), sr = Math.sin(rot);
-                return { x: CX + x * cr - y * sr, y: CY + x * sr + y * cr };
-            }
-
-            function tick() {
-                frame++;
-                for (var i = 0; i < 3; i++) {
-                    var o = orbits[i];
-                    var pos = posOnEllipse(o.angle, o.rotation);
-
-                    // Wavefunction oscillation — coherent uncertainty (Born's interpretation)
-                    var phase = frame * 0.047 + i * 2.094;
-                    var dx = Math.sin(phase) * 0.25;
-                    var dy = Math.cos(phase * 1.37) * 0.18;
-                    var fx = pos.x + dx, fy = pos.y + dy;
-
-                    els[i].setAttribute('transform', 'translate(' + fx + ',' + fy + ')');
-
-                    // Update luminous trail ring buffer
-                    o.trail.unshift(fx.toFixed(2) + ',' + fy.toFixed(2));
-                    if (o.trail.length > TRAIL_LEN) o.trail.pop();
-
-                    // Update polyline points — smooth continuous stream
-                    var pts = o.trail.join(' ');
-                    trailCores[i].setAttribute('points', pts);
-                    trailGlows[i].setAttribute('points', pts);
-
-                    // Kepler's 2nd law — electrons accelerate through periapsis
-                    var dist = Math.sqrt((pos.x - CX) * (pos.x - CX) + (pos.y - CY) * (pos.y - CY));
-                    var speedMod = 1 + (RX - dist) / (RX * 2);
-                    o.angle += o.speed * speedMod;
-                }
-                requestAnimationFrame(tick);
-            }
-
-            if (els[0]) requestAnimationFrame(tick);
-        })();
 
         // Mobile CTA: show after scrolling past hero
         var mobileCta = document.getElementById('mobileCta');
