@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Echoelmusic — App Icon: Atkinson Bold "3", White on Black -->
-  <rect width="1024" height="1024" rx="225" fill="#000000"/>
-  <g transform="translate(512 512) scale(1.127 -1.127) translate(-293.5 -334)">
-    <path d="M291-12Q235-12 183.5 4Q132 20 93 53.5Q54 87 33 140L171 190Q184 141 219 121Q254 101 295 101Q342 101 370 124Q398 147 398 188Q398 229 372 251.5Q346 274 303.5 282.5Q261 291 211 291V397Q297 397 343.5 421Q390 445 390 489Q390 528 358.5 547.5Q327 567 286 567Q249 567 218 549Q187 531 177 485L40 535Q60 586 99 618Q138 650 189 665Q240 680 295 680Q341 680 385 670Q429 660 464.5 638.5Q500 617 521.5 584.5Q543 552 543 507Q543 453 514 412.5Q485 372 450 352Q483 340 506.5 314Q530 288 542 257Q554 226 554 195Q554 125 517 79.5Q480 34 420 11Q360-12 291-12Z" fill="white"/>
+  <!-- Echoelmusic — App Icon: E + echo waves, White on Black -->
+  <rect width="1024" height="1024" rx="225" fill="#000"/>
+  <text x="512" y="533" text-anchor="middle" font-family="'Atkinson Hyperlegible',Arial,sans-serif" font-weight="700" font-size="533" fill="white">E</text>
+  <g stroke="white" fill="none" stroke-width="30" stroke-linecap="round">
+    <path d="M246,676 C297,625 369,625 420,676 C471,727 553,727 604,676 C655,625 727,625 778,676" opacity="0.8"/>
+    <path d="M246,789 C297,738 369,738 420,789 C471,840 553,840 604,789 C655,738 727,738 778,789" opacity="0.4"/>
+    <path d="M246,901 C297,850 369,850 420,901 C471,953 553,953 604,901 C655,850 727,850 778,901" opacity="0.15"/>
   </g>
 </svg>
