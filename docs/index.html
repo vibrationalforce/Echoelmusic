@@ -182,8 +182,6 @@
         }
         .nav-logo svg { width: 28px; height: 28px; }
         .nav-logo span { color: var(--white); }
-        .nav-logo svg .nav-glow { animation: wave-pulse 2s ease-in-out infinite; }
-        .nav-logo svg .nav-dot { animation: core-pulse 2s ease-in-out infinite; }
 
         .nav-links {
             display: none; align-items: center; gap: 4px;
@@ -702,19 +700,9 @@
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <!-- "3" waveform logo: EKG waveform shaped as the number 3 -->
-                    <defs>
-                        <filter id="nglow" x="-30%" y="-30%" width="160%" height="160%">
-                            <feGaussianBlur stdDeviation="2" result="b"/>
-                            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-                        </filter>
-                    </defs>
-                    <!-- The "3" shape as a waveform path -->
-                    <path d="M 28 22 C 28 22 38 16 50 16 C 66 16 74 26 74 36 C 74 44 67 50 56 50 C 67 50 76 56 76 66 C 76 78 66 86 50 86 C 38 86 28 80 28 80"
-                          fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
-                          filter="url(#nglow)"/>
-                    <!-- Subtle pulse dot at top curve -->
-                    <circle cx="74" cy="36" r="2" fill="white" opacity="0.5"/>
+                    <g transform="translate(50 50) scale(0.11 -0.11) translate(-293.5 -334)">
+                        <path d="M291-12Q235-12 183.5 4Q132 20 93 53.5Q54 87 33 140L171 190Q184 141 219 121Q254 101 295 101Q342 101 370 124Q398 147 398 188Q398 229 372 251.5Q346 274 303.5 282.5Q261 291 211 291V397Q297 397 343.5 421Q390 445 390 489Q390 528 358.5 547.5Q327 567 286 567Q249 567 218 549Q187 531 177 485L40 535Q60 586 99 618Q138 650 189 665Q240 680 295 680Q341 680 385 670Q429 660 464.5 638.5Q500 617 521.5 584.5Q543 552 543 507Q543 453 514 412.5Q485 372 450 352Q483 340 506.5 314Q530 288 542 257Q554 226 554 195Q554 125 517 79.5Q480 34 420 11Q360-12 291-12Z" fill="white"/>
+                    </g>
                 </svg>
                 <span>Echoelmusic</span>
             </a>
