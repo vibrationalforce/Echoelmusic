@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!-- Echoelmusic — App Icon: E + echo waves, White on Black -->
   <rect width="1024" height="1024" rx="225" fill="#000"/>
-  <text x="512" y="533" text-anchor="middle" font-family="'Atkinson Hyperlegible',Arial,sans-serif" font-weight="700" font-size="533" fill="white">E</text>
-  <g stroke="white" fill="none" stroke-width="30" stroke-linecap="round">
+  <text x="512" y="533" text-anchor="middle" font-family="'Atkinson Hyperlegible',Arial,sans-serif" font-weight="700" font-size="533" fill="#e0e0e0">E</text>
+  <g stroke="#e0e0e0" fill="none" stroke-width="30" stroke-linecap="round">
     <path d="M246,676 C297,625 369,625 420,676 C471,727 553,727 604,676 C655,625 727,625 778,676" opacity="0.8"/>
     <path d="M246,789 C297,738 369,738 420,789 C471,840 553,840 604,789 C655,738 727,738 778,789" opacity="0.4"/>
     <path d="M246,901 C297,850 369,850 420,901 C471,953 553,953 604,901 C655,850 727,850 778,901" opacity="0.15"/>
