@@ -86,13 +86,13 @@
   <text x="100" y="148" text-anchor="middle"
         font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="22" font-weight="700" fill="white" letter-spacing="-0.5">
-    Echoel
+    Echoelmusic
   </text>
 
   <!-- Tagline -->
   <text x="100" y="168" text-anchor="middle"
         font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
-        font-size="8" font-weight="700" fill="#22C55E" letter-spacing="1.5">
-    YOUR BODY IS THE INSTRUMENT
+        font-size="9" font-weight="700" fill="#22C55E" letter-spacing="2">
+    CREATE FROM WITHIN
   </text>
 </svg>

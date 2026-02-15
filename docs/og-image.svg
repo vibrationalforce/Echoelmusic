@@ -107,19 +107,19 @@
   <!-- App name -->
   <text x="420" y="268" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="82" font-weight="700" fill="white" filter="url(#tg)" letter-spacing="-2">
-    Echoel
+    Echoelmusic
   </text>
 
   <!-- Tagline -->
   <text x="420" y="325" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="30" fill="url(#brand)" font-weight="700" letter-spacing="-0.3">
-    Your body is the instrument.
+    Create from Within
   </text>
 
   <!-- Description -->
   <text x="420" y="378" font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="18" fill="rgba(255,255,255,0.5)" font-weight="400">
-    Heartbeat, breath, and movement become spatial sound, light, and vision.
+    Your body's vibrations become music, visuals, film, and light.
   </text>
 
   <!-- Feature badges -->
@@ -145,7 +145,7 @@
 
   <!-- Free badge -->
   <rect x="420" y="528" width="165" height="30" rx="15" fill="#22C55E" opacity="0.1"/>
-  <text x="502.5" y="548" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700" letter-spacing="1">FREE</text>
+  <text x="502.5" y="548" font-family="'Atkinson Hyperlegible', sans-serif" font-size="12" fill="#22C55E" text-anchor="middle" font-weight="700" letter-spacing="1">FREE FOR A LIMITED TIME</text>
 
   <!-- Bottom brand line -->
   <line x1="0" y1="620" x2="1200" y2="620" stroke="url(#brand)" stroke-width="1" opacity="0.15"/>
