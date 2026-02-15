@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
   <defs>
-    <!-- Echoelmusic Branding System v7.0 — Stacked Logo: Bio-Audio Waveform Mark -->
+    <!-- Echoel Branding System v8.0 — Stacked Logo: Bio-Audio Waveform Mark -->
     <!-- Waveform stroke gradient -->
     <linearGradient id="ws" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="white" stop-opacity="0.6"/>
@@ -86,13 +86,13 @@
   <text x="100" y="148" text-anchor="middle"
         font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
         font-size="22" font-weight="700" fill="white" letter-spacing="-0.5">
-    Echoelmusic
+    Echoel
   </text>
 
   <!-- Tagline -->
   <text x="100" y="168" text-anchor="middle"
         font-family="'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
-        font-size="9" font-weight="700" fill="#22C55E" letter-spacing="2">
-    CREATE FROM WITHIN
+        font-size="8" font-weight="700" fill="#22C55E" letter-spacing="1.5">
+    YOUR BODY IS THE INSTRUMENT
   </text>
 </svg>

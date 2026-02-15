@@ -1,7 +1,7 @@
 {
-  "name": "Echoelmusic",
-  "short_name": "Echoelmusic",
-  "description": "Create from Within. Turn your heartbeat, breath, and body into music, visuals, and light. Bio-reactive creative platform.",
+  "name": "Echoel",
+  "short_name": "Echoel",
+  "description": "Your body is the instrument. Heartbeat, breath, and movement become spatial sound, light, and vision. Bio-reactive creative platform.",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
@@ -44,7 +44,7 @@
       "sizes": "1024x1024",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Echoelmusic Bio-Reactive Interface"
+      "label": "Echoel Bio-Reactive Interface"
     }
   ],
   "shortcuts": [
