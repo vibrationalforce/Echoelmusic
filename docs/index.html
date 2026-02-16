@@ -331,6 +331,51 @@
             letter-spacing: 1px; text-transform: uppercase; margin-left: 6px;
         }
 
+        /* ============ CAPABILITY MAP ============ */
+        .cap-map {
+            width: 100%; max-width: 900px; margin: 64px auto 0;
+            animation: hero-fade 1s cubic-bezier(0.16,1,0.3,1) 0.65s both;
+        }
+        .cap-flow {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+            position: relative;
+        }
+        .cap-flow::before {
+            content: ''; position: absolute; top: 28px; left: 10%; right: 10%;
+            height: 1px; background: linear-gradient(90deg, transparent, var(--white-10), var(--white-10), transparent);
+        }
+        .cap-node {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 10px; padding: 0 8px; position: relative; z-index: 1;
+        }
+        .cap-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            background: var(--white-03); border: 1px solid var(--white-06);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--white-40);
+            transition: border-color 0.3s, color 0.3s, transform 0.3s;
+        }
+        .cap-node:hover .cap-icon {
+            border-color: var(--white-20); color: var(--white-60);
+            transform: translateY(-3px);
+        }
+        .cap-icon svg { width: 22px; height: 22px; }
+        .cap-label {
+            font-size: 11px; font-weight: 700; color: var(--white-60);
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .cap-detail {
+            font-size: 10px; color: var(--white-20); text-align: center;
+            line-height: 1.5; letter-spacing: 0.2px;
+        }
+        @media (max-width: 600px) {
+            .cap-flow { grid-template-columns: repeat(3, 1fr); gap: 24px 0; }
+            .cap-flow::before { display: none; }
+        }
+        @media (max-width: 380px) {
+            .cap-flow { grid-template-columns: repeat(2, 1fr); }
+        }
+
         @keyframes hero-fade {
             0% { opacity: 0; transform: translateY(24px); }
             100% { opacity: 1; transform: translateY(0); }
@@ -732,6 +777,47 @@
                     <p class="hero-platforms">
                         iPhone &middot; iPad &middot; Mac &middot; Apple Watch &middot; Apple TV &middot; Vision Pro
                     </p>
+                </div>
+
+                <!-- Capability Map -->
+                <div class="cap-map" role="img" aria-label="Echoelmusic capabilities: Biofeedback input, 6 synth engines with 90+ effects, 30+ visual modes, DMX and laser lighting, live streaming and film export">
+                    <div class="cap-flow">
+                        <div class="cap-node">
+                            <div class="cap-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+                            </div>
+                            <span class="cap-label">Body</span>
+                            <span class="cap-detail">HRV &middot; Heart Rate<br>Breath &middot; Dance</span>
+                        </div>
+                        <div class="cap-node">
+                            <div class="cap-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
+                            </div>
+                            <span class="cap-label">Sound</span>
+                            <span class="cap-detail">6 Engines &middot; 90+ FX<br>MIDI 2.0 &middot; Atmos</span>
+                        </div>
+                        <div class="cap-node">
+                            <div class="cap-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg>
+                            </div>
+                            <span class="cap-label">Visuals</span>
+                            <span class="cap-detail">30+ Modes &middot; 120fps<br>Particles &middot; Fractals</span>
+                        </div>
+                        <div class="cap-node">
+                            <div class="cap-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+                            </div>
+                            <span class="cap-label">Light</span>
+                            <span class="cap-detail">DMX &middot; Art-Net<br>Lasers &middot; Smart Home</span>
+                        </div>
+                        <div class="cap-node">
+                            <div class="cap-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M2 12h20"/></svg>
+                            </div>
+                            <span class="cap-label">Output</span>
+                            <span class="cap-detail">Stream &middot; Film<br>ProRes &middot; 25+ Formats</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
