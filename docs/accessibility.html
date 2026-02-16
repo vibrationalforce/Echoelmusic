@@ -27,43 +27,6 @@
     <link rel="stylesheet" href="shared.css">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
-    <style>
-        main { max-width: 900px; margin: 0 auto; padding: 80px 24px 80px; }
-        .hero { text-align: center; margin-bottom: 60px; }
-        .hero h1 { font-size: clamp(32px, 7vw, 42px); font-weight: 700; margin-bottom: 16px; }
-        .hero h1 span { background: var(--text); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .hero p { font-size: 14px; color: var(--text-dim); max-width: 600px; margin: 0 auto 24px; line-height: 1.6; }
-        .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-dim); }
-        .badge:first-child { color: var(--text); }
-        .badge + .badge::before { content: '\00B7'; margin-right: 6px; }
-
-        section { margin-bottom: 48px; }
-        section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: var(--text); margin-bottom: 24px; }
-
-        .platform-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
-        .platform-card { padding: 20px 0; }
-        .platform-card h3 { font-size: 14px; margin-bottom: 8px; color: var(--text); }
-        .platform-card p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
-
-        .feature-list { display: grid; gap: 12px; }
-        .feature-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; }
-        .feature-icon { width: 24px; height: 24px; color: var(--text); flex-shrink: 0; margin-top: 2px; }
-        .feature-content h4 { font-size: 14px; margin-bottom: 4px; color: var(--text); }
-        .feature-content p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
-
-        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-        .profile-category { padding: 20px 0; }
-        .profile-category h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; color: var(--text); }
-        .profile-category ul { list-style: none; }
-        .profile-category li { font-size: 13px; color: rgba(224,224,224,0.7); padding: 6px 0; }
-        .profile-category li strong { color: var(--text); }
-
-        .contact-box { text-align: center; margin-top: 40px; }
-        .contact-box h3 { font-size: 15px; margin-bottom: 12px; }
-        .contact-box p { color: var(--text-dim); margin-bottom: 20px; font-size: 14px; }
-        .contact-box a, .contact-box a:visited, .contact-box a:active, .contact-box a:link { color: var(--text); text-decoration: none; font-weight: 600; }
-    </style>
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
@@ -84,20 +47,26 @@
     </div>
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
         <nav>
-            <a href="/">Home</a><a href="faq.html">FAQ</a><a href="support.html">Support</a>
-            <a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="health.html">Health</a>
-            <a href="security.html">Security</a><a href="accessibility.html">Accessibility</a><a href="impressum.html">Impressum</a>
+            <a href="/">Home</a>
+            <a href="faq.html">FAQ</a>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="impressum.html">Impressum</a>
         </nav>
     </div>
 
-    <main id="main">
-        <div class="hero">
-            <h1><span>Accessibility</span></h1>
-            <p>Echoelmusic is designed for everyone. We believe music creation and biofeedback experiences should be accessible to all, regardless of ability.</p>
+    <main id="main" class="subpage subpage--wider">
+        <div class="subpage-hero">
+            <h1>Accessibility</h1>
+            <p class="subtitle">Echoelmusic is designed for everyone. We believe music creation and biofeedback experiences should be accessible to all, regardless of ability.</p>
             <div class="badges">
-                <span class="badge">WCAG 2.2 AAA</span>
-                <span class="badge">20+ Profiles</span>
-                <span class="badge">6 Platforms</span>
+                <span>WCAG 2.2 AAA</span>
+                <span>20+ Profiles</span>
+                <span>6 Platforms</span>
             </div>
         </div>
 
@@ -140,7 +109,7 @@
 
         <section>
             <h2>Accessibility Profiles</h2>
-            <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 11px;">One-tap profiles optimized for specific needs</p>
+            <p class="subpage-summary">One-tap profiles optimized for specific needs</p>
             <div class="profile-grid">
                 <div class="profile-category">
                     <h3>Vision</h3>
@@ -190,28 +159,19 @@
         </section>
     </main>
 
-    <div class="page-cta">
-        <h2>Create from Within</h2>
-        <p>Your body's vibrations become music, visuals, film, and light.<br>No ads. No tracking. No accounts. Free.</p>
-        <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="page-cta-btn">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            Download Free
-        </a>
-        <div class="page-cta-platforms">iPhone &middot; iPad &middot; Mac &middot; Apple Watch &middot; Apple TV &middot; Vision Pro</div>
-    </div>
-
     <footer>
         <span class="footer-copy">&copy; 2026 Echoelmusic</span>
-        <div class="footer-links"><a href="faq.html">FAQ</a><a href="support.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="health.html">Health</a><a href="security.html">Security</a><a href="accessibility.html">Accessibility</a><a href="impressum.html">Impressum</a></div>
+        <div class="footer-links">
+            <a href="faq.html">FAQ</a>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="impressum.html">Impressum</a>
+        </div>
     </footer>
-
-    <div class="mobile-cta">
-        <a href="https://apps.apple.com/app/echoelmusic/id6757957358">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            Download Free on the App Store
-        </a>
-        <div class="sub">Free for a limited time</div>
-    </div>
 
     <script src="shared.js"></script>
 </body>
