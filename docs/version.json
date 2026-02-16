@@ -1,5 +1,5 @@
 {
-  "version": "8.0.0",
+  "version": "8.0.1",
   "build": "2026-02-16",
   "features": {
     "monochromeDesign": true,
@@ -11,6 +11,8 @@
     "singleCTA": true,
     "zeroInlineStyles": true,
     "sharedCSSFoundation": true,
+    "cacheBusting": true,
+    "autoSWUpdate": true,
     "scrollAnimations": true,
     "pwa": true,
     "offlineMode": true,
@@ -23,6 +25,7 @@
     "wcag22AAA": true
   },
   "changelog": [
+    "v8.0.1: Cache-busting query params on all assets, aggressive SW update checking, fixes CDN stale cache issue",
     "v8.0.0: Complete CI rebuild — consistent nav/menu/footer on every page, zero inline styles on subpages, 1 CTA only (no page-cta, no mobile-cta, no Apple logos on subpages), shared.css as single source of truth",
     "v7.1.1: Service worker cache bust",
     "v7.1.0: Corporate Identity — pure grayscale on black, refined logo mark",

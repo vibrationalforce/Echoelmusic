@@ -1,4 +1,4 @@
-/* Echoelmusic Shared JS — v8.0.0 */
+/* Echoelmusic Shared JS — v8.0.1 */
 (function(){
 var burger=document.getElementById('burger');
 var overlay=document.getElementById('menuOverlay');
@@ -23,5 +23,21 @@ if(e.shiftKey){if(document.activeElement===first||!overlay.contains(document.act
 else{if(document.activeElement===last||!overlay.contains(document.activeElement)){e.preventDefault();first.focus();}}
 }
 });
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('[SW]',e);});}
+/* SW: Register with update check — force refresh on new version */
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('/sw.js').then(function(reg){
+reg.addEventListener('updatefound',function(){
+var newWorker=reg.installing;
+if(newWorker){newWorker.addEventListener('statechange',function(){
+if(newWorker.state==='activated'){window.location.reload();}
+});}
+});
+/* Check for SW update every 60s (CDN may cache sw.js) */
+setInterval(function(){reg.update();},60000);
+}).catch(function(e){console.warn('[SW]',e);});
+/* Listen for SW_UPDATED message */
+navigator.serviceWorker.addEventListener('message',function(e){
+if(e.data&&e.data.type==='SW_UPDATED'){window.location.reload();}
+});
+}
 })();
