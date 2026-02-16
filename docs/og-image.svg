@@ -1,78 +1,64 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
-  <defs>
-    <!-- Echoelmusic — OG Image (Social Share 1200x630): E + echo waves, White on Black -->
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="4" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="tg" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="1.5" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
+  <!-- Echoelmusic — OG Image (Social Share 1200x630) — CI v7.1 grayscale on black -->
 
   <!-- Background -->
   <rect width="1200" height="630" fill="#000000"/>
 
-  <!-- E + echo waves mark (centered at 190, 315) -->
-  <text x="190" y="280" text-anchor="middle"
+  <!-- E mark (centered at 190, 315) -->
+  <text x="190" y="275" text-anchor="middle"
         font-family="'Atkinson Hyperlegible',-apple-system,sans-serif"
-        font-weight="700" font-size="180" fill="#e0e0e0" filter="url(#glow)">E</text>
+        font-weight="700" font-size="190" fill="#e0e0e0">E</text>
 
   <!-- Echo waves -->
-  <g stroke="#e0e0e0" fill="none" stroke-width="8" stroke-linecap="round" filter="url(#glow)">
-    <path d="M100,325 C120,300 147,300 167,325 C187,350 213,350 233,325 C253,300 280,300 300,325" opacity="0.9"/>
-    <path d="M100,365 C120,340 147,340 167,365 C187,390 213,390 233,365 C253,340 280,340 300,365" opacity="0.5"/>
-    <path d="M100,405 C120,380 147,380 167,405 C187,430 213,430 233,405 C253,380 280,380 300,405" opacity="0.3"/>
+  <g stroke="#e0e0e0" fill="none" stroke-width="7" stroke-linecap="round">
+    <path d="M102,320 C122,295 149,295 169,320 C189,345 211,345 231,320 C251,295 278,295 298,320" opacity="0.8"/>
+    <path d="M102,360 C122,335 149,335 169,360 C189,385 211,385 231,360 C251,335 278,335 298,360" opacity="0.4"/>
+    <path d="M102,400 C122,375 149,375 169,400 C189,425 211,425 231,400 C251,375 278,375 298,400" opacity="0.2"/>
   </g>
-
-  <!-- Pulse dot at end of first wave -->
-  <circle cx="300" cy="325" r="5" fill="#e0e0e0" opacity="0.25"/>
-  <circle cx="300" cy="325" r="2.5" fill="#e0e0e0" opacity="0.9"/>
 
   <!-- App name -->
   <text x="420" y="268" font-family="'Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif"
-        font-size="82" font-weight="700" fill="#e0e0e0" filter="url(#tg)" letter-spacing="-2">
+        font-size="80" font-weight="700" fill="#e0e0e0" letter-spacing="-3">
     Echoelmusic
   </text>
 
   <!-- Tagline -->
   <text x="420" y="325" font-family="'Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif"
-        font-size="30" fill="#e0e0e0" font-weight="700" letter-spacing="-0.3" opacity="0.6">
+        font-size="28" fill="#e0e0e0" font-weight="700" letter-spacing="-0.5" opacity="0.5">
     Create from Within
   </text>
 
   <!-- Description -->
   <text x="420" y="378" font-family="'Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif"
-        font-size="18" fill="rgba(255,255,255,0.45)" font-weight="400">
+        font-size="17" fill="#e0e0e0" font-weight="400" opacity="0.35">
     Your body's vibrations become music, visuals, film, and light.
   </text>
 
-  <!-- Feature badges — white -->
+  <!-- Feature badges -->
   <g transform="translate(420, 418)">
-    <rect x="0" y="0" width="100" height="32" rx="16" fill="#e0e0e0" opacity="0.06"/>
-    <text x="50" y="21" font-family="'Atkinson Hyperlegible',sans-serif" font-size="12" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.6">6 Synths</text>
+    <rect x="0" y="0" width="100" height="30" rx="15" fill="#e0e0e0" opacity="0.05"/>
+    <text x="50" y="20" font-family="'Atkinson Hyperlegible',sans-serif" font-size="11" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.5">6 Synths</text>
 
-    <rect x="112" y="0" width="108" height="32" rx="16" fill="#e0e0e0" opacity="0.06"/>
-    <text x="166" y="21" font-family="'Atkinson Hyperlegible',sans-serif" font-size="12" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.6">90+ Effects</text>
+    <rect x="112" y="0" width="108" height="30" rx="15" fill="#e0e0e0" opacity="0.05"/>
+    <text x="166" y="20" font-family="'Atkinson Hyperlegible',sans-serif" font-size="11" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.5">90+ Effects</text>
 
-    <rect x="232" y="0" width="120" height="32" rx="16" fill="#e0e0e0" opacity="0.06"/>
-    <text x="292" y="21" font-family="'Atkinson Hyperlegible',sans-serif" font-size="12" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.6">30+ Visuals</text>
+    <rect x="232" y="0" width="120" height="30" rx="15" fill="#e0e0e0" opacity="0.05"/>
+    <text x="292" y="20" font-family="'Atkinson Hyperlegible',sans-serif" font-size="11" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.5">30+ Visuals</text>
 
-    <rect x="364" y="0" width="118" height="32" rx="16" fill="#e0e0e0" opacity="0.06"/>
-    <text x="423" y="21" font-family="'Atkinson Hyperlegible',sans-serif" font-size="12" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.6">Bio-Reactive</text>
+    <rect x="364" y="0" width="118" height="30" rx="15" fill="#e0e0e0" opacity="0.05"/>
+    <text x="423" y="20" font-family="'Atkinson Hyperlegible',sans-serif" font-size="11" fill="#e0e0e0" text-anchor="middle" font-weight="700" opacity="0.5">Bio-Reactive</text>
   </g>
 
   <!-- Platforms -->
   <text x="420" y="508" font-family="'Atkinson Hyperlegible',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif"
-        font-size="14" fill="rgba(255,255,255,0.3)" font-weight="400" letter-spacing="0.5">
+        font-size="14" fill="#e0e0e0" font-weight="400" letter-spacing="0.5" opacity="0.25">
     iPhone  ·  iPad  ·  Mac  ·  Apple Watch  ·  Apple TV  ·  Vision Pro
   </text>
 
   <!-- Free badge -->
-  <rect x="420" y="528" width="70" height="30" rx="15" fill="#e0e0e0" opacity="0.06"/>
-  <text x="455" y="548" font-family="'Atkinson Hyperlegible',sans-serif" font-size="12" fill="#e0e0e0" text-anchor="middle" font-weight="700" letter-spacing="1" opacity="0.5">FREE</text>
+  <rect x="420" y="528" width="66" height="28" rx="14" fill="#e0e0e0" opacity="0.05"/>
+  <text x="453" y="547" font-family="'Atkinson Hyperlegible',sans-serif" font-size="11" fill="#e0e0e0" text-anchor="middle" font-weight="700" letter-spacing="1.5" opacity="0.4">FREE</text>
 
   <!-- Bottom line -->
-  <line x1="0" y1="620" x2="1200" y2="620" stroke="#e0e0e0" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="620" x2="1200" y2="620" stroke="#e0e0e0" stroke-width="1" opacity="0.04"/>
 </svg>

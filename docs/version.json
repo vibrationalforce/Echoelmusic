@@ -1,14 +1,17 @@
 {
-  "version": "6.1.0",
-  "build": "2026-02-15T16:00:00Z",
+  "version": "7.1.1",
+  "build": "2026-02-16T18:00:00Z",
   "features": {
     "liquidGlassIcon": true,
     "bioGreenTheme": false,
     "monochromeDesign": true,
-    "maximumRalphWiggumLoopMode": true,
+    "maximumRalphWiggumLambdaLoopMode": true,
+    "corporateIdentityV71": true,
+    "pureBlackBackground": true,
+    "noParticleAnimation": true,
+    "refinedLogoMark": true,
     "atkinsonFont": true,
     "desktopNav": true,
-    "animatedECG": true,
     "animatedCounters": true,
     "scrollAnimations": true,
     "floatingMobileCTA": true,
@@ -16,7 +19,6 @@
     "instrumentGrid": true,
     "pwa": true,
     "offlineMode": true,
-    "noiseTexture": true,
     "glassCards": true,
     "customDomain": true,
     "selfHostedFonts": true,
@@ -31,9 +33,12 @@
     "navConsistency": true,
     "inclusiveFontSizes": true,
     "downloadCTAAllPages": true,
-    "heroCTAButton": true
+    "heroCTAButton": true,
+    "swCacheBust710": true
   },
   "changelog": [
+    "v7.1.1: Service worker cache bust (v5.4.0 → v7.1.0) — forces old cache purge on all visitors, shared.js version sync",
+    "v7.1.0: Corporate Identity — Maximum Ralph Wiggum Lambda Loop Mode. Pure grayscale on black. Particle canvas animation removed (clean, confident). Logo mark refined (tighter proportions, thinner waves, 0.8/0.4/0.2 opacity cascade). All SVGs unified. Software follows website CI.",
     "v6.1.0: Inclusive font sizes + download CTA on all pages — minimum 11px body text, 13-14px content text, hero CTA button, page-cta + mobile-cta on all subpages, professionalized hero section",
     "v6.0.1: Nav & header consistency — shared.css nav aligned with index.html (padding, height, gap, link spacing, max-width 1120px), unified h1 sizes across all subpages, fixed accessibility/impressum/security/health style deviations",
     "v6.0.0: Maximum Ralph Wiggum Loop Mode — monochrome consistency, font-size reduction (-3px), hero-tagline frame removed, tagline period fix, bioGreenTheme disabled, all color/text inconsistencies resolved",
