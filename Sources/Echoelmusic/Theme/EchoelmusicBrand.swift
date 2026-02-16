@@ -8,7 +8,7 @@ import UIKit
 // Design Philosophy: Confident • Premium • Evidence-Based • Accessible
 //
 // Guidelines Applied:
-// - Apple Human Interface Guidelines (2024-2025)
+// - Apple Human Interface Guidelines (2024-2026)
 // - Material Design 3 (Android)
 // - Windows Fluent Design
 // - Pro Audio Industry Standards (Ableton, Logic Pro, Native Instruments)
@@ -16,11 +16,12 @@ import UIKit
 // - VR/AR Readability (visionOS, Quest)
 //
 // Typography: Atkinson Hyperlegible - Optimal VR/AR readability
-// Primary Color: Bio-Green 💚 - Organic, wellness, growth
+// Brand Identity: Monochrome — true black + two grays
+// Matches echoelmusic.com website CI
 
 /// Echoelmusic Brand Colors - Professional Artist Identity
-/// Color strategy: Bio-Green theme for organic wellness feel
-/// Inspired by: HeartMath (wellness trust), Calm (green wellness), Nature (bio-reactive)
+/// Color strategy: Monochrome (true black + gray) — premium, cinematic, timeless
+/// Inspired by: Pro audio hardware (matte black), high-end studios, cinematic production
 public struct EchoelBrand {
 
     // MARK: - Brand Tagline
@@ -44,35 +45,35 @@ public struct EchoelBrand {
     /// Description
     public static let description = "Create music, film, visuals & light from your body's own signals — bio-reactive performance tools for artists."
 
-    // MARK: - Primary Brand Colors (Bio-Green Theme 💚)
+    // MARK: - Primary Brand Colors (Monochrome CI)
 
-    /// Green - Primary brand color (life, bio-reactive, wellness)
-    /// #22C55E - Vibrant bio-green
-    public static let primary = Color(red: 0.133, green: 0.773, blue: 0.369)  // #22C55E
+    /// Primary brand color — light gray (text, icons, primary UI elements)
+    /// #E0E0E0 — Website CI primary
+    public static let primary = Color(red: 0.878, green: 0.878, blue: 0.878)  // #E0E0E0
 
-    /// Emerald - Secondary brand color (depth, growth)
-    /// #10B981 - Rich emerald
-    public static let secondary = Color(red: 0.063, green: 0.725, blue: 0.506)  // #10B981
+    /// Secondary brand color — dim gray (secondary text, subtle elements)
+    /// #E0E0E0 at 55% opacity equivalent ≈ #7A7A7A on black
+    public static let secondary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
 
-    /// Mint - Accent color (freshness, clarity)
-    /// #34D399 - Light mint
-    public static let accent = Color(red: 0.204, green: 0.827, blue: 0.600)  // #34D399
+    /// Accent color — white (CTA buttons, emphasis, active states)
+    /// #FFFFFF — pure white for maximum contrast on true black
+    public static let accent = Color.white
 
     // MARK: - Legacy Aliases (for backward compatibility)
 
-    /// Teal - Alias for primary (bio-green)
+    /// Teal - Alias for primary
     public static let teal = primary
 
-    /// Rose - Soft pink for heart visualization
+    /// Rose - Soft pink for heart visualization (functional color)
     public static let rose = Color(red: 0.957, green: 0.447, blue: 0.714)  // #F472B6
 
-    /// Violet - For creativity accents
+    /// Violet - For creativity accents (functional color)
     public static let violet = Color(red: 0.655, green: 0.545, blue: 0.980)  // #A78BFA
 
-    // MARK: - Extended Palette
+    // MARK: - Extended Palette (Functional Colors — bio-reactive UI only)
 
-    /// Emerald - Health, success, growth (same as secondary)
-    public static let emerald = secondary
+    /// Emerald - Health, success, growth
+    public static let emerald = Color(red: 0.063, green: 0.725, blue: 0.506)  // #10B981
 
     /// Sky - Science, trust, clarity
     public static let sky = Color(red: 0.220, green: 0.741, blue: 0.973)  // #38BDF8
@@ -83,35 +84,35 @@ public struct EchoelBrand {
     /// Coral - Warning, attention
     public static let coral = Color(red: 0.984, green: 0.451, blue: 0.408)  // #FB7366
 
-    // MARK: - Background System (Bio-Green Dark Theme)
+    // MARK: - Background System (True Black)
 
-    /// Deep background - Primary (dark with green undertone)
-    public static let bgDeep = Color(red: 0.012, green: 0.027, blue: 0.071)  // #030712
+    /// Deep background — true black (website CI)
+    public static let bgDeep = Color.black  // #000000
 
-    /// Surface background - Cards, panels (forest green tint)
-    public static let bgSurface = Color(red: 0.020, green: 0.180, blue: 0.086)  // #052e16
+    /// Surface background — Cards, panels (very subtle gray lift)
+    public static let bgSurface = Color(white: 0.04)  // #0A0A0A
 
-    /// Elevated background - Modals, popovers
-    public static let bgElevated = Color(red: 0.039, green: 0.212, blue: 0.133)  // #0a3622
+    /// Elevated background — Modals, popovers
+    public static let bgElevated = Color(white: 0.08)  // #141414
 
-    /// Glass overlay (green tint)
-    public static let bgGlass = primary.opacity(0.08)
+    /// Glass overlay (neutral white tint, matching website --glass)
+    public static let bgGlass = Color.white.opacity(0.03)
 
     // MARK: - Text Hierarchy
 
-    /// Primary text - High emphasis
-    public static let textPrimary = Color(red: 0.973, green: 0.980, blue: 0.988)  // #F8FAFC
+    /// Primary text - High emphasis (#E0E0E0)
+    public static let textPrimary = Color(red: 0.878, green: 0.878, blue: 0.878)  // #E0E0E0
 
-    /// Secondary text - Medium emphasis
-    public static let textSecondary = Color(red: 0.973, green: 0.980, blue: 0.988).opacity(0.75)
+    /// Secondary text - Medium emphasis (55% of primary)
+    public static let textSecondary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
 
     /// Tertiary text - Low emphasis
-    public static let textTertiary = Color(red: 0.973, green: 0.980, blue: 0.988).opacity(0.45)
+    public static let textTertiary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.35)
 
     /// Disabled text
-    public static let textDisabled = Color(red: 0.973, green: 0.980, blue: 0.988).opacity(0.25)
+    public static let textDisabled = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.20)
 
-    // MARK: - Bio-Reactive Colors (Evidence-Based)
+    // MARK: - Bio-Reactive Colors (Evidence-Based — functional, not brand)
 
     /// Low coherence - Needs attention (warm, not alarming)
     public static let coherenceLow = Color(red: 0.984, green: 0.451, blue: 0.408)  // #FB7366
@@ -119,8 +120,8 @@ public struct EchoelBrand {
     /// Medium coherence - Transitioning
     public static let coherenceMedium = Color(red: 0.984, green: 0.749, blue: 0.141)  // #FBBF24
 
-    /// High coherence - Flow state achieved (bio-green)
-    public static let coherenceHigh = primary  // #22C55E
+    /// High coherence - Flow state achieved
+    public static let coherenceHigh = Color(red: 0.063, green: 0.725, blue: 0.506)  // #10B981
 
     // MARK: - Semantic Colors
 
@@ -138,11 +139,11 @@ public struct EchoelBrand {
 
     // MARK: - Border & Divider
 
-    /// Default border (green tint)
-    public static let border = primary.opacity(0.2)
+    /// Default border (neutral gray, matching website --border)
+    public static let border = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.08)
 
     /// Active/focused border
-    public static let borderActive = primary.opacity(0.5)
+    public static let borderActive = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.3)
 
     // MARK: - Brainwave Colors (Evidence-Based Associations)
     // These colors are for UI differentiation, NOT claimed therapeutic effects
@@ -167,21 +168,25 @@ public struct EchoelBrand {
 
 public struct EchoelGradients {
 
-    /// Primary brand gradient (bio-green spectrum)
+    /// Primary brand gradient (monochrome — dark to light gray)
     public static let brand = LinearGradient(
-        colors: [EchoelBrand.primary, EchoelBrand.secondary, EchoelBrand.accent],
+        colors: [
+            EchoelBrand.primary.opacity(0.6),
+            EchoelBrand.primary,
+            Color.white.opacity(0.9)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
-    /// Bio-reactive gradient (emerald to mint)
+    /// Bio-reactive gradient (functional — uses coherence colors)
     public static let bioReactive = LinearGradient(
-        colors: [EchoelBrand.secondary, EchoelBrand.primary, EchoelBrand.accent],
+        colors: [EchoelBrand.coherenceLow, EchoelBrand.coherenceMedium, EchoelBrand.coherenceHigh],
         startPoint: .leading,
         endPoint: .trailing
     )
 
-    /// Background gradient (deep to surface)
+    /// Background gradient (true black to surface)
     public static let background = LinearGradient(
         colors: [EchoelBrand.bgDeep, EchoelBrand.bgSurface],
         startPoint: .top,
@@ -342,13 +347,13 @@ public struct EchoelAnimation {
 
 // MARK: - View Modifiers
 
-/// Professional glow effect (subtle, bio-green)
+/// Professional glow effect (subtle, monochrome)
 public struct EchoelGlow: ViewModifier {
     let color: Color
     let radius: CGFloat
     let intensity: Double
 
-    public init(color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.5) {
+    public init(color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.3) {
         self.color = color
         self.radius = radius
         self.intensity = intensity
@@ -382,7 +387,7 @@ public struct EchoelCard: ViewModifier {
     }
 }
 
-/// Primary button style (bio-green)
+/// Primary button style (monochrome — light on dark)
 public struct EchoelPrimaryButton: ButtonStyle {
     public init() {}
 
@@ -394,18 +399,14 @@ public struct EchoelPrimaryButton: ButtonStyle {
             .padding(.vertical, EchoelSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: EchoelRadius.md)
-                    .fill(LinearGradient(
-                        colors: [EchoelBrand.primary, EchoelBrand.secondary],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ))
+                    .fill(EchoelBrand.primary)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
 
-/// Secondary button style (bio-green outline)
+/// Secondary button style (monochrome outline)
 public struct EchoelSecondaryButton: ButtonStyle {
     public init() {}
 
@@ -417,10 +418,10 @@ public struct EchoelSecondaryButton: ButtonStyle {
             .padding(.vertical, EchoelSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: EchoelRadius.md)
-                    .stroke(EchoelBrand.primary.opacity(0.5), lineWidth: 1.5)
+                    .stroke(EchoelBrand.primary.opacity(0.3), lineWidth: 1.5)
                     .background(
                         RoundedRectangle(cornerRadius: EchoelRadius.md)
-                            .fill(EchoelBrand.primary.opacity(configuration.isPressed ? 0.15 : 0.05))
+                            .fill(Color.white.opacity(configuration.isPressed ? 0.08 : 0.03))
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
@@ -431,8 +432,8 @@ public struct EchoelSecondaryButton: ButtonStyle {
 // MARK: - View Extensions
 
 public extension View {
-    /// Apply professional glow effect (bio-green by default)
-    func echoelGlow(_ color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.5) -> some View {
+    /// Apply professional glow effect (monochrome gray by default)
+    func echoelGlow(_ color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.3) -> some View {
         modifier(EchoelGlow(color: color, radius: radius, intensity: intensity))
     }
 

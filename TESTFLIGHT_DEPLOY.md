@@ -54,7 +54,7 @@ MIGTAgEA...
 |----------|-----------|--------|
 | iOS | com.echoelmusic.app | Echoelmusic |
 | iOS Widgets | com.echoelmusic.app.widgets | (embedded) |
-| iOS App Clip | com.echoelmusic.app.Clip | (embedded) |
+| iOS App Clip | com.echoelmusic.app.clip | (embedded) |
 | macOS | com.echoelmusic.app | Echoelmusic-macOS |
 | macOS AUv3 | com.echoelmusic.app.auv3 | (embedded) |
 | watchOS | com.echoelmusic.app.watchkitapp | Echoelmusic-watchOS |

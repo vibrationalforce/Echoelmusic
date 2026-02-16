@@ -72,7 +72,7 @@ get_certificates(
 |-----|-----------|
 | iOS Main | `com.echoelmusic.app` |
 | iOS Widgets | `com.echoelmusic.app.widgets` |
-| iOS App Clip | `com.echoelmusic.app.Clip` |
+| iOS App Clip | `com.echoelmusic.app.clip` |
 | macOS Main | `com.echoelmusic.app` |
 | macOS AUv3 | `com.echoelmusic.app.auv3` |
 | watchOS | `com.echoelmusic.app.watchkitapp` |

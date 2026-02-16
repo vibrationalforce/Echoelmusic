@@ -2,7 +2,7 @@
 // ECHOELMUSIC APP CLIP
 // =============================================================================
 // Lightweight App Clip for instant bio-reactive audio experiences
-// Bundle ID: com.echoelmusic.app.Clip
+// Bundle ID: com.echoelmusic.app.clip
 // =============================================================================
 
 import SwiftUI

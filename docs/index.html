@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- v2026.02.16-b — 1 font, 2 grays, 2 sizes, no duplications -->
+<!-- v2026.02.16-c — brand CI (bio-green), centered, quantum-ready -->
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic by Echoel — Your Body Creates Music, Visuals &amp; Light</title>
-    <meta name="description" content="I built Echoelmusic so your heartbeat, breath, and movement become music, visuals, and light. 6 synth engines, 90+ effects, Dolby Atmos, DMX lighting, live streaming. Free on iPhone, iPad, Mac, Apple Watch, Apple TV, and Vision Pro. — Echoel">
+    <meta name="description" content="I built Echoelmusic so your heartbeat, breath, and movement become music, visuals, and light. 16 synth engines, 90+ effects, Dolby Atmos, DMX lighting, live streaming. Free on iPhone, iPad, Mac, Apple Watch, Apple TV, and Vision Pro. — Echoel">
     <meta name="theme-color" content="#000000">
 
     <!-- Open Graph -->
@@ -90,7 +90,7 @@
           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
           "downloadUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
           "installUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
-          "featureList": "Bio-reactive music, 6 synth engines, 90+ DSP effects, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio, Apple Watch HRV"
+          "featureList": "Bio-reactive music, 16 synth engines incl. quantum wavefunction, 90+ DSP effects, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio, Apple Watch HRV"
         }
       ]
     }
@@ -178,7 +178,8 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .nav-links .nav-cta:hover {
-            transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,255,255,0.15); color: #000; background: var(--text);
+            transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,255,255,0.15);
+            color: #000; background: var(--text);
         }
 
         @media (min-width: 900px) {
@@ -249,7 +250,7 @@
             animation: hero-breathe 5s ease-in-out infinite;
             z-index: 1; pointer-events: none;
         }
-        .hero-content { position: relative; z-index: 2; max-width: 960px; }
+        .hero-content { position: relative; z-index: 2; max-width: 960px; margin: 0 auto; text-align: center; }
 
         .hero h1 { margin-bottom: 28px; line-height: 1; }
         .h1-line { display: block; opacity: 0; }
@@ -433,20 +434,26 @@
             position: relative; overflow: hidden;
             transition: transform 0.4s;
         }
+        .bento-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--dim), transparent);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .bento-card:hover::before { opacity: 0.5; }
         .bento-card:hover { transform: translateY(-4px); }
         .bento-card.span2 { grid-column: span 2; }
 
         .bento-icon {
             margin-bottom: 20px;
-            display: flex; align-items: center; justify-content: flex-start;
+            display: flex; align-items: center; justify-content: center;
             color: var(--dim);
         }
 
         .bento-card h3 {
             font-size: clamp(16px, 2vw, 20px); font-weight: 700; letter-spacing: -0.5px;
-            margin-bottom: 10px; line-height: 1.2;
+            margin-bottom: 10px; line-height: 1.2; text-align: center;
         }
-        .bento-card p { color: var(--dim); line-height: 1.7; }
+        .bento-card p { color: var(--dim); line-height: 1.7; text-align: center; }
 
         /* ============ PERSONAS ============ */
         .persona-grid {
@@ -472,7 +479,8 @@
         .spec-item {
             padding: 20px 24px;
             background: var(--glass); border-radius: 12px;
-            display: flex; align-items: center; gap: 14px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; gap: 6px;
         }
         .spec-item:hover { background: rgba(255,255,255,0.04); }
         .spec-val {
@@ -653,7 +661,7 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
                             </div>
                             <span class="cap-label">Sound</span>
-                            <span class="cap-detail">6 Engines &middot; 90+ FX<br>MIDI 2.0 &middot; Atmos</span>
+                            <span class="cap-detail">16 Engines &middot; 90+ FX<br>MIDI 2.0 &middot; Atmos</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
@@ -725,7 +733,7 @@
                 <div class="bento-card">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
                     <h3>Full production studio</h3>
-                    <p>FM, wavetable, granular synthesis and more. Drum kits, spatial audio, Dolby Atmos. A complete studio in one app.</p>
+                    <p>16 synthesis engines — FM, wavetable, granular, physical modeling, quantum wavefunction, and more. Spatial audio, Dolby Atmos. A complete studio in one app.</p>
                 </div>
 
                 <!-- Visuals -->
@@ -789,6 +797,10 @@
 
             <div class="specs-grid reveal reveal-stagger">
                 <div class="spec-item">
+                    <div class="spec-val">16</div>
+                    <div class="spec-label">Synth engines incl. quantum</div>
+                </div>
+                <div class="spec-item">
                     <div class="spec-val">&lt;10ms</div>
                     <div class="spec-label">Audio latency</div>
                 </div>
@@ -803,10 +815,6 @@
                 <div class="spec-item">
                     <div class="spec-val">MIDI 2.0</div>
                     <div class="spec-label">Full protocol + MPE</div>
-                </div>
-                <div class="spec-item">
-                    <div class="spec-val">0</div>
-                    <div class="spec-label">External dependencies</div>
                 </div>
                 <div class="spec-item">
                     <div class="spec-val">6</div>
