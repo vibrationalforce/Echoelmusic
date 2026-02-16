@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v2026.02.15 — monochrome rebuild -->
+<!-- v2026.02.16 — Corporate Identity: pure grayscale on black, no animation noise -->
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
@@ -155,11 +155,7 @@
         }
         .skip-link:focus { top: 16px; }
 
-        /* ============ CANVAS BACKGROUND ============ */
-        #bgCanvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
-        }
+        /* ============ BACKGROUND ============ */
 
         /* ============ NAV ============ */
         .nav {
@@ -268,6 +264,7 @@
             padding: 140px 24px 80px;
             min-height: 100vh; min-height: 100dvh;
             display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse 70% 50% at 50% 40%, rgba(255,255,255,0.018) 0%, transparent 100%);
         }
         .hero-content { position: relative; z-index: 2; max-width: 800px; }
 
@@ -355,20 +352,20 @@
             animation: hero-fade 1s cubic-bezier(0.16,1,0.3,1) 0.05s both;
         }
         .hero-mark svg { width: 100%; height: 100%; }
-        .echo-w1 { animation: echo-wave-1 3s ease-in-out infinite; }
-        .echo-w2 { animation: echo-wave-2 4s ease-in-out infinite; }
-        .echo-w3 { animation: echo-wave-3 5s ease-in-out infinite; }
+        .echo-w1 { animation: echo-wave-1 4s ease-in-out infinite; }
+        .echo-w2 { animation: echo-wave-2 5s ease-in-out infinite; }
+        .echo-w3 { animation: echo-wave-3 6s ease-in-out infinite; }
         @keyframes echo-wave-1 {
-            0%, 100% { transform: translateX(0); opacity: 0.8; }
-            50% { transform: translateX(4px); opacity: 0.5; }
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.4; }
         }
         @keyframes echo-wave-2 {
-            0%, 100% { transform: translateX(0); opacity: 0.4; }
-            50% { transform: translateX(-6px); opacity: 0.2; }
+            0%, 100% { opacity: 0.35; }
+            50% { opacity: 0.15; }
         }
         @keyframes echo-wave-3 {
-            0%, 100% { transform: translateX(0); opacity: 0.15; }
-            50% { transform: translateX(8px); opacity: 0.06; }
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.05; }
         }
 
         /* Scroll indicator */
@@ -693,7 +690,6 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
             .reveal, .reveal-stagger > * { opacity: 1; transform: none; }
-            #bgCanvas { display: none; }
         }
         @media (prefers-contrast: high) {
             :root { --text-dim: rgba(224,224,224,0.85); }
@@ -703,19 +699,16 @@
 <body>
     <a href="#main" class="skip-link">Skip to main content</a>
 
-    <!-- Particle Canvas -->
-    <canvas id="bgCanvas" aria-hidden="true"></canvas>
-
     <!-- Nav -->
     <div class="nav" id="mainNav">
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <text x="50" y="48" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="49" fill="#e0e0e0">E</text>
-                    <g stroke="#e0e0e0" fill="none" stroke-width="3.5" stroke-linecap="round">
-                        <path d="M22,61 C27,55 35,55 40,61 C45,67 55,67 60,61 C65,55 73,55 78,61" opacity="0.9"/>
-                        <path d="M22,71 C27,65 35,65 40,71 C45,77 55,77 60,71 C65,65 73,65 78,71" opacity="0.5"/>
-                        <path d="M22,81 C27,75 35,75 40,81 C45,87 55,87 60,81 C65,75 73,75 78,81" opacity="0.3"/>
+                    <text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
+                    <g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round">
+                        <path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/>
+                        <path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/>
+                        <path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/>
                     </g>
                 </svg>
                 <span>Echoelmusic</span>
@@ -756,11 +749,11 @@
             <div class="hero-content">
                 <div class="hero-mark" aria-hidden="true">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <text x="50" y="48" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="49" fill="#e0e0e0">E</text>
-                        <g stroke="#e0e0e0" fill="none" stroke-width="2.5" stroke-linecap="round">
-                            <path class="echo-w1" d="M22,61 C27,55 35,55 40,61 C45,67 55,67 60,61 C65,55 73,55 78,61"/>
-                            <path class="echo-w2" d="M22,71 C27,65 35,65 40,71 C45,77 55,77 60,71 C65,65 73,65 78,71"/>
-                            <path class="echo-w3" d="M22,81 C27,75 35,75 40,81 C45,87 55,87 60,81 C65,75 73,75 78,81"/>
+                        <text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
+                        <g stroke="#e0e0e0" fill="none" stroke-width="2" stroke-linecap="round">
+                            <path class="echo-w1" d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60"/>
+                            <path class="echo-w2" d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70"/>
+                            <path class="echo-w3" d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80"/>
                         </g>
                     </svg>
                 </div>
@@ -1082,135 +1075,6 @@
     <script>
     (function() {
         'use strict';
-
-        // ===== INTERACTIVE PARTICLE CANVAS =====
-        var canvas = document.getElementById('bgCanvas');
-        var ctx = canvas.getContext('2d');
-        var particles = [];
-        var mouseX = -1000, mouseY = -1000;
-        var scrollY = 0;
-        var dpr = Math.min(window.devicePixelRatio || 1, 2);
-        var w, h;
-        var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        function resize() {
-            w = window.innerWidth;
-            h = window.innerHeight;
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
-            canvas.style.width = w + 'px';
-            canvas.style.height = h + 'px';
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
-
-        var COLORS = [
-            { r: 255, g: 255, b: 255 },
-        ];
-
-        function createParticle() {
-            var c = COLORS[Math.floor(Math.random() * COLORS.length)];
-            return {
-                x: Math.random() * w,
-                y: Math.random() * h,
-                vx: (Math.random() - 0.5) * 0.3,
-                vy: (Math.random() - 0.5) * 0.3,
-                r: Math.random() * 1.5 + 0.5,
-                color: c,
-                alpha: Math.random() * 0.25 + 0.05,
-                baseAlpha: Math.random() * 0.25 + 0.05,
-                phase: Math.random() * Math.PI * 2,
-            };
-        }
-
-        function initParticles() {
-            var count = Math.min(Math.floor(w * h / 12000), 120);
-            particles = [];
-            for (var i = 0; i < count; i++) {
-                particles.push(createParticle());
-            }
-        }
-
-        var frame = 0;
-        function animate() {
-            if (prefersReducedMotion) return;
-            frame++;
-            ctx.clearRect(0, 0, w, h);
-
-            // Ambient gradient
-            var grd = ctx.createRadialGradient(w * 0.5, h * 0.35, 0, w * 0.5, h * 0.35, Math.max(w, h) * 0.6);
-            grd.addColorStop(0, 'rgba(255,255,255,0.015)');
-            grd.addColorStop(0.5, 'rgba(255,255,255,0.008)');
-            grd.addColorStop(1, 'transparent');
-            ctx.fillStyle = grd;
-            ctx.fillRect(0, 0, w, h);
-
-            for (var i = 0; i < particles.length; i++) {
-                var p = particles[i];
-
-                // Movement
-                p.x += p.vx;
-                p.y += p.vy;
-
-                // Breathing alpha
-                p.alpha = p.baseAlpha + Math.sin(frame * 0.01 + p.phase) * p.baseAlpha * 0.4;
-
-                // Mouse interaction
-                var dx = mouseX - p.x;
-                var dy = mouseY - p.y;
-                var dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 180) {
-                    var force = (180 - dist) / 180;
-                    p.alpha = Math.min(p.alpha + force * 0.3, 0.6);
-                    p.vx += dx * force * 0.0003;
-                    p.vy += dy * force * 0.0003;
-                }
-
-                // Damping
-                p.vx *= 0.998;
-                p.vy *= 0.998;
-
-                // Wrap
-                if (p.x < -20) p.x = w + 20;
-                if (p.x > w + 20) p.x = -20;
-                if (p.y < -20) p.y = h + 20;
-                if (p.y > h + 20) p.y = -20;
-
-                // Draw
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(' + p.color.r + ',' + p.color.g + ',' + p.color.b + ',' + p.alpha + ')';
-                ctx.fill();
-            }
-
-            // Draw connections
-            for (var i = 0; i < particles.length; i++) {
-                for (var j = i + 1; j < particles.length; j++) {
-                    var dx = particles[i].x - particles[j].x;
-                    var dy = particles[i].y - particles[j].y;
-                    var dist = dx * dx + dy * dy;
-                    if (dist < 14400) { // 120px
-                        var alpha = (1 - dist / 14400) * 0.06;
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    }
-                }
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        if (!prefersReducedMotion) {
-            resize();
-            initParticles();
-            animate();
-            window.addEventListener('resize', function() { resize(); initParticles(); });
-            document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
-            document.addEventListener('mouseleave', function() { mouseX = -1000; mouseY = -1000; });
-        }
 
         // ===== NAV SCROLL EFFECT =====
         var nav = document.getElementById('mainNav');
