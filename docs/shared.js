@@ -1,4 +1,4 @@
-/* Echoelmusic Shared JS — v7.1.0 */
+/* Echoelmusic Shared JS — v8.0.0 */
 (function(){
 var burger=document.getElementById('burger');
 var overlay=document.getElementById('menuOverlay');
