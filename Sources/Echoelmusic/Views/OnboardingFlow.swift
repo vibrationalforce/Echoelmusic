@@ -801,6 +801,7 @@ private struct RippleAnimationModifier: ViewModifier {
 
 // MARK: - Haptic Feedback
 
+#if canImport(UIKit) && !os(watchOS) && !os(tvOS)
 private func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
     let generator = UIImpactFeedbackGenerator(style: style)
     generator.prepare()
@@ -812,6 +813,13 @@ private func hapticFeedback(_ type: UINotificationFeedbackGenerator.FeedbackType
     generator.prepare()
     generator.notificationOccurred(type)
 }
+#else
+// No-op stubs for macOS/watchOS/tvOS — matches call-site enum values
+private enum FallbackImpactStyle { case light, medium, heavy, rigid, soft }
+private enum FallbackNotificationType { case success, error, warning }
+private func hapticFeedback(_ style: FallbackImpactStyle) {}
+private func hapticFeedback(_ type: FallbackNotificationType) {}
+#endif
 
 // MARK: - Preview
 

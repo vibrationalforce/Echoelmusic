@@ -46,6 +46,9 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
     // Bio-reactive synthesis (Echoelmusic unique)
     case bioReactive = "bio_reactive"
 
+    // Quantum wavefunction synthesis (Schrödinger equation)
+    case quantumWavefunction = "quantum_wavefunction"
+
     /// Human-readable display name
     public var displayName: String {
         switch self {
@@ -65,6 +68,7 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
         case .genetic: return "Genetic Synthesis"
         case .organic: return "Organic Synthesis"
         case .bioReactive: return "Bio-Reactive Synthesis"
+        case .quantumWavefunction: return "Quantum Wavefunction Synthesis"
         }
     }
 
@@ -103,6 +107,8 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return "Living, breathing sounds that grow from seeds"
         case .bioReactive:
             return "Synthesis controlled by heart rate, HRV, and breathing"
+        case .quantumWavefunction:
+            return "Sound from the Schrödinger equation — potential wells shape timbre, wavefunction collapse creates sound"
         }
     }
 
@@ -123,6 +129,8 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return .organic
         case .bioReactive:
             return .bioReactive
+        case .quantumWavefunction:
+            return .advanced
         }
     }
 

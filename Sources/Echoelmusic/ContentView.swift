@@ -606,8 +606,10 @@ struct ContentView: View {
                 }
 
                 // Provide haptic feedback
+                #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.impactOccurred()
+                #endif
             } else {
                 // Request permission and show alert if denied
                 microphoneManager.requestPermission()
@@ -628,8 +630,10 @@ struct ContentView: View {
         audioEngine.toggleBinauralBeats()
 
         // Haptic feedback
+        #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
+        #endif
     }
 
     /// Check permissions on launch

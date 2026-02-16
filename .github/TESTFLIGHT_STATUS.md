@@ -39,7 +39,7 @@
 ```
 com.echoelmusic.app              # iOS/macOS/tvOS/visionOS Main
 com.echoelmusic.app.widgets      # iOS Widgets Extension
-com.echoelmusic.app.Clip         # iOS App Clip
+com.echoelmusic.app.clip         # iOS App Clip
 com.echoelmusic.app.auv3         # macOS AUv3 Audio Unit
 com.echoelmusic.app.watchkitapp  # watchOS App
 ```

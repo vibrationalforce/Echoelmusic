@@ -276,8 +276,10 @@ public struct LiquidGlassButton: View {
 
     public var body: some View {
         Button(action: {
+            #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
+            #endif
             action()
         }) {
             HStack(spacing: 8) {
@@ -446,8 +448,10 @@ public struct LiquidGlassTabBar: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = index
                     }
+                    #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
                     let generator = UIImpactFeedbackGenerator(style: .light)
                     generator.impactOccurred()
+                    #endif
                 } label: {
                     VStack(spacing: 4) {
                         if #available(iOS 17.0, *) {
