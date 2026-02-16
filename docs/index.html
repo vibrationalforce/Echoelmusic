@@ -114,10 +114,10 @@
 
         :root {
             --text: #e0e0e0;
-            --dim: rgba(224,224,224,0.4);
+            --dim: rgba(224,224,224,0.55);
             --bg: #000;
-            --glass: rgba(255,255,255,0.02);
-            --border: rgba(224,224,224,0.06);
+            --glass: rgba(255,255,255,0.03);
+            --border: rgba(224,224,224,0.08);
             --max-w: 1120px;
             --font: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
         }
@@ -129,7 +129,7 @@
             font-family: var(--font);
             background: var(--bg); color: var(--text);
             -webkit-font-smoothing: antialiased; line-height: 1.6;
-            overflow-x: hidden; max-width: 100vw; font-size: 14px;
+            overflow-x: hidden; max-width: 100vw; font-size: 16px;
         }
 
         a, a:visited, a:active { color: inherit; text-decoration: none; }
@@ -235,7 +235,7 @@
             position: relative;
             min-height: 100vh; min-height: 100dvh;
             display: flex; align-items: center; justify-content: center;
-            text-align: center; padding: 80px 24px 0; overflow: hidden;
+            text-align: center; padding: 80px 24px 60px; overflow: hidden;
         }
         .hero-canvas {
             position: absolute; inset: 0; z-index: 0;
@@ -271,23 +271,23 @@
         }
 
         .hero-claim {
-            font-size: clamp(16px, 2.5vw, 24px); font-style: italic;
-            font-weight: 400; color: var(--dim); margin-bottom: 24px;
+            font-size: clamp(17px, 2.5vw, 24px); font-style: italic;
+            font-weight: 400; color: var(--dim); margin-bottom: 20px;
             opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 0.95s forwards;
         }
 
         .hero-sub {
-            font-size: clamp(14px, 2.2vw, 17px); color: var(--dim);
-            max-width: 520px; margin: 0 auto 28px; line-height: 1.8;
+            font-size: clamp(15px, 2.2vw, 18px); color: var(--dim);
+            max-width: 520px; margin: 0 auto 24px; line-height: 1.7;
             font-weight: 400;
             opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.15s forwards;
         }
         .hero-sub strong { color: var(--text); font-weight: 600; }
 
         .hero-category {
-            font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
-            color: var(--dim); font-weight: 600; line-height: 2.4;
-            margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto;
+            font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+            color: var(--dim); font-weight: 600; line-height: 2.2;
+            margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto;
             opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.35s forwards;
         }
 
@@ -377,28 +377,6 @@
             100% { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
         }
 
-        /* ============ STATS ============ */
-        .stats {
-            max-width: var(--max-w); margin: 0 auto;
-            padding: 40px 24px 80px;
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
-            position: relative; z-index: 1;
-        }
-        .stat {
-            text-align: center; padding: 32px 16px;
-            background: var(--glass); border-radius: 16px;
-            transition: transform 0.3s;
-        }
-        .stat:hover { transform: translateY(-4px); }
-        .stat-num {
-            font-size: clamp(33px, 5vw, 49px); font-weight: 700; letter-spacing: -2px;
-            line-height: 1; color: var(--text);
-        }
-        .stat-label {
-            color: var(--dim); margin-top: 10px;
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
-        }
-
         /* ============ SECTION COMMON ============ */
         .section {
             max-width: var(--max-w); margin: 0 auto;
@@ -470,12 +448,6 @@
         }
         .bento-card p { color: var(--dim); line-height: 1.7; }
 
-        .bento-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
-        .bento-tag {
-            font-weight: 600; padding: 4px 10px; border-radius: 6px;
-            background: var(--border); color: var(--dim);
-        }
-
         /* ============ PERSONAS ============ */
         .persona-grid {
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
@@ -495,7 +467,7 @@
 
         /* ============ TECH SPECS ============ */
         .specs-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
         }
         .spec-item {
             padding: 20px 24px;
@@ -562,15 +534,13 @@
         }
         @media (max-width: 768px) {
             .h1-create, .h1-within { letter-spacing: -3px; }
-            .hero-category { letter-spacing: 3px; font-size: 9px; margin-bottom: 36px; }
-            .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .hero-category { letter-spacing: 3px; font-size: 10px; }
             .steps { grid-template-columns: 1fr; gap: 12px; }
             footer { flex-direction: column; text-align: center; }
             .footer-links { justify-content: center; }
             .scroll-hint { display: none; }
         }
         @media (max-width: 480px) {
-            .stats { grid-template-columns: repeat(2, 1fr); }
             .persona-grid { grid-template-columns: 1fr; }
             .specs-grid { grid-template-columns: 1fr; }
         }
@@ -580,7 +550,11 @@
             .reveal, .reveal-stagger > * { opacity: 1; transform: none; }
         }
         @media (prefers-contrast: high) {
-            :root { --dim: rgba(224,224,224,0.85); }
+            :root { --dim: rgba(224,224,224,0.9); --border: rgba(224,224,224,0.2); }
+        }
+        @media (max-width: 320px) {
+            body { font-size: 15px; }
+            .h1-create, .h1-within { font-size: clamp(48px, 14vw, 80px); letter-spacing: -2px; }
         }
     </style>
 </head>
@@ -709,46 +683,26 @@
             <div class="scroll-hint" aria-hidden="true"><span></span></div>
         </header>
 
-        <!-- ========== STATS ========== -->
-        <div class="stats reveal reveal-stagger">
-            <div class="stat">
-                <div class="stat-num" data-count="6" role="text" aria-label="6 Synth Engines">0</div>
-                <div class="stat-label">Synth Engines</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num" data-count="90" data-suffix="+" role="text" aria-label="90+ DSP Effects">0</div>
-                <div class="stat-label">DSP Effects</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num" data-count="30" data-suffix="+" role="text" aria-label="30+ Visual Modes">0</div>
-                <div class="stat-label">Visual Modes</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num" data-count="6" role="text" aria-label="6 Platforms">0</div>
-                <div class="stat-label">Platforms</div>
-            </div>
-        </div>
-
         <!-- ========== HOW IT WORKS ========== -->
         <div id="how" class="section">
             <div class="section-label reveal">Resonance</div>
-            <h2 class="section-title reveal">From heartbeat to total art form</h2>
-            <p class="section-sub reveal">Three steps. One living signal chain. Your biology becomes the instrument, the score, and the conductor.</p>
+            <h2 class="section-title reveal">From heartbeat to art form</h2>
+            <p class="section-sub reveal">One living signal chain. Your biology becomes the instrument, the score, and the conductor.</p>
             <div class="steps reveal reveal-stagger">
                 <div class="step">
                     <div class="step-num">01</div>
                     <h3>Sense</h3>
-                    <p>Apple Watch, iPhone camera, or heart rate monitor reads your biometrics in real time. Heart rate. HRV. Breathing. Dance. Movement.</p>
+                    <p>Apple Watch or iPhone reads your heartbeat, breathing, and movement in real time. No setup. Just wear it.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">02</div>
                     <h3>Transform</h3>
-                    <p>Your biology shapes 6 synth engines, 90+ effects, spatial audio, video, and 30+ visual modes. High coherence opens the sound. Your pulse drives the bass.</p>
+                    <p>Your biology shapes sound, visuals, and light. High coherence opens the mix. Your pulse drives the bass. Every breath changes the color.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">03</div>
                     <h3>Radiate</h3>
-                    <p>Music, video, live streams, DMX lighting, lasers, projection mapping, and Vision Pro spaces. Every output breathes with you.</p>
+                    <p>Stream it. Film it. Light up a room. From your living room to a festival stage. Every output breathes with you.</p>
                 </div>
             </div>
         </div>
@@ -757,72 +711,42 @@
         <div id="features" class="section">
             <div class="section-label reveal">Vibration</div>
             <h2 class="section-title reveal">Everything. Built in.</h2>
-            <p class="section-sub reveal">Pro-level creative tools. Zero subscriptions. Zero external dependencies. Your art stays yours.</p>
+            <p class="section-sub reveal">Pro-level creative tools. Zero subscriptions. Zero plugins. Your art stays yours.</p>
 
             <div class="bento reveal reveal-stagger">
                 <!-- Bio-Reactive -->
                 <div class="bento-card span2">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
-                    <h3>Your body is the instrument</h3>
-                    <p>Heart rate, HRV, breathing, dance, and movement shape every parameter in real time. 10ms latency. Faster than conscious thought.</p>
-                    <div class="bento-tags">
-                        <span class="bento-tag">Heart Rate</span>
-                        <span class="bento-tag">HRV</span>
-                        <span class="bento-tag">Breathing</span>
-                        <span class="bento-tag">Dance</span>
-                        <span class="bento-tag">Coherence</span>
-                    </div>
+                    <h3>Your body is the controller</h3>
+                    <p>Every heartbeat, every breath, every move shapes sound and light in real time. Faster than conscious thought. No MIDI. No knobs. Just you.</p>
                 </div>
 
                 <!-- Sound -->
                 <div class="bento-card">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
-                    <h3>Six engines. One sound field.</h3>
-                    <p>Subtractive, FM, wavetable, granular, physical modeling, additive. 808 bass, 6 drum kits, 90+ DSP effects. MIDI 2.0. Dolby Atmos.</p>
-                    <div class="bento-tags">
-                        <span class="bento-tag">FM</span>
-                        <span class="bento-tag">Wavetable</span>
-                        <span class="bento-tag">Granular</span>
-                        <span class="bento-tag">Atmos</span>
-                    </div>
+                    <h3>Full production studio</h3>
+                    <p>FM, wavetable, granular synthesis and more. Drum kits, spatial audio, Dolby Atmos. A complete studio in one app.</p>
                 </div>
 
                 <!-- Visuals -->
                 <div class="bento-card">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg></div>
-                    <h3>30+ visual worlds</h3>
-                    <p>GPU-accelerated particles, fractals, audio-reactive geometry. Metal shaders at 120fps. Your biology paints in real time.</p>
-                    <div class="bento-tags">
-                        <span class="bento-tag">Particles</span>
-                        <span class="bento-tag">Fractals</span>
-                        <span class="bento-tag">120fps</span>
-                    </div>
+                    <h3>Living visuals</h3>
+                    <p>Particles, fractals, reactive geometry. GPU-accelerated at 120fps. Your biology paints worlds in real time.</p>
                 </div>
 
                 <!-- Video & Streaming -->
                 <div class="bento-card">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-                    <h3>Video &amp; live streaming</h3>
-                    <p>50+ real-time video effects. AI live production. Multi-platform RTMP up to 50 Mbps. ProRes, H.265, 25+ export formats.</p>
-                    <div class="bento-tags">
-                        <span class="bento-tag">Video</span>
-                        <span class="bento-tag">Streaming</span>
-                        <span class="bento-tag">ProRes</span>
-                    </div>
+                    <h3>Film &amp; stream</h3>
+                    <p>Record in ProRes. Go live on any platform. AI-assisted production. Export in any format you need.</p>
                 </div>
 
                 <!-- Light -->
                 <div class="bento-card span2">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></div>
-                    <h3>From living room to main stage</h3>
-                    <p>Smart home lights, DMX512, Art-Net, ILDA lasers, projection mapping. Your heart rate controls the room. Vision Pro immersive spaces.</p>
-                    <div class="bento-tags">
-                        <span class="bento-tag">DMX512</span>
-                        <span class="bento-tag">Lasers</span>
-                        <span class="bento-tag">Mapping</span>
-                        <span class="bento-tag">Vision Pro</span>
-                        <span class="bento-tag">Smart Home</span>
-                    </div>
+                    <h3>Control any light</h3>
+                    <p>Smart home bulbs, DMX stage rigs, lasers, projection mapping. Your heartbeat controls the room. Walk into a Vision Pro space your body creates.</p>
                 </div>
             </div>
         </div>
@@ -837,22 +761,22 @@
                 <div class="persona-card">
                     <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
                     <h3>Musicians &amp; Producers</h3>
-                    <p>6 synth engines. 90+ effects. MIDI 2.0. Dolby Atmos. Your biology adds a dimension no plugin can.</p>
+                    <p>A full studio that responds to your body. Your biology adds a dimension no plugin can.</p>
                 </div>
                 <div class="persona-card">
                     <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
                     <h3>DJs &amp; Performers</h3>
-                    <p>DMX lighting, lasers, 30+ visuals, live streaming, mapping. Your pulse drives the show.</p>
+                    <p>Your pulse controls the lights. Your energy shapes the visuals. The crowd feels what you feel.</p>
                 </div>
                 <div class="persona-card">
                     <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
                     <h3>Therapists &amp; Coaches</h3>
-                    <p>HRV coherence. Guided breathing. Brainwave entrainment. Where biofeedback becomes creative expression.</p>
+                    <p>Turn biofeedback into creative expression. HRV coherence and guided breathing made audible and visible.</p>
                 </div>
                 <div class="persona-card">
                     <svg class="persona-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     <h3>Filmmakers &amp; Artists</h3>
-                    <p>GPU particles, fractals, video production, projection mapping. Biology-driven generative art and film.</p>
+                    <p>Generative art driven by your biology. Record it. Project it. Stream it. Let your body direct the film.</p>
                 </div>
             </div>
         </div>
@@ -860,8 +784,8 @@
         <!-- ========== TECH SPECS ========== -->
         <div class="section">
             <div class="section-label reveal">Specs</div>
-            <h2 class="section-title reveal">Built different</h2>
-            <p class="section-sub reveal">Native performance. No wrappers. No Electron. Pure Apple frameworks on every platform.</p>
+            <h2 class="section-title reveal">Built native. Runs everywhere.</h2>
+            <p class="section-sub reveal">Pure Apple frameworks. No wrappers. No Electron. Just performance.</p>
 
             <div class="specs-grid reveal reveal-stagger">
                 <div class="spec-item">
@@ -869,32 +793,20 @@
                     <div class="spec-label">Audio latency</div>
                 </div>
                 <div class="spec-item">
-                    <div class="spec-val">60Hz</div>
-                    <div class="spec-label">Control loop</div>
-                </div>
-                <div class="spec-item">
                     <div class="spec-val">120fps</div>
                     <div class="spec-label">Visual engine</div>
                 </div>
                 <div class="spec-item">
-                    <div class="spec-val">0</div>
-                    <div class="spec-label">External dependencies</div>
-                </div>
-                <div class="spec-item">
-                    <div class="spec-val">7.1.4</div>
-                    <div class="spec-label">Dolby Atmos channels</div>
-                </div>
-                <div class="spec-item">
-                    <div class="spec-val">25+</div>
-                    <div class="spec-label">Export formats</div>
-                </div>
-                <div class="spec-item">
-                    <div class="spec-val">21</div>
-                    <div class="spec-label">Orchestral instruments</div>
+                    <div class="spec-val">Atmos</div>
+                    <div class="spec-label">Dolby 7.1.4 spatial</div>
                 </div>
                 <div class="spec-item">
                     <div class="spec-val">MIDI 2.0</div>
-                    <div class="spec-label">MPE + full protocol</div>
+                    <div class="spec-label">Full protocol + MPE</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">0</div>
+                    <div class="spec-label">External dependencies</div>
                 </div>
                 <div class="spec-item">
                     <div class="spec-val">6</div>
