@@ -1,6 +1,6 @@
 {
-  "version": "6.0.0",
-  "build": "2026-02-15T12:00:00Z",
+  "version": "6.1.0",
+  "build": "2026-02-15T16:00:00Z",
   "features": {
     "liquidGlassIcon": true,
     "bioGreenTheme": false,
@@ -27,9 +27,15 @@
     "hreflangSupport": true,
     "breadcrumbStructuredData": true,
     "faqFullStructuredData": true,
-    "faqKeyboardAccessibility": true
+    "faqKeyboardAccessibility": true,
+    "navConsistency": true,
+    "inclusiveFontSizes": true,
+    "downloadCTAAllPages": true,
+    "heroCTAButton": true
   },
   "changelog": [
+    "v6.1.0: Inclusive font sizes + download CTA on all pages — minimum 11px body text, 13-14px content text, hero CTA button, page-cta + mobile-cta on all subpages, professionalized hero section",
+    "v6.0.1: Nav & header consistency — shared.css nav aligned with index.html (padding, height, gap, link spacing, max-width 1120px), unified h1 sizes across all subpages, fixed accessibility/impressum/security/health style deviations",
     "v6.0.0: Maximum Ralph Wiggum Loop Mode — monochrome consistency, font-size reduction (-3px), hero-tagline frame removed, tagline period fix, bioGreenTheme disabled, all color/text inconsistencies resolved",
     "v5.4.0: Premium animation overhaul — cache bust for updated SVGs/logos, branding consistency across all assets",
     "v5.3.0: SEO & accessibility optimization — full FAQ structured data (18 questions), hreflang tags for DE aliases, breadcrumb JSON-LD on all subpages, FAQ keyboard accessibility (role=button, aria-expanded), 404 page now uses shared.css/js with OG tags and skip-link, accessibility.html SVG titles for screen readers, Impressum skip-link in German",

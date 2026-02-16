@@ -179,7 +179,7 @@
         }
         .nav-logo, .nav-logo:visited, .nav-logo:active, .nav-logo:link {
             display: flex; align-items: center; gap: 10px;
-            font-weight: 700; font-size: 14px; z-index: 1001;
+            font-weight: 700; font-size: 15px; z-index: 1001;
             color: var(--text); text-decoration: none;
         }
         .nav-logo svg { width: 30px; height: 30px; }
@@ -189,7 +189,7 @@
             display: none; align-items: center; gap: 4px;
         }
         .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {
-            font-size: 10px; font-weight: 500; color: var(--text-dim);
+            font-size: 13px; font-weight: 500; color: var(--text-dim);
             padding: 7px 14px; border-radius: 8px; transition: color 0.2s, background 0.2s;
             letter-spacing: 0.2px; text-decoration: none;
         }
@@ -235,7 +235,7 @@
         .menu-overlay.open { opacity: 1; visibility: visible; }
         .menu-overlay nav { display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .menu-overlay a, .menu-overlay a:visited, .menu-overlay a:active, .menu-overlay a:link {
-            font-size: clamp(17px, 4vw, 27px); font-weight: 700; letter-spacing: -0.5px;
+            font-size: clamp(20px, 4vw, 30px); font-weight: 700; letter-spacing: -0.5px;
             color: var(--text-dim); padding: 8px 20px; border-radius: 12px;
             transform: translateY(20px); opacity: 0; text-decoration: none;
             transition: color 0.2s, background 0.2s, transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.5s;
@@ -252,7 +252,7 @@
         .menu-overlay.open a:nth-child(9) { transition-delay: 0.27s; }
         .menu-overlay a:hover { color: #e0e0e0; background: rgba(255,255,255,0.05); }
         .menu-overlay .menu-cta, .menu-overlay .menu-cta:visited, .menu-overlay .menu-cta:active {
-            margin-top: 16px; font-size: 13px; font-weight: 700;
+            margin-top: 16px; font-size: 14px; font-weight: 700;
             background: var(--white); color: #000; padding: 14px 32px; border-radius: 12px;
             transition: transform 0.2s, box-shadow 0.2s;
             transform: translateY(20px); opacity: 0; text-decoration: none;
@@ -275,7 +275,7 @@
             display: inline-flex; align-items: center; gap: 8px;
             background: none;
             padding: 6px 0; border-radius: 0;
-            font-size: 10px; font-weight: 600; color: var(--white-60);
+            font-size: 12px; font-weight: 600; color: var(--white-60);
             letter-spacing: 0.3px; margin-bottom: 32px;
             animation: hero-fade 1s cubic-bezier(0.16,1,0.3,1) 0.1s both;
         }
@@ -299,7 +299,7 @@
         }
 
         .hero-sub {
-            font-size: clamp(13px, 2.2vw, 16px); color: var(--text-dim);
+            font-size: clamp(15px, 2.5vw, 18px); color: var(--text-dim);
             max-width: 560px; margin: 0 auto 40px; line-height: 1.7;
             font-weight: 400;
             animation: hero-fade 1s cubic-bezier(0.16,1,0.3,1) 0.35s both;
@@ -323,12 +323,12 @@
         }
         .hero-cta svg { width: 20px; height: 20px; }
         .hero-platforms {
-            font-size: 10px; color: var(--text-dim); letter-spacing: 0.3px;
+            font-size: 12px; color: var(--text-dim); letter-spacing: 0.3px;
         }
         .badge-free {
             display: inline-block; background: var(--white-06);
             color: var(--white-60);
-            padding: 3px 12px; border-radius: 20px; font-weight: 700; font-size: 8px;
+            padding: 3px 12px; border-radius: 20px; font-weight: 700; font-size: 11px;
             letter-spacing: 1px; text-transform: uppercase; margin-left: 6px;
         }
 
@@ -410,8 +410,8 @@
         .signal-node:hover .signal-node-icon {
             transform: translateY(-2px); color: var(--white-60);
         }
-        .signal-node-label { font-size: 10px; font-weight: 600; color: var(--text-mid); letter-spacing: -0.2px; }
-        .signal-node-sub { font-size: 8px; color: var(--text-dim); text-align: center; }
+        .signal-node-label { font-size: 12px; font-weight: 600; color: var(--text-mid); letter-spacing: -0.2px; }
+        .signal-node-sub { font-size: 11px; color: var(--text-dim); text-align: center; }
         .signal-arrow {
             color: var(--text-dim); font-size: 13px; opacity: 0.3;
             flex-shrink: 0; padding: 0 2px;
@@ -438,7 +438,7 @@
             color: var(--white);
         }
         .stat-label {
-            font-size: 9px; color: var(--text-dim); margin-top: 10px;
+            font-size: 12px; color: var(--text-dim); margin-top: 10px;
             text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
         }
 
@@ -449,7 +449,7 @@
             position: relative; z-index: 1;
         }
         .section-label {
-            font-size: 9px; text-transform: uppercase; letter-spacing: 3px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 3px;
             color: var(--white-40); font-weight: 700; text-align: center;
             margin-bottom: 12px;
         }
@@ -458,7 +458,7 @@
             letter-spacing: -2px; text-align: center; margin-bottom: 16px; line-height: 1.05;
         }
         .section-sub {
-            font-size: 13px; color: var(--text-dim); text-align: center;
+            font-size: 14px; color: var(--text-dim); text-align: center;
             max-width: 560px; margin: 0 auto 56px; line-height: 1.7;
         }
 
@@ -486,9 +486,9 @@
             margin-bottom: 16px; line-height: 1;
         }
         .step h3 {
-            font-size: 15px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.3px;
+            font-size: 16px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.3px;
         }
-        .step p { font-size: 11px; color: var(--text-dim); line-height: 1.7; }
+        .step p { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
 
         /* ============ BENTO FEATURES ============ */
         .bento {
@@ -519,14 +519,14 @@
         }
 
         .bento-card h3 {
-            font-size: 19px; font-weight: 700; letter-spacing: -0.5px;
+            font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
             margin-bottom: 10px; line-height: 1.2;
         }
-        .bento-card p { font-size: 11px; color: var(--text-dim); line-height: 1.7; }
+        .bento-card p { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
 
         .bento-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
         .bento-tag {
-            font-size: 8px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+            font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
             letter-spacing: 0.3px;
         }
         .bento-tag {
@@ -547,8 +547,8 @@
             margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto;
             color: var(--white-40); opacity: 0.7;
         }
-        .persona-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
-        .persona-card p { font-size: 10px; color: var(--text-dim); line-height: 1.6; }
+        .persona-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+        .persona-card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
 
         /* ============ TECH SPECS ============ */
         .specs-grid {
@@ -561,10 +561,10 @@
         }
         .spec-item:hover { background: rgba(255,255,255,0.04); }
         .spec-val {
-            font-size: 17px; font-weight: 700; color: var(--white);
+            font-size: 18px; font-weight: 700; color: var(--white);
             letter-spacing: -0.5px; white-space: nowrap;
         }
-        .spec-label { font-size: 10px; color: var(--text-dim); }
+        .spec-label { font-size: 12px; color: var(--text-dim); }
 
         /* ============ BOTTOM CTA ============ */
         .bottom-cta {
@@ -586,7 +586,7 @@
         }
         .bottom-cta h2 .grad { color: var(--white); }
         .bottom-cta p {
-            font-size: 13px; color: var(--text-dim); margin-bottom: 40px;
+            font-size: 14px; color: var(--text-dim); margin-bottom: 40px;
             position: relative; line-height: 1.7;
         }
         .bottom-cta .hero-cta { position: relative; }
@@ -595,7 +595,7 @@
             flex-wrap: wrap; position: relative;
         }
         .bottom-badge {
-            font-size: 10px; color: var(--text-dim); font-weight: 500;
+            font-size: 12px; color: var(--text-dim); font-weight: 500;
             display: flex; align-items: center; gap: 6px;
         }
         .bottom-badge svg { width: 14px; height: 14px; opacity: 0.5; }
@@ -621,9 +621,9 @@
             flex-wrap: wrap; gap: 16px;
             position: relative; z-index: 1;
         }
-        .footer-copy { font-size: 9px; color: var(--text-dim); }
+        .footer-copy { font-size: 12px; color: var(--text-dim); }
         .footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
-        .footer-links a, .footer-links a:visited, .footer-links a:active, .footer-links a:link { font-size: 9px; color: var(--text-dim); transition: color 0.2s; text-decoration: none; }
+        .footer-links a, .footer-links a:visited, .footer-links a:active, .footer-links a:link { font-size: 12px; color: var(--text-dim); transition: color 0.2s; text-decoration: none; }
         .footer-links a:hover { color: var(--text); }
 
         /* ============ MOBILE CTA ============ */
@@ -635,12 +635,12 @@
         .mobile-cta a, .mobile-cta a:visited, .mobile-cta a:active, .mobile-cta a:link {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             background: #e0e0e0; color: #000; padding: 14px; border-radius: 12px;
-            font-weight: 700; font-size: 12px; text-decoration: none;
+            font-weight: 700; font-size: 14px; text-decoration: none;
             transition: transform 0.2s;
         }
         .mobile-cta a:hover { transform: translateY(-1px); }
         .mobile-cta a svg { width: 18px; height: 18px; }
-        .mobile-cta .sub { text-align: center; margin-top: 6px; font-size: 8px; color: var(--text-dim); }
+        .mobile-cta .sub { text-align: center; margin-top: 6px; font-size: 11px; color: var(--text-dim); }
 
         /* ============ SCROLL ANIMATIONS ============ */
         .reveal {
@@ -778,9 +778,15 @@
                     Heartbeat, breath, dance, and movement become <strong>music</strong>, <strong>visuals</strong>, <strong>film</strong>, and <strong>light</strong>. 6 synth engines. 90+ effects. 30+ visual modes. Every output is alive.
                 </p>
 
-                <p class="hero-platforms">
-                    iPhone &middot; iPad &middot; Mac &middot; Apple Watch &middot; Apple TV &middot; Vision Pro
-                </p>
+                <div class="hero-cta-group">
+                    <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="hero-cta">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                        Download Free
+                    </a>
+                    <p class="hero-platforms">
+                        iPhone &middot; iPad &middot; Mac &middot; Apple Watch &middot; Apple TV &middot; Vision Pro
+                    </p>
+                </div>
             </div>
 
             <div class="scroll-hint" aria-hidden="true"><span></span></div>
