@@ -90,7 +90,7 @@
           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
           "downloadUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
           "installUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
-          "featureList": "Bio-reactive music, 20 synth engines incl. EchoelQuant, 90+ DSP effects, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio, Apple Watch HRV"
+          "featureList": "Bio-reactive music, 20 synth engines incl. EchoelQuant, 90+ DSP effects, face/gesture/gaze tracking, MPE touch instruments, SharePlay collaboration, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio, Apple Watch HRV, visionOS immersive, HRV coherence training"
         }
       ]
     }
@@ -309,7 +309,7 @@
             opacity: 0; animation: h-rise 1s cubic-bezier(0.16,1,0.3,1) 1.75s forwards;
         }
         .cap-flow {
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
             position: relative;
         }
         .cap-flow::before {
@@ -642,7 +642,7 @@
                 </div>
 
                 <!-- Capability Map -->
-                <div class="cap-map" role="img" aria-label="Echoelmusic capabilities: Biofeedback, synthesis, visuals, lighting, output">
+                <div class="cap-map" role="img" aria-label="Echoelmusic capabilities: Biofeedback, synthesis, visuals, lighting, output, collaboration">
                     <div class="cap-flow">
                         <div class="cap-node">
                             <div class="cap-icon">
@@ -678,6 +678,13 @@
                             </div>
                             <span class="cap-label">Output</span>
                             <span class="cap-detail">Stream &middot; Film<br>ProRes &middot; 25+ Formats</span>
+                        </div>
+                        <div class="cap-node">
+                            <div class="cap-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
+                            </div>
+                            <span class="cap-label">Sync</span>
+                            <span class="cap-detail">Collab &middot; SharePlay<br>Projects &middot; Coherence</span>
                         </div>
                     </div>
                 </div>
@@ -960,6 +967,73 @@
                         <li><span class="tool-name">EchoelWatchSync</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Real-time Apple Watch bio-data sync</span></li>
                         <li><span class="tool-name">EchoelShortcuts</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Siri &amp; Shortcuts hands-free control</span></li>
                         <li><span class="tool-name">EchoelHaptic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-reactive haptic composition (15 patterns)</span></li>
+                        <li><span class="tool-name">EchoelSync</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Own protocol for cross-device sync (&lt;10ms)</span></li>
+                        <li><span class="tool-name">EchoelCloud</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Cloud project sync &amp; backup</span></li>
+                    </ul>
+                </div>
+
+                <!-- Physical Input -->
+                <div class="tools-cat">
+                    <div class="tools-cat-title">Physical Input</div>
+                    <ul>
+                        <li><span class="tool-name">EchoelFaceMapper</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Face expression &rarr; audio (ARKit jaw, smile, eyebrow)</span></li>
+                        <li><span class="tool-name">EchoelGestureMapper</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Hand gesture recognition (pinch, spread, fist, swipe)</span></li>
+                        <li><span class="tool-name">EchoelGazeTracker</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Eye gaze tracking (visionOS, iPad Pro, ARKit)</span></li>
+                        <li><span class="tool-name">EchoelHeadTracker</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Head rotation &rarr; spatial audio control</span></li>
+                        <li><span class="tool-name">EchoelHandTracker</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Real-time hand tracking (visionOS)</span></li>
+                        <li><span class="tool-name">EchoelMotion</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Accelerometer &amp; gyro &rarr; music (dance, sport, movement)</span></li>
+                        <li><span class="tool-name">EchoelEVM</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Eulerian video magnification (micro-movement detection)</span></li>
+                        <li><span class="tool-name">EchoelCymatics</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sound &rarr; cymatics pattern visualization</span></li>
+                    </ul>
+                </div>
+
+                <!-- Touch Controllers & MPE -->
+                <div class="tools-cat">
+                    <div class="tools-cat-title">Touch &amp; MPE</div>
+                    <ul>
+                        <li><span class="tool-name">EchoelKeys</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Touch keyboard with MPE per-note expression</span></li>
+                        <li><span class="tool-name">EchoelPads</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Chord pads with velocity &amp; aftertouch</span></li>
+                        <li><span class="tool-name">EchoelDrums</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Drum pad controller (velocity-sensitive)</span></li>
+                        <li><span class="tool-name">EchoelMelody</span><span class="tool-sep">&mdash;</span><span class="tool-desc">XY melody grid (pitch + mod)</span></li>
+                        <li><span class="tool-name">EchoelStrum</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Strum pad instrument</span></li>
+                        <li><span class="tool-name">EchoelMIDI2</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MIDI 2.0 Universal Packets (32-bit resolution)</span></li>
+                        <li><span class="tool-name">EchoelMPE</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MPE per-note pitch, slide, pressure</span></li>
+                        <li><span class="tool-name">EchoelEchoboard</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Unified control dashboard for all devices</span></li>
+                    </ul>
+                </div>
+
+                <!-- Immersive / Spatial -->
+                <div class="tools-cat">
+                    <div class="tools-cat-title">Immersive</div>
+                    <ul>
+                        <li><span class="tool-name">EchoelImmersive</span><span class="tool-sep">&mdash;</span><span class="tool-desc">visionOS immersive space (RealityKit)</span></li>
+                        <li><span class="tool-name">EchoelIsochronic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Isochronic tone sessions</span></li>
+                        <li><span class="tool-name">Echoel360</span><span class="tool-sep">&mdash;</span><span class="tool-desc">360&deg; panoramic audio-visuals</span></li>
+                        <li><span class="tool-name">EchoelRoomSim</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Acoustic room simulation</span></li>
+                        <li><span class="tool-name">EchoelObjectAudio</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Object-based audio rendering</span></li>
+                    </ul>
+                </div>
+
+                <!-- Wellness / Science -->
+                <div class="tools-cat">
+                    <div class="tools-cat-title">Wellness &amp; Science</div>
+                    <ul>
+                        <li><span class="tool-name">EchoelHRVTraining</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Evidence-based HRV coherence training</span></li>
+                        <li><span class="tool-name">EchoelCircadian</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Circadian rhythm optimization</span></li>
+                        <li><span class="tool-name">EchoelFlow</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Flow state detection &amp; optimization</span></li>
+                        <li><span class="tool-name">EchoelBreathGuide</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Guided breathing with real-time feedback</span></li>
+                        <li><span class="tool-name">EchoelCoherenceTrainer</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Group coherence training (real-time sync)</span></li>
+                    </ul>
+                </div>
+
+                <!-- Platform Integration -->
+                <div class="tools-cat">
+                    <div class="tools-cat-title">Platform</div>
+                    <ul>
+                        <li><span class="tool-name">EchoelWidgets</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Home screen &amp; Lock Screen widgets</span></li>
+                        <li><span class="tool-name">EchoelLiveActivity</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Dynamic Island &amp; Live Activities</span></li>
+                        <li><span class="tool-name">EchoelAppClip</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Instant try-before-download App Clip</span></li>
+                        <li><span class="tool-name">EchoelVoiceControl</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Full voice command interface</span></li>
                     </ul>
                 </div>
 
