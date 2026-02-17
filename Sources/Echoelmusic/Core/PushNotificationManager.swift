@@ -9,6 +9,7 @@
 
 import Foundation
 import Combine
+import CloudKit
 import UserNotifications
 #if canImport(UIKit)
 import UIKit
@@ -116,8 +117,11 @@ public final class PushNotificationManager: NSObject, ObservableObject {
         self.deviceToken = token
         log.info("APNs device token registered: \(token.prefix(8))...", category: .system)
 
-        // Store token for server-side use
+        // Store token locally
         UserDefaults.standard.set(token, forKey: "echoelmusic_apns_token")
+
+        // Store token in CloudKit for server-side push delivery
+        saveTokenToCloudKit(token)
 
         // Publish via bus so other engines can react
         EngineBus.shared.publish(.custom(
@@ -293,6 +297,65 @@ public final class PushNotificationManager: NSObject, ObservableObject {
                 .map(\.identifier)
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: wellnessIDs)
         }
+    }
+
+    // MARK: - CloudKit Device Token Storage
+
+    private static let cloudKitContainer = CKContainer(identifier: "iCloud.com.echoelmusic.app")
+    private static let tokenRecordType = "DeviceToken"
+
+    /// Save device token to CloudKit public database for server-side push delivery
+    private func saveTokenToCloudKit(_ token: String) {
+        let container = Self.cloudKitContainer
+        let publicDB = container.publicCloudDatabase
+
+        // Use a deterministic record ID so the same device updates its token
+        #if canImport(UIKit) && !os(watchOS)
+        let deviceID = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        #else
+        let deviceID = UserDefaults.standard.string(forKey: "echoelmusic_device_id")
+            ?? { let id = UUID().uuidString; UserDefaults.standard.set(id, forKey: "echoelmusic_device_id"); return id }()
+        #endif
+
+        let recordID = CKRecord.ID(recordName: "token_\(deviceID)")
+        let record = CKRecord(recordType: Self.tokenRecordType, recordID: recordID)
+        record["token"] = token as CKRecordValue
+        record["platform"] = Self.currentPlatform as CKRecordValue
+        record["appVersion"] = Self.appVersion as CKRecordValue
+        record["locale"] = Locale.current.identifier as CKRecordValue
+        record["updatedAt"] = Date() as CKRecordValue
+
+        let operation = CKModifyRecordsOperation(recordsToSave: [record])
+        operation.savePolicy = .changedKeys
+        operation.modifyRecordsResultBlock = { result in
+            switch result {
+            case .success:
+                log.info("Device token saved to CloudKit", category: .system)
+            case .failure(let error):
+                log.error("CloudKit token save failed: \(error.localizedDescription)", category: .system)
+            }
+        }
+        publicDB.add(operation)
+    }
+
+    private static var currentPlatform: String {
+        #if os(iOS)
+        return "ios"
+        #elseif os(macOS)
+        return "macos"
+        #elseif os(watchOS)
+        return "watchos"
+        #elseif os(tvOS)
+        return "tvos"
+        #elseif os(visionOS)
+        return "visionos"
+        #else
+        return "unknown"
+        #endif
+    }
+
+    private static var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
     }
 }
 
