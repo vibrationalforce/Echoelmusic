@@ -403,6 +403,7 @@ public final class EchoelCellular: @unchecked Sendable {
 
         for i in 0..<count {
             let partialFreq = frequency * Float(i + 1)
+            if partialFreq > sampleRate * 0.5 { break } // Nyquist guard
             let phaseInc = partialFreq / sampleRate * 2.0 * .pi
             phases[i] += phaseInc
             if phases[i] > 2.0 * .pi { phases[i] -= 2.0 * .pi }
@@ -437,7 +438,8 @@ public final class EchoelCellular: @unchecked Sendable {
 
         let modSignal = sin(fmModulatorPhase) * modIndex
 
-        let carrierPhaseInc = (frequency + modSignal * frequency) / sampleRate * 2.0 * .pi
+        let modulatedFreq = min(frequency + modSignal * frequency, sampleRate * 0.49) // Nyquist clamp
+        let carrierPhaseInc = modulatedFreq / sampleRate * 2.0 * .pi
         fmCarrierPhase += carrierPhaseInc
         if fmCarrierPhase > 2.0 * .pi { fmCarrierPhase -= 2.0 * .pi }
 
@@ -453,6 +455,7 @@ public final class EchoelCellular: @unchecked Sendable {
 
         for i in 0..<count {
             let partialFreq = frequency * Float(i + 1)
+            if partialFreq > sampleRate * 0.5 { break } // Nyquist guard
             let phaseInc = partialFreq / sampleRate * 2.0 * .pi
             phases[i] += phaseInc
             if phases[i] > 2.0 * .pi { phases[i] -= 2.0 * .pi }

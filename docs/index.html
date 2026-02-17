@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic by Echoel — Your Body Creates Music, Visuals &amp; Light</title>
-    <meta name="description" content="I built Echoelmusic so your heartbeat, breath, and movement become music, visuals, and light. 20 synth engines, 90+ DSP effects, Dolby Atmos, DMX lighting, live streaming. Free on iPhone, iPad, Mac, Apple Watch, Apple TV, and Vision Pro. — Echoel">
+    <meta name="description" content="Your heartbeat, breath, and movement become music, visuals, and light. 20 synth engines, 90+ DSP effects, Dolby Atmos, DMX. Free on all Apple devices. — Echoel">
     <meta name="theme-color" content="#000000">
 
     <!-- Open Graph -->
@@ -445,7 +445,7 @@
         .tools-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 32px;
         }
-        .tools-cat { }
+
         .tools-cat-title {
             font-size: 12px; font-weight: 700; letter-spacing: 2px;
             text-transform: uppercase; color: var(--text); margin-bottom: 10px;
@@ -565,7 +565,7 @@
     <a href="#main" class="skip-link">Skip to main content</a>
 
     <!-- Nav -->
-    <div class="nav" id="mainNav">
+    <nav class="nav" id="mainNav">
         <div class="nav-bar">
             <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -591,7 +591,7 @@
                 <span></span><span></span><span></span>
             </button>
         </div>
-    </div>
+    </nav>
 
     <!-- Full-screen menu overlay -->
     <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
@@ -811,14 +811,14 @@
                 <div class="tools-cat">
                     <div class="tools-cat-title">Analog Emulations</div>
                     <ul>
-                        <li><span class="tool-name">EchoelSSL</span><span class="tool-sep">&mdash;</span><span class="tool-desc">SSL bus compressor</span></li>
-                        <li><span class="tool-name">EchoelAPI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">API 2500 bus compressor</span></li>
-                        <li><span class="tool-name">EchoelPultec</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Pultec EQP-1A tube EQ</span></li>
-                        <li><span class="tool-name">EchoelFairchild</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Fairchild 670 vari-mu limiter</span></li>
-                        <li><span class="tool-name">EchoelLA2A</span><span class="tool-sep">&mdash;</span><span class="tool-desc">LA-2A optical compressor</span></li>
-                        <li><span class="tool-name">Echoel1176</span><span class="tool-sep">&mdash;</span><span class="tool-desc">UREI 1176 FET limiter</span></li>
-                        <li><span class="tool-name">EchoelVariMu</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Manley Vari-Mu compressor</span></li>
-                        <li><span class="tool-name">EchoelNeve</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Neve console channel + mastering</span></li>
+                        <li><span class="tool-name">EchoelVCA</span><span class="tool-sep">&mdash;</span><span class="tool-desc">VCA bus compressor (classic glue)</span></li>
+                        <li><span class="tool-name">EchoelPunch</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Punchy analog bus compressor</span></li>
+                        <li><span class="tool-name">EchoelTubeEQ</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Vintage tube program EQ</span></li>
+                        <li><span class="tool-name">EchoelVariMu</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Variable-mu tube limiter</span></li>
+                        <li><span class="tool-name">EchoelOpto</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Optical leveling amplifier</span></li>
+                        <li><span class="tool-name">EchoelFET</span><span class="tool-sep">&mdash;</span><span class="tool-desc">FET peak limiter (all-button mode)</span></li>
+                        <li><span class="tool-name">EchoelStereoMu</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Stereo variable-mu mastering compressor</span></li>
+                        <li><span class="tool-name">EchoelBritChannel</span><span class="tool-sep">&mdash;</span><span class="tool-desc">British console channel strip + mastering</span></li>
                     </ul>
                 </div>
 
@@ -944,6 +944,22 @@
                         <li><span class="tool-name">EchoelTuner</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Chromatic tuner</span></li>
                         <li><span class="tool-name">EchoelVocal</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Vocal chain (harmony, doubling, vibrato)</span></li>
                         <li><span class="tool-name">EchoelBinaural</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Binaural beat generator</span></li>
+                        <li><span class="tool-name">EchoelAutomate</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI-assisted parameter automation</span></li>
+                        <li><span class="tool-name">EchoelRecord</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Multi-track bio-reactive recording</span></li>
+                        <li><span class="tool-name">EchoelPresets</span><span class="tool-sep">&mdash;</span><span class="tool-desc">50+ curated preset library</span></li>
+                        <li><span class="tool-name">EchoelScript</span><span class="tool-sep">&mdash;</span><span class="tool-desc">User scripting engine</span></li>
+                    </ul>
+                </div>
+
+                <!-- Connectivity / Collaboration -->
+                <div class="tools-cat">
+                    <div class="tools-cat-title">Connectivity</div>
+                    <ul>
+                        <li><span class="tool-name">EchoelSharePlay</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Group bio-reactive sessions via SharePlay</span></li>
+                        <li><span class="tool-name">EchoelCollab</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Worldwide collaboration hub (1000+ participants)</span></li>
+                        <li><span class="tool-name">EchoelWatchSync</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Real-time Apple Watch bio-data sync</span></li>
+                        <li><span class="tool-name">EchoelShortcuts</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Siri &amp; Shortcuts hands-free control</span></li>
+                        <li><span class="tool-name">EchoelHaptic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-reactive haptic composition (15 patterns)</span></li>
                     </ul>
                 </div>
 
@@ -1016,13 +1032,13 @@
 
         <!-- Social -->
         <div class="social">
-            <a href="https://instagram.com/echoelmusic" aria-label="Instagram" rel="noopener" target="_blank">
+            <a href="https://instagram.com/echoelmusic" aria-label="Instagram" rel="noopener noreferrer" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
             </a>
-            <a href="https://tiktok.com/@echoelmusic" aria-label="TikTok" rel="noopener" target="_blank">
+            <a href="https://tiktok.com/@echoelmusic" aria-label="TikTok" rel="noopener noreferrer" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/></svg>
             </a>
-            <a href="https://youtube.com/@echoelmusic" aria-label="YouTube" rel="noopener" target="_blank">
+            <a href="https://youtube.com/@echoelmusic" aria-label="YouTube" rel="noopener noreferrer" target="_blank">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
             </a>
         </div>
