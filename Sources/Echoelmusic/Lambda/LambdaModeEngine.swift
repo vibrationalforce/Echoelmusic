@@ -349,6 +349,8 @@ public final class LambdaModeEngine: ObservableObject {
     @Published public var quantumEngineActive: Bool = false
     @Published public var creativeEngineActive: Bool = false
     @Published public var collaborationActive: Bool = false
+    @Published public var samplerEngineActive: Bool = false
+    @Published public var breakbeatEngineActive: Bool = false
 
     // User preferences
     @Published public var bioSyncEnabled: Bool = true
@@ -374,6 +376,10 @@ public final class LambdaModeEngine: ObservableObject {
     private var updateTimer: DispatchSourceTimer?
     private let updateQueue = DispatchQueue(label: "com.echoelmusic.lambda.update", qos: .userInteractive)
     private var sessionStartTime: Date?
+
+    // Sampler + Breakbeat integration
+    private var sampler: EchoelSampler?
+    private var breakbeatChopper: BreakbeatChopper?
 
     // History buffers
     private let maxHistoryLength = 300 // 5 minutes at 1Hz
@@ -556,6 +562,11 @@ public final class LambdaModeEngine: ObservableObject {
         audioEngineActive && visualEngineActive && bioEngineActive
     }
 
+    /// Super Mode: ALL systems including sampler and breakbeat
+    public var superLambdaActive: Bool {
+        allSystemsActive && samplerEngineActive && breakbeatEngineActive && quantumEngineActive
+    }
+
     //==========================================================================
     // MARK: - Lambda Score Calculation
     //==========================================================================
@@ -576,9 +587,10 @@ public final class LambdaModeEngine: ObservableObject {
 
         // Systems component (how many subsystems active)
         let activeCount = [audioEngineActive, visualEngineActive, bioEngineActive,
-                          quantumEngineActive, creativeEngineActive, collaborationActive]
+                          quantumEngineActive, creativeEngineActive, collaborationActive,
+                          samplerEngineActive, breakbeatEngineActive]
             .filter { $0 }.count
-        let systemsScore = Double(activeCount) / 6.0
+        let systemsScore = Double(activeCount) / 8.0
 
         // Stability component (time in current state)
         let stabilityTime = Date().timeIntervalSince(stateTransitionTime)
@@ -860,6 +872,60 @@ public final class LambdaModeEngine: ObservableObject {
             log.lambda("\(LambdaConstants.symbol) Physical light output DISABLED")
         }
     }
+
+    //==========================================================================
+    // MARK: - Sampler & Breakbeat Integration (λ∞ Super Mode)
+    //==========================================================================
+
+    /// Initialize and connect the EchoelSampler to Lambda Mode
+    public func enableSampler(sampleRate: Float = 44100) {
+        sampler = EchoelSampler(sampleRate: sampleRate)
+        sampler?.bioModulation = SamplerBioModulation()
+        samplerEngineActive = true
+        log.lambda("\(LambdaConstants.symbol) EchoelSampler ACTIVATED — \(SamplerConstants.maxVoices) voices, \(SamplerConstants.maxZones) zones")
+    }
+
+    /// Initialize the BreakbeatChopper for slice-based manipulation
+    public func enableBreakbeat() {
+        breakbeatChopper = BreakbeatChopper()
+        breakbeatEngineActive = true
+        log.lambda("\(LambdaConstants.symbol) BreakbeatChopper ACTIVATED — Jungle/DnB slice engine")
+    }
+
+    /// Load sample data into the sampler
+    public func loadSample(data: [Float], sampleRate: Float, rootNote: Int = 60, name: String = "Sample") -> Int? {
+        return sampler?.loadSample(data: data, sampleRate: sampleRate, rootNote: rootNote, name: name)
+    }
+
+    /// Trigger sampler note with bio-reactive modulation
+    public func samplerNoteOn(note: Int, velocity: Int) {
+        // Update sampler with current bio data before note trigger
+        sampler?.updateBioData(
+            hrv: Float(bioData.hrvMs),
+            coherence: Float(bioData.hrvCoherence),
+            heartRate: Float(bioData.heartRate),
+            breathPhase: Float(bioData.breathPhase),
+            flow: Float(bioData.flowScore)
+        )
+        sampler?.noteOn(note: note, velocity: velocity)
+    }
+
+    /// Release sampler note
+    public func samplerNoteOff(note: Int) {
+        sampler?.noteOff(note: note)
+    }
+
+    /// Render sampler audio (call from audio thread)
+    public func renderSampler(frameCount: Int) -> [Float]? {
+        guard samplerEngineActive, let sampler = sampler else { return nil }
+        return sampler.render(frameCount: frameCount)
+    }
+
+    /// Get current sampler instance for direct access
+    public var currentSampler: EchoelSampler? { sampler }
+
+    /// Get current breakbeat chopper for direct access
+    public var currentBreakbeat: BreakbeatChopper? { breakbeatChopper }
 
     //==========================================================================
     // MARK: - Presets

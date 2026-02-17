@@ -58,6 +58,12 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
     // EchoelModalBank — Physics-constrained modal resonator bank
     case modalBank = "modal_bank"
 
+    // EchoelSampler — Native Swift multi-sampler (128 zones, 64 voices, ZDF filters)
+    case echoelSampler = "echoel_sampler"
+
+    // Breakbeat — Jungle/DnB slice engine with bio-reactive pattern generation
+    case breakbeat = "breakbeat"
+
     /// Human-readable display name
     public var displayName: String {
         switch self {
@@ -81,6 +87,8 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
         case .ddsp: return "EchoelDDSP"
         case .cellularAutomata: return "EchoelCellular"
         case .modalBank: return "EchoelModalBank"
+        case .echoelSampler: return "EchoelSampler"
+        case .breakbeat: return "Breakbeat Chopper"
         }
     }
 
@@ -127,6 +135,10 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return "Cellular automata evolution drives synthesis — deterministic chaos creates digital-organic textures"
         case .modalBank:
             return "Physics-constrained modal resonator bank — bells, plates, strings, gongs as exponentially decaying sinusoidal modes"
+        case .echoelSampler:
+            return "Native Swift multi-sampler — 128 zones, 16 velocity layers, 16 round-robin, Hermite/Sinc interpolation, ZDF filters, bio-reactive modulation"
+        case .breakbeat:
+            return "Jungle/DnB breakbeat chopper — transient slicing, pattern sequencing, roll/stutter, bio-reactive slice selection (Akai/SP-1200 style)"
         }
     }
 
@@ -155,6 +167,10 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return .advanced
         case .modalBank:
             return .physical
+        case .echoelSampler:
+            return .sample
+        case .breakbeat:
+            return .sample
         }
     }
 
