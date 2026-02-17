@@ -137,6 +137,12 @@ public struct BioSnapshot: Sendable {
     public var breathPhase: Float = 0.5
     public var flowScore: Float = 0
 
+    // Extended fields for 12-parameter DDSP bio-reactive mapping
+    public var hrvVariability: Float = 0.5    // RMSSD normalized (0-1)
+    public var breathDepth: Float = 0.5       // Breathing depth (0-1)
+    public var lfHfRatio: Float = 0.5         // LF/HF power ratio normalized (0-1)
+    public var coherenceTrend: Float = 0      // Coherence derivative (-1 to 1)
+
     public init() {}
 }
 
