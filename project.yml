@@ -131,6 +131,7 @@ targets:
         UIBackgroundModes:
           - audio
           - bluetooth-central
+          - remote-notification
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -454,6 +455,7 @@ targets:
         LSRequiresIPhoneOS: true
         UIBackgroundModes:
           - audio
+          - remote-notification
         UILaunchScreen: {}
         UIUserInterfaceStyle: Dark
         ITSAppUsesNonExemptEncryption: false
