@@ -55,6 +55,9 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
     // EchoelCellular — Cellular automata driven synthesis
     case cellularAutomata = "cellular_automata"
 
+    // EchoelModalBank — Physics-constrained modal resonator bank
+    case modalBank = "modal_bank"
+
     /// Human-readable display name
     public var displayName: String {
         switch self {
@@ -77,6 +80,7 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
         case .echoelQuant: return "EchoelQuant"
         case .ddsp: return "EchoelDDSP"
         case .cellularAutomata: return "EchoelCellular"
+        case .modalBank: return "EchoelModalBank"
         }
     }
 
@@ -121,6 +125,8 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return "ML-powered harmonic-plus-noise model — neural network predicts filter and oscillator parameters in real time"
         case .cellularAutomata:
             return "Cellular automata evolution drives synthesis — deterministic chaos creates digital-organic textures"
+        case .modalBank:
+            return "Physics-constrained modal resonator bank — bells, plates, strings, gongs as exponentially decaying sinusoidal modes"
         }
     }
 
@@ -147,6 +153,8 @@ public enum SynthesisEngineType: String, CaseIterable, Sendable, Codable {
             return .advanced
         case .cellularAutomata:
             return .advanced
+        case .modalBank:
+            return .physical
         }
     }
 
