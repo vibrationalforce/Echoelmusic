@@ -20,6 +20,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import Foundation
+import AVFoundation
 import Accelerate
 
 // MARK: - Constants
@@ -608,6 +609,226 @@ public final class EchoelSampler {
         // Heart rate → LFO tempo sync
         if bioModulation.heartRateToTempo {
             currentBPM = heartRate
+        }
+    }
+
+    // MARK: - File I/O
+
+    /// Load sample from audio file URL (WAV, AIFF, CAF, M4A)
+    /// Reads file via AVAudioFile, extracts Float32 channel data, creates zone
+    public func loadFromAudioFile(
+        _ url: URL,
+        rootNote: Int = 60,
+        name: String? = nil,
+        keyRange: ClosedRange<Int>? = nil,
+        velocityRange: ClosedRange<Int>? = nil
+    ) throws -> Int {
+        let file = try AVAudioFile(forReading: url)
+        let format = file.processingFormat
+        let frameCount = AVAudioFrameCount(file.length)
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            throw SamplerError.bufferCreationFailed
+        }
+        try file.read(into: buffer)
+
+        // Extract mono float data (mix down if stereo)
+        let data: [Float]
+        if let channelData = buffer.floatChannelData {
+            let length = Int(buffer.frameLength)
+            if format.channelCount >= 2 {
+                // Mix stereo to mono
+                var mono = [Float](repeating: 0, count: length)
+                let left = channelData[0]
+                let right = channelData[1]
+                for i in 0..<length {
+                    mono[i] = (left[i] + right[i]) * 0.5
+                }
+                data = mono
+            } else {
+                data = Array(UnsafeBufferPointer(start: channelData[0], count: length))
+            }
+        } else {
+            throw SamplerError.noAudioData
+        }
+
+        let zoneName = name ?? url.deletingPathExtension().lastPathComponent
+        var zone = SampleZone(name: zoneName, rootNote: rootNote)
+        zone.sampleData = data
+        zone.sampleRate = Float(format.sampleRate)
+        zone.loopEnd = data.count
+
+        if let keyRange = keyRange {
+            zone.keyRangeLow = keyRange.lowerBound
+            zone.keyRangeHigh = keyRange.upperBound
+        }
+        if let velocityRange = velocityRange {
+            zone.velocityLow = velocityRange.lowerBound
+            zone.velocityHigh = velocityRange.upperBound
+        }
+
+        zones.append(zone)
+        return zones.count - 1
+    }
+
+    /// Load an entire directory of samples, auto-mapping by filename
+    /// Expects filenames like "C4.wav", "piano_60.wav", or just sequential naming
+    public func loadSampleDirectory(_ directoryURL: URL, rootNote: Int = 36) throws -> Int {
+        let fileManager = FileManager.default
+        let contents = try fileManager.contentsOfDirectory(
+            at: directoryURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )
+
+        let audioExtensions: Set<String> = ["wav", "aif", "aiff", "caf", "m4a"]
+        let audioFiles = contents
+            .filter { audioExtensions.contains($0.pathExtension.lowercased()) }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+
+        var loadedCount = 0
+        for (index, fileURL) in audioFiles.enumerated() {
+            let note = detectNoteFromFilename(fileURL.lastPathComponent) ?? (rootNote + index)
+            _ = try loadFromAudioFile(fileURL, rootNote: note, keyRange: note...note)
+            loadedCount += 1
+        }
+        return loadedCount
+    }
+
+    /// Detect MIDI note from filename patterns like "C4", "Db3", "piano_60"
+    private func detectNoteFromFilename(_ filename: String) -> Int? {
+        let name = filename.replacingOccurrences(of: "\\.[^.]+$", with: "", options: .regularExpression)
+
+        // Try MIDI note number: "60", "piano_60", "sample-72"
+        let numberPattern = try? NSRegularExpression(pattern: "(\\d{1,3})(?:\\D|$)")
+        if let match = numberPattern?.firstMatch(in: name, range: NSRange(name.startIndex..., in: name)),
+           let range = Range(match.range(at: 1), in: name),
+           let midiNote = Int(name[range]),
+           midiNote >= 0 && midiNote <= 127 {
+            return midiNote
+        }
+
+        // Try note name: "C4", "Db3", "F#5"
+        let noteNames = ["C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11]
+        let notePattern = try? NSRegularExpression(pattern: "([A-Ga-g])([#b]?)(\\d)")
+        if let match = notePattern?.firstMatch(in: name, range: NSRange(name.startIndex..., in: name)) {
+            let letterRange = Range(match.range(at: 1), in: name)!
+            let accidentalRange = Range(match.range(at: 2), in: name)!
+            let octaveRange = Range(match.range(at: 3), in: name)!
+
+            let letter = String(name[letterRange]).uppercased()
+            let accidental = String(name[accidentalRange])
+            let octave = Int(name[octaveRange]) ?? 4
+
+            if let base = noteNames[letter] {
+                var note = (octave + 1) * 12 + base
+                if accidental == "#" { note += 1 }
+                if accidental == "b" { note -= 1 }
+                return note
+            }
+        }
+
+        return nil
+    }
+
+    // MARK: - Synth Freeze (Synthesis → Sample Zone)
+
+    /// Freeze a synthesis engine's output into a sampler zone
+    /// Renders `duration` seconds of audio from the synth render closure, then loads as zone
+    public func freezeSynthToZone(
+        render: (Int) -> [Float],
+        duration: Float = 2.0,
+        rootNote: Int = 60,
+        name: String = "Frozen Synth",
+        loopEnabled: Bool = true
+    ) -> Int {
+        let frameCount = Int(duration * sampleRate)
+        let synthOutput = render(frameCount)
+
+        var zone = SampleZone(name: name, rootNote: rootNote)
+        zone.sampleData = synthOutput
+        zone.sampleRate = sampleRate
+        zone.loopEnabled = loopEnabled
+
+        if loopEnabled {
+            // Find zero crossing near 80% mark for clean loop
+            let searchStart = Int(Float(synthOutput.count) * 0.75)
+            var loopEnd = synthOutput.count
+            for i in searchStart..<synthOutput.count - 1 {
+                if synthOutput[i] <= 0 && synthOutput[i + 1] > 0 {
+                    loopEnd = i
+                    break
+                }
+            }
+            zone.loopStart = 0
+            zone.loopEnd = loopEnd
+        } else {
+            zone.loopEnd = synthOutput.count
+        }
+
+        zones.append(zone)
+        return zones.count - 1
+    }
+
+    /// Freeze multiple notes from a synth into a multi-sampled instrument
+    /// Creates velocity-layered, round-robin zones across the keyboard
+    public func freezeMultiSampled(
+        render: (Int, Float, Int) -> [Float],  // (frameCount, frequency, velocity) → [Float]
+        notes: [Int] = [36, 48, 60, 72, 84],   // Sample every octave
+        velocityLayers: [Int] = [40, 80, 120],  // Soft, medium, hard
+        duration: Float = 2.0,
+        name: String = "Multi-Sample"
+    ) -> Int {
+        let frameCount = Int(duration * sampleRate)
+        var loadedCount = 0
+
+        for (noteIdx, note) in notes.enumerated() {
+            let frequency = 440.0 * pow(2.0, Float(note - 69) / 12.0)
+
+            // Key range: from this note to just below next sampled note
+            let keyLow = noteIdx == 0 ? 0 : (notes[noteIdx - 1] + note) / 2 + 1
+            let keyHigh = noteIdx == notes.count - 1 ? 127 : (note + notes[Swift.min(noteIdx + 1, notes.count - 1)]) / 2
+
+            for (velIdx, velocity) in velocityLayers.enumerated() {
+                let synthOutput = render(frameCount, frequency, velocity)
+
+                var zone = SampleZone(name: "\(name)_\(note)_v\(velocity)", rootNote: note)
+                zone.sampleData = synthOutput
+                zone.sampleRate = sampleRate
+                zone.keyRangeLow = keyLow
+                zone.keyRangeHigh = keyHigh
+
+                // Velocity range: divide 0-127 by layer count
+                let velStep = 128 / velocityLayers.count
+                zone.velocityLow = velIdx * velStep
+                zone.velocityHigh = velIdx == velocityLayers.count - 1 ? 127 : (velIdx + 1) * velStep - 1
+
+                zone.roundRobinGroup = note
+                zone.roundRobinIndex = velIdx
+                zone.loopEnd = synthOutput.count
+
+                zones.append(zone)
+                loadedCount += 1
+            }
+        }
+        return loadedCount
+    }
+
+    // MARK: - Errors
+
+    public enum SamplerError: Error, LocalizedError {
+        case bufferCreationFailed
+        case noAudioData
+        case fileNotFound
+        case unsupportedFormat
+
+        public var errorDescription: String? {
+            switch self {
+            case .bufferCreationFailed: return "Failed to create audio buffer"
+            case .noAudioData: return "No audio data in file"
+            case .fileNotFound: return "Audio file not found"
+            case .unsupportedFormat: return "Unsupported audio format"
+            }
         }
     }
 

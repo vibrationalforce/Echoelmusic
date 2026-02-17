@@ -908,6 +908,50 @@ class BreakbeatChopper: ObservableObject {
         currentPattern = pattern
     }
 
+    // MARK: - Export to EchoelSampler
+
+    /// Export all slices into an EchoelSampler as individual zones
+    /// Each slice becomes a zone mapped to sequential MIDI notes starting at `startNote`
+    func exportSlicesToSampler(_ sampler: EchoelSampler, startNote: Int = 36) -> Int {
+        var loadedCount = 0
+        for (index, slice) in slices.enumerated() {
+            guard let audio = processSlice(slice) else { continue }
+
+            let note = startNote + index
+            guard note <= 127 else { break }
+
+            var zone = SampleZone(name: "Slice_\(index)", rootNote: note)
+            zone.sampleData = audio
+            zone.sampleRate = Float(sampleRate)
+            zone.keyRangeLow = note
+            zone.keyRangeHigh = note
+            zone.loopEnd = audio.count
+            sampler.addZone(zone)
+            loadedCount += 1
+        }
+        return loadedCount
+    }
+
+    /// Export current pattern as a single rendered zone in the sampler
+    /// The full pattern render becomes one playable sample
+    func exportPatternToSampler(_ sampler: EchoelSampler, rootNote: Int = 60, name: String? = nil) -> Int? {
+        guard let patternBuffer = renderPattern() else { return nil }
+        guard let channelData = patternBuffer.floatChannelData?[0] else { return nil }
+
+        let length = Int(patternBuffer.frameLength)
+        let data = Array(UnsafeBufferPointer(start: channelData, count: length))
+
+        let zoneName = name ?? "Pattern_\(currentPattern?.name ?? "unknown")"
+        var zone = SampleZone(name: zoneName, rootNote: rootNote)
+        zone.sampleData = data
+        zone.sampleRate = Float(sampleRate)
+        zone.loopEnabled = true
+        zone.loopStart = 0
+        zone.loopEnd = data.count
+        sampler.addZone(zone)
+        return sampler.zones.count - 1
+    }
+
     // MARK: - Errors
 
     enum ChopperError: Error, LocalizedError {
