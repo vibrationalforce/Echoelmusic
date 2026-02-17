@@ -2,7 +2,7 @@
 // Echoelmusic - Echoela Physical AI
 //
 // Post-Quantum Cryptographic Meta-Registry for creative process integrity
-// Ensures all Echoela actions and NFT preparations are cryptographically secured
+// Ensures all Echoela actions are cryptographically secured
 //
 // Based on CRYSTALS-Dilithium (NIST PQC Standard)
 //
@@ -78,7 +78,6 @@ public struct RegistryEntry: Identifiable, Codable, Sendable {
 
     public enum Category: String, Codable, Sendable {
         case parameterChange = "Parameter Change"
-        case nftPreparation = "NFT Preparation"
         case sessionEvent = "Session Event"
         case objectiveUpdate = "Objective Update"
         case biometricCapture = "Biometric Capture"
@@ -189,45 +188,6 @@ public final class PQCMetaRegistry: ObservableObject {
         )
     }
 
-    /// NFT metadata for registry entries
-    public struct NFTRegistryMetadata {
-        public let name: String
-        public let artist: String
-        public let network: NFTFactory.BlockchainNetwork
-
-        public init(name: String, artist: String, network: NFTFactory.BlockchainNetwork) {
-            self.name = name
-            self.artist = artist
-            self.network = network
-        }
-    }
-
-    /// Sign and register an NFT preparation
-    public func registerNFTPreparation(
-        metadata: NFTRegistryMetadata,
-        contentHash: String
-    ) async throws -> RegistryEntry {
-        let payload = NFTPreparationPayload(
-            name: metadata.name,
-            artist: metadata.artist,
-            network: metadata.network.rawValue,
-            contentHash: contentHash
-        )
-
-        let payloadData = try JSONEncoder().encode(payload)
-
-        return try await registerEntry(
-            category: .nftPreparation,
-            action: "Prepared NFT: \(metadata.name)",
-            payload: payloadData,
-            metadata: [
-                "name": metadata.name,
-                "artist": metadata.artist,
-                "network": metadata.network.rawValue
-            ]
-        )
-    }
-
     /// Sign and register an AI decision
     public func registerAIDecision(
         decision: String,
@@ -253,7 +213,7 @@ public final class PQCMetaRegistry: ObservableObject {
         )
     }
 
-    /// Register a biometric capture for NFT
+    /// Register a biometric capture
     public func registerBiometricCapture(
         heartRateAvg: Float,
         hrvAvg: Float,

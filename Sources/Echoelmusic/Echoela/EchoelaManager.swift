@@ -31,7 +31,6 @@ public final class EchoelaManager: ObservableObject {
         case idle
         case production          // DAW/Production mode
         case performance         // Live performance
-        case minting             // NFT creation
         case meditation          // Wellness session
         case collaboration       // Multi-user session
         case auv3                // Running as AUv3 plugin
@@ -102,7 +101,6 @@ public final class EchoelaManager: ObservableObject {
 
         public enum ToolCategory: String, Codable {
             case production       // Audio/visual production
-            case nft              // NFT minting & management
             case biometric        // Health data access
             case collaboration    // Multi-user features
             case settings         // App configuration
@@ -114,7 +112,6 @@ public final class EchoelaManager: ObservableObject {
             case microphone
             case camera
             case location
-            case blockchain
             case notifications
         }
     }
@@ -135,14 +132,6 @@ public final class EchoelaManager: ObservableObject {
             category: .biometric,
             deepLinkScheme: "echoelmusic://action/meditation/start",
             requiredPermissions: [.healthKit]
-        ),
-        EchoelaTool(
-            id: "mint_nft",
-            name: "Mint NFT",
-            description: "Create an NFT from the current session",
-            category: .nft,
-            deepLinkScheme: "echoelmusic://action/nft/mint",
-            requiredPermissions: [.blockchain]
         ),
         EchoelaTool(
             id: "watch_sensing",
@@ -175,14 +164,6 @@ public final class EchoelaManager: ObservableObject {
             category: .compliance,
             deepLinkScheme: "echoelmusic://action/compliance/gema",
             requiredPermissions: []
-        ),
-        EchoelaTool(
-            id: "splits_configure",
-            name: "Configure Revenue Splits",
-            description: "Set up 0xSplits for collaborator payments",
-            category: .nft,
-            deepLinkScheme: "echoelmusic://action/nft/splits",
-            requiredPermissions: [.blockchain]
         ),
         // Morphic Engine tools
         EchoelaTool(
@@ -242,10 +223,8 @@ public final class EchoelaManager: ObservableObject {
             availableTools = toolDefinitions.filter { $0.category == .production }
         case .watchSensing:
             availableTools = toolDefinitions.filter { $0.category == .biometric }
-        case .minting:
-            availableTools = toolDefinitions.filter { $0.category == .nft || $0.category == .compliance }
         case .appClipPreview:
-            availableTools = toolDefinitions.filter { $0.id == "mint_nft" }
+            availableTools = toolDefinitions.filter { $0.category == .production }
         default:
             availableTools = toolDefinitions
         }
@@ -474,17 +453,6 @@ public final class EchoelaManager: ObservableObject {
             }
         }
 
-        if text.lowercased().contains("nft") || text.lowercased().contains("mint") {
-            if let url = generateDeepLink(action: "nft/mint") {
-                actions.append(EchoelaResponse.SuggestedAction(
-                    title: "Mint NFT",
-                    icon: "sparkles.rectangle.stack",
-                    deepLink: url,
-                    isDestructive: false
-                ))
-            }
-        }
-
         if text.lowercased().contains("collaborate") || text.lowercased().contains("invite") {
             if let url = generateDeepLink(action: "collab/invite") {
                 actions.append(EchoelaResponse.SuggestedAction(
@@ -547,8 +515,6 @@ public final class EchoelaManager: ObservableObject {
         switch category {
         case "meditation":
             handleMeditationAction(action, params: params)
-        case "nft":
-            handleNFTAction(action, params: params)
         case "watch":
             handleWatchAction(action, params: params)
         case "auv3":
@@ -569,14 +535,6 @@ public final class EchoelaManager: ObservableObject {
             name: .echoelaAction,
             object: nil,
             userInfo: ["category": "meditation", "action": action, "params": params]
-        )
-    }
-
-    private func handleNFTAction(_ action: String, params: [String: String]) {
-        NotificationCenter.default.post(
-            name: .echoelaAction,
-            object: nil,
-            userInfo: ["category": "nft", "action": action, "params": params]
         )
     }
 
