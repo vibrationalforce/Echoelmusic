@@ -468,6 +468,68 @@ class InstrumentOrchestrator: ObservableObject {
         }
     }
 
+    // MARK: - Synth Freeze Pipeline
+
+    /// Freeze current synth engine into EchoelSampler zones
+    /// Renders the synth at multiple notes and velocity layers, creating a multi-sampled instrument
+    func freezeToSampler(
+        _ sampler: EchoelSampler,
+        notes: [Int] = [36, 48, 60, 72, 84],
+        velocityLayers: [Int] = [40, 80, 120],
+        duration: Float = 2.0
+    ) -> Int {
+        guard let synthEngine = currentSynthEngine else {
+            log.audio("InstrumentOrchestrator: No synth engine to freeze")
+            return 0
+        }
+
+        let sampleRate: Float = 48000.0
+        let name = currentInstrument?.name ?? synthEngine.name
+
+        let count = sampler.freezeMultiSampled(
+            render: { frameCount, frequency, velocity in
+                var samples = synthEngine.synthesize(
+                    frequency: frequency,
+                    duration: Float(frameCount) / sampleRate,
+                    sampleRate: sampleRate
+                )
+                let vel = Float(velocity) / 127.0
+                samples = self.applyVelocityEnvelope(samples, velocity: vel)
+                return samples
+            },
+            notes: notes,
+            velocityLayers: velocityLayers,
+            duration: duration,
+            name: name
+        )
+
+        log.audio("InstrumentOrchestrator: Froze \(name) → \(count) sampler zones (\(notes.count) notes x \(velocityLayers.count) layers)")
+        return count
+    }
+
+    /// Quick freeze: render current synth at a single note into one sampler zone
+    func quickFreeze(_ sampler: EchoelSampler, note: Int = 60, duration: Float = 2.0) -> Int {
+        guard let synthEngine = currentSynthEngine else { return -1 }
+
+        let sampleRate: Float = 48000.0
+        let frequency = midiNoteToFrequency(note)
+        let name = currentInstrument?.name ?? synthEngine.name
+
+        return sampler.freezeSynthToZone(
+            render: { frameCount in
+                synthEngine.synthesize(
+                    frequency: frequency,
+                    duration: Float(frameCount) / sampleRate,
+                    sampleRate: sampleRate
+                )
+            },
+            duration: duration,
+            rootNote: note,
+            name: "\(name)_frozen",
+            loopEnabled: true
+        )
+    }
+
     // MARK: - Public API for AudioEngine Integration
 
     /// Get all available instruments
