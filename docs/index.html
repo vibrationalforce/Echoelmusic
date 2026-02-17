@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- v2026.02.17 — stable, no canvas, EchoelTools inventory -->
+<!-- v9.0.0 — EchoelToolkit: 498 classes → 11 unified Echoel* tools -->
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echoelmusic by Echoel — Your Body Creates Music, Visuals &amp; Light</title>
-    <meta name="description" content="Your heartbeat, breath, and movement become music, visuals, and light. 20 synth engines, 90+ DSP effects, Dolby Atmos, DMX. Free on all Apple devices. — Echoel">
+    <meta name="description" content="Your heartbeat, breath, and movement become music, visuals, and light. 11 unified Echoel* tools — synthesis, effects, mixing, MIDI, biometrics, visuals, video, lighting, networking, AI. Free on all Apple devices. — Echoel">
     <meta name="theme-color" content="#000000">
 
     <!-- Open Graph -->
@@ -86,11 +86,11 @@
           "name": "Echoelmusic",
           "applicationCategory": "MultimediaApplication",
           "operatingSystem": ["iOS 15+", "macOS 12+", "watchOS 8+", "tvOS 15+", "visionOS 1+"],
-          "description": "Bio-reactive multimedia art production. 20 synth engines, 90+ DSP effects, spatial audio, visuals, film, lighting — all from your body.",
+          "description": "Bio-reactive multimedia art production. 11 unified Echoel* tools — synthesis, effects, mixing, sequencing, MIDI, biometrics, visuals, video, lighting, networking, AI. All from your body.",
           "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
           "downloadUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
           "installUrl": "https://apps.apple.com/app/echoelmusic/id6757957358",
-          "featureList": "Bio-reactive music, 20 synth engines incl. EchoelQuant, 90+ DSP effects, face/gesture/gaze tracking, MPE touch instruments, SharePlay collaboration, 30+ visual modes, video production, live streaming, projection mapping, MIDI 2.0, Dolby Atmos, DMX lighting, spatial audio, Apple Watch HRV, visionOS immersive, HRV coherence training"
+          "featureList": "Bio-reactive music, EchoelToolkit (11 unified tools), EchoelSynth (6 synthesis backends), EchoelFX (20+ effects incl. analog emulations), EchoelMix (pro mixing + session), EchoelSeq (sequencer + automation), EchoelMIDI (MIDI 2.0 + MPE + touch instruments), EchoelBio (HRV/face/gesture/gaze tracking), EchoelVis (30+ visual modes), EchoelVid (video + live streaming), EchoelLux (DMX/Art-Net/projection mapping), EchoelNet (SharePlay/collab), EchoelAI (on-device intelligence), Dolby Atmos, spatial audio, visionOS immersive"
         }
       ]
     }
@@ -443,23 +443,39 @@
 
         /* ============ ECHOELTOOLS ============ */
         .tools-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 32px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
         }
-
-        .tools-cat-title {
-            font-size: 12px; font-weight: 700; letter-spacing: 2px;
-            text-transform: uppercase; color: var(--text); margin-bottom: 10px;
-            padding-bottom: 6px; border-bottom: 1px solid var(--border);
+        .tool-card {
+            background: var(--glass); border-radius: 20px;
+            padding: 28px 24px;
+            position: relative; overflow: hidden;
+            transition: transform 0.3s;
         }
-        .tools-cat ul { list-style: none; }
-        .tools-cat li {
-            padding: 4px 0; font-size: 14px; line-height: 1.5;
-            border-bottom: 1px solid rgba(224,224,224,0.03);
+        .tool-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--dim), transparent);
+            opacity: 0; transition: opacity 0.3s;
         }
-        .tools-cat li:last-child { border-bottom: none; }
-        .tool-name { font-weight: 700; color: var(--text); }
-        .tool-sep { color: var(--dim); margin: 0 4px; }
-        .tool-desc { color: var(--dim); }
+        .tool-card:hover::before { opacity: 0.5; }
+        .tool-card:hover { transform: translateY(-4px); }
+        .tool-card.span2 { grid-column: span 2; }
+        .tool-card h3 {
+            font-size: clamp(16px, 2vw, 20px); font-weight: 700; letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+        .tool-tagline {
+            color: var(--dim); font-style: italic; margin-bottom: 12px;
+            font-size: 14px; line-height: 1.5;
+        }
+        .tool-caps {
+            display: flex; flex-wrap: wrap; gap: 6px;
+        }
+        .tool-cap {
+            font-size: 11px; color: var(--dim);
+            padding: 3px 10px; border-radius: 20px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
 
         /* ============ TECH SPECS ============ */
         .specs-grid {
@@ -535,6 +551,7 @@
             .bento-card.span2 { grid-column: span 1; }
             .specs-grid { grid-template-columns: repeat(2, 1fr); }
             .tools-grid { grid-template-columns: 1fr; }
+            .tool-card.span2 { grid-column: span 1; }
         }
         @media (max-width: 768px) {
             .h1-create, .h1-within { letter-spacing: -3px; }
@@ -656,7 +673,7 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg>
                             </div>
                             <span class="cap-label">Sound</span>
-                            <span class="cap-detail">20 Engines &middot; 90+ FX<br>MIDI 2.0 &middot; Atmos</span>
+                            <span class="cap-detail">EchoelSynth &middot; EchoelFX<br>MIDI 2.0 &middot; Atmos</span>
                         </div>
                         <div class="cap-node">
                             <div class="cap-icon">
@@ -733,7 +750,7 @@
                 <div class="bento-card">
                     <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12h2"/><path d="M6 8v8"/><path d="M10 5v14"/><path d="M14 8v8"/><path d="M18 10v4"/><path d="M22 12h-2"/></svg></div>
                     <h3>Full production studio</h3>
-                    <p>20 synth engines, 90+ DSP effects, spatial audio, Dolby Atmos. Complete studio in one app.</p>
+                    <p>EchoelSynth, EchoelFX, EchoelMix — 6 synthesis backends, 20+ effects, spatial audio, Dolby Atmos. Complete studio in one app.</p>
                 </div>
 
                 <!-- Visuals -->
@@ -759,282 +776,171 @@
             </div>
         </div>
 
-        <!-- ========== ECHOELTOOLS ========== -->
+        <!-- ========== ECHOELTOOLKIT ========== -->
         <div id="tools" class="section">
-            <div class="section-label reveal">EchoelTools</div>
-            <h2 class="section-title reveal">The full toolkit</h2>
-            <p class="section-sub reveal">Every instrument, effect, and engine built into Echoelmusic.</p>
+            <div class="section-label reveal">EchoelToolkit</div>
+            <h2 class="section-title reveal">11 Tools. Everything.</h2>
+            <p class="section-sub reveal">498 engines consolidated into 11 unified Echoel* tools. Fewer tools, more power. All connected via EngineBus.</p>
 
             <div class="tools-grid reveal reveal-stagger">
 
-                <!-- Synth Engines -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Synth Engines</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelSub</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Classic analog subtractive synthesis</span></li>
-                        <li><span class="tool-name">EchoelFM</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Frequency modulation (DX7-style)</span></li>
-                        <li><span class="tool-name">EchoelWave</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Morphing wavetable synthesis</span></li>
-                        <li><span class="tool-name">EchoelAdd</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Additive harmonic synthesis</span></li>
-                        <li><span class="tool-name">EchoelGrain</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Granular time-domain synthesis</span></li>
-                        <li><span class="tool-name">EchoelSpectral</span><span class="tool-sep">&mdash;</span><span class="tool-desc">FFT spectral processing</span></li>
-                        <li><span class="tool-name">EchoelPhys</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Physical modeling synthesis</span></li>
-                        <li><span class="tool-name">EchoelString</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Karplus-Strong plucked strings</span></li>
-                        <li><span class="tool-name">EchoelGuide</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Digital waveguide (wind &amp; strings)</span></li>
-                        <li><span class="tool-name">EchoelModal</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Resonant modes (bells, plates)</span></li>
-                        <li><span class="tool-name">EchoelSample</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sample playback &amp; manipulation</span></li>
-                        <li><span class="tool-name">EchoelVector</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Vector crossfade synthesis</span></li>
-                        <li><span class="tool-name">EchoelNeural</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI-powered audio generation</span></li>
-                        <li><span class="tool-name">EchoelGenetic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sounds evolve &amp; mutate like DNA</span></li>
-                        <li><span class="tool-name">EchoelOrganic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Living sounds grown from seeds</span></li>
-                        <li><span class="tool-name">EchoelBio</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-reactive synthesis (HRV-driven)</span></li>
-                        <li><span class="tool-name">EchoelQuant</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Quantum wavefunction (Schr&ouml;dinger)</span></li>
-                        <li><span class="tool-name">EchoelDDSP</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Differentiable DSP (ML + harmonic model)</span></li>
-                        <li><span class="tool-name">EchoelCellular</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Cellular automata synthesis</span></li>
-                        <li><span class="tool-name">EchoelModalBank</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Physics-constrained modal resonator (bells, plates, gongs)</span></li>
-                    </ul>
+                <div class="tool-card span2">
+                    <h3>EchoelSynth</h3>
+                    <p class="tool-tagline">All synthesis in one engine</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">DDSP</span>
+                        <span class="tool-cap">Modal</span>
+                        <span class="tool-cap">Cellular</span>
+                        <span class="tool-cap">Quantum</span>
+                        <span class="tool-cap">Sampler</span>
+                        <span class="tool-cap">TR-808</span>
+                        <span class="tool-cap">Binaural</span>
+                        <span class="tool-cap">45+ Presets</span>
+                    </div>
                 </div>
 
-                <!-- Effects / FX -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Effects / FX</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelEQ</span><span class="tool-sep">&mdash;</span><span class="tool-desc">32-band parametric equalizer</span></li>
-                        <li><span class="tool-name">EchoelComp</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Multiband compressor</span></li>
-                        <li><span class="tool-name">EchoelVerb</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Convolution &amp; algorithmic reverb</span></li>
-                        <li><span class="tool-name">EchoelDelay</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Tape, analog &amp; modern delay</span></li>
-                        <li><span class="tool-name">EchoelMod</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Chorus, flanger, phaser</span></li>
-                        <li><span class="tool-name">EchoelDrive</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Distortion &amp; saturation</span></li>
-                        <li><span class="tool-name">EchoelLimit</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Brick-wall true peak limiter</span></li>
-                        <li><span class="tool-name">EchoelGate</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Gate &amp; expander</span></li>
-                        <li><span class="tool-name">EchoelDeEss</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Vocal de-esser</span></li>
-                        <li><span class="tool-name">EchoelStereo</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Stereo imaging &amp; width</span></li>
-                        <li><span class="tool-name">EchoelTune</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Real-time pitch correction</span></li>
-                        <li><span class="tool-name">EchoelWarmth</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Analog console saturation</span></li>
-                        <li><span class="tool-name">EchoelCore</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Central DSP algorithms</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelFX</h3>
+                    <p class="tool-tagline">Every effect &amp; analog emulation</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">EQ</span>
+                        <span class="tool-cap">Comp</span>
+                        <span class="tool-cap">Reverb</span>
+                        <span class="tool-cap">Delay</span>
+                        <span class="tool-cap">Mod</span>
+                        <span class="tool-cap">Drive</span>
+                        <span class="tool-cap">Limiter</span>
+                        <span class="tool-cap">VCA</span>
+                        <span class="tool-cap">Tube</span>
+                        <span class="tool-cap">FET</span>
+                    </div>
                 </div>
 
-                <!-- Analog Emulations -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Analog Emulations</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelVCA</span><span class="tool-sep">&mdash;</span><span class="tool-desc">VCA bus compressor (classic glue)</span></li>
-                        <li><span class="tool-name">EchoelPunch</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Punchy analog bus compressor</span></li>
-                        <li><span class="tool-name">EchoelTubeEQ</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Vintage tube program EQ</span></li>
-                        <li><span class="tool-name">EchoelVariMu</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Variable-mu tube limiter</span></li>
-                        <li><span class="tool-name">EchoelOpto</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Optical leveling amplifier</span></li>
-                        <li><span class="tool-name">EchoelFET</span><span class="tool-sep">&mdash;</span><span class="tool-desc">FET peak limiter (all-button mode)</span></li>
-                        <li><span class="tool-name">EchoelStereoMu</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Stereo variable-mu mastering compressor</span></li>
-                        <li><span class="tool-name">EchoelBritChannel</span><span class="tool-sep">&mdash;</span><span class="tool-desc">British console channel strip + mastering</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelMix</h3>
+                    <p class="tool-tagline">Mixing, recording &amp; session</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">Console</span>
+                        <span class="tool-cap">Session</span>
+                        <span class="tool-cap">Recording</span>
+                        <span class="tool-cap">BPM Sync</span>
+                        <span class="tool-cap">Metering</span>
+                    </div>
                 </div>
 
-                <!-- Instruments -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Instruments</div>
-                    <ul>
-                        <li><span class="tool-name">Echoel808</span><span class="tool-sep">&mdash;</span><span class="tool-desc">TR-808 drum machine + bass synth</span></li>
-                        <li><span class="tool-name">EchoelKeys</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Touch keyboard &amp; piano</span></li>
-                        <li><span class="tool-name">EchoelPads</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Chord pads &amp; arpeggiator</span></li>
-                        <li><span class="tool-name">EchoelDrums</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Drum pad controller</span></li>
-                        <li><span class="tool-name">EchoelMelody</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Melody grid instrument</span></li>
-                        <li><span class="tool-name">EchoelOrchestra</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Orchestral &amp; cinematic scoring</span></li>
-                        <li><span class="tool-name">EchoelWorld</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sitar, Erhu, Koto, Oud, Tabla, Gamelan + more</span></li>
-                        <li><span class="tool-name">EchoelFilmScore</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Film score composer</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelSeq</h3>
+                    <p class="tool-tagline">Sequencer &amp; automation</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">Step Seq</span>
+                        <span class="tool-cap">Patterns</span>
+                        <span class="tool-cap">Automation</span>
+                        <span class="tool-cap">Scripting</span>
+                    </div>
                 </div>
 
-                <!-- MIDI / MPE -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">MIDI / MPE</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelMIDI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Full MIDI 2.0 protocol</span></li>
-                        <li><span class="tool-name">EchoelMPE</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MPE zone manager</span></li>
-                        <li><span class="tool-name">EchoelPianoRoll</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MIDI note editor</span></li>
-                        <li><span class="tool-name">EchoelAudioToMIDI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI audio-to-MIDI transcription</span></li>
-                        <li><span class="tool-name">EchoelVoiceToMIDI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Voice input to MIDI</span></li>
-                        <li><span class="tool-name">EchoelQuantumMIDI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Quantum-intelligent MIDI routing</span></li>
-                        <li><span class="tool-name">EchoelMIDISpatial</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MIDI to spatial audio mapping</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelMIDI</h3>
+                    <p class="tool-tagline">MIDI 2.0, MPE &amp; touch instruments</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">MIDI 2.0</span>
+                        <span class="tool-cap">MPE</span>
+                        <span class="tool-cap">Keys</span>
+                        <span class="tool-cap">Pads</span>
+                        <span class="tool-cap">Drums</span>
+                        <span class="tool-cap">Strum</span>
+                        <span class="tool-cap">Audio&rarr;MIDI</span>
+                    </div>
                 </div>
 
-                <!-- Visuals -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Visuals</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelVisual</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Immersive visual engine (120fps)</span></li>
-                        <li><span class="tool-name">Echoel360</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Intelligent 360&deg; visuals</span></li>
-                        <li><span class="tool-name">EchoelCymatics</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sound-to-pattern visualization</span></li>
-                        <li><span class="tool-name">EchoelLiquidLight</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Liquid light show</span></li>
-                        <li><span class="tool-name">EchoelMandala</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sacred geometry visuals</span></li>
-                        <li><span class="tool-name">EchoelSpectrum</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Rainbow spectrum analyzer</span></li>
-                        <li><span class="tool-name">EchoelVaporwave</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Aesthetic vaporwave visuals</span></li>
-                        <li><span class="tool-name">EchoelParticles</span><span class="tool-sep">&mdash;</span><span class="tool-desc">GPU particle systems</span></li>
-                        <li><span class="tool-name">EchoelGeometry</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Procedural 3D geometry</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelBio</h3>
+                    <p class="tool-tagline">Biometrics &amp; body input</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">HRV</span>
+                        <span class="tool-cap">Heart Rate</span>
+                        <span class="tool-cap">Breath</span>
+                        <span class="tool-cap">Face</span>
+                        <span class="tool-cap">Gaze</span>
+                        <span class="tool-cap">Hands</span>
+                        <span class="tool-cap">Motion</span>
+                        <span class="tool-cap">EEG</span>
+                    </div>
                 </div>
 
-                <!-- Film / Video / Streaming -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Film / Streaming</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelEdit</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Full NLE video timeline</span></li>
-                        <li><span class="tool-name">EchoelLive</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI multi-camera live production</span></li>
-                        <li><span class="tool-name">EchoelStream</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Multi-platform live streaming</span></li>
-                        <li><span class="tool-name">EchoelGrade</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Pro color grading (LUT, curves)</span></li>
-                        <li><span class="tool-name">EchoelChromaKey</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Green screen keying</span></li>
-                        <li><span class="tool-name">EchoelProjection</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Multi-surface projection mapping</span></li>
-                        <li><span class="tool-name">EchoelStabilize</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Video stabilization</span></li>
-                        <li><span class="tool-name">EchoelExport</span><span class="tool-sep">&mdash;</span><span class="tool-desc">ProRes, H.265, 25+ formats</span></li>
-                        <li><span class="tool-name">EchoelBPMEdit</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Beat-synced video editing</span></li>
-                        <li><span class="tool-name">EchoelVideoAI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Super-intelligence video AI</span></li>
-                    </ul>
+                <div class="tool-card span2">
+                    <h3>EchoelVis</h3>
+                    <p class="tool-tagline">30+ visual modes, 120fps, Metal-accelerated</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">Particles</span>
+                        <span class="tool-cap">Fractals</span>
+                        <span class="tool-cap">Cymatics</span>
+                        <span class="tool-cap">Geometry</span>
+                        <span class="tool-cap">360&deg;</span>
+                        <span class="tool-cap">visionOS</span>
+                        <span class="tool-cap">Sacred Geometry</span>
+                    </div>
                 </div>
 
-                <!-- Lighting -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Lighting</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelDMX</span><span class="tool-sep">&mdash;</span><span class="tool-desc">DMX / Art-Net lighting control</span></li>
-                        <li><span class="tool-name">EchoelCue</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Show cue system &amp; scene management</span></li>
-                        <li><span class="tool-name">EchoelPush</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Ableton Push 3 LED controller</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelVid</h3>
+                    <p class="tool-tagline">Film, stream &amp; edit</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">NLE Editor</span>
+                        <span class="tool-cap">Multi-Cam</span>
+                        <span class="tool-cap">Live Stream</span>
+                        <span class="tool-cap">Color Grade</span>
+                        <span class="tool-cap">ProRes</span>
+                        <span class="tool-cap">25+ Formats</span>
+                    </div>
                 </div>
 
-                <!-- Spatial Audio -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Spatial Audio</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelSpatial</span><span class="tool-sep">&mdash;</span><span class="tool-desc">3D/4D spatial audio engine</span></li>
-                        <li><span class="tool-name">EchoelAtmos</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Object-based Dolby Atmos renderer</span></li>
-                        <li><span class="tool-name">EchoelAmbi</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Ambisonics processor</span></li>
-                        <li><span class="tool-name">EchoelHRTF</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Head-related transfer functions</span></li>
-                        <li><span class="tool-name">EchoelDoppler</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Motion-based frequency shifting</span></li>
-                        <li><span class="tool-name">EchoelRoom</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Acoustic room simulation</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelLux</h3>
+                    <p class="tool-tagline">Lighting &amp; stage control</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">DMX 512</span>
+                        <span class="tool-cap">Art-Net</span>
+                        <span class="tool-cap">Lasers</span>
+                        <span class="tool-cap">Smart Home</span>
+                        <span class="tool-cap">Cue System</span>
+                        <span class="tool-cap">Projection</span>
+                    </div>
                 </div>
 
-                <!-- Biofeedback -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Biofeedback</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelHeart</span><span class="tool-sep">&mdash;</span><span class="tool-desc">HRV &amp; heart rate engine</span></li>
-                        <li><span class="tool-name">EchoelBreath</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Respiratory tracking</span></li>
-                        <li><span class="tool-name">EchoelEEG</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Brainwave sensor bridge</span></li>
-                        <li><span class="tool-name">EchoelOura</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Oura Ring integration</span></li>
-                        <li><span class="tool-name">EchoelBioMap</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-to-parameter mapper</span></li>
-                        <li><span class="tool-name">EchoelBioVocal</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-reactive vocal processing</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>EchoelNet</h3>
+                    <p class="tool-tagline">Collaboration &amp; sync</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">SharePlay</span>
+                        <span class="tool-cap">1000+ Collab</span>
+                        <span class="tool-cap">Cloud Sync</span>
+                        <span class="tool-cap">&lt;10ms Sync</span>
+                        <span class="tool-cap">Haptics</span>
+                    </div>
                 </div>
 
-                <!-- AI / Intelligence -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">AI / Intelligence</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelComposer</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI music composition</span></li>
-                        <li><span class="tool-name">EchoelStemSplit</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI stem separation</span></li>
-                        <li><span class="tool-name">EchoelLLM</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Language model integration</span></li>
-                        <li><span class="tool-name">EchoelGenAI</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Generative AI engine</span></li>
-                        <li><span class="tool-name">EchoelImageMatch</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI color &amp; exposure matching</span></li>
-                    </ul>
+                <div class="tool-card span2">
+                    <h3>EchoelAI</h3>
+                    <p class="tool-tagline">On-device intelligence layer</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">CoreML</span>
+                        <span class="tool-cap">LLM</span>
+                        <span class="tool-cap">Stem Split</span>
+                        <span class="tool-cap">Composition</span>
+                        <span class="tool-cap">Generative</span>
+                        <span class="tool-cap">Video AI</span>
+                    </div>
                 </div>
 
-                <!-- Control / Production -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Control / Production</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelMix</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Pro mix engine</span></li>
-                        <li><span class="tool-name">EchoelSession</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Session management</span></li>
-                        <li><span class="tool-name">EchoelLoop</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Live looper</span></li>
-                        <li><span class="tool-name">EchoelSequencer</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-reactive step sequencer</span></li>
-                        <li><span class="tool-name">EchoelLink</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Ableton Link multi-device sync</span></li>
-                        <li><span class="tool-name">EchoelTuner</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Chromatic tuner</span></li>
-                        <li><span class="tool-name">EchoelVocal</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Vocal chain (harmony, doubling, vibrato)</span></li>
-                        <li><span class="tool-name">EchoelBinaural</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Binaural beat generator</span></li>
-                        <li><span class="tool-name">EchoelAutomate</span><span class="tool-sep">&mdash;</span><span class="tool-desc">AI-assisted parameter automation</span></li>
-                        <li><span class="tool-name">EchoelRecord</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Multi-track bio-reactive recording</span></li>
-                        <li><span class="tool-name">EchoelPresets</span><span class="tool-sep">&mdash;</span><span class="tool-desc">50+ curated preset library</span></li>
-                        <li><span class="tool-name">EchoelScript</span><span class="tool-sep">&mdash;</span><span class="tool-desc">User scripting engine</span></li>
-                    </ul>
-                </div>
-
-                <!-- Connectivity / Collaboration -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Connectivity</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelSharePlay</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Group bio-reactive sessions via SharePlay</span></li>
-                        <li><span class="tool-name">EchoelCollab</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Worldwide collaboration hub (1000+ participants)</span></li>
-                        <li><span class="tool-name">EchoelWatchSync</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Real-time Apple Watch bio-data sync</span></li>
-                        <li><span class="tool-name">EchoelShortcuts</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Siri &amp; Shortcuts hands-free control</span></li>
-                        <li><span class="tool-name">EchoelHaptic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Bio-reactive haptic composition (15 patterns)</span></li>
-                        <li><span class="tool-name">EchoelSync</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Own protocol for cross-device sync (&lt;10ms)</span></li>
-                        <li><span class="tool-name">EchoelCloud</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Cloud project sync &amp; backup</span></li>
-                    </ul>
-                </div>
-
-                <!-- Physical Input -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Physical Input</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelFaceMapper</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Face expression &rarr; audio (ARKit jaw, smile, eyebrow)</span></li>
-                        <li><span class="tool-name">EchoelGestureMapper</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Hand gesture recognition (pinch, spread, fist, swipe)</span></li>
-                        <li><span class="tool-name">EchoelGazeTracker</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Eye gaze tracking (visionOS, iPad Pro, ARKit)</span></li>
-                        <li><span class="tool-name">EchoelHeadTracker</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Head rotation &rarr; spatial audio control</span></li>
-                        <li><span class="tool-name">EchoelHandTracker</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Real-time hand tracking (visionOS)</span></li>
-                        <li><span class="tool-name">EchoelMotion</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Accelerometer &amp; gyro &rarr; music (dance, sport, movement)</span></li>
-                        <li><span class="tool-name">EchoelEVM</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Eulerian video magnification (micro-movement detection)</span></li>
-                        <li><span class="tool-name">EchoelCymatics</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Sound &rarr; cymatics pattern visualization</span></li>
-                    </ul>
-                </div>
-
-                <!-- Touch Controllers & MPE -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Touch &amp; MPE</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelKeys</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Touch keyboard with MPE per-note expression</span></li>
-                        <li><span class="tool-name">EchoelPads</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Chord pads with velocity &amp; aftertouch</span></li>
-                        <li><span class="tool-name">EchoelDrums</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Drum pad controller (velocity-sensitive)</span></li>
-                        <li><span class="tool-name">EchoelMelody</span><span class="tool-sep">&mdash;</span><span class="tool-desc">XY melody grid (pitch + mod)</span></li>
-                        <li><span class="tool-name">EchoelStrum</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Strum pad instrument</span></li>
-                        <li><span class="tool-name">EchoelMIDI2</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MIDI 2.0 Universal Packets (32-bit resolution)</span></li>
-                        <li><span class="tool-name">EchoelMPE</span><span class="tool-sep">&mdash;</span><span class="tool-desc">MPE per-note pitch, slide, pressure</span></li>
-                        <li><span class="tool-name">EchoelEchoboard</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Unified control dashboard for all devices</span></li>
-                    </ul>
-                </div>
-
-                <!-- Immersive / Spatial -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Immersive</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelImmersive</span><span class="tool-sep">&mdash;</span><span class="tool-desc">visionOS immersive space (RealityKit)</span></li>
-                        <li><span class="tool-name">EchoelIsochronic</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Isochronic tone sessions</span></li>
-                        <li><span class="tool-name">Echoel360</span><span class="tool-sep">&mdash;</span><span class="tool-desc">360&deg; panoramic audio-visuals</span></li>
-                        <li><span class="tool-name">EchoelRoomSim</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Acoustic room simulation</span></li>
-                        <li><span class="tool-name">EchoelObjectAudio</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Object-based audio rendering</span></li>
-                    </ul>
-                </div>
-
-                <!-- Wellness / Science -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Wellness &amp; Science</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelHRVTraining</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Evidence-based HRV coherence training</span></li>
-                        <li><span class="tool-name">EchoelCircadian</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Circadian rhythm optimization</span></li>
-                        <li><span class="tool-name">EchoelFlow</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Flow state detection &amp; optimization</span></li>
-                        <li><span class="tool-name">EchoelBreathGuide</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Guided breathing with real-time feedback</span></li>
-                        <li><span class="tool-name">EchoelCoherenceTrainer</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Group coherence training (real-time sync)</span></li>
-                    </ul>
-                </div>
-
-                <!-- Platform Integration -->
-                <div class="tools-cat">
-                    <div class="tools-cat-title">Platform</div>
-                    <ul>
-                        <li><span class="tool-name">EchoelWidgets</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Home screen &amp; Lock Screen widgets</span></li>
-                        <li><span class="tool-name">EchoelLiveActivity</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Dynamic Island &amp; Live Activities</span></li>
-                        <li><span class="tool-name">EchoelAppClip</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Instant try-before-download App Clip</span></li>
-                        <li><span class="tool-name">EchoelVoiceControl</span><span class="tool-sep">&mdash;</span><span class="tool-desc">Full voice command interface</span></li>
-                    </ul>
+                <div class="tool-card">
+                    <h3>Echoela</h3>
+                    <p class="tool-tagline">AI assistant &amp; creative guide</p>
+                    <div class="tool-caps">
+                        <span class="tool-cap">11 Skills</span>
+                        <span class="tool-cap">Constitutional AI</span>
+                        <span class="tool-cap">Voice Control</span>
+                    </div>
                 </div>
 
             </div>
@@ -1078,12 +984,8 @@
 
             <div class="specs-grid reveal reveal-stagger">
                 <div class="spec-item">
-                    <div class="spec-val">20</div>
-                    <div class="spec-label">Synth engines</div>
-                </div>
-                <div class="spec-item">
-                    <div class="spec-val">90+</div>
-                    <div class="spec-label">DSP effects</div>
+                    <div class="spec-val">11</div>
+                    <div class="spec-label">Unified Echoel* tools</div>
                 </div>
                 <div class="spec-item">
                     <div class="spec-val">&lt;10ms</div>
@@ -1092,6 +994,10 @@
                 <div class="spec-item">
                     <div class="spec-val">120fps</div>
                     <div class="spec-label">Visual engine</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">60Hz</div>
+                    <div class="spec-label">Bio-reactive loop</div>
                 </div>
                 <div class="spec-item">
                     <div class="spec-val">MIDI 2.0</div>
