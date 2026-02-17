@@ -1031,6 +1031,18 @@ public final class EchoelStage: ObservableObject {
     @Published public var connectedDisplays: [ConnectedDisplay] = []
     @Published public var isOutputActive: Bool = false
 
+    /// The rendering pipeline handles actual display detection and frame routing
+    public let pipeline = ExternalDisplayRenderingPipeline.shared
+
+    /// Dante/AES67 audio transport for professional installations
+    public let danteTransport = DanteAudioTransport.shared
+
+    /// NDI/Syphon video transport for broadcast and VJ workflows
+    public let videoTransport = VideoNetworkTransport.shared
+
+    /// EchoelSync: bio-reactive sync across devices
+    public let sync = EchoelSyncProtocol.shared
+
     public struct ConnectedDisplay: Identifiable {
         public let id: String
         public let name: String
@@ -1050,8 +1062,10 @@ public final class EchoelStage: ObservableObject {
     }
 
     private var busSubscription: BusSubscription?
+    private var cancellables = Set<AnyCancellable>()
 
     public init() {
+        // Subscribe to visual frames for routing
         busSubscription = EngineBus.shared.subscribe(to: .visual) { [weak self] msg in
             Task { @MainActor in
                 guard self?.isOutputActive == true else { return }
@@ -1060,41 +1074,80 @@ public final class EchoelStage: ObservableObject {
                 }
             }
         }
+
+        // Sync detected outputs from pipeline to our connectedDisplays
+        pipeline.$detectedOutputs
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] outputs in
+                self?.connectedDisplays = outputs.map { output in
+                    ConnectedDisplay(
+                        id: output.id,
+                        name: output.name,
+                        type: Self.mapCategory(output.category),
+                        width: output.nativeWidth,
+                        height: output.nativeHeight,
+                        isActive: output.isAvailable
+                    )
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private static func mapCategory(_ category: DisplayOutputDescriptor.OutputCategory) -> DisplayType {
+        switch category {
+        case .externalDisplay: return .externalHDMI
+        case .airPlay: return .airPlay
+        case .smartGlasses: return .smartGlasses
+        case .vrXRHeadset: return .vrXR
+        case .projector: return .projector
+        case .domeBeamer: return .domeBeamer
+        case .multiBeamerArray: return .multiBeamer
+        case .ledWall: return .ledWall
+        case .ndiOutput: return .externalHDMI
+        case .syphonOutput: return .externalHDMI
+        }
     }
 
     /// Start output to all connected displays
     public func startOutput() {
         isOutputActive = true
+        pipeline.startPipeline()
         EngineBus.shared.publish(.custom(topic: "stage.output.start", payload: ["mode": mode.rawValue]))
     }
 
     /// Stop all output routing
     public func stopOutput() {
         isOutputActive = false
+        pipeline.stopPipeline()
         EngineBus.shared.publish(.custom(topic: "stage.output.stop", payload: [:]))
     }
 
-    /// Route visual frame to appropriate outputs based on mode
+    /// Route visual frame via the pipeline to all assigned outputs
     private func routeFrame(_ frame: VisualFrame) {
-        for display in connectedDisplays where display.isActive {
-            EngineBus.shared.publish(.custom(
-                topic: "stage.route.\(display.type.rawValue)",
-                payload: ["displayId": display.id, "mode": mode.rawValue]
-            ))
-        }
+        pipeline.routeVisualFrame(frame)
     }
 
-    /// Scan for available displays and devices
+    /// Scan for all available displays, NDI sources, and AirPlay devices
     public func scanForDisplays() {
-        EngineBus.shared.publish(.custom(topic: "stage.scan", payload: [:]))
+        pipeline.scanForAllOutputs()
+        danteTransport.startDiscovery()
+        videoTransport.startNDIDiscovery()
     }
 
     /// Set content per screen for multi-screen mode
     public func assignContent(displayId: String, contentType: OutputMode) {
-        EngineBus.shared.publish(.custom(
-            topic: "stage.assign",
-            payload: ["displayId": displayId, "content": contentType.rawValue]
-        ))
+        let pipelineContent: OutputContentAssignment.ContentType
+        switch contentType {
+        case .mirror: pipelineContent = .mirror
+        case .extended: pipelineContent = .cleanFeed
+        case .audience: pipelineContent = .audienceVisuals
+        case .therapist: pipelineContent = .therapistBioData
+        case .projection: pipelineContent = .cleanFeed
+        case .dome: pipelineContent = .domeProjection
+        case .vrHeadset: pipelineContent = .immersive360
+        case .multiScreen: pipelineContent = .multiviewMonitor
+        }
+        pipeline.assignContent(outputId: displayId, content: pipelineContent)
     }
 }
 
