@@ -1,7 +1,7 @@
 import Foundation
 import Accelerate
 
-// MARK: - Quantum Wavefunction Synthesizer
+// MARK: - EchoelQuant — Quantum Wavefunction Synthesizer
 // Sound generation based on the time-dependent Schrödinger equation (TDSE).
 // Uses Split-Step Fourier method for real-time numerical simulation.
 //
@@ -11,12 +11,21 @@ import Accelerate
 //   3. Split-Step Fourier: V-step in position space, T-step in momentum space via FFT
 //   4. Audio extraction via observables (Re(ψ), |ψ|², phase-to-stereo)
 //
+// Features:
+//   - 6 potential types (infinite well, harmonic, double well, periodic, custom, free)
+//   - 4 output modes (real part, probability density, phase-to-stereo, expectation value)
+//   - Unison mode (up to 16 stacked voices with detune and stereo spread)
+//   - Entanglement coupling between instances
+//   - Superposition blend between two potential types
+//   - Wavefunction collapse trigger for transient percussion
+//
 // References:
 //   - Schrödinger, E. (1926) "Quantisierung als Eigenwertproblem"
 //   - Feit, Fleck, Steiger (1982) "Solution of the Schrödinger equation by a spectral method"
 
-/// Quantum Wavefunction Synthesizer — generates audio from Schrödinger equation simulation
-public final class QuantumWavefunctionSynth: @unchecked Sendable {
+/// EchoelQuant — Quantum Wavefunction Synthesizer
+/// Generates audio from Schrödinger equation simulation with unison stacking
+public final class EchoelQuant: @unchecked Sendable {
 
     // MARK: - Types
 
@@ -125,10 +134,59 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
     /// Excitation width (σ of Gaussian)
     public var excitationWidth: Float = 0.05
 
+    // MARK: - Unison
+
+    /// Number of unison voices (1 = off, 2-16 = stacked)
+    public var unisonVoices: Int = 1 {
+        didSet {
+            unisonVoices = max(1, min(16, unisonVoices))
+            rebuildUnisonDetune()
+        }
+    }
+
+    /// Unison detune amount in cents (0-100)
+    public var unisonDetune: Float = 25.0 {
+        didSet { rebuildUnisonDetune() }
+    }
+
+    /// Unison stereo spread (0 = mono, 1 = full width)
+    public var unisonSpread: Float = 0.8
+
+    /// Per-voice frequency multipliers for unison detune
+    private var unisonFrequencyMultipliers: [Float] = [1.0]
+
+    /// Per-voice stereo pan positions (-1 = left, +1 = right)
+    private var unisonPanPositions: [Float] = [0.0]
+
+    /// Additional unison voice states (voice 0 is the main psi)
+    private var unisonPsiReal: [[Float]] = []
+    private var unisonPsiImag: [[Float]] = []
+
+    // MARK: - Superposition
+
+    /// Secondary potential type for superposition blending
+    public var superpositionPotential: PotentialType? = nil
+
+    /// Blend amount between primary and secondary potential (0 = primary, 1 = secondary)
+    public var superpositionBlend: Float = 0.0 {
+        didSet { rebuildPotential() }
+    }
+
+    // MARK: - Collapse
+
+    /// Whether a collapse has been triggered (creates transient)
+    private var collapseTriggered: Bool = false
+
+    /// Collapse position (normalized -1 to 1)
+    private var collapsePosition: Float = 0
+
+    /// Collapse width (how localized the measurement is)
+    private var collapseWidth: Float = 0.1
+
     // MARK: - Entanglement
 
     /// Coupled second oscillator for entanglement simulation
-    private var entangledPartner: QuantumWavefunctionSynth?
+    private var entangledPartner: EchoelQuant?
 
     /// Entanglement coupling strength (0 = independent, 1 = fully coupled)
     public var entanglementCoupling: Float = 0.0
@@ -144,7 +202,7 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
 
     // MARK: - Init
 
-    /// Initialize quantum wavefunction synthesizer
+    /// Initialize EchoelQuant synthesizer
     /// - Parameters:
     ///   - gridSize: Spatial grid points (power of 2, default 1024)
     ///   - sampleRate: Audio sample rate (default 48000)
@@ -207,59 +265,95 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         excite(position: 0, momentum: Float(frequency) * 0.1)
     }
 
+    // MARK: - Unison Setup
+
+    /// Rebuild unison frequency multipliers and pan positions
+    private func rebuildUnisonDetune() {
+        let count = unisonVoices
+        var multipliers = [Float](repeating: 1.0, count: count)
+        var pans = [Float](repeating: 0.0, count: count)
+
+        if count > 1 {
+            let detuneRange = unisonDetune // cents
+            for i in 0..<count {
+                // Spread detune evenly from -detuneRange to +detuneRange
+                let t = Float(i) / Float(count - 1) // 0 to 1
+                let centOffset = -detuneRange + t * 2.0 * detuneRange
+                multipliers[i] = pow(2.0, centOffset / 1200.0)
+
+                // Stereo spread: alternate left/right, centered voices at center
+                let panT = (t - 0.5) * 2.0 // -1 to 1
+                pans[i] = panT * unisonSpread
+            }
+        }
+
+        unisonFrequencyMultipliers = multipliers
+        unisonPanPositions = pans
+
+        // Resize unison voice buffers (voice 0 is main psi)
+        let extraVoices = max(0, count - 1)
+        while unisonPsiReal.count < extraVoices {
+            unisonPsiReal.append([Float](repeating: 0, count: gridSize))
+            unisonPsiImag.append([Float](repeating: 0, count: gridSize))
+        }
+        while unisonPsiReal.count > extraVoices {
+            unisonPsiReal.removeLast()
+            unisonPsiImag.removeLast()
+        }
+
+        // Re-excite unison voices with their detuned frequencies
+        for v in 0..<extraVoices {
+            let voiceFreq = frequency * multipliers[v + 1]
+            for i in 0..<gridSize {
+                unisonPsiReal[v][i] = 0
+                unisonPsiImag[v][i] = 0
+            }
+            // Mini-excite for this voice
+            let x0: Float = 0
+            let sigma = excitationWidth * spatialExtent
+            let sigmaSq = sigma * sigma
+            let norm = 1.0 / sqrt(sigma * sqrt(.pi))
+            let momentum = voiceFreq * 0.1
+            for i in 0..<gridSize {
+                let x = xGrid[i]
+                let dxx = x - x0
+                let envelope = norm * excitationAmplitude * exp(-dxx * dxx / (2.0 * sigmaSq))
+                let phase = momentum * x
+                unisonPsiReal[v][i] += envelope * cos(phase)
+                unisonPsiImag[v][i] += envelope * sin(phase)
+            }
+            // Normalize this voice
+            var normSq: Float = 0
+            for i in 0..<gridSize {
+                normSq += unisonPsiReal[v][i] * unisonPsiReal[v][i] + unisonPsiImag[v][i] * unisonPsiImag[v][i]
+            }
+            normSq *= dx
+            if normSq > 1e-30 {
+                let scale = 1.0 / sqrt(normSq)
+                vDSP.multiply(scale, unisonPsiReal[v], result: &unisonPsiReal[v])
+                vDSP.multiply(scale, unisonPsiImag[v], result: &unisonPsiImag[v])
+            }
+        }
+    }
+
     // MARK: - Potential Construction
 
     /// Rebuild the potential energy field based on current parameters
     private func rebuildPotential() {
-        let omega = 2.0 * Float.pi * frequency / sampleRate * 10.0
+        buildPotentialForType(potentialType, into: &potential)
 
-        switch potentialType {
-        case .infiniteWell:
-            // Particle in a box: V=0 inside, V=∞ at boundaries
-            let wellWidth = spatialExtent * 0.6 / potentialStrength
+        // Superposition blending
+        if let secondaryType = superpositionPotential, superpositionBlend > 0 {
+            var secondaryPotential = [Float](repeating: 0, count: gridSize)
+            buildPotentialForType(secondaryType, into: &secondaryPotential)
+            let blend = superpositionBlend
+            let invBlend = 1.0 - blend
             for i in 0..<gridSize {
-                let x = xGrid[i]
-                potential[i] = abs(x) > wellWidth / 2.0 ? 1e6 : 0
-            }
-
-        case .harmonicOscillator:
-            // V(x) = ½mω²x²
-            let k = omega * omega * potentialStrength
-            for i in 0..<gridSize {
-                let x = xGrid[i]
-                potential[i] = 0.5 * k * x * x
-            }
-
-        case .doubleWell:
-            // V(x) = a(x²-b)² — double minimum for tunneling
-            let a = potentialStrength * 2.0
-            let b = 1.0 / potentialStrength
-            for i in 0..<gridSize {
-                let x = xGrid[i]
-                let xsq = x * x
-                potential[i] = a * (xsq - b) * (xsq - b)
-            }
-
-        case .periodic:
-            // V(x) = V₀ cos(2πx/a) — Kronig-Penney style
-            let period = spatialExtent / (4.0 * potentialStrength)
-            for i in 0..<gridSize {
-                let x = xGrid[i]
-                potential[i] = potentialStrength * 100.0 * cos(2.0 * .pi * x / period)
-            }
-
-        case .custom:
-            // Custom potential is set externally, don't overwrite
-            break
-
-        case .free:
-            // No potential
-            for i in 0..<gridSize {
-                potential[i] = 0
+                potential[i] = potential[i] * invBlend + secondaryPotential[i] * blend
             }
         }
 
-        // Add absorbing boundary conditions (complex absorbing potential)
+        // Add absorbing boundary conditions
         let boundaryWidth = Float(gridSize) * 0.1
         for i in 0..<gridSize {
             let distFromEdge = min(Float(i), Float(gridSize - 1 - i))
@@ -270,7 +364,6 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
 
         // Precompute potential phase factors: exp(-i V Δt / (2ℏ))
-        // Using ℏ = 1 (natural units)
         let halfDt = dt * 0.5
         for i in 0..<gridSize {
             let phase = -potential[i] * halfDt
@@ -279,7 +372,6 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
 
         // Precompute kinetic phase factors: exp(-i k² Δt / (2m))
-        // Using m = 1
         for i in 0..<gridSize {
             let kSq = kGrid[i] * kGrid[i]
             let phase = -0.5 * kSq * dt
@@ -288,10 +380,54 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
     }
 
+    /// Build potential for a specific type into target array
+    private func buildPotentialForType(_ type: PotentialType, into target: inout [Float]) {
+        let omega = 2.0 * Float.pi * frequency / sampleRate * 10.0
+
+        switch type {
+        case .infiniteWell:
+            let wellWidth = spatialExtent * 0.6 / potentialStrength
+            for i in 0..<gridSize {
+                let x = xGrid[i]
+                target[i] = abs(x) > wellWidth / 2.0 ? 1e6 : 0
+            }
+
+        case .harmonicOscillator:
+            let k = omega * omega * potentialStrength
+            for i in 0..<gridSize {
+                let x = xGrid[i]
+                target[i] = 0.5 * k * x * x
+            }
+
+        case .doubleWell:
+            let a = potentialStrength * 2.0
+            let b = 1.0 / potentialStrength
+            for i in 0..<gridSize {
+                let x = xGrid[i]
+                let xsq = x * x
+                target[i] = a * (xsq - b) * (xsq - b)
+            }
+
+        case .periodic:
+            let period = spatialExtent / (4.0 * potentialStrength)
+            for i in 0..<gridSize {
+                let x = xGrid[i]
+                target[i] = potentialStrength * 100.0 * cos(2.0 * .pi * x / period)
+            }
+
+        case .custom:
+            break
+
+        case .free:
+            for i in 0..<gridSize {
+                target[i] = 0
+            }
+        }
+    }
+
     // MARK: - Excitation
 
     /// Excite the wavefunction with a Gaussian wave packet
-    /// Like plucking a string — injects energy into the simulation
     /// - Parameters:
     ///   - position: Center position (-1 to 1, normalized)
     ///   - momentum: Initial momentum (controls initial pitch direction)
@@ -311,10 +447,14 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
 
         normalize()
+
+        // Re-excite unison voices
+        if unisonVoices > 1 {
+            rebuildUnisonDetune()
+        }
     }
 
     /// Set custom potential (for user-drawn barriers)
-    /// - Parameter values: Potential values (gridSize elements, 0-1 normalized)
     public func setCustomPotential(_ values: [Float]) {
         guard values.count == gridSize else { return }
         potentialType = .custom
@@ -322,7 +462,6 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         for i in 0..<gridSize {
             potential[i] = values[i] * maxV
         }
-        // Re-precompute phase factors
         let halfDt = dt * 0.5
         for i in 0..<gridSize {
             let phase = -potential[i] * halfDt
@@ -331,14 +470,51 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
     }
 
+    // MARK: - Wavefunction Collapse
+
+    /// Trigger a wavefunction collapse — creates a sharp transient
+    /// The wavefunction localizes to a position, then re-spreads
+    /// - Parameters:
+    ///   - position: Collapse position (-1 to 1)
+    ///   - width: Collapse width (0.01 = very sharp, 0.5 = broad)
+    public func collapse(at position: Float = 0, width: Float = 0.1) {
+        let x0 = position * spatialExtent / 2.0
+        let sigma = width * spatialExtent
+        let sigmaSq = sigma * sigma
+
+        // Project wavefunction onto localized Gaussian (measurement)
+        var newNormSq: Float = 0
+        for i in 0..<gridSize {
+            let x = xGrid[i]
+            let dxx = x - x0
+            let measurement = exp(-dxx * dxx / (2.0 * sigmaSq))
+            psiReal[i] *= measurement
+            psiImag[i] *= measurement
+            newNormSq += psiReal[i] * psiReal[i] + psiImag[i] * psiImag[i]
+        }
+
+        // Renormalize
+        newNormSq *= dx
+        if newNormSq > 1e-30 {
+            let scale = 1.0 / sqrt(newNormSq)
+            vDSP.multiply(scale, psiReal, result: &psiReal)
+            vDSP.multiply(scale, psiImag, result: &psiImag)
+        }
+    }
+
+    // MARK: - Superposition
+
+    /// Set up superposition between two potential types
+    /// Creates morphing between two quantum worlds
+    public func setSuperposition(primary: PotentialType, secondary: PotentialType, blend: Float = 0.5) {
+        self.potentialType = primary
+        self.superpositionPotential = secondary
+        self.superpositionBlend = max(0, min(1, blend))
+    }
+
     // MARK: - Split-Step Fourier Evolution
 
     /// Advance the wavefunction by one time step using Split-Step Fourier
-    /// 1. Half-step potential in position space: ψ *= exp(-iVΔt/2ℏ)
-    /// 2. FFT to momentum space
-    /// 3. Full kinetic step: ψ̃ *= exp(-ik²Δt/2m)
-    /// 4. iFFT back to position space
-    /// 5. Half-step potential: ψ *= exp(-iVΔt/2ℏ)
     private func step() {
         // --- Half-step potential (position space) ---
         complexMultiply(
@@ -375,10 +551,65 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         time += dt
     }
 
+    /// Step a unison voice (simplified — shares kinetic/potential phases)
+    private func stepUnisonVoice(_ voiceIndex: Int) {
+        guard voiceIndex < unisonPsiReal.count else { return }
+
+        for i in 0..<gridSize {
+            let r = unisonPsiReal[voiceIndex][i]
+            let im = unisonPsiImag[voiceIndex][i]
+            let pr = potentialPhaseReal[i]
+            let pi = potentialPhaseImag[i]
+            unisonPsiReal[voiceIndex][i] = r * pr - im * pi
+            unisonPsiImag[voiceIndex][i] = r * pi + im * pr
+        }
+
+        unisonPsiReal[voiceIndex].withUnsafeMutableBufferPointer { realBuf in
+            unisonPsiImag[voiceIndex].withUnsafeMutableBufferPointer { imagBuf in
+                var split = DSPSplitComplex(
+                    realp: realBuf.baseAddress!,
+                    imagp: imagBuf.baseAddress!
+                )
+                fftSetup?.forward(input: &split, output: &split)
+            }
+        }
+
+        let scale = 1.0 / Float(gridSize)
+        vDSP.multiply(scale, unisonPsiReal[voiceIndex], result: &unisonPsiReal[voiceIndex])
+        vDSP.multiply(scale, unisonPsiImag[voiceIndex], result: &unisonPsiImag[voiceIndex])
+
+        for i in 0..<gridSize {
+            let r = unisonPsiReal[voiceIndex][i]
+            let im = unisonPsiImag[voiceIndex][i]
+            let kr = kineticPhaseReal[i]
+            let ki = kineticPhaseImag[i]
+            unisonPsiReal[voiceIndex][i] = r * kr - im * ki
+            unisonPsiImag[voiceIndex][i] = r * ki + im * kr
+        }
+
+        unisonPsiReal[voiceIndex].withUnsafeMutableBufferPointer { realBuf in
+            unisonPsiImag[voiceIndex].withUnsafeMutableBufferPointer { imagBuf in
+                var split = DSPSplitComplex(
+                    realp: realBuf.baseAddress!,
+                    imagp: imagBuf.baseAddress!
+                )
+                fftSetup?.inverse(input: &split, output: &split)
+            }
+        }
+
+        for i in 0..<gridSize {
+            let r = unisonPsiReal[voiceIndex][i]
+            let im = unisonPsiImag[voiceIndex][i]
+            let pr = potentialPhaseReal[i]
+            let pi = potentialPhaseImag[i]
+            unisonPsiReal[voiceIndex][i] = r * pr - im * pi
+            unisonPsiImag[voiceIndex][i] = r * pi + im * pr
+        }
+    }
+
     // MARK: - FFT Operations
 
     private func forwardFFT() {
-        // Copy state to scratch, apply FFT in-place
         psiReal.withUnsafeMutableBufferPointer { realBuf in
             psiImag.withUnsafeMutableBufferPointer { imagBuf in
                 var split = DSPSplitComplex(
@@ -389,7 +620,6 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
             }
         }
 
-        // Normalize by 1/N
         let scale = 1.0 / Float(gridSize)
         vDSP.multiply(scale, psiReal, result: &psiReal)
         vDSP.multiply(scale, psiImag, result: &psiImag)
@@ -407,23 +637,13 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
     }
 
-    // MARK: - Complex Arithmetic (Vectorized)
+    // MARK: - Complex Arithmetic
 
-    /// Element-wise complex multiplication using Accelerate
     private func complexMultiply(
         aReal: [Float], aImag: [Float],
         bReal: [Float], bImag: [Float],
         outReal: inout [Float], outImag: inout [Float]
     ) {
-        // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
-        // Use scratch buffers to avoid aliasing issues
-        vDSP.multiply(aReal, bReal, result: &scratchReal)       // ac
-        vDSP.multiply(aImag, bImag, result: &scratchImag)       // bd
-        vDSP.subtract(scratchImag, scratchReal, result: &scratchReal) // ac - bd (wrong order!)
-
-        // Fix: vDSP.subtract(b, a) = a - b, so swap
-        // Actually: result[i] = scratchReal[i] - scratchImag[i]
-        // Let's just be explicit
         for i in 0..<gridSize {
             let ac = aReal[i] * bReal[i]
             let bd = aImag[i] * bImag[i]
@@ -436,7 +656,6 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
 
     // MARK: - Normalization
 
-    /// Normalize wavefunction so ∫|ψ|²dx = 1
     private func normalize() {
         var normSq: Float = 0
         for i in 0..<gridSize {
@@ -451,9 +670,8 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
 
     // MARK: - Entanglement
 
-    /// Set up entanglement with another quantum synth instance
-    /// Coupling creates cross-Kerr-like interaction between the two systems
-    public func entangle(with partner: QuantumWavefunctionSynth, coupling: Float = 0.3) {
+    /// Set up entanglement with another EchoelQuant instance
+    public func entangle(with partner: EchoelQuant, coupling: Float = 0.3) {
         self.entangledPartner = partner
         self.entanglementCoupling = coupling
         partner.entangledPartner = self
@@ -468,13 +686,10 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         entanglementCoupling = 0
     }
 
-    /// Apply cross-Kerr-like entanglement coupling
-    /// The probability density of A modulates the potential of B and vice versa
-    private func applyEntanglementCoupling(partner: QuantumWavefunctionSynth) {
+    private func applyEntanglementCoupling(partner: EchoelQuant) {
         let coupling = entanglementCoupling
         guard coupling > 0 else { return }
 
-        // Compute |ψ_partner|² as effective potential modulation
         for i in 0..<gridSize {
             let probDensity = partner.psiReal[i] * partner.psiReal[i]
                             + partner.psiImag[i] * partner.psiImag[i]
@@ -501,62 +716,66 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
 
         guard buffer.count >= totalSamples else { return }
 
+        let voiceGain = 1.0 / sqrt(Float(unisonVoices))
+
         for frame in 0..<frameCount {
-            // Advance simulation
+            // Advance main voice
             for _ in 0..<stepsPerSample {
                 step()
             }
 
-            // Extract audio from wavefunction
-            switch outputMode {
-            case .realPart:
-                // Sum real part as audio sample
-                let sample = extractRealPart()
-                if stereo {
-                    buffer[frame * 2] = sample
-                    buffer[frame * 2 + 1] = sample
-                } else {
-                    buffer[frame] = sample
+            // Advance unison voices
+            for v in 0..<unisonPsiReal.count {
+                for _ in 0..<stepsPerSample {
+                    stepUnisonVoice(v)
                 }
+            }
 
-            case .probabilityDensity:
-                // |ψ|² — rich in harmonics (octave doubling)
-                let sample = extractProbabilityDensity()
-                if stereo {
-                    buffer[frame * 2] = sample
-                    buffer[frame * 2 + 1] = sample
-                } else {
-                    buffer[frame] = sample
-                }
+            // Mix all voices
+            var left: Float = 0
+            var right: Float = 0
 
-            case .phaseToStereo:
-                // Real → Left, Imaginary → Right
-                let (left, right) = extractPhaseToStereo()
-                if stereo {
-                    buffer[frame * 2] = left
-                    buffer[frame * 2 + 1] = right
-                } else {
-                    buffer[frame] = (left + right) * 0.5  // Mono downmix
-                }
+            // Main voice (voice 0)
+            let mainSample = extractSampleFromState(psiReal: psiReal, psiImag: psiImag)
+            let mainPan = unisonPanPositions[0]
+            left += mainSample * voiceGain * (1.0 - max(0, mainPan))
+            right += mainSample * voiceGain * (1.0 + min(0, mainPan))
 
-            case .expectationValue:
-                // ⟨x⟩ — expectation value of position
-                let sample = extractExpectationValue()
-                if stereo {
-                    buffer[frame * 2] = sample
-                    buffer[frame * 2 + 1] = sample
-                } else {
-                    buffer[frame] = sample
-                }
+            // Unison voices
+            for v in 0..<unisonPsiReal.count {
+                let voiceSample = extractSampleFromState(psiReal: unisonPsiReal[v], psiImag: unisonPsiImag[v])
+                let pan = unisonPanPositions[v + 1]
+                left += voiceSample * voiceGain * (1.0 - max(0, pan))
+                right += voiceSample * voiceGain * (1.0 + min(0, pan))
+            }
+
+            if stereo {
+                buffer[frame * 2] = left
+                buffer[frame * 2 + 1] = right
+            } else {
+                buffer[frame] = (left + right) * 0.5
             }
         }
     }
 
     // MARK: - Observable Extraction
 
-    /// Extract audio from the real part of ψ
-    private func extractRealPart() -> Float {
-        // Weighted sum of Re(ψ) centered on the well
+    /// Extract a mono sample from a given wavefunction state
+    private func extractSampleFromState(psiReal: [Float], psiImag: [Float]) -> Float {
+        switch outputMode {
+        case .realPart:
+            return extractRealPartFrom(psiReal: psiReal)
+        case .probabilityDensity:
+            return extractProbabilityDensityFrom(psiReal: psiReal, psiImag: psiImag)
+        case .phaseToStereo:
+            let (l, r) = extractPhaseToStereoFrom(psiReal: psiReal, psiImag: psiImag)
+            return (l + r) * 0.5
+        case .expectationValue:
+            return extractExpectationValueFrom(psiReal: psiReal, psiImag: psiImag)
+        }
+    }
+
+    private func extractRealPartFrom(psiReal: [Float]) -> Float {
         var sum: Float = 0
         let center = gridSize / 2
         let window = gridSize / 4
@@ -567,8 +786,7 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         return sum * dx * 2.0
     }
 
-    /// Extract audio from probability density |ψ|²
-    private func extractProbabilityDensity() -> Float {
+    private func extractProbabilityDensityFrom(psiReal: [Float], psiImag: [Float]) -> Float {
         var sum: Float = 0
         let center = gridSize / 2
         let window = gridSize / 4
@@ -577,12 +795,10 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
             let fade = 1.0 - abs(Float(i - center)) / Float(window)
             sum += prob * fade
         }
-        // Remove DC offset (probability is always positive)
         return (sum * dx * 4.0) - 0.5
     }
 
-    /// Extract stereo from phase: Re(ψ) → L, Im(ψ) → R
-    private func extractPhaseToStereo() -> (left: Float, right: Float) {
+    private func extractPhaseToStereoFrom(psiReal: [Float], psiImag: [Float]) -> (left: Float, right: Float) {
         var sumReal: Float = 0
         var sumImag: Float = 0
         let center = gridSize / 2
@@ -595,14 +811,13 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         return (sumReal * dx * 2.0, sumImag * dx * 2.0)
     }
 
-    /// Extract audio from expectation value ⟨x⟩ = ∫ x |ψ|² dx
-    private func extractExpectationValue() -> Float {
+    private func extractExpectationValueFrom(psiReal: [Float], psiImag: [Float]) -> Float {
         var sum: Float = 0
         for i in 0..<gridSize {
             let prob = psiReal[i] * psiReal[i] + psiImag[i] * psiImag[i]
             sum += xGrid[i] * prob
         }
-        return sum * dx / spatialExtent  // Normalize to [-0.5, 0.5]
+        return sum * dx / spatialExtent
     }
 
     // MARK: - Wavefunction State Access
@@ -628,9 +843,7 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
 
     /// Get total energy ⟨Ĥ⟩ of the system
     public func getTotalEnergy() -> Float {
-        // Kinetic energy via momentum space
         var kineticEnergy: Float = 0
-        // Copy state for FFT
         var tmpReal = psiReal
         var tmpImag = psiImag
 
@@ -652,7 +865,6 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         }
         kineticEnergy *= dk
 
-        // Potential energy via position space
         var potentialEnergy: Float = 0
         for i in 0..<gridSize {
             let prob = psiReal[i] * psiReal[i] + psiImag[i] * psiImag[i]
@@ -663,9 +875,8 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         return kineticEnergy + potentialEnergy
     }
 
-    /// Get coherence metric (how "quantum" the state is — spread of wavefunction)
+    /// Get coherence metric
     public func getCoherence() -> Float {
-        // Use position uncertainty Δx as coherence metric
         var meanX: Float = 0
         var meanX2: Float = 0
         for i in 0..<gridSize {
@@ -676,8 +887,7 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         meanX *= dx
         meanX2 *= dx
         let variance = meanX2 - meanX * meanX
-        // Normalize: small uncertainty = high coherence
-        let maxVariance = (spatialExtent * spatialExtent) / 12.0  // Uniform distribution variance
+        let maxVariance = (spatialExtent * spatialExtent) / 12.0
         return max(0, min(1, 1.0 - sqrt(max(0, variance)) / sqrt(maxVariance)))
     }
 
@@ -688,6 +898,12 @@ public final class QuantumWavefunctionSynth: @unchecked Sendable {
         for i in 0..<gridSize {
             psiReal[i] = 0
             psiImag[i] = 0
+        }
+        for v in 0..<unisonPsiReal.count {
+            for i in 0..<gridSize {
+                unisonPsiReal[v][i] = 0
+                unisonPsiImag[v][i] = 0
+            }
         }
         time = 0
     }
