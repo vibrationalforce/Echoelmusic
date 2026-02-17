@@ -541,10 +541,10 @@ public final class EchoelModalBank: @unchecked Sendable {
 
         // Precompute per-mode decay factors: exp(-decayRate * damping / sampleRate)
         // Using vDSP for batch exponential where beneficial
-        var decayFactors = scratchBuffer
+        // Compute decay factors in-place in scratchBuffer (avoids COW heap allocation)
         for i in 0..<modeCount {
             let effectiveDecay = modeDecayRates[i] * Swift.max(0.01, damping)
-            decayFactors[i] = exp(-effectiveDecay * invSampleRate)
+            scratchBuffer[i] = exp(-effectiveDecay * invSampleRate)
         }
 
         for frame in 0..<frameCount {
@@ -594,7 +594,7 @@ public final class EchoelModalBank: @unchecked Sendable {
                 sample += modeAmplitudes[i] * sin(modePhases[i])
 
                 // Exponential decay
-                modeAmplitudes[i] *= decayFactors[i]
+                modeAmplitudes[i] *= scratchBuffer[i]
             }
 
             // Normalize by approximate active mode count to prevent clipping
