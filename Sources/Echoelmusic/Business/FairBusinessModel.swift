@@ -49,7 +49,7 @@ class FairBusinessModel: ObservableObject {
 
         static let proFeatures: [Feature] = [
             Feature(name: "Unlimited Session Length", included: true),
-            Feature(name: "All 6 Synth Engines", included: true),
+            Feature(name: "All 7 Synth Engines", included: true),
             Feature(name: "All Presets + Hilbert Visualization", included: true),
             Feature(name: "CloudKit Sync", included: true),
             Feature(name: "WAV/MIDI Export", included: true),

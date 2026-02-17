@@ -793,7 +793,7 @@ class UniversalSoundLibrary: ObservableObject {
 
 
         === CAPABILITIES ===
-        ✓ 6 synthesis methods (Subtractive, FM, Wavetable, Granular, Additive, Physical Modeling)
+        ✓ 6 basic synthesis methods (Subtractive, FM, Wavetable, Granular, Additive, Physical Modeling)
         ✓ Global instrument coverage (Asia, Middle East, Africa, Europe, Americas, Oceania)
         ✓ Quarter-tone tuning support (Arabic, Persian, Turkish music)
         ✓ Non-equal temperament (Gamelan slendro/pelog)

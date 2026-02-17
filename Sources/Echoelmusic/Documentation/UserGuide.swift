@@ -391,7 +391,7 @@ public struct UserGuide {
     ### Core Audio Parameters
 
     **Synthesis Engine**
-    - Type: Wavetable, FM, Granular, Physical Modeling
+    - Type: DDSP, Modal Bank, Cellular, Quantum, Sampler, TR-808, Breakbeat
     - Oscillators: Number of voices (1-64)
     - Tuning: Equal, just, Pythagorean, custom
 

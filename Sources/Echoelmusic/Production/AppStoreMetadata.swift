@@ -242,15 +242,16 @@ No two sessions sound the same because no two moments in your body are the same.
 
 SYNTH ENGINES
 
-Six software synthesizers, each responding to biometric input:
+Seven software synthesizers, each responding to biometric input:
 • DDSP — Neural audio synthesis with spectral morphing
-• Modal — Physical modeling (strings, membranes, resonators)
-• Granular — Time-stretching and texture design
-• Wavetable — Evolving waveform playback
-• FM — Frequency modulation synthesis
-• Subtractive — Classic analog-style filtering
+• Modal Bank — Physical modeling (strings, membranes, resonators)
+• Cellular — Cellular automata synthesis (evolving patterns)
+• Quantum — Schrödinger equation wavefunction synthesizer
+• Sampler — Multi-zone multi-layer sampler (128 zones, 64-voice polyphony)
+• TR-808 Bass — Professional 808 bass with pitch glide
+• Breakbeat Chopper — Jungle/DNB slice engine with pattern sequencer
 
-The free tier includes DDSP. Pro unlocks all six.
+The free tier includes DDSP. Pro unlocks all seven.
 
 AUv3 PLUGINS
 
@@ -304,7 +305,7 @@ PRICING
 
 Free to download. The free tier includes bio-reactive sessions up to 15 minutes, the DDSP engine, and 3 presets.
 
-Echoelmusic Pro unlocks unlimited sessions, all 6 synth engines, all presets, CloudKit sync, WAV/MIDI export, and DMX lighting control.
+Echoelmusic Pro unlocks unlimited sessions, all 7 synth engines, all presets, CloudKit sync, WAV/MIDI export, and DMX lighting control.
 
 • Pro Monthly: $9.99/month (7-day free trial)
 • Pro Yearly: $79.99/year (7-day free trial, save 33%)
@@ -354,11 +355,12 @@ BIO-REAKTIVE KREATION
 
 SYNTHESIZER-ENGINES
 • DDSP — Deep-Learning-Synthese mit Spektral-Morphing
-• Modal — Physical Modeling (Saiten, Membranen, Resonatoren)
-• Granular — Zeitdehnung und Texturgenerierung
-• Wavetable — Klassische und evolvierende Wellenformen
-• FM — Frequenzmodulation mit bio-reaktiver Modulation
-• Subtraktiv — Analog-inspiriertes Filtering
+• Modal Bank — Physical Modeling (Saiten, Membranen, Resonatoren)
+• Cellular — Zelluläre Automaten-Synthese (evolvierende Muster)
+• Quantum — Schrödinger-Gleichung Wellenfunktions-Synthesizer
+• Sampler — Multi-Zone Multi-Layer Sampler (128 Zonen, 64 Stimmen)
+• TR-808 Bass — Professioneller 808-Bass mit Pitch Glide
+• Breakbeat Chopper — Jungle/DNB Slice-Engine mit Pattern-Sequenzer
 
 AUv3 AUDIO UNIT PLUGINS
 Nutze Echoelmusic in Logic Pro, GarageBand, AUM oder jedem AUv3-Host:
@@ -407,7 +409,7 @@ Kostenlos herunterladen. Bio-reaktive Kreation mit Basisfunktionen erleben. Upgr
 
 ECHOELMUSIC PRO
 • Unbegrenzte Session-Länge
-• Alle 6 Synth-Engines und Presets
+• Alle 7 Synth-Engines und Presets
 • CloudKit-Sync + Watch-Integration
 • WAV/MIDI Export
 • DMX Lichtsteuerung
@@ -968,8 +970,8 @@ public struct AppStoreScreenshots {
         ),
         .init(
             number: 3,
-            title: "Six Synth Engines",
-            description: "DDSP, Modal, Granular, Wavetable, FM, and Subtractive — each driven by your bio-signals."
+            title: "Seven Synth Engines",
+            description: "DDSP, Modal Bank, Cellular, Quantum, Sampler, TR-808, and Breakbeat — each driven by your bio-signals."
         ),
         .init(
             number: 4,
@@ -1056,8 +1058,8 @@ Visual: Montage of GPU-accelerated visualization modes
 Text: "Metal-Powered Visuals at 60fps"
 
 [13-18s] SYNTH ENGINES
-Visual: Switching between DDSP, Modal, Granular, FM engines
-Text: "Six Bio-Reactive Synth Engines"
+Visual: Switching between DDSP, Modal Bank, Cellular, Quantum engines
+Text: "Seven Bio-Reactive Synth Engines"
 
 [18-23s] WELLNESS
 Visual: Coherence training, breathing exercises, sleep session
@@ -1347,7 +1349,7 @@ public struct AppFeatures {
     /// Features unlocked with Pro subscription
     public static let proFeatures: [String] = [
         "Unlimited session length",
-        "All 6 synth engines (DDSP, Modal, Granular, Wavetable, FM, Subtractive)",
+        "All 7 synth engines (DDSP, Modal Bank, Cellular, Quantum, Sampler, TR-808, Breakbeat)",
         "All presets + Hilbert visualization",
         "CloudKit sync across all devices",
         "Apple Watch real-time data streaming",
