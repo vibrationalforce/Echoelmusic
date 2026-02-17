@@ -779,22 +779,24 @@ public struct TermsOfService {
 
     5. PURCHASE AND PAYMENT
 
-    5.1. ONE-TIME PURCHASE MODEL
+    5.1. FREEMIUM MODEL
 
-    Echoelmusic uses a simple, fair one-time purchase model:
+    Echoelmusic is free to download with optional paid upgrades:
 
-    • One-Time Purchase: Pay once ($29.99 USD), own forever
-    • All Features Included: No artificial limitations or feature gates
-    • Lifetime Updates: All future features and updates included
-    • Family Sharing: Up to 6 family members can use the app (Apple Family Sharing, Google Family Library)
+    • Free Tier: Core bio-reactive features, DDSP engine, 15-minute sessions, 3 presets
+    • Pro Monthly: $9.99/month auto-renewable subscription (7-day free trial)
+    • Pro Yearly: $79.99/year auto-renewable subscription (7-day free trial, save 33%)
+    • Pro Lifetime: $149.99 one-time non-consumable purchase
+    • Individual Sessions: $3.99–$6.99 consumable purchases
+    • Family Sharing: Enabled for subscriptions and lifetime purchase (up to 6 family members)
     • Universal Purchase: Buy once, use on all your Apple devices (iOS, macOS, visionOS, tvOS, watchOS)
-    • No Subscriptions: No recurring charges, no renewal fees
 
     5.2. PAYMENT TERMS
 
-    • Platform Billing: Purchase processed through Apple App Store or Google Play Store
-    • One-Time Charge: Single payment, no recurring billing
-    • Price Changes: We may change prices for new customers; existing purchasers retain full access
+    • Platform Billing: Purchases processed through Apple App Store or Google Play Store
+    • Subscriptions: Auto-renew unless cancelled at least 24 hours before the end of the current period
+    • Cancellation: Manage or cancel subscriptions in Settings > Apple ID > Subscriptions
+    • Price Changes: We may change prices for new customers; existing subscribers retain their current rate until renewal
     • Taxes: Prices exclude applicable taxes (added at checkout)
     • Currency: Charges in your local currency based on platform settings
 
@@ -1233,9 +1235,9 @@ public struct TermsOfService {
     • Personal, non-commercial use only
     • Age 13+ required (16+ in EU)
     • No reverse engineering or misuse
-    • One-time purchase ($29.99) - no subscriptions
+    • Free to download, optional Pro subscription or lifetime purchase
     • Family Sharing included (up to 6 members)
-    • Lifetime updates included
+    • Subscriptions auto-renew; cancel anytime via Settings
     • NOT a medical device - wellness only
     • Respect others in collaboration features
     • We may terminate for violations
