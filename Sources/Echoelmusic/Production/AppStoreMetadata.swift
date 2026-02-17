@@ -3,7 +3,7 @@
 //
 // Complete App Store submission metadata
 // Generated: 2026-01-07
-// Status: PRODUCTION READY - Nobel Prize Multitrillion Dollar
+// Status: PRODUCTION READY — Updated for Freemium model with StoreKit 2
 //
 // CRITICAL: Review and customize before submission
 // - Update URLs with actual domains
@@ -111,13 +111,14 @@ public struct AppStoreMetadata {
 
     // MARK: - Pricing
 
-    /// Price tier - FREE
-    /// Echoelmusic is completely free:
-    /// - No in-app purchases
-    /// - No subscriptions
-    /// - All features included
-    /// - No ads
-    public static let priceTier = 0  // Free
+    /// Price tier — Free download with optional Pro subscription
+    /// Freemium model:
+    /// - Free: Core bio-reactive sessions (15 min), basic synth, 3 presets
+    /// - Pro Monthly: $9.99/month (7-day free trial)
+    /// - Pro Yearly: $79.99/year (7-day free trial, save 33%)
+    /// - Pro Lifetime: $149.99 one-time
+    /// - Individual sessions: $3.99–$6.99 (consumable)
+    public static let priceTier = 0  // Free download
 
     /// App price (USD)
     public static let appPrice = "Free"
@@ -126,7 +127,7 @@ public struct AppStoreMetadata {
     public static let availableTerritories: [String] = ["ALL"]
 
     /// Pricing model description
-    public static let pricingModel = PricingModel.free
+    public static let pricingModel = PricingModel.freemium
 
     public enum PricingModel: String {
         case free = "Free"
@@ -229,162 +230,105 @@ public struct LocalizedMetadata {
     public static let english = LocalizedMetadata(
         locale: "en-US",
         name: "Echoelmusic",
-        subtitle: "Create from Within",
+        subtitle: "Your Heartbeat Becomes Music",
         description: """
-Create from Within.
+Echoelmusic reads your heart rate and HRV from Apple Watch and uses those signals to shape live audio, visuals, and lighting in real time. It is a bio-reactive instrument — what you hear and see responds to your body.
 
-Turn your heartbeat, breath, and body into music, film, visuals, and light. Echoelmusic is the world's first bio-reactive creative platform — a performance tool where your biometric signals drive spatial audio, real-time visuals, cinematic scoring, and DMX lighting simultaneously.
+HOW IT WORKS
 
-Whether you're a musician, filmmaker, VJ, or live performer — create directly from your body's own rhythms, powered by cutting-edge AI and quantum-inspired processing.
+Wear an Apple Watch. Open Echoelmusic. Your heart rate influences tempo and intensity. Your HRV coherence shapes harmonic complexity. Your breathing affects spatial depth. The result is a unique audio-visual experience that changes with your physiology.
 
-✨ KEY FEATURES
+No two sessions sound the same because no two moments in your body are the same.
 
-BIOMETRIC MUSIC CREATION
-• Real-time heart rate variability (HRV) → spatial audio field
-• Breathing patterns → sound textures & visual flow
-• Coherence tracking → harmonic complexity
-• Apple Watch integration for continuous monitoring
+SYNTH ENGINES
 
-SPATIAL AUDIO ENGINE
-• 3D/4D immersive soundscapes
-• Fibonacci & sacred geometry sound positioning
-• MIDI 2.0 & MPE support for expressive control
-• Zero-latency performance (<10ms)
+Seven software synthesizers, each responding to biometric input:
+• DDSP — Neural audio synthesis with spectral morphing
+• Modal Bank — Physical modeling (strings, membranes, resonators)
+• Cellular — Cellular automata synthesis (evolving patterns)
+• Quantum — Schrödinger equation wavefunction synthesizer
+• Sampler — Multi-zone multi-layer sampler (128 zones, 64-voice polyphony)
+• TR-808 Bass — Professional 808 bass with pitch glide
+• Breakbeat Chopper — Jungle/DNB slice engine with pattern sequencer
 
-CINEMATIC ORCHESTRAL SCORING
-• 27 professional articulations (legato, spiccato, flutter tongue)
-• 8 orchestral sections (strings, brass, woodwinds, choir)
-• Disney & Hollywood-inspired film scoring
-• Bio-reactive dynamics and mood
+The free tier includes DDSP. Pro unlocks all seven.
 
-QUANTUM LIGHT VISUALS
-• 10 GPU-accelerated visualization modes
-• Wave interference, photon flow, sacred geometry
-• Real-time Metal shaders at 60fps
-• 360° immersive experiences on visionOS
+AUv3 PLUGINS
 
-16K VIDEO PROCESSING
-• Ultra-high resolution up to 15360x8640
-• 1000 fps light-speed capture
-• 50+ quantum & bio-reactive effects
-• Professional streaming (RTMP, SRT, WebRTC)
+Echoelmusic works as AUv3 Audio Unit plugins inside Logic Pro, GarageBand, or other AUv3 hosts:
+• 808 Bass Synth
+• BioComposer
+• Stem Splitter
+• MIDI Pro (MIDI 2.0 + MPE)
 
-AI CREATIVE STUDIO
-• Generate art in 30+ styles (quantum, sacred, abstract)
-• Compose music in 30+ genres (ambient to orchestral)
-• Fractal generator with 11 types
-• Light show designer with DMX/Art-Net control
+SPATIAL AUDIO
 
-WORLDWIDE COLLABORATION
-• Zero-latency global sessions (1000+ participants)
-• Group coherence synchronization
-• 15+ server regions worldwide
-• Real-time parameter sharing
+• Binaural rendering for headphones
+• Head tracking support
+• Target audio latency under 10ms
 
-WELLNESS & MEDITATION
-• Guided breathing patterns (box, 4-7-8, coherence)
-• Sound bath generator with Multidimensional Brainwave Entrainment
-• Session tracking & journaling
-• NOT medical advice - creative wellness only
+VISUALS
 
-PROFESSIONAL FEATURES
-• Ableton Push 3 LED control
-• Multi-track recording & export
-• Live streaming to YouTube, Twitch, Instagram
-• VST3/AU/AUv3 plugin support (EchoelCore native)
-• Developer SDK for custom plugins
+• GPU-accelerated visuals via Metal
+• Multiple visualization modes driven by biometric data
+• 60fps rendering
 
-ACCESSIBILITY (WCAG AAA)
-• 20+ accessibility profiles (blind, low vision, motor-limited)
-• VoiceOver/TalkBack with spatial audio cues
-• Voice control & switch access
-• Color-blind safe palettes (6 schemes)
-• Haptic feedback patterns
+LIGHTING
 
-HARDWARE ECOSYSTEM
-• 60+ audio interfaces (Universal Audio, Focusrite, RME)
-• 40+ MIDI controllers (Push 3, Maschine, KeyLab)
-• DMX/Art-Net lighting systems
-• VR/AR devices (Vision Pro, Meta Quest)
-• Cross-platform sessions (iPhone + Windows + Android)
+• DMX/Art-Net output for professional lighting rigs
+• Bio-reactive lighting for live performance spaces
 
-🔒 ENTERPRISE SECURITY
-• AES-256 encryption
-• Certificate pinning (TLS 1.3)
-• Biometric authentication (Face ID/Touch ID)
-• Device integrity verification
-• Audit logging for compliance
+WELLNESS SESSIONS
 
-🌍 UNIVERSAL DESIGN
-• 12 languages supported
-• RTL support for Arabic
-• One-handed mode
-• Senior-friendly UI options
-• Cognitive accessibility features
+• Guided coherence training
+• Deep sleep soundscapes
+• Flow state sessions
+• Breathing exercises (box breathing, 4-7-8, coherence)
 
-📱 APPLE ECOSYSTEM
-• iOS, macOS, watchOS, tvOS, visionOS
-• Widgets & Live Activities
-• Dynamic Island integration
-• SharePlay for group sessions
-• Siri Shortcuts support
+These are creative wellness tools, not medical treatments.
 
-🎵 PERFECT FOR
-• Musicians & producers
-• Filmmakers & composers
-• VJs & visual artists
-• Live performers & DJs
-• Meditation practitioners
-• Researchers & educators
-• Wellness coaches
-• Content creators
+PLATFORMS
 
-Create from Within. Download Echoelmusic today and turn your body into a creative instrument for music, film, visuals, and light.
+• iPhone, iPad, Mac (Universal Purchase)
+• Apple Watch (biometric source)
+• Apple TV, Vision Pro
+• CloudKit sync for sessions and settings
 
-HEALTH DISCLAIMER: Echoelmusic is designed for creative expression, relaxation, and general wellness. It is NOT a medical device and does not diagnose, treat, cure, or prevent any disease. Biometric readings are for informational and creative purposes only. Consult a healthcare professional for medical advice.
+ACCESSIBILITY
+
+• VoiceOver support
+• Voice Control and Switch Access
+• Color-blind safe palettes
+• Accessibility profiles
+
+PRICING
+
+Free to download. The free tier includes bio-reactive sessions up to 15 minutes, the DDSP engine, and 3 presets.
+
+Echoelmusic Pro unlocks unlimited sessions, all 7 synth engines, all presets, CloudKit sync, WAV/MIDI export, and DMX lighting control.
+
+• Pro Monthly: $9.99/month (7-day free trial)
+• Pro Yearly: $79.99/year (7-day free trial, save 33%)
+• Pro Lifetime: $149.99 one-time purchase
+
+Individual guided sessions are also available as one-time purchases ($3.99–$6.99).
+
+Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. Manage subscriptions in Settings > Apple ID > Subscriptions.
+
+No ads. No data sold. Your creations belong to you.
+
+This is not a medical device.
+
+echoelmusic.com
 """,
-        keywords: "biofeedback,HRV,spatial audio,meditation,quantum,music creation,visual art,wellness,binaural,coherence",
-        promotionalText: "Create from Within. Your heartbeat drives the music, your breath shapes the visuals, your body controls the light. Bio-reactive performance for music, film & beyond.",
+        keywords: "biofeedback,HRV,spatial audio,synthesizer,auv3,meditation,music creation,wellness,binaural,coherence",
+        promotionalText: "Bio-reactive instrument — Apple Watch reads your heart rate and HRV, Echoelmusic turns it into live audio and visuals.",
         whatsNew: """
-🎬 PHASE 10000 ULTIMATE UPDATE
-
-NEW: Cinematic Orchestral Scoring
-• Walt Disney & Hollywood-inspired film composition
-• 27 articulations, 8 orchestra sections
-• Leitmotif system for recurring themes
-• Bio-reactive dynamics & mood
-
-NEW: Professional Streaming
-• Complete RTMP/RTMPS support
-• 8K UHD streaming quality
-• Multi-platform broadcast (YouTube, Twitch, Facebook)
-• Hardware-accelerated H.264 encoding
-
-NEW: Production Logger System
-• 7 log levels (trace → critical)
-• 16 specialized categories
-• Native os.log integration
-• File-based persistence
-
-ENHANCED: Hardware Ecosystem
-• 60+ audio interface presets
-• 40+ MIDI controller mappings
-• ANY device combination sessions
-• Universal cross-platform sync
-
-ENHANCED: Security
-• Enterprise-grade encryption
-• Certificate pinning
-• Jailbreak detection
-• Biometric authentication
-
-ENHANCED: Test Coverage
-• 10000% comprehensive tests
-• 100+ new test methods
-• Performance benchmarks
-• Production safety validation
-
-Ready for App Store & Play Store deployment!
+• Echoelmusic Pro — freemium model with 7-day free trial
+• Guided Coherence, Deep Sleep, and Flow State sessions
+• DDSP synthesis engine
+• CloudKit sync
+• Performance improvements
 """
     )
 
@@ -393,55 +337,104 @@ Ready for App Store & Play Store deployment!
     public static let german = LocalizedMetadata(
         locale: "de-DE",
         name: "Echoelmusic",
-        subtitle: "Erschaffe aus dir heraus",
+        subtitle: "Dein Herzschlag wird Musik",
         description: """
-Erschaffe aus dir heraus.
+Dein Herzschlag wird Musik. Dein Atem formt den Raum. Deine Kohärenz eröffnet neue Dimensionen.
 
-Verwandle deinen Herzschlag, Atem und Körper in Musik, Film, Visuals und Licht. Echoelmusic ist die weltweit erste bio-reaktive Kreativ-Plattform — ein Performance-Tool, bei dem deine biometrischen Signale gleichzeitig Spatial Audio, Echtzeit-Visuals, filmische Kompositionen und DMX-Beleuchtung steuern.
+Echoelmusic verwandelt deine Biometrie in Live-Musik, Visuals und Licht. Verbinde deine Apple Watch und erlebe das weltweit erste bio-reaktive audio-visuelle Instrument.
 
-Ob Musiker, Filmemacher, VJ oder Live-Performer — erschaffe direkt aus den Rhythmen deines eigenen Körpers, angetrieben von modernster KI und quanten-inspirierter Verarbeitung.
+WAS ECHOELMUSIC BESONDERS MACHT
 
-✨ HAUPTFUNKTIONEN
+Das ist kein gewöhnlicher Synthesizer. Das ist keine Meditations-App. Echoelmusic liest Herzfrequenz, HRV und Atmung in Echtzeit — und verwandelt diese Signale in Spatial Audio, GPU-beschleunigte Visuals und DMX-Lichtsteuerung. Keine Presets. Keine Loops. Nur du, verwandelt in Kunst.
 
-BIOMETRISCHE MUSIKKREATION
-• Echtzeit-Herzratenvariabilität (HRV) → räumliches Audiofeld
-• Atemmuster → Klang-Texturen & visueller Fluss
-• Kohärenz-Tracking → harmonische Komplexität
-• Apple Watch Integration
+BIO-REAKTIVE KREATION
+• Herzfrequenz wird Tempo und Intensität
+• HRV-Kohärenz formt harmonische Komplexität und Effekte
+• Atmung steuert räumliche Tiefe und Atmosphäre
+• Apple Watch Integration für kontinuierliche Biometrie
 
-RÄUMLICHE AUDIO-ENGINE
-• 3D/4D immersive Klanglandschaften
-• Fibonacci & heilige Geometrie
-• MIDI 2.0 & MPE Unterstützung
-• Null-Latenz (<10ms)
+SYNTHESIZER-ENGINES
+• DDSP — Deep-Learning-Synthese mit Spektral-Morphing
+• Modal Bank — Physical Modeling (Saiten, Membranen, Resonatoren)
+• Cellular — Zelluläre Automaten-Synthese (evolvierende Muster)
+• Quantum — Schrödinger-Gleichung Wellenfunktions-Synthesizer
+• Sampler — Multi-Zone Multi-Layer Sampler (128 Zonen, 64 Stimmen)
+• TR-808 Bass — Professioneller 808-Bass mit Pitch Glide
+• Breakbeat Chopper — Jungle/DNB Slice-Engine mit Pattern-Sequenzer
 
-QUANTUM LIGHT VISUALS
-• 10 GPU-beschleunigte Visualisierungsmodi
-• Welleninterferenz, Photonenfluss
-• Echtzeit Metal Shader mit 60fps
-• 360° Erlebnisse auf visionOS
+AUv3 AUDIO UNIT PLUGINS
+Nutze Echoelmusic in Logic Pro, GarageBand, AUM oder jedem AUv3-Host:
+• 808 Bass Synth mit Pitch Glide
+• BioComposer — KI-Musikgenerator
+• Stem Splitter — KI-Quellentrennung
+• MIDI Pro — MIDI 2.0 + MPE Prozessor
 
-KI KREATIV-STUDIO
-• Kunst in 30+ Stilen generieren
-• Musik in 30+ Genres komponieren
-• Fraktal-Generator
-• Lichtshow-Designer
+SPATIAL AUDIO
+• 3D-Klanglandschaften mit Head Tracking
+• Fibonacci-basierte Lautsprecherpositionierung
+• Binaurales Rendering für Kopfhörer
+• Niedrige Latenz (<10ms)
 
-WELTWEITE ZUSAMMENARBEIT
-• Null-Latenz globale Sessions (1000+ Teilnehmer)
-• Gruppen-Kohärenz-Synchronisation
+VISUALS & BELEUCHTUNG
+• GPU-beschleunigte Visualisierungsmodi (Metal)
+• Bio-reaktive Farb- und Bewegungssteuerung
+• DMX/Art-Net Lichtsteuerung für Live-Performances
+• Echtzeit-Visualgenerierung bei 60fps
 
-BARRIEREFREIHEIT (WCAG AAA)
+WELLNESS
+• Geführte Kohärenz-Trainings-Sessions
+• Deep-Sleep bio-reaktive Klanglandschaften
+• Flow-State-Optimierung
+• Atemübungen (Box, 4-7-8, Kohärenz)
+• Session-Tracking und Fortschritt
+
+JEDES APPLE-GERÄT
+• iPhone, iPad, Mac, Apple Watch, Apple TV, Vision Pro
+• CloudKit-Sync über alle Geräte
+• Widgets und Live Activities
+• SharePlay für Gruppen-Sessions
+
+BARRIEREFREIHEIT — FÜR ALLE
 • 20+ Barrierefreiheitsprofile
-• VoiceOver/TalkBack Unterstützung
-• Sprachsteuerung
-• Farbenblind-sichere Paletten
+• VoiceOver mit räumlichen Audio-Hinweisen
+• Sprachsteuerung und Switch Access
+• 6 farbenblind-sichere Paletten
+• WCAG 2.1 AAA konform
 
-GESUNDHEITSHINWEIS: Echoelmusic ist KEIN medizinisches Gerät. Nur für kreative und Wellness-Zwecke.
+12 SPRACHEN
+Englisch, Deutsch, Japanisch, Spanisch, Französisch, Chinesisch, Koreanisch, Portugiesisch, Italienisch, Russisch, Arabisch, Hindi
+
+KOSTENLOS STARTEN
+Kostenlos herunterladen. Bio-reaktive Kreation mit Basisfunktionen erleben. Upgrade auf Pro für unbegrenzte Sessions, alle Synth-Engines, Export und mehr.
+
+ECHOELMUSIC PRO
+• Unbegrenzte Session-Länge
+• Alle 7 Synth-Engines und Presets
+• CloudKit-Sync + Watch-Integration
+• WAV/MIDI Export
+• DMX Lichtsteuerung
+• Prioritäts-Support
+• 7 Tage kostenlos testen
+
+Deine Kreationen gehören dir. Wir beanspruchen keine Rechte an deiner Musik, Visuals oder Kunst.
+
+Dies ist kein medizinisches Gerät. Biofeedback-Funktionen dienen nur kreativen und Wellness-Zwecken.
+
+echoelmusic.com
 """,
-        keywords: "Biofeedback,HRV,Meditation,Musik,Wellness,Quantenphysik,Raumklang,Kohärenz,Achtsamkeit,Kreativ",
-        promotionalText: "Erschaffe aus dir heraus. Dein Herzschlag treibt die Musik, dein Atem formt die Visuals, dein Körper steuert das Licht. Bio-reaktive Performance für Musik, Film & mehr.",
-        whatsNew: "🎬 NEU: Orchestrales Scoring, professionelles Streaming, erweiterte Hardware-Integration, Enterprise-Sicherheit"
+        keywords: "Biofeedback,HRV,Synthesizer,AUv3,Meditation,Musik,Wellness,Raumklang,Kohärenz,Bio-Reaktiv",
+        promotionalText: "Dein Herzschlag wird Musik. Bio-reaktives audio-visuelles Instrument — verbinde Apple Watch, erschaffe aus dir heraus.",
+        whatsNew: """
+NEU IN DIESER VERSION
+
+• Echoelmusic Pro — Abo mit 7 Tagen kostenloser Testphase
+• Geführte Kohärenz-, Deep-Sleep- und Flow-State-Sessions
+• CloudKit Sync für Push-Benachrichtigungen
+• DDSP-Synthese mit 12 bio-reaktiven Mappings
+• Spektral-Morphing und Klangfarben-Transfer
+• Hilbert Bio-Signal-Visualisierung
+• Performance- und Stabilitätsverbesserungen
+"""
     )
 
     // MARK: - Japanese (ja-JP)
@@ -449,53 +442,55 @@ GESUNDHEITSHINWEIS: Echoelmusic ist KEIN medizinisches Gerät. Nur für kreative
     public static let japanese = LocalizedMetadata(
         locale: "ja-JP",
         name: "Echoelmusic",
-        subtitle: "内なるものから創造する",
+        subtitle: "心拍が音楽になる",
         description: """
-心拍、呼吸、意識を驚異的な空間オーディオとイマーシブビジュアルに変換します。
+心拍が音楽になる。呼吸が空間を形作る。コヒーレンスが新しい次元を開く。
 
-Echoelmusicは、バイオメトリック信号をアートに変える世界初のバイオリアクティブ・オーディオビジュアル・プラットフォームです。最先端のAIと量子インスパイアド処理により、身体の自然なリズムを通じて音楽創造を体験してください。
+Echoelmusicはバイオメトリクスをライブミュージック、ビジュアル、ライトに変換します。Apple Watchを接続して、世界初のバイオリアクティブ・オーディオビジュアル楽器を体験してください。
 
-✨ 主な機能
-
-バイオメトリック音楽創造
-• リアルタイム心拍変動(HRV) → 空間オーディオフィールド
-• 呼吸パターン → サウンドテクスチャとビジュアルフロー
-• コヒーレンス追跡 → ハーモニック複雑性
+バイオリアクティブ・クリエーション
+• 心拍数がテンポとインテンシティに
+• HRVコヒーレンスがハーモニック複雑性とエフェクトを形成
+• 呼吸が空間的深さとアトモスフィアをコントロール
 • Apple Watch統合
 
-空間オーディオエンジン
-• 3D/4Dイマーシブサウンドスケープ
-• フィボナッチと神聖幾何学
-• MIDI 2.0とMPEサポート
-• ゼロレイテンシー(<10ms)
+シンセサイザーエンジン
+• DDSP — スペクトラルモーフィングによるディープラーニング合成
+• Modal — フィジカルモデリング（弦、膜、共鳴器）
+• Granular — タイムストレッチとテクスチャ生成
+• Wavetable — クラシックな波形
+• FM — バイオリアクティブモジュレーション
+• Subtractive — アナログインスパイアドフィルタリング
 
-量子ライトビジュアル
-• 10種類のGPU加速ビジュアライゼーションモード
-• 波干渉、光子フロー、神聖幾何学
-• リアルタイムMetalシェーダー60fps
-• visionOSで360°体験
+AUv3オーディオユニットプラグイン
+Logic Pro、GarageBand、AUM内で使用可能
 
-AIクリエイティブスタジオ
-• 30以上のスタイルでアート生成
-• 30以上のジャンルで音楽作曲
-• フラクタルジェネレーター
-• ライトショーデザイナー
+空間オーディオ
+• ヘッドトラッキング付き3Dサウンドスケープ
+• バイノーラルレンダリング
+• 低レイテンシー（<10ms）
 
-世界中のコラボレーション
-• ゼロレイテンシーグローバルセッション(1000人以上)
-• グループコヒーレンス同期
+ウェルネス
+• ガイド付きコヒーレンストレーニング
+• ディープスリープサウンドスケープ
+• フローステート最適化
+• 呼吸エクササイズ
 
-アクセシビリティ(WCAG AAA)
-• 20以上のアクセシビリティプロファイル
-• VoiceOver/TalkBackサポート
-• 音声コントロール
-• 色覚異常対応パレット
+すべてのAppleデバイス
+iPhone、iPad、Mac、Apple Watch、Apple TV、Vision Pro
 
-健康に関する免責事項: Echoelmusicは医療機器ではありません。創造的およびウェルネス目的のみです。
+アクセシビリティ
+• 20以上のプロファイル • VoiceOver • 6つの色覚対応パレット • WCAG 2.1 AAA準拠
+
+無料で開始。Proにアップグレードで無制限セッション、全シンセエンジン、エクスポート等。7日間無料トライアル。
+
+これは医療機器ではありません。
+
+echoelmusic.com
 """,
-        keywords: "バイオフィードバック,HRV,瞑想,音楽,ウェルネス,量子,空間オーディオ,コヒーレンス,マインドフルネス,創造性",
-        promotionalText: "心拍を交響曲に変える。バイオリアクティブオーディオと量子ビジュアルの融合。",
-        whatsNew: "🎬 新機能: オーケストラスコアリング、プロフェッショナルストリーミング、ハードウェア統合拡張、エンタープライズセキュリティ"
+        keywords: "バイオフィードバック,HRV,シンセサイザー,AUv3,瞑想,音楽,ウェルネス,空間オーディオ,コヒーレンス,バイオリアクティブ",
+        promotionalText: "心拍が音楽になる。バイオリアクティブ・オーディオビジュアル楽器 — Apple Watchを接続して、内側から創造。",
+        whatsNew: "Echoelmusic Pro（7日間無料トライアル）、ガイド付きセッション、DDSP合成、CloudKit同期、パフォーマンス改善"
     )
 
     // MARK: - Spanish (es-ES)
@@ -503,53 +498,47 @@ AIクリエイティブスタジオ
     public static let spanish = LocalizedMetadata(
         locale: "es-ES",
         name: "Echoelmusic",
-        subtitle: "Crea desde tu Interior",
+        subtitle: "Tu Latido se Hace Música",
         description: """
-Transforma tu ritmo cardíaco, respiración y conciencia en impresionante audio espacial y visuales inmersivos.
+Tu latido se hace música. Tu respiración da forma al espacio. Tu coherencia abre nuevas dimensiones.
 
-Echoelmusic es la primera plataforma audiovisual bio-reactiva del mundo que convierte tus señales biométricas en arte. Experimenta la creación musical a través de los ritmos naturales de tu cuerpo, impulsado por IA de vanguardia y procesamiento cuántico.
+Echoelmusic transforma tu biometría en música en vivo, visuales y luz. Conecta tu Apple Watch y experimenta el primer instrumento audiovisual bio-reactivo del mundo.
 
-✨ CARACTERÍSTICAS PRINCIPALES
-
-CREACIÓN MUSICAL BIOMÉTRICA
-• Variabilidad del ritmo cardíaco (HRV) en tiempo real → campo de audio espacial
-• Patrones de respiración → texturas de sonido y flujo visual
-• Seguimiento de coherencia → complejidad armónica
+CREACIÓN BIO-REACTIVA
+• La frecuencia cardíaca se convierte en tempo e intensidad
+• La coherencia HRV da forma a la complejidad armónica
+• La respiración controla la profundidad espacial
 • Integración con Apple Watch
 
-MOTOR DE AUDIO ESPACIAL
-• Paisajes sonoros inmersivos 3D/4D
-• Posicionamiento de sonido con Fibonacci y geometría sagrada
-• Soporte MIDI 2.0 y MPE
-• Latencia cero (<10ms)
+MOTORES DE SÍNTESIS
+DDSP, Modal, Granular, Wavetable, FM, Subtractive — todos bio-reactivos.
 
-VISUALES DE LUZ CUÁNTICA
-• 10 modos de visualización acelerados por GPU
-• Interferencia de ondas, flujo de fotones
-• Shaders Metal en tiempo real a 60fps
-• Experiencias 360° en visionOS
+PLUGINS AUv3
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — funciona en Logic Pro, GarageBand.
 
-ESTUDIO CREATIVO IA
-• Genera arte en 30+ estilos
-• Compone música en 30+ géneros
-• Generador de fractales
-• Diseñador de espectáculos de luz
+AUDIO ESPACIAL
+Paisajes sonoros 3D con head tracking. Renderizado binaural. Baja latencia (<10ms).
 
-COLABORACIÓN MUNDIAL
-• Sesiones globales de latencia cero (1000+ participantes)
-• Sincronización de coherencia grupal
+BIENESTAR
+Entrenamiento de coherencia guiado. Paisajes sonoros para dormir. Optimización de flow state. Ejercicios de respiración.
 
-ACCESIBILIDAD (WCAG AAA)
-• 20+ perfiles de accesibilidad
-• Soporte VoiceOver/TalkBack
-• Control por voz
-• Paletas seguras para daltónicos
+TODOS LOS DISPOSITIVOS APPLE
+iPhone, iPad, Mac, Watch, TV, Vision Pro. Sync con CloudKit.
 
-AVISO DE SALUD: Echoelmusic NO es un dispositivo médico. Solo para uso creativo y bienestar.
+ACCESIBILIDAD
+20+ perfiles. VoiceOver. 6 paletas para daltonismo. WCAG 2.1 AAA.
+
+12 IDIOMAS
+
+GRATIS PARA EMPEZAR. Pro para sesiones ilimitadas, todos los motores, exportación. Prueba gratuita de 7 días.
+
+Esto no es un dispositivo médico.
+
+echoelmusic.com
 """,
-        keywords: "biofeedback,HRV,meditación,música,bienestar,cuántico,audio espacial,coherencia,mindfulness,creatividad",
-        promotionalText: "Convierte tu latido en una sinfonía. Audio bio-reactivo encuentra visuales cuánticos.",
-        whatsNew: "🎬 NUEVO: Composición orquestal, streaming profesional, ecosistema de hardware ampliado, seguridad empresarial"
+        keywords: "biofeedback,HRV,sintetizador,AUv3,meditación,música,bienestar,audio espacial,coherencia,bio-reactivo",
+        promotionalText: "Tu latido se hace música. Instrumento audiovisual bio-reactivo — conecta Apple Watch.",
+        whatsNew: "Echoelmusic Pro (prueba gratuita 7 días), sesiones guiadas, síntesis DDSP, sincronización CloudKit, mejoras de rendimiento"
     )
 
     // MARK: - French (fr-FR)
@@ -557,53 +546,47 @@ AVISO DE SALUD: Echoelmusic NO es un dispositivo médico. Solo para uso creativo
     public static let french = LocalizedMetadata(
         locale: "fr-FR",
         name: "Echoelmusic",
-        subtitle: "Créez de l'Intérieur",
+        subtitle: "Votre Cœur Devient Musique",
         description: """
-Transformez votre rythme cardiaque, votre respiration et votre conscience en audio spatial époustouflant et visuels immersifs.
+Votre cœur devient musique. Votre respiration façonne l'espace. Votre cohérence ouvre de nouvelles dimensions.
 
-Echoelmusic est la première plateforme audiovisuelle bio-réactive au monde qui transforme vos signaux biométriques en art. Découvrez la création musicale à travers les rythmes naturels de votre corps, propulsée par l'IA de pointe et le traitement quantique.
+Echoelmusic transforme vos données biométriques en musique live, visuels et lumière. Connectez votre Apple Watch et découvrez le premier instrument audiovisuel bio-réactif au monde.
 
-✨ FONCTIONNALITÉS PRINCIPALES
-
-CRÉATION MUSICALE BIOMÉTRIQUE
-• Variabilité de la fréquence cardiaque (HRV) en temps réel → champ audio spatial
-• Schémas respiratoires → textures sonores et flux visuels
-• Suivi de cohérence → complexité harmonique
+CRÉATION BIO-RÉACTIVE
+• La fréquence cardiaque devient tempo et intensité
+• La cohérence HRV façonne la complexité harmonique
+• La respiration contrôle la profondeur spatiale
 • Intégration Apple Watch
 
-MOTEUR AUDIO SPATIAL
-• Paysages sonores immersifs 3D/4D
-• Positionnement sonore Fibonacci et géométrie sacrée
-• Support MIDI 2.0 et MPE
-• Latence zéro (<10ms)
+MOTEURS DE SYNTHÈSE
+DDSP, Modal, Granulaire, Wavetable, FM, Soustractif — tous bio-réactifs.
 
-VISUELS LUMIÈRE QUANTIQUE
-• 10 modes de visualisation accélérés par GPU
-• Interférence d'ondes, flux de photons
-• Shaders Metal en temps réel à 60fps
-• Expériences 360° sur visionOS
+PLUGINS AUv3
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — fonctionne dans Logic Pro, GarageBand.
 
-STUDIO CRÉATIF IA
-• Générez de l'art dans 30+ styles
-• Composez de la musique dans 30+ genres
-• Générateur de fractales
-• Concepteur de spectacles lumineux
+AUDIO SPATIAL
+Paysages sonores 3D avec head tracking. Rendu binaural. Faible latence (<10ms).
 
-COLLABORATION MONDIALE
-• Sessions globales à latence zéro (1000+ participants)
-• Synchronisation de cohérence de groupe
+BIEN-ÊTRE
+Entraînement de cohérence guidé. Paysages sonores pour le sommeil. Exercices de respiration.
 
-ACCESSIBILITÉ (WCAG AAA)
-• 20+ profils d'accessibilité
-• Support VoiceOver/TalkBack
-• Contrôle vocal
-• Palettes adaptées aux daltoniens
+TOUS LES APPAREILS APPLE
+iPhone, iPad, Mac, Watch, TV, Vision Pro. Synchronisation CloudKit.
 
-AVERTISSEMENT SANTÉ: Echoelmusic N'EST PAS un dispositif médical. Usage créatif et bien-être uniquement.
+ACCESSIBILITÉ
+20+ profils. VoiceOver. 6 palettes pour daltoniens. WCAG 2.1 AAA.
+
+12 LANGUES
+
+GRATUIT POUR COMMENCER. Pro pour sessions illimitées, tous les moteurs, export. Essai gratuit 7 jours.
+
+Ce n'est pas un dispositif médical.
+
+echoelmusic.com
 """,
-        keywords: "biofeedback,HRV,méditation,musique,bien-être,quantique,audio spatial,cohérence,pleine conscience,créativité",
-        promotionalText: "Transformez votre battement de cœur en symphonie. Audio bio-réactif rencontre visuels quantiques.",
-        whatsNew: "🎬 NOUVEAU: Partition orchestrale, streaming professionnel, écosystème matériel étendu, sécurité d'entreprise"
+        keywords: "biofeedback,HRV,synthétiseur,AUv3,méditation,musique,bien-être,audio spatial,cohérence,bio-réactif",
+        promotionalText: "Votre cœur devient musique. Instrument audiovisuel bio-réactif — connectez Apple Watch.",
+        whatsNew: "Echoelmusic Pro (essai gratuit 7 jours), sessions guidées, synthèse DDSP, synchronisation CloudKit, améliorations"
     )
 
     // MARK: - Chinese Simplified (zh-Hans)
@@ -611,53 +594,47 @@ AVERTISSEMENT SANTÉ: Echoelmusic N'EST PAS un dispositif médical. Usage créat
     public static let chineseSimplified = LocalizedMetadata(
         locale: "zh-Hans",
         name: "Echoelmusic",
-        subtitle: "从内心创造",
+        subtitle: "心跳化为音乐",
         description: """
-将您的心跳、呼吸和意识转化为令人惊叹的空间音频和沉浸式视觉效果。
+心跳化为音乐。呼吸塑造空间。一致性开启新维度。
 
-Echoelmusic 是世界上第一个将您的生物特征信号转化为艺术的生物反应式音视频平台。通过身体的自然节奏体验音乐创作,由尖端人工智能和量子启发处理驱动。
+Echoelmusic将您的生物特征转化为实时音乐、视觉效果和灯光。连接Apple Watch，体验全球首款生物反应式音视觉乐器。
 
-✨ 主要功能
+生物反应创作
+• 心率成为节拍和强度
+• HRV一致性塑造和声复杂性
+• 呼吸控制空间深度
+• Apple Watch集成
 
-生物特征音乐创作
-• 实时心率变异性 (HRV) → 空间音频场
-• 呼吸模式 → 声音纹理和视觉流
-• 一致性追踪 → 和声复杂性
-• Apple Watch 集成
+合成器引擎
+DDSP、Modal、Granular、Wavetable、FM、Subtractive — 全部生物反应式。
 
-空间音频引擎
-• 3D/4D 沉浸式音景
-• 斐波那契和神圣几何声音定位
-• MIDI 2.0 和 MPE 支持
-• 零延迟 (<10ms)
+AUv3音频单元插件
+808 Bass、BioComposer、Stem Splitter、MIDI Pro — 可在Logic Pro、GarageBand中使用。
 
-量子光视觉
-• 10 种 GPU 加速可视化模式
-• 波干涉、光子流、神圣几何
-• 60fps 实时 Metal 着色器
-• visionOS 上的 360° 体验
+空间音频
+带头部追踪的3D音景。双耳渲染。低延迟（<10ms）。
 
-AI 创意工作室
-• 生成 30 多种风格的艺术
-• 创作 30 多种流派的音乐
-• 分形生成器
-• 灯光秀设计器
+健康
+引导式一致性训练。深度睡眠音景。心流状态优化。呼吸练习。
 
-全球协作
-• 零延迟全球会话(1000+ 参与者)
-• 群组一致性同步
+所有Apple设备
+iPhone、iPad、Mac、Watch、TV、Vision Pro。CloudKit同步。
 
-无障碍功能 (WCAG AAA)
-• 20 多个无障碍配置文件
-• VoiceOver/TalkBack 支持
-• 语音控制
-• 色盲安全调色板
+无障碍
+20+配置文件。VoiceOver。6种色盲安全调色板。WCAG 2.1 AAA。
 
-健康免责声明:Echoelmusic 不是医疗设备。仅用于创意和健康目的。
+12种语言
+
+免费开始。升级Pro享受无限时长、全部引擎、导出功能。7天免费试用。
+
+这不是医疗设备。
+
+echoelmusic.com
 """,
-        keywords: "生物反馈,心率变异性,冥想,音乐,健康,量子,空间音频,一致性,正念,创造力",
-        promotionalText: "将您的心跳变成交响乐。生物反应式音频遇见量子视觉。",
-        whatsNew: "🎬 新功能:管弦乐配乐、专业流媒体、硬件生态系统扩展、企业级安全"
+        keywords: "生物反馈,HRV,合成器,AUv3,冥想,音乐,健康,空间音频,一致性,生物反应",
+        promotionalText: "心跳化为音乐。生物反应式音视觉乐器 — 连接Apple Watch，从内心创造。",
+        whatsNew: "Echoelmusic Pro（7天免费试用），引导式会话，DDSP合成，CloudKit同步，性能改进"
     )
 
     // MARK: - Korean (ko-KR)
@@ -665,53 +642,47 @@ AI 创意工作室
     public static let korean = LocalizedMetadata(
         locale: "ko-KR",
         name: "Echoelmusic",
-        subtitle: "내면에서 창조하다",
+        subtitle: "심장 박동이 음악이 된다",
         description: """
-심박, 호흡, 의식을 놀라운 공간 오디오와 몰입형 비주얼로 변환하세요.
+심장 박동이 음악이 된다. 호흡이 공간을 형성한다. 일관성이 새로운 차원을 연다.
 
-Echoelmusic은 생체 신호를 예술로 전환하는 세계 최초의 생체 반응형 오디오-비주얼 플랫폼입니다. 최첨단 AI와 양자 영감 처리로 구동되는 신체의 자연스러운 리듬을 통해 음악 창작을 경험하세요.
+Echoelmusic은 생체 정보를 라이브 음악, 비주얼, 조명으로 변환합니다. Apple Watch를 연결하고 세계 최초의 생체 반응형 오디오-비주얼 악기를 경험하세요.
 
-✨ 주요 기능
-
-생체 음악 창작
-• 실시간 심박 변이도(HRV) → 공간 오디오 필드
-• 호흡 패턴 → 사운드 텍스처 및 비주얼 플로우
-• 일관성 추적 → 화성 복잡성
+생체 반응형 크리에이션
+• 심박수가 템포와 인텐시티로
+• HRV 일관성이 화성 복잡성을 형성
+• 호흡이 공간 깊이를 제어
 • Apple Watch 통합
 
-공간 오디오 엔진
-• 3D/4D 몰입형 사운드스케이프
-• 피보나치 및 신성 기하학 사운드 포지셔닝
-• MIDI 2.0 및 MPE 지원
-• 제로 레이턴시(<10ms)
+신디사이저 엔진
+DDSP, Modal, Granular, Wavetable, FM, Subtractive — 모두 생체 반응형.
 
-양자 빛 비주얼
-• 10가지 GPU 가속 시각화 모드
-• 파동 간섭, 광자 흐름, 신성 기하학
-• 60fps 실시간 Metal 셰이더
-• visionOS에서 360° 경험
+AUv3 오디오 유닛 플러그인
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — Logic Pro, GarageBand에서 사용 가능.
 
-AI 크리에이티브 스튜디오
-• 30개 이상의 스타일로 아트 생성
-• 30개 이상의 장르로 음악 작곡
-• 프랙탈 생성기
-• 라이트 쇼 디자이너
+공간 오디오
+헤드 트래킹 3D 사운드스케이프. 바이노럴 렌더링. 저지연(<10ms).
 
-전 세계 협업
-• 제로 레이턴시 글로벌 세션(1000명 이상 참가자)
-• 그룹 일관성 동기화
+웰니스
+가이드 일관성 트레이닝. 딥 슬립 사운드스케이프. 플로우 스테이트 최적화. 호흡 운동.
 
-접근성(WCAG AAA)
-• 20개 이상의 접근성 프로필
-• VoiceOver/TalkBack 지원
-• 음성 제어
-• 색맹 안전 팔레트
+모든 Apple 기기
+iPhone, iPad, Mac, Watch, TV, Vision Pro. CloudKit 동기화.
 
-건강 면책 조항: Echoelmusic은 의료 기기가 아닙니다. 창의적 및 웰니스 목적으로만 사용하세요.
+접근성
+20+ 프로필. VoiceOver. 6가지 색맹 안전 팔레트. WCAG 2.1 AAA.
+
+12개 언어
+
+무료로 시작. Pro로 무제한 세션, 모든 엔진, 내보내기. 7일 무료 체험.
+
+의료 기기가 아닙니다.
+
+echoelmusic.com
 """,
-        keywords: "생체피드백,심박변이도,명상,음악,웰니스,양자,공간오디오,일관성,마음챙김,창의성",
-        promotionalText: "심박을 교향곡으로 바꾸세요. 생체 반응형 오디오가 양자 비주얼을 만납니다.",
-        whatsNew: "🎬 새로운 기능: 오케스트라 스코어링, 전문 스트리밍, 하드웨어 생태계 확장, 엔터프라이즈 보안"
+        keywords: "생체피드백,HRV,신디사이저,AUv3,명상,음악,웰니스,공간오디오,일관성,생체반응",
+        promotionalText: "심장 박동이 음악이 된다. 생체 반응형 오디오-비주얼 악기 — Apple Watch 연결.",
+        whatsNew: "Echoelmusic Pro (7일 무료 체험), 가이드 세션, DDSP 합성, CloudKit 동기화, 성능 개선"
     )
 
     // MARK: - Portuguese Brazil (pt-BR)
@@ -719,53 +690,47 @@ AI 크리에이티브 스튜디오
     public static let portugueseBrazil = LocalizedMetadata(
         locale: "pt-BR",
         name: "Echoelmusic",
-        subtitle: "Crie de Dentro",
+        subtitle: "Seu Batimento Vira Música",
         description: """
-Transforme seu batimento cardíaco, respiração e consciência em áudio espacial deslumbrante e visuais imersivos.
+Seu batimento vira música. Sua respiração molda o espaço. Sua coerência abre novas dimensões.
 
-Echoelmusic é a primeira plataforma audiovisual bio-reativa do mundo que transforma seus sinais biométricos em arte. Experimente a criação musical através dos ritmos naturais do seu corpo, impulsionado por IA de ponta e processamento quântico.
+Echoelmusic transforma sua biometria em música ao vivo, visuais e luz. Conecte seu Apple Watch e experimente o primeiro instrumento audiovisual bio-reativo do mundo.
 
-✨ RECURSOS PRINCIPAIS
+CRIAÇÃO BIO-REATIVA
+• Frequência cardíaca se torna tempo e intensidade
+• Coerência HRV molda complexidade harmônica
+• Respiração controla profundidade espacial
+• Integração Apple Watch
 
-CRIAÇÃO MUSICAL BIOMÉTRICA
-• Variabilidade da frequência cardíaca (HRV) em tempo real → campo de áudio espacial
-• Padrões respiratórios → texturas sonoras e fluxo visual
-• Rastreamento de coerência → complexidade harmônica
-• Integração com Apple Watch
+MOTORES DE SÍNTESE
+DDSP, Modal, Granular, Wavetable, FM, Subtractive — todos bio-reativos.
 
-MOTOR DE ÁUDIO ESPACIAL
-• Paisagens sonoras imersivas 3D/4D
-• Posicionamento de som Fibonacci e geometria sagrada
-• Suporte MIDI 2.0 e MPE
-• Latência zero (<10ms)
+PLUGINS AUv3
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — funciona no Logic Pro, GarageBand.
 
-VISUAIS DE LUZ QUÂNTICA
-• 10 modos de visualização acelerados por GPU
-• Interferência de ondas, fluxo de fótons
-• Shaders Metal em tempo real a 60fps
-• Experiências 360° no visionOS
+ÁUDIO ESPACIAL
+Paisagens sonoras 3D com head tracking. Renderização binaural. Baixa latência (<10ms).
 
-ESTÚDIO CRIATIVO IA
-• Gere arte em 30+ estilos
-• Componha música em 30+ gêneros
-• Gerador de fractais
-• Designer de shows de luz
+BEM-ESTAR
+Treinamento de coerência guiado. Paisagens sonoras para sono profundo. Exercícios de respiração.
 
-COLABORAÇÃO MUNDIAL
-• Sessões globais de latência zero (1000+ participantes)
-• Sincronização de coerência em grupo
+TODOS OS DISPOSITIVOS APPLE
+iPhone, iPad, Mac, Watch, TV, Vision Pro. Sync com CloudKit.
 
-ACESSIBILIDADE (WCAG AAA)
-• 20+ perfis de acessibilidade
-• Suporte VoiceOver/TalkBack
-• Controle por voz
-• Paletas seguras para daltônicos
+ACESSIBILIDADE
+20+ perfis. VoiceOver. 6 paletas para daltonismo. WCAG 2.1 AAA.
 
-AVISO DE SAÚDE: Echoelmusic NÃO é um dispositivo médico. Apenas para uso criativo e bem-estar.
+12 IDIOMAS
+
+GRÁTIS PARA COMEÇAR. Pro para sessões ilimitadas, todos os motores, exportação. Teste grátis de 7 dias.
+
+Não é um dispositivo médico.
+
+echoelmusic.com
 """,
-        keywords: "biofeedback,HRV,meditação,música,bem-estar,quântico,áudio espacial,coerência,atenção plena,criatividade",
-        promotionalText: "Transforme seu batimento cardíaco em uma sinfonia. Áudio bio-reativo encontra visuais quânticos.",
-        whatsNew: "🎬 NOVO: Composição orquestral, streaming profissional, ecossistema de hardware expandido, segurança empresarial"
+        keywords: "biofeedback,HRV,sintetizador,AUv3,meditação,música,bem-estar,áudio espacial,coerência,bio-reativo",
+        promotionalText: "Seu batimento vira música. Instrumento audiovisual bio-reativo — conecte Apple Watch.",
+        whatsNew: "Echoelmusic Pro (teste grátis 7 dias), sessões guiadas, síntese DDSP, sincronização CloudKit, melhorias"
     )
 
     // MARK: - Italian (it-IT)
@@ -773,53 +738,47 @@ AVISO DE SAÚDE: Echoelmusic NÃO é um dispositivo médico. Apenas para uso cri
     public static let italian = LocalizedMetadata(
         locale: "it-IT",
         name: "Echoelmusic",
-        subtitle: "Crea dall'Interno",
+        subtitle: "Il Tuo Battito Diventa Musica",
         description: """
-Trasforma il tuo battito cardiaco, respiro e coscienza in straordinario audio spaziale e visual immersivi.
+Il tuo battito diventa musica. Il tuo respiro modella lo spazio. La tua coerenza apre nuove dimensioni.
 
-Echoelmusic è la prima piattaforma audiovisiva bio-reattiva al mondo che trasforma i tuoi segnali biometrici in arte. Sperimenta la creazione musicale attraverso i ritmi naturali del tuo corpo, alimentata da IA all'avanguardia e elaborazione quantistica.
+Echoelmusic trasforma la tua biometria in musica live, visual ed effetti luminosi. Collega il tuo Apple Watch e scopri il primo strumento audiovisivo bio-reattivo al mondo.
 
-✨ CARATTERISTICHE PRINCIPALI
-
-CREAZIONE MUSICALE BIOMETRICA
-• Variabilità della frequenza cardiaca (HRV) in tempo reale → campo audio spaziale
-• Schemi respiratori → texture sonore e flusso visivo
-• Tracciamento della coerenza → complessità armonica
+CREAZIONE BIO-REATTIVA
+• La frequenza cardiaca diventa tempo e intensità
+• La coerenza HRV modella la complessità armonica
+• La respirazione controlla la profondità spaziale
 • Integrazione Apple Watch
 
-MOTORE AUDIO SPAZIALE
-• Paesaggi sonori immersivi 3D/4D
-• Posizionamento del suono Fibonacci e geometria sacra
-• Supporto MIDI 2.0 e MPE
-• Latenza zero (<10ms)
+MOTORI DI SINTESI
+DDSP, Modal, Granulare, Wavetable, FM, Sottrattivo — tutti bio-reattivi.
 
-VISUAL LUCE QUANTICA
-• 10 modalità di visualizzazione accelerate da GPU
-• Interferenza d'onda, flusso di fotoni
-• Shader Metal in tempo reale a 60fps
-• Esperienze 360° su visionOS
+PLUGIN AUv3
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — funziona in Logic Pro, GarageBand.
 
-STUDIO CREATIVO IA
-• Genera arte in 30+ stili
-• Componi musica in 30+ generi
-• Generatore di frattali
-• Designer di spettacoli di luce
+AUDIO SPAZIALE
+Paesaggi sonori 3D con head tracking. Rendering binaurale. Bassa latenza (<10ms).
 
-COLLABORAZIONE MONDIALE
-• Sessioni globali a latenza zero (1000+ partecipanti)
-• Sincronizzazione della coerenza di gruppo
+BENESSERE
+Training di coerenza guidato. Paesaggi sonori per il sonno. Esercizi di respirazione.
 
-ACCESSIBILITÀ (WCAG AAA)
-• 20+ profili di accessibilità
-• Supporto VoiceOver/TalkBack
-• Controllo vocale
-• Palette sicure per daltonici
+TUTTI I DISPOSITIVI APPLE
+iPhone, iPad, Mac, Watch, TV, Vision Pro. Sincronizzazione CloudKit.
 
-AVVISO SANITARIO: Echoelmusic NON è un dispositivo medico. Solo per uso creativo e benessere.
+ACCESSIBILITÀ
+20+ profili. VoiceOver. 6 palette per daltonici. WCAG 2.1 AAA.
+
+12 LINGUE
+
+GRATIS PER INIZIARE. Pro per sessioni illimitate, tutti i motori, esportazione. Prova gratuita 7 giorni.
+
+Non è un dispositivo medico.
+
+echoelmusic.com
 """,
-        keywords: "biofeedback,HRV,meditazione,musica,benessere,quantico,audio spaziale,coerenza,mindfulness,creatività",
-        promotionalText: "Trasforma il tuo battito cardiaco in una sinfonia. Audio bio-reattivo incontra visual quantici.",
-        whatsNew: "🎬 NUOVO: Composizione orchestrale, streaming professionale, ecosistema hardware espanso, sicurezza aziendale"
+        keywords: "biofeedback,HRV,sintetizzatore,AUv3,meditazione,musica,benessere,audio spaziale,coerenza,bio-reattivo",
+        promotionalText: "Il tuo battito diventa musica. Strumento audiovisivo bio-reattivo — collega Apple Watch.",
+        whatsNew: "Echoelmusic Pro (prova gratuita 7 giorni), sessioni guidate, sintesi DDSP, sincronizzazione CloudKit, miglioramenti"
     )
 
     // MARK: - Russian (ru-RU)
@@ -827,53 +786,47 @@ AVVISO SANITARIO: Echoelmusic NON è un dispositivo medico. Solo per uso creativ
     public static let russian = LocalizedMetadata(
         locale: "ru-RU",
         name: "Echoelmusic",
-        subtitle: "Творите изнутри",
+        subtitle: "Ваше Сердцебиение — Музыка",
         description: """
-Превратите свое сердцебиение, дыхание и сознание в потрясающее пространственное аудио и иммерсивные визуальные эффекты.
+Ваше сердцебиение становится музыкой. Ваше дыхание формирует пространство. Ваша когерентность открывает новые измерения.
 
-Echoelmusic — первая в мире биореактивная аудиовизуальная платформа, которая превращает ваши биометрические сигналы в искусство. Испытайте создание музыки через естественные ритмы вашего тела с помощью передового ИИ и квантовой обработки.
+Echoelmusic превращает вашу биометрию в живую музыку, визуальные эффекты и свет. Подключите Apple Watch и испытайте первый в мире биореактивный аудиовизуальный инструмент.
 
-✨ ОСНОВНЫЕ ФУНКЦИИ
-
-БИОМЕТРИЧЕСКОЕ СОЗДАНИЕ МУЗЫКИ
-• Вариабельность сердечного ритма (ВСР) в реальном времени → пространственное аудиополе
-• Паттерны дыхания → звуковые текстуры и визуальный поток
-• Отслеживание когерентности → гармоническая сложность
+БИОРЕАКТИВНОЕ ТВОРЧЕСТВО
+• Частота сердцебиения становится темпом и интенсивностью
+• Когерентность ВСР формирует гармоническую сложность
+• Дыхание контролирует пространственную глубину
 • Интеграция с Apple Watch
 
-ПРОСТРАНСТВЕННЫЙ АУДИОДВИЖОК
-• Иммерсивные звуковые ландшафты 3D/4D
-• Позиционирование звука по Фибоначчи и священной геометрии
-• Поддержка MIDI 2.0 и MPE
-• Нулевая задержка (<10ms)
+СИНТЕЗАТОРНЫЕ ДВИЖКИ
+DDSP, Modal, Granular, Wavetable, FM, Subtractive — все биореактивные.
 
-КВАНТОВЫЕ СВЕТОВЫЕ ВИЗУАЛЫ
-• 10 режимов визуализации с ускорением GPU
-• Интерференция волн, поток фотонов
-• Шейдеры Metal в реальном времени 60fps
-• 360° опыт на visionOS
+ПЛАГИНЫ AUv3
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — работает в Logic Pro, GarageBand.
 
-КРЕАТИВНАЯ СТУДИЯ ИИ
-• Создавайте искусство в 30+ стилях
-• Сочиняйте музыку в 30+ жанрах
-• Генератор фракталов
-• Дизайнер светового шоу
+ПРОСТРАНСТВЕННОЕ АУДИО
+3D звуковые ландшафты с отслеживанием головы. Бинауральный рендеринг. Низкая задержка (<10мс).
 
-ГЛОБАЛЬНОЕ СОТРУДНИЧЕСТВО
-• Глобальные сессии с нулевой задержкой (1000+ участников)
-• Групповая синхронизация когерентности
+ВЕЛНЕС
+Управляемые тренировки когерентности. Звуковые ландшафты для сна. Дыхательные упражнения.
 
-ДОСТУПНОСТЬ (WCAG AAA)
-• 20+ профилей доступности
-• Поддержка VoiceOver/TalkBack
-• Голосовое управление
-• Безопасные для дальтоников палитры
+ВСЕ УСТРОЙСТВА APPLE
+iPhone, iPad, Mac, Watch, TV, Vision Pro. Синхронизация CloudKit.
 
-УВЕДОМЛЕНИЕ О ЗДОРОВЬЕ: Echoelmusic НЕ является медицинским устройством. Только для творческих и оздоровительных целей.
+ДОСТУПНОСТЬ
+20+ профилей. VoiceOver. 6 палитр для дальтоников. WCAG 2.1 AAA.
+
+12 ЯЗЫКОВ
+
+НАЧНИТЕ БЕСПЛАТНО. Pro для безлимитных сессий, всех движков, экспорта. 7-дневная бесплатная пробная версия.
+
+Не является медицинским устройством.
+
+echoelmusic.com
 """,
-        keywords: "биофидбэк,ВСР,медитация,музыка,велнес,квантовый,пространственное аудио,когерентность,осознанность,креативность",
-        promotionalText: "Превратите свое сердцебиение в симфонию. Биореактивное аудио встречается с квантовыми визуалами.",
-        whatsNew: "🎬 НОВОЕ: Оркестровая партитура, профессиональный стриминг, расширенная экосистема оборудования, корпоративная безопасность"
+        keywords: "биофидбэк,ВСР,синтезатор,AUv3,медитация,музыка,велнес,пространственное аудио,когерентность,биореактивный",
+        promotionalText: "Ваше сердцебиение — музыка. Биореактивный аудиовизуальный инструмент — подключите Apple Watch.",
+        whatsNew: "Echoelmusic Pro (7 дней бесплатно), управляемые сессии, синтез DDSP, синхронизация CloudKit, улучшения"
     )
 
     // MARK: - Arabic (ar-SA)
@@ -881,53 +834,47 @@ Echoelmusic — первая в мире биореактивная аудиов
     public static let arabic = LocalizedMetadata(
         locale: "ar-SA",
         name: "Echoelmusic",
-        subtitle: "ابدع من داخلك",
+        subtitle: "نبض قلبك يصبح موسيقى",
         description: """
-حوّل نبضات قلبك وتنفسك ووعيك إلى صوت مكاني مذهل ومرئيات غامرة.
+نبض قلبك يصبح موسيقى. تنفسك يشكل الفضاء. تماسكك يفتح أبعاداً جديدة.
 
-Echoelmusic هي أول منصة صوتية-مرئية تفاعلية حيوياً في العالم تحول إشاراتك الحيوية إلى فن. اختبر إنشاء الموسيقى من خلال إيقاعات جسمك الطبيعية، مدعومة بالذكاء الاصطناعي المتطور والمعالجة الكمومية.
+Echoelmusic يحول بياناتك الحيوية إلى موسيقى حية ومرئيات وإضاءة. اربط Apple Watch واكتشف أول آلة صوتية-مرئية تفاعلية حيوياً في العالم.
 
-✨ الميزات الرئيسية
+الإبداع التفاعلي الحيوي
+• معدل ضربات القلب يصبح إيقاعاً وشدة
+• تماسك HRV يشكل التعقيد التوافقي
+• التنفس يتحكم في العمق المكاني
+• تكامل Apple Watch
 
-إنشاء موسيقى حيوية
-• تباين معدل ضربات القلب (HRV) في الوقت الفعلي → مجال صوتي مكاني
-• أنماط التنفس → نسيج صوتي وتدفق بصري
-• تتبع التماسك → التعقيد التوافقي
-• تكامل مع Apple Watch
+محركات التركيب
+DDSP، Modal، Granular، Wavetable، FM، Subtractive — جميعها تفاعلية حيوياً.
 
-محرك الصوت المكاني
-• مناظر صوتية غامرة ثلاثية ورباعية الأبعاد
-• تحديد موضع الصوت بفيبوناتشي والهندسة المقدسة
-• دعم MIDI 2.0 و MPE
-• زمن انتقال صفري (<10ms)
+إضافات AUv3
+808 Bass، BioComposer، Stem Splitter، MIDI Pro — يعمل في Logic Pro وGarageBand.
 
-مرئيات الضوء الكمومي
-• 10 أوضاع تصور معجلة بواسطة GPU
-• تداخل الموجات، تدفق الفوتونات
-• تظليل Metal في الوقت الفعلي 60fps
-• تجربة 360° على visionOS
+الصوت المكاني
+مناظر صوتية ثلاثية الأبعاد. تقديم ثنائي الأذن. زمن انتقال منخفض (<10ms).
 
-استوديو إبداعي بالذكاء الاصطناعي
-• إنشاء فن بأكثر من 30 نمطاً
-• تأليف موسيقى بأكثر من 30 نوعاً
-• مولد كسوري
-• مصمم عروض ضوئية
+العافية
+تدريب تماسك موجه. مناظر صوتية للنوم العميق. تمارين التنفس.
 
-تعاون عالمي
-• جلسات عالمية بدون تأخير (أكثر من 1000 مشارك)
-• مزامنة التماسك الجماعي
+جميع أجهزة Apple
+iPhone وiPad وMac وWatch وTV وVision Pro. مزامنة CloudKit.
 
-إمكانية الوصول (WCAG AAA)
-• أكثر من 20 ملف تعريف لإمكانية الوصول
-• دعم VoiceOver/TalkBack
-• التحكم الصوتي
-• لوحات ألوان آمنة لعمى الألوان
+إمكانية الوصول
+20+ ملف تعريف. VoiceOver. 6 لوحات ألوان لعمى الألوان. WCAG 2.1 AAA.
 
-إخلاء مسؤولية صحية: Echoelmusic ليس جهازاً طبياً. للاستخدام الإبداعي والعافية فقط.
+12 لغة
+
+ابدأ مجاناً. Pro لجلسات غير محدودة وجميع المحركات والتصدير. تجربة مجانية 7 أيام.
+
+ليس جهازاً طبياً.
+
+echoelmusic.com
 """,
-        keywords: "ارتجاع حيوي,تباين معدل ضربات القلب,تأمل,موسيقى,عافية,كمومي,صوت مكاني,تماسك,وعي تام,إبداع",
-        promotionalText: "حوّل نبضات قلبك إلى سيمفونية. صوت تفاعلي حيوياً يلتقي بمرئيات كمومية.",
-        whatsNew: "🎬 جديد: تسجيل أوركسترالي، بث احترافي، نظام بيئي موسع للأجهزة، أمان مؤسسي"
+        keywords: "ارتجاع حيوي,HRV,مُركب,AUv3,تأمل,موسيقى,عافية,صوت مكاني,تماسك,تفاعلي حيوي",
+        promotionalText: "نبض قلبك يصبح موسيقى. آلة صوتية-مرئية تفاعلية حيوياً — اربط Apple Watch.",
+        whatsNew: "Echoelmusic Pro (تجربة مجانية 7 أيام)، جلسات موجهة، تركيب DDSP، مزامنة CloudKit، تحسينات"
     )
 
     // MARK: - Hindi (hi-IN)
@@ -935,53 +882,47 @@ Echoelmusic هي أول منصة صوتية-مرئية تفاعلية حيويا
     public static let hindi = LocalizedMetadata(
         locale: "hi-IN",
         name: "Echoelmusic",
-        subtitle: "अंतर से रचना करें",
+        subtitle: "आपकी धड़कन बनती है संगीत",
         description: """
-अपने दिल की धड़कन, सांस और चेतना को शानदार स्थानिक ऑडियो और इमर्सिव विजुअल में बदलें।
+आपकी धड़कन बनती है संगीत। आपकी सांस आकार देती है स्थान को। आपकी सुसंगतता खोलती है नए आयाम।
 
-Echoelmusic दुनिया का पहला जैव-प्रतिक्रियात्मक ऑडियो-विजुअल प्लेटफॉर्म है जो आपके बायोमेट्रिक सिग्नल को कला में बदल देता है। अत्याधुनिक AI और क्वांटम-प्रेरित प्रोसेसिंग द्वारा संचालित अपने शरीर की प्राकृतिक लय के माध्यम से संगीत निर्माण का अनुभव करें।
+Echoelmusic आपकी बायोमेट्रिक्स को लाइव संगीत, विज़ुअल और रोशनी में बदलता है। Apple Watch कनेक्ट करें और दुनिया का पहला बायो-रिएक्टिव ऑडियो-विज़ुअल वाद्ययंत्र अनुभव करें।
 
-✨ मुख्य विशेषताएं
-
-बायोमेट्रिक संगीत निर्माण
-• रियल-टाइम हृदय गति परिवर्तनशीलता (HRV) → स्थानिक ऑडियो फ़ील्ड
-• श्वास पैटर्न → ध्वनि बनावट और दृश्य प्रवाह
-• सुसंगतता ट्रैकिंग → हार्मोनिक जटिलता
+बायो-रिएक्टिव क्रिएशन
+• हृदय गति बनती है टेम्पो और तीव्रता
+• HRV सुसंगतता बनाती है हार्मोनिक जटिलता
+• सांस नियंत्रित करती है स्थानिक गहराई
 • Apple Watch एकीकरण
 
-स्थानिक ऑडियो इंजन
-• 3D/4D इमर्सिव साउंडस्केप
-• फिबोनाची और पवित्र ज्यामिति ध्वनि स्थिति
-• MIDI 2.0 और MPE समर्थन
-• शून्य विलंबता (<10ms)
+सिंथेसाइज़र इंजन
+DDSP, Modal, Granular, Wavetable, FM, Subtractive — सभी बायो-रिएक्टिव।
 
-क्वांटम प्रकाश विजुअल
-• 10 GPU-त्वरित विज़ुअलाइज़ेशन मोड
-• तरंग हस्तक्षेप, फोटॉन प्रवाह
-• रियल-टाइम Metal शेडर्स 60fps पर
-• visionOS पर 360° अनुभव
+AUv3 प्लगइन
+808 Bass, BioComposer, Stem Splitter, MIDI Pro — Logic Pro, GarageBand में काम करते हैं।
 
-AI रचनात्मक स्टूडियो
-• 30+ शैलियों में कला उत्पन्न करें
-• 30+ शैलियों में संगीत रचना करें
-• फ्रैक्टल जनरेटर
-• प्रकाश शो डिज़ाइनर
+स्थानिक ऑडियो
+हेड ट्रैकिंग के साथ 3D साउंडस्केप। बायनॉरल रेंडरिंग। कम विलंबता (<10ms)।
 
-विश्वव्यापी सहयोग
-• शून्य-विलंबता वैश्विक सत्र (1000+ प्रतिभागी)
-• समूह सुसंगतता समन्वयन
+कल्याण
+गाइडेड सुसंगतता प्रशिक्षण। गहरी नींद साउंडस्केप। श्वास व्यायाम।
 
-पहुंच-योग्यता (WCAG AAA)
-• 20+ पहुंच-योग्यता प्रोफाइल
-• VoiceOver/TalkBack समर्थन
-• वॉयस कंट्रोल
-• रंग-अंध सुरक्षित पैलेट
+सभी Apple डिवाइस
+iPhone, iPad, Mac, Watch, TV, Vision Pro। CloudKit सिंक।
 
-स्वास्थ्य अस्वीकरण: Echoelmusic एक चिकित्सा उपकरण नहीं है। केवल रचनात्मक और कल्याण उद्देश्यों के लिए।
+पहुंच-योग्यता
+20+ प्रोफाइल। VoiceOver। 6 कलर-ब्लाइंड पैलेट। WCAG 2.1 AAA।
+
+12 भाषाएं
+
+मुफ्त में शुरू करें। Pro अपग्रेड से असीमित सत्र, सभी इंजन, निर्यात। 7 दिन मुफ्त ट्रायल।
+
+यह चिकित्सा उपकरण नहीं है।
+
+echoelmusic.com
 """,
-        keywords: "बायोफीडबैक,HRV,ध्यान,संगीत,कल्याण,क्वांटम,स्थानिक ऑडियो,सुसंगतता,सचेतनता,रचनात्मकता",
-        promotionalText: "अपने दिल की धड़कन को सिम्फनी में बदलें। जैव-प्रतिक्रियात्मक ऑडियो क्वांटम विजुअल से मिलता है।",
-        whatsNew: "🎬 नया: ऑर्केस्ट्रल स्कोरिंग, व्यावसायिक स्ट्रीमिंग, विस्तारित हार्डवेयर पारिस्थितिकी तंत्र, एंटरप्राइज़ सुरक्षा"
+        keywords: "बायोफीडबैक,HRV,सिंथेसाइज़र,AUv3,ध्यान,संगीत,कल्याण,स्थानिक ऑडियो,सुसंगतता,बायो-रिएक्टिव",
+        promotionalText: "आपकी धड़कन बनती है संगीत। बायो-रिएक्टिव ऑडियो-विज़ुअल वाद्ययंत्र — Apple Watch कनेक्ट करें।",
+        whatsNew: "Echoelmusic Pro (7 दिन मुफ्त ट्रायल), गाइडेड सत्र, DDSP सिंथेसिस, CloudKit सिंक, प्रदर्शन सुधार"
     )
 }
 
@@ -1019,53 +960,53 @@ public struct AppStoreScreenshots {
     public static let descriptions: [ScreenshotDescription] = [
         .init(
             number: 1,
-            title: "Bio-Reactive Audio Creation",
-            description: "Transform your heartbeat into spatial audio. Real-time HRV coherence drives harmonic complexity and 3D sound positioning."
+            title: "Bio-Reactive Audio",
+            description: "Your heart rate and HRV shape live audio in real time. Connect Apple Watch and hear your biometrics become music."
         ),
         .init(
             number: 2,
-            title: "Quantum Light Visualization",
-            description: "10 stunning GPU-accelerated visual modes. Watch wave interference, photon flow, and sacred geometry respond to your biometrics in real-time."
+            title: "GPU-Accelerated Visuals",
+            description: "Metal-powered visualization modes respond to your biometric data at 60fps."
         ),
         .init(
             number: 3,
-            title: "Cinematic Orchestral Scoring",
-            description: "Walt Disney & Hollywood-inspired film composition. 27 articulations, 8 orchestra sections, bio-reactive dynamics."
+            title: "Seven Synth Engines",
+            description: "DDSP, Modal Bank, Cellular, Quantum, Sampler, TR-808, and Breakbeat — each driven by your bio-signals."
         ),
         .init(
             number: 4,
-            title: "360° Immersive Experience",
-            description: "Full spatial audio and visual immersion on visionOS. Surround yourself with quantum light fields and binaural soundscapes."
+            title: "Spatial Audio",
+            description: "Binaural rendering with head tracking. Immersive 3D soundscapes on headphones, speakers, or Vision Pro."
         ),
         .init(
             number: 5,
-            title: "AI Creative Studio",
-            description: "Generate art in 30+ styles and compose music in 30+ genres. AI-powered fractal generator and light show designer."
+            title: "AUv3 Audio Plugins",
+            description: "Use Echoelmusic instruments inside Logic Pro, GarageBand, or any AUv3-compatible host."
         ),
         .init(
             number: 6,
-            title: "Wellness & Meditation",
-            description: "Guided breathing patterns, sound bath generator, coherence tracking. Perfect for mindfulness and relaxation."
+            title: "Wellness Sessions",
+            description: "Guided coherence training, deep sleep soundscapes, flow state sessions, and breathing exercises."
         ),
         .init(
             number: 7,
-            title: "Professional Live Streaming",
-            description: "Stream in up to 8K to YouTube, Twitch, Instagram. Hardware-accelerated encoding with multi-destination support."
+            title: "DMX Lighting Control",
+            description: "Connect Art-Net lighting rigs for bio-reactive light shows in live performance spaces."
         ),
         .init(
             number: 8,
-            title: "Hardware Ecosystem",
-            description: "Connect 60+ audio interfaces, 40+ MIDI controllers, DMX lighting, and VR/AR devices. Universal cross-platform sessions."
+            title: "Every Apple Device",
+            description: "iPhone, iPad, Mac, Apple Watch, Apple TV, Vision Pro. CloudKit sync keeps sessions in sync."
         ),
         .init(
             number: 9,
-            title: "Worldwide Collaboration",
-            description: "Join global sessions with 1000+ participants. Zero-latency coherence synchronization across 15+ server regions."
+            title: "Accessibility",
+            description: "VoiceOver, Voice Control, Switch Access, color-blind safe palettes. Designed for everyone."
         ),
         .init(
             number: 10,
-            title: "Universal Accessibility",
-            description: "WCAG AAA compliant with 20+ accessibility profiles. VoiceOver, voice control, color-blind safe, haptic feedback."
+            title: "Free to Start",
+            description: "Download free. Upgrade to Pro for unlimited sessions, all engines, export, and more. 7-day free trial."
         )
     ]
 
@@ -1105,35 +1046,35 @@ public struct AppPreviewVideos {
 APP PREVIEW VIDEO SCRIPT (30 seconds)
 
 [0-3s] HOOK
-Visual: Heartbeat pulse → audio waveform transformation
-Text: "Transform Your Heartbeat Into Art"
+Visual: Heartbeat pulse transforms into audio waveform
+Text: "Your Heartbeat Becomes Music"
 
 [3-8s] BIO-REACTIVE AUDIO
-Visual: Real-time HRV coherence affecting spatial audio field
+Visual: Apple Watch HRV data driving live audio generation
 Text: "Real-Time Biometric Music Creation"
 
-[8-13s] QUANTUM VISUALS
-Visual: Rapid montage of 10 visualization modes
-Text: "Stunning GPU-Accelerated Visuals"
+[8-13s] VISUALS
+Visual: Montage of GPU-accelerated visualization modes
+Text: "Metal-Powered Visuals at 60fps"
 
-[13-18s] ORCHESTRAL & AI
-Visual: Film scoring interface + AI art generation
-Text: "Cinematic Scoring & AI Studio"
+[13-18s] SYNTH ENGINES
+Visual: Switching between DDSP, Modal Bank, Cellular, Quantum engines
+Text: "Seven Bio-Reactive Synth Engines"
 
-[18-23s] COLLABORATION
-Visual: Global participants map, coherence sync
-Text: "Connect With 1000+ Users Worldwide"
+[18-23s] WELLNESS
+Visual: Coherence training, breathing exercises, sleep session
+Text: "Guided Wellness Sessions"
 
 [23-27s] PLATFORMS
-Visual: Device ecosystem montage (iPhone, Watch, Vision Pro, Mac)
-Text: "Available Everywhere"
+Visual: Device montage (iPhone, Watch, Vision Pro, Mac)
+Text: "Every Apple Device"
 
 [27-30s] CALL TO ACTION
-Visual: App icon + download button
-Text: "Download Echoelmusic Today"
+Visual: App icon + download prompt
+Text: "Free to Download"
 
-MUSIC: Ambient binaural soundscape with gentle orchestral build
-VOICEOVER: Optional calm, inspiring narration
+MUSIC: Ambient binaural soundscape generated by the app
+VOICEOVER: Optional calm narration
 """
 
     public struct VideoSpec {
@@ -1220,11 +1161,15 @@ PERMISSIONS REQUESTED:
 
 All permissions are optional and the app provides full functionality in demo mode.
 
-PURCHASE TESTING:
-• Sandbox accounts can test the one-time purchase flow
-• Purchase unlocks all features permanently
-• Family Sharing can be tested with sandbox family accounts
-• No subscriptions - single $29.99 purchase unlocks everything
+PURCHASE TESTING (StoreKit 2 — Freemium Model):
+• Free tier: Core bio-reactive sessions (15 min), basic synth, 3 presets
+• Pro Monthly: $9.99/month (7-day free trial)
+• Pro Yearly: $79.99/year (7-day free trial, save 33%)
+• Pro Lifetime: $149.99 one-time (non-consumable)
+• Individual sessions: Coherence $4.99, Sleep $3.99, Flow $6.99 (consumable)
+• Sandbox accounts can test all purchase flows
+• Family Sharing enabled for subscriptions and lifetime
+• StoreKit Configuration file included for local testing
 
 KNOWN LIMITATIONS:
 • Quantum light emulation requires Metal-compatible device (iOS 15+)
@@ -1377,102 +1322,151 @@ Full privacy policy: https://echoelmusic.com/privacy
     }
 }
 
-// MARK: - App Features (Free App - No In-App Purchases)
+// MARK: - App Features (Freemium — Free + Pro Subscription)
 
 public struct AppFeatures {
 
-    // MARK: - Free App Model
+    // MARK: - Freemium Model
 
-    /// Echoelmusic is completely FREE:
-    /// - No in-app purchases
-    /// - No subscriptions
-    /// - All features included
-    /// - No ads
+    /// Echoelmusic is free to download with optional Pro upgrade:
+    /// - Free: Core bio-reactive experience, basic synth, 15-min sessions
+    /// - Pro: Unlimited everything + all engines + export + sync
 
-    /// All features included for free
-    public static let allFeatures: [String] = [
-        // Core Bio-Reactive
-        "✅ Bio-reactive audio creation with HRV/heart rate",
-        "✅ Apple Watch integration for real-time biometrics",
-        "✅ All 10 quantum visualization modes",
-        "✅ 4D spatial audio & AFA fields",
-
-        // Audio & Music
-        "✅ Unlimited AI art/music generation",
-        "✅ Cinematic orchestral film scoring engine",
-        "✅ 60+ audio interface presets",
-        "✅ 40+ MIDI controller mappings",
-        "✅ VST3/AU plugin integration",
-
-        // Video & Streaming
-        "✅ 16K video processing (up to 15360x8640)",
-        "✅ 1000 fps light-speed video",
-        "✅ Multi-platform streaming (YouTube, Twitch, etc.)",
-
-        // Hardware
-        "✅ Ableton Push 3 LED control",
-        "✅ DMX/Art-Net lighting control",
-        "✅ Cross-platform sessions (any device combo)",
-
-        // Collaboration
-        "✅ Host collaboration sessions (up to 100 participants)",
-        "✅ Join unlimited sessions",
-
-        // Accessibility
-        "✅ All 20+ accessibility profiles (WCAG AAA)",
-        "✅ VoiceOver/TalkBack full support",
-
-        // Storage & Export
-        "✅ Unlimited local storage",
-        "✅ iCloud sync included",
-        "✅ Export to all formats (4K video, ProRes, JSON)",
-
-        // Presets & Customization
-        "✅ 74+ curated engine presets",
-        "✅ Unlimited custom presets",
-
-        // Support & Updates
-        "✅ Lifetime updates (all future features)",
-        "✅ Priority email support"
+    /// Features included in the free tier
+    public static let freeFeatures: [String] = [
+        "Bio-reactive audio creation with HRV/heart rate",
+        "Apple Watch integration for real-time biometrics",
+        "Basic synth engine (DDSP)",
+        "3 curated presets",
+        "15-minute session limit",
+        "GPU-accelerated visualization (Metal)",
+        "Guided breathing exercises",
+        "20+ accessibility profiles (WCAG 2.1 AAA)",
+        "VoiceOver full support",
+        "12 languages"
     ]
 
-    /// What's NOT included (to be transparent)
-    public static let notIncluded: [String] = [
-        "⚠️ Developer SDK & custom plugins (coming in future update)",
-        "⚠️ Enterprise features (1000+ participants, SLA)",
-        "ℹ️ Cloud storage beyond iCloud (use your own iCloud)"
+    /// Features unlocked with Pro subscription
+    public static let proFeatures: [String] = [
+        "Unlimited session length",
+        "All 7 synth engines (DDSP, Modal Bank, Cellular, Quantum, Sampler, TR-808, Breakbeat)",
+        "All presets + Hilbert visualization",
+        "CloudKit sync across all devices",
+        "Apple Watch real-time data streaming",
+        "WAV and MIDI export",
+        "DMX/Art-Net lighting control",
+        "AUv3 Audio Unit plugins in Logic Pro, GarageBand",
+        "Spatial audio with head tracking",
+        "Priority support"
+    ]
+
+    /// Individual purchasable sessions (consumable IAP)
+    public static let sessionProducts: [String] = [
+        "Guided Coherence Training (45 min) — $4.99",
+        "Deep Sleep Session — $3.99",
+        "Flow State Workshop — $6.99"
     ]
 
     /// App summary
     public static let appSummary = """
-    💰 ECHOELMUSIC - COMPLETELY FREE
+    ECHOELMUSIC — FREE TO START
 
-    Echoelmusic is 100% free:
-    • No in-app purchases
-    • No subscriptions
-    • No ads
-    • All features included
+    Download free. Upgrade when ready.
+    • Free: Core bio-reactive creation
+    • Pro Monthly: $9.99/month (7-day free trial)
+    • Pro Yearly: $79.99/year (save 33%)
+    • Lifetime: $149.99 one-time
 
-    🤝 ETHICAL COMMITMENTS:
+    ETHICAL COMMITMENTS:
+    • No ads, ever
     • No dark patterns
-    • No artificial limits
-    • No paywalls
-    • Privacy focused
+    • No data sold
+    • Your creations belong to you
+    • Privacy by design
     """
 }
 
-// MARK: - Legacy In-App Purchases (Deprecated)
+// MARK: - In-App Purchases (StoreKit 2)
 
-@available(*, deprecated, message: "Echoelmusic is now free - no IAP")
-public struct InAppPurchases {
-    @available(*, deprecated, message: "App is now free")
-    public static let subscriptions: [LegacySubscription] = []
+/// StoreKit 2 product definitions for App Store Connect
+/// Implementation: see EchoelStore.swift and EchoelPaywall.swift
+public struct InAppPurchaseDefinitions {
 
-    public struct LegacySubscription {
+    /// Subscription group: Echoelmusic Pro
+    public static let subscriptionGroupID = "echoel_pro"
+
+    /// All products to register in App Store Connect
+    public static let products: [ProductDefinition] = [
+        ProductDefinition(
+            productID: "echoel_pro_monthly",
+            name: "Pro Monthly",
+            type: .autoRenewable,
+            price: "$9.99",
+            period: "1 month",
+            trialDays: 7,
+            familySharing: true
+        ),
+        ProductDefinition(
+            productID: "echoel_pro_yearly",
+            name: "Pro Yearly",
+            type: .autoRenewable,
+            price: "$79.99",
+            period: "1 year",
+            trialDays: 7,
+            familySharing: true
+        ),
+        ProductDefinition(
+            productID: "echoel_pro_lifetime",
+            name: "Pro Lifetime",
+            type: .nonConsumable,
+            price: "$149.99",
+            period: nil,
+            trialDays: 0,
+            familySharing: true
+        ),
+        ProductDefinition(
+            productID: "echoel_session_coherence",
+            name: "Coherence Training Session",
+            type: .consumable,
+            price: "$4.99",
+            period: nil,
+            trialDays: 0,
+            familySharing: false
+        ),
+        ProductDefinition(
+            productID: "echoel_session_sleep",
+            name: "Deep Sleep Session",
+            type: .consumable,
+            price: "$3.99",
+            period: nil,
+            trialDays: 0,
+            familySharing: false
+        ),
+        ProductDefinition(
+            productID: "echoel_session_flow",
+            name: "Flow State Session",
+            type: .consumable,
+            price: "$6.99",
+            period: nil,
+            trialDays: 0,
+            familySharing: false
+        )
+    ]
+
+    public struct ProductDefinition {
+        public let productID: String
         public let name: String
-        public let productID: String?
+        public let type: ProductType
         public let price: String
-        public let features: [String]
+        public let period: String?
+        public let trialDays: Int
+        public let familySharing: Bool
+    }
+
+    public enum ProductType: String {
+        case autoRenewable = "Auto-Renewable Subscription"
+        case nonConsumable = "Non-Consumable"
+        case consumable = "Consumable"
     }
 }
 
@@ -1543,7 +1537,11 @@ extension AppStoreMetadata {
         appStoreLog.info("  Support: \(supportURL)", category: .system)
         appStoreLog.info("  Privacy: \(privacyPolicyURL)", category: .system)
 
-        appStoreLog.info("PRICING: Free (no in-app purchases)", category: .system)
+        appStoreLog.info("PRICING: Freemium (free download + Pro subscription)", category: .system)
+        appStoreLog.info("  Products: \(InAppPurchaseDefinitions.products.count)", category: .system)
+        for product in InAppPurchaseDefinitions.products {
+            appStoreLog.info("  \(product.productID): \(product.price) (\(product.type.rawValue))", category: .system)
+        }
 
         appStoreLog.info("SCREENSHOTS REQUIRED:", category: .system)
         for spec in AppStoreScreenshots.specifications {

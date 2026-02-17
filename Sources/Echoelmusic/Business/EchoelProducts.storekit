@@ -1,0 +1,241 @@
+{
+  "identifier" : "EchoelProducts",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "149.99",
+      "familyShareable" : true,
+      "internalID" : "echoel_pro_lifetime",
+      "localizations" : [
+        {
+          "description" : "Unlock all Pro features forever. One-time purchase.",
+          "displayName" : "Echoelmusic Pro Lifetime",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Alle Pro-Features für immer freischalten. Einmalig.",
+          "displayName" : "Echoelmusic Pro Lifetime",
+          "locale" : "de"
+        }
+      ],
+      "productID" : "echoel_pro_lifetime",
+      "referenceName" : "Echoelmusic Pro Lifetime",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "echoel_session_coherence",
+      "localizations" : [
+        {
+          "description" : "45-minute guided coherence training session with bio-reactive audio.",
+          "displayName" : "Coherence Training Session",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "45-minütige geführte Kohärenz-Trainings-Session mit bio-reaktivem Audio.",
+          "displayName" : "Kohärenz-Training Session",
+          "locale" : "de"
+        }
+      ],
+      "productID" : "echoel_session_coherence",
+      "referenceName" : "Coherence Training Session",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : false,
+      "internalID" : "echoel_session_sleep",
+      "localizations" : [
+        {
+          "description" : "Deep sleep session with circadian-aware bio-reactive soundscapes.",
+          "displayName" : "Deep Sleep Session",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Deep-Sleep-Session mit zirkadianbewussten bio-reaktiven Klanglandschaften.",
+          "displayName" : "Deep Sleep Session",
+          "locale" : "de"
+        }
+      ],
+      "productID" : "echoel_session_sleep",
+      "referenceName" : "Deep Sleep Session",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "6.99",
+      "familyShareable" : false,
+      "internalID" : "echoel_session_flow",
+      "localizations" : [
+        {
+          "description" : "Flow state workshop — bio-reactive music optimized for deep focus.",
+          "displayName" : "Flow State Session",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Flow-State-Workshop — bio-reaktive Musik optimiert für Deep Focus.",
+          "displayName" : "Flow State Session",
+          "locale" : "de"
+        }
+      ],
+      "productID" : "echoel_session_flow",
+      "referenceName" : "Flow State Session",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ],
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitTransaction" : false
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "echoel_pro",
+      "localizations" : [
+        {
+          "description" : "Echoelmusic Pro subscription",
+          "displayName" : "Echoelmusic Pro",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Echoelmusic Pro Abonnement",
+          "displayName" : "Echoelmusic Pro",
+          "locale" : "de"
+        }
+      ],
+      "name" : "Echoelmusic Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "9.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "echoel_pro_monthly",
+          "introductoryOffer" : {
+            "displayPrice" : "0.00",
+            "internalID" : "echoel_pro_monthly_trial",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Unlimited sessions, all synth engines, CloudKit sync, export, and more.",
+              "displayName" : "Pro Monthly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "Unbegrenzte Sessions, alle Synth-Engines, CloudKit-Sync, Export und mehr.",
+              "displayName" : "Pro Monatlich",
+              "locale" : "de"
+            }
+          ],
+          "productID" : "echoel_pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "echoel_pro",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "79.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "echoel_pro_yearly",
+          "introductoryOffer" : {
+            "displayPrice" : "0.00",
+            "internalID" : "echoel_pro_yearly_trial",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Unlimited sessions, all synth engines, CloudKit sync, export, and more. Save 33%.",
+              "displayName" : "Pro Yearly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "Unbegrenzte Sessions, alle Synth-Engines, CloudKit-Sync, Export und mehr. 33% sparen.",
+              "displayName" : "Pro Jährlich",
+              "locale" : "de"
+            }
+          ],
+          "productID" : "echoel_pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Yearly",
+          "subscriptionGroupID" : "echoel_pro",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

@@ -340,9 +340,9 @@ public enum MVPDefinition {
         ),
 
         MVPFeature(
-            name: "Worldwide Collaboration (1000+)",
+            name: "Worldwide Collaboration",
             tier: .future,
-            description: "Global sessions with zero-latency sync",
+            description: "Group bio-reactive sessions via CloudKit",
             files: [
                 "Sources/Echoelmusic/Collaboration/WorldwideCollaborationHub.swift"
             ],
@@ -388,9 +388,9 @@ public enum MVPDefinition {
         ),
 
         MVPFeature(
-            name: "16K Video Processing",
+            name: "Video Processing",
             tier: .future,
-            description: "Ultra high-resolution video engine",
+            description: "Video recording and export engine",
             files: [
                 "Sources/Echoelmusic/Video/VideoProcessingEngine.swift"
             ],

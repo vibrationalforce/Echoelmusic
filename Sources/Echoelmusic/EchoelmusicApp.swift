@@ -1,4 +1,24 @@
 import SwiftUI
+import UserNotifications
+
+#if os(iOS) || os(tvOS)
+/// AppDelegate adaptor for APNs device token callbacks
+class EchoelAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Task { @MainActor in
+            PushNotificationManager.shared.didRegisterForRemoteNotifications(deviceToken: deviceToken)
+        }
+    }
+
+    func application(_ application: UIApplication,
+                     didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        Task { @MainActor in
+            PushNotificationManager.shared.didFailToRegisterForRemoteNotifications(error: error)
+        }
+    }
+}
+#endif
 
 #if os(iOS) || os(macOS) || os(tvOS)
 
@@ -6,6 +26,10 @@ import SwiftUI
 /// Bio-reactive audio-visual experiences platform
 @main
 struct EchoelmusicApp: App {
+
+    #if os(iOS) || os(tvOS)
+    @UIApplicationDelegateAdaptor(EchoelAppDelegate.self) var appDelegate
+    #endif
 
     /// StateObject ensures the MicrophoneManager stays alive
     /// throughout the app's lifetime
@@ -22,6 +46,9 @@ struct EchoelmusicApp: App {
 
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
+
+    /// Push notification manager
+    @ObservedObject private var pushManager = PushNotificationManager.shared
 
     init() {
         // Initialize AudioEngine with MicrophoneManager
@@ -104,6 +131,12 @@ struct EchoelmusicApp: App {
                             log.info("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub", category: .system)
                         } catch {
                             log.warning("⚠️ MIDI 2.0 not available: \(error.localizedDescription)", category: .system)
+                        }
+
+                        // Request push notification permission + register with APNs
+                        let pushGranted = await PushNotificationManager.shared.requestAuthorization()
+                        if pushGranted {
+                            log.info("✅ Push notifications authorized", category: .system)
                         }
                     }
 

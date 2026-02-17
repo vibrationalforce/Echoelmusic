@@ -108,7 +108,7 @@ public final class ZeroCostDeveloperGuarantee: ObservableObject {
             "CryptoKit",            // Free (encryption)
             "LocalAuthentication",  // Free (Face ID/Touch ID)
             "CloudKit",             // Free tier: 1GB storage, 10GB transfer
-            "StoreKit",             // Free (IAP - but we don't use it!)
+            "StoreKit",             // Free (IAP — used for Pro subscription + sessions)
             "GameKit",              // Free (multiplayer - optional)
             "MultipeerConnectivity" // Free (local collaboration)
         ]
@@ -228,12 +228,13 @@ public final class ZeroCostDeveloperGuarantee: ObservableObject {
     /// How you CAN make money (if you want)
     public struct MonetizationOptions: Codable, Sendable {
 
-        /// App Store pricing options
+        /// Current App Store pricing model
         public let appStorePricing: [String] = [
-            "Free (recommended - current model)",
-            "Paid upfront ($0.99 - $999.99)",
-            "Freemium (free + IAP)",
-            "Subscription ($0.99 - $999.99/month)"
+            "Freemium (current model — free download + Pro subscription)",
+            "Pro Monthly: $9.99/month (7-day free trial)",
+            "Pro Yearly: $79.99/year (7-day free trial)",
+            "Pro Lifetime: $149.99 one-time",
+            "Individual sessions: $3.99–$6.99 (consumable)"
         ]
 
         /// Revenue split with Apple
@@ -241,10 +242,10 @@ public final class ZeroCostDeveloperGuarantee: ObservableObject {
 
         /// Built-in ethical monetization
         public let ethicalMonetization: [String] = [
-            "Creator Marketplace (85% to creator)",
-            "Wellness Coaching (85% to coach)",
-            "NFT Coherence Moments (97.5% to creator)",
-            "Optional Pro Plan (€4.99/month)"
+            "Freemium: Free to try, Pro for full access",
+            "Individual session purchases for one-time use",
+            "Family Sharing enabled for subscriptions",
+            "7-day free trial on all subscription tiers"
         ]
 
         /// What we DON'T do
@@ -254,7 +255,7 @@ public final class ZeroCostDeveloperGuarantee: ObservableObject {
             "✗ No dark patterns",
             "✗ No artificial scarcity",
             "✗ No FOMO tactics",
-            "✗ No subscription traps"
+            "✗ No hidden costs — all pricing shown upfront"
         ]
     }
 

@@ -1011,7 +1011,7 @@ struct Screenshot9_Collaboration: View {
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Zero-latency global sessions")
+                    Text("Group bio-reactive sessions")
                         .font(.system(size: 18, weight: .regular))
                         .foregroundColor(.white.opacity(0.8))
                 }

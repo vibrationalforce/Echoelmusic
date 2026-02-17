@@ -4,78 +4,58 @@ import Combine
 /// Fair Business Model - Transparent, Ethical, No Dark Patterns
 /// Principles: Honesty, user respect, sustainable pricing, no manipulation
 ///
-/// FREE APP - ALL FEATURES INCLUDED:
-/// ✓ Completely free to use
-/// ✓ All features unlocked
-/// ✓ No in-app purchases
-/// ✓ No subscriptions
+/// FREEMIUM MODEL:
+/// ✓ Free to download and use (basic features)
+/// ✓ Optional Pro subscription for full access
+/// ✓ Individual session purchases available
 /// ✓ No ads
 ///
 /// Anti-Dark Pattern Commitments:
 /// ✓ No fake urgency ("Only 2 left!")
 /// ✓ No hidden costs or surprise charges
-/// ✓ No subscription traps
-/// ✓ Export your data anytime for free
-/// ✓ No artificial feature limitations
-/// ✓ Open source core (coming soon)
+/// ✓ Clear pricing shown before purchase
+/// ✓ Easy cancellation via Apple Settings
+/// ✓ Export your data anytime
 @MainActor
 class FairBusinessModel: ObservableObject {
 
     // MARK: - Published State
 
-    /// Always true - app is completely free with all features
-    @Published var isFullVersionPurchased: Bool = true
+    /// Whether the user has Pro access (subscription or lifetime)
+    @Published var isFullVersionPurchased: Bool = false
 
-    // MARK: - App Info (Free)
+    // MARK: - App Info (Freemium)
 
-    /// Echoelmusic is completely free
+    /// Echoelmusic pricing model
     struct AppInfo {
-        static let price: Decimal = 0
+        static let downloadPrice: Decimal = 0
         static let currency = "USD"
         static let displayPrice = "Free"
 
         static let description = """
-        Completely free to use.
-        All features included. No ads. No IAP.
+        Free to download. Optional Pro upgrade.
+        No ads. No data sold. No dark patterns.
         """
 
-        static let features: [Feature] = [
-            // Core Bio-Reactive
-            Feature(name: "Bio-Reactive Audio & Visuals", included: true),
+        static let freeFeatures: [Feature] = [
+            Feature(name: "Bio-Reactive Audio (DDSP engine)", included: true),
             Feature(name: "Apple Watch Integration", included: true),
-            Feature(name: "All 10 Quantum Visualization Modes", included: true),
-            Feature(name: "4D Spatial Audio & AFA Fields", included: true),
+            Feature(name: "GPU-Accelerated Visuals (Metal)", included: true),
+            Feature(name: "3 Curated Presets", included: true),
+            Feature(name: "15-Minute Sessions", included: true),
+            Feature(name: "Guided Breathing Exercises", included: true),
+            Feature(name: "Accessibility Profiles", included: true),
+        ]
 
-            // Audio & Music
-            Feature(name: "Unlimited AI Art/Music Generation", included: true),
-            Feature(name: "Cinematic Orchestral Film Scoring", included: true),
-            Feature(name: "60+ Audio Interface Presets", included: true),
-            Feature(name: "40+ MIDI Controller Mappings", included: true),
-            Feature(name: "VST3/AU Plugin Integration", included: true),
-
-            // Video & Streaming
-            Feature(name: "16K Video Processing", included: true),
-            Feature(name: "1000fps Light-Speed Video", included: true),
-            Feature(name: "Multi-Platform Streaming", included: true),
-
-            // Hardware
-            Feature(name: "Ableton Push 3 LED Control", included: true),
+        static let proFeatures: [Feature] = [
+            Feature(name: "Unlimited Session Length", included: true),
+            Feature(name: "All 7 Synth Engines", included: true),
+            Feature(name: "All Presets + Hilbert Visualization", included: true),
+            Feature(name: "CloudKit Sync", included: true),
+            Feature(name: "WAV/MIDI Export", included: true),
             Feature(name: "DMX/Art-Net Lighting Control", included: true),
-
-            // Collaboration
-            Feature(name: "Collaboration Sessions (100 participants)", included: true),
-
-            // Accessibility
-            Feature(name: "All 20+ Accessibility Profiles", included: true),
-
-            // Storage & Presets
-            Feature(name: "iCloud Sync", included: true),
-            Feature(name: "74+ Curated Engine Presets", included: true),
-            Feature(name: "Unlimited Custom Presets", included: true),
-
-            // Support & Updates
-            Feature(name: "Lifetime Updates", included: true),
-            Feature(name: "Priority Email Support", included: true)
+            Feature(name: "AUv3 Audio Unit Plugins", included: true),
+            Feature(name: "Spatial Audio with Head Tracking", included: true),
         ]
 
         struct Feature {
@@ -87,71 +67,59 @@ class FairBusinessModel: ObservableObject {
     // MARK: - Access Status
 
     enum AccessStatus {
-        case fullAccess
+        case free
+        case session
+        case pro
 
         var hasFullAccess: Bool {
-            return true
+            return self == .pro
         }
     }
 
-    @Published var accessStatus: AccessStatus = .fullAccess
+    @Published var accessStatus: AccessStatus = .free
 
     // MARK: - Ethical Commitments
 
     struct EthicalCommitments {
         static let commitments: [String] = [
-            "✓ Completely Free - No cost to download or use",
-            "✓ All Features Included - No artificial limitations",
-            "✓ No In-App Purchases - Everything is free",
-            "✓ No Subscriptions - No recurring fees ever",
-            "✓ No Ads - You are not the product",
-            "✓ No Dark Patterns - We respect your intelligence",
-            "✓ Free Data Export - Your data is yours, export anytime",
-            "✓ Accessibility First - WCAG AAA compliant",
-            "✓ Open Source Core - Coming 2026",
-            "✓ Privacy Focused - Your data stays on your device"
+            "Free to download — no paywall to try it",
+            "No ads — ever",
+            "No data sold to third parties",
+            "No dark patterns — no fake urgency, no hidden costs",
+            "Clear pricing before any purchase",
+            "Easy cancellation via Apple Settings",
+            "Your creations belong to you",
+            "Privacy by design — biometric data stays on device",
         ]
     }
 
     // MARK: - Initialization
 
     init() {
-        log.business("✅ Fair Business Model: Initialized")
-        log.business("💰 Pricing: Free (no in-app purchases)")
-        log.business("🤝 Ethical commitments loaded")
+        log.business("Fair Business Model: Initialized")
+        log.business("Pricing: Freemium (free + Pro subscription)")
     }
 
     // MARK: - App Summary
 
     func getAppSummary() -> String {
         return """
-        💰 ECHOELMUSIC - COMPLETELY FREE
+        ECHOELMUSIC — FREE TO START
 
         \(AppInfo.description)
 
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        FREE TIER:
+        \(AppInfo.freeFeatures.map { "• \($0.name)" }.joined(separator: "\n"))
 
-        WHAT'S INCLUDED:
+        PRO (subscription or lifetime):
+        \(AppInfo.proFeatures.map { "• \($0.name)" }.joined(separator: "\n"))
 
-        \(AppInfo.features.map { "✓ \($0.name)" }.joined(separator: "\n"))
+        Pro Monthly: $9.99/month (7-day free trial)
+        Pro Yearly: $79.99/year (save 33%)
+        Pro Lifetime: $149.99 one-time
 
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        🤝 ETHICAL COMMITMENTS:
-
-        \(EthicalCommitments.commitments.joined(separator: "\n"))
-
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        ♿️ ACCESSIBILITY:
-
-        Full WCAG AAA compliance.
-        20+ accessibility profiles included.
-        Contact: michaelterbuyken@gmail.com
-
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        Status: ✅ All Features Unlocked
+        ETHICAL COMMITMENTS:
+        \(EthicalCommitments.commitments.map { "• \($0)" }.joined(separator: "\n"))
         """
     }
 
