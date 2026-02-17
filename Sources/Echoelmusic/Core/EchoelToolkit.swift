@@ -72,6 +72,11 @@ public final class EchoelSynth: ObservableObject {
         case tr808 = "TR-808"           // Classic drum machine
     }
 
+    /// Circadian-aware DDSP tuning (time-of-day adaptive synthesis)
+    @Published public var circadianTuningEnabled: Bool = true
+
+    private var wellnessSubscription: BusSubscription?
+
     public init(sampleRate: Float = 44100) {
         self.ddsp = EchoelDDSP(sampleRate: sampleRate)
         self.modal = EchoelModalBank(sampleRate: sampleRate)
@@ -87,6 +92,97 @@ public final class EchoelSynth: ObservableObject {
                     self?.applyBio(bio)
                 }
             }
+        }
+
+        // Listen to wellness session commands for sub-bass healing frequencies
+        wellnessSubscription = EngineBus.shared.subscribe(to: .custom) { [weak self] msg in
+            if case .custom(let topic, let payload) = msg, topic == "bio.wellness" {
+                Task { @MainActor in
+                    self?.applyWellness(payload)
+                }
+            }
+        }
+
+        // Apply initial circadian tuning
+        applyCircadianTuning()
+    }
+
+    /// Apply circadian-aware DDSP defaults based on time of day
+    /// Morning: bright, energetic (high brightness, fast vibrato)
+    /// Evening: warm, calming (low brightness, slow vibrato, warm timbre)
+    public func applyCircadianTuning() {
+        guard circadianTuningEnabled else { return }
+
+        let circadian = CircadianRhythmEngine.shared
+        let phase = circadian.currentPhase
+        let (entrainmentHz, _) = circadian.getCurrentAudioSettings()
+
+        // Map circadian phase to DDSP parameters
+        switch phase {
+        case .deepSleep, .remSleep:
+            ddsp.brightness = 0.15
+            ddsp.harmonicity = 0.9
+            ddsp.spectralShape = .sine
+            ddsp.vibratoRate = 0.5
+            ddsp.vibratoDepth = 0.02
+        case .cortisol:
+            ddsp.brightness = 0.35
+            ddsp.harmonicity = 0.75
+            ddsp.spectralShape = .triangle
+            ddsp.vibratoRate = 2.0
+            ddsp.vibratoDepth = 0.01
+        case .peakAlertness:
+            ddsp.brightness = 0.7
+            ddsp.harmonicity = 0.6
+            ddsp.spectralShape = .sawtooth
+            ddsp.vibratoRate = 4.0
+            ddsp.vibratoDepth = 0.015
+        case .postLunch:
+            ddsp.brightness = 0.4
+            ddsp.harmonicity = 0.8
+            ddsp.spectralShape = .triangle
+            ddsp.vibratoRate = 2.5
+            ddsp.vibratoDepth = 0.01
+        case .secondWind:
+            ddsp.brightness = 0.6
+            ddsp.harmonicity = 0.65
+            ddsp.spectralShape = .sawtooth
+            ddsp.vibratoRate = 3.5
+            ddsp.vibratoDepth = 0.012
+        case .windDown:
+            ddsp.brightness = 0.3
+            ddsp.harmonicity = 0.85
+            ddsp.spectralShape = .triangle
+            ddsp.vibratoRate = 1.5
+            ddsp.vibratoDepth = 0.008
+        case .melatonin:
+            ddsp.brightness = 0.2
+            ddsp.harmonicity = 0.95
+            ddsp.spectralShape = .sine
+            ddsp.vibratoRate = 0.8
+            ddsp.vibratoDepth = 0.005
+        }
+
+        // Publish circadian state for other tools
+        EngineBus.shared.publish(.custom(
+            topic: "synth.circadian",
+            payload: [
+                "phase": phase.rawValue,
+                "entrainmentHz": "\(entrainmentHz)"
+            ]
+        ))
+    }
+
+    /// Apply wellness healing frequency from BiophysicalWellnessEngine via bus
+    private func applyWellness(_ payload: [String: String]) {
+        if payload["active"] == "true", let freqStr = payload["frequency"],
+           let freq = Double(freqStr) {
+            // Set DDSP to sub-bass healing frequency with high harmonicity (pure tone)
+            ddsp.frequency = Float(freq)
+            ddsp.harmonicity = 0.95
+            ddsp.brightness = 0.2
+            ddsp.amplitude = 0.3  // Gentle
+            ddsp.spectralShape = .sine
         }
     }
 
@@ -483,6 +579,18 @@ public final class EchoelBio: ObservableObject {
     @Published public var wellnessScore: Float = 0.5
     @Published public var isStreaming: Bool = false
 
+    // NeuroSpiritual integration
+    @Published public var polyvagalState: PolyvagalState = .ventralVagal
+    @Published public var consciousnessState: ConsciousnessState = .relaxedAwareness
+
+    // EEG integration
+    @Published public var eegConnected: Bool = false
+    @Published public var dominantBrainwave: String = "Alpha"
+
+    // Wellness session state
+    @Published public var wellnessSessionActive: Bool = false
+    @Published public var wellnessFrequency: Float = 0
+
     // Rausch-inspired bio-signal processing
     /// Graph-based bio-event detection and clustering (DELLY-inspired)
     public let eventGraph = BioEventGraph(maxEvents: 512, clusterCount: 4)
@@ -494,6 +602,15 @@ public final class EchoelBio: ObservableObject {
     private var coherenceHistory: [Float] = []
     private let coherenceHistorySize = 30  // 0.5s at 60Hz
 
+    /// EEG observation cancellable
+    private var eegCancellable: AnyCancellable?
+
+    /// NeuroSpiritual observation cancellable
+    private var neuroCancellable: AnyCancellable?
+
+    /// Wellness observation cancellable
+    private var wellnessCancellable: AnyCancellable?
+
     public init() {
         // Register as bio provider on bus
         EngineBus.shared.provide("bio.heartRate") { [weak self] in self?.heartRate }
@@ -501,6 +618,113 @@ public final class EchoelBio: ObservableObject {
         EngineBus.shared.provide("bio.breathPhase") { [weak self] in self?.breathPhase }
         EngineBus.shared.provide("bio.flowScore") { [weak self] in self?.flowScore }
         EngineBus.shared.provide("bio.hrvMs") { [weak self] in self?.hrvMs }
+        EngineBus.shared.provide("bio.polyvagalState") { [weak self] in
+            Float(PolyvagalState.allCases.firstIndex(of: self?.polyvagalState ?? .ventralVagal) ?? 0)
+        }
+        EngineBus.shared.provide("bio.consciousnessState") { [weak self] in
+            Float(ConsciousnessState.allCases.firstIndex(of: self?.consciousnessState ?? .relaxedAwareness) ?? 2)
+        }
+
+        // Wire EEG → BioEventGraph (5 brainwave bands as event channels)
+        wireEEGSensorBridge()
+
+        // Wire NeuroSpiritual → polyvagal + consciousness state
+        wireNeuroSpiritualEngine()
+    }
+
+    // MARK: - EEG Integration
+
+    /// Connect EEGSensorBridge bands to BioEventGraph for pattern detection
+    private func wireEEGSensorBridge() {
+        eegCancellable = EEGSensorBridge.shared.$currentBands
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] bands in
+                guard let self = self else { return }
+                self.eegConnected = EEGSensorBridge.shared.connectionState == .streaming
+
+                guard self.eegConnected else { return }
+
+                // Feed 5 brainwave bands into event graph as composite channel
+                let total = max(0.001, Float(bands.totalPower))
+                let alphaNorm = Float(bands.alpha) / total
+                let thetaNorm = Float(bands.theta) / total
+                let betaNorm = Float(bands.beta) / total
+                let gammaNorm = Float(bands.gamma) / total
+                let deltaNorm = Float(bands.delta) / total
+
+                // Composite: alpha/theta ratio as coherence-like metric (higher = more relaxed/focused)
+                let alphaTheta = (alphaNorm + thetaNorm) / max(0.001, betaNorm + deltaNorm)
+                self.eventGraph.feedSample(min(1, alphaTheta / 3.0), channel: .composite)
+
+                // Update flow score from EEG (theta-alpha border + gamma = flow state)
+                let eegFlowScore = Float(EEGSensorBridge.shared.flowScore)
+                if eegFlowScore > 0 { self.flowScore = eegFlowScore }
+
+                // Update dominant brainwave
+                self.dominantBrainwave = bands.dominantBand
+
+                // Feed gamma as separate high-frequency event source
+                if gammaNorm > 0.3 {
+                    self.eventGraph.feedSample(gammaNorm, channel: .composite)
+                }
+            }
+    }
+
+    // MARK: - NeuroSpiritual Integration
+
+    /// Connect NeuroSpiritualEngine polyvagal + consciousness states
+    private func wireNeuroSpiritualEngine() {
+        let neuro = NeuroSpiritualEngine.shared
+
+        neuroCancellable = neuro.$polyvagalState
+            .combineLatest(neuro.$consciousnessState, neuro.$overallCoherence)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] polyvagal, consciousness, neuroCoherence in
+                guard let self = self else { return }
+                self.polyvagalState = polyvagal
+                self.consciousnessState = consciousness
+
+                // Publish polyvagal-aware parameters via bus
+                EngineBus.shared.publish(.custom(
+                    topic: "bio.neuroState",
+                    payload: [
+                        "polyvagal": polyvagal.rawValue,
+                        "consciousness": consciousness.rawValue,
+                        "neuroCoherence": String(format: "%.3f", neuroCoherence)
+                    ]
+                ))
+            }
+    }
+
+    // MARK: - Wellness Session Integration
+
+    /// Start a BiophysicalWellness session and publish healing frequencies via bus
+    public func startWellnessSession(preset: BiophysicalPreset) {
+        wellnessSessionActive = true
+        wellnessFrequency = Float(preset.primaryFrequency)
+
+        // Publish healing frequency to synth via bus
+        EngineBus.shared.publish(.custom(
+            topic: "bio.wellness",
+            payload: [
+                "preset": preset.rawValue,
+                "frequency": "\(preset.primaryFrequency)",
+                "freqMin": "\(preset.frequencyRange.min)",
+                "freqMax": "\(preset.frequencyRange.max)",
+                "active": "true"
+            ]
+        ))
+    }
+
+    /// Stop wellness session
+    public func stopWellnessSession() {
+        wellnessSessionActive = false
+        wellnessFrequency = 0
+
+        EngineBus.shared.publish(.custom(
+            topic: "bio.wellness",
+            payload: ["active": "false"]
+        ))
     }
 
     public func startStreaming() {
@@ -553,6 +777,9 @@ public final class EchoelBio: ObservableObject {
         snapshot.breathDepth = self.breathDepth
         snapshot.lfHfRatio = self.lfHfRatio
         snapshot.coherenceTrend = coherenceTrend
+        snapshot.polyvagalIndex = Float(PolyvagalState.allCases.firstIndex(of: polyvagalState) ?? 0)
+        snapshot.consciousnessLevel = Float(ConsciousnessState.allCases.firstIndex(of: consciousnessState) ?? 2)
+        snapshot.wellnessFrequency = self.wellnessFrequency
         EngineBus.shared.publishBio(snapshot)
     }
 
@@ -579,6 +806,16 @@ public final class EchoelBio: ObservableObject {
     /// Signal quality (inverse of artifact level)
     public var signalQuality: Float {
         1.0 - min(1.0, deconvolver.artifactLevel() * 5.0)
+    }
+
+    /// Optimal audio parameters from NeuroSpiritual state
+    public var neuroAudioParams: (frequency: Double, carrier: Double, volume: Double) {
+        NeuroSpiritualEngine.shared.getOptimalAudioParameters()
+    }
+
+    /// Optimal light color from polyvagal state
+    public var neuroLightColor: (r: Float, g: Float, b: Float) {
+        NeuroSpiritualEngine.shared.getOptimalLightColor()
     }
 
     private func computeCoherenceTrend() -> Float {
