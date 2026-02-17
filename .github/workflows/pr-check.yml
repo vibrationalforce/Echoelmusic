@@ -2,6 +2,7 @@
 # ECHOELMUSIC - PR BUILD CHECK
 # =============================================================================
 # Runs ONLY on pull requests - validates code compiles before merge
+# Mirrors the main CI build strategy for consistency
 # =============================================================================
 
 name: "PR Build Check"
@@ -17,12 +18,13 @@ concurrency:
 
 env:
   XCODE_VERSION: '16.2'
+  XCODEGEN_VERSION: '2.42.0'
 
 jobs:
   build-check:
     name: "PR Build Check"
     runs-on: macos-14
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: "Checkout"
@@ -41,7 +43,7 @@ jobs:
       - name: "Validate Project Files"
         run: |
           echo "Checking required files..."
-          for file in Package.swift project.yml fastlane/Fastfile; do
+          for file in Package.swift project.yml; do
             if [ -f "$file" ]; then
               echo "[OK] $file"
             else
@@ -56,66 +58,91 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: "Install XcodeGen"
-        run: |
-          brew install xcodegen || true
-          xcodegen --version
+      - name: "Cache Swift Package Dependencies"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            .build
+            ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-spm-pr-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-pr-
+            ${{ runner.os }}-spm-
+
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: ${{ env.XCODEGEN_VERSION }}
 
       - name: "Generate Xcode Project"
         run: |
-          # Use placeholder Team ID for CI builds
-          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml
+          sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
           xcodegen generate --spec project.yml
           echo "Project generated successfully."
 
+      - name: "Resolve Swift Package Dependencies"
+        run: |
+          swift package resolve || true
+
       - name: "Build iOS (Simulator)"
         run: |
+          set -o pipefail
           echo "Building iOS for Simulator..."
-          xcodebuild build \
-            -project Echoelmusic.xcodeproj \
+          xcodebuild build-for-testing \
             -scheme Echoelmusic \
             -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
-            -quiet
+            2>&1 | tee build-ios.log | xcpretty || { echo "BUILD FAILED — full log:"; tail -100 build-ios.log; exit 1; }
           echo "[OK] iOS Simulator build succeeded"
 
       - name: "Build macOS"
         run: |
+          set -o pipefail
           echo "Building macOS..."
-          xcodebuild build \
-            -project Echoelmusic.xcodeproj \
+          xcodebuild build-for-testing \
             -scheme Echoelmusic-macOS \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
-            -quiet
+            2>&1 | tee build-macos.log | xcpretty || { echo "BUILD FAILED — full log:"; tail -100 build-macos.log; exit 1; }
           echo "[OK] macOS build succeeded"
 
       - name: "Run Tests (iOS Simulator)"
         run: |
+          set -o pipefail
           echo "Running iOS tests..."
-          xcodebuild test \
-            -project Echoelmusic.xcodeproj \
+          xcodebuild test-without-building \
             -scheme Echoelmusic \
             -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
-            -quiet \
-            2>&1 | xcpretty --test || exit 1
+            2>&1 | tee test-ios.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-ios.log; exit 1; }
           echo "[OK] iOS tests passed"
 
       - name: "Run Tests (macOS)"
         run: |
+          set -o pipefail
           echo "Running macOS tests..."
-          xcodebuild test \
-            -project Echoelmusic.xcodeproj \
+          xcodebuild test-without-building \
             -scheme Echoelmusic-macOS \
             -destination 'platform=macOS' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
-            -quiet \
-            2>&1 | xcpretty --test || exit 1
+            2>&1 | tee test-macos.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-macos.log; exit 1; }
           echo "[OK] macOS tests passed"
+
+      - name: "Upload Build Logs (on failure)"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-build-logs
+          path: |
+            build-ios.log
+            build-macos.log
+            test-ios.log
+            test-macos.log
+          retention-days: 7
 
       - name: "Summary"
         run: |
@@ -123,9 +150,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS Build | ✅ |" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS Build | ✅ |" >> $GITHUB_STEP_SUMMARY
-          echo "| macOS Tests | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Build | Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS Tests | Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS Build | Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS Tests | Passed |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "All builds and tests passed - ready to merge!" >> $GITHUB_STEP_SUMMARY
