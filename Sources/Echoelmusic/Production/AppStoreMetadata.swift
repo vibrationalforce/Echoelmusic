@@ -253,13 +253,17 @@ Seven software synthesizers, each responding to biometric input:
 
 The free tier includes DDSP. Pro unlocks all seven.
 
-AUv3 PLUGINS
+AUv3 PLUGIN + HOST
 
-Echoelmusic works as AUv3 Audio Unit plugins inside Logic Pro, GarageBand, or other AUv3 hosts:
+Echoelmusic is both an AUv3 Audio Unit plugin and an AUv3 host.
+
+As a plugin — load Echoelmusic instruments and effects inside Logic Pro, GarageBand, AUM, or any AUv3-compatible host:
 • 808 Bass Synth
 • BioComposer
 • Stem Splitter
 • MIDI Pro (MIDI 2.0 + MPE)
+
+As a host — load third-party AUv3 plugins directly inside Echoelmusic and route them through the bio-reactive signal chain.
 
 SPATIAL AUDIO
 
@@ -362,12 +366,16 @@ SYNTHESIZER-ENGINES
 • TR-808 Bass — Professioneller 808-Bass mit Pitch Glide
 • Breakbeat Chopper — Jungle/DNB Slice-Engine mit Pattern-Sequenzer
 
-AUv3 AUDIO UNIT PLUGINS
-Nutze Echoelmusic in Logic Pro, GarageBand, AUM oder jedem AUv3-Host:
+AUv3 PLUGIN + HOST
+Echoelmusic ist gleichzeitig AUv3-Plugin und AUv3-Host.
+
+Als Plugin — lade Echoelmusic-Instrumente in Logic Pro, GarageBand, AUM oder jeden AUv3-Host:
 • 808 Bass Synth mit Pitch Glide
 • BioComposer — KI-Musikgenerator
 • Stem Splitter — KI-Quellentrennung
 • MIDI Pro — MIDI 2.0 + MPE Prozessor
+
+Als Host — lade beliebige AUv3-Plugins von Drittanbietern direkt in Echoelmusic und route sie durch die bio-reaktive Signalkette.
 
 SPATIAL AUDIO
 • 3D-Klanglandschaften mit Head Tracking
@@ -980,8 +988,8 @@ public struct AppStoreScreenshots {
         ),
         .init(
             number: 5,
-            title: "AUv3 Audio Plugins",
-            description: "Use Echoelmusic instruments inside Logic Pro, GarageBand, or any AUv3-compatible host."
+            title: "AUv3 Plugin + Host",
+            description: "Load Echoelmusic as a plugin in Logic Pro or GarageBand — or host third-party AUv3 plugins directly inside Echoelmusic."
         ),
         .init(
             number: 6,

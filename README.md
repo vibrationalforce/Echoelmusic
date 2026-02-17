@@ -18,7 +18,7 @@
 | **macOS** | [DMG](../../releases/latest/download/Echoelmusic-macOS.dmg) | VST3, AU, CLAP, Standalone | Ready |
 | **Windows** | [Installer](../../releases/latest/download/Echoelmusic-Windows-Setup.exe) | VST3, CLAP, Standalone | Ready |
 | **Linux** | [AppImage](../../releases/latest/download/Echoelmusic-Linux.AppImage) | VST3, CLAP, Standalone, Deb | Ready |
-| **iOS** | App Store | AUv3, Standalone, HealthKit | Coming Soon |
+| **iOS** | App Store | AUv3 Plugin + Host, Standalone, HealthKit | Coming Soon |
 | **Android** | Google Play | Standalone, Health Connect | Coming Soon |
 | **visionOS** | App Store | Immersive, Spatial Audio | Coming 2026 |
 
