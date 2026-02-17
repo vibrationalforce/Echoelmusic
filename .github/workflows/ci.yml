@@ -160,12 +160,15 @@ jobs:
       continue-on-error: true
 
     - name: Upload Code Coverage
-      if: success()
+      if: success() && env.CODECOV_TOKEN != ''
       uses: codecov/codecov-action@v4
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.lcov
         flags: ios
         name: ios-coverage-${{ matrix.name }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       continue-on-error: true
 
     - name: Upload Test Results
