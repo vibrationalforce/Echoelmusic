@@ -45,6 +45,8 @@ EchoelUniversalCore (120Hz) → UnifiedControlHub (60Hz) + VideoAICreativeHub
 | `SpatialAudioEngine` | `Spatial/` | 3D/4D spatial (init, setMode, setPan, setReverbBlend) |
 | `UnifiedHealthKitEngine` | `Biofeedback/` | HRV/HR (coherence, startStreaming, stopStreaming) |
 | `VideoStreamingManager` | `Stream/` | Streaming (NOT VideoProcessingEngine) |
+| `EchoelStage` | `Core/EchoelToolkit.swift` | Output routing (external displays, VR/XR, projection, Dante) |
+| `ExternalDisplayRenderingPipeline` | `Stage/` | Metal-based multi-output rendering pipeline |
 | `ProfessionalLogger` | `Core/` | Global `log` instance |
 
 ### 5 Pro Engines
@@ -69,6 +71,7 @@ Sources/Echoelmusic/ has **70+ flat sibling directories**:
 **Platform:** Platforms, WatchOS, WatchSync, tvOS, AppClips, Widgets, LiveActivity, SharePlay, Shortcuts
 **Infrastructure:** Core, Utils, Integration, Testing, Performance, Optimization, QualityAssurance
 **Business:** Legal, Privacy, Security, Analytics, Social, Sustainability, Business, Localization
+**Stage:** Stage (ExternalDisplayRenderingPipeline, DanteAudioTransport, VideoNetworkTransport, EchoelSyncProtocol)
 **Other:** Creative, NeuroSpiritual, Onboarding, Scripting, Export, Hardware, Presets, Resources, Views
 
 Entry points: `EchoelmusicApp.swift`, `ContentView.swift`
