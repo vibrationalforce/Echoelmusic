@@ -46,7 +46,7 @@ mkdir build && cd build && cmake .. && cmake --build .   # Desktop
 
 ## Architecture — EchoelToolkit
 
-498 classes consolidated into **11 unified Echoel\* tools**. All connected via **EngineBus** (lock-free pub/sub).
+498 classes consolidated into **12 unified Echoel\* tools**. All connected via **EngineBus** (lock-free pub/sub).
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────┐
@@ -59,8 +59,13 @@ mkdir build && cd build && cmake .. && cmake --build .   # Desktop
 │   │          │          │         │          │          │               │
 │   ├──────────┼──────────┼─────────┼──────────┼──────────┤               │
 │   │          │          │         │          │          │               │
-│ EchoelBio EchoelVis EchoelVid EchoelLux EchoelNet   │               │
-│ (biometrics)(visuals) (video)   (lighting)(network)   │               │
+│ EchoelBio EchoelVis EchoelVid EchoelLux EchoelStage │               │
+│ (biometrics)(visuals) (video)  (lighting) (output)    │               │
+│   │          │          │         │          │          │               │
+│   └──────────┴──────────┴─────────┴──────────┴──────────┘               │
+│                              │                                           │
+│                         EchoelNet                                        │
+│                    (collaboration/sync)                                   │
 │   │          │          │         │          │          │               │
 │   └──────────┴──────────┴─────────┴──────────┴──────────┘               │
 │                              │                                           │
@@ -72,7 +77,7 @@ Communication: EngineBus — lock-free publish/subscribe/request
 Bio-Reactivity: All tools react to BioSnapshot via bus
 ```
 
-### The 11 Tools
+### The 12 Tools
 
 | Tool | Purpose | Key Capabilities |
 |------|---------|-----------------|
@@ -85,7 +90,8 @@ Bio-Reactivity: All tools react to BioSnapshot via bus
 | **EchoelVis** | Visuals | 8 modes (particles, cymatics, geometry, spectrum, 3D, 360, waveform, Hilbert), Metal 120fps |
 | **EchoelVid** | Video & streaming | Capture, edit, stream, multi-cam, chroma key, ProRes |
 | **EchoelLux** | Lighting | DMX 512, Art-Net, lasers, smart home, cue system |
-| **EchoelNet** | Collaboration | SharePlay, 1000+ collab, cloud sync, <10ms |
+| **EchoelStage** | Output routing | External displays, smart glasses, AirPlay, projection mapping, multi-screen, audience view |
+| **EchoelNet** | Collaboration | SharePlay, Dante, EchoelSync, 1000+ collab, cloud sync, <10ms |
 | **EchoelAI** | Intelligence | CoreML, LLM, stem separation, composition, generative AI |
 
 Plus **Echoela** — the AI assistant with 11 skills and constitutional AI.

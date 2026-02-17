@@ -1,5 +1,5 @@
 {
-  "version": "9.1.0",
+  "version": "9.2.0",
   "build": "2026-02-17",
   "features": {
     "monochromeDesign": true,
@@ -25,8 +25,9 @@
     "wcag22AAA": true
   },
   "changelog": [
+    "v9.2.0: EchoelStage (12th tool) — external displays, smart glasses, AirPlay, projection, multi-screen, audience view. Dante + EchoelSync added to EchoelNet. Clickable tool-cap descriptions on website. External-Display-Rendering-Pipeline.",
     "v9.1.0: Enhanced DDSP (12 bio-mappings, spectral morphing, timbre transfer), Rausch-inspired bio-signal algorithms (BioEventGraph, HilbertSensorMapper, BioSignalDeconvolver), BioSignalDSP integrated into EchoelBio + EchoelVis, Android EngineBus port, extended BioSnapshot, 56 test suites",
-    "v9.0.0: EchoelToolkit — 498 classes consolidated into 11 unified Echoel* tools (EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelVis, EchoelVid, EchoelLux, EchoelNet, EchoelAI + Echoela). Card-based tools section, updated specs and FAQ.",
+    "v9.0.0: EchoelToolkit — 498 classes consolidated into 12 unified Echoel* tools (EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelVis, EchoelVid, EchoelLux, EchoelStage, EchoelNet, EchoelAI + Echoela). Card-based tools section, updated specs and FAQ.",
     "v8.0.1: Cache-busting query params on all assets, aggressive SW update checking, fixes CDN stale cache issue",
     "v8.0.0: Complete CI rebuild — consistent nav/menu/footer on every page, zero inline styles on subpages, 1 CTA only (no page-cta, no mobile-cta, no Apple logos on subpages), shared.css as single source of truth",
     "v7.1.1: Service worker cache bust",
