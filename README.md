@@ -87,14 +87,22 @@ Bio-Reactivity: All tools react to BioSnapshot via bus
 | **EchoelSeq** | Sequencer | Step sequencer, patterns, automation, scripting |
 | **EchoelMIDI** | MIDI/MPE control | MIDI 2.0, MPE, touch instruments, routing |
 | **EchoelBio** | Biometrics hub | HRV, HR, breathing, face, gaze, hands, motion, EEG. Rausch-inspired bio-event graph + signal deconvolution |
-| **EchoelVis** | Visuals | 8 modes (particles, cymatics, geometry, spectrum, 3D, 360, waveform, Hilbert), Metal 120fps |
-| **EchoelVid** | Video & streaming | Capture, edit, stream, multi-cam, chroma key, ProRes |
+| **EchoelVis** | Visuals | 10 modes (particles, cymatics, geometry, spectrum, 3D, 360, waveform, Hilbert, generative worlds, AR worlds), Metal 120fps |
+| **EchoelVid** | Video & streaming | Capture, edit, stream, multi-cam, chroma key, ProRes, NDI, Syphon |
 | **EchoelLux** | Lighting | DMX 512, Art-Net, lasers, smart home, cue system |
-| **EchoelStage** | Output routing | External displays, smart glasses, AirPlay, projection mapping, multi-screen, audience view |
+| **EchoelStage** | Output routing | External displays, smart glasses, VR/XR, AirPlay, projection, dome beamer, multi-beamer, LED walls |
 | **EchoelNet** | Collaboration | SharePlay, Dante, EchoelSync, 1000+ collab, cloud sync, <10ms |
-| **EchoelAI** | Intelligence | CoreML, LLM, stem separation, composition, generative AI |
+| **EchoelAI** | Intelligence | CoreML, LLM, stem separation, composition, generative AI, music theory, AR history |
 
-Plus **Echoela** — the AI assistant with 11 skills and constitutional AI.
+Plus **Echoela** — the AI assistant with 12 skills and constitutional AI.
+
+### Editions
+
+| Edition | Audience | Key Additions |
+|---------|----------|---------------|
+| **Creative Suite** | Musicians, filmmakers, performers, installation artists | Full 12-tool studio (core product) |
+| **Research Edition** | Universities, Fraunhofer, clinical researchers | Enhanced data export (CSV/HDF5), session protocols, anonymized collection |
+| **Bio-Reactive Audio SDK** | Game developers (Unity, Unreal) | Middleware: heart rate → difficulty, breath → ambience, coherence → unlocks |
 
 ### Bio-Signal Processing (Rausch-inspired)
 

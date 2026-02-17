@@ -1,5 +1,5 @@
 {
-  "version": "9.2.0",
+  "version": "9.3.0",
   "build": "2026-02-17",
   "features": {
     "monochromeDesign": true,
@@ -25,6 +25,7 @@
     "wcag22AAA": true
   },
   "changelog": [
+    "v9.3.0: Generative Worlds + AR Worlds (EchoelVis), Music Theory + AR History (EchoelAI). 3 Editions: Creative Suite, Research Edition, Bio-Reactive Audio SDK. 8 audience personas. Education, research, and game developer positioning.",
     "v9.2.0: EchoelStage (12th tool) — external displays, smart glasses, AirPlay, projection, multi-screen, audience view. Dante + EchoelSync added to EchoelNet. Clickable tool-cap descriptions on website. External-Display-Rendering-Pipeline.",
     "v9.1.0: Enhanced DDSP (12 bio-mappings, spectral morphing, timbre transfer), Rausch-inspired bio-signal algorithms (BioEventGraph, HilbertSensorMapper, BioSignalDeconvolver), BioSignalDSP integrated into EchoelBio + EchoelVis, Android EngineBus port, extended BioSnapshot, 56 test suites",
     "v9.0.0: EchoelToolkit — 498 classes consolidated into 12 unified Echoel* tools (EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelVis, EchoelVid, EchoelLux, EchoelStage, EchoelNet, EchoelAI + Echoela). Card-based tools section, updated specs and FAQ.",

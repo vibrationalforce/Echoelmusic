@@ -853,6 +853,8 @@ public final class EchoelVis: ObservableObject {
         case spatial360 = "360"
         case waveform = "Waveform"
         case hilbert = "Hilbert"           // Hilbert curve bio-visualization
+        case generativeWorld = "Generative World"  // Abstract bio-reactive environments
+        case arWorld = "AR World"          // Augmented reality overlays on real locations
     }
 
     @Published public var mode: VisMode = .particles
@@ -1212,6 +1214,8 @@ public final class EchoelAI: ObservableObject {
         case transcribe = "Transcribe"      // Audio → MIDI
         case generate = "Generate"          // LLM creative generation
         case analyze = "Analyze"            // Audio analysis
+        case musicTheory = "Music Theory"   // Bio-reactive theory lessons (scales, harmony, counterpoint)
+        case arHistory = "AR History"       // Music/cultural history at real locations or from sofa
     }
 
     public init() {
@@ -1228,7 +1232,7 @@ public final class EchoelAI: ObservableObject {
             lastResult = "\(suggestion.chord) (\(suggestion.reason))"
         case .generate:
             lastResult = await creative.generate(prompt: input)
-        case .separate, .transcribe, .analyze:
+        case .separate, .transcribe, .analyze, .musicTheory, .arHistory:
             lastResult = "[\(task.rawValue)] Processing..."
         }
 
