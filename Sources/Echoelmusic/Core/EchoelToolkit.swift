@@ -474,12 +474,25 @@ public final class EchoelBio: ObservableObject {
     @Published public var hrvMs: Float = 50
     @Published public var coherence: Float = 0.5
     @Published public var breathPhase: Float = 0.5
+    @Published public var breathDepth: Float = 0.5
     @Published public var breathingRate: Float = 12
+    @Published public var lfHfRatio: Float = 0.5
     @Published public var flowScore: Float = 0
     @Published public var stressIndex: Float = 0.5
     @Published public var energyLevel: Float = 0.5
     @Published public var wellnessScore: Float = 0.5
     @Published public var isStreaming: Bool = false
+
+    // Rausch-inspired bio-signal processing
+    /// Graph-based bio-event detection and clustering (DELLY-inspired)
+    public let eventGraph = BioEventGraph(maxEvents: 512, clusterCount: 4)
+
+    /// Adaptive signal deconvolution — separates cardiac, respiratory, artifact (Tracy-inspired)
+    public let deconvolver = BioSignalDeconvolver(sampleRate: 60.0)
+
+    /// Coherence trend tracker (derivative for spectral morphing)
+    private var coherenceHistory: [Float] = []
+    private let coherenceHistorySize = 30  // 0.5s at 60Hz
 
     public init() {
         // Register as bio provider on bus
@@ -496,25 +509,85 @@ public final class EchoelBio: ObservableObject {
 
     public func stopStreaming() {
         isStreaming = false
+        eventGraph.reset()
+        deconvolver.reset()
+        coherenceHistory.removeAll()
     }
 
     /// Push new bio reading and broadcast to all tools via bus
     public func update(heartRate: Float? = nil, hrvMs: Float? = nil, coherence: Float? = nil,
-                       breathPhase: Float? = nil, flowScore: Float? = nil) {
+                       breathPhase: Float? = nil, breathDepth: Float? = nil,
+                       lfHfRatio: Float? = nil, flowScore: Float? = nil) {
         if let hr = heartRate { self.heartRate = hr }
         if let hrv = hrvMs { self.hrvMs = hrv }
         if let c = coherence { self.coherence = c }
         if let bp = breathPhase { self.breathPhase = bp }
+        if let bd = breathDepth { self.breathDepth = bd }
+        if let lf = lfHfRatio { self.lfHfRatio = lf }
         if let fs = flowScore { self.flowScore = fs }
 
-        // Broadcast to ALL tools — they react automatically
-        let snapshot = BioSnapshot(
-            coherence: self.coherence,
-            heartRate: self.heartRate,
-            breathPhase: self.breathPhase,
-            flowScore: self.flowScore
-        )
+        // Feed event graph — detects peaks, valleys, anomalies, transitions
+        eventGraph.feedSample(self.coherence, channel: .coherence)
+        eventGraph.feedSample(self.heartRate / 180.0, channel: .heartRate)
+        eventGraph.feedSample(self.breathPhase, channel: .breathing)
+        eventGraph.feedSample(self.hrvMs / 100.0, channel: .hrv)
+
+        // Feed deconvolver — separates cardiac, respiratory, artifact from composite
+        let composite = self.coherence * 0.4 + (self.heartRate / 180.0) * 0.3 + self.breathPhase * 0.3
+        _ = deconvolver.process(composite)
+
+        // Track coherence trend (derivative)
+        coherenceHistory.append(self.coherence)
+        if coherenceHistory.count > coherenceHistorySize {
+            coherenceHistory.removeFirst()
+        }
+        let coherenceTrend = computeCoherenceTrend()
+
+        // Broadcast extended snapshot to ALL tools
+        var snapshot = BioSnapshot()
+        snapshot.coherence = self.coherence
+        snapshot.heartRate = self.heartRate
+        snapshot.breathPhase = self.breathPhase
+        snapshot.flowScore = self.flowScore
+        snapshot.hrvVariability = min(1.0, self.hrvMs / 100.0)
+        snapshot.breathDepth = self.breathDepth
+        snapshot.lfHfRatio = self.lfHfRatio
+        snapshot.coherenceTrend = coherenceTrend
         EngineBus.shared.publishBio(snapshot)
+    }
+
+    /// Current dominant bio-state cluster (for adaptive synthesis/visuals)
+    public var dominantBioState: Int {
+        eventGraph.dominantClusterIndex()
+    }
+
+    /// Recent anomaly density — maps to synthesis complexity
+    public var anomalyDensity: Float {
+        eventGraph.recentAnomalyDensity()
+    }
+
+    /// Deconvolved cardiac component
+    public var cardiacSignal: Float {
+        deconvolver.cardiacValue()
+    }
+
+    /// Deconvolved respiratory component
+    public var respiratorySignal: Float {
+        deconvolver.respiratoryValue()
+    }
+
+    /// Signal quality (inverse of artifact level)
+    public var signalQuality: Float {
+        1.0 - min(1.0, deconvolver.artifactLevel() * 5.0)
+    }
+
+    private func computeCoherenceTrend() -> Float {
+        guard coherenceHistory.count >= 2 else { return 0 }
+        let recent = coherenceHistory.suffix(10)
+        let older = coherenceHistory.prefix(max(1, coherenceHistory.count - 10))
+        let recentAvg = recent.reduce(0, +) / Float(recent.count)
+        let olderAvg = older.reduce(0, +) / Float(older.count)
+        return max(-1, min(1, (recentAvg - olderAvg) * 5.0))
     }
 }
 
@@ -540,6 +613,7 @@ public final class EchoelVis: ObservableObject {
         case immersive3D = "Immersive 3D"
         case spatial360 = "360"
         case waveform = "Waveform"
+        case hilbert = "Hilbert"           // Hilbert curve bio-visualization
     }
 
     @Published public var mode: VisMode = .particles
@@ -548,6 +622,9 @@ public final class EchoelVis: ObservableObject {
     @Published public var complexity: Float = 0.5
     @Published public var particleCount: Int = 200
     @Published public var beatReactive: Bool = true
+
+    /// Hilbert curve mapper — bio data → 2D locality-preserving visualization
+    public let hilbertMapper = HilbertSensorMapper(order: 5)  // 32×32 = 1024 points
 
     private var busSubscription: BusSubscription?
 
@@ -558,6 +635,8 @@ public final class EchoelVis: ObservableObject {
                 case .bioUpdate(let bio):
                     self?.intensity = 0.3 + bio.coherence * 0.7
                     self?.particleCount = bio.flowScore > 0.75 ? 500 : 200
+                    // Feed Hilbert mapper with coherence for spatial visualization
+                    self?.hilbertMapper.feedSample(bio.coherence)
                 case .audioAnalysis(let audio):
                     if audio.beatDetected && self?.beatReactive == true {
                         self?.intensity = Swift.min(1.0, (self?.intensity ?? 0.5) + 0.2)
@@ -566,6 +645,16 @@ public final class EchoelVis: ObservableObject {
                 }
             }
         }
+    }
+
+    /// Get Hilbert density grid for bio-pattern visualization (normalized 0-1)
+    public func hilbertDensityGrid() -> [Float] {
+        hilbertMapper.getDensityGrid()
+    }
+
+    /// Get recent Hilbert mapped points for particle rendering
+    public func hilbertParticles(count: Int = 64) -> [HilbertSensorMapper.MappedPoint] {
+        hilbertMapper.recentPoints(count: count)
     }
 }
 
