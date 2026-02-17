@@ -164,7 +164,7 @@ Additional: vDSP vectorized rendering, exponential ADSR, spectral morphing betwe
 ```
 Sources/Echoelmusic/
 ├── Core/
-│   ├── EchoelToolkit.swift          # Master registry (11 tools)
+│   ├── EchoelToolkit.swift          # Master registry (12 tools)
 │   ├── EngineConsolidation.swift    # Hub protocols, EngineBus, BioSnapshot
 │   └── EchoelCore.swift             # Core DSP node graph
 ├── DSP/
@@ -181,6 +181,7 @@ Sources/Echoelmusic/
 ├── Video/                            # Camera, streaming, editing
 ├── MIDI/                             # MIDI 2.0, MPE
 ├── LED/                              # DMX, Art-Net, Push 3
+├── Stage/                            # External display pipeline, Dante, NDI, EchoelSync
 ├── Platforms/                        # watchOS, tvOS, visionOS
 └── ...                               # 70+ flat sibling directories
 
