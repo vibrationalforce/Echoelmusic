@@ -143,6 +143,11 @@ public struct BioSnapshot: Sendable {
     public var lfHfRatio: Float = 0.5         // LF/HF power ratio normalized (0-1)
     public var coherenceTrend: Float = 0      // Coherence derivative (-1 to 1)
 
+    // NeuroSpiritual state (polyvagal + consciousness)
+    public var polyvagalIndex: Float = 0      // 0=ventral, 1=sympathetic, 2=dorsal, 3+=blended
+    public var consciousnessLevel: Float = 2  // Index into ConsciousnessState.allCases
+    public var wellnessFrequency: Float = 0   // Active healing frequency (0 = none)
+
     public init() {}
 }
 
