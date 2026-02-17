@@ -2,7 +2,7 @@
 // Echoelmusic — The Unified Tool Architecture
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// MASTER CONSOLIDATION: 498 classes → 11 Echoel* Tools + Core
+// MASTER CONSOLIDATION: 498 classes → 12 Echoel* Tools + Core
 //
 // Philosophy: Weniger Tools, die mehr können.
 // Every tool is an Echoel* — consistent naming, consistent API, consistent power.
@@ -17,15 +17,17 @@
 // │   │          │          │         │          │          │               │
 // │   ├──────────┼──────────┼─────────┼──────────┼──────────┤               │
 // │   │          │          │         │          │          │               │
-// │ EchoelBio EchoelVis EchoelVid EchoelLux EchoelNet   │               │
-// │ (biometrics)(visuals) (video)   (lighting)(network)   │               │
+// │ EchoelBio EchoelVis EchoelVid EchoelLux EchoelStage│               │
+// │ (biometrics)(visuals) (video)  (lighting) (output)  │               │
 // │   │          │          │         │          │          │               │
 // │   └──────────┴──────────┴─────────┴──────────┴──────────┘               │
+// │                         EchoelNet                                        │
+// │                    (collaboration/sync)                                  │
 // │                              │                                           │
 // │                         EchoelAI                                         │
 // │                    (intelligence layer)                                  │
 // │                              │                                           │
-// │                         EchoelA                                          │
+// │                         Echoela                                          │
 // │                    (AI assistant / UX)                                   │
 // └───────────────────────────────────────────────────────────────────────────┘
 //
@@ -990,7 +992,167 @@ public final class EchoelLux: ObservableObject {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 10. EchoelNet — Networking & Collaboration
+// MARK: - 10. EchoelStage — External Display & Output Routing
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// MERGES: ExternalDisplayManager, iPadExternalDisplay, AirPlayManager,
+//         AppleGlassesOptimization, ProjectionMappingEngine, MultiScreenRouter
+//
+// Output routing: external displays, smart glasses, AirPlay, projection mapping,
+// multi-screen layouts, audience/therapist views, VR/XR devices, dome projectors
+
+/// Output everywhere — from pocket to arena
+@MainActor
+public final class EchoelStage: ObservableObject {
+
+    public enum OutputMode: String, CaseIterable, Sendable {
+        case mirror = "Mirror"
+        case extended = "Extended Display"
+        case audience = "Audience View"
+        case therapist = "Therapist View"
+        case projection = "Projection Mapping"
+        case dome = "Dome / Planetarium"
+        case vrHeadset = "VR/XR Headset"
+        case multiScreen = "Multi-Screen"
+    }
+
+    public enum DisplayType: String, CaseIterable, Sendable {
+        case externalHDMI = "HDMI/USB-C"
+        case airPlay = "AirPlay"
+        case smartGlasses = "Smart Glasses"
+        case vrXR = "VR/XR Device"
+        case projector = "Projector"
+        case domeBeamer = "Dome Beamer"
+        case multiBeamer = "Multi-Beamer Array"
+        case ledWall = "LED Wall"
+    }
+
+    @Published public var mode: OutputMode = .mirror
+    @Published public var connectedDisplays: [ConnectedDisplay] = []
+    @Published public var isOutputActive: Bool = false
+
+    /// The rendering pipeline handles actual display detection and frame routing
+    public let pipeline = ExternalDisplayRenderingPipeline.shared
+
+    /// Dante/AES67 audio transport for professional installations
+    public let danteTransport = DanteAudioTransport.shared
+
+    /// NDI/Syphon video transport for broadcast and VJ workflows
+    public let videoTransport = VideoNetworkTransport.shared
+
+    /// EchoelSync: bio-reactive sync across devices
+    public let sync = EchoelSyncProtocol.shared
+
+    public struct ConnectedDisplay: Identifiable {
+        public let id: String
+        public let name: String
+        public let type: DisplayType
+        public let width: Int
+        public let height: Int
+        public let isActive: Bool
+
+        public init(id: String, name: String, type: DisplayType, width: Int, height: Int, isActive: Bool) {
+            self.id = id
+            self.name = name
+            self.type = type
+            self.width = width
+            self.height = height
+            self.isActive = isActive
+        }
+    }
+
+    private var busSubscription: BusSubscription?
+    private var cancellables = Set<AnyCancellable>()
+
+    public init() {
+        // Subscribe to visual frames for routing
+        busSubscription = EngineBus.shared.subscribe(to: .visual) { [weak self] msg in
+            Task { @MainActor in
+                guard self?.isOutputActive == true else { return }
+                if case .visualStateChange(let frame) = msg {
+                    self?.routeFrame(frame)
+                }
+            }
+        }
+
+        // Sync detected outputs from pipeline to our connectedDisplays
+        pipeline.$detectedOutputs
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] outputs in
+                self?.connectedDisplays = outputs.map { output in
+                    ConnectedDisplay(
+                        id: output.id,
+                        name: output.name,
+                        type: Self.mapCategory(output.category),
+                        width: output.nativeWidth,
+                        height: output.nativeHeight,
+                        isActive: output.isAvailable
+                    )
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private static func mapCategory(_ category: DisplayOutputDescriptor.OutputCategory) -> DisplayType {
+        switch category {
+        case .externalDisplay: return .externalHDMI
+        case .airPlay: return .airPlay
+        case .smartGlasses: return .smartGlasses
+        case .vrXRHeadset: return .vrXR
+        case .projector: return .projector
+        case .domeBeamer: return .domeBeamer
+        case .multiBeamerArray: return .multiBeamer
+        case .ledWall: return .ledWall
+        case .ndiOutput: return .externalHDMI
+        case .syphonOutput: return .externalHDMI
+        }
+    }
+
+    /// Start output to all connected displays
+    public func startOutput() {
+        isOutputActive = true
+        pipeline.startPipeline()
+        EngineBus.shared.publish(.custom(topic: "stage.output.start", payload: ["mode": mode.rawValue]))
+    }
+
+    /// Stop all output routing
+    public func stopOutput() {
+        isOutputActive = false
+        pipeline.stopPipeline()
+        EngineBus.shared.publish(.custom(topic: "stage.output.stop", payload: [:]))
+    }
+
+    /// Route visual frame via the pipeline to all assigned outputs
+    private func routeFrame(_ frame: VisualFrame) {
+        pipeline.routeVisualFrame(frame)
+    }
+
+    /// Scan for all available displays, NDI sources, and AirPlay devices
+    public func scanForDisplays() {
+        pipeline.scanForAllOutputs()
+        danteTransport.startDiscovery()
+        videoTransport.startNDIDiscovery()
+    }
+
+    /// Set content per screen for multi-screen mode
+    public func assignContent(displayId: String, contentType: OutputMode) {
+        let pipelineContent: OutputContentAssignment.ContentType
+        switch contentType {
+        case .mirror: pipelineContent = .mirror
+        case .extended: pipelineContent = .cleanFeed
+        case .audience: pipelineContent = .audienceVisuals
+        case .therapist: pipelineContent = .therapistBioData
+        case .projection: pipelineContent = .cleanFeed
+        case .dome: pipelineContent = .domeProjection
+        case .vrHeadset: pipelineContent = .immersive360
+        case .multiScreen: pipelineContent = .multiviewMonitor
+        }
+        pipeline.assignContent(outputId: displayId, content: pipelineContent)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MARK: - 11. EchoelNet — Networking & Collaboration
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: CloudSyncManager, CollaborationEngine, WebRTCClient,
@@ -999,7 +1161,7 @@ public final class EchoelLux: ObservableObject {
 //
 // 20 classes → 1 network hub
 
-/// Networking — cloud sync, collaboration, streaming, auth
+/// Networking — cloud sync, collaboration, streaming, auth, Dante, EchoelSync
 @MainActor
 public final class EchoelNet: ObservableObject {
 
@@ -1025,7 +1187,7 @@ public final class EchoelNet: ObservableObject {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 11. EchoelAI — Intelligence Layer
+// MARK: - 12. EchoelAI — Intelligence Layer
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: EchoelCreativeAI (already merged: AIComposer + BioReactiveAIComposer
@@ -1101,7 +1263,7 @@ public final class EchoelToolkit: ObservableObject {
 
     public static let shared = EchoelToolkit()
 
-    // The 11 Echoel* Tools
+    // The 12 Echoel* Tools
     public let synth: EchoelSynth       // Synthesis
     public let mix: EchoelMix           // Mixing
     public let fx: EchoelFX             // Effects
@@ -1111,6 +1273,7 @@ public final class EchoelToolkit: ObservableObject {
     public let vis: EchoelVis           // Visuals
     public let vid: EchoelVid           // Video
     public let lux: EchoelLux           // Lighting
+    public let stage: EchoelStage       // External displays/glasses/projection
     public let net: EchoelNet           // Networking
     public let ai: EchoelAI             // Intelligence
 
@@ -1130,6 +1293,7 @@ public final class EchoelToolkit: ObservableObject {
         self.vis = EchoelVis()
         self.vid = EchoelVid()
         self.lux = EchoelLux()
+        self.stage = EchoelStage()
         self.net = EchoelNet()
         self.ai = EchoelAI()
     }
@@ -1137,7 +1301,7 @@ public final class EchoelToolkit: ObservableObject {
     /// One-line status of the entire system
     public var status: String {
         """
-        EchoelToolkit: 11 tools active
+        EchoelToolkit: 12 tools active
         Synth: \(synth.activeEngine.rawValue) | Mix: \(mix.channelCount)ch @ \(mix.bpm) BPM
         Bio: HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100))
         Vis: \(vis.mode.rawValue) | Lux: \(lux.mode.rawValue)
