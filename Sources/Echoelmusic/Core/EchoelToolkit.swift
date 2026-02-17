@@ -919,12 +919,24 @@ public final class EchoelVid: ObservableObject {
         case edit = "Edit"
         case stream = "Stream"
         case multiCam = "MultiCam"
+        case greenScreen = "Green Screen"   // 6-pass Metal chroma key pipeline
+        case avatarTransform = "Avatar"     // ARKit blendshapes → 3D avatar rig
+        case styleFilter = "Style Filter"   // Core ML real-time style transfer
+    }
+
+    public enum AvatarPreset: String, CaseIterable, Sendable {
+        case none = "None"
+        case abstract = "Abstract Being"
+        case creature = "Creature"
+        case robot = "Robot"
+        case custom = "Custom"
     }
 
     @Published public var mode: VidMode = .capture
     @Published public var isRecording: Bool = false
     @Published public var isStreaming: Bool = false
     @Published public var chromaKeyEnabled: Bool = false
+    @Published public var avatarPreset: AvatarPreset = .none
 
     public init() {}
 

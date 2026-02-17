@@ -102,7 +102,21 @@ Plus **Echoela** — the AI assistant with 12 skills and constitutional AI.
 |---------|----------|---------------|
 | **Creative Suite** | Musicians, filmmakers, performers, installation artists | Full 12-tool studio (core product) |
 | **Research Edition** | Universities, Fraunhofer, clinical researchers | Enhanced data export (CSV/HDF5), session protocols, anonymized collection |
-| **Bio-Reactive Audio SDK** | Game developers (Unity, Unreal) | Middleware: heart rate → difficulty, breath → ambience, coherence → unlocks |
+| **Bio-Reactive Audio SDK** | Game developers (Unity, Unreal, Godot) | Middleware: heart rate → difficulty, breath → ambience, coherence → unlocks |
+
+### Avatar & Worlds Technology
+
+| Technology | Purpose | Status |
+|-----------|---------|--------|
+| **ARKit Blendshapes → 3D Avatar** | Face/hand/gaze tracking drives avatar rigs in RealityKit | Ready (tracking 100%, avatar mesh greenfield) |
+| **ChromaKeyEngine** | 6-pass Metal green screen pipeline, 120fps | Production-ready |
+| **Core ML Style Transfer** | AI visual filters on live camera (on-device) | Neural Engine, low effort |
+| **Godot via SwiftGodotKit** | Embeddable 3D engine for rich worlds (~30MB, MIT) | Integration target |
+| **GodotVision** | Godot logic + RealityKit rendering on visionOS | Integration target |
+| **TRELLIS (Microsoft)** | Text/image → 3D assets (GLB), MIT license | Server-side pipeline |
+| **FastNoise (C++)** | Procedural bio-reactive terrain in real time | CMake integration |
+| **SharePlay Shared Worlds** | Multi-user bio-reactive experiences | Existing infra ready |
+| **W3C Verifiable Credentials** | Digital achievements/certificates (no NFTs) | Planned |
 
 ### Bio-Signal Processing (Rausch-inspired)
 
