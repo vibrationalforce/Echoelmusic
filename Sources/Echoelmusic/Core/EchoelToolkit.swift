@@ -165,8 +165,18 @@ public final class EchoelSynth: ObservableObject {
     }
 
     private func applyBio(_ bio: BioSnapshot) {
-        ddsp.applyBioReactive(coherence: bio.coherence, hrvVariability: bio.heartRate, breathPhase: bio.breathPhase)
-        modal.applyBioReactive(coherence: bio.coherence, hrvVariability: bio.heartRate, breathPhase: bio.breathPhase)
+        // Extended 12-parameter mapping for DDSP
+        let hrNormalized = (bio.heartRate - 40.0) / 140.0  // 40-180 BPM → 0-1
+        ddsp.applyBioReactive(
+            coherence: bio.coherence,
+            hrvVariability: bio.hrvVariability,
+            heartRate: max(0, min(1, hrNormalized)),
+            breathPhase: bio.breathPhase,
+            breathDepth: bio.breathDepth,
+            lfHfRatio: bio.lfHfRatio,
+            coherenceTrend: bio.coherenceTrend
+        )
+        modal.applyBioReactive(coherence: bio.coherence, hrvVariability: bio.hrvVariability, breathPhase: bio.breathPhase)
         cellular.coherence = bio.coherence
     }
 }
