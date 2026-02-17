@@ -52,6 +52,17 @@ EchoelUniversalCore (120Hz) → UnifiedControlHub (60Hz) + VideoAICreativeHub
 ### 5 Pro Engines
 ProMixEngine, ProSessionEngine, ProColorGrading, ProCueSystem, ProStreamEngine
 
+### 2026 Expansion: 4 New Echoel* Engines + 2 Support Engines
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| `EchoelTranslateEngine` | `Translation/` | Real-time translation (20+ languages, on-device, Apple Translation) |
+| `EchoelSpeechEngine` | `Translation/` | Speech-to-text (SpeechAnalyzer iOS 26 / SFSpeech fallback) |
+| `EchoelLyricsEngine` | `Lyrics/` | Lyrics extraction (vocal separation + ASR + sync) |
+| `EchoelSubtitleRenderer` | `Subtitle/` | Real-time multilingual subtitles (WebVTT, HLS, SwiftUI overlay) |
+| `EchoelMindEngine` | `Mind/` | On-device LLM (Apple Foundation Models, 3B params, bio-reactive) |
+| `EchoelMintEngine` | `Mint/` | Bio-reactive Dynamic NFTs (capture, metadata, export)
+
 ### Android
 - `EchoelmusicApplication` — minimal, loads native libs only
 - `EchoelmusicViewModel` — holds audioEngine, midiManager, bioReactiveEngine
@@ -72,6 +83,7 @@ Sources/Echoelmusic/ has **70+ flat sibling directories**:
 **Infrastructure:** Core, Utils, Integration, Testing, Performance, Optimization, QualityAssurance
 **Business:** Legal, Privacy, Security, Analytics, Social, Sustainability, Business, Localization
 **Stage:** Stage (ExternalDisplayRenderingPipeline, DanteAudioTransport, VideoNetworkTransport, EchoelSyncProtocol)
+**2026 New:** Translation, Lyrics, Subtitle, Mind, Mint
 **Other:** Creative, NeuroSpiritual, Onboarding, Scripting, Export, Hardware, Presets, Resources, Views
 
 Entry points: `EchoelmusicApp.swift`, `ContentView.swift`

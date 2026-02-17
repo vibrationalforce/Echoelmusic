@@ -2,7 +2,7 @@
 // Echoelmusic — The Unified Tool Architecture
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// MASTER CONSOLIDATION: 498 classes → 12 Echoel* Tools + Core
+// MASTER CONSOLIDATION: 498 classes → 16 Echoel* Tools + Core
 //
 // Philosophy: Weniger Tools, die mehr können.
 // Every tool is an Echoel* — consistent naming, consistent API, consistent power.
@@ -29,6 +29,14 @@
 // │                              │                                           │
 // │                         Echoela                                          │
 // │                    (AI assistant / UX)                                   │
+// │                              │                                           │
+// │   ┌──────────┬──────────┬────┴────┬──────────┐ ← NEW 2026              │
+// │   │          │          │         │          │                           │
+// │ EchoelTranslate EchoelLyrics EchoelMind EchoelMint                     │
+// │ (translation)  (lyrics/STT) (on-device (bio-reactive                   │
+// │                               LLM)     NFTs)                            │
+// │   │                                                                     │
+// │   └─→ EchoelSubtitle (real-time multilingual captions)                  │
 // └───────────────────────────────────────────────────────────────────────────┘
 //
 // Communication: All tools talk via EngineBus (publish/subscribe/request)
@@ -1279,7 +1287,7 @@ public final class EchoelToolkit: ObservableObject {
 
     public static let shared = EchoelToolkit()
 
-    // The 12 Echoel* Tools
+    // The 12 Original Echoel* Tools
     public let synth: EchoelSynth       // Synthesis
     public let mix: EchoelMix           // Mixing
     public let fx: EchoelFX             // Effects
@@ -1293,6 +1301,16 @@ public final class EchoelToolkit: ObservableObject {
     public let net: EchoelNet           // Networking
     public let ai: EchoelAI             // Intelligence
 
+    // 4 New Echoel* Tools (2026 — Worldwide Reach + On-Device AI + NFT)
+    public let translate: EchoelTranslateEngine    // Real-time translation (20+ languages, on-device)
+    public let lyrics: EchoelLyricsEngine          // Lyrics extraction + sync + translation
+    public let mind: EchoelMindEngine              // On-device LLM (Apple Foundation Models)
+    public let mint: EchoelMintEngine              // Bio-reactive Dynamic NFTs
+
+    // Supporting engines
+    public let speech: EchoelSpeechEngine          // Speech-to-text (SpeechAnalyzer)
+    public let subtitle: EchoelSubtitleRenderer    // Real-time multilingual subtitles
+
     // Infrastructure
     public let bus: EngineBus
     public let registry: EngineRegistry
@@ -1300,6 +1318,8 @@ public final class EchoelToolkit: ObservableObject {
     private init() {
         self.bus = EngineBus.shared
         self.registry = EngineRegistry.shared
+
+        // Original 12
         self.synth = EchoelSynth()
         self.mix = EchoelMix()
         self.fx = EchoelFX()
@@ -1312,15 +1332,25 @@ public final class EchoelToolkit: ObservableObject {
         self.stage = EchoelStage()
         self.net = EchoelNet()
         self.ai = EchoelAI()
+
+        // New 2026 engines (singletons — initialized once, shared across app)
+        self.translate = EchoelTranslateEngine.shared
+        self.lyrics = EchoelLyricsEngine.shared
+        self.mind = EchoelMindEngine.shared
+        self.mint = EchoelMintEngine.shared
+        self.speech = EchoelSpeechEngine.shared
+        self.subtitle = EchoelSubtitleRenderer.shared
     }
 
     /// One-line status of the entire system
     public var status: String {
         """
-        EchoelToolkit: 12 tools active
+        EchoelToolkit: 16 tools + 2 support engines active
         Synth: \(synth.activeEngine.rawValue) | Mix: \(mix.channelCount)ch @ \(mix.bpm) BPM
         Bio: HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100))
         Vis: \(vis.mode.rawValue) | Lux: \(lux.mode.rawValue)
+        Translate: \(translate.targetLanguages.count) langs | Mind: \(mind.isAvailable ? "Ready" : "N/A")
+        Lyrics: \(lyrics.document?.lines.count ?? 0) lines | Mint: \(mint.drafts.count) drafts
         Bus: \(bus.stats)
         """
     }
