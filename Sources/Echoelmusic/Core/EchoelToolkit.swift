@@ -897,6 +897,18 @@ public final class EchoelCanvas: ObservableObject {
 
     @Published public var renderMode: RenderMode = .realtime
 
+    // MARK: - Bio-Reactive Photorealistic Properties
+    // These drive the photoRealistic render mode via biometric input
+
+    /// Depth of field blur radius — driven by HRV coherence (high coherence = shallow DoF)
+    @Published public var depthOfFieldRadius: Float = 0.0
+
+    /// Particle system density — driven by breath phase (inhale = expand, exhale = contract)
+    @Published public var particleDensity: Float = 0.5
+
+    /// Color temperature shift in Kelvin — driven by heart rate (low HR = warm, high HR = cool)
+    @Published public var colorTemperature: Float = 6500
+
     /// Hilbert curve mapper — bio data → 2D locality-preserving visualization
     public let hilbertMapper = HilbertSensorMapper(order: 5)  // 32×32 = 1024 points
 
@@ -910,6 +922,18 @@ public final class EchoelCanvas: ObservableObject {
                     self?.intensity = 0.3 + bio.coherence * 0.7
                     self?.particleCount = bio.flowScore > 0.75 ? 500 : 200
                     self?.hilbertMapper.feedSample(bio.coherence)
+
+                    // Bio-reactive photorealistic mappings
+                    // HRV coherence → depth of field (high coherence = artistic shallow DoF)
+                    self?.depthOfFieldRadius = bio.coherence * 12.0
+
+                    // Breath phase → particle density (0→1 breath cycle modulates density)
+                    self?.particleDensity = 0.3 + bio.breathPhase * 0.7
+
+                    // Heart rate → color temperature (60 BPM = warm 3200K, 180 BPM = cool 9500K)
+                    let hrNorm = max(0, min(1, (bio.heartRate - 60) / 120))
+                    self?.colorTemperature = 3200 + hrNorm * 6300
+
                 case .audioAnalysis(let audio):
                     if audio.beatDetected && self?.beatReactive == true {
                         self?.intensity = Swift.min(1.0, (self?.intensity ?? 0.5) + 0.2)
