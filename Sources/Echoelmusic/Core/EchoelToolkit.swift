@@ -17,15 +17,13 @@
 // │   │          │          │         │          │                          │
 // │   ├──────────┼──────────┼─────────┼──────────┤                          │
 // │   │          │          │         │          │                          │
-// │ EchoelBio  EchoelCanvas   EchoelOutput    EchoelNet                   │
-// │ (biometrics)(vis+video)   (light+stage)   (collab/sync)               │
+// │ EchoelBio  EchoelCanvas    EchoelOutput    EchoelNet                  │
+// │ (biometrics)(vis+vid+       (light+stage)  (protocols+                │
+// │             avatar+world)                   collab+mint)              │
 // │   │          │              │              │                            │
 // │   └──────────┴──────────────┴──────────────┘                            │
 // │                         EchoelAI                                         │
-// │                    (intelligence layer)                                  │
-// │                              │                                           │
-// │                         Echoela                                          │
-// │                    (AI assistant / UX)                                   │
+// │              (intelligence + translate + assistant)                      │
 // └───────────────────────────────────────────────────────────────────────────┘
 //
 // Communication: All tools talk via EngineBus (publish/subscribe/request)
@@ -828,7 +826,7 @@ public final class EchoelBio: ObservableObject {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 7. EchoelCanvas — Visuals + Video (merged EchoelVis + EchoelVid)
+// MARK: - 7. EchoelCanvas — Visuals + Video + Avatar + World
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: UnifiedVisualSoundEngine, ImmersiveVisualEngine, Intelligent360VisualEngine,
@@ -839,10 +837,13 @@ public final class EchoelBio: ObservableObject {
 //         BackgroundSourceManager, VideoExportManager, RecordingEngine,
 //         DAWProductionEngine, BPMGridEditEngine
 //
-// 22 classes → 1 unified visual+video pipeline
-// Single Metal pipeline for both real-time visuals AND video
+// ABSORBS (formerly separate homepage tools):
+//   EchoelAvatar → Gaussian Splatting, ARKit 52 blendshapes, aura, live avatar
+//   EchoelWorld  → Procedural worlds, 6 biomes, weather systems, day/night
+//
+// 1 unified visual creation pipeline: 2D/3D visuals + video + avatars + worlds
 
-/// All visuals + video — particles, shaders, 360, capture, edit, stream, export
+/// All visuals + video + avatars + worlds — unified visual creation pipeline
 @MainActor
 public final class EchoelCanvas: ObservableObject {
 
@@ -857,6 +858,11 @@ public final class EchoelCanvas: ObservableObject {
         case spatial360 = "360"
         case waveform = "Waveform"
         case hilbert = "Hilbert"
+        // Avatar modes (from EchoelAvatar)
+        case avatar = "Avatar"              // Gaussian Splatting 3D avatar
+        case aura = "Aura"                  // Bio-reactive aura visualization
+        // World modes (from EchoelWorld)
+        case world = "World"                // Procedural 3D environments
     }
 
     // MARK: - Video Modes
@@ -897,8 +903,37 @@ public final class EchoelCanvas: ObservableObject {
 
     @Published public var renderMode: RenderMode = .realtime
 
+    // MARK: - Avatar Properties (from EchoelAvatar)
+
+    /// Gaussian Splatting avatar active
+    @Published public var avatarActive: Bool = false
+    /// ARKit 52-blendshape face tracking for avatar animation
+    @Published public var faceTrackingActive: Bool = false
+    /// Bio-reactive aura: colors shift with coherence, HR, breath
+    @Published public var auraEnabled: Bool = true
+    /// Live avatar streaming for remote performances
+    @Published public var liveAvatarStreaming: Bool = false
+
+    // MARK: - World Properties (from EchoelWorld)
+
+    /// Procedural world biome types
+    public enum Biome: String, CaseIterable, Sendable {
+        case forest = "Forest"
+        case desert = "Desert"
+        case ocean = "Ocean"
+        case arctic = "Arctic"
+        case volcanic = "Volcanic"
+        case crystal = "Crystal"
+    }
+
+    /// Current world biome — bio-state influences weather
+    @Published public var activeBiome: Biome = .forest
+    /// Dynamic weather driven by HRV (calm = sunshine, stress = storms)
+    @Published public var weatherIntensity: Float = 0.3
+    /// Day/night cycle progress (0 = dawn, 0.5 = noon, 1 = midnight)
+    @Published public var dayNightPhase: Float = 0.25
+
     // MARK: - Bio-Reactive Photorealistic Properties
-    // These drive the photoRealistic render mode via biometric input
 
     /// Depth of field blur radius — driven by HRV coherence (high coherence = shallow DoF)
     @Published public var depthOfFieldRadius: Float = 0.0
@@ -924,15 +959,13 @@ public final class EchoelCanvas: ObservableObject {
                     self?.hilbertMapper.feedSample(bio.coherence)
 
                     // Bio-reactive photorealistic mappings
-                    // HRV coherence → depth of field (high coherence = artistic shallow DoF)
                     self?.depthOfFieldRadius = bio.coherence * 12.0
-
-                    // Breath phase → particle density (0→1 breath cycle modulates density)
                     self?.particleDensity = 0.3 + bio.breathPhase * 0.7
-
-                    // Heart rate → color temperature (60 BPM = warm 3200K, 180 BPM = cool 9500K)
                     let hrNorm = max(0, min(1, (bio.heartRate - 60) / 120))
                     self?.colorTemperature = 3200 + hrNorm * 6300
+
+                    // Bio-reactive world weather (low coherence = storms, high = calm)
+                    self?.weatherIntensity = 1.0 - bio.coherence
 
                 case .audioAnalysis(let audio):
                     if audio.beatDetected && self?.beatReactive == true {
@@ -967,6 +1000,8 @@ public final class EchoelCanvas: ObservableObject {
 /// Backward compatibility — remove after 1 release cycle
 public typealias EchoelVis = EchoelCanvas
 public typealias EchoelVid = EchoelCanvas
+public typealias EchoelAvatar = EchoelCanvas
+public typealias EchoelWorld = EchoelCanvas
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MARK: - 8. EchoelOutput — Lighting + Stage (merged EchoelLux + EchoelStage)
@@ -1183,18 +1218,24 @@ public final class EchoelOutput: ObservableObject {
 /// Backward compatibility — remove after 1 release cycle
 public typealias EchoelLux = EchoelOutput
 public typealias EchoelStage = EchoelOutput
+public typealias EchoelConnect = EchoelNet
+public typealias EchoelMint = EchoelNet
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 11. EchoelNet — Networking & Collaboration
+// MARK: - 9. EchoelNet — Networking, Protocols & Publishing
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: CloudSyncManager, CollaborationEngine, WebRTCClient,
 //         EchoelmusicWebSocket, RTMPClient, AuthenticationService,
 //         OfflineSupport, AnalyticsManager, StreamEngine (network part)
 //
-// 20 classes → 1 network hub
+// ABSORBS (formerly separate homepage tools):
+//   EchoelConnect → OSC, MSC, Mackie Control, sACN, PosiStageNet, 17 protocols
+//   EchoelMint    → Dynamic NFTs, bio-capture, on-chain metadata, export
+//
+// 1 unified network + protocol + publishing hub
 
-/// Networking — cloud sync, collaboration, streaming, auth, Dante, EchoelSync
+/// Networking — collab, sync, 17 protocols, Dante, NFT publishing, EchoelSync
 @MainActor
 public final class EchoelNet: ObservableObject {
 
@@ -1202,7 +1243,58 @@ public final class EchoelNet: ObservableObject {
     @Published public var collaborators: [String] = []
     @Published public var syncStatus: String = "idle"
 
+    // MARK: - Protocol Hub (from EchoelConnect)
+
+    /// All supported industry protocols
+    public enum ProtocolType: String, CaseIterable, Sendable {
+        case osc = "OSC"                    // Open Sound Control
+        case msc = "MSC"                    // MIDI Show Control
+        case mackieControl = "Mackie Control"  // HUI/MCU fader protocol
+        case sACN = "sACN"                  // E1.31 streaming ACN
+        case posiStageNet = "PosiStageNet"  // Real-time position tracking
+        case artNet = "Art-Net"             // DMX over IP
+        case midi2 = "MIDI 2.0"            // Universal MIDI Packet
+        case dante = "Dante"               // AES67 audio transport
+        case ndi = "NDI"                   // Network Device Interface
+        case syphon = "Syphon"             // GPU texture sharing (macOS)
+        case spout = "Spout"               // GPU texture sharing (Windows)
+        case sharePlay = "SharePlay"       // Apple SharePlay
+        case echoelSync = "EchoelSync"     // Proprietary bio-sync
+        case webRTC = "WebRTC"             // Peer-to-peer streaming
+        case rtmp = "RTMP"                 // Live streaming
+        case hls = "HLS"                   // HTTP Live Streaming
+        case srt = "SRT"                   // Secure Reliable Transport
+    }
+
+    @Published public var activeProtocols: Set<String> = []
+
+    // MARK: - NFT Publishing (from EchoelMint)
+
+    /// Dynamic NFT state
+    @Published public var mintingActive: Bool = false
+
+    /// Bio-capture moments for NFT minting
+    public struct BioCaptureEvent: Identifiable, Sendable {
+        public let id: UUID
+        public let timestamp: Date
+        public let coherence: Float
+        public let heartRate: Float
+        public let type: String  // "coherence_peak", "creative_breakthrough", "milestone"
+
+        public init(id: UUID = UUID(), timestamp: Date = Date(), coherence: Float, heartRate: Float, type: String) {
+            self.id = id
+            self.timestamp = timestamp
+            self.coherence = coherence
+            self.heartRate = heartRate
+            self.type = type
+        }
+    }
+
+    @Published public var capturedEvents: [BioCaptureEvent] = []
+
     public init() {}
+
+    // MARK: - Collaboration API
 
     public func startCollaboration(roomId: String) {
         syncStatus = "connecting"
@@ -1217,20 +1309,59 @@ public final class EchoelNet: ObservableObject {
     public func syncToCloud() {
         syncStatus = "syncing"
     }
+
+    // MARK: - Protocol API (from EchoelConnect)
+
+    /// Enable a protocol connection
+    public func enableProtocol(_ proto: ProtocolType) {
+        activeProtocols.insert(proto.rawValue)
+        EngineBus.shared.publish(.custom(topic: "net.protocol.enable", payload: ["protocol": proto.rawValue]))
+    }
+
+    /// Disable a protocol connection
+    public func disableProtocol(_ proto: ProtocolType) {
+        activeProtocols.remove(proto.rawValue)
+    }
+
+    /// Send OSC message
+    public func sendOSC(address: String, arguments: [Any]) {
+        EngineBus.shared.publish(.custom(topic: "net.osc.send", payload: ["address": address]))
+    }
+
+    // MARK: - Mint API (from EchoelMint)
+
+    /// Capture a bio-moment for potential NFT minting
+    public func captureBioMoment(coherence: Float, heartRate: Float, type: String) {
+        let event = BioCaptureEvent(coherence: coherence, heartRate: heartRate, type: type)
+        capturedEvents.append(event)
+        EngineBus.shared.publish(.custom(topic: "net.mint.capture", payload: [
+            "coherence": "\(coherence)", "heartRate": "\(heartRate)", "type": type
+        ]))
+    }
+
+    /// Mint captured event as dynamic NFT with on-chain metadata
+    public func mintNFT(eventId: UUID) {
+        mintingActive = true
+        EngineBus.shared.publish(.custom(topic: "net.mint.create", payload: ["eventId": eventId.uuidString]))
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 12. EchoelAI — Intelligence Layer
+// MARK: - 10. EchoelAI — Intelligence Layer
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// MERGES: EchoelCreativeAI (already merged: AIComposer + BioReactiveAIComposer
-//         + QuantumComposer), MLModelManager, MLInferenceEngine, LLMService,
-//         AIStemSeparationEngine, QuantumIntelligenceEngine,
-//         SuperIntelligenceQuantumBioPhysicalEngine
+// MERGES: EchoelCreativeAI (AIComposer + BioReactiveAIComposer + QuantumComposer),
+//         MLModelManager, MLInferenceEngine, LLMService, AIStemSeparationEngine,
+//         QuantumIntelligenceEngine, SuperIntelligenceQuantumBioPhysicalEngine
 //
-// 12 classes → 1 AI brain
+// ABSORBS (formerly separate homepage tools):
+//   EchoelMind     → Foundation Models, 3B params, on-device, bio-reactive AI
+//   EchoelTranslate → 20+ languages, speech-to-text, lyrics, subtitles, TTS
+//   Echoela         → AI assistant skills, constitutional AI, voice control
+//
+// 1 unified intelligence layer = brain + language + assistant personality
 
-/// The brain — LLM, CoreML, stem separation, composition, creative AI
+/// The brain — LLM, CoreML, stem separation, composition, translation, assistant
 @MainActor
 public final class EchoelAI: ObservableObject {
 
@@ -1239,13 +1370,51 @@ public final class EchoelAI: ObservableObject {
     @Published public var isProcessing: Bool = false
     @Published public var lastResult: String = ""
 
-    public enum AITask: String, Sendable {
+    // MARK: - AI Tasks (core + absorbed)
+
+    public enum AITask: String, CaseIterable, Sendable {
+        // Core AI
         case compose = "Compose"            // Chord/melody suggestions
         case separate = "Stem Separate"     // 6-stem AI separation
         case transcribe = "Transcribe"      // Audio → MIDI
         case generate = "Generate"          // LLM creative generation
         case analyze = "Analyze"            // Audio analysis
+        case videoAI = "Video AI"           // Auto-cam, framing, highlights
+        // EchoelMind (absorbed)
+        case foundationModel = "Foundation Model"  // Apple Foundation Models, 3B params
+        case sessionIntelligence = "Session Intelligence"  // Reports, briefs
+        case adaptiveLearning = "Adaptive Learning"  // Evolving suggestions
+        // EchoelTranslate (absorbed)
+        case translate = "Translate"        // 20+ languages
+        case speechToText = "Speech-to-Text"  // On-device recognition
+        case textToSpeech = "Text-to-Speech"  // Natural voice synthesis
+        case lyrics = "Lyrics"              // Transcription + translation
+        case subtitles = "Subtitles"        // Live subtitle generation
     }
+
+    // MARK: - Mind Properties (from EchoelMind)
+
+    /// Apple Foundation Models backend (on-device, 3B params)
+    @Published public var foundationModelActive: Bool = false
+    /// Bio-reactive AI: coherence level modulates suggestion depth
+    @Published public var bioReactiveIntelligence: Bool = true
+
+    // MARK: - Translate Properties (from EchoelTranslate)
+
+    @Published public var activeLanguage: String = "en"
+    @Published public var supportedLanguages: [String] = [
+        "en", "de", "fr", "es", "it", "pt", "ja", "ko", "zh",
+        "ar", "hi", "ru", "nl", "sv", "da", "no", "fi", "pl", "tr", "uk"
+    ]
+
+    // MARK: - Assistant Properties (from Echoela)
+
+    /// Echoela personality layer — 25 skills (one per tool)
+    @Published public var assistantActive: Bool = true
+    /// Constitutional AI safety constraints
+    @Published public var constitutionalAIEnabled: Bool = true
+    /// Voice control active
+    @Published public var voiceControlEnabled: Bool = false
 
     public init() {
         self.creative = EchoelCreativeAI.shared
@@ -1261,8 +1430,12 @@ public final class EchoelAI: ObservableObject {
             lastResult = "\(suggestion.chord) (\(suggestion.reason))"
         case .generate:
             lastResult = await creative.generate(prompt: input)
-        case .separate, .transcribe, .analyze:
+        case .separate, .transcribe, .analyze, .videoAI:
             lastResult = "[\(task.rawValue)] Processing..."
+        case .foundationModel, .sessionIntelligence, .adaptiveLearning:
+            lastResult = "[Mind: \(task.rawValue)] On-device inference..."
+        case .translate, .speechToText, .textToSpeech, .lyrics, .subtitles:
+            lastResult = "[Translate: \(task.rawValue)] \(activeLanguage)..."
         }
 
         EngineBus.shared.publish(.custom(topic: "ai.result", payload: ["task": task.rawValue, "result": lastResult]))
@@ -1270,20 +1443,10 @@ public final class EchoelAI: ObservableObject {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 12. EchoelA — The AI Assistant (Echoela)
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// KEEPS: EchoelaManager, EchoelaConstitution, MorphicEngine, PhysicalAIEngine,
-//        GEMASentinel, NFTFactory, ComplianceManager, WorldModel
-//
-// EchoelA = "Echoela" — the branded AI assistant. NOT merged, but connected.
-// The name fits the Echoel* pattern: Echoel + A (AI Assistant)
-//
-// EchoelA is the USER-FACING layer. It uses EchoelAI internally.
-// Think: EchoelAI = the brain, EchoelA = the personality.
-
-// (EchoelA lives in Echoela/ directory — already well-structured)
+// Backward-compatible typealiases — absorbed into EchoelAI
+public typealias EchoelMind = EchoelAI
+public typealias EchoelTranslate = EchoelAI
+public typealias Echoela = EchoelAI
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MARK: - EchoelToolkit — The Master Registry
