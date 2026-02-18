@@ -57,6 +57,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-
     display: flex; align-items: center; gap: 10px;
     font-weight: 700; z-index: 1001;
     color: var(--text); text-decoration: none;
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
 }
 .nav-logo svg { width: 28px; height: 28px; }
 .nav-links { display: none; align-items: center; gap: 4px; }
