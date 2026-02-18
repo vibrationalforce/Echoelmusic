@@ -406,14 +406,19 @@ public extension AsyncBioStream {
     func toPublisher() -> AnyPublisher<BioSample, Never> {
         let subject = PassthroughSubject<BioSample, Never>()
 
-        Task {
+        let task = Task { [weak self] in
+            guard let self = self else { return }
             for await sample in self {
+                guard !Task.isCancelled else { break }
                 subject.send(sample)
             }
             subject.send(completion: .finished)
         }
 
-        return subject.eraseToAnyPublisher()
+        // Cancel task when last subscriber disconnects
+        return subject
+            .handleEvents(receiveCancel: { task.cancel() })
+            .eraseToAnyPublisher()
     }
 }
 #endif

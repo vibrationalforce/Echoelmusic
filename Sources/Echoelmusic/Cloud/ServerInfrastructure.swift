@@ -14,9 +14,6 @@ import Security
 #if canImport(AuthenticationServices)
 import AuthenticationServices
 #endif
-#if canImport(Network)
-import Network
-#endif
 #if canImport(CryptoKit)
 import CryptoKit
 #endif
