@@ -531,10 +531,10 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Get all connected MIDI controllers
     public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
-        return hardwareEcosystem?.midiControllers.controllers.filter { controller in
-            // Check if controller is actually connected
-            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.model } ?? false
-        } ?? []
+        guard let ecosystem = hardwareEcosystem else { return [] }
+        // O(1) lookup set instead of O(n) linear scan per controller
+        let connectedNames = Set(ecosystem.connectedDevices.map { $0.name })
+        return ecosystem.midiControllers.controllers.filter { connectedNames.contains($0.model) }
     }
 
     /// Get all available lighting fixtures

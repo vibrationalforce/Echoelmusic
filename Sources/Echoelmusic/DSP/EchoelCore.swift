@@ -1,4 +1,5 @@
 import Foundation
+import Accelerate
 
 // ╔═══════════════════════════════════════════════════════════════════════════╗
 // ║                                                                           ║
@@ -118,10 +119,16 @@ public enum EchoelWarmth {
             let outputGain = pow(10.0, (output - 50.0) / 50.0 * 12.0 / 20.0)
             let wet = blend / 100.0
 
-            return input.indices.map { i in
-                let wetSignal = processed[i] * outputGain
-                return input[i] * (1.0 - wet) + wetSignal * wet
-            }
+            // Vectorized wet/dry mix using Accelerate — avoids per-sample closure overhead
+            var wetScaled = processed
+            var dryMixed = input
+            var wetGain = outputGain * wet
+            var dryGain: Float = 1.0 - wet
+            let count = vDSP_Length(input.count)
+            vDSP_vsmul(processed, 1, &wetGain, &wetScaled, 1, count)
+            vDSP_vsmul(input, 1, &dryGain, &dryMixed, 1, count)
+            vDSP_vadd(dryMixed, 1, wetScaled, 1, &wetScaled, 1, count)
+            return wetScaled
         }
 
         private func applyLegend(_ input: [Float]) -> [Float] {

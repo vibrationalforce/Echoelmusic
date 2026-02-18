@@ -279,36 +279,36 @@ public class MIDIToLightMapper: ObservableObject {
 
         let color = hueToRGB(hue: hue, value: intensity)
 
+        let time = CACurrentMediaTime()
+
         switch currentScene {
         case .ambient:
             fillAllStrips(color: color)
 
         case .meditation:
-            // Slow breathing pattern
-            let breathCycle = sin(Date().timeIntervalSinceReferenceDate * 0.3)
+            // Slow breathing pattern — use cached time, no Date() allocation
+            let breathCycle = sin(time * 0.3)
             let breathIntensity = UInt8((breathCycle + 1.0) * 0.5 * 255.0)
-            let breathColor = hueToRGB(hue: 0.55, value: breathIntensity)  // Blue-green
+            let breathColor = hueToRGB(hue: 0.55, value: breathIntensity)
             fillAllStrips(color: breathColor)
 
         case .energetic:
             // Fast pulsing
-            let pulseCycle = sin(Date().timeIntervalSinceReferenceDate * 2.0)
+            let pulseCycle = sin(time * 2.0)
             let pulseIntensity = UInt8((pulseCycle + 1.0) * 0.5 * 255.0)
             let pulseColor = hueToRGB(hue: hue, value: pulseIntensity)
             fillAllStrips(color: pulseColor)
 
         case .reactive:
-            // Full bio-reactive control
             applyBioReactivePattern(coherence: hrvCoherence, heartRate: heartRate)
 
         case .performance:
-            // High-intensity lighting
             fillAllStrips(color: RGB.white)
 
         case .strobeSync:
             // Strobe synced to heart rate
             let beatInterval = 60.0 / heartRate
-            let phase = Date().timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: beatInterval) / beatInterval
+            let phase = time.truncatingRemainder(dividingBy: beatInterval) / beatInterval
             let strobeOn = phase < 0.1
             fillAllStrips(color: strobeOn ? RGB.white : RGB.black)
         }
@@ -318,18 +318,21 @@ public class MIDIToLightMapper: ObservableObject {
 
     private func applyBioReactivePattern(coherence: Double, heartRate: Double) {
         // Create wave pattern across strips based on HRV
-        let time = Date().timeIntervalSinceReferenceDate
+        let time = Float(CACurrentMediaTime())
+        let coherenceNorm = Float(coherence) / 100.0
 
-        for (stripIndex, strip) in ledStrips.enumerated() {
-            for pixelIndex in 0..<strip.pixelCount {
-                let position = Float(pixelIndex) / Float(strip.pixelCount)
-                let wave = sin(position * 2.0 * .pi + Float(time) * 2.0)
+        for stripIndex in 0..<ledStrips.count {
+            let pixelCount = ledStrips[stripIndex].pixelCount
+            let invCount = 1.0 / Float(pixelCount)
 
-                let hue = (Float(coherence) / 100.0 + wave * 0.2).truncatingRemainder(dividingBy: 1.0)
+            for pixelIndex in 0..<pixelCount {
+                let position = Float(pixelIndex) * invCount
+                let wave = sin(position * 2.0 * .pi + time * 2.0)
+
+                let hue = (coherenceNorm + wave * 0.2).truncatingRemainder(dividingBy: 1.0)
                 let brightness = UInt8((wave + 1.0) * 0.5 * 255.0)
 
-                let color = hueToRGB(hue: hue, value: brightness)
-                ledStrips[stripIndex].pixels[pixelIndex] = color
+                ledStrips[stripIndex].pixels[pixelIndex] = hueToRGB(hue: hue, value: brightness)
             }
 
             updateStripInDMX(strip: ledStrips[stripIndex])
@@ -406,26 +409,31 @@ public class MIDIToLightMapper: ObservableObject {
 
     // MARK: - DMX Output (Art-Net)
 
+    /// Pre-allocated Art-Net header (18 bytes) — never changes
+    private static let artNetHeader: [UInt8] = [
+        0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00,  // "Art-Net\0"
+        0x00, 0x50,                                          // OpCode: ArtDMX
+        0x00, 0x0E,                                          // Protocol v14
+        0x00,                                                // Sequence
+        0x00,                                                // Physical
+        0x00, 0x00,                                          // Universe
+        0x02, 0x00                                           // Length (512)
+    ]
+
+    /// Pre-allocated packet buffer reused every frame (18 header + 512 DMX = 530 bytes)
+    private lazy var artNetBuffer: [UInt8] = {
+        var buf = Self.artNetHeader
+        buf.append(contentsOf: [UInt8](repeating: 0, count: 512))
+        return buf
+    }()
+
     private func sendDMX() {
         guard isActive, let socket = artNetSocket else { return }
 
-        // Build Art-Net packet
-        var packet: [UInt8] = []
+        // Reuse pre-allocated buffer — only copy DMX data, skip header rebuild
+        artNetBuffer.replaceSubrange(Self.artNetHeader.count..<artNetBuffer.count, with: dmxUniverse)
 
-        // Art-Net header
-        packet.append(contentsOf: "Art-Net\0".utf8)  // 8 bytes
-        packet.append(contentsOf: [0x00, 0x50])      // OpCode: ArtDMX (0x5000)
-        packet.append(contentsOf: [0x00, 0x0E])      // Protocol version 14
-        packet.append(0)                              // Sequence (0 = no sequencing)
-        packet.append(0)                              // Physical port
-        packet.append(contentsOf: [0x00, 0x00])      // Universe (0)
-        packet.append(contentsOf: [0x02, 0x00])      // Length (512 bytes, MSB first)
-
-        // DMX data (512 channels)
-        packet.append(contentsOf: dmxUniverse)
-
-        // Send via UDP
-        socket.send(data: Data(packet))
+        socket.send(data: Data(artNetBuffer))
     }
 
     // MARK: - Utility Functions
