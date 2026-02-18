@@ -1039,7 +1039,7 @@
                     <p class="tool-tagline">Procedural bio-reactive worlds &mdash; terrain, biomes, weather, narrative</p>
                     <div class="tool-caps">
                         <span class="tool-cap" data-desc="Multi-octave fractal noise terrain generation. Your coherence shapes the landscape — calm creates rolling hills, chaos spawns jagged peaks.">Terrain Gen</span>
-                        <span class="tool-cap" data-desc="6 procedural biomes (forest, desert, ocean, crystal, void, aurora) that shift based on your emotional state and bio-signals.">6 Biomes</span>
+                        <span class="tool-cap" data-desc="8 procedural biomes (Crystal Caverns, Sacred Forest, Deep Ocean, Cosmic Nebula, Resonant Desert, Harmonic Peaks, Quantum Void, Bio-Garden) that shift based on your emotional state and bio-signals.">8 Biomes</span>
                         <span class="tool-cap" data-desc="Dynamic weather system driven by HRV. Rain, fog, lightning, aurora — each mapped to specific physiological states.">Bio-Weather</span>
                         <span class="tool-cap" data-desc="AI-driven narrative engine creates story arcs from your bio-journey. Landmarks, events, and discoveries tied to coherence milestones.">Narrative AI</span>
                         <span class="tool-cap" data-desc="Godot 4.6 rendering via LibGodot and SwiftGodotKit. Native integration for visionOS spatial computing and immersive 3D.">Godot 4.6</span>
@@ -1268,16 +1268,25 @@
                 if (burger.classList.contains('active')) toggleMenu();
             });
         });
-        // ===== TOOL-CAP CLICK-TO-EXPAND =====
-        document.addEventListener('click', function(e) {
-            var cap = e.target.closest('.tool-cap[data-desc]');
-            if (!cap) return;
+        // ===== TOOL-CAP CLICK-TO-EXPAND (Accessible) =====
+        // Add keyboard accessibility to all tool-cap elements
+        document.querySelectorAll('.tool-cap[data-desc]').forEach(function(cap) {
+            cap.setAttribute('tabindex', '0');
+            cap.setAttribute('role', 'button');
+            cap.setAttribute('aria-expanded', 'false');
+            cap.setAttribute('aria-label', cap.textContent + ': ' + cap.getAttribute('data-desc'));
+        });
+
+        function toggleToolCap(cap) {
             var capsContainer = cap.closest('.tool-caps');
             var existing = capsContainer.querySelector('.tool-cap-desc');
             var wasActive = cap.classList.contains('active');
 
             // Remove any open description in this card
-            capsContainer.querySelectorAll('.tool-cap.active').forEach(function(c) { c.classList.remove('active'); });
+            capsContainer.querySelectorAll('.tool-cap.active').forEach(function(c) {
+                c.classList.remove('active');
+                c.setAttribute('aria-expanded', 'false');
+            });
             if (existing) existing.remove();
 
             // If clicking same cap, just close
@@ -1285,10 +1294,26 @@
 
             // Create description element
             cap.classList.add('active');
+            cap.setAttribute('aria-expanded', 'true');
             var desc = document.createElement('div');
             desc.className = 'tool-cap-desc show';
+            desc.setAttribute('role', 'status');
+            desc.setAttribute('aria-live', 'polite');
             desc.textContent = cap.getAttribute('data-desc');
             capsContainer.appendChild(desc);
+        }
+
+        document.addEventListener('click', function(e) {
+            var cap = e.target.closest('.tool-cap[data-desc]');
+            if (!cap) return;
+            toggleToolCap(cap);
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                var cap = e.target.closest('.tool-cap[data-desc]');
+                if (cap) { e.preventDefault(); toggleToolCap(cap); }
+            }
         });
 
         document.addEventListener('keydown', function(e) {
