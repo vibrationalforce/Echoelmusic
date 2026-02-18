@@ -4,6 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops — runs BEFORE anything else -->
+    <script>
+    (function(){var V='10.0.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
     <title>Echoelmusic by Echoel — Your Body Creates Music, Visuals &amp; Light</title>
     <meta name="description" content="Your heartbeat, breath, and movement become music, visuals, and light. 25 unified Echoel* tools — synthesis, effects, mixing, MIDI, biometrics, visuals, video, lighting, staging, networking, AI, translation, foundation models, avatars, procedural worlds, NFTs, protocol control. Free on all Apple devices. — Echoel">
     <meta name="theme-color" content="#000000">
@@ -1274,15 +1291,6 @@
             if (e.data && e.data.type === 'SW_UPDATED') { window.location.reload(); }
         });
     }
-    /* Version check: bypass all caches, force reload if content is stale */
-    fetch('/version.json?t=' + Date.now(), { cache: 'no-store' }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.version !== '10.0.0') return;
-        var el = document.querySelector('.spec-val');
-        if (el && el.textContent.trim() === '12') {
-            caches.keys().then(function(ks) { return Promise.all(ks.map(function(k) { return caches.delete(k); })); })
-                .then(function() { window.location.reload(true); });
-        }
-    }).catch(function() {});
     </script>
 </body>
 </html>

@@ -1,8 +1,11 @@
 /* Echoelmusic Shared JS — v10.0.0 */
 (function(){
+var V='10.0.0';
+
+/* === Burger Menu === */
 var burger=document.getElementById('burger');
 var overlay=document.getElementById('menuOverlay');
-if(!burger||!overlay)return;
+if(burger&&overlay){
 function toggleMenu(){
 var open=burger.classList.toggle('active');
 overlay.classList.toggle('open');
@@ -23,30 +26,37 @@ if(e.shiftKey){if(document.activeElement===first||!overlay.contains(document.act
 else{if(document.activeElement===last||!overlay.contains(document.activeElement)){e.preventDefault();first.focus();}}
 }
 });
-/* SW: Register with updateViaCache:none — force network check for sw.js */
+}
+
+/* === Service Worker: register with updateViaCache:none === */
 if('serviceWorker' in navigator){
 navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(function(reg){
 reg.addEventListener('updatefound',function(){
-var newWorker=reg.installing;
-if(newWorker){newWorker.addEventListener('statechange',function(){
-if(newWorker.state==='activated'){window.location.reload();}
+var nw=reg.installing;
+if(nw){nw.addEventListener('statechange',function(){
+if(nw.state==='activated'){window.location.reload();}
 });}
 });
-/* Check for SW update every 30s */
 setInterval(function(){reg.update();},30000);
 }).catch(function(e){console.warn('[SW]',e);});
-/* Listen for SW_UPDATED message */
 navigator.serviceWorker.addEventListener('message',function(e){
 if(e.data&&e.data.type==='SW_UPDATED'){window.location.reload();}
 });
 }
-/* Version check: nuke stale caches if server has v10 but page shows old content */
-fetch('/version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
-if(d.version!=='10.0.0')return;
-var h=document.querySelector('h1,title');
-if(h&&h.textContent&&h.textContent.indexOf('12 tools')!==-1){
-caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));})
-.then(function(){window.location.reload(true);});
+
+/* === Periodic Version Poll: detect deploy while page is open === */
+function checkVersion(){
+fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+if(d.version&&d.version!==V){
+var K='echoel-nuke',t=sessionStorage.getItem(K);
+if(t&&Date.now()-parseInt(t)<60000)return;
+sessionStorage.setItem(K,''+Date.now());
+var p=[];
+if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+Promise.all(p).then(function(){window.location.reload()});
 }
 }).catch(function(){});
+}
+setInterval(checkVersion,60000);
 })();

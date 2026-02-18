@@ -86,6 +86,22 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+function fetchBypassCache(request, timeout = 5000) {
+  // Create a no-cache request to bypass browser HTTP cache AND CDN edge cache
+  const noCacheRequest = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    mode: request.mode,
+    credentials: request.credentials,
+    redirect: request.redirect,
+    cache: 'no-store'
+  });
+  return Promise.race([
+    fetch(noCacheRequest),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), timeout))
+  ]);
+}
+
 function fetchWithTimeout(request, timeout = 5000) {
   return Promise.race([
     fetch(request),
@@ -101,8 +117,9 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Cache-first for immutable assets (fonts, images)
   const url = new URL(event.request.url);
+
+  // Cache-first for immutable assets (fonts, images)
   if (url.pathname.startsWith('/fonts/') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png')) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
@@ -119,28 +136,61 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // HTML + version.json: Network-first with cache:no-store (bypasses CDN)
+  const isHTML = event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/';
+  const isVersionCheck = url.pathname === '/version.json';
+
+  if (isHTML || isVersionCheck) {
+    event.respondWith(
+      fetchBypassCache(event.request)
+        .then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            if (isHTML) return caches.match('/404.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // CSS/JS: Stale-while-revalidate (serve cached, fetch fresh in background)
+  if (url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const networkFetch = fetchWithTimeout(event.request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+        return cached || networkFetch;
+      })
+    );
+    return;
+  }
+
+  // Everything else: Network-first with cache fallback
   event.respondWith(
     fetchWithTimeout(event.request)
       .then((response) => {
-        // Cache successful responses
         if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
       })
       .catch(() => {
-        // Fallback to cache when offline
-        return caches.match(event.request).then((response) => {
-          if (response) {
-            return response;
-          }
-          // Fallback to 404 page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/404.html');
-          }
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') return caches.match('/404.html');
         });
       })
   );
