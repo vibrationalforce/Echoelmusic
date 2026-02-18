@@ -49,6 +49,28 @@ public protocol BioReactiveEngineProtocol: AnyObject {
     func stopStreaming() async
 }
 
+/// Protocol for spatial audio engine injection
+public protocol SpatialAudioProviderProtocol: AnyObject {
+    func setMode(_ mode: SpatialAudioEngine.SpatialMode)
+    func setPan(_ pan: Float)
+    func setReverbBlend(_ blend: Float)
+    var currentMode: SpatialAudioEngine.SpatialMode { get }
+}
+
+/// Protocol for video engine injection
+public protocol VideoEngineProtocol: AnyObject {
+    func start() async throws
+    func stop() async
+    var isProcessing: Bool { get }
+}
+
+/// Protocol for lighting/DMX output injection
+public protocol LightingProviderProtocol: AnyObject {
+    func setScene(_ scene: Int)
+    func blackout()
+    var isActive: Bool { get }
+}
+
 // MARK: - Service Container
 
 /// Lightweight service container for dependency injection

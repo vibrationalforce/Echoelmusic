@@ -138,7 +138,8 @@ class SpatialAnchorPersistence: ObservableObject {
 
     init() {
         let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
-            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+            ?? fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? fileManager.temporaryDirectory
         self.storageURL = documentsDir.appendingPathComponent("SpatialAnchors", isDirectory: true)
 
         // Ensure storage directory exists
@@ -335,7 +336,7 @@ class SpatialAnchorPersistence: ObservableObject {
             let data = try JSONEncoder().encode(persistedAnchors)
             try data.write(to: fileURL, options: .atomic)
         } catch {
-            // Silent fail for persistence - non-critical
+            log.log(.warning, category: .system, "Failed to save spatial anchors: \(error.localizedDescription)")
         }
     }
 
