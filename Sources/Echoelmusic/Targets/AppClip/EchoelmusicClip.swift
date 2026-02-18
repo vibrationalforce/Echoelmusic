@@ -512,7 +512,7 @@ struct EchoelmusicClipRootView: View {
     }
 
     private var fullAppButton: some View {
-        Link(destination: URL(string: "https://apps.apple.com/app/echoelmusic")!) {
+        Link(destination: URL(string: "https://apps.apple.com/app/echoelmusic") ?? URL(fileURLWithPath: "/")) {
             HStack {
                 Image(systemName: "arrow.down.app.fill")
                 Text("Get Full App")

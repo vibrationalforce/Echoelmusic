@@ -363,7 +363,7 @@ class PrivacyManager: ObservableObject {
         }
 
         // Delete UserDefaults
-        let domain = Bundle.main.bundleIdentifier!
+        let domain = Bundle.main.bundleIdentifier ?? "com.echoelmusic.app"
         UserDefaults.standard.removePersistentDomain(forName: domain)
 
         // Delete Keychain

@@ -6,7 +6,7 @@
  * Background Sync, Push Notifications
  */
 
-const CACHE_NAME = 'echoelmusic-v8.0.1';
+const CACHE_NAME = 'echoelmusic-v10.0.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -50,7 +50,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: Clean old caches
+// Activate: Nuke ALL old caches, re-cache fresh assets, notify clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -63,14 +63,44 @@ self.addEventListener('activate', (event) => {
           })
       );
     }).then(() => {
-      trimCache(CACHE_NAME, MAX_CACHE_ITEMS);
-      self.clients.matchAll().then(clients => {
+      // Re-cache fresh copies of all static assets (network fetch, bypass old cache)
+      return caches.open(CACHE_NAME).then((cache) => {
+        return Promise.all(
+          STATIC_ASSETS.map((url) =>
+            fetch(url, { cache: 'no-store' })
+              .then((response) => {
+                if (response.ok) return cache.put(url, response);
+              })
+              .catch(() => {}) // Offline: skip, install already cached these
+          )
+        );
+      });
+    }).then(() => {
+      return trimCache(CACHE_NAME, MAX_CACHE_ITEMS);
+    }).then(() => {
+      return self.clients.matchAll().then(clients => {
         clients.forEach(client => client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME }));
       });
     })
   );
   self.clients.claim();
 });
+
+function fetchBypassCache(request, timeout = 5000) {
+  // Create a no-cache request to bypass browser HTTP cache AND CDN edge cache
+  const noCacheRequest = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    mode: request.mode,
+    credentials: request.credentials,
+    redirect: request.redirect,
+    cache: 'no-store'
+  });
+  return Promise.race([
+    fetch(noCacheRequest),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), timeout))
+  ]);
+}
 
 function fetchWithTimeout(request, timeout = 5000) {
   return Promise.race([
@@ -87,8 +117,9 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Cache-first for immutable assets (fonts, images)
   const url = new URL(event.request.url);
+
+  // Cache-first for immutable assets (fonts, images)
   if (url.pathname.startsWith('/fonts/') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.png')) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
@@ -105,28 +136,61 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // HTML + version.json: Network-first with cache:no-store (bypasses CDN)
+  const isHTML = event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/';
+  const isVersionCheck = url.pathname === '/version.json';
+
+  if (isHTML || isVersionCheck) {
+    event.respondWith(
+      fetchBypassCache(event.request)
+        .then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            if (isHTML) return caches.match('/404.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // CSS/JS: Stale-while-revalidate (serve cached, fetch fresh in background)
+  if (url.pathname.endsWith('.css') || url.pathname.endsWith('.js')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const networkFetch = fetchWithTimeout(event.request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+        return cached || networkFetch;
+      })
+    );
+    return;
+  }
+
+  // Everything else: Network-first with cache fallback
   event.respondWith(
     fetchWithTimeout(event.request)
       .then((response) => {
-        // Cache successful responses
         if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
       })
       .catch(() => {
-        // Fallback to cache when offline
-        return caches.match(event.request).then((response) => {
-          if (response) {
-            return response;
-          }
-          // Fallback to 404 page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/404.html');
-          }
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') return caches.match('/404.html');
         });
       })
   );

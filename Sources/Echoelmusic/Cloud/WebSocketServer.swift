@@ -448,7 +448,7 @@ public class WebSocketSecurity {
     private let securityQueue = DispatchQueue(label: "com.echoelmusic.websocket.security", attributes: .concurrent)
 
     // Salt for HKDF key derivation (app-specific, not secret)
-    private static let hmacSalt = "echoelmusic.websocket.signing.v1".data(using: .utf8)!
+    private static let hmacSalt = "echoelmusic.websocket.signing.v1".data(using: .utf8) ?? Data()
 
     /// Derive a proper cryptographic key from JWT token using HKDF
     private func deriveSigningKey(from token: String) -> SymmetricKey {

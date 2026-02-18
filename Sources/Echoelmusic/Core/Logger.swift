@@ -123,7 +123,7 @@ public enum Logger {
     // MARK: - Private Methods
 
     private static func log(_ message: String, level: Level, subsystem: Subsystem, file: String, line: Int) {
-        let filename = (file as NSString).lastPathComponent
+        let filename = URL(fileURLWithPath: file).lastPathComponent
         let timestamp = ISO8601DateFormatter().string(from: Date())
 
         #if DEBUG

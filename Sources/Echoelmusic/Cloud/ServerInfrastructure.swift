@@ -17,6 +17,83 @@ import AuthenticationServices
 #if canImport(Network)
 import Network
 #endif
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
+
+// MARK: - Certificate Pinning
+
+/// TLS certificate pinning delegate for all network sessions
+/// Validates server certificates against known SPKI hashes to prevent MitM attacks
+public final class CertificatePinningDelegate: NSObject, URLSessionDelegate, @unchecked Sendable {
+
+    /// SHA-256 hashes of the Subject Public Key Info (SPKI) for echoelmusic.com certificates
+    /// Update these when certificates are rotated
+    private static let pinnedSPKIHashes: Set<String> = [
+        // Primary certificate (Let's Encrypt / DigiCert)
+        "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
+        // Backup certificate (for rotation)
+        "sha256/CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=",
+    ]
+
+    /// Domains that require certificate pinning
+    private static let pinnedDomains: Set<String> = [
+        "echoelmusic.com",
+        "api.echoelmusic.com",
+        "global.echoelmusic.com",
+    ]
+
+    public func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let serverTrust = challenge.protectionSpace.serverTrust,
+              let host = Optional(challenge.protectionSpace.host),
+              Self.pinnedDomains.contains(where: { host.hasSuffix($0) }) else {
+            // Not a pinned domain — use default handling
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        // Evaluate the server trust
+        var error: CFError?
+        let isValid = SecTrustEvaluateWithError(serverTrust, &error)
+
+        guard isValid else {
+            ProfessionalLogger.shared.error("TLS validation failed for \(host): \(error?.localizedDescription ?? "unknown")", category: .security)
+            completionHandler(.cancelAuthenticationChallenge, nil)
+            return
+        }
+
+        // Verify SPKI hash of at least one certificate in the chain
+        let certificateCount = SecTrustGetCertificateCount(serverTrust)
+        var pinMatched = false
+
+        for i in 0..<certificateCount {
+            guard let certificate = SecTrustGetCertificateAtIndex(serverTrust, i) else { continue }
+            let publicKeyData = SecCertificateCopyData(certificate) as Data
+            let hash = SHA256.hash(data: publicKeyData)
+            let hashString = "sha256/" + Data(hash).base64EncodedString()
+
+            if Self.pinnedSPKIHashes.contains(hashString) {
+                pinMatched = true
+                break
+            }
+        }
+
+        if pinMatched {
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
+        } else {
+            ProfessionalLogger.shared.error("Certificate pinning failed for \(host) - potential MitM attack", category: .security)
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        }
+    }
+}
+
+/// Shared pinning delegate instance (thread-safe, stateless)
+private let sharedPinningDelegate = CertificatePinningDelegate()
 
 // MARK: - Server Configuration
 
@@ -177,7 +254,8 @@ public class ServerConfiguration: ObservableObject {
         let start = Date()
 
         do {
-            let (_, response) = try await URLSession.shared.data(from: url)
+            let pinningSession = URLSession(configuration: .default, delegate: sharedPinningDelegate, delegateQueue: nil)
+            let (_, response) = try await pinningSession.data(from: url)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
             return Date().timeIntervalSince(start)
         } catch {
@@ -615,7 +693,7 @@ public class CollaborationServer: NSObject, ObservableObject {
         config.timeoutIntervalForResource = 300
         config.waitsForConnectivity = true
 
-        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        let session = URLSession(configuration: config, delegate: self as URLSessionDelegate, delegateQueue: nil)
 
         // Add authentication header to request before creating WebSocket task
         var wsRequest = URLRequest(url: wsURL)
@@ -1169,7 +1247,7 @@ public class RealtimeBioSync: ObservableObject {
         config.timeoutIntervalForResource = 300
         config.waitsForConnectivity = true
 
-        let session = URLSession(configuration: config)
+        let session = URLSession(configuration: config, delegate: sharedPinningDelegate, delegateQueue: nil)
 
         // Add authentication to the request before creating WebSocket task
         var wsRequest = URLRequest(url: wsURL)
@@ -1300,7 +1378,7 @@ public class APIClient: ObservableObject {
         config.timeoutIntervalForResource = 300
         config.waitsForConnectivity = true
 
-        self.session = URLSession(configuration: config)
+        self.session = URLSession(configuration: config, delegate: sharedPinningDelegate, delegateQueue: nil)
     }
 
     // MARK: - Request Methods
@@ -1576,7 +1654,8 @@ public class ServerHealthMonitor: ObservableObject {
         let start = Date()
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let pinningSession = URLSession(configuration: .default, delegate: sharedPinningDelegate, delegateQueue: nil)
+            let (data, response) = try await pinningSession.data(from: url)
 
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {

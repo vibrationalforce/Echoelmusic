@@ -21,7 +21,7 @@ import Security
 /// to prevent potential crashes from environment variable interpolation
 private enum SafeURLFactory {
     /// Known fallback URL for emergency use (always valid)
-    static let fallback = URL(string: "https://api.echoelmusic.com")!
+    static let fallback = URL(string: "https://api.echoelmusic.com") ?? URL(fileURLWithPath: "/")
 
     /// Safely construct a URL with fallback
     /// - Parameter string: URL string

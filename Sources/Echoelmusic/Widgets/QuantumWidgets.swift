@@ -156,7 +156,7 @@ struct CoherenceTimelineProvider: AppIntentTimelineProvider {
 
         // Generate entries for next hour
         for minuteOffset in 0..<60 {
-            let entryDate = Calendar.current.date(byAdding: .minute, value: minuteOffset, to: currentDate)!
+            let entryDate = Calendar.current.date(byAdding: .minute, value: minuteOffset, to: currentDate) ?? currentDate
 
             let entry = CoherenceEntry(
                 date: entryDate,
@@ -663,7 +663,7 @@ struct VisualizationProvider: TimelineProvider {
 
         // Rotate through visualizations every 15 minutes
         for (index, viz) in visualizations.enumerated() {
-            let entryDate = Calendar.current.date(byAdding: .minute, value: index * 15, to: currentDate)!
+            let entryDate = Calendar.current.date(byAdding: .minute, value: index * 15, to: currentDate) ?? currentDate
             entries.append(VisualizationEntry(
                 date: entryDate,
                 visualizationType: viz,

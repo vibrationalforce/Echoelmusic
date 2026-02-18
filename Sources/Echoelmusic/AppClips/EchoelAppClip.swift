@@ -658,7 +658,7 @@ public struct AppClipCodeGenerator {
         }
 
         // Safe fallback - components should always produce valid URL with these inputs
-        return components.url ?? URL(string: "https://echoelmusic.app/clip")!
+        return components.url ?? URL(fileURLWithPath: "/")
     }
 
     /// Generate URL for event
@@ -669,7 +669,7 @@ public struct AppClipCodeGenerator {
         components.path = "/clip/event/\(eventId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? eventId)"
 
         // Safe fallback
-        return components.url ?? URL(string: "https://echoelmusic.app/clip/event")!
+        return components.url ?? URL(fileURLWithPath: "/")
     }
 
     /// Generate URL for venue
@@ -681,7 +681,7 @@ public struct AppClipCodeGenerator {
         components.queryItems = [URLQueryItem(name: "session", value: sessionType.rawValue.lowercased())]
 
         // Safe fallback
-        return components.url ?? URL(string: "https://echoelmusic.app/clip/venue")!
+        return components.url ?? URL(fileURLWithPath: "/")
     }
 }
 

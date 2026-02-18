@@ -34,24 +34,6 @@ struct EchoelaWidgetBundle: WidgetBundle {
     }
 }
 
-// MARK: - Shared Timeline Provider
-
-struct EchoelaTimelineProvider<Entry: TimelineEntry>: TimelineProvider {
-    typealias Entry = Entry
-
-    func placeholder(in context: Context) -> Entry {
-        fatalError("Subclass must implement")
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
-        fatalError("Subclass must implement")
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<Entry>) -> Void) {
-        fatalError("Subclass must implement")
-    }
-}
-
 // MARK: - Artist Stats Widget
 
 struct ArtistStatsEntry: TimelineEntry {
@@ -565,14 +547,14 @@ struct QuickActionWidgetView: View {
                 actionButton(
                     icon: "waveform",
                     label: "Session",
-                    url: URL(string: "echoelmusic://action/meditation/start")!,
+                    url: URL(string: "echoelmusic://action/meditation/start") ?? URL(fileURLWithPath: "/"),
                     color: .purple
                 )
 
                 actionButton(
                     icon: "sparkles.rectangle.stack",
                     label: "Mint",
-                    url: URL(string: "echoelmusic://action/nft/mint")!,
+                    url: URL(string: "echoelmusic://action/nft/mint") ?? URL(fileURLWithPath: "/"),
                     color: .blue
                 )
             }
@@ -581,14 +563,14 @@ struct QuickActionWidgetView: View {
                 actionButton(
                     icon: "applewatch",
                     label: "Watch",
-                    url: URL(string: "echoelmusic://action/watch/sense")!,
+                    url: URL(string: "echoelmusic://action/watch/sense") ?? URL(fileURLWithPath: "/"),
                     color: .green
                 )
 
                 actionButton(
                     icon: "person.2",
                     label: "Collab",
-                    url: URL(string: "echoelmusic://action/collab/invite")!,
+                    url: URL(string: "echoelmusic://action/collab/invite") ?? URL(fileURLWithPath: "/"),
                     color: .orange
                 )
             }
