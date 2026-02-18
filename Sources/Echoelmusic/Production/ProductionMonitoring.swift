@@ -25,6 +25,7 @@ public final class ProductionMonitoring: ObservableObject {
     private let logger = os.Logger(subsystem: "com.echoelmusic", category: "monitoring")
     private var metricsTimer: Timer?
     private var eventQueue: [MonitoringAnalyticsEvent] = []
+    private var notificationObservers: [NSObjectProtocol] = []
     private let maxQueueSize = 1000
     private let flushInterval: TimeInterval = 30
 
@@ -331,7 +332,7 @@ public final class ProductionMonitoring: ObservableObject {
 
     private func setupPerformanceMonitoring() {
         // Monitor memory warnings
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
             queue: .main
@@ -339,10 +340,10 @@ public final class ProductionMonitoring: ObservableObject {
             Task {
                 await self?.trackEvent("memory_warning", category: .performance)
             }
-        }
+        })
 
         // Monitor thermal state changes
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main
@@ -353,6 +354,13 @@ public final class ProductionMonitoring: ObservableObject {
                     "state": "\(state.rawValue)"
                 ])
             }
+        })
+    }
+
+    deinit {
+        metricsTimer?.invalidate()
+        for observer in notificationObservers {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 

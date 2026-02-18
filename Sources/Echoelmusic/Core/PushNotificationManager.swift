@@ -117,8 +117,8 @@ public final class PushNotificationManager: NSObject, ObservableObject {
         self.deviceToken = token
         log.info("APNs device token registered: \(token.prefix(8))...", category: .system)
 
-        // Store token locally
-        UserDefaults.standard.set(token, forKey: "echoelmusic_apns_token")
+        // Store token securely in Keychain (not UserDefaults which is unencrypted)
+        _ = EnhancedKeychainManager.shared.store(key: "echoelmusic_apns_token", value: token)
 
         // Store token in CloudKit for server-side push delivery
         saveTokenToCloudKit(token)

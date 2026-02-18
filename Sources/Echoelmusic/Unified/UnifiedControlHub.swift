@@ -103,9 +103,22 @@ public class UnifiedControlHub: ObservableObject {
 
     // MARK: - Initialization
 
+    /// Pre-allocated buffer for MPE voice data to avoid per-tick allocations
+    private var voiceDataBuffer: [MPEVoiceData] = []
+
     public init(audioEngine: AudioEngine? = nil) {
         self.audioEngine = audioEngine
         self.faceToAudioMapper = FaceToAudioMapper()
+    }
+
+    deinit {
+        // Clean up DisplayLink to prevent retain cycle leaks
+        #if os(iOS) || os(tvOS)
+        displayLink?.invalidate()
+        displayLink = nil
+        #endif
+        controlLoopTimer?.cancel()
+        controlLoopTimer = nil
     }
 
     /// Enable face tracking integration
@@ -877,15 +890,18 @@ public class UnifiedControlHub: ObservableObject {
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
             // Convert active MPE voices to spatial field
-            let voiceData = mpe.activeVoices.map { voice in
-                MPEVoiceData(
+            // Reuse pre-allocated buffer to avoid per-tick allocations in 60Hz loop
+            voiceDataBuffer.removeAll(keepingCapacity: true)
+            for voice in mpe.activeVoices {
+                voiceDataBuffer.append(MPEVoiceData(
                     id: voice.id,
                     note: voice.note,
                     velocity: voice.velocity,
                     pitchBend: voice.pitchBend,
                     brightness: voice.brightness
-                )
+                ))
             }
+            let voiceData = voiceDataBuffer
 
             // Morph AFA field geometry based on HRV coherence
             let fieldGeometry: MIDIToSpatialMapper.AFAField.FieldGeometry

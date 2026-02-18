@@ -19,6 +19,9 @@ struct VisualizerContainerView: View {
     @State private var isFullscreen = false
     @Binding var isActive: Bool
 
+    /// Respect system accessibility setting for reduced motion (seizure safety)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     /// Timer für Bio-Daten Updates (Memory Leak Prevention)
     @State private var bioDataTimer: Timer?
 
@@ -27,9 +30,25 @@ struct VisualizerContainerView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // Main Visualizer
+                // Main Visualizer — disabled when Reduce Motion is enabled
+                if reduceMotion {
+                    Rectangle()
+                        .fill(Color.black.opacity(0.8))
+                        .overlay(
+                            VStack(spacing: 8) {
+                                Image(systemName: "waveform.circle")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.white.opacity(0.6))
+                                Text("Visualizer paused (Reduce Motion)")
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.4))
+                            }
+                        )
+                        .accessibilityLabel("Visualizer paused for accessibility")
+                } else {
                 UnifiedVisualizer(engine: visualEngine)
                     .ignoresSafeArea(isFullscreen ? .all : [])
+                }
 
                 // Overlay UI (hidden in fullscreen)
                 if !isFullscreen {
