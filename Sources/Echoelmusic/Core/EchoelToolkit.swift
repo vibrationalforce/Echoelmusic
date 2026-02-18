@@ -2,7 +2,7 @@
 // Echoelmusic — The Unified Tool Architecture
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// MASTER CONSOLIDATION: 498 classes → 16 Echoel* Tools + Core
+// MASTER CONSOLIDATION: 498 classes → 19 Echoel* Tools + 2 Support Engines + Core
 //
 // Philosophy: Weniger Tools, die mehr können.
 // Every tool is an Echoel* — consistent naming, consistent API, consistent power.
@@ -1301,11 +1301,14 @@ public final class EchoelToolkit: ObservableObject {
     public let net: EchoelNet           // Networking
     public let ai: EchoelAI             // Intelligence
 
-    // 4 New Echoel* Tools (2026 — Worldwide Reach + On-Device AI + NFT)
+    // 7 New Echoel* Engines (2026 Expansion)
     public let translate: EchoelTranslateEngine    // Real-time translation (20+ languages, on-device)
     public let lyrics: EchoelLyricsEngine          // Lyrics extraction + sync + translation
-    public let mind: EchoelMindEngine              // On-device LLM (Apple Foundation Models)
+    public let mind: EchoelMindEngine              // On-device LLM (Apple Foundation Models, 3B params)
     public let mint: EchoelMintEngine              // Bio-reactive Dynamic NFTs
+    public let avatar: EchoelAvatarEngine          // Bio-reactive avatars (3DGS, ARKit, particles)
+    public let world: EchoelWorldEngine            // Procedural bio-reactive worlds
+    public let godot: EchoelGodotBridge            // Godot 4.6 rendering engine (LibGodot)
 
     // Supporting engines
     public let speech: EchoelSpeechEngine          // Speech-to-text (SpeechAnalyzer)
@@ -1333,11 +1336,14 @@ public final class EchoelToolkit: ObservableObject {
         self.net = EchoelNet()
         self.ai = EchoelAI()
 
-        // New 2026 engines (singletons — initialized once, shared across app)
+        // 2026 Expansion engines (singletons)
         self.translate = EchoelTranslateEngine.shared
         self.lyrics = EchoelLyricsEngine.shared
         self.mind = EchoelMindEngine.shared
         self.mint = EchoelMintEngine.shared
+        self.avatar = EchoelAvatarEngine.shared
+        self.world = EchoelWorldEngine.shared
+        self.godot = EchoelGodotBridge.shared
         self.speech = EchoelSpeechEngine.shared
         self.subtitle = EchoelSubtitleRenderer.shared
     }
@@ -1345,13 +1351,20 @@ public final class EchoelToolkit: ObservableObject {
     /// One-line status of the entire system
     public var status: String {
         """
-        EchoelToolkit: 16 tools + 2 support engines active
-        Synth: \(synth.activeEngine.rawValue) | Mix: \(mix.channelCount)ch @ \(mix.bpm) BPM
-        Bio: HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100))
-        Vis: \(vis.mode.rawValue) | Lux: \(lux.mode.rawValue)
-        Translate: \(translate.targetLanguages.count) langs | Mind: \(mind.isAvailable ? "Ready" : "N/A")
-        Lyrics: \(lyrics.document?.lines.count ?? 0) lines | Mint: \(mint.drafts.count) drafts
-        Bus: \(bus.stats)
+        EchoelToolkit: 19 Echoel* tools + 2 support engines
+        ═══════════════════════════════════════════════════
+        Audio:     Synth(\(synth.activeEngine.rawValue)) Mix(\(mix.channelCount)ch @ \(mix.bpm)BPM) FX Seq MIDI
+        Bio:       HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100)) HRV=\(Int(bio.hrvSDNN))ms
+        Visual:    Vis(\(vis.mode.rawValue)) Lux(\(lux.mode.rawValue)) Vid Stage
+        Network:   Net AI
+        Translate: \(translate.targetLanguages.count) languages | Speech: \(speech.state.rawValue)
+        Lyrics:    \(lyrics.document?.lines.count ?? 0) lines | Subtitle: \(subtitle.isVisible ? "ON" : "OFF")
+        Mind:      \(mind.isAvailable ? "Ready" : "N/A") (\(mind.totalTokens) tokens)
+        Mint:      \(mint.drafts.count) drafts, \(mint.minted.count) minted
+        Avatar:    \(avatar.style.rawValue) | Face: \(avatar.isFaceTrackingActive ? "ON" : "OFF")
+        World:     \(world.currentState.biome.rawValue) | \(world.currentState.weather.rawValue)
+        Godot:     \(godot.state.rawValue) | Scene: \(godot.activeScene?.rawValue ?? "none")
+        Bus:       \(bus.stats)
         """
     }
 }

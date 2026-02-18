@@ -52,7 +52,7 @@ EchoelUniversalCore (120Hz) → UnifiedControlHub (60Hz) + VideoAICreativeHub
 ### 5 Pro Engines
 ProMixEngine, ProSessionEngine, ProColorGrading, ProCueSystem, ProStreamEngine
 
-### 2026 Expansion: 4 New Echoel* Engines + 2 Support Engines
+### 2026 Expansion: 7 New Echoel* Engines + 2 Support Engines
 
 | Component | Path | Purpose |
 |-----------|------|---------|
@@ -61,7 +61,10 @@ ProMixEngine, ProSessionEngine, ProColorGrading, ProCueSystem, ProStreamEngine
 | `EchoelLyricsEngine` | `Lyrics/` | Lyrics extraction (vocal separation + ASR + sync) |
 | `EchoelSubtitleRenderer` | `Subtitle/` | Real-time multilingual subtitles (WebVTT, HLS, SwiftUI overlay) |
 | `EchoelMindEngine` | `Mind/` | On-device LLM (Apple Foundation Models, 3B params, bio-reactive) |
-| `EchoelMintEngine` | `Mint/` | Bio-reactive Dynamic NFTs (capture, metadata, export)
+| `EchoelMintEngine` | `Mint/` | Bio-reactive Dynamic NFTs (capture, metadata, export) |
+| `EchoelAvatarEngine` | `Avatar/` | Bio-reactive avatars (3DGS, ARKit 52 blendshapes, aura particles) |
+| `EchoelWorldEngine` | `World/` | Procedural bio-reactive worlds (terrain, biomes, weather, narrative) |
+| `EchoelGodotBridge` | `Godot/` | Godot 4.6 LibGodot/SwiftGodotKit rendering (visionOS, 3D worlds) |
 
 ### Android
 - `EchoelmusicApplication` — minimal, loads native libs only
@@ -83,7 +86,7 @@ Sources/Echoelmusic/ has **70+ flat sibling directories**:
 **Infrastructure:** Core, Utils, Integration, Testing, Performance, Optimization, QualityAssurance
 **Business:** Legal, Privacy, Security, Analytics, Social, Sustainability, Business, Localization
 **Stage:** Stage (ExternalDisplayRenderingPipeline, DanteAudioTransport, VideoNetworkTransport, EchoelSyncProtocol)
-**2026 New:** Translation, Lyrics, Subtitle, Mind, Mint
+**2026 New:** Translation, Lyrics, Subtitle, Mind, Mint, Avatar, World, Godot
 **Other:** Creative, NeuroSpiritual, Onboarding, Scripting, Export, Hardware, Presets, Resources, Views
 
 Entry points: `EchoelmusicApp.swift`, `ContentView.swift`
