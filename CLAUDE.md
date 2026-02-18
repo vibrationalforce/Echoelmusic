@@ -52,7 +52,7 @@ EchoelUniversalCore (120Hz) → UnifiedControlHub (60Hz) + VideoAICreativeHub
 ### 5 Pro Engines
 ProMixEngine, ProSessionEngine, ProColorGrading, ProCueSystem, ProStreamEngine
 
-### 2026 Expansion: 7 New Echoel* Engines + 2 Support Engines
+### 2026 Expansion: 7 New Echoel* Engines + 5 Support Engines
 
 | Component | Path | Purpose |
 |-----------|------|---------|
@@ -65,6 +65,9 @@ ProMixEngine, ProSessionEngine, ProColorGrading, ProCueSystem, ProStreamEngine
 | `EchoelAvatarEngine` | `Avatar/` | Bio-reactive avatars (3DGS, ARKit 52 blendshapes, aura particles) |
 | `EchoelWorldEngine` | `World/` | Procedural bio-reactive worlds (terrain, biomes, weather, narrative) |
 | `EchoelGodotBridge` | `Godot/` | Godot 4.6 LibGodot/SwiftGodotKit rendering (visionOS, 3D worlds) |
+| `EchoelOSCEngine` | `Integration/` | Open Sound Control (TouchDesigner, Resolume, Max/MSP, QLab) |
+| `EchoelShowControl` | `Integration/` | MIDI Show Control + Mackie Control / HUI (DAW surfaces) |
+| `EchoelIntegrationHub` | `Integration/` | Master orchestrator for all industry protocols |
 
 ### Android
 - `EchoelmusicApplication` — minimal, loads native libs only

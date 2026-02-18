@@ -2,7 +2,7 @@
 // Echoelmusic — The Unified Tool Architecture
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// MASTER CONSOLIDATION: 498 classes → 19 Echoel* Tools + 2 Support Engines + Core
+// MASTER CONSOLIDATION: 498 classes → 19 Echoel* Tools + 5 Support Engines + Core
 //
 // Philosophy: Weniger Tools, die mehr können.
 // Every tool is an Echoel* — consistent naming, consistent API, consistent power.
@@ -37,6 +37,12 @@
 // │                               LLM)     NFTs)                            │
 // │   │                                                                     │
 // │   └─→ EchoelSubtitle (real-time multilingual captions)                  │
+// │                                                                         │
+// │   ┌──────────┬──────────┬────────────┐ ← INTEGRATION                   │
+// │   │          │          │            │                                   │
+// │ EchoelOSC EchoelShowCtrl EchoelHub                                     │
+// │ (OSC UDP)  (MSC/Mackie)  (master                                       │
+// │                           orchestrator)                                 │
 // └───────────────────────────────────────────────────────────────────────────┘
 //
 // Communication: All tools talk via EngineBus (publish/subscribe/request)
@@ -1314,6 +1320,11 @@ public final class EchoelToolkit: ObservableObject {
     public let speech: EchoelSpeechEngine          // Speech-to-text (SpeechAnalyzer)
     public let subtitle: EchoelSubtitleRenderer    // Real-time multilingual subtitles
 
+    // Integration engines (industry-standard protocols)
+    public let osc: EchoelOSCEngine                // Open Sound Control (TouchDesigner, Resolume, Max/MSP)
+    public let showControl: EchoelShowControl      // MIDI Show Control + Mackie Control / HUI
+    public let integrationHub: EchoelIntegrationHub // Master orchestrator for all protocols
+
     // Infrastructure
     public let bus: EngineBus
     public let registry: EngineRegistry
@@ -1346,12 +1357,17 @@ public final class EchoelToolkit: ObservableObject {
         self.godot = EchoelGodotBridge.shared
         self.speech = EchoelSpeechEngine.shared
         self.subtitle = EchoelSubtitleRenderer.shared
+
+        // Integration engines (singletons)
+        self.osc = EchoelOSCEngine.shared
+        self.showControl = EchoelShowControl.shared
+        self.integrationHub = EchoelIntegrationHub.shared
     }
 
     /// One-line status of the entire system
     public var status: String {
         """
-        EchoelToolkit: 19 Echoel* tools + 2 support engines
+        EchoelToolkit: 19 Echoel* tools + 5 support engines
         ═══════════════════════════════════════════════════
         Audio:     Synth(\(synth.activeEngine.rawValue)) Mix(\(mix.channelCount)ch @ \(mix.bpm)BPM) FX Seq MIDI
         Bio:       HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100)) HRV=\(Int(bio.hrvSDNN))ms
@@ -1364,6 +1380,9 @@ public final class EchoelToolkit: ObservableObject {
         Avatar:    \(avatar.style.rawValue) | Face: \(avatar.isFaceTrackingActive ? "ON" : "OFF")
         World:     \(world.currentState.biome.rawValue) | \(world.currentState.weather.rawValue)
         Godot:     \(godot.state.rawValue) | Scene: \(godot.activeScene?.rawValue ?? "none")
+        OSC:       \(osc.isServerRunning ? "Listening :\(osc.serverPort)" : "OFF") | \(osc.targets.count) targets | \(osc.sendRate)msg/s
+        ShowCtrl:  MSC=\(showControl.mscEnabled ? "ON" : "OFF") | Mackie=\(showControl.mackieEnabled ? "ON" : "OFF")
+        Hub:       \(integrationHub.summary)
         Bus:       \(bus.stats)
         """
     }
