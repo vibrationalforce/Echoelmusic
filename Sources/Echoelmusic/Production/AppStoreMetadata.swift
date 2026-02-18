@@ -1566,10 +1566,4 @@ extension AppStoreMetadata {
 
         appStoreLog.info("=== END METADATA ===", category: .system)
     }
-
-    /// Deprecated: Use logAllMetadata() instead
-    @available(*, deprecated, renamed: "logAllMetadata")
-    public static func printAllMetadata() {
-        logAllMetadata()
-    }
 }

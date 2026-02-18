@@ -123,15 +123,4 @@ class FairBusinessModel: ObservableObject {
         """
     }
 
-    // MARK: - Legacy Support
-
-    @available(*, deprecated, message: "Use getAppSummary() instead")
-    func getPricingSummary() -> String {
-        return getAppSummary()
-    }
-
-    @available(*, deprecated, message: "Use getAppSummary() instead")
-    func getPricingComparison() -> String {
-        return getAppSummary()
-    }
 }
