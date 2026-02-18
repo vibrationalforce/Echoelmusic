@@ -95,11 +95,11 @@ public final class AsyncBioStream: AsyncSequence {
     // MARK: - Initialization
 
     public init(bufferingPolicy: AsyncStream<BioSample>.Continuation.BufferingPolicy = .bufferingNewest(10)) {
-        var continuation: AsyncStream<BioSample>.Continuation!
+        var captured: AsyncStream<BioSample>.Continuation?
         self.stream = AsyncStream(bufferingPolicy: bufferingPolicy) { cont in
-            continuation = cont
+            captured = cont
         }
-        self.continuation = continuation
+        self.continuation = captured!  // Safe: closure is executed synchronously by AsyncStream.init
     }
 
     // MARK: - AsyncSequence

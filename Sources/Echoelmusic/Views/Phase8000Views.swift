@@ -23,7 +23,7 @@ public struct VideoProcessingView: View {
     public init() {}
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 0) {
                 // Video Preview
                 videoPreviewSection
@@ -186,7 +186,7 @@ public struct CreativeStudioView: View {
     public init() {}
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     // Mode Selection
@@ -315,7 +315,7 @@ public struct ScientificDashboardView: View {
     public init() {}
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             HStack(spacing: 0) {
                 // Sidebar
                 sidebarContent
@@ -428,7 +428,7 @@ public struct CollaborationLobbyView: View {
     public init() {}
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Group {
                 if hub.currentSession != nil {
                     CollaborationActiveSessionView(hub: hub)
@@ -631,7 +631,7 @@ public struct DeveloperConsoleView: View {
     public init() {}
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack {
                 Picker("Tab", selection: $selectedTab) {
                     Text("Console").tag(0)
@@ -1036,7 +1036,7 @@ struct VideoEffectPicker: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section("Quantum Effects") {
                     ForEach([VideoEffectType.quantumWave, .coherenceField, .photonTrails, .entanglement], id: \.self) { effect in

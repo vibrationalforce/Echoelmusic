@@ -918,7 +918,7 @@ struct QuantumLightSettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Geometry") {
                     Picker("Light Field", selection: $engine.geometry) {

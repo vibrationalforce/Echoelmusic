@@ -957,7 +957,9 @@ final class HapticSubsystem: EngineSubsystem {
             let pattern = try CHHapticPattern(events: [event], parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: CHHapticTimeImmediate)
-        } catch {}
+        } catch {
+            log.log(.warning, category: .haptics, "Haptic pattern failed: \(error.localizedDescription)")
+        }
     }
     #endif
 }

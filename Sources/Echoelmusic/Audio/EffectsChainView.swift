@@ -10,7 +10,7 @@ struct EffectsChainView: View {
     @State private var showPresets = false
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             ScrollView {
                 VStack(spacing: VaporwaveSpacing.lg) {
                     // Node Graph Visualization
@@ -229,7 +229,7 @@ struct EffectsChainView: View {
     // MARK: - Node Picker
 
     private var nodePickerView: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section(header: Text("Filter Effects")) {
                     nodeTypeButton("Low-Pass Filter", icon: "waveform.path", description: "Bio-reactive frequency filter") {
@@ -293,7 +293,7 @@ struct EffectsChainView: View {
     // MARK: - Presets View
 
     private var presetsView: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section(header: Text("Bio-Reactive Presets")) {
                     presetRow("Biofeedback Chain", description: "Filter → Reverb optimized for biofeedback") {

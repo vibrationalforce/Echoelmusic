@@ -226,7 +226,10 @@ class ScriptEngine: ObservableObject {
         // Marketplace Script Installation Pipeline
 
         // 1. Download script from marketplace CDN
-        let scriptURL = URL(string: "https://marketplace.echoelmusic.com/scripts/\(marketplace.id.uuidString).swift")!
+        guard let scriptURL = URL(string: "https://marketplace.echoelmusic.com/scripts/\(marketplace.id.uuidString).swift") else {
+            log.log(.error, category: .plugin, "ScriptEngine: Invalid marketplace URL")
+            return
+        }
         log.info("📥 ScriptEngine: Downloading from \(scriptURL.lastPathComponent)...", category: .plugin)
 
         // 2. Verify script signature (security)

@@ -343,7 +343,7 @@ struct ExperienceCard: View {
         case .cosmos:
             colors = [Color.purple.opacity(0.8), Color.blue.opacity(0.6)]
         case .nature, .forest:
-            colors = [Color.green.opacity(0.8), Color.brown.opacity(0.6)]
+            colors = [Color.green.opacity(0.8), Color(red: 0.55, green: 0.35, blue: 0.17).opacity(0.6)]
         case .ocean:
             colors = [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)]
         case .sacred, .quantum:

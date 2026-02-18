@@ -780,7 +780,7 @@ struct LLMSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Provider") {
                     Picker("LLM Provider", selection: $selectedProvider) {

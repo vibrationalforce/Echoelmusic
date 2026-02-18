@@ -950,7 +950,7 @@ public struct ClipLauncherGridView: View {
     // MARK: - Settings View
 
     private var settingsView: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Bio-Reactive") {
                     Toggle("Enable Bio-Reactive", isOn: $launcher.bioReactiveEnabled)

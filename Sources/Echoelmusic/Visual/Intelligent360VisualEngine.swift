@@ -1081,7 +1081,7 @@ struct Visual360SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section("Dimension") {
                     Picker("Dimension", selection: $engine.currentDimension) {

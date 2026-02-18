@@ -550,7 +550,7 @@ public struct PresetPickerView: View {
     }
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 // Recent section
                 if !presetManager.recentPresets.isEmpty && searchText.isEmpty {

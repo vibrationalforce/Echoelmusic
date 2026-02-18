@@ -1199,7 +1199,7 @@ struct ProductionSettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Production Mode") {
                     Picker("Mode", selection: $engine.productionMode) {
@@ -1254,7 +1254,7 @@ struct EventLogView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List(events) { event in
                 HStack {
                     Image(systemName: iconForEvent(event.type))

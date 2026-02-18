@@ -1218,7 +1218,7 @@ struct VisualImmersiveSettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section("Mode") {
                     Picker("Immersive Mode", selection: $engine.currentMode) {

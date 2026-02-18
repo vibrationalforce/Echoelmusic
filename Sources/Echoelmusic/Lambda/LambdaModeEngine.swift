@@ -1382,7 +1382,7 @@ struct LambdaSettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Sync Options") {
                     Toggle("Bio-Reactive Sync", isOn: $engine.bioSyncEnabled)
@@ -1428,7 +1428,7 @@ struct LambdaStatsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section("Session") {
                     LambdaStatRow(label: "Duration", value: formatDuration(engine.sessionStats.duration))

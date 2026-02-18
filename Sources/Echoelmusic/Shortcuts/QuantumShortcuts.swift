@@ -9,7 +9,9 @@
 //
 
 import Foundation
+#if canImport(Intents)
 import Intents
+#endif
 
 #if canImport(AppIntents)
 import AppIntents

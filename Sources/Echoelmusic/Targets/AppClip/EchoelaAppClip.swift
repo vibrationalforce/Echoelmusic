@@ -330,7 +330,7 @@ public struct EchoelaAppClipView: View {
     public init() {}
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 24) {
                 // Event info
                 if let event = clipManager.eventInfo {
