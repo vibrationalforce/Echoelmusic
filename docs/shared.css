@@ -58,7 +58,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-
     font-weight: 700; z-index: 1001;
     color: var(--text); text-decoration: none;
 }
-.nav-logo svg { width: 28px; height: 28px; }
+.nav-logo svg { width: 30px; height: 30px; }
+.nav-logo span { font-size: 16px; }
 .nav-links { display: none; align-items: center; gap: 4px; }
 .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {
     font-weight: 500; color: var(--dim);
