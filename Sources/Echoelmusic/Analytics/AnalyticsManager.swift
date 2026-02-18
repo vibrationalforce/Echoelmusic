@@ -681,10 +681,22 @@ public class CrashReporter {
         }
     }
 
+    /// Safe context keys allowed in crash reports (no PII)
+    private static let safeContextKeys: Set<String> = [
+        "feature_name", "screen", "operation", "error_domain", "subsystem",
+        "component", "action", "state", "module"
+    ]
+
     /// Report a non-fatal error
     public func reportNonFatal(error: Error, context: [String: Any] = [:]) {
         queue.async {
             self.log.error("Non-fatal error: \(error)")
+
+            // Sanitize context — only allow safe keys, strip potential PII
+            let sanitizedContext = context.filter { Self.safeContextKeys.contains($0.key) }
+            let sanitizedUserInfo = self.userInfo.filter { key, _ in
+                !["email", "phone", "address", "name", "token", "password"].contains(key.lowercased())
+            }
 
             // Create crash report
             let report = CrashReport(
@@ -693,8 +705,8 @@ public class CrashReporter {
                 errorDomain: (error as NSError).domain,
                 errorCode: (error as NSError).code,
                 breadcrumbs: Array(self.breadcrumbs.suffix(20)),
-                userInfo: self.userInfo,
-                context: context,
+                userInfo: sanitizedUserInfo,
+                context: sanitizedContext,
                 timestamp: Date(),
                 appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
                 osVersion: ProcessInfo.processInfo.operatingSystemVersionString,
@@ -708,9 +720,6 @@ public class CrashReporter {
             Task {
                 await self.uploadCrashReport(report)
             }
-
-            self.log.error("Breadcrumbs: \(self.breadcrumbs.suffix(10))")
-            self.log.error("Context: \(context)")
         }
     }
 

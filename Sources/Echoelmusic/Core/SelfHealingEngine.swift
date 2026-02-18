@@ -622,6 +622,7 @@ class HealthMonitor {
     }
 }
 
+@MainActor
 class ErrorPredictor {
     weak var delegate: ErrorPredictorDelegate?
     private var errorHistory: [ErrorType: [Date]] = [:]
@@ -682,6 +683,7 @@ class ErrorPredictor {
 }
 
 /// Flow-based performance optimizer for SelfHealingEngine (renamed to avoid conflict with Optimization/PerformanceOptimizer)
+@MainActor
 class FlowPerformanceOptimizer {
     weak var delegate: PerformanceOptimizerDelegate?
 
@@ -740,6 +742,7 @@ class MemoryGuardian {
     }
 }
 
+@MainActor
 class FlowStateMachine {
     weak var delegate: FlowStateMachineDelegate?
     private(set) var currentState: FlowState = .neutral

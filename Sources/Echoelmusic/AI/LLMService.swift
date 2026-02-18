@@ -247,23 +247,20 @@ class LLMService: ObservableObject {
 
     // MARK: - Bio-Reactive Prompts
 
-    /// Get guidance based on current bio-state
+    /// Get guidance based on current bio-state.
+    /// Privacy: Only sends aggregated bio-state label to the LLM, never raw biometric values.
     func getBioGuidance(heartRate: Double, hrv: Double, coherence: Double) async throws -> String {
         let bioState = determineBioState(heartRate: heartRate, hrv: hrv, coherence: coherence)
 
+        // Only send aggregated state label — raw HR/HRV/coherence never leaves the device
         let prompt = """
-        My current bio-state:
-        - Heart Rate: \(Int(heartRate)) BPM
-        - HRV: \(Int(hrv)) ms
-        - Coherence: \(Int(coherence * 100))%
-        - State: \(bioState)
-
+        My current bio-state: \(bioState)
         Based on this, what should I focus on right now in my session?
         """
 
         let context = Message.BioContext(
-            heartRate: heartRate,
-            hrv: hrv,
+            heartRate: 0,
+            hrv: 0,
             coherence: coherence,
             bioState: bioState
         )

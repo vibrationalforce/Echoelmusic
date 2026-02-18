@@ -674,7 +674,8 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
         timer.schedule(deadline: .now(), repeating: .seconds(1), leeway: .milliseconds(10))
         timer.setEventHandler { [weak self] in
-            Task { @MainActor in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
                 self?.simulateHealthUpdate()
             }
         }

@@ -708,7 +708,11 @@ public struct CustomAIConfiguration: APIConfiguration {
     public var baseURL: URL {
         switch environment {
         case .development:
+            #if DEBUG
             return SafeURLFactory.make("http://localhost:8080")
+            #else
+            return SafeURLFactory.make("https://ai.echoelmusic.com")
+            #endif
         case .staging:
             return SafeURLFactory.make("https://ai-staging.echoelmusic.com")
         case .production, .enterprise:

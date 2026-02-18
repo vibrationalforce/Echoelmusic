@@ -380,14 +380,14 @@ struct QuantumField {
         let dt: Float = 1.0/120.0
         let hbar: Float = 0.1  // Effective Planck constant for creative dynamics
 
+        let time = Float(CACurrentMediaTime())
+        let stability = coherence * 0.8 + 0.2
+        let fluctuation = (1.0 - coherence) * energy
+
         for i in 0..<amplitudes.count {
             // Hamiltonian evolution
-            let phase = Float(i) * 0.1 + Float(Date().timeIntervalSinceReferenceDate)
+            let phase = Float(i) * 0.1 + time
             let quantumNoise = sin(phase) * (1.0 - coherence) * 0.1
-
-            // Coherence increases stability, reduces quantum fluctuations
-            let stability = coherence * 0.8 + 0.2
-            let fluctuation = (1.0 - coherence) * energy
 
             amplitudes[i] = simd_float4(
                 amplitudes[i].x * stability + quantumNoise,
@@ -403,8 +403,12 @@ struct QuantumField {
             }
         }
 
-        // Calculate superposition strength (how "quantum" the state is)
-        superpositionStrength = amplitudes.map { simd_length($0) }.reduce(0, +) / Float(amplitudes.count)
+        // Calculate superposition strength — avoid intermediate array allocation
+        var sumStrength: Float = 0
+        for amplitude in amplitudes {
+            sumStrength += simd_length(amplitude)
+        }
+        superpositionStrength = sumStrength / Float(amplitudes.count)
 
         // Creativity emerges from quantum fluctuations modulated by coherence
         creativity = superpositionStrength * (1.0 - coherence * 0.5) * energy
@@ -482,6 +486,7 @@ struct CoreQuantumState {
     var creativity: Float = 0.5
 }
 
+@MainActor
 class BioReactiveProcessor {
     weak var delegate: EchoelUniversalCore?
     var currentState = BioState()
@@ -514,6 +519,7 @@ class BioReactiveProcessor {
 
 // MARK: - Quantum Processor
 
+@MainActor
 class QuantumProcessor {
     weak var delegate: EchoelUniversalCore?
     var currentState = CoreQuantumState()
@@ -528,6 +534,7 @@ class QuantumProcessor {
 
 // MARK: - Device Sync Manager (Ableton Link Compatible)
 
+@MainActor
 class DeviceSyncManager {
     weak var delegate: EchoelUniversalCore?
 
@@ -544,6 +551,7 @@ class DeviceSyncManager {
 
 // MARK: - Analog Gear Bridge
 
+@MainActor
 class AnalogGearBridge {
     weak var delegate: EchoelUniversalCore?
 
@@ -568,6 +576,7 @@ class AnalogGearBridge {
 
 // MARK: - AI Creative Engine
 
+@MainActor
 class AICreativeEngine {
     weak var delegate: EchoelUniversalCore?
 
