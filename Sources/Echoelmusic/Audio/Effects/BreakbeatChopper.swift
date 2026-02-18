@@ -234,6 +234,8 @@ enum ShuffleAlgorithm: String, CaseIterable {
 @MainActor
 class BreakbeatChopper: ObservableObject {
 
+    private let log = ProfessionalLogger.shared
+
     // MARK: - Published State
 
     /// Original audio buffer
@@ -348,7 +350,7 @@ class BreakbeatChopper: ObservableObject {
         // Estimate original tempo
         estimateTempo()
 
-        print("🥁 Loaded break: \(frameCount) samples, \(slices.count) slices detected")
+        log.info("Loaded break: \(frameCount) samples, \(slices.count) slices detected", category: .audio)
     }
 
     /// Load from AVAudioPCMBuffer directly
@@ -405,7 +407,7 @@ class BreakbeatChopper: ObservableObject {
             slices.append(BreakSlice(start: sliceStart, end: frameCount, index: sliceIndex))
         }
 
-        print("🔪 Detected \(slices.count) slices")
+        log.info("Detected \(slices.count) slices", category: .audio)
     }
 
     /// Manually set number of equal slices
@@ -422,7 +424,7 @@ class BreakbeatChopper: ObservableObject {
             )
         }
 
-        print("🔪 Created \(count) even slices")
+        log.info("Created \(count) even slices", category: .audio)
     }
 
     // MARK: - Tempo Detection
@@ -446,7 +448,7 @@ class BreakbeatChopper: ObservableObject {
         originalTempo = max(80, min(200, estimatedBPM))
         tempo = originalTempo
 
-        print("🎵 Estimated tempo: \(Int(originalTempo)) BPM")
+        log.info("Estimated tempo: \(Int(originalTempo)) BPM", category: .audio)
     }
 
     // MARK: - Slice Manipulation
@@ -688,7 +690,7 @@ class BreakbeatChopper: ObservableObject {
         }
 
         currentPattern = pattern
-        print("🔀 Pattern shuffled: \(algorithm.rawValue)")
+        log.info("Pattern shuffled: \(algorithm.rawValue)", category: .audio)
     }
 
     /// Randomize pattern
@@ -707,7 +709,7 @@ class BreakbeatChopper: ObservableObject {
         }
 
         currentPattern = pattern
-        print("🎲 Pattern randomized")
+        log.info("Pattern randomized", category: .audio)
     }
 
     /// Create stutter/roll pattern
@@ -746,7 +748,7 @@ class BreakbeatChopper: ObservableObject {
             }
         }
 
-        print("▶️ Chopper playing @ \(Int(tempo)) BPM")
+        log.info("Chopper playing @ \(Int(tempo)) BPM", category: .audio)
     }
 
     /// Stop playback
@@ -756,7 +758,7 @@ class BreakbeatChopper: ObservableObject {
         playerNode.stop()
         isPlaying = false
         currentStep = 0
-        print("⏹️ Chopper stopped")
+        log.info("Chopper stopped", category: .audio)
     }
 
     /// Play next step in pattern

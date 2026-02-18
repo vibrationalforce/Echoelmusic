@@ -34,24 +34,6 @@ struct EchoelaWidgetBundle: WidgetBundle {
     }
 }
 
-// MARK: - Shared Timeline Provider
-
-struct EchoelaTimelineProvider<Entry: TimelineEntry>: TimelineProvider {
-    typealias Entry = Entry
-
-    func placeholder(in context: Context) -> Entry {
-        fatalError("Subclass must implement")
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
-        fatalError("Subclass must implement")
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<Entry>) -> Void) {
-        fatalError("Subclass must implement")
-    }
-}
-
 // MARK: - Artist Stats Widget
 
 struct ArtistStatsEntry: TimelineEntry {
