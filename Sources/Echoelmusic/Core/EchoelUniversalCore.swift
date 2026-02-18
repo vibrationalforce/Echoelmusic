@@ -36,6 +36,11 @@ final class EchoelUniversalCore: ObservableObject {
 
     static let shared = EchoelUniversalCore()
 
+    deinit {
+        updateTimer?.cancel()
+        updateTimer = nil
+    }
+
     // MARK: - Published State
 
     /// Unified system state
