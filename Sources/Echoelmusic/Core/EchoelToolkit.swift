@@ -2,7 +2,7 @@
 // Echoelmusic — The Unified Tool Architecture
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// MASTER CONSOLIDATION: 498 classes → 12 Echoel* Tools + Core
+// MASTER CONSOLIDATION: 498 classes → 10 Echoel* Tools + Core
 //
 // Philosophy: Weniger Tools, die mehr können.
 // Every tool is an Echoel* — consistent naming, consistent API, consistent power.
@@ -10,20 +10,17 @@
 // ┌───────────────────────────────────────────────────────────────────────────┐
 // │                        EchoelCore (120Hz)                                │
 // │                              │                                           │
-// │   ┌──────────┬──────────┬────┴────┬──────────┬──────────┐               │
-// │   │          │          │         │          │          │               │
-// │ EchoelSynth EchoelMix EchoelFX EchoelSeq EchoelMIDI  │               │
-// │ (synthesis) (mixing)  (effects) (sequencer)(control)   │               │
-// │   │          │          │         │          │          │               │
-// │   ├──────────┼──────────┼─────────┼──────────┼──────────┤               │
-// │   │          │          │         │          │          │               │
-// │ EchoelBio EchoelVis EchoelVid EchoelLux EchoelStage│               │
-// │ (biometrics)(visuals) (video)  (lighting) (output)  │               │
-// │   │          │          │         │          │          │               │
-// │   └──────────┴──────────┴─────────┴──────────┴──────────┘               │
-// │                         EchoelNet                                        │
-// │                    (collaboration/sync)                                  │
-// │                              │                                           │
+// │   ┌──────────┬──────────┬────┴────┬──────────┐                          │
+// │   │          │          │         │          │                          │
+// │ EchoelSynth EchoelMix EchoelFX EchoelSeq EchoelMIDI                  │
+// │ (synthesis) (mixing)  (effects) (sequencer)(control)                   │
+// │   │          │          │         │          │                          │
+// │   ├──────────┼──────────┼─────────┼──────────┤                          │
+// │   │          │          │         │          │                          │
+// │ EchoelBio  EchoelCanvas   EchoelOutput    EchoelNet                   │
+// │ (biometrics)(vis+video)   (light+stage)   (collab/sync)               │
+// │   │          │              │              │                            │
+// │   └──────────┴──────────────┴──────────────┘                            │
 // │                         EchoelAI                                         │
 // │                    (intelligence layer)                                  │
 // │                              │                                           │
@@ -511,8 +508,8 @@ public final class EchoelMIDI: ObservableObject {
         case synth = "EchoelSynth"
         case sampler = "Sampler"
         case fx = "EchoelFX"
-        case visual = "EchoelVis"
-        case light = "EchoelLux"
+        case canvas = "EchoelCanvas"
+        case output = "EchoelOutput"
         case custom = "Custom"
     }
 
@@ -831,20 +828,27 @@ public final class EchoelBio: ObservableObject {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 7. EchoelVis — Visuals & Particles
+// MARK: - 7. EchoelCanvas — Visuals + Video (merged EchoelVis + EchoelVid)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: UnifiedVisualSoundEngine, ImmersiveVisualEngine, Intelligent360VisualEngine,
 //         MetalShaderManager, MIDIToVisualMapper, CymaticsRenderer,
-//         OctaveCreativeStudio, PhotonicsVisualizationEngine
+//         OctaveCreativeStudio, PhotonicsVisualizationEngine,
+//         VideoAICreativeHub, VideoEditingEngine, VideoProcessingEngine,
+//         StreamEngine, CameraManager, MultiCamManager, ChromaKeyEngine,
+//         BackgroundSourceManager, VideoExportManager, RecordingEngine,
+//         DAWProductionEngine, BPMGridEditEngine
 //
-// 7 classes → 1 visual pipeline with modes
+// 22 classes → 1 unified visual+video pipeline
+// Single Metal pipeline for both real-time visuals AND video
 
-/// All visuals — particles, shaders, 360, immersive, cymatics
+/// All visuals + video — particles, shaders, 360, capture, edit, stream, export
 @MainActor
-public final class EchoelVis: ObservableObject {
+public final class EchoelCanvas: ObservableObject {
 
-    public enum VisMode: String, CaseIterable, Sendable {
+    // MARK: - Visual Modes
+
+    public enum VisualMode: String, CaseIterable, Sendable {
         case particles = "Particles"
         case cymatics = "Cymatics"
         case geometry = "Sacred Geometry"
@@ -852,15 +856,46 @@ public final class EchoelVis: ObservableObject {
         case immersive3D = "Immersive 3D"
         case spatial360 = "360"
         case waveform = "Waveform"
-        case hilbert = "Hilbert"           // Hilbert curve bio-visualization
+        case hilbert = "Hilbert"
     }
 
-    @Published public var mode: VisMode = .particles
+    // MARK: - Video Modes
+
+    public enum VideoMode: String, CaseIterable, Sendable {
+        case capture = "Capture"
+        case edit = "Edit"
+        case stream = "Stream"
+        case multiCam = "MultiCam"
+    }
+
+    // MARK: - Render Modes
+
+    public enum RenderMode: String, CaseIterable, Sendable {
+        case realtime = "Realtime"              // Metal 120fps visuals
+        case photoRealistic = "Photorealistic"  // RealityKit PBR + IBL
+        case videoExport = "Video Export"       // ProRes render pipeline
+        case hybrid = "Hybrid"                  // Realtime + overlay
+    }
+
+    // MARK: - Visual Properties
+
+    @Published public var visualMode: VisualMode = .particles
     @Published public var intensity: Float = 0.5
     @Published public var hue: Float = 0.6
     @Published public var complexity: Float = 0.5
     @Published public var particleCount: Int = 200
     @Published public var beatReactive: Bool = true
+
+    // MARK: - Video Properties
+
+    @Published public var videoMode: VideoMode = .capture
+    @Published public var isRecording: Bool = false
+    @Published public var isStreaming: Bool = false
+    @Published public var chromaKeyEnabled: Bool = false
+
+    // MARK: - Render Properties
+
+    @Published public var renderMode: RenderMode = .realtime
 
     /// Hilbert curve mapper — bio data → 2D locality-preserving visualization
     public let hilbertMapper = HilbertSensorMapper(order: 5)  // 32×32 = 1024 points
@@ -874,7 +909,6 @@ public final class EchoelVis: ObservableObject {
                 case .bioUpdate(let bio):
                     self?.intensity = 0.3 + bio.coherence * 0.7
                     self?.particleCount = bio.flowScore > 0.75 ? 500 : 200
-                    // Feed Hilbert mapper with coherence for spatial visualization
                     self?.hilbertMapper.feedSample(bio.coherence)
                 case .audioAnalysis(let audio):
                     if audio.beatDetected && self?.beatReactive == true {
@@ -886,6 +920,8 @@ public final class EchoelVis: ObservableObject {
         }
     }
 
+    // MARK: - Visual API
+
     /// Get Hilbert density grid for bio-pattern visualization (normalized 0-1)
     public func hilbertDensityGrid() -> [Float] {
         hilbertMapper.getDensityGrid()
@@ -895,36 +931,8 @@ public final class EchoelVis: ObservableObject {
     public func hilbertParticles(count: Int = 64) -> [HilbertSensorMapper.MappedPoint] {
         hilbertMapper.recentPoints(count: count)
     }
-}
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 8. EchoelVid — Video & Streaming
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// MERGES: VideoAICreativeHub, VideoEditingEngine, VideoProcessingEngine,
-//         StreamEngine, CameraManager, MultiCamManager, ChromaKeyEngine,
-//         BackgroundSourceManager, VideoExportManager, RecordingEngine,
-//         DAWProductionEngine, BPMGridEditEngine
-//
-// 15 classes → 1 video engine
-
-/// Video — capture, edit, stream, export, AI processing
-@MainActor
-public final class EchoelVid: ObservableObject {
-
-    public enum VidMode: String, CaseIterable, Sendable {
-        case capture = "Capture"
-        case edit = "Edit"
-        case stream = "Stream"
-        case multiCam = "MultiCam"
-    }
-
-    @Published public var mode: VidMode = .capture
-    @Published public var isRecording: Bool = false
-    @Published public var isStreaming: Bool = false
-    @Published public var chromaKeyEnabled: Bool = false
-
-    public init() {}
+    // MARK: - Video API
 
     public func startRecording() { isRecording = true }
     public func stopRecording() { isRecording = false }
@@ -932,23 +940,29 @@ public final class EchoelVid: ObservableObject {
     public func stopStreaming() { isStreaming = false }
 }
 
+/// Backward compatibility — remove after 1 release cycle
+public typealias EchoelVis = EchoelCanvas
+public typealias EchoelVid = EchoelCanvas
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 9. EchoelLux — Lighting & DMX
+// MARK: - 8. EchoelOutput — Lighting + Stage (merged EchoelLux + EchoelStage)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: ProCueSystem, TimecodeEngine, CueList, ILDALaserController,
 //         LaserPatternGenerator, Push3LEDController, MIDIToLightMapper,
-//         UDPSocket (ArtNet)
+//         UDPSocket (ArtNet), ExternalDisplayManager, iPadExternalDisplay,
+//         AirPlayManager, AppleGlassesOptimization, ProjectionMappingEngine,
+//         MultiScreenRouter
 //
-// 10 classes → 1 lighting controller
-//
-// "Lux" = Latin for light. EchoelLux = Echoel Light.
+// 16 classes → 1 unified output controller (lighting + display routing)
 
-/// All lighting — DMX, Art-Net, laser, LED strips, cue system
+/// All output — DMX, Art-Net, lasers, smart home, external displays, projection, VR/XR
 @MainActor
-public final class EchoelLux: ObservableObject {
+public final class EchoelOutput: ObservableObject {
 
-    public enum LightMode: String, CaseIterable, Sendable {
+    // MARK: - Lighting Modes
+
+    public enum LightingMode: String, CaseIterable, Sendable {
         case dmx = "DMX/Art-Net"
         case laser = "ILDA Laser"
         case led = "LED Strip"
@@ -956,56 +970,9 @@ public final class EchoelLux: ObservableObject {
         case bioReactive = "Bio-Reactive"
     }
 
-    @Published public var mode: LightMode = .bioReactive
-    @Published public var masterIntensity: Float = 1.0
-    @Published public var hue: Float = 0.6
-    @Published public var saturation: Float = 0.8
-    @Published public var isConnected: Bool = false
+    // MARK: - Display Modes
 
-    /// DMX universe address
-    public var dmxAddress: String = "192.168.1.100"
-    public var dmxUniverse: Int = 1
-
-    private var busSubscription: BusSubscription?
-
-    public init() {
-        // Auto-react to bio data when in bioReactive mode
-        busSubscription = EngineBus.shared.subscribe(to: .bio) { [weak self] msg in
-            Task { @MainActor in
-                guard self?.mode == .bioReactive else { return }
-                if case .bioUpdate(let bio) = msg {
-                    self?.masterIntensity = bio.coherence
-                    self?.hue = bio.breathPhase
-                }
-            }
-        }
-    }
-
-    /// Send RGB to all connected fixtures
-    public func setColor(r: Float, g: Float, b: Float, intensity: Float) {
-        // Routes to DMX/ArtNet/Laser/LED based on mode
-        EngineBus.shared.publish(.custom(
-            topic: "light.color",
-            payload: ["r": "\(r)", "g": "\(g)", "b": "\(b)", "i": "\(intensity)"]
-        ))
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 10. EchoelStage — External Display & Output Routing
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// MERGES: ExternalDisplayManager, iPadExternalDisplay, AirPlayManager,
-//         AppleGlassesOptimization, ProjectionMappingEngine, MultiScreenRouter
-//
-// Output routing: external displays, smart glasses, AirPlay, projection mapping,
-// multi-screen layouts, audience/therapist views, VR/XR devices, dome projectors
-
-/// Output everywhere — from pocket to arena
-@MainActor
-public final class EchoelStage: ObservableObject {
-
-    public enum OutputMode: String, CaseIterable, Sendable {
+    public enum DisplayMode: String, CaseIterable, Sendable {
         case mirror = "Mirror"
         case extended = "Extended Display"
         case audience = "Audience View"
@@ -1027,7 +994,21 @@ public final class EchoelStage: ObservableObject {
         case ledWall = "LED Wall"
     }
 
-    @Published public var mode: OutputMode = .mirror
+    // MARK: - Lighting Properties
+
+    @Published public var lightingMode: LightingMode = .bioReactive
+    @Published public var masterIntensity: Float = 1.0
+    @Published public var hue: Float = 0.6
+    @Published public var saturation: Float = 0.8
+    @Published public var isLightingConnected: Bool = false
+
+    /// DMX universe address
+    public var dmxAddress: String = "192.168.1.100"
+    public var dmxUniverse: Int = 1
+
+    // MARK: - Display Properties
+
+    @Published public var displayMode: DisplayMode = .mirror
     @Published public var connectedDisplays: [ConnectedDisplay] = []
     @Published public var isOutputActive: Bool = false
 
@@ -1061,12 +1042,24 @@ public final class EchoelStage: ObservableObject {
         }
     }
 
-    private var busSubscription: BusSubscription?
+    private var lightBusSubscription: BusSubscription?
+    private var frameBusSubscription: BusSubscription?
     private var cancellables = Set<AnyCancellable>()
 
     public init() {
-        // Subscribe to visual frames for routing
-        busSubscription = EngineBus.shared.subscribe(to: .visual) { [weak self] msg in
+        // Auto-react to bio data when in bioReactive lighting mode
+        lightBusSubscription = EngineBus.shared.subscribe(to: .bio) { [weak self] msg in
+            Task { @MainActor in
+                guard self?.lightingMode == .bioReactive else { return }
+                if case .bioUpdate(let bio) = msg {
+                    self?.masterIntensity = bio.coherence
+                    self?.hue = bio.breathPhase
+                }
+            }
+        }
+
+        // Subscribe to visual frames for display routing
+        frameBusSubscription = EngineBus.shared.subscribe(to: .visual) { [weak self] msg in
             Task { @MainActor in
                 guard self?.isOutputActive == true else { return }
                 if case .visualStateChange(let frame) = msg {
@@ -1093,6 +1086,18 @@ public final class EchoelStage: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Lighting API
+
+    /// Send RGB to all connected fixtures
+    public func setColor(r: Float, g: Float, b: Float, intensity: Float) {
+        EngineBus.shared.publish(.custom(
+            topic: "light.color",
+            payload: ["r": "\(r)", "g": "\(g)", "b": "\(b)", "i": "\(intensity)"]
+        ))
+    }
+
+    // MARK: - Display API
+
     private static func mapCategory(_ category: DisplayOutputDescriptor.OutputCategory) -> DisplayType {
         switch category {
         case .externalDisplay: return .externalHDMI
@@ -1112,7 +1117,7 @@ public final class EchoelStage: ObservableObject {
     public func startOutput() {
         isOutputActive = true
         pipeline.startPipeline()
-        EngineBus.shared.publish(.custom(topic: "stage.output.start", payload: ["mode": mode.rawValue]))
+        EngineBus.shared.publish(.custom(topic: "stage.output.start", payload: ["mode": displayMode.rawValue]))
     }
 
     /// Stop all output routing
@@ -1135,7 +1140,7 @@ public final class EchoelStage: ObservableObject {
     }
 
     /// Set content per screen for multi-screen mode
-    public func assignContent(displayId: String, contentType: OutputMode) {
+    public func assignContent(displayId: String, contentType: DisplayMode) {
         let pipelineContent: OutputContentAssignment.ContentType
         switch contentType {
         case .mirror: pipelineContent = .mirror
@@ -1150,6 +1155,10 @@ public final class EchoelStage: ObservableObject {
         pipeline.assignContent(outputId: displayId, content: pipelineContent)
     }
 }
+
+/// Backward compatibility — remove after 1 release cycle
+public typealias EchoelLux = EchoelOutput
+public typealias EchoelStage = EchoelOutput
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MARK: - 11. EchoelNet — Networking & Collaboration
@@ -1263,19 +1272,23 @@ public final class EchoelToolkit: ObservableObject {
 
     public static let shared = EchoelToolkit()
 
-    // The 12 Echoel* Tools
+    // The 10 Echoel* Tools
     public let synth: EchoelSynth       // Synthesis
     public let mix: EchoelMix           // Mixing
     public let fx: EchoelFX             // Effects
     public let seq: EchoelSeq           // Sequencer
     public let midi: EchoelMIDI         // MIDI/MPE
     public let bio: EchoelBio           // Biometrics
-    public let vis: EchoelVis           // Visuals
-    public let vid: EchoelVid           // Video
-    public let lux: EchoelLux           // Lighting
-    public let stage: EchoelStage       // External displays/glasses/projection
+    public let canvas: EchoelCanvas     // Visuals + Video (was EchoelVis + EchoelVid)
+    public let output: EchoelOutput     // Lighting + Stage (was EchoelLux + EchoelStage)
     public let net: EchoelNet           // Networking
     public let ai: EchoelAI             // Intelligence
+
+    // Backward-compatible accessors — remove after 1 release cycle
+    public var vis: EchoelCanvas { canvas }
+    public var vid: EchoelCanvas { canvas }
+    public var lux: EchoelOutput { output }
+    public var stage: EchoelOutput { output }
 
     // Infrastructure
     public let bus: EngineBus
@@ -1290,10 +1303,8 @@ public final class EchoelToolkit: ObservableObject {
         self.seq = EchoelSeq()
         self.midi = EchoelMIDI()
         self.bio = EchoelBio()
-        self.vis = EchoelVis()
-        self.vid = EchoelVid()
-        self.lux = EchoelLux()
-        self.stage = EchoelStage()
+        self.canvas = EchoelCanvas()
+        self.output = EchoelOutput()
         self.net = EchoelNet()
         self.ai = EchoelAI()
     }
@@ -1301,10 +1312,10 @@ public final class EchoelToolkit: ObservableObject {
     /// One-line status of the entire system
     public var status: String {
         """
-        EchoelToolkit: 12 tools active
+        EchoelToolkit: 10 tools active
         Synth: \(synth.activeEngine.rawValue) | Mix: \(mix.channelCount)ch @ \(mix.bpm) BPM
         Bio: HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100))
-        Vis: \(vis.mode.rawValue) | Lux: \(lux.mode.rawValue)
+        Canvas: \(canvas.visualMode.rawValue) | Output: \(output.lightingMode.rawValue)
         Bus: \(bus.stats)
         """
     }
