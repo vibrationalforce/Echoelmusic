@@ -145,6 +145,9 @@ public final class FeatureFlagManager: ObservableObject {
             // Experimental
             FeatureFlag(key: "experimental_dsp", enabled: false),
             FeatureFlag(key: "beta_features", enabled: true, environments: ["staging"]),
+
+            // Blockchain / NFT — disabled in App Store builds (Guideline 3.1.5)
+            FeatureFlag(key: "nft_minting", enabled: false, environments: ["development"]),
         ]
 
         for flag in defaultFlags {

@@ -131,7 +131,7 @@ public struct PrivacyPolicy {
 
     With your explicit consent, we may use anonymized, aggregated biometric data for:
 
-    • Scientific research on bio-reactive music therapy
+    • Scientific research on bio-reactive music and audio design
     • Improving coherence detection algorithms
     • Developing new audio-visual mapping techniques
 
@@ -1584,7 +1584,7 @@ public struct HealthDisclaimer {
     14. PROFESSIONAL TRAINING DISCLAIMER
 
     The App does NOT:
-    • Provide professional training in music therapy, biofeedback, or healthcare
+    • Provide professional training in music production, biofeedback, or healthcare
     • Qualify you to provide therapeutic services
     • Replace formal education or licensure
 

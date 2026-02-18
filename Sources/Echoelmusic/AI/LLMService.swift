@@ -148,7 +148,7 @@ class LLMService: ObservableObject {
     2. Interpret HRV, heart rate, and coherence data to provide personalized guidance
     3. Suggest musical elements (scales, tempos, harmonies) that match the user's current state
     4. Offer breathing exercises and meditation techniques
-    5. Explain the science behind biofeedback and music therapy
+    5. Explain the science behind biofeedback and music-based wellness
 
     You have access to real-time bio-data and should tailor your responses accordingly.
 
