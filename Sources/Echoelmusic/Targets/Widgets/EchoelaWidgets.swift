@@ -547,14 +547,14 @@ struct QuickActionWidgetView: View {
                 actionButton(
                     icon: "waveform",
                     label: "Session",
-                    url: URL(string: "echoelmusic://action/meditation/start")!,
+                    url: URL(string: "echoelmusic://action/meditation/start") ?? URL(fileURLWithPath: "/"),
                     color: .purple
                 )
 
                 actionButton(
                     icon: "sparkles.rectangle.stack",
                     label: "Mint",
-                    url: URL(string: "echoelmusic://action/nft/mint")!,
+                    url: URL(string: "echoelmusic://action/nft/mint") ?? URL(fileURLWithPath: "/"),
                     color: .blue
                 )
             }
@@ -563,14 +563,14 @@ struct QuickActionWidgetView: View {
                 actionButton(
                     icon: "applewatch",
                     label: "Watch",
-                    url: URL(string: "echoelmusic://action/watch/sense")!,
+                    url: URL(string: "echoelmusic://action/watch/sense") ?? URL(fileURLWithPath: "/"),
                     color: .green
                 )
 
                 actionButton(
                     icon: "person.2",
                     label: "Collab",
-                    url: URL(string: "echoelmusic://action/collab/invite")!,
+                    url: URL(string: "echoelmusic://action/collab/invite") ?? URL(fileURLWithPath: "/"),
                     color: .orange
                 )
             }

@@ -232,8 +232,8 @@ public struct EchoelPaywall: View {
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 16) {
-                Link("Terms", destination: URL(string: "https://echoelmusic.com/terms")!)
-                Link("Privacy", destination: URL(string: "https://echoelmusic.com/privacy")!)
+                Link("Terms", destination: URL(string: "https://echoelmusic.com/terms") ?? URL(fileURLWithPath: "/"))
+                Link("Privacy", destination: URL(string: "https://echoelmusic.com/privacy") ?? URL(fileURLWithPath: "/"))
             }
             .font(.caption2)
             .foregroundColor(.gray)

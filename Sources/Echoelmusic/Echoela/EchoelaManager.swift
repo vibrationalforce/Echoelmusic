@@ -331,7 +331,7 @@ public final class EchoelaManager: ObservableObject {
         var components = URLComponents()
         components.scheme = Self.deepLinkScheme
         components.host = "action"
-        components.path = id != nil ? "/\(action)/\(id!)" : "/\(action)"
+        components.path = id.map { "/\(action)/\($0)" } ?? "/\(action)"
 
         if let params = parameters {
             components.queryItems = params.map { URLQueryItem(name: $0.key, value: $0.value) }

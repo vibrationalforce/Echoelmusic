@@ -699,7 +699,7 @@ final class PQCCryptoManager {
         // Use Secure Enclave P256 signing
         // In production, this would use a hybrid PQC+ECDSA scheme
 
-        let transactionData = "\(transaction.to)\(transaction.data)\(transaction.value)\(transaction.chainID)".data(using: .utf8)!
+        let transactionData = "\(transaction.to)\(transaction.data)\(transaction.value)\(transaction.chainID)".data(using: .utf8) ?? Data()
 
         // Hash the transaction
         let hash = SHA256.hash(data: transactionData)

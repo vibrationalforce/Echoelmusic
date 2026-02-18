@@ -362,7 +362,7 @@ public final class ComplianceManager: ObservableObject {
             consent.userID == userID &&
             consent.granted &&
             consent.purposes.contains(purpose) &&
-            (consent.expirationDate == nil || consent.expirationDate! > Date())
+            (consent.expirationDate.map({ $0 > Date() }) ?? true)
         }
     }
 

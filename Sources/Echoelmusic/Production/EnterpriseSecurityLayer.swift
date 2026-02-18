@@ -97,7 +97,8 @@ public final class SecurityManager: ObservableObject {
 
     private func verifyAppIntegrity() async -> SecurityCheck {
         // Verify bundle signature
-        guard let bundlePath = Bundle.main.bundlePath as NSString? else {
+        let bundlePath = Bundle.main.bundlePath
+        guard !bundlePath.isEmpty else {
             return SecurityCheck(name: "AppIntegrity", passed: false)
         }
 
