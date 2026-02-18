@@ -1,13 +1,15 @@
 # =============================================================================
 # Cloudflare Pages Redirects
-# Note: www-to-non-www and HTTP-to-HTTPS are handled by Cloudflare domain settings
 # =============================================================================
+
+# www to non-www (canonical domain)
+https://www.echoelmusic.com/* https://echoelmusic.com/:splat 301
 
 # App Store shortcut
 /app https://apps.apple.com/app/echoelmusic/id6757957358 302
 /download https://apps.apple.com/app/echoelmusic/id6757957358 302
 
-# Common page aliases
+# German page aliases
 /datenschutz /privacy.html 301
 /agb /terms.html 301
 /hilfe /support.html 301
