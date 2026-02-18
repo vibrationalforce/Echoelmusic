@@ -356,7 +356,7 @@ public final class PhysicalAIEngine: NSObject, ObservableObject {
 
     private func sensorTick() {
         // If no real sensor data, use simulation for demo
-        if latestReading == nil || Date().timeIntervalSince(latestReading!.timestamp) > 1.0 {
+        if latestReading == nil || latestReading.map({ Date().timeIntervalSince($0.timestamp) > 1.0 }) == true {
             let simulated = generateSimulatedReading()
             processSensorData(simulated)
         }

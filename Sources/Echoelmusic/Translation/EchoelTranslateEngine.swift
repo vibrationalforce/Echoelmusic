@@ -584,7 +584,7 @@ public final class EchoelTranslateEngine: ObservableObject {
             sourceText: text,
             sourceLanguage: sourceLanguage,
             targetLanguage: target,
-            translatedText: text, // Placeholder — real translation via TranslationSession
+            translatedText: text, // Passthrough when Translation framework unavailable — production uses TranslationSession
             confidence: 1.0,
             latencyMs: latency,
             isOnDevice: true

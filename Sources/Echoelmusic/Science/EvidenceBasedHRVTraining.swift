@@ -113,7 +113,9 @@ class EvidenceBasedHRVTraining: ObservableObject {
 
     // MARK: - HealthKit Integration
 
+    #if canImport(HealthKit)
     private let healthStore = HKHealthStore()
+    #endif
 
     // MARK: - Initialization
 

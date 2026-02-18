@@ -89,7 +89,7 @@ public struct RegistryEntry: Identifiable, Codable, Sendable {
     public func verify(with publicKey: Data) -> Bool {
         // In production, this would use the actual PQC verification algorithm
         // For now, we use a hash-based verification placeholder
-        let dataToVerify = payloadHash.data(using: .utf8)!
+        guard let dataToVerify = payloadHash.data(using: .utf8) else { return false }
         let expectedSignature = SHA256.hash(data: dataToVerify + publicKey)
         let signaturePrefix = signature.prefix(32)
         return signaturePrefix == Data(expectedSignature)
@@ -359,11 +359,13 @@ public final class PQCMetaRegistry: ObservableObject {
         privateKey = Data(privateKeyBytes)
 
         // Derive public key (simplified)
-        let publicKeyHash = SHA256.hash(data: privateKey!)
+        guard let pk = privateKey else { return }
+        let publicKeyHash = SHA256.hash(data: pk)
         publicKey = Data(publicKeyHash)
 
         // Generate fingerprint
-        let fingerprint = SHA256.hash(data: publicKey!)
+        guard let pubKey = publicKey else { return }
+        let fingerprint = SHA256.hash(data: pubKey)
         publicKeyFingerprint = fingerprint.prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 

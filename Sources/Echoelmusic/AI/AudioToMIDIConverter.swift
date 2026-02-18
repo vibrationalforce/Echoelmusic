@@ -516,7 +516,7 @@ public final class AudioToMIDIConverter: ObservableObject {
                 if duration >= configuration.minimumNoteLength {
                     let velocity = amplitudeToVelocity(noteAmplitudes)
                     notes.append(AudioMIDINoteEvent(
-                        noteNumber: currentNote!,
+                        noteNumber: currentNote ?? midiNote,
                         velocity: velocity,
                         startTime: noteStartTime,
                         duration: duration

@@ -904,12 +904,22 @@ public final class EchoelShowControl: ObservableObject {
 
     // MARK: - Shutdown
 
+    deinit {
+        meterUpdateTimer?.invalidate()
+    }
+
     /// Stop all show control operations
     public func shutdown() {
         stopMeterSync()
         mscEnabled = false
         mackieEnabled = false
         huiEnabled = false
+        onFaderMove = nil
+        onVPotTurn = nil
+        onButtonPress = nil
+        onTransportChange = nil
+        onMSCReceived = nil
+        onJogWheel = nil
         busSubscriptions.removeAll()
     }
 }

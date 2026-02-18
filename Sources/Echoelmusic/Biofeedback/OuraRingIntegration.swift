@@ -94,7 +94,9 @@ public class OuraRingIntegration: ObservableObject {
 
     // MARK: - Private Properties
 
+    #if canImport(HealthKit)
     private let healthStore = HKHealthStore()
+    #endif
 
     // MARK: - HealthKit Types (Oura syncs these)
 

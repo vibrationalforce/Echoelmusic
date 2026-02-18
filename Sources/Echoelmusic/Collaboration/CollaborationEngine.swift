@@ -1,6 +1,8 @@
 import Foundation
 import Combine
+#if canImport(Network)
 import Network
+#endif
 
 /// Collaboration Engine - Ultra-Low-Latency Multiplayer with WebRTC
 /// Group Bio-Sync, Shared Metronome, Collective Coherence

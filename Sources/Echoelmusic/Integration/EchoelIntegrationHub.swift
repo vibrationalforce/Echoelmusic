@@ -282,6 +282,10 @@ public final class EchoelIntegrationHub: ObservableObject {
         loadPresetsFromDisk()
     }
 
+    deinit {
+        healthTimer?.invalidate()
+    }
+
     // MARK: - Protocol Registration
 
     /// Register all known protocols in the system
@@ -749,7 +753,9 @@ public final class EchoelIntegrationHub: ObservableObject {
     // MARK: - Persistence
 
     private var presetsURL: URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("echoelmusic_integration_presets.json")
+        }
         return docs.appendingPathComponent("echoelmusic_integration_presets.json")
     }
 

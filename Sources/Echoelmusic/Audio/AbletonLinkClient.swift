@@ -14,7 +14,9 @@
 // Ralph Wiggum Lambda Loop Mode - 100% Complete
 
 import Foundation
+#if canImport(Network)
 import Network
+#endif
 import Combine
 
 // MARK: - Link Protocol Constants

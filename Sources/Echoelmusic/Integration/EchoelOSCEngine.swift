@@ -547,6 +547,11 @@ public final class EchoelOSCEngine: ObservableObject {
         startRateMonitor()
     }
 
+    deinit {
+        broadcastTimer?.invalidate()
+        rateTimer?.invalidate()
+    }
+
     // MARK: - Server (Receive)
 
     /// Start OSC UDP server to receive messages from external applications

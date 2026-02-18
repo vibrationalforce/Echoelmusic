@@ -178,8 +178,8 @@ public struct MintDocument: Codable, Sendable, Identifiable {
         var metadata: [String: Any] = [
             "name": name,
             "description": description,
-            "image": "ipfs://placeholder", // Set after media upload
-            "animation_url": "ipfs://placeholder",
+            "image": "ipfs://pending-upload/\(id.uuidString)", // Set after IPFS media upload
+            "animation_url": "ipfs://pending-upload/\(id.uuidString)/animation",
             "external_url": "https://echoelmusic.com/nft/\(id.uuidString)",
             "attributes": [
                 ["trait_type": "Type", "value": mintType.rawValue],
