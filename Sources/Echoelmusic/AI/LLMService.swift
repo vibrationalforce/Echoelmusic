@@ -66,6 +66,11 @@ class LLMService: ObservableObject {
         let timestamp: Date
         var bioContext: BioContext?
 
+        /// Structured content blocks (JSON-encoded) for tool_use/tool_result support.
+        /// When present, this is used instead of `content` when building API messages.
+        /// Stored as Data for Codable compatibility since content blocks contain [String: Any].
+        var toolContentJSON: Data?
+
         enum Role: String, Codable {
             case user
             case assistant
@@ -78,6 +83,28 @@ class LLMService: ObservableObject {
             let coherence: Double
             let bioState: String
         }
+
+        /// Returns the structured content blocks if present, otherwise nil.
+        var contentBlocks: [[String: Any]]? {
+            guard let data = toolContentJSON,
+                  let blocks = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                return nil
+            }
+            return blocks
+        }
+
+        /// Extract tool_use IDs from this message's content blocks (for assistant messages).
+        var toolUseIds: Set<String> {
+            guard let blocks = contentBlocks else { return [] }
+            var ids = Set<String>()
+            for block in blocks {
+                if let type = block["type"] as? String, type == "tool_use",
+                   let id = block["id"] as? String {
+                    ids.insert(id)
+                }
+            }
+            return ids
+        }
     }
 
     // MARK: - Configuration
@@ -85,6 +112,10 @@ class LLMService: ObservableObject {
     private var apiKey: String?
     private let session: URLSession
     private var cancellables = Set<AnyCancellable>()
+
+    /// Temporarily holds structured content blocks from the last API response
+    /// when it contains tool_use blocks. Used by sendMessage to store in the Message.
+    private var lastResponseContentBlocks: Data?
 
     // MARK: - Retry Configuration
 
@@ -192,14 +223,16 @@ class LLMService: ObservableObject {
         // Build request
         let response = try await sendRequest(messages: conversationHistory, bioContext: bioContext)
 
-        // Add assistant response to history
-        let assistantMessage = Message(
+        // Add assistant response to history, preserving tool_use content blocks if present
+        var assistantMessage = Message(
             id: UUID(),
             role: .assistant,
             content: response,
             timestamp: Date(),
             bioContext: nil
         )
+        assistantMessage.toolContentJSON = lastResponseContentBlocks
+        lastResponseContentBlocks = nil
         conversationHistory.append(assistantMessage)
 
         lastResponse = response
@@ -309,10 +342,11 @@ class LLMService: ObservableObject {
             fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
         }
 
-        // Build messages array
-        let apiMessages = messages.map { msg -> [String: String] in
-            ["role": msg.role == .user ? "user" : "assistant", "content": msg.content]
-        }
+        // Build messages array with structured content block support
+        let rawAPIMessages = messages.map { buildAPIMessage(from: $0) }
+
+        // Validate tool_result/tool_use pairing to prevent API 400 errors
+        let apiMessages = validateAndSanitizeAPIMessages(rawAPIMessages)
 
         let body: [String: Any] = [
             "model": LLMProvider.claude.modelName,
@@ -343,16 +377,44 @@ class LLMService: ObservableObject {
                 if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let error = errorData["error"] as? [String: Any],
                    let message = error["message"] as? String {
+                    // Detect tool_result validation errors specifically
+                    if let errorType = error["type"] as? String,
+                       errorType == "invalid_request_error",
+                       message.contains("tool_use_id") && message.contains("tool_result") {
+                        log.error("Tool result validation error: \(message). Conversation history may contain orphaned tool references.", category: .intelligence)
+                        throw LLMError.invalidToolResult(message)
+                    }
                     throw LLMError.apiError(message)
                 }
                 throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
             }
 
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let content = json["content"] as? [[String: Any]],
-                  let firstContent = content.first,
-                  let text = firstContent["text"] as? String else {
+                  let contentBlocks = json["content"] as? [[String: Any]] else {
                 throw LLMError.invalidResponse
+            }
+
+            // Extract text from content blocks
+            let textParts = contentBlocks.compactMap { block -> String? in
+                guard let type = block["type"] as? String, type == "text" else { return nil }
+                return block["text"] as? String
+            }
+
+            guard !textParts.isEmpty else {
+                throw LLMError.invalidResponse
+            }
+
+            let text = textParts.joined(separator: "\n")
+
+            // Check if response contains tool_use blocks — store them for future validation
+            let hasToolUse = contentBlocks.contains { ($0["type"] as? String) == "tool_use" }
+            if hasToolUse {
+                log.info("Claude response contains tool_use blocks — storing structured content for validation", category: .intelligence)
+                // The caller (sendMessage) will need to store this in the Message's toolContentJSON
+                // We store it in a thread-local-like property for the caller to pick up
+                lastResponseContentBlocks = try? JSONSerialization.data(withJSONObject: contentBlocks)
+            } else {
+                lastResponseContentBlocks = nil
             }
 
             connectionStatus = .connected
@@ -503,6 +565,104 @@ class LLMService: ObservableObject {
         return content
     }
 
+    // MARK: - Message Building & Validation
+
+    /// Converts an internal Message to an API-compatible dictionary.
+    /// Uses structured content blocks when present, otherwise falls back to simple string content.
+    private func buildAPIMessage(from msg: Message) -> [String: Any] {
+        let role: String = msg.role == .user ? "user" : "assistant"
+
+        if let contentBlocks = msg.contentBlocks {
+            return ["role": role, "content": contentBlocks]
+        }
+
+        return ["role": role, "content": msg.content]
+    }
+
+    /// Validates and sanitizes an array of API messages to ensure tool_result blocks
+    /// have corresponding tool_use blocks in the immediately preceding assistant message.
+    ///
+    /// This prevents the Claude API error:
+    /// "unexpected tool_use_id found in tool_result blocks. Each tool_result block
+    /// must have a corresponding tool_use block in the previous message."
+    private func validateAndSanitizeAPIMessages(_ messages: [[String: Any]]) -> [[String: Any]] {
+        var sanitized: [[String: Any]] = []
+
+        for (index, message) in messages.enumerated() {
+            guard let content = message["content"] else {
+                sanitized.append(message)
+                continue
+            }
+
+            // Simple string content — no tool blocks possible
+            if content is String {
+                sanitized.append(message)
+                continue
+            }
+
+            // Structured content blocks — validate tool_result references
+            guard var contentBlocks = content as? [[String: Any]] else {
+                sanitized.append(message)
+                continue
+            }
+
+            let role = message["role"] as? String ?? ""
+
+            if role == "user" {
+                // Collect valid tool_use IDs from the immediately preceding assistant message
+                var validToolUseIds = Set<String>()
+                if index > 0 {
+                    let prevMessage = sanitized[sanitized.count - 1]
+                    if let prevRole = prevMessage["role"] as? String, prevRole == "assistant",
+                       let prevContent = prevMessage["content"] as? [[String: Any]] {
+                        for block in prevContent {
+                            if let type = block["type"] as? String, type == "tool_use",
+                               let id = block["id"] as? String {
+                                validToolUseIds.insert(id)
+                            }
+                        }
+                    }
+                }
+
+                // Filter out tool_result blocks that reference non-existent tool_use IDs
+                let originalCount = contentBlocks.count
+                contentBlocks = contentBlocks.filter { block in
+                    guard let type = block["type"] as? String, type == "tool_result" else {
+                        return true // Keep non-tool_result blocks
+                    }
+                    guard let toolUseId = block["tool_use_id"] as? String else {
+                        return false // Remove tool_result without a tool_use_id
+                    }
+                    let isValid = validToolUseIds.contains(toolUseId)
+                    if !isValid {
+                        log.warning("Stripped orphaned tool_result referencing tool_use_id '\(toolUseId)' — no matching tool_use in preceding assistant message", category: .intelligence)
+                    }
+                    return isValid
+                }
+
+                // If all content blocks were stripped, replace with a text block
+                if contentBlocks.isEmpty && originalCount > 0 {
+                    contentBlocks = [["type": "text", "text": "[Previous tool results no longer available]"]]
+                }
+
+                // If only text blocks remain, simplify to a plain string
+                if contentBlocks.allSatisfy({ ($0["type"] as? String) == "text" }) && contentBlocks.count == 1,
+                   let text = contentBlocks[0]["text"] as? String {
+                    var simplified = message
+                    simplified["content"] = text
+                    sanitized.append(simplified)
+                    continue
+                }
+            }
+
+            var sanitizedMessage = message
+            sanitizedMessage["content"] = contentBlocks
+            sanitized.append(sanitizedMessage)
+        }
+
+        return sanitized
+    }
+
     // MARK: - Helpers
 
     private func determineBioState(heartRate: Double, hrv: Double, coherence: Double) -> String {
@@ -567,6 +727,7 @@ enum LLMError: LocalizedError {
     case missingAPIKey
     case invalidResponse
     case apiError(String)
+    case invalidToolResult(String) // Tool_result references a non-existent tool_use_id
     case serverError(Int)  // For 5xx errors after retries exhausted
     case rateLimited       // For 429 errors after retries exhausted
     case networkError(Error)
@@ -579,6 +740,8 @@ enum LLMError: LocalizedError {
             return "Received invalid response from LLM service"
         case .apiError(let message):
             return "API Error: \(message)"
+        case .invalidToolResult(let message):
+            return "Tool Result Validation Error: \(message)"
         case .serverError(let code):
             return "Server Error (\(code)): The AI service is temporarily unavailable. Please try again in a few moments."
         case .rateLimited:
@@ -596,6 +759,8 @@ enum LLMError: LocalizedError {
             return "Try again. If the problem persists, the AI service may be experiencing issues."
         case .apiError:
             return "Check your API key and try again."
+        case .invalidToolResult:
+            return "The conversation history contains invalid tool references. Try clearing the chat history and starting a new conversation."
         case .serverError:
             return "The AI service is experiencing high load. Please wait 30 seconds and try again."
         case .rateLimited:
