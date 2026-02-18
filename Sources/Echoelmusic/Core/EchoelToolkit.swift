@@ -17,12 +17,12 @@
 // │   │          │          │         │          │                          │
 // │   ├──────────┼──────────┼─────────┼──────────┤                          │
 // │   │          │          │         │          │                          │
-// │ EchoelBio  EchoelCanvas    EchoelOutput    EchoelNet                  │
+// │ EchoelBio  EchoelField     EchoelBeam      EchoelNet                  │
 // │ (biometrics)(vis+vid+       (light+stage)  (protocols+                │
 // │             avatar+world)                   collab+mint)              │
 // │   │          │              │              │                            │
 // │   └──────────┴──────────────┴──────────────┘                            │
-// │                         EchoelAI                                         │
+// │                        EchoelMind                                        │
 // │              (intelligence + translate + assistant)                      │
 // └───────────────────────────────────────────────────────────────────────────┘
 //
@@ -506,8 +506,8 @@ public final class EchoelMIDI: ObservableObject {
         case synth = "EchoelSynth"
         case sampler = "Sampler"
         case fx = "EchoelFX"
-        case canvas = "EchoelCanvas"
-        case output = "EchoelOutput"
+        case field = "EchoelField"
+        case beam = "EchoelBeam"
         case custom = "Custom"
     }
 
@@ -826,7 +826,7 @@ public final class EchoelBio: ObservableObject {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 7. EchoelCanvas — Visuals + Video + Avatar + World
+// MARK: - 7. EchoelField — Visuals + Video + Avatar + World
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: UnifiedVisualSoundEngine, ImmersiveVisualEngine, Intelligent360VisualEngine,
@@ -842,10 +842,11 @@ public final class EchoelBio: ObservableObject {
 //   EchoelWorld  → Procedural worlds, 6 biomes, weather systems, day/night
 //
 // 1 unified visual creation pipeline: 2D/3D visuals + video + avatars + worlds
+// SEO: "EchoelField" — bio-field, visual field, creative field. No conflicts.
 
-/// All visuals + video + avatars + worlds — unified visual creation pipeline
+/// All visuals + video + avatars + worlds — the unified visual creation field
 @MainActor
-public final class EchoelCanvas: ObservableObject {
+public final class EchoelField: ObservableObject {
 
     // MARK: - Visual Modes
 
@@ -998,13 +999,14 @@ public final class EchoelCanvas: ObservableObject {
 }
 
 /// Backward compatibility — remove after 1 release cycle
-public typealias EchoelVis = EchoelCanvas
-public typealias EchoelVid = EchoelCanvas
-public typealias EchoelAvatar = EchoelCanvas
-public typealias EchoelWorld = EchoelCanvas
+public typealias EchoelCanvas = EchoelField
+public typealias EchoelVis = EchoelField
+public typealias EchoelVid = EchoelField
+public typealias EchoelAvatar = EchoelField
+public typealias EchoelWorld = EchoelField
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 8. EchoelOutput — Lighting + Stage (merged EchoelLux + EchoelStage)
+// MARK: - 8. EchoelBeam — Lighting + Stage (merged EchoelLux + EchoelStage)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: ProCueSystem, TimecodeEngine, CueList, ILDALaserController,
@@ -1014,10 +1016,11 @@ public typealias EchoelWorld = EchoelCanvas
 //         MultiScreenRouter
 //
 // 16 classes → 1 unified output controller (lighting + display routing)
+// SEO: "EchoelBeam" — light beams, projection beams, display beaming. Avoids Output.com conflict.
 
 /// All output — DMX, Art-Net, lasers, smart home, external displays, projection, VR/XR
 @MainActor
-public final class EchoelOutput: ObservableObject {
+public final class EchoelBeam: ObservableObject {
 
     // MARK: - Lighting Modes
 
@@ -1216,8 +1219,9 @@ public final class EchoelOutput: ObservableObject {
 }
 
 /// Backward compatibility — remove after 1 release cycle
-public typealias EchoelLux = EchoelOutput
-public typealias EchoelStage = EchoelOutput
+public typealias EchoelOutput = EchoelBeam
+public typealias EchoelLux = EchoelBeam
+public typealias EchoelStage = EchoelBeam
 public typealias EchoelConnect = EchoelNet
 public typealias EchoelMint = EchoelNet
 
@@ -1347,7 +1351,7 @@ public final class EchoelNet: ObservableObject {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MARK: - 10. EchoelAI — Intelligence Layer
+// MARK: - 10. EchoelMind — Intelligence Layer
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: EchoelCreativeAI (AIComposer + BioReactiveAIComposer + QuantumComposer),
@@ -1355,15 +1359,15 @@ public final class EchoelNet: ObservableObject {
 //         QuantumIntelligenceEngine, SuperIntelligenceQuantumBioPhysicalEngine
 //
 // ABSORBS (formerly separate homepage tools):
-//   EchoelMind     → Foundation Models, 3B params, on-device, bio-reactive AI
 //   EchoelTranslate → 20+ languages, speech-to-text, lyrics, subtitles, TTS
 //   Echoela         → AI assistant skills, constitutional AI, voice control
 //
 // 1 unified intelligence layer = brain + language + assistant personality
+// SEO: "EchoelMind" — distinctive, avoids "Echo AI" saturation. The mind of Echoelmusic.
 
-/// The brain — LLM, CoreML, stem separation, composition, translation, assistant
+/// The mind — LLM, CoreML, stem separation, composition, translation, assistant
 @MainActor
-public final class EchoelAI: ObservableObject {
+public final class EchoelMind: ObservableObject {
 
     public let creative: EchoelCreativeAI
 
@@ -1443,10 +1447,10 @@ public final class EchoelAI: ObservableObject {
     }
 }
 
-// Backward-compatible typealiases — absorbed into EchoelAI
-public typealias EchoelMind = EchoelAI
-public typealias EchoelTranslate = EchoelAI
-public typealias Echoela = EchoelAI
+// Backward-compatible typealiases — absorbed into EchoelMind
+public typealias EchoelAI = EchoelMind
+public typealias EchoelTranslate = EchoelMind
+public typealias Echoela = EchoelMind
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MARK: - EchoelToolkit — The Master Registry
@@ -1459,23 +1463,26 @@ public final class EchoelToolkit: ObservableObject {
 
     public static let shared = EchoelToolkit()
 
-    // The 10 Echoel* Tools
+    // The 10 Echoel* Tools — SEO-optimized authentic naming
     public let synth: EchoelSynth       // Synthesis
     public let mix: EchoelMix           // Mixing
     public let fx: EchoelFX             // Effects
     public let seq: EchoelSeq           // Sequencer
     public let midi: EchoelMIDI         // MIDI/MPE
     public let bio: EchoelBio           // Biometrics
-    public let canvas: EchoelCanvas     // Visuals + Video (was EchoelVis + EchoelVid)
-    public let output: EchoelOutput     // Lighting + Stage (was EchoelLux + EchoelStage)
-    public let net: EchoelNet           // Networking
-    public let ai: EchoelAI             // Intelligence
+    public let field: EchoelField       // Visuals + Video + Avatar + World
+    public let beam: EchoelBeam         // Lighting + Stage
+    public let net: EchoelNet           // Networking + Protocols + NFT
+    public let mind: EchoelMind         // Intelligence + Translation + Assistant
 
     // Backward-compatible accessors — remove after 1 release cycle
-    public var vis: EchoelCanvas { canvas }
-    public var vid: EchoelCanvas { canvas }
-    public var lux: EchoelOutput { output }
-    public var stage: EchoelOutput { output }
+    public var canvas: EchoelField { field }
+    public var vis: EchoelField { field }
+    public var vid: EchoelField { field }
+    public var output: EchoelBeam { beam }
+    public var lux: EchoelBeam { beam }
+    public var stage: EchoelBeam { beam }
+    public var ai: EchoelMind { mind }
 
     // Infrastructure
     public let bus: EngineBus
@@ -1490,10 +1497,10 @@ public final class EchoelToolkit: ObservableObject {
         self.seq = EchoelSeq()
         self.midi = EchoelMIDI()
         self.bio = EchoelBio()
-        self.canvas = EchoelCanvas()
-        self.output = EchoelOutput()
+        self.field = EchoelField()
+        self.beam = EchoelBeam()
         self.net = EchoelNet()
-        self.ai = EchoelAI()
+        self.mind = EchoelMind()
     }
 
     /// One-line status of the entire system
@@ -1502,7 +1509,7 @@ public final class EchoelToolkit: ObservableObject {
         EchoelToolkit: 10 tools active
         Synth: \(synth.activeEngine.rawValue) | Mix: \(mix.channelCount)ch @ \(mix.bpm) BPM
         Bio: HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100))
-        Canvas: \(canvas.visualMode.rawValue) | Output: \(output.lightingMode.rawValue)
+        Field: \(field.visualMode.rawValue) | Beam: \(beam.lightingMode.rawValue)
         Bus: \(bus.stats)
         """
     }
