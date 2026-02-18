@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var binauralAmplitude: Float = 0.3
     @State private var pulseAnimation = false
     @StateObject private var cymaticsVisualizer = CymaticsVisualizer()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Computed property - single source of truth for recording state
     private var isRecording: Bool {
@@ -97,7 +98,7 @@ struct ContentView: View {
                 if isRecording {
                     audioLevelBars
                         .transition(.opacity)
-                        .animation(VaporwaveAnimation.quick, value: microphoneManager.audioLevel)
+                        .animation(reduceMotion ? nil : VaporwaveAnimation.quick, value: microphoneManager.audioLevel)
                 }
 
                 // Control Buttons

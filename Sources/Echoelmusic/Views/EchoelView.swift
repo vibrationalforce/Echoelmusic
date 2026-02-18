@@ -33,6 +33,7 @@ public struct EchoelView: View {
     @State private var selectedLeftTab: LeftTab = .browser
     @State private var selectedRightTab: RightTab = .bio
     @State private var isFullscreen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}
 
@@ -549,6 +550,7 @@ struct MeditationCanvas: View {
     let coherence: Float
     let breathPhase: Float
     let heartRate: Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -568,7 +570,7 @@ struct MeditationCanvas: View {
                 )
                 .frame(width: 300 + CGFloat(breathPhase) * 60,
                        height: 300 + CGFloat(breathPhase) * 60)
-                .animation(.easeInOut(duration: 2), value: breathPhase)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 2), value: breathPhase)
 
             // Coherence text
             VStack(spacing: 8) {
@@ -679,6 +681,7 @@ struct StudioOverlay: View {
     @State private var isArmed = false
     @State private var metronomeOn = false
     @State private var inputMonitor = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack {
@@ -693,9 +696,11 @@ struct StudioOverlay: View {
                     RoundedRectangle(cornerRadius: 2)
                         .fill(Color.green.opacity(0.6))
                         .frame(width: CGFloat(max(engine.state.audioLevel, 0.05)) * 60, height: 8)
-                        .animation(.linear(duration: 0.05), value: engine.state.audioLevel)
+                        .animation(reduceMotion ? nil : .linear(duration: 0.05), value: engine.state.audioLevel)
                 }
+                .frame(minHeight: 44)
                 .onTapGesture { inputMonitor.toggle() }
+                .accessibilityLabel("Input monitor, \(inputMonitor ? "enabled" : "disabled")")
 
                 // Metronome
                 Button(action: { metronomeOn.toggle() }) {
@@ -705,8 +710,10 @@ struct StudioOverlay: View {
                         .padding(6)
                         .background(metronomeOn ? Color.orange.opacity(0.2) : Color.clear)
                         .cornerRadius(6)
+                        .frame(minWidth: 44, minHeight: 44)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Metronome, \(metronomeOn ? "on" : "off")")
 
                 // Record arm
                 Button(action: {
@@ -720,8 +727,10 @@ struct StudioOverlay: View {
                             Circle()
                                 .stroke(Color.red, lineWidth: isArmed ? 0 : 1)
                         )
+                        .frame(minWidth: 44, minHeight: 44)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Record, \(isArmed ? "armed" : "disarmed")")
 
                 // Recording indicator
                 if engine.state.isRecording {
@@ -779,8 +788,10 @@ struct LiveOverlay: View {
                                     .frame(width: 64, height: 24)
                                     .background(selectedScene == i ? Color.orange : Color.white.opacity(0.1))
                                     .cornerRadius(4)
+                                    .frame(minHeight: 44)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Scene \(sceneNames[i]), \(selectedScene == i ? "active" : "inactive")")
                         }
                     }
                 }
@@ -815,6 +826,7 @@ struct MeditationOverlay: View {
     @State private var targetMinutes: Int = 10
     @State private var sessionActive = false
     @State private var timer: Timer?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack {
@@ -837,9 +849,11 @@ struct MeditationOverlay: View {
                             .padding(.vertical, 6)
                             .background(sessionActive ? Color.red.opacity(0.5) : Color.cyan.opacity(0.5))
                             .cornerRadius(16)
+                            .frame(minHeight: 44)
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 4)
+                    .accessibilityLabel(sessionActive ? "End meditation session" : "Begin meditation session")
                 }
                 .padding(.trailing, 16)
                 .padding(.top, 16)
@@ -860,7 +874,7 @@ struct MeditationOverlay: View {
                     )
                     .frame(width: 120, height: 120)
                     .rotationEffect(.degrees(-90))
-                    .animation(.easeInOut(duration: 1), value: engine.state.coherence)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 1), value: engine.state.coherence)
             }
 
             Spacer()
@@ -1309,8 +1323,10 @@ struct TracksPanel: View {
                                 Circle()
                                     .fill(trackStates[i].armed ? Color.red : Color.red.opacity(0.2))
                                     .frame(width: 14, height: 14)
+                                    .frame(minWidth: 44, minHeight: 44)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("\(trackStates[i].name) arm, \(trackStates[i].armed ? "armed" : "disarmed")")
 
                             // Mute
                             Button(action: { trackStates[i].muted.toggle() }) {
@@ -1320,8 +1336,10 @@ struct TracksPanel: View {
                                     .frame(width: 18, height: 18)
                                     .background(trackStates[i].muted ? Color.yellow : Color.white.opacity(0.1))
                                     .cornerRadius(3)
+                                    .frame(minWidth: 44, minHeight: 44)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("\(trackStates[i].name) mute, \(trackStates[i].muted ? "muted" : "unmuted")")
 
                             // Solo
                             Button(action: { trackStates[i].solo.toggle() }) {
@@ -1331,8 +1349,10 @@ struct TracksPanel: View {
                                     .frame(width: 18, height: 18)
                                     .background(trackStates[i].solo ? Color.cyan : Color.white.opacity(0.1))
                                     .cornerRadius(3)
+                                    .frame(minWidth: 44, minHeight: 44)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("\(trackStates[i].name) solo, \(trackStates[i].solo ? "soloed" : "off")")
 
                             // Level
                             RoundedRectangle(cornerRadius: 1)
@@ -1632,6 +1652,7 @@ struct TimelineStrip: View {
 
 struct BreathingGuideStrip: View {
     let state: EngineState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 24) {
@@ -1652,7 +1673,7 @@ struct BreathingGuideStrip: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.cyan.opacity(0.6))
                         .frame(width: geo.size.width * CGFloat(state.breathPhase))
-                        .animation(.easeInOut(duration: 1), value: state.breathPhase)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 1), value: state.breathPhase)
                 }
             }
 

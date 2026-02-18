@@ -89,6 +89,7 @@ public struct OnboardingView: View {
     @State private var currentPage: Int = 0
     @State private var showMainApp: Bool = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let totalPages = 5
 
@@ -126,7 +127,7 @@ public struct OnboardingView: View {
                     .tag(4)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeInOut, value: currentPage)
+            .animation(reduceMotion ? nil : .easeInOut, value: currentPage)
 
             // Custom page indicators
             VStack {
@@ -774,27 +775,29 @@ private extension View {
 
 private struct PulseAnimationModifier: ViewModifier {
     @State private var isPulsing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(isPulsing ? 1.05 : 1.0)
-            .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isPulsing)
+            .scaleEffect(isPulsing && !reduceMotion ? 1.05 : 1.0)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isPulsing)
             .onAppear {
-                isPulsing = true
+                if !reduceMotion { isPulsing = true }
             }
     }
 }
 
 private struct RippleAnimationModifier: ViewModifier {
     @State private var isAnimating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(isAnimating ? 1.2 : 1.0)
-            .opacity(isAnimating ? 0.5 : 1.0)
-            .animation(.easeOut(duration: 2.0).repeatForever(autoreverses: false), value: isAnimating)
+            .scaleEffect(isAnimating && !reduceMotion ? 1.2 : 1.0)
+            .opacity(isAnimating && !reduceMotion ? 0.5 : 1.0)
+            .animation(reduceMotion ? nil : .easeOut(duration: 2.0).repeatForever(autoreverses: false), value: isAnimating)
             .onAppear {
-                isAnimating = true
+                if !reduceMotion { isAnimating = true }
             }
     }
 }
