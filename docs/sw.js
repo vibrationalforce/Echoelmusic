@@ -50,7 +50,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: Clean old caches
+// Activate: Nuke ALL old caches, re-cache fresh assets, notify clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -63,8 +63,22 @@ self.addEventListener('activate', (event) => {
           })
       );
     }).then(() => {
-      trimCache(CACHE_NAME, MAX_CACHE_ITEMS);
-      self.clients.matchAll().then(clients => {
+      // Re-cache fresh copies of all static assets (network fetch, bypass old cache)
+      return caches.open(CACHE_NAME).then((cache) => {
+        return Promise.all(
+          STATIC_ASSETS.map((url) =>
+            fetch(url, { cache: 'no-store' })
+              .then((response) => {
+                if (response.ok) return cache.put(url, response);
+              })
+              .catch(() => {}) // Offline: skip, install already cached these
+          )
+        );
+      });
+    }).then(() => {
+      return trimCache(CACHE_NAME, MAX_CACHE_ITEMS);
+    }).then(() => {
+      return self.clients.matchAll().then(clients => {
         clients.forEach(client => client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME }));
       });
     })

@@ -1,4 +1,4 @@
-/* Echoelmusic Shared JS — v8.0.1 */
+/* Echoelmusic Shared JS — v10.0.0 */
 (function(){
 var burger=document.getElementById('burger');
 var overlay=document.getElementById('menuOverlay');
@@ -23,21 +23,30 @@ if(e.shiftKey){if(document.activeElement===first||!overlay.contains(document.act
 else{if(document.activeElement===last||!overlay.contains(document.activeElement)){e.preventDefault();first.focus();}}
 }
 });
-/* SW: Register with update check — force refresh on new version */
+/* SW: Register with updateViaCache:none — force network check for sw.js */
 if('serviceWorker' in navigator){
-navigator.serviceWorker.register('/sw.js').then(function(reg){
+navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(function(reg){
 reg.addEventListener('updatefound',function(){
 var newWorker=reg.installing;
 if(newWorker){newWorker.addEventListener('statechange',function(){
 if(newWorker.state==='activated'){window.location.reload();}
 });}
 });
-/* Check for SW update every 60s (CDN may cache sw.js) */
-setInterval(function(){reg.update();},60000);
+/* Check for SW update every 30s */
+setInterval(function(){reg.update();},30000);
 }).catch(function(e){console.warn('[SW]',e);});
 /* Listen for SW_UPDATED message */
 navigator.serviceWorker.addEventListener('message',function(e){
 if(e.data&&e.data.type==='SW_UPDATED'){window.location.reload();}
 });
 }
+/* Version check: nuke stale caches if server has v10 but page shows old content */
+fetch('/version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+if(d.version!=='10.0.0')return;
+var h=document.querySelector('h1,title');
+if(h&&h.textContent&&h.textContent.indexOf('12 tools')!==-1){
+caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));})
+.then(function(){window.location.reload(true);});
+}
+}).catch(function(){});
 })();

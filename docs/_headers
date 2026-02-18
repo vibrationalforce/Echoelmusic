@@ -38,11 +38,11 @@
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
 
-# Shared CSS/JS - cache 1 week (versioned via SW cache name)
+# Shared CSS/JS - cache 1 hour (cache-busted via ?v= query param)
 /shared.css
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=3600
 /shared.js
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=3600
 
 # Service worker - no cache (must update immediately)
 /sw.js
