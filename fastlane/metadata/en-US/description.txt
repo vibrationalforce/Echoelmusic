@@ -55,6 +55,36 @@ Every instrument responds to your biometrics.
 Professional audio processing inspired by legendary analog hardware. Classic British console compression, vintage American tube EQ, optical limiters, transformer saturation. Reverbs, delays, modulation, distortion - all studio-grade, all native.
 
 
+REAL-TIME TRANSLATION
+
+EchoelTranslate: 20+ languages, on-device, zero-latency. Speak in any language - live subtitles appear instantly. Multilingual audiences, one performance.
+
+
+LYRICS EXTRACTION
+
+EchoelLyrics: Separate vocals, extract lyrics, sync to the beat. Word-level timestamps, real-time display, translation into any language.
+
+
+BIO-REACTIVE AVATARS
+
+EchoelAvatar: 7 avatar styles driven by your biometrics and facial expressions. Photorealistic (3D Gaussian Splatting), Particle Cloud, Holographic, Cymatics, and more. Your coherence shapes your aura. 52 facial blendshapes at 60fps.
+
+
+PROCEDURAL WORLDS
+
+EchoelWorld: Entire universes that breathe with you. 8 biomes generated from your bio-state. Crystal Caverns, Sacred Forest, Deep Ocean, Cosmic Nebula. Your heart rate drives weather. Your HRV shapes terrain.
+
+
+ON-DEVICE AI
+
+EchoelMind: Apple Foundation Models (3B params, on-device). Session summaries, creative suggestions, bio-reactive narrative generation. Your coherence modulates AI mood. Zero cloud. Zero data leaves your device.
+
+
+INDUSTRY INTEGRATION
+
+EchoelConnect: 17 protocols. OSC for TouchDesigner, Resolume, Max/MSP, QLab. MIDI Show Control for theater. Mackie Control for DAW surfaces. Art-Net for lighting. Dante for audio networking. Your biometrics broadcast to professional software in real time.
+
+
 LASER AND DMX
 
 Control professional lighting directly from your biometrics. Art-Net and DMX integration for live performances, installations, and immersive experiences.

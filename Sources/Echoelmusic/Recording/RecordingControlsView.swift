@@ -294,7 +294,7 @@ struct RecordingControlsView: View {
     // MARK: - Session Name Prompt
 
     private var sessionNamePromptView: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 20) {
                 Text("Create New Session")
                     .font(.system(size: 24, weight: .bold))
@@ -361,7 +361,7 @@ struct RecordingControlsView: View {
     // MARK: - Export Options View
 
     private var exportOptionsView: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 Section(header: Text("Audio Format")) {
                     exportFormatButton(title: "WAV", icon: "waveform", format: .wav)

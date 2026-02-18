@@ -9,7 +9,7 @@ struct TrackListView: View {
     @State private var trackToDelete: UUID?
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             ScrollView {
                 VStack(spacing: 12) {
                     if session.tracks.isEmpty {

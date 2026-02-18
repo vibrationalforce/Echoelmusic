@@ -566,7 +566,7 @@ struct MintingSheet: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 24) {
                 // Preview card
                 VStack(spacing: 12) {

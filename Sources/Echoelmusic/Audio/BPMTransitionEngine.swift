@@ -674,7 +674,7 @@ private struct SituationPickerView: View {
     @Binding var isPresented: Bool
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List(BPMSituation.allCases) { situation in
                 Button(action: {
                     engine.situation = situation

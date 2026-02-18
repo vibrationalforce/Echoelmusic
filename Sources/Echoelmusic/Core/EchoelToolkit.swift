@@ -2,7 +2,7 @@
 // Echoelmusic — The Unified Tool Architecture
 //
 // ═══════════════════════════════════════════════════════════════════════════════
-// MASTER CONSOLIDATION: 498 classes → 12 Echoel* Tools + Core
+// MASTER CONSOLIDATION: 498 classes → 19 Echoel* Tools + 5 Support Engines + Core
 //
 // Philosophy: Weniger Tools, die mehr können.
 // Every tool is an Echoel* — consistent naming, consistent API, consistent power.
@@ -29,6 +29,20 @@
 // │                              │                                           │
 // │                         Echoela                                          │
 // │                    (AI assistant / UX)                                   │
+// │                              │                                           │
+// │   ┌──────────┬──────────┬────┴────┬──────────┐ ← NEW 2026              │
+// │   │          │          │         │          │                           │
+// │ EchoelTranslate EchoelLyrics EchoelMind EchoelMint                     │
+// │ (translation)  (lyrics/STT) (on-device (bio-reactive                   │
+// │                               LLM)     NFTs)                            │
+// │   │                                                                     │
+// │   └─→ EchoelSubtitle (real-time multilingual captions)                  │
+// │                                                                         │
+// │   ┌──────────┬──────────┬────────────┐ ← INTEGRATION                   │
+// │   │          │          │            │                                   │
+// │ EchoelOSC EchoelShowCtrl EchoelHub                                     │
+// │ (OSC UDP)  (MSC/Mackie)  (master                                       │
+// │                           orchestrator)                                 │
 // └───────────────────────────────────────────────────────────────────────────┘
 //
 // Communication: All tools talk via EngineBus (publish/subscribe/request)
@@ -853,6 +867,8 @@ public final class EchoelVis: ObservableObject {
         case spatial360 = "360"
         case waveform = "Waveform"
         case hilbert = "Hilbert"           // Hilbert curve bio-visualization
+        case generativeWorld = "Generative World"  // Abstract bio-reactive environments
+        case arWorld = "AR World"          // Augmented reality overlays on real locations
     }
 
     @Published public var mode: VisMode = .particles
@@ -917,12 +933,24 @@ public final class EchoelVid: ObservableObject {
         case edit = "Edit"
         case stream = "Stream"
         case multiCam = "MultiCam"
+        case greenScreen = "Green Screen"   // 6-pass Metal chroma key pipeline
+        case avatarTransform = "Avatar"     // ARKit blendshapes → 3D avatar rig
+        case styleFilter = "Style Filter"   // Core ML real-time style transfer
+    }
+
+    public enum AvatarPreset: String, CaseIterable, Sendable {
+        case none = "None"
+        case abstract = "Abstract Being"
+        case creature = "Creature"
+        case robot = "Robot"
+        case custom = "Custom"
     }
 
     @Published public var mode: VidMode = .capture
     @Published public var isRecording: Bool = false
     @Published public var isStreaming: Bool = false
     @Published public var chromaKeyEnabled: Bool = false
+    @Published public var avatarPreset: AvatarPreset = .none
 
     public init() {}
 
@@ -1212,6 +1240,8 @@ public final class EchoelAI: ObservableObject {
         case transcribe = "Transcribe"      // Audio → MIDI
         case generate = "Generate"          // LLM creative generation
         case analyze = "Analyze"            // Audio analysis
+        case musicTheory = "Music Theory"   // Bio-reactive theory lessons (scales, harmony, counterpoint)
+        case arHistory = "AR History"       // Music/cultural history at real locations or from sofa
     }
 
     public init() {
@@ -1228,7 +1258,7 @@ public final class EchoelAI: ObservableObject {
             lastResult = "\(suggestion.chord) (\(suggestion.reason))"
         case .generate:
             lastResult = await creative.generate(prompt: input)
-        case .separate, .transcribe, .analyze:
+        case .separate, .transcribe, .analyze, .musicTheory, .arHistory:
             lastResult = "[\(task.rawValue)] Processing..."
         }
 
@@ -1263,7 +1293,7 @@ public final class EchoelToolkit: ObservableObject {
 
     public static let shared = EchoelToolkit()
 
-    // The 12 Echoel* Tools
+    // The 12 Original Echoel* Tools
     public let synth: EchoelSynth       // Synthesis
     public let mix: EchoelMix           // Mixing
     public let fx: EchoelFX             // Effects
@@ -1277,6 +1307,24 @@ public final class EchoelToolkit: ObservableObject {
     public let net: EchoelNet           // Networking
     public let ai: EchoelAI             // Intelligence
 
+    // 7 New Echoel* Engines (2026 Expansion)
+    public let translate: EchoelTranslateEngine    // Real-time translation (20+ languages, on-device)
+    public let lyrics: EchoelLyricsEngine          // Lyrics extraction + sync + translation
+    public let mind: EchoelMindEngine              // On-device LLM (Apple Foundation Models, 3B params)
+    public let mint: EchoelMintEngine              // Bio-reactive Dynamic NFTs
+    public let avatar: EchoelAvatarEngine          // Bio-reactive avatars (3DGS, ARKit, particles)
+    public let world: EchoelWorldEngine            // Procedural bio-reactive worlds
+    public let godot: EchoelGodotBridge            // Godot 4.6 rendering engine (LibGodot)
+
+    // Supporting engines
+    public let speech: EchoelSpeechEngine          // Speech-to-text (SpeechAnalyzer)
+    public let subtitle: EchoelSubtitleRenderer    // Real-time multilingual subtitles
+
+    // Integration engines (industry-standard protocols)
+    public let osc: EchoelOSCEngine                // Open Sound Control (TouchDesigner, Resolume, Max/MSP)
+    public let showControl: EchoelShowControl      // MIDI Show Control + Mackie Control / HUI
+    public let integrationHub: EchoelIntegrationHub // Master orchestrator for all protocols
+
     // Infrastructure
     public let bus: EngineBus
     public let registry: EngineRegistry
@@ -1284,6 +1332,8 @@ public final class EchoelToolkit: ObservableObject {
     private init() {
         self.bus = EngineBus.shared
         self.registry = EngineRegistry.shared
+
+        // Original 12
         self.synth = EchoelSynth()
         self.mix = EchoelMix()
         self.fx = EchoelFX()
@@ -1296,16 +1346,44 @@ public final class EchoelToolkit: ObservableObject {
         self.stage = EchoelStage()
         self.net = EchoelNet()
         self.ai = EchoelAI()
+
+        // 2026 Expansion engines (singletons)
+        self.translate = EchoelTranslateEngine.shared
+        self.lyrics = EchoelLyricsEngine.shared
+        self.mind = EchoelMindEngine.shared
+        self.mint = EchoelMintEngine.shared
+        self.avatar = EchoelAvatarEngine.shared
+        self.world = EchoelWorldEngine.shared
+        self.godot = EchoelGodotBridge.shared
+        self.speech = EchoelSpeechEngine.shared
+        self.subtitle = EchoelSubtitleRenderer.shared
+
+        // Integration engines (singletons)
+        self.osc = EchoelOSCEngine.shared
+        self.showControl = EchoelShowControl.shared
+        self.integrationHub = EchoelIntegrationHub.shared
     }
 
     /// One-line status of the entire system
     public var status: String {
         """
-        EchoelToolkit: 12 tools active
-        Synth: \(synth.activeEngine.rawValue) | Mix: \(mix.channelCount)ch @ \(mix.bpm) BPM
-        Bio: HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100))
-        Vis: \(vis.mode.rawValue) | Lux: \(lux.mode.rawValue)
-        Bus: \(bus.stats)
+        EchoelToolkit: 19 Echoel* tools + 5 support engines
+        ═══════════════════════════════════════════════════
+        Audio:     Synth(\(synth.activeEngine.rawValue)) Mix(\(mix.channelCount)ch @ \(mix.bpm)BPM) FX Seq MIDI
+        Bio:       HR=\(Int(bio.heartRate)) Coh=\(String(format: "%.0f%%", bio.coherence * 100)) HRV=\(Int(bio.hrvSDNN))ms
+        Visual:    Vis(\(vis.mode.rawValue)) Lux(\(lux.mode.rawValue)) Vid Stage
+        Network:   Net AI
+        Translate: \(translate.targetLanguages.count) languages | Speech: \(speech.state.rawValue)
+        Lyrics:    \(lyrics.document?.lines.count ?? 0) lines | Subtitle: \(subtitle.isVisible ? "ON" : "OFF")
+        Mind:      \(mind.isAvailable ? "Ready" : "N/A") (\(mind.totalTokens) tokens)
+        Mint:      \(mint.drafts.count) drafts, \(mint.minted.count) minted
+        Avatar:    \(avatar.style.rawValue) | Face: \(avatar.isFaceTrackingActive ? "ON" : "OFF")
+        World:     \(world.currentState.biome.rawValue) | \(world.currentState.weather.rawValue)
+        Godot:     \(godot.state.rawValue) | Scene: \(godot.activeScene?.rawValue ?? "none")
+        OSC:       \(osc.isServerRunning ? "Listening :\(osc.serverPort)" : "OFF") | \(osc.targets.count) targets | \(osc.sendRate)msg/s
+        ShowCtrl:  MSC=\(showControl.mscEnabled ? "ON" : "OFF") | Mackie=\(showControl.mackieEnabled ? "ON" : "OFF")
+        Hub:       \(integrationHub.summary)
+        Bus:       \(bus.stats)
         """
     }
 }

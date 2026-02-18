@@ -6,7 +6,7 @@ struct EffectParametersView: View {
     @ObservedObject var nodeGraph: NodeGraph
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     // Node info header

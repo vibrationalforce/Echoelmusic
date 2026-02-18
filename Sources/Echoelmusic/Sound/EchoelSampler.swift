@@ -711,10 +711,10 @@ public final class EchoelSampler {
         // Try note name: "C4", "Db3", "F#5"
         let noteNames = ["C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11]
         let notePattern = try? NSRegularExpression(pattern: "([A-Ga-g])([#b]?)(\\d)")
-        if let match = notePattern?.firstMatch(in: name, range: NSRange(name.startIndex..., in: name)) {
-            let letterRange = Range(match.range(at: 1), in: name)!
-            let accidentalRange = Range(match.range(at: 2), in: name)!
-            let octaveRange = Range(match.range(at: 3), in: name)!
+        if let match = notePattern?.firstMatch(in: name, range: NSRange(name.startIndex..., in: name)),
+           let letterRange = Range(match.range(at: 1), in: name),
+           let accidentalRange = Range(match.range(at: 2), in: name),
+           let octaveRange = Range(match.range(at: 3), in: name) {
 
             let letter = String(name[letterRange]).uppercased()
             let accidental = String(name[accidentalRange])

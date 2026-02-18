@@ -245,6 +245,63 @@ class LocalizationManager: ObservableObject {
         case errorNetwork = "error.network"
         case errorPermission = "error.permission"
         case errorFileNotFound = "error.file_not_found"
+
+        // 2026 Expansion — Translation & Speech
+        case translate = "translate.title"
+        case translateSourceLanguage = "translate.source_language"
+        case translateTargetLanguage = "translate.target_language"
+        case translateOnDevice = "translate.on_device"
+        case speechRecognition = "speech.recognition"
+        case speechListening = "speech.listening"
+        case speechTranscription = "speech.transcription"
+
+        // 2026 Expansion — Lyrics & Subtitles
+        case lyrics = "lyrics.title"
+        case lyricsExtract = "lyrics.extract"
+        case lyricsSyncing = "lyrics.syncing"
+        case lyricsNoVocals = "lyrics.no_vocals"
+        case subtitle = "subtitle.title"
+        case subtitleLive = "subtitle.live"
+        case subtitleLanguage = "subtitle.language"
+
+        // 2026 Expansion — Mind (On-Device LLM)
+        case mind = "mind.title"
+        case mindSummarize = "mind.summarize"
+        case mindSuggest = "mind.suggest"
+        case mindDescribe = "mind.describe"
+        case mindGenerate = "mind.generate"
+        case mindOnDevice = "mind.on_device"
+        case mindProcessing = "mind.processing"
+
+        // 2026 Expansion — Mint (Digital Assets)
+        case mint = "mint.title"
+        case mintCapture = "mint.capture"
+        case mintExport = "mint.export"
+        case mintBioSignature = "mint.bio_signature"
+
+        // 2026 Expansion — Avatar
+        case avatar = "avatar.title"
+        case avatarStyle = "avatar.style"
+        case avatarPhotorealistic = "avatar.photorealistic"
+        case avatarParticleCloud = "avatar.particle_cloud"
+        case avatarHolographic = "avatar.holographic"
+        case avatarSilhouette = "avatar.silhouette"
+        case avatarAura = "avatar.aura"
+
+        // 2026 Expansion — World
+        case world = "world.title"
+        case worldBiome = "world.biome"
+        case worldWeather = "world.weather"
+        case worldTerrain = "world.terrain"
+        case worldExplore = "world.explore"
+
+        // 2026 Expansion — Integration (OSC, Show Control)
+        case integration = "integration.title"
+        case integrationOSC = "integration.osc"
+        case integrationShowControl = "integration.show_control"
+        case integrationMackieControl = "integration.mackie_control"
+        case integrationConnected = "integration.connected"
+        case integrationDisconnected = "integration.disconnected"
     }
 
     // MARK: - Initialization
@@ -607,7 +664,64 @@ class LocalizationManager: ObservableObject {
             "error.generic": "Ein Fehler ist aufgetreten",
             "error.network": "Netzwerkfehler",
             "error.permission": "Berechtigung erforderlich",
-            "error.file_not_found": "Datei nicht gefunden"
+            "error.file_not_found": "Datei nicht gefunden",
+
+            // 2026 Expansion — Translation & Speech
+            "translate.title": "Übersetzen",
+            "translate.source_language": "Ausgangssprache",
+            "translate.target_language": "Zielsprache",
+            "translate.on_device": "Auf dem Gerät",
+            "speech.recognition": "Spracherkennung",
+            "speech.listening": "Zuhören...",
+            "speech.transcription": "Transkription",
+
+            // 2026 Expansion — Lyrics & Subtitles
+            "lyrics.title": "Songtexte",
+            "lyrics.extract": "Texte extrahieren",
+            "lyrics.syncing": "Synchronisiere...",
+            "lyrics.no_vocals": "Keine Vocals erkannt",
+            "subtitle.title": "Untertitel",
+            "subtitle.live": "Live-Untertitel",
+            "subtitle.language": "Untertitelsprache",
+
+            // 2026 Expansion — Mind
+            "mind.title": "KI-Assistent",
+            "mind.summarize": "Zusammenfassen",
+            "mind.suggest": "Vorschlagen",
+            "mind.describe": "Beschreiben",
+            "mind.generate": "Generieren",
+            "mind.on_device": "Auf dem Gerät",
+            "mind.processing": "Verarbeite...",
+
+            // 2026 Expansion — Mint
+            "mint.title": "Digitale Assets",
+            "mint.capture": "Moment festhalten",
+            "mint.export": "Asset exportieren",
+            "mint.bio_signature": "Bio-Signatur",
+
+            // 2026 Expansion — Avatar
+            "avatar.title": "Avatar",
+            "avatar.style": "Avatar-Stil",
+            "avatar.photorealistic": "Fotorealistisch",
+            "avatar.particle_cloud": "Partikelwolke",
+            "avatar.holographic": "Holographisch",
+            "avatar.silhouette": "Silhouette",
+            "avatar.aura": "Aura",
+
+            // 2026 Expansion — World
+            "world.title": "Welt",
+            "world.biome": "Biom",
+            "world.weather": "Wetter",
+            "world.terrain": "Terrain",
+            "world.explore": "Erkunden",
+
+            // 2026 Expansion — Integration
+            "integration.title": "Integration",
+            "integration.osc": "Open Sound Control",
+            "integration.show_control": "Show Control",
+            "integration.mackie_control": "Mackie Control",
+            "integration.connected": "Verbunden",
+            "integration.disconnected": "Getrennt"
         ]
     }
 
@@ -675,7 +789,64 @@ class LocalizationManager: ObservableObject {
             "error.generic": "An error occurred",
             "error.network": "Network error",
             "error.permission": "Permission required",
-            "error.file_not_found": "File not found"
+            "error.file_not_found": "File not found",
+
+            // 2026 Expansion — Translation & Speech
+            "translate.title": "Translate",
+            "translate.source_language": "Source Language",
+            "translate.target_language": "Target Language",
+            "translate.on_device": "On Device",
+            "speech.recognition": "Speech Recognition",
+            "speech.listening": "Listening...",
+            "speech.transcription": "Transcription",
+
+            // 2026 Expansion — Lyrics & Subtitles
+            "lyrics.title": "Lyrics",
+            "lyrics.extract": "Extract Lyrics",
+            "lyrics.syncing": "Syncing...",
+            "lyrics.no_vocals": "No Vocals Detected",
+            "subtitle.title": "Subtitles",
+            "subtitle.live": "Live Subtitles",
+            "subtitle.language": "Subtitle Language",
+
+            // 2026 Expansion — Mind
+            "mind.title": "AI Assistant",
+            "mind.summarize": "Summarize",
+            "mind.suggest": "Suggest",
+            "mind.describe": "Describe",
+            "mind.generate": "Generate",
+            "mind.on_device": "On Device",
+            "mind.processing": "Processing...",
+
+            // 2026 Expansion — Mint
+            "mint.title": "Digital Assets",
+            "mint.capture": "Capture Moment",
+            "mint.export": "Export Asset",
+            "mint.bio_signature": "Bio Signature",
+
+            // 2026 Expansion — Avatar
+            "avatar.title": "Avatar",
+            "avatar.style": "Avatar Style",
+            "avatar.photorealistic": "Photorealistic",
+            "avatar.particle_cloud": "Particle Cloud",
+            "avatar.holographic": "Holographic",
+            "avatar.silhouette": "Silhouette",
+            "avatar.aura": "Aura",
+
+            // 2026 Expansion — World
+            "world.title": "World",
+            "world.biome": "Biome",
+            "world.weather": "Weather",
+            "world.terrain": "Terrain",
+            "world.explore": "Explore",
+
+            // 2026 Expansion — Integration
+            "integration.title": "Integration",
+            "integration.osc": "Open Sound Control",
+            "integration.show_control": "Show Control",
+            "integration.mackie_control": "Mackie Control",
+            "integration.connected": "Connected",
+            "integration.disconnected": "Disconnected"
         ]
     }
 

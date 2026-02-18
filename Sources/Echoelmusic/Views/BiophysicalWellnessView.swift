@@ -539,7 +539,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 // Preset Info Section
                 Section("Preset Information") {

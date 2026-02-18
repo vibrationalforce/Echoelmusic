@@ -9,7 +9,9 @@
 
 import Foundation
 import Combine
+#if canImport(Network)
 import Network
+#endif
 
 /// Logger alias for Collaboration operations
 private var collabLog: EchoelLogger { echoelLog }

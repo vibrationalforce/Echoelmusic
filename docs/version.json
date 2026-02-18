@@ -1,6 +1,6 @@
 {
-  "version": "9.2.0",
-  "build": "2026-02-17",
+  "version": "10.0.0",
+  "build": "2026-02-18",
   "features": {
     "monochromeDesign": true,
     "pureBlackBackground": true,
@@ -25,6 +25,9 @@
     "wcag22AAA": true
   },
   "changelog": [
+    "v10.0.0: 2026 Expansion — 25 unified Echoel* tools. EchoelTranslate (20+ languages, speech-to-text, lyrics, subtitles), EchoelMind (Apple Foundation Models, 3B params), EchoelAvatar (3DGS, ARKit 52 blendshapes, aura particles), EchoelWorld (procedural worlds, Godot 4.6), EchoelMint (dynamic NFTs), EchoelConnect (OSC, MIDI Show Control, Mackie Control, 17 protocols). Website updated with all new tool cards.",
+    "v9.4.0: Avatar Transform (ARKit → 3D avatar rigs), Green Screen + AI Style Filter (EchoelVid), Shared Worlds (EchoelNet), Text→3D (EchoelAI). Godot/SwiftGodotKit + TRELLIS + FastNoise technology roadmap. W3C Verifiable Credentials for digital ownership.",
+    "v9.3.0: Generative Worlds + AR Worlds (EchoelVis), Music Theory + AR History (EchoelAI). 3 Editions: Creative Suite, Research Edition, Bio-Reactive Audio SDK. 8 audience personas. Education, research, and game developer positioning.",
     "v9.2.0: EchoelStage (12th tool) — external displays, smart glasses, AirPlay, projection, multi-screen, audience view. Dante + EchoelSync added to EchoelNet. Clickable tool-cap descriptions on website. External-Display-Rendering-Pipeline.",
     "v9.1.0: Enhanced DDSP (12 bio-mappings, spectral morphing, timbre transfer), Rausch-inspired bio-signal algorithms (BioEventGraph, HilbertSensorMapper, BioSignalDeconvolver), BioSignalDSP integrated into EchoelBio + EchoelVis, Android EngineBus port, extended BioSnapshot, 56 test suites",
     "v9.0.0: EchoelToolkit — 498 classes consolidated into 12 unified Echoel* tools (EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelVis, EchoelVid, EchoelLux, EchoelStage, EchoelNet, EchoelAI + Echoela). Card-based tools section, updated specs and FAQ.",

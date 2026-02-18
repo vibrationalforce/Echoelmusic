@@ -123,6 +123,40 @@
                 <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
             </array>
         </dict>
+
+        <!-- Photos/Videos (EchoelAvatar camera capture, EchoelMint asset snapshots) -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypePhotosorVideos</string>
+
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+
+        <!-- Other Data — On-device LLM prompts/responses (EchoelMind), translation text (EchoelTranslate) -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
+
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
     </array>
 
     <!-- ============================= -->

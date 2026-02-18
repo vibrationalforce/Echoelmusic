@@ -7,7 +7,7 @@ struct MixerView: View {
     @Binding var session: Session
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             GeometryReader { geometry in
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: VaporwaveSpacing.lg) {

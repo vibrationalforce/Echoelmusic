@@ -1836,7 +1836,7 @@ public struct LegalDocumentViewer: View {
     }
 
     public var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 0) {
                 // Document picker
                 Picker("Document", selection: $selectedDocument) {

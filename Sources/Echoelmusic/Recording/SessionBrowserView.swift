@@ -22,7 +22,7 @@ struct SessionBrowserView: View {
     }
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 0) {
                 // Search bar
                 searchBar

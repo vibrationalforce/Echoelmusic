@@ -720,7 +720,7 @@ public struct ImmersiveIsochronicView: View {
     }
 
     private var settingsView: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Audio Mode") {
                     Picker("Mode", selection: $session.audioMode) {

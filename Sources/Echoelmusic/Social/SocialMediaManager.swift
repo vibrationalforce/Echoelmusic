@@ -689,7 +689,7 @@ struct OneClickPublishView: View {
     @State private var selectedPlatforms: Set<SocialMediaManager.Platform> = []
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 20) {
 
                 // Platform Selection

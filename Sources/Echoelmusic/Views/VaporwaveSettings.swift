@@ -36,7 +36,7 @@ struct VaporwaveSettings: View {
     // MARK: - Body
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             ZStack {
                 VaporwaveGradients.background
                     .ignoresSafeArea()

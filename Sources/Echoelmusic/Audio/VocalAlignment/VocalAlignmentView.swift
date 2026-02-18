@@ -12,7 +12,7 @@ struct VocalAlignmentView: View {
     @State private var showExportSheet = false
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             VStack(spacing: 0) {
                 // Header with guide track
                 guideTrackSection

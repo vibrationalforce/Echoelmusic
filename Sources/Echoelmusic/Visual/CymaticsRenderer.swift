@@ -11,10 +11,10 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Metal Components
 
-    private var device: MTLDevice!
-    private var commandQueue: MTLCommandQueue!
-    private var pipelineState: MTLRenderPipelineState!
-    private var vertexBuffer: MTLBuffer!
+    private var device: MTLDevice?
+    private var commandQueue: MTLCommandQueue?
+    private var pipelineState: MTLRenderPipelineState?
+    private var vertexBuffer: MTLBuffer?
 
 
     // MARK: - Uniforms

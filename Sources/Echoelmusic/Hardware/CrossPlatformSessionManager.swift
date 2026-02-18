@@ -1,6 +1,8 @@
 import Foundation
 import Combine
+#if canImport(Network)
 import Network
+#endif
 
 // Logger: uses global 'log' from ProfessionalLogger
 

@@ -672,7 +672,7 @@ struct QuantumMIDISettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             Form {
                 Section("Intelligence Mode") {
                     Picker("Mode", selection: $midiOut.intelligenceMode) {
@@ -737,7 +737,7 @@ struct InstrumentRoutingView: View {
     ]
 
     var body: some View {
-        NavigationView {
+        EchoelNavigationStack {
             List {
                 ForEach(categories, id: \.0) { category, instruments in
                     Section(category) {

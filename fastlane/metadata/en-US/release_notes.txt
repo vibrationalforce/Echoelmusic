@@ -1,41 +1,29 @@
-Version 1.2.0 - Phase 10000 ULTIMATE MODE
+Version 2.0.0 - 2026 Expansion
 
 BETA - FREE FOR A LIMITED TIME
 We'd love to hear your feedback! Help us shape the future of bio-reactive music.
 Contact: michaelterbuyken@gmail.com
 
-MAJOR NEW FEATURES
+7 NEW ENGINES
 
-Cinematic Orchestral Scoring Engine
-- 27 articulation types (legato, spiccato, col legno, flutter tongue)
-- Full orchestra with 8 sections and accurate stage positioning
-- Disney/Pixar-inspired film scoring with leitmotifs
+EchoelTranslate — Real-time translation in 20+ languages, on-device
+EchoelSpeech — Speech-to-text transcription
+EchoelLyrics — Lyrics extraction with word-level sync
+EchoelSubtitle — Live multilingual subtitles (WebVTT, HLS, SwiftUI)
+EchoelMind — On-device AI (Apple Foundation Models, 3B params)
+EchoelMint — Bio-reactive digital assets with biometric proof
+EchoelAvatar — 7 avatar styles with 3D Gaussian Splatting
 
-Professional Streaming Engine
-- Complete RTMP handshake implementation
-- 8K UHD streaming support
-- Multi-platform streaming (YouTube, Twitch, TikTok)
+3 NEW INTEGRATION ENGINES
 
-NeuroSpiritual Engine
-- Polyvagal Theory integration
-- FACS facial expression analysis
-- Psychosomatic state integration
-
-Quantum Health Biofeedback
-- Unlimited participants per session
-- Real-time worldwide collaboration
-- 8 broadcasting platforms supported
+EchoelWorld — Procedural bio-reactive worlds (8 biomes, Godot 4.6)
+EchoelConnect — OSC, MIDI Show Control, Mackie Control, 17 protocols
+EchoelGodot — Godot 4.6 rendering bridge for visionOS
 
 ENHANCEMENTS
-- 74+ curated engine presets
-- 53 DSP plugins with EchoelCore framework
-- Enterprise-grade security (AES-256)
-- 12-language localization
-- WCAG 2.2 AAA accessibility
-
-FIXES
-- Improved stability across all platforms
-- Optimized memory usage
-- Enhanced bio-reactive response time
+- 25 unified Echoel* tools (was 498 scattered classes)
+- Industry integration (TouchDesigner, Resolume, Max/MSP, QLab)
+- Production hardening (zero force unwraps, full platform guards)
+- Updated Privacy Manifest for all new capabilities
 
 Your heartbeat has never sounded so good.
