@@ -2,93 +2,136 @@
 //  AUv3Theme.swift
 //  EchoelmusicAUv3
 //
-//  Vaporwave Palace theme for Audio Unit plugin UIs.
-//  Mirrors VaporwaveTheme.swift from the main app to keep
-//  a consistent look in third-party hosts (GarageBand, AUM, etc.).
+//  Monochrome brand theme for Audio Unit plugin UIs.
+//  Mirrors EchoelmusicBrand.swift — true black + two grays.
+//  Matches echoelmusic.com website CI exactly.
 //
 
 import SwiftUI
 
-// MARK: - AUv3 Colors (synced with echoelmusic.com + VaporwaveTheme)
+// MARK: - Brand Colors (echoelmusic.com CI)
 
-enum AUv3Colors {
+enum AUv3Brand {
 
-    // Primary Neon
-    static let neonPink    = Color(red: 1.0, green: 0.08, blue: 0.58)  // #FF1494
-    static let neonCyan    = Color(red: 0.0, green: 1.0, blue: 1.0)    // #00FFFF
-    static let neonPurple  = Color(red: 0.6, green: 0.2, blue: 1.0)    // #9933FF
-    static let lavender    = Color(red: 0.8, green: 0.6, blue: 1.0)    // #CC99FF
-    static let coral       = Color(red: 1.0, green: 0.5, blue: 0.4)    // #FF7F66
+    // MARK: - Backgrounds (true black + two grays)
 
-    // Backgrounds
-    static let deepBlack   = Color(red: 0.02, green: 0.02, blue: 0.0625)  // #050510
-    static let midnightBlue = Color(red: 0.05, green: 0.05, blue: 0.15)   // #0D0D26
-    static let darkPurple  = Color(red: 0.1, green: 0.05, blue: 0.2)      // #1A0D33
+    /// True black — primary background (#000000)
+    static let bgDeep = Color.black
 
-    // Glass
-    static let glassBg     = Color.white.opacity(0.08)
-    static let glassBorder = Color.white.opacity(0.15)
+    /// Surface — cards, panels (#0A0A0A)
+    static let bgSurface = Color(white: 0.04)
 
-    // Text
-    static let textPrimary   = Color.white
-    static let textSecondary = Color.white.opacity(0.85)
-    static let textTertiary  = Color.white.opacity(0.5)
+    /// Elevated — modals, sections (#141414)
+    static let bgElevated = Color(white: 0.08)
 
-    // Bio-Reactive (coherence)
-    static let coherenceLow    = Color(red: 1.0, green: 0.3, blue: 0.3)   // #FF4D4D
-    static let coherenceMedium = Color(red: 1.0, green: 0.8, blue: 0.2)   // #FFCC33
-    static let coherenceHigh   = Color(red: 0.2, green: 1.0, blue: 0.8)   // #33FFCC
+    /// Glass overlay (white 3%)
+    static let bgGlass = Color.white.opacity(0.03)
+
+    // MARK: - Text (light gray #E0E0E0)
+
+    /// Primary text — high emphasis (#E0E0E0)
+    static let textPrimary = Color(red: 0.878, green: 0.878, blue: 0.878)
+
+    /// Secondary text — 55% (#E0E0E0 @ 0.55)
+    static let textSecondary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
+
+    /// Tertiary text — 35%
+    static let textTertiary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.35)
+
+    /// Disabled text — 20%
+    static let textDisabled = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.20)
+
+    // MARK: - Accent
+
+    /// Pure white — CTA, active states
+    static let accent = Color.white
+
+    // MARK: - Borders
+
+    /// Default border (#E0E0E0 @ 8%)
+    static let border = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.08)
+
+    /// Active/focused border (#E0E0E0 @ 30%)
+    static let borderActive = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.30)
+
+    // MARK: - Functional Colors (bio-reactive only, NOT brand)
+
+    /// Success / coherence high (#10B981)
+    static let emerald = Color(red: 0.063, green: 0.725, blue: 0.506)
+
+    /// Warning / coherence medium (#FBBF24)
+    static let amber = Color(red: 0.984, green: 0.749, blue: 0.141)
+
+    /// Error / coherence low (#FB7366)
+    static let coral = Color(red: 0.984, green: 0.451, blue: 0.408)
+
+    /// Info / clarity (#38BDF8)
+    static let sky = Color(red: 0.220, green: 0.741, blue: 0.973)
+
+    /// Heart (#F472B6)
+    static let rose = Color(red: 0.957, green: 0.447, blue: 0.714)
+
+    /// Creativity (#A78BFA)
+    static let violet = Color(red: 0.655, green: 0.545, blue: 0.980)
 }
 
-// MARK: - AUv3 Gradients
+// MARK: - Reusable Parameter Slider
 
-enum AUv3Gradients {
+struct AUParameterSlider: View {
+    let label: String
+    @Binding var value: Float
+    let range: ClosedRange<Float>
+    let format: String
+    var multiplier: Float = 1
+    let address: EchoelmusicParameterAddress
+    let audioUnit: EchoelmusicAudioUnit
 
-    /// Deep space background
-    static let background = LinearGradient(
-        colors: [AUv3Colors.midnightBlue, AUv3Colors.darkPurple],
-        startPoint: .top, endPoint: .bottom
-    )
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .foregroundColor(AUv3Brand.textSecondary)
+                .frame(width: 60, alignment: .leading)
 
-    /// Neon accent bar
-    static let neon = LinearGradient(
-        colors: [AUv3Colors.neonPink, AUv3Colors.neonPurple, AUv3Colors.neonCyan],
-        startPoint: .leading, endPoint: .trailing
-    )
+            Slider(value: $value, in: range)
+                .tint(AUv3Brand.textPrimary)
+                .onChange(of: value) { _, newValue in
+                    audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
+                }
 
-    /// Sunset hero
-    static let sunset = LinearGradient(
-        colors: [AUv3Colors.neonPurple, AUv3Colors.neonPink, AUv3Colors.coral],
-        startPoint: .topLeading, endPoint: .bottomTrailing
-    )
-}
-
-// MARK: - Glass Card Modifier
-
-struct AUv3GlassCard: ViewModifier {
-    var accentColor: Color = AUv3Colors.neonPink
-    var isActive: Bool = false
-
-    func body(content: Content) -> some View {
-        content
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(AUv3Colors.glassBg)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        isActive ? accentColor.opacity(0.5) : AUv3Colors.glassBorder,
-                        lineWidth: 1
-                    )
-            )
+            Text(String(format: format, value * multiplier))
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .foregroundColor(AUv3Brand.accent)
+                .frame(width: 60, alignment: .trailing)
+        }
     }
 }
 
-extension View {
-    func auv3GlassCard(accent: Color = AUv3Colors.neonPink, isActive: Bool = false) -> some View {
-        modifier(AUv3GlassCard(accentColor: accent, isActive: isActive))
+// MARK: - Reusable Parameter Section
+
+struct AUParameterSection<Content: View>: View {
+    let title: String
+    let color: Color
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title.uppercased())
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(AUv3Brand.textSecondary)
+                .tracking(1.5)
+
+            content()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(AUv3Brand.bgSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AUv3Brand.border, lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -98,130 +141,66 @@ struct AUv3PluginHeader: View {
     let icon: String
     let title: String
     let subtitle: String
-    let accentColor: Color
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(accentColor.opacity(0.2))
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(accentColor)
-            }
-            .shadow(color: accentColor.opacity(0.4), radius: 8)
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(AUv3Brand.textPrimary)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.headline)
-                    .foregroundColor(AUv3Colors.textPrimary)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(AUv3Brand.textPrimary)
 
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(AUv3Colors.textTertiary)
+                    .font(.system(size: 12))
+                    .foregroundColor(AUv3Brand.textTertiary)
             }
 
             Spacer()
 
-            // Brand mark
             Text("echoel")
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundColor(AUv3Colors.textTertiary)
+                .foregroundColor(AUv3Brand.textTertiary)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
     }
 }
 
-// MARK: - Neon Divider
+// MARK: - Brand Divider
 
-struct NeonDivider: View {
+struct BrandDivider: View {
     var body: some View {
         Rectangle()
-            .fill(AUv3Gradients.neon)
+            .fill(AUv3Brand.border)
             .frame(height: 1)
-            .opacity(0.6)
     }
 }
 
-// MARK: - Themed Parameter Section
+// MARK: - Pill Button (for mode selectors)
 
-struct AUv3Section<Content: View>: View {
-    let title: String
-    let color: Color
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased())
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(color)
-                .tracking(2)
-
-            content()
-        }
-        .auv3GlassCard(accent: color)
-    }
-}
-
-// MARK: - Themed Parameter Slider
-
-struct AUv3Slider: View {
+struct AUv3PillButton: View {
     let label: String
-    @Binding var value: Float
-    let range: ClosedRange<Float>
-    let format: String
-    var multiplier: Float = 1
-    let accentColor: Color
-    let address: EchoelmusicParameterAddress
-    let audioUnit: EchoelmusicAudioUnit
+    let isSelected: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        Button(action: action) {
             Text(label)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundColor(AUv3Colors.textSecondary)
-                .frame(width: 56, alignment: .leading)
-
-            Slider(value: $value, in: range)
-                .tint(accentColor)
-                .onChange(of: value) { _, newValue in
-                    audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
-                }
-
-            Text(String(format: format, value * multiplier))
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundColor(accentColor)
-                .frame(width: 56, alignment: .trailing)
-        }
-    }
-}
-
-// MARK: - Deep Space Background
-
-struct DeepSpaceBackground: View {
-    var body: some View {
-        ZStack {
-            AUv3Gradients.background
-                .ignoresSafeArea()
-
-            // Subtle grid (vaporwave signature)
-            GeometryReader { geo in
-                Path { path in
-                    let spacing: CGFloat = 40
-                    for x in stride(from: CGFloat(0), through: geo.size.width, by: spacing) {
-                        path.move(to: CGPoint(x: x, y: 0))
-                        path.addLine(to: CGPoint(x: x, y: geo.size.height))
-                    }
-                    for y in stride(from: CGFloat(0), through: geo.size.height, by: spacing) {
-                        path.move(to: CGPoint(x: 0, y: y))
-                        path.addLine(to: CGPoint(x: geo.size.width, y: y))
-                    }
-                }
-                .stroke(AUv3Colors.neonPink.opacity(0.03), lineWidth: 0.5)
-            }
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isSelected ? AUv3Brand.accent : AUv3Brand.bgElevated)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isSelected ? Color.clear : AUv3Brand.border, lineWidth: 1)
+                        )
+                )
+                .foregroundColor(isSelected ? AUv3Brand.bgDeep : AUv3Brand.textSecondary)
         }
     }
 }

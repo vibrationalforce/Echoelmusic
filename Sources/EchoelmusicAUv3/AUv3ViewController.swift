@@ -40,11 +40,11 @@ public class EchoelmusicAUv3ViewController: AUViewController {
         super.viewDidLoad()
 
         #if canImport(UIKit)
-        // Deep space black (#050510) — matches Vaporwave Palace theme
-        view.backgroundColor = UIColor(red: 0.02, green: 0.02, blue: 0.0625, alpha: 1.0)
+        // True black (#000000) — echoelmusic.com website CI
+        view.backgroundColor = .black
         #elseif canImport(AppKit)
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor(red: 0.02, green: 0.02, blue: 0.0625, alpha: 1.0).cgColor
+        view.layer?.backgroundColor = NSColor.black.cgColor
         #endif
 
         if audioUnit != nil {
@@ -153,55 +153,35 @@ struct TR808AUv3View: View {
     @State private var gain: Float = 1.0
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Circle()
-                    .fill(LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom))
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Text("808")
-                            .font(.system(size: 12, weight: .black))
-                            .foregroundColor(.white)
-                    )
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "waveform.path", title: "EchoelSynth", subtitle: "TR-808 Bass Synthesizer")
 
-                VStack(alignment: .leading) {
-                    Text("EchoelSynth")
-                        .font(.headline)
-                    Text("TR-808 Bass Synthesizer")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal)
-
-            Divider()
+            BrandDivider()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    AUParameterSection(title: "Pitch Glide", color: .orange) {
+                VStack(spacing: 16) {
+                    AUParameterSection(title: "Pitch Glide", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Time", value: $pitchGlideTime, range: 0.01...0.5,
                                           format: "%.0f ms", multiplier: 1000, address: .pitchGlideTime, audioUnit: audioUnit)
                         AUParameterSlider(label: "Range", value: $pitchGlideRange, range: -24...0,
                                           format: "%.0f st", address: .pitchGlideRange, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Envelope", color: .red) {
+                    AUParameterSection(title: "Envelope", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Click", value: $clickAmount, range: 0...1,
                                           format: "%.0f%%", multiplier: 100, address: .clickAmount, audioUnit: audioUnit)
                         AUParameterSlider(label: "Decay", value: $decay, range: 0.1...5,
                                           format: "%.1f s", address: .decay, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Tone", color: .purple) {
+                    AUParameterSection(title: "Tone", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Drive", value: $drive, range: 0...1,
                                           format: "%.0f%%", multiplier: 100, address: .drive, audioUnit: audioUnit)
                         AUParameterSlider(label: "Filter", value: $filterCutoff, range: 20...2000,
                                           format: "%.0f Hz", address: .filterCutoff, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Output", color: .green) {
+                    AUParameterSection(title: "Output", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Gain", value: $gain, range: 0...2,
                                           format: "%.0f%%", multiplier: 100, address: .gain, audioUnit: audioUnit)
                     }
@@ -209,7 +189,7 @@ struct TR808AUv3View: View {
                 .padding()
             }
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
         .onAppear { loadParameters() }
     }
 
@@ -236,29 +216,14 @@ struct ReverbAUv3View: View {
     @State private var gain: Float = 1.0
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "waveform.badge.magnifyingglass")
-                    .font(.title)
-                    .foregroundColor(.cyan)
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "waveform.badge.magnifyingglass", title: "EchoelFX", subtitle: "Freeverb Algorithmic Reverb")
 
-                VStack(alignment: .leading) {
-                    Text("EchoelFX")
-                        .font(.headline)
-                    Text("Freeverb Algorithmic Reverb")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal)
-
-            Divider()
+            BrandDivider()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    AUParameterSection(title: "Reverb", color: .cyan) {
+                VStack(spacing: 16) {
+                    AUParameterSection(title: "Reverb", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Wet/Dry", value: $wetDry, range: 0...100,
                                           format: "%.0f%%", address: .reverbWetDry, audioUnit: audioUnit)
                         AUParameterSlider(label: "Room", value: $roomSize, range: 0...100,
@@ -267,7 +232,7 @@ struct ReverbAUv3View: View {
                                           format: "%.0f%%", address: .reverbDamping, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Output", color: .green) {
+                    AUParameterSection(title: "Output", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Gain", value: $gain, range: 0...2,
                                           format: "%.0f%%", multiplier: 100, address: .gain, audioUnit: audioUnit)
                     }
@@ -275,7 +240,7 @@ struct ReverbAUv3View: View {
                 .padding()
             }
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
         .onAppear { loadParameters() }
     }
 
@@ -301,29 +266,14 @@ struct CompressorAUv3View: View {
     @State private var knee: Float = 6.0
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "gauge.with.needle")
-                    .font(.title)
-                    .foregroundColor(.orange)
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "gauge.with.needle", title: "EchoelMix", subtitle: "Analog Compressor")
 
-                VStack(alignment: .leading) {
-                    Text("EchoelMix")
-                        .font(.headline)
-                    Text("Analog Compressor")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal)
-
-            Divider()
+            BrandDivider()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    AUParameterSection(title: "Dynamics", color: .orange) {
+                VStack(spacing: 16) {
+                    AUParameterSection(title: "Dynamics", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Threshold", value: $threshold, range: -60...0,
                                           format: "%.1f dB", address: .compThreshold, audioUnit: audioUnit)
                         AUParameterSlider(label: "Ratio", value: $ratio, range: 1...20,
@@ -332,14 +282,14 @@ struct CompressorAUv3View: View {
                                           format: "%.1f dB", address: .compKnee, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Timing", color: .yellow) {
+                    AUParameterSection(title: "Timing", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Attack", value: $attack, range: 0.1...200,
                                           format: "%.1f ms", address: .compAttack, audioUnit: audioUnit)
                         AUParameterSlider(label: "Release", value: $release, range: 10...2000,
                                           format: "%.0f ms", address: .compRelease, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Output", color: .green) {
+                    AUParameterSection(title: "Output", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Makeup", value: $makeupGain, range: 0...24,
                                           format: "%.1f dB", address: .compMakeupGain, audioUnit: audioUnit)
                     }
@@ -347,7 +297,7 @@ struct CompressorAUv3View: View {
                 .padding()
             }
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
         .onAppear { loadParameters() }
     }
 
@@ -375,60 +325,37 @@ struct FilterAUv3View: View {
     private let modeNames = ["Low Pass", "High Pass", "Band Pass", "Notch"]
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "slider.horizontal.below.rectangle")
-                    .font(.title)
-                    .foregroundColor(.purple)
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "slider.horizontal.below.rectangle", title: "EchoelField", subtitle: "Multi-Mode Biquad Filter")
 
-                VStack(alignment: .leading) {
-                    Text("EchoelField")
-                        .font(.headline)
-                    Text("Multi-Mode Biquad Filter")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal)
-
-            Divider()
+            BrandDivider()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    // Filter mode selector
-                    AUParameterSection(title: "Filter Mode", color: .purple) {
+                VStack(spacing: 16) {
+                    AUParameterSection(title: "Filter Mode", color: AUv3Brand.textPrimary) {
                         HStack(spacing: 8) {
                             ForEach(0..<4) { index in
-                                Button(action: {
+                                AUv3PillButton(
+                                    label: modeNames[index],
+                                    isSelected: Int(filterMode) == index
+                                ) {
                                     filterMode = Float(index)
                                     audioUnit.parameterTree?.parameter(
                                         withAddress: EchoelmusicParameterAddress.filterMode.rawValue
                                     )?.value = filterMode
-                                }) {
-                                    Text(modeNames[index])
-                                        .font(.caption2.bold())
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(Int(filterMode) == index ? Color.purple : Color.gray.opacity(0.3))
-                                        )
-                                        .foregroundColor(.white)
                                 }
                             }
                         }
                     }
 
-                    AUParameterSection(title: "Parameters", color: .purple) {
+                    AUParameterSection(title: "Parameters", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Freq", value: $frequency, range: 20...20000,
                                           format: "%.0f Hz", address: .filterFrequency, audioUnit: audioUnit)
                         AUParameterSlider(label: "Reso", value: $resonance, range: 0.1...20,
                                           format: "%.1f Q", address: .filterResonance, audioUnit: audioUnit)
                     }
 
-                    AUParameterSection(title: "Output", color: .green) {
+                    AUParameterSection(title: "Output", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Gain", value: $gain, range: 0...2,
                                           format: "%.0f%%", multiplier: 100, address: .gain, audioUnit: audioUnit)
                     }
@@ -436,7 +363,7 @@ struct FilterAUv3View: View {
                 .padding()
             }
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
         .onAppear { loadParameters() }
     }
 
@@ -462,54 +389,30 @@ struct ConsoleAUv3View: View {
                                 "Fairchild", "LA-2A", "1176", "Manley"]
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "dial.medium")
-                    .font(.title)
-                    .foregroundColor(.yellow)
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "dial.medium", title: "EchoelMind", subtitle: "Analog Console Emulation")
 
-                VStack(alignment: .leading) {
-                    Text("EchoelMind")
-                        .font(.headline)
-                    Text("Analog Console Emulation")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal)
-
-            Divider()
+            BrandDivider()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    // Console model selector
-                    AUParameterSection(title: "Console Legend", color: .yellow) {
+                VStack(spacing: 16) {
+                    AUParameterSection(title: "Console Legend", color: AUv3Brand.textPrimary) {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 70))], spacing: 8) {
                             ForEach(0..<8) { index in
-                                Button(action: {
+                                AUv3PillButton(
+                                    label: legendNames[index],
+                                    isSelected: Int(legend) == index
+                                ) {
                                     legend = Float(index)
                                     audioUnit.parameterTree?.parameter(
                                         withAddress: EchoelmusicParameterAddress.consoleLegend.rawValue
                                     )?.value = legend
-                                }) {
-                                    Text(legendNames[index])
-                                        .font(.caption2.bold())
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 8)
-                                        .frame(maxWidth: .infinity)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(Int(legend) == index ? Color.yellow : Color.gray.opacity(0.3))
-                                        )
-                                        .foregroundColor(Int(legend) == index ? .black : .white)
                                 }
                             }
                         }
                     }
 
-                    AUParameterSection(title: "Character", color: .yellow) {
+                    AUParameterSection(title: "Character", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Vibe", value: $vibe, range: 0...100,
                                           format: "%.0f%%", address: .consoleVibe, audioUnit: audioUnit)
                         AUParameterSlider(label: "Blend", value: $blend, range: 0...100,
@@ -519,7 +422,7 @@ struct ConsoleAUv3View: View {
                 .padding()
             }
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
         .onAppear { loadParameters() }
     }
 
@@ -540,39 +443,19 @@ struct BinauralAUv3View: View {
     @State private var beat: Float = 10.0
     @State private var amplitude: Float = 0.7
 
-    private let brainwavePresets: [(name: String, freq: Float, color: Color)] = [
-        ("Delta", 2.0, .indigo),
-        ("Theta", 6.0, .blue),
-        ("Alpha", 10.0, .green),
-        ("Beta", 20.0, .yellow),
-        ("Gamma", 40.0, .red)
+    private let brainwavePresets: [(name: String, freq: Float)] = [
+        ("Delta", 2.0), ("Theta", 6.0), ("Alpha", 10.0), ("Beta", 20.0), ("Gamma", 40.0)
     ]
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "brain.head.profile")
-                    .font(.title)
-                    .foregroundColor(.green)
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "brain.head.profile", title: "EchoelBio", subtitle: "Binaural Beat Generator")
 
-                VStack(alignment: .leading) {
-                    Text("EchoelBio")
-                        .font(.headline)
-                    Text("Binaural Beat Generator")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal)
-
-            Divider()
+            BrandDivider()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    // Brainwave state presets
-                    AUParameterSection(title: "Brainwave State", color: .green) {
+                VStack(spacing: 16) {
+                    AUParameterSection(title: "Brainwave State", color: AUv3Brand.textPrimary) {
                         HStack(spacing: 8) {
                             ForEach(0..<brainwavePresets.count, id: \.self) { index in
                                 let preset = brainwavePresets[index]
@@ -584,24 +467,28 @@ struct BinauralAUv3View: View {
                                 }) {
                                     VStack(spacing: 2) {
                                         Text(preset.name)
-                                            .font(.caption2.bold())
+                                            .font(.system(size: 10, weight: .bold, design: .monospaced))
                                         Text("\(Int(preset.freq)) Hz")
-                                            .font(.system(size: 9).monospacedDigit())
+                                            .font(.system(size: 9, design: .monospaced))
                                     }
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 6)
                                     .frame(maxWidth: .infinity)
                                     .background(
                                         RoundedRectangle(cornerRadius: 6)
-                                            .fill(abs(beat - preset.freq) < 0.5 ? preset.color : Color.gray.opacity(0.3))
+                                            .fill(abs(beat - preset.freq) < 0.5 ? AUv3Brand.accent : AUv3Brand.bgElevated)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .stroke(abs(beat - preset.freq) < 0.5 ? Color.clear : AUv3Brand.border, lineWidth: 1)
+                                            )
                                     )
-                                    .foregroundColor(.white)
+                                    .foregroundColor(abs(beat - preset.freq) < 0.5 ? AUv3Brand.bgDeep : AUv3Brand.textSecondary)
                                 }
                             }
                         }
                     }
 
-                    AUParameterSection(title: "Parameters", color: .green) {
+                    AUParameterSection(title: "Parameters", color: AUv3Brand.textPrimary) {
                         AUParameterSlider(label: "Carrier", value: $carrier, range: 100...1000,
                                           format: "%.0f Hz", address: .binauralCarrier, audioUnit: audioUnit)
                         AUParameterSlider(label: "Beat", value: $beat, range: 0.5...50,
@@ -613,7 +500,7 @@ struct BinauralAUv3View: View {
                 .padding()
             }
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
         .onAppear { loadParameters() }
     }
 
@@ -631,48 +518,40 @@ struct MIDIProcessorAUv3View: View {
     let audioUnit: EchoelmusicAudioUnit
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Image(systemName: "pianokeys")
-                    .font(.title)
-                    .foregroundColor(.green)
+        VStack(spacing: 0) {
+            AUv3PluginHeader(icon: "pianokeys", title: audioUnit.pluginID?.displayName ?? "MIDI Pro", subtitle: "MIDI 2.0 + MPE")
 
-                VStack(alignment: .leading) {
-                    Text(audioUnit.pluginID?.displayName ?? "MIDI Pro")
-                        .font(.headline)
-                    Text("MIDI 2.0 + MPE")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+            BrandDivider()
 
+            VStack(spacing: 16) {
                 Spacer()
-            }
-            .padding(.horizontal)
 
-            Divider()
+                Text("MIDI 2.0 PROCESSOR")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(AUv3Brand.textSecondary)
+                    .tracking(2)
 
-            VStack(spacing: 12) {
-                Text("MIDI 2.0 Processor")
-                    .font(.title3)
-
-                Text("Universal MIDI Packet support\nPer-Note Controllers\nMPE Zone Management")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                VStack(spacing: 4) {
+                    Text("Universal MIDI Packet support")
+                    Text("Per-Note Controllers")
+                    Text("MPE Zone Management")
+                }
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundColor(AUv3Brand.textTertiary)
 
                 Image(systemName: "checkmark.circle.fill")
                     .font(.largeTitle)
-                    .foregroundColor(.green)
+                    .foregroundColor(AUv3Brand.accent)
 
                 Text("Active")
-                    .font(.caption)
-                    .foregroundColor(.green)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(AUv3Brand.textPrimary)
+
+                Spacer()
             }
             .padding()
-
-            Spacer()
         }
-        .background(Color.black)
+        .background(AUv3Brand.bgDeep)
     }
 }
 
