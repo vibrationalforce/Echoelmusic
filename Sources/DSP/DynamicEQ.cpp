@@ -15,6 +15,9 @@
  * Created: 2026-01-15
  */
 
+#ifndef ECHOELMUSIC_DYNAMIC_EQ_CPP
+#define ECHOELMUSIC_DYNAMIC_EQ_CPP
+
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -456,3 +459,5 @@ private:
 
 } // namespace DSP
 } // namespace Echoelmusic
+
+#endif /* ECHOELMUSIC_DYNAMIC_EQ_CPP */

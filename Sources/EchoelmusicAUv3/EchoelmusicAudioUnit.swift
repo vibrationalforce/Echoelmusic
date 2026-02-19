@@ -123,11 +123,22 @@ private func fourCharCode(_ string: String) -> OSType {
 /// Echoelmusic manufacturer code: "Echo"
 let kEchoelmusicManufacturer: OSType = fourCharCode("Echo")
 
-/// Create AudioComponentDescription for Echoelmusic AU
+/// Create AudioComponentDescription for a specific Echoelmusic plugin
+public func echoelmusicAudioComponentDescription(plugin: EchoelPluginID) -> AudioComponentDescription {
+    AudioComponentDescription(
+        componentType: plugin.auType.componentType,
+        componentSubType: plugin.componentSubType,
+        componentManufacturer: kEchoelmusicManufacturer,
+        componentFlags: 0,
+        componentFlagsMask: 0
+    )
+}
+
+/// Create AudioComponentDescription for an Echoelmusic AU type (generic, no subtype)
 public func echoelmusicAudioComponentDescription(type: EchoelmusicAUType) -> AudioComponentDescription {
     AudioComponentDescription(
         componentType: type.componentType,
-        componentSubType: type.componentSubType,
+        componentSubType: 0,
         componentManufacturer: kEchoelmusicManufacturer,
         componentFlags: 0,
         componentFlagsMask: 0
@@ -152,12 +163,7 @@ public enum EchoelmusicParameterAddress: AUParameterAddress {
     case drive = 105
     case filterCutoff = 106
 
-    // Stem Separation
-    case vocalLevel = 200
-    case drumLevel = 201
-    case bassLevel = 202
-    case otherLevel = 203
-    case separationQuality = 204
+    // Reserved (200-204) — formerly stem separation, addresses kept for state compatibility
 
     // Bio-Reactive
     case bioReactivity = 300
@@ -372,17 +378,35 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
 
         parameters.append(contentsOf: [bypassParam, gainParam, mixParam])
 
-        // Type-specific parameters
-        switch auType {
-        case .instrument:
-            parameters.append(contentsOf: create808Parameters())
-            parameters.append(contentsOf: createBioReactiveParameters())
-
-        case .effect:
-            parameters.append(contentsOf: createStemSeparationParameters())
-
-        case .midiProcessor:
-            break
+        // Plugin-specific parameters — each plugin registers only its own parameters
+        if let id = pluginID {
+            switch id {
+            case .echoelSynth:
+                parameters.append(contentsOf: create808Parameters())
+            case .echoelBio:
+                parameters.append(contentsOf: createBinauralParameters())
+                parameters.append(contentsOf: createBioReactiveParameters())
+            case .echoelFX:
+                parameters.append(contentsOf: createReverbParameters())
+            case .echoelMix:
+                parameters.append(contentsOf: createCompressorParameters())
+            case .echoelField:
+                parameters.append(contentsOf: createFilterParameters())
+            case .echoelMind:
+                parameters.append(contentsOf: createConsoleParameters())
+            case .echoelSeq, .echoelMIDI, .echoelBeam, .echoelNet:
+                parameters.append(contentsOf: create808Parameters())
+            }
+        } else {
+            // Fallback when pluginID is nil — register by AU type
+            switch auType {
+            case .instrument:
+                parameters.append(contentsOf: create808Parameters())
+            case .effect:
+                parameters.append(contentsOf: createReverbParameters())
+            case .midiProcessor:
+                break
+            }
         }
 
         // Create tree
@@ -474,61 +498,225 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         ]
     }
 
-    private func createStemSeparationParameters() -> [AUParameter] {
+    private func createReverbParameters() -> [AUParameter] {
         return [
             AUParameterTree.createParameter(
-                withIdentifier: "vocalLevel",
-                name: "Vocals Level",
-                address: EchoelmusicParameterAddress.vocalLevel.rawValue,
-                min: 0, max: 2,
-                unit: .linearGain,
+                withIdentifier: "reverbWetDry",
+                name: "Wet/Dry",
+                address: EchoelmusicParameterAddress.reverbWetDry.rawValue,
+                min: 0, max: 100,
+                unit: .percent,
                 unitName: nil,
                 flags: [.flag_IsReadable, .flag_IsWritable],
                 valueStrings: nil,
                 dependentParameters: nil
             ),
             AUParameterTree.createParameter(
-                withIdentifier: "drumLevel",
-                name: "Drums Level",
-                address: EchoelmusicParameterAddress.drumLevel.rawValue,
-                min: 0, max: 2,
-                unit: .linearGain,
+                withIdentifier: "reverbRoomSize",
+                name: "Room Size",
+                address: EchoelmusicParameterAddress.reverbRoomSize.rawValue,
+                min: 0, max: 100,
+                unit: .percent,
                 unitName: nil,
                 flags: [.flag_IsReadable, .flag_IsWritable],
                 valueStrings: nil,
                 dependentParameters: nil
             ),
             AUParameterTree.createParameter(
-                withIdentifier: "bassLevel",
-                name: "Bass Level",
-                address: EchoelmusicParameterAddress.bassLevel.rawValue,
-                min: 0, max: 2,
-                unit: .linearGain,
+                withIdentifier: "reverbDamping",
+                name: "Damping",
+                address: EchoelmusicParameterAddress.reverbDamping.rawValue,
+                min: 0, max: 100,
+                unit: .percent,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            )
+        ]
+    }
+
+    private func createCompressorParameters() -> [AUParameter] {
+        return [
+            AUParameterTree.createParameter(
+                withIdentifier: "compThreshold",
+                name: "Threshold",
+                address: EchoelmusicParameterAddress.compThreshold.rawValue,
+                min: -60, max: 0,
+                unit: .decibels,
                 unitName: nil,
                 flags: [.flag_IsReadable, .flag_IsWritable],
                 valueStrings: nil,
                 dependentParameters: nil
             ),
             AUParameterTree.createParameter(
-                withIdentifier: "otherLevel",
-                name: "Other Level",
-                address: EchoelmusicParameterAddress.otherLevel.rawValue,
-                min: 0, max: 2,
-                unit: .linearGain,
-                unitName: nil,
-                flags: [.flag_IsReadable, .flag_IsWritable],
-                valueStrings: nil,
-                dependentParameters: nil
-            ),
-            AUParameterTree.createParameter(
-                withIdentifier: "separationQuality",
-                name: "Separation Quality",
-                address: EchoelmusicParameterAddress.separationQuality.rawValue,
-                min: 0, max: 1,
+                withIdentifier: "compRatio",
+                name: "Ratio",
+                address: EchoelmusicParameterAddress.compRatio.rawValue,
+                min: 1, max: 20,
                 unit: .generic,
                 unitName: nil,
                 flags: [.flag_IsReadable, .flag_IsWritable],
-                valueStrings: ["Fast", "Balanced", "High Quality"],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "compAttack",
+                name: "Attack",
+                address: EchoelmusicParameterAddress.compAttack.rawValue,
+                min: 0.1, max: 200,
+                unit: .milliseconds,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "compRelease",
+                name: "Release",
+                address: EchoelmusicParameterAddress.compRelease.rawValue,
+                min: 10, max: 2000,
+                unit: .milliseconds,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "compMakeupGain",
+                name: "Makeup Gain",
+                address: EchoelmusicParameterAddress.compMakeupGain.rawValue,
+                min: 0, max: 24,
+                unit: .decibels,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "compKnee",
+                name: "Knee",
+                address: EchoelmusicParameterAddress.compKnee.rawValue,
+                min: 0, max: 20,
+                unit: .decibels,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            )
+        ]
+    }
+
+    private func createFilterParameters() -> [AUParameter] {
+        return [
+            AUParameterTree.createParameter(
+                withIdentifier: "filterFrequency",
+                name: "Frequency",
+                address: EchoelmusicParameterAddress.filterFrequency.rawValue,
+                min: 20, max: 20000,
+                unit: .hertz,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable, .flag_DisplayLogarithmic],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "filterResonance",
+                name: "Resonance",
+                address: EchoelmusicParameterAddress.filterResonance.rawValue,
+                min: 0.1, max: 20,
+                unit: .generic,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "filterMode",
+                name: "Mode",
+                address: EchoelmusicParameterAddress.filterMode.rawValue,
+                min: 0, max: 3,
+                unit: .indexed,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: ["Low Pass", "High Pass", "Band Pass", "Notch"],
+                dependentParameters: nil
+            )
+        ]
+    }
+
+    private func createConsoleParameters() -> [AUParameter] {
+        return [
+            AUParameterTree.createParameter(
+                withIdentifier: "consoleLegend",
+                name: "Console Model",
+                address: EchoelmusicParameterAddress.consoleLegend.rawValue,
+                min: 0, max: 7,
+                unit: .indexed,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: ["SSL VCA", "API Thrust", "Neve Transformer", "Pultec Boost",
+                               "Fairchild Mu", "LA-2A Optical", "1176 FET", "Manley Tube"],
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "consoleVibe",
+                name: "Vibe (Drive)",
+                address: EchoelmusicParameterAddress.consoleVibe.rawValue,
+                min: 0, max: 100,
+                unit: .percent,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "consoleBlend",
+                name: "Blend",
+                address: EchoelmusicParameterAddress.consoleBlend.rawValue,
+                min: 0, max: 100,
+                unit: .percent,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            )
+        ]
+    }
+
+    private func createBinauralParameters() -> [AUParameter] {
+        return [
+            AUParameterTree.createParameter(
+                withIdentifier: "binauralCarrier",
+                name: "Carrier Frequency",
+                address: EchoelmusicParameterAddress.binauralCarrier.rawValue,
+                min: 100, max: 1000,
+                unit: .hertz,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable, .flag_DisplayLogarithmic],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "binauralBeat",
+                name: "Beat Frequency",
+                address: EchoelmusicParameterAddress.binauralBeat.rawValue,
+                min: 0.5, max: 50,
+                unit: .hertz,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "binauralAmplitude",
+                name: "Amplitude",
+                address: EchoelmusicParameterAddress.binauralAmplitude.rawValue,
+                min: 0, max: 1,
+                unit: .linearGain,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
                 dependentParameters: nil
             )
         ]
@@ -627,19 +815,19 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
             ]
         case .echoelFX:
             _factoryPresets = [
-                Self.makePreset(number: 0, name: "Clean Channel"),
-                Self.makePreset(number: 1, name: "Warm Analog"),
-                Self.makePreset(number: 2, name: "EchoelGlue Bus"),
-                Self.makePreset(number: 3, name: "Tape Saturation"),
-                Self.makePreset(number: 4, name: "Spatial Reverb"),
-                Self.makePreset(number: 5, name: "Bio-Reactive FX")
+                Self.makePreset(number: 0, name: "Small Room"),
+                Self.makePreset(number: 1, name: "Medium Hall"),
+                Self.makePreset(number: 2, name: "Large Hall"),
+                Self.makePreset(number: 3, name: "Cathedral"),
+                Self.makePreset(number: 4, name: "Plate")
             ]
         case .echoelMix:
             _factoryPresets = [
-                Self.makePreset(number: 0, name: "Stereo Bus"),
-                Self.makePreset(number: 1, name: "Spatial Atmos"),
-                Self.makePreset(number: 2, name: "Binaural"),
-                Self.makePreset(number: 3, name: "Metering Only")
+                Self.makePreset(number: 0, name: "Gentle Glue"),
+                Self.makePreset(number: 1, name: "Vocal Leveler"),
+                Self.makePreset(number: 2, name: "Bus Compressor"),
+                Self.makePreset(number: 3, name: "Drum Smash"),
+                Self.makePreset(number: 4, name: "Limiter")
             ]
         case .echoelSeq:
             _factoryPresets = [
@@ -664,10 +852,10 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
             ]
         case .echoelField:
             _factoryPresets = [
-                Self.makePreset(number: 0, name: "Spectrum Analyzer"),
-                Self.makePreset(number: 1, name: "Particle Burst"),
-                Self.makePreset(number: 2, name: "Fractal Mirror"),
-                Self.makePreset(number: 3, name: "Cymatics")
+                Self.makePreset(number: 0, name: "Warm Low Pass"),
+                Self.makePreset(number: 1, name: "Bright High Pass"),
+                Self.makePreset(number: 2, name: "Vocal Band Pass"),
+                Self.makePreset(number: 3, name: "Notch Hum Remove")
             ]
         case .echoelBeam:
             _factoryPresets = [
@@ -685,11 +873,14 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
             ]
         case .echoelMind:
             _factoryPresets = [
-                Self.makePreset(number: 0, name: "Vocal Isolation"),
-                Self.makePreset(number: 1, name: "Drums Only"),
-                Self.makePreset(number: 2, name: "Instrumental"),
-                Self.makePreset(number: 3, name: "AI Enhance"),
-                Self.makePreset(number: 4, name: "Karaoke Mode")
+                Self.makePreset(number: 0, name: "SSL VCA Bus"),
+                Self.makePreset(number: 1, name: "API Thrust"),
+                Self.makePreset(number: 2, name: "Neve Silk"),
+                Self.makePreset(number: 3, name: "Pultec Warmth"),
+                Self.makePreset(number: 4, name: "Fairchild Glue"),
+                Self.makePreset(number: 5, name: "LA-2A Vocal"),
+                Self.makePreset(number: 6, name: "1176 Drums"),
+                Self.makePreset(number: 7, name: "Manley Tube")
             ]
         }
     }
@@ -760,14 +951,18 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     }
 
     open override var internalRenderBlock: AUInternalRenderBlock {
-        return { [weak self] actionFlags, timestamp, frameCount, outputBusNumber, outputData, realtimeEventListHead, pullInputBlock in
+        // Capture kernel and auType once — safe for real-time render thread (no weak self dereference)
+        let kernel = self.kernel
+        let isEffect = self.auType == .effect
 
-            guard let self = self, let kernel = self.kernel else {
+        return { actionFlags, timestamp, frameCount, outputBusNumber, outputData, realtimeEventListHead, pullInputBlock in
+
+            guard let kernel = kernel else {
                 return noErr
             }
 
             // Pull input for effects
-            if self.auType == .effect, let pullInput = pullInputBlock {
+            if isEffect, let pullInput = pullInputBlock {
                 var inputFlags = AudioUnitRenderActionFlags()
                 let status = pullInput(&inputFlags, timestamp, frameCount, 0, outputData)
                 if status != noErr {

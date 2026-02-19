@@ -16,6 +16,9 @@
  * Created: 2026-01-15
  */
 
+#ifndef ECHOELMUSIC_SPECTRAL_SCULPTOR_CPP
+#define ECHOELMUSIC_SPECTRAL_SCULPTOR_CPP
+
 #include <cmath>
 #include <complex>
 #include <vector>
@@ -593,3 +596,5 @@ private:
 
 } // namespace DSP
 } // namespace Echoelmusic
+
+#endif /* ECHOELMUSIC_SPECTRAL_SCULPTOR_CPP */
