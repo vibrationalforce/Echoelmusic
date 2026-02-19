@@ -645,9 +645,9 @@ public final class BiophysicalSensorFusion: ObservableObject {
             // IMU running but no clear frequency → partial confidence
             confidenceFactors.append(0.3)
         }
-        if depthReading != nil {
+        if let depth = depthReading {
             // Depth data available → adds spatial context confidence
-            confidenceFactors.append(depthReading!.confidenceValues != nil ? 0.9 : 0.6)
+            confidenceFactors.append(depth.confidenceValues != nil ? 0.9 : 0.6)
         }
         #if canImport(CoreMotion)
         if let baro = barometric, baro.detectedVibration {
