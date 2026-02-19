@@ -18,7 +18,6 @@ public struct BodyScanView: View {
     @StateObject private var engine = BodyScanResonanceEngine()
     @State private var showDisclaimer = true
     @State private var showRegionDetail = false
-    @State private var showSettings = false
 
     public init() {}
 
@@ -153,10 +152,6 @@ public struct BodyScanView: View {
                 }
             }
 
-            Button(action: { showSettings = true }) {
-                Image(systemName: "gearshape.fill")
-                    .foregroundColor(VaporwaveColors.textSecondary)
-            }
         }
         .padding(VaporwaveSpacing.md)
     }

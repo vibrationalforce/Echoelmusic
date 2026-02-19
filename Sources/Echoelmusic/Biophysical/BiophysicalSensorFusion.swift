@@ -149,13 +149,10 @@ public final class LiDARDepthScanner: NSObject, ObservableObject {
     }
 
     private func checkAvailability() {
-        if #available(iOS 15.4, *) {
-            isLiDARAvailable = ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth)
-        }
+        isLiDARAvailable = ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth)
     }
 
     /// Start LiDAR depth scanning
-    @available(iOS 15.4, *)
     public func startScanning() throws {
         guard isLiDARAvailable else {
             throw BiophysicalError.sensorNotAvailable
@@ -181,7 +178,7 @@ public final class LiDARDepthScanner: NSObject, ObservableObject {
     }
 
     deinit {
-        arSession?.pause()
+        // arSession cleanup handled by stopScanning() — deinit is nonisolated in Swift 6
     }
 }
 
@@ -207,7 +204,6 @@ extension LiDARDepthScanner: ARSessionDelegate {
         var mean: Float = 0
         vDSP_meanv(depths, 1, &mean, vDSP_Length(count))
         var variance: Float = 0
-        var meanCopy = mean
         vDSP_measqv(depths, 1, &variance, vDSP_Length(count))
         variance -= mean * mean
 
@@ -309,7 +305,7 @@ public final class TrueDepthExtractor: NSObject, ObservableObject {
     }
 
     deinit {
-        captureSession?.stopRunning()
+        // captureSession cleanup handled by stopCapture() — deinit is nonisolated in Swift 6
     }
 }
 
@@ -502,6 +498,7 @@ public final class BiophysicalSensorFusion: ObservableObject {
 
     deinit {
         fusionTimer?.cancel()
+        fusionTimer = nil // Prevent pending callbacks from firing
         if let setup = accelFFTSetup { vDSP_DFT_DestroySetup(setup) }
     }
 
@@ -509,14 +506,12 @@ public final class BiophysicalSensorFusion: ObservableObject {
 
     /// Start all available sensors
     public func startAllSensors() async throws {
-        // LiDAR (if available)
+        // LiDAR (if available — requires hardware support)
         #if canImport(ARKit)
         if lidarScanner.isLiDARAvailable {
-            if #available(iOS 15.4, *) {
-                try lidarScanner.startScanning()
-                activeSensors.insert(.lidar)
-                sensorHealth[.lidar] = 1.0
-            }
+            try lidarScanner.startScanning()
+            activeSensors.insert(.lidar)
+            sensorHealth[.lidar] = 1.0
         }
         #endif
 
@@ -537,29 +532,22 @@ public final class BiophysicalSensorFusion: ObservableObject {
             sensorHealth[.barometer] = 1.0
         }
 
-        // IMU
-        if motionManager.isAccelerometerAvailable {
-            motionManager.accelerometerUpdateInterval = 1.0 / Double(imuSampleRate)
-            motionManager.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
-                guard let self, let data else { return }
-                let mag = Float(sqrt(
-                    data.acceleration.x * data.acceleration.x +
-                    data.acceleration.y * data.acceleration.y +
-                    data.acceleration.z * data.acceleration.z
-                ) - 1.0) // Remove gravity
+        // IMU — use deviceMotion which properly separates gravity via sensor fusion
+        if motionManager.isDeviceMotionAvailable {
+            motionManager.deviceMotionUpdateInterval = 1.0 / Double(imuSampleRate)
+            motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, _ in
+                guard let self, let motion else { return }
+                // userAcceleration is gravity-free (Apple's sensor fusion handles this)
+                let accel = motion.userAcceleration
+                let mag = Float(sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z))
                 self.accelBuffer.append(mag)
                 if self.accelBuffer.count > self.fftSize * 2 {
                     self.accelBuffer.removeFirst(self.accelBuffer.count - self.fftSize * 2)
                 }
             }
             activeSensors.insert(.accelerometer)
+            activeSensors.insert(.gyroscope) // deviceMotion includes both
             sensorHealth[.accelerometer] = 1.0
-        }
-
-        if motionManager.isGyroAvailable {
-            motionManager.gyroUpdateInterval = 1.0 / Double(imuSampleRate)
-            motionManager.startGyroUpdates()
-            activeSensors.insert(.gyroscope)
             sensorHealth[.gyroscope] = 1.0
         }
         #endif
@@ -576,8 +564,7 @@ public final class BiophysicalSensorFusion: ObservableObject {
         trueDepthExtractor.stopCapture()
         #if canImport(CoreMotion)
         barometerDetector.stopMonitoring()
-        motionManager.stopAccelerometerUpdates()
-        motionManager.stopGyroUpdates()
+        motionManager.stopDeviceMotionUpdates()
         #endif
 
         fusionTimer?.cancel()
@@ -620,27 +607,17 @@ public final class BiophysicalSensorFusion: ObservableObject {
             depthReading = trueDepthExtractor.latestDepthMap
         }
 
-        // IMU frequency analysis
+        // IMU frequency analysis (from userAcceleration buffer)
         let imuFreq = detectIMUFrequency()
         let inertial: InertialReading?
         #if canImport(CoreMotion)
-        if let accelData = motionManager.accelerometerData {
+        if let motion = motionManager.deviceMotion {
+            let accel = motion.userAcceleration
+            let rate = motion.rotationRate
             inertial = InertialReading(
-                acceleration: SIMD3<Float>(
-                    Float(accelData.acceleration.x),
-                    Float(accelData.acceleration.y),
-                    Float(accelData.acceleration.z)
-                ),
-                rotationRate: SIMD3<Float>(
-                    Float(motionManager.gyroData?.rotationRate.x ?? 0),
-                    Float(motionManager.gyroData?.rotationRate.y ?? 0),
-                    Float(motionManager.gyroData?.rotationRate.z ?? 0)
-                ),
-                magnitude: Float(sqrt(
-                    accelData.acceleration.x * accelData.acceleration.x +
-                    accelData.acceleration.y * accelData.acceleration.y +
-                    accelData.acceleration.z * accelData.acceleration.z
-                )),
+                acceleration: SIMD3<Float>(Float(accel.x), Float(accel.y), Float(accel.z)),
+                rotationRate: SIMD3<Float>(Float(rate.x), Float(rate.y), Float(rate.z)),
+                magnitude: Float(sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z)),
                 dominantFrequency: imuFreq
             )
         } else {
@@ -652,21 +629,33 @@ public final class BiophysicalSensorFusion: ObservableObject {
         let barometric: BarometricReading? = nil
         #endif
 
-        // Kalman-fused frequency estimate
-        var measurements: [Double] = []
-        if imuFreq > 0 { measurements.append(Double(imuFreq)) }
-        if let depth = depthReading, depth.depthVariance > 0.0001 {
-            // Depth variance correlates with micro-movement frequency
-            measurements.append(Double(depth.depthVariance) * 1000)
+        // Fused frequency estimate from IMU FFT only (the one sensor with Nyquist > 50 Hz)
+        // LiDAR (7.5 Hz Nyquist) and TrueDepth (15 Hz Nyquist) cannot detect 35-50 Hz range,
+        // so they contribute depth context (spatial mapping) but NOT frequency data.
+        if imuFreq > 0 {
+            dominantFrequency = frequencyFilter.update(measurement: Double(imuFreq))
         }
 
-        if let measurement = measurements.first {
-            dominantFrequency = frequencyFilter.update(measurement: measurement)
+        // Confidence based on actual sensor data quality, not just sensor count
+        var confidenceFactors: [Double] = []
+        if imuFreq > 0 {
+            // IMU producing valid frequency → high confidence
+            confidenceFactors.append(0.8)
+        } else if !accelBuffer.isEmpty {
+            // IMU running but no clear frequency → partial confidence
+            confidenceFactors.append(0.3)
         }
-
-        // Fused confidence
-        let sensorCount = Double(activeSensors.count)
-        let rawConfidence = min(1.0, sensorCount / 4.0) * (depthReading != nil ? 1.0 : 0.7)
+        if depthReading != nil {
+            // Depth data available → adds spatial context confidence
+            confidenceFactors.append(depthReading!.confidenceValues != nil ? 0.9 : 0.6)
+        }
+        #if canImport(CoreMotion)
+        if let baro = barometric, baro.detectedVibration {
+            // Barometer confirms physical vibration (supplementary)
+            confidenceFactors.append(0.5)
+        }
+        #endif
+        let rawConfidence = confidenceFactors.isEmpty ? 0 : confidenceFactors.reduce(0, +) / Double(confidenceFactors.count)
         fusedCoherence = coherenceFilter.update(measurement: rawConfidence)
 
         // Create fused reading

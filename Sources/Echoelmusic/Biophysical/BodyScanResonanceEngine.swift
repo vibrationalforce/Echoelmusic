@@ -48,15 +48,15 @@ public enum BodyRegion: String, CaseIterable, Identifiable, Codable, Sendable {
     /// System icon for body region
     public var icon: String {
         switch self {
-        case .head: return "brain.head.profile"
-        case .neck: return "person.bust"
-        case .chest: return "heart.fill"
-        case .abdomen: return "stomach"
-        case .leftShoulder, .rightShoulder: return "figure.arms.open"
-        case .leftArm, .rightArm: return "hand.raised.fill"
-        case .leftHand, .rightHand: return "hand.point.up.fill"
-        case .leftHip, .rightHip: return "figure.stand"
-        case .leftLeg, .rightLeg: return "figure.walk"
+        case .head: return "brain.head.profile"     // iOS 15+
+        case .neck: return "person.fill"            // iOS 15+ (person.bust requires iOS 16)
+        case .chest: return "heart.fill"            // iOS 15+
+        case .abdomen: return "circle.grid.cross"   // iOS 15+ (stomach requires iOS 17)
+        case .leftShoulder, .rightShoulder: return "figure.stand" // iOS 14+ (figure.arms.open requires iOS 16)
+        case .leftArm, .rightArm: return "hand.raised.fill"      // iOS 14+
+        case .leftHand, .rightHand: return "hand.point.up.fill"  // iOS 14+
+        case .leftHip, .rightHip: return "figure.stand"          // iOS 14+
+        case .leftLeg, .rightLeg: return "figure.walk"           // iOS 14+
         }
     }
 
@@ -167,7 +167,7 @@ public struct BodyScanSession: Codable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, startTime, endTime, overallCoherence
+        case id, startTime, endTime, regionResults, activeRegion, overallCoherence
     }
 }
 
@@ -205,15 +205,6 @@ public final class BodyScanResonanceEngine: ObservableObject {
     @Published public private(set) var activeSensors: Set<BiophysicalSensor> = []
     /// Fused sensor confidence
     @Published public private(set) var fusedConfidence: Double = 0
-
-    // MARK: - Vision
-
-    #if canImport(Vision)
-    private lazy var bodyPoseRequest: VNDetectHumanBodyPoseRequest = {
-        let request = VNDetectHumanBodyPoseRequest()
-        return request
-    }()
-    #endif
 
     // MARK: - Camera
 
@@ -303,7 +294,14 @@ public final class BodyScanResonanceEngine: ObservableObject {
         detectedRegions = []
         jointPositions = [:]
 
-        captureSession?.startRunning()
+        // Start camera on capture queue to avoid blocking main thread
+        let session = captureSession
+        await withCheckedContinuation { continuation in
+            captureQueue.async {
+                session?.startRunning()
+                continuation.resume()
+            }
+        }
         startUpdateLoop()
         startSessionTimer()
 
@@ -324,7 +322,8 @@ public final class BodyScanResonanceEngine: ObservableObject {
         isScanning = false
         currentSession.endTime = Date()
 
-        captureSession?.stopRunning()
+        let session = captureSession
+        captureQueue.async { session?.stopRunning() }
         stopUpdateLoop()
         stopSessionTimer()
         await stopStimulation()
@@ -383,93 +382,6 @@ public final class BodyScanResonanceEngine: ObservableObject {
         self.captureSession = session
         self.videoOutput = output
     }
-
-    // MARK: - Body Pose Detection
-
-    #if canImport(Vision)
-    private func detectBodyPose(in pixelBuffer: CVPixelBuffer) {
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up, options: [:])
-
-        do {
-            try handler.perform([bodyPoseRequest])
-
-            guard let observation = bodyPoseRequest.results?.first else {
-                DispatchQueue.main.async { [weak self] in
-                    self?.bodyPoseConfidence = 0
-                    self?.detectedRegions = []
-                }
-                return
-            }
-
-            let joints = extractJointPositions(from: observation)
-            let regions = identifyRegions(from: joints)
-
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.bodyPoseConfidence = Double(observation.confidence)
-                self.jointPositions = joints
-                self.detectedRegions = regions
-
-                // Auto-scan: focus on nearest detected region
-                if self.autoScan, self.selectedRegion == nil, let firstRegion = regions.first {
-                    self.currentRegion = firstRegion
-                }
-            }
-
-        } catch {
-            log.error("Body pose detection failed: \(error)")
-        }
-    }
-
-    private func extractJointPositions(from observation: VNHumanBodyPoseObservation) -> [BodyRegion: CGPoint] {
-        var positions: [BodyRegion: CGPoint] = [:]
-
-        let jointMap: [(VNHumanBodyPoseObservation.JointName, BodyRegion)] = [
-            (.nose, .head),
-            (.neck, .neck),
-            (.leftShoulder, .leftShoulder),
-            (.rightShoulder, .rightShoulder),
-            (.leftElbow, .leftArm),
-            (.rightElbow, .rightArm),
-            (.leftWrist, .leftHand),
-            (.rightWrist, .rightHand),
-            (.leftHip, .leftHip),
-            (.rightHip, .rightHip),
-            (.leftKnee, .leftLeg),
-            (.rightKnee, .rightLeg),
-        ]
-
-        for (jointName, region) in jointMap {
-            if let point = try? observation.recognizedPoint(jointName),
-               point.confidence > 0.3 {
-                positions[region] = CGPoint(x: point.location.x, y: 1.0 - point.location.y)
-            }
-        }
-
-        // Synthesize chest/abdomen from shoulders and hips
-        if let ls = positions[.leftShoulder], let rs = positions[.rightShoulder] {
-            let chestCenter = CGPoint(x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 + 0.05)
-            positions[.chest] = chestCenter
-        }
-
-        if let lh = positions[.leftHip], let rh = positions[.rightHip],
-           let ls = positions[.leftShoulder], let rs = positions[.rightShoulder] {
-            let hipCenter = CGPoint(x: (lh.x + rh.x) / 2, y: (lh.y + rh.y) / 2)
-            let shoulderCenter = CGPoint(x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2)
-            let abdomenCenter = CGPoint(
-                x: (hipCenter.x + shoulderCenter.x) / 2,
-                y: (hipCenter.y + shoulderCenter.y) / 2
-            )
-            positions[.abdomen] = abdomenCenter
-        }
-
-        return positions
-    }
-
-    private func identifyRegions(from joints: [BodyRegion: CGPoint]) -> [BodyRegion] {
-        return joints.keys.sorted { $0.rawValue < $1.rawValue }
-    }
-    #endif
 
     // MARK: - Stimulation
 
@@ -618,9 +530,15 @@ public final class BodyScanResonanceEngine: ObservableObject {
 
     // MARK: - Cleanup
 
-    deinit {
+    /// Call before releasing to ensure timers are cleaned up.
+    /// stopScan() handles this during normal operation.
+    nonisolated private func cleanupTimers(_ sessionTimer: Timer?, _ updateTimer: DispatchSourceTimer?) {
         sessionTimer?.invalidate()
         updateTimer?.cancel()
+    }
+
+    deinit {
+        cleanupTimers(sessionTimer, updateTimer)
     }
 }
 
