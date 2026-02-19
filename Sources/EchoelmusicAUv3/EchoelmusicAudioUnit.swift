@@ -6,26 +6,27 @@
 //  AUDIO UNIT v3 BASE CLASS
 //  Universal AUv3 wrapper for Echoelmusic — all 10 Echoel* tools as plugins
 //
-//  10 AUv3 Plugins (all platforms):
-//  ┌─────────────────────────────────────────────────────────────────────┐
-//  │ Instruments (aumu)                                                 │
-//  │   EchoelSynth (Esyn) — Bio-reactive synthesis engine              │
-//  │   EchoelBio   (Ebio) — Bio-reactive AI music generator            │
-//  │                                                                    │
-//  │ Effects (aufx)                                                     │
-//  │   EchoelFX    (Eefx) — Effects chain + analog emulations          │
-//  │   EchoelMix   (Emix) — Mixer bus processor + spatial audio        │
-//  │   EchoelField (Efld) — Audio-reactive visual engine               │
-//  │   EchoelMind  (Emnd) — On-device AI audio intelligence            │
-//  │                                                                    │
-//  │ MIDI Processors (aumi)                                             │
-//  │   EchoelSeq   (Eseq) — Bio-reactive step sequencer               │
-//  │   EchoelMIDI  (Emid) — MIDI 2.0 + MPE processor                  │
+//  10 AUv3 Plugins — each with dedicated DSP kernel:
+//  ┌──────────────────────────────────────────────────────────────────────┐
+//  │ Instruments (aumu)                                                  │
+//  │   EchoelSynth (Esyn) — TR808 bass synthesizer                     │
+//  │   EchoelBio   (Ebio) — Binaural beat generator (brainwave states) │
+//  │                                                                     │
+//  │ Effects (aufx)                                                      │
+//  │   EchoelFX    (Eefx) — Freeverb algorithmic reverb                │
+//  │   EchoelMix   (Emix) — Analog-style compressor (soft-knee)        │
+//  │   EchoelField (Efld) — Multi-mode biquad filter (LP/HP/BP/Notch)  │
+//  │   EchoelMind  (Emnd) — 8 analog console emulations                │
+//  │                                                                     │
+//  │ MIDI Processors (aumi)                                              │
+//  │   EchoelSeq   (Eseq) — Step sequencer with drum synthesis         │
+//  │   EchoelMIDI  (Emid) — MIDI processor with synthesis              │
 //  │   EchoelBeam  (Ebem) — Audio-to-lighting DMX bridge               │
 //  │   EchoelNet   (Enet) — Network protocol bridge (OSC/MSC/Dante)    │
-//  └─────────────────────────────────────────────────────────────────────┘
+//  └──────────────────────────────────────────────────────────────────────┘
 //
-//  macOS additionally: VST3, CLAP (via PluginWrapper)
+//  C++ DSP (via bridge headers): DynamicEQ, SpectralSculptor
+//  macOS additionally: VST3, CLAP (via PluginWrapper — in development)
 //
 
 import Foundation
@@ -50,23 +51,23 @@ public enum EchoelmusicAUType: String, CaseIterable {
     }
 }
 
-/// All 10 Echoel* plugin identities
+/// All 10 Echoel* plugin identities — each backed by a dedicated DSP kernel
 public enum EchoelPluginID: String, CaseIterable {
     // Instruments (aumu)
-    case echoelSynth = "Esyn"   // Bio-reactive synthesis engine
-    case echoelBio   = "Ebio"   // Bio-reactive AI generator
+    case echoelSynth = "Esyn"   // TR808 bass synthesizer (TR808DSPKernel)
+    case echoelBio   = "Ebio"   // Binaural beat generator (BinauralDSPKernel)
 
     // Effects (aufx)
-    case echoelFX    = "Eefx"   // Effects chain + analog emulations
-    case echoelMix   = "Emix"   // Mixer bus processor + spatial
-    case echoelField = "Efld"   // Audio-reactive visual engine
-    case echoelMind  = "Emnd"   // AI stem separation + enhancement
+    case echoelFX    = "Eefx"   // Freeverb reverb (ReverbDSPKernel)
+    case echoelMix   = "Emix"   // Analog compressor (CompressorDSPKernel)
+    case echoelField = "Efld"   // Multi-mode filter (FilterDSPKernel)
+    case echoelMind  = "Emnd"   // 8 analog console emulations (EchoelCoreDSPKernel)
 
     // MIDI Processors (aumi)
-    case echoelSeq   = "Eseq"   // Step sequencer + patterns
-    case echoelMIDI  = "Emid"   // MIDI 2.0 + MPE processor
+    case echoelSeq   = "Eseq"   // Step sequencer + drum synthesis
+    case echoelMIDI  = "Emid"   // MIDI processor + synthesis
     case echoelBeam  = "Ebem"   // Audio-to-lighting DMX bridge
-    case echoelNet   = "Enet"   // Network protocol bridge
+    case echoelNet   = "Enet"   // Network protocol bridge (OSC/MSC)
 
     var auType: EchoelmusicAUType {
         switch self {
@@ -162,6 +163,36 @@ public enum EchoelmusicParameterAddress: AUParameterAddress {
     case bioReactivity = 300
     case coherenceTarget = 301
     case creativityLevel = 302
+
+    // Reverb (ReverbDSPKernel)
+    case reverbWetDry = 400
+    case reverbRoomSize = 401
+    case reverbDamping = 402
+    case reverbWidth = 403
+    case reverbPreDelay = 404
+
+    // Compressor (CompressorDSPKernel)
+    case compThreshold = 500
+    case compRatio = 501
+    case compAttack = 502
+    case compRelease = 503
+    case compMakeupGain = 504
+    case compKnee = 505
+
+    // Filter (FilterDSPKernel)
+    case filterFrequency = 600
+    case filterResonance = 601
+    case filterMode = 602
+
+    // Console / EchoelCore (EchoelCoreDSPKernel)
+    case consoleLegend = 700
+    case consoleVibe = 701
+    case consoleBlend = 702
+
+    // Binaural (BinauralDSPKernel)
+    case binauralCarrier = 800
+    case binauralBeat = 801
+    case binauralAmplitude = 802
 }
 
 // MARK: - Base Audio Unit
@@ -257,41 +288,42 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - Kernel Factory
 
     /// Creates the appropriate DSP kernel for each plugin identity.
-    /// Instruments use TR808DSPKernel, effects use StemSeparationDSPKernel,
-    /// MIDI processors use TR808DSPKernel as a pass-through with MIDI handling.
+    /// Each plugin gets a dedicated kernel with its own DSP algorithm.
     private static func createKernel(for pluginID: EchoelPluginID?, auType: EchoelmusicAUType) -> EchoelmusicDSPKernel {
         guard let pluginID = pluginID else {
-            // Fallback based on AU type
             switch auType {
-            case .instrument:
-                return TR808DSPKernel()
-            case .effect:
-                return StemSeparationDSPKernel()
-            case .midiProcessor:
-                return TR808DSPKernel()
+            case .instrument: return TR808DSPKernel()
+            case .effect: return ReverbDSPKernel()
+            case .midiProcessor: return TR808DSPKernel()
             }
         }
 
         switch pluginID {
-        // Instruments — synthesis kernels
+        // Instruments
         case .echoelSynth:
-            return TR808DSPKernel()
+            return TR808DSPKernel()           // Bass synthesizer
         case .echoelBio:
-            return TR808DSPKernel()
+            return BinauralDSPKernel()        // Binaural beat generator
 
-        // Effects — processing kernels
+        // Effects — each gets its own dedicated DSP
         case .echoelFX:
-            return StemSeparationDSPKernel()
+            return ReverbDSPKernel()          // Freeverb algorithmic reverb
         case .echoelMix:
-            return StemSeparationDSPKernel()
+            return CompressorDSPKernel()      // Analog-style compressor
         case .echoelField:
-            return StemSeparationDSPKernel()
+            return FilterDSPKernel()          // Multi-mode biquad filter
         case .echoelMind:
-            return StemSeparationDSPKernel()
+            return EchoelCoreDSPKernel()      // 8 analog console emulations
 
-        // MIDI Processors — pass-through with MIDI handling
-        case .echoelSeq, .echoelMIDI, .echoelBeam, .echoelNet:
-            return TR808DSPKernel()
+        // MIDI Processors
+        case .echoelSeq:
+            return TR808DSPKernel()           // Sequencer with drum synthesis
+        case .echoelMIDI:
+            return TR808DSPKernel()           // MIDI pass-through + synthesis
+        case .echoelBeam:
+            return TR808DSPKernel()           // DMX bridge (audio-triggered)
+        case .echoelNet:
+            return TR808DSPKernel()           // Network bridge (audio-triggered)
         }
     }
 
