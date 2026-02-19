@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">ポリフォニックシンセサイザー</string>
-    <string name="tr808_title">TR-808 ベース</string>
+    <string name="tr808_title">Pulse Drum ベース</string>
     <string name="bio_title">バイオリアクティブコントロール</string>
     <string name="ai_title">量子AI生成</string>
     <string name="settings_title">設定</string>

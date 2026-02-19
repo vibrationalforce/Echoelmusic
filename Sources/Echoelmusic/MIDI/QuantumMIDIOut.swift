@@ -122,7 +122,7 @@ public struct QuantumMIDIVoice: Identifiable, Sendable {
         case genetic = "Genetic Synth"
         case organic = "Organic Synth"
         case bioReactive = "Bio-Reactive Synth"
-        case tr808 = "TR-808"
+        case tr808 = "Pulse Drum"
         case echoSynth = "EchoSynth"
 
         // Global Instruments

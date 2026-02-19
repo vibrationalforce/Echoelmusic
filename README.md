@@ -81,7 +81,7 @@ Bio-Reactivity: All tools react to BioSnapshot via bus
 
 | Tool | Purpose | Key Capabilities |
 |------|---------|-----------------|
-| **EchoelSynth** | All synthesis | DDSP (vDSP vectorized, 12 bio-mappings, spectral morphing, timbre transfer), Modal, Cellular, Quantum, Sampler, TR-808, 45+ presets |
+| **EchoelSynth** | All synthesis | DDSP (vDSP vectorized, 12 bio-mappings, spectral morphing, timbre transfer), Modal, Cellular, Quantum, Sampler, Pulse Drum, 45+ presets |
 | **EchoelMix** | Mixing & session | Console, metering, BPM sync, multi-track recording |
 | **EchoelFX** | Effects chain | 20+ types: EQ, Comp, Reverb, Delay, Drive, Mod, Limiter, Neve/SSL emulation |
 | **EchoelSeq** | Sequencer | Step sequencer, patterns, automation, scripting |

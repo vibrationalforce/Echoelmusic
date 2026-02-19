@@ -7,7 +7,7 @@
 //  Universal AUv3 wrapper for Echoelmusic audio processing
 //
 //  Supports:
-//  - Instrument (aumu) - TR-808, BioReactive Composer
+//  - Instrument (aumu) - Pulse Drum, BioReactive Composer
 //  - Effect (aufx) - Stem Separation, Effects Chain
 //  - MIDI Processor (aumi) - MIDI 2.0 Processing
 //

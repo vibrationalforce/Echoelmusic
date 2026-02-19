@@ -94,7 +94,7 @@ public struct EchoelPaywall: View {
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             featureRow(icon: "waveform.circle.fill", title: "Unlimited Sessions", subtitle: "No time limits on bio-reactive sessions")
-            featureRow(icon: "pianokeys", title: "All 7 Synth Engines", subtitle: "DDSP, Modal Bank, Cellular, Quantum, Sampler, TR-808, Breakbeat")
+            featureRow(icon: "pianokeys", title: "All 7 Synth Engines", subtitle: "DDSP, Modal Bank, Cellular, Quantum, Sampler, Pulse Drum, Breakbeat")
             featureRow(icon: "slider.horizontal.3", title: "All Presets", subtitle: "Full preset library + Hilbert Visualization")
             featureRow(icon: "icloud.fill", title: "CloudKit Sync", subtitle: "Sessions sync across all your devices")
             featureRow(icon: "applewatch", title: "Watch Integration", subtitle: "Real-time bio data from Apple Watch")

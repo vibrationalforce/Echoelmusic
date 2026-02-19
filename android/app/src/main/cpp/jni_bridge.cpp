@@ -130,7 +130,7 @@ Java_com_echoelmusic_app_audio_AudioEngine_nativeUpdateBioData(
     }
 }
 
-// ============== TR-808 ==============
+// ============== Pulse Drum ==============
 
 JNIEXPORT void JNICALL
 Java_com_echoelmusic_app_audio_AudioEngine_nativeTrigger808(
