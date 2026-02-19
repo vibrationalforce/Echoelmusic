@@ -293,47 +293,183 @@ public final class EchoelSynth: ObservableObject {
 // 7 classes → 1 unified mixing engine
 
 /// Professional mixing — channels, sends, analysis, session management
+/// Backed by ProMixEngine (mixing) + ProSessionEngine (clip launching/recording)
 @MainActor
 public final class EchoelMix: ObservableObject {
+
+    // ── Backing Pro Engines ──────────────────────────────────────────────
+    public let mixer: ProMixEngine
+    public let session: ProSessionEngine
+
+    // ── Published State (derived from Pro Engines) ───────────────────────
     @Published public var masterVolume: Float = 0.8
     @Published public var bpm: Float = 120
     @Published public var isRecording: Bool = false
+    @Published public var isPlaying: Bool = false
     @Published public var rmsLevel: Float = 0
     @Published public var spectralCentroid: Float = 0
+    @Published public var currentBeat: Double = 0
 
-    public var channelCount: Int { channels.count }
-    private var channels: [MixChannel] = []
+    public var channelCount: Int { mixer.channels.count }
 
-    public struct MixChannel: Identifiable, Sendable {
-        public let id: Int
-        public var name: String
-        public var volume: Float = 0.8
-        public var pan: Float = 0.0
-        public var mute: Bool = false
-        public var solo: Bool = false
-    }
+    private var cancellables = Set<AnyCancellable>()
 
     public init() {
+        self.mixer = ProMixEngine.defaultSession()
+        self.session = ProSessionEngine.defaultSession()
+
         // Register as audio provider on the bus
         EngineBus.shared.provide("audio.bpm") { [weak self] in self?.bpm }
         EngineBus.shared.provide("audio.rms") { [weak self] in self?.rmsLevel }
         EngineBus.shared.provide("audio.volume") { [weak self] in self?.masterVolume }
+
+        // Sync ProSessionEngine state → EchoelMix published state
+        session.$isPlaying
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] playing in self?.isPlaying = playing }
+            .store(in: &cancellables)
+
+        session.$currentBeat
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] beat in self?.currentBeat = beat }
+            .store(in: &cancellables)
+
+        session.$globalBPM
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] bpm in self?.bpm = Float(bpm) }
+            .store(in: &cancellables)
     }
 
-    public func addChannel(name: String) -> Int {
-        let ch = MixChannel(id: channels.count, name: name)
-        channels.append(ch)
-        return ch.id
+    // ── Channel Management (delegates to ProMixEngine) ───────────────────
+
+    @discardableResult
+    public func addChannel(name: String, type: ChannelType = .audio) -> UUID {
+        let strip = mixer.addChannel(name: name, type: type)
+        return strip.id
     }
 
-    public func setVolume(_ volume: Float, channel: Int) {
-        guard channel < channels.count else { return }
-        channels[channel].volume = volume
-        EngineBus.shared.publishParam(engine: "mix", param: "ch\(channel).vol", value: volume)
+    public func removeChannel(id: UUID) {
+        mixer.removeChannel(id: id)
     }
 
-    public func startSession() { isRecording = true }
-    public func stopSession() { isRecording = false }
+    public func setVolume(_ volume: Float, channelId: UUID) {
+        if let idx = mixer.channelIndex(for: channelId) {
+            mixer.channels[idx].volume = volume
+            EngineBus.shared.publishParam(engine: "mix", param: "ch\(idx).vol", value: volume)
+        }
+    }
+
+    public func setPan(_ pan: Float, channelId: UUID) {
+        if let idx = mixer.channelIndex(for: channelId) {
+            mixer.channels[idx].pan = pan
+        }
+    }
+
+    public func solo(channelId: UUID) {
+        mixer.soloExclusive(channelID: channelId)
+    }
+
+    // ── Insert FX (delegates to ProMixEngine) ────────────────────────────
+
+    @discardableResult
+    public func addInsert(channelId: UUID, effect: ProEffectType) -> InsertSlot? {
+        mixer.addInsert(to: channelId, effect: effect)
+    }
+
+    // ── Send Routing ─────────────────────────────────────────────────────
+
+    public func addSend(from source: UUID, to dest: UUID, level: Float = 0.5) {
+        mixer.addSend(from: source, to: dest, level: level)
+    }
+
+    @discardableResult
+    public func createAuxBus(name: String) -> ChannelStrip {
+        mixer.createAuxBus(name: name)
+    }
+
+    // ── Sidechain ────────────────────────────────────────────────────────
+
+    public func setSidechain(compressor: UUID, source: UUID) {
+        mixer.setSidechain(compressorChannelID: compressor, sidechainSourceID: source)
+    }
+
+    // ── Mix Snapshots ────────────────────────────────────────────────────
+
+    public func snapshotMix(name: String? = nil) -> MixSnapshot {
+        mixer.snapshotMix(name: name)
+    }
+
+    public func recallMix(_ snapshot: MixSnapshot) {
+        mixer.recallMix(snapshot: snapshot)
+    }
+
+    // ── Session Transport (delegates to ProSessionEngine) ────────────────
+
+    public func play() {
+        session.play()
+        EngineBus.shared.publishParam(engine: "mix", param: "transport", value: 1)
+    }
+
+    public func stop() {
+        session.stop()
+        EngineBus.shared.publishParam(engine: "mix", param: "transport", value: 0)
+    }
+
+    public func pause() {
+        session.pause()
+    }
+
+    // ── Clip Launching (Ableton-style) ───────────────────────────────────
+
+    public func launchClip(track: Int, scene: Int) {
+        session.launchClip(trackIndex: track, sceneIndex: scene)
+    }
+
+    public func launchScene(_ scene: Int) {
+        session.launchScene(sceneIndex: scene)
+    }
+
+    public func stopAllClips() {
+        session.stopAllClips()
+    }
+
+    // ── Pattern Creation (FL-style) ──────────────────────────────────────
+
+    @discardableResult
+    public func createPattern(name: String, steps: Int = 16) -> SessionClip {
+        session.createPattern(name: name, steps: steps)
+    }
+
+    // ── DJ Crossfader ────────────────────────────────────────────────────
+
+    public func setCrossfader(_ position: Float) {
+        session.setCrossfader(position: position)
+    }
+
+    // ── Tempo ────────────────────────────────────────────────────────────
+
+    public func tapTempo() {
+        session.tapTempo()
+    }
+
+    // ── Session Recording ────────────────────────────────────────────────
+
+    public func startSession() {
+        isRecording = true
+        session.play()
+    }
+
+    public func stopSession() {
+        isRecording = false
+        session.stop()
+    }
+
+    // ── Audio Processing (drives the mixer at 60Hz) ─────────────────────
+
+    public func processBlock(frameCount: Int) {
+        mixer.processBlock(frameCount: frameCount)
+        masterVolume = mixer.masterChannel.volume
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1911,6 +2047,81 @@ public typealias EchoelTranslate = EchoelMind
 public typealias Echoela = EchoelMind
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MARK: - Toolkit Support Types (EngineMode, ToolkitState, SubsystemType)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Operating mode — determines which panels/overlays EchoelView shows
+public enum EngineMode: String, CaseIterable, Identifiable, Sendable {
+    case studio = "Studio"
+    case live = "Live"
+    case meditation = "Meditation"
+    case video = "Video"
+    case dj = "DJ"
+    case collaboration = "Collab"
+    case immersive = "Immersive"
+    case research = "Research"
+
+    public var id: String { rawValue }
+}
+
+/// Performance profile — trades CPU for quality
+public enum PerformanceProfile: String, CaseIterable, Sendable {
+    case balanced = "Balanced"
+    case quality = "Quality"
+    case performance = "Performance"
+}
+
+/// Active subsystem tracking
+public enum SubsystemType: String, Hashable, CaseIterable, Sendable {
+    case bio = "Bio"
+    case audio = "Audio"
+    case visual = "Visual"
+    case network = "Network"
+    case quantum = "Quantum"
+}
+
+/// Unified state snapshot — derived from all 10 tools every frame
+public struct ToolkitState {
+    public var audioLevel: Float = 0
+    public var coherence: Float = 0.5
+    public var breathPhase: Float = 0.5
+    public var heartRate: Float = 70
+    public var bpm: Double = 120
+    public var isPlaying: Bool = false
+    public var position: TimeInterval = 0
+    public var isRecording: Bool = false
+    public var isStreaming: Bool = false
+    public var fps: Int = 60
+    public var visualIntensity: Float = 0.5
+    public var participantCount: Int = 0
+    public var groupCoherence: Float = 0
+    public var handsTracked: Bool = false
+    public var leftPinch: Float = 0
+    public var rightPinch: Float = 0
+    public var quantumCoherence: Float = 0
+    public var circadianPhase: String = "peakAlertness"
+}
+
+/// Simple event bus for UI commands
+public final class ToolkitEventBus {
+    public enum Event {
+        case record, play, stop, pause
+        case modeChange(EngineMode)
+        case custom(String)
+    }
+
+    private var handlers: [(Event) -> Void] = []
+
+    public func send(_ event: Event) {
+        for handler in handlers { handler(event) }
+    }
+
+    public func on(_ handler: @escaping (Event) -> Void) {
+        handlers.append(handler)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MARK: - EchoelToolkit — The Master Registry
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1959,6 +2170,23 @@ public final class EchoelToolkit: ObservableObject {
     // Isolated intelligence engines — now wired into the toolkit
     public let quantumIntelligence: QuantumIntelligenceEngine
     public let quantumHealth: QuantumHealthBiofeedbackEngine
+
+    // ── Mode / State / Subsystems (for EchoelView + MainNavigationHub) ──
+
+    /// Current operating mode — determines UI overlay
+    @Published public var mode: EngineMode = .studio
+
+    /// Unified state snapshot — rebuilt every frame from all 10 tools
+    @Published public var state: ToolkitState = ToolkitState()
+
+    /// Active subsystems
+    @Published public var activeSubsystems: Set<SubsystemType> = [.audio]
+
+    /// Performance profile
+    @Published public var performanceProfile: PerformanceProfile = .balanced
+
+    /// UI event bus
+    public let eventBus = ToolkitEventBus()
 
     // Backward-compatible accessors — remove after 1 release cycle
     public var canvas: EchoelField { field }
@@ -2075,5 +2303,88 @@ public final class EchoelToolkit: ObservableObject {
     public func deactivateLambda() {
         lambda.deactivate()
         lambda.disconnectFromLightMapper()
+    }
+
+    // ── Mode / Transport / State API (for EchoelView) ────────────────────
+
+    /// Switch operating mode — configures all tools for the target workflow
+    public func start(mode newMode: EngineMode) {
+        self.mode = newMode
+
+        // Configure subsystems per mode
+        switch newMode {
+        case .studio:
+            activeSubsystems = [.audio]
+        case .live:
+            activeSubsystems = [.audio, .visual]
+            beam.startOutput()
+        case .meditation:
+            activeSubsystems = [.bio, .audio, .visual]
+            bio.startStreaming()
+        case .video:
+            activeSubsystems = [.audio, .visual]
+        case .dj:
+            activeSubsystems = [.audio]
+        case .collaboration:
+            activeSubsystems = [.audio, .network]
+        case .immersive:
+            activeSubsystems = [.bio, .audio, .visual, .quantum]
+            activateLambda()
+        case .research:
+            activeSubsystems = [.bio, .quantum]
+        }
+
+        eventBus.send(.modeChange(newMode))
+    }
+
+    /// Stop all active subsystems
+    public func stop() {
+        mix.stop()
+        seq.stop()
+        bio.stopStreaming()
+        beam.stopOutput()
+        field.stopRecording()
+        field.stopStreaming()
+        if lambda.isActive { deactivateLambda() }
+        activeSubsystems = []
+        updateState()
+    }
+
+    /// Play transport
+    public func play() {
+        mix.play()
+        seq.play()
+        updateState()
+    }
+
+    /// Pause transport
+    public func pause() {
+        mix.pause()
+        updateState()
+    }
+
+    /// Stop playback only (keep mode active)
+    public func stopPlayback() {
+        mix.stop()
+        seq.stop()
+        updateState()
+    }
+
+    /// Rebuild state snapshot from all 10 tools (call at 60Hz or on change)
+    public func updateState() {
+        state.audioLevel = mix.rmsLevel
+        state.coherence = bio.coherence
+        state.breathPhase = bio.breathPhase
+        state.heartRate = bio.heartRate
+        state.bpm = Double(mix.bpm)
+        state.isPlaying = mix.isPlaying
+        state.position = TimeInterval(mix.currentBeat / Double(mix.bpm) * 60.0)
+        state.isRecording = mix.isRecording || field.isRecording
+        state.isStreaming = field.isStreaming
+        state.visualIntensity = field.intensity
+        state.participantCount = net.collaborators.count
+        state.groupCoherence = bio.coherence // TODO: aggregate from peers
+        state.quantumCoherence = Float(lambda.lambdaScore)
+        state.circadianPhase = CircadianRhythmEngine.shared.currentPhase.rawValue
     }
 }

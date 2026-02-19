@@ -41,8 +41,14 @@ struct EchoelmusicApp: App {
     /// HealthKit engine for biofeedback (unified engine)
     @ObservedObject private var healthKitEngine = UnifiedHealthKitEngine.shared
 
+    /// HealthKitManager for MainNavigationHub + WorkspaceContentRouter
+    @StateObject private var healthKitManager = HealthKitManager()
+
     /// Recording engine for multi-track recording
     @StateObject private var recordingEngine = RecordingEngine()
+
+    /// EchoelToolkit — unified access to all 10 tools + Lambda
+    @ObservedObject private var toolkit = EchoelToolkit.shared
 
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
@@ -73,6 +79,7 @@ struct EchoelmusicApp: App {
                     group.addTask { @MainActor in _ = VideoAICreativeHub.shared }
                     group.addTask { @MainActor in _ = MultiPlatformBridge.shared }
                     group.addTask { @MainActor in _ = EchoelTools.shared }
+                    group.addTask { @MainActor in _ = EchoelToolkit.shared }
                     try await group.waitForAll()
                 }
 
@@ -122,12 +129,14 @@ struct EchoelmusicApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainNavigationHub()
                 .environmentObject(microphoneManager)      // Makes mic manager available to all views
                 .environmentObject(audioEngine)             // Makes audio engine available
-                .environmentObject(healthKitEngine)        // Makes health data available
+                .environmentObject(healthKitEngine)        // Makes health data available (UnifiedHealthKitEngine)
+                .environmentObject(healthKitManager)       // Makes HealthKitManager available (for MainNavigationHub)
                 .environmentObject(recordingEngine)         // Makes recording engine available
                 .environmentObject(unifiedControlHub)       // Makes unified control available
+                .environmentObject(toolkit)                 // Makes EchoelToolkit available to all views
                 .preferredColorScheme(.dark)                // Force dark theme
                 .onAppear {
                     // Connect HealthKit to AudioEngine for bio-parameter mapping
