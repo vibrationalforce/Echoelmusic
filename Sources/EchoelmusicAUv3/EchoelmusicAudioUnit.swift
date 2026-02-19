@@ -1099,39 +1099,6 @@ public protocol EchoelmusicDSPKernel: AnyObject {
     var fullState: [String: Any]? { get set }
 }
 
-// MARK: - Audio Unit View Controller
-
-/// Base view controller for Audio Unit UI
-open class EchoelmusicAudioUnitViewController: AUViewController {
-
-    public var audioUnit: EchoelmusicAudioUnit? {
-        didSet {
-            DispatchQueue.main.async { [weak self] in
-                self?.connectViewToAU()
-            }
-        }
-    }
-
-    open override func viewDidLoad() {
-        super.viewDidLoad()
-        #if os(iOS) || os(tvOS) || os(visionOS)
-        view.backgroundColor = .black
-        #elseif os(macOS)
-        view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.black.cgColor
-        #endif
-
-        if audioUnit != nil {
-            connectViewToAU()
-        }
-    }
-
-    /// Override to connect UI to audio unit parameters
-    open func connectViewToAU() {
-        // Subclasses implement
-    }
-}
-
 // MARK: - Audio Unit Factory
 
 /// Factory for creating Echoelmusic audio units

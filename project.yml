@@ -305,7 +305,7 @@ targets:
                 type: aumi
                 version: 1
           NSExtensionPointIdentifier: com.apple.AudioUnit-UI
-          NSExtensionPrincipalClass: EchoelmusicAudioUnitViewController
+          NSExtensionPrincipalClass: EchoelmusicAUv3ViewController
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
