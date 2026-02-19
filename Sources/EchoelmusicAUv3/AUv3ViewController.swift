@@ -5,6 +5,7 @@
 //  Created: December 2025
 //  AUv3 VIEW CONTROLLER
 //  SwiftUI-based UI for Audio Unit hosts — dispatches by pluginID
+//  Platform-safe: iOS (UIHostingController) + macOS (NSHostingView)
 //
 
 import SwiftUI
@@ -27,38 +28,53 @@ public class EchoelmusicAUv3ViewController: AUViewController {
         }
     }
 
+    #if canImport(UIKit)
     private var hostingController: UIHostingController<AnyView>?
+    #elseif canImport(AppKit)
+    private var hostingView: NSHostingView<AnyView>?
+    #endif
 
     // MARK: - Lifecycle
 
     public override func viewDidLoad() {
         super.viewDidLoad()
 
+        #if canImport(UIKit)
         view.backgroundColor = UIColor.black
+        #elseif canImport(AppKit)
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.black.cgColor
+        #endif
 
         if audioUnit != nil {
             setupUI()
         }
     }
 
+    #if canImport(UIKit)
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         hostingController?.view.frame = view.bounds
     }
+    #elseif canImport(AppKit)
+    public override func viewDidLayout() {
+        super.viewDidLayout()
+        hostingView?.frame = view.bounds
+    }
+    #endif
 
     // MARK: - Setup
 
     private func setupUI() {
         guard let au = audioUnit else { return }
 
+        let swiftUIView: AnyView = createViewForPlugin(au)
+
+        #if canImport(UIKit)
         // Remove existing hosting controller
         hostingController?.view.removeFromSuperview()
         hostingController?.removeFromParent()
 
-        // Dispatch to correct SwiftUI view based on plugin identity
-        let swiftUIView: AnyView = createViewForPlugin(au)
-
-        // Create hosting controller
         let hosting = UIHostingController(rootView: swiftUIView)
         hosting.view.backgroundColor = .clear
 
@@ -69,6 +85,17 @@ public class EchoelmusicAUv3ViewController: AUViewController {
         hosting.didMove(toParent: self)
 
         hostingController = hosting
+        #elseif canImport(AppKit)
+        // Remove existing hosting view
+        hostingView?.removeFromSuperview()
+
+        let hosting = NSHostingView(rootView: swiftUIView)
+        hosting.frame = view.bounds
+        hosting.autoresizingMask = [.width, .height]
+        view.addSubview(hosting)
+
+        hostingView = hosting
+        #endif
     }
 
     /// Creates the appropriate SwiftUI view for a given audio unit's plugin identity
@@ -128,7 +155,7 @@ private struct AUParameterSlider: View {
                 .frame(width: 60, alignment: .leading)
 
             Slider(value: $value, in: range)
-                .onChange(of: value) { newValue in
+                .onChange(of: value) { _, newValue in
                     audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
                 }
 
@@ -720,7 +747,13 @@ public class EchoelmusicAUv3ViewControllerFactory: NSObject, AUAudioUnitFactory 
         return try EchoelmusicAudioUnit(componentDescription: componentDescription, auType: auType)
     }
 
+    #if canImport(UIKit)
     public func requestViewController(completionHandler: @escaping (UIViewController?) -> Void) {
         completionHandler(EchoelmusicAUv3ViewController())
     }
+    #elseif canImport(AppKit)
+    public func requestViewController(completionHandler: @escaping (NSViewController?) -> Void) {
+        completionHandler(EchoelmusicAUv3ViewController())
+    }
+    #endif
 }
