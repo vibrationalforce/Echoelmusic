@@ -271,6 +271,7 @@ public struct EchoelView: View {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 10))
                     .foregroundColor(.red)
+                    .accessibilityHidden(true)
                 Text("\(Int(engine.state.heartRate))")
                     .font(.system(size: 12, design: .monospaced))
             }
@@ -280,11 +281,14 @@ public struct EchoelView: View {
                 Circle()
                     .fill(coherenceColor(engine.state.coherence))
                     .frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
                 Text("\(Int(engine.state.coherence * 100))%")
                     .font(.system(size: 12, design: .monospaced))
             }
         }
         .foregroundColor(.white.opacity(0.7))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Heart rate \(Int(engine.state.heartRate)) BPM, coherence \(Int(engine.state.coherence * 100)) percent")
     }
 
     // MARK: - Left Panel
@@ -429,6 +433,7 @@ public struct EchoelView: View {
             Circle()
                 .fill(fpsColor)
                 .frame(width: 6, height: 6)
+                .accessibilityHidden(true)
             Text("\(Int(engine.state.fps)) FPS")
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(.white.opacity(0.5))
@@ -1717,6 +1722,7 @@ struct CollaborationStrip: View {
             if engine.state.isStreaming {
                 HStack(spacing: 4) {
                     Circle().fill(Color.red).frame(width: 6, height: 6)
+                        .accessibilityHidden(true)
                     Text("LIVE")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.red)

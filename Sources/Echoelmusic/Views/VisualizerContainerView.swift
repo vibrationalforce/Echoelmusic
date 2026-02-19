@@ -205,12 +205,13 @@ struct VisualizerContainerView: View {
                         .foregroundColor(VaporwaveColors.textTertiary)
                 }
 
-                // Beat indicator
+                // Beat indicator (decorative)
                 Circle()
                     .fill(visualEngine.beatDetected ? VaporwaveColors.neonPink : Color.white.opacity(0.2))
                     .frame(width: 12, height: 12)
                     .neonGlow(color: visualEngine.beatDetected ? VaporwaveColors.neonPink : .clear, radius: 10)
-                    .animation(.easeOut(duration: 0.1), value: visualEngine.beatDetected)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.1), value: visualEngine.beatDetected)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, VaporwaveSpacing.lg)
             .padding(.vertical, VaporwaveSpacing.md)

@@ -292,7 +292,6 @@ struct ChordPadButton: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
                     if dragOffset == .zero {
-                        // Initial press
                         onPress(value.startLocation, 0.8)
                     }
                     dragOffset = value.translation
@@ -303,6 +302,8 @@ struct ChordPadButton: View {
                     onRelease()
                 }
         )
+        .accessibilityHint("Drag down to strum, drag left or right for pitch bend")
+        .accessibilityAddTraits(.allowsDirectInteraction)
     }
 }
 
@@ -914,6 +915,9 @@ struct MelodyPadView: View {
                             viewModel.endAllTouches(hub: hub)
                         }
                 )
+                .accessibilityLabel("XY Pad")
+                .accessibilityHint("Drag horizontally for pitch, vertically for brightness")
+                .accessibilityAddTraits(.allowsDirectInteraction)
             }
             .frame(height: 300)
             .padding()

@@ -7,6 +7,7 @@ struct RecordingControlsView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var microphoneManager: MicrophoneManager
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showSessionNamePrompt = false
     @State private var newSessionName = ""
     @State private var showTrackList = false
@@ -158,7 +159,8 @@ struct RecordingControlsView: View {
                         )
                         .frame(width: 60, height: 60)
                         .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut(duration: 0.1), value: recordingEngine.recordingLevel)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.1), value: recordingEngine.recordingLevel)
+                        .accessibilityValue("Recording level \(Int(recordingEngine.recordingLevel * 100)) percent")
 
                     Text("\(Int(recordingEngine.recordingLevel * 100))")
                         .font(.system(size: 14, weight: .semibold, design: .monospaced))
