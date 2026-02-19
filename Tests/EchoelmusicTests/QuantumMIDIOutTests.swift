@@ -109,7 +109,7 @@ final class QuantumMIDIOutTests: XCTestCase {
         XCTAssertEqual(pianoRange.lowerBound, 21)
         XCTAssertEqual(pianoRange.upperBound, 108)
 
-        // TR-808: Drum map
+        // Pulse Drum: Drum map
         let tr808Range = QuantumMIDIVoice.InstrumentTarget.tr808.noteRange
         XCTAssertEqual(tr808Range.lowerBound, 36)
         XCTAssertEqual(tr808Range.upperBound, 51)

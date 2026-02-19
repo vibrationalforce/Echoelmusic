@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">Polyphonic Synthesizer</string>
-    <string name="tr808_title">TR-808 Bass</string>
+    <string name="tr808_title">Pulse Drum Bass</string>
     <string name="bio_title">Bio-Reactive Control</string>
     <string name="ai_title">Quantum AI Generation</string>
     <string name="settings_title">Settings</string>

@@ -134,7 +134,7 @@ cd android
 
 ### v1.0.0 (Initial Release)
 - 16-voice polyphonic synthesizer
-- TR-808 Bass with pitch glide
+- Pulse Drum Bass with pitch glide
 - AI Stem Separation
 - Bio-reactive features
 - Quantum AI composition

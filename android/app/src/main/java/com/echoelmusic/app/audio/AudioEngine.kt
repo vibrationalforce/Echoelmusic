@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
  * - AAudio (Android 8.0+) / OpenSL ES fallback
  * - < 10ms latency on supported devices
  * - 16-voice polyphonic synth
- * - TR-808 Bass with pitch glide
+ * - Pulse Drum Bass with pitch glide
  * - Bio-reactive parameter modulation
  */
 class AudioEngine(private val context: Context) {
@@ -100,7 +100,7 @@ class AudioEngine(private val context: Context) {
         nativeUpdateBioData(heartRate, hrv, coherence)
     }
 
-    // TR-808 Bass
+    // Pulse Drum Bass
     fun trigger808(note: Int, velocity: Int) {
         nativeTrigger808(note, velocity)
     }

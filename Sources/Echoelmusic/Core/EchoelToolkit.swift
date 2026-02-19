@@ -66,7 +66,7 @@ public final class EchoelSynth: ObservableObject {
         case cellular = "Cellular"      // Cellular automata → audio
         case quant = "Quantum"          // Schrödinger equation synthesis
         case sampler = "Sampler"        // Sample playback + slicing
-        case tr808 = "TR-808"           // Classic drum machine
+        case tr808 = "Pulse Drum"       // Analog drum machine
     }
 
     /// Circadian-aware DDSP tuning (time-of-day adaptive synthesis)

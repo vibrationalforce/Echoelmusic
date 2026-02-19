@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * TR-808 Bass Engine for Android
- * Authentic 808 bass with pitch glide
+ * Pulse Drum Bass Engine for Android
+ * Authentic 808-style bass with pitch glide
  */
 
 #include <cmath>

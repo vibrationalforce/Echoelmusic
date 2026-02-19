@@ -7,7 +7,7 @@
 //
 // Categories match the original Drive library:
 // • ECHOEL_DRUMS — Kicks, snares, hats, perc, claps (→ EchoelModalBank)
-// • ECHOEL_BASS — Sub, 808, reese, acid, synth bass (→ TR808BassSynth + EchoelDDSP)
+// • ECHOEL_BASS — Sub, 808, reese, acid, synth bass (→ PulseDrumBassSynth + EchoelDDSP)
 // • ECHOEL_MELODIC — Keys, plucks, leads, pads, bells (→ EchoelDDSP + EchoelModalBank)
 // • ECHOEL_JUNGLE — Amen slices, think break, classic breaks (→ BreakbeatChopper patterns)
 // • ECHOEL_TEXTURES — Atmospheres, drones, noise beds (→ EchoelCellular + EchoelQuant)

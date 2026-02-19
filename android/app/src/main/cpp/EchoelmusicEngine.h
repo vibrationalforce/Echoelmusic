@@ -6,7 +6,7 @@
  *
  * Features:
  * - 16-voice polyphonic synthesizer
- * - TR-808 Bass with pitch glide
+ * - Pulse Drum Bass with pitch glide
  * - Bio-reactive parameter modulation
  * - < 10ms latency on AAudio devices
  */
@@ -42,7 +42,7 @@ public:
     // Bio-reactive
     void updateBioData(float heartRate, float hrv, float coherence);
 
-    // TR-808
+    // Pulse Drum
     void trigger808(int note, int velocity);
     void set808Parameter(int paramId, float value);
 

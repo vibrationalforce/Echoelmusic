@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">مُركِّب متعدد الأصوات</string>
-    <string name="tr808_title">TR-808 باس</string>
+    <string name="tr808_title">Pulse Drum باس</string>
     <string name="bio_title">التحكم البيو-تفاعلي</string>
     <string name="ai_title">توليد الذكاء الاصطناعي الكمي</string>
     <string name="settings_title">الإعدادات</string>

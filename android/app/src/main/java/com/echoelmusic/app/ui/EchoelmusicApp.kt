@@ -93,7 +93,7 @@ fun EchoelmusicApp(viewModel: EchoelmusicViewModel) {
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Album, contentDescription = null) },
-                    label = { Text("808") },
+                    label = { Text("Pulse") },
                     selected = currentRoute == "tr808",
                     onClick = { navController.navigate("tr808") }
                 )

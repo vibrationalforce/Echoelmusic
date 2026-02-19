@@ -3,7 +3,7 @@
 //  EchoelmusicAUv3
 //
 //  Created: December 2025
-//  TR-808 BASS SYNTH DSP KERNEL
+//  PULSE DRUM BASS SYNTH DSP KERNEL
 //  Real-time audio processing for AUv3 instrument
 //
 
@@ -11,9 +11,9 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-// MARK: - TR-808 DSP Kernel
+// MARK: - Pulse Drum DSP Kernel
 
-/// DSP Kernel for TR-808 Bass Synthesizer
+/// DSP Kernel for Pulse Drum Bass Synthesizer
 public final class TR808DSPKernel: EchoelmusicDSPKernel {
 
     // MARK: - Audio Format
