@@ -215,9 +215,8 @@ public final class AppClipManager: ObservableObject {
     private func startSessionTimer() {
         let totalDuration = sessionType.duration
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-
-            Task { @MainActor in
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
                 self.remainingTime -= 1
                 self.sessionProgress = 1 - (self.remainingTime / totalDuration)
 
@@ -235,8 +234,8 @@ public final class AppClipManager: ObservableObject {
         sessionProgress = 1
 
         // Show upgrade prompt after session completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.showUpgradePrompt = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.showUpgradePrompt = true
         }
     }
 
@@ -533,19 +532,19 @@ struct BreathingGuideView: View {
     private func startBreathingCycle() {
         // 4-4-4-4 Box Breathing
         Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                switch breathPhase {
+                switch self.breathPhase {
                 case .inhale:
-                    breathPhase = .hold1
-                    scale = 1.0
+                    self.breathPhase = .hold1
+                    self.scale = 1.0
                 case .hold1:
-                    breathPhase = .exhale
+                    self.breathPhase = .exhale
                 case .exhale:
-                    breathPhase = .hold2
-                    scale = 0.6
+                    self.breathPhase = .hold2
+                    self.scale = 0.6
                 case .hold2:
-                    breathPhase = .inhale
+                    self.breathPhase = .inhale
                 }
             }
         }

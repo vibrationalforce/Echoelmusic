@@ -442,7 +442,8 @@ class ChordPadViewModel: ObservableObject {
         let strumDelay = 0.03 // 30ms between notes
 
         for (index, note) in pad.notes.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * strumDelay) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * strumDelay) { [weak self] in
+                guard self != nil else { return }
                 if let voice = mpe.allocateVoice(note: note, velocity: velocity * (1.0 - Float(index) * 0.1)) {
                     voices.append(voice)
                     hub.triggerHaptic(intensity: 0.3, sharpness: 0.3)

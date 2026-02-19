@@ -219,7 +219,7 @@ class PerformanceOptimizer: ObservableObject {
     private func startMonitoring() {
         // Monitor FPS - store timer reference for cleanup
         metricsTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.updateMetrics()
             }
         }
@@ -230,8 +230,8 @@ class PerformanceOptimizer: ObservableObject {
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main
-        ) { [weak self] notification in
-            Task { @MainActor in
+        ) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.updateThermalState()
             }
         }
@@ -241,7 +241,7 @@ class PerformanceOptimizer: ObservableObject {
         #if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         batteryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.batteryLevel = UIDevice.current.batteryLevel
                 self?.adjustForBattery()
             }

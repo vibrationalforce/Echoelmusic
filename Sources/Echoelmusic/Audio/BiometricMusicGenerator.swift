@@ -307,7 +307,7 @@ public final class BiometricMusicGenerator: ObservableObject {
     private var updateTimer: Timer?
     private var beatCounter: Int = 0
     private var measureCounter: Int = 0
-    private var lastBeatTime: Date = Date()
+    private var lastBeatTime: CFTimeInterval = CACurrentMediaTime()
     private var phraseHistory: [GeneratedPhrase] = []
     private var melodyMemory: [Int] = []  // Recent pitches for continuity
     private var cancellables = Set<AnyCancellable>()
@@ -377,7 +377,7 @@ public final class BiometricMusicGenerator: ObservableObject {
 
         let beatInterval = 60.0 / currentTempo
         updateTimer = Timer.scheduledTimer(withTimeInterval: beatInterval / 4, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.generateTick()
             }
         }
@@ -429,9 +429,9 @@ public final class BiometricMusicGenerator: ObservableObject {
         }
 
         // Clear old notes
-        let now = Date()
+        let elapsed = CACurrentMediaTime() - lastBeatTime
         activeNotes.removeAll { note in
-            now.timeIntervalSince(lastBeatTime) > note.startTime + note.duration
+            elapsed > note.startTime + note.duration
         }
     }
 
@@ -511,7 +511,7 @@ public final class BiometricMusicGenerator: ObservableObject {
             pitch: finalPitch,
             velocity: velocity,
             duration: duration,
-            startTime: Date().timeIntervalSince(lastBeatTime),
+            startTime: CACurrentMediaTime() - lastBeatTime,
             channel: 0,
             source: .melody
         )
@@ -562,7 +562,7 @@ public final class BiometricMusicGenerator: ObservableObject {
                 pitch: octavePitch,
                 velocity: velocity,
                 duration: duration,
-                startTime: Date().timeIntervalSince(lastBeatTime),
+                startTime: CACurrentMediaTime() - lastBeatTime,
                 channel: 1,
                 source: .harmony
             )
@@ -590,7 +590,7 @@ public final class BiometricMusicGenerator: ObservableObject {
             pitch: bassPitch,
             velocity: velocity,
             duration: duration,
-            startTime: Date().timeIntervalSince(lastBeatTime),
+            startTime: CACurrentMediaTime() - lastBeatTime,
             channel: 2,
             source: .bass
         )
@@ -603,7 +603,7 @@ public final class BiometricMusicGenerator: ObservableObject {
                 pitch: bassPitch + 12,
                 velocity: velocity * 0.7,
                 duration: duration * 0.5,
-                startTime: Date().timeIntervalSince(lastBeatTime),
+                startTime: CACurrentMediaTime() - lastBeatTime,
                 channel: 2,
                 source: .bass
             )
@@ -634,7 +634,7 @@ public final class BiometricMusicGenerator: ObservableObject {
             pitch: pitch,
             velocity: velocity,
             duration: duration,
-            startTime: Date().timeIntervalSince(lastBeatTime),
+            startTime: CACurrentMediaTime() - lastBeatTime,
             channel: 3,
             source: .arpeggio
         )

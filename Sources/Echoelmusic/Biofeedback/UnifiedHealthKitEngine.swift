@@ -544,13 +544,13 @@ public final class UnifiedHealthKitEngine: ObservableObject {
                 anchor: lastAnchor,
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, anchor, error in
-                Task { @MainActor in
+                DispatchQueue.main.async {
                     self?.handleHeartRateSamples(samples: samples, anchor: anchor, error: error)
                 }
             }
 
             query.updateHandler = { [weak self] _, samples, _, anchor, error in
-                Task { @MainActor in
+                DispatchQueue.main.async {
                     self?.handleHeartRateSamples(samples: samples, anchor: anchor, error: error)
                 }
             }
@@ -567,13 +567,13 @@ public final class UnifiedHealthKitEngine: ObservableObject {
                 anchor: nil,
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, _, error in
-                Task { @MainActor in
+                DispatchQueue.main.async {
                     self?.handleHRVSamples(samples: samples, error: error)
                 }
             }
 
             query.updateHandler = { [weak self] _, samples, _, _, error in
-                Task { @MainActor in
+                DispatchQueue.main.async {
                     self?.handleHRVSamples(samples: samples, error: error)
                 }
             }
@@ -598,57 +598,49 @@ public final class UnifiedHealthKitEngine: ObservableObject {
 
     private func handleHeartRateSamples(samples: [HKSample]?, anchor: HKQueryAnchor?, error: Error?) {
         if let error = error {
-            Task { @MainActor in
-                self.errorMessage = "Heart rate query error: \(error.localizedDescription)"
-            }
+            self.errorMessage = "Heart rate query error: \(error.localizedDescription)"
             return
         }
 
         guard let samples = samples as? [HKQuantitySample], !samples.isEmpty else { return }
         lastAnchor = anchor
 
-        Task { @MainActor in
-            if let latest = samples.last {
-                let bpm = latest.quantity.doubleValue(for: HKUnit(from: "count/min"))
-                self.heartRate = bpm
-                self.heartData.heartRate = bpm
-                self.heartData.timestamp = latest.endDate
-                self.heartData.source = self.dataSource
+        if let latest = samples.last {
+            let bpm = latest.quantity.doubleValue(for: HKUnit(from: "count/min"))
+            self.heartRate = bpm
+            self.heartData.heartRate = bpm
+            self.heartData.timestamp = latest.endDate
+            self.heartData.source = self.dataSource
 
-                // Calculate RR interval and add to buffer
-                let rrInterval = 60000.0 / bpm
-                self.rrIntervalBuffer.append(rrInterval)
-                self.heartData.rrIntervals = self.rrIntervalBuffer.toArray()
+            // Calculate RR interval and add to buffer
+            let rrInterval = 60000.0 / bpm
+            self.rrIntervalBuffer.append(rrInterval)
+            self.heartData.rrIntervals = self.rrIntervalBuffer.toArray()
 
-                // Calculate HRV metrics
-                self.calculateHRVMetrics()
+            // Calculate HRV metrics
+            self.calculateHRVMetrics()
 
-                // Calculate coherence
-                self.calculateCoherence()
+            // Calculate coherence
+            self.calculateCoherence()
 
-                // Notify
-                self.notifyHeartUpdate()
-                self.lastUpdateTime = Date()
-            }
+            // Notify
+            self.notifyHeartUpdate()
+            self.lastUpdateTime = Date()
         }
     }
 
     private func handleHRVSamples(samples: [HKSample]?, error: Error?) {
         if let error = error {
-            Task { @MainActor in
-                self.errorMessage = "HRV query error: \(error.localizedDescription)"
-            }
+            self.errorMessage = "HRV query error: \(error.localizedDescription)"
             return
         }
 
         guard let samples = samples as? [HKQuantitySample], !samples.isEmpty else { return }
 
-        Task { @MainActor in
-            if let latest = samples.last {
-                let sdnn = latest.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
-                self.hrvSDNN = sdnn
-                self.heartData.heartRateVariability = sdnn
-            }
+        if let latest = samples.last {
+            let sdnn = latest.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
+            self.hrvSDNN = sdnn
+            self.heartData.heartRateVariability = sdnn
         }
     }
 
@@ -674,8 +666,7 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
         timer.schedule(deadline: .now(), repeating: .seconds(1), leeway: .milliseconds(10))
         timer.setEventHandler { [weak self] in
-            guard let self else { return }
-            Task { @MainActor [weak self] in
+            DispatchQueue.main.async {
                 self?.simulateHealthUpdate()
             }
         }
@@ -684,7 +675,7 @@ public final class UnifiedHealthKitEngine: ObservableObject {
     }
 
     private func simulateHealthUpdate() {
-        let time = Date().timeIntervalSinceReferenceDate
+        let time = CFAbsoluteTimeGetCurrent()
 
         // Simulate heart rate with natural variation
         let baseHR = 70.0
@@ -1003,7 +994,7 @@ public final class UnifiedHealthKitEngine: ObservableObject {
 
         let interval = 1.0 / speed
         replayTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.playNextReplayFrame()
             }
         }
