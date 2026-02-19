@@ -17,7 +17,7 @@
 - [x] Spatial Audio Engine (3D/4D/AFA)
 - [x] 42 DSP Effects Suite (Dynamics, EQ, Reverb, Delay, Modulation, Pitch, Distortion, Mastering)
 - [x] 6 Synthesis Engines (Subtractive, FM, Wavetable, Granular, Additive, Physical Modeling)
-- [x] Pulse Drum Bass Synth with full presets
+- [x] EchoelBeat Bass Synth with full presets
 - [x] ILDA Laser Protocol integration
 - [x] Ableton Link Client for tempo sync
 

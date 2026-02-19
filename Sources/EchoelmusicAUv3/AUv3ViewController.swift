@@ -116,7 +116,7 @@ struct TR808AUv3View: View {
                     )
 
                 VStack(alignment: .leading) {
-                    Text("Pulse Drum Bass")
+                    Text("EchoelBeat Bass")
                         .font(.headline)
                     Text("Pitch Glide Synth")
                         .font(.caption)

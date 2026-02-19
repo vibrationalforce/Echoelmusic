@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">Полифонический синтезатор</string>
-    <string name="tr808_title">Pulse Drum Бас</string>
+    <string name="tr808_title">EchoelBeat Бас</string>
     <string name="bio_title">Био-реактивное управление</string>
     <string name="ai_title">Квантовая ИИ генерация</string>
     <string name="settings_title">Настройки</string>

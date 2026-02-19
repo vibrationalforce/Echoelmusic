@@ -413,7 +413,7 @@ struct DAWArrangementView: View {
                 // Categories
                 ScrollView {
                     VStack(spacing: VaporwaveSpacing.md) {
-                        instrumentCategory("Synths", instruments: ["EchoSynth", "Pulse Drum Bass", "Wavetable", "FM Synth", "Granular"])
+                        instrumentCategory("Synths", instruments: ["EchoSynth", "EchoelBeat Bass", "Wavetable", "FM Synth", "Granular"])
                         instrumentCategory("Orchestral", instruments: ["Strings", "Brass", "Woodwinds", "Choir", "Piano"])
                         instrumentCategory("World", instruments: ["Sitar", "Erhu", "Koto", "Djembe", "Kalimba"])
                         instrumentCategory("Bio-Reactive", instruments: ["Coherence Pad", "Heart Pulse", "Breath Synth"])
@@ -510,7 +510,7 @@ struct DAWArrangementView: View {
 
 class ArrangementDAWProductionEngine: ObservableObject {
     @Published var tracks: [DAWTrack] = [
-        DAWTrack(name: "Drums", instrumentName: "Pulse Drum", color: VaporwaveColors.neonPink),
+        DAWTrack(name: "Drums", instrumentName: "EchoelBeat", color: VaporwaveColors.neonPink),
         DAWTrack(name: "Bass", instrumentName: "EchoSynth", color: VaporwaveColors.neonCyan),
         DAWTrack(name: "Lead", instrumentName: "Wavetable", color: VaporwaveColors.neonPurple),
         DAWTrack(name: "Pad", instrumentName: "Coherence Pad", color: VaporwaveColors.lavender)

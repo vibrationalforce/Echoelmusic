@@ -72,7 +72,7 @@ Die komplette Analyse der Echoelmusic-Codebasis ergibt:
 - **EchoSynth**: Analog Subtractive (Minimoog/Juno-60 Style)
 - **WaveForge**: Wavetable Synthesizer (Serum/Vital Competitor)
 - **SampleEngine**: Advanced Sampler mit Time-Stretching
-- **DrumSynthesizer**: Pulse Drum/909 Emulation
+- **DrumSynthesizer**: EchoelBeat/909 Emulation
 
 ### AI/Quantum Features (Swift)
 - **QuantumSuperIntelligence.swift**: 1157 Zeilen

@@ -11,9 +11,9 @@ import Foundation
 import AVFoundation
 import Accelerate
 
-// MARK: - Pulse Drum DSP Kernel
+// MARK: - EchoelBeat DSP Kernel
 
-/// DSP Kernel for Pulse Drum Bass Synthesizer
+/// DSP Kernel for EchoelBeat Bass Synthesizer
 public final class TR808DSPKernel: EchoelmusicDSPKernel {
 
     // MARK: - Audio Format

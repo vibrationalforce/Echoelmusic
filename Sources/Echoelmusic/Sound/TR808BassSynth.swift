@@ -697,7 +697,7 @@ public struct TR808BassSynthView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Pulse Drum Bass Synth")
+                Text("EchoelBeat Bass Synth")
                     .font(.title2.bold())
 
                 Text("Sub-Bass Engine with Pitch Glide")

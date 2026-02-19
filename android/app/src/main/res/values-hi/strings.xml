@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">पॉलीफोनिक सिंथेसाइज़र</string>
-    <string name="tr808_title">Pulse Drum बेस</string>
+    <string name="tr808_title">EchoelBeat बेस</string>
     <string name="bio_title">बायो-रिएक्टिव कंट्रोल</string>
     <string name="ai_title">क्वांटम AI जनरेशन</string>
     <string name="settings_title">सेटिंग्स</string>

@@ -79,7 +79,7 @@ Phase 5: Web (PWA/WASM)     █████████████████�
 **Implemented:**
 - [x] JNI Bridge for EchoelCore (`jni_bridge.cpp`)
 - [x] Oboe Audio Engine (`EchoelmusicEngine.cpp`)
-- [x] Pulse Drum Bass Synthesizer (`TR808Engine.cpp`)
+- [x] EchoelBeat Bass Synthesizer (`TR808Engine.cpp`)
 - [x] SIMD Optimizations (NEON/AVX2/SSE)
 - [x] Bio-reactive modulation
 - [x] Health Connect integration

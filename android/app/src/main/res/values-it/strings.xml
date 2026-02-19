@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">Sintetizzatore Polifonico</string>
-    <string name="tr808_title">Pulse Drum Basso</string>
+    <string name="tr808_title">EchoelBeat Basso</string>
     <string name="bio_title">Controllo Bio-Reattivo</string>
     <string name="ai_title">Generazione Quantum IA</string>
     <string name="settings_title">Impostazioni</string>

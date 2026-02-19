@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">폴리포닉 신시사이저</string>
-    <string name="tr808_title">Pulse Drum 베이스</string>
+    <string name="tr808_title">EchoelBeat 베이스</string>
     <string name="bio_title">바이오리액티브 컨트롤</string>
     <string name="ai_title">퀀텀 AI 생성</string>
     <string name="settings_title">설정</string>

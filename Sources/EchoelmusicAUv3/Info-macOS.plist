@@ -32,7 +32,7 @@
 			<array>
 				<dict>
 					<key>description</key>
-					<string>Echoelmusic Pulse Drum Bass Synth with Pitch Glide</string>
+					<string>Echoelmusic EchoelBeat Bass Synth with Pitch Glide</string>
 					<key>factoryFunction</key>
 					<string>EchoelmusicAudioUnitFactory</string>
 					<key>manufacturer</key>

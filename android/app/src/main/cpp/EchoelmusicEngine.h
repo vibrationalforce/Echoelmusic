@@ -6,7 +6,7 @@
  *
  * Features:
  * - 16-voice polyphonic synthesizer
- * - Pulse Drum Bass with pitch glide
+ * - EchoelBeat Bass with pitch glide
  * - Bio-reactive parameter modulation
  * - < 10ms latency on AAudio devices
  */
@@ -42,7 +42,7 @@ public:
     // Bio-reactive
     void updateBioData(float heartRate, float hrv, float coherence);
 
-    // Pulse Drum
+    // EchoelBeat
     void trigger808(int note, int velocity);
     void set808Parameter(int paramId, float value);
 

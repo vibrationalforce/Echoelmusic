@@ -38,7 +38,7 @@
 |---------|--------|---|---------|
 | AVAudioEngine Setup | **Production** | 90% | Audio Session, Routing, Format Config |
 | Binaural Beat Generator | **Production** | 95% | Echte Sine-Wave Synthese mit AVAudioPlayerNode |
-| Pulse Drum Bass Synth | **Production** | 95% | AVAudioSourceNode, Frame-by-Frame DSP, Voices |
+| EchoelBeat Bass Synth | **Production** | 95% | AVAudioSourceNode, Frame-by-Frame DSP, Voices |
 | Filter Node (Biquad) | **Production** | 90% | Echte Koeffizienten-Berechnung, State Variables |
 | Reverb Node (Freeverb) | **Production** | 90% | 8 Comb + 4 Allpass Filter |
 | Compressor Node | **Production** | 85% | Envelope Follower, Peak/RMS, Soft Knee |

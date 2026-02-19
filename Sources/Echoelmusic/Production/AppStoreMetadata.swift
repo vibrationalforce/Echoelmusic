@@ -248,7 +248,7 @@ Seven software synthesizers, each responding to biometric input:
 • Cellular — Cellular automata synthesis (evolving patterns)
 • Quantum — Schrödinger equation wavefunction synthesizer
 • Sampler — Multi-zone multi-layer sampler (128 zones, 64-voice polyphony)
-• Pulse Drum — Analog drum machine and bass synth with pitch glide
+• EchoelBeat — Analog drum machine and bass synth with pitch glide
 • Breakbeat Chopper — Jungle/DNB slice engine with pattern sequencer
 
 The free tier includes DDSP. Pro unlocks all seven.
@@ -363,7 +363,7 @@ SYNTHESIZER-ENGINES
 • Cellular — Zelluläre Automaten-Synthese (evolvierende Muster)
 • Quantum — Schrödinger-Gleichung Wellenfunktions-Synthesizer
 • Sampler — Multi-Zone Multi-Layer Sampler (128 Zonen, 64 Stimmen)
-• Pulse Drum — Analoge Drum Machine und Bass-Synth mit Pitch Glide
+• EchoelBeat — Analoge Drum Machine und Bass-Synth mit Pitch Glide
 • Breakbeat Chopper — Jungle/DNB Slice-Engine mit Pattern-Sequenzer
 
 AUv3 PLUGIN + HOST
@@ -979,7 +979,7 @@ public struct AppStoreScreenshots {
         .init(
             number: 3,
             title: "Seven Synth Engines",
-            description: "DDSP, Modal Bank, Cellular, Quantum, Sampler, Pulse Drum, and Breakbeat — each driven by your bio-signals."
+            description: "DDSP, Modal Bank, Cellular, Quantum, Sampler, EchoelBeat, and Breakbeat — each driven by your bio-signals."
         ),
         .init(
             number: 4,
@@ -1357,7 +1357,7 @@ public struct AppFeatures {
     /// Features unlocked with Pro subscription
     public static let proFeatures: [String] = [
         "Unlimited session length",
-        "All 7 synth engines (DDSP, Modal Bank, Cellular, Quantum, Sampler, Pulse Drum, Breakbeat)",
+        "All 7 synth engines (DDSP, Modal Bank, Cellular, Quantum, Sampler, EchoelBeat, Breakbeat)",
         "All presets + Hilbert visualization",
         "CloudKit sync across all devices",
         "Apple Watch real-time data streaming",

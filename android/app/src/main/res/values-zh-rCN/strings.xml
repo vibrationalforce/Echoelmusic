@@ -12,7 +12,7 @@
 
     <!-- Screens -->
     <string name="synth_title">复音合成器</string>
-    <string name="tr808_title">Pulse Drum 贝斯</string>
+    <string name="tr808_title">EchoelBeat 贝斯</string>
     <string name="bio_title">生物反应控制</string>
     <string name="ai_title">量子AI生成</string>
     <string name="settings_title">设置</string>
