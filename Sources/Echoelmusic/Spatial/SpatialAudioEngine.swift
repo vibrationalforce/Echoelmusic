@@ -4,6 +4,9 @@ import Combine
 #if canImport(CoreMotion)
 import CoreMotion
 #endif
+#if canImport(PHASE)
+import PHASE
+#endif
 
 /// Spatial Audio Engine with 3D/4D positioning and head tracking
 /// Supports iOS 15+ with runtime feature detection for iOS 17+ spatial audio
@@ -32,6 +35,16 @@ class SpatialAudioEngine: ObservableObject {
     private var motionManager: CMMotionManager?
     #endif
     private var headTrackingCancellable: AnyCancellable?
+
+    // MARK: - PHASE Engine (iOS 15+)
+
+    #if canImport(PHASE)
+    /// Apple PHASE spatial audio engine for native HRTF + head tracking
+    private var phaseEngine: PHASEEngine?
+    private var phaseListener: PHASEListener?
+    private var phaseSources: [UUID: PHASESource] = [:]
+    @Published var usePHASE: Bool = true  // Prefer PHASE when available
+    #endif
 
     // MARK: - Spatial Processing Modules
 
@@ -96,10 +109,38 @@ class SpatialAudioEngine: ObservableObject {
 
     init() {
         setupAudioEngine()
+        setupPHASE()
     }
 
     deinit {
         audioEngine.stop()
+        #if canImport(PHASE)
+        phaseEngine?.stop()
+        #endif
+    }
+
+    // MARK: - PHASE Setup
+
+    private func setupPHASE() {
+        #if canImport(PHASE)
+        do {
+            let engine = PHASEEngine(updateMode: .automatic)
+            engine.defaultReverbPreset = .mediumRoom
+
+            // Create listener at origin
+            let listener = PHASEListener(engine: engine)
+            listener.transform = matrix_identity_float4x4
+            try engine.rootObject.addChild(listener)
+
+            self.phaseEngine = engine
+            self.phaseListener = listener
+
+            try engine.start()
+            log.spatial("✅ PHASE engine initialized — native HRTF + auto head tracking")
+        } catch {
+            log.spatial("⚠️ PHASE not available: \(error.localizedDescription). Using AVAudioEngine fallback.", level: .warning)
+        }
+        #endif
     }
 
     // MARK: - Audio Engine Setup
@@ -175,6 +216,9 @@ class SpatialAudioEngine: ObservableObject {
 
         stopHeadTracking()
         audioEngine.stop()
+        #if canImport(PHASE)
+        phaseEngine?.stop()
+        #endif
         isActive = false
 
         log.spatial("🛑 SpatialAudioEngine stopped")

@@ -361,10 +361,28 @@ public class UnifiedControlHub: ObservableObject {
         Log.biofeedback("💓 Biometric monitoring disabled")
     }
 
-    /// Handle bio signal updates from HealthKit
+    // MARK: - Physical AI Integration
+
+    /// Physical AI engine for JEPA-based predictive control
+    private var physicalAIEngine: PhysicalAIEngine?
+
+    /// Connect Physical AI engine for autonomous bio-reactive parameter control
+    public func connectPhysicalAI(_ engine: PhysicalAIEngine) {
+        self.physicalAIEngine = engine
+        Log.info("PhysicalAI connected to ControlHub", category: .system)
+    }
+
+    /// Handle bio signal updates from HealthKit — bridges to PhysicalAI
     private func handleBioSignalUpdate() {
-        // Bio signal updates happen via Combine subscriptions
-        // Actual mapping happens in updateFromBioSignals()
+        // Bridge real bio data to PhysicalAI sensor pipeline
+        if let healthKit = healthKitEngine, let physicalAI = physicalAIEngine {
+            let reading = SensorReading(
+                source: .iPhone,
+                heartRate: Float(healthKit.heartRate),
+                rrIntervals: nil  // RR intervals come separately from watchOS
+            )
+            physicalAI.processSensorData(reading)
+        }
     }
 
     /// Enable MIDI 2.0 + MPE output

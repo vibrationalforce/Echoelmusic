@@ -443,6 +443,39 @@ public class AudioEngine: ObservableObject {
         nodeGraph?.setParameter(.tempo, value: bpm)
     }
 
+    // MARK: - Physical AI Parameter Control
+
+    /// Apply a parameter change from the PhysicalAI WorldModel prediction engine
+    /// Maps abstract AI action names to concrete DSP parameters
+    func applyPhysicalAIParameter(_ parameter: String, value: Float) {
+        let clamped = max(0, min(1, value))
+
+        switch parameter {
+        case "intensity":
+            // Map intensity to filter cutoff (0=dark, 1=bright)
+            setFilterCutoff(clamped * 18000 + 200)  // 200Hz → 18200Hz
+        case "filterCutoff":
+            setFilterCutoff(clamped * 18000 + 200)
+        case "harmonicTension":
+            // Map tension to resonance + slight distortion
+            setFilterResonance(clamped * 0.8)
+        case "reverbMix", "reverbWet":
+            setReverbWetness(clamped)
+        case "reverbSize":
+            setReverbSize(clamped)
+        case "delayMix":
+            setDelayTime(clamped * 0.5)  // 0→500ms
+        case "volume", "masterVolume":
+            setMasterVolume(clamped)
+        case "spatialWidth":
+            spatialAudioEngine?.setPan(clamped * 2 - 1)  // -1 to +1
+        case "tempo":
+            setTempo(clamped * 120 + 60)  // 60→180 BPM
+        default:
+            log.audio("PhysicalAI: unknown parameter '\(parameter)', value=\(value)")
+        }
+    }
+
     // MARK: - Preset Loading
 
     /// Load a preset by name and apply audio settings
