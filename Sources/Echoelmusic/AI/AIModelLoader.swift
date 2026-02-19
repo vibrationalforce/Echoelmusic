@@ -110,7 +110,8 @@ class AIModelLoader: ObservableObject {
     private init() {
         // Setup cache directory
         let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
-        cacheDirectory = paths[0].appendingPathComponent("AIModels", isDirectory: true)
+        let base = paths.first ?? FileManager.default.temporaryDirectory
+        cacheDirectory = base.appendingPathComponent("AIModels", isDirectory: true)
 
         // Create cache directory if needed
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)

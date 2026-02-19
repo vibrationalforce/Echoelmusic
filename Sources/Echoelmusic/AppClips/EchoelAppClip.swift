@@ -181,9 +181,9 @@ public final class AppClipManager: ObservableObject {
             center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
             radius: 100,
             identifier: "echoelmusic-venue"
-        )) { inRegion, error in
+        )) { [weak self] inRegion, error in
             DispatchQueue.main.async {
-                self.locationConfirmed = inRegion || error != nil
+                self?.locationConfirmed = inRegion || error != nil
             }
         }
     }

@@ -90,6 +90,19 @@ struct EchoelmusicApp: App {
                     physicalAI.addObjective(.maintainCoherence())
                 }
 
+                // SCRIPT ENGINE (community scripts + automation)
+                await MainActor.run {
+                    let scriptEngine = ScriptEngine(
+                        audioAPI: AudioScriptAPI(),
+                        visualAPI: VisualScriptAPI(),
+                        bioAPI: BioScriptAPI(),
+                        streamAPI: StreamScriptAPI(),
+                        midiAPI: MIDIScriptAPI(),
+                        spatialAPI: SpatialScriptAPI()
+                    )
+                    log.info("📜 ScriptEngine: Initialized with all 6 APIs", category: .system)
+                }
+
                 // STREAMING PIPELINE
                 await MainActor.run { _ = SocialMediaManager.shared }
 

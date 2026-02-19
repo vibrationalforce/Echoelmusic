@@ -650,6 +650,8 @@ public final class VoiceToQuantumMIDI: ObservableObject {
     // MARK: - Pitch Correction
 
     private func applyPitchCorrection(_ note: Int) -> Int {
+        guard !scale.isEmpty else { return note }
+
         // Find nearest note in scale
         let noteInOctave = note % 12
         let octave = note / 12

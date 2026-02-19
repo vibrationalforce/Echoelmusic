@@ -950,7 +950,7 @@ public final class AIStemSeparationEngine: ObservableObject {
     // MARK: - Helpers
 
     private func defaultOutputDirectory(for audioURL: URL) -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory
         let name = audioURL.deletingPathExtension().lastPathComponent
         return docs.appendingPathComponent("Exports/Separated/\(name)", isDirectory: true)
     }
