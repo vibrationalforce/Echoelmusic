@@ -164,6 +164,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
     private var audioPlayerNode: AVAudioPlayerNode?
 
     // Analysis buffers
+    private let pitchDetector = PitchDetector()
     private let bufferSize: Int = 4096
     private let fftSize: Int = 4096
     private var analysisBuffer: [Float] = []
@@ -491,53 +492,10 @@ public final class AudioToQuantumMIDI: ObservableObject {
         }
     }
 
-    // MARK: - Monophonic Detection (YIN)
+    // MARK: - Monophonic Detection (delegates to shared PitchDetector)
 
     private func detectMonophonic(sampleRate: Float) {
-        let tauMax = bufferSize / 2
-        var cmndf = [Float](repeating: 0, count: tauMax)
-        let yinThreshold: Float = 0.15
-
-        // YIN difference function
-        var runningSum: Float = 0
-        cmndf[0] = 1
-
-        for tau in 1..<tauMax {
-            var sum: Float = 0
-            for i in 0..<(bufferSize - tau) {
-                let diff = analysisBuffer[i] - analysisBuffer[i + tau]
-                sum += diff * diff
-            }
-
-            runningSum += sum
-            cmndf[tau] = sum * Float(tau) / runningSum
-        }
-
-        // Find first minimum below threshold
-        var tau = 2
-        while tau < tauMax - 1 {
-            if cmndf[tau] < yinThreshold {
-                while tau + 1 < tauMax && cmndf[tau + 1] < cmndf[tau] {
-                    tau += 1
-                }
-                break
-            }
-            tau += 1
-        }
-
-        guard tau < tauMax - 1 else { return }
-
-        // Parabolic interpolation
-        let s0 = cmndf[tau - 1]
-        let s1 = cmndf[tau]
-        let s2 = cmndf[tau + 1]
-
-        let adjustment = (s2 - s0) / (2.0 * (2.0 * s1 - s2 - s0))
-        let refinedTau = Float(tau) + adjustment
-
-        let frequency = sampleRate / refinedTau
-        let confidence = 1.0 - cmndf[tau]
-
+        let frequency = pitchDetector.detectPitch(samples: analysisBuffer, sampleRate: sampleRate)
         guard frequency >= 60 && frequency <= 2000 else { return }
 
         let (midiNote, cents) = frequencyToMIDI(frequency)
@@ -547,7 +505,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
             frequency: frequency,
             amplitude: inputLevel,
             cents: cents,
-            confidence: confidence
+            confidence: 0.9
         )
 
         detectedNotes = [note]

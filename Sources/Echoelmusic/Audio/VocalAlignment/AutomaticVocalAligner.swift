@@ -77,6 +77,7 @@ class AutomaticVocalAligner: ObservableObject {
     // MARK: - DSP Constants
 
     private let fftSize: Int = 2048
+    private let pitchDetector = PitchDetector()
     private let sampleRate: Float = 48000.0
 
     // MARK: - Initialization
@@ -311,7 +312,7 @@ class AutomaticVocalAligner: ObservableObject {
         return envelope
     }
 
-    // MARK: - DSP: Pitch Detection (YIN Algorithm)
+    // MARK: - DSP: Pitch Detection (delegates to shared PitchDetector)
 
     private func detectPitch(buffer: AVAudioPCMBuffer) async -> [Float] {
         guard let channelData = buffer.floatChannelData?[0] else { return [] }
@@ -325,71 +326,11 @@ class AutomaticVocalAligner: ObservableObject {
 
         for i in 0..<numFrames {
             let offset = i * hopSize
-            pitchContour[i] = yinPitchDetection(
-                signal: channelData.advanced(by: offset),
-                length: windowSize,
-                sampleRate: sampleRate
-            )
+            let window = Array(UnsafeBufferPointer(start: channelData.advanced(by: offset), count: windowSize))
+            pitchContour[i] = pitchDetector.detectPitch(samples: window, sampleRate: sampleRate)
         }
 
         return pitchContour
-    }
-
-    private func yinPitchDetection(signal: UnsafePointer<Float>, length: Int, sampleRate: Float) -> Float {
-        let minLag = Int(sampleRate / 500.0)  // Max frequency 500 Hz
-        let maxLag = Int(sampleRate / 50.0)   // Min frequency 50 Hz
-
-        guard maxLag < length / 2 else { return 0 }
-
-        // Compute difference function
-        var diff = [Float](repeating: 0, count: maxLag)
-
-        for tau in minLag..<maxLag {
-            var sum: Float = 0.0
-            for j in 0..<(length - tau) {
-                let delta = signal[j] - signal[j + tau]
-                sum += delta * delta
-            }
-            diff[tau] = sum
-        }
-
-        // Cumulative mean normalized difference
-        var cmndf = [Float](repeating: 0, count: maxLag)
-        cmndf[0] = 1.0
-        var runningSum: Float = 0.0
-
-        for tau in 1..<maxLag {
-            runningSum += diff[tau]
-            cmndf[tau] = diff[tau] * Float(tau) / runningSum
-        }
-
-        // Find first minimum below threshold
-        let threshold: Float = 0.1
-        for tau in minLag..<maxLag {
-            if cmndf[tau] < threshold {
-                // Parabolic interpolation for sub-sample accuracy
-                let betterTau = parabolicInterpolation(cmndf, tau)
-                return sampleRate / betterTau
-            }
-        }
-
-        return 0  // Unvoiced
-    }
-
-    private func parabolicInterpolation(_ values: [Float], _ index: Int) -> Float {
-        guard index > 0 && index < values.count - 1 else {
-            return Float(index)
-        }
-
-        let s0 = values[index - 1]
-        let s1 = values[index]
-        let s2 = values[index + 1]
-
-        let denominator = 2.0 * (2.0 * s1 - s2 - s0)
-        guard abs(denominator) > 1e-10 else { return Float(index) }
-
-        let adjustment = (s2 - s0) / denominator
-        return Float(index) + adjustment
     }
 
     // MARK: - DSP: Dynamic Time Warping

@@ -111,6 +111,10 @@ class EvidenceBasedHRVTraining: ObservableObject {
         let lfHfRatio: Float     // LF/HF ratio (autonomic balance)
     }
 
+    // MARK: - Timer
+
+    private var monitoringTimer: Timer?
+
     // MARK: - HealthKit Integration
 
     private let healthStore = HKHealthStore()
@@ -120,6 +124,10 @@ class EvidenceBasedHRVTraining: ObservableObject {
     init() {
         log.science("✅ Evidence-Based HRV Training: Initialized")
         log.science("📚 Based on peer-reviewed research - Educational purposes only")
+    }
+
+    deinit {
+        monitoringTimer?.invalidate()
     }
 
     // MARK: - Start Training Session
@@ -149,6 +157,8 @@ class EvidenceBasedHRVTraining: ObservableObject {
     func stopSession() {
         guard isTraining else { return }
 
+        monitoringTimer?.invalidate()
+        monitoringTimer = nil
         isTraining = false
 
         // Calculate results
@@ -185,8 +195,11 @@ class EvidenceBasedHRVTraining: ObservableObject {
         // Monitor HRV, Heart Rate, Breathing Rate continuously
         // This would integrate with HealthKitManager for real data
 
+        // Invalidate any existing timer before creating a new one
+        monitoringTimer?.invalidate()
+
         // For now, simulate monitoring
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self, self.isTraining else {
                 timer.invalidate()
                 return

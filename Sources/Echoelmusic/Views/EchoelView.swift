@@ -884,6 +884,11 @@ struct MeditationOverlay: View {
 
             Spacer()
         }
+        .onDisappear {
+            timer?.invalidate()
+            timer = nil
+            sessionActive = false
+        }
     }
 
     private func toggleSession() {
@@ -894,7 +899,8 @@ struct MeditationOverlay: View {
         } else {
             sessionSeconds = 0
             sessionActive = true
-            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak engine] _ in
+                guard engine != nil else { return }
                 Task { @MainActor in
                     sessionSeconds += 1
                 }

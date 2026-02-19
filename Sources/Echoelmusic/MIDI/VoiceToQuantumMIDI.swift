@@ -166,7 +166,7 @@ public final class VoiceToQuantumMIDI: ObservableObject {
     // MARK: - Private Properties
 
     private var quantumMIDIOut: QuantumMIDIOut?
-    private var pitchDetector: PitchDetector?
+    private var pitchDetector = PitchDetector()
     private var audioEngine: AVAudioEngine?
     private var inputNode: AVAudioInputNode?
 
@@ -301,60 +301,14 @@ public final class VoiceToQuantumMIDI: ObservableObject {
         }
     }
 
-    // MARK: - YIN Pitch Detection
+    // MARK: - Pitch Detection (delegates to shared PitchDetector)
 
     private func detectPitchYIN(sampleRate: Float) -> (frequency: Float, confidence: Float)? {
-        let tauMax = bufferSize / 2
-        var cmndf = [Float](repeating: 0, count: tauMax)
-
-        // Step 1: Difference function
-        var runningSum: Float = 0
-        cmndf[0] = 1
-
-        for tau in 1..<tauMax {
-            var sum: Float = 0
-            for i in 0..<(bufferSize - tau) {
-                let diff = yinBuffer[i] - yinBuffer[i + tau]
-                sum += diff * diff
-            }
-
-            runningSum += sum
-            cmndf[tau] = sum * Float(tau) / runningSum
-        }
-
-        // Step 2: Find first minimum below threshold
-        var tau = 2
-        while tau < tauMax - 1 {
-            if cmndf[tau] < yinThreshold {
-                // Found potential minimum
-                while tau + 1 < tauMax && cmndf[tau + 1] < cmndf[tau] {
-                    tau += 1
-                }
-                break
-            }
-            tau += 1
-        }
-
-        guard tau < tauMax - 1 else { return nil }
-
-        // Step 3: Parabolic interpolation for sub-sample accuracy
-        let s0 = cmndf[tau - 1]
-        let s1 = cmndf[tau]
-        let s2 = cmndf[tau + 1]
-
-        let adjustment = (s2 - s0) / (2.0 * (2.0 * s1 - s2 - s0))
-        let refinedTau = Float(tau) + adjustment
-
-        let frequency = sampleRate / refinedTau
-        let confidence = 1.0 - cmndf[tau]
-
-        // Validate frequency range
-        guard frequency >= VoiceQuantumConstants.minFrequency &&
-              frequency <= VoiceQuantumConstants.maxFrequency else {
-            return nil
-        }
-
-        return (frequency, confidence)
+        let frequency = pitchDetector.detectPitch(samples: yinBuffer, sampleRate: sampleRate)
+        guard frequency > 0,
+              frequency >= VoiceQuantumConstants.minFrequency,
+              frequency <= VoiceQuantumConstants.maxFrequency else { return nil }
+        return (frequency, 0.9) // PitchDetector only returns voiced results above threshold
     }
 
     private func calculateBrightness() -> Float {

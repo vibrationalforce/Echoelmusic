@@ -15,6 +15,7 @@ struct RecordingControlsView: View {
     @State private var showExportOptions = false
     @State private var shareURL: URL?
     @State private var showShareSheet = false
+    @State private var bioDataTimer: Timer?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -97,6 +98,10 @@ struct RecordingControlsView: View {
             if let url = shareURL {
                 RecordingShareSheet(items: [url])
             }
+        }
+        .onDisappear {
+            bioDataTimer?.invalidate()
+            bioDataTimer = nil
         }
     }
     // MARK: - Recording Controls Section
@@ -452,9 +457,12 @@ struct RecordingControlsView: View {
     }
 
     private func startBioDataCapture() {
+        // Invalidate any existing timer before creating a new one
+        bioDataTimer?.invalidate()
+
         // Capture bio-data every 0.5 seconds while recording
-        // Memory Leak Fix: Capture weak references zu EnvironmentObjects
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak recordingEngine, weak healthKitManager, weak microphoneManager] timer in
+        // Memory Leak Fix: Capture weak references to EnvironmentObjects
+        bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak recordingEngine, weak healthKitManager, weak microphoneManager] timer in
             guard let recEngine = recordingEngine,
                   let hkManager = healthKitManager,
                   let micManager = microphoneManager else {
