@@ -343,6 +343,10 @@ public final class EngineBus: @unchecked Sendable {
     private(set) var messageCount: UInt64 = 0
     private(set) var subscriberCount: Int = 0
 
+    /// Reentrant publish depth guard — prevents infinite message loops
+    private var publishDepth: Int = 0
+    private static let maxPublishDepth = 4
+
     private init() {
         subscribers.reserveCapacity(64)
     }
@@ -350,13 +354,25 @@ public final class EngineBus: @unchecked Sendable {
     // MARK: - Publish
 
     /// Publish a message to all subscribers on the matching channel
-    /// Lock-free on the hot path — O(n) subscriber scan
+    /// Includes cycle detection: if a subscriber re-publishes, depth is tracked
+    /// and messages are dropped beyond maxPublishDepth to prevent infinite loops
     public func publish(_ message: BusMessage) {
+        // Cycle guard — prevent infinite re-publish loops
+        guard publishDepth < Self.maxPublishDepth else {
+            #if DEBUG
+            log.warning("EngineBus: publish depth exceeded (\(publishDepth)) — dropping message to prevent cycle", category: .system)
+            #endif
+            return
+        }
+
+        publishDepth += 1
+        defer { publishDepth -= 1 }
+
         messageCount &+= 1
 
         let channel = BusChannel.channel(for: message)
 
-        // Notify callback subscribers
+        // Notify callback subscribers (snapshot to avoid mutation during iteration)
         lock.lock()
         let subs = subscribers
         lock.unlock()

@@ -27,6 +27,9 @@ struct ParticleView: View {
     /// Heart rate in BPM - controls turbulence
     let heartRate: Double
 
+    /// Respect system accessibility setting for reduced motion
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     /// Particle system state
     @State private var particles: [Particle] = []
 
@@ -42,6 +45,23 @@ struct ParticleView: View {
     }
 
     var body: some View {
+        if reduceMotion {
+            // Static accessibility-friendly fallback: show coherence as a calm gradient
+            RoundedRectangle(cornerRadius: 16)
+                .fill(
+                    LinearGradient(
+                        colors: [coherenceColor.opacity(0.6), coherenceColor.opacity(0.2)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    Text(isActive ? "Bio-Reactive Active" : "Paused")
+                        .font(.headline)
+                        .foregroundStyle(.white.opacity(0.8))
+                )
+                .accessibilityLabel("Bio-reactive visualization, coherence \(Int(hrvCoherence)) percent")
+        } else {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -83,6 +103,7 @@ struct ParticleView: View {
                 particles.removeAll()
             }
         }
+        } // end else (non-reduceMotion)
     }
 
 

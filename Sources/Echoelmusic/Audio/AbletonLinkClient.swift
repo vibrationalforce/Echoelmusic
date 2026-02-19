@@ -77,13 +77,13 @@ public struct LinkSessionState: Equatable {
         self.phase = 0.0
         self.quantum = quantum
         self.isPlaying = false
-        self.timestamp = UInt64(Date().timeIntervalSince1970 * 1_000_000)
+        self.timestamp = UInt64(CFAbsoluteTimeGetCurrent() * 1_000_000)
         self.peerCount = 0
     }
 
     /// Calculate beat from timestamp
     mutating func updateBeat() {
-        let now = UInt64(Date().timeIntervalSince1970 * 1_000_000)
+        let now = UInt64(CFAbsoluteTimeGetCurrent() * 1_000_000)
         let elapsed = now - timestamp
 
         // Microseconds per beat = 60_000_000 / tempo
@@ -104,10 +104,10 @@ public struct LinkPeer: Identifiable, Equatable {
     public let port: UInt16
     public var name: String
     public var tempo: Double
-    public var lastSeen: Date
+    public var lastSeen: CFTimeInterval
 
     public var isStale: Bool {
-        Date().timeIntervalSince(lastSeen) > LinkConstants.sessionTimeout
+        CFAbsoluteTimeGetCurrent() - lastSeen > LinkConstants.sessionTimeout
     }
 }
 
@@ -231,7 +231,7 @@ public class AbletonLinkClient: ObservableObject {
         multicastConnection = NWConnectionGroup(with: group, using: params)
 
         multicastConnection?.stateUpdateHandler = { [weak self] state in
-            Task { @MainActor [weak self] in
+            DispatchQueue.main.async {
                 switch state {
                 case .ready:
                     log.audio("✅ Link: Multicast ready")
@@ -247,7 +247,7 @@ public class AbletonLinkClient: ObservableObject {
 
         multicastConnection?.setReceiveHandler(maximumMessageSize: 1024, rejectOversizedMessages: true) { [weak self] message, content, isComplete in
             if let data = content {
-                Task { @MainActor [weak self] in
+                DispatchQueue.main.async {
                     self?.handleIncomingMessage(data: data, from: message.remoteEndpoint)
                 }
             }
@@ -280,7 +280,7 @@ public class AbletonLinkClient: ObservableObject {
                 connection.start(queue: self?.queue ?? .main)
                 connection.receiveMessage { data, _, _, _ in
                     if let data = data {
-                        Task { @MainActor [weak self] in
+                        DispatchQueue.main.async { [weak self] in
                             self?.handleIncomingMessage(data: data, from: nil)
                         }
                     }
@@ -298,7 +298,7 @@ public class AbletonLinkClient: ObservableObject {
     private func startUpdateLoop() {
         // High-frequency update for accurate timing (100 Hz)
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            DispatchQueue.main.async {
                 self?.updateSessionState()
             }
         }
@@ -319,7 +319,7 @@ public class AbletonLinkClient: ObservableObject {
     private func startDiscovery() {
         // Send periodic discovery messages
         discoveryTimer = Timer.scheduledTimer(withTimeInterval: LinkConstants.discoveryInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            DispatchQueue.main.async {
                 self?.sendDiscovery()
                 self?.cleanupStalePeers()
             }
@@ -368,7 +368,7 @@ public class AbletonLinkClient: ObservableObject {
             let address = endpoint.debugDescription
             if let index = peers.firstIndex(where: { $0.address == address }) {
                 peers[index].tempo = peerTempo
-                peers[index].lastSeen = Date()
+                peers[index].lastSeen = CFAbsoluteTimeGetCurrent()
             } else {
                 let peer = LinkPeer(
                     id: UUID(),
@@ -376,7 +376,7 @@ public class AbletonLinkClient: ObservableObject {
                     port: LinkConstants.port,
                     name: "Link Peer",
                     tempo: peerTempo,
-                    lastSeen: Date()
+                    lastSeen: CFAbsoluteTimeGetCurrent()
                 )
                 peers.append(peer)
             }
@@ -406,7 +406,7 @@ public class AbletonLinkClient: ObservableObject {
         }
 
         // Update timestamp offset for sync
-        let localTime = UInt64(Date().timeIntervalSince1970 * 1_000_000)
+        let localTime = UInt64(CFAbsoluteTimeGetCurrent() * 1_000_000)
         hostTimeOffset = Int64(timestamp) - Int64(localTime)
     }
 
@@ -497,7 +497,7 @@ public class AbletonLinkClient: ObservableObject {
         guard tempo >= 20 && tempo <= 999 else { return }
 
         sessionState.tempo = tempo
-        sessionState.timestamp = UInt64(Date().timeIntervalSince1970 * 1_000_000)
+        sessionState.timestamp = UInt64(CFAbsoluteTimeGetCurrent() * 1_000_000)
 
         // Broadcast to network
         sendStateUpdate()

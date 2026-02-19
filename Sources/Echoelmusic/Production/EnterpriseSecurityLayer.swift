@@ -377,11 +377,15 @@ public final class CertificatePinning: Sendable {
             )
         } else {
             // Fallback to CA validation until pins are configured
+            // Enforce in production to prevent MITM — will fail-closed until pins are set
             pinnedCertificates["api.echoelmusic.com"] = PinConfiguration(
                 primaryPin: trustedRootPins[0], // Let's Encrypt
                 backupPin: trustedRootPins[2],  // DigiCert backup
-                enforced: false // Don't enforce CA-only validation
+                enforced: isProduction
             )
+            if isProduction {
+                ProfessionalLogger.shared.error("🚨 Certificate pinning: api.echoelmusic.com missing production pins — using CA root enforcement", category: .network)
+            }
         }
 
         // Streaming Server
@@ -395,8 +399,11 @@ public final class CertificatePinning: Sendable {
             pinnedCertificates["stream.echoelmusic.com"] = PinConfiguration(
                 primaryPin: trustedRootPins[0],
                 backupPin: trustedRootPins[1],
-                enforced: false
+                enforced: isProduction
             )
+            if isProduction {
+                ProfessionalLogger.shared.error("🚨 Certificate pinning: stream.echoelmusic.com missing production pins — using CA root enforcement", category: .network)
+            }
         }
 
         // Collaboration Server
@@ -410,8 +417,11 @@ public final class CertificatePinning: Sendable {
             pinnedCertificates["collab.echoelmusic.com"] = PinConfiguration(
                 primaryPin: trustedRootPins[0],
                 backupPin: trustedRootPins[2],
-                enforced: false
+                enforced: isProduction
             )
+            if isProduction {
+                ProfessionalLogger.shared.error("🚨 Certificate pinning: collab.echoelmusic.com missing production pins — using CA root enforcement", category: .network)
+            }
         }
 
         // Analytics Server
@@ -425,8 +435,11 @@ public final class CertificatePinning: Sendable {
             pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
                 primaryPin: trustedRootPins[2], // DigiCert
                 backupPin: trustedRootPins[3],
-                enforced: false
+                enforced: isProduction
             )
+            if isProduction {
+                ProfessionalLogger.shared.error("🚨 Certificate pinning: analytics.echoelmusic.com missing production pins — using CA root enforcement", category: .network)
+            }
         }
 
         // Log configuration status
@@ -684,12 +697,14 @@ public actor AuditLogger {
     private let sessionId: String
 
     private init() {
-        // Generate or retrieve device ID
-        if let existingId = UserDefaults.standard.string(forKey: "echoelmusic.deviceId") {
+        // Generate or retrieve device ID from Keychain (not UserDefaults which is unencrypted)
+        let keychainKey = "echoelmusic.deviceId"
+        if case .success(let existingId) = EnhancedKeychainManager.shared.retrieve(key: keychainKey) {
             deviceId = existingId
         } else {
-            deviceId = UUID().uuidString
-            UserDefaults.standard.set(deviceId, forKey: "echoelmusic.deviceId")
+            let newId = UUID().uuidString
+            _ = EnhancedKeychainManager.shared.store(key: keychainKey, value: newId)
+            deviceId = newId
         }
 
         sessionId = UUID().uuidString

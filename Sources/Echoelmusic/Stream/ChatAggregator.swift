@@ -158,7 +158,8 @@ class ToxicityClassifier {
             results.append((.toxic, score))
         }
 
-        if text.lowercased().contains("kill") || text.lowercased().contains("die") {
+        let lowerText = text.lowercased()
+        if lowerText.contains("kill") || lowerText.contains("die") {
             results.append((.threat, 0.8))
         }
 

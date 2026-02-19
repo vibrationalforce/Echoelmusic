@@ -234,6 +234,10 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
     private var externalWindows: [String: NSWindow] = [:]
     #endif
 
+    // MARK: - Observer Management
+
+    private var notificationObservers: [NSObjectProtocol] = []
+
     // MARK: - Bus Integration
 
     private var busSubscription: BusSubscription?
@@ -260,7 +264,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
 
     private func setupDisplayDetection() {
         #if os(iOS)
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: UIScreen.didConnectNotification,
             object: nil, queue: .main
         ) { [weak self] notification in
@@ -268,9 +272,9 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
             Task { @MainActor in
                 self?.handleScreenConnected(screen)
             }
-        }
+        })
 
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: UIScreen.didDisconnectNotification,
             object: nil, queue: .main
         ) { [weak self] notification in
@@ -278,25 +282,35 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
             Task { @MainActor in
                 self?.handleScreenDisconnected(screen)
             }
-        }
+        })
 
-        // Detect already-connected screens
-        for screen in UIScreen.screens where screen != UIScreen.main {
-            handleScreenConnected(screen)
+        // Detect already-connected screens via UIWindowScene (future-proof)
+        let connectedScenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let mainScreen = connectedScenes.first?.screen ?? UIScreen.main
+        for scene in connectedScenes where scene.screen != mainScreen {
+            handleScreenConnected(scene.screen)
         }
         #endif
 
         #if os(macOS)
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.rescanMacDisplays()
             }
-        }
+        })
         rescanMacDisplays()
         #endif
+    }
+
+    deinit {
+        for observer in notificationObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        notificationObservers.removeAll()
     }
 
     // MARK: - Screen Handlers (iOS)

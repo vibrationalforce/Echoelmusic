@@ -104,16 +104,15 @@ public final class ProStreamEngine: ObservableObject {
     public func switchScene(_ scene: ProStreamScene, transition: StreamSceneTransition) {
         let previousID = programScene?.id
 
-        // Deactivate old program scene
-        if let prevID = previousID, let index = scenes.firstIndex(where: { $0.id == prevID }) {
-            scenes[index].isActive = false
+        // Batch scene state mutations into a single array update to reduce re-renders
+        var updatedScenes = scenes
+        if let prevID = previousID, let index = updatedScenes.firstIndex(where: { $0.id == prevID }) {
+            updatedScenes[index].isActive = false
         }
-
-        // Activate new program scene
-        if let index = scenes.firstIndex(where: { $0.id == scene.id }) {
-            scenes[index].isActive = true
+        if let index = updatedScenes.firstIndex(where: { $0.id == scene.id }) {
+            updatedScenes[index].isActive = true
         }
-
+        scenes = updatedScenes
         programScene = scene
 
         log.log(
@@ -125,15 +124,15 @@ public final class ProStreamEngine: ObservableObject {
 
     /// Set a scene as the studio mode preview
     public func setPreviewScene(_ scene: ProStreamScene) {
-        // Deactivate old preview
-        if let prevID = previewScene?.id, let index = scenes.firstIndex(where: { $0.id == prevID }) {
-            scenes[index].isPreview = false
+        // Batch preview state mutations into a single array update
+        var updatedScenes = scenes
+        if let prevID = previewScene?.id, let index = updatedScenes.firstIndex(where: { $0.id == prevID }) {
+            updatedScenes[index].isPreview = false
         }
-
-        if let index = scenes.firstIndex(where: { $0.id == scene.id }) {
-            scenes[index].isPreview = true
+        if let index = updatedScenes.firstIndex(where: { $0.id == scene.id }) {
+            updatedScenes[index].isPreview = true
         }
-
+        scenes = updatedScenes
         previewScene = scene
         log.log(.debug, category: .streaming, "Preview set to '\(scene.name)'")
     }

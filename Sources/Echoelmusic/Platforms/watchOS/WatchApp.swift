@@ -220,8 +220,8 @@ class WatchApp: ObservableObject {
             // Passe Timer für nächsten Zyklus an
             self.breathingTimer?.invalidate()
             let nextInterval = isInhale ? inhaleTime : exhaleTime
-            self.breathingTimer = Timer.scheduledTimer(withTimeInterval: nextInterval, repeats: false) { _ in
-                self.startBreathingGuidance()
+            self.breathingTimer = Timer.scheduledTimer(withTimeInterval: nextInterval, repeats: false) { [weak self] _ in
+                self?.startBreathingGuidance()
             }
         }
     }

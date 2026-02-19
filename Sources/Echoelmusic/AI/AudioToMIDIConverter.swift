@@ -510,13 +510,13 @@ public final class AudioToMIDIConverter: ObservableObject {
                 currentNote = midiNote
                 noteStartTime = frame.time
                 noteAmplitudes = [frame.amplitude]
-            } else if midiNote != currentNote {
+            } else if midiNote != currentNote, let previousNote = currentNote {
                 // Note changed — end previous, start new
                 let duration = frame.time - noteStartTime
                 if duration >= configuration.minimumNoteLength {
                     let velocity = amplitudeToVelocity(noteAmplitudes)
                     notes.append(AudioMIDINoteEvent(
-                        noteNumber: currentNote!,
+                        noteNumber: previousNote,
                         velocity: velocity,
                         startTime: noteStartTime,
                         duration: duration

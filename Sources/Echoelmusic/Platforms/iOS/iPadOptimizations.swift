@@ -52,6 +52,18 @@ class iPadOptimizations: ObservableObject {
     /// Layout-Modus
     @Published var layoutMode: LayoutMode = .standard
 
+    // MARK: - Screen Helper
+
+    /// Future-proof screen bounds accessor — prefers window scene screen over deprecated UIScreen.main
+    @MainActor
+    static var currentScreenBounds: CGRect {
+        if let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene }).first {
+            return windowScene.screen.bounds
+        }
+        return UIScreen.main.bounds
+    }
+
     // MARK: - Private Properties
 
     private let windowSceneManager: WindowSceneManager
@@ -187,7 +199,7 @@ class iPadOptimizations: ObservableObject {
     private func detectiPadModel() {
         guard isiPad else { return }
 
-        let screenSize = UIScreen.main.bounds.size
+        let screenSize = Self.currentScreenBounds.size
         let maxDimension = max(screenSize.width, screenSize.height)
 
         switch maxDimension {
@@ -249,7 +261,7 @@ class iPadOptimizations: ObservableObject {
             return
         }
 
-        let screenWidth = UIScreen.main.bounds.width
+        let screenWidth = Self.currentScreenBounds.width
         let windowWidth = window.frame.width
 
         // Wenn Window schmaler als Screen → Split View

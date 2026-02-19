@@ -43,6 +43,8 @@ class LegacyDeviceSupport: ObservableObject {
     @Published var thermalState: ProcessInfo.ThermalState = .nominal
     @Published var memoryWarningReceived: Bool = false
 
+    private var notificationObservers: [NSObjectProtocol] = []
+
     // MARK: - Device Profile
 
     struct DeviceProfile: Identifiable {
@@ -559,7 +561,7 @@ class LegacyDeviceSupport: ObservableObject {
     // MARK: - Memory Warning Observer
 
     private func setupMemoryWarningObserver() {
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
             queue: .main
@@ -567,7 +569,7 @@ class LegacyDeviceSupport: ObservableObject {
             Task { @MainActor in
                 self?.handleMemoryWarning()
             }
-        }
+        })
     }
 
     private func handleMemoryWarning() {
@@ -604,7 +606,7 @@ class LegacyDeviceSupport: ObservableObject {
     // MARK: - Thermal State Observer
 
     private func setupThermalStateObserver() {
-        NotificationCenter.default.addObserver(
+        notificationObservers.append(NotificationCenter.default.addObserver(
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main
@@ -612,6 +614,12 @@ class LegacyDeviceSupport: ObservableObject {
             Task { @MainActor in
                 self?.handleThermalStateChange()
             }
+        })
+    }
+
+    deinit {
+        for observer in notificationObservers {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 

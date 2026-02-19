@@ -23,6 +23,7 @@ const STATIC_ASSETS = [
   '/privacy.html',
   '/terms.html',
   '/impressum.html',
+  '/tools.html',
   '/faq.html',
   '/support.html',
   '/health.html',

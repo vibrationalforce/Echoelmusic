@@ -119,7 +119,6 @@ class CloudSyncManager: ObservableObject {
 
         // Backup every 5 minutes (or specified interval)
         autoBackupTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
             Task { @MainActor [weak self] in
                 try? await self?.autoBackup()
             }

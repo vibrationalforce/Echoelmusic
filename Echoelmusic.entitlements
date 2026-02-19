@@ -43,7 +43,7 @@
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)com.echoelmusic.app</string>
 
-	<!-- HomeKit (for smart home lighting control) -->
+	<!-- HomeKit (for smart home lighting control via EchoelHomeService — HMHomeManager) -->
 	<key>com.apple.developer.homekit</key>
 	<true/>
 

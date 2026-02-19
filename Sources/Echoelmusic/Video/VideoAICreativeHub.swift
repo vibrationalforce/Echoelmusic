@@ -67,6 +67,45 @@ final class VideoAICreativeHub: ObservableObject {
                 self?.updateFromSystemState(state)
             }
             .store(in: &cancellables)
+
+        // Connect to PhysicalAI WorldModel for predictive visual adaptation
+        WorldModel.shared.$latestPrediction
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] prediction in
+                self?.updateFromWorldPrediction(prediction)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateFromWorldPrediction(_ prediction: WorldPrediction) {
+        // Map emotional trajectory to visual parameters
+        let mood = prediction.emotionalTrajectory
+        let confidence = prediction.confidence
+
+        // High-confidence predictions drive smoother visual transitions
+        videoEffects.setPredictiveTransitionDuration(
+            confidence > 0.7 ? 2.0 : 0.5  // Smooth 2s for confident predictions, 0.5s for uncertain
+        )
+
+        // Map predicted mood to generative AI creativity level
+        switch mood.predictedMood {
+        case .energized, .euphoric:
+            generativeAI.setCreativityLevel(min(1.0, Float(confidence) + 0.3))
+        case .calm, .focused:
+            generativeAI.setCreativityLevel(0.4)
+        case .introspective:
+            generativeAI.setCreativityLevel(0.6)
+        default:
+            break
+        }
+
+        // Feed predicted coherence to projection mapper for field geometry
+        if prediction.predictedState.biometrics.coherence > 0.6 {
+            projectionMapper.setFieldGeometry(.fibonacci)
+        } else {
+            projectionMapper.setFieldGeometry(.grid)
+        }
     }
 
     private func updateFromSystemState(_ state: EchoelUniversalCore.SystemState) {
@@ -499,6 +538,25 @@ class ProjectionMapper: ObservableObject {
         surfaces[index].meshPoints[key] = offset
     }
 
+    // MARK: - Field Geometry (WorldModel-driven)
+
+    /// Current field geometry mode driven by coherence prediction
+    @Published var fieldGeometryMode: FieldGeometry = .grid
+
+    enum FieldGeometry: String {
+        case fibonacci = "Fibonacci Spiral"
+        case grid = "Grid"
+        case radial = "Radial"
+        case voronoi = "Voronoi"
+    }
+
+    /// Set field geometry based on WorldModel coherence prediction
+    func setFieldGeometry(_ geometry: FieldGeometry) {
+        if fieldGeometryMode != geometry {
+            fieldGeometryMode = geometry
+        }
+    }
+
     // MARK: - Edge Blending
 
     func setEdgeBlend(edge: Edge, width: Float, gamma: Float, for surfaceID: UUID) {
@@ -631,6 +689,16 @@ class BioReactiveVideoEffects: ObservableObject {
 
             activeEffects[i] = effect
         }
+    }
+
+    // MARK: - Predictive Transition (from WorldModel)
+
+    /// Duration of visual transitions driven by WorldModel prediction confidence
+    private(set) var predictiveTransitionDuration: TimeInterval = 1.0
+
+    /// Set the transition duration based on WorldModel prediction confidence
+    func setPredictiveTransitionDuration(_ duration: TimeInterval) {
+        predictiveTransitionDuration = max(0.1, min(5.0, duration))
     }
 
     // MARK: - Apply to Frame

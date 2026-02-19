@@ -11,10 +11,10 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     // MARK: - Metal Components
 
-    private var device: MTLDevice!
-    private var commandQueue: MTLCommandQueue!
-    private var pipelineState: MTLRenderPipelineState!
-    private var vertexBuffer: MTLBuffer!
+    private var device: MTLDevice?
+    private var commandQueue: MTLCommandQueue?
+    private var pipelineState: MTLRenderPipelineState?
+    private var vertexBuffer: MTLBuffer?
 
 
     // MARK: - Uniforms
@@ -96,7 +96,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
 
     private func createPipeline() throws {
         // Load Metal library
-        guard let library = device.makeDefaultLibrary() else {
+        guard let library = device?.makeDefaultLibrary() else {
             throw RendererError.libraryCreationFailed
         }
 
@@ -113,7 +113,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
         pipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
 
         // Create pipeline state
-        pipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
+        pipelineState = try device?.makeRenderPipelineState(descriptor: pipelineDescriptor)
     }
 
     private func createVertexBuffer() {
@@ -127,7 +127,7 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
         ]
 
         let dataSize = vertices.count * MemoryLayout<Float>.stride
-        vertexBuffer = device.makeBuffer(bytes: vertices, length: dataSize, options: [])
+        vertexBuffer = device?.makeBuffer(bytes: vertices, length: dataSize, options: [])
     }
 
 
@@ -148,8 +148,11 @@ class CymaticsRenderer: NSObject, MTKViewDelegate {
             return
         }
 
-        // Create command buffer
-        guard let commandBuffer = commandQueue.makeCommandBuffer() else {
+        // Create command buffer (safe — all Metal properties are optional)
+        guard let commandQueue,
+              let pipelineState,
+              let vertexBuffer,
+              let commandBuffer = commandQueue.makeCommandBuffer() else {
             return
         }
 

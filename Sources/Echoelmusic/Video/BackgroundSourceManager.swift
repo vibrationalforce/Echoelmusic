@@ -36,6 +36,7 @@ class BackgroundSourceManager: ObservableObject {
     // MARK: - Video Playback
 
     private var videoPlayer: AVPlayer?
+    private var loopObserver: NSObjectProtocol?
     private var videoOutput: AVPlayerItemVideoOutput?
     private var displayLink: CADisplayLink?
 
@@ -160,6 +161,9 @@ class BackgroundSourceManager: ObservableObject {
     deinit {
         // stopVideoPlayback()/stopDisplayLink() are @MainActor-isolated, cannot call from deinit
         // AVPlayer and display link will be cleaned up on deallocation
+        if let observer = loopObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     // MARK: - Initialize Default Sources
@@ -633,7 +637,11 @@ class BackgroundSourceManager: ObservableObject {
 
         // Loop if requested
         if looping {
-            NotificationCenter.default.addObserver(
+            // Remove previous loop observer to prevent leaks
+            if let existing = loopObserver {
+                NotificationCenter.default.removeObserver(existing)
+            }
+            loopObserver = NotificationCenter.default.addObserver(
                 forName: .AVPlayerItemDidPlayToEndTime,
                 object: playerItem,
                 queue: .main

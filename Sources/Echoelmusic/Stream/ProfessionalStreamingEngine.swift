@@ -665,6 +665,8 @@ public final class RTMPClientComplete: @unchecked Sendable {
 // MARK: - Professional Streaming Engine
 
 /// Main professional streaming engine
+/// - Note: Superseded by ProStreamEngine. No active call sites exist.
+@available(*, deprecated, message: "Use ProStreamEngine instead — this class has no active call sites")
 @MainActor
 public final class ProfessionalStreamingEngine: ObservableObject {
 

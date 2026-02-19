@@ -151,7 +151,14 @@ class PerformanceOptimizer: ObservableObject {
     private static func detectCapabilities() -> DeviceCapabilities {
         #if os(iOS)
         let device = UIDevice.current
-        let screen = UIScreen.main
+        // Future-proof: prefer window scene screen over deprecated UIScreen.main
+        let screen: UIScreen = {
+            if let ws = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first {
+                return ws.screen
+            }
+            return UIScreen.main
+        }()
 
         // Detect ProMotion
         let supportsProMotion = screen.maximumFramesPerSecond > 60
@@ -212,7 +219,7 @@ class PerformanceOptimizer: ObservableObject {
     private func startMonitoring() {
         // Monitor FPS - store timer reference for cleanup
         metricsTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.updateMetrics()
             }
         }
@@ -223,8 +230,8 @@ class PerformanceOptimizer: ObservableObject {
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
             queue: .main
-        ) { [weak self] notification in
-            Task { @MainActor in
+        ) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.updateThermalState()
             }
         }
@@ -234,7 +241,7 @@ class PerformanceOptimizer: ObservableObject {
         #if os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         batteryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.batteryLevel = UIDevice.current.batteryLevel
                 self?.adjustForBattery()
             }

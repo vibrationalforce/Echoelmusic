@@ -97,7 +97,8 @@ class ProVocalChain: ObservableObject {
 
     // Active note tracking (for real-time vibrato)
     private var activeNoteId: UUID?
-    private var noteStartTime: Date?
+    private var noteStartTime: CFTimeInterval = 0
+    private var noteStartTimeIsSet: Bool = false
     private var currentNoteVibrato: VibratoEngine.VibratoParameters = .default()
 
     // MARK: - Initialization
@@ -157,8 +158,8 @@ class ProVocalChain: ObservableObject {
         }
 
         // 3. Vibrato (add/modify)
-        if vibratoEnabled, let noteId = activeNoteId, let startTime = noteStartTime {
-            let noteTime = Float(Date().timeIntervalSince(startTime))
+        if vibratoEnabled, let noteId = activeNoteId, noteStartTimeIsSet {
+            let noteTime = Float(CACurrentMediaTime() - noteStartTime)
             let vibrato = vibratoEngine.generateVibrato(
                 noteId: noteId,
                 params: currentNoteVibrato,
@@ -254,7 +255,8 @@ class ProVocalChain: ObservableObject {
     func noteOn() {
         let id = UUID()
         activeNoteId = id
-        noteStartTime = Date()
+        noteStartTime = CACurrentMediaTime()
+        noteStartTimeIsSet = true
         vibratoEngine.registerNote(id: id, params: currentNoteVibrato)
     }
 
@@ -264,7 +266,7 @@ class ProVocalChain: ObservableObject {
             vibratoEngine.unregisterNote(id: id)
         }
         activeNoteId = nil
-        noteStartTime = nil
+        noteStartTimeIsSet = false
     }
 
     // MARK: - Bio-Reactive Control

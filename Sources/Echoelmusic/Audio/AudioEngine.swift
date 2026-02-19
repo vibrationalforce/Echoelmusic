@@ -290,7 +290,7 @@ public class AudioEngine: ObservableObject {
         // OPTIMIZATION: High-precision bio-parameter updates using DispatchSourceTimer
         // 50% lower jitter compared to Timer.publish for real-time audio responsiveness
         bioParameterTimer?.cancel()
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: bioParameterQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: bioParameterQueue)
         timer.schedule(deadline: .now(), repeating: .milliseconds(100), leeway: .milliseconds(5))
         timer.setEventHandler { [weak self] in
             Task { @MainActor in
@@ -443,6 +443,39 @@ public class AudioEngine: ObservableObject {
         nodeGraph?.setParameter(.tempo, value: bpm)
     }
 
+    // MARK: - Physical AI Parameter Control
+
+    /// Apply a parameter change from the PhysicalAI WorldModel prediction engine
+    /// Maps abstract AI action names to concrete DSP parameters
+    func applyPhysicalAIParameter(_ parameter: String, value: Float) {
+        let clamped = max(0, min(1, value))
+
+        switch parameter {
+        case "intensity":
+            // Map intensity to filter cutoff (0=dark, 1=bright)
+            setFilterCutoff(clamped * 18000 + 200)  // 200Hz → 18200Hz
+        case "filterCutoff":
+            setFilterCutoff(clamped * 18000 + 200)
+        case "harmonicTension":
+            // Map tension to resonance + slight distortion
+            setFilterResonance(clamped * 0.8)
+        case "reverbMix", "reverbWet":
+            setReverbWetness(clamped)
+        case "reverbSize":
+            setReverbSize(clamped)
+        case "delayMix":
+            setDelayTime(clamped * 0.5)  // 0→500ms
+        case "volume", "masterVolume":
+            setMasterVolume(clamped)
+        case "spatialWidth":
+            spatialAudioEngine?.setPan(clamped * 2 - 1)  // -1 to +1
+        case "tempo":
+            setTempo(clamped * 120 + 60)  // 60→180 BPM
+        default:
+            log.audio("PhysicalAI: unknown parameter '\(parameter)', value=\(value)")
+        }
+    }
+
     // MARK: - Preset Loading
 
     /// Load a preset by name and apply audio settings
@@ -453,7 +486,7 @@ public class AudioEngine: ObservableObject {
         // Search in built-in presets first
         let allPresets = BuiltInPresets.all
 
-        guard let preset = allPresets.first(where: { $0.name.lowercased() == named.lowercased() || $0.id == named }) else {
+        guard let preset = allPresets.first(where: { $0.name.caseInsensitiveCompare(named) == .orderedSame || $0.id == named }) else {
             log.audio("⚠️  Preset not found: \(named)", level: .warning)
             return false
         }

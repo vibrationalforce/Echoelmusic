@@ -148,7 +148,7 @@ class LLMService: ObservableObject {
     2. Interpret HRV, heart rate, and coherence data to provide personalized guidance
     3. Suggest musical elements (scales, tempos, harmonies) that match the user's current state
     4. Offer breathing exercises and meditation techniques
-    5. Explain the science behind biofeedback and music therapy
+    5. Explain the science behind biofeedback and music-based wellness
 
     You have access to real-time bio-data and should tailor your responses accordingly.
 
@@ -247,23 +247,20 @@ class LLMService: ObservableObject {
 
     // MARK: - Bio-Reactive Prompts
 
-    /// Get guidance based on current bio-state
+    /// Get guidance based on current bio-state.
+    /// Privacy: Only sends aggregated bio-state label to the LLM, never raw biometric values.
     func getBioGuidance(heartRate: Double, hrv: Double, coherence: Double) async throws -> String {
         let bioState = determineBioState(heartRate: heartRate, hrv: hrv, coherence: coherence)
 
+        // Only send aggregated state label — raw HR/HRV/coherence never leaves the device
         let prompt = """
-        My current bio-state:
-        - Heart Rate: \(Int(heartRate)) BPM
-        - HRV: \(Int(hrv)) ms
-        - Coherence: \(Int(coherence * 100))%
-        - State: \(bioState)
-
+        My current bio-state: \(bioState)
         Based on this, what should I focus on right now in my session?
         """
 
         let context = Message.BioContext(
-            heartRate: heartRate,
-            hrv: hrv,
+            heartRate: 0,
+            hrv: 0,
             coherence: coherence,
             bioState: bioState
         )
@@ -336,10 +333,10 @@ class LLMService: ObservableObject {
         request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
-        // Build system prompt with bio-context
+        // Build system prompt with bio-context — only aggregated state, never raw biometrics
         var fullSystemPrompt = systemPrompt
         if let bio = bioContext {
-            fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
+            fullSystemPrompt += "\n\nCurrent Bio-State: \(bio.bioState)"
         }
 
         // Build messages array with structured content block support
@@ -445,10 +442,10 @@ class LLMService: ObservableObject {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
-        // Build system prompt with bio-context
+        // Build system prompt with bio-context — only aggregated state, never raw biometrics
         var fullSystemPrompt = systemPrompt
         if let bio = bioContext {
-            fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
+            fullSystemPrompt += "\n\nCurrent Bio-State: \(bio.bioState)"
         }
 
         // Build messages array
@@ -527,10 +524,10 @@ class LLMService: ObservableObject {
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Build system prompt with bio-context
+        // Build system prompt with bio-context — only aggregated state, never raw biometrics
         var fullSystemPrompt = systemPrompt
         if let bio = bioContext {
-            fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
+            fullSystemPrompt += "\n\nCurrent Bio-State: \(bio.bioState)"
         }
 
         // Build messages array for Ollama

@@ -53,6 +53,8 @@ class MicrophoneManager: NSObject, ObservableObject {
     /// YIN pitch detector for fundamental frequency estimation
     private let pitchDetector = PitchDetector()
 
+    /// Dedicated queue for FFT/pitch processing — keeps audio render thread unblocked
+    private let processingQueue = DispatchQueue(label: "com.echoelmusic.audio.processing", qos: .userInteractive)
 
     // MARK: - Initialization
 
@@ -127,9 +129,11 @@ class MicrophoneManager: NSObject, ObservableObject {
                 vDSP_DFT_Direction.FORWARD
             )
 
-            // Install a tap to capture audio data
+            // Install a tap to capture audio data — dispatch off the audio render thread
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
-                self?.processAudioBuffer(buffer)
+                self?.processingQueue.async {
+                    self?.processAudioBuffer(buffer)
+                }
             }
 
             // Prepare and start the audio engine

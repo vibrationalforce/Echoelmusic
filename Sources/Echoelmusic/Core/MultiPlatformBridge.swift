@@ -539,7 +539,6 @@ class WebSocketHandler {
 extension MultiPlatformBridge: OSCHandlerDelegate,
                                 MIDIHandlerDelegate,
                                 CVGateHandlerDelegate,
-                                DMXHandlerDelegate,
                                 WebSocketHandlerDelegate {
     func oscReceived(address: String, values: [Any]) {
         // Handle incoming OSC
@@ -579,8 +578,6 @@ protocol CVGateHandlerDelegate: AnyObject {
     func cvReceived(channel: Int, voltage: Float) async
     func gateReceived(channel: Int, state: Bool) async
 }
-
-protocol DMXHandlerDelegate: AnyObject {}
 
 protocol WebSocketHandlerDelegate: AnyObject {
     func webSocketConnected(client: WebSocketHandler.WebSocketClient) async

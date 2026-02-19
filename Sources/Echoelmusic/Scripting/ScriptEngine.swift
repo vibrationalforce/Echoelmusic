@@ -105,12 +105,48 @@ class ScriptEngine: ObservableObject {
         let validAPIs = ["audioAPI", "visualAPI", "bioAPI", "streamAPI", "midiAPI", "spatialAPI"]
         let usedAPIs = validAPIs.filter { script.content.contains($0) }
 
-        // 4. Security scan - block unsafe operations
-        let unsafePatterns = ["FileManager", "Process", "NSTask", "URLSession.shared.dataTask"]
-        for pattern in unsafePatterns {
-            if script.content.contains(pattern) {
-                throw ScriptError.compilationFailed("Unsafe operation '\(pattern)' not allowed in scripts")
+        // 4. Security scan - block unsafe operations via regex patterns
+        //    Simple string matching is bypassable via obfuscation; use word-boundary regex
+        let unsafePatterns: [(String, String)] = [
+            // File system access
+            ("\\bFileManager\\b", "FileManager"),
+            ("\\bProcess\\b", "Process"),
+            ("\\bNSTask\\b", "NSTask"),
+            ("\\bURLSession\\b", "URLSession"),
+            // Dynamic code execution
+            ("\\bNSExpression\\b", "NSExpression"),
+            ("\\bNSPredicate\\b", "NSPredicate"),
+            ("\\bperformSelector\\b", "performSelector"),
+            ("\\bdlopen\\b", "dlopen"),
+            ("\\bdlsym\\b", "dlsym"),
+            // System access
+            ("\\bProcessInfo\\b", "ProcessInfo"),
+            ("\\bBundle\\.main\\b", "Bundle.main"),
+            ("\\bUnsafePointer\\b", "UnsafePointer"),
+            ("\\bUnsafeMutablePointer\\b", "UnsafeMutablePointer"),
+            ("\\bUnsafeRawPointer\\b", "UnsafeRawPointer"),
+            ("\\bUnsafeBufferPointer\\b", "UnsafeBufferPointer"),
+            // Network access
+            ("\\bSocket\\b", "Socket"),
+            ("\\bNWConnection\\b", "NWConnection"),
+            // Keychain / credentials
+            ("\\bSecItem\\w*\\b", "SecItem APIs"),
+            ("\\bKeychain\\b", "Keychain"),
+            // Import of non-allowed modules
+            ("^\\s*import\\s+(?!Foundation|SwiftUI|Combine)\\w+", "non-allowed import"),
+        ]
+        for (regex, label) in unsafePatterns {
+            if let regexObj = try? NSRegularExpression(pattern: regex, options: .anchorsMatchLines),
+               regexObj.firstMatch(in: script.content, options: [], range: NSRange(script.content.startIndex..., in: script.content)) != nil {
+                throw ScriptError.compilationFailed("Unsafe operation '\(label)' not allowed in scripts")
             }
+        }
+
+        // 4b. Block string concatenation obfuscation attempts (e.g., "File" + "Manager")
+        let concatenationPattern = try? NSRegularExpression(pattern: "\"\\w+\"\\s*\\+\\s*\"\\w+\"", options: [])
+        if let concatRange = NSRange(script.content.startIndex..., in: script.content) as NSRange?,
+           concatenationPattern?.firstMatch(in: script.content, options: [], range: concatRange) != nil {
+            throw ScriptError.compilationFailed("String concatenation patterns not allowed in scripts (potential obfuscation)")
         }
 
         // 5. Parse function signatures for runtime dispatch

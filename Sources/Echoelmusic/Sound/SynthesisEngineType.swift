@@ -201,12 +201,3 @@ public enum SynthesisCategory: String, CaseIterable, Sendable {
     }
 }
 
-// MARK: - Type Aliases for Backwards Compatibility
-
-/// Legacy type alias - use `SynthesisEngineType` instead
-/// @available(*, deprecated, renamed: "SynthesisEngineType")
-public typealias SynthType = SynthesisEngineType
-
-/// Legacy type alias - use `SynthesisEngineType` instead
-/// @available(*, deprecated, renamed: "SynthesisEngineType")
-public typealias SynthesisEngine = SynthesisEngineType

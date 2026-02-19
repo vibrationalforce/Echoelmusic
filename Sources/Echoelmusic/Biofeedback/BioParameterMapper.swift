@@ -233,7 +233,7 @@ class BioParameterMapper: ObservableObject {
         let maxDeviation: Float = 1.0 - normalized  // 0.0 (centered) to 1.0 (spread)
 
         // Create subtle circular motion for low coherence
-        let angle = Float(Date().timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 6.28))
+        let angle = Float(CACurrentMediaTime().truncatingRemainder(dividingBy: 6.28))
         let x = cos(angle) * maxDeviation * 0.5
         let y = sin(angle) * maxDeviation * 0.5
         let z: Float = 1.0  // Keep constant distance

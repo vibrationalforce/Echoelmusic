@@ -21,6 +21,7 @@ struct VaporwaveExport: View {
     @State private var isExporting = false
     @State private var exportProgress: Double = 0
     @State private var exportComplete = false
+    @State private var exportTimer: Timer?
 
     // MARK: - Enums
 
@@ -102,6 +103,10 @@ struct VaporwaveExport: View {
             } else {
                 exportOptionsView
             }
+        }
+        .onDisappear {
+            exportTimer?.invalidate()
+            exportTimer = nil
         }
     }
 
@@ -498,8 +503,11 @@ struct VaporwaveExport: View {
         isExporting = true
         exportProgress = 0
 
+        // Invalidate any existing timer before creating a new one
+        exportTimer?.invalidate()
+
         // Simulate export progress
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+        exportTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
             withAnimation(.linear(duration: 0.05)) {
                 exportProgress += 0.02
             }

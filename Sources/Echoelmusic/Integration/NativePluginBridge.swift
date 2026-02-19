@@ -185,9 +185,3 @@ extension NativePluginBridge {
         activateEngine()
     }
 }
-
-// MARK: - Backwards Compatibility Typealias
-
-/// Backwards compatibility - use NativePluginBridge instead
-@available(*, deprecated, renamed: "NativePluginBridge", message: "Use NativePluginBridge - Pure Native, No JUCE!")
-typealias JUCEPluginIntegration = NativePluginBridge

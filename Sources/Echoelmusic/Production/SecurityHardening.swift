@@ -413,9 +413,22 @@ public final class SecurityAuditTrail: @unchecked Sendable {
             self.type = type
             self.description = description
             self.severity = severity
-            self.deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+            self.deviceId = SecurityAuditTrail.cachedDeviceId
         }
     }
+
+    /// Cached device ID — avoids per-event UIDevice lookup and uses Keychain-stored ID
+    fileprivate static let cachedDeviceId: String = {
+        let keychainKey = "echoelmusic.deviceId"
+        if case .success(let existingId) = EnhancedKeychainManager.shared.retrieve(key: keychainKey) {
+            return existingId
+        }
+        #if canImport(UIKit)
+        return UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        #else
+        return UUID().uuidString
+        #endif
+    }()
 
     public func log(_ event: SecurityEvent) {
         queue.async { [weak self] in

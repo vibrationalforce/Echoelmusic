@@ -49,6 +49,28 @@ public protocol BioReactiveEngineProtocol: AnyObject {
     func stopStreaming() async
 }
 
+/// Protocol for spatial audio engine injection
+public protocol SpatialAudioProviderProtocol: AnyObject {
+    func setMode(_ mode: SpatialAudioEngine.SpatialMode)
+    func setPan(_ pan: Float)
+    func setReverbBlend(_ blend: Float)
+    var currentMode: SpatialAudioEngine.SpatialMode { get }
+}
+
+/// Protocol for video engine injection
+public protocol VideoEngineProtocol: AnyObject {
+    func start() async throws
+    func stop() async
+    var isProcessing: Bool { get }
+}
+
+/// Protocol for lighting/DMX output injection
+public protocol LightingProviderProtocol: AnyObject {
+    func setScene(_ scene: Int)
+    func blackout()
+    var isActive: Bool { get }
+}
+
 // MARK: - Service Container
 
 /// Lightweight service container for dependency injection
@@ -118,14 +140,16 @@ public final class ServiceContainer {
 // MARK: - Property Wrapper for Injection
 
 /// Property wrapper for automatic service resolution
-/// Usage: `@Injected var analytics: AnalyticsServiceProtocol`
+/// Returns nil instead of crashing when a service is not registered.
+/// Usage: `@Injected var analytics: AnalyticsServiceProtocol?`
 @propertyWrapper
 public struct Injected<T> {
     private let container: ServiceContainer
 
-    public var wrappedValue: T {
-        guard let service = container.resolve(T.self) else {
-            fatalError("Service \(T.self) not registered in ServiceContainer")
+    public var wrappedValue: T? {
+        let service = container.resolve(T.self)
+        if service == nil {
+            log.log(.warning, category: .system, "Service \(T.self) not registered in ServiceContainer — returning nil")
         }
         return service
     }

@@ -83,6 +83,26 @@ struct EchoelmusicApp: App {
                     try await group.waitForAll()
                 }
 
+                // PHYSICAL AI PIPELINE (JEPA world model + autonomous control)
+                await MainActor.run {
+                    let physicalAI = PhysicalAIEngine.shared
+                    physicalAI.start()
+                    physicalAI.addObjective(.maintainCoherence())
+                }
+
+                // SCRIPT ENGINE (community scripts + automation)
+                await MainActor.run {
+                    let scriptEngine = ScriptEngine(
+                        audioAPI: AudioScriptAPI(),
+                        visualAPI: VisualScriptAPI(),
+                        bioAPI: BioScriptAPI(),
+                        streamAPI: StreamScriptAPI(),
+                        midiAPI: MIDIScriptAPI(),
+                        spatialAPI: SpatialScriptAPI()
+                    )
+                    log.info("📜 ScriptEngine: Initialized with all 6 APIs", category: .system)
+                }
+
                 // STREAMING PIPELINE
                 await MainActor.run { _ = SocialMediaManager.shared }
 
@@ -140,9 +160,19 @@ struct EchoelmusicApp: App {
                         }
                     }
 
+                    // Wire PhysicalAI → AudioEngine parameter control
+                    let physicalAI = PhysicalAIEngine.shared
+                    physicalAI.onParameterChange = { [weak audioEngine] parameter, value in
+                        audioEngine?.applyPhysicalAIParameter(parameter, value: value)
+                    }
+
+                    // Wire ControlHub → PhysicalAI bio signal bridge
+                    unifiedControlHub.connectPhysicalAI(physicalAI)
+
                     // Start UnifiedControlHub
                     unifiedControlHub.start()
 
+                    log.info("🧠 PhysicalAI → AudioEngine wired", category: .system)
                     log.info("🎵 Echoelmusic Started - All Systems Connected!", category: .system)
                     log.info("🎹 MIDI 2.0 + MPE + Spatial Audio Ready", category: .system)
                     log.info("🌊 Bio-Reactive Audio-Visual Platform Ready", category: .system)

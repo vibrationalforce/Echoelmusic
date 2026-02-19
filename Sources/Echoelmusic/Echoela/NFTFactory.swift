@@ -230,8 +230,16 @@ public final class NFTFactory: ObservableObject {
 
     // MARK: - Public API
 
+    /// Whether NFT functionality is enabled (disabled in App Store builds per Guideline 3.1.5)
+    public var isNFTEnabled: Bool {
+        FeatureFlagManager.shared.isEnabled("nft_minting")
+    }
+
     /// Connect wallet
     public func connectWallet(provider: WalletConnection.WalletProvider, network: BlockchainNetwork) async throws -> WalletConnection {
+        guard isNFTEnabled else {
+            throw NFTError.complianceFailed("NFT functionality is disabled in this build")
+        }
         log.info("Connecting wallet via \(provider.rawValue) on \(network.rawValue)")
 
         // For Secure Enclave, use device's hardware security
@@ -341,6 +349,9 @@ public final class NFTFactory: ObservableObject {
 
     /// Mint NFT with PQC-signed transaction
     public func mint(mintID: UUID) async throws -> MintedNFT {
+        guard isNFTEnabled else {
+            throw NFTError.complianceFailed("NFT functionality is disabled in this build")
+        }
         guard let wallet = connectedWallet else {
             throw NFTError.walletNotConnected
         }

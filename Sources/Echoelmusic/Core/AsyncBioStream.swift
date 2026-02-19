@@ -85,6 +85,8 @@ public final class AsyncBioStream: AsyncSequence {
     private let continuation: AsyncStream<BioSample>.Continuation
     private let stream: AsyncStream<BioSample>
     private var isRunning = false
+    /// Retains Combine subscription when created via `from(_:)`
+    private var bridgeCancellable: Any?
 
     /// Sample rate in Hz
     public var sampleRate: Double = 60.0
@@ -355,13 +357,13 @@ public actor AsyncBioBuffer {
     /// Stream of windowed samples
     public func windowedStream(windowSize: Int, slideBy: Int = 1) -> AsyncStream<[BioSample]> {
         AsyncStream { continuation in
-            self.continuation = continuation
-
-            Task {
+            let task = Task { [weak self] in
                 var lastIndex = 0
-                while true {
+                while !Task.isCancelled {
                     try? await Task.sleep(nanoseconds: 16_666_667) // ~60Hz
+                    guard !Task.isCancelled else { break }
 
+                    guard let self = self else { break }
                     let currentSamples = await self.getSamples()
                     if currentSamples.count >= windowSize && currentSamples.count > lastIndex + slideBy {
                         let window = Array(currentSamples.suffix(windowSize))
@@ -369,6 +371,11 @@ public actor AsyncBioBuffer {
                         lastIndex = currentSamples.count
                     }
                 }
+                continuation.finish()
+            }
+
+            continuation.onTermination = { _ in
+                task.cancel()
             }
         }
     }
@@ -387,10 +394,9 @@ public extension AsyncBioStream {
         let stream = AsyncBioStream()
         stream.start()
 
-        var cancellable: AnyCancellable?
-        cancellable = publisher.sink { sample in
+        // Store cancellable on stream instance to tie subscription lifetime to stream lifetime
+        stream.bridgeCancellable = publisher.sink { sample in
             stream.send(sample)
-            _ = cancellable // Keep alive
         }
 
         return stream
@@ -400,14 +406,19 @@ public extension AsyncBioStream {
     func toPublisher() -> AnyPublisher<BioSample, Never> {
         let subject = PassthroughSubject<BioSample, Never>()
 
-        Task {
+        let task = Task { [weak self] in
+            guard let self = self else { return }
             for await sample in self {
+                guard !Task.isCancelled else { break }
                 subject.send(sample)
             }
             subject.send(completion: .finished)
         }
 
-        return subject.eraseToAnyPublisher()
+        // Cancel task when last subscriber disconnects
+        return subject
+            .handleEvents(receiveCancel: { task.cancel() })
+            .eraseToAnyPublisher()
     }
 }
 #endif

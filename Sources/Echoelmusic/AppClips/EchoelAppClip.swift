@@ -181,9 +181,9 @@ public final class AppClipManager: ObservableObject {
             center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
             radius: 100,
             identifier: "echoelmusic-venue"
-        )) { inRegion, error in
+        )) { [weak self] inRegion, error in
             DispatchQueue.main.async {
-                self.locationConfirmed = inRegion || error != nil
+                self?.locationConfirmed = inRegion || error != nil
             }
         }
     }
@@ -215,9 +215,8 @@ public final class AppClipManager: ObservableObject {
     private func startSessionTimer() {
         let totalDuration = sessionType.duration
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-
-            Task { @MainActor in
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
                 self.remainingTime -= 1
                 self.sessionProgress = 1 - (self.remainingTime / totalDuration)
 
@@ -235,8 +234,8 @@ public final class AppClipManager: ObservableObject {
         sessionProgress = 1
 
         // Show upgrade prompt after session completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.showUpgradePrompt = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.showUpgradePrompt = true
         }
     }
 
@@ -498,6 +497,7 @@ struct ActiveSessionView: View {
 struct BreathingGuideView: View {
     @State private var breathPhase: BreathPhase = .inhale
     @State private var scale: CGFloat = 0.6
+    @State private var breathingTimer: Timer?
 
     enum BreathPhase: String {
         case inhale = "Einatmen"
@@ -532,19 +532,21 @@ struct BreathingGuideView: View {
 
     private func startBreathingCycle() {
         // 4-4-4-4 Box Breathing
-        Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { _ in
-            Task { @MainActor in
-                switch breathPhase {
+        breathingTimer?.invalidate()
+        breathingTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                switch self.breathPhase {
                 case .inhale:
-                    breathPhase = .hold1
-                    scale = 1.0
+                    self.breathPhase = .hold1
+                    self.scale = 1.0
                 case .hold1:
-                    breathPhase = .exhale
+                    self.breathPhase = .exhale
                 case .exhale:
-                    breathPhase = .hold2
-                    scale = 0.6
+                    self.breathPhase = .hold2
+                    self.scale = 0.6
                 case .hold2:
-                    breathPhase = .inhale
+                    self.breathPhase = .inhale
                 }
             }
         }

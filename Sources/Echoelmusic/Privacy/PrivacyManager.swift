@@ -310,13 +310,13 @@ class PrivacyManager: ObservableObject {
         // Convert to JSON
         let jsonData = try JSONSerialization.data(withJSONObject: exportData, options: .prettyPrinted)
 
-        // Save to temporary file
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("echoelmusic_export_\(Date().timeIntervalSince1970).json")
+        // Save to app-scoped cache with unpredictable filename and atomic write
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let tempURL = cacheDir.appendingPathComponent("echoelmusic_export_\(UUID().uuidString).json")
 
-        try jsonData.write(to: tempURL)
+        try jsonData.write(to: tempURL, options: [.atomic, .completeFileProtection])
 
-        log.privacy("✅ User data exported to: \(tempURL.path)")
+        log.privacy("User data exported successfully")
         return tempURL
     }
 

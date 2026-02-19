@@ -7,10 +7,6 @@ import SwiftUI
 import Combine
 import AVFoundation
 
-#if canImport(CoreML)
-import CoreML
-#endif
-
 //==============================================================================
 // MARK: - AI Production Mode
 //==============================================================================

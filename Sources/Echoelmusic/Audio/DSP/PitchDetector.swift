@@ -293,6 +293,65 @@ class PitchDetector {
     }
 
 
+    // MARK: - Float Array API
+
+    /// Detect pitch from raw Float samples (no AVAudioPCMBuffer needed).
+    /// Reuses the same YIN pipeline with pre-allocated buffers.
+    ///
+    /// - Parameters:
+    ///   - samples: Mono audio samples
+    ///   - sampleRate: Sample rate in Hz
+    /// - Returns: Detected pitch in Hz, or 0.0 if no pitch detected
+    func detectPitch(samples: [Float], sampleRate: Float) -> Float {
+        let frameLength = samples.count
+        guard frameLength > 0 else { return 0.0 }
+
+        // Silence check
+        var rms: Float = 0
+        vDSP_rmsqv(samples, 1, &rms, vDSP_Length(frameLength))
+        guard rms > silenceThreshold else { return 0.0 }
+
+        let bufferSize = frameLength / 2
+        let minLag = Int(sampleRate / maxFrequency)
+        let maxLag = min(Int(sampleRate / minFrequency), bufferSize)
+
+        guard maxLag > minLag else { return 0.0 }
+        guard maxLag <= maxBufferSize else { return 0.0 }
+
+        // Reset pre-allocated buffers
+        for i in 0..<maxLag { differenceBuffer[i] = 0 }
+        for i in 0..<maxLag { cmndfBuffer[i] = 0 }
+
+        // Difference function using vDSP
+        samples.withUnsafeBufferPointer { ptr in
+            guard let base = ptr.baseAddress else { return }
+            calculateDifferenceFunction(base,
+                                       frameLength: frameLength,
+                                       differenceFunction: &differenceBuffer,
+                                       maxLag: maxLag)
+        }
+
+        // CMNDF
+        calculateCMNDF(differenceFunction: differenceBuffer,
+                      cmndf: &cmndfBuffer,
+                      maxLag: maxLag)
+
+        // Find minimum
+        guard let tau = findAbsoluteMinimum(cmndf: cmndfBuffer,
+                                           minLag: minLag,
+                                           maxLag: maxLag,
+                                           threshold: threshold) else {
+            return 0.0
+        }
+
+        // Parabolic interpolation
+        let refinedTau = parabolicInterpolation(cmndf: cmndfBuffer, tau: tau)
+        let pitch = sampleRate / refinedTau
+
+        guard pitch >= minFrequency && pitch <= maxFrequency else { return 0.0 }
+        return pitch
+    }
+
     // MARK: - Utility Methods
 
     /// Get next power of 2 for efficient FFT (if needed in future)

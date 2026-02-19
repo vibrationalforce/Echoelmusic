@@ -363,6 +363,7 @@ extension Notification.Name {
 
 public struct VisualStepSequencerView: View {
     @ObservedObject var sequencer = VisualStepSequencer.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}
 
@@ -441,6 +442,8 @@ public struct VisualStepSequencerView: View {
                 Slider(value: $sequencer.bpm, in: VisualStepSequencer.bpmRange)
                     .tint(.cyan)
                     .frame(width: 150)
+                    .accessibilityLabel("Tempo")
+                    .accessibilityValue("\(Int(sequencer.bpm)) BPM")
 
                 // Preset Picker
                 Menu {
@@ -488,9 +491,11 @@ struct StepButton: View {
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(isCurrent ? Color.white : Color.clear, lineWidth: 2)
                 )
-                .frame(width: 20, height: 20)
+                .frame(width: 32, height: 32)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(isActive ? "Step active" : "Step inactive")
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 

@@ -315,8 +315,8 @@ public class QuantumAccessibilityManager: ObservableObject {
 
         case .photonBurst:
             for i in 0..<3 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
-                    self.impactGenerator.impactOccurred(intensity: CGFloat(1.0 - Float(i) * 0.3))
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) { [weak self] in
+                    self?.impactGenerator.impactOccurred(intensity: CGFloat(1.0 - Float(i) * 0.3))
                 }
             }
 

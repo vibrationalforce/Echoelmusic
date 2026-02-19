@@ -16,7 +16,7 @@ class VocalDoublingEngine {
 
     // MARK: - Types
 
-    enum DoublingStyle: String, CaseIterable {
+    enum DoublingStyle: String, CaseIterable, Codable, Sendable {
         case natural        // Subtle, realistic double
         case tight          // Very close double (ADT-style)
         case wide           // Exaggerated stereo spread
@@ -24,7 +24,7 @@ class VocalDoublingEngine {
         case slap           // Slapback delay style
     }
 
-    struct DoublingVoice {
+    struct DoublingVoice: Codable, Sendable {
         var detuningCents: Float = 7.0       // Pitch offset in cents
         var delayMs: Float = 15.0            // Timing offset in milliseconds
         var gain: Float = 0.7                // Volume level
@@ -39,7 +39,7 @@ class VocalDoublingEngine {
         var delayModDepth: Float = 2.0       // LFO depth in ms
     }
 
-    struct Configuration {
+    struct Configuration: Codable, Sendable {
         var style: DoublingStyle = .natural
         var voices: [DoublingVoice]
         var dryWet: Float = 0.5              // 0 = dry only, 1 = wet only

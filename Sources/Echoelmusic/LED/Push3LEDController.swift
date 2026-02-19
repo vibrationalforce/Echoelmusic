@@ -262,18 +262,41 @@ class Push3LEDController: ObservableObject {
 
     // MARK: - Pattern Implementations
 
+    /// Pre-computed distance from center for 8×8 grid (avoids sqrt per pixel per frame)
+    private static let distanceLUT: [[Float]] = {
+        var lut = [[Float]](repeating: [Float](repeating: 0, count: 8), count: 8)
+        for row in 0..<8 {
+            for col in 0..<8 {
+                let dx = Float(col) - 3.5
+                let dy = Float(row) - 3.5
+                lut[row][col] = sqrt(dx * dx + dy * dy)
+            }
+        }
+        return lut
+    }()
+
+    /// Pre-computed angle from center for 8×8 grid (avoids atan2 per pixel per frame)
+    private static let angleLUT: [[Float]] = {
+        var lut = [[Float]](repeating: [Float](repeating: 0, count: 8), count: 8)
+        for row in 0..<8 {
+            for col in 0..<8 {
+                let dx = Float(col) - 3.5
+                let dy = Float(row) - 3.5
+                lut[row][col] = atan2(dy, dx)
+            }
+        }
+        return lut
+    }()
+
     private func applyBreathePattern(coherence: Double) {
-        // Map coherence to hue (0-100 → 0.0-1.0)
         let hue = Float(coherence) / 100.0
 
-        // Breathing wave (sine oscillation)
-        let time = Date().timeIntervalSinceReferenceDate
-        let breathCycle = sin(time * 0.5)  // ~6 seconds per cycle
-        let intensity = UInt8((breathCycle + 1.0) * 0.5 * 255.0)  // 0-255
+        let time = CACurrentMediaTime()
+        let breathCycle = sin(time * 0.5)
+        let intensity = UInt8((breathCycle + 1.0) * 0.5 * 255.0)
 
         let color = hueToRGB(hue: hue, value: intensity)
 
-        // Fill entire grid with breathing color
         for row in 0..<8 {
             for col in 0..<8 {
                 ledGrid[row][col] = color
@@ -282,8 +305,7 @@ class Push3LEDController: ObservableObject {
     }
 
     private func applyPulsePattern(heartRate: Double) {
-        // Flash center LED on heartbeat
-        let time = Date().timeIntervalSinceReferenceDate
+        let time = CACurrentMediaTime()
         let beatInterval = 60.0 / heartRate  // Seconds per beat
         let phase = time.truncatingRemainder(dividingBy: beatInterval) / beatInterval
 
@@ -303,30 +325,19 @@ class Push3LEDController: ObservableObject {
     }
 
     private func applyCoherencePattern(coherence: Double) {
-        // Map coherence to color gradient across grid
-        // Low coherence (0-40) = Red
-        // Medium (40-60) = Yellow
-        // High (60-100) = Green
-
         let normalizedCoherence = Float(coherence) / 100.0
 
         for row in 0..<8 {
             for col in 0..<8 {
-                // Create gradient from center
-                let dx = Float(col) - 3.5
-                let dy = Float(row) - 3.5
-                let distance = sqrt(dx * dx + dy * dy) / 5.0  // 0-1
-
-                let hue = normalizedCoherence * (1.0 - distance)  // Fade from center
-                let color = hueToRGB(hue: hue, value: 200)
-
-                ledGrid[row][col] = color
+                let distance = Self.distanceLUT[row][col] / 5.0
+                let hue = normalizedCoherence * (1.0 - distance)
+                ledGrid[row][col] = hueToRGB(hue: hue, value: 200)
             }
         }
     }
 
     private func applyRainbowPattern() {
-        let time = Date().timeIntervalSinceReferenceDate
+        let time = CACurrentMediaTime()
         let hueOffset = Float(time * 0.2).truncatingRemainder(dividingBy: 1.0)
 
         for row in 0..<8 {
@@ -338,45 +349,31 @@ class Push3LEDController: ObservableObject {
     }
 
     private func applyWavePattern() {
-        let time = Date().timeIntervalSinceReferenceDate
-
-        clearGrid()
+        let time = Float(CACurrentMediaTime())
 
         for row in 0..<8 {
             for col in 0..<8 {
-                let dx = Float(col) - 3.5
-                let dy = Float(row) - 3.5
-                let distance = sqrt(dx * dx + dy * dy)
-
-                // Ripple wave
-                let wave = sin(distance - Float(time) * 3.0)
+                let distance = Self.distanceLUT[row][col]
+                let wave = sin(distance - time * 3.0)
                 let intensity = UInt8(max(0, wave) * 255.0)
-
                 ledGrid[row][col] = RGB(r: 0, g: intensity, b: intensity)
             }
         }
     }
 
     private func applySpiralPattern() {
-        let time = Date().timeIntervalSinceReferenceDate
-
-        clearGrid()
+        let time = Float(CACurrentMediaTime())
 
         for row in 0..<8 {
             for col in 0..<8 {
-                let dx = Float(col) - 3.5
-                let dy = Float(row) - 3.5
-                let angle = atan2(dy, dx)
-                let distance = sqrt(dx * dx + dy * dy)
+                let angle = Self.angleLUT[row][col]
+                let distance = Self.distanceLUT[row][col]
 
-                // Spiral equation
-                let spiralPhase = angle + distance * 0.5 - Float(time)
+                let spiralPhase = angle + distance * 0.5 - time
                 let intensity = UInt8((sin(spiralPhase) + 1.0) * 0.5 * 255.0)
 
                 let hue = (angle / (2.0 * .pi) + 1.0) * 0.5
-                let color = hueToRGB(hue: hue, value: intensity)
-
-                ledGrid[row][col] = color
+                ledGrid[row][col] = hueToRGB(hue: hue, value: intensity)
             }
         }
     }

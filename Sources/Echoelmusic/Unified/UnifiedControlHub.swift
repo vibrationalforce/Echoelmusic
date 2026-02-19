@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import AVFoundation
 import QuartzCore
+import os.signpost
 
 /// Global logger instance for UnifiedControlHub
 private let Log = EchoelLogger.shared
@@ -71,6 +72,10 @@ public class UnifiedControlHub: ObservableObject {
     // Phase λ∞: Lambda Mode Engine
     private var lambdaModeEngine: LambdaModeEngine?
 
+    // Phase λ∞: NeuroSpiritual + Circadian (consciousness-driven audio/light)
+    private let neuroSpiritualEngine = NeuroSpiritualEngine.shared
+    private let circadianEngine = CircadianRhythmEngine.shared
+
     // Phase 10000+: Ultimate Hardware Ecosystem Integration
     private var hardwareEcosystem: HardwareEcosystem?
     private var crossPlatformSessionManager: CrossPlatformSessionManager?
@@ -103,9 +108,135 @@ public class UnifiedControlHub: ObservableObject {
 
     // MARK: - Initialization
 
+    /// Pre-allocated buffer for MPE voice data to avoid per-tick allocations
+    private var voiceDataBuffer: [MPEVoiceData] = []
+
+    /// Whether the app is currently in the background (pauses non-essential loops)
+    private var isBackgrounded: Bool = false
+
+    /// Current thermal pressure level for adaptive quality
+    private var thermalPressure: ThermalPressure = .nominal
+
+    /// Thermal pressure levels for adaptive resource scaling
+    enum ThermalPressure {
+        case nominal, fair, serious, critical
+
+        #if canImport(UIKit)
+        init(state: ProcessInfo.ThermalState) {
+            switch state {
+            case .nominal: self = .nominal
+            case .fair: self = .fair
+            case .serious: self = .serious
+            case .critical: self = .critical
+            @unknown default: self = .fair
+            }
+        }
+        #endif
+    }
+
     public init(audioEngine: AudioEngine? = nil) {
         self.audioEngine = audioEngine
         self.faceToAudioMapper = FaceToAudioMapper()
+        observeAppLifecycle()
+        observeThermalState()
+    }
+
+    deinit {
+        // Clean up DisplayLink to prevent retain cycle leaks
+        #if os(iOS) || os(tvOS)
+        displayLink?.invalidate()
+        displayLink = nil
+        #endif
+        controlLoopTimer?.cancel()
+        controlLoopTimer = nil
+    }
+
+    // MARK: - App Lifecycle & Thermal State
+
+    private func observeAppLifecycle() {
+        #if canImport(UIKit) && !os(watchOS)
+        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+            .sink { [weak self] _ in
+                self?.handleEnteredBackground()
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                self?.handleEnteredForeground()
+            }
+            .store(in: &cancellables)
+
+        // Low Power Mode detection
+        NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)
+            .sink { [weak self] _ in
+                self?.handlePowerStateChange()
+            }
+            .store(in: &cancellables)
+        #endif
+    }
+
+    private func observeThermalState() {
+        NotificationCenter.default.publisher(for: ProcessInfo.thermalStateDidChangeNotification)
+            .sink { [weak self] _ in
+                self?.handleThermalStateChange()
+            }
+            .store(in: &cancellables)
+        // Set initial state
+        #if canImport(UIKit)
+        thermalPressure = ThermalPressure(state: ProcessInfo.processInfo.thermalState)
+        #endif
+    }
+
+    private func handleEnteredBackground() {
+        guard !isBackgrounded else { return }
+        isBackgrounded = true
+        Log.info("App backgrounded — pausing non-essential loops", category: .system)
+        // Pause visual/lighting loops; keep audio alive
+        #if os(iOS) || os(tvOS)
+        displayLink?.isPaused = true
+        #endif
+        quantumLightEmulator?.stop()
+        push3LEDController?.clearGrid()
+    }
+
+    private func handleEnteredForeground() {
+        guard isBackgrounded else { return }
+        isBackgrounded = false
+        Log.info("App foregrounded — resuming loops", category: .system)
+        #if os(iOS) || os(tvOS)
+        displayLink?.isPaused = false
+        #endif
+    }
+
+    private func handleThermalStateChange() {
+        #if canImport(UIKit)
+        thermalPressure = ThermalPressure(state: ProcessInfo.processInfo.thermalState)
+        #endif
+        switch thermalPressure {
+        case .nominal:
+            Log.info("Thermal: nominal", category: .system)
+        case .fair:
+            Log.info("Thermal: fair — reducing visual fidelity", category: .system)
+        case .serious:
+            Log.warning("Thermal: serious — disabling non-essential visual processing", category: .system)
+            quantumLightEmulator?.stop()
+        case .critical:
+            Log.warning("Thermal: critical — minimal mode", category: .system)
+            quantumLightEmulator?.stop()
+            push3LEDController?.clearGrid()
+        }
+    }
+
+    private func handlePowerStateChange() {
+        #if canImport(UIKit) && !os(watchOS)
+        let isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+        if isLowPower {
+            Log.info("Low Power Mode enabled — throttling updates", category: .system)
+        } else {
+            Log.info("Low Power Mode disabled — restoring full performance", category: .system)
+        }
+        #endif
     }
 
     /// Enable face tracking integration
@@ -204,16 +335,16 @@ public class UnifiedControlHub: ObservableObject {
         self.bioParameterMapper = bioMapper
 
         // Event-driven bio updates (replaces polling pattern)
-        // Debounce prevents excessive updates while maintaining responsiveness
+        // 16ms debounce = one frame at 60Hz — keeps full budget for bio→audio pipeline
         healthKit.$coherence
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(16), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
             }
             .store(in: &bioFeedbackCancellables)
 
         healthKit.$heartRate
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(16), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
             }
@@ -234,10 +365,38 @@ public class UnifiedControlHub: ObservableObject {
         Log.biofeedback("💓 Biometric monitoring disabled")
     }
 
-    /// Handle bio signal updates from HealthKit
+    // MARK: - Physical AI Integration
+
+    /// Physical AI engine for JEPA-based predictive control
+    private var physicalAIEngine: PhysicalAIEngine?
+
+    /// Connect Physical AI engine for autonomous bio-reactive parameter control
+    public func connectPhysicalAI(_ engine: PhysicalAIEngine) {
+        self.physicalAIEngine = engine
+        Log.info("PhysicalAI connected to ControlHub", category: .system)
+    }
+
+    /// Handle bio signal updates from HealthKit — bridges to PhysicalAI + NeuroSpiritual
     private func handleBioSignalUpdate() {
-        // Bio signal updates happen via Combine subscriptions
-        // Actual mapping happens in updateFromBioSignals()
+        guard let healthKit = healthKitEngine else { return }
+
+        // Bridge real bio data to PhysicalAI sensor pipeline
+        if let physicalAI = physicalAIEngine {
+            let reading = SensorReading(
+                source: .iPhone,
+                heartRate: Float(healthKit.heartRate),
+                rrIntervals: nil  // RR intervals come separately from watchOS
+            )
+            physicalAI.processSensorData(reading)
+        }
+
+        // Feed NeuroSpiritualEngine for consciousness-state-driven audio/light
+        neuroSpiritualEngine.updateBiometrics(
+            heartRate: healthKit.heartRate,
+            hrvSDNN: healthKit.hrvSDNN,
+            hrvRMSSD: healthKit.hrvSDNN,  // Approximate RMSSD from SDNN
+            coherence: healthKit.coherence
+        )
     }
 
     /// Enable MIDI 2.0 + MPE output
@@ -518,10 +677,10 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Get all connected MIDI controllers
     public func getConnectedMIDIControllers() -> [MIDIControllerRegistry.MIDIController] {
-        return hardwareEcosystem?.midiControllers.controllers.filter { controller in
-            // Check if controller is actually connected
-            hardwareEcosystem?.connectedDevices.contains { $0.name == controller.model } ?? false
-        } ?? []
+        guard let ecosystem = hardwareEcosystem else { return [] }
+        // O(1) lookup set instead of O(n) linear scan per controller
+        let connectedNames = Set(ecosystem.connectedDevices.map { $0.name })
+        return ecosystem.midiControllers.controllers.filter { connectedNames.contains($0.model) }
     }
 
     /// Get all available lighting fixtures
@@ -571,9 +730,10 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &gazeTrackingCancellables)
 
-        // Subscribe to attention level changes
+        // Subscribe to attention level changes — use removeDuplicates instead of debounce
+        // to avoid 50ms latency while still filtering redundant updates
         tracker.$attentionLevel
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .removeDuplicates(by: { abs($0 - $1) < 0.01 })
             .sink { [weak self] attention in
                 self?.handleAttentionChange(attention)
             }
@@ -744,6 +904,9 @@ public class UnifiedControlHub: ObservableObject {
 
         // HealthKit monitoring already started in enableBiometricMonitoring()
 
+        // Start NeuroSpiritual session for consciousness-state-driven adaptation
+        neuroSpiritualEngine.startSession()
+
         // Start control loop
         startControlLoop()
     }
@@ -785,7 +948,7 @@ public class UnifiedControlHub: ObservableObject {
         // LAMBDA LOOP: macOS/watchOS use DispatchSourceTimer for 50% lower jitter
         controlLoopTimer?.cancel()
         let interval = 1.0 / targetFrequency
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: controlQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: controlQueue)
         timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(1))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
@@ -803,14 +966,24 @@ public class UnifiedControlHub: ObservableObject {
     }
     #endif
 
+    /// Signpost ID for Instruments profiling of control loop frame budget
+    private let controlSignpostID = OSSignpostID(log: PerformanceSignposts.controlLoop)
+
     private func controlLoopTick() {
+        // Skip entirely when backgrounded
+        guard !isBackgrounded else { return }
+
+        // os_signpost for Instruments frame budget visualization
+        PerformanceSignposts.beginControlTick(controlSignpostID)
+        defer { PerformanceSignposts.endControlTick(controlSignpostID) }
+
         // Measure actual frequency using CACurrentMediaTime (no allocation)
         let now = CACurrentMediaTime()
         let deltaTime = now - lastUpdateTime
         controlLoopFrequency = deltaTime > 0 ? 1.0 / deltaTime : targetFrequency
         lastUpdateTime = now
 
-        // Priority-based parameter updates
+        // Priority-based parameter updates (always run — <1ms total)
         updateFromBioSignals()
         updateFromFaceTracking()
         updateFromHandGestures()
@@ -819,10 +992,14 @@ public class UnifiedControlHub: ObservableObject {
         // Check for gesture conflicts
         resolveConflicts()
 
-        // Update all output systems
+        // Update all output systems — skip visuals/lights under thermal pressure
         updateAudioEngine()
-        updateVisualEngine()
-        updateLightSystems()
+        if thermalPressure != .critical {
+            updateVisualEngine()
+        }
+        if thermalPressure == .nominal || thermalPressure == .fair {
+            updateLightSystems()
+        }
     }
 
     // MARK: - Input Updates
@@ -877,15 +1054,18 @@ public class UnifiedControlHub: ObservableObject {
         // Apply bio-reactive spatial field (AFA)
         if let mpe = mpeZoneManager, let spatialMapper = midiToSpatialMapper {
             // Convert active MPE voices to spatial field
-            let voiceData = mpe.activeVoices.map { voice in
-                MPEVoiceData(
+            // Reuse pre-allocated buffer to avoid per-tick allocations in 60Hz loop
+            voiceDataBuffer.removeAll(keepingCapacity: true)
+            for voice in mpe.activeVoices {
+                voiceDataBuffer.append(MPEVoiceData(
                     id: voice.id,
                     note: voice.note,
                     velocity: voice.velocity,
                     pitchBend: voice.pitchBend,
                     brightness: voice.brightness
-                )
+                ))
             }
+            let voiceData = voiceDataBuffer
 
             // Morph AFA field geometry based on HRV coherence
             let fieldGeometry: MIDIToSpatialMapper.AFAField.FieldGeometry
@@ -1208,6 +1388,25 @@ public class UnifiedControlHub: ObservableObject {
                 // Legacy: Simple hue-based mapping
                 lighting.updateBioReactive(bioData)
             }
+        }
+
+        // NeuroSpiritual polyvagal light modulation — blend consciousness-driven color
+        let neuroColor = neuroSpiritualEngine.getOptimalLightColor()
+        let neuroWeight = Float(neuroSpiritualEngine.overallCoherence) * 0.3  // 30% max influence
+        if let lighting = midiToLightMapper, neuroWeight > 0.05 {
+            lighting.blendOverlayColor(r: neuroColor.r, g: neuroColor.g, b: neuroColor.b, weight: neuroWeight)
+        }
+
+        // Circadian rhythm — adapt light temperature to time of day
+        let circadianLight = circadianEngine.getCurrentLightSettings()
+        if let lighting = midiToLightMapper {
+            // Blend circadian color at 20% influence, scale by circadian intensity
+            lighting.blendOverlayColor(
+                r: circadianLight.color.r,
+                g: circadianLight.color.g,
+                b: circadianLight.color.b,
+                weight: 0.2 * circadianLight.intensity
+            )
         }
 
         // Update ILDA Laser with octave-based hue

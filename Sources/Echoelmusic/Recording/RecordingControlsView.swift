@@ -7,6 +7,7 @@ struct RecordingControlsView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var microphoneManager: MicrophoneManager
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showSessionNamePrompt = false
     @State private var newSessionName = ""
     @State private var showTrackList = false
@@ -14,6 +15,7 @@ struct RecordingControlsView: View {
     @State private var showExportOptions = false
     @State private var shareURL: URL?
     @State private var showShareSheet = false
+    @State private var bioDataTimer: Timer?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -97,6 +99,10 @@ struct RecordingControlsView: View {
                 RecordingShareSheet(items: [url])
             }
         }
+        .onDisappear {
+            bioDataTimer?.invalidate()
+            bioDataTimer = nil
+        }
     }
     // MARK: - Recording Controls Section
 
@@ -158,7 +164,8 @@ struct RecordingControlsView: View {
                         )
                         .frame(width: 60, height: 60)
                         .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut(duration: 0.1), value: recordingEngine.recordingLevel)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.1), value: recordingEngine.recordingLevel)
+                        .accessibilityValue("Recording level \(Int(recordingEngine.recordingLevel * 100)) percent")
 
                     Text("\(Int(recordingEngine.recordingLevel * 100))")
                         .font(.system(size: 14, weight: .semibold, design: .monospaced))
@@ -450,9 +457,12 @@ struct RecordingControlsView: View {
     }
 
     private func startBioDataCapture() {
+        // Invalidate any existing timer before creating a new one
+        bioDataTimer?.invalidate()
+
         // Capture bio-data every 0.5 seconds while recording
-        // Memory Leak Fix: Capture weak references zu EnvironmentObjects
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak recordingEngine, weak healthKitManager, weak microphoneManager] timer in
+        // Memory Leak Fix: Capture weak references to EnvironmentObjects
+        bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak recordingEngine, weak healthKitManager, weak microphoneManager] timer in
             guard let recEngine = recordingEngine,
                   let hkManager = healthKitManager,
                   let micManager = microphoneManager else {

@@ -38,6 +38,10 @@ class InclusiveMobilityManager: ObservableObject {
         log.accessibility("✅ InclusiveMobilityManager: Initialized")
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     // MARK: - System Integration
 
     private func loadSystemPreferences() {
