@@ -172,8 +172,9 @@ public final class SynthPresetLibrary {
         case .tr808:
             audioData = renderTR808(preset, frameCount: frameCount, sampleRate: sampleRate)
         case .breakbeat:
-            // Breakbeat presets store pattern data, not direct audio
-            audioData = [Float](repeating: 0, count: frameCount)
+            // Breakbeat presets store pattern data — render a synthetic break
+            // by sequencing drum presets according to the pattern indices
+            audioData = renderSyntheticBreak(preset, frameCount: frameCount, sampleRate: sampleRate)
         }
 
         return sampler.loadSample(
@@ -495,6 +496,292 @@ public final class SynthPresetLibrary {
         shaker.sustain = 0
         shaker.duration = 0.12
         presets.append(shaker)
+
+        // — ADDITIONAL KICKS (genre-specific) —
+
+        var kickTechno = SynthPreset(name: "Techno Kick", category: .drums, engine: .tr808, tags: ["kick", "techno", "hard", "four-on-floor"])
+        kickTechno.frequency = 52
+        kickTechno.decay = 0.35
+        kickTechno.pitchGlide = 180
+        kickTechno.pitchGlideTime = 0.025
+        kickTechno.clickAmount = 0.7
+        kickTechno.drive = 0.35
+        kickTechno.duration = 0.5
+        presets.append(kickTechno)
+
+        var kickGarage = SynthPreset(name: "Garage Kick", category: .drums, engine: .tr808, tags: ["kick", "garage", "uk", "warm"])
+        kickGarage.frequency = 58
+        kickGarage.decay = 0.45
+        kickGarage.pitchGlide = 120
+        kickGarage.pitchGlideTime = 0.06
+        kickGarage.clickAmount = 0.4
+        kickGarage.drive = 0.15
+        kickGarage.duration = 0.6
+        presets.append(kickGarage)
+
+        var kickLofi = SynthPreset(name: "Lo-Fi Kick", category: .drums, engine: .tr808, tags: ["kick", "lofi", "chill", "dusty"])
+        kickLofi.frequency = 50
+        kickLofi.decay = 0.5
+        kickLofi.pitchGlide = 60
+        kickLofi.pitchGlideTime = 0.1
+        kickLofi.clickAmount = 0.15
+        kickLofi.drive = 0.5
+        kickLofi.filterCutoff = 300
+        kickLofi.duration = 0.6
+        presets.append(kickLofi)
+
+        var kickDnB = SynthPreset(name: "DnB Kick", category: .drums, engine: .tr808, tags: ["kick", "dnb", "jungle", "tight"])
+        kickDnB.frequency = 62
+        kickDnB.decay = 0.2
+        kickDnB.pitchGlide = 200
+        kickDnB.pitchGlideTime = 0.015
+        kickDnB.clickAmount = 0.8
+        kickDnB.drive = 0.25
+        kickDnB.duration = 0.3
+        presets.append(kickDnB)
+
+        var kickAfro = SynthPreset(name: "Afrobeat Kick", category: .drums, engine: .modalBank, tags: ["kick", "afrobeat", "acoustic", "warm"])
+        kickAfro.frequency = 80
+        kickAfro.material = "drum"
+        kickAfro.stiffness = 0.003
+        kickAfro.damping = 0.006
+        kickAfro.strikePosition = 0.35
+        kickAfro.brightness = 0.4
+        kickAfro.size = 1.5
+        kickAfro.duration = 0.4
+        presets.append(kickAfro)
+
+        // — ADDITIONAL SNARES —
+
+        var snare808 = SynthPreset(name: "808 Snare", category: .drums, engine: .ddsp, tags: ["snare", "808", "crisp"])
+        snare808.frequency = 180
+        snare808.harmonicity = 0.15
+        snare808.noiseLevel = 0.7
+        snare808.noiseColor = "white"
+        snare808.brightness = 0.8
+        snare808.attack = 0.001
+        snare808.decay = 0.2
+        snare808.sustain = 0
+        snare808.release = 0.06
+        snare808.duration = 0.3
+        presets.append(snare808)
+
+        var snareTrap = SynthPreset(name: "Trap Snare", category: .drums, engine: .ddsp, tags: ["snare", "trap", "hard", "crack"])
+        snareTrap.frequency = 220
+        snareTrap.harmonicity = 0.08
+        snareTrap.noiseLevel = 0.85
+        snareTrap.noiseColor = "white"
+        snareTrap.brightness = 0.9
+        snareTrap.attack = 0.0005
+        snareTrap.decay = 0.18
+        snareTrap.sustain = 0
+        snareTrap.release = 0.04
+        snareTrap.duration = 0.25
+        presets.append(snareTrap)
+
+        var snareLofi = SynthPreset(name: "Lo-Fi Snare", category: .drums, engine: .ddsp, tags: ["snare", "lofi", "dusty", "vinyl"])
+        snareLofi.frequency = 200
+        snareLofi.harmonicity = 0.12
+        snareLofi.noiseLevel = 0.6
+        snareLofi.noiseColor = "pink"
+        snareLofi.brightness = 0.4
+        snareLofi.attack = 0.002
+        snareLofi.decay = 0.22
+        snareLofi.sustain = 0
+        snareLofi.release = 0.08
+        snareLofi.duration = 0.35
+        presets.append(snareLofi)
+
+        var snareDnB = SynthPreset(name: "DnB Snare", category: .drums, engine: .modalBank, tags: ["snare", "dnb", "jungle", "sharp"])
+        snareDnB.frequency = 240
+        snareDnB.material = "drum"
+        snareDnB.stiffness = 0.008
+        snareDnB.damping = 0.012
+        snareDnB.strikePosition = 0.25
+        snareDnB.brightness = 0.85
+        snareDnB.duration = 0.25
+        presets.append(snareDnB)
+
+        // — ADDITIONAL CLAPS —
+
+        var clapTight = SynthPreset(name: "Tight Clap", category: .drums, engine: .ddsp, tags: ["clap", "tight", "house", "disco"])
+        clapTight.frequency = 350
+        clapTight.harmonicity = 0.03
+        clapTight.noiseLevel = 0.95
+        clapTight.noiseColor = "pink"
+        clapTight.attack = 0.001
+        clapTight.decay = 0.12
+        clapTight.sustain = 0
+        clapTight.release = 0.05
+        clapTight.brightness = 0.65
+        clapTight.duration = 0.2
+        presets.append(clapTight)
+
+        var clapBig = SynthPreset(name: "Big Room Clap", category: .drums, engine: .ddsp, tags: ["clap", "big", "reverb", "edm"])
+        clapBig.frequency = 280
+        clapBig.harmonicity = 0.04
+        clapBig.noiseLevel = 0.85
+        clapBig.noiseColor = "white"
+        clapBig.attack = 0.003
+        clapBig.decay = 0.35
+        clapBig.sustain = 0.05
+        clapBig.release = 0.15
+        clapBig.brightness = 0.5
+        clapBig.duration = 0.5
+        presets.append(clapBig)
+
+        // — ADDITIONAL HATS —
+
+        var hatTight = SynthPreset(name: "Tight Hat", category: .drums, engine: .ddsp, tags: ["hihat", "closed", "tight", "trap"])
+        hatTight.frequency = 9000
+        hatTight.harmonicity = 0.01
+        hatTight.noiseLevel = 0.9
+        hatTight.noiseColor = "blue"
+        hatTight.attack = 0.0005
+        hatTight.decay = 0.04
+        hatTight.sustain = 0
+        hatTight.brightness = 0.95
+        hatTight.duration = 0.06
+        presets.append(hatTight)
+
+        var hatRide = SynthPreset(name: "Ride Cymbal", category: .drums, engine: .modalBank, tags: ["ride", "cymbal", "sustain", "jazz"])
+        hatRide.frequency = 5000
+        hatRide.material = "glass"
+        hatRide.stiffness = 0.06
+        hatRide.damping = 0.002
+        hatRide.brightness = 0.75
+        hatRide.size = 1.5
+        hatRide.duration = 1.2
+        presets.append(hatRide)
+
+        var hatCrash = SynthPreset(name: "Crash Cymbal", category: .drums, engine: .modalBank, tags: ["crash", "cymbal", "accent"])
+        hatCrash.frequency = 4000
+        hatCrash.material = "gong"
+        hatCrash.stiffness = 0.07
+        hatCrash.damping = 0.001
+        hatCrash.brightness = 0.8
+        hatCrash.size = 2.0
+        hatCrash.duration = 2.0
+        presets.append(hatCrash)
+
+        var hatPedal = SynthPreset(name: "Pedal Hat", category: .drums, engine: .modalBank, tags: ["hihat", "pedal", "foot", "groove"])
+        hatPedal.frequency = 6500
+        hatPedal.material = "glass"
+        hatPedal.stiffness = 0.12
+        hatPedal.damping = 0.04
+        hatPedal.brightness = 0.6
+        hatPedal.duration = 0.1
+        presets.append(hatPedal)
+
+        // — TOMS —
+
+        var tomHigh = SynthPreset(name: "High Tom", category: .drums, engine: .modalBank, tags: ["tom", "high", "fill"])
+        tomHigh.frequency = 350
+        tomHigh.material = "drum"
+        tomHigh.stiffness = 0.003
+        tomHigh.damping = 0.005
+        tomHigh.strikePosition = 0.3
+        tomHigh.brightness = 0.6
+        tomHigh.duration = 0.4
+        presets.append(tomHigh)
+
+        var tomMid = SynthPreset(name: "Mid Tom", category: .drums, engine: .modalBank, tags: ["tom", "mid", "fill"])
+        tomMid.frequency = 250
+        tomMid.material = "drum"
+        tomMid.stiffness = 0.003
+        tomMid.damping = 0.005
+        tomMid.strikePosition = 0.3
+        tomMid.brightness = 0.55
+        tomMid.size = 1.2
+        tomMid.duration = 0.45
+        presets.append(tomMid)
+
+        var tomFloor = SynthPreset(name: "Floor Tom", category: .drums, engine: .modalBank, tags: ["tom", "floor", "low", "fill"])
+        tomFloor.frequency = 150
+        tomFloor.material = "drum"
+        tomFloor.stiffness = 0.002
+        tomFloor.damping = 0.004
+        tomFloor.strikePosition = 0.35
+        tomFloor.brightness = 0.45
+        tomFloor.size = 1.5
+        tomFloor.duration = 0.55
+        presets.append(tomFloor)
+
+        // — ADDITIONAL PERCUSSION —
+
+        var tambourine = SynthPreset(name: "Tambourine", category: .drums, engine: .ddsp, tags: ["tambourine", "perc", "jingle"])
+        tambourine.frequency = 7000
+        tambourine.harmonicity = 0.05
+        tambourine.noiseLevel = 0.6
+        tambourine.noiseColor = "white"
+        tambourine.attack = 0.001
+        tambourine.decay = 0.15
+        tambourine.sustain = 0
+        tambourine.brightness = 0.8
+        tambourine.duration = 0.2
+        presets.append(tambourine)
+
+        var claves = SynthPreset(name: "Claves", category: .drums, engine: .modalBank, tags: ["claves", "latin", "click", "wood"])
+        claves.frequency = 2500
+        claves.material = "bar"
+        claves.stiffness = 0.04
+        claves.damping = 0.03
+        claves.brightness = 0.7
+        claves.duration = 0.1
+        presets.append(claves)
+
+        var bongo = SynthPreset(name: "Bongo", category: .drums, engine: .modalBank, tags: ["bongo", "latin", "perc"])
+        bongo.frequency = 350
+        bongo.material = "drum"
+        bongo.stiffness = 0.004
+        bongo.damping = 0.008
+        bongo.strikePosition = 0.25
+        bongo.brightness = 0.65
+        bongo.size = 0.6
+        bongo.duration = 0.3
+        presets.append(bongo)
+
+        var djembe = SynthPreset(name: "Djembe", category: .drums, engine: .modalBank, tags: ["djembe", "african", "world", "perc"])
+        djembe.frequency = 180
+        djembe.material = "drum"
+        djembe.stiffness = 0.002
+        djembe.damping = 0.003
+        djembe.strikePosition = 0.4
+        djembe.brightness = 0.55
+        djembe.size = 1.3
+        djembe.duration = 0.5
+        presets.append(djembe)
+
+        var woodblock = SynthPreset(name: "Woodblock", category: .drums, engine: .modalBank, tags: ["woodblock", "perc", "click", "latin"])
+        woodblock.frequency = 1200
+        woodblock.material = "bar"
+        woodblock.stiffness = 0.02
+        woodblock.damping = 0.025
+        woodblock.brightness = 0.6
+        woodblock.duration = 0.1
+        presets.append(woodblock)
+
+        var triangle = SynthPreset(name: "Triangle", category: .drums, engine: .modalBank, tags: ["triangle", "perc", "metallic", "orch"])
+        triangle.frequency = 3000
+        triangle.material = "bar"
+        triangle.stiffness = 0.005
+        triangle.damping = 0.0005
+        triangle.brightness = 0.85
+        triangle.size = 0.3
+        triangle.duration = 1.5
+        presets.append(triangle)
+
+        var snap = SynthPreset(name: "Finger Snap", category: .drums, engine: .ddsp, tags: ["snap", "finger", "minimal", "hiphop"])
+        snap.frequency = 3500
+        snap.harmonicity = 0.02
+        snap.noiseLevel = 0.8
+        snap.noiseColor = "white"
+        snap.attack = 0.0005
+        snap.decay = 0.06
+        snap.sustain = 0
+        snap.brightness = 0.75
+        snap.duration = 0.08
+        presets.append(snap)
 
         // ═══════════════════════════════════════════════════════════
         // ECHOEL_BASS — Sub, 808, Reese, Acid, Synth
@@ -830,6 +1117,117 @@ public final class SynthPresetLibrary {
         chordOrgan.release = 0.3
         chordOrgan.duration = 4.0
         presets.append(chordOrgan)
+    }
+
+    // MARK: - Synthetic Break Renderer
+
+    /// Render a breakbeat preset by sequencing drum sounds according to pattern indices.
+    /// Slice mapping: 0=kick, 1=snare, 2=closed hat, 3=open hat, 4=clap, 5=rim, 6=tom, 7=crash
+    private func renderSyntheticBreak(_ preset: SynthPreset, frameCount: Int, sampleRate: Float) -> [Float] {
+        var buffer = [Float](repeating: 0, count: frameCount)
+
+        let stepCount = preset.patternIndices.count
+        guard stepCount > 0 else { return buffer }
+
+        let samplesPerStep = frameCount / stepCount
+
+        // Drum slice parameter table: (frequency, noiseLevel, decay, brightness)
+        let sliceParams: [(freq: Float, noise: Float, decay: Float, bright: Float)] = [
+            (55,   0.05, 0.25, 0.3),  // 0: kick
+            (200,  0.8,  0.15, 0.7),  // 1: snare
+            (8000, 0.9,  0.04, 0.9),  // 2: closed hat
+            (7000, 0.7,  0.20, 0.85), // 3: open hat
+            (300,  0.9,  0.12, 0.6),  // 4: clap
+            (600,  0.3,  0.05, 0.8),  // 5: rim
+            (250,  0.1,  0.18, 0.55), // 6: tom
+            (4000, 0.6,  0.40, 0.8),  // 7: crash
+        ]
+
+        for (stepIdx, sliceOpt) in preset.patternIndices.enumerated() {
+            guard let sliceIndex = sliceOpt, sliceIndex >= 0, sliceIndex < sliceParams.count else { continue }
+
+            let params = sliceParams[sliceIndex]
+            let startSample = stepIdx * samplesPerStep
+            let decaySamples = Int(params.decay * sampleRate)
+
+            for i in 0..<Swift.min(decaySamples, samplesPerStep) {
+                let sampleIdx = startSample + i
+                guard sampleIdx < frameCount else { break }
+
+                let t = Float(i) / sampleRate
+                let env = Swift.max(0, 1.0 - t / params.decay)
+
+                // Tone component
+                let tone = sin(t * params.freq * 2.0 * .pi) * (1.0 - params.noise)
+
+                // Noise component (simple LCG-style)
+                let noiseVal = (Float(((sampleIdx * 1103515245 + 12345) >> 16) & 0x7FFF) / 16383.5 - 1.0) * params.noise
+
+                buffer[sampleIdx] += (tone + noiseVal) * env * 0.7
+            }
+        }
+
+        return buffer
+    }
+
+    // MARK: - Genre Kit Loading
+
+    /// Load a complete drum kit into a sampler, mapped to standard GM drum notes starting at C1 (MIDI 36).
+    /// Returns the number of zones loaded.
+    public func loadGenreKit(_ genre: GenreKit, into sampler: EchoelSampler) -> Int {
+        let kitTags = genre.tags
+        let kitPresets = presets.filter { preset in
+            preset.category == .drums && preset.tags.contains(where: { kitTags.contains($0) })
+        }
+
+        // Fallback: if genre filter returns too few, add generic drums
+        var finalPresets = kitPresets
+        if finalPresets.count < 8 {
+            let generic = presets.filter { $0.category == .drums && !finalPresets.contains(where: { $0.id == $0.id }) }
+            finalPresets.append(contentsOf: generic.prefix(16 - finalPresets.count))
+        }
+
+        var count = 0
+        for (index, preset) in finalPresets.prefix(16).enumerated() {
+            let note = 36 + index // C1 upward (GM drum map)
+            guard note <= 127 else { break }
+            _ = renderPresetToSampler(preset, sampler: sampler, rootNote: note)
+            count += 1
+        }
+        return count
+    }
+
+    /// Predefined genre kits matching TouchInstruments.DrumKit categories
+    public enum GenreKit: String, CaseIterable, Sendable {
+        case acoustic = "Acoustic"
+        case electronic = "Electronic"
+        case tr808 = "808"
+        case tr909 = "909"
+        case hiphop = "Hip Hop"
+        case trap = "Trap"
+        case techno = "Techno"
+        case house = "House"
+        case dnb = "DnB"
+        case lofi = "Lo-Fi"
+        case latin = "Latin"
+        case afrobeat = "Afrobeat"
+
+        var tags: [String] {
+            switch self {
+            case .acoustic: return ["acoustic", "snare", "kick", "tom", "ride", "crash"]
+            case .electronic: return ["electronic", "tight", "noise", "metallic"]
+            case .tr808: return ["808", "sub", "trap"]
+            case .tr909: return ["909", "house", "techno"]
+            case .hiphop: return ["hiphop", "808", "snap", "lofi"]
+            case .trap: return ["trap", "808", "hard", "crack"]
+            case .techno: return ["techno", "hard", "tight", "four-on-floor"]
+            case .house: return ["house", "disco", "warm", "four-on-floor"]
+            case .dnb: return ["dnb", "jungle", "tight", "sharp"]
+            case .lofi: return ["lofi", "dusty", "vinyl", "chill"]
+            case .latin: return ["latin", "conga", "bongo", "claves", "wood"]
+            case .afrobeat: return ["afrobeat", "african", "world", "djembe"]
+            }
+        }
     }
 
     // MARK: - Statistics
