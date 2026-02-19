@@ -1,6 +1,6 @@
-/* Echoelmusic Shared JS — v10.0.0 */
+/* Echoelmusic Shared JS — v10.1.0 */
 (function(){
-var V='10.0.0';
+var V='10.1.0';
 
 /* === Burger Menu === */
 var burger=document.getElementById('burger');

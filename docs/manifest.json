@@ -1,7 +1,7 @@
 {
   "name": "Echoelmusic",
   "short_name": "Echoelmusic",
-  "description": "Create from Within. 25 unified Echoel* tools — your body's vibrations become music, visuals, film, and light. Bio-reactive creative platform.",
+  "description": "Create from Within. 10 unified Echoel* tools — your body's vibrations become music, visuals, film, and light. Bio-reactive creative platform.",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
