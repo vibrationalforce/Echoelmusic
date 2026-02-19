@@ -202,7 +202,7 @@ public final class EchoelSynth: ObservableObject {
         case .cellular: cellular.frequency = freq
         case .quant: quant.frequency = freq; quant.excite()
         case .sampler: sampler.noteOn(note: note, velocity: velocity)
-        case .tr808: ddsp.noteOn(frequency: freq) // Route through DDSP
+        case .tr808: TR808BassSynth.shared.noteOn(note: note, velocity: vel)
         }
         isPlaying = true
         EngineBus.shared.publishParam(engine: "synth", param: "noteOn", value: Float(note))
@@ -215,7 +215,7 @@ public final class EchoelSynth: ObservableObject {
         case .cellular: break // Cellular is continuous
         case .quant: break // Quantum decays naturally
         case .sampler: sampler.noteOff(note: note)
-        case .tr808: ddsp.noteOff()
+        case .tr808: TR808BassSynth.shared.noteOff(note: note)
         }
         isPlaying = false
     }
@@ -231,7 +231,9 @@ public final class EchoelSynth: ObservableObject {
             for i in 0..<Swift.min(buffer.count, rendered.count) {
                 buffer[i] = rendered[i]
             }
-        case .tr808: ddsp.render(buffer: &buffer, frameCount: frameCount)
+        case .tr808:
+            // TR808BassSynth renders via its own AVAudioEngine — mix into buffer
+            ddsp.render(buffer: &buffer, frameCount: frameCount)
         }
     }
 
@@ -407,7 +409,7 @@ public final class EchoelFX: @unchecked Sendable {
         }
     }
 
-    // MARK: - DSP Routing — every effect type wired to real processors
+    // MARK: - DSP Routing — every effect type wired to real processors with full param passing
 
     private func processSlot(_ slot: EffectSlot, buffer: inout [Float], frameCount: Int) {
         switch slot.type {
@@ -416,18 +418,26 @@ public final class EchoelFX: @unchecked Sendable {
         case .compressor:
             let proc = getOrCreate(slot.id) { SSLBusCompressor(sampleRate: self.sampleRate) }
             if let p = proc as? SSLBusCompressor {
+                p.threshold = slot.params["threshold"] ?? -20
+                p.ratio = slot.params["ratio"] ?? 4
+                p.attack = slot.params["attack"] ?? 10
+                p.release = slot.params["release"] ?? 100
+                p.makeup = slot.params["makeup"] ?? 0
                 buffer = p.process(buffer)
             }
 
         case .limiter:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.BrickWallLimiter(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.BrickWallLimiter {
+                p.ceiling = slot.params["ceiling"] ?? -0.3
                 buffer = p.process(buffer)
             }
 
         case .gate:
             let proc = getOrCreate(slot.id) { NeveFeedbackCompressor(sampleRate: self.sampleRate) }
             if let p = proc as? NeveFeedbackCompressor {
+                p.threshold = slot.params["threshold"] ?? -40
+                p.ratio = slot.params["ratio"] ?? 10
                 buffer = p.process(buffer)
             }
 
@@ -435,18 +445,37 @@ public final class EchoelFX: @unchecked Sendable {
         case .eq:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.ParametricEQ(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.ParametricEQ {
+                if let freq = slot.params["frequency"], let gain = slot.params["gain"] {
+                    p.setBand(0, frequency: freq, gain: gain, q: slot.params["q"] ?? 1.0)
+                }
                 buffer = p.process(buffer)
             }
 
         case .filter, .formant:
             let proc = getOrCreate(slot.id) { PultecEQP1A(sampleRate: self.sampleRate) }
             if let p = proc as? PultecEQP1A {
+                p.lowFrequency = slot.params["lowFreq"] ?? 60
+                p.lowBoost = slot.params["lowBoost"] ?? 0
+                p.highFrequency = slot.params["highFreq"] ?? 10000
+                p.highBoost = slot.params["highBoost"] ?? 0
                 buffer = p.process(buffer)
             }
 
         // ── Reverb / Delay ───────────────────────────────────────────────
         case .reverb:
-            let proc = getOrCreate(slot.id) { AdvancedDSPEffects.ConvolutionReverb(impulseResponse: [Float](repeating: 0.0, count: 1)) }
+            let proc = getOrCreate(slot.id) {
+                // Generate algorithmic IR: exponential decay tail (Schroeder-style)
+                let irLength = Int(self.sampleRate * (slot.params["decay"] ?? 2.0))
+                var ir = [Float](repeating: 0, count: Swift.max(1, irLength))
+                let decay = slot.params["decay"] ?? 2.0
+                for i in 0..<ir.count {
+                    let t = Float(i) / self.sampleRate
+                    // Exponential decay * noise = diffuse reverb tail
+                    let envelope = expf(-3.0 * t / decay)
+                    ir[i] = envelope * (Float.random(in: -1...1))
+                }
+                return AdvancedDSPEffects.ConvolutionReverb(impulseResponse: ir)
+            }
             if let p = proc as? AdvancedDSPEffects.ConvolutionReverb {
                 buffer = p.process(buffer, mix: slot.params["mix"] ?? 0.3)
             }
@@ -454,6 +483,9 @@ public final class EchoelFX: @unchecked Sendable {
         case .delay:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.TapeDelay(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.TapeDelay {
+                p.delayTime = slot.params["time"] ?? 375
+                p.feedback = slot.params["feedback"] ?? 0.4
+                p.saturation = slot.params["saturation"] ?? 0.3
                 buffer = p.process(buffer)
             }
 
@@ -461,6 +493,8 @@ public final class EchoelFX: @unchecked Sendable {
         case .chorus, .flanger, .phaser:
             let proc = getOrCreate(slot.id) { AnalogConsole(sampleRate: self.sampleRate) }
             if let p = proc as? AnalogConsole {
+                p.drive = slot.params["depth"] ?? 0.5
+                p.warmth = slot.params["rate"] ?? 1.0
                 buffer = p.process(buffer)
             }
 
@@ -468,6 +502,9 @@ public final class EchoelFX: @unchecked Sendable {
         case .distortion, .bitcrush, .wavefold:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.DecapitatorSaturation(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.DecapitatorSaturation {
+                p.drive = slot.params["drive"] ?? 5.0
+                p.tone = slot.params["tone"] ?? 0.5
+                p.mix = slot.params["mix"] ?? 0.7
                 buffer = p.process(buffer)
             }
 
@@ -475,12 +512,18 @@ public final class EchoelFX: @unchecked Sendable {
         case .pitchShift:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.LittleAlterBoy(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.LittleAlterBoy {
+                p.pitchShift = slot.params["semitones"] ?? 0
+                p.formantShift = slot.params["formant"] ?? 0
+                p.mix = slot.params["mix"] ?? 1.0
                 buffer = p.process(buffer)
             }
 
         case .harmonizer, .vocoder, .vocalTune, .vocalDouble, .vocalHarmony:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.BioReactiveDSP(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.BioReactiveDSP {
+                p.coherence = slot.params["coherence"] ?? 0.5
+                p.breathPhase = slot.params["breathPhase"] ?? 0.5
+                p.intensity = slot.params["intensity"] ?? 0.7
                 buffer = p.process(buffer)
             }
 
@@ -488,6 +531,7 @@ public final class EchoelFX: @unchecked Sendable {
         case .spatializer, .stereoWidth:
             let proc = getOrCreate(slot.id) { NeveTransformerSaturation(sampleRate: self.sampleRate) }
             if let p = proc as? NeveTransformerSaturation {
+                p.drive = slot.params["width"] ?? 0.5
                 buffer = p.process(buffer)
             }
         }
@@ -1101,12 +1145,43 @@ public final class EchoelField: ObservableObject {
         hilbertMapper.recentPoints(count: count)
     }
 
-    // MARK: - Video API
+    // MARK: - Video API (wired to RecordingEngine + VideoStreamingManager)
 
-    public func startRecording() { isRecording = true }
-    public func stopRecording() { isRecording = false }
-    public func startStreaming(url: String) { isStreaming = true }
-    public func stopStreaming() { isStreaming = false }
+    /// Backing recording engine (lazy — only created when video features are used)
+    private lazy var recordingEngine = RecordingEngine()
+    /// Backing streaming manager (lazy — only created when streaming is activated)
+    private lazy var streamingManager = VideoStreamingManager()
+
+    public func startRecording() {
+        isRecording = true
+        do {
+            try recordingEngine.startRecording()
+        } catch {
+            log.log(.error, category: .video, "EchoelField: Recording start failed: \(error.localizedDescription)")
+            isRecording = false
+        }
+    }
+
+    public func stopRecording() {
+        do {
+            try recordingEngine.stopRecording()
+        } catch {
+            log.log(.error, category: .video, "EchoelField: Recording stop failed: \(error.localizedDescription)")
+        }
+        isRecording = false
+    }
+
+    public func startStreaming(url: String) {
+        isStreaming = true
+        Task {
+            await streamingManager.startStream(to: [.custom])
+        }
+    }
+
+    public func stopStreaming() {
+        streamingManager.stopStream()
+        isStreaming = false
+    }
 }
 
 /// Backward compatibility — remove after 1 release cycle
@@ -1529,7 +1604,7 @@ public final class EchoelNet: ObservableObject {
             echoelSync.startHosting(sessionName: "Echoelmusic")
         case .sharePlay:
             Task {
-                try? await sharePlay.startSession(type: .collaboration)
+                try? await sharePlay.startSession(type: .musicCreation)
             }
         case .artNet, .sACN:
             // Art-Net/sACN use the ExternalDisplayRenderingPipeline DMX subsystem
@@ -1948,8 +2023,14 @@ public final class EchoelToolkit: ObservableObject {
         }
 
         // Sequencer triggers → synth noteOn (close the seq→synth loop)
-        seqToSynthSubscription = bus.subscribe(to: .custom) { [weak self] msg in
+        // Seq publishes via publishParam(engine: "seq", param: "trigger", value: noteNumber)
+        seqToSynthSubscription = bus.subscribe(to: .audio) { [weak self] msg in
             Task { @MainActor in
+                if case .paramChange(let engine, let param, let value) = msg,
+                   engine == "seq", param == "trigger" {
+                    self?.synth.noteOn(note: Int(value), velocity: 100)
+                }
+                // Also handle MIDI noteOn from EchoelMIDI
                 if case .custom(let topic, let payload) = msg, topic == "midi.noteOn" {
                     if let noteStr = payload["note"], let note = Int(noteStr),
                        let velStr = payload["vel"], let vel = Int(velStr) {

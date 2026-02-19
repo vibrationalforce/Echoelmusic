@@ -24,7 +24,7 @@ import SwiftUI
 // MARK: - EchoelView
 
 public struct EchoelView: View {
-    @StateObject private var engine = EchoelEngine.shared
+    @StateObject private var toolkit = EchoelToolkit.shared
 
     @State private var showLeftPanel = true
     @State private var showRightPanel = true
@@ -55,10 +55,10 @@ public struct EchoelView: View {
         .background(Color.black)
         .preferredColorScheme(.dark)
         .onAppear {
-            engine.start(mode: engine.mode)
+            toolkit.start(mode: toolkit.mode)
         }
         .onDisappear {
-            engine.stop()
+            toolkit.stop()
         }
         #if canImport(UIKit)
         .persistentSystemOverlays(isFullscreen ? .hidden : .automatic)
@@ -73,8 +73,8 @@ public struct EchoelView: View {
                 ForEach(EngineMode.allCases) { mode in
                     EngineModeButton(
                         mode: mode,
-                        isSelected: engine.mode == mode,
-                        action: { engine.mode = mode }
+                        isSelected: toolkit.mode == mode,
+                        action: { toolkit.mode = mode }
                     )
                 }
 
@@ -172,49 +172,49 @@ public struct EchoelView: View {
 
     @ViewBuilder
     private var visualizationLayer: some View {
-        switch engine.mode {
+        switch toolkit.mode {
         case .studio, .live, .dj:
             AudioVisualizerCanvas(
-                audioLevel: engine.state.audioLevel,
-                coherence: engine.state.coherence,
-                bpm: engine.state.bpm
+                audioLevel: toolkit.state.audioLevel,
+                coherence: toolkit.state.coherence,
+                bpm: toolkit.state.bpm
             )
         case .meditation:
             MeditationCanvas(
-                coherence: engine.state.coherence,
-                breathPhase: engine.state.breathPhase,
-                heartRate: engine.state.heartRate
+                coherence: toolkit.state.coherence,
+                breathPhase: toolkit.state.breathPhase,
+                heartRate: toolkit.state.heartRate
             )
         case .video:
             VideoPreviewCanvas()
         case .collaboration:
-            CollaborationCanvas(coherence: engine.state.coherence)
+            CollaborationCanvas(coherence: toolkit.state.coherence)
         case .immersive:
-            ImmersivePreviewCanvas(coherence: engine.state.coherence)
+            ImmersivePreviewCanvas(coherence: toolkit.state.coherence)
         case .research:
-            ResearchDashboardCanvas(state: engine.state)
+            ResearchDashboardCanvas(state: toolkit.state)
         }
     }
 
     @ViewBuilder
     private var modeOverlay: some View {
-        switch engine.mode {
+        switch toolkit.mode {
         case .studio:
-            StudioOverlay(engine: engine)
+            StudioOverlay(toolkit: toolkit)
         case .live:
-            LiveOverlay(engine: engine)
+            LiveOverlay(toolkit: toolkit)
         case .meditation:
-            MeditationOverlay(engine: engine)
+            MeditationOverlay(toolkit: toolkit)
         case .video:
-            VideoOverlay(engine: engine)
+            VideoOverlay(toolkit: toolkit)
         case .dj:
-            DJOverlay(engine: engine)
+            DJOverlay(toolkit: toolkit)
         case .collaboration:
-            CollaborationOverlay(engine: engine)
+            CollaborationOverlay(toolkit: toolkit)
         case .immersive:
-            ImmersiveOverlay(engine: engine)
+            ImmersiveOverlay(toolkit: toolkit)
         case .research:
-            ResearchOverlay(engine: engine)
+            ResearchOverlay(toolkit: toolkit)
         }
     }
 
@@ -223,36 +223,36 @@ public struct EchoelView: View {
     private var transportBar: some View {
         HStack(spacing: 16) {
             // Rewind
-            Button(action: { engine.stopPlayback() }) {
+            Button(action: { toolkit.stopPlayback() }) {
                 Image(systemName: "backward.end.fill")
                     .font(.system(size: 16))
             }
 
             // Play/Pause
             Button(action: {
-                if engine.state.isPlaying { engine.pause() } else { engine.play() }
+                if toolkit.state.isPlaying { toolkit.pause() } else { toolkit.play() }
             }) {
-                Image(systemName: engine.state.isPlaying ? "pause.fill" : "play.fill")
+                Image(systemName: toolkit.state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20))
                     .frame(width: 44, height: 44)
-                    .background(engine.state.isPlaying ? Color.orange : Color.green)
+                    .background(toolkit.state.isPlaying ? Color.orange : Color.green)
                     .clipShape(Circle())
             }
 
             // BPM display
-            Text("\(Int(engine.state.bpm)) BPM")
+            Text("\(Int(toolkit.state.bpm)) BPM")
                 .font(.system(size: 14, weight: .medium, design: .monospaced))
                 .foregroundColor(.white.opacity(0.8))
 
             Spacer()
 
             // Bio indicators
-            if engine.activeSubsystems.contains(.bio) {
+            if toolkit.activeSubsystems.contains(.bio) {
                 bioMiniDisplay
             }
 
             // Position
-            Text(formatTime(engine.state.position))
+            Text(formatTime(toolkit.state.position))
                 .font(.system(size: 14, design: .monospaced))
                 .foregroundColor(.white.opacity(0.6))
         }
@@ -271,23 +271,23 @@ public struct EchoelView: View {
                     .font(.system(size: 10))
                     .foregroundColor(.red)
                     .accessibilityHidden(true)
-                Text("\(Int(engine.state.heartRate))")
+                Text("\(Int(toolkit.state.heartRate))")
                     .font(.system(size: 12, design: .monospaced))
             }
 
             // Coherence
             HStack(spacing: 4) {
                 Circle()
-                    .fill(coherenceColor(engine.state.coherence))
+                    .fill(coherenceColor(toolkit.state.coherence))
                     .frame(width: 8, height: 8)
                     .accessibilityHidden(true)
-                Text("\(Int(engine.state.coherence * 100))%")
+                Text("\(Int(toolkit.state.coherence * 100))%")
                     .font(.system(size: 12, design: .monospaced))
             }
         }
         .foregroundColor(.white.opacity(0.7))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Heart rate \(Int(engine.state.heartRate)) BPM, coherence \(Int(engine.state.coherence * 100)) percent")
+        .accessibilityLabel("Heart rate \(Int(toolkit.state.heartRate)) BPM, coherence \(Int(toolkit.state.coherence * 100)) percent")
     }
 
     // MARK: - Left Panel
@@ -319,11 +319,11 @@ public struct EchoelView: View {
     private var leftPanelContent: some View {
         switch selectedLeftTab {
         case .browser:
-            BrowserPanel(mode: engine.mode)
+            BrowserPanel(mode: toolkit.mode)
         case .tracks:
-            TracksPanel(engine: engine)
+            TracksPanel(toolkit: toolkit)
         case .scenes:
-            ScenesPanel(engine: engine)
+            ScenesPanel(toolkit: toolkit)
         }
     }
 
@@ -355,18 +355,18 @@ public struct EchoelView: View {
     private var rightPanelContent: some View {
         switch selectedRightTab {
         case .bio:
-            BioInspectorPanel(state: engine.state)
+            BioInspectorPanel(state: toolkit.state)
         case .fx:
-            FXInspectorPanel(engine: engine)
+            FXInspectorPanel(toolkit: toolkit)
         case .visual:
-            VisualInspectorPanel(engine: engine)
+            VisualInspectorPanel(toolkit: toolkit)
         case .settings:
-            SettingsPanel(engine: engine)
+            SettingsPanel(toolkit: toolkit)
         }
     }
 
     private var rightTabsForMode: [RightTab] {
-        switch engine.mode {
+        switch toolkit.mode {
         case .meditation:
             return [.bio, .visual, .settings]
         case .video:
@@ -380,19 +380,19 @@ public struct EchoelView: View {
 
     private var bottomPanel: some View {
         Group {
-            switch engine.mode {
+            switch toolkit.mode {
             case .studio:
-                MixerStrip(engine: engine)
+                MixerStrip(toolkit: toolkit)
             case .live, .dj:
-                PerformanceStrip(engine: engine)
+                PerformanceStrip(toolkit: toolkit)
             case .video:
-                TimelineStrip(engine: engine)
+                TimelineStrip(toolkit: toolkit)
             case .meditation:
-                BreathingGuideStrip(state: engine.state)
+                BreathingGuideStrip(state: toolkit.state)
             case .collaboration:
-                CollaborationStrip(engine: engine)
+                CollaborationStrip(toolkit: toolkit)
             default:
-                MixerStrip(engine: engine)
+                MixerStrip(toolkit: toolkit)
             }
         }
         .background(Color.black.opacity(0.9))
@@ -433,14 +433,14 @@ public struct EchoelView: View {
                 .fill(fpsColor)
                 .frame(width: 6, height: 6)
                 .accessibilityHidden(true)
-            Text("\(Int(engine.state.fps)) FPS")
+            Text("\(Int(toolkit.state.fps)) FPS")
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(.white.opacity(0.5))
         }
     }
 
     private var fpsColor: Color {
-        let fps = engine.state.fps
+        let fps = toolkit.state.fps
         if fps >= 55 { return .green }
         if fps >= 30 { return .yellow }
         return .red
@@ -681,7 +681,7 @@ private struct MetricCard: View {
 // MARK: - Mode Overlays
 
 struct StudioOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var isArmed = false
     @State private var metronomeOn = false
     @State private var inputMonitor = false
@@ -699,8 +699,8 @@ struct StudioOverlay: View {
                         .foregroundColor(inputMonitor ? .green : .white.opacity(0.4))
                     RoundedRectangle(cornerRadius: 2)
                         .fill(Color.green.opacity(0.6))
-                        .frame(width: CGFloat(max(engine.state.audioLevel, 0.05)) * 60, height: 8)
-                        .animation(reduceMotion ? nil : .linear(duration: 0.05), value: engine.state.audioLevel)
+                        .frame(width: CGFloat(max(toolkit.state.audioLevel, 0.05)) * 60, height: 8)
+                        .animation(reduceMotion ? nil : .linear(duration: 0.05), value: toolkit.state.audioLevel)
                 }
                 .frame(minHeight: 44)
                 .onTapGesture { inputMonitor.toggle() }
@@ -722,7 +722,7 @@ struct StudioOverlay: View {
                 // Record arm
                 Button(action: {
                     isArmed.toggle()
-                    if isArmed { engine.eventBus.send(.record) }
+                    if isArmed { toolkit.eventBus.send(.record) }
                 }) {
                     Circle()
                         .fill(isArmed ? Color.red : Color.red.opacity(0.3))
@@ -737,7 +737,7 @@ struct StudioOverlay: View {
                 .accessibilityLabel("Record, \(isArmed ? "armed" : "disarmed")")
 
                 // Recording indicator
-                if engine.state.isRecording {
+                if toolkit.state.isRecording {
                     HStack(spacing: 4) {
                         Circle().fill(Color.red).frame(width: 6, height: 6)
                         Text("REC")
@@ -759,7 +759,7 @@ struct StudioOverlay: View {
 }
 
 struct LiveOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var selectedScene = 0
     private let sceneNames = ["Intro", "Verse", "Chorus", "Bridge", "Drop", "Outro"]
 
@@ -769,7 +769,7 @@ struct LiveOverlay: View {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 8) {
                     // Streaming status
-                    if engine.state.isStreaming {
+                    if toolkit.state.isStreaming {
                         HStack(spacing: 4) {
                             Circle().fill(Color.red).frame(width: 6, height: 6)
                             Text("LIVE")
@@ -825,7 +825,7 @@ struct LiveOverlay: View {
 }
 
 struct MeditationOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var sessionSeconds: Int = 0
     @State private var targetMinutes: Int = 10
     @State private var sessionActive = false
@@ -871,14 +871,14 @@ struct MeditationOverlay: View {
                     .stroke(Color.white.opacity(0.1), lineWidth: 3)
                     .frame(width: 120, height: 120)
                 Circle()
-                    .trim(from: 0, to: CGFloat(engine.state.coherence))
+                    .trim(from: 0, to: CGFloat(toolkit.state.coherence))
                     .stroke(
-                        Color.green.opacity(Double(engine.state.coherence)),
+                        Color.green.opacity(Double(toolkit.state.coherence)),
                         style: StrokeStyle(lineWidth: 3, lineCap: .round)
                     )
                     .frame(width: 120, height: 120)
                     .rotationEffect(.degrees(-90))
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 1), value: engine.state.coherence)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 1), value: toolkit.state.coherence)
             }
 
             Spacer()
@@ -898,8 +898,8 @@ struct MeditationOverlay: View {
         } else {
             sessionSeconds = 0
             sessionActive = true
-            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak engine] _ in
-                guard engine != nil else { return }
+            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak toolkit] _ in
+                guard toolkit != nil else { return }
                 Task { @MainActor in
                     sessionSeconds += 1
                 }
@@ -913,7 +913,7 @@ struct MeditationOverlay: View {
 }
 
 struct VideoOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var selectedExport = "H.265"
     @State private var selectedResolution = "4K"
     private let exports = ["H.264", "H.265", "ProRes", "AV1"]
@@ -964,7 +964,7 @@ struct VideoOverlay: View {
 
             // Timeline position bar
             HStack(spacing: 8) {
-                Text(formatVideoTime(engine.state.position))
+                Text(formatVideoTime(toolkit.state.position))
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundColor(.white.opacity(0.7))
                 GeometryReader { geo in
@@ -973,7 +973,7 @@ struct VideoOverlay: View {
                             .fill(Color.white.opacity(0.1))
                         RoundedRectangle(cornerRadius: 2)
                             .fill(Color.cyan.opacity(0.6))
-                            .frame(width: max(0, CGFloat(engine.state.position.truncatingRemainder(dividingBy: 60)) / 60 * geo.size.width))
+                            .frame(width: max(0, CGFloat(toolkit.state.position.truncatingRemainder(dividingBy: 60)) / 60 * geo.size.width))
                     }
                 }
                 .frame(height: 4)
@@ -993,7 +993,7 @@ struct VideoOverlay: View {
 }
 
 struct DJOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var crossfader: Float = 0.5
     @State private var deckABPM: Double = 128
     @State private var deckBBPM: Double = 128
@@ -1089,7 +1089,7 @@ struct DJOverlay: View {
 }
 
 struct CollaborationOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         VStack {
@@ -1101,7 +1101,7 @@ struct CollaborationOverlay: View {
                         Image(systemName: "person.3.fill")
                             .font(.system(size: 12))
                             .foregroundColor(.cyan)
-                        Text("\(engine.state.participantCount)")
+                        Text("\(toolkit.state.participantCount)")
                             .font(.system(size: 14, weight: .medium, design: .monospaced))
                             .foregroundColor(.white)
                     }
@@ -1113,15 +1113,15 @@ struct CollaborationOverlay: View {
                     // Group coherence
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(engine.state.groupCoherence > 0.7 ? Color.green : Color.yellow)
+                            .fill(toolkit.state.groupCoherence > 0.7 ? Color.green : Color.yellow)
                             .frame(width: 6, height: 6)
-                        Text("Group: \(Int(engine.state.groupCoherence * 100))%")
+                        Text("Group: \(Int(toolkit.state.groupCoherence * 100))%")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundColor(.white.opacity(0.7))
                     }
 
                     // Streaming status
-                    if engine.state.isStreaming {
+                    if toolkit.state.isStreaming {
                         HStack(spacing: 4) {
                             Circle().fill(Color.red).frame(width: 6, height: 6)
                             Text("Broadcasting")
@@ -1140,13 +1140,13 @@ struct CollaborationOverlay: View {
 }
 
 struct ImmersiveOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         VStack {
             HStack {
                 // Hand tracking status
-                if engine.state.handsTracked {
+                if toolkit.state.handsTracked {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 4) {
                             Image(systemName: "hand.raised.fill")
@@ -1161,7 +1161,7 @@ struct ImmersiveOverlay: View {
                                 Text("L")
                                     .font(.system(size: 9, weight: .bold))
                                     .foregroundColor(.cyan)
-                                Text("\(Int(engine.state.leftPinch * 100))")
+                                Text("\(Int(toolkit.state.leftPinch * 100))")
                                     .font(.system(size: 10, design: .monospaced))
                                     .foregroundColor(.white.opacity(0.6))
                             }
@@ -1169,7 +1169,7 @@ struct ImmersiveOverlay: View {
                                 Text("R")
                                     .font(.system(size: 9, weight: .bold))
                                     .foregroundColor(.orange)
-                                Text("\(Int(engine.state.rightPinch * 100))")
+                                Text("\(Int(toolkit.state.rightPinch * 100))")
                                     .font(.system(size: 10, design: .monospaced))
                                     .foregroundColor(.white.opacity(0.6))
                             }
@@ -1183,7 +1183,7 @@ struct ImmersiveOverlay: View {
 
                 // Quantum coherence
                 VStack(spacing: 4) {
-                    Text("\(Int(engine.state.quantumCoherence * 100))%")
+                    Text("\(Int(toolkit.state.quantumCoherence * 100))%")
                         .font(.system(size: 16, weight: .ultraLight, design: .monospaced))
                         .foregroundColor(.purple)
                     Text("Quantum")
@@ -1200,7 +1200,7 @@ struct ImmersiveOverlay: View {
 }
 
 struct ResearchOverlay: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var isExporting = false
 
     var body: some View {
@@ -1213,13 +1213,13 @@ struct ResearchOverlay: View {
                         Image(systemName: "sun.max.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.yellow)
-                        Text(engine.state.circadianPhase)
+                        Text(toolkit.state.circadianPhase)
                             .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.6))
                     }
 
                     // Recording indicator
-                    if engine.state.isRecording {
+                    if toolkit.state.isRecording {
                         HStack(spacing: 4) {
                             Circle().fill(Color.red).frame(width: 6, height: 6)
                             Text("Recording Data")
@@ -1287,7 +1287,7 @@ struct BrowserPanel: View {
 }
 
 struct TracksPanel: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var trackStates: [(name: String, armed: Bool, muted: Bool, solo: Bool, level: Float)] = [
         ("Audio 1", false, false, false, 0.7),
         ("Audio 2", false, false, false, 0.5),
@@ -1385,7 +1385,7 @@ struct TracksPanel: View {
 }
 
 struct ScenesPanel: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var scenes: [String] = ["Intro", "Verse", "Chorus", "Bridge", "Drop", "Outro"]
     @State private var activeScene: Int = 0
 
@@ -1475,7 +1475,7 @@ struct BioInspectorPanel: View {
 }
 
 struct FXInspectorPanel: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
     @State private var fxChain: [(name: String, enabled: Bool, mix: Float)] = [
         ("EQ", true, 1.0),
         ("Compressor", true, 0.8),
@@ -1549,7 +1549,7 @@ struct FXInspectorPanel: View {
 
                 // Master output
                 InspectorSection(title: "Output") {
-                    InspectorRow(label: "Level", value: "\(Int(engine.state.audioLevel * 100))%")
+                    InspectorRow(label: "Level", value: "\(Int(toolkit.state.audioLevel * 100))%")
                     InspectorRow(label: "Pan", value: "C")
                     InspectorRow(label: "Width", value: "100%")
                 }
@@ -1560,7 +1560,7 @@ struct FXInspectorPanel: View {
 }
 
 struct VisualInspectorPanel: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         ScrollView {
@@ -1569,7 +1569,7 @@ struct VisualInspectorPanel: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
 
-                InspectorRow(label: "Intensity", value: "\(Int(engine.state.visualIntensity * 100))%")
+                InspectorRow(label: "Intensity", value: "\(Int(toolkit.state.visualIntensity * 100))%")
             }
             .padding(12)
         }
@@ -1577,7 +1577,7 @@ struct VisualInspectorPanel: View {
 }
 
 struct SettingsPanel: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         ScrollView {
@@ -1586,7 +1586,7 @@ struct SettingsPanel: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
 
-                InspectorRow(label: "Profile", value: engine.performanceProfile.rawValue)
+                InspectorRow(label: "Profile", value: toolkit.performanceProfile.rawValue)
             }
             .padding(12)
         }
@@ -1596,7 +1596,7 @@ struct SettingsPanel: View {
 // MARK: - Bottom Panels
 
 struct MixerStrip: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         HStack(spacing: 2) {
@@ -1619,11 +1619,11 @@ struct MixerStrip: View {
 }
 
 struct PerformanceStrip: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         HStack {
-            Text("BPM: \(Int(engine.state.bpm))")
+            Text("BPM: \(Int(toolkit.state.bpm))")
                 .font(.system(size: 16, weight: .bold, design: .monospaced))
                 .foregroundColor(.orange)
             Spacer()
@@ -1640,7 +1640,7 @@ struct PerformanceStrip: View {
 }
 
 struct TimelineStrip: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         GeometryReader { geo in
@@ -1653,7 +1653,7 @@ struct TimelineStrip: View {
                 Rectangle()
                     .fill(Color.red)
                     .frame(width: 2)
-                    .offset(x: CGFloat(engine.state.position.truncatingRemainder(dividingBy: 60)) / 60 * geo.size.width)
+                    .offset(x: CGFloat(toolkit.state.position.truncatingRemainder(dividingBy: 60)) / 60 * geo.size.width)
             }
         }
         .padding(8)
@@ -1701,13 +1701,13 @@ struct BreathingGuideStrip: View {
 }
 
 struct CollaborationStrip: View {
-    @ObservedObject var engine: EchoelEngine
+    @ObservedObject var toolkit: EchoelToolkit
 
     var body: some View {
         HStack {
             Image(systemName: "person.3.fill")
                 .foregroundColor(.cyan)
-            Text("\(engine.state.participantCount) participant\(engine.state.participantCount == 1 ? "" : "s")")
+            Text("\(toolkit.state.participantCount) participant\(toolkit.state.participantCount == 1 ? "" : "s")")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.6))
 
@@ -1715,16 +1715,16 @@ struct CollaborationStrip: View {
 
             // Individual coherence
             VStack(spacing: 2) {
-                Text("You: \(Int(engine.state.coherence * 100))%")
+                Text("You: \(Int(toolkit.state.coherence * 100))%")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundColor(.cyan)
-                Text("Group: \(Int(engine.state.groupCoherence * 100))%")
+                Text("Group: \(Int(toolkit.state.groupCoherence * 100))%")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundColor(.green)
             }
 
             // Streaming toggle indicator
-            if engine.state.isStreaming {
+            if toolkit.state.isStreaming {
                 HStack(spacing: 4) {
                     Circle().fill(Color.red).frame(width: 6, height: 6)
                         .accessibilityHidden(true)
