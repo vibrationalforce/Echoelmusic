@@ -72,7 +72,7 @@ class RealTimePitchCorrector: ObservableObject {
 
     // MARK: - Types
 
-    enum ScaleType: String, CaseIterable, Identifiable {
+    enum ScaleType: String, CaseIterable, Identifiable, Codable, Sendable {
         case chromatic = "Chromatic"
         case major = "Major"
         case naturalMinor = "Natural Minor"
@@ -204,61 +204,9 @@ class RealTimePitchCorrector: ObservableObject {
 
     // MARK: - Pitch Detection
 
-    /// Detect pitch from raw samples using YIN
+    /// Detect pitch from raw samples — delegates to shared PitchDetector (YIN)
     private func detectPitchFromSamples(_ samples: [Float], sampleRate: Float) -> Float {
-        // RMS check for silence
-        var rms: Float = 0
-        vDSP_rmsqv(samples, 1, &rms, vDSP_Length(samples.count))
-        guard rms > 0.005 else { return 0 }
-
-        // YIN pitch detection (simplified inline for nonisolated context)
-        let bufferSize = samples.count / 2
-        let minLag = Int(sampleRate / 2000.0)
-        let maxLag = min(Int(sampleRate / 50.0), bufferSize)
-
-        guard maxLag > minLag else { return 0 }
-
-        // Difference function
-        var diff = [Float](repeating: 0, count: maxLag)
-        for tau in minLag..<maxLag {
-            var sum: Float = 0
-            let length = samples.count - tau
-            vDSP_distancesq(samples, 1,
-                           UnsafePointer(samples) + tau, 1,
-                           &sum, vDSP_Length(length))
-            diff[tau] = sum
-        }
-
-        // CMNDF
-        var cmndf = [Float](repeating: 1, count: maxLag)
-        var runningSum: Float = 0
-        for tau in 1..<maxLag {
-            runningSum += diff[tau]
-            if runningSum > 0 {
-                cmndf[tau] = diff[tau] * Float(tau) / runningSum
-            }
-        }
-
-        // Find minimum below threshold
-        let threshold: Float = 0.15
-        for tau in minLag..<maxLag {
-            if cmndf[tau] < threshold {
-                // Parabolic interpolation
-                if tau > 0 && tau < maxLag - 1 {
-                    let s0 = cmndf[tau - 1]
-                    let s1 = cmndf[tau]
-                    let s2 = cmndf[tau + 1]
-                    let denom = 2.0 * (2.0 * s1 - s2 - s0)
-                    if abs(denom) > 1e-10 {
-                        let adj = (s2 - s0) / denom
-                        return sampleRate / (Float(tau) + adj)
-                    }
-                }
-                return sampleRate / Float(tau)
-            }
-        }
-
-        return 0
+        pitchDetector.detectPitch(samples: samples, sampleRate: sampleRate)
     }
 
     // MARK: - Note Finding

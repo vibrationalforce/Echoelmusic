@@ -16,14 +16,14 @@ class VocalHarmonyGenerator {
 
     // MARK: - Types
 
-    enum HarmonyMode: String, CaseIterable {
+    enum HarmonyMode: String, CaseIterable, Codable, Sendable {
         case diatonic       // Follow scale degrees (thirds, fifths, etc.)
         case chromatic      // Fixed semitone intervals
         case midi           // Follow external MIDI input
         case intelligent    // AI-assisted voice leading
     }
 
-    enum HarmonyInterval: Int, CaseIterable {
+    enum HarmonyInterval: Int, CaseIterable, Codable, Sendable {
         case unison = 0
         case minorSecond = 1
         case majorSecond = 2
@@ -57,7 +57,7 @@ class VocalHarmonyGenerator {
         }
     }
 
-    struct HarmonyVoice {
+    struct HarmonyVoice: Codable, Sendable {
         var interval: HarmonyInterval = .majorThird
         var customSemitones: Float = 0        // For fine-tuning or chromatic mode
         var gain: Float = 0.7                 // 0-1 volume of this harmony voice
@@ -67,7 +67,7 @@ class VocalHarmonyGenerator {
         var enabled: Bool = true
     }
 
-    struct Configuration {
+    struct Configuration: Codable, Sendable {
         var mode: HarmonyMode = .diatonic
         var key: Int = 0                      // 0=C, 1=C#, ..., 11=B
         var scale: ScaleType = .major
@@ -95,7 +95,7 @@ class VocalHarmonyGenerator {
         ])
     }
 
-    enum ScaleType: String, CaseIterable {
+    enum ScaleType: String, CaseIterable, Codable, Sendable {
         case major, minor, harmonicMinor, melodicMinor
         case dorian, phrygian, lydian, mixolydian, aeolian, locrian
         case pentatonicMajor, pentatonicMinor, blues

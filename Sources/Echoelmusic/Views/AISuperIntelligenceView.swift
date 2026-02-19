@@ -987,8 +987,10 @@ class AISuperIntelligenceViewModel: ObservableObject {
     @Published var bioCoupling: Double = 0.7
 
     // Voice
-    @Published var voiceModels = ["Natural", "Robot", "Clone 1", "Clone 2"]
+    @Published var voiceModels: [String] = []
     @Published var selectedVoiceModel = "Natural"
+    let voiceProfileManager = VoiceProfileManager.shared
+    let voiceSynthesisEngine = VoiceSynthesisEngine.shared
 
     // Mastering
     @Published var integratedLUFS: Double = -14.2
@@ -997,6 +999,12 @@ class AISuperIntelligenceViewModel: ObservableObject {
 
     // Output
     @Published var hasOutput = false
+
+    override init() {
+        super.init()
+        voiceModels = voiceProfileManager.profiles.map { $0.name }
+        if let first = voiceModels.first { selectedVoiceModel = first }
+    }
     @Published var outputTitle = ""
     @Published var outputDescription = ""
     @Published var outputActions: [String] = []
@@ -1011,9 +1019,49 @@ class AISuperIntelligenceViewModel: ObservableObject {
     func faceAIVideo() { addHistory("Face AI applied", "person.crop.rectangle") }
     func generateVideo() { isProcessing = true; addHistory("Generated video", "sparkles") }
     func generateVisuals() { isProcessing = true; addHistory("Generated visuals", "eye") }
-    func trainVoiceModel() { addHistory("Training voice model", "waveform.and.person.filled") }
-    func recordVoiceSample() { addHistory("Recording voice", "mic.fill") }
-    func synthesizeVoice() { isProcessing = true; addHistory("Synthesized voice", "waveform.and.person.filled") }
+    func trainVoiceModel() {
+        addHistory("Training voice model", "waveform.and.person.filled")
+        isProcessing = true
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let profileName = "Custom \(voiceModels.count + 1)"
+                let profile = try await voiceSynthesisEngine.recordAndTrain(profileName: profileName, duration: 10)
+                voiceModels = voiceProfileManager.profiles.map { $0.name }
+                selectedVoiceModel = profile.name
+                setOutput("Voice Model Trained", "Created profile '\(profile.name)' (F0=\(Int(profile.fundamentalFrequency ?? 0))Hz). Ready to apply.", ["Apply", "Refine", "Export"])
+            } catch {
+                setOutput("Training Failed", "Could not train voice model: \(error.localizedDescription)", ["Retry"])
+            }
+        }
+    }
+
+    func recordVoiceSample() {
+        addHistory("Recording voice", "mic.fill")
+        if voiceSynthesisEngine.isRecording {
+            let _ = voiceSynthesisEngine.stopRecording()
+            setOutput("Recording Stopped", "Voice sample captured. Tap 'Train New' to create a profile.", ["Train Now"])
+        } else {
+            do {
+                try voiceSynthesisEngine.startRecording()
+                setOutput("Recording...", "Sing or speak naturally. Tap again to stop.", ["Stop"])
+            } catch {
+                setOutput("Recording Failed", "Microphone access denied or unavailable.", ["Retry"])
+            }
+        }
+    }
+
+    func synthesizeVoice() {
+        isProcessing = true
+        addHistory("Synthesized voice", "waveform.and.person.filled")
+        guard let profile = voiceProfileManager.profiles.first(where: { $0.name == selectedVoiceModel }) else {
+            setOutput("No Profile", "Select a voice model first.", [])
+            return
+        }
+        // Apply profile to the shared vocal chain (VoiceSynthesisEngine logs the activation)
+        voiceProfileManager.activeProfile = profile
+        setOutput("Voice Applied", "Profile '\(profile.name)' activated. Route audio through ProVocalChain to hear.", ["Undo", "Adjust"])
+    }
     func plantSeed() { addHistory("Planted seed", "leaf.fill"); setOutput("Sound DNA Created", "New genetic sound seed planted. Evolve with Mutate or Breed.", ["Play", "Mutate", "Save"]) }
     func mutateSound() { addHistory("Mutated sound", "wand.and.rays") }
     func breedSound() { addHistory("Bred sound", "arrow.triangle.merge") }

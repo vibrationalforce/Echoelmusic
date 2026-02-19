@@ -30,7 +30,7 @@ class BioReactiveVocalEngine: ObservableObject {
     // MARK: - Types
 
     /// Current biometric state
-    struct BioState {
+    struct BioState: Codable, Sendable {
         var coherence: Float = 50.0       // 0-100 (from UnifiedHealthKitEngine)
         var heartRate: Float = 72.0       // BPM
         var hrv: Float = 45.0             // SDNN in ms
@@ -41,7 +41,7 @@ class BioReactiveVocalEngine: ObservableObject {
     }
 
     /// Mapping configuration: which bio signal maps to which vocal parameter
-    struct BioVocalMappings {
+    struct BioVocalMappings: Codable, Sendable {
         // Pitch correction mappings
         var coherenceToCorrectionSpeed: MappingCurve
         var coherenceToCorrectionStrength: MappingCurve
@@ -154,14 +154,29 @@ class BioReactiveVocalEngine: ObservableObject {
     }
 
     /// Mapping curve between bio input and vocal parameter
-    struct MappingCurve {
-        var inputRange: ClosedRange<Float>
-        var outputRange: ClosedRange<Float>
+    struct MappingCurve: Codable, Sendable {
+        var inputMin: Float
+        var inputMax: Float
+        var outputMin: Float
+        var outputMax: Float
         var curve: CurveType
         var label: String
         var inverted: Bool = false
 
-        enum CurveType {
+        var inputRange: ClosedRange<Float> { inputMin...inputMax }
+        var outputRange: ClosedRange<Float> { outputMin...outputMax }
+
+        init(inputRange: ClosedRange<Float>, outputRange: ClosedRange<Float>, curve: CurveType, label: String, inverted: Bool = false) {
+            self.inputMin = inputRange.lowerBound
+            self.inputMax = inputRange.upperBound
+            self.outputMin = outputRange.lowerBound
+            self.outputMax = outputRange.upperBound
+            self.curve = curve
+            self.label = label
+            self.inverted = inverted
+        }
+
+        enum CurveType: String, Codable, Sendable {
             case linear
             case inverseLinear
             case exponential
@@ -204,7 +219,7 @@ class BioReactiveVocalEngine: ObservableObject {
     }
 
     /// Current modulation output values (what's actually being applied)
-    struct ModulationValues {
+    struct ModulationValues: Codable, Sendable {
         var correctionSpeed: Float = 50.0
         var correctionStrength: Float = 0.8
         var vibratoRate: Float = 5.5

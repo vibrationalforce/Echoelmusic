@@ -16,7 +16,7 @@ class BreathDetector {
 
     // MARK: - Configuration
 
-    struct Configuration {
+    struct Configuration: Codable, Sendable {
         /// Detection sensitivity (0 = least sensitive, 1 = most sensitive)
         var sensitivity: Float = 0.5
 
@@ -40,7 +40,7 @@ class BreathDetector {
         static let aggressive = Configuration(sensitivity: 0.8, reductionGain: 0.0, crossfadeDuration: 0.005)
     }
 
-    enum DetectionMode: String, CaseIterable {
+    enum DetectionMode: String, CaseIterable, Codable, Sendable {
         case detect      // Only detect and mark, no processing
         case reduce      // Reduce breath volume by reductionGain
         case remove      // Remove breaths entirely (reductionGain = 0)

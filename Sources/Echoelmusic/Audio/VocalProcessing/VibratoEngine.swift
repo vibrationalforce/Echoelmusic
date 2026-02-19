@@ -29,7 +29,7 @@ class VibratoEngine: ObservableObject {
     // MARK: - Types
 
     /// Vibrato waveform shape
-    enum VibratoShape: String, CaseIterable, Identifiable {
+    enum VibratoShape: String, CaseIterable, Identifiable, Codable, Sendable {
         case sine = "Sine"              // Classic smooth vibrato
         case triangle = "Triangle"       // Linear ramp vibrato
         case rampUp = "Ramp Up"         // Accelerating vibrato
@@ -57,7 +57,7 @@ class VibratoEngine: ObservableObject {
     }
 
     /// Per-note vibrato parameters
-    struct VibratoParameters: Identifiable {
+    struct VibratoParameters: Identifiable, Codable, Sendable {
         let id: UUID
         var enabled: Bool = true
         var rate: Float = 5.5          // Hz
