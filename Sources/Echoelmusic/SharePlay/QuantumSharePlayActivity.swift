@@ -144,6 +144,10 @@ public class QuantumSharePlayManager: ObservableObject {
         setupActivityObserver()
     }
 
+    deinit {
+        coherenceUpdateTimer?.invalidate()
+    }
+
     // MARK: - Setup
 
     private func setupActivityObserver() {
@@ -218,6 +222,7 @@ public class QuantumSharePlayManager: ObservableObject {
         entanglementStrength = 0
         sessionPhase = .idle
         coherenceUpdateTimer?.invalidate()
+        coherenceUpdateTimer = nil
     }
 
     /// Send collective intention to all participants

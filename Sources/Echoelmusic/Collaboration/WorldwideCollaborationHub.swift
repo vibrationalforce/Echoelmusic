@@ -176,7 +176,7 @@ public struct CollaborationSession: Identifiable, Codable, Sendable {
     public var sharedState: SharedState
     public var chatMessages: [ChatMessage]
     public var isPublic: Bool
-    public var password: String?
+    public private(set) var password: String?
 
     public struct SessionSettings: Codable, Sendable {
         public var maxParticipants: Int

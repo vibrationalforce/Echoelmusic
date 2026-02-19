@@ -934,6 +934,7 @@ extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
             if let index = discoveredDevices.firstIndex(where: { $0.id == device.id }) {
                 discoveredDevices[index] = device
             } else {
+                if discoveredDevices.count >= 100 { discoveredDevices.removeFirst() }
                 discoveredDevices.append(device)
             }
         }
@@ -987,6 +988,7 @@ public final class BluetoothMIDIManager: ObservableObject {
 
     /// Connect to a MIDI controller
     public func connectController(_ controller: BluetoothAudioDevice) {
+        if connectedControllers.count >= 20 { return }  // Max 20 controllers
         // BLE MIDI connection
         connectedControllers.append(controller)
     }

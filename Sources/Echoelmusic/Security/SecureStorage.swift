@@ -35,7 +35,11 @@ public final class SecureStorageManager {
     private init() {
         // Initialize encryption key on first launch
         Task {
-            _ = try? getOrCreateEncryptionKey()
+            do {
+                _ = try getOrCreateEncryptionKey()
+            } catch {
+                log.log(.error, category: .system, "SecureStorage: Failed to create encryption key: \(error.localizedDescription)")
+            }
         }
     }
 

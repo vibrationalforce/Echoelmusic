@@ -27,6 +27,8 @@ public final class CertificatePinningDelegate: NSObject, URLSessionDelegate, @un
     /// SHA-256 hashes of the Subject Public Key Info (SPKI) for echoelmusic.com certificates
     /// Update these when certificates are rotated
     private static let pinnedSPKIHashes: Set<String> = [
+        // ⚠️ PRODUCTION: Replace with actual certificate SPKI hashes before release
+        // Generate with: openssl s_client -connect api.echoelmusic.com:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
         // Primary certificate (Let's Encrypt / DigiCert)
         "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",
         // Backup certificate (for rotation)
