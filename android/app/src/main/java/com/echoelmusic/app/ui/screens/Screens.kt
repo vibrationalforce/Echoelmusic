@@ -109,7 +109,7 @@ fun SynthScreen(viewModel: EchoelmusicViewModel) {
 }
 
 /**
- * Pulse Drum Screen - Pulse Drum Bass with pitch glide
+ * EchoelBeat Screen - EchoelBeat Bass with pitch glide
  */
 @Composable
 fun TR808Screen(viewModel: EchoelmusicViewModel) {
@@ -124,7 +124,7 @@ fun TR808Screen(viewModel: EchoelmusicViewModel) {
             .padding(16.dp)
     ) {
         Text(
-            "Pulse Drum Bass",
+            "EchoelBeat Bass",
             style = MaterialTheme.typography.headlineMedium
         )
 

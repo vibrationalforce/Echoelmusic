@@ -12,7 +12,7 @@
 # - visionOS (Apple Vision Pro) with Spatial Audio
 #
 # AUv3 Features:
-# - Pulse Drum Bass Synth Instrument
+# - EchoelBeat Bass Synth Instrument
 # - Bio-Reactive Composer
 # - AI Stem Separator
 # - MIDI 2.0 + MPE Processor
@@ -256,7 +256,7 @@ targets:
       path: Sources/EchoelmusicAUv3/Info-macOS.plist
       properties:
         CFBundleDevelopmentRegion: en
-        CFBundleDisplayName: "Echoelmusic Pulse Drum"
+        CFBundleDisplayName: "Echoelmusic EchoelBeat"
         CFBundleExecutable: $(EXECUTABLE_NAME)
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
         CFBundleInfoDictionaryVersion: "6.0"
@@ -268,10 +268,10 @@ targets:
         NSExtension:
           NSExtensionAttributes:
             AudioComponents:
-              - description: "Echoelmusic Pulse Drum Bass Synth with Pitch Glide"
+              - description: "Echoelmusic EchoelBeat Bass Synth with Pitch Glide"
                 factoryFunction: EchoelmusicAudioUnitFactory
                 manufacturer: Echo
-                name: "Echoelmusic: Pulse Drum Bass"
+                name: "Echoelmusic: EchoelBeat Bass"
                 sandboxSafe: true
                 subtype: E808
                 tags: [Synth, Bass, PulseDrum]

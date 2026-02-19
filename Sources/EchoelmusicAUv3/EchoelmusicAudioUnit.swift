@@ -4,12 +4,28 @@
 //
 //  Created: December 2025
 //  AUDIO UNIT v3 BASE CLASS
-//  Universal AUv3 wrapper for Echoelmusic audio processing
+//  Universal AUv3 wrapper for Echoelmusic — all 10 Echoel* tools as plugins
 //
-//  Supports:
-//  - Instrument (aumu) - Pulse Drum, BioReactive Composer
-//  - Effect (aufx) - Stem Separation, Effects Chain
-//  - MIDI Processor (aumi) - MIDI 2.0 Processing
+//  10 AUv3 Plugins (all platforms):
+//  ┌─────────────────────────────────────────────────────────────────────┐
+//  │ Instruments (aumu)                                                 │
+//  │   EchoelSynth (Esyn) — Bio-reactive synthesis engine              │
+//  │   EchoelBio   (Ebio) — Bio-reactive AI music generator            │
+//  │                                                                    │
+//  │ Effects (aufx)                                                     │
+//  │   EchoelFX    (Eefx) — Effects chain + analog emulations          │
+//  │   EchoelMix   (Emix) — Mixer bus processor + spatial audio        │
+//  │   EchoelField (Efld) — Audio-reactive visual engine               │
+//  │   EchoelMind  (Emnd) — On-device AI audio intelligence            │
+//  │                                                                    │
+//  │ MIDI Processors (aumi)                                             │
+//  │   EchoelSeq   (Eseq) — Bio-reactive step sequencer               │
+//  │   EchoelMIDI  (Emid) — MIDI 2.0 + MPE processor                  │
+//  │   EchoelBeam  (Ebem) — Audio-to-lighting DMX bridge               │
+//  │   EchoelNet   (Enet) — Network protocol bridge (OSC/MSC/Dante)    │
+//  └─────────────────────────────────────────────────────────────────────┘
+//
+//  macOS additionally: VST3, CLAP (via PluginWrapper)
 //
 
 import Foundation
@@ -32,13 +48,63 @@ public enum EchoelmusicAUType: String, CaseIterable {
         case .midiProcessor: return kAudioUnitType_MIDIProcessor
         }
     }
+}
+
+/// All 10 Echoel* plugin identities
+public enum EchoelPluginID: String, CaseIterable {
+    // Instruments (aumu)
+    case echoelSynth = "Esyn"   // Bio-reactive synthesis engine
+    case echoelBio   = "Ebio"   // Bio-reactive AI generator
+
+    // Effects (aufx)
+    case echoelFX    = "Eefx"   // Effects chain + analog emulations
+    case echoelMix   = "Emix"   // Mixer bus processor + spatial
+    case echoelField = "Efld"   // Audio-reactive visual engine
+    case echoelMind  = "Emnd"   // AI stem separation + enhancement
+
+    // MIDI Processors (aumi)
+    case echoelSeq   = "Eseq"   // Step sequencer + patterns
+    case echoelMIDI  = "Emid"   // MIDI 2.0 + MPE processor
+    case echoelBeam  = "Ebem"   // Audio-to-lighting DMX bridge
+    case echoelNet   = "Enet"   // Network protocol bridge
+
+    var auType: EchoelmusicAUType {
+        switch self {
+        case .echoelSynth, .echoelBio:
+            return .instrument
+        case .echoelFX, .echoelMix, .echoelField, .echoelMind:
+            return .effect
+        case .echoelSeq, .echoelMIDI, .echoelBeam, .echoelNet:
+            return .midiProcessor
+        }
+    }
 
     var componentSubType: OSType {
+        return fourCharCode(rawValue)
+    }
+
+    var displayName: String {
         switch self {
-        case .instrument: return fourCharCode("E808")
-        case .effect: return fourCharCode("Estm")
-        case .midiProcessor: return fourCharCode("Emid")
+        case .echoelSynth: return "EchoelSynth"
+        case .echoelFX:    return "EchoelFX"
+        case .echoelMix:   return "EchoelMix"
+        case .echoelSeq:   return "EchoelSeq"
+        case .echoelMIDI:  return "EchoelMIDI"
+        case .echoelBio:   return "EchoelBio"
+        case .echoelField: return "EchoelField"
+        case .echoelBeam:  return "EchoelBeam"
+        case .echoelNet:   return "EchoelNet"
+        case .echoelMind:  return "EchoelMind"
         }
+    }
+
+    /// Identify plugin from AudioComponentDescription subtype
+    static func from(componentDescription: AudioComponentDescription) -> EchoelPluginID? {
+        let subtypeBytes = withUnsafeBytes(of: componentDescription.componentSubType.bigEndian) {
+            String(bytes: $0, encoding: .ascii)
+        }
+        guard let subtype = subtypeBytes else { return nil }
+        return EchoelPluginID(rawValue: subtype)
     }
 }
 
@@ -108,6 +174,9 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     /// Audio Unit type (instrument, effect, midi)
     public let auType: EchoelmusicAUType
 
+    /// Specific Echoel* plugin identity
+    public let pluginID: EchoelPluginID?
+
     /// Parameter tree for host automation
     private var _parameterTree: AUParameterTree?
 
@@ -139,6 +208,7 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
 
     public init(componentDescription: AudioComponentDescription, auType: EchoelmusicAUType) throws {
         self.auType = auType
+        self.pluginID = EchoelPluginID.from(componentDescription: componentDescription)
 
         try super.init(componentDescription: componentDescription, options: [])
 
@@ -167,6 +237,8 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         default:
             self.auType = .effect
         }
+
+        self.pluginID = EchoelPluginID.from(componentDescription: componentDescription)
 
         try super.init(componentDescription: componentDescription, options: options)
 
@@ -458,29 +530,87 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - Factory Presets
 
     private func setupFactoryPresets() {
-        switch auType {
-        case .instrument:
+        guard let id = pluginID else {
+            _factoryPresets = [Self.makePreset(number: 0, name: "Default")]
+            return
+        }
+
+        switch id {
+        case .echoelSynth:
             _factoryPresets = [
-                Self.makePreset(number: 0, name: "Classic 808"),
-                Self.makePreset(number: 1, name: "Hard Trap"),
-                Self.makePreset(number: 2, name: "Deep Sub"),
-                Self.makePreset(number: 3, name: "Distorted"),
-                Self.makePreset(number: 4, name: "Long Slide"),
+                Self.makePreset(number: 0, name: "DDSP Warm"),
+                Self.makePreset(number: 1, name: "Modal Bell"),
+                Self.makePreset(number: 2, name: "Quantum Pad"),
+                Self.makePreset(number: 3, name: "EchoelBeat 808"),
+                Self.makePreset(number: 4, name: "Cellular Texture"),
                 Self.makePreset(number: 5, name: "Bio Flow"),
-                Self.makePreset(number: 6, name: "Quantum Pulse")
+                Self.makePreset(number: 6, name: "Spectral Morph")
             ]
-        case .effect:
+        case .echoelFX:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "Clean Channel"),
+                Self.makePreset(number: 1, name: "Warm Analog"),
+                Self.makePreset(number: 2, name: "EchoelGlue Bus"),
+                Self.makePreset(number: 3, name: "Tape Saturation"),
+                Self.makePreset(number: 4, name: "Spatial Reverb"),
+                Self.makePreset(number: 5, name: "Bio-Reactive FX")
+            ]
+        case .echoelMix:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "Stereo Bus"),
+                Self.makePreset(number: 1, name: "Spatial Atmos"),
+                Self.makePreset(number: 2, name: "Binaural"),
+                Self.makePreset(number: 3, name: "Metering Only")
+            ]
+        case .echoelSeq:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "4/4 Basic"),
+                Self.makePreset(number: 1, name: "Bio-Pulse"),
+                Self.makePreset(number: 2, name: "Euclidean"),
+                Self.makePreset(number: 3, name: "Generative Lambda")
+            ]
+        case .echoelMIDI:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "Default"),
+                Self.makePreset(number: 1, name: "MPE Mode"),
+                Self.makePreset(number: 2, name: "Arp + Chord"),
+                Self.makePreset(number: 3, name: "Scale Quantize")
+            ]
+        case .echoelBio:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "Heart Composer"),
+                Self.makePreset(number: 1, name: "Breath Ambient"),
+                Self.makePreset(number: 2, name: "Coherence Tonal"),
+                Self.makePreset(number: 3, name: "Movement Rhythmic")
+            ]
+        case .echoelField:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "Spectrum Analyzer"),
+                Self.makePreset(number: 1, name: "Particle Burst"),
+                Self.makePreset(number: 2, name: "Fractal Mirror"),
+                Self.makePreset(number: 3, name: "Cymatics")
+            ]
+        case .echoelBeam:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "DMX Default"),
+                Self.makePreset(number: 1, name: "Beat-Synced"),
+                Self.makePreset(number: 2, name: "Bio-Reactive Warm"),
+                Self.makePreset(number: 3, name: "Strobe Chase")
+            ]
+        case .echoelNet:
+            _factoryPresets = [
+                Self.makePreset(number: 0, name: "OSC Bridge"),
+                Self.makePreset(number: 1, name: "MSC Theater"),
+                Self.makePreset(number: 2, name: "Mackie Control"),
+                Self.makePreset(number: 3, name: "SharePlay Collab")
+            ]
+        case .echoelMind:
             _factoryPresets = [
                 Self.makePreset(number: 0, name: "Vocal Isolation"),
                 Self.makePreset(number: 1, name: "Drums Only"),
-                Self.makePreset(number: 2, name: "Bass Boost"),
-                Self.makePreset(number: 3, name: "Karaoke Mode"),
-                Self.makePreset(number: 4, name: "Instrumental")
-            ]
-        case .midiProcessor:
-            _factoryPresets = [
-                Self.makePreset(number: 0, name: "Default"),
-                Self.makePreset(number: 1, name: "MPE Mode")
+                Self.makePreset(number: 2, name: "Instrumental"),
+                Self.makePreset(number: 3, name: "AI Enhance"),
+                Self.makePreset(number: 4, name: "Karaoke Mode")
             ]
         }
     }

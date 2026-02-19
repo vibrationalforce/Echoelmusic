@@ -6,7 +6,7 @@ Bio-Reactive Audio-Visual Platform for Android
 
 - **Ultra-Low-Latency Audio**: Oboe (AAudio/OpenSL ES) with < 10ms latency on supported devices
 - **16-Voice Polyphonic Synth**: Band-limited oscillators, Moog filter, ADSR envelopes
-- **Pulse Drum Bass Engine**: Authentic 808 bass with pitch glide
+- **EchoelBeat Bass Engine**: Authentic 808 bass with pitch glide
 - **MIDI Support**: USB and Bluetooth MIDI with MPE
 - **Bio-Reactive**: Health Connect integration for heart rate, HRV, coherence
 - **Quantum AI**: Quantum-inspired composition and pattern generation

@@ -553,7 +553,7 @@ struct InstrumentBrowserSheet: View {
             InstrumentInfo(name: "Kalimba", icon: "music.note", category: "World")
         ]),
         ("Drums", "drum.fill", [
-            InstrumentInfo(name: "Pulse Drum", icon: "square.grid.3x3", category: "Drums"),
+            InstrumentInfo(name: "EchoelBeat", icon: "square.grid.3x3", category: "Drums"),
             InstrumentInfo(name: "Acoustic Kit", icon: "drum.fill", category: "Drums"),
             InstrumentInfo(name: "Electronic Kit", icon: "waveform.badge.mic", category: "Drums"),
             InstrumentInfo(name: "Percussion", icon: "music.note.list", category: "Drums")
@@ -796,7 +796,7 @@ class SessionClipViewModel: ObservableObject {
     init() {
         // Sample data
         tracks = [
-            ClipViewTrack(name: "Drums", color: VaporwaveColors.neonPink, instrumentName: "Pulse Drum", instrumentIcon: "square.grid.3x3"),
+            ClipViewTrack(name: "Drums", color: VaporwaveColors.neonPink, instrumentName: "EchoelBeat", instrumentIcon: "square.grid.3x3"),
             ClipViewTrack(name: "Bass", color: VaporwaveColors.neonCyan, instrumentName: "EchoSynth", instrumentIcon: "waveform"),
             ClipViewTrack(name: "Lead", color: VaporwaveColors.neonPurple, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
             ClipViewTrack(name: "Pad", color: VaporwaveColors.lavender, instrumentName: "Granular", instrumentIcon: "sparkles"),

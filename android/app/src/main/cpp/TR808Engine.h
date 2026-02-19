@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * Pulse Drum Bass Engine for Android
+ * EchoelBeat Bass Engine for Android
  * Authentic 808-style bass with pitch glide
  */
 

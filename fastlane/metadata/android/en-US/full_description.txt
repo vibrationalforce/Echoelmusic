@@ -20,7 +20,7 @@ KEY FEATURES
 🎹 Professional Music Creation
 • MIDI 2.0 + MPE support for expressive control
 • 50+ DSP effects including bio-reactive processors
-• Pulse Drum synthesis engine
+• EchoelBeat synthesis engine
 • AI-powered chord and melody generation
 • Multi-track recording and export
 • USB MIDI controller support

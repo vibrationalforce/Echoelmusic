@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Echoelmusic 808</string>
+	<string>Echoelmusic Plugins</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -30,39 +30,141 @@
 		<dict>
 			<key>AudioComponents</key>
 			<array>
+				<!-- 1. EchoelSynth -->
 				<dict>
 					<key>description</key>
-					<string>Echoelmusic Pulse Drum Bass Synth with Pitch Glide</string>
+					<string>Echoelmusic EchoelSynth — Bio-Reactive Synthesis Engine</string>
 					<key>factoryFunction</key>
 					<string>EchoelmusicAudioUnitFactory</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>name</key>
-					<string>Echoelmusic: 808 Bass</string>
+					<string>Echoelmusic: EchoelSynth</string>
 					<key>sandboxSafe</key>
 					<true/>
 					<key>subtype</key>
-					<string>E808</string>
+					<string>Esyn</string>
 					<key>tags</key>
 					<array>
 						<string>Synth</string>
-						<string>Bass</string>
-						<string>808</string>
+						<string>Generator</string>
+						<string>Bio-Reactive</string>
 					</array>
 					<key>type</key>
 					<string>aumu</string>
 					<key>version</key>
 					<integer>1</integer>
 				</dict>
+				<!-- 2. EchoelFX -->
 				<dict>
 					<key>description</key>
-					<string>Echoelmusic Bio-Reactive AI Music Generator</string>
+					<string>Echoelmusic EchoelFX — Effects Chain and Analog Emulations</string>
 					<key>factoryFunction</key>
 					<string>EchoelmusicAudioUnitFactory</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>name</key>
-					<string>Echoelmusic: BioComposer</string>
+					<string>Echoelmusic: EchoelFX</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Eefx</string>
+					<key>tags</key>
+					<array>
+						<string>Effect</string>
+						<string>EQ</string>
+						<string>Dynamics</string>
+					</array>
+					<key>type</key>
+					<string>aufx</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 3. EchoelMix -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelMix — Mixer Bus Processor and Spatial Audio</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelMix</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Emix</string>
+					<key>tags</key>
+					<array>
+						<string>Effect</string>
+						<string>Mixer</string>
+						<string>Spatial</string>
+					</array>
+					<key>type</key>
+					<string>aufx</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 4. EchoelSeq -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelSeq — Bio-Reactive Step Sequencer</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelSeq</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Eseq</string>
+					<key>tags</key>
+					<array>
+						<string>MIDI</string>
+						<string>Sequencer</string>
+						<string>Generator</string>
+					</array>
+					<key>type</key>
+					<string>aumi</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 5. EchoelMIDI -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelMIDI — MIDI 2.0 + MPE Processor</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelMIDI</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Emid</string>
+					<key>tags</key>
+					<array>
+						<string>MIDI</string>
+						<string>MPE</string>
+						<string>Processor</string>
+					</array>
+					<key>type</key>
+					<string>aumi</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 6. EchoelBio -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelBio — Bio-Reactive AI Music Generator</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelBio</string>
 					<key>sandboxSafe</key>
 					<true/>
 					<key>subtype</key>
@@ -78,19 +180,95 @@
 					<key>version</key>
 					<integer>1</integer>
 				</dict>
+				<!-- 7. EchoelField -->
 				<dict>
 					<key>description</key>
-					<string>Echoelmusic AI Stem Separation</string>
+					<string>Echoelmusic EchoelField — Audio-Reactive Visual Engine</string>
 					<key>factoryFunction</key>
 					<string>EchoelmusicAudioUnitFactory</string>
 					<key>manufacturer</key>
 					<string>Echo</string>
 					<key>name</key>
-					<string>Echoelmusic: Stem Splitter</string>
+					<string>Echoelmusic: EchoelField</string>
 					<key>sandboxSafe</key>
 					<true/>
 					<key>subtype</key>
-					<string>Estm</string>
+					<string>Efld</string>
+					<key>tags</key>
+					<array>
+						<string>Effect</string>
+						<string>Analyzer</string>
+						<string>Visual</string>
+					</array>
+					<key>type</key>
+					<string>aufx</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 8. EchoelBeam -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelBeam — Audio-to-Lighting DMX Bridge</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelBeam</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Ebem</string>
+					<key>tags</key>
+					<array>
+						<string>MIDI</string>
+						<string>Lighting</string>
+						<string>DMX</string>
+					</array>
+					<key>type</key>
+					<string>aumi</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 9. EchoelNet -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelNet — Network Protocol Bridge (OSC, MSC, Dante)</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelNet</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Enet</string>
+					<key>tags</key>
+					<array>
+						<string>MIDI</string>
+						<string>Network</string>
+						<string>OSC</string>
+					</array>
+					<key>type</key>
+					<string>aumi</string>
+					<key>version</key>
+					<integer>1</integer>
+				</dict>
+				<!-- 10. EchoelMind -->
+				<dict>
+					<key>description</key>
+					<string>Echoelmusic EchoelMind — On-Device AI Audio Intelligence</string>
+					<key>factoryFunction</key>
+					<string>EchoelmusicAudioUnitFactory</string>
+					<key>manufacturer</key>
+					<string>Echo</string>
+					<key>name</key>
+					<string>Echoelmusic: EchoelMind</string>
+					<key>sandboxSafe</key>
+					<true/>
+					<key>subtype</key>
+					<string>Emnd</string>
 					<key>tags</key>
 					<array>
 						<string>Effect</string>
@@ -99,30 +277,6 @@
 					</array>
 					<key>type</key>
 					<string>aufx</string>
-					<key>version</key>
-					<integer>1</integer>
-				</dict>
-				<dict>
-					<key>description</key>
-					<string>Echoelmusic MIDI 2.0 + MPE Processor</string>
-					<key>factoryFunction</key>
-					<string>EchoelmusicAudioUnitFactory</string>
-					<key>manufacturer</key>
-					<string>Echo</string>
-					<key>name</key>
-					<string>Echoelmusic: MIDI Pro</string>
-					<key>sandboxSafe</key>
-					<true/>
-					<key>subtype</key>
-					<string>Emid</string>
-					<key>tags</key>
-					<array>
-						<string>MIDI</string>
-						<string>MPE</string>
-						<string>Processor</string>
-					</array>
-					<key>type</key>
-					<string>aumi</string>
 					<key>version</key>
 					<integer>1</integer>
 				</dict>
