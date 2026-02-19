@@ -149,9 +149,10 @@ public final class CrossfadeEngine {
                 memcpy(resultData, outData, preCrossfadeLength * MemoryLayout<Float>.size)
             }
 
-            // Apply crossfade region
+            // Apply crossfade region — pre-compute reciprocal to avoid division per sample
+            let invCrossfade = 1.0 / Float(actualCrossfade)
             for i in 0..<actualCrossfade {
-                let position = Float(i) / Float(actualCrossfade)
+                let position = Float(i) * invCrossfade
                 let fadeOut = curve.fadeOutGain(at: position)
                 let fadeIn = curve.fadeInGain(at: position)
 

@@ -1237,16 +1237,27 @@ public final class SuperIntelligenceQuantumBioPhysicalEngine: ObservableObject {
 
     /// Returns comprehensive session analytics
     public func getSessionAnalytics() -> SuperIntelligenceAnalytics {
-        let avgRecovery = stateHistory.isEmpty ? recoveryScore :
-            stateHistory.map { $0.recoveryScore }.reduce(0, +) / Double(stateHistory.count)
+        // Single-pass computation — avoids 4× intermediate array allocations
+        var avgRecovery = recoveryScore
+        var avgStress = stressIndex
+        var avgCoherence = currentState.hrvCoherence
+        var peakCoherence = currentState.hrvCoherence
 
-        let avgStress = stateHistory.isEmpty ? stressIndex :
-            stateHistory.map { $0.stressIndex }.reduce(0, +) / Double(stateHistory.count)
-
-        let avgCoherence = stateHistory.isEmpty ? currentState.hrvCoherence :
-            stateHistory.map { $0.hrvCoherence }.reduce(0, +) / Double(stateHistory.count)
-
-        let peakCoherence = stateHistory.map { $0.hrvCoherence }.max() ?? currentState.hrvCoherence
+        if !stateHistory.isEmpty {
+            var sumRecovery = 0.0, sumStress = 0.0, sumCoherence = 0.0
+            var maxCoherence = -Double.infinity
+            for state in stateHistory {
+                sumRecovery += state.recoveryScore
+                sumStress += state.stressIndex
+                sumCoherence += state.hrvCoherence
+                maxCoherence = Swift.max(maxCoherence, state.hrvCoherence)
+            }
+            let count = Double(stateHistory.count)
+            avgRecovery = sumRecovery / count
+            avgStress = sumStress / count
+            avgCoherence = sumCoherence / count
+            peakCoherence = maxCoherence
+        }
 
         return SuperIntelligenceAnalytics(
             sessionDuration: sessionDuration,

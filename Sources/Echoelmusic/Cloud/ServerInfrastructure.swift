@@ -1374,6 +1374,8 @@ public class APIClient: ObservableObject {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 300
         config.waitsForConnectivity = true
+        config.tlsMinimumSupportedProtocolVersion = .TLSv12
+        config.tlsMaximumSupportedProtocolVersion = .TLSv13
 
         self.session = URLSession(configuration: config, delegate: sharedPinningDelegate, delegateQueue: nil)
     }

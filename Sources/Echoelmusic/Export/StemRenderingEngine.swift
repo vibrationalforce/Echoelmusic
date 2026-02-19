@@ -597,11 +597,23 @@ public final class StemRenderingEngine: ObservableObject {
         let tracks = session.tracks.filter { !$0.isMuted }
         var configs: [StemConfiguration] = []
 
-        // Group by track type
-        let drums = tracks.filter { $0.name.lowercased().contains("drum") || $0.name.lowercased().contains("kick") || $0.name.lowercased().contains("snare") || $0.name.lowercased().contains("hat") || $0.name.lowercased().contains("perc") }
-        let bass = tracks.filter { $0.name.lowercased().contains("bass") || $0.name.lowercased().contains("sub") }
-        let vocals = tracks.filter { $0.name.lowercased().contains("vocal") || $0.name.lowercased().contains("voice") || $0.name.lowercased().contains("vox") || $0.type == .voice }
-        let fx = tracks.filter { $0.name.lowercased().contains("fx") || $0.name.lowercased().contains("effect") || $0.name.lowercased().contains("sfx") || $0.type == .binaural || $0.type == .spatial }
+        // Group by track type — cache lowercased name once per track
+        let drums = tracks.filter { track in
+            let n = track.name.lowercased()
+            return n.contains("drum") || n.contains("kick") || n.contains("snare") || n.contains("hat") || n.contains("perc")
+        }
+        let bass = tracks.filter { track in
+            let n = track.name.lowercased()
+            return n.contains("bass") || n.contains("sub")
+        }
+        let vocals = tracks.filter { track in
+            let n = track.name.lowercased()
+            return n.contains("vocal") || n.contains("voice") || n.contains("vox") || track.type == .voice
+        }
+        let fx = tracks.filter { track in
+            let n = track.name.lowercased()
+            return n.contains("fx") || n.contains("effect") || n.contains("sfx") || track.type == .binaural || track.type == .spatial
+        }
 
         let groupedIDs = Set(drums.map(\.id) + bass.map(\.id) + vocals.map(\.id) + fx.map(\.id))
         let music = tracks.filter { !groupedIDs.contains($0.id) && $0.type != .master }

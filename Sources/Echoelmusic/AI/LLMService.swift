@@ -333,10 +333,10 @@ class LLMService: ObservableObject {
         request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
-        // Build system prompt with bio-context
+        // Build system prompt with bio-context — only aggregated state, never raw biometrics
         var fullSystemPrompt = systemPrompt
         if let bio = bioContext {
-            fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
+            fullSystemPrompt += "\n\nCurrent Bio-State: \(bio.bioState)"
         }
 
         // Build messages array with structured content block support
@@ -442,10 +442,10 @@ class LLMService: ObservableObject {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
-        // Build system prompt with bio-context
+        // Build system prompt with bio-context — only aggregated state, never raw biometrics
         var fullSystemPrompt = systemPrompt
         if let bio = bioContext {
-            fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
+            fullSystemPrompt += "\n\nCurrent Bio-State: \(bio.bioState)"
         }
 
         // Build messages array
@@ -524,10 +524,10 @@ class LLMService: ObservableObject {
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Build system prompt with bio-context
+        // Build system prompt with bio-context — only aggregated state, never raw biometrics
         var fullSystemPrompt = systemPrompt
         if let bio = bioContext {
-            fullSystemPrompt += "\n\nCurrent Bio-Data:\n- Heart Rate: \(Int(bio.heartRate)) BPM\n- HRV: \(Int(bio.hrv)) ms\n- Coherence: \(Int(bio.coherence * 100))%\n- State: \(bio.bioState)"
+            fullSystemPrompt += "\n\nCurrent Bio-State: \(bio.bioState)"
         }
 
         // Build messages array for Ollama

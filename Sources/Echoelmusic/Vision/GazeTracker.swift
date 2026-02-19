@@ -483,9 +483,22 @@ public final class GazeTracker: NSObject, ObservableObject {
         guard gazeHistory.count >= 30 else { return }
 
         let recent = Array(gazeHistory.suffix(30))
+        guard !recent.isEmpty else { return }
+
+        // Single-pass computation — avoid 5× intermediate array allocations
+        var sumOpenness: Float = 0
+        var minX: Float = .infinity, maxX: Float = -.infinity
+        var minY: Float = .infinity, maxY: Float = -.infinity
+        for data in recent {
+            sumOpenness += data.averageOpenness
+            minX = min(minX, data.gazePoint.x)
+            maxX = max(maxX, data.gazePoint.x)
+            minY = min(minY, data.gazePoint.y)
+            maxY = max(maxY, data.gazePoint.y)
+        }
+        let avgOpenness = sumOpenness / Float(recent.count)
 
         // Detect widen eyes (sustained high openness)
-        let avgOpenness = recent.map { $0.averageOpenness }.reduce(0, +) / Float(recent.count)
         if avgOpenness > 0.95 {
             notifyGesture(.widenEyes)
         }
@@ -496,16 +509,12 @@ public final class GazeTracker: NSObject, ObservableObject {
         }
 
         // Detect horizontal sweep
-        let xValues = recent.map { $0.gazePoint.x }
-        let xRange = (xValues.max() ?? 0) - (xValues.min() ?? 0)
-        if xRange > 0.6 {
+        if maxX - minX > 0.6 {
             notifyGesture(.horizontalSweep)
         }
 
         // Detect vertical sweep
-        let yValues = recent.map { $0.gazePoint.y }
-        let yRange = (yValues.max() ?? 0) - (yValues.min() ?? 0)
-        if yRange > 0.6 {
+        if maxY - minY > 0.6 {
             notifyGesture(.verticalSweep)
         }
     }

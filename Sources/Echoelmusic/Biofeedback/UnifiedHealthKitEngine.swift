@@ -733,8 +733,13 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         // Mean RR
         let meanRR = intervals.reduce(0, +) / Double(n)
 
-        // SDNN
-        let variance = intervals.map { pow($0 - meanRR, 2) }.reduce(0, +) / Double(n)
+        // SDNN — direct loop avoids intermediate array allocation
+        var varianceSum = 0.0
+        for interval in intervals {
+            let diff = interval - meanRR
+            varianceSum += diff * diff
+        }
+        let variance = varianceSum / Double(n)
         hrvSDNN = sqrt(variance)
         heartData.heartRateVariability = hrvSDNN
 
