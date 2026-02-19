@@ -40,10 +40,11 @@ public class EchoelmusicAUv3ViewController: AUViewController {
         super.viewDidLoad()
 
         #if canImport(UIKit)
-        view.backgroundColor = UIColor.black
+        // Deep space black (#050510) — matches Vaporwave Palace theme
+        view.backgroundColor = UIColor(red: 0.02, green: 0.02, blue: 0.0625, alpha: 1.0)
         #elseif canImport(AppKit)
         view.wantsLayer = true
-        view.layer?.backgroundColor = NSColor.black.cgColor
+        view.layer?.backgroundColor = NSColor(red: 0.02, green: 0.02, blue: 0.0625, alpha: 1.0).cgColor
         #endif
 
         if audioUnit != nil {
@@ -136,57 +137,7 @@ public class EchoelmusicAUv3ViewController: AUViewController {
     }
 }
 
-// MARK: - Shared Parameter Slider Helper
-
-/// Reusable parameter slider for AUv3 plugin views
-private struct AUParameterSlider: View {
-    let label: String
-    @Binding var value: Float
-    let range: ClosedRange<Float>
-    let format: String
-    var multiplier: Float = 1
-    let address: EchoelmusicParameterAddress
-    let audioUnit: EchoelmusicAudioUnit
-
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.caption)
-                .frame(width: 60, alignment: .leading)
-
-            Slider(value: $value, in: range)
-                .onChange(of: value) { _, newValue in
-                    audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
-                }
-
-            Text(String(format: format, value * multiplier))
-                .font(.caption.monospacedDigit())
-                .frame(width: 60, alignment: .trailing)
-        }
-    }
-}
-
-/// Reusable section container for parameter groups
-private struct AUParameterSection<Content: View>: View {
-    let title: String
-    let color: Color
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.subheadline.bold())
-                .foregroundColor(color)
-
-            content()
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(color.opacity(0.1))
-        )
-    }
-}
+// MARK: - Shared Components (use AUv3Theme.swift for styling)
 
 // MARK: - TR-808 AUv3 View
 
