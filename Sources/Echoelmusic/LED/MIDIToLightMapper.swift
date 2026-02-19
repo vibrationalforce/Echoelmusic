@@ -521,6 +521,38 @@ public class MIDIToLightMapper: ObservableObject {
         updateFromOctaveColor(r: rgb.r, g: rgb.g, b: rgb.b, coherence: Float(coherence))
     }
 
+    // MARK: - NeuroSpiritual + Circadian Overlays
+
+    /// Blend an overlay color from NeuroSpiritualEngine (polyvagal-state-driven)
+    /// Weight controls how much the overlay influences the current color (0-1)
+    func blendOverlayColor(r: Float, g: Float, b: Float, weight: Float) {
+        let w = max(0, min(1, weight))
+        let invW = 1.0 - w
+        // Blend into current DMX universe strip channels
+        for i in stride(from: 0, to: min(dmxUniverse.count, 512), by: 3) {
+            dmxUniverse[i]     = UInt8(Float(dmxUniverse[i]) * invW + r * 255 * w)
+            dmxUniverse[i + 1] = UInt8(Float(dmxUniverse[i + 1]) * invW + g * 255 * w)
+            dmxUniverse[i + 2] = UInt8(Float(dmxUniverse[i + 2]) * invW + b * 255 * w)
+        }
+    }
+
+    /// Apply circadian rhythm overlay — adjusts color temperature and brightness
+    func applyCircadianOverlay(colorTemperature: Float, brightness: Float) {
+        // Map color temperature (2700K warm → 6500K cool) to RGB shift
+        let warmth = max(0, min(1, (6500 - colorTemperature) / 3800))  // 1=warm, 0=cool
+        let dimFactor = max(0.3, min(1.0, brightness))
+
+        // Apply subtle warm/cool shift to all channels
+        for i in stride(from: 0, to: min(dmxUniverse.count, 512), by: 3) {
+            let r = Float(dmxUniverse[i]) * dimFactor * (1.0 + warmth * 0.1)
+            let g = Float(dmxUniverse[i + 1]) * dimFactor
+            let b = Float(dmxUniverse[i + 2]) * dimFactor * (1.0 - warmth * 0.1)
+            dmxUniverse[i]     = UInt8(max(0, min(255, r)))
+            dmxUniverse[i + 1] = UInt8(max(0, min(255, g)))
+            dmxUniverse[i + 2] = UInt8(max(0, min(255, b)))
+        }
+    }
+
     /// Extract RGB components from SwiftUI Color (platform-agnostic)
     private func extractRGB(from color: Color) -> (r: Float, g: Float, b: Float) {
         #if canImport(UIKit)

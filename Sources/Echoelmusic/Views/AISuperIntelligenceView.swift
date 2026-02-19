@@ -1036,7 +1036,7 @@ class AISuperIntelligenceViewModel: ObservableObject {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         history.insert(AIHistoryItem(action: action, icon: icon, timestamp: formatter.string(from: Date())), at: 0)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.isProcessing = false }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.isProcessing = false }
     }
 
     private func setOutput(_ title: String, _ description: String, _ actions: [String]) {

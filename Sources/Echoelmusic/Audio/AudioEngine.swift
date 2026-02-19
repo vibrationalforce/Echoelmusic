@@ -486,7 +486,7 @@ public class AudioEngine: ObservableObject {
         // Search in built-in presets first
         let allPresets = BuiltInPresets.all
 
-        guard let preset = allPresets.first(where: { $0.name.lowercased() == named.lowercased() || $0.id == named }) else {
+        guard let preset = allPresets.first(where: { $0.name.caseInsensitiveCompare(named) == .orderedSame || $0.id == named }) else {
             log.audio("⚠️  Preset not found: \(named)", level: .warning)
             return false
         }

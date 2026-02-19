@@ -532,8 +532,9 @@ struct BreathingGuideView: View {
 
     private func startBreathingCycle() {
         // 4-4-4-4 Box Breathing
-        Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { _ in
-            Task { @MainActor in
+        Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 switch breathPhase {
                 case .inhale:
                     breathPhase = .hold1

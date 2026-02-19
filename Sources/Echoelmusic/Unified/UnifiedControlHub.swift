@@ -72,6 +72,10 @@ public class UnifiedControlHub: ObservableObject {
     // Phase λ∞: Lambda Mode Engine
     private var lambdaModeEngine: LambdaModeEngine?
 
+    // Phase λ∞: NeuroSpiritual + Circadian (consciousness-driven audio/light)
+    private let neuroSpiritualEngine = NeuroSpiritualEngine.shared
+    private let circadianEngine = CircadianRhythmEngine.shared
+
     // Phase 10000+: Ultimate Hardware Ecosystem Integration
     private var hardwareEcosystem: HardwareEcosystem?
     private var crossPlatformSessionManager: CrossPlatformSessionManager?
@@ -372,10 +376,12 @@ public class UnifiedControlHub: ObservableObject {
         Log.info("PhysicalAI connected to ControlHub", category: .system)
     }
 
-    /// Handle bio signal updates from HealthKit — bridges to PhysicalAI
+    /// Handle bio signal updates from HealthKit — bridges to PhysicalAI + NeuroSpiritual
     private func handleBioSignalUpdate() {
+        guard let healthKit = healthKitEngine else { return }
+
         // Bridge real bio data to PhysicalAI sensor pipeline
-        if let healthKit = healthKitEngine, let physicalAI = physicalAIEngine {
+        if let physicalAI = physicalAIEngine {
             let reading = SensorReading(
                 source: .iPhone,
                 heartRate: Float(healthKit.heartRate),
@@ -383,6 +389,14 @@ public class UnifiedControlHub: ObservableObject {
             )
             physicalAI.processSensorData(reading)
         }
+
+        // Feed NeuroSpiritualEngine for consciousness-state-driven audio/light
+        neuroSpiritualEngine.updateBiometrics(
+            heartRate: healthKit.heartRate,
+            hrvSDNN: healthKit.hrvSDNN,
+            hrvRMSSD: healthKit.hrvSDNN,  // Approximate RMSSD from SDNN
+            coherence: healthKit.coherence
+        )
     }
 
     /// Enable MIDI 2.0 + MPE output
@@ -890,6 +904,9 @@ public class UnifiedControlHub: ObservableObject {
 
         // HealthKit monitoring already started in enableBiometricMonitoring()
 
+        // Start NeuroSpiritual session for consciousness-state-driven adaptation
+        neuroSpiritualEngine.startSession()
+
         // Start control loop
         startControlLoop()
     }
@@ -1371,6 +1388,25 @@ public class UnifiedControlHub: ObservableObject {
                 // Legacy: Simple hue-based mapping
                 lighting.updateBioReactive(bioData)
             }
+        }
+
+        // NeuroSpiritual polyvagal light modulation — blend consciousness-driven color
+        let neuroColor = neuroSpiritualEngine.getOptimalLightColor()
+        let neuroWeight = Float(neuroSpiritualEngine.overallCoherence) * 0.3  // 30% max influence
+        if let lighting = midiToLightMapper, neuroWeight > 0.05 {
+            lighting.blendOverlayColor(r: neuroColor.r, g: neuroColor.g, b: neuroColor.b, weight: neuroWeight)
+        }
+
+        // Circadian rhythm — adapt light temperature to time of day
+        let circadianLight = circadianEngine.getCurrentLightSettings()
+        if let lighting = midiToLightMapper {
+            // Blend circadian color at 20% influence, scale by circadian intensity
+            lighting.blendOverlayColor(
+                r: circadianLight.color.r,
+                g: circadianLight.color.g,
+                b: circadianLight.color.b,
+                weight: 0.2 * circadianLight.intensity
+            )
         }
 
         // Update ILDA Laser with octave-based hue

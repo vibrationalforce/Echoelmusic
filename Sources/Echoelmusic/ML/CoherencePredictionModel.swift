@@ -490,7 +490,11 @@ public final class CoherenceStatePredictor {
         public let timeToTransition: TimeInterval
 
         public var isImproving: Bool {
-            CoherenceState.allCases.firstIndex(of: to)! > CoherenceState.allCases.firstIndex(of: from)!
+            guard let toIndex = CoherenceState.allCases.firstIndex(of: to),
+                  let fromIndex = CoherenceState.allCases.firstIndex(of: from) else {
+                return false
+            }
+            return toIndex > fromIndex
         }
     }
 }

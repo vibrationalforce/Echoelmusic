@@ -616,7 +616,8 @@ struct ContentView: View {
                 microphoneManager.requestPermission()
 
                 // Check again after a delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    guard let self else { return }
                     if !microphoneManager.hasPermission {
                         showPermissionAlert = true
                     }

@@ -104,7 +104,8 @@ class LoopEngine: ObservableObject {
     private let timerQueue = DispatchQueue(label: "com.echoelmusic.loopengine.timer", qos: .userInteractive)
 
     /// Current loop start time
-    private var loopStartTime: Date?
+    private var loopStartTime: CFTimeInterval = 0
+    private var loopStartTimeIsSet: Bool = false
 
     /// Recording buffer
     private var recordingBuffer: AVAudioPCMBuffer?
@@ -144,7 +145,8 @@ class LoopEngine: ObservableObject {
 
         loops.append(loop)
         isRecordingLoop = true
-        loopStartTime = Date()
+        loopStartTime = CACurrentMediaTime()
+        loopStartTimeIsSet = true
 
         log.audio("🔴 Started loop recording: \(loop.name) (\(bars) bars)")
     }
@@ -156,10 +158,10 @@ class LoopEngine: ObservableObject {
         isRecordingLoop = false
 
         // Calculate actual duration
-        if let startTime = loopStartTime,
+        if loopStartTimeIsSet,
            let lastLoopIndex = loops.indices.last {
 
-            let duration = Date().timeIntervalSince(startTime)
+            let duration = CACurrentMediaTime() - loopStartTime
 
             // Quantize to nearest bar if enabled
             let barDuration = barDurationSeconds()
@@ -172,7 +174,7 @@ class LoopEngine: ObservableObject {
             log.audio("⏹️ Stopped loop recording: \(quantizedDuration)s")
         }
 
-        loopStartTime = nil
+        loopStartTimeIsSet = false
     }
 
 
@@ -185,7 +187,8 @@ class LoopEngine: ObservableObject {
 
         isOverdubbing = true
         overdubLoopID = loopID
-        loopStartTime = Date()
+        loopStartTime = CACurrentMediaTime()
+        loopStartTimeIsSet = true
 
         // Start playback if not already playing
         if !isPlayingLoops {
@@ -218,7 +221,7 @@ class LoopEngine: ObservableObject {
         loops.append(newLoop)
 
         overdubLoopID = nil
-        loopStartTime = nil
+        loopStartTimeIsSet = false
 
         log.audio("⏹️ Stopped overdub, created: \(overdubName)")
     }
@@ -229,7 +232,7 @@ class LoopEngine: ObservableObject {
 
         isOverdubbing = false
         overdubLoopID = nil
-        loopStartTime = nil
+        loopStartTimeIsSet = false
 
         log.audio("❌ Cancelled overdub", level: .error)
     }
@@ -242,7 +245,8 @@ class LoopEngine: ObservableObject {
         guard !isPlayingLoops else { return }
 
         isPlayingLoops = true
-        loopStartTime = Date()
+        loopStartTime = CACurrentMediaTime()
+        loopStartTimeIsSet = true
 
         // Start position timer
         startTimer()
@@ -351,8 +355,8 @@ class LoopEngine: ObservableObject {
         let beatDuration = beatDurationSeconds()
         let beatsPerBar = Double(timeSignature.numerator)
 
-        if let startTime = loopStartTime {
-            let elapsed = Date().timeIntervalSince(startTime)
+        if loopStartTimeIsSet {
+            let elapsed = CACurrentMediaTime() - loopStartTime
             let totalBeats = Int(elapsed / beatDuration)
             return totalBeats % Int(beatsPerBar)
         }
@@ -384,7 +388,7 @@ class LoopEngine: ObservableObject {
         let newTimer = DispatchSource.makeTimerSource(flags: .strict, queue: timerQueue)
         newTimer.schedule(deadline: .now(), repeating: .milliseconds(16), leeway: .milliseconds(1))
         newTimer.setEventHandler { [weak self] in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.updatePosition()
             }
         }
@@ -400,12 +404,12 @@ class LoopEngine: ObservableObject {
 
     /// Update loop position
     private func updatePosition() {
-        guard isPlayingLoops, let startTime = loopStartTime else {
+        guard isPlayingLoops, loopStartTimeIsSet else {
             loopPosition = 0.0
             return
         }
 
-        let elapsed = Date().timeIntervalSince(startTime)
+        let elapsed = CACurrentMediaTime() - loopStartTime
         let longestLoop = loops.map { $0.duration }.max() ?? 1.0
 
         if longestLoop > 0 {
