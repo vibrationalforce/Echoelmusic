@@ -671,8 +671,9 @@ public class Echoboard: ObservableObject {
         state.hrvMs = hrvMs
         state.coherence = coherence
 
-        // Check automation triggers
-        for automation in activeAutomations {
+        // Snapshot automations to prevent modification during iteration
+        let automationsSnapshot = activeAutomations
+        for automation in automationsSnapshot {
             switch automation.trigger {
             case .hrvThreshold(let above, let below):
                 if let a = above, hrvMs > a { Task { await executeAutomation(automation) } }

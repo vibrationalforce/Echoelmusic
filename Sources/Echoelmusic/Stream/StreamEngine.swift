@@ -314,22 +314,22 @@ public class StreamEngine: ObservableObject {
             return
         }
 
-        // Send to all active streams
-        for (destination, client) in rtmpClients {
-            Task {
+        // Send to all active streams — snapshot clients to avoid concurrent mutation
+        let clientsSnapshot = rtmpClients
+        for (destination, client) in clientsSnapshot {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 do {
                     try await client.sendFrame(encodedData)
 
-                    // Update status
                     if var status = self.activeStreams[destination] {
                         status.framesSent += 1
                         status.bytesTransferred += Int64(encodedData.count)
                         self.activeStreams[destination] = status
                     }
                 } catch {
-                    log.streaming("❌ StreamEngine: Failed to send frame to \(destination.rawValue) - \(error)", level: .error)
+                    log.streaming("❌ StreamEngine: Frame send failed to \(destination.rawValue)", level: .error)
 
-                    // Update status
                     if var status = self.activeStreams[destination] {
                         status.error = error
                         self.activeStreams[destination] = status
