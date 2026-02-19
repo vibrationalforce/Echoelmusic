@@ -272,7 +272,8 @@ public class StreamEngine: ObservableObject {
         )
         #else
         // macOS: Use CVDisplayLink or Timer
-        let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / Double(frameRate), repeats: true) { [weak self] _ in
+        captureTimer?.invalidate()
+        captureTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / Double(frameRate), repeats: true) { [weak self] _ in
             self?.captureFrame()
         }
         #endif
@@ -281,6 +282,8 @@ public class StreamEngine: ObservableObject {
     private func stopCaptureLoop() {
         displayLink?.invalidate()
         displayLink = nil
+        captureTimer?.invalidate()
+        captureTimer = nil
     }
 
     @objc private func captureFrame() {

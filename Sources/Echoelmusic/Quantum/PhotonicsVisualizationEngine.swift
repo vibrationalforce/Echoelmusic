@@ -91,6 +91,7 @@ public class PhotonicsVisualizationEngine: ObservableObject {
     private weak var quantumEmulator: QuantumLightEmulator?
     #endif
     private var displayLink: CADisplayLink?
+    private var renderTimer: Timer?
     private var lastFrameTime: CFTimeInterval = 0
     private var frameBuffer: [[SIMD4<Float>]] = []
     private var previousFrame: [[SIMD4<Float>]] = []
@@ -234,8 +235,9 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         displayLink?.add(to: .main, forMode: .common)
         #else
         // macOS: Use timer
-        Timer.scheduledTimer(withTimeInterval: 1.0 / configuration.targetFrameRate, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+        renderTimer?.invalidate()
+        renderTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / configuration.targetFrameRate, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.renderFrame()
             }
         }

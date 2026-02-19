@@ -497,6 +497,7 @@ struct ActiveSessionView: View {
 struct BreathingGuideView: View {
     @State private var breathPhase: BreathPhase = .inhale
     @State private var scale: CGFloat = 0.6
+    @State private var breathingTimer: Timer?
 
     enum BreathPhase: String {
         case inhale = "Einatmen"
@@ -531,7 +532,8 @@ struct BreathingGuideView: View {
 
     private func startBreathingCycle() {
         // 4-4-4-4 Box Breathing
-        Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+        breathingTimer?.invalidate()
+        breathingTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 switch self.breathPhase {

@@ -28,6 +28,8 @@ class TeamCollaborationHub: ObservableObject {
 
     // MARK: - Wellness
 
+    private var wellnessTimer: Timer?
+
     @Published private(set) var teamWellnessScore: Double = 0.8
     @Published private(set) var wellnessAlerts: [WellnessNotification] = []
 
@@ -260,8 +262,9 @@ class TeamCollaborationHub: ObservableObject {
 
     private func startWellnessMonitoring() {
         // Monitor team wellness metrics
-        Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+        wellnessTimer?.invalidate()
+        wellnessTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.checkTeamWellness()
             }
         }
