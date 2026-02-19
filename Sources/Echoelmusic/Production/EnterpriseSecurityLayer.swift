@@ -524,15 +524,15 @@ public final class CertificatePinning: Sendable {
 
         return URLSession(
             configuration: config,
-            delegate: CertificatePinningDelegate.shared,
+            delegate: EnterpriseCertificatePinningDelegate.shared,
             delegateQueue: nil
         )
     }
 }
 
-/// URLSession delegate for certificate pinning
-public final class CertificatePinningDelegate: NSObject, URLSessionDelegate, Sendable {
-    public static let shared = CertificatePinningDelegate()
+/// URLSession delegate for enterprise certificate pinning
+public final class EnterpriseCertificatePinningDelegate: NSObject, URLSessionDelegate, Sendable {
+    public static let shared = EnterpriseCertificatePinningDelegate()
 
     private override init() { super.init() }
 

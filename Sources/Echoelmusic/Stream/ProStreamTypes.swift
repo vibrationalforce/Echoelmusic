@@ -781,7 +781,7 @@ public struct ReplayBuffer: Sendable {
         let fileName = "Replay_\(timestamp).\(format.rawValue.lowercased())"
         let url = URL(fileURLWithPath: outputPath).appendingPathComponent(fileName)
         lastSavedURL = url
-        ProfessionalLogger.shared.log(
+        log.log(
             .info,
             category: .streaming,
             "Replay saved to \(url.lastPathComponent)"

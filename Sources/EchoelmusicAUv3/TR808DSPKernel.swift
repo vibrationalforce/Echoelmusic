@@ -56,6 +56,7 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
     private var voices: [Voice] = Array(repeating: Voice(), count: 8)
     private let maxVoices = 8
     private var currentSample: Int64 = 0
+    private var pitchBendOffset: Float = 0.0
 
     // MARK: - Initialization
 
@@ -362,8 +363,9 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
 
     private func handlePitchBend(value: Int) {
         // Pitch bend affects all voices
-        // Range: ±2 semitones by default
-        _ = Float(value) / 8192.0 * 2.0
+        // Range: +/-2 semitones by default
+        let bendSemitones = Float(value) / 8192.0 * 2.0
+        pitchBendOffset = bendSemitones
     }
 
     // MARK: - Voice Rendering
@@ -411,7 +413,7 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
             }
 
             // Calculate frequency
-            let baseFreq = 440.0 * pow(2.0, (Float(voices[voiceIndex].midiNote) - 69.0) / 12.0)
+            let baseFreq = 440.0 * pow(2.0, (Float(voices[voiceIndex].midiNote) - 69.0 + pitchBendOffset) / 12.0)
             let freq = baseFreq * pitchMultiplier
 
             // Phase increment

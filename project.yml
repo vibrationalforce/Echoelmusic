@@ -159,17 +159,19 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
-    # Note: iOS AUv3 is integrated into the main app (works as both host and plugin)
-    # No separate extension needed - same approach as macOS
-    # Dependencies temporarily disabled for initial TestFlight build
+    dependencies:
+      - target: EchoelmusicAUv3
+        embed: true
+      - target: EchoelmusicNotificationService
+        embed: true
+    # Note: Widgets and Clip dependencies temporarily disabled for initial TestFlight build
     # Re-enable after registering App IDs in Developer Portal:
     #   - com.echoelmusic.app.widgets
     #   - com.echoelmusic.app.clip
-    # dependencies:
-    #   - target: EchoelmusicWidgets
-    #     embed: true
-    #   - target: EchoelmusicClip
-    #     embed: false
+    # - target: EchoelmusicWidgets
+    #   embed: true
+    # - target: EchoelmusicClip
+    #   embed: false
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -305,7 +307,7 @@ targets:
                 type: aumi
                 version: 1
           NSExtensionPointIdentifier: com.apple.AudioUnit-UI
-          NSExtensionPrincipalClass: EchoelmusicAudioUnitViewController
+          NSExtensionPrincipalClass: EchoelmusicAUv3ViewController
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
@@ -326,6 +328,179 @@ targets:
       - framework: AVFoundation.framework
       - framework: CoreAudioKit.framework
       - framework: Accelerate.framework
+
+  # ===========================================================================
+  # iOS AUv3 Audio Unit Extension
+  # ===========================================================================
+  # Required for AUv3 plugins to appear in third-party hosts (GarageBand, AUM,
+  # Cubasis, etc.) on iPhone and iPad. Without this extension target, the AUv3
+  # plugins only work within the main Echoelmusic app.
+  EchoelmusicAUv3:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/EchoelmusicAUv3
+        type: group
+      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
+        type: file
+    info:
+      path: Sources/EchoelmusicAUv3/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic Plugins"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MinimumOSVersion: "15.0"
+        NSExtension:
+          NSExtensionAttributes:
+            AudioComponents:
+              - description: "Echoelmusic EchoelSynth — Bio-Reactive Synthesis Engine"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelSynth"
+                sandboxSafe: true
+                subtype: Esyn
+                tags: [Synth, Generator, Bio-Reactive]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic EchoelBio — Bio-Reactive AI Music Generator"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelBio"
+                sandboxSafe: true
+                subtype: Ebio
+                tags: [Synth, Generator, AI]
+                type: aumu
+                version: 1
+              - description: "Echoelmusic EchoelFX — Effects Chain and Analog Emulations"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelFX"
+                sandboxSafe: true
+                subtype: Eefx
+                tags: [Effect, EQ, Dynamics]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelMix — Mixer Bus Processor and Spatial Audio"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelMix"
+                sandboxSafe: true
+                subtype: Emix
+                tags: [Effect, Mixer, Spatial]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelField — Audio-Reactive Visual Engine"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelField"
+                sandboxSafe: true
+                subtype: Efld
+                tags: [Effect, Analyzer, Visual]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelMind — On-Device AI Audio Intelligence"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelMind"
+                sandboxSafe: true
+                subtype: Emnd
+                tags: [Effect, AI, Separator]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelSeq — Bio-Reactive Step Sequencer"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelSeq"
+                sandboxSafe: true
+                subtype: Eseq
+                tags: [MIDI, Sequencer, Generator]
+                type: aumi
+                version: 1
+              - description: "Echoelmusic EchoelMIDI — MIDI 2.0 + MPE Processor"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelMIDI"
+                sandboxSafe: true
+                subtype: Emid
+                tags: [MIDI, MPE, Processor]
+                type: aumi
+                version: 1
+              - description: "Echoelmusic EchoelBeam — Audio-to-Lighting DMX Bridge"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelBeam"
+                sandboxSafe: true
+                subtype: Ebem
+                tags: [MIDI, Lighting, DMX]
+                type: aumi
+                version: 1
+              - description: "Echoelmusic EchoelNet — Network Protocol Bridge (OSC, MSC, Dante)"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelNet"
+                sandboxSafe: true
+                subtype: Enet
+                tags: [MIDI, Network, OSC]
+                type: aumi
+                version: 1
+          NSExtensionPointIdentifier: com.apple.AudioUnit-UI
+          NSExtensionPrincipalClass: EchoelmusicAUv3ViewController
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicAUv3
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
+        INFOPLIST_FILE: Sources/EchoelmusicAUv3/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicAUv3.entitlements
+        DEVELOPMENT_TEAM: ""
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
+        SKIP_INSTALL: YES
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+    dependencies:
+      - framework: AudioToolbox.framework
+      - framework: AVFoundation.framework
+      - framework: CoreAudioKit.framework
+      - framework: Accelerate.framework
+
+  # ===========================================================================
+  # iOS Notification Service Extension (Rich Push Notifications)
+  # ===========================================================================
+  # Required for: media attachments, mutable content, silent background pushes.
+  # Without this, push notifications are plain text only.
+  EchoelmusicNotificationService:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/EchoelmusicNotificationService
+        type: group
+    info:
+      path: Sources/EchoelmusicNotificationService/Info.plist
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicNotificationService
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.notification-service
+        INFOPLIST_FILE: Sources/EchoelmusicNotificationService/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
+        SKIP_INSTALL: YES
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+    dependencies:
+      - sdk: UserNotifications.framework
 
   # ===========================================================================
   # watchOS App
@@ -703,6 +878,8 @@ schemes:
     build:
       targets:
         Echoelmusic: all
+        EchoelmusicAUv3: all
+        EchoelmusicNotificationService: all
         # EchoelmusicWidgets: all
         # EchoelmusicClip: all
         EchoelmusicTests: [test]
@@ -803,11 +980,12 @@ schemes:
           randomExecutionOrder: false
 
   # All Platforms Release (for CI)
-  # Note: iOS and macOS AUv3 are integrated into their main apps (no separate targets)
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
+        EchoelmusicAUv3: [archive]
+        EchoelmusicNotificationService: [archive]
         EchoelmusicWidgets: [archive]
         EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]

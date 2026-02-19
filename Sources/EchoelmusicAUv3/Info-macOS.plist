@@ -285,7 +285,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.AudioUnit-UI</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>EchoelmusicAudioUnitViewController</string>
+		<string>EchoelmusicAUv3ViewController</string>
 	</dict>
 </dict>
 </plist>

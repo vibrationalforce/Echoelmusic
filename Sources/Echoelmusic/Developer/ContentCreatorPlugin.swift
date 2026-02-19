@@ -8,7 +8,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
-import Combine
 
 /// A comprehensive plugin for content creators and streamers
 /// Demonstrates: streaming, recording, collaboration, cloudSync capabilities
@@ -27,7 +26,7 @@ public final class ContentCreatorPlugin: EchoelmusicPlugin {
     // MARK: - Configuration
 
     public struct Configuration: Sendable {
-        public var obsWebSocketURL: String = "ws://localhost:4455"
+        public var obsWebSocketURL: String = "wss://localhost:4455"
         public var obsWebSocketPassword: String = ""
         public var enableBioSceneSwitching: Bool = true
         public var enableChatCommands: Bool = true

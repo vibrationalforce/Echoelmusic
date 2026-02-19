@@ -537,7 +537,7 @@ public final class EchoelmusicAPIClient {
 
     // MARK: - Authentication
 
-    public var apiKey: String?
+    public private(set) var apiKey: String?
     public var authToken: String?
 
     // MARK: - Endpoints

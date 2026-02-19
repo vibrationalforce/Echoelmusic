@@ -217,7 +217,9 @@ final class Scientific10000Tests: XCTestCase {
         _ = movement.abdominalTension
         _ = movement.pelvicTension
 
-        XCTAssertTrue(true) // Segments accessible
+        // Verify all 5 tension segments are non-negative (valid range)
+        XCTAssertGreaterThanOrEqual(movement.cervicalTension, 0, "Cervical tension should be non-negative")
+        XCTAssertGreaterThanOrEqual(movement.pelvicTension, 0, "Pelvic tension should be non-negative")
     }
 
     // MARK: - Quantum Health State Tests

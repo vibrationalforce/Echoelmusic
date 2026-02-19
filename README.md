@@ -46,55 +46,51 @@ mkdir build && cd build && cmake .. && cmake --build .   # Desktop
 
 ## Architecture — EchoelToolkit
 
-498 classes consolidated into **12 unified Echoel\* tools**. All connected via **EngineBus** (lock-free pub/sub).
+498 classes consolidated into **10 unified Echoel\* tools + λ∞ Lambda**. All connected via **EngineBus** (lock-free pub/sub).
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────┐
-│                        EchoelCore (120Hz)                                │
+│                     λ∞ LambdaModeEngine (60Hz)                           │
+│              Bio-Reactive Consciousness Orchestrator                      │
 │                              │                                           │
-│   ┌──────────┬──────────┬────┴────┬──────────┬──────────┐               │
-│   │          │          │         │          │          │               │
-│ EchoelSynth EchoelMix EchoelFX EchoelSeq EchoelMIDI  │               │
-│ (synthesis) (mixing)  (effects) (sequencer)(control)   │               │
-│   │          │          │         │          │          │               │
-│   ├──────────┼──────────┼─────────┼──────────┼──────────┤               │
-│   │          │          │         │          │          │               │
-│ EchoelBio EchoelVis EchoelVid EchoelLux EchoelStage │               │
-│ (biometrics)(visuals) (video)  (lighting) (output)    │               │
-│   │          │          │         │          │          │               │
-│   └──────────┴──────────┴─────────┴──────────┴──────────┘               │
-│                              │                                           │
-│                         EchoelNet                                        │
-│                    (collaboration/sync)                                   │
-│   │          │          │         │          │          │               │
-│   └──────────┴──────────┴─────────┴──────────┴──────────┘               │
-│                              │                                           │
-│                    EchoelAI + Echoela                                    │
-│              (intelligence)  (AI assistant)                              │
+│   ┌──────────┬──────────┬────┴────┬──────────┐                          │
+│   │          │          │         │          │                          │
+│ EchoelSynth EchoelMix EchoelFX EchoelSeq EchoelMIDI                  │
+│ (5 DSP      (ProMix)  (28 DSP  (timer-   (CoreMIDI                   │
+│  engines)             procs)   based)    + MPE)                       │
+│   │          │          │         │          │                          │
+│   ├──────────┼──────────┼─────────┼──────────┤                          │
+│   │          │          │         │          │                          │
+│ EchoelBio  EchoelField     EchoelBeam      EchoelNet                  │
+│ (EEG+Neuro (Metal+       (Dante+NDI+     (17 protocols               │
+│  +Polyvagal) Hilbert)     sACN+laser)     +collab+cloud)             │
+│   │          │              │              │                            │
+│   └──────────┴──────────────┴──────────────┘                            │
+│                        EchoelMind                                        │
+│    (LLM + AIComposer + StemSep + AudioToMIDI + QuantumIntelligence)    │
 └───────────────────────────────────────────────────────────────────────────┘
 
 Communication: EngineBus — lock-free publish/subscribe/request
 Bio-Reactivity: All tools react to BioSnapshot via bus
+Lambda: Consciousness state machine drives all tools through bus messages
 ```
 
-### The 12 Tools
+### The 10 Tools + λ∞ Lambda
 
 | Tool | Purpose | Key Capabilities |
 |------|---------|-----------------|
 | **EchoelSynth** | All synthesis | DDSP (vDSP vectorized, 12 bio-mappings, spectral morphing, timbre transfer), Modal, Cellular, Quantum, Sampler, EchoelBeat, 45+ presets |
-| **EchoelMix** | Mixing & session | Console, metering, BPM sync, multi-track recording |
-| **EchoelFX** | Effects chain | 20+ types: EQ, Comp, Reverb, Delay, Drive, Mod, Limiter, Neve/SSL emulation |
-| **EchoelSeq** | Sequencer | Step sequencer, patterns, automation, scripting |
-| **EchoelMIDI** | MIDI/MPE control | MIDI 2.0, MPE, touch instruments, routing |
+| **EchoelMix** | Mixing & session | ProMixEngine + ProSessionEngine, console, metering, BPM sync, multi-track recording, clip launching, DJ crossfader |
+| **EchoelFX** | Effects chain | 28 DSP processors: EQ, Comp, Reverb, Delay, Drive, Mod, Limiter, Neve/SSL emulation — all with full parameter passing |
+| **EchoelSeq** | Sequencer | Step sequencer, patterns, automation, Lambda scripting |
+| **EchoelMIDI** | MIDI/MPE control | MIDI 2.0, MPE, touch instruments, audio-to-MIDI, routing |
 | **EchoelBio** | Biometrics hub | HRV, HR, breathing, face, gaze, hands, motion, EEG. Rausch-inspired bio-event graph + signal deconvolution |
-| **EchoelVis** | Visuals | 8 modes (particles, cymatics, geometry, spectrum, 3D, 360, waveform, Hilbert), Metal 120fps |
-| **EchoelVid** | Video & streaming | Capture, edit, stream, multi-cam, chroma key, ProRes |
-| **EchoelLux** | Lighting | DMX 512, Art-Net, lasers, smart home, cue system |
-| **EchoelStage** | Output routing | External displays, smart glasses, AirPlay, projection mapping, multi-screen, audience view |
-| **EchoelNet** | Collaboration | SharePlay, Dante, EchoelSync, 1000+ collab, cloud sync, <10ms |
-| **EchoelAI** | Intelligence | CoreML, LLM, stem separation, composition, generative AI |
+| **EchoelField** | Visuals & video | 8 visual modes (particles, cymatics, Hilbert, 360), Metal 120fps, NLE video editor, multi-cam, ProRes, 3D avatars, procedural worlds |
+| **EchoelBeam** | Lighting & stage | DMX 512, Art-Net, sACN, ILDA lasers, projection mapping, Dante/NDI, external displays, VR/XR, multi-screen output |
+| **EchoelNet** | Collaboration | 17 protocols: SharePlay, Dante, EchoelSync, OSC, MSC, Mackie, cloud sync, dynamic NFTs |
+| **EchoelMind** | Intelligence | CoreML, Apple Foundation Models, LLM, stem separation, AI composition, audio-to-MIDI, voice control, constitutional AI |
 
-Plus **Echoela** — the AI assistant with 11 skills and constitutional AI.
+Plus **λ∞ Lambda** — bio-reactive consciousness orchestrator. Drives all tools through EngineBus state transitions (studio, live, meditation, video, DJ, collaboration, immersive, research modes).
 
 ### Bio-Signal Processing (Rausch-inspired)
 
@@ -121,6 +117,31 @@ Harmonic+Noise synthesizer with 12 bio-reactive parameter mappings:
 | Coherence trend | Spectral shape morphing |
 
 Additional: vDSP vectorized rendering, exponential ADSR, spectral morphing between 8 shapes, timbre transfer with 6 instrument profiles (violin, flute, trumpet, cello, clarinet, oboe).
+
+### 5 Pro Engines
+
+| Engine | Purpose |
+|--------|---------|
+| **ProMixEngine** | Professional mixing console with unlimited channel strips, bus routing, insert/send slots |
+| **ProSessionEngine** | Session management, multi-track recording, punch-in, undo history, version snapshots |
+| **ProColorGrading** | Professional color grading with LUTs, curves, color wheels, bio-reactive color shifts |
+| **ProCueSystem** | Cue list with timed triggers, crossfades, follow cues, MIDI/timecode sync |
+| **ProStreamEngine** | Multi-platform streaming (RTMP, SRT), scene management, transitions, overlays |
+
+### λ∞ Lambda — Consciousness Orchestrator
+
+Bio-reactive state machine that drives all 10 tools through 8 operating modes:
+
+| Mode | Behavior |
+|------|----------|
+| **Studio** | Full DAW workflow — all tools active, recording enabled |
+| **Live** | Low-latency performance — audio priority, visual sync, cue system |
+| **Meditation** | Bio-focused — coherence tracking, brainwave entrainment, ambient synthesis |
+| **Video** | Video production — NLE editor, multi-cam, color grading, ProRes export |
+| **DJ** | Beat-matched — crossfader, clip launching, tempo sync, lighting chase |
+| **Collaboration** | Multi-user — SharePlay, Dante, EchoelSync, cloud sync |
+| **Immersive** | VR/XR — visionOS spatial audio, volumetric visuals, hand tracking |
+| **Research** | Data capture — full bio-signal logging, EEG analysis, wellness tracking |
 
 ---
 
@@ -164,7 +185,7 @@ Additional: vDSP vectorized rendering, exponential ADSR, spectral morphing betwe
 ```
 Sources/Echoelmusic/
 ├── Core/
-│   ├── EchoelToolkit.swift          # Master registry (12 tools)
+│   ├── EchoelToolkit.swift          # Master registry (10 tools + λ∞ Lambda)
 │   ├── EngineConsolidation.swift    # Hub protocols, EngineBus, BioSnapshot
 │   └── EchoelCore.swift             # Core DSP node graph
 ├── DSP/
@@ -176,12 +197,13 @@ Sources/Echoelmusic/
 ├── Audio/                            # Audio engine, effects, spatial
 ├── Biofeedback/                      # HealthKit, EEG, bio mapping
 ├── Biophysical/                      # Evidence-based wellness
-├── Echoela/                          # AI assistant
-├── Visual/                           # Metal rendering, shaders
-├── Video/                            # Camera, streaming, editing
+├── Visual/                           # Metal rendering, shaders (EchoelField)
+├── Video/                            # Camera, streaming, editing (EchoelField)
 ├── MIDI/                             # MIDI 2.0, MPE
-├── LED/                              # DMX, Art-Net, Push 3
-├── Stage/                            # External display pipeline, Dante, NDI, EchoelSync
+├── LED/                              # DMX, Art-Net, Push 3 (EchoelBeam)
+├── Stage/                            # External display pipeline, Dante, NDI, EchoelSync (EchoelBeam)
+├── Lambda/                           # λ∞ Consciousness orchestrator
+├── AI/                               # Intelligence engines (EchoelMind)
 ├── Platforms/                        # watchOS, tvOS, visionOS
 └── ...                               # 70+ flat sibling directories
 
@@ -263,7 +285,7 @@ Address: 192.168.1.100 | Port: 6454 | Universe: 512 channels
 
 ## License
 
-Copyright 2025 Echoelmusic Studio. All rights reserved.
+Copyright 2025-2026 Echoelmusic Studio. All rights reserved.
 
 ---
 

@@ -8,7 +8,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
-import Combine
 
 /// A comprehensive plugin for enhanced accessibility features
 /// Demonstrates: gestureInput, voiceInput, bioProcessing capabilities

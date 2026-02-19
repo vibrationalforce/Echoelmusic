@@ -301,9 +301,9 @@
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.AudioUnit-UI</string>
         <key>NSExtensionPrincipalClass</key>
-        <string>EchoelmusicAudioUnitViewController</string>
+        <string>EchoelmusicAUv3ViewController</string>
     </dict>
     <key>MinimumOSVersion</key>
-    <string>16.0</string>
+    <string>15.0</string>
 </dict>
 </plist>

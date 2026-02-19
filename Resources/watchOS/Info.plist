@@ -35,10 +35,13 @@
 	<string>Echoelmusic uses heart rate and HRV data for real-time bio-reactive audio feedback and coherence training.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Echoelmusic saves your meditation and breathing sessions to HealthKit.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Echoelmusic connects to Bluetooth audio devices and MIDI controllers for bio-reactive music.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
 		<string>workout-processing</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>CLKComplicationSupportedFamilies</key>
 	<array>

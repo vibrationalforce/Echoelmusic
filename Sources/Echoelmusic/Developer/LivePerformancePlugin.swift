@@ -8,7 +8,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
-import Combine
 
 /// A comprehensive plugin for live musicians and performers
 /// Demonstrates: midiInput, midiOutput, dmxOutput, recording capabilities

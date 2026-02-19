@@ -1,6 +1,6 @@
 {
-  "version": "10.0.0",
-  "build": "2026-02-18",
+  "version": "10.1.0",
+  "build": "2026-02-19",
   "features": {
     "monochromeDesign": true,
     "pureBlackBackground": true,
@@ -23,10 +23,11 @@
     "faqStructuredData": true,
     "faqKeyboardAccessibility": true,
     "wcag22AAA": true,
-    "25UnifiedTools": true
+    "10UnifiedTools": true
   },
   "changelog": [
-    "v10.0.0: 25 unified Echoel* tools — 6 new engines (EchoelTranslate, EchoelMind, EchoelAvatar, EchoelWorld, EchoelMint, EchoelConnect). Translation (20+ languages), Apple Foundation Models (3B params), 3D avatars (Gaussian Splatting), procedural worlds (6 biomes, Godot 4.6), dynamic NFTs, OSC/MSC/Mackie Control (17 protocols). Echoela upgraded to 25 skills.",
+    "v10.1.0: Fix stale '25 tools' references → 10 unified tools across manifest.json, version.json. Bump cache version, update build date. Website reflects consolidated EchoelToolkit accurately.",
+    "v10.0.0: 25 engines consolidated into 10 unified Echoel* tools — EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelField, EchoelBeam, EchoelNet, EchoelMind. Translation (20+ languages), Apple Foundation Models, 3D avatars (Gaussian Splatting), procedural worlds (6 biomes), dynamic NFTs, OSC/MSC/Mackie Control (17 protocols).",
     "v9.2.0: EchoelStage (12th tool) — external displays, smart glasses, AirPlay, projection, multi-screen, audience view. Dante + EchoelSync added to EchoelNet. Clickable tool-cap descriptions on website. External-Display-Rendering-Pipeline.",
     "v9.1.0: Enhanced DDSP (12 bio-mappings, spectral morphing, timbre transfer), Rausch-inspired bio-signal algorithms (BioEventGraph, HilbertSensorMapper, BioSignalDeconvolver), BioSignalDSP integrated into EchoelBio + EchoelVis, Android EngineBus port, extended BioSnapshot, 56 test suites",
     "v9.0.0: EchoelToolkit — 498 classes consolidated into 12 unified Echoel* tools (EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelVis, EchoelVid, EchoelLux, EchoelStage, EchoelNet, EchoelAI + Echoela). Card-based tools section, updated specs and FAQ.",

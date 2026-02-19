@@ -104,8 +104,10 @@ final class ProSessionEngineTests: XCTestCase {
 
     func testStopAllClips() {
         sut.play()
+        XCTAssertTrue(sut.isPlaying, "Session should be playing after play()")
         sut.stopAllClips()
-        // Should not crash; clips should be stopped
+        // Session transport should still be playing even after stopping all clips
+        XCTAssertTrue(sut.isPlaying, "Transport should remain playing after stopAllClips")
     }
 
     // MARK: - Clip Operations (6 tests)
@@ -113,26 +115,32 @@ final class ProSessionEngineTests: XCTestCase {
     func testLaunchClip() {
         sut.play()
         sut.launchClip(trackIndex: 0, sceneIndex: 0)
-        // Verify clip state changed (or at minimum, no crash)
+        // Verify session is still playing after clip launch
+        XCTAssertTrue(sut.isPlaying, "Session should remain playing after launching clip")
     }
 
     func testLaunchClipOutOfBoundsDoesNotCrash() {
         sut.launchClip(trackIndex: 999, sceneIndex: 999)
+        // Engine should survive out-of-bounds access
+        XCTAssertNotNil(sut, "ProSessionEngine should survive out-of-bounds clip launch")
     }
 
     func testStopClip() {
         sut.play()
         sut.launchClip(trackIndex: 0, sceneIndex: 0)
         sut.stopClip(trackIndex: 0, sceneIndex: 0)
+        XCTAssertTrue(sut.isPlaying, "Transport should remain playing after stopping individual clip")
     }
 
     func testLaunchScene() {
         sut.play()
         sut.launchScene(sceneIndex: 0)
+        XCTAssertTrue(sut.isPlaying, "Transport should remain playing after scene launch")
     }
 
     func testLaunchSceneOutOfBoundsDoesNotCrash() {
         sut.launchScene(sceneIndex: 999)
+        XCTAssertNotNil(sut, "ProSessionEngine should survive out-of-bounds scene launch")
     }
 
     func testStopTrack() {

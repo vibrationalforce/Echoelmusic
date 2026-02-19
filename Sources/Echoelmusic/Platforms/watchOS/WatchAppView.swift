@@ -56,7 +56,7 @@ struct WatchMetricsView: View {
         ScrollView {
             VStack(spacing: 12) {
                 // Heart Rate
-                MetricCard(
+                WatchMetricCard(
                     icon: "heart.fill",
                     value: "\(Int(watchApp.currentMetrics.heartRate))",
                     unit: "BPM",
@@ -64,7 +64,7 @@ struct WatchMetricsView: View {
                 )
 
                 // HRV
-                MetricCard(
+                WatchMetricCard(
                     icon: "waveform.path.ecg",
                     value: String(format: "%.0f", watchApp.currentMetrics.hrv * 100),
                     unit: "HRV",
@@ -194,7 +194,7 @@ struct WatchSettingsView: View {
 
 // MARK: - Components
 
-struct MetricCard: View {
+struct WatchMetricCard: View {
     let icon: String
     let value: String
     let unit: String

@@ -463,12 +463,13 @@ Echoelmusicはバイオメトリクスをライブミュージック、ビジュ
 • Apple Watch統合
 
 シンセサイザーエンジン
-• DDSP — スペクトラルモーフィングによるディープラーニング合成
-• Modal — フィジカルモデリング（弦、膜、共鳴器）
-• Granular — タイムストレッチとテクスチャ生成
-• Wavetable — クラシックな波形
-• FM — バイオリアクティブモジュレーション
-• Subtractive — アナログインスパイアドフィルタリング
+• DDSP — スペクトラルモーフィングによるニューラルオーディオ合成
+• Modal Bank — フィジカルモデリング（弦、膜、共鳴器）
+• Cellular — セルラーオートマトン合成（進化するパターン）
+• Quantum — シュレーディンガー方程式波動関数シンセサイザー
+• Sampler — マルチゾーン・マルチレイヤーサンプラー（128ゾーン、64ボイス）
+• EchoelBeat — アナログドラムマシン＆ベースシンセ（ピッチグライド付き）
+• Breakbeat Chopper — ジャングル/DnBスライスエンジン（パターンシーケンサー付き）
 
 AUv3オーディオユニットプラグイン
 Logic Pro、GarageBand、AUM内で使用可能
@@ -519,7 +520,14 @@ CREACIÓN BIO-REACTIVA
 • Integración con Apple Watch
 
 MOTORES DE SÍNTESIS
-DDSP, Modal, Granular, Wavetable, FM, Subtractive — todos bio-reactivos.
+Siete sintetizadores de software, cada uno respondiendo a la entrada biométrica:
+• DDSP — Síntesis de audio neuronal con morphing espectral
+• Modal Bank — Modelado físico (cuerdas, membranas, resonadores)
+• Cellular — Síntesis de autómatas celulares (patrones evolutivos)
+• Quantum — Sintetizador de función de onda de ecuación de Schrödinger
+• Sampler — Sampler multicapa multizona (128 zonas, 64 voces)
+• EchoelBeat — Drum machine analógica y sintetizador de bajo con pitch glide
+• Breakbeat Chopper — Motor de corte Jungle/DNB con secuenciador de patrones
 
 PLUGINS AUv3
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — funciona en Logic Pro, GarageBand.
@@ -567,7 +575,14 @@ CRÉATION BIO-RÉACTIVE
 • Intégration Apple Watch
 
 MOTEURS DE SYNTHÈSE
-DDSP, Modal, Granulaire, Wavetable, FM, Soustractif — tous bio-réactifs.
+Sept synthétiseurs logiciels, chacun répondant aux entrées biométriques :
+• DDSP — Synthèse audio neuronale avec morphing spectral
+• Modal Bank — Modélisation physique (cordes, membranes, résonateurs)
+• Cellular — Synthèse par automates cellulaires (motifs évolutifs)
+• Quantum — Synthétiseur à fonction d'onde de l'équation de Schrödinger
+• Sampler — Sampler multi-zone multi-couche (128 zones, 64 voix)
+• EchoelBeat — Boîte à rythmes analogique et synthé basse avec pitch glide
+• Breakbeat Chopper — Moteur de découpe Jungle/DNB avec séquenceur de motifs
 
 PLUGINS AUv3
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — fonctionne dans Logic Pro, GarageBand.
@@ -615,7 +630,14 @@ Echoelmusic将您的生物特征转化为实时音乐、视觉效果和灯光。
 • Apple Watch集成
 
 合成器引擎
-DDSP、Modal、Granular、Wavetable、FM、Subtractive — 全部生物反应式。
+七款软件合成器，每款均响应生物特征输入：
+• DDSP — 具有频谱变形的神经音频合成
+• Modal Bank — 物理建模（弦、膜、共鳴器）
+• Cellular — 细胞自动机合成（演化模式）
+• Quantum — 薛定谔方程波函数合成器
+• Sampler — 多区域多层采样器（128区域、64复音）
+• EchoelBeat — 模拟鼓机和低音合成器（含音高滑音）
+• Breakbeat Chopper — Jungle/DnB切片引擎（含模式音序器）
 
 AUv3音频单元插件
 808 Bass、BioComposer、Stem Splitter、MIDI Pro — 可在Logic Pro、GarageBand中使用。
@@ -663,7 +685,14 @@ Echoelmusic은 생체 정보를 라이브 음악, 비주얼, 조명으로 변환
 • Apple Watch 통합
 
 신디사이저 엔진
-DDSP, Modal, Granular, Wavetable, FM, Subtractive — 모두 생체 반응형.
+7개의 소프트웨어 신디사이저, 각각 생체 입력에 반응:
+• DDSP — 스펙트럴 모핑을 갖춘 뉴럴 오디오 합성
+• Modal Bank — 물리 모델링 (현, 막, 공명기)
+• Cellular — 셀룰러 오토마타 합성 (진화하는 패턴)
+• Quantum — 슈뢰딩거 방정식 파동함수 신디사이저
+• Sampler — 멀티존 멀티레이어 샘플러 (128존, 64보이스)
+• EchoelBeat — 아날로그 드럼 머신 & 베이스 신스 (피치 글라이드)
+• Breakbeat Chopper — 정글/DnB 슬라이스 엔진 (패턴 시퀀서)
 
 AUv3 오디오 유닛 플러그인
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — Logic Pro, GarageBand에서 사용 가능.
@@ -711,7 +740,14 @@ CRIAÇÃO BIO-REATIVA
 • Integração Apple Watch
 
 MOTORES DE SÍNTESE
-DDSP, Modal, Granular, Wavetable, FM, Subtractive — todos bio-reativos.
+Sete sintetizadores de software, cada um respondendo à entrada biométrica:
+• DDSP — Síntese de áudio neural com morphing espectral
+• Modal Bank — Modelagem física (cordas, membranas, ressonadores)
+• Cellular — Síntese de autômatos celulares (padrões evolutivos)
+• Quantum — Sintetizador de função de onda da equação de Schrödinger
+• Sampler — Sampler multicamada multizona (128 zonas, 64 vozes)
+• EchoelBeat — Drum machine analógica e sintetizador de baixo com pitch glide
+• Breakbeat Chopper — Motor de corte Jungle/DNB com sequenciador de padrões
 
 PLUGINS AUv3
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — funciona no Logic Pro, GarageBand.
@@ -759,7 +795,14 @@ CREAZIONE BIO-REATTIVA
 • Integrazione Apple Watch
 
 MOTORI DI SINTESI
-DDSP, Modal, Granulare, Wavetable, FM, Sottrattivo — tutti bio-reattivi.
+Sette sintetizzatori software, ognuno reattivo agli input biometrici:
+• DDSP — Sintesi audio neurale con morphing spettrale
+• Modal Bank — Modellazione fisica (corde, membrane, risonatori)
+• Cellular — Sintesi a automi cellulari (pattern evolutivi)
+• Quantum — Sintetizzatore a funzione d'onda dell'equazione di Schrödinger
+• Sampler — Campionatore multizona multistrato (128 zone, 64 voci)
+• EchoelBeat — Drum machine analogica e sintetizzatore bass con pitch glide
+• Breakbeat Chopper — Motore di taglio Jungle/DNB con sequencer di pattern
 
 PLUGIN AUv3
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — funziona in Logic Pro, GarageBand.
@@ -807,7 +850,14 @@ Echoelmusic превращает вашу биометрию в живую му�
 • Интеграция с Apple Watch
 
 СИНТЕЗАТОРНЫЕ ДВИЖКИ
-DDSP, Modal, Granular, Wavetable, FM, Subtractive — все биореактивные.
+Семь программных синтезаторов, каждый реагирует на биометрические данные:
+• DDSP — Нейронный аудиосинтез со спектральным морфингом
+• Modal Bank — Физическое моделирование (струны, мембраны, резонаторы)
+• Cellular — Синтез на клеточных автоматах (эволюционирующие паттерны)
+• Quantum — Синтезатор волновой функции уравнения Шрёдингера
+• Sampler — Многозонный многослойный сэмплер (128 зон, 64 голоса)
+• EchoelBeat — Аналоговая драм-машина и бас-синтезатор с питч-глайдом
+• Breakbeat Chopper — Jungle/DnB слайс-движок с паттерн-секвенсером
 
 ПЛАГИНЫ AUv3
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — работает в Logic Pro, GarageBand.
@@ -855,7 +905,14 @@ Echoelmusic يحول بياناتك الحيوية إلى موسيقى حية و
 • تكامل Apple Watch
 
 محركات التركيب
-DDSP، Modal، Granular، Wavetable، FM، Subtractive — جميعها تفاعلية حيوياً.
+سبعة مُركبات برمجية، كل منها يستجيب للمدخلات الحيوية:
+• DDSP — تركيب صوتي عصبي مع تحويل طيفي
+• Modal Bank — نمذجة فيزيائية (أوتار، أغشية، رنانات)
+• Cellular — تركيب أوتوماتا خلوي (أنماط متطورة)
+• Quantum — مُركب دالة موجية لمعادلة شرودنجر
+• Sampler — عينات متعددة المناطق والطبقات (128 منطقة، 64 صوت)
+• EchoelBeat — آلة إيقاع تناظرية ومُركب باس مع انزلاق النغمة
+• Breakbeat Chopper — محرك تقطيع جنغل/DnB مع مُسلسِل أنماط
 
 إضافات AUv3
 808 Bass، BioComposer، Stem Splitter، MIDI Pro — يعمل في Logic Pro وGarageBand.
@@ -903,7 +960,14 @@ Echoelmusic आपकी बायोमेट्रिक्स को ला�
 • Apple Watch एकीकरण
 
 सिंथेसाइज़र इंजन
-DDSP, Modal, Granular, Wavetable, FM, Subtractive — सभी बायो-रिएक्टिव।
+सात सॉफ्टवेयर सिंथेसाइज़र, प्रत्येक बायोमेट्रिक इनपुट पर प्रतिक्रिया करता है:
+• DDSP — स्पेक्ट्रल मॉर्फिंग के साथ न्यूरल ऑडियो सिंथेसिस
+• Modal Bank — फिजिकल मॉडलिंग (तार, झिल्ली, अनुनादक)
+• Cellular — सेल्युलर ऑटोमेटा सिंथेसिस (विकसित होते पैटर्न)
+• Quantum — श्रोडिंगर समीकरण तरंग फलन सिंथेसाइज़र
+• Sampler — मल्टी-ज़ोन मल्टी-लेयर सैम्पलर (128 ज़ोन, 64 वॉइस)
+• EchoelBeat — एनालॉग ड्रम मशीन और बेस सिंथ (पिच ग्लाइड के साथ)
+• Breakbeat Chopper — जंगल/DnB स्लाइस इंजन (पैटर्न सीक्वेंसर के साथ)
 
 AUv3 प्लगइन
 808 Bass, BioComposer, Stem Splitter, MIDI Pro — Logic Pro, GarageBand में काम करते हैं।
