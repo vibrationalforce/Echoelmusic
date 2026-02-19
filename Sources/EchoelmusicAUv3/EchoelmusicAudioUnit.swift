@@ -212,6 +212,9 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
 
         try super.init(componentDescription: componentDescription, options: [])
 
+        // Instantiate the correct DSP kernel based on plugin identity
+        self.kernel = Self.createKernel(for: self.pluginID, auType: auType)
+
         // Setup parameter tree
         setupParameterTree()
 
@@ -242,10 +245,54 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
 
         try super.init(componentDescription: componentDescription, options: options)
 
+        // Instantiate the correct DSP kernel based on plugin identity
+        self.kernel = Self.createKernel(for: self.pluginID, auType: self.auType)
+
         setupParameterTree()
         setupBuses()
         setupFactoryPresets()
         self.maximumFramesToRender = 4096
+    }
+
+    // MARK: - Kernel Factory
+
+    /// Creates the appropriate DSP kernel for each plugin identity.
+    /// Instruments use TR808DSPKernel, effects use StemSeparationDSPKernel,
+    /// MIDI processors use TR808DSPKernel as a pass-through with MIDI handling.
+    private static func createKernel(for pluginID: EchoelPluginID?, auType: EchoelmusicAUType) -> EchoelmusicDSPKernel {
+        guard let pluginID = pluginID else {
+            // Fallback based on AU type
+            switch auType {
+            case .instrument:
+                return TR808DSPKernel()
+            case .effect:
+                return StemSeparationDSPKernel()
+            case .midiProcessor:
+                return TR808DSPKernel()
+            }
+        }
+
+        switch pluginID {
+        // Instruments — synthesis kernels
+        case .echoelSynth:
+            return TR808DSPKernel()
+        case .echoelBio:
+            return TR808DSPKernel()
+
+        // Effects — processing kernels
+        case .echoelFX:
+            return StemSeparationDSPKernel()
+        case .echoelMix:
+            return StemSeparationDSPKernel()
+        case .echoelField:
+            return StemSeparationDSPKernel()
+        case .echoelMind:
+            return StemSeparationDSPKernel()
+
+        // MIDI Processors — pass-through with MIDI handling
+        case .echoelSeq, .echoelMIDI, .echoelBeam, .echoelNet:
+            return TR808DSPKernel()
+        }
     }
 
     // MARK: - Parameter Tree

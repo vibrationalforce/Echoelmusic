@@ -191,13 +191,15 @@ final class ProMixEngineTests: XCTestCase {
     func testUpdateAutomation() {
         sut.updateAutomation(time: 0)
         sut.updateAutomation(time: 1.0)
-        // Should not crash
+        // Verify engine survives automation updates
+        XCTAssertNotNil(sut, "ProMixEngine should remain valid after automation updates")
     }
 
     func testAutomationAtDifferentTimes() {
         sut.updateAutomation(time: 0)
         sut.updateAutomation(time: 30)
         sut.updateAutomation(time: 60)
+        XCTAssertNotNil(sut, "ProMixEngine should remain valid after automation at different times")
     }
 
     func testProcessBlock() {

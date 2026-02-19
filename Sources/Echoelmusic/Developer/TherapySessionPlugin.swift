@@ -8,7 +8,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
-import Combine
 
 /// A comprehensive plugin for wellness practitioners and therapists
 /// Demonstrates: bioProcessing, hrvAnalysis, recording, cloudSync capabilities

@@ -60,7 +60,7 @@ struct BreakSlice: Identifiable, Equatable {
 // MARK: - Pattern Step
 
 /// A step in a pattern sequence
-struct PatternStep: Identifiable {
+struct ChopperChopperPatternStep: Identifiable {
     let id: UUID
     var sliceIndex: Int?      // nil = rest/silence
     var velocity: Float       // 0-1
@@ -99,8 +99,8 @@ struct PatternStep: Identifiable {
         self.probability = 1.0
     }
 
-    static func rest() -> PatternStep {
-        return PatternStep(sliceIndex: nil, velocity: 0)
+    static func rest() -> ChopperPatternStep {
+        return ChopperPatternStep(sliceIndex: nil, velocity: 0)
     }
 }
 
@@ -110,7 +110,7 @@ struct PatternStep: Identifiable {
 struct ChopPattern: Identifiable {
     let id: UUID
     var name: String
-    var steps: [PatternStep]
+    var steps: [ChopperPatternStep]
     var stepsPerBar: Int = 16
     var swing: Float = 0.0  // 0-100%
     var length: Int         // Number of steps
@@ -120,14 +120,14 @@ struct ChopPattern: Identifiable {
         self.name = name
         self.length = length
         self.steps = (0..<length).map { i in
-            PatternStep(sliceIndex: i % 8)  // Default: cycle through 8 slices
+            ChopperPatternStep(sliceIndex: i % 8)  // Default: cycle through 8 slices
         }
     }
 
     /// Create pattern from slice indices
     static func fromIndices(_ indices: [Int?], name: String = "Custom") -> ChopPattern {
         var pattern = ChopPattern(name: name, length: indices.count)
-        pattern.steps = indices.map { PatternStep(sliceIndex: $0) }
+        pattern.steps = indices.map { ChopperPatternStep(sliceIndex: $0) }
         return pattern
     }
 }
@@ -321,7 +321,7 @@ class BreakbeatChopper: ObservableObject {
         // Randomized
         var randomPattern = ChopPattern(name: "Random", length: 16)
         randomPattern.steps = (0..<16).map { _ in
-            PatternStep(sliceIndex: Int.random(in: 0..<8))
+            ChopperPatternStep(sliceIndex: Int.random(in: 0..<8))
         }
         patterns.append(randomPattern)
 
@@ -704,7 +704,7 @@ class BreakbeatChopper: ObservableObject {
                 pattern.steps[i].reverse = Float.random(in: 0...1) < 0.1
                 pattern.steps[i].pitch = Float.random(in: -2...2).rounded()
             } else {
-                pattern.steps[i] = PatternStep.rest()
+                pattern.steps[i] = ChopperPatternStep.rest()
             }
         }
 
@@ -717,7 +717,7 @@ class BreakbeatChopper: ObservableObject {
         var pattern = ChopPattern(name: "Roll x\(divisions)", length: length)
 
         for i in 0..<length {
-            var step = PatternStep(sliceIndex: sliceIndex)
+            var step = ChopperPatternStep(sliceIndex: sliceIndex)
             step.velocity = 1.0 - Float(i % divisions) * 0.1  // Velocity roll
             pattern.steps[i] = step
         }
@@ -794,7 +794,7 @@ class BreakbeatChopper: ObservableObject {
     }
 
     /// Play a single slice
-    func playSlice(_ slice: BreakSlice, roll: PatternStep.RollType? = nil) {
+    func playSlice(_ slice: BreakSlice, roll: ChopperPatternStep.RollType? = nil) {
         guard let audio = processSlice(slice),
               let format = sourceBuffer?.format else { return }
 

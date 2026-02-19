@@ -8,7 +8,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
-import Combine
 import simd
 
 // MARK: - AI Sound Designer Plugin

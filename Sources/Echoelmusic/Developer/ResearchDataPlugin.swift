@@ -8,7 +8,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
-import Combine
 
 /// A comprehensive plugin for scientific research and data analysis
 /// Demonstrates: bioProcessing, recording, cloudSync, collaboration capabilities

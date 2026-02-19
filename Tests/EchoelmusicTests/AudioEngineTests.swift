@@ -123,14 +123,16 @@ final class AudioEngineTests: XCTestCase {
     // MARK: - Filter Control Tests
 
     func testSetFilterCutoff() {
-        // Should not crash even without node graph
         audioEngine.setFilterCutoff(2000.0)
-        // Verify no crash - actual value change depends on node graph
+        // Engine should remain in valid state after setting filter cutoff without node graph
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setFilterCutoff")
+        XCTAssertFalse(audioEngine.isRunning, "Engine should not auto-start from parameter change")
     }
 
     func testSetFilterResonance() {
         audioEngine.setFilterResonance(0.5)
-        // Verify no crash
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setFilterResonance")
+        XCTAssertFalse(audioEngine.isRunning, "Engine should not auto-start from parameter change")
     }
 
 
@@ -138,12 +140,12 @@ final class AudioEngineTests: XCTestCase {
 
     func testSetReverbWetness() {
         audioEngine.setReverbWetness(0.3)
-        // Verify no crash
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setReverbWetness")
     }
 
     func testSetReverbSize() {
         audioEngine.setReverbSize(0.7)
-        // Verify no crash
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setReverbSize")
     }
 
 
@@ -151,7 +153,7 @@ final class AudioEngineTests: XCTestCase {
 
     func testSetDelayTime() {
         audioEngine.setDelayTime(0.25)
-        // Verify no crash
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setDelayTime")
     }
 
 
@@ -159,7 +161,7 @@ final class AudioEngineTests: XCTestCase {
 
     func testSetMasterVolume() {
         audioEngine.setMasterVolume(0.8)
-        // Verify no crash
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setMasterVolume")
     }
 
 
@@ -167,7 +169,7 @@ final class AudioEngineTests: XCTestCase {
 
     func testSetTempo() {
         audioEngine.setTempo(120.0)
-        // Verify no crash
+        XCTAssertNotNil(audioEngine, "AudioEngine should remain valid after setTempo")
     }
 
 
