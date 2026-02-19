@@ -199,6 +199,12 @@ public final class BodyScanResonanceEngine: ObservableObject {
     private let evmEngine = EVMAnalysisEngine()
     private let stimulationEngine = TapticStimulationEngine()
     private let wellnessEngine = BiophysicalWellnessEngine()
+    private let sensorFusion = BiophysicalSensorFusion()
+
+    /// Active sensors detected during scan
+    @Published public private(set) var activeSensors: Set<BiophysicalSensor> = []
+    /// Fused sensor confidence
+    @Published public private(set) var fusedConfidence: Double = 0
 
     // MARK: - Vision
 
@@ -301,6 +307,15 @@ public final class BodyScanResonanceEngine: ObservableObject {
         startUpdateLoop()
         startSessionTimer()
 
+        // Start multi-sensor fusion (LiDAR, TrueDepth, barometer, IMU)
+        do {
+            try await sensorFusion.startAllSensors()
+            activeSensors = sensorFusion.activeSensors
+            log.info("Sensor fusion started: \(activeSensors.map(\.rawValue).joined(separator: ", "))")
+        } catch {
+            log.info("Sensor fusion partial: \(error) — continuing with camera-only mode")
+        }
+
         log.info("Body scan session started")
     }
 
@@ -313,6 +328,11 @@ public final class BodyScanResonanceEngine: ObservableObject {
         stopUpdateLoop()
         stopSessionTimer()
         await stopStimulation()
+
+        // Stop all sensors
+        sensorFusion.stopAllSensors()
+        activeSensors = []
+        fusedConfidence = 0
 
         log.info("Body scan session stopped")
     }
@@ -456,7 +476,9 @@ public final class BodyScanResonanceEngine: ObservableObject {
     private func startStimulation(for region: BodyRegion) async throws {
         isStimulating = true
 
-        let frequency = region.primaryFrequency
+        // Use named frequency engines for optimal frequency selection
+        let coherence = sensorFusion.fusedCoherence
+        let frequency = optimalFrequency(for: region, coherence: coherence)
         let intensity = min(region.resonanceRange.max * 0.015, Self.maxStimulationIntensity)
 
         // Start haptic stimulation
@@ -468,7 +490,7 @@ public final class BodyScanResonanceEngine: ObservableObject {
         // Start audio tone (low amplitude — creative/wellness, not medical)
         audioGenerator?.startTone(frequency: frequency, amplitude: 0.25)
 
-        log.info("Stimulation started for \(region.rawValue) at \(frequency)Hz")
+        log.info("Stimulation started for \(region.rawValue) at \(frequency)Hz (coherence: \(String(format: "%.2f", coherence)))")
     }
 
     private func stopStimulation() async {
@@ -500,26 +522,82 @@ public final class BodyScanResonanceEngine: ObservableObject {
     private func updateScanState() {
         guard isScanning else { return }
 
-        // Update coherence from EVM results
-        if let evmResult = evmEngine.latestResult {
-            currentCoherence = evmResult.qualityScore
+        // Merge EVM + sensor fusion for richer coherence
+        let evmCoherence = evmEngine.latestResult?.qualityScore ?? 0
+        let fusionCoherence = sensorFusion.fusedCoherence
+        let fusionFrequency = sensorFusion.dominantFrequency
 
-            if let region = currentRegion {
-                let result = BodyScanResult(
-                    timestamp: Date(),
-                    region: region,
-                    detectedFrequencies: evmResult.detectedFrequencies,
-                    dominantFrequency: evmResult.detectedFrequencies.first ?? region.primaryFrequency,
-                    amplitude: evmResult.spatialAmplitudes.first ?? 0,
-                    coherenceScore: evmResult.qualityScore,
-                    qualityScore: evmResult.qualityScore
-                )
-                scanResults[region] = result
-                currentSession.regionResults[region] = result
+        // Weighted blend: EVM is primary, sensor fusion supplements
+        let hasEVM = evmEngine.latestResult != nil
+        let hasFusion = !sensorFusion.activeSensors.isEmpty
+        if hasEVM && hasFusion {
+            currentCoherence = evmCoherence * 0.6 + fusionCoherence * 0.4
+        } else if hasEVM {
+            currentCoherence = evmCoherence
+        } else if hasFusion {
+            currentCoherence = fusionCoherence
+        }
+
+        fusedConfidence = sensorFusion.latestFusedReading?.fusedConfidence ?? 0
+        activeSensors = sensorFusion.activeSensors
+
+        if let region = currentRegion {
+            // Merge frequency detection: EVM frequencies + IMU-detected frequency
+            var detectedFreqs = evmEngine.latestResult?.detectedFrequencies ?? []
+            if fusionFrequency > 0 && !detectedFreqs.contains(where: { abs($0 - fusionFrequency) < 1.0 }) {
+                detectedFreqs.append(fusionFrequency)
             }
+
+            // Depth data adds spatial context
+            let depthAmplitude: Double
+            if let depth = sensorFusion.latestFusedReading?.depthMap {
+                depthAmplitude = Double(depth.depthVariance) * 100 // Scale for readability
+            } else {
+                depthAmplitude = evmEngine.latestResult?.spatialAmplitudes.first ?? 0
+            }
+
+            let result = BodyScanResult(
+                timestamp: Date(),
+                region: region,
+                detectedFrequencies: detectedFreqs,
+                dominantFrequency: detectedFreqs.first ?? region.primaryFrequency,
+                amplitude: depthAmplitude,
+                coherenceScore: currentCoherence,
+                qualityScore: currentCoherence
+            )
+            scanResults[region] = result
+            currentSession.regionResults[region] = result
         }
 
         currentSession.overallCoherence = currentSession.averageCoherence
+    }
+
+    // MARK: - Named Frequency Engine Selection
+
+    /// Select optimal frequency using named engines based on body region and sensor coherence.
+    /// Maps regions to OsteoSync (bone), MyoResonance (muscle), or NeuralFlow (neural).
+    private func optimalFrequency(for region: BodyRegion, coherence: Double) -> Double {
+        switch region {
+        case .head:
+            // Neural-Flow: 40 Hz gamma entrainment
+            return NeuralFlowEngine.optimalFrequency(sensorCoherence: coherence)
+        case .leftShoulder, .rightShoulder, .leftHip, .rightHip:
+            // Osteo-Sync: 35-45 Hz bone adaptation
+            return OsteoSyncEngine.optimalFrequency(sensorCoherence: coherence)
+        case .leftArm, .rightArm, .leftLeg, .rightLeg:
+            // Myo-Resonance: 45-50 Hz muscle tissue
+            return MyoResonanceEngine.optimalFrequency(sensorCoherence: coherence)
+        case .neck, .chest, .abdomen:
+            // Blend: use region's midpoint, adaptively shifted
+            let range = region.resonanceRange
+            let center = (range.min + range.max) / 2.0
+            let offset = (coherence - 0.5) * (range.max - range.min) * 0.3
+            return max(range.min, min(range.max, center + offset))
+        case .leftHand, .rightHand:
+            // Soft tissue — use relaxation range
+            let range = region.resonanceRange
+            return (range.min + range.max) / 2.0
+        }
     }
 
     // MARK: - Session Timer

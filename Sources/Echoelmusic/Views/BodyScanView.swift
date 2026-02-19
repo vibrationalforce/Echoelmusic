@@ -95,6 +95,11 @@ public struct BodyScanView: View {
             // Header
             scanHeader
 
+            // Sensor Status (when scanning)
+            if engine.isScanning && !engine.activeSensors.isEmpty {
+                sensorStatusBar
+            }
+
             // Body Map
             bodyMapSection
 
@@ -366,6 +371,41 @@ public struct BodyScanView: View {
                     .multilineTextAlignment(.center)
             }
         }
+    }
+
+    // MARK: - Sensor Status
+
+    private var sensorStatusBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: VaporwaveSpacing.sm) {
+                ForEach(Array(engine.activeSensors).sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { sensor in
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 6, height: 6)
+                        Text(sensor.rawValue)
+                            .font(.system(size: 10))
+                            .foregroundColor(VaporwaveColors.textSecondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(VaporwaveColors.deepBlack.opacity(0.4))
+                    .cornerRadius(8)
+                }
+
+                if engine.fusedConfidence > 0 {
+                    Text("Fusion: \(Int(engine.fusedConfidence * 100))%")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(VaporwaveColors.neonCyan)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(VaporwaveColors.neonCyan.opacity(0.1))
+                        .cornerRadius(8)
+                }
+            }
+            .padding(.horizontal, VaporwaveSpacing.md)
+        }
+        .padding(.vertical, 4)
     }
 
     // MARK: - Helpers
