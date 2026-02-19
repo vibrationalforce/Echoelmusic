@@ -27,7 +27,7 @@ import Combine
 ///
 /// Note: This is quantum-INSPIRED classical computing until true quantum hardware is available
 @MainActor
-class QuantumIntelligenceEngine: ObservableObject {
+public class QuantumIntelligenceEngine: ObservableObject {
 
     // MARK: - Published State
 

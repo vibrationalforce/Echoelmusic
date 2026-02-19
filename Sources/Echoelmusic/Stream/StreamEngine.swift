@@ -1,7 +1,9 @@
 import Foundation
 import AVFoundation
 import VideoToolbox
+#if canImport(Metal)
 import Metal
+#endif
 import Combine
 import CoreImage
 

@@ -246,9 +246,8 @@ public final class TR808BassSynth: ObservableObject {
     }
 
     deinit {
-        // Note: Can't call MainActor-isolated methods from deinit
-        // Audio engine cleanup happens automatically on deallocation
-        audioEngine?.stop()
+        // Note: Can't call MainActor-isolated methods from nonisolated deinit
+        // AVAudioEngine deallocation handles cleanup automatically
     }
 
     // MARK: - Audio Engine Setup

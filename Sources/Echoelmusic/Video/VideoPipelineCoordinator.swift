@@ -8,7 +8,9 @@
 
 import Foundation
 import AVFoundation
+#if canImport(Metal)
 import Metal
+#endif
 import CoreVideo
 import Combine
 

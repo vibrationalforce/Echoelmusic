@@ -4,8 +4,12 @@
 // Copyright 2026 Echoelmusic. All rights reserved.
 
 import SwiftUI
+#if canImport(HealthKit)
 import HealthKit
+#endif
+#if canImport(WatchConnectivity)
 import WatchConnectivity
+#endif
 import Combine
 
 // MARK: - Watch Manager
