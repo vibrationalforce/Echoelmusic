@@ -30,7 +30,7 @@ import CoreLocation
 /// - Seamless handoff to full app
 // Note: @main removed - App Clip uses separate Xcode target with its own entry point
 struct EchoelmusicClipApp: App {
-    @StateObject private var clipManager = AppClipManager()
+    @StateObject private var clipManager = ClipTargetManager()
     @StateObject private var healthKit = UnifiedHealthKitEngine.shared
 
     var body: some Scene {
@@ -49,7 +49,7 @@ struct EchoelmusicClipApp: App {
 
 /// Manages App Clip invocation, context, and state
 @MainActor
-final class AppClipManager: ObservableObject {
+final class ClipTargetManager: ObservableObject {
 
     // MARK: - Published State
 
@@ -274,7 +274,7 @@ final class AppClipManager: ObservableObject {
 // MARK: - App Clip Root View
 
 struct EchoelmusicClipRootView: View {
-    @EnvironmentObject var clipManager: AppClipManager
+    @EnvironmentObject var clipManager: ClipTargetManager
     @EnvironmentObject var healthKit: UnifiedHealthKitEngine
 
     @State private var showingMintSheet = false
@@ -440,7 +440,7 @@ struct EchoelmusicClipRootView: View {
         }
     }
 
-    private func momentCapturedView(_ moment: AppClipManager.CoherenceMoment) -> some View {
+    private func momentCapturedView(_ moment: ClipTargetManager.CoherenceMoment) -> some View {
         VStack(spacing: 20) {
             // Success badge
             Image(systemName: "checkmark.circle.fill")
@@ -489,7 +489,7 @@ struct EchoelmusicClipRootView: View {
         }
     }
 
-    private func eventBadge(_ event: AppClipManager.EventContext) -> some View {
+    private func eventBadge(_ event: ClipTargetManager.EventContext) -> some View {
         HStack {
             Image(systemName: "music.note.house.fill")
                 .foregroundColor(.purple)
@@ -561,8 +561,8 @@ struct EchoelmusicClipRootView: View {
 // MARK: - Minting Sheet
 
 struct MintingSheet: View {
-    let moment: AppClipManager.CoherenceMoment
-    @EnvironmentObject var clipManager: AppClipManager
+    let moment: ClipTargetManager.CoherenceMoment
+    @EnvironmentObject var clipManager: ClipTargetManager
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -700,7 +700,7 @@ struct MintingSheet: View {
 #if DEBUG
 #Preview("App Clip") {
     EchoelmusicClipRootView()
-        .environmentObject(AppClipManager())
+        .environmentObject(ClipTargetManager())
         .environmentObject(UnifiedHealthKitEngine.shared)
 }
 #endif
