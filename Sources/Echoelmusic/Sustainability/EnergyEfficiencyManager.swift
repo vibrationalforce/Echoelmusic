@@ -349,7 +349,13 @@ class EnergyEfficiencyManager: ObservableObject {
     private func estimateDisplayPower() -> Double {
         // OLED dark mode saves ~60% power vs white screen
         #if os(iOS)
-        let brightness = UIScreen.main.brightness
+        let brightness: CGFloat = {
+            if let ws = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first {
+                return ws.screen.brightness
+            }
+            return UIScreen.main.brightness
+        }()
         let basePower = 1.5  // Watts at full brightness
         let darkModeSavings = 0.6  // 60% savings in dark mode
 

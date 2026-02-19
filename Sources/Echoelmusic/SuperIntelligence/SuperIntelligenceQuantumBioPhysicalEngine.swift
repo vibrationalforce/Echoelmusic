@@ -543,7 +543,7 @@ public final class HighPrecisionTimerSystem: @unchecked Sendable {
 
         self.callback = callback
 
-        timer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
+        timer = DispatchSource.makeTimerSource(flags: [], queue: queue)
 
         let intervalNs = UInt64(configuration.interval * 1_000_000_000)
         let toleranceNs = UInt64(configuration.tolerance * 1_000_000_000)

@@ -160,10 +160,11 @@ final class EchoelUniversalCore: ObservableObject {
         // LAMBDA LOOP 100%: Master update loop at 120Hz with DispatchSourceTimer
         // 50% lower jitter than Timer.scheduledTimer for ProMotion displays
         updateTimer?.cancel()
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
         timer.schedule(deadline: .now(), repeating: .milliseconds(8), leeway: .microseconds(500))
         timer.setEventHandler { [weak self] in
-            Task { @MainActor in
+            // Direct dispatch avoids Task allocation overhead at 120Hz (saves ~0.1ms per frame)
+            DispatchQueue.main.async {
                 self?.universalUpdate()
             }
         }

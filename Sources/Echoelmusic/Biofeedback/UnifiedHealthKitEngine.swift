@@ -671,7 +671,7 @@ public final class UnifiedHealthKitEngine: ObservableObject {
     private func startSimulationStreaming() {
         updateTimer?.cancel()
 
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
         timer.schedule(deadline: .now(), repeating: .seconds(1), leeway: .milliseconds(10))
         timer.setEventHandler { [weak self] in
             guard let self else { return }

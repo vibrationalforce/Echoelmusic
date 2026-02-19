@@ -151,7 +151,14 @@ class PerformanceOptimizer: ObservableObject {
     private static func detectCapabilities() -> DeviceCapabilities {
         #if os(iOS)
         let device = UIDevice.current
-        let screen = UIScreen.main
+        // Future-proof: prefer window scene screen over deprecated UIScreen.main
+        let screen: UIScreen = {
+            if let ws = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first {
+                return ws.screen
+            }
+            return UIScreen.main
+        }()
 
         // Detect ProMotion
         let supportsProMotion = screen.maximumFramesPerSecond > 60

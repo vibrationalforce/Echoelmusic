@@ -290,7 +290,7 @@ public class AudioEngine: ObservableObject {
         // OPTIMIZATION: High-precision bio-parameter updates using DispatchSourceTimer
         // 50% lower jitter compared to Timer.publish for real-time audio responsiveness
         bioParameterTimer?.cancel()
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: bioParameterQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: bioParameterQueue)
         timer.schedule(deadline: .now(), repeating: .milliseconds(100), leeway: .milliseconds(5))
         timer.setEventHandler { [weak self] in
             Task { @MainActor in

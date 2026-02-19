@@ -425,7 +425,7 @@ public final class LambdaModeEngine: ObservableObject {
 
         // LAMBDA LOOP: High-precision 60Hz timer with 50% lower jitter
         updateTimer?.cancel()
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
         timer.schedule(deadline: .now(), repeating: .milliseconds(16), leeway: .milliseconds(1))
         timer.setEventHandler { [weak self] in
             Task { @MainActor in

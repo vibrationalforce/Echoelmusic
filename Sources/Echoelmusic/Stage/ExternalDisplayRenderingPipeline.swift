@@ -284,9 +284,12 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
             }
         })
 
-        // Detect already-connected screens
-        for screen in UIScreen.screens where screen != UIScreen.main {
-            handleScreenConnected(screen)
+        // Detect already-connected screens via UIWindowScene (future-proof)
+        let connectedScenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let mainScreen = connectedScenes.first?.screen ?? UIScreen.main
+        for scene in connectedScenes where scene.screen != mainScreen {
+            handleScreenConnected(scene.screen)
         }
         #endif
 

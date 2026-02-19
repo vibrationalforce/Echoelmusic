@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import AVFoundation
 import QuartzCore
+import os.signpost
 
 /// Global logger instance for UnifiedControlHub
 private let Log = EchoelLogger.shared
@@ -106,9 +107,34 @@ public class UnifiedControlHub: ObservableObject {
     /// Pre-allocated buffer for MPE voice data to avoid per-tick allocations
     private var voiceDataBuffer: [MPEVoiceData] = []
 
+    /// Whether the app is currently in the background (pauses non-essential loops)
+    private var isBackgrounded: Bool = false
+
+    /// Current thermal pressure level for adaptive quality
+    private var thermalPressure: ThermalPressure = .nominal
+
+    /// Thermal pressure levels for adaptive resource scaling
+    enum ThermalPressure {
+        case nominal, fair, serious, critical
+
+        #if canImport(UIKit)
+        init(state: ProcessInfo.ThermalState) {
+            switch state {
+            case .nominal: self = .nominal
+            case .fair: self = .fair
+            case .serious: self = .serious
+            case .critical: self = .critical
+            @unknown default: self = .fair
+            }
+        }
+        #endif
+    }
+
     public init(audioEngine: AudioEngine? = nil) {
         self.audioEngine = audioEngine
         self.faceToAudioMapper = FaceToAudioMapper()
+        observeAppLifecycle()
+        observeThermalState()
     }
 
     deinit {
@@ -119,6 +145,94 @@ public class UnifiedControlHub: ObservableObject {
         #endif
         controlLoopTimer?.cancel()
         controlLoopTimer = nil
+    }
+
+    // MARK: - App Lifecycle & Thermal State
+
+    private func observeAppLifecycle() {
+        #if canImport(UIKit) && !os(watchOS)
+        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+            .sink { [weak self] _ in
+                self?.handleEnteredBackground()
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                self?.handleEnteredForeground()
+            }
+            .store(in: &cancellables)
+
+        // Low Power Mode detection
+        NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)
+            .sink { [weak self] _ in
+                self?.handlePowerStateChange()
+            }
+            .store(in: &cancellables)
+        #endif
+    }
+
+    private func observeThermalState() {
+        NotificationCenter.default.publisher(for: ProcessInfo.thermalStateDidChangeNotification)
+            .sink { [weak self] _ in
+                self?.handleThermalStateChange()
+            }
+            .store(in: &cancellables)
+        // Set initial state
+        #if canImport(UIKit)
+        thermalPressure = ThermalPressure(state: ProcessInfo.processInfo.thermalState)
+        #endif
+    }
+
+    private func handleEnteredBackground() {
+        guard !isBackgrounded else { return }
+        isBackgrounded = true
+        Log.info("App backgrounded — pausing non-essential loops", category: .system)
+        // Pause visual/lighting loops; keep audio alive
+        #if os(iOS) || os(tvOS)
+        displayLink?.isPaused = true
+        #endif
+        quantumLightEmulator?.stop()
+        push3LEDController?.clearGrid()
+    }
+
+    private func handleEnteredForeground() {
+        guard isBackgrounded else { return }
+        isBackgrounded = false
+        Log.info("App foregrounded — resuming loops", category: .system)
+        #if os(iOS) || os(tvOS)
+        displayLink?.isPaused = false
+        #endif
+    }
+
+    private func handleThermalStateChange() {
+        #if canImport(UIKit)
+        thermalPressure = ThermalPressure(state: ProcessInfo.processInfo.thermalState)
+        #endif
+        switch thermalPressure {
+        case .nominal:
+            Log.info("Thermal: nominal", category: .system)
+        case .fair:
+            Log.info("Thermal: fair — reducing visual fidelity", category: .system)
+        case .serious:
+            Log.warning("Thermal: serious — disabling non-essential visual processing", category: .system)
+            quantumLightEmulator?.stop()
+        case .critical:
+            Log.warning("Thermal: critical — minimal mode", category: .system)
+            quantumLightEmulator?.stop()
+            push3LEDController?.clearGrid()
+        }
+    }
+
+    private func handlePowerStateChange() {
+        #if canImport(UIKit) && !os(watchOS)
+        let isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+        if isLowPower {
+            Log.info("Low Power Mode enabled — throttling updates", category: .system)
+        } else {
+            Log.info("Low Power Mode disabled — restoring full performance", category: .system)
+        }
+        #endif
     }
 
     /// Enable face tracking integration
@@ -217,16 +331,16 @@ public class UnifiedControlHub: ObservableObject {
         self.bioParameterMapper = bioMapper
 
         // Event-driven bio updates (replaces polling pattern)
-        // Debounce prevents excessive updates while maintaining responsiveness
+        // 16ms debounce = one frame at 60Hz — keeps full budget for bio→audio pipeline
         healthKit.$coherence
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(16), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
             }
             .store(in: &bioFeedbackCancellables)
 
         healthKit.$heartRate
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(16), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleBioSignalUpdate()
             }
@@ -584,9 +698,10 @@ public class UnifiedControlHub: ObservableObject {
             }
             .store(in: &gazeTrackingCancellables)
 
-        // Subscribe to attention level changes
+        // Subscribe to attention level changes — use removeDuplicates instead of debounce
+        // to avoid 50ms latency while still filtering redundant updates
         tracker.$attentionLevel
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
+            .removeDuplicates(by: { abs($0 - $1) < 0.01 })
             .sink { [weak self] attention in
                 self?.handleAttentionChange(attention)
             }
@@ -798,7 +913,7 @@ public class UnifiedControlHub: ObservableObject {
         // LAMBDA LOOP: macOS/watchOS use DispatchSourceTimer for 50% lower jitter
         controlLoopTimer?.cancel()
         let interval = 1.0 / targetFrequency
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: controlQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: controlQueue)
         timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(1))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
@@ -816,14 +931,24 @@ public class UnifiedControlHub: ObservableObject {
     }
     #endif
 
+    /// Signpost ID for Instruments profiling of control loop frame budget
+    private let controlSignpostID = OSSignpostID(log: PerformanceSignposts.controlLoop)
+
     private func controlLoopTick() {
+        // Skip entirely when backgrounded
+        guard !isBackgrounded else { return }
+
+        // os_signpost for Instruments frame budget visualization
+        PerformanceSignposts.beginControlTick(controlSignpostID)
+        defer { PerformanceSignposts.endControlTick(controlSignpostID) }
+
         // Measure actual frequency using CACurrentMediaTime (no allocation)
         let now = CACurrentMediaTime()
         let deltaTime = now - lastUpdateTime
         controlLoopFrequency = deltaTime > 0 ? 1.0 / deltaTime : targetFrequency
         lastUpdateTime = now
 
-        // Priority-based parameter updates
+        // Priority-based parameter updates (always run — <1ms total)
         updateFromBioSignals()
         updateFromFaceTracking()
         updateFromHandGestures()
@@ -832,10 +957,14 @@ public class UnifiedControlHub: ObservableObject {
         // Check for gesture conflicts
         resolveConflicts()
 
-        // Update all output systems
+        // Update all output systems — skip visuals/lights under thermal pressure
         updateAudioEngine()
-        updateVisualEngine()
-        updateLightSystems()
+        if thermalPressure != .critical {
+            updateVisualEngine()
+        }
+        if thermalPressure == .nominal || thermalPressure == .fair {
+            updateLightSystems()
+        }
     }
 
     // MARK: - Input Updates

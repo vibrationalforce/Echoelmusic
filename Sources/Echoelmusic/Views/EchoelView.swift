@@ -62,7 +62,7 @@ public struct EchoelView: View {
             engine.stop()
         }
         #if canImport(UIKit)
-        .statusBarHidden(isFullscreen)
+        .persistentSystemOverlays(isFullscreen ? .hidden : .automatic)
         #endif
     }
 

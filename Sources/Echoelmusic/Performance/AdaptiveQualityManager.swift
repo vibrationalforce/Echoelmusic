@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os.signpost
 #if canImport(Metal)
 import Metal
 import MetalKit
@@ -7,6 +8,86 @@ import MetalKit
 #if canImport(UIKit)
 import UIKit
 #endif
+
+// MARK: - Performance Signposts for Instruments
+
+/// Lightweight os_signpost integration for profiling control loop and render passes
+/// Use Instruments → os_signpost instrument to visualize frame budgets
+enum PerformanceSignposts {
+    static let subsystem = "com.echoelmusic.performance"
+
+    static let controlLoop = OSLog(subsystem: subsystem, category: "ControlLoop")
+    static let audioRender = OSLog(subsystem: subsystem, category: "AudioRender")
+    static let visualRender = OSLog(subsystem: subsystem, category: "VisualRender")
+    static let bioProcessing = OSLog(subsystem: subsystem, category: "BioProcessing")
+
+    /// Begin a signpost interval for the 60Hz control loop tick
+    @inlinable
+    static func beginControlTick(_ id: OSSignpostID) {
+        os_signpost(.begin, log: controlLoop, name: "ControlTick", signpostID: id)
+    }
+
+    /// End a signpost interval for the control loop tick
+    @inlinable
+    static func endControlTick(_ id: OSSignpostID) {
+        os_signpost(.end, log: controlLoop, name: "ControlTick", signpostID: id)
+    }
+
+    /// Mark a single event (e.g., frame drop, quality change)
+    @inlinable
+    static func event(_ log: OSLog, _ name: StaticString) {
+        os_signpost(.event, log: log, name: name)
+    }
+}
+
+// MARK: - Frame Budget Monitor
+
+/// Tracks time spent within the 16.67ms frame budget (60Hz)
+/// Reports budget utilization to AdaptiveQualityManager
+struct FrameBudgetMonitor {
+    /// Target frame time in seconds (16.67ms for 60Hz)
+    let targetFrameTime: TimeInterval
+
+    /// Rolling budget utilization (0.0 = idle, 1.0 = fully consumed, >1.0 = over budget)
+    private(set) var budgetUtilization: Float = 0
+
+    /// Number of frames that exceeded the budget
+    private(set) var overBudgetCount: Int = 0
+
+    private var frameStartTime: CFTimeInterval = 0
+    private let smoothingFactor: Float = 0.9
+
+    init(targetHz: Double = 60.0) {
+        self.targetFrameTime = 1.0 / targetHz
+    }
+
+    /// Call at the start of each frame
+    mutating func beginFrame() {
+        frameStartTime = CACurrentMediaTime()
+    }
+
+    /// Call at the end of each frame — returns true if over budget
+    @discardableResult
+    mutating func endFrame() -> Bool {
+        let elapsed = CACurrentMediaTime() - frameStartTime
+        let utilization = Float(elapsed / targetFrameTime)
+
+        // Exponential moving average
+        budgetUtilization = budgetUtilization * smoothingFactor + utilization * (1.0 - smoothingFactor)
+
+        let overBudget = elapsed > targetFrameTime
+        if overBudget {
+            overBudgetCount += 1
+        }
+        return overBudget
+    }
+
+    /// Reset counters
+    mutating func reset() {
+        overBudgetCount = 0
+        budgetUtilization = 0
+    }
+}
 
 /// Adaptive Quality Manager für automatische Performance-Optimierung
 ///
@@ -59,7 +140,7 @@ class AdaptiveQualityManager: ObservableObject {
     private var frameBufferIndex: Int = 0
     private var frameBufferCount: Int = 0
 
-    private var lastQualityChange: Date = Date()
+    private var lastQualityChangeTime: CFTimeInterval = CACurrentMediaTime()
     private let qualityChangePublisher = PassthroughSubject<QualityLevel, Never>()
 
     /// Hysterese-Timer: Verhindert zu häufige Qualitätsänderungen
@@ -151,7 +232,7 @@ class AdaptiveQualityManager: ObservableObject {
         var frameDrops: Int = 0
         var audioUnderruns: Int = 0
 
-        var lastUpdateTime: Date = Date()
+        var lastUpdateTime: CFTimeInterval = CACurrentMediaTime()
 
         enum ThermalState: String {
             case nominal = "Normal"
@@ -321,7 +402,7 @@ class AdaptiveQualityManager: ObservableObject {
         updateMemoryUsage()
         updateThermalState()
 
-        metrics.lastUpdateTime = Date()
+        metrics.lastUpdateTime = CACurrentMediaTime()
     }
 
     func recordFrame(timestamp: TimeInterval) {
@@ -410,7 +491,7 @@ class AdaptiveQualityManager: ObservableObject {
         guard isAdaptiveQualityEnabled else { return }
 
         // Hysterese: Verhindere zu häufige Änderungen
-        let timeSinceLastChange = Date().timeIntervalSince(lastQualityChange)
+        let timeSinceLastChange = CACurrentMediaTime() - lastQualityChangeTime
         if timeSinceLastChange < hysteresisDelay {
             return
         }
@@ -505,7 +586,7 @@ class AdaptiveQualityManager: ObservableObject {
         log.performance("   FPS: \(String(format: "%.1f", metrics.averageFPS)) | CPU: \(String(format: "%.1f%%", metrics.cpuUsage * 100)) | GPU: \(String(format: "%.1f%%", metrics.gpuUsage * 100))")
 
         currentQuality = newQuality
-        lastQualityChange = Date()
+        lastQualityChangeTime = CACurrentMediaTime()
 
         // Aktualisiere Einstellungen
         updateVisualSettings()
@@ -656,7 +737,7 @@ class AdaptiveQualityManager: ObservableObject {
 
     func resetToAutomatic() {
         isAdaptiveQualityEnabled = true
-        lastQualityChange = Date().addingTimeInterval(-hysteresisDelay)
+        lastQualityChangeTime = CACurrentMediaTime() - hysteresisDelay
         evaluateQuality()
     }
 

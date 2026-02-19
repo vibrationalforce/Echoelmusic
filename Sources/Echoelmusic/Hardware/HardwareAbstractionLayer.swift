@@ -294,7 +294,7 @@ class HardwareAbstractionLayer: ObservableObject {
     class DisplayInterface: DisplayInterfaceProtocol {
         func getDisplayInfo() -> DisplayInfo {
             #if os(iOS)
-            let screen = UIScreen.main
+            let screen = Self.currentScreen
             return DisplayInfo(
                 widthPixels: Int(screen.bounds.width * screen.scale),
                 heightPixels: Int(screen.bounds.height * screen.scale),
@@ -324,9 +324,21 @@ class HardwareAbstractionLayer: ObservableObject {
 
         func setBrightness(_ brightness: Float) {
             #if os(iOS)
-            UIScreen.main.brightness = CGFloat(brightness)
+            Self.currentScreen.brightness = CGFloat(brightness)
             #endif
         }
+
+        /// Future-proof screen accessor — prefers window scene screen over deprecated UIScreen.main
+        #if os(iOS)
+        @MainActor
+        static var currentScreen: UIScreen {
+            if let windowScene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first {
+                return windowScene.screen
+            }
+            return UIScreen.main
+        }
+        #endif
     }
 
     // MARK: - Initialization
@@ -386,7 +398,7 @@ class HardwareAbstractionLayer: ObservableObject {
         caps.supportsHealthKit = true
         caps.supportsCoreML = true
 
-        let screen = UIScreen.main
+        let screen = DisplayInterface.currentScreen
         caps.maxFPS = screen.maximumFramesPerSecond
         caps.supportsMetalFX = caps.maxFPS >= 120  // Simplified check
 

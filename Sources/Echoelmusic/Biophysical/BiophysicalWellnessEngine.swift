@@ -479,7 +479,7 @@ public final class BiophysicalWellnessEngine: ObservableObject {
     private func startUpdateLoop() {
         // LAMBDA LOOP 100%: 30Hz wellness updates with high precision
         updateTimer?.cancel()
-        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: updateQueue)
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
         timer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(2))
         timer.setEventHandler { [weak self] in
             Task { @MainActor [weak self] in
