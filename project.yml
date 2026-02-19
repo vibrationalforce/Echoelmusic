@@ -162,6 +162,8 @@ targets:
     dependencies:
       - target: EchoelmusicAUv3
         embed: true
+      - target: EchoelmusicNotificationService
+        embed: true
     # Note: Widgets and Clip dependencies temporarily disabled for initial TestFlight build
     # Re-enable after registering App IDs in Developer Portal:
     #   - com.echoelmusic.app.widgets
@@ -469,6 +471,36 @@ targets:
       - framework: AVFoundation.framework
       - framework: CoreAudioKit.framework
       - framework: Accelerate.framework
+
+  # ===========================================================================
+  # iOS Notification Service Extension (Rich Push Notifications)
+  # ===========================================================================
+  # Required for: media attachments, mutable content, silent background pushes.
+  # Without this, push notifications are plain text only.
+  EchoelmusicNotificationService:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/EchoelmusicNotificationService
+        type: group
+    info:
+      path: Sources/EchoelmusicNotificationService/Info.plist
+    settings:
+      base:
+        PRODUCT_NAME: EchoelmusicNotificationService
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.notification-service
+        INFOPLIST_FILE: Sources/EchoelmusicNotificationService/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
+        SKIP_INSTALL: YES
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+    dependencies:
+      - sdk: UserNotifications.framework
 
   # ===========================================================================
   # watchOS App
@@ -847,6 +879,7 @@ schemes:
       targets:
         Echoelmusic: all
         EchoelmusicAUv3: all
+        EchoelmusicNotificationService: all
         # EchoelmusicWidgets: all
         # EchoelmusicClip: all
         EchoelmusicTests: [test]
@@ -952,6 +985,7 @@ schemes:
       targets:
         Echoelmusic: [archive]
         EchoelmusicAUv3: [archive]
+        EchoelmusicNotificationService: [archive]
         EchoelmusicWidgets: [archive]
         EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]
