@@ -172,7 +172,7 @@ public final class VideoNetworkTransport: ObservableObject {
         let params = NWParameters()
         params.includePeerToPeer = true
 
-        log.log(.info, category: .visual, "NDI source discovery started")
+        log.log(.info, category: .video, "NDI source discovery started")
 
         EngineBus.shared.publish(.custom(topic: "stage.ndi.discovery.start", payload: [:]))
     }
@@ -203,7 +203,7 @@ public final class VideoNetworkTransport: ObservableObject {
         )
         outputStreams.append(stream)
 
-        log.log(.info, category: .visual, "Video stream created: \(name) (\(protocol_.rawValue) \(width)x\(height)@\(Int(frameRate)))")
+        log.log(.info, category: .video, "Video stream created: \(name) (\(protocol_.rawValue) \(width)x\(height)@\(Int(frameRate)))")
 
         EngineBus.shared.publish(.custom(
             topic: "stage.video.stream.created",
@@ -220,7 +220,7 @@ public final class VideoNetworkTransport: ObservableObject {
         outputStreams[index].isActive = true
         updateBandwidth()
 
-        log.log(.info, category: .visual, "Video stream started: \(outputStreams[index].name)")
+        log.log(.info, category: .video, "Video stream started: \(outputStreams[index].name)")
     }
 
     /// Stop an output stream
