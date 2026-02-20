@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
+#if canImport(Metal)
 import Metal
+#endif
 import CoreImage
 #if canImport(Vision)
 import Vision

@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
+#if canImport(Metal)
 import Metal
+#endif
 import SwiftUI
 
 /// Scene Manager for Stream Engine

@@ -300,7 +300,10 @@ class BreakbeatChopper: ObservableObject {
     }
 
     deinit {
-        stop()
+        // stop() is @MainActor-isolated, cannot call from nonisolated deinit
+        playbackTimer?.invalidate()
+        playbackTimer = nil
+        playerNode.stop()
     }
 
     private func setupAudioEngine() {
