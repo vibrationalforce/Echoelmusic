@@ -896,18 +896,8 @@ public final class EchoelBio: ObservableObject {
     private var wellnessCancellable: AnyCancellable?
 
     public init() {
-        // Register as bio provider on bus
-        EngineBus.shared.provide("bio.heartRate") { [weak self] in self?.heartRate }
-        EngineBus.shared.provide("bio.coherence") { [weak self] in self?.coherence }
-        EngineBus.shared.provide("bio.breathPhase") { [weak self] in self?.breathPhase }
-        EngineBus.shared.provide("bio.flowScore") { [weak self] in self?.flowScore }
-        EngineBus.shared.provide("bio.hrvMs") { [weak self] in self?.hrvMs }
-        EngineBus.shared.provide("bio.polyvagalState") { [weak self] in
-            Float(PolyvagalState.allCases.firstIndex(of: self?.polyvagalState ?? .ventralVagal) ?? 0)
-        }
-        EngineBus.shared.provide("bio.consciousnessState") { [weak self] in
-            Float(ConsciousnessState.allCases.firstIndex(of: self?.consciousnessState ?? .relaxedAwareness) ?? 2)
-        }
+        // Bio values are published via EngineBus.shared.publishBio() pattern
+        // instead of provider closures (avoids @MainActor isolation in Sendable closures)
 
         // Wire EEG → BioEventGraph (5 brainwave bands as event channels)
         wireEEGSensorBridge()
@@ -2084,6 +2074,30 @@ public struct ToolkitState {
     public var rightPinch: Float = 0
     public var quantumCoherence: Float = 0
     public var circadianPhase: String = "peakAlertness"
+
+    /// Convert to EngineState for views that expect it
+    public var asEngineState: EngineState {
+        var es = EngineState()
+        es.bpm = bpm
+        es.isPlaying = isPlaying
+        es.position = position
+        es.isRecording = isRecording
+        es.heartRate = Double(heartRate)
+        es.coherence = coherence
+        es.breathPhase = breathPhase
+        es.audioLevel = audioLevel
+        es.visualIntensity = visualIntensity
+        es.participantCount = participantCount
+        es.groupCoherence = groupCoherence
+        es.isStreaming = isStreaming
+        es.handsTracked = handsTracked
+        es.leftPinch = leftPinch
+        es.rightPinch = rightPinch
+        es.fps = Double(fps)
+        es.quantumCoherence = quantumCoherence
+        es.circadianPhase = circadianPhase
+        return es
+    }
 }
 
 /// Simple event bus for UI commands
@@ -2238,7 +2252,7 @@ public final class EchoelToolkit: ObservableObject {
         // Seq publishes via publishParam(engine: "seq", param: "trigger", value: noteNumber)
         seqToSynthSubscription = bus.subscribe(to: .audio) { [weak self] msg in
             Task { @MainActor in
-                if case .paramChange(let engine, let param, let value) = msg,
+                if case .parameterChange(engineId: let engine, parameter: let param, value: let value) = msg,
                    engine == "seq", param == "trigger" {
                     self?.synth.noteOn(note: Int(value), velocity: 100)
                 }
