@@ -18,7 +18,7 @@ import Combine
 /// - Pitch modulation via phase vocoder
 /// - Envelope followers for rate/depth estimation
 @MainActor
-class VibratoEngine: ObservableObject {
+public class VibratoEngine: ObservableObject {
 
     // MARK: - Published State
 
@@ -29,7 +29,7 @@ class VibratoEngine: ObservableObject {
     // MARK: - Types
 
     /// Vibrato waveform shape
-    enum VibratoShape: String, CaseIterable, Identifiable, Codable, Sendable {
+    public enum VibratoShape: String, CaseIterable, Identifiable, Codable, Sendable {
         case sine = "Sine"              // Classic smooth vibrato
         case triangle = "Triangle"       // Linear ramp vibrato
         case rampUp = "Ramp Up"         // Accelerating vibrato
