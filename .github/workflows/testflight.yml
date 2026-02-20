@@ -278,6 +278,9 @@ jobs:
 
           if [ $RESULT -ne 0 ]; then
             echo "=== ARCHIVE FAILED (exit $RESULT) ==="
+            # Extract Swift compile errors specifically
+            SWIFT_ERRORS=$(grep -E ': error: ' /tmp/archive.log | head -20 | tr '\n' ' ||| ')
+            echo "::error title=Swift Errors::${SWIFT_ERRORS}"
             # Write errors as GitHub annotations (visible via API)
             LAST_LINES=$(tail -30 /tmp/archive.log | tr '\n' ' | ')
             echo "::error title=Archive Failed::${LAST_LINES}"
@@ -286,6 +289,8 @@ jobs:
             # Also write full tail to step summary
             echo "## Archive Failed (exit $RESULT)" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E ': error: |: warning: .*(deprecated|unavailable)' /tmp/archive.log | head -30 >> $GITHUB_STEP_SUMMARY
+            echo '---' >> $GITHUB_STEP_SUMMARY
             tail -50 /tmp/archive.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
