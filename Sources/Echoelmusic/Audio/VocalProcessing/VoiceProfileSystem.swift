@@ -317,7 +317,7 @@ public class VoiceProfileManager: ObservableObject {
 
     // MARK: - Snapshot from Current Chain
 
-    func snapshot(from chain: ProVocalChain, name: String, category: VoiceProfileCategory = .custom) -> VoiceProfile {
+    public func snapshot(from chain: ProVocalChain, name: String, category: VoiceProfileCategory = .custom) -> VoiceProfile {
         var profile = VoiceProfile(name: name, category: category)
 
         // Capture pitch correction state
@@ -1023,14 +1023,14 @@ public class VoiceSynthesisEngine: ObservableObject {
     // MARK: - Synthesis (Apply Profile)
 
     /// Apply a voice profile to the vocal chain for real-time processing
-    func synthesize(profile: VoiceProfile, chain: ProVocalChain) {
+    public func synthesize(profile: VoiceProfile, chain: ProVocalChain) {
         isSynthesizing = true
         profileManager.apply(profile, to: chain)
         log.info("🎤 Voice synthesis active: \(profile.name)", category: .audio)
     }
 
     /// Stop synthesis (revert to default)
-    func stopSynthesis(chain: ProVocalChain) {
+    public func stopSynthesis(chain: ProVocalChain) {
         isSynthesizing = false
         // Apply default profile
         if let natural = profileManager.profiles.first(where: { $0.name == "Natural" }) {

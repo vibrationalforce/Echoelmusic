@@ -27,7 +27,7 @@ import Combine
 /// - **Studio**: Post-production with full editing capabilities
 /// - **Bio-Reactive**: Live processing modulated by biometrics
 @MainActor
-class ProVocalChain: ObservableObject {
+public class ProVocalChain: ObservableObject {
 
     // MARK: - Published State
 
