@@ -194,27 +194,7 @@ private struct TR808Voice {
     var filterZ2: Float = 0.0
 }
 
-// MARK: - Drum Slot (Pre-Rendered from SynthPresetLibrary)
-
-/// A pre-rendered drum sound loaded from the SynthPresetLibrary's 65+ parametric presets.
-/// Each slot holds the fully rendered audio data — zero-allocation playback on the audio thread.
-public struct DrumSlot: Identifiable, Sendable {
-    public let id: UUID
-    public var name: String
-    public var audioData: [Float]
-    public var sampleRate: Float
-    public var midiNote: Int
-    public var category: String
-
-    public init(name: String, audioData: [Float], sampleRate: Float, midiNote: Int, category: String = "") {
-        self.id = UUID()
-        self.name = name
-        self.audioData = audioData
-        self.sampleRate = sampleRate
-        self.midiNote = midiNote
-        self.category = category
-    }
-}
+// MARK: - Drum Playback (Audio-Thread Safe)
 
 /// Active drum playback voice (lightweight, audio-thread safe)
 private struct DrumPlayback {
@@ -224,114 +204,8 @@ private struct DrumPlayback {
     var isActive: Bool = true
 }
 
-// MARK: - Beat Step Sequencer Types
-
-/// A single step in a beat pattern track
-public struct BeatStep: Codable, Sendable {
-    public var isActive: Bool = false
-    public var velocity: Float = 0.8
-    public var probability: Float = 1.0
-
-    public init(isActive: Bool = false, velocity: Float = 0.8, probability: Float = 1.0) {
-        self.isActive = isActive
-        self.velocity = velocity
-        self.probability = probability
-    }
-}
-
-/// A complete drum pattern with multiple tracks (one per drum slot)
-public struct BeatPattern: Identifiable, Sendable {
-    public let id: UUID
-    public var name: String
-    public var tracks: [[BeatStep]]  // [trackIndex][stepIndex]
-    public var stepCount: Int
-
-    public init(name: String, trackCount: Int = 16, stepCount: Int = 16) {
-        self.id = UUID()
-        self.name = name
-        self.stepCount = stepCount
-        self.tracks = (0..<trackCount).map { _ in
-            (0..<stepCount).map { _ in BeatStep() }
-        }
-    }
-
-    /// Toggle a step on/off
-    public mutating func toggle(track: Int, step: Int) {
-        guard track < tracks.count, step < stepCount else { return }
-        tracks[track][step].isActive.toggle()
-    }
-
-    /// Classic four-on-the-floor pattern
-    public static func fourOnFloor(trackCount: Int = 16) -> BeatPattern {
-        var pattern = BeatPattern(name: "Four on Floor", trackCount: trackCount)
-        // Kick on every beat
-        if trackCount > 0 {
-            for step in stride(from: 0, to: 16, by: 4) {
-                pattern.tracks[0][step].isActive = true
-            }
-        }
-        // Snare on 2 and 4
-        if trackCount > 1 {
-            pattern.tracks[1][4].isActive = true
-            pattern.tracks[1][12].isActive = true
-        }
-        // Closed hat on 8ths
-        if trackCount > 2 {
-            for step in stride(from: 0, to: 16, by: 2) {
-                pattern.tracks[2][step].isActive = true
-            }
-        }
-        return pattern
-    }
-
-    /// Classic breakbeat pattern
-    public static func breakbeat(trackCount: Int = 16) -> BeatPattern {
-        var pattern = BeatPattern(name: "Breakbeat", trackCount: trackCount)
-        if trackCount > 0 {
-            for s in [0, 6, 10] where s < 16 { pattern.tracks[0][s].isActive = true }
-        }
-        if trackCount > 1 {
-            for s in [4, 12] where s < 16 { pattern.tracks[1][s].isActive = true }
-        }
-        if trackCount > 2 {
-            for s in stride(from: 0, to: 16, by: 2) { pattern.tracks[2][s].isActive = true }
-        }
-        return pattern
-    }
-
-    /// Trap-style pattern with hihat rolls
-    public static func trap(trackCount: Int = 16) -> BeatPattern {
-        var pattern = BeatPattern(name: "Trap", trackCount: trackCount)
-        if trackCount > 0 {
-            for s in [0, 7, 10] where s < 16 { pattern.tracks[0][s].isActive = true }
-        }
-        if trackCount > 1 {
-            for s in [4, 12] where s < 16 { pattern.tracks[1][s].isActive = true }
-        }
-        if trackCount > 2 {
-            for s in 0..<16 {
-                pattern.tracks[2][s].isActive = true
-                pattern.tracks[2][s].velocity = (s % 2 == 0) ? 0.9 : 0.5
-            }
-        }
-        return pattern
-    }
-
-    /// DnB roller pattern (170+ BPM)
-    public static func dnbRoller(trackCount: Int = 16) -> BeatPattern {
-        var pattern = BeatPattern(name: "DnB Roller", trackCount: trackCount)
-        if trackCount > 0 {
-            for s in [0, 10] where s < 16 { pattern.tracks[0][s].isActive = true }
-        }
-        if trackCount > 1 {
-            for s in [4, 12] where s < 16 { pattern.tracks[1][s].isActive = true }
-        }
-        if trackCount > 2 {
-            for s in 0..<16 { pattern.tracks[2][s].isActive = true }
-        }
-        return pattern
-    }
-}
+// NOTE: DrumSlot, BeatStep, BeatPattern types are defined in EchoelBeat.swift
+// to avoid duplication. This file uses those shared types.
 
 // MARK: - TR808 Bass Synthesizer + EchoelBeat Drum Machine
 
