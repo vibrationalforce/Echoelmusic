@@ -258,7 +258,7 @@ targets:
         CFBundleDevelopmentRegion: en
         CFBundleDisplayName: "Echoelmusic EchoelBeat"
         CFBundleExecutable: $(EXECUTABLE_NAME)
-        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleIdentifier: com.echoelmusic.app.auv3
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: XPC!
@@ -345,7 +345,7 @@ targets:
         CFBundleDevelopmentRegion: en
         CFBundleDisplayName: "Echoelmusic Plugins"
         CFBundleExecutable: $(EXECUTABLE_NAME)
-        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleIdentifier: com.echoelmusic.app.auv3
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: XPC!
