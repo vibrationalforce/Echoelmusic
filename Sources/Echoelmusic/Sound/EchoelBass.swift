@@ -240,8 +240,8 @@ public struct EchoelBassConfig: Codable, Equatable {
         moogDrive: 0.3,
         filterCutoff: 500.0, filterResonance: 0.4,
         filterEnvAmount: 2000.0, filterEnvDecay: 0.4,
-        decay: 2.0, sustain: 0.5, vibratoRate: 5.0, vibratoDepth: 0.1,
-        drive: 0.2, level: 0.8
+        decay: 2.0, sustain: 0.5, drive: 0.2, level: 0.8,
+        vibratoRate: 5.0, vibratoDepth: 0.1
     )
 }
 

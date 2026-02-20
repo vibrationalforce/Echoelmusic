@@ -232,7 +232,7 @@ enum ShuffleAlgorithm: String, CaseIterable {
 // MARK: - Breakbeat Chopper
 
 @MainActor
-class BreakbeatChopper: ObservableObject {
+public class BreakbeatChopper: ObservableObject {
 
     private let log = ProfessionalLogger.shared
 

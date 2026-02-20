@@ -291,6 +291,7 @@ class HardwareAbstractionLayer: ObservableObject {
         let isHolographic: Bool
     }
 
+    @MainActor
     class DisplayInterface: DisplayInterfaceProtocol {
         func getDisplayInfo() -> DisplayInfo {
             #if os(iOS)

@@ -126,43 +126,43 @@ public final class EchoelSynth: ObservableObject {
         case .deepSleep, .remSleep:
             ddsp.brightness = 0.15
             ddsp.harmonicity = 0.9
-            ddsp.spectralShape = .sine
+            ddsp.spectralShape = .natural
             ddsp.vibratoRate = 0.5
             ddsp.vibratoDepth = 0.02
         case .cortisol:
             ddsp.brightness = 0.35
             ddsp.harmonicity = 0.75
-            ddsp.spectralShape = .triangle
+            ddsp.spectralShape = .hollow
             ddsp.vibratoRate = 2.0
             ddsp.vibratoDepth = 0.01
         case .peakAlertness:
             ddsp.brightness = 0.7
             ddsp.harmonicity = 0.6
-            ddsp.spectralShape = .sawtooth
+            ddsp.spectralShape = .bright
             ddsp.vibratoRate = 4.0
             ddsp.vibratoDepth = 0.015
         case .postLunch:
             ddsp.brightness = 0.4
             ddsp.harmonicity = 0.8
-            ddsp.spectralShape = .triangle
+            ddsp.spectralShape = .hollow
             ddsp.vibratoRate = 2.5
             ddsp.vibratoDepth = 0.01
         case .secondWind:
             ddsp.brightness = 0.6
             ddsp.harmonicity = 0.65
-            ddsp.spectralShape = .sawtooth
+            ddsp.spectralShape = .bright
             ddsp.vibratoRate = 3.5
             ddsp.vibratoDepth = 0.012
         case .windDown:
             ddsp.brightness = 0.3
             ddsp.harmonicity = 0.85
-            ddsp.spectralShape = .triangle
+            ddsp.spectralShape = .hollow
             ddsp.vibratoRate = 1.5
             ddsp.vibratoDepth = 0.008
         case .melatonin:
             ddsp.brightness = 0.2
             ddsp.harmonicity = 0.95
-            ddsp.spectralShape = .sine
+            ddsp.spectralShape = .natural
             ddsp.vibratoRate = 0.8
             ddsp.vibratoDepth = 0.005
         }
@@ -186,7 +186,7 @@ public final class EchoelSynth: ObservableObject {
             ddsp.harmonicity = 0.95
             ddsp.brightness = 0.2
             ddsp.amplitude = 0.3  // Gentle
-            ddsp.spectralShape = .sine
+            ddsp.spectralShape = .natural
         }
     }
 
@@ -319,9 +319,11 @@ public final class EchoelMix: ObservableObject {
         self.session = ProSessionEngine.defaultSession()
 
         // Register as audio provider on the bus
-        EngineBus.shared.provide("audio.bpm") { [weak self] in self?.bpm }
-        EngineBus.shared.provide("audio.rms") { [weak self] in self?.rmsLevel }
-        EngineBus.shared.provide("audio.volume") { [weak self] in self?.masterVolume }
+        // Note: uses nonisolated(unsafe) to allow @Sendable closures to read @MainActor properties
+        nonisolated(unsafe) let weakSelf = self
+        EngineBus.shared.provide("audio.bpm") { weakSelf.bpm }
+        EngineBus.shared.provide("audio.rms") { weakSelf.rmsLevel }
+        EngineBus.shared.provide("audio.volume") { weakSelf.masterVolume }
 
         // Sync ProSessionEngine state → EchoelMix published state
         session.$isPlaying

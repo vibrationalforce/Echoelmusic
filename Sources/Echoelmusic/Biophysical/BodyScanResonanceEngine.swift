@@ -259,8 +259,9 @@ public final class BodyScanResonanceEngine: NSObject, ObservableObject {
 
     // MARK: - Initialization
 
-    public init() {
+    public override init() {
         audioGenerator = BiophysicalAudioGenerator()
+        super.init()
     }
 
     // MARK: - Public API
