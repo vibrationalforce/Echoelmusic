@@ -147,11 +147,8 @@ public struct Injected<T> {
     private let container: ServiceContainer
 
     public var wrappedValue: T? {
-        let service = container.resolve(T.self)
-        if service == nil {
-            log.log(.warning, category: .system, "Service \(T.self) not registered in ServiceContainer — returning nil")
-        }
-        return service
+        nonisolated(unsafe) let c = container
+        return c.resolve(T.self)
     }
 
     @MainActor
