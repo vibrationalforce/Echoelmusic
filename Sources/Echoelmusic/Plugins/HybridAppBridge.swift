@@ -99,38 +99,41 @@ public struct PlatformCapabilities: Codable {
     public let supportsSpatialAudio: Bool
 
     public static var current: PlatformCapabilities {
-        PlatformCapabilities(
-            #if os(iOS)
-            platform: "iOS",
-            hasHealthKit: true,
-            #elseif os(macOS)
-            platform: "macOS",
-            hasHealthKit: false,
-            #elseif os(visionOS)
-            platform: "visionOS",
-            hasHealthKit: true,
-            #else
-            platform: "unknown",
-            hasHealthKit: false,
-            #endif
+        #if os(iOS)
+        let platformName = "iOS"
+        let healthKit = true
+        let arKit = true
+        let haptics = true
+        #elseif os(macOS)
+        let platformName = "macOS"
+        let healthKit = false
+        let arKit = false
+        let haptics = false
+        #elseif os(visionOS)
+        let platformName = "visionOS"
+        let healthKit = true
+        let arKit = true
+        let haptics = false
+        #else
+        let platformName = "unknown"
+        let healthKit = false
+        let arKit = false
+        let haptics = false
+        #endif
+
+        return PlatformCapabilities(
+            platform: platformName,
+            hasHealthKit: healthKit,
             hasCoreML: true,
             hasMetal: true,
             hasCoreAudio: true,
             hasCoreMIDI: true,
-            #if os(iOS) || os(visionOS)
-            hasARKit: true,
-            #else
-            hasARKit: false,
-            #endif
+            hasARKit: arKit,
             hasSharePlay: true,
             maxAudioChannels: 32,
             sampleRate: 48000,
             gpuName: "Apple GPU",
-            #if os(iOS)
-            supportsHaptics: true,
-            #else
-            supportsHaptics: false,
-            #endif
+            supportsHaptics: haptics,
             supportsSpatialAudio: true
         )
     }

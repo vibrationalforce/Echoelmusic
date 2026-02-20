@@ -93,7 +93,7 @@ public class RealTimePitchCorrector: ObservableObject {
         case japanese = "Japanese"
         case hungarian = "Hungarian Minor"
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
 
         /// Semitone intervals from root (C = 0)
         var intervals: [Int] {
