@@ -499,6 +499,7 @@ targets:
         SKIP_INSTALL: YES
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicNotificationService.entitlements
     dependencies:
       - sdk: UserNotifications.framework
 
