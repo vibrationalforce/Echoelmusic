@@ -1,6 +1,7 @@
 import Foundation
 import Accelerate
 import Combine
+import QuartzCore
 
 /// Pro Vocal Processing Chain — Master Orchestrator
 ///

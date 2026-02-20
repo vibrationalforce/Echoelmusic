@@ -176,7 +176,7 @@ public struct BodyScanSession: Codable, Sendable {
 /// Main engine for body scan resonance wellness sessions.
 /// Integrates camera-based body pose detection with targeted frequency responses.
 @MainActor
-public final class BodyScanResonanceEngine: ObservableObject {
+public final class BodyScanResonanceEngine: NSObject, ObservableObject {
 
     // MARK: - Published State
 

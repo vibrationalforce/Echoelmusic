@@ -236,7 +236,8 @@ public struct EchoelBassConfig: Codable, Equatable {
 
     public static let bioReactive = EchoelBassConfig(
         engineA: .moog, engineB: .reese, morphPosition: 0.5,
-        moogDrive: 0.3, reeseDetune: 12.0, reeseVoices: 3,
+        reeseDetune: 12.0, reeseVoices: 3,
+        moogDrive: 0.3,
         filterCutoff: 500.0, filterResonance: 0.4,
         filterEnvAmount: 2000.0, filterEnvDecay: 0.4,
         decay: 2.0, sustain: 0.5, vibratoRate: 5.0, vibratoDepth: 0.1,
@@ -1018,13 +1019,7 @@ public struct EchoelBassView: View {
                         .foregroundColor(engineColor(bass.config.engineB))
                 }
                 Slider(value: $bass.config.morphPosition, in: 0...1)
-                    .tint(
-                        LinearGradient(
-                            colors: [engineColor(bass.config.engineA), engineColor(bass.config.engineB)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .accentColor(engineColor(bass.config.engineA))
             }
 
             // Engine B selector

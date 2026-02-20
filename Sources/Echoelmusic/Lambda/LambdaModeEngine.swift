@@ -487,12 +487,11 @@ public final class LambdaModeEngine: ObservableObject {
         }
 
         // Publish to EngineBus so ALL tools receive state updates seamlessly
-        let bio = BioSnapshot(
-            coherence: Float(bioData.overallCoherence),
-            heartRate: Float(bioData.heartRate),
-            breathPhase: Float(bioData.breathPhase),
-            flowScore: Float(bioData.flowScore)
-        )
+        var bio = BioSnapshot()
+        bio.coherence = Float(bioData.overallCoherence)
+        bio.heartRate = Float(bioData.heartRate)
+        bio.breathPhase = Float(bioData.breathPhase)
+        bio.flowScore = Float(bioData.flowScore)
         EngineBus.shared.publishBio(bio)
 
         var audio = AudioSnapshot()

@@ -306,10 +306,9 @@ public final class EchoelStore: ObservableObject {
     /// Get renewal date for current subscription
     public func renewalDate() async -> Date? {
         guard let status = await subscriptionStatus(),
-              case .verified(let renewal) = status.renewalInfo,
-              let expirationDate = renewal.expirationDate else {
+              case .verified(let transaction) = status.transaction else {
             return nil
         }
-        return expirationDate
+        return transaction.expirationDate
     }
 }
