@@ -1665,7 +1665,7 @@ struct TimelineStrip: View {
 }
 
 struct BreathingGuideStrip: View {
-    let state: EngineState
+    let state: ToolkitState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {

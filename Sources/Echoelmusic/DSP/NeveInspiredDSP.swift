@@ -19,7 +19,6 @@ import Foundation
 /// - Low-frequency thickening
 /// - High-frequency "silk" smoothing
 /// - Drive control for saturation amount
-@MainActor
 class NeveTransformerSaturation {
 
     // MARK: - Parameters
@@ -179,7 +178,6 @@ class NeveTransformerSaturation {
 /// - Inductor resonance modeling
 /// - Proportional-Q behavior
 /// - Musical shelving curves
-@MainActor
 class NeveInductorEQ {
 
     // MARK: - Band Parameters
@@ -377,7 +375,6 @@ class NeveInductorEQ {
 /// - Soft knee characteristic
 /// - Link for stereo operation
 /// - Recovery control
-@MainActor
 class NeveFeedbackCompressor {
 
     // MARK: - 33609-Style Fixed Times
@@ -530,7 +527,6 @@ class NeveFeedbackCompressor {
 /// Complete Neve-style mastering chain
 /// Combines: Transformer → EQ → Compressor → Final Transformer
 /// Inspired by professional Neve mastering setups
-@MainActor
 class NeveMasteringChain {
 
     let inputTransformer: NeveTransformerSaturation
