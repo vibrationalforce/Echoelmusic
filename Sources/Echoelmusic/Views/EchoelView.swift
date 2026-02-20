@@ -378,24 +378,28 @@ public struct EchoelView: View {
 
     // MARK: - Bottom Panel
 
+    @ViewBuilder
     private var bottomPanel: some View {
-        Group {
-            switch toolkit.mode {
-            case .studio:
-                MixerStrip(toolkit: toolkit)
-            case .live, .dj:
-                PerformanceStrip(toolkit: toolkit)
-            case .video:
-                TimelineStrip(toolkit: toolkit)
-            case .meditation:
-                BreathingGuideStrip(state: toolkit.state)
-            case .collaboration:
-                CollaborationStrip(toolkit: toolkit)
-            default:
-                MixerStrip(toolkit: toolkit)
-            }
+        switch toolkit.mode {
+        case .studio:
+            MixerStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        case .live, .dj:
+            PerformanceStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        case .video:
+            TimelineStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        case .meditation:
+            BreathingGuideStrip(state: toolkit.state)
+                .background(Color.black.opacity(0.9))
+        case .collaboration:
+            CollaborationStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        default:
+            MixerStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
         }
-        .background(Color.black.opacity(0.9))
     }
 
     // MARK: - Panel Toggles

@@ -556,7 +556,7 @@ public final class EchoelFX: @unchecked Sendable {
                 p.ratio = slot.params["ratio"] ?? 4
                 p.attack = slot.params["attack"] ?? 10
                 p.release = slot.params["release"] ?? 100
-                p.makeup = slot.params["makeup"] ?? 0
+                p.makeupGain = slot.params["makeup"] ?? 0
                 buffer = p.process(buffer)
             }
 
@@ -588,9 +588,9 @@ public final class EchoelFX: @unchecked Sendable {
         case .filter, .formant:
             let proc = getOrCreate(slot.id) { PultecEQP1A(sampleRate: self.sampleRate) }
             if let p = proc as? PultecEQP1A {
-                p.lowFrequency = slot.params["lowFreq"] ?? 60
+                p.lowFreq = slot.params["lowFreq"] ?? 60
                 p.lowBoost = slot.params["lowBoost"] ?? 0
-                p.highFrequency = slot.params["highFreq"] ?? 10000
+                p.highFreq = slot.params["highFreq"] ?? 10000
                 p.highBoost = slot.params["highBoost"] ?? 0
                 buffer = p.process(buffer)
             }
@@ -627,8 +627,7 @@ public final class EchoelFX: @unchecked Sendable {
         case .chorus, .flanger, .phaser:
             let proc = getOrCreate(slot.id) { AnalogConsole(sampleRate: self.sampleRate) }
             if let p = proc as? AnalogConsole {
-                p.drive = slot.params["depth"] ?? 0.5
-                p.warmth = slot.params["rate"] ?? 1.0
+                p.character = slot.params["depth"] ?? 0.5
                 buffer = p.process(buffer)
             }
 
@@ -646,8 +645,8 @@ public final class EchoelFX: @unchecked Sendable {
         case .pitchShift:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.LittleAlterBoy(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.LittleAlterBoy {
-                p.pitchShift = slot.params["semitones"] ?? 0
-                p.formantShift = slot.params["formant"] ?? 0
+                p.pitch = slot.params["semitones"] ?? 0
+                p.formant = slot.params["formant"] ?? 0
                 p.mix = slot.params["mix"] ?? 1.0
                 buffer = p.process(buffer)
             }
@@ -655,9 +654,8 @@ public final class EchoelFX: @unchecked Sendable {
         case .harmonizer, .vocoder, .vocalTune, .vocalDouble, .vocalHarmony:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.BioReactiveDSP(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.BioReactiveDSP {
-                p.coherence = slot.params["coherence"] ?? 0.5
-                p.breathPhase = slot.params["breathPhase"] ?? 0.5
-                p.intensity = slot.params["intensity"] ?? 0.7
+                p.bioData.coherence = slot.params["coherence"] ?? 0.5
+                p.bioData.breathPhase = slot.params["breathPhase"] ?? 0.5
                 buffer = p.process(buffer)
             }
 
