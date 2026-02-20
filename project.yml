@@ -97,6 +97,9 @@ targets:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
+      - path: Resources/iOS/AppIcons
+        type: folder
+        buildPhase: resources
     info:
       path: Resources/iOS/Info.plist
       properties:

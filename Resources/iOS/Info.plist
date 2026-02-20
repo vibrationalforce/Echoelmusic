@@ -88,6 +88,38 @@
 	<true/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcons/AppIcon60x60</string>
+				<string>AppIcons/AppIcon40x40</string>
+				<string>AppIcons/AppIcon29x29</string>
+				<string>AppIcons/AppIcon20x20</string>
+			</array>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcons/AppIcon60x60</string>
+				<string>AppIcons/AppIcon76x76</string>
+				<string>AppIcons/AppIcon83.5x83.5</string>
+				<string>AppIcons/AppIcon40x40</string>
+				<string>AppIcons/AppIcon29x29</string>
+				<string>AppIcons/AppIcon20x20</string>
+			</array>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
+	</dict>
 	<key>MinimumOSVersion</key>
 	<string>15.0</string>
 	<key>UIRequiredDeviceCapabilities</key>
