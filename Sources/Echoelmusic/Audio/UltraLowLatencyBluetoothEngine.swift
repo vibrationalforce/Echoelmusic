@@ -1170,7 +1170,7 @@ public struct BluetoothAudioView: View {
 
                 Toggle("", isOn: $engine.isDirectMonitoringActive)
                     .labelsHidden()
-                    .onChange(of: engine.isDirectMonitoringActive) { _, isOn in
+                    .onChange(of: engine.isDirectMonitoringActive) { isOn in
                         if isOn {
                             try? engine.enableDirectMonitoring()
                         } else {
@@ -1236,11 +1236,17 @@ public struct BluetoothAudioView: View {
             }
 
             if engine.discoveredDevices.isEmpty && !engine.isScanning {
-                ContentUnavailableView(
-                    "No Devices Found",
-                    systemImage: "antenna.radiowaves.left.and.right.slash",
-                    description: Text("Tap Scan to search for Bluetooth audio devices")
-                )
+                VStack(spacing: 12) {
+                    Image(systemName: "antenna.radiowaves.left.and.right.slash")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No Devices Found")
+                        .font(.headline)
+                    Text("Tap Scan to search for Bluetooth audio devices")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
             } else {
                 ForEach(engine.discoveredDevices.filter { device in
                     !engine.connectedDevices.contains { $0.id == device.id }
