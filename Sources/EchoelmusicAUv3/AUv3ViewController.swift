@@ -559,7 +559,7 @@ struct MIDIProcessorAUv3View: View {
 
 /// Factory for creating Audio Unit view controllers
 @objc(EchoelmusicAUv3ViewControllerFactory)
-public class EchoelmusicAUv3ViewControllerFactory: NSObject, AUAudioUnitFactory {
+public class EchoelmusicAUv3ViewControllerFactory: NSObject, AUAudioUnitFactory, NSExtensionRequestHandling {
 
     public func createAudioUnit(with componentDescription: AudioComponentDescription) throws -> AUAudioUnit {
         let auType: EchoelmusicAUType
@@ -575,6 +575,10 @@ public class EchoelmusicAUv3ViewControllerFactory: NSObject, AUAudioUnitFactory 
         }
 
         return try EchoelmusicAudioUnit(componentDescription: componentDescription, auType: auType)
+    }
+
+    public func beginRequest(with context: NSExtensionContext) {
+        // Required by NSExtensionRequestHandling — AUv3 lifecycle managed by host
     }
 
     #if canImport(UIKit)

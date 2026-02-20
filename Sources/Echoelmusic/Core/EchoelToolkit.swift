@@ -2050,19 +2050,7 @@ public typealias Echoela = EchoelMind
 // MARK: - Toolkit Support Types (EngineMode, ToolkitState, SubsystemType)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Operating mode — determines which panels/overlays EchoelView shows
-public enum EngineMode: String, CaseIterable, Identifiable, Sendable {
-    case studio = "Studio"
-    case live = "Live"
-    case meditation = "Meditation"
-    case video = "Video"
-    case dj = "DJ"
-    case collaboration = "Collab"
-    case immersive = "Immersive"
-    case research = "Research"
-
-    public var id: String { rawValue }
-}
+// EngineMode is defined in EchoelEngine.swift (canonical definition)
 
 /// Performance profile — trades CPU for quality
 public enum PerformanceProfile: String, CaseIterable, Sendable {

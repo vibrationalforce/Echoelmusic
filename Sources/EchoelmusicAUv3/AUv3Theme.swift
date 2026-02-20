@@ -95,7 +95,7 @@ struct AUParameterSlider: View {
 
             Slider(value: $value, in: range)
                 .tint(AUv3Brand.textPrimary)
-                .onChange(of: value) { _, newValue in
+                .onChange(of: value) { newValue in
                     audioUnit.parameterTree?.parameter(withAddress: address.rawValue)?.value = newValue
                 }
 
