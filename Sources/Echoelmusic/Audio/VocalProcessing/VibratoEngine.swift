@@ -40,7 +40,7 @@ public class VibratoEngine: ObservableObject {
         case trill = "Trill"            // Very fast, semitone oscillation
         case none = "None"              // No vibrato (straight tone)
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
     }
 
     /// Analysis result for detected vibrato

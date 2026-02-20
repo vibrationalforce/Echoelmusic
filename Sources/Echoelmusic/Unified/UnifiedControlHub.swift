@@ -3,6 +3,9 @@ import Combine
 import AVFoundation
 import QuartzCore
 import os.signpost
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Global logger instance for UnifiedControlHub
 private let Log = EchoelLogger.shared
