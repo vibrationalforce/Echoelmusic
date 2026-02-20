@@ -60,7 +60,7 @@ struct BreakSlice: Identifiable, Equatable {
 // MARK: - Pattern Step
 
 /// A step in a pattern sequence
-struct ChopperChopperPatternStep: Identifiable {
+struct ChopperPatternStep: Identifiable {
     let id: UUID
     var sliceIndex: Int?      // nil = rest/silence
     var velocity: Float       // 0-1
@@ -904,8 +904,9 @@ class BreakbeatChopper: ObservableObject {
             }
         }
 
-        // Energy affects velocity
-        let energyFactor = 0.7 + signal.energy * 0.3
+        // Derive energy from HRV (higher HRV = higher energy/relaxation)
+        let energy = Float(Swift.min(1.0, signal.hrv / 100.0))
+        let energyFactor = 0.7 + energy * 0.3
         for i in 0..<pattern.steps.count {
             pattern.steps[i].velocity *= energyFactor
         }
@@ -994,5 +995,104 @@ extension BreakbeatChopper {
         guard index < Self.classicPatterns.count else { return }
         let preset = Self.classicPatterns[index]
         currentPattern = ChopPattern.fromIndices(preset.indices, name: preset.name)
+    }
+}
+
+// MARK: - SynthPresetLibrary Integration
+
+extension BreakbeatChopper {
+
+    /// Load a synthetic break from the SynthPresetLibrary.
+    /// Renders the preset's parametric break into an audio buffer and auto-slices it.
+    /// Also imports the preset's pattern indices as a chopper pattern.
+    func loadFromPresetLibrary(_ preset: SynthPreset) {
+        guard preset.engine == .breakbeat || preset.category == .jungle else {
+            log.info("Preset '\(preset.name)' is not a breakbeat preset", category: .audio)
+            return
+        }
+
+        guard let buffer = SynthPresetLibrary.shared.renderPresetToBuffer(preset) else {
+            log.info("Failed to render preset '\(preset.name)' to buffer", category: .audio)
+            return
+        }
+
+        // Load the rendered audio as source
+        loadBuffer(buffer)
+
+        // Set tempo from preset
+        tempo = preset.bpm
+        originalTempo = preset.bpm
+
+        // Import the pattern
+        if !preset.patternIndices.isEmpty {
+            let pattern = ChopPattern.fromIndices(preset.patternIndices, name: preset.name)
+            patterns.append(pattern)
+            currentPattern = pattern
+        }
+
+        log.info("Loaded synthetic break from preset library: '\(preset.name)' @ \(Int(preset.bpm)) BPM", category: .audio)
+    }
+
+    /// Load all ECHOEL_JUNGLE patterns from SynthPresetLibrary as chopper patterns.
+    /// Call this to populate the pattern list with factory breakbeat patterns.
+    func loadJunglePatternsFromLibrary() {
+        let junglePatterns = SynthPresetLibrary.shared.junglePatterns()
+
+        for jp in junglePatterns {
+            guard !patterns.contains(where: { $0.name == jp.name }) else { continue }
+
+            var pattern = ChopPattern.fromIndices(jp.indices, name: jp.name)
+            pattern.swing = jp.swing
+            patterns.append(pattern)
+        }
+
+        log.info("Loaded \(junglePatterns.count) jungle patterns from preset library", category: .audio)
+    }
+
+    /// Load a specific jungle preset by name
+    func loadJunglePreset(_ name: String) {
+        let junglePresets = SynthPresetLibrary.shared.presets(for: .jungle)
+        guard let preset = junglePresets.first(where: { $0.name == name }) else {
+            log.info("Jungle preset '\(name)' not found", category: .audio)
+            return
+        }
+        loadFromPresetLibrary(preset)
+    }
+
+    /// Render drum presets from a genre kit and load as choppable source.
+    /// Creates a concatenated drum break from individual hits — perfect for slicing.
+    func loadGenreKitAsBreak(genre: SynthPresetLibrary.GenreKit) {
+        let drumPresets = SynthPresetLibrary.shared.drumPresets(for: genre)
+        guard !drumPresets.isEmpty else { return }
+
+        let library = SynthPresetLibrary.shared
+        var combinedAudio: [Float] = []
+
+        for preset in drumPresets.prefix(8) {
+            let (data, _) = library.renderPresetToAudio(preset)
+            combinedAudio.append(contentsOf: data)
+        }
+
+        guard !combinedAudio.isEmpty else { return }
+
+        // Create buffer from combined audio
+        let sr: Double = 44100
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(combinedAudio.count)) else {
+            return
+        }
+
+        buffer.frameLength = AVAudioFrameCount(combinedAudio.count)
+        if let channelData = buffer.floatChannelData?[0] {
+            for i in 0..<combinedAudio.count {
+                channelData[i] = combinedAudio[i]
+            }
+        }
+
+        // Load and slice evenly (one slice per drum hit)
+        loadBuffer(buffer)
+        sliceEvenly(count: Swift.min(drumPresets.count, 8))
+
+        log.info("Loaded \(genre.rawValue) genre kit as choppable break (\(drumPresets.count) hits)", category: .audio)
     }
 }
