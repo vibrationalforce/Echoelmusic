@@ -252,8 +252,6 @@ targets:
     sources:
       - path: Sources/EchoelmusicAUv3
         type: group
-      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
-        type: file
     info:
       path: Sources/EchoelmusicAUv3/Info-macOS.plist
       properties:
@@ -341,8 +339,6 @@ targets:
     sources:
       - path: Sources/EchoelmusicAUv3
         type: group
-      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
-        type: file
     info:
       path: Sources/EchoelmusicAUv3/Info.plist
       properties:
