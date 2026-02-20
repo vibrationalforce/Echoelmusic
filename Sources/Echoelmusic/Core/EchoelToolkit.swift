@@ -318,12 +318,8 @@ public final class EchoelMix: ObservableObject {
         self.mixer = ProMixEngine.defaultSession()
         self.session = ProSessionEngine.defaultSession()
 
-        // Register as audio provider on the bus
-        // Note: uses nonisolated(unsafe) to allow @Sendable closures to read @MainActor properties
-        nonisolated(unsafe) let weakSelf = self
-        EngineBus.shared.provide("audio.bpm") { weakSelf.bpm }
-        EngineBus.shared.provide("audio.rms") { weakSelf.rmsLevel }
-        EngineBus.shared.provide("audio.volume") { weakSelf.masterVolume }
+        // Audio state is published via EngineBus.publish(.audio) instead of providers
+        // to avoid @MainActor/@Sendable conflict in provider closures
 
         // Sync ProSessionEngine state → EchoelMix published state
         session.$isPlaying
