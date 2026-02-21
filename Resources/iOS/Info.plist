@@ -80,6 +80,12 @@
 	<string>Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking.</string>
 	<key>NSEyeTrackingUsageDescription</key>
 	<string>Echoelmusic uses eye tracking for immersive gaze-based audio control on supported devices.</string>
+	<key>NSHomeKitUsageDescription</key>
+	<string>Echoelmusic connects to your smart home devices to synchronize lighting scenes and ambiance with your bio-reactive audio experience.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences even in the background.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIRequiresFullScreen</key>
