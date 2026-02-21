@@ -82,7 +82,6 @@ targets:
       - path: Sources/Echoelmusic
         type: group
         excludes:
-          - "**/*.xcassets"
           - "**/VisionOS/**"
           - "**/WatchOS/**"
           - "**/tvOS/**"
@@ -94,7 +93,6 @@ targets:
           - "**/README.md"
           - "**/*.md"
     resources:
-      - path: Sources/Echoelmusic/Resources/Assets.xcassets
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
     info:
