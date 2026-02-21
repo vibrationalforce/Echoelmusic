@@ -375,6 +375,7 @@ public final class TR808BassSynth: ObservableObject {
             voices[existingIndex].velocity = velocity
             voices[existingIndex].isReleasing = false
             voices[existingIndex].phase = 0.0
+            voices[existingIndex].subPhase = 0.0  // Phase-reset sub-osc on kick retrigger
             voices[existingIndex].clickPhase = 0.0
         } else {
             // Voice stealing if at max

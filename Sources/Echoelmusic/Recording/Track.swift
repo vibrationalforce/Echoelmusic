@@ -270,6 +270,9 @@ struct Track: Identifiable, Codable {
     /// Frozen state (render to audio for CPU savings)
     var isFrozen: Bool
 
+    /// Phase invert (polarity flip / Ø) — multiplies signal by -1
+    var isPhaseInverted: Bool
+
 
     // MARK: - Initialization
 
@@ -302,6 +305,7 @@ struct Track: Identifiable, Codable {
         self.groupID = nil
         self.automationLanes = []
         self.isFrozen = false
+        self.isPhaseInverted = false
     }
 
 
@@ -440,7 +444,7 @@ struct Track: Identifiable, Codable {
         case createdAt, modifiedAt, type
         case sends, outputBusID, inputSource, sidechainSourceID
         case isArmed, monitorMode, trackColor, groupID
-        case automationLanes, isFrozen, isPlaying
+        case automationLanes, isFrozen, isPlaying, isPhaseInverted
     }
 
     func encode(to encoder: Encoder) throws {
@@ -469,6 +473,7 @@ struct Track: Identifiable, Codable {
         try container.encode(automationLanes, forKey: .automationLanes)
         try container.encode(isFrozen, forKey: .isFrozen)
         try container.encode(isPlaying, forKey: .isPlaying)
+        try container.encode(isPhaseInverted, forKey: .isPhaseInverted)
     }
 
     init(from decoder: Decoder) throws {
@@ -497,6 +502,7 @@ struct Track: Identifiable, Codable {
         automationLanes = try container.decode([TrackAutomationLane].self, forKey: .automationLanes)
         isFrozen = try container.decode(Bool.self, forKey: .isFrozen)
         isPlaying = try container.decodeIfPresent(Bool.self, forKey: .isPlaying) ?? false
+        isPhaseInverted = try container.decodeIfPresent(Bool.self, forKey: .isPhaseInverted) ?? false
     }
 }
 
