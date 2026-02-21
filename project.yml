@@ -97,9 +97,6 @@ targets:
       - path: Sources/Echoelmusic/Resources/Assets.xcassets
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
-      - path: Resources/iOS/AppIcons
-        type: group
-        buildPhase: resources
     info:
       path: Resources/iOS/Info.plist
       properties:
@@ -147,24 +144,6 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIUserInterfaceStyle: Dark
         UIRequiresFullScreen: false
-        CFBundleIcons:
-          CFBundlePrimaryIcon:
-            CFBundleIconName: AppIcon
-            CFBundleIconFiles:
-              - AppIcon60x60
-              - AppIcon40x40
-              - AppIcon29x29
-              - AppIcon20x20
-        CFBundleIcons~ipad:
-          CFBundlePrimaryIcon:
-            CFBundleIconName: AppIcon
-            CFBundleIconFiles:
-              - AppIcon60x60
-              - AppIcon76x76
-              - AppIcon83.5x83.5
-              - AppIcon40x40
-              - AppIcon29x29
-              - AppIcon20x20
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
     settings:
@@ -172,7 +151,7 @@ targets:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Resources/iOS/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""

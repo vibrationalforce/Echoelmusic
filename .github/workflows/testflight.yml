@@ -346,6 +346,29 @@ jobs:
           echo "=== EXPORT SUCCESSFUL ==="
           ls -la ./build/*.ipa 2>/dev/null || echo "No IPA found"
 
+      - name: "Inspect IPA Icons"
+        run: |
+          IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
+          [ -z "$IPA" ] && { echo "No IPA to inspect"; exit 0; }
+          mkdir -p /tmp/ipa_inspect
+          unzip -o "$IPA" -d /tmp/ipa_inspect > /dev/null 2>&1
+          APP_DIR=$(ls -d /tmp/ipa_inspect/Payload/*.app 2>/dev/null | head -1)
+          [ -z "$APP_DIR" ] && { echo "::warning title=IPA Debug::No .app in IPA"; exit 0; }
+
+          # Check for icons
+          ICONS=$(ls "$APP_DIR"/AppIcon* 2>/dev/null | head -20 || echo "NONE")
+          ASSETS=$(ls -la "$APP_DIR/Assets.car" 2>/dev/null || echo "NO Assets.car")
+          PLIST_ICONS=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIcons in plist")
+          PLIST_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIconName")
+          PLIST_FILES=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIconFiles")
+          ALL_ICONS=$(find "$APP_DIR" -maxdepth 2 -name "*[Ii]con*" -o -name "*[Aa]pp[Ii]con*" 2>/dev/null | head -20 || echo "NONE")
+
+          echo "::warning title=IPA Icon Scan::Icons at root: ${ICONS} | Assets.car: ${ASSETS} | CFBundleIconName: ${PLIST_NAME} | CFBundleIconFiles: ${PLIST_FILES}"
+          echo "::warning title=IPA All Icons::${ALL_ICONS}"
+          echo "--- Detailed Info.plist Icons ---"
+          echo "$PLIST_ICONS"
+          rm -rf /tmp/ipa_inspect
+
       - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
