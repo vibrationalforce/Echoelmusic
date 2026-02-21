@@ -78,17 +78,17 @@ final class EchoelUniversalCore: ObservableObject {
     /// AI Creative Engine
     private var aiEngine = AICreativeEngine()
 
-    /// Self-Healing Engine - NEU VERBUNDEN
-    private let selfHealing = SelfHealingEngine.shared
+    /// Self-Healing Engine - lazy to avoid circular singleton deadlock
+    private lazy var selfHealing = SelfHealingEngine.shared
 
-    /// Multi-Platform Bridge - NEU VERBUNDEN
-    private let platformBridge = MultiPlatformBridge.shared
+    /// Multi-Platform Bridge - lazy to avoid circular singleton deadlock
+    private lazy var platformBridge = MultiPlatformBridge.shared
 
-    /// Video AI Hub - NEU VERBUNDEN
-    private let videoAIHub = VideoAICreativeHub.shared
+    /// Video AI Hub - lazy to avoid circular singleton deadlock
+    private lazy var videoAIHub = VideoAICreativeHub.shared
 
-    /// EchoelTools - NEU VERBUNDEN
-    private let tools = EchoelTools.shared
+    /// EchoelTools - lazy to avoid circular singleton deadlock
+    private lazy var tools = EchoelTools.shared
 
     // MARK: - Private State
 
@@ -101,8 +101,13 @@ final class EchoelUniversalCore: ObservableObject {
 
     private init() {
         setupSubsystems()
-        setupCrossSystemConnections()
         startUniversalLoop()
+        // Defer cross-system connections to next run loop iteration
+        // This ensures EchoelUniversalCore.shared is fully assigned before
+        // other singletons (EchoelTools, VideoAICreativeHub) try to access it
+        Task { @MainActor [weak self] in
+            self?.setupCrossSystemConnections()
+        }
     }
 
     // MARK: - Setup

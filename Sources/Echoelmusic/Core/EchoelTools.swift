@@ -42,23 +42,39 @@ final class EchoelTools: ObservableObject {
     let spatializer = Spatializer()
     let timeStretcher = TimeStretcher()
 
-    // MARK: - System References
+    // MARK: - System References (lazy to avoid circular dependency with EchoelUniversalCore)
 
-    private let universalCore = EchoelUniversalCore.shared
-    private let selfHealing = SelfHealingEngine.shared
+    private var _universalCore: EchoelUniversalCore?
+    private var universalCore: EchoelUniversalCore {
+        if _universalCore == nil { _universalCore = EchoelUniversalCore.shared }
+        return _universalCore!
+    }
+    private var _selfHealing: SelfHealingEngine?
+    private var selfHealing: SelfHealingEngine {
+        if _selfHealing == nil { _selfHealing = SelfHealingEngine.shared }
+        return _selfHealing!
+    }
 
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
+    private var connectionsSetUp = false
 
     // MARK: - Initialization
 
     private init() {
-        setupToolConnections()
         activateUltraFlow()
+        // Defer cross-system connections to avoid circular singleton deadlock
+        // EchoelUniversalCore.shared -> EchoelTools.shared -> EchoelUniversalCore.shared
+        Task { @MainActor [weak self] in
+            self?.setupToolConnections()
+        }
     }
 
     private func setupToolConnections() {
+        guard !connectionsSetUp else { return }
+        connectionsSetUp = true
+
         // Connect all tools to the universal core
         universalCore.$systemState
             .sink { [weak self] state in
