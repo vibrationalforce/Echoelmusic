@@ -24,12 +24,23 @@ class EchoelAppDelegate: NSObject, UIApplicationDelegate {
 
 /// Main entry point for the Echoelmusic app
 /// Bio-reactive audio-visual experiences platform
+///
+/// ARCHITECTURE: Splash-screen-gated startup
+/// All singletons are initialized SEQUENTIALLY in `initializeCoreSystems()`,
+/// which runs asynchronously while the LaunchScreen is displayed.
+/// MainNavigationHub is ONLY rendered after all systems are ready.
+/// This prevents:
+/// 1. Circular singleton deadlocks (sequential init order)
+/// 2. Race conditions (no eager @ObservedObject singleton access)
+/// 3. UI rendering before systems are initialized
 @main
 struct EchoelmusicApp: App {
 
     #if os(iOS) || os(tvOS)
     @UIApplicationDelegateAdaptor(EchoelAppDelegate.self) var appDelegate
     #endif
+
+    // MARK: - Owned State Objects (lightweight, no singleton dependencies)
 
     /// StateObject ensures the MicrophoneManager stays alive
     /// throughout the app's lifetime
@@ -38,23 +49,24 @@ struct EchoelmusicApp: App {
     /// Central AudioEngine coordinates all audio components
     @StateObject private var audioEngine: AudioEngine
 
-    /// HealthKit engine for biofeedback (unified engine)
-    @ObservedObject private var healthKitEngine = UnifiedHealthKitEngine.shared
-
     /// HealthKitManager for MainNavigationHub + WorkspaceContentRouter
     @StateObject private var healthKitManager = HealthKitManager()
 
     /// Recording engine for multi-track recording
     @StateObject private var recordingEngine = RecordingEngine()
 
-    /// EchoelToolkit — unified access to all 10 tools + Lambda
-    @ObservedObject private var toolkit = EchoelToolkit.shared
-
     /// UnifiedControlHub for multimodal input
     @StateObject private var unifiedControlHub: UnifiedControlHub
 
-    /// Push notification manager
-    @ObservedObject private var pushManager = PushNotificationManager.shared
+    // MARK: - Initialization Gate
+    // NOTE: Singletons (UnifiedHealthKitEngine, EchoelToolkit, PushNotificationManager,
+    // EchoelUniversalCore, etc.) are NO LONGER accessed eagerly via @ObservedObject.
+    // They were causing a massive synchronous init cascade of 30+ objects BEFORE
+    // the init() body even ran, bypassing the sequential initialization entirely.
+    // Now they are initialized in initializeCoreSystems() and accessed via .shared
+    // only after coreSystemsReady == true.
+
+    @State private var coreSystemsReady = false
 
     init() {
         // Initialize AudioEngine with MicrophoneManager
@@ -65,126 +77,154 @@ struct EchoelmusicApp: App {
         _audioEngine = StateObject(wrappedValue: audioEng)
 
         _unifiedControlHub = StateObject(wrappedValue: UnifiedControlHub(audioEngine: audioEng))
-
-        // PERFORMANCE: Defer non-critical singleton initialization to background
-        // This prevents 2-5 second startup blocking on main thread
-        Task(priority: .userInitiated) {
-            do {
-                // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
-                // Sequential initialization to avoid circular singleton deadlocks:
-                // EchoelUniversalCore <-> EchoelTools, EchoelUniversalCore <-> VideoAICreativeHub
-                await MainActor.run { _ = SelfHealingEngine.shared }
-                await MainActor.run { _ = MultiPlatformBridge.shared }
-                await MainActor.run { _ = EchoelUniversalCore.shared }
-                // After EchoelUniversalCore is fully assigned, these can safely reference it
-                await MainActor.run { _ = VideoAICreativeHub.shared }
-                await MainActor.run { _ = EchoelTools.shared }
-                await MainActor.run { _ = EchoelToolkit.shared }
-
-                // INSTRUMENT PIPELINE (depends on core systems)
-                try await withThrowingTaskGroup(of: Void.self) { group in
-                    group.addTask { @MainActor in _ = InstrumentOrchestrator.shared }
-                    group.addTask { @MainActor in _ = WorldMusicBridge.shared }
-                    try await group.waitForAll()
-                }
-
-                // PHYSICAL AI PIPELINE (JEPA world model + autonomous control)
-                await MainActor.run {
-                    let physicalAI = PhysicalAIEngine.shared
-                    physicalAI.start()
-                    physicalAI.addObjective(.maintainCoherence())
-                }
-
-                // SCRIPT ENGINE (community scripts + automation)
-                await MainActor.run {
-                    let scriptEngine = ScriptEngine(
-                        audioAPI: AudioScriptAPI(),
-                        visualAPI: VisualScriptAPI(),
-                        bioAPI: BioScriptAPI(),
-                        streamAPI: StreamScriptAPI(),
-                        midiAPI: MIDIScriptAPI(),
-                        spatialAPI: SpatialScriptAPI()
-                    )
-                    log.info("📜 ScriptEngine: Initialized with all 6 APIs", category: .system)
-                }
-
-                // STREAMING PIPELINE
-                await MainActor.run { _ = SocialMediaManager.shared }
-
-                await MainActor.run {
-                    log.info("⚛️ Echoelmusic Core Systems Initialized (async)", category: .system)
-                    log.info("🎹 InstrumentOrchestrator: 54+ Instruments Ready", category: .system)
-                    log.info("🌍 WorldMusicBridge: 42 Music Styles Loaded", category: .system)
-                }
-            } catch {
-                await MainActor.run {
-                    log.error("❌ Core system initialization failed: \(error.localizedDescription)", category: .system)
-                    // App can still function - singletons will init lazily on first access
-                }
-            }
-        }
     }
 
     var body: some Scene {
         WindowGroup {
-            MainNavigationHub()
-                .environmentObject(microphoneManager)      // Makes mic manager available to all views
-                .environmentObject(audioEngine)             // Makes audio engine available
-                .environmentObject(healthKitEngine)        // Makes health data available (UnifiedHealthKitEngine)
-                .environmentObject(healthKitManager)       // Makes HealthKitManager available (for MainNavigationHub)
-                .environmentObject(recordingEngine)         // Makes recording engine available
-                .environmentObject(unifiedControlHub)       // Makes unified control available
-                .environmentObject(toolkit)                 // Makes EchoelToolkit available to all views
-                .preferredColorScheme(.dark)                // Force dark theme
-                .onAppear {
-                    // Connect HealthKit to AudioEngine for bio-parameter mapping
-                    audioEngine.connectHealthKit(healthKitEngine)
-
-                    // Connect RecordingEngine to AudioEngine for audio routing
-                    recordingEngine.connectAudioEngine(audioEngine)
-
-                    // Enable biometric monitoring through UnifiedControlHub
-                    Task {
-                        do {
-                            try await unifiedControlHub.enableBiometricMonitoring()
-                            log.info("✅ Biometric monitoring enabled via UnifiedControlHub", category: .system)
-                        } catch {
-                            log.warning("⚠️ Biometric monitoring not available: \(error.localizedDescription)", category: .system)
-                        }
-
-                        // Enable MIDI 2.0 + MPE
-                        do {
-                            try await unifiedControlHub.enableMIDI2()
-                            log.info("✅ MIDI 2.0 + MPE enabled via UnifiedControlHub", category: .system)
-                        } catch {
-                            log.warning("⚠️ MIDI 2.0 not available: \(error.localizedDescription)", category: .system)
-                        }
-
-                        // Request push notification permission + register with APNs
-                        let pushGranted = await PushNotificationManager.shared.requestAuthorization()
-                        if pushGranted {
-                            log.info("✅ Push notifications authorized", category: .system)
-                        }
+            if coreSystemsReady {
+                mainContent
+            } else {
+                LaunchScreen()
+                    .preferredColorScheme(.dark)
+                    .task {
+                        await initializeCoreSystems()
+                        coreSystemsReady = true
                     }
-
-                    // Wire PhysicalAI → AudioEngine parameter control
-                    let physicalAI = PhysicalAIEngine.shared
-                    physicalAI.onParameterChange = { [weak audioEngine] parameter, value in
-                        audioEngine?.applyPhysicalAIParameter(parameter, value: value)
-                    }
-
-                    // Wire ControlHub → PhysicalAI bio signal bridge
-                    unifiedControlHub.connectPhysicalAI(physicalAI)
-
-                    // Start UnifiedControlHub
-                    unifiedControlHub.start()
-
-                    log.info("🧠 PhysicalAI → AudioEngine wired", category: .system)
-                    log.info("🎵 Echoelmusic Started - All Systems Connected!", category: .system)
-                    log.info("🎹 MIDI 2.0 + MPE + Spatial Audio Ready", category: .system)
-                    log.info("🌊 Bio-Reactive Audio-Visual Platform Ready", category: .system)
-                }
+            }
         }
+    }
+
+    // MARK: - Main Content (only rendered after core systems are ready)
+
+    @ViewBuilder
+    private var mainContent: some View {
+        MainNavigationHub()
+            .environmentObject(microphoneManager)
+            .environmentObject(audioEngine)
+            .environmentObject(UnifiedHealthKitEngine.shared)
+            .environmentObject(healthKitManager)
+            .environmentObject(recordingEngine)
+            .environmentObject(unifiedControlHub)
+            .environmentObject(EchoelToolkit.shared)
+            .preferredColorScheme(.dark)
+            .onAppear {
+                connectSystems()
+            }
+    }
+
+    // MARK: - Sequential Core System Initialization
+
+    /// Initializes all singletons in a controlled, sequential order.
+    /// Each phase waits for the previous to complete, preventing circular deadlocks.
+    /// Wrapped in do/catch so a single failure doesn't crash the entire app.
+    private func initializeCoreSystems() async {
+        do {
+            // Phase 1: Foundation singletons (no cross-references)
+            await MainActor.run { _ = UnifiedHealthKitEngine.shared }
+            await MainActor.run { _ = PushNotificationManager.shared }
+            await MainActor.run { _ = SelfHealingEngine.shared }
+            await MainActor.run { _ = MultiPlatformBridge.shared }
+
+            // Phase 2: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
+            await MainActor.run { _ = EchoelUniversalCore.shared }
+
+            // Phase 3: Systems that reference EchoelUniversalCore
+            await MainActor.run { _ = VideoAICreativeHub.shared }
+            await MainActor.run { _ = EchoelTools.shared }
+
+            // Phase 4: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
+            // This triggers: CircadianRhythmEngine, EEGSensorBridge, NeuroSpiritualEngine,
+            // EchoelCreativeAI, QuantumHealthBiofeedbackEngine, and more.
+            await MainActor.run { _ = EchoelToolkit.shared }
+
+            // Phase 5: Instrument pipeline (can run in parallel)
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { @MainActor in _ = InstrumentOrchestrator.shared }
+                group.addTask { @MainActor in _ = WorldMusicBridge.shared }
+                try await group.waitForAll()
+            }
+
+            // Phase 6: Physical AI (JEPA world model + autonomous control)
+            await MainActor.run {
+                let physicalAI = PhysicalAIEngine.shared
+                physicalAI.start()
+                physicalAI.addObjective(.maintainCoherence())
+            }
+
+            // Phase 7: Script engine (community scripts + automation)
+            await MainActor.run {
+                _ = ScriptEngine(
+                    audioAPI: AudioScriptAPI(),
+                    visualAPI: VisualScriptAPI(),
+                    bioAPI: BioScriptAPI(),
+                    streamAPI: StreamScriptAPI(),
+                    midiAPI: MIDIScriptAPI(),
+                    spatialAPI: SpatialScriptAPI()
+                )
+                log.info("ScriptEngine: Initialized with all 6 APIs", category: .system)
+            }
+
+            // Phase 8: Streaming pipeline
+            await MainActor.run { _ = SocialMediaManager.shared }
+
+            await MainActor.run {
+                log.info("Echoelmusic Core Systems Initialized", category: .system)
+            }
+        } catch {
+            await MainActor.run {
+                log.error("Core system initialization failed: \(error.localizedDescription)", category: .system)
+                // App can still function — singletons will init lazily on first access
+            }
+        }
+    }
+
+    // MARK: - System Connections (runs after MainNavigationHub appears)
+
+    /// Wires all systems together after UI is ready and all singletons are initialized.
+    private func connectSystems() {
+        let healthKitEngine = UnifiedHealthKitEngine.shared
+
+        // Connect HealthKit to AudioEngine for bio-parameter mapping
+        audioEngine.connectHealthKit(healthKitEngine)
+
+        // Connect RecordingEngine to AudioEngine for audio routing
+        recordingEngine.connectAudioEngine(audioEngine)
+
+        // Wire PhysicalAI → AudioEngine parameter control
+        let physicalAI = PhysicalAIEngine.shared
+        physicalAI.onParameterChange = { [weak audioEngine] parameter, value in
+            audioEngine?.applyPhysicalAIParameter(parameter, value: value)
+        }
+
+        // Wire ControlHub → PhysicalAI bio signal bridge
+        unifiedControlHub.connectPhysicalAI(physicalAI)
+
+        // Start UnifiedControlHub
+        unifiedControlHub.start()
+
+        // Async tasks: biometric monitoring, MIDI, push notifications
+        Task {
+            do {
+                try await unifiedControlHub.enableBiometricMonitoring()
+                log.info("Biometric monitoring enabled via UnifiedControlHub", category: .system)
+            } catch {
+                log.warning("Biometric monitoring not available: \(error.localizedDescription)", category: .system)
+            }
+
+            do {
+                try await unifiedControlHub.enableMIDI2()
+                log.info("MIDI 2.0 + MPE enabled via UnifiedControlHub", category: .system)
+            } catch {
+                log.warning("MIDI 2.0 not available: \(error.localizedDescription)", category: .system)
+            }
+
+            let pushGranted = await PushNotificationManager.shared.requestAuthorization()
+            if pushGranted {
+                log.info("Push notifications authorized", category: .system)
+            }
+        }
+
+        log.info("Bio-Reactive Audio-Visual Platform Ready", category: .system)
     }
 }
 
