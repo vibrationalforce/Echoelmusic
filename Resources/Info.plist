@@ -40,6 +40,16 @@
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Echoelmusic detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality Multidimensional Brainwave Entrainment.</string>
 
+	<!-- HomeKit Permission (for smart home lighting sync) -->
+	<key>NSHomeKitUsageDescription</key>
+	<string>Echoelmusic connects to your smart home devices to synchronize lighting scenes and ambiance with your bio-reactive audio experience.</string>
+
+	<!-- Location Permissions (for nearby events and users) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences even in the background.</string>
+
 	<!-- Background Modes (for continuous audio playback) -->
 	<key>UIBackgroundModes</key>
 	<array>

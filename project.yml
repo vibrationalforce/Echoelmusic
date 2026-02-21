@@ -117,6 +117,9 @@ targets:
         NSFaceIDUsageDescription: "Echoelmusic uses TrueDepth camera for face tracking to map expressions to audio-visual parameters"
         NSMotionUsageDescription: "Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking"
         NSEyeTrackingUsageDescription: "Echoelmusic uses eye tracking for immersive gaze-based audio control on supported devices"
+        NSHomeKitUsageDescription: "Echoelmusic connects to your smart home devices to synchronize lighting scenes and ambiance with your bio-reactive audio experience"
+        NSLocationWhenInUseUsageDescription: "Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences"
+        NSLocationAlwaysAndWhenInUseUsageDescription: "Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences even in the background"
         NSLocalNetworkUsageDescription: "Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces"
         NSBonjourServices:
           - "_http._tcp"
