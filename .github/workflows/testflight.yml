@@ -374,6 +374,23 @@ jobs:
             echo "::error title=No IPA::No IPA found in $(pwd)/build/"
             exit 1
           fi
+
+          # Debug: inspect IPA contents for icons
+          echo "=== IPA Icon Debug ==="
+          mkdir -p /tmp/ipa_debug
+          unzip -o "$IPA" -d /tmp/ipa_debug > /dev/null 2>&1
+          echo "--- Info.plist CFBundleIcons ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" /tmp/ipa_debug/Payload/*.app/Info.plist 2>&1 || echo "No CFBundleIcons key"
+          echo "--- Icon files in .app ---"
+          ls -la /tmp/ipa_debug/Payload/*.app/AppIcon* 2>/dev/null || echo "No AppIcon files at root"
+          ls -la /tmp/ipa_debug/Payload/*.app/Assets.car 2>/dev/null || echo "No Assets.car"
+          echo "--- actool-generated icon entries ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" /tmp/ipa_debug/Payload/*.app/Info.plist 2>&1 || echo "No icon files in plist"
+          echo "--- All files matching Icon/icon ---"
+          find /tmp/ipa_debug/Payload/*.app -maxdepth 1 -name "*[Ii]con*" 2>/dev/null || echo "No icon files found"
+          echo "=== End Icon Debug ==="
+          rm -rf /tmp/ipa_debug
+
           echo "Uploading $IPA to TestFlight..."
           set +eo pipefail
           IPA_PATH="$IPA" fastlane ios upload 2>&1 | tee /tmp/upload.log
