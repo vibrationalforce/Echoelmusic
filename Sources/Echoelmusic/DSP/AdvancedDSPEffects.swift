@@ -24,7 +24,6 @@ import Accelerate
 /// - Zero-latency where possible
 /// - Oversampling for non-linear effects
 /// - True peak limiting
-@MainActor
 class AdvancedDSPEffects {
 
     // MARK: - Parametric EQ

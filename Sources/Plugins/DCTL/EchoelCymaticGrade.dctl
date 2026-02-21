@@ -1,0 +1,146 @@
+/*
+ *  EchoelCymaticGrade.dctl
+ *  Echoelmusic — Cymatics-Inspired Color Grading
+ *
+ *  Created: February 2026
+ *  Creates organic, frequency-based color patterns inspired by cymatics
+ *  (the science of visible sound). Maps audio frequency data to geometric
+ *  color transformations.
+ *
+ *  For DaVinci Resolve Color page.
+ *  Install: /Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/DCTL/
+ */
+
+DEFINE_UI_PARAMS(p_frequency,    Audio Frequency,    DCTLUI_SLIDER_FLOAT, 440.0, 20.0, 8000.0, 1.0)
+DEFINE_UI_PARAMS(p_amplitude,    Audio Amplitude,    DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_patternScale, Pattern Scale,      DCTLUI_SLIDER_FLOAT, 3.0, 0.5, 20.0, 0.1)
+DEFINE_UI_PARAMS(p_rotation,     Pattern Rotation,   DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 360.0, 1.0)
+DEFINE_UI_PARAMS(p_complexity,   Complexity,         DCTLUI_SLIDER_FLOAT, 5.0, 1.0, 12.0, 1.0)
+DEFINE_UI_PARAMS(p_colorMode,    Color Mode,         DCTLUI_SLIDER_INT,   0, 0, 3, 1)
+DEFINE_UI_PARAMS(p_overlay,      Overlay Strength,   DCTLUI_SLIDER_FLOAT, 0.3, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_coherence,    Bio Coherence,      DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Cymatics Pattern Generator                                                 */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Chladni plate vibration pattern (Ernst Chladni, 1787) */
+__DEVICE__ float chladniPattern(float x, float y, float m, float n) {
+    return _cosf(m * 3.14159265f * x) * _cosf(n * 3.14159265f * y)
+         - _cosf(n * 3.14159265f * x) * _cosf(m * 3.14159265f * y);
+}
+
+/* Frequency → mode numbers (approximate Chladni plate resonances) */
+__DEVICE__ void frequencyToModes(float freq, float* m, float* n) {
+    /* Map audio frequency to cymatics mode numbers
+     * Lower frequencies → simpler patterns (low m,n)
+     * Higher frequencies → complex patterns (high m,n) */
+    float normalized = _logf(freq / 20.0f) / _logf(400.0f);  /* 0-1 range */
+    normalized = _clampf(normalized, 0.0f, 1.0f);
+    *m = 1.0f + normalized * 8.0f;
+    *n = 1.0f + normalized * 6.0f;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Main Transform                                                            */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B) {
+
+    /* Normalized coordinates (-1 to 1) */
+    float aspect = (float)p_Width / (float)p_Height;
+    float uvX = ((float)p_X / (float)p_Width - 0.5f) * 2.0f * aspect;
+    float uvY = ((float)p_Y / (float)p_Height - 0.5f) * 2.0f;
+
+    /* Apply rotation */
+    float rad = p_rotation * 3.14159265f / 180.0f;
+    float cosR = _cosf(rad);
+    float sinR = _sinf(rad);
+    float rx = uvX * cosR - uvY * sinR;
+    float ry = uvX * sinR + uvY * cosR;
+
+    /* Scale */
+    rx *= p_patternScale;
+    ry *= p_patternScale;
+
+    /* Generate cymatics pattern from audio frequency */
+    float m, n;
+    frequencyToModes(p_frequency, &m, &n);
+
+    /* Multi-mode superposition (like real cymatics) */
+    float pattern = 0.0f;
+    float complexity = _fmaxf(1.0f, p_complexity);
+
+    for (float i = 1.0f; i <= complexity; i += 1.0f) {
+        float weight = 1.0f / i;
+        pattern += chladniPattern(rx, ry, m * i, n * i) * weight;
+    }
+
+    /* Normalize pattern to 0-1 */
+    pattern = _fabs(pattern);
+    pattern = _clampf(pattern, 0.0f, 1.0f);
+
+    /* Audio amplitude modulates pattern visibility */
+    pattern *= p_amplitude;
+
+    /* Bio-coherence smooths/sharpens the pattern */
+    if (p_coherence > 0.6f) {
+        /* High coherence → smoother, more harmonious patterns */
+        pattern = pattern * pattern;  /* smooth */
+    } else if (p_coherence < 0.3f) {
+        /* Low coherence → sharper, more angular patterns */
+        pattern = _sqrtf(pattern);    /* sharpen */
+    }
+
+    /* ─── Color Mapping ─── */
+    float3 color;
+
+    if (p_colorMode == 0) {
+        /* Mode 0: Golden / Coherence (warm) */
+        color = make_float3(
+            pattern * 1.0f,
+            pattern * 0.7f * p_coherence,
+            pattern * 0.3f * (1.0f - p_coherence)
+        );
+    } else if (p_colorMode == 1) {
+        /* Mode 1: Cyan / Energy (cool) */
+        color = make_float3(
+            pattern * 0.2f,
+            pattern * 0.8f,
+            pattern * 1.0f
+        );
+    } else if (p_colorMode == 2) {
+        /* Mode 2: Spectral (rainbow based on pattern value) */
+        float hue = pattern * 6.0f;
+        float s = 0.8f;
+        float v = pattern;
+        /* HSV → RGB */
+        int hi = (int)hue % 6;
+        float f = hue - (float)hi;
+        float p2 = v * (1.0f - s);
+        float q = v * (1.0f - s * f);
+        float t = v * (1.0f - s * (1.0f - f));
+        if (hi == 0)      color = make_float3(v, t, p2);
+        else if (hi == 1) color = make_float3(q, v, p2);
+        else if (hi == 2) color = make_float3(p2, v, t);
+        else if (hi == 3) color = make_float3(p2, q, v);
+        else if (hi == 4) color = make_float3(t, p2, v);
+        else              color = make_float3(v, p2, q);
+    } else {
+        /* Mode 3: Monochrome (white) */
+        color = make_float3(pattern, pattern, pattern);
+    }
+
+    /* ─── Overlay Blend ─── */
+    float overlay = p_overlay;
+    float r = p_R + color.x * overlay;
+    float g = p_G + color.y * overlay;
+    float b = p_B + color.z * overlay;
+
+    /* Clamp */
+    r = _clampf(r, 0.0f, 1.0f);
+    g = _clampf(g, 0.0f, 1.0f);
+    b = _clampf(b, 0.0f, 1.0f);
+
+    return make_float3(r, g, b);
+}

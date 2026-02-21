@@ -817,6 +817,179 @@ message(STATUS "==============================================")
 
 endif() # End of USE_JUCE block
 
+# ═══════════════════════════════════════════════════════════════════════
+# EchoelPluginCore — Unified C ABI DSP Library (JUCE-Free, MIT License)
+# ═══════════════════════════════════════════════════════════════════════
+# This is the foundation of the entire Echoelmusic plugin ecosystem.
+# Every plugin format (VST3, CLAP, AAX, AU, OFX) links against this
+# single shared library. Zero external dependencies.
+#
+# Architecture:
+#   EchoelPluginCore.h  — Pure C ABI (opaque handle, real-time safe)
+#   EchoelPluginCore.cpp — Full DSP: synths, effects, bio-reactive
+#                          ↓
+#   CLAP / VST3 / AAX / OFX wrappers — Thin adapters only
+
+option(BUILD_PLUGIN_CORE "Build EchoelPluginCore library" ON)
+
+if(BUILD_PLUGIN_CORE)
+    message(STATUS "")
+    message(STATUS "==============================================")
+    message(STATUS "EchoelPluginCore — Unified DSP Library")
+    message(STATUS "==============================================")
+
+    add_library(EchoelPluginCore STATIC
+        Sources/PluginCore/EchoelPluginCore.cpp
+        Sources/PluginCore/EchoelPluginCore.h
+    )
+
+    target_include_directories(EchoelPluginCore
+        PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/PluginCore
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/DSP
+            ${CMAKE_CURRENT_SOURCE_DIR}/Sources/Desktop/DSP
+    )
+
+    target_compile_features(EchoelPluginCore PUBLIC cxx_std_17)
+
+    # SIMD flags are already set globally at top of CMakeLists.txt
+    target_compile_definitions(EchoelPluginCore PRIVATE
+        ECHOEL_PLUGIN_CORE=1
+        ECHOEL_MAX_VOICES=32
+        ECHOEL_SAMPLE_RATE=48000
+    )
+
+    if(WIN32)
+        target_compile_definitions(EchoelPluginCore PRIVATE
+            NOMINMAX WIN32_LEAN_AND_MEAN _UNICODE UNICODE
+        )
+    endif()
+
+    set_target_properties(EchoelPluginCore PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+        C_VISIBILITY_PRESET hidden
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN ON
+    )
+
+    message(STATUS "  Sources: Sources/PluginCore/")
+    message(STATUS "  API: EchoelPluginCore.h (C ABI)")
+    message(STATUS "==============================================")
+
+    # ─── CLAP Plugin ───
+    if(BUILD_CLAP)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap"
+           OR EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Sources/Plugins/CLAP/EchoelCLAPEntry.cpp")
+            add_library(EchoelCLAP MODULE
+                Sources/Plugins/CLAP/EchoelCLAPEntry.cpp
+            )
+            target_link_libraries(EchoelCLAP PRIVATE EchoelPluginCore)
+            target_include_directories(EchoelCLAP PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/Sources/PluginCore
+            )
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap/include")
+                target_include_directories(EchoelCLAP PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/clap/include
+                )
+                target_compile_definitions(EchoelCLAP PRIVATE ECHOEL_HAS_CLAP_SDK=1)
+            endif()
+            set_target_properties(EchoelCLAP PROPERTIES
+                OUTPUT_NAME "Echoelmusic"
+                SUFFIX ".clap"
+                PREFIX ""
+            )
+            if(APPLE)
+                set_target_properties(EchoelCLAP PROPERTIES
+                    BUNDLE TRUE
+                    BUNDLE_EXTENSION "clap"
+                )
+            endif()
+            message(STATUS "  CLAP Plugin: EchoelCLAP (12 plugins)")
+        endif()
+    endif()
+
+    # ─── VST3 Plugin ───
+    if(BUILD_VST3)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vst3sdk"
+           OR EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Sources/Plugins/VST3/EchoelVST3Entry.cpp")
+            add_library(EchoelVST3 MODULE
+                Sources/Plugins/VST3/EchoelVST3Entry.cpp
+            )
+            target_link_libraries(EchoelVST3 PRIVATE EchoelPluginCore)
+            target_include_directories(EchoelVST3 PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/Sources/PluginCore
+            )
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vst3sdk")
+                target_include_directories(EchoelVST3 PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/vst3sdk
+                )
+                target_compile_definitions(EchoelVST3 PRIVATE ECHOEL_HAS_VST3_SDK=1)
+            endif()
+            set_target_properties(EchoelVST3 PROPERTIES
+                OUTPUT_NAME "Echoelmusic"
+                SUFFIX ".vst3"
+                PREFIX ""
+            )
+            message(STATUS "  VST3 Plugin: EchoelVST3 (9 plugins)")
+        endif()
+    endif()
+
+    # ─── AAX Plugin (Pro Tools) ───
+    if(BUILD_AAX)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/AAX_SDK"
+           OR EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Sources/Plugins/AAX/EchoelAAXEntry.cpp")
+            add_library(EchoelAAX MODULE
+                Sources/Plugins/AAX/EchoelAAXEntry.cpp
+            )
+            target_link_libraries(EchoelAAX PRIVATE EchoelPluginCore)
+            target_include_directories(EchoelAAX PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/Sources/PluginCore
+            )
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/AAX_SDK/Interfaces")
+                target_include_directories(EchoelAAX PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/AAX_SDK/Interfaces
+                    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/AAX_SDK/Interfaces/ACF
+                )
+                target_compile_definitions(EchoelAAX PRIVATE ECHOEL_HAS_AAX_SDK=1)
+            endif()
+            set_target_properties(EchoelAAX PROPERTIES
+                OUTPUT_NAME "Echoelmusic"
+                SUFFIX ".aaxplugin"
+                PREFIX ""
+            )
+            message(STATUS "  AAX Plugin: EchoelAAX (7 plugins)")
+        endif()
+    endif()
+
+    # ─── OFX Plugin (Video Compositing) ───
+    option(BUILD_OFX "Build OFX plugin for DaVinci Resolve/Nuke" ON)
+    if(BUILD_OFX)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Sources/Plugins/OFX/EchoelOFXPlugin.cpp")
+            add_library(EchoelOFX MODULE
+                Sources/Plugins/OFX/EchoelOFXPlugin.cpp
+            )
+            target_link_libraries(EchoelOFX PRIVATE EchoelPluginCore)
+            target_include_directories(EchoelOFX PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/Sources/PluginCore
+            )
+            if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/openfx/include")
+                target_include_directories(EchoelOFX PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/openfx/include
+                )
+                target_compile_definitions(EchoelOFX PRIVATE ECHOEL_HAS_OFX_SDK=1)
+            endif()
+            set_target_properties(EchoelOFX PROPERTIES
+                OUTPUT_NAME "Echoelmusic"
+                SUFFIX ".ofx"
+                PREFIX ""
+            )
+            message(STATUS "  OFX Plugin: EchoelOFX (3 plugins)")
+        endif()
+    endif()
+
+    message(STATUS "")
+endif()
+
 # ===========================
 # Native Audio Engines (JUCE-Free)
 # ===========================
@@ -910,10 +1083,15 @@ if(EMSCRIPTEN)
         Sources/Desktop/DSP/EchoelmusicDSP.h
     )
 
+    # Link PluginCore for full DSP in WASM
+    if(TARGET EchoelPluginCore)
+        target_link_libraries(echoelcore_wasm PRIVATE EchoelPluginCore)
+    endif()
+
     # Emscripten settings for audio
     set_target_properties(echoelcore_wasm PROPERTIES
         SUFFIX ".js"
-        LINK_FLAGS "-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1 -s AUDIO_WORKLET=1"
+        LINK_FLAGS "-s WASM=1 -s EXPORTED_RUNTIME_METHODS=['ccall','cwrap'] -s ALLOW_MEMORY_GROWTH=1 -s AUDIO_WORKLET=1 -s USE_PTHREADS=1 -s WASM_BIGINT=1 -msimd128"
     )
 
     target_compile_definitions(echoelcore_wasm PRIVATE
@@ -930,33 +1108,40 @@ endif()
 # ===========================
 
 if(NOT USE_JUCE)
-    # Non-JUCE build (Swift-only for iOS/macOS)
     message(STATUS "")
     message(STATUS "==============================================")
-    message(STATUS "Echoelmusic - Swift-Only Build Mode")
+    message(STATUS "Echoelmusic — Build Summary")
     message(STATUS "==============================================")
     message(STATUS "")
-    message(STATUS "JUCE Framework: DISABLED")
+    message(STATUS "Platform: ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_PROCESSOR})")
+    message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
+    message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
     message(STATUS "")
-    message(STATUS "This configuration is for iOS/macOS Swift builds")
-    message(STATUS "that use native Apple frameworks:")
-    message(STATUS "  - AVFoundation (Audio/Video)")
-    message(STATUS "  - Accelerate (DSP/SIMD)")
-    message(STATUS "  - CoreML (AI/ML)")
-    message(STATUS "  - HealthKit (Biometrics)")
-    message(STATUS "  - Metal (GPU Shaders)")
+    message(STATUS "Plugin Core: EchoelPluginCore (C ABI, JUCE-free)")
+    if(TARGET EchoelCLAP)
+        message(STATUS "  CLAP:  Echoelmusic.clap  (12 plugins)")
+    endif()
+    if(TARGET EchoelVST3)
+        message(STATUS "  VST3:  Echoelmusic.vst3  (9 plugins)")
+    endif()
+    if(TARGET EchoelAAX)
+        message(STATUS "  AAX:   Echoelmusic.aaxplugin (7 plugins)")
+    endif()
+    if(TARGET EchoelOFX)
+        message(STATUS "  OFX:   Echoelmusic.ofx  (3 plugins)")
+    endif()
     message(STATUS "")
-    message(STATUS "To build Swift targets:")
-    message(STATUS "  swift build")
-    message(STATUS "  swift test")
+    message(STATUS "Native Audio: EchoelmusicNativeAudio (header-only)")
     message(STATUS "")
-    message(STATUS "To enable desktop plugin builds:")
-    message(STATUS "  cmake .. -DUSE_JUCE=ON")
-    message(STATUS "  (Requires JUCE in ThirdParty/JUCE)")
+    message(STATUS "Swift targets: swift build / swift test")
     message(STATUS "")
-    message(STATUS "Or use iPlug2 (MIT license - FREE):")
-    message(STATUS "  cmake .. -DUSE_IPLUG2=ON")
-    message(STATUS "  (Requires iPlug2 in ThirdParty/iPlug2)")
-    message(STATUS "")
+    if(APPLE)
+        message(STATUS "macOS Plugin Install Paths:")
+        message(STATUS "  VST3: ~/Library/Audio/Plug-Ins/VST3/")
+        message(STATUS "  AU:   ~/Library/Audio/Plug-Ins/Components/")
+        message(STATUS "  CLAP: ~/Library/Audio/Plug-Ins/CLAP/")
+        message(STATUS "  AAX:  ~/Library/Application Support/Avid/Audio/Plug-Ins/")
+        message(STATUS "  OFX:  /Library/OFX/Plugins/")
+    endif()
     message(STATUS "==============================================")
 endif()

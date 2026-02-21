@@ -1,0 +1,161 @@
+{
+  "name": "Echoelmusic",
+  "short_name": "Echoel",
+  "description": "Bio-reactive audio-visual platform. Create music that responds to your body and mind.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00d4ff",
+  "categories": ["music", "entertainment", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "/",
+
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "2560x1440",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Echoelmusic Studio — DAW Arrangement View"
+    },
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Echoelmusic Mobile — Bio-Reactive Performance"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "New Session",
+      "url": "/session/new",
+      "icons": [{"src": "/icons/shortcut-session.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "EchoelBeat",
+      "url": "/instruments/beat",
+      "icons": [{"src": "/icons/shortcut-beat.png", "sizes": "96x96"}]
+    },
+    {
+      "name": "EchoelSynth",
+      "url": "/instruments/synth",
+      "icons": [{"src": "/icons/shortcut-synth.png", "sizes": "96x96"}]
+    }
+  ],
+
+  "protocol_handlers": [
+    {
+      "protocol": "web+echoel",
+      "url": "/protocol?uri=%s"
+    }
+  ],
+
+  "file_handlers": [
+    {
+      "action": "/open",
+      "accept": {
+        "audio/wav": [".wav"],
+        "audio/mpeg": [".mp3"],
+        "audio/flac": [".flac"],
+        "audio/ogg": [".ogg"],
+        "audio/midi": [".mid", ".midi"],
+        "application/x-echoel-session": [".echoel", ".echoelsession"]
+      }
+    }
+  ],
+
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "url": "link",
+      "files": [
+        {
+          "name": "media",
+          "accept": ["audio/*", "video/*", "application/x-echoel-session"]
+        }
+      ]
+    }
+  },
+
+  "related_applications": [
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/echoelmusic/id6737442498",
+      "id": "com.echoelmusic.app"
+    },
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.echoelmusic.app",
+      "id": "com.echoelmusic.app"
+    }
+  ],
+  "prefer_related_applications": false,
+
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+
+  "edge_side_panel": {
+    "preferred_width": 480
+  }
+}

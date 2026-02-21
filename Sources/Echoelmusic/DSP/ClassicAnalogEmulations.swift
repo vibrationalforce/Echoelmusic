@@ -19,7 +19,6 @@ import Foundation
 
 /// Easy-access console for switching between classic analog emulations
 /// One-knob simplicity with expert mode for detailed control
-@MainActor
 class AnalogConsole {
 
     /// Available analog hardware styles
@@ -239,7 +238,6 @@ class AnalogConsole {
 /// SSL 4000G-style bus compressor
 /// Clean, punchy, "glue" compression
 /// The sound of modern mixing
-@MainActor
 class SSLBusCompressor {
 
     // Parameters matching SSL front panel
@@ -315,7 +313,6 @@ class SSLBusCompressor {
 /// API 2500-style compressor
 /// Punchy, aggressive, with "Thrust" circuit
 /// Famous for drums and mix bus
-@MainActor
 class APIBusCompressor {
 
     var threshold: Float = -10.0
@@ -415,7 +412,6 @@ class APIBusCompressor {
 /// Pultec EQP-1A tube passive EQ emulation
 /// Famous "boost and cut" low-end trick
 /// Smooth, musical high frequencies
-@MainActor
 class PultecEQP1A {
 
     // Low frequency section
@@ -633,7 +629,6 @@ class PultecEQP1A {
 /// Fairchild 670 tube limiter emulation
 /// The "holy grail" of vintage compression
 /// Variable-mu tube compression with 6 time constants
-@MainActor
 class FairchildLimiter {
 
     var inputGain: Float = 5.0  // 0-10 (drives the tubes)
@@ -733,7 +728,6 @@ class FairchildLimiter {
 /// Teletronix LA-2A optical compressor emulation
 /// Smooth, program-dependent compression
 /// Famous for vocals and bass
-@MainActor
 class LA2ACompressor {
 
     /// Peak reduction (main compression control)
@@ -817,7 +811,6 @@ class LA2ACompressor {
 /// UREI 1176LN FET limiter emulation
 /// Fast, punchy, aggressive compression
 /// Famous for drums, vocals, guitars
-@MainActor
 class UREI1176Limiter {
 
     var inputDrive: Float = 30.0  // 0-60 (input gain)
@@ -920,7 +913,6 @@ class UREI1176Limiter {
 /// Manley Vari-Mu tube compressor emulation
 /// Smooth, musical mastering compression
 /// Variable-mu (6386 tubes) design
-@MainActor
 class ManleyVariMu {
 
     var threshold: Float = -10.0  // dB

@@ -67,18 +67,18 @@ public final class CertificatePinningDelegate: NSObject, URLSessionDelegate, @un
         }
 
         // Verify SPKI hash of at least one certificate in the chain
-        let certificateCount = SecTrustGetCertificateCount(serverTrust)
         var pinMatched = false
 
-        for i in 0..<certificateCount {
-            guard let certificate = SecTrustGetCertificateAtIndex(serverTrust, i) else { continue }
-            let publicKeyData = SecCertificateCopyData(certificate) as Data
-            let hash = SHA256.hash(data: publicKeyData)
-            let hashString = "sha256/" + Data(hash).base64EncodedString()
+        if let certificates = SecTrustCopyCertificateChain(serverTrust) as? [SecCertificate] {
+            for certificate in certificates {
+                let publicKeyData = SecCertificateCopyData(certificate) as Data
+                let hash = SHA256.hash(data: publicKeyData)
+                let hashString = "sha256/" + Data(hash).base64EncodedString()
 
-            if Self.pinnedSPKIHashes.contains(hashString) {
-                pinMatched = true
-                break
+                if Self.pinnedSPKIHashes.contains(hashString) {
+                    pinMatched = true
+                    break
+                }
             }
         }
 

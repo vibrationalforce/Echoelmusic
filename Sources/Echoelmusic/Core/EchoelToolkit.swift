@@ -126,43 +126,43 @@ public final class EchoelSynth: ObservableObject {
         case .deepSleep, .remSleep:
             ddsp.brightness = 0.15
             ddsp.harmonicity = 0.9
-            ddsp.spectralShape = .sine
+            ddsp.spectralShape = .natural
             ddsp.vibratoRate = 0.5
             ddsp.vibratoDepth = 0.02
         case .cortisol:
             ddsp.brightness = 0.35
             ddsp.harmonicity = 0.75
-            ddsp.spectralShape = .triangle
+            ddsp.spectralShape = .hollow
             ddsp.vibratoRate = 2.0
             ddsp.vibratoDepth = 0.01
         case .peakAlertness:
             ddsp.brightness = 0.7
             ddsp.harmonicity = 0.6
-            ddsp.spectralShape = .sawtooth
+            ddsp.spectralShape = .bright
             ddsp.vibratoRate = 4.0
             ddsp.vibratoDepth = 0.015
         case .postLunch:
             ddsp.brightness = 0.4
             ddsp.harmonicity = 0.8
-            ddsp.spectralShape = .triangle
+            ddsp.spectralShape = .hollow
             ddsp.vibratoRate = 2.5
             ddsp.vibratoDepth = 0.01
         case .secondWind:
             ddsp.brightness = 0.6
             ddsp.harmonicity = 0.65
-            ddsp.spectralShape = .sawtooth
+            ddsp.spectralShape = .bright
             ddsp.vibratoRate = 3.5
             ddsp.vibratoDepth = 0.012
         case .windDown:
             ddsp.brightness = 0.3
             ddsp.harmonicity = 0.85
-            ddsp.spectralShape = .triangle
+            ddsp.spectralShape = .hollow
             ddsp.vibratoRate = 1.5
             ddsp.vibratoDepth = 0.008
         case .melatonin:
             ddsp.brightness = 0.2
             ddsp.harmonicity = 0.95
-            ddsp.spectralShape = .sine
+            ddsp.spectralShape = .natural
             ddsp.vibratoRate = 0.8
             ddsp.vibratoDepth = 0.005
         }
@@ -186,7 +186,7 @@ public final class EchoelSynth: ObservableObject {
             ddsp.harmonicity = 0.95
             ddsp.brightness = 0.2
             ddsp.amplitude = 0.3  // Gentle
-            ddsp.spectralShape = .sine
+            ddsp.spectralShape = .natural
         }
     }
 
@@ -318,10 +318,8 @@ public final class EchoelMix: ObservableObject {
         self.mixer = ProMixEngine.defaultSession()
         self.session = ProSessionEngine.defaultSession()
 
-        // Register as audio provider on the bus
-        EngineBus.shared.provide("audio.bpm") { [weak self] in self?.bpm }
-        EngineBus.shared.provide("audio.rms") { [weak self] in self?.rmsLevel }
-        EngineBus.shared.provide("audio.volume") { [weak self] in self?.masterVolume }
+        // Audio state is published via EngineBus.publish(.audio) instead of providers
+        // to avoid @MainActor/@Sendable conflict in provider closures
 
         // Sync ProSessionEngine state → EchoelMix published state
         session.$isPlaying
@@ -558,7 +556,7 @@ public final class EchoelFX: @unchecked Sendable {
                 p.ratio = slot.params["ratio"] ?? 4
                 p.attack = slot.params["attack"] ?? 10
                 p.release = slot.params["release"] ?? 100
-                p.makeup = slot.params["makeup"] ?? 0
+                p.makeupGain = slot.params["makeup"] ?? 0
                 buffer = p.process(buffer)
             }
 
@@ -590,9 +588,9 @@ public final class EchoelFX: @unchecked Sendable {
         case .filter, .formant:
             let proc = getOrCreate(slot.id) { PultecEQP1A(sampleRate: self.sampleRate) }
             if let p = proc as? PultecEQP1A {
-                p.lowFrequency = slot.params["lowFreq"] ?? 60
+                p.lowFreq = slot.params["lowFreq"] ?? 60
                 p.lowBoost = slot.params["lowBoost"] ?? 0
-                p.highFrequency = slot.params["highFreq"] ?? 10000
+                p.highFreq = slot.params["highFreq"] ?? 10000
                 p.highBoost = slot.params["highBoost"] ?? 0
                 buffer = p.process(buffer)
             }
@@ -629,8 +627,7 @@ public final class EchoelFX: @unchecked Sendable {
         case .chorus, .flanger, .phaser:
             let proc = getOrCreate(slot.id) { AnalogConsole(sampleRate: self.sampleRate) }
             if let p = proc as? AnalogConsole {
-                p.drive = slot.params["depth"] ?? 0.5
-                p.warmth = slot.params["rate"] ?? 1.0
+                p.character = slot.params["depth"] ?? 0.5
                 buffer = p.process(buffer)
             }
 
@@ -648,8 +645,8 @@ public final class EchoelFX: @unchecked Sendable {
         case .pitchShift:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.LittleAlterBoy(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.LittleAlterBoy {
-                p.pitchShift = slot.params["semitones"] ?? 0
-                p.formantShift = slot.params["formant"] ?? 0
+                p.pitch = slot.params["semitones"] ?? 0
+                p.formant = slot.params["formant"] ?? 0
                 p.mix = slot.params["mix"] ?? 1.0
                 buffer = p.process(buffer)
             }
@@ -657,9 +654,8 @@ public final class EchoelFX: @unchecked Sendable {
         case .harmonizer, .vocoder, .vocalTune, .vocalDouble, .vocalHarmony:
             let proc = getOrCreate(slot.id) { AdvancedDSPEffects.BioReactiveDSP(sampleRate: self.sampleRate) }
             if let p = proc as? AdvancedDSPEffects.BioReactiveDSP {
-                p.coherence = slot.params["coherence"] ?? 0.5
-                p.breathPhase = slot.params["breathPhase"] ?? 0.5
-                p.intensity = slot.params["intensity"] ?? 0.7
+                p.bioData.coherence = slot.params["coherence"] ?? 0.5
+                p.bioData.breathPhase = slot.params["breathPhase"] ?? 0.5
                 buffer = p.process(buffer)
             }
 
@@ -900,18 +896,8 @@ public final class EchoelBio: ObservableObject {
     private var wellnessCancellable: AnyCancellable?
 
     public init() {
-        // Register as bio provider on bus
-        EngineBus.shared.provide("bio.heartRate") { [weak self] in self?.heartRate }
-        EngineBus.shared.provide("bio.coherence") { [weak self] in self?.coherence }
-        EngineBus.shared.provide("bio.breathPhase") { [weak self] in self?.breathPhase }
-        EngineBus.shared.provide("bio.flowScore") { [weak self] in self?.flowScore }
-        EngineBus.shared.provide("bio.hrvMs") { [weak self] in self?.hrvMs }
-        EngineBus.shared.provide("bio.polyvagalState") { [weak self] in
-            Float(PolyvagalState.allCases.firstIndex(of: self?.polyvagalState ?? .ventralVagal) ?? 0)
-        }
-        EngineBus.shared.provide("bio.consciousnessState") { [weak self] in
-            Float(ConsciousnessState.allCases.firstIndex(of: self?.consciousnessState ?? .relaxedAwareness) ?? 2)
-        }
+        // Bio values are published via EngineBus.shared.publishBio() pattern
+        // instead of provider closures (avoids @MainActor isolation in Sendable closures)
 
         // Wire EEG → BioEventGraph (5 brainwave bands as event channels)
         wireEEGSensorBridge()
@@ -2050,19 +2036,7 @@ public typealias Echoela = EchoelMind
 // MARK: - Toolkit Support Types (EngineMode, ToolkitState, SubsystemType)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Operating mode — determines which panels/overlays EchoelView shows
-public enum EngineMode: String, CaseIterable, Identifiable, Sendable {
-    case studio = "Studio"
-    case live = "Live"
-    case meditation = "Meditation"
-    case video = "Video"
-    case dj = "DJ"
-    case collaboration = "Collab"
-    case immersive = "Immersive"
-    case research = "Research"
-
-    public var id: String { rawValue }
-}
+// EngineMode is defined in EchoelEngine.swift (canonical definition)
 
 /// Performance profile — trades CPU for quality
 public enum PerformanceProfile: String, CaseIterable, Sendable {
@@ -2100,6 +2074,30 @@ public struct ToolkitState {
     public var rightPinch: Float = 0
     public var quantumCoherence: Float = 0
     public var circadianPhase: String = "peakAlertness"
+
+    /// Convert to EngineState for views that expect it
+    public var asEngineState: EngineState {
+        var es = EngineState()
+        es.bpm = bpm
+        es.isPlaying = isPlaying
+        es.position = position
+        es.isRecording = isRecording
+        es.heartRate = Double(heartRate)
+        es.coherence = coherence
+        es.breathPhase = breathPhase
+        es.audioLevel = audioLevel
+        es.visualIntensity = visualIntensity
+        es.participantCount = participantCount
+        es.groupCoherence = groupCoherence
+        es.isStreaming = isStreaming
+        es.handsTracked = handsTracked
+        es.leftPinch = leftPinch
+        es.rightPinch = rightPinch
+        es.fps = Double(fps)
+        es.quantumCoherence = quantumCoherence
+        es.circadianPhase = circadianPhase
+        return es
+    }
 }
 
 /// Simple event bus for UI commands
@@ -2254,7 +2252,7 @@ public final class EchoelToolkit: ObservableObject {
         // Seq publishes via publishParam(engine: "seq", param: "trigger", value: noteNumber)
         seqToSynthSubscription = bus.subscribe(to: .audio) { [weak self] msg in
             Task { @MainActor in
-                if case .paramChange(let engine, let param, let value) = msg,
+                if case .parameterChange(engineId: let engine, parameter: let param, value: let value) = msg,
                    engine == "seq", param == "trigger" {
                     self?.synth.noteOn(note: Int(value), velocity: 100)
                 }

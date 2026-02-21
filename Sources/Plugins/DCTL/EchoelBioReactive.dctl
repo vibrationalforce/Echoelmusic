@@ -1,0 +1,140 @@
+/*
+ *  EchoelBioReactive.dctl
+ *  Echoelmusic — DaVinci Color Transform Language
+ *
+ *  Created: February 2026
+ *  Bio-reactive color grading for DaVinci Resolve.
+ *
+ *  DCTL runs on GPU via CUDA (NVIDIA), OpenCL (AMD/Intel), or Metal (Apple).
+ *  Place in: /Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/DCTL/
+ *
+ *  Parameters:
+ *    Bio Coherence    — 0.0 (scattered) to 1.0 (coherent) → color warmth/harmony
+ *    Audio RMS        — 0.0 (silent) to 1.0 (loud) → glow/energy
+ *    Audio Peak       — 0.0 to 1.0 → transient pulse
+ *    Heart Rate Phase — 0.0 to 1.0 → rhythmic pulsation
+ *    Warmth           — Color temperature offset
+ *    Saturation Mod   — Bio-driven saturation
+ *    Glow Amount      — Audio-reactive bloom
+ *    Vignette         — Dynamic vignette based on coherence
+ *    Mix              — Wet/dry blend
+ */
+
+DEFINE_UI_PARAMS(p_coherence,    Bio Coherence,   DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_audioRMS,     Audio RMS,       DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_audioPeak,    Audio Peak,       DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_heartPhase,   Heart Phase,      DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_warmth,       Warmth,          DCTLUI_SLIDER_FLOAT, 0.5, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_satMod,       Saturation Mod,   DCTLUI_SLIDER_FLOAT, 0.0, -1.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_glow,         Glow Amount,     DCTLUI_SLIDER_FLOAT, 0.3, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_vignette,     Vignette,        DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 1.0, 0.01)
+DEFINE_UI_PARAMS(p_mix,          Mix,             DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01)
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Color Science Utilities                                                    */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* sRGB luminance coefficients (BT.709) */
+__DEVICE__ float luminance(float r, float g, float b) {
+    return r * 0.2126f + g * 0.7152f + b * 0.0722f;
+}
+
+/* Soft clamp to prevent clipping artifacts */
+__DEVICE__ float softClamp(float x, float limit) {
+    if (x <= limit * 0.9f) return x;
+    float over = (x - limit * 0.9f) / (limit * 0.1f);
+    return limit * 0.9f + limit * 0.1f * (1.0f - _expf(-over));
+}
+
+/* Smooth step for vignette transitions */
+__DEVICE__ float smoothstep(float edge0, float edge1, float x) {
+    float t = _clampf((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* Main Transform                                                            */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B) {
+
+    /* ─── Bio-Reactive Color Temperature ─── */
+
+    /* Coherence drives warm/cool shift:
+     * High coherence (>0.6) → warm, harmonious tones (golden hour look)
+     * Low coherence (<0.4) → cool, analytical tones (moonlight look)
+     * Neutral (0.5) → no shift */
+    float warmthOffset = (p_coherence - 0.5f) * 2.0f * p_warmth;
+
+    float rShift = 1.0f + warmthOffset * 0.15f;   /* Red: warmer when coherent */
+    float gShift = 1.0f + warmthOffset * 0.05f;   /* Green: slight warm shift */
+    float bShift = 1.0f - warmthOffset * 0.12f;   /* Blue: cooler when coherent */
+
+    float r = p_R * rShift;
+    float g = p_G * gShift;
+    float b = p_B * bShift;
+
+    /* ─── Audio-Reactive Glow ─── */
+
+    /* RMS energy adds subtle bloom across the image
+     * Peak transients create brief flashes */
+    float energy = p_audioRMS * p_glow;
+    float pulse = p_audioPeak * p_glow * 0.5f;
+
+    r += energy * 0.04f + pulse * 0.08f;
+    g += energy * 0.025f + pulse * 0.05f;
+    b += energy * 0.06f + pulse * 0.1f;
+
+    /* ─── Heart Rate Pulsation ─── */
+
+    /* Subtle brightness oscillation synced to heartbeat phase */
+    float heartPulse = _sinf(p_heartPhase * 6.283185f) * 0.02f;
+    float pulseMod = 1.0f + heartPulse * p_coherence;
+
+    r *= pulseMod;
+    g *= pulseMod;
+    b *= pulseMod;
+
+    /* ─── Bio-Reactive Saturation ─── */
+
+    /* High coherence → richer colors (life is vivid)
+     * Low coherence → muted (introspective, calm) */
+    float lum = luminance(r, g, b);
+    float saturation = 1.0f + (p_coherence - 0.5f) * 0.4f + p_satMod;
+    saturation = _fmaxf(saturation, 0.0f);
+
+    r = lum + (r - lum) * saturation;
+    g = lum + (g - lum) * saturation;
+    b = lum + (b - lum) * saturation;
+
+    /* ─── Dynamic Vignette ─── */
+
+    /* Vignette intensity modulated by coherence:
+     * High coherence → softer vignette (open, expansive)
+     * Low coherence → stronger vignette (focused, introspective) */
+    if (p_vignette > 0.01f) {
+        float cx = ((float)p_X / (float)p_Width) - 0.5f;
+        float cy = ((float)p_Y / (float)p_Height) - 0.5f;
+        float dist = _sqrtf(cx * cx + cy * cy) * 2.0f;
+
+        float vigStr = p_vignette * (1.0f + (0.5f - p_coherence) * 0.5f);
+        float vignette = 1.0f - smoothstep(0.5f, 1.2f, dist) * vigStr;
+
+        r *= vignette;
+        g *= vignette;
+        b *= vignette;
+    }
+
+    /* ─── Soft Clamp & Mix ─── */
+
+    r = softClamp(r, 1.0f);
+    g = softClamp(g, 1.0f);
+    b = softClamp(b, 1.0f);
+
+    /* Wet/dry blend */
+    r = p_R * (1.0f - p_mix) + r * p_mix;
+    g = p_G * (1.0f - p_mix) + g * p_mix;
+    b = p_B * (1.0f - p_mix) + b * p_mix;
+
+    return make_float3(r, g, b);
+}

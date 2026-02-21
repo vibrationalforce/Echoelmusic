@@ -148,12 +148,15 @@ public struct MeterState: Codable, Sendable {
     public var peakHold: Float
     /// Whether the channel is currently clipping.
     public var isClipping: Bool
+    /// Phase correlation between L/R (-1 = out of phase, 0 = uncorrelated, +1 = in phase).
+    public var phaseCorrelation: Float
 
-    public init(peak: Float = 0, rms: Float = 0, peakHold: Float = 0, isClipping: Bool = false) {
+    public init(peak: Float = 0, rms: Float = 0, peakHold: Float = 0, isClipping: Bool = false, phaseCorrelation: Float = 1.0) {
         self.peak = peak
         self.rms = rms
         self.peakHold = peakHold
         self.isClipping = isClipping
+        self.phaseCorrelation = phaseCorrelation
     }
 }
 
@@ -247,6 +250,8 @@ public struct ChannelStrip: Identifiable, Codable, Sendable {
     public var solo: Bool
     /// Whether the channel is armed for recording.
     public var isArmed: Bool
+    /// Whether the channel's polarity is inverted (phase invert / Ø).
+    public var phaseInvert: Bool
 
     // MARK: Routing
 
@@ -280,6 +285,7 @@ public struct ChannelStrip: Identifiable, Codable, Sendable {
         mute: Bool = false,
         solo: Bool = false,
         isArmed: Bool = false,
+        phaseInvert: Bool = false,
         inserts: [InsertSlot] = [],
         sends: [SendSlot] = [],
         inputSource: InputSource = .none,
@@ -295,6 +301,7 @@ public struct ChannelStrip: Identifiable, Codable, Sendable {
         self.mute = mute
         self.solo = solo
         self.isArmed = isArmed
+        self.phaseInvert = phaseInvert
         self.inserts = inserts
         self.sends = sends
         self.inputSource = inputSource

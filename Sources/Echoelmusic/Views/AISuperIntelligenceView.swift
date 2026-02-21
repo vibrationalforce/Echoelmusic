@@ -1000,8 +1000,7 @@ class AISuperIntelligenceViewModel: ObservableObject {
     // Output
     @Published var hasOutput = false
 
-    override init() {
-        super.init()
+    init() {
         voiceModels = voiceProfileManager.profiles.map { $0.name }
         if let first = voiceModels.first { selectedVoiceModel = first }
     }

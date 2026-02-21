@@ -12,7 +12,7 @@ import Accelerate
 /// 3. Energy envelope tracking (breath = low energy relative to singing)
 /// 4. Zero-crossing rate (breath = high ZCR)
 /// 5. Temporal smoothing to avoid false positives
-class BreathDetector {
+public class BreathDetector {
 
     // MARK: - Configuration
 
@@ -40,7 +40,7 @@ class BreathDetector {
         static let aggressive = Configuration(sensitivity: 0.8, reductionGain: 0.0, crossfadeDuration: 0.005)
     }
 
-    enum DetectionMode: String, CaseIterable, Codable, Sendable {
+    public enum DetectionMode: String, CaseIterable, Codable, Sendable {
         case detect      // Only detect and mark, no processing
         case reduce      // Reduce breath volume by reductionGain
         case remove      // Remove breaths entirely (reductionGain = 0)

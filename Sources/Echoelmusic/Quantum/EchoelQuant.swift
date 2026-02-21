@@ -570,7 +570,7 @@ public final class EchoelQuant: @unchecked Sendable {
                     realp: realBuf.baseAddress!,
                     imagp: imagBuf.baseAddress!
                 )
-                fftSetup?.forward(input: &split, output: &split)
+                if let fft = fftSetup { fft.forward(input: split, output: &split) }
             }
         }
 
@@ -593,7 +593,7 @@ public final class EchoelQuant: @unchecked Sendable {
                     realp: realBuf.baseAddress!,
                     imagp: imagBuf.baseAddress!
                 )
-                fftSetup?.inverse(input: &split, output: &split)
+                if let fft = fftSetup { fft.inverse(input: split, output: &split) }
             }
         }
 
@@ -616,7 +616,7 @@ public final class EchoelQuant: @unchecked Sendable {
                     realp: realBuf.baseAddress!,
                     imagp: imagBuf.baseAddress!
                 )
-                fftSetup?.forward(input: &split, output: &split)
+                if let fft = fftSetup { fft.forward(input: split, output: &split) }
             }
         }
 
@@ -632,7 +632,7 @@ public final class EchoelQuant: @unchecked Sendable {
                     realp: realBuf.baseAddress!,
                     imagp: imagBuf.baseAddress!
                 )
-                fftSetup?.inverse(input: &split, output: &split)
+                if let fft = fftSetup { fft.inverse(input: split, output: &split) }
             }
         }
     }
@@ -853,7 +853,7 @@ public final class EchoelQuant: @unchecked Sendable {
                     realp: realBuf.baseAddress!,
                     imagp: imagBuf.baseAddress!
                 )
-                fftSetup?.forward(input: &split, output: &split)
+                if let fft = fftSetup { fft.forward(input: split, output: &split) }
             }
         }
 

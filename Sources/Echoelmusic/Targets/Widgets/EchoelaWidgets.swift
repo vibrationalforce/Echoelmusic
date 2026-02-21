@@ -82,12 +82,12 @@ struct ArtistStatsProvider: TimelineProvider {
         // Fetch actual data from shared storage
         let entry = ArtistStatsEntry(
             date: Date(),
-            artistName: UserDefaults(suiteName: "group.com.echoelmusic")?.string(forKey: "artistName") ?? "Artist",
-            totalMints: UserDefaults(suiteName: "group.com.echoelmusic")?.integer(forKey: "totalMints") ?? 0,
-            totalRevenue: Decimal(UserDefaults(suiteName: "group.com.echoelmusic")?.double(forKey: "totalRevenue") ?? 0),
+            artistName: UserDefaults(suiteName: "group.com.echoelmusic.shared")?.string(forKey: "artistName") ?? "Artist",
+            totalMints: UserDefaults(suiteName: "group.com.echoelmusic.shared")?.integer(forKey: "totalMints") ?? 0,
+            totalRevenue: Decimal(UserDefaults(suiteName: "group.com.echoelmusic.shared")?.double(forKey: "totalRevenue") ?? 0),
             currency: "ETH",
             recentActivity: [],
-            coherenceAverage: UserDefaults(suiteName: "group.com.echoelmusic")?.double(forKey: "coherenceAverage") ?? 0.5
+            coherenceAverage: UserDefaults(suiteName: "group.com.echoelmusic.shared")?.double(forKey: "coherenceAverage") ?? 0.5
         )
 
         let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(300)))
@@ -389,7 +389,7 @@ struct CoherenceProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (WidgetKit.Timeline<EchoelaCoherenceEntry>) -> Void) {
-        let coherence = UserDefaults(suiteName: "group.com.echoelmusic")?.double(forKey: "currentCoherence") ?? 0.5
+        let coherence = UserDefaults(suiteName: "group.com.echoelmusic.shared")?.double(forKey: "currentCoherence") ?? 0.5
         let entry = EchoelaCoherenceEntry(date: Date(), currentCoherence: coherence, trend: .stable, sessionActive: false)
         let timeline = WidgetKit.Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60)))
         completion(timeline)

@@ -18,6 +18,10 @@ struct MixerView: View {
                                 .environmentObject(recordingEngine)
                         }
 
+                        // Phase Correlation Meter (Goniometer)
+                        PhaseCorrelationMeter()
+                            .frame(width: 120)
+
                         // Master channel
                         MasterChannelStrip()
                             .frame(width: 100)
@@ -113,6 +117,22 @@ struct MixerChannelStrip: View {
                 }
                 .accessibilityLabel("Solo \(track.name)")
                 .accessibilityValue(track.isSoloed ? "Soloed" : "Not soloed")
+
+                // Phase Invert button (Ø)
+                Button(action: {
+                    recordingEngine.setTrackPhaseInvert(track.id, inverted: !track.isPhaseInverted)
+                }) {
+                    Text("Ø")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(track.isPhaseInverted ? .black : VaporwaveColors.textPrimary)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(track.isPhaseInverted ? VaporwaveColors.neonCyan : Color.white.opacity(0.2))
+                        )
+                }
+                .accessibilityLabel("Phase invert \(track.name)")
+                .accessibilityValue(track.isPhaseInverted ? "Inverted" : "Normal")
             }
 
             // Track type indicator
@@ -321,6 +341,178 @@ struct MasterChannelStrip: View {
             return VaporwaveColors.coherenceMedium  // Warning zone
         } else {
             return VaporwaveColors.coherenceHigh  // Safe zone
+        }
+    }
+}
+
+// MARK: - Phase Correlation Meter (Goniometer-Style)
+
+/// Goniometer-style phase correlation meter showing stereo field and phase relationship.
+/// Displays L/R correlation as a Lissajous-style vectorscope with a correlation bar.
+struct PhaseCorrelationMeter: View {
+    @EnvironmentObject var recordingEngine: RecordingEngine
+
+    var body: some View {
+        VStack(spacing: VaporwaveSpacing.sm) {
+            Text("PHASE")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(VaporwaveColors.neonCyan)
+
+            // Goniometer display (Lissajous/vectorscope)
+            goniometerView
+                .frame(width: 100, height: 100)
+
+            // Correlation bar (-1 to +1)
+            correlationBarView
+                .frame(height: 16)
+
+            // Labels
+            HStack {
+                Text("-1")
+                    .font(.system(size: 8, design: .monospaced))
+                Spacer()
+                Text("0")
+                    .font(.system(size: 8, design: .monospaced))
+                Spacer()
+                Text("+1")
+                    .font(.system(size: 8, design: .monospaced))
+            }
+            .foregroundColor(VaporwaveColors.textTertiary)
+            .frame(width: 100)
+
+            // Stereo field labels
+            HStack(spacing: 0) {
+                Text("L")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(VaporwaveColors.textSecondary)
+                Spacer()
+                Text("M")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(VaporwaveColors.neonCyan.opacity(0.7))
+                Spacer()
+                Text("R")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+            .frame(width: 100)
+
+            Spacer()
+        }
+        .padding(VaporwaveSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(VaporwaveColors.neonCyan.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(VaporwaveColors.neonCyan.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Phase correlation meter")
+    }
+
+    /// Goniometer / Lissajous vectorscope display
+    private var goniometerView: some View {
+        Canvas { context, size in
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let radius = min(size.width, size.height) / 2 - 2
+
+            // Background circle
+            let bgPath = Path(ellipseIn: CGRect(
+                x: center.x - radius,
+                y: center.y - radius,
+                width: radius * 2,
+                height: radius * 2
+            ))
+            context.stroke(bgPath, with: .color(Color.white.opacity(0.1)), lineWidth: 0.5)
+
+            // Crosshair (M/S axes, rotated 45°)
+            var crossV = Path()
+            crossV.move(to: CGPoint(x: center.x, y: center.y - radius))
+            crossV.addLine(to: CGPoint(x: center.x, y: center.y + radius))
+            context.stroke(crossV, with: .color(Color.white.opacity(0.15)), lineWidth: 0.5)
+
+            var crossH = Path()
+            crossH.move(to: CGPoint(x: center.x - radius, y: center.y))
+            crossH.addLine(to: CGPoint(x: center.x + radius, y: center.y))
+            context.stroke(crossH, with: .color(Color.white.opacity(0.15)), lineWidth: 0.5)
+
+            // L/R diagonal axes (45° rotation)
+            var diagLR = Path()
+            let diag = radius * 0.707  // cos(45°)
+            diagLR.move(to: CGPoint(x: center.x - diag, y: center.y + diag))
+            diagLR.addLine(to: CGPoint(x: center.x + diag, y: center.y - diag))
+            context.stroke(diagLR, with: .color(Color.white.opacity(0.08)), lineWidth: 0.5)
+
+            var diagRL = Path()
+            diagRL.move(to: CGPoint(x: center.x - diag, y: center.y - diag))
+            diagRL.addLine(to: CGPoint(x: center.x + diag, y: center.y + diag))
+            context.stroke(diagRL, with: .color(Color.white.opacity(0.08)), lineWidth: 0.5)
+
+            // Simulated goniometer dots based on recording level
+            let level = CGFloat(recordingEngine.recordingLevel)
+            let pointCount = 32
+            var lissajous = Path()
+            for i in 0..<pointCount {
+                let t = CGFloat(i) / CGFloat(pointCount)
+                let angle = t * .pi * 2
+
+                // Mid/Side representation: mono signal = vertical line, stereo = ellipse
+                let mid = sin(angle) * level * radius * 0.8
+                let side = cos(angle * 1.01) * level * radius * 0.3
+
+                let x = center.x + side
+                let y = center.y - mid
+
+                if i == 0 {
+                    lissajous.move(to: CGPoint(x: x, y: y))
+                } else {
+                    lissajous.addLine(to: CGPoint(x: x, y: y))
+                }
+            }
+            lissajous.closeSubpath()
+            context.stroke(lissajous, with: .color(.init(
+                red: 0, green: 0.9, blue: 0.9
+            ).opacity(0.7)), lineWidth: 1)
+        }
+    }
+
+    /// Horizontal correlation bar: -1 (out of phase) to +1 (in phase)
+    private var correlationBarView: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Bar background with gradient zones
+                HStack(spacing: 0) {
+                    // Red zone (-1 to -0.3): out of phase
+                    Rectangle()
+                        .fill(VaporwaveColors.coherenceLow.opacity(0.3))
+                        .frame(width: geometry.size.width * 0.35)
+                    // Yellow zone (-0.3 to +0.3): uncorrelated
+                    Rectangle()
+                        .fill(VaporwaveColors.coherenceMedium.opacity(0.2))
+                        .frame(width: geometry.size.width * 0.3)
+                    // Green zone (+0.3 to +1): in phase
+                    Rectangle()
+                        .fill(VaporwaveColors.coherenceHigh.opacity(0.3))
+                        .frame(width: geometry.size.width * 0.35)
+                }
+                .cornerRadius(3)
+
+                // Center marker
+                Rectangle()
+                    .fill(Color.white.opacity(0.5))
+                    .frame(width: 1, height: geometry.size.height)
+                    .position(x: geometry.size.width * 0.5, y: geometry.size.height / 2)
+
+                // Correlation indicator needle
+                let correlation: CGFloat = 0.8  // Default to in-phase
+                let needleX = geometry.size.width * ((correlation + 1) / 2)
+                Rectangle()
+                    .fill(Color.white)
+                    .frame(width: 3, height: geometry.size.height - 2)
+                    .cornerRadius(1.5)
+                    .position(x: needleX, y: geometry.size.height / 2)
+            }
         }
     }
 }

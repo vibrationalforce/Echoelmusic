@@ -15,7 +15,7 @@ import Combine
 ///
 /// Inspired by Antares Auto-Tune, Celemony Melodyne, Waves Tune
 @MainActor
-class RealTimePitchCorrector: ObservableObject {
+public class RealTimePitchCorrector: ObservableObject {
 
     // MARK: - Published State
 
@@ -72,7 +72,7 @@ class RealTimePitchCorrector: ObservableObject {
 
     // MARK: - Types
 
-    enum ScaleType: String, CaseIterable, Identifiable, Codable, Sendable {
+    public enum ScaleType: String, CaseIterable, Identifiable, Codable, Sendable {
         case chromatic = "Chromatic"
         case major = "Major"
         case naturalMinor = "Natural Minor"
@@ -93,7 +93,7 @@ class RealTimePitchCorrector: ObservableObject {
         case japanese = "Japanese"
         case hungarian = "Hungarian Minor"
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
 
         /// Semitone intervals from root (C = 0)
         var intervals: [Int] {

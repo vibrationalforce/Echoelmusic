@@ -12,11 +12,11 @@ import Accelerate
 ///                                                          ↓
 ///                                                  Formant Preserve → Mix → Output
 /// ```
-class VocalHarmonyGenerator {
+public class VocalHarmonyGenerator {
 
     // MARK: - Types
 
-    enum HarmonyMode: String, CaseIterable, Codable, Sendable {
+    public enum HarmonyMode: String, CaseIterable, Codable, Sendable {
         case diatonic       // Follow scale degrees (thirds, fifths, etc.)
         case chromatic      // Fixed semitone intervals
         case midi           // Follow external MIDI input
@@ -57,7 +57,7 @@ class VocalHarmonyGenerator {
         }
     }
 
-    struct HarmonyVoice: Codable, Sendable {
+    public struct HarmonyVoice: Codable, Sendable {
         var interval: HarmonyInterval = .majorThird
         var customSemitones: Float = 0        // For fine-tuning or chromatic mode
         var gain: Float = 0.7                 // 0-1 volume of this harmony voice
@@ -95,7 +95,7 @@ class VocalHarmonyGenerator {
         ])
     }
 
-    enum ScaleType: String, CaseIterable, Codable, Sendable {
+    public enum ScaleType: String, CaseIterable, Codable, Sendable {
         case major, minor, harmonicMinor, melodicMinor
         case dorian, phrygian, lydian, mixolydian, aeolian, locrian
         case pentatonicMajor, pentatonicMinor, blues

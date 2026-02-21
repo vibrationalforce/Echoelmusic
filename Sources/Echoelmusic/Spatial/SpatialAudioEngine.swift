@@ -12,7 +12,7 @@ import PHASE
 /// Supports iOS 15+ with runtime feature detection for iOS 17+ spatial audio
 /// Integrates with MIDIToSpatialMapper for bio-reactive spatial fields
 @MainActor
-class SpatialAudioEngine: ObservableObject {
+public class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Published State
 
@@ -59,7 +59,7 @@ class SpatialAudioEngine: ObservableObject {
 
     // MARK: - Spatial Modes
 
-    enum SpatialMode: String, CaseIterable {
+    public enum SpatialMode: String, CaseIterable {
         case stereo = "Stereo"
         case surround_3d = "3D Spatial"
         case surround_4d = "4D Orbital"

@@ -82,7 +82,6 @@ targets:
       - path: Sources/Echoelmusic
         type: group
         excludes:
-          - "**/*.xcassets"
           - "**/VisionOS/**"
           - "**/WatchOS/**"
           - "**/tvOS/**"
@@ -94,7 +93,6 @@ targets:
           - "**/README.md"
           - "**/*.md"
     resources:
-      - path: Sources/Echoelmusic/Resources/Assets.xcassets
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
     info:
@@ -154,7 +152,7 @@ targets:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Resources/iOS/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
@@ -162,9 +160,13 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APP_ICON_ASSETS: YES
+        ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR: all
     dependencies:
-      - target: EchoelmusicAUv3
-        embed: true
+      # AUv3 temporarily disabled — binary validation issue with App Store Connect
+      # - target: EchoelmusicAUv3
+      #   embed: true
       - target: EchoelmusicNotificationService
         embed: true
     # Note: Widgets and Clip dependencies temporarily disabled for initial TestFlight build
@@ -255,15 +257,13 @@ targets:
     sources:
       - path: Sources/EchoelmusicAUv3
         type: group
-      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
-        type: file
     info:
       path: Sources/EchoelmusicAUv3/Info-macOS.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleDisplayName: "Echoelmusic EchoelBeat"
         CFBundleExecutable: $(EXECUTABLE_NAME)
-        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleIdentifier: com.echoelmusic.app.auv3
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: XPC!
@@ -344,15 +344,13 @@ targets:
     sources:
       - path: Sources/EchoelmusicAUv3
         type: group
-      - path: Sources/Echoelmusic/Sound/TR808BassSynth.swift
-        type: file
     info:
       path: Sources/EchoelmusicAUv3/Info.plist
       properties:
         CFBundleDevelopmentRegion: en
         CFBundleDisplayName: "Echoelmusic Plugins"
         CFBundleExecutable: $(EXECUTABLE_NAME)
-        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleIdentifier: com.echoelmusic.app.auv3
         CFBundleInfoDictionaryVersion: "6.0"
         CFBundleName: $(PRODUCT_NAME)
         CFBundlePackageType: XPC!
@@ -488,12 +486,26 @@ targets:
         type: group
     info:
       path: Sources/EchoelmusicNotificationService/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic Notifications"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MinimumOSVersion: "15.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
     settings:
       base:
         PRODUCT_NAME: EchoelmusicNotificationService
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.notification-service
         INFOPLIST_FILE: Sources/EchoelmusicNotificationService/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
@@ -502,6 +514,7 @@ targets:
         SKIP_INSTALL: YES
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        CODE_SIGN_ENTITLEMENTS: EchoelmusicNotificationService.entitlements
     dependencies:
       - sdk: UserNotifications.framework
 
