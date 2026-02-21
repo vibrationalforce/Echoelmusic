@@ -154,7 +154,7 @@ targets:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Resources/iOS/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
