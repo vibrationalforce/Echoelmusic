@@ -12,11 +12,11 @@ import Accelerate
 /// - Subtle formant variation
 /// - Stereo spreading for width
 /// - Optional chorus-like modulation for thicker sound
-class VocalDoublingEngine {
+public class VocalDoublingEngine {
 
     // MARK: - Types
 
-    enum DoublingStyle: String, CaseIterable, Codable, Sendable {
+    public enum DoublingStyle: String, CaseIterable, Codable, Sendable {
         case natural        // Subtle, realistic double
         case tight          // Very close double (ADT-style)
         case wide           // Exaggerated stereo spread
@@ -24,7 +24,7 @@ class VocalDoublingEngine {
         case slap           // Slapback delay style
     }
 
-    struct DoublingVoice: Codable, Sendable {
+    public struct DoublingVoice: Codable, Sendable {
         var detuningCents: Float = 7.0       // Pitch offset in cents
         var delayMs: Float = 15.0            // Timing offset in milliseconds
         var gain: Float = 0.7                // Volume level

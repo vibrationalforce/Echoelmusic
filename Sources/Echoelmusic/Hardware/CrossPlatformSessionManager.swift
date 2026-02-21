@@ -132,7 +132,7 @@ public final class CrossPlatformSessionManager: ObservableObject {
             name: name,
             devices: devices,
             syncMode: syncMode,
-            latencyCompensation: LatencyCompensation()
+            latencyCompensation: SessionLatencyCompensation()
         )
         activeSession = session
         syncStatus = .connected
@@ -315,7 +315,7 @@ public struct CrossPlatformSession: Identifiable {
     public let name: String
     public var devices: [SessionDevice]
     public var syncMode: SyncMode
-    public var latencyCompensation: LatencyCompensation
+    public var latencyCompensation: SessionLatencyCompensation
     public let createdAt: Date = Date()
 
     /// Check if this is a cross-ecosystem session (Apple + Android, etc.)
@@ -492,7 +492,7 @@ public enum SessionSyncStatus: String {
 
 // MARK: - Latency Compensation
 
-public struct LatencyCompensation {
+public struct SessionLatencyCompensation {
     public var enabled: Bool = true
     public var currentOffset: Double = 0  // milliseconds
     public var measurements: [Double] = []

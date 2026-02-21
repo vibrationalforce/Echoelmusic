@@ -480,6 +480,33 @@ class RecordingEngine: ObservableObject {
         undoManager.execute(command)
     }
 
+    /// Phase invert track polarity (undoable)
+    func setTrackPhaseInvert(_ trackID: UUID, inverted: Bool) {
+        guard var session = currentSession else { return }
+        guard let index = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
+
+        let oldValue = session.tracks[index].isPhaseInverted
+
+        let command = GenericTrackCommand(
+            actionName: inverted ? "Phase Invert" : "Phase Normal",
+            trackID: trackID,
+            execute: { [weak self] in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
+                session.tracks[idx].isPhaseInverted = inverted
+                self?.currentSession = session
+            },
+            undo: { [weak self] in
+                guard var session = self?.currentSession,
+                      let idx = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
+                session.tracks[idx].isPhaseInverted = oldValue
+                self?.currentSession = session
+            }
+        )
+
+        undoManager.execute(command)
+    }
+
     /// Set track volume (undoable)
     func setTrackVolume(_ trackID: UUID, volume: Float) {
         guard var session = currentSession else { return }

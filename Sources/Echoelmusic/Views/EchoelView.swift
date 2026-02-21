@@ -23,6 +23,20 @@ import SwiftUI
 
 // MARK: - EchoelView
 
+#if canImport(UIKit)
+/// ViewModifier to handle persistentSystemOverlays with iOS 16+ availability
+private struct PersistentOverlayModifier: ViewModifier {
+    let isFullscreen: Bool
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, tvOS 16.0, *) {
+            content.persistentSystemOverlays(isFullscreen ? .hidden : .automatic)
+        } else {
+            content
+        }
+    }
+}
+#endif
+
 public struct EchoelView: View {
     @StateObject private var toolkit = EchoelToolkit.shared
 
@@ -61,7 +75,7 @@ public struct EchoelView: View {
             toolkit.stop()
         }
         #if canImport(UIKit)
-        .persistentSystemOverlays(isFullscreen ? .hidden : .automatic)
+        .modifier(PersistentOverlayModifier(isFullscreen: isFullscreen))
         #endif
     }
 
@@ -183,7 +197,7 @@ public struct EchoelView: View {
             MeditationCanvas(
                 coherence: toolkit.state.coherence,
                 breathPhase: toolkit.state.breathPhase,
-                heartRate: toolkit.state.heartRate
+                heartRate: Double(toolkit.state.heartRate)
             )
         case .video:
             VideoPreviewCanvas()
@@ -192,7 +206,7 @@ public struct EchoelView: View {
         case .immersive:
             ImmersivePreviewCanvas(coherence: toolkit.state.coherence)
         case .research:
-            ResearchDashboardCanvas(state: toolkit.state)
+            ResearchDashboardCanvas(state: toolkit.state.asEngineState)
         }
     }
 
@@ -355,7 +369,7 @@ public struct EchoelView: View {
     private var rightPanelContent: some View {
         switch selectedRightTab {
         case .bio:
-            BioInspectorPanel(state: toolkit.state)
+            BioInspectorPanel(state: toolkit.state.asEngineState)
         case .fx:
             FXInspectorPanel(toolkit: toolkit)
         case .visual:
@@ -378,24 +392,28 @@ public struct EchoelView: View {
 
     // MARK: - Bottom Panel
 
+    @ViewBuilder
     private var bottomPanel: some View {
-        Group {
-            switch toolkit.mode {
-            case .studio:
-                MixerStrip(toolkit: toolkit)
-            case .live, .dj:
-                PerformanceStrip(toolkit: toolkit)
-            case .video:
-                TimelineStrip(toolkit: toolkit)
-            case .meditation:
-                BreathingGuideStrip(state: toolkit.state)
-            case .collaboration:
-                CollaborationStrip(toolkit: toolkit)
-            default:
-                MixerStrip(toolkit: toolkit)
-            }
+        switch toolkit.mode {
+        case .studio:
+            MixerStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        case .live, .dj:
+            PerformanceStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        case .video:
+            TimelineStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        case .meditation:
+            BreathingGuideStrip(state: toolkit.state)
+                .background(Color.black.opacity(0.9))
+        case .collaboration:
+            CollaborationStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
+        default:
+            MixerStrip(toolkit: toolkit)
+                .background(Color.black.opacity(0.9))
         }
-        .background(Color.black.opacity(0.9))
     }
 
     // MARK: - Panel Toggles
@@ -1661,7 +1679,7 @@ struct TimelineStrip: View {
 }
 
 struct BreathingGuideStrip: View {
-    let state: EngineState
+    let state: ToolkitState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {

@@ -57,7 +57,7 @@ public protocol EngineSubsystem: AnyObject {
 // MARK: - Engine Mode
 
 /// What the engine is optimized for right now
-public enum EngineMode: String, CaseIterable, Identifiable, Codable {
+public enum EngineMode: String, CaseIterable, Identifiable, Codable, Sendable {
     case studio = "Studio"
     case live = "Live Performance"
     case meditation = "Meditation"

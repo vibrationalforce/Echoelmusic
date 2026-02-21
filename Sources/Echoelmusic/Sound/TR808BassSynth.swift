@@ -194,9 +194,23 @@ private struct TR808Voice {
     var filterZ2: Float = 0.0
 }
 
-// MARK: - TR808 Bass Synthesizer
+// MARK: - Drum Playback (Audio-Thread Safe)
 
-/// Professional 808 Bass Synthesizer with Pitch Glide
+/// Active drum playback voice (lightweight, audio-thread safe)
+private struct DrumPlayback {
+    var slotIndex: Int
+    var position: Int = 0
+    var velocity: Float = 1.0
+    var isActive: Bool = true
+}
+
+// NOTE: DrumSlot, BeatStep, BeatPattern types are defined in EchoelBeat.swift
+// to avoid duplication. This file uses those shared types.
+
+// MARK: - TR808 Bass Synthesizer + EchoelBeat Drum Machine
+
+/// EchoelBeat — Professional 808 Bass Synthesizer + Full Drum Machine
+/// Integrates with SynthPresetLibrary for access to 65+ parametric drum presets across 12 genre kits.
 @MainActor
 public final class TR808BassSynth: ObservableObject {
 
@@ -211,6 +225,23 @@ public final class TR808BassSynth: ObservableObject {
     @Published public var activeVoiceCount: Int = 0
     @Published public var currentNote: Int? = nil
     @Published public var meterLevel: Float = 0.0
+
+    // MARK: - Drum Kit (SynthPresetLibrary Integration)
+
+    @Published public var drumSlots: [DrumSlot] = []
+    @Published public var currentDrumKit: String = "None"
+
+    // MARK: - Step Sequencer
+
+    @Published public var sequencerPattern: BeatPattern = BeatPattern(name: "Default")
+    @Published public var sequencerBPM: Float = 120
+    @Published public var sequencerStep: Int = 0
+    @Published public var isSequencerPlaying: Bool = false
+
+    // Drum playback state (audio thread)
+    private var drumPlaybacks: [DrumPlayback] = []
+    private let maxDrumPlaybacks = 32
+    private var sequencerTimer: Timer?
 
     // MARK: - Audio Engine
 
@@ -326,7 +357,9 @@ public final class TR808BassSynth: ObservableObject {
             do {
                 try audioEngine?.start()
             } catch let engineError {
-                log.audio("TR808BassSynth failed to start audio engine: \(engineError)")
+                #if DEBUG
+                print("TR808BassSynth failed to start audio engine: \(engineError)")
+                #endif
             }
         }
 
@@ -342,6 +375,7 @@ public final class TR808BassSynth: ObservableObject {
             voices[existingIndex].velocity = velocity
             voices[existingIndex].isReleasing = false
             voices[existingIndex].phase = 0.0
+            voices[existingIndex].subPhase = 0.0  // Phase-reset sub-osc on kick retrigger
             voices[existingIndex].clickPhase = 0.0
         } else {
             // Voice stealing if at max
@@ -545,6 +579,48 @@ public final class TR808BassSynth: ObservableObject {
             }
         }
 
+        // ═══ Drum Kit Playback ═══
+        // Mix pre-rendered drum hits from SynthPresetLibrary into output
+        let drumSlotsCopy = drumSlots  // Snapshot for thread safety (value type COW)
+        var drumPlaybacksToRemove: [Int] = []
+
+        for dpIdx in drumPlaybacks.indices {
+            guard drumPlaybacks[dpIdx].isActive else {
+                drumPlaybacksToRemove.append(dpIdx)
+                continue
+            }
+            let slotIdx = drumPlaybacks[dpIdx].slotIndex
+            guard slotIdx < drumSlotsCopy.count else {
+                drumPlaybacks[dpIdx].isActive = false
+                drumPlaybacksToRemove.append(dpIdx)
+                continue
+            }
+            let slotAudio = drumSlotsCopy[slotIdx].audioData
+            let vel = drumPlaybacks[dpIdx].velocity * cfg.level
+
+            for frame in 0..<frameCount {
+                let pos = drumPlaybacks[dpIdx].position + frame
+                guard pos < slotAudio.count else {
+                    drumPlaybacks[dpIdx].isActive = false
+                    if !drumPlaybacksToRemove.contains(dpIdx) {
+                        drumPlaybacksToRemove.append(dpIdx)
+                    }
+                    break
+                }
+                let sample = slotAudio[pos] * vel
+                leftBuffer[frame] += sample
+                rightBuffer[frame] += sample
+                peak = Swift.max(peak, abs(sample))
+            }
+            drumPlaybacks[dpIdx].position += frameCount
+        }
+
+        for index in drumPlaybacksToRemove.sorted().reversed() {
+            if index < drumPlaybacks.count {
+                drumPlaybacks.remove(at: index)
+            }
+        }
+
         voiceLock.unlock()
 
         // Update time
@@ -581,14 +657,22 @@ public final class TR808BassSynth: ObservableObject {
 
 extension TR808BassSynth {
 
-    /// Handle MIDI note on
+    /// Handle MIDI note on — routes to drum kit or bass synth depending on loaded slots
     public func handleMIDINoteOn(channel: UInt8, note: UInt8, velocity: UInt8) {
         let vel = Float(velocity) / 127.0
-        noteOn(note: Int(note), velocity: vel)
+        let midiNote = Int(note)
+
+        // Route to drum kit if note matches a loaded drum slot (GM drum map)
+        if !drumSlots.isEmpty, let slotIdx = drumSlots.firstIndex(where: { $0.midiNote == midiNote }) {
+            triggerDrum(slotIndex: slotIdx, velocity: vel)
+        } else {
+            noteOn(note: midiNote, velocity: vel)
+        }
     }
 
     /// Handle MIDI note off
     public func handleMIDINoteOff(channel: UInt8, note: UInt8) {
+        // Drum hits are one-shot — only send note off to bass synth
         noteOff(note: Int(note))
     }
 
@@ -668,7 +752,13 @@ public struct TR808BassSynthView: View {
                     // Tone section
                     toneSection
 
-                    // Keyboard
+                    // Drum Kit (SynthPresetLibrary integration)
+                    drumKitSection
+
+                    // Step Sequencer
+                    sequencerSection
+
+                    // Bass Keyboard
                     keyboardView
                 }
                 .padding()
@@ -696,10 +786,10 @@ public struct TR808BassSynthView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("EchoelBeat Bass Synth")
+                Text("EchoelBeat")
                     .font(.title2.bold())
 
-                Text("Sub-Bass Engine with Pitch Glide")
+                Text("Drum Machine + Sub-Bass Engine")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -956,6 +1046,372 @@ public struct TR808BassSynthView: View {
         let octave = (note / 12) - 1
         let noteName = names[note % 12]
         return "\(noteName)\(octave)"
+    }
+
+    // MARK: - Drum Kit Section
+
+    private var drumKitSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Drum Kit")
+                    .font(.headline)
+                Spacer()
+                Text(synth.currentDrumKit)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            // Genre kit selector
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(SynthPresetLibrary.GenreKit.allCases, id: \.rawValue) { genre in
+                        Button(action: {
+                            synth.loadDrumKit(genre: genre)
+                        }) {
+                            Text(genre.rawValue)
+                                .font(.caption)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(synth.currentDrumKit == genre.rawValue ? Color.cyan : Color.gray.opacity(0.2))
+                                )
+                                .foregroundColor(synth.currentDrumKit == genre.rawValue ? .white : .primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+            // Drum pads (4x4 grid)
+            if !synth.drumSlots.isEmpty {
+                let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 4)
+                LazyVGrid(columns: columns, spacing: 4) {
+                    ForEach(Array(synth.drumSlots.prefix(16).enumerated()), id: \.element.id) { index, slot in
+                        Button(action: {}) {
+                            VStack(spacing: 2) {
+                                Text(drumPadShortName(slot.name))
+                                    .font(.system(size: 10, weight: .bold))
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(drumPadColor(for: slot.category))
+                            )
+                            .foregroundColor(.white)
+                        }
+                        .buttonStyle(.plain)
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { _ in
+                                    synth.triggerDrum(slotIndex: index, velocity: 0.8)
+                                }
+                        )
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.cyan.opacity(0.1))
+        )
+    }
+
+    // MARK: - Step Sequencer Section
+
+    private var sequencerSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with transport
+            HStack {
+                Text("Sequencer")
+                    .font(.headline)
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    Text("BPM")
+                        .font(.caption)
+                    Text(String(format: "%.0f", synth.sequencerBPM))
+                        .font(.caption.monospacedDigit().bold())
+                }
+
+                Slider(value: $synth.sequencerBPM, in: 60...200, step: 1)
+                    .frame(width: 100)
+                    .tint(.cyan)
+
+                Button(action: {
+                    if synth.isSequencerPlaying {
+                        synth.stopSequencer()
+                    } else {
+                        synth.startSequencer()
+                    }
+                }) {
+                    Image(systemName: synth.isSequencerPlaying ? "stop.fill" : "play.fill")
+                        .font(.title3)
+                        .foregroundColor(synth.isSequencerPlaying ? .red : .green)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Pattern presets
+            HStack(spacing: 6) {
+                ForEach(TR808BassSynth.BeatPatternPreset.allCases, id: \.rawValue) { preset in
+                    Button(preset.rawValue) {
+                        synth.loadPatternPreset(preset)
+                    }
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color.gray.opacity(0.2)))
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Step grid
+            if !synth.drumSlots.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    VStack(spacing: 2) {
+                        // Step numbers header
+                        HStack(spacing: 2) {
+                            Text("")
+                                .frame(width: 60)
+                            ForEach(0..<16, id: \.self) { step in
+                                Text("\(step + 1)")
+                                    .font(.system(size: 8).monospacedDigit())
+                                    .frame(width: 24, height: 14)
+                                    .foregroundColor(synth.sequencerStep == step && synth.isSequencerPlaying ? .cyan : .secondary)
+                            }
+                        }
+
+                        // Track rows (first 8 drum slots)
+                        ForEach(Array(synth.drumSlots.prefix(8).enumerated()), id: \.element.id) { trackIdx, slot in
+                            HStack(spacing: 2) {
+                                Text(drumPadShortName(slot.name))
+                                    .font(.system(size: 9, weight: .medium))
+                                    .frame(width: 60, alignment: .trailing)
+                                    .lineLimit(1)
+
+                                ForEach(0..<16, id: \.self) { step in
+                                    let isActive = trackIdx < synth.sequencerPattern.tracks.count &&
+                                                   step < synth.sequencerPattern.stepCount &&
+                                                   synth.sequencerPattern.tracks[trackIdx][step].isActive
+
+                                    Button(action: {
+                                        synth.sequencerPattern.toggle(track: trackIdx, step: step)
+                                    }) {
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .fill(isActive ? drumPadColor(for: slot.category) : Color.gray.opacity(0.15))
+                                            .frame(width: 24, height: 24)
+                                            .overlay(
+                                                Group {
+                                                    if synth.sequencerStep == step && synth.isSequencerPlaying {
+                                                        RoundedRectangle(cornerRadius: 3)
+                                                            .stroke(Color.white, lineWidth: 1)
+                                                    }
+                                                }
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.08))
+        )
+    }
+
+    // MARK: - View Helpers
+
+    private func drumPadShortName(_ name: String) -> String {
+        var result = name
+        for (old, new) in [("Acoustic ", ""), ("Noise ", "N."), ("808 ", ""),
+                           ("Distorted ", "Dist "), ("Closed ", "Cl."),
+                           ("Open ", "Op."), ("Finger ", ""), ("Big Room ", "Big ")] {
+            result = result.replacingOccurrences(of: old, with: new)
+        }
+        return String(result.prefix(8))
+    }
+
+    private func drumPadColor(for category: String) -> Color {
+        switch category {
+        case "kick": return Color.red.opacity(0.7)
+        case "snare", "clap": return Color.orange.opacity(0.7)
+        case "hihat", "closed", "open", "ride", "crash", "pedal": return Color.cyan.opacity(0.7)
+        case "tom", "floor", "mid", "high": return Color.blue.opacity(0.7)
+        default: return Color.purple.opacity(0.7)
+        }
+    }
+}
+
+// MARK: - Drum Kit Integration
+
+extension TR808BassSynth {
+
+    /// Load a complete drum kit from SynthPresetLibrary.
+    /// Maps drum sounds to sequential MIDI notes starting at C1 (36) following GM drum map.
+    public func loadDrumKit(genre: SynthPresetLibrary.GenreKit) {
+        let library = SynthPresetLibrary.shared
+        let presetList = library.drumPresets(for: genre)
+
+        let sr = Float(sampleRate)
+        var newSlots: [DrumSlot] = []
+
+        for (index, preset) in presetList.prefix(16).enumerated() {
+            let audioData = library.renderDrumHit(preset, targetSampleRate: sr)
+            let slot = DrumSlot(
+                name: preset.name,
+                audioData: audioData,
+                sampleRate: sr,
+                midiNote: 36 + index,
+                category: preset.tags.first ?? ""
+            )
+            newSlots.append(slot)
+        }
+
+        voiceLock.lock()
+        drumPlaybacks.removeAll()
+        voiceLock.unlock()
+
+        drumSlots = newSlots
+        currentDrumKit = genre.rawValue
+
+        // Create matching sequencer pattern
+        sequencerPattern = BeatPattern(name: genre.rawValue, trackCount: drumSlots.count)
+    }
+
+    /// Load all drum presets (no genre filter) — full kit with all 38+ sounds
+    public func loadFullDrumKit() {
+        let library = SynthPresetLibrary.shared
+        let allDrums = library.presets(for: .drums)
+
+        let sr = Float(sampleRate)
+        var newSlots: [DrumSlot] = []
+
+        for (index, preset) in allDrums.prefix(16).enumerated() {
+            let audioData = library.renderDrumHit(preset, targetSampleRate: sr)
+            let slot = DrumSlot(
+                name: preset.name,
+                audioData: audioData,
+                sampleRate: sr,
+                midiNote: 36 + index,
+                category: preset.tags.first ?? ""
+            )
+            newSlots.append(slot)
+        }
+
+        voiceLock.lock()
+        drumPlaybacks.removeAll()
+        voiceLock.unlock()
+
+        drumSlots = newSlots
+        currentDrumKit = "Full Kit"
+        sequencerPattern = BeatPattern(name: "Full Kit", trackCount: drumSlots.count)
+    }
+
+    /// Trigger a drum slot by index
+    public func triggerDrum(slotIndex: Int, velocity: Float = 0.8) {
+        guard slotIndex < drumSlots.count else { return }
+
+        voiceLock.lock()
+        defer { voiceLock.unlock() }
+
+        // Clean up finished playbacks
+        drumPlaybacks.removeAll { !$0.isActive }
+
+        // Voice stealing if needed
+        if drumPlaybacks.count >= maxDrumPlaybacks {
+            drumPlaybacks.removeFirst()
+        }
+
+        drumPlaybacks.append(DrumPlayback(
+            slotIndex: slotIndex,
+            velocity: velocity
+        ))
+    }
+
+    /// Trigger drum by MIDI note (GM drum map: C1 = 36)
+    public func triggerDrumByNote(_ note: Int, velocity: Float = 0.8) {
+        if let idx = drumSlots.firstIndex(where: { $0.midiNote == note }) {
+            triggerDrum(slotIndex: idx, velocity: velocity)
+        }
+    }
+}
+
+// MARK: - Step Sequencer
+
+extension TR808BassSynth {
+
+    /// Start the step sequencer
+    public func startSequencer() {
+        guard !isSequencerPlaying else { return }
+        isSequencerPlaying = true
+        sequencerStep = 0
+
+        let stepInterval = 60.0 / Double(sequencerBPM) / 4.0  // 16th notes
+        sequencerTimer = Timer.scheduledTimer(withTimeInterval: stepInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.advanceSequencer()
+            }
+        }
+    }
+
+    /// Stop the step sequencer
+    public func stopSequencer() {
+        isSequencerPlaying = false
+        sequencerTimer?.invalidate()
+        sequencerTimer = nil
+        sequencerStep = 0
+    }
+
+    /// Advance to next step — triggers drum slots according to pattern grid
+    private func advanceSequencer() {
+        let step = sequencerStep
+
+        for (trackIdx, track) in sequencerPattern.tracks.enumerated() {
+            guard step < track.count else { continue }
+            let beatStep = track[step]
+
+            if beatStep.isActive && Float.random(in: 0...1) <= beatStep.probability {
+                triggerDrum(slotIndex: trackIdx, velocity: beatStep.velocity)
+            }
+        }
+
+        sequencerStep = (sequencerStep + 1) % sequencerPattern.stepCount
+    }
+
+    /// Load a factory pattern preset
+    public func loadPatternPreset(_ preset: BeatPatternPreset) {
+        let tc = Swift.max(1, drumSlots.count)
+        switch preset {
+        case .fourOnFloor:
+            sequencerPattern = .fourOnFloor(trackCount: tc)
+        case .breakbeat:
+            sequencerPattern = .breakbeat(trackCount: tc)
+        case .trap:
+            sequencerPattern = .trap(trackCount: tc)
+        case .dnbRoller:
+            sequencerPattern = .dnbRoller(trackCount: tc)
+        case .empty:
+            sequencerPattern = BeatPattern(name: "Empty", trackCount: tc)
+        }
+    }
+
+    /// Pattern preset options
+    public enum BeatPatternPreset: String, CaseIterable {
+        case fourOnFloor = "4x4"
+        case breakbeat = "Break"
+        case trap = "Trap"
+        case dnbRoller = "DnB"
+        case empty = "Empty"
     }
 }
 

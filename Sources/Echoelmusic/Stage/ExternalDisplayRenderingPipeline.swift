@@ -341,7 +341,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
         window.isHidden = false
         externalWindows[descriptor.id] = window
 
-        log.log(.info, category: .visual, "External display connected: \(descriptor.name) (\(descriptor.nativeWidth)x\(descriptor.nativeHeight))")
+        log.log(.info, category: .video, "External display connected: \(descriptor.name) (\(descriptor.nativeWidth)x\(descriptor.nativeHeight))")
 
         EngineBus.shared.publish(.custom(
             topic: "stage.display.connected",
@@ -357,7 +357,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
         externalWindows[id]?.isHidden = true
         externalWindows.removeValue(forKey: id)
 
-        log.log(.info, category: .visual, "External display disconnected")
+        log.log(.info, category: .video, "External display disconnected")
 
         EngineBus.shared.publish(.custom(topic: "stage.display.disconnected", payload: ["id": id]))
     }
@@ -395,7 +395,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
         detectedOutputs = newOutputs
 
         for output in newOutputs where !currentIds.contains(output.id) {
-            log.log(.info, category: .visual, "macOS display detected: \(output.name) (\(output.nativeWidth)x\(output.nativeHeight))")
+            log.log(.info, category: .video, "macOS display detected: \(output.name) (\(output.nativeWidth)x\(output.nativeHeight))")
         }
     }
     #endif
@@ -523,7 +523,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
         contentAssignments.removeAll { $0.outputId == outputId }
         contentAssignments.append(assignment)
 
-        log.log(.info, category: .visual, "Content assigned: \(content.rawValue) → \(outputId)")
+        log.log(.info, category: .video, "Content assigned: \(content.rawValue) → \(outputId)")
 
         EngineBus.shared.publish(.custom(
             topic: "stage.content.assigned",
@@ -539,7 +539,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
         isPipelineActive = true
         renderStats.activeOutputCount = contentAssignments.count
 
-        log.log(.info, category: .visual, "Rendering pipeline started: \(contentAssignments.count) outputs")
+        log.log(.info, category: .video, "Rendering pipeline started: \(contentAssignments.count) outputs")
 
         EngineBus.shared.publish(.custom(topic: "stage.pipeline.start", payload: [
             "outputs": "\(contentAssignments.count)"
@@ -551,7 +551,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
         isPipelineActive = false
         renderStats.activeOutputCount = 0
 
-        log.log(.info, category: .visual, "Rendering pipeline stopped")
+        log.log(.info, category: .video, "Rendering pipeline stopped")
 
         EngineBus.shared.publish(.custom(topic: "stage.pipeline.stop", payload: [:]))
     }

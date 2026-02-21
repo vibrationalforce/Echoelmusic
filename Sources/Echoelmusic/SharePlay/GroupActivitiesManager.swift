@@ -69,11 +69,11 @@ struct EchoelmusicActivity: GroupActivity {
 
 /// Manages SharePlay sessions for synchronized experiences
 @MainActor
-class GroupSessionManager: ObservableObject {
+public class GroupSessionManager: ObservableObject {
 
     // MARK: - Singleton
 
-    static let shared = GroupSessionManager()
+    public static let shared = GroupSessionManager()
 
     // MARK: - Published Properties
 

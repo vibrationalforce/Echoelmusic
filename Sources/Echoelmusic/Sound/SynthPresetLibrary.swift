@@ -17,6 +17,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import Foundation
+import AVFoundation
+import Accelerate
 
 // MARK: - Preset Target Engine
 
@@ -1227,6 +1229,84 @@ public final class SynthPresetLibrary {
             case .latin: return ["latin", "conga", "bongo", "claves", "wood"]
             case .afrobeat: return ["afrobeat", "african", "world", "djembe"]
             }
+        }
+    }
+
+    // MARK: - Audio Rendering Bridge (BreakbeatChopper + EchoelBeat Integration)
+
+    /// Render any preset to raw Float32 audio — the universal bridge to all Echoelmusic engines.
+    /// Used by BreakbeatChopper for synthetic break loading and TR808BassSynth (EchoelBeat) for drum kits.
+    public func renderPresetToAudio(_ preset: SynthPreset, targetSampleRate: Float = 44100) -> (data: [Float], sampleRate: Float) {
+        let sampleRate = targetSampleRate
+        let frameCount = Int(preset.duration * sampleRate)
+        guard frameCount > 0 else { return ([], sampleRate) }
+
+        let audioData: [Float]
+        switch preset.engine {
+        case .ddsp:
+            audioData = renderDDSP(preset, frameCount: frameCount, sampleRate: sampleRate)
+        case .modalBank:
+            audioData = renderModalBank(preset, frameCount: frameCount, sampleRate: sampleRate)
+        case .cellular:
+            audioData = renderCellular(preset, frameCount: frameCount, sampleRate: sampleRate)
+        case .quant:
+            audioData = renderQuant(preset, frameCount: frameCount, sampleRate: sampleRate)
+        case .tr808:
+            audioData = renderTR808(preset, frameCount: frameCount, sampleRate: sampleRate)
+        case .breakbeat:
+            audioData = renderSyntheticBreak(preset, frameCount: frameCount, sampleRate: sampleRate)
+        }
+
+        return (audioData, sampleRate)
+    }
+
+    /// Render a preset to AVAudioPCMBuffer — direct bridge for BreakbeatChopper source loading
+    public func renderPresetToBuffer(_ preset: SynthPreset, targetSampleRate: Float = 44100) -> AVAudioPCMBuffer? {
+        let (data, sampleRate) = renderPresetToAudio(preset, targetSampleRate: targetSampleRate)
+        guard !data.isEmpty else { return nil }
+
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: Double(sampleRate), channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(data.count)) else {
+            return nil
+        }
+
+        buffer.frameLength = AVAudioFrameCount(data.count)
+        if let channelData = buffer.floatChannelData?[0] {
+            for i in 0..<data.count {
+                channelData[i] = data[i]
+            }
+        }
+        return buffer
+    }
+
+    /// Render a single drum hit with velocity scaling — bridge for EchoelBeat drum pads
+    public func renderDrumHit(_ preset: SynthPreset, velocity: Float = 1.0, targetSampleRate: Float = 48000) -> [Float] {
+        var (data, _) = renderPresetToAudio(preset, targetSampleRate: targetSampleRate)
+        if abs(velocity - 1.0) > 0.01 && !data.isEmpty {
+            var vel = velocity
+            vDSP_vsmul(data, 1, &vel, &data, 1, vDSP_Length(data.count))
+        }
+        return data
+    }
+
+    /// Get drum presets matching a genre — pre-filtered for EchoelBeat kit loading
+    public func drumPresets(for genre: GenreKit) -> [SynthPreset] {
+        let tags = genre.tags
+        let allDrums = presets(for: .drums)
+        let matching = allDrums.filter { preset in
+            preset.tags.contains(where: { tags.contains($0) })
+        }
+        if matching.count >= 8 { return Array(matching.prefix(16)) }
+        // Supplement with generic drums to ensure a complete kit
+        let matchingIDs = Set(matching.map { $0.id })
+        let additional = allDrums.filter { !matchingIDs.contains($0.id) }
+        return matching + Array(additional.prefix(16 - matching.count))
+    }
+
+    /// Get all jungle/breakbeat patterns — bridge for BreakbeatChopper pattern import
+    public func junglePatterns() -> [(name: String, bpm: Float, indices: [Int?], swing: Float)] {
+        presets(for: .jungle).map { preset in
+            (name: preset.name, bpm: preset.bpm, indices: preset.patternIndices, swing: preset.swing)
         }
     }
 

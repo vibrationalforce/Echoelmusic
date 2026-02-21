@@ -142,19 +142,15 @@ public final class ServiceContainer {
 /// Property wrapper for automatic service resolution
 /// Returns nil instead of crashing when a service is not registered.
 /// Usage: `@Injected var analytics: AnalyticsServiceProtocol?`
+@MainActor
 @propertyWrapper
 public struct Injected<T> {
     private let container: ServiceContainer
 
     public var wrappedValue: T? {
-        let service = container.resolve(T.self)
-        if service == nil {
-            log.log(.warning, category: .system, "Service \(T.self) not registered in ServiceContainer — returning nil")
-        }
-        return service
+        return container.resolve(T.self)
     }
 
-    @MainActor
     public init(container: ServiceContainer = .shared) {
         self.container = container
     }

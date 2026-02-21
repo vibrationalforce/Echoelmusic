@@ -180,7 +180,7 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4
@@ -278,14 +278,19 @@ jobs:
 
           if [ $RESULT -ne 0 ]; then
             echo "=== ARCHIVE FAILED (exit $RESULT) ==="
+            # Extract Swift compile errors specifically (|| true to avoid pipefail exit)
+            SWIFT_ERRORS=$(grep -E ': error: ' /tmp/archive.log | head -20 | tr '\n' ' ||| ' || true)
+            echo "::error title=Swift Errors::${SWIFT_ERRORS:-NO_SWIFT_ERRORS_FOUND}"
             # Write errors as GitHub annotations (visible via API)
             LAST_LINES=$(tail -30 /tmp/archive.log | tr '\n' ' | ')
             echo "::error title=Archive Failed::${LAST_LINES}"
-            ERRORS=$(grep -iE "error:|failed|signing|provision|certificate|not found" /tmp/archive.log | tail -10 | tr '\n' ' | ')
-            echo "::error title=Build Errors::${ERRORS}"
+            ERRORS=$(grep -iE "error:|failed|signing|provision|certificate|not found" /tmp/archive.log | tail -10 | tr '\n' ' | ' || true)
+            echo "::error title=Build Errors::${ERRORS:-NO_ERRORS_MATCHED}"
             # Also write full tail to step summary
             echo "## Archive Failed (exit $RESULT)" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+            { grep -E ': error: |: warning: .*(deprecated|unavailable)' /tmp/archive.log | head -30 || true; } >> $GITHUB_STEP_SUMMARY
+            echo '---' >> $GITHUB_STEP_SUMMARY
             tail -50 /tmp/archive.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
@@ -341,6 +346,29 @@ jobs:
           echo "=== EXPORT SUCCESSFUL ==="
           ls -la ./build/*.ipa 2>/dev/null || echo "No IPA found"
 
+      - name: "Inspect IPA Icons"
+        run: |
+          IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
+          [ -z "$IPA" ] && { echo "No IPA to inspect"; exit 0; }
+          mkdir -p /tmp/ipa_inspect
+          unzip -o "$IPA" -d /tmp/ipa_inspect > /dev/null 2>&1
+          APP_DIR=$(ls -d /tmp/ipa_inspect/Payload/*.app 2>/dev/null | head -1)
+          [ -z "$APP_DIR" ] && { echo "::warning title=IPA Debug::No .app in IPA"; exit 0; }
+
+          # Check for icons
+          ICONS=$(ls "$APP_DIR"/AppIcon* 2>/dev/null | head -20 || echo "NONE")
+          ASSETS=$(ls -la "$APP_DIR/Assets.car" 2>/dev/null || echo "NO Assets.car")
+          PLIST_ICONS=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIcons in plist")
+          PLIST_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIconName")
+          PLIST_FILES=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIconFiles")
+          ALL_ICONS=$(find "$APP_DIR" -maxdepth 2 -name "*[Ii]con*" -o -name "*[Aa]pp[Ii]con*" 2>/dev/null | head -20 || echo "NONE")
+
+          echo "::warning title=IPA Icon Scan::Icons at root: ${ICONS} | Assets.car: ${ASSETS} | CFBundleIconName: ${PLIST_NAME} | CFBundleIconFiles: ${PLIST_FILES}"
+          echo "::warning title=IPA All Icons::${ALL_ICONS}"
+          echo "--- Detailed Info.plist Icons ---"
+          echo "$PLIST_ICONS"
+          rm -rf /tmp/ipa_inspect
+
       - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -355,6 +383,23 @@ jobs:
             echo "::error title=No IPA::No IPA found in $(pwd)/build/"
             exit 1
           fi
+
+          # Debug: inspect IPA contents for icons
+          echo "=== IPA Icon Debug ==="
+          mkdir -p /tmp/ipa_debug
+          unzip -o "$IPA" -d /tmp/ipa_debug > /dev/null 2>&1
+          echo "--- Info.plist CFBundleIcons ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" /tmp/ipa_debug/Payload/*.app/Info.plist 2>&1 || echo "No CFBundleIcons key"
+          echo "--- Icon files in .app ---"
+          ls -la /tmp/ipa_debug/Payload/*.app/AppIcon* 2>/dev/null || echo "No AppIcon files at root"
+          ls -la /tmp/ipa_debug/Payload/*.app/Assets.car 2>/dev/null || echo "No Assets.car"
+          echo "--- actool-generated icon entries ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" /tmp/ipa_debug/Payload/*.app/Info.plist 2>&1 || echo "No icon files in plist"
+          echo "--- All files matching Icon/icon ---"
+          find /tmp/ipa_debug/Payload/*.app -maxdepth 1 -name "*[Ii]con*" 2>/dev/null || echo "No icon files found"
+          echo "=== End Icon Debug ==="
+          rm -rf /tmp/ipa_debug
+
           echo "Uploading $IPA to TestFlight..."
           set +eo pipefail
           IPA_PATH="$IPA" fastlane ios upload 2>&1 | tee /tmp/upload.log
@@ -412,7 +457,7 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4
@@ -589,7 +634,7 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4
@@ -760,7 +805,7 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4
@@ -931,7 +976,7 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4

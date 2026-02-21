@@ -129,7 +129,7 @@ public final class EchoelSyncProtocol: ObservableObject {
             let params = NWParameters.tcp
             params.includePeerToPeer = true
 
-            let txtRecord = NWTXTRecord()
+            var txtRecord = NWTXTRecord()
             txtRecord["session"] = sessionName
             txtRecord["role"] = role.rawValue
 
@@ -139,7 +139,9 @@ public final class EchoelSyncProtocol: ObservableObject {
                 type: "_echoelsync._tcp"
             )
             listener?.newConnectionHandler = { [weak self] connection in
-                self?.handleNewConnection(connection)
+                Task { @MainActor in
+                    self?.handleNewConnection(connection)
+                }
             }
             listener?.start(queue: .main)
 

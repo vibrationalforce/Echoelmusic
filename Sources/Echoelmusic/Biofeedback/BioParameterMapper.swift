@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import QuartzCore
 
 /// Maps biometric parameters to audio synthesis parameters
 /// HRV Coherence → Reverb, Filter, Amplitude
