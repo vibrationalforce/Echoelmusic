@@ -51,16 +51,28 @@ final class VideoAICreativeHub: ObservableObject {
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
-    private let universalCore = EchoelUniversalCore.shared
+    // Lazy to avoid circular dependency: EchoelUniversalCore.shared -> VideoAICreativeHub.shared -> EchoelUniversalCore.shared
+    private var _universalCore: EchoelUniversalCore?
+    private var universalCore: EchoelUniversalCore {
+        if _universalCore == nil { _universalCore = EchoelUniversalCore.shared }
+        return _universalCore!
+    }
+    private var connectionsSetUp = false
 
     // MARK: - Initialization
 
     private init() {
-        setupConnections()
         log.video("🎬 VideoAICreativeHub: Initialized - Ultra Liquid Light Flow")
+        // Defer cross-system connections to avoid circular singleton deadlock
+        Task { @MainActor [weak self] in
+            self?.setupConnections()
+        }
     }
 
     private func setupConnections() {
+        guard !connectionsSetUp else { return }
+        connectionsSetUp = true
+
         // Connect to Universal Core for bio-data
         universalCore.$systemState
             .sink { [weak self] state in

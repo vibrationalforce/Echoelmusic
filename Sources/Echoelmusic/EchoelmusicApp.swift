@@ -71,17 +71,15 @@ struct EchoelmusicApp: App {
         Task(priority: .userInitiated) {
             do {
                 // KRITISCH: Initialisiere alle Core-Systeme (Singletons)
-                // Diese werden jetzt async geladen für schnelleren App-Start!
-                // Use TaskGroup for parallel initialization with error handling
-                try await withThrowingTaskGroup(of: Void.self) { group in
-                    group.addTask { @MainActor in _ = EchoelUniversalCore.shared }
-                    group.addTask { @MainActor in _ = SelfHealingEngine.shared }
-                    group.addTask { @MainActor in _ = VideoAICreativeHub.shared }
-                    group.addTask { @MainActor in _ = MultiPlatformBridge.shared }
-                    group.addTask { @MainActor in _ = EchoelTools.shared }
-                    group.addTask { @MainActor in _ = EchoelToolkit.shared }
-                    try await group.waitForAll()
-                }
+                // Sequential initialization to avoid circular singleton deadlocks:
+                // EchoelUniversalCore <-> EchoelTools, EchoelUniversalCore <-> VideoAICreativeHub
+                await MainActor.run { _ = SelfHealingEngine.shared }
+                await MainActor.run { _ = MultiPlatformBridge.shared }
+                await MainActor.run { _ = EchoelUniversalCore.shared }
+                // After EchoelUniversalCore is fully assigned, these can safely reference it
+                await MainActor.run { _ = VideoAICreativeHub.shared }
+                await MainActor.run { _ = EchoelTools.shared }
+                await MainActor.run { _ = EchoelToolkit.shared }
 
                 // INSTRUMENT PIPELINE (depends on core systems)
                 try await withThrowingTaskGroup(of: Void.self) { group in
