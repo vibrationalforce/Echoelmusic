@@ -98,7 +98,7 @@ targets:
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
       - path: Resources/iOS/AppIcons
-        type: folder
+        type: group
         buildPhase: resources
     info:
       path: Resources/iOS/Info.plist
