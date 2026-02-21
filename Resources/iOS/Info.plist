@@ -92,6 +92,8 @@
 	<dict>
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
 			<key>CFBundleIconFiles</key>
 			<array>
 				<string>AppIcon60x60</string>
@@ -105,6 +107,8 @@
 	<dict>
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
 			<key>CFBundleIconFiles</key>
 			<array>
 				<string>AppIcon60x60</string>

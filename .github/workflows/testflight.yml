@@ -297,20 +297,6 @@ jobs:
           fi
           echo "=== ARCHIVE SUCCESSFUL ==="
 
-      - name: "Inject App Icons into Archive"
-        run: |
-          APP_PATH=$(find ./build/Echoelmusic.xcarchive/Products/Applications -name "*.app" -maxdepth 1 | head -1)
-          if [ -d "$APP_PATH" ] && [ -d "Resources/iOS/AppIcons" ]; then
-            echo "Copying loose icon PNGs into $APP_PATH"
-            cp Resources/iOS/AppIcons/*.png "$APP_PATH/"
-            echo "Icons in bundle:"
-            ls -la "$APP_PATH"/AppIcon*.png 2>/dev/null || echo "No AppIcon files found"
-          else
-            echo "Warning: App path or AppIcons directory not found"
-            echo "APP_PATH: $APP_PATH"
-            ls ./build/Echoelmusic.xcarchive/Products/Applications/ 2>/dev/null || true
-          fi
-
       - name: "Export IPA"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
