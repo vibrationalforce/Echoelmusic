@@ -7,6 +7,12 @@ import Combine
 @MainActor
 class ScriptEngine: ObservableObject {
 
+    // MARK: - Singleton
+
+    /// Retained reference to prevent immediate deallocation after initialization.
+    /// Set by `initializeCoreSystems()` in EchoelmusicApp.
+    static var shared: ScriptEngine?
+
     // MARK: - Published State
 
     @Published var loadedScripts: [EchoelScript] = []

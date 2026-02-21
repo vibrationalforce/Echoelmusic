@@ -43,17 +43,10 @@ final class EchoelTools: ObservableObject {
     let timeStretcher = TimeStretcher()
 
     // MARK: - System References (lazy to avoid circular dependency with EchoelUniversalCore)
+    // Safe because @MainActor guarantees single-threaded access.
 
-    private var _universalCore: EchoelUniversalCore?
-    private var universalCore: EchoelUniversalCore {
-        if _universalCore == nil { _universalCore = EchoelUniversalCore.shared }
-        return _universalCore!
-    }
-    private var _selfHealing: SelfHealingEngine?
-    private var selfHealing: SelfHealingEngine {
-        if _selfHealing == nil { _selfHealing = SelfHealingEngine.shared }
-        return _selfHealing!
-    }
+    private lazy var universalCore: EchoelUniversalCore = EchoelUniversalCore.shared
+    private lazy var selfHealing: SelfHealingEngine = SelfHealingEngine.shared
 
     // MARK: - Private State
 

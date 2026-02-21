@@ -153,7 +153,7 @@ struct EchoelmusicApp: App {
 
             // Phase 7: Script engine (community scripts + automation)
             await MainActor.run {
-                _ = ScriptEngine(
+                ScriptEngine.shared = ScriptEngine(
                     audioAPI: AudioScriptAPI(),
                     visualAPI: VisualScriptAPI(),
                     bioAPI: BioScriptAPI(),
