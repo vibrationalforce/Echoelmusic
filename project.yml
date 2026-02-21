@@ -483,12 +483,26 @@ targets:
         type: group
     info:
       path: Sources/EchoelmusicNotificationService/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: en
+        CFBundleDisplayName: "Echoelmusic Notifications"
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: "6.0"
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: XPC!
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        MinimumOSVersion: "15.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.usernotifications.service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
     settings:
       base:
         PRODUCT_NAME: EchoelmusicNotificationService
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.notification-service
         INFOPLIST_FILE: Sources/EchoelmusicNotificationService/Info.plist
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
