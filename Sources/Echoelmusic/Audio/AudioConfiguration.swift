@@ -136,9 +136,9 @@ enum AudioConfiguration {
 
         var bufferSize: AVAudioFrameCount {
             switch self {
-            case .ultraLow: return ultraLowLatencyBufferSize
-            case .low: return lowLatencyBufferSize
-            case .normal: return normalBufferSize
+            case .ultraLow: return AudioConfiguration.ultraLowLatencyBufferSize
+            case .low: return AudioConfiguration.lowLatencyBufferSize
+            case .normal: return AudioConfiguration.normalBufferSize
             }
         }
 

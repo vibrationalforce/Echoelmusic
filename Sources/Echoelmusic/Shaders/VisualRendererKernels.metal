@@ -21,15 +21,15 @@ struct VisualParams {
 
 // MARK: - Color Helpers
 
-float3 hsv2rgb(float3 c) {
+float3 vr_hsv2rgb(float3 c) {
     float3 p = abs(fract(float3(c.x) + float3(0.0, 2.0/3.0, 1.0/3.0)) * 6.0 - 3.0);
     return c.z * mix(float3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
 }
 
-float3 coherenceColor(float coherence, float phase) {
+float3 vr_coherenceColor(float coherence, float phase) {
     // Low coherence = warm reds, high = cool cyans/blues
     float hue = mix(0.0, 0.55, coherence) + phase * 0.1;
-    return hsv2rgb(float3(fract(hue), 0.8, 0.9));
+    return vr_hsv2rgb(float3(fract(hue), 0.8, 0.9));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -68,7 +68,7 @@ kernel void cymaticsKernel(
     float nodal = 1.0 - smoothstep(0.0, 0.08 + 0.05 * coh, abs(chladni));
 
     // Color: coherence drives palette
-    float3 baseColor = coherenceColor(coh, t * 0.2);
+    float3 baseColor = vr_coherenceColor(coh, t * 0.2);
     float3 nodalColor = float3(1.0, 0.95, 0.85); // warm white
 
     float3 color = mix(baseColor * pattern, nodalColor, nodal * 0.7);
@@ -141,7 +141,7 @@ kernel void mandalaKernel(
     float sat = 0.6 + coh * 0.3;
     float val = pattern * fade * (0.7 + breathCycle * 0.3);
 
-    float3 color = hsv2rgb(float3(hue, sat, val));
+    float3 color = vr_hsv2rgb(float3(hue, sat, val));
 
     // Center glow
     float glow = exp(-r * r * 8.0) * coh;
@@ -155,7 +155,7 @@ kernel void mandalaKernel(
 // ═══════════════════════════════════════════════════════════════════
 
 // Hash for particle positions
-float2 particleHash(float2 p, float seed) {
+float2 vr_particleHash(float2 p, float seed) {
     p = float2(dot(p, float2(127.1 + seed, 311.7)),
                dot(p, float2(269.5, 183.3 + seed)));
     return fract(sin(p) * 43758.5453);
@@ -183,7 +183,7 @@ kernel void particlesKernel(
         float2 seed = float2(fi * 0.73, fi * 1.37);
 
         // Particle position: orbital motion modulated by coherence
-        float2 basePos = particleHash(seed, 0.0);
+        float2 basePos = vr_particleHash(seed, 0.0);
         float orbitR = basePos.x * 0.4 + 0.05;
         float orbitSpeed = (basePos.y - 0.5) * 2.0;
 
@@ -203,14 +203,14 @@ kernel void particlesKernel(
 
         // Color per particle — coherence shifts hue range
         float hue = fract(fi * 0.618 + coh * 0.3);
-        float3 particleColor = hsv2rgb(float3(hue, 0.7 + coh * 0.2, 1.0));
+        float3 particleColor = vr_hsv2rgb(float3(hue, 0.7 + coh * 0.2, 1.0));
 
         color += particleColor * glow * 0.0015;
         totalGlow += glow;
     }
 
     // Background subtle gradient
-    float3 bg = coherenceColor(coh, t * 0.1) * 0.03;
+    float3 bg = vr_coherenceColor(coh, t * 0.1) * 0.03;
     color = bg + color;
 
     // Tone map
@@ -263,8 +263,8 @@ kernel void waveformKernel(
 
     // Color: position-based hue shift
     float hue = fract(uv.x * 0.3 + coh * 0.5 + t * 0.05);
-    float3 waveColor = hsv2rgb(float3(hue, 0.8, 1.0));
-    float3 mirrorColor = hsv2rgb(float3(fract(hue + 0.5), 0.6, 0.7));
+    float3 waveColor = vr_hsv2rgb(float3(hue, 0.8, 1.0));
+    float3 mirrorColor = vr_hsv2rgb(float3(fract(hue + 0.5), 0.6, 0.7));
 
     // Combine
     float3 color = waveColor * (line + glow) + mirrorColor * (mirrorLine + mirrorGlow);
@@ -327,7 +327,7 @@ kernel void spectralKernel(
     float hue = float(band) / float(bandCount) * 0.8;
     float sat = 0.7 + coh * 0.2;
     float val = 0.8 + mag * 0.2;
-    float3 barColor = hsv2rgb(float3(hue, sat, val));
+    float3 barColor = vr_hsv2rgb(float3(hue, sat, val));
 
     // Gradient within bar (brighter at top)
     float gradient = uv.y * 0.5 + 0.5;

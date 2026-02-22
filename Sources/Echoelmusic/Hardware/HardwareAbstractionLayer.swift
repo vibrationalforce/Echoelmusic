@@ -17,21 +17,32 @@ import HealthKit
 import AVFoundation
 import Combine
 
+// MARK: - HAL Protocols (top-level, Swift does not allow nested protocols)
+
+protocol HALSensorManagerProtocol {
+    func startAccelerometer(handler: @escaping (SIMD3<Float>) -> Void)
+    func startGyroscope(handler: @escaping (SIMD3<Float>) -> Void)
+    func startMagnetometer(handler: @escaping (SIMD3<Float>) -> Void)
+    func startHeartRate(handler: @escaping (Float) -> Void)
+    func startBrainWaves(handler: @escaping ([Float]) -> Void)
+    func stopAll()
+}
+
+protocol HALAudioInterfaceProtocol {
+    func configureAudio(sampleRate: Double, bufferSize: Int)
+    func startAudio()
+    func stopAudio()
+    func setVolume(_ volume: Float)
+}
+
+protocol HALDisplayInterfaceProtocol {
+    func getDisplayInfo() -> HardwareAbstractionLayer.DisplayInfo
+    func setRefreshRate(_ fps: Int)
+    func setBrightness(_ brightness: Float)
+}
+
 /// Hardware Abstraction Layer (HAL)
 /// Universal hardware interface for ALL device types
-/// Abstracts differences between: iOS, macOS, watchOS, tvOS, CarPlay, IoT, Vehicles, Drones
-///
-/// Architecture: Plugin-based system allows Echoelmusic to run on ANY hardware
-/// without changing core code. Each device type implements the HAL protocol.
-///
-/// Supported Platforms (2024-2035):
-/// - Mobile: iPhone, iPad, Android phones/tablets
-/// - Wearables: Apple Watch, AR glasses, VR headsets
-/// - Desktop: Mac, Windows PC, Linux
-/// - Vehicles: Tesla, Apple Car, CarPlay, Android Auto
-/// - Drones: DJI, autonomous drones
-/// - IoT: Smart home, medical devices, embedded systems
-/// - Future: Neural interfaces, quantum devices, holographic displays
 @MainActor
 class HardwareAbstractionLayer: ObservableObject {
 
@@ -153,27 +164,20 @@ class HardwareAbstractionLayer: ObservableObject {
         var supportsFlight: Bool = false
     }
 
-    // MARK: - Sensor Manager Protocol
+    // MARK: - Sensor Manager
 
-    protocol SensorManagerProtocol {
-        func startAccelerometer(handler: @escaping (SIMD3<Float>) -> Void)
-        func startGyroscope(handler: @escaping (SIMD3<Float>) -> Void)
-        func startMagnetometer(handler: @escaping (SIMD3<Float>) -> Void)
-        func startHeartRate(handler: @escaping (Float) -> Void)
-        func startBrainWaves(handler: @escaping ([Float]) -> Void)
-        func stopAll()
-    }
-
-    class SensorManager: SensorManagerProtocol {
+    class SensorManager: HALSensorManagerProtocol {
+        #if canImport(CoreMotion)
         private let motionManager = CMMotionManager()
+        #endif
         private var accelerometerHandler: ((SIMD3<Float>) -> Void)?
         private var gyroscopeHandler: ((SIMD3<Float>) -> Void)?
 
         func startAccelerometer(handler: @escaping (SIMD3<Float>) -> Void) {
             accelerometerHandler = handler
+            #if canImport(CoreMotion)
             guard motionManager.isAccelerometerAvailable else { return }
-
-            motionManager.accelerometerUpdateInterval = 1.0 / 60.0  // 60 Hz
+            motionManager.accelerometerUpdateInterval = 1.0 / 60.0
             motionManager.startAccelerometerUpdates(to: .main) { data, error in
                 guard let data = data, error == nil else { return }
                 let vector = SIMD3<Float>(
@@ -183,12 +187,13 @@ class HardwareAbstractionLayer: ObservableObject {
                 )
                 handler(vector)
             }
+            #endif
         }
 
         func startGyroscope(handler: @escaping (SIMD3<Float>) -> Void) {
             gyroscopeHandler = handler
+            #if canImport(CoreMotion)
             guard motionManager.isGyroAvailable else { return }
-
             motionManager.gyroUpdateInterval = 1.0 / 60.0
             motionManager.startGyroUpdates(to: .main) { data, error in
                 guard let data = data, error == nil else { return }
@@ -199,12 +204,13 @@ class HardwareAbstractionLayer: ObservableObject {
                 )
                 handler(vector)
             }
+            #endif
         }
 
         func startMagnetometer(handler: @escaping (SIMD3<Float>) -> Void) {
+            #if canImport(CoreMotion)
             guard motionManager.isMagnetometerAvailable else { return }
-
-            motionManager.magnetometerUpdateInterval = 1.0 / 10.0  // 10 Hz sufficient
+            motionManager.magnetometerUpdateInterval = 1.0 / 10.0
             motionManager.startMagnetometerUpdates(to: .main) { data, error in
                 guard let data = data, error == nil else { return }
                 let vector = SIMD3<Float>(
@@ -214,36 +220,29 @@ class HardwareAbstractionLayer: ObservableObject {
                 )
                 handler(vector)
             }
+            #endif
         }
 
         func startHeartRate(handler: @escaping (Float) -> Void) {
-            // Platform-specific: Use HealthKit on Apple platforms
-            // For other platforms, use device-specific APIs
             log.hardware("⚠️ Heart rate monitoring requires HealthKit integration", level: .warning)
         }
 
         func startBrainWaves(handler: @escaping ([Float]) -> Void) {
-            // Future: Neural interface support (Neuralink, etc.)
             log.hardware("⚠️ Brain wave monitoring not yet available (future feature)", level: .warning)
         }
 
         func stopAll() {
+            #if canImport(CoreMotion)
             motionManager.stopAccelerometerUpdates()
             motionManager.stopGyroUpdates()
             motionManager.stopMagnetometerUpdates()
+            #endif
         }
     }
 
-    // MARK: - Audio Interface Protocol
+    // MARK: - Audio Interface
 
-    protocol AudioInterfaceProtocol {
-        func configureAudio(sampleRate: Double, bufferSize: Int)
-        func startAudio()
-        func stopAudio()
-        func setVolume(_ volume: Float)
-    }
-
-    class AudioInterface: AudioInterfaceProtocol {
+    class AudioInterface: HALAudioInterfaceProtocol {
         private var audioEngine: AVAudioEngine?
 
         func configureAudio(sampleRate: Double, bufferSize: Int) {
@@ -280,14 +279,6 @@ class HardwareAbstractionLayer: ObservableObject {
         }
     }
 
-    // MARK: - Display Interface Protocol
-
-    protocol DisplayInterfaceProtocol {
-        func getDisplayInfo() -> DisplayInfo
-        func setRefreshRate(_ fps: Int)
-        func setBrightness(_ brightness: Float)
-    }
-
     struct DisplayInfo {
         let widthPixels: Int
         let heightPixels: Int
@@ -299,7 +290,7 @@ class HardwareAbstractionLayer: ObservableObject {
     }
 
     @MainActor
-    class DisplayInterface: DisplayInterfaceProtocol {
+    class DisplayInterface: HALDisplayInterfaceProtocol {
         func getDisplayInfo() -> DisplayInfo {
             #if os(iOS)
             let screen = Self.currentScreen
@@ -389,10 +380,12 @@ class HardwareAbstractionLayer: ObservableObject {
         caps.ramGB = Float(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824.0
 
         // Detect sensors
+        #if canImport(CoreMotion)
         let motionManager = CMMotionManager()
         caps.hasAccelerometer = motionManager.isAccelerometerAvailable
         caps.hasGyroscope = motionManager.isGyroAvailable
         caps.hasMagnetometer = motionManager.isMagnetometerAvailable
+        #endif
 
         #if os(iOS)
         caps.hasTouchScreen = true

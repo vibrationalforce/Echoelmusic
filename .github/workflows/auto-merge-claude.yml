@@ -1,0 +1,94 @@
+# =============================================================================
+# ECHOELMUSIC - AUTO-MERGE CLAUDE BRANCHES
+# =============================================================================
+name: Auto-Merge Claude Branch
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'project.yml'
+      - '.github/workflows/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-Merge to Main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Create PR via API
+        uses: actions/github-script@v7
+        id: create-pr
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            console.log(`Branch: ${branch}, SHA: ${context.sha}`);
+
+            // Check for existing open PR
+            const { data: existingPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${branch}`,
+              base: 'main'
+            });
+
+            let prNumber;
+            if (existingPRs.length > 0) {
+              prNumber = existingPRs[0].number;
+              console.log(`Existing PR #${prNumber}`);
+            } else {
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `fix: auto-merge from ${branch}`,
+                head: branch,
+                base: 'main',
+                body: `Auto-merge claude branch changes.\nCommit: ${context.sha}`
+              });
+              prNumber = pr.number;
+              console.log(`Created PR #${prNumber}`);
+            }
+
+            core.setOutput('pr_number', prNumber);
+            return prNumber;
+
+      - name: Merge PR
+        if: steps.create-pr.outputs.pr_number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.create-pr.outputs.pr_number }}');
+            console.log(`Merging PR #${prNumber}...`);
+
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'squash'
+              });
+              console.log(`PR #${prNumber} merged successfully`);
+            } catch (error) {
+              console.log(`Merge failed: ${error.message}`);
+              console.log('PR may require manual merge or approval');
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auto-Merge Claude Branch" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR | #${{ steps.create-pr.outputs.pr_number }} |" >> $GITHUB_STEP_SUMMARY
