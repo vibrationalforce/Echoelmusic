@@ -1,7 +1,10 @@
 # =============================================================================
-# ECHOELMUSIC - AUTO-MERGE CLAUDE BRANCHES
+# ECHOELMUSIC - AUTO-MERGE CLAUDE BRANCHES + TRIGGER TESTFLIGHT
 # =============================================================================
-# Direct merge approach: checkout main, merge claude branch commit, push
+# Direct merge approach: checkout main, merge claude branch commit, push,
+# then dispatch TestFlight workflow for all Apple platforms.
+# Note: GITHUB_TOKEN pushes don't trigger other workflows, so we dispatch
+# TestFlight directly from this workflow after a successful merge.
 # =============================================================================
 name: Auto-Merge Claude Branch
 
@@ -18,6 +21,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   auto-merge:
@@ -95,6 +99,30 @@ jobs:
             exit 1
           fi
 
+      - name: Trigger TestFlight
+        if: steps.merge.outputs.merge_status == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('Merge successful! Triggering TestFlight for all platforms...');
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'testflight.yml',
+                ref: 'main',
+                inputs: {
+                  platform: 'all',
+                  clean_build: 'true'
+                }
+              });
+              console.log('TestFlight workflow dispatched successfully!');
+            } catch (error) {
+              console.log(`Failed to dispatch TestFlight: ${error.message}`);
+              console.log('You may need to trigger TestFlight manually from the Actions tab.');
+            }
+
       - name: Summary
         if: always()
         run: |
@@ -106,3 +134,4 @@ jobs:
           echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TestFlight | ${{ steps.merge.outputs.merge_status == 'success' && 'Dispatched' || 'Not triggered' }} |" >> $GITHUB_STEP_SUMMARY
