@@ -1267,6 +1267,11 @@ public final class EchoelField: ObservableObject {
         hilbertMapper.recentPoints(count: count)
     }
 
+    // MARK: - Camera Assistant (EchoelMind integration)
+
+    /// AI-powered camera assistant — smart presets, accessibility, voice control
+    public let cameraAssistant = EchoelMindCameraAssistant.shared
+
     // MARK: - Video API (wired to RecordingEngine + VideoStreamingManager)
 
     /// Backing recording engine (lazy — only created when video features are used)

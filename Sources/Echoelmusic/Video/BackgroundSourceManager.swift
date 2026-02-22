@@ -949,24 +949,47 @@ class BackgroundSourceManager: ObservableObject {
     }
 }
 
-// MARK: - Echoelmusic Visual Renderer (Placeholder)
+// MARK: - Echoelmusic Visual Renderer — Metal Compute Pipeline
 
+/// GPU-accelerated bio-reactive visual renderer using Metal compute shaders.
+/// Each visual type (cymatics, mandala, particles, waveform, spectral) dispatches
+/// a dedicated compute kernel from VisualRendererKernels.metal.
 @MainActor
 class EchoelmusicVisualRenderer {
     private let device: MTLDevice
     private let type: BackgroundSourceManager.EchoelmusicVisualType
+    private let commandQueue: MTLCommandQueue
 
     private var hrvCoherence: Float = 0.5
     private var heartRate: Float = 70.0
+    private var startTime: CFAbsoluteTime = CFAbsoluteTimeGetCurrent()
+
+    // Compute pipeline states — loaded once at start()
+    private var computePipeline: MTLComputePipelineState?
+
+    // Audio data buffer for waveform/spectral/particles (up to 4096 floats)
+    private var audioBuffer: MTLBuffer?
+    private var audioData: [Float] = [Float](repeating: 0, count: 4096)
+
+    // Params buffer (matches VisualParams in .metal)
+    private var paramsBuffer: MTLBuffer?
 
     init(device: MTLDevice, type: BackgroundSourceManager.EchoelmusicVisualType) {
         self.device = device
         self.type = type
+        self.commandQueue = device.makeCommandQueue()!
     }
 
     func update(hrvCoherence: Float, heartRate: Float) {
         self.hrvCoherence = hrvCoherence
         self.heartRate = heartRate
+    }
+
+    /// Feed audio samples (waveform) or FFT magnitudes (spectral/particles)
+    func updateAudioData(_ data: [Float]) {
+        let count = Swift.min(data.count, 4096)
+        audioData.replaceSubrange(0..<count, with: data[0..<count])
+        audioBuffer?.contents().copyMemory(from: &audioData, byteCount: 4096 * MemoryLayout<Float>.stride)
     }
 
     var parameters: [String: Any] = [:]
@@ -976,77 +999,124 @@ class EchoelmusicVisualRenderer {
     }
 
     func start() async {
-        // Initialize renderer resources based on type
-        log.video("🎨 EchoelmusicVisualRenderer: Started \(type.rawValue)")
+        startTime = CFAbsoluteTimeGetCurrent()
+
+        // Load compute kernel from default Metal library
+        guard let library = device.makeDefaultLibrary() else {
+            log.video("EchoelmusicVisualRenderer: No Metal library", level: .error)
+            return
+        }
+
+        let kernelName: String
+        switch type {
+        case .cymatics:  kernelName = "cymaticsKernel"
+        case .mandala:   kernelName = "mandalaKernel"
+        case .particles: kernelName = "particlesKernel"
+        case .waveform:  kernelName = "waveformKernel"
+        case .spectral:  kernelName = "spectralKernel"
+        }
+
+        guard let function = library.makeFunction(name: kernelName) else {
+            log.video("EchoelmusicVisualRenderer: Kernel '\(kernelName)' not found", level: .error)
+            return
+        }
+
+        do {
+            computePipeline = try device.makeComputePipelineState(function: function)
+        } catch {
+            log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
+            return
+        }
+
+        // Allocate param and audio buffers
+        paramsBuffer = device.makeBuffer(length: MemoryLayout<VisualParamsCPU>.stride, options: .storageModeShared)
+        audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
+
+        log.video("EchoelmusicVisualRenderer: Started \(type.rawValue) [\(kernelName)]")
     }
 
     func render(size: CGSize) async throws -> MTLTexture {
-        // Render visual frame based on type
+        guard let pipeline = computePipeline,
+              let paramsBuf = paramsBuffer else {
+            throw BackgroundError.echoelmusicVisualNotActive
+        }
+
+        // Create output texture
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = .rgba16Float
         descriptor.width = Int(size.width)
         descriptor.height = Int(size.height)
-        descriptor.usage = [.shaderRead, .renderTarget]
+        descriptor.usage = [.shaderRead, .shaderWrite, .renderTarget]
         descriptor.storageMode = .private
 
         guard let texture = device.makeTexture(descriptor: descriptor) else {
             throw BackgroundError.textureCreationFailed
         }
 
-        // Render based on visual type (dispatch to appropriate renderer)
-        switch type {
-        case .cymatics:
-            // Render cymatics water patterns based on frequency and coherence
-            renderCymaticsToTexture(texture)
-        case .mandala:
-            // Render sacred geometry mandala with rotation
-            renderMandalaToTexture(texture)
-        case .particles:
-            // Render bio-reactive particle system
-            renderParticlesToTexture(texture)
-        case .waveform:
-            // Render audio waveform visualization
-            renderWaveformToTexture(texture)
-        case .spectral:
-            // Render FFT spectral analysis
-            renderSpectralToTexture(texture)
+        // Update params
+        let elapsed = Float(CFAbsoluteTimeGetCurrent() - startTime)
+        let frequency = parameters["frequency"] as? Float ?? 432.0
+        let amplitude = parameters["amplitude"] as? Float ?? hrvCoherence
+        let rotation = elapsed * (parameters["rotationSpeed"] as? Float ?? 0.5)
+        let symmetry = Int32(parameters["symmetry"] as? Int ?? 8)
+        let bands = Int32(parameters["bands"] as? Int ?? 64)
+
+        var params = VisualParamsCPU(
+            time: elapsed,
+            coherence: hrvCoherence,
+            heartRate: heartRate,
+            frequency: frequency,
+            amplitude: amplitude,
+            rotation: rotation,
+            symmetry: symmetry,
+            bands: bands,
+            resolutionX: Float(size.width),
+            resolutionY: Float(size.height)
+        )
+        memcpy(paramsBuf.contents(), &params, MemoryLayout<VisualParamsCPU>.stride)
+
+        // Encode compute
+        guard let cmdBuffer = commandQueue.makeCommandBuffer(),
+              let encoder = cmdBuffer.makeComputeCommandEncoder() else {
+            throw BackgroundError.textureCreationFailed
         }
+
+        encoder.setComputePipelineState(pipeline)
+        encoder.setTexture(texture, index: 0)
+        encoder.setBuffer(paramsBuf, offset: 0, index: 0)
+        if let audioBuf = audioBuffer {
+            encoder.setBuffer(audioBuf, offset: 0, index: 1)
+        }
+
+        // Threadgroup sizing
+        let w = pipeline.threadExecutionWidth
+        let h = pipeline.maxTotalThreadsPerThreadgroup / w
+        let threadsPerGroup = MTLSize(width: w, height: h, depth: 1)
+        let gridSize = MTLSize(width: Int(size.width), height: Int(size.height), depth: 1)
+        encoder.dispatchThreads(gridSize, threadsPerThreadgroup: threadsPerGroup)
+
+        encoder.endEncoding()
+        cmdBuffer.commit()
+        cmdBuffer.waitUntilCompleted()
 
         return texture
     }
+}
 
-    private func renderCymaticsToTexture(_ texture: MTLTexture) {
-        // Cymatics rendering - water ripple patterns based on coherence
-        let frequency = parameters["frequency"] as? Float ?? 432.0
-        let amplitude = parameters["amplitude"] as? Float ?? hrvCoherence
-        log.video("🎨 Cymatics: freq=\(frequency)Hz, amp=\(amplitude), coherence=\(hrvCoherence)")
-    }
-
-    private func renderMandalaToTexture(_ texture: MTLTexture) {
-        // Mandala rendering - sacred geometry with symmetry
-        let symmetry = parameters["symmetry"] as? Int ?? 8
-        let rotationSpeed = parameters["rotationSpeed"] as? Float ?? 0.5
-        log.video("🎨 Mandala: symmetry=\(symmetry), rotation=\(rotationSpeed), coherence=\(hrvCoherence)")
-    }
-
-    private func renderParticlesToTexture(_ texture: MTLTexture) {
-        // Particle system rendering - bio-reactive particles
-        let particleCount = parameters["particleCount"] as? Int ?? 10000
-        log.video("🎨 Particles: count=\(particleCount), heartRate=\(heartRate), coherence=\(hrvCoherence)")
-    }
-
-    private func renderWaveformToTexture(_ texture: MTLTexture) {
-        // Waveform rendering - audio visualization
-        let fftSize = parameters["fftSize"] as? Int ?? 2048
-        log.video("🎨 Waveform: fftSize=\(fftSize), coherence=\(hrvCoherence)")
-    }
-
-    private func renderSpectralToTexture(_ texture: MTLTexture) {
-        // Spectral analysis rendering - FFT bars
-        let bands = parameters["bands"] as? Int ?? 64
-        log.video("🎨 Spectral: bands=\(bands), coherence=\(hrvCoherence)")
-    }
+/// CPU-side mirror of Metal VisualParams struct (must match layout exactly)
+struct VisualParamsCPU {
+    var time: Float
+    var coherence: Float
+    var heartRate: Float
+    var frequency: Float
+    var amplitude: Float
+    var rotation: Float
+    var symmetry: Int32
+    var bands: Int32
+    var resolutionX: Float
+    var resolutionY: Float
+}
 }
 
 // MARK: - Errors

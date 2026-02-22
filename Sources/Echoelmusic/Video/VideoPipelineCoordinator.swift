@@ -99,7 +99,11 @@ public final class VideoPipelineCoordinator: ObservableObject {
         }
 
         self.cameraManager = camera
-        log.video("VideoPipelineCoordinator: Camera manager set up")
+
+        // Wire camera to EchoelMind assistant
+        EchoelMindCameraAssistant.shared.connect(camera: camera)
+
+        log.video("VideoPipelineCoordinator: Camera manager set up + EchoelMind connected")
     }
 
     /// Set up the video processing engine
