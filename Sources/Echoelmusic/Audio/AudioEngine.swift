@@ -85,6 +85,7 @@ public class AudioEngine: ObservableObject {
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
+            AudioConfiguration.registerInterruptionHandlers()
             log.audio(AudioConfiguration.latencyStats())
         } catch {
             log.audio("⚠️  Failed to configure audio session: \(error)", level: .warning)
@@ -122,9 +123,19 @@ public class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
-        log.audio("🎵 AudioEngine initialized")
-        log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
-        log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
+        // Wire audio interruption callbacks so engine resumes automatically
+        AudioConfiguration.onInterruptionBegan = { [weak self] in
+            self?.isPlaying = false
+            log.audio("Audio interrupted — pausing engine")
+        }
+        AudioConfiguration.onInterruptionResume = { [weak self] in
+            log.audio("Audio interruption ended — resuming engine")
+            self?.isPlaying = true
+        }
+
+        log.audio("AudioEngine initialized")
+        log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "Yes" : "No")")
+        log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "Yes" : "No")")
         log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
     }
 

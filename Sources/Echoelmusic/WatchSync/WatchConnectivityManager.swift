@@ -214,12 +214,14 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             MessageKey.timestamp: Date().timeIntervalSince1970
         ]
 
-        session.sendMessage(message, replyHandler: nil, errorHandler: nil)
+        session.sendMessage(message, replyHandler: nil) { error in
+            watchLog.error("Failed to send haptic: \(error.localizedDescription)", category: .system)
+        }
     }
 
     /// Send settings update to Watch
     func updateWatchSettings(_ settings: [String: Any]) {
-        guard let session = session else { return }
+        guard let session = session, session.activationState == .activated else { return }
 
         do {
             try session.updateApplicationContext(settings)

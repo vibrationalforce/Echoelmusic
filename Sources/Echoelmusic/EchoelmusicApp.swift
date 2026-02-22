@@ -122,6 +122,9 @@ struct EchoelmusicApp: App {
             // Phase 0: Detect hardware + permissions (all other systems query this)
             await MainActor.run { _ = AdaptiveCapabilityManager.shared }
 
+            // Phase 0.5: Memory pressure monitoring (prevents OOM crashes)
+            await MainActor.run { _ = MemoryPressureHandler.shared }
+
             // Phase 1: Foundation singletons (no cross-references)
             await MainActor.run { _ = UnifiedHealthKitEngine.shared }
             await MainActor.run { _ = PushNotificationManager.shared }
