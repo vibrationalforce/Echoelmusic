@@ -61,8 +61,8 @@ struct VaporwaveColors {
     /// Secondary text - soft white (rgba 255,255,255,0.85)
     static let textSecondary = Color.white.opacity(0.85)
 
-    /// Tertiary/muted text (rgba 255,255,255,0.5)
-    static let textTertiary = Color.white.opacity(0.5)
+    /// Tertiary/muted text — WCAG AA compliant (4.5:1 on dark bg)
+    static let textTertiary = Color.white.opacity(0.65)
 
     // MARK: - Glass Effect Colors (website CSS)
 

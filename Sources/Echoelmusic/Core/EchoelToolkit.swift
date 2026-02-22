@@ -2386,7 +2386,16 @@ public final class EchoelToolkit: ObservableObject {
         state.isStreaming = field.isStreaming
         state.visualIntensity = field.intensity
         state.participantCount = net.collaborators.count
-        state.groupCoherence = bio.coherence // TODO: aggregate from peers
+        // Group coherence: self coherence weighted by participant count
+        // When collaborators are present, moderate toward neutral (0.5) to
+        // represent unknown peer states until real-time sync provides data
+        if net.collaborators.isEmpty {
+            state.groupCoherence = bio.coherence
+        } else {
+            let peerWeight = Float(net.collaborators.count)
+            let selfWeight: Float = 2.0  // Weight own data higher
+            state.groupCoherence = (bio.coherence * selfWeight + 0.5 * peerWeight) / (selfWeight + peerWeight)
+        }
         state.quantumCoherence = Float(lambda.lambdaScore)
         state.circadianPhase = CircadianRhythmEngine.shared.currentPhase.rawValue
     }

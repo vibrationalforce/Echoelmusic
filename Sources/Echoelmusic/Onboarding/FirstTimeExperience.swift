@@ -345,6 +345,7 @@ struct WelcomeStepView: View {
 
 struct InstantDemoStepView: View {
     @ObservedObject var experience: FirstTimeExperience
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 30) {
@@ -370,7 +371,9 @@ struct InstantDemoStepView: View {
                         .font(.headline)
                 )
                 .scaleEffect(1.0)
-                .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: UUID())
+                .animation(reduceMotion ? nil : .easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: UUID())
+                .accessibilityLabel("Interactive demo circle")
+                .accessibilityHint("Touch and hold to experience bio-reactive sound")
 
             Text("Notice how the sound reacts to your touch.\nThis is your first bio-reactive experience.")
                 .font(.body)

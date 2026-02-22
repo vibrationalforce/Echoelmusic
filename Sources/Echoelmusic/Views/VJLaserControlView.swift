@@ -119,6 +119,8 @@ struct VJLaserControlView: View {
                 Image(systemName: "rectangle.on.rectangle")
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
+            .accessibilityLabel("Toggle fullscreen output")
+            .accessibilityHint("Sends visuals to external display")
         }
         .padding(VaporwaveSpacing.md)
     }
@@ -887,6 +889,7 @@ struct LayerPreviewView: View {
 
 struct MandalaPreview: View {
     @State private var rotation: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geo in
@@ -912,10 +915,12 @@ struct MandalaPreview: View {
         }
         .rotationEffect(.degrees(rotation))
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
                 rotation = 360
             }
         }
+        .accessibilityHidden(true)
     }
 }
 

@@ -59,7 +59,7 @@ struct MixerChannelStrip: View {
             VStack(spacing: VaporwaveSpacing.xs) {
                 Text("PAN")
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(VaporwaveColors.textSecondary)
 
                 panKnobView
                     .frame(width: 50, height: 50)
@@ -68,21 +68,48 @@ struct MixerChannelStrip: View {
                     .font(.system(size: 9, design: .monospaced))
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Pan position: \(panString(track.pan))")
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Pan: \(panString(track.pan))")
+            .accessibilityValue(panString(track.pan))
+            .accessibilityAdjustableAction { direction in
+                let step: Float = 0.1
+                switch direction {
+                case .increment:
+                    recordingEngine.setTrackPan(track.id, pan: min(1.0, track.pan + step))
+                case .decrement:
+                    recordingEngine.setTrackPan(track.id, pan: max(-1.0, track.pan - step))
+                @unknown default: break
+                }
+            }
+            .accessibilityHint("Swipe up or down to adjust pan position")
 
             Spacer()
 
             // Volume fader
-            volumeFaderView
-                .frame(height: 150)
+            VStack(spacing: 0) {
+                volumeFaderView
+                    .frame(height: 150)
 
-            // Volume readout
-            Text("\(Int(track.volume * 100))")
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .foregroundColor(VaporwaveColors.textPrimary)
-                .frame(height: 20)
-                .accessibilityLabel("Volume: \(Int(track.volume * 100)) percent")
+                // Volume readout
+                Text("\(Int(track.volume * 100))")
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .frame(height: 20)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Volume: \(Int(track.volume * 100)) percent")
+            .accessibilityValue("\(Int(track.volume * 100))")
+            .accessibilityAdjustableAction { direction in
+                let step: Float = 0.05
+                switch direction {
+                case .increment:
+                    recordingEngine.setTrackVolume(track.id, volume: min(1.0, track.volume + step))
+                case .decrement:
+                    recordingEngine.setTrackVolume(track.id, volume: max(0.0, track.volume - step))
+                @unknown default: break
+                }
+            }
+            .accessibilityHint("Swipe up or down to adjust volume")
 
             // Control buttons
             HStack(spacing: VaporwaveSpacing.sm) {

@@ -50,8 +50,9 @@ struct ContentView: View {
 
                 Text("breath → sound")
                     .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(VaporwaveColors.textSecondary)
                     .tracking(4)
+                    .accessibilityLabel("breath to sound")
 
                 Spacer()
 
