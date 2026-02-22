@@ -149,6 +149,12 @@ jobs:
           set -eo pipefail
           if [ $RESULT -ne 0 ]; then
             echo "=== COMPILE FAILED (exit $RESULT) ==="
+            # Write errors as GitHub annotations (visible via check-runs API)
+            SWIFT_ERRORS=$(grep -E ': error: ' /tmp/compile.log | head -20 | tr '\n' ' ||| ' || true)
+            echo "::error title=Swift Compile Errors::${SWIFT_ERRORS:-NO_SWIFT_ERRORS_FOUND}"
+            LAST_LINES=$(tail -30 /tmp/compile.log | tr '\n' ' ||| ' || true)
+            echo "::error title=Compile Tail::${LAST_LINES}"
+            # Also write to step summary
             echo "## Compile Failed (exit $RESULT)" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             grep -E "error:" /tmp/compile.log | head -40 >> $GITHUB_STEP_SUMMARY
