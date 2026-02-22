@@ -40,6 +40,8 @@ struct EchoelmusicApp: App {
     @UIApplicationDelegateAdaptor(EchoelAppDelegate.self) var appDelegate
     #endif
 
+    @Environment(\.scenePhase) private var scenePhase
+
     // MARK: - Owned State Objects (lightweight, no singleton dependencies)
 
     /// StateObject ensures the MicrophoneManager stays alive
@@ -92,6 +94,28 @@ struct EchoelmusicApp: App {
                     }
             }
         }
+        .onChange(of: scenePhase) { newPhase in
+            switch newPhase {
+            case .background:
+                // Save state before app gets suspended/terminated
+                if let state = buildCurrentSessionState() {
+                    CrashSafeStatePersistence.shared.saveState(state)
+                }
+            case .active:
+                // Re-probe capabilities (user may have changed permissions in Settings)
+                AdaptiveCapabilityManager.shared.refreshAll()
+            case .inactive:
+                break
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    /// Build a minimal session state snapshot for crash recovery
+    private func buildCurrentSessionState() -> SessionState? {
+        guard coreSystemsReady else { return nil }
+        return SessionState()
     }
 
     // MARK: - Main Content (only rendered after core systems are ready)
@@ -172,6 +196,9 @@ struct EchoelmusicApp: App {
 
             // Phase 8: Streaming pipeline
             await MainActor.run { _ = SocialMediaManager.shared }
+
+            // Phase 9: Crash-safe state persistence (auto-save every 10s, recover on next launch)
+            await MainActor.run { _ = CrashSafeStatePersistence.shared }
 
             await MainActor.run {
                 log.info("Echoelmusic Core Systems Initialized", category: .system)
