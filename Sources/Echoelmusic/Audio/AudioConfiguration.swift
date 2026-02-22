@@ -63,16 +63,32 @@ enum AudioConfiguration {
 
     // MARK: - Audio Session Configuration
 
-    /// Configure audio session for real-time performance
+    /// Whether the audio session has been successfully configured at least once.
+    private(set) static var isSessionConfigured = false
+
+    /// Configure audio session for real-time performance.
+    /// Falls back to playback-only if `.playAndRecord` fails (e.g. microphone
+    /// permission not yet granted on first launch).
     static func configureAudioSession() throws {
         let audioSession = AVAudioSession.sharedInstance()
 
-        // Set category for playback and recording
-        try audioSession.setCategory(
-            .playAndRecord,
-            mode: .measurement,  // Low-latency mode
-            options: [.allowBluetooth, .defaultToSpeaker, .mixWithOthers]
-        )
+        // Try playAndRecord first (needs microphone permission).
+        // If that fails (first launch, permission denied), fall back to playback-only
+        // so the app can at least start without crashing.
+        do {
+            try audioSession.setCategory(
+                .playAndRecord,
+                mode: .measurement,
+                options: [.allowBluetooth, .defaultToSpeaker, .mixWithOthers]
+            )
+        } catch {
+            log.audio("⚠️ playAndRecord unavailable (mic permission?), falling back to .playback: \(error)", level: .warning)
+            try audioSession.setCategory(
+                .playback,
+                mode: .default,
+                options: [.allowBluetooth, .mixWithOthers]
+            )
+        }
 
         // Set preferred sample rate
         try audioSession.setPreferredSampleRate(preferredSampleRate)
@@ -84,7 +100,10 @@ enum AudioConfiguration {
         // Activate session
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
 
+        isSessionConfigured = true
+
         log.audio("🎵 Audio Session Configured:")
+        log.audio("   Category: \(audioSession.category.rawValue)")
         log.audio("   Sample Rate: \(audioSession.sampleRate) Hz")
         log.audio("   IO Buffer Duration: \(audioSession.ioBufferDuration * 1000) ms")
         log.audio("   Input Latency: \(audioSession.inputLatency * 1000) ms")
@@ -92,6 +111,21 @@ enum AudioConfiguration {
         log.audio("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
     }
 
+
+    /// Upgrade audio session from .playback to .playAndRecord after mic permission is granted.
+    /// No-op if already using .playAndRecord.
+    static func upgradeToPlayAndRecord() throws {
+        let audioSession = AVAudioSession.sharedInstance()
+        guard audioSession.category != .playAndRecord else { return }
+
+        try audioSession.setCategory(
+            .playAndRecord,
+            mode: .measurement,
+            options: [.allowBluetooth, .defaultToSpeaker, .mixWithOthers]
+        )
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        log.audio("Audio session upgraded to .playAndRecord")
+    }
 
     // MARK: - Latency Modes
 

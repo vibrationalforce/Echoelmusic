@@ -396,7 +396,9 @@ public actor CircuitBreaker {
                 throw CircuitBreakerError.timeout
             }
 
-            let result = try await group.next()!
+            guard let result = try await group.next() else {
+                throw CircuitBreakerError.timeout
+            }
             group.cancelAll()
             return result
         }

@@ -179,43 +179,112 @@ class EvidenceBasedHRVTraining: ObservableObject {
     // MARK: - Measure Baseline HRV
 
     private func measureBaselineHRV() async throws -> Float {
-        // Request HRV from HealthKit (last 5 minutes average)
-        // This is a placeholder - real implementation would query HealthKit
+        #if canImport(HealthKit)
+        guard HKHealthStore.isHealthDataAvailable() else {
+            log.science("⚠️ HealthKit not available — using simulation baseline")
+            return await simulateBaselineHRV()
+        }
 
-        // Simulate baseline measurement
-        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        // Query the last 5 minutes of HRV samples (RMSSD/SDNN)
+        let fiveMinutesAgo = Date().addingTimeInterval(-300)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: fiveMinutesAgo,
+            end: Date(),
+            options: .strictEndDate
+        )
 
-        // Typical resting HRV: 20-100 ms (age-dependent)
+        guard let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            log.science("⚠️ HRV type not available — using simulation baseline")
+            return await simulateBaselineHRV()
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: hrvType,
+                quantitySamplePredicate: predicate,
+                options: .discreteAverage
+            ) { _, statistics, error in
+                if let error = error {
+                    log.science("⚠️ HRV query error: \(error.localizedDescription) — using simulation")
+                    continuation.resume(returning: 50.0)
+                    return
+                }
+
+                if let avg = statistics?.averageQuantity() {
+                    let sdnn = Float(avg.doubleValue(for: HKUnit.secondUnit(with: .milli)))
+                    log.science("📊 Baseline HRV from HealthKit: \(String(format: "%.1f", sdnn)) ms (SDNN)")
+                    continuation.resume(returning: sdnn)
+                } else {
+                    log.science("⚠️ No recent HRV data — using simulation baseline")
+                    continuation.resume(returning: 50.0)
+                }
+            }
+            healthStore.execute(query)
+        }
+        #else
+        return await simulateBaselineHRV()
+        #endif
+    }
+
+    private func simulateBaselineHRV() async -> Float {
+        // Fallback for simulator/platforms without HealthKit
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        // Typical resting HRV: 20-100 ms (age-dependent), use moderate default
         return 50.0
     }
 
     // MARK: - Start Monitoring
 
     private func startMonitoring() {
-        // Monitor HRV, Heart Rate, Breathing Rate continuously
-        // This would integrate with HealthKitManager for real data
-
         // Invalidate any existing timer before creating a new one
         monitoringTimer?.invalidate()
 
-        // For now, simulate monitoring
+        // Subscribe to real-time HealthKit updates from UnifiedHealthKitEngine
+        let healthEngine = UnifiedHealthKitEngine.shared
+
+        // Start streaming if not already
+        if !healthEngine.isStreaming {
+            healthEngine.startStreaming()
+        }
+
+        // Monitor at 1 Hz, pulling live data from UnifiedHealthKitEngine
         monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
             guard let self = self, self.isTraining else {
                 timer.invalidate()
                 return
             }
 
-            // Simulate data point
-            let dataPoint = SessionDataPoint(
-                timestamp: Date(),
-                hrv: self.currentHRV,
-                heartRate: 70.0,
-                coherence: self.coherenceScore,
-                breathingRate: self.currentProtocol?.targetBreathingRate ?? 6.0,
-                lfHfRatio: 1.5
-            )
-
             Task { @MainActor in
+                let engine = UnifiedHealthKitEngine.shared
+
+                // Pull real-time values from the unified HealthKit engine
+                let liveHRV = Float(engine.hrvSDNN)
+                let liveHR = Float(engine.heartRate)
+                let liveCoherence = Float(engine.coherence) * 100.0 // Scale 0-1 → 0-100
+                let liveBreathRate = Float(engine.breathingRate)
+
+                // Update current metrics
+                self.currentHRV = liveHRV > 0 ? liveHRV : self.currentHRV
+                self.coherenceScore = liveCoherence
+                self.respiratoryRate = liveBreathRate
+
+                // Calculate LF/HF ratio from engine data
+                let lfHf: Float
+                if engine.heartData.hfPower > 0 {
+                    lfHf = Float(engine.heartData.lfPower / engine.heartData.hfPower)
+                } else {
+                    lfHf = Float(engine.heartData.lfHfRatio)
+                }
+
+                let dataPoint = SessionDataPoint(
+                    timestamp: Date(),
+                    hrv: self.currentHRV,
+                    heartRate: liveHR,
+                    coherence: self.coherenceScore,
+                    breathingRate: liveBreathRate,
+                    lfHfRatio: lfHf
+                )
+
                 self.sessionData.append(dataPoint)
                 self.updateProgress()
             }

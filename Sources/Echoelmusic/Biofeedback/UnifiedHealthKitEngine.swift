@@ -382,6 +382,10 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         if let setup = cachedFFTSetup {
             vDSP_DFT_DestroySetup(setup)
         }
+        replayTimer?.invalidate()
+        replayTimer = nil
+        updateTimer?.cancel()
+        updateTimer = nil
     }
 
     // MARK: - Availability Check
@@ -648,11 +652,14 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         guard let store = healthStore,
               let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else { return }
 
-        store.enableBackgroundDelivery(for: heartRateType, frequency: .immediate) { success, error in
+        // Use .hourly instead of .immediate to reduce battery drain from
+        // continuous HealthKit wakeups. Foreground streaming uses anchored queries
+        // which already deliver data in real-time when the app is active.
+        store.enableBackgroundDelivery(for: heartRateType, frequency: .hourly) { success, error in
             if let error = error {
                 log.biofeedback("Background delivery error: \(error.localizedDescription)", level: .warning)
             } else if success {
-                log.biofeedback("Background delivery enabled")
+                log.biofeedback("Background delivery enabled (hourly)")
             }
         }
     }
@@ -664,7 +671,8 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         updateTimer?.cancel()
 
         let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
-        timer.schedule(deadline: .now(), repeating: .seconds(1), leeway: .milliseconds(10))
+        // 100ms leeway allows the OS to coalesce timer wakeups for battery savings
+        timer.schedule(deadline: .now(), repeating: .seconds(1), leeway: .milliseconds(100))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
                 self?.simulateHealthUpdate()
@@ -864,8 +872,9 @@ public final class UnifiedHealthKitEngine: ObservableObject {
 
         guard let fftSetup = cachedFFTSetup else { return [] }
 
-        var realIn = realParts
-        var imagIn = imagParts
+        // Copy inputs to separate buffers to avoid overlapping access with outputs
+        var realIn = [Float](realParts)
+        var imagIn = [Float](imagParts)
         vDSP_DFT_Execute(fftSetup, &realIn, &imagIn, &realParts, &imagParts)
 
         var powerSpectrum = [Float](repeating: 0, count: fftSize / 2)

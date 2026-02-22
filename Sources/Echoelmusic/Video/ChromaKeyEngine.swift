@@ -257,37 +257,124 @@ class ChromaKeyEngine: ObservableObject {
     // MARK: - Color Sampling
 
     private func sampleColor(from texture: MTLTexture, at normalizedPosition: SIMD2<Float>) throws -> SIMD3<Float> {
-        let x = Int(normalizedPosition.x * Float(texture.width))
-        let y = Int(normalizedPosition.y * Float(texture.height))
+        let centerX = Int(normalizedPosition.x * Float(texture.width))
+        let centerY = Int(normalizedPosition.y * Float(texture.height))
 
-        // Sample a 5x5 region and average
+        // Sample a 5x5 region and average for robustness
+        let regionSize = 5
+        let halfRegion = regionSize / 2
+
+        // Clamp region bounds
+        let startX = max(centerX - halfRegion, 0)
+        let startY = max(centerY - halfRegion, 0)
+        let endX = min(centerX + halfRegion, texture.width - 1)
+        let endY = min(centerY + halfRegion, texture.height - 1)
+        let width = endX - startX + 1
+        let height = endY - startY + 1
+
+        // Read pixels from texture into CPU-accessible buffer
+        // Use RGBA float16 format matching our intermediate texture format
+        let bytesPerPixel = 8 // rgba16Float = 4 channels * 2 bytes
+        let bytesPerRow = texture.width * bytesPerPixel
+
+        // Allocate buffer for the sampled region
+        let regionBytesPerRow = width * bytesPerPixel
+        var pixelData = [UInt8](repeating: 0, count: regionBytesPerRow * height)
+
+        texture.getBytes(
+            &pixelData,
+            bytesPerRow: regionBytesPerRow,
+            from: MTLRegion(
+                origin: MTLOrigin(x: startX, y: startY, z: 0),
+                size: MTLSize(width: width, height: height, depth: 1)
+            ),
+            mipmapLevel: 0
+        )
+
+        // Average the sampled colors (interpret as float16 RGBA)
         var totalColor = SIMD3<Float>.zero
         var sampleCount: Float = 0.0
 
-        for dy in -2...2 {
-            for dx in -2...2 {
-                let sampleX = min(max(x + dx, 0), texture.width - 1)
-                let sampleY = min(max(y + dy, 0), texture.height - 1)
+        for row in 0..<height {
+            for col in 0..<width {
+                let offset = (row * width + col) * bytesPerPixel
 
-                // Read pixel (this is a simplified version - real implementation needs proper texture reading)
-                // In production, use MTLTexture.getBytes or render to CPU-accessible buffer
+                // Read float16 values (2 bytes each) and convert to float32
+                let r = float16ToFloat32(pixelData, at: offset)
+                let g = float16ToFloat32(pixelData, at: offset + 2)
+                let b = float16ToFloat32(pixelData, at: offset + 4)
 
+                totalColor += SIMD3<Float>(r, g, b)
                 sampleCount += 1.0
             }
         }
 
-        // For now, return the key color as placeholder
-        // Real implementation would read actual pixel data
-        return keyColor.rgbValue
+        guard sampleCount > 0 else { return keyColor.rgbValue }
+        return totalColor / sampleCount
+    }
+
+    /// Convert 2 bytes at the given offset from float16 to float32
+    private func float16ToFloat32(_ data: [UInt8], at offset: Int) -> Float {
+        guard offset + 1 < data.count else { return 0 }
+        let bits = UInt16(data[offset]) | (UInt16(data[offset + 1]) << 8)
+        #if swift(>=5.3)
+        return Float(Float16(bitPattern: bits))
+        #else
+        // Manual float16 decode fallback
+        let sign: UInt32 = UInt32(bits >> 15) << 31
+        let exponent = UInt32((bits >> 10) & 0x1F)
+        let mantissa = UInt32(bits & 0x3FF)
+        if exponent == 0 {
+            if mantissa == 0 { return Float(bitPattern: sign) }
+            // Subnormal
+            var m = mantissa
+            var e: UInt32 = 0
+            while (m & 0x400) == 0 { m <<= 1; e += 1 }
+            let f32Exp = (127 - 15 - e + 1) << 23
+            let f32Man = (m & 0x3FF) << 13
+            return Float(bitPattern: sign | UInt32(f32Exp) | UInt32(f32Man))
+        } else if exponent == 31 {
+            return Float(bitPattern: sign | 0x7F800000 | (mantissa << 13))
+        }
+        let f32Exp = (exponent + 127 - 15) << 23
+        let f32Man = mantissa << 13
+        return Float(bitPattern: sign | f32Exp | f32Man)
+        #endif
     }
 
     private func calculateColorVariance(around position: SIMD2<Float>, in texture: MTLTexture) -> SIMD3<Float> {
-        // Calculate color variance in a region around the point
-        // Higher variance = uneven lighting
-        // Returns variance in RGB space
+        // Sample colors at multiple offsets around the position to measure variance
+        let offsets: [SIMD2<Float>] = [
+            SIMD2<Float>(-0.02, -0.02), SIMD2<Float>(0.0, -0.02), SIMD2<Float>(0.02, -0.02),
+            SIMD2<Float>(-0.02,  0.0),  SIMD2<Float>(0.02,  0.0),
+            SIMD2<Float>(-0.02,  0.02), SIMD2<Float>(0.0,  0.02), SIMD2<Float>(0.02,  0.02)
+        ]
 
-        // Placeholder implementation
-        return SIMD3<Float>(0.05, 0.05, 0.05)
+        var colors: [SIMD3<Float>] = []
+        for offset in offsets {
+            let samplePos = SIMD2<Float>(
+                min(max(position.x + offset.x, 0.01), 0.99),
+                min(max(position.y + offset.y, 0.01), 0.99)
+            )
+            if let color = try? sampleColor(from: texture, at: samplePos) {
+                colors.append(color)
+            }
+        }
+
+        guard colors.count >= 2 else { return SIMD3<Float>(0.05, 0.05, 0.05) }
+
+        // Calculate mean
+        let mean = colors.reduce(SIMD3<Float>.zero, +) / Float(colors.count)
+
+        // Calculate variance
+        var variance = SIMD3<Float>.zero
+        for color in colors {
+            let diff = color - mean
+            variance += diff * diff
+        }
+        variance /= Float(colors.count)
+
+        return variance
     }
 
     // MARK: - Main Processing Pipeline (6 Passes)

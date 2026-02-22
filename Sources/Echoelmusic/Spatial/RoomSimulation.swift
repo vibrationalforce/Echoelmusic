@@ -247,11 +247,9 @@ class RoomSimulation {
         let count = input.count
         var output = [Float](repeating: 0, count: count)
 
-        // Add dry signal
+        // Add dry signal (copy input to output first to avoid overlapping vDSP access)
         var dryGain = configuration.dryGain
-        output.withUnsafeMutableBufferPointer { buf in
-            vDSP_vsma(input, 1, &dryGain, buf.baseAddress!, 1, buf.baseAddress!, 1, vDSP_Length(count))
-        }
+        vDSP_vsmul(input, 1, &dryGain, &output, 1, vDSP_Length(count))
 
         // Add each image source reflection
         for (index, source) in imageSources.enumerated() {
@@ -282,9 +280,7 @@ class RoomSimulation {
         var early = [Float](repeating: 0, count: count)
 
         var dryGainSep = configuration.dryGain
-        direct.withUnsafeMutableBufferPointer { buf in
-            vDSP_vsma(input, 1, &dryGainSep, buf.baseAddress!, 1, buf.baseAddress!, 1, vDSP_Length(count))
-        }
+        vDSP_vsmul(input, 1, &dryGainSep, &direct, 1, vDSP_Length(count))
 
         for (index, source) in imageSources.enumerated() {
             guard index < delayBuffers.count else { break }

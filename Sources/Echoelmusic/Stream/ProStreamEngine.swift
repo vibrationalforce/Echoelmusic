@@ -54,6 +54,7 @@ public final class ProStreamEngine: ObservableObject {
 
     deinit {
         statsTimer?.invalidate()
+        statsTimer = nil
     }
 
     // MARK: - Scene Management
@@ -596,9 +597,11 @@ public final class ProStreamEngine: ObservableObject {
 
     /// Stop periodic stats collection
     private func stopStatsCollection() {
-        guard !isLive && !isRecording else { return }
+        // Always invalidate the timer, even if still live/recording.
+        // The guard only protects clearing startTime.
         statsTimer?.invalidate()
         statsTimer = nil
+        guard !isLive && !isRecording else { return }
         startTime = nil
     }
 

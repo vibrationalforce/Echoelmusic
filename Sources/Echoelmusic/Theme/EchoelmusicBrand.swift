@@ -106,8 +106,8 @@ public struct EchoelBrand {
     /// Secondary text - Medium emphasis (55% of primary)
     public static let textSecondary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
 
-    /// Tertiary text - Low emphasis
-    public static let textTertiary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.35)
+    /// Tertiary text - Low emphasis — WCAG AA compliant
+    public static let textTertiary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
 
     /// Disabled text
     public static let textDisabled = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.20)

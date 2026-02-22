@@ -7,6 +7,12 @@ import Combine
 @MainActor
 class ScriptEngine: ObservableObject {
 
+    // MARK: - Singleton
+
+    /// Retained reference to prevent immediate deallocation after initialization.
+    /// Set by `initializeCoreSystems()` in EchoelmusicApp.
+    static var shared: ScriptEngine?
+
     // MARK: - Published State
 
     @Published var loadedScripts: [EchoelScript] = []
@@ -326,16 +332,39 @@ struct CompilationError {
 // MARK: - Script APIs
 
 class AudioScriptAPI {
+    weak var audioEngine: AudioEngine?
+
+    init(audioEngine: AudioEngine? = nil) {
+        self.audioEngine = audioEngine
+    }
+
     func processBuffer(_ buffer: [Float]) -> [Float] {
         return buffer
     }
 
     func setParameter(_ name: String, value: Float) {
+        // Route parameter changes to the audio engine
+        if let engine = audioEngine {
+            switch name {
+            case "binauralAmplitude":
+                engine.binauralAmplitude = value
+            case "spatialEnabled":
+                engine.spatialAudioEnabled = value > 0.5
+            case "reverb":
+                engine.spatialAudioEngine?.setReverbBlend(value)
+            default:
+                break
+            }
+        }
         log.info("🎵 AudioAPI: Set \(name) = \(value)", category: .plugin)
     }
 
     func getFFT() -> [Float] {
-        return Array(repeating: 0.0, count: 1024)
+        // Pull real FFT data from the microphone manager
+        if let fft = audioEngine?.microphoneManager.fftMagnitudes {
+            return fft
+        }
+        return Array(repeating: 0.0, count: 256)
     }
 
     func applyEffect(_ effect: String) {
@@ -362,26 +391,33 @@ class VisualScriptAPI {
 }
 
 class BioScriptAPI {
+    /// Pull live biometric data from the shared UnifiedHealthKitEngine
     func getHRV() -> Float {
-        return 50.0
+        return Float(UnifiedHealthKitEngine.shared.hrvSDNN)
     }
 
     func getHeartRate() -> Float {
-        return 70.0
+        return Float(UnifiedHealthKitEngine.shared.heartRate)
     }
 
     func getCoherence() -> Float {
-        return 0.5
+        return Float(UnifiedHealthKitEngine.shared.coherence)
     }
 
     func getBreathRate() -> Float {
-        return 6.0
+        return Float(UnifiedHealthKitEngine.shared.breathingRate)
     }
 }
 
 class StreamScriptAPI {
+    weak var streamAnalytics: StreamAnalytics?
+
+    init(streamAnalytics: StreamAnalytics? = nil) {
+        self.streamAnalytics = streamAnalytics
+    }
+
     func getViewerCount() -> Int {
-        return 0
+        return streamAnalytics?.currentViewers ?? 0
     }
 
     func getChatMessages() -> [String] {
@@ -416,15 +452,25 @@ class MIDIScriptAPI {
 }
 
 class SpatialScriptAPI {
+    weak var spatialEngine: SpatialAudioEngine?
+
+    init(spatialEngine: SpatialAudioEngine? = nil) {
+        self.spatialEngine = spatialEngine
+    }
+
     func setListenerPosition(x: Float, y: Float, z: Float) {
         log.info("🎧 SpatialAPI: Set listener position (\(x), \(y), \(z))", category: .plugin)
     }
 
     func setSourcePosition(id: UUID, x: Float, y: Float, z: Float) {
+        spatialEngine?.setPan(x)
         log.info("🎧 SpatialAPI: Set source position (\(x), \(y), \(z))", category: .plugin)
     }
 
     func setSpatialMode(_ mode: String) {
+        if let modeEnum = SpatialAudioEngine.SpatialMode(rawValue: mode) {
+            spatialEngine?.setMode(modeEnum)
+        }
         log.info("🎧 SpatialAPI: Set spatial mode '\(mode)'", category: .plugin)
     }
 

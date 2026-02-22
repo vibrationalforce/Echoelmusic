@@ -347,6 +347,10 @@ public final class ScientificVisualizationEngine: ObservableObject {
     private var simulationTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
+    deinit {
+        simulationTimer?.invalidate()
+    }
+
     // MARK: - Statistics
 
     public struct EngineStats: Sendable {

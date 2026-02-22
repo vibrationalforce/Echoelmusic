@@ -355,35 +355,81 @@ class ObjectBasedAudioRenderer {
 
     // MARK: - Rendering
 
+    /// Audio buffers supplied per-object for custom rendering path.
+    /// Call `setObjectBuffer(_:for:)` each frame before `renderToStereo`.
+    private var objectAudioBuffers: [UUID: [Float]] = [:]
+
+    /// Supply an audio buffer for an object (used in custom ambisonics/binaural path).
+    func setObjectBuffer(_ buffer: [Float], for objectID: UUID) {
+        objectAudioBuffers[objectID] = buffer
+    }
+
     /// Render all objects to a stereo buffer (custom processing path).
     func renderToStereo(bufferSize: Int) -> (left: [Float], right: [Float]) {
+        let emptyResult = ([Float](repeating: 0, count: bufferSize),
+                           [Float](repeating: 0, count: bufferSize))
+
         guard let ambiProcessor = ambisonicsProcessor else {
-            return ([Float](repeating: 0, count: bufferSize),
-                    [Float](repeating: 0, count: bufferSize))
+            return emptyResult
         }
 
         ambiProcessor.clearAccumulator()
 
-        // Encode each object into ambisonics
-        for obj in objects.values where obj.gain > 0.001 {
+        var hasAudio = false
+
+        // Encode each object into ambisonics using its supplied audio buffer
+        for (id, obj) in objects where obj.gain > 0.001 {
             let dist = simd_length(obj.position)
             guard dist > 0.001 else { continue }
 
             let azimuth = atan2(obj.position.y, obj.position.x) * 180.0 / .pi
             let elevation = asin(obj.position.z / dist) * 180.0 / .pi
 
-            // Generate silence placeholder (actual audio would come from player nodes)
-            let silence = [Float](repeating: 0, count: bufferSize)
+            // Use supplied audio buffer, or skip if no audio available
+            guard let audioBuffer = objectAudioBuffers[id], !audioBuffer.isEmpty else {
+                continue
+            }
+
+            // Apply distance attenuation and object gain
+            let attenuation = configuration.distanceAttenuationModel.attenuation(distance: dist)
+            let gainFactor = obj.gain * min(attenuation, 1.0)
+
+            // Apply gain to audio buffer
+            let gainedBuffer: [Float]
+            if abs(gainFactor - 1.0) > 0.001 {
+                gainedBuffer = audioBuffer.map { $0 * gainFactor }
+            } else {
+                gainedBuffer = audioBuffer
+            }
+
+            // Pad or truncate to match requested buffer size
+            let finalBuffer: [Float]
+            if gainedBuffer.count == bufferSize {
+                finalBuffer = gainedBuffer
+            } else if gainedBuffer.count > bufferSize {
+                finalBuffer = Array(gainedBuffer.prefix(bufferSize))
+            } else {
+                finalBuffer = gainedBuffer + [Float](repeating: 0, count: bufferSize - gainedBuffer.count)
+            }
 
             ambiProcessor.accumulateSource(
-                silence,
+                finalBuffer,
                 azimuth: azimuth,
                 elevation: elevation,
                 distance: dist
             )
+            hasAudio = true
         }
 
-        return ambiProcessor.decodeToStereo(ambiProcessor.decodeAccumulated().isEmpty ? [[]] : [])
+        // Clear per-frame buffers after rendering
+        objectAudioBuffers.removeAll(keepingCapacity: true)
+
+        guard hasAudio else { return emptyResult }
+
+        let decoded = ambiProcessor.decodeAccumulated()
+        guard !decoded.isEmpty else { return emptyResult }
+
+        return ambiProcessor.decodeToStereo(decoded)
     }
 
     // MARK: - Apple Audio Node Helpers

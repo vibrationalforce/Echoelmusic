@@ -381,12 +381,13 @@ class LoopEngine: ObservableObject {
 
     // MARK: - Private Helpers
 
-    /// Start position update timer
-    /// LAMBDA LOOP: High-precision DispatchSourceTimer for sample-accurate loop sync
+    /// Start position update timer for loop playback UI.
+    /// 30Hz (33ms) is sufficient for position display; actual audio
+    /// sync happens at buffer callback level, not via this timer.
     private func startTimer() {
         timer?.cancel()
-        let newTimer = DispatchSource.makeTimerSource(flags: .strict, queue: timerQueue)
-        newTimer.schedule(deadline: .now(), repeating: .milliseconds(16), leeway: .milliseconds(1))
+        let newTimer = DispatchSource.makeTimerSource(flags: [], queue: timerQueue)
+        newTimer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(4))
         newTimer.setEventHandler { [weak self] in
             DispatchQueue.main.async {
                 self?.updatePosition()

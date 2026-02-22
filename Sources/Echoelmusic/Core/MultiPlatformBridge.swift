@@ -51,27 +51,42 @@ final class MultiPlatformBridge: ObservableObject {
     @Published var linkPhase: Double = 0
     @Published var networkLatency: Double = 0
 
-    // MARK: - Protocol Handlers
+    // MARK: - Protocol Handlers (lazy to avoid network/port allocation at singleton init time)
 
-    private var oscHandler = OSCHandler()
-    private var midiHandler = MIDIHandler()
-    private var cvGateHandler = CVGateHandler()
-    private var dmxHandler = DMXHandler()
-    private var webHandler = WebSocketHandler()
+    private lazy var oscHandler: OSCHandler = {
+        let handler = OSCHandler()
+        handler.delegate = self
+        return handler
+    }()
+
+    private lazy var midiHandler: MIDIHandler = {
+        let handler = MIDIHandler()
+        handler.delegate = self
+        return handler
+    }()
+
+    private lazy var cvGateHandler: CVGateHandler = {
+        let handler = CVGateHandler()
+        handler.delegate = self
+        return handler
+    }()
+
+    private lazy var dmxHandler: DMXHandler = {
+        let handler = DMXHandler()
+        handler.delegate = self
+        return handler
+    }()
+
+    private lazy var webHandler: WebSocketHandler = {
+        let handler = WebSocketHandler()
+        handler.delegate = self
+        return handler
+    }()
 
     // MARK: - Initialization
 
     private init() {
-        setupHandlers()
-    }
-
-    private func setupHandlers() {
-        // Setup all protocol handlers
-        oscHandler.delegate = self
-        midiHandler.delegate = self
-        cvGateHandler.delegate = self
-        dmxHandler.delegate = self
-        webHandler.delegate = self
+        // Handlers are lazy — no network/port allocation until first use
     }
 
     // MARK: - Platform Connection

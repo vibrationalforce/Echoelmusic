@@ -117,6 +117,10 @@ public final class EchoelSyncProtocol: ObservableObject {
         subscribeToBus()
     }
 
+    deinit {
+        syncTimer?.invalidate()
+    }
+
     // MARK: - Host Session
 
     /// Start hosting an EchoelSync session

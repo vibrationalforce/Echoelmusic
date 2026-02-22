@@ -7,6 +7,7 @@ struct LaunchScreen: View {
     @State private var isAnimating = false
     @State private var pulseScale: CGFloat = 1.0
     @State private var glowOpacity: Double = 0.5
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -92,7 +93,7 @@ struct LaunchScreen: View {
                             .scaleEffect(isAnimating ? 1.0 : 0.5)
                             .opacity(isAnimating ? 1.0 : 0.3)
                             .animation(
-                                .easeInOut(duration: 0.6)
+                                reduceMotion ? nil : .easeInOut(duration: 0.6)
                                 .repeatForever()
                                 .delay(Double(index) * 0.2),
                                 value: isAnimating
@@ -109,10 +110,16 @@ struct LaunchScreen: View {
             }
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+            if reduceMotion {
                 isAnimating = true
-                pulseScale = 1.1
-                glowOpacity = 0.8
+                pulseScale = 1.0
+                glowOpacity = 0.6
+            } else {
+                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                    isAnimating = true
+                    pulseScale = 1.1
+                    glowOpacity = 0.8
+                }
             }
         }
     }

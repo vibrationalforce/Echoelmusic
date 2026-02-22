@@ -123,6 +123,13 @@ public class PhotonicsVisualizationEngine: ObservableObject {
         initializeParticleSystem()
     }
 
+    deinit {
+        displayLink?.invalidate()
+        displayLink = nil
+        renderTimer?.invalidate()
+        renderTimer = nil
+    }
+
     // MARK: - Public Methods
 
     /// Connect to quantum emulator

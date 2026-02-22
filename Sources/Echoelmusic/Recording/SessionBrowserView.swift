@@ -174,40 +174,58 @@ struct SessionBrowserView: View {
     // MARK: - Actions
 
     private func loadSessions() {
-        // In a real implementation, this would scan the sessions directory
-        // For now, create some mock data
-        sessions = [
-            SessionInfo(
-                id: UUID(),
-                name: "Morning Meditation",
-                duration: 1200,
-                trackCount: 3,
-                genre: "Meditation",
-                mood: "Calm",
-                createdAt: Date().addingTimeInterval(-86400 * 7),
-                modifiedAt: Date().addingTimeInterval(-86400 * 2)
-            ),
-            SessionInfo(
-                id: UUID(),
-                name: "Evening Flow",
-                duration: 900,
-                trackCount: 2,
-                genre: "Healing",
-                mood: "Peaceful",
-                createdAt: Date().addingTimeInterval(-86400 * 3),
-                modifiedAt: Date().addingTimeInterval(-86400)
-            ),
-            SessionInfo(
-                id: UUID(),
-                name: "Creative Jam",
-                duration: 1800,
-                trackCount: 5,
-                genre: "Experimental",
-                mood: "Inspired",
-                createdAt: Date().addingTimeInterval(-86400),
-                modifiedAt: Date()
+        // Scan the real sessions directory for saved session.json files
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let sessionsDir = documentsPath.appendingPathComponent("Sessions", isDirectory: true)
+
+        // Ensure directory exists
+        try? FileManager.default.createDirectory(at: sessionsDir, withIntermediateDirectories: true)
+
+        do {
+            let contents = try FileManager.default.contentsOfDirectory(
+                at: sessionsDir,
+                includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey],
+                options: [.skipsHiddenFiles]
             )
-        ]
+
+            var loadedSessions: [SessionInfo] = []
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+
+            for directory in contents {
+                var isDir: ObjCBool = false
+                guard FileManager.default.fileExists(atPath: directory.path, isDirectory: &isDir),
+                      isDir.boolValue else { continue }
+
+                let sessionFile = directory.appendingPathComponent("session.json")
+                guard FileManager.default.fileExists(atPath: sessionFile.path) else { continue }
+
+                do {
+                    let data = try Data(contentsOf: sessionFile)
+                    let session = try decoder.decode(Session.self, from: data)
+
+                    let info = SessionInfo(
+                        id: session.id,
+                        name: session.name,
+                        duration: session.duration,
+                        trackCount: session.tracks.count,
+                        genre: session.metadata.genre ?? "Unknown",
+                        mood: session.metadata.mood ?? "Unknown",
+                        createdAt: session.createdAt,
+                        modifiedAt: session.modifiedAt
+                    )
+                    loadedSessions.append(info)
+                } catch {
+                    log.log(.warning, category: .recording, "⚠️ Failed to load session at \(directory.lastPathComponent): \(error.localizedDescription)")
+                }
+            }
+
+            sessions = loadedSessions
+            log.log(.info, category: .recording, "📂 Loaded \(loadedSessions.count) session(s) from disk")
+        } catch {
+            log.log(.error, category: .recording, "❌ Failed to scan sessions directory: \(error.localizedDescription)")
+            sessions = []
+        }
     }
 
     private func loadSession(_ id: UUID) {
@@ -220,9 +238,21 @@ struct SessionBrowserView: View {
     }
 
     private func deleteSession(_ id: UUID) {
-        sessions.removeAll { $0.id == id }
-        // In real implementation, delete from disk
-        log.info("🗑️ Deleted session: \(id)", category: .recording)
+        // Delete session directory from disk
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let sessionDir = documentsPath
+            .appendingPathComponent("Sessions")
+            .appendingPathComponent(id.uuidString)
+
+        do {
+            if FileManager.default.fileExists(atPath: sessionDir.path) {
+                try FileManager.default.removeItem(at: sessionDir)
+            }
+            sessions.removeAll { $0.id == id }
+            log.log(.info, category: .recording, "🗑️ Deleted session: \(id)")
+        } catch {
+            log.log(.error, category: .recording, "❌ Failed to delete session \(id): \(error.localizedDescription)")
+        }
     }
 }
 

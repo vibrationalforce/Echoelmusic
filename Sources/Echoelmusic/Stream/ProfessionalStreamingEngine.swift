@@ -697,6 +697,10 @@ public final class ProfessionalStreamingEngine: ObservableObject {
         setupEncoder()
     }
 
+    deinit {
+        streamTimer?.invalidate()
+    }
+
     // MARK: - Setup
 
     private func setupEncoder() {

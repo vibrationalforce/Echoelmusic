@@ -86,7 +86,7 @@ jobs:
         if: ${{ github.event.inputs.upload_to_stores == 'yes' }}
         run: |
           gem install fastlane -N
-          fastlane ios beta
+          fastlane ios upload
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}

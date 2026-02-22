@@ -337,6 +337,10 @@ public class QuantumLiveActivityManager: ObservableObject {
 
     private init() {}
 
+    deinit {
+        updateTimer?.invalidate()
+    }
+
     // MARK: - Start Activity
 
     public func startSession(

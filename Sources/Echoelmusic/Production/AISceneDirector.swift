@@ -294,6 +294,10 @@ public final class AISceneDirector: ObservableObject {
         setupDefaultScene()
     }
 
+    deinit {
+        updateTimer?.invalidate()
+    }
+
     private func setupDefaultScene() {
         var scene = DirectorScene(name: "Default Scene", mood: .calm)
 

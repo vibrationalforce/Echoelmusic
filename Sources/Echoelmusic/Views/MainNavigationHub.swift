@@ -25,6 +25,7 @@ struct MainNavigationHub: View {
     @State private var heartRate: Int = 72
     @State private var isPlaying = false
     @State private var bpm: Double = 120.0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Workspaces
 
@@ -217,7 +218,7 @@ struct MainNavigationHub: View {
         HStack(spacing: VaporwaveSpacing.md) {
             // Sidebar Toggle
             Button(action: {
-                withAnimation(VaporwaveAnimation.smooth) {
+                withAnimation(reduceMotion ? nil : VaporwaveAnimation.smooth) {
                     sidebarExpanded.toggle()
                 }
             }) {
@@ -226,6 +227,8 @@ struct MainNavigationHub: View {
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(sidebarExpanded ? "Collapse sidebar" : "Expand sidebar")
+            .accessibilityHint("Toggles the navigation sidebar")
 
             // Logo
             HStack(spacing: VaporwaveSpacing.sm) {
@@ -258,6 +261,8 @@ struct MainNavigationHub: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut("k", modifiers: .command)
+            .accessibilityLabel("Search")
+            .accessibilityHint("Search workspaces and controls. Command-K")
 
             // Quick Actions
             Button(action: { showQuickActions.toggle() }) {
@@ -269,6 +274,8 @@ struct MainNavigationHub: View {
             .popover(isPresented: $showQuickActions) {
                 QuickActionsMenu(onAction: handleQuickAction)
             }
+            .accessibilityLabel("Quick actions")
+            .accessibilityHint("Create new session, add track, or import")
         }
         .padding(.horizontal, VaporwaveSpacing.lg)
         .padding(.vertical, VaporwaveSpacing.md)
@@ -321,7 +328,7 @@ struct MainNavigationHub: View {
                         .font(.system(size: 11, weight: .semibold))
                 }
             }
-            .foregroundColor(currentWorkspace == workspace ? .white : VaporwaveColors.textTertiary)
+            .foregroundColor(currentWorkspace == workspace ? .white : VaporwaveColors.textSecondary)
             .padding(.horizontal, currentWorkspace == workspace ? 14 : 10)
             .padding(.vertical, 8)
             .background(
@@ -330,6 +337,9 @@ struct MainNavigationHub: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(workspace.rawValue) workspace")
+        .accessibilityValue(currentWorkspace == workspace ? "Selected" : "")
+        .accessibilityHint("Switch to \(workspace.rawValue)")
     }
 
     // MARK: - Bio Status Indicator
@@ -346,18 +356,27 @@ struct MainNavigationHub: View {
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(VaporwaveColors.textPrimary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Heart rate: \(heartRate) BPM")
 
             // Coherence
             HStack(spacing: 4) {
+                Image(systemName: coherenceIcon)
+                    .font(.system(size: 10))
+                    .foregroundColor(coherenceColor)
+
                 Circle()
                     .fill(coherenceColor)
                     .frame(width: 8, height: 8)
                     .neonGlow(color: coherenceColor, radius: 4)
+                    .accessibilityHidden(true)
 
                 Text("\(Int(coherence * 100))%")
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(VaporwaveColors.textPrimary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Coherence: \(coherenceLabel), \(Int(coherence * 100)) percent")
         }
         .padding(.horizontal, VaporwaveSpacing.md)
         .padding(.vertical, 6)
@@ -369,6 +388,18 @@ struct MainNavigationHub: View {
                         .stroke(coherenceColor.opacity(0.3), lineWidth: 1)
                 )
         )
+    }
+
+    private var coherenceLabel: String {
+        if coherence > 0.7 { return "High" }
+        else if coherence > 0.4 { return "Medium" }
+        else { return "Low" }
+    }
+
+    private var coherenceIcon: String {
+        if coherence > 0.7 { return "star.fill" }
+        else if coherence > 0.4 { return "checkmark.circle.fill" }
+        else { return "exclamationmark.circle.fill" }
     }
 
     private var coherenceColor: Color {
@@ -448,6 +479,9 @@ struct MainNavigationHub: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(workspace.rawValue) workspace")
+        .accessibilityValue(currentWorkspace == workspace ? "Selected" : "")
+        .accessibilityHint("Shortcut: \(workspace.shortcut)")
     }
 
     private func sidebarBottomItem(icon: String, label: String, action: @escaping () -> Void) -> some View {
@@ -466,6 +500,7 @@ struct MainNavigationHub: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     // MARK: - Workspace Content

@@ -176,7 +176,9 @@ public class AbletonLinkClient: ObservableObject {
 
     deinit {
         updateTimer?.invalidate()
+        updateTimer = nil
         discoveryTimer?.invalidate()
+        discoveryTimer = nil
         multicastConnection?.cancel()
     }
 

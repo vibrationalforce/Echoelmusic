@@ -6,6 +6,12 @@ import Combine
 #if canImport(UIKit)
 import UIKit
 #endif
+#if canImport(IOKit)
+import IOKit.ps
+#endif
+#if os(watchOS)
+import WatchKit
+#endif
 
 /// Energy Efficiency Manager - Green Computing & Carbon Footprint Tracking
 /// Sustainable software design for minimal environmental impact
@@ -26,6 +32,8 @@ import UIKit
 /// - Carbon intensity data from Electricity Maps API
 @MainActor
 class EnergyEfficiencyManager: ObservableObject {
+
+    static let shared = EnergyEfficiencyManager()
 
     // MARK: - Published State
 
@@ -98,6 +106,10 @@ class EnergyEfficiencyManager: ObservableObject {
     }
 
     @Published var currentPowerSource: PowerSource = .battery(level: 1.0)
+
+    /// Throttle factor (0.0–1.0) that all subsystems should respect.
+    /// Published so engines can subscribe via Combine and adapt their tick rates.
+    @Published var systemThrottleFactor: Float = 1.0
 
     // MARK: - Carbon Intensity
 
@@ -173,14 +185,13 @@ class EnergyEfficiencyManager: ObservableObject {
     // MARK: - Detect Power Source
 
     private func detectPowerSource() {
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         let batteryState = UIDevice.current.batteryState
         let batteryLevel = UIDevice.current.batteryLevel
 
         switch batteryState {
         case .charging, .full:
-            // Assume renewable if user has specified
             let isRenewable = UserDefaults.standard.bool(forKey: "usingRenewableEnergy")
             currentPowerSource = .pluggedIn(isRenewable: isRenewable)
 
@@ -198,16 +209,71 @@ class EnergyEfficiencyManager: ObservableObject {
         @unknown default:
             currentPowerSource = .battery(level: batteryLevel)
         }
+
+        #elseif os(macOS)
+        detectMacOSPowerSource()
+
+        #elseif os(watchOS)
+        // watchOS uses WKInterfaceDevice for battery state
+        WKInterfaceDevice.current().isBatteryMonitoringEnabled = true
+        let batteryLevel = WKInterfaceDevice.current().batteryLevel
+        let batteryState = WKInterfaceDevice.current().batteryState
+
+        switch batteryState {
+        case .charging, .full:
+            currentPowerSource = .pluggedIn(isRenewable: false)
+            log.performance("⌚ Watch charging (\(Int(batteryLevel * 100))%)")
+        case .unplugged:
+            currentPowerSource = .battery(level: batteryLevel)
+            log.performance("⌚ Watch on battery (\(Int(batteryLevel * 100))%)")
+        @unknown default:
+            currentPowerSource = .battery(level: batteryLevel)
+        }
+
         #else
-        // macOS - assume plugged in
         currentPowerSource = .pluggedIn(isRenewable: false)
         #endif
     }
 
+    #if os(macOS)
+    /// Detect macOS power source via IOKit Power Sources API
+    private func detectMacOSPowerSource() {
+        #if canImport(IOKit)
+        guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+              let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [Any],
+              let firstSource = sources.first,
+              let description = IOPSGetPowerSourceDescription(snapshot, firstSource as CFTypeRef)?
+                  .takeUnretainedValue() as? [String: Any] else {
+            // No battery info available — desktop Mac, assume plugged in
+            currentPowerSource = .pluggedIn(isRenewable: UserDefaults.standard.bool(forKey: "usingRenewableEnergy"))
+            log.performance("🖥️ Desktop Mac — AC power assumed")
+            return
+        }
+
+        let isCharging = (description[kIOPSIsChargingKey] as? Bool) ?? false
+        let currentCapacity = (description[kIOPSCurrentCapacityKey] as? Int) ?? 100
+        let maxCapacity = (description[kIOPSMaxCapacityKey] as? Int) ?? 100
+        let batteryLevel = Float(currentCapacity) / Float(max(1, maxCapacity))
+        let powerSource = (description[kIOPSPowerSourceStateKey] as? String) ?? ""
+
+        if powerSource == kIOPSACPowerValue as String || isCharging {
+            let isRenewable = UserDefaults.standard.bool(forKey: "usingRenewableEnergy")
+            currentPowerSource = .pluggedIn(isRenewable: isRenewable)
+            log.performance("🔌 MacBook on AC power (\(Int(batteryLevel * 100))%)")
+        } else {
+            currentPowerSource = .battery(level: batteryLevel)
+            log.performance("🔋 MacBook on battery (\(Int(batteryLevel * 100))%)")
+        }
+        #else
+        currentPowerSource = .pluggedIn(isRenewable: false)
+        #endif
+    }
+    #endif
+
     // MARK: - Setup Power Monitoring
 
     private func setupPowerMonitoring() {
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         batteryObserver = NotificationCenter.default.addObserver(
             forName: UIDevice.batteryStateDidChangeNotification,
             object: nil,
@@ -218,10 +284,24 @@ class EnergyEfficiencyManager: ObservableObject {
                 self?.adjustForPowerSource()
             }
         }
+        #elseif os(macOS)
+        // macOS: monitor Low Power Mode changes; re-detect power source periodically
+        // via the 30s monitoring timer (IOKit has no push notification for AC/battery change)
+        batteryObserver = NotificationCenter.default.addObserver(
+            forName: .NSProcessInfoPowerStateDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.detectPowerSource()
+                self?.adjustForPowerSource()
+            }
+        }
         #endif
 
-        // Monitor every 10 seconds
-        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+        // Monitor every 30 seconds (was 10s). Energy metrics change slowly;
+        // reducing wakeup frequency by 3x saves battery on polling alone.
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateEnergyMetrics()
             }
@@ -288,21 +368,34 @@ class EnergyEfficiencyManager: ObservableObject {
     private func adjustForPowerSource() {
         switch currentPowerSource {
         case .battery(let level):
-            if level < 0.2 {  // < 20%
-                log.performance("🔋 Low battery - enabling eco mode")
+            if level < 0.1 {
+                // Critical battery — aggressive throttle
+                log.performance("🔋 Critical battery (<10%) — eco mode + aggressive throttle")
                 enableEcoMode()
-            } else if level < 0.5 && !ecoModeEnabled {
-                log.performance("🔋 Battery moderate - recommending eco mode")
+                systemThrottleFactor = 0.25
+            } else if level < 0.2 {
+                log.performance("🔋 Low battery (<20%) — enabling eco mode")
+                enableEcoMode()
+                systemThrottleFactor = 0.4
+            } else if level < 0.5 {
+                log.performance("🔋 Battery moderate (<50%) — balanced throttle")
+                if !ecoModeEnabled {
+                    currentEnergyEfficiency = .balanced
+                }
+                systemThrottleFactor = 0.6
+            } else {
+                // Healthy battery
+                systemThrottleFactor = currentEnergyEfficiency.cpuThrottle
             }
 
         case .pluggedIn(let isRenewable):
             if isRenewable {
-                // Renewable energy - can use more power guilt-free
                 currentEnergyEfficiency = .performance
-                log.performance("♻️ Renewable energy detected - performance mode enabled")
+                systemThrottleFactor = 1.0
+                log.performance("♻️ Renewable energy detected — full performance")
             } else {
-                // Grid power - stay balanced
                 currentEnergyEfficiency = .balanced
+                systemThrottleFactor = 0.8
             }
         }
     }
@@ -323,7 +416,7 @@ class EnergyEfficiencyManager: ObservableObject {
         powerConsumptionWatts = estimatedCPUWatts + estimatedGPUWatts + estimatedDisplayWatts
 
         // Calculate energy in Joules (Watts * seconds)
-        let energyThisInterval = powerConsumptionWatts * 10.0  // 10 second interval
+        let energyThisInterval = powerConsumptionWatts * 30.0  // 30 second interval
         accumulatedEnergy += energyThisInterval
 
         // Calculate carbon footprint

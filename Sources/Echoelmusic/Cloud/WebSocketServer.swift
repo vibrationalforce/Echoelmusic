@@ -841,7 +841,7 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
     // MARK: - Private Properties
 
     private var webSocketTask: URLSessionWebSocketTask?
-    private var session: URLSession!
+    private var session: URLSession?
 
     private let logger = EchoelLogger.shared
     private let security = WebSocketSecurity()
@@ -861,6 +861,11 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         messageSubject.eraseToAnyPublisher()
     }
 
+    /// Saved connection parameters for background/foreground reconnection
+    private var lastConnectURL: URL?
+    private var lastConnectToken: String?
+    private var sceneObservers: [NSObjectProtocol] = []
+
     // MARK: - Initialization
 
     override init() {
@@ -873,6 +878,41 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
 
         offlineQueue.loadQueue()
+        setupSceneLifecycleObservers()
+    }
+
+    /// Pause WebSocket when app enters background, reconnect on foreground.
+    /// Eliminates network radio wakeups while backgrounded.
+    private func setupSceneLifecycleObservers() {
+        #if canImport(UIKit) && !os(watchOS)
+        let bgObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            if self.connectionState == .connected {
+                self.logger.info("App backgrounded — pausing WebSocket", category: .network)
+                self.disconnect()
+            }
+        }
+
+        let fgObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self,
+                  let url = self.lastConnectURL,
+                  let token = self.lastConnectToken else { return }
+            self.logger.info("App foregrounded — reconnecting WebSocket", category: .network)
+            Task {
+                try? await self.connect(url: url, token: token)
+            }
+        }
+
+        sceneObservers = [bgObserver, fgObserver]
+        #endif
     }
 
     // MARK: - Connection Management
@@ -884,6 +924,10 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
             return
         }
 
+        // Save for foreground reconnection
+        lastConnectURL = url
+        lastConnectToken = token
+
         await MainActor.run {
             connectionState = .connecting
         }
@@ -894,7 +938,7 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("echoelmusic-ws/1.0", forHTTPHeaderField: "Sec-WebSocket-Protocol")
 
-        webSocketTask = session.webSocketTask(with: request)
+        webSocketTask = session?.webSocketTask(with: request)
         webSocketTask?.resume()
 
         await MainActor.run {

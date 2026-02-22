@@ -76,7 +76,7 @@ struct BioMetricsView: View {
 
                 Text("Coherence")
                     .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(VaporwaveColors.textSecondary)
 
                 // Coherence state indicator
                 Text(coherenceState)
@@ -124,8 +124,9 @@ struct BioMetricsView: View {
 
                     Text("Hz")
                         .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(VaporwaveColors.textSecondary)
                 }
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Voice pitch: \(Int(voicePitch)) Hertz")
             }
         }

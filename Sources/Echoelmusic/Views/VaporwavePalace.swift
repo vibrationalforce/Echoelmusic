@@ -21,6 +21,7 @@ struct VaporwavePalace: View {
     @State private var showVisualizer = false
     @State private var pulseAnimation = false
     @State private var glowIntensity: CGFloat = 0.5
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Central Systems (VERBUNDEN MIT UNIVERSAL CORE)
 
@@ -196,8 +197,8 @@ struct VaporwavePalace: View {
                     lineWidth: 4
                 )
                 .frame(width: 280, height: 280)
-                .rotationEffect(.degrees(pulseAnimation ? 360 : 0))
-                .animation(.linear(duration: 8).repeatForever(autoreverses: false), value: pulseAnimation)
+                .rotationEffect(.degrees(pulseAnimation && !reduceMotion ? 360 : 0))
+                .animation(reduceMotion ? nil : .linear(duration: 8).repeatForever(autoreverses: false), value: pulseAnimation)
 
             // Middle ring (HRV)
             Circle()
@@ -511,6 +512,7 @@ struct VaporwavePalace: View {
 
 struct VaporwaveGrid: View {
     @State private var offset: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geo in
@@ -553,6 +555,7 @@ struct VaporwaveGrid: View {
             }
         }
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
                 offset = 40
             }

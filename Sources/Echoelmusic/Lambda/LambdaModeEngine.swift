@@ -423,10 +423,12 @@ public final class LambdaModeEngine: ObservableObject {
         sessionStartTime = Date()
         transitionTo(.awakening)
 
-        // LAMBDA LOOP: High-precision 60Hz timer with 50% lower jitter
+        // Lambda loop at 30Hz (33ms) — consciousness-driven audio/light synthesis
+        // responds to biometric changes at <1Hz, so 30Hz provides smooth visuals
+        // while halving CPU/battery usage vs 60Hz.
         updateTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(16), leeway: .milliseconds(1))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(4))
         timer.setEventHandler { [weak self] in
             Task { @MainActor in
                 self?.tick()
@@ -436,6 +438,10 @@ public final class LambdaModeEngine: ObservableObject {
         updateTimer = timer
 
         log.lambda("\(LambdaConstants.symbol) Lambda Mode ACTIVATED")
+    }
+
+    deinit {
+        updateTimer?.cancel()
     }
 
     /// Deactivate Lambda Mode

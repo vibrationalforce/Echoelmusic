@@ -171,6 +171,10 @@ public final class HapticCompositionEngine: ObservableObject {
         setupEngine()
     }
 
+    deinit {
+        updateTimer?.invalidate()
+    }
+
     // MARK: - Setup
 
     private func checkHapticSupport() {

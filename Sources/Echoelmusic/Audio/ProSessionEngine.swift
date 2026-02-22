@@ -671,6 +671,10 @@ public class ProSessionEngine: ObservableObject {
 
     // MARK: - Initialization
 
+    deinit {
+        transportTimer?.invalidate()
+    }
+
     public init() {
         self.masterTrack = SessionTrack(
             name: "Master",

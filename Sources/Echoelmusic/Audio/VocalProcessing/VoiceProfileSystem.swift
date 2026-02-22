@@ -766,8 +766,11 @@ public class VoiceCharacterizer: ObservableObject {
         windowed.withUnsafeBufferPointer { inPtr in
             realPart.withUnsafeMutableBufferPointer { rPtr in
                 imagPart.withUnsafeMutableBufferPointer { iPtr in
-                    var splitComplex = DSPSplitComplex(realp: rPtr.baseAddress!, imagp: iPtr.baseAddress!)
-                    inPtr.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: halfN) { complexPtr in
+                    guard let rBase = rPtr.baseAddress,
+                          let iBase = iPtr.baseAddress,
+                          let inBase = inPtr.baseAddress else { return }
+                    var splitComplex = DSPSplitComplex(realp: rBase, imagp: iBase)
+                    inBase.withMemoryRebound(to: DSPComplex.self, capacity: halfN) { complexPtr in
                         vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(halfN))
                     }
                     vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2N, FFTDirection(FFT_FORWARD))
@@ -779,8 +782,10 @@ public class VoiceCharacterizer: ObservableObject {
         var magnitudes = [Float](repeating: 0, count: halfN)
         realPart.withUnsafeBufferPointer { rPtr in
             imagPart.withUnsafeBufferPointer { iPtr in
-                var split = DSPSplitComplex(realp: UnsafeMutablePointer(mutating: rPtr.baseAddress!),
-                                           imagp: UnsafeMutablePointer(mutating: iPtr.baseAddress!))
+                guard let rBase = rPtr.baseAddress,
+                      let iBase = iPtr.baseAddress else { return }
+                var split = DSPSplitComplex(realp: UnsafeMutablePointer(mutating: rBase),
+                                           imagp: UnsafeMutablePointer(mutating: iBase))
                 vDSP_zvmags(&split, 1, &magnitudes, 1, vDSP_Length(halfN))
             }
         }

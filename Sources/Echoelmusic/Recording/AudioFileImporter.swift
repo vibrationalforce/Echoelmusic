@@ -61,7 +61,9 @@ class AudioFileImporter: ObservableObject {
         importProgress = 0.3
 
         // Create destination URL
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            throw ImportError.invalidFormat
+        }
         let sessionDir = documentsPath.appendingPathComponent("Sessions/\(session.id.uuidString)", isDirectory: true)
         try? FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
 

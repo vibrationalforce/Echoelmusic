@@ -53,11 +53,15 @@ public final class OnboardingManager: ObservableObject {
 
         // Check microphone authorization
         #if os(iOS)
-        switch AVAudioSession.sharedInstance().recordPermission {
-        case .granted:
-            hasGrantedMicrophone = true
-        default:
-            hasGrantedMicrophone = false
+        if #available(iOS 17.0, *) {
+            hasGrantedMicrophone = AVAudioApplication.shared.recordPermission == .granted
+        } else {
+            switch AVAudioSession.sharedInstance().recordPermission {
+            case .granted:
+                hasGrantedMicrophone = true
+            default:
+                hasGrantedMicrophone = false
+            }
         }
         #endif
 
@@ -337,10 +341,28 @@ private struct PermissionsPage: View {
     }
 
     private func requestMicrophonePermission() {
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            DispatchQueue.main.async {
-                manager.checkPermissions()
-                hapticFeedback(granted ? .success : .error)
+        if #available(iOS 17.0, *) {
+            Task {
+                let granted = await AVAudioApplication.requestRecordPermission()
+                await MainActor.run {
+                    manager.checkPermissions()
+                    AdaptiveCapabilityManager.shared.refresh(.microphone)
+                    hapticFeedback(granted ? .success : .error)
+                    if granted {
+                        try? AudioConfiguration.upgradeToPlayAndRecord()
+                    }
+                }
+            }
+        } else {
+            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    manager.checkPermissions()
+                    AdaptiveCapabilityManager.shared.refresh(.microphone)
+                    hapticFeedback(granted ? .success : .error)
+                    if granted {
+                        try? AudioConfiguration.upgradeToPlayAndRecord()
+                    }
+                }
             }
         }
     }

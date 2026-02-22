@@ -299,6 +299,11 @@ public class QuantumLightEmulator: ObservableObject {
         initializePhotonBuffer()
     }
 
+    deinit {
+        updateTimer?.invalidate()
+        updateTimer = nil
+    }
+
     // MARK: - Public Methods
 
     /// Start the quantum light emulation

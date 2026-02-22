@@ -47,7 +47,13 @@ class LLMService: ObservableObject {
             switch self {
             case .claude: return "https://api.anthropic.com/v1"
             case .openAI: return "https://api.openai.com/v1"
-            case .local: return "http://localhost:11434/api"
+            case .local:
+                #if DEBUG
+                return "http://localhost:11434/api"
+                #else
+                // Production: local models must use secure loopback
+                return "https://localhost:11434/api"
+                #endif
             }
         }
     }
@@ -181,17 +187,31 @@ class LLMService: ObservableObject {
     }
 
     private func loadAPIKey() {
-        // Load from Keychain or environment
-        if let key = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] {
+        // Security: Keychain is the primary source for API keys in all builds.
+        // Environment variables are only allowed in DEBUG builds for developer convenience.
+        if let keychainKey = KeychainHelper.load(key: "echoelmusic.llm.apikey"), !keychainKey.isEmpty {
+            apiKey = keychainKey
+            // Detect provider from stored key prefix
+            if keychainKey.hasPrefix("sk-ant-") {
+                provider = .claude
+            } else if keychainKey.hasPrefix("sk-") {
+                provider = .openAI
+            }
+            return
+        }
+
+        #if DEBUG
+        // Development only: allow environment variables for local testing
+        if let key = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"], !key.isEmpty {
             apiKey = key
             provider = .claude
-        } else if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] {
+            log.log(.warning, category: .system, "API key loaded from environment (DEBUG only)")
+        } else if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !key.isEmpty {
             apiKey = key
             provider = .openAI
-        } else {
-            // Check Keychain
-            apiKey = KeychainHelper.load(key: "echoelmusic.llm.apikey")
+            log.log(.warning, category: .system, "API key loaded from environment (DEBUG only)")
         }
+        #endif
     }
 
     // MARK: - Configuration

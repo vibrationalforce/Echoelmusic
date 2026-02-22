@@ -32,6 +32,7 @@ class InstrumentOrchestrator: ObservableObject {
 
     // MARK: - Audio Engine
 
+    @Published private(set) var isEngineReady: Bool = false
     private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
     private var mixerNode: AVAudioMixerNode?
@@ -86,6 +87,17 @@ class InstrumentOrchestrator: ObservableObject {
     // MARK: - Audio Engine Setup
 
     private func setupAudioEngine() {
+        // Ensure AVAudioSession is configured before creating AVAudioEngine.
+        // On first launch the session may not be active yet (e.g. mic permission pending).
+        if !AudioConfiguration.isSessionConfigured {
+            do {
+                try AudioConfiguration.configureAudioSession()
+            } catch {
+                log.warning("InstrumentOrchestrator: AVAudioSession not ready, deferring engine start: \(error)", category: .audio)
+                return
+            }
+        }
+
         audioEngine = AVAudioEngine()
 
         guard let engine = audioEngine else {
@@ -114,9 +126,11 @@ class InstrumentOrchestrator: ObservableObject {
         do {
             try engine.start()
             isPlaying = true
+            isEngineReady = true
             log.audio("🎵 InstrumentOrchestrator: Audio engine started")
         } catch let engineError {
-            log.audio("InstrumentOrchestrator: Failed to start audio engine: \(engineError)")
+            isEngineReady = false
+            log.error("InstrumentOrchestrator: Failed to start audio engine: \(engineError)", category: .audio)
         }
     }
 
@@ -188,6 +202,11 @@ class InstrumentOrchestrator: ObservableObject {
 
     /// Play a MIDI note
     func noteOn(midiNote: Int, velocity: Float = 0.8) {
+        guard isEngineReady, playerNode != nil else {
+            log.warning("InstrumentOrchestrator: Audio engine not ready, ignoring noteOn", category: .audio)
+            return
+        }
+
         guard let synthEngine = currentSynthEngine else {
             log.audio("⚠️ No synthesis engine selected", level: .warning)
             return

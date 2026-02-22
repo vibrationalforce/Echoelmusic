@@ -85,6 +85,7 @@ public class AudioEngine: ObservableObject {
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
+            AudioConfiguration.registerInterruptionHandlers()
             log.audio(AudioConfiguration.latencyStats())
         } catch {
             log.audio("⚠️  Failed to configure audio session: \(error)", level: .warning)
@@ -122,9 +123,19 @@ public class AudioEngine: ObservableObject {
         // Initialize node graph with default biofeedback chain
         nodeGraph = NodeGraph.createBiofeedbackChain()
 
-        log.audio("🎵 AudioEngine initialized")
-        log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "✅" : "❌")")
-        log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "✅" : "❌")")
+        // Wire audio interruption callbacks so engine resumes automatically
+        AudioConfiguration.onInterruptionBegan = { [weak self] in
+            self?.isPlaying = false
+            log.audio("Audio interrupted — pausing engine")
+        }
+        AudioConfiguration.onInterruptionResume = { [weak self] in
+            log.audio("Audio interruption ended — resuming engine")
+            self?.isPlaying = true
+        }
+
+        log.audio("AudioEngine initialized")
+        log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "Yes" : "No")")
+        log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "Yes" : "No")")
         log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
     }
 
@@ -173,8 +184,14 @@ public class AudioEngine: ObservableObject {
         // Stop bio-parameter mapping
         stopBioParameterMapping()
 
+        // Deactivate audio session to power down audio hardware.
+        // notifyOthersOnDeactivation lets other apps resume playback.
+        #if canImport(AVFoundation) && !os(macOS)
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        #endif
+
         isRunning = false
-        log.audio("🎵 AudioEngine stopped")
+        log.audio("🎵 AudioEngine stopped — audio session deactivated")
     }
 
     /// Toggle Multidimensional Brainwave Entrainment on/off
@@ -287,11 +304,12 @@ public class AudioEngine: ObservableObject {
             return
         }
 
-        // OPTIMIZATION: High-precision bio-parameter updates using DispatchSourceTimer
-        // 50% lower jitter compared to Timer.publish for real-time audio responsiveness
+        // Bio-parameter updates: 200ms (5Hz) is perceptually sufficient for
+        // HRV/HR → audio mapping since biometrics change slowly (~0.1Hz).
+        // 20ms leeway allows OS timer coalescing for battery savings.
         bioParameterTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: bioParameterQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(100), leeway: .milliseconds(5))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(200), leeway: .milliseconds(20))
         timer.setEventHandler { [weak self] in
             Task { @MainActor in
                 self?.updateBioParameters()

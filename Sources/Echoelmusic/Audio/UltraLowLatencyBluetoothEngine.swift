@@ -510,7 +510,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     // MARK: - Private Properties
 
-    private var centralManager: CBCentralManager!
+    private var centralManager: CBCentralManager?
     private var audioSession: BluetoothAudioSession
     private var audioEngine: AVAudioEngine
     private var inputBuffer: LockFreeRingBuffer
@@ -604,11 +604,11 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     /// Start scanning for Bluetooth audio devices
     public func startScanning() {
-        guard centralManager.state == .poweredOn else { return }
+        guard centralManager?.state == .poweredOn else { return }
         isScanning = true
 
         // Scan for audio devices (A2DP, HFP, LE Audio)
-        centralManager.scanForPeripherals(
+        centralManager?.scanForPeripherals(
             withServices: [
                 CBUUID(string: "110B"),  // A2DP Sink
                 CBUUID(string: "110A"),  // A2DP Source
@@ -625,7 +625,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     /// Stop scanning
     public func stopScanning() {
-        centralManager.stopScan()
+        centralManager?.stopScan()
         isScanning = false
     }
 
@@ -664,6 +664,13 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
         }
         if activeInputDevice?.id == device.id {
             activeInputDevice = nil
+        }
+
+        // Deactivate audio session when no devices remain connected
+        if connectedDevices.isEmpty {
+            #if canImport(AVFoundation) && !os(macOS)
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            #endif
         }
     }
 

@@ -154,6 +154,10 @@ public final class TherapySessionPlugin: EchoelmusicPlugin {
 
     public init() {}
 
+    deinit {
+        recordingTimer?.invalidate()
+    }
+
     // MARK: - Plugin Lifecycle
 
     public func onLoad(context: PluginContext) async throws {

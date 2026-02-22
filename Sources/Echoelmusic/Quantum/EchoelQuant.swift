@@ -567,8 +567,8 @@ public final class EchoelQuant: @unchecked Sendable {
         unisonPsiReal[voiceIndex].withUnsafeMutableBufferPointer { realBuf in
             unisonPsiImag[voiceIndex].withUnsafeMutableBufferPointer { imagBuf in
                 var split = DSPSplitComplex(
-                    realp: realBuf.baseAddress!,
-                    imagp: imagBuf.baseAddress!
+                    realp: realBuf.baseAddress.unsafelyUnwrapped,
+                    imagp: imagBuf.baseAddress.unsafelyUnwrapped
                 )
                 if let fft = fftSetup { fft.forward(input: split, output: &split) }
             }
@@ -590,8 +590,8 @@ public final class EchoelQuant: @unchecked Sendable {
         unisonPsiReal[voiceIndex].withUnsafeMutableBufferPointer { realBuf in
             unisonPsiImag[voiceIndex].withUnsafeMutableBufferPointer { imagBuf in
                 var split = DSPSplitComplex(
-                    realp: realBuf.baseAddress!,
-                    imagp: imagBuf.baseAddress!
+                    realp: realBuf.baseAddress.unsafelyUnwrapped,
+                    imagp: imagBuf.baseAddress.unsafelyUnwrapped
                 )
                 if let fft = fftSetup { fft.inverse(input: split, output: &split) }
             }
@@ -613,8 +613,8 @@ public final class EchoelQuant: @unchecked Sendable {
         psiReal.withUnsafeMutableBufferPointer { realBuf in
             psiImag.withUnsafeMutableBufferPointer { imagBuf in
                 var split = DSPSplitComplex(
-                    realp: realBuf.baseAddress!,
-                    imagp: imagBuf.baseAddress!
+                    realp: realBuf.baseAddress.unsafelyUnwrapped,
+                    imagp: imagBuf.baseAddress.unsafelyUnwrapped
                 )
                 if let fft = fftSetup { fft.forward(input: split, output: &split) }
             }
@@ -629,8 +629,8 @@ public final class EchoelQuant: @unchecked Sendable {
         psiReal.withUnsafeMutableBufferPointer { realBuf in
             psiImag.withUnsafeMutableBufferPointer { imagBuf in
                 var split = DSPSplitComplex(
-                    realp: realBuf.baseAddress!,
-                    imagp: imagBuf.baseAddress!
+                    realp: realBuf.baseAddress.unsafelyUnwrapped,
+                    imagp: imagBuf.baseAddress.unsafelyUnwrapped
                 )
                 if let fft = fftSetup { fft.inverse(input: split, output: &split) }
             }
@@ -850,8 +850,8 @@ public final class EchoelQuant: @unchecked Sendable {
         tmpReal.withUnsafeMutableBufferPointer { realBuf in
             tmpImag.withUnsafeMutableBufferPointer { imagBuf in
                 var split = DSPSplitComplex(
-                    realp: realBuf.baseAddress!,
-                    imagp: imagBuf.baseAddress!
+                    realp: realBuf.baseAddress.unsafelyUnwrapped,
+                    imagp: imagBuf.baseAddress.unsafelyUnwrapped
                 )
                 if let fft = fftSetup { fft.forward(input: split, output: &split) }
             }

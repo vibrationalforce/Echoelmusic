@@ -477,10 +477,12 @@ public final class BiophysicalWellnessEngine: ObservableObject {
     // MARK: - Private Methods
 
     private func startUpdateLoop() {
-        // LAMBDA LOOP 100%: 30Hz wellness updates with high precision
+        // Wellness updates at 15Hz (66ms) — sufficient for guided breathing/haptics.
+        // 30Hz was excessive; biometric signals change at <1Hz.
+        // 8ms leeway allows OS timer coalescing for battery savings.
         updateTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(2))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(66), leeway: .milliseconds(8))
         timer.setEventHandler { [weak self] in
             Task { @MainActor [weak self] in
                 await self?.updateLoop()

@@ -638,7 +638,7 @@ class MemoryOptimizationManager: ObservableObject {
             closeMemoryMappedFile(path: path)
         } else {
             // Fallback: Standard chunk-based reading
-            while true {
+            while !Task.isCancelled {
                 guard let chunk = try fileHandle.read(upToCount: chunkSize) else {
                     break
                 }
@@ -649,7 +649,7 @@ class MemoryOptimizationManager: ObservableObject {
 
                 processor(chunk)
 
-                // Yield to allow UI updates
+                // Yield to allow UI updates and cooperative cancellation
                 await Task.yield()
             }
         }

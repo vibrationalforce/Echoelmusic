@@ -93,9 +93,11 @@ final class EchoelUniversalCore: ObservableObject {
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
-    // LAMBDA LOOP 100%: High-precision 120Hz universal timer
+    // LAMBDA LOOP 100%: High-precision universal timer (adaptive: 30–120Hz)
     private var updateTimer: DispatchSourceTimer?
     private let updateQueue = DispatchQueue(label: "com.echoelmusic.universal.core", qos: .userInteractive)
+    /// Current tick interval in milliseconds (adaptive based on performance mode + power state)
+    private var currentTickIntervalMs: Int = 8
 
     // MARK: - Initialization
 
@@ -139,16 +141,49 @@ final class EchoelUniversalCore: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // EnergyEfficiencyManager → Universal Core
+        // Adapt performance mode based on battery/power state throttle factor
+        EnergyEfficiencyManager.shared.$systemThrottleFactor
+            .removeDuplicates()
+            .sink { [weak self] throttle in
+                self?.handleThrottleFactorChange(throttle)
+            }
+            .store(in: &cancellables)
+
         // Tools sind bereits verbunden via EchoelTools.shared
 
         log.info("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden", category: .system)
+    }
+
+    /// Map energy throttle factor (0.0–1.0) to performance mode
+    private func handleThrottleFactorChange(_ throttle: Float) {
+        let newMode: PerformanceMode
+        switch throttle {
+        case ..<0.3:
+            newMode = .minimal
+        case 0.3..<0.5:
+            newMode = .reduced
+        case 0.5..<0.75:
+            newMode = .balanced
+        case 0.75..<0.9:
+            newMode = .high
+        default:
+            newMode = .maximum
+        }
+
+        guard newMode != systemState.performanceMode else { return }
+        systemState.performanceMode = newMode
+
+        let newInterval = tickIntervalForCurrentMode()
+        restartUniversalTimer(intervalMs: newInterval)
+
+        log.info("Throttle factor \(String(format: "%.2f", throttle)) → \(newMode.rawValue) mode", category: .system)
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System
     private func handleFlowStateChange(_ flowState: FlowState) {
         switch flowState {
         case .ultraFlow:
-            // Maximale Leistung
             systemState.performanceMode = .maximum
         case .flow:
             systemState.performanceMode = .high
@@ -159,22 +194,54 @@ final class EchoelUniversalCore: ObservableObject {
         case .recovery, .emergency:
             systemState.performanceMode = .minimal
         }
+
+        // Adapt master loop tick rate to new performance mode
+        let newInterval = tickIntervalForCurrentMode()
+        restartUniversalTimer(intervalMs: newInterval)
     }
 
     private func startUniversalLoop() {
-        // LAMBDA LOOP 100%: Master update loop at 120Hz with DispatchSourceTimer
-        // 50% lower jitter than Timer.scheduledTimer for ProMotion displays
+        let intervalMs = tickIntervalForCurrentMode()
+        restartUniversalTimer(intervalMs: intervalMs)
+    }
+
+    /// Compute tick interval (ms) based on performance mode and system power state
+    private func tickIntervalForCurrentMode() -> Int {
+        #if canImport(UIKit) && !os(watchOS)
+        let lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+        #else
+        let lowPower = false
+        #endif
+
+        switch systemState.performanceMode {
+        case .maximum, .high:
+            return lowPower ? 16 : 8   // 60Hz / 120Hz
+        case .balanced:
+            return lowPower ? 33 : 16  // 30Hz / 60Hz
+        case .reduced:
+            return 33                   // 30Hz
+        case .minimal:
+            return 66                   // ~15Hz
+        }
+    }
+
+    /// Restart the master timer at a new interval (no-op if interval unchanged)
+    private func restartUniversalTimer(intervalMs: Int) {
+        guard intervalMs != currentTickIntervalMs || updateTimer == nil else { return }
+        currentTickIntervalMs = intervalMs
+
         updateTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: updateQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(8), leeway: .microseconds(500))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(intervalMs), leeway: .milliseconds(max(1, intervalMs / 8)))
         timer.setEventHandler { [weak self] in
-            // Direct dispatch avoids Task allocation overhead at 120Hz (saves ~0.1ms per frame)
             DispatchQueue.main.async {
                 self?.universalUpdate()
             }
         }
         timer.resume()
         updateTimer = timer
+
+        log.info("Universal loop tick rate: \(1000 / intervalMs)Hz", category: .system)
     }
 
     // MARK: - Universal Update
@@ -207,7 +274,8 @@ final class EchoelUniversalCore: ObservableObject {
         systemState.update(
             coherence: globalCoherence,
             energy: systemEnergy,
-            quantumField: quantumField
+            quantumField: quantumField,
+            tickIntervalMs: currentTickIntervalMs
         )
     }
 
@@ -323,13 +391,13 @@ extension EchoelUniversalCore {
         var analogFeedback: [Float] = []
         var aiSuggestion: AICreativeEngine.CreativeSuggestion?
 
-        mutating func update(coherence: Float, energy: Float, quantumField: QuantumField) {
+        mutating func update(coherence: Float, energy: Float, quantumField: QuantumField, tickIntervalMs: Int = 8) {
             self.coherence = coherence
             self.energy = energy
             self.quantumField = quantumField
             self.flow = (coherence + energy) / 2
             self.creativity = quantumField.creativity
-            self.globalTime += 1.0/120.0
+            self.globalTime += Double(tickIntervalMs) / 1000.0
         }
     }
 
