@@ -323,6 +323,10 @@ public final class BiometricMusicGenerator: ObservableObject {
         initializeMarkovChain()
     }
 
+    deinit {
+        updateTimer?.invalidate()
+    }
+
     private func initializeMarkovChain() {
         // Initialize basic melodic tendencies
         // Step motion is more likely than leaps

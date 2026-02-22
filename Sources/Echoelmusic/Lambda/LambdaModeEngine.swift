@@ -440,6 +440,10 @@ public final class LambdaModeEngine: ObservableObject {
         log.lambda("\(LambdaConstants.symbol) Lambda Mode ACTIVATED")
     }
 
+    deinit {
+        updateTimer?.cancel()
+    }
+
     /// Deactivate Lambda Mode
     public func deactivate() {
         isActive = false

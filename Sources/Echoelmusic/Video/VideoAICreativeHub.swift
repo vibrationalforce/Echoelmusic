@@ -70,6 +70,9 @@ final class VideoAICreativeHub: ObservableObject {
         guard !connectionsSetUp else { return }
         connectionsSetUp = true
 
+        // Clear any stale subscriptions before wiring new ones
+        cancellables.removeAll()
+
         // Connect to Universal Core for bio-data
         universalCore.$systemState
             .sink { [weak self] state in

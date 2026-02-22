@@ -217,6 +217,10 @@ public final class WorldModel: ObservableObject {
 
     // MARK: - Initialization
 
+    deinit {
+        updateTimer?.invalidate()
+    }
+
     private init(config: Configuration = .default) {
         self.config = config
         initializeWeights()

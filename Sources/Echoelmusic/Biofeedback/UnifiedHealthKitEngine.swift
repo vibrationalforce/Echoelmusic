@@ -382,6 +382,10 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         if let setup = cachedFFTSetup {
             vDSP_DFT_DestroySetup(setup)
         }
+        replayTimer?.invalidate()
+        replayTimer = nil
+        updateTimer?.cancel()
+        updateTimer = nil
     }
 
     // MARK: - Availability Check

@@ -272,6 +272,11 @@ public final class EEGSensorBridge: NSObject, ObservableObject {
         log.biofeedback("EEGSensorBridge initialized")
     }
 
+    deinit {
+        simulationTimer?.invalidate()
+        simulationTimer = nil
+    }
+
     // MARK: - Device Discovery
 
     /// Start scanning for EEG devices

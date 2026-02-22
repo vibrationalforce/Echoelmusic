@@ -344,6 +344,10 @@ public final class AILiveProductionEngine: ObservableObject {
         setupDefaultSources()
     }
 
+    deinit {
+        productionTimer?.invalidate()
+    }
+
     private func setupDefaultSources() {
         cameraSources = [
             CameraSource(name: "Main Wide", type: .wideShot, position: .front),

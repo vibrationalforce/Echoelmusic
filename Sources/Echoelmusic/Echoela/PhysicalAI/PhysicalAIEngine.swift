@@ -178,6 +178,11 @@ public final class PhysicalAIEngine: NSObject, ObservableObject {
 
     // MARK: - Initialization
 
+    deinit {
+        sensorTimer?.invalidate()
+        predictionTimer?.invalidate()
+    }
+
     private init(config: Configuration = .default) {
         self.config = config
         super.init()

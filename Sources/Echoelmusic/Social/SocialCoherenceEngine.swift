@@ -251,6 +251,10 @@ public final class SocialCoherenceEngine: ObservableObject {
         setupLocalParticipant()
     }
 
+    deinit {
+        updateTimer?.invalidate()
+    }
+
     private func setupLocalParticipant() {
         localParticipant = SocialParticipant(
             displayName: "You",

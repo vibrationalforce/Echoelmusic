@@ -339,6 +339,10 @@ public final class PluginManager: ObservableObject {
         setupFrameLoop()
     }
 
+    deinit {
+        frameTimer?.invalidate()
+    }
+
     private func setupFrameLoop() {
         frameTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { [weak self] timer in
             Task { @MainActor in
@@ -703,6 +707,10 @@ public final class PerformanceMonitor: ObservableObject {
                 self?.updateMetrics()
             }
         }
+    }
+
+    deinit {
+        timer?.invalidate()
     }
 
     public func stop() {
