@@ -21,6 +21,9 @@
 import Foundation
 import Combine
 import CryptoKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // MARK: - WebSocket Message Protocol
 

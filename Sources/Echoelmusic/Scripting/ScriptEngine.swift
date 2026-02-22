@@ -331,6 +331,7 @@ struct CompilationError {
 
 // MARK: - Script APIs
 
+@MainActor
 class AudioScriptAPI {
     weak var audioEngine: AudioEngine?
 
@@ -372,6 +373,7 @@ class AudioScriptAPI {
     }
 }
 
+@MainActor
 class VisualScriptAPI {
     func renderFrame() {
         log.info("🎨 VisualAPI: Rendered frame", category: .plugin)
@@ -390,6 +392,7 @@ class VisualScriptAPI {
     }
 }
 
+@MainActor
 class BioScriptAPI {
     /// Pull live biometric data from the shared UnifiedHealthKitEngine
     func getHRV() -> Float {
@@ -409,6 +412,7 @@ class BioScriptAPI {
     }
 }
 
+@MainActor
 class StreamScriptAPI {
     weak var streamAnalytics: StreamAnalytics?
 
@@ -433,6 +437,7 @@ class StreamScriptAPI {
     }
 }
 
+@MainActor
 class MIDIScriptAPI {
     func sendNote(_ note: Int, velocity: Int, channel: Int) {
         log.info("🎹 MIDIAPI: Send note \(note) velocity \(velocity) ch \(channel)", category: .plugin)
@@ -451,6 +456,7 @@ class MIDIScriptAPI {
     }
 }
 
+@MainActor
 class SpatialScriptAPI {
     weak var spatialEngine: SpatialAudioEngine?
 
