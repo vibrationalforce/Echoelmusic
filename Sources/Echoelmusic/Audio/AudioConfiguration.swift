@@ -112,6 +112,21 @@ enum AudioConfiguration {
     }
 
 
+    /// Upgrade audio session from .playback to .playAndRecord after mic permission is granted.
+    /// No-op if already using .playAndRecord.
+    static func upgradeToPlayAndRecord() throws {
+        let audioSession = AVAudioSession.sharedInstance()
+        guard audioSession.category != .playAndRecord else { return }
+
+        try audioSession.setCategory(
+            .playAndRecord,
+            mode: .measurement,
+            options: [.allowBluetooth, .defaultToSpeaker, .mixWithOthers]
+        )
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        log.audio("Audio session upgraded to .playAndRecord")
+    }
+
     // MARK: - Latency Modes
 
     enum LatencyMode {

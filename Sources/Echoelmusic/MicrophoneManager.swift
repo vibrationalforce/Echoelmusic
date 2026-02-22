@@ -68,25 +68,46 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Check if we already have microphone permission
     private func checkPermission() {
-        switch AVAudioSession.sharedInstance().recordPermission {
-        case .granted:
-            hasPermission = true
-        case .denied, .undetermined:
-            hasPermission = false
-        @unknown default:
-            hasPermission = false
+        if #available(iOS 17.0, *) {
+            hasPermission = AVAudioApplication.shared.recordPermission == .granted
+        } else {
+            switch AVAudioSession.sharedInstance().recordPermission {
+            case .granted:
+                hasPermission = true
+            case .denied, .undetermined:
+                hasPermission = false
+            @unknown default:
+                hasPermission = false
+            }
         }
     }
 
     /// Request microphone permission from the user
     func requestPermission() {
-        AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
-            DispatchQueue.main.async {
-                self?.hasPermission = granted
-                if granted {
-                    log.audio("✅ Microphone permission granted")
-                } else {
-                    log.audio("❌ Microphone permission denied", level: .error)
+        if #available(iOS 17.0, *) {
+            Task {
+                let granted = await AVAudioApplication.requestRecordPermission()
+                await MainActor.run {
+                    self.hasPermission = granted
+                    if granted {
+                        log.audio("Microphone permission granted")
+                        // Upgrade audio session to playAndRecord now that mic is available
+                        try? AudioConfiguration.upgradeToPlayAndRecord()
+                    } else {
+                        log.audio("Microphone permission denied", level: .error)
+                    }
+                }
+            }
+        } else {
+            AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+                DispatchQueue.main.async {
+                    self?.hasPermission = granted
+                    if granted {
+                        log.audio("Microphone permission granted")
+                        try? AudioConfiguration.upgradeToPlayAndRecord()
+                    } else {
+                        log.audio("Microphone permission denied", level: .error)
+                    }
                 }
             }
         }
