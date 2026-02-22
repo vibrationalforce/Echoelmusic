@@ -233,7 +233,7 @@ public final class SecretsManager: Sendable {
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key.rawValue,
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
