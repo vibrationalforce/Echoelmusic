@@ -213,6 +213,7 @@ class ScriptEngine: ObservableObject {
 
     // MARK: - Script Execution Context
 
+    @MainActor
     private class ScriptExecutionContext {
         let audioAPI: AudioScriptAPI
         let visualAPI: VisualScriptAPI
