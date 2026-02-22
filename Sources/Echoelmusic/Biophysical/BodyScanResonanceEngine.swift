@@ -415,9 +415,11 @@ public final class BodyScanResonanceEngine: NSObject, ObservableObject {
     // MARK: - Update Loop
 
     private func startUpdateLoop() {
+        // Body scan updates at 5Hz (200ms) — haptic/visual feedback is perceptually
+        // smooth at this rate. 25ms leeway for OS timer coalescing.
         updateTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: analysisQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(100), leeway: .milliseconds(10))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(200), leeway: .milliseconds(25))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async { [weak self] in
                 self?.updateScanState()

@@ -298,11 +298,12 @@ public class AudioEngine: ObservableObject {
             return
         }
 
-        // OPTIMIZATION: High-precision bio-parameter updates using DispatchSourceTimer
-        // 50% lower jitter compared to Timer.publish for real-time audio responsiveness
+        // Bio-parameter updates: 200ms (5Hz) is perceptually sufficient for
+        // HRV/HR → audio mapping since biometrics change slowly (~0.1Hz).
+        // 20ms leeway allows OS timer coalescing for battery savings.
         bioParameterTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: bioParameterQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(100), leeway: .milliseconds(5))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(200), leeway: .milliseconds(20))
         timer.setEventHandler { [weak self] in
             Task { @MainActor in
                 self?.updateBioParameters()

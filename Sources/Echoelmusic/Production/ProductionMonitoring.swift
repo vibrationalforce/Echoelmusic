@@ -119,7 +119,10 @@ public final class ProductionMonitoring: ObservableObject {
     }
 
     private func startMetricsCollection() {
-        metricsTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+        // Collect system metrics every 15 seconds (was 5s). CPU/memory/battery
+        // metrics are slow-changing; tripling the interval reduces timer wakeups
+        // and CPU overhead from mach_task_basic_info calls.
+        metricsTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.collectMetrics()
             }

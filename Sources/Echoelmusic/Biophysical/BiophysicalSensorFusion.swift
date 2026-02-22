@@ -583,9 +583,11 @@ public final class BiophysicalSensorFusion: ObservableObject {
     // MARK: - Fusion Loop
 
     private func startFusionLoop() {
+        // Sensor fusion at 15Hz (66ms) — matches sensor Nyquist requirements
+        // while halving CPU wakeups vs previous 30Hz.
         fusionTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(flags: [], queue: fusionQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(2))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(66), leeway: .milliseconds(8))
         timer.setEventHandler { [weak self] in
             DispatchQueue.main.async { [weak self] in
                 self?.performFusion()

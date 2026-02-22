@@ -100,7 +100,7 @@ public class UnifiedControlHub: ObservableObject {
     )
 
     private var lastUpdateTime: CFTimeInterval = CACurrentMediaTime()
-    private let targetFrequency: Double = 60.0  // 60 Hz
+    private var targetFrequency: Double = 60.0  // 60 Hz (adaptive: 20–60Hz)
 
     // MARK: - Cancellables (Lifecycle-scoped)
 
@@ -219,15 +219,19 @@ public class UnifiedControlHub: ObservableObject {
         switch thermalPressure {
         case .nominal:
             Log.info("Thermal: nominal", category: .system)
+            setTargetFrequency(60.0)
         case .fair:
-            Log.info("Thermal: fair — reducing visual fidelity", category: .system)
+            Log.info("Thermal: fair — reducing visual fidelity, 45Hz", category: .system)
+            setTargetFrequency(45.0)
         case .serious:
-            Log.warning("Thermal: serious — disabling non-essential visual processing", category: .system)
+            Log.warning("Thermal: serious — disabling visuals, 30Hz", category: .system)
             quantumLightEmulator?.stop()
+            setTargetFrequency(30.0)
         case .critical:
-            Log.warning("Thermal: critical — minimal mode", category: .system)
+            Log.warning("Thermal: critical — minimal mode, 20Hz", category: .system)
             quantumLightEmulator?.stop()
             push3LEDController?.clearGrid()
+            setTargetFrequency(20.0)
         }
     }
 
@@ -235,10 +239,39 @@ public class UnifiedControlHub: ObservableObject {
         #if canImport(UIKit) && !os(watchOS)
         let isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
         if isLowPower {
-            Log.info("Low Power Mode enabled — throttling updates", category: .system)
+            Log.info("Low Power Mode enabled — throttling control loop to 30Hz", category: .system)
+            setTargetFrequency(30.0)
         } else {
-            Log.info("Low Power Mode disabled — restoring full performance", category: .system)
+            Log.info("Low Power Mode disabled — restoring 60Hz control loop", category: .system)
+            setTargetFrequency(60.0)
         }
+        #endif
+    }
+
+    /// Dynamically change the control loop target frequency and restart the timer
+    private func setTargetFrequency(_ newFrequency: Double) {
+        guard abs(newFrequency - targetFrequency) > 1.0 else { return }
+        targetFrequency = newFrequency
+
+        #if os(iOS) || os(tvOS)
+        displayLink?.preferredFrameRateRange = CAFrameRateRange(
+            minimum: Float(newFrequency),
+            maximum: Float(newFrequency),
+            preferred: Float(newFrequency)
+        )
+        #else
+        // Restart DispatchSourceTimer at new interval
+        controlLoopTimer?.cancel()
+        let interval = 1.0 / newFrequency
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: controlQueue)
+        timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(1))
+        timer.setEventHandler { [weak self] in
+            DispatchQueue.main.async {
+                self?.controlLoopTick()
+            }
+        }
+        timer.resume()
+        controlLoopTimer = timer
         #endif
     }
 
