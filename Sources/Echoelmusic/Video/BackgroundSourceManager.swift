@@ -958,7 +958,7 @@ class BackgroundSourceManager: ObservableObject {
 class EchoelmusicVisualRenderer {
     private let device: MTLDevice
     private let type: BackgroundSourceManager.EchoelmusicVisualType
-    private let commandQueue: MTLCommandQueue
+    private let commandQueue: MTLCommandQueue?
 
     private var hrvCoherence: Float = 0.5
     private var heartRate: Float = 70.0
@@ -977,7 +977,10 @@ class EchoelmusicVisualRenderer {
     init(device: MTLDevice, type: BackgroundSourceManager.EchoelmusicVisualType) {
         self.device = device
         self.type = type
-        self.commandQueue = device.makeCommandQueue()!
+        self.commandQueue = device.makeCommandQueue()
+        if self.commandQueue == nil {
+            log.video("EchoelmusicVisualRenderer: Failed to create Metal command queue", level: .error)
+        }
     }
 
     func update(hrvCoherence: Float, heartRate: Float) {
@@ -1032,6 +1035,10 @@ class EchoelmusicVisualRenderer {
         paramsBuffer = device.makeBuffer(length: MemoryLayout<VisualParamsCPU>.stride, options: .storageModeShared)
         audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
 
+        if paramsBuffer == nil || audioBuffer == nil {
+            log.video("EchoelmusicVisualRenderer: Failed to allocate Metal buffers", level: .error)
+        }
+
         log.video("EchoelmusicVisualRenderer: Started \(type.rawValue) [\(kernelName)]")
     }
 
@@ -1077,7 +1084,7 @@ class EchoelmusicVisualRenderer {
         memcpy(paramsBuf.contents(), &params, MemoryLayout<VisualParamsCPU>.stride)
 
         // Encode compute
-        guard let cmdBuffer = commandQueue.makeCommandBuffer(),
+        guard let cmdBuffer = commandQueue?.makeCommandBuffer(),
               let encoder = cmdBuffer.makeComputeCommandEncoder() else {
             throw BackgroundError.textureCreationFailed
         }

@@ -841,7 +841,7 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
     // MARK: - Private Properties
 
     private var webSocketTask: URLSessionWebSocketTask?
-    private var session: URLSession!
+    private var session: URLSession?
 
     private let logger = EchoelLogger.shared
     private let security = WebSocketSecurity()
@@ -894,7 +894,7 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("echoelmusic-ws/1.0", forHTTPHeaderField: "Sec-WebSocket-Protocol")
 
-        webSocketTask = session.webSocketTask(with: request)
+        webSocketTask = session?.webSocketTask(with: request)
         webSocketTask?.resume()
 
         await MainActor.run {
