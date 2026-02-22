@@ -125,12 +125,12 @@ public class AudioEngine: ObservableObject {
 
         // Wire audio interruption callbacks so engine resumes automatically
         AudioConfiguration.onInterruptionBegan = { [weak self] in
-            self?.isPlaying = false
+            self?.isRunning = false
             log.audio("Audio interrupted — pausing engine")
         }
         AudioConfiguration.onInterruptionResume = { [weak self] in
             log.audio("Audio interruption ended — resuming engine")
-            self?.isPlaying = true
+            self?.isRunning = true
         }
 
         log.audio("AudioEngine initialized")

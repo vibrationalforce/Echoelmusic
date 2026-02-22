@@ -219,8 +219,8 @@ public final class AdaptiveCapabilityManager: ObservableObject {
     // MARK: - Individual Probes
 
     private func probeMicrophone() {
-        #if os(iOS) || os(macOS)
-        if #available(iOS 17.0, macOS 14.0, *) {
+        #if os(iOS)
+        if #available(iOS 17.0, *) {
             switch AVAudioApplication.shared.recordPermission {
             case .granted:
                 states[.microphone] = .available
@@ -242,6 +242,21 @@ public final class AdaptiveCapabilityManager: ObservableObject {
             @unknown default:
                 states[.microphone] = .permissionNeeded
             }
+        }
+        #elseif os(macOS)
+        if #available(macOS 14.0, *) {
+            switch AVAudioApplication.shared.recordPermission {
+            case .granted:
+                states[.microphone] = .available
+            case .denied:
+                states[.microphone] = .denied
+            case .undetermined:
+                states[.microphone] = .permissionNeeded
+            @unknown default:
+                states[.microphone] = .permissionNeeded
+            }
+        } else {
+            states[.microphone] = .permissionNeeded
         }
         #elseif os(watchOS) || os(tvOS)
         states[.microphone] = .unavailable
@@ -397,17 +412,23 @@ public final class AdaptiveCapabilityManager: ObservableObject {
         #if canImport(UIKit) && !os(watchOS)
         NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
             .sink { [weak self] _ in
-                self?.refreshAll()
+                Task { @MainActor in
+                    self?.refreshAll()
+                }
             }
             .store(in: &cancellables)
         #endif
 
         // Monitor audio route changes (AirPods connect/disconnect)
+        #if os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
         NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
             .sink { [weak self] _ in
-                self?.probeSpatialAudio()
-                self?.probeMicrophone()
+                Task { @MainActor in
+                    self?.probeSpatialAudio()
+                    self?.probeMicrophone()
+                }
             }
             .store(in: &cancellables)
+        #endif
     }
 }
