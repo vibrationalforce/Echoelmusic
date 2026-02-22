@@ -1124,7 +1124,6 @@ struct VisualParamsCPU {
     var resolutionX: Float
     var resolutionY: Float
 }
-}
 
 // MARK: - Errors
 

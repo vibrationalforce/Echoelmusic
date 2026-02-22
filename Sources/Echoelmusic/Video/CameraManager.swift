@@ -583,7 +583,8 @@ public class CameraManager: NSObject, ObservableObject {
             try device.lockForConfiguration()
             device.setExposureModeCustom(
                 duration: device.exposureDuration,
-                iso: clampedISO
+                iso: clampedISO,
+                completionHandler: nil
             )
             device.unlockForConfiguration()
             currentISO = clampedISO
@@ -607,7 +608,8 @@ public class CameraManager: NSObject, ObservableObject {
             try device.lockForConfiguration()
             device.setExposureModeCustom(
                 duration: clamped,
-                iso: device.iso
+                iso: device.iso,
+                completionHandler: nil
             )
             device.unlockForConfiguration()
             currentShutterSpeed = clamped
@@ -624,7 +626,7 @@ public class CameraManager: NSObject, ObservableObject {
 
         do {
             try device.lockForConfiguration()
-            device.setExposureTargetBias(clamped)
+            device.setExposureTargetBias(clamped, completionHandler: nil)
             device.unlockForConfiguration()
             exposureCompensation = clamped
         } catch {
@@ -694,7 +696,7 @@ public class CameraManager: NSObject, ObservableObject {
 
         do {
             try device.lockForConfiguration()
-            device.setFocusModeLocked(lensPosition: clamped)
+            device.setFocusModeLocked(lensPosition: clamped, completionHandler: nil)
             device.unlockForConfiguration()
             focusPosition = clamped
         } catch {
@@ -776,7 +778,7 @@ public class CameraManager: NSObject, ObservableObject {
 
         do {
             try device.lockForConfiguration()
-            device.setWhiteBalanceModeLocked(with: gains)
+            device.setWhiteBalanceModeLocked(with: gains, completionHandler: nil)
             device.unlockForConfiguration()
             self.colorTemperature = temperature
             self.tint = tint
@@ -1144,7 +1146,7 @@ public class CameraManager: NSObject, ObservableObject {
 
     // MARK: - Create Texture from Pixel Buffer (Zero-Copy)
 
-    private nonisolated func createTexture(from pixelBuffer: CVPixelBuffer) -> MTLTexture? {
+    private func createTexture(from pixelBuffer: CVPixelBuffer) -> MTLTexture? {
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
 
@@ -1184,16 +1186,13 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             return
         }
 
-        guard let texture = createTexture(from: pixelBuffer) else {
-            Task { @MainActor in
-                self.droppedFrames += 1
-            }
-            return
-        }
-
         let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
 
         Task { @MainActor in
+            guard let texture = self.createTexture(from: pixelBuffer) else {
+                self.droppedFrames += 1
+                return
+            }
             self.frameCount += 1
             self.lastFrameTime = presentationTime
             self.onFrameCaptured?(texture, presentationTime)
