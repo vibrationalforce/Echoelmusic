@@ -48,16 +48,10 @@
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
-		<string>iphone-ipad-minimum-performance-a12</string>
 	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
+	<!-- visionOS does not use interface orientations -->
 	<key>MinimumOSVersion</key>
 	<string>1.0</string>
 	<key>NSHealthShareUsageDescription</key>
