@@ -262,6 +262,7 @@ public class UnifiedControlHub: ObservableObject {
         #else
         // Restart DispatchSourceTimer at new interval
         controlLoopTimer?.cancel()
+        controlLoopTimer = nil
         let interval = 1.0 / newFrequency
         let timer = DispatchSource.makeTimerSource(flags: [], queue: controlQueue)
         timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(1))

@@ -286,8 +286,9 @@ class MicrophoneManager: NSObject, ObservableObject {
         vDSP_vmul(realParts, 1, window, 1, &realParts, 1, vDSP_Length(fftSize))
 
         // Perform FFT
-        var realIn = realParts
-        var imagIn = imagParts
+        // Copy inputs to separate buffers to avoid overlapping access with outputs
+        var realIn = [Float](realParts)
+        var imagIn = [Float](imagParts)
         vDSP_DFT_Execute(setup, &realIn, &imagIn, &realParts, &imagParts)
 
         // Calculate magnitudes (power spectrum)

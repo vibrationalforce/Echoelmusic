@@ -495,9 +495,9 @@ class SpectralAnalyzer {
             real[i] = samples[i] * window[i]
         }
 
-        // Forward FFT
-        var realIn = real
-        var imagIn = imaginary
+        // Forward FFT — copy inputs to avoid overlapping access with outputs
+        var realIn = [Float](real)
+        var imagIn = [Float](imaginary)
         vDSP_DFT_Execute(setup, &realIn, &imagIn, &real, &imaginary)
 
         // Zero out bins outside desired frequency range
@@ -519,8 +519,9 @@ class SpectralAnalyzer {
         )
 
         if let invSetup = inverseSetup {
-            var invRealIn = real
-            var invImagIn = imaginary
+            // Copy inputs to avoid overlapping access with outputs
+            var invRealIn = [Float](real)
+            var invImagIn = [Float](imaginary)
             vDSP_DFT_Execute(invSetup, &invRealIn, &invImagIn, &real, &imaginary)
             vDSP_DFT_DestroySetup(invSetup)
         }

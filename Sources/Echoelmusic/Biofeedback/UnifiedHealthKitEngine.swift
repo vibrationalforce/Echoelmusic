@@ -872,8 +872,9 @@ public final class UnifiedHealthKitEngine: ObservableObject {
 
         guard let fftSetup = cachedFFTSetup else { return [] }
 
-        var realIn = realParts
-        var imagIn = imagParts
+        // Copy inputs to separate buffers to avoid overlapping access with outputs
+        var realIn = [Float](realParts)
+        var imagIn = [Float](imagParts)
         vDSP_DFT_Execute(fftSetup, &realIn, &imagIn, &realParts, &imagParts)
 
         var powerSpectrum = [Float](repeating: 0, count: fftSize / 2)

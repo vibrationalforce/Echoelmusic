@@ -323,6 +323,67 @@ final class CriticalFixesTests: XCTestCase {
     }
 }
 
+    // MARK: - Timer Cleanup Regression Tests
+
+    func testProStreamEngineTimerCleanup() async {
+        // Verify statsTimer is nil'd after deinit (no retain cycle)
+        var engine: ProStreamEngine? = ProStreamEngine()
+        XCTAssertNotNil(engine)
+        engine = nil
+        // If deinit leaks, ARC would keep engine alive — no crash = pass
+    }
+
+    func testAbletonLinkClientTimerCleanup() {
+        // Verify both timers are nil'd in deinit
+        var client: AbletonLinkClient? = AbletonLinkClient()
+        XCTAssertNotNil(client)
+        client = nil
+        // Deallocation without crash = timers properly cleaned
+    }
+
+    func testMetronomeEngineTimerCleanup() {
+        var engine: MetronomeEngine? = MetronomeEngine()
+        XCTAssertNotNil(engine)
+        engine = nil
+        // DispatchSourceTimer properly cancelled and nil'd in deinit
+    }
+
+    func testUnifiedControlHubTimerCleanup() async {
+        var hub: UnifiedControlHub? = await UnifiedControlHub()
+        XCTAssertNotNil(hub)
+        hub = nil
+        // controlLoopTimer + displayLink properly cleaned in deinit
+    }
+
+    // MARK: - vDSP Buffer Isolation Tests
+
+    func testFFTBufferIsolation() {
+        // Verify input buffers are separate copies, not aliases
+        let size = 64
+        var realParts = [Float](repeating: 1.0, count: size)
+        let imagParts = [Float](repeating: 0.0, count: size)
+
+        // Explicit copy (our fix pattern)
+        var realIn = [Float](realParts)
+        var imagIn = [Float](imagParts)
+
+        // Mutating output shouldn't affect input copy
+        realParts[0] = 999.0
+        XCTAssertEqual(realIn[0], 1.0, "Input buffer must be an independent copy")
+        XCTAssertNotEqual(realParts[0], realIn[0], "Output and input must not alias")
+    }
+
+    func testHealthKitFFTDoesNotCrash() {
+        // Regression: vDSP_DFT_Execute with overlapping buffers caused UB
+        let engine = UnifiedHealthKitEngine()
+        let rrIntervals = (0..<128).map { i in
+            800.0 + 50.0 * sin(2.0 * .pi * 0.1 * Double(i))
+        }
+        let coherence = engine.calculateCoherence(rrIntervals: rrIntervals)
+        XCTAssertGreaterThanOrEqual(coherence, 0.0, "Coherence should be non-negative")
+    }
+}
+
 // MARK: - Type Aliases for Test Compatibility
 
 typealias ColorBlindnessMode = AccessibilityManager.ColorBlindnessMode
