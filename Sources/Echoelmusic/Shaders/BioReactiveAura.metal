@@ -31,14 +31,14 @@ constant float COHERENCE_HIGH = 0.6;
 // MARK: - Color Utilities
 
 /// Convert HSV to RGB for dynamic color generation
-float3 hsv2rgb(float3 c) {
+float3 bio_hsv2rgb(float3 c) {
     float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     float3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
 /// Smooth step with configurable edge
-float smootherstep(float edge0, float edge1, float x) {
+float bio_smootherstep(float edge0, float edge1, float x) {
     x = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
     return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
 }
@@ -46,19 +46,19 @@ float smootherstep(float edge0, float edge1, float x) {
 // MARK: - Noise Functions
 
 /// Simple hash function for noise generation
-float hash(float2 p) {
+float bio_hash(float2 p) {
     return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
 }
 
 /// 2D Perlin-style noise
-float noise(float2 p) {
+float bio_noise(float2 p) {
     float2 i = floor(p);
     float2 f = fract(p);
 
-    float a = hash(i);
-    float b = hash(i + float2(1.0, 0.0));
-    float c = hash(i + float2(0.0, 1.0));
-    float d = hash(i + float2(1.0, 1.0));
+    float a = bio_hash(i);
+    float b = bio_hash(i + float2(1.0, 0.0));
+    float c = bio_hash(i + float2(0.0, 1.0));
+    float d = bio_hash(i + float2(1.0, 1.0));
 
     float2 u = f * f * (3.0 - 2.0 * f);
 
@@ -66,13 +66,13 @@ float noise(float2 p) {
 }
 
 /// Fractal Brownian Motion for organic textures
-float fbm(float2 p, int octaves) {
+float bio_fbm(float2 p, int octaves) {
     float value = 0.0;
     float amplitude = 0.5;
     float frequency = 1.0;
 
     for (int i = 0; i < octaves; i++) {
-        value += amplitude * noise(p * frequency);
+        value += amplitude * bio_noise(p * frequency);
         amplitude *= 0.5;
         frequency *= 2.0;
     }
@@ -118,7 +118,7 @@ float fbm(float2 p, int octaves) {
     // === BREATHING WAVE ===
     // Smooth breathing modulation
     float breathWave = sin(breathPhase * TAU) * 0.5 + 0.5;
-    breathWave = smootherstep(0.0, 1.0, breathWave);
+    breathWave = bio_smootherstep(0.0, 1.0, breathWave);
 
     // === COHERENCE-BASED COLOR ===
     float3 auraColor;
@@ -138,7 +138,7 @@ float fbm(float2 p, int octaves) {
 
     // === CONFIDENCE SHIMMER ===
     // Higher confidence = more stable, lower = more shimmer
-    float shimmer = fbm(uv * 10.0 + time * 0.5, 4);
+    float shimmer = bio_fbm(uv * 10.0 + time * 0.5, 4);
     float shimmerAmount = (1.0 - confidence) * 0.3;
     auraColor += shimmer * shimmerAmount;
 
@@ -147,14 +147,14 @@ float fbm(float2 p, int octaves) {
     float normalizedRadius = glowRadius / max(size.x, size.y);
 
     // Base glow falloff (smooth edge)
-    float glowFalloff = 1.0 - smootherstep(0.0, normalizedRadius, dist);
+    float glowFalloff = 1.0 - bio_smootherstep(0.0, normalizedRadius, dist);
 
     // Heartbeat modulates glow intensity
     float pulseIntensity = 0.7 + heartPulse * 0.3;
 
     // Breathing modulates glow radius
     float breathRadius = normalizedRadius * (0.9 + breathWave * 0.2);
-    float breathGlow = 1.0 - smootherstep(0.0, breathRadius, dist);
+    float breathGlow = 1.0 - bio_smootherstep(0.0, breathRadius, dist);
 
     // Combine glows
     float finalGlow = mix(glowFalloff, breathGlow, 0.5) * pulseIntensity;
@@ -162,8 +162,8 @@ float fbm(float2 p, int octaves) {
     // === EDGE HIGHLIGHT ===
     // Bright edge ring for depth
     float edgeWidth = 0.02;
-    float edge = smootherstep(normalizedRadius - edgeWidth, normalizedRadius, dist) *
-                 (1.0 - smootherstep(normalizedRadius, normalizedRadius + edgeWidth, dist));
+    float edge = bio_smootherstep(normalizedRadius - edgeWidth, normalizedRadius, dist) *
+                 (1.0 - bio_smootherstep(normalizedRadius, normalizedRadius + edgeWidth, dist));
     edge *= 0.5;
 
     // === ANGULAR VARIATION ===
@@ -210,8 +210,8 @@ float fbm(float2 p, int octaves) {
     float ringRadius = pulse * 0.5;  // Expands from center
 
     // Ring with smooth falloff
-    float ring = smootherstep(ringRadius - ringWidth, ringRadius, dist) *
-                 (1.0 - smootherstep(ringRadius, ringRadius + ringWidth, dist));
+    float ring = bio_smootherstep(ringRadius - ringWidth, ringRadius, dist) *
+                 (1.0 - bio_smootherstep(ringRadius, ringRadius + ringWidth, dist));
 
     // Fade out as ring expands
     ring *= 1.0 - pulse;
@@ -296,17 +296,17 @@ float fbm(float2 p, int octaves) {
     float breath;
     if (breathPhase < 0.5) {
         // Inhale (expand)
-        breath = smootherstep(0.0, 0.5, breathPhase);
+        breath = bio_smootherstep(0.0, 0.5, breathPhase);
     } else {
         // Exhale (contract)
-        breath = 1.0 - smootherstep(0.5, 1.0, breathPhase);
+        breath = 1.0 - bio_smootherstep(0.5, 1.0, breathPhase);
     }
 
     float radius = mix(minRadius, maxRadius, breath);
 
     // Circle with soft edge
-    float circle = smootherstep(radius + 0.02, radius, dist) *
-                   (1.0 - smootherstep(radius - 0.02, radius - 0.04, dist));
+    float circle = bio_smootherstep(radius + 0.02, radius, dist) *
+                   (1.0 - bio_smootherstep(radius - 0.02, radius - 0.04, dist));
 
     // Fill color based on phase
     float3 fillColor;
@@ -317,7 +317,7 @@ float fbm(float2 p, int octaves) {
     }
 
     // Inner fill (semi-transparent)
-    float innerFill = 1.0 - smootherstep(0.0, radius - 0.02, dist);
+    float innerFill = 1.0 - bio_smootherstep(0.0, radius - 0.02, dist);
     innerFill *= 0.2;
 
     half4 original = layer.sample(position);
@@ -349,8 +349,8 @@ float fbm(float2 p, int octaves) {
         // Particle position with coherence-based movement
         float speed = 0.1 + coherence * 0.2;
         float2 particlePos = float2(
-            fract(hash(float2(fi, 0.0)) + time * speed * hash(float2(fi, 1.0))),
-            fract(hash(float2(fi, 2.0)) + time * speed * 0.5 * hash(float2(fi, 3.0)))
+            fract(bio_hash(float2(fi, 0.0)) + time * speed * bio_hash(float2(fi, 1.0))),
+            fract(bio_hash(float2(fi, 2.0)) + time * speed * 0.5 * bio_hash(float2(fi, 3.0)))
         );
 
         // Particle size varies with coherence
@@ -360,7 +360,7 @@ float fbm(float2 p, int octaves) {
         float dist = length(uv - particlePos);
 
         // Soft particle with glow
-        float particle = smootherstep(particleSize, 0.0, dist);
+        float particle = bio_smootherstep(particleSize, 0.0, dist);
         particles += particle;
     }
 
