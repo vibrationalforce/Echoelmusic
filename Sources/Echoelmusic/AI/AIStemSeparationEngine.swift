@@ -475,8 +475,9 @@ public final class AIStemSeparationEngine: ObservableObject {
 
         // Pack input into split complex
         input.withUnsafeBufferPointer { inputPtr in
+            guard let base = inputPtr.baseAddress else { return }
             var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
-            inputPtr.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: halfN) { complexPtr in
+            base.withMemoryRebound(to: DSPComplex.self, capacity: halfN) { complexPtr in
                 vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(halfN))
             }
         }
@@ -919,7 +920,8 @@ public final class AIStemSeparationEngine: ObservableObject {
 
         for ch in 0..<channels {
             processedSamples[ch].withUnsafeBufferPointer { ptr in
-                floatData[ch].update(from: ptr.baseAddress!, count: Int(frameCount))
+                guard let base = ptr.baseAddress else { return }
+                floatData[ch].update(from: base, count: Int(frameCount))
             }
         }
 
