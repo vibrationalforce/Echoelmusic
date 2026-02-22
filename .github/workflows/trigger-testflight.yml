@@ -1,0 +1,62 @@
+# =============================================================================
+# ECHOELMUSIC - TRIGGER TESTFLIGHT ON MAIN UPDATE
+# =============================================================================
+# When main is updated (from auto-merge), trigger the TestFlight workflow
+# =============================================================================
+name: Trigger TestFlight
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'project.yml'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  trigger:
+    name: Trigger TestFlight Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Dispatch TestFlight workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log(`Main updated with commit: ${context.sha}`);
+            console.log('Triggering TestFlight workflow for all platforms...');
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'testflight.yml',
+                ref: 'main',
+                inputs: {
+                  platform: 'all',
+                  clean_build: 'true'
+                }
+              });
+              console.log('TestFlight workflow dispatched successfully!');
+            } catch (error) {
+              console.log(`Failed to dispatch: ${error.message}`);
+              console.log('You may need to trigger TestFlight manually.');
+              core.setFailed(`Dispatch failed: ${error.message}`);
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## TestFlight Trigger" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | Dispatched TestFlight for all platforms |" >> $GITHUB_STEP_SUMMARY
