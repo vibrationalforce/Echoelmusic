@@ -455,5 +455,6 @@ public final class MetronomeEngine: ObservableObject {
 
     deinit {
         timer?.cancel()
+        timer = nil
     }
 }
