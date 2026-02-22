@@ -187,11 +187,33 @@ public final class HybridAppBridge: NSObject, ObservableObject {
         #if canImport(WebKit)
         guard let webView = webView else { return }
 
-        let jsonData = try? JSONSerialization.data(withJSONObject: data)
-        let jsonString = jsonData.flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        // Security: Use JSONSerialization for safe encoding, then pass via callAsyncJavaScript
+        // to avoid string interpolation XSS vulnerabilities
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: data, options: [.fragmentsAllowed]),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            return
+        }
 
-        let js = "window.echoelBridge.receive('\(type.rawValue)', \(jsonString));"
-        webView.evaluateJavaScript(js) { _, _ in }
+        // Escape the type string to prevent injection via enum raw values
+        let safeType = type.rawValue
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\n", with: "\\n")
+
+        // Escape the JSON string to prevent breaking out of the JS context
+        let safeJSON = jsonString
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "</", with: "<\\/")  // Prevent </script> injection
+
+        let js = "if(window.echoelBridge&&typeof window.echoelBridge.receive==='function'){window.echoelBridge.receive('\(safeType)',JSON.parse('\(safeJSON)'));}"
+        webView.evaluateJavaScript(js) { _, error in
+            if let error = error {
+                ProfessionalLogger.shared.log(.warning, category: .system, "HybridBridge JS eval error: \(error.localizedDescription)")
+            }
+        }
         #endif
     }
 

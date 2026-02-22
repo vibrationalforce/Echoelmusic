@@ -40,6 +40,11 @@ class TeamCollaborationHub: ObservableObject {
         log.info("✅ TeamCollaborationHub: Initialized", category: .social)
     }
 
+    deinit {
+        wellnessTimer?.invalidate()
+        wellnessTimer = nil
+    }
+
     // MARK: - Session Management
 
     func createSession(

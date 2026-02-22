@@ -283,6 +283,11 @@ public final class GazeTracker: NSObject, ObservableObject {
         checkAvailability()
     }
 
+    deinit {
+        updateTimer?.invalidate()
+        updateTimer = nil
+    }
+
     private func checkAvailability() {
         #if canImport(ARKit) && !targetEnvironment(simulator)
         isAvailable = ARFaceTrackingConfiguration.isSupported

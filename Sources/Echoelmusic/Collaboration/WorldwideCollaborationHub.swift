@@ -409,6 +409,13 @@ public final class WorldwideCollaborationHub: ObservableObject {
         setupHeartbeat()
     }
 
+    deinit {
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = nil
+        syncTimer?.invalidate()
+        syncTimer = nil
+    }
+
     private func setupNetworkMonitoring() {
         // Monitor network quality
         Timer.publish(every: 5.0, on: .main, in: .common)
