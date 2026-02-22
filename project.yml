@@ -121,6 +121,8 @@ targets:
         NSLocationWhenInUseUsageDescription: "Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences"
         NSLocationAlwaysAndWhenInUseUsageDescription: "Echoelmusic uses your location to discover nearby events, connect with other users, and provide location-aware audio experiences even in the background"
         NSLocalNetworkUsageDescription: "Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces"
+        NSPhotoLibraryUsageDescription: "Echoelmusic can save visualizations, session screenshots, and captured photos to your photo library"
+        NSPhotoLibraryAddUsageDescription: "Echoelmusic can save generated art, captured photos, and recorded video to your photo library"
         NSBonjourServices:
           - "_http._tcp"
           - "_rtsp._tcp"

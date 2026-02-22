@@ -86,6 +86,10 @@
 	<string>Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking.</string>
 	<key>NSEyeTrackingUsageDescription</key>
 	<string>Echoelmusic uses eye tracking for immersive gaze-based audio control on supported devices.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Echoelmusic can save visualizations, session screenshots, and captured photos to your photo library.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Echoelmusic can save generated art, captured photos, and recorded video to your photo library.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIRequiresFullScreen</key>
