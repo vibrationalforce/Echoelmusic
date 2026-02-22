@@ -87,6 +87,17 @@ class InstrumentOrchestrator: ObservableObject {
     // MARK: - Audio Engine Setup
 
     private func setupAudioEngine() {
+        // Ensure AVAudioSession is configured before creating AVAudioEngine.
+        // On first launch the session may not be active yet (e.g. mic permission pending).
+        if !AudioConfiguration.isSessionConfigured {
+            do {
+                try AudioConfiguration.configureAudioSession()
+            } catch {
+                log.warning("InstrumentOrchestrator: AVAudioSession not ready, deferring engine start: \(error)", category: .audio)
+                return
+            }
+        }
+
         audioEngine = AVAudioEngine()
 
         guard let engine = audioEngine else {
