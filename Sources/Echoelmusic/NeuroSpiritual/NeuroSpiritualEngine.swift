@@ -496,7 +496,9 @@ public final class NeuroSpiritualEngine: ObservableObject {
     private func startMotionTracking() {
         #if canImport(CoreMotion)
         if motionManager.isDeviceMotionAvailable {
-            motionManager.deviceMotionUpdateInterval = 1.0 / 60.0
+            // 20Hz is sufficient for body awareness detection (breath, sway).
+            // Reduces accelerometer power draw by ~67% vs 60Hz.
+            motionManager.deviceMotionUpdateInterval = 1.0 / 20.0
             motionManager.startDeviceMotionUpdates()
         }
         #endif

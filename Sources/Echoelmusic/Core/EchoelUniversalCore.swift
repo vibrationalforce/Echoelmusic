@@ -141,9 +141,43 @@ final class EchoelUniversalCore: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // EnergyEfficiencyManager → Universal Core
+        // Adapt performance mode based on battery/power state throttle factor
+        EnergyEfficiencyManager.shared.$systemThrottleFactor
+            .removeDuplicates()
+            .sink { [weak self] throttle in
+                self?.handleThrottleFactorChange(throttle)
+            }
+            .store(in: &cancellables)
+
         // Tools sind bereits verbunden via EchoelTools.shared
 
         log.info("✅ EchoelUniversalCore: Alle Systeme bidirektional verbunden", category: .system)
+    }
+
+    /// Map energy throttle factor (0.0–1.0) to performance mode
+    private func handleThrottleFactorChange(_ throttle: Float) {
+        let newMode: PerformanceMode
+        switch throttle {
+        case ..<0.3:
+            newMode = .minimal
+        case 0.3..<0.5:
+            newMode = .reduced
+        case 0.5..<0.75:
+            newMode = .balanced
+        case 0.75..<0.9:
+            newMode = .high
+        default:
+            newMode = .maximum
+        }
+
+        guard newMode != systemState.performanceMode else { return }
+        systemState.performanceMode = newMode
+
+        let newInterval = tickIntervalForCurrentMode()
+        restartUniversalTimer(intervalMs: newInterval)
+
+        log.info("Throttle factor \(String(format: "%.2f", throttle)) → \(newMode.rawValue) mode", category: .system)
     }
 
     /// Reagiert auf Flow-State Änderungen vom Self-Healing System

@@ -541,6 +541,9 @@ public class SpatialAudioEngine: ObservableObject {
 
         motionManager = manager
 
+        // 30Hz head tracking is perceptually smooth for spatial audio panning.
+        // Default (100Hz) wastes significant power on continuous sensor reads.
+        manager.deviceMotionUpdateInterval = 1.0 / 30.0
         manager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let self = self, let motion = motion else { return }
             Task { @MainActor in

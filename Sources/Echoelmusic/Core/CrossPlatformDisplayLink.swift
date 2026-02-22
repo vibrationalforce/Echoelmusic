@@ -81,6 +81,28 @@ public final class CrossPlatformDisplayLink {
     /// Frame duration
     public private(set) var frameDuration: CFTimeInterval = 1.0 / 60.0
 
+    // MARK: - Idle Detection (Battery Optimization)
+
+    /// Number of consecutive frames with no `needsDisplay` signal before auto-pausing.
+    /// At 60Hz, 120 frames = 2 seconds of idle.
+    private let idleFrameThreshold: UInt64 = 120
+    /// Frames since last `setNeedsDisplay()` call
+    private var framesSinceLastRequest: UInt64 = 0
+    /// Whether the display link is idle-paused (separate from manual stop)
+    private var isIdlePaused = false
+
+    /// Call this to signal that the visual content has changed and the
+    /// display link should keep running. If no subscriber calls this for
+    /// ~2 seconds, the display link auto-pauses to save battery.
+    public func setNeedsDisplay() {
+        framesSinceLastRequest = 0
+        if isIdlePaused {
+            isIdlePaused = false
+            start()
+            log.video("CrossPlatformDisplayLink: Resumed from idle")
+        }
+    }
+
     // MARK: - Subscribers
 
     private var subscribers: [UUID: Callback] = [:]
@@ -239,6 +261,16 @@ public final class CrossPlatformDisplayLink {
 
     #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
     @objc private func displayLinkCallback(_ link: CADisplayLink) {
+        // Idle detection: auto-pause when no visual updates requested
+        framesSinceLastRequest += 1
+        if framesSinceLastRequest >= idleFrameThreshold && !isIdlePaused {
+            isIdlePaused = true
+            link.isPaused = true
+            isRunning = false
+            log.video("CrossPlatformDisplayLink: Auto-paused (idle \(idleFrameThreshold) frames)")
+            return
+        }
+
         let timestamp = link.timestamp
         let duration = link.targetTimestamp - link.timestamp
         frameDuration = duration
@@ -259,6 +291,15 @@ public final class CrossPlatformDisplayLink {
 
     /// Internal tick (macOS CVDisplayLink and timer fallback)
     private func tick() {
+        // Idle detection: auto-pause when no visual updates requested
+        framesSinceLastRequest += 1
+        if framesSinceLastRequest >= idleFrameThreshold && !isIdlePaused {
+            isIdlePaused = true
+            stop()
+            log.video("CrossPlatformDisplayLink: Auto-paused (idle \(idleFrameThreshold) frames)")
+            return
+        }
+
         let now = CACurrentMediaTime()
         let duration = lastTimestamp > 0 ? now - lastTimestamp : frameDuration
 

@@ -6,6 +6,12 @@ import Combine
 #if canImport(UIKit)
 import UIKit
 #endif
+#if canImport(IOKit)
+import IOKit.ps
+#endif
+#if os(watchOS)
+import WatchKit
+#endif
 
 /// Energy Efficiency Manager - Green Computing & Carbon Footprint Tracking
 /// Sustainable software design for minimal environmental impact
@@ -26,6 +32,8 @@ import UIKit
 /// - Carbon intensity data from Electricity Maps API
 @MainActor
 class EnergyEfficiencyManager: ObservableObject {
+
+    static let shared = EnergyEfficiencyManager()
 
     // MARK: - Published State
 
@@ -177,14 +185,13 @@ class EnergyEfficiencyManager: ObservableObject {
     // MARK: - Detect Power Source
 
     private func detectPowerSource() {
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         let batteryState = UIDevice.current.batteryState
         let batteryLevel = UIDevice.current.batteryLevel
 
         switch batteryState {
         case .charging, .full:
-            // Assume renewable if user has specified
             let isRenewable = UserDefaults.standard.bool(forKey: "usingRenewableEnergy")
             currentPowerSource = .pluggedIn(isRenewable: isRenewable)
 
@@ -202,18 +209,86 @@ class EnergyEfficiencyManager: ObservableObject {
         @unknown default:
             currentPowerSource = .battery(level: batteryLevel)
         }
+
+        #elseif os(macOS)
+        detectMacOSPowerSource()
+
+        #elseif os(watchOS)
+        // watchOS uses WKInterfaceDevice for battery state
+        WKInterfaceDevice.current().isBatteryMonitoringEnabled = true
+        let batteryLevel = WKInterfaceDevice.current().batteryLevel
+        let batteryState = WKInterfaceDevice.current().batteryState
+
+        switch batteryState {
+        case .charging, .full:
+            currentPowerSource = .pluggedIn(isRenewable: false)
+            log.performance("⌚ Watch charging (\(Int(batteryLevel * 100))%)")
+        case .unplugged:
+            currentPowerSource = .battery(level: batteryLevel)
+            log.performance("⌚ Watch on battery (\(Int(batteryLevel * 100))%)")
+        @unknown default:
+            currentPowerSource = .battery(level: batteryLevel)
+        }
+
         #else
-        // macOS - assume plugged in
         currentPowerSource = .pluggedIn(isRenewable: false)
         #endif
     }
 
+    #if os(macOS)
+    /// Detect macOS power source via IOKit Power Sources API
+    private func detectMacOSPowerSource() {
+        #if canImport(IOKit)
+        guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+              let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [Any],
+              let firstSource = sources.first,
+              let description = IOPSGetPowerSourceDescription(snapshot, firstSource as CFTypeRef)?
+                  .takeUnretainedValue() as? [String: Any] else {
+            // No battery info available — desktop Mac, assume plugged in
+            currentPowerSource = .pluggedIn(isRenewable: UserDefaults.standard.bool(forKey: "usingRenewableEnergy"))
+            log.performance("🖥️ Desktop Mac — AC power assumed")
+            return
+        }
+
+        let isCharging = (description[kIOPSIsChargingKey] as? Bool) ?? false
+        let currentCapacity = (description[kIOPSCurrentCapacityKey] as? Int) ?? 100
+        let maxCapacity = (description[kIOPSMaxCapacityKey] as? Int) ?? 100
+        let batteryLevel = Float(currentCapacity) / Float(max(1, maxCapacity))
+        let powerSource = (description[kIOPSPowerSourceStateKey] as? String) ?? ""
+
+        if powerSource == kIOPSACPowerValue as String || isCharging {
+            let isRenewable = UserDefaults.standard.bool(forKey: "usingRenewableEnergy")
+            currentPowerSource = .pluggedIn(isRenewable: isRenewable)
+            log.performance("🔌 MacBook on AC power (\(Int(batteryLevel * 100))%)")
+        } else {
+            currentPowerSource = .battery(level: batteryLevel)
+            log.performance("🔋 MacBook on battery (\(Int(batteryLevel * 100))%)")
+        }
+        #else
+        currentPowerSource = .pluggedIn(isRenewable: false)
+        #endif
+    }
+    #endif
+
     // MARK: - Setup Power Monitoring
 
     private func setupPowerMonitoring() {
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         batteryObserver = NotificationCenter.default.addObserver(
             forName: UIDevice.batteryStateDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.detectPowerSource()
+                self?.adjustForPowerSource()
+            }
+        }
+        #elseif os(macOS)
+        // macOS: monitor Low Power Mode changes; re-detect power source periodically
+        // via the 30s monitoring timer (IOKit has no push notification for AC/battery change)
+        batteryObserver = NotificationCenter.default.addObserver(
+            forName: .NSProcessInfoPowerStateDidChange,
             object: nil,
             queue: .main
         ) { [weak self] _ in

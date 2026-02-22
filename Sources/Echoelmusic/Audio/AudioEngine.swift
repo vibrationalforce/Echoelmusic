@@ -184,8 +184,14 @@ public class AudioEngine: ObservableObject {
         // Stop bio-parameter mapping
         stopBioParameterMapping()
 
+        // Deactivate audio session to power down audio hardware.
+        // notifyOthersOnDeactivation lets other apps resume playback.
+        #if canImport(AVFoundation) && !os(macOS)
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        #endif
+
         isRunning = false
-        log.audio("🎵 AudioEngine stopped")
+        log.audio("🎵 AudioEngine stopped — audio session deactivated")
     }
 
     /// Toggle Multidimensional Brainwave Entrainment on/off

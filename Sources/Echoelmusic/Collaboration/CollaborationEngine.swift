@@ -1,6 +1,9 @@
 import Foundation
 import Combine
 import Network
+#if canImport(UIKit) && !os(watchOS)
+import UIKit
+#endif
 
 /// Collaboration Engine - Ultra-Low-Latency Multiplayer with WebRTC
 /// Group Bio-Sync, Shared Metronome, Collective Coherence
@@ -33,6 +36,47 @@ class CollaborationEngine: ObservableObject {
 
     /// Signaling server URL
     private let signalingURL = "wss://signaling.echoelmusic.com"
+
+    /// Whether we were connected before entering background
+    private var wasConnectedBeforeBackground = false
+    private var sceneObservers: [NSObjectProtocol] = []
+
+    // MARK: - Background Lifecycle
+
+    /// Pause collaboration when app enters background to save network/battery.
+    func setupBackgroundHandling() {
+        #if canImport(UIKit) && !os(watchOS)
+        let bgObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.connectionState == .connected else { return }
+                self.wasConnectedBeforeBackground = true
+                self.signalingClient?.disconnect()
+                self.webRTCClient?.disconnect()
+                self.connectionState = .disconnected
+                log.collaboration("📡 Collaboration paused (background)")
+            }
+        }
+
+        let fgObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.wasConnectedBeforeBackground else { return }
+                self.wasConnectedBeforeBackground = false
+                try? await self.createSession(as: false)
+                log.collaboration("📡 Collaboration resumed (foreground)")
+            }
+        }
+
+        sceneObservers = [bgObserver, fgObserver]
+        #endif
+    }
 
     // MARK: - Connection State
 

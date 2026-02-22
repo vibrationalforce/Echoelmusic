@@ -665,6 +665,13 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
         if activeInputDevice?.id == device.id {
             activeInputDevice = nil
         }
+
+        // Deactivate audio session when no devices remain connected
+        if connectedDevices.isEmpty {
+            #if canImport(AVFoundation) && !os(macOS)
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            #endif
+        }
     }
 
     /// Enable direct monitoring (zero-latency passthrough)
