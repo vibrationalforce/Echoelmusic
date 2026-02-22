@@ -52,11 +52,8 @@ final class VideoAICreativeHub: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     // Lazy to avoid circular dependency: EchoelUniversalCore.shared -> VideoAICreativeHub.shared -> EchoelUniversalCore.shared
-    private var _universalCore: EchoelUniversalCore?
-    private var universalCore: EchoelUniversalCore {
-        if _universalCore == nil { _universalCore = EchoelUniversalCore.shared }
-        return _universalCore!
-    }
+    // Safe because @MainActor guarantees single-threaded access.
+    private lazy var universalCore: EchoelUniversalCore = EchoelUniversalCore.shared
     private var connectionsSetUp = false
 
     // MARK: - Initialization
