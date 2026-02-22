@@ -1,6 +1,8 @@
 # =============================================================================
 # ECHOELMUSIC - AUTO-MERGE CLAUDE BRANCHES
 # =============================================================================
+# Direct merge approach: checkout main, merge claude branch commit, push
+# =============================================================================
 name: Auto-Merge Claude Branch
 
 on:
@@ -16,7 +18,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   auto-merge:
@@ -25,70 +26,83 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Create PR via API
-        uses: actions/github-script@v7
-        id: create-pr
+      - name: Checkout main
+        uses: actions/checkout@v4
         with:
-          script: |
-            const branch = context.ref.replace('refs/heads/', '');
-            console.log(`Branch: ${branch}, SHA: ${context.sha}`);
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-            // Check for existing open PR
-            const { data: existingPRs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:${branch}`,
-              base: 'main'
-            });
+      - name: Fetch pushed commit
+        id: fetch
+        run: |
+          echo "=============================================="
+          echo "  FETCHING PUSHED COMMIT"
+          echo "=============================================="
+          echo "Push SHA: ${{ github.sha }}"
+          echo "Push branch: ${{ github.ref_name }}"
 
-            let prNumber;
-            if (existingPRs.length > 0) {
-              prNumber = existingPRs[0].number;
-              console.log(`Existing PR #${prNumber}`);
-            } else {
-              const { data: pr } = await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `fix: auto-merge from ${branch}`,
-                head: branch,
-                base: 'main',
-                body: `Auto-merge claude branch changes.\nCommit: ${context.sha}`
-              });
-              prNumber = pr.number;
-              console.log(`Created PR #${prNumber}`);
-            }
+          git fetch origin ${{ github.sha }} --depth=50 || git fetch origin --all
 
-            core.setOutput('pr_number', prNumber);
-            return prNumber;
+          if git cat-file -e ${{ github.sha }}^{commit} 2>/dev/null; then
+            echo "commit_exists=true" >> $GITHUB_OUTPUT
+            echo "[OK] Commit ${{ github.sha }} is accessible"
+          else
+            echo "commit_exists=false" >> $GITHUB_OUTPUT
+            echo "[ERROR] Commit ${{ github.sha }} not found"
+            exit 1
+          fi
 
-      - name: Merge PR
-        if: steps.create-pr.outputs.pr_number
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prNumber = parseInt('${{ steps.create-pr.outputs.pr_number }}');
-            console.log(`Merging PR #${prNumber}...`);
+      - name: Merge to main
+        if: steps.fetch.outputs.commit_exists == 'true'
+        id: merge
+        run: |
+          echo "=============================================="
+          echo "  MERGING CHANGES TO MAIN"
+          echo "=============================================="
 
-            try {
-              await github.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                merge_method: 'squash'
-              });
-              console.log(`PR #${prNumber} merged successfully`);
-            } catch (error) {
-              console.log(`Merge failed: ${error.message}`);
-              console.log('PR may require manual merge or approval');
-            }
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Current branch: $(git branch --show-current)"
+          echo "Current HEAD: $(git rev-parse HEAD)"
+          echo "Target commit: ${{ github.sha }}"
+
+          # Show what we're merging
+          echo ""
+          echo "Files changed:"
+          git diff --name-only HEAD..${{ github.sha }} 2>/dev/null || echo "(could not diff)"
+          echo ""
+
+          # Try merge
+          if git merge ${{ github.sha }} --no-edit -m "fix: auto-merge from ${{ github.ref_name }}"; then
+            echo ""
+            echo "Merge successful, pushing to main..."
+            echo "New HEAD: $(git rev-parse HEAD)"
+
+            if git push origin main 2>&1; then
+              echo "merge_status=success" >> $GITHUB_OUTPUT
+              echo "[OK] Pushed to main successfully!"
+            else
+              echo "merge_status=push_failed" >> $GITHUB_OUTPUT
+              echo "[ERROR] Push to main failed"
+              exit 1
+            fi
+          else
+            echo "merge_status=conflict" >> $GITHUB_OUTPUT
+            echo "[ERROR] Merge failed - conflicts detected"
+            git merge --abort 2>/dev/null || true
+            exit 1
+          fi
 
       - name: Summary
         if: always()
         run: |
           echo "## Auto-Merge Claude Branch" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| PR | #${{ steps.create-pr.outputs.pr_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pushed Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Source Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit Found | ${{ steps.fetch.outputs.commit_exists == 'true' && 'Yes' || 'No' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Merge Status | ${{ steps.merge.outputs.merge_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
