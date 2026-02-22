@@ -175,14 +175,43 @@ public class ARFaceTrackingManager: NSObject, ObservableObject {
 
     // MARK: - Lifecycle
 
-    /// Start face tracking
+    /// Start face tracking (requires TrueDepth camera + camera permission)
     public func start() {
         guard ARFaceTrackingConfiguration.isSupported else {
-            log.spatial("[ARFaceTrackingManager] ❌ Face tracking not supported on this device", level: .error)
+            log.spatial("[ARFaceTrackingManager] Face tracking not supported on this device", level: .error)
             return
         }
 
-        log.spatial("[ARFaceTrackingManager] ▶️ Starting face tracking...")
+        // Check camera permission before starting ARSession
+        let cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        switch cameraStatus {
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                Task { @MainActor in
+                    if granted {
+                        AdaptiveCapabilityManager.shared.refresh(.camera)
+                        AdaptiveCapabilityManager.shared.refresh(.faceTracking)
+                        self?.startSession()
+                    } else {
+                        log.spatial("[ARFaceTrackingManager] Camera permission denied", level: .warning)
+                    }
+                }
+            }
+            return
+        case .denied, .restricted:
+            log.spatial("[ARFaceTrackingManager] Camera permission denied — face tracking unavailable", level: .warning)
+            return
+        case .authorized:
+            break
+        @unknown default:
+            break
+        }
+
+        startSession()
+    }
+
+    private func startSession() {
+        log.spatial("[ARFaceTrackingManager] Starting face tracking...")
 
         let config = ARFaceTrackingConfiguration()
         config.isLightEstimationEnabled = false

@@ -119,6 +119,9 @@ struct EchoelmusicApp: App {
     /// Wrapped in do/catch so a single failure doesn't crash the entire app.
     private func initializeCoreSystems() async {
         do {
+            // Phase 0: Detect hardware + permissions (all other systems query this)
+            await MainActor.run { _ = AdaptiveCapabilityManager.shared }
+
             // Phase 1: Foundation singletons (no cross-references)
             await MainActor.run { _ = UnifiedHealthKitEngine.shared }
             await MainActor.run { _ = PushNotificationManager.shared }

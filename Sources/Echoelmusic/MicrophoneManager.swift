@@ -89,9 +89,9 @@ class MicrophoneManager: NSObject, ObservableObject {
                 let granted = await AVAudioApplication.requestRecordPermission()
                 await MainActor.run {
                     self.hasPermission = granted
+                    AdaptiveCapabilityManager.shared.refresh(.microphone)
                     if granted {
                         log.audio("Microphone permission granted")
-                        // Upgrade audio session to playAndRecord now that mic is available
                         try? AudioConfiguration.upgradeToPlayAndRecord()
                     } else {
                         log.audio("Microphone permission denied", level: .error)
@@ -102,6 +102,7 @@ class MicrophoneManager: NSObject, ObservableObject {
             AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
                 DispatchQueue.main.async {
                     self?.hasPermission = granted
+                    AdaptiveCapabilityManager.shared.refresh(.microphone)
                     if granted {
                         log.audio("Microphone permission granted")
                         try? AudioConfiguration.upgradeToPlayAndRecord()

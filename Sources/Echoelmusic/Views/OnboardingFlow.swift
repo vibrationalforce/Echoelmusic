@@ -346,6 +346,7 @@ private struct PermissionsPage: View {
                 let granted = await AVAudioApplication.requestRecordPermission()
                 await MainActor.run {
                     manager.checkPermissions()
+                    AdaptiveCapabilityManager.shared.refresh(.microphone)
                     hapticFeedback(granted ? .success : .error)
                     if granted {
                         try? AudioConfiguration.upgradeToPlayAndRecord()
@@ -356,6 +357,7 @@ private struct PermissionsPage: View {
             AVAudioSession.sharedInstance().requestRecordPermission { granted in
                 DispatchQueue.main.async {
                     manager.checkPermissions()
+                    AdaptiveCapabilityManager.shared.refresh(.microphone)
                     hapticFeedback(granted ? .success : .error)
                     if granted {
                         try? AudioConfiguration.upgradeToPlayAndRecord()

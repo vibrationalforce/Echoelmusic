@@ -5,6 +5,15 @@ import CoreMotion
 #if canImport(UIKit)
 import UIKit
 #endif
+#if canImport(CoreHaptics)
+import CoreHaptics
+#endif
+#if canImport(ARKit)
+import ARKit
+#endif
+#if canImport(HealthKit)
+import HealthKit
+#endif
 import AVFoundation
 import Combine
 
@@ -242,13 +251,11 @@ class HardwareAbstractionLayer: ObservableObject {
 
             #if os(iOS)
             do {
-                try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [.allowBluetooth, .defaultToSpeaker])
-                try AVAudioSession.sharedInstance().setPreferredSampleRate(sampleRate)
-                try AVAudioSession.sharedInstance().setPreferredIOBufferDuration(Double(bufferSize) / sampleRate)
-                try AVAudioSession.sharedInstance().setActive(true)
-                log.hardware("✅ Audio configured: \(sampleRate) Hz, \(bufferSize) samples")
+                // Use AudioConfiguration's fallback-safe setup
+                try AudioConfiguration.configureAudioSession()
+                log.hardware("Audio configured: \(sampleRate) Hz, \(bufferSize) samples")
             } catch {
-                log.hardware("❌ Audio configuration failed: \(error)", level: .error)
+                log.hardware("Audio configuration failed: \(error)", level: .error)
             }
             #endif
         }
@@ -389,28 +396,45 @@ class HardwareAbstractionLayer: ObservableObject {
 
         #if os(iOS)
         caps.hasTouchScreen = true
-        caps.hasCamera = true
-        caps.hasMicrophone = true
+        caps.hasCamera = AVCaptureDevice.default(for: .video) != nil
+        caps.hasMicrophone = true  // All iPhones have microphones
         caps.hasGPS = true
         caps.hasBluetooth = true
         caps.hasWiFi = true
         caps.hasCellular = true
         caps.hasBattery = true
-        caps.supportsHealthKit = true
         caps.supportsCoreML = true
 
         let screen = DisplayInterface.currentScreen
         caps.maxFPS = screen.maximumFramesPerSecond
-        caps.supportsMetalFX = caps.maxFPS >= 120  // Simplified check
+        caps.supportsMetalFX = caps.maxFPS >= 120
 
-        // Haptics
-        caps.hasHaptics = true
+        // Haptics - detect actual hardware support
+        #if canImport(CoreHaptics)
+        caps.hasHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
+        #else
+        caps.hasHaptics = false
+        #endif
 
-        // Check for HealthKit sensors
-        // In production, would check HealthKit authorization
-        caps.hasHeartRateSensor = false  // Requires Apple Watch
+        // LiDAR - detect via ARKit scene reconstruction
+        #if canImport(ARKit)
+        caps.hasLiDAR = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
+        #endif
+
+        // HealthKit - check actual availability, not assume
+        #if canImport(HealthKit)
+        caps.supportsHealthKit = HKHealthStore.isHealthDataAvailable()
+        #else
+        caps.supportsHealthKit = false
+        #endif
+
+        // Health sensors require Apple Watch
+        caps.hasHeartRateSensor = false
         caps.hasECG = false
         caps.hasBloodOxygenSensor = false
+
+        // Eye tracking only on visionOS
+        caps.hasEyeTracking = false
 
         #elseif os(macOS)
         caps.hasKeyboard = true
