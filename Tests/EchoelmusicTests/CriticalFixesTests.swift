@@ -321,7 +321,6 @@ final class CriticalFixesTests: XCTestCase {
             }
         }
     }
-}
 
     // MARK: - Timer Cleanup Regression Tests
 
