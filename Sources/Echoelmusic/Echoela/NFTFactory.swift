@@ -442,12 +442,65 @@ public final class NFTFactory: ObservableObject {
         return mintedNFT
     }
 
-    /// Get consent for biometric data usage (GDPR compliant)
+    /// Pending consent continuation — set by the UI alert and resolved by user action
+    private var consentContinuation: CheckedContinuation<Bool, Never>?
+
+    /// Whether a consent dialog is currently showing
+    @Published public var isShowingConsentDialog: Bool = false
+
+    /// The usage type being requested
+    @Published public var pendingConsentUsage: BiometricDataUsage?
+
+    /// Get consent for biometric data usage (GDPR compliant).
+    /// Presents a consent dialog and waits for the user's response.
     public func requestBiometricConsent(for usage: BiometricDataUsage) async -> Bool {
-        // This would present a consent dialog to the user
-        // For now, return placeholder
         log.info("Requesting biometric consent for: \(usage.rawValue)")
-        return true
+
+        // Check if user has already given consent for this usage type
+        let consentKey = "echoelmusic.biometricConsent.\(usage.rawValue)"
+        if UserDefaults.standard.bool(forKey: consentKey) {
+            log.info("Biometric consent already granted for: \(usage.rawValue)")
+            return true
+        }
+
+        // Present consent dialog and wait for user response
+        pendingConsentUsage = usage
+        isShowingConsentDialog = true
+
+        let granted = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            self.consentContinuation = continuation
+        }
+
+        // Persist consent if granted
+        if granted {
+            UserDefaults.standard.set(true, forKey: consentKey)
+            log.info("Biometric consent granted for: \(usage.rawValue)")
+        } else {
+            log.info("Biometric consent denied for: \(usage.rawValue)")
+        }
+
+        isShowingConsentDialog = false
+        pendingConsentUsage = nil
+        return granted
+    }
+
+    /// Called by the UI when the user taps Accept on the consent dialog.
+    public func grantBiometricConsent() {
+        consentContinuation?.resume(returning: true)
+        consentContinuation = nil
+    }
+
+    /// Called by the UI when the user taps Decline on the consent dialog.
+    public func denyBiometricConsent() {
+        consentContinuation?.resume(returning: false)
+        consentContinuation = nil
+    }
+
+    /// Revoke previously granted consent (GDPR right to withdraw).
+    public func revokeBiometricConsent(for usage: BiometricDataUsage) {
+        let consentKey = "echoelmusic.biometricConsent.\(usage.rawValue)"
+        UserDefaults.standard.removeObject(forKey: consentKey)
+        log.info("Biometric consent revoked for: \(usage.rawValue)")
     }
 
     public enum BiometricDataUsage: String {
