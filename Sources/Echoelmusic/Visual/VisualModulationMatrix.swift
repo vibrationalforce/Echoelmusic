@@ -566,11 +566,13 @@ struct AudioModulatorState: Identifiable {
         let targetCoeff: Float
         if rawValue > smoothedValue {
             // Attack
-            let attackCoeff: Float = attackTime > 0 ? 1.0 - Float(Foundation.exp(Double(-deltaTime / attackTime))) : 1.0
+            let exponent: Float = -deltaTime / attackTime
+            let attackCoeff: Float = attackTime > 0 ? 1.0 - Foundation.exp(exponent) : 1.0
             targetCoeff = attackCoeff
         } else {
             // Release
-            let releaseCoeff: Float = releaseTime > 0 ? 1.0 - Float(Foundation.exp(Double(-deltaTime / releaseTime))) : 1.0
+            let exponent: Float = -deltaTime / releaseTime
+            let releaseCoeff: Float = releaseTime > 0 ? 1.0 - Foundation.exp(exponent) : 1.0
             targetCoeff = releaseCoeff
         }
 
