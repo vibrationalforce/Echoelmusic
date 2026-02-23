@@ -21,13 +21,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26'
   XCODEGEN_VERSION: '2.42.0'
 
 jobs:
   benchmark:
     name: Build & Size Benchmarks
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:

@@ -24,7 +24,7 @@ on:
 env:
   BUILD_TYPE: Release
   IPLUG2_VERSION: master
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26'
 
 jobs:
   # ============================================
@@ -112,7 +112,7 @@ jobs:
   # macOS Build (VST3, AU, CLAP, Standalone)
   # ============================================
   build-macos:
-    runs-on: macos-14
+    runs-on: macos-15
     continue-on-error: true
     steps:
       - name: Checkout

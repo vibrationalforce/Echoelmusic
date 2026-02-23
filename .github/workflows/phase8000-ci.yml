@@ -10,13 +10,13 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26'
 
 jobs:
   # Job 1: Swift Matrix Build (All Apple Platforms)
   swift-matrix-build:
     name: Build (${{ matrix.platform }})
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +61,7 @@ jobs:
   # Job 2: Comprehensive Test Suite
   comprehensive-tests:
     name: Test Suite (1654+ Tests)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: swift-matrix-build
 
     steps:
@@ -206,7 +206,7 @@ jobs:
   # Job 6: Performance Benchmarks
   performance-benchmarks:
     name: Performance Benchmarks
-    runs-on: macos-14
+    runs-on: macos-15
     needs: comprehensive-tests
     continue-on-error: true
 
@@ -226,7 +226,7 @@ jobs:
   # Job 7: Documentation Generation
   documentation:
     name: Generate Documentation
-    runs-on: macos-14
+    runs-on: macos-15
     needs: swift-matrix-build
     continue-on-error: true
 
@@ -257,7 +257,7 @@ jobs:
   # Job 8: Release Build
   release-build:
     name: Release Build
-    runs-on: macos-14
+    runs-on: macos-15
     needs: [comprehensive-tests, code-quality, security-scan]
     if: github.ref == 'refs/heads/main'
     continue-on-error: true
@@ -281,7 +281,7 @@ jobs:
       run: |
         xcodebuild build \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro' \
           -configuration Release \
           CODE_SIGNING_ALLOWED=NO \
           2>&1 | xcpretty || true

@@ -15,9 +15,9 @@ Complete guide to building Echoelmusic from source on all platforms.
 ### Platform-Specific
 
 #### macOS / iOS
-- **Xcode** 14.0 or later
-- **macOS** 12.0 (Monterey) or later
-- **iOS SDK** 15.0 or later (for iOS builds)
+- **Xcode** 26 or later
+- **macOS** 15.0 (Sequoia) or later
+- **iOS SDK** 26 or later (for iOS builds)
 - **Developer Tools**: `xcode-select --install`
 
 #### Windows

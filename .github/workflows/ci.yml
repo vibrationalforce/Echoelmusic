@@ -21,14 +21,14 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26'
   XCODEGEN_VERSION: '2.42.0'
 
 jobs:
   # Job 1: Code Quality & Linting
   code-quality:
     name: Code Quality & Linting
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
     - name: Checkout code
@@ -75,16 +75,16 @@ jobs:
   # Job 2: Build & Test - iOS
   build-test-ios:
     name: Build & Test (iOS)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: code-quality
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - destination: 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro'
+          - destination: 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro'
             name: 'iPhone 16 Pro'
-          - destination: 'platform=iOS Simulator,OS=18.2,name=iPhone SE (3rd generation)'
+          - destination: 'platform=iOS Simulator,OS=26.0,name=iPhone SE (3rd generation)'
             name: 'iPhone SE'
 
     steps:
@@ -188,7 +188,7 @@ jobs:
   # Job 3: Build & Test - macOS
   build-test-macos:
     name: Build & Test (macOS)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: code-quality
 
     steps:
@@ -247,7 +247,7 @@ jobs:
   # Job 4: Build - watchOS
   build-watchos:
     name: Build (watchOS)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: code-quality
 
     steps:
@@ -282,7 +282,7 @@ jobs:
   # Job 5: Build - tvOS
   build-tvos:
     name: Build (tvOS)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: code-quality
 
     steps:
@@ -317,7 +317,7 @@ jobs:
   # Job 6: Build - visionOS
   build-visionos:
     name: Build (visionOS)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: code-quality
 
     steps:
@@ -352,7 +352,7 @@ jobs:
   # Job 7: Performance Tests
   performance-tests:
     name: Performance & Memory Tests
-    runs-on: macos-14
+    runs-on: macos-15
     needs: [build-test-ios, build-test-macos, build-watchos, build-tvos, build-visionos]
     continue-on-error: true
 
@@ -380,7 +380,7 @@ jobs:
       run: |
         xcodebuild test \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro' \
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testAdaptiveQualityAdjustment \
           -only-testing:EchoelmusicTests/ComprehensiveTestSuite/testMemoryOptimizationCaching \
           CODE_SIGNING_ALLOWED=NO \
@@ -392,7 +392,7 @@ jobs:
         echo "🔍 Checking for memory leaks..."
         xcodebuild test \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro' \
           -enableAddressSanitizer YES \
           CODE_SIGNING_ALLOWED=NO \
           2>&1 | xcpretty || true
@@ -421,7 +421,7 @@ jobs:
   # Job 6: Build Archive (Release)
   build-archive:
     name: Build Archive (Release)
-    runs-on: macos-14
+    runs-on: macos-15
     needs: [build-test-ios, build-test-macos]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
@@ -479,7 +479,7 @@ jobs:
   # Job 7: Documentation Generation
   generate-docs:
     name: Generate Documentation
-    runs-on: macos-14
+    runs-on: macos-15
     if: github.ref == 'refs/heads/main'
 
     steps:

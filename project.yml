@@ -22,7 +22,7 @@ name: Echoelmusic
 
 options:
   bundleIdPrefix: com.echoelmusic
-  xcodeVersion: "16.2"
+  xcodeVersion: "26"
   deploymentTarget:
     iOS: "15.0"
     macOS: "12.0"
