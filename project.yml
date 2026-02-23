@@ -168,6 +168,8 @@ targets:
     dependencies:
       - target: EchoelmusicNotificationService
         embed: true
+      - target: EchoelmusicAUv3
+        embed: true
       - target: EchoelmusicWidgets
         embed: true
       - target: EchoelmusicClip
@@ -895,6 +897,7 @@ schemes:
       targets:
         Echoelmusic: all
         EchoelmusicNotificationService: all
+        EchoelmusicAUv3: all
         EchoelmusicWidgets: all
         EchoelmusicClip: all
         EchoelmusicTests: [test]
@@ -1000,6 +1003,7 @@ schemes:
       targets:
         Echoelmusic: [archive]
         EchoelmusicNotificationService: [archive]
+        EchoelmusicAUv3: [archive]
         EchoelmusicWidgets: [archive]
         EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]

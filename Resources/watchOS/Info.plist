@@ -55,7 +55,7 @@
 		<string>CLKComplicationFamilyGraphicRectangular</string>
 	</array>
 	<key>MinimumOSVersion</key>
-	<string>9.0</string>
+	<string>8.0</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Echoelmusic uses microphone for voice commands and breathing detection.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

@@ -20,19 +20,12 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UILaunchScreen</key>
-	<dict/>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
-		<string>bluetooth-central</string>
 	</array>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Echoelmusic connects to Bluetooth devices for bio-data and audio control.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Echoelmusic uses local network to receive bio-data from iPhone/Apple Watch via AirPlay.</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -46,8 +39,6 @@
 	</dict>
 	<key>MinimumOSVersion</key>
 	<string>15.0</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Echoelmusic uses microphone for voice commands and audio capture.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
