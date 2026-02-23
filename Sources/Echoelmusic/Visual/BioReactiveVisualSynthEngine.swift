@@ -309,30 +309,30 @@ public struct VisualScene: Identifiable, Sendable {
 ///
 /// Routes define how bio and audio signals modulate visual parameters. The
 /// modulation matrix evaluates all routes each frame.
-public struct ModulationRoute: Identifiable, Sendable {
+public struct BioReactiveModulationRoute: Identifiable, Sendable {
     public let id: String
 
     /// Source signal type
-    public var source: ModulationSource
+    public var source: BioReactiveModulationSource
 
     /// Destination visual parameter
-    public var destination: ModulationDestination
+    public var destination: BioReactiveModulationDestination
 
     /// Modulation amount (0.0 = no modulation, 1.0 = full range)
     public var amount: Float
 
     /// Curve applied to the source signal before modulation
-    public var curve: ModulationCurve
+    public var curve: BioReactiveModulationCurve
 
     /// Whether this route is currently active
     public var isActive: Bool
 
     public init(
         id: String = UUID().uuidString,
-        source: ModulationSource,
-        destination: ModulationDestination,
+        source: BioReactiveModulationSource,
+        destination: BioReactiveModulationDestination,
         amount: Float = 1.0,
-        curve: ModulationCurve = .linear,
+        curve: BioReactiveModulationCurve = .linear,
         isActive: Bool = true
     ) {
         self.id = id
@@ -345,7 +345,7 @@ public struct ModulationRoute: Identifiable, Sendable {
 }
 
 /// Available modulation source signals
-public enum ModulationSource: String, CaseIterable, Sendable {
+public enum BioReactiveModulationSource: String, CaseIterable, Sendable {
     case coherence = "Coherence"
     case heartRate = "Heart Rate"
     case breathPhase = "Breath Phase"
@@ -361,7 +361,7 @@ public enum ModulationSource: String, CaseIterable, Sendable {
 }
 
 /// Available modulation destination parameters
-public enum ModulationDestination: String, CaseIterable, Sendable {
+public enum BioReactiveModulationDestination: String, CaseIterable, Sendable {
     case colorHue = "Color Hue"
     case colorSaturation = "Color Saturation"
     case colorBrightness = "Color Brightness"
@@ -380,7 +380,7 @@ public enum ModulationDestination: String, CaseIterable, Sendable {
 }
 
 /// Curve shapes for modulation mapping
-public enum ModulationCurve: String, CaseIterable, Sendable {
+public enum BioReactiveModulationCurve: String, CaseIterable, Sendable {
     case linear = "Linear"
     case exponential = "Exponential"
     case logarithmic = "Logarithmic"
@@ -414,7 +414,7 @@ public enum ModulationCurve: String, CaseIterable, Sendable {
 // MARK: - Scene Transition
 
 /// Describes a transition between two visual scenes
-public struct SceneTransition {
+public struct BioReactiveSceneTransition {
     /// Target scene to transition to
     public let targetScene: VisualScene
 
@@ -505,10 +505,10 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
     @Published public var scenes: [VisualScene] = []
 
     /// Active modulation routes
-    @Published public var modulationRoutes: [ModulationRoute] = []
+    @Published public var modulationRoutes: [BioReactiveModulationRoute] = []
 
     /// In-progress scene transition (nil if no transition is active)
-    @Published public private(set) var activeTransition: SceneTransition?
+    @Published public private(set) var activeTransition: BioReactiveSceneTransition?
 
     /// Whether output to video protocols is active
     @Published public private(set) var isOutputActive: Bool = false
@@ -646,71 +646,71 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
     // MARK: - Default Modulation Routes per Profile
 
     /// Creates the default modulation route set for a given profile
-    private static func createDefaultRoutes(for profile: BioReactiveProfile) -> [ModulationRoute] {
+    private static func createDefaultRoutes(for profile: BioReactiveProfile) -> [BioReactiveModulationRoute] {
         switch profile {
         case .meditation:
             return [
-                ModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.8, curve: .sCurve),
-                ModulationRoute(source: .coherence, destination: .geometryComplexity, amount: 0.6, curve: .logarithmic),
-                ModulationRoute(source: .breathPhase, destination: .scaleOscillation, amount: 0.7, curve: .linear),
-                ModulationRoute(source: .breathPhase, destination: .opacityPulse, amount: 0.4, curve: .sCurve),
-                ModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.3, curve: .linear),
-                ModulationRoute(source: .hrvRaw, destination: .blendSmoothness, amount: 0.5, curve: .logarithmic)
+                BioReactiveModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.8, curve: .sCurve),
+                BioReactiveModulationRoute(source: .coherence, destination: .geometryComplexity, amount: 0.6, curve: .logarithmic),
+                BioReactiveModulationRoute(source: .breathPhase, destination: .scaleOscillation, amount: 0.7, curve: .linear),
+                BioReactiveModulationRoute(source: .breathPhase, destination: .opacityPulse, amount: 0.4, curve: .sCurve),
+                BioReactiveModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.3, curve: .linear),
+                BioReactiveModulationRoute(source: .hrvRaw, destination: .blendSmoothness, amount: 0.5, curve: .logarithmic)
             ]
 
         case .performance:
             return [
-                ModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.8, curve: .linear),
-                ModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 0.9, curve: .exponential),
-                ModulationRoute(source: .beatPhase, destination: .flashIntensity, amount: 1.0, curve: .exponential),
-                ModulationRoute(source: .bassLevel, destination: .scaleOscillation, amount: 0.7, curve: .linear),
-                ModulationRoute(source: .spectralCentroid, destination: .colorHue, amount: 0.6, curve: .linear),
-                ModulationRoute(source: .coherence, destination: .colorSaturation, amount: 0.4, curve: .sCurve),
-                ModulationRoute(source: .highLevel, destination: .particleSize, amount: 0.5, curve: .exponential)
+                BioReactiveModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.8, curve: .linear),
+                BioReactiveModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 0.9, curve: .exponential),
+                BioReactiveModulationRoute(source: .beatPhase, destination: .flashIntensity, amount: 1.0, curve: .exponential),
+                BioReactiveModulationRoute(source: .bassLevel, destination: .scaleOscillation, amount: 0.7, curve: .linear),
+                BioReactiveModulationRoute(source: .spectralCentroid, destination: .colorHue, amount: 0.6, curve: .linear),
+                BioReactiveModulationRoute(source: .coherence, destination: .colorSaturation, amount: 0.4, curve: .sCurve),
+                BioReactiveModulationRoute(source: .highLevel, destination: .particleSize, amount: 0.5, curve: .exponential)
             ]
 
         case .wellness:
             return [
-                ModulationRoute(source: .breathPhase, destination: .scaleOscillation, amount: 0.8, curve: .sCurve),
-                ModulationRoute(source: .breathPhase, destination: .opacityPulse, amount: 0.6, curve: .sCurve),
-                ModulationRoute(source: .coherence, destination: .geometryComplexity, amount: 0.7, curve: .logarithmic),
-                ModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.8, curve: .sCurve),
-                ModulationRoute(source: .hrvRaw, destination: .detailAmount, amount: 0.4, curve: .linear),
-                ModulationRoute(source: .stressLevel, destination: .chaosLevel, amount: 0.5, curve: .inverseLinear)
+                BioReactiveModulationRoute(source: .breathPhase, destination: .scaleOscillation, amount: 0.8, curve: .sCurve),
+                BioReactiveModulationRoute(source: .breathPhase, destination: .opacityPulse, amount: 0.6, curve: .sCurve),
+                BioReactiveModulationRoute(source: .coherence, destination: .geometryComplexity, amount: 0.7, curve: .logarithmic),
+                BioReactiveModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.8, curve: .sCurve),
+                BioReactiveModulationRoute(source: .hrvRaw, destination: .detailAmount, amount: 0.4, curve: .linear),
+                BioReactiveModulationRoute(source: .stressLevel, destination: .chaosLevel, amount: 0.5, curve: .inverseLinear)
             ]
 
         case .creative:
             return [
-                ModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.5, curve: .linear),
-                ModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.5, curve: .linear),
-                ModulationRoute(source: .breathPhase, destination: .scaleOscillation, amount: 0.5, curve: .linear),
-                ModulationRoute(source: .hrvRaw, destination: .chaosLevel, amount: 0.5, curve: .linear),
-                ModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 0.5, curve: .linear),
-                ModulationRoute(source: .bassLevel, destination: .flashIntensity, amount: 0.5, curve: .linear),
-                ModulationRoute(source: .spectralCentroid, destination: .filterSweep, amount: 0.5, curve: .linear)
+                BioReactiveModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.5, curve: .linear),
+                BioReactiveModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.5, curve: .linear),
+                BioReactiveModulationRoute(source: .breathPhase, destination: .scaleOscillation, amount: 0.5, curve: .linear),
+                BioReactiveModulationRoute(source: .hrvRaw, destination: .chaosLevel, amount: 0.5, curve: .linear),
+                BioReactiveModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 0.5, curve: .linear),
+                BioReactiveModulationRoute(source: .bassLevel, destination: .flashIntensity, amount: 0.5, curve: .linear),
+                BioReactiveModulationRoute(source: .spectralCentroid, destination: .filterSweep, amount: 0.5, curve: .linear)
             ]
 
         case .installation:
             return [
-                ModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.7, curve: .sCurve),
-                ModulationRoute(source: .coherence, destination: .geometryComplexity, amount: 0.8, curve: .logarithmic),
-                ModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.4, curve: .linear),
-                ModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 0.6, curve: .exponential),
-                ModulationRoute(source: .breathPhase, destination: .opacityPulse, amount: 0.5, curve: .sCurve),
-                ModulationRoute(source: .hrvRaw, destination: .detailAmount, amount: 0.6, curve: .linear),
-                ModulationRoute(source: .bassLevel, destination: .scaleOscillation, amount: 0.5, curve: .linear)
+                BioReactiveModulationRoute(source: .coherence, destination: .colorWarmth, amount: 0.7, curve: .sCurve),
+                BioReactiveModulationRoute(source: .coherence, destination: .geometryComplexity, amount: 0.8, curve: .logarithmic),
+                BioReactiveModulationRoute(source: .heartRate, destination: .animationSpeed, amount: 0.4, curve: .linear),
+                BioReactiveModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 0.6, curve: .exponential),
+                BioReactiveModulationRoute(source: .breathPhase, destination: .opacityPulse, amount: 0.5, curve: .sCurve),
+                BioReactiveModulationRoute(source: .hrvRaw, destination: .detailAmount, amount: 0.6, curve: .linear),
+                BioReactiveModulationRoute(source: .bassLevel, destination: .scaleOscillation, amount: 0.5, curve: .linear)
             ]
 
         case .djSet:
             return [
-                ModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 1.0, curve: .exponential),
-                ModulationRoute(source: .bassLevel, destination: .flashIntensity, amount: 0.9, curve: .exponential),
-                ModulationRoute(source: .bassLevel, destination: .scaleOscillation, amount: 0.8, curve: .linear),
-                ModulationRoute(source: .beatPhase, destination: .animationSpeed, amount: 0.7, curve: .linear),
-                ModulationRoute(source: .spectralCentroid, destination: .colorHue, amount: 0.8, curve: .linear),
-                ModulationRoute(source: .highLevel, destination: .particleSize, amount: 0.6, curve: .exponential),
-                ModulationRoute(source: .coherence, destination: .colorSaturation, amount: 0.3, curve: .sCurve),
-                ModulationRoute(source: .midLevel, destination: .filterSweep, amount: 0.7, curve: .linear)
+                BioReactiveModulationRoute(source: .audioLevel, destination: .colorBrightness, amount: 1.0, curve: .exponential),
+                BioReactiveModulationRoute(source: .bassLevel, destination: .flashIntensity, amount: 0.9, curve: .exponential),
+                BioReactiveModulationRoute(source: .bassLevel, destination: .scaleOscillation, amount: 0.8, curve: .linear),
+                BioReactiveModulationRoute(source: .beatPhase, destination: .animationSpeed, amount: 0.7, curve: .linear),
+                BioReactiveModulationRoute(source: .spectralCentroid, destination: .colorHue, amount: 0.8, curve: .linear),
+                BioReactiveModulationRoute(source: .highLevel, destination: .particleSize, amount: 0.6, curve: .exponential),
+                BioReactiveModulationRoute(source: .coherence, destination: .colorSaturation, amount: 0.3, curve: .sCurve),
+                BioReactiveModulationRoute(source: .midLevel, destination: .filterSweep, amount: 0.7, curve: .linear)
             ]
         }
     }
@@ -879,7 +879,7 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
     ///   - scene: The target scene to transition to
     ///   - duration: Duration of the crossfade in seconds (default: 2.0)
     public func triggerTransition(to scene: VisualScene, duration: TimeInterval = 2.0) {
-        activeTransition = SceneTransition(targetScene: scene, duration: duration)
+        activeTransition = BioReactiveSceneTransition(targetScene: scene, duration: duration)
 
         log.log(.info, category: .video, "BioReactiveVisualSynth: Transition started to '\(scene.name)' over \(String(format: "%.1f", duration))s")
 
@@ -1137,7 +1137,7 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
     }
 
     /// Reads the current value of a modulation source, normalized to 0.0-1.0
-    private func readModulationSource(_ source: ModulationSource) -> Float {
+    private func readModulationSource(_ source: BioReactiveModulationSource) -> Float {
         switch source {
         case .coherence:
             return bioState.coherence
@@ -1170,7 +1170,7 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
     }
 
     /// Applies a modulation value to a destination parameter (additive)
-    private func applyModulationToDestination(_ destination: ModulationDestination, value: Float) {
+    private func applyModulationToDestination(_ destination: BioReactiveModulationDestination, value: Float) {
         switch destination {
         case .colorHue:
             modulatedParams.colorHue = fmodf(modulatedParams.colorHue + value, 1.0)

@@ -101,7 +101,8 @@ public struct ISFInput: Codable, Sendable, Identifiable {
         case label = "LABEL"
         case labels = "LABELS"
         case values = "VALUES"
-        case maxBufferSize = "MAX"
+        // maxBufferSize shares the "MAX" JSON key with maxValue;
+        // decoded manually in init(from:) based on input type.
     }
 
     public init(from decoder: Decoder) throws {
@@ -143,7 +144,8 @@ public struct ISFInput: Codable, Sendable, Identifiable {
         case "audio", "audioFFT":
             defaultValue = nil
             minValue = nil
-            maxBufferSize = try container.decodeIfPresent(Int.self, forKey: .maxBufferSize)
+            // For audio types, "MAX" represents maximum buffer size
+            maxBufferSize = try container.decodeIfPresent(Int.self, forKey: .maxValue)
             maxValue = nil
         default:
             defaultValue = nil

@@ -352,6 +352,7 @@ public final class SyphonNDIBridge: ObservableObject {
 
     // MARK: - Frame Submission
 
+    #if canImport(Metal)
     /// Submits a Metal texture to all active output protocols.
     ///
     /// For NDI protocols, the texture is converted to a CVPixelBuffer via the
@@ -362,7 +363,6 @@ public final class SyphonNDIBridge: ObservableObject {
     public func submitFrame(texture: MTLTexture) {
         guard isOutputActive else { return }
 
-        #if canImport(Metal)
         let frameStart = CFAbsoluteTimeGetCurrent()
 
         for proto in activeProtocols {
@@ -392,8 +392,8 @@ public final class SyphonNDIBridge: ObservableObject {
         stats.lastFrameTime = Date()
 
         updateBandwidthEstimate()
-        #endif
     }
+    #endif
 
     /// Renders the current visual compositor output and submits to all active protocols.
     ///

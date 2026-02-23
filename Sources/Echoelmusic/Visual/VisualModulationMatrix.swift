@@ -320,7 +320,7 @@ struct LFOState: Identifiable {
 ///
 /// Envelope generators produce a shaped signal in response to
 /// gate events (MIDI note on/off, beat detection).
-struct EnvelopeState: Identifiable {
+struct VisualEnvelopeState: Identifiable {
     let id: Int
     let index: Int
 
@@ -720,7 +720,7 @@ class VisualModulationMatrix: ObservableObject {
     @Published var lfoStates: [LFOState]
 
     /// The 2 envelope generator states
-    @Published var envelopeStates: [EnvelopeState]
+    @Published var envelopeStates: [VisualEnvelopeState]
 
     /// The 4 audio modulator states
     @Published var audioModulatorStates: [AudioModulatorState]
@@ -778,7 +778,7 @@ class VisualModulationMatrix: ObservableObject {
 
         // Initialize 2 envelopes
         self.envelopeStates = (0..<2).map { i in
-            var env = EnvelopeState(index: i)
+            var env = VisualEnvelopeState(index: i)
             env.triggerSource = i == 0 ? .midiNoteOn : .beatDetection
             env.isEnabled = false
             return env
@@ -943,7 +943,7 @@ class VisualModulationMatrix: ObservableObject {
     /// Process a MIDI note on event.
     ///
     /// Updates the MIDI state and triggers any envelopes set to
-    /// ``EnvelopeState/EnvelopeTrigger/midiNoteOn``.
+    /// ``VisualEnvelopeState/EnvelopeTrigger/midiNoteOn``.
     ///
     /// - Parameters:
     ///   - note: MIDI note number (0-127)
@@ -1023,8 +1023,10 @@ class VisualModulationMatrix: ObservableObject {
                 if envelopeStates[i].triggerSource == .beatDetection && envelopeStates[i].isEnabled {
                     envelopeStates[i].gateOn()
                     // Auto-release after a short gate time
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                        self?.envelopeStates[i].gateOff()
+                    let envelopeIndex = i
+                    Task { @MainActor [weak self] in
+                        try? await Task.sleep(nanoseconds: 50_000_000) // 0.05s
+                        self?.envelopeStates[envelopeIndex].gateOff()
                     }
                 }
             }

@@ -14,7 +14,7 @@
 //
 // Architecture:
 //   EchoelVisualCompositor (60Hz) ← UnifiedVisualSoundEngine
-//       └─ 8 VisualLayers + 1 Background
+//       └─ 8 CompositorVisualLayers + 1 Background
 //           └─ Per-layer: material, blend mode, opacity, modulation
 //
 // Supported Platforms: iOS 15+, macOS 12+, tvOS 15+, visionOS 1+
@@ -187,7 +187,7 @@ enum CompositorBlendMode: String, CaseIterable, Identifiable, Codable, Sendable 
 /// Each layer owns its material type, blend mode, opacity, MIDI channel,
 /// and a set of animatable parameters that can be driven by the
 /// ``VisualModulationMatrix``.
-struct VisualLayer: Identifiable, Equatable {
+struct CompositorVisualLayer: Identifiable, Equatable {
 
     // MARK: - Identity
 
@@ -369,7 +369,7 @@ struct VisualLayer: Identifiable, Equatable {
 
     // MARK: - Equatable
 
-    static func == (lhs: VisualLayer, rhs: VisualLayer) -> Bool {
+    static func == (lhs: CompositorVisualLayer, rhs: CompositorVisualLayer) -> Bool {
         lhs.id == rhs.id
     }
 }
@@ -454,7 +454,7 @@ struct CompositorFrameOutput {
 
 /// Professional 8-layer bio-reactive visual compositor.
 ///
-/// Manages a stack of ``VisualLayer`` instances, each with its own
+/// Manages a stack of ``CompositorVisualLayer`` instances, each with its own
 /// shader material, blend mode, opacity, transform, and modulation
 /// routing. Bio-reactive parameters (coherence, heart rate, breathing,
 /// audio level) flow into every layer at 60 Hz.
@@ -489,10 +489,10 @@ class EchoelVisualCompositor: ObservableObject {
     // MARK: - Published State
 
     /// The 8 visual layers (bottom to top render order)
-    @Published var layers: [VisualLayer] = []
+    @Published var layers: [CompositorVisualLayer] = []
 
     /// The background layer (rendered behind all other layers)
-    @Published var backgroundLayer: VisualLayer
+    @Published var backgroundLayer: CompositorVisualLayer
 
     /// Master opacity applied to the final composite (0-1)
     @Published var masterOpacity: Float = 1.0
@@ -538,7 +538,7 @@ class EchoelVisualCompositor: ObservableObject {
     /// The background layer defaults to ``VisualMaterialType/nebula``
     /// at full opacity with normal blend mode.
     init() {
-        self.backgroundLayer = VisualLayer(
+        self.backgroundLayer = CompositorVisualLayer(
             name: "Background",
             material: .nebula,
             blendMode: .normal,
@@ -606,7 +606,7 @@ class EchoelVisualCompositor: ObservableObject {
         material: VisualMaterialType = .liquidLight,
         blendMode: CompositorBlendMode = .normal,
         opacity: Float = 1.0
-    ) -> VisualLayer? {
+    ) -> CompositorVisualLayer? {
         guard layers.count < Self.maxLayerCount else {
             log.log(.warning, category: .video,
                      "Cannot add layer: maximum of \(Self.maxLayerCount) layers reached")
@@ -614,7 +614,7 @@ class EchoelVisualCompositor: ObservableObject {
         }
 
         let layerName = name == "Layer" ? "Layer \(layers.count + 1)" : name
-        let layer = VisualLayer(
+        let layer = CompositorVisualLayer(
             name: layerName,
             material: material,
             blendMode: blendMode,
@@ -684,7 +684,7 @@ class EchoelVisualCompositor: ObservableObject {
     /// - Returns: The duplicated layer, or `nil` if the stack is full or the
     ///   source layer was not found.
     @discardableResult
-    func duplicateLayer(id: UUID) -> VisualLayer? {
+    func duplicateLayer(id: UUID) -> CompositorVisualLayer? {
         guard layers.count < Self.maxLayerCount else {
             log.log(.warning, category: .video,
                      "Cannot duplicate: maximum layer count reached")
@@ -695,7 +695,7 @@ class EchoelVisualCompositor: ObservableObject {
         }
 
         let source = layers[index]
-        var copy = VisualLayer(
+        var copy = CompositorVisualLayer(
             name: source.name + " Copy",
             material: source.material,
             blendMode: source.blendMode,
@@ -938,7 +938,7 @@ class EchoelVisualCompositor: ObservableObject {
     /// Reset all layers to default state.
     func resetToDefault() {
         layers.removeAll()
-        backgroundLayer = VisualLayer(
+        backgroundLayer = CompositorVisualLayer(
             name: "Background",
             material: .nebula,
             blendMode: .normal,
@@ -1101,7 +1101,7 @@ class EchoelVisualCompositor: ObservableObject {
     ///
     /// - Parameter id: The layer's unique identifier.
     /// - Returns: The layer if found, otherwise `nil`.
-    func layer(for id: UUID) -> VisualLayer? {
+    func layer(for id: UUID) -> CompositorVisualLayer? {
         layers.first { $0.id == id }
     }
 
@@ -1109,7 +1109,7 @@ class EchoelVisualCompositor: ObservableObject {
     ///
     /// - Parameter index: Zero-based index (0 = bottom).
     /// - Returns: The layer if the index is valid, otherwise `nil`.
-    func layer(at index: Int) -> VisualLayer? {
+    func layer(at index: Int) -> CompositorVisualLayer? {
         guard index >= 0, index < layers.count else { return nil }
         return layers[index]
     }
