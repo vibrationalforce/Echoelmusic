@@ -81,6 +81,20 @@ jobs:
           xcodegen generate --spec project.yml
           echo "Project generated successfully."
 
+      - name: "Build Guard - Pattern Check"
+        run: |
+          chmod +x scripts/build-guard.sh
+          scripts/build-guard.sh --quick
+
+      - name: "SwiftLint"
+        run: |
+          if command -v swiftlint &> /dev/null; then
+            swiftlint lint --strict --reporter xcode
+          else
+            brew install swiftlint
+            swiftlint lint --strict --reporter xcode
+          fi
+
       - name: "Resolve Swift Package Dependencies"
         run: |
           swift package resolve || true

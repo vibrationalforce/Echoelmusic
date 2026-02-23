@@ -42,28 +42,35 @@ jobs:
     - name: Show Swift Version
       run: swift --version
 
+    - name: Install SwiftLint
+      run: |
+        if ! command -v swiftlint &> /dev/null; then
+          brew install swiftlint
+        fi
+        swiftlint version
+
+    - name: SwiftLint (blocking)
+      run: swiftlint lint --strict --reporter xcode
+
     - name: Swift Format Check
       run: |
         if command -v swift-format &> /dev/null; then
-          swift-format lint --recursive Sources/ Tests/ || true
+          swift-format lint --recursive Sources/ Tests/
         else
-          echo "⚠️  swift-format not installed, skipping"
+          echo "swift-format not installed, skipping"
         fi
       continue-on-error: true
 
-    - name: SwiftLint
+    - name: Build Guard - Pattern Check
       run: |
-        if command -v swiftlint &> /dev/null; then
-          swiftlint --strict || true
-        else
-          echo "⚠️  SwiftLint not installed, skipping"
-        fi
-      continue-on-error: true
+        chmod +x scripts/build-guard.sh
+        scripts/build-guard.sh --quick
 
     - name: Check for TODO/FIXME
       run: |
-        echo "🔍 Checking for TODO/FIXME comments..."
+        echo "Checking for TODO/FIXME comments..."
         find Sources -name "*.swift" -exec grep -Hn "TODO\|FIXME" {} \; || echo "No TODOs found"
+      continue-on-error: true
 
   # Job 2: Build & Test - iOS
   build-test-ios:

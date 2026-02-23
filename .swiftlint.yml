@@ -160,5 +160,43 @@ custom_rules:
     message: "Never force unwrap audio buffers - use guard let"
     severity: error
 
+  # === Echoelmusic-specific build error prevention rules ===
+
+  no_color_magenta:
+    name: "Color.magenta does not exist in SwiftUI"
+    regex: '(?<![A-Za-z])Color\.magenta'
+    message: "Color.magenta doesn't exist. Use Color(red: 1, green: 0, blue: 1) instead."
+    severity: error
+
+  no_static_logger_call:
+    name: "Logger is instance, not static"
+    regex: 'ProfessionalLogger\.log\('
+    message: "ProfessionalLogger.log() is an instance method. Use the global 'log' instance: log.log(...)"
+    severity: error
+
+  logger_needs_self_in_extension:
+    name: "Logger self reference in extension"
+    regex: '^\s+log\(\.(debug|info|warning|error|critical)'
+    message: "Inside EchoelLogger extensions, use self.log() to avoid calling the global 'log' variable."
+    severity: warning
+
+  no_uikit_without_guard:
+    name: "UIKit requires canImport guard"
+    regex: '^\s*import UIKit\s*$'
+    message: "UIKit is iOS-only. Wrap with #if canImport(UIKit) for cross-platform safety."
+    severity: warning
+
+  math_log_needs_foundation_prefix:
+    name: "Math log() shadowed by logger"
+    regex: '(?<!\.)(?<!Foundation\.)(?<!self\.)(?<!Swift\.)log\(\s*[0-9a-zA-Z_]+\s*\)\s*$'
+    message: "Math log() is shadowed by the global logger. Use Foundation.log() for logarithm calculations."
+    severity: warning
+
+  no_normalized_coherence_arithmetic:
+    name: "NormalizedCoherence is not numeric"
+    regex: 'coherence\s*[+\-\*\/]\s*[0-9]|[0-9]\s*[+\-\*\/]\s*coherence'
+    message: "NormalizedCoherence is not BinaryFloatingPoint. Use .value for arithmetic operations."
+    severity: warning
+
 # Reporter type (xcode, json, csv, checkstyle, junit, html, emoji)
 reporter: "xcode"

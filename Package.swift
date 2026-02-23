@@ -26,6 +26,12 @@ let package = Package(
         .target(
             name: "Echoelmusic",
             dependencies: [],
+            swiftSettings: [
+                // Treat all warnings as errors — prevents broken builds from reaching CI
+                .unsafeFlags(["-warnings-as-errors"]),
+                // Strict concurrency checking for Sendable/actor isolation
+                .enableExperimentalFeature("StrictConcurrency=targeted")
+            ],
             exclude: [
                 // Platform-specific directories (handled separately)
                 "Platforms/visionOS",
