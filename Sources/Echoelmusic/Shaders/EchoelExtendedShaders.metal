@@ -1481,8 +1481,14 @@ kernel void coherenceFieldKernel(
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// MARK: - 20. Breathing Guide — Visual breathing circle
+// MARK: - 20. Breathing Guide — Visual breathing circle with HRV
 // ═══════════════════════════════════════════════════════════════════
+//
+// Interactive breathing guide: a circle that expands on inhale (phase
+// 0-0.5) and contracts on exhale (phase 0.5-1.0). Color transitions
+// from blue (inhale) to green (exhale). Coherence feedback shown via
+// the ring color and glow intensity. Heartbeat indicator pulses
+// inside the circle. Expanding pulse rings visualize breath cycles.
 
 kernel void breathingGuideKernel(
     texture2d<float, access::write> output [[texture(0)]],
@@ -1499,39 +1505,75 @@ kernel void breathingGuideKernel(
 
     float dist = length(p);
 
-    // Main breathing circle
-    float breathSize = 0.2 + breathPhase * 0.3;
-    float circle = smoothstep(breathSize + 0.02, breathSize - 0.02, dist);
-    float ring = smoothstep(breathSize + 0.03, breathSize + 0.01, dist) -
-                 smoothstep(breathSize - 0.01, breathSize - 0.03, dist);
-
-    // Color based on coherence (green=good, red=stressed)
-    float3 circleColor = mix(float3(0.3, 0.5, 0.8), float3(0.2, 0.8, 0.4), coh);
-    float3 ringColor = float3(1.0, 1.0, 1.0) * 0.5;
-
-    // Soft glow
-    float glow = exp(-dist * dist * 3.0) * breathPhase * 0.3;
-    float3 glowColor = circleColor * 0.5;
-
-    // Pulse rings expanding outward
-    float3 pulseColor = float3(0.0);
-    for (int i = 0; i < 3; i++) {
-        float fi = float(i);
-        float pulseRadius = fract(breathPhase + fi * 0.33) * 0.8;
-        float pulseFade = 1.0 - fract(breathPhase + fi * 0.33);
-        float pulseRing = smoothstep(0.02, 0.0, abs(dist - pulseRadius));
-        pulseColor += circleColor * pulseRing * pulseFade * 0.3;
+    // Smooth breathing curve: inhale (0-0.5 expanding), exhale (0.5-1.0 contracting)
+    float breathCurve;
+    if (breathPhase < 0.5) {
+        // Inhale: smooth ease-in-out expansion
+        float x = breathPhase * 2.0;
+        breathCurve = x * x * (3.0 - 2.0 * x); // smootherstep
+    } else {
+        // Exhale: smooth ease-in-out contraction (slightly slower)
+        float x = (breathPhase - 0.5) * 2.0;
+        breathCurve = 1.0 - x * x * (3.0 - 2.0 * x);
     }
 
-    // Heart rate indicator dots
-    float hrPulse = sin(t * params.heartRate / 60.0 * M_PI_F * 2.0) * 0.5 + 0.5;
-    float hrDot = smoothstep(0.04, 0.02, abs(dist - 0.08)) * hrPulse;
-    float3 hrColor = mix(float3(1.0, 0.3, 0.3), float3(0.3, 1.0, 0.5), coh) * hrDot;
+    // Main breathing circle size
+    float minSize = 0.15;
+    float maxSize = 0.45;
+    float breathSize = mix(minSize, maxSize, breathCurve);
 
-    // Compose
-    float3 bg = float3(0.02, 0.02, 0.04);
-    float3 color = bg + glowColor * glow + circleColor * circle * 0.6 +
-                   ringColor * ring + pulseColor + hrColor;
+    // Circle fill (soft inner glow)
+    float circleFill = smoothstep(breathSize, breathSize - 0.05, dist);
+
+    // Circle ring (crisp outline)
+    float ringWidth = 0.012 + coh * 0.008;
+    float ring = smoothstep(ringWidth, ringWidth * 0.3, abs(dist - breathSize));
+
+    // Phase-dependent color: blue for inhale, green for exhale
+    float3 inhaleColor = float3(0.2, 0.4, 0.85);
+    float3 exhaleColor = float3(0.15, 0.75, 0.35);
+    float3 phaseColor = (breathPhase < 0.5) ?
+        mix(inhaleColor, inhaleColor * 1.2, breathCurve) :
+        mix(exhaleColor * 1.2, exhaleColor, breathCurve - 0.5);
+
+    // Coherence feedback: ring color shifts from warning to success
+    float3 cohColor = mix(float3(0.8, 0.4, 0.2), float3(0.2, 0.9, 0.5), coh);
+
+    // Soft ambient glow
+    float glow = exp(-dist * dist * 2.5) * breathCurve * 0.35;
+    float3 glowColor = phaseColor * 0.5;
+
+    // Expanding pulse rings (echo of each breath cycle)
+    float3 pulseColor = float3(0.0);
+    for (int i = 0; i < 4; i++) {
+        float fi = float(i);
+        float pulsePhase = fract(breathPhase * 0.5 + fi * 0.25);
+        float pulseRadius = pulsePhase * 0.9;
+        float pulseFade = pow(1.0 - pulsePhase, 2.0);
+        float pulseRing = smoothstep(0.015, 0.003, abs(dist - pulseRadius));
+        pulseColor += phaseColor * pulseRing * pulseFade * 0.25;
+    }
+
+    // Heart rate indicator: small pulsing dot at center
+    float heartBeat = pow(sin(t * params.heartRate / 60.0 * M_PI_F) * 0.5 + 0.5, 4.0);
+    float hrDot = smoothstep(0.06, 0.03, dist) * heartBeat;
+    float3 hrColor = mix(float3(0.9, 0.3, 0.3), float3(0.3, 0.9, 0.5), coh);
+
+    // Inhale/Exhale text indicator (simple up/down arrows via geometry)
+    float arrowY = (breathPhase < 0.5) ? 0.02 : -0.02;
+    float arrow = smoothstep(0.015, 0.005, abs(p.x)) *
+                  smoothstep(0.03, 0.01, abs(p.y - arrowY)) *
+                  step(dist, 0.05) * 0.3;
+
+    // Compose final color
+    float3 bg = float3(0.015, 0.015, 0.03);
+    float3 color = bg;
+    color += glowColor * glow;                    // Ambient glow
+    color += phaseColor * circleFill * 0.35;      // Circle fill
+    color += cohColor * ring * 0.7;               // Coherence ring
+    color += pulseColor;                           // Expanding pulses
+    color += hrColor * hrDot * 0.6;               // Heart rate dot
+    color += phaseColor * arrow;                   // Direction indicator
 
     output.write(float4(color, 1.0), gid);
 }
