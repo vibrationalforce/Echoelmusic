@@ -311,7 +311,8 @@ class PrivacyManager: ObservableObject {
         let jsonData = try JSONSerialization.data(withJSONObject: exportData, options: .prettyPrinted)
 
         // Save to app-scoped cache with unpredictable filename and atomic write
-        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let tempURL = cacheDir.appendingPathComponent("echoelmusic_export_\(UUID().uuidString).json")
 
         try jsonData.write(to: tempURL, options: [.atomic, .completeFileProtection])

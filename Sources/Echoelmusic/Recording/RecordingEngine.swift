@@ -127,7 +127,8 @@ class RecordingEngine: ObservableObject {
 
     init() {
         // Setup sessions directory
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         self.sessionsDirectory = documentsPath.appendingPathComponent("Sessions", isDirectory: true)
 
         // Create directory if needed

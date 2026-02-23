@@ -175,7 +175,8 @@ struct SessionBrowserView: View {
 
     private func loadSessions() {
         // Scan the real sessions directory for saved session.json files
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let sessionsDir = documentsPath.appendingPathComponent("Sessions", isDirectory: true)
 
         // Ensure directory exists
@@ -239,7 +240,8 @@ struct SessionBrowserView: View {
 
     private func deleteSession(_ id: UUID) {
         // Delete session directory from disk
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let sessionDir = documentsPath
             .appendingPathComponent("Sessions")
             .appendingPathComponent(id.uuidString)

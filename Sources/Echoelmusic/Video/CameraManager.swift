@@ -991,7 +991,8 @@ public class CameraManager: NSObject, ObservableObject {
             throw CameraError.alreadyRecording
         }
 
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let fileName = "echoelvideo_\(Int(Date().timeIntervalSince1970)).mov"
         let url = documentsPath.appendingPathComponent(fileName)
 

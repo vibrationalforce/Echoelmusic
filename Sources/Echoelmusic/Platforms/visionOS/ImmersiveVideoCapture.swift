@@ -217,7 +217,8 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
     }
 
     private func generateRecordingURL() -> URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let fileName = "immersive_\(Date().timeIntervalSince1970).mov"
         return documentsPath.appendingPathComponent(fileName)
     }
@@ -312,7 +313,8 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
     // MARK: - Persistence
 
     private func loadRecordings() {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let metadataURL = documentsPath.appendingPathComponent("recordings.json")
 
         guard FileManager.default.fileExists(atPath: metadataURL.path),
@@ -325,7 +327,8 @@ final class ImmersiveVideoCaptureManager: ObservableObject {
     }
 
     private func saveRecordings() {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let metadataURL = documentsPath.appendingPathComponent("recordings.json")
 
         if let data = try? JSONEncoder().encode(recordings) {

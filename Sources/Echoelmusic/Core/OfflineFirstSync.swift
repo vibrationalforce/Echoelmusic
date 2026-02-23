@@ -147,7 +147,7 @@ public actor OfflineFirstSyncEngine<Entity: SyncableEntity> {
 
     private var storageDirectory: URL {
         let paths = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-        let dir = paths[0]
+        let dir = (paths.first ?? URL(fileURLWithPath: NSTemporaryDirectory()))
             .appendingPathComponent("Echoelmusic", isDirectory: true)
             .appendingPathComponent("sync", isDirectory: true)
             .appendingPathComponent(entityType, isDirectory: true)
