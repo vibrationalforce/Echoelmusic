@@ -6,6 +6,10 @@
 	<key>com.apple.developer.healthkit</key>
 	<true/>
 
+	<!-- Inter-App Audio (legacy routing for apps that don't support AUv3) -->
+	<key>inter-app-audio</key>
+	<true/>
+
 	<!-- App Groups (for widget/watch communication) -->
 	<key>com.apple.security.application-groups</key>
 	<array>
