@@ -158,6 +158,9 @@ public final class SyphonNDIBridge: ObservableObject {
     /// Timer driving the frame capture/submission loop
     private var renderTimer: Timer?
 
+    /// Display link token for frame-synchronized rendering
+    private var displayLinkToken: CrossPlatformDisplayLink.Token?
+
     /// Timestamp of the last rendered frame for frame pacing
     private var lastFrameTime: CFAbsoluteTime = 0
 
@@ -315,6 +318,10 @@ public final class SyphonNDIBridge: ObservableObject {
         guard isOutputActive else { return }
 
         // Stop render loop
+        if let token = displayLinkToken {
+            CrossPlatformDisplayLink.shared.unsubscribe(token)
+            displayLinkToken = nil
+        }
         renderTimer?.invalidate()
         renderTimer = nil
 
@@ -787,26 +794,26 @@ public final class SyphonNDIBridge: ObservableObject {
 
     // MARK: - Render Loop
 
-    /// Starts the timer-driven render loop at the configured frame rate.
+    /// Starts the render loop using CrossPlatformDisplayLink for frame-accurate output.
     ///
     /// The render loop captures the current visual state and submits it to all
-    /// active output protocols. Frame pacing ensures consistent output timing.
+    /// active output protocols. Frame pacing via ``frameInterval`` ensures
+    /// consistent output timing even if the display refresh rate differs.
     private func startRenderLoop() {
         renderTimer?.invalidate()
+        renderTimer = nil
 
-        let interval = frameInterval
-        renderTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        if let token = displayLinkToken {
+            CrossPlatformDisplayLink.shared.unsubscribe(token)
+        }
+
+        displayLinkToken = CrossPlatformDisplayLink.shared.subscribe { [weak self] _, _ in
             Task { @MainActor in
                 self?.renderLoopTick()
             }
         }
 
-        // Ensure timer fires during tracking (scrolling, etc.)
-        if let timer = renderTimer {
-            RunLoop.main.add(timer, forMode: .common)
-        }
-
-        log.video("SyphonNDIBridge: Render loop started at \(outputFPS) fps")
+        log.video("SyphonNDIBridge: Render loop started (DisplayLink, target \(outputFPS) fps)")
     }
 
     /// Single tick of the render loop: checks frame pacing, renders, and submits.

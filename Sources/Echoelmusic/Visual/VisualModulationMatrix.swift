@@ -752,6 +752,7 @@ class VisualModulationMatrix: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     private var updateTimer: AnyCancellable?
+    private var displayLinkToken: CrossPlatformDisplayLink.Token?
     private var lastTickTime: Date = Date()
 
     /// Weak reference to the compositor for applying modulation
@@ -814,30 +815,32 @@ class VisualModulationMatrix: ObservableObject {
 
     // MARK: - Lifecycle
 
-    /// Start the 60 Hz modulation processing loop.
+    /// Start the modulation processing loop using CrossPlatformDisplayLink.
+    ///
+    /// Uses display-synchronized timing for frame-accurate modulation.
     func start() {
         guard !isRunning else { return }
 
         lastTickTime = Date()
         isRunning = true
 
-        updateTimer = Timer.publish(
-            every: 1.0 / Self.targetUpdateRate,
-            on: .main,
-            in: .common
-        )
-        .autoconnect()
-        .sink { [weak self] _ in
-            self?.tick()
+        displayLinkToken = CrossPlatformDisplayLink.shared.subscribe { [weak self] _, _ in
+            Task { @MainActor [weak self] in
+                self?.tick()
+            }
         }
 
-        log.log(.info, category: .video, "VisualModulationMatrix started at \(Int(Self.targetUpdateRate)) Hz")
+        log.log(.info, category: .video, "VisualModulationMatrix started (DisplayLink)")
     }
 
     /// Stop the modulation processing loop.
     func stop() {
         guard isRunning else { return }
 
+        if let token = displayLinkToken {
+            CrossPlatformDisplayLink.shared.unsubscribe(token)
+            displayLinkToken = nil
+        }
         updateTimer?.cancel()
         updateTimer = nil
         isRunning = false

@@ -549,6 +549,7 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     private var controlLoopTimer: Timer?
+    private var displayLinkToken: CrossPlatformDisplayLink.Token?
     private var busSubscription: BusSubscription?
 
     // MARK: - Default Scenes
@@ -794,6 +795,11 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
     public func stop() {
         guard isRunning else { return }
 
+        // Unsubscribe from display link
+        if let token = displayLinkToken {
+            CrossPlatformDisplayLink.shared.unsubscribe(token)
+            displayLinkToken = nil
+        }
         controlLoopTimer?.invalidate()
         controlLoopTimer = nil
         isRunning = false
@@ -922,18 +928,20 @@ public final class BioReactiveVisualSynthEngine: ObservableObject {
 
     // MARK: - Control Loop
 
-    /// Starts the 60 Hz timer-driven control loop
+    /// Starts the 60 Hz control loop using CrossPlatformDisplayLink.
+    ///
+    /// Replaces Timer-based loop with display-synchronized callback for:
+    /// - Frame-accurate timing (no timer drift)
+    /// - Automatic frame rate adaptation (ProMotion, 120Hz displays)
+    /// - Battery-saving idle detection (pauses when no visual changes)
     private func startControlLoop() {
         controlLoopTimer?.invalidate()
+        controlLoopTimer = nil
 
-        controlLoopTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+        displayLinkToken = CrossPlatformDisplayLink.shared.subscribe { [weak self] _, _ in
             Task { @MainActor in
                 self?.controlLoopTick()
             }
-        }
-
-        if let timer = controlLoopTimer {
-            RunLoop.main.add(timer, forMode: .common)
         }
     }
 

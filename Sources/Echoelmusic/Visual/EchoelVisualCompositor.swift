@@ -520,10 +520,43 @@ class EchoelVisualCompositor: ObservableObject {
     /// Target update rate in Hz
     static let targetUpdateRate: Double = 60.0
 
+    // MARK: - Adaptive Performance
+
+    /// Current effective quality tier (from AdaptiveQualityManager)
+    @Published private(set) var effectiveQualityTier: String = "High"
+
+    /// Maximum active layers based on quality tier and thermal state
+    var effectiveMaxLayers: Int {
+        switch effectiveQualityTier {
+        case "Minimal": return 2
+        case "Niedrig": return 3
+        case "Mittel": return 5
+        case "Ultra": return 8
+        default: return 8 // High
+        }
+    }
+
+    /// Texture resolution scale factor (0.25 - 1.0)
+    private(set) var textureScale: Float = 1.0
+
+    /// Frame budget monitor for adaptive throttling
+    private var frameBudgetMonitor = FrameBudgetMonitor(targetHz: 60.0)
+
+    /// Optional adaptive quality manager for battery/thermal-aware rendering.
+    /// Inject via ``connectAdaptiveQuality(_:)`` after initialization.
+    var adaptiveQualityManager: AdaptiveQualityManager?
+
+    /// Connect an adaptive quality manager for battery/thermal-aware rendering.
+    func connectAdaptiveQuality(_ manager: AdaptiveQualityManager) {
+        self.adaptiveQualityManager = manager
+        adaptToQualityLevel(manager.currentQuality)
+    }
+
     // MARK: - Private State
 
     private var cancellables = Set<AnyCancellable>()
     private var updateTimer: AnyCancellable?
+    private var displayLinkToken: CrossPlatformDisplayLink.Token?
     private var startTime: Date = Date()
     private var lastFrameTime: Date = Date()
     private var frameCount: Int = 0
@@ -550,10 +583,11 @@ class EchoelVisualCompositor: ObservableObject {
 
     // MARK: - Lifecycle
 
-    /// Start the 60 Hz compositor update loop.
+    /// Start the compositor update loop using CrossPlatformDisplayLink.
     ///
-    /// Begins animation timing and per-frame compositing. Safe to call
-    /// multiple times; subsequent calls are no-ops if already running.
+    /// Uses the system display link for frame-accurate timing instead of
+    /// a Timer. Subscribes to ``AdaptiveQualityManager`` for battery-aware
+    /// quality scaling and thermal throttling.
     func start() {
         guard !isRunning else { return }
 
@@ -563,17 +597,22 @@ class EchoelVisualCompositor: ObservableObject {
         frameCount = 0
         isRunning = true
 
-        updateTimer = Timer.publish(
-            every: 1.0 / Self.targetUpdateRate,
-            on: .main,
-            in: .common
-        )
-        .autoconnect()
-        .sink { [weak self] _ in
-            self?.tick()
+        // Use CrossPlatformDisplayLink for frame-accurate timing
+        displayLinkToken = CrossPlatformDisplayLink.shared.subscribe { [weak self] timestamp, duration in
+            Task { @MainActor [weak self] in
+                self?.tick()
+            }
         }
 
-        log.log(.info, category: .video, "EchoelVisualCompositor started at \(Int(Self.targetUpdateRate)) Hz")
+        // Subscribe to adaptive quality changes (if manager is injected)
+        adaptiveQualityManager?.$currentQuality
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] quality in
+                self?.adaptToQualityLevel(quality)
+            }
+            .store(in: &cancellables)
+
+        log.log(.info, category: .video, "EchoelVisualCompositor started (DisplayLink + AdaptiveQuality)")
     }
 
     /// Stop the compositor update loop.
@@ -583,11 +622,36 @@ class EchoelVisualCompositor: ObservableObject {
     func stop() {
         guard isRunning else { return }
 
+        if let token = displayLinkToken {
+            CrossPlatformDisplayLink.shared.unsubscribe(token)
+            displayLinkToken = nil
+        }
         updateTimer?.cancel()
         updateTimer = nil
+        cancellables.removeAll()
         isRunning = false
 
         log.log(.info, category: .video, "EchoelVisualCompositor stopped")
+    }
+
+    /// Adapt compositor parameters to the current quality level.
+    ///
+    /// Called when ``AdaptiveQualityManager`` changes quality tier.
+    /// Adjusts texture resolution, active layer count, and effect
+    /// complexity to maintain frame budget on weaker devices or
+    /// when thermal state is elevated.
+    private func adaptToQualityLevel(_ quality: AdaptiveQualityManager.QualityLevel) {
+        effectiveQualityTier = quality.rawValue
+        textureScale = quality.textureQuality
+
+        // Disable expensive layers when quality drops
+        let maxActive = effectiveMaxLayers
+        for (index, _) in layers.enumerated() where index >= maxActive {
+            layers[index].isEnabled = false
+        }
+
+        log.log(.info, category: .video,
+            "Compositor adapted to quality '\(quality.rawValue)': maxLayers=\(maxActive), textureScale=\(textureScale)")
     }
 
     // MARK: - Layer Management
