@@ -38,7 +38,7 @@ enum TrackInputSource: String, Codable, CaseIterable {
 // MARK: - Monitor Mode
 
 /// Input monitoring mode (Ableton Live style)
-enum MonitorMode: String, Codable, CaseIterable {
+enum RecordingMonitorMode: String, Codable, CaseIterable {
     case auto = "Auto"       // Monitor when armed & not playing
     case alwaysOn = "In"     // Always monitor input
     case off = "Off"         // Never monitor input
@@ -256,7 +256,7 @@ struct Track: Identifiable, Codable {
     var isArmed: Bool
 
     /// Monitor mode (Ableton style)
-    var monitorMode: MonitorMode
+    var monitorMode: RecordingMonitorMode
 
     /// Track color
     var trackColor: TrackColor
@@ -496,7 +496,7 @@ struct Track: Identifiable, Codable {
         inputSource = try container.decode(TrackInputSource.self, forKey: .inputSource)
         sidechainSourceID = try container.decodeIfPresent(UUID.self, forKey: .sidechainSourceID)
         isArmed = try container.decode(Bool.self, forKey: .isArmed)
-        monitorMode = try container.decode(MonitorMode.self, forKey: .monitorMode)
+        monitorMode = try container.decode(RecordingMonitorMode.self, forKey: .monitorMode)
         trackColor = try container.decode(TrackColor.self, forKey: .trackColor)
         groupID = try container.decodeIfPresent(UUID.self, forKey: .groupID)
         automationLanes = try container.decode([TrackAutomationLane].self, forKey: .automationLanes)

@@ -109,7 +109,7 @@ public struct CameraSource: Identifiable, Sendable {
 // MARK: - Transition Type
 //==============================================================================
 
-public enum TransitionType: String, CaseIterable, Identifiable, Sendable {
+public enum ProductionTransitionType: String, CaseIterable, Identifiable, Sendable {
     case cut = "cut"
     case dissolve = "dissolve"
     case fade = "fade"
@@ -170,7 +170,7 @@ public struct AIDecision: Identifiable, Sendable {
 }
 
 public enum AIAction: Sendable {
-    case switchCamera(sourceID: UUID, transition: TransitionType)
+    case switchCamera(sourceID: UUID, transition: ProductionTransitionType)
     case adjustVisuals(intensity: Double, mode: String)
     case triggerEffect(effectName: String)
     case adjustAudio(parameter: String, value: Double)
@@ -294,7 +294,7 @@ public final class AILiveProductionEngine: ObservableObject {
     @Published public var previewSource: UUID? = nil
 
     // Transitions
-    @Published public var currentTransition: TransitionType = .dissolve
+    @Published public var currentTransition: ProductionTransitionType = .dissolve
     @Published public var transitionDuration: Double = 1.0
     @Published public var isTransitioning: Bool = false
 
@@ -428,7 +428,7 @@ public final class AILiveProductionEngine: ObservableObject {
     // MARK: - Camera Switching
     //==========================================================================
 
-    public func switchToCamera(_ sourceID: UUID, transition: TransitionType? = nil) {
+    public func switchToCamera(_ sourceID: UUID, transition: ProductionTransitionType? = nil) {
         guard let source = cameraSources.first(where: { $0.id == sourceID }) else { return }
         guard sourceID != programSource else { return }
 
@@ -1211,7 +1211,7 @@ struct ProductionSettingsView: View {
 
                 Section("Transitions") {
                     Picker("Default Transition", selection: $engine.currentTransition) {
-                        ForEach(TransitionType.allCases) { trans in
+                        ForEach(ProductionTransitionType.allCases) { trans in
                             Text(trans.displayName).tag(trans)
                         }
                     }
