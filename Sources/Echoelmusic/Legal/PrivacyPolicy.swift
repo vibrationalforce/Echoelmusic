@@ -1862,8 +1862,7 @@ public struct LegalDocumentViewer: View {
                                     .font(.title)
                                     .foregroundColor(.accentColor)
                                 Text(selectedDocument.rawValue)
-                                    .font(.title2)
-                                    .bold()
+                                    .font(.title2.bold())
                             }
 
                             HStack {
