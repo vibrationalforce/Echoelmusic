@@ -327,15 +327,16 @@ class HardwareAbstractionLayer: ObservableObject {
             #endif
         }
 
-        /// Future-proof screen accessor — prefers window scene screen over deprecated UIScreen.main
+        /// Future-proof screen accessor via UIWindowScene (iOS 15+ guaranteed)
         #if os(iOS)
         @MainActor
         static var currentScreen: UIScreen {
-            if let windowScene = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene }).first {
-                return windowScene.screen
+            guard let screen = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first?.screen else {
+                // UIWindowScene is always present on iOS 15+ (minimum deployment target)
+                preconditionFailure("No UIWindowScene available — requires iOS 15+")
             }
-            return UIScreen.main
+            return screen
         }
         #endif
     }

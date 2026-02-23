@@ -56,14 +56,14 @@ class iPadOptimizations: ObservableObject {
 
     // MARK: - Screen Helper
 
-    /// Future-proof screen bounds accessor — prefers window scene screen over deprecated UIScreen.main
+    /// Screen bounds accessor via UIWindowScene (iOS 15+ guaranteed)
     @MainActor
     static var currentScreenBounds: CGRect {
-        if let windowScene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene }).first {
-            return windowScene.screen.bounds
+        guard let screen = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene }).first?.screen else {
+            preconditionFailure("No UIWindowScene available — requires iOS 15+")
         }
-        return UIScreen.main.bounds
+        return screen.bounds
     }
 
     // MARK: - Private Properties

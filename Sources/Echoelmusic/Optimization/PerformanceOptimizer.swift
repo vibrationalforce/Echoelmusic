@@ -152,13 +152,9 @@ class PerformanceOptimizer: ObservableObject {
         #if os(iOS)
         let device = UIDevice.current
         // Future-proof: prefer window scene screen over deprecated UIScreen.main
-        let screen: UIScreen = {
-            if let ws = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene }).first {
-                return ws.screen
-            }
-            return UIScreen.main
-        }()
+        let screen: UIScreen = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene }).first?.screen
+            ?? { preconditionFailure("No UIWindowScene available — requires iOS 15+") }()
 
         // Detect ProMotion
         let supportsProMotion = screen.maximumFramesPerSecond > 60
