@@ -57,13 +57,15 @@ class iPadOptimizations: ObservableObject {
     // MARK: - Screen Helper
 
     /// Screen bounds accessor via UIWindowScene (iOS 15+ guaranteed)
+    /// Returns fallback bounds during early app startup before the first scene connects.
     @MainActor
     static var currentScreenBounds: CGRect {
-        guard let screen = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene }).first?.screen else {
-            preconditionFailure("No UIWindowScene available — requires iOS 15+")
+        if let screen = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene }).first?.screen {
+            return screen.bounds
         }
-        return screen.bounds
+        // Fallback: scene not yet connected (early startup) — return main screen bounds
+        return UIScreen.main.bounds
     }
 
     // MARK: - Private Properties

@@ -140,74 +140,71 @@ struct EchoelmusicApp: App {
 
     /// Initializes all singletons in a controlled, sequential order.
     /// Each phase waits for the previous to complete, preventing circular deadlocks.
-    /// Wrapped in do/catch so a single failure doesn't crash the entire app.
+    /// Each phase is individually isolated so a single failure doesn't block the rest.
     private func initializeCoreSystems() async {
+        // Phase 0: Detect hardware + permissions (all other systems query this)
+        await MainActor.run { _ = AdaptiveCapabilityManager.shared }
+
+        // Phase 0.5: Memory pressure monitoring (prevents OOM crashes)
+        await MainActor.run { _ = MemoryPressureHandler.shared }
+
+        // Phase 1: Foundation singletons (no cross-references)
+        await MainActor.run { _ = UnifiedHealthKitEngine.shared }
+        await MainActor.run { _ = PushNotificationManager.shared }
+        await MainActor.run { _ = SelfHealingEngine.shared }
+        await MainActor.run { _ = MultiPlatformBridge.shared }
+
+        // Phase 2: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
+        await MainActor.run { _ = EchoelUniversalCore.shared }
+
+        // Phase 3: Systems that reference EchoelUniversalCore
+        await MainActor.run { _ = VideoAICreativeHub.shared }
+        await MainActor.run { _ = EchoelTools.shared }
+
+        // Phase 4: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
+        await MainActor.run { _ = EchoelToolkit.shared }
+
+        // Phase 5: Instrument pipeline (can run in parallel)
         do {
-            // Phase 0: Detect hardware + permissions (all other systems query this)
-            await MainActor.run { _ = AdaptiveCapabilityManager.shared }
-
-            // Phase 0.5: Memory pressure monitoring (prevents OOM crashes)
-            await MainActor.run { _ = MemoryPressureHandler.shared }
-
-            // Phase 1: Foundation singletons (no cross-references)
-            await MainActor.run { _ = UnifiedHealthKitEngine.shared }
-            await MainActor.run { _ = PushNotificationManager.shared }
-            await MainActor.run { _ = SelfHealingEngine.shared }
-            await MainActor.run { _ = MultiPlatformBridge.shared }
-
-            // Phase 2: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
-            await MainActor.run { _ = EchoelUniversalCore.shared }
-
-            // Phase 3: Systems that reference EchoelUniversalCore
-            await MainActor.run { _ = VideoAICreativeHub.shared }
-            await MainActor.run { _ = EchoelTools.shared }
-
-            // Phase 4: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
-            // This triggers: CircadianRhythmEngine, EEGSensorBridge, NeuroSpiritualEngine,
-            // EchoelCreativeAI, QuantumHealthBiofeedbackEngine, and more.
-            await MainActor.run { _ = EchoelToolkit.shared }
-
-            // Phase 5: Instrument pipeline (can run in parallel)
             try await withThrowingTaskGroup(of: Void.self) { group in
                 group.addTask { @MainActor in _ = InstrumentOrchestrator.shared }
                 group.addTask { @MainActor in _ = WorldMusicBridge.shared }
                 try await group.waitForAll()
             }
-
-            // Phase 6: Physical AI (JEPA world model + autonomous control)
-            await MainActor.run {
-                let physicalAI = PhysicalAIEngine.shared
-                physicalAI.start()
-                physicalAI.addObjective(.maintainCoherence())
-            }
-
-            // Phase 7: Script engine (community scripts + automation)
-            await MainActor.run {
-                ScriptEngine.shared = ScriptEngine(
-                    audioAPI: AudioScriptAPI(),
-                    visualAPI: VisualScriptAPI(),
-                    bioAPI: BioScriptAPI(),
-                    streamAPI: StreamScriptAPI(),
-                    midiAPI: MIDIScriptAPI(),
-                    spatialAPI: SpatialScriptAPI()
-                )
-                log.info("ScriptEngine: Initialized with all 6 APIs", category: .system)
-            }
-
-            // Phase 8: Streaming pipeline
-            await MainActor.run { _ = SocialMediaManager.shared }
-
-            // Phase 9: Crash-safe state persistence (auto-save every 10s, recover on next launch)
-            await MainActor.run { _ = CrashSafeStatePersistence.shared }
-
-            await MainActor.run {
-                log.info("Echoelmusic Core Systems Initialized", category: .system)
-            }
         } catch {
             await MainActor.run {
-                log.error("Core system initialization failed: \(error.localizedDescription)", category: .system)
-                // App can still function — singletons will init lazily on first access
+                log.warning("Phase 5 (Instruments) failed: \(error.localizedDescription)", category: .system)
             }
+        }
+
+        // Phase 6: Physical AI (JEPA world model + autonomous control)
+        await MainActor.run {
+            let physicalAI = PhysicalAIEngine.shared
+            physicalAI.start()
+            physicalAI.addObjective(.maintainCoherence())
+        }
+
+        // Phase 7: Script engine (community scripts + automation)
+        await MainActor.run {
+            ScriptEngine.shared = ScriptEngine(
+                audioAPI: AudioScriptAPI(),
+                visualAPI: VisualScriptAPI(),
+                bioAPI: BioScriptAPI(),
+                streamAPI: StreamScriptAPI(),
+                midiAPI: MIDIScriptAPI(),
+                spatialAPI: SpatialScriptAPI()
+            )
+            log.info("ScriptEngine: Initialized with all 6 APIs", category: .system)
+        }
+
+        // Phase 8: Streaming pipeline
+        await MainActor.run { _ = SocialMediaManager.shared }
+
+        // Phase 9: Crash-safe state persistence (auto-save every 10s, recover on next launch)
+        await MainActor.run { _ = CrashSafeStatePersistence.shared }
+
+        await MainActor.run {
+            log.info("Echoelmusic Core Systems Initialized", category: .system)
         }
     }
 

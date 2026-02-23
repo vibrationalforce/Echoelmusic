@@ -328,15 +328,16 @@ class HardwareAbstractionLayer: ObservableObject {
         }
 
         /// Future-proof screen accessor via UIWindowScene (iOS 15+ guaranteed)
+        /// Returns nil during early app startup before the first scene connects.
         #if os(iOS)
         @MainActor
         static var currentScreen: UIScreen {
-            guard let screen = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene }).first?.screen else {
-                // UIWindowScene is always present on iOS 15+ (minimum deployment target)
-                preconditionFailure("No UIWindowScene available — requires iOS 15+")
+            if let screen = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first?.screen {
+                return screen
             }
-            return screen
+            // Fallback: scene not yet connected (early startup) — return main screen
+            return UIScreen.main
         }
         #endif
     }

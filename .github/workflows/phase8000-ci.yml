@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: '26'
+  XCODE_VERSION: '16.2'
 
 jobs:
   # Job 1: Swift Matrix Build (All Apple Platforms)
