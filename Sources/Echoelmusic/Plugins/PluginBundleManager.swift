@@ -195,7 +195,7 @@ public final class PluginBundleManager: ObservableObject {
             id: "com.echoelmusic.mind", name: "EchoelMind",
             subtitle: "AI-powered stem separation and audio enhancement",
             category: .effect,
-            supportedFormats: [.auv3, .au, .vst3, .clap, .aax],
+            supportedFormats: [.auv3, .au, .vst3, .clap, .aax, .standalone],
             parameterCount: 36, inputChannels: 2, outputChannels: 2,
             auType: "aufx", auSubtype: "Emnd", auManufacturer: "Echo"),
 
@@ -219,7 +219,7 @@ public final class PluginBundleManager: ObservableObject {
             id: "com.echoelmusic.midi", name: "EchoelMIDI",
             subtitle: "MIDI 2.0 + MPE processor, arpeggiator, chord generator",
             category: .midi,
-            supportedFormats: [.auv3, .au, .clap],
+            supportedFormats: [.auv3, .au, .vst3, .clap],
             parameterCount: 36, inputChannels: 0, outputChannels: 0,
             auType: "aumi", auSubtype: "Emid", auManufacturer: "Echo"),
 
@@ -227,7 +227,7 @@ public final class PluginBundleManager: ObservableObject {
             id: "com.echoelmusic.field", name: "EchoelField",
             subtitle: "Audio-reactive visual analyzer — spectrum, waveform, cymatics",
             category: .analyzer,
-            supportedFormats: [.auv3, .au, .vst3, .clap],
+            supportedFormats: [.auv3, .au, .vst3, .clap, .ofx],
             parameterCount: 36, inputChannels: 2, outputChannels: 2,
             auType: "aufx", auSubtype: "Efld", auManufacturer: "Echo"),
 
