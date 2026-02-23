@@ -375,6 +375,93 @@ jobs:
           echo "$PLIST_ICONS"
           rm -rf /tmp/ipa_inspect
 
+      - name: "Inspect Extension Bundles"
+        run: |
+          IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
+          [ -z "$IPA" ] && { echo "No IPA to inspect"; exit 0; }
+          mkdir -p /tmp/ext_inspect
+          unzip -o "$IPA" -d /tmp/ext_inspect > /dev/null 2>&1
+          APP_DIR=$(ls -d /tmp/ext_inspect/Payload/*.app 2>/dev/null | head -1)
+          [ -z "$APP_DIR" ] && { echo "::warning::No .app in IPA"; exit 0; }
+
+          echo "=== PlugIns Directory ==="
+          ls -laR "$APP_DIR/PlugIns/" 2>/dev/null || echo "No PlugIns directory"
+
+          echo ""
+          echo "=== Extension Bundle Validation ==="
+          for APPEX in "$APP_DIR"/PlugIns/*.appex; do
+            [ -d "$APPEX" ] || continue
+            EXT_NAME=$(basename "$APPEX")
+            echo "--- $EXT_NAME ---"
+
+            # Check Info.plist exists
+            if [ -f "$APPEX/Info.plist" ]; then
+              echo "  Info.plist: OK"
+              BUNDLE_TYPE=$(/usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$APPEX/Info.plist" 2>&1 || echo "MISSING")
+              EXT_POINT=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$APPEX/Info.plist" 2>&1 || echo "MISSING")
+              PRINCIPAL=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPrincipalClass" "$APPEX/Info.plist" 2>&1 || echo "MISSING")
+              echo "  CFBundlePackageType: $BUNDLE_TYPE"
+              echo "  NSExtensionPointIdentifier: $EXT_POINT"
+              echo "  NSExtensionPrincipalClass: $PRINCIPAL"
+            else
+              echo "  Info.plist: MISSING!"
+              echo "::error title=Missing Info.plist::Extension $EXT_NAME has no Info.plist"
+            fi
+
+            # Check binary
+            BIN_NAME="${EXT_NAME%.appex}"
+            if [ -f "$APPEX/$BIN_NAME" ]; then
+              MACHO_TYPE=$(file "$APPEX/$BIN_NAME" | head -1)
+              echo "  Binary: $MACHO_TYPE"
+              # Check code signature
+              codesign -dvv "$APPEX/$BIN_NAME" 2>&1 | head -5 || echo "  Code signature: INVALID"
+            else
+              echo "  Binary '$BIN_NAME': MISSING!"
+              echo "::error title=Missing Binary::Extension $EXT_NAME has no binary"
+            fi
+
+            # Check _CodeSignature
+            if [ -d "$APPEX/_CodeSignature" ]; then
+              echo "  _CodeSignature: OK"
+            else
+              echo "  _CodeSignature: MISSING!"
+            fi
+            echo ""
+          done
+
+          rm -rf /tmp/ext_inspect
+
+      - name: "Validate IPA"
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
+          [ -z "$IPA" ] && { echo "::error::No IPA found"; exit 1; }
+          API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+
+          echo "=== Validating IPA with Apple ==="
+          set +eo pipefail
+          xcrun altool --validate-app \
+            -f "$IPA" \
+            -t ios \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID" \
+            2>&1 | tee /tmp/validate.log
+          RESULT=${PIPESTATUS[0]}
+          set -eo pipefail
+
+          if [ $RESULT -ne 0 ]; then
+            ERRORS=$(grep -iE "error|invalid|not permitted|rejected" /tmp/validate.log | head -10 | tr '\n' ' ||| ' || true)
+            echo "::error title=IPA Validation Failed::${ERRORS}"
+            echo "## IPA Validation Failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/validate.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "=== IPA VALIDATION PASSED ==="
+
       - name: "Upload to TestFlight"
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}

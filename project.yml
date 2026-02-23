@@ -311,7 +311,7 @@ targets:
                 type: aumi
                 version: 1
           NSExtensionPointIdentifier: com.apple.AudioUnit-UI
-          NSExtensionPrincipalClass: EchoelmusicAUv3ViewController
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).EchoelmusicAUv3ViewController
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
@@ -452,7 +452,7 @@ targets:
                 type: aumi
                 version: 1
           NSExtensionPointIdentifier: com.apple.AudioUnit-UI
-          NSExtensionPrincipalClass: EchoelmusicAUv3ViewController
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).EchoelmusicAUv3ViewController
     settings:
       base:
         PRODUCT_NAME: EchoelmusicAUv3
@@ -466,6 +466,9 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../../Frameworks @executable_path/../Frameworks"
         SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: NO
+        DEFINES_MODULE: YES
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     dependencies:
