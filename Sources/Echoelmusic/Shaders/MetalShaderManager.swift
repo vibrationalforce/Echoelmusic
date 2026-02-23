@@ -36,6 +36,9 @@ class MetalShaderManager: ObservableObject {
     // Pipeline cache for O(1) lookup (2-5% render overhead reduction)
     private lazy var pipelineMap: [ShaderType: MTLRenderPipelineState?] = [:]
 
+    /// Compute kernel pipeline cache for all 25 visual compute kernels
+    private var computeKernelPipelines: [ComputeKernelType: MTLComputePipelineState] = [:]
+
     // MARK: - Buffers
 
     private var uniformBuffer: MTLBuffer?
@@ -67,6 +70,40 @@ class MetalShaderManager: ObservableObject {
             case .mandala: return "mandalaShader"
             }
         }
+    }
+
+    /// Compute kernel types from VisualRendererKernels.metal and EchoelExtendedShaders.metal
+    enum ComputeKernelType: String, CaseIterable {
+        // VisualRendererKernels.metal (5 base kernels)
+        case cymaticsKernel = "cymaticsKernel"
+        case mandalaKernel = "mandalaKernel"
+        case particlesKernel = "particlesKernel"
+        case waveformKernel = "waveformKernel"
+        case spectralKernel = "spectralKernel"
+
+        // EchoelExtendedShaders.metal (20 extended kernels)
+        case sacredGeometry = "sacredGeometryKernel"
+        case fractalZoom = "fractalZoomKernel"
+        case reactionDiffusion = "reactionDiffusionKernel"
+        case voronoiMesh = "voronoiMeshKernel"
+        case auroraField = "auroraFieldKernel"
+        case plasmaWave = "plasmaWaveKernel"
+        case dataStream = "dataStreamKernel"
+        case tunnelEffect = "tunnelEffectKernel"
+        case fluidSimulation = "fluidSimulationKernel"
+        case crystalFormation = "crystalFormationKernel"
+        case fireEmbers = "fireEmbersKernel"
+        case oceanWaves = "oceanWavesKernel"
+        case electricField = "electricFieldKernel"
+        case morphingBlob = "morphingBlobKernel"
+        case kaleidoscope = "kaleidoscopeKernel"
+        case nebulaClouds = "nebulaCloudsKernel"
+        case geometricPatterns = "geometricPatternsKernel"
+        case liquidLight = "liquidLightKernel"
+        case coherenceField = "coherenceFieldKernel"
+        case breathingGuide = "breathingGuideKernel"
+
+        var functionName: String { rawValue }
     }
 
     struct Uniforms {
@@ -231,6 +268,29 @@ class MetalShaderManager: ObservableObject {
                 log.video("⚠️ Failed to create particle compute pipeline: \(error)", level: .warning)
             }
         }
+
+        // Create compute pipelines for all visual compute kernels (25 total)
+        createComputeKernelPipelines()
+    }
+
+    private func createComputeKernelPipelines() {
+        guard let device = device, let library = library else { return }
+
+        var loadedCount = 0
+        for kernelType in ComputeKernelType.allCases {
+            guard let function = library.makeFunction(name: kernelType.functionName) else {
+                continue
+            }
+            do {
+                let pipeline = try device.makeComputePipelineState(function: function)
+                computeKernelPipelines[kernelType] = pipeline
+                loadedCount += 1
+            } catch {
+                log.video("⚠️ Failed to create compute pipeline for \(kernelType.rawValue): \(error)", level: .warning)
+            }
+        }
+
+        log.video("✅ Loaded \(loadedCount)/\(ComputeKernelType.allCases.count) compute kernel pipelines")
     }
 
     private func createBuffers() {
@@ -251,7 +311,7 @@ class MetalShaderManager: ObservableObject {
         // Particle buffer (10000 particles)
         let particleCount = 10000
         var particles = [Particle]()
-        for i in 0..<particleCount {
+        for _ in 0..<particleCount {
             let x = Float.random(in: -1...1)
             let y = Float.random(in: -1...1)
             particles.append(Particle(
@@ -333,6 +393,42 @@ class MetalShaderManager: ObservableObject {
 
         commandBuffer.commit()
     }
+
+    // MARK: - Compute Kernel Dispatch
+
+    /// Dispatch a compute kernel to render into a texture
+    func dispatchComputeKernel(_ kernelType: ComputeKernelType, to texture: MTLTexture, uniforms: UnsafeRawPointer, uniformsSize: Int, audioBuffer: MTLBuffer? = nil) {
+        guard let commandQueue = commandQueue,
+              let pipeline = computeKernelPipelines[kernelType],
+              let commandBuffer = commandQueue.makeCommandBuffer(),
+              let encoder = commandBuffer.makeComputeCommandEncoder() else {
+            return
+        }
+
+        encoder.setComputePipelineState(pipeline)
+        encoder.setTexture(texture, index: 0)
+        encoder.setBytes(uniforms, length: uniformsSize, index: 0)
+        if let audioBuffer = audioBuffer {
+            encoder.setBuffer(audioBuffer, offset: 0, index: 1)
+        }
+
+        let w = pipeline.threadExecutionWidth
+        let h = pipeline.maxTotalThreadsPerThreadgroup / w
+        let threadsPerGroup = MTLSize(width: w, height: h, depth: 1)
+        let threadsPerGrid = MTLSize(width: texture.width, height: texture.height, depth: 1)
+        encoder.dispatchThreads(threadsPerGrid, threadsPerThreadgroup: threadsPerGroup)
+
+        encoder.endEncoding()
+        commandBuffer.commit()
+    }
+
+    /// Check if a specific compute kernel is available
+    func isComputeKernelAvailable(_ kernelType: ComputeKernelType) -> Bool {
+        return computeKernelPipelines[kernelType] != nil
+    }
+
+    /// Get the Metal device for external texture creation
+    func getDevice() -> MTLDevice? { device }
 
     // MARK: - Texture Generation
 

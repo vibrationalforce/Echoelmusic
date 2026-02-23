@@ -76,7 +76,7 @@ final class EchoelVisualCompositorTests: XCTestCase {
 
     // 4. Move layer from index 0 to 4 and verify order
     func testMoveLayer() {
-        var addedLayers: [VisualLayer] = []
+        var addedLayers: [CompositorVisualLayer] = []
         for i in 0..<5 {
             if let layer = sut.addLayer(name: "Layer \(i)", material: VisualMaterialType.allCases[i]) {
                 addedLayers.append(layer)
@@ -378,7 +378,7 @@ final class VisualModulationMatrixTests: XCTestCase {
 
     // 4. ADSR envelope: gate on -> attack -> decay -> sustain -> gate off -> release
     func testADSREnvelope() {
-        var env = EnvelopeState(index: 0)
+        var env = VisualEnvelopeState(index: 0)
         env.attack = 0.1
         env.decay = 0.1
         env.sustain = 0.7
