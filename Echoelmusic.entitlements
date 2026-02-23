@@ -10,7 +10,7 @@
 	<key>inter-app-audio</key>
 	<true/>
 
-	<!-- App Groups (for widget/watch communication) -->
+	<!-- App Groups (AUv3 extension, widgets, watch communication) -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.echoelmusic.shared</string>
