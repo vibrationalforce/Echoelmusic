@@ -167,7 +167,7 @@ public final class ProductionMonitoring: ObservableObject {
 
         // Alert on critical thermal state
         if newMetrics.thermalState == .critical {
-            Task {
+            Task { @MainActor in
                 await trackEvent("thermal_critical", category: .performance, parameters: [
                     "state": "critical"
                 ])
@@ -341,7 +341,7 @@ public final class ProductionMonitoring: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task {
+            Task { @MainActor in
                 await self?.trackEvent("memory_warning", category: .performance)
             }
         })
@@ -354,7 +354,7 @@ public final class ProductionMonitoring: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             let state = ProcessInfo.processInfo.thermalState
-            Task {
+            Task { @MainActor in
                 await self?.trackEvent("thermal_state_change", category: .performance, parameters: [
                     "state": "\(state.rawValue)"
                 ])
@@ -373,7 +373,7 @@ public final class ProductionMonitoring: ObservableObject {
 
     public func setUserId(_ id: String) {
         userId = id
-        Task {
+        Task { @MainActor in
             await trackEvent("user_identified", category: .session, parameters: ["user_id": id])
         }
     }
