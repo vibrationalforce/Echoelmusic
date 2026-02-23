@@ -8,7 +8,7 @@ import Accelerate
 
 /// Central hub that connects audio, bio-data, and visuals
 @MainActor
-class UnifiedVisualSoundEngine: ObservableObject {
+public class UnifiedVisualSoundEngine: ObservableObject {
 
     // MARK: - Published State
 
