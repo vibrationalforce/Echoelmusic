@@ -211,7 +211,7 @@ public final class HybridAppBridge: NSObject, ObservableObject {
         let js = "if(window.echoelBridge&&typeof window.echoelBridge.receive==='function'){window.echoelBridge.receive('\(safeType)',JSON.parse('\(safeJSON)'));}"
         webView.evaluateJavaScript(js) { _, error in
             if let error = error {
-                ProfessionalLogger.shared.log(.warning, category: .system, "HybridBridge JS eval error: \(error.localizedDescription)")
+                log.log(.warning, category: .system, "HybridBridge JS eval error: \(error.localizedDescription)")
             }
         }
         #endif
