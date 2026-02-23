@@ -168,18 +168,10 @@ targets:
     dependencies:
       - target: EchoelmusicNotificationService
         embed: true
-    # Note: AUv3, Widgets and Clip dependencies temporarily disabled for initial TestFlight build
-    # AUv3 fails Apple IPA validation ("Invalid bundle structure — binary not permitted")
-    # Re-enable after registering App IDs in Developer Portal:
-    #   - com.echoelmusic.app.auv3 (requires AudioUnit capability on App ID)
-    #   - com.echoelmusic.app.widgets
-    #   - com.echoelmusic.app.clip
-    # - target: EchoelmusicAUv3
-    #   embed: true
-    # - target: EchoelmusicWidgets
-    #   embed: true
-    # - target: EchoelmusicClip
-    #   embed: false
+      - target: EchoelmusicWidgets
+        embed: true
+      - target: EchoelmusicClip
+        embed: false
     entitlements:
       path: Echoelmusic.entitlements
 
@@ -245,10 +237,9 @@ targets:
         COMBINE_HIDPI_IMAGES: YES
         SDKROOT: macosx
         SUPPORTED_PLATFORMS: macosx
-    dependencies: []
-    # Note: macOS AUv3 temporarily disabled (same App ID registration needed)
-    # - target: EchoelmusicAUv3-macOS
-    #   embed: true
+    dependencies:
+      - target: EchoelmusicAUv3-macOS
+        embed: true
     entitlements:
       path: EchoelmusicMac.entitlements
 
@@ -899,15 +890,13 @@ targets:
 schemes:
 
   # iOS Development
-  # Note: AUv3, Widgets and Clip temporarily excluded until App IDs registered in Developer Portal
   Echoelmusic:
     build:
       targets:
         Echoelmusic: all
         EchoelmusicNotificationService: all
-        # EchoelmusicAUv3: all
-        # EchoelmusicWidgets: all
-        # EchoelmusicClip: all
+        EchoelmusicWidgets: all
+        EchoelmusicClip: all
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -929,7 +918,7 @@ schemes:
     build:
       targets:
         Echoelmusic-macOS: all
-        # EchoelmusicAUv3-macOS: all
+        EchoelmusicAUv3-macOS: all
         EchoelmusicTests-macOS: [test]
     run:
       config: Debug
@@ -1006,17 +995,15 @@ schemes:
           randomExecutionOrder: false
 
   # All Platforms Release (for CI)
-  # Note: AUv3, Widgets, Clip temporarily excluded until App IDs registered
   Echoelmusic-AllPlatforms:
     build:
       targets:
         Echoelmusic: [archive]
         EchoelmusicNotificationService: [archive]
-        # EchoelmusicAUv3: [archive]
-        # EchoelmusicWidgets: [archive]
-        # EchoelmusicClip: [archive]
+        EchoelmusicWidgets: [archive]
+        EchoelmusicClip: [archive]
         Echoelmusic-macOS: [archive]
-        # EchoelmusicAUv3-macOS: [archive]
+        EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]
         Echoelmusic-tvOS: [archive]
         Echoelmusic-visionOS: [archive]
