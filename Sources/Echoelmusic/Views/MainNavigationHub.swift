@@ -68,11 +68,11 @@ struct MainNavigationHub: View {
             case .daw: return VaporwaveColors.neonCyan
             case .session: return VaporwaveColors.neonPurple
             case .video: return VaporwaveColors.coral
-            case .vj: return Color(red: 0.0, green: 1.0, blue: 0.5)
+            case .vj: return VaporwaveColors.coherenceHigh
             case .nodes: return VaporwaveColors.lavender
-            case .midi: return Color(red: 1.0, green: 0.8, blue: 0.2)
+            case .midi: return VaporwaveColors.coherenceMedium
             case .mixing: return VaporwaveColors.neonCyan
-            case .ai: return Color(red: 0.8, green: 0.2, blue: 1.0)
+            case .ai: return VaporwaveColors.neonPurple
             case .hardware: return VaporwaveColors.coral
             case .streaming: return VaporwaveColors.neonPink
             case .settings: return VaporwaveColors.textSecondary

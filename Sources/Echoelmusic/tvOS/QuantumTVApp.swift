@@ -14,7 +14,7 @@ import TVUIKit
 
 // MARK: - Main tvOS App View
 
-@available(tvOS 15.0, *)
+@available(tvOS 16.0, *)
 public struct QuantumTVMainView: View {
 
     @StateObject private var viewModel = QuantumTVViewModel()
