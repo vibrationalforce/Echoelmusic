@@ -328,10 +328,12 @@ public struct TikTokAPIConfiguration: APIConfiguration {
 }
 
 /// Custom RTMP Endpoint Configuration
+/// - Important: streamKey should be stored in Keychain for production use.
+///   This struct is a transfer object; persist via EnhancedKeychainManager.
 public struct CustomRTMPConfiguration: Codable {
     public let name: String
     public let rtmpURL: String
-    public let streamKey: String // Encrypted in Keychain
+    public let streamKey: String
     public let maxBitrate: Int
 
     public init(name: String, rtmpURL: String, streamKey: String, maxBitrate: Int = 10_000_000) {
@@ -848,7 +850,7 @@ public final class SecureAPIKeyManager {
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: identifier,
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
         // Delete existing item

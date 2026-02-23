@@ -768,7 +768,7 @@ extension Dictionary where Key == String, Value == Any {
         "NSBluetoothAlwaysUsageDescription": "Echoelmusic connects to MIDI controllers, audio interfaces, and biometric sensors via Bluetooth.",
         "NSBluetoothPeripheralUsageDescription": "Echoelmusic connects to external music hardware and health sensors.",
         "NSLocalNetworkUsageDescription": "Echoelmusic discovers DMX lighting controllers, Art-Net devices, and streaming endpoints on your local network.",
-        "NSBonjourServices": ["_http._tcp", "_rtsp._tcp", "_artnet._udp", "_osc._udp"],
+        "NSBonjourServices": ["_artnet._udp", "_osc._udp"],
         "NSHomeKitUsageDescription": "Echoelmusic can control HomeKit lights and scenes synchronized to your music.",
         "NSMotionUsageDescription": "Echoelmusic uses motion data to detect gestures and movement patterns for interactive control.",
         "NSLocationWhenInUseUsageDescription": "Echoelmusic uses location for worldwide collaboration server selection and timezone-aware sessions.",
@@ -910,7 +910,7 @@ extension Dictionary where Key == String, Value == Any {
         "NSCameraUsageDescription": "Echoelmusic uses your camera for face tracking control.",
         "NSBluetoothAlwaysUsageDescription": "Echoelmusic connects to MIDI and audio hardware via Bluetooth.",
         "NSLocalNetworkUsageDescription": "Echoelmusic discovers DMX controllers and streaming endpoints.",
-        "NSBonjourServices": ["_http._tcp", "_rtsp._tcp", "_artnet._udp", "_osc._udp"],
+        "NSBonjourServices": ["_artnet._udp", "_osc._udp"],
         "NSHomeKitUsageDescription": "Echoelmusic controls HomeKit lights synchronized to music.",
 
         // High Resolution Support
