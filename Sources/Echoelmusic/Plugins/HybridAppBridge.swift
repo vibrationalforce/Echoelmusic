@@ -291,8 +291,8 @@ extension HybridAppBridge: WKScriptMessageHandler {
         guard let messageType = HybridMessageType(rawValue: message.name) else { return }
         let body = message.body as? [String: Any] ?? [:]
 
-        Task { @MainActor in
-            self.handleWebMessage(type: messageType, data: body)
+        Task { @MainActor [weak self] in
+            self?.handleWebMessage(type: messageType, data: body)
         }
     }
 }

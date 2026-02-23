@@ -468,21 +468,21 @@ public final class EEGSensorBridge: NSObject, ObservableObject {
 extension EEGSensorBridge: CBCentralManagerDelegate {
 
     nonisolated public func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
             switch central.state {
             case .poweredOn:
-                if connectionState == .scanning {
-                    startBluetoothScan()
+                if self?.connectionState == .scanning {
+                    self?.startBluetoothScan()
                 }
             case .poweredOff:
-                errorMessage = "Bluetooth is turned off"
-                updateState(.error)
+                self?.errorMessage = "Bluetooth is turned off"
+                self?.updateState(.error)
             case .unauthorized:
-                errorMessage = "Bluetooth permission denied"
-                updateState(.error)
+                self?.errorMessage = "Bluetooth permission denied"
+                self?.updateState(.error)
             case .unsupported:
-                errorMessage = "Bluetooth not supported on this device"
-                updateState(.error)
+                self?.errorMessage = "Bluetooth not supported on this device"
+                self?.updateState(.error)
             default:
                 break
             }
@@ -510,18 +510,18 @@ extension EEGSensorBridge: CBCentralManagerDelegate {
         }
 
         if let type = deviceType {
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 log.biofeedback("Discovered EEG device: \(name) (\(type.rawValue))")
                 // In production: Add to discovered devices list for user selection
                 // For now: Auto-connect to first found device
-                self.connect(to: peripheral, type: type)
+                self?.connect(to: peripheral, type: type)
             }
         }
     }
 
     nonisolated public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        Task { @MainActor in
-            updateState(.connected)
+        Task { @MainActor [weak self] in
+            self?.updateState(.connected)
             peripheral.delegate = self
             peripheral.discoverServices(nil)
             log.biofeedback("Connected to EEG device")
@@ -533,10 +533,10 @@ extension EEGSensorBridge: CBCentralManagerDelegate {
         didFailToConnect peripheral: CBPeripheral,
         error: Error?
     ) {
-        Task { @MainActor in
-            errorMessage = error?.localizedDescription ?? "Connection failed"
-            updateState(.error)
-            log.biofeedback("EEG connection failed: \(errorMessage ?? "unknown")")
+        Task { @MainActor [weak self] in
+            self?.errorMessage = error?.localizedDescription ?? "Connection failed"
+            self?.updateState(.error)
+            log.biofeedback("EEG connection failed: \(self?.errorMessage ?? "unknown")")
         }
     }
 
@@ -545,10 +545,10 @@ extension EEGSensorBridge: CBCentralManagerDelegate {
         didDisconnectPeripheral peripheral: CBPeripheral,
         error: Error?
     ) {
-        Task { @MainActor in
-            updateState(.disconnected)
-            connectedPeripheral = nil
-            connectedDevice = nil
+        Task { @MainActor [weak self] in
+            self?.updateState(.disconnected)
+            self?.connectedPeripheral = nil
+            self?.connectedDevice = nil
             log.biofeedback("EEG device disconnected")
         }
     }
@@ -580,8 +580,8 @@ extension EEGSensorBridge: CBPeripheralDelegate {
             }
         }
 
-        Task { @MainActor in
-            updateState(.streaming)
+        Task { @MainActor [weak self] in
+            self?.updateState(.streaming)
         }
     }
 
@@ -596,9 +596,9 @@ extension EEGSensorBridge: CBPeripheralDelegate {
         // This is device-specific and would need actual protocol parsing
         // For now, this is a placeholder that would be implemented per device
 
-        Task { @MainActor in
-            if let type = connectedDevice {
-                parseEEGData(data, for: type)
+        Task { @MainActor [weak self] in
+            if let type = self?.connectedDevice {
+                self?.parseEEGData(data, for: type)
             }
         }
     }

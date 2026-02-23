@@ -335,6 +335,7 @@ public final class ProductionMonitoring: ObservableObject {
 
     private func setupPerformanceMonitoring() {
         // Monitor memory warnings
+        #if canImport(UIKit)
         notificationObservers.append(NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
@@ -344,6 +345,7 @@ public final class ProductionMonitoring: ObservableObject {
                 await self?.trackEvent("memory_warning", category: .performance)
             }
         })
+        #endif
 
         // Monitor thermal state changes
         notificationObservers.append(NotificationCenter.default.addObserver(

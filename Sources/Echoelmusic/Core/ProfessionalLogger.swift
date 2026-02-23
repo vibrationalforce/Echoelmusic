@@ -280,133 +280,133 @@ public final class EchoelLogger: @unchecked Sendable {
     // MARK: - Convenience Methods
 
     public func trace(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.trace, category: category, message, file: file, function: function, line: line)
+        self.log(.trace, category: category, message, file: file, function: function, line: line)
     }
 
     public func debug(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.debug, category: category, message, file: file, function: function, line: line)
+        self.log(.debug, category: category, message, file: file, function: function, line: line)
     }
 
     public func info(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.info, category: category, message, file: file, function: function, line: line)
+        self.log(.info, category: category, message, file: file, function: function, line: line)
     }
 
     public func notice(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.notice, category: category, message, file: file, function: function, line: line)
+        self.log(.notice, category: category, message, file: file, function: function, line: line)
     }
 
     public func warning(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.warning, category: category, message, file: file, function: function, line: line)
+        self.log(.warning, category: category, message, file: file, function: function, line: line)
     }
 
     public func error(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.error, category: category, message, file: file, function: function, line: line)
+        self.log(.error, category: category, message, file: file, function: function, line: line)
     }
 
     public func critical(_ message: String, category: LogCategory = .system, file: String = #file, function: String = #function, line: Int = #line) {
-        log(.critical, category: category, message, file: file, function: function, line: line)
+        self.log(.critical, category: category, message, file: file, function: function, line: line)
     }
 
     // MARK: - Category-Specific Loggers
 
     public func audio(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .audio, message, file: file, function: function, line: line)
+        self.log(level, category: .audio, message, file: file, function: function, line: line)
     }
 
     public func video(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .video, message, file: file, function: function, line: line)
+        self.log(level, category: .video, message, file: file, function: function, line: line)
     }
 
     public func streaming(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .streaming, message, file: file, function: function, line: line)
+        self.log(level, category: .streaming, message, file: file, function: function, line: line)
     }
 
     public func biofeedback(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .biofeedback, message, file: file, function: function, line: line)
+        self.log(level, category: .biofeedback, message, file: file, function: function, line: line)
     }
 
     public func quantum(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .quantum, message, file: file, function: function, line: line)
+        self.log(level, category: .quantum, message, file: file, function: function, line: line)
     }
 
     public func lambda(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .lambda, message, file: file, function: function, line: line)
+        self.log(level, category: .lambda, message, file: file, function: function, line: line)
     }
 
     public func orchestral(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .orchestral, message, file: file, function: function, line: line)
+        self.log(level, category: .orchestral, message, file: file, function: function, line: line)
     }
 
     public func midi(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .midi, message, file: file, function: function, line: line)
+        self.log(level, category: .midi, message, file: file, function: function, line: line)
     }
 
     public func network(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .network, message, file: file, function: function, line: line)
+        self.log(level, category: .network, message, file: file, function: function, line: line)
     }
 
     public func performance(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .performance, message, file: file, function: function, line: line)
+        self.log(level, category: .performance, message, file: file, function: function, line: line)
     }
 
     public func scoring(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .scoring, message, file: file, function: function, line: line)
+        self.log(level, category: .scoring, message, file: file, function: function, line: line)
     }
 
     public func hardware(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .hardware, message, file: file, function: function, line: line)
+        self.log(level, category: .hardware, message, file: file, function: function, line: line)
     }
 
     public func privacy(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .privacy, message, file: file, function: function, line: line)
+        self.log(level, category: .privacy, message, file: file, function: function, line: line)
     }
 
     public func recording(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .recording, message, file: file, function: function, line: line)
+        self.log(level, category: .recording, message, file: file, function: function, line: line)
     }
 
     public func business(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .business, message, file: file, function: function, line: line)
+        self.log(level, category: .business, message, file: file, function: function, line: line)
     }
 
     public func automation(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .automation, message, file: file, function: function, line: line)
+        self.log(level, category: .automation, message, file: file, function: function, line: line)
     }
 
     public func intelligence(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .intelligence, message, file: file, function: function, line: line)
+        self.log(level, category: .intelligence, message, file: file, function: function, line: line)
     }
 
     public func spatial(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .spatial, message, file: file, function: function, line: line)
+        self.log(level, category: .spatial, message, file: file, function: function, line: line)
     }
 
     public func led(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .led, message, file: file, function: function, line: line)
+        self.log(level, category: .led, message, file: file, function: function, line: line)
     }
 
     public func social(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .social, message, file: file, function: function, line: line)
+        self.log(level, category: .social, message, file: file, function: function, line: line)
     }
 
     public func science(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .science, message, file: file, function: function, line: line)
+        self.log(level, category: .science, message, file: file, function: function, line: line)
     }
 
     public func wellness(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .wellness, message, file: file, function: function, line: line)
+        self.log(level, category: .wellness, message, file: file, function: function, line: line)
     }
 
     public func accessibility(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .accessibility, message, file: file, function: function, line: line)
+        self.log(level, category: .accessibility, message, file: file, function: function, line: line)
     }
 
     public func analytics(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .analytics, message, file: file, function: function, line: line)
+        self.log(level, category: .analytics, message, file: file, function: function, line: line)
     }
 
     public func ai(_ message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level, category: .ai, message, file: file, function: function, line: line)
+        self.log(level, category: .ai, message, file: file, function: function, line: line)
     }
 
     // MARK: - Log Retrieval
