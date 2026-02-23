@@ -69,28 +69,39 @@ else
     pass "No static logger calls"
 fi
 
-# 1c. UIKit import without canImport guard
-# Find bare UIKit imports that aren't wrapped in #if canImport
+# 1c. UIKit import without platform guard
+# Find bare UIKit imports that aren't wrapped in #if canImport or #if os(iOS) etc.
 BARE_UIKIT=$(grep -rn '^import UIKit$' Sources/ --include="*.swift" 2>/dev/null || true)
 if [[ -n "$BARE_UIKIT" ]]; then
     UNGUARDED=0
     while IFS= read -r line; do
         FILE=$(echo "$line" | cut -d: -f1)
         LINE_NUM=$(echo "$line" | cut -d: -f2)
-        # Check if there's a #if canImport within 3 lines before
-        PREV_LINE=$((LINE_NUM - 1))
-        if [[ $PREV_LINE -gt 0 ]]; then
-            GUARD=$(sed -n "${PREV_LINE}p" "$FILE" 2>/dev/null || true)
-            if [[ ! "$GUARD" =~ "canImport(UIKit)" ]]; then
-                UNGUARDED=$((UNGUARDED + 1))
-                if [[ $VERBOSE == true ]]; then
-                    echo "    $line"
+        # Check up to 10 preceding lines for any platform guard
+        FOUND_GUARD=false
+        for offset in 1 2 3 4 5 6 7 8 9 10; do
+            CHECK_LINE=$((LINE_NUM - offset))
+            if [[ $CHECK_LINE -gt 0 ]]; then
+                GUARD=$(sed -n "${CHECK_LINE}p" "$FILE" 2>/dev/null || true)
+                if [[ "$GUARD" =~ canImport\(UIKit\) ]] || \
+                   [[ "$GUARD" =~ os\(iOS\) ]] || \
+                   [[ "$GUARD" =~ os\(visionOS\) ]] || \
+                   [[ "$GUARD" =~ os\(tvOS\) ]] || \
+                   [[ "$GUARD" =~ targetEnvironment ]]; then
+                    FOUND_GUARD=true
+                    break
                 fi
+            fi
+        done
+        if [[ "$FOUND_GUARD" == false ]]; then
+            UNGUARDED=$((UNGUARDED + 1))
+            if [[ $VERBOSE == true ]]; then
+                echo "    $line"
             fi
         fi
     done <<< "$BARE_UIKIT"
     if [[ $UNGUARDED -gt 0 ]]; then
-        warn "$UNGUARDED bare 'import UIKit' without #if canImport guard"
+        warn "$UNGUARDED bare 'import UIKit' without platform guard"
     else
         pass "All UIKit imports properly guarded"
     fi
@@ -201,14 +212,25 @@ fi
 header "4/4" "Checking for type name conflicts..."
 
 # Check for types that should be prefixed per CLAUDE.md
+# Only flag top-level definitions (≤4 leading spaces). Nested types inside
+# structs/classes are scoped and don't conflict.
 CONFLICT_TYPES=("MonitorMode" "TransitionType" "TrackSend" "TrackType" "SourceFilter")
 for type in "${CONFLICT_TYPES[@]}"; do
-    COUNT=$( (grep -rn "enum ${type} \|struct ${type} \|class ${type} \|enum ${type}:\|struct ${type}:\|class ${type}:" Sources/ --include="*.swift" 2>/dev/null || true) | wc -l | tr -d '[:space:]')
-    COUNT=${COUNT:-0}
+    ALL_DEFS=$( (grep -rn "^\(public \|internal \|\)\(enum\|struct\|class\) ${type}[: ]" Sources/ --include="*.swift" 2>/dev/null || true) )
+    if [[ -z "$ALL_DEFS" ]]; then
+        COUNT=0
+    else
+        TOP_LEVEL=$( (echo "$ALL_DEFS" | grep -v '^[^:]*:[0-9]*:    ' || true) )
+        if [[ -z "$TOP_LEVEL" ]]; then
+            COUNT=0
+        else
+            COUNT=$(echo "$TOP_LEVEL" | wc -l | tr -d '[:space:]')
+        fi
+    fi
     if [[ $COUNT -gt 1 ]]; then
-        warn "Type '$type' defined $COUNT times — should be prefixed (Session/Stream/Cue/Grade)"
+        warn "Type '$type' defined $COUNT times at top level — should be prefixed (Session/Stream/Cue/Grade)"
         if [[ $VERBOSE == true ]]; then
-            grep -rn "enum ${type} \|struct ${type} \|class ${type} " Sources/ --include="*.swift" 2>/dev/null | head -5 || true
+            echo "$TOP_LEVEL" | head -5
         fi
     fi
 done
