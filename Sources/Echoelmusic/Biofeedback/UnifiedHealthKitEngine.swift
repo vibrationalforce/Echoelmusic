@@ -234,7 +234,7 @@ struct HealthCircularBuffer<T> {
 // MARK: - Delegate Protocol
 
 /// Protocol for receiving real-time health updates
-public protocol UnifiedHealthKitDelegate: AnyObject {
+public protocol UnifiedHealthKitDelegate: AnyObject, Sendable {
     func healthKit(_ engine: UnifiedHealthKitEngine, didUpdateHeart data: UnifiedHeartData)
     func healthKit(_ engine: UnifiedHealthKitEngine, didUpdateRespiratory data: UnifiedRespiratoryData)
     func healthKit(_ engine: UnifiedHealthKitEngine, didChangeCoherence coherence: Double, trend: CoherenceTrend)
