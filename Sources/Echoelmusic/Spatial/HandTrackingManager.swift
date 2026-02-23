@@ -292,6 +292,7 @@ class HandTrackingManager: ObservableObject {
 
 // MARK: - Camera Integration Helper
 
+#if os(iOS) || os(macOS)
 extension HandTrackingManager {
     /// Create camera capture session for hand tracking
     func createCaptureSession() -> AVCaptureSession? {
@@ -318,3 +319,4 @@ extension HandTrackingManager {
         return session
     }
 }
+#endif

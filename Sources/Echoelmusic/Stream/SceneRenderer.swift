@@ -310,11 +310,13 @@ class SceneRenderer {
 
     private func renderSource(_ source: SceneSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
         switch source {
+        #if os(iOS) || os(macOS)
         case .camera(let cameraSource):
             renderCameraSource(cameraSource, to: output, time: time, commandBuffer: commandBuffer)
 
         case .chromaKey(let chromaKeySource):
             renderChromaKeySource(chromaKeySource, to: output, time: time, commandBuffer: commandBuffer)
+        #endif
 
         case .screenCapture(let screenSource):
             renderScreenCaptureSource(screenSource, to: output, time: time, commandBuffer: commandBuffer)
@@ -341,6 +343,7 @@ class SceneRenderer {
 
     // MARK: - Source Renderers
 
+    #if os(iOS) || os(macOS)
     private func renderCameraSource(_ source: StreamCameraSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
         guard let sourceTexture = sourceTextures[source.id],
               let pipeline = compositePipeline else { return }
@@ -359,6 +362,7 @@ class SceneRenderer {
 
         renderTextureToOutput(sourceTexture, to: output, pipeline: pipeline, opacity: 1.0, time: time, commandBuffer: commandBuffer, chromaKeyColor: keyColor)
     }
+    #endif
 
     private func renderScreenCaptureSource(_ source: ScreenCaptureSource, to output: MTLTexture, time: Float, commandBuffer: MTLCommandBuffer) {
         guard let sourceTexture = sourceTextures[source.id],

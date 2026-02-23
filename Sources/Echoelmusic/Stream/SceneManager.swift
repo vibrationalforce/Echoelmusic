@@ -44,8 +44,10 @@ struct StreamScene: Identifiable {
 // MARK: - Scene Source
 
 enum SceneSource: Identifiable {
+    #if os(iOS) || os(macOS)
     case camera(StreamCameraSource)
     case chromaKey(ChromaKeySource)
+    #endif
     case screenCapture(ScreenCaptureSource)
     case videoFile(VideoFileSource)
     case echoelVisual(EchoelVisualSource)
@@ -56,8 +58,10 @@ enum SceneSource: Identifiable {
 
     var id: UUID {
         switch self {
+        #if os(iOS) || os(macOS)
         case .camera(let s): return s.id
         case .chromaKey(let s): return s.id
+        #endif
         case .screenCapture(let s): return s.id
         case .videoFile(let s): return s.id
         case .echoelVisual(let s): return s.id
@@ -69,6 +73,7 @@ enum SceneSource: Identifiable {
     }
 }
 
+#if os(iOS) || os(macOS)
 struct StreamCameraSource: Identifiable {
     let id = UUID()
     var name: String
@@ -86,6 +91,7 @@ struct ChromaKeySource: Identifiable {
         case blue
     }
 }
+#endif
 
 struct ScreenCaptureSource: Identifiable {
     let id = UUID()

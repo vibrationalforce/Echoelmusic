@@ -249,6 +249,7 @@ extension LiDARDepthScanner: ARSessionDelegate {
 ///
 /// Nyquist: 30 Hz → max detectable freq = 15 Hz (breathing, micro-sway).
 /// Used for: near-field skin surface analysis, tissue topology.
+#if os(iOS)
 @MainActor
 public final class TrueDepthExtractor: NSObject, ObservableObject {
 
@@ -361,6 +362,7 @@ extension TrueDepthExtractor: AVCaptureDepthDataOutputDelegate {
         }
     }
 }
+#endif // os(iOS)
 
 // MARK: - Barometer Vibration Detector
 
@@ -462,7 +464,9 @@ public final class BiophysicalSensorFusion: ObservableObject {
     #if canImport(ARKit)
     private let lidarScanner = LiDARDepthScanner()
     #endif
+    #if os(iOS)
     private let trueDepthExtractor = TrueDepthExtractor()
+    #endif
     #if canImport(CoreMotion)
     private let barometerDetector = BarometerVibrationDetector()
     private let motionManager = CMMotionManager()
@@ -516,6 +520,7 @@ public final class BiophysicalSensorFusion: ObservableObject {
         #endif
 
         // TrueDepth
+        #if os(iOS)
         do {
             try trueDepthExtractor.startCapture()
             activeSensors.insert(.trueDepth)
@@ -523,6 +528,7 @@ public final class BiophysicalSensorFusion: ObservableObject {
         } catch {
             log.info("TrueDepth not available: \(error)")
         }
+        #endif
 
         // Barometer
         #if canImport(CoreMotion)
@@ -561,7 +567,9 @@ public final class BiophysicalSensorFusion: ObservableObject {
         #if canImport(ARKit)
         lidarScanner.stopScanning()
         #endif
+        #if os(iOS)
         trueDepthExtractor.stopCapture()
+        #endif
         #if canImport(CoreMotion)
         barometerDetector.stopMonitoring()
         motionManager.stopDeviceMotionUpdates()
@@ -605,9 +613,11 @@ public final class BiophysicalSensorFusion: ObservableObject {
         #if canImport(ARKit)
         depthReading = lidarScanner.latestDepthMap
         #endif
+        #if os(iOS)
         if depthReading == nil {
             depthReading = trueDepthExtractor.latestDepthMap
         }
+        #endif
 
         // IMU frequency analysis (from userAcceleration buffer)
         let imuFreq = detectIMUFrequency()
