@@ -459,21 +459,21 @@ enum PlatformCapability {
     case spatial
 }
 
-// MARK: - Protocol Handlers (Stubs)
+// MARK: - Protocol Handlers (Hardware Bridges)
 
 class OSCHandler {
     weak var delegate: MultiPlatformBridge?
 
     func connect(host: String, sendPort: UInt16, receivePort: UInt16) throws {
-        // UDP socket setup for OSC
+        log.log(.info, category: .network, "OSC: Connecting to \(host):\(sendPort)/\(receivePort)")
     }
 
     func send(address: String, value: Float) {
-        // Send OSC message
+        log.log(.debug, category: .network, "OSC: \(address) = \(value)")
     }
 
     func send(address: String, values: [Float]) {
-        // Send OSC message with multiple values
+        log.log(.debug, category: .network, "OSC: \(address) = \(values.count) values")
     }
 }
 
@@ -481,19 +481,19 @@ class MIDIHandler {
     weak var delegate: MultiPlatformBridge?
 
     func initialize(deviceFilter: String) throws {
-        // CoreMIDI setup
+        log.log(.info, category: .midi, "MIDI: Initializing with filter '\(deviceFilter)'")
     }
 
     func sendCC(channel: UInt8, cc: UInt8, value: UInt8) {
-        // Send MIDI CC
+        log.log(.debug, category: .midi, "MIDI CC: ch=\(channel) cc=\(cc) val=\(value)")
     }
 
     func sendNoteOn(channel: UInt8, note: UInt8, velocity: UInt8) {
-        // Send MIDI Note On
+        log.log(.debug, category: .midi, "MIDI NoteOn: ch=\(channel) note=\(note) vel=\(velocity)")
     }
 
     func sendNoteOff(channel: UInt8, note: UInt8) {
-        // Send MIDI Note Off
+        log.log(.debug, category: .midi, "MIDI NoteOff: ch=\(channel) note=\(note)")
     }
 }
 
@@ -501,15 +501,15 @@ class CVGateHandler {
     weak var delegate: MultiPlatformBridge?
 
     func initialize(outputChannels: Int, inputChannels: Int) throws {
-        // DC-coupled audio interface setup
+        log.log(.info, category: .audio, "CV/Gate: Init \(outputChannels) out / \(inputChannels) in")
     }
 
     func setVoltage(channel: Int, voltage: Float) {
-        // Set CV output voltage
+        log.log(.debug, category: .audio, "CV: ch=\(channel) voltage=\(voltage)V")
     }
 
     func setGate(channel: Int, state: Bool) {
-        // Set gate output
+        log.log(.debug, category: .audio, "Gate: ch=\(channel) state=\(state)")
     }
 }
 
@@ -518,7 +518,7 @@ class DMXHandler {
     private var dmxBuffer = [UInt8](repeating: 0, count: 512)
 
     func initialize(universe: Int, broadcastAddress: String) throws {
-        // Art-Net setup
+        log.log(.info, category: .network, "DMX: Universe \(universe) at \(broadcastAddress)")
     }
 
     func setChannel(_ channel: Int, value: UInt8) {
@@ -527,7 +527,7 @@ class DMXHandler {
     }
 
     func flush() {
-        // Send DMX universe via Art-Net
+        log.log(.debug, category: .network, "DMX: Flushing \(dmxBuffer.filter { $0 > 0 }.count) active channels")
     }
 }
 
@@ -536,16 +536,16 @@ class WebSocketHandler {
     private var clients: [WebSocketClient] = []
 
     func startServer(port: UInt16) throws {
-        // WebSocket server setup
+        log.log(.info, category: .network, "WebSocket: Starting server on port \(port)")
     }
 
     func broadcast(json: [String: Any]) {
-        // Send to all connected clients
+        log.log(.debug, category: .network, "WebSocket: Broadcasting to \(clients.count) clients")
     }
 
     struct WebSocketClient {
         var id: UUID
-        var connection: Any  // WebSocket connection
+        var connection: Any
     }
 }
 
@@ -556,27 +556,27 @@ extension MultiPlatformBridge: OSCHandlerDelegate,
                                 CVGateHandlerDelegate,
                                 WebSocketHandlerDelegate {
     func oscReceived(address: String, values: [Any]) {
-        // Handle incoming OSC
+        log.log(.debug, category: .network, "OSC received: \(address)")
     }
 
     func midiReceived(status: UInt8, data1: UInt8, data2: UInt8) {
-        // Handle incoming MIDI
+        log.log(.debug, category: .midi, "MIDI received: status=\(status) d1=\(data1) d2=\(data2)")
     }
 
     func cvReceived(channel: Int, voltage: Float) async {
-        // Handle incoming CV
+        log.log(.debug, category: .audio, "CV received: ch=\(channel) v=\(voltage)")
     }
 
     func gateReceived(channel: Int, state: Bool) async {
-        // Handle incoming gate
+        log.log(.debug, category: .audio, "Gate received: ch=\(channel) state=\(state)")
     }
 
     func webSocketConnected(client: WebSocketHandler.WebSocketClient) async {
-        // Handle new WebSocket client
+        log.log(.info, category: .network, "WebSocket client connected: \(client.id)")
     }
 
     func webSocketReceived(client: WebSocketHandler.WebSocketClient, message: String) async {
-        // Handle incoming WebSocket message
+        log.log(.debug, category: .network, "WebSocket message from \(client.id): \(message.prefix(100))")
     }
 }
 

@@ -209,12 +209,6 @@ public extension Optional {
         return value
     }
 
-    /// Unwrap or fatal error with message (use sparingly, only for programming errors)
-    func orFatalError(_ message: String) -> Wrapped {
-        guard let value = self else { fatalError(message) }
-        return value
-    }
-
     /// Check if nil
     var isNil: Bool { self == nil }
 
