@@ -76,8 +76,9 @@ public class UnifiedControlHub: ObservableObject {
     private var lambdaModeEngine: LambdaModeEngine?
 
     // Phase λ∞: NeuroSpiritual + Circadian (consciousness-driven audio/light)
-    private let neuroSpiritualEngine = NeuroSpiritualEngine.shared
-    private let circadianEngine = CircadianRhythmEngine.shared
+    // Lazy to avoid triggering singleton init before initializeCoreSystems() completes
+    private lazy var neuroSpiritualEngine = NeuroSpiritualEngine.shared
+    private lazy var circadianEngine = CircadianRhythmEngine.shared
 
     // Phase 10000+: Ultimate Hardware Ecosystem Integration
     private var hardwareEcosystem: HardwareEcosystem?

@@ -386,7 +386,8 @@ public final class CreativeStudioEngine: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         let data = try encoder.encode(project)
 
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let fileURL = documentsPath.appendingPathComponent("\(project.name).echoproject")
 
         try data.write(to: fileURL)

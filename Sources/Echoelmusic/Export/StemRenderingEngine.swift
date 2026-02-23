@@ -788,7 +788,8 @@ public final class StemRenderingEngine: ObservableObject {
     }
 
     private func defaultOutputDirectory(for session: Session) -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let stemsDir = docs.appendingPathComponent("Exports/Stems/\(session.name)", isDirectory: true)
         return stemsDir
     }

@@ -291,7 +291,8 @@ class ExportManager {
 
     /// Generate default export URL for audio
     private func defaultExportURL(for session: Session, format: ExportFormat) -> URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let exportsDir = documentsPath.appendingPathComponent("Exports", isDirectory: true)
         try? FileManager.default.createDirectory(at: exportsDir, withIntermediateDirectories: true)
 
@@ -301,7 +302,8 @@ class ExportManager {
 
     /// Generate default export URL for bio-data
     private func defaultBioDataURL(for session: Session, format: BioDataFormat) -> URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let exportsDir = documentsPath.appendingPathComponent("Exports", isDirectory: true)
         try? FileManager.default.createDirectory(at: exportsDir, withIntermediateDirectories: true)
 
@@ -311,7 +313,8 @@ class ExportManager {
 
     /// Generate default package URL
     private func defaultPackageURL(for session: Session) -> URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let exportsDir = documentsPath.appendingPathComponent("Exports", isDirectory: true)
         try? FileManager.default.createDirectory(at: exportsDir, withIntermediateDirectories: true)
 

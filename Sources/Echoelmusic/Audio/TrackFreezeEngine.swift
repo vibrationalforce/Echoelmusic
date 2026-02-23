@@ -455,14 +455,16 @@ public final class TrackFreezeEngine: ObservableObject {
     // MARK: - File Management
 
     private func freezeFileURL(for trackId: UUID) -> URL {
-        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let freezeDir = cacheDir.appendingPathComponent("FrozenTracks", isDirectory: true)
         try? FileManager.default.createDirectory(at: freezeDir, withIntermediateDirectories: true)
         return freezeDir.appendingPathComponent("\(trackId.uuidString)_frozen.wav")
     }
 
     private func bounceFileURL(for trackId: UUID) -> URL {
-        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let bounceDir = documentsDir.appendingPathComponent("Bounced", isDirectory: true)
         try? FileManager.default.createDirectory(at: bounceDir, withIntermediateDirectories: true)
         return bounceDir.appendingPathComponent("\(trackId.uuidString)_bounced.wav")
@@ -470,7 +472,8 @@ public final class TrackFreezeEngine: ObservableObject {
 
     /// Clean up all frozen files
     public func cleanupAllFrozenFiles() {
-        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let freezeDir = cacheDir.appendingPathComponent("FrozenTracks", isDirectory: true)
         try? FileManager.default.removeItem(at: freezeDir)
 

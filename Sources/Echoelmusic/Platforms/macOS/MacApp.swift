@@ -265,7 +265,8 @@ class MacAudioEngine {
     }
 
     func startRecording() async throws {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let timestamp = ISO8601DateFormatter().string(from: Date())
         recordingURL = documentsPath.appendingPathComponent("Recording_\(timestamp).wav")
         isRecording = true

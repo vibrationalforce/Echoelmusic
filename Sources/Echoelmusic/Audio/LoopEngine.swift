@@ -121,7 +121,8 @@ class LoopEngine: ObservableObject {
 
     init() {
         // Setup loops directory
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         self.loopsDirectory = documentsPath.appendingPathComponent("Loops", isDirectory: true)
 
         // Create directory if needed
