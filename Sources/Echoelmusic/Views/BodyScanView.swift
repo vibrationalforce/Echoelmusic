@@ -1,3 +1,4 @@
+#if os(iOS)
 // BodyScanView.swift
 // Echoelmusic
 //
@@ -582,3 +583,4 @@ struct DisclaimerRow: View {
     BodyScanView()
 }
 #endif
+#endif // os(iOS)

@@ -1,3 +1,4 @@
+#if os(iOS) || os(macOS)
 // VideoPipelineCoordinator.swift
 // Echoelmusic - Phase 10000 Ralph Wiggum Lambda Loop Mode
 //
@@ -402,3 +403,4 @@ public enum VideoPipelineError: LocalizedError {
         }
     }
 }
+#endif // os(iOS) || os(macOS)

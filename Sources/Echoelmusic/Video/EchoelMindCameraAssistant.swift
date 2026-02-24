@@ -1,3 +1,4 @@
+#if os(iOS) || os(macOS)
 import Foundation
 import AVFoundation
 import Combine
@@ -986,3 +987,4 @@ public final class EchoelMindCameraAssistant: ObservableObject {
         announceVoice("I didn't understand. Say Help for available commands.")
     }
 }
+#endif // os(iOS) || os(macOS)

@@ -304,7 +304,9 @@ public final class BiophysicalWellnessEngine: ObservableObject {
 
     // MARK: - Sub-Engines
 
+    #if os(iOS) || os(macOS)
     private var evmEngine: EVMAnalysisEngine?
+    #endif
     private var inertialEngine: InertialAnalysisEngine?
     private var stimulationEngine: TapticStimulationEngine?
     private var cymaticsVisualizer: CymaticsVisualizer?
@@ -336,7 +338,9 @@ public final class BiophysicalWellnessEngine: ObservableObject {
     }
 
     private func setupSubEngines() {
+        #if os(iOS) || os(macOS)
         evmEngine = EVMAnalysisEngine()
+        #endif
         inertialEngine = InertialAnalysisEngine()
         stimulationEngine = TapticStimulationEngine()
         cymaticsVisualizer = CymaticsVisualizer()
@@ -371,9 +375,11 @@ public final class BiophysicalWellnessEngine: ObservableObject {
             try await inertialEngine?.startAnalysis(sampleRate: 100)
         }
 
+        #if os(iOS) || os(macOS)
         if state.evmEnabled {
             try await evmEngine?.startAnalysis(frequencyRange: preset.frequencyRange)
         }
+        #endif
 
         // Start update loop
         startUpdateLoop()
@@ -398,7 +404,9 @@ public final class BiophysicalWellnessEngine: ObservableObject {
         await stopStimulation()
 
         inertialEngine?.stopAnalysis()
+        #if os(iOS) || os(macOS)
         evmEngine?.stopAnalysis()
+        #endif
     }
 
     /// Set custom frequency (for custom preset)
@@ -447,6 +455,7 @@ public final class BiophysicalWellnessEngine: ObservableObject {
 
     public func setEVMEnabled(_ enabled: Bool) async throws {
         state.evmEnabled = enabled
+        #if os(iOS) || os(macOS)
         if state.isActive {
             if enabled {
                 try await evmEngine?.startAnalysis(frequencyRange: state.preset.frequencyRange)
@@ -454,6 +463,7 @@ public final class BiophysicalWellnessEngine: ObservableObject {
                 evmEngine?.stopAnalysis()
             }
         }
+        #endif
     }
 
     // MARK: - Current Values
@@ -511,9 +521,11 @@ public final class BiophysicalWellnessEngine: ObservableObject {
             state.frequencyHistory.append(inertial.dominantFrequency)
         }
 
+        #if os(iOS) || os(macOS)
         if let evm = evmEngine?.latestResult {
             currentEVMResult = evm
         }
+        #endif
 
         // Calculate coherence from sensor alignment
         currentCoherence = calculateCoherence()
