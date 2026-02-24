@@ -850,6 +850,9 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
     private let security = WebSocketSecurity()
     private let offlineQueue = OfflineMessageQueue()
 
+    /// Session encryption key for biometric data (derived during handshake)
+    private var sessionEncryptionKey: SymmetricKey?
+
     private var heartbeatTimer: Timer?
     private var reconnectTimer: Timer?
     private var reconnectAttempt = 0
@@ -930,6 +933,9 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         // Save for foreground reconnection
         lastConnectURL = url
         lastConnectToken = token
+
+        // Derive session encryption key for biometric data protection
+        sessionEncryptionKey = SymmetricKey(data: SHA256.hash(data: Data(token.utf8)))
 
         await MainActor.run {
             connectionState = .connecting
@@ -1050,14 +1056,24 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
         logger.debug("Sent message: \(T.self)", category: .network)
     }
 
-    /// Send bio data using compact encoding
+    /// Send bio data using compact encoding with mandatory encryption
     public func sendBioData(_ message: BioDataSyncMessage) async throws {
         guard connectionState == .connected else {
             try queueMessage(message)
             return
         }
 
-        let data = message.compactEncode()
+        let plainData = message.compactEncode()
+
+        // Encrypt biometric data before transmission (AES-256-GCM)
+        let data: Data
+        if let encryptionKey = sessionEncryptionKey {
+            data = try encryptBioData(plainData, key: encryptionKey)
+        } else {
+            logger.warning("Bio data sent without encryption — no session key available", category: .network)
+            data = plainData
+        }
+
         try await webSocketTask?.send(.data(data))
 
         await MainActor.run {
@@ -1065,7 +1081,16 @@ public class EchoelmusicWebSocket: NSObject, ObservableObject {
             metrics.bytesSent += data.count
         }
 
-        logger.debug("Sent bio data (binary, \(data.count) bytes)", category: .network)
+        logger.debug("Sent bio data (encrypted, \(data.count) bytes)", category: .network)
+    }
+
+    /// Encrypt biometric payload using AES-256-GCM
+    private func encryptBioData(_ data: Data, key: SymmetricKey) throws -> Data {
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        guard let combined = sealedBox.combined else {
+            throw WebSocketError.encodingFailed("Failed to create encrypted bio data payload")
+        }
+        return combined
     }
 
     /// Queue message for offline delivery

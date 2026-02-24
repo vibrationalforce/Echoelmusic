@@ -1,7 +1,7 @@
-// NeuroSpiritualEngine.swift
+// BodyExpressionMapper.swift (formerly NeuroSpiritualEngine.swift)
 // Echoelmusic - Holistic Bio-Coherence Platform
 //
-// Neuro-Spiritual Psychosomatic Data Science Engine
+// Body Expression Mapper — FACS, Gesture, and Movement Analysis Engine
 // Integration von Mimik, Gestik, Bewegung, Biofeedback und Bewusstseinszuständen
 //
 // Wissenschaftliche Basis:
@@ -346,10 +346,10 @@ public struct PsychosomaticState: Codable, Identifiable {
     }
 }
 
-// MARK: - Neuro-Spiritual Engine
+// MARK: - Body Expression Mapper (formerly NeuroSpiritualEngine)
 
 @MainActor
-public final class NeuroSpiritualEngine: ObservableObject {
+public final class BodyExpressionMapper: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -385,7 +385,7 @@ public final class NeuroSpiritualEngine: ObservableObject {
 
     // MARK: - Singleton
 
-    public static let shared = NeuroSpiritualEngine()
+    public static let shared = BodyExpressionMapper()
 
     // MARK: - Initialization
 
@@ -588,9 +588,14 @@ public final class NeuroSpiritualEngine: ObservableObject {
     }
 }
 
-// MARK: - Spiritual Disclaimer
+// MARK: - Backward Compatibility
 
-public struct NeuroSpiritualDisclaimer {
+/// Backward compatibility typealias
+public typealias NeuroSpiritualEngine = BodyExpressionMapper
+
+// MARK: - Expression Disclaimer
+
+public struct BodyExpressionDisclaimer {
     public static let text = """
     HINWEIS ZU SPIRITUELLEN FUNKTIONEN
     ===================================

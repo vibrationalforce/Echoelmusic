@@ -1,7 +1,7 @@
-// QuantumHealthBiofeedbackEngine.swift
+// CollaborationSyncEngine.swift (formerly QuantumHealthBiofeedbackEngine.swift)
 // Echoelmusic - Holistic Bio-Coherence Platform
 //
-// Quantum-Inspired Health & Biofeedback Integration
+// Collaboration Sync Engine — Real-Time Multi-User Session Synchronization
 // Real-Time Unlimited Collaboration & Broadcasting
 //
 // Quantum Computing Konzepte:
@@ -178,10 +178,10 @@ public struct BroadcastConfiguration: Codable {
     }
 }
 
-// MARK: - Quantum Health Biofeedback Engine
+// MARK: - Collaboration Sync Engine (formerly QuantumHealthBiofeedbackEngine)
 
 @MainActor
-public final class QuantumHealthBiofeedbackEngine: ObservableObject {
+public final class CollaborationSyncEngine: ObservableObject {
 
     // MARK: - Published Properties
 
@@ -223,7 +223,7 @@ public final class QuantumHealthBiofeedbackEngine: ObservableObject {
 
     // MARK: - Singleton
 
-    public static let shared = QuantumHealthBiofeedbackEngine()
+    public static let shared = CollaborationSyncEngine()
 
     // MARK: - Initialization
 
@@ -529,6 +529,11 @@ public struct SessionAnalytics: Codable {
 }
 
 // MARK: - Quantum Disclaimer
+
+// MARK: - Backward Compatibility
+
+/// Backward compatibility typealias
+public typealias QuantumHealthBiofeedbackEngine = CollaborationSyncEngine
 
 public struct QuantumHealthDisclaimer {
     public static let text = """

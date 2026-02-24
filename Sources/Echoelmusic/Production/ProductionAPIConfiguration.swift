@@ -710,8 +710,9 @@ public struct CustomAIConfiguration: APIConfiguration {
     public var baseURL: URL {
         switch environment {
         case .development:
+            // Always use HTTPS — even in development (use mkcert for local TLS)
             #if DEBUG
-            return SafeURLFactory.make("http://localhost:8080")
+            return SafeURLFactory.make("https://localhost:8080")
             #else
             return SafeURLFactory.make("https://ai.echoelmusic.com")
             #endif
