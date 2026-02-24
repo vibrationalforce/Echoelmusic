@@ -93,6 +93,7 @@ targets:
           - "**/README.md"
           - "**/*.md"
     resources:
+      - path: Sources/Echoelmusic/Resources/Assets.xcassets
       - path: Resources/PrivacyInfo.xcprivacy
         type: file
     info:
@@ -505,7 +506,7 @@ targets:
         MinimumOSVersion: "15.0"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.usernotifications.service
-          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
+          NSExtensionPrincipalClass: EchoelmusicNotificationService.NotificationService
     settings:
       base:
         PRODUCT_NAME: EchoelmusicNotificationService
