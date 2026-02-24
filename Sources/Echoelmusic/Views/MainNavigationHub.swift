@@ -62,6 +62,25 @@ struct MainNavigationHub: View {
             }
         }
 
+        /// Filled variant for selected state in tab bars.
+        /// Some SF Symbols don't have a .fill variant or already end in .fill.
+        var filledIcon: String {
+            switch self {
+            case .palace: return "waveform.circle.fill"
+            case .daw: return "pianokeys.inverse"
+            case .session: return "square.grid.3x3.fill"
+            case .video: return "film.fill"
+            case .vj: return "lightbulb.led.fill"
+            case .nodes: return "point.3.connected.trianglepath.dotted"
+            case .midi: return "cable.connector.horizontal"
+            case .mixing: return "slider.horizontal.3"
+            case .ai: return "brain.head.profile.fill"
+            case .hardware: return "cpu.fill"
+            case .streaming: return "dot.radiowaves.left.and.right"
+            case .settings: return "gearshape.fill"
+            }
+        }
+
         var color: Color {
             switch self {
             case .palace: return VaporwaveColors.neonPink
@@ -695,7 +714,7 @@ struct MainNavigationHub: View {
             }
         }) {
             VStack(spacing: 4) {
-                Image(systemName: currentWorkspace == workspace ? workspace.icon + ".fill" : workspace.icon)
+                Image(systemName: currentWorkspace == workspace ? workspace.filledIcon : workspace.icon)
                     .font(.system(size: 20))
                     .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textTertiary)
                     .neonGlow(color: currentWorkspace == workspace ? workspace.color : .clear, radius: 6)
