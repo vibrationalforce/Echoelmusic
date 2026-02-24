@@ -70,6 +70,12 @@ enum AudioConfiguration {
     /// Falls back to playback-only if `.playAndRecord` fails (e.g. microphone
     /// permission not yet granted on first launch).
     static func configureAudioSession() throws {
+        #if os(macOS)
+        // macOS uses HAL (Hardware Abstraction Layer), not AVAudioSession
+        isSessionConfigured = true
+        log.audio("Audio session: macOS HAL (no AVAudioSession)")
+        return
+        #else
         let audioSession = AVAudioSession.sharedInstance()
 
         // Try playAndRecord first (needs microphone permission).
@@ -109,12 +115,16 @@ enum AudioConfiguration {
         log.audio("   Input Latency: \(audioSession.inputLatency * 1000) ms")
         log.audio("   Output Latency: \(audioSession.outputLatency * 1000) ms")
         log.audio("   Total Latency: \((audioSession.inputLatency + audioSession.outputLatency + audioSession.ioBufferDuration) * 1000) ms")
+        #endif // !os(macOS)
     }
 
 
     /// Upgrade audio session from .playback to .playAndRecord after mic permission is granted.
     /// No-op if already using .playAndRecord.
     static func upgradeToPlayAndRecord() throws {
+        #if os(macOS)
+        return
+        #else
         let audioSession = AVAudioSession.sharedInstance()
         guard audioSession.category != .playAndRecord else { return }
 
@@ -125,6 +135,7 @@ enum AudioConfiguration {
         )
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         log.audio("Audio session upgraded to .playAndRecord")
+        #endif
     }
 
     // MARK: - Latency Modes
@@ -154,7 +165,9 @@ enum AudioConfiguration {
     /// Set latency mode and reconfigure audio session
     static func setLatencyMode(_ mode: LatencyMode) throws {
         currentBufferSize = mode.bufferSize
+        #if !os(macOS)
         try configureAudioSession()
+        #endif
         log.audio("🎵 Latency mode set to: \(mode.description)")
     }
 
@@ -212,12 +225,16 @@ enum AudioConfiguration {
 
     /// Measure actual audio latency
     static func measureLatency() -> TimeInterval {
+        #if os(macOS)
+        return Double(currentBufferSize) / preferredSampleRate
+        #else
         let audioSession = AVAudioSession.sharedInstance()
         let inputLatency = audioSession.inputLatency
         let outputLatency = audioSession.outputLatency
         let ioBufferDuration = audioSession.ioBufferDuration
 
         return inputLatency + outputLatency + ioBufferDuration
+        #endif
     }
 
     // MARK: - Audio Interruption Handling
@@ -231,6 +248,10 @@ enum AudioConfiguration {
     /// Register for audio session interruption and route change notifications.
     /// Call once during app startup after configureAudioSession().
     static func registerInterruptionHandlers() {
+        #if os(macOS)
+        log.audio("Audio interruption handlers: N/A on macOS")
+        return
+        #else
         NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),
@@ -256,8 +277,10 @@ enum AudioConfiguration {
         }
 
         log.audio("Audio interruption handlers registered")
+        #endif // !os(macOS)
     }
 
+    #if !os(macOS)
     private static func handleAudioInterruption(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -318,12 +341,19 @@ enum AudioConfiguration {
             log.audio("Failed to reconfigure audio after media services reset: \(error)", level: .error)
         }
     }
+    #endif // !os(macOS)
 
     /// Get latency statistics
     static func latencyStats() -> String {
-        let audioSession = AVAudioSession.sharedInstance()
         let totalLatency = measureLatency() * 1000  // Convert to ms
-
+        #if os(macOS)
+        return """
+        🎵 Audio Latency Statistics (macOS HAL):
+           Buffer: \(currentBufferSize) frames
+           Estimated Latency: \(String(format: "%.2f", totalLatency)) ms
+        """
+        #else
+        let audioSession = AVAudioSession.sharedInstance()
         return """
         🎵 Audio Latency Statistics:
            Sample Rate: \(audioSession.sampleRate) Hz
@@ -334,5 +364,6 @@ enum AudioConfiguration {
            Target: < 5.0 ms
            Status: \(totalLatency < 5.0 ? "✅ EXCELLENT" : totalLatency < 10.0 ? "⚠️  GOOD" : "❌ NEEDS OPTIMIZATION")
         """
+        #endif
     }
 }

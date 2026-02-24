@@ -72,7 +72,11 @@ class BinauralBeatGenerator: ObservableObject {
 
     /// Sample rate for audio generation - uses system rate for proper sync
     private var sampleRate: Double {
-        AVAudioSession.sharedInstance().sampleRate
+        #if os(macOS)
+        return 48000.0
+        #else
+        return AVAudioSession.sharedInstance().sampleRate
+        #endif
     }
 
     /// Current audio mode (automatically detected)
