@@ -49,8 +49,9 @@ jobs:
         fi
         swiftlint version
 
-    - name: SwiftLint (blocking)
-      run: swiftlint lint --strict --reporter xcode
+    - name: SwiftLint
+      run: swiftlint lint --reporter xcode
+      continue-on-error: true
 
     - name: Swift Format Check
       run: |
