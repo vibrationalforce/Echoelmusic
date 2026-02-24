@@ -210,7 +210,8 @@ public final class AdaptiveCapabilityManager: ObservableObject {
         }
 
         #if canImport(UIKit) && !os(watchOS)
-        deviceName = UIDevice.current.name
+        // Defer UIDevice access — safe even before UIWindowScene connects
+        deviceName = ProcessInfo.processInfo.hostName
         #else
         deviceName = Host.current().localizedName ?? "Unknown"
         #endif
