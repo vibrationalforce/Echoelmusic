@@ -329,8 +329,8 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
     /// Coefficients: [b0, b1, b2, a1, a2] per section, flattened
     private var coefficients: [Double]
 
-    /// Internal delay state
-    private var delays: [Double]
+    /// Internal delay state (Float for vDSP_biquad processing)
+    private var delays: [Float]
 
     /// vDSP biquad setup
     private var setup: vDSP_biquad_Setup?
@@ -338,7 +338,7 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
     public init(sectionCount: Int = 4) {
         self.sectionCount = sectionCount
         self.coefficients = [Double](repeating: 0, count: sectionCount * 5)
-        self.delays = [Double](repeating: 0, count: (sectionCount + 1) * 2)
+        self.delays = [Float](repeating: 0, count: (sectionCount + 1) * 2)
 
         // Initialize as passthrough (b0=1, rest=0)
         for i in 0..<sectionCount {
@@ -435,7 +435,7 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
             vDSP_biquad_DestroySetup(old)
         }
         setup = vDSP_biquad_CreateSetup(coefficients, vDSP_Length(sectionCount))
-        delays = [Double](repeating: 0, count: (sectionCount + 1) * 2)
+        delays = [Float](repeating: 0, count: (sectionCount + 1) * 2)
     }
 
     // MARK: - Processing
@@ -445,25 +445,17 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
         guard let setup = setup else { return input }
 
         let count = input.count
-        var inputDouble = [Double](repeating: 0, count: count)
-        var outputDouble = [Double](repeating: 0, count: count)
-
-        // Float → Double
-        vDSP_vspdp(input, 1, &inputDouble, 1, vDSP_Length(count))
-
-        // Process through biquad cascade
-        vDSP_biquad(setup, &delays, inputDouble, 1, &outputDouble, 1, vDSP_Length(count))
-
-        // Double → Float
         var output = [Float](repeating: 0, count: count)
-        vDSP_vdpsp(outputDouble, 1, &output, 1, vDSP_Length(count))
+
+        // vDSP_biquad processes Float signals (setup uses Double coefficients internally)
+        vDSP_biquad(setup, &delays, input, 1, &output, 1, vDSP_Length(count))
 
         return output
     }
 
     /// Reset filter state
     public func reset() {
-        delays = [Double](repeating: 0, count: (sectionCount + 1) * 2)
+        delays = [Float](repeating: 0, count: (sectionCount + 1) * 2)
     }
 }
 
