@@ -317,9 +317,12 @@ class AccessibilityManager: ObservableObject {
         isReduceTransparencyEnabled = UIAccessibility.isReduceTransparencyEnabled
         isIncreasedContrastEnabled = UIAccessibility.isDarkerSystemColorsEnabled
 
-        // Detect preferred content size
-        let uiCategory = UIApplication.shared.preferredContentSizeCategory
-        preferredContentSizeCategory = ContentSizeCategory(uiCategory)
+        // Detect preferred content size (defer UIApplication access to avoid
+        // crash if called before UIWindowScene is connected during early init)
+        if let scene = UIApplication.shared.connectedScenes.first {
+            let uiCategory = UIApplication.shared.preferredContentSizeCategory
+            preferredContentSizeCategory = ContentSizeCategory(uiCategory)
+        }
 
         log.accessibility("📱 System Accessibility Settings:")
         log.accessibility("   - VoiceOver: \(isVoiceOverEnabled)")
