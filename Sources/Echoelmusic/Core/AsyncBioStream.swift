@@ -103,7 +103,10 @@ public final class AsyncBioStream: AsyncSequence {
         }
         // The closure is always called synchronously by AsyncStream.init,
         // so capturedContinuation is guaranteed to be set.
-        self.continuation = capturedContinuation!
+        guard let cont = capturedContinuation else {
+            fatalError("AsyncStream.init did not invoke continuation closure synchronously — this is a Swift runtime bug")
+        }
+        self.continuation = cont
     }
 
     // MARK: - AsyncSequence

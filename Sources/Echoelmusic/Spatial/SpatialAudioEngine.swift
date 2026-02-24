@@ -194,10 +194,12 @@ public class SpatialAudioEngine: ObservableObject {
         // Configure audio session for low-latency spatial audio
         // .measurement mode provides lowest latency (disables post-processing)
         // Note: Removed .allowBluetoothA2DP which adds 100-200ms latency
+        #if !os(macOS)
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playback, mode: .measurement, options: [.allowBluetooth])
         try session.setPreferredIOBufferDuration(0.005) // 5ms buffer for low latency
         try session.setActive(true)
+        #endif
 
         // Start engine
         try audioEngine.start()

@@ -353,12 +353,16 @@ public final class ImmersiveIsochronicSession: ObservableObject {
     }
 
     private func detectHeadphones() {
+        #if os(macOS)
+        isHeadphonesConnected = false  // macOS uses HAL, not AVAudioSession route
+        #else
         let route = AVAudioSession.sharedInstance().currentRoute
         isHeadphonesConnected = route.outputs.contains { output in
             output.portType == .headphones ||
             output.portType == .bluetoothA2DP ||
             output.portType == .bluetoothHFP
         }
+        #endif
     }
 
     // MARK: - Session Control
@@ -376,6 +380,7 @@ public final class ImmersiveIsochronicSession: ObservableObject {
         analytics = SessionAnalytics()
 
         // Configure audio session
+        #if !os(macOS)
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default)
@@ -383,6 +388,7 @@ public final class ImmersiveIsochronicSession: ObservableObject {
         } catch {
             log.audio("Audio session configuration failed: \(error)", level: .error)
         }
+        #endif
 
         // Start audio engine
         do {

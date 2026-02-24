@@ -18,7 +18,11 @@ public enum AudioConstants {
 
     /// System-Sample-Rate (dynamisch)
     public static var systemSampleRate: Double {
-        AVAudioSession.sharedInstance().sampleRate
+        #if os(macOS)
+        return 48000.0  // macOS uses HAL, not AVAudioSession
+        #else
+        return AVAudioSession.sharedInstance().sampleRate
+        #endif
     }
 
     /// Preferred Sample Rate für Aufnahmen (Pro Audio Standard)

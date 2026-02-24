@@ -964,9 +964,11 @@ public class VoiceSynthesisEngine: ObservableObject {
 
     /// Start recording a voice sample for profile creation
     public func startRecording() throws {
+        #if !os(macOS)
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.record, mode: .measurement)
         try session.setActive(true)
+        #endif
 
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("voice_sample_\(UUID().uuidString).m4a")
         let settings: [String: Any] = [
