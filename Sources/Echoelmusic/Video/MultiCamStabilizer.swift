@@ -1,3 +1,4 @@
+#if os(iOS)
 import Foundation
 import AVFoundation
 #if canImport(Metal)
@@ -1024,3 +1025,4 @@ enum StabilizationError: LocalizedError {
         }
     }
 }
+#endif // os(iOS)

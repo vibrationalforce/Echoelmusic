@@ -1,3 +1,4 @@
+#if os(iOS) || os(macOS)
 import Foundation
 import AVFoundation
 #if canImport(Metal)
@@ -1309,3 +1310,4 @@ enum CameraError: LocalizedError {
         }
     }
 }
+#endif // os(iOS) || os(macOS)

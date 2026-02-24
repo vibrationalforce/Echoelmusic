@@ -1,3 +1,4 @@
+#if os(iOS) || os(macOS)
 // EVMAnalysisEngine.swift
 // Echoelmusic
 //
@@ -595,3 +596,4 @@ extension EVMAnalysisEngine: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 }
+#endif // os(iOS) || os(macOS)

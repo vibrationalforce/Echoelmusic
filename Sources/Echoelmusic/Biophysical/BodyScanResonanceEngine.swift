@@ -1,3 +1,4 @@
+#if os(iOS)
 // BodyScanResonanceEngine.swift
 // Echoelmusic
 //
@@ -824,4 +825,5 @@ public struct OrganResonanceReference: Identifiable, Codable, Sendable {
         }
     }
 }
+#endif // os(iOS)
 
