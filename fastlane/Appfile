@@ -39,13 +39,25 @@ for_lane :beta_watchos do
   app_identifier "com.echoelmusic.app.watchkitapp"
 end
 
+for_lane :upload_watchos do
+  app_identifier "com.echoelmusic.app.watchkitapp"
+end
+
 # tvOS App (unified bundle ID for universal purchase)
 for_lane :beta_tvos do
   app_identifier "com.echoelmusic.app"
 end
 
+for_lane :upload_tvos do
+  app_identifier "com.echoelmusic.app"
+end
+
 # visionOS App (unified bundle ID for universal purchase)
 for_lane :beta_visionos do
+  app_identifier "com.echoelmusic.app"
+end
+
+for_lane :upload_visionos do
   app_identifier "com.echoelmusic.app"
 end
 

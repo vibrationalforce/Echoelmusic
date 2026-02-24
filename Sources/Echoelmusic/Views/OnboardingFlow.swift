@@ -341,6 +341,7 @@ private struct PermissionsPage: View {
     }
 
     private func requestMicrophonePermission() {
+        #if os(iOS)
         if #available(iOS 17.0, *) {
             Task {
                 let granted = await AVAudioApplication.requestRecordPermission()
@@ -365,6 +366,7 @@ private struct PermissionsPage: View {
                 }
             }
         }
+        #endif
     }
 }
 
