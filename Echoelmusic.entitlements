@@ -2,55 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- HealthKit Access (basic - no health-records which requires approval) -->
+	<!-- HealthKit Access (bio-reactive features) -->
 	<key>com.apple.developer.healthkit</key>
 	<true/>
 
-	<!-- Inter-App Audio (legacy routing for apps that don't support AUv3) -->
-	<key>inter-app-audio</key>
-	<true/>
-
-	<!-- App Groups (AUv3 extension, widgets, watch communication) -->
+	<!-- App Groups (shared data with extensions) -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.echoelmusic.shared</string>
-	</array>
-
-	<!-- Keychain Sharing -->
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.echoelmusic.app</string>
-	</array>
-
-	<!-- Push Notifications (APNs) — production for TestFlight + App Store -->
-	<key>aps-environment</key>
-	<string>production</string>
-
-	<!-- iCloud/CloudKit (for cross-device sync) -->
-	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array>
-		<string>iCloud.com.echoelmusic.app</string>
-	</array>
-	<key>com.apple.developer.icloud-services</key>
-	<array>
-		<string>CloudKit</string>
-		<string>CloudDocuments</string>
-	</array>
-	<key>com.apple.developer.ubiquity-container-identifiers</key>
-	<array>
-		<string>iCloud.com.echoelmusic.app</string>
-	</array>
-	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)com.echoelmusic.app</string>
-
-	<!-- HomeKit (for smart home lighting control via EchoelHomeService — HMHomeManager) -->
-	<key>com.apple.developer.homekit</key>
-	<true/>
-
-	<!-- In-App Purchases (StoreKit 2) -->
-	<key>com.apple.developer.in-app-payments</key>
-	<array>
-		<string>merchant.com.echoelmusic</string>
 	</array>
 </dict>
 </plist>
