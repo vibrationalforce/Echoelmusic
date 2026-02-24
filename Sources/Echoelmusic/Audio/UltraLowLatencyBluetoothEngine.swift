@@ -333,9 +333,15 @@ public class BluetoothAudioSession: ObservableObject {
     @Published public var isLowLatencyMode: Bool = true
     @Published public var currentLatency: Double = 0
 
+    #if !os(macOS)
     private var audioSession: AVAudioSession { AVAudioSession.sharedInstance() }
+    #endif
 
     public func configureForLowLatency() throws {
+        #if os(macOS)
+        // macOS uses CoreAudio HAL, not AVAudioSession
+        return
+        #else
         try audioSession.setCategory(
             .playAndRecord,
             mode: .measurement,
@@ -359,6 +365,7 @@ public class BluetoothAudioSession: ObservableObject {
         // Update actual values
         sampleRate = audioSession.sampleRate
         currentLatency = audioSession.inputLatency + audioSession.outputLatency
+        #endif
     }
 
     public func configureForBluetooth(codec: BluetoothAudioCodec) throws {
@@ -585,6 +592,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
     }
 
     private func setupNotifications() {
+        #if !os(macOS)
         // Audio route change notifications
         NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
             .sink { [weak self] notification in
@@ -598,6 +606,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
                 self?.handleInterruption(notification)
             }
             .store(in: &cancellables)
+        #endif
     }
 
     // MARK: - Public API
@@ -751,6 +760,9 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
     // MARK: - Private Methods
 
     private func scanSystemAudioDevices() {
+        #if os(macOS)
+        return  // macOS uses CoreAudio HAL for device enumeration
+        #else
         // Get current audio route
         let route = AVAudioSession.sharedInstance().currentRoute
 
@@ -785,8 +797,10 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
                 discoveredDevices.append(device)
             }
         }
+        #endif
     }
 
+    #if !os(macOS)
     private func classifyDevice(portType: AVAudioSession.Port) -> BluetoothDeviceType {
         switch portType {
         case .bluetoothA2DP, .bluetoothHFP:
@@ -869,6 +883,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
             break
         }
     }
+    #endif // !os(macOS)
 }
 
 // MARK: - CBCentralManagerDelegate

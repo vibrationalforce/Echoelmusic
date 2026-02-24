@@ -148,6 +148,9 @@ class AdaptiveAudioEngine: ObservableObject {
     }
 
     private func applyAudioConfiguration() {
+        #if os(macOS)
+        log.audio("Audio configured: \(currentPreset.sampleRate)Hz, \(currentPreset.bufferSize) samples (macOS — HAL managed)")
+        #else
         do {
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setPreferredIOBufferDuration(
@@ -159,6 +162,7 @@ class AdaptiveAudioEngine: ObservableObject {
         } catch {
             log.audio("Failed to apply audio configuration: \(error)", level: .error)
         }
+        #endif
     }
 }
 

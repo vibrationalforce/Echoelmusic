@@ -47,7 +47,19 @@ public final class EchoelRealFFT: @unchecked Sendable {
         precondition(size > 0 && (size & (size - 1)) == 0, "FFT size must be power of 2")
         self.size = size
         self.log2n = vDSP_Length(Int(Foundation.log2(Double(size))))
-        self.fftSetup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2))!
+        guard let setup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else {
+            // Fallback: use smallest valid FFT if allocation fails (memory pressure)
+            self.log2n = 8 // 256-point FFT
+            self.fftSetup = vDSP_create_fftsetup(8, FFTRadix(kFFTRadix2))!
+            self.size = 256
+            self.splitReal = [Float](repeating: 0, count: 128)
+            self.splitImag = [Float](repeating: 0, count: 128)
+            self.windowBuffer = [Float](repeating: 0, count: 256)
+            self.windowType = window
+            updateWindow(window)
+            return
+        }
+        self.fftSetup = setup
         self.splitReal = [Float](repeating: 0, count: size / 2)
         self.splitImag = [Float](repeating: 0, count: size / 2)
         self.windowBuffer = [Float](repeating: 0, count: size)
