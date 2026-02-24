@@ -154,7 +154,7 @@ targets:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
         INFOPLIST_FILE: Resources/iOS/Info.plist
-        GENERATE_INFOPLIST_FILE: YES
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: Echoelmusic.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
@@ -511,7 +511,7 @@ targets:
         PRODUCT_NAME: EchoelmusicNotificationService
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.notification-service
         INFOPLIST_FILE: Sources/EchoelmusicNotificationService/Info.plist
-        GENERATE_INFOPLIST_FILE: YES
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
