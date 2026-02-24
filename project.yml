@@ -168,10 +168,12 @@ targets:
     dependencies:
       - target: EchoelmusicNotificationService
         embed: true
-      - target: EchoelmusicAUv3
-        embed: true
-      - target: EchoelmusicWidgets
-        embed: true
+      # AUv3 disabled — "Invalid bundle structure" validation error
+      # - target: EchoelmusicAUv3
+      #   embed: true
+      # Widgets disabled — missing __swift5_entry section
+      # - target: EchoelmusicWidgets
+      #   embed: true
       # App Clip disabled until registered in Apple Developer portal
       # - target: EchoelmusicClip
       #   embed: false
@@ -898,9 +900,9 @@ schemes:
       targets:
         Echoelmusic: all
         EchoelmusicNotificationService: all
-        EchoelmusicAUv3: all
-        EchoelmusicWidgets: all
-        # EchoelmusicClip: all  # Disabled until App Clip registered in Apple Developer portal
+        # EchoelmusicAUv3: all  # Disabled — invalid bundle structure
+        # EchoelmusicWidgets: all  # Disabled — missing __swift5_entry
+        # EchoelmusicClip: all  # Disabled — not registered in Apple Developer portal
         EchoelmusicTests: [test]
         EchoelmusicUITests: [test]
     run:
@@ -1004,9 +1006,9 @@ schemes:
       targets:
         Echoelmusic: [archive]
         EchoelmusicNotificationService: [archive]
-        EchoelmusicAUv3: [archive]
-        EchoelmusicWidgets: [archive]
-        # EchoelmusicClip: [archive]  # Disabled until registered
+        # EchoelmusicAUv3: [archive]  # Disabled — invalid bundle structure
+        # EchoelmusicWidgets: [archive]  # Disabled — missing __swift5_entry
+        # EchoelmusicClip: [archive]  # Disabled — not registered
         Echoelmusic-macOS: [archive]
         EchoelmusicAUv3-macOS: [archive]
         Echoelmusic-watchOS: [archive]
