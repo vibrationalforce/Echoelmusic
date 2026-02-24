@@ -131,7 +131,7 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
-      - name: "Compile (iOS Simulator, no signing)"
+      - name: "Compile (iOS device SDK, no signing)"
         run: |
           set +eo pipefail
           xcodebuild build \
@@ -144,6 +144,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             ONLY_ACTIVE_ARCH=NO \
+            SUPPORTED_PLATFORMS=iphoneos \
             2>&1 | tee /tmp/compile.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -278,6 +279,7 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
             COMPILER_INDEX_STORE_ENABLE=NO \
+            SUPPORTED_PLATFORMS=iphoneos \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -803,6 +805,7 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
             COMPILER_INDEX_STORE_ENABLE=NO \
+            SUPPORTED_PLATFORMS=watchos \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -974,6 +977,7 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
             COMPILER_INDEX_STORE_ENABLE=NO \
+            SUPPORTED_PLATFORMS=appletvos \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -1145,6 +1149,7 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_STYLE=Automatic \
             COMPILER_INDEX_STORE_ENABLE=NO \
+            SUPPORTED_PLATFORMS=xros \
             2>&1 | tee /tmp/archive.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
