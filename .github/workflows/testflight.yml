@@ -117,11 +117,24 @@ jobs:
 
       - name: "Install iOS Simulator Runtime"
         run: |
-          echo "Available runtimes before install:"
+          echo "=== Xcode version ==="
+          xcodebuild -version
+          echo "=== Available runtimes ==="
           xcrun simctl runtime list 2>/dev/null || true
-          echo "Installing iOS platform for Xcode ${{ env.XCODE_VERSION }}..."
-          xcodebuild -downloadPlatform iOS || true
-          echo "Available runtimes after install:"
+          echo "=== Checking if iOS 18.2 simulator is available ==="
+          # Check if correct runtime is already installed
+          SDK_BUILD=$(xcodebuild -version -sdk iphonesimulator | grep -i "ProductBuildVersion" | awk '{print $2}')
+          echo "Required SDK build: $SDK_BUILD"
+          if xcrun simctl runtime list 2>/dev/null | grep -q "$SDK_BUILD"; then
+            echo "Matching simulator runtime already installed"
+          else
+            echo "Installing iOS simulator runtime (build: $SDK_BUILD)..."
+            xcodebuild -downloadPlatform iOS -buildVersion "$SDK_BUILD" 2>&1 || {
+              echo "Specific version failed, trying generic download..."
+              xcodebuild -downloadPlatform iOS 2>&1 || true
+            }
+          fi
+          echo "=== Runtimes after install ==="
           xcrun simctl runtime list 2>/dev/null || true
 
       - name: "Cache Swift PM"
@@ -206,8 +219,17 @@ jobs:
 
       - name: "Install iOS Simulator Runtime"
         run: |
-          echo "Installing iOS platform for Xcode ${{ env.XCODE_VERSION }}..."
-          xcodebuild -downloadPlatform iOS || true
+          SDK_BUILD=$(xcodebuild -version -sdk iphonesimulator | grep -i "ProductBuildVersion" | awk '{print $2}')
+          echo "Required SDK build: $SDK_BUILD"
+          if xcrun simctl runtime list 2>/dev/null | grep -q "$SDK_BUILD"; then
+            echo "Matching simulator runtime already installed"
+          else
+            echo "Installing iOS simulator runtime (build: $SDK_BUILD)..."
+            xcodebuild -downloadPlatform iOS -buildVersion "$SDK_BUILD" 2>&1 || {
+              echo "Specific version failed, trying generic download..."
+              xcodebuild -downloadPlatform iOS 2>&1 || true
+            }
+          fi
 
       - name: "Cache Swift PM"
         uses: actions/cache@v4
