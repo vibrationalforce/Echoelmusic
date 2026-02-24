@@ -103,6 +103,14 @@ public final class EchoelDDSP: @unchecked Sendable {
     /// Envelope curve type
     public var envelopeCurve: EnvelopeCurve = .exponential
 
+    // MARK: - Convolution Reverb
+
+    /// Reverb wet/dry mix (0 = dry, 1 = fully wet)
+    public var reverbMix: Float = 0.0
+
+    /// Reverb decay time in seconds (controls IR length)
+    public var reverbDecay: Float = 1.5
+
     // MARK: - Spectral Control
 
     /// Spectral envelope shape
@@ -216,6 +224,10 @@ public final class EchoelDDSP: @unchecked Sendable {
     private var morphSourceAmplitudes: [Float]
     private var morphTargetAmplitudes: [Float]
 
+    /// Convolution reverb engine (vDSP_conv based)
+    private var reverbConvolution: EchoelConvolution?
+    private var reverbFrameBuffer: [Float] = []
+
     // MARK: - Init
 
     /// Initialize EchoelDDSP
@@ -256,9 +268,51 @@ public final class EchoelDDSP: @unchecked Sendable {
         self.morphSourceAmplitudes = [Float](repeating: 0, count: harmonicCount)
         self.morphTargetAmplitudes = [Float](repeating: 0, count: harmonicCount)
 
+        // Reverb IR buffer
+        self.reverbFrameBuffer = [Float](repeating: 0, count: frameSize)
+
+        // Initialize convolution reverb with a synthetic IR
+        self.reverbConvolution = EchoelConvolution(kernel: EchoelDDSP.generateReverbIR(
+            decay: 1.5, sampleRate: sampleRate, length: 4096
+        ))
+
         // Initialize with natural spectral envelope
         updateSpectralEnvelope()
         updateNoiseProfile()
+    }
+
+    /// Generate synthetic impulse response for convolution reverb
+    /// Uses exponential decay with early reflections + diffuse tail
+    private static func generateReverbIR(decay: Float, sampleRate: Float, length: Int) -> [Float] {
+        var ir = [Float](repeating: 0, count: length)
+
+        // Direct sound
+        ir[0] = 1.0
+
+        // Early reflections (first 20ms)
+        let earlyEnd = min(length, Int(0.02 * sampleRate))
+        let reflectionTimes = [0.003, 0.007, 0.011, 0.015, 0.019]
+        for time in reflectionTimes {
+            let idx = min(length - 1, Int(time * Double(sampleRate)))
+            ir[idx] = Float.random(in: 0.2...0.5)
+        }
+
+        // Diffuse tail (exponential decay)
+        let decayRate = -6.9 / (decay * sampleRate)  // -60dB decay
+        for i in earlyEnd..<length {
+            let envelope = exp(decayRate * Float(i))
+            ir[i] = Float.random(in: -1...1) * envelope * 0.3
+        }
+
+        return ir
+    }
+
+    /// Update reverb IR when decay time changes
+    public func updateReverbDecay(_ newDecay: Float) {
+        reverbDecay = newDecay
+        reverbConvolution = EchoelConvolution(kernel: EchoelDDSP.generateReverbIR(
+            decay: newDecay, sampleRate: sampleRate, length: 4096
+        ))
     }
 
     // MARK: - Spectral Envelope
@@ -470,6 +524,38 @@ public final class EchoelDDSP: @unchecked Sendable {
                 buffer[frame * 2 + 1] = sample
             } else {
                 buffer[frame] = sample
+            }
+        }
+
+        // --- Convolution Reverb (post-render, block-based) ---
+        if reverbMix > 0, let conv = reverbConvolution {
+            if stereo {
+                // Extract mono mix for reverb input
+                let monoCount = frameCount
+                if reverbFrameBuffer.count < monoCount {
+                    reverbFrameBuffer = [Float](repeating: 0, count: monoCount)
+                }
+                for i in 0..<monoCount {
+                    reverbFrameBuffer[i] = (buffer[i * 2] + buffer[i * 2 + 1]) * 0.5
+                }
+                let wet = conv.process(reverbFrameBuffer)
+                let dry = 1.0 - reverbMix
+                let wetGain = reverbMix
+                for i in 0..<monoCount {
+                    let wetSample = i < wet.count ? wet[i] : 0
+                    buffer[i * 2] = buffer[i * 2] * dry + wetSample * wetGain
+                    buffer[i * 2 + 1] = buffer[i * 2 + 1] * dry + wetSample * wetGain
+                }
+            } else {
+                // Mono path
+                let monoSlice = Array(buffer[0..<frameCount])
+                let wet = conv.process(monoSlice)
+                let dry = 1.0 - reverbMix
+                let wetGain = reverbMix
+                for i in 0..<frameCount {
+                    let wetSample = i < wet.count ? wet[i] : 0
+                    buffer[i] = buffer[i] * dry + wetSample * wetGain
+                }
             }
         }
     }

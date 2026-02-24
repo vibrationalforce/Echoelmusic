@@ -450,4 +450,125 @@ public final class SIMDBioProcessor {
         let denominator = sqrt(sumSqA * sumSqB)
         return denominator > 0 ? dotProduct / denominator : 0
     }
+
+    // MARK: - Welch's PSD (Power Spectral Density)
+
+    /// Welch's method for robust PSD estimation.
+    /// Uses overlapping, windowed segments for more stable spectral estimates
+    /// than a single FFT. Reduces variance by a factor of ~segments/2.
+    ///
+    /// Reference: Welch, P.D. (1967) "The Use of Fast Fourier Transform for the
+    /// Estimation of Power Spectra" IEEE Trans. Audio Electroacoustics
+    ///
+    /// - Parameters:
+    ///   - data: Input signal
+    ///   - segmentSize: FFT size per segment (must be power of 2, default 256)
+    ///   - overlap: Overlap fraction (0-1, default 0.5 = 50%)
+    /// - Returns: Power spectral density array of size segmentSize/2
+    public func welchPSD(_ data: [Float], segmentSize: Int = 256, overlap: Float = 0.5) -> [Float] {
+        guard data.count >= segmentSize else {
+            return calculatePowerSpectrum(data)
+        }
+
+        let hopSize = max(1, Int(Float(segmentSize) * (1.0 - overlap)))
+        let numSegments = max(1, (data.count - segmentSize) / hopSize + 1)
+
+        // Pre-allocate
+        var window = [Float](repeating: 0, count: segmentSize)
+        vDSP_hann_window(&window, vDSP_Length(segmentSize), Int32(vDSP_HANN_NORM))
+
+        // Window power for normalization (sum of squared window values)
+        var windowPower: Float = 0
+        vDSP_svesq(window, 1, &windowPower, vDSP_Length(segmentSize))
+
+        let halfSize = segmentSize / 2
+        var psdAccumulator = [Float](repeating: 0, count: halfSize)
+
+        // Create DFT setup for segment size
+        guard let segmentFFT = vDSP_DFT_zop_CreateSetup(
+            nil, vDSP_Length(segmentSize), .FORWARD
+        ) else { return [] }
+        defer { vDSP_DFT_DestroySetup(segmentFFT) }
+
+        var segReal = [Float](repeating: 0, count: segmentSize)
+        var segImag = [Float](repeating: 0, count: segmentSize)
+        var outReal = [Float](repeating: 0, count: segmentSize)
+        var outImag = [Float](repeating: 0, count: segmentSize)
+
+        for seg in 0..<numSegments {
+            let start = seg * hopSize
+            guard start + segmentSize <= data.count else { break }
+
+            // Copy segment and apply window
+            for i in 0..<segmentSize {
+                segReal[i] = data[start + i] * window[i]
+                segImag[i] = 0
+            }
+
+            // FFT
+            vDSP_DFT_Execute(segmentFFT, segReal, segImag, &outReal, &outImag)
+
+            // Accumulate power spectrum
+            for i in 0..<halfSize {
+                psdAccumulator[i] += outReal[i] * outReal[i] + outImag[i] * outImag[i]
+            }
+        }
+
+        // Average and normalize: PSD = (1/K) * (1/W) * |X(f)|^2
+        // where K = number of segments, W = window power
+        let normFactor = 1.0 / (Float(numSegments) * windowPower * Float(config.sampleRate))
+        var factor = normFactor
+        vDSP_vsmul(psdAccumulator, 1, &factor, &psdAccumulator, 1, vDSP_Length(halfSize))
+
+        return psdAccumulator
+    }
+
+    /// Calculate LF/HF ratio using Welch's PSD (more stable than single-FFT)
+    public func welchLFHFRatio(_ data: [Float]) -> (lf: Float, hf: Float, ratio: Float) {
+        let psd = welchPSD(data, segmentSize: min(256, data.count))
+        let freqRes = Float(config.sampleRate) / Float(min(256, data.count))
+
+        // Extract band powers
+        let lfStart = max(0, Int(config.lfBand.lowerBound / freqRes))
+        let lfEnd = min(psd.count - 1, Int(config.lfBand.upperBound / freqRes))
+        let hfStart = max(0, Int(config.hfBand.lowerBound / freqRes))
+        let hfEnd = min(psd.count - 1, Int(config.hfBand.upperBound / freqRes))
+
+        var lfPower: Float = 0
+        var hfPower: Float = 0
+
+        if lfStart <= lfEnd {
+            let lfSlice = Array(psd[lfStart...lfEnd])
+            vDSP_sve(lfSlice, 1, &lfPower, vDSP_Length(lfSlice.count))
+        }
+        if hfStart <= hfEnd {
+            let hfSlice = Array(psd[hfStart...hfEnd])
+            vDSP_sve(hfSlice, 1, &hfPower, vDSP_Length(hfSlice.count))
+        }
+
+        let ratio = hfPower > 0 ? lfPower / hfPower : 0
+        return (lf: lfPower, hf: hfPower, ratio: ratio)
+    }
+
+    /// Coherence score using Welch's PSD — more reliable for short recordings
+    public func welchCoherence(_ data: [Float]) -> Float {
+        let psd = welchPSD(data)
+        guard !psd.isEmpty else { return 0 }
+
+        let coherenceBand: ClosedRange<Float> = 0.04...0.26
+        let freqRes = Float(config.sampleRate) / Float(min(256, data.count))
+
+        let startBin = max(0, Int(coherenceBand.lowerBound / freqRes))
+        let endBin = min(psd.count - 1, Int(coherenceBand.upperBound / freqRes))
+        guard startBin <= endBin else { return 0 }
+
+        let slice = Array(psd[startBin...endBin])
+        var maxVal: Float = 0
+        vDSP_maxv(slice, 1, &maxVal, vDSP_Length(slice.count))
+
+        var totalPower: Float = 0
+        vDSP_sve(slice, 1, &totalPower, vDSP_Length(slice.count))
+
+        return totalPower > 0 ? maxVal / totalPower : 0
+    }
 }

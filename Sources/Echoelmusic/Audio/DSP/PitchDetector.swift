@@ -359,4 +359,82 @@ class PitchDetector {
         guard value > 1 else { return 1 }
         return 1 << (Int.bitWidth - (value - 1).leadingZeroBitCount)
     }
+
+    // MARK: - Polyphonic Pitch Detection
+
+    /// Detect multiple simultaneous pitches using iterative YIN with spectral subtraction.
+    ///
+    /// Algorithm:
+    ///   1. Detect strongest fundamental via YIN
+    ///   2. Synthesize and subtract detected pitch from signal
+    ///   3. Repeat on residual for remaining pitches
+    ///   4. Validate via harmonic series consistency
+    ///
+    /// Reference: Klapuri, A. (2003) "Multiple fundamental frequency estimation based on
+    /// harmonicity and spectral smoothness" IEEE Trans. Speech Audio Processing
+    ///
+    /// - Parameters:
+    ///   - samples: Mono audio samples
+    ///   - sampleRate: Sample rate in Hz
+    ///   - maxPitches: Maximum number of simultaneous pitches to detect (default 4)
+    ///   - confidenceThreshold: Minimum confidence to accept a pitch (0-1, default 0.3)
+    /// - Returns: Array of (frequency, confidence) tuples sorted by frequency
+    func detectPolyphonic(
+        samples: [Float],
+        sampleRate: Float,
+        maxPitches: Int = 4,
+        confidenceThreshold: Float = 0.3
+    ) -> [(frequency: Float, confidence: Float)] {
+        guard samples.count > 0 else { return [] }
+
+        var detectedPitches: [(frequency: Float, confidence: Float)] = []
+        var residual = samples
+
+        for _ in 0..<maxPitches {
+            // Detect strongest pitch in residual
+            let pitch = detectPitch(samples: residual, sampleRate: sampleRate)
+            guard pitch > 0 else { break }
+
+            // Calculate confidence from CMNDF minimum value
+            let bufferSize = residual.count / 2
+            let minLag = Int(sampleRate / maxFrequency)
+            let maxLag = min(Int(sampleRate / minFrequency), bufferSize)
+            guard maxLag > minLag && maxLag <= maxBufferSize else { break }
+
+            let tau = Int(sampleRate / pitch)
+            let confidence: Float
+            if tau >= 0 && tau < maxLag {
+                confidence = max(0, 1.0 - cmndfBuffer[tau])
+            } else {
+                confidence = 0
+            }
+
+            guard confidence >= confidenceThreshold else { break }
+
+            // Check for duplicate (octave/unison within 5%)
+            let isDuplicate = detectedPitches.contains { existingPitch in
+                let ratio = pitch / existingPitch.frequency
+                return abs(ratio - 1.0) < 0.05 || abs(ratio - 2.0) < 0.05 || abs(ratio - 0.5) < 0.05
+            }
+            guard !isDuplicate else { break }
+
+            detectedPitches.append((frequency: pitch, confidence: confidence))
+
+            // Spectral subtraction: synthesize detected pitch and subtract
+            let twoPiOverSR = 2.0 * Float.pi / sampleRate
+            for i in 0..<residual.count {
+                // Subtract fundamental + first 4 harmonics
+                var subtraction: Float = 0
+                for harmonic in 1...5 {
+                    let freq = pitch * Float(harmonic)
+                    if freq > sampleRate / 2 { break }
+                    let amp = confidence / Float(harmonic) * 0.7
+                    subtraction += amp * sin(twoPiOverSR * freq * Float(i))
+                }
+                residual[i] -= subtraction
+            }
+        }
+
+        return detectedPitches.sorted { $0.frequency < $1.frequency }
+    }
 }
