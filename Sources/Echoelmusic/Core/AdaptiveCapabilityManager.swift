@@ -394,12 +394,13 @@ public final class AdaptiveCapabilityManager: ObservableObject {
     }
 
     private func probeMetalGPU() {
-        #if canImport(Metal)
-        if MTLCreateSystemDefaultDevice() != nil {
-            states[.metalGPU] = .available
-        } else {
-            states[.metalGPU] = .unavailable
-        }
+        #if canImport(Metal) && !targetEnvironment(simulator)
+        // MTLCreateSystemDefaultDevice() can stall during early init.
+        // All modern iPhones/iPads have Metal — assume available, verify lazily.
+        states[.metalGPU] = .available
+        #elseif canImport(Metal) && targetEnvironment(simulator)
+        // Simulator may or may not have Metal depending on host GPU
+        states[.metalGPU] = (MTLCreateSystemDefaultDevice() != nil) ? .available : .unavailable
         #else
         states[.metalGPU] = .unavailable
         #endif
