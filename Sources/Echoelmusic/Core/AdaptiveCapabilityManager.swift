@@ -210,10 +210,18 @@ public final class AdaptiveCapabilityManager: ObservableObject {
         }
 
         #if canImport(UIKit) && !os(watchOS)
-        // Defer UIDevice access — safe even before UIWindowScene connects
-        deviceName = ProcessInfo.processInfo.hostName
+        // NOTE: ProcessInfo.hostName does a reverse DNS lookup (blocks 5+ seconds!)
+        // UIDevice.current.name crashes before UIWindowScene connects.
+        // Use machine model string which is instant and non-blocking.
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        deviceName = withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                String(validatingUTF8: $0) ?? "iPhone"
+            }
+        }
         #else
-        deviceName = Host.current().localizedName ?? "Unknown"
+        deviceName = ProcessInfo.processInfo.processName
         #endif
     }
 

@@ -89,27 +89,21 @@ struct EchoelmusicApp: App {
                 LaunchScreen()
                     .preferredColorScheme(.dark)
                     .task {
-                        // Watchdog: if initialization hangs for >15s, proceed anyway
-                        // to avoid iOS killing the app for startup timeout (~20s limit)
-                        await withTaskGroup(of: Bool.self) { group in
-                            group.addTask {
-                                await self.initializeCoreSystems()
-                                return true
+                        // Watchdog: unstructured Task fires after 10s to force-proceed.
+                        // CRITICAL: Previous TaskGroup-based watchdog was broken because
+                        // withTaskGroup MUST wait for ALL child tasks to complete, so if
+                        // initializeCoreSystems() hung, the watchdog couldn't bypass it.
+                        // Using an unstructured Task avoids this — it runs independently.
+                        let watchdog = Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 10_000_000_000) // 10s
+                            if !coreSystemsReady {
+                                log.warning("Core init watchdog: proceeding after 10s timeout", category: .system)
+                                coreSystemsReady = true
                             }
-                            group.addTask {
-                                try? await Task.sleep(nanoseconds: 15_000_000_000) // 15s
-                                return false
-                            }
-                            // First to finish wins
-                            if let result = await group.next() {
-                                if !result {
-                                    await MainActor.run {
-                                        log.warning("Core init watchdog: proceeding after timeout", category: .system)
-                                    }
-                                }
-                            }
-                            group.cancelAll()
                         }
+
+                        await initializeCoreSystems()
+                        watchdog.cancel()
                         coreSystemsReady = true
                     }
             }

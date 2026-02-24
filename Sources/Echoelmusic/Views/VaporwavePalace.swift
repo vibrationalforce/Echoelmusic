@@ -25,8 +25,9 @@ struct VaporwavePalace: View {
 
     // MARK: - Central Systems (VERBUNDEN MIT UNIVERSAL CORE)
 
-    /// Verwendet die zentrale Visual Engine vom UniversalCore (nicht eigene Instanz!)
-    @ObservedObject private var visualEngine = EchoelUniversalCore.shared.visualEngine
+    /// Visual Engine — accessed lazily via onAppear to avoid triggering
+    /// a heavyweight singleton cascade during view init (which blocks MainActor).
+    @State private var visualEngine: UnifiedVisualSoundEngine?
 
     /// System Status für UI-Anzeige
     @State private var systemStatus: EchoelUniversalCore.SystemStatus?
@@ -101,17 +102,23 @@ struct VaporwavePalace: View {
             .padding(.horizontal, VaporwaveSpacing.lg)
         }
         .onAppear {
+            // Lazy-init: attach visual engine only when view appears on screen
+            if visualEngine == nil {
+                visualEngine = EchoelUniversalCore.shared.visualEngine
+            }
             startAnimations()
         }
         .sheet(isPresented: $showSettings) {
             VaporwaveSettings()
         }
         .fullScreenCover(isPresented: $showVisualizer) {
-            VisualizerContainerView(
-                visualEngine: visualEngine,
-                isActive: $isActive
-            )
-            .ignoresSafeArea()
+            if let engine = visualEngine {
+                VisualizerContainerView(
+                    visualEngine: engine,
+                    isActive: $isActive
+                )
+                .ignoresSafeArea()
+            }
         }
     }
 
@@ -206,13 +213,13 @@ struct VaporwavePalace: View {
                 .frame(width: 240, height: 240)
 
             // Inner content - Mini visualizer when active, bio data when inactive
-            if isActive {
+            if isActive, let engine = visualEngine {
                 // Mini visualizer preview
                 Circle()
                     .fill(Color.black)
                     .frame(width: 200, height: 200)
                     .overlay(
-                        UnifiedVisualizer(engine: visualEngine)
+                        UnifiedVisualizer(engine: engine)
                             .clipShape(Circle())
                     )
                     .overlay(
@@ -443,7 +450,7 @@ struct VaporwavePalace: View {
             }
 
             // Set initial visualization mode based on palace mode
-            visualEngine.currentMode = mapPalaceModeToVisualMode(selectedMode)
+            visualEngine?.currentMode = mapPalaceModeToVisualMode(selectedMode)
         } else {
             audioEngine.stop()
             healthKitManager.stopMonitoring()
