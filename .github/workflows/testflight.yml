@@ -137,7 +137,7 @@ jobs:
           xcodebuild build \
             -project Echoelmusic.xcodeproj \
             -scheme Echoelmusic \
-            -destination "generic/platform=iOS Simulator" \
+            -destination "platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro" \
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -skipPackagePluginValidation \
