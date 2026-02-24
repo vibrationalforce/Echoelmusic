@@ -105,7 +105,7 @@ jobs:
           echo "Building iOS for Simulator..."
           xcodebuild build-for-testing \
             -scheme Echoelmusic \
-            -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee build-ios.log | xcpretty || { echo "BUILD FAILED — full log:"; tail -100 build-ios.log; exit 1; }
@@ -128,7 +128,7 @@ jobs:
           echo "Running iOS tests..."
           xcodebuild test-without-building \
             -scheme Echoelmusic \
-            -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee test-ios.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-ios.log; exit 1; }

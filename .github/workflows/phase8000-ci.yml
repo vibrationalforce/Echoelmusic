@@ -281,7 +281,7 @@ jobs:
       run: |
         xcodebuild build \
           -scheme Echoelmusic \
-          -destination 'platform=iOS Simulator,OS=26.0,name=iPhone 16 Pro' \
+          -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
           -configuration Release \
           CODE_SIGNING_ALLOWED=NO \
           2>&1 | xcpretty || true
