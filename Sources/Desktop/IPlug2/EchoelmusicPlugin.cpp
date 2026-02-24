@@ -177,15 +177,15 @@ void EchoelmusicPlugin::OnParamChange(int paramIdx)
             mDSP.SetOsc2Waveform(static_cast<int>(GetParam(kOsc2Waveform)->Value()));
             break;
         case kBioHRV:
-            mCurrentHRV = GetParam(kBioHRV)->Value();
+            mCurrentHRV.store(GetParam(kBioHRV)->Value(), std::memory_order_relaxed);
             ApplyBioModulation();
             break;
         case kBioCoherence:
-            mCurrentCoherence = GetParam(kBioCoherence)->Value();
+            mCurrentCoherence.store(GetParam(kBioCoherence)->Value(), std::memory_order_relaxed);
             ApplyBioModulation();
             break;
         case kBioHeartRate:
-            mCurrentHeartRate = GetParam(kBioHeartRate)->Value();
+            mCurrentHeartRate.store(GetParam(kBioHeartRate)->Value(), std::memory_order_relaxed);
             ApplyBioModulation();
             break;
         default:
@@ -221,10 +221,10 @@ void EchoelmusicPlugin::ProcessBlock(sample** inputs, sample** outputs, int nFra
         peakR = std::max(peakR, absR);
     }
 
-    // Smooth meter decay (ballistics)
+    // Smooth meter decay (ballistics) — atomic for thread-safe UI reads
     const float decayFactor = 0.99f;
-    mOutputLevelL = std::max(mOutputLevelL * decayFactor, peakL);
-    mOutputLevelR = std::max(mOutputLevelR * decayFactor, peakR);
+    mOutputLevelL.store(std::max(mOutputLevelL.load(std::memory_order_relaxed) * decayFactor, peakL), std::memory_order_relaxed);
+    mOutputLevelR.store(std::max(mOutputLevelR.load(std::memory_order_relaxed) * decayFactor, peakR), std::memory_order_relaxed);
 
 #if IPLUG_EDITOR
     // Send meter values to UI
@@ -297,9 +297,9 @@ void EchoelmusicPlugin::ProcessMidiMsg(const IMidiMsg& msg)
 
 void EchoelmusicPlugin::UpdateBioData(float hrv, float coherence, float heartRate)
 {
-    mCurrentHRV = hrv;
-    mCurrentCoherence = coherence;
-    mCurrentHeartRate = heartRate;
+    mCurrentHRV.store(hrv, std::memory_order_relaxed);
+    mCurrentCoherence.store(coherence, std::memory_order_relaxed);
+    mCurrentHeartRate.store(heartRate, std::memory_order_relaxed);
 
     // Update parameters (these will trigger UI updates)
     GetParam(kBioHRV)->Set(hrv);
@@ -324,41 +324,53 @@ void EchoelmusicPlugin::ApplyBioModulation()
     // Heart Rate (40-200 bpm):
     //   - Modulates LFO rate subtly
 
+    // Load bio-reactive state (atomic reads)
+    const float hrv = mCurrentHRV.load(std::memory_order_relaxed);
+    const float coherence = mCurrentCoherence.load(std::memory_order_relaxed);
+    const float heartRate = mCurrentHeartRate.load(std::memory_order_relaxed);
+
     // Filter modulation based on HRV
     float baseFilterCutoff = GetParam(kFilterCutoff)->Value();
     float hrvModAmount = 0.3f;  // 30% modulation range
-    float hrvMod = (mCurrentHRV - 0.5f) * hrvModAmount;
+    float hrvMod = (hrv - 0.5f) * hrvModAmount;
     float modulatedCutoff = baseFilterCutoff * (1.0f + hrvMod);
     modulatedCutoff = std::clamp(modulatedCutoff, 20.0f, 20000.0f);
     mDSP.SetFilterCutoff(modulatedCutoff);
 
     // Reverb modulation based on coherence
-    float reverbMix = mCurrentCoherence * 0.5f;  // 0-50% reverb based on coherence
+    float reverbMix = coherence * 0.5f;  // 0-50% reverb based on coherence
     mDSP.SetReverbMix(reverbMix);
 
     // LFO rate modulation based on heart rate
     float baseLFORate = GetParam(kLFORate)->Value();
-    float hrMod = (mCurrentHeartRate - 70.0f) / 130.0f;  // Normalize around 70 bpm
+    float hrMod = (heartRate - 70.0f) / 130.0f;  // Normalize around 70 bpm
     float modulatedLFORate = baseLFORate * (1.0f + hrMod * 0.2f);
     mDSP.SetLFORate(modulatedLFORate);
 }
 
 bool EchoelmusicPlugin::SerializeState(IByteChunk& chunk) const
 {
-    // Save bio-reactive state
-    chunk.Put(&mCurrentHRV);
-    chunk.Put(&mCurrentCoherence);
-    chunk.Put(&mCurrentHeartRate);
+    // Save bio-reactive state (read from atomics)
+    float hrv = mCurrentHRV.load(std::memory_order_relaxed);
+    float coherence = mCurrentCoherence.load(std::memory_order_relaxed);
+    float heartRate = mCurrentHeartRate.load(std::memory_order_relaxed);
+    chunk.Put(&hrv);
+    chunk.Put(&coherence);
+    chunk.Put(&heartRate);
 
     return SerializeParams(chunk);
 }
 
 int EchoelmusicPlugin::UnserializeState(const IByteChunk& chunk, int startPos)
 {
-    // Load bio-reactive state
-    startPos = chunk.Get(&mCurrentHRV, startPos);
-    startPos = chunk.Get(&mCurrentCoherence, startPos);
-    startPos = chunk.Get(&mCurrentHeartRate, startPos);
+    // Load bio-reactive state (write to atomics)
+    float hrv, coherence, heartRate;
+    startPos = chunk.Get(&hrv, startPos);
+    startPos = chunk.Get(&coherence, startPos);
+    startPos = chunk.Get(&heartRate, startPos);
+    mCurrentHRV.store(hrv, std::memory_order_relaxed);
+    mCurrentCoherence.store(coherence, std::memory_order_relaxed);
+    mCurrentHeartRate.store(heartRate, std::memory_order_relaxed);
 
     return UnserializeParams(chunk, startPos);
 }

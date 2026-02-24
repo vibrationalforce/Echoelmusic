@@ -370,10 +370,19 @@ public:
     void SetSampleRate(float sr)
     {
         mSampleRate = sr;
-        // Resize delay lines
+        // Pre-allocate delay lines once (avoid allocation in audio path)
         int maxDelay = static_cast<int>(sr * 0.1f);  // 100ms max
-        for (auto& comb : mCombs) comb.resize(maxDelay, 0.0f);
-        for (auto& ap : mAllpass) ap.resize(maxDelay / 4, 0.0f);
+        for (auto& comb : mCombs) {
+            comb.assign(maxDelay, 0.0f);
+            comb.shrink_to_fit();
+        }
+        for (auto& ap : mAllpass) {
+            ap.assign(maxDelay / 4, 0.0f);
+            ap.shrink_to_fit();
+        }
+        // Reset read positions
+        mCombIdx.fill(0);
+        mApIdx.fill(0);
     }
 
     void SetMix(float mix) { mMix = std::clamp(mix, 0.0f, 1.0f); }

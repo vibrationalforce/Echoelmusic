@@ -740,3 +740,250 @@ public final class EchoelDDSP: @unchecked Sendable {
         morphPosition = 0
     }
 }
+
+// MARK: - EchoelPolyDDSP — Polyphonic DDSP Engine
+
+/// Polyphonic wrapper over EchoelDDSP.
+/// Manages up to maxVoices independent DDSP voices with voice stealing.
+///
+/// Architecture:
+///   - Round-robin voice allocation with oldest-voice stealing
+///   - Shared bio-reactive parameters across all voices
+///   - Per-voice frequency, envelope, and timbre
+///   - Stereo output with per-voice pan
+///
+/// Performance: O(maxVoices * harmonicCount) per sample, SIMD-accelerated
+public final class EchoelPolyDDSP: @unchecked Sendable {
+
+    // MARK: - Configuration
+
+    public let maxVoices: Int
+    public let sampleRate: Float
+
+    // MARK: - Voices
+
+    private var voices: [EchoelDDSP]
+    private var voiceNotes: [Int]      // MIDI note per voice (-1 = free)
+    private var voiceAges: [Int]       // Age counter for voice stealing
+    private var ageCounter: Int = 0
+
+    // MARK: - Per-Voice Pan
+
+    /// Pan position per voice (-1.0 = left, 0 = center, 1.0 = right)
+    private var voicePans: [Float]
+
+    // MARK: - Shared Bio-Reactive State
+
+    private var bioCoherence: Float = 0.5
+    private var bioHRV: Float = 0.5
+    private var bioHeartRate: Float = 0.5
+    private var bioBreathPhase: Float = 0.5
+    private var bioBreathDepth: Float = 0.5
+    private var bioLfHfRatio: Float = 0.5
+    private var bioCoherenceTrend: Float = 0
+
+    // MARK: - Scratch Buffers
+
+    private var voiceBuffer: [Float]
+    private var mixBufferL: [Float]
+    private var mixBufferR: [Float]
+
+    /// Initialize polyphonic DDSP
+    public init(
+        maxVoices: Int = 8,
+        harmonicCount: Int = 64,
+        sampleRate: Float = 48000.0
+    ) {
+        self.maxVoices = maxVoices
+        self.sampleRate = sampleRate
+
+        self.voices = (0..<maxVoices).map { _ in
+            EchoelDDSP(harmonicCount: harmonicCount, sampleRate: sampleRate)
+        }
+        self.voiceNotes = [Int](repeating: -1, count: maxVoices)
+        self.voiceAges = [Int](repeating: 0, count: maxVoices)
+        self.voicePans = [Float](repeating: 0, count: maxVoices)
+
+        let maxFrameSize = 512
+        self.voiceBuffer = [Float](repeating: 0, count: maxFrameSize)
+        self.mixBufferL = [Float](repeating: 0, count: maxFrameSize)
+        self.mixBufferR = [Float](repeating: 0, count: maxFrameSize)
+    }
+
+    // MARK: - Note Control
+
+    /// MIDI note on
+    public func noteOn(note: Int, velocity: Float = 1.0) {
+        let freq = 440.0 * pow(2.0, Float(note - 69) / 12.0)
+        let voiceIdx = allocateVoice()
+
+        voiceNotes[voiceIdx] = note
+        ageCounter += 1
+        voiceAges[voiceIdx] = ageCounter
+
+        // Spread panning across active voices
+        let activeCount = voiceNotes.filter { $0 >= 0 }.count
+        if activeCount > 1 {
+            let panSpread: Float = 0.6
+            let normalized = Float(voiceIdx) / Float(maxVoices - 1)
+            voicePans[voiceIdx] = (normalized * 2.0 - 1.0) * panSpread
+        } else {
+            voicePans[voiceIdx] = 0
+        }
+
+        voices[voiceIdx].amplitude = velocity
+        voices[voiceIdx].noteOn(frequency: freq)
+        applyBioToVoice(voiceIdx)
+    }
+
+    /// MIDI note off
+    public func noteOff(note: Int) {
+        for i in 0..<maxVoices {
+            if voiceNotes[i] == note {
+                voices[i].noteOff()
+                voiceNotes[i] = -1
+            }
+        }
+    }
+
+    /// All notes off
+    public func allNotesOff() {
+        for i in 0..<maxVoices {
+            voices[i].noteOff()
+            voiceNotes[i] = -1
+        }
+    }
+
+    // MARK: - Voice Allocation
+
+    private func allocateVoice() -> Int {
+        // Find free voice
+        if let freeIdx = voiceNotes.firstIndex(of: -1) {
+            return freeIdx
+        }
+        // Steal oldest voice
+        var oldestAge = Int.max
+        var oldestIdx = 0
+        for i in 0..<maxVoices {
+            if voiceAges[i] < oldestAge {
+                oldestAge = voiceAges[i]
+                oldestIdx = i
+            }
+        }
+        voices[oldestIdx].noteOff()
+        return oldestIdx
+    }
+
+    // MARK: - Bio-Reactive
+
+    /// Apply bio-reactive parameters to all voices
+    public func applyBioReactive(
+        coherence: Float,
+        hrvVariability: Float = 0.5,
+        heartRate: Float = 0.5,
+        breathPhase: Float = 0.5,
+        breathDepth: Float = 0.5,
+        lfHfRatio: Float = 0.5,
+        coherenceTrend: Float = 0
+    ) {
+        bioCoherence = coherence
+        bioHRV = hrvVariability
+        bioHeartRate = heartRate
+        bioBreathPhase = breathPhase
+        bioBreathDepth = breathDepth
+        bioLfHfRatio = lfHfRatio
+        bioCoherenceTrend = coherenceTrend
+
+        for i in 0..<maxVoices where voiceNotes[i] >= 0 {
+            applyBioToVoice(i)
+        }
+    }
+
+    private func applyBioToVoice(_ idx: Int) {
+        voices[idx].applyBioReactive(
+            coherence: bioCoherence,
+            hrvVariability: bioHRV,
+            heartRate: bioHeartRate,
+            breathPhase: bioBreathPhase,
+            breathDepth: bioBreathDepth,
+            lfHfRatio: bioLfHfRatio,
+            coherenceTrend: bioCoherenceTrend
+        )
+    }
+
+    // MARK: - Spectral Morphing
+
+    /// Set spectral shape for all voices
+    public func setSpectralShape(_ shape: EchoelDDSP.SpectralShape) {
+        for voice in voices {
+            voice.spectralShape = shape
+        }
+    }
+
+    /// Load timbre profile for all voices
+    public func loadTimbreProfile(_ profile: [Float], blend: Float = 1.0) {
+        for voice in voices {
+            voice.loadTimbreProfile(profile, blend: blend)
+        }
+    }
+
+    // MARK: - Audio Rendering
+
+    /// Render stereo audio from all active voices
+    public func render(left: inout [Float], right: inout [Float], frameCount: Int) {
+        guard frameCount <= mixBufferL.count else { return }
+
+        // Clear mix buffers
+        memset(&mixBufferL, 0, frameCount * MemoryLayout<Float>.size)
+        memset(&mixBufferR, 0, frameCount * MemoryLayout<Float>.size)
+
+        for i in 0..<maxVoices {
+            guard voiceNotes[i] >= 0 else { continue }
+
+            // Render voice mono
+            memset(&voiceBuffer, 0, frameCount * MemoryLayout<Float>.size)
+            voices[i].render(buffer: &voiceBuffer, frameCount: frameCount, stereo: false)
+
+            // Pan law: constant power (-3dB center)
+            let pan = voicePans[i]
+            let leftGain = cos((pan + 1.0) * 0.25 * Float.pi)
+            let rightGain = sin((pan + 1.0) * 0.25 * Float.pi)
+
+            // Mix into stereo buffers (vDSP accelerated)
+            var lg = leftGain
+            var rg = rightGain
+            var scaledL = [Float](repeating: 0, count: frameCount)
+            var scaledR = [Float](repeating: 0, count: frameCount)
+
+            vDSP_vsmul(voiceBuffer, 1, &lg, &scaledL, 1, vDSP_Length(frameCount))
+            vDSP_vsmul(voiceBuffer, 1, &rg, &scaledR, 1, vDSP_Length(frameCount))
+            vDSP_vadd(mixBufferL, 1, scaledL, 1, &mixBufferL, 1, vDSP_Length(frameCount))
+            vDSP_vadd(mixBufferR, 1, scaledR, 1, &mixBufferR, 1, vDSP_Length(frameCount))
+        }
+
+        // Copy to output
+        left.withUnsafeMutableBufferPointer { ptr in
+            memcpy(ptr.baseAddress!, mixBufferL, frameCount * MemoryLayout<Float>.size)
+        }
+        right.withUnsafeMutableBufferPointer { ptr in
+            memcpy(ptr.baseAddress!, mixBufferR, frameCount * MemoryLayout<Float>.size)
+        }
+    }
+
+    // MARK: - State
+
+    /// Number of currently active voices
+    public var activeVoiceCount: Int {
+        voiceNotes.filter { $0 >= 0 }.count
+    }
+
+    /// Reset all voices
+    public func reset() {
+        for i in 0..<maxVoices {
+            voices[i].reset()
+            voiceNotes[i] = -1
+            voiceAges[i] = 0
+        }
+        ageCounter = 0
+    }
+}

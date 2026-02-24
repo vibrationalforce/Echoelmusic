@@ -431,15 +431,22 @@ public final class CertificatePinning: Sendable {
                 backupPin: ProductionPins.analyticsBackup.map { "sha256/\($0)" },
                 enforced: isProduction
             )
+        } else if isProduction {
+            // FAIL-CLOSED: In production, reject connections when pins are missing
+            // rather than silently falling back to generic CA validation
+            ProfessionalLogger.shared.error("Certificate pinning: analytics.echoelmusic.com missing production pins — connections will be rejected", category: .network)
+            pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
+                primaryPin: "sha256/MISSING_PRODUCTION_PIN_DEPLOY_REQUIRED",
+                backupPin: nil,
+                enforced: true
+            )
         } else {
+            // Development/Staging: CA fallback acceptable
             pinnedCertificates["analytics.echoelmusic.com"] = PinConfiguration(
                 primaryPin: trustedRootPins[2], // DigiCert
                 backupPin: trustedRootPins[3],
-                enforced: isProduction
+                enforced: false
             )
-            if isProduction {
-                ProfessionalLogger.shared.error("🚨 Certificate pinning: analytics.echoelmusic.com missing production pins — using CA root enforcement", category: .network)
-            }
         }
 
         // Log configuration status
