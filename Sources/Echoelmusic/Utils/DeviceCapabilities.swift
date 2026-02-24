@@ -209,6 +209,11 @@ class DeviceCapabilities: ObservableObject {
 
     /// Detect connected AirPods
     private func detectAirPods() {
+        #if os(macOS) || os(watchOS)
+        // AVAudioSession not available on macOS/watchOS
+        hasAirPodsConnected = false
+        return
+        #else
         // Check for connected audio outputs
         let session = AVAudioSession.sharedInstance()
 
@@ -256,6 +261,7 @@ class DeviceCapabilities: ObservableObject {
         supportsAPACCodec = false
 
         log.performance("🔇 No AirPods detected")
+        #endif // !os(macOS) && !os(watchOS)
     }
 
 
@@ -303,6 +309,9 @@ class DeviceCapabilities: ObservableObject {
 
     /// Start monitoring audio route changes (detect AirPods connection/disconnection)
     func startMonitoringAudioRoute() {
+        #if os(macOS) || os(watchOS)
+        return
+        #else
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(audioRouteChanged),
@@ -311,10 +320,14 @@ class DeviceCapabilities: ObservableObject {
         )
 
         log.performance("🔊 Started monitoring audio route changes")
+        #endif
     }
 
     /// Stop monitoring audio route changes
     func stopMonitoringAudioRoute() {
+        #if os(macOS) || os(watchOS)
+        return
+        #else
         NotificationCenter.default.removeObserver(
             self,
             name: AVAudioSession.routeChangeNotification,
@@ -322,6 +335,7 @@ class DeviceCapabilities: ObservableObject {
         )
 
         log.performance("🔇 Stopped monitoring audio route changes")
+        #endif
     }
 
     /// Handle audio route changes

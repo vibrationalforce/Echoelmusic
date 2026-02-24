@@ -68,6 +68,11 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Check if we already have microphone permission
     private func checkPermission() {
+        #if os(macOS)
+        hasPermission = false // macOS handles mic permission via system dialog on first use
+        #elseif os(watchOS) || os(tvOS)
+        hasPermission = false
+        #else
         if #available(iOS 17.0, *) {
             hasPermission = AVAudioApplication.shared.recordPermission == .granted
         } else {
@@ -80,6 +85,7 @@ class MicrophoneManager: NSObject, ObservableObject {
                 hasPermission = false
             }
         }
+        #endif
     }
 
     /// Request microphone permission from the user
