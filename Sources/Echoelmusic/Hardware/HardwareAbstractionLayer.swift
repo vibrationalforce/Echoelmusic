@@ -168,7 +168,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
     class SensorManager: HALSensorManagerProtocol {
         #if canImport(CoreMotion)
-        private let motionManager = CMMotionManager()
+        private let motionManager = SharedMotionManager.shared
         #endif
         private var accelerometerHandler: ((SIMD3<Float>) -> Void)?
         private var gyroscopeHandler: ((SIMD3<Float>) -> Void)?
@@ -383,7 +383,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
         // Detect sensors
         #if canImport(CoreMotion)
-        let motionManager = CMMotionManager()
+        let motionManager = SharedMotionManager.shared
         caps.hasAccelerometer = motionManager.isAccelerometerAvailable
         caps.hasGyroscope = motionManager.isGyroAvailable
         caps.hasMagnetometer = motionManager.isMagnetometerAvailable

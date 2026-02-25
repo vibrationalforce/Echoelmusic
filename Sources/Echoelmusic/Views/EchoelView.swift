@@ -38,7 +38,7 @@ private struct PersistentOverlayModifier: ViewModifier {
 #endif
 
 public struct EchoelView: View {
-    @StateObject private var toolkit = EchoelToolkit.shared
+    @ObservedObject private var toolkit = EchoelToolkit.shared
 
     @State private var showLeftPanel = true
     @State private var showRightPanel = true

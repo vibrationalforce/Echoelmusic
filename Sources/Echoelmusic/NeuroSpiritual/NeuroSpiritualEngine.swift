@@ -367,7 +367,7 @@ public final class BodyExpressionMapper: ObservableObject {
     // MARK: - Private Properties
 
     #if canImport(CoreMotion)
-    private let motionManager = CMMotionManager()
+    private let motionManager = SharedMotionManager.shared
     #endif
     private var sessionStartTime: Date?
     private var updateTimer: Timer?

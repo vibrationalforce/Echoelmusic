@@ -469,7 +469,7 @@ public final class BiophysicalSensorFusion: ObservableObject {
     #endif
     #if canImport(CoreMotion)
     private let barometerDetector = BarometerVibrationDetector()
-    private let motionManager = CMMotionManager()
+    private let motionManager = SharedMotionManager.shared
     #endif
 
     // MARK: - Kalman Filters

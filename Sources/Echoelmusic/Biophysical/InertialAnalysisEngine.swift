@@ -111,7 +111,7 @@ public final class InertialAnalysisEngine: ObservableObject {
 
     private var configuration: InertialConfiguration
     #if canImport(CoreMotion)
-    private let motionManager = CMMotionManager()
+    private let motionManager = SharedMotionManager.shared
     #endif
     private let analysisQueue = DispatchQueue(label: "com.echoelmusic.inertial.analysis", qos: .userInteractive)
 
