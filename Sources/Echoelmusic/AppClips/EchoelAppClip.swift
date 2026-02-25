@@ -25,7 +25,7 @@ private var appClipLog: EchoelLogger { echoelLog }
 // Note: @main is removed here as App Clips use a separate target with its own entry point
 // The App Clip target in Xcode will have its own @main attribute
 struct EchoelAppClipApp: App {
-    @StateObject private var appClipManager = AppClipManager.shared
+    @ObservedObject private var appClipManager = AppClipManager.shared
 
     var body: some Scene {
         WindowGroup {

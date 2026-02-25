@@ -478,7 +478,7 @@ public struct GlassesHUDOverlay: View {
 
 /// Optimized session view for Apple Glasses
 public struct GlassesSessionView: View {
-    @StateObject private var optimization = AppleGlassesOptimization.shared
+    @ObservedObject private var optimization = AppleGlassesOptimization.shared
     @State private var showFullHUD = false
 
     public init() {}
