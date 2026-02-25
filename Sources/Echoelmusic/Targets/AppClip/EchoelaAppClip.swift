@@ -323,7 +323,7 @@ import CoreLocation
 
 /// Main App Clip view
 public struct EchoelaAppClipView: View {
-    @StateObject private var clipManager = EchoelaAppClipManager.shared
+    @ObservedObject private var clipManager = EchoelaAppClipManager.shared
     @State private var showMintConfirmation = false
     @State private var mintResult: EchoelaAppClipManager.AppClipMintResult?
 
