@@ -483,11 +483,9 @@ public final class TapticStimulationEngine: ObservableObject {
     // MARK: - Cleanup
 
     deinit {
-        // Dispatch to main actor since deinit is nonisolated
-        let engine = hapticEngine
-        Task { @MainActor in
-            engine?.stop()
-        }
+        // Cannot safely dispatch @MainActor Task from deinit — engine cleanup
+        // is automatic when the reference is released
+        hapticEngine = nil
     }
 }
 

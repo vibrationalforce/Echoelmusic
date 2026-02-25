@@ -339,6 +339,7 @@ public class QuantumLiveActivityManager: ObservableObject {
 
     deinit {
         updateTimer?.invalidate()
+        updateTimer = nil
     }
 
     // MARK: - Start Activity

@@ -25,6 +25,11 @@ class SocialMediaManager: ObservableObject {
 
     static let shared = SocialMediaManager()
 
+    deinit {
+        schedulerTimer?.invalidate()
+        schedulerTimer = nil
+    }
+
     // MARK: - Published State
 
     @Published var connectedPlatforms: Set<Platform> = []
