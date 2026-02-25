@@ -301,12 +301,21 @@ public final class PushNotificationManager: NSObject, ObservableObject {
 
     // MARK: - CloudKit Device Token Storage
 
-    private static let cloudKitContainer = CKContainer(identifier: "iCloud.com.echoelmusic.app")
     private static let tokenRecordType = "DeviceToken"
+
+    /// Lazily create CKContainer only when CloudKit entitlement is present
+    private static var cloudKitContainer: CKContainer? = {
+        // Guard: only create CKContainer if iCloud/CloudKit is available
+        guard FileManager.default.ubiquityIdentityToken != nil else { return nil }
+        return CKContainer(identifier: "iCloud.com.echoelmusic.app")
+    }()
 
     /// Save device token to CloudKit public database for server-side push delivery
     private func saveTokenToCloudKit(_ token: String) {
-        let container = Self.cloudKitContainer
+        guard let container = Self.cloudKitContainer else {
+            log.warning("CloudKit unavailable — skipping device token sync", category: .system)
+            return
+        }
         let publicDB = container.publicCloudDatabase
 
         // Use a deterministic record ID so the same device updates its token

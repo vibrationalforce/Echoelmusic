@@ -1572,8 +1572,8 @@ public final class EchoelNet: ObservableObject {
     public lazy var echoelSync = EchoelSyncProtocol.shared
     /// SharePlay group sessions
     public lazy var sharePlay = GroupSessionManager.shared
-    /// Cloud persistence
-    private let cloudSync = CloudSyncManager()
+    /// Cloud persistence (lazy — CKContainer traps if CloudKit entitlement is missing)
+    private lazy var cloudSync = CloudSyncManager()
     /// Peer-to-peer collaboration
     private let collaboration = CollaborationEngine()
 

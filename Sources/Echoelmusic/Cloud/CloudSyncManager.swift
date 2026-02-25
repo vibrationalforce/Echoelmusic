@@ -12,20 +12,49 @@ class CloudSyncManager: ObservableObject {
     @Published var lastSyncDate: Date?
     @Published var cloudSessions: [CloudSession] = []
 
-    private let container: CKContainer
-    private let privateDatabase: CKDatabase
-    private let sharedDatabase: CKDatabase
+    private let container: CKContainer?
+    private let privateDatabase: CKDatabase?
+    private let sharedDatabase: CKDatabase?
 
     init() {
-        self.container = CKContainer(identifier: "iCloud.com.echoelmusic.app")
-        self.privateDatabase = container.privateCloudDatabase
-        self.sharedDatabase = container.sharedCloudDatabase
-        log.network("✅ CloudSyncManager: Initialized")
+        // Guard CKContainer creation — crashes if CloudKit entitlement is missing
+        if Self.isCloudKitAvailable() {
+            let ck = CKContainer(identifier: "iCloud.com.echoelmusic.app")
+            self.container = ck
+            self.privateDatabase = ck.privateCloudDatabase
+            self.sharedDatabase = ck.sharedCloudDatabase
+            log.network("✅ CloudSyncManager: Initialized with CloudKit")
+        } else {
+            self.container = nil
+            self.privateDatabase = nil
+            self.sharedDatabase = nil
+            log.network("⚠️ CloudSyncManager: CloudKit entitlement missing — running offline")
+        }
+    }
+
+    /// Check if CloudKit entitlement is present before touching CKContainer
+    private static func isCloudKitAvailable() -> Bool {
+        guard let entitlements = Bundle.main.infoDictionary,
+              let _ = entitlements["com.apple.developer.icloud-services"] else {
+            // Also try the default container as a smoke test — if entitlements
+            // are missing the CKContainer initializer traps.  We check the
+            // entitlements plist key instead so we never call CKContainer
+            // without the capability.
+            //
+            // Fallback: check if the ubiquity identity token exists (iCloud signed-in
+            // AND entitlement present).
+            return FileManager.default.ubiquityIdentityToken != nil
+        }
+        return true
     }
 
     // MARK: - Enable/Disable Sync
 
     func enableSync() async throws {
+        guard let container = container else {
+            throw CloudError.iCloudNotAvailable
+        }
+
         // Check iCloud availability
         let status = try await container.accountStatus()
 
@@ -45,7 +74,7 @@ class CloudSyncManager: ObservableObject {
     // MARK: - Save Session
 
     func saveSession(_ session: Session) async throws {
-        guard syncEnabled else { return }
+        guard syncEnabled, let privateDatabase = privateDatabase else { return }
 
         isSyncing = true
         defer { isSyncing = false }
@@ -67,7 +96,7 @@ class CloudSyncManager: ObservableObject {
     // MARK: - Fetch Sessions
 
     func fetchSessions() async throws -> [CloudSession] {
-        guard syncEnabled else { return [] }
+        guard syncEnabled, let privateDatabase = privateDatabase else { return [] }
 
         isSyncing = true
         defer { isSyncing = false }
@@ -152,8 +181,8 @@ class CloudSyncManager: ObservableObject {
     }
 
     private func autoBackup() async throws {
-        guard syncEnabled else {
-            log.network("☁️ CloudSyncManager: Auto backup skipped (sync disabled)")
+        guard syncEnabled, let privateDatabase = privateDatabase else {
+            log.network("☁️ CloudSyncManager: Auto backup skipped (sync disabled or CloudKit unavailable)")
             return
         }
 
@@ -214,7 +243,7 @@ class CloudSyncManager: ObservableObject {
 
     /// Finalize and save complete session
     func finalizeSession() async throws {
-        guard let sessionData = currentSessionData else { return }
+        guard let sessionData = currentSessionData, let privateDatabase = privateDatabase else { return }
 
         // Calculate final averages
         let avgHRV = sessionData.hrvReadings.reduce(0, +) / Float(max(sessionData.hrvReadings.count, 1))
