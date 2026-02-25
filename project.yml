@@ -261,7 +261,7 @@ targets:
       path: Sources/EchoelmusicAUv3/Info-macOS.plist
       properties:
         CFBundleDevelopmentRegion: en
-        CFBundleDisplayName: "Echoelmusic EchoelBeat"
+        CFBundleDisplayName: "Echoelmusic Plugins"
         CFBundleExecutable: $(EXECUTABLE_NAME)
         CFBundleIdentifier: com.echoelmusic.app.auv3
         CFBundleInfoDictionaryVersion: "6.0"
@@ -273,40 +273,94 @@ targets:
         NSExtension:
           NSExtensionAttributes:
             AudioComponents:
-              - description: "Echoelmusic EchoelBeat Bass Synth with Pitch Glide"
+              - description: "Echoelmusic EchoelSynth — Bio-Reactive Synthesis Engine"
                 factoryFunction: EchoelmusicAudioUnitFactory
                 manufacturer: Echo
-                name: "Echoelmusic: EchoelBeat Bass"
+                name: "Echoelmusic: EchoelSynth"
                 sandboxSafe: true
-                subtype: E808
-                tags: [Synth, Bass, PulseDrum]
+                subtype: Esyn
+                tags: [Synth, Generator, Bio-Reactive]
                 type: aumu
                 version: 1
-              - description: "Echoelmusic Bio-Reactive AI Music Generator"
+              - description: "Echoelmusic EchoelBio — Bio-Reactive AI Music Generator"
                 factoryFunction: EchoelmusicAudioUnitFactory
                 manufacturer: Echo
-                name: "Echoelmusic: BioComposer"
+                name: "Echoelmusic: EchoelBio"
                 sandboxSafe: true
                 subtype: Ebio
                 tags: [Synth, Generator, AI]
                 type: aumu
                 version: 1
-              - description: "Echoelmusic AI Stem Separation"
+              - description: "Echoelmusic EchoelFX — Effects Chain and Analog Emulations"
                 factoryFunction: EchoelmusicAudioUnitFactory
                 manufacturer: Echo
-                name: "Echoelmusic: Stem Splitter"
+                name: "Echoelmusic: EchoelFX"
                 sandboxSafe: true
-                subtype: Estm
+                subtype: Eefx
+                tags: [Effect, EQ, Dynamics]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelMix — Mixer Bus Processor and Spatial Audio"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelMix"
+                sandboxSafe: true
+                subtype: Emix
+                tags: [Effect, Mixer, Spatial]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelField — Audio-Reactive Visual Engine"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelField"
+                sandboxSafe: true
+                subtype: Efld
+                tags: [Effect, Analyzer, Visual]
+                type: aufx
+                version: 1
+              - description: "Echoelmusic EchoelMind — On-Device AI Audio Intelligence"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelMind"
+                sandboxSafe: true
+                subtype: Emnd
                 tags: [Effect, AI, Separator]
                 type: aufx
                 version: 1
-              - description: "Echoelmusic MIDI 2.0 + MPE Processor"
+              - description: "Echoelmusic EchoelSeq — Bio-Reactive Step Sequencer"
                 factoryFunction: EchoelmusicAudioUnitFactory
                 manufacturer: Echo
-                name: "Echoelmusic: MIDI Pro"
+                name: "Echoelmusic: EchoelSeq"
+                sandboxSafe: true
+                subtype: Eseq
+                tags: [MIDI, Sequencer, Generator]
+                type: aumi
+                version: 1
+              - description: "Echoelmusic EchoelMIDI — MIDI 2.0 + MPE Processor"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelMIDI"
                 sandboxSafe: true
                 subtype: Emid
                 tags: [MIDI, MPE, Processor]
+                type: aumi
+                version: 1
+              - description: "Echoelmusic EchoelBeam — Audio-to-Lighting DMX Bridge"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelBeam"
+                sandboxSafe: true
+                subtype: Ebem
+                tags: [MIDI, Lighting, DMX]
+                type: aumi
+                version: 1
+              - description: "Echoelmusic EchoelNet — Network Protocol Bridge (OSC, MSC, Dante)"
+                factoryFunction: EchoelmusicAudioUnitFactory
+                manufacturer: Echo
+                name: "Echoelmusic: EchoelNet"
+                sandboxSafe: true
+                subtype: Enet
+                tags: [MIDI, Network, OSC]
                 type: aumi
                 version: 1
           NSExtensionPointIdentifier: com.apple.AudioUnit-UI
