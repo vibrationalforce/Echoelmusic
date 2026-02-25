@@ -613,7 +613,7 @@ class HealthMonitor {
     }
 
     private func getBatteryLevel() -> Float {
-        #if os(iOS)
+        #if canImport(UIKit) && os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         return UIDevice.current.batteryLevel
         #else

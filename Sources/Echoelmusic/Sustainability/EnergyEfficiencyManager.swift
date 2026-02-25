@@ -185,7 +185,7 @@ class EnergyEfficiencyManager: ObservableObject {
     // MARK: - Detect Power Source
 
     private func detectPowerSource() {
-        #if os(iOS) || os(tvOS)
+        #if canImport(UIKit) && (os(iOS) || os(tvOS))
         UIDevice.current.isBatteryMonitoringEnabled = true
         let batteryState = UIDevice.current.batteryState
         let batteryLevel = UIDevice.current.batteryLevel
@@ -273,7 +273,7 @@ class EnergyEfficiencyManager: ObservableObject {
     // MARK: - Setup Power Monitoring
 
     private func setupPowerMonitoring() {
-        #if os(iOS) || os(tvOS)
+        #if canImport(UIKit) && (os(iOS) || os(tvOS))
         batteryObserver = NotificationCenter.default.addObserver(
             forName: UIDevice.batteryStateDidChangeNotification,
             object: nil,

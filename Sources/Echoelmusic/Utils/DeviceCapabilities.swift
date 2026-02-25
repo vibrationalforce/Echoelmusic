@@ -166,10 +166,13 @@ class DeviceCapabilities: ObservableObject {
 
     /// Detect iOS version
     private func detectiOSVersion() {
+        #if canImport(UIKit)
         let version = UIDevice.current.systemVersion
         iOSVersion = version
-
         log.performance("🔧 iOS Version: \(version)")
+        #else
+        iOSVersion = ProcessInfo.processInfo.operatingSystemVersionString
+        #endif
     }
 
     /// Check if device supports ASAF (Apple Spatial Audio Features)

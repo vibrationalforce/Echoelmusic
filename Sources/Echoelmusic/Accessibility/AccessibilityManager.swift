@@ -310,7 +310,7 @@ class AccessibilityManager: ObservableObject {
     // MARK: - Detect System Settings
 
     private func detectSystemAccessibilitySettings() {
-        #if os(iOS)
+        #if canImport(UIKit) && os(iOS)
         isVoiceOverEnabled = UIAccessibility.isVoiceOverRunning
         isSwitchControlEnabled = UIAccessibility.isSwitchControlRunning
         isReduceMotionEnabled = UIAccessibility.isReduceMotionEnabled

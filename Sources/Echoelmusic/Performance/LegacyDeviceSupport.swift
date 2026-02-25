@@ -561,6 +561,7 @@ class LegacyDeviceSupport: ObservableObject {
     // MARK: - Memory Warning Observer
 
     private func setupMemoryWarningObserver() {
+        #if canImport(UIKit) && !os(watchOS)
         notificationObservers.append(NotificationCenter.default.addObserver(
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
@@ -570,6 +571,7 @@ class LegacyDeviceSupport: ObservableObject {
                 self?.handleMemoryWarning()
             }
         })
+        #endif
     }
 
     private func handleMemoryWarning() {

@@ -329,7 +329,7 @@ class HardwareAbstractionLayer: ObservableObject {
 
         /// Future-proof screen accessor via UIWindowScene (iOS 15+ guaranteed)
         /// Returns nil during early app startup before the first scene connects.
-        #if os(iOS)
+        #if canImport(UIKit) && os(iOS)
         @MainActor
         static var currentScreen: UIScreen {
             if let screen = UIApplication.shared.connectedScenes

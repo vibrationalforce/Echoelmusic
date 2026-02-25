@@ -381,7 +381,7 @@ class AdaptiveQualityManager: ObservableObject {
         #endif
 
         // Memory Warning Monitoring
-        #if os(iOS)
+        #if canImport(UIKit) && !os(watchOS)
         NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)
             .sink { [weak self] _ in
                 guard let self = self else { return }

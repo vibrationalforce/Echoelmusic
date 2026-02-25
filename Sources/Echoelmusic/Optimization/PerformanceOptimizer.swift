@@ -149,7 +149,7 @@ class PerformanceOptimizer: ObservableObject {
     // MARK: - Detect Device Capabilities
 
     private static func detectCapabilities() -> DeviceCapabilities {
-        #if os(iOS)
+        #if canImport(UIKit) && os(iOS)
         let device = UIDevice.current
         // Prefer window scene screen; fall back to UIScreen.main during early startup
         let screen: UIScreen = UIApplication.shared.connectedScenes
@@ -234,7 +234,7 @@ class PerformanceOptimizer: ObservableObject {
         #endif
 
         // Monitor battery - store timer reference for cleanup
-        #if os(iOS)
+        #if canImport(UIKit) && os(iOS)
         UIDevice.current.isBatteryMonitoringEnabled = true
         batteryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             DispatchQueue.main.async {
