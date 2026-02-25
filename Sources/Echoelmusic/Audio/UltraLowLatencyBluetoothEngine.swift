@@ -593,15 +593,17 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
 
     private func setupNotifications() {
         #if !os(macOS)
-        // Audio route change notifications
+        // Audio route change notifications — receive on main for @MainActor isolation
         NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 self?.handleRouteChange(notification)
             }
             .store(in: &cancellables)
 
-        // Interruption notifications
+        // Interruption notifications — receive on main for @MainActor isolation
         NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 self?.handleInterruption(notification)
             }

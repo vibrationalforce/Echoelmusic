@@ -727,9 +727,11 @@ class BackgroundSourceManager: ObservableObject {
         self.captureSession = session
         self.cameraOutput = output
 
-        // Start capture on background thread
+        // Start capture on background thread — nonisolated(unsafe) suppresses
+        // Sendable warning for AVCaptureSession (safe: newly created local)
+        nonisolated(unsafe) let bgSession = session
         DispatchQueue.global(qos: .userInitiated).async {
-            session.startRunning()
+            bgSession.startRunning()
         }
 
         log.video("📷 BackgroundSourceManager: Live camera capture started (\(position == .front ? "front" : "back") camera)")

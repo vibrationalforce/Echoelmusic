@@ -351,6 +351,7 @@ public final class VisualMethodMapper: ObservableObject {
 
     private func setupSequencerListener() {
         NotificationCenter.default.publisher(for: .sequencerStepTriggered)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 self?.handleSequencerTrigger(notification)
             }

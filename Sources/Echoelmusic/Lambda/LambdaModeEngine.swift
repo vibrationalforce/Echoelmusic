@@ -408,6 +408,7 @@ public final class LambdaModeEngine: ObservableObject {
         #if os(iOS) || os(tvOS) || os(visionOS)
         // Observe system accessibility settings
         NotificationCenter.default.publisher(for: UIAccessibility.reduceMotionStatusDidChangeNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.reducedMotion = UIAccessibility.isReduceMotionEnabled
             }

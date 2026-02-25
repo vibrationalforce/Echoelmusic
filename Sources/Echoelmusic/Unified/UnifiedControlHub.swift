@@ -160,12 +160,14 @@ public class UnifiedControlHub: ObservableObject {
     private func observeAppLifecycle() {
         #if canImport(UIKit) && !os(watchOS)
         NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleEnteredBackground()
             }
             .store(in: &cancellables)
 
         NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleEnteredForeground()
             }
@@ -173,6 +175,7 @@ public class UnifiedControlHub: ObservableObject {
 
         // Low Power Mode detection
         NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handlePowerStateChange()
             }
@@ -182,6 +185,7 @@ public class UnifiedControlHub: ObservableObject {
 
     private func observeThermalState() {
         NotificationCenter.default.publisher(for: ProcessInfo.thermalStateDidChangeNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleThermalStateChange()
             }

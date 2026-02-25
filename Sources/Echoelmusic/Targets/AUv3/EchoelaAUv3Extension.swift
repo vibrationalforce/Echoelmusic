@@ -114,6 +114,7 @@ public final class EchoelaAUv3Manager: ObservableObject {
 
         // Listen for Echoela actions
         NotificationCenter.default.publisher(for: .echoelaAction)
+            .receive(on: DispatchQueue.main)
             .compactMap { $0.userInfo as? [String: Any] }
             .filter { ($0["category"] as? String) == "auv3" }
             .sink { [weak self] info in

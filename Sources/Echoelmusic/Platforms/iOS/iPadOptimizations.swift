@@ -229,6 +229,7 @@ class iPadOptimizations: ObservableObject {
     private func setupObservers() {
         // Beobachte Split View Changes
         NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.detectSplitView()
             }
@@ -236,12 +237,14 @@ class iPadOptimizations: ObservableObject {
 
         // Beobachte External Display
         NotificationCenter.default.publisher(for: UIScreen.didConnectNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 self?.handleExternalDisplayConnected(notification)
             }
             .store(in: &cancellables)
 
         NotificationCenter.default.publisher(for: UIScreen.didDisconnectNotification)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.externalDisplayConnected = false
             }

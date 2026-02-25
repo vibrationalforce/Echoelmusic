@@ -266,7 +266,9 @@ public class AudioEngine: ObservableObject {
         self.healthKitEngine = healthKitEngine
 
         // Subscribe to HRV coherence changes (coherence is 0-1, convert to 0-100)
+        // Receive on main queue to satisfy @MainActor isolation
         healthKitEngine.$coherence
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] coherence in
                 self?.adaptToBiofeedback(coherence: coherence * 100.0)
             }

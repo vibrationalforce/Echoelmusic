@@ -451,7 +451,7 @@ public final class SyncManager: ObservableObject {
         Timer.publish(every: 60, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                Task {
+                Task { @MainActor in
                     await self?.syncAll()
                 }
             }
