@@ -373,7 +373,7 @@ struct MasterStripView: View {
             ), accentColor: VaporwaveColors.neonPink)
             .frame(height: 120)
 
-            Text(String(format: "%.1f dB", 20 * log10(max(volume, 0.0001))))
+            Text(String(format: "%.1f dB", 20 * log10(Swift.max(volume, 0.0001))))
                 .font(VaporwaveTypography.label())
                 .foregroundColor(VaporwaveColors.textPrimary)
 
@@ -905,7 +905,7 @@ struct AudioChannel: Identifiable {
     var inputName: String = "Input"
     var sends: [UUID: Float] = [:]
 
-    var volumeDB: Float { 20 * log10(max(volume, 0.0001)) }
+    var volumeDB: Float { 20 * log10(Swift.max(volume, 0.0001)) }
 }
 
 struct AudioBus: Identifiable {
@@ -916,7 +916,7 @@ struct AudioBus: Identifiable {
     var leftLevel: Float
     var rightLevel: Float
 
-    var volumeDB: Float { 20 * log10(max(volume, 0.0001)) }
+    var volumeDB: Float { 20 * log10(Swift.max(volume, 0.0001)) }
 }
 
 struct AudioInput: Identifiable {
