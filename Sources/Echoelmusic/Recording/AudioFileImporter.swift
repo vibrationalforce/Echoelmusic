@@ -27,7 +27,7 @@ class AudioFileImporter: ObservableObject {
     // MARK: - Import Methods
 
     /// Import audio file and add to session as new track
-    func importAudioFile(from url: URL, to session: inout Session, trackName: String? = nil) async throws -> Track {
+    func importAudioFile(from url: URL, to session: Session, trackName: String? = nil) async throws -> Track {
         isImporting = true
         importProgress = 0.0
         importError = nil
@@ -159,12 +159,12 @@ class AudioFileImporter: ObservableObject {
     }
 
     /// Import multiple files at once
-    func importMultipleFiles(urls: [URL], to session: inout Session) async throws -> [Track] {
+    func importMultipleFiles(urls: [URL], to session: Session) async throws -> [Track] {
         var importedTracks: [Track] = []
 
         for (index, url) in urls.enumerated() {
             do {
-                let track = try await importAudioFile(from: url, to: &session)
+                let track = try await importAudioFile(from: url, to: session)
                 importedTracks.append(track)
 
                 // Update overall progress

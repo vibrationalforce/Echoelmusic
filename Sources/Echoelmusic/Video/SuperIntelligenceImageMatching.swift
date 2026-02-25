@@ -920,14 +920,15 @@ public class SuperIntelligenceImageMatchingEngine: ObservableObject {
 
         #if canImport(Vision)
         // Use Vision to detect faces for face lighting
-        await detectFacesForLighting(cgImage, correction: &correction)
+        correction = await detectFacesForLighting(cgImage, correction: correction)
         #endif
 
         return correction
     }
 
     #if canImport(Vision)
-    private func detectFacesForLighting(_ cgImage: CGImage, correction: inout LightingCorrection) async {
+    private func detectFacesForLighting(_ cgImage: CGImage, correction: LightingCorrection) async -> LightingCorrection {
+        var result = correction
         let request = VNDetectFaceRectanglesRequest()
 
         do {
@@ -935,18 +936,19 @@ public class SuperIntelligenceImageMatchingEngine: ObservableObject {
             try handler.perform([request])
 
             if let results = request.results, !results.isEmpty {
-                correction.faceLightingEnabled = true
-                correction.detectedLightSources = results.count
+                result.faceLightingEnabled = true
+                result.detectedLightSources = results.count
 
                 // If faces detected, suggest face-specific lighting
-                if correction.lightingQualityScore < 0.7 {
-                    correction.faceLightIntensity = 0.3
-                    correction.faceShadowReduction = 0.4
+                if result.lightingQualityScore < 0.7 {
+                    result.faceLightIntensity = 0.3
+                    result.faceShadowReduction = 0.4
                 }
             }
         } catch {
             // Vision not available or failed
         }
+        return result
     }
     #endif
 
