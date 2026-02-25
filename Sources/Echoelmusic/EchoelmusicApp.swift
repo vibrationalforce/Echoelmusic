@@ -68,6 +68,8 @@ struct EchoelmusicApp: App {
     // Now they are initialized in initializeCoreSystems() and accessed via .shared
     // only after coreSystemsReady == true.
 
+    @StateObject private var themeManager = ThemeManager()
+
     @State private var coreSystemsReady = false
 
     init() {
@@ -87,7 +89,7 @@ struct EchoelmusicApp: App {
                 mainContent
             } else {
                 LaunchScreen()
-                    .preferredColorScheme(.dark)
+                    .preferredColorScheme(themeManager.resolvedColorScheme)
                     .task {
                         // Watchdog: unstructured Task fires after 10s to force-proceed.
                         // CRITICAL: Previous TaskGroup-based watchdog was broken because
@@ -144,7 +146,8 @@ struct EchoelmusicApp: App {
             .environmentObject(recordingEngine)
             .environmentObject(unifiedControlHub)
             .environmentObject(EchoelToolkit.shared)
-            .preferredColorScheme(.dark)
+            .environmentObject(themeManager)
+            .preferredColorScheme(themeManager.resolvedColorScheme)
             .onAppear {
                 connectSystems()
             }

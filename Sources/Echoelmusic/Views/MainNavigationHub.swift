@@ -684,6 +684,9 @@ struct MainNavigationHub: View {
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
 
+            // Theme Toggle (Dark/Light)
+            ThemeToggleButton()
+
             // Settings
             Button(action: { showSettings = true }) {
                 Image(systemName: "gearshape")

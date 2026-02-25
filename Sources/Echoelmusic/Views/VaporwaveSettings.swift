@@ -268,8 +268,19 @@ struct VaporwaveSettings: View {
 
     // MARK: - Visual Settings
 
+    @ObservedObject private var themeManager = ThemeManager.shared
+
     private var visualSettings: some View {
         VStack(spacing: VaporwaveSpacing.md) {
+            // Appearance Mode (Dark/Light/System)
+            VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+                Text("APPEARANCE")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+
+                ThemeModePicker(themeManager: themeManager)
+            }
+
             HStack {
                 Text("Visual Quality")
                     .font(VaporwaveTypography.body())
