@@ -140,9 +140,14 @@ public struct LiquidGlassModifier: ViewModifier {
 
     private var glassBackground: some View {
         ZStack {
-            // Base blur
+            // Base blur (ultraThinMaterial requires watchOS 10.0+)
+            #if os(watchOS)
+            Rectangle()
+                .fill(Color.black.opacity(0.3))
+            #else
             Rectangle()
                 .fill(.ultraThinMaterial)
+            #endif
 
             // Tint overlay
             Rectangle()
@@ -454,7 +459,7 @@ public struct LiquidGlassTabBar: View {
                     #endif
                 } label: {
                     VStack(spacing: 4) {
-                        if #available(iOS 17.0, *) {
+                        if #available(iOS 17.0, macOS 14.0, watchOS 10.0, tvOS 17.0, *) {
                             Image(systemName: selectedTab == index ? "\(tab.icon).fill" : tab.icon)
                                 .font(.system(size: 22))
                                 .symbolEffect(.bounce, value: selectedTab == index)
@@ -501,9 +506,14 @@ public struct CoherenceOrb: View {
                 .opacity(0.5)
                 .scaleEffect(1 + breathPhase * 0.1)
 
-            // Glass orb
+            // Glass orb (ultraThinMaterial requires watchOS 10.0+)
+            #if os(watchOS)
+            Circle()
+                .fill(Color.black.opacity(0.3))
+            #else
             Circle()
                 .fill(.ultraThinMaterial)
+            #endif
                 .overlay(
                     Circle()
                         .stroke(orbColor.opacity(0.5), lineWidth: 2)
