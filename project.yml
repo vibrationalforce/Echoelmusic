@@ -169,9 +169,8 @@ targets:
     dependencies:
       - target: EchoelmusicNotificationService
         embed: true
-      # AUv3 disabled — "Invalid bundle structure" validation error
-      # - target: EchoelmusicAUv3
-      #   embed: true
+      - target: EchoelmusicAUv3
+        embed: true
       # Widgets disabled — missing __swift5_entry section
       # - target: EchoelmusicWidgets
       #   embed: true
@@ -331,10 +330,10 @@ targets:
         SDKROOT: macosx
         SUPPORTED_PLATFORMS: macosx
     dependencies:
-      - framework: AudioToolbox.framework
-      - framework: AVFoundation.framework
-      - framework: CoreAudioKit.framework
-      - framework: Accelerate.framework
+      - sdk: AudioToolbox.framework
+      - sdk: AVFoundation.framework
+      - sdk: CoreAudioKit.framework
+      - sdk: Accelerate.framework
 
   # ===========================================================================
   # iOS AUv3 Audio Unit Extension
@@ -475,10 +474,10 @@ targets:
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
     dependencies:
-      - framework: AudioToolbox.framework
-      - framework: AVFoundation.framework
-      - framework: CoreAudioKit.framework
-      - framework: Accelerate.framework
+      - sdk: AudioToolbox.framework
+      - sdk: AVFoundation.framework
+      - sdk: CoreAudioKit.framework
+      - sdk: Accelerate.framework
 
   # ===========================================================================
   # iOS Notification Service Extension (Rich Push Notifications)
@@ -901,7 +900,7 @@ schemes:
       targets:
         Echoelmusic: all
         EchoelmusicNotificationService: all
-        # EchoelmusicAUv3: all  # Disabled — invalid bundle structure
+        EchoelmusicAUv3: all
         # EchoelmusicWidgets: all  # Disabled — missing __swift5_entry
         # EchoelmusicClip: all  # Disabled — not registered in Apple Developer portal
         EchoelmusicTests: [test]
@@ -1007,7 +1006,7 @@ schemes:
       targets:
         Echoelmusic: [archive]
         EchoelmusicNotificationService: [archive]
-        # EchoelmusicAUv3: [archive]  # Disabled — invalid bundle structure
+        EchoelmusicAUv3: [archive]
         # EchoelmusicWidgets: [archive]  # Disabled — missing __swift5_entry
         # EchoelmusicClip: [archive]  # Disabled — not registered
         Echoelmusic-macOS: [archive]

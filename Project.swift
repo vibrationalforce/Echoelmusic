@@ -316,7 +316,7 @@ let project = Project(
                 "CFBundleVersion": "10000"
             ]),
             sources: [
-                "Sources/Echoelmusic/Plugin/**/*.swift"
+                "Sources/EchoelmusicAUv3/**/*.swift"
             ],
             entitlements: .file(path: "EchoelmusicAUv3.entitlements"),
             dependencies: [],
