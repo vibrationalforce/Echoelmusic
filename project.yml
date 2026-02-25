@@ -242,10 +242,10 @@ targets:
         COMBINE_HIDPI_IMAGES: YES
         SDKROOT: macosx
         SUPPORTED_PLATFORMS: macosx
-    dependencies:
-      # AUv3 disabled — App Store Connect rejects bundle structure (409: standalone executable)
-      # - target: EchoelmusicAUv3-macOS
-      #   embed: true
+    # AUv3 disabled — App Store Connect rejects bundle structure (409: standalone executable)
+    # dependencies:
+    #   - target: EchoelmusicAUv3-macOS
+    #     embed: true
     entitlements:
       path: EchoelmusicMac.entitlements
 
