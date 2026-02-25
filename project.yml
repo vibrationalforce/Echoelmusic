@@ -168,8 +168,9 @@ targets:
     dependencies:
       - target: EchoelmusicNotificationService
         embed: true
-      - target: EchoelmusicAUv3
-        embed: true
+      # AUv3 disabled — App Store Connect rejects bundle structure (409: standalone executable)
+      # - target: EchoelmusicAUv3
+      #   embed: true
       # Widgets disabled — missing __swift5_entry section
       # - target: EchoelmusicWidgets
       #   embed: true
@@ -242,8 +243,9 @@ targets:
         SDKROOT: macosx
         SUPPORTED_PLATFORMS: macosx
     dependencies:
-      - target: EchoelmusicAUv3-macOS
-        embed: true
+      # AUv3 disabled — App Store Connect rejects bundle structure (409: standalone executable)
+      # - target: EchoelmusicAUv3-macOS
+      #   embed: true
     entitlements:
       path: EchoelmusicMac.entitlements
 
