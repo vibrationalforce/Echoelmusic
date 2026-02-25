@@ -305,11 +305,11 @@ extension HybridAppBridge {
             let note = data["note"] as? Int ?? 60
             let velocity = data["velocity"] as? Float ?? 0.8
             // Forward to active synth engine
-            TR808BassSynth.shared.noteOn(note: note, velocity: velocity)
+            EchoelBass.shared.noteOn(note: note, velocity: velocity)
 
         case .noteOff:
             let note = data["note"] as? Int ?? 60
-            TR808BassSynth.shared.noteOff(note: note)
+            EchoelBass.shared.noteOff(note: note)
 
         case .setParameter:
             let paramId = data["id"] as? Int ?? 0

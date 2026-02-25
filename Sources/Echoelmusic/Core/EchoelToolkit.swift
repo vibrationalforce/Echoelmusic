@@ -202,7 +202,7 @@ public final class EchoelSynth: ObservableObject {
         case .cellular: cellular.frequency = freq
         case .quant: quant.frequency = freq; quant.excite()
         case .sampler: sampler.noteOn(note: note, velocity: velocity)
-        case .tr808: TR808BassSynth.shared.noteOn(note: note, velocity: vel)
+        case .tr808: EchoelBass.shared.noteOn(note: note, velocity: vel)
         }
         isPlaying = true
         EngineBus.shared.publishParam(engine: "synth", param: "noteOn", value: Float(note))
@@ -215,7 +215,7 @@ public final class EchoelSynth: ObservableObject {
         case .cellular: break // Cellular is continuous
         case .quant: break // Quantum decays naturally
         case .sampler: sampler.noteOff(note: note)
-        case .tr808: TR808BassSynth.shared.noteOff(note: note)
+        case .tr808: EchoelBass.shared.noteOff(note: note)
         }
         isPlaying = false
     }
