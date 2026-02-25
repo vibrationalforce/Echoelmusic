@@ -49,7 +49,6 @@
 		<string>audio</string>
 		<string>bluetooth-central</string>
 		<string>bluetooth-peripheral</string>
-		<string>remote-notification</string>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Echoelmusic uses your microphone to capture audio for bio-reactive processing and voice-to-music transformation.</string>

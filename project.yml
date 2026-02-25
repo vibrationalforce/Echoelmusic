@@ -135,7 +135,6 @@ targets:
         UIBackgroundModes:
           - audio
           - bluetooth-central
-          - remote-notification
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
