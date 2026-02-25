@@ -507,13 +507,7 @@ public struct CoherenceOrb: View {
                 .scaleEffect(1 + breathPhase * 0.1)
 
             // Glass orb (ultraThinMaterial requires watchOS 10.0+)
-            #if os(watchOS)
-            Circle()
-                .fill(Color.black.opacity(0.3))
-            #else
-            Circle()
-                .fill(.ultraThinMaterial)
-            #endif
+            glassOrb
                 .overlay(
                     Circle()
                         .stroke(orbColor.opacity(0.5), lineWidth: 2)
@@ -560,6 +554,17 @@ public struct CoherenceOrb: View {
                 breathPhase = healthKit.respiratoryData.breathPhase
             }
         }
+    }
+
+    @ViewBuilder
+    private var glassOrb: some View {
+        #if os(watchOS)
+        Circle()
+            .fill(Color.black.opacity(0.3))
+        #else
+        Circle()
+            .fill(.ultraThinMaterial)
+        #endif
     }
 
     private var orbColor: Color {
