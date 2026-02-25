@@ -7,7 +7,7 @@ import SwiftUI
 @MainActor
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
-    @StateObject private var workspace = EchoelCreativeWorkspace.shared
+    @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showEffectsPanel = false

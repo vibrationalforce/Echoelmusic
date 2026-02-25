@@ -89,7 +89,7 @@ public final class OnboardingManager: ObservableObject {
 
 /// Main onboarding container with page navigation
 public struct OnboardingView: View {
-    @StateObject private var manager = OnboardingManager.shared
+    @ObservedObject private var manager = OnboardingManager.shared
     @State private var currentPage: Int = 0
     @State private var showMainApp: Bool = false
     @Environment(\.dismiss) private var dismiss
@@ -253,7 +253,7 @@ private struct FeaturesPage: View {
 
 private struct PermissionsPage: View {
     @Binding var currentPage: Int
-    @StateObject private var manager = OnboardingManager.shared
+    @ObservedObject private var manager = OnboardingManager.shared
 
     var body: some View {
         OnboardingPageView(
@@ -374,7 +374,7 @@ private struct PermissionsPage: View {
 
 private struct WatchSetupPage: View {
     @Binding var currentPage: Int
-    @StateObject private var manager = OnboardingManager.shared
+    @ObservedObject private var manager = OnboardingManager.shared
 
     var body: some View {
         OnboardingPageView(

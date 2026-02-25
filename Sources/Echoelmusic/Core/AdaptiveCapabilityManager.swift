@@ -109,7 +109,7 @@ public final class AdaptiveCapabilityManager: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     #if canImport(CoreMotion)
-    private let motionManager = CMMotionManager()
+    private let motionManager = SharedMotionManager.shared
     #endif
 
     // MARK: - Init

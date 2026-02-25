@@ -533,7 +533,7 @@ public class SpatialAudioEngine: ObservableObject {
     private func startHeadTracking() {
         guard motionManager == nil else { return }
 
-        let manager = CMMotionManager()
+        let manager = SharedMotionManager.shared
         manager.deviceMotionUpdateInterval = 1.0 / 60.0  // 60 Hz
 
         guard manager.isDeviceMotionAvailable else {
@@ -560,7 +560,7 @@ public class SpatialAudioEngine: ObservableObject {
 
     private func stopHeadTracking() {
         motionManager?.stopDeviceMotionUpdates()
-        motionManager = nil
+        motionManager = nil  // Clears reference; SharedMotionManager.shared still alive
     }
 
     @available(iOS 17.0, *)

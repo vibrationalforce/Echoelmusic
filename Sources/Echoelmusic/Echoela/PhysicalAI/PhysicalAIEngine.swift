@@ -291,8 +291,8 @@ public final class PhysicalAIEngine: NSObject, ObservableObject {
     // MARK: - Private Setup
 
     private func setupMotionManager() {
-        #if os(iOS)
-        motionManager = CMMotionManager()
+        #if os(iOS) && canImport(CoreMotion)
+        motionManager = SharedMotionManager.shared
         motionManager?.accelerometerUpdateInterval = config.sensorUpdateRate
         motionManager?.gyroUpdateInterval = config.sensorUpdateRate
         #endif
