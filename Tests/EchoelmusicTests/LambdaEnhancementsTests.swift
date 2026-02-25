@@ -185,11 +185,11 @@ final class LambdaEnhancementsTests: XCTestCase {
     // MARK: - HapticCompositionEngine Tests
 
     func testHapticPatternTypes() {
-        XCTAssertEqual(HapticPatternType.allCases.count, 15)
+        XCTAssertEqual(HapticPatternType.allCases.count, 18)
         XCTAssertTrue(HapticPatternType.allCases.contains(.heartbeat))
-        XCTAssertTrue(HapticPatternType.allCases.contains(.breathing))
-        XCTAssertTrue(HapticPatternType.allCases.contains(.quantumFlutter))
-        XCTAssertTrue(HapticPatternType.allCases.contains(.bioSync))
+        XCTAssertTrue(HapticPatternType.allCases.contains(.breathSync))
+        XCTAssertTrue(HapticPatternType.allCases.contains(.wave))
+        XCTAssertTrue(HapticPatternType.allCases.contains(.flowState))
     }
 
     func testHapticEventInitialization() {

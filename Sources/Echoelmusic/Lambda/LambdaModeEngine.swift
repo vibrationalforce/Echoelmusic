@@ -26,6 +26,10 @@ import UIKit
 import AppKit
 #endif
 
+#if os(watchOS)
+import WatchKit
+#endif
+
 //==============================================================================
 // MARK: - λ Lambda Constants
 //==============================================================================
@@ -401,7 +405,7 @@ public final class LambdaModeEngine: ObservableObject {
     }
 
     private func setupAccessibilityObservers() {
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
         // Observe system accessibility settings
         NotificationCenter.default.publisher(for: UIAccessibility.reduceMotionStatusDidChangeNotification)
             .sink { [weak self] _ in
@@ -1025,7 +1029,7 @@ public final class LambdaModeEngine: ObservableObject {
     }
 
     private func triggerHaptic(for state: LambdaState) {
-        #if os(iOS)
+        #if os(iOS) || os(visionOS)
         let generator = UINotificationFeedbackGenerator()
         switch state {
         case .dormant: break
@@ -1036,6 +1040,16 @@ public final class LambdaModeEngine: ObservableObject {
             // Special lambda haptic pattern
             let impact = UIImpactFeedbackGenerator(style: .heavy)
             impact.impactOccurred()
+        }
+        #elseif os(watchOS)
+        // watchOS haptics via WKInterfaceDevice
+        let device = WKInterfaceDevice.current()
+        switch state {
+        case .dormant: break
+        case .awakening, .aware: device.play(.click)
+        case .flowing, .coherent: device.play(.success)
+        case .transcendent, .unified: device.play(.success)
+        case .lambda: device.play(.notification)
         }
         #endif
     }
@@ -1072,7 +1086,7 @@ public final class LambdaModeEngine: ObservableObject {
 // MARK: - Lambda Mode View
 //==============================================================================
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct LambdaModeView: View {
     @ObservedObject var engine: LambdaModeEngine
     @State private var showDisclaimer = true
@@ -1086,8 +1100,13 @@ public struct LambdaModeView: View {
     public var body: some View {
         ZStack {
             // Background visualization
+            #if os(watchOS)
+            // watchOS: lightweight gradient background (Canvas unavailable on watchOS 8)
+            LambdaWatchBackground(engine: engine)
+            #else
             LambdaVisualizationCanvas(engine: engine)
                 .ignoresSafeArea()
+            #endif
 
             // Overlay UI
             VStack {
@@ -1288,6 +1307,7 @@ public struct LambdaModeView: View {
 // MARK: - Lambda Visualization Canvas
 //==============================================================================
 
+#if !os(watchOS)
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
 struct LambdaVisualizationCanvas: View {
     @ObservedObject var engine: LambdaModeEngine
@@ -1376,12 +1396,36 @@ struct LambdaVisualizationCanvas: View {
         }
     }
 }
+#endif // !os(watchOS)
+
+// MARK: - watchOS Lightweight Background
+#if os(watchOS)
+@available(watchOS 8.0, *)
+struct LambdaWatchBackground: View {
+    @ObservedObject var engine: LambdaModeEngine
+
+    var body: some View {
+        let hue = engine.state.colorHue
+        let coherence = engine.bioData.overallCoherence
+
+        LinearGradient(
+            colors: [
+                Color(hue: hue, saturation: 0.6, brightness: 0.15 + coherence * 0.1),
+                Color(hue: hue + 0.1, saturation: 0.4, brightness: 0.05)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+}
+#endif
 
 //==============================================================================
 // MARK: - Lambda Settings View
 //==============================================================================
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 struct LambdaSettingsView: View {
     @ObservedObject var engine: LambdaModeEngine
     @Environment(\.dismiss) var dismiss
@@ -1427,7 +1471,7 @@ struct LambdaSettingsView: View {
 // MARK: - Lambda Stats View
 //==============================================================================
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 struct LambdaStatsView: View {
     @ObservedObject var engine: LambdaModeEngine
     @Environment(\.dismiss) var dismiss

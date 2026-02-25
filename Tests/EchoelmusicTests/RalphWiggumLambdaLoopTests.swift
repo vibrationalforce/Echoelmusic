@@ -472,7 +472,7 @@ final class CoherencePredictionTests: XCTestCase {
 final class HapticFeedbackTests: XCTestCase {
 
     func testPatternTypes() {
-        XCTAssertEqual(HapticPatternType.allCases.count, 17)
+        XCTAssertEqual(HapticPatternType.allCases.count, 18)
         XCTAssertTrue(HapticPatternType.allCases.contains(.heartbeat))
         XCTAssertTrue(HapticPatternType.allCases.contains(.coherencePulse))
     }
