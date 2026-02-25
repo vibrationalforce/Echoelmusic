@@ -76,7 +76,7 @@ public class UnifiedControlHub: ObservableObject {
     private var lambdaModeEngine: LambdaModeEngine?
 
     // Phase λ∞: NeuroSpiritual + Circadian (consciousness-driven audio/light)
-    // lazy to avoid accessing non-@MainActor singletons during StateObject init
+    // Lazy to avoid triggering singleton init before initializeCoreSystems() completes
     private lazy var neuroSpiritualEngine = NeuroSpiritualEngine.shared
     private lazy var circadianEngine = CircadianRhythmEngine.shared
 

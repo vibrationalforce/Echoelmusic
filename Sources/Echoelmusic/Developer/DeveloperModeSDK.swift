@@ -456,9 +456,11 @@ public final class PluginManager: ObservableObject {
     // MARK: - Helpers
 
     private func createPluginContext() -> PluginContext {
-        let dataDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let dataDir = (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory()))
             .appendingPathComponent("Plugins")
-        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let cacheDir = (FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory()))
             .appendingPathComponent("Plugins")
 
         return PluginContext(

@@ -151,7 +151,10 @@ public final class CrashSafeStatePersistence: ObservableObject {
 
     private var baseDirectory: URL {
         let paths = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-        let appSupport = paths[0].appendingPathComponent("Echoelmusic", isDirectory: true)
+        guard let base = paths.first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Echoelmusic")
+        }
+        let appSupport = base.appendingPathComponent("Echoelmusic", isDirectory: true)
 
         try? fileManager.createDirectory(at: appSupport, withIntermediateDirectories: true)
 

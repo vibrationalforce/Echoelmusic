@@ -169,7 +169,8 @@ public final class FileOutput: LogOutput, @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.echoelmusic.log.file")
 
     public init(fileName: String = "echoelmusic.log") {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
         self.fileURL = documentsPath.appendingPathComponent(fileName)
     }
 
