@@ -103,6 +103,7 @@ class AmbisonicsProcessor {
     func encode(_ input: [Float], azimuth: Float, elevation: Float, distance: Float = 1.0) -> [[Float]] {
         let channelCount = configuration.order.channelCount
         let sampleCount = input.count
+        guard sampleCount > 0 else { return [[Float]](repeating: [], count: channelCount) }
 
         let azRad = azimuth * .pi / 180.0
         let elRad = elevation * .pi / 180.0
