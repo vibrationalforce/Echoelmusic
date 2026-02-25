@@ -1915,7 +1915,9 @@ public struct APIExamples {
                 settings: settings
             )
 
-            print("Session created! Code: \\(currentSession!.code)")
+            if let session = currentSession {
+                print("Session created! Code: \\(session.code)")
+            }
             print("Share this code with participants worldwide")
 
             // Start sharing biometrics
@@ -1939,8 +1941,10 @@ public struct APIExamples {
                 participant: participant
             )
 
-            print("Joined session: \\(currentSession!.name)")
-            print("Participants: \\(currentSession!.participants.count)")
+            if let session = currentSession {
+                print("Joined session: \\(session.name)")
+                print("Participants: \\(session.participants.count)")
+            }
 
             // Start sharing biometrics
             startBioSharing()

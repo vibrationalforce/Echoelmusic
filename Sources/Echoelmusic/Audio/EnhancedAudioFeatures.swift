@@ -66,7 +66,9 @@ class AdaptiveAudioEngine: ObservableObject {
     }
 
     deinit {
-        // stopMonitoring() is @MainActor-isolated, cannot call from deinit
+        // Timer must be invalidated directly — stopMonitoring() is @MainActor-isolated
+        timer?.invalidate()
+        timer = nil
     }
 
     // MARK: - Public Methods
