@@ -600,7 +600,7 @@ public enum WatchError: LocalizedError {
 
 /// Main watchOS app view
 public struct EchoelaWatchView: View {
-    @StateObject private var watchManager = EchoelaWatchManager.shared
+    @ObservedObject private var watchManager = EchoelaWatchManager.shared
 
     public init() {}
 
@@ -620,7 +620,7 @@ public struct EchoelaWatchView: View {
 }
 
 struct EchoelaMetricsView: View {
-    @StateObject private var watchManager = EchoelaWatchManager.shared
+    @ObservedObject private var watchManager = EchoelaWatchManager.shared
 
     var body: some View {
         VStack(spacing: 8) {
@@ -666,7 +666,7 @@ struct EchoelaMetricsView: View {
 }
 
 struct SessionControlView: View {
-    @StateObject private var watchManager = EchoelaWatchManager.shared
+    @ObservedObject private var watchManager = EchoelaWatchManager.shared
 
     var body: some View {
         VStack(spacing: 12) {
@@ -704,7 +704,7 @@ struct SessionControlView: View {
 }
 
 struct ConnectionView: View {
-    @StateObject private var watchManager = EchoelaWatchManager.shared
+    @ObservedObject private var watchManager = EchoelaWatchManager.shared
 
     var body: some View {
         VStack(spacing: 8) {

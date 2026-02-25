@@ -718,7 +718,7 @@ extension TR808BassSynth {
 import SwiftUI
 
 public struct TR808BassSynthView: View {
-    @StateObject private var synth = TR808BassSynth.shared
+    @ObservedObject private var synth = TR808BassSynth.shared
     @State private var selectedPreset: String = "Classic 808"
 
     private let presets: [(String, TR808BassConfig)] = [

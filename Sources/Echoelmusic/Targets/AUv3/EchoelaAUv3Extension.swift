@@ -364,8 +364,8 @@ import SwiftUI
 
 /// SwiftUI view for AUv3 plugin interface with Echoela integration
 public struct EchoelaAUv3View: View {
-    @StateObject private var auv3Manager = EchoelaAUv3Manager.shared
-    @StateObject private var echoela = EchoelaManager.shared
+    @ObservedObject private var auv3Manager = EchoelaAUv3Manager.shared
+    @ObservedObject private var echoela = EchoelaManager.shared
 
     public init() {}
 

@@ -31,7 +31,7 @@ import CoreLocation
 // Note: @main removed - App Clip uses separate Xcode target with its own entry point
 struct EchoelmusicClipApp: App {
     @StateObject private var clipManager = ClipTargetManager()
-    @StateObject private var healthKit = UnifiedHealthKitEngine.shared
+    @ObservedObject private var healthKit = UnifiedHealthKitEngine.shared
 
     var body: some Scene {
         WindowGroup {

@@ -920,7 +920,7 @@ public final class EchoelBeat: ObservableObject {
 
 #if canImport(SwiftUI)
 public struct EchoelBeatView: View {
-    @StateObject private var beat = EchoelBeat.shared
+    @ObservedObject private var beat = EchoelBeat.shared
 
     public init() {}
 
