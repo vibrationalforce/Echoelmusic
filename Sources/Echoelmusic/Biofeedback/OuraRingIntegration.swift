@@ -119,8 +119,8 @@ public class OuraRingIntegration: ObservableObject {
             types.insert(stepsType)
         }
 
-        // Temperature (if available)
-        if #available(iOS 16.0, *) {
+        // Temperature (if available — requires iOS 16.0+ / watchOS 9.0+)
+        if #available(iOS 16.0, watchOS 9.0, *) {
             if let tempType = HKObjectType.quantityType(forIdentifier: .appleSleepingWristTemperature) {
                 types.insert(tempType)
             }

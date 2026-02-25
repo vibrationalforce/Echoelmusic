@@ -828,7 +828,7 @@ private struct RippleAnimationModifier: ViewModifier {
 
 // MARK: - Haptic Feedback
 
-#if canImport(UIKit) && !os(watchOS) && !os(tvOS)
+#if canImport(UIKit) && !os(watchOS) && !os(tvOS) && !os(visionOS)
 private func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
     let generator = UIImpactFeedbackGenerator(style: style)
     generator.prepare()

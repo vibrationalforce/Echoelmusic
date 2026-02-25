@@ -386,10 +386,46 @@ final class MultiPlatformBridge: ObservableObject {
     }
 
     private func stateToRGB(_ state: EchoelUniversalCore.SystemState) -> (r: Float, g: Float, b: Float) {
-        // Use coherence to color mapping
-        return UnifiedVisualSoundEngine.OctaveTransposition.wavelengthToRGB(
-            wavelength: 650 - state.coherence * 120  // Red to Green
-        )
+        // Inline wavelength-to-RGB conversion (CIE 1931 based)
+        // Avoids dependency on UnifiedVisualSoundEngine which may not be available on all platforms
+        let wl = 650 - state.coherence * 120  // Red to Green wavelength range
+        var r: Float = 0, g: Float = 0, b: Float = 0
+
+        if wl >= 380 && wl < 440 {
+            r = -(wl - 440) / (440 - 380)
+            g = 0
+            b = 1
+        } else if wl >= 440 && wl < 490 {
+            r = 0
+            g = (wl - 440) / (490 - 440)
+            b = 1
+        } else if wl >= 490 && wl < 510 {
+            r = 0
+            g = 1
+            b = -(wl - 510) / (510 - 490)
+        } else if wl >= 510 && wl < 580 {
+            r = (wl - 510) / (580 - 510)
+            g = 1
+            b = 0
+        } else if wl >= 580 && wl < 645 {
+            r = 1
+            g = -(wl - 645) / (645 - 580)
+            b = 0
+        } else if wl >= 645 && wl <= 780 {
+            r = 1
+            g = 0
+            b = 0
+        }
+
+        // Intensity adjustment at edges of visible spectrum
+        var intensity: Float = 1.0
+        if wl >= 380 && wl < 420 {
+            intensity = 0.3 + 0.7 * (wl - 380) / (420 - 380)
+        } else if wl >= 700 && wl <= 780 {
+            intensity = 0.3 + 0.7 * (780 - wl) / (780 - 700)
+        }
+
+        return (r * intensity, g * intensity, b * intensity)
     }
 }
 
