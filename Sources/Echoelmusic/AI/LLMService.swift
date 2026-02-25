@@ -835,7 +835,7 @@ private enum KeychainHelper {
 
 /// Chat interface for LLM assistant
 struct LLMChatView: View {
-    @StateObject private var llm = LLMService.shared
+    @ObservedObject private var llm = LLMService.shared
     @State private var inputText = ""
     @State private var showSettings = false
 
@@ -956,7 +956,7 @@ struct MessageBubble: View {
 }
 
 struct LLMSettingsView: View {
-    @StateObject private var llm = LLMService.shared
+    @ObservedObject private var llm = LLMService.shared
     @State private var selectedProvider: LLMService.LLMProvider = .claude
     @State private var apiKey = ""
     @Environment(\.dismiss) private var dismiss

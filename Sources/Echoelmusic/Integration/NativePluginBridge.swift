@@ -107,7 +107,7 @@ class NativePluginBridge: ObservableObject {
 #if canImport(SwiftUI)
 
 struct NativePluginStatusView: View {
-    @StateObject private var bridge = NativePluginBridge.shared
+    @ObservedObject private var bridge = NativePluginBridge.shared
 
     var body: some View {
         VStack(spacing: 12) {

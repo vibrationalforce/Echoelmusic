@@ -1034,7 +1034,7 @@ public final class BluetoothMIDIManager: ObservableObject {
 import SwiftUI
 
 public struct BluetoothAudioView: View {
-    @StateObject private var engine = UltraLowLatencyBluetoothEngine.shared
+    @ObservedObject private var engine = UltraLowLatencyBluetoothEngine.shared
     @State private var showLatencySettings = false
 
     public init() {}
@@ -1416,7 +1416,7 @@ struct SignalStrengthIndicator: View {
 }
 
 struct LatencySettingsView: View {
-    @StateObject private var engine = UltraLowLatencyBluetoothEngine.shared
+    @ObservedObject private var engine = UltraLowLatencyBluetoothEngine.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

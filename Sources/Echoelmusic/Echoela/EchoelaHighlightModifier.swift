@@ -17,7 +17,7 @@ public struct EchoelaHighlightModifier: ViewModifier {
 
     @State private var glowIntensity: Double = 0
     @State private var glowPhase: Double = 0
-    @StateObject private var echoelaManager = EchoelaManager.shared
+    @ObservedObject private var echoelaManager = EchoelaManager.shared
 
     // Accessibility
     @AccessibilityFocusState private var isAccessibilityFocused: Bool
@@ -165,7 +165,7 @@ struct EchoelaHighlightWrapper<Content: View>: View {
     let elementID: String
     let glowColor: Color
 
-    @StateObject private var echoelaManager = EchoelaManager.shared
+    @ObservedObject private var echoelaManager = EchoelaManager.shared
     @State private var isHighlighted = false
 
     var body: some View {
@@ -375,7 +375,7 @@ public struct EchoelaActionCard: View {
 
 /// Main Echoela assistant interface
 public struct EchoelaAssistantView: View {
-    @StateObject private var echoela = EchoelaManager.shared
+    @ObservedObject private var echoela = EchoelaManager.shared
     @State private var inputText = ""
     @State private var isExpanded = false
 

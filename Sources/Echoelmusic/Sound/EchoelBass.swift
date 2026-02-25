@@ -855,7 +855,7 @@ extension EchoelBass {
 // MARK: - SwiftUI View
 
 public struct EchoelBassView: View {
-    @StateObject private var bass = EchoelBass.shared
+    @ObservedObject private var bass = EchoelBass.shared
     @State private var selectedPreset: String = "808 Sub"
 
     private let presets: [(String, EchoelBassConfig)] = [
