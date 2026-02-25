@@ -241,7 +241,7 @@ public final class ZeroCostDeveloperGuarantee: ObservableObject {
         public let appleRevenueSplit: String = "70/30 (or 85/15 for small developers < $1M)"
 
         /// Built-in ethical monetization
-        public let ethicalMonetization: [String] = [
+        public var ethicalMonetization: [String] = [
             "Freemium: Free to try, Pro for full access",
             "Individual session purchases for one-time use",
             "Family Sharing enabled for subscriptions",

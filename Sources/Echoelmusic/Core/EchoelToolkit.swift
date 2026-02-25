@@ -1388,16 +1388,18 @@ public final class EchoelBeam: ObservableObject {
     @Published public var isOutputActive: Bool = false
 
     /// The rendering pipeline handles actual display detection and frame routing
-    public let pipeline = ExternalDisplayRenderingPipeline.shared
+    /// Lazy: defers MTLCreateSystemDefaultDevice() + UIApplication.shared access
+    /// until first use, preventing crash during early app startup.
+    public lazy var pipeline = ExternalDisplayRenderingPipeline.shared
 
     /// Dante/AES67 audio transport for professional installations
-    public let danteTransport = DanteAudioTransport.shared
+    public lazy var danteTransport = DanteAudioTransport.shared
 
     /// NDI/Syphon video transport for broadcast and VJ workflows
-    public let videoTransport = VideoNetworkTransport.shared
+    public lazy var videoTransport = VideoNetworkTransport.shared
 
     /// EchoelSync: bio-reactive sync across devices
-    public let sync = EchoelSyncProtocol.shared
+    public lazy var sync = EchoelSyncProtocol.shared
 
     public struct ConnectedDisplay: Identifiable {
         public let id: String
@@ -1563,13 +1565,13 @@ public final class EchoelNet: ObservableObject {
     // MARK: - Backing Engines (wired to real implementations)
 
     /// Dante/AES67 audio networking
-    public let dante = DanteAudioTransport.shared
+    public lazy var dante = DanteAudioTransport.shared
     /// NDI/Syphon video networking
-    public let videoTransport = VideoNetworkTransport.shared
+    public lazy var videoTransport = VideoNetworkTransport.shared
     /// Multi-device bio-sync protocol
-    public let echoelSync = EchoelSyncProtocol.shared
+    public lazy var echoelSync = EchoelSyncProtocol.shared
     /// SharePlay group sessions
-    public let sharePlay = GroupSessionManager.shared
+    public lazy var sharePlay = GroupSessionManager.shared
     /// Cloud persistence
     private let cloudSync = CloudSyncManager()
     /// Peer-to-peer collaboration

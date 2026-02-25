@@ -155,11 +155,21 @@ public final class VideoNetworkTransport: ObservableObject {
 
     // MARK: - Initialization
 
+    private var metalSetUp = false
+
     private init() {
+        // Defer MTLCreateSystemDefaultDevice() — calling during early app startup
+        // can crash on real devices when the GPU is still initializing.
+        subscribeToBus()
+    }
+
+    /// Lazily initializes Metal device on first use. Safe to call multiple times.
+    private func ensureMetalSetUp() {
+        guard !metalSetUp else { return }
+        metalSetUp = true
         #if canImport(Metal)
         metalDevice = MTLCreateSystemDefaultDevice()
         #endif
-        subscribeToBus()
     }
 
     // MARK: - NDI Discovery

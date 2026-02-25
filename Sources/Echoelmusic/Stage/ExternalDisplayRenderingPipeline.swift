@@ -245,10 +245,21 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
 
     // MARK: - Initialization
 
+    private var isSetUp = false
+
     private init() {
+        // Defer Metal + display detection to avoid MTLCreateSystemDefaultDevice()
+        // and UIApplication.shared access during early app startup (causes crash).
+        // Setup runs lazily on first startPipeline() or scanForAllOutputs() call.
+        subscribeToBus()
+    }
+
+    /// Performs deferred Metal + display setup. Safe to call multiple times.
+    private func ensureSetUp() {
+        guard !isSetUp else { return }
+        isSetUp = true
         setupMetal()
         setupDisplayDetection()
-        subscribeToBus()
     }
 
     // MARK: - Metal Setup
@@ -284,12 +295,15 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
             }
         })
 
-        // Detect already-connected screens via UIWindowScene (future-proof)
-        let connectedScenes = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-        guard let mainScreen = connectedScenes.first?.screen else { return }
-        for scene in connectedScenes where scene.screen != mainScreen {
-            handleScreenConnected(scene.screen)
+        // Detect already-connected screens via UIWindowScene
+        // Dispatch to next run loop to ensure UIApplication is fully initialized
+        DispatchQueue.main.async { [weak self] in
+            let connectedScenes = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+            guard let mainScreen = connectedScenes.first?.screen else { return }
+            for scene in connectedScenes where scene.screen != mainScreen {
+                self?.handleScreenConnected(scene.screen)
+            }
         }
         #endif
 
@@ -404,6 +418,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
 
     /// Full scan: physical displays + AirPlay + NDI + Syphon
     public func scanForAllOutputs() {
+        ensureSetUp()
         isScanning = true
 
         // Physical displays are auto-detected via notifications
@@ -535,6 +550,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
 
     /// Start rendering to all assigned outputs
     public func startPipeline() {
+        ensureSetUp()
         guard !isPipelineActive else { return }
         isPipelineActive = true
         renderStats.activeOutputCount = contentAssignments.count
@@ -560,6 +576,7 @@ public final class ExternalDisplayRenderingPipeline: ObservableObject {
 
     /// Route a visual frame to all active outputs based on their content assignments
     public func routeVisualFrame(_ frame: VisualFrame) {
+        ensureSetUp()
         guard isPipelineActive else { return }
 
         for assignment in contentAssignments {
