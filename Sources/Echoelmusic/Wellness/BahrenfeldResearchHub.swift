@@ -137,11 +137,16 @@ public class BahrenfeldResearchHub: ObservableObject {
 
     public static let shared = BahrenfeldResearchHub()
 
-    // MARK: - Sub-Engines
+    // MARK: - Sub-Engines (Domain-Specific)
 
     public let waterEngine = WaterQualityEngine.shared
     public let plantEngine = PlantBioReactiveEngine.shared
     public let freiraumEngine = FreiraumEnvironmentEngine.shared
+
+    // MARK: - Universal Engine (Lambda Loop Integration)
+
+    public let universalEngine = UniversalEnvironmentEngine.shared
+    public let loopProcessor = EnvironmentLoopProcessor.shared
 
     // MARK: - Published State
 
@@ -180,16 +185,23 @@ public class BahrenfeldResearchHub: ObservableObject {
 
     // MARK: - Lifecycle
 
-    /// Forschungsinstitut aktivieren
+    /// Forschungsinstitut aktivieren — startet alle Engines inkl. Universal Lambda Loop
     public func activate() {
         guard !isActive else { return }
         isActive = true
         operationalStatus = .research
         activeDomains = Set(ResearchDomain.allCases)
 
+        // Domain-spezifische Engines
         waterEngine.startMonitoring()
         plantEngine.startMonitoring()
         freiraumEngine.startMonitoring()
+
+        // Universal Environment auf Bahrenfeld setzen & Lambda Loop starten
+        universalEngine.setEnvironment(.greenhouse)
+        universalEngine.startMonitoring()
+        loopProcessor.setLambdaChain(.bahrenfeldResearch)
+        loopProcessor.start()
     }
 
     /// Forschungsinstitut deaktivieren
@@ -200,6 +212,9 @@ public class BahrenfeldResearchHub: ObservableObject {
         waterEngine.stopMonitoring()
         plantEngine.stopMonitoring()
         freiraumEngine.stopMonitoring()
+
+        loopProcessor.stop()
+        universalEngine.stopMonitoring()
     }
 
     /// Einzelne Domäne aktivieren/deaktivieren
