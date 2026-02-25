@@ -128,11 +128,18 @@ public struct ThemeToggleButton: View {
         Button {
             themeManager.cycleMode()
         } label: {
-            Image(systemName: themeManager.currentMode.icon)
-                .font(.title3)
-                .foregroundColor(.primary)
-                .frame(width: 36, height: 36)
-                .contentTransition(.symbolEffect(.replace))
+            if #available(iOS 17.0, macOS 14.0, watchOS 10.0, tvOS 17.0, *) {
+                Image(systemName: themeManager.currentMode.icon)
+                    .font(.title3)
+                    .foregroundColor(.primary)
+                    .frame(width: 36, height: 36)
+                    .contentTransition(.symbolEffect(.replace))
+            } else {
+                Image(systemName: themeManager.currentMode.icon)
+                    .font(.title3)
+                    .foregroundColor(.primary)
+                    .frame(width: 36, height: 36)
+            }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Erscheinungsmodus: \(themeManager.currentMode.displayName)")
