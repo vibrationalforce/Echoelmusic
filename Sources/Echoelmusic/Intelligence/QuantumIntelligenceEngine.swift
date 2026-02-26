@@ -32,7 +32,7 @@ public class QuantumIntelligenceEngine: ObservableObject {
     // MARK: - Published State
 
     @Published var quantumMode: QuantumMode = .hybrid
-    @Published var qubitSimulationCount: Int = 32  // Simulated qubits
+    @Published var qubitSimulationCount: Int = 10  // Simulated qubits (capped at 20 to prevent OOM)
     @Published var entanglementStrength: Float = 0.8
     @Published var coherenceTime: TimeInterval = 100.0  // microseconds (simulated)
     @Published var quantumAdvantage: Float = 1.0  // Speedup factor vs classical
@@ -213,10 +213,12 @@ public class QuantumIntelligenceEngine: ObservableObject {
     // MARK: - Initialize Quantum Register
 
     private func initializeQuantumRegister() {
-        quantumRegister = (0..<qubitSimulationCount).map { _ in Qubit() }
+        // Cap qubit count to prevent exponential OOM: 2^32 = 34 GB, 2^20 = 8 MB
+        let safeQubitCount = min(qubitSimulationCount, 20)
+        quantumRegister = (0..<safeQubitCount).map { _ in Qubit() }
 
         // Initialize state vector |000...0⟩
-        let stateCount = Int(pow(2.0, Double(qubitSimulationCount)))
+        let stateCount = 1 << safeQubitCount  // 2^n (safe: max 2^20 = 1M entries = 8 MB)
         stateVector = Array(repeating: Complex(0, 0), count: stateCount)
         stateVector[0] = Complex(1, 0)  // Ground state
 
