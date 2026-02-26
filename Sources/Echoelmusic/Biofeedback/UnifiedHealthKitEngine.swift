@@ -530,6 +530,31 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         log.biofeedback("Health streaming stopped")
     }
 
+    // MARK: - External RR Interval Injection (Camera PPG)
+
+    /// Inject an R-R interval from an external source (e.g., camera PPG)
+    /// This feeds into the same coherence calculation as HealthKit data.
+    /// - Parameter intervalMs: R-R interval in milliseconds (250-2000 valid range)
+    public func injectRRInterval(_ intervalMs: Double) {
+        guard intervalMs >= 250, intervalMs <= 2000 else { return }
+
+        rrIntervalBuffer.append(intervalMs)
+        heartData.rrIntervals = rrIntervalBuffer.toArray()
+
+        // Update heart rate from R-R interval
+        heartRate = 60000.0 / intervalMs
+        heartData.heartRate = heartRate
+
+        // Recalculate HRV and coherence
+        calculateHRVMetrics()
+        calculateCoherence()
+
+        // Notify listeners
+        notifyHeartUpdate()
+
+        lastUpdateTime = Date()
+    }
+
     // MARK: - HealthKit Queries
 
     #if canImport(HealthKit)
