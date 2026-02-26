@@ -66,16 +66,12 @@ final class CircadianWellnessTests: XCTestCase {
     }
 
     func testCircadianCarrierFrequencies() {
-        // Sleep phases use 432Hz (subjective preference, no scientific basis)
-        XCTAssertEqual(CircadianPhase.deepSleep.carrierFrequency, 432.0)
-        XCTAssertEqual(CircadianPhase.remSleep.carrierFrequency, 432.0)
-        XCTAssertEqual(CircadianPhase.melatonin.carrierFrequency, 432.0)
-
-        // Daytime phases use standard 440Hz (ISO 16 A4)
+        // All phases use standard 440 Hz (ISO 16 A4)
+        XCTAssertEqual(CircadianPhase.deepSleep.carrierFrequency, 440.0)
+        XCTAssertEqual(CircadianPhase.remSleep.carrierFrequency, 440.0)
+        XCTAssertEqual(CircadianPhase.melatonin.carrierFrequency, 440.0)
         XCTAssertEqual(CircadianPhase.postLunch.carrierFrequency, 440.0)
         XCTAssertEqual(CircadianPhase.windDown.carrierFrequency, 440.0)
-
-        // Active phases use 440Hz
         XCTAssertEqual(CircadianPhase.peakAlertness.carrierFrequency, 440.0)
     }
 

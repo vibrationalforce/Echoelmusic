@@ -40,13 +40,13 @@ public enum IsochronicPreset: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Carrier frequency for the isochronic tone
+    /// Carrier frequency for the isochronic tone (12-TET standard tuning)
     public var carrierFrequency: Float {
         switch self {
-        case .sleepJourney, .deepMeditation: return 432.0  // Solfeggio
-        case .energyBoost, .focusFlow: return 528.0        // DNA repair frequency
-        case .quantumCoherence: return 639.0               // Heart chakra
-        default: return 440.0                               // Standard
+        case .sleepJourney, .deepMeditation: return 440.0  // A4 standard
+        case .energyBoost, .focusFlow: return 523.251      // C5
+        case .quantumCoherence: return 659.255             // E5
+        default: return 440.0                               // A4 standard
         }
     }
 

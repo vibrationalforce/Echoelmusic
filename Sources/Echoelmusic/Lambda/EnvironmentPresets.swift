@@ -80,7 +80,7 @@ public enum EnvironmentPresetRegistry {
             .salinity: ExpectedRange(typical: 33...37, extreme: 30...40, unit: "‰")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 432.0,
+            baseFrequency: 440.0,
             reverbMix: 0.8,
             reverbDecay: 4.0,
             lowPassCutoff: 2000,
@@ -151,7 +151,7 @@ public enum EnvironmentPresetRegistry {
             .lightLevel: ExpectedRange(typical: 5000...20000, extreme: 200...50000, unit: "lux")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 528.0,
+            baseFrequency: 523.251,  // C5 (12-TET)
             reverbMix: 0.4,
             reverbDecay: 1.5,
             lowPassCutoff: 8000,
@@ -186,7 +186,7 @@ public enum EnvironmentPresetRegistry {
             .uvRadiation: ExpectedRange(typical: 3...8, extreme: 0...12, unit: "UV-Index")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 528.0,
+            baseFrequency: 523.251,  // C5 (12-TET)
             reverbMix: 0.1,
             reverbDecay: 0.5,
             lowPassCutoff: 12000,
@@ -258,7 +258,7 @@ public enum EnvironmentPresetRegistry {
             .uvRadiation: ExpectedRange(typical: 8...12, extreme: 5...15, unit: "UV-Index")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 396.0,
+            baseFrequency: 392.0,  // G4 (12-TET)
             reverbMix: 0.0,
             reverbDecay: 0.0,
             lowPassCutoff: 4000,
@@ -297,7 +297,7 @@ public enum EnvironmentPresetRegistry {
             .noise: ExpectedRange(typical: 55...72, extreme: 50...80, unit: "dB(A)")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 396.0,
+            baseFrequency: 392.0,  // G4 (12-TET)
             reverbMix: 0.3,
             reverbDecay: 2.0,
             lowPassCutoff: 8000,
@@ -405,7 +405,7 @@ public enum EnvironmentPresetRegistry {
             .uvRadiation: ExpectedRange(typical: 4...9, extreme: 0...12, unit: "UV-Index")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 432.0,
+            baseFrequency: 440.0,
             reverbMix: 0.1,
             reverbDecay: 0.3,
             lowPassCutoff: 14000,
@@ -481,7 +481,7 @@ public enum EnvironmentPresetRegistry {
             .humidity: ExpectedRange(typical: 90...100, extreme: 80...100, unit: "%")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 432.0,
+            baseFrequency: 440.0,
             reverbMix: 0.6,
             reverbDecay: 3.0,
             lowPassCutoff: 2000,
@@ -520,7 +520,7 @@ public enum EnvironmentPresetRegistry {
             .dissolvedOxygen: ExpectedRange(typical: 6...12, extreme: 2...14, unit: "mg/L")
         ],
         audioProfile: EnvironmentAudioProfile(
-            baseFrequency: 432.0,
+            baseFrequency: 440.0,
             reverbMix: 0.3,
             reverbDecay: 1.5,
             lowPassCutoff: 12000,

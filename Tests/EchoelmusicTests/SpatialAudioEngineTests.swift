@@ -74,14 +74,14 @@ final class SpatialAudioEngineTests: XCTestCase {
             id: UUID(),
             position: SIMD3<Float>(1.0, 2.0, 3.0),
             amplitude: 0.8,
-            frequency: 528.0
+            frequency: 523.251
         )
 
         XCTAssertEqual(source.position.x, 1.0)
         XCTAssertEqual(source.position.y, 2.0)
         XCTAssertEqual(source.position.z, 3.0)
         XCTAssertEqual(source.amplitude, 0.8)
-        XCTAssertEqual(source.frequency, 528.0)
+        XCTAssertEqual(source.frequency, 523.251)
     }
 
     func testSpatialSourceDefaults() {
@@ -135,7 +135,7 @@ final class SpatialAudioEngineTests: XCTestCase {
         let sourceID = spatialEngine.addSource(
             position: SIMD3<Float>(0, 0, 1),
             amplitude: 0.8,
-            frequency: 432.0
+            frequency: 440.0
         )
 
         XCTAssertEqual(spatialEngine.spatialSources.count, 1)

@@ -163,13 +163,13 @@ public enum WaterQualityAlertLevel: String, CaseIterable, Codable, Sendable {
         }
     }
 
-    /// Audio-Feedback Frequenz für Sonifikation
+    /// Audio-Feedback Frequenz für Sonifikation (12-TET Noten)
     public var sonificationFrequency: Double {
         switch self {
-        case .normal: return 432.0     // Harmonisch
-        case .caution: return 528.0    // Aufmerksamkeit
-        case .warning: return 639.0    // Warnung
-        case .critical: return 741.0   // Alarm
+        case .normal: return 440.0     // A4 — Standard
+        case .caution: return 523.251  // C5 — Aufmerksamkeit
+        case .warning: return 659.255  // E5 — Warnung
+        case .critical: return 739.989 // F#5 — Alarm
         }
     }
 }

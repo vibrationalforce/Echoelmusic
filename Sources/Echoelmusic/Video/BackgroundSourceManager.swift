@@ -757,7 +757,7 @@ class BackgroundSourceManager: ObservableObject {
         switch type {
         case .cymatics:
             renderer.configure(parameters: [
-                "frequency": 432.0,
+                "frequency": 440.0,
                 "amplitude": 0.8,
                 "resolution": 256
             ])
@@ -1065,7 +1065,7 @@ class EchoelmusicVisualRenderer {
 
         // Update params
         let elapsed = Float(CFAbsoluteTimeGetCurrent() - startTime)
-        let frequency = parameters["frequency"] as? Float ?? 432.0
+        let frequency = parameters["frequency"] as? Float ?? 440.0
         let amplitude = parameters["amplitude"] as? Float ?? hrvCoherence
         let rotation = elapsed * (parameters["rotationSpeed"] as? Float ?? 0.5)
         let symmetry = Int32(parameters["symmetry"] as? Int ?? 8)

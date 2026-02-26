@@ -22,7 +22,7 @@ final class BinauralBeatTests: XCTestCase {
     // MARK: - Configuration Tests
 
     func testDefaultConfiguration() {
-        XCTAssertEqual(generator.carrierFrequency, 432.0, "Default carrier should be 432 Hz")
+        XCTAssertEqual(generator.carrierFrequency, 440.0, "Default carrier should be 440 Hz")
         XCTAssertEqual(generator.beatFrequency, 10.0, "Default beat should be 10 Hz (Alpha)")
         XCTAssertEqual(generator.amplitude, 0.3, "Default amplitude should be 0.3")
     }
@@ -37,11 +37,11 @@ final class BinauralBeatTests: XCTestCase {
 
     func testAmplitudeClamping() {
         // Test upper bound
-        generator.configure(carrier: 432.0, beat: 10.0, amplitude: 1.5)
+        generator.configure(carrier: 440.0, beat: 10.0, amplitude: 1.5)
         XCTAssertEqual(generator.amplitude, 1.0, "Amplitude should clamp to 1.0")
 
         // Test lower bound
-        generator.configure(carrier: 432.0, beat: 10.0, amplitude: -0.5)
+        generator.configure(carrier: 440.0, beat: 10.0, amplitude: -0.5)
         XCTAssertEqual(generator.amplitude, 0.0, "Amplitude should clamp to 0.0")
     }
 
@@ -206,7 +206,7 @@ final class BinauralBeatTests: XCTestCase {
     func testConfigurationPerformance() {
         measure {
             for _ in 0..<100 {
-                generator.configure(carrier: 432.0, beat: 10.0, amplitude: 0.3)
+                generator.configure(carrier: 440.0, beat: 10.0, amplitude: 0.3)
             }
         }
     }
@@ -224,12 +224,12 @@ final class BinauralBeatTests: XCTestCase {
     // MARK: - Edge Case Tests
 
     func testZeroBeatFrequency() {
-        generator.configure(carrier: 432.0, beat: 0.0, amplitude: 0.3)
+        generator.configure(carrier: 440.0, beat: 0.0, amplitude: 0.3)
         XCTAssertEqual(generator.beatFrequency, 0.0, "Should allow 0 Hz beat (pure tone)")
     }
 
     func testHighBeatFrequency() {
-        generator.configure(carrier: 432.0, beat: 100.0, amplitude: 0.3)
+        generator.configure(carrier: 440.0, beat: 100.0, amplitude: 0.3)
         XCTAssertEqual(generator.beatFrequency, 100.0, "Should allow high beat frequencies")
     }
 

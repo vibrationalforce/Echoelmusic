@@ -14,7 +14,7 @@ public final class AudioEngine: ObservableObject {
     @Published public var isRunning: Bool = false
     @Published public var audioMode: AudioMode = .ambient
     @Published public var volume: Float = 0.7
-    @Published public var baseFrequency: Float = 432.0
+    @Published public var baseFrequency: Float = 440.0
     @Published public var binauralState: BinauralState = .alpha
 
     // Bio-reactive parameters

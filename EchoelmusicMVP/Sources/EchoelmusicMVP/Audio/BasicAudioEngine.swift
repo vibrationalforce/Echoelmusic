@@ -12,7 +12,7 @@ public final class BasicAudioEngine: ObservableObject {
 
     @Published public var isRunning: Bool = false
     @Published public var volume: Float = 0.7
-    @Published public var frequency: Float = 432.0
+    @Published public var frequency: Float = 440.0
     @Published public var coherenceLevel: Float = 0.5
 
     // MARK: - Audio Components
@@ -25,8 +25,8 @@ public final class BasicAudioEngine: ObservableObject {
 
     private var phase: Float = 0.0
     private var phaseIncrement: Float = 0.0
-    private var targetFrequency: Float = 432.0
-    private var currentFrequency: Float = 432.0
+    private var targetFrequency: Float = 440.0
+    private var currentFrequency: Float = 440.0
 
     // Harmonic blend (coherence-driven)
     private var harmonicBlend: Float = 0.3
@@ -248,10 +248,10 @@ public enum AudioPreset: String, CaseIterable {
 
     public var baseFrequency: Float {
         switch self {
-        case .calm: return 396.0      // G4 - Liberating
-        case .focus: return 528.0     // C5 - Transformation
-        case .energize: return 639.0  // E5 - Connecting
-        case .meditate: return 432.0  // A4 - Natural tuning
+        case .calm: return 329.628     // E4 - warm, open
+        case .focus: return 440.0      // A4 - standard concert pitch
+        case .energize: return 659.255 // E5 - bright, energetic
+        case .meditate: return 220.0   // A3 - grounding
         }
     }
 

@@ -300,7 +300,7 @@ public final class BioAudioGeneratorPlugin: EchoelmusicPlugin {
     // MARK: - Configuration
 
     public struct Configuration: Sendable {
-        public var baseFrequency: Float = 432.0  // Hz (A4 tuned to 432)
+        public var baseFrequency: Float = 440.0  // Hz (A4 — ISO 16 standard)
         public var harmonicSeries: HarmonicSeries = .natural
         public var rhythmSource: RhythmSource = .heartRate
         public var dynamicsSource: DynamicsSource = .breathing

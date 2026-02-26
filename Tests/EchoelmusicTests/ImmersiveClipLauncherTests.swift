@@ -22,13 +22,13 @@ final class ImmersiveClipLauncherTests: XCTestCase {
     }
 
     func testIsochronicPresetCarrierFrequencies() {
-        // Verify carrier frequencies
-        XCTAssertEqual(IsochronicPreset.sleepJourney.carrierFrequency, 432.0)   // Solfeggio
-        XCTAssertEqual(IsochronicPreset.deepMeditation.carrierFrequency, 432.0)
-        XCTAssertEqual(IsochronicPreset.energyBoost.carrierFrequency, 528.0)    // DNA repair
-        XCTAssertEqual(IsochronicPreset.focusFlow.carrierFrequency, 528.0)
-        XCTAssertEqual(IsochronicPreset.quantumCoherence.carrierFrequency, 639.0) // Heart chakra
-        XCTAssertEqual(IsochronicPreset.relaxationPortal.carrierFrequency, 440.0) // Standard
+        // Verify carrier frequencies (12-TET standard tuning)
+        XCTAssertEqual(IsochronicPreset.sleepJourney.carrierFrequency, 440.0)       // A4 standard
+        XCTAssertEqual(IsochronicPreset.deepMeditation.carrierFrequency, 440.0)     // A4 standard
+        XCTAssertEqual(IsochronicPreset.energyBoost.carrierFrequency, 523.251, accuracy: 0.01) // C5
+        XCTAssertEqual(IsochronicPreset.focusFlow.carrierFrequency, 523.251, accuracy: 0.01)   // C5
+        XCTAssertEqual(IsochronicPreset.quantumCoherence.carrierFrequency, 659.255, accuracy: 0.01) // E5
+        XCTAssertEqual(IsochronicPreset.relaxationPortal.carrierFrequency, 440.0)   // A4 standard
     }
 
     func testIsochronicPresetVisualModes() {

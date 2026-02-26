@@ -249,7 +249,7 @@ final class AUv3PluginTests: XCTestCase {
     @MainActor
     func testBinauralBeatGeneratorInitialization() {
         let generator = BinauralBeatGenerator()
-        XCTAssertEqual(generator.carrierFrequency, 432.0, "Default carrier should be 432 Hz")
+        XCTAssertEqual(generator.carrierFrequency, 440.0, "Default carrier should be 440 Hz")
         XCTAssertEqual(generator.beatFrequency, 10.0, "Default beat should be 10 Hz (Alpha)")
         XCTAssertFalse(generator.isPlaying, "Should not be playing initially")
     }

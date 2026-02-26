@@ -37,6 +37,15 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
     private var mix: Float = 1.0
     private var bypass: Bool = false
 
+    // Extended synth parameters
+    private var concertPitch: Float = 440.0  // A4 reference (ISO 16)
+    private var oscillatorType: Int = 0       // 0=Sine, 1=Tri, 2=Saw, 3=Square, 4=808
+    private var subOscLevel: Float = 0.0      // Sub-oscillator (-1 octave)
+    private var noiseLevel: Float = 0.0       // Noise component
+
+    // Random state for noise
+    private var noiseState: UInt32 = 0x12345678
+
     // MARK: - Voice State
 
     private struct Voice {
@@ -119,6 +128,14 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
             drive = value
         case .filterCutoff:
             filterCutoff = value
+        case .concertPitch:
+            concertPitch = Swift.max(392.0, Swift.min(494.0, value))
+        case .synthOscillatorType:
+            oscillatorType = Int(value)
+        case .synthSubOscLevel:
+            subOscLevel = value
+        case .synthNoiseLevel:
+            noiseLevel = value
         default:
             break
         }
@@ -239,6 +256,52 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
             decay = 3.0
             drive = 0.2
             filterCutoff = 350
+            oscillatorType = 4  // 808 pulse
+
+        case 5: // Saw Bass
+            pitchGlideTime = 0.03
+            pitchGlideRange = -7.0
+            pitchGlideCurve = 0.5
+            clickAmount = 0.0
+            decay = 2.0
+            drive = 0.15
+            filterCutoff = 800
+            oscillatorType = 2  // Saw
+            subOscLevel = 0.4
+
+        case 6: // Square Lead
+            pitchGlideTime = 0.01
+            pitchGlideRange = 0.0
+            pitchGlideCurve = 0.5
+            clickAmount = 0.0
+            decay = 3.0
+            drive = 0.1
+            filterCutoff = 1200
+            oscillatorType = 3  // Square
+            subOscLevel = 0.0
+
+        case 7: // Sub Sine
+            pitchGlideTime = 0.01
+            pitchGlideRange = 0.0
+            pitchGlideCurve = 0.5
+            clickAmount = 0.0
+            decay = 4.0
+            drive = 0.0
+            filterCutoff = 200
+            oscillatorType = 0  // Sine
+            subOscLevel = 0.8
+
+        case 8: // Noise Perc
+            pitchGlideTime = 0.02
+            pitchGlideRange = -12.0
+            pitchGlideCurve = 0.9
+            clickAmount = 0.6
+            decay = 0.3
+            drive = 0.3
+            filterCutoff = 1500
+            oscillatorType = 0
+            noiseLevel = 0.7
+            subOscLevel = 0.0
 
         default:
             break
@@ -251,6 +314,9 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
         parameters[EchoelmusicParameterAddress.decay.rawValue] = decay
         parameters[EchoelmusicParameterAddress.drive.rawValue] = drive
         parameters[EchoelmusicParameterAddress.filterCutoff.rawValue] = filterCutoff
+        parameters[EchoelmusicParameterAddress.synthOscillatorType.rawValue] = Float(oscillatorType)
+        parameters[EchoelmusicParameterAddress.synthSubOscLevel.rawValue] = subOscLevel
+        parameters[EchoelmusicParameterAddress.synthNoiseLevel.rawValue] = noiseLevel
     }
 
     public var latency: TimeInterval {
@@ -271,7 +337,11 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
                 "decay": decay,
                 "drive": drive,
                 "filterCutoff": filterCutoff,
-                "outputGain": outputGain
+                "outputGain": outputGain,
+                "concertPitch": concertPitch,
+                "oscillatorType": oscillatorType,
+                "subOscLevel": subOscLevel,
+                "noiseLevel": noiseLevel
             ]
         }
         set {
@@ -284,6 +354,10 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
             if let v = state["drive"] as? Float { drive = v }
             if let v = state["filterCutoff"] as? Float { filterCutoff = v }
             if let v = state["outputGain"] as? Float { outputGain = v }
+            if let v = state["concertPitch"] as? Float { concertPitch = v }
+            if let v = state["oscillatorType"] as? Int { oscillatorType = v }
+            if let v = state["subOscLevel"] as? Float { subOscLevel = v }
+            if let v = state["noiseLevel"] as? Float { noiseLevel = v }
         }
     }
 
@@ -412,18 +486,70 @@ public final class TR808DSPKernel: EchoelmusicDSPKernel {
                 pitchMultiplier = pow(2.0, pitchOffset / 12.0)
             }
 
-            // Calculate frequency
-            let baseFreq = 440.0 * pow(2.0, (Float(voices[voiceIndex].midiNote) - 69.0 + pitchBendOffset) / 12.0)
+            // Calculate frequency using concert pitch (default 440 Hz, ISO 16)
+            let baseFreq = concertPitch * pow(2.0, (Float(voices[voiceIndex].midiNote) - 69.0 + pitchBendOffset) / 12.0)
             let freq = baseFreq * pitchMultiplier
 
             // Phase increment
             let phaseInc = Double(freq) / sampleRate
 
-            // Generate sine wave
-            var sample = Float(sin(voices[voiceIndex].phase * 2.0 * Double.pi))
+            // Generate waveform based on oscillator type
+            let phase = voices[voiceIndex].phase
+            var sample: Float
+            switch oscillatorType {
+            case 0: // Sine
+                sample = Float(sin(phase * 2.0 * Double.pi))
+            case 1: // Triangle
+                let t = phase - Foundation.floor(phase)
+                sample = Float(4.0 * abs(t - 0.5) - 1.0)
+            case 2: // Saw (band-limited approximation via polyBLEP)
+                let t = phase - Foundation.floor(phase)
+                sample = Float(2.0 * t - 1.0)
+                // PolyBLEP anti-aliasing
+                let dt = phaseInc
+                if t < dt {
+                    let x = t / dt
+                    sample -= Float(x + x - x * x - 1.0)
+                } else if t > 1.0 - dt {
+                    let x = (t - 1.0 + dt) / dt
+                    sample -= Float(x * x + x + x - 1.0)
+                }
+            case 3: // Square (band-limited via polyBLEP)
+                let t = phase - Foundation.floor(phase)
+                sample = t < 0.5 ? 1.0 : -1.0
+                // PolyBLEP at both transitions
+                let dt = phaseInc
+                if t < dt {
+                    let x = t / dt
+                    sample += Float(2.0 * (x + x - x * x - 1.0))
+                } else if t > 0.5 && t < 0.5 + dt {
+                    let x = (t - 0.5) / dt
+                    sample -= Float(2.0 * (x + x - x * x - 1.0))
+                }
+                sample *= 0.8 // reduce volume (square is louder)
+            default: // 808 Pulse (original behavior)
+                sample = Float(sin(phase * 2.0 * Double.pi))
+            }
+
             voices[voiceIndex].phase += phaseInc
             if voices[voiceIndex].phase >= 1.0 {
                 voices[voiceIndex].phase -= 1.0
+            }
+
+            // Sub-oscillator (-1 octave, sine)
+            if subOscLevel > 0 {
+                let subPhase = voices[voiceIndex].phase * 0.5
+                sample += Float(sin(subPhase * 2.0 * Double.pi)) * subOscLevel
+            }
+
+            // Noise component
+            if noiseLevel > 0 {
+                // Fast xorshift noise
+                noiseState ^= noiseState << 13
+                noiseState ^= noiseState >> 17
+                noiseState ^= noiseState << 5
+                let noise = Float(Int32(bitPattern: noiseState)) / Float(Int32.max)
+                sample += noise * noiseLevel * 0.5
             }
 
             // Attack click

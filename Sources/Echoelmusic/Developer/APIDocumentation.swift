@@ -408,7 +408,7 @@ public struct APIDocumentation {
                 let sourceId = spatialEngine.addSource(
                     position: SIMD3<Float>(0, 1, -2),
                     amplitude: 0.8,
-                    frequency: 432.0
+                    frequency: 440.0
                 )
                 """
             ),

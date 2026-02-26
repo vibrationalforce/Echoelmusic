@@ -26,9 +26,17 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
     private var wetDry: Float = 0.3       // 0.0-1.0
     private var roomSize: Float = 0.5     // 0.0-1.0
     private var dampingAmount: Float = 0.5 // 0.0-1.0
+    private var width: Float = 1.0        // Stereo width 0.0-1.0
+    private var preDelayMs: Float = 0.0   // Pre-delay in ms (0-200)
     private var outputGain: Float = 1.0
     private var mix: Float = 1.0
     private var bypass: Bool = false
+
+    // Pre-delay buffer
+    private var preDelayBufferL: [Float] = []
+    private var preDelayBufferR: [Float] = []
+    private var preDelayIndex: Int = 0
+    private var preDelaySamples: Int = 0
 
     // MARK: - Freeverb DSP State
 
@@ -104,6 +112,11 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
         case .reverbDamping:
             dampingAmount = value
             damping = dampingAmount * 0.4
+        case .reverbWidth:
+            width = value / 100.0  // Convert percent to 0-1
+        case .reverbPreDelay:
+            preDelayMs = value
+            preDelaySamples = Int(Double(preDelayMs) * sampleRate / 1000.0)
         default:
             break
         }
@@ -127,8 +140,20 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
         if bypass { return }
 
         for frame in 0..<frameCount {
-            let inputL = left[frame]
-            let inputR = right[frame]
+            var inputL = left[frame]
+            var inputR = right[frame]
+
+            // Pre-delay
+            if preDelaySamples > 0 && !preDelayBufferL.isEmpty {
+                let idx = preDelayIndex % preDelayBufferL.count
+                let delayedL = preDelayBufferL[idx]
+                let delayedR = preDelayBufferR[idx]
+                preDelayBufferL[idx] = inputL
+                preDelayBufferR[idx] = inputR
+                preDelayIndex = (preDelayIndex + 1) % preDelayBufferL.count
+                inputL = delayedL
+                inputR = delayedR
+            }
 
             // Process left channel through comb filters
             var combSumL: Float = 0.0
@@ -178,6 +203,12 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
                 outputR = delayedR - outputR * 0.5
             }
 
+            // Apply stereo width (1.0 = full stereo, 0.0 = mono)
+            let mid = (outputL + outputR) * 0.5
+            let side = (outputL - outputR) * 0.5
+            outputL = mid + side * width
+            outputR = mid - side * width
+
             // Mix dry and wet, apply gain
             left[frame] = (inputL * (1.0 - wetDry) + outputL * wetDry) * outputGain
             right[frame] = (inputR * (1.0 - wetDry) + outputR * wetDry) * outputGain
@@ -187,23 +218,26 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
     public func loadPreset(number: Int) {
         switch number {
         case 0: // Small Room
-            wetDry = 0.2; roomSize = 0.3; dampingAmount = 0.6
+            wetDry = 0.2; roomSize = 0.3; dampingAmount = 0.6; width = 0.6; preDelayMs = 5
         case 1: // Medium Hall
-            wetDry = 0.35; roomSize = 0.6; dampingAmount = 0.4
+            wetDry = 0.35; roomSize = 0.6; dampingAmount = 0.4; width = 0.8; preDelayMs = 20
         case 2: // Large Hall
-            wetDry = 0.5; roomSize = 0.85; dampingAmount = 0.3
+            wetDry = 0.5; roomSize = 0.85; dampingAmount = 0.3; width = 1.0; preDelayMs = 40
         case 3: // Cathedral
-            wetDry = 0.6; roomSize = 0.95; dampingAmount = 0.2
+            wetDry = 0.6; roomSize = 0.95; dampingAmount = 0.2; width = 1.0; preDelayMs = 80
         case 4: // Plate
-            wetDry = 0.4; roomSize = 0.5; dampingAmount = 0.7
+            wetDry = 0.4; roomSize = 0.5; dampingAmount = 0.7; width = 0.9; preDelayMs = 10
         default:
             break
         }
         feedback = 0.7 + roomSize * 0.28
         damping = dampingAmount * 0.4
+        preDelaySamples = Int(Double(preDelayMs) * sampleRate / 1000.0)
         parameters[EchoelmusicParameterAddress.reverbWetDry.rawValue] = wetDry
         parameters[EchoelmusicParameterAddress.reverbRoomSize.rawValue] = roomSize
         parameters[EchoelmusicParameterAddress.reverbDamping.rawValue] = dampingAmount
+        parameters[EchoelmusicParameterAddress.reverbWidth.rawValue] = width * 100
+        parameters[EchoelmusicParameterAddress.reverbPreDelay.rawValue] = preDelayMs
     }
 
     public var latency: TimeInterval { 0 }
@@ -214,13 +248,18 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
 
     public var fullState: [String: Any]? {
         get {
-            return ["wetDry": wetDry, "roomSize": roomSize, "damping": dampingAmount, "gain": outputGain]
+            return [
+                "wetDry": wetDry, "roomSize": roomSize, "damping": dampingAmount,
+                "width": width, "preDelayMs": preDelayMs, "gain": outputGain
+            ]
         }
         set {
             guard let state = newValue else { return }
             if let v = state["wetDry"] as? Float { wetDry = v }
             if let v = state["roomSize"] as? Float { roomSize = v; feedback = 0.7 + v * 0.28 }
             if let v = state["damping"] as? Float { dampingAmount = v; damping = v * 0.4 }
+            if let v = state["width"] as? Float { width = v }
+            if let v = state["preDelayMs"] as? Float { preDelayMs = v; preDelaySamples = Int(Double(v) * sampleRate / 1000.0) }
             if let v = state["gain"] as? Float { outputGain = v }
         }
     }
@@ -241,5 +280,11 @@ public final class ReverbDSPKernel: EchoelmusicDSPKernel {
         allpassBuffersR = Self.allpassDelays.map { [Float](repeating: 0, count: Int(Double($0) * scaleFactor)) }
         allpassIndicesL = [Int](repeating: 0, count: Self.allpassDelays.count)
         allpassIndicesR = [Int](repeating: 0, count: Self.allpassDelays.count)
+
+        // Pre-delay buffer (max 200ms)
+        let maxPreDelaySamples = Int(sampleRate * 0.2) + 1
+        preDelayBufferL = [Float](repeating: 0, count: maxPreDelaySamples)
+        preDelayBufferR = [Float](repeating: 0, count: maxPreDelaySamples)
+        preDelayIndex = 0
     }
 }

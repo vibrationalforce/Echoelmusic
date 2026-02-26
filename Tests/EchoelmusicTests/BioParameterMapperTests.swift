@@ -22,7 +22,7 @@ final class BioParameterMapperTests: XCTestCase {
         XCTAssertEqual(mapper.reverbWet, 0.3, accuracy: 0.01)
         XCTAssertEqual(mapper.filterCutoff, 1000.0, accuracy: 1.0)
         XCTAssertEqual(mapper.amplitude, 0.5, accuracy: 0.01)
-        XCTAssertEqual(mapper.baseFrequency, 432.0, accuracy: 0.1)
+        XCTAssertEqual(mapper.baseFrequency, 440.0, accuracy: 0.1)
         XCTAssertEqual(mapper.tempo, 60.0, accuracy: 0.1)
         XCTAssertEqual(mapper.harmonicCount, 5)
     }
@@ -107,20 +107,20 @@ final class BioParameterMapperTests: XCTestCase {
     }
 
     func testVoicePitchSnapsToBNote() {
-        // Test snapping to 486 Hz (B4)
+        // Test snapping to 493.883 Hz (B4 in 12-TET)
         for _ in 0..<20 {
             mapper.updateParameters(hrvCoherence: 50, heartRate: 70, voicePitch: 490, audioLevel: 0.5)
         }
 
-        // Should be close to 486 Hz
-        XCTAssertEqual(mapper.baseFrequency, 486.0, accuracy: 60.0)
+        // Should be close to B4 (493.883 Hz)
+        XCTAssertEqual(mapper.baseFrequency, 493.883, accuracy: 60.0)
     }
 
     func testNoVoicePitchDefaultsToBase() {
         mapper.updateParameters(hrvCoherence: 50, heartRate: 70, voicePitch: 0, audioLevel: 0)
 
-        // With no pitch, should remain at base frequency
-        XCTAssertEqual(mapper.baseFrequency, 432.0, accuracy: 5.0)
+        // With no pitch, should remain at base frequency (440 Hz)
+        XCTAssertEqual(mapper.baseFrequency, 440.0, accuracy: 5.0)
     }
 
     // MARK: - Harmonic Count Tests
@@ -209,7 +209,7 @@ final class BioParameterMapperTests: XCTestCase {
         XCTAssertEqual(mapper.reverbWet, 0.7, accuracy: 0.01)
         XCTAssertEqual(mapper.filterCutoff, 500.0, accuracy: 1.0)
         XCTAssertEqual(mapper.amplitude, 0.5, accuracy: 0.01)
-        XCTAssertEqual(mapper.baseFrequency, 432.0, accuracy: 0.1)
+        XCTAssertEqual(mapper.baseFrequency, 220.0, accuracy: 0.1)  // A3
         XCTAssertEqual(mapper.tempo, 6.0, accuracy: 0.1)
     }
 

@@ -144,7 +144,7 @@ final class LambdaEnhancementsTests: XCTestCase {
     func testBioAudioGeneratorConfiguration() {
         let config = BioAudioGeneratorPlugin.Configuration()
 
-        XCTAssertEqual(config.baseFrequency, 432.0)  // A4 at 432Hz
+        XCTAssertEqual(config.baseFrequency, 440.0)  // A4 standard (ISO 16)
         XCTAssertEqual(config.scale, .pentatonic)
     }
 

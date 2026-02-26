@@ -78,10 +78,10 @@ final class EchoelmusicMVPTests: XCTestCase {
     }
 
     func testAudioPresetFrequencies() {
-        XCTAssertEqual(AudioPreset.calm.baseFrequency, 396.0)
-        XCTAssertEqual(AudioPreset.focus.baseFrequency, 528.0)
-        XCTAssertEqual(AudioPreset.energize.baseFrequency, 639.0)
-        XCTAssertEqual(AudioPreset.meditate.baseFrequency, 432.0)
+        XCTAssertEqual(AudioPreset.calm.baseFrequency, 329.628, accuracy: 0.01)   // E4
+        XCTAssertEqual(AudioPreset.focus.baseFrequency, 440.0, accuracy: 0.01)    // A4
+        XCTAssertEqual(AudioPreset.energize.baseFrequency, 659.255, accuracy: 0.01) // E5
+        XCTAssertEqual(AudioPreset.meditate.baseFrequency, 220.0, accuracy: 0.01)  // A3
     }
 
     func testAudioPresetHarmonics() {

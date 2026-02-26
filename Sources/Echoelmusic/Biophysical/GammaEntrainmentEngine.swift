@@ -9,7 +9,7 @@
 // No therapeutic claims. Consult a physician for neurological conditions.
 //
 // Architecture:
-//   1. Carrier oscillator (configurable: 432, 528, 639 Hz)
+//   1. Carrier oscillator (configurable: 440, 523, 659 Hz)
 //   2. 40 Hz amplitude modulation with sharp pulse shaping (pow envelope)
 //   3. Optional binaural mode (stereo L/R frequency offset)
 //   4. Bio-reactive: HRV coherence → ±0.5 Hz frequency fine-tune
@@ -43,12 +43,12 @@ public final class GammaEntrainmentEngine {
         case complete
     }
 
-    /// Carrier frequency preset
+    /// Carrier frequency preset (12-TET standard tuning)
     public enum CarrierPreset: Float, CaseIterable {
-        case solfeggio = 432.0
-        case dnaRepair = 528.0
-        case heartChakra = 639.0
-        case standard = 440.0
+        case standard = 440.0      // A4
+        case c5 = 523.251         // C5
+        case e5 = 659.255         // E5
+        case g4 = 392.0           // G4
     }
 
     // MARK: - Public Properties
@@ -57,7 +57,7 @@ public final class GammaEntrainmentEngine {
     public var mode: Mode = .isochronic
 
     /// Carrier frequency (Hz)
-    public var carrierFrequency: Float = 432.0
+    public var carrierFrequency: Float = 440.0
 
     /// Target gamma frequency (Hz) — stays within 38-42 Hz
     public private(set) var gammaFrequency: Float = 40.0

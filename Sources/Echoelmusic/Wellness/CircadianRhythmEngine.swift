@@ -91,7 +91,7 @@ public enum CircadianPhase: String, CaseIterable, Codable {
     public var carrierFrequency: Double {
         switch self {
         case .deepSleep, .remSleep, .melatonin:
-            return 432.0    // Subjektiv als "waermer" empfunden (keine wissenschaftliche Basis)
+            return 440.0    // Standard A4 Stimmung
         case .postLunch, .windDown:
             return 440.0    // Standard A4 Stimmung
         default:

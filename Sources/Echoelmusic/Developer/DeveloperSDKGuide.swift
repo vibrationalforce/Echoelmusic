@@ -473,7 +473,7 @@ public struct DeveloperSDKGuide {
             ```swift
             public struct Configuration: Sendable {
                 // Audio settings
-                public var baseFrequency: Float = 432.0
+                public var baseFrequency: Float = 440.0
                 public var outputGain: Float = 0.5
 
                 // Visual settings

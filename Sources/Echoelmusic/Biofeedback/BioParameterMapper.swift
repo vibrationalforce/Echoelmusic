@@ -26,7 +26,7 @@ class BioParameterMapper: ObservableObject {
 
     /// Base note frequency (Hz)
     /// Mapped from: Voice Pitch
-    @Published var baseFrequency: Float = 432.0
+    @Published var baseFrequency: Float = 440.0
 
     /// Tempo (BPM)
     /// Mapped from: Heart Rate (synchronized breathing)
@@ -73,17 +73,16 @@ class BioParameterMapper: ObservableObject {
 
     // MARK: - Musical Scale Configuration
 
-    /// Musical scale for harmonic generation (A4 = 432Hz variant)
-    /// HINWEIS: 432Hz ist eine kulturelle Präferenz, keine "Heilfrequenz"
-    /// Wissenschaftlich: Kein Unterschied zu 440Hz für Gesundheit belegt
+    /// Musical scale for harmonic generation — 12-TET based on A4 = 440 Hz (ISO 16)
+    /// Uses proper equal temperament note frequencies
     private let harmonicScale: [Float] = [
-        432.0,   // A4 (traditionelle Stimmung, subjektiv "wärmer")
-        486.0,   // B4
-        512.0,   // C5
-        576.0,   // D5
-        648.0,   // E5
-        729.0,   // F#5
-        768.0,   // G5
+        440.000,  // A4
+        493.883,  // B4
+        523.251,  // C5
+        587.330,  // D5
+        659.255,  // E5
+        739.989,  // F#5
+        783.991,  // G5
     ]
 
 
@@ -191,7 +190,7 @@ class BioParameterMapper: ObservableObject {
     }
 
     /// Map Voice Pitch → Musical Scale (harmonic frequencies)
-    /// Snaps detected pitch to nearest note in harmonic scale (432Hz tuning)
+    /// Snaps detected pitch to nearest note in harmonic scale (440 Hz 12-TET)
     private func mapVoicePitchToScale(voicePitch: Float) -> Float {
         guard voicePitch > 0 else { return harmonicScale[0] }
 
@@ -300,7 +299,7 @@ class BioParameterMapper: ObservableObject {
             reverbWet = 0.7
             filterCutoff = 500.0
             amplitude = 0.5
-            baseFrequency = 432.0
+            baseFrequency = 220.0  // A3 - warm, grounding
             tempo = 6.0
 
         case .focus:

@@ -23,7 +23,7 @@ public struct Preset: Identifiable, Codable, Equatable {
         visualization: VisualizationType = .coherence,
         audioMode: AudioMode = .ambient,
         binauralState: BinauralState = .alpha,
-        baseFrequency: Float = 432.0,
+        baseFrequency: Float = 440.0,
         volume: Float = 0.7,
         icon: String = "star",
         colorHex: String = "#3B82F6",
@@ -157,7 +157,7 @@ public enum DefaultPresets {
             visualization: .mandala,
             audioMode: .binaural,
             binauralState: .theta,
-            baseFrequency: 432.0,
+            baseFrequency: 220.0,  // A3 - warm, grounding
             volume: 0.5,
             icon: "leaf.fill",
             colorHex: "#10B981",
@@ -170,7 +170,7 @@ public enum DefaultPresets {
             visualization: .particles,
             audioMode: .binaural,
             binauralState: .beta,
-            baseFrequency: 528.0,
+            baseFrequency: 440.0,  // A4 - standard concert pitch
             volume: 0.6,
             icon: "target",
             colorHex: "#3B82F6",
@@ -183,7 +183,7 @@ public enum DefaultPresets {
             visualization: .coherence,
             audioMode: .drone,
             binauralState: .alpha,
-            baseFrequency: 396.0,
+            baseFrequency: 329.628,  // E4 - warm, open
             volume: 0.5,
             icon: "moon.fill",
             colorHex: "#8B5CF6",
@@ -196,7 +196,7 @@ public enum DefaultPresets {
             visualization: .waveform,
             audioMode: .ambient,
             binauralState: .gamma,
-            baseFrequency: 639.0,
+            baseFrequency: 659.255,  // E5 - bright, energetic
             volume: 0.7,
             icon: "bolt.fill",
             colorHex: "#F59E0B",
@@ -209,7 +209,7 @@ public enum DefaultPresets {
             visualization: .mandala,
             audioMode: .binaural,
             binauralState: .delta,
-            baseFrequency: 396.0,
+            baseFrequency: 130.813,  // C3 - deep, calming
             volume: 0.3,
             icon: "bed.double.fill",
             colorHex: "#6366F1",
@@ -222,7 +222,7 @@ public enum DefaultPresets {
             visualization: .spectrum,
             audioMode: .drone,
             binauralState: .alpha,
-            baseFrequency: 528.0,
+            baseFrequency: 523.251,  // C5 - clear, centered
             volume: 0.6,
             icon: "paintpalette.fill",
             colorHex: "#EC4899",
@@ -235,7 +235,7 @@ public enum DefaultPresets {
             visualization: .particles,
             audioMode: .silence,
             binauralState: .alpha,
-            baseFrequency: 432.0,
+            baseFrequency: 440.0,  // A4 - standard
             volume: 0.0,
             icon: "star.fill",
             colorHex: "#EF4444",
@@ -248,7 +248,7 @@ public enum DefaultPresets {
             visualization: .coherence,
             audioMode: .ambient,
             binauralState: .alpha,
-            baseFrequency: 432.0,
+            baseFrequency: 261.626,  // C4 - middle C, natural center
             volume: 0.5,
             icon: "wind",
             colorHex: "#06B6D4",

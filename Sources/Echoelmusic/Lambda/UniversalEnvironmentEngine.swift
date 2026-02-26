@@ -475,21 +475,21 @@ public class UniversalEnvironmentEngine: ObservableObject {
         return (blended - 0.5) * 0.3  // ±0.15
     }
 
-    /// Empfohlene Carrier-Frequenz basierend auf Environment
+    /// Empfohlene Carrier-Frequenz basierend auf Environment (12-TET)
     public var recommendedCarrierFrequency: Double {
         switch currentEnvironment.domain {
         case .aquatic:
-            return 432.0    // Wasser-Resonanz
+            return 440.0    // A4 standard
         case .aerial:
-            return 528.0    // Luft-Klarheit
+            return 523.251  // C5
         case .extraterrestrial:
-            return 396.0    // Erdung (paradox — gerade im Weltraum wichtig)
+            return 392.0    // G4
         case .subterranean:
-            return 256.0    // C4 — Erd-Ton
+            return 261.626  // C4 (middle C, 12-TET)
         case .vehicular:
-            return 440.0    // Standard — Stabilität in Bewegung
+            return 440.0    // A4 standard
         case .terrestrial:
-            return 440.0
+            return 440.0    // A4 standard
         }
     }
 

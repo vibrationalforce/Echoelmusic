@@ -13,7 +13,7 @@ public enum AppConstants {
     public static let sampleRate: Double = 44100
     public static let bufferSize: Int = 256
     public static let defaultVolume: Float = 0.7
-    public static let baseFrequency: Float = 432.0  // A4 natural tuning
+    public static let baseFrequency: Float = 440.0  // A4 ISO 16 concert pitch
 
     // MARK: - Biofeedback
     public static let bioUpdateRate: Double = 1.0  // Hz
@@ -48,7 +48,11 @@ public enum AudioFrequencies {
 
     // Standard tuning (ISO 16)
     public static let a4Standard: Float = 440.0
-    public static let a4Verdi: Float = 432.0  // Historical preference, no scientific basis
+
+    // Common orchestral tunings
+    public static let a4Baroque: Float = 415.0     // Baroque period
+    public static let a4Concert: Float = 442.0     // Common European concert pitch
+    public static let a4ConcertHigh: Float = 443.0 // Berlin Philharmonic etc.
 
     // Carrier frequencies for binaural
     public static let binauralCarrier: Float = 200.0

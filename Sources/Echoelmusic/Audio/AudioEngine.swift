@@ -95,9 +95,8 @@ public class AudioEngine: ObservableObject {
         AudioConfiguration.setAudioThreadPriority()
 
         // Configure default binaural beat settings
-        // HINWEIS: 432 Hz ist kulturell beliebt, keine "Heilfrequenz" wissenschaftlich belegt
         binauralGenerator.configure(
-            carrier: 432.0,  // Traditional tuning (subjective preference)
+            carrier: 440.0,  // A4 standard tuning (ISO 16)
             beat: 10.0,      // Alpha waves (relaxation)
             amplitude: 0.3
         )
@@ -225,7 +224,7 @@ public class AudioEngine: ObservableObject {
     func setBinauralAmplitude(_ amplitude: Float) {
         binauralAmplitude = amplitude
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,
             beat: currentBrainwaveState.beatFrequency,
             amplitude: amplitude
         )
@@ -292,7 +291,7 @@ public class AudioEngine: ObservableObject {
         binauralAmplitude = adaptiveAmplitude
 
         binauralGenerator.configure(
-            carrier: 432.0,
+            carrier: 440.0,
             beat: binauralGenerator.beatFrequency,
             amplitude: adaptiveAmplitude
         )
@@ -529,7 +528,7 @@ public class AudioEngine: ObservableObject {
         // Apply binaural beat frequency if specified
         if let binauralFrequency = preset.binauralFrequency {
             binauralGenerator.configure(
-                carrier: 432.0,
+                carrier: 440.0,
                 beat: binauralFrequency,
                 amplitude: binauralAmplitude
             )

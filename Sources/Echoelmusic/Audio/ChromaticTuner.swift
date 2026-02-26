@@ -60,19 +60,21 @@ public struct MusicalNote: Equatable, Sendable {
 public enum TuningReference: String, CaseIterable, Codable, Sendable {
     case standard440 = "A4 = 440 Hz"
     case baroque415 = "A4 = 415 Hz"
-    case classical432 = "A4 = 432 Hz"
+    case verdi432 = "A4 = 432 Hz"
     case concert442 = "A4 = 442 Hz"
     case concert443 = "A4 = 443 Hz"
     case scientific256 = "C4 = 256 Hz"
+    case custom = "Custom"
 
     public var a4Frequency: Double {
         switch self {
         case .standard440: return 440.0
         case .baroque415: return 415.0
-        case .classical432: return 432.0
+        case .verdi432: return 432.0
         case .concert442: return 442.0
         case .concert443: return 443.0
         case .scientific256: return 430.539 // A4 when C4=256
+        case .custom: return 440.0 // placeholder — actual value from TuningManager.concertPitch
         }
     }
 }

@@ -125,7 +125,7 @@ public struct HRVSoundPreferences: Codable, Sendable {
     public var reverbAmount: Float
 
     public static let `default` = HRVSoundPreferences(
-        carrierFrequency: 432.0,
+        carrierFrequency: 440.0,
         timbre: .warmPad,
         beatFrequency: 10.0,  // Alpha
         beatsEnabled: true,
@@ -143,7 +143,7 @@ public struct HRVSoundPreferences: Codable, Sendable {
 
     /// Preset: Deep calm (slower, warmer, more reverb)
     public static let deepCalm = HRVSoundPreferences(
-        carrierFrequency: 396.0,
+        carrierFrequency: 392.0,  // G4
         timbre: .deepDrone,
         beatFrequency: 6.0,  // Theta
         beatsEnabled: true,
@@ -179,7 +179,7 @@ public struct HRVSoundPreferences: Codable, Sendable {
 
     /// Preset: Tibetan meditation
     public static let tibetanMeditation = HRVSoundPreferences(
-        carrierFrequency: 432.0,
+        carrierFrequency: 440.0,
         timbre: .tibetanBowl,
         beatFrequency: 6.0,  // Theta
         beatsEnabled: false,

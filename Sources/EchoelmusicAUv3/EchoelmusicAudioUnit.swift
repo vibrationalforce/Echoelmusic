@@ -199,6 +199,18 @@ public enum EchoelmusicParameterAddress: AUParameterAddress {
     case binauralCarrier = 800
     case binauralBeat = 801
     case binauralAmplitude = 802
+
+    // Tuning (Global)
+    case concertPitch = 900
+
+    // EchoelSynth extended
+    case synthOscillatorType = 910   // 0=Sine, 1=Triangle, 2=Saw, 3=Square, 4=808
+    case synthSubOscLevel = 911     // Sub-oscillator (-1 octave) level
+    case synthNoiseLevel = 912      // Noise component level
+
+    // EchoelFX extended
+    case reverbWidth = 920
+    case reverbPreDelay = 921
 }
 
 // MARK: - Base Audio Unit
@@ -383,11 +395,13 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
             switch id {
             case .echoelSynth:
                 parameters.append(contentsOf: create808Parameters())
+                parameters.append(contentsOf: createSynthExtendedParameters())
             case .echoelBio:
                 parameters.append(contentsOf: createBinauralParameters())
                 parameters.append(contentsOf: createBioReactiveParameters())
             case .echoelFX:
                 parameters.append(contentsOf: createReverbParameters())
+                parameters.append(contentsOf: createReverbExtendedParameters())
             case .echoelMix:
                 parameters.append(contentsOf: createCompressorParameters())
             case .echoelField:
@@ -684,6 +698,82 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         ]
     }
 
+    private func createSynthExtendedParameters() -> [AUParameter] {
+        return [
+            AUParameterTree.createParameter(
+                withIdentifier: "concertPitch",
+                name: "Concert Pitch (A4)",
+                address: EchoelmusicParameterAddress.concertPitch.rawValue,
+                min: 392, max: 494,
+                unit: .hertz,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "oscillatorType",
+                name: "Oscillator",
+                address: EchoelmusicParameterAddress.synthOscillatorType.rawValue,
+                min: 0, max: 4,
+                unit: .indexed,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: ["Sine", "Triangle", "Saw", "Square", "808 Pulse"],
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "subOscLevel",
+                name: "Sub Oscillator",
+                address: EchoelmusicParameterAddress.synthSubOscLevel.rawValue,
+                min: 0, max: 1,
+                unit: .generic,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "noiseLevel",
+                name: "Noise",
+                address: EchoelmusicParameterAddress.synthNoiseLevel.rawValue,
+                min: 0, max: 1,
+                unit: .generic,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            )
+        ]
+    }
+
+    private func createReverbExtendedParameters() -> [AUParameter] {
+        return [
+            AUParameterTree.createParameter(
+                withIdentifier: "reverbWidth",
+                name: "Width",
+                address: EchoelmusicParameterAddress.reverbWidth.rawValue,
+                min: 0, max: 100,
+                unit: .percent,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "reverbPreDelay",
+                name: "Pre-Delay",
+                address: EchoelmusicParameterAddress.reverbPreDelay.rawValue,
+                min: 0, max: 200,
+                unit: .milliseconds,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            )
+        ]
+    }
+
     private func createBinauralParameters() -> [AUParameter] {
         return [
             AUParameterTree.createParameter(
@@ -805,13 +895,15 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         switch id {
         case .echoelSynth:
             _factoryPresets = [
-                Self.makePreset(number: 0, name: "DDSP Warm"),
-                Self.makePreset(number: 1, name: "Modal Bell"),
-                Self.makePreset(number: 2, name: "Quantum Pad"),
-                Self.makePreset(number: 3, name: "EchoelBeat 808"),
-                Self.makePreset(number: 4, name: "Cellular Texture"),
-                Self.makePreset(number: 5, name: "Bio Flow"),
-                Self.makePreset(number: 6, name: "Spectral Morph")
+                Self.makePreset(number: 0, name: "Classic 808"),
+                Self.makePreset(number: 1, name: "Hard Trap"),
+                Self.makePreset(number: 2, name: "Deep Sub"),
+                Self.makePreset(number: 3, name: "Distorted"),
+                Self.makePreset(number: 4, name: "Long Slide"),
+                Self.makePreset(number: 5, name: "Saw Bass"),
+                Self.makePreset(number: 6, name: "Square Lead"),
+                Self.makePreset(number: 7, name: "Sub Sine"),
+                Self.makePreset(number: 8, name: "Noise Perc")
             ]
         case .echoelFX:
             _factoryPresets = [
