@@ -303,19 +303,19 @@ public final class PushNotificationManager: NSObject, ObservableObject {
 
     private static let tokenRecordType = "DeviceToken"
 
-    /// Lazily create CKContainer only when CloudKit entitlement is present
-    private static var cloudKitContainer: CKContainer? = {
-        // Guard: only create CKContainer if iCloud/CloudKit is available
-        guard FileManager.default.ubiquityIdentityToken != nil else { return nil }
-        return CKContainer(identifier: "iCloud.com.echoelmusic.app")
-    }()
-
-    /// Save device token to CloudKit public database for server-side push delivery
+    /// Save device token to CloudKit public database for server-side push delivery.
+    /// Uses CKContainer.default() which never traps, then verifies account async.
+    /// CKContainer(identifier:) traps with SIGTRAP if container isn't configured,
+    /// so we avoid it entirely and use the default container instead.
     private func saveTokenToCloudKit(_ token: String) {
-        guard let container = Self.cloudKitContainer else {
-            log.warning("CloudKit unavailable — skipping device token sync", category: .system)
+        // Quick synchronous guard — skip if iCloud is not signed in
+        guard FileManager.default.ubiquityIdentityToken != nil else {
+            log.log(.info, category: .system, "CloudKit unavailable (no iCloud) — skipping device token sync")
             return
         }
+
+        // Use default container (never traps) and verify account async
+        let container = CKContainer.default()
         let publicDB = container.publicCloudDatabase
 
         // Use a deterministic record ID so the same device updates its token

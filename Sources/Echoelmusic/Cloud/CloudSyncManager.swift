@@ -17,35 +17,21 @@ class CloudSyncManager: ObservableObject {
     private let sharedDatabase: CKDatabase?
 
     init() {
-        // Guard CKContainer creation — crashes if CloudKit entitlement is missing
-        if Self.isCloudKitAvailable() {
-            let ck = CKContainer(identifier: "iCloud.com.echoelmusic.app")
+        // Use CKContainer.default() which NEVER traps, unlike CKContainer(identifier:)
+        // which crashes with SIGTRAP if the container isn't configured in the portal.
+        // Account availability is checked async when sync is actually requested.
+        if FileManager.default.ubiquityIdentityToken != nil {
+            let ck = CKContainer.default()
             self.container = ck
             self.privateDatabase = ck.privateCloudDatabase
             self.sharedDatabase = ck.sharedCloudDatabase
-            log.network("✅ CloudSyncManager: Initialized with CloudKit")
+            log.log(.info, category: .network, "CloudSyncManager: Initialized with default CloudKit container")
         } else {
             self.container = nil
             self.privateDatabase = nil
             self.sharedDatabase = nil
-            log.network("⚠️ CloudSyncManager: CloudKit entitlement missing — running offline")
+            log.log(.info, category: .network, "CloudSyncManager: iCloud not available — running offline")
         }
-    }
-
-    /// Check if CloudKit entitlement is present before touching CKContainer
-    private static func isCloudKitAvailable() -> Bool {
-        guard let entitlements = Bundle.main.infoDictionary,
-              let _ = entitlements["com.apple.developer.icloud-services"] else {
-            // Also try the default container as a smoke test — if entitlements
-            // are missing the CKContainer initializer traps.  We check the
-            // entitlements plist key instead so we never call CKContainer
-            // without the capability.
-            //
-            // Fallback: check if the ubiquity identity token exists (iCloud signed-in
-            // AND entitlement present).
-            return FileManager.default.ubiquityIdentityToken != nil
-        }
-        return true
     }
 
     // MARK: - Enable/Disable Sync
