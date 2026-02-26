@@ -337,7 +337,7 @@ public final class CameraPPGEngine: NSObject, ObservableObject {
     // MARK: - Signal Processing
 
     /// Extract average red channel brightness from pixel buffer
-    private func extractRedChannel(from pixelBuffer: CVPixelBuffer) -> Float {
+    nonisolated private func extractRedChannel(from pixelBuffer: CVPixelBuffer) -> Float {
         CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
 

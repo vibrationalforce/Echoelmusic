@@ -211,22 +211,8 @@ public final class InterAppAudioManager: ObservableObject {
             isHostConnected = connectedState != 0
         }
 
-        // Get host icon
-        if isHostConnected {
-            var iconRef: Unmanaged<CGImage>?
-            var iconSize = UInt32(MemoryLayout<Unmanaged<CGImage>>.size)
-            let iconStatus = AudioUnitGetProperty(
-                au,
-                kAudioOutputUnitProperty_HostIcon,
-                kAudioUnitScope_Global,
-                0,
-                &iconRef,
-                &iconSize
-            )
-            if iconStatus == noErr {
-                hostIcon = iconRef?.takeRetainedValue()
-            }
-        }
+        // Note: kAudioOutputUnitProperty_HostIcon was removed from the iOS SDK.
+        // IAA is deprecated since iOS 14 in favor of AUv3.
     }
 
     /// Navigate to host app (switch back to DAW)
@@ -277,18 +263,19 @@ public final class InterAppAudioManager: ObservableObject {
                 hostBeatPosition = beat
             }
 
-            // Get transport state
+            // Get transport state (transportStateProc2 has 8 params)
             if let transportState = callbackInfo.transportStateProc2 {
                 var playing: DarwinBoolean = false
                 var recording: DarwinBoolean = false
-                var looping: DarwinBoolean = false
+                var transportStateChanged: DarwinBoolean = false
                 var currentPosition: Float64 = 0
+                var cycling: DarwinBoolean = false
                 var cycleStart: Float64 = 0
                 var cycleEnd: Float64 = 0
                 transportState(
                     callbackInfo.hostUserData,
-                    &playing, &recording, &looping,
-                    &currentPosition, &cycleStart, &cycleEnd
+                    &playing, &recording, &transportStateChanged,
+                    &currentPosition, &cycling, &cycleStart, &cycleEnd
                 )
                 isHostPlaying = playing.boolValue
                 hostBeatPosition = currentPosition
