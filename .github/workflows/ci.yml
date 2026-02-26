@@ -51,7 +51,6 @@ jobs:
 
     - name: SwiftLint
       run: swiftlint lint --reporter xcode
-      continue-on-error: true
 
     - name: Swift Format Check
       run: |
@@ -60,7 +59,7 @@ jobs:
         else
           echo "swift-format not installed, skipping"
         fi
-      continue-on-error: true
+      continue-on-error: true  # Optional: swift-format may not be installed
 
     - name: Build Guard - Pattern Check
       run: |
@@ -71,7 +70,7 @@ jobs:
       run: |
         echo "Checking for TODO/FIXME comments..."
         find Sources -name "*.swift" -exec grep -Hn "TODO\|FIXME" {} \; || echo "No TODOs found"
-      continue-on-error: true
+      continue-on-error: true  # Informational only
 
   # Job 2: Build & Test - iOS
   build-test-ios:

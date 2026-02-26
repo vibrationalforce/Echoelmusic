@@ -260,6 +260,112 @@ public final class DanteAudioTransport: ObservableObject {
         }
     }
 
+    // MARK: - Connection Health Monitoring
+
+    @Published public var connectionHealth: ConnectionHealth = .unknown
+    private var healthCheckTimer: DispatchSourceTimer?
+
+    public enum ConnectionHealth: String {
+        case excellent = "Excellent"   // <1ms latency, 0 errors
+        case good = "Good"             // <5ms latency, rare errors
+        case degraded = "Degraded"     // >5ms latency or periodic errors
+        case critical = "Critical"     // >20ms latency or frequent errors
+        case unknown = "Unknown"
+
+        public var color: String {
+            switch self {
+            case .excellent: return "green"
+            case .good: return "cyan"
+            case .degraded: return "yellow"
+            case .critical: return "red"
+            case .unknown: return "gray"
+            }
+        }
+    }
+
+    /// Start monitoring connection health with periodic checks
+    public func startHealthMonitoring(intervalSeconds: Double = 5.0) {
+        healthCheckTimer?.cancel()
+        let timer = DispatchSource.makeTimerSource(flags: [], queue: .main)
+        timer.schedule(
+            deadline: .now(),
+            repeating: .milliseconds(Int(intervalSeconds * 1000)),
+            leeway: .milliseconds(500)
+        )
+        timer.setEventHandler { [weak self] in
+            self?.performHealthCheck()
+        }
+        timer.resume()
+        healthCheckTimer = timer
+    }
+
+    /// Stop health monitoring
+    public func stopHealthMonitoring() {
+        healthCheckTimer?.cancel()
+        healthCheckTimer = nil
+    }
+
+    private func performHealthCheck() {
+        guard isConnected else {
+            connectionHealth = .unknown
+            return
+        }
+
+        if networkLatencyMs < 1.0 {
+            connectionHealth = .excellent
+        } else if networkLatencyMs < 5.0 {
+            connectionHealth = .good
+        } else if networkLatencyMs < 20.0 {
+            connectionHealth = .degraded
+        } else {
+            connectionHealth = .critical
+        }
+
+        EngineBus.shared.publish(.custom(
+            topic: "stage.dante.health",
+            payload: [
+                "status": connectionHealth.rawValue,
+                "latencyMs": "\(networkLatencyMs)",
+                "deviceCount": "\(discoveredDevices.count)",
+                "routeCount": "\(activeRoutes.count)"
+            ]
+        ))
+    }
+
+    // MARK: - Multi-Protocol Auto-Routing
+
+    /// Automatically route all discovered device channels to local inputs
+    public func autoRoute() {
+        // Clear existing routes
+        activeRoutes.removeAll()
+
+        for device in discoveredDevices where device.isOnline {
+            for ch in 0..<Swift.min(device.outputChannels, 64) {
+                createRoute(
+                    sourceDevice: device.id,
+                    sourceChannel: ch,
+                    destDevice: "local",
+                    destChannel: ch,
+                    label: "\(device.name) Out \(ch + 1) → Local In \(ch + 1)"
+                )
+            }
+        }
+
+        log.log(.info, category: .audio, "Auto-routed \(activeRoutes.count) channels from \(discoveredDevices.count) devices")
+    }
+
+    /// Set route gain with clamping
+    public func setRouteGain(routeId: String, gain: Float) {
+        guard let idx = activeRoutes.firstIndex(where: { $0.id == routeId }) else { return }
+        activeRoutes[idx].gain = Swift.max(0, Swift.min(gain, 2.0))
+    }
+
+    /// Mute/unmute a route
+    public func setRouteMute(routeId: String, muted: Bool) {
+        guard let idx = activeRoutes.firstIndex(where: { $0.id == routeId }) else { return }
+        activeRoutes[idx].isMuted = muted
+    }
+
     // MARK: - Status
 
     public var statusSummary: String {
@@ -269,6 +375,7 @@ public final class DanteAudioTransport: ObservableObject {
         Routes: \(activeRoutes.count) | Sample Rate: \(sampleRate)Hz / \(bitDepth)-bit
         Timecode: \(timecodeFormat.rawValue) — \(currentTimecode)
         Latency: \(String(format: "%.2f", networkLatencyMs))ms
+        Health: \(connectionHealth.rawValue)
         """
     }
 }

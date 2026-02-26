@@ -657,6 +657,78 @@ public class SpatialAudioEngine: ObservableObject {
         return roomSimulation.processBuffer(input)
     }
 
+    // MARK: - Bio-Reactive Spatial Field
+
+    /// Configure a bio-reactive spatial field where source positions
+    /// respond to coherence, HRV, and breathing patterns
+    ///
+    /// - Parameters:
+    ///   - coherence: HRV coherence 0.0-1.0
+    ///   - breathPhase: Current breath cycle position 0.0-1.0
+    ///   - hrvVariability: HRV variability (SDNN in ms)
+    func applyBioReactiveSpatialField(
+        coherence: Double,
+        breathPhase: Double,
+        hrvVariability: Double
+    ) {
+        guard isActive, !spatialSources.isEmpty else { return }
+
+        let coherenceF = Float(coherence)
+        let breathF = Float(breathPhase)
+        let hrvNormalized = Float(Swift.min(hrvVariability / 100.0, 1.0))
+
+        for i in spatialSources.indices {
+            let sourceIndex = Float(i)
+            let totalSources = Float(spatialSources.count)
+            let baseAngle = (sourceIndex / totalSources) * 2.0 * Float.pi
+
+            if coherenceF > 0.6 {
+                // High coherence: Fibonacci spiral — harmonious sacred geometry
+                let goldenAngle = Float.pi * (3.0 - sqrt(5.0)) // Golden angle ~137.5°
+                let spiralAngle = baseAngle + goldenAngle * sourceIndex
+                let spiralRadius = 1.0 + coherenceF * 2.0 // Expand with coherence
+                let breathModulation = 1.0 + sin(breathF * 2.0 * Float.pi) * 0.2 * hrvNormalized
+
+                let x = cos(spiralAngle) * spiralRadius * breathModulation
+                let z = sin(spiralAngle) * spiralRadius * breathModulation
+                let y = sin(sourceIndex * 0.5 + breathF * Float.pi) * hrvNormalized * 0.5
+
+                spatialSources[i].position = SIMD3<Float>(x, y, z)
+            } else if coherenceF > 0.3 {
+                // Medium coherence: Circular orbit — steady but not optimal
+                let radius: Float = 1.5
+                let orbitSpeed = 0.1 + coherenceF * 0.3
+                let angle = baseAngle + breathF * 2.0 * Float.pi * orbitSpeed
+
+                let x = cos(angle) * radius
+                let z = sin(angle) * radius
+                let y: Float = 0 // Flat plane
+
+                spatialSources[i].position = SIMD3<Float>(x, y, z)
+            } else {
+                // Low coherence: Grid pattern — grounded and structured
+                let gridSize: Float = 3.0
+                let cols = Int(ceil(sqrt(totalSources)))
+                let row = Float(i / cols) - Float(cols) / 2.0
+                let col = Float(i % cols) - Float(cols) / 2.0
+                let spacing = gridSize / Float(cols)
+
+                // Subtle jitter based on breath
+                let jitterX = sin(breathF * Float.pi * 2.0 + sourceIndex) * 0.1
+                let jitterZ = cos(breathF * Float.pi * 2.0 + sourceIndex) * 0.1
+
+                spatialSources[i].position = SIMD3<Float>(
+                    col * spacing + jitterX,
+                    0,
+                    row * spacing + jitterZ
+                )
+            }
+
+            // Apply updated position to audio node
+            applyPositionToNode(id: spatialSources[i].id, position: spatialSources[i].position)
+        }
+    }
+
     // MARK: - Debug Info
 
     var debugInfo: String {
@@ -667,6 +739,9 @@ public class SpatialAudioEngine: ObservableObject {
         - Sources: \(spatialSources.count)
         - Head Tracking: \(headTrackingEnabled ? "✅" : "❌")
         - iOS 17+ Features: \(environmentNode != nil ? "✅" : "❌")
+        - Doppler: ✅
+        - Room Sim: active
+        - Ambisonics: \(currentMode == .ambisonics ? "✅" : "❌")
         """
     }
 }

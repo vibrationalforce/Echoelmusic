@@ -9,6 +9,11 @@ import SwiftUI
 /// DispatchQueue.main.asyncAfter to prevent state mutation after deallocation.
 struct LaunchScreen: View {
 
+    /// Initialization phase description from EchoelmusicApp
+    var phase: String = ""
+    /// Initialization progress 0.0-1.0 from EchoelmusicApp
+    var progress: Double = 0
+
     // Animation phases
     @State private var eStroke: CGFloat = 0       // 0→1: E letter draws on
     @State private var waveStroke: CGFloat = 0    // 0→1: waveform draws on
@@ -92,6 +97,40 @@ struct LaunchScreen: View {
                 .padding(.top, EchoelSpacing.lg)
 
                 Spacer()
+
+                // Initialization progress bar + phase label
+                VStack(spacing: EchoelSpacing.sm) {
+                    if !phase.isEmpty {
+                        Text(phase)
+                            .font(EchoelBrandFont.caption())
+                            .foregroundColor(EchoelBrand.textSecondary)
+                            .transition(.opacity)
+                    }
+
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            // Track
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(EchoelBrand.textDisabled.opacity(0.2))
+                                .frame(height: 3)
+
+                            // Fill
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [EchoelBrand.primary, EchoelBrand.primary.opacity(0.6)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: geo.size.width * CGFloat(progress), height: 3)
+                                .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: progress)
+                        }
+                    }
+                    .frame(height: 3)
+                    .padding(.horizontal, 60)
+                }
+                .padding(.bottom, EchoelSpacing.md)
 
                 // Loading indicator — monochrome dots
                 HStack(spacing: EchoelSpacing.sm) {

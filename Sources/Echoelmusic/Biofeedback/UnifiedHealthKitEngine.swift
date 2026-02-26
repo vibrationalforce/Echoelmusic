@@ -707,31 +707,117 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         updateTimer = timer
     }
 
+    /// Simulation state for physiologically accurate bio-mock
+    private var simPhase: Double = 0
+    private var simCoherenceTarget: Double = 0.5
+    private var simStateTimer: Double = 0
+    private var simCurrentState: SimulatedPhysiologicalState = .restingCalm
+
+    /// Physiological states for realistic simulation transitions
+    private enum SimulatedPhysiologicalState: CaseIterable {
+        case restingCalm       // Low HR, moderate HRV, building coherence
+        case focusedAttention  // Slightly elevated HR, lower HRV, moderate coherence
+        case deepRelaxation    // Low HR, high HRV, high coherence (meditation-like)
+        case mildStress        // Elevated HR, low HRV, low coherence
+        case flowState         // Moderate HR, high HRV, very high coherence
+
+        var baseHeartRate: Double {
+            switch self {
+            case .restingCalm: return 68.0
+            case .focusedAttention: return 75.0
+            case .deepRelaxation: return 62.0
+            case .mildStress: return 82.0
+            case .flowState: return 70.0
+            }
+        }
+
+        var baseHRVRange: Double {
+            switch self {
+            case .restingCalm: return 45.0
+            case .focusedAttention: return 35.0
+            case .deepRelaxation: return 65.0
+            case .mildStress: return 25.0
+            case .flowState: return 55.0
+            }
+        }
+
+        var coherenceTarget: Double {
+            switch self {
+            case .restingCalm: return 0.55
+            case .focusedAttention: return 0.50
+            case .deepRelaxation: return 0.80
+            case .mildStress: return 0.25
+            case .flowState: return 0.90
+            }
+        }
+
+        var breathingRate: Double {
+            switch self {
+            case .restingCalm: return 14.0
+            case .focusedAttention: return 16.0
+            case .deepRelaxation: return 6.0   // Coherence breathing
+            case .mildStress: return 18.0
+            case .flowState: return 10.0
+            }
+        }
+
+        var stateDuration: Double {
+            Double.random(in: 30...90) // 30-90 seconds per state
+        }
+    }
+
     private func simulateHealthUpdate() {
         let time = CFAbsoluteTimeGetCurrent()
+        simPhase += 1.0
 
-        // Simulate heart rate with natural variation
-        let baseHR = 70.0
-        let variation = sin(time * 0.1) * 5.0 + sin(time * 0.3) * 3.0
-        let noise = Double.random(in: -2...2)
-        heartRate = baseHR + variation + noise
+        // State transition logic
+        simStateTimer -= 1.0
+        if simStateTimer <= 0 {
+            // Transition to a new state
+            let states = SimulatedPhysiologicalState.allCases.filter { $0 != simCurrentState }
+            simCurrentState = states.randomElement() ?? .restingCalm
+            simStateTimer = simCurrentState.stateDuration
+            simCoherenceTarget = simCurrentState.coherenceTarget
+        }
+
+        let state = simCurrentState
+
+        // Respiratory sinus arrhythmia (RSA): heart rate oscillates with breathing
+        // This is the primary mechanism linking breath to HRV
+        let breathFreqHz = state.breathingRate / 60.0
+        let rsaAmplitude = state.baseHRVRange * 0.15 // RSA modulates HR by ~15% of HRV
+        let rsaComponent = sin(2.0 * Double.pi * breathFreqHz * time) * rsaAmplitude
+
+        // Baroreflex oscillation (~0.1 Hz Mayer waves)
+        let mayerWave = sin(2.0 * Double.pi * 0.1 * time) * 3.0
+
+        // Slow circadian drift
+        let circadianDrift = sin(time * 0.001) * 2.0
+
+        // Heart rate with physiological components
+        let noise = Double.random(in: -1.5...1.5)
+        heartRate = state.baseHeartRate + rsaComponent + mayerWave + circadianDrift + noise
+        heartRate = Swift.max(45, Swift.min(heartRate, 140))
         heartData.heartRate = heartRate
         heartData.timestamp = Date()
         heartData.source = .simulation
 
-        // Simulate RR intervals
-        let rrInterval = 60000.0 / heartRate + Double.random(in: -20...20)
-        rrIntervalBuffer.append(rrInterval)
+        // Generate RR intervals with realistic jitter
+        let baseRR = 60000.0 / heartRate
+        // Add physiological jitter (sympatho-vagal balance noise)
+        let jitter = Double.random(in: -15...15) * (1.0 - simCoherenceTarget)
+        let rrInterval = baseRR + jitter
+        rrIntervalBuffer.append(Swift.max(400, Swift.min(rrInterval, 1500)))
         heartData.rrIntervals = rrIntervalBuffer.toArray()
 
-        // Calculate HRV metrics
+        // Calculate HRV metrics from accumulated RR intervals
         calculateHRVMetrics()
 
-        // Simulate respiratory data
-        let breathCycle = sin(time * 0.5) * 0.5 + 0.5
-        respiratoryData.breathPhase = breathCycle
-        respiratoryData.breathingRate = 12.0 + sin(time * 0.02) * 2.0
-        respiratoryData.breathDepth = 0.5 + sin(time * 0.5) * 0.3
+        // Respiratory data with realistic breath-to-breath variation
+        let breathPhaseRaw = sin(2.0 * Double.pi * breathFreqHz * time)
+        respiratoryData.breathPhase = (breathPhaseRaw + 1.0) / 2.0 // 0-1
+        respiratoryData.breathingRate = state.breathingRate + sin(time * 0.02) * 1.0 + Double.random(in: -0.5...0.5)
+        respiratoryData.breathDepth = 0.4 + sin(2.0 * Double.pi * breathFreqHz * time) * 0.35 + Double.random(in: -0.05...0.05)
         respiratoryData.timestamp = Date()
         breathingRate = respiratoryData.breathingRate
 

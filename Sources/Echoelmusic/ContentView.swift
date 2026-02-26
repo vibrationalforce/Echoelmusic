@@ -18,25 +18,50 @@ struct ContentView: View {
     @State private var showBinauralControls = false
     @State private var showSpatialControls = false
     @State private var showVisualizationPicker = false
+    @State private var showEEGPanel = false
     @State private var selectedVisualizationMode: VisualizationMode = .particles
     @State private var selectedBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
     @State private var binauralAmplitude: Float = 0.3
     @State private var pulseAnimation = false
     @StateObject private var cymaticsVisualizer = CymaticsVisualizer()
+    @StateObject private var eegBridge = EEGSensorBridge.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // MARK: - Breathing Guide State
+
+    /// Current phase of the 4-7-8 breathing cycle
+    @State private var breathingPhase: BreathingPhase = .inhale
+    /// Scale factor for the breathing guide circle (0-1)
+    @State private var breathingScale: CGFloat = 0.3
+    /// Opacity for the breathing guide label
+    @State private var breathingLabelOpacity: Double = 1.0
+    /// Timer that drives the breathing cycle
+    @State private var breathingTimer: Timer?
+    /// Elapsed seconds within the current breathing phase
+    @State private var breathingElapsed: Double = 0.0
 
     /// Computed property - single source of truth for recording state
     private var isRecording: Bool {
         microphoneManager.isRecording
     }
 
+    /// The normalized coherence value (0-1) for reactive background
+    private var coherenceNormalized: Double {
+        healthKitEngine.coherence
+    }
+
     // MARK: - Body
 
     var body: some View {
         ZStack {
-            // Background - using design system
+            // Background - using design system with coherence-reactive overlay
             VaporwaveGradients.background
                 .ignoresSafeArea()
+
+            // Coherence-reactive background overlay
+            coherenceReactiveBackground
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
             VStack(spacing: VaporwaveSpacing.xl) {
 
@@ -48,7 +73,7 @@ struct ContentView: View {
                     .padding(.top, VaporwaveSpacing.xxl)
                     .accessibilityLabel("Echoelmusic - Bio-reactive music application")
 
-                Text("breath → sound")
+                Text("breath \u{2192} sound")
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.textSecondary)
                     .tracking(4)
@@ -95,6 +120,18 @@ struct ContentView: View {
                         .transition(.opacity.combined(with: .scale))
                 }
 
+                // Breathing guide circle
+                if isRecording && healthKitEngine.isAuthorized {
+                    breathingGuideView
+                        .transition(.opacity.combined(with: .scale))
+                }
+
+                // EEG Visualization Panel
+                if showEEGPanel && eegBridge.connectionState == .streaming {
+                    eegBandPanel
+                        .transition(.opacity.combined(with: .scale))
+                }
+
                 // Audio level bars (improved visualization)
                 if isRecording {
                     audioLevelBars
@@ -135,6 +172,16 @@ struct ContentView: View {
                 } catch {
                     log.error("HealthKit authorization failed: \(error)")
                 }
+            }
+        }
+        .onDisappear {
+            stopBreathingGuide()
+        }
+        .onChange(of: isRecording) { recording in
+            if recording && healthKitEngine.isAuthorized {
+                startBreathingGuide()
+            } else {
+                stopBreathingGuide()
             }
         }
         .alert("Microphone Access Required", isPresented: $showPermissionAlert) {
@@ -274,13 +321,65 @@ struct ContentView: View {
     /// Convert frequency to musical note name (12-tone equal temperament)
     private func musicalNote(_ frequency: Float) -> String {
         guard frequency > 0 else { return "-" }
-        let noteNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
+        let noteNames = ["C", "C\u{266F}", "D", "D\u{266F}", "E", "F", "F\u{266F}", "G", "G\u{266F}", "A", "A\u{266F}", "B"]
         let semitonesFromA4 = 12.0 * log2(frequency / 440.0)
         let roundedSemitones = Int(round(semitonesFromA4))
         let noteIndex = (9 + roundedSemitones) % 12
         let octave = 4 + (9 + roundedSemitones) / 12
         let positiveNoteIndex = (noteIndex + 12) % 12
         return "\(noteNames[positiveNoteIndex])\(octave)"
+    }
+
+    // MARK: - Coherence-Reactive Background
+
+    /// Background overlay that shifts color based on coherence level
+    @ViewBuilder
+    private var coherenceReactiveBackground: some View {
+        if isRecording && healthKitEngine.isAuthorized {
+            ZStack {
+                // Golden glow when coherence is high (> 0.7)
+                if coherenceNormalized > 0.7 {
+                    RadialGradient(
+                        colors: [
+                            Color(red: 1.0, green: 0.84, blue: 0.0).opacity(goldenGlowOpacity),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 50,
+                        endRadius: 400
+                    )
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.0), value: coherenceNormalized)
+                }
+
+                // Subtle red hints when coherence is low (< 0.3)
+                if coherenceNormalized < 0.3 {
+                    RadialGradient(
+                        colors: [
+                            VaporwaveColors.coherenceLow.opacity(redHintOpacity),
+                            Color.clear
+                        ],
+                        center: .bottom,
+                        startRadius: 20,
+                        endRadius: 350
+                    )
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 2.0), value: coherenceNormalized)
+                }
+            }
+        }
+    }
+
+    /// Opacity for the golden glow overlay based on how far above 0.7 the coherence is
+    private var goldenGlowOpacity: Double {
+        let excess = coherenceNormalized - 0.7
+        // Map 0.7-1.0 range to 0.0-0.15 opacity
+        return min(excess / 0.3, 1.0) * 0.15
+    }
+
+    /// Opacity for the red hint overlay based on how far below 0.3 the coherence is
+    private var redHintOpacity: Double {
+        let deficit = 0.3 - coherenceNormalized
+        // Map 0.0-0.3 range to 0.0-0.12 opacity
+        return min(deficit / 0.3, 1.0) * 0.12
     }
 
     // MARK: - Extracted View Components
@@ -386,6 +485,229 @@ struct ContentView: View {
         .padding(.bottom, VaporwaveSpacing.md)
     }
 
+    // MARK: - Breathing Guide
+
+    /// 4-7-8 breathing guide circle that expands and contracts
+    private var breathingGuideView: some View {
+        VStack(spacing: VaporwaveSpacing.sm) {
+            Text("Breathing Guide")
+                .font(VaporwaveTypography.label())
+                .foregroundColor(VaporwaveColors.textTertiary)
+                .tracking(2)
+                .accessibilityLabel("4-7-8 breathing guide")
+
+            ZStack {
+                // Outer ring (static reference)
+                Circle()
+                    .stroke(VaporwaveColors.neonCyan.opacity(0.15), lineWidth: 1)
+                    .frame(width: 100, height: 100)
+
+                // Animated breathing circle
+                Circle()
+                    .fill(breathingCircleColor.opacity(0.25))
+                    .frame(
+                        width: 100 * breathingScale,
+                        height: 100 * breathingScale
+                    )
+                    .overlay(
+                        Circle()
+                            .stroke(breathingCircleColor.opacity(0.6), lineWidth: 2)
+                    )
+                    .neonGlow(color: breathingCircleColor, radius: 8 * breathingScale)
+                    .animation(
+                        reduceMotion ? nil : .easeInOut(duration: breathingPhaseDuration),
+                        value: breathingScale
+                    )
+
+                // Phase label
+                Text(breathingPhase.label)
+                    .font(VaporwaveTypography.caption())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .opacity(breathingLabelOpacity)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.5), value: breathingPhase)
+            }
+            .frame(width: 100, height: 100)
+            .accessibilityLabel("Breathing guide: \(breathingPhase.accessibilityLabel)")
+
+            // Breathing rate from HealthKit
+            if healthKitEngine.respiratoryData.breathingRate > 0 {
+                Text("\(Int(healthKitEngine.respiratoryData.breathingRate)) breaths/min")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .accessibilityLabel("Current breathing rate: \(Int(healthKitEngine.respiratoryData.breathingRate)) breaths per minute")
+            }
+        }
+        .padding(VaporwaveSpacing.md)
+        .glassCard()
+        .padding(.horizontal, VaporwaveSpacing.lg)
+        .padding(.bottom, VaporwaveSpacing.sm)
+    }
+
+    /// Color for the breathing circle based on the current phase
+    private var breathingCircleColor: Color {
+        switch breathingPhase {
+        case .inhale:
+            return VaporwaveColors.neonCyan
+        case .hold:
+            return VaporwaveColors.lavender
+        case .exhale:
+            return VaporwaveColors.neonPurple
+        }
+    }
+
+    /// Duration of the current breathing phase in seconds
+    private var breathingPhaseDuration: Double {
+        switch breathingPhase {
+        case .inhale: return 4.0
+        case .hold: return 7.0
+        case .exhale: return 8.0
+        }
+    }
+
+    // MARK: - EEG Band Visualization
+
+    /// Compact EEG band visualization panel with meditation/focus/flow scores
+    private var eegBandPanel: some View {
+        VStack(spacing: VaporwaveSpacing.sm) {
+            // Header row
+            HStack {
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 14))
+                    .foregroundColor(VaporwaveColors.neonPurple)
+
+                Text("EEG Bands")
+                    .font(VaporwaveTypography.label())
+                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .tracking(1)
+
+                Spacer()
+
+                if let device = eegBridge.connectedDevice {
+                    Text(device.rawValue)
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textTertiary)
+                }
+
+                // Signal quality dot
+                Circle()
+                    .fill(eegSignalQualityColor)
+                    .frame(width: 8, height: 8)
+                    .accessibilityLabel("Signal quality: \(Int(eegBridge.signalQuality * 100)) percent")
+            }
+
+            // Compact band bars
+            HStack(spacing: VaporwaveSpacing.xs) {
+                eegBandBar(label: "\u{03B4}", value: eegBridge.currentBands.delta, maxValue: 50, color: VaporwaveColors.neonPurple)
+                eegBandBar(label: "\u{03B8}", value: eegBridge.currentBands.theta, maxValue: 50, color: VaporwaveColors.lavender)
+                eegBandBar(label: "\u{03B1}", value: eegBridge.currentBands.alpha, maxValue: 50, color: VaporwaveColors.neonCyan)
+                eegBandBar(label: "\u{03B2}", value: eegBridge.currentBands.beta, maxValue: 50, color: VaporwaveColors.coherenceMedium)
+                eegBandBar(label: "\u{03B3}", value: eegBridge.currentBands.gamma, maxValue: 50, color: VaporwaveColors.coral)
+            }
+            .frame(height: 60)
+            .accessibilityLabel("EEG frequency bands: Delta \(Int(eegBridge.currentBands.delta)), Theta \(Int(eegBridge.currentBands.theta)), Alpha \(Int(eegBridge.currentBands.alpha)), Beta \(Int(eegBridge.currentBands.beta)), Gamma \(Int(eegBridge.currentBands.gamma))")
+
+            // Dominant band label
+            Text("Dominant: \(eegBridge.currentBands.dominantBand)")
+                .font(VaporwaveTypography.label())
+                .foregroundColor(VaporwaveColors.textTertiary)
+
+            // Meditation, Focus, Flow scores row
+            HStack(spacing: VaporwaveSpacing.lg) {
+                eegScoreView(
+                    label: "Meditation",
+                    value: eegBridge.meditationScore,
+                    color: VaporwaveColors.neonPurple
+                )
+                eegScoreView(
+                    label: "Focus",
+                    value: eegBridge.focusScore,
+                    color: VaporwaveColors.neonCyan
+                )
+                eegScoreView(
+                    label: "Flow",
+                    value: eegBridge.flowScore,
+                    color: VaporwaveColors.coherenceHigh
+                )
+            }
+
+            // Disclaimer
+            Text("Creative use only. Not a medical device.")
+                .font(.system(size: 8, weight: .light))
+                .foregroundColor(VaporwaveColors.textTertiary.opacity(0.6))
+        }
+        .padding(VaporwaveSpacing.md)
+        .glassCard()
+        .padding(.horizontal, VaporwaveSpacing.lg)
+        .padding(.bottom, VaporwaveSpacing.sm)
+    }
+
+    /// Single vertical bar for an EEG band
+    private func eegBandBar(label: String, value: Double, maxValue: Double, color: Color) -> some View {
+        VStack(spacing: 2) {
+            // Value
+            Text("\(Int(value))")
+                .font(.system(size: 8, weight: .medium, design: .monospaced))
+                .foregroundColor(color)
+
+            // Vertical bar
+            GeometryReader { geometry in
+                VStack {
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(color)
+                        .frame(
+                            width: 12,
+                            height: geometry.size.height * min(value / maxValue, 1.0)
+                        )
+                        .neonGlow(color: color, radius: 4)
+                        .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: value)
+                }
+            }
+
+            // Greek letter label
+            Text(label)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(VaporwaveColors.textSecondary)
+        }
+    }
+
+    /// Circular score indicator for meditation/focus/flow
+    private func eegScoreView(label: String, value: Double, color: Color) -> some View {
+        VStack(spacing: VaporwaveSpacing.xs) {
+            ZStack {
+                Circle()
+                    .stroke(VaporwaveColors.textTertiary.opacity(0.2), lineWidth: 3)
+
+                Circle()
+                    .trim(from: 0, to: value)
+                    .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.5), value: value)
+
+                Text("\(Int(value * 100))")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(color)
+            }
+            .frame(width: 36, height: 36)
+
+            Text(label)
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(VaporwaveColors.textTertiary)
+        }
+        .accessibilityLabel("\(label) score: \(Int(value * 100)) percent")
+    }
+
+    /// Color for the EEG signal quality indicator
+    private var eegSignalQualityColor: Color {
+        if eegBridge.signalQuality > 0.7 {
+            return VaporwaveColors.coherenceHigh
+        } else if eegBridge.signalQuality > 0.4 {
+            return VaporwaveColors.coherenceMedium
+        } else {
+            return VaporwaveColors.coherenceLow
+        }
+    }
+
     /// Audio level bars visualization
     private var audioLevelBars: some View {
         HStack(spacing: VaporwaveSpacing.sm) {
@@ -409,6 +731,15 @@ struct ContentView: View {
                 isActive: audioEngine.binauralBeatsEnabled,
                 color: VaporwaveColors.neonPurple,
                 action: toggleBinauralBeats
+            )
+
+            // EEG button
+            controlButton(
+                icon: "brain.head.profile",
+                label: showEEGPanel ? "EEG ON" : "EEG",
+                isActive: showEEGPanel && eegBridge.connectionState == .streaming,
+                color: VaporwaveColors.lavender,
+                action: toggleEEG
             )
 
             // Main record button
@@ -638,6 +969,24 @@ struct ContentView: View {
         #endif
     }
 
+    /// Toggle EEG panel and start/stop simulation if needed
+    private func toggleEEG() {
+        showEEGPanel.toggle()
+
+        if showEEGPanel {
+            if eegBridge.connectionState == .disconnected {
+                // Start simulation for demo; in production, scan for real devices
+                eegBridge.startSimulation()
+                log.biofeedback("EEG panel activated, started simulation")
+            }
+        } else {
+            if eegBridge.connectedDevice == .simulator {
+                eegBridge.stopSimulation()
+                log.biofeedback("EEG panel deactivated, stopped simulation")
+            }
+        }
+    }
+
     /// Check permissions on launch
     private func checkPermissions() {
         if !microphoneManager.hasPermission {
@@ -652,6 +1001,92 @@ struct ContentView: View {
             UIApplication.shared.open(url)
         }
         #endif
+    }
+
+    // MARK: - Breathing Guide Logic
+
+    /// Start the 4-7-8 breathing guide cycle
+    private func startBreathingGuide() {
+        guard breathingTimer == nil else { return }
+        breathingPhase = .inhale
+        breathingElapsed = 0.0
+        breathingScale = 0.3
+        breathingLabelOpacity = 1.0
+
+        log.biofeedback("Breathing guide started (4-7-8 pattern)")
+
+        // Kick off the first phase transition
+        advanceBreathingPhase()
+
+        // Tick every 0.1s to track elapsed time and advance phases
+        breathingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [self] _ in
+            Task { @MainActor in
+                self.breathingElapsed += 0.1
+                if self.breathingElapsed >= self.breathingPhaseDuration {
+                    self.breathingElapsed = 0.0
+                    // Advance to next phase
+                    switch self.breathingPhase {
+                    case .inhale:
+                        self.breathingPhase = .hold
+                    case .hold:
+                        self.breathingPhase = .exhale
+                    case .exhale:
+                        self.breathingPhase = .inhale
+                    }
+                    self.advanceBreathingPhase()
+                }
+            }
+        }
+    }
+
+    /// Stop the breathing guide
+    private func stopBreathingGuide() {
+        breathingTimer?.invalidate()
+        breathingTimer = nil
+        breathingPhase = .inhale
+        breathingScale = 0.3
+    }
+
+    /// Apply the scale for the current breathing phase
+    private func advanceBreathingPhase() {
+        switch breathingPhase {
+        case .inhale:
+            // Expand circle over 4 seconds
+            breathingScale = 1.0
+        case .hold:
+            // Stay fully expanded for 7 seconds
+            breathingScale = 1.0
+        case .exhale:
+            // Contract circle over 8 seconds
+            breathingScale = 0.3
+        }
+    }
+}
+
+// MARK: - Breathing Phase Enum
+
+/// Phases in the 4-7-8 breathing technique
+enum BreathingPhase: String, CaseIterable {
+    case inhale
+    case hold
+    case exhale
+
+    /// Display label
+    var label: String {
+        switch self {
+        case .inhale: return "Breathe In"
+        case .hold: return "Hold"
+        case .exhale: return "Breathe Out"
+        }
+    }
+
+    /// Accessibility description
+    var accessibilityLabel: String {
+        switch self {
+        case .inhale: return "Inhale for 4 seconds"
+        case .hold: return "Hold breath for 7 seconds"
+        case .exhale: return "Exhale for 8 seconds"
+        }
     }
 }
 

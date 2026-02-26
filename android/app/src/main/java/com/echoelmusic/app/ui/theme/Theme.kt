@@ -10,117 +10,234 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 /**
- * Echoelmusic Artist Brand Theme (2026)
+ * Echoelmusic Vaporwave Theme (2026)
  *
- * Professional Audio + Wellness Trust Palette
- * Based on:
- * - Apple Human Interface Guidelines
- * - Material Design 3
- * - Pro Audio Industry Standards (Ableton, Logic Pro, Native Instruments)
- * - WCAG 2.2 AAA Accessibility
+ * Bio-Reactive Audio-Visual Platform
+ * Vaporwave-inspired dark theme matching the iOS app
+ *
+ * Color Palette:
+ * - neonCyan: #00FFFF
+ * - neonPink: #FF1493
+ * - neonPurple: #9B30FF
+ * - deepBlack: #0A0A1A
+ * - Background gradient: dark blue to deep purple
  */
 
-// MARK: - Primary Brand Colors
-private val EchoelTeal = Color(0xFF2DD4BF)      // Primary - confidence, technology, wellness
-private val EchoelRose = Color(0xFFF472B6)      // Secondary - heart, bio-reactive, human
-private val EchoelViolet = Color(0xFFA78BFA)    // Accent - creativity, premium
+// ============================================================
+// Vaporwave Primary Colors
+// ============================================================
+val NeonCyan = Color(0xFF00FFFF)
+val NeonPink = Color(0xFFFF1493)
+val NeonPurple = Color(0xFF9B30FF)
+val DeepBlack = Color(0xFF0A0A1A)
 
-// MARK: - Extended Palette
-private val EchoelEmerald = Color(0xFF34D399)   // Health, success
-private val EchoelSky = Color(0xFF38BDF8)       // Science, trust
-private val EchoelAmber = Color(0xFFFBBF24)     // Energy, warmth
-private val EchoelCoral = Color(0xFFFB7366)     // Warning, attention
+// ============================================================
+// Extended Vaporwave Palette
+// ============================================================
+val VaporwaveMagenta = Color(0xFFFF00FF)
+val VaporwaveLavender = Color(0xFFB388FF)
+val VaporwaveHotPink = Color(0xFFFF69B4)
+val VaporwaveSunset = Color(0xFFFF6B6B)
+val VaporwaveGold = Color(0xFFFFD700)
+val VaporwaveMint = Color(0xFF00FFAB)
 
-// MARK: - Background System
-private val EchoelBgDeep = Color(0xFF0C0A1A)    // Primary background
-private val EchoelBgSurface = Color(0xFF151326) // Cards, panels
-private val EchoelBgElevated = Color(0xFF1A1730) // Modals, popovers
+// ============================================================
+// Background System (Dark Blue to Deep Purple gradient)
+// ============================================================
+val VaporBgDeep = Color(0xFF0A0A1A)        // Deepest background
+val VaporBgDarkBlue = Color(0xFF0D0B2E)    // Dark blue layer
+val VaporBgMidnight = Color(0xFF12103A)    // Midnight purple
+val VaporBgSurface = Color(0xFF16133D)     // Card / panel surface
+val VaporBgElevated = Color(0xFF1C1850)    // Elevated surfaces
+val VaporBgDeepPurple = Color(0xFF2D1B69)  // Deep purple accent bg
 
-// MARK: - Text Colors
-private val EchoelTextPrimary = Color(0xFFF8FAFC)
-private val EchoelTextSecondary = Color(0xBFF8FAFC)  // 75% opacity
-private val EchoelTextTertiary = Color(0x73F8FAFC)   // 45% opacity
+// ============================================================
+// Text Colors
+// ============================================================
+val VaporTextPrimary = Color(0xFFF0F0FF)      // Near-white with blue tint
+val VaporTextSecondary = Color(0xBBE0E0FF)    // 73% opacity
+val VaporTextTertiary = Color(0x77C0C0DD)     // 47% opacity
 
-// MARK: - Bio-Reactive Colors
-private val CoherenceLow = Color(0xFFFB7366)
-private val CoherenceMedium = Color(0xFFFBBF24)
-private val CoherenceHigh = Color(0xFF2DD4BF)
+// ============================================================
+// Bio-Reactive Colors
+// ============================================================
+val CoherenceLow = Color(0xFFFF6B6B)       // Warm red
+val CoherenceMedium = Color(0xFFFFD700)    // Gold
+val CoherenceHigh = Color(0xFF00FFFF)      // Neon cyan
 
-// MARK: - Dark Color Scheme (Pro Audio Standard)
-private val DarkColorScheme = darkColorScheme(
-    primary = EchoelTeal,
-    onPrimary = EchoelBgDeep,
-    primaryContainer = EchoelTeal.copy(alpha = 0.2f),
-    onPrimaryContainer = EchoelTeal,
+// ============================================================
+// Brainwave State Colors (for binaural beats UI)
+// ============================================================
+val BrainwaveDelta = Color(0xFF9B30FF)     // Deep purple - deep sleep
+val BrainwaveTheta = Color(0xFF6366F1)     // Indigo - meditation
+val BrainwaveAlpha = Color(0xFF00FFAB)     // Mint green - relaxation
+val BrainwaveBeta = Color(0xFFFFD700)      // Gold - focus
+val BrainwaveGamma = Color(0xFFFF1493)     // Neon pink - peak performance
 
-    secondary = EchoelRose,
-    onSecondary = EchoelBgDeep,
-    secondaryContainer = EchoelRose.copy(alpha = 0.2f),
-    onSecondaryContainer = EchoelRose,
+// ============================================================
+// Dark Color Scheme (Vaporwave)
+// ============================================================
+private val VaporwaveDarkColorScheme = darkColorScheme(
+    primary = NeonCyan,
+    onPrimary = DeepBlack,
+    primaryContainer = NeonCyan.copy(alpha = 0.15f),
+    onPrimaryContainer = NeonCyan,
 
-    tertiary = EchoelViolet,
-    onTertiary = EchoelBgDeep,
-    tertiaryContainer = EchoelViolet.copy(alpha = 0.2f),
-    onTertiaryContainer = EchoelViolet,
+    secondary = NeonPink,
+    onSecondary = DeepBlack,
+    secondaryContainer = NeonPink.copy(alpha = 0.15f),
+    onSecondaryContainer = NeonPink,
 
-    background = EchoelBgDeep,
-    onBackground = EchoelTextPrimary,
+    tertiary = NeonPurple,
+    onTertiary = DeepBlack,
+    tertiaryContainer = NeonPurple.copy(alpha = 0.15f),
+    onTertiaryContainer = NeonPurple,
 
-    surface = EchoelBgSurface,
-    onSurface = EchoelTextPrimary,
+    background = VaporBgDeep,
+    onBackground = VaporTextPrimary,
 
-    surfaceVariant = EchoelBgElevated,
-    onSurfaceVariant = EchoelTextSecondary,
+    surface = VaporBgSurface,
+    onSurface = VaporTextPrimary,
 
-    error = EchoelCoral,
+    surfaceVariant = VaporBgElevated,
+    onSurfaceVariant = VaporTextSecondary,
+
+    error = VaporwaveSunset,
     onError = Color.White,
 
-    outline = Color.White.copy(alpha = 0.08f),
-    outlineVariant = Color.White.copy(alpha = 0.04f),
+    outline = NeonPurple.copy(alpha = 0.3f),
+    outlineVariant = NeonCyan.copy(alpha = 0.1f),
+
+    inverseSurface = VaporTextPrimary,
+    inverseOnSurface = VaporBgDeep,
+    inversePrimary = Color(0xFF006666),
+
+    surfaceTint = NeonCyan.copy(alpha = 0.05f),
 )
 
-// MARK: - Light Color Scheme (for accessibility)
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF0D9488),      // Darker teal for light mode
-    secondary = Color(0xFFDB2777),    // Darker rose
-    tertiary = Color(0xFF7C3AED),     // Darker violet
-    background = Color(0xFFF8FAFC),
+// ============================================================
+// Light Color Scheme (fallback, rarely used for pro audio)
+// ============================================================
+private val VaporwaveLightColorScheme = lightColorScheme(
+    primary = Color(0xFF008B8B),        // Dark cyan
+    secondary = Color(0xFFC71585),      // Medium violet red
+    tertiary = Color(0xFF6A0DAD),       // Purple
+    background = Color(0xFFF8F0FF),
     surface = Color.White,
 )
 
+// ============================================================
+// Typography
+// ============================================================
+val EchoelTypography = Typography(
+    displayLarge = TextStyle(
+        fontWeight = FontWeight.Light,
+        fontSize = 57.sp,
+        lineHeight = 64.sp,
+        letterSpacing = (-0.25).sp
+    ),
+    displayMedium = TextStyle(
+        fontWeight = FontWeight.Light,
+        fontSize = 45.sp,
+        lineHeight = 52.sp
+    ),
+    headlineLarge = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 32.sp,
+        lineHeight = 40.sp
+    ),
+    headlineMedium = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp
+    ),
+    headlineSmall = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp,
+        lineHeight = 32.sp
+    ),
+    titleLarge = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp
+    ),
+    titleMedium = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.15.sp
+    ),
+    titleSmall = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    bodyLarge = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
+    ),
+    bodyMedium = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.25.sp
+    ),
+    labelLarge = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    labelMedium = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    ),
+    labelSmall = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    ),
+)
+
 /**
- * Echoelmusic Theme Composable
+ * EchoelmusicTheme - Vaporwave dark theme composable
  *
- * @param darkTheme Always true for pro audio apps (reduces eye strain)
- * @param dynamicColor Disabled by default to maintain brand consistency
+ * @param darkTheme Always true for pro audio (reduces eye strain in studio)
+ * @param dynamicColor Disabled by default to preserve Vaporwave brand
  */
 @Composable
 fun EchoelmusicTheme(
-    darkTheme: Boolean = true,          // Pro audio standard: always dark
-    dynamicColor: Boolean = false,       // Use brand colors, not system
+    darkTheme: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // Allow dynamic color on Android 12+ if explicitly requested
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> VaporwaveDarkColorScheme
+        else -> VaporwaveLightColorScheme
     }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Use brand background for system bars
             window.statusBarColor = colorScheme.background.toArgb()
             window.navigationBarColor = colorScheme.background.toArgb()
-            // Light icons on dark background
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme
@@ -135,41 +252,51 @@ fun EchoelmusicTheme(
     )
 }
 
-/**
- * Custom typography following brand guidelines
- */
-val EchoelTypography = Typography(
-    // Uses Material 3 defaults with system fonts
-    // Pro audio apps benefit from clean, readable typography
-)
-
-// MARK: - Brand Color Extensions
+// ============================================================
+// Color Extensions for direct access throughout the app
+// ============================================================
 object EchoelColors {
-    val teal = EchoelTeal
-    val rose = EchoelRose
-    val violet = EchoelViolet
-    val emerald = EchoelEmerald
-    val sky = EchoelSky
-    val amber = EchoelAmber
-    val coral = EchoelCoral
+    // Primary Vaporwave
+    val neonCyan = NeonCyan
+    val neonPink = NeonPink
+    val neonPurple = NeonPurple
+    val deepBlack = DeepBlack
 
-    val bgDeep = EchoelBgDeep
-    val bgSurface = EchoelBgSurface
-    val bgElevated = EchoelBgElevated
+    // Extended
+    val magenta = VaporwaveMagenta
+    val lavender = VaporwaveLavender
+    val hotPink = VaporwaveHotPink
+    val sunset = VaporwaveSunset
+    val gold = VaporwaveGold
+    val mint = VaporwaveMint
 
-    val textPrimary = EchoelTextPrimary
-    val textSecondary = EchoelTextSecondary
-    val textTertiary = EchoelTextTertiary
+    // Backgrounds
+    val bgDeep = VaporBgDeep
+    val bgDarkBlue = VaporBgDarkBlue
+    val bgMidnight = VaporBgMidnight
+    val bgSurface = VaporBgSurface
+    val bgElevated = VaporBgElevated
+    val bgDeepPurple = VaporBgDeepPurple
+
+    // Text
+    val textPrimary = VaporTextPrimary
+    val textSecondary = VaporTextSecondary
+    val textTertiary = VaporTextTertiary
 
     // Bio-reactive
     val coherenceLow = CoherenceLow
     val coherenceMedium = CoherenceMedium
     val coherenceHigh = CoherenceHigh
 
-    // Brainwave colors (UI differentiation only, NOT therapeutic claims)
-    val brainwaveDelta = Color(0xFF8B5CF6)   // Violet
-    val brainwaveTheta = Color(0xFF38BDF8)   // Sky
-    val brainwaveAlpha = Color(0xFF34D399)   // Emerald
-    val brainwaveBeta = Color(0xFFFBBF24)    // Amber
-    val brainwaveGamma = Color(0xFFF472B6)   // Rose
+    // Brainwave states
+    val brainwaveDelta = BrainwaveDelta
+    val brainwaveTheta = BrainwaveTheta
+    val brainwaveAlpha = BrainwaveAlpha
+    val brainwaveBeta = BrainwaveBeta
+    val brainwaveGamma = BrainwaveGamma
+
+    // Gradient presets
+    val backgroundGradientColors = listOf(VaporBgDarkBlue, VaporBgDeepPurple, VaporBgDeep)
+    val neonGradientColors = listOf(NeonCyan, NeonPurple, NeonPink)
+    val sunsetGradientColors = listOf(NeonPink, NeonPurple, VaporBgDarkBlue)
 }

@@ -86,6 +86,9 @@ struct EchoelmusicApp: App {
     private let systemCancellables = CancellableHolder()
 
     @State private var coreSystemsReady = false
+    @State private var initializationPhase: String = "Starting..."
+    @State private var initializationProgress: Double = 0
+    @State private var failedPhases: [String] = []
 
     init() {
         // Initialize AudioEngine with MicrophoneManager
@@ -103,7 +106,10 @@ struct EchoelmusicApp: App {
             if coreSystemsReady {
                 mainContent
             } else {
-                LaunchScreen()
+                LaunchScreen(
+                    phase: initializationPhase,
+                    progress: initializationProgress
+                )
                     .preferredColorScheme(themeManager.resolvedColorScheme)
                     .task {
                         // Watchdog: unstructured Task fires after 10s to force-proceed.
@@ -170,65 +176,64 @@ struct EchoelmusicApp: App {
 
     // MARK: - Sequential Core System Initialization
 
+    /// Total initialization phases for progress tracking
+    private static let totalPhases: Double = 12
+
     /// Initializes all singletons in a controlled, sequential order.
     /// Each phase waits for the previous to complete, preventing circular deadlocks.
     /// Each phase is individually isolated so a single failure doesn't block the rest.
     /// Safely initialize a singleton on MainActor, catching any crash
-    private func safeInit(_ label: String, _ block: @MainActor () -> Void) async {
+    private func safeInit(_ label: String, phase: Int = 0, _ block: @MainActor () -> Void) async {
         await MainActor.run {
-            // Swift doesn't have try-catch for traps, but we guard against
-            // throwing inits and log failures so one broken module doesn't
-            // take down the entire startup sequence.
+            initializationPhase = label
+            initializationProgress = Double(phase) / Self.totalPhases
             block()
-            log.debug("✓ \(label)", category: .system)
+            log.debug("✓ [\(phase)/\(Int(Self.totalPhases))] \(label)", category: .system)
         }
     }
 
     private func initializeCoreSystems() async {
+        let startTime = CFAbsoluteTimeGetCurrent()
+
         // Phase 0: Detect hardware + permissions (all other systems query this)
-        await safeInit("AdaptiveCapabilityManager") { _ = AdaptiveCapabilityManager.shared }
+        await safeInit("Detecting hardware...", phase: 0) { _ = AdaptiveCapabilityManager.shared }
 
-        // Phase 0.5: Memory pressure monitoring (prevents OOM crashes)
-        await safeInit("MemoryPressureHandler") { _ = MemoryPressureHandler.shared }
+        // Phase 1: Memory pressure monitoring (prevents OOM crashes)
+        await safeInit("Memory monitor...", phase: 1) { _ = MemoryPressureHandler.shared }
 
-        // Phase 1: Foundation singletons (no cross-references)
-        await safeInit("UnifiedHealthKitEngine") { _ = UnifiedHealthKitEngine.shared }
-        await safeInit("PushNotificationManager") { _ = PushNotificationManager.shared }
-        await safeInit("SelfHealingEngine") { _ = SelfHealingEngine.shared }
-        await safeInit("MultiPlatformBridge") { _ = MultiPlatformBridge.shared }
+        // Phase 2: Foundation singletons (no cross-references)
+        await safeInit("Health & biometrics...", phase: 2) { _ = UnifiedHealthKitEngine.shared }
+        await safeInit("Notifications...", phase: 3) { _ = PushNotificationManager.shared }
+        await safeInit("Self-healing engine...", phase: 3) { _ = SelfHealingEngine.shared }
+        await safeInit("Platform bridge...", phase: 3) { _ = MultiPlatformBridge.shared }
 
-        // Phase 2: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
-        await safeInit("EchoelUniversalCore") { _ = EchoelUniversalCore.shared }
+        // Phase 4: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
+        await safeInit("Universal core...", phase: 4) { _ = EchoelUniversalCore.shared }
 
-        // Phase 3: Systems that reference EchoelUniversalCore
-        await safeInit("VideoAICreativeHub") { _ = VideoAICreativeHub.shared }
-        await safeInit("EchoelTools") { _ = EchoelTools.shared }
-
-        // Phase 4: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
-        await safeInit("EchoelToolkit") { _ = EchoelToolkit.shared }
-
-        // Phase 5: Instrument pipeline (can run in parallel)
-        do {
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                group.addTask { @MainActor in _ = InstrumentOrchestrator.shared }
-                group.addTask { @MainActor in _ = WorldMusicBridge.shared }
-                try await group.waitForAll()
-            }
-        } catch {
-            await MainActor.run {
-                log.warning("Phase 5 (Instruments) failed: \(error.localizedDescription)", category: .system)
-            }
+        // Phase 5: Systems that reference EchoelUniversalCore
+        await safeInit("Video & creative hub...", phase: 5) {
+            _ = VideoAICreativeHub.shared
+            _ = EchoelTools.shared
         }
 
-        // Phase 6: Physical AI (JEPA world model + autonomous control)
-        await safeInit("PhysicalAIEngine") {
+        // Phase 6: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
+        await safeInit("Echoel toolkit (10 engines)...", phase: 6) { _ = EchoelToolkit.shared }
+
+        // Phase 7: Instrument pipeline (can run in parallel)
+        await safeInit("Instruments & world music...", phase: 7) {
+            _ = InstrumentOrchestrator.shared
+            _ = WorldMusicBridge.shared
+        }
+
+        // Phase 8: Physical AI (JEPA world model + autonomous control)
+        await safeInit("Physical AI engine...", phase: 8) {
             let physicalAI = PhysicalAIEngine.shared
             physicalAI.start()
             physicalAI.addObjective(.maintainCoherence())
         }
 
-        // Phase 7: Script engine (community scripts + automation)
-        await safeInit("ScriptEngine") {
+        // Phase 9: Script engine (community scripts + automation)
+        await safeInit("Script engine...", phase: 9) {
             ScriptEngine.shared = ScriptEngine(
                 audioAPI: AudioScriptAPI(),
                 visualAPI: VisualScriptAPI(),
@@ -239,17 +244,20 @@ struct EchoelmusicApp: App {
             )
         }
 
-        // Phase 8: Streaming pipeline
-        await safeInit("SocialMediaManager") { _ = SocialMediaManager.shared }
+        // Phase 10: Streaming & social
+        await safeInit("Streaming pipeline...", phase: 10) { _ = SocialMediaManager.shared }
 
-        // Phase 8.5: Creative Workspace (bridges all engines: BPM grid, video, pro engines)
-        await safeInit("EchoelCreativeWorkspace") { _ = EchoelCreativeWorkspace.shared }
+        // Phase 11: Creative Workspace (bridges all engines: BPM grid, video, pro engines)
+        await safeInit("Creative workspace...", phase: 11) { _ = EchoelCreativeWorkspace.shared }
 
-        // Phase 9: Crash-safe state persistence (auto-save every 10s, recover on next launch)
-        await safeInit("CrashSafeStatePersistence") { _ = CrashSafeStatePersistence.shared }
+        // Phase 12: Crash-safe state persistence (auto-save every 10s, recover on next launch)
+        await safeInit("State persistence...", phase: 12) { _ = CrashSafeStatePersistence.shared }
 
+        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         await MainActor.run {
-            log.info("Echoelmusic Core Systems Initialized (all phases complete)", category: .system)
+            initializationProgress = 1.0
+            initializationPhase = "Ready"
+            log.info("Echoelmusic initialized in \(String(format: "%.1f", elapsed))s (12 phases complete)", category: .system)
         }
     }
 

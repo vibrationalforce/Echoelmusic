@@ -1136,9 +1136,9 @@ public class AnalyticsManager: ObservableObject {
             log.analytics("Analytics file: \(analyticsFile.path)")
         }
 
-        // Add Firebase provider (stub for now)
-        // Uncomment when Firebase SDK is added:
-        // providers.append(FirebaseAnalyticsProvider())
+        // Privacy-first analytics with local storage + remote sync
+        // Works without Firebase SDK — stores locally, syncs to own backend
+        providers.append(FirebaseAnalyticsProvider())
 
         log.analytics("✅ Analytics providers initialized: \(providers.count)")
     }

@@ -626,25 +626,292 @@ extension EEGSensorBridge: CBPeripheralDelegate {
 
     @MainActor
     private func parseMuseData(_ data: Data) {
-        // Muse data format (simplified):
-        // Packet types include: EEG, accelerometer, gyroscope, PPG
-        // EEG packets contain 12-bit samples from 4 channels
+        // Muse BLE protocol: Packets are prefixed with a type byte
+        // Reference: https://mind-monitor.com/FAQ.php
+        // Channel layout: TP9 (left ear), AF7 (left front), AF8 (right front), TP10 (right ear)
+        //
+        // Packet types:
+        //   0x20-0x23: EEG channel data (12-bit packed samples)
+        //   0x0D: Accelerometer
+        //   0x0E: Gyroscope
+        //   0x09: PPG (Muse S only)
+        //   0x1A: Battery level
 
-        // This would need the full Muse SDK or reverse-engineered protocol
-        // For now, generate simulated data when connected
+        guard data.count >= 2 else { return }
+        let bytes = [UInt8](data)
+        let packetType = bytes[0]
 
-        // Placeholder: Use simulation when connected to real device
-        // In production: Implement actual Muse protocol parsing
-        generateSimulatedData()
+        switch packetType {
+        case 0x20...0x23:
+            // EEG channel data — 12-bit packed samples (6 samples per packet)
+            let channelIndex = Int(packetType - 0x20)
+            let electrodes: [EEGRawData.Electrode] = [.tp9, .af7, .af8, .tp10]
+            guard channelIndex < electrodes.count else { return }
+
+            // Unpack 12-bit samples from remaining bytes
+            var samples: [Double] = []
+            var bitOffset = 8 // skip packet type byte
+            for _ in 0..<6 {
+                let byteIndex = bitOffset / 8
+                let bitRemainder = bitOffset % 8
+                guard byteIndex + 1 < bytes.count else { break }
+
+                var rawValue: UInt16
+                if bitRemainder <= 4 {
+                    rawValue = (UInt16(bytes[byteIndex]) << 8 | UInt16(bytes[byteIndex + 1]))
+                    rawValue = (rawValue >> (4 - bitRemainder)) & 0x0FFF
+                } else {
+                    guard byteIndex + 2 < bytes.count else { break }
+                    let combined = UInt32(bytes[byteIndex]) << 16 | UInt32(bytes[byteIndex + 1]) << 8 | UInt32(bytes[byteIndex + 2])
+                    rawValue = UInt16((combined >> (12 - bitRemainder)) & 0x0FFF)
+                }
+
+                // Convert 12-bit unsigned to microvolts (Muse scale: 0.48828125 µV/LSB)
+                let microvolts = (Double(rawValue) - 2048.0) * 0.48828125
+                samples.append(microvolts)
+                bitOffset += 12
+            }
+
+            // Publish raw electrode data
+            let rawData = EEGRawData(
+                electrode: electrodes[channelIndex],
+                values: samples,
+                sampleRate: 256,
+                timestamp: Date()
+            )
+            delegate?.eegSensor(self, didUpdateRawData: rawData)
+
+            // Accumulate channel data and compute band powers when all 4 channels received
+            accumulateMuseChannel(channelIndex, samples: samples)
+
+        case 0x1A:
+            // Battery packet — log but don't process as EEG
+            if bytes.count >= 4 {
+                let batteryLevel = Int(bytes[1])
+                log.biofeedback("Muse battery: \(batteryLevel)%")
+            }
+
+        default:
+            // Accelerometer (0x0D), Gyroscope (0x0E), PPG (0x09) — skip for now
+            break
+        }
+    }
+
+    /// Accumulated Muse channel data for band power computation
+    private var museChannelBuffers: [[Double]] = [[], [], [], []]
+    private var museChannelTimestamps: [Date] = [Date(), Date(), Date(), Date()]
+    private let museBandComputeThreshold = 64 // Accumulate this many samples before FFT
+
+    /// Accumulate EEG samples per channel and compute band powers
+    private func accumulateMuseChannel(_ channel: Int, samples: [Double]) {
+        guard channel < 4 else { return }
+        museChannelBuffers[channel].append(contentsOf: samples)
+        museChannelTimestamps[channel] = Date()
+
+        // Once we have enough samples on all channels, compute band powers
+        let minSamples = museChannelBuffers.map(\.count).min() ?? 0
+        guard minSamples >= museBandComputeThreshold else { return }
+
+        // Average across all 4 channels
+        let sampleCount = museBandComputeThreshold
+        var averaged = [Double](repeating: 0, count: sampleCount)
+        for ch in 0..<4 {
+            for i in 0..<sampleCount {
+                averaged[i] += museChannelBuffers[ch][i] / 4.0
+            }
+        }
+
+        // Trim consumed samples
+        for ch in 0..<4 {
+            museChannelBuffers[ch].removeFirst(sampleCount)
+        }
+
+        // Compute band powers via simple DFT magnitude bins
+        let bands = computeBandPowers(from: averaged, sampleRate: 256)
+        processNewBands(bands)
+    }
+
+    /// Compute EEG frequency band powers from a time-domain signal using DFT
+    private func computeBandPowers(from signal: [Double], sampleRate: Int) -> EEGBands {
+        let n = signal.count
+        let freqResolution = Double(sampleRate) / Double(n)
+
+        // Band frequency ranges (Hz)
+        let bandRanges: [(name: String, low: Double, high: Double)] = [
+            ("delta", 0.5, 4.0),
+            ("theta", 4.0, 8.0),
+            ("alpha", 8.0, 12.0),
+            ("beta", 12.0, 30.0),
+            ("gamma", 30.0, min(100.0, Double(sampleRate) / 2.0))
+        ]
+
+        var powers = [Double](repeating: 0, count: 5)
+
+        // Simple magnitude-squared DFT for each frequency bin
+        for k in 0..<(n / 2) {
+            let freq = Double(k) * freqResolution
+            var realPart = 0.0
+            var imagPart = 0.0
+
+            for i in 0..<n {
+                let angle = -2.0 * Double.pi * Double(k) * Double(i) / Double(n)
+                realPart += signal[i] * Foundation.cos(angle)
+                imagPart += signal[i] * Foundation.sin(angle)
+            }
+
+            let magnitudeSquared = (realPart * realPart + imagPart * imagPart) / Double(n * n)
+
+            // Assign to appropriate band
+            for (bandIdx, range) in bandRanges.enumerated() {
+                if freq >= range.low && freq < range.high {
+                    powers[bandIdx] += magnitudeSquared
+                    break
+                }
+            }
+        }
+
+        return EEGBands(
+            delta: powers[0],
+            theta: powers[1],
+            alpha: powers[2],
+            beta: powers[3],
+            gamma: powers[4],
+            timestamp: Date()
+        )
     }
 
     @MainActor
     private func parseNeuroSkyData(_ data: Data) {
-        // NeuroSky ThinkGear protocol parsing
+        // NeuroSky ThinkGear protocol (TGSP)
         // Reference: http://developer.neurosky.com/docs/doku.php
+        //
+        // Packet structure:
+        //   [SYNC] [SYNC] [PLENGTH] [PAYLOAD...] [CHECKSUM]
+        //   SYNC = 0xAA
+        //   PLENGTH = payload length (0-169)
+        //
+        // Payload codes:
+        //   0x02: Signal quality (0=good, 200=off head)
+        //   0x04: Attention (0-100)
+        //   0x05: Meditation (0-100)
+        //   0x80: Raw EEG (2 bytes, big-endian signed)
+        //   0x83: EEG power bands (24 bytes: 8 bands × 3 bytes each)
 
-        // Placeholder for actual parsing
-        generateSimulatedData()
+        guard data.count >= 4 else { return }
+        let bytes = [UInt8](data)
+
+        // Find sync bytes
+        var offset = 0
+        while offset < bytes.count - 3 {
+            if bytes[offset] == 0xAA && bytes[offset + 1] == 0xAA {
+                break
+            }
+            offset += 1
+        }
+
+        guard offset < bytes.count - 3 else { return }
+        offset += 2 // Skip sync bytes
+
+        let payloadLength = Int(bytes[offset])
+        offset += 1
+
+        guard payloadLength > 0, offset + payloadLength < bytes.count else { return }
+
+        // Verify checksum
+        var checksum: UInt8 = 0
+        for i in offset..<(offset + payloadLength) {
+            checksum = checksum &+ bytes[i]
+        }
+        checksum = ~checksum
+        let expectedChecksum = bytes[offset + payloadLength]
+        guard checksum == expectedChecksum else { return }
+
+        // Parse payload
+        var payloadOffset = offset
+        let payloadEnd = offset + payloadLength
+        var attention: Double = 0
+        var meditation: Double = 0
+        var signalQualityByte: UInt8 = 200
+
+        while payloadOffset < payloadEnd {
+            let code = bytes[payloadOffset]
+            payloadOffset += 1
+
+            switch code {
+            case 0x02: // Signal quality
+                guard payloadOffset < payloadEnd else { return }
+                signalQualityByte = bytes[payloadOffset]
+                payloadOffset += 1
+
+            case 0x04: // Attention
+                guard payloadOffset < payloadEnd else { return }
+                attention = Double(bytes[payloadOffset])
+                payloadOffset += 1
+
+            case 0x05: // Meditation
+                guard payloadOffset < payloadEnd else { return }
+                meditation = Double(bytes[payloadOffset])
+                payloadOffset += 1
+
+            case 0x83: // EEG power bands (24 bytes: 8 bands × 3 bytes)
+                guard payloadOffset + 1 < payloadEnd else { return }
+                let bandLength = Int(bytes[payloadOffset])
+                payloadOffset += 1
+
+                guard bandLength == 24, payloadOffset + 24 <= payloadEnd else {
+                    payloadOffset += bandLength
+                    continue
+                }
+
+                // 8 bands: delta, theta, low-alpha, high-alpha, low-beta, high-beta, low-gamma, mid-gamma
+                var bandPowers = [Double]()
+                for b in 0..<8 {
+                    let idx = payloadOffset + b * 3
+                    let value = (UInt32(bytes[idx]) << 16) | (UInt32(bytes[idx + 1]) << 8) | UInt32(bytes[idx + 2])
+                    bandPowers.append(Double(value))
+                }
+                payloadOffset += 24
+
+                // Map 8 NeuroSky bands to 5 standard EEG bands
+                let bands = EEGBands(
+                    delta: bandPowers[0],
+                    theta: bandPowers[1],
+                    alpha: (bandPowers[2] + bandPowers[3]) / 2.0,  // low + high alpha
+                    beta: (bandPowers[4] + bandPowers[5]) / 2.0,   // low + high beta
+                    gamma: (bandPowers[6] + bandPowers[7]) / 2.0,  // low + mid gamma
+                    timestamp: Date()
+                )
+                processNewBands(bands)
+
+            case 0x80: // Raw EEG (2 bytes)
+                guard payloadOffset + 2 < payloadEnd else { return }
+                let rawLength = Int(bytes[payloadOffset])
+                payloadOffset += 1
+                payloadOffset += rawLength
+
+            default:
+                // Unknown code — skip
+                if code >= 0x80 {
+                    // Extended code: next byte is length
+                    guard payloadOffset < payloadEnd else { return }
+                    let extLen = Int(bytes[payloadOffset])
+                    payloadOffset += 1 + extLen
+                } else {
+                    payloadOffset += 1
+                }
+            }
+        }
+
+        // Update signal quality from NeuroSky quality byte (0=best, 200=off head)
+        signalQuality = Swift.max(0, 1.0 - Double(signalQualityByte) / 200.0)
+
+        // Use attention/meditation for derived scores when band data unavailable
+        if attention > 0 {
+            focusScore = attention / 100.0
+        }
+        if meditation > 0 {
+            meditationScore = meditation / 100.0
+        }
     }
 }
 
