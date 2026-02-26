@@ -10,6 +10,7 @@
 
 #if os(iOS)
 import Foundation
+import UIKit
 import AudioToolbox
 import AVFoundation
 import Combine

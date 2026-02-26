@@ -75,7 +75,6 @@ public struct KammertonWheelView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(String(format: "%.3f", tuning.concertPitch))
                         .font(.system(size: 36, weight: .bold, design: .monospaced))
-                        .contentTransition(.numericText())
                         .onTapGesture {
                             editText = String(format: "%.3f", tuning.concertPitch)
                             isEditing = true
@@ -88,7 +87,7 @@ public struct KammertonWheelView: View {
 
             // Cents offset from 440
             if tuning.concertPitch != 440.0 {
-                let cents = 1200.0 * log2(tuning.concertPitch / 440.0)
+                let cents = 1200.0 * Foundation.log2(tuning.concertPitch / 440.0)
                 Text(String(format: "%+.1f cents from 440 Hz", cents))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
