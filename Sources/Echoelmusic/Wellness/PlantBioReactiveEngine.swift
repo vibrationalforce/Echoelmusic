@@ -175,7 +175,7 @@ public enum PlantSoundscape: String, CaseIterable, Codable, Sendable {
     public var baseFrequency: Double {
         switch self {
         case .earthTones: return 128.0      // C3 — Erdverbundenheit
-        case .crystalline: return 528.0     // C5 — Klarheit
+        case .crystalline: return 523.251   // C5 — Klarheit
         case .deepForest: return 64.0       // C2 — Tiefe
         case .waterFlow: return 256.0       // C4 — Fluss
         case .windRustle: return 512.0      // C5 — Luft

@@ -184,14 +184,14 @@ public enum LambdaOperators {
         var result = LambdaTransformResult.neutral
         guard let gravity = state.dimensions[.gravity] else { return result }
 
-        // 0g (Schwerelosigkeit) → 396 Hz (Erdung), 1g → 440 Hz, >1g → 528 Hz
+        // 0g (Schwerelosigkeit) → G4, 1g → A4, >1g → C5 (12-TET)
         let gNorm = gravity.value / 9.81
         if gNorm < 0.1 {
-            result.carrierFrequency = 396.0
+            result.carrierFrequency = 392.0    // G4
         } else if gNorm < 1.5 {
-            result.carrierFrequency = 440.0
+            result.carrierFrequency = 440.0    // A4
         } else {
-            result.carrierFrequency = 528.0
+            result.carrierFrequency = 523.251  // C5
         }
         return result
     }
