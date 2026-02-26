@@ -177,10 +177,9 @@ struct VaporwaveGradients {
 
 // MARK: - Animated Background Components
 
-/// Vaporwave animated gradient background (matches website design)
+/// Vaporwave gradient background (matches website design)
+/// Uses static blobs to avoid continuous 60fps re-renders that cause 50%+ CPU.
 struct VaporwaveAnimatedBackground: View {
-    @State private var animationPhase: CGFloat = 0
-
     var body: some View {
         ZStack {
             // Base gradient
@@ -194,7 +193,7 @@ struct VaporwaveAnimatedBackground: View {
                 endPoint: .bottom
             )
 
-            // Animated blob 1 (purple, top-left)
+            // Static blob 1 (purple, top-left)
             Circle()
                 .fill(
                     RadialGradient(
@@ -205,10 +204,10 @@ struct VaporwaveAnimatedBackground: View {
                     )
                 )
                 .frame(width: 500, height: 500)
-                .offset(x: -150 + sin(animationPhase) * 30, y: -200 + cos(animationPhase) * 20)
+                .offset(x: -150, y: -200)
                 .blur(radius: 60)
 
-            // Animated blob 2 (pink, bottom-right)
+            // Static blob 2 (pink, bottom-right)
             Circle()
                 .fill(
                     RadialGradient(
@@ -219,10 +218,10 @@ struct VaporwaveAnimatedBackground: View {
                     )
                 )
                 .frame(width: 400, height: 400)
-                .offset(x: 150 + cos(animationPhase * 0.8) * 25, y: 200 + sin(animationPhase * 0.8) * 30)
+                .offset(x: 150, y: 200)
                 .blur(radius: 50)
 
-            // Animated blob 3 (cyan, center)
+            // Static blob 3 (cyan, center)
             Circle()
                 .fill(
                     RadialGradient(
@@ -233,15 +232,10 @@ struct VaporwaveAnimatedBackground: View {
                     )
                 )
                 .frame(width: 600, height: 600)
-                .offset(x: sin(animationPhase * 0.6) * 40, y: cos(animationPhase * 0.6) * 35)
                 .blur(radius: 80)
         }
         .ignoresSafeArea()
-        .onAppear {
-            withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
-                animationPhase = .pi * 2
-            }
-        }
+        .drawingGroup()
     }
 }
 
@@ -317,9 +311,7 @@ struct NeonGlow: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .shadow(color: color.opacity(0.8), radius: radius / 2)
-            .shadow(color: color.opacity(0.5), radius: radius)
-            .shadow(color: color.opacity(0.3), radius: radius * 2)
+            .shadow(color: color.opacity(0.6), radius: radius)
     }
 }
 
@@ -476,14 +468,14 @@ struct VaporwaveAnimation {
     /// Quick response
     static let quick = Animation.easeOut(duration: 0.2)
 
-    /// Slow breathing animation
-    static let breathing = Animation.easeInOut(duration: 4.0).repeatForever(autoreverses: true)
+    /// Slow breathing animation (single cycle, not infinite)
+    static let breathing = Animation.easeInOut(duration: 4.0)
 
-    /// Pulse animation
-    static let pulse = Animation.easeInOut(duration: 1.0).repeatForever(autoreverses: true)
+    /// Pulse animation (single cycle, not infinite)
+    static let pulse = Animation.easeInOut(duration: 1.0)
 
-    /// Glow animation
-    static let glow = Animation.easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+    /// Glow animation (single cycle, not infinite)
+    static let glow = Animation.easeInOut(duration: 2.0)
 
     /// Returns nil animation if reduce motion is enabled, otherwise returns the provided animation
     /// Use this for accessibility compliance
@@ -601,12 +593,11 @@ struct VaporwaveDataDisplay: View {
     }
 }
 
-/// Status indicator with pulse animation
+/// Status indicator (static glow, no continuous animation to save CPU)
 struct VaporwaveStatusIndicator: View {
     let isActive: Bool
     let activeColor: Color
     let inactiveColor: Color
-    @State private var isPulsing = false
 
     init(isActive: Bool, activeColor: Color = VaporwaveColors.success, inactiveColor: Color = VaporwaveColors.textTertiary) {
         self.isActive = isActive
@@ -618,15 +609,7 @@ struct VaporwaveStatusIndicator: View {
         Circle()
             .fill(isActive ? activeColor : inactiveColor)
             .frame(width: 10, height: 10)
-            .scaleEffect(isActive && isPulsing ? 1.3 : 1.0)
             .shadow(color: isActive ? activeColor.opacity(0.5) : .clear, radius: 5)
-            .onAppear {
-                if isActive {
-                    withAnimation(VaporwaveAnimation.pulse) {
-                        isPulsing = true
-                    }
-                }
-            }
             .accessibilityLabel(isActive ? "Active" : "Inactive")
     }
 }
@@ -819,13 +802,11 @@ struct VaporwaveToggleRow: View {
     }
 }
 
-/// Status badge with pulsing dot (matches website hero-badge)
+/// Status badge with dot (matches website hero-badge)
 struct VaporwaveBadge: View {
     let text: String
     let dotColor: Color
     let showPulse: Bool
-
-    @State private var isPulsing = false
 
     init(_ text: String, dotColor: Color = VaporwaveColors.coherenceHigh, showPulse: Bool = true) {
         self.text = text
@@ -838,8 +819,6 @@ struct VaporwaveBadge: View {
             Circle()
                 .fill(dotColor)
                 .frame(width: 8, height: 8)
-                .scaleEffect(isPulsing ? 1.2 : 1.0)
-                .opacity(isPulsing ? 0.7 : 1.0)
 
             Text(text)
                 .font(.system(size: 12, weight: .medium))
@@ -853,13 +832,6 @@ struct VaporwaveBadge: View {
                 .stroke(VaporwaveColors.glassBorder, lineWidth: 1)
         )
         .clipShape(Capsule())
-        .onAppear {
-            if showPulse {
-                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                    isPulsing = true
-                }
-            }
-        }
     }
 }
 
