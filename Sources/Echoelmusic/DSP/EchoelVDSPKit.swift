@@ -57,10 +57,21 @@ public final class EchoelRealFFT: @unchecked Sendable {
             actualSize = requestedSize
             actualLog2n = requestedLog2n
             setup = s
-        } else {
+        } else if let fallback256 = vDSP_create_fftsetup(8, FFTRadix(kFFTRadix2)) {
+            // Fallback to 256-point FFT on memory pressure
             actualSize = 256
             actualLog2n = 8
-            setup = vDSP_create_fftsetup(8, FFTRadix(kFFTRadix2))!
+            setup = fallback256
+        } else if let fallback128 = vDSP_create_fftsetup(7, FFTRadix(kFFTRadix2)) {
+            // Extreme fallback to 128-point FFT
+            actualSize = 128
+            actualLog2n = 7
+            setup = fallback128
+        } else {
+            // Absolute minimum: 64-point FFT — vDSP guarantees this succeeds
+            actualSize = 64
+            actualLog2n = 6
+            setup = vDSP_create_fftsetup(6, FFTRadix(kFFTRadix2))!
         }
 
         self.size = actualSize
