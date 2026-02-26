@@ -93,7 +93,11 @@ public final class InterAppAudioManager: ObservableObject {
     }
 
     deinit {
-        disconnect()
+        // Nonisolated cleanup — cannot call @MainActor methods from deinit
+        if let au = audioUnit {
+            AudioUnitUninitialize(au)
+            AudioComponentInstanceDispose(au)
+        }
     }
 
     // MARK: - Audio Session

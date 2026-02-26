@@ -60,7 +60,9 @@ public struct KammertonWheelView: View {
             if isEditing {
                 HStack(spacing: 4) {
                     TextField("Hz", text: $editText)
+                        #if os(iOS) || os(visionOS)
                         .keyboardType(.decimalPad)
+                        #endif
                         .multilineTextAlignment(.center)
                         .font(.system(size: 36, weight: .bold, design: .monospaced))
                         .frame(width: 180)

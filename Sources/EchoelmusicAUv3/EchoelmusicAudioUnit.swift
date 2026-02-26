@@ -208,9 +208,6 @@ public enum EchoelmusicParameterAddress: AUParameterAddress {
     case synthSubOscLevel = 911     // Sub-oscillator (-1 octave) level
     case synthNoiseLevel = 912      // Noise component level
 
-    // EchoelFX extended
-    case reverbWidth = 920
-    case reverbPreDelay = 921
 }
 
 // MARK: - Base Audio Unit
