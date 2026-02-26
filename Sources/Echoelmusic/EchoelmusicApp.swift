@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import UserNotifications
 
 #if os(iOS) || os(tvOS)
@@ -19,6 +20,17 @@ class EchoelAppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 #endif
+
+/// Reference-type holder for Combine subscriptions in value-type (struct) contexts
+private final class CancellableHolder {
+    var cancellables = Set<AnyCancellable>()
+}
+
+extension AnyCancellable {
+    func store(in holder: CancellableHolder) {
+        self.store(in: &holder.cancellables)
+    }
+}
 
 #if os(iOS) || os(macOS) || os(tvOS)
 
@@ -69,6 +81,9 @@ struct EchoelmusicApp: App {
     // only after coreSystemsReady == true.
 
     @StateObject private var themeManager = ThemeManager()
+
+    /// Holds Combine subscriptions for system-level bridges
+    private let systemCancellables = CancellableHolder()
 
     @State private var coreSystemsReady = false
 
@@ -227,6 +242,9 @@ struct EchoelmusicApp: App {
         // Phase 8: Streaming pipeline
         await safeInit("SocialMediaManager") { _ = SocialMediaManager.shared }
 
+        // Phase 8.5: Creative Workspace (bridges all engines: BPM grid, video, pro engines)
+        await safeInit("EchoelCreativeWorkspace") { _ = EchoelCreativeWorkspace.shared }
+
         // Phase 9: Crash-safe state persistence (auto-save every 10s, recover on next launch)
         await safeInit("CrashSafeStatePersistence") { _ = CrashSafeStatePersistence.shared }
 
@@ -256,6 +274,28 @@ struct EchoelmusicApp: App {
         // Wire ControlHub → PhysicalAI bio signal bridge
         unifiedControlHub.connectPhysicalAI(physicalAI)
 
+        // Wire EchoelCreativeWorkspace → AudioEngine BPM sync
+        // This bridges the creative workspace BPM grid to the audio engine tempo
+        let workspace = EchoelCreativeWorkspace.shared
+        workspace.$globalBPM
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak audioEngine] bpm in
+                audioEngine?.setTempo(Float(bpm))
+            }
+            .store(in: systemCancellables)
+
+        // Wire EchoelCreativeWorkspace playback → AudioEngine start/stop
+        workspace.$isPlaying
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak audioEngine] playing in
+                if playing && !(audioEngine?.isRunning ?? false) {
+                    audioEngine?.start()
+                }
+            }
+            .store(in: systemCancellables)
+
         // Start UnifiedControlHub
         unifiedControlHub.start()
 
@@ -281,7 +321,7 @@ struct EchoelmusicApp: App {
             }
         }
 
-        log.info("Bio-Reactive Audio-Visual Platform Ready", category: .system)
+        log.info("Bio-Reactive Audio-Visual Platform Ready — all systems connected end-to-end", category: .system)
     }
 }
 

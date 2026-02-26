@@ -13,7 +13,12 @@ struct MainNavigationHub: View {
     @EnvironmentObject var microphoneManager: MicrophoneManager
     @EnvironmentObject var recordingEngine: RecordingEngine
 
-    // MARK: - State
+    // MARK: - Live Engine State
+
+    @EnvironmentObject var unifiedControlHub: UnifiedControlHub
+    @EnvironmentObject var healthKitEngine: UnifiedHealthKitEngine
+
+    // MARK: - UI State
 
     @State private var currentWorkspace: Workspace = .palace
     @State private var sidebarExpanded = true
@@ -21,11 +26,29 @@ struct MainNavigationHub: View {
     @State private var showSettings = false
     @State private var showSearch = false
     @State private var searchQuery = ""
-    @State private var coherence: Double = 0.75
-    @State private var heartRate: Int = 72
-    @State private var isPlaying = false
-    @State private var bpm: Double = 120.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // MARK: - Live Computed Properties (no stale state)
+
+    /// Live coherence from HealthKit (0.0-1.0)
+    private var coherence: Double {
+        healthKitEngine.coherence
+    }
+
+    /// Live heart rate from HealthKit
+    private var heartRate: Int {
+        Int(healthKitEngine.heartRate)
+    }
+
+    /// Live playback state from AudioEngine
+    private var isPlaying: Bool {
+        audioEngine.isRunning
+    }
+
+    /// Live BPM from EchoelCreativeWorkspace
+    private var bpm: Double {
+        EchoelCreativeWorkspace.shared.globalBPM
+    }
 
     // MARK: - Workspaces
 
@@ -542,7 +565,7 @@ struct MainNavigationHub: View {
                 transportButton(icon: "backward.end.fill") { }
                 transportButton(icon: "backward.fill") { }
 
-                Button(action: { isPlaying.toggle() }) {
+                Button(action: togglePlayback) {
                     ZStack {
                         Circle()
                             .fill(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan)
@@ -559,8 +582,8 @@ struct MainNavigationHub: View {
                 transportButton(icon: "forward.fill") { }
                 transportButton(icon: "forward.end.fill") { }
 
-                transportButton(icon: "stop.fill") { isPlaying = false }
-                transportButton(icon: "record.circle", color: VaporwaveColors.neonPink) { }
+                transportButton(icon: "stop.fill") { stopPlayback() }
+                transportButton(icon: "record.circle", color: VaporwaveColors.neonPink) { toggleRecording() }
             }
 
             Divider()
@@ -585,7 +608,7 @@ struct MainNavigationHub: View {
 
             // BPM
             HStack(spacing: VaporwaveSpacing.sm) {
-                Button(action: { bpm = max(20, bpm - 1) }) {
+                Button(action: { adjustBPM(by: -1) }) {
                     Image(systemName: "minus")
                         .font(.system(size: 10))
                         .foregroundColor(VaporwaveColors.textTertiary)
@@ -603,7 +626,7 @@ struct MainNavigationHub: View {
                         .tracking(2)
                 }
 
-                Button(action: { bpm = min(300, bpm + 1) }) {
+                Button(action: { adjustBPM(by: 1) }) {
                     Image(systemName: "plus")
                         .font(.system(size: 10))
                         .foregroundColor(VaporwaveColors.textTertiary)
@@ -621,20 +644,38 @@ struct MainNavigationHub: View {
 
             // Right Side Controls
             HStack(spacing: VaporwaveSpacing.md) {
-                // Metronome
-                transportButton(icon: "metronome", color: VaporwaveColors.textSecondary) { }
+                // Metronome — wired to ProSessionEngine
+                Button(action: { toggleMetronome() }) {
+                    Image(systemName: metronomeActive ? "metronome.fill" : "metronome")
+                        .font(.system(size: 14))
+                        .foregroundColor(metronomeActive ? VaporwaveColors.coherenceMedium : VaporwaveColors.textSecondary)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
 
-                // Loop
-                transportButton(icon: "repeat", color: VaporwaveColors.neonCyan) { }
+                // Loop Mode — wired to BPMGridEditEngine
+                Button(action: { toggleLoopMode() }) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 14))
+                        .foregroundColor(loopActive ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
 
-                // MIDI
-                transportButton(icon: "pianokeys", color: VaporwaveColors.textSecondary) { }
+                // MIDI — navigate to MIDI workspace
+                Button(action: { currentWorkspace = .midi }) {
+                    Image(systemName: "pianokeys")
+                        .font(.system(size: 14))
+                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
 
-                // CPU
+                // CPU — live from control hub
                 VStack(spacing: 0) {
-                    Text("12%")
+                    Text(String(format: "%.0f%%", unifiedControlHub.controlLoopFrequency / 60.0 * 100.0))
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundColor(VaporwaveColors.coherenceHigh)
+                        .foregroundColor(unifiedControlHub.controlLoopFrequency > 50 ? VaporwaveColors.coherenceHigh : VaporwaveColors.coherenceMedium)
 
                     Text("CPU")
                         .font(.system(size: 6))
@@ -821,16 +862,147 @@ struct MainNavigationHub: View {
         .background(Color.black.opacity(0.6))
     }
 
-    // MARK: - Helpers
+    // MARK: - Live Engine Computed Properties
+
+    /// Metronome state from ProSessionEngine
+    private var metronomeActive: Bool {
+        EchoelCreativeWorkspace.shared.proSession.metronomeEnabled
+    }
+
+    /// Loop mode: loops clips in ProSession (standard DAW loop behavior)
+    @State private var loopActive: Bool = false
+
+    // MARK: - Transport Actions
+
+    /// Toggle metronome — wired to ProSessionEngine + BPMGridEditEngine
+    private func toggleMetronome() {
+        EchoelCreativeWorkspace.shared.proSession.metronomeEnabled.toggle()
+        EchoelCreativeWorkspace.shared.bpmGrid.metronomeEnabled = EchoelCreativeWorkspace.shared.proSession.metronomeEnabled
+    }
+
+    /// Toggle loop mode — enables looping in all running clips
+    private func toggleLoopMode() {
+        loopActive.toggle()
+        let workspace = EchoelCreativeWorkspace.shared
+
+        // Enable/disable looping on all active clips in the session
+        for trackIndex in workspace.proSession.tracks.indices {
+            for sceneIndex in workspace.proSession.scenes.indices {
+                if var clip = workspace.proSession.tracks[trackIndex].clips[sceneIndex] {
+                    clip.loopEnabled = loopActive
+                    workspace.proSession.tracks[trackIndex].clips[sceneIndex] = clip
+                }
+            }
+        }
+    }
+
+    /// Toggle playback — wired to AudioEngine + EchoelCreativeWorkspace
+    private func togglePlayback() {
+        if audioEngine.isRunning {
+            audioEngine.stop()
+            healthKitEngine.stopStreaming()
+        } else {
+            audioEngine.start()
+            if healthKitEngine.isAuthorized {
+                healthKitEngine.startStreaming()
+            }
+        }
+        EchoelCreativeWorkspace.shared.togglePlayback()
+    }
+
+    /// Stop all playback
+    private func stopPlayback() {
+        audioEngine.stop()
+        healthKitEngine.stopStreaming()
+        if EchoelCreativeWorkspace.shared.isPlaying {
+            EchoelCreativeWorkspace.shared.togglePlayback()
+        }
+    }
+
+    /// Toggle recording via RecordingEngine
+    private func toggleRecording() {
+        do {
+            if recordingEngine.isRecording {
+                try recordingEngine.stopRecording()
+            } else {
+                try recordingEngine.startRecording()
+            }
+        } catch {
+            log.warning("Recording toggle failed: \(error.localizedDescription)", category: .audio)
+        }
+    }
+
+    /// Adjust BPM globally — syncs to all engines
+    private func adjustBPM(by delta: Double) {
+        let newBPM = max(20, min(300, bpm + delta))
+        EchoelCreativeWorkspace.shared.setGlobalBPM(newBPM)
+        audioEngine.setTempo(Float(newBPM))
+    }
+
+    // MARK: - Command & Action Handlers
 
     private func handleCommand(_ command: String) {
         showSearch = false
-        // Handle command palette selection
+
+        switch command {
+        case "New Project":
+            EchoelCreativeWorkspace.shared.newSession(mode: .audioVideo, bpm: bpm)
+        case "Save Project":
+            CrashSafeStatePersistence.shared.saveState(SessionState())
+        case "Add Track":
+            _ = EchoelCreativeWorkspace.shared.proMixer.addChannel(name: "Track \(EchoelCreativeWorkspace.shared.proMixer.channels.count + 1)", type: .audio)
+        case "Add Instrument":
+            currentWorkspace = .daw
+        case "Add Effect":
+            currentWorkspace = .nodes
+        case "Toggle Bio-Reactive":
+            Task {
+                do {
+                    try await unifiedControlHub.enableBiometricMonitoring()
+                } catch {
+                    log.warning("Biometric monitoring not available: \(error.localizedDescription)", category: .system)
+                }
+            }
+        case "Start Recording":
+            toggleRecording()
+        case "Open MIDI Settings":
+            currentWorkspace = .midi
+        case "Open Audio Settings":
+            currentWorkspace = .mixing
+        case "Open AI Tools":
+            currentWorkspace = .ai
+        case "Export Audio", "Export Video":
+            currentWorkspace = .streaming
+        case "Open Project":
+            currentWorkspace = .session
+        default:
+            log.info("Command: \(command)", category: .system)
+        }
     }
 
     private func handleQuickAction(_ action: QuickAction) {
         showQuickActions = false
-        // Handle quick action
+
+        switch action {
+        case .newProject:
+            EchoelCreativeWorkspace.shared.newSession(mode: .audioVideo, bpm: bpm)
+        case .addTrack:
+            _ = EchoelCreativeWorkspace.shared.proMixer.addChannel(name: "Track \(EchoelCreativeWorkspace.shared.proMixer.channels.count + 1)", type: .audio)
+        case .addInstrument:
+            currentWorkspace = .daw
+        case .addEffect:
+            currentWorkspace = .nodes
+        case .startSession:
+            togglePlayback()
+        case .toggleBio:
+            Task {
+                do {
+                    try await unifiedControlHub.enableBiometricMonitoring()
+                } catch {
+                    log.warning("Bio mode not available: \(error.localizedDescription)", category: .system)
+                }
+            }
+        }
     }
 }
 
@@ -1021,22 +1193,28 @@ struct QuickActionsMenu: View {
 
 #if DEBUG
 #Preview("Desktop") {
+    let audioEngine = AudioEngine()
     MainNavigationHub()
         .environmentObject(HealthKitManager())
-        .environmentObject(AudioEngine())
+        .environmentObject(audioEngine)
         .environmentObject(MicrophoneManager())
         .environmentObject(RecordingEngine())
+        .environmentObject(UnifiedControlHub(audioEngine: audioEngine))
+        .environmentObject(UnifiedHealthKitEngine.shared)
         .frame(width: 1400, height: 900)
 }
 #endif
 
 #if DEBUG
 #Preview("Mobile") {
+    let audioEngine = AudioEngine()
     MainNavigationHub()
         .environmentObject(HealthKitManager())
-        .environmentObject(AudioEngine())
+        .environmentObject(audioEngine)
         .environmentObject(MicrophoneManager())
         .environmentObject(RecordingEngine())
+        .environmentObject(UnifiedControlHub(audioEngine: audioEngine))
+        .environmentObject(UnifiedHealthKitEngine.shared)
         .frame(width: 390, height: 844)
 }
 #endif

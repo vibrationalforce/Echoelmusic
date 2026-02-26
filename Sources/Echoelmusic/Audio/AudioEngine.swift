@@ -417,7 +417,12 @@ public class AudioEngine: ObservableObject {
         microphoneManager.audioLevel
     }
 
-    /// Get current detected pitch in Hz
+    /// Current detected pitch in Hz from the microphone
+    var currentPitch: Float {
+        microphoneManager.currentPitch
+    }
+
+    /// Legacy closure accessor (kept for UnifiedControlHub compatibility)
     var getCurrentPitch: (() -> Float)? {
         return { [weak self] in
             self?.microphoneManager.currentPitch ?? 0.0
