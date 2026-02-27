@@ -27,7 +27,7 @@ fileprivate final class CancellableHolder {
 }
 
 extension AnyCancellable {
-    func store(in holder: CancellableHolder) {
+    fileprivate func store(in holder: CancellableHolder) {
         self.store(in: &holder.cancellables)
     }
 }
