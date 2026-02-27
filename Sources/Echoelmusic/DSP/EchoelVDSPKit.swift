@@ -73,12 +73,16 @@ public final class EchoelRealFFT: @unchecked Sendable {
             actualLog2n = 6
             setup = fallback64
         } else {
-            // Allocation failed entirely — create a minimal valid setup
+            // Allocation failed entirely — last-resort minimal setup
             // This should never happen on any Apple hardware, but avoids a crash
-            actualSize = 64
-            actualLog2n = 6
-            setup = vDSP_create_fftsetup(4, FFTRadix(kFFTRadix2))
-                ?? vDSP_create_fftsetup(2, FFTRadix(kFFTRadix2))!
+            actualSize = 16
+            actualLog2n = 4
+            guard let lastResort = vDSP_create_fftsetup(4, FFTRadix(kFFTRadix2)) else {
+                // If even a 16-point FFT fails, we are in catastrophic memory state.
+                // Crash with a clear diagnostic rather than undefined behavior.
+                preconditionFailure("EchoelRealFFT: cannot allocate even a 16-point FFT setup — system out of memory")
+            }
+            setup = lastResort
         }
 
         self.size = actualSize

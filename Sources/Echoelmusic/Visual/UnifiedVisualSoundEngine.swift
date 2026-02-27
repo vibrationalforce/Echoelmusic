@@ -477,9 +477,10 @@ public class UnifiedVisualSoundEngine: ObservableObject {
     private func performFFT(_ buffer: [Float]) {
         guard let setup = fftSetup, buffer.count >= fftSize else { return }
 
-        // Copy and window (Hann-Window reduziert Spectral Leakage)
-        var windowedBuffer = Array(buffer.prefix(fftSize))
-        vDSP_vmul(windowedBuffer, 1, hannWindow, 1, &windowedBuffer, 1, vDSP_Length(fftSize))
+        // Copy and window (Hann-Window reduziert Spectral Leakage) — separate buffer avoids overlap
+        let inputBuffer = Array(buffer.prefix(fftSize))
+        var windowedBuffer = [Float](repeating: 0, count: fftSize)
+        vDSP_vmul(inputBuffer, 1, hannWindow, 1, &windowedBuffer, 1, vDSP_Length(fftSize))
 
         // Prepare for FFT
         var realIn = windowedBuffer

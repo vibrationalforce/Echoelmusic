@@ -286,16 +286,16 @@ class MicrophoneManager: NSObject, ObservableObject {
             realParts[i] = data[i]
         }
 
-        // Apply Hann window to reduce spectral leakage
+        // Apply Hann window to reduce spectral leakage — separate buffer avoids overlap
         var window = [Float](repeating: 0, count: fftSize)
         vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
-        vDSP_vmul(realParts, 1, window, 1, &realParts, 1, vDSP_Length(fftSize))
+        var windowedParts = [Float](repeating: 0, count: fftSize)
+        vDSP_vmul(realParts, 1, window, 1, &windowedParts, 1, vDSP_Length(fftSize))
 
         // Perform FFT
-        // Copy inputs to separate buffers to avoid overlapping access with outputs
-        var realIn = [Float](realParts)
+        // Use windowed input; copy imagParts to avoid overlapping access with outputs
         var imagIn = [Float](imagParts)
-        vDSP_DFT_Execute(setup, &realIn, &imagIn, &realParts, &imagParts)
+        vDSP_DFT_Execute(setup, &windowedParts, &imagIn, &realParts, &imagParts)
 
         // Calculate magnitudes (power spectrum)
         var magnitudes = [Float](repeating: 0, count: fftSize / 2)

@@ -691,13 +691,14 @@ public final class BiophysicalSensorFusion: ObservableObject {
         var realOutput = [Float](repeating: 0, count: fftSize)
         var imagOutput = [Float](repeating: 0, count: fftSize)
 
-        // Hanning window
+        // Hanning window — use separate output buffer to avoid overlapping inout access
         var window = [Float](repeating: 0, count: fftSize)
         vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
-        vDSP_vmul(realInput, 1, window, 1, &realInput, 1, vDSP_Length(fftSize))
+        var windowed = [Float](repeating: 0, count: fftSize)
+        vDSP_vmul(realInput, 1, window, 1, &windowed, 1, vDSP_Length(fftSize))
 
         // FFT
-        vDSP_DFT_Execute(fftSetup, &realInput, &imagInput, &realOutput, &imagOutput)
+        vDSP_DFT_Execute(fftSetup, &windowed, &imagInput, &realOutput, &imagOutput)
 
         // Magnitude
         var magnitudes = [Float](repeating: 0, count: fftSize / 2)

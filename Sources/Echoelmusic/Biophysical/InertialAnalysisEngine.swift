@@ -252,11 +252,12 @@ public final class InertialAnalysisEngine: ObservableObject {
         // Convert to float array (use magnitude for omnidirectional detection)
         var magnitudes = recentSamples.map { Float($0.vibrationalMagnitude) }
 
-        // Apply window function
-        vDSP_vmul(magnitudes, 1, windowFunction, 1, &magnitudes, 1, vDSP_Length(windowSize))
+        // Apply window function — separate output buffer avoids overlapping inout access
+        var windowed = [Float](repeating: 0, count: windowSize)
+        vDSP_vmul(magnitudes, 1, windowFunction, 1, &windowed, 1, vDSP_Length(windowSize))
 
         // Prepare FFT arrays
-        var realInput = magnitudes
+        var realInput = windowed
         var imagInput = [Float](repeating: 0, count: windowSize)
         var realOutput = [Float](repeating: 0, count: windowSize)
         var imagOutput = [Float](repeating: 0, count: windowSize)

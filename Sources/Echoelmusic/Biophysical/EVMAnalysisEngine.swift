@@ -445,14 +445,15 @@ public final class EVMAnalysisEngine: NSObject {
         var realOutput = [Float](repeating: 0, count: fftLength)
         var imagOutput = [Float](repeating: 0, count: fftLength)
 
-        // Apply Hanning window
+        // Apply Hanning window — use separate output buffer to avoid overlapping inout access
         var window = [Float](repeating: 0, count: fftLength)
         vDSP_hann_window(&window, vDSP_Length(fftLength), Int32(vDSP_HANN_NORM))
-        vDSP_vmul(realInput, 1, window, 1, &realInput, 1, vDSP_Length(fftLength))
+        var windowed = [Float](repeating: 0, count: fftLength)
+        vDSP_vmul(realInput, 1, window, 1, &windowed, 1, vDSP_Length(fftLength))
 
         // Perform FFT
         if let fftSetup = fftSetup {
-            vDSP_DFT_Execute(fftSetup, &realInput, &imagInput, &realOutput, &imagOutput)
+            vDSP_DFT_Execute(fftSetup, &windowed, &imagInput, &realOutput, &imagOutput)
         }
 
         // Calculate magnitude spectrum

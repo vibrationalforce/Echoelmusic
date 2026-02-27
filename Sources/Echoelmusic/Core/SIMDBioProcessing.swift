@@ -279,16 +279,17 @@ public final class SIMDBioProcessor {
             fftImagBuffer[i] = 0
         }
 
-        // Apply Hann window
+        // Apply Hann window — separate output buffer avoids overlapping inout access
         var window = [Float](repeating: 0, count: n)
         vDSP_hann_window(&window, vDSP_Length(n), Int32(vDSP_HANN_NORM))
-        vDSP_vmul(fftRealBuffer, 1, window, 1, &fftRealBuffer, 1, vDSP_Length(n))
+        var windowed = [Float](repeating: 0, count: n)
+        vDSP_vmul(fftRealBuffer, 1, window, 1, &windowed, 1, vDSP_Length(n))
 
         // Perform FFT
         var outReal = [Float](repeating: 0, count: n)
         var outImag = [Float](repeating: 0, count: n)
 
-        vDSP_DFT_Execute(setup, fftRealBuffer, fftImagBuffer, &outReal, &outImag)
+        vDSP_DFT_Execute(setup, windowed, fftImagBuffer, &outReal, &outImag)
 
         // Calculate power spectrum (magnitude squared)
         var power = [Float](repeating: 0, count: n / 2)
