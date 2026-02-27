@@ -126,6 +126,7 @@ class AdaptiveAudioEngine: ObservableObject {
     }
 
     private func adaptQuality() {
+        guard !performanceHistory.isEmpty else { return }
         let avgCPU = performanceHistory.reduce(0, +) / Float(performanceHistory.count)
 
         if avgCPU > 80.0 && currentPreset != .batterySaver {
@@ -1149,7 +1150,7 @@ class AudioAnalysisEngine {
         let chord = detectChord(spectralData: spectralData, timestamp: timestamp)
 
         // Energy calculation
-        let energy = spectralData.spectrum.reduce(0, +) / Float(spectralData.spectrum.count)
+        let energy = spectralData.spectrum.isEmpty ? 0 : spectralData.spectrum.reduce(0, +) / Float(spectralData.spectrum.count)
 
         return AnalysisResult(
             bpm: bpm,

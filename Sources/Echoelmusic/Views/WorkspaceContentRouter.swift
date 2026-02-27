@@ -64,6 +64,7 @@ struct WorkspaceContentRouter: View {
 
         case .streaming:
             StreamingView()
+                .environmentObject(healthKitManager)
 
         case .settings:
             // Settings uses monochrome brand design

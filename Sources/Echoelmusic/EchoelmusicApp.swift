@@ -312,6 +312,16 @@ struct EchoelmusicApp: App {
             }
             .store(in: systemCancellables)
 
+        // Wire MicrophoneManager audio buffer → UnifiedVisualSoundEngine (via UniversalCore)
+        // This connects the audio→visual pipeline so spectrum, waveform, and beat detection work.
+        microphoneManager.$audioBuffer
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { buffer in
+                EchoelUniversalCore.shared.receiveAudioData(buffer: buffer)
+            }
+            .store(in: systemCancellables)
+
         // Start UnifiedControlHub
         unifiedControlHub.start()
 
