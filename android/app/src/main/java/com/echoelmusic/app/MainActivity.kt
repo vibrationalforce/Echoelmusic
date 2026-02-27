@@ -1,6 +1,7 @@
 package com.echoelmusic.app
 
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -40,6 +41,10 @@ val LocalEchoelmusicViewModel = staticCompositionLocalOf<EchoelmusicViewModel> {
  */
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
     private val viewModel: EchoelmusicViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,15 +77,27 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.startAudio()
-        viewModel.midiManager.start()
+        try {
+            viewModel.startAudio()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start audio on resume", e)
+        }
+        try {
+            viewModel.midiManager.start()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start MIDI on resume", e)
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        // Keep audio running in background if service is active
-        if (!viewModel.audioEngine.isServiceRunning) {
-            viewModel.stopAudio()
+        try {
+            // Keep audio running in background if service is active
+            if (!viewModel.audioEngine.isServiceRunning) {
+                viewModel.stopAudio()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to stop audio on pause", e)
         }
     }
 

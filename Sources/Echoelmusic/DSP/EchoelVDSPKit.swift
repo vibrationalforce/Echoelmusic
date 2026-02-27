@@ -67,11 +67,18 @@ public final class EchoelRealFFT: @unchecked Sendable {
             actualSize = 128
             actualLog2n = 7
             setup = fallback128
-        } else {
-            // Absolute minimum: 64-point FFT — vDSP guarantees this succeeds
+        } else if let fallback64 = vDSP_create_fftsetup(6, FFTRadix(kFFTRadix2)) {
+            // Absolute minimum: 64-point FFT
             actualSize = 64
             actualLog2n = 6
-            setup = vDSP_create_fftsetup(6, FFTRadix(kFFTRadix2))!
+            setup = fallback64
+        } else {
+            // Allocation failed entirely — create a minimal valid setup
+            // This should never happen on any Apple hardware, but avoids a crash
+            actualSize = 64
+            actualLog2n = 6
+            setup = vDSP_create_fftsetup(4, FFTRadix(kFFTRadix2))
+                ?? vDSP_create_fftsetup(2, FFTRadix(kFFTRadix2))!
         }
 
         self.size = actualSize

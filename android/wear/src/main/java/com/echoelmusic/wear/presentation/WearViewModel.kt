@@ -102,8 +102,8 @@ class WearViewModel(application: Application) : AndroidViewModel(application),
 
     // Session tracking
     private var sessionStartTime: Long = 0
-    private var sessionCoherenceReadings = mutableListOf<Float>()
-    private var sessionHrvReadings = mutableListOf<Float>()
+    private var sessionCoherenceReadings = Collections.synchronizedList(mutableListOf<Float>())
+    private var sessionHrvReadings = Collections.synchronizedList(mutableListOf<Float>())
     private var timerJob: kotlinx.coroutines.Job? = null
 
     // Vibrator for haptic feedback
@@ -363,18 +363,26 @@ class WearViewModel(application: Application) : AndroidViewModel(application),
 
         if (json.isNotBlank()) {
             val sessions = json.split("\n").mapNotNull { line ->
-                val parts = line.split("|")
-                if (parts.size >= 7) {
-                    SessionSummary(
-                        id = parts[0],
-                        startTime = parts[1].toLongOrNull() ?: 0,
-                        durationSeconds = parts[2].toLongOrNull() ?: 0,
-                        avgCoherence = parts[3].toFloatOrNull() ?: 0f,
-                        avgHrv = parts[4].toFloatOrNull() ?: 0f,
-                        peakCoherence = parts[5].toFloatOrNull() ?: 0f,
-                        coherenceLevel = CoherenceLevel.valueOf(parts[6])
-                    )
-                } else null
+                try {
+                    val parts = line.split("|")
+                    if (parts.size >= 7) {
+                        SessionSummary(
+                            id = parts[0],
+                            startTime = parts[1].toLongOrNull() ?: 0,
+                            durationSeconds = parts[2].toLongOrNull() ?: 0,
+                            avgCoherence = parts[3].toFloatOrNull() ?: 0f,
+                            avgHrv = parts[4].toFloatOrNull() ?: 0f,
+                            peakCoherence = parts[5].toFloatOrNull() ?: 0f,
+                            coherenceLevel = try {
+                                CoherenceLevel.valueOf(parts[6])
+                            } catch (_: IllegalArgumentException) {
+                                CoherenceLevel.MEDIUM
+                            }
+                        )
+                    } else null
+                } catch (e: Exception) {
+                    null
+                }
             }
             _sessionHistory.value = sessions
         }
@@ -422,7 +430,7 @@ class WearViewModel(application: Application) : AndroidViewModel(application),
     private fun startBioDataSimulation() {
         viewModelScope.launch {
             var phase = 0f
-            while (true) {
+            while (isActive) {
                 if (!_isPhoneConnected.value) {
                     // Simulate bio data when phone not connected
                     phase += 0.05f

@@ -351,7 +351,8 @@ public final class EEGSensorBridge: NSObject, ObservableObject {
 
         simulationTimer?.invalidate()
         simulationTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            guard self != nil else { return }
+            Task { @MainActor [weak self] in
                 self?.generateSimulatedData()
             }
         }

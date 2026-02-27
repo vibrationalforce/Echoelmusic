@@ -293,7 +293,11 @@ public final class DanteAudioTransport: ObservableObject {
             leeway: .milliseconds(500)
         )
         timer.setEventHandler { [weak self] in
-            self?.performHealthCheck()
+            // DispatchSource on .main doesn't guarantee MainActor isolation.
+            // Hop explicitly to MainActor to safely mutate @Published properties.
+            Task { @MainActor [weak self] in
+                self?.performHealthCheck()
+            }
         }
         timer.resume()
         healthCheckTimer = timer

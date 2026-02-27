@@ -127,6 +127,8 @@ class MidiManager(private val context: Context) {
                         outputPort.connect(midiReceiver)
                         openOutputPorts.add(outputPort)
                         Log.i(TAG, "Connected to output port $i")
+                    } else {
+                        Log.w(TAG, "Failed to open output port $i on ${deviceInfo.properties}")
                     }
                 }
 
@@ -137,8 +139,12 @@ class MidiManager(private val context: Context) {
                     if (inputPort != null) {
                         openInputPorts.add(inputPort)
                         Log.i(TAG, "Opened input port $i for sending")
+                    } else {
+                        Log.w(TAG, "Failed to open input port $i on ${deviceInfo.properties}")
                     }
                 }
+            } else {
+                Log.e(TAG, "Failed to open MIDI device: ${deviceInfo.properties}")
             }
         }, Handler(Looper.getMainLooper()))
     }

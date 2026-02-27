@@ -39,6 +39,8 @@ struct ContentView: View {
     @State private var breathingTimer: Timer?
     /// Elapsed seconds within the current breathing phase
     @State private var breathingElapsed: Double = 0.0
+    /// Guard against timer operations after view disappears
+    @State private var viewIsActive: Bool = false
 
     /// Computed property - single source of truth for recording state
     private var isRecording: Bool {
@@ -164,6 +166,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            viewIsActive = true
             pulseAnimation = true
             checkPermissions()
             Task {
@@ -175,9 +178,11 @@ struct ContentView: View {
             }
         }
         .onDisappear {
+            viewIsActive = false
             stopBreathingGuide()
         }
         .onChange(of: isRecording) { recording in
+            guard viewIsActive else { return }
             if recording && healthKitEngine.isAuthorized {
                 startBreathingGuide()
             } else {
@@ -1019,8 +1024,10 @@ struct ContentView: View {
         advanceBreathingPhase()
 
         // Tick every 0.1s to track elapsed time and advance phases
-        breathingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [self] _ in
+        // Uses [weak self] to prevent retain cycle (timer → closure → self → timer)
+        breathingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
+                guard let self = self else { return }
                 self.breathingElapsed += 0.1
                 if self.breathingElapsed >= self.breathingPhaseDuration {
                     self.breathingElapsed = 0.0
