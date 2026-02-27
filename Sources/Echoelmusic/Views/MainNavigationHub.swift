@@ -1,8 +1,8 @@
 import SwiftUI
 
 // MARK: - Main Navigation Hub
-// Unified workspace navigation for Echoelmusic - Multi-Billion Dollar Production Interface
-// Connects all professional views: DAW, Video, VJ/Laser, Node Editor, AI, Sessions
+// Unified workspace navigation for Echoelmusic — Monochrome Production Interface
+// E + Wellen, Schwarz mit Grautönen — Connects all professional views
 
 struct MainNavigationHub: View {
 
@@ -20,7 +20,7 @@ struct MainNavigationHub: View {
 
     // MARK: - UI State
 
-    @State private var currentWorkspace: Workspace = .palace
+    @State private var currentWorkspace: Workspace = .daw
     @State private var sidebarExpanded = true
     @State private var showQuickActions = false
     @State private var showSettings = false
@@ -86,7 +86,6 @@ struct MainNavigationHub: View {
         }
 
         /// Filled variant for selected state in tab bars.
-        /// Some SF Symbols don't have a .fill variant or already end in .fill.
         var filledIcon: String {
             switch self {
             case .palace: return "waveform.circle.fill"
@@ -106,18 +105,18 @@ struct MainNavigationHub: View {
 
         var color: Color {
             switch self {
-            case .palace: return VaporwaveColors.neonPink
-            case .daw: return VaporwaveColors.neonCyan
-            case .session: return VaporwaveColors.neonPurple
-            case .video: return VaporwaveColors.coral
-            case .vj: return VaporwaveColors.coherenceHigh
-            case .nodes: return VaporwaveColors.lavender
-            case .midi: return VaporwaveColors.coherenceMedium
-            case .mixing: return VaporwaveColors.neonCyan
-            case .ai: return VaporwaveColors.neonPurple
-            case .hardware: return VaporwaveColors.coral
-            case .streaming: return VaporwaveColors.neonPink
-            case .settings: return VaporwaveColors.textSecondary
+            case .palace: return EchoelBrand.primary
+            case .daw: return EchoelBrand.sky
+            case .session: return EchoelBrand.violet
+            case .video: return EchoelBrand.coral
+            case .vj: return EchoelBrand.emerald
+            case .nodes: return EchoelBrand.violet
+            case .midi: return EchoelBrand.amber
+            case .mixing: return EchoelBrand.sky
+            case .ai: return EchoelBrand.violet
+            case .hardware: return EchoelBrand.coral
+            case .streaming: return EchoelBrand.rose
+            case .settings: return EchoelBrand.textSecondary
             }
         }
 
@@ -144,17 +143,15 @@ struct MainNavigationHub: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background
-                VaporwaveGradients.background
+                // Background — true black
+                EchoelBrand.bgDeep
                     .ignoresSafeArea()
 
                 // Main Layout
                 #if os(iOS)
                 if geometry.size.width > 768 {
-                    // iPad - Desktop-style layout
                     desktopLayout
                 } else {
-                    // iPhone - Tab-based layout
                     mobileLayout
                 }
                 #elseif os(macOS)
@@ -185,12 +182,9 @@ struct MainNavigationHub: View {
 
     private var desktopLayout: some View {
         VStack(spacing: 0) {
-            // Top Bar
             topBar
 
-            // Main Content Area
             HStack(spacing: 0) {
-                // Sidebar
                 if sidebarExpanded {
                     sidebar
                         .frame(width: 220)
@@ -202,7 +196,6 @@ struct MainNavigationHub: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            // Transport Bar
             transportBar
         }
     }
@@ -211,14 +204,11 @@ struct MainNavigationHub: View {
 
     private var mobileLayout: some View {
         VStack(spacing: 0) {
-            // Top Status Bar
             mobileStatusBar
 
-            // Content
             workspaceContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Bottom Tab Bar
             mobileTabBar
         }
     }
@@ -227,11 +217,9 @@ struct MainNavigationHub: View {
 
     private var visionOSLayout: some View {
         ZStack {
-            // Floating workspace content
             workspaceContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Floating toolbar
             VStack {
                 Spacer()
 
@@ -245,10 +233,8 @@ struct MainNavigationHub: View {
 
     private var tvOSLayout: some View {
         VStack(spacing: 0) {
-            // Top navigation
             tvOSTopNav
 
-            // Content
             workspaceContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -257,31 +243,33 @@ struct MainNavigationHub: View {
     // MARK: - Top Bar
 
     private var topBar: some View {
-        HStack(spacing: VaporwaveSpacing.md) {
+        HStack(spacing: EchoelSpacing.md) {
             // Sidebar Toggle
             Button(action: {
-                withAnimation(reduceMotion ? nil : VaporwaveAnimation.smooth) {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: EchoelAnimation.smooth)) {
                     sidebarExpanded.toggle()
                 }
             }) {
                 Image(systemName: "sidebar.left")
                     .font(.system(size: 18))
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(sidebarExpanded ? "Collapse sidebar" : "Expand sidebar")
             .accessibilityHint("Toggles the navigation sidebar")
 
-            // Logo
-            HStack(spacing: VaporwaveSpacing.sm) {
-                Image(systemName: "waveform.path.ecg")
-                    .font(.system(size: 20))
-                    .foregroundColor(VaporwaveColors.neonPink)
-                    .neonGlow(color: VaporwaveColors.neonPink, radius: 8)
+            // Logo — E + Wellen
+            HStack(spacing: EchoelSpacing.sm) {
+                ELetterShape()
+                    .stroke(
+                        EchoelBrand.primary,
+                        style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)
+                    )
+                    .frame(width: 14, height: 18)
 
                 Text("ECHOELMUSIC")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .tracking(2)
             }
 
@@ -299,7 +287,7 @@ struct MainNavigationHub: View {
             Button(action: { showSearch = true }) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16))
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .buttonStyle(.plain)
             .keyboardShortcut("k", modifiers: .command)
@@ -310,7 +298,7 @@ struct MainNavigationHub: View {
             Button(action: { showQuickActions.toggle() }) {
                 Image(systemName: "plus.circle")
                     .font(.system(size: 18))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.primary)
             }
             .buttonStyle(.plain)
             .popover(isPresented: $showQuickActions) {
@@ -319,22 +307,15 @@ struct MainNavigationHub: View {
             .accessibilityLabel("Quick actions")
             .accessibilityHint("Create new session, add track, or import")
         }
-        .padding(.horizontal, VaporwaveSpacing.lg)
-        .padding(.vertical, VaporwaveSpacing.md)
+        .padding(.horizontal, EchoelSpacing.lg)
+        .padding(.vertical, EchoelSpacing.md)
         .background(
             Rectangle()
-                .fill(Color.black.opacity(0.8))
+                .fill(EchoelBrand.bgSurface)
                 .overlay(
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [currentWorkspace.color.opacity(0.3), .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(height: 2)
-                        .offset(y: 20),
+                        .fill(EchoelBrand.border)
+                        .frame(height: 1),
                     alignment: .bottom
                 )
         )
@@ -344,20 +325,21 @@ struct MainNavigationHub: View {
 
     private var workspaceTabs: some View {
         HStack(spacing: 0) {
-            ForEach([Workspace.palace, .daw, .session, .video, .vj, .nodes, .ai], id: \.self) { workspace in
+            // Video + Music Production prioritized
+            ForEach([Workspace.daw, .video, .session, .palace, .vj, .nodes, .ai], id: \.self) { workspace in
                 workspaceTab(workspace)
             }
         }
         .padding(4)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.black.opacity(0.4))
+                .fill(EchoelBrand.bgSurface)
         )
     }
 
     private func workspaceTab(_ workspace: Workspace) -> some View {
         Button(action: {
-            withAnimation(VaporwaveAnimation.smooth) {
+            withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                 currentWorkspace = workspace
             }
         }) {
@@ -370,12 +352,19 @@ struct MainNavigationHub: View {
                         .font(.system(size: 11, weight: .semibold))
                 }
             }
-            .foregroundColor(currentWorkspace == workspace ? .white : VaporwaveColors.textSecondary)
+            .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
             .padding(.horizontal, currentWorkspace == workspace ? 14 : 10)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(currentWorkspace == workspace ? workspace.color.opacity(0.8) : .clear)
+                    .fill(currentWorkspace == workspace ? EchoelBrand.bgElevated : .clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(
+                        currentWorkspace == workspace ? EchoelBrand.borderActive : .clear,
+                        lineWidth: 1
+                    )
             )
         }
         .buttonStyle(.plain)
@@ -387,16 +376,16 @@ struct MainNavigationHub: View {
     // MARK: - Bio Status Indicator
 
     private var bioStatusIndicator: some View {
-        HStack(spacing: VaporwaveSpacing.md) {
+        HStack(spacing: EchoelSpacing.md) {
             // Heart Rate
             HStack(spacing: 4) {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 12))
-                    .foregroundColor(VaporwaveColors.heartRate)
+                    .foregroundColor(EchoelBrand.rose)
 
                 Text("\(heartRate)")
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Heart rate: \(heartRate) BPM")
@@ -409,25 +398,24 @@ struct MainNavigationHub: View {
 
                 Circle()
                     .fill(coherenceColor)
-                    .frame(width: 8, height: 8)
-                    .neonGlow(color: coherenceColor, radius: 4)
+                    .frame(width: 6, height: 6)
                     .accessibilityHidden(true)
 
                 Text("\(Int(coherence * 100))%")
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Coherence: \(coherenceLabel), \(Int(coherence * 100)) percent")
         }
-        .padding(.horizontal, VaporwaveSpacing.md)
+        .padding(.horizontal, EchoelSpacing.md)
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color.black.opacity(0.4))
+                .fill(EchoelBrand.bgSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(coherenceColor.opacity(0.3), lineWidth: 1)
+                        .stroke(EchoelBrand.border, lineWidth: 1)
                 )
         )
     }
@@ -446,11 +434,11 @@ struct MainNavigationHub: View {
 
     private var coherenceColor: Color {
         if coherence > 0.7 {
-            return VaporwaveColors.coherenceHigh
+            return EchoelBrand.coherenceHigh
         } else if coherence > 0.4 {
-            return VaporwaveColors.coherenceMedium
+            return EchoelBrand.coherenceMedium
         } else {
-            return VaporwaveColors.coherenceLow
+            return EchoelBrand.coherenceLow
         }
     }
 
@@ -458,66 +446,64 @@ struct MainNavigationHub: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            // Workspace List
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: VaporwaveSpacing.xs) {
+                VStack(spacing: EchoelSpacing.xs) {
                     ForEach(Workspace.allCases) { workspace in
                         sidebarItem(workspace)
                     }
                 }
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
             }
 
             Divider()
-                .background(VaporwaveColors.textTertiary.opacity(0.2))
+                .background(EchoelBrand.border)
 
-            // Bottom Section - User & Help
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 sidebarBottomItem(icon: "questionmark.circle", label: "Help", action: {})
                 sidebarBottomItem(icon: "arrow.up.circle", label: "Upgrade Pro", action: {})
             }
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
         }
-        .background(Color.black.opacity(0.4))
+        .background(EchoelBrand.bgSurface.opacity(0.5))
     }
 
     private func sidebarItem(_ workspace: Workspace) -> some View {
         Button(action: {
-            withAnimation(VaporwaveAnimation.smooth) {
+            withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                 currentWorkspace = workspace
             }
         }) {
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 Image(systemName: workspace.icon)
                     .font(.system(size: 16))
-                    .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textTertiary)
+                    .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
                     .frame(width: 24)
 
                 Text(workspace.rawValue)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(currentWorkspace == workspace ? VaporwaveColors.textPrimary : VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textSecondary)
 
                 Spacer()
 
                 Text(workspace.shortcut)
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.white.opacity(0.1))
+                            .fill(EchoelBrand.bgElevated)
                     )
             }
-            .padding(.horizontal, VaporwaveSpacing.md)
-            .padding(.vertical, VaporwaveSpacing.sm)
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(currentWorkspace == workspace ? workspace.color.opacity(0.2) : .clear)
+                    .fill(currentWorkspace == workspace ? EchoelBrand.bgElevated : .clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(currentWorkspace == workspace ? workspace.color.opacity(0.5) : .clear, lineWidth: 1)
+                    .stroke(currentWorkspace == workspace ? EchoelBrand.borderActive : .clear, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -528,15 +514,15 @@ struct MainNavigationHub: View {
 
     private func sidebarBottomItem(icon: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 Image(systemName: icon)
                     .font(.system(size: 14))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
                     .frame(width: 20)
 
                 Text(label)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
 
                 Spacer()
             }
@@ -549,7 +535,6 @@ struct MainNavigationHub: View {
 
     @ViewBuilder
     private var workspaceContent: some View {
-        // Extracted to WorkspaceContentRouter for better modularity
         WorkspaceContentRouter(workspace: currentWorkspace)
             .environmentObject(healthKitManager)
             .environmentObject(audioEngine)
@@ -559,23 +544,26 @@ struct MainNavigationHub: View {
     // MARK: - Transport Bar
 
     private var transportBar: some View {
-        HStack(spacing: VaporwaveSpacing.lg) {
+        HStack(spacing: EchoelSpacing.lg) {
             // Playback Controls
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 transportButton(icon: "backward.end.fill") { }
                 transportButton(icon: "backward.fill") { }
 
                 Button(action: togglePlayback) {
                     ZStack {
                         Circle()
-                            .fill(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan)
+                            .fill(isPlaying ? EchoelBrand.primary : EchoelBrand.bgElevated)
                             .frame(width: 40, height: 40)
+                            .overlay(
+                                Circle()
+                                    .stroke(EchoelBrand.primary.opacity(0.4), lineWidth: 1)
+                            )
 
                         Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(isPlaying ? EchoelBrand.bgDeep : EchoelBrand.primary)
                     }
-                    .neonGlow(color: isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: 8)
                 }
                 .buttonStyle(.plain)
 
@@ -583,112 +571,120 @@ struct MainNavigationHub: View {
                 transportButton(icon: "forward.end.fill") { }
 
                 transportButton(icon: "stop.fill") { stopPlayback() }
-                transportButton(icon: "record.circle", color: VaporwaveColors.neonPink) { toggleRecording() }
+                transportButton(icon: "record.circle", color: EchoelBrand.coral) { toggleRecording() }
             }
 
             Divider()
                 .frame(height: 24)
-                .background(VaporwaveColors.textTertiary.opacity(0.3))
+                .background(EchoelBrand.border)
 
             // Time Display
             VStack(spacing: 0) {
                 Text("00:00:00:00")
                     .font(.system(size: 18, weight: .light, design: .monospaced))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("TIMECODE")
                     .font(.system(size: 8, weight: .medium))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
                     .tracking(2)
             }
 
             Divider()
                 .frame(height: 24)
-                .background(VaporwaveColors.textTertiary.opacity(0.3))
+                .background(EchoelBrand.border)
 
             // BPM
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Button(action: { adjustBPM(by: -1) }) {
                     Image(systemName: "minus")
                         .font(.system(size: 10))
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
                 .buttonStyle(.plain)
 
                 VStack(spacing: 0) {
                     Text(String(format: "%.1f", bpm))
                         .font(.system(size: 16, weight: .medium, design: .monospaced))
-                        .foregroundColor(VaporwaveColors.neonPurple)
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Text("BPM")
                         .font(.system(size: 8, weight: .medium))
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
                         .tracking(2)
                 }
 
                 Button(action: { adjustBPM(by: 1) }) {
                     Image(systemName: "plus")
                         .font(.system(size: 10))
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, VaporwaveSpacing.md)
+            .padding(.horizontal, EchoelSpacing.md)
             .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.black.opacity(0.3))
+                    .fill(EchoelBrand.bgElevated)
             )
 
             Spacer()
 
             // Right Side Controls
-            HStack(spacing: VaporwaveSpacing.md) {
-                // Metronome — wired to ProSessionEngine
+            HStack(spacing: EchoelSpacing.md) {
+                // Metronome
                 Button(action: { toggleMetronome() }) {
                     Image(systemName: metronomeActive ? "metronome.fill" : "metronome")
                         .font(.system(size: 14))
-                        .foregroundColor(metronomeActive ? VaporwaveColors.coherenceMedium : VaporwaveColors.textSecondary)
+                        .foregroundColor(metronomeActive ? EchoelBrand.amber : EchoelBrand.textSecondary)
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
 
-                // Loop Mode — wired to BPMGridEditEngine
+                // Loop Mode
                 Button(action: { toggleLoopMode() }) {
                     Image(systemName: "repeat")
                         .font(.system(size: 14))
-                        .foregroundColor(loopActive ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
+                        .foregroundColor(loopActive ? EchoelBrand.primary : EchoelBrand.textSecondary)
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
 
-                // MIDI — navigate to MIDI workspace
+                // MIDI
                 Button(action: { currentWorkspace = .midi }) {
                     Image(systemName: "pianokeys")
                         .font(.system(size: 14))
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .foregroundColor(EchoelBrand.textSecondary)
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
 
-                // CPU — live from control hub
+                // CPU
                 VStack(spacing: 0) {
                     Text(String(format: "%.0f%%", unifiedControlHub.controlLoopFrequency / 60.0 * 100.0))
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundColor(unifiedControlHub.controlLoopFrequency > 50 ? VaporwaveColors.coherenceHigh : VaporwaveColors.coherenceMedium)
+                        .foregroundColor(unifiedControlHub.controlLoopFrequency > 50 ? EchoelBrand.coherenceHigh : EchoelBrand.coherenceMedium)
 
                     Text("CPU")
                         .font(.system(size: 6))
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
             }
         }
-        .padding(.horizontal, VaporwaveSpacing.lg)
-        .padding(.vertical, VaporwaveSpacing.md)
-        .background(Color.black.opacity(0.9))
+        .padding(.horizontal, EchoelSpacing.lg)
+        .padding(.vertical, EchoelSpacing.md)
+        .background(
+            EchoelBrand.bgSurface
+                .overlay(
+                    Rectangle()
+                        .fill(EchoelBrand.border)
+                        .frame(height: 1),
+                    alignment: .top
+                )
+        )
     }
 
-    private func transportButton(icon: String, color: Color = VaporwaveColors.textSecondary, action: @escaping () -> Void) -> some View {
+    private func transportButton(icon: String, color: Color = EchoelBrand.textSecondary, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 14))
@@ -701,15 +697,18 @@ struct MainNavigationHub: View {
     // MARK: - Mobile Components
 
     private var mobileStatusBar: some View {
-        HStack(spacing: VaporwaveSpacing.md) {
-            // Logo
-            Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 18))
-                .foregroundColor(VaporwaveColors.neonPink)
+        HStack(spacing: EchoelSpacing.md) {
+            // Logo — E letter
+            ELetterShape()
+                .stroke(
+                    EchoelBrand.primary,
+                    style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)
+                )
+                .frame(width: 12, height: 16)
 
             Text(currentWorkspace.rawValue.uppercased())
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(VaporwaveColors.textPrimary)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(EchoelBrand.textPrimary)
                 .tracking(2)
 
             Spacer()
@@ -718,11 +717,11 @@ struct MainNavigationHub: View {
             HStack(spacing: 4) {
                 Circle()
                     .fill(coherenceColor)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 6, height: 6)
 
                 Text("\(Int(coherence * 100))%")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
 
             // Theme Toggle (Dark/Light)
@@ -732,40 +731,48 @@ struct MainNavigationHub: View {
             Button(action: { showSettings = true }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 16))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
         }
-        .padding(.horizontal, VaporwaveSpacing.md)
-        .padding(.vertical, VaporwaveSpacing.sm)
-        .background(Color.black.opacity(0.8))
+        .padding(.horizontal, EchoelSpacing.md)
+        .padding(.vertical, EchoelSpacing.sm)
+        .background(EchoelBrand.bgSurface)
     }
 
     private var mobileTabBar: some View {
         HStack(spacing: 0) {
-            ForEach([Workspace.palace, .daw, .session, .vj, .ai], id: \.self) { workspace in
+            // Video + Music Production prioritized
+            ForEach([Workspace.daw, .video, .palace, .session, .ai], id: \.self) { workspace in
                 mobileTabButton(workspace)
             }
         }
-        .padding(.top, VaporwaveSpacing.sm)
-        .padding(.bottom, VaporwaveSpacing.lg)
-        .background(Color.black.opacity(0.9))
+        .padding(.top, EchoelSpacing.sm)
+        .padding(.bottom, EchoelSpacing.lg)
+        .background(
+            EchoelBrand.bgSurface
+                .overlay(
+                    Rectangle()
+                        .fill(EchoelBrand.border)
+                        .frame(height: 1),
+                    alignment: .top
+                )
+        )
     }
 
     private func mobileTabButton(_ workspace: Workspace) -> some View {
         Button(action: {
-            withAnimation(VaporwaveAnimation.smooth) {
+            withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                 currentWorkspace = workspace
             }
         }) {
             VStack(spacing: 4) {
                 Image(systemName: currentWorkspace == workspace ? workspace.filledIcon : workspace.icon)
                     .font(.system(size: 20))
-                    .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textTertiary)
-                    .neonGlow(color: currentWorkspace == workspace ? workspace.color : .clear, radius: 6)
+                    .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
 
                 Text(workspace.rawValue)
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textTertiary)
+                    .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
             }
             .frame(maxWidth: .infinity)
         }
@@ -775,39 +782,43 @@ struct MainNavigationHub: View {
     // MARK: - Floating Toolbar (visionOS)
 
     private var floatingToolbar: some View {
-        HStack(spacing: VaporwaveSpacing.lg) {
-            ForEach([Workspace.palace, .daw, .session, .video, .vj, .nodes, .ai], id: \.self) { workspace in
+        HStack(spacing: EchoelSpacing.lg) {
+            // Video + Music Production prioritized
+            ForEach([Workspace.daw, .video, .session, .palace, .vj, .nodes, .ai], id: \.self) { workspace in
                 Button(action: {
-                    withAnimation(VaporwaveAnimation.smooth) {
+                    withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         currentWorkspace = workspace
                     }
                 }) {
                     VStack(spacing: 6) {
                         Image(systemName: workspace.icon)
                             .font(.system(size: 24))
-                            .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textSecondary)
+                            .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textSecondary)
 
                         Text(workspace.rawValue)
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textTertiary)
+                            .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
                     }
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(currentWorkspace == workspace ? workspace.color.opacity(0.2) : Color.black.opacity(0.4))
+                            .fill(currentWorkspace == workspace ? EchoelBrand.bgElevated : EchoelBrand.bgSurface)
                     )
-                    .neonGlow(color: currentWorkspace == workspace ? workspace.color : .clear, radius: 10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(currentWorkspace == workspace ? EchoelBrand.borderActive : .clear, lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(VaporwaveSpacing.lg)
+        .padding(EchoelSpacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.6))
+                .fill(EchoelBrand.bgSurface.opacity(0.8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(VaporwaveColors.textTertiary.opacity(0.2), lineWidth: 1)
+                        .stroke(EchoelBrand.border, lineWidth: 1)
                 )
         )
     }
@@ -815,32 +826,37 @@ struct MainNavigationHub: View {
     // MARK: - tvOS Navigation
 
     private var tvOSTopNav: some View {
-        HStack(spacing: VaporwaveSpacing.xl) {
+        HStack(spacing: EchoelSpacing.xl) {
             // Logo
-            HStack(spacing: VaporwaveSpacing.md) {
-                Image(systemName: "waveform.path.ecg")
-                    .font(.system(size: 32))
-                    .foregroundColor(VaporwaveColors.neonPink)
+            HStack(spacing: EchoelSpacing.md) {
+                ELetterShape()
+                    .stroke(
+                        EchoelBrand.primary,
+                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                    )
+                    .frame(width: 24, height: 32)
 
                 Text("ECHOELMUSIC")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(EchoelBrand.textPrimary)
+                    .tracking(3)
             }
 
             Spacer()
 
             // Workspace Selector
-            ForEach([Workspace.palace, .daw, .session, .vj, .ai], id: \.self) { workspace in
+            // Video + Music Production prioritized
+            ForEach([Workspace.daw, .video, .palace, .session, .ai], id: \.self) { workspace in
                 Button(action: {
-                    withAnimation(VaporwaveAnimation.smooth) {
+                    withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         currentWorkspace = workspace
                     }
                 }) {
                     Text(workspace.rawValue)
-                        .font(.system(size: 18, weight: currentWorkspace == workspace ? .bold : .regular))
-                        .foregroundColor(currentWorkspace == workspace ? workspace.color : VaporwaveColors.textSecondary)
-                        .padding(.horizontal, VaporwaveSpacing.lg)
-                        .padding(.vertical, VaporwaveSpacing.md)
+                        .font(.system(size: 18, weight: currentWorkspace == workspace ? .semibold : .regular))
+                        .foregroundColor(currentWorkspace == workspace ? EchoelBrand.textPrimary : EchoelBrand.textSecondary)
+                        .padding(.horizontal, EchoelSpacing.lg)
+                        .padding(.vertical, EchoelSpacing.md)
                 }
                 .buttonStyle(.plain)
             }
@@ -848,18 +864,18 @@ struct MainNavigationHub: View {
             Spacer()
 
             // Bio Status
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 Circle()
                     .fill(coherenceColor)
-                    .frame(width: 16, height: 16)
+                    .frame(width: 12, height: 12)
 
                 Text("\(Int(coherence * 100))%")
                     .font(.system(size: 20, weight: .medium, design: .monospaced))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
         }
-        .padding(VaporwaveSpacing.xl)
-        .background(Color.black.opacity(0.6))
+        .padding(EchoelSpacing.xl)
+        .background(EchoelBrand.bgSurface)
     }
 
     // MARK: - Live Engine Computed Properties
@@ -869,23 +885,20 @@ struct MainNavigationHub: View {
         EchoelCreativeWorkspace.shared.proSession.metronomeEnabled
     }
 
-    /// Loop mode: loops clips in ProSession (standard DAW loop behavior)
+    /// Loop mode
     @State private var loopActive: Bool = false
 
     // MARK: - Transport Actions
 
-    /// Toggle metronome — wired to ProSessionEngine + BPMGridEditEngine
     private func toggleMetronome() {
         EchoelCreativeWorkspace.shared.proSession.metronomeEnabled.toggle()
         EchoelCreativeWorkspace.shared.bpmGrid.metronomeEnabled = EchoelCreativeWorkspace.shared.proSession.metronomeEnabled
     }
 
-    /// Toggle loop mode — enables looping in all running clips
     private func toggleLoopMode() {
         loopActive.toggle()
         let workspace = EchoelCreativeWorkspace.shared
 
-        // Enable/disable looping on all active clips in the session
         for trackIndex in workspace.proSession.tracks.indices {
             for sceneIndex in workspace.proSession.scenes.indices {
                 if var clip = workspace.proSession.tracks[trackIndex].clips[sceneIndex] {
@@ -896,7 +909,6 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Toggle playback — wired to AudioEngine + EchoelCreativeWorkspace
     private func togglePlayback() {
         if audioEngine.isRunning {
             audioEngine.stop()
@@ -910,7 +922,6 @@ struct MainNavigationHub: View {
         EchoelCreativeWorkspace.shared.togglePlayback()
     }
 
-    /// Stop all playback
     private func stopPlayback() {
         audioEngine.stop()
         healthKitEngine.stopStreaming()
@@ -919,7 +930,6 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Toggle recording via RecordingEngine
     private func toggleRecording() {
         do {
             if recordingEngine.isRecording {
@@ -932,7 +942,6 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Adjust BPM globally — syncs to all engines
     private func adjustBPM(by delta: Double) {
         let newBPM = max(20, min(300, bpm + delta))
         EchoelCreativeWorkspace.shared.setGlobalBPM(newBPM)
@@ -1041,21 +1050,21 @@ struct CommandPaletteView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Search Field
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
 
                 TextField("Search commands...", text: $searchQuery)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .textFieldStyle(.plain)
 
                 if !searchQuery.isEmpty {
                     Button(action: { searchQuery = "" }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 14))
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .foregroundColor(EchoelBrand.textTertiary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1063,64 +1072,64 @@ struct CommandPaletteView: View {
                 Button(action: { dismiss() }) {
                     Text("ESC")
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.1))
+                                .fill(EchoelBrand.bgElevated)
                         )
                 }
                 .buttonStyle(.plain)
             }
-            .padding(VaporwaveSpacing.md)
-            .background(Color.black.opacity(0.6))
+            .padding(EchoelSpacing.md)
+            .background(EchoelBrand.bgSurface)
 
             Divider()
-                .background(VaporwaveColors.textTertiary.opacity(0.2))
+                .background(EchoelBrand.border)
 
             // Results
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(filteredCommands, id: \.0) { command in
                         Button(action: { onSelect(command.0) }) {
-                            HStack(spacing: VaporwaveSpacing.md) {
+                            HStack(spacing: EchoelSpacing.md) {
                                 Image(systemName: command.1)
                                     .font(.system(size: 16))
-                                    .foregroundColor(VaporwaveColors.neonCyan)
+                                    .foregroundColor(EchoelBrand.primary)
                                     .frame(width: 24)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(command.0)
-                                        .font(VaporwaveTypography.body())
-                                        .foregroundColor(VaporwaveColors.textPrimary)
+                                        .font(EchoelBrandFont.body())
+                                        .foregroundColor(EchoelBrand.textPrimary)
 
                                     Text(command.2)
-                                        .font(VaporwaveTypography.caption())
-                                        .foregroundColor(VaporwaveColors.textTertiary)
+                                        .font(EchoelBrandFont.caption())
+                                        .foregroundColor(EchoelBrand.textTertiary)
                                 }
 
                                 Spacer()
                             }
-                            .padding(VaporwaveSpacing.md)
+                            .padding(EchoelSpacing.md)
                             .background(Color.clear)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
 
                         Divider()
-                            .background(VaporwaveColors.textTertiary.opacity(0.1))
+                            .background(EchoelBrand.border)
                     }
                 }
             }
         }
         .frame(width: 500, height: 400)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(VaporwaveColors.deepBlack)
+            RoundedRectangle(cornerRadius: EchoelRadius.lg)
+                .fill(EchoelBrand.bgDeep)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(VaporwaveColors.neonCyan.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: EchoelRadius.lg)
+                        .stroke(EchoelBrand.borderActive, lineWidth: 1)
                 )
         )
     }
@@ -1144,19 +1153,19 @@ struct QuickActionsMenu: View {
         VStack(spacing: 0) {
             ForEach(QuickAction.allCases, id: \.self) { action in
                 Button(action: { onAction(action) }) {
-                    HStack(spacing: VaporwaveSpacing.md) {
+                    HStack(spacing: EchoelSpacing.md) {
                         Image(systemName: iconFor(action))
                             .font(.system(size: 14))
-                            .foregroundColor(VaporwaveColors.neonCyan)
+                            .foregroundColor(EchoelBrand.primary)
                             .frame(width: 20)
 
                         Text(action.rawValue)
-                            .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.textPrimary)
+                            .font(EchoelBrandFont.body())
+                            .foregroundColor(EchoelBrand.textPrimary)
 
                         Spacer()
                     }
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                     .background(Color.clear)
                     .contentShape(Rectangle())
                 }
@@ -1164,16 +1173,16 @@ struct QuickActionsMenu: View {
 
                 if action != QuickAction.allCases.last {
                     Divider()
-                        .background(VaporwaveColors.textTertiary.opacity(0.2))
+                        .background(EchoelBrand.border)
                 }
             }
         }
         .frame(width: 200)
-        .background(VaporwaveColors.deepBlack)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(EchoelBrand.bgDeep)
+        .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.md))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(VaporwaveColors.textTertiary.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: EchoelRadius.md)
+                .stroke(EchoelBrand.border, lineWidth: 1)
         )
     }
 

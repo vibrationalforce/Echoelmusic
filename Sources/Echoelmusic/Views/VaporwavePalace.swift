@@ -1,8 +1,8 @@
 import SwiftUI
 
-// MARK: - Vaporwave Palace
+// MARK: - Echoel Palace
 // Das Mutterschiff - Die Hauptansicht für Echoelmusic
-// "Flüssiges Licht für deine Musik"
+// "Create from Within" — E + Wellen, Schwarz mit Grautönen
 
 @MainActor
 struct VaporwavePalace: View {
@@ -21,9 +21,10 @@ struct VaporwavePalace: View {
     @State private var showVisualizer = false
     @State private var pulseAnimation = false
     @State private var glowIntensity: CGFloat = 0.5
+    @State private var wavePhase: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    // MARK: - Central Systems (VERBUNDEN MIT UNIVERSAL CORE)
+    // MARK: - Central Systems
 
     /// Visual Engine — accessed lazily via onAppear to avoid triggering
     /// a heavyweight singleton cascade during view init (which blocks MainActor).
@@ -54,10 +55,10 @@ struct VaporwavePalace: View {
 
         var color: Color {
             switch self {
-            case .focus: return VaporwaveColors.neonCyan
-            case .create: return VaporwaveColors.neonPurple
-            case .heal: return VaporwaveColors.coherenceHigh
-            case .live: return VaporwaveColors.neonPink
+            case .focus: return EchoelBrand.sky
+            case .create: return EchoelBrand.primary
+            case .heal: return EchoelBrand.emerald
+            case .live: return EchoelBrand.accent
             }
         }
 
@@ -75,7 +76,7 @@ struct VaporwavePalace: View {
 
     var body: some View {
         ZStack {
-            // Background
+            // Background — true black
             backgroundLayer
 
             // Content
@@ -85,7 +86,7 @@ struct VaporwavePalace: View {
 
                 Spacer()
 
-                // Bio Metrics Circle
+                // Bio Metrics Circle with E motif
                 bioMetricsCircle
 
                 Spacer()
@@ -99,7 +100,7 @@ struct VaporwavePalace: View {
                 // Status Bar
                 statusBar
             }
-            .padding(.horizontal, VaporwaveSpacing.lg)
+            .padding(.horizontal, EchoelSpacing.lg)
         }
         .onAppear {
             // Lazy-init: attach visual engine only when view appears on screen
@@ -126,23 +127,48 @@ struct VaporwavePalace: View {
 
     private var backgroundLayer: some View {
         ZStack {
-            // Base gradient
-            VaporwaveGradients.background
+            // True black base
+            EchoelBrand.bgDeep
                 .ignoresSafeArea()
 
-            // Animated grid (Vaporwave aesthetic)
+            // Subtle wave pattern (monochrome)
             GeometryReader { geo in
-                VaporwaveGrid()
-                    .opacity(0.3)
+                Canvas { context, size in
+                    let lineCount = 5
+                    for i in 0..<lineCount {
+                        let progress = CGFloat(i) / CGFloat(lineCount - 1)
+                        let y = size.height * (0.3 + progress * 0.4)
+                        let opacity = 0.03 + (1.0 - abs(progress - 0.5) * 2) * 0.04
+
+                        var path = Path()
+                        let segments = 60
+                        for seg in 0...segments {
+                            let x = CGFloat(seg) / CGFloat(segments) * size.width
+                            let wave = sin((x / size.width) * .pi * 3 + wavePhase + CGFloat(i) * 0.8) * 15 * (1.0 - progress * 0.5)
+                            let point = CGPoint(x: x, y: y + wave)
+                            if seg == 0 {
+                                path.move(to: point)
+                            } else {
+                                path.addLine(to: point)
+                            }
+                        }
+
+                        context.stroke(
+                            path,
+                            with: .color(EchoelBrand.primary.opacity(opacity)),
+                            lineWidth: 0.8
+                        )
+                    }
+                }
             }
 
-            // Glow orb (responds to coherence)
+            // Subtle coherence glow orb (monochrome)
             Circle()
                 .fill(
                     RadialGradient(
                         gradient: Gradient(colors: [
-                            selectedMode.color.opacity(glowIntensity * 0.5),
-                            selectedMode.color.opacity(0)
+                            EchoelBrand.primary.opacity(glowIntensity * 0.08),
+                            EchoelBrand.primary.opacity(0)
                         ]),
                         center: .center,
                         startRadius: 50,
@@ -150,7 +176,7 @@ struct VaporwavePalace: View {
                     )
                 )
                 .frame(width: 600, height: 600)
-                .blur(radius: 50)
+                .blur(radius: 60)
                 .offset(y: -100)
         }
     }
@@ -158,65 +184,95 @@ struct VaporwavePalace: View {
     // MARK: - Header Section
 
     private var headerSection: some View {
-        VStack(spacing: VaporwaveSpacing.xs) {
+        VStack(spacing: EchoelSpacing.xs) {
             HStack {
-                // Logo
-                Text("ECHOELMUSIC")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
-                    .neonGlow(color: selectedMode.color, radius: pulseAnimation ? 20 : 10)
+                // E + Waveform Logo (inline)
+                HStack(spacing: EchoelSpacing.sm) {
+                    // Small E letter
+                    ELetterShape()
+                        .stroke(
+                            EchoelBrand.primary,
+                            style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                        )
+                        .frame(width: 18, height: 24)
+
+                    Text("ECHOELMUSIC")
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
+                        .tracking(4)
+                }
 
                 Spacer()
 
                 // Settings button
                 Button(action: { showSettings.toggle() }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18))
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
             }
 
             // Tagline
-            Text("Flüssiges Licht")
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textTertiary)
-                .tracking(6)
+            Text("Create from Within")
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textTertiary)
+                .tracking(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.top, VaporwaveSpacing.xl)
+        .padding(.top, EchoelSpacing.xl)
     }
 
     // MARK: - Bio Metrics Circle
 
     private var bioMetricsCircle: some View {
         ZStack {
-            // Outer ring (coherence indicator)
+            // Outer ring (coherence indicator) — monochrome with functional color
             Circle()
                 .stroke(
                     AngularGradient(
                         gradient: Gradient(colors: [
-                            coherenceColor.opacity(0.1),
-                            coherenceColor,
-                            coherenceColor.opacity(0.1)
+                            coherenceColor.opacity(0.05),
+                            coherenceColor.opacity(0.4),
+                            coherenceColor.opacity(0.05)
                         ]),
                         center: .center
                     ),
-                    lineWidth: 4
+                    lineWidth: 2
                 )
                 .frame(width: 280, height: 280)
                 .rotationEffect(.degrees(pulseAnimation && !reduceMotion ? 360 : 0))
-                .animation(reduceMotion ? nil : .linear(duration: 8).repeatForever(autoreverses: false), value: pulseAnimation)
+                .animation(reduceMotion ? nil : .linear(duration: 12).repeatForever(autoreverses: false), value: pulseAnimation)
 
-            // Middle ring (HRV)
+            // Middle ring (HRV) — subtle gray
             Circle()
-                .stroke(VaporwaveColors.hrv.opacity(0.3), lineWidth: 2)
+                .stroke(EchoelBrand.primary.opacity(0.1), lineWidth: 1)
                 .frame(width: 240, height: 240)
 
-            // Inner content - Mini visualizer when active, bio data when inactive
+            // Wave rings emanating from center (E motif)
+            ForEach(0..<3, id: \.self) { i in
+                Circle()
+                    .stroke(
+                        EchoelBrand.primary.opacity(pulseAnimation ? 0.03 : 0.06),
+                        lineWidth: 0.5
+                    )
+                    .frame(
+                        width: 160 + CGFloat(i) * 40,
+                        height: 160 + CGFloat(i) * 40
+                    )
+                    .scaleEffect(pulseAnimation ? 1.05 : 0.95)
+                    .animation(
+                        reduceMotion ? nil :
+                            .easeInOut(duration: 3.0 + Double(i) * 0.5)
+                            .repeatForever(autoreverses: true),
+                        value: pulseAnimation
+                    )
+            }
+
+            // Inner content
             if isActive, let engine = visualEngine {
                 // Mini visualizer preview
                 Circle()
-                    .fill(Color.black)
+                    .fill(EchoelBrand.bgDeep)
                     .frame(width: 200, height: 200)
                     .overlay(
                         UnifiedVisualizer(engine: engine)
@@ -224,9 +280,9 @@ struct VaporwavePalace: View {
                     )
                     .overlay(
                         Circle()
-                            .stroke(selectedMode.color.opacity(0.5), lineWidth: 2)
+                            .stroke(EchoelBrand.primary.opacity(0.2), lineWidth: 1)
                     )
-                    .neonGlow(color: selectedMode.color, radius: 15)
+                    .echoelGlow(EchoelBrand.primary, radius: 8, intensity: 0.15)
                     .onTapGesture {
                         showVisualizer = true
                     }
@@ -235,74 +291,72 @@ struct VaporwavePalace: View {
                             Spacer()
                             Text("TAP TO EXPAND")
                                 .font(.system(size: 8, weight: .medium))
-                                .foregroundColor(VaporwaveColors.textTertiary)
+                                .foregroundColor(EchoelBrand.textTertiary)
                                 .tracking(2)
                                 .padding(.bottom, 20)
                         }
                     )
             } else {
-                // Inner glow
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(colors: [
-                                selectedMode.color.opacity(0.3),
-                                selectedMode.color.opacity(0.1),
-                                Color.clear
-                            ]),
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 100
-                        )
+                // E letter in center (brand motif)
+                ELetterShape()
+                    .stroke(
+                        EchoelBrand.primary.opacity(0.08),
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
                     )
-                    .frame(width: 200, height: 200)
-                    .scaleEffect(pulseAnimation ? 1.1 : 0.9)
-                    .animation(VaporwaveAnimation.breathing, value: pulseAnimation)
+                    .frame(width: 40, height: 54)
+                    .scaleEffect(pulseAnimation ? 1.02 : 0.98)
+                    .animation(
+                        reduceMotion ? nil :
+                            .easeInOut(duration: 4.0).repeatForever(autoreverses: true),
+                        value: pulseAnimation
+                    )
 
                 // Bio data display
-                VStack(spacing: VaporwaveSpacing.md) {
+                VStack(spacing: EchoelSpacing.md) {
                     // Heart Rate
                     VStack(spacing: 2) {
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
                             Text("\(Int(healthKitManager.heartRate))")
-                                .font(VaporwaveTypography.data())
-                                .foregroundColor(VaporwaveColors.heartRate)
-                                .neonGlow(color: VaporwaveColors.heartRate, radius: 8)
+                                .font(EchoelBrandFont.data())
+                                .foregroundColor(EchoelBrand.rose)
 
                             Image(systemName: "heart.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(VaporwaveColors.heartRate)
-                                .scaleEffect(pulseAnimation ? 1.2 : 1.0)
-                                .animation(VaporwaveAnimation.pulse, value: pulseAnimation)
+                                .font(.system(size: 14))
+                                .foregroundColor(EchoelBrand.rose)
+                                .scaleEffect(pulseAnimation ? 1.15 : 1.0)
+                                .animation(
+                                    reduceMotion ? nil :
+                                        .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                                    value: pulseAnimation
+                                )
                         }
 
                         Text("BPM")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textTertiary)
                     }
 
                     // Coherence Score
                     VStack(spacing: 2) {
                         Text("\(Int(healthKitManager.hrvCoherence))")
-                            .font(.system(size: 56, weight: .ultraLight, design: .rounded))
+                            .font(.system(size: 52, weight: .ultraLight, design: .rounded))
                             .foregroundColor(coherenceColor)
-                            .neonGlow(color: coherenceColor, radius: 15)
 
                         Text(coherenceLabel)
-                            .font(VaporwaveTypography.caption())
-                            .foregroundColor(coherenceColor)
-                            .tracking(2)
+                            .font(EchoelBrandFont.caption())
+                            .foregroundColor(coherenceColor.opacity(0.8))
+                            .tracking(3)
                     }
 
                     // HRV
                     VStack(spacing: 2) {
                         Text(String(format: "%.0f", healthKitManager.hrvRMSSD))
-                            .font(VaporwaveTypography.dataSmall())
-                            .foregroundColor(VaporwaveColors.hrv)
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundColor(EchoelBrand.emerald)
 
                         Text("HRV ms")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textTertiary)
                     }
                 }
             }
@@ -312,42 +366,49 @@ struct VaporwavePalace: View {
     // MARK: - Mode Selector
 
     private var modeSelector: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             // Mode buttons
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 ForEach(PalaceMode.allCases, id: \.self) { mode in
-                    Button(action: { withAnimation(VaporwaveAnimation.smooth) { selectedMode = mode } }) {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
+                            selectedMode = mode
+                        }
+                    }) {
                         VStack(spacing: 6) {
                             Image(systemName: mode.icon)
-                                .font(.system(size: 24))
+                                .font(.system(size: 22))
 
                             Text(mode.rawValue)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.system(size: 9, weight: .medium))
+                                .tracking(1)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, VaporwaveSpacing.md)
-                        .foregroundColor(selectedMode == mode ? mode.color : VaporwaveColors.textTertiary)
+                        .padding(.vertical, EchoelSpacing.md)
+                        .foregroundColor(selectedMode == mode ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(selectedMode == mode ? mode.color.opacity(0.15) : Color.clear)
+                            RoundedRectangle(cornerRadius: EchoelRadius.md)
+                                .fill(selectedMode == mode ? EchoelBrand.bgElevated : Color.clear)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(selectedMode == mode ? mode.color.opacity(0.5) : Color.clear, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: EchoelRadius.md)
+                                .stroke(
+                                    selectedMode == mode ? EchoelBrand.borderActive : Color.clear,
+                                    lineWidth: 1
+                                )
                         )
                     }
-                    .neonGlow(color: selectedMode == mode ? mode.color : .clear, radius: 10)
                 }
             }
 
             // Mode description
             Text(selectedMode.description)
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.top, VaporwaveSpacing.xs)
+                .padding(.top, EchoelSpacing.xs)
         }
-        .padding(.horizontal, VaporwaveSpacing.sm)
+        .padding(.horizontal, EchoelSpacing.sm)
     }
 
     // MARK: - Main Action Button
@@ -355,30 +416,38 @@ struct VaporwavePalace: View {
     private var mainActionButton: some View {
         Button(action: toggleActive) {
             ZStack {
-                // Outer glow ring
+                // Outer ring — subtle
                 Circle()
-                    .stroke(selectedMode.color.opacity(isActive ? 0.5 : 0.2), lineWidth: 2)
-                    .frame(width: 120, height: 120)
-                    .scaleEffect(isActive ? 1.2 : 1.0)
-                    .animation(isActive ? VaporwaveAnimation.pulse : .default, value: isActive)
+                    .stroke(
+                        EchoelBrand.primary.opacity(isActive ? 0.3 : 0.1),
+                        lineWidth: 1.5
+                    )
+                    .frame(width: 110, height: 110)
+                    .scaleEffect(isActive ? 1.15 : 1.0)
+                    .animation(
+                        isActive ?
+                            .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                            : .default,
+                        value: isActive
+                    )
 
                 // Main button
                 Circle()
-                    .fill(isActive ? selectedMode.color : VaporwaveColors.deepBlack)
-                    .frame(width: 100, height: 100)
+                    .fill(isActive ? EchoelBrand.primary : EchoelBrand.bgSurface)
+                    .frame(width: 90, height: 90)
                     .overlay(
                         Circle()
-                            .stroke(selectedMode.color, lineWidth: 2)
+                            .stroke(EchoelBrand.primary.opacity(0.4), lineWidth: 1.5)
                     )
 
                 // Icon
                 Image(systemName: isActive ? "stop.fill" : "play.fill")
-                    .font(.system(size: 36))
-                    .foregroundColor(isActive ? VaporwaveColors.deepBlack : selectedMode.color)
+                    .font(.system(size: 32))
+                    .foregroundColor(isActive ? EchoelBrand.bgDeep : EchoelBrand.primary)
             }
-            .neonGlow(color: isActive ? selectedMode.color : .clear, radius: 25)
+            .echoelGlow(EchoelBrand.primary, radius: isActive ? 15 : 0, intensity: isActive ? 0.2 : 0)
         }
-        .padding(.vertical, VaporwaveSpacing.xl)
+        .padding(.vertical, EchoelSpacing.xl)
     }
 
     // MARK: - Status Bar
@@ -388,28 +457,33 @@ struct VaporwavePalace: View {
             // Connection status
             HStack(spacing: 6) {
                 Circle()
-                    .fill(healthKitManager.isAuthorized ? VaporwaveColors.success : VaporwaveColors.warning)
-                    .frame(width: 8, height: 8)
+                    .fill(healthKitManager.isAuthorized ? EchoelBrand.success : EchoelBrand.warning)
+                    .frame(width: 6, height: 6)
 
                 Text(healthKitManager.isAuthorized ? "Watch Connected" : "Connect Watch")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             Spacer()
 
             // Mode indicator
             Text(selectedMode.rawValue)
-                .font(VaporwaveTypography.label())
-                .foregroundColor(selectedMode.color)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textSecondary)
+                .tracking(2)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(selectedMode.color.opacity(0.15))
+                        .fill(EchoelBrand.bgElevated)
+                        .overlay(
+                            Capsule()
+                                .stroke(EchoelBrand.border, lineWidth: 1)
+                        )
                 )
         }
-        .padding(.bottom, VaporwaveSpacing.xl)
+        .padding(.bottom, EchoelSpacing.xl)
     }
 
     // MARK: - Computed Properties
@@ -417,11 +491,11 @@ struct VaporwavePalace: View {
     private var coherenceColor: Color {
         let score = healthKitManager.hrvCoherence
         if score < 40 {
-            return VaporwaveColors.coherenceLow
+            return EchoelBrand.coherenceLow
         } else if score < 60 {
-            return VaporwaveColors.coherenceMedium
+            return EchoelBrand.coherenceMedium
         } else {
-            return VaporwaveColors.coherenceHigh
+            return EchoelBrand.coherenceHigh
         }
     }
 
@@ -439,7 +513,7 @@ struct VaporwavePalace: View {
     // MARK: - Actions
 
     private func toggleActive() {
-        withAnimation(VaporwaveAnimation.smooth) {
+        withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
             isActive.toggle()
         }
 
@@ -469,8 +543,14 @@ struct VaporwavePalace: View {
         // Invalidiere vorherigen Timer falls vorhanden (Memory Leak Prevention)
         bioDataTimer?.invalidate()
 
-        // Update glow and feed bio data through UNIVERSAL CORE (not directly to visualEngine!)
-        // Timer wird gespeichert für sauberes Cleanup in stopAnimations()
+        // Subtle wave animation
+        if !reduceMotion {
+            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                wavePhase = .pi * 2
+            }
+        }
+
+        // Update glow and feed bio data through UNIVERSAL CORE
         bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak healthKitManager] _ in
             guard let hkManager = healthKitManager else { return }
 
@@ -479,7 +559,7 @@ struct VaporwavePalace: View {
                     glowIntensity = CGFloat(hkManager.hrvCoherence / 100.0)
                 }
 
-                // Route Bio-Daten durch UniversalCore - verteilt automatisch an ALLE Systeme
+                // Route Bio-Daten durch UniversalCore
                 EchoelUniversalCore.shared.receiveBioData(
                     heartRate: hkManager.heartRate,
                     hrv: hkManager.hrvRMSSD,
@@ -511,61 +591,6 @@ struct VaporwavePalace: View {
             return .mandala
         case .live:
             return .spectrum
-        }
-    }
-}
-
-// MARK: - Vaporwave Grid (Aesthetic Background)
-
-struct VaporwaveGrid: View {
-    @State private var offset: CGFloat = 0
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        GeometryReader { geo in
-            Canvas { context, size in
-                let gridSpacing: CGFloat = 40
-                let lineWidth: CGFloat = 0.5
-
-                // Horizontal lines with perspective
-                for i in 0..<Int(size.height / gridSpacing) + 10 {
-                    let y = CGFloat(i) * gridSpacing + offset.truncatingRemainder(dividingBy: gridSpacing)
-                    let opacity = 1.0 - (y / size.height)
-
-                    var path = Path()
-                    path.move(to: CGPoint(x: 0, y: y))
-                    path.addLine(to: CGPoint(x: size.width, y: y))
-
-                    context.stroke(
-                        path,
-                        with: .color(VaporwaveColors.neonPink.opacity(opacity * 0.3)),
-                        lineWidth: lineWidth
-                    )
-                }
-
-                // Vertical lines
-                let centerX = size.width / 2
-                for i in -10..<11 {
-                    let x = centerX + CGFloat(i) * gridSpacing
-                    let opacity = 1.0 - abs(CGFloat(i)) / 10.0
-
-                    var path = Path()
-                    path.move(to: CGPoint(x: x, y: size.height * 0.5))
-                    path.addLine(to: CGPoint(x: centerX + CGFloat(i) * gridSpacing * 3, y: size.height))
-
-                    context.stroke(
-                        path,
-                        with: .color(VaporwaveColors.neonCyan.opacity(opacity * 0.2)),
-                        lineWidth: lineWidth
-                    )
-                }
-            }
-        }
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
-                offset = 40
-            }
         }
     }
 }

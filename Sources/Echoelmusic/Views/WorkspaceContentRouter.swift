@@ -66,6 +66,7 @@ struct WorkspaceContentRouter: View {
             StreamingView()
 
         case .settings:
+            // Settings uses monochrome brand design
             VaporwaveSettings()
                 .environmentObject(healthKitManager)
                 .environmentObject(audioEngine)
@@ -80,7 +81,7 @@ extension MainNavigationHub.Workspace {
     /// Human-readable description for accessibility
     var accessibilityLabel: String {
         switch self {
-        case .palace: return "Vaporwave Palace - Main creative dashboard"
+        case .palace: return "Echoel Palace - Main creative dashboard"
         case .daw: return "Digital Audio Workstation - Arrangement view"
         case .session: return "Session View - Clip launcher"
         case .video: return "Video Editor - Edit and process video"

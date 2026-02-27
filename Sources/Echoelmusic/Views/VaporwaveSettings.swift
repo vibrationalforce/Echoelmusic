@@ -1,7 +1,7 @@
 import SwiftUI
 
-// MARK: - Vaporwave Settings View
-// Einstellungen im Vaporwave Palace Style
+// MARK: - Echoel Settings View
+// Einstellungen im monochrome Echoelmusic Brand Design
 
 struct VaporwaveSettings: View {
 
@@ -38,11 +38,11 @@ struct VaporwaveSettings: View {
     var body: some View {
         NavigationView {
             ZStack {
-                VaporwaveGradients.background
+                EchoelBrand.bgDeep
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: VaporwaveSpacing.lg) {
+                    VStack(spacing: EchoelSpacing.lg) {
 
                         // Bio-Reactive Mappings
                         settingsSection(title: "BIO-REACTIVE", icon: "heart.circle") {
@@ -69,7 +69,7 @@ struct VaporwaveSettings: View {
                             aboutSection
                         }
                     }
-                    .padding(VaporwaveSpacing.lg)
+                    .padding(EchoelSpacing.lg)
                 }
             }
             .navigationTitle("")
@@ -77,14 +77,14 @@ struct VaporwaveSettings: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Text("SETTINGS")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                     .accessibilityLabel("Close settings")
                 }
@@ -100,60 +100,60 @@ struct VaporwaveSettings: View {
         icon: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.md) {
             // Header
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.primary)
 
                 Text(title)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(EchoelBrand.primary)
                     .tracking(2)
 
                 Spacer()
             }
 
             // Content
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 content()
             }
-            .padding(VaporwaveSpacing.md)
-            .glassCard()
+            .padding(EchoelSpacing.md)
+            .echoelCard()
         }
     }
 
     // MARK: - Bio-Reactive Settings
 
     private var bioReactiveSettings: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             settingsToggle(
                 title: "HRV → Filter",
                 subtitle: "Heart rate variability controls filter brightness",
                 isOn: $hrvToFilter,
-                color: VaporwaveColors.hrv
+                color: EchoelBrand.emerald
             )
 
             settingsToggle(
                 title: "Coherence → Reverb",
                 subtitle: "Flow state opens up the space",
                 isOn: $coherenceToReverb,
-                color: VaporwaveColors.coherenceHigh
+                color: EchoelBrand.coherenceHigh
             )
 
             settingsToggle(
                 title: "Heart Rate → Tempo",
                 subtitle: "Sync delay time to your heartbeat",
                 isOn: $heartRateToTempo,
-                color: VaporwaveColors.heartRate
+                color: EchoelBrand.rose
             )
 
             settingsToggle(
                 title: "Stress → Compression",
                 subtitle: "Tension increases audio compression",
                 isOn: $stressToCompression,
-                color: VaporwaveColors.coherenceLow
+                color: EchoelBrand.coherenceLow
             )
         }
     }
@@ -161,44 +161,44 @@ struct VaporwaveSettings: View {
     // MARK: - OSC Settings
 
     private var oscSettings: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             settingsToggle(
                 title: "Enable OSC Output",
                 subtitle: "Send bio-data to external software",
                 isOn: $oscEnabled,
-                color: VaporwaveColors.neonPurple
+                color: EchoelBrand.violet
             )
 
             if oscEnabled {
-                HStack(spacing: VaporwaveSpacing.md) {
+                HStack(spacing: EchoelSpacing.md) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("HOST")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textTertiary)
 
                         TextField("127.0.0.1", text: $oscHost)
-                            .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.textPrimary)
-                            .padding(VaporwaveSpacing.sm)
+                            .font(EchoelBrandFont.body())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                            .padding(EchoelSpacing.sm)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.white.opacity(0.05))
+                                    .fill(EchoelBrand.bgElevated)
                             )
                             .keyboardType(.numbersAndPunctuation)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("PORT")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textTertiary)
 
                         TextField("9000", text: $oscPort)
-                            .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.textPrimary)
-                            .padding(VaporwaveSpacing.sm)
+                            .font(EchoelBrandFont.body())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                            .padding(EchoelSpacing.sm)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.white.opacity(0.05))
+                                    .fill(EchoelBrand.bgElevated)
                             )
                             .keyboardType(.numberPad)
                             .frame(width: 80)
@@ -206,12 +206,12 @@ struct VaporwaveSettings: View {
                 }
 
                 // Presets
-                VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                     Text("PRESETS")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
 
-                    HStack(spacing: VaporwaveSpacing.sm) {
+                    HStack(spacing: EchoelSpacing.sm) {
                         presetButton("TouchDesigner", port: "9000")
                         presetButton("Resolume", port: "7000")
                         presetButton("Ableton", port: "9001")
@@ -225,12 +225,16 @@ struct VaporwaveSettings: View {
         Button(action: { oscPort = port }) {
             Text(name)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundColor(oscPort == port ? VaporwaveColors.neonPurple : VaporwaveColors.textTertiary)
+                .foregroundColor(oscPort == port ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
-                        .fill(oscPort == port ? VaporwaveColors.neonPurple.opacity(0.2) : Color.white.opacity(0.05))
+                        .fill(oscPort == port ? EchoelBrand.bgElevated : EchoelBrand.bgSurface)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(oscPort == port ? EchoelBrand.borderActive : EchoelBrand.border, lineWidth: 1)
                 )
         }
     }
@@ -238,19 +242,19 @@ struct VaporwaveSettings: View {
     // MARK: - MIDI Settings
 
     private var midiSettings: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             settingsToggle(
                 title: "Enable MIDI Output",
                 subtitle: "Send CC messages to hardware/software",
                 isOn: $midiEnabled,
-                color: VaporwaveColors.neonPink
+                color: EchoelBrand.amber
             )
 
             if midiEnabled {
                 HStack {
                     Text("MIDI Device")
-                        .font(VaporwaveTypography.body())
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .font(EchoelBrandFont.body())
+                        .foregroundColor(EchoelBrand.textSecondary)
 
                     Spacer()
 
@@ -260,7 +264,7 @@ struct VaporwaveSettings: View {
                         Text("Bluetooth").tag(2)
                     }
                     .pickerStyle(.menu)
-                    .tint(VaporwaveColors.neonPink)
+                    .tint(EchoelBrand.primary)
                 }
             }
         }
@@ -271,20 +275,20 @@ struct VaporwaveSettings: View {
     @ObservedObject private var themeManager = ThemeManager.shared
 
     private var visualSettings: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             // Appearance Mode (Dark/Light/System)
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                 Text("APPEARANCE")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
 
                 ThemeModePicker(themeManager: themeManager)
             }
 
             HStack {
                 Text("Visual Quality")
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                 Spacer()
 
@@ -294,14 +298,14 @@ struct VaporwaveSettings: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .tint(VaporwaveColors.neonCyan)
+                .tint(EchoelBrand.primary)
             }
 
             settingsToggle(
                 title: "Haptic Feedback",
                 subtitle: "Vibrate on heartbeat and triggers",
                 isOn: $hapticFeedback,
-                color: VaporwaveColors.neonCyan
+                color: EchoelBrand.primary
             )
         }
     }
@@ -309,48 +313,56 @@ struct VaporwaveSettings: View {
     // MARK: - About Section
 
     private var aboutSection: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             HStack {
                 Text("Version")
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textSecondary)
                 Spacer()
                 Text("1.0.0")
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             HStack {
                 Text("Build")
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textSecondary)
                 Spacer()
-                Text("Vaporwave Palace")
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.neonPink)
+                Text("Echoel Studio")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.primary)
             }
 
             Divider()
-                .background(Color.white.opacity(0.1))
+                .background(EchoelBrand.border)
 
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
+                // E Logo
+                ELetterShape()
+                    .stroke(
+                        EchoelBrand.primary,
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+                    )
+                    .frame(width: 24, height: 32)
+
                 Text("ECHOELMUSIC")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
-                    .neonGlow(color: VaporwaveColors.neonPink, radius: 10)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
+                    .tracking(4)
 
-                Text("Flüssiges Licht für deine Musik")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                Text("Create from Within")
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
                     .tracking(2)
 
-                Text("© 2024-2025")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
-                    .padding(.top, VaporwaveSpacing.sm)
+                Text("© 2024-2026")
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textDisabled)
+                    .padding(.top, EchoelSpacing.sm)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, VaporwaveSpacing.md)
+            .padding(.vertical, EchoelSpacing.md)
         }
     }
 
@@ -365,12 +377,12 @@ struct VaporwaveSettings: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text(subtitle)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             Spacer()
