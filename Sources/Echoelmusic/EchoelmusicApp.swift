@@ -22,7 +22,7 @@ class EchoelAppDelegate: NSObject, UIApplicationDelegate {
 #endif
 
 /// Reference-type holder for Combine subscriptions in value-type (struct) contexts
-private final class CancellableHolder {
+fileprivate final class CancellableHolder {
     var cancellables = Set<AnyCancellable>()
 }
 

@@ -246,6 +246,11 @@ public final class EEGSensorBridge: NSObject, ObservableObject {
     private var bandHistory: [EEGBands] = []
     private let historySize = 10
 
+    // Accumulated Muse channel data for band power computation
+    private var museChannelBuffers: [[Double]] = [[], [], [], []]
+    private var museChannelTimestamps: [Date] = [Date(), Date(), Date(), Date()]
+    private let museBandComputeThreshold = 64
+
     // MARK: - Health Disclaimer
 
     public static let disclaimer = """
@@ -697,11 +702,6 @@ extension EEGSensorBridge: CBPeripheralDelegate {
             break
         }
     }
-
-    /// Accumulated Muse channel data for band power computation
-    private var museChannelBuffers: [[Double]] = [[], [], [], []]
-    private var museChannelTimestamps: [Date] = [Date(), Date(), Date(), Date()]
-    private let museBandComputeThreshold = 64 // Accumulate this many samples before FFT
 
     /// Accumulate EEG samples per channel and compute band powers
     private func accumulateMuseChannel(_ channel: Int, samples: [Double]) {

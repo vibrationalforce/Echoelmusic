@@ -1024,10 +1024,8 @@ struct ContentView: View {
         advanceBreathingPhase()
 
         // Tick every 0.1s to track elapsed time and advance phases
-        // Uses [weak self] to prevent retain cycle (timer → closure → self → timer)
-        breathingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        breathingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [self] _ in
             Task { @MainActor in
-                guard let self = self else { return }
                 self.breathingElapsed += 0.1
                 if self.breathingElapsed >= self.breathingPhaseDuration {
                     self.breathingElapsed = 0.0
