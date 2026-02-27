@@ -152,7 +152,11 @@ class SocialMediaManager: ObservableObject {
     struct Content {
         var videoURL: URL?
         var audioURL: URL?
+        #if canImport(UIKit)
         var thumbnailImage: UIImage?
+        #else
+        var thumbnailImage: Data?
+        #endif
         var title: String
         var description: String
         var hashtags: [String]

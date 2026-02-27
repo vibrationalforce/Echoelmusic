@@ -589,14 +589,22 @@ class VideoExportManager: ObservableObject {
                 let cgImage = try imageGenerator.copyCGImage(at: time, actualTime: nil)
                 #endif
 
-                // Create UIImage and save as PNG
-                let uiImage = UIImage(cgImage: cgImage)
+                // Save frame as PNG
                 let filename = String(format: "frame_%06d.png", frameIndex)
                 let fileURL = outputDirectory.appendingPathComponent(filename)
 
+                #if canImport(UIKit)
+                let uiImage = UIImage(cgImage: cgImage)
                 if let pngData = uiImage.pngData() {
                     try pngData.write(to: fileURL)
                 }
+                #else
+                // macOS: use CGImage directly with ImageIO
+                if let dest = CGImageDestinationCreateWithURL(fileURL as CFURL, kUTTypePNG, 1, nil) {
+                    CGImageDestinationAddImage(dest, cgImage, nil)
+                    CGImageDestinationFinalize(dest)
+                }
+                #endif
 
                 // Update progress
                 exportProgress = Double(frameIndex + 1) / Double(totalFrames)
