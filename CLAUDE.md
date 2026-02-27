@@ -213,3 +213,62 @@ Tests in `Tests/EchoelmusicTests/`. Key suites:
 - **Push 3:** Requires USB
 - **DMX:** Requires network 192.168.1.100
 - **Linux:** `apt install libasound2-dev`
+
+---
+
+## Development Workflow
+
+### Long-Term Memory (scratchpads/)
+
+The `scratchpads/` directory is persistent memory across sessions:
+
+| File | Purpose |
+|------|---------|
+| `HEALING_LOG.md` | **Read first** — session history, key discoveries, commits |
+| `ARCHITECTURE_AUDIT_*.md` | Data flow diagrams, env object chains, init sequence |
+| `PLAN_*.md` | Feature/fix plans before implementation |
+
+**Start every session** by reading `scratchpads/HEALING_LOG.md`.
+
+### 4-Phase Workflow
+
+**Phase 1 — Plan:**
+- Read `scratchpads/HEALING_LOG.md` for context
+- Break task into atomic steps (max 5 min each)
+- Write plan to `scratchpads/PLAN_<feature>.md`
+- Include exact file paths, expected changes, test strategy
+
+**Phase 2 — Implement (TDD):**
+- Write failing test FIRST when adding new functionality
+- Run `swift test` — confirm RED
+- Implement minimal code to pass
+- Run `swift test` — confirm GREEN
+- Refactor while GREEN
+
+**Phase 3 — Verify:**
+- `swift build` must pass (remember: `-warnings-as-errors`)
+- `swift test` must pass
+- No force unwraps, no divide-by-zero, no missing environmentObjects
+- Guard all divisions, guard all array access, guard all optionals
+
+**Phase 4 — Ship:**
+- Commit with conventional prefix: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`
+- Update `scratchpads/HEALING_LOG.md` with session summary
+- Push to feature branch
+
+### Parallel Agent Strategy
+
+For large tasks, use 3-agent parallel audits:
+```
+Agent 1: Core systems (App entry, init sequence, data flow)
+Agent 2: UI layer (Views, environment objects, navigation)
+Agent 3: Domain logic (Audio, bio, visual, lighting pipelines)
+```
+
+### Code Review Checklist
+- [ ] No `@EnvironmentObject` without matching `.environmentObject()` injection
+- [ ] No division without guard (`.count`, heartRate, etc.)
+- [ ] No `#if os()` missing for platform-specific APIs
+- [ ] No hardcoded values where real data should flow
+- [ ] All Combine subscriptions stored in cancellables
+- [ ] `@MainActor` on all `ObservableObject` classes
