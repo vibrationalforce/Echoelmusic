@@ -65,7 +65,7 @@ struct DAWArrangementView: View {
                     .font(VaporwaveTypography.sectionTitle())
                     .foregroundColor(VaporwaveColors.textPrimary)
 
-                Text("Bio-Reactive Production")
+                Text("Arrangement View")
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
