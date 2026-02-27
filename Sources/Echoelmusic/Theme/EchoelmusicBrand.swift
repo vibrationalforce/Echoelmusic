@@ -95,8 +95,8 @@ public struct EchoelBrand {
     /// Elevated background — Modals, popovers
     public static let bgElevated = Color(white: 0.08)  // #141414
 
-    /// Glass overlay (neutral white tint, matching website --glass)
-    public static let bgGlass = Color.white.opacity(0.03)
+    /// Glass overlay (neutral white tint, matching website --glass: rgba(255,255,255,0.02))
+    public static let bgGlass = Color.white.opacity(0.02)
 
     // MARK: - Text Hierarchy
 
@@ -139,8 +139,8 @@ public struct EchoelBrand {
 
     // MARK: - Border & Divider
 
-    /// Default border (neutral gray, matching website --border)
-    public static let border = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.08)
+    /// Default border (neutral gray, matching website --border: rgba(224,224,224,0.06))
+    public static let border = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.06)
 
     /// Active/focused border
     public static let borderActive = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.3)

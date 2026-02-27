@@ -646,6 +646,7 @@ class AccessibilityManager: ObservableObject {
 
 // MARK: - Content Size Category Extension
 
+#if os(iOS) || os(tvOS) || os(visionOS)
 extension ContentSizeCategory {
     init(_ uiCategory: UIContentSizeCategory) {
         switch uiCategory {
@@ -665,6 +666,7 @@ extension ContentSizeCategory {
         }
     }
 }
+#endif
 
 // MARK: - Accessibility Report
 

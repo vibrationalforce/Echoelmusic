@@ -481,6 +481,8 @@ jobs:
 
           echo "=== Validating IPA with Apple ==="
           set +eo pipefail
+          # Use altool for iOS IPA validation (still functional; migrate to
+          # App Store Connect API when Apple removes altool from Xcode)
           xcrun altool --validate-app \
             -f "$IPA" \
             -t ios \
