@@ -182,7 +182,13 @@ public class QuantumSharePlayManager: ObservableObject {
         #if canImport(GroupActivities)
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, *) {
             let activity = QuantumSharePlayActivity(
-                hostDeviceId: UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString,
+                hostDeviceId: {
+                    #if canImport(UIKit) && !os(watchOS)
+                    return UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+                    #else
+                    return UUID().uuidString
+                    #endif
+                }(),
                 quantumMode: quantumEmulator?.emulationMode.rawValue ?? "bioCoherent",
                 coherenceTarget: 0.7
             )
@@ -430,7 +436,11 @@ public class QuantumSharePlayManager: ObservableObject {
 
         #if canImport(GroupActivities)
         if #available(iOS 15.0, macOS 12.0, tvOS 15.0, *) {
+            #if canImport(UIKit) && !os(watchOS)
             let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+            #else
+            let deviceId = UUID().uuidString
+            #endif
             let message = SharePlayMessage.coherenceUpdate(participantId: deviceId, coherence: coherence)
 
             Task {

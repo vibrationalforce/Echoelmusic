@@ -641,7 +641,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set +eo pipefail
-          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
+          fastlane mac setup_signing 2>&1 | tee /tmp/signing.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
           if [ $RESULT -ne 0 ]; then

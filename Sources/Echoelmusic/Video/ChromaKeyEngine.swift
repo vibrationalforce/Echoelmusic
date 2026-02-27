@@ -1,12 +1,12 @@
 import Foundation
-#if canImport(Metal)
-import Metal
-import MetalKit
-#endif
 import CoreImage
 import AVFoundation
 import Combine
 import SwiftUI
+
+#if canImport(Metal)
+import Metal
+import MetalKit
 
 /// Chroma Key Engine with 6-Pass Metal Pipeline for Real-Time Greenscreen/Bluescreen
 /// Supports iOS 15+ with optimized performance for 120 FPS @ 1080p on iPhone 16 Pro
@@ -798,3 +798,5 @@ enum ChromaKeyError: LocalizedError {
         }
     }
 }
+
+#endif // canImport(Metal)

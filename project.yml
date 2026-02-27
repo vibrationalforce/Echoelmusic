@@ -654,7 +654,8 @@ targets:
       base:
         PRODUCT_NAME: "Echoelmusic Watch"
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.watchkitapp
-        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Resources/watchOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicWatch.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
@@ -715,7 +716,8 @@ targets:
       base:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
-        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Resources/tvOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicTV.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
@@ -776,7 +778,8 @@ targets:
       base:
         PRODUCT_NAME: Echoelmusic
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app
-        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Resources/visionOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: EchoelmusicVision.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: ""
