@@ -602,6 +602,71 @@ public class AudioEngine: ObservableObject {
         )
     }
 
+    // MARK: - Spatial Audio Integration
+
+    /// Adds a spatial processing node to the audio graph.
+    /// The node type is selected based on the current spatial mode.
+    ///
+    /// - Parameter mode: The spatial mode to configure the node for.
+    /// - Returns: The created spatial node, or nil if creation failed.
+    @discardableResult
+    func addSpatialNode(for mode: SpatialAudioEngine.SpatialMode) -> EchoelmusicNode? {
+        guard let graph = nodeGraph else { return nil }
+
+        let node: BaseEchoelmusicNode
+        switch mode {
+        case .ambisonics:
+            node = AmbisonicsNode()
+        case .binaural:
+            node = HRTFNode()
+        case .surround_3d, .surround_4d, .afa:
+            node = AmbisonicsNode()
+        case .stereo:
+            // Stereo mode uses room simulation for spatial depth
+            node = RoomSimulationNode()
+        }
+
+        graph.addNode(node)
+        node.prepare(sampleRate: 44100, maxFrames: 4096)
+        node.start()
+        log.audio("Spatial node added to graph: \(node.name) (\(mode.rawValue))")
+        return node
+    }
+
+    /// Route audio through spatial processing using the SpatialAudioEngine.
+    /// Processes mono input → stereo spatialized output.
+    ///
+    /// - Parameters:
+    ///   - buffer: Input audio buffer.
+    ///   - sourcePosition: 3D position of the audio source.
+    /// - Returns: Spatialized stereo buffer, or the input buffer if spatial is disabled.
+    func routeAudioThroughSpatial(
+        buffer: AVAudioPCMBuffer,
+        sourcePosition: SIMD3<Float> = SIMD3<Float>(0, 0, 1)
+    ) -> AVAudioPCMBuffer {
+        guard spatialAudioEnabled, let spatial = spatialAudioEngine else { return buffer }
+        guard let channelData = buffer.floatChannelData else { return buffer }
+
+        let frameCount = Int(buffer.frameLength)
+        guard frameCount > 0 else { return buffer }
+
+        let input = Array(UnsafeBufferPointer(start: channelData[0], count: frameCount))
+        let stereo = spatial.processAmbisonics(input, sourcePosition: sourcePosition)
+
+        // Write spatialized output back
+        let channelCount = Int(buffer.format.channelCount)
+        for i in 0..<min(frameCount, stereo.left.count) {
+            channelData[0][i] = stereo.left[i]
+        }
+        if channelCount >= 2 {
+            for i in 0..<min(frameCount, stereo.right.count) {
+                channelData[1][i] = stereo.right[i]
+            }
+        }
+
+        return buffer
+    }
+
     /// Apply spatial mode from preset string
     private func applySpatialMode(_ mode: String) {
         guard let spatial = spatialAudioEngine else {
