@@ -2,12 +2,15 @@ import Foundation
 import SwiftUI
 import AVFoundation
 import Combine
-#if os(iOS)
+#if os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 typealias PlatformColor = UIColor
 #elseif os(macOS)
 import AppKit
 typealias PlatformColor = NSColor
+#elseif os(watchOS)
+import WatchKit
+typealias PlatformColor = UIColor
 #endif
 
 /// Accessibility Manager - WCAG 2.1 AAA Compliance
@@ -452,23 +455,19 @@ class AccessibilityManager: ObservableObject {
 
     // MARK: - Haptic Feedback
 
+    #if os(iOS)
     func provideFeedback(type: UINotificationFeedbackGenerator.FeedbackType) {
         guard hapticFeedbackLevel != .off else { return }
-
-        #if os(iOS)
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(type)
-        #endif
     }
 
     func provideImpactFeedback(style: UIImpactFeedbackGenerator.FeedbackStyle) {
         guard hapticFeedbackLevel != .off else { return }
-
-        #if os(iOS)
         let generator = UIImpactFeedbackGenerator(style: style)
         generator.impactOccurred(intensity: CGFloat(hapticFeedbackLevel.intensity))
-        #endif
     }
+    #endif
 
     // MARK: - Voice Announcements
 

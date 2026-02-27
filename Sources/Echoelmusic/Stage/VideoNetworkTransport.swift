@@ -147,7 +147,9 @@ public final class VideoNetworkTransport: ObservableObject {
 
     // MARK: - Metal
 
+    #if canImport(Metal)
     private var metalDevice: MTLDevice?
+    #endif
 
     // MARK: - Bus
 

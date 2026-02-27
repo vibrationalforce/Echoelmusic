@@ -13,6 +13,9 @@ import Foundation
 import HealthKit
 #endif
 
+// Entire file requires HealthKit — tvOS does not have HealthKit
+#if canImport(HealthKit)
+
 // MARK: - Oura Ring Data Types
 
 /// Oura Ring metrics synced to HealthKit
@@ -555,3 +558,5 @@ private struct MetricBadge: View {
         .cornerRadius(EchoelRadius.sm)
     }
 }
+
+#endif // canImport(HealthKit)

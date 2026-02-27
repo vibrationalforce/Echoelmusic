@@ -1,8 +1,8 @@
 import Foundation
+import SwiftUI
+
 #if canImport(Metal)
 import MetalKit
-#endif
-import SwiftUI
 
 /// Metal-based Cymatics Renderer
 /// Renders real-time audio-reactive cymatics patterns using GPU shaders
@@ -289,8 +289,6 @@ struct MetalCymaticsView: NSViewRepresentable {
         let renderer = CymaticsRenderer()
     }
 }
-#endif
-
 
 // MARK: - Preview
 
@@ -308,3 +306,5 @@ struct MetalCymaticsView_Previews: PreviewProvider {
     }
 }
 #endif
+
+#endif // canImport(Metal)

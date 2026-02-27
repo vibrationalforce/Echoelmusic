@@ -41,8 +41,10 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Metal Rendering
 
-    private let device: MTLDevice
-    private let commandQueue: MTLCommandQueue
+    #if canImport(Metal)
+    private var device: MTLDevice?
+    private var commandQueue: MTLCommandQueue?
+    #endif
     private let ciContext: CIContext
     private let sceneRenderer: SceneRenderer
 
@@ -123,6 +125,7 @@ public class StreamEngine: ObservableObject {
 
     // MARK: - Initialization
 
+    #if canImport(Metal)
     /// Convenience initializer with default dependencies
     convenience init?(device: MTLDevice) {
         self.init(device: device, sceneManager: SceneManager(), chatAggregator: ChatAggregator(), analytics: StreamAnalytics())
@@ -162,6 +165,7 @@ public class StreamEngine: ObservableObject {
 
         log.streaming("✅ StreamEngine: Initialized")
     }
+    #endif // canImport(Metal)
 
     deinit {
         // Minimal cleanup - stopStreaming() is @MainActor and can't be called from deinit

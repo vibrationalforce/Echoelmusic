@@ -771,15 +771,24 @@ class SessionClipViewModel: ObservableObject {
     @Published var tracks: [ClipViewTrack] = []
     @Published var scenes: [ClipViewScene] = []
     @Published var clips: [[ClipViewClip?]] = []
-    @Published var isPlaying = false
     @Published var isRecording = false
-    @Published var bpm: Double = 120.0
     @Published var position: Double = 0
     @Published var quantize: QuantizeValue = .bar
     @Published var followPlayhead = true
     @Published var activeScene: Int?
     @Published var bioSyncEnabled = true
-    @Published var coherence: Float = 0.72
+
+    /// Live BPM from EchoelCreativeWorkspace (single source of truth)
+    var bpm: Double { EchoelCreativeWorkspace.shared.globalBPM }
+
+    /// Live playback state from EchoelCreativeWorkspace
+    var isPlaying: Bool {
+        get { EchoelCreativeWorkspace.shared.isPlaying }
+        set { EchoelCreativeWorkspace.shared.isPlaying = newValue }
+    }
+
+    /// Live coherence from UnifiedHealthKitEngine (real biometrics, not hardcoded)
+    var coherence: Float { Float(UnifiedHealthKitEngine.shared.coherence) }
 
     var coherenceColor: Color {
         if coherence > 0.7 { return VaporwaveColors.coherenceHigh }
@@ -794,7 +803,7 @@ class SessionClipViewModel: ObservableObject {
     }
 
     init() {
-        // Sample data
+        // Default tracks representing the core Echoelmusic instruments
         tracks = [
             ClipViewTrack(name: "Drums", color: EchoelBrand.primary, instrumentName: "EchoelBeat", instrumentIcon: "square.grid.3x3"),
             ClipViewTrack(name: "Bass", color: EchoelBrand.primary.opacity(0.7), instrumentName: "EchoSynth", instrumentIcon: "waveform"),
@@ -805,10 +814,9 @@ class SessionClipViewModel: ObservableObject {
 
         scenes = (1...8).map { ClipViewScene(name: "Scene \($0)") }
 
+        // Initialize empty clip grid — users create clips by recording or dragging
         clips = tracks.map { _ in
-            scenes.map { _ in
-                Bool.random() ? ClipViewClip(name: "Clip") : nil
-            }
+            scenes.map { _ -> ClipViewClip? in nil }
         }
     }
 
@@ -817,15 +825,15 @@ class SessionClipViewModel: ObservableObject {
     func toggleMute(_ index: Int) { tracks[index].isMuted.toggle() }
     func toggleSolo(_ index: Int) { tracks[index].isSoloed.toggle() }
     func toggleArm(_ index: Int) { tracks[index].isArmed.toggle() }
-    func togglePlay() { isPlaying.toggle() }
+    func togglePlay() { EchoelCreativeWorkspace.shared.isPlaying.toggle() }
     func toggleRecord() { isRecording.toggle() }
-    func stop() { isPlaying = false; isRecording = false }
+    func stop() { EchoelCreativeWorkspace.shared.isPlaying = false; isRecording = false }
     func stopAll() { activeScene = nil }
-    func launchScene(_ index: Int) { activeScene = index; isPlaying = true }
+    func launchScene(_ index: Int) { activeScene = index; EchoelCreativeWorkspace.shared.isPlaying = true }
     func clipAt(track: Int, scene: Int) -> ClipViewClip? { clips[track][scene] }
     func isClipPlaying(track: Int, scene: Int) -> Bool { activeScene == scene && clips[track][scene] != nil }
-    func toggleClip(track: Int, scene: Int) { if clips[track][scene] != nil { isPlaying = true } }
-    func editClip(track: Int, scene: Int) { /* Open editor */ }
+    func toggleClip(track: Int, scene: Int) { if clips[track][scene] != nil { EchoelCreativeWorkspace.shared.isPlaying = true } }
+    func editClip(track: Int, scene: Int) { /* Open clip editor */ }
     func stopClip(track: Int, scene: Int) { /* Stop individual clip */ }
     func addInstrumentToTrack(_ track: Int, instrument: InstrumentInfo) { tracks[track].instrumentName = instrument.name; tracks[track].instrumentIcon = instrument.icon }
     func addEffectToTrack(_ track: Int, effect: EffectInfo) { tracks[track].effectCount += 1 }

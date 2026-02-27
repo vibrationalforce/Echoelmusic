@@ -3,7 +3,7 @@ import AVFoundation
 import VideoToolbox
 import Combine
 import ImageIO
-import MobileCoreServices
+import UniformTypeIdentifiers
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -600,7 +600,7 @@ class VideoExportManager: ObservableObject {
                 }
                 #else
                 // macOS: use CGImage directly with ImageIO
-                if let dest = CGImageDestinationCreateWithURL(fileURL as CFURL, kUTTypePNG, 1, nil) {
+                if let dest = CGImageDestinationCreateWithURL(fileURL as CFURL, UTType.png.identifier as CFString, 1, nil) {
                     CGImageDestinationAddImage(dest, cgImage, nil)
                     CGImageDestinationFinalize(dest)
                 }
@@ -662,7 +662,7 @@ class VideoExportManager: ObservableObject {
         // Create GIF destination
         guard let destination = CGImageDestinationCreateWithURL(
             outputURL as CFURL,
-            kUTTypeGIF,
+            UTType.gif.identifier as CFString,
             totalFrames,
             nil
         ) else {

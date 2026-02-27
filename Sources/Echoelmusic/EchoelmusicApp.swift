@@ -315,6 +315,13 @@ struct EchoelmusicApp: App {
         // Start UnifiedControlHub
         unifiedControlHub.start()
 
+        // AUTO-START: Enable binaural beats and start the audio engine immediately
+        // so users hear bio-reactive audio as soon as the app launches.
+        // The BinauralBeatGenerator has its own AVAudioEngine that outputs to hardware.
+        audioEngine.binauralBeatsEnabled = true
+        audioEngine.start()
+        log.info("Audio engine auto-started with binaural beats enabled", category: .audio)
+
         // Async tasks: biometric monitoring, MIDI, push notifications
         Task {
             do {

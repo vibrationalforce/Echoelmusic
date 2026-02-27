@@ -24,14 +24,14 @@
 // ============================================================================
 
 import Foundation
+
+// Camera PPG requires AVCaptureSession which is only available on iOS
+#if os(iOS)
 import AVFoundation
 import Accelerate
 import Combine
 import SwiftUI
-
-#if canImport(UIKit)
 import UIKit
-#endif
 
 // MARK: - PPG Signal Quality
 
@@ -623,3 +623,5 @@ enum PPGError: Error, LocalizedError {
         }
     }
 }
+
+#endif // os(iOS)

@@ -76,7 +76,7 @@ end
 # SIGNING HELPER — Revokes stale certs and creates fresh ones
 # =============================================================================
 
-def setup_signing_certs
+def setup_signing_certs(cert_platform: "ios")
   api_key = setup_api_key
   keychain_path = "#{ENV['HOME']}/Library/Keychains/build.keychain-db"
   keychain_password = ""
@@ -109,17 +109,17 @@ def setup_signing_certs
     UI.important("Continuing anyway - cert action will try to create/reuse...")
   end
 
-  # Step 2: Create a fresh Development certificate
-  UI.message("Creating fresh Development certificate...")
+  # Step 2: Create a fresh Development certificate for the requested platform
+  UI.message("Creating fresh Development certificate for platform: #{cert_platform}...")
   cert(
     development: true,
     api_key: api_key,
     generate_apple_certs: true,
     keychain_path: keychain_path,
     keychain_password: keychain_password,
-    platform: "ios"
+    platform: cert_platform
   )
-  UI.success("Fresh Development certificate installed in keychain")
+  UI.success("Fresh #{cert_platform} Development certificate installed in keychain")
 end
 
 # =============================================================================
@@ -130,7 +130,7 @@ platform :ios do
 
   desc "Setup signing certificates (revoke stale, create fresh)"
   lane :setup_signing do
-    setup_signing_certs
+    setup_signing_certs(cert_platform: "ios")
   end
 
   desc "Upload iOS IPA to TestFlight (archive built by xcodebuild in CI)"
@@ -219,6 +219,11 @@ end
 # =============================================================================
 
 platform :mac do
+
+  desc "Setup macOS signing certificates (revoke stale, create fresh)"
+  lane :setup_signing do
+    setup_signing_certs(cert_platform: "macos")
+  end
 
   desc "Upload macOS app to TestFlight"
   lane :upload do

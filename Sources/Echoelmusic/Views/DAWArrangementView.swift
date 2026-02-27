@@ -6,13 +6,22 @@ import SwiftUI
 /// Professional DAW arrangement interface with bio-reactive features
 struct DAWArrangementView: View {
     @StateObject private var engine = ArrangementDAWProductionEngine()
+    @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedTrackIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showMixer = false
     @State private var showInstrumentBrowser = false
     @State private var currentBeat: Double = 0
-    @State private var isPlaying = false
-    @State private var bpm: Double = 120
+
+    /// Live BPM from EchoelCreativeWorkspace (single source of truth)
+    private var bpm: Double {
+        get { workspace.globalBPM }
+    }
+
+    /// Live playback state from EchoelCreativeWorkspace
+    private var isPlaying: Bool {
+        workspace.isPlaying
+    }
 
     var body: some View {
         ZStack {
@@ -310,7 +319,7 @@ struct DAWArrangementView: View {
 
                 // Play button
                 Button {
-                    isPlaying.toggle()
+                    workspace.isPlaying.toggle()
                 } label: {
                     ZStack {
                         Circle()
