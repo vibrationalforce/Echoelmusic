@@ -45,6 +45,7 @@ let package = Package(
                 "tvOS",
                 "Widgets",
                 "LiveActivity",
+                "AppClips",
                 // Extension targets (separate Xcode targets, not part of main SPM build)
                 "Targets"
                 // NOTE: Sources/_Deferred/ is automatically excluded (sibling folder)

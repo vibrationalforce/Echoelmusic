@@ -566,6 +566,7 @@ public final class SocialCoherenceEngine: ObservableObject {
         if coherenceHistory.count > 10 {
             let recent = Array(coherenceHistory.suffix(5))
             let earlier = Array(coherenceHistory.dropLast(5).suffix(5))
+            guard !recent.isEmpty, !earlier.isEmpty else { return }
             let recentAvg = recent.reduce(0, +) / Float(recent.count)
             let earlierAvg = earlier.reduce(0, +) / Float(earlier.count)
 

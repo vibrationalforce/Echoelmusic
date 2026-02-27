@@ -111,7 +111,7 @@ public class AudioEngine: ObservableObject {
         headTrackingManager = HeadTrackingManager()
 
         // Initialize spatial audio if available (iOS 15+)
-        if let _ = headTrackingManager,
+        if headTrackingManager != nil,
            let capabilities = deviceCapabilities,
            capabilities.canUseSpatialAudioEngine {
             spatialAudioEngine = SpatialAudioEngine()

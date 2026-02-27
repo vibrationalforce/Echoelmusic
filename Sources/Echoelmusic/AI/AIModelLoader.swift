@@ -393,7 +393,7 @@ extension AIModelLoader {
     /// Predict user bio state from HRV and heart rate data
     func predictBioState(hrv: Double, heartRate: Double, breathingRate: Double) async throws -> BioStatePrediction {
         // Try ML model first
-        if let _ = loadedModels[.bioStatePredictor] {
+        if loadedModels[.bioStatePredictor] != nil {
             let input = try MLDictionaryFeatureProvider(dictionary: [
                 "hrv": MLFeatureValue(double: hrv),
                 "heart_rate": MLFeatureValue(double: heartRate),

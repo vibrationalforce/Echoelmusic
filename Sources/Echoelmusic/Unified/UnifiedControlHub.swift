@@ -1310,7 +1310,7 @@ public class UnifiedControlHub: ObservableObject {
             guard let tracker = gazeTracker, tracker.isTracking else { return }
 
             // Sync gaze data to cross-platform session if active
-            if let _ = crossPlatformSessionManager?.activeSession {
+            if crossPlatformSessionManager?.activeSession != nil {
                 let params = tracker.getControlParameters()
                 // Gaze-derived parameters can be synced as part of biometric data
                 let hrvModifier = params.attention * 20  // Attention affects coherence perception

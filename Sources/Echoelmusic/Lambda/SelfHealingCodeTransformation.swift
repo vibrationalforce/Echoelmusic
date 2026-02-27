@@ -302,6 +302,7 @@ public class SelfHealingCodeTransformation: ObservableObject {
         }
 
         // Kohärenz-Stabilität berechnen (niedrige Varianz = stabil)
+        guard !coherenceHistory.isEmpty else { return }
         let mean = coherenceHistory.reduce(0, +) / Double(coherenceHistory.count)
         let variance = coherenceHistory.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(coherenceHistory.count)
         coherenceStability = Swift.max(0, 1.0 - sqrt(variance) * 5.0)

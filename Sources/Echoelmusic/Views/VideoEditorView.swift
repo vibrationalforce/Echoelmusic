@@ -133,7 +133,7 @@ struct VideoEditorView: View {
                     .fill(VaporwaveColors.deepBlack)
 
                 // Preview content
-                if let _ = engine.currentProject {
+                if engine.currentProject != nil {
                     // Video preview would render here
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 60))

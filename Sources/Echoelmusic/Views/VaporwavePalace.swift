@@ -519,9 +519,7 @@ struct VaporwavePalace: View {
 
         if isActive {
             audioEngine.start()
-            if healthKitManager.isAuthorized {
-                healthKitManager.startMonitoring()
-            }
+            healthKitManager.startMonitoring()
 
             // Set initial visualization mode based on palace mode
             visualEngine?.currentMode = mapPalaceModeToVisualMode(selectedMode)

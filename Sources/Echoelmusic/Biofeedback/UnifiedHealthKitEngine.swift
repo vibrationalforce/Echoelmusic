@@ -432,14 +432,14 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         guard let store = healthStore else {
             authState = .unavailable
             dataSource = .simulation
-            isAuthorized = true  // Allow simulation
+            isAuthorized = false  // Not authorized — simulation fallback active
             return
         }
 
         guard HKHealthStore.isHealthDataAvailable() else {
             authState = .unavailable
             dataSource = .simulation
-            isAuthorized = true
+            isAuthorized = false  // HealthKit unavailable — simulation fallback active
             return
         }
 
@@ -461,20 +461,20 @@ public final class UnifiedHealthKitEngine: ObservableObject {
             } else {
                 authState = .denied
                 dataSource = .simulation
-                isAuthorized = true  // Allow simulation fallback
+                isAuthorized = false
                 errorMessage = "HealthKit access denied. Using simulation mode."
             }
         } catch {
             authState = .denied
             dataSource = .simulation
-            isAuthorized = true  // Allow simulation fallback
+            isAuthorized = false
             errorMessage = "Authorization failed: \(error.localizedDescription)"
             log.biofeedback("HealthKit authorization failed: \(error)", level: .warning)
         }
         #else
         authState = .unavailable
         dataSource = .simulation
-        isAuthorized = true
+        isAuthorized = false
         #endif
     }
 
@@ -1004,7 +1004,7 @@ public final class UnifiedHealthKitEngine: ObservableObject {
     }
 
     private func updateCoherenceTrend() {
-        guard coherenceBuffer.count >= 10 else {
+        guard coherenceBuffer.count >= 20 else {
             coherenceTrend = .stable
             return
         }
@@ -1012,6 +1012,11 @@ public final class UnifiedHealthKitEngine: ObservableObject {
         let allValues = coherenceBuffer.toArray()
         let recent = Array(allValues.suffix(10))
         let older = Array(allValues.prefix(10))
+
+        guard !recent.isEmpty, !older.isEmpty else {
+            coherenceTrend = .stable
+            return
+        }
 
         let recentAvg = recent.reduce(0, +) / Double(recent.count)
         let olderAvg = older.reduce(0, +) / Double(older.count)

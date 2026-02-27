@@ -306,10 +306,11 @@ class MicrophoneManager: NSObject, ObservableObject {
         // Downsample magnitudes for visualization (256 bins for spectral mode)
         let visualBins = 256
         var visualMagnitudes = [Float](repeating: 0, count: visualBins)
-        let binRatio = magnitudes.count / visualBins
+        let binRatio = Swift.max(1, magnitudes.count / visualBins)
         for i in 0..<visualBins {
             let startIdx = i * binRatio
             let endIdx = min(startIdx + binRatio, magnitudes.count)
+            guard startIdx < magnitudes.count else { break }
             var sum: Float = 0
             for j in startIdx..<endIdx {
                 sum += magnitudes[j]
@@ -318,6 +319,7 @@ class MicrophoneManager: NSObject, ObservableObject {
         }
 
         // Find peak frequency (ignore DC component at index 0)
+        guard magnitudes.count > 1 else { return nil }
         var maxMagnitude: Float = 0
         var maxIndex: vDSP_Length = 0
 
