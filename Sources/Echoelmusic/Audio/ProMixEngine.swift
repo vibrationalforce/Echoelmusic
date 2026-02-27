@@ -594,6 +594,17 @@ public class ProMixEngine: ObservableObject {
     /// Audio buffer size in frames.
     public let bufferSize: Int
 
+    // MARK: - DSP Kernel
+
+    /// Real-time DSP kernel that processes actual audio buffers.
+    /// Manages per-channel buffer allocation, insert node chains,
+    /// send routing, bus summing, and metering from real audio data.
+    public private(set) lazy var dspKernel: MixerDSPKernel = {
+        let kernel = MixerDSPKernel(sampleRate: sampleRate, bufferSize: bufferSize)
+        kernel.addChannel(id: masterChannel.id)
+        return kernel
+    }()
+
     // MARK: - Private
 
     private let logger = ProfessionalLogger.shared
@@ -641,6 +652,9 @@ public class ProMixEngine: ObservableObject {
         // Route to master by default
         routingMatrix.addConnection(from: channel.id, to: masterChannel.id)
 
+        // Allocate DSP resources for this channel
+        dspKernel.addChannel(id: channel.id)
+
         logger.log(.debug, category: .audio, "Added channel '\(name)' (\(type.rawValue))")
         return channel
     }
@@ -662,6 +676,9 @@ public class ProMixEngine: ObservableObject {
 
         // Clean up automation lanes
         automationLanes.removeAll { $0.channelID == id }
+
+        // Release DSP resources
+        dspKernel.removeChannel(id: id)
 
         channels.remove(at: index)
         logger.log(.debug, category: .audio, "Removed channel '\(name)'")
@@ -687,6 +704,9 @@ public class ProMixEngine: ObservableObject {
 
         let slot = InsertSlot(effectType: effect, parameters: defaultParameters(for: effect))
         channels[index].inserts.append(slot)
+
+        // Sync DSP insert chain
+        dspKernel.syncInsertChain(channelID: channels[index].id, inserts: channels[index].inserts)
 
         logger.log(.debug, category: .audio, "Added \(effect.rawValue) insert to '\(channels[index].name)'")
         return slot
@@ -811,43 +831,63 @@ public class ProMixEngine: ObservableObject {
     /// It updates automation, processes each channel's insert chain and sends,
     /// sums into buses, and writes to the master output.
     ///
+    /// When no input buffers are available (e.g., during UI-only playback),
+    /// this operates with zeroed buffers and produces real metering from
+    /// the DSP kernel (silence = zero meters).
+    ///
+    /// For real audio processing with input data, use `processAudioBlock(inputBuffers:frameCount:)`.
+    ///
     /// - Parameter frameCount: Number of audio frames to process.
     public func processBlock(frameCount: Int) {
         guard isPlaying else { return }
 
-        // Step 1: Apply automation values at the current playhead position
+        // Apply automation values at the current playhead position
         updateAutomation(time: currentTime)
 
-        // Step 2: Determine which channels are audible (solo logic)
-        let anySoloed = channels.contains { $0.solo }
+        // Process through DSP kernel with no input buffers (zeroed)
+        dspKernel.processBlock(
+            channels: &channels,
+            masterChannel: &masterChannel,
+            inputBuffers: [:],
+            frameCount: frameCount
+        )
 
-        // Step 3: Process each channel
-        for i in channels.indices {
-            let channel = channels[i]
-
-            // Skip muted channels; if any channel is soloed, skip non-soloed channels
-            let isAudible = !channel.mute && (!anySoloed || channel.solo)
-            guard isAudible else {
-                channels[i].metering = MeterState()
-                continue
-            }
-
-            // Process insert chain
-            processInserts(channelIndex: i, frameCount: frameCount)
-
-            // Process sends
-            processSends(channelIndex: i, frameCount: frameCount)
-
-            // Update metering (simulated in-engine; real DSP would feed actual levels)
-            updateMetering(channelIndex: i)
-        }
-
-        // Step 4: Sum all routed signals into the master bus
-        processMasterBus(frameCount: frameCount)
-
-        // Step 5: Advance the playhead
+        // Advance the playhead
         let blockDuration = Double(frameCount) / sampleRate
         currentTime += blockDuration
+    }
+
+    /// Processes one audio block with real input buffers.
+    ///
+    /// This is the primary entry point for real audio processing.
+    /// Each channel that has audio data should have its buffer in `inputBuffers`.
+    /// Channels without an entry receive silence.
+    ///
+    /// - Parameters:
+    ///   - inputBuffers: Per-channel input audio buffers keyed by channel UUID.
+    ///   - frameCount: Number of audio frames to process.
+    /// - Returns: The processed master output buffer (stereo).
+    @discardableResult
+    public func processAudioBlock(
+        inputBuffers: [UUID: AVAudioPCMBuffer],
+        frameCount: Int
+    ) -> AVAudioPCMBuffer {
+        // Apply automation
+        updateAutomation(time: currentTime)
+
+        // Process through DSP kernel with real input buffers
+        let output = dspKernel.processBlock(
+            channels: &channels,
+            masterChannel: &masterChannel,
+            inputBuffers: inputBuffers,
+            frameCount: frameCount
+        )
+
+        // Advance the playhead
+        let blockDuration = Double(frameCount) / sampleRate
+        currentTime += blockDuration
+
+        return output
     }
 
     /// Resolves the full routing chain for a channel, returning all destination UUIDs.
@@ -988,6 +1028,7 @@ public class ProMixEngine: ObservableObject {
                 masterChannel.solo = state.solo
                 masterChannel.sends = state.sends
                 masterChannel.inserts = state.inserts
+                dspKernel.syncInsertChain(channelID: masterChannel.id, inserts: masterChannel.inserts)
                 continue
             }
 
@@ -999,6 +1040,7 @@ public class ProMixEngine: ObservableObject {
             channels[index].solo = state.solo
             channels[index].sends = state.sends
             channels[index].inserts = state.inserts
+            dspKernel.syncInsertChain(channelID: state.channelID, inserts: channels[index].inserts)
         }
 
         logger.log(.info, category: .audio, "Mix snapshot recalled: '\(snapshot.name)'")
@@ -1031,6 +1073,7 @@ public class ProMixEngine: ObservableObject {
             )
             engine.channels[reverbIndex].inserts.append(reverbSlot)
             engine.channels[reverbIndex].color = .purple
+            engine.dspKernel.syncInsertChain(channelID: reverbBus.id, inserts: engine.channels[reverbIndex].inserts)
         }
 
         // Add delay insert to the delay bus
@@ -1042,6 +1085,7 @@ public class ProMixEngine: ObservableObject {
             )
             engine.channels[delayIndex].inserts.append(delaySlot)
             engine.channels[delayIndex].color = .teal
+            engine.dspKernel.syncInsertChain(channelID: delayBus.id, inserts: engine.channels[delayIndex].inserts)
         }
 
         // Create 8 audio tracks with default sends
@@ -1098,71 +1142,9 @@ public class ProMixEngine: ObservableObject {
         return colors[index % colors.count]
     }
 
-    /// Processes the insert effect chain for a single channel.
-    private func processInserts(channelIndex: Int, frameCount: Int) {
-        let channel = channels[channelIndex]
-        for insert in channel.inserts where insert.isEnabled {
-            // Each insert processes the audio buffer in place.
-            // In a real implementation this would call into the DSP graph.
-            _ = insert.dryWet
-            _ = insert.parameters
-        }
-    }
-
-    /// Processes all sends for a single channel, routing signal to aux/bus destinations.
-    private func processSends(channelIndex: Int, frameCount: Int) {
-        let channel = channels[channelIndex]
-        for send in channel.sends where send.isEnabled {
-            guard let destID = send.destinationID else { continue }
-            let sendLevel = send.isPreFader ? send.level : send.level * channel.volume
-            _ = sendLevel
-            _ = destID
-            // In a real implementation, this would mix the signal into the destination buffer.
-        }
-    }
-
-    /// Simulates metering updates for a channel.
-    private func updateMetering(channelIndex: Int) {
-        let channel = channels[channelIndex]
-        // Simulated metering based on volume — a real implementation feeds actual RMS/peak from the DSP graph.
-        let simulatedLevel = channel.volume * (channel.mute ? 0 : 1)
-        let rms = simulatedLevel * 0.707 // Approximate RMS for a sine wave
-        let peak = simulatedLevel
-
-        channels[channelIndex].metering = MeterState(
-            peak: peak,
-            rms: rms,
-            peakHold: max(peak, channels[channelIndex].metering.peakHold * 0.995),
-            isClipping: peak > 0.99
-        )
-    }
-
-    /// Processes the master bus summing and metering.
-    private func processMasterBus(frameCount: Int) {
-        // In a real implementation, the master bus sums all routed channels.
-        // Here we simulate master metering from active channels.
-        var sumLevel: Float = 0
-        let anySoloed = channels.contains { $0.solo }
-
-        for channel in channels {
-            let isAudible = !channel.mute && (!anySoloed || channel.solo)
-            guard isAudible else { continue }
-
-            let effectiveLevel = channel.volume
-            sumLevel += effectiveLevel
-        }
-
-        // Normalize the sum (simple approximation)
-        let channelCount = max(Float(channels.filter { !$0.mute }.count), 1)
-        let normalizedLevel = min(sumLevel / channelCount, 1.0) * masterChannel.volume
-
-        masterChannel.metering = MeterState(
-            peak: normalizedLevel,
-            rms: normalizedLevel * 0.707,
-            peakHold: max(normalizedLevel, masterChannel.metering.peakHold * 0.995),
-            isClipping: normalizedLevel > 0.99
-        )
-    }
+    // NOTE: Insert chain processing, send routing, bus summing, and metering
+    // are now handled by MixerDSPKernel.processBlock() with real AVAudioPCMBuffers.
+    // See MixerDSPKernel.swift for the DSP implementation.
 
     /// Applies an automation value to a named parameter on the first matching insert.
     private func applyInsertAutomation(channelIndex: Int, paramKey: String, value: Float) {

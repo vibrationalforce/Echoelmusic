@@ -26,7 +26,7 @@
 | Vocal Processing | 9 | 0 | 0 | 9 |
 | Spatial Audio | 3 | 4 | 0 | 7 |
 | MIDI | 6 | 0 | 0 | 6 |
-| Professionelles Mixing | 4 | 2 | 0 | 6 |
+| Professionelles Mixing | 5 | 1 | 0 | 6 |
 | Biofeedback | 7 | 0 | 2 | 9 |
 | Visual / Grafik | 4 | 2 | 0 | 6 |
 | Video | 3 | 1 | 0 | 4 |
@@ -35,9 +35,9 @@
 | UI Views | 15 | 0 | 1 | 16 |
 | Plattformen | 5 | 1 | 0 | 6 |
 | Infrastruktur | 7 | 0 | 0 | 7 |
-| **GESAMT** | **90** | **18** | **5** | **113** |
+| **GESAMT** | **91** | **17** | **5** | **113** |
 
-**Realistische Implementierungsrate: ~80% REAL, ~16% PARTIAL, ~4% STUB**
+**Realistische Implementierungsrate: ~81% REAL, ~15% PARTIAL, ~4% STUB**
 
 ---
 
@@ -122,7 +122,7 @@
 
 | Feature | Status | Beweis |
 |---------|--------|--------|
-| ProMixEngine (Kanalzuege) | **PARTIAL** | Volles Datenmodell (Volume, Pan, Mute, Solo, Sends, Inserts, Automation). Audio-Graph-Routing nicht sichtbar. |
+| ProMixEngine (Kanalzuege) | **REAL** | Volles Datenmodell + MixerDSPKernel: per-Kanal AVAudioPCMBuffer, Insert-Chain (EchoelmusicNode), Equal-Power Pan, Send-Routing, Bus-Summing, vDSP-Metering |
 | ProSessionEngine (Clips) | **PARTIAL** | Session/Clip-Architektur, State Machine, Warp Markers. Echte Audio-Wiedergabe nicht gezeigt. |
 | Mix Snapshots | **REAL** | Speichern/Abrufen/Umbenennen des gesamten Mixer-Zustands |
 | Solo Exclusive Mode | **REAL** | Gegenseitig exklusive Solo-Logik |
@@ -267,7 +267,7 @@ Der Feb-11 Audit war oberflaechlich — hat Methoden-Signaturen als "Skeleton" g
 
 ## WAS INTEGRATIONSARBEIT BRAUCHT (1-4 Wochen je)
 
-1. **ProMixEngine Audio-Routing** (Datenmodell fertig, braucht AVAudioEngine-Graph)
+1. ~~**ProMixEngine Audio-Routing**~~ **DONE** (MixerDSPKernel mit per-Kanal Buffern, Insert-Chains, Send-Routing, Bus-Summing)
 2. **ProSessionEngine Clip-Playback** (Architektur fertig, braucht Audio-Scheduler)
 3. **VisionOS Immersive Content** (RealityKit-Geruest fertig)
 4. **Dante/AES67 Paket-I/O**

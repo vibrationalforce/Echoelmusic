@@ -565,6 +565,43 @@ public class AudioEngine: ObservableObject {
         }
     }
 
+    // MARK: - ProMixEngine Integration
+
+    /// Optional reference to ProMixEngine for multi-channel mixing.
+    /// When connected, microphone audio is routed through the mixer's
+    /// channel strip processing (inserts, sends, buses, master).
+    private(set) var proMixEngine: ProMixEngine?
+
+    /// Connects a ProMixEngine instance for multi-channel mixing.
+    ///
+    /// Once connected, `routeAudioThroughMixer(buffer:channelID:)` can
+    /// send audio from any source into a specific mixer channel for
+    /// full insert chain, send, bus, and master processing.
+    ///
+    /// - Parameter mixer: The ProMixEngine to integrate.
+    func connectMixer(_ mixer: ProMixEngine) {
+        self.proMixEngine = mixer
+        mixer.dspKernel.prepare()
+        log.audio("ProMixEngine connected to AudioEngine (\(mixer.channels.count) channels)")
+    }
+
+    /// Routes an audio buffer through a specific ProMixEngine channel.
+    ///
+    /// The buffer flows through the channel's insert chain, volume/pan,
+    /// sends to aux buses, and into the master output.
+    ///
+    /// - Parameters:
+    ///   - buffer: Input audio buffer (stereo PCM).
+    ///   - channelID: The mixer channel to route through.
+    /// - Returns: The processed master output buffer, or nil if no mixer is connected.
+    func routeAudioThroughMixer(buffer: AVAudioPCMBuffer, channelID: UUID) -> AVAudioPCMBuffer? {
+        guard let mixer = proMixEngine else { return nil }
+        return mixer.processAudioBlock(
+            inputBuffers: [channelID: buffer],
+            frameCount: Int(buffer.frameLength)
+        )
+    }
+
     /// Apply spatial mode from preset string
     private func applySpatialMode(_ mode: String) {
         guard let spatial = spatialAudioEngine else {
