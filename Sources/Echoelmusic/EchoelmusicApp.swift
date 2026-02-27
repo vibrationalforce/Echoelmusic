@@ -185,7 +185,7 @@ struct EchoelmusicApp: App {
     // MARK: - Sequential Core System Initialization
 
     /// Total initialization phases for progress tracking
-    private static let totalPhases: Double = 12
+    private static let totalPhases: Double = 14
 
     /// Initializes all singletons in a controlled, sequential order.
     /// Each phase waits for the previous to complete, preventing circular deadlocks.
@@ -209,39 +209,39 @@ struct EchoelmusicApp: App {
         // Phase 1: Memory pressure monitoring (prevents OOM crashes)
         await safeInit("Memory monitor...", phase: 1) { _ = MemoryPressureHandler.shared }
 
-        // Phase 2: Foundation singletons (no cross-references)
+        // Phase 2-4: Foundation singletons (no cross-references)
         await safeInit("Health & biometrics...", phase: 2) { _ = UnifiedHealthKitEngine.shared }
         await safeInit("Notifications...", phase: 3) { _ = PushNotificationManager.shared }
-        await safeInit("Self-healing engine...", phase: 3) { _ = SelfHealingEngine.shared }
-        await safeInit("Platform bridge...", phase: 3) { _ = MultiPlatformBridge.shared }
+        await safeInit("Self-healing engine...", phase: 4) { _ = SelfHealingEngine.shared }
+        await safeInit("Platform bridge...", phase: 5) { _ = MultiPlatformBridge.shared }
 
-        // Phase 4: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
-        await safeInit("Universal core...", phase: 4) { _ = EchoelUniversalCore.shared }
+        // Phase 6: Core hub (references SelfHealingEngine, MultiPlatformBridge lazily)
+        await safeInit("Universal core...", phase: 6) { _ = EchoelUniversalCore.shared }
 
-        // Phase 5: Systems that reference EchoelUniversalCore
-        await safeInit("Video & creative hub...", phase: 5) {
+        // Phase 7: Systems that reference EchoelUniversalCore
+        await safeInit("Video & creative hub...", phase: 7) {
             _ = VideoAICreativeHub.shared
             _ = EchoelTools.shared
         }
 
-        // Phase 6: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
-        await safeInit("Echoel toolkit (10 engines)...", phase: 6) { _ = EchoelToolkit.shared }
+        // Phase 8: EchoelToolkit (creates all 10 Echoel* tools — largest init chain)
+        await safeInit("Echoel toolkit (10 engines)...", phase: 8) { _ = EchoelToolkit.shared }
 
-        // Phase 7: Instrument pipeline (can run in parallel)
-        await safeInit("Instruments & world music...", phase: 7) {
+        // Phase 9: Instrument pipeline
+        await safeInit("Instruments & world music...", phase: 9) {
             _ = InstrumentOrchestrator.shared
             _ = WorldMusicBridge.shared
         }
 
-        // Phase 8: Physical AI (JEPA world model + autonomous control)
-        await safeInit("Physical AI engine...", phase: 8) {
+        // Phase 10: Physical AI (JEPA world model + autonomous control)
+        await safeInit("Physical AI engine...", phase: 10) {
             let physicalAI = PhysicalAIEngine.shared
             physicalAI.start()
             physicalAI.addObjective(.maintainCoherence())
         }
 
-        // Phase 9: Script engine (community scripts + automation)
-        await safeInit("Script engine...", phase: 9) {
+        // Phase 11: Script engine (community scripts + automation)
+        await safeInit("Script engine...", phase: 11) {
             ScriptEngine.shared = ScriptEngine(
                 audioAPI: AudioScriptAPI(),
                 visualAPI: VisualScriptAPI(),
@@ -252,20 +252,20 @@ struct EchoelmusicApp: App {
             )
         }
 
-        // Phase 10: Streaming & social
-        await safeInit("Streaming pipeline...", phase: 10) { _ = SocialMediaManager.shared }
+        // Phase 12: Streaming & social
+        await safeInit("Streaming pipeline...", phase: 12) { _ = SocialMediaManager.shared }
 
-        // Phase 11: Creative Workspace (bridges all engines: BPM grid, video, pro engines)
-        await safeInit("Creative workspace...", phase: 11) { _ = EchoelCreativeWorkspace.shared }
+        // Phase 13: Creative Workspace (bridges all engines: BPM grid, video, pro engines)
+        await safeInit("Creative workspace...", phase: 13) { _ = EchoelCreativeWorkspace.shared }
 
-        // Phase 12: Crash-safe state persistence (auto-save every 10s, recover on next launch)
-        await safeInit("State persistence...", phase: 12) { _ = CrashSafeStatePersistence.shared }
+        // Phase 14: Crash-safe state persistence (auto-save every 10s, recover on next launch)
+        await safeInit("State persistence...", phase: 14) { _ = CrashSafeStatePersistence.shared }
 
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         await MainActor.run {
             initializationProgress = 1.0
             initializationPhase = "Ready"
-            log.info("Echoelmusic initialized in \(String(format: "%.1f", elapsed))s (12 phases complete)", category: .system)
+            log.info("Echoelmusic initialized in \(String(format: "%.1f", elapsed))s (14 phases complete)", category: .system)
         }
     }
 

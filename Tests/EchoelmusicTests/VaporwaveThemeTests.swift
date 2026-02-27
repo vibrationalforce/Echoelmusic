@@ -45,18 +45,26 @@ final class VaporwaveThemeTests: XCTestCase {
         XCTAssertNotNil(VaporwaveColors.hrv)
     }
 
-    func testRecordingActiveMatchesNeonPink() {
-        // recordingActive should be an alias for neonPink
+    func testRecordingActiveIsCoral() {
+        // recordingActive should be coral (functional color)
         let recordingActive = VaporwaveColors.recordingActive
-        let neonPink = VaporwaveColors.neonPink
-        XCTAssertEqual(recordingActive.description, neonPink.description)
+        let coral = EchoelBrand.coral
+        XCTAssertEqual(recordingActive.description, coral.description)
     }
 
-    func testSuccessMatchesNeonCyan() {
-        // success should be an alias for neonCyan
+    func testSuccessIsEmerald() {
+        // success should be emerald (functional color)
         let success = VaporwaveColors.success
-        let neonCyan = VaporwaveColors.neonCyan
-        XCTAssertEqual(success.description, neonCyan.description)
+        let emerald = EchoelBrand.emerald
+        XCTAssertEqual(success.description, emerald.description)
+    }
+
+    func testColorsRedirectToEchoelBrand() {
+        // Verify VaporwaveColors now redirects to EchoelBrand monochrome system
+        XCTAssertEqual(VaporwaveColors.neonPink.description, EchoelBrand.primary.description)
+        XCTAssertEqual(VaporwaveColors.neonCyan.description, EchoelBrand.primary.description)
+        XCTAssertEqual(VaporwaveColors.deepBlack.description, EchoelBrand.bgDeep.description)
+        XCTAssertEqual(VaporwaveColors.textPrimary.description, EchoelBrand.textPrimary.description)
     }
 
     // MARK: - VaporwaveGradients Tests
@@ -294,10 +302,13 @@ final class VaporwaveThemeTests: XCTestCase {
         XCTAssertNotNil(row)
     }
 
-    // MARK: - Preview Component Tests
+    // MARK: - EchoelBrand Integration Tests
 
-    func testVaporwavePreviewCreation() {
-        let preview = VaporwavePreview()
-        XCTAssertNotNil(preview)
+    func testEchoelBrandColorsDefined() {
+        XCTAssertNotNil(EchoelBrand.primary)
+        XCTAssertNotNil(EchoelBrand.bgDeep)
+        XCTAssertNotNil(EchoelBrand.bgSurface)
+        XCTAssertNotNil(EchoelBrand.textPrimary)
+        XCTAssertNotNil(EchoelBrand.coherenceHigh)
     }
 }

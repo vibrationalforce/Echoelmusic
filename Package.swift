@@ -44,7 +44,9 @@ let package = Package(
                 "WatchOS",
                 "tvOS",
                 "Widgets",
-                "LiveActivity"
+                "LiveActivity",
+                // Extension targets (separate Xcode targets, not part of main SPM build)
+                "Targets"
                 // NOTE: Sources/_Deferred/ is automatically excluded (sibling folder)
                 // See DEFERRED_FEATURES.md for deferred features roadmap
             ],
