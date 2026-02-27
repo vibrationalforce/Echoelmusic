@@ -56,6 +56,60 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-02-27 — ProSessionEngine Clip Playback + Spatial Audio Wiring
+
+**Directive:** "Alles andere auch" — Continue all tiers
+
+**Approach:** Create AudioClipScheduler → Integrate into ProSessionEngine → Create Spatial Audio nodes → Wire into NodeGraph → Tests
+
+**Result:** ProSessionEngine upgraded from state-machine-only to real audio scheduling. Spatial processors wired into audio graph as EchoelmusicNodes.
+
+### ProSessionEngine Clip Playback
+
+**New Files:**
+- `Sources/Echoelmusic/Audio/AudioClipScheduler.swift` — Real-time clip playback scheduler with per-track EchoelSampler instances, MIDI event triggering, pattern step sequencing, audio file loading, stereo mixing with equal-power pan
+- `Tests/EchoelmusicTests/AudioClipSchedulerTests.swift` — 35+ tests for clip scheduling, MIDI/pattern triggering, transport advancement, stereo mixing, playback speed, bio-reactivity
+
+**Modified Files:**
+- `Sources/Echoelmusic/Audio/ProSessionEngine.swift` — Integrated AudioClipScheduler: `executeLaunch()` starts audio scheduling, `executeStop()` stops it, `transportTick()` advances scheduler, `stop()`/`stopAllClips()` reset scheduler. Added `renderAudio()` public API for stereo output.
+
+**What Changed:**
+1. **Per-track samplers** — Each track gets its own EchoelSampler instance with 64-voice polyphony
+2. **MIDI clip playback** — noteOn/noteOff events fired at beat positions within tick window
+3. **Pattern step sequencing** — FL Studio-style step triggering with probability gates, velocity, pitch offsets
+4. **Audio clip loading** — Audio files loaded into sampler zones via `loadFromAudioFile()`
+5. **Transport integration** — 240Hz tick advances clip beat positions, handles looping/non-looping clips
+6. **Stereo mixing** — per-track volume, pan (equal-power), mute, solo with vDSP acceleration
+7. **Playback speed** — Clips advance at configurable speed (0.5x to 2.0x)
+8. **Bio-reactive** — `updateBioData()` propagates HRV/coherence to all track samplers
+
+### Spatial Audio Graph Wiring
+
+**New Files:**
+- `Sources/Echoelmusic/Audio/Nodes/SpatialNodes.swift` — 4 new EchoelmusicNode wrappers:
+  - `AmbisonicsNode` — FOA/HOA encode → head-tracked rotate → stereo decode
+  - `RoomSimulationNode` — ISM early reflections with configurable room geometry
+  - `DopplerNode` — Resampling-based pitch shift with smoothed source tracking
+  - `HRTFNode` — Analytical binaural rendering with ITD/ILD + pinna modeling
+- `Tests/EchoelmusicTests/SpatialNodesTests.swift` — 25+ tests for all 4 spatial nodes
+
+**Modified Files:**
+- `Sources/Echoelmusic/Audio/Nodes/NodeGraph.swift` — NodeFactory now creates all 4 spatial nodes; `availableNodeClasses` includes them
+- `Sources/Echoelmusic/Audio/AudioEngine.swift` — Added `addSpatialNode(for:)` and `routeAudioThroughSpatial()` for spatial processing integration
+
+**What Changed:**
+1. **Spatial nodes conform to EchoelmusicNode** — process AVAudioPCMBuffer, bio-reactive, parameterized
+2. **NodeFactory registration** — All 4 spatial nodes creatable from manifests (presets, serialization)
+3. **AudioEngine bridge** — `addSpatialNode()` creates mode-appropriate spatial node in graph; `routeAudioThroughSpatial()` processes buffers through SpatialAudioEngine's ambisonics pipeline
+4. **Bio-reactivity** — Coherence → spatial width (Ambisonics, HRTF), coherence → room size (Room Sim), breathing → source velocity (Doppler)
+
+**Feature Matrix Impact:**
+- ProSessionEngine: PARTIAL → **REAL** (was state-machine-only, now has clip audio scheduling)
+- Spatial Audio Graph: PARTIAL → **REAL** (processors now wired as EchoelmusicNodes)
+- ~60+ new tests across both features
+
+---
+
 ## How to Use This File
 
 When starting a new session:

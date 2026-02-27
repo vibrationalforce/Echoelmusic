@@ -389,6 +389,14 @@ enum NodeFactory {
             return DelayNode()
         case "CompressorNode":
             return CompressorNode()
+        case "AmbisonicsNode":
+            return AmbisonicsNode()
+        case "RoomSimulationNode":
+            return RoomSimulationNode()
+        case "DopplerNode":
+            return DopplerNode()
+        case "HRTFNode":
+            return HRTFNode()
         default:
             // Try to create a generic node for unknown types
             log.audio("⚠️ Unknown node class: \(manifest.className)", level: .warning)
@@ -398,7 +406,10 @@ enum NodeFactory {
 
     /// Get all available node class names
     static var availableNodeClasses: [String] {
-        ["FilterNode", "ReverbNode", "DelayNode", "CompressorNode"]
+        [
+            "FilterNode", "ReverbNode", "DelayNode", "CompressorNode",
+            "AmbisonicsNode", "RoomSimulationNode", "DopplerNode", "HRTFNode"
+        ]
     }
 }
 

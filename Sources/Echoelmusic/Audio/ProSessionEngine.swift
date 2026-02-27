@@ -656,6 +656,13 @@ public class ProSessionEngine: ObservableObject {
     /// Default recording length in bars
     @Published public var loopLength: Int = 4
 
+    // MARK: - Audio Scheduling
+
+    /// Real-time audio scheduler for clip playback (MIDI, pattern, audio)
+    public private(set) lazy var audioScheduler: AudioClipScheduler = {
+        AudioClipScheduler(sampleRate: 44100, bufferSize: 512)
+    }()
+
     // MARK: - Private Properties
 
     private let log = ProfessionalLogger.shared
@@ -702,6 +709,7 @@ public class ProSessionEngine: ObservableObject {
         currentBeat = 0.0
         pendingLaunches.removeAll()
         pendingStops.removeAll()
+        audioScheduler.stopAll()
         log.info("Transport stopped", category: .audio)
     }
 
@@ -741,6 +749,18 @@ public class ProSessionEngine: ObservableObject {
 
         // Process pending stops
         processPendingStops(previousBeat: previousBeat, currentBeat: currentBeat)
+
+        // Advance audio scheduler — triggers MIDI notes, pattern steps, audio playback
+        let capturedTracks = tracks
+        audioScheduler.advanceTransport(
+            previousBeat: previousBeat,
+            currentBeat: currentBeat,
+            bpm: globalBPM
+        ) { [capturedTracks] trackIndex in
+            guard trackIndex < capturedTracks.count else { return nil }
+            // Find the currently playing clip on this track
+            return capturedTracks[trackIndex].clips.first(where: { $0?.state == .playing }) ?? nil
+        }
 
         // Process follow actions
         processFollowActions()
@@ -909,6 +929,8 @@ public class ProSessionEngine: ObservableObject {
                 }
             }
         }
+        // Stop all audio scheduling
+        audioScheduler.stopAll()
         log.info("All clips stopped (panic)", category: .audio)
     }
 
@@ -917,7 +939,7 @@ public class ProSessionEngine: ObservableObject {
     private func executeLaunch(trackIndex: Int, sceneIndex: Int) {
         guard trackIndex < tracks.count,
               sceneIndex < tracks[trackIndex].clips.count,
-              tracks[trackIndex].clips[sceneIndex] != nil else { return }
+              let clip = tracks[trackIndex].clips[sceneIndex] else { return }
 
         // Stop any other playing clip on this track (exclusive)
         for i in tracks[trackIndex].clips.indices {
@@ -927,13 +949,26 @@ public class ProSessionEngine: ObservableObject {
         }
 
         tracks[trackIndex].clips[sceneIndex]?.state = ClipState.playing
-        log.info("Clip playing: \(tracks[trackIndex].clips[sceneIndex]?.name ?? "?")", category: .audio)
+
+        // Launch audio scheduling for this clip
+        audioScheduler.launchClip(
+            clip,
+            trackIndex: trackIndex,
+            sceneIndex: sceneIndex,
+            trackID: tracks[trackIndex].id,
+            atBeat: currentBeat
+        )
+
+        log.info("Clip playing: \(clip.name)", category: .audio)
     }
 
     private func executeStop(trackIndex: Int, sceneIndex: Int) {
         guard trackIndex < tracks.count,
               sceneIndex < tracks[trackIndex].clips.count else { return }
         tracks[trackIndex].clips[sceneIndex]?.state = ClipState.stopped
+
+        // Stop audio scheduling for this track
+        audioScheduler.stopTrack(trackIndex: trackIndex)
     }
 
     /// Calculate the next beat boundary for a given quantization
@@ -1263,6 +1298,18 @@ public class ProSessionEngine: ObservableObject {
             }
         }
         return nil
+    }
+
+    // MARK: - Audio Rendering
+
+    /// Render audio from all playing clips and mix to stereo
+    /// Call this from the audio render callback at the hardware buffer rate
+    /// - Parameter frameCount: Number of audio frames to render
+    /// - Returns: Stereo pair of Float arrays (left, right), or nil if nothing is playing
+    public func renderAudio(frameCount: Int) -> (left: [Float], right: [Float])? {
+        let trackBuffers = audioScheduler.renderAllTracks(frameCount: frameCount)
+        guard !trackBuffers.isEmpty else { return nil }
+        return audioScheduler.mixToStereo(trackBuffers: trackBuffers, tracks: tracks, frameCount: frameCount)
     }
 
     // MARK: - Static Factory Methods

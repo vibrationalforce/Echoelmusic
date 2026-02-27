@@ -24,9 +24,9 @@
 | DSP & Synthese | 9 | 1 | 0 | 10 |
 | Synthesizer | 7 | 0 | 0 | 7 |
 | Vocal Processing | 9 | 0 | 0 | 9 |
-| Spatial Audio | 3 | 4 | 0 | 7 |
+| Spatial Audio | 7 | 0 | 0 | 7 |
 | MIDI | 6 | 0 | 0 | 6 |
-| Professionelles Mixing | 5 | 1 | 0 | 6 |
+| Professionelles Mixing | 6 | 0 | 0 | 6 |
 | Biofeedback | 7 | 0 | 2 | 9 |
 | Visual / Grafik | 4 | 2 | 0 | 6 |
 | Video | 3 | 1 | 0 | 4 |
@@ -35,9 +35,9 @@
 | UI Views | 15 | 0 | 1 | 16 |
 | Plattformen | 5 | 1 | 0 | 6 |
 | Infrastruktur | 7 | 0 | 0 | 7 |
-| **GESAMT** | **91** | **17** | **5** | **113** |
+| **GESAMT** | **96** | **12** | **5** | **113** |
 
-**Realistische Implementierungsrate: ~81% REAL, ~15% PARTIAL, ~4% STUB**
+**Realistische Implementierungsrate: ~85% REAL, ~11% PARTIAL, ~4% STUB**
 
 ---
 
@@ -102,10 +102,10 @@
 | 3D Spatial Engine | **REAL** | AVAudioEnvironmentNode + PHASE, HRTF, Head Tracking |
 | Head Tracking (CoreMotion) | **REAL** | 30Hz Device Motion, Echtzeit-Listener-Orientierung |
 | Fibonacci/Sphere/Grid Geometrie | **REAL** | Quellenplatzierung mit Position-Caching |
-| Ambisonics Processor | **PARTIAL** | B-Format Encode/Decode, Rotation — Genauigkeit unklar |
-| HRTF Processor | **PARTIAL** | Delegiert an AVAudioEnvironmentNode Built-in |
-| Doppler Processor | **PARTIAL** | Geschwindigkeitsbasierter Pitch-Shift, vereinfachtes Modell |
-| Raum-Simulation | **PARTIAL** | Image-Source-Methode, Fruehe Reflexionen — volle IR unklar |
+| Ambisonics Processor | **REAL** | FOA/HOA Encode/Decode, B-Format Rotation, Head-Tracked, als AmbisonicsNode im Audio-Graph |
+| HRTF Processor | **REAL** | Analytisches Modell (Woodworth ITD, Brown-Duda Diffraktion, Pinna-Resonanz), als HRTFNode im Audio-Graph |
+| Doppler Processor | **REAL** | Catmull-Rom Interpolation, per-Source Smoothing, physikalisch korrekt, als DopplerNode im Audio-Graph |
+| Raum-Simulation | **REAL** | Image-Source-Methode (rekursiv), bis 5. Ordnung, Sabine RT60, als RoomSimulationNode im Audio-Graph |
 
 ## 6. MIDI
 
@@ -123,7 +123,7 @@
 | Feature | Status | Beweis |
 |---------|--------|--------|
 | ProMixEngine (Kanalzuege) | **REAL** | Volles Datenmodell + MixerDSPKernel: per-Kanal AVAudioPCMBuffer, Insert-Chain (EchoelmusicNode), Equal-Power Pan, Send-Routing, Bus-Summing, vDSP-Metering |
-| ProSessionEngine (Clips) | **PARTIAL** | Session/Clip-Architektur, State Machine, Warp Markers. Echte Audio-Wiedergabe nicht gezeigt. |
+| ProSessionEngine (Clips) | **REAL** | Session/Clip-Architektur + AudioClipScheduler: per-Track EchoelSampler, MIDI noteOn/noteOff, Pattern-Step-Sequencer, Audio-File-Loading, Stereo-Mixing, 240Hz Transport |
 | Mix Snapshots | **REAL** | Speichern/Abrufen/Umbenennen des gesamten Mixer-Zustands |
 | Solo Exclusive Mode | **REAL** | Gegenseitig exklusive Solo-Logik |
 | Bus Groups | **REAL** | Gruppiere Kanaele, verknuepfte Steuerung |
@@ -239,11 +239,11 @@
 | Biofeedback Engine | 60% (Partial) | **90% (REAL)** | +30% — Bio→Audio + Bio→Visual jetzt REAL |
 | Audio/DSP | 65% (Partial) | **85% (REAL)** | +20% — Alle Synths, Vocal Chain REAL |
 | MIDI | 70% (Partial) | **95% (REAL)** | +25% — MIDI 2.0 + Touch + Piano Roll REAL |
-| Spatial Audio | 30% (Skeleton) | **55% (PARTIAL+)** | +25% — PHASE + Head Tracking REAL |
+| Spatial Audio | 30% (Skeleton) | **95% (REAL)** | +65% — Alle 4 Prozessoren als Nodes im Audio-Graph |
 | Visual Engine | 45% (Partial) | **75% (REAL)** | +30% — 25 Metal Shaders REAL |
 | Video | 25% (Skeleton) | **70% (REAL)** | +45% — Processing + Color Grading REAL |
 | UI Views | 60% (Partial) | **95% (REAL)** | +35% — Alle 16 Views REAL |
-| ProMixEngine | 20% (Skeleton) | **40% (PARTIAL)** | +20% — Snapshots/Solo/Bus REAL |
+| ProMixEngine | 20% (Skeleton) | **95% (REAL)** | +75% — MixerDSPKernel + AudioClipScheduler REAL |
 | Push 3 / Laser | 45% (Partial) | **80% (REAL)** | +35% — Volles MIDI SysEx + ILDA REAL |
 | AI | 15% (Skeleton) | **50% (PARTIAL+)** | +35% — LLM Service + CoreML Loader REAL |
 
@@ -268,10 +268,11 @@ Der Feb-11 Audit war oberflaechlich — hat Methoden-Signaturen als "Skeleton" g
 ## WAS INTEGRATIONSARBEIT BRAUCHT (1-4 Wochen je)
 
 1. ~~**ProMixEngine Audio-Routing**~~ **DONE** (MixerDSPKernel mit per-Kanal Buffern, Insert-Chains, Send-Routing, Bus-Summing)
-2. **ProSessionEngine Clip-Playback** (Architektur fertig, braucht Audio-Scheduler)
-3. **VisionOS Immersive Content** (RealityKit-Geruest fertig)
-4. **Dante/AES67 Paket-I/O**
-5. **AI-Modell Training/Deployment**
+2. ~~**ProSessionEngine Clip-Playback**~~ **DONE** (AudioClipScheduler mit MIDI/Pattern/Audio-Playback, EchoelSampler-Integration)
+3. ~~**Spatial Audio Graph-Integration**~~ **DONE** (4 Spatial Nodes: Ambisonics, HRTF, Doppler, Room Sim im NodeGraph)
+4. **VisionOS Immersive Content** (RealityKit-Geruest fertig)
+5. **Dante/AES67 Paket-I/O**
+6. **AI-Modell Training/Deployment**
 
 ## BLOCKIERT AUF EXTERNE ABHAENGIGKEITEN
 
