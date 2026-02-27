@@ -2,14 +2,14 @@ import Foundation
 import AVFoundation
 import Combine
 
-/// Central audio engine that manages and mixes multiple audio sources
+/// Central audio engine for professional music production
 ///
 /// Coordinates:
-/// - Microphone input (for voice/breath capture)
-/// - Multidimensional Brainwave Entrainment generation (for brainwave entrainment)
+/// - Audio playback and transport control
+/// - Real-time mixing and effects (NodeGraph)
 /// - Spatial audio with head tracking
-/// - Bio-parameter mapping (HRV → Audio)
-/// - Real-time mixing and effects
+/// - Microphone input (for recording/monitoring)
+/// - Optional bio-parameter mapping (HRV → Audio)
 ///
 /// This class acts as the central hub for all audio processing in Echoelmusic
 @MainActor
@@ -25,6 +25,9 @@ public class AudioEngine: ObservableObject {
 
     /// Whether spatial audio is enabled
     @Published var spatialAudioEnabled: Bool = false
+
+    /// Whether input monitoring is enabled (mic recording on play)
+    @Published var inputMonitoringEnabled: Bool = false
 
     /// Current binaural beat state
     @Published var currentBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
@@ -119,8 +122,8 @@ public class AudioEngine: ObservableObject {
         // Start monitoring device capabilities
         deviceCapabilities?.startMonitoringAudioRoute()
 
-        // Initialize node graph with default biofeedback chain
-        nodeGraph = NodeGraph.createBiofeedbackChain()
+        // Initialize node graph with default production chain (EQ → Compressor → Reverb)
+        nodeGraph = NodeGraph.createProductionChain()
 
         // Wire audio interruption callbacks so engine resumes automatically
         AudioConfiguration.onInterruptionBegan = { [weak self] in
@@ -141,12 +144,18 @@ public class AudioEngine: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Start the audio engine (microphone + optional Multidimensional Brainwave Entrainment + spatial audio)
+    /// Start the audio engine for production playback
+    ///
+    /// Starts the effects chain and any enabled sub-engines.
+    /// Microphone input is only started when input monitoring is enabled.
+    /// Binaural beats are only started when explicitly enabled by the user.
     func start() {
-        // Start microphone
-        microphoneManager.startRecording()
+        // Start microphone only if input monitoring is needed
+        if inputMonitoringEnabled {
+            microphoneManager.startRecording()
+        }
 
-        // Start Multidimensional Brainwave Entrainment if enabled
+        // Start binaural beats only if explicitly enabled by the user
         if binauralBeatsEnabled {
             binauralGenerator.start()
         }
@@ -155,18 +164,20 @@ public class AudioEngine: ObservableObject {
         if spatialAudioEnabled, let spatial = spatialAudioEngine {
             do {
                 try spatial.start()
-                log.audio("🎵 Spatial audio started")
+                log.audio("Spatial audio started")
             } catch {
-                log.audio("❌ Failed to start spatial audio: \(error)", level: .error)
+                log.audio("Failed to start spatial audio: \(error)", level: .error)
                 spatialAudioEnabled = false
             }
         }
 
-        // Start bio-parameter mapping updates
-        startBioParameterMapping()
+        // Start bio-parameter mapping updates if HealthKit is connected
+        if healthKitEngine != nil {
+            startBioParameterMapping()
+        }
 
         isRunning = true
-        log.audio("🎵 AudioEngine started")
+        log.audio("AudioEngine started (production mode)")
     }
 
     /// Stop the audio engine

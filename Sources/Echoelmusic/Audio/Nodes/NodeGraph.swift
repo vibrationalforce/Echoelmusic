@@ -488,6 +488,31 @@ extension NodeGraph {
         return graph
     }
 
+    /// Create default production processing chain (EQ → Compressor → Reverb)
+    static func createProductionChain() -> NodeGraph {
+        let graph = NodeGraph()
+
+        // Production chain: Filter (EQ) → Compressor → Reverb (send)
+        let filter = FilterNode()
+        filter.setParameter(name: "cutoffFrequency", value: 20000.0)  // Wide open
+        filter.setParameter(name: "resonance", value: 0.0)            // Flat
+
+        let compressor = CompressorNode()
+
+        let reverb = ReverbNode()
+        reverb.setParameter(name: "wetDry", value: 15.0)  // Subtle reverb for production
+
+        graph.addNode(filter)
+        graph.addNode(compressor)
+        graph.addNode(reverb)
+
+        // Connect: Input → Filter → Compressor → Reverb → Output
+        try? graph.connect(from: filter.id, to: compressor.id)
+        try? graph.connect(from: compressor.id, to: reverb.id)
+
+        return graph
+    }
+
     /// Create ambient healing preset
     static func createHealingPreset() -> NodeGraph {
         let graph = NodeGraph()

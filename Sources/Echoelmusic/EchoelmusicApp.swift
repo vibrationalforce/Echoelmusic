@@ -35,7 +35,7 @@ extension AnyCancellable {
 #if os(iOS) || os(macOS) || os(tvOS)
 
 /// Main entry point for the Echoelmusic app
-/// Bio-reactive audio-visual experiences platform
+/// Professional music and video production platform
 ///
 /// ARCHITECTURE: Splash-screen-gated startup
 /// All singletons are initialized SEQUENTIALLY in `initializeCoreSystems()`,
@@ -315,12 +315,10 @@ struct EchoelmusicApp: App {
         // Start UnifiedControlHub
         unifiedControlHub.start()
 
-        // AUTO-START: Enable binaural beats and start the audio engine immediately
-        // so users hear bio-reactive audio as soon as the app launches.
-        // The BinauralBeatGenerator has its own AVAudioEngine that outputs to hardware.
-        audioEngine.binauralBeatsEnabled = true
-        audioEngine.start()
-        log.info("Audio engine auto-started with binaural beats enabled", category: .audio)
+        // Professional production mode: audio engine starts on-demand when
+        // user hits Play in the transport bar — no auto-start, no binaural beats.
+        // Audio session is configured and ready; playback begins via togglePlayback().
+        log.info("Audio engine ready — awaiting transport Play command", category: .audio)
 
         // Async tasks: biometric monitoring, MIDI, push notifications
         Task {
@@ -344,7 +342,7 @@ struct EchoelmusicApp: App {
             }
         }
 
-        log.info("Bio-Reactive Audio-Visual Platform Ready — all systems connected end-to-end", category: .system)
+        log.info("Professional Production Platform Ready — all systems connected", category: .system)
     }
 }
 
