@@ -89,6 +89,7 @@ struct EchoelmusicApp: App {
     @State private var initializationPhase: String = "Starting..."
     @State private var initializationProgress: Double = 0
     @State private var failedPhases: [String] = []
+    @State private var showOnboarding = false
 
     init() {
         // Initialize AudioEngine with MicrophoneManager
@@ -171,6 +172,13 @@ struct EchoelmusicApp: App {
             .preferredColorScheme(themeManager.resolvedColorScheme)
             .onAppear {
                 connectSystems()
+                // Show onboarding on first launch
+                if !OnboardingManager.shared.hasCompletedOnboarding {
+                    showOnboarding = true
+                }
+            }
+            .fullScreenCover(isPresented: $showOnboarding) {
+                OnboardingView()
             }
     }
 

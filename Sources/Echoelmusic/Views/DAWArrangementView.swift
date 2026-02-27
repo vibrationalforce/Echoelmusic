@@ -509,21 +509,29 @@ struct DAWArrangementView: View {
 // MARK: - DAW Models
 
 class ArrangementDAWProductionEngine: ObservableObject {
+    /// Track accent colors — monochrome grays with subtle differentiation
+    private static let trackAccents: [Color] = [
+        EchoelBrand.primary,                           // #E0E0E0
+        EchoelBrand.primary.opacity(0.7),              // dimmer
+        EchoelBrand.primary.opacity(0.5),              // subtle
+        Color.white,                                    // bright accent
+        EchoelBrand.primary.opacity(0.85)              // mid
+    ]
+
     @Published var tracks: [DAWTrack] = [
-        DAWTrack(name: "Drums", instrumentName: "EchoelBeat", color: VaporwaveColors.neonPink),
-        DAWTrack(name: "Bass", instrumentName: "EchoSynth", color: VaporwaveColors.neonCyan),
-        DAWTrack(name: "Lead", instrumentName: "Wavetable", color: VaporwaveColors.neonPurple),
-        DAWTrack(name: "Pad", instrumentName: "Coherence Pad", color: VaporwaveColors.lavender)
+        DAWTrack(name: "Drums", instrumentName: "EchoelBeat", color: EchoelBrand.primary),
+        DAWTrack(name: "Bass", instrumentName: "EchoSynth", color: EchoelBrand.primary.opacity(0.7)),
+        DAWTrack(name: "Lead", instrumentName: "Wavetable", color: Color.white),
+        DAWTrack(name: "Pad", instrumentName: "Coherence Pad", color: EchoelBrand.primary.opacity(0.5))
     ]
     @Published var isRecording = false
     @Published var projectLength: Int = 32 // bars
 
     func addTrack(withInstrument instrument: String = "EchoSynth") {
-        let colors: [Color] = [VaporwaveColors.neonPink, VaporwaveColors.neonCyan, VaporwaveColors.neonPurple, VaporwaveColors.lavender, VaporwaveColors.coral]
         let newTrack = DAWTrack(
             name: "Track \(tracks.count + 1)",
             instrumentName: instrument,
-            color: colors[tracks.count % colors.count]
+            color: Self.trackAccents[tracks.count % Self.trackAccents.count]
         )
         tracks.append(newTrack)
     }

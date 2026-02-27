@@ -101,13 +101,9 @@ public struct OnboardingView: View {
 
     public var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background — true black
+            EchoelBrand.bgDeep
+                .ignoresSafeArea()
 
             TabView(selection: $currentPage) {
                 // Page 0: Welcome
@@ -163,7 +159,7 @@ private struct WelcomePage: View {
                     Circle()
                         .fill(
                             RadialGradient(
-                                colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.3)],
+                                colors: [EchoelBrand.primary.opacity(0.15), EchoelBrand.bgSurface],
                                 center: .center,
                                 startRadius: 20,
                                 endRadius: 120
@@ -171,15 +167,22 @@ private struct WelcomePage: View {
                         )
                         .frame(width: 240, height: 240)
 
-                    Image(systemName: "waveform.path.ecg.rectangle.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.blue, .cyan],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                    // E + Wellen logo
+                    VStack(spacing: EchoelSpacing.sm) {
+                        ELetterShape()
+                            .stroke(
+                                EchoelBrand.primary,
+                                style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
                             )
-                        )
+                            .frame(width: 50, height: 65)
+
+                        LaunchWaveformShape()
+                            .stroke(
+                                EchoelBrand.primary.opacity(0.6),
+                                style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                            )
+                            .frame(width: 120, height: 30)
+                    }
                 }
                 .pulseAnimation()
             },

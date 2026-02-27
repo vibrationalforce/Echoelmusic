@@ -26,6 +26,8 @@ struct MainNavigationHub: View {
     @State private var showSettings = false
     @State private var showSearch = false
     @State private var searchQuery = ""
+    @State private var playbackSeconds: Double = 0
+    @State private var playbackTimer: Timer?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Live Computed Properties (no stale state)
@@ -578,9 +580,9 @@ struct MainNavigationHub: View {
                 .frame(height: 24)
                 .background(EchoelBrand.border)
 
-            // Time Display
+            // Time Display — live timecode
             VStack(spacing: 0) {
-                Text("00:00:00:00")
+                Text(formatTimecode(playbackSeconds))
                     .font(.system(size: 18, weight: .light, design: .monospaced))
                     .foregroundColor(EchoelBrand.textPrimary)
 
@@ -913,11 +915,13 @@ struct MainNavigationHub: View {
         if audioEngine.isRunning {
             audioEngine.stop()
             healthKitEngine.stopStreaming()
+            stopTimecode()
         } else {
             audioEngine.start()
             if healthKitEngine.isAuthorized {
                 healthKitEngine.startStreaming()
             }
+            startTimecode()
         }
         EchoelCreativeWorkspace.shared.togglePlayback()
     }
@@ -925,9 +929,35 @@ struct MainNavigationHub: View {
     private func stopPlayback() {
         audioEngine.stop()
         healthKitEngine.stopStreaming()
+        stopTimecode()
+        playbackSeconds = 0
         if EchoelCreativeWorkspace.shared.isPlaying {
             EchoelCreativeWorkspace.shared.togglePlayback()
         }
+    }
+
+    // MARK: - Timecode
+
+    private func startTimecode() {
+        playbackTimer?.invalidate()
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { _ in
+            Task { @MainActor in
+                playbackSeconds += 1.0 / 30.0
+            }
+        }
+    }
+
+    private func stopTimecode() {
+        playbackTimer?.invalidate()
+        playbackTimer = nil
+    }
+
+    private func formatTimecode(_ totalSeconds: Double) -> String {
+        let hours = Int(totalSeconds) / 3600
+        let minutes = (Int(totalSeconds) % 3600) / 60
+        let seconds = Int(totalSeconds) % 60
+        let frames = Int((totalSeconds - Double(Int(totalSeconds))) * 30)
+        return String(format: "%02d:%02d:%02d:%02d", hours, minutes, seconds, frames)
     }
 
     private func toggleRecording() {

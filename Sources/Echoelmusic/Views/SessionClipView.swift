@@ -796,11 +796,11 @@ class SessionClipViewModel: ObservableObject {
     init() {
         // Sample data
         tracks = [
-            ClipViewTrack(name: "Drums", color: VaporwaveColors.neonPink, instrumentName: "EchoelBeat", instrumentIcon: "square.grid.3x3"),
-            ClipViewTrack(name: "Bass", color: VaporwaveColors.neonCyan, instrumentName: "EchoSynth", instrumentIcon: "waveform"),
-            ClipViewTrack(name: "Lead", color: VaporwaveColors.neonPurple, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
-            ClipViewTrack(name: "Pad", color: VaporwaveColors.lavender, instrumentName: "Granular", instrumentIcon: "sparkles"),
-            ClipViewTrack(name: "Bio", color: VaporwaveColors.coherenceHigh, instrumentName: "Coherence", instrumentIcon: "heart.fill")
+            ClipViewTrack(name: "Drums", color: EchoelBrand.primary, instrumentName: "EchoelBeat", instrumentIcon: "square.grid.3x3"),
+            ClipViewTrack(name: "Bass", color: EchoelBrand.primary.opacity(0.7), instrumentName: "EchoSynth", instrumentIcon: "waveform"),
+            ClipViewTrack(name: "Lead", color: Color.white, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
+            ClipViewTrack(name: "Pad", color: EchoelBrand.primary.opacity(0.5), instrumentName: "Granular", instrumentIcon: "sparkles"),
+            ClipViewTrack(name: "Bio", color: EchoelBrand.coherenceHigh, instrumentName: "Coherence", instrumentIcon: "heart.fill")
         ]
 
         scenes = (1...8).map { ClipViewScene(name: "Scene \($0)") }
@@ -812,7 +812,7 @@ class SessionClipViewModel: ObservableObject {
         }
     }
 
-    func addTrack() { tracks.append(ClipViewTrack(name: "Track \(tracks.count + 1)", color: VaporwaveColors.neonCyan, instrumentName: "Empty", instrumentIcon: "questionmark")) }
+    func addTrack() { tracks.append(ClipViewTrack(name: "Track \(tracks.count + 1)", color: EchoelBrand.primary.opacity(0.6), instrumentName: "Empty", instrumentIcon: "questionmark")) }
     func addScene() { scenes.append(ClipViewScene(name: "Scene \(scenes.count + 1)")) }
     func toggleMute(_ index: Int) { tracks[index].isMuted.toggle() }
     func toggleSolo(_ index: Int) { tracks[index].isSoloed.toggle() }

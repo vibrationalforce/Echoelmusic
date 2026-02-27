@@ -1,171 +1,141 @@
 import SwiftUI
 
-// MARK: - Vaporwave Palace Theme
-// "Flüssiges Licht für deine Musik"
-// Design synchronized with echoelmusic.com website
+// MARK: - Vaporwave Theme → EchoelBrand Bridge
+// All legacy VaporwaveColors/Gradients/Typography now redirect to EchoelBrand.
+// This unifies the entire app under the monochrome "E + Wellen" identity
+// without touching 23+ individual view files.
 
-/// The Vaporwave Palace color palette
-/// Inspired by: 80s/90s aesthetics, neon lights, sunset gradients, liquid light
+/// Legacy color palette — now forwards to EchoelBrand monochrome system
 struct VaporwaveColors {
 
-    // MARK: - Primary Neon Colors (exact website hex values)
+    // MARK: - Primary Colors (monochrome)
 
-    /// Hot pink - primary accent (#FF1494)
-    static let neonPink = Color(red: 1.0, green: 0.08, blue: 0.58)
+    /// Primary accent — light gray (#E0E0E0)
+    static let neonPink = EchoelBrand.primary
 
-    /// Electric cyan - secondary accent (#00FFFF)
-    static let neonCyan = Color(red: 0.0, green: 1.0, blue: 1.0)
+    /// Secondary accent — light gray (#E0E0E0)
+    static let neonCyan = EchoelBrand.primary
 
-    /// Deep purple - tertiary (#9933FF)
-    static let neonPurple = Color(red: 0.6, green: 0.2, blue: 1.0)
+    /// Tertiary — dimmed gray
+    static let neonPurple = EchoelBrand.textSecondary
 
-    /// Soft lavender (#CC99FF)
-    static let lavender = Color(red: 0.8, green: 0.6, blue: 1.0)
+    /// Soft lavender → secondary text
+    static let lavender = EchoelBrand.textSecondary
 
-    /// Warm coral/orange (#FF7F66)
-    static let coral = Color(red: 1.0, green: 0.5, blue: 0.4)
+    /// Coral — functional color (warnings, recording)
+    static let coral = EchoelBrand.coral
 
-    // MARK: - Background Colors
+    // MARK: - Background Colors (true black)
 
-    /// Deep space black (#050510)
-    static let deepBlack = Color(red: 0.02, green: 0.02, blue: 0.0625)
+    /// True black
+    static let deepBlack = EchoelBrand.bgDeep
 
-    /// Midnight blue (#0D0D26)
-    static let midnightBlue = Color(red: 0.05, green: 0.05, blue: 0.15)
+    /// Surface — very subtle gray (#0A0A0A)
+    static let midnightBlue = EchoelBrand.bgSurface
 
-    /// Dark purple (#1A0D33)
-    static let darkPurple = Color(red: 0.1, green: 0.05, blue: 0.2)
+    /// Elevated — modals, popovers (#141414)
+    static let darkPurple = EchoelBrand.bgElevated
 
-    /// Sunset orange (for gradients) (#FF6633)
-    static let sunsetOrange = Color(red: 1.0, green: 0.4, blue: 0.2)
+    /// Amber (functional)
+    static let sunsetOrange = EchoelBrand.amber
 
-    /// Sunset pink (#FF3380)
-    static let sunsetPink = Color(red: 1.0, green: 0.2, blue: 0.5)
+    /// Coral (functional)
+    static let sunsetPink = EchoelBrand.coral
 
-    // MARK: - Bio-Reactive Colors (website CSS variables)
+    // MARK: - Bio-Reactive Colors (functional — keep distinct)
 
-    /// Low coherence - stressed (#FF4D4D)
-    static let coherenceLow = Color(red: 1.0, green: 0.3, blue: 0.3)
+    /// Low coherence - needs attention
+    static let coherenceLow = EchoelBrand.coherenceLow
 
-    /// Medium coherence - transitioning (#FFCC33)
-    static let coherenceMedium = Color(red: 1.0, green: 0.8, blue: 0.2)
+    /// Medium coherence - transitioning
+    static let coherenceMedium = EchoelBrand.coherenceMedium
 
-    /// High coherence - flow state (#33FFCC)
-    static let coherenceHigh = Color(red: 0.2, green: 1.0, blue: 0.8)
+    /// High coherence - flow state
+    static let coherenceHigh = EchoelBrand.coherenceHigh
 
     // MARK: - Text Colors
 
-    /// Primary text - bright white
-    static let textPrimary = Color.white
+    /// Primary text (#E0E0E0)
+    static let textPrimary = EchoelBrand.textPrimary
 
-    /// Secondary text - soft white (rgba 255,255,255,0.85)
-    static let textSecondary = Color.white.opacity(0.85)
+    /// Secondary text (55% opacity)
+    static let textSecondary = EchoelBrand.textSecondary
 
-    /// Tertiary/muted text — WCAG AA compliant (4.5:1 on dark bg)
-    static let textTertiary = Color.white.opacity(0.65)
+    /// Tertiary text (55% opacity)
+    static let textTertiary = EchoelBrand.textTertiary
 
-    // MARK: - Glass Effect Colors (website CSS)
+    // MARK: - Glass Effect Colors
 
-    /// Glass background (rgba 255,255,255,0.08)
-    static let glassBg = Color.white.opacity(0.08)
+    /// Glass background
+    static let glassBg = EchoelBrand.bgGlass
 
-    /// Glass border (rgba 255,255,255,0.15)
-    static let glassBorder = Color.white.opacity(0.15)
+    /// Glass border
+    static let glassBorder = EchoelBrand.border
 
-    /// Glass border active state (rgba 255,20,148,0.5)
-    static let glassBorderActive = neonPink.opacity(0.5)
+    /// Glass border active
+    static let glassBorderActive = EchoelBrand.borderActive
 
     // MARK: - Functional Colors
 
     /// Recording active
-    static let recordingActive = neonPink
+    static let recordingActive = EchoelBrand.coral
 
     /// Success/connected
-    static let success = neonCyan
+    static let success = EchoelBrand.emerald
 
     /// Warning
-    static let warning = coral
+    static let warning = EchoelBrand.amber
 
     /// Heart rate
-    static let heartRate = Color(red: 1.0, green: 0.3, blue: 0.4)
+    static let heartRate = EchoelBrand.rose
 
     /// HRV
-    static let hrv = Color(red: 0.3, green: 1.0, blue: 0.6)
+    static let hrv = EchoelBrand.emerald
 }
 
-// MARK: - Gradients
+// MARK: - Gradients (monochrome)
 
 struct VaporwaveGradients {
 
-    /// Main background gradient (deep space)
-    static let background = LinearGradient(
-        gradient: Gradient(colors: [
-            VaporwaveColors.midnightBlue,
-            VaporwaveColors.darkPurple
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    /// Main background — true black to surface
+    static let background = EchoelGradients.background
 
-    /// Sunset gradient (for hero sections)
-    static let sunset = LinearGradient(
-        gradient: Gradient(colors: [
-            VaporwaveColors.neonPurple,
-            VaporwaveColors.sunsetPink,
-            VaporwaveColors.sunsetOrange
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    /// Brand gradient (monochrome)
+    static let sunset = EchoelGradients.brand
 
-    /// Neon gradient (pink to cyan)
+    /// Brand gradient (monochrome)
     static let neon = LinearGradient(
-        gradient: Gradient(colors: [
-            VaporwaveColors.neonPink,
-            VaporwaveColors.neonPurple,
-            VaporwaveColors.neonCyan
-        ]),
+        colors: [
+            EchoelBrand.primary.opacity(0.6),
+            EchoelBrand.primary,
+            Color.white.opacity(0.9)
+        ],
         startPoint: .leading,
         endPoint: .trailing
     )
 
-    /// Coherence gradient (red → yellow → green)
-    static let coherence = LinearGradient(
-        gradient: Gradient(colors: [
-            VaporwaveColors.coherenceLow,
-            VaporwaveColors.coherenceMedium,
-            VaporwaveColors.coherenceHigh
-        ]),
-        startPoint: .leading,
-        endPoint: .trailing
-    )
+    /// Coherence gradient (functional — keep colors)
+    static let coherence = EchoelGradients.coherence
 
-    /// Card background (glass effect)
-    static let glassCard = LinearGradient(
-        gradient: Gradient(colors: [
-            Color.white.opacity(0.1),
-            Color.white.opacity(0.05)
-        ]),
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    /// Card background (glass)
+    static let glassCard = EchoelGradients.card
 
-    /// Card accent bar gradient (top border on hover)
+    /// Card accent bar
     static let cardAccent = LinearGradient(
-        gradient: Gradient(colors: [
-            VaporwaveColors.neonPink,
-            VaporwaveColors.neonPurple,
-            VaporwaveColors.neonCyan
-        ]),
+        colors: [
+            EchoelBrand.primary.opacity(0.5),
+            EchoelBrand.primary,
+            EchoelBrand.primary.opacity(0.5)
+        ],
         startPoint: .leading,
         endPoint: .trailing
     )
 
-    /// Animated blob gradient (for background effects)
+    /// Subtle blob gradient
     static func blobGradient(at position: UnitPoint) -> RadialGradient {
         RadialGradient(
             gradient: Gradient(colors: [
-                VaporwaveColors.neonPurple.opacity(0.15),
+                EchoelBrand.primary.opacity(0.04),
                 Color.clear
             ]),
             center: position,
@@ -175,29 +145,20 @@ struct VaporwaveGradients {
     }
 }
 
-// MARK: - Animated Background Components
+// MARK: - Animated Background (monochrome)
 
-/// Vaporwave gradient background (matches website design)
-/// Uses static blobs to avoid continuous 60fps re-renders that cause 50%+ CPU.
+/// Monochrome background with subtle depth
 struct VaporwaveAnimatedBackground: View {
     var body: some View {
         ZStack {
-            // Base gradient
-            LinearGradient(
-                colors: [
-                    VaporwaveColors.deepBlack,
-                    VaporwaveColors.midnightBlue,
-                    VaporwaveColors.darkPurple
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // True black base
+            EchoelBrand.bgDeep
 
-            // Static blob 1 (purple, top-left)
+            // Subtle depth blob (gray, top-left)
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [VaporwaveColors.neonPurple.opacity(0.15), .clear],
+                        colors: [EchoelBrand.primary.opacity(0.03), .clear],
                         center: .center,
                         startRadius: 0,
                         endRadius: 250
@@ -207,11 +168,11 @@ struct VaporwaveAnimatedBackground: View {
                 .offset(x: -150, y: -200)
                 .blur(radius: 60)
 
-            // Static blob 2 (pink, bottom-right)
+            // Subtle depth blob (gray, bottom-right)
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [VaporwaveColors.neonPink.opacity(0.12), .clear],
+                        colors: [EchoelBrand.primary.opacity(0.02), .clear],
                         center: .center,
                         startRadius: 0,
                         endRadius: 200
@@ -220,26 +181,13 @@ struct VaporwaveAnimatedBackground: View {
                 .frame(width: 400, height: 400)
                 .offset(x: 150, y: 200)
                 .blur(radius: 50)
-
-            // Static blob 3 (cyan, center)
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [VaporwaveColors.neonCyan.opacity(0.08), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 300
-                    )
-                )
-                .frame(width: 600, height: 600)
-                .blur(radius: 80)
         }
         .ignoresSafeArea()
         .drawingGroup()
     }
 }
 
-/// Grid pattern overlay (matches website design)
+/// Grid overlay (monochrome)
 struct VaporwaveGridOverlay: View {
     let gridSize: CGFloat
     let lineOpacity: Double
@@ -252,7 +200,7 @@ struct VaporwaveGridOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             Canvas { context, size in
-                let color = Color(red: 1.0, green: 0.08, blue: 0.58).opacity(lineOpacity)
+                let color = EchoelBrand.primary.opacity(lineOpacity)
 
                 // Vertical lines
                 for x in stride(from: 0, through: size.width, by: gridSize) {
@@ -277,7 +225,7 @@ struct VaporwaveGridOverlay: View {
     }
 }
 
-/// Complete vaporwave background with gradient and grid
+/// Complete background with gradient and grid
 struct VaporwaveFullBackground: View {
     let showGrid: Bool
     let animated: Bool
@@ -292,7 +240,7 @@ struct VaporwaveFullBackground: View {
             if animated {
                 VaporwaveAnimatedBackground()
             } else {
-                VaporwaveGradients.background
+                EchoelBrand.bgDeep
             }
 
             if showGrid {
@@ -303,7 +251,7 @@ struct VaporwaveFullBackground: View {
     }
 }
 
-// MARK: - View Modifiers
+// MARK: - View Modifiers (monochrome)
 
 struct NeonGlow: ViewModifier {
     let color: Color
@@ -311,7 +259,8 @@ struct NeonGlow: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .shadow(color: color.opacity(0.6), radius: radius)
+            .shadow(color: color.opacity(0.3), radius: radius)
+            .shadow(color: color.opacity(0.15), radius: radius * 2)
     }
 }
 
@@ -320,7 +269,7 @@ struct GlassCard: ViewModifier {
     let showAccentBar: Bool
     let cornerRadius: CGFloat
 
-    init(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = 20) {
+    init(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = EchoelRadius.lg) {
         self.isActive = isActive
         self.showAccentBar = showAccentBar
         self.cornerRadius = cornerRadius
@@ -330,31 +279,22 @@ struct GlassCard: ViewModifier {
         content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(VaporwaveColors.glassBg)
-                    .background(
+                    .fill(isActive ? EchoelBrand.bgElevated : EchoelBrand.bgSurface)
+                    .overlay(
                         RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(Color.black.opacity(0.3))
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(
-                        isActive ? VaporwaveColors.glassBorderActive : VaporwaveColors.glassBorder,
-                        lineWidth: 1
+                            .stroke(
+                                isActive ? EchoelBrand.borderActive : EchoelBrand.border,
+                                lineWidth: 1
+                            )
                     )
             )
             .overlay(alignment: .top) {
                 if showAccentBar {
-                    VaporwaveGradients.cardAccent
-                        .frame(height: 3)
+                    EchoelBrand.primary.opacity(0.3)
+                        .frame(height: 2)
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                 }
             }
-            .shadow(
-                color: isActive ? VaporwaveColors.neonPink.opacity(0.15) : .clear,
-                radius: 20,
-                y: 10
-            )
     }
 }
 
@@ -364,213 +304,94 @@ struct VaporwaveButton: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .foregroundColor(.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
+            .foregroundColor(isActive ? EchoelBrand.bgDeep : EchoelBrand.textPrimary)
+            .padding(.horizontal, EchoelSpacing.lg)
+            .padding(.vertical, EchoelSpacing.md)
             .background(
                 Capsule()
-                    .fill(isActive ? activeColor : Color.white.opacity(0.1))
+                    .fill(isActive ? EchoelBrand.primary : EchoelBrand.bgElevated)
             )
             .overlay(
                 Capsule()
-                    .stroke(isActive ? activeColor : Color.white.opacity(0.3), lineWidth: 1)
+                    .stroke(isActive ? EchoelBrand.primary : EchoelBrand.border, lineWidth: 1)
             )
-            .shadow(color: isActive ? activeColor.opacity(0.5) : .clear, radius: 10)
     }
 }
 
 // MARK: - View Extensions
 
 extension View {
-    /// Apply neon glow effect
-    func neonGlow(color: Color = VaporwaveColors.neonPink, radius: CGFloat = 15) -> some View {
+    func neonGlow(color: Color = EchoelBrand.primary, radius: CGFloat = 12) -> some View {
         modifier(NeonGlow(color: color, radius: radius))
     }
 
-    /// Apply glass card background
-    func glassCard(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = 20) -> some View {
+    func glassCard(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = EchoelRadius.lg) -> some View {
         modifier(GlassCard(isActive: isActive, showAccentBar: showAccentBar, cornerRadius: cornerRadius))
     }
 
-    /// Apply vaporwave button style
-    func vaporwaveButton(isActive: Bool = false, activeColor: Color = VaporwaveColors.neonPink) -> some View {
+    func vaporwaveButton(isActive: Bool = false, activeColor: Color = EchoelBrand.primary) -> some View {
         modifier(VaporwaveButton(isActive: isActive, activeColor: activeColor))
     }
 
-    /// Apply simple vaporwave background gradient
     func vaporwaveBackground() -> some View {
-        self.background(VaporwaveGradients.background.ignoresSafeArea())
+        self.background(EchoelBrand.bgDeep.ignoresSafeArea())
     }
 
-    /// Apply full vaporwave background with animated blobs and grid
     func vaporwaveFullBackground(showGrid: Bool = true, animated: Bool = true) -> some View {
         self.background(VaporwaveFullBackground(showGrid: showGrid, animated: animated))
     }
 }
 
-// MARK: - Typography
+// MARK: - Typography (forwards to EchoelBrandFont)
 
 struct VaporwaveTypography {
-
-    /// Hero title (app name)
-    static func heroTitle() -> Font {
-        .system(size: 48, weight: .bold, design: .rounded)
-    }
-
-    /// Section title
-    static func sectionTitle() -> Font {
-        .system(size: 24, weight: .semibold, design: .rounded)
-    }
-
-    /// Body text
-    static func body() -> Font {
-        .system(size: 16, weight: .regular, design: .default)
-    }
-
-    /// Caption
-    static func caption() -> Font {
-        .system(size: 12, weight: .light, design: .default)
-    }
-
-    /// Monospace for data
-    static func data() -> Font {
-        .system(size: 36, weight: .light, design: .monospaced)
-    }
-
-    /// Small monospace
-    static func dataSmall() -> Font {
-        .system(size: 24, weight: .light, design: .monospaced)
-    }
-
-    /// Label
-    static func label() -> Font {
-        .system(size: 10, weight: .medium, design: .default)
-    }
+    static func heroTitle() -> Font { EchoelBrandFont.heroTitle() }
+    static func sectionTitle() -> Font { EchoelBrandFont.sectionTitle() }
+    static func body() -> Font { EchoelBrandFont.body() }
+    static func caption() -> Font { EchoelBrandFont.caption() }
+    static func data() -> Font { EchoelBrandFont.data() }
+    static func dataSmall() -> Font { EchoelBrandFont.dataSmall() }
+    static func label() -> Font { EchoelBrandFont.label() }
 }
 
-// MARK: - Spacing
+// MARK: - Spacing (same values as EchoelSpacing)
 
 struct VaporwaveSpacing {
-    static let xs: CGFloat = 4
-    static let sm: CGFloat = 8
-    static let md: CGFloat = 16
-    static let lg: CGFloat = 24
-    static let xl: CGFloat = 32
-    static let xxl: CGFloat = 48
+    static let xs: CGFloat = EchoelSpacing.xs
+    static let sm: CGFloat = EchoelSpacing.sm
+    static let md: CGFloat = EchoelSpacing.md
+    static let lg: CGFloat = EchoelSpacing.lg
+    static let xl: CGFloat = EchoelSpacing.xl
+    static let xxl: CGFloat = EchoelSpacing.xxl
 }
 
 // MARK: - Animation
 
 struct VaporwaveAnimation {
-    /// Smooth spring animation
     static let smooth = Animation.spring(response: 0.4, dampingFraction: 0.8)
+    static let quick = Animation.easeOut(duration: EchoelAnimation.quick)
+    static let breathing = Animation.easeInOut(duration: EchoelAnimation.breathing)
+    static let pulse = Animation.easeInOut(duration: EchoelAnimation.pulse)
+    static let glow = Animation.easeInOut(duration: EchoelAnimation.coherenceGlow)
 
-    /// Quick response
-    static let quick = Animation.easeOut(duration: 0.2)
-
-    /// Slow breathing animation (single cycle, not infinite)
-    static let breathing = Animation.easeInOut(duration: 4.0)
-
-    /// Pulse animation (single cycle, not infinite)
-    static let pulse = Animation.easeInOut(duration: 1.0)
-
-    /// Glow animation (single cycle, not infinite)
-    static let glow = Animation.easeInOut(duration: 2.0)
-
-    /// Returns nil animation if reduce motion is enabled, otherwise returns the provided animation
-    /// Use this for accessibility compliance
     static func reduced(_ animation: Animation, reduceMotion: Bool) -> Animation? {
         reduceMotion ? nil : animation
     }
 
-    /// Smooth animation that respects reduced motion preference
     static func smoothReduced(_ reduceMotion: Bool) -> Animation? {
         reduceMotion ? nil : smooth
     }
 }
 
-// MARK: - Preview Components
+// MARK: - Reusable UI Components (monochrome)
 
-struct VaporwavePreview: View {
-    var body: some View {
-        ZStack {
-            VaporwaveGradients.background
-                .ignoresSafeArea()
-
-            VStack(spacing: VaporwaveSpacing.lg) {
-                Text("ECHOELMUSIC")
-                    .font(VaporwaveTypography.heroTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
-                    .neonGlow(color: VaporwaveColors.neonPink)
-
-                Text("Flüssiges Licht")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
-                    .tracking(4)
-
-                HStack(spacing: VaporwaveSpacing.xl) {
-                    VStack {
-                        Text("72")
-                            .font(VaporwaveTypography.data())
-                            .foregroundColor(VaporwaveColors.heartRate)
-                        Text("BPM")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
-                    }
-
-                    VStack {
-                        Text("68")
-                            .font(VaporwaveTypography.data())
-                            .foregroundColor(VaporwaveColors.hrv)
-                        Text("HRV")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
-                    }
-
-                    VStack {
-                        Text("85")
-                            .font(VaporwaveTypography.data())
-                            .foregroundColor(VaporwaveColors.coherenceHigh)
-                        Text("FLOW")
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textTertiary)
-                    }
-                }
-                .padding(VaporwaveSpacing.lg)
-                .glassCard()
-
-                HStack(spacing: VaporwaveSpacing.md) {
-                    Text("Focus")
-                        .vaporwaveButton(isActive: true, activeColor: VaporwaveColors.neonCyan)
-
-                    Text("Create")
-                        .vaporwaveButton(isActive: false)
-
-                    Text("Heal")
-                        .vaporwaveButton(isActive: false)
-                }
-            }
-        }
-    }
-}
-
-#if DEBUG
-#Preview {
-    VaporwavePreview()
-}
-#endif
-
-
-// MARK: - Reusable UI Components
-
-/// Data display component for showing metrics with label
 struct VaporwaveDataDisplay: View {
     let value: String
     let label: String
     let color: Color
     let showGlow: Bool
 
-    init(value: String, label: String, color: Color = VaporwaveColors.neonCyan, showGlow: Bool = true) {
+    init(value: String, label: String, color: Color = EchoelBrand.primary, showGlow: Bool = false) {
         self.value = value
         self.label = label
         self.color = color
@@ -578,28 +399,27 @@ struct VaporwaveDataDisplay: View {
     }
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.xs) {
+        VStack(spacing: EchoelSpacing.xs) {
             Text(value)
-                .font(VaporwaveTypography.data())
+                .font(EchoelBrandFont.data())
                 .foregroundColor(color)
-                .neonGlow(color: showGlow ? color : .clear, radius: 8)
+                .neonGlow(color: showGlow ? color : .clear, radius: 6)
 
             Text(label)
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
 }
 
-/// Status indicator (static glow, no continuous animation to save CPU)
 struct VaporwaveStatusIndicator: View {
     let isActive: Bool
     let activeColor: Color
     let inactiveColor: Color
 
-    init(isActive: Bool, activeColor: Color = VaporwaveColors.success, inactiveColor: Color = VaporwaveColors.textTertiary) {
+    init(isActive: Bool, activeColor: Color = EchoelBrand.emerald, inactiveColor: Color = EchoelBrand.textTertiary) {
         self.isActive = isActive
         self.activeColor = activeColor
         self.inactiveColor = inactiveColor
@@ -609,19 +429,18 @@ struct VaporwaveStatusIndicator: View {
         Circle()
             .fill(isActive ? activeColor : inactiveColor)
             .frame(width: 10, height: 10)
-            .shadow(color: isActive ? activeColor.opacity(0.5) : .clear, radius: 5)
+            .shadow(color: isActive ? activeColor.opacity(0.4) : .clear, radius: 4)
             .accessibilityLabel(isActive ? "Active" : "Inactive")
     }
 }
 
-/// Circular progress indicator for coherence/progress
 struct VaporwaveProgressRing: View {
     let progress: Double
     let color: Color
     let lineWidth: CGFloat
     let size: CGFloat
 
-    init(progress: Double, color: Color = VaporwaveColors.coherenceHigh, lineWidth: CGFloat = 6, size: CGFloat = 60) {
+    init(progress: Double, color: Color = EchoelBrand.coherenceHigh, lineWidth: CGFloat = 6, size: CGFloat = 60) {
         self.progress = progress
         self.color = color
         self.lineWidth = lineWidth
@@ -630,12 +449,10 @@ struct VaporwaveProgressRing: View {
 
     var body: some View {
         ZStack {
-            // Background ring
             Circle()
-                .stroke(VaporwaveColors.textTertiary.opacity(0.2), lineWidth: lineWidth)
+                .stroke(EchoelBrand.textDisabled, lineWidth: lineWidth)
                 .frame(width: size, height: size)
 
-            // Progress ring
             Circle()
                 .trim(from: 0, to: min(progress, 1.0))
                 .stroke(
@@ -650,7 +467,6 @@ struct VaporwaveProgressRing: View {
     }
 }
 
-/// Unified control button component
 struct VaporwaveControlButton: View {
     let icon: String
     let label: String
@@ -663,7 +479,7 @@ struct VaporwaveControlButton: View {
         icon: String,
         label: String,
         isActive: Bool = false,
-        color: Color = VaporwaveColors.neonCyan,
+        color: Color = EchoelBrand.primary,
         size: CGFloat = 60,
         action: @escaping () -> Void
     ) {
@@ -677,25 +493,24 @@ struct VaporwaveControlButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 ZStack {
                     Circle()
-                        .fill(isActive ? color.opacity(0.3) : VaporwaveColors.deepBlack.opacity(0.5))
+                        .fill(isActive ? color.opacity(0.15) : EchoelBrand.bgSurface)
                         .frame(width: size, height: size)
                         .overlay(
                             Circle()
-                                .stroke(isActive ? color : VaporwaveColors.textTertiary, lineWidth: 1)
+                                .stroke(isActive ? color : EchoelBrand.border, lineWidth: 1)
                         )
 
                     Image(systemName: icon)
                         .font(.system(size: size * 0.45))
-                        .foregroundColor(isActive ? color : VaporwaveColors.textSecondary)
+                        .foregroundColor(isActive ? color : EchoelBrand.textSecondary)
                 }
-                .neonGlow(color: isActive ? color : .clear, radius: 10)
 
                 Text(label)
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
         }
         .accessibilityLabel("\(label), \(isActive ? "active" : "inactive")")
@@ -703,14 +518,13 @@ struct VaporwaveControlButton: View {
     }
 }
 
-/// Info row component for settings/device info
 struct VaporwaveInfoRow: View {
     let icon: String
     let title: String
     let value: String
     let valueColor: Color
 
-    init(icon: String, title: String, value: String, valueColor: Color = VaporwaveColors.textSecondary) {
+    init(icon: String, title: String, value: String, valueColor: Color = EchoelBrand.textSecondary) {
         self.icon = icon
         self.title = title
         self.value = value
@@ -718,30 +532,29 @@ struct VaporwaveInfoRow: View {
     }
 
     var body: some View {
-        HStack(spacing: VaporwaveSpacing.md) {
+        HStack(spacing: EchoelSpacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(VaporwaveColors.neonCyan)
+                .foregroundColor(EchoelBrand.primary)
                 .frame(width: 24)
 
             Text(title)
-                .font(VaporwaveTypography.body())
-                .foregroundColor(VaporwaveColors.textPrimary)
+                .font(EchoelBrandFont.body())
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Spacer()
 
             Text(value)
-                .font(VaporwaveTypography.caption())
+                .font(EchoelBrandFont.caption())
                 .foregroundColor(valueColor)
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
     }
 }
 
-/// Section header component
 struct VaporwaveSectionHeader: View {
     let title: String
     let icon: String?
@@ -752,30 +565,29 @@ struct VaporwaveSectionHeader: View {
     }
 
     var body: some View {
-        HStack(spacing: VaporwaveSpacing.sm) {
+        HStack(spacing: EchoelSpacing.sm) {
             if let icon = icon {
                 Image(systemName: icon)
                     .font(.system(size: 14))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.primary)
             }
 
             Text(title.uppercased())
                 .font(.system(size: 12, weight: .bold))
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .foregroundColor(EchoelBrand.textTertiary)
                 .tracking(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-/// Toggle row with vaporwave styling
 struct VaporwaveToggleRow: View {
     let title: String
     let subtitle: String?
     @Binding var isOn: Bool
     let tintColor: Color
 
-    init(title: String, subtitle: String? = nil, isOn: Binding<Bool>, tintColor: Color = VaporwaveColors.neonCyan) {
+    init(title: String, subtitle: String? = nil, isOn: Binding<Bool>, tintColor: Color = EchoelBrand.primary) {
         self.title = title
         self.subtitle = subtitle
         self._isOn = isOn
@@ -786,61 +598,59 @@ struct VaporwaveToggleRow: View {
         Toggle(isOn: $isOn) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 if let subtitle = subtitle {
                     Text(subtitle)
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
             }
         }
         .toggleStyle(SwitchToggleStyle(tint: tintColor))
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
 
-/// Status badge with dot (matches website hero-badge)
 struct VaporwaveBadge: View {
     let text: String
     let dotColor: Color
     let showPulse: Bool
 
-    init(_ text: String, dotColor: Color = VaporwaveColors.coherenceHigh, showPulse: Bool = true) {
+    init(_ text: String, dotColor: Color = EchoelBrand.coherenceHigh, showPulse: Bool = true) {
         self.text = text
         self.dotColor = dotColor
         self.showPulse = showPulse
     }
 
     var body: some View {
-        HStack(spacing: VaporwaveSpacing.sm) {
+        HStack(spacing: EchoelSpacing.sm) {
             Circle()
                 .fill(dotColor)
                 .frame(width: 8, height: 8)
 
             Text(text)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .foregroundColor(EchoelBrand.textSecondary)
         }
-        .padding(.horizontal, VaporwaveSpacing.md)
-        .padding(.vertical, VaporwaveSpacing.xs)
-        .background(VaporwaveColors.glassBg)
+        .padding(.horizontal, EchoelSpacing.md)
+        .padding(.vertical, EchoelSpacing.xs)
+        .background(EchoelBrand.bgGlass)
         .overlay(
             Capsule()
-                .stroke(VaporwaveColors.glassBorder, lineWidth: 1)
+                .stroke(EchoelBrand.border, lineWidth: 1)
         )
         .clipShape(Capsule())
     }
 }
 
-/// Feature tag component (matches website feature-tag)
 struct VaporwaveTag: View {
     let text: String
     let color: Color
 
-    init(_ text: String, color: Color = VaporwaveColors.neonCyan) {
+    init(_ text: String, color: Color = EchoelBrand.primary) {
         self.text = text
         self.color = color
     }
@@ -860,7 +670,6 @@ struct VaporwaveTag: View {
     }
 }
 
-/// Section label component (matches website section-label)
 struct VaporwaveSectionLabel: View {
     let text: String
 
@@ -871,50 +680,39 @@ struct VaporwaveSectionLabel: View {
     var body: some View {
         Text(text.uppercased())
             .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(VaporwaveColors.neonPink)
+            .foregroundColor(EchoelBrand.primary)
             .tracking(1)
-            .padding(.horizontal, VaporwaveSpacing.md)
-            .padding(.vertical, VaporwaveSpacing.xs)
-            .background(
-                LinearGradient(
-                    colors: [
-                        VaporwaveColors.neonPink.opacity(0.2),
-                        VaporwaveColors.neonPurple.opacity(0.2)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.xs)
+            .background(EchoelBrand.primary.opacity(0.08))
             .overlay(
                 Capsule()
-                    .stroke(VaporwaveColors.neonPink, lineWidth: 1)
+                    .stroke(EchoelBrand.border, lineWidth: 1)
             )
             .clipShape(Capsule())
     }
 }
 
-/// Stat card component (matches website stat-card)
 struct VaporwaveStatCard: View {
     let value: String
     let label: String
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.xs) {
+        VStack(spacing: EchoelSpacing.xs) {
             Text(value)
                 .font(.system(size: 36, weight: .heavy))
-                .foregroundStyle(VaporwaveGradients.neon)
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Text(label)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .foregroundColor(EchoelBrand.textTertiary)
         }
-        .padding(VaporwaveSpacing.xl)
+        .padding(EchoelSpacing.xl)
         .frame(maxWidth: .infinity)
         .glassCard()
     }
 }
 
-/// Primary CTA button (matches website btn-primary)
 struct VaporwavePrimaryButton: View {
     let title: String
     let icon: String?
@@ -930,7 +728,7 @@ struct VaporwavePrimaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 if let icon = icon {
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .semibold))
@@ -938,27 +736,19 @@ struct VaporwavePrimaryButton: View {
                 Text(title)
                     .font(.system(size: 16, weight: .bold))
             }
-            .foregroundColor(.white)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 16)
+            .foregroundColor(EchoelBrand.bgDeep)
+            .padding(.horizontal, EchoelSpacing.xl)
+            .padding(.vertical, EchoelSpacing.md)
             .background(
-                LinearGradient(
-                    colors: [VaporwaveColors.neonPink, VaporwaveColors.neonPurple],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .clipShape(Capsule())
-            .shadow(
-                color: isHovered ? VaporwaveColors.neonPink.opacity(0.5) : .clear,
-                radius: 20
+                Capsule()
+                    .fill(EchoelBrand.primary)
             )
             .scaleEffect(isHovered ? 1.02 : 1.0)
         }
         .buttonStyle(.plain)
         #if !os(watchOS)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.easeOut(duration: EchoelAnimation.quick)) {
                 isHovered = hovering
             }
         }
@@ -966,7 +756,6 @@ struct VaporwavePrimaryButton: View {
     }
 }
 
-/// Secondary button (matches website btn-secondary)
 struct VaporwaveSecondaryButton: View {
     let title: String
     let icon: String?
@@ -982,7 +771,7 @@ struct VaporwaveSecondaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 if let icon = icon {
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .medium))
@@ -990,27 +779,23 @@ struct VaporwaveSecondaryButton: View {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
             }
-            .foregroundColor(VaporwaveColors.textPrimary)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 16)
-            .background(VaporwaveColors.glassBg)
+            .foregroundColor(EchoelBrand.textPrimary)
+            .padding(.horizontal, EchoelSpacing.xl)
+            .padding(.vertical, EchoelSpacing.md)
+            .background(EchoelBrand.bgGlass)
             .overlay(
                 Capsule()
                     .stroke(
-                        isHovered ? VaporwaveColors.neonCyan : VaporwaveColors.glassBorder,
+                        isHovered ? EchoelBrand.borderActive : EchoelBrand.border,
                         lineWidth: 1
                     )
             )
             .clipShape(Capsule())
-            .shadow(
-                color: isHovered ? VaporwaveColors.neonCyan.opacity(0.3) : .clear,
-                radius: 15
-            )
         }
         .buttonStyle(.plain)
         #if !os(watchOS)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.2)) {
+            withAnimation(.easeOut(duration: EchoelAnimation.quick)) {
                 isHovered = hovering
             }
         }
@@ -1018,7 +803,6 @@ struct VaporwaveSecondaryButton: View {
     }
 }
 
-/// Workspace card (matches website workspace-card)
 struct VaporwaveWorkspaceCard: View {
     let icon: String
     let title: String
@@ -1030,28 +814,28 @@ struct VaporwaveWorkspaceCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: VaporwaveSpacing.md) {
+            VStack(spacing: EchoelSpacing.md) {
                 Text(icon)
                     .font(.system(size: 48))
 
                 Text(title)
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text(description)
                     .font(.system(size: 14))
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
                     .multilineTextAlignment(.center)
 
                 Text(badge)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, VaporwaveSpacing.md)
-                    .padding(.vertical, VaporwaveSpacing.xs)
-                    .background(VaporwaveGradients.neon)
+                    .foregroundColor(EchoelBrand.bgDeep)
+                    .padding(.horizontal, EchoelSpacing.md)
+                    .padding(.vertical, EchoelSpacing.xs)
+                    .background(EchoelBrand.primary)
                     .clipShape(Capsule())
             }
-            .padding(VaporwaveSpacing.xl)
+            .padding(EchoelSpacing.xl)
             .frame(maxWidth: .infinity)
             .glassCard(isActive: isHovered)
             .scaleEffect(isHovered ? 1.02 : 1.0)
@@ -1068,7 +852,6 @@ struct VaporwaveWorkspaceCard: View {
     }
 }
 
-/// Empty state placeholder
 struct VaporwaveEmptyState: View {
     let icon: String
     let title: String
@@ -1085,93 +868,73 @@ struct VaporwaveEmptyState: View {
     }
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.lg) {
+        VStack(spacing: EchoelSpacing.lg) {
             ZStack {
                 Circle()
-                    .fill(VaporwaveColors.neonPurple.opacity(0.2))
+                    .fill(EchoelBrand.primary.opacity(0.08))
                     .frame(width: 100, height: 100)
 
                 Image(systemName: icon)
                     .font(.system(size: 40))
-                    .foregroundColor(VaporwaveColors.neonPurple)
+                    .foregroundColor(EchoelBrand.primary)
             }
-            .neonGlow(color: VaporwaveColors.neonPurple, radius: 15)
 
             Text(title)
-                .font(VaporwaveTypography.sectionTitle())
-                .foregroundColor(VaporwaveColors.textPrimary)
+                .font(EchoelBrandFont.sectionTitle())
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Text(message)
-                .font(VaporwaveTypography.body())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.body())
+                .foregroundColor(EchoelBrand.textSecondary)
                 .multilineTextAlignment(.center)
 
             if let actionTitle = actionTitle, let action = action {
                 Button(action: action) {
                     Text(actionTitle)
-                        .vaporwaveButton(isActive: true, activeColor: VaporwaveColors.neonCyan)
+                        .vaporwaveButton(isActive: true, activeColor: EchoelBrand.primary)
                 }
             }
         }
-        .padding(VaporwaveSpacing.xl)
+        .padding(EchoelSpacing.xl)
     }
 }
 
-// MARK: - Component Previews
+// MARK: - Previews
 
 #if DEBUG
-#Preview("Components") {
+#Preview {
     ZStack {
-        VaporwaveGradients.background
+        EchoelBrand.bgDeep
             .ignoresSafeArea()
 
-        ScrollView {
-            VStack(spacing: VaporwaveSpacing.xl) {
-                VaporwaveSectionHeader("Data Displays", icon: "chart.bar")
+        VStack(spacing: EchoelSpacing.lg) {
+            Text("ECHOELMUSIC")
+                .font(EchoelBrandFont.heroTitle())
+                .foregroundColor(EchoelBrand.textPrimary)
 
-                HStack(spacing: VaporwaveSpacing.xl) {
-                    VaporwaveDataDisplay(value: "72", label: "BPM", color: VaporwaveColors.heartRate)
-                    VaporwaveDataDisplay(value: "68", label: "HRV", color: VaporwaveColors.hrv)
-                    VaporwaveDataDisplay(value: "85", label: "FLOW", color: VaporwaveColors.coherenceHigh)
-                }
-                .padding()
-                .glassCard()
+            Text("Create from Within")
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textSecondary)
+                .tracking(4)
 
-                VaporwaveSectionHeader("Progress Rings", icon: "circle.dashed")
-
-                HStack(spacing: VaporwaveSpacing.xl) {
-                    VaporwaveProgressRing(progress: 0.3, color: VaporwaveColors.coherenceLow)
-                    VaporwaveProgressRing(progress: 0.6, color: VaporwaveColors.coherenceMedium)
-                    VaporwaveProgressRing(progress: 0.9, color: VaporwaveColors.coherenceHigh)
-                }
-
-                VaporwaveSectionHeader("Control Buttons", icon: "button.horizontal")
-
-                HStack(spacing: VaporwaveSpacing.lg) {
-                    VaporwaveControlButton(icon: "mic.fill", label: "Record", isActive: true, color: VaporwaveColors.neonPink) {}
-                    VaporwaveControlButton(icon: "waveform", label: "Binaural", color: VaporwaveColors.neonPurple) {}
-                    VaporwaveControlButton(icon: "airpodspro", label: "Spatial", color: VaporwaveColors.neonCyan) {}
-                }
-
-                VaporwaveSectionHeader("Info Rows", icon: "info.circle")
-
-                VStack(spacing: VaporwaveSpacing.sm) {
-                    VaporwaveInfoRow(icon: "applewatch", title: "Apple Watch", value: "Connected", valueColor: VaporwaveColors.success)
-                    VaporwaveInfoRow(icon: "antenna.radiowaves.left.and.right", title: "OSC", value: "Ready")
-                }
-                .padding(.horizontal)
-
-                VaporwaveSectionHeader("Status Indicators", icon: "circle.fill")
-
-                HStack(spacing: VaporwaveSpacing.xl) {
-                    VaporwaveStatusIndicator(isActive: true)
-                    VaporwaveStatusIndicator(isActive: false)
-                    VaporwaveStatusIndicator(isActive: true, activeColor: VaporwaveColors.neonPink)
-                }
-
-                Spacer()
+            HStack(spacing: EchoelSpacing.xl) {
+                VaporwaveDataDisplay(value: "72", label: "BPM", color: EchoelBrand.rose)
+                VaporwaveDataDisplay(value: "68", label: "HRV", color: EchoelBrand.emerald)
+                VaporwaveDataDisplay(value: "85", label: "FLOW", color: EchoelBrand.coherenceHigh)
             }
-            .padding()
+            .padding(EchoelSpacing.lg)
+            .glassCard()
+
+            HStack(spacing: EchoelSpacing.md) {
+                Text("Focus")
+                    .vaporwaveButton(isActive: true)
+
+                Text("Create")
+                    .vaporwaveButton(isActive: false)
+
+                Text("Heal")
+                    .vaporwaveButton(isActive: false)
+            }
         }
     }
 }
