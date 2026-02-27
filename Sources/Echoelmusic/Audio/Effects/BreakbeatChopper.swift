@@ -419,7 +419,7 @@ public class BreakbeatChopper: ObservableObject {
 
     /// Manually set number of equal slices
     func sliceEvenly(count: Int) {
-        guard let buffer = sourceBuffer else { return }
+        guard count > 0, let buffer = sourceBuffer else { return }
         let frameCount = Int(buffer.frameLength)
         let sliceLength = frameCount / count
 

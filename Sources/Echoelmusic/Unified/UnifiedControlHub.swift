@@ -1482,11 +1482,13 @@ public class UnifiedControlHub: ObservableObject {
     /// Convert audio frequency to hue (0-1) via light wavelength
     /// Uses the physics-based octave transposition: Audio → Light (f × 2^n)
     private func wavelengthToHue(audioFrequency: Float) -> Float {
-        // Audio to light: ~40 octaves up (20Hz → 400THz)
-        // Visible light: 380-780nm (789-384 THz)
-        let lightTHz = audioFrequency * pow(2.0, 40) / 1e12  // Convert to THz
+        guard audioFrequency > 0 else { return 0 }
+        // Use physics-based logarithmic mapping from OctaveTransposition
+        let lightTHz = UnifiedVisualSoundEngine.OctaveTransposition.audioToLight(
+            audioFrequency: audioFrequency
+        )
 
-        // Clamp to visible range
+        // Clamp to visible range (384-789 THz)
         let clampedTHz = max(384, min(789, lightTHz))
 
         // Convert frequency to wavelength: λ = c / f

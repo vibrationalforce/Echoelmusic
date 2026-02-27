@@ -118,6 +118,8 @@ struct VaporwavePalace: View {
                     visualEngine: engine,
                     isActive: $isActive
                 )
+                .environmentObject(healthKitManager)
+                .environmentObject(audioEngine)
                 .ignoresSafeArea()
             }
         }

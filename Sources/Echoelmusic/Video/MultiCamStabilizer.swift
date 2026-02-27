@@ -584,6 +584,9 @@ class VideoStabilizer: ObservableObject {
 
     private func movingAverageCorrection(windowSize: Int) -> FrameMotion {
         let window = motionHistory.suffix(windowSize)
+        guard !window.isEmpty else {
+            return FrameMotion(timestamp: .zero, translation: .zero, rotation: 0, scale: 1)
+        }
 
         var avgX: CGFloat = 0
         var avgY: CGFloat = 0

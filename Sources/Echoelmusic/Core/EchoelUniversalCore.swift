@@ -251,10 +251,10 @@ final class EchoelUniversalCore: ObservableObject {
         let bioData = bioProcessor.currentState
         let visualParams = visualEngine.visualParams
         let audioData = AudioState(
-            level: Float(visualParams.energy),
-            spectralFlatness: Float(1.0 - visualParams.energy),
-            dominantFrequency: 440,
-            beatPhase: 0
+            level: visualParams.audioLevel,
+            spectralFlatness: visualParams.spectralFlatness,
+            dominantFrequency: visualEngine.dominantFrequency,
+            beatPhase: visualParams.beatPhase
         )
         let quantumState = quantumProcessor.currentState
 

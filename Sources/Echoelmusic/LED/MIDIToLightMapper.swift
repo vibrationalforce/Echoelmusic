@@ -307,6 +307,7 @@ public class MIDIToLightMapper: ObservableObject {
 
         case .strobeSync:
             // Strobe synced to heart rate
+            guard heartRate > 0 else { break }
             let beatInterval = 60.0 / heartRate
             let phase = time.truncatingRemainder(dividingBy: beatInterval) / beatInterval
             let strobeOn = phase < 0.1
@@ -505,6 +506,7 @@ public class MIDIToLightMapper: ObservableObject {
     /// Update lights using full octave transposition pipeline
     /// Computes: heartRate → audioFreq (f × 2^n) → lightFreq → wavelength → CIE 1931 RGB
     func updateFromOctaveBio(heartRate: Double, coherence: Double, octaves: Int = 6) {
+        guard heartRate > 0 else { return }
         // Step 1: Heart rate to audio frequency (octave transposition)
         let heartHz = Float(heartRate) / 60.0
         let audioFreq = heartHz * pow(2.0, Float(octaves))
