@@ -114,7 +114,7 @@ public class AudioEngine: ObservableObject {
         if headTrackingManager != nil,
            let capabilities = deviceCapabilities,
            capabilities.canUseSpatialAudioEngine {
-            spatialAudioEngine = SpatialAudioEngine()
+            spatialAudioEngine = SpatialAudioEngine.shared
         } else {
             log.audio("⚠️  Spatial audio engine requires iOS 15+", level: .warning)
         }

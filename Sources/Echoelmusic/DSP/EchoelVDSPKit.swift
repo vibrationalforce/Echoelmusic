@@ -16,6 +16,53 @@ import Accelerate
 //  - Zero runtime allocation in real-time paths
 //  - Thread-safe for concurrent read access
 
+// MARK: - Complex DFT Engine (Forward)
+
+/// Managed wrapper around `vDSP_DFT_zop_CreateSetup` with overlapping-access-safe execution.
+/// Replaces 6+ identical `vDSP_DFT_zop_CreateSetup / Execute / DestroySetup` patterns across the codebase.
+///
+/// Usage:
+/// ```swift
+/// let dft = EchoelComplexDFT(size: 2048)
+/// let (outR, outI) = dft.forward(real: &realIn, imag: &imagIn)
+/// ```
+public final class EchoelComplexDFT: @unchecked Sendable {
+
+    public let size: Int
+    private let setup: OpaquePointer
+
+    /// Pre-allocated output buffers (avoids overlapping access violations)
+    private var outReal: [Float]
+    private var outImag: [Float]
+
+    /// Create a forward complex DFT of the given size.
+    /// - Parameter size: Transform length (need not be power of 2).
+    public init(size: Int) {
+        precondition(size > 0, "DFT size must be positive")
+        guard let s = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(size), .FORWARD) else {
+            preconditionFailure("EchoelComplexDFT: cannot create DFT setup for size \(size)")
+        }
+        self.size = size
+        self.setup = s
+        self.outReal = [Float](repeating: 0, count: size)
+        self.outImag = [Float](repeating: 0, count: size)
+    }
+
+    deinit {
+        vDSP_DFT_DestroySetup(setup)
+    }
+
+    /// Execute the forward DFT.
+    /// Input arrays are copied internally to prevent overlapping access.
+    /// - Returns: Tuple of (realOut, imagOut) arrays of length `size`.
+    public func forward(real: [Float], imag: [Float]) -> (real: [Float], imag: [Float]) {
+        var inReal = real
+        var inImag = imag
+        vDSP_DFT_Execute(setup, &inReal, &inImag, &outReal, &outImag)
+        return (Array(outReal), Array(outImag))
+    }
+}
+
 // MARK: - Real FFT Engine
 
 /// Real-to-complex FFT using vDSP_fft_zrop for maximum performance.

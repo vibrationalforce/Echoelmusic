@@ -173,6 +173,7 @@ final class EchoelCreativeWorkspace: ObservableObject {
         bridgeProMixerToSession()
         bridgeProCueToStream()
         bridgeBPMToSessionEngine()
+        bridgeProColorToVideoEditor()
     }
 
     /// Bridge 5: Pro Mixer ↔ Session Engine
@@ -194,6 +195,25 @@ final class EchoelCreativeWorkspace: ObservableObject {
             .sink { [weak self] cueScene in
                 // When a cue activates a scene, the stream engine can match
                 self?.proStream.switchSceneByName(cueScene.name)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Bridge 8: Pro Color Grading → Video Editor
+    /// When the grading wheels change, the video editor's active clip grade updates.
+    private func bridgeProColorToVideoEditor() {
+        proColor.$colorWheels
+            .removeDuplicates()
+            .sink { [weak self] wheels in
+                guard let self else { return }
+                let grade = ColorGradeEffect(
+                    exposure: wheels.exposure,
+                    contrast: wheels.contrast,
+                    saturation: wheels.saturation,
+                    temperature: wheels.temperature,
+                    tint: wheels.tint
+                )
+                self.videoEditor.applyLiveGrade(grade)
             }
             .store(in: &cancellables)
     }

@@ -479,10 +479,10 @@ public class UnifiedControlHub: ObservableObject {
 
     /// Enable spatial audio engine
     public func enableSpatialAudio() throws {
-        let spatial = SpatialAudioEngine()
+        let spatial = SpatialAudioEngine.shared
         try spatial.start()
         self.spatialAudioEngine = spatial
-        Log.spatial("🔊 Spatial audio enabled")
+        Log.spatial("Spatial audio enabled (shared instance)")
     }
 
     /// Disable spatial audio
@@ -1165,6 +1165,23 @@ public class UnifiedControlHub: ObservableObject {
 
         // Apply to audio engine (if available)
         applyFaceAudioParameters(audioParams)
+
+        // Apply to visual engine: smile → intensity, jawOpen → particle reactivity
+        if let visualMapper = midiToVisualMapper {
+            let visualIntensity = expression.smile.clamped(to: 0.0...1.0)
+            visualMapper.setIntensity(visualIntensity)
+        }
+
+        // Apply to lighting: smile → brightness overlay, browRaise → warm tint
+        if let lighting = midiToLightMapper {
+            let brightness = expression.smile.clamped(to: 0.0...1.0)
+            let warmth = expression.browRaise.clamped(to: 0.0...1.0)
+            // Warm white tint scaled by brow raise, brightness scaled by smile
+            lighting.blendOverlayColor(
+                r: 1.0, g: 0.9 + warmth * 0.1, b: 0.8 + warmth * 0.2,
+                weight: brightness * 0.25
+            )
+        }
     }
 
     /// Apply face-derived audio parameters to audio engine and MPE
@@ -1298,6 +1315,25 @@ public class UnifiedControlHub: ObservableObject {
         if let presetChange = params.presetChange {
             Log.info("[Gesture→Audio] Preset change requested: \(presetChange)", category: .system)
             audioEngine?.loadPreset(named: String(presetChange))
+        }
+
+        // Gesture → Visual: map filter parameters to visual intensity
+        if let visualMapper = midiToVisualMapper {
+            // High filter cutoff (open gesture) = brighter visuals
+            let normalizedCutoff = Float((params.filterCutoff ?? 1000.0) / 8000.0).clamped(to: 0.0...1.0)
+            visualMapper.setIntensity(normalizedCutoff)
+        }
+
+        // Gesture → Lighting: reverb wetness modulates light spread
+        if let lighting = midiToLightMapper {
+            let wetness = Float(params.reverbWetness ?? 0.3).clamped(to: 0.0...1.0)
+            // Wetter reverb = cooler, more diffused light overlay
+            lighting.blendOverlayColor(
+                r: 0.7 + (1.0 - wetness) * 0.3,
+                g: 0.8 + wetness * 0.2,
+                b: 0.9 + wetness * 0.1,
+                weight: wetness * 0.2
+            )
         }
     }
 
