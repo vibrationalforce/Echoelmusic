@@ -14,6 +14,11 @@ import PHASE
 @MainActor
 public class SpatialAudioEngine: ObservableObject {
 
+    // MARK: - Shared Instance
+
+    /// Canonical singleton — all subsystems should reference this instead of creating new instances.
+    public static let shared = SpatialAudioEngine()
+
     // MARK: - Published State
 
     @Published var isActive: Bool = false

@@ -400,6 +400,27 @@ class VideoEditingEngine: ObservableObject {
         return nil
     }
 
+    // MARK: - Live Color Grading
+
+    /// Applies a live color grade from ProColorGrading to selected video clips.
+    /// Called by the workspace bridge when the grading wheels change.
+    func applyLiveGrade(_ grade: ColorGradeEffect) {
+        let gradeEffect = VideoEffect.colorGrade(grade)
+
+        for (trackIdx, track) in timeline.videoTracks.enumerated() {
+            for (clipIdx, clip) in track.clips.enumerated() {
+                guard selectedClips.contains(clip.id) else { continue }
+                // Replace existing color grade or append
+                var updatedEffects = clip.effects.filter {
+                    if case .colorGrade = $0 { return false }
+                    return true
+                }
+                updatedEffects.append(gradeEffect)
+                timeline.videoTracks[trackIdx].clips[clipIdx].effects = updatedEffects
+            }
+        }
+    }
+
     // MARK: - Playback
 
     func play() async {

@@ -110,6 +110,51 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-02-28 — Deep Audit: Deduplication + System Wiring
+
+### Commits
+- `6e3284e` — refactor: deduplicate equal-power pan and SessionClip copying
+- `7d1fe9a` — fix: wire disconnected systems + deduplicate buffer/clamping patterns
+
+### Phase 1: Equal-Power Pan Deduplication
+- Extracted shared `equalPowerPan(pan:volume:)` as module-level function in MixerDSPKernel.swift
+- Replaced 4 inline implementations (MixerDSPKernel, AudioClipScheduler, EchoelDDSP, VocalDoublingEngine)
+- **Fixed VocalDoublingEngine pan bug**: wrong theta mapping (`pan*π/4` instead of `(pan+1)*π/4`) + asymmetric rightGain (`sin(θ+π/4)` instead of `sin(θ)`)
+- Added `SessionClip.duplicated(name:state:)` — eliminates 40+ lines of manual field copying in duplicateClip() and captureScene()
+
+### Phase 2: Deep 4-Agent Audit (Critical Findings)
+
+**7 Disconnected Systems Found:**
+1. ProMixEngine never wired to AudioEngine (`connectMixer()` defined but never called) → **FIXED**
+2. `updateAudioEngine()` was empty stub in UnifiedControlHub 60Hz loop → **FIXED**
+3. `nodeGraph.updateBioSignal()` never called — FilterNode/ReverbNode/CompressorNode bio-reactivity dead → **FIXED**
+4. BioReactiveVisualSynthEngine.connectBioSource() never called — visual engine disconnected → **FIXED**
+5. SpatialAudioEngine instantiated 3 times independently (AudioEngine, ControlHub, VisionApp) → NOTED
+6. Face/Hand tracking → Visual/Lighting not connected → NOTED
+7. ProSessionEngine clips not routed through AudioEngine → NOTED (partial fix via AudioClipScheduler)
+
+**Code Pattern Deduplication:**
+- Added `AVAudioPCMBuffer.floatArray(channel:)` extension — eliminates 11+ repeated `Array(UnsafeBufferPointer(...))` patterns
+- Migrated 10 `min(max(...))` patterns to `.clamped(to:)` in MIDI2Types, BinauralBeatGenerator, EnhancedAudioFeatures
+
+### Files Modified (10 files, 59 insertions, 21 deletions)
+- EchoelmusicApp.swift — connectMixer() + BioReactiveVisualSynthEngine wiring
+- AudioEngine.swift — nodeGraph.updateBioSignal() in applyBioParameters()
+- UnifiedControlHub.swift — real updateAudioEngine() implementation
+- NumericExtensions.swift — AVAudioPCMBuffer.floatArray() extension
+- SpatialNodes.swift — use floatArray() extension
+- AudioToMIDIConverter.swift, ChromaticTuner.swift — use floatArray()
+- MIDI2Types.swift — 8x .clamped(to:) migration
+- BinauralBeatGenerator.swift, EnhancedAudioFeatures.swift — .clamped(to:)
+
+### Remaining Known Issues
+- SpatialAudioEngine triple-instantiation (needs singleton pattern)
+- Face/Hand/Gaze → Visual/Lighting pipeline not connected
+- 22+ FFT/DFT setup patterns could benefit from shared wrapper class
+- ProColorGrading never referenced from any view
+
+---
+
 ## How to Use This File
 
 When starting a new session:

@@ -40,7 +40,7 @@ class MicrophoneManager: NSObject, ObservableObject {
     private var inputNode: AVAudioInputNode?
 
     /// FFT setup for frequency analysis
-    private var fftSetup: vDSP_DFT_Setup?
+    private var complexDFT: EchoelComplexDFT?
 
     /// Buffer size for FFT (power of 2)
     /// Reduced from 2048 to 1024 for lower latency (46ms → 23ms)
@@ -151,11 +151,7 @@ class MicrophoneManager: NSObject, ObservableObject {
             sampleRate = format.sampleRate
 
             // Setup FFT
-            fftSetup = vDSP_DFT_zop_CreateSetup(
-                nil,
-                vDSP_Length(fftSize),
-                vDSP_DFT_Direction.FORWARD
-            )
+            complexDFT = EchoelComplexDFT(size: fftSize)
 
             // Install a tap to capture audio data — dispatch off the audio render thread
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
@@ -193,11 +189,8 @@ class MicrophoneManager: NSObject, ObservableObject {
         audioEngine = nil
         inputNode = nil
 
-        // Destroy FFT setup
-        if let setup = fftSetup {
-            vDSP_DFT_DestroySetup(setup)
-            fftSetup = nil
-        }
+        // Release FFT wrapper
+        complexDFT = nil
 
         // Deactivate the audio session
         try? AVAudioSession.sharedInstance().setActive(false)
@@ -274,11 +267,10 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Perform FFT to detect fundamental frequency and return magnitudes
     private func performFFT(on data: UnsafePointer<Float>, frameLength: Int) -> (frequency: Float, magnitudes: [Float]) {
-        guard let setup = fftSetup else { return (0, []) }
+        guard let dft = complexDFT else { return (0, []) }
 
         // Prepare buffers
         var realParts = [Float](repeating: 0, count: fftSize)
-        var imagParts = [Float](repeating: 0, count: fftSize)
 
         // Copy audio data to real parts (pad with zeros if needed)
         let copyLength = min(frameLength, fftSize)
@@ -286,16 +278,17 @@ class MicrophoneManager: NSObject, ObservableObject {
             realParts[i] = data[i]
         }
 
-        // Apply Hann window to reduce spectral leakage — separate buffer avoids overlap
+        // Apply Hann window to reduce spectral leakage
         var window = [Float](repeating: 0, count: fftSize)
         vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
         var windowedParts = [Float](repeating: 0, count: fftSize)
         vDSP_vmul(realParts, 1, window, 1, &windowedParts, 1, vDSP_Length(fftSize))
 
-        // Perform FFT
-        // Use windowed input; copy imagParts to avoid overlapping access with outputs
-        var imagIn = [Float](imagParts)
-        vDSP_DFT_Execute(setup, &windowedParts, &imagIn, &realParts, &imagParts)
+        // Perform FFT via EchoelComplexDFT (handles overlapping access safety internally)
+        let imagZeros = [Float](repeating: 0, count: fftSize)
+        let result = dft.forward(real: windowedParts, imag: imagZeros)
+        realParts = result.real
+        let imagParts = result.imag
 
         // Calculate magnitudes (power spectrum)
         var magnitudes = [Float](repeating: 0, count: fftSize / 2)

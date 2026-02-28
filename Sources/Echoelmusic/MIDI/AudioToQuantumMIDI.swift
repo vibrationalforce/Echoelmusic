@@ -168,7 +168,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
     private let bufferSize: Int = 4096
     private let fftSize: Int = 4096
     private var analysisBuffer: [Float] = []
-    private var fftSetup: vDSP_DFT_Setup?
+    private var complexDFT: EchoelComplexDFT?
     private var fftRealBuffer: [Float] = []
     private var fftImagBuffer: [Float] = []
     private var magnitudeSpectrum: [Float] = []
@@ -194,7 +194,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
     }
 
     private func setupFFT() {
-        fftSetup = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(fftSize), .FORWARD)
+        complexDFT = EchoelComplexDFT(size: fftSize)
         analysisBuffer = Array(repeating: 0, count: bufferSize)
         fftRealBuffer = Array(repeating: 0, count: fftSize)
         fftImagBuffer = Array(repeating: 0, count: fftSize)
@@ -516,7 +516,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
     // MARK: - Polyphonic Detection (FFT + Peak)
 
     private func detectPolyphonic(sampleRate: Float) {
-        guard let fft = fftSetup else { return }
+        guard let dft = complexDFT else { return }
 
         // Apply Hann window
         var windowedBuffer = [Float](repeating: 0, count: fftSize)
@@ -525,13 +525,11 @@ public final class AudioToQuantumMIDI: ObservableObject {
             windowedBuffer[i] = analysisBuffer[i] * window
         }
 
-        // Perform FFT
-        fftRealBuffer = windowedBuffer
-        fftImagBuffer = [Float](repeating: 0, count: fftSize)
-
-        var realInput = fftRealBuffer
-        var imagInput = fftImagBuffer
-        vDSP_DFT_Execute(fft, &realInput, &imagInput, &fftRealBuffer, &fftImagBuffer)
+        // Perform FFT via EchoelComplexDFT
+        let imagZeros = [Float](repeating: 0, count: fftSize)
+        let result = dft.forward(real: windowedBuffer, imag: imagZeros)
+        fftRealBuffer = result.real
+        fftImagBuffer = result.imag
 
         // Calculate magnitude spectrum
         for i in 0..<fftSize/2 {
@@ -829,9 +827,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
     // MARK: - Cleanup
 
     deinit {
-        if let fft = fftSetup {
-            vDSP_DFT_DestroySetup(fft)
-        }
+        complexDFT = nil
     }
 }
 
