@@ -322,6 +322,13 @@ struct EchoelmusicApp: App {
             }
             .store(in: systemCancellables)
 
+        // Wire ProMixEngine → AudioEngine for multi-channel mixing DSP
+        audioEngine.connectMixer(workspace.proMixer)
+
+        // Wire BioReactiveVisualSynthEngine to biometric data source
+        let bioVisualEngine = BioReactiveVisualSynthEngine()
+        bioVisualEngine.connectBioSource(healthKitEngine)
+
         // Start UnifiedControlHub
         unifiedControlHub.start()
 

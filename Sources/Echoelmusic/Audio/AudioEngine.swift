@@ -382,6 +382,20 @@ public class AudioEngine: ObservableObject {
                 amplitude: bioParameterMapper.amplitude
             )
         }
+
+        // Propagate bio signals to all audio processing nodes (FilterNode, ReverbNode, etc.)
+        if let graph = nodeGraph, let healthKit = healthKitEngine {
+            let signal = BioSignal(
+                hrv: healthKit.hrvSDNN,
+                heartRate: healthKit.heartRate,
+                coherence: healthKit.coherence * 100.0,
+                respiratoryRate: healthKit.breathingRate,
+                audioLevel: microphoneManager.audioLevel,
+                voicePitch: microphoneManager.currentPitch,
+                customData: [:]
+            )
+            graph.updateBioSignal(signal)
+        }
     }
 
 

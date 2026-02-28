@@ -147,7 +147,7 @@ class BinauralBeatGenerator: ObservableObject {
     func configure(carrier: Float, beat: Float, amplitude: Float) {
         self.carrierFrequency = carrier
         self.beatFrequency = beat
-        self.amplitude = min(max(amplitude, 0.0), 1.0)  // Clamp to 0-1
+        self.amplitude = amplitude.clamped(to: 0.0...1.0)
     }
 
     /// Configure using a brainwave preset
