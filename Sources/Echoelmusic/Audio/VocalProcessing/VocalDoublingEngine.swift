@@ -145,10 +145,8 @@ public class VocalDoublingEngine {
 
             let voiceOutput = processVoice(input, voice: voice, voiceIndex: voiceIndex)
 
-            // Pan law: constant power panning
-            let panAngle = voice.pan * .pi / 4.0
-            let leftGain = cos(panAngle) * voice.gain * wetGain
-            let rightGain = sin(panAngle + .pi / 4.0) * voice.gain * wetGain
+            // Equal-power pan (shared utility)
+            let (leftGain, rightGain) = equalPowerPan(pan: voice.pan, volume: voice.gain * wetGain)
 
             vDSP_vsma(voiceOutput, 1, [leftGain], leftChannel, 1, &leftChannel, 1, vDSP_Length(input.count))
             vDSP_vsma(voiceOutput, 1, [rightGain], rightChannel, 1, &rightChannel, 1, vDSP_Length(input.count))

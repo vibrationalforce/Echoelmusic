@@ -12,6 +12,24 @@ import Foundation
 import AVFoundation
 import Accelerate
 
+// MARK: - Equal-Power Pan Utility
+
+/// Computes equal-power stereo pan gains using constant-power pan law.
+///
+/// Uses `L = cos(θ)`, `R = sin(θ)` where θ maps pan from [-1,1] to [0, π/2].
+/// At center (pan=0): L ≈ 0.707, R ≈ 0.707 (−3 dB each, sums to 0 dB).
+///
+/// - Parameters:
+///   - pan: Pan position from -1 (hard left) to +1 (hard right).
+///   - volume: Linear volume multiplier (0-1).
+/// - Returns: (gainL, gainR) tuple for left and right channels.
+func equalPowerPan(pan: Float, volume: Float) -> (Float, Float) {
+    let theta = (pan + 1.0) * 0.5 * Float.pi * 0.5
+    let gainL = cos(theta) * volume
+    let gainR = sin(theta) * volume
+    return (gainL, gainR)
+}
+
 // MARK: - Mixer DSP Kernel
 
 /// Real-time DSP kernel that processes audio buffers through the ProMixEngine signal chain.
@@ -539,21 +557,9 @@ final class MixerDSPKernel {
 
     // MARK: - Private: Pan Law
 
-    /// Computes equal-power stereo pan gains.
-    ///
-    /// Uses constant-power pan law: `L = cos(θ)`, `R = sin(θ)` where θ = 0..π/2.
-    /// At center (pan=0): L ≈ 0.707, R ≈ 0.707 (−3 dB each, sums to 0 dB).
-    ///
-    /// - Parameters:
-    ///   - pan: Pan position from -1 (hard left) to +1 (hard right).
-    ///   - volume: Channel fader volume (0-1).
-    /// - Returns: (gainL, gainR) tuple for left and right channels.
+    /// Delegates to the module-level `equalPowerPan(pan:volume:)` utility.
     func equalPowerPan(pan: Float, volume: Float) -> (Float, Float) {
-        // Map pan from [-1, 1] to [0, π/2]
-        let theta = (pan + 1.0) * 0.5 * Float.pi * 0.5
-        let gainL = cos(theta) * volume
-        let gainR = sin(theta) * volume
-        return (gainL, gainR)
+        Echoelmusic.equalPowerPan(pan: pan, volume: volume)
     }
 
     // MARK: - Private: Metering

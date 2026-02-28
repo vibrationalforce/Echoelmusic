@@ -1030,10 +1030,8 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
             memset(&voiceBuffer, 0, frameCount * MemoryLayout<Float>.size)
             voices[i].render(buffer: &voiceBuffer, frameCount: frameCount, stereo: false)
 
-            // Pan law: constant power (-3dB center)
-            let pan = voicePans[i]
-            let leftGain = cos((pan + 1.0) * 0.25 * Float.pi)
-            let rightGain = sin((pan + 1.0) * 0.25 * Float.pi)
+            // Equal-power pan (shared utility)
+            let (leftGain, rightGain) = equalPowerPan(pan: voicePans[i], volume: 1.0)
 
             // Mix into stereo buffers (vDSP accelerated)
             var lg = leftGain
