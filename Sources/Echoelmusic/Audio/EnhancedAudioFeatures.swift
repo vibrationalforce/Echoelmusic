@@ -227,7 +227,7 @@ class AdvancedBinauralProcessor {
     func configure(preset: FrequencyPreset, type: BeatType = .binaural, amplitude: Float = 0.3) {
         self.currentPreset = preset
         self.beatType = type
-        self.amplitude = min(max(amplitude, 0.0), 1.0)
+        self.amplitude = amplitude.clamped(to: 0.0...1.0)
         log.audio("Binaural configured: \(preset.rawValue), type: \(type)")
     }
 

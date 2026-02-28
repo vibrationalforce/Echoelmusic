@@ -68,7 +68,7 @@ class AmbisonicsNode: BaseEchoelmusicNode {
         guard frameCount > 0 else { return buffer }
 
         // Extract mono from first channel
-        let input = Array(UnsafeBufferPointer(start: channelData[0], count: frameCount))
+        let input = buffer.floatArray(channel: 0)
 
         let azimuth = getParameter(name: Params.azimuth) ?? 0.0
         let elevation = getParameter(name: Params.elevation) ?? 0.0
@@ -197,7 +197,7 @@ class RoomSimulationNode: BaseEchoelmusicNode {
         // Process each channel
         let channelCount = Int(buffer.format.channelCount)
         for ch in 0..<channelCount {
-            let input = Array(UnsafeBufferPointer(start: channelData[ch], count: frameCount))
+            let input = buffer.floatArray(channel: ch)
             let processed = roomSim.processBuffer(input)
 
             guard processed.count >= frameCount else { continue }
@@ -282,7 +282,7 @@ class DopplerNode: BaseEchoelmusicNode {
         // Process each channel through Doppler shift
         let channelCount = Int(buffer.format.channelCount)
         for ch in 0..<channelCount {
-            let input = Array(UnsafeBufferPointer(start: channelData[ch], count: frameCount))
+            let input = buffer.floatArray(channel: ch)
 
             let shifted = processor.processSource(
                 input,

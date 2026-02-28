@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AVFoundation
 
 // MARK: - Clamped Extension (Consolidated)
 
@@ -54,5 +55,19 @@ extension BinaryInteger {
         guard fromLength != 0 else { return toRange.lowerBound }
         let normalized = (self - fromRange.lowerBound) * toLength / fromLength
         return toRange.lowerBound + normalized
+    }
+}
+
+// MARK: - AVAudioPCMBuffer Convenience
+
+extension AVAudioPCMBuffer {
+    /// Extracts a Float array from a single channel, avoiding repeated UnsafeBufferPointer boilerplate.
+    ///
+    /// - Parameter channel: The channel index (default 0).
+    /// - Returns: A `[Float]` copy of the channel data, or empty if unavailable.
+    func floatArray(channel: Int = 0) -> [Float] {
+        guard let data = floatChannelData,
+              channel < Int(format.channelCount) else { return [] }
+        return Array(UnsafeBufferPointer(start: data[channel], count: Int(frameLength)))
     }
 }

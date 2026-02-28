@@ -173,11 +173,11 @@ public final class AudioToMIDIConverter: ObservableObject {
         }
         try audioFile.read(into: buffer)
 
-        guard let channelData = buffer.floatChannelData?[0] else {
+        guard buffer.floatChannelData != nil else {
             throw AudioToMIDIError.invalidFormat
         }
 
-        let samples = Array(UnsafeBufferPointer(start: channelData, count: Int(buffer.frameLength)))
+        let samples = buffer.floatArray(channel: 0)
         let duration = Double(samples.count) / sampleRate
 
         // Detect onsets

@@ -180,11 +180,10 @@ public final class ChromaticTuner: ObservableObject {
     // MARK: - Audio Processing
 
     private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData?[0] else { return }
-        let frameLength = Int(buffer.frameLength)
+        guard buffer.floatChannelData != nil else { return }
 
         // Copy data for analysis
-        let samples = Array(UnsafeBufferPointer(start: channelData, count: frameLength))
+        let samples = buffer.floatArray(channel: 0)
 
         analysisQueue.async { [weak self] in
             guard let self = self else { return }

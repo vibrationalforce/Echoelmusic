@@ -1352,8 +1352,12 @@ public class UnifiedControlHub: ObservableObject {
     // MARK: - Output Updates
 
     private func updateAudioEngine() {
-        // Audio engine updates happen in specific input handlers
-        // This is called after all inputs have been processed
+        guard let engine = audioEngine,
+              let mapper = bioParameterMapper else { return }
+
+        // Sync merged control parameters to audio engine after all inputs are resolved
+        engine.setFilterCutoff(mapper.filterCutoff)
+        engine.setReverbWetness(mapper.reverbWet)
     }
 
     private func updateVisualEngine() {

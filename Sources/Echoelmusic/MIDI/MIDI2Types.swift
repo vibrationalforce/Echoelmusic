@@ -185,7 +185,7 @@ extension UMPPacket64 {
     /// - Returns: 64-bit UMP packet
     static func noteOn(channel: UInt8, note: UInt8, velocity: Float,
                       attributeType: UInt8 = 0, attributeData: UInt16 = 0) -> UMPPacket64 {
-        let velocity16 = UInt16(min(max(velocity, 0.0), 1.0) * 65535.0)
+        let velocity16 = UInt16(velocity.clamped(to: 0.0...1.0) * 65535.0)
 
         let word1: UInt32 = (UInt32(UMPMessageType.midi2ChannelVoice.rawValue) << 28) |
                            (UInt32(0) << 24) |  // Group 0
@@ -201,7 +201,7 @@ extension UMPPacket64 {
 
     /// Create a MIDI 2.0 Note Off message
     static func noteOff(channel: UInt8, note: UInt8, velocity: Float = 0.0) -> UMPPacket64 {
-        let velocity16 = UInt16(min(max(velocity, 0.0), 1.0) * 65535.0)
+        let velocity16 = UInt16(velocity.clamped(to: 0.0...1.0) * 65535.0)
 
         let word1: UInt32 = (UInt32(UMPMessageType.midi2ChannelVoice.rawValue) << 28) |
                            (UInt32(0) << 24) |  // Group 0
@@ -223,7 +223,7 @@ extension UMPPacket64 {
     /// - Returns: 64-bit UMP packet
     static func perNoteController(channel: UInt8, note: UInt8,
                                   controller: PerNoteController, value: Float) -> UMPPacket64 {
-        let value32 = UInt32(min(max(value, 0.0), 1.0) * 4294967295.0)
+        let value32 = UInt32(value.clamped(to: 0.0...1.0) * 4294967295.0)
 
         return UMPPacket64(
             messageType: UMPMessageType.midi2ChannelVoice.rawValue,
@@ -243,7 +243,7 @@ extension UMPPacket64 {
     /// - Returns: 64-bit UMP packet
     static func perNotePitchBend(channel: UInt8, note: UInt8, bend: Float) -> UMPPacket64 {
         // Map -1.0...+1.0 to 0...4294967295 (center = 2147483648)
-        let bendValue = min(max(bend, -1.0), 1.0)
+        let bendValue = bend.clamped(to: -1.0...1.0)
         let bend32 = UInt32((bendValue + 1.0) * 2147483648.0)
 
         let word1: UInt32 = (UInt32(UMPMessageType.midi2ChannelVoice.rawValue) << 28) |
@@ -257,7 +257,7 @@ extension UMPPacket64 {
 
     /// Create a Channel Pressure (Aftertouch) message (MIDI 2.0)
     static func channelPressure(channel: UInt8, pressure: Float) -> UMPPacket64 {
-        let pressure32 = UInt32(min(max(pressure, 0.0), 1.0) * 4294967295.0)
+        let pressure32 = UInt32(pressure.clamped(to: 0.0...1.0) * 4294967295.0)
 
         let word1: UInt32 = (UInt32(UMPMessageType.midi2ChannelVoice.rawValue) << 28) |
                            (UInt32(0) << 24) |  // Group 0
@@ -269,7 +269,7 @@ extension UMPPacket64 {
 
     /// Create a MIDI 2.0 Control Change message
     static func controlChange(channel: UInt8, controller: UInt8, value: Float) -> UMPPacket64 {
-        let value32 = UInt32(min(max(value, 0.0), 1.0) * 4294967295.0)
+        let value32 = UInt32(value.clamped(to: 0.0...1.0) * 4294967295.0)
 
         return UMPPacket64(
             messageType: UMPMessageType.midi2ChannelVoice.rawValue,
@@ -287,13 +287,12 @@ extension UMPPacket64 {
 extension Float {
     /// Convert normalized 0-1 value to MIDI 2.0 32-bit resolution
     var toMIDI2Value: UInt32 {
-        UInt32(min(max(self, 0.0), 1.0) * 4294967295.0)
+        UInt32(self.clamped(to: 0.0...1.0) * 4294967295.0)
     }
 
     /// Convert normalized -1 to +1 value to MIDI 2.0 pitch bend
     var toMIDI2PitchBend: UInt32 {
-        let clamped = min(max(self, -1.0), 1.0)
-        return UInt32((clamped + 1.0) * 2147483648.0)
+        UInt32((self.clamped(to: -1.0...1.0) + 1.0) * 2147483648.0)
     }
 }
 
