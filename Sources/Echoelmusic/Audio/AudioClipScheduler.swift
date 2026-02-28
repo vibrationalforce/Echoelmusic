@@ -455,14 +455,8 @@ public final class AudioClipScheduler {
             let volume = track.volume
             guard volume > 0 else { continue }
 
-            // Equal-power pan
-            let panAngle = (Double(track.pan) + 1.0) * 0.5 * .pi / 2.0
-            let leftGain = Float(cos(panAngle)) * volume
-            let rightGain = Float(sin(panAngle)) * volume
-
-            // Apply gain to decibels
-            let linearGain = pow(10.0, track.volume / 20.0) // Not needed, volume is already 0-1 linear
-            // Use volume directly as linear gain
+            // Equal-power pan (shared utility)
+            let (leftGain, rightGain) = equalPowerPan(pan: track.pan, volume: volume)
 
             guard buffer.count >= frameCount else { continue }
 

@@ -380,6 +380,33 @@ public struct SessionClip: Identifiable, Equatable, Sendable {
         lhs.midiNotes == rhs.midiNotes &&
         lhs.patternSteps == rhs.patternSteps
     }
+
+    /// Creates a copy with a new UUID and optional overrides for name and state.
+    /// Centralizes field-by-field copying so new fields only need updating here.
+    public func duplicated(name: String? = nil, state: ClipState = .stopped) -> SessionClip {
+        SessionClip(
+            id: UUID(),
+            name: name ?? self.name,
+            type: type,
+            state: state,
+            color: color,
+            length: length,
+            loopEnabled: loopEnabled,
+            launchMode: launchMode,
+            quantization: quantization,
+            followAction: followAction,
+            followActionTime: followActionTime,
+            warpMode: warpMode,
+            warpMarkers: warpMarkers,
+            playbackSpeed: playbackSpeed,
+            startOffset: startOffset,
+            endOffset: endOffset,
+            audioURL: audioURL,
+            gain: gain,
+            midiNotes: midiNotes,
+            patternSteps: patternSteps
+        )
+    }
 }
 
 // MARK: - SessionTrackType
@@ -1062,29 +1089,7 @@ public class ProSessionEngine: ObservableObject {
 
         tracks[destination.trackIndex].ensureSlots(count: destination.sceneIndex + 1)
 
-        var newClip = sourceClip
-        newClip = SessionClip(
-            id: UUID(),
-            name: sourceClip.name + " (copy)",
-            type: sourceClip.type,
-            state: ClipState.stopped,
-            color: sourceClip.color,
-            length: sourceClip.length,
-            loopEnabled: sourceClip.loopEnabled,
-            launchMode: sourceClip.launchMode,
-            quantization: sourceClip.quantization,
-            followAction: sourceClip.followAction,
-            followActionTime: sourceClip.followActionTime,
-            warpMode: sourceClip.warpMode,
-            warpMarkers: sourceClip.warpMarkers,
-            playbackSpeed: sourceClip.playbackSpeed,
-            startOffset: sourceClip.startOffset,
-            endOffset: sourceClip.endOffset,
-            audioURL: sourceClip.audioURL,
-            gain: sourceClip.gain,
-            midiNotes: sourceClip.midiNotes,
-            patternSteps: sourceClip.patternSteps
-        )
+        let newClip = sourceClip.duplicated(name: sourceClip.name + " (copy)")
         tracks[destination.trackIndex].clips[destination.sceneIndex] = newClip
         log.info("Clip duplicated: \(sourceClip.name) -> [\(destination.trackIndex)][\(destination.sceneIndex)]", category: .audio)
     }
@@ -1126,31 +1131,7 @@ public class ProSessionEngine: ObservableObject {
             let playingClip = tracks[trackIndex].clips.first(where: { $0?.state == ClipState.playing })
             if let clip = playingClip, let unwrapped = clip {
                 tracks[trackIndex].ensureSlots(count: newSceneIndex + 1)
-                var captured = unwrapped
-                // Give the captured clip a new ID and reset state
-                captured = SessionClip(
-                    id: UUID(),
-                    name: unwrapped.name,
-                    type: unwrapped.type,
-                    state: ClipState.stopped,
-                    color: unwrapped.color,
-                    length: unwrapped.length,
-                    loopEnabled: unwrapped.loopEnabled,
-                    launchMode: unwrapped.launchMode,
-                    quantization: unwrapped.quantization,
-                    followAction: unwrapped.followAction,
-                    followActionTime: unwrapped.followActionTime,
-                    warpMode: unwrapped.warpMode,
-                    warpMarkers: unwrapped.warpMarkers,
-                    playbackSpeed: unwrapped.playbackSpeed,
-                    startOffset: unwrapped.startOffset,
-                    endOffset: unwrapped.endOffset,
-                    audioURL: unwrapped.audioURL,
-                    gain: unwrapped.gain,
-                    midiNotes: unwrapped.midiNotes,
-                    patternSteps: unwrapped.patternSteps
-                )
-                tracks[trackIndex].clips[newSceneIndex] = captured
+                tracks[trackIndex].clips[newSceneIndex] = unwrapped.duplicated()
             }
         }
         log.info("Scene captured with \(tracks.count) tracks", category: .audio)
