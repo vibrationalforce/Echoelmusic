@@ -16,6 +16,19 @@ struct VideoEditorView: View {
     @State private var currentTime: TimeInterval = 0
     @State private var isPlaying = false
 
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// Whether on iPhone compact layout
+    private var isCompact: Bool {
+        #if os(iOS)
+        return horizontalSizeClass == .compact
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         ZStack {
             // Background
@@ -26,24 +39,32 @@ struct VideoEditorView: View {
                 // Header
                 headerSection
 
-                // Preview + Effects
-                HStack(spacing: VaporwaveSpacing.md) {
-                    // Video Preview
-                    previewSection
+                if isCompact {
+                    // iPhone: stacked layout (preview on top, timeline below)
+                    VStack(spacing: 0) {
+                        previewSection
+                            .frame(maxHeight: 200)
 
-                    // Effects Panel (conditional)
-                    if showEffectsPanel {
-                        effectsPanel
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        timelineSection
+
+                        transportControls
                     }
+                } else {
+                    // iPad/Mac: side-by-side layout
+                    HStack(spacing: VaporwaveSpacing.md) {
+                        previewSection
+
+                        if showEffectsPanel {
+                            effectsPanel
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+                    }
+                    .padding(.horizontal, VaporwaveSpacing.md)
+
+                    timelineSection
+
+                    transportControls
                 }
-                .padding(.horizontal, VaporwaveSpacing.md)
-
-                // Timeline
-                timelineSection
-
-                // Transport Controls
-                transportControls
             }
         }
         .sheet(isPresented: $showExportSheet) {

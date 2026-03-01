@@ -23,6 +23,37 @@ private struct SessionClipContent: View {
     @State private var showInstrumentBrowser = false
     @State private var showEffectsBrowser = false
 
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// Adaptive clip cell size for iPhone vs iPad
+    private var clipCellWidth: CGFloat {
+        #if os(iOS)
+        return horizontalSizeClass == .compact ? 70 : 100
+        #else
+        return 100
+        #endif
+    }
+
+    /// Adaptive track header width for iPhone vs iPad
+    private var trackHeaderWidth: CGFloat {
+        #if os(iOS)
+        return horizontalSizeClass == .compact ? 70 : 100
+        #else
+        return 100
+        #endif
+    }
+
+    /// Whether on iPhone compact layout
+    private var isCompact: Bool {
+        #if os(iOS)
+        return horizontalSizeClass == .compact
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         ZStack {
             VaporwaveGradients.background.ignoresSafeArea()
@@ -150,7 +181,7 @@ private struct SessionClipContent: View {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(VaporwaveColors.neonCyan)
             }
-            .frame(width: 100, height: 30)
+            .frame(width: trackHeaderWidth, height: 30)
             .glassCard()
 
             // Track Headers
@@ -175,7 +206,7 @@ private struct SessionClipContent: View {
 
             Spacer()
         }
-        .frame(width: 100)
+        .frame(width: trackHeaderWidth)
         .background(VaporwaveColors.deepBlack.opacity(0.5))
     }
 
@@ -194,7 +225,7 @@ private struct SessionClipContent: View {
                     Text("Scene \(idx + 1)")
                         .font(VaporwaveTypography.label())
                         .foregroundColor(VaporwaveColors.textTertiary)
-                        .frame(width: 100, height: 30)
+                        .frame(width: trackHeaderWidth, height: 30)
                 }
             }
 
@@ -832,9 +863,42 @@ class SessionClipViewModel: ObservableObject {
     func launchScene(_ index: Int) { activeScene = index; EchoelCreativeWorkspace.shared.isPlaying = true }
     func clipAt(track: Int, scene: Int) -> ClipViewClip? { clips[track][scene] }
     func isClipPlaying(track: Int, scene: Int) -> Bool { activeScene == scene && clips[track][scene] != nil }
-    func toggleClip(track: Int, scene: Int) { if clips[track][scene] != nil { EchoelCreativeWorkspace.shared.isPlaying = true } }
-    func editClip(track: Int, scene: Int) { /* Open clip editor */ }
-    func stopClip(track: Int, scene: Int) { /* Stop individual clip */ }
+    func toggleClip(track: Int, scene: Int) {
+        let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
+        if clips[track][scene] != nil {
+            // Clip exists — toggle playback
+            if loopEngine.isPlayingLoops {
+                loopEngine.stopPlayback()
+            } else {
+                loopEngine.startPlayback()
+            }
+            EchoelCreativeWorkspace.shared.isPlaying = true
+        } else {
+            // Empty slot — record a new loop into it
+            loopEngine.setTempo(bpm)
+            let bars = quantize == .bar ? 4 : (quantize == .beat ? 1 : 2)
+            loopEngine.startLoopRecording(bars: bars)
+            clips[track][scene] = ClipViewClip(name: "\(tracks[track].name) \(scene + 1)")
+        }
+    }
+
+    func editClip(track: Int, scene: Int) {
+        guard clips[track][scene] != nil else { return }
+        let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
+        // Start overdub on the last recorded loop
+        if let lastLoop = loopEngine.loops.last {
+            loopEngine.startOverdub(loopID: lastLoop.id)
+        }
+    }
+
+    func stopClip(track: Int, scene: Int) {
+        let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
+        if loopEngine.isRecordingLoop {
+            loopEngine.stopLoopRecording()
+        } else if loopEngine.isPlayingLoops {
+            loopEngine.stopPlayback()
+        }
+    }
     func addInstrumentToTrack(_ track: Int, instrument: InstrumentInfo) { tracks[track].instrumentName = instrument.name; tracks[track].instrumentIcon = instrument.icon }
     func addEffectToTrack(_ track: Int, effect: EffectInfo) { tracks[track].effectCount += 1 }
 }
