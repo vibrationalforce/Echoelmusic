@@ -21,10 +21,12 @@ struct MixerView: View {
                         // Phase Correlation Meter (Goniometer)
                         PhaseCorrelationMeter()
                             .frame(width: 120)
+                            .environmentObject(recordingEngine)
 
                         // Master channel
                         MasterChannelStrip()
                             .frame(width: 100)
+                            .environmentObject(recordingEngine)
                     }
                     .padding()
                 }

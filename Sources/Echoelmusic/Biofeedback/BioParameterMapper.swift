@@ -268,6 +268,7 @@ class BioParameterMapper: ObservableObject {
     /// Normalize value from input range to 0.0-1.0
     private func normalize(value: Float, from range: (Float, Float)) -> Float {
         let clamped = max(range.0, min(range.1, value))
+        guard range.1 > range.0 else { return 0.0 }
         return (clamped - range.0) / (range.1 - range.0)
     }
 

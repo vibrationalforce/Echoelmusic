@@ -509,6 +509,7 @@ final class UnifiedControlHubTests: XCTestCase {
         sut.disableGazeTracking()
         // Disabling before enabling should be a safe no-op
         XCTAssertFalse(sut.isGazeTrackingActive, "Gaze tracking should be inactive when disabled before enabling")
+    }
 
     // MARK: - Performance Tests (4 tests)
 
