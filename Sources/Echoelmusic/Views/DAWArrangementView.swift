@@ -12,6 +12,29 @@ struct DAWArrangementView: View {
     @State private var showMixer = false
     @State private var showInstrumentBrowser = false
     @State private var currentBeat: Double = 0
+    @State private var showTrackList = true
+
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// Adaptive track list width — compact for iPhone, wider for iPad
+    private var trackListWidth: CGFloat {
+        #if os(iOS)
+        return horizontalSizeClass == .compact ? 140 : 200
+        #else
+        return 200
+        #endif
+    }
+
+    /// Whether on iPhone compact layout
+    private var isCompact: Bool {
+        #if os(iOS)
+        return horizontalSizeClass == .compact
+        #else
+        return false
+        #endif
+    }
 
     /// Live BPM from EchoelCreativeWorkspace (single source of truth)
     private var bpm: Double {
@@ -35,8 +58,10 @@ struct DAWArrangementView: View {
 
                 // Main Content
                 HStack(spacing: 0) {
-                    // Track List
-                    trackListSection
+                    // Track List (collapsible on iPhone)
+                    if showTrackList || !isCompact {
+                        trackListSection
+                    }
 
                     // Arrangement Timeline
                     arrangementSection
@@ -93,6 +118,11 @@ struct DAWArrangementView: View {
 
             // Toolbar
             HStack(spacing: VaporwaveSpacing.sm) {
+                if isCompact {
+                    toolbarButton(icon: showTrackList ? "sidebar.left" : "sidebar.leading", label: "Tracks", isActive: showTrackList) {
+                        withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
+                    }
+                }
                 toolbarButton(icon: "slider.horizontal.3", label: "Mixer", isActive: showMixer) {
                     showMixer = true
                 }
@@ -139,7 +169,7 @@ struct DAWArrangementView: View {
                 .padding(.horizontal, VaporwaveSpacing.sm)
             }
         }
-        .frame(width: 200)
+        .frame(width: trackListWidth)
         .background(VaporwaveColors.deepBlack.opacity(0.5))
     }
 

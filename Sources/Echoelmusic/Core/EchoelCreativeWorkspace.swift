@@ -139,6 +139,10 @@ final class EchoelCreativeWorkspace: ObservableObject {
     /// (Best of OBS Studio + Restream)
     let proStream: ProStreamEngine
 
+    /// Loop Engine — live looping with tempo-sync, overdub, quantized recording
+    /// Connected to global BPM; loops auto-sync to timeline
+    let loopEngine: LoopEngine
+
     // MARK: - Private
 
     private var cancellables = Set<AnyCancellable>()
@@ -159,8 +163,12 @@ final class EchoelCreativeWorkspace: ObservableObject {
         self.proCue = ProCueSystem()
         self.proStream = ProStreamEngine.defaultSetup()
 
+        // Initialize loop engine (synced to global BPM)
+        self.loopEngine = LoopEngine()
+        self.loopEngine.setTempo(120.0)
+
         setupBridges()
-        log.info("EchoelCreativeWorkspace: All engines connected (core + pro)", category: .system)
+        log.info("EchoelCreativeWorkspace: All engines connected (core + pro + loop)", category: .system)
     }
 
     // MARK: - Bridge Setup
@@ -174,6 +182,25 @@ final class EchoelCreativeWorkspace: ObservableObject {
         bridgeProCueToStream()
         bridgeBPMToSessionEngine()
         bridgeProColorToVideoEditor()
+        bridgeBPMToLoopEngine()
+    }
+
+    /// Bridge 9: Global BPM → LoopEngine
+    /// Keeps loop recording/playback in sync with workspace tempo
+    private func bridgeBPMToLoopEngine() {
+        $globalBPM
+            .removeDuplicates()
+            .sink { [weak self] bpm in
+                self?.loopEngine.setTempo(bpm)
+            }
+            .store(in: &cancellables)
+
+        $globalTimeSignature
+            .removeDuplicates()
+            .sink { [weak self] ts in
+                self?.loopEngine.setTimeSignature(beats: ts.numerator, noteValue: ts.denominator)
+            }
+            .store(in: &cancellables)
     }
 
     /// Bridge 5: Pro Mixer ↔ Session Engine

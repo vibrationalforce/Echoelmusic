@@ -18,9 +18,11 @@ struct MainNavigationHub: View {
     @EnvironmentObject var unifiedControlHub: UnifiedControlHub
     @EnvironmentObject var healthKitEngine: UnifiedHealthKitEngine
 
-    // MARK: - Loop Engine
+    // MARK: - Loop Engine (shared via workspace — BPM-synced)
 
-    @StateObject private var loopEngine = LoopEngine()
+    private var loopEngine: LoopEngine {
+        EchoelCreativeWorkspace.shared.loopEngine
+    }
 
     // MARK: - UI State
 
@@ -643,6 +645,49 @@ struct MainNavigationHub: View {
 
             // Right Side Controls
             HStack(spacing: EchoelSpacing.md) {
+                // Loop Status Badge
+                if loopEngine.isRecordingLoop || loopEngine.isPlayingLoops {
+                    HStack(spacing: 4) {
+                        if loopEngine.isRecordingLoop {
+                            Circle()
+                                .fill(EchoelBrand.coral)
+                                .frame(width: 6, height: 6)
+                            Text("REC")
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .foregroundColor(EchoelBrand.coral)
+                        } else {
+                            Image(systemName: "repeat")
+                                .font(.system(size: 10))
+                                .foregroundColor(EchoelBrand.coherenceHigh)
+                        }
+                        Text("\(loopEngine.loops.count) LOOPS")
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .foregroundColor(EchoelBrand.textSecondary)
+
+                        // Loop position bar
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(EchoelBrand.bgElevated)
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(EchoelBrand.primary)
+                                    .frame(width: geo.size.width * CGFloat(loopEngine.loopPosition))
+                            }
+                        }
+                        .frame(width: 40, height: 4)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(EchoelBrand.bgElevated)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(loopEngine.isRecordingLoop ? EchoelBrand.coral.opacity(0.5) : EchoelBrand.primary.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                }
+
                 // Metronome
                 Button(action: { toggleMetronome() }) {
                     Image(systemName: metronomeActive ? "metronome.fill" : "metronome")
@@ -751,14 +796,19 @@ struct MainNavigationHub: View {
     }
 
     private var mobileTabBar: some View {
-        HStack(spacing: 0) {
-            // Video + Music Production prioritized
-            ForEach([Workspace.daw, .video, .palace, .session, .ai], id: \.self) { workspace in
-                mobileTabButton(workspace)
+        VStack(spacing: 0) {
+            // Mobile Transport Strip (compact)
+            mobileTransportStrip
+
+            // Main Tabs — Music + Video + Loop prioritized
+            HStack(spacing: 0) {
+                ForEach([Workspace.daw, .video, .session, .lambda, .palace], id: \.self) { workspace in
+                    mobileTabButton(workspace)
+                }
             }
+            .padding(.top, EchoelSpacing.sm)
+            .padding(.bottom, EchoelSpacing.lg)
         }
-        .padding(.top, EchoelSpacing.sm)
-        .padding(.bottom, EchoelSpacing.lg)
         .background(
             EchoelBrand.bgSurface
                 .overlay(
@@ -768,6 +818,82 @@ struct MainNavigationHub: View {
                     alignment: .top
                 )
         )
+    }
+
+    // MARK: - Mobile Transport Strip
+
+    private var mobileTransportStrip: some View {
+        HStack(spacing: EchoelSpacing.md) {
+            // Play/Stop
+            Button(action: togglePlayback) {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(isPlaying ? EchoelBrand.primary : EchoelBrand.textPrimary)
+            }
+            .buttonStyle(.plain)
+
+            // Record
+            Button(action: toggleRecording) {
+                Circle()
+                    .fill(recordingEngine.isRecording ? EchoelBrand.coral : EchoelBrand.textTertiary)
+                    .frame(width: 10, height: 10)
+            }
+            .buttonStyle(.plain)
+
+            // BPM
+            Text(String(format: "%.0f", bpm))
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundColor(EchoelBrand.textPrimary)
+
+            // Timecode
+            Text(formatTimecode(playbackSeconds))
+                .font(.system(size: 11, weight: .light, design: .monospaced))
+                .foregroundColor(EchoelBrand.textSecondary)
+
+            Spacer()
+
+            // Loop Status
+            if loopEngine.isRecordingLoop {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(EchoelBrand.coral)
+                        .frame(width: 6, height: 6)
+                    Text("REC LOOP")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundColor(EchoelBrand.coral)
+                }
+            } else if loopEngine.isPlayingLoops {
+                HStack(spacing: 4) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 10))
+                        .foregroundColor(EchoelBrand.coherenceHigh)
+                    Text("\(loopEngine.loops.count)")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundColor(EchoelBrand.coherenceHigh)
+                }
+            }
+
+            // Loop Toggle
+            Button(action: toggleLoopMode) {
+                Image(systemName: "repeat")
+                    .font(.system(size: 14))
+                    .foregroundColor(loopActive ? EchoelBrand.primary : EchoelBrand.textTertiary)
+            }
+            .buttonStyle(.plain)
+
+            // Bio
+            HStack(spacing: 3) {
+                Circle()
+                    .fill(coherenceColor)
+                    .frame(width: 5, height: 5)
+                Text("\(Int(coherence * 100))")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textSecondary)
+            }
+        }
+        .padding(.horizontal, EchoelSpacing.md)
+        .padding(.vertical, 6)
+        .background(EchoelBrand.bgDeep)
     }
 
     private func mobileTabButton(_ workspace: Workspace) -> some View {
