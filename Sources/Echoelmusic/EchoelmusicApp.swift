@@ -85,6 +85,9 @@ struct EchoelmusicApp: App {
     /// Holds Combine subscriptions for system-level bridges
     private let systemCancellables = CancellableHolder()
 
+    /// Bio-reactive visual synth engine (kept alive for render loop)
+    @State private var bioVisualEngine: BioReactiveVisualSynthEngine?
+
     @State private var coreSystemsReady = false
     @State private var initializationPhase: String = "Starting..."
     @State private var initializationProgress: Double = 0
@@ -326,8 +329,9 @@ struct EchoelmusicApp: App {
         audioEngine.connectMixer(workspace.proMixer)
 
         // Wire BioReactiveVisualSynthEngine to biometric data source
-        let bioVisualEngine = BioReactiveVisualSynthEngine()
-        bioVisualEngine.connectBioSource(healthKitEngine)
+        let visualEngine = BioReactiveVisualSynthEngine()
+        visualEngine.connectBioSource(healthKitEngine)
+        self.bioVisualEngine = visualEngine
 
         // Start UnifiedControlHub
         unifiedControlHub.start()
