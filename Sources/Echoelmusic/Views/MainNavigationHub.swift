@@ -18,6 +18,10 @@ struct MainNavigationHub: View {
     @EnvironmentObject var unifiedControlHub: UnifiedControlHub
     @EnvironmentObject var healthKitEngine: UnifiedHealthKitEngine
 
+    // MARK: - Loop Engine
+
+    @StateObject private var loopEngine = LoopEngine()
+
     // MARK: - UI State
 
     @State private var currentWorkspace: Workspace = .daw
@@ -63,6 +67,7 @@ struct MainNavigationHub: View {
         case nodes = "Nodes"
         case midi = "MIDI"
         case mixing = "Mixing"
+        case lambda = "Lambda"
         case ai = "AI Tools"
         case hardware = "Hardware"
         case streaming = "Stream"
@@ -80,6 +85,7 @@ struct MainNavigationHub: View {
             case .nodes: return "point.3.connected.trianglepath.dotted"
             case .midi: return "cable.connector"
             case .mixing: return "slider.horizontal.3"
+            case .lambda: return "atom"
             case .ai: return "brain.head.profile"
             case .hardware: return "cpu"
             case .streaming: return "dot.radiowaves.left.and.right"
@@ -98,6 +104,7 @@ struct MainNavigationHub: View {
             case .nodes: return "point.3.connected.trianglepath.dotted"
             case .midi: return "cable.connector.horizontal"
             case .mixing: return "slider.horizontal.3"
+            case .lambda: return "atom"
             case .ai: return "brain.head.profile.fill"
             case .hardware: return "cpu.fill"
             case .streaming: return "dot.radiowaves.left.and.right"
@@ -115,6 +122,7 @@ struct MainNavigationHub: View {
             case .nodes: return EchoelBrand.violet
             case .midi: return EchoelBrand.amber
             case .mixing: return EchoelBrand.sky
+            case .lambda: return EchoelBrand.emerald
             case .ai: return EchoelBrand.violet
             case .hardware: return EchoelBrand.coral
             case .streaming: return EchoelBrand.rose
@@ -132,6 +140,7 @@ struct MainNavigationHub: View {
             case .nodes: return "6"
             case .midi: return "7"
             case .mixing: return "8"
+            case .lambda: return "L"
             case .ai: return "9"
             case .hardware: return "0"
             case .streaming: return "-"
@@ -328,7 +337,7 @@ struct MainNavigationHub: View {
     private var workspaceTabs: some View {
         HStack(spacing: 0) {
             // Video + Music Production prioritized
-            ForEach([Workspace.daw, .video, .session, .palace, .vj, .nodes, .ai], id: \.self) { workspace in
+            ForEach([Workspace.daw, .video, .session, .palace, .vj, .nodes, .lambda, .ai], id: \.self) { workspace in
                 workspaceTab(workspace)
             }
         }
@@ -887,8 +896,10 @@ struct MainNavigationHub: View {
         EchoelCreativeWorkspace.shared.proSession.metronomeEnabled
     }
 
-    /// Loop mode
-    @State private var loopActive: Bool = false
+    /// Loop mode — driven by LoopEngine state
+    private var loopActive: Bool {
+        loopEngine.isPlayingLoops || loopEngine.isRecordingLoop
+    }
 
     // MARK: - Transport Actions
 
@@ -898,13 +909,24 @@ struct MainNavigationHub: View {
     }
 
     private func toggleLoopMode() {
-        loopActive.toggle()
-        let workspace = EchoelCreativeWorkspace.shared
+        if loopEngine.isPlayingLoops {
+            loopEngine.stopPlayback()
+        } else if loopEngine.loops.isEmpty {
+            // Start recording a new loop
+            loopEngine.setTempo(bpm)
+            loopEngine.startLoopRecording(bars: 4)
+        } else {
+            // Start playing existing loops
+            loopEngine.startPlayback()
+        }
 
+        // Also sync clip loopEnabled state
+        let workspace = EchoelCreativeWorkspace.shared
+        let active = loopEngine.isPlayingLoops || loopEngine.isRecordingLoop
         for trackIndex in workspace.proSession.tracks.indices {
             for sceneIndex in workspace.proSession.scenes.indices {
                 if var clip = workspace.proSession.tracks[trackIndex].clips[sceneIndex] {
-                    clip.loopEnabled = loopActive
+                    clip.loopEnabled = active
                     workspace.proSession.tracks[trackIndex].clips[sceneIndex] = clip
                 }
             }

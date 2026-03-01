@@ -517,6 +517,7 @@ struct DAWArrangementView: View {
 
 // MARK: - DAW Models
 
+@MainActor
 class ArrangementDAWProductionEngine: ObservableObject {
     /// Track accent colors — monochrome grays with subtle differentiation
     private static let trackAccents: [Color] = [
