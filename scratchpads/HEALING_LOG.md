@@ -115,6 +115,8 @@ Read this FIRST when continuing work on Echoelmusic.
 ### Commits
 - `6e3284e` — refactor: deduplicate equal-power pan and SessionClip copying
 - `7d1fe9a` — fix: wire disconnected systems + deduplicate buffer/clamping patterns
+- `a29c8b2` — feat: singleton SpatialAudioEngine, face/hand→visual/lighting, color grading bridge, DFT wrapper
+- `7d1fe9a` — fix: wire disconnected systems + deduplicate buffer/clamping patterns
 
 ### Phase 1: Equal-Power Pan Deduplication
 - Extracted shared `equalPowerPan(pan:volume:)` as module-level function in MixerDSPKernel.swift
@@ -147,11 +149,32 @@ Read this FIRST when continuing work on Echoelmusic.
 - MIDI2Types.swift — 8x .clamped(to:) migration
 - BinauralBeatGenerator.swift, EnhancedAudioFeatures.swift — .clamped(to:)
 
+### Phase 3: Complete System Integration (a29c8b2)
+
+**SpatialAudioEngine Singleton:**
+- Added `SpatialAudioEngine.shared` — canonical instance
+- AudioEngine + UnifiedControlHub now share the same instance
+- Eliminates 3 independent instances with divergent state
+
+**Face/Hand → Visual/Lighting Pipeline:**
+- `handleFaceExpressionUpdate()` now drives: audio + visual intensity (smile) + lighting warmth (browRaise)
+- `applyGestureAudioParameters()` now drives: audio + visual intensity (filter cutoff) + lighting color (reverb wetness)
+- Complete input→output matrix: all 4 inputs (bio, gaze, face, hand) → all 3 outputs (audio, visual, lighting)
+
+**ProColorGrading → VideoEditingEngine Bridge:**
+- New `bridgeProColorToVideoEditor()` in EchoelCreativeWorkspace
+- ColorWheels (exposure/contrast/saturation/temperature/tint) flow to selected video clips
+- `VideoEditingEngine.applyLiveGrade()` replaces/appends color grade effects
+
+**EchoelComplexDFT Wrapper:**
+- New `EchoelComplexDFT` class in EchoelVDSPKit.swift — manages `vDSP_DFT_zop` lifecycle
+- Pre-allocated output buffers, overlapping access safety handled internally
+- Migrated MicrophoneManager + AudioToQuantumMIDI as first adopters
+- 4 more files can migrate later (EnhancedAudioFeatures, VisualSoundEngine, SIMDBioProcessing, BreathDetector)
+
 ### Remaining Known Issues
-- SpatialAudioEngine triple-instantiation (needs singleton pattern)
-- Face/Hand/Gaze → Visual/Lighting pipeline not connected
-- 22+ FFT/DFT setup patterns could benefit from shared wrapper class
-- ProColorGrading never referenced from any view
+- 4 more files can migrate to EchoelComplexDFT (non-urgent)
+- ProColorGrading UI panel not yet in VideoEditorView (needs SwiftUI implementation)
 
 ---
 

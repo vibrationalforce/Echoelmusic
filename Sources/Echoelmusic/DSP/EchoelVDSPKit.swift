@@ -24,7 +24,7 @@ import Accelerate
 /// Usage:
 /// ```swift
 /// let dft = EchoelComplexDFT(size: 2048)
-/// let (outR, outI) = dft.forward(real: &realIn, imag: &imagIn)
+/// let (outR, outI) = dft.forward(real: realIn, imag: imagIn)
 /// ```
 public final class EchoelComplexDFT: @unchecked Sendable {
 
