@@ -312,7 +312,7 @@ class MicrophoneManager: NSObject, ObservableObject {
         }
 
         // Find peak frequency (ignore DC component at index 0)
-        guard magnitudes.count > 1 else { return nil }
+        guard magnitudes.count > 1 else { return (0, visualMagnitudes) }
         var maxMagnitude: Float = 0
         var maxIndex: vDSP_Length = 0
 
