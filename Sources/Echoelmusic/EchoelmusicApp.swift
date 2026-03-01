@@ -188,7 +188,7 @@ struct EchoelmusicApp: App {
     // MARK: - Sequential Core System Initialization
 
     /// Total initialization phases for progress tracking
-    private static let totalPhases: Double = 14
+    private static let totalPhases: Double = 16
 
     /// Initializes all singletons in a controlled, sequential order.
     /// Each phase waits for the previous to complete, preventing circular deadlocks.
@@ -264,11 +264,22 @@ struct EchoelmusicApp: App {
         // Phase 14: Crash-safe state persistence (auto-save every 10s, recover on next launch)
         await safeInit("State persistence...", phase: 14) { _ = CrashSafeStatePersistence.shared }
 
+        // Phase 15: Lambda Environment Engine (universal environment sensing + lambda chains)
+        await safeInit("Lambda environment...", phase: 15) {
+            _ = UniversalEnvironmentEngine.shared
+            _ = EnvironmentLoopProcessor.shared
+        }
+
+        // Phase 16: Self-Healing Code Transformation (environment-aware pipeline adaptation)
+        await safeInit("Self-healing transformation...", phase: 16) {
+            _ = SelfHealingCodeTransformation.shared
+        }
+
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         await MainActor.run {
             initializationProgress = 1.0
             initializationPhase = "Ready"
-            log.info("Echoelmusic initialized in \(String(format: "%.1f", elapsed))s (14 phases complete)", category: .system)
+            log.info("Echoelmusic initialized in \(String(format: "%.1f", elapsed))s (16 phases complete)", category: .system)
         }
     }
 
@@ -333,8 +344,9 @@ struct EchoelmusicApp: App {
         visualEngine.connectBioSource(healthKitEngine)
         self.bioVisualEngine = visualEngine
 
-        // Start UnifiedControlHub
+        // Start UnifiedControlHub + Lambda Mode
         unifiedControlHub.start()
+        unifiedControlHub.enableLambdaMode()
 
         // Professional production mode: audio engine starts on-demand when
         // user hits Play in the transport bar — no auto-start, no binaural beats.
@@ -363,7 +375,36 @@ struct EchoelmusicApp: App {
             }
         }
 
-        log.info("Professional Production Platform Ready — all systems connected", category: .system)
+        // Wire Lambda Environment Loop Processor → Audio/Visual/Lighting
+        let envLoop = EnvironmentLoopProcessor.shared
+        envLoop.reverbOutput
+            .receive(on: DispatchQueue.main)
+            .sink { [weak audioEngine] reverb in
+                audioEngine?.spatialAudioEngine?.setReverbBlend(reverb)
+            }
+            .store(in: systemCancellables)
+
+        envLoop.frequencyOutput
+            .receive(on: DispatchQueue.main)
+            .sink { [weak audioEngine] freq in
+                audioEngine?.setBinauralCarrierFrequency(freq)
+            }
+            .store(in: systemCancellables)
+
+        envLoop.spatialOutput
+            .receive(on: DispatchQueue.main)
+            .sink { [weak audioEngine] width in
+                audioEngine?.spatialAudioEngine?.setPan(width * 2.0 - 1.0)
+            }
+            .store(in: systemCancellables)
+
+        // Start Environment Loop Processor (60Hz)
+        envLoop.start()
+
+        // Activate Self-Healing Code Transformation
+        SelfHealingCodeTransformation.shared.activate()
+
+        log.info("Professional Production Platform Ready — all systems connected (incl. Lambda)", category: .system)
     }
 }
 

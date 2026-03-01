@@ -247,6 +247,22 @@ public class AudioEngine: ObservableObject {
         }
     }
 
+    /// Set binaural carrier frequency from Lambda environment data
+    /// - Parameter frequency: Carrier frequency in Hz (e.g. 440.0 for A4)
+    func setBinauralCarrierFrequency(_ frequency: Double) {
+        let carrier = Float(max(100, min(1000, frequency)))
+        binauralGenerator.configure(
+            carrier: carrier,
+            beat: currentBrainwaveState.beatFrequency,
+            amplitude: binauralAmplitude
+        )
+
+        if binauralBeatsEnabled {
+            binauralGenerator.stop()
+            binauralGenerator.start()
+        }
+    }
+
     /// Toggle spatial audio on/off
     func toggleSpatialAudio() {
         spatialAudioEnabled.toggle()

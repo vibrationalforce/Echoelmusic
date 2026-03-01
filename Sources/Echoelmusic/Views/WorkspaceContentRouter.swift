@@ -56,6 +56,9 @@ struct WorkspaceContentRouter: View {
         case .mixing:
             AudioRoutingMatrixView()
 
+        case .lambda:
+            LambdaWorkspaceView()
+
         case .ai:
             AISuperIntelligenceView()
 
@@ -90,6 +93,7 @@ extension MainNavigationHub.Workspace {
         case .nodes: return "Node Editor - Visual programming"
         case .midi: return "MIDI Routing - Connect devices"
         case .mixing: return "Mixing Console - Audio routing matrix"
+        case .lambda: return "Lambda Mode - Bio-reactive environment engine"
         case .ai: return "AI Tools - Super intelligence features"
         case .hardware: return "Hardware - Device configuration"
         case .streaming: return "Streaming - Live broadcast"
@@ -109,6 +113,7 @@ extension MainNavigationHub.Workspace {
         case .nodes: return "6"
         case .midi: return "7"
         case .mixing: return "8"
+        case .lambda: return nil
         case .ai: return "9"
         case .hardware: return "0"
         case .streaming: return nil
