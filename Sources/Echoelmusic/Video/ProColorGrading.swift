@@ -1445,6 +1445,29 @@ public final class ProColorGrading: ObservableObject {
         loadNodeToPublished()
     }
 
+    // MARK: - Lambda Integration
+
+    /// Applies Lambda bio-reactive color influence to the active grade.
+    /// Subtly shifts temperature and tint based on Lambda's RGB output.
+    ///
+    /// - Parameters:
+    ///   - red: Red channel (0-1)
+    ///   - green: Green channel (0-1)
+    ///   - blue: Blue channel (0-1)
+    public func setLambdaColorInfluence(red: Double, green: Double, blue: Double) {
+        // Map RGB to temperature and tint adjustments
+        // Warm colors (high red) → positive temperature, cool (high blue) → negative
+        let temperatureInfluence = Float((red - blue) * 15.0) // ±15 range
+        // Green-heavy → negative tint (green), magenta-heavy → positive tint
+        let tintInfluence = Float((red + blue - green * 2.0) * 10.0) // ±10 range
+
+        // Blend gently (10% influence) to avoid jarring shifts
+        let blend: Float = 0.1
+        colorWheels.temperature = colorWheels.temperature * (1.0 - blend) + temperatureInfluence * blend
+        colorWheels.tint = colorWheels.tint * (1.0 - blend) + tintInfluence * blend
+        syncPublishedToNode()
+    }
+
     // MARK: - Internal Sync
 
     /// Write current published properties into the active node.

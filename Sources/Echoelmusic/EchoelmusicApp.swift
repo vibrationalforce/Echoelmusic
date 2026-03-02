@@ -398,6 +398,38 @@ struct EchoelmusicApp: App {
             }
             .store(in: systemCancellables)
 
+        // Lambda coherenceOutput → SpatialAudioEngine bio-reactive field
+        envLoop.coherenceOutput
+            .receive(on: DispatchQueue.main)
+            .sink { [weak audioEngine] coherence in
+                audioEngine?.spatialAudioEngine?.applyBioReactiveSpatialField(
+                    coherence: max(0, min(1, 0.5 + coherence)),
+                    breathPhase: 0.0,
+                    hrvVariability: 50.0
+                )
+            }
+            .store(in: systemCancellables)
+
+        // Lambda colorOutput → Visual layer via notification
+        envLoop.colorOutput
+            .receive(on: DispatchQueue.main)
+            .sink { color in
+                NotificationCenter.default.post(
+                    name: .lambdaColorUpdate,
+                    object: nil,
+                    userInfo: ["r": color.r, "g": color.g, "b": color.b]
+                )
+            }
+            .store(in: systemCancellables)
+
+        // Lambda hapticOutput → CoreHaptics transient feedback
+        envLoop.hapticOutput
+            .receive(on: DispatchQueue.main)
+            .sink { intensity in
+                LambdaHapticEngine.shared.playTransient(intensity: intensity)
+            }
+            .store(in: systemCancellables)
+
         // Start Environment Loop Processor (60Hz)
         envLoop.start()
 

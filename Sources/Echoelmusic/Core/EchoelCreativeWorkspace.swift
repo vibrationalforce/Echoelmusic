@@ -183,6 +183,7 @@ final class EchoelCreativeWorkspace: ObservableObject {
         bridgeBPMToSessionEngine()
         bridgeProColorToVideoEditor()
         bridgeBPMToLoopEngine()
+        bridgeLambdaToWorkspace()
     }
 
     /// Bridge 9: Global BPM → LoopEngine
@@ -199,6 +200,40 @@ final class EchoelCreativeWorkspace: ObservableObject {
             .removeDuplicates()
             .sink { [weak self] ts in
                 self?.loopEngine.setTimeSignature(beats: ts.numerator, noteValue: ts.denominator)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Bridge 10: Lambda Environment Loop → Creative Workspace
+    /// Bio-reactive Lambda output influences BPM, reverb, and color grading
+    private func bridgeLambdaToWorkspace() {
+        let envLoop = EnvironmentLoopProcessor.shared
+
+        // Lambda frequency → LoopEngine tempo influence (gentle 5% nudge)
+        envLoop.frequencyOutput
+            .map { freq in max(60.0, min(180.0, freq * 10.0)) }
+            .removeDuplicates()
+            .sink { [weak self] suggestedBPM in
+                guard let self = self else { return }
+                let blend = 0.05
+                let blended = self.globalBPM * (1.0 - blend) + suggestedBPM * blend
+                self.globalBPM = blended
+            }
+            .store(in: &cancellables)
+
+        // Lambda reverb → ProMixEngine master reverb send
+        envLoop.reverbOutput
+            .sink { [weak self] reverb in
+                self?.proMixer.setMasterReverbSend(Double(reverb))
+            }
+            .store(in: &cancellables)
+
+        // Lambda color → ProColorGrading temperature/tint influence
+        envLoop.colorOutput
+            .sink { [weak self] color in
+                self?.proColor.setLambdaColorInfluence(
+                    red: Double(color.r), green: Double(color.g), blue: Double(color.b)
+                )
             }
             .store(in: &cancellables)
     }

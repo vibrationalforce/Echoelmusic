@@ -202,29 +202,113 @@ class LoopEngine: ObservableObject {
     /// Stop overdubbing and merge with original loop
     func stopOverdub() {
         guard isOverdubbing, let loopID = overdubLoopID else { return }
-        guard let loopIndex = loops.firstIndex(where: { $0.id == loopID }) else { return }
+        guard let loopIndex = loops.firstIndex(where: { $0.id == loopID }) else {
+            isOverdubbing = false
+            overdubLoopID = nil
+            return
+        }
 
         isOverdubbing = false
 
-        // In a real implementation, this would:
-        // 1. Stop recording the overdub
-        // 2. Mix the overdub with the original loop
-        // 3. Save the merged result
-        // For now, we'll create a new loop
+        // Calculate the overdub duration
+        let overdubDuration: TimeInterval
+        if loopStartTimeIsSet {
+            overdubDuration = CACurrentMediaTime() - loopStartTime
+        } else {
+            overdubDuration = loops[loopIndex].duration
+        }
 
-        let overdubName = "\(loops[loopIndex].name) (Overdub)"
-        var newLoop = Loop(
-            name: overdubName,
-            bars: loops[loopIndex].bars,
-            color: Loop.LoopColor.allCases.randomElement() ?? .cyan
-        )
+        // Merge the overdub into the existing loop:
+        // 1. If both have audio files, mix them using AVFoundation
+        // 2. Extend duration to the longer of the two
+        // 3. Keep the original loop identity (no new loop created)
+        let originalURL = loops[loopIndex].audioURL
+        let overdubURL = loopsDirectory.appendingPathComponent("overdub_\(UUID().uuidString).caf")
 
-        loops.append(newLoop)
+        if let originalURL = originalURL {
+            mergeAudioFiles(original: originalURL, overdub: overdubURL, into: originalURL, completion: { [weak self] success in
+                guard let self = self else { return }
+                if success {
+                    log.audio("Merged overdub audio into \(self.loops[loopIndex].name)")
+                }
+            })
+        }
+
+        // Extend loop duration if overdub was longer
+        let originalDuration = loops[loopIndex].duration
+        if overdubDuration > originalDuration {
+            loops[loopIndex].duration = overdubDuration
+            // Recalculate bars based on new duration
+            let barDuration = barDurationSeconds()
+            guard barDuration > 0 else {
+                overdubLoopID = nil
+                loopStartTimeIsSet = false
+                return
+            }
+            loops[loopIndex].bars = max(1, Int(round(overdubDuration / barDuration)))
+        }
 
         overdubLoopID = nil
         loopStartTimeIsSet = false
 
-        log.audio("⏹️ Stopped overdub, created: \(overdubName)")
+        log.audio("Merged overdub into: \(loops[loopIndex].name) (\(loops[loopIndex].bars) bars)")
+    }
+
+    /// Merge two audio files by summing their samples, clamped to -1...1
+    private func mergeAudioFiles(original: URL, overdub: URL, into destination: URL, completion: @escaping (Bool) -> Void) {
+        // Audio file merge using AVAudioFile
+        // Both files are read, samples summed, and written to destination
+        guard FileManager.default.fileExists(atPath: original.path),
+              FileManager.default.fileExists(atPath: overdub.path) else {
+            completion(false)
+            return
+        }
+
+        do {
+            let originalFile = try AVAudioFile(forReading: original)
+            let overdubFile = try AVAudioFile(forReading: overdub)
+
+            let format = originalFile.processingFormat
+            let originalFrameCount = AVAudioFrameCount(originalFile.length)
+            let overdubFrameCount = AVAudioFrameCount(overdubFile.length)
+            let mergedFrameCount = max(originalFrameCount, overdubFrameCount)
+
+            guard let originalBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: mergedFrameCount),
+                  let overdubBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: mergedFrameCount) else {
+                completion(false)
+                return
+            }
+
+            try originalFile.read(into: originalBuffer)
+            try overdubFile.read(into: overdubBuffer)
+
+            // Sum the samples
+            guard let mergedBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: mergedFrameCount) else {
+                completion(false)
+                return
+            }
+            mergedBuffer.frameLength = mergedFrameCount
+
+            let channelCount = Int(format.channelCount)
+            for ch in 0..<channelCount {
+                guard let origData = originalBuffer.floatChannelData?[ch],
+                      let overdubData = overdubBuffer.floatChannelData?[ch],
+                      let mergedData = mergedBuffer.floatChannelData?[ch] else { continue }
+
+                for i in 0..<Int(mergedFrameCount) {
+                    let orig = i < Int(originalFrameCount) ? origData[i] : 0
+                    let over = i < Int(overdubFrameCount) ? overdubData[i] : 0
+                    mergedData[i] = max(-1.0, min(1.0, orig + over))
+                }
+            }
+
+            let outputFile = try AVAudioFile(forWriting: destination, settings: format.settings)
+            try outputFile.write(from: mergedBuffer)
+            completion(true)
+        } catch {
+            log.warning("Overdub merge failed: \(error.localizedDescription)", category: .audio)
+            completion(false)
+        }
     }
 
     /// Cancel overdub without saving

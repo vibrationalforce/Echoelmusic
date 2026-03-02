@@ -1129,6 +1129,30 @@ public class ProMixEngine: ObservableObject {
         return engine
     }
 
+    // MARK: - Lambda Integration
+
+    /// Sets the master reverb send level from Lambda bio-reactive output.
+    /// Adjusts the reverb send on all audio channels proportionally.
+    ///
+    /// - Parameter level: Reverb send level from 0.0 (dry) to 1.0 (full wet).
+    public func setMasterReverbSend(_ level: Double) {
+        let clampedLevel = Float(max(0, min(1, level)))
+        // Find the reverb aux bus
+        guard let reverbBusIndex = channels.firstIndex(where: {
+            $0.type == .aux && $0.name == "Reverb"
+        }) else { return }
+        let reverbBusID = channels[reverbBusIndex].id
+
+        // Adjust reverb send level on all audio channels
+        for i in channels.indices where channels[i].type == .audio {
+            for j in channels[i].sends.indices {
+                if channels[i].sends[j].destinationID == reverbBusID {
+                    channels[i].sends[j].level = clampedLevel * 0.3 // Scale to reasonable range
+                }
+            }
+        }
+    }
+
     // MARK: - Private Helpers
 
     /// Returns the index of a channel in the `channels` array by its UUID.
