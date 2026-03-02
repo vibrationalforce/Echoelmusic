@@ -1391,7 +1391,7 @@ public struct SourceFiles {
 
         // Audio Engine
         .init(path: "Sources/Echoelmusic/Audio/AudioEngine.swift"),
-        .init(path: "Sources/Echoelmusic/Audio/BinauralBeatNode.swift"),
+        // BinauralBeatNode removed — pseudoscience code eliminated
         .init(path: "Sources/Echoelmusic/Audio/GranularSynthNode.swift"),
         .init(path: "Sources/Echoelmusic/Audio/PitchDetector.swift"),
 

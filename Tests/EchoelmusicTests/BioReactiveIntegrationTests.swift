@@ -257,36 +257,10 @@ final class BioReactiveIntegrationTests: XCTestCase {
 
     // MARK: - Audio Engine Bio-Reactive Tests
 
-    func testAudioEngineBinauralBeatInitialization() {
+    func testAudioEngineInitialization() {
         let engine = AudioEngine()
-        XCTAssertFalse(engine.binauralBeatsEnabled)
         XCTAssertFalse(engine.spatialAudioEnabled)
         XCTAssertFalse(engine.isRunning)
-        XCTAssertEqual(engine.currentBrainwaveState, .alpha)
-        XCTAssertEqual(engine.binauralAmplitude, 0.3, accuracy: 0.01)
-    }
-
-    func testAudioEngineBrainwaveStateChange() {
-        let engine = AudioEngine()
-
-        engine.setBrainwaveState(.theta)
-        XCTAssertEqual(engine.currentBrainwaveState, .theta)
-
-        engine.setBrainwaveState(.delta)
-        XCTAssertEqual(engine.currentBrainwaveState, .delta)
-
-        engine.setBrainwaveState(.gamma)
-        XCTAssertEqual(engine.currentBrainwaveState, .gamma)
-    }
-
-    func testAudioEngineBinauralAmplitudeRange() {
-        let engine = AudioEngine()
-
-        engine.setBinauralAmplitude(0.0)
-        XCTAssertEqual(engine.binauralAmplitude, 0.0, accuracy: 0.01)
-
-        engine.setBinauralAmplitude(0.6)
-        XCTAssertEqual(engine.binauralAmplitude, 0.6, accuracy: 0.01)
     }
 
     func testAudioEngineStateDescription() {
@@ -319,7 +293,7 @@ final class BioReactiveIntegrationTests: XCTestCase {
             .sessionEnded(duration: 60),
             .presetSelected(name: "Test"),
             .coherenceAchieved(level: .high),
-            .featureUsed(name: "binaural"),
+            .featureUsed(name: "spatial"),
             .errorOccurred(type: "test", message: "msg"),
             .performanceWarning(metric: "cpu", value: 0.5)
         ]

@@ -111,7 +111,7 @@ public final class FeatureFlagManager: ObservableObject {
             FeatureFlag(key: "quantum_light_emulator", enabled: true),
             FeatureFlag(key: "orchestral_scoring", enabled: true),
             FeatureFlag(key: "film_score_composer", enabled: true),
-            FeatureFlag(key: "binaural_beats", enabled: true),
+            FeatureFlag(key: "binaural_beats", enabled: false), // Deprecated — pseudoscience removed
             FeatureFlag(key: "spatial_audio_4d", enabled: true),
 
             // Video Features

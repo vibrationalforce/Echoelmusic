@@ -152,19 +152,18 @@ final class PerformanceBenchmarks: XCTestCase {
         }
     }
 
-    func testBinauralBeatGeneration() {
+    func testStereoToneGeneration() {
         let sampleRate = 44100.0
         let bufferSize = 512
         let leftFreq = 440.0
         let rightFreq = 446.0
-        let beatFreq = rightFreq - leftFreq
 
         var leftBuffer = [Float](repeating: 0.0, count: bufferSize)
         var rightBuffer = [Float](repeating: 0.0, count: bufferSize)
         var phase: Double = 0.0
 
         measurePerformance(
-            name: "Binaural Beat Generation (CPU)",
+            name: "Stereo Tone Generation (CPU)",
             target: 0.005, // 5ms target
             iterations: 1000
         ) {

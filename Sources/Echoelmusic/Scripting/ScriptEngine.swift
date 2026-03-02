@@ -348,8 +348,6 @@ class AudioScriptAPI {
         // Route parameter changes to the audio engine
         if let engine = audioEngine {
             switch name {
-            case "binauralAmplitude":
-                engine.binauralAmplitude = value
             case "spatialEnabled":
                 engine.spatialAudioEnabled = value > 0.5
             case "reverb":

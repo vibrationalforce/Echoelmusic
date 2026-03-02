@@ -244,58 +244,7 @@ final class AUv3PluginTests: XCTestCase {
                           "Pitch shifted output should differ from input")
     }
 
-    // MARK: - Binaural Beat Generator Tests
-
-    @MainActor
-    func testBinauralBeatGeneratorInitialization() {
-        let generator = BinauralBeatGenerator()
-        XCTAssertEqual(generator.carrierFrequency, 440.0, "Default carrier should be 440 Hz")
-        XCTAssertEqual(generator.beatFrequency, 10.0, "Default beat should be 10 Hz (Alpha)")
-        XCTAssertFalse(generator.isPlaying, "Should not be playing initially")
-    }
-
-    @MainActor
-    func testBinauralBeatConfiguration() {
-        let generator = BinauralBeatGenerator()
-        generator.configure(carrier: 440.0, beat: 6.0, amplitude: 0.5)
-
-        XCTAssertEqual(generator.carrierFrequency, 440.0)
-        XCTAssertEqual(generator.beatFrequency, 6.0)
-    }
-
-    @MainActor
-    func testBinauralBeatBrainwavePresets() {
-        let generator = BinauralBeatGenerator()
-
-        generator.configure(state: .delta)
-        XCTAssertEqual(generator.beatFrequency, 2.0, "Delta should be 2 Hz")
-
-        generator.configure(state: .theta)
-        XCTAssertEqual(generator.beatFrequency, 6.0, "Theta should be 6 Hz")
-
-        generator.configure(state: .alpha)
-        XCTAssertEqual(generator.beatFrequency, 10.0, "Alpha should be 10 Hz")
-
-        generator.configure(state: .beta)
-        XCTAssertEqual(generator.beatFrequency, 20.0, "Beta should be 20 Hz")
-
-        generator.configure(state: .gamma)
-        XCTAssertEqual(generator.beatFrequency, 40.0, "Gamma should be 40 Hz")
-    }
-
-    @MainActor
-    func testBinauralBeatHRVMapping() {
-        let generator = BinauralBeatGenerator()
-
-        generator.setBeatFrequencyFromHRV(coherence: 20)
-        XCTAssertEqual(generator.beatFrequency, 10.0, "Low coherence → Alpha (10 Hz)")
-
-        generator.setBeatFrequencyFromHRV(coherence: 50)
-        XCTAssertEqual(generator.beatFrequency, 15.0, "Medium coherence → 15 Hz")
-
-        generator.setBeatFrequencyFromHRV(coherence: 80)
-        XCTAssertEqual(generator.beatFrequency, 20.0, "High coherence → Beta (20 Hz)")
-    }
+    // Binaural beat generator tests removed — pseudoscience code eliminated
 
     // MARK: - Plugin Identity Tests
 

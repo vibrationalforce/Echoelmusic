@@ -26,16 +26,7 @@ final class AudioEngineTests: XCTestCase {
     func testInitialization() {
         XCTAssertNotNil(audioEngine)
         XCTAssertFalse(audioEngine.isRunning)
-        XCTAssertFalse(audioEngine.binauralBeatsEnabled)
         XCTAssertFalse(audioEngine.spatialAudioEnabled)
-    }
-
-    func testDefaultBrainwaveState() {
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .alpha)
-    }
-
-    func testDefaultBinauralAmplitude() {
-        XCTAssertEqual(audioEngine.binauralAmplitude, 0.3, accuracy: 0.01)
     }
 
 
@@ -57,58 +48,7 @@ final class AudioEngineTests: XCTestCase {
     }
 
 
-    // MARK: - Brainwave State Tests
-
-    func testSetBrainwaveStateDelta() {
-        audioEngine.setBrainwaveState(.delta)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .delta)
-    }
-
-    func testSetBrainwaveStateTheta() {
-        audioEngine.setBrainwaveState(.theta)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .theta)
-    }
-
-    func testSetBrainwaveStateBeta() {
-        audioEngine.setBrainwaveState(.beta)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .beta)
-    }
-
-    func testSetBrainwaveStateGamma() {
-        audioEngine.setBrainwaveState(.gamma)
-        XCTAssertEqual(audioEngine.currentBrainwaveState, .gamma)
-    }
-
-
-    // MARK: - Amplitude Tests
-
-    func testSetBinauralAmplitude() {
-        audioEngine.setBinauralAmplitude(0.5)
-        XCTAssertEqual(audioEngine.binauralAmplitude, 0.5, accuracy: 0.01)
-    }
-
-    func testSetBinauralAmplitudeZero() {
-        audioEngine.setBinauralAmplitude(0.0)
-        XCTAssertEqual(audioEngine.binauralAmplitude, 0.0, accuracy: 0.01)
-    }
-
-    func testSetBinauralAmplitudeMax() {
-        audioEngine.setBinauralAmplitude(1.0)
-        XCTAssertEqual(audioEngine.binauralAmplitude, 1.0, accuracy: 0.01)
-    }
-
-
     // MARK: - Toggle Tests
-
-    func testToggleBinauralBeats() {
-        XCTAssertFalse(audioEngine.binauralBeatsEnabled)
-
-        audioEngine.toggleBinauralBeats()
-        XCTAssertTrue(audioEngine.binauralBeatsEnabled)
-
-        audioEngine.toggleBinauralBeats()
-        XCTAssertFalse(audioEngine.binauralBeatsEnabled)
-    }
 
     func testToggleSpatialAudio() {
         // Note: May fail if spatial audio is not available
@@ -181,16 +121,6 @@ final class AudioEngineTests: XCTestCase {
 
 
     // MARK: - Performance Tests
-
-    func testBrainwaveStateSwitchingPerformance() {
-        let states: [BinauralBeatGenerator.BrainwaveState] = [.delta, .theta, .alpha, .beta, .gamma]
-
-        measure {
-            for state in states {
-                audioEngine.setBrainwaveState(state)
-            }
-        }
-    }
 
     func testParameterUpdatePerformance() {
         measure {

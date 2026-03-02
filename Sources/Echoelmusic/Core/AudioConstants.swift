@@ -140,8 +140,8 @@ public enum AudioConstants {
     /// Maximum safe amplitude (hearing protection, WHO guidelines)
     public static let maxSafeAmplitude: Float = 0.6
 
-    /// Binaural beat amplitude (subtle, background)
-    public static let binauralAmplitude: Float = 0.25
+    /// Default sub-mix amplitude (subtle, background layer)
+    public static let backgroundAmplitude: Float = 0.25
 
     // MARK: - Performance Thresholds
 

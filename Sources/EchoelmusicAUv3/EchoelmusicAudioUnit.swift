@@ -55,7 +55,7 @@ public enum EchoelmusicAUType: String, CaseIterable {
 public enum EchoelPluginID: String, CaseIterable {
     // Instruments (aumu)
     case echoelSynth = "Esyn"   // TR808 bass synthesizer (TR808DSPKernel)
-    case echoelBio   = "Ebio"   // Binaural beat generator (BinauralDSPKernel)
+    case echoelBio   = "Ebio"   // Bio-reactive audio processor (TR808DSPKernel)
 
     // Effects (aufx)
     case echoelFX    = "Eefx"   // Freeverb reverb (ReverbDSPKernel)
@@ -195,10 +195,10 @@ public enum EchoelmusicParameterAddress: AUParameterAddress {
     case consoleVibe = 701
     case consoleBlend = 702
 
-    // Binaural (BinauralDSPKernel)
-    case binauralCarrier = 800
-    case binauralBeat = 801
-    case binauralAmplitude = 802
+    // Bio-reactive (reserved)
+    case bioReactiveParam1 = 800
+    case bioReactiveParam2 = 801
+    case bioReactiveParam3 = 802
 
     // Tuning (Global)
     case concertPitch = 900
@@ -318,7 +318,7 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         case .echoelSynth:
             return TR808DSPKernel()           // Bass synthesizer
         case .echoelBio:
-            return BinauralDSPKernel()        // Binaural beat generator
+            return TR808DSPKernel()           // Bio-reactive audio processor
 
         // Effects — each gets its own dedicated DSP
         case .echoelFX:
@@ -394,7 +394,6 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
                 parameters.append(contentsOf: create808Parameters())
                 parameters.append(contentsOf: createSynthExtendedParameters())
             case .echoelBio:
-                parameters.append(contentsOf: createBinauralParameters())
                 parameters.append(contentsOf: createBioReactiveParameters())
             case .echoelFX:
                 parameters.append(contentsOf: createReverbParameters())
@@ -771,34 +770,34 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
         ]
     }
 
-    private func createBinauralParameters() -> [AUParameter] {
+    private func createBioReactiveParameters() -> [AUParameter] {
         return [
             AUParameterTree.createParameter(
-                withIdentifier: "binauralCarrier",
-                name: "Carrier Frequency",
-                address: EchoelmusicParameterAddress.binauralCarrier.rawValue,
-                min: 100, max: 1000,
-                unit: .hertz,
-                unitName: nil,
-                flags: [.flag_IsReadable, .flag_IsWritable, .flag_DisplayLogarithmic],
-                valueStrings: nil,
-                dependentParameters: nil
-            ),
-            AUParameterTree.createParameter(
-                withIdentifier: "binauralBeat",
-                name: "Beat Frequency",
-                address: EchoelmusicParameterAddress.binauralBeat.rawValue,
-                min: 0.5, max: 50,
-                unit: .hertz,
+                withIdentifier: "bioReactiveParam1",
+                name: "Coherence Input",
+                address: EchoelmusicParameterAddress.bioReactiveParam1.rawValue,
+                min: 0, max: 1,
+                unit: .generic,
                 unitName: nil,
                 flags: [.flag_IsReadable, .flag_IsWritable],
                 valueStrings: nil,
                 dependentParameters: nil
             ),
             AUParameterTree.createParameter(
-                withIdentifier: "binauralAmplitude",
-                name: "Amplitude",
-                address: EchoelmusicParameterAddress.binauralAmplitude.rawValue,
+                withIdentifier: "bioReactiveParam2",
+                name: "HRV Input",
+                address: EchoelmusicParameterAddress.bioReactiveParam2.rawValue,
+                min: 0, max: 200,
+                unit: .generic,
+                unitName: nil,
+                flags: [.flag_IsReadable, .flag_IsWritable],
+                valueStrings: nil,
+                dependentParameters: nil
+            ),
+            AUParameterTree.createParameter(
+                withIdentifier: "bioReactiveParam3",
+                name: "Output Mix",
+                address: EchoelmusicParameterAddress.bioReactiveParam3.rawValue,
                 min: 0, max: 1,
                 unit: .linearGain,
                 unitName: nil,

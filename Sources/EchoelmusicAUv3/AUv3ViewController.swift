@@ -107,7 +107,7 @@ public class EchoelmusicAUv3ViewController: AUViewController {
             case .echoelSynth:
                 return AnyView(TR808AUv3View(audioUnit: au).preferredColorScheme(.dark))
             case .echoelBio:
-                return AnyView(BinauralAUv3View(audioUnit: au).preferredColorScheme(.dark))
+                return AnyView(BioReactiveAUv3View(audioUnit: au).preferredColorScheme(.dark))
 
             // Effects — each plugin gets its own dedicated view
             case .echoelFX:
@@ -434,81 +434,29 @@ struct ConsoleAUv3View: View {
     }
 }
 
-// MARK: - Binaural Beat AUv3 View (EchoelBio)
+// MARK: - Bio-Reactive AUv3 View (EchoelBio)
 
-struct BinauralAUv3View: View {
+struct BioReactiveAUv3View: View {
     let audioUnit: EchoelmusicAudioUnit
-
-    @State private var carrier: Float = 432.0
-    @State private var beat: Float = 10.0
-    @State private var amplitude: Float = 0.7
-
-    private let brainwavePresets: [(name: String, freq: Float)] = [
-        ("Delta", 2.0), ("Theta", 6.0), ("Alpha", 10.0), ("Beta", 20.0), ("Gamma", 40.0)
-    ]
 
     var body: some View {
         VStack(spacing: 0) {
-            AUv3PluginHeader(icon: "brain.head.profile", title: "EchoelBio", subtitle: "Binaural Beat Generator")
+            AUv3PluginHeader(icon: "waveform.path.ecg", title: "EchoelBio", subtitle: "Bio-Reactive Processor")
 
             BrandDivider()
 
-            ScrollView {
-                VStack(spacing: 16) {
-                    AUParameterSection(title: "Brainwave State", color: AUv3Brand.textPrimary) {
-                        HStack(spacing: 8) {
-                            ForEach(0..<brainwavePresets.count, id: \.self) { index in
-                                let preset = brainwavePresets[index]
-                                Button(action: {
-                                    beat = preset.freq
-                                    audioUnit.parameterTree?.parameter(
-                                        withAddress: EchoelmusicParameterAddress.binauralBeat.rawValue
-                                    )?.value = beat
-                                }) {
-                                    VStack(spacing: 2) {
-                                        Text(preset.name)
-                                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                                        Text("\(Int(preset.freq)) Hz")
-                                            .font(.system(size: 9, design: .monospaced))
-                                    }
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 6)
-                                    .frame(maxWidth: .infinity)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .fill(abs(beat - preset.freq) < 0.5 ? AUv3Brand.accent : AUv3Brand.bgElevated)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 6)
-                                                    .stroke(abs(beat - preset.freq) < 0.5 ? Color.clear : AUv3Brand.border, lineWidth: 1)
-                                            )
-                                    )
-                                    .foregroundColor(abs(beat - preset.freq) < 0.5 ? AUv3Brand.bgDeep : AUv3Brand.textSecondary)
-                                }
-                            }
-                        }
-                    }
-
-                    AUParameterSection(title: "Parameters", color: AUv3Brand.textPrimary) {
-                        AUParameterSlider(label: "Carrier", value: $carrier, range: 100...1000,
-                                          format: "%.0f Hz", address: .binauralCarrier, audioUnit: audioUnit)
-                        AUParameterSlider(label: "Beat", value: $beat, range: 0.5...50,
-                                          format: "%.1f Hz", address: .binauralBeat, audioUnit: audioUnit)
-                        AUParameterSlider(label: "Volume", value: $amplitude, range: 0...1,
-                                          format: "%.0f%%", multiplier: 100, address: .binauralAmplitude, audioUnit: audioUnit)
-                    }
-                }
-                .padding()
+            VStack(spacing: 16) {
+                Text("Bio-reactive audio processing")
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundColor(AUv3Brand.textPrimary)
+                Text("Connect biometric sensors to modulate audio parameters in real-time")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(AUv3Brand.textSecondary)
+                    .multilineTextAlignment(.center)
             }
+            .padding()
         }
         .background(AUv3Brand.bgDeep)
-        .onAppear { loadParameters() }
-    }
-
-    private func loadParameters() {
-        guard let tree = audioUnit.parameterTree else { return }
-        if let p = tree.parameter(withAddress: EchoelmusicParameterAddress.binauralCarrier.rawValue) { carrier = p.value }
-        if let p = tree.parameter(withAddress: EchoelmusicParameterAddress.binauralBeat.rawValue) { beat = p.value }
-        if let p = tree.parameter(withAddress: EchoelmusicParameterAddress.binauralAmplitude.rawValue) { amplitude = p.value }
     }
 }
 

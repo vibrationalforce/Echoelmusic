@@ -233,52 +233,7 @@ public struct APIDocumentation {
                 audioEngine.stop()
                 """
             ),
-            APIMethod(
-                name: "toggleBinauralBeats",
-                signature: "func toggleBinauralBeats()",
-                description: "Toggle Multidimensional Brainwave Entrainment on/off",
-                parameters: [],
-                returnType: "Void",
-                availability: .all,
-                example: """
-                audioEngine.toggleBinauralBeats()
-                // Multidimensional Brainwave Entrainment enabled/disabled
-                """
-            ),
-            APIMethod(
-                name: "setBrainwaveState",
-                signature: "func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState)",
-                description: "Set target brainwave state for Multidimensional Brainwave Entrainment",
-                parameters: [
-                    APIParameter(name: "state", type: "BrainwaveState", description: "Target brainwave state (delta, theta, alpha, beta, gamma)", defaultValue: nil)
-                ],
-                returnType: "Void",
-                availability: .all,
-                example: """
-                // Alpha waves for relaxation (8-12 Hz)
-                audioEngine.setBrainwaveState(.alpha)
-
-                // Theta waves for meditation (4-8 Hz)
-                audioEngine.setBrainwaveState(.theta)
-
-                // Gamma waves for focus (32-100 Hz)
-                audioEngine.setBrainwaveState(.gamma)
-                """
-            ),
-            APIMethod(
-                name: "setBinauralAmplitude",
-                signature: "func setBinauralAmplitude(_ amplitude: Float)",
-                description: "Set binaural beat volume (0.0 - 1.0)",
-                parameters: [
-                    APIParameter(name: "amplitude", type: "Float", description: "Volume level 0.0 to 1.0", defaultValue: nil)
-                ],
-                returnType: "Void",
-                availability: .all,
-                example: """
-                audioEngine.setBinauralAmplitude(0.5)
-                // 50% volume
-                """
-            ),
+            // Binaural beat methods removed — pseudoscience code eliminated
             APIMethod(
                 name: "setBPM",
                 signature: "func setBPM(_ bpm: Double)",
@@ -350,10 +305,8 @@ public struct APIDocumentation {
         ],
         properties: [
             APIProperty(name: "isRunning", type: "@Published Bool", description: "Whether the audio engine is currently running", access: .readOnly),
-            APIProperty(name: "binauralBeatsEnabled", type: "@Published Bool", description: "Whether Multidimensional Brainwave Entrainment are enabled", access: .readOnly),
             APIProperty(name: "spatialAudioEnabled", type: "@Published Bool", description: "Whether spatial audio is enabled", access: .readOnly),
-            APIProperty(name: "currentBrainwaveState", type: "@Published BrainwaveState", description: "Current binaural beat brainwave state", access: .readOnly),
-            APIProperty(name: "binauralAmplitude", type: "@Published Float", description: "Multidimensional Brainwave Entrainment volume (0.0 - 1.0)", access: .readOnly)
+            APIProperty(name: "masterVolume", type: "@Published Float", description: "Master output volume (0.0 - 1.0)", access: .readOnly)
         ]
     )
 
@@ -1623,10 +1576,9 @@ public struct APIExamples {
             hub.enableHandTracking()
             try await hub.enableBiometricMonitoring()
 
-            // 4. Configure Multidimensional Brainwave Entrainment for meditation
-            audioEngine.setBrainwaveState(.theta)
-            audioEngine.setBinauralAmplitude(0.3)
-            audioEngine.toggleBinauralBeats()
+            // 4. Configure spatial audio for immersive experience
+            audioEngine.spatialAudioEngine?.setMode(.binaural)
+            audioEngine.spatialAudioEngine?.setReverbBlend(0.3)
 
             // 5. Start control loop
             hub.start()

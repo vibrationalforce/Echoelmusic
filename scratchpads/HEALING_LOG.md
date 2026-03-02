@@ -323,6 +323,47 @@ Video Capture Chain (NEW):
 
 ---
 
+## Session: 2026-03-02 — Complete Binaural Beats Purge + TestFlight Deploy (Phase 3)
+
+**Branch:** `claude/analyze-test-coverage-9aFjV`
+
+### What Was Done
+
+**Phase 3: Complete pseudoscience code elimination**
+
+Deleted files:
+- `Sources/Echoelmusic/Audio/Effects/BinauralBeatGenerator.swift` — main binaural class
+- `Sources/EchoelmusicAUv3/BinauralDSPKernel.swift` — AUv3 DSP kernel
+- `Tests/EchoelmusicTests/BinauralBeatTests.swift` — binaural unit tests
+- `Sources/Echoelmusic/Biophysical/GammaEntrainmentEngine.swift` — gamma entrainment pseudoscience
+- `Tests/EchoelmusicTests/GammaEntrainmentEngineTests.swift` — its tests
+
+Source files cleaned:
+- `EchoelmusicAudioUnit.swift` — replaced BinauralDSPKernel with TR808DSPKernel for echoelBio, renamed parameter addresses
+- `AUv3ViewController.swift` — replaced BinauralAUv3View with BioReactiveAUv3View
+- `XcodeProjectGenerator.swift` — removed BinauralBeatNode reference
+- `APIDocumentation.swift` — removed binaural API docs and example code
+- `ScriptEngine.swift` — removed binauralAmplitude parameter routing
+- `AudioConstants.swift` — renamed binauralAmplitude to backgroundAmplitude
+- `DeviceCapabilities.swift` — renamed .binauralBeats to .headphoneStereo
+- `VisionApp.swift` — renamed .binauralBeat to .spatialTone
+- `ProductionConfiguration.swift` — disabled binaural_beats feature flag
+
+Test files cleaned:
+- `AudioEngineTests.swift` — removed all binaural/brainwave tests
+- `BioReactiveIntegrationTests.swift` — removed binaural initialization/amplitude/brainwave tests
+- `AUv3PluginTests.swift` — removed BinauralBeatGenerator tests
+- `PerformanceBenchmarks.swift` — renamed binaural benchmark to stereo tone generation
+
+### Key Decisions
+- "Binaural" in SpatialAudioEngine (HRTF binaural rendering) is KEPT — that's legitimate audio engineering
+- VisionOS spatial tones at 7.83 Hz (Schumann resonance) are kept as spatial audio, not as "binaural beats"
+- EchoelmusicComplete/ package not modified (separate/legacy package)
+
+**Commit:** `feat: purge all binaural beat pseudoscience code + prepare TestFlight`
+
+---
+
 ## How to Use This File
 
 When starting a new session:
