@@ -196,12 +196,17 @@ public class SpatialAudioEngine: ObservableObject {
     func start() throws {
         guard !isActive else { return }
 
-        // Configure audio session for low-latency spatial audio
-        // .measurement mode provides lowest latency (disables post-processing)
-        // Note: Removed .allowBluetoothA2DP which adds 100-200ms latency
+        // Configure audio session for spatial audio with Bluetooth support.
+        // Use .default mode (NOT .measurement) — .measurement disables Bluetooth
+        // codec negotiation (A2DP/AAC/aptX) causing silent output on BT headphones.
+        // .allowBluetoothA2DP is required for high-quality stereo Bluetooth output.
         #if !os(macOS)
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playback, mode: .measurement, options: [.allowBluetooth])
+        try session.setCategory(
+            .playback,
+            mode: .default,
+            options: [.allowBluetooth, .allowBluetoothA2DP, .mixWithOthers]
+        )
         try session.setPreferredIOBufferDuration(0.005) // 5ms buffer for low latency
         try session.setActive(true)
         #endif

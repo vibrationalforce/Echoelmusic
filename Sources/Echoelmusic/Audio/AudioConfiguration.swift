@@ -82,17 +82,26 @@ enum AudioConfiguration {
         // If that fails (first launch, permission denied), fall back to playback-only
         // so the app can at least start without crashing.
         do {
+            // Use .default mode (NOT .measurement) — .measurement disables audio
+            // post-processing including Bluetooth codec negotiation (A2DP/AAC/aptX),
+            // making Bluetooth headphones silent or disconnecting.
+            // .default mode provides proper Bluetooth support + onboard speaker output.
             try audioSession.setCategory(
                 .playAndRecord,
-                mode: .measurement,
-                options: [.allowBluetooth, .defaultToSpeaker, .mixWithOthers]
+                mode: .default,
+                options: [
+                    .allowBluetooth,
+                    .allowBluetoothA2DP,
+                    .defaultToSpeaker,
+                    .mixWithOthers
+                ]
             )
         } catch {
             log.audio("⚠️ playAndRecord unavailable (mic permission?), falling back to .playback: \(error)", level: .warning)
             try audioSession.setCategory(
                 .playback,
                 mode: .default,
-                options: [.allowBluetooth, .mixWithOthers]
+                options: [.allowBluetooth, .allowBluetoothA2DP, .mixWithOthers]
             )
         }
 
@@ -130,8 +139,13 @@ enum AudioConfiguration {
 
         try audioSession.setCategory(
             .playAndRecord,
-            mode: .measurement,
-            options: [.allowBluetooth, .defaultToSpeaker, .mixWithOthers]
+            mode: .default,
+            options: [
+                .allowBluetooth,
+                .allowBluetoothA2DP,
+                .defaultToSpeaker,
+                .mixWithOthers
+            ]
         )
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         log.audio("Audio session upgraded to .playAndRecord")

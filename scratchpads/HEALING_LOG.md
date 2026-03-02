@@ -211,6 +211,82 @@ EnvironmentLoopProcessor had all 6 PassthroughSubjects publishing correctly at 6
 
 ---
 
+## Session: 2026-03-02 — UI/UX Overhaul + Audio Output Fix + Video Capture
+
+**Directive:** "Overwork the whole UI/UX — everything must be usable, technically working, professional Echoelmusic brand quality"
+
+**Root Cause Analysis:**
+- CRITICAL: AudioConfiguration used `.measurement` mode which disables Bluetooth codec negotiation (A2DP/AAC/aptX) — Bluetooth headphones were completely silent
+- CRITICAL: SpatialAudioEngine also used `.measurement` mode with same Bluetooth-breaking effect
+- CRITICAL: AudioEngine had no AVAudioEngine instance for hardware output — only configured AVAudioSession but never created output graph
+- VIDEO: CameraManager.captureSession was private — VideoEditorView couldn't access it for live preview
+
+**Fixes Applied:**
+
+1. **AudioConfiguration.swift** — Changed `.measurement` → `.default` mode + added `.allowBluetoothA2DP` option
+   - Primary category: `.playAndRecord` with `.default` mode, `.allowBluetooth` + `.allowBluetoothA2DP` + `.defaultToSpeaker`
+   - Fallback category: `.playback` with same Bluetooth options
+   - `upgradeToPlayAndRecord()` also updated to `.default` mode
+
+2. **SpatialAudioEngine.swift** — Changed `.measurement` → `.default` mode + added `.allowBluetoothA2DP`
+   - `start()`: `.playback` with `.default` mode, `.allowBluetooth` + `.allowBluetoothA2DP` + `.mixWithOthers`
+
+3. **AudioEngine.swift** — Added master AVAudioEngine for hardware output
+   - New: `masterEngine` (AVAudioEngine), `masterMixer` (AVAudioMixerNode), `masterPlayerNode` (AVAudioPlayerNode)
+   - New: `setupMasterEngine()` — builds graph: playerNode → masterMixer → mainMixerNode → outputNode → hardware
+   - New: `masterVolume` published property
+   - New: `schedulePlayback(buffer:)` — primary method for audio → speakers/headphones
+   - New: `scheduleLoopPlayback(buffer:loopCount:)` — looped playback
+   - New: `processAndOutput(inputBuffers:frameCount:)` — ProMixEngine → hardware
+   - New: `currentOutputDescription` — human-readable output route (e.g. "AirPods Pro (bluetoothA2DPOutput)")
+   - `start()` now starts masterEngine first, with retry on failure
+   - `stop()` now pauses masterEngine + stops playerNode
+   - Interruption handlers now pause/restart masterEngine
+
+4. **VideoEditorView.swift** — Wired CameraManager for live camera capture
+   - Added `@StateObject cameraManager = CameraManager()`
+   - Added camera capture toggle button in toolbar (iOS only)
+   - Preview section now shows live camera feed via CameraPreviewLayer
+   - Added "Open Camera" button in empty state
+   - Created `CameraPreviewLayer` (UIViewRepresentable) wrapping AVCaptureVideoPreviewLayer
+   - Added LIVE indicator overlay when camera is active
+
+5. **CameraManager.swift** — Exposed `captureSession` as public for preview layer access
+
+**Key Discoveries:**
+- `.measurement` mode was the #1 blocker for ALL audio output (Bluetooth + onboard)
+- AudioEngine was a "professional signal processor without a speaker driver" — had DSP, effects, spatial, mixing, but no actual output path
+- All 13 workspace views already exist and are functional (700-1800 lines each)
+- Brand design system (EchoelBrand) is comprehensive and professional
+- CommandPaletteView + QuickActionsMenu already existed inside MainNavigationHub.swift
+
+**Architecture After Fix:**
+```
+Audio Output Chain (NEW):
+  AudioEngine.masterPlayerNode → masterMixer → mainMixerNode → outputNode → hardware
+
+  Hardware Output Types Now Supported:
+  ✅ Bluetooth headphones (A2DP/AAC/aptX via .default mode)
+  ✅ Bluetooth speakers
+  ✅ Onboard speaker (.defaultToSpeaker)
+  ✅ Wired headphones (3.5mm/Lightning/USB-C)
+  ✅ AirPlay receivers
+
+Video Capture Chain (NEW):
+  CameraManager.captureSession → AVCaptureVideoPreviewLayer → CameraPreviewLayer → VideoEditorView
+```
+
+**Files Modified:**
+- `Sources/Echoelmusic/Audio/AudioConfiguration.swift` — Bluetooth fix
+- `Sources/Echoelmusic/Audio/AudioEngine.swift` — Master AVAudioEngine + output methods
+- `Sources/Echoelmusic/Spatial/SpatialAudioEngine.swift` — Bluetooth fix
+- `Sources/Echoelmusic/Views/VideoEditorView.swift` — Camera capture integration
+- `Sources/Echoelmusic/Video/CameraManager.swift` — Public captureSession
+
+**Commit:** `feat: wire audio output + Bluetooth fix + video capture`
+
+---
+
 ## How to Use This File
 
 When starting a new session:

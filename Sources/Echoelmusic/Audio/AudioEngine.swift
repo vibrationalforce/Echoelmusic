@@ -36,6 +36,24 @@ public class AudioEngine: ObservableObject {
     @Published var binauralAmplitude: Float = 0.3
 
 
+    // MARK: - Master Audio Engine (Hardware Output)
+
+    /// The master AVAudioEngine that connects the entire audio graph to hardware output.
+    /// This is the ONLY path to speakers/headphones (Bluetooth, wired, onboard).
+    /// Graph: playerNode/generators → masterMixer → mainMixerNode → outputNode → hardware
+    private let masterEngine = AVAudioEngine()
+
+    /// Master mixer node for summing all audio sources before output
+    private let masterMixer = AVAudioMixerNode()
+
+    /// Player node for playing back audio buffers (from ProMixEngine, clips, etc.)
+    private let masterPlayerNode = AVAudioPlayerNode()
+
+    /// Master output volume (0.0 - 1.0)
+    @Published var masterVolume: Float = 0.85 {
+        didSet { masterMixer.outputVolume = masterVolume }
+    }
+
     // MARK: - Audio Components
 
     /// Microphone manager for voice/breath input
@@ -125,20 +143,59 @@ public class AudioEngine: ObservableObject {
         // Initialize node graph with default production chain (EQ → Compressor → Reverb)
         nodeGraph = NodeGraph.createProductionChain()
 
+        // Setup master audio engine graph:
+        // masterPlayerNode + masterMixer → mainMixerNode → outputNode → hardware
+        setupMasterEngine()
+
         // Wire audio interruption callbacks so engine resumes automatically
         AudioConfiguration.onInterruptionBegan = { [weak self] in
+            self?.masterEngine.pause()
             self?.isRunning = false
             log.audio("Audio interrupted — pausing engine")
         }
         AudioConfiguration.onInterruptionResume = { [weak self] in
             log.audio("Audio interruption ended — resuming engine")
-            self?.isRunning = true
+            do {
+                try self?.masterEngine.start()
+                self?.isRunning = true
+            } catch {
+                log.audio("Failed to resume master engine: \(error)", level: .error)
+            }
         }
 
-        log.audio("AudioEngine initialized")
+        log.audio("AudioEngine initialized — master output wired to hardware")
         log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "Yes" : "No")")
         log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "Yes" : "No")")
         log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
+        log.audio("   Master Engine: \(masterEngine.isRunning ? "Running" : "Ready")")
+    }
+
+    /// Setup the master AVAudioEngine graph that routes all audio to hardware output.
+    /// This is critical — without this, no audio reaches speakers or headphones.
+    private func setupMasterEngine() {
+        // Attach nodes to engine
+        masterEngine.attach(masterMixer)
+        masterEngine.attach(masterPlayerNode)
+
+        // Connect: playerNode → masterMixer → mainMixerNode (→ outputNode is automatic)
+        let outputFormat = masterEngine.outputNode.outputFormat(forBus: 0)
+        let processingFormat = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: outputFormat.sampleRate,
+            channels: min(outputFormat.channelCount, 2),
+            interleaved: false
+        ) ?? outputFormat
+
+        masterEngine.connect(masterPlayerNode, to: masterMixer, format: processingFormat)
+        masterEngine.connect(masterMixer, to: masterEngine.mainMixerNode, format: processingFormat)
+
+        // Set initial volume
+        masterMixer.outputVolume = masterVolume
+        masterEngine.mainMixerNode.outputVolume = 1.0
+
+        // Prepare engine (pre-allocates buffers)
+        masterEngine.prepare()
+        log.audio("Master AVAudioEngine graph: playerNode → masterMixer → mainMixer → outputNode → hardware")
     }
 
 
@@ -146,10 +203,28 @@ public class AudioEngine: ObservableObject {
 
     /// Start the audio engine for production playback
     ///
-    /// Starts the effects chain and any enabled sub-engines.
-    /// Microphone input is only started when input monitoring is enabled.
-    /// Binaural beats are only started when explicitly enabled by the user.
+    /// Starts the master AVAudioEngine for hardware output, then activates
+    /// sub-engines (spatial, binaural, effects). Microphone input is only
+    /// started when input monitoring is enabled.
     func start() {
+        // Start master audio engine — this is required for ANY audio output
+        if !masterEngine.isRunning {
+            do {
+                try masterEngine.start()
+                log.audio("Master AVAudioEngine started — audio output active")
+            } catch {
+                log.audio("CRITICAL: Failed to start master engine: \(error)", level: .error)
+                // Try reconfiguring audio session and retry once
+                do {
+                    try AudioConfiguration.configureAudioSession()
+                    try masterEngine.start()
+                    log.audio("Master AVAudioEngine started after session reconfiguration")
+                } catch {
+                    log.audio("CRITICAL: Master engine start failed after retry: \(error)", level: .error)
+                }
+            }
+        }
+
         // Start microphone only if input monitoring is needed
         if inputMonitoringEnabled {
             microphoneManager.startRecording()
@@ -177,7 +252,18 @@ public class AudioEngine: ObservableObject {
         }
 
         isRunning = true
-        log.audio("AudioEngine started (production mode)")
+        log.audio("AudioEngine started (production mode) — output: \(currentOutputDescription)")
+    }
+
+    /// Human-readable description of the current audio output route
+    private var currentOutputDescription: String {
+        #if os(macOS)
+        return "macOS HAL"
+        #else
+        let route = AVAudioSession.sharedInstance().currentRoute
+        let outputs = route.outputs.map { "\($0.portName) (\($0.portType.rawValue))" }
+        return outputs.isEmpty ? "No output" : outputs.joined(separator: ", ")
+        #endif
     }
 
     /// Stop the audio engine
@@ -194,6 +280,12 @@ public class AudioEngine: ObservableObject {
         // Stop bio-parameter mapping
         stopBioParameterMapping()
 
+        // Stop master player node
+        masterPlayerNode.stop()
+
+        // Pause master engine (keeps graph intact for quick restart)
+        masterEngine.pause()
+
         // Deactivate audio session to power down audio hardware.
         // notifyOthersOnDeactivation lets other apps resume playback.
         #if canImport(AVFoundation) && !os(macOS)
@@ -201,7 +293,7 @@ public class AudioEngine: ObservableObject {
         #endif
 
         isRunning = false
-        log.audio("🎵 AudioEngine stopped — audio session deactivated")
+        log.audio("AudioEngine stopped — master engine paused, audio session deactivated")
     }
 
     /// Toggle Multidimensional Brainwave Entrainment on/off
@@ -613,6 +705,51 @@ public class AudioEngine: ObservableObject {
         self.proMixEngine = mixer
         mixer.dspKernel.prepare()
         log.audio("ProMixEngine connected to AudioEngine (\(mixer.channels.count) channels)")
+    }
+
+    // MARK: - Master Output Playback
+
+    /// Schedule an audio buffer for immediate playback through hardware output.
+    /// This is the primary method for getting audio to speakers/headphones.
+    ///
+    /// - Parameter buffer: PCM audio buffer to play
+    func schedulePlayback(buffer: AVAudioPCMBuffer) {
+        guard masterEngine.isRunning else {
+            log.audio("Cannot schedule playback — master engine not running", level: .warning)
+            return
+        }
+        masterPlayerNode.scheduleBuffer(buffer, completionHandler: nil)
+        if !masterPlayerNode.isPlaying {
+            masterPlayerNode.play()
+        }
+    }
+
+    /// Schedule an audio buffer for looped playback through hardware output.
+    ///
+    /// - Parameters:
+    ///   - buffer: PCM audio buffer to loop
+    ///   - loopCount: Number of times to loop (0 = infinite)
+    func scheduleLoopPlayback(buffer: AVAudioPCMBuffer, loopCount: AVAudioPlayerNodeBufferOptions = .loops) {
+        guard masterEngine.isRunning else {
+            log.audio("Cannot schedule loop playback — master engine not running", level: .warning)
+            return
+        }
+        masterPlayerNode.scheduleBuffer(buffer, at: nil, options: loopCount, completionHandler: nil)
+        if !masterPlayerNode.isPlaying {
+            masterPlayerNode.play()
+        }
+    }
+
+    /// Process audio through ProMixEngine and output to hardware.
+    /// Full chain: inputBuffers → ProMixEngine DSP → masterPlayerNode → speakers/headphones
+    ///
+    /// - Parameters:
+    ///   - inputBuffers: Map of channelID → audio buffer
+    ///   - frameCount: Number of frames to process
+    func processAndOutput(inputBuffers: [UUID: AVAudioPCMBuffer], frameCount: Int) {
+        guard let mixer = proMixEngine else { return }
+        guard let outputBuffer = mixer.processAudioBlock(inputBuffers: inputBuffers, frameCount: frameCount) else { return }
+        schedulePlayback(buffer: outputBuffer)
     }
 
     /// Routes an audio buffer through a specific ProMixEngine channel.

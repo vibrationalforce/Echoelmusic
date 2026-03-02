@@ -1,18 +1,21 @@
 import SwiftUI
+import AVFoundation
 
 // MARK: - Video Editor View
-// Homogeneous GUI with VaporwaveTheme - "Flüssiges Licht"
+// Professional Video Editor with Camera Capture + Bio-Reactive Effects
 
 /// Professional video editing interface with bio-reactive features
 @MainActor
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
+    @StateObject private var cameraManager = CameraManager()
     @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showEffectsPanel = false
     @State private var showExportSheet = false
     @State private var showBPMGrid = true
+    @State private var showCameraCapture = false
     @State private var currentTime: TimeInterval = 0
     @State private var isPlaying = false
 
@@ -107,6 +110,21 @@ struct VideoEditorView: View {
                     }
                 }
 
+                #if os(iOS)
+                toolbarButton(icon: "camera.fill", label: "Capture", isActive: showCameraCapture) {
+                    withAnimation(VaporwaveAnimation.smooth) {
+                        showCameraCapture.toggle()
+                        if showCameraCapture {
+                            Task {
+                            try? await cameraManager.startCapture()
+                        }
+                        } else {
+                            cameraManager.stopCapture()
+                        }
+                    }
+                }
+                #endif
+
                 toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
                     showExportSheet = true
                 }
@@ -154,7 +172,27 @@ struct VideoEditorView: View {
                     .fill(VaporwaveColors.deepBlack)
 
                 // Preview content
-                if engine.currentProject != nil {
+                if showCameraCapture && cameraManager.isCapturing {
+                    // Live camera preview
+                    #if os(iOS)
+                    CameraPreviewLayer(cameraManager: cameraManager)
+                    #endif
+
+                    // Live indicator
+                    VStack {
+                        HStack {
+                            Circle()
+                                .fill(EchoelBrand.coherenceHigh)
+                                .frame(width: 8, height: 8)
+                            Text("LIVE")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .foregroundColor(EchoelBrand.coherenceHigh)
+                            Spacer()
+                        }
+                        .padding(VaporwaveSpacing.sm)
+                        Spacer()
+                    }
+                } else if engine.currentProject != nil {
                     // Video preview would render here
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 60))
@@ -163,12 +201,35 @@ struct VideoEditorView: View {
                     VStack(spacing: VaporwaveSpacing.md) {
                         Image(systemName: "film")
                             .font(.system(size: 48))
-                            .foregroundColor(VaporwaveColors.neonCyan)
-                            .modifier(NeonGlow(color: VaporwaveColors.neonCyan, radius: 10))
+                            .foregroundColor(EchoelBrand.primary)
+                            .modifier(EchoelGlow(color: EchoelBrand.primary, radius: 10))
 
-                        Text("Import Video")
-                            .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                        Text("Import or Capture Video")
+                            .font(EchoelBrandFont.body())
+                            .foregroundColor(EchoelBrand.textSecondary)
+
+                        #if os(iOS)
+                        Button {
+                            showCameraCapture = true
+                            Task {
+                            try? await cameraManager.startCapture()
+                        }
+                        } label: {
+                            HStack(spacing: EchoelSpacing.sm) {
+                                Image(systemName: "camera.fill")
+                                Text("Open Camera")
+                            }
+                            .font(EchoelBrandFont.body().weight(.medium))
+                            .foregroundColor(EchoelBrand.bgDeep)
+                            .padding(.horizontal, EchoelSpacing.lg)
+                            .padding(.vertical, EchoelSpacing.md)
+                            .background(
+                                Capsule()
+                                    .fill(EchoelBrand.primary)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        #endif
                     }
                 }
 
@@ -772,6 +833,42 @@ struct VideoExportSheet: View {
         .padding(VaporwaveSpacing.sm)
     }
 }
+
+// MARK: - Camera Preview Layer (UIViewRepresentable)
+
+#if os(iOS)
+/// SwiftUI wrapper for AVCaptureVideoPreviewLayer — shows live camera feed.
+/// Connects to CameraManager's AVCaptureSession for real-time preview.
+struct CameraPreviewLayer: UIViewRepresentable {
+    let cameraManager: CameraManager
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: .zero)
+        view.backgroundColor = .black
+
+        let previewLayer = AVCaptureVideoPreviewLayer(session: cameraManager.captureSession)
+        previewLayer.videoGravity = .resizeAspectFill
+        previewLayer.frame = view.bounds
+        view.layer.addSublayer(previewLayer)
+
+        // Store for layout updates
+        context.coordinator.previewLayer = previewLayer
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.previewLayer?.frame = uiView.bounds
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    class Coordinator {
+        var previewLayer: AVCaptureVideoPreviewLayer?
+    }
+}
+#endif
 
 // MARK: - Preview
 
