@@ -421,12 +421,20 @@ final class EchoelCreativeWorkspace: ObservableObject {
         videoEditor.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
     }
 
-    /// Play/pause toggle — syncs all engines
+    /// Play/pause toggle — syncs ALL engines (audio, video, session, loops)
     func togglePlayback() {
         if isPlaying {
+            // Stop all engines
             videoEditor.pause()
+            proSession.stop()
+            loopEngine.stopPlayback()
         } else {
+            // Start all engines
             Task { await videoEditor.play() }
+            proSession.play()
+            if !loopEngine.loops.isEmpty {
+                loopEngine.startPlayback()
+            }
         }
         isPlaying.toggle()
     }

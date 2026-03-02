@@ -285,6 +285,42 @@ Video Capture Chain (NEW):
 
 **Commit:** `feat: wire audio output + Bluetooth fix + video capture`
 
+### Phase 2: Binaural Beats Removal + Production Workflow
+
+**Directive:** "Binaural Beats raus — unwissenschaftliches Eso-Zeug"
+
+**Changes:**
+
+1. **AudioEngine.swift** — Removed ALL binaural beat code:
+   - Removed `binauralGenerator`, `binauralBeatsEnabled`, `binauralAmplitude`, `currentBrainwaveState`
+   - Removed `toggleBinauralBeats()`, `setBrainwaveState()`, `setBinauralAmplitude()`, `setBinauralCarrierFrequency()`
+   - Removed binaural beat adaptation from `adaptToBiofeedback()` and `applyBioParameters()`
+   - Removed binaural preset application from `applyPreset()`
+   - Updated doc comments to remove binaural references
+
+2. **EchoelmusicApp.swift** — Removed binaural carrier frequency Lambda wiring, replaced with spatial audio parameter
+
+3. **DAWArrangementView.swift** — Wired Play button to real audio playback:
+   - Play button now calls `workspace.togglePlayback()` which syncs ALL engines
+   - Added BPM-synced playback timer for playhead advancement
+   - Playhead wraps at project length
+
+4. **EchoelCreativeWorkspace.swift** — `togglePlayback()` now starts/stops ALL engines:
+   - ProSessionEngine: `play()` / `stop()`
+   - LoopEngine: `startPlayback()` / `stopPlayback()`
+   - VideoEditingEngine: `play()` / `pause()`
+
+5. **RecordingEngine.swift** — Real audio playback:
+   - `startPlayback()` now loads recorded tracks, reads audio files, applies volume, schedules through AudioEngine.schedulePlayback()
+   - Supports multi-track playback with per-track volume and mute
+
+6. **EchoelmusicBrand.swift** — Cleaned up disclaimers:
+   - Removed "Audio Entrainment" and "biofeedback/entrainment" language
+   - Repositioned as "professional production tool" not "relaxation/wellness"
+   - Brainwave colors renamed to "Frequency Band Colors" for spectrum visualization
+
+**Commit:** `feat: remove binaural beats + wire DAW/recording playback`
+
 ---
 
 ## How to Use This File

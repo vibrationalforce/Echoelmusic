@@ -162,10 +162,13 @@ class RecordingEngine: ObservableObject {
 
     // MARK: - Audio Engine Connection
 
-    /// Connect to main audio engine for audio routing
+    /// Player node for playback through master engine
+    private var playbackPlayerNode: AVAudioPlayerNode?
+
+    /// Connect to main audio engine for audio routing and playback monitoring
     func connectAudioEngine(_ audioEngine: AudioEngine) {
         self.mainAudioEngine = audioEngine
-        log.recording("🔌 Connected to main audio engine")
+        log.recording("Connected to main audio engine — playback + monitoring enabled")
     }
 
 
@@ -365,7 +368,7 @@ class RecordingEngine: ObservableObject {
 
     // MARK: - Playback Control
 
-    /// Start playback of current session
+    /// Start playback of current session — plays recorded tracks through master engine
     func startPlayback() throws {
         guard !isPlaying else {
             throw RecordingError.alreadyPlaying
@@ -375,10 +378,46 @@ class RecordingEngine: ObservableObject {
             throw RecordingError.noActiveSession
         }
 
+        // Find recorded tracks with audio files
+        let playableTracks = session.tracks.filter { track in
+            guard !track.isMuted, let url = track.url else { return false }
+            return FileManager.default.fileExists(atPath: url.path)
+        }
+
+        // Schedule each track for playback through the master engine
+        if let audioEngine = mainAudioEngine, !playableTracks.isEmpty {
+            for track in playableTracks {
+                guard let url = track.url else { continue }
+                do {
+                    let audioFile = try AVAudioFile(forReading: url)
+                    guard let buffer = AVAudioPCMBuffer(
+                        pcmFormat: audioFile.processingFormat,
+                        frameCapacity: AVAudioFrameCount(audioFile.length)
+                    ) else { continue }
+                    try audioFile.read(into: buffer)
+
+                    // Apply track volume
+                    let channelCount = Int(buffer.format.channelCount)
+                    for ch in 0..<channelCount {
+                        guard let channelData = buffer.floatChannelData?[ch] else { continue }
+                        let frameCount = Int(buffer.frameLength)
+                        for i in 0..<frameCount {
+                            channelData[i] *= track.volume
+                        }
+                    }
+
+                    audioEngine.schedulePlayback(buffer: buffer)
+                    log.recording("Scheduled track '\(track.name)' for playback (\(buffer.frameLength) frames)")
+                } catch {
+                    log.recording("Failed to load track '\(track.name)': \(error)", level: .warning)
+                }
+            }
+        }
+
         isPlaying = true
         startTimer()
 
-        log.recording("▶️ Started playback: \(session.name)")
+        log.recording("Started playback: \(session.name) (\(playableTracks.count) tracks)")
     }
 
     /// Stop playback
@@ -387,7 +426,7 @@ class RecordingEngine: ObservableObject {
         stopTimer()
         currentTime = 0.0
 
-        log.recording("⏹️ Stopped playback")
+        log.recording("Stopped playback")
     }
 
     /// Pause playback
@@ -395,7 +434,7 @@ class RecordingEngine: ObservableObject {
         isPlaying = false
         stopTimer()
 
-        log.recording("⏸️ Paused playback at \(currentTime)s")
+        log.recording("Paused playback at \(currentTime)s")
     }
 
     /// Seek to position

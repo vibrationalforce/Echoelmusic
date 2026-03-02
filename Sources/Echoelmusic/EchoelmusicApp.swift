@@ -349,7 +349,7 @@ struct EchoelmusicApp: App {
         unifiedControlHub.enableLambdaMode()
 
         // Professional production mode: audio engine starts on-demand when
-        // user hits Play in the transport bar — no auto-start, no binaural beats.
+        // user hits Play in the transport bar — no auto-start.
         // Audio session is configured and ready; playback begins via togglePlayback().
         log.info("Audio engine ready — awaiting transport Play command", category: .audio)
 
@@ -384,10 +384,12 @@ struct EchoelmusicApp: App {
             }
             .store(in: systemCancellables)
 
+        // Lambda frequency output → spatial audio frequency modulation
         envLoop.frequencyOutput
             .receive(on: DispatchQueue.main)
             .sink { [weak audioEngine] freq in
-                audioEngine?.setBinauralCarrierFrequency(freq)
+                // Map environment frequency to spatial audio parameters
+                audioEngine?.spatialAudioEngine?.setPan(Float(freq / 1000.0) * 2.0 - 1.0)
             }
             .store(in: systemCancellables)
 

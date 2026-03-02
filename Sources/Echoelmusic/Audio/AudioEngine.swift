@@ -5,11 +5,12 @@ import Combine
 /// Central audio engine for professional music production
 ///
 /// Coordinates:
+/// - Master AVAudioEngine with hardware output (Bluetooth, speakers, headphones)
 /// - Audio playback and transport control
-/// - Real-time mixing and effects (NodeGraph)
-/// - Spatial audio with head tracking
+/// - Real-time mixing and effects (NodeGraph + ProMixEngine)
+/// - Spatial audio with head tracking (HRTF, Ambisonics)
 /// - Microphone input (for recording/monitoring)
-/// - Optional bio-parameter mapping (HRV → Audio)
+/// - Bio-parameter mapping (HRV → spatial/effects parameters)
 ///
 /// This class acts as the central hub for all audio processing in Echoelmusic
 @MainActor
@@ -20,20 +21,11 @@ public class AudioEngine: ObservableObject {
     /// Whether the audio engine is currently running
     @Published var isRunning: Bool = false
 
-    /// Whether Multidimensional Brainwave Entrainment are enabled
-    @Published var binauralBeatsEnabled: Bool = false
-
     /// Whether spatial audio is enabled
     @Published var spatialAudioEnabled: Bool = false
 
     /// Whether input monitoring is enabled (mic recording on play)
     @Published var inputMonitoringEnabled: Bool = false
-
-    /// Current binaural beat state
-    @Published var currentBrainwaveState: BinauralBeatGenerator.BrainwaveState = .alpha
-
-    /// Multidimensional Brainwave Entrainment amplitude (0.0 - 1.0)
-    @Published var binauralAmplitude: Float = 0.3
 
 
     // MARK: - Master Audio Engine (Hardware Output)
@@ -58,10 +50,6 @@ public class AudioEngine: ObservableObject {
 
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
-
-    /// Multidimensional Brainwave Entrainment generator for brainwave entrainment frequencies
-    /// HINWEIS: Subjektive Entspannung, keine medizinischen Heilungseffekte belegt
-    private let binauralGenerator = BinauralBeatGenerator()
 
     /// Spatial audio engine for 3D audio
     var spatialAudioEngine: SpatialAudioEngine?
@@ -114,13 +102,6 @@ public class AudioEngine: ObservableObject {
 
         // Set real-time audio thread priority
         AudioConfiguration.setAudioThreadPriority()
-
-        // Configure default binaural beat settings
-        binauralGenerator.configure(
-            carrier: 440.0,  // A4 standard tuning (ISO 16)
-            beat: 10.0,      // Alpha waves (relaxation)
-            amplitude: 0.3
-        )
 
         // Initialize device capabilities
         deviceCapabilities = DeviceCapabilities()
@@ -204,7 +185,7 @@ public class AudioEngine: ObservableObject {
     /// Start the audio engine for production playback
     ///
     /// Starts the master AVAudioEngine for hardware output, then activates
-    /// sub-engines (spatial, binaural, effects). Microphone input is only
+    /// sub-engines (spatial, effects). Microphone input is only
     /// started when input monitoring is enabled.
     func start() {
         // Start master audio engine — this is required for ANY audio output
@@ -228,11 +209,6 @@ public class AudioEngine: ObservableObject {
         // Start microphone only if input monitoring is needed
         if inputMonitoringEnabled {
             microphoneManager.startRecording()
-        }
-
-        // Start binaural beats only if explicitly enabled by the user
-        if binauralBeatsEnabled {
-            binauralGenerator.start()
         }
 
         // Start spatial audio if enabled
@@ -271,9 +247,6 @@ public class AudioEngine: ObservableObject {
         // Stop microphone
         microphoneManager.stopRecording()
 
-        // Stop Multidimensional Brainwave Entrainment
-        binauralGenerator.stop()
-
         // Stop spatial audio
         spatialAudioEngine?.stop()
 
@@ -294,65 +267,6 @@ public class AudioEngine: ObservableObject {
 
         isRunning = false
         log.audio("AudioEngine stopped — master engine paused, audio session deactivated")
-    }
-
-    /// Toggle Multidimensional Brainwave Entrainment on/off
-    func toggleBinauralBeats() {
-        binauralBeatsEnabled.toggle()
-
-        if binauralBeatsEnabled {
-            binauralGenerator.start()
-            log.audio("🔊 Multidimensional Brainwave Entrainment enabled")
-        } else {
-            binauralGenerator.stop()
-            log.audio("🔇 Multidimensional Brainwave Entrainment disabled")
-        }
-    }
-
-    /// Set brainwave state for Multidimensional Brainwave Entrainment
-    /// - Parameter state: Target brainwave state (delta, theta, alpha, beta, gamma)
-    func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState) {
-        currentBrainwaveState = state
-        binauralGenerator.configure(state: state)
-
-        // Restart if currently playing
-        if binauralBeatsEnabled {
-            binauralGenerator.stop()
-            binauralGenerator.start()
-        }
-    }
-
-    /// Set binaural beat amplitude
-    /// - Parameter amplitude: Volume (0.0 - 1.0)
-    func setBinauralAmplitude(_ amplitude: Float) {
-        binauralAmplitude = amplitude
-        binauralGenerator.configure(
-            carrier: 440.0,
-            beat: currentBrainwaveState.beatFrequency,
-            amplitude: amplitude
-        )
-
-        // Restart if currently playing
-        if binauralBeatsEnabled {
-            binauralGenerator.stop()
-            binauralGenerator.start()
-        }
-    }
-
-    /// Set binaural carrier frequency from Lambda environment data
-    /// - Parameter frequency: Carrier frequency in Hz (e.g. 440.0 for A4)
-    func setBinauralCarrierFrequency(_ frequency: Double) {
-        let carrier = Float(max(100, min(1000, frequency)))
-        binauralGenerator.configure(
-            carrier: carrier,
-            beat: currentBrainwaveState.beatFrequency,
-            amplitude: binauralAmplitude
-        )
-
-        if binauralBeatsEnabled {
-            binauralGenerator.stop()
-            binauralGenerator.start()
-        }
     }
 
     /// Toggle spatial audio on/off
@@ -396,24 +310,14 @@ public class AudioEngine: ObservableObject {
 
     // MARK: - Private Methods
 
-    /// Adapt binaural beat frequency based on HRV coherence
+    /// Adapt audio parameters based on HRV coherence
     /// - Parameter coherence: HRV coherence score (0-100)
     private func adaptToBiofeedback(coherence: Double) {
-        guard binauralBeatsEnabled else { return }
-
-        // Use HRV to modulate binaural beat frequency
-        binauralGenerator.setBeatFrequencyFromHRV(coherence: coherence)
-
-        // Optional: Adjust amplitude based on coherence
-        // Higher coherence = can handle higher amplitude
-        let adaptiveAmplitude = Float(0.2 + (coherence / 100.0) * 0.3)  // 0.2-0.5 range
-        binauralAmplitude = adaptiveAmplitude
-
-        binauralGenerator.configure(
-            carrier: 440.0,
-            beat: binauralGenerator.beatFrequency,
-            amplitude: adaptiveAmplitude
-        )
+        // Coherence drives spatial audio and effects parameters
+        if let spatial = spatialAudioEngine, spatialAudioEnabled {
+            let reverbBlend = Float(0.1 + (coherence / 100.0) * 0.4)
+            spatial.setReverbBlend(reverbBlend)
+        }
     }
 
 
@@ -482,15 +386,6 @@ public class AudioEngine: ObservableObject {
             spatial.setPan(Float(pos.x))
         }
 
-        // Apply frequency/amplitude to binaural generator
-        if binauralBeatsEnabled {
-            binauralGenerator.configure(
-                carrier: bioParameterMapper.baseFrequency,
-                beat: currentBrainwaveState.beatFrequency,
-                amplitude: bioParameterMapper.amplitude
-            )
-        }
-
         // Propagate bio signals to all audio processing nodes (FilterNode, ReverbNode, etc.)
         if let graph = nodeGraph, let healthKit = healthKitEngine {
             let signal = BioSignal(
@@ -516,12 +411,6 @@ public class AudioEngine: ObservableObject {
         }
 
         var description = "Microphone: Active"
-
-        if binauralBeatsEnabled {
-            description += "\nMultidimensional Brainwave Entrainment: \(currentBrainwaveState.rawValue.capitalized) (\(currentBrainwaveState.beatFrequency) Hz)"
-        } else {
-            description += "\nMultidimensional Brainwave Entrainment: Off"
-        }
 
         if spatialAudioEnabled {
             description += "\nSpatial Audio: Active"
@@ -663,21 +552,6 @@ public class AudioEngine: ObservableObject {
 
     /// Apply audio settings from a preset
     private func applyPreset(_ preset: QuantumPreset) {
-        // Apply binaural beat frequency if specified
-        if let binauralFrequency = preset.binauralFrequency {
-            binauralGenerator.configure(
-                carrier: 440.0,
-                beat: binauralFrequency,
-                amplitude: binauralAmplitude
-            )
-
-            // Auto-enable binaural beats when preset specifies a frequency
-            if !binauralBeatsEnabled {
-                binauralBeatsEnabled = true
-                binauralGenerator.start()
-            }
-        }
-
         // Apply reverb wetness
         setReverbWetness(preset.reverbWetness)
 

@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - DAW Arrangement View
 // Homogeneous GUI with VaporwaveTheme - "Flüssiges Licht"
 
-/// Professional DAW arrangement interface with bio-reactive features
+/// Professional DAW arrangement interface with real audio engine integration
 struct DAWArrangementView: View {
     @StateObject private var engine = ArrangementDAWProductionEngine()
     @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
@@ -13,6 +13,7 @@ struct DAWArrangementView: View {
     @State private var showInstrumentBrowser = false
     @State private var currentBeat: Double = 0
     @State private var showTrackList = true
+    @State private var playbackTimer: Timer?
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -347,9 +348,9 @@ struct DAWArrangementView: View {
                     currentBeat = max(0, currentBeat - 4)
                 }
 
-                // Play button
+                // Play button — triggers real audio playback
                 Button {
-                    workspace.isPlaying.toggle()
+                    togglePlayback()
                 } label: {
                     ZStack {
                         Circle()
@@ -542,6 +543,34 @@ struct DAWArrangementView: View {
         let bar = Int(beat / 4) + 1
         let beatInBar = Int(beat.truncatingRemainder(dividingBy: 4)) + 1
         return "\(bar).\(beatInBar)"
+    }
+
+    // MARK: - Real Audio Playback Integration
+
+    /// Toggle playback — starts/stops the real audio engine and clip scheduler
+    private func togglePlayback() {
+        workspace.togglePlayback()
+
+        if workspace.isPlaying {
+            // Start playback timer to advance playhead in sync with BPM
+            let beatsPerSecond = bpm / 60.0
+            playbackTimer?.invalidate()
+            playbackTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { _ in
+                Task { @MainActor in
+                    self.currentBeat += beatsPerSecond / 30.0
+                    // Wrap around at project length
+                    if self.currentBeat >= Double(self.engine.projectLength) * 4 {
+                        self.currentBeat = 0
+                    }
+                }
+            }
+            log.info("DAW playback started at \(String(format: "%.1f", bpm)) BPM", category: .audio)
+        } else {
+            // Stop playback timer
+            playbackTimer?.invalidate()
+            playbackTimer = nil
+            log.info("DAW playback stopped at beat \(String(format: "%.1f", currentBeat))", category: .audio)
+        }
     }
 }
 

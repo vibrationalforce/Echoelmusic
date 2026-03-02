@@ -145,22 +145,21 @@ public struct EchoelBrand {
     /// Active/focused border
     public static let borderActive = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.3)
 
-    // MARK: - Brainwave Colors (Evidence-Based Associations)
-    // These colors are for UI differentiation, NOT claimed therapeutic effects
+    // MARK: - Frequency Band Colors (for audio spectrum visualization)
 
-    /// Delta (0.5-4 Hz) - Deep violet (sleep association)
+    /// Low frequency band - Deep violet
     public static let brainwaveDelta = Color(red: 0.545, green: 0.361, blue: 0.965)  // #8B5CF6
 
-    /// Theta (4-8 Hz) - Sky blue (meditation association)
+    /// Low-mid frequency band - Sky blue
     public static let brainwaveTheta = Color(red: 0.220, green: 0.741, blue: 0.973)  // #38BDF8
 
-    /// Alpha (8-12 Hz) - Emerald (relaxation association)
+    /// Mid frequency band - Emerald
     public static let brainwaveAlpha = Color(red: 0.204, green: 0.827, blue: 0.600)  // #34D399
 
-    /// Beta (12-30 Hz) - Amber (alertness association)
+    /// High-mid frequency band - Amber
     public static let brainwaveBeta = Color(red: 0.984, green: 0.749, blue: 0.141)  // #FBBF24
 
-    /// Gamma (30-100 Hz) - Rose (cognition association)
+    /// High frequency band - Rose
     public static let brainwaveGamma = Color(red: 0.957, green: 0.447, blue: 0.714)  // #F472B6
 }
 
@@ -443,49 +442,41 @@ public extension View {
     }
 }
 
-// MARK: - Evidence-Based Disclaimer
+// MARK: - Health & Safety Disclaimers
 
-/// Disclaimer text for wellness features
-/// CRITICAL: Must be displayed for all biofeedback/entrainment features
+/// Disclaimer text for biofeedback features
 public struct EchoelDisclaimer {
 
     /// Short disclaimer for UI
     public static let short = """
-    For relaxation and creative purposes only. Not a medical device.
+    Professional creative production tool. Not a medical device.
     """
 
     /// Medium disclaimer for settings
     public static let medium = """
-    Echoelmusic is designed for relaxation, creativity, and wellness exploration. \
-    It is not a medical device and does not diagnose, treat, or cure any condition. \
-    Individual results vary. Consult a healthcare provider for medical concerns.
+    Echoelmusic is a professional audio-visual production platform. \
+    Biofeedback features (HRV, heart rate) are for creative parameter \
+    mapping only. Not a medical device. Consult a healthcare provider \
+    for medical concerns.
     """
 
     /// Full disclaimer for legal
     public static let full = """
-    IMPORTANT HEALTH INFORMATION
+    IMPORTANT INFORMATION
 
-    Echoelmusic is a professional audio-visual production tool designed for creative \
-    expression, relaxation, and wellness exploration. It is NOT a medical device.
+    Echoelmusic is a professional audio-visual production tool designed for \
+    music production, video editing, live performance, and creative expression.
 
-    The biofeedback features (HRV coherence, breathing guides) are based on published \
-    research but are provided for informational and creative purposes only. They do not \
-    diagnose, treat, cure, or prevent any disease or medical condition.
-
-    EVIDENCE LEVELS:
-    • HRV Biofeedback: Moderate evidence for relaxation support
-    • Breathing Exercises: Strong evidence for stress reduction
-    • Audio Entrainment: Mixed evidence; individual results vary
-    • Visual Features: For creative/aesthetic purposes
+    The biofeedback features (HRV coherence, heart rate monitoring) use real \
+    biometric data from Apple Watch and HealthKit to drive creative parameters \
+    (spatial audio positioning, visual effects, lighting). These features are \
+    for creative purposes only and do not diagnose, treat, or prevent any \
+    medical condition.
 
     WARNINGS:
     • Photosensitive users: Some visual effects may trigger seizures
     • Cardiac conditions: Consult physician before using HRV features
-    • Mental health: Not a substitute for professional treatment
     • Children: Parental supervision recommended
-
-    Individual results vary significantly. What works for one person may not work for another. \
-    Always consult qualified healthcare professionals for medical advice.
 
     © Echoelmusic. All rights reserved.
     """
