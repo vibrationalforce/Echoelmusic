@@ -191,16 +191,16 @@ public struct CreativePreset: EnginePreset {
     public static let meditationMusic = CreativePreset(
         id: UUID(),
         name: "Meditation Music",
-        description: "Multidimensional Brainwave Entrainment and relaxation soundscapes",
+        description: "Ambient audio and relaxation soundscapes",
         category: "Wellness",
         author: "Echoelmusic",
         version: "1.0",
         mode: .musicComposition,
         style: nil,
         genre: .meditation,
-        promptTemplate: "Meditation music, Multidimensional Brainwave Entrainment, ambient soundscape, relaxation",
+        promptTemplate: "Meditation music, ambient audio, ambient soundscape, relaxation",
         quantumEnhanced: true,
-        parameters: ["frequency": 432, "binaural": 10, "duration": 600]
+        parameters: ["frequency": 432, "toneFrequency": 10, "duration": 600]
     )
 
     public static let all: [CreativePreset] = [
@@ -365,7 +365,7 @@ public struct WellnessPreset: EnginePreset {
         wellnessCategory: .focus,
         durationMinutes: 25,
         breathingPattern: .boxBreathing,
-        backgroundSounds: ["binaural40Hz"],
+        backgroundSounds: ["gamma40Hz"],
         guidedInstructions: false
     )
 

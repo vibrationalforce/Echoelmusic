@@ -188,15 +188,12 @@ print("Current coherence: \(coherence)%")
 **Category:** Audio
 **Platforms:** iOS, macOS, watchOS, tvOS
 
-Central audio processing engine managing microphone, Multidimensional Brainwave Entrainment, effects, and mixing
+Central audio processing engine managing microphone, effects, and mixing
 
 ### Properties
 
 - **`isRunning`** (`@Published Bool`, read-only): Whether the audio engine is currently running
-- **`binauralBeatsEnabled`** (`@Published Bool`, read-only): Whether Multidimensional Brainwave Entrainment are enabled
 - **`spatialAudioEnabled`** (`@Published Bool`, read-only): Whether spatial audio is enabled
-- **`currentBrainwaveState`** (`@Published BrainwaveState`, read-only): Current binaural beat brainwave state
-- **`binauralAmplitude`** (`@Published Float`, read-only): Multidimensional Brainwave Entrainment volume (0.0 - 1.0)
 
 ### Methods
 
@@ -226,7 +223,7 @@ let audioEngine = AudioEngine(microphoneManager: micManager)
 func start()
 ```
 
-Start the audio engine (microphone, Multidimensional Brainwave Entrainment, spatial audio)
+Start the audio engine (microphone, spatial audio)
 
 **Returns:** `Void`
 
@@ -235,32 +232,6 @@ Start the audio engine (microphone, Multidimensional Brainwave Entrainment, spat
 ```swift
 audioEngine.start()
 // Audio engine now running
-```
-
-#### `setBrainwaveState`
-
-```swift
-func setBrainwaveState(_ state: BinauralBeatGenerator.BrainwaveState)
-```
-
-Set target brainwave state for Multidimensional Brainwave Entrainment
-
-**Parameters:**
-- `state` (`BrainwaveState`): Target brainwave state (delta, theta, alpha, beta, gamma)
-
-**Returns:** `Void`
-
-**Example:**
-
-```swift
-// Alpha waves for relaxation (8-12 Hz)
-audioEngine.setBrainwaveState(.alpha)
-
-// Theta waves for meditation (4-8 Hz)
-audioEngine.setBrainwaveState(.theta)
-
-// Gamma waves for focus (32-100 Hz)
-audioEngine.setBrainwaveState(.gamma)
 ```
 
 #### `addEffect`
@@ -1165,15 +1136,10 @@ class BioReactiveSession: ObservableObject {
         hub.enableHandTracking()
         try await hub.enableBiometricMonitoring()
 
-        // 4. Configure Multidimensional Brainwave Entrainment for meditation
-        audioEngine.setBrainwaveState(.theta)
-        audioEngine.setBinauralAmplitude(0.3)
-        audioEngine.toggleBinauralBeats()
-
-        // 5. Start control loop
+        // 4. Start control loop
         hub.start()
 
-        // 6. Monitor coherence and adapt spatial field
+        // 5. Monitor coherence and adapt spatial field
         monitorCoherence()
     }
 

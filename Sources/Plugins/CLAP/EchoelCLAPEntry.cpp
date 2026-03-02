@@ -240,7 +240,7 @@ static const ClapDescriptorEntry s_clapPlugins[] = {
 
     {{CLAP_VERSION_INIT, "com.echoelmusic.bio", "EchoelBio",
       ECHOEL_VENDOR_NAME, ECHOEL_VENDOR_URL, "", "", ECHOEL_PLUGIN_VERSION_STRING,
-      "Binaural beat & AI tone generator for meditation and focus", synthFeats},
+      "Bio-reactive audio processor for creative production", synthFeats},
      ECHOEL_ENGINE_BIO},
 
     {{CLAP_VERSION_INIT, "com.echoelmusic.field", "EchoelField",

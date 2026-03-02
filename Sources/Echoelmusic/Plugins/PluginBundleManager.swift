@@ -201,7 +201,7 @@ public final class PluginBundleManager: ObservableObject {
 
         EchoelPluginDescriptor(
             id: "com.echoelmusic.bio", name: "EchoelBio",
-            subtitle: "Binaural beat & AI tone generator for meditation and focus",
+            subtitle: "Bio-reactive audio processor for creative production",
             category: .instrument,
             supportedFormats: [.auv3, .au, .vst3, .clap, .standalone, .wasm],
             parameterCount: 36, inputChannels: 0, outputChannels: 2,

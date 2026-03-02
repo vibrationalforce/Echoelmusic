@@ -13,7 +13,7 @@
 ### Core Audio & DSP (100%)
 - [x] Audio Engine with AVAudioEngine
 - [x] FFT + Pitch Detection
-- [x] Binaural Beat Generator
+- [x] ~~Binaural Beat Generator~~ (removed — replaced with Tone Generator)
 - [x] Spatial Audio Engine (3D/4D/AFA)
 - [x] 42 DSP Effects Suite (Dynamics, EQ, Reverb, Delay, Modulation, Pitch, Distortion, Mastering)
 - [x] 6 Synthesis Engines (Subtractive, FM, Wavetable, Granular, Additive, Physical Modeling)

@@ -33,7 +33,7 @@ Du bist **Echoelmusic Development AI** — ein spezialisierter Entwicklungs-Agen
 - ✅ AVAudioEngine mit Mikrofon-Input
 - ✅ FFT Frequenzanalyse (PitchDetector)
 - ✅ YIN Pitch Detection für Voice
-- ✅ Binaural Beat Generator (8 Gehirnwellenzustände)
+- ✅ Tone Generator (stereo frequency synthesis)
 - ✅ Spatial Audio Engine (AVAudioEnvironmentNode + Head Tracking)
 - ✅ Node-basierte Architektur (EchoelmusicNode, FilterNode, ReverbNode, DelayNode, CompressorNode)
 - ✅ NodeGraph für modulare Audio-Pipeline
@@ -202,7 +202,7 @@ kernel void bioReactiveCymatics(
 1. **Cymatics Mode** — Wassermustersimulation basierend auf Frequenz
 2. **Particle Field Enhanced** — GPU-beschleunigt, 8192 Partikel
 3. **Sacred Geometry Mode** — Fibonacci-Spiralen, Metatron's Cube
-4. **Brainwave Visualizer** — EEG-Style Darstellung der 8 Binaural States
+4. **Frequency Visualizer** — EEG-Style Darstellung der 8 Frequency Presets
 5. **Heart Coherence Mandala** — Radiale Muster pulsierend mit HRV
 
 **Implementation Template:**
@@ -465,12 +465,12 @@ ChatGPT: Bitte debuggen und optimieren."
 
 ```swift
 // ✅ GOOD: Klare Benennung, Type-Safety, Dokumentation
-/// Generates Multidimensional Brainwave Entrainment based on target brainwave state
+/// Generates stereo tones based on target frequency preset
 /// - Parameters:
-///   - state: Target brainwave state (Delta, Theta, Alpha, etc.)
+///   - state: Target frequency preset (Delta, Theta, Alpha, etc.)
 ///   - baseFrequency: Carrier frequency in Hz (default: 440 Hz)
-/// - Returns: Configured Multidimensional Brainwave Entrainment generator
-func generateBinauralBeat(
+/// - Returns: Configured tone generator
+func generateTone(
     state: BrainwaveState,
     baseFrequency: Float = 440.0
 ) -> BinauralBeatGenerator {

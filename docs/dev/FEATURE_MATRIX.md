@@ -49,7 +49,7 @@
 | Mikrofon-Input | **REAL** | AVAudioEngine Input-Tap, vDSP FFT, YIN Pitch-Detection |
 | Audio-Aufnahme (Multi-Track) | **REAL** | AVAudioFile Write, Circular Buffer, Retrospective Capture (60s) |
 | Audio-Session-Management | **REAL** | 5ms Buffer, .measurement Mode, Interruption-Handler |
-| Binaural Beat Generator | **REAL** | AVAudioPlayerNode L/R, Sine-Wave PCM-Buffer-Generierung |
+| Tone Generator | **REAL** | AVAudioPlayerNode L/R, Sine-Wave PCM-Buffer-Generierung |
 | Ableton Link Integration | **REAL** | Netzwerk-Tempo-Sync-Protokoll |
 | Bluetooth Low-Latency | **REAL** | Optimierter drahtloser Audio-Pfad |
 | Inter-App Audio | **PARTIAL** | Framework-Skeleton, Routing unklar |
@@ -254,7 +254,7 @@ Der Feb-11 Audit war oberflaechlich — hat Methoden-Signaturen als "Skeleton" g
 
 ## WAS HEUTE SHIPPEN KANN (Production-Ready)
 
-1. **Binaural Beats + alle Synthesizer** (DDSP, Bass, Beat, 808, Quantum, Sampler)
+1. **Tone Generators + alle Synthesizer** (DDSP, Bass, Beat, 808, Quantum, Sampler)
 2. **Volle Vocal Processing Chain** (Pitch-Korrektur, Harmony, Doubling, Bio-Reactive)
 3. **HealthKit Biofeedback + Kamera-PPG** + Coherence-Berechnung
 4. **25+ Metal Compute Shaders** fuer Echtzeit-Visualisierung

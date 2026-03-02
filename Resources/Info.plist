@@ -38,7 +38,7 @@
 
 	<!-- Bluetooth Permission (for AirPods detection and ASAF) -->
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Echoelmusic detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality Multidimensional Brainwave Entrainment.</string>
+	<string>Echoelmusic detects your AirPods to enable Apple Spatial Audio Features (ASAF) and high-quality spatial audio rendering.</string>
 
 	<!-- HomeKit Permission (for smart home lighting sync) -->
 	<key>NSHomeKitUsageDescription</key>

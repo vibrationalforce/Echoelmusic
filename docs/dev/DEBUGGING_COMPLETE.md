@@ -78,7 +78,7 @@ private func detectASAFSupport() {
 
 | Feature nicht verfügbar | Fallback |
 |-------------------------|----------|
-| Spatial Audio Engine | Multidimensional Brainwave Entrainment (Stereo) |
+| Spatial Audio Engine | Spatial Audio (Stereo) |
 | Head Tracking | Statische Position |
 | ASAF | Standard 3D Audio |
 | HealthKit | Manuelle Parameter |

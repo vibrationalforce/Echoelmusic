@@ -288,7 +288,7 @@ public class SelfHealingCodeTransformation: ObservableObject {
         if comfort < 0.3 {
             performTransformation(level: .parameterAdjust, trigger: .comfortDrop, from: nil, to: nil) {
                 // Beruhigende Parameter aktivieren
-                return "Comfort-Recovery: Theta-Entrainment aktiviert"
+                return "Comfort-Recovery: Beruhigende Audio-Parameter aktiviert"
             }
         }
     }

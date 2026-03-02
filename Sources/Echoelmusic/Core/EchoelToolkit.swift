@@ -45,7 +45,7 @@ import Combine
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // MERGES: AudioEngine, EchoelDDSP, EchoelModalBank, EchoelCellular, EchoelQuant,
-//         EchoelSampler, TR808BassSynth, BreakbeatChopper, BinauralBeatGenerator,
+//         EchoelSampler, TR808BassSynth, BreakbeatChopper,
 //         UniversalSoundLibrary, SynthPresetLibrary, LoopEngine, MetronomeEngine
 //
 // 16 classes → 1 unified synthesis engine with pluggable backends

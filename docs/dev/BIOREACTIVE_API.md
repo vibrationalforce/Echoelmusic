@@ -146,15 +146,15 @@ healthKitManager.hrvCoherence   // Double (0-100)
 - Gamification through sound quality
 
 ### 3. Wellness & Meditation Music
-- Multidimensional Brainwave Entrainment synced to HRV (scientifically validated: Goessl 2017)
-- Brainwave entrainment (Delta/Theta/Alpha/Beta/Gamma)
+- Tone synthesis synced to HRV
+- Frequency presets (Delta/Theta/Alpha/Beta/Gamma ranges)
 - Personalized relaxation soundscapes
 
 > **Wellness Feature Disclaimer**
 >
 > These features are for **general wellness and relaxation only**:
 >
-> - **Not medical treatment** - Brainwave entrainment and HRV-synced audio are not proven medical therapies
+> - **Not medical treatment** - HRV-synced audio features are not proven medical therapies
 > - **Subjective effects** - Individual experiences vary; relaxation is not guaranteed
 > - **No health claims** - We make no claims about treating anxiety, depression, insomnia, or any condition
 > - **Seizure risk** - If you have epilepsy or a history of seizures, consult a doctor before using audio/visual entrainment

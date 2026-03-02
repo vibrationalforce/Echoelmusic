@@ -42,7 +42,7 @@
 | Kategorie | Features | Status |
 |-----------|----------|--------|
 | **Audio Engine** | AVFoundation-basiert | ✅ |
-| **DSP** | BinauralBeats, Pitch Detector | ✅ |
+| **DSP** | ToneGenerator, Pitch Detector | ✅ |
 | **Effects** | Compressor, Delay, Reverb, Filter Nodes | ✅ |
 | **MIDI** | MIDI 2.0, MPE Zones, MIDI-to-Spatial | ✅ |
 | **Bio-Feedback** | HealthKit (Real HRV!), BioParameterMapper | ✅ |

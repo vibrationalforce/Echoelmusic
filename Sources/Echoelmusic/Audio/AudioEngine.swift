@@ -622,7 +622,7 @@ public class AudioEngine: ObservableObject {
     ///   - frameCount: Number of frames to process
     func processAndOutput(inputBuffers: [UUID: AVAudioPCMBuffer], frameCount: Int) {
         guard let mixer = proMixEngine else { return }
-        guard let outputBuffer = mixer.processAudioBlock(inputBuffers: inputBuffers, frameCount: frameCount) else { return }
+        let outputBuffer = mixer.processAudioBlock(inputBuffers: inputBuffers, frameCount: frameCount)
         schedulePlayback(buffer: outputBuffer)
     }
 

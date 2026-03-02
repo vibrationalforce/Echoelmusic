@@ -25,7 +25,7 @@ From First Creative Session to Published Production
 
 - **Apple Device**: iPhone 12+, iPad Pro, Mac (M1+), Apple Watch (optional)
 - **HealthKit Access**: Grant permission for heart rate and HRV data
-- **Headphones**: Quality headphones for Multidimensional Brainwave Entrainment (AirPods Pro/Max recommended)
+- **Headphones**: Quality headphones for spatial audio (AirPods Pro/Max recommended)
 - **Optional**: Ableton Push 3 for LED feedback, MIDI controller
 
 ### First Launch
@@ -219,9 +219,9 @@ Configure 3D/4D audio:
    Response: Real-time position
    ```
 
-### Multidimensional Brainwave Entrainment
+### Tone Generator
 
-Add brainwave entrainment:
+Configure tone generation:
 
 1. **Choose Frequency**:
    - Delta (0.5-4 Hz): Deep sleep
@@ -232,9 +232,9 @@ Add brainwave entrainment:
 
 2. **Configure Carrier**:
    ```
-   Binaural → Settings:
+   Tone Generator → Settings:
    Base Frequency: 200 Hz
-   Beat Frequency: 10 Hz (Alpha)
+   Differential Frequency: 10 Hz
    Intensity: 30%
    ```
 
@@ -621,7 +621,7 @@ Keep detailed records:
 1. Convolution Reverb (Cathedral)
 2. Chorus (slow, subtle)
 3. Low-pass filter (12kHz)
-4. Binaural encoder (10Hz Alpha)
+4. Stereo tone encoder (10Hz)
 
 ## AI Settings
 - Melody: Pentatonic, 4-bar phrases

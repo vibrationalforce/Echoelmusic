@@ -364,6 +364,85 @@ Test files cleaned:
 
 ---
 
+## Session: 2026-03-02 — Deep Binaural Purge Phase 4 (0% Waste)
+
+**Branch:** `claude/analyze-test-coverage-9aFjV`
+
+**Directive:** "Haben wir irgendwas übersehen? 0% waste, 100% proper code"
+
+### Deep Sweep Results
+
+Full codebase grep found **100+** remaining references across:
+- Swift sources (19 files)
+- Android/Kotlin (2 files)
+- C++/Plugin code (3 files)
+- TypeScript/CoherenceCore (2 files)
+- Documentation (20+ files)
+- Info.plist + fastlane metadata
+
+### What Was Cleaned
+
+**Swift source renames:**
+- `binauralFrequency` → `toneFrequency` (QuantumPresets, ExpandedPresets, CrashSafeStatePersistence, SharePlay, tests)
+- `binauralEnabled` → `toneEnabled` (CrashSafeStatePersistence)
+- `AdvancedBinauralProcessor` → `AdvancedToneProcessor` (EnhancedAudioFeatures)
+- `.brainwaveSync` → `.bioSync` (VideoProcessingEngine)
+- `binauralTrack()` → `spatialToneTrack()` (Track, Session)
+- "Binaural" stem → "Spatial Tone" (StemRenderingEngine)
+- `Source("binaural")/Mixer("binauralMix")` → `Source("tone")/Mixer("toneMix")` (AudioGraphBuilder)
+
+**String/comment fixes:**
+- AUv3 comment: "Binaural beat generator" → "Bio-reactive audio processor"
+- AppClip: "binauralen Beats" → "Klanglandschaften"
+- SelfHealing: "Theta-Entrainment" → "Beruhigende Audio-Parameter"
+- EnvironmentPresets: "Theta-Entrainment" → "tiefe Entspannung"
+- HRVTrainingView: "Entrainment Beats" → "Audio Beats"
+- HRVSoundscapeEngine: all "binaural" comments → "isochronic/stereo"
+- Phase8000Presets: `"binaural": 10` → `"toneFrequency": 10`, `"binaural40Hz"` → `"gamma40Hz"`
+- Preset descriptions: "entrainment" → "ambient" in all pseudoscience contexts
+
+**C++/Plugin code:**
+- EchoelPluginCore.h: "binaural beats" → "bio-reactive audio"
+- EchoelPluginCore.cpp: "Binaural beat & AI tone generator" → "Bio-reactive audio processor"
+- EchoelCLAPEntry.cpp: same description fix
+
+**Android:**
+- Phase8000Engines.kt: BINAURAL display name → "Spatial Audio"
+- Phase8000EnginesTest.kt: updated assertion
+
+**Documentation:**
+- 20+ doc files cleaned of "Multidimensional Brainwave Entrainment" references
+- Info.plist: spatial audio description
+- fastlane metadata: removed binaural beat marketing
+
+### What Was Kept (Legitimate)
+
+| Reference | Why Kept |
+|-----------|----------|
+| `SpatialAudioEngine.binaural` | HRTF headphone rendering (real audio tech) |
+| `AmbisonicsProcessor.binaural` | Headphone decode (real audio tech) |
+| `ObjectBasedAudioRenderer.binaural` | HRTF processing (real audio tech) |
+| `Track.TrackType.binaural` | Audio format type (raw value in Codable) |
+| `AudioConstants.Brainwave` | EEG frequency bands (real neuroscience, with evidence disclaimers) |
+| `HardwareAbstractionLayer.brainWaves` | EEG sensor hardware support |
+| `EchoelmusicBrand.brainwave*` colors | EEG visualization colors |
+| `ValidatedScienceDatabase.gammaEntrainment40Hz` | MIT Tsai Lab peer-reviewed research |
+| `SocialCoherenceEngine.entrainmentLevel` | Group bio-sync measurement |
+| `ImmersiveIsochronicSession.entrainment*` | Isochronic session metrics |
+| `NeuroSpiritualEngine.dominantBrainwave` | EEG data from hardware |
+| AppStoreMetadata "binaural rendering" | Marketing for legitimate HRTF feature |
+
+### Key Principle
+
+**"Binaural" ≠ always bad.** The purge targets:
+- ❌ "Binaural beats" (pseudoscience frequency-difference entrainment claims)
+- ❌ "Brainwave entrainment" (unvalidated therapeutic claims)
+- ✅ "Binaural audio" (HRTF spatial rendering — real audio engineering)
+- ✅ "Brainwave data" (EEG sensor input from actual hardware)
+- ✅ "Entrainment" (validated science: MIT 40Hz gamma, circadian, group sync)
+
+---
+
 ## How to Use This File
 
 When starting a new session:

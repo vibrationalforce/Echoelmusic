@@ -85,8 +85,8 @@ public enum CircadianPhase: String, CaseIterable, Codable {
         }
     }
 
-    /// Carrier-Frequenz fuer Multidimensional Brainwave Entrainment (Standard 440Hz)
-    /// HINWEIS: Alle Carrier-Frequenzen sind akustisch aequivalent fuer Entrainment.
+    /// Carrier-Frequenz fuer Audio-Synthese (Standard 440Hz)
+    /// HINWEIS: Alle Carrier-Frequenzen sind akustisch aequivalent.
     /// Es gibt keine wissenschaftliche Evidenz fuer "spezielle" Frequenzen wie 432Hz oder 528Hz.
     public var carrierFrequency: Double {
         switch self {

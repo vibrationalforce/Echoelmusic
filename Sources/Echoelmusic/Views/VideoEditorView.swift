@@ -1,5 +1,8 @@
 import SwiftUI
 import AVFoundation
+#if canImport(Metal)
+import Metal
+#endif
 
 // MARK: - Video Editor View
 // Professional Video Editor with Camera Capture + Bio-Reactive Effects
@@ -8,7 +11,7 @@ import AVFoundation
 @MainActor
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
-    @StateObject private var cameraManager = CameraManager()
+    @State private var cameraManager: CameraManager?
     @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
@@ -116,10 +119,13 @@ struct VideoEditorView: View {
                         showCameraCapture.toggle()
                         if showCameraCapture {
                             Task {
-                            try? await cameraManager.startCapture()
-                        }
+                                if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
+                                    cameraManager = CameraManager(device: device)
+                                }
+                                try? await cameraManager?.startCapture()
+                            }
                         } else {
-                            cameraManager.stopCapture()
+                            cameraManager?.stopCapture()
                         }
                     }
                 }
@@ -172,10 +178,10 @@ struct VideoEditorView: View {
                     .fill(VaporwaveColors.deepBlack)
 
                 // Preview content
-                if showCameraCapture && cameraManager.isCapturing {
+                if showCameraCapture, let cam = cameraManager, cam.isCapturing {
                     // Live camera preview
                     #if os(iOS)
-                    CameraPreviewLayer(cameraManager: cameraManager)
+                    CameraPreviewLayer(cameraManager: cam)
                     #endif
 
                     // Live indicator
@@ -212,8 +218,11 @@ struct VideoEditorView: View {
                         Button {
                             showCameraCapture = true
                             Task {
-                            try? await cameraManager.startCapture()
-                        }
+                                if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
+                                    cameraManager = CameraManager(device: device)
+                                }
+                                try? await cameraManager?.startCapture()
+                            }
                         } label: {
                             HStack(spacing: EchoelSpacing.sm) {
                                 Image(systemName: "camera.fill")

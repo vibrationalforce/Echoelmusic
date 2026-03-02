@@ -480,17 +480,17 @@ public extension AudioGraphBuilder {
                 .waveform(.sine)
                 .amplitude(0.3)
 
-            Source("binaural")
-                .frequency(442)  // +10Hz for alpha
+            Source("tone")
+                .frequency(442)  // +10Hz offset for stereo effect
                 .waveform(.sine)
                 .amplitude(0.3)
 
-            Mixer("binauralMix")
+            Mixer("toneMix")
                 .input("carrier", volume: 1.0, pan: -1.0)
-                .input("binaural", volume: 1.0, pan: 1.0)
+                .input("tone", volume: 1.0, pan: 1.0)
 
             BioReactiveNode("coherenceMod")
-                .input("binauralMix")
+                .input("toneMix")
                 .parameter(.amplitude, mappedTo: .coherence)
                 .smoothing(0.8)
 

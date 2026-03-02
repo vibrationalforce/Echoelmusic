@@ -500,7 +500,7 @@ public enum EnvironmentPresetRegistry {
         ),
         safetyNotes: [
             "Maximale Kohärenz-Förderung möglich",
-            "Ideale Umgebung für Theta-Entrainment"
+            "Ideale Umgebung für tiefe Entspannung"
         ]
     )
 

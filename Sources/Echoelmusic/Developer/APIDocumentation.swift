@@ -192,7 +192,7 @@ public struct APIDocumentation {
 
     public static let audioEngineAPI = APIModule(
         name: "AudioEngine",
-        description: "Central audio processing engine managing microphone, Multidimensional Brainwave Entrainment, effects, and mixing",
+        description: "Central audio processing engine managing microphone, effects, and mixing",
         category: .audio,
         platform: [.iOS, .macOS, .watchOS, .tvOS],
         methods: [
@@ -213,7 +213,7 @@ public struct APIDocumentation {
             APIMethod(
                 name: "start",
                 signature: "func start()",
-                description: "Start the audio engine (microphone, Multidimensional Brainwave Entrainment, spatial audio)",
+                description: "Start the audio engine (microphone, spatial audio)",
                 parameters: [],
                 returnType: "Void",
                 availability: .all,

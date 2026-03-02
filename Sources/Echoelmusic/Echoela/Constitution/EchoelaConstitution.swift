@@ -221,17 +221,17 @@ public final class EchoelaConstitution: ObservableObject {
                 humanOversightRequired: true
             ),
 
-            // Brainwave Entrainment: Limited Risk
+            // Audio Processing: Safe
             FeatureRiskAssessment(
                 id: UUID(),
-                featureName: "Brainwave Entrainment (Binaural Beats)",
-                riskLevel: .limited,
-                rationale: "Audio-based relaxation tool. Evidence for neurophysiological effects is inconsistent (meta-analysis).",
+                featureName: "Audio Processing & Spatial Audio",
+                riskLevel: .minimal,
+                rationale: "Standard audio processing and spatial rendering. No therapeutic claims.",
                 mitigations: [
-                    "Scientific honesty disclaimer",
-                    "No 'healing' or 'treatment' claims",
-                    "Seizure warning for photosensitive users",
-                    "Clear 'not a medical device' label"
+                    "Volume limiting for hearing protection",
+                    "Seizure warning for visual effects",
+                    "Clear 'not a medical device' label",
+                    "Regular break reminders"
                 ],
                 humanOversightRequired: false
             )

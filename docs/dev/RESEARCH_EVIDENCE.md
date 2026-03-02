@@ -87,21 +87,15 @@ Echoelmusic maintains rigorous evidence-based practices for all biometric, welln
 
 ---
 
-### 3. Binaural Beat Research
+### 3. Tone Generator
 
 **File:** `Sources/Echoelmusic/Audio/Effects/BinauralBeatGenerator.swift`
 
-#### Research Status
+#### Implementation Status
 
-| Frequency Range | Claimed Effect | Evidence Level | Notes |
-|-----------------|----------------|----------------|-------|
-| Delta (0.5-4 Hz) | Deep Sleep | 2b-3 | Limited evidence |
-| Theta (4-8 Hz) | Meditation | 2b | Some RCT support |
-| Alpha (8-14 Hz) | Relaxation | 2a | Moderate evidence |
-| Beta (14-30 Hz) | Focus | 2b-3 | Mixed results |
-| Gamma (30-100 Hz) | Cognition | 3-4 | Early research |
+Tone generation is implemented as a creative audio tool for producing stereo frequency differentials. No medical or neurological claims are made.
 
-**Note:** Multidimensional Brainwave Entrainment are implemented as creative audio effects, not medical interventions.
+**Note:** Tone generators are implemented as creative audio effects, not medical interventions.
 
 ---
 

@@ -212,7 +212,7 @@ public enum StemExportPreset: String, CaseIterable, Sendable {
         case .djStems: return ["Drums", "Bass", "Vocals", "Other"]
         case .filmPost: return ["Dialog", "Music", "Ambience", "SFX", "Foley"]
         case .dolbyAtmos: return ["Bed L", "Bed R", "Bed Ls", "Bed Rs", "Objects"]
-        case .bioReactive: return ["Audio", "Binaural", "Spatial", "Bio Layer", "Ambient"]
+        case .bioReactive: return ["Audio", "Spatial Tone", "Spatial", "Bio Layer", "Ambient"]
         case .masteringStems: return ["Sub (20-80Hz)", "Low (80-300Hz)", "Mid (300-3kHz)", "High (3-10kHz)", "Air (10-20kHz)"]
         case .custom: return []
         }
@@ -704,7 +704,7 @@ public final class StemRenderingEngine: ObservableObject {
 
         return [
             StemConfiguration(name: "Audio", trackIDs: audio.map(\.id), format: format, colorHex: "#FF6B6B"),
-            StemConfiguration(name: "Binaural", trackIDs: binaural.map(\.id), format: format, colorHex: "#A855F7"),
+            StemConfiguration(name: "Spatial Tone", trackIDs: binaural.map(\.id), format: format, colorHex: "#A855F7"),
             StemConfiguration(name: "Spatial", trackIDs: spatial.map(\.id), format: format, colorHex: "#3B82F6"),
             StemConfiguration(name: "Bio Layer", trackIDs: bio.map(\.id), format: format, colorHex: "#10B981"),
             StemConfiguration(name: "Ambient", trackIDs: ambient.map(\.id), format: format, colorHex: "#06B6D4")

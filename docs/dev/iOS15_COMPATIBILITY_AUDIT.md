@@ -217,7 +217,7 @@ Dies ist OK, da Package.swift bereits `.iOS(.v15)` hat.
 | Mikrophone Recording | ✅ | ✅ | ✅ | ✅ | ✅ |
 | FFT Frequency Detection | ✅ | ✅ | ✅ | ✅ | ✅ |
 | YIN Pitch Detection | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Multidimensional Brainwave Entrainment | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Stereo Tone Synthesis | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **HealthKit** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Heart Rate Monitoring | ✅ | ✅ | ✅ | ✅ | ✅ |
 | HRV (RMSSD) | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -245,7 +245,7 @@ Dies ist OK, da Package.swift bereits `.iOS(.v15)` hat.
 - [ ] Audio recording starts
 - [ ] FFT frequency detection works
 - [ ] YIN pitch detection works
-- [ ] Multidimensional Brainwave Entrainment play
+- [ ] Tone generator plays
 - [ ] HealthKit authorization works
 - [ ] HRV data reads successfully
 - [ ] Particle visualization renders

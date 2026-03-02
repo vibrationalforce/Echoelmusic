@@ -60,8 +60,8 @@ public struct SessionState: Codable, Sendable {
         public var volume: Float = 0.8
         public var bpm: Double = 120
         public var carrierFrequency: Float = 440
-        public var binauralEnabled: Bool = true
-        public var binauralFrequency: Float = 10
+        public var toneEnabled: Bool = true
+        public var toneFrequency: Float = 10
     }
 
     public struct VisualSettings: Codable, Sendable {

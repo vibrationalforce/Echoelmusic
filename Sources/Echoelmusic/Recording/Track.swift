@@ -519,9 +519,9 @@ extension Track {
         return track
     }
 
-    /// Create Multidimensional Brainwave Entrainment track
-    static func binauralTrack() -> Track {
-        var track = Track(name: "Multidimensional Brainwave Entrainment", type: .binaural)
+    /// Create spatial tone track
+    static func spatialToneTrack() -> Track {
+        var track = Track(name: "Spatial Tone", type: .binaural)
         track.volume = 0.3
         track.trackColor = TrackColor.purple
         return track

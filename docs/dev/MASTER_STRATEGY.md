@@ -295,9 +295,9 @@ Priority: 2
 Time: 1 day
 
 Key Features to Implement:
-- Brainwave entrainment (Delta, Theta, Alpha, Beta, Gamma)
+- Tone synthesis (Delta, Theta, Alpha, Beta, Gamma frequency presets)
 - Schumann resonance (7.83Hz)
-- Multidimensional Brainwave Entrainment generator
+- Stereo tone generator
 - Bio-feedback integration
 ```
 

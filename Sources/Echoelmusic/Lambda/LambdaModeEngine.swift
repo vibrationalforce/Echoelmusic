@@ -275,7 +275,7 @@ public struct LambdaHealthDisclaimer: Sendable {
 
     LIGHT & SOUND:
     • Visual effects may cause discomfort in photosensitive individuals
-    • Multidimensional Brainwave Entrainment and certain frequencies may affect some users
+    • Certain audio frequencies at high volumes may affect some users
     • Use appropriate volume levels to protect hearing
     • Take regular breaks during extended sessions
 

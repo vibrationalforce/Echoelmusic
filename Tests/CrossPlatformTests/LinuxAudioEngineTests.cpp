@@ -139,7 +139,7 @@ bool test_alsa_mixer_custom_element() {
 }
 
 // ============================================================================
-// MARK: - Binaural Beat Generator Tests
+// MARK: - Audio Tone Generator Tests
 // ============================================================================
 
 bool test_binaural_construction() {
@@ -383,8 +383,8 @@ int main() {
     RUN_TEST(test_alsa_mixer_construction);
     RUN_TEST(test_alsa_mixer_custom_element);
 
-    // Binaural Beat tests
-    std::cout << "\n--- Binaural Beat Generator Tests ---\n";
+    // Audio Tone Generator tests
+    std::cout << "\n--- Audio Tone Generator Tests ---\n";
     RUN_TEST(test_binaural_construction);
     RUN_TEST(test_binaural_custom_frequencies);
     RUN_TEST(test_binaural_generate_stereo);

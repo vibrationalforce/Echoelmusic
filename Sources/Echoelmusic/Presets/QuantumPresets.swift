@@ -27,7 +27,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
     public let lightFieldGeometry: String
 
     // Audio settings
-    public let binauralFrequency: Float?
+    public let toneFrequency: Float?
     public let spatialMode: String?
     public let reverbWetness: Float
 
@@ -76,7 +76,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         emulationMode: String = "bioCoherent",
         visualizationType: String = "coherenceField",
         lightFieldGeometry: String = "fibonacci",
-        binauralFrequency: Float? = nil,
+        toneFrequency: Float? = nil,
         spatialMode: String? = nil,
         reverbWetness: Float = 0.3,
         coherenceTarget: Float = 0.7,
@@ -95,7 +95,7 @@ public struct QuantumPreset: Identifiable, Codable, Sendable {
         self.emulationMode = emulationMode
         self.visualizationType = visualizationType
         self.lightFieldGeometry = lightFieldGeometry
-        self.binauralFrequency = binauralFrequency
+        self.toneFrequency = toneFrequency
         self.spatialMode = spatialMode
         self.reverbWetness = reverbWetness
         self.coherenceTarget = coherenceTarget
@@ -116,14 +116,14 @@ public struct BuiltInPresets {
     public static let deepMeditation = QuantumPreset(
         id: "deep-meditation",
         name: "Deep Meditation",
-        description: "Enter profound states of inner stillness with theta wave entrainment",
+        description: "Enter profound states of inner stillness with theta wave ambient",
         category: .meditation,
         icon: "brain.head.profile",
         color: .init(hue: 0.7, saturation: 0.6, brightness: 0.4),
         emulationMode: "bioCoherent",
         visualizationType: "waveFunction",
         lightFieldGeometry: "toroidal",
-        binauralFrequency: 6.0, // Theta
+        toneFrequency: 6.0, // Theta
         spatialMode: "ambisonics",
         reverbWetness: 0.5,
         coherenceTarget: 0.85,
@@ -141,7 +141,7 @@ public struct BuiltInPresets {
         emulationMode: "bioCoherent",
         visualizationType: "biophotonAura",
         lightFieldGeometry: "fibonacci",
-        binauralFrequency: 10.0, // Alpha
+        toneFrequency: 10.0, // Alpha
         spatialMode: "binaural",
         reverbWetness: 0.3,
         coherenceTarget: 0.9,
@@ -159,7 +159,7 @@ public struct BuiltInPresets {
         emulationMode: "quantumInspired",
         visualizationType: "sacredGeometry",
         lightFieldGeometry: "spherical",
-        binauralFrequency: 14.0, // Low Beta
+        toneFrequency: 14.0, // Low Beta
         spatialMode: "surround_3d",
         reverbWetness: 0.2,
         coherenceTarget: 0.6,
@@ -179,7 +179,7 @@ public struct BuiltInPresets {
         emulationMode: "quantumInspired",
         visualizationType: "lightMandala",
         lightFieldGeometry: "merkaba",
-        binauralFrequency: 10.0,
+        toneFrequency: 10.0,
         spatialMode: "surround_4d",
         reverbWetness: 0.4,
         coherenceTarget: 0.65,
@@ -197,7 +197,7 @@ public struct BuiltInPresets {
         emulationMode: "hybridPhotonic",
         visualizationType: "interferencePattern",
         lightFieldGeometry: "gaussian",
-        binauralFrequency: 8.0,
+        toneFrequency: 8.0,
         spatialMode: "afa",
         reverbWetness: 0.35,
         coherenceTarget: 0.7,
@@ -217,7 +217,7 @@ public struct BuiltInPresets {
         emulationMode: "classical",
         visualizationType: "coherenceField",
         lightFieldGeometry: "planar",
-        binauralFrequency: 18.0, // Beta
+        toneFrequency: 18.0, // Beta
         spatialMode: "stereo",
         reverbWetness: 0.1,
         coherenceTarget: 0.8,
@@ -235,7 +235,7 @@ public struct BuiltInPresets {
         emulationMode: "bioCoherent",
         visualizationType: "quantumTunnel",
         lightFieldGeometry: "vortex",
-        binauralFrequency: 12.0,
+        toneFrequency: 12.0,
         spatialMode: "surround_3d",
         reverbWetness: 0.25,
         coherenceTarget: 0.75,
@@ -255,7 +255,7 @@ public struct BuiltInPresets {
         emulationMode: "bioCoherent",
         visualizationType: "photonFlow",
         lightFieldGeometry: "fibonacci",
-        binauralFrequency: 4.0, // Delta edge
+        toneFrequency: 4.0, // Delta edge
         spatialMode: "binaural",
         reverbWetness: 0.6,
         coherenceTarget: 0.6,
@@ -273,7 +273,7 @@ public struct BuiltInPresets {
         emulationMode: "bioCoherent",
         visualizationType: "cosmicWeb",
         lightFieldGeometry: "toroidal",
-        binauralFrequency: 2.0, // Delta
+        toneFrequency: 2.0, // Delta
         spatialMode: "binaural",
         reverbWetness: 0.7,
         coherenceTarget: 0.5,
@@ -294,7 +294,7 @@ public struct BuiltInPresets {
         emulationMode: "quantumInspired",
         visualizationType: "sacredGeometry",
         lightFieldGeometry: "merkaba",
-        binauralFrequency: 25.0, // High Beta
+        toneFrequency: 25.0, // High Beta
         spatialMode: "surround_4d",
         reverbWetness: 0.15,
         coherenceTarget: 0.6,
@@ -316,7 +316,7 @@ public struct BuiltInPresets {
         emulationMode: "bioCoherent",
         visualizationType: "coherenceField",
         lightFieldGeometry: "toroidal",
-        binauralFrequency: 7.83, // Schumann resonance (scientifically measured)
+        toneFrequency: 7.83, // Schumann resonance (scientifically measured)
         spatialMode: "ambisonics",
         reverbWetness: 0.45,
         coherenceTarget: 0.75,
@@ -336,7 +336,7 @@ public struct BuiltInPresets {
         emulationMode: "fullQuantum",
         visualizationType: "cosmicWeb",
         lightFieldGeometry: "merkaba",
-        binauralFrequency: 5.5,
+        toneFrequency: 5.5,
         spatialMode: "surround_4d",
         reverbWetness: 0.55,
         coherenceTarget: 0.7,
@@ -354,7 +354,7 @@ public struct BuiltInPresets {
         emulationMode: "quantumInspired",
         visualizationType: "holographicDisplay",
         lightFieldGeometry: "vortex",
-        binauralFrequency: 4.5,
+        toneFrequency: 4.5,
         spatialMode: "binaural",
         reverbWetness: 0.6,
         coherenceTarget: 0.65,
@@ -374,7 +374,7 @@ public struct BuiltInPresets {
         emulationMode: "bioCoherent",
         visualizationType: "lightMandala",
         lightFieldGeometry: "spherical",
-        binauralFrequency: 15.0,
+        toneFrequency: 15.0,
         spatialMode: "surround_3d",
         reverbWetness: 0.2,
         coherenceTarget: 0.85,

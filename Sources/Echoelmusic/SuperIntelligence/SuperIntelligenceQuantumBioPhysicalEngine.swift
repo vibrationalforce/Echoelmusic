@@ -782,7 +782,7 @@ public struct OptimalHealthProtocols {
         public let phase: CircadianPhase
         public let lightColorTemp: Int        // Kelvin
         public let lightIntensityLux: Int
-        public let audioFrequency: Double     // Hz (binaural beat target)
+        public let audioFrequency: Double     // Hz (audio frequency target)
         public let activityRecommendation: String
         public let nutritionGuidance: String
 

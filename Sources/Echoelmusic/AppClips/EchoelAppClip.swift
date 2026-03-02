@@ -92,7 +92,7 @@ public final class AppClipManager: ObservableObject {
             case .breathwork:
                 return "Box Breathing für sofortige Entspannung"
             case .meditation:
-                return "Geführte Kurzmeditation mit binauralen Beats"
+                return "Geführte Kurzmeditation mit Klanglandschaften"
             case .coherence:
                 return "Messe deine Herz-Kohärenz in 2 Minuten"
             case .soundBath:

@@ -35,7 +35,6 @@ import com.echoelmusic.app.viewmodel.EchoelmusicViewModel
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Main : Screen("main", "Home", Icons.Default.Home)
     data object Synth : Screen("synth", "Synth", Icons.Default.Piano)
-    data object Binaural : Screen("binaural", "Binaural", Icons.Default.Waves)
     data object Bio : Screen("bio", "Bio", Icons.Default.FavoriteBorder)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
@@ -43,7 +42,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 private val bottomNavItems = listOf(
     Screen.Main,
     Screen.Synth,
-    Screen.Binaural,
     Screen.Bio,
     Screen.Settings
 )
@@ -219,7 +217,6 @@ fun EchoelmusicApp(viewModel: EchoelmusicViewModel) {
             ) {
                 composable(Screen.Main.route) { MainDashboardScreen(viewModel = viewModel) }
                 composable(Screen.Synth.route) { SynthScreen(viewModel = viewModel) }
-                composable(Screen.Binaural.route) { BinauralBeatsScreen(viewModel = viewModel) }
                 composable(Screen.Bio.route) { BioReactiveScreen(viewModel = viewModel) }
                 composable(Screen.Settings.route) { SettingsScreen(viewModel = viewModel) }
             }

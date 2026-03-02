@@ -38,7 +38,7 @@ final class QuantumIntegrationTests: XCTestCase {
         XCTAssertFalse(preset.name.isEmpty, "Preset should have a name")
         XCTAssertFalse(preset.description.isEmpty, "Preset should have a description")
         XCTAssertGreaterThan(preset.sessionDuration, 0, "Session duration should be positive")
-        XCTAssertGreaterThanOrEqual(preset.binauralFrequency, 0, "Binaural frequency should be non-negative")
+        XCTAssertGreaterThanOrEqual(preset.toneFrequency, 0, "Tone frequency should be non-negative")
     }
 
     func testPresetSerialization() throws {

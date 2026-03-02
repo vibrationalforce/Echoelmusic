@@ -148,11 +148,11 @@ export function generateWaveform(
 }
 
 // ============================================================================
-// BINAURAL BEATS
+// STEREO TONE GENERATION
 // ============================================================================
 
 /**
- * Generate binaural beat (stereo: left and right frequencies differ)
+ * Generate stereo tone (stereo: left and right frequencies differ)
  */
 export function generateBinauralBeat(
   baseFrequencyHz: number,

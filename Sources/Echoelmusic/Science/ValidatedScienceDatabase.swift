@@ -176,8 +176,7 @@ public struct ValidatedScienceDatabase {
     ║                                                                      ║
     ║ Level 1b (RCTs)                                                      ║
     ║ ├─ PEMF für Knochenbruchheilung (FDA-zugelassen 1979)               ║
-    ║ ├─ 40Hz Gamma-Stimulation (MIT Tsai Lab, Phase 2)                   ║
-    ║ └─ Multidimensional Brainwave Entrainment perioperativ: SMD = -1.38 Angst                   ║
+    ║ └─ 40Hz Gamma-Stimulation (MIT Tsai Lab, Phase 2)                   ║
     ║                                                                      ║
     ║ Level 2a-2b (Kohortenstudien)                                        ║
     ║ ├─ NASA Vibration für Knochenerhalt (Rubin/Judex)                   ║
@@ -185,7 +184,6 @@ public struct ValidatedScienceDatabase {
     ║ └─ Photic Driving/Alpha-Entrainment (EEG-validiert)                 ║
     ║                                                                      ║
     ║ Level 3-5 (Limitierte Evidenz)                                       ║
-    ║ ├─ Multidimensional Brainwave Entrainment Brainwave Entrainment (inkonsistent)              ║
     ║ └─ Schumann-Resonanz biologische Effekte (spekulativ)               ║
     ║                                                                      ║
     ║ ENTFERNT (Pseudowissenschaft):                                       ║
@@ -408,55 +406,6 @@ public struct ValidatedScienceDatabase {
         safetyRating: .lowRisk
     )
 
-    /// Multidimensional Brainwave Entrainment - Perioperative Anwendung
-    public static let binauralBeatsAnxiety = ValidatedIntervention(
-        name: "Multidimensional Brainwave Entrainment for Perioperative Anxiety",
-        evidenceLevel: .randomizedControlledTrial,
-        effectSize: EffectSize(hedgesG: -1.38, confidence95: (-1.65, -1.11), pValue: 0.001),
-        primaryCitations: [
-            Citation(
-                authors: "Liu R, Yang X, Zuo H, et al.",
-                year: 2025,
-                title: "Multidimensional Brainwave Entrainment for perioperative anxiety and pain: A systematic review and meta-analysis",
-                journal: "Complementary Therapies in Clinical Practice",
-                volume: "58",
-                pages: "101916",
-                pmid: nil,
-                doi: "10.1016/j.ctcp.2025.101916"
-            ),
-            Citation(
-                authors: "Garcia-Argibay M, Santed MA, Reales JM",
-                year: 2019,
-                title: "Efficacy of binaural auditory beats in cognition, anxiety, and pain perception",
-                journal: "Psychological Research",
-                volume: "83(2)",
-                pages: "357-372",
-                pmid: "30167891",
-                doi: "10.1007/s00426-018-1066-8"
-            )
-        ],
-        mechanism: """
-        Binaurale Beats entstehen durch leicht unterschiedliche Frequenzen
-        auf beiden Ohren (z.B. 400Hz links, 410Hz rechts → 10Hz Beat).
-        Meta-Analyse zeigt signifikante Angstreduktion perioperativ.
-
-        HINWEIS: Brainwave Entrainment per EEG ist INKONSISTENT nachweisbar.
-        Psychologische Effekte sind besser belegt als neurophysiologische.
-        """,
-        implementationNotes: """
-        - Carrier: 200-500 Hz (angenehm hörbar)
-        - Beat-Frequenz: 4-14 Hz für Entspannung (Alpha/Theta)
-        - Stereo-Kopfhörer ERFORDERLICH
-        - Dauer: 15-30 Minuten
-        """,
-        contraindications: [
-            "Epilepsie (mit Vorsicht)",
-            "Schwere Hörschäden",
-            "Tinnitus (kann verstärkt werden)"
-        ],
-        safetyRating: .veryLowRisk
-    )
-
     // MARK: - Level 2 Interventions (Cohort Studies)
 
     /// NASA Vibration Therapy
@@ -603,41 +552,6 @@ public struct ValidatedScienceDatabase {
 
     // MARK: - Level 3-5 Interventions (Limited Evidence)
 
-    /// Multidimensional Brainwave Entrainment - Brainwave Entrainment (Inkonsistent)
-    public static let binauralBrainwaveEntrainment = ValidatedIntervention(
-        name: "Multidimensional Brainwave Entrainment Brainwave Entrainment",
-        evidenceLevel: .caseControl,
-        effectSize: EffectSize(hedgesG: 0.40, confidence95: (0.10, 0.70), pValue: 0.05),
-        primaryCitations: [
-            Citation(
-                authors: "Ingendoh RM, Posny ES, Heine A",
-                year: 2023,
-                title: "Multidimensional Brainwave Entrainment to entrain the brain? A systematic review",
-                journal: "PLOS ONE",
-                volume: "18(5)",
-                pages: "e0286023",
-                pmid: nil,
-                doi: "10.1371/journal.pone.0286023"
-            )
-        ],
-        mechanism: """
-        KRITISCHE BEWERTUNG: Systematischer Review von 14 Studien zeigt
-        INKONSISTENTE Ergebnisse für Brainwave Entrainment via EEG:
-        - 5 Studien: Unterstützen Entrainment-Hypothese
-        - 8 Studien: Widersprüchliche Ergebnisse
-        - 1 Studie: Gemischte Ergebnisse
-
-        Psychologische Effekte sind besser belegt als neurophysiologische.
-        """,
-        implementationNotes: """
-        - Evidenz für SUBJEKTIVE Entspannung: Besser belegt
-        - Evidenz für EEG-ENTRAINMENT: Inkonsistent
-        - Verwenden als: Entspannungs-Soundscape, nicht als Therapie
-        """,
-        contraindications: [],
-        safetyRating: .veryLowRisk
-    )
-
     // MARK: - All Validated Interventions
 
     /// Alle validierten Interventionen
@@ -646,11 +560,9 @@ public struct ValidatedScienceDatabase {
         resonanceBreathing,
         gammaEntrainment40Hz,
         pemfBoneHealing,
-        binauralBeatsAnxiety,
         nasaVibrationTherapy,
         mitAffectiveComputing,
-        photonicAlphaEntrainment,
-        binauralBrainwaveEntrainment
+        photonicAlphaEntrainment
     ]
 
     /// Interventionen nach Evidenzlevel

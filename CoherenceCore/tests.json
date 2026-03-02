@@ -147,7 +147,7 @@
       "name": "Neural-Flow-Entrainment-Pattern",
       "feature": "F005",
       "platforms": ["ios", "android", "windows", "linux"],
-      "description": "Isochronic/binaural beat patterns",
+      "description": "Isochronic/pulsed tone patterns",
       "validation": {
         "type": "audio_output",
         "criteria": "Beat frequency matches target +/- 0.5 Hz"

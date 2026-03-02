@@ -168,9 +168,9 @@ Audio follows head movement! 🎧
 ✅ **Particle Visualization** (reacts to audio)
 ✅ **Audio Level Bars** (24 bars, color-coded)
 
-✅ **Multidimensional Brainwave Entrainment** (via AudioEngine)
-✅ **Brainwave States** (Delta/Theta/Alpha/Beta/Gamma)
-✅ **HRV-based Beat Modulation** (adaptive frequencies)
+✅ **Stereo Tone Synthesis** (via AudioEngine)
+✅ **Frequency Presets** (Delta/Theta/Alpha/Beta/Gamma ranges)
+✅ **HRV-based Tone Modulation** (adaptive frequencies)
 
 ✅ **HealthKit Integration**
 ✅ **HRV RMSSD** (Heart Rate Variability)
@@ -221,9 +221,9 @@ CONNECTIONS:          ████████████ 100%
    - [ ] Audio level bars react
    - [ ] Pitch detection shows note
 
-2. **Multidimensional Brainwave Entrainment**
+2. **Tone Generator**
    - [ ] Tap beats button → sound plays
-   - [ ] Change brainwave state → frequency changes
+   - [ ] Change frequency preset → frequency changes
    - [ ] Adjust volume → amplitude changes
 
 3. **HealthKit**
@@ -235,7 +235,7 @@ CONNECTIONS:          ████████████ 100%
 4. **Bio-Parameter Mapping**
    - [ ] HRV changes → reverb changes (listen!)
    - [ ] HR changes → sound brightness changes
-   - [ ] Voice pitch → adapts to brainwave entrainment
+   - [ ] Voice pitch → adapts to tone synthesis
 
 5. **Spatial Audio** (if iOS 19+ with AirPods)
    - [ ] Connect AirPods Pro/Max
@@ -254,7 +254,7 @@ You know everything works when:
 ✅ All buttons functional
 ✅ Audio recording works
 ✅ Frequency/pitch displays update
-✅ Multidimensional Brainwave Entrainment play
+✅ Tone generator plays
 ✅ HRV data shows (if authorized)
 ✅ Spatial audio toggle appears (if supported)
 ✅ Audio changes with bio-parameters

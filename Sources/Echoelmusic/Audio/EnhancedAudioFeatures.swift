@@ -169,10 +169,10 @@ class AdaptiveAudioEngine: ObservableObject {
     }
 }
 
-// MARK: - Advanced Binaural Processor
+// MARK: - Advanced Audio Processor
 
-/// Advanced binaural beat processor with gamma entrainment and Schumann resonance
-class AdvancedBinauralProcessor {
+/// Advanced audio processor with spatial rendering
+class AdvancedToneProcessor {
 
     // MARK: - Frequency Presets
 
@@ -228,7 +228,7 @@ class AdvancedBinauralProcessor {
         self.currentPreset = preset
         self.beatType = type
         self.amplitude = amplitude.clamped(to: 0.0...1.0)
-        log.audio("Binaural configured: \(preset.rawValue), type: \(type)")
+        log.audio("Tone processor configured: \(preset.rawValue), type: \(type)")
     }
 
     func enableHRTF(_ enabled: Bool, azimuth: Float = 0.0) {
@@ -249,7 +249,7 @@ class AdvancedBinauralProcessor {
         let channelCount = Int(buffer.format.channelCount)
 
         guard channelCount >= 2 else {
-            log.audio("Binaural requires stereo output", level: .warning)
+            log.audio("Stereo processing requires stereo output", level: .warning)
             return
         }
 

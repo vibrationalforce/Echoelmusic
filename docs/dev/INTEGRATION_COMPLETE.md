@@ -183,7 +183,7 @@ Follow on-screen instructions to:
 - **Low HRV** → Less reverb, audio moves around
 - **High HR** → Brighter sound (higher filter)
 - **Low HR** → Darker sound (lower filter)
-- **Voice Pitch** → Adapts to brainwave entrainment
+- **Voice Pitch** → Adapts to tone synthesis
 
 ---
 
@@ -342,7 +342,7 @@ You know the integration is working when:
 ✅ Head tracking visualization shows movement
 ✅ Audio follows head movements
 ✅ HRV changes affect reverb/spatial position
-✅ Voice pitch adapts to brainwave entrainment
+✅ Voice pitch adapts to tone synthesis
 ✅ Bio-parameters display in UI
 
 ---

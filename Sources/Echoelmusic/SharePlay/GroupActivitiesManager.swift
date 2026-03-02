@@ -53,13 +53,13 @@ struct EchoelmusicActivity: GroupActivity {
     struct SessionConfiguration: Codable {
         let targetDuration: TimeInterval
         let breathingRate: Double
-        let binauralFrequency: Float
+        let toneFrequency: Float
         let visualizationMode: String
 
         static let `default` = SessionConfiguration(
             targetDuration: 600, // 10 minutes
             breathingRate: 6.0,
-            binauralFrequency: 10.0, // Alpha waves
+            toneFrequency: 10.0, // Alpha waves
             visualizationMode: "mandala"
         )
     }

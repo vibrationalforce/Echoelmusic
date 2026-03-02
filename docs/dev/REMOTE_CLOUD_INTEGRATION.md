@@ -608,19 +608,19 @@ Basis: Cymatics, Sound Therapy Research
 Concept:
   - Jedes Organ hat eine resonante Frequenz
   - Solfeggio-Frequenzen (removed from code, too esoteric)
-  - Multidimensional Brainwave Entrainment (frequency entrainment)
+  - Stereo tone generation (frequency differentials)
   - Isochronic Tones (pulsed tones)
 
 Scientific Research:
   1. Vibroacoustic Therapy for Pain (University of Helsinki)
-  2. Multidimensional Brainwave Entrainment for Anxiety Reduction (Frontiers in Psychiatry, 2020)
-  3. Sound Healing (Review paper, Music and Medicine, 2021)
+  2. Auditory Stimulation Research (Frontiers in Psychiatry, 2020)
+  3. Music and Medicine (Review paper, Music and Medicine, 2021)
 
 Implementation:
   File: Sources/Wellness/BiofeedbackEngine.h (concept)
   Features:
     - Frequency generator (selectable frequencies)
-    - Multidimensional Brainwave Entrainment generator
+    - Stereo tone generator
     - Isochronic tone generator
     - Visual cymatics display
     - Guided breathing exercises
@@ -1105,7 +1105,7 @@ Audio Therapy:
   1. "Vibroacoustic therapy for pain"
      University of Helsinki
 
-  2. "Multidimensional Brainwave Entrainment for Anxiety Reduction"
+  2. "Auditory Stimulation for Anxiety Reduction"
      Frontiers in Psychiatry (2020)
 ```
 

@@ -40,15 +40,6 @@
    - Room simulation
    - Bio-reactive spatial positioning
 
-#### **Relaxation & Wellness** (Non-Medical)
-19. ✅ **BrainwaveEntrainment** - Scientifically-grounded audio relaxation
-   - Multidimensional Brainwave Entrainment (Delta/Theta/Alpha/Beta/Gamma)
-   - Isochronic tones
-   - 40Hz Gamma (MIT GENUS research)
-   - Bio-feedback adaptive adjustment
-   - Session tracking
-   - **DISCLAIMER:** NOT a medical device. For relaxation only.
-
 ### 🎼 **INTELLIGENT MUSIC TOOLS**
 
 20. ✅ **ArpWeaver** - Scale-aware arpeggiator
@@ -264,7 +255,6 @@
 - Visuals: Particle behavior, color shifts, animation speed
 - Lasers: Beam movement, rotation, pattern morphing
 - Video: Color grading intensity
-- Wellness: Adaptive brainwave entrainment
 - Spatial: 3D object positioning
 
 ### 🎵 **2. AUDIO-REACTIVE EVERYTHING**
@@ -404,10 +394,9 @@
 - ✅ AMBEO Orbit
 - ✅ Dear Reality dearVR
 
-### **Healing/Wellness**
+### **Wellness**
 - ✅ Brain.fm
 - ✅ Endel
-- ✅ Frequency healing apps
 
 ---
 
@@ -473,7 +462,6 @@
 - Distribution
 
 ### **Wellness Practitioners**
-- Brainwave entrainment generator
 - Bio-feedback integration
 - Session tracking
 - Client management

@@ -573,14 +573,14 @@ struct SoundSettingsSheet: View {
                 // Layers
                 Section("Layer Volumes") {
                     sliderRow("Pad / Drone", value: $engine.preferences.padVolume)
-                    sliderRow("Entrainment Beats", value: $engine.preferences.beatsVolume)
+                    sliderRow("Audio Beats", value: $engine.preferences.beatsVolume)
                     Toggle("Beats Enabled", isOn: $engine.preferences.beatsEnabled)
                     sliderRow("Breathing Guide", value: $engine.preferences.breathingVolume)
                     sliderRow("Harmonic Overtones", value: $engine.preferences.harmonicsVolume)
                 }
 
                 // Beats
-                Section("Brainwave Entrainment") {
+                Section("Audio Settings") {
                     HStack {
                         Text("Beat Frequency")
                         Spacer()

@@ -455,7 +455,7 @@ class QuantumPresetTest {
         assertEquals("deep-meditation", preset.id)
         assertEquals("Deep Meditation", preset.name)
         assertEquals(EmulationMode.BIO_COHERENT, preset.emulationMode)
-        assertEquals(6f, preset.binauralFrequency, 0.001f)
+        assertEquals(6f, preset.audioFrequency, 0.001f)
         assertEquals(PresetCategory.MEDITATION, preset.category)
     }
 
@@ -464,7 +464,7 @@ class QuantumPresetTest {
         val preset = QuantumPresets.focusFlow
         assertEquals("focus-flow", preset.id)
         assertEquals(EmulationMode.QUANTUM_INSPIRED, preset.emulationMode)
-        assertEquals(18f, preset.binauralFrequency, 0.001f)
+        assertEquals(18f, preset.audioFrequency, 0.001f)
         assertEquals(PresetCategory.FOCUS, preset.category)
     }
 
@@ -473,7 +473,7 @@ class QuantumPresetTest {
         val preset = QuantumPresets.quantumDream
         assertEquals("quantum-dream", preset.id)
         assertEquals(EmulationMode.FULL_QUANTUM, preset.emulationMode)
-        assertEquals(2f, preset.binauralFrequency, 0.001f)
+        assertEquals(2f, preset.audioFrequency, 0.001f)
         assertEquals(PresetCategory.SLEEP, preset.category)
     }
 

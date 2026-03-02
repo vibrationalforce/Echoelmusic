@@ -203,7 +203,7 @@ Tests in `Tests/EchoelmusicTests/`. Key suites:
 - `ComprehensiveTestSuite.swift` — Main
 - `ComprehensiveQuantumTests.swift` — Quantum
 - `Comprehensive2000Tests.swift` / `Comprehensive8000Tests.swift` — Coverage
-- Individual: ControlHub, BinauralBeat, HealthKit, FaceMapper, PitchDetector, Accessibility
+- Individual: ControlHub, HealthKit, FaceMapper, PitchDetector, Accessibility
 
 ---
 

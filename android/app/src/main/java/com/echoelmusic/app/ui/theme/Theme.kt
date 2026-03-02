@@ -72,15 +72,6 @@ val CoherenceMedium = Color(0xFFFFD700)    // Gold
 val CoherenceHigh = Color(0xFF00FFFF)      // Neon cyan
 
 // ============================================================
-// Brainwave State Colors (for binaural beats UI)
-// ============================================================
-val BrainwaveDelta = Color(0xFF9B30FF)     // Deep purple - deep sleep
-val BrainwaveTheta = Color(0xFF6366F1)     // Indigo - meditation
-val BrainwaveAlpha = Color(0xFF00FFAB)     // Mint green - relaxation
-val BrainwaveBeta = Color(0xFFFFD700)      // Gold - focus
-val BrainwaveGamma = Color(0xFFFF1493)     // Neon pink - peak performance
-
-// ============================================================
 // Dark Color Scheme (Vaporwave)
 // ============================================================
 private val VaporwaveDarkColorScheme = darkColorScheme(
@@ -287,13 +278,6 @@ object EchoelColors {
     val coherenceLow = CoherenceLow
     val coherenceMedium = CoherenceMedium
     val coherenceHigh = CoherenceHigh
-
-    // Brainwave states
-    val brainwaveDelta = BrainwaveDelta
-    val brainwaveTheta = BrainwaveTheta
-    val brainwaveAlpha = BrainwaveAlpha
-    val brainwaveBeta = BrainwaveBeta
-    val brainwaveGamma = BrainwaveGamma
 
     // Gradient presets
     val backgroundGradientColors = listOf(VaporBgDarkBlue, VaporBgDeepPurple, VaporBgDeep)

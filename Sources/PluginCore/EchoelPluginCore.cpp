@@ -737,7 +737,7 @@ static const EchoelPluginDescriptor s_descriptors[] = {
      "com.echoelmusic:EchoelMIDI", "Echoelmusic"},
 
     {ECHOEL_ENGINE_BIO,    ECHOEL_PLUGIN_TYPE_INSTRUMENT, "com.echoelmusic.bio", "EchoelBio",
-     "Binaural beat & AI tone generator", ECHOEL_PLUGIN_VERSION_STRING, ECHOEL_VENDOR_NAME, ECHOEL_VENDOR_URL,
+     "Bio-reactive audio processor", ECHOEL_PLUGIN_VERSION_STRING, ECHOEL_VENDOR_NAME, ECHOEL_VENDOR_URL,
      36, {0, 2, 0}, 0x61756D75, 0x4562696F/*Ebio*/, 0x4563686F,
      "A03D6F7B8C9D0E1F2A3B4C5D6E7F8091", "com.echoelmusic.bio", bioFeatures, 0x45620001,
      "com.echoelmusic:EchoelBio", "Echoelmusic"},

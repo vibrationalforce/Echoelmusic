@@ -3,7 +3,7 @@
 //
 // Generates a layered soundscape that responds to real-time HRV/coherence:
 // - Layer 1: Warm pad/drone (foundation) — always playing
-// - Layer 2: Binaural/isochronic beats (entrainment) — optional
+// - Layer 2: Isochronic/pulsed tones — optional
 // - Layer 3: Breathing guide tones (chime on inhale/exhale) — optional
 // - Layer 4: Harmonic overtones (respond to coherence) — optional
 //
@@ -94,10 +94,10 @@ public struct HRVSoundPreferences: Codable, Sendable {
     /// Selected timbre for the pad/drone layer
     public var timbre: SoundTimbre
 
-    /// Brainwave entrainment beat frequency (Hz)
+    /// Target audio frequency (Hz)
     public var beatFrequency: Float
 
-    /// Whether binaural/isochronic beats are enabled
+    /// Whether isochronic beats are enabled
     public var beatsEnabled: Bool
 
     /// Breathing guide style
@@ -450,7 +450,7 @@ public final class HRVSoundscapeEngine: ObservableObject {
         return buffer
     }
 
-    /// Generate binaural/isochronic beats buffer
+    /// Generate isochronic beats buffer
     private func generateBeatsBuffer(format: AVAudioFormat) -> AVAudioPCMBuffer? {
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: bufferFrameCount) else { return nil }
         buffer.frameLength = bufferFrameCount
@@ -468,7 +468,7 @@ public final class HRVSoundscapeEngine: ObservableObject {
         let modulatedBeat = Swift.max(1.0, beat + coherenceShift)
 
         if isHeadphonesConnected {
-            // Binaural mode: different frequency per ear
+            // Stereo mode: different frequency per ear
             let leftFreq = carrier - modulatedBeat / 2.0
             let rightFreq = carrier + modulatedBeat / 2.0
             let leftInc = 2.0 * Float.pi * leftFreq / sampleRate

@@ -268,7 +268,7 @@ class MusicGenreTest {
 
     @Test
     fun `binaural has correct display name`() {
-        assertEquals("Multidimensional Brainwave Entrainment", MusicGenre.BINAURAL.displayName)
+        assertEquals("Spatial Audio", MusicGenre.BINAURAL.displayName)
     }
 }
 

@@ -10,7 +10,7 @@ import AVFoundation
 ///
 /// References:
 /// - HRV: Scientific Reports 2025, HeartMath Institute
-/// - Binaural: PMC Systematic Review 2023, MDPI Meta-Analysis 2024
+/// - Audio Processing: PMC Systematic Review 2023, MDPI Meta-Analysis 2024
 /// - Breathing: PubMed systematic reviews on resonance frequency
 public enum AudioConstants {
 

@@ -126,7 +126,7 @@ Exclusion Criteria:
 - Genre selection based on desired emotional state
 - Tempo/rhythm matching to arousal levels
 - Harmonic content for stress reduction
-- Multidimensional Brainwave Entrainment (evidence-based frequencies only)
+- Tone synthesis (creative audio frequencies)
 
 ---
 

@@ -55,7 +55,7 @@ Sources/Blab/
 **AudioEngine.swift** (Existing)
 - AVAudioEngine-based real-time processing
 - Low-latency input tap (microphone)
-- Multidimensional Brainwave Entrainment generation
+- Stereo tone generation
 - Spatial audio integration hooks
 
 **MicrophoneManager.swift** (Existing)
@@ -365,7 +365,7 @@ audioPublisher
 
 ## 6. 🧘 Neuroakustik & Wellness
 
-### **Binaural / Isochronic Generators**
+### **Stereo Tone / Isochronic Generators**
 
 **Existing:** `BinauralBeatGenerator.swift` (partial implementation)
 
@@ -380,10 +380,10 @@ class NeuroAcousticEngine {
         case gamma = 40.0     // 30-100 Hz (cognition)
     }
 
-    // Generate binaural beat
-    func generateBinaural(
+    // Generate stereo tone
+    func generateTone(
         baseFreq: Float,      // e.g., 200 Hz
-        beatFreq: Float,      // e.g., 10 Hz (Alpha)
+        beatFreq: Float,      // e.g., 10 Hz frequency differential
         duration: TimeInterval
     ) -> AVAudioPCMBuffer {
         // Left ear: baseFreq
@@ -398,7 +398,7 @@ class NeuroAcousticEngine {
         duration: TimeInterval
     ) -> AVAudioPCMBuffer {
         // Amplitude modulation at pulseRate
-        // More intense than binaural
+        // More intense than stereo differential tones
     }
 }
 ```
@@ -443,7 +443,7 @@ class AdaptiveHealingEngine {
     func learn(session: SessionData) {
         // ML model learns:
         // - Which frequencies → best HRV response
-        // - Optimal binaural beat rates
+        // - Optimal tone parameters
         // - Visual preferences
 
         // Creates PersonalHealingProfile
@@ -503,7 +503,7 @@ func applyAdaptiveRules(context: ContextState) {
         audioEngine.setTempo(60)  // Slow tempo
         audioEngine.setReverbWet(0.8)  // More reverb
         visualEngine.setColors(.calmBlue)
-        neuroEngine.startBinaural(.alpha)  // Alpha waves
+        neuroEngine.startTone(.alpha)  // Alpha frequency range
     }
 
     // High motion → Add rhythm
@@ -514,7 +514,7 @@ func applyAdaptiveRules(context: ContextState) {
 
     // Low focus → Stimulate
     if context.focus < 0.3 {
-        neuroEngine.startBinaural(.beta)  // Beta waves for focus
+        neuroEngine.startTone(.beta)  // Beta frequency range
         visualEngine.setContrast(1.2)  // Sharper visuals
     }
 
@@ -1112,7 +1112,7 @@ blab-ios-app/
 
 ### **Neuro-Acoustics Research**
 - HeartMath Institute - HRV Coherence
-- Brainwave Entrainment Studies (EEG-validated)
+- Auditory Stimulation Studies (EEG-validated)
 - MIT Tsai Lab - 40Hz Gamma Entrainment (GENUS)
 
 ### **AI/ML Resources**

@@ -717,7 +717,7 @@ data class QuantumPreset(
     val icon: String,
     val emulationMode: EmulationMode,
     val visualizationType: VisualizationType,
-    val binauralFrequency: Float,
+    val audioFrequency: Float,
     val sessionDuration: Long, // seconds
     val category: PresetCategory
 )
@@ -731,11 +731,11 @@ object QuantumPresets {
     val deepMeditation = QuantumPreset(
         id = "deep-meditation",
         name = "Deep Meditation",
-        description = "Theta waves for deep meditative states",
+        description = "Low-frequency audio for deep meditative states",
         icon = "🧘",
         emulationMode = EmulationMode.BIO_COHERENT,
         visualizationType = VisualizationType.WAVE_FUNCTION,
-        binauralFrequency = 6f,
+        audioFrequency = 6f,
         sessionDuration = 1200,
         category = PresetCategory.MEDITATION
     )
@@ -743,11 +743,11 @@ object QuantumPresets {
     val focusFlow = QuantumPreset(
         id = "focus-flow",
         name = "Focus Flow",
-        description = "Beta waves for concentration",
+        description = "Mid-frequency audio for concentration",
         icon = "🎯",
         emulationMode = EmulationMode.QUANTUM_INSPIRED,
         visualizationType = VisualizationType.COHERENCE_FIELD,
-        binauralFrequency = 18f,
+        audioFrequency = 18f,
         sessionDuration = 1800,
         category = PresetCategory.FOCUS
     )
@@ -755,11 +755,11 @@ object QuantumPresets {
     val quantumDream = QuantumPreset(
         id = "quantum-dream",
         name = "Quantum Dream",
-        description = "Delta waves for lucid dreaming",
+        description = "Sub-bass frequency audio for dream exploration",
         icon = "🌙",
         emulationMode = EmulationMode.FULL_QUANTUM,
         visualizationType = VisualizationType.COSMIC_WEB,
-        binauralFrequency = 2f,
+        audioFrequency = 2f,
         sessionDuration = 3600,
         category = PresetCategory.SLEEP
     )

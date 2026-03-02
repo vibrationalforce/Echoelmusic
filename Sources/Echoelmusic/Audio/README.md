@@ -4,15 +4,17 @@ Core audio processing engine for Echoelmusic.
 
 ## Overview
 
-The Audio module provides the fundamental audio synthesis, processing, and playback capabilities. It handles binaural beat generation, spatial audio integration, and preset management.
+The Audio module provides audio synthesis, processing, and real-time playback capabilities. It handles spatial audio integration, effects processing, and preset management.
 
 ## Key Components
 
 | Component | Description |
 |-----------|-------------|
-| `AudioEngine` | Main audio engine with binaural generation, reverb, and preset loading |
-| `BinauralBeatGenerator` | Generates binaural beats for brainwave entrainment |
-| `SpatialAudioEngine` | 3D/4D spatial audio rendering |
+| `AudioEngine` | Main audio engine with master output, effects, and preset loading |
+| `ProMixEngine` | Professional mixing console with channel strips and buses |
+| `SpatialAudioEngine` | 3D/4D spatial audio rendering (HRTF binaural, ambisonics) |
+| `LoopEngine` | Loop recording and playback |
+| `RecordingEngine` | Multi-track recording and playback |
 | `Nodes/` | Audio graph nodes for synthesis and effects |
 
 ## Usage
@@ -21,20 +23,16 @@ The Audio module provides the fundamental audio synthesis, processing, and playb
 let engine = AudioEngine()
 engine.start()
 
-// Load a preset
-engine.loadPreset(named: "Deep Meditation")
+// Schedule playback
+engine.schedulePlayback(buffer: audioBuffer)
 
-// Configure binaural beats
-engine.binauralGenerator.configure(carrier: 432.0, beat: 6.0, amplitude: 0.3)
-engine.binauralBeatsEnabled = true
+// Control master volume
+engine.masterVolume = 0.85
 ```
 
 ## Presets
 
-The engine supports 74+ curated presets including:
-- **Meditation**: Delta, Theta, Alpha frequencies
-- **Focus**: Beta, Gamma frequencies
-- **Creative**: Bio-reactive audio synthesis
+The engine supports 74+ curated presets for professional audio production.
 
 ## Dependencies
 

@@ -13,56 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Brainwave state presets for binaural beats generation.
- * Each state corresponds to a frequency range and a carrier/offset pair.
- *
- * NOTE: These are audio exploration tools, NOT therapeutic claims.
- */
-enum class BrainwaveState(
-    val displayName: String,
-    val description: String,
-    val frequencyRange: String,
-    val binauralBeatHz: Float,
-    val carrierHz: Float
-) {
-    DELTA(
-        displayName = "Delta",
-        description = "Deep sleep / recovery",
-        frequencyRange = "0.5 - 4 Hz",
-        binauralBeatHz = 2.0f,
-        carrierHz = 200f
-    ),
-    THETA(
-        displayName = "Theta",
-        description = "Meditation / creativity",
-        frequencyRange = "4 - 8 Hz",
-        binauralBeatHz = 6.0f,
-        carrierHz = 220f
-    ),
-    ALPHA(
-        displayName = "Alpha",
-        description = "Relaxation / calm focus",
-        frequencyRange = "8 - 13 Hz",
-        binauralBeatHz = 10.0f,
-        carrierHz = 250f
-    ),
-    BETA(
-        displayName = "Beta",
-        description = "Active focus / concentration",
-        frequencyRange = "13 - 30 Hz",
-        binauralBeatHz = 18.0f,
-        carrierHz = 300f
-    ),
-    GAMMA(
-        displayName = "Gamma",
-        description = "Peak performance / insight",
-        frequencyRange = "30 - 100 Hz",
-        binauralBeatHz = 40.0f,
-        carrierHz = 400f
-    )
-}
-
-/**
  * Echoelmusic ViewModel
  * Proper Android architecture replacing singleton pattern.
  *
@@ -76,7 +26,6 @@ enum class BrainwaveState(
  * - Audio engine (Oboe-based low-latency synth)
  * - MIDI manager (USB + BLE MIDI)
  * - Bio-reactive engine (Health Connect integration)
- * - Binaural beats generation state
  * - Audio transport controls
  */
 class EchoelmusicViewModel(application: Application) : AndroidViewModel(application) {
@@ -138,24 +87,6 @@ class EchoelmusicViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _masterVolume = MutableStateFlow(0.75f)
     val masterVolume: StateFlow<Float> = _masterVolume.asStateFlow()
-
-    // ================================================================
-    // Binaural Beats State
-    // ================================================================
-    private val _binauralBeatsEnabled = MutableStateFlow(false)
-    val binauralBeatsEnabled: StateFlow<Boolean> = _binauralBeatsEnabled.asStateFlow()
-
-    private val _selectedBrainwaveState = MutableStateFlow(BrainwaveState.ALPHA)
-    val selectedBrainwaveState: StateFlow<BrainwaveState> = _selectedBrainwaveState.asStateFlow()
-
-    private val _binauralVolume = MutableStateFlow(0.5f)
-    val binauralVolume: StateFlow<Float> = _binauralVolume.asStateFlow()
-
-    private val _carrierFrequency = MutableStateFlow(250f)
-    val carrierFrequency: StateFlow<Float> = _carrierFrequency.asStateFlow()
-
-    private val _beatFrequency = MutableStateFlow(10f)
-    val beatFrequency: StateFlow<Float> = _beatFrequency.asStateFlow()
 
     // ================================================================
     // Synth Parameter State (for visualizer)
@@ -266,49 +197,6 @@ class EchoelmusicViewModel(application: Application) : AndroidViewModel(applicat
 
     fun setReverbMix(mix: Float) {
         _reverbMix.value = mix
-    }
-
-    // ================================================================
-    // Binaural Beats Controls
-    // ================================================================
-    fun toggleBinauralBeats() {
-        _binauralBeatsEnabled.value = !_binauralBeatsEnabled.value
-        if (_binauralBeatsEnabled.value) {
-            applyBrainwaveState(_selectedBrainwaveState.value)
-            Log.i(TAG, "Binaural beats enabled: ${_selectedBrainwaveState.value.displayName}")
-        } else {
-            Log.i(TAG, "Binaural beats disabled")
-        }
-    }
-
-    fun selectBrainwaveState(state: BrainwaveState) {
-        _selectedBrainwaveState.value = state
-        _carrierFrequency.value = state.carrierHz
-        _beatFrequency.value = state.binauralBeatHz
-        if (_binauralBeatsEnabled.value) {
-            applyBrainwaveState(state)
-        }
-        Log.i(TAG, "Brainwave state selected: ${state.displayName} (${state.binauralBeatHz} Hz)")
-    }
-
-    fun setBinauralVolume(volume: Float) {
-        _binauralVolume.value = volume.coerceIn(0f, 1f)
-    }
-
-    fun setCarrierFrequency(frequency: Float) {
-        _carrierFrequency.value = frequency.coerceIn(50f, 800f)
-    }
-
-    fun setBeatFrequency(frequency: Float) {
-        _beatFrequency.value = frequency.coerceIn(0.5f, 100f)
-    }
-
-    private fun applyBrainwaveState(state: BrainwaveState) {
-        // Apply binaural beat parameters to audio engine
-        // Left ear = carrierHz, Right ear = carrierHz + binauralBeatHz
-        _audioEngine.setParameter(AudioEngine.Params.LFO_RATE, state.binauralBeatHz)
-        _audioEngine.setParameter(AudioEngine.Params.LFO_DEPTH, _binauralVolume.value)
-        Log.i(TAG, "Applied brainwave: carrier=${state.carrierHz}Hz, beat=${state.binauralBeatHz}Hz")
     }
 
     // ================================================================

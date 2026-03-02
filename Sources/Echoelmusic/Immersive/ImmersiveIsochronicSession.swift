@@ -1,8 +1,8 @@
 // ImmersiveIsochronicSession.swift
 // Echoelmusic - Unified Immersive Isochronic Experience
 //
-// Combines isochronic/binaural audio with immersive visuals and bio-reactive modulation
-// for complete brainwave entrainment experiences in VR/AR environments.
+// Combines isochronic audio with immersive visuals and bio-reactive modulation
+// for immersive frequency tone experiences in VR/AR environments.
 //
 // Created by Echoelmusic Team
 // Copyright 2026 Echoelmusic. MIT License.
@@ -26,16 +26,16 @@ public enum IsochronicPreset: String, CaseIterable, Identifiable {
 
     public var id: String { rawValue }
 
-    /// Target brainwave frequency in Hz
+    /// Target modulation frequency in Hz
     public var targetFrequency: Float {
         switch self {
-        case .deepMeditation: return 6.0   // Theta
-        case .focusFlow: return 14.0       // Low Beta
+        case .deepMeditation: return 6.0
+        case .focusFlow: return 14.0
         case .creativeDream: return 7.83   // Schumann Resonance
-        case .relaxationPortal: return 10.0 // Alpha
-        case .sleepJourney: return 2.0     // Delta
-        case .energyBoost: return 20.0     // Beta
-        case .quantumCoherence: return 40.0 // Gamma
+        case .relaxationPortal: return 10.0
+        case .sleepJourney: return 2.0
+        case .energyBoost: return 20.0
+        case .quantumCoherence: return 40.0
         case .sacredGeometry: return 7.83  // Schumann
         }
     }
@@ -79,21 +79,21 @@ public enum IsochronicPreset: String, CaseIterable, Identifiable {
     public var description: String {
         switch self {
         case .deepMeditation:
-            return "Enter a deep meditative state with theta waves and breathing mandalas"
+            return "A calming session with slow-pulse tones and breathing mandalas"
         case .focusFlow:
-            return "Enhance concentration and productivity with focused beta entrainment"
+            return "An upbeat rhythmic tone session with focused visuals"
         case .creativeDream:
-            return "Unlock creative potential with Schumann resonance and fractal visuals"
+            return "Ambient tones at Schumann resonance frequency with fractal visuals"
         case .relaxationPortal:
-            return "Relax deeply with alpha waves and coherence field visualization"
+            return "Gentle pulsing tones with coherence field visualization"
         case .sleepJourney:
-            return "Prepare for restful sleep with delta waves and gentle ocean visuals"
+            return "Very slow pulse tones with gentle ocean visuals for winding down"
         case .energyBoost:
-            return "Quick energizing session with beta waves and particle dynamics"
+            return "Quick energizing session with fast-pulse tones and particle dynamics"
         case .quantumCoherence:
-            return "Experience peak awareness with gamma entrainment and quantum visuals"
+            return "High-frequency pulsing tones with quantum-inspired visuals"
         case .sacredGeometry:
-            return "Connect with universal patterns through sacred geometry and Schumann resonance"
+            return "Ambient tones with sacred geometry patterns and Schumann resonance frequency"
         }
     }
 }
@@ -112,15 +112,14 @@ public enum IsochronicVisualMode: String, CaseIterable {
     case cosmicNebula = "Cosmic Nebula"
 }
 
-/// Audio mode for isochronic/binaural delivery
+/// Audio mode for isochronic tone delivery
 public enum IsochronicAudioMode: String, CaseIterable {
     case isochronic = "Isochronic Tones"      // Works on speakers
-    case binaural = "Binaural Beats"           // Requires headphones
     case monaural = "Monaural Beats"           // Hybrid approach
     case hybrid = "Hybrid (Auto-detect)"       // Auto-selects based on output
 
     public var requiresHeadphones: Bool {
-        self == .binaural
+        false
     }
 }
 
@@ -175,10 +174,9 @@ public struct IsochronicSessionState {
 /// Unified Immersive Isochronic Session Engine
 ///
 /// Combines:
-/// - Isochronic/Binaural beat generation
+/// - Isochronic tone generation
 /// - Immersive visual rendering (VR/AR ready)
 /// - Bio-reactive parameter modulation
-/// - Circadian rhythm awareness
 /// - Session management and analytics
 ///
 /// DISCLAIMER: This feature is for relaxation and creative purposes only.
@@ -321,14 +319,6 @@ public final class ImmersiveIsochronicSession: ObservableObject {
             let sharpEnvelope = pow(envelope, 2)  // Sharper pulses
             sample = carrier * sharpEnvelope
 
-        case .binaural:
-            // Binaural: different frequencies per ear (mono mix for now)
-            let leftFreq = carrierFreq - modulationFreq / 2
-            let rightFreq = carrierFreq + modulationFreq / 2
-            let leftPhase = Float(2.0 * Double.pi * Double(leftFreq) / sampleRate)
-            let rightPhase = Float(2.0 * Double.pi * Double(rightFreq) / sampleRate)
-            sample = (sin(carrierPhase + leftPhase) + sin(carrierPhase + rightPhase)) / 2
-
         case .monaural:
             // Monaural: beat created in the signal itself
             let beat = (sin(modulationPhase) + 1) / 2
@@ -347,7 +337,7 @@ public final class ImmersiveIsochronicSession: ObservableObject {
 
     private func resolveAudioMode() -> IsochronicAudioMode {
         if audioMode == .hybrid {
-            return isHeadphonesConnected ? .binaural : .isochronic
+            return .isochronic
         }
         return audioMode
     }
@@ -735,11 +725,6 @@ public struct ImmersiveIsochronicView: View {
                         }
                     }
 
-                    if session.audioMode == .binaural && !session.isHeadphonesConnected {
-                        Text("⚠️ Headphones required for binaural beats")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
                 }
 
                 Section("Bio Modulation") {

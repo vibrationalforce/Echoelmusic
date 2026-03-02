@@ -46,7 +46,7 @@ public enum CreativeMode: String, CaseIterable, Codable, Sendable {
     case harmonyAnalysis = "Harmony Analysis"
     case audioRestoration = "Audio Restoration"
     case spatialAudio = "Spatial Audio Design"
-    case binauralCreation = "Binaural Beat Creation"
+    case toneDesign = "Tone Design"
     case quantumMusic = "Quantum Music"
 
     // Content Creation

@@ -144,7 +144,7 @@ android/app/src/main/cpp/
 - [x] ALSA Audio Engine (`LinuxAudioEngine.hpp`)
 - [x] PipeWire support (`PipeWireAudioEngine.hpp`)
 - [x] Mixer control (ALSAMixer)
-- [x] Binaural beat generator
+- [x] Tone generator
 - [x] Quantum emulator integration
 
 **Files:**

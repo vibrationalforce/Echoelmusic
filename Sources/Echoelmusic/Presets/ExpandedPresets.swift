@@ -39,7 +39,7 @@ public struct BioReactivePreset: EnginePreset {
     public static let deepMeditation = BioReactivePreset(
         id: UUID(),
         name: "Deep Meditation",
-        description: "Ultra-deep meditative state with theta entrainment and minimal stimulation",
+        description: "Ultra-deep meditative state with theta ambient and minimal stimulation",
         category: "Meditation",
         author: "Echoelmusic",
         version: "1.0",
@@ -49,7 +49,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 6.0,
+            "toneFrequency": 6.0,
             "reverbWetness": 0.7,
             "filterCutoff": 500,
             "volume": 0.4
@@ -79,7 +79,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 18.0,
+            "toneFrequency": 18.0,
             "reverbWetness": 0.2,
             "filterCutoff": 8000,
             "volume": 0.7
@@ -99,7 +99,7 @@ public struct BioReactivePreset: EnginePreset {
     public static let sleepInduction = BioReactivePreset(
         id: UUID(),
         name: "Sleep Induction",
-        description: "Gentle transition to deep sleep with delta entrainment",
+        description: "Gentle transition to deep sleep with delta ambient",
         category: "Sleep",
         author: "Echoelmusic",
         version: "1.0",
@@ -109,7 +109,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 2.0,
+            "toneFrequency": 2.0,
             "reverbWetness": 0.8,
             "filterCutoff": 300,
             "volume": 0.2
@@ -139,7 +139,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: false,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 20.0,
+            "toneFrequency": 20.0,
             "reverbWetness": 0.15,
             "filterCutoff": 10000,
             "volume": 0.6
@@ -159,7 +159,7 @@ public struct BioReactivePreset: EnginePreset {
     public static let focusZone = BioReactivePreset(
         id: UUID(),
         name: "Focus Zone",
-        description: "Laser-sharp concentration with gamma brainwave enhancement",
+        description: "Laser-sharp concentration with gamma frequency enhancement",
         category: "Focus",
         author: "Echoelmusic",
         version: "1.0",
@@ -169,7 +169,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: false,
         audioParameters: [
-            "binauralFrequency": 40.0,
+            "toneFrequency": 40.0,
             "reverbWetness": 0.1,
             "filterCutoff": 6000,
             "volume": 0.5
@@ -199,7 +199,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 10.0,
+            "toneFrequency": 10.0,
             "reverbWetness": 0.5,
             "filterCutoff": 2000,
             "volume": 0.45
@@ -229,7 +229,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 7.83,
+            "toneFrequency": 7.83,
             "reverbWetness": 0.4,
             "filterCutoff": 1000,
             "volume": 0.5
@@ -259,7 +259,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: false,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 8.0,
+            "toneFrequency": 8.0,
             "reverbWetness": 0.35,
             "filterCutoff": 3000,
             "volume": 0.5
@@ -289,7 +289,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 4.5,
+            "toneFrequency": 4.5,
             "reverbWetness": 0.6,
             "filterCutoff": 400,
             "volume": 0.3
@@ -319,7 +319,7 @@ public struct BioReactivePreset: EnginePreset {
         coherenceModulation: true,
         breathModulation: true,
         audioParameters: [
-            "binauralFrequency": 7.83,
+            "toneFrequency": 7.83,
             "reverbWetness": 0.65,
             "filterCutoff": 528,
             "volume": 0.4

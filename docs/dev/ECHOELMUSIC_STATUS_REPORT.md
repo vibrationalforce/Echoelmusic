@@ -176,12 +176,12 @@ Häufigste Warning-Typen:
 ### 3️⃣ WELLNESS SUITE (3 Therapeutische Systeme)
 
 #### 🧠 Audio-Visual Entrainment (AVE)
-Brainwave-Entrainment durch Multidimensional Brainwave Entrainment und isochronic tones:
-- **Delta** (0.5-4 Hz): Tiefschlaf, Heilung
-- **Theta** (4-8 Hz): Meditation, Kreativität
-- **Alpha** (8-13 Hz): Entspannung, Lernen
-- **Beta** (13-30 Hz): Fokus, Konzentration (⚠️ Epilepsie-Warnung 15-25 Hz)
-- **Gamma** (30-100 Hz): Kognition, Peak-Performance
+Audio-Visual Tone Synthesis mit stereo tones und isochronic tones:
+- **Delta** (0.5-4 Hz): Low-frequency range
+- **Theta** (4-8 Hz): Mid-low frequency range
+- **Alpha** (8-13 Hz): Mid frequency range
+- **Beta** (13-30 Hz): Mid-high frequency range (⚠️ Epilepsie-Warnung 15-25 Hz)
+- **Gamma** (30-100 Hz): High frequency range
 
 **Wissenschaftliche Basis:**
 - Frequency Following Response (FFR)
@@ -394,7 +394,7 @@ Custom JUCE Look & Feel:
 
 ### Biofeedback & Wellness
 - **HeartMath Institute** - HRV Coherence Training
-- **Frequency Following Response (FFR)** - Brainwave Entrainment
+- **Frequency Following Response (FFR)** - Auditory Processing
 - **Melanopsin Research** - Circadian Photoreception
 - **Gate Control Theory** - Vibrations-Therapie Schmerzlinderung
 - **Autonomic Nervous System** - Sympathikus/Parasympathikus Balance

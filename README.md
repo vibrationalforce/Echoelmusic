@@ -136,7 +136,7 @@ Bio-reactive state machine that drives all 10 tools through 8 operating modes:
 |------|----------|
 | **Studio** | Full DAW workflow — all tools active, recording enabled |
 | **Live** | Low-latency performance — audio priority, visual sync, cue system |
-| **Meditation** | Bio-focused — coherence tracking, brainwave entrainment, ambient synthesis |
+| **Meditation** | Bio-focused — coherence tracking, ambient synthesis, spatial audio |
 | **Video** | Video production — NLE editor, multi-cam, color grading, ProRes export |
 | **DJ** | Beat-matched — crossfader, clip launching, tempo sync, lighting chase |
 | **Collaboration** | Multi-user — SharePlay, Dante, EchoelSync, cloud sync |
@@ -150,7 +150,6 @@ Bio-reactive state machine that drives all 10 tools through 8 operating modes:
 ### Audio
 - Real-time voice processing (AVAudioEngine)
 - FFT + YIN pitch detection
-- Brainwave entrainment (8 states)
 - 6 spatial modes (Stereo, 3D, 4D Orbital, AFA, Binaural, Ambisonics)
 - Node-based audio graph, multi-track recording
 

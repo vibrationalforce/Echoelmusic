@@ -241,7 +241,7 @@ extension Session {
     /// Create meditation session template
     static func meditationTemplate() -> Session {
         var session = Session(name: "Meditation Session", tempo: 60)
-        session.addTrack(.binauralTrack())
+        session.addTrack(.spatialToneTrack())
         session.metadata.genre = "Meditation"
         session.metadata.mood = "Calm"
         return session
@@ -251,7 +251,7 @@ extension Session {
     static func healingTemplate() -> Session {
         var session = Session(name: "Healing Session", tempo: 72)
         session.addTrack(.voiceTrack())
-        session.addTrack(.binauralTrack())
+        session.addTrack(.spatialToneTrack())
         session.metadata.genre = "Healing"
         session.metadata.mood = "Peaceful"
         return session
@@ -261,7 +261,7 @@ extension Session {
     static func creativeTemplate() -> Session {
         var session = Session(name: "Creative Session", tempo: 120)
         session.addTrack(.voiceTrack())
-        session.addTrack(.binauralTrack())
+        session.addTrack(.spatialToneTrack())
         session.addTrack(.spatialTrack())
         session.metadata.genre = "Experimental"
         session.metadata.mood = "Inspired"

@@ -97,7 +97,7 @@ typedef enum {
     ECHOEL_ENGINE_MIX         = 2,    /* EchoelMix — mixer / spatial */
     ECHOEL_ENGINE_SEQ         = 3,    /* EchoelSeq — bio-reactive sequencer */
     ECHOEL_ENGINE_MIDI        = 4,    /* EchoelMIDI — MIDI 2.0 + MPE */
-    ECHOEL_ENGINE_BIO         = 5,    /* EchoelBio — binaural beats */
+    ECHOEL_ENGINE_BIO         = 5,    /* EchoelBio — bio-reactive audio */
     ECHOEL_ENGINE_FIELD       = 6,    /* EchoelField — visual analyzer */
     ECHOEL_ENGINE_BEAM        = 7,    /* EchoelBeam — DMX lighting */
     ECHOEL_ENGINE_NET         = 8,    /* EchoelNet — OSC/MSC/Dante */

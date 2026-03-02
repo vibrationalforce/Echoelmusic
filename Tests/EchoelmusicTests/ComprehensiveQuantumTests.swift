@@ -290,7 +290,7 @@ final class ComprehensiveQuantumTests: XCTestCase {
             XCTAssertFalse(preset.icon.isEmpty, "Preset icon must not be empty")
 
             XCTAssertGreaterThan(preset.sessionDuration, 0, "Session duration must be positive")
-            XCTAssertGreaterThanOrEqual(preset.binauralFrequency, 0, "Binaural frequency must be non-negative")
+            XCTAssertGreaterThanOrEqual(preset.toneFrequency, 0, "Tone frequency must be non-negative")
 
             // Validate mode string maps to actual mode
             let modeValid = QuantumLightEmulator.EmulationMode(rawValue: preset.emulationMode) != nil

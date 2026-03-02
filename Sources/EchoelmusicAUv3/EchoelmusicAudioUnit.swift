@@ -10,7 +10,7 @@
 //  ┌──────────────────────────────────────────────────────────────────────┐
 //  │ Instruments (aumu)                                                  │
 //  │   EchoelSynth (Esyn) — TR808 bass synthesizer                     │
-//  │   EchoelBio   (Ebio) — Binaural beat generator (brainwave states) │
+//  │   EchoelBio   (Ebio) — Bio-reactive audio processor               │
 //  │                                                                     │
 //  │ Effects (aufx)                                                      │
 //  │   EchoelFX    (Eefx) — Freeverb algorithmic reverb                │
