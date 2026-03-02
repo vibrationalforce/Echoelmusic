@@ -599,7 +599,7 @@ public class ProMixEngine: ObservableObject {
     /// Real-time DSP kernel that processes actual audio buffers.
     /// Manages per-channel buffer allocation, insert node chains,
     /// send routing, bus summing, and metering from real audio data.
-    public private(set) lazy var dspKernel: MixerDSPKernel = {
+    private(set) lazy var dspKernel: MixerDSPKernel = {
         let kernel = MixerDSPKernel(sampleRate: sampleRate, bufferSize: bufferSize)
         kernel.addChannel(id: masterChannel.id)
         return kernel

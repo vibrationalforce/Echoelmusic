@@ -289,6 +289,7 @@ struct MetalCymaticsView: NSViewRepresentable {
         let renderer = CymaticsRenderer()
     }
 }
+#endif // canImport(UIKit) / os(macOS)
 
 // MARK: - Preview
 

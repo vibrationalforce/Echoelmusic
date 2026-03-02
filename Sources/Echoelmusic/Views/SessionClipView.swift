@@ -876,7 +876,7 @@ class SessionClipViewModel: ObservableObject {
         } else {
             // Empty slot — record a new loop into it
             loopEngine.setTempo(bpm)
-            let bars = quantize == .bar ? 4 : (quantize == .beat ? 1 : 2)
+            let bars = quantize == .bar ? 4 : (quantize == .quarter ? 1 : 2)
             loopEngine.startLoopRecording(bars: bars)
             clips[track][scene] = ClipViewClip(name: "\(tracks[track].name) \(scene + 1)")
         }

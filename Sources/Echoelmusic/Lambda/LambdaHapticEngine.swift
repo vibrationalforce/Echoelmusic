@@ -27,7 +27,7 @@ public final class LambdaHapticEngine {
 
     /// Maximum haptic events per second to avoid overwhelming the Taptic Engine
     private let maxEventsPerSecond: Int = 30
-    private var lastEventTime: CFTimeInterval = 0
+    private var lastEventTime: TimeInterval = 0
 
     #if canImport(CoreHaptics)
     // MARK: - CoreHaptics State
@@ -137,7 +137,7 @@ public final class LambdaHapticEngine {
     // MARK: - Rate Limiting
 
     private func shouldFireEvent() -> Bool {
-        let now = CACurrentMediaTime()
+        let now = ProcessInfo.processInfo.systemUptime
         let minInterval = 1.0 / Double(maxEventsPerSecond)
         guard now - lastEventTime >= minInterval else { return false }
         lastEventTime = now

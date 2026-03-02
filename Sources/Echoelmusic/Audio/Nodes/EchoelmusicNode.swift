@@ -230,6 +230,7 @@ class BaseEchoelmusicNode: EchoelmusicNode {
 
     var isBypassed: Bool = false
     var isActive: Bool = false
+    var isBioReactive: Bool { false }
 
     var parameters: [NodeParameter] = []
 
