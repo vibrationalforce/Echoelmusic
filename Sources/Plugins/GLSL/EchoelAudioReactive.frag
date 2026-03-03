@@ -142,7 +142,7 @@ vec3 bioAura(vec2 uv) {
     /* Coherence-driven color */
     vec3 auraColor;
     if (u_bioCoherence > 0.7) {
-        /* High coherence: golden/green (heart chakra) */
+        /* High coherence: golden/green (high coherence state) */
         auraColor = vec3(0.9, 0.8, 0.2);
     } else if (u_bioCoherence > 0.4) {
         /* Medium coherence: blue/purple (calm) */

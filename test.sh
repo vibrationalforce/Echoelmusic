@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test.sh - VS Code friendly test script for BLAB
+# test.sh - VS Code friendly test script for Echoelmusic
 # Runs Swift unit tests with nice output
 #
 # Usage:
@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 
 # Banner
 echo -e "${BLUE}╔═══════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║  🧪 BLAB - Running Tests            ║${NC}"
+echo -e "${BLUE}║  Echoelmusic - Running Tests        ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════╝${NC}"
 echo ""
 

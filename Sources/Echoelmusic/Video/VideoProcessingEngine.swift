@@ -133,7 +133,7 @@ public enum VideoEffectType: String, CaseIterable, Codable, Sendable {
     case breathingWave = "Breathing Wave"
     case hrvCoherence = "HRV Coherence Glow"
     case bioSync = "Bio Sync"
-    case auralField = "Aural Energy Field"
+    case auralField = "Bio-Reactive Field"
     case spectrumColors = "Spectrum Color Mapping"
 
     // Cinematic Effects

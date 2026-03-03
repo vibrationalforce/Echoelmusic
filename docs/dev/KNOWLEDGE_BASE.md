@@ -291,7 +291,7 @@ fluctuation = (1 - coherence) × energy
 - [ ] 808 Bass Synth implementieren
 - [ ] Audio Thread Safety verbessern
 - [ ] TestFlight Build vorbereiten
-- [ ] Legacy BLAB-Referenzen (~116 verbleibend)
+- [x] Legacy BLAB-Referenzen — eliminated (March 2026)
 
 ---
 

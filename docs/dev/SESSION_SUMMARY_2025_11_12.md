@@ -75,11 +75,11 @@ REBRANDED (14 files):
   ✅ BlabTests → EchoelmusicTests
   ✅ @testable import Blab → Echoelmusic
 
-DELETED (4 old files):
-  ✅ BLAB_90_DAY_ROADMAP.md
-  ✅ BLAB_EXTENDED_VISION.md
-  ✅ BLAB_IMPLEMENTATION_ROADMAP.md
-  ✅ blab-dev.sh
+DELETED (legacy BLAB files — all removed):
+  ~~BLAB_90_DAY_ROADMAP.md~~
+  ~~BLAB_EXTENDED_VISION.md~~
+  ~~BLAB_IMPLEMENTATION_ROADMAP.md~~
+  ~~blab-dev.sh~~
 
 RESULT:
   • Clean, professional codebase

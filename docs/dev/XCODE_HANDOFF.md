@@ -593,8 +593,8 @@ git push origin main
 ### **Documentation:**
 - `PHASE_3_OPTIMIZED.md` - Optimization details
 - `DAW_INTEGRATION_GUIDE.md` - DAW integration
-- `BLAB_IMPLEMENTATION_ROADMAP.md` - Overall roadmap
-- `BLAB_90_DAY_ROADMAP.md` - 90-day plan
+- ~~`BLAB_IMPLEMENTATION_ROADMAP.md`~~ (removed — legacy branding)
+- ~~`BLAB_90_DAY_ROADMAP.md`~~ (removed — legacy branding)
 
 ### **Code Locations:**
 ```
