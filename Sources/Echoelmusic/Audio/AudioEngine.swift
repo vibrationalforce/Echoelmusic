@@ -108,8 +108,6 @@ public class AudioEngine: ObservableObject {
         }
 
         log.audio("AudioEngine initialized — master output wired to hardware")
-        log.audio("   Spatial Audio: \(deviceCapabilities?.canUseSpatialAudio == true ? "Yes" : "No")")
-        log.audio("   Head Tracking: \(headTrackingManager?.isAvailable == true ? "Yes" : "No")")
         log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
         log.audio("   Master Engine: \(masterEngine.isRunning ? "Running" : "Ready")")
     }

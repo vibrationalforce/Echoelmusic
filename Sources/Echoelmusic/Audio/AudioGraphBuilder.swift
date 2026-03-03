@@ -324,6 +324,8 @@ public struct BioReactiveNode: AudioGraphNode {
         return copy
     }
 
+    public enum MappingCurve: String { case linear, exponential, logarithmic, sCurve }
+
     public func curve(_ curve: MappingCurve) -> BioReactiveNode {
         var copy = self
         copy.parameters["curve"] = curve.rawValue

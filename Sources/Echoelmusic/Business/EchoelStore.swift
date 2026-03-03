@@ -247,10 +247,7 @@ public final class EchoelStore: ObservableObject {
         switch product.type {
         case .autoRenewable, .nonConsumable:
             entitlement = .pro
-            EngineBus.shared.publish(.custom(
-                topic: "store.entitlement_changed",
-                payload: ["level": "pro"]
-            ))
+            log.info("Store: entitlement changed to pro", category: .system)
 
         case .consumable:
             availableSessions += 1
@@ -258,10 +255,7 @@ public final class EchoelStore: ObservableObject {
             if entitlement == .free {
                 entitlement = .session
             }
-            EngineBus.shared.publish(.custom(
-                topic: "store.session_purchased",
-                payload: ["product": product.id, "available": "\(availableSessions)"]
-            ))
+            log.info("Store: session purchased - \(product.id)", category: .system)
 
         default:
             break
