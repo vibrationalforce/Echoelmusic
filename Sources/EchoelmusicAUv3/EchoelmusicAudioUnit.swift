@@ -804,12 +804,7 @@ open class EchoelmusicAudioUnit: AUAudioUnit {
                 flags: [.flag_IsReadable, .flag_IsWritable],
                 valueStrings: nil,
                 dependentParameters: nil
-            )
-        ]
-    }
-
-    private func createBioReactiveParameters() -> [AUParameter] {
-        return [
+            ),
             AUParameterTree.createParameter(
                 withIdentifier: "bioReactivity",
                 name: "Bio Reactivity",
