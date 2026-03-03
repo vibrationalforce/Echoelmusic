@@ -1,97 +1,205 @@
-# CLAUDE.md - Echoelmusic
+# CLAUDE.md — Echoelmusic v7.0 ULTIMATE
 
-## Overview
-Bio-reactive audio-visual platform: biometrics (HRV, HR, breathing) → spatial audio, visuals, DMX lighting.
+## IDENTITY
 
-- **Languages:** Swift 5.9+, Kotlin 1.9+, C++17, Metal, GLSL
-- **Platforms:** iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+, Android 8+
-- **Build:** SPM (Swift), Gradle (Android), CMake (Desktop)
-- **Dependencies:** Zero external (Apple frameworks only). Android: Compose, Health Connect, Oboe.
+Repository: https://github.com/vibrationalforce/Echoelmusic
+Developer: Echoel (Michael Terbuyken) @ Studio Hamburg
+App Apple ID: 6757957358
+Bundle: com.echoelmusic.*
+
+Bio-reactive creative performance platform. Physiological data → real-time music, visuals, light.
+
+**SCIENCE-ONLY.** No esoteric terminology. No chakras, auras, energy healing. Evidence-based biofeedback. Every wellness claim requires peer-reviewed citation.
 
 ---
 
-## Build & Test
+## CURRENT STATE
+
+- **Branch:** `claude/analyze-test-coverage-9aFjV`
+- **TestFlight Build:** `22572541274`
+- **Mode:** RALPH WIGGUM LAMBDA — iterative tightening until tight
+- **SDK:** Must target iOS 26 SDK (ITMS-90725, deadline April 28, 2026)
+- **Architecture:** 100% JUCE-free, platform-native
+- **Commits:** 1,552+ | **Tests:** 56 suites | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
+
+---
+
+## BRAND
+
+```
+Echoelmusic          ← Hauptmarke
+├── EchoelTools      ← Creative instruments
+├── EchoelWorks      ← DAW integration
+├── EchoelSync       ← Cross-platform sync (OSC, BLE, SharePlay)
+└── EchoelWell       ← Wellness (NO health claims)
+```
+
+NEVER use "BLAB", "Vibrational Force", or legacy branding anywhere.
+
+---
+
+## THE 12 ECHOELTOOLS (via EngineBus)
+
+```
+EchoelCore (120Hz)
+├── EchoelSynth    DDSP, 12 bio-mappings, vDSP, spectral morphing, timbre transfer
+├── EchoelMix      Console, metering, BPM sync, multi-track
+├── EchoelFX       20+ effects, Neve/SSL emulation
+├── EchoelSeq      Step sequencer, patterns, automation
+├── EchoelMIDI     MIDI 2.0, MPE, touch instruments
+├── EchoelBio      HRV, HR, breathing, ARKit face (52 blendshapes), hands, EEG
+├── EchoelVis      8 modes, Metal 120fps, Hilbert bio-mapping
+├── EchoelVid      Capture, edit, stream, ProRes
+├── EchoelLux      DMX 512, Art-Net, lasers, smart home
+├── EchoelStage    External displays, projection mapping, AirPlay
+├── EchoelNet      SharePlay, Dante, cloud sync, <10ms
+└── EchoelAI       CoreML, LLM, stem separation, generative
+```
+
+Communication: EngineBus (lock-free pub/sub). All tools react to BioSnapshot.
+
+---
+
+## TECH STACK — Zero Dependencies
+
+| Platform | Framework |
+|---|---|
+| Apple (all) | AVFoundation + Accelerate + Metal |
+| Android | Oboe + AAudio + Health Connect |
+| Desktop Plugins | iPlug2 (MIT) |
+| DSP | Pure C++17 |
+| Build | Tuist + Fastlane + Codemagic |
+
+---
+
+## REPO STRUCTURE
+
+```
+Echoelmusic/           ← Main iOS app target
+EchoelmusicComplete/   ← Full feature set
+EchoelmusicMVP/        ← MVP subset
+CoherenceCore/         ← Swift Package (core DSP)
+Sources/               ← Shared sources
+Tests/                 ← 56 test suites
+android/               ← Kotlin/Compose
+docs/                  ← Website (GitHub Pages)
+fastlane/              ← CI/CD
+.ai/                   ← Session context
+.claude/               ← Claude Code config
+```
+
+DO NOT create new top-level directories.
+
+---
+
+## BIO-SIGNAL DSP — DO NOT SIMPLIFY
+
+| Algorithm | Basis | Function |
+|---|---|---|
+| BioEventGraph | DELLY (Rausch 2012) | Graph-based event detection, k-means clustering |
+| HilbertSensorMapper | Hilbert curves | 1D→2D locality-preserving sensor mapping |
+| BioSignalDeconvolver | Tracy (Rausch 2017) | Separates cardiac/respiratory/artifact via adaptive biquad IIR |
+
+### DDSP Bio-Mappings
+
+Coherence → Harmonicity | HRV → Brightness | Heart rate → Vibrato | Breath phase → Envelope | Breath depth → Noise | LF/HF → Spectral tilt | Coherence trend → Shape morphing
+
+---
+
+## PERFORMANCE — Hard Limits
+
+| Metric | Target | FAIL |
+|---|---|---|
+| Audio Latency | <10ms | >15ms |
+| CPU | <30% | >50% |
+| Memory | <200MB | >300MB |
+| Visual FPS | 120fps | <60fps |
+| Bio Loop | 120Hz | <60Hz |
+
+**Audio thread: NO locks, NO malloc, NO ObjC messaging, NO file I/O, NO GCD.**
+
+---
+
+## PLATFORM CONSTRAINTS
+
+- Apple Watch HR: ~4-5 sec latency — NO beat-sync!
+- RMSSD: Self-calculate (Apple only gives SDNN)
+- Bluetooth Audio: 150-250ms latency
+- Flash animations: Max 3 Hz (epilepsy W3C WCAG)
+
+---
+
+## SAFETY WARNINGS (must be in app)
+
+- Brainwave Entrainment: NOT while operating vehicles
+- NOT under influence of alcohol/drugs
+- Therapeutic use: coordinate medications with provider
+- Max 3 Hz visual flash rate
+- Data for self-observation, NOT medical diagnosis
+
+---
+
+## RALPH WIGGUM LAMBDA PROTOCOL
+
+```
+1. git status && git log --oneline -10
+2. swift build 2>&1 | tail -20
+3. Identify ONE broken/unclear thing
+4. Fix it (minimal change, max 3 files)
+5. swift test --filter [relevant]
+6. Commit: fix: [description]
+7. Deploy to TestFlight
+8. Evaluate on device
+9. GOTO 1
+```
+
+ONE issue per cycle. No batching. Build fails = ONLY priority.
+No features during fix cycles. Convergence only.
+
+---
+
+## "CLEAR SOFTWARE" CHECKLIST
+
+1. Every screen does something (no placeholders)
+2. Navigation works (tabs respond, back goes back)
+3. Bio-feedback visible (HR, HRV, coherence front and center)
+4. Audio works (tap synth = hear sound)
+5. Buttons respond, states change, loading indicators work
+6. No crashes (force unwraps banned, optionals handled)
+7. Permission denials handled gracefully
+8. Background/foreground transitions stable
+
+---
+
+## SESSION START
 
 ```bash
-# Swift
-swift build
-swift test
-
-# Android
-cd android && ./gradlew build && ./gradlew test
-
-# Desktop (pure native, no JUCE)
-mkdir build && cd build && cmake .. -DUSE_JUCE=OFF && cmake --build . --parallel
+git status
+git log --oneline -20
+swift build 2>&1 | tail -30
+cat .ai/*.md 2>/dev/null
+swift test 2>&1 | tail -20
 ```
+
+Priority: Build errors → Test failures → Crash code → Task → Cleanup
 
 ---
 
-## Architecture
+## CODE STYLE
 
-```
-EchoelUniversalCore (120Hz) → UnifiedControlHub (60Hz) + VideoAICreativeHub
-                                      │
-              ┌───────────┬───────────┼───────────┬──────────┐
-         Spatial Audio  Visuals   Lighting    Quantum    5 Pro Engines
-```
-
-### Key Components
-
-| Component | Path | Purpose |
-|-----------|------|---------|
-| `UnifiedControlHub` | `Unified/` | Central 60Hz orchestrator |
-| `EchoelCreativeWorkspace` | - | Bridges ALL engines via Combine |
-| `AudioEngine` | `Audio/` | Core audio processing |
-| `SpatialAudioEngine` | `Spatial/` | 3D/4D spatial (init, setMode, setPan, setReverbBlend) |
-| `UnifiedHealthKitEngine` | `Biofeedback/` | HRV/HR (coherence, startStreaming, stopStreaming) |
-| `VideoStreamingManager` | `Stream/` | Streaming (NOT VideoProcessingEngine) |
-| `EchoelStage` | `Core/EchoelToolkit.swift` | Output routing (external displays, VR/XR, projection, Dante) |
-| `ExternalDisplayRenderingPipeline` | `Stage/` | Metal-based multi-output rendering pipeline |
-| `ProfessionalLogger` | `Core/` | Global `log` instance |
-
-### 5 Pro Engines
-ProMixEngine, ProSessionEngine, ProColorGrading, ProCueSystem, ProStreamEngine
-
-### Android
-- `EchoelmusicApplication` — minimal, loads native libs only
-- `EchoelmusicViewModel` — holds audioEngine, midiManager, bioReactiveEngine
-- All UI composables receive `viewModel` parameter (no singletons)
-
----
-
-## Directory Structure
-
-Sources/Echoelmusic/ has **70+ flat sibling directories**:
-
-**Audio:** Audio, DSP, Sound, SoundDesign, Orchestral, MusicTheory, Spatial, Recording
-**Input/Control:** MIDI, LED, Control, Automation, Sequencer, Haptics
-**Intelligence:** AI, Intelligence, SuperIntelligence, Quantum, Lambda, ML
-**Biometric:** Biofeedback, Biophysical, Wellness
-**Visual:** Visual, Shaders, Video, VisionOS, Vision, Theme, ParticleView
-**Platform:** Platforms, WatchOS, WatchSync, tvOS, AppClips, Widgets, LiveActivity, SharePlay, Shortcuts
-**Infrastructure:** Core, Utils, Integration, Testing, Performance, Optimization, QualityAssurance
-**Business:** Legal, Privacy, Security, Analytics, Social, Sustainability, Business, Localization
-**Stage:** Stage (ExternalDisplayRenderingPipeline, DanteAudioTransport, VideoNetworkTransport, EchoelSyncProtocol)
-**Other:** Creative, NeuroSpiritual, Onboarding, Scripting, Export, Hardware, Presets, Resources, Views
-
-Entry points: `EchoelmusicApp.swift`, `ContentView.swift`
-
----
-
-## Code Style
-
-- **SwiftUI** for UI, **Combine** for reactive
-- `@MainActor` for UI classes
-- `guard` for early returns
-- `///` for public API docs
+- **SwiftUI + MVVM** | `@Observable` (iOS 17+) | async/await + `@MainActor`
+- **Swift 6** strict concurrency | SwiftLint enforced
+- `os_log` ONLY (never `print`) | Guard-let over if-let
+- Conventional commits | One change per commit
 - C++17 with namespace `Echoelmusic::`
-- Commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`
+- `///` for public API docs
 
 ---
 
-## Critical Build Error Patterns
+## CRITICAL BUILD ERROR PATTERNS
 
 ### Swift Compiler Errors
+
 | Pattern | Fix |
 |---------|-----|
 | UIKit refs on non-iOS | `#if canImport(UIKit)` |
@@ -105,6 +213,7 @@ Entry points: `EchoelmusicApp.swift`, `ContentView.swift`
 | `inout` + escaping closure | Copy to local var first |
 
 ### Logger Usage (Global `log` is EchoelLogger instance)
+
 ```swift
 // CORRECT:
 log.log(.info, category: .audio, "message")
@@ -120,6 +229,7 @@ Foundation.log(value)
 ```
 
 ### API Gotchas
+
 | Type | Correct API |
 |------|-------------|
 | `SpatialAudioEngine` | `init()`, `setMode()`, `currentMode`, `setPan()`, `setReverbBlend()` |
@@ -128,6 +238,7 @@ Foundation.log(value)
 | `Swift.max/min` | Qualify when struct has static `.max` property |
 
 ### Type Conflict Resolution
+
 Always prefix types to avoid conflicts:
 - ProSessionEngine: `SessionMonitorMode`, `SessionTrackSend`, `SessionTrackType`
 - ProStreamEngine: `StreamMonitorMode`, `StreamTransitionType`, `ProStreamScene`
@@ -136,15 +247,25 @@ Always prefix types to avoid conflicts:
 - `ChannelStrip`, `ArticulationType`, `SubsystemID` → top-level types, NOT nested
 
 ### Other Patterns
+
 - `@escaping` required for `TaskGroup.addTask` closures
 - Result builder: `buildBlock(_ components: [T]...)` when using `buildExpression`
 - `CXProviderConfiguration.localizedName` is read-only in iOS 14+ (set via Info.plist)
 
 ---
 
+## KEY TESTS
+
+BioSignalDSPTests | EchoelDDSPTests | EchoelToolkitTests | ComprehensiveTestSuite | AudioEngineTests | SpatialAudioTests | MIDITests | HealthKitTests
+
+Run before ANY commit.
+
+---
+
 ## CI/CD
 
 ### Active Workflows (.github/workflows/)
+
 | Workflow | Purpose |
 |----------|---------|
 | `testflight.yml` | **PRIMARY** — TestFlight builds (ID: 225043686) |
@@ -157,57 +278,24 @@ Android build is disabled. TestFlight needs 60min timeout (30min+ compile).
 
 ---
 
-## Key Patterns
+## OSC (EchoelSync)
 
-### Control Loop (60Hz)
-```swift
-// Priority: Touch > Gesture > Face > Gaze > Position > Bio
-private func controlLoopTick() {
-    updateFromBioSignals()
-    updateFromFaceTracking()
-    updateFromHandGestures()
-    resolveConflicts()
-    updateAudioEngine()
-    updateVisualEngine()
-    updateLightSystems()
-}
+```
+/echoelmusic/bio/heart/bpm       float [40-200]
+/echoelmusic/bio/heart/hrv       float [0-1]
+/echoelmusic/bio/breath/rate     float [4-30]
+/echoelmusic/bio/breath/phase    float [0-1]
+/echoelmusic/bio/coherence       float [0-1]
+/echoelmusic/bio/eeg/{band}      float [0-1]
+/echoelmusic/audio/rms           float [0-1]
+/echoelmusic/audio/pitch         float Hz
 ```
 
-### Bio-Reactive Mapping
-```swift
-if coherence > 60 {
-    fieldGeometry = .fibonacci(sourceCount: voiceCount)  // harmonious
-} else {
-    fieldGeometry = .grid(rows: 3, cols: 3, spacing: 0.5)  // grounded
-}
-```
+UDP. Target: <5ms LAN.
 
 ---
 
-## Performance Targets
-
-| Metric | Target |
-|--------|--------|
-| Control Loop | 60 Hz |
-| Audio Latency | <10ms |
-| CPU Usage | <30% |
-| Memory | <200 MB |
-
-Use lock-free queues, pre-allocated buffers, SIMD/Accelerate, atomic ops.
-
----
-
-## Testing
-
-Tests in `Tests/EchoelmusicTests/`. Key suites:
-- `ComprehensiveTestSuite.swift` — Main
-- `ComprehensiveQuantumTests.swift` — Quantum
-- `Comprehensive2000Tests.swift` / `Comprehensive8000Tests.swift` — Coverage
-- Individual: ControlHub, HealthKit, FaceMapper, PitchDetector, Accessibility
-
----
-
-## Platform Notes
+## PLATFORM NOTES
 
 - **Simulator:** No HealthKit, Push 3, head tracking
 - **Push 3:** Requires USB
@@ -216,7 +304,7 @@ Tests in `Tests/EchoelmusicTests/`. Key suites:
 
 ---
 
-## Development Workflow
+## DEVELOPMENT WORKFLOW
 
 ### Long-Term Memory (scratchpads/)
 
@@ -266,9 +354,38 @@ Agent 3: Domain logic (Audio, bio, visual, lighting pipelines)
 ```
 
 ### Code Review Checklist
+
 - [ ] No `@EnvironmentObject` without matching `.environmentObject()` injection
 - [ ] No division without guard (`.count`, heartRate, etc.)
 - [ ] No `#if os()` missing for platform-specific APIs
 - [ ] No hardcoded values where real data should flow
 - [ ] All Combine subscriptions stored in cancellables
 - [ ] `@MainActor` on all `ObservableObject` classes
+
+---
+
+## DO NOT
+
+- Restructure project without approval
+- Add dependencies without asking
+- Create new targets or top-level dirs
+- Modify Info.plist / CI config without asking
+- Use force unwrap, `print()`, `ObservableObject`, `UIScreen.main`
+- Simplify Rausch DSP algorithms
+- Allocate memory on audio thread
+- Batch unrelated fixes
+- Add features during fix cycles
+- Use esoteric terminology
+
+---
+
+## ACTIVATION
+
+```
+ECHOEL MODE ACTIVE
+Branch: [branch]  Build: [number]
+Priority: [errors | failures | task]
+Mode: Ralph Wiggum Lambda — Fix → Build → Test → Ship → Loop
+```
+
+No intro. Audit → Fix → Build → Loop.
