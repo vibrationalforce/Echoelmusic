@@ -649,9 +649,7 @@ public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
         do {
             try audioSession.configureForBluetooth(codec: codec)
         } catch {
-            #if DEBUG
-            print("⚠️ [Bluetooth] Failed to configure audio session: \(error)")
-            #endif
+            log.log(.error, category: .audio, "Bluetooth audio session config failed: \(error)")
         }
 
         // Update connected devices
@@ -896,22 +894,14 @@ extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
         Task { @MainActor in
             switch central.state {
             case .poweredOn:
-                #if DEBUG
-                print("🔵 [Bluetooth] Powered on")
-                #endif
+                log.log(.info, category: .audio, "Bluetooth powered on")
             case .poweredOff:
-                #if DEBUG
-                print("⚪ [Bluetooth] Powered off")
-                #endif
+                log.log(.notice, category: .audio, "Bluetooth powered off")
                 isScanning = false
             case .unauthorized:
-                #if DEBUG
-                print("⚠️ [Bluetooth] Unauthorized")
-                #endif
+                log.log(.error, category: .audio, "Bluetooth unauthorized")
             case .unsupported:
-                #if DEBUG
-                print("❌ [Bluetooth] Unsupported")
-                #endif
+                log.log(.error, category: .audio, "Bluetooth unsupported")
             default:
                 break
             }
