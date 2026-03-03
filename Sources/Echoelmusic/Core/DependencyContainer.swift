@@ -254,18 +254,6 @@ struct DefaultLogger: LoggerProtocol {
     }
 }
 
-/// Bio stream provider dependency
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
-public struct BioStreamProviderKey: DependencyKey {
-    public static var defaultValue: any BioStreamProvider { DefaultBioStreamProvider() }
-}
-
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
-struct DefaultBioStreamProvider: BioStreamProvider {
-    func bioStream() -> AsyncBioStream {
-        AsyncBioStream()
-    }
-}
 
 /// Configuration dependency
 public struct ConfigurationKey: DependencyKey {
@@ -363,13 +351,3 @@ public struct AudioModule: DependencyModule {
     }
 }
 
-// MARK: - Bio Module Example
-
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
-public struct BioModule: DependencyModule {
-    public static func register(in container: DependencyContainer) {
-        container.register(BioStreamProviderKey.self, scope: .singleton) {
-            DefaultBioStreamProvider()
-        }
-    }
-}

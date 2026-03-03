@@ -818,8 +818,8 @@ class SessionClipViewModel: ObservableObject {
         set { EchoelCreativeWorkspace.shared.isPlaying = newValue }
     }
 
-    /// Live coherence from UnifiedHealthKitEngine (real biometrics, not hardcoded)
-    var coherence: Float { Float(UnifiedHealthKitEngine.shared.coherence) }
+    /// Coherence placeholder (biometrics removed)
+    var coherence: Float { 0.5 }
 
     var coherenceColor: Color {
         if coherence > 0.7 { return VaporwaveColors.coherenceHigh }

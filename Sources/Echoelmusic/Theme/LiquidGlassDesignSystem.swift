@@ -335,52 +335,6 @@ public struct LiquidGlassCard<Content: View>: View {
     }
 }
 
-// MARK: - Bio-Reactive Glass Panel
-
-/// Panel that visually responds to biometric data
-public struct BioReactiveGlassPanel<Content: View>: View {
-    @ObservedObject var healthKit: UnifiedHealthKitEngine
-    let content: () -> Content
-
-    @State private var pulseScale: CGFloat = 1.0
-
-    public init(
-        healthKit: UnifiedHealthKitEngine = .shared,
-        @ViewBuilder content: @escaping () -> Content
-    ) {
-        self.healthKit = healthKit
-        self.content = content
-    }
-
-    public var body: some View {
-        content()
-            .padding(20)
-            .bioReactiveLiquidGlass(coherence: healthKit.coherence)
-            .overlay(
-                // Coherence pulse ring
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(pulseColor, lineWidth: 2)
-                    .scaleEffect(pulseScale)
-                    .opacity(2 - pulseScale)
-            )
-            .onReceive(Timer.publish(every: 60.0 / max(healthKit.heartRate, 60), on: .main, in: .common).autoconnect()) { _ in
-                withAnimation(.easeOut(duration: 0.3)) {
-                    pulseScale = 1.1
-                }
-                withAnimation(.easeIn(duration: 0.5).delay(0.3)) {
-                    pulseScale = 1.0
-                }
-            }
-    }
-
-    private var pulseColor: Color {
-        switch healthKit.coherenceLevel {
-        case .high: return .green
-        case .medium: return .yellow
-        case .low: return .orange
-        }
-    }
-}
 
 // MARK: - Liquid Glass Navigation Bar
 
@@ -484,110 +438,6 @@ public struct LiquidGlassTabBar: View {
     }
 }
 
-// MARK: - Coherence Orb (Liquid Glass)
-
-/// Bio-reactive orb with Liquid Glass aesthetic
-public struct CoherenceOrb: View {
-    @ObservedObject var healthKit: UnifiedHealthKitEngine
-
-    @State private var rotation: Double = 0
-    @State private var breathPhase: Double = 0
-
-    public init(healthKit: UnifiedHealthKitEngine = .shared) {
-        self.healthKit = healthKit
-    }
-
-    public var body: some View {
-        ZStack {
-            // Outer glow
-            Circle()
-                .fill(orbGradient)
-                .blur(radius: 40)
-                .opacity(0.5)
-                .scaleEffect(1 + breathPhase * 0.1)
-
-            // Glass orb (ultraThinMaterial requires watchOS 10.0+)
-            glassOrb
-                .overlay(
-                    Circle()
-                        .stroke(orbColor.opacity(0.5), lineWidth: 2)
-                )
-                .overlay(
-                    // Specular highlight
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.white.opacity(0.5),
-                                    Color.white.opacity(0.0)
-                                ],
-                                center: .topLeading,
-                                startRadius: 0,
-                                endRadius: 100
-                            )
-                        )
-                        .scaleEffect(0.8)
-                        .offset(x: -20, y: -20)
-                )
-                .shadow(color: orbColor.opacity(0.3), radius: 20)
-
-            // Inner content
-            VStack(spacing: 4) {
-                Text("\(Int(healthKit.coherence * 100))")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-
-                Text("Coherence")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .frame(width: 180, height: 180)
-        .rotation3DEffect(.degrees(rotation), axis: (x: 0.1, y: 1, z: 0))
-        .onAppear {
-            withAnimation(.linear(duration: 30).repeatForever(autoreverses: false)) {
-                rotation = 360
-            }
-        }
-        .onReceive(Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()) { _ in
-            withAnimation(.easeInOut(duration: 0.3)) {
-                breathPhase = healthKit.respiratoryData.breathPhase
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var glassOrb: some View {
-        #if os(watchOS)
-        Circle()
-            .fill(Color.black.opacity(0.3))
-        #else
-        Circle()
-            .fill(.ultraThinMaterial)
-        #endif
-    }
-
-    private var orbColor: Color {
-        switch healthKit.coherenceLevel {
-        case .high: return .green
-        case .medium: return .yellow
-        case .low: return .orange
-        }
-    }
-
-    private var orbGradient: RadialGradient {
-        RadialGradient(
-            colors: [
-                orbColor,
-                orbColor.opacity(0.3),
-                Color.clear
-            ],
-            center: .center,
-            startRadius: 20,
-            endRadius: 100
-        )
-    }
-}
 
 // MARK: - Preview
 
@@ -609,13 +459,11 @@ public struct CoherenceOrb: View {
                 trailingAction: {}
             )
 
-            CoherenceOrb()
-
             LiquidGlassCard(tint: .chromatic) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Bio-Reactive Session")
+                    Text("Creative Session")
                         .font(.headline)
-                    Text("Your coherence is improving")
+                    Text("DAW + Video Production")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }

@@ -4,7 +4,6 @@ import os.log
 /// Main recording controls view with session management
 struct RecordingControlsView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
-    @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var microphoneManager: MicrophoneManager
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -457,32 +456,7 @@ struct RecordingControlsView: View {
     }
 
     private func startBioDataCapture() {
-        // Invalidate any existing timer before creating a new one
-        bioDataTimer?.invalidate()
-
-        // Capture bio-data every 0.5 seconds while recording
-        // Memory Leak Fix: Capture weak references to EnvironmentObjects
-        bioDataTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak recordingEngine, weak healthKitManager, weak microphoneManager] timer in
-            guard let recEngine = recordingEngine,
-                  let hkManager = healthKitManager,
-                  let micManager = microphoneManager else {
-                timer.invalidate()
-                return
-            }
-
-            if !recEngine.isRecording {
-                timer.invalidate()
-                return
-            }
-
-            recEngine.addBioDataPoint(
-                hrv: hkManager.hrvRMSSD,
-                heartRate: hkManager.heartRate,
-                coherence: hkManager.hrvCoherence,
-                audioLevel: micManager.audioLevel,
-                frequency: micManager.frequency
-            )
-        }
+        // Bio data capture removed (DAW + Video only)
     }
 
     private func exportAudio(format: ExportManager.ExportFormat) {

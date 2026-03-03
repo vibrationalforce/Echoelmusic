@@ -51,21 +51,6 @@ public class AudioEngine: ObservableObject {
     /// Microphone manager for voice/breath input
     let microphoneManager: MicrophoneManager
 
-    /// Spatial audio engine for 3D audio
-    var spatialAudioEngine: SpatialAudioEngine?
-
-    /// Bio-parameter mapper (HRV/HR → Audio parameters)
-    private let bioParameterMapper = BioParameterMapper()
-
-    /// HealthKit manager for HRV-based adaptations
-    private var healthKitEngine: UnifiedHealthKitEngine?
-
-    /// Head tracking manager
-    private var headTrackingManager: HeadTrackingManager?
-
-    /// Device capabilities
-    var deviceCapabilities: DeviceCapabilities?
-
     /// Node graph for effects processing
     private var nodeGraph: NodeGraph?
 
@@ -75,10 +60,6 @@ public class AudioEngine: ObservableObject {
     /// Cancellables for Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
 
-    /// OPTIMIZATION: High-precision timer for bio-parameter updates
-    /// Using DispatchSourceTimer instead of Timer.publish for lower latency
-    private var bioParameterTimer: DispatchSourceTimer?
-    private let bioParameterQueue = DispatchQueue(label: "com.echoelmusic.bioparameters", qos: .userInteractive)
 
 
     // MARK: - Initialization
@@ -102,24 +83,6 @@ public class AudioEngine: ObservableObject {
 
         // Set real-time audio thread priority
         AudioConfiguration.setAudioThreadPriority()
-
-        // Initialize device capabilities
-        deviceCapabilities = DeviceCapabilities()
-
-        // Initialize head tracking if available
-        headTrackingManager = HeadTrackingManager()
-
-        // Initialize spatial audio if available (iOS 15+)
-        if headTrackingManager != nil,
-           let capabilities = deviceCapabilities,
-           capabilities.canUseSpatialAudioEngine {
-            spatialAudioEngine = SpatialAudioEngine.shared
-        } else {
-            log.audio("⚠️  Spatial audio engine requires iOS 15+", level: .warning)
-        }
-
-        // Start monitoring device capabilities
-        deviceCapabilities?.startMonitoringAudioRoute()
 
         // Initialize node graph with default production chain (EQ → Compressor → Reverb)
         nodeGraph = NodeGraph.createProductionChain()
@@ -211,22 +174,6 @@ public class AudioEngine: ObservableObject {
             microphoneManager.startRecording()
         }
 
-        // Start spatial audio if enabled
-        if spatialAudioEnabled, let spatial = spatialAudioEngine {
-            do {
-                try spatial.start()
-                log.audio("Spatial audio started")
-            } catch {
-                log.audio("Failed to start spatial audio: \(error)", level: .error)
-                spatialAudioEnabled = false
-            }
-        }
-
-        // Start bio-parameter mapping updates if HealthKit is connected
-        if healthKitEngine != nil {
-            startBioParameterMapping()
-        }
-
         isRunning = true
         log.audio("AudioEngine started (production mode) — output: \(currentOutputDescription)")
     }
@@ -247,12 +194,6 @@ public class AudioEngine: ObservableObject {
         // Stop microphone
         microphoneManager.stopRecording()
 
-        // Stop spatial audio
-        spatialAudioEngine?.stop()
-
-        // Stop bio-parameter mapping
-        stopBioParameterMapping()
-
         // Stop master player node
         masterPlayerNode.stop()
 
@@ -269,169 +210,14 @@ public class AudioEngine: ObservableObject {
         log.audio("AudioEngine stopped — master engine paused, audio session deactivated")
     }
 
-    /// Toggle spatial audio on/off
-    func toggleSpatialAudio() {
-        spatialAudioEnabled.toggle()
 
-        if spatialAudioEnabled {
-            if let spatial = spatialAudioEngine {
-                do {
-                    try spatial.start()
-                    log.audio("🎵 Spatial audio enabled")
-                } catch {
-                    log.audio("❌ Failed to enable spatial audio: \(error)", level: .error)
-                    spatialAudioEnabled = false
-                }
-            } else {
-                log.audio("⚠️  Spatial audio not available", level: .warning)
-                spatialAudioEnabled = false
-            }
-        } else {
-            spatialAudioEngine?.stop()
-            log.audio("🎵 Spatial audio disabled")
-        }
-    }
-
-    /// Connect to HealthKit engine for HRV-based adaptations
-    /// - Parameter healthKitEngine: UnifiedHealthKitEngine instance
-    func connectHealthKit(_ healthKitEngine: UnifiedHealthKitEngine) {
-        self.healthKitEngine = healthKitEngine
-
-        // Subscribe to HRV coherence changes (coherence is 0-1, convert to 0-100)
-        // Receive on main queue to satisfy @MainActor isolation
-        healthKitEngine.$coherence
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] coherence in
-                self?.adaptToBiofeedback(coherence: coherence * 100.0)
-            }
-            .store(in: &cancellables)
-    }
-
-
-    // MARK: - Private Methods
-
-    /// Adapt audio parameters based on HRV coherence
-    /// - Parameter coherence: HRV coherence score (0-100)
-    private func adaptToBiofeedback(coherence: Double) {
-        // Coherence drives spatial audio and effects parameters
-        if let spatial = spatialAudioEngine, spatialAudioEnabled {
-            let reverbBlend = Float(0.1 + (coherence / 100.0) * 0.4)
-            spatial.setReverbBlend(reverbBlend)
-        }
-    }
-
-
-    /// Start bio-parameter mapping (HRV/HR → Audio)
-    private func startBioParameterMapping() {
-        guard let healthKit = healthKitEngine else {
-            log.audio("⚠️  Bio-parameter mapping: HealthKit not connected", level: .warning)
-            return
-        }
-
-        // Bio-parameter updates: 200ms (5Hz) is perceptually sufficient for
-        // HRV/HR → audio mapping since biometrics change slowly (~0.1Hz).
-        // 20ms leeway allows OS timer coalescing for battery savings.
-        bioParameterTimer?.cancel()
-        let timer = DispatchSource.makeTimerSource(flags: [], queue: bioParameterQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(200), leeway: .milliseconds(20))
-        timer.setEventHandler { [weak self] in
-            Task { @MainActor in
-                self?.updateBioParameters()
-            }
-        }
-        timer.resume()
-        bioParameterTimer = timer
-
-        log.audio("🎛️  Bio-parameter mapping started (high-precision timer)")
-    }
-
-    /// Stop bio-parameter mapping
-    private func stopBioParameterMapping() {
-        // OPTIMIZATION: Clean up high-precision timer
-        bioParameterTimer?.cancel()
-        bioParameterTimer = nil
-        log.audio("🎛️  Bio-parameter mapping stopped")
-    }
-
-    /// Update bio-parameters from current biometric data
-    private func updateBioParameters() {
-        guard let healthKit = healthKitEngine else { return }
-
-        // Get current biometric data
-        let hrvCoherence = healthKit.coherence
-        let heartRate = healthKit.heartRate
-        let voicePitch = microphoneManager.currentPitch
-        let audioLevel = microphoneManager.audioLevel
-
-        // Update bio-parameter mapper
-        bioParameterMapper.updateParameters(
-            hrvCoherence: hrvCoherence,
-            heartRate: heartRate,
-            voicePitch: voicePitch,
-            audioLevel: audioLevel
-        )
-
-        // Apply mapped parameters to audio engine
-        applyBioParameters()
-    }
-
-    /// Apply bio-mapped parameters to audio components
-    private func applyBioParameters() {
-        // Apply reverb to spatial audio engine
-        if let spatial = spatialAudioEngine, spatialAudioEnabled {
-            spatial.setReverbBlend(bioParameterMapper.reverbWet)
-
-            // Apply spatial panning based on HRV
-            let pos = bioParameterMapper.spatialPosition
-            spatial.setPan(Float(pos.x))
-        }
-
-        // Propagate bio signals to all audio processing nodes (FilterNode, ReverbNode, etc.)
-        if let graph = nodeGraph, let healthKit = healthKitEngine {
-            let signal = BioSignal(
-                hrv: healthKit.hrvSDNN,
-                heartRate: healthKit.heartRate,
-                coherence: healthKit.coherence * 100.0,
-                respiratoryRate: healthKit.breathingRate,
-                audioLevel: microphoneManager.audioLevel,
-                voicePitch: microphoneManager.currentPitch,
-                customData: [:]
-            )
-            graph.updateBioSignal(signal)
-        }
-    }
 
 
     // MARK: - Utility Methods
 
     /// Get human-readable description of current state
     var stateDescription: String {
-        if !isRunning {
-            return "Audio engine stopped"
-        }
-
-        var description = "Microphone: Active"
-
-        if spatialAudioEnabled {
-            description += "\nSpatial Audio: Active"
-            if let spatial = spatialAudioEngine {
-                description += " (\(spatial.currentMode.rawValue))"
-            }
-        } else {
-            description += "\nSpatial Audio: Off"
-        }
-
-        return description
-    }
-
-    /// Get device capabilities summary
-    var deviceCapabilitiesSummary: String? {
-        deviceCapabilities?.capabilitySummary
-    }
-
-    /// Get bio-parameter mapping summary
-    var bioParameterSummary: String {
-        bioParameterMapper.parameterSummary
+        isRunning ? "Audio engine running" : "Audio engine stopped"
     }
 
     /// Current audio level from microphone (0.0 - 1.0)
@@ -444,14 +230,7 @@ public class AudioEngine: ObservableObject {
         microphoneManager.currentPitch
     }
 
-    /// Legacy closure accessor (kept for UnifiedControlHub compatibility)
-    var getCurrentPitch: (() -> Float)? {
-        return { [weak self] in
-            self?.microphoneManager.currentPitch ?? 0.0
-        }
-    }
-
-    // MARK: - Filter & Effect Control (for UnifiedControlHub)
+    // MARK: - Filter & Effect Control
 
     /// Set filter cutoff frequency
     func setFilterCutoff(_ frequency: Float) {
@@ -466,7 +245,6 @@ public class AudioEngine: ObservableObject {
     /// Set reverb wetness (0.0 - 1.0)
     func setReverbWetness(_ wetness: Float) {
         nodeGraph?.setParameter(.reverbWet, value: wetness)
-        spatialAudioEngine?.setReverbBlend(wetness)
     }
 
     /// Set reverb size (0.0 - 1.0)
@@ -489,77 +267,6 @@ public class AudioEngine: ObservableObject {
         nodeGraph?.setParameter(.tempo, value: bpm)
     }
 
-    // MARK: - Physical AI Parameter Control
-
-    /// Apply a parameter change from the PhysicalAI WorldModel prediction engine
-    /// Maps abstract AI action names to concrete DSP parameters
-    func applyPhysicalAIParameter(_ parameter: String, value: Float) {
-        let clamped = max(0, min(1, value))
-
-        switch parameter {
-        case "intensity":
-            // Map intensity to filter cutoff (0=dark, 1=bright)
-            setFilterCutoff(clamped * 18000 + 200)  // 200Hz → 18200Hz
-        case "filterCutoff":
-            setFilterCutoff(clamped * 18000 + 200)
-        case "harmonicTension":
-            // Map tension to resonance + slight distortion
-            setFilterResonance(clamped * 0.8)
-        case "reverbMix", "reverbWet":
-            setReverbWetness(clamped)
-        case "reverbSize":
-            setReverbSize(clamped)
-        case "delayMix":
-            setDelayTime(clamped * 0.5)  // 0→500ms
-        case "volume", "masterVolume":
-            setMasterVolume(clamped)
-        case "spatialWidth":
-            spatialAudioEngine?.setPan(clamped * 2 - 1)  // -1 to +1
-        case "tempo":
-            setTempo(clamped * 120 + 60)  // 60→180 BPM
-        default:
-            log.audio("PhysicalAI: unknown parameter '\(parameter)', value=\(value)")
-        }
-    }
-
-    // MARK: - Preset Loading
-
-    /// Load a preset by name and apply audio settings
-    /// - Parameter named: The name of the preset to load
-    /// - Returns: True if preset was found and applied, false otherwise
-    @discardableResult
-    func loadPreset(named: String) -> Bool {
-        // Search in built-in presets first
-        let allPresets = BuiltInPresets.all
-
-        guard let preset = allPresets.first(where: { $0.name.caseInsensitiveCompare(named) == .orderedSame || $0.id == named }) else {
-            log.audio("⚠️  Preset not found: \(named)", level: .warning)
-            return false
-        }
-
-        // Apply audio settings from preset
-        applyPreset(preset)
-        log.audio("🎵 Loaded preset: \(preset.name)")
-        return true
-    }
-
-    /// Load a QuantumPreset directly
-    /// - Parameter preset: The preset to apply
-    func loadPreset(_ preset: QuantumPreset) {
-        applyPreset(preset)
-        log.audio("🎵 Loaded preset: \(preset.name)")
-    }
-
-    /// Apply audio settings from a preset
-    private func applyPreset(_ preset: QuantumPreset) {
-        // Apply reverb wetness
-        setReverbWetness(preset.reverbWetness)
-
-        // Apply spatial mode if specified
-        if let spatialModeString = preset.spatialMode {
-            applySpatialMode(spatialModeString)
-        }
-    }
 
     // MARK: - ProMixEngine Integration
 
@@ -643,103 +350,4 @@ public class AudioEngine: ObservableObject {
         )
     }
 
-    // MARK: - Spatial Audio Integration
-
-    /// Adds a spatial processing node to the audio graph.
-    /// The node type is selected based on the current spatial mode.
-    ///
-    /// - Parameter mode: The spatial mode to configure the node for.
-    /// - Returns: The created spatial node, or nil if creation failed.
-    @discardableResult
-    func addSpatialNode(for mode: SpatialAudioEngine.SpatialMode) -> EchoelmusicNode? {
-        guard let graph = nodeGraph else { return nil }
-
-        let node: BaseEchoelmusicNode
-        switch mode {
-        case .ambisonics:
-            node = AmbisonicsNode()
-        case .binaural:
-            node = HRTFNode()
-        case .surround_3d, .surround_4d, .afa:
-            node = AmbisonicsNode()
-        case .stereo:
-            // Stereo mode uses room simulation for spatial depth
-            node = RoomSimulationNode()
-        }
-
-        graph.addNode(node)
-        node.prepare(sampleRate: 44100, maxFrames: 4096)
-        node.start()
-        log.audio("Spatial node added to graph: \(node.name) (\(mode.rawValue))")
-        return node
-    }
-
-    /// Route audio through spatial processing using the SpatialAudioEngine.
-    /// Processes mono input → stereo spatialized output.
-    ///
-    /// - Parameters:
-    ///   - buffer: Input audio buffer.
-    ///   - sourcePosition: 3D position of the audio source.
-    /// - Returns: Spatialized stereo buffer, or the input buffer if spatial is disabled.
-    func routeAudioThroughSpatial(
-        buffer: AVAudioPCMBuffer,
-        sourcePosition: SIMD3<Float> = SIMD3<Float>(0, 0, 1)
-    ) -> AVAudioPCMBuffer {
-        guard spatialAudioEnabled, let spatial = spatialAudioEngine else { return buffer }
-        guard let channelData = buffer.floatChannelData else { return buffer }
-
-        let frameCount = Int(buffer.frameLength)
-        guard frameCount > 0 else { return buffer }
-
-        let input = Array(UnsafeBufferPointer(start: channelData[0], count: frameCount))
-        let stereo = spatial.processAmbisonics(input, sourcePosition: sourcePosition)
-
-        // Write spatialized output back
-        let channelCount = Int(buffer.format.channelCount)
-        for i in 0..<min(frameCount, stereo.left.count) {
-            channelData[0][i] = stereo.left[i]
-        }
-        if channelCount >= 2 {
-            for i in 0..<min(frameCount, stereo.right.count) {
-                channelData[1][i] = stereo.right[i]
-            }
-        }
-
-        return buffer
-    }
-
-    /// Apply spatial mode from preset string
-    private func applySpatialMode(_ mode: String) {
-        guard let spatial = spatialAudioEngine else {
-            log.audio("⚠️  Spatial audio not available for mode: \(mode)", level: .warning)
-            return
-        }
-
-        // Map preset spatial mode strings to SpatialAudioEngine modes
-        switch mode.lowercased() {
-        case "binaural":
-            spatial.setMode(.binaural)
-        case "stereo":
-            spatial.setMode(.stereo)
-        case "ambisonics":
-            spatial.setMode(.ambisonics)
-        case "surround_3d", "surround3d":
-            spatial.setMode(.surround_3d)
-        case "surround_4d", "surround4d", "afa":
-            spatial.setMode(.afa)
-        default:
-            log.audio("⚠️  Unknown spatial mode: \(mode), using default", level: .warning)
-        }
-
-        // Enable spatial audio when preset specifies a mode
-        if !spatialAudioEnabled {
-            spatialAudioEnabled = true
-            do {
-                try spatial.start()
-            } catch {
-                log.audio("❌ Failed to start spatial audio: \(error)", level: .error)
-                spatialAudioEnabled = false
-            }
-        }
-    }
 }
