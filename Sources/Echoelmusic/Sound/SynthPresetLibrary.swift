@@ -270,22 +270,8 @@ public final class SynthPresetLibrary {
     }
 
     private func renderQuant(_ preset: SynthPreset, frameCount: Int, sampleRate: Float) -> [Float] {
-        let quant = EchoelQuant(gridSize: preset.gridSize, sampleRate: sampleRate)
-        quant.frequency = preset.frequency
-        quant.damping = 0.001
-        quant.unisonVoices = preset.unisonVoices
-        quant.unisonDetune = preset.unisonDetune
-        quant.excite()
-
-        var buffer = [Float](repeating: 0, count: frameCount)
-        quant.render(buffer: &buffer, frameCount: frameCount)
-
-        // Scale amplitude
-        let scale = preset.amplitude
-        for i in 0..<buffer.count {
-            buffer[i] *= scale
-        }
-        return buffer
+        // EchoelQuant engine not available — return silence
+        return [Float](repeating: 0, count: frameCount)
     }
 
     private func renderTR808(_ preset: SynthPreset, frameCount: Int, sampleRate: Float) -> [Float] {

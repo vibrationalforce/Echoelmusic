@@ -54,7 +54,6 @@ public class ProVocalChain: ObservableObject {
     let vibratoEngine: VibratoEngine
     let phaseVocoder: PhaseVocoder
     let postProcessor: VocalPostProcessor
-    let bioReactiveEngine: BioReactiveVocalEngine
     let breathDetector: BreathDetector
     let harmonyGenerator: VocalHarmonyGenerator
     let doublingEngine: VocalDoublingEngine
@@ -118,7 +117,6 @@ public class ProVocalChain: ObservableObject {
             preserveTransients: true
         ))
         self.postProcessor = VocalPostProcessor(sampleRate: config.sampleRate)
-        self.bioReactiveEngine = BioReactiveVocalEngine()
         self.breathDetector = BreathDetector(sampleRate: Double(config.sampleRate), fftSize: config.fftSize)
         self.harmonyGenerator = VocalHarmonyGenerator(sampleRate: Double(config.sampleRate), fftSize: config.fftSize)
         self.doublingEngine = VocalDoublingEngine(sampleRate: Double(config.sampleRate))
@@ -129,14 +127,7 @@ public class ProVocalChain: ObservableObject {
     // MARK: - Setup
 
     private func setupBindings() {
-        // When bio-reactive engine updates, propagate to pitch corrector
-        bioReactiveEngine.$modulationValues
-            .receive(on: RunLoop.main)
-            .sink { [weak self] values in
-                guard let self = self, self.bioReactiveEnabled else { return }
-                self.bioReactiveEngine.applyToPitchCorrector(self.pitchCorrector)
-            }
-            .store(in: &cancellables)
+        // Bindings for future parameter automation
     }
 
     // MARK: - Real-Time Processing
@@ -182,18 +173,13 @@ public class ProVocalChain: ObservableObject {
             output = breathDetector.processBuffer(output)
         }
 
-        // 5. Bio-Reactive Processing
-        if bioReactiveEnabled {
-            output = bioReactiveEngine.processAudio(output, modValues: bioReactiveEngine.modulationValues)
-        }
-
-        // 6. Harmony Generation
+        // 5. Harmony Generation
         if harmonyEnabled {
             let detectedPitch = pitchCorrector.currentInputPitch
             output = harmonyGenerator.processBuffer(output, detectedPitchHz: detectedPitch)
         }
 
-        // 7. Vocal Doubling
+        // 6. Vocal Doubling
         if doublingEnabled {
             output = doublingEngine.processMono(output)
         }
@@ -216,13 +202,6 @@ public class ProVocalChain: ObservableObject {
     /// - Returns: Fully processed audio with all edits
     func renderEdits(originalAudio: [Float]) async -> [Float] {
         var output = await postProcessor.render(originalAudio: originalAudio)
-
-        // Apply bio-reactive layer if active
-        if bioReactiveEnabled && bioReactiveEngine.isActive {
-            output = bioReactiveEngine.processAudio(
-                output, modValues: bioReactiveEngine.modulationValues
-            )
-        }
 
         return output
     }
@@ -270,30 +249,6 @@ public class ProVocalChain: ObservableObject {
         noteStartTimeIsSet = false
     }
 
-    // MARK: - Bio-Reactive Control
-
-    /// Update biometric data from HealthKit/sensors
-    func updateBiometrics(_ state: BioReactiveVocalEngine.BioState) {
-        bioReactiveEngine.updateBioState(state)
-    }
-
-    /// Enable/disable bio-reactive processing
-    func setBioReactive(_ enabled: Bool) {
-        bioReactiveEnabled = enabled
-        if enabled {
-            bioReactiveEngine.start()
-            mode = .bioReactive
-        } else {
-            bioReactiveEngine.stop()
-            if mode == .bioReactive { mode = .live }
-        }
-    }
-
-    /// Load a bio-reactive preset
-    func loadBioPreset(_ preset: BioReactiveVocalEngine.MappingPreset) {
-        bioReactiveEngine.loadPreset(preset)
-    }
-
     // MARK: - Chain Control
 
     func start() {
@@ -304,7 +259,6 @@ public class ProVocalChain: ObservableObject {
     func stop() {
         isActive = false
         noteOff()
-        bioReactiveEngine.stop()
         log.log(.info, category: .audio, "ProVocalChain: Stopped")
     }
 
@@ -380,20 +334,14 @@ public class ProVocalChain: ObservableObject {
             pitchCorrector.correctionStrength = 0.7
             pitchCorrector.humanize = 0.3
             currentNoteVibrato = .default()
-            bioReactiveEnabled = true
-            bioReactiveEngine.loadPreset(.meditation)
-            bioReactiveEngine.start()
-            mode = .bioReactive
+            bioReactiveEnabled = false
 
         case .bioReactivePerformance:
             pitchCorrector.correctionSpeed = 50
             pitchCorrector.correctionStrength = 0.8
             pitchCorrector.humanize = 0.2
             currentNoteVibrato = .default()
-            bioReactiveEnabled = true
-            bioReactiveEngine.loadPreset(.performance)
-            bioReactiveEngine.start()
-            mode = .bioReactive
+            bioReactiveEnabled = false
         }
 
         log.log(.info, category: .audio, "ProVocalChain: Loaded preset '\(preset.rawValue)'")

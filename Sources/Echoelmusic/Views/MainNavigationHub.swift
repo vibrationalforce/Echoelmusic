@@ -233,7 +233,11 @@ struct MainNavigationHub: View {
             .buttonStyle(.plain)
 
             Button(action: {
-                recordingEngine.toggleRecording()
+                if recordingEngine.isRecording {
+                    try? recordingEngine.stopRecording()
+                } else {
+                    try? recordingEngine.startRecording()
+                }
             }) {
                 Circle()
                     .fill(recordingEngine.isRecording ? Color.red : Color.red.opacity(0.6))

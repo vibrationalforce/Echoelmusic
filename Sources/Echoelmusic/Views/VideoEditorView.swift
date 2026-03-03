@@ -87,15 +87,12 @@ struct VideoEditorView: View {
                     .font(VaporwaveTypography.sectionTitle())
                     .foregroundColor(VaporwaveColors.textPrimary)
 
-                Text(workspace.mode.rawValue)
+                Text("DAW + Video")
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
 
             Spacer()
-
-            // Workspace mode switcher
-            workspaceModePicker
 
             Spacer()
 
@@ -137,35 +134,6 @@ struct VideoEditorView: View {
             }
         }
         .padding(VaporwaveSpacing.md)
-    }
-
-    // MARK: - Workspace Mode Picker
-
-    private var workspaceModePicker: some View {
-        HStack(spacing: VaporwaveSpacing.xs) {
-            ForEach(WorkspaceMode.allCases, id: \.self) { mode in
-                Button {
-                    withAnimation(VaporwaveAnimation.smooth) {
-                        workspace.switchMode(mode)
-                    }
-                } label: {
-                    VStack(spacing: 2) {
-                        Image(systemName: mode.icon)
-                            .font(.system(size: 14))
-                        Text(mode.rawValue)
-                            .font(VaporwaveTypography.label())
-                    }
-                    .foregroundColor(workspace.mode == mode ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
-                    .padding(.horizontal, VaporwaveSpacing.sm)
-                    .padding(.vertical, VaporwaveSpacing.xs)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(workspace.mode == mode ? VaporwaveColors.neonCyan.opacity(0.15) : Color.clear)
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
 
     // MARK: - Preview Section
@@ -580,43 +548,14 @@ struct VideoEditorView: View {
 
     private var transportControls: some View {
         HStack(spacing: VaporwaveSpacing.lg) {
-            // Output target selector
-            Menu {
-                ForEach(OutputTarget.allCases, id: \.self) { target in
-                    Button {
-                        workspace.outputTarget = target
-                    } label: {
-                        HStack {
-                            Image(systemName: target.icon)
-                            Text(target.rawValue)
-                            if workspace.outputTarget == target {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: workspace.outputTarget.icon)
-                        .font(.system(size: 12))
-                    Text(workspace.outputTarget.rawValue)
-                        .font(VaporwaveTypography.caption())
-                }
-                .foregroundColor(VaporwaveColors.neonPurple)
-                .padding(.horizontal, VaporwaveSpacing.sm)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule()
-                        .fill(VaporwaveColors.neonPurple.opacity(0.1))
-                )
-            }
-
             Spacer()
 
             // Beat-snap cut (previous beat)
             if showBPMGrid {
                 transportButton(icon: "scissors") {
-                    currentTime = workspace.cutVideoOnBeat(at: currentTime)
+                    // Snap to nearest beat
+                    let beatDuration = 60.0 / workspace.globalBPM
+                    currentTime = round(currentTime / beatDuration) * beatDuration
                 }
             }
 

@@ -332,41 +332,10 @@ public final class MemoryPressureHandler: ObservableObject {
 
 extension MemoryPressureHandler {
 
-    /// Register Metal resource pools for automatic cleanup
-    #if canImport(Metal)
-    @available(iOS 13.0, macOS 10.15, tvOS 13.0, *)
-    public func registerMetalPools() {
-        if let resourceManager = MetalResourceManager.shared {
-            // Create a wrapper that conforms to MemoryReleasable
-            let wrapper = MetalPoolsWrapper(manager: resourceManager)
-            register(wrapper)
-        }
+    /// Force a memory cleanup cycle
+    public func forceCleanup() {
+        handlePressure(level: .warning)
     }
-
-    private class MetalPoolsWrapper: MemoryReleasable {
-        let manager: MetalResourceManager
-
-        init(manager: MetalResourceManager) {
-            self.manager = manager
-        }
-
-        var memoryReleasePriority: Int { 50 }
-        var estimatedReleasableMemory: Int { 10_000_000 } // ~10MB estimate
-
-        func releaseMemory(for level: MemoryPressureLevel) {
-            Task { @MainActor in
-                switch level {
-                case .warning:
-                    manager.trimPools()
-                case .critical, .terminal:
-                    manager.clearPools()
-                default:
-                    break
-                }
-            }
-        }
-    }
-    #endif
 }
 
 // MARK: - Memory Cache Base Class
