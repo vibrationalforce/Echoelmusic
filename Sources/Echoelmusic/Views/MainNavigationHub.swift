@@ -301,7 +301,11 @@ struct MainNavigationHub: View {
 
             // Transport Controls
             HStack(spacing: EchoelSpacing.sm + EchoelSpacing.xxs) {
-                Button(action: {}) {
+                Button(action: {
+                    let newTime = max(0, recordingEngine.currentTime - 5.0)
+                    recordingEngine.seek(to: newTime)
+                    HapticHelper.impact(.light)
+                }) {
                     Image(systemName: "backward.fill")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(EchoelBrand.textSecondary)

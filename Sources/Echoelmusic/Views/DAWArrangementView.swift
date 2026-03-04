@@ -267,6 +267,27 @@ struct DAWArrangementView: View {
                 .stroke(isSelected ? trackColor : Color.clear, lineWidth: 1)
         )
         .onTapGesture { selectedTrackID = track.id }
+        .contextMenu {
+            Button {
+                recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)
+            } label: {
+                Label(track.isMuted ? "Unmute" : "Mute", systemImage: track.isMuted ? "speaker.wave.2" : "speaker.slash")
+            }
+            Button {
+                recordingEngine.setTrackSoloed(track.id, soloed: !track.isSoloed)
+            } label: {
+                Label(track.isSoloed ? "Unsolo" : "Solo", systemImage: "headphones")
+            }
+            Divider()
+            Button(role: .destructive) {
+                try? recordingEngine.deleteTrack(track.id)
+                if selectedTrackID == track.id {
+                    selectedTrackID = nil
+                }
+            } label: {
+                Label("Delete Track", systemImage: "trash")
+            }
+        }
     }
 
     // MARK: - Arrangement Timeline
