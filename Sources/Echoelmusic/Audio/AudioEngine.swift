@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import Accelerate
 
 /// Central audio engine for professional music production
 ///

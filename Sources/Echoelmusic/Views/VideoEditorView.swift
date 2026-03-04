@@ -23,7 +23,6 @@ struct VideoEditorView: View {
     @State private var currentTime: TimeInterval = 0
     @State private var isPlaying = false
     @State private var showVideoPicker = false
-    @State private var selectedVideoItems: [PhotosPickerItem] = []
     @State private var videoPlayer: AVPlayer?
     @State private var importProgress: String?
 
@@ -81,10 +80,12 @@ struct VideoEditorView: View {
         .sheet(isPresented: $showExportSheet) {
             VideoExportSheet(engine: engine)
         }
-        .photosPicker(isPresented: $showVideoPicker, selection: $selectedVideoItems, maxSelectionCount: 10, matching: .videos)
-        .onChange(of: selectedVideoItems) { _, newItems in
-            Task {
-                await importSelectedVideos(newItems)
+        .sheet(isPresented: $showVideoPicker) {
+            if #available(iOS 16.0, *) {
+                VideoPickerSheet(engine: engine, videoPlayer: $videoPlayer, currentTime: $currentTime, importProgress: $importProgress)
+            } else {
+                Text("Video import requires iOS 16+")
+                    .foregroundColor(.secondary)
             }
         }
     }
@@ -813,11 +814,59 @@ struct VideoExportSheet: View {
     }
 }
 
-// MARK: - Video Import
+// MARK: - Video Picker Sheet (iOS 16+)
 
-extension VideoEditorView {
-    func importSelectedVideos(_ items: [PhotosPickerItem]) async {
-        for item in items {
+@available(iOS 16.0, *)
+struct VideoPickerSheet: View {
+    @ObservedObject var engine: VideoEditingEngine
+    @Binding var videoPlayer: AVPlayer?
+    @Binding var currentTime: TimeInterval
+    @Binding var importProgress: String?
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                if let progress = importProgress {
+                    ProgressView(progress)
+                        .padding()
+                }
+
+                PhotosPicker(
+                    selection: $selectedItems,
+                    maxSelectionCount: 10,
+                    matching: .videos
+                ) {
+                    Label("Select Videos", systemImage: "film.stack")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(VaporwaveColors.neonCyan.opacity(0.2))
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .navigationTitle("Import Videos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .onChange(of: selectedItems) { _ in
+                Task {
+                    await importSelectedVideos()
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private func importSelectedVideos() async {
+        for item in selectedItems {
             importProgress = "Importing..."
             guard let movie = try? await item.loadTransferable(type: VideoTransferable.self) else {
                 continue
@@ -828,7 +877,6 @@ extension VideoEditorView {
             let durationSeconds = CMTimeGetSeconds(duration)
             guard durationSeconds > 0 else { continue }
 
-            // Create clip and add to first video track
             let clip = VideoClip(
                 name: "Clip \(engine.timeline.videoTracks.first?.clips.count ?? 0 + 1)",
                 asset: asset,
@@ -842,7 +890,6 @@ extension VideoEditorView {
                 engine.addClip(clip, to: videoTrack, at: clip.startTime)
             }
 
-            // Setup player for preview
             let playerItem = AVPlayerItem(asset: asset)
             if videoPlayer == nil {
                 videoPlayer = AVPlayer(playerItem: playerItem)
@@ -853,11 +900,11 @@ extension VideoEditorView {
             currentTime += durationSeconds
         }
         importProgress = nil
-        selectedVideoItems.removeAll()
     }
 }
 
 /// Transferable for importing videos from PhotosPicker
+@available(iOS 16.0, macOS 13.0, *)
 struct VideoTransferable: Transferable {
     let url: URL
 
