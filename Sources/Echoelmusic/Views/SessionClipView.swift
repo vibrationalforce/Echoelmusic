@@ -869,22 +869,34 @@ class SessionClipViewModel: ObservableObject {
         }
     }
 
-    func addTrack() { tracks.append(ClipViewTrack(name: "Track \(tracks.count + 1)", color: EchoelBrand.primary.opacity(0.6), instrumentName: "Empty", instrumentIcon: "questionmark")) }
-    func addScene() { scenes.append(ClipViewScene(name: "Scene \(scenes.count + 1)")) }
-    func toggleMute(_ index: Int) { tracks[index].isMuted.toggle() }
-    func toggleSolo(_ index: Int) { tracks[index].isSoloed.toggle() }
-    func toggleArm(_ index: Int) { tracks[index].isArmed.toggle() }
+    func addTrack() {
+        tracks.append(ClipViewTrack(name: "Track \(tracks.count + 1)", color: EchoelBrand.primary.opacity(0.6), instrumentName: "Empty", instrumentIcon: "questionmark"))
+        clips.append(scenes.map { _ -> ClipViewClip? in nil })
+    }
+    func addScene() {
+        scenes.append(ClipViewScene(name: "Scene \(scenes.count + 1)"))
+        for i in 0..<clips.count { clips[i].append(nil) }
+    }
+    func toggleMute(_ index: Int) { guard index < tracks.count else { return }; tracks[index].isMuted.toggle() }
+    func toggleSolo(_ index: Int) { guard index < tracks.count else { return }; tracks[index].isSoloed.toggle() }
+    func toggleArm(_ index: Int) { guard index < tracks.count else { return }; tracks[index].isArmed.toggle() }
     func togglePlay() { EchoelCreativeWorkspace.shared.isPlaying.toggle() }
     func toggleRecord() { isRecording.toggle() }
     func stop() { EchoelCreativeWorkspace.shared.isPlaying = false; isRecording = false }
     func stopAll() { activeScene = nil }
     func launchScene(_ index: Int) { activeScene = index; EchoelCreativeWorkspace.shared.isPlaying = true }
-    func clipAt(track: Int, scene: Int) -> ClipViewClip? { clips[track][scene] }
-    func isClipPlaying(track: Int, scene: Int) -> Bool { activeScene == scene && clips[track][scene] != nil }
+    func clipAt(track: Int, scene: Int) -> ClipViewClip? {
+        guard track < clips.count, scene < clips[track].count else { return nil }
+        return clips[track][scene]
+    }
+    func isClipPlaying(track: Int, scene: Int) -> Bool {
+        guard track < clips.count, scene < clips[track].count else { return false }
+        return activeScene == scene && clips[track][scene] != nil
+    }
     func toggleClip(track: Int, scene: Int) {
+        guard track < clips.count, scene < clips[track].count else { return }
         let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
         if clips[track][scene] != nil {
-            // Clip exists — toggle playback
             if loopEngine.isPlayingLoops {
                 loopEngine.stopPlayback()
             } else {
@@ -892,18 +904,17 @@ class SessionClipViewModel: ObservableObject {
             }
             EchoelCreativeWorkspace.shared.isPlaying = true
         } else {
-            // Empty slot — record a new loop into it
             loopEngine.setTempo(bpm)
             let bars = quantize == .bar ? 4 : (quantize == .quarter ? 1 : 2)
             loopEngine.startLoopRecording(bars: bars)
+            guard track < tracks.count else { return }
             clips[track][scene] = ClipViewClip(name: "\(tracks[track].name) \(scene + 1)")
         }
     }
 
     func editClip(track: Int, scene: Int) {
-        guard clips[track][scene] != nil else { return }
+        guard track < clips.count, scene < clips[track].count, clips[track][scene] != nil else { return }
         let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
-        // Start overdub on the last recorded loop
         if let lastLoop = loopEngine.loops.last {
             loopEngine.startOverdub(loopID: lastLoop.id)
         }
@@ -917,8 +928,15 @@ class SessionClipViewModel: ObservableObject {
             loopEngine.stopPlayback()
         }
     }
-    func addInstrumentToTrack(_ track: Int, instrument: InstrumentInfo) { tracks[track].instrumentName = instrument.name; tracks[track].instrumentIcon = instrument.icon }
-    func addEffectToTrack(_ track: Int, effect: EffectInfo) { tracks[track].effectCount += 1 }
+    func addInstrumentToTrack(_ track: Int, instrument: InstrumentInfo) {
+        guard track < tracks.count else { return }
+        tracks[track].instrumentName = instrument.name
+        tracks[track].instrumentIcon = instrument.icon
+    }
+    func addEffectToTrack(_ track: Int, effect: EffectInfo) {
+        guard track < tracks.count else { return }
+        tracks[track].effectCount += 1
+    }
 }
 
 struct ClipViewTrack: Identifiable {
