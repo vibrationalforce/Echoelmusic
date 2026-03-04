@@ -533,6 +533,7 @@ struct EchoelFXView: View {
 
                         // Bypass toggle button
                         Button {
+                            nodeGraph.objectWillChange.send()
                             node.isBypassed.toggle()
                             HapticHelper.impact(.medium)
                         } label: {
