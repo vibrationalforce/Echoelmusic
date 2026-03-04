@@ -12,6 +12,7 @@ import Metal
 @MainActor
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
+    @StateObject private var cameraAnalyzer = CameraAnalyzer()
     @State private var cameraManager: CameraManager?
     @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedClipIndex: Int?
@@ -148,10 +149,15 @@ struct VideoEditorView: View {
                                 if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
                                     cameraManager = CameraManager(device: device)
                                 }
+                                // Wire camera frames to analyzer
+                                cameraManager?.onRawFrameCaptured = { [weak cameraAnalyzer] pixelBuffer, _ in
+                                    cameraAnalyzer?.analyzePixelBuffer(pixelBuffer)
+                                }
                                 try? await cameraManager?.startCapture()
                             }
                         } else {
                             cameraManager?.stopCapture()
+                            cameraAnalyzer.reset()
                         }
                     }
                 }
@@ -181,7 +187,7 @@ struct VideoEditorView: View {
                     CameraPreviewLayer(cameraManager: cam)
                     #endif
 
-                    // Live indicator
+                    // Camera analysis overlay (top)
                     VStack {
                         HStack {
                             Circle()
@@ -190,10 +196,87 @@ struct VideoEditorView: View {
                             Text("LIVE")
                                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                                 .foregroundColor(EchoelBrand.coherenceHigh)
+
                             Spacer()
+
+                            // Filter modulation indicator
+                            HStack(spacing: 4) {
+                                Image(systemName: "camera.filters")
+                                    .font(.system(size: 10))
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(VaporwaveColors.neonCyan)
+                                    .frame(width: CGFloat(cameraAnalyzer.filterModulation) * 40, height: 6)
+                                    .animation(.easeOut(duration: 0.1), value: cameraAnalyzer.filterModulation)
+                            }
+                            .foregroundColor(VaporwaveColors.neonCyan)
                         }
                         .padding(VaporwaveSpacing.sm)
+
                         Spacer()
+
+                        // BPM suggestion (bottom of camera preview)
+                        if cameraAnalyzer.isPulseDetecting && cameraAnalyzer.estimatedBPM > 0 {
+                            HStack(spacing: 8) {
+                                Image(systemName: "heart.fill")
+                                    .foregroundColor(VaporwaveColors.neonPink)
+                                    .font(.system(size: 12))
+                                Text("\(Int(cameraAnalyzer.estimatedBPM)) BPM")
+                                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                    .foregroundColor(VaporwaveColors.neonPink)
+
+                                // Apply BPM button
+                                Button {
+                                    workspace.setGlobalBPM(cameraAnalyzer.estimatedBPM)
+                                    HapticHelper.notification(.success)
+                                } label: {
+                                    Text("Apply")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(VaporwaveColors.deepBlack)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Capsule().fill(VaporwaveColors.neonPink))
+                                }
+                                .buttonStyle(.plain)
+
+                                // Confidence bar
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(VaporwaveColors.neonPink.opacity(cameraAnalyzer.bpmConfidence))
+                                    .frame(width: 30, height: 4)
+                            }
+                            .padding(.horizontal, VaporwaveSpacing.sm)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(VaporwaveColors.deepBlack.opacity(0.7))
+                            )
+                            .padding(.bottom, VaporwaveSpacing.sm)
+                        }
+
+                        // Pulse detection toggle
+                        HStack {
+                            Spacer()
+                            Button {
+                                cameraAnalyzer.togglePulseDetection()
+                                HapticHelper.impact(.light)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: cameraAnalyzer.isPulseDetecting ? "heart.fill" : "heart")
+                                        .font(.system(size: 11))
+                                    Text(cameraAnalyzer.isPulseDetecting ? "Pulse ON" : "Pulse")
+                                        .font(.system(size: 10, weight: .medium))
+                                }
+                                .foregroundColor(cameraAnalyzer.isPulseDetecting ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(cameraAnalyzer.isPulseDetecting ? VaporwaveColors.neonPink.opacity(0.15) : VaporwaveColors.deepBlack.opacity(0.5))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, VaporwaveSpacing.sm)
+                        .padding(.bottom, VaporwaveSpacing.sm)
                     }
                 } else if let player = videoPlayer {
                     // Real AVPlayer video preview
@@ -236,6 +319,9 @@ struct VideoEditorView: View {
                                 Task {
                                     if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
                                         cameraManager = CameraManager(device: device)
+                                    }
+                                    cameraManager?.onRawFrameCaptured = { [weak cameraAnalyzer] pixelBuffer, _ in
+                                        cameraAnalyzer?.analyzePixelBuffer(pixelBuffer)
                                     }
                                     try? await cameraManager?.startCapture()
                                 }
@@ -760,10 +846,12 @@ struct EditorVideoClip: Identifiable {
 
 struct VideoExportSheet: View {
     @ObservedObject var engine: VideoEditingEngine
+    @StateObject private var exportManager = VideoExportManager()
     @Environment(\.dismiss) private var dismiss
     @State private var selectedFormat = "H.264"
     @State private var selectedResolution = "1080p"
     @State private var selectedQuality = "High"
+    @State private var exportError: String?
 
     var body: some View {
         ZStack {
@@ -786,22 +874,46 @@ struct VideoExportSheet: View {
 
                 // Settings
                 VStack(spacing: VaporwaveSpacing.md) {
-                    exportSetting(title: "Format", value: $selectedFormat, options: ["H.264", "H.265", "ProRes", "AV1"])
-                    exportSetting(title: "Resolution", value: $selectedResolution, options: ["720p", "1080p", "4K", "8K"])
+                    exportSetting(title: "Format", value: $selectedFormat, options: ["H.264", "H.265", "ProRes"])
+                    exportSetting(title: "Resolution", value: $selectedResolution, options: ["720p", "1080p", "4K"])
                     exportSetting(title: "Quality", value: $selectedQuality, options: ["Draft", "Good", "High", "Best"])
                 }
                 .modifier(GlassCard())
+
+                // Progress
+                if exportManager.isExporting {
+                    VStack(spacing: VaporwaveSpacing.sm) {
+                        ProgressView(value: exportManager.exportProgress)
+                            .tint(VaporwaveColors.neonCyan)
+                        Text("\(Int(exportManager.exportProgress * 100))%")
+                            .font(VaporwaveTypography.dataSmall())
+                            .foregroundColor(VaporwaveColors.textSecondary)
+                    }
+                    .padding()
+                    .modifier(GlassCard())
+                }
+
+                if let error = exportError {
+                    Text(error)
+                        .font(VaporwaveTypography.caption())
+                        .foregroundColor(VaporwaveColors.coral)
+                        .padding()
+                }
 
                 Spacer()
 
                 // Export button
                 Button {
-                    // Export action
-                    dismiss()
+                    Task { await performExport() }
                 } label: {
                     HStack {
-                        Image(systemName: "square.and.arrow.up")
-                        Text("Export")
+                        if exportManager.isExporting {
+                            ProgressView()
+                                .tint(VaporwaveColors.deepBlack)
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        Text(exportManager.isExporting ? "Exporting..." : "Export")
                     }
                     .font(VaporwaveTypography.body())
                     .foregroundColor(VaporwaveColors.deepBlack)
@@ -809,12 +921,69 @@ struct VideoExportSheet: View {
                     .padding(.vertical, VaporwaveSpacing.md)
                     .background(
                         Capsule()
-                            .fill(VaporwaveColors.neonCyan)
+                            .fill(exportManager.isExporting ? VaporwaveColors.textTertiary : VaporwaveColors.neonCyan)
                     )
                     .modifier(NeonGlow(color: VaporwaveColors.neonCyan, radius: 15))
                 }
+                .disabled(exportManager.isExporting)
             }
             .padding(VaporwaveSpacing.lg)
+        }
+    }
+
+    private func performExport() async {
+        exportError = nil
+        guard let composition = try? await engine.buildComposition() else {
+            exportError = "No video content to export"
+            return
+        }
+
+        // Map UI selections to ExportManager types
+        let format: VideoExportManager.ExportFormat = {
+            switch selectedFormat {
+            case "H.265": return .hevc_main
+            case "ProRes": return .prores422
+            default: return .h264_high
+            }
+        }()
+
+        let resolution: VideoExportManager.Resolution = {
+            switch selectedResolution {
+            case "720p": return .hd1280x720
+            case "4K": return .uhd3840x2160
+            default: return .hd1920x1080
+            }
+        }()
+
+        let quality: VideoExportManager.Quality = {
+            switch selectedQuality {
+            case "Draft": return .low
+            case "Good": return .medium
+            case "Best": return .maximum
+            default: return .high
+            }
+        }()
+
+        // Generate output URL
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let outputURL = documentsDir
+            .appendingPathComponent("Echoelmusic_Export_\(Int(Date().timeIntervalSince1970))")
+            .appendingPathExtension(format.fileExtension)
+
+        do {
+            try await exportManager.export(
+                composition: composition,
+                to: outputURL,
+                format: format,
+                resolution: resolution,
+                quality: quality
+            )
+            HapticHelper.notification(.success)
+            dismiss()
+        } catch {
+            exportError = "Export failed: \(error.localizedDescription)"
+            HapticHelper.notification(.error)
         }
     }
 

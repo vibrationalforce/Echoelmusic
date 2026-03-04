@@ -9,11 +9,15 @@ struct DAWArrangementView: View {
     @EnvironmentObject var recordingEngine: RecordingEngine
     @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
 
+    @StateObject private var metronome = MetronomeEngine()
+
     @State private var selectedTrackID: UUID?
     @State private var timelineZoom: Double = 1.0
     @State private var showMixer = false
     @State private var showInstrumentBrowser = false
     @State private var showTrackList = true
+    @State private var showSessionClips = false
+    @State private var showEffectsChain = false
     @State private var playbackTimer: Timer?
     @State private var scrollOffset: CGFloat = 0
 
@@ -74,6 +78,12 @@ struct DAWArrangementView: View {
                 .environmentObject(audioEngine)
                 .environmentObject(recordingEngine)
         }
+        .sheet(isPresented: $showSessionClips) {
+            SessionClipView()
+        }
+        .sheet(isPresented: $showEffectsChain) {
+            EffectsChainView()
+        }
         .onAppear {
             ensureSessionExists()
         }
@@ -119,19 +129,35 @@ struct DAWArrangementView: View {
 
             Spacer()
 
-            // BPM
-            HStack(spacing: VaporwaveSpacing.sm) {
-                Image(systemName: "metronome")
-                    .foregroundColor(VaporwaveColors.neonPink)
-                Text("\(Int(bpm))")
-                    .font(VaporwaveTypography.data())
-                    .foregroundColor(VaporwaveColors.textPrimary)
-                Text("BPM")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+            // BPM + Metronome toggle
+            Button {
+                if metronome.isRunning {
+                    metronome.stop()
+                } else {
+                    metronome.setTempo(newTempo: bpm)
+                    metronome.start()
+                }
+                HapticHelper.impact(.light)
+            } label: {
+                HStack(spacing: VaporwaveSpacing.sm) {
+                    Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
+                        .foregroundColor(metronome.isRunning ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
+                        .opacity(metronome.beatFlash ? 1.0 : 0.7)
+                    Text("\(Int(bpm))")
+                        .font(VaporwaveTypography.data())
+                        .foregroundColor(VaporwaveColors.textPrimary)
+                    Text("BPM")
+                        .font(VaporwaveTypography.label())
+                        .foregroundColor(VaporwaveColors.textSecondary)
+                }
             }
+            .buttonStyle(.plain)
             .padding(.horizontal, VaporwaveSpacing.md)
             .padding(.vertical, VaporwaveSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(metronome.isRunning ? VaporwaveColors.neonPink.opacity(0.1) : Color.clear)
+            )
             .modifier(GlassCard())
 
             Spacer()
@@ -145,6 +171,12 @@ struct DAWArrangementView: View {
                 }
                 toolbarButton(icon: "slider.horizontal.3", label: "Mixer", isActive: showMixer) {
                     showMixer = true
+                }
+                toolbarButton(icon: "square.grid.3x3", label: "Clips", isActive: showSessionClips) {
+                    showSessionClips = true
+                }
+                toolbarButton(icon: "waveform.path.ecg", label: "FX", isActive: showEffectsChain) {
+                    showEffectsChain = true
                 }
                 toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
                     addNewTrack()

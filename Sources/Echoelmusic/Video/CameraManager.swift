@@ -220,6 +220,7 @@ public class CameraManager: NSObject, ObservableObject {
     // MARK: - Frame Callback
 
     var onFrameCaptured: ((MTLTexture, CMTime) -> Void)?
+    var onRawFrameCaptured: ((CVPixelBuffer, CMTime) -> Void)?
     var onDepthDataCaptured: ((AVDepthData) -> Void)?
 
     // MARK: - Performance Tracking
@@ -1193,6 +1194,9 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
 
         Task { @MainActor in
+            // Raw frame callback (for analysis — lightweight, every frame)
+            self.onRawFrameCaptured?(pixelBuffer, presentationTime)
+
             guard let texture = self.createTexture(from: pixelBuffer) else {
                 self.droppedFrames += 1
                 return
