@@ -239,7 +239,9 @@ private struct SessionClipContent: View {
                             isPlaying: vm.isClipPlaying(track: trackIndex, scene: sceneIndex),
                             onTap: { vm.toggleClip(track: trackIndex, scene: sceneIndex) },
                             onDoubleTap: { vm.editClip(track: trackIndex, scene: sceneIndex) },
-                            onStop: { vm.stopClip(track: trackIndex, scene: sceneIndex) }
+                            onStop: { vm.stopClip(track: trackIndex, scene: sceneIndex) },
+                            onClear: { vm.clearClip(track: trackIndex, scene: sceneIndex) },
+                            onDuplicate: { vm.duplicateClip(track: trackIndex, scene: sceneIndex) }
                         )
                     }
                 }
@@ -459,6 +461,8 @@ struct ClipSlotCell: View {
     let onTap: () -> Void
     let onDoubleTap: () -> Void
     let onStop: () -> Void
+    var onClear: (() -> Void)?
+    var onDuplicate: (() -> Void)?
 
     @State private var isHovered = false
 
@@ -481,6 +485,11 @@ struct ClipSlotCell: View {
                         .frame(height: 20)
                 }
                 .padding(4)
+            } else {
+                // Empty slot indicator
+                Image(systemName: "plus")
+                    .font(.system(size: 14))
+                    .foregroundColor(VaporwaveColors.textTertiary.opacity(0.4))
             }
 
             // Playing Indicator
@@ -509,6 +518,45 @@ struct ClipSlotCell: View {
         .onTapGesture(count: 2, perform: onDoubleTap)
         .onTapGesture(count: 1, perform: onTap)
         .onHover { isHovered = $0 }
+        .contextMenu {
+            if clip != nil {
+                Button {
+                    onTap()
+                } label: {
+                    Label(isPlaying ? "Stop" : "Play", systemImage: isPlaying ? "stop.fill" : "play.fill")
+                }
+
+                Button {
+                    onDoubleTap()
+                } label: {
+                    Label("Overdub", systemImage: "mic.badge.plus")
+                }
+
+                if let onDuplicate = onDuplicate {
+                    Button {
+                        onDuplicate()
+                    } label: {
+                        Label("Duplicate", systemImage: "doc.on.doc")
+                    }
+                }
+
+                Divider()
+
+                if let onClear = onClear {
+                    Button(role: .destructive) {
+                        onClear()
+                    } label: {
+                        Label("Delete Clip", systemImage: "trash")
+                    }
+                }
+            } else {
+                Button {
+                    onTap()
+                } label: {
+                    Label("Record", systemImage: "record.circle")
+                }
+            }
+        }
     }
 }
 
@@ -928,6 +976,24 @@ class SessionClipViewModel: ObservableObject {
             loopEngine.stopPlayback()
         }
     }
+    func clearClip(track: Int, scene: Int) {
+        guard track < clips.count, scene < clips[track].count else { return }
+        stopClip(track: track, scene: scene)
+        clips[track][scene] = nil
+    }
+
+    func duplicateClip(track: Int, scene: Int) {
+        guard track < clips.count, scene < clips[track].count,
+              let original = clips[track][scene] else { return }
+        // Find next empty slot in same track
+        for s in 0..<clips[track].count where s != scene {
+            if clips[track][s] == nil {
+                clips[track][s] = ClipViewClip(name: original.name + " copy")
+                return
+            }
+        }
+    }
+
     func addInstrumentToTrack(_ track: Int, instrument: InstrumentInfo) {
         guard track < tracks.count else { return }
         tracks[track].instrumentName = instrument.name

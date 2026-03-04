@@ -501,49 +501,69 @@ struct EchoelFXView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: EchoelSpacing.sm) {
                 ForEach(nodeGraph.nodes, id: \.id) { node in
-                    Button {
-                        withAnimation(.easeInOut(duration: EchoelAnimation.quick)) {
-                            selectedNodeID = node.id
-                        }
-                        HapticHelper.impact(.light)
-                    } label: {
-                        HStack(spacing: EchoelSpacing.xs) {
-                            // Colored indicator dot
-                            Circle()
-                                .fill(accentColorForNode(node))
-                                .frame(width: 6, height: 6)
+                    HStack(spacing: 2) {
+                        Button {
+                            withAnimation(.easeInOut(duration: EchoelAnimation.quick)) {
+                                selectedNodeID = node.id
+                            }
+                            HapticHelper.impact(.light)
+                        } label: {
+                            HStack(spacing: EchoelSpacing.xs) {
+                                // Colored indicator dot
+                                Circle()
+                                    .fill(node.isBypassed ? EchoelBrand.textTertiary : accentColorForNode(node))
+                                    .frame(width: 6, height: 6)
 
-                            Image(systemName: iconForNode(node))
-                                .font(.system(size: 11))
+                                Image(systemName: iconForNode(node))
+                                    .font(.system(size: 11))
 
-                            Text(node.name)
-                                .font(EchoelBrandFont.label())
+                                Text(node.name)
+                                    .font(EchoelBrandFont.label())
+                                    .strikethrough(node.isBypassed, color: EchoelBrand.textTertiary)
+                            }
+                            .foregroundColor(
+                                node.isBypassed
+                                    ? EchoelBrand.textTertiary
+                                    : node.id == selectedNode.id
+                                        ? EchoelBrand.primary
+                                        : EchoelBrand.textSecondary
+                            )
                         }
-                        .foregroundColor(
-                            node.id == selectedNode.id
-                                ? EchoelBrand.primary
-                                : EchoelBrand.textSecondary
-                        )
-                        .padding(.horizontal, EchoelSpacing.sm + 2)
-                        .padding(.vertical, EchoelSpacing.xs + 2)
-                        .background(
-                            Capsule().fill(
-                                node.id == selectedNode.id
+                        .buttonStyle(.plain)
+
+                        // Bypass toggle button
+                        Button {
+                            node.isBypassed.toggle()
+                            HapticHelper.impact(.medium)
+                        } label: {
+                            Image(systemName: node.isBypassed ? "xmark.circle.fill" : "power.circle")
+                                .font(.system(size: 13))
+                                .foregroundColor(node.isBypassed ? EchoelBrand.coral : EchoelBrand.emerald)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, EchoelSpacing.sm + 2)
+                    .padding(.vertical, EchoelSpacing.xs + 2)
+                    .background(
+                        Capsule().fill(
+                            node.isBypassed
+                                ? EchoelBrand.coral.opacity(0.05)
+                                : node.id == selectedNode.id
                                     ? EchoelBrand.primary.opacity(0.08)
                                     : EchoelBrand.bgSurface
-                            )
                         )
-                        .overlay(
-                            Capsule().stroke(
-                                node.id == selectedNode.id
+                    )
+                    .overlay(
+                        Capsule().stroke(
+                            node.isBypassed
+                                ? EchoelBrand.coral.opacity(0.3)
+                                : node.id == selectedNode.id
                                     ? EchoelBrand.borderActive
                                     : EchoelBrand.border,
-                                lineWidth: 1
-                            )
+                            lineWidth: 1
                         )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(node.name) effect")
+                    )
+                    .accessibilityLabel("\(node.name) effect, \(node.isBypassed ? "bypassed" : "active")")
                     .accessibilityAddTraits(node.id == selectedNode.id ? .isSelected : [])
                 }
             }

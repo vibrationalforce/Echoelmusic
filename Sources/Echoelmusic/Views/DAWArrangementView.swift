@@ -403,6 +403,9 @@ struct DAWArrangementView: View {
 
             ScrollView([.horizontal, .vertical]) {
                 ZStack(alignment: .topLeading) {
+                    // Beat grid lines
+                    beatGridOverlay
+
                     // Track lanes
                     VStack(spacing: EchoelSpacing.xs) {
                         ForEach(tracks) { track in
@@ -494,6 +497,13 @@ struct DAWArrangementView: View {
         }
         .frame(height: 30)
         .background(EchoelBrand.bgDeep.opacity(0.5))
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    let time = max(0, Double(value.location.x) / pixelsPerSecond)
+                    recordingEngine.seek(to: time)
+                }
+        )
     }
 
     private var playheadView: some View {
@@ -594,6 +604,51 @@ struct DAWArrangementView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, EchoelSpacing.md)
+    }
+
+    // MARK: - Beat Grid Overlay
+
+    private var beatGridOverlay: some View {
+        let beatWidth = (60.0 / bpm) * pixelsPerSecond
+        let barWidth = beatWidth * 4
+        let totalBars = max(16, Int(ceil((recordingEngine.currentSession?.duration ?? 30) * bpm / 240.0)) + 4)
+        let laneHeight = CGFloat(max(tracks.count, 1)) * 64 + CGFloat(EchoelSpacing.sm * 2)
+
+        return Canvas { context, size in
+            for bar in 0..<totalBars {
+                let barX = CGFloat(bar) * barWidth + CGFloat(EchoelSpacing.sm)
+
+                // Bar line (strong)
+                context.stroke(
+                    Path { p in
+                        p.move(to: CGPoint(x: barX, y: 0))
+                        p.addLine(to: CGPoint(x: barX, y: laneHeight))
+                    },
+                    with: .color(Color.white.opacity(bar % 4 == 0 ? 0.12 : 0.06)),
+                    lineWidth: bar % 4 == 0 ? 1 : 0.5
+                )
+
+                // Beat lines within bar (lighter)
+                if timelineZoom > 0.5 {
+                    for beat in 1..<4 {
+                        let beatX = barX + CGFloat(beat) * beatWidth
+                        context.stroke(
+                            Path { p in
+                                p.move(to: CGPoint(x: beatX, y: 0))
+                                p.addLine(to: CGPoint(x: beatX, y: laneHeight))
+                            },
+                            with: .color(Color.white.opacity(0.03)),
+                            lineWidth: 0.5
+                        )
+                    }
+                }
+            }
+        }
+        .frame(
+            width: CGFloat(totalBars) * barWidth + CGFloat(EchoelSpacing.sm * 2),
+            height: laneHeight
+        )
+        .allowsHitTesting(false)
     }
 
     // MARK: - Mini Mixer Strip (FL Mobile Style)
