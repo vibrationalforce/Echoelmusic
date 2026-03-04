@@ -15,6 +15,8 @@ Read this FIRST when continuing work on Echoelmusic.
 15. `493fc40` — `fix: resolve @MainActor init isolation error in VideoEditingEngine`
 16. `ced1db4` — `fix: return nil instead of bare return in optional-returning function`
 17. `e87ab7a` — `feat: FL Mobile/Ableton/CapCut/DaVinci combined iPhone UI`
+18. `7c02a9b` — `feat: effect bypass, clip context menu, beat-grid lines, tap-to-seek`
+19. `6f7ad98` — `fix: trigger SwiftUI refresh on effect bypass toggle`
 
 **What Changed:**
 - **"Live" tab**: 5th tab in MainNavigationHub for Ableton-style Session Clips (was modal-only before)
@@ -23,9 +25,14 @@ Read this FIRST when continuing work on Echoelmusic.
 - **currentGrade wiring**: VideoEditingEngine.applyLiveGrade() now sets currentGrade for slider feedback
 - **Division guards**: ~20 more unguarded BPM/tempo divisions fixed across 14 additional files
 - **Build fixes**: @MainActor init isolation (Timeline default arg), bare return in Float? function
+- **FX bypass toggle**: Per-effect power/X button in node picker strip with red/green visual, strikethrough bypassed names
+- **Clip context menu**: Long-press on clip cells → Play/Stop, Overdub, Duplicate, Delete actions
+- **Beat-grid overlay**: Canvas-rendered bar/beat lines behind DAW tracks, zoom-responsive
+- **Tap-to-seek**: Drag on timeline ruler to scrub playhead position
+- **Empty clip hint**: + icon in empty clip slots for discoverability
 
 **TestFlight:**
-- Build `22681723866` — In Progress (combined iPhone UI features)
+- Build `22681939277` — In Progress (all combined UI features)
 
 ---
 
