@@ -52,8 +52,8 @@ class VideoEditingEngine: ObservableObject {
 
     // MARK: - Initialization
 
-    init(timeline: Timeline = Timeline()) {
-        self.timeline = timeline
+    init(timeline: Timeline? = nil) {
+        self.timeline = timeline ?? Timeline()
         log.video("✅ VideoEditingEngine: Initialized with Undo/Redo support")
     }
 
