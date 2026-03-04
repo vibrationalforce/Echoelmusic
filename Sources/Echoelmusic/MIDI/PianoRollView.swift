@@ -255,7 +255,7 @@ struct NoteGridView: View {
             }
 
             // Draw vertical lines (beats)
-            let totalBeats = Int(viewModel.duration / (60.0 / viewModel.tempo))
+            let totalBeats = Int(viewModel.duration / (60.0 / max(viewModel.tempo, 20.0)))
             for beat in 0...totalBeats {
                 let x = CGFloat(beat) * beatWidth
                 let isMeasure = beat % 4 == 0
@@ -594,7 +594,7 @@ class PianoRollViewModel: ObservableObject {
                 }
 
                 // Loop
-                let totalBeats = self.duration / (60.0 / self.tempo)
+                let totalBeats = self.duration / (60.0 / max(self.tempo, 20.0))
                 if self.playheadPosition >= totalBeats {
                     self.playheadPosition = 0
                     self.releaseAllVoices()

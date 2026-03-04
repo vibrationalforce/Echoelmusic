@@ -87,7 +87,7 @@ public struct LinkSessionState: Equatable {
         let elapsed = now - timestamp
 
         // Microseconds per beat = 60_000_000 / tempo
-        let microsecondsPerBeat = 60_000_000.0 / tempo
+        let microsecondsPerBeat = 60_000_000.0 / max(tempo, 20.0)
         beat = Double(elapsed) / microsecondsPerBeat
 
         // Phase within quantum
@@ -610,7 +610,7 @@ public class AbletonLinkClient: ObservableObject {
 
     /// Get beat time in seconds
     public func getBeatDuration() -> TimeInterval {
-        60.0 / sessionState.tempo
+        60.0 / max(sessionState.tempo, 20.0)
     }
 
     /// Time until next beat

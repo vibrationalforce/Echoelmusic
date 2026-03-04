@@ -695,6 +695,7 @@ public class BPMGridEditEngine: ObservableObject {
         let avgInterval = totalInterval / Double(tapTimes.count - 1)
 
         // Convert to BPM
+        guard avgInterval > 0 else { return }
         let detectedBPM = 60.0 / avgInterval
         setBPM(detectedBPM)
     }
@@ -849,7 +850,7 @@ public class BPMGridEditEngine: ObservableObject {
 
         // Histogram of intervals (quantized to common beat durations)
         var histogram: [Double: Int] = [:]
-        for interval in intervals {
+        for interval in intervals where interval > 0 {
             // Quantize to nearest common interval
             let bpm = 60.0 / interval
             let quantizedBPM = round(bpm / 5) * 5 // Round to nearest 5 BPM

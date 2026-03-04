@@ -614,7 +614,7 @@ class Timeline: ObservableObject {
 
         // If no clip edge nearby, snap to beat
         if nearestDistance >= tolerance {
-            let secondsPerBeat = 60.0 / tempo
+            let secondsPerBeat = 60.0 / max(tempo, 20.0)
             let nearestBeat = round(time.seconds / secondsPerBeat)
             nearestTime = CMTime(seconds: nearestBeat * secondsPerBeat, preferredTimescale: 600)
         }

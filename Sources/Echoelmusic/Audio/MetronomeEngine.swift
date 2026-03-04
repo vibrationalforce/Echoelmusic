@@ -331,7 +331,7 @@ public final class MetronomeEngine: ObservableObject {
     // MARK: - Timer
 
     private func startTimer() {
-        let beatInterval = 60.0 / tempo
+        let beatInterval = 60.0 / max(tempo, 20.0)
         let subdivisionInterval = beatInterval / Double(configuration.subdivision.clicksPerBeat)
 
         timer = DispatchSource.makeTimerSource(queue: timerQueue)

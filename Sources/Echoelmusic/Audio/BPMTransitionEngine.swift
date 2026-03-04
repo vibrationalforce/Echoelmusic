@@ -502,6 +502,7 @@ public class BPMTransitionEngine: ObservableObject {
         }
 
         let averageInterval = intervals.reduce(0, +) / Double(intervals.count)
+        guard averageInterval > 0 else { return }
         let tappedBPM = 60.0 / averageInterval
 
         setTargetBPM(tappedBPM)

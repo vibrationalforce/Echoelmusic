@@ -126,7 +126,7 @@ class DelayNode: BaseEchoelmusicNode {
         let bpm = max(40.0, min(120.0, heartRate))  // Clamp to reasonable range
 
         // Calculate quarter note duration in seconds
-        let quarterNoteDuration = 60.0 / bpm
+        let quarterNoteDuration = 60.0 / max(bpm, 20.0)
 
         // Use eighth note for delay (half of quarter)
         let targetDelayTime = Float(quarterNoteDuration / 2.0)  // Eighth note
@@ -199,7 +199,7 @@ class DelayNode: BaseEchoelmusicNode {
 
     /// Get delay time for musical subdivision
     func setTempoSyncedDelay(bpm: Double, subdivision: MusicalSubdivision) {
-        let quarterNoteDuration = 60.0 / bpm
+        let quarterNoteDuration = 60.0 / max(bpm, 20.0)
         let delayTime = Float(quarterNoteDuration * subdivision.multiplier)
         setParameter(name: Params.delayTime, value: delayTime)
     }

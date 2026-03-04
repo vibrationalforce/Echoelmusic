@@ -927,7 +927,7 @@ public final class QuantumMIDIOut: ObservableObject {
             let velocity = bioInput.quantumVelocity * (0.8 + Float(i % 4) * 0.05)
 
             // Schedule note with bio-reactive timing
-            let beatDuration = 60.0 / bioInput.heartRate
+            let beatDuration = 60.0 / max(bioInput.heartRate, 20.0)
             let delay = Double(i) * beatDuration * 0.5
 
             Task { @MainActor in

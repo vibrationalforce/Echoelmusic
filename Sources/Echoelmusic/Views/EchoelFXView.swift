@@ -11,7 +11,6 @@ struct EchoelFXView: View {
     @State private var activePanel: FXPanel = .chain
     @State private var selectedNodeID: UUID?
     @State private var showPresetSheet = false
-    @State private var showAddNodeSheet = false
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass

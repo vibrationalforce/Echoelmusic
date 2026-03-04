@@ -426,13 +426,13 @@ class LoopEngine: ObservableObject {
     /// Calculate bar duration in seconds
     func barDurationSeconds() -> TimeInterval {
         let beatsPerBar = Double(timeSignature.numerator)
-        let secondsPerBeat = 60.0 / tempo
+        let secondsPerBeat = 60.0 / max(tempo, 20.0)
         return beatsPerBar * secondsPerBeat
     }
 
     /// Calculate beat duration in seconds
     func beatDurationSeconds() -> TimeInterval {
-        return 60.0 / tempo
+        return 60.0 / max(tempo, 20.0)
     }
 
     /// Get current beat position (0-based within loop)

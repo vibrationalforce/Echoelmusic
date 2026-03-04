@@ -1104,7 +1104,7 @@ public class ProSessionEngine: ObservableObject {
         tracks[trackIndex].ensureSlots(count: sceneIndex + 1)
         tracks[trackIndex].isArmed = true
 
-        let recordLength = Double(loopLength) * 4.0 * (60.0 / globalBPM)
+        let recordLength = Double(loopLength) * 4.0 * (60.0 / max(globalBPM, 20.0))
         let clipType: ClipType = tracks[trackIndex].type == SessionTrackType.audio ? ClipType.audio : ClipType.midi
 
         let newClip = SessionClip(
@@ -1205,7 +1205,7 @@ public class ProSessionEngine: ObservableObject {
         let stepCount = min(max(1, steps), 64)
         let patternSteps = (0..<stepCount).map { PatternStep(stepIndex: $0) }
         let beatsLength = Double(stepCount) / 4.0
-        let lengthSeconds = beatsLength * (60.0 / globalBPM)
+        let lengthSeconds = beatsLength * (60.0 / max(globalBPM, 20.0))
 
         let clip = SessionClip(
             name: name,

@@ -747,7 +747,7 @@ struct VideoEditorView: View {
             if showBPMGrid {
                 transportButton(icon: "scissors") {
                     // Snap to nearest beat
-                    let beatDuration = 60.0 / workspace.globalBPM
+                    let beatDuration = 60.0 / max(workspace.globalBPM, 20.0)
                     currentTime = round(currentTime / beatDuration) * beatDuration
                 }
             }
@@ -760,7 +760,7 @@ struct VideoEditorView: View {
             // Previous beat
             if showBPMGrid {
                 transportButton(icon: "backward.end.fill") {
-                    let beatDuration = 60.0 / workspace.globalBPM
+                    let beatDuration = 60.0 / max(workspace.globalBPM, 20.0)
                     currentTime = max(0, currentTime - beatDuration)
                 }
             }
@@ -791,7 +791,7 @@ struct VideoEditorView: View {
             // Next beat
             if showBPMGrid {
                 transportButton(icon: "forward.end.fill") {
-                    let beatDuration = 60.0 / workspace.globalBPM
+                    let beatDuration = 60.0 / max(workspace.globalBPM, 20.0)
                     currentTime += beatDuration
                 }
             }
