@@ -1180,7 +1180,7 @@ class AudioAnalysisEngine {
 
         // Find most common interval (simplified - would use autocorrelation in production)
         let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
-        guard avgInterval > 0 else { return }
+        guard avgInterval > 0 else { return nil }
         let bpm = Float(60.0 / avgInterval)
 
         // BPM should be in reasonable range
