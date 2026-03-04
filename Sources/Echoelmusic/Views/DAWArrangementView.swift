@@ -18,6 +18,7 @@ struct DAWArrangementView: View {
     @State private var showTrackList = true
     @State private var showSessionClips = false
     @State private var showEffectsChain = false
+    @State private var showMasterExport = false
     @State private var playbackTimer: Timer?
     @State private var scrollOffset: CGFloat = 0
 
@@ -83,6 +84,10 @@ struct DAWArrangementView: View {
         }
         .sheet(isPresented: $showEffectsChain) {
             DAWEffectsChainSheet()
+        }
+        .sheet(isPresented: $showMasterExport) {
+            MasterExportSheet()
+                .environmentObject(recordingEngine)
         }
         .onAppear {
             ensureSessionExists()
@@ -180,6 +185,9 @@ struct DAWArrangementView: View {
                 }
                 toolbarButton(icon: "waveform.path.ecg", label: "FX", isActive: showEffectsChain) {
                     showEffectsChain = true
+                }
+                toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
+                    showMasterExport = true
                 }
                 toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
                     addNewTrack()
@@ -830,6 +838,312 @@ struct DAWEffectsChainSheet: View {
                 nodeGraph.loadFromPreset(NodeGraph.createProductionChain())
             }
         }
+    }
+}
+
+// MARK: - Master Export Sheet
+
+struct MasterExportSheet: View {
+    @EnvironmentObject var recordingEngine: RecordingEngine
+    private let exportManager = ExportManager()
+    @Environment(\.dismiss) private var dismiss
+
+    enum MasterFormat: String, CaseIterable {
+        case wav24_441 = "WAV 24-bit / 44.1 kHz"
+        case wav24_48 = "WAV 24-bit / 48 kHz"
+        case wav16_441 = "WAV 16-bit / 44.1 kHz (CD)"
+        case aiff24 = "AIFF 24-bit / 44.1 kHz"
+        case m4a = "AAC (M4A) / 48 kHz"
+
+        var format: ExportManager.ExportFormat {
+            switch self {
+            case .wav24_441, .wav24_48, .wav16_441: return .wav
+            case .aiff24: return .aiff
+            case .m4a: return .m4a
+            }
+        }
+
+        var displayDescription: String {
+            switch self {
+            case .wav24_441: return "Industry standard for music distribution"
+            case .wav24_48: return "Studio quality, video post-production"
+            case .wav16_441: return "Red Book CD standard"
+            case .aiff24: return "Apple lossless, compatible with Logic Pro"
+            case .m4a: return "Compressed, good for streaming previews"
+            }
+        }
+    }
+
+    @State private var selectedFormat: MasterFormat = .wav24_441
+    @State private var isExporting = false
+    @State private var exportError: String?
+    @State private var exportSuccess = false
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: EchoelSpacing.lg) {
+                    // Session info
+                    sessionInfoCard
+
+                    // Format selection
+                    formatSection
+
+                    // Progress
+                    if isExporting {
+                        progressSection
+                    }
+
+                    // Error
+                    if let error = exportError {
+                        Text(error)
+                            .font(EchoelBrandFont.caption())
+                            .foregroundColor(EchoelBrand.coral)
+                            .padding(EchoelSpacing.md)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                                    .fill(EchoelBrand.coral.opacity(0.1))
+                            )
+                    }
+
+                    // Success
+                    if exportSuccess {
+                        HStack(spacing: EchoelSpacing.sm) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(EchoelBrand.emerald)
+                            Text("Master exported successfully")
+                                .font(EchoelBrandFont.body())
+                                .foregroundColor(EchoelBrand.emerald)
+                        }
+                        .padding(EchoelSpacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                                .fill(EchoelBrand.emerald.opacity(0.1))
+                        )
+                    }
+
+                    Spacer(minLength: EchoelSpacing.lg)
+
+                    // Export button
+                    Button {
+                        Task { await performMasterExport() }
+                    } label: {
+                        HStack(spacing: EchoelSpacing.sm) {
+                            if isExporting {
+                                ProgressView()
+                                    .tint(EchoelBrand.bgDeep)
+                            } else {
+                                Image(systemName: "waveform.badge.arrow.down")
+                            }
+                            Text(isExporting ? "Mastering..." : "Export Master")
+                                .fontWeight(.semibold)
+                        }
+                        .font(EchoelBrandFont.body())
+                        .foregroundColor(EchoelBrand.bgDeep)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, EchoelSpacing.md)
+                        .background(
+                            Capsule()
+                                .fill(isExporting ? EchoelBrand.textTertiary : EchoelBrand.primary)
+                        )
+                    }
+                    .disabled(isExporting)
+                    .buttonStyle(.plain)
+                }
+                .padding(EchoelSpacing.lg)
+            }
+            .background(EchoelBrand.bgDeep.ignoresSafeArea())
+            .navigationTitle("Master Export")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(EchoelBrand.primary)
+                }
+            }
+        }
+    }
+
+    private var sessionInfoCard: some View {
+        let session = recordingEngine.currentSession
+
+        return VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
+                Image(systemName: "music.note.list")
+                    .foregroundColor(EchoelBrand.sky)
+                Text("SESSION")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .tracking(1.5)
+            }
+
+            if let session = session {
+                HStack {
+                    VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
+                        Text(session.name)
+                            .font(EchoelBrandFont.cardTitle())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                        Text("\(session.tracks.count) tracks")
+                            .font(EchoelBrandFont.caption())
+                            .foregroundColor(EchoelBrand.textSecondary)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: EchoelSpacing.xs) {
+                        Text(formatDuration(session.duration))
+                            .font(EchoelBrandFont.data())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                        Text("duration")
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textTertiary)
+                    }
+                }
+            } else {
+                Text("No session loaded")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textTertiary)
+            }
+        }
+        .padding(EchoelSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: EchoelRadius.md)
+                .fill(EchoelBrand.bgSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: EchoelRadius.md)
+                .stroke(EchoelBrand.border, lineWidth: 1)
+        )
+    }
+
+    private var formatSection: some View {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
+                Image(systemName: "waveform")
+                    .foregroundColor(EchoelBrand.textSecondary)
+                Text("MASTER FORMAT")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .tracking(1.5)
+            }
+
+            ForEach(MasterFormat.allCases, id: \.self) { format in
+                Button {
+                    selectedFormat = format
+                    HapticHelper.impact(.light)
+                } label: {
+                    HStack(spacing: EchoelSpacing.md) {
+                        ZStack {
+                            Circle()
+                                .stroke(
+                                    selectedFormat == format ? EchoelBrand.primary : EchoelBrand.border,
+                                    lineWidth: 2
+                                )
+                                .frame(width: 20, height: 20)
+
+                            if selectedFormat == format {
+                                Circle()
+                                    .fill(EchoelBrand.primary)
+                                    .frame(width: 10, height: 10)
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: EchoelSpacing.xxs) {
+                            Text(format.rawValue)
+                                .font(EchoelBrandFont.body())
+                                .foregroundColor(
+                                    selectedFormat == format ? EchoelBrand.textPrimary : EchoelBrand.textSecondary
+                                )
+                            Text(format.displayDescription)
+                                .font(EchoelBrandFont.caption())
+                                .foregroundColor(EchoelBrand.textTertiary)
+                        }
+
+                        Spacer()
+
+                        if format == .wav24_441 {
+                            Text("REC")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(EchoelBrand.emerald)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(EchoelBrand.emerald.opacity(0.15))
+                                )
+                        }
+                    }
+                    .padding(EchoelSpacing.sm + EchoelSpacing.xs)
+                    .background(
+                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                            .fill(selectedFormat == format ? EchoelBrand.primary.opacity(0.06) : Color.clear)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                            .stroke(
+                                selectedFormat == format ? EchoelBrand.borderActive : EchoelBrand.border,
+                                lineWidth: 1
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var progressSection: some View {
+        VStack(spacing: EchoelSpacing.sm) {
+            ProgressView()
+                .tint(EchoelBrand.sky)
+            Text("Rendering master...")
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textSecondary)
+        }
+        .padding(EchoelSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                .fill(EchoelBrand.bgSurface)
+        )
+    }
+
+    private func performMasterExport() async {
+        guard let session = recordingEngine.currentSession else {
+            exportError = "No session loaded"
+            return
+        }
+
+        isExporting = true
+        exportError = nil
+        exportSuccess = false
+
+        do {
+            let url = try await exportManager.exportAudio(
+                session: session,
+                format: selectedFormat.format
+            )
+            isExporting = false
+            exportSuccess = true
+            HapticHelper.notification(.success)
+
+            // Share the exported file
+            #if os(iOS)
+            let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                rootVC.present(activityVC, animated: true)
+            }
+            #endif
+        } catch {
+            isExporting = false
+            exportError = "Export failed: \(error.localizedDescription)"
+            HapticHelper.notification(.error)
+        }
+    }
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 }
 

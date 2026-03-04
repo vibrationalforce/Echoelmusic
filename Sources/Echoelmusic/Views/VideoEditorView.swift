@@ -855,162 +855,401 @@ struct VideoExportSheet: View {
     @ObservedObject var engine: VideoEditingEngine
     @StateObject private var exportManager = VideoExportManager()
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedFormat = "H.264"
-    @State private var selectedResolution = "1080p"
-    @State private var selectedQuality = "High"
+    @State private var selectedTemplate: VideoTemplate = .youtube1080
     @State private var exportError: String?
+    @State private var exportSuccess = false
 
-    var body: some View {
-        ZStack {
-            EchoelBrand.bgDeep
-                .ignoresSafeArea()
+    // MARK: - Video Export Templates (FL Studio Mobile / InShot style)
 
-            VStack(spacing: EchoelSpacing.lg) {
-                // Header
-                HStack {
-                    Text("EXPORT VIDEO")
-                        .font(EchoelBrandFont.sectionTitle())
-                        .foregroundColor(EchoelBrand.textPrimary)
-                    Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(EchoelBrand.textSecondary)
-                    }
-                }
+    enum VideoTemplate: String, CaseIterable, Identifiable {
+        case youtube1080 = "YouTube 1080p"
+        case youtube4k = "YouTube 4K"
+        case instagramFeed = "Instagram Feed"
+        case instagramReels = "Instagram Reels"
+        case tiktok = "TikTok"
+        case custom1080 = "HD 1080p"
+        case custom4k = "4K Master"
+        case proRes = "ProRes 422"
 
-                // Settings
-                VStack(spacing: EchoelSpacing.md) {
-                    exportSetting(title: "Format", value: $selectedFormat, options: ["H.264", "H.265", "ProRes"])
-                    exportSetting(title: "Resolution", value: $selectedResolution, options: ["720p", "1080p", "4K"])
-                    exportSetting(title: "Quality", value: $selectedQuality, options: ["Draft", "Good", "High", "Best"])
-                }
-                .modifier(GlassCard())
+        var id: String { rawValue }
 
-                // Progress
-                if exportManager.isExporting {
-                    VStack(spacing: EchoelSpacing.sm) {
-                        ProgressView(value: exportManager.exportProgress)
-                            .tint(EchoelBrand.sky)
-                        Text("\(Int(exportManager.exportProgress * 100))%")
-                            .font(EchoelBrandFont.dataSmall())
-                            .foregroundColor(EchoelBrand.textSecondary)
-                    }
-                    .padding()
-                    .modifier(GlassCard())
-                }
-
-                if let error = exportError {
-                    Text(error)
-                        .font(EchoelBrandFont.caption())
-                        .foregroundColor(EchoelBrand.coral)
-                        .padding()
-                }
-
-                Spacer()
-
-                // Export button
-                Button {
-                    Task { await performExport() }
-                } label: {
-                    HStack {
-                        if exportManager.isExporting {
-                            ProgressView()
-                                .tint(EchoelBrand.bgDeep)
-                        } else {
-                            Image(systemName: "square.and.arrow.up")
-                        }
-                        Text(exportManager.isExporting ? "Exporting..." : "Export")
-                    }
-                    .font(EchoelBrandFont.body())
-                    .foregroundColor(EchoelBrand.bgDeep)
-                    .padding(.horizontal, EchoelSpacing.xl)
-                    .padding(.vertical, EchoelSpacing.md)
-                    .background(
-                        Capsule()
-                            .fill(exportManager.isExporting ? EchoelBrand.textTertiary : EchoelBrand.sky)
-                    )
-                    .modifier(NeonGlow(color: EchoelBrand.sky, radius: 15))
-                }
-                .disabled(exportManager.isExporting)
+        var icon: String {
+            switch self {
+            case .youtube1080, .youtube4k: return "play.rectangle.fill"
+            case .instagramFeed, .instagramReels: return "camera.fill"
+            case .tiktok: return "music.note"
+            case .custom1080: return "film"
+            case .custom4k: return "sparkles.tv"
+            case .proRes: return "film.stack"
             }
-            .padding(EchoelSpacing.lg)
+        }
+
+        var accentColor: Color {
+            switch self {
+            case .youtube1080, .youtube4k: return EchoelBrand.coral
+            case .instagramFeed, .instagramReels: return EchoelBrand.violet
+            case .tiktok: return EchoelBrand.sky
+            case .custom1080, .custom4k: return EchoelBrand.primary
+            case .proRes: return EchoelBrand.amber
+            }
+        }
+
+        var aspectLabel: String {
+            switch self {
+            case .youtube1080, .youtube4k, .custom1080, .custom4k, .proRes: return "16:9"
+            case .instagramFeed: return "1:1"
+            case .instagramReels, .tiktok: return "9:16"
+            }
+        }
+
+        var resolutionLabel: String {
+            switch self {
+            case .youtube1080: return "1920×1080"
+            case .youtube4k: return "3840×2160"
+            case .instagramFeed: return "1080×1080"
+            case .instagramReels: return "1080×1920"
+            case .tiktok: return "1080×1920"
+            case .custom1080: return "1920×1080"
+            case .custom4k: return "3840×2160"
+            case .proRes: return "1920×1080"
+            }
+        }
+
+        var description: String {
+            switch self {
+            case .youtube1080: return "H.264 High, 10 Mbps, -13 LUFS"
+            case .youtube4k: return "H.265, 35 Mbps, -13 LUFS"
+            case .instagramFeed: return "H.264, 5 Mbps, square format"
+            case .instagramReels: return "H.264, 8 Mbps, vertical 9:16"
+            case .tiktok: return "H.264, 8 Mbps, vertical 9:16"
+            case .custom1080: return "H.264 High, universal format"
+            case .custom4k: return "H.265, maximum quality"
+            case .proRes: return "ProRes 422, post-production"
+            }
+        }
+
+        var format: VideoExportManager.ExportFormat {
+            switch self {
+            case .youtube1080, .instagramFeed, .instagramReels, .tiktok, .custom1080:
+                return .h264_high
+            case .youtube4k, .custom4k:
+                return .hevc_main
+            case .proRes:
+                return .prores422
+            }
+        }
+
+        var resolution: VideoExportManager.Resolution {
+            switch self {
+            case .youtube4k, .custom4k: return .uhd3840x2160
+            default: return .hd1920x1080
+            }
+        }
+
+        var quality: VideoExportManager.Quality {
+            switch self {
+            case .youtube4k, .custom4k, .proRes: return .maximum
+            case .youtube1080, .custom1080: return .high
+            default: return .high
+            }
+        }
+
+        var isRecommended: Bool {
+            self == .youtube1080
         }
     }
 
+    // MARK: - Body
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: EchoelSpacing.lg) {
+                    templateGrid
+                    selectedTemplateDetail
+                    exportProgressSection
+                    errorSection
+                    successSection
+
+                    Spacer(minLength: EchoelSpacing.lg)
+
+                    exportButton
+                }
+                .padding(EchoelSpacing.lg)
+            }
+            .background(EchoelBrand.bgDeep.ignoresSafeArea())
+            .navigationTitle("Export Video")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(EchoelBrand.primary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Template Grid
+
+    private var templateGrid: some View {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
+                Image(systemName: "rectangle.stack.fill")
+                    .foregroundColor(EchoelBrand.textSecondary)
+                Text("TEMPLATES")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .tracking(1.5)
+            }
+
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 150), spacing: EchoelSpacing.sm)],
+                spacing: EchoelSpacing.sm
+            ) {
+                ForEach(VideoTemplate.allCases) { template in
+                    templateCard(template)
+                }
+            }
+        }
+    }
+
+    private func templateCard(_ template: VideoTemplate) -> some View {
+        let isSelected = selectedTemplate == template
+
+        return Button {
+            withAnimation(.easeInOut(duration: EchoelAnimation.quick)) {
+                selectedTemplate = template
+            }
+            HapticHelper.impact(.light)
+        } label: {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
+                HStack {
+                    Image(systemName: template.icon)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(isSelected ? template.accentColor : EchoelBrand.textSecondary)
+
+                    Spacer()
+
+                    Text(template.aspectLabel)
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(isSelected ? template.accentColor : EchoelBrand.textTertiary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    isSelected
+                                        ? template.accentColor.opacity(0.15)
+                                        : EchoelBrand.border.opacity(0.3)
+                                )
+                        )
+
+                    if template.isRecommended {
+                        Text("REC")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(EchoelBrand.emerald)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(EchoelBrand.emerald.opacity(0.15))
+                            )
+                    }
+                }
+
+                Text(template.rawValue)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(isSelected ? EchoelBrand.textPrimary : EchoelBrand.textSecondary)
+                    .lineLimit(1)
+
+                Text(template.resolutionLabel)
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(EchoelBrand.textTertiary)
+            }
+            .padding(EchoelSpacing.sm + EchoelSpacing.xs)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: EchoelRadius.md)
+                    .fill(isSelected ? template.accentColor.opacity(0.06) : EchoelBrand.bgSurface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: EchoelRadius.md)
+                    .stroke(
+                        isSelected ? template.accentColor.opacity(0.4) : EchoelBrand.border,
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Selected Template Detail
+
+    private var selectedTemplateDetail: some View {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
+                Image(systemName: "info.circle")
+                    .foregroundColor(EchoelBrand.textSecondary)
+                Text("SETTINGS")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .tracking(1.5)
+            }
+
+            VStack(spacing: EchoelSpacing.sm) {
+                detailRow(label: "Format", value: selectedTemplate.format.rawValue)
+                detailRow(label: "Resolution", value: selectedTemplate.resolutionLabel)
+                detailRow(label: "Aspect Ratio", value: selectedTemplate.aspectLabel)
+                detailRow(label: "Quality", value: selectedTemplate.quality.rawValue)
+            }
+            .padding(EchoelSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: EchoelRadius.md)
+                    .fill(EchoelBrand.bgSurface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: EchoelRadius.md)
+                    .stroke(EchoelBrand.border, lineWidth: 1)
+            )
+        }
+    }
+
+    private func detailRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textTertiary)
+            Spacer()
+            Text(value)
+                .font(EchoelBrandFont.dataSmall())
+                .foregroundColor(EchoelBrand.textPrimary)
+        }
+    }
+
+    // MARK: - Progress / Error / Success
+
+    @ViewBuilder
+    private var exportProgressSection: some View {
+        if exportManager.isExporting {
+            VStack(spacing: EchoelSpacing.sm) {
+                ProgressView(value: exportManager.exportProgress)
+                    .tint(selectedTemplate.accentColor)
+                Text("\(Int(exportManager.exportProgress * 100))% — Rendering \(selectedTemplate.rawValue)...")
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
+            }
+            .padding(EchoelSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                    .fill(EchoelBrand.bgSurface)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var errorSection: some View {
+        if let error = exportError {
+            Text(error)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.coral)
+                .padding(EchoelSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                        .fill(EchoelBrand.coral.opacity(0.1))
+                )
+        }
+    }
+
+    @ViewBuilder
+    private var successSection: some View {
+        if exportSuccess {
+            HStack(spacing: EchoelSpacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(EchoelBrand.emerald)
+                Text("Video exported successfully")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.emerald)
+            }
+            .padding(EchoelSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                    .fill(EchoelBrand.emerald.opacity(0.1))
+            )
+        }
+    }
+
+    // MARK: - Export Button
+
+    private var exportButton: some View {
+        Button {
+            Task { await performExport() }
+        } label: {
+            HStack(spacing: EchoelSpacing.sm) {
+                if exportManager.isExporting {
+                    ProgressView()
+                        .tint(EchoelBrand.bgDeep)
+                } else {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                Text(exportManager.isExporting ? "Exporting..." : "Export \(selectedTemplate.rawValue)")
+                    .fontWeight(.semibold)
+            }
+            .font(EchoelBrandFont.body())
+            .foregroundColor(EchoelBrand.bgDeep)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, EchoelSpacing.md)
+            .background(
+                Capsule()
+                    .fill(exportManager.isExporting ? EchoelBrand.textTertiary : selectedTemplate.accentColor)
+            )
+        }
+        .disabled(exportManager.isExporting)
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Export Logic
+
     private func performExport() async {
         exportError = nil
+        exportSuccess = false
+
         guard let composition = try? await engine.buildComposition() else {
             exportError = "No video content to export"
             return
         }
 
-        // Map UI selections to ExportManager types
-        let format: VideoExportManager.ExportFormat = {
-            switch selectedFormat {
-            case "H.265": return .hevc_main
-            case "ProRes": return .prores422
-            default: return .h264_high
-            }
-        }()
-
-        let resolution: VideoExportManager.Resolution = {
-            switch selectedResolution {
-            case "720p": return .hd1280x720
-            case "4K": return .uhd3840x2160
-            default: return .hd1920x1080
-            }
-        }()
-
-        let quality: VideoExportManager.Quality = {
-            switch selectedQuality {
-            case "Draft": return .low
-            case "Good": return .medium
-            case "Best": return .maximum
-            default: return .high
-            }
-        }()
-
-        // Generate output URL
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
         let outputURL = documentsDir
-            .appendingPathComponent("Echoelmusic_Export_\(Int(Date().timeIntervalSince1970))")
-            .appendingPathExtension(format.fileExtension)
+            .appendingPathComponent("Echoelmusic_\(selectedTemplate.rawValue.replacingOccurrences(of: " ", with: "_"))_\(Int(Date().timeIntervalSince1970))")
+            .appendingPathExtension(selectedTemplate.format.fileExtension)
 
         do {
             try await exportManager.export(
                 composition: composition,
                 to: outputURL,
-                format: format,
-                resolution: resolution,
-                quality: quality
+                format: selectedTemplate.format,
+                resolution: selectedTemplate.resolution,
+                quality: selectedTemplate.quality
             )
+            exportSuccess = true
             HapticHelper.notification(.success)
-            dismiss()
+
+            // Share the exported file
+            #if os(iOS)
+            let activityVC = UIActivityViewController(activityItems: [outputURL], applicationActivities: nil)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                activityVC.popoverPresentationController?.sourceView = rootVC.view
+                rootVC.present(activityVC, animated: true)
+            }
+            #endif
         } catch {
             exportError = "Export failed: \(error.localizedDescription)"
             HapticHelper.notification(.error)
         }
-    }
-
-    private func exportSetting(title: String, value: Binding<String>, options: [String]) -> some View {
-        HStack {
-            Text(title)
-                .font(EchoelBrandFont.body())
-                .foregroundColor(EchoelBrand.textSecondary)
-
-            Spacer()
-
-            Picker(title, selection: value) {
-                ForEach(options, id: \.self) { option in
-                    Text(option).tag(option)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(EchoelBrand.sky)
-        }
-        .padding(EchoelSpacing.sm)
     }
 }
 
