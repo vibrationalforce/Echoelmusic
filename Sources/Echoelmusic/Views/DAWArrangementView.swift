@@ -82,7 +82,7 @@ struct DAWArrangementView: View {
             SessionClipView()
         }
         .sheet(isPresented: $showEffectsChain) {
-            EffectsChainView()
+            DAWEffectsChainSheet()
         }
         .onAppear {
             ensureSessionExists()
@@ -803,6 +803,33 @@ struct WaveformShape: Shape {
 
         path.closeSubpath()
         return path
+    }
+}
+
+// MARK: - DAW Effects Chain Sheet
+
+struct DAWEffectsChainSheet: View {
+    @StateObject private var nodeGraph = NodeGraph()
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            EffectsChainView(nodeGraph: nodeGraph)
+                .background(EchoelBrand.bgDeep.ignoresSafeArea())
+                .navigationTitle("Effects Chain")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") { dismiss() }
+                            .foregroundColor(EchoelBrand.primary)
+                    }
+                }
+        }
+        .onAppear {
+            if nodeGraph.nodes.isEmpty {
+                nodeGraph.loadFromPreset(NodeGraph.createProductionChain())
+            }
+        }
     }
 }
 
