@@ -6,6 +6,41 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-04 — Adaptive Layouts + Professional Export Templates
+
+**Directive:** "Maximum Ralph Wiggum Lambda until everything is on the most valuable level possible loop mode"
+
+**Focus:** iPhone production workflow, WAV 24-bit/44.1kHz mastering, video export templates (YouTube/Instagram/TikTok)
+
+**Commits:**
+1. `1012440` — `feat: add EchoelSynth and EchoelFX tabs with full engine wiring`
+2. `433f5aa` — `refactor: adaptive layouts + EchoelBrand design system for all views`
+3. `fda2969` — `fix: EffectsChainView requires nodeGraph parameter in DAW sheet`
+4. `872b7ee` — `feat: professional export templates — WAV 24-bit master + video templates`
+
+**What Changed:**
+- **5 views rewritten** with adaptive layouts (portrait iPhone, landscape iPhone, iPad)
+- **EchoelSynthView**: 3 layouts, per-panel accent colors, PresetCardButtonStyle
+- **EchoelFXView**: iPad split view (chain 60% + params 40%), landscape sidebar
+- **MainNavigationHub**: Glass-effect tab bar, 16-segment LED meters, spring animations
+- **DAWArrangementView**: Full Vaporwave→EchoelBrand migration, MasterExportSheet (WAV 24-bit/44.1kHz default)
+- **VideoEditorView**: 8 template presets (YouTube 1080p/4K, Instagram Feed/Reels, TikTok, HD, 4K Master, ProRes)
+- All VaporwaveColors/Typography/Spacing → EchoelBrand system
+- DAWEffectsChainSheet wrapper for NodeGraph parameter injection
+
+**TestFlight:**
+- Build `22656757364` — SUCCESS (Archive + Upload to TestFlight)
+- Build `22657135026` — In progress (new export templates)
+
+**Key API Discoveries:**
+- `EchoelmusicNode` is NOT Identifiable → always `ForEach(nodes, id: \.id)`
+- `NodeGraph.loadFromPreset()` not `loadPreset()`
+- `AudioEngine.schedulePlayback(buffer:)` not `playBuffer()`
+- `ExportManager` is plain class (NOT ObservableObject) — no progress tracking
+- `VideoExportManager` IS ObservableObject with `@Published exportProgress`
+
+---
+
 ## Session: 2026-03-03 — CLAUDE.md v7.0 + Total Brand Purge + Architecture Audit
 
 **Directive:** "Ralph Wiggum Lambda until 100% finest structure, Echoelmusic Brand UI, working Architecture"

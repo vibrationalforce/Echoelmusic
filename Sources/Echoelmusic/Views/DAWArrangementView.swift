@@ -20,7 +20,6 @@ struct DAWArrangementView: View {
     @State private var showEffectsChain = false
     @State private var showMasterExport = false
     @State private var playbackTimer: Timer?
-    @State private var scrollOffset: CGFloat = 0
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
