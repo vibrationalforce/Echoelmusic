@@ -295,7 +295,8 @@ public final class ClipLauncherGrid: ObservableObject {
     }
 
     private func startPlaybackTimer() {
-        let interval = 60.0 / tempo / 4.0  // 16th note resolution
+        let safeTempo = max(tempo, 20.0)
+        let interval = 60.0 / safeTempo / 4.0  // 16th note resolution
         playbackTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.advancePlayhead()

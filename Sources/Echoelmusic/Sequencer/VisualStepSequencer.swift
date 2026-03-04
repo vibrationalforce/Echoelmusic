@@ -39,7 +39,7 @@ public final class VisualStepSequencer: ObservableObject {
 
     private var timer: Timer?
     private var stepInterval: TimeInterval {
-        60.0 / bpm / 4.0  // 16th notes
+        60.0 / max(bpm, 20.0) / 4.0  // 16th notes
     }
 
     // MARK: - Channels

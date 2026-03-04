@@ -412,7 +412,7 @@ class PianoRollViewModel: ObservableObject {
     var duration: Double = 60.0 // seconds
 
     var gridWidth: CGFloat {
-        CGFloat(duration / (60.0 / tempo)) * beatWidth
+        CGFloat(duration / (60.0 / max(tempo, 20.0))) * beatWidth
     }
 
     // MARK: - MIDI 2.0 + MPE Connection

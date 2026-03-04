@@ -40,7 +40,7 @@ struct DAWArrangementView: View {
         #endif
     }
 
-    private var bpm: Double { workspace.globalBPM }
+    private var bpm: Double { max(workspace.globalBPM, 20.0) }
     private var isPlaying: Bool { recordingEngine.isPlaying }
     private var isRecording: Bool { recordingEngine.isRecording }
 

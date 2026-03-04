@@ -146,7 +146,7 @@ public struct BeatPosition: Codable, Equatable, Comparable {
         timeSignature: TimeSignature = .fourFour,
         ppq: Int = 960
     ) -> BeatPosition {
-        let secondsPerBeat = 60.0 / bpm
+        let secondsPerBeat = 60.0 / max(bpm, 20.0)
         let totalBeats = seconds / secondsPerBeat
         let beatsPerBar = Double(timeSignature.numerator)
 
@@ -162,7 +162,7 @@ public struct BeatPosition: Codable, Equatable, Comparable {
 
     /// Convert to absolute time in seconds
     public func toSeconds(bpm: Double, timeSignature: TimeSignature = .fourFour) -> Double {
-        let secondsPerBeat = 60.0 / bpm
+        let secondsPerBeat = 60.0 / max(bpm, 20.0)
         let beatsPerBar = Double(timeSignature.numerator)
 
         let totalBeats = Double(bar - 1) * beatsPerBar + Double(beat - 1) + Double(tick) / Double(ticksPerQuarterNote)
@@ -503,7 +503,7 @@ public struct BPMGrid: Codable {
 
     /// Seconds per beat at given time
     public func secondsPerBeat(at seconds: Double = 0) -> Double {
-        return 60.0 / bpmAt(seconds: seconds)
+        return 60.0 / max(bpmAt(seconds: seconds), 20.0)
     }
 
     /// Seconds per bar at given time
@@ -788,7 +788,7 @@ public class BPMGridEditEngine: ObservableObject {
         let (bpm, confidence) = estimateBPM(onsets: onsets, sampleRate: 44100)
 
         // Find beat times
-        let beatInterval = 60.0 / bpm
+        let beatInterval = 60.0 / max(bpm, 20.0)
         var beats: [Double] = []
         var time = onsets.first ?? 0
 

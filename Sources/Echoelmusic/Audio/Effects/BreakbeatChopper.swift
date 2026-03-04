@@ -445,6 +445,10 @@ public class BreakbeatChopper: ObservableObject {
 
         // Calculate average time between kicks (assuming 4/4)
         let avgSliceLength = slices.map { $0.lengthSamples }.reduce(0, +) / slices.count
+        guard avgSliceLength > 0 else {
+            originalTempo = 170.0
+            return
+        }
         let slicesPerSecond = sampleRate / Double(avgSliceLength)
 
         // Assume 8 slices per bar (common for 2-bar breaks)

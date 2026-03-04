@@ -571,6 +571,7 @@ class VideoEditingEngine: ObservableObject {
 
 // MARK: - Timeline Model
 
+@MainActor
 class Timeline: ObservableObject {
     @Published var name: String
     @Published var videoTracks: [VideoTrack]
@@ -624,6 +625,7 @@ class Timeline: ObservableObject {
 
 // MARK: - Video Track Model (renamed to avoid conflict with Recording/Track)
 
+@MainActor
 class VideoTrack: ObservableObject, Identifiable {
     let id = UUID()
     @Published var name: String

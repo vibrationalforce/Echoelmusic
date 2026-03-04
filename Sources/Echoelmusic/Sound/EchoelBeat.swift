@@ -726,7 +726,7 @@ public final class EchoelBeat: ObservableObject {
 
             // ── 1. Sample-Accurate Sequencer ──
             if isSeqRunning {
-                let beatDuration = sampleRate * 60.0 / Double(bpm)
+                let beatDuration = sampleRate * 60.0 / max(Double(bpm), 20.0)
                 let stepDuration = beatDuration / 4.0 // 16th notes
                 seqGlobalSamplePos += 1
 

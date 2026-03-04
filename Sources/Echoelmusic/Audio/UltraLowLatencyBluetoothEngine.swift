@@ -324,6 +324,7 @@ public struct AudioRoute: Identifiable {
 // MARK: - Bluetooth Audio Session
 
 /// Audio session configuration for Bluetooth
+@MainActor
 public class BluetoothAudioSession: ObservableObject {
 
     @Published public var sampleRate: Double = 48000
