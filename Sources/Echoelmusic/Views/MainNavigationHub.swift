@@ -225,6 +225,7 @@ struct MainNavigationHub: View {
                 } else {
                     audioEngine.start()
                 }
+                HapticHelper.impact(.medium)
             }) {
                 Image(systemName: audioEngine.isRunning ? "pause.fill" : "play.fill")
                     .font(.system(size: 20))
@@ -232,7 +233,10 @@ struct MainNavigationHub: View {
             }
             .buttonStyle(.plain)
 
-            Button(action: {}) {
+            Button(action: {
+                audioEngine.stop()
+                HapticHelper.impact(.light)
+            }) {
                 Image(systemName: "stop.fill")
                     .foregroundColor(EchoelBrand.textPrimary)
             }
@@ -241,8 +245,10 @@ struct MainNavigationHub: View {
             Button(action: {
                 if recordingEngine.isRecording {
                     try? recordingEngine.stopRecording()
+                    HapticHelper.notification(.success)
                 } else {
                     try? recordingEngine.startRecording()
+                    HapticHelper.impact(.heavy)
                 }
             }) {
                 Circle()

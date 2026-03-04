@@ -77,6 +77,23 @@ struct DAWArrangementView: View {
         .onAppear {
             ensureSessionExists()
         }
+        // Cycle 12: Keyboard shortcuts (Cmd+key for compatibility)
+        .background(
+            Group {
+                Button { togglePlayback(); HapticHelper.impact(.medium) } label: { EmptyView() }
+                    .keyboardShortcut(.space, modifiers: [])
+                Button { toggleRecording(); HapticHelper.impact(.heavy) } label: { EmptyView() }
+                    .keyboardShortcut("r", modifiers: [])
+                Button { recordingEngine.undo(); HapticHelper.impact(.light) } label: { EmptyView() }
+                    .keyboardShortcut("z", modifiers: .command)
+                Button { recordingEngine.redo(); HapticHelper.impact(.light) } label: { EmptyView() }
+                    .keyboardShortcut("z", modifiers: [.command, .shift])
+                Button { showMixer = true } label: { EmptyView() }
+                    .keyboardShortcut("m", modifiers: .command)
+            }
+            .frame(width: 0, height: 0)
+            .opacity(0)
+        )
     }
 
     /// Create a session if none exists
@@ -625,14 +642,17 @@ struct DAWArrangementView: View {
             audioEngine.start()
             try? recordingEngine.startPlayback()
         }
+        HapticHelper.impact(.medium)
     }
 
     private func toggleRecording() {
         if isRecording {
             try? recordingEngine.stopRecording()
+            HapticHelper.notification(.success)
         } else {
             audioEngine.start()
             try? recordingEngine.startRecording()
+            HapticHelper.impact(.heavy)
         }
     }
 

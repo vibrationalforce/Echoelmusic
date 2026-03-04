@@ -88,6 +88,23 @@ struct VideoEditorView: View {
                     .foregroundColor(.secondary)
             }
         }
+        // Keyboard shortcuts
+        .background(
+            Group {
+                Button {
+                    workspace.togglePlayback()
+                    isPlaying = workspace.isPlaying
+                    HapticHelper.impact(.medium)
+                } label: { EmptyView() }
+                    .keyboardShortcut(.space, modifiers: [])
+                Button { showExportSheet = true } label: { EmptyView() }
+                    .keyboardShortcut("e", modifiers: .command)
+                Button { showVideoPicker = true } label: { EmptyView() }
+                    .keyboardShortcut("i", modifiers: .command)
+            }
+            .frame(width: 0, height: 0)
+            .opacity(0)
+        )
     }
 
     // MARK: - Header Section
@@ -390,6 +407,12 @@ struct VideoEditorView: View {
                 .padding(.horizontal, VaporwaveSpacing.md)
             }
             .frame(height: 150)
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        timelineZoom = max(0.5, min(4.0, value))
+                    }
+            )
             .modifier(GlassCard())
             .padding(.horizontal, VaporwaveSpacing.md)
         }
@@ -608,6 +631,7 @@ struct VideoEditorView: View {
             Button {
                 workspace.togglePlayback()
                 isPlaying = workspace.isPlaying
+                HapticHelper.impact(.medium)
             } label: {
                 ZStack {
                     Circle()
