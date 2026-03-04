@@ -828,7 +828,10 @@ struct VideoEditorView: View {
     // MARK: - Helper Views
 
     private func toolbarButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            action()
+            HapticHelper.impact(.light)
+        } label: {
             VStack(spacing: EchoelSpacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 20))

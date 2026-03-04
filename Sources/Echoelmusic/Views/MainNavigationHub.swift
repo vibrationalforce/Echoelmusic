@@ -456,13 +456,6 @@ struct MainNavigationHub: View {
         return String(format: "%02d:%02d:%02d", minutes, seconds, millis)
     }
 
-    // MARK: - Keyboard Shortcuts
-
-    private func handleKeyboardShortcuts(_ view: some View) -> some View {
-        view
-            .keyboardShortcut(.space, modifiers: [])
-    }
-
     // MARK: - Mobile Tab Bar
 
     private var mobileTabBar: some View {

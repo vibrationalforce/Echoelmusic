@@ -139,7 +139,7 @@ private struct SessionClipContent: View {
             .glassCard()
 
             // Bio Sync
-            Button(action: { vm.bioSyncEnabled.toggle() }) {
+            Button { vm.bioSyncEnabled.toggle(); HapticHelper.impact(.light) } label: {
                 HStack(spacing: VaporwaveSpacing.sm) {
                     Image(systemName: "heart.fill")
                     Text("Bio")
@@ -177,7 +177,7 @@ private struct SessionClipContent: View {
         let trackCount = tracks.count
         VStack(spacing: 2) {
             // Add Track Button
-            Button(action: { vm.addTrack() }) {
+            Button { vm.addTrack(); HapticHelper.impact(.medium) } label: {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(VaporwaveColors.neonCyan)
             }
@@ -256,7 +256,7 @@ private struct SessionClipContent: View {
         let sceneCount = scenes.count
         VStack(spacing: 2) {
             // Master Stop
-            Button(action: { vm.stopAll() }) {
+            Button { vm.stopAll(); HapticHelper.impact(.medium) } label: {
                 Image(systemName: "stop.fill")
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
@@ -273,7 +273,7 @@ private struct SessionClipContent: View {
             }
 
             // Add Scene
-            Button(action: { vm.addScene() }) {
+            Button { vm.addScene(); HapticHelper.impact(.light) } label: {
                 Image(systemName: "plus")
                     .foregroundColor(VaporwaveColors.neonPurple)
             }
@@ -292,18 +292,27 @@ private struct SessionClipContent: View {
         HStack(spacing: VaporwaveSpacing.lg) {
             // Transport Controls
             HStack(spacing: VaporwaveSpacing.md) {
-                Button(action: { session.stop() }) {
+                Button {
+                    session.stop()
+                    HapticHelper.impact(.medium)
+                } label: {
                     Image(systemName: "stop.fill")
                         .foregroundColor(VaporwaveColors.textSecondary)
                 }
 
-                Button(action: { session.togglePlay() }) {
+                Button {
+                    session.togglePlay()
+                    HapticHelper.impact(.medium)
+                } label: {
                     Image(systemName: session.isPlaying ? "pause.fill" : "play.fill")
                         .foregroundColor(session.isPlaying ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
                 }
                 .neonGlow(color: session.isPlaying ? VaporwaveColors.neonCyan : .clear, radius: 8)
 
-                Button(action: { session.toggleRecord() }) {
+                Button {
+                    session.toggleRecord()
+                    HapticHelper.notification(.warning)
+                } label: {
                     Image(systemName: "record.circle")
                         .foregroundColor(session.isRecording ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
                 }
@@ -533,7 +542,10 @@ struct SceneLaunchButton: View {
     let onLaunch: () -> Void
 
     var body: some View {
-        Button(action: onLaunch) {
+        Button {
+            onLaunch()
+            HapticHelper.impact(.medium)
+        } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isPlaying ? VaporwaveColors.coherenceHigh.opacity(0.3) : VaporwaveColors.deepBlack.opacity(0.5))
@@ -647,7 +659,10 @@ struct InstrumentCard: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            action()
+            HapticHelper.impact(.medium)
+        } label: {
             VStack(spacing: VaporwaveSpacing.sm) {
                 Image(systemName: instrument.icon)
                     .font(.system(size: 24))
@@ -771,7 +786,10 @@ struct EffectCard: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            action()
+            HapticHelper.impact(.light)
+        } label: {
             HStack(spacing: VaporwaveSpacing.sm) {
                 Image(systemName: effect.icon)
                     .font(.system(size: 18))

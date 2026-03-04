@@ -150,7 +150,10 @@ struct EffectsChainView: View {
     // MARK: - Add Node Button
 
     private var addNodeButton: some View {
-        Button(action: { showNodePicker.toggle() }) {
+        Button {
+            showNodePicker.toggle()
+            HapticHelper.impact(.medium)
+        } label: {
             HStack {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 18))
@@ -180,7 +183,10 @@ struct EffectsChainView: View {
 
                 Spacer()
 
-                Button(action: { showPresets.toggle() }) {
+                Button {
+                    showPresets.toggle()
+                    HapticHelper.impact(.light)
+                } label: {
                     Text("View All")
                         .font(.system(size: 12))
                         .foregroundColor(VaporwaveColors.neonCyan)
@@ -205,7 +211,10 @@ struct EffectsChainView: View {
     }
 
     private func presetButton(_ title: String, icon: String, color: Color = VaporwaveColors.neonCyan, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            action()
+            HapticHelper.impact(.medium)
+        } label: {
             VStack(spacing: VaporwaveSpacing.sm) {
                 Image(systemName: icon)
                     .font(.system(size: 20))

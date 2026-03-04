@@ -20,8 +20,6 @@ struct DAWArrangementView: View {
     @State private var showEffectsChain = false
     @State private var showMasterExport = false
     @State private var showTempoEditor = false
-    @State private var playbackTimer: Timer?
-
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
@@ -844,7 +842,10 @@ struct DAWArrangementView: View {
     }
 
     private func transportButton(icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            action()
+            HapticHelper.impact(.light)
+        } label: {
             Image(systemName: icon)
                 .font(.system(size: 16))
                 .foregroundColor(EchoelBrand.textSecondary)
@@ -854,7 +855,10 @@ struct DAWArrangementView: View {
     }
 
     private func miniButton(label: String, isActive: Bool, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            action()
+            HapticHelper.impact(.light)
+        } label: {
             Text(label)
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(isActive ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
