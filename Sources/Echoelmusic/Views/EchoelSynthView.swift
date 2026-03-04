@@ -295,6 +295,7 @@ struct EchoelSynthView: View {
         Button {
             let library = SynthPresetLibrary.shared
             if let buffer = library.renderPresetToBuffer(preset) {
+                if !audioEngine.isRunning { audioEngine.start() }
                 audioEngine.schedulePlayback(buffer: buffer)
                 HapticHelper.notification(.success)
             } else {
