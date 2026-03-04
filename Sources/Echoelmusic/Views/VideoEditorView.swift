@@ -413,7 +413,8 @@ struct VideoEditorView: View {
 
             ForEach(effects, id: \.self) { effect in
                 Button {
-                    // Apply effect
+                    applyVideoEffect(effect)
+                    HapticHelper.impact(.light)
                 } label: {
                     HStack {
                         Text(effect)
@@ -433,6 +434,49 @@ struct VideoEditorView: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(EchoelBrand.bgDeep.opacity(0.5))
         )
+    }
+
+    private func applyVideoEffect(_ name: String) {
+        switch name {
+        // Color effects → ColorGradeEffect
+        case "Auto Color":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.1, saturation: 1.15))
+        case "LUT":
+            engine.applyLiveGrade(ColorGradeEffect(temperature: -0.1, tint: 0.05, saturation: 1.2))
+        case "Color Grade":
+            engine.applyLiveGrade(ColorGradeEffect(exposure: 0.1, contrast: 1.15, temperature: 0.05))
+        case "HDR":
+            engine.applyLiveGrade(ColorGradeEffect(exposure: 0.15, contrast: 1.3, saturation: 1.1))
+
+        // Style effects → Cinematic look presets
+        case "Cinematic":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.2, saturation: 0.85, temperature: 0.1))
+        case "Vintage":
+            engine.applyLiveGrade(ColorGradeEffect(exposure: -0.05, contrast: 0.9, saturation: 0.6, temperature: 0.15))
+        case "Neon Glow":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.4, saturation: 1.5, temperature: -0.1))
+        case "Glitch":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.3, saturation: 1.8, tint: 0.2))
+
+        // Bio-Reactive → Coherence-driven color shifts
+        case "Coherence Pulse":
+            engine.applyLiveGrade(ColorGradeEffect(exposure: 0.1, saturation: 1.3, temperature: -0.05))
+        case "Heart Sync":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.1, saturation: 1.1, temperature: 0.1))
+        case "Breath Flow":
+            engine.applyLiveGrade(ColorGradeEffect(exposure: 0.05, contrast: 1.05, saturation: 0.95))
+
+        // AI → Enhanced processing presets
+        case "Style Transfer":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.25, saturation: 1.2, temperature: -0.05))
+        case "Face Enhance":
+            engine.applyLiveGrade(ColorGradeEffect(exposure: 0.08, contrast: 1.05, saturation: 1.05))
+        case "Background Remove":
+            engine.applyLiveGrade(ColorGradeEffect(contrast: 1.15, saturation: 0.9))
+
+        default:
+            break
+        }
     }
 
     // MARK: - Timeline Section
