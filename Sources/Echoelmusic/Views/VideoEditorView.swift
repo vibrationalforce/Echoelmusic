@@ -1,13 +1,14 @@
 import SwiftUI
 import AVFoundation
+import PhotosUI
 #if canImport(Metal)
 import Metal
 #endif
 
 // MARK: - Video Editor View
-// Professional Video Editor with Camera Capture + Bio-Reactive Effects
+// Professional Video Editor with Camera Capture, Import, AVPlayer Preview
 
-/// Professional video editing interface with bio-reactive features
+/// Professional video editing interface
 @MainActor
 struct VideoEditorView: View {
     @StateObject private var engine = VideoEditingEngine()
@@ -21,6 +22,10 @@ struct VideoEditorView: View {
     @State private var showCameraCapture = false
     @State private var currentTime: TimeInterval = 0
     @State private var isPlaying = false
+    @State private var showVideoPicker = false
+    @State private var selectedVideoItems: [PhotosPickerItem] = []
+    @State private var videoPlayer: AVPlayer?
+    @State private var importProgress: String?
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -75,6 +80,12 @@ struct VideoEditorView: View {
         }
         .sheet(isPresented: $showExportSheet) {
             VideoExportSheet(engine: engine)
+        }
+        .photosPicker(isPresented: $showVideoPicker, selection: $selectedVideoItems, maxSelectionCount: 10, matching: .videos)
+        .onChange(of: selectedVideoItems) { _, newItems in
+            Task {
+                await importSelectedVideos(newItems)
+            }
         }
     }
 
@@ -166,8 +177,11 @@ struct VideoEditorView: View {
                         .padding(VaporwaveSpacing.sm)
                         Spacer()
                     }
+                } else if let player = videoPlayer {
+                    // Real AVPlayer video preview
+                    VideoPlayerView(player: player)
+                        .cornerRadius(12)
                 } else if engine.currentProject != nil {
-                    // Video preview would render here
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 60))
                         .foregroundColor(VaporwaveColors.textTertiary)
@@ -182,31 +196,48 @@ struct VideoEditorView: View {
                             .font(EchoelBrandFont.body())
                             .foregroundColor(EchoelBrand.textSecondary)
 
-                        #if os(iOS)
-                        Button {
-                            showCameraCapture = true
-                            Task {
-                                if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
-                                    cameraManager = CameraManager(device: device)
+                        HStack(spacing: EchoelSpacing.md) {
+                            // Import video from library
+                            Button { showVideoPicker = true } label: {
+                                HStack(spacing: EchoelSpacing.sm) {
+                                    Image(systemName: "photo.on.rectangle.angled")
+                                    Text("Import Video")
                                 }
-                                try? await cameraManager?.startCapture()
+                                .font(EchoelBrandFont.body().weight(.medium))
+                                .foregroundColor(EchoelBrand.bgDeep)
+                                .padding(.horizontal, EchoelSpacing.lg)
+                                .padding(.vertical, EchoelSpacing.md)
+                                .background(Capsule().fill(EchoelBrand.primary))
                             }
-                        } label: {
-                            HStack(spacing: EchoelSpacing.sm) {
-                                Image(systemName: "camera.fill")
-                                Text("Open Camera")
+                            .buttonStyle(.plain)
+
+                            #if os(iOS)
+                            // Open camera
+                            Button {
+                                showCameraCapture = true
+                                Task {
+                                    if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
+                                        cameraManager = CameraManager(device: device)
+                                    }
+                                    try? await cameraManager?.startCapture()
+                                }
+                            } label: {
+                                HStack(spacing: EchoelSpacing.sm) {
+                                    Image(systemName: "camera.fill")
+                                    Text("Camera")
+                                }
+                                .font(EchoelBrandFont.body().weight(.medium))
+                                .foregroundColor(EchoelBrand.textPrimary)
+                                .padding(.horizontal, EchoelSpacing.lg)
+                                .padding(.vertical, EchoelSpacing.md)
+                                .background(
+                                    Capsule()
+                                        .stroke(EchoelBrand.primary, lineWidth: 1)
+                                )
                             }
-                            .font(EchoelBrandFont.body().weight(.medium))
-                            .foregroundColor(EchoelBrand.bgDeep)
-                            .padding(.horizontal, EchoelSpacing.lg)
-                            .padding(.vertical, EchoelSpacing.md)
-                            .background(
-                                Capsule()
-                                    .fill(EchoelBrand.primary)
-                            )
+                            .buttonStyle(.plain)
+                            #endif
                         }
-                        .buttonStyle(.plain)
-                        #endif
                     }
                 }
 
@@ -782,11 +813,110 @@ struct VideoExportSheet: View {
     }
 }
 
+// MARK: - Video Import
+
+extension VideoEditorView {
+    func importSelectedVideos(_ items: [PhotosPickerItem]) async {
+        for item in items {
+            importProgress = "Importing..."
+            guard let movie = try? await item.loadTransferable(type: VideoTransferable.self) else {
+                continue
+            }
+
+            let asset = AVAsset(url: movie.url)
+            let duration = (try? await asset.load(.duration)) ?? CMTime.zero
+            let durationSeconds = CMTimeGetSeconds(duration)
+            guard durationSeconds > 0 else { continue }
+
+            // Create clip and add to first video track
+            let clip = VideoClip(
+                name: "Clip \(engine.timeline.videoTracks.first?.clips.count ?? 0 + 1)",
+                asset: asset,
+                startTime: CMTime(seconds: currentTime, preferredTimescale: 600),
+                duration: duration,
+                inPoint: .zero,
+                outPoint: duration
+            )
+
+            if let videoTrack = engine.timeline.videoTracks.first {
+                engine.addClip(clip, to: videoTrack, at: clip.startTime)
+            }
+
+            // Setup player for preview
+            let playerItem = AVPlayerItem(asset: asset)
+            if videoPlayer == nil {
+                videoPlayer = AVPlayer(playerItem: playerItem)
+            } else {
+                videoPlayer?.replaceCurrentItem(with: playerItem)
+            }
+
+            currentTime += durationSeconds
+        }
+        importProgress = nil
+        selectedVideoItems.removeAll()
+    }
+}
+
+/// Transferable for importing videos from PhotosPicker
+struct VideoTransferable: Transferable {
+    let url: URL
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(contentType: .movie) { video in
+            SentTransferredFile(video.url)
+        } importing: { received in
+            let tempDir = FileManager.default.temporaryDirectory
+            let filename = "\(UUID().uuidString).mov"
+            let destination = tempDir.appendingPathComponent(filename)
+            try FileManager.default.copyItem(at: received.file, to: destination)
+            return Self(url: destination)
+        }
+    }
+}
+
+// MARK: - AVPlayer SwiftUI Wrapper
+
+#if os(iOS)
+import UIKit
+
+/// UIViewRepresentable wrapper for AVPlayerLayer — shows video playback
+struct VideoPlayerView: UIViewRepresentable {
+    let player: AVPlayer
+
+    func makeUIView(context: Context) -> UIView {
+        let view = PlayerUIView()
+        view.playerLayer.player = player
+        view.playerLayer.videoGravity = .resizeAspect
+        view.backgroundColor = .black
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        if let playerView = uiView as? PlayerUIView {
+            playerView.playerLayer.player = player
+        }
+    }
+
+    class PlayerUIView: UIView {
+        override class var layerClass: AnyClass { AVPlayerLayer.self }
+        var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+    }
+}
+#else
+/// macOS stub
+struct VideoPlayerView: View {
+    let player: AVPlayer
+    var body: some View {
+        Text("Video Preview")
+            .foregroundColor(.secondary)
+    }
+}
+#endif
+
 // MARK: - Camera Preview Layer (UIViewRepresentable)
 
 #if os(iOS)
 /// SwiftUI wrapper for AVCaptureVideoPreviewLayer — shows live camera feed.
-/// Connects to CameraManager's AVCaptureSession for real-time preview.
 struct CameraPreviewLayer: UIViewRepresentable {
     let cameraManager: CameraManager
 
@@ -798,8 +928,6 @@ struct CameraPreviewLayer: UIViewRepresentable {
         previewLayer.videoGravity = .resizeAspectFill
         previewLayer.frame = view.bounds
         view.layer.addSublayer(previewLayer)
-
-        // Store for layout updates
         context.coordinator.previewLayer = previewLayer
         return view
     }
@@ -808,9 +936,7 @@ struct CameraPreviewLayer: UIViewRepresentable {
         context.coordinator.previewLayer?.frame = uiView.bounds
     }
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
+    func makeCoordinator() -> Coordinator { Coordinator() }
 
     class Coordinator {
         var previewLayer: AVCaptureVideoPreviewLayer?

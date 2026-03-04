@@ -1,34 +1,34 @@
 import SwiftUI
+import Accelerate
 
 // MARK: - DAW Arrangement View
-// Homogeneous GUI with VaporwaveTheme - "Flüssiges Licht"
+// Professional DAW arrangement with REAL audio engine integration
 
-/// Professional DAW arrangement interface with real audio engine integration
 struct DAWArrangementView: View {
-    @StateObject private var engine = ArrangementDAWProductionEngine()
+    @EnvironmentObject var audioEngine: AudioEngine
+    @EnvironmentObject var recordingEngine: RecordingEngine
     @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
-    @State private var selectedTrackIndex: Int?
+
+    @State private var selectedTrackID: UUID?
     @State private var timelineZoom: Double = 1.0
     @State private var showMixer = false
     @State private var showInstrumentBrowser = false
-    @State private var currentBeat: Double = 0
     @State private var showTrackList = true
     @State private var playbackTimer: Timer?
+    @State private var scrollOffset: CGFloat = 0
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
 
-    /// Adaptive track list width — compact for iPhone, wider for iPad
     private var trackListWidth: CGFloat {
         #if os(iOS)
-        return horizontalSizeClass == .compact ? 140 : 200
+        return horizontalSizeClass == .compact ? 120 : 180
         #else
-        return 200
+        return 180
         #endif
     }
 
-    /// Whether on iPhone compact layout
     private var isCompact: Bool {
         #if os(iOS)
         return horizontalSizeClass == .compact
@@ -37,76 +37,78 @@ struct DAWArrangementView: View {
         #endif
     }
 
-    /// Live BPM from EchoelCreativeWorkspace (single source of truth)
-    private var bpm: Double {
-        get { workspace.globalBPM }
-    }
+    private var bpm: Double { workspace.globalBPM }
+    private var isPlaying: Bool { recordingEngine.isPlaying }
+    private var isRecording: Bool { recordingEngine.isRecording }
 
-    /// Live playback state from EchoelCreativeWorkspace
-    private var isPlaying: Bool {
-        workspace.isPlaying
+    /// Pixels per second at current zoom
+    private var pixelsPerSecond: CGFloat { 50.0 * timelineZoom }
+
+    /// Tracks from real session
+    private var tracks: [Track] {
+        recordingEngine.currentSession?.tracks ?? []
     }
 
     var body: some View {
         ZStack {
-            // Background
             VaporwaveGradients.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
                 headerSection
-
-                // Main Content
                 HStack(spacing: 0) {
-                    // Track List (collapsible on iPhone)
                     if showTrackList || !isCompact {
                         trackListSection
                     }
-
-                    // Arrangement Timeline
                     arrangementSection
                 }
-
-                // Transport Bar
-                transportBar
+                dawTransportBar
             }
 
-            // Instrument Browser Overlay
             if showInstrumentBrowser {
                 instrumentBrowserOverlay
             }
         }
         .sheet(isPresented: $showMixer) {
-            MixerSheet(engine: engine)
+            RealMixerSheet()
+                .environmentObject(audioEngine)
+                .environmentObject(recordingEngine)
+        }
+        .onAppear {
+            ensureSessionExists()
         }
     }
 
-    // MARK: - Header Section
+    /// Create a session if none exists
+    private func ensureSessionExists() {
+        if recordingEngine.currentSession == nil {
+            _ = recordingEngine.createSession(name: "New Project", template: .custom)
+        }
+    }
+
+    // MARK: - Header
 
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
-                Text("DAW STUDIO")
+                Text(recordingEngine.currentSession?.name.uppercased() ?? "DAW STUDIO")
                     .font(VaporwaveTypography.sectionTitle())
                     .foregroundColor(VaporwaveColors.textPrimary)
 
-                Text("Arrangement View")
+                Text("\(tracks.count) Tracks • \(formatDuration(recordingEngine.currentSession?.duration ?? 0))")
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.textSecondary)
             }
 
             Spacer()
 
-            // BPM Display
+            // BPM
             HStack(spacing: VaporwaveSpacing.sm) {
                 Image(systemName: "metronome")
                     .foregroundColor(VaporwaveColors.neonPink)
-
                 Text("\(Int(bpm))")
                     .font(VaporwaveTypography.data())
                     .foregroundColor(VaporwaveColors.textPrimary)
-
                 Text("BPM")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textSecondary)
@@ -120,51 +122,42 @@ struct DAWArrangementView: View {
             // Toolbar
             HStack(spacing: VaporwaveSpacing.sm) {
                 if isCompact {
-                    toolbarButton(icon: showTrackList ? "sidebar.left" : "sidebar.leading", label: "Tracks", isActive: showTrackList) {
+                    toolbarButton(icon: "sidebar.left", label: "Tracks", isActive: showTrackList) {
                         withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
                     }
                 }
                 toolbarButton(icon: "slider.horizontal.3", label: "Mixer", isActive: showMixer) {
                     showMixer = true
                 }
-
-                toolbarButton(icon: "pianokeys", label: "Instruments", isActive: showInstrumentBrowser) {
-                    withAnimation(VaporwaveAnimation.smooth) {
-                        showInstrumentBrowser.toggle()
-                    }
+                toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
+                    addNewTrack()
                 }
             }
         }
         .padding(VaporwaveSpacing.md)
     }
 
-    // MARK: - Track List Section
+    // MARK: - Track List
 
     private var trackListSection: some View {
         VStack(spacing: 0) {
-            // Track list header
             HStack {
                 Text("TRACKS")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textSecondary)
                     .tracking(2)
-
                 Spacer()
-
-                Button {
-                    engine.addTrack()
-                } label: {
+                Button { addNewTrack() } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(VaporwaveColors.neonCyan)
                 }
             }
             .padding(VaporwaveSpacing.sm)
 
-            // Track rows
             ScrollView {
                 VStack(spacing: VaporwaveSpacing.xs) {
-                    ForEach(engine.tracks.indices, id: \.self) { index in
-                        trackRow(track: engine.tracks[index], index: index)
+                    ForEach(tracks) { track in
+                        trackRow(track: track)
                     }
                 }
                 .padding(.horizontal, VaporwaveSpacing.sm)
@@ -174,13 +167,13 @@ struct DAWArrangementView: View {
         .background(VaporwaveColors.deepBlack.opacity(0.5))
     }
 
-    private func trackRow(track: DAWTrack, index: Int) -> some View {
-        let isSelected = selectedTrackIndex == index
+    private func trackRow(track: Track) -> some View {
+        let isSelected = selectedTrackID == track.id
+        let trackColor = color(for: track.trackColor)
 
         return HStack(spacing: VaporwaveSpacing.sm) {
-            // Track color indicator
             RoundedRectangle(cornerRadius: 2)
-                .fill(track.color)
+                .fill(trackColor)
                 .frame(width: 4, height: 40)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -188,8 +181,7 @@ struct DAWArrangementView: View {
                     .font(VaporwaveTypography.body())
                     .foregroundColor(VaporwaveColors.textPrimary)
                     .lineLimit(1)
-
-                Text(track.instrumentName)
+                Text(track.type.rawValue)
                     .font(VaporwaveTypography.caption())
                     .foregroundColor(VaporwaveColors.textTertiary)
                     .lineLimit(1)
@@ -197,75 +189,113 @@ struct DAWArrangementView: View {
 
             Spacer()
 
-            // Mute/Solo buttons
             HStack(spacing: 4) {
-                miniButton(label: "M", isActive: track.isMuted, color: VaporwaveColors.coral)
-                miniButton(label: "S", isActive: track.isSolo, color: VaporwaveColors.neonCyan)
+                miniButton(label: "M", isActive: track.isMuted, color: VaporwaveColors.coral) {
+                    recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)
+                }
+                miniButton(label: "S", isActive: track.isSoloed, color: VaporwaveColors.neonCyan) {
+                    recordingEngine.setTrackSoloed(track.id, soloed: !track.isSoloed)
+                }
             }
         }
         .padding(VaporwaveSpacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? track.color.opacity(0.15) : Color.clear)
+                .fill(isSelected ? trackColor.opacity(0.15) : Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? track.color : Color.clear, lineWidth: 1)
+                .stroke(isSelected ? trackColor : Color.clear, lineWidth: 1)
         )
-        .onTapGesture {
-            selectedTrackIndex = index
-        }
+        .onTapGesture { selectedTrackID = track.id }
     }
 
-    private func miniButton(label: String, isActive: Bool, color: Color) -> some View {
-        Text(label)
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(isActive ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
-            .frame(width: 20, height: 20)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isActive ? color : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(color.opacity(0.5), lineWidth: 1)
-            )
-    }
-
-    // MARK: - Arrangement Section
+    // MARK: - Arrangement Timeline
 
     private var arrangementSection: some View {
         VStack(spacing: 0) {
-            // Timeline ruler
             timelineRuler
 
-            // Track lanes
             ScrollView([.horizontal, .vertical]) {
-                VStack(spacing: VaporwaveSpacing.xs) {
-                    ForEach(engine.tracks.indices, id: \.self) { index in
-                        trackLane(track: engine.tracks[index], index: index)
+                ZStack(alignment: .topLeading) {
+                    // Track lanes
+                    VStack(spacing: VaporwaveSpacing.xs) {
+                        ForEach(tracks) { track in
+                            trackLane(track: track)
+                        }
+
+                        // Empty area for adding tracks
+                        if tracks.isEmpty {
+                            emptyStateView
+                        }
                     }
+                    .padding(VaporwaveSpacing.sm)
+
+                    // Playhead overlay
+                    playheadView
                 }
-                .padding(VaporwaveSpacing.sm)
             }
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        timelineZoom = max(0.25, min(4.0, value))
+                    }
+            )
+
+            // Zoom control
+            zoomControl
         }
         .modifier(GlassCard())
         .padding(VaporwaveSpacing.md)
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: VaporwaveSpacing.md) {
+            Image(systemName: "waveform.badge.plus")
+                .font(.system(size: 48))
+                .foregroundColor(VaporwaveColors.textTertiary)
+
+            Text("Tap Record or Add Track to start")
+                .font(VaporwaveTypography.body())
+                .foregroundColor(VaporwaveColors.textSecondary)
+
+            Button {
+                addNewTrack()
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Track")
+                }
+                .font(VaporwaveTypography.body())
+                .foregroundColor(VaporwaveColors.neonCyan)
+                .padding(.horizontal, VaporwaveSpacing.lg)
+                .padding(.vertical, VaporwaveSpacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(VaporwaveColors.neonCyan.opacity(0.5), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, minHeight: 200)
     }
 
     private var timelineRuler: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 // Bar markers
+                let totalBars = max(16, Int(ceil((recordingEngine.currentSession?.duration ?? 30) * bpm / 240.0)) + 4)
+                let barWidth = (240.0 / bpm) * pixelsPerSecond // 4 beats per bar
+
                 HStack(spacing: 0) {
-                    ForEach(0..<32, id: \.self) { bar in
+                    ForEach(0..<totalBars, id: \.self) { bar in
                         VStack {
                             Text("\(bar + 1)")
                                 .font(VaporwaveTypography.caption())
-                                .foregroundColor(VaporwaveColors.textTertiary)
+                                .foregroundColor(bar % 4 == 0 ? VaporwaveColors.textSecondary : VaporwaveColors.textTertiary)
                             Spacer()
                         }
-                        .frame(width: 50 * timelineZoom)
+                        .frame(width: barWidth)
                     }
                 }
 
@@ -273,7 +303,7 @@ struct DAWArrangementView: View {
                 Rectangle()
                     .fill(VaporwaveColors.neonPink)
                     .frame(width: 2)
-                    .offset(x: CGFloat(currentBeat / 4 * 50 * timelineZoom))
+                    .offset(x: CGFloat(recordingEngine.currentTime) * pixelsPerSecond)
                     .modifier(NeonGlow(color: VaporwaveColors.neonPink, radius: 8))
             }
         }
@@ -281,168 +311,231 @@ struct DAWArrangementView: View {
         .background(VaporwaveColors.deepBlack.opacity(0.5))
     }
 
-    private func trackLane(track: DAWTrack, index: Int) -> some View {
-        let isSelected = selectedTrackIndex == index
+    private var playheadView: some View {
+        Rectangle()
+            .fill(VaporwaveColors.neonPink.opacity(0.3))
+            .frame(width: 1)
+            .frame(maxHeight: .infinity)
+            .offset(x: CGFloat(recordingEngine.currentTime) * pixelsPerSecond + VaporwaveSpacing.sm)
+    }
+
+    private func trackLane(track: Track) -> some View {
+        let isSelected = selectedTrackID == track.id
+        let trackColor = color(for: track.trackColor)
+        let laneWidth = max(300, CGFloat(track.duration) * pixelsPerSecond + 20)
 
         return ZStack(alignment: .leading) {
             // Lane background
             RoundedRectangle(cornerRadius: 4)
                 .fill(VaporwaveColors.deepBlack.opacity(0.3))
-                .frame(height: 50)
+                .frame(width: laneWidth, height: 60)
 
-            // MIDI regions/clips
-            HStack(spacing: 2) {
-                ForEach(track.regions) { region in
-                    regionView(region: region, color: track.color)
-                }
+            // Audio region with waveform
+            if track.duration > 0 {
+                audioRegionView(track: track, trackColor: trackColor)
             }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 4)
-                .stroke(isSelected ? track.color.opacity(0.5) : Color.clear, lineWidth: 1)
+                .stroke(isSelected ? trackColor.opacity(0.5) : Color.clear, lineWidth: 1)
         )
     }
 
-    private func regionView(region: DAWRegion, color: Color) -> some View {
-        RoundedRectangle(cornerRadius: 4)
-            .fill(color.opacity(0.4))
-            .frame(width: CGFloat(Double(region.length) * 50 * timelineZoom), height: 46)
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(color, lineWidth: 1)
-            )
-            .overlay(
-                Text(region.name)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textPrimary)
-                    .padding(.horizontal, 4)
-                , alignment: .leading
-            )
-            .offset(x: CGFloat(Double(region.startBar) * 50 * timelineZoom))
+    /// Renders a real audio region with waveform data
+    private func audioRegionView(track: Track, trackColor: Color) -> some View {
+        let regionWidth = CGFloat(track.duration) * pixelsPerSecond
+
+        return ZStack(alignment: .leading) {
+            // Region background
+            RoundedRectangle(cornerRadius: 4)
+                .fill(trackColor.opacity(0.2))
+                .frame(width: regionWidth, height: 56)
+
+            // Waveform
+            if let waveformData = track.waveformData, !waveformData.isEmpty {
+                WaveformShape(samples: waveformData)
+                    .fill(trackColor.opacity(0.8))
+                    .frame(width: regionWidth, height: 40)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 8)
+            } else {
+                // Loading / recording indicator
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(trackColor.opacity(0.3))
+                    .frame(width: regionWidth - 4, height: 20)
+                    .padding(.horizontal, 2)
+            }
+
+            // Region border
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(trackColor.opacity(0.6), lineWidth: 1)
+                .frame(width: regionWidth, height: 56)
+
+            // Track name label
+            Text(track.name)
+                .font(VaporwaveTypography.caption())
+                .foregroundColor(VaporwaveColors.textPrimary)
+                .padding(.horizontal, 4)
+                .padding(.top, 2)
+                .frame(width: regionWidth, alignment: .leading)
+                .offset(y: -20)
+        }
     }
 
-    // MARK: - Transport Bar
+    // MARK: - Zoom Control
 
-    private var transportBar: some View {
+    private var zoomControl: some View {
+        HStack(spacing: VaporwaveSpacing.sm) {
+            Button {
+                withAnimation { timelineZoom = max(0.25, timelineZoom - 0.25) }
+            } label: {
+                Image(systemName: "minus.magnifyingglass")
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+            .buttonStyle(.plain)
+
+            Text("\(Int(timelineZoom * 100))%")
+                .font(VaporwaveTypography.caption())
+                .foregroundColor(VaporwaveColors.textTertiary)
+                .frame(width: 40)
+
+            Button {
+                withAnimation { timelineZoom = min(4.0, timelineZoom + 0.25) }
+            } label: {
+                Image(systemName: "plus.magnifyingglass")
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, VaporwaveSpacing.md)
+    }
+
+    // MARK: - DAW Transport Bar
+
+    private var dawTransportBar: some View {
         HStack(spacing: VaporwaveSpacing.lg) {
             // Position display
             VStack(spacing: 2) {
-                Text(formatPosition(currentBeat))
+                Text(formatPosition(recordingEngine.currentTime))
                     .font(VaporwaveTypography.dataSmall())
                     .foregroundColor(VaporwaveColors.textPrimary)
                 Text("POSITION")
                     .font(VaporwaveTypography.label())
                     .foregroundColor(VaporwaveColors.textTertiary)
             }
-            .frame(width: 100)
+            .frame(width: 80)
 
             Spacer()
 
             // Transport controls
             HStack(spacing: VaporwaveSpacing.md) {
                 transportButton(icon: "backward.end.fill") {
-                    currentBeat = 0
+                    recordingEngine.seek(to: 0)
                 }
 
                 transportButton(icon: "backward.fill") {
-                    currentBeat = max(0, currentBeat - 4)
+                    recordingEngine.seek(to: max(0, recordingEngine.currentTime - 5))
                 }
 
-                // Play button — triggers real audio playback
-                Button {
-                    togglePlayback()
-                } label: {
+                // Play/Stop
+                Button { togglePlayback() } label: {
                     ZStack {
                         Circle()
                             .fill(isPlaying ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.neonCyan.opacity(0.2))
-                            .frame(width: 56, height: 56)
-
+                            .frame(width: 52, height: 52)
                         Circle()
                             .stroke(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, lineWidth: 2)
-                            .frame(width: 56, height: 56)
-
+                            .frame(width: 52, height: 52)
                         Image(systemName: isPlaying ? "stop.fill" : "play.fill")
-                            .font(.system(size: 22))
+                            .font(.system(size: 20))
                             .foregroundColor(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan)
                     }
-                    .modifier(NeonGlow(color: isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: 12))
+                    .modifier(NeonGlow(color: isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: 10))
                 }
                 .buttonStyle(.plain)
 
-                // Record button
-                Button {
-                    engine.isRecording.toggle()
-                } label: {
+                // Record
+                Button { toggleRecording() } label: {
                     ZStack {
                         Circle()
-                            .fill(engine.isRecording ? VaporwaveColors.recordingActive.opacity(0.3) : Color.clear)
-                            .frame(width: 44, height: 44)
-
+                            .fill(isRecording ? VaporwaveColors.recordingActive.opacity(0.3) : Color.clear)
+                            .frame(width: 42, height: 42)
                         Circle()
                             .stroke(VaporwaveColors.recordingActive, lineWidth: 2)
-                            .frame(width: 44, height: 44)
-
+                            .frame(width: 42, height: 42)
                         Circle()
                             .fill(VaporwaveColors.recordingActive)
-                            .frame(width: 16, height: 16)
+                            .frame(width: 14, height: 14)
                     }
-                    .modifier(engine.isRecording ? NeonGlow(color: VaporwaveColors.recordingActive, radius: 15) : NeonGlow(color: .clear, radius: 0))
+                    .modifier(isRecording ? NeonGlow(color: VaporwaveColors.recordingActive, radius: 12) : NeonGlow(color: .clear, radius: 0))
                 }
                 .buttonStyle(.plain)
 
                 transportButton(icon: "forward.fill") {
-                    currentBeat += 4
-                }
-
-                transportButton(icon: "forward.end.fill") {
-                    currentBeat = Double(engine.projectLength)
+                    recordingEngine.seek(to: recordingEngine.currentTime + 5)
                 }
             }
 
             Spacer()
 
-            // Bio-reactive indicator
-            HStack(spacing: VaporwaveSpacing.sm) {
-                Circle()
-                    .fill(VaporwaveColors.coherenceHigh)
-                    .frame(width: 8, height: 8)
-                    .modifier(NeonGlow(color: VaporwaveColors.coherenceHigh, radius: 5))
-
-                Text("Bio-Sync Active")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
-            }
-            .frame(width: 120)
+            // Live master meter
+            masterMeter
+                .frame(width: 80)
         }
         .padding(VaporwaveSpacing.md)
         .background(VaporwaveColors.deepBlack.opacity(0.8))
     }
 
-    // MARK: - Instrument Browser Overlay
+    /// Live master output VU meter
+    private var masterMeter: some View {
+        HStack(spacing: 3) {
+            meterChannel(level: audioEngine.masterLevel, label: "L")
+            meterChannel(level: audioEngine.masterLevelR, label: "R")
+        }
+    }
+
+    private func meterChannel(level: Float, label: String) -> some View {
+        VStack(spacing: 1) {
+            // 12-segment LED meter
+            ForEach((0..<12).reversed(), id: \.self) { i in
+                let threshold = Float(i) / 12.0
+                let isLit = level > threshold
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(segmentColor(index: i))
+                    .frame(width: 14, height: 3)
+                    .opacity(isLit ? 1.0 : 0.15)
+            }
+            Text(label)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(VaporwaveColors.textTertiary)
+        }
+    }
+
+    private func segmentColor(index: Int) -> Color {
+        if index >= 10 { return VaporwaveColors.coherenceLow } // red
+        if index >= 7 { return VaporwaveColors.coherenceMedium } // yellow
+        return VaporwaveColors.coherenceHigh // green
+    }
+
+    // MARK: - Instrument Browser
 
     private var instrumentBrowserOverlay: some View {
         ZStack {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
                 .onTapGesture {
-                    withAnimation(VaporwaveAnimation.smooth) {
-                        showInstrumentBrowser = false
-                    }
+                    withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = false }
                 }
 
             VStack(spacing: VaporwaveSpacing.md) {
-                // Header
                 HStack {
-                    Text("INSTRUMENTS")
+                    Text("ADD TRACK")
                         .font(VaporwaveTypography.sectionTitle())
                         .foregroundColor(VaporwaveColors.textPrimary)
-
                     Spacer()
-
                     Button {
-                        withAnimation(VaporwaveAnimation.smooth) {
-                            showInstrumentBrowser = false
-                        }
+                        withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = false }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
@@ -450,23 +543,30 @@ struct DAWArrangementView: View {
                     }
                 }
 
-                // Categories
                 ScrollView {
                     VStack(spacing: VaporwaveSpacing.md) {
-                        instrumentCategory("Synths", instruments: ["EchoSynth", "EchoelBeat Bass", "Wavetable", "FM Synth", "Granular"])
-                        instrumentCategory("Orchestral", instruments: ["Strings", "Brass", "Woodwinds", "Choir", "Piano"])
-                        instrumentCategory("World", instruments: ["Sitar", "Erhu", "Koto", "Djembe", "Kalimba"])
-                        instrumentCategory("Bio-Reactive", instruments: ["Coherence Pad", "Heart Pulse", "Breath Synth"])
+                        trackTypeCategory("Audio", types: [
+                            ("mic.fill", "Voice", Track.TrackType.voice),
+                            ("waveform", "Audio", Track.TrackType.audio),
+                        ])
+                        trackTypeCategory("Instruments", types: [
+                            ("pianokeys", "Instrument", Track.TrackType.instrument),
+                            ("music.note", "MIDI", Track.TrackType.midi),
+                        ])
+                        trackTypeCategory("Routing", types: [
+                            ("arrow.triangle.branch", "Aux/Return", Track.TrackType.aux),
+                            ("rectangle.3.group", "Bus", Track.TrackType.bus),
+                        ])
                     }
                 }
             }
             .padding(VaporwaveSpacing.lg)
-            .frame(maxWidth: 500, maxHeight: 600)
+            .frame(maxWidth: 400, maxHeight: 500)
             .modifier(GlassCard())
         }
     }
 
-    private func instrumentCategory(_ title: String, instruments: [String]) -> some View {
+    private func trackTypeCategory(_ title: String, types: [(String, String, Track.TrackType)]) -> some View {
         VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
             Text(title.uppercased())
                 .font(VaporwaveTypography.label())
@@ -474,22 +574,18 @@ struct DAWArrangementView: View {
                 .tracking(2)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: VaporwaveSpacing.sm) {
-                ForEach(instruments, id: \.self) { instrument in
+                ForEach(types, id: \.1) { icon, name, type in
                     Button {
-                        engine.addTrack(withInstrument: instrument)
-                        withAnimation(VaporwaveAnimation.smooth) {
-                            showInstrumentBrowser = false
-                        }
+                        addTrack(name: name, type: type)
+                        withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = false }
                     } label: {
                         VStack(spacing: VaporwaveSpacing.xs) {
-                            Image(systemName: "pianokeys")
+                            Image(systemName: icon)
                                 .font(.system(size: 24))
                                 .foregroundColor(VaporwaveColors.neonPurple)
-
-                            Text(instrument)
+                            Text(name)
                                 .font(VaporwaveTypography.caption())
                                 .foregroundColor(VaporwaveColors.textPrimary)
-                                .lineLimit(1)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(VaporwaveSpacing.sm)
@@ -508,7 +604,39 @@ struct DAWArrangementView: View {
         }
     }
 
-    // MARK: - Helper Views
+    // MARK: - Actions
+
+    private func addNewTrack() {
+        withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = true }
+    }
+
+    private func addTrack(name: String, type: Track.TrackType) {
+        guard var session = recordingEngine.currentSession else { return }
+        let track = Track(name: "\(name) \(session.tracks.count + 1)", type: type)
+        session.addTrack(track)
+        recordingEngine.currentSession = session
+    }
+
+    private func togglePlayback() {
+        if isPlaying {
+            recordingEngine.stopPlayback()
+            audioEngine.stop()
+        } else {
+            audioEngine.start()
+            try? recordingEngine.startPlayback()
+        }
+    }
+
+    private func toggleRecording() {
+        if isRecording {
+            try? recordingEngine.stopRecording()
+        } else {
+            audioEngine.start()
+            try? recordingEngine.startRecording()
+        }
+    }
+
+    // MARK: - Helpers
 
     private func toolbarButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -532,107 +660,107 @@ struct DAWArrangementView: View {
     private func transportButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 18))
+                .font(.system(size: 16))
                 .foregroundColor(VaporwaveColors.textSecondary)
-                .frame(width: 40, height: 40)
+                .frame(width: 36, height: 36)
         }
         .buttonStyle(.plain)
     }
 
-    private func formatPosition(_ beat: Double) -> String {
-        let bar = Int(beat / 4) + 1
-        let beatInBar = Int(beat.truncatingRemainder(dividingBy: 4)) + 1
+    private func miniButton(label: String, isActive: Bool, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(isActive ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                .frame(width: 20, height: 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(isActive ? color : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(color.opacity(0.5), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func formatPosition(_ time: TimeInterval) -> String {
+        let bar = Int(time * bpm / 240.0) + 1
+        let beatInBar = Int((time * bpm / 60.0).truncatingRemainder(dividingBy: 4)) + 1
         return "\(bar).\(beatInBar)"
     }
 
-    // MARK: - Real Audio Playback Integration
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
 
-    /// Toggle playback — starts/stops the real audio engine and clip scheduler
-    private func togglePlayback() {
-        workspace.togglePlayback()
-
-        if workspace.isPlaying {
-            // Start playback timer to advance playhead in sync with BPM
-            let beatsPerSecond = bpm / 60.0
-            playbackTimer?.invalidate()
-            playbackTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { _ in
-                Task { @MainActor in
-                    self.currentBeat += beatsPerSecond / 30.0
-                    // Wrap around at project length
-                    if self.currentBeat >= Double(self.engine.projectLength) * 4 {
-                        self.currentBeat = 0
-                    }
-                }
-            }
-            log.info("DAW playback started at \(String(format: "%.1f", bpm)) BPM", category: .audio)
-        } else {
-            // Stop playback timer
-            playbackTimer?.invalidate()
-            playbackTimer = nil
-            log.info("DAW playback stopped at beat \(String(format: "%.1f", currentBeat))", category: .audio)
+    private func color(for trackColor: TrackColor) -> Color {
+        switch trackColor {
+        case .red: return .red
+        case .orange: return .orange
+        case .yellow: return .yellow
+        case .green: return .green
+        case .cyan: return VaporwaveColors.neonCyan
+        case .blue: return .blue
+        case .purple: return VaporwaveColors.neonPurple
+        case .pink: return VaporwaveColors.neonPink
+        case .magenta: return Color(red: 1, green: 0, blue: 1)
+        case .teal: return .teal
+        case .lime: return Color(red: 0.5, green: 1, blue: 0)
+        case .amber: return Color(red: 1, green: 0.75, blue: 0)
+        case .indigo: return .indigo
+        case .rose: return Color(red: 1, green: 0.4, blue: 0.6)
         }
     }
 }
 
-// MARK: - DAW Models
+// MARK: - Waveform Shape
 
-@MainActor
-class ArrangementDAWProductionEngine: ObservableObject {
-    /// Track accent colors — monochrome grays with subtle differentiation
-    private static let trackAccents: [Color] = [
-        EchoelBrand.primary,                           // #E0E0E0
-        EchoelBrand.primary.opacity(0.7),              // dimmer
-        EchoelBrand.primary.opacity(0.5),              // subtle
-        Color.white,                                    // bright accent
-        EchoelBrand.primary.opacity(0.85)              // mid
-    ]
+/// Draws an audio waveform from sample data as a filled shape (center-mirrored)
+struct WaveformShape: Shape {
+    let samples: [Float]
 
-    @Published var tracks: [DAWTrack] = [
-        DAWTrack(name: "Drums", instrumentName: "EchoelBeat", color: EchoelBrand.primary),
-        DAWTrack(name: "Bass", instrumentName: "EchoSynth", color: EchoelBrand.primary.opacity(0.7)),
-        DAWTrack(name: "Lead", instrumentName: "Wavetable", color: Color.white),
-        DAWTrack(name: "Pad", instrumentName: "Coherence Pad", color: EchoelBrand.primary.opacity(0.5))
-    ]
-    @Published var isRecording = false
-    @Published var projectLength: Int = 32 // bars
+    func path(in rect: CGRect) -> Path {
+        guard !samples.isEmpty else { return Path() }
 
-    func addTrack(withInstrument instrument: String = "EchoSynth") {
-        let newTrack = DAWTrack(
-            name: "Track \(tracks.count + 1)",
-            instrumentName: instrument,
-            color: Self.trackAccents[tracks.count % Self.trackAccents.count]
-        )
-        tracks.append(newTrack)
+        var path = Path()
+        let midY = rect.midY
+        let count = samples.count
+        let stepX = rect.width / CGFloat(count)
+
+        // Top half (positive)
+        path.move(to: CGPoint(x: 0, y: midY))
+        for i in 0..<count {
+            let x = CGFloat(i) * stepX
+            let amplitude = CGFloat(min(samples[i], 1.0)) * (rect.height / 2)
+            path.addLine(to: CGPoint(x: x, y: midY - amplitude))
+        }
+
+        // Bottom half (mirrored, going backwards)
+        for i in stride(from: count - 1, through: 0, by: -1) {
+            let x = CGFloat(i) * stepX
+            let amplitude = CGFloat(min(samples[i], 1.0)) * (rect.height / 2)
+            path.addLine(to: CGPoint(x: x, y: midY + amplitude))
+        }
+
+        path.closeSubpath()
+        return path
     }
 }
 
-struct DAWTrack: Identifiable {
-    let id = UUID()
-    var name: String
-    var instrumentName: String
-    var color: Color
-    var isMuted = false
-    var isSolo = false
-    var volume: Float = 0.8
-    var pan: Float = 0.0
-    var regions: [DAWRegion] = [
-        DAWRegion(name: "Intro", startBar: 0, length: 4),
-        DAWRegion(name: "Verse", startBar: 4, length: 8)
-    ]
-}
+// MARK: - Real Mixer Sheet
 
-struct DAWRegion: Identifiable {
-    let id = UUID()
-    var name: String
-    var startBar: Int
-    var length: Int
-}
-
-// MARK: - Mixer Sheet
-
-struct MixerSheet: View {
-    @ObservedObject var engine: ArrangementDAWProductionEngine
+struct RealMixerSheet: View {
+    @EnvironmentObject var audioEngine: AudioEngine
+    @EnvironmentObject var recordingEngine: RecordingEngine
     @Environment(\.dismiss) private var dismiss
+
+    private var tracks: [Track] {
+        recordingEngine.currentSession?.tracks ?? []
+    }
 
     var body: some View {
         ZStack {
@@ -640,7 +768,6 @@ struct MixerSheet: View {
                 .ignoresSafeArea()
 
             VStack(spacing: VaporwaveSpacing.md) {
-                // Header
                 HStack {
                     Text("MIXER")
                         .font(VaporwaveTypography.sectionTitle())
@@ -654,14 +781,11 @@ struct MixerSheet: View {
                 }
                 .padding(.horizontal, VaporwaveSpacing.md)
 
-                // Channel strips
                 ScrollView(.horizontal) {
                     HStack(spacing: VaporwaveSpacing.md) {
-                        ForEach(engine.tracks) { track in
-                            channelStrip(track: track)
+                        ForEach(tracks) { track in
+                            realChannelStrip(track: track)
                         }
-
-                        // Master channel
                         masterChannelStrip()
                     }
                     .padding(VaporwaveSpacing.md)
@@ -670,41 +794,77 @@ struct MixerSheet: View {
         }
     }
 
-    private func channelStrip(track: DAWTrack) -> some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
-            // Track name
+    private func realChannelStrip(track: Track) -> some View {
+        let trackColor = DAWArrangementView.staticColor(for: track.trackColor)
+
+        return VStack(spacing: VaporwaveSpacing.sm) {
             Text(track.name)
                 .font(VaporwaveTypography.caption())
-                .foregroundColor(track.color)
+                .foregroundColor(trackColor)
                 .lineLimit(1)
 
-            // Meter
+            // VU Meter (uses track volume as simulated level for now)
             VStack(spacing: 2) {
-                ForEach(0..<12, id: \.self) { i in
+                ForEach((0..<12).reversed(), id: \.self) { i in
+                    let threshold = Float(i) / 12.0
+                    let level = track.isMuted ? Float(0) : track.volume
                     RoundedRectangle(cornerRadius: 1)
                         .fill(i > 8 ? VaporwaveColors.coherenceLow : (i > 5 ? VaporwaveColors.coherenceMedium : VaporwaveColors.coherenceHigh))
                         .frame(width: 40, height: 4)
-                        .opacity(i < Int(track.volume * 12) ? 1.0 : 0.2)
+                        .opacity(level > threshold ? 1.0 : 0.15)
                 }
             }
             .padding(.vertical, VaporwaveSpacing.sm)
 
-            // Fader
-            Slider(value: .constant(Double(track.volume)), in: 0...1)
-                .tint(track.color)
+            // Volume fader
+            VStack(spacing: 2) {
+                Slider(
+                    value: Binding(
+                        get: { Double(track.volume) },
+                        set: { recordingEngine.setTrackVolume(track.id, volume: Float($0)) }
+                    ),
+                    in: 0...1
+                )
+                .tint(trackColor)
                 .frame(height: 100)
                 .rotationEffect(.degrees(-90))
                 .frame(width: 100, height: 40)
 
-            // Pan
-            Text(String(format: "%.0f", track.pan * 100))
+                Text(String(format: "%.1f dB", 20 * log10(max(track.volume, 0.001))))
+                    .font(VaporwaveTypography.dataSmall())
+                    .foregroundColor(VaporwaveColors.textSecondary)
+            }
+
+            // Pan knob display
+            Text(panLabel(track.pan))
                 .font(VaporwaveTypography.dataSmall())
                 .foregroundColor(VaporwaveColors.textSecondary)
 
             // M/S buttons
             HStack(spacing: 4) {
-                muteButton(isMuted: track.isMuted)
-                soloButton(isSolo: track.isSolo)
+                Button {
+                    recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)
+                } label: {
+                    Text("M")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(track.isMuted ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .frame(width: 24, height: 24)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(track.isMuted ? VaporwaveColors.coral : Color.clear))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(VaporwaveColors.coral.opacity(0.5), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    recordingEngine.setTrackSoloed(track.id, soloed: !track.isSoloed)
+                } label: {
+                    Text("S")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(track.isSoloed ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .frame(width: 24, height: 24)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(track.isSoloed ? VaporwaveColors.neonCyan : Color.clear))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(VaporwaveColors.neonCyan.opacity(0.5), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
         }
         .frame(width: 60)
@@ -718,21 +878,27 @@ struct MixerSheet: View {
                 .font(VaporwaveTypography.caption())
                 .foregroundColor(VaporwaveColors.neonPink)
 
-            // Stereo meter
-            HStack(spacing: 2) {
-                meterBar()
-                meterBar()
+            // Live stereo meter
+            HStack(spacing: 3) {
+                liveMeterBar(level: audioEngine.masterLevel)
+                liveMeterBar(level: audioEngine.masterLevelR)
             }
             .padding(.vertical, VaporwaveSpacing.sm)
 
-            // Fader
-            Slider(value: .constant(0.8), in: 0...1)
-                .tint(VaporwaveColors.neonPink)
-                .frame(height: 100)
-                .rotationEffect(.degrees(-90))
-                .frame(width: 100, height: 40)
+            // Master fader
+            Slider(
+                value: Binding(
+                    get: { Double(audioEngine.masterVolume) },
+                    set: { audioEngine.masterVolume = Float($0) }
+                ),
+                in: 0...1
+            )
+            .tint(VaporwaveColors.neonPink)
+            .frame(height: 100)
+            .rotationEffect(.degrees(-90))
+            .frame(width: 100, height: 40)
 
-            Text("0.0 dB")
+            Text(String(format: "%.1f dB", 20 * log10(max(audioEngine.masterVolume, 0.001))))
                 .font(VaporwaveTypography.caption())
                 .foregroundColor(VaporwaveColors.textSecondary)
         }
@@ -741,45 +907,45 @@ struct MixerSheet: View {
         .modifier(GlassCard())
     }
 
-    private func meterBar() -> some View {
+    private func liveMeterBar(level: Float) -> some View {
         VStack(spacing: 2) {
-            ForEach(0..<12, id: \.self) { i in
+            ForEach((0..<12).reversed(), id: \.self) { i in
+                let threshold = Float(i) / 12.0
                 RoundedRectangle(cornerRadius: 1)
                     .fill(i > 8 ? VaporwaveColors.coherenceLow : (i > 5 ? VaporwaveColors.coherenceMedium : VaporwaveColors.coherenceHigh))
                     .frame(width: 16, height: 4)
-                    .opacity(i < 9 ? 1.0 : 0.2)
+                    .opacity(level > threshold ? 1.0 : 0.15)
             }
         }
     }
 
-    private func muteButton(isMuted: Bool) -> some View {
-        Text("M")
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(isMuted ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
-            .frame(width: 24, height: 24)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isMuted ? VaporwaveColors.coral : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(VaporwaveColors.coral.opacity(0.5), lineWidth: 1)
-            )
+    private func panLabel(_ pan: Float) -> String {
+        if abs(pan) < 0.05 { return "C" }
+        if pan < 0 { return "L\(Int(abs(pan) * 100))" }
+        return "R\(Int(pan * 100))"
     }
+}
 
-    private func soloButton(isSolo: Bool) -> some View {
-        Text("S")
-            .font(.system(size: 10, weight: .bold))
-            .foregroundColor(isSolo ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
-            .frame(width: 24, height: 24)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(isSolo ? VaporwaveColors.neonCyan : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(VaporwaveColors.neonCyan.opacity(0.5), lineWidth: 1)
-            )
+// MARK: - Static Helpers (for use in other views)
+
+extension DAWArrangementView {
+    static func staticColor(for trackColor: TrackColor) -> Color {
+        switch trackColor {
+        case .red: return .red
+        case .orange: return .orange
+        case .yellow: return .yellow
+        case .green: return .green
+        case .cyan: return VaporwaveColors.neonCyan
+        case .blue: return .blue
+        case .purple: return VaporwaveColors.neonPurple
+        case .pink: return VaporwaveColors.neonPink
+        case .magenta: return Color(red: 1, green: 0, blue: 1)
+        case .teal: return .teal
+        case .lime: return Color(red: 0.5, green: 1, blue: 0)
+        case .amber: return Color(red: 1, green: 0.75, blue: 0)
+        case .indigo: return .indigo
+        case .rose: return Color(red: 1, green: 0.4, blue: 0.6)
+        }
     }
 }
 
@@ -788,5 +954,7 @@ struct MixerSheet: View {
 #if DEBUG
 #Preview {
     DAWArrangementView()
+        .environmentObject(AudioEngine())
+        .environmentObject(RecordingEngine())
 }
 #endif

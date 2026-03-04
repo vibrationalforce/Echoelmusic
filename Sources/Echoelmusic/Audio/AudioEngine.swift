@@ -27,6 +27,11 @@ public class AudioEngine: ObservableObject {
     /// Whether input monitoring is enabled (mic recording on play)
     @Published var inputMonitoringEnabled: Bool = false
 
+    /// Live master output level (0.0 - 1.0) for metering
+    @Published var masterLevel: Float = 0.0
+
+    /// Live master output level right channel (0.0 - 1.0)
+    @Published var masterLevelR: Float = 0.0
 
     // MARK: - Master Audio Engine (Hardware Output)
 
@@ -134,6 +139,33 @@ public class AudioEngine: ObservableObject {
         // Set initial volume
         masterMixer.outputVolume = masterVolume
         masterEngine.mainMixerNode.outputVolume = 1.0
+
+        // Install metering tap on master mixer for live VU meters
+        let meterFormat = masterMixer.outputFormat(forBus: 0)
+        if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
+            masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { [weak self] buffer, _ in
+                guard let self, let channelData = buffer.floatChannelData else { return }
+                let frameLength = UInt(buffer.frameLength)
+                guard frameLength > 0 else { return }
+
+                var rmsL: Float = 0
+                vDSP_rmsqv(channelData[0], 1, &rmsL, vDSP_Length(frameLength))
+
+                var rmsR: Float = 0
+                if buffer.format.channelCount > 1 {
+                    vDSP_rmsqv(channelData[1], 1, &rmsR, vDSP_Length(frameLength))
+                } else {
+                    rmsR = rmsL
+                }
+
+                Task { @MainActor [weak self] in
+                    // Smooth metering (decay)
+                    let smoothing: Float = 0.3
+                    self?.masterLevel = max(rmsL, (self?.masterLevel ?? 0) * (1.0 - smoothing))
+                    self?.masterLevelR = max(rmsR, (self?.masterLevelR ?? 0) * (1.0 - smoothing))
+                }
+            }
+        }
 
         // Prepare engine (pre-allocates buffers)
         masterEngine.prepare()

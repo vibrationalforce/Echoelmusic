@@ -52,6 +52,12 @@ struct MainNavigationHub: View {
                 }
             }
         }
+        .onAppear {
+            // Ensure a session exists for DAW
+            if recordingEngine.currentSession == nil {
+                _ = recordingEngine.createSession(name: "New Project", template: .custom)
+            }
+        }
     }
 
     // MARK: - Desktop Layout (iPad)
@@ -248,9 +254,15 @@ struct MainNavigationHub: View {
             Spacer()
 
             // Time display
-            Text("00:00:00")
+            Text(formatTime(recordingEngine.currentTime))
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .foregroundColor(EchoelBrand.textSecondary)
+
+            // Level indicator
+            HStack(spacing: 2) {
+                levelBar(level: audioEngine.masterLevel)
+                levelBar(level: audioEngine.masterLevelR)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -263,6 +275,29 @@ struct MainNavigationHub: View {
                     alignment: .top
                 )
         )
+    }
+
+    private func levelBar(level: Float) -> some View {
+        GeometryReader { _ in
+            RoundedRectangle(cornerRadius: 1)
+                .fill(level > 0.8 ? Color.red : (level > 0.5 ? Color.yellow : Color.green))
+                .frame(width: 4, height: CGFloat(level) * 20)
+        }
+        .frame(width: 4, height: 20)
+    }
+
+    private func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        let millis = Int((time.truncatingRemainder(dividingBy: 1)) * 100)
+        return String(format: "%02d:%02d:%02d", minutes, seconds, millis)
+    }
+
+    // MARK: - Keyboard Shortcuts
+
+    private func handleKeyboardShortcuts(_ view: some View) -> some View {
+        view
+            .keyboardShortcut(.space, modifiers: [])
     }
 
     // MARK: - Mobile Tab Bar
