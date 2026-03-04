@@ -137,7 +137,7 @@ struct DAWArrangementView: View {
                 if metronome.isRunning {
                     metronome.stop()
                 } else {
-                    metronome.setTempo(newTempo: bpm)
+                    metronome.setTempo(bpm)
                     metronome.start()
                 }
                 HapticHelper.impact(.light)
