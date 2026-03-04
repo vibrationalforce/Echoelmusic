@@ -19,6 +19,7 @@ struct DAWArrangementView: View {
     @State private var showSessionClips = false
     @State private var showEffectsChain = false
     @State private var showMasterExport = false
+    @State private var showTempoEditor = false
     @State private var playbackTimer: Timer?
 
     #if os(iOS)
@@ -136,36 +137,81 @@ struct DAWArrangementView: View {
 
             Spacer()
 
-            // BPM + Metronome toggle
-            Button {
-                if metronome.isRunning {
-                    metronome.stop()
-                } else {
-                    metronome.setTempo(bpm)
-                    metronome.start()
-                }
-                HapticHelper.impact(.light)
-            } label: {
-                HStack(spacing: EchoelSpacing.sm) {
+            // BPM display with tempo controls
+            HStack(spacing: EchoelSpacing.xs) {
+                // Metronome toggle
+                Button {
+                    if metronome.isRunning {
+                        metronome.stop()
+                    } else {
+                        metronome.setTempo(bpm)
+                        metronome.start()
+                    }
+                    HapticHelper.impact(.light)
+                } label: {
                     Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
+                        .font(.system(size: 14))
                         .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
                         .opacity(metronome.beatFlash ? 1.0 : 0.7)
-                    Text("\(Int(bpm))")
-                        .font(EchoelBrandFont.data())
-                        .foregroundColor(EchoelBrand.textPrimary)
-                    Text("BPM")
-                        .font(EchoelBrandFont.label())
-                        .foregroundColor(EchoelBrand.textSecondary)
+                        .frame(width: 28, height: 28)
                 }
+                .buttonStyle(.plain)
+
+                // Tempo down
+                Button {
+                    let newBPM = max(40, workspace.globalBPM - 1)
+                    workspace.globalBPM = newBPM
+                    metronome.setTempo(newBPM)
+                    HapticHelper.impact(.light)
+                } label: {
+                    Image(systemName: "minus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(EchoelBrand.textTertiary)
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(EchoelBrand.bgElevated))
+                }
+                .buttonStyle(.plain)
+
+                // BPM value — tap for editor
+                Button {
+                    showTempoEditor.toggle()
+                } label: {
+                    HStack(spacing: EchoelSpacing.xs) {
+                        Text("\(Int(bpm))")
+                            .font(EchoelBrandFont.data())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                        Text("BPM")
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textSecondary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                // Tempo up
+                Button {
+                    let newBPM = min(300, workspace.globalBPM + 1)
+                    workspace.globalBPM = newBPM
+                    metronome.setTempo(newBPM)
+                    HapticHelper.impact(.light)
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(EchoelBrand.textTertiary)
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(EchoelBrand.bgElevated))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, EchoelSpacing.md)
-            .padding(.vertical, EchoelSpacing.sm)
+            .padding(.horizontal, EchoelSpacing.sm)
+            .padding(.vertical, EchoelSpacing.xs)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
             )
             .modifier(GlassCard())
+            .popover(isPresented: $showTempoEditor) {
+                tempoEditorPopover
+            }
 
             Spacer()
 
@@ -194,6 +240,63 @@ struct DAWArrangementView: View {
             }
         }
         .padding(EchoelSpacing.md)
+    }
+
+    // MARK: - Tempo Editor Popover
+
+    private var tempoEditorPopover: some View {
+        VStack(spacing: EchoelSpacing.md) {
+            Text("TEMPO")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(EchoelBrand.textSecondary)
+                .tracking(1.5)
+
+            Text("\(Int(workspace.globalBPM))")
+                .font(.system(size: 48, weight: .light, design: .monospaced))
+                .foregroundColor(EchoelBrand.textPrimary)
+
+            Slider(
+                value: $workspace.globalBPM,
+                in: 40...300,
+                step: 1
+            ) {
+                Text("BPM")
+            }
+            .tint(EchoelBrand.primary)
+            .onChange(of: workspace.globalBPM) { newValue in
+                metronome.setTempo(newValue)
+            }
+
+            // Quick presets
+            HStack(spacing: EchoelSpacing.sm) {
+                ForEach([80, 100, 120, 140, 160], id: \.self) { preset in
+                    Button {
+                        workspace.globalBPM = Double(preset)
+                        metronome.setTempo(Double(preset))
+                        HapticHelper.impact(.light)
+                    } label: {
+                        Text("\(preset)")
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundColor(
+                                Int(workspace.globalBPM) == preset ? EchoelBrand.bgDeep : EchoelBrand.textSecondary
+                            )
+                            .frame(width: 44, height: 32)
+                            .background(
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                                    .fill(
+                                        Int(workspace.globalBPM) == preset
+                                            ? EchoelBrand.primary
+                                            : EchoelBrand.bgElevated
+                                    )
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(EchoelSpacing.lg)
+        .frame(width: 280)
+        .background(EchoelBrand.bgSurface)
     }
 
     // MARK: - Track List
