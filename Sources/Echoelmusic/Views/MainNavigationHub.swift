@@ -13,6 +13,7 @@ struct MainNavigationHub: View {
 
     enum Tab: String, CaseIterable, Identifiable {
         case daw = "DAW"
+        case live = "Live"
         case synth = "Synth"
         case fx = "FX"
         case video = "Video"
@@ -22,6 +23,7 @@ struct MainNavigationHub: View {
         var icon: String {
             switch self {
             case .daw: return "pianokeys"
+            case .live: return "square.grid.3x3"
             case .synth: return "waveform"
             case .fx: return "waveform.path.ecg"
             case .video: return "film"
@@ -31,6 +33,7 @@ struct MainNavigationHub: View {
         var filledIcon: String {
             switch self {
             case .daw: return "pianokeys.inverse"
+            case .live: return "square.grid.3x3.fill"
             case .synth: return "waveform.circle.fill"
             case .fx: return "waveform.path.ecg.rectangle.fill"
             case .video: return "film.fill"
@@ -40,6 +43,7 @@ struct MainNavigationHub: View {
         var color: Color {
             switch self {
             case .daw: return EchoelBrand.sky
+            case .live: return EchoelBrand.emerald
             case .synth: return EchoelBrand.primary
             case .fx: return EchoelBrand.violet
             case .video: return EchoelBrand.coral
@@ -272,6 +276,8 @@ struct MainNavigationHub: View {
         switch currentTab {
         case .daw:
             DAWArrangementView()
+        case .live:
+            SessionClipView()
         case .synth:
             EchoelSynthView()
         case .fx:

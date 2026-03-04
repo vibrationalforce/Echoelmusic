@@ -16,6 +16,7 @@ class VideoEditingEngine: ObservableObject {
     @Published var isPlaying: Bool = false
     @Published var selectedClips: Set<UUID> = []
     @Published var editMode: EditMode = .select
+    @Published var currentGrade: ColorGradeEffect?
 
     // MARK: - Undo/Redo Integration
     private let undoManager = UndoRedoManager.shared
@@ -405,6 +406,7 @@ class VideoEditingEngine: ObservableObject {
     /// Applies a live color grade from ProColorGrading to selected video clips.
     /// Called by the workspace bridge when the grading wheels change.
     func applyLiveGrade(_ grade: ColorGradeEffect) {
+        currentGrade = grade
         let gradeEffect = VideoEffect.colorGrade(grade)
 
         for (trackIdx, track) in timeline.videoTracks.enumerated() {

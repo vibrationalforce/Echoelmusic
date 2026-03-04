@@ -56,6 +56,10 @@ struct VideoEditorView: View {
                         previewSection
                             .frame(maxHeight: 200)
 
+                        if showEffectsPanel {
+                            quickEffectsStrip
+                        }
+
                         timelineSection
 
                         transportControls
@@ -403,6 +407,111 @@ struct VideoEditorView: View {
         .frame(width: 250)
         .padding(EchoelSpacing.md)
         .modifier(GlassCard())
+    }
+
+    // MARK: - Quick Effects Strip (CapCut/InShot Style)
+
+    private var quickEffectsStrip: some View {
+        VStack(spacing: 0) {
+            // Color grading sliders (DaVinci style)
+            VStack(spacing: EchoelSpacing.xs) {
+                colorSlider(label: "EXP", value: Binding(
+                    get: { engine.currentGrade?.exposure ?? 0 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: $0, contrast: engine.currentGrade?.contrast ?? 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: engine.currentGrade?.temperature ?? 0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -1...1, color: EchoelBrand.amber)
+
+                colorSlider(label: "CON", value: Binding(
+                    get: { (engine.currentGrade?.contrast ?? 1) - 1 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: $0 + 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: engine.currentGrade?.temperature ?? 0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -0.5...0.5, color: EchoelBrand.primary)
+
+                colorSlider(label: "SAT", value: Binding(
+                    get: { (engine.currentGrade?.saturation ?? 1) - 1 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: engine.currentGrade?.contrast ?? 1, saturation: $0 + 1, temperature: engine.currentGrade?.temperature ?? 0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -0.5...0.5, color: EchoelBrand.coral)
+
+                colorSlider(label: "TEMP", value: Binding(
+                    get: { engine.currentGrade?.temperature ?? 0 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: engine.currentGrade?.contrast ?? 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: $0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -1...1, color: EchoelBrand.sky)
+            }
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.sm)
+
+            // Quick filter presets (horizontal scroll)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: EchoelSpacing.sm) {
+                    quickFilterButton("Reset", icon: "arrow.counterclockwise", color: EchoelBrand.textSecondary) {
+                        engine.applyLiveGrade(ColorGradeEffect())
+                    }
+                    quickFilterButton("Cinema", icon: "film", color: EchoelBrand.coral) {
+                        applyVideoEffect("Cinematic")
+                    }
+                    quickFilterButton("Vintage", icon: "camera.filters", color: EchoelBrand.amber) {
+                        applyVideoEffect("Vintage")
+                    }
+                    quickFilterButton("Neon", icon: "lightbulb.fill", color: EchoelBrand.violet) {
+                        applyVideoEffect("Neon Glow")
+                    }
+                    quickFilterButton("HDR", icon: "sun.max.fill", color: EchoelBrand.sky) {
+                        applyVideoEffect("HDR")
+                    }
+                    quickFilterButton("B&W", icon: "circle.lefthalf.filled", color: EchoelBrand.primary) {
+                        applyVideoEffect("Heart Sync")
+                    }
+                    quickFilterButton("Warm", icon: "flame", color: EchoelBrand.coral) {
+                        engine.applyLiveGrade(ColorGradeEffect(saturation: 1.1, temperature: 0.2))
+                    }
+                    quickFilterButton("Cool", icon: "snowflake", color: EchoelBrand.sky) {
+                        engine.applyLiveGrade(ColorGradeEffect(saturation: 1.1, temperature: -0.2))
+                    }
+                }
+                .padding(.horizontal, EchoelSpacing.md)
+            }
+            .padding(.bottom, EchoelSpacing.sm)
+        }
+        .background(EchoelBrand.bgSurface)
+    }
+
+    private func colorSlider(label: String, value: Binding<Float>, range: ClosedRange<Float>, color: Color) -> some View {
+        HStack(spacing: EchoelSpacing.sm) {
+            Text(label)
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(color)
+                .frame(width: 32, alignment: .leading)
+
+            Slider(value: value, in: range)
+                .tint(color)
+
+            Text(String(format: "%+.1f", value.wrappedValue))
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundColor(EchoelBrand.textTertiary)
+                .frame(width: 30, alignment: .trailing)
+        }
+        .frame(height: 20)
+    }
+
+    private func quickFilterButton(_ title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            HapticHelper.impact(.light)
+        } label: {
+            VStack(spacing: EchoelSpacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(color)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                            .fill(color.opacity(0.1))
+                    )
+
+                Text(title)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(EchoelBrand.textSecondary)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func effectCategory(_ title: String, effects: [String]) -> some View {

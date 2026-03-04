@@ -20,6 +20,7 @@ struct DAWArrangementView: View {
     @State private var showEffectsChain = false
     @State private var showMasterExport = false
     @State private var showTempoEditor = false
+    @State private var showMiniMixer = false
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
@@ -64,6 +65,9 @@ struct DAWArrangementView: View {
                         trackListSection
                     }
                     arrangementSection
+                }
+                if showMiniMixer {
+                    miniMixerStrip
                 }
                 dawTransportBar
             }
@@ -220,11 +224,11 @@ struct DAWArrangementView: View {
                         withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
                     }
                 }
-                toolbarButton(icon: "slider.horizontal.3", label: "Mixer", isActive: showMixer) {
-                    showMixer = true
+                toolbarButton(icon: "slider.horizontal.3", label: "Mix", isActive: showMiniMixer) {
+                    withAnimation(.easeInOut(duration: 0.2)) { showMiniMixer.toggle() }
                 }
-                toolbarButton(icon: "square.grid.3x3", label: "Clips", isActive: showSessionClips) {
-                    showSessionClips = true
+                toolbarButton(icon: "slider.vertical.3", label: "Full", isActive: showMixer) {
+                    showMixer = true
                 }
                 toolbarButton(icon: "waveform.path.ecg", label: "FX", isActive: showEffectsChain) {
                     showEffectsChain = true
@@ -590,6 +594,110 @@ struct DAWArrangementView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, EchoelSpacing.md)
+    }
+
+    // MARK: - Mini Mixer Strip (FL Mobile Style)
+
+    private var miniMixerStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: EchoelSpacing.xs) {
+                ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
+                    VStack(spacing: EchoelSpacing.xs) {
+                        // Track name
+                        Text(track.name.prefix(4).uppercased())
+                            .font(.system(size: 8, weight: .semibold, design: .monospaced))
+                            .foregroundColor(EchoelBrand.textSecondary)
+                            .lineLimit(1)
+
+                        // Volume slider (vertical)
+                        GeometryReader { geo in
+                            let height = geo.size.height
+                            let volume = CGFloat(track.volume)
+
+                            ZStack(alignment: .bottom) {
+                                // Track
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(EchoelBrand.bgDeep)
+                                    .frame(width: 6)
+
+                                // Fill
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(track.isMuted ? EchoelBrand.textTertiary : EchoelBrand.sky)
+                                    .frame(width: 6, height: height * volume)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        let newVol = Float(1.0 - (value.location.y / height))
+                                        recordingEngine.setTrackVolume(track.id, volume: max(0, min(1, newVol)))
+                                    }
+                            )
+                        }
+                        .frame(width: 24, height: 60)
+
+                        // Mute button
+                        Button {
+                            recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)
+                            HapticHelper.impact(.light)
+                        } label: {
+                            Text("M")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(track.isMuted ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
+                                .frame(width: 18, height: 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(track.isMuted ? EchoelBrand.amber : EchoelBrand.bgElevated)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .frame(width: 32)
+                }
+
+                // Master fader
+                VStack(spacing: EchoelSpacing.xs) {
+                    Text("MST")
+                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .foregroundColor(EchoelBrand.emerald)
+                        .lineLimit(1)
+
+                    // Master level indicator
+                    GeometryReader { geo in
+                        let height = geo.size.height
+                        ZStack(alignment: .bottom) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(EchoelBrand.bgDeep)
+                                .frame(width: 8)
+
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(EchoelBrand.emerald)
+                                .frame(width: 8, height: height * CGFloat(audioEngine.masterLevel))
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .frame(width: 28, height: 60)
+
+                    // Master label
+                    Text("•")
+                        .font(.system(size: 8))
+                        .foregroundColor(EchoelBrand.emerald)
+                        .frame(width: 18, height: 14)
+                }
+                .frame(width: 36)
+            }
+            .padding(.horizontal, EchoelSpacing.sm)
+        }
+        .frame(height: 100)
+        .background(
+            EchoelBrand.bgSurface
+                .overlay(
+                    Rectangle()
+                        .fill(EchoelBrand.border)
+                        .frame(height: 0.5),
+                    alignment: .top
+                )
+        )
     }
 
     // MARK: - DAW Transport Bar
