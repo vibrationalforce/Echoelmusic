@@ -89,6 +89,13 @@ struct VideoEditorView: View {
                     .foregroundColor(.secondary)
             }
         }
+        .onDisappear {
+            // Clean up camera and audio resources
+            cameraManager?.stopCapture()
+            cameraAnalyzer.reset()
+            videoPlayer?.pause()
+            videoPlayer = nil
+        }
         // Keyboard shortcuts
         .background(
             Group {

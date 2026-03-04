@@ -87,6 +87,9 @@ struct DAWArrangementView: View {
         .onAppear {
             ensureSessionExists()
         }
+        .onDisappear {
+            metronome.stop()
+        }
         // Cycle 12: Keyboard shortcuts (Cmd+key for compatibility)
         .background(
             Group {
