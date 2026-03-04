@@ -17,20 +17,27 @@ Read this FIRST when continuing work on Echoelmusic.
 2. `433f5aa` — `refactor: adaptive layouts + EchoelBrand design system for all views`
 3. `fda2969` — `fix: EffectsChainView requires nodeGraph parameter in DAW sheet`
 4. `872b7ee` — `feat: professional export templates — WAV 24-bit master + video templates`
+5. `b861675` — `fix: remove unused scrollOffset state, update healing log`
+6. `bdfeeb0` — `fix: wire backward seek button, add track delete context menu`
+7. `648d38c` — `fix: wire video effect buttons to engine color grade presets`
+8. `d5f8b57` — `feat: add tempo controls with +/- buttons and slider popover`
+9. `7220e9a` — `fix: ColorGradeEffect argument order matches struct definition`
 
 **What Changed:**
 - **5 views rewritten** with adaptive layouts (portrait iPhone, landscape iPhone, iPad)
 - **EchoelSynthView**: 3 layouts, per-panel accent colors, PresetCardButtonStyle
 - **EchoelFXView**: iPad split view (chain 60% + params 40%), landscape sidebar
-- **MainNavigationHub**: Glass-effect tab bar, 16-segment LED meters, spring animations
-- **DAWArrangementView**: Full Vaporwave→EchoelBrand migration, MasterExportSheet (WAV 24-bit/44.1kHz default)
-- **VideoEditorView**: 8 template presets (YouTube 1080p/4K, Instagram Feed/Reels, TikTok, HD, 4K Master, ProRes)
+- **MainNavigationHub**: Glass-effect tab bar, 16-segment LED meters, backward seek button wired
+- **DAWArrangementView**: Full Vaporwave→EchoelBrand migration, MasterExportSheet (WAV 24-bit/44.1kHz default), track delete context menu, tempo +/- controls with slider popover (40-300 BPM)
+- **VideoEditorView**: 8 template presets (YouTube 1080p/4K, Instagram Feed/Reels, TikTok, HD, 4K Master, ProRes), video effect buttons wired to ColorGradeEffect presets
 - All VaporwaveColors/Typography/Spacing → EchoelBrand system
 - DAWEffectsChainSheet wrapper for NodeGraph parameter injection
 
 **TestFlight:**
-- Build `22656757364` — SUCCESS (Archive + Upload to TestFlight)
-- Build `22657135026` — In progress (new export templates)
+- Build `22656757364` — SUCCESS
+- Build `22657135026` — SUCCESS
+- Build `22657543518` — FAILED (ColorGradeEffect argument order)
+- Build `22657781539` — SUCCESS (fix applied)
 
 **Key API Discoveries:**
 - `EchoelmusicNode` is NOT Identifiable → always `ForEach(nodes, id: \.id)`
@@ -38,6 +45,9 @@ Read this FIRST when continuing work on Echoelmusic.
 - `AudioEngine.schedulePlayback(buffer:)` not `playBuffer()`
 - `ExportManager` is plain class (NOT ObservableObject) — no progress tracking
 - `VideoExportManager` IS ObservableObject with `@Published exportProgress`
+- `ColorGradeEffect` memberwise init: order is `exposure, contrast, saturation, temperature, tint`
+- `RecordingEngine.deleteTrack(_:)` exists and has undo support
+- `RecordingEngine.seek(to:)` works for timeline navigation
 
 ---
 
