@@ -41,7 +41,7 @@ struct MainNavigationHub: View {
             switch self {
             case .daw: return EchoelBrand.sky
             case .synth: return EchoelBrand.primary
-            case .fx: return Color.purple
+            case .fx: return EchoelBrand.violet
             case .video: return EchoelBrand.coral
             }
         }
@@ -105,96 +105,164 @@ struct MainNavigationHub: View {
     // MARK: - Top Bar
 
     private var topBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: EchoelSpacing.sm) {
             Button(action: {
-                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                withAnimation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.85)) {
                     sidebarExpanded.toggle()
                 }
             }) {
-                Image(systemName: "sidebar.left")
-                    .font(.system(size: 18))
+                Image(systemName: sidebarExpanded ? "sidebar.left" : "sidebar.leading")
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundColor(EchoelBrand.textSecondary)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: EchoelRadius.xs)
+                            .fill(EchoelBrand.bgElevated.opacity(0.5))
+                    )
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            HStack(spacing: 6) {
-                Text("ECHOELMUSIC")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(EchoelBrand.textPrimary)
-                    .tracking(2)
-            }
+            Text("ECHOELMUSIC")
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textPrimary.opacity(0.7))
+                .tracking(4)
+                .kerning(0.5)
 
             Spacer()
 
-            ForEach(Tab.allCases) { tab in
-                Button(action: { currentTab = tab }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
-                        Text(tab.rawValue)
-                            .font(.system(size: 13, weight: .medium))
+            HStack(spacing: EchoelSpacing.xxs) {
+                ForEach(Tab.allCases) { tab in
+                    Button(action: {
+                        withAnimation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.78)) {
+                            currentTab = tab
+                        }
+                    }) {
+                        HStack(spacing: EchoelSpacing.xs) {
+                            Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
+                                .font(.system(size: 11, weight: currentTab == tab ? .semibold : .regular))
+                            Text(tab.rawValue)
+                                .font(EchoelBrandFont.label())
+                                .fontWeight(currentTab == tab ? .semibold : .regular)
+                        }
+                        .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
+                        .padding(.horizontal, EchoelSpacing.sm + EchoelSpacing.xs)
+                        .padding(.vertical, EchoelSpacing.xs + EchoelSpacing.xxs)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                                    .fill(currentTab == tab ? tab.color.opacity(0.1) : Color.clear)
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                                    .stroke(
+                                        currentTab == tab ? tab.color.opacity(0.18) : Color.clear,
+                                        lineWidth: 0.5
+                                    )
+                            }
+                        )
+                        .overlay(alignment: .bottom) {
+                            if currentTab == tab {
+                                Capsule()
+                                    .fill(tab.color)
+                                    .frame(width: 16, height: 2)
+                                    .offset(y: 1)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
                     }
-                    .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        currentTab == tab
-                            ? tab.color.opacity(0.15)
-                            : Color.clear
-                    )
-                    .cornerRadius(6)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
 
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, EchoelSpacing.md)
+        .padding(.vertical, EchoelSpacing.sm)
         .background(
-            EchoelBrand.bgSurface
-                .overlay(
-                    Rectangle()
-                        .fill(EchoelBrand.border)
-                        .frame(height: 1),
-                    alignment: .bottom
-                )
+            ZStack {
+                EchoelBrand.bgSurface.opacity(0.92)
+                if #available(iOS 15.0, *) {
+                    Rectangle().fill(.ultraThinMaterial).opacity(0.25)
+                }
+            }
+            .overlay(
+                Rectangle()
+                    .fill(EchoelBrand.border)
+                    .frame(height: 0.5),
+                alignment: .bottom
+            )
         )
     }
 
     // MARK: - Sidebar
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.xxs) {
             ForEach(Tab.allCases) { tab in
-                Button(action: { currentTab = tab }) {
-                    HStack(spacing: 10) {
+                Button(action: {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.85)) {
+                        currentTab = tab
+                    }
+                }) {
+                    HStack(spacing: EchoelSpacing.sm + EchoelSpacing.xxs) {
+                        // Active indicator bar on leading edge
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(currentTab == tab ? tab.color : Color.clear)
+                            .frame(width: 2.5, height: 16)
+
                         Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
-                            .font(.system(size: 16))
-                            .frame(width: 24)
+                            .font(.system(size: 14, weight: currentTab == tab ? .semibold : .regular))
+                            .frame(width: 20)
 
                         Text(tab.rawValue)
-                            .font(.system(size: 14, weight: currentTab == tab ? .semibold : .regular))
+                            .font(.system(size: 13, weight: currentTab == tab ? .semibold : .regular))
 
                         Spacer()
+
+                        if currentTab == tab {
+                            Circle()
+                                .fill(tab.color)
+                                .frame(width: 4, height: 4)
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
                     .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.trailing, EchoelSpacing.sm)
+                    .padding(.vertical, EchoelSpacing.sm)
                     .background(
-                        currentTab == tab
-                            ? tab.color.opacity(0.1)
-                            : Color.clear
+                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                            .fill(currentTab == tab ? tab.color.opacity(0.08) : EchoelBrand.bgElevated.opacity(0.01))
                     )
-                    .cornerRadius(8)
+                    .contentShape(RoundedRectangle(cornerRadius: EchoelRadius.sm))
                 }
                 .buttonStyle(.plain)
             }
 
             Spacer()
+
+            // Version label at sidebar bottom
+            Text("v7.0")
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .foregroundColor(EchoelBrand.textSecondary.opacity(0.5))
+                .padding(.bottom, EchoelSpacing.sm)
+                .frame(maxWidth: .infinity)
         }
-        .padding(.top, 12)
-        .padding(.horizontal, 8)
-        .background(EchoelBrand.bgSurface)
+        .padding(.top, EchoelSpacing.sm + EchoelSpacing.xs)
+        .padding(.horizontal, EchoelSpacing.sm)
+        .background(
+            EchoelBrand.bgSurface
+                .overlay(
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [EchoelBrand.border.opacity(0.3), EchoelBrand.border, EchoelBrand.border.opacity(0.3)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 0.5),
+                    alignment: .trailing
+                )
+        )
     }
 
     // MARK: - Workspace Content
@@ -216,92 +284,165 @@ struct MainNavigationHub: View {
     // MARK: - Transport Bar
 
     private var transportBar: some View {
-        HStack(spacing: 16) {
-            // BPM
-            Text("\(Int(EchoelCreativeWorkspace.shared.globalBPM)) BPM")
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-                .foregroundColor(EchoelBrand.textSecondary)
+        HStack(spacing: 0) {
+            // BPM Section
+            HStack(spacing: EchoelSpacing.xxs) {
+                Text("\(Int(EchoelCreativeWorkspace.shared.globalBPM))")
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(EchoelBrand.textPrimary)
+                    .monospacedDigit()
+                Text("BPM")
+                    .font(.system(size: 9, weight: .semibold, design: .default))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .padding(.top, 1)
+            }
 
-            Spacer()
+            transportDivider
 
             // Transport Controls
-            Button(action: {}) {
-                Image(systemName: "backward.fill")
-                    .foregroundColor(EchoelBrand.textPrimary)
-            }
-            .buttonStyle(.plain)
+            HStack(spacing: EchoelSpacing.sm + EchoelSpacing.xxs) {
+                Button(action: {}) {
+                    Image(systemName: "backward.fill")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(EchoelBrand.textSecondary)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
 
-            Button(action: {
-                if audioEngine.isRunning {
+                Button(action: {
+                    if audioEngine.isRunning {
+                        audioEngine.stop()
+                    } else {
+                        audioEngine.start()
+                    }
+                    HapticHelper.impact(.medium)
+                }) {
+                    ZStack {
+                        // Outer glow ring when playing
+                        Circle()
+                            .fill(audioEngine.isRunning ? EchoelBrand.primary.opacity(0.08) : Color.clear)
+                            .frame(width: 42, height: 42)
+
+                        Circle()
+                            .fill(audioEngine.isRunning ? EchoelBrand.primary.opacity(0.15) : EchoelBrand.bgElevated)
+                            .frame(width: 36, height: 36)
+
+                        Image(systemName: audioEngine.isRunning ? "pause.fill" : "play.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(audioEngine.isRunning ? EchoelBrand.primary : EchoelBrand.textPrimary)
+                            .offset(x: audioEngine.isRunning ? 0 : 1) // Optical center for play triangle
+                    }
+                    .shadow(
+                        color: audioEngine.isRunning ? EchoelBrand.primary.opacity(0.35) : Color.clear,
+                        radius: audioEngine.isRunning ? 10 : 0
+                    )
+                    .shadow(
+                        color: audioEngine.isRunning ? EchoelBrand.primary.opacity(0.15) : Color.clear,
+                        radius: audioEngine.isRunning ? 20 : 0
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
                     audioEngine.stop()
-                } else {
-                    audioEngine.start()
+                    HapticHelper.impact(.light)
+                }) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(EchoelBrand.textSecondary)
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
                 }
-                HapticHelper.impact(.medium)
-            }) {
-                Image(systemName: audioEngine.isRunning ? "pause.fill" : "play.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(EchoelBrand.primary)
-            }
-            .buttonStyle(.plain)
+                .buttonStyle(.plain)
 
-            Button(action: {
-                audioEngine.stop()
-                HapticHelper.impact(.light)
-            }) {
-                Image(systemName: "stop.fill")
-                    .foregroundColor(EchoelBrand.textPrimary)
-            }
-            .buttonStyle(.plain)
+                Button(action: {
+                    if recordingEngine.isRecording {
+                        try? recordingEngine.stopRecording()
+                        HapticHelper.notification(.success)
+                    } else {
+                        try? recordingEngine.startRecording()
+                        HapticHelper.impact(.heavy)
+                    }
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(recordingEngine.isRecording ? EchoelBrand.coral : EchoelBrand.coral.opacity(0.4))
+                            .frame(width: 12, height: 12)
 
-            Button(action: {
-                if recordingEngine.isRecording {
-                    try? recordingEngine.stopRecording()
-                    HapticHelper.notification(.success)
-                } else {
-                    try? recordingEngine.startRecording()
-                    HapticHelper.impact(.heavy)
+                        if recordingEngine.isRecording {
+                            Circle()
+                                .stroke(EchoelBrand.coral.opacity(0.3), lineWidth: 1.5)
+                                .frame(width: 18, height: 18)
+                        }
+                    }
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
                 }
-            }) {
-                Circle()
-                    .fill(recordingEngine.isRecording ? Color.red : Color.red.opacity(0.6))
-                    .frame(width: 16, height: 16)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
             Spacer()
 
             // Time display
             Text(formatTime(recordingEngine.currentTime))
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .font(EchoelBrandFont.dataSmall())
                 .foregroundColor(EchoelBrand.textSecondary)
+                .monospacedDigit()
 
-            // Level indicator
-            HStack(spacing: 2) {
-                levelBar(level: audioEngine.masterLevel)
-                levelBar(level: audioEngine.masterLevelR)
+            transportDivider
+
+            // Stereo LED meters
+            HStack(spacing: EchoelSpacing.xs) {
+                segmentedMeter(level: audioEngine.masterLevel, label: "L")
+                segmentedMeter(level: audioEngine.masterLevelR, label: "R")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, EchoelSpacing.md)
+        .padding(.vertical, EchoelSpacing.sm - EchoelSpacing.xxs)
         .background(
             EchoelBrand.bgSurface
                 .overlay(
                     Rectangle()
                         .fill(EchoelBrand.border)
-                        .frame(height: 1),
+                        .frame(height: 0.5),
                     alignment: .top
                 )
         )
     }
 
-    private func levelBar(level: Float) -> some View {
-        GeometryReader { _ in
-            RoundedRectangle(cornerRadius: 1)
-                .fill(level > 0.8 ? Color.red : (level > 0.5 ? Color.yellow : Color.green))
-                .frame(width: 4, height: CGFloat(level) * 20)
+    /// Visual divider between transport bar sections
+    private var transportDivider: some View {
+        Rectangle()
+            .fill(EchoelBrand.border)
+            .frame(width: 1, height: 20)
+            .padding(.horizontal, EchoelSpacing.sm)
+    }
+
+    /// Segmented LED-style level meter (DAW transport style)
+    private func segmentedMeter(level: Float, label: String) -> some View {
+        HStack(spacing: EchoelSpacing.xxs) {
+            Text(label)
+                .font(.system(size: 8, weight: .semibold, design: .monospaced))
+                .foregroundColor(EchoelBrand.textSecondary)
+                .frame(width: 8)
+
+            HStack(spacing: 1) {
+                ForEach(0..<16, id: \.self) { segment in
+                    let threshold = Float(segment) / 16.0
+                    let isLit = level > threshold
+                    let segmentColor: Color = {
+                        if segment >= 13 { return EchoelBrand.coral }
+                        if segment >= 10 { return EchoelBrand.amber }
+                        return EchoelBrand.emerald
+                    }()
+
+                    RoundedRectangle(cornerRadius: 0.5)
+                        .fill(isLit ? segmentColor : segmentColor.opacity(0.1))
+                        .frame(width: 2.5, height: 8)
+                }
+            }
         }
-        .frame(width: 4, height: 20)
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
@@ -321,23 +462,69 @@ struct MainNavigationHub: View {
     // MARK: - Mobile Tab Bar
 
     private var mobileTabBar: some View {
-        HStack {
+        HStack(spacing: 0) {
             ForEach(Tab.allCases) { tab in
-                Spacer()
-                Button(action: { currentTab = tab }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
-                            .font(.system(size: 20))
+                Button(action: {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.75)) {
+                        currentTab = tab
+                    }
+                    HapticHelper.impact(.light)
+                }) {
+                    VStack(spacing: EchoelSpacing.xs) {
+                        ZStack {
+                            Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
+                                .font(.system(size: 20, weight: currentTab == tab ? .semibold : .regular))
+                                .scaleEffect(currentTab == tab ? 1.1 : 1.0)
+                                .shadow(
+                                    color: currentTab == tab ? tab.color.opacity(0.4) : Color.clear,
+                                    radius: currentTab == tab ? 6 : 0
+                                )
+                        }
+                        .frame(height: 24)
+
                         Text(tab.rawValue)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(EchoelBrandFont.label())
+                            .fontWeight(currentTab == tab ? .semibold : .regular)
                     }
                     .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, EchoelSpacing.sm + EchoelSpacing.xxs)
+                    .overlay(alignment: .top) {
+                        // Active tab indicator pill
+                        if currentTab == tab {
+                            Capsule()
+                                .fill(tab.color)
+                                .frame(width: 20, height: 2.5)
+                                .offset(y: -EchoelSpacing.xxs)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
-                Spacer()
+                .accessibilityLabel("\(tab.rawValue) tab")
+                .accessibilityAddTraits(currentTab == tab ? .isSelected : [])
             }
         }
-        .padding(.vertical, 8)
-        .background(EchoelBrand.bgSurface)
+        .padding(.bottom, EchoelSpacing.xs)
+        .background(
+            ZStack {
+                EchoelBrand.bgSurface.opacity(0.95)
+                if #available(iOS 15.0, *) {
+                    Rectangle().fill(.ultraThinMaterial).opacity(0.3)
+                }
+            }
+            .overlay(
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [EchoelBrand.border.opacity(0.8), EchoelBrand.border.opacity(0.2)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(height: 0.5),
+                alignment: .top
+            )
+        )
     }
 }

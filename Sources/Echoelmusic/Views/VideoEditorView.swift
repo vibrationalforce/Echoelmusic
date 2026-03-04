@@ -43,7 +43,7 @@ struct VideoEditorView: View {
     var body: some View {
         ZStack {
             // Background
-            VaporwaveGradients.background
+            EchoelBrand.bgDeep
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -62,7 +62,7 @@ struct VideoEditorView: View {
                     }
                 } else {
                     // iPad/Mac: side-by-side layout
-                    HStack(spacing: VaporwaveSpacing.md) {
+                    HStack(spacing: EchoelSpacing.md) {
                         previewSection
 
                         if showEffectsPanel {
@@ -70,7 +70,7 @@ struct VideoEditorView: View {
                                 .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
                     }
-                    .padding(.horizontal, VaporwaveSpacing.md)
+                    .padding(.horizontal, EchoelSpacing.md)
 
                     timelineSection
 
@@ -119,14 +119,14 @@ struct VideoEditorView: View {
 
     private var headerSection: some View {
         HStack {
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                 Text("VIDEO EDITOR")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("DAW + Video")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
 
             Spacer()
@@ -134,22 +134,22 @@ struct VideoEditorView: View {
             Spacer()
 
             // Toolbar buttons
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 toolbarButton(icon: "metronome", label: "BPM", isActive: showBPMGrid) {
-                    withAnimation(VaporwaveAnimation.smooth) {
+                    withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         showBPMGrid.toggle()
                     }
                 }
 
                 toolbarButton(icon: "square.stack.3d.up", label: "Effects", isActive: showEffectsPanel) {
-                    withAnimation(VaporwaveAnimation.smooth) {
+                    withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         showEffectsPanel.toggle()
                     }
                 }
 
                 #if os(iOS)
                 toolbarButton(icon: "camera.fill", label: "Capture", isActive: showCameraCapture) {
-                    withAnimation(VaporwaveAnimation.smooth) {
+                    withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         showCameraCapture.toggle()
                         if showCameraCapture {
                             Task {
@@ -175,17 +175,17 @@ struct VideoEditorView: View {
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - Preview Section
 
     private var previewSection: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             // Video Preview Area
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(VaporwaveColors.deepBlack)
+                    .fill(EchoelBrand.bgDeep)
 
                 // Preview content
                 if showCameraCapture, let cam = cameraManager, cam.isCapturing {
@@ -211,13 +211,13 @@ struct VideoEditorView: View {
                                 Image(systemName: "camera.filters")
                                     .font(.system(size: 10))
                                 RoundedRectangle(cornerRadius: 2)
-                                    .fill(VaporwaveColors.neonCyan)
+                                    .fill(EchoelBrand.sky)
                                     .frame(width: CGFloat(cameraAnalyzer.filterModulation) * 40, height: 6)
                                     .animation(.easeOut(duration: 0.1), value: cameraAnalyzer.filterModulation)
                             }
-                            .foregroundColor(VaporwaveColors.neonCyan)
+                            .foregroundColor(EchoelBrand.sky)
                         }
-                        .padding(VaporwaveSpacing.sm)
+                        .padding(EchoelSpacing.sm)
 
                         Spacer()
 
@@ -225,11 +225,11 @@ struct VideoEditorView: View {
                         if cameraAnalyzer.isPulseDetecting && cameraAnalyzer.estimatedBPM > 0 {
                             HStack(spacing: 8) {
                                 Image(systemName: "heart.fill")
-                                    .foregroundColor(VaporwaveColors.neonPink)
+                                    .foregroundColor(EchoelBrand.coral)
                                     .font(.system(size: 12))
                                 Text("\(Int(cameraAnalyzer.estimatedBPM)) BPM")
                                     .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                    .foregroundColor(VaporwaveColors.neonPink)
+                                    .foregroundColor(EchoelBrand.coral)
 
                                 // Apply BPM button
                                 Button {
@@ -238,25 +238,25 @@ struct VideoEditorView: View {
                                 } label: {
                                     Text("Apply")
                                         .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(VaporwaveColors.deepBlack)
+                                        .foregroundColor(EchoelBrand.bgDeep)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 3)
-                                        .background(Capsule().fill(VaporwaveColors.neonPink))
+                                        .background(Capsule().fill(EchoelBrand.coral))
                                 }
                                 .buttonStyle(.plain)
 
                                 // Confidence bar
                                 RoundedRectangle(cornerRadius: 2)
-                                    .fill(VaporwaveColors.neonPink.opacity(cameraAnalyzer.bpmConfidence))
+                                    .fill(EchoelBrand.coral.opacity(cameraAnalyzer.bpmConfidence))
                                     .frame(width: 30, height: 4)
                             }
-                            .padding(.horizontal, VaporwaveSpacing.sm)
+                            .padding(.horizontal, EchoelSpacing.sm)
                             .padding(.vertical, 4)
                             .background(
                                 Capsule()
-                                    .fill(VaporwaveColors.deepBlack.opacity(0.7))
+                                    .fill(EchoelBrand.bgDeep.opacity(0.7))
                             )
-                            .padding(.bottom, VaporwaveSpacing.sm)
+                            .padding(.bottom, EchoelSpacing.sm)
                         }
 
                         // Pulse detection toggle
@@ -272,18 +272,18 @@ struct VideoEditorView: View {
                                     Text(cameraAnalyzer.isPulseDetecting ? "Pulse ON" : "Pulse")
                                         .font(.system(size: 10, weight: .medium))
                                 }
-                                .foregroundColor(cameraAnalyzer.isPulseDetecting ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
+                                .foregroundColor(cameraAnalyzer.isPulseDetecting ? EchoelBrand.coral : EchoelBrand.textSecondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(
                                     Capsule()
-                                        .fill(cameraAnalyzer.isPulseDetecting ? VaporwaveColors.neonPink.opacity(0.15) : VaporwaveColors.deepBlack.opacity(0.5))
+                                        .fill(cameraAnalyzer.isPulseDetecting ? EchoelBrand.coral.opacity(0.15) : EchoelBrand.bgDeep.opacity(0.5))
                                 )
                             }
                             .buttonStyle(.plain)
                         }
-                        .padding(.horizontal, VaporwaveSpacing.sm)
-                        .padding(.bottom, VaporwaveSpacing.sm)
+                        .padding(.horizontal, EchoelSpacing.sm)
+                        .padding(.bottom, EchoelSpacing.sm)
                     }
                 } else if let player = videoPlayer {
                     // Real AVPlayer video preview
@@ -292,9 +292,9 @@ struct VideoEditorView: View {
                 } else if engine.currentProject != nil {
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 60))
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
                 } else {
-                    VStack(spacing: VaporwaveSpacing.md) {
+                    VStack(spacing: EchoelSpacing.md) {
                         Image(systemName: "film")
                             .font(.system(size: 48))
                             .foregroundColor(EchoelBrand.primary)
@@ -357,27 +357,27 @@ struct VideoEditorView: View {
                     Spacer()
                     HStack {
                         Text(formatTimecode(currentTime))
-                            .font(VaporwaveTypography.dataSmall())
-                            .foregroundColor(VaporwaveColors.textPrimary)
-                            .padding(.horizontal, VaporwaveSpacing.sm)
-                            .padding(.vertical, VaporwaveSpacing.xs)
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                            .padding(.horizontal, EchoelSpacing.sm)
+                            .padding(.vertical, EchoelSpacing.xs)
                             .background(
                                 Capsule()
-                                    .fill(VaporwaveColors.deepBlack.opacity(0.8))
+                                    .fill(EchoelBrand.bgDeep.opacity(0.8))
                             )
                         Spacer()
                     }
-                    .padding(VaporwaveSpacing.sm)
+                    .padding(EchoelSpacing.sm)
                 }
             }
             .aspectRatio(16/9, contentMode: .fit)
             .modifier(GlassCard())
 
             // Preview metrics
-            HStack(spacing: VaporwaveSpacing.lg) {
-                metricDisplay(value: "1920x1080", label: "Resolution", color: VaporwaveColors.neonCyan)
-                metricDisplay(value: "30 fps", label: "Frame Rate", color: VaporwaveColors.neonPurple)
-                metricDisplay(value: formatDuration(engine.duration), label: "Duration", color: VaporwaveColors.neonPink)
+            HStack(spacing: EchoelSpacing.lg) {
+                metricDisplay(value: "1920x1080", label: "Resolution", color: EchoelBrand.sky)
+                metricDisplay(value: "30 fps", label: "Frame Rate", color: EchoelBrand.violet)
+                metricDisplay(value: formatDuration(engine.duration), label: "Duration", color: EchoelBrand.coral)
             }
         }
     }
@@ -385,14 +385,14 @@ struct VideoEditorView: View {
     // MARK: - Effects Panel
 
     private var effectsPanel: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.md) {
             Text("EFFECTS")
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textSecondary)
                 .tracking(2)
 
             ScrollView {
-                VStack(spacing: VaporwaveSpacing.sm) {
+                VStack(spacing: EchoelSpacing.sm) {
                     effectCategory("Color", effects: ["Auto Color", "LUT", "Color Grade", "HDR"])
                     effectCategory("Style", effects: ["Cinematic", "Vintage", "Neon Glow", "Glitch"])
                     effectCategory("Bio-Reactive", effects: ["Coherence Pulse", "Heart Sync", "Breath Flow"])
@@ -401,15 +401,15 @@ struct VideoEditorView: View {
             }
         }
         .frame(width: 250)
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .modifier(GlassCard())
     }
 
     private func effectCategory(_ title: String, effects: [String]) -> some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
             Text(title.uppercased())
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.neonCyan)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.sky)
 
             ForEach(effects, id: \.self) { effect in
                 Button {
@@ -417,33 +417,33 @@ struct VideoEditorView: View {
                 } label: {
                     HStack {
                         Text(effect)
-                            .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.textPrimary)
+                            .font(EchoelBrandFont.body())
+                            .foregroundColor(EchoelBrand.textPrimary)
                         Spacer()
                         Image(systemName: "plus.circle")
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .foregroundColor(EchoelBrand.textTertiary)
                     }
-                    .padding(.vertical, VaporwaveSpacing.xs)
+                    .padding(.vertical, EchoelSpacing.xs)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(VaporwaveColors.deepBlack.opacity(0.5))
+                .fill(EchoelBrand.bgDeep.opacity(0.5))
         )
     }
 
     // MARK: - Timeline Section
 
     private var timelineSection: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             // Timeline header with BPM controls
             HStack {
                 Text("TIMELINE")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
                     .tracking(2)
 
                 // BPM Grid controls (inline)
@@ -459,24 +459,24 @@ struct VideoEditorView: View {
                 }
 
                 // Zoom control
-                HStack(spacing: VaporwaveSpacing.xs) {
+                HStack(spacing: EchoelSpacing.xs) {
                     Button { timelineZoom = max(0.5, timelineZoom - 0.25) } label: {
                         Image(systemName: "minus.magnifyingglass")
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
 
                     Text("\(Int(timelineZoom * 100))%")
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textTertiary)
                         .frame(width: 50)
 
                     Button { timelineZoom = min(4.0, timelineZoom + 0.25) } label: {
                         Image(systemName: "plus.magnifyingglass")
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
             }
-            .padding(.horizontal, VaporwaveSpacing.md)
+            .padding(.horizontal, EchoelSpacing.md)
 
             // Timeline tracks with beat grid overlay
             ScrollView(.horizontal, showsIndicators: false) {
@@ -486,18 +486,18 @@ struct VideoEditorView: View {
                         beatGridOverlay
                     }
 
-                    VStack(spacing: VaporwaveSpacing.xs) {
+                    VStack(spacing: EchoelSpacing.xs) {
                         // Video track
-                        timelineTrack(name: "Video", color: VaporwaveColors.neonCyan, clips: engine.videoClips)
+                        timelineTrack(name: "Video", color: EchoelBrand.sky, clips: engine.videoClips)
 
                         // Audio track
-                        timelineTrack(name: "Audio", color: VaporwaveColors.neonPurple, clips: engine.audioClips)
+                        timelineTrack(name: "Audio", color: EchoelBrand.violet, clips: engine.audioClips)
 
                         // Bio track
-                        timelineTrack(name: "Bio-Sync", color: VaporwaveColors.neonPink, clips: [])
+                        timelineTrack(name: "Bio-Sync", color: EchoelBrand.coral, clips: [])
                     }
                 }
-                .padding(.horizontal, VaporwaveSpacing.md)
+                .padding(.horizontal, EchoelSpacing.md)
             }
             .frame(height: 150)
             .gesture(
@@ -507,14 +507,14 @@ struct VideoEditorView: View {
                     }
             )
             .modifier(GlassCard())
-            .padding(.horizontal, VaporwaveSpacing.md)
+            .padding(.horizontal, EchoelSpacing.md)
         }
     }
 
     // MARK: - BPM Grid Controls
 
     private var bpmGridControls: some View {
-        HStack(spacing: VaporwaveSpacing.sm) {
+        HStack(spacing: EchoelSpacing.sm) {
             // BPM display + tap tempo
             Button {
                 // Tap tempo — record tap times for BPM detection
@@ -524,17 +524,17 @@ struct VideoEditorView: View {
                     Image(systemName: "metronome.fill")
                         .font(.system(size: 12))
                     Text("\(Int(workspace.globalBPM))")
-                        .font(VaporwaveTypography.dataSmall())
+                        .font(EchoelBrandFont.dataSmall())
                     Text("BPM")
-                        .font(VaporwaveTypography.label())
+                        .font(EchoelBrandFont.label())
                 }
-                .foregroundColor(VaporwaveColors.neonPink)
-                .padding(.horizontal, VaporwaveSpacing.sm)
+                .foregroundColor(EchoelBrand.coral)
+                .padding(.horizontal, EchoelSpacing.sm)
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(VaporwaveColors.neonPink.opacity(0.15))
-                        .overlay(Capsule().stroke(VaporwaveColors.neonPink.opacity(0.4), lineWidth: 1))
+                        .fill(EchoelBrand.coral.opacity(0.15))
+                        .overlay(Capsule().stroke(EchoelBrand.coral.opacity(0.4), lineWidth: 1))
                 )
             }
             .buttonStyle(.plain)
@@ -544,7 +544,7 @@ struct VideoEditorView: View {
                 Button { workspace.setGlobalBPM(workspace.globalBPM - 1) } label: {
                     Image(systemName: "minus")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .foregroundColor(EchoelBrand.textSecondary)
                         .frame(width: 20, height: 20)
                 }
                 .buttonStyle(.plain)
@@ -552,7 +552,7 @@ struct VideoEditorView: View {
                 Button { workspace.setGlobalBPM(workspace.globalBPM + 1) } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .foregroundColor(EchoelBrand.textSecondary)
                         .frame(width: 20, height: 20)
                 }
                 .buttonStyle(.plain)
@@ -567,13 +567,13 @@ struct VideoEditorView: View {
                 }
             } label: {
                 Text(workspace.globalTimeSignature.displayString)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonCyan)
-                    .padding(.horizontal, VaporwaveSpacing.xs)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.sky)
+                    .padding(.horizontal, EchoelSpacing.xs)
                     .padding(.vertical, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(VaporwaveColors.neonCyan.opacity(0.1))
+                            .fill(EchoelBrand.sky.opacity(0.1))
                     )
             }
         }
@@ -600,17 +600,17 @@ struct VideoEditorView: View {
                 Image(systemName: "magnet")
                     .font(.system(size: 11))
                 Text(workspace.bpmGrid.snapMode.rawValue)
-                    .font(VaporwaveTypography.caption())
+                    .font(EchoelBrandFont.caption())
             }
-            .foregroundColor(workspace.bpmGrid.snapMode != .off ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
-            .padding(.horizontal, VaporwaveSpacing.sm)
+            .foregroundColor(workspace.bpmGrid.snapMode != .off ? EchoelBrand.sky : EchoelBrand.textTertiary)
+            .padding(.horizontal, EchoelSpacing.sm)
             .padding(.vertical, 4)
             .background(
                 Capsule()
-                    .fill(workspace.bpmGrid.snapMode != .off ? VaporwaveColors.neonCyan.opacity(0.1) : Color.clear)
+                    .fill(workspace.bpmGrid.snapMode != .off ? EchoelBrand.sky.opacity(0.1) : Color.clear)
             )
         }
-        .padding(.trailing, VaporwaveSpacing.sm)
+        .padding(.trailing, EchoelSpacing.sm)
     }
 
     // MARK: - Beat Grid Overlay
@@ -630,7 +630,7 @@ struct VideoEditorView: View {
                 let isBar = beat % Int(beatsPerBar) == 0
 
                 Rectangle()
-                    .fill(isBar ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.textTertiary.opacity(0.15))
+                    .fill(isBar ? EchoelBrand.coral.opacity(0.3) : EchoelBrand.textTertiary.opacity(0.15))
                     .frame(width: isBar ? 1.5 : 0.5, height: geometry.size.height)
                     .offset(x: x)
             }
@@ -641,7 +641,7 @@ struct VideoEditorView: View {
         HStack(spacing: 0) {
             // Track label
             Text(name)
-                .font(VaporwaveTypography.caption())
+                .font(EchoelBrandFont.caption())
                 .foregroundColor(color)
                 .frame(width: 70, alignment: .leading)
 
@@ -649,7 +649,7 @@ struct VideoEditorView: View {
             ZStack(alignment: .leading) {
                 // Background
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(VaporwaveColors.deepBlack.opacity(0.5))
+                    .fill(EchoelBrand.bgDeep.opacity(0.5))
                     .frame(height: 40)
 
                 // Clips
@@ -666,10 +666,10 @@ struct VideoEditorView: View {
 
                 // Playhead
                 Rectangle()
-                    .fill(VaporwaveColors.neonPink)
+                    .fill(EchoelBrand.coral)
                     .frame(width: 2)
                     .offset(x: CGFloat(currentTime * 10 * timelineZoom))
-                    .modifier(NeonGlow(color: VaporwaveColors.neonPink, radius: 5))
+                    .modifier(NeonGlow(color: EchoelBrand.coral, radius: 5))
             }
         }
     }
@@ -684,8 +684,8 @@ struct VideoEditorView: View {
             )
             .overlay(
                 Text(clip.name)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .lineLimit(1)
                     .padding(.horizontal, 4)
             )
@@ -695,7 +695,7 @@ struct VideoEditorView: View {
     // MARK: - Transport Controls
 
     private var transportControls: some View {
-        HStack(spacing: VaporwaveSpacing.lg) {
+        HStack(spacing: EchoelSpacing.lg) {
             Spacer()
 
             // Beat-snap cut (previous beat)
@@ -728,18 +728,18 @@ struct VideoEditorView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(VaporwaveColors.neonPink.opacity(0.2))
+                        .fill(EchoelBrand.coral.opacity(0.2))
                         .frame(width: 60, height: 60)
 
                     Circle()
-                        .stroke(VaporwaveColors.neonPink, lineWidth: 2)
+                        .stroke(EchoelBrand.coral, lineWidth: 2)
                         .frame(width: 60, height: 60)
 
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(VaporwaveColors.neonPink)
+                        .foregroundColor(EchoelBrand.coral)
                 }
-                .modifier(NeonGlow(color: VaporwaveColors.neonPink, radius: isPlaying ? 15 : 8))
+                .modifier(NeonGlow(color: EchoelBrand.coral, radius: isPlaying ? 15 : 8))
             }
             .buttonStyle(.plain)
 
@@ -763,39 +763,39 @@ struct VideoEditorView: View {
                 let position = workspace.bpmGrid.grid.beatPosition(at: currentTime)
                 HStack(spacing: 4) {
                     Text("Bar \(position.bar)")
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.neonPink)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.coral)
                     Text("Beat \(position.beat)")
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
-                .padding(.horizontal, VaporwaveSpacing.sm)
+                .padding(.horizontal, EchoelSpacing.sm)
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(VaporwaveColors.deepBlack.opacity(0.6))
+                        .fill(EchoelBrand.bgDeep.opacity(0.6))
                 )
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - Helper Views
 
     private func toolbarButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: VaporwaveSpacing.xs) {
+            VStack(spacing: EchoelSpacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
                 Text(label)
-                    .font(VaporwaveTypography.caption())
+                    .font(EchoelBrandFont.caption())
             }
-            .foregroundColor(isActive ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
-            .padding(.horizontal, VaporwaveSpacing.sm)
-            .padding(.vertical, VaporwaveSpacing.xs)
+            .foregroundColor(isActive ? EchoelBrand.sky : EchoelBrand.textSecondary)
+            .padding(.horizontal, EchoelSpacing.sm)
+            .padding(.vertical, EchoelSpacing.xs)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isActive ? VaporwaveColors.neonCyan.opacity(0.15) : Color.clear)
+                    .fill(isActive ? EchoelBrand.sky.opacity(0.15) : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -805,20 +805,20 @@ struct VideoEditorView: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .foregroundColor(EchoelBrand.textSecondary)
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
     }
 
     private func metricDisplay(value: String, label: String, color: Color) -> some View {
-        VStack(spacing: VaporwaveSpacing.xs) {
+        VStack(spacing: EchoelSpacing.xs) {
             Text(value)
-                .font(VaporwaveTypography.dataSmall())
+                .font(EchoelBrandFont.dataSmall())
                 .foregroundColor(color)
             Text(label)
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
         }
     }
 
@@ -862,25 +862,25 @@ struct VideoExportSheet: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background
+            EchoelBrand.bgDeep
                 .ignoresSafeArea()
 
-            VStack(spacing: VaporwaveSpacing.lg) {
+            VStack(spacing: EchoelSpacing.lg) {
                 // Header
                 HStack {
                     Text("EXPORT VIDEO")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
 
                 // Settings
-                VStack(spacing: VaporwaveSpacing.md) {
+                VStack(spacing: EchoelSpacing.md) {
                     exportSetting(title: "Format", value: $selectedFormat, options: ["H.264", "H.265", "ProRes"])
                     exportSetting(title: "Resolution", value: $selectedResolution, options: ["720p", "1080p", "4K"])
                     exportSetting(title: "Quality", value: $selectedQuality, options: ["Draft", "Good", "High", "Best"])
@@ -889,12 +889,12 @@ struct VideoExportSheet: View {
 
                 // Progress
                 if exportManager.isExporting {
-                    VStack(spacing: VaporwaveSpacing.sm) {
+                    VStack(spacing: EchoelSpacing.sm) {
                         ProgressView(value: exportManager.exportProgress)
-                            .tint(VaporwaveColors.neonCyan)
+                            .tint(EchoelBrand.sky)
                         Text("\(Int(exportManager.exportProgress * 100))%")
-                            .font(VaporwaveTypography.dataSmall())
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                     .padding()
                     .modifier(GlassCard())
@@ -902,8 +902,8 @@ struct VideoExportSheet: View {
 
                 if let error = exportError {
                     Text(error)
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.coral)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.coral)
                         .padding()
                 }
 
@@ -916,25 +916,25 @@ struct VideoExportSheet: View {
                     HStack {
                         if exportManager.isExporting {
                             ProgressView()
-                                .tint(VaporwaveColors.deepBlack)
+                                .tint(EchoelBrand.bgDeep)
                         } else {
                             Image(systemName: "square.and.arrow.up")
                         }
                         Text(exportManager.isExporting ? "Exporting..." : "Export")
                     }
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.deepBlack)
-                    .padding(.horizontal, VaporwaveSpacing.xl)
-                    .padding(.vertical, VaporwaveSpacing.md)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.bgDeep)
+                    .padding(.horizontal, EchoelSpacing.xl)
+                    .padding(.vertical, EchoelSpacing.md)
                     .background(
                         Capsule()
-                            .fill(exportManager.isExporting ? VaporwaveColors.textTertiary : VaporwaveColors.neonCyan)
+                            .fill(exportManager.isExporting ? EchoelBrand.textTertiary : EchoelBrand.sky)
                     )
-                    .modifier(NeonGlow(color: VaporwaveColors.neonCyan, radius: 15))
+                    .modifier(NeonGlow(color: EchoelBrand.sky, radius: 15))
                 }
                 .disabled(exportManager.isExporting)
             }
-            .padding(VaporwaveSpacing.lg)
+            .padding(EchoelSpacing.lg)
         }
     }
 
@@ -997,8 +997,8 @@ struct VideoExportSheet: View {
     private func exportSetting(title: String, value: Binding<String>, options: [String]) -> some View {
         HStack {
             Text(title)
-                .font(VaporwaveTypography.body())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.body())
+                .foregroundColor(EchoelBrand.textSecondary)
 
             Spacer()
 
@@ -1008,9 +1008,9 @@ struct VideoExportSheet: View {
                 }
             }
             .pickerStyle(.menu)
-            .tint(VaporwaveColors.neonCyan)
+            .tint(EchoelBrand.sky)
         }
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
     }
 }
 
@@ -1042,7 +1042,7 @@ struct VideoPickerSheet: View {
                         .font(.headline)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(VaporwaveColors.neonCyan.opacity(0.2))
+                        .background(EchoelBrand.sky.opacity(0.2))
                         .cornerRadius(12)
                 }
                 .padding(.horizontal)

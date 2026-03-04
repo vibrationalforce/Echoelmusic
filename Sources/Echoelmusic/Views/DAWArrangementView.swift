@@ -55,7 +55,7 @@ struct DAWArrangementView: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background
+            EchoelBrand.bgDeep
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -120,14 +120,14 @@ struct DAWArrangementView: View {
 
     private var headerSection: some View {
         HStack {
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                 Text(recordingEngine.currentSession?.name.uppercased() ?? "DAW STUDIO")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("\(tracks.count) Tracks • \(formatDuration(recordingEngine.currentSession?.duration ?? 0))")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
 
             Spacer()
@@ -142,31 +142,31 @@ struct DAWArrangementView: View {
                 }
                 HapticHelper.impact(.light)
             } label: {
-                HStack(spacing: VaporwaveSpacing.sm) {
+                HStack(spacing: EchoelSpacing.sm) {
                     Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
-                        .foregroundColor(metronome.isRunning ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
+                        .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
                         .opacity(metronome.beatFlash ? 1.0 : 0.7)
                     Text("\(Int(bpm))")
-                        .font(VaporwaveTypography.data())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.data())
+                        .foregroundColor(EchoelBrand.textPrimary)
                     Text("BPM")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
             }
             .buttonStyle(.plain)
-            .padding(.horizontal, VaporwaveSpacing.md)
-            .padding(.vertical, VaporwaveSpacing.sm)
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(metronome.isRunning ? VaporwaveColors.neonPink.opacity(0.1) : Color.clear)
+                    .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
             )
             .modifier(GlassCard())
 
             Spacer()
 
             // Toolbar
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 if isCompact {
                     toolbarButton(icon: "sidebar.left", label: "Tracks", isActive: showTrackList) {
                         withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
@@ -186,7 +186,7 @@ struct DAWArrangementView: View {
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - Track List
@@ -195,62 +195,62 @@ struct DAWArrangementView: View {
         VStack(spacing: 0) {
             HStack {
                 Text("TRACKS")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
                     .tracking(2)
                 Spacer()
                 Button { addNewTrack() } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(VaporwaveColors.neonCyan)
+                        .foregroundColor(EchoelBrand.sky)
                 }
             }
-            .padding(VaporwaveSpacing.sm)
+            .padding(EchoelSpacing.sm)
 
             ScrollView {
-                VStack(spacing: VaporwaveSpacing.xs) {
+                VStack(spacing: EchoelSpacing.xs) {
                     ForEach(tracks) { track in
                         trackRow(track: track)
                     }
                 }
-                .padding(.horizontal, VaporwaveSpacing.sm)
+                .padding(.horizontal, EchoelSpacing.sm)
             }
         }
         .frame(width: trackListWidth)
-        .background(VaporwaveColors.deepBlack.opacity(0.5))
+        .background(EchoelBrand.bgDeep.opacity(0.5))
     }
 
     private func trackRow(track: Track) -> some View {
         let isSelected = selectedTrackID == track.id
         let trackColor = color(for: track.trackColor)
 
-        return HStack(spacing: VaporwaveSpacing.sm) {
+        return HStack(spacing: EchoelSpacing.sm) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(trackColor)
                 .frame(width: 4, height: 40)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(track.name)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .lineLimit(1)
                 Text(track.type.rawValue)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
                     .lineLimit(1)
             }
 
             Spacer()
 
             HStack(spacing: 4) {
-                miniButton(label: "M", isActive: track.isMuted, color: VaporwaveColors.coral) {
+                miniButton(label: "M", isActive: track.isMuted, color: EchoelBrand.coral) {
                     recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)
                 }
-                miniButton(label: "S", isActive: track.isSoloed, color: VaporwaveColors.neonCyan) {
+                miniButton(label: "S", isActive: track.isSoloed, color: EchoelBrand.sky) {
                     recordingEngine.setTrackSoloed(track.id, soloed: !track.isSoloed)
                 }
             }
         }
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? trackColor.opacity(0.15) : Color.clear)
@@ -271,7 +271,7 @@ struct DAWArrangementView: View {
             ScrollView([.horizontal, .vertical]) {
                 ZStack(alignment: .topLeading) {
                     // Track lanes
-                    VStack(spacing: VaporwaveSpacing.xs) {
+                    VStack(spacing: EchoelSpacing.xs) {
                         ForEach(tracks) { track in
                             trackLane(track: track)
                         }
@@ -281,7 +281,7 @@ struct DAWArrangementView: View {
                             emptyStateView
                         }
                     }
-                    .padding(VaporwaveSpacing.sm)
+                    .padding(EchoelSpacing.sm)
 
                     // Playhead overlay
                     playheadView
@@ -298,18 +298,18 @@ struct DAWArrangementView: View {
             zoomControl
         }
         .modifier(GlassCard())
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             Image(systemName: "waveform.badge.plus")
                 .font(.system(size: 48))
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .foregroundColor(EchoelBrand.textTertiary)
 
             Text("Tap Record or Add Track to start")
-                .font(VaporwaveTypography.body())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.body())
+                .foregroundColor(EchoelBrand.textSecondary)
 
             Button {
                 addNewTrack()
@@ -318,13 +318,13 @@ struct DAWArrangementView: View {
                     Image(systemName: "plus.circle.fill")
                     Text("Add Track")
                 }
-                .font(VaporwaveTypography.body())
-                .foregroundColor(VaporwaveColors.neonCyan)
-                .padding(.horizontal, VaporwaveSpacing.lg)
-                .padding(.vertical, VaporwaveSpacing.sm)
+                .font(EchoelBrandFont.body())
+                .foregroundColor(EchoelBrand.sky)
+                .padding(.horizontal, EchoelSpacing.lg)
+                .padding(.vertical, EchoelSpacing.sm)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(VaporwaveColors.neonCyan.opacity(0.5), lineWidth: 1)
+                        .stroke(EchoelBrand.sky.opacity(0.5), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
@@ -343,8 +343,8 @@ struct DAWArrangementView: View {
                     ForEach(0..<totalBars, id: \.self) { bar in
                         VStack {
                             Text("\(bar + 1)")
-                                .font(VaporwaveTypography.caption())
-                                .foregroundColor(bar % 4 == 0 ? VaporwaveColors.textSecondary : VaporwaveColors.textTertiary)
+                                .font(EchoelBrandFont.caption())
+                                .foregroundColor(bar % 4 == 0 ? EchoelBrand.textSecondary : EchoelBrand.textTertiary)
                             Spacer()
                         }
                         .frame(width: barWidth)
@@ -353,22 +353,22 @@ struct DAWArrangementView: View {
 
                 // Playhead
                 Rectangle()
-                    .fill(VaporwaveColors.neonPink)
+                    .fill(EchoelBrand.coral)
                     .frame(width: 2)
                     .offset(x: CGFloat(recordingEngine.currentTime) * pixelsPerSecond)
-                    .modifier(NeonGlow(color: VaporwaveColors.neonPink, radius: 8))
+                    .shadow(color: EchoelBrand.coral.opacity(0.4), radius: 6)
             }
         }
         .frame(height: 30)
-        .background(VaporwaveColors.deepBlack.opacity(0.5))
+        .background(EchoelBrand.bgDeep.opacity(0.5))
     }
 
     private var playheadView: some View {
         Rectangle()
-            .fill(VaporwaveColors.neonPink.opacity(0.3))
+            .fill(EchoelBrand.coral.opacity(0.3))
             .frame(width: 1)
             .frame(maxHeight: .infinity)
-            .offset(x: CGFloat(recordingEngine.currentTime) * pixelsPerSecond + VaporwaveSpacing.sm)
+            .offset(x: CGFloat(recordingEngine.currentTime) * pixelsPerSecond + EchoelSpacing.sm)
     }
 
     private func trackLane(track: Track) -> some View {
@@ -379,7 +379,7 @@ struct DAWArrangementView: View {
         return ZStack(alignment: .leading) {
             // Lane background
             RoundedRectangle(cornerRadius: 4)
-                .fill(VaporwaveColors.deepBlack.opacity(0.3))
+                .fill(EchoelBrand.bgDeep.opacity(0.3))
                 .frame(width: laneWidth, height: 60)
 
             // Audio region with waveform
@@ -425,8 +425,8 @@ struct DAWArrangementView: View {
 
             // Track name label
             Text(track.name)
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textPrimary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textPrimary)
                 .padding(.horizontal, 4)
                 .padding(.top, 2)
                 .frame(width: regionWidth, alignment: .leading)
@@ -437,51 +437,51 @@ struct DAWArrangementView: View {
     // MARK: - Zoom Control
 
     private var zoomControl: some View {
-        HStack(spacing: VaporwaveSpacing.sm) {
+        HStack(spacing: EchoelSpacing.sm) {
             Button {
                 withAnimation { timelineZoom = max(0.25, timelineZoom - 0.25) }
             } label: {
                 Image(systemName: "minus.magnifyingglass")
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .buttonStyle(.plain)
 
             Text("\(Int(timelineZoom * 100))%")
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textTertiary)
                 .frame(width: 40)
 
             Button {
                 withAnimation { timelineZoom = min(4.0, timelineZoom + 0.25) }
             } label: {
                 Image(systemName: "plus.magnifyingglass")
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
-        .padding(.horizontal, VaporwaveSpacing.md)
+        .padding(.horizontal, EchoelSpacing.md)
     }
 
     // MARK: - DAW Transport Bar
 
     private var dawTransportBar: some View {
-        HStack(spacing: VaporwaveSpacing.lg) {
+        HStack(spacing: EchoelSpacing.lg) {
             // Position display
             VStack(spacing: 2) {
                 Text(formatPosition(recordingEngine.currentTime))
-                    .font(VaporwaveTypography.dataSmall())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(EchoelBrand.textPrimary)
                 Text("POSITION")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
             .frame(width: 80)
 
             Spacer()
 
             // Transport controls
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 transportButton(icon: "backward.end.fill") {
                     recordingEngine.seek(to: 0)
                 }
@@ -494,16 +494,16 @@ struct DAWArrangementView: View {
                 Button { togglePlayback() } label: {
                     ZStack {
                         Circle()
-                            .fill(isPlaying ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.neonCyan.opacity(0.2))
+                            .fill(isPlaying ? EchoelBrand.coral.opacity(0.3) : EchoelBrand.sky.opacity(0.2))
                             .frame(width: 52, height: 52)
                         Circle()
-                            .stroke(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, lineWidth: 2)
+                            .stroke(isPlaying ? EchoelBrand.coral : EchoelBrand.sky, lineWidth: 2)
                             .frame(width: 52, height: 52)
                         Image(systemName: isPlaying ? "stop.fill" : "play.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan)
+                            .foregroundColor(isPlaying ? EchoelBrand.coral : EchoelBrand.sky)
                     }
-                    .modifier(NeonGlow(color: isPlaying ? VaporwaveColors.neonPink : VaporwaveColors.neonCyan, radius: 10))
+                    .shadow(color: (isPlaying ? EchoelBrand.coral : EchoelBrand.sky).opacity(0.4), radius: 8)
                 }
                 .buttonStyle(.plain)
 
@@ -511,16 +511,16 @@ struct DAWArrangementView: View {
                 Button { toggleRecording() } label: {
                     ZStack {
                         Circle()
-                            .fill(isRecording ? VaporwaveColors.recordingActive.opacity(0.3) : Color.clear)
+                            .fill(isRecording ? EchoelBrand.coral.opacity(0.3) : Color.clear)
                             .frame(width: 42, height: 42)
                         Circle()
-                            .stroke(VaporwaveColors.recordingActive, lineWidth: 2)
+                            .stroke(EchoelBrand.coral, lineWidth: 2)
                             .frame(width: 42, height: 42)
                         Circle()
-                            .fill(VaporwaveColors.recordingActive)
+                            .fill(EchoelBrand.coral)
                             .frame(width: 14, height: 14)
                     }
-                    .modifier(isRecording ? NeonGlow(color: VaporwaveColors.recordingActive, radius: 12) : NeonGlow(color: .clear, radius: 0))
+                    .shadow(color: isRecording ? EchoelBrand.coral.opacity(0.5) : .clear, radius: isRecording ? 10 : 0)
                 }
                 .buttonStyle(.plain)
 
@@ -535,8 +535,8 @@ struct DAWArrangementView: View {
             masterMeter
                 .frame(width: 80)
         }
-        .padding(VaporwaveSpacing.md)
-        .background(VaporwaveColors.deepBlack.opacity(0.8))
+        .padding(EchoelSpacing.md)
+        .background(EchoelBrand.bgDeep.opacity(0.8))
     }
 
     /// Live master output VU meter
@@ -560,14 +560,14 @@ struct DAWArrangementView: View {
             }
             Text(label)
                 .font(.system(size: 8, weight: .bold))
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .foregroundColor(EchoelBrand.textTertiary)
         }
     }
 
     private func segmentColor(index: Int) -> Color {
-        if index >= 10 { return VaporwaveColors.coherenceLow } // red
-        if index >= 7 { return VaporwaveColors.coherenceMedium } // yellow
-        return VaporwaveColors.coherenceHigh // green
+        if index >= 10 { return EchoelBrand.coral } // red
+        if index >= 7 { return EchoelBrand.amber } // yellow
+        return EchoelBrand.emerald // green
     }
 
     // MARK: - Instrument Browser
@@ -577,26 +577,26 @@ struct DAWArrangementView: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
                 .onTapGesture {
-                    withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = false }
+                    withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) { showInstrumentBrowser = false }
                 }
 
-            VStack(spacing: VaporwaveSpacing.md) {
+            VStack(spacing: EchoelSpacing.md) {
                 HStack {
                     Text("ADD TRACK")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
                     Spacer()
                     Button {
-                        withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = false }
+                        withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) { showInstrumentBrowser = false }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
 
                 ScrollView {
-                    VStack(spacing: VaporwaveSpacing.md) {
+                    VStack(spacing: EchoelSpacing.md) {
                         trackTypeCategory("Audio", types: [
                             ("mic.fill", "Voice", Track.TrackType.voice),
                             ("waveform", "Audio", Track.TrackType.audio),
@@ -612,42 +612,42 @@ struct DAWArrangementView: View {
                     }
                 }
             }
-            .padding(VaporwaveSpacing.lg)
+            .padding(EchoelSpacing.lg)
             .frame(maxWidth: 400, maxHeight: 500)
             .modifier(GlassCard())
         }
     }
 
     private func trackTypeCategory(_ title: String, types: [(String, String, Track.TrackType)]) -> some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
             Text(title.uppercased())
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.neonCyan)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.sky)
                 .tracking(2)
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: VaporwaveSpacing.sm) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: EchoelSpacing.sm) {
                 ForEach(types, id: \.1) { icon, name, type in
                     Button {
                         addTrack(name: name, type: type)
-                        withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = false }
+                        withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) { showInstrumentBrowser = false }
                     } label: {
-                        VStack(spacing: VaporwaveSpacing.xs) {
+                        VStack(spacing: EchoelSpacing.xs) {
                             Image(systemName: icon)
                                 .font(.system(size: 24))
-                                .foregroundColor(VaporwaveColors.neonPurple)
+                                .foregroundColor(EchoelBrand.violet)
                             Text(name)
-                                .font(VaporwaveTypography.caption())
-                                .foregroundColor(VaporwaveColors.textPrimary)
+                                .font(EchoelBrandFont.caption())
+                                .foregroundColor(EchoelBrand.textPrimary)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(VaporwaveSpacing.sm)
+                        .padding(EchoelSpacing.sm)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(VaporwaveColors.deepBlack.opacity(0.5))
+                                .fill(EchoelBrand.bgDeep.opacity(0.5))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(VaporwaveColors.neonPurple.opacity(0.3), lineWidth: 1)
+                                .stroke(EchoelBrand.violet.opacity(0.3), lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -659,7 +659,7 @@ struct DAWArrangementView: View {
     // MARK: - Actions
 
     private func addNewTrack() {
-        withAnimation(VaporwaveAnimation.smooth) { showInstrumentBrowser = true }
+        withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) { showInstrumentBrowser = true }
     }
 
     private func addTrack(name: String, type: Track.TrackType) {
@@ -695,18 +695,18 @@ struct DAWArrangementView: View {
 
     private func toolbarButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: VaporwaveSpacing.xs) {
+            VStack(spacing: EchoelSpacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
                 Text(label)
-                    .font(VaporwaveTypography.caption())
+                    .font(EchoelBrandFont.caption())
             }
-            .foregroundColor(isActive ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
-            .padding(.horizontal, VaporwaveSpacing.sm)
-            .padding(.vertical, VaporwaveSpacing.xs)
+            .foregroundColor(isActive ? EchoelBrand.sky : EchoelBrand.textSecondary)
+            .padding(.horizontal, EchoelSpacing.sm)
+            .padding(.vertical, EchoelSpacing.xs)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isActive ? VaporwaveColors.neonCyan.opacity(0.15) : Color.clear)
+                    .fill(isActive ? EchoelBrand.sky.opacity(0.15) : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -716,7 +716,7 @@ struct DAWArrangementView: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .foregroundColor(EchoelBrand.textSecondary)
                 .frame(width: 36, height: 36)
         }
         .buttonStyle(.plain)
@@ -726,7 +726,7 @@ struct DAWArrangementView: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(isActive ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                .foregroundColor(isActive ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
                 .frame(width: 20, height: 20)
                 .background(
                     RoundedRectangle(cornerRadius: 4)
@@ -758,10 +758,10 @@ struct DAWArrangementView: View {
         case .orange: return .orange
         case .yellow: return .yellow
         case .green: return .green
-        case .cyan: return VaporwaveColors.neonCyan
+        case .cyan: return EchoelBrand.sky
         case .blue: return .blue
-        case .purple: return VaporwaveColors.neonPurple
-        case .pink: return VaporwaveColors.neonPink
+        case .purple: return EchoelBrand.violet
+        case .pink: return EchoelBrand.coral
         case .magenta: return Color(red: 1, green: 0, blue: 1)
         case .teal: return .teal
         case .lime: return Color(red: 0.5, green: 1, blue: 0)
@@ -819,31 +819,31 @@ struct RealMixerSheet: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background
+            EchoelBrand.bgDeep
                 .ignoresSafeArea()
 
-            VStack(spacing: VaporwaveSpacing.md) {
+            VStack(spacing: EchoelSpacing.md) {
                 HStack {
                     Text("MIXER")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .padding(.horizontal, VaporwaveSpacing.md)
+                .padding(.horizontal, EchoelSpacing.md)
 
                 ScrollView(.horizontal) {
-                    HStack(spacing: VaporwaveSpacing.md) {
+                    HStack(spacing: EchoelSpacing.md) {
                         ForEach(tracks) { track in
                             realChannelStrip(track: track)
                         }
                         masterChannelStrip()
                     }
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                 }
             }
         }
@@ -852,9 +852,9 @@ struct RealMixerSheet: View {
     private func realChannelStrip(track: Track) -> some View {
         let trackColor = DAWArrangementView.staticColor(for: track.trackColor)
 
-        return VStack(spacing: VaporwaveSpacing.sm) {
+        return VStack(spacing: EchoelSpacing.sm) {
             Text(track.name)
-                .font(VaporwaveTypography.caption())
+                .font(EchoelBrandFont.caption())
                 .foregroundColor(trackColor)
                 .lineLimit(1)
 
@@ -864,12 +864,12 @@ struct RealMixerSheet: View {
                     let threshold = Float(i) / 12.0
                     let level = track.isMuted ? Float(0) : track.volume
                     RoundedRectangle(cornerRadius: 1)
-                        .fill(i > 8 ? VaporwaveColors.coherenceLow : (i > 5 ? VaporwaveColors.coherenceMedium : VaporwaveColors.coherenceHigh))
+                        .fill(i > 8 ? EchoelBrand.coral : (i > 5 ? EchoelBrand.amber : EchoelBrand.emerald))
                         .frame(width: 40, height: 4)
                         .opacity(level > threshold ? 1.0 : 0.15)
                 }
             }
-            .padding(.vertical, VaporwaveSpacing.sm)
+            .padding(.vertical, EchoelSpacing.sm)
 
             // Volume fader
             VStack(spacing: 2) {
@@ -886,14 +886,14 @@ struct RealMixerSheet: View {
                 .frame(width: 100, height: 40)
 
                 Text(String(format: "%.1f dB", 20 * log10(max(track.volume, 0.001))))
-                    .font(VaporwaveTypography.dataSmall())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
 
             // Pan knob display
             Text(panLabel(track.pan))
-                .font(VaporwaveTypography.dataSmall())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.dataSmall())
+                .foregroundColor(EchoelBrand.textSecondary)
 
             // M/S buttons
             HStack(spacing: 4) {
@@ -902,10 +902,10 @@ struct RealMixerSheet: View {
                 } label: {
                     Text("M")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(track.isMuted ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .foregroundColor(track.isMuted ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
                         .frame(width: 24, height: 24)
-                        .background(RoundedRectangle(cornerRadius: 4).fill(track.isMuted ? VaporwaveColors.coral : Color.clear))
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(VaporwaveColors.coral.opacity(0.5), lineWidth: 1))
+                        .background(RoundedRectangle(cornerRadius: 4).fill(track.isMuted ? EchoelBrand.coral : Color.clear))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(EchoelBrand.coral.opacity(0.5), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
 
@@ -914,31 +914,31 @@ struct RealMixerSheet: View {
                 } label: {
                     Text("S")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(track.isSoloed ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .foregroundColor(track.isSoloed ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
                         .frame(width: 24, height: 24)
-                        .background(RoundedRectangle(cornerRadius: 4).fill(track.isSoloed ? VaporwaveColors.neonCyan : Color.clear))
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(VaporwaveColors.neonCyan.opacity(0.5), lineWidth: 1))
+                        .background(RoundedRectangle(cornerRadius: 4).fill(track.isSoloed ? EchoelBrand.sky : Color.clear))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(EchoelBrand.sky.opacity(0.5), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
         }
         .frame(width: 60)
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .modifier(GlassCard())
     }
 
     private func masterChannelStrip() -> some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             Text("MASTER")
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.neonPink)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.coral)
 
             // Live stereo meter
             HStack(spacing: 3) {
                 liveMeterBar(level: audioEngine.masterLevel)
                 liveMeterBar(level: audioEngine.masterLevelR)
             }
-            .padding(.vertical, VaporwaveSpacing.sm)
+            .padding(.vertical, EchoelSpacing.sm)
 
             // Master fader
             Slider(
@@ -948,17 +948,17 @@ struct RealMixerSheet: View {
                 ),
                 in: 0...1
             )
-            .tint(VaporwaveColors.neonPink)
+            .tint(EchoelBrand.coral)
             .frame(height: 100)
             .rotationEffect(.degrees(-90))
             .frame(width: 100, height: 40)
 
             Text(String(format: "%.1f dB", 20 * log10(max(audioEngine.masterVolume, 0.001))))
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textSecondary)
         }
         .frame(width: 80)
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .modifier(GlassCard())
     }
 
@@ -967,7 +967,7 @@ struct RealMixerSheet: View {
             ForEach((0..<12).reversed(), id: \.self) { i in
                 let threshold = Float(i) / 12.0
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(i > 8 ? VaporwaveColors.coherenceLow : (i > 5 ? VaporwaveColors.coherenceMedium : VaporwaveColors.coherenceHigh))
+                    .fill(i > 8 ? EchoelBrand.coral : (i > 5 ? EchoelBrand.amber : EchoelBrand.emerald))
                     .frame(width: 16, height: 4)
                     .opacity(level > threshold ? 1.0 : 0.15)
             }
@@ -990,10 +990,10 @@ extension DAWArrangementView {
         case .orange: return .orange
         case .yellow: return .yellow
         case .green: return .green
-        case .cyan: return VaporwaveColors.neonCyan
+        case .cyan: return EchoelBrand.sky
         case .blue: return .blue
-        case .purple: return VaporwaveColors.neonPurple
-        case .pink: return VaporwaveColors.neonPink
+        case .purple: return EchoelBrand.violet
+        case .pink: return EchoelBrand.coral
         case .magenta: return Color(red: 1, green: 0, blue: 1)
         case .teal: return .teal
         case .lime: return Color(red: 0.5, green: 1, blue: 0)
