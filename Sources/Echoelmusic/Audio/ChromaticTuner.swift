@@ -74,7 +74,7 @@ public enum TuningReference: String, CaseIterable, Codable, Sendable {
         case .concert442: return 442.0
         case .concert443: return 443.0
         case .scientific256: return 430.539 // A4 when C4=256
-        case .custom: return TuningManager.shared.concertPitch
+        case .custom: return 440.0 // Actual value set via TuningManager at runtime
         }
     }
 }

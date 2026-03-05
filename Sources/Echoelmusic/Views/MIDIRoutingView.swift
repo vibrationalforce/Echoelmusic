@@ -99,30 +99,34 @@ struct MIDIRoutingView: View {
     private var tabBarView: some View {
         HStack(spacing: EchoelSpacing.sm) {
             ForEach(MIDITab.allCases, id: \.self) { tab in
-                Button(action: {
-                    withAnimation(EchoelAnimation.smooth) {
-                        selectedTab = tab
-                    }
-                }) {
-                    Text(tab.rawValue)
-                        .font(EchoelBrandFont.caption())
-                        .foregroundColor(selectedTab == tab ? EchoelBrand.bgDeep : EchoelBrand.textSecondary)
-                        .padding(.horizontal, EchoelSpacing.md)
-                        .padding(.vertical, EchoelSpacing.sm)
-                        .background(
-                            Capsule()
-                                .fill(selectedTab == tab ? EchoelBrand.sky : Color.clear)
-                        )
-                        .overlay(
-                            Capsule()
-                                .stroke(selectedTab == tab ? EchoelBrand.sky : EchoelBrand.textTertiary, lineWidth: 1)
-                        )
-                }
-                .neonGlow(color: selectedTab == tab ? EchoelBrand.sky : .clear, radius: 8)
+                midiTabButton(tab)
             }
         }
         .padding(.horizontal, EchoelSpacing.md)
         .padding(.bottom, EchoelSpacing.md)
+    }
+
+    private func midiTabButton(_ tab: MIDITab) -> some View {
+        let isActive = selectedTab == tab
+        let fgColor: Color = isActive ? EchoelBrand.bgDeep : EchoelBrand.textSecondary
+        let fillColor: Color = isActive ? EchoelBrand.sky : Color.clear
+        let strokeColor: Color = isActive ? EchoelBrand.sky : EchoelBrand.textTertiary
+        let glowColor: Color = isActive ? EchoelBrand.sky : .clear
+
+        return Button(action: {
+            withAnimation(EchoelAnimation.smooth) {
+                selectedTab = tab
+            }
+        }) {
+            Text(tab.rawValue)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(fgColor)
+                .padding(.horizontal, EchoelSpacing.md)
+                .padding(.vertical, EchoelSpacing.sm)
+                .background(Capsule().fill(fillColor))
+                .overlay(Capsule().stroke(strokeColor, lineWidth: 1))
+        }
+        .neonGlow(color: glowColor, radius: 8)
     }
 
     // MARK: - Devices View

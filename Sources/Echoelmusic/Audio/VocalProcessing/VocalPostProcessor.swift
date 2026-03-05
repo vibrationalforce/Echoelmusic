@@ -216,7 +216,7 @@ class VocalPostProcessor: ObservableObject {
         var energyContour = [Float](repeating: 0, count: numFrames)
         var confidenceContour = [Float](repeating: 0, count: numFrames)
 
-        let pitchDetector = PitchDetector()
+        let _ = PitchDetector()
 
         for frame in 0..<numFrames {
             let offset = frame * hopSize
@@ -415,7 +415,7 @@ class VocalPostProcessor: ObservableObject {
         // Convert to MIDI
         let midiFloat = 69.0 + 12.0 * Foundation.log(medianPitch / 440.0) / Foundation.log(2.0)
         let midiNote = Int(round(midiFloat))
-        let centsOffset = (midiFloat - Float(midiNote)) * 100.0
+        let _ = (midiFloat - Float(midiNote)) * 100.0
 
         return VocalNote.create(
             startTime: Float(startFrame) * frameTime,

@@ -1001,7 +1001,7 @@ public class VoiceSynthesisEngine: ObservableObject {
     /// Analyze a recorded voice sample and create a voice profile
     public func trainVoiceModel(from audioURL: URL, profileName: String) async throws -> VoiceProfile {
         let result = try await characterizer.analyze(audioURL: audioURL)
-        var profile = characterizer.createProfile(from: result, name: profileName)
+        let profile = characterizer.createProfile(from: result, name: profileName)
 
         // Save to profile manager
         profileManager.save(profile)
@@ -1087,7 +1087,7 @@ public class VoiceSynthesisEngine: ObservableObject {
     private func updateAvailableModels() {
         var models = ["Natural", "Robot"]
         let cloneProfiles = profileManager.profiles(for: .voiceClone)
-        for (i, profile) in cloneProfiles.prefix(8).enumerated() {
+        for (_, profile) in cloneProfiles.prefix(8).enumerated() {
             models.append(profile.name)
         }
         availableVoiceModels = models

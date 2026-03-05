@@ -183,7 +183,7 @@ struct AudioRoutingMatrixView: View {
                 .padding(EchoelSpacing.md)
             }
         }
-        .background(EchoelBrand.bgCard.opacity(0.5))
+        .background(EchoelBrand.bgElevated.opacity(0.5))
     }
 }
 
