@@ -438,8 +438,7 @@ struct RecordingControlsView: View {
         } else {
             try? recordingEngine.startRecording()
 
-            // Start capturing bio-data
-            startBioDataCapture()
+            // Recording started via engine
         }
     }
 
@@ -453,10 +452,6 @@ struct RecordingControlsView: View {
 
     private func stopPlayback() {
         recordingEngine.stopPlayback()
-    }
-
-    private func startBioDataCapture() {
-        // Bio data capture removed (DAW + Video only)
     }
 
     private func exportAudio(format: ExportManager.ExportFormat) {

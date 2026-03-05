@@ -884,7 +884,7 @@ class SessionClipViewModel: ObservableObject {
         set { EchoelCreativeWorkspace.shared.isPlaying = newValue }
     }
 
-    /// Coherence placeholder (biometrics removed)
+    /// Default coherence level (bio-reactive mode provides live values)
     var coherence: Float { 0.5 }
 
     var coherenceColor: Color {
