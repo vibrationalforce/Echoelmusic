@@ -114,7 +114,7 @@ struct MIDIRoutingView: View {
         let glowColor: Color = isActive ? EchoelBrand.sky : .clear
 
         return Button(action: {
-            withAnimation(EchoelAnimation.smooth) {
+            withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                 selectedTab = tab
             }
         }) {

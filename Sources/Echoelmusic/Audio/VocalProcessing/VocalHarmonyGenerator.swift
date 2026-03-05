@@ -232,18 +232,6 @@ public class VocalHarmonyGenerator {
 
     private func computeDiatonicShift(for voice: HarmonyVoice) -> Float {
         let scaleIntervals = configuration.scale.intervals
-        let noteInKey = (currentMIDINote - configuration.key + 120) % 12
-
-        // Find current scale degree
-        var currentDegree = 0
-        var minDistance = 12
-        for (i, interval) in scaleIntervals.enumerated() {
-            let dist = abs(noteInKey - interval)
-            if dist < minDistance {
-                minDistance = dist
-                currentDegree = i
-            }
-        }
 
         // Move by the harmony interval in scale degrees
         let intervalSemitones = voice.interval.rawValue
