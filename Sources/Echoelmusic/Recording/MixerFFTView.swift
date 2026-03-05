@@ -58,7 +58,7 @@ struct MixerFFTView: View {
             for j in startIdx..<endIdx {
                 sum += fftMagnitudes[j]
             }
-            let avgMagnitude = sum / Float(endIdx - startIdx)
+            let avgMagnitude = endIdx > startIdx ? sum / Float(endIdx - startIdx) : 0
 
             // Normalize and scale
             let normalizedHeight = min(CGFloat(avgMagnitude) * 2.0, 1.0)

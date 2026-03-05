@@ -1171,7 +1171,7 @@ public final class SynthPresetLibrary {
         // Fallback: if genre filter returns too few, add generic drums
         var finalPresets = kitPresets
         if finalPresets.count < 8 {
-            let generic = presets.filter { $0.category == .drums && !finalPresets.contains(where: { $0.id == $0.id }) }
+            let generic = presets.filter { preset in preset.category == .drums && !finalPresets.contains(where: { $0.id == preset.id }) }
             finalPresets.append(contentsOf: generic.prefix(16 - finalPresets.count))
         }
 

@@ -767,7 +767,7 @@ public class ProSessionEngine: ObservableObject {
     private func transportTick(_ deltaTime: TimeInterval) {
         guard isPlaying else { return }
 
-        let beatsPerSecond = globalBPM / 60.0
+        let beatsPerSecond = max(globalBPM, 20.0) / 60.0
         let previousBeat = currentBeat
         currentBeat += beatsPerSecond * deltaTime
 
@@ -817,8 +817,9 @@ public class ProSessionEngine: ObservableObject {
                       let followAction = clip.followAction else { continue }
 
                 // Check if follow action time has elapsed
-                let clipBeatsLength = clip.length * (globalBPM / 60.0)
-                let followBeats = followAction.action == .stop ? clipBeatsLength : clip.followActionTime * (globalBPM / 60.0)
+                let safeBPM = max(globalBPM, 20.0)
+                let clipBeatsLength = clip.length * (safeBPM / 60.0)
+                let followBeats = followAction.action == .stop ? clipBeatsLength : clip.followActionTime * (safeBPM / 60.0)
 
                 // Simplified: check on loop boundaries
                 if clip.loopEnabled && followBeats > 0 {
