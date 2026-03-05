@@ -224,4 +224,47 @@ HealthKit API Changes → n8n → Claude Code Update EchoelBio → PR
 
 ---
 
+---
+
+## PART D: Additional Discoveries (Agent 2)
+
+### Awesome Lists (Meta-Resources)
+
+| Repository | Description |
+|---|---|
+| [rohitg00/awesome-claude-code-toolkit](https://github.com/rohitg00/awesome-claude-code-toolkit) | **Most comprehensive**: 135 agents, 35 skills (+15k via SkillKit), 42 commands, 120 plugins, 19 hooks |
+| [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | 100+ specialized subagents covering full-stack dev |
+| [BehiSecc/awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills) | Security-focused skills (OWASP Top 10:2025, ASVS 5.0) |
+| [tolkonepiu/best-of-mcp-servers](https://github.com/tolkonepiu/best-of-mcp-servers) | 410 MCP servers ranked weekly across 34 categories |
+
+### Additional Memory Tools
+
+| Repository | Description |
+|---|---|
+| [idnotbe/claude-memory](https://github.com/idnotbe/claude-memory) | Captures decisions/runbooks/constraints as JSON, <10ms retrieval via keyword matching — no LLM overhead |
+
+### Additional Plugins & Tools
+
+| Repository | Stars | Description |
+|---|---|---|
+| claudia | 19.9k | GUI app for Claude Code — custom agents, interactive sessions, secure background agents |
+| vibe-kanban | 14.7k | Kanban project management for Claude Code / Gemini CLI / Codex |
+| cc-sessions | 1.5k | Opinionated extension set — hooks, subagents, commands, task/git management |
+| ccundo | 1.3k | Granular undo reading from Claude Code session files |
+
+### Additional Multi-Agent Tools
+
+| Repository | Description |
+|---|---|
+| [jayminwest/overstory](https://github.com/jayminwest/overstory) | Spawns workers in git worktrees via tmux, SQLite mail system, pluggable runtimes (Claude Code, Pi, Gemini CLI) |
+
+### Additional Hooks
+
+| Repository | Description |
+|---|---|
+| [karanb192/claude-code-hooks](https://github.com/karanb192/claude-code-hooks) | Ready-to-use hooks: safety, automation, notifications (PreToolUse + PostToolUse) |
+| [decider/claude-hooks](https://github.com/decider/claude-hooks) | Python-based hooks for automatic validation, quality checks, notifications |
+
+---
+
 *Research completed 2026-03-05. All repos verified via web search.*
