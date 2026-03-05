@@ -683,7 +683,7 @@ class VocalPostProcessor: ObservableObject {
         originalContour: [Float],
         editedContour: [Float]
     ) -> [Float] {
-        guard !originalContour.isEmpty && !editedContour.isEmpty else { return audio }
+        guard !originalContour.isEmpty && !editedContour.isEmpty && !audio.isEmpty else { return audio }
 
         // Process in blocks
         let blockSize = 2048
