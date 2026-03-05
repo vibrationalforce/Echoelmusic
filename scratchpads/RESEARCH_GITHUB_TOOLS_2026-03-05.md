@@ -267,4 +267,48 @@ HealthKit API Changes → n8n → Claude Code Update EchoelBio → PR
 
 ---
 
-*Research completed 2026-03-05. All repos verified via web search.*
+## PART E: Additional Echoelmusic-Specific Discoveries (Agent 3)
+
+### Open-Source Music Production Reference
+
+| Repository | Stars | Description | Relevance |
+|---|---|---|---|
+| [AudioKit/AudioKitSynthOne](https://github.com/AudioKit/AudioKitSynthOne) | 1,700+ | First free open-source professional iOS synth — MIDI, sequencer, arpeggiator, 300+ presets, Ableton Link, AUv3, MPE. "Best iOS App 2018" by Apple | **Architecture reference** for Echoelmusic's synth ambitions |
+
+### Swift Art-Net (Only One Exists)
+
+| Repository | Description | Relevance |
+|---|---|---|
+| [MillerTechnologyPeru/ArtNet](https://github.com/MillerTechnologyPeru/ArtNet) | The only Swift-native Art-Net library on GitHub | **Directly relevant** to EchoelLux DMX 512 / Art-Net control |
+
+### Metal Video Processing
+
+| Repository | Description | Relevance |
+|---|---|---|
+| [Silence-GitHub/BBMetalImage](https://github.com/Silence-GitHub/BBMetalImage) | GPU-accelerated image/video processing via Metal — camera capture, filter chains, custom filters, video writing | Reference for EchoelVid video processing pipeline |
+
+### Modern Testing
+
+| Repository | Description | Relevance |
+|---|---|---|
+| [swiftlang/swift-testing](https://github.com/swiftlang/swift-testing) | Apple's official modern testing framework (Swift 6 / Xcode 16) — `#expect` macros, parallel by default, full Swift Concurrency | **Modernize** Echoelmusic's 57 tests |
+| [pointfreeco/swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) | Snapshot testing for any platform — SceneKit, SpriteKit, WebKit, Codable | Snapshot-test EchoelVis visual outputs |
+| [giginet/swift-testing-revolutionary](https://github.com/giginet/swift-testing-revolutionary) | Converts XCTest → swift-testing (Xcode Plugin, CLI) | Migrate existing test suites |
+
+### Accelerate / vDSP Deep Dive
+
+| Repository | Description | Relevance |
+|---|---|---|
+| [haginile/SwiftAccelerate](https://github.com/haginile/SwiftAccelerate) | Playground for Accelerate linear algebra — vector/matrix via vDSP | EchoelVDSPKit reference |
+| [ooper-shlab/AVAEMixerSample-Swift](https://github.com/ooper-shlab/AVAEMixerSample-Swift) | Apple's AVAudioEngine mixer sample in Swift — 2 players, delay, reverb, recording | EchoelMix mixing architecture reference |
+
+### SwiftUI Performance
+
+| Repository | Description | Relevance |
+|---|---|---|
+| [gahntpo/SwiftUIPerformance](https://github.com/gahntpo/SwiftUIPerformance) | Test and optimize SwiftUI performance with practical examples | Profile EchoelVis 120fps rendering |
+| [WWDC25: Optimize SwiftUI with Instruments](https://developer.apple.com/videos/play/wwdc2025/306/) | New SwiftUI instrument for profiling view body updates | Profile unnecessary recomputations |
+
+---
+
+*Research completed 2026-03-05. All repos verified via web search. 70+ repositories catalogued.*
