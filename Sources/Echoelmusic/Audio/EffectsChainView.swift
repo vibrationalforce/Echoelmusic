@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Visual effects chain editor with node routing
-/// Uses VaporwaveTheme for consistent styling
+/// Uses EchoelBrand design system for consistent styling
 struct EffectsChainView: View {
     @ObservedObject var nodeGraph: NodeGraph
 
@@ -12,7 +12,7 @@ struct EffectsChainView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: VaporwaveSpacing.lg) {
+                VStack(spacing: EchoelSpacing.lg) {
                     // Node Graph Visualization
                     nodeGraphView
 
@@ -27,7 +27,7 @@ struct EffectsChainView: View {
                 }
                 .padding()
             }
-            .background(VaporwaveGradients.background)
+            .background(EchoelBrand.bgDeep)
             .navigationTitle("Effects Chain")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showNodePicker) {
@@ -42,20 +42,20 @@ struct EffectsChainView: View {
     // MARK: - Node Graph Visualization
 
     private var nodeGraphView: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.md) {
             Text("Signal Flow")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .foregroundColor(EchoelBrand.textSecondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: VaporwaveSpacing.md) {
+                HStack(spacing: EchoelSpacing.md) {
                     // Input
-                    signalFlowBox("Input", color: VaporwaveColors.coherenceHigh, isInput: true)
+                    signalFlowBox("Input", color: EchoelBrand.emerald, isInput: true)
                         .accessibilityLabel("Audio input")
 
                     ForEach(nodeGraph.nodes, id: \.id) { node in
                         Image(systemName: "arrow.right")
-                            .foregroundColor(VaporwaveColors.textTertiary)
+                            .foregroundColor(EchoelBrand.textTertiary)
 
                         signalFlowBox(node.name, color: nodeColor(for: node), isNode: true)
                             .onTapGesture {
@@ -63,17 +63,17 @@ struct EffectsChainView: View {
                             }
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(selectedNode == node.id ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 2)
+                                    .stroke(selectedNode == node.id ? EchoelBrand.sky : Color.clear, lineWidth: 2)
                             )
                             .accessibilityLabel("\(node.name) effect node")
                             .accessibilityHint("Double tap to select")
                     }
 
                     Image(systemName: "arrow.right")
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .foregroundColor(EchoelBrand.textTertiary)
 
                     // Output
-                    signalFlowBox("Output", color: VaporwaveColors.neonCyan, isOutput: true)
+                    signalFlowBox("Output", color: EchoelBrand.sky, isOutput: true)
                         .accessibilityLabel("Audio output")
                 }
             }
@@ -85,7 +85,7 @@ struct EffectsChainView: View {
     }
 
     private func signalFlowBox(_ label: String, color: Color, isInput: Bool = false, isOutput: Bool = false, isNode: Bool = false) -> some View {
-        VStack(spacing: VaporwaveSpacing.xs) {
+        VStack(spacing: EchoelSpacing.xs) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(color.opacity(0.2))
@@ -109,7 +109,7 @@ struct EffectsChainView: View {
 
             Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .foregroundColor(EchoelBrand.textSecondary)
                 .lineLimit(1)
         }
     }
@@ -117,10 +117,10 @@ struct EffectsChainView: View {
     // MARK: - Node List
 
     private var nodeListView: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.md) {
             Text("Active Nodes (\(nodeGraph.nodes.count))")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .foregroundColor(EchoelBrand.textSecondary)
 
             if nodeGraph.nodes.isEmpty {
                 emptyStateView
@@ -160,12 +160,12 @@ struct EffectsChainView: View {
                 Text("Add Effect Node")
                     .font(.system(size: 14, weight: .medium))
             }
-            .foregroundColor(VaporwaveColors.textPrimary)
+            .foregroundColor(EchoelBrand.textPrimary)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, VaporwaveSpacing.md)
+            .padding(.vertical, EchoelSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(VaporwaveColors.neonCyan.opacity(0.3))
+                    .fill(EchoelBrand.sky.opacity(0.3))
             )
         }
         .accessibilityLabel("Add effect node")
@@ -175,11 +175,11 @@ struct EffectsChainView: View {
     // MARK: - Presets Section
 
     private var presetsSection: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.md) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.md) {
             HStack {
                 Text("Presets")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                 Spacer()
 
@@ -189,43 +189,43 @@ struct EffectsChainView: View {
                 } label: {
                     Text("View All")
                         .font(.system(size: 12))
-                        .foregroundColor(VaporwaveColors.neonCyan)
+                        .foregroundColor(EchoelBrand.sky)
                 }
                 .accessibilityLabel("View all presets")
             }
 
-            HStack(spacing: VaporwaveSpacing.md) {
-                presetButton("Biofeedback", icon: "heart.fill", color: VaporwaveColors.neonPink) {
+            HStack(spacing: EchoelSpacing.md) {
+                presetButton("Biofeedback", icon: "heart.fill", color: EchoelBrand.coral) {
                     nodeGraph.loadFromPreset(NodeGraph.createBiofeedbackChain())
                 }
 
-                presetButton("Healing", icon: "leaf.fill", color: VaporwaveColors.coherenceHigh) {
+                presetButton("Healing", icon: "leaf.fill", color: EchoelBrand.emerald) {
                     nodeGraph.loadFromPreset(NodeGraph.createHealingPreset())
                 }
 
-                presetButton("Energizing", icon: "bolt.fill", color: VaporwaveColors.coral) {
+                presetButton("Energizing", icon: "bolt.fill", color: EchoelBrand.coral) {
                     nodeGraph.loadFromPreset(NodeGraph.createEnergizingPreset())
                 }
             }
         }
     }
 
-    private func presetButton(_ title: String, icon: String, color: Color = VaporwaveColors.neonCyan, action: @escaping () -> Void) -> some View {
+    private func presetButton(_ title: String, icon: String, color: Color = EchoelBrand.sky, action: @escaping () -> Void) -> some View {
         Button {
             action()
             HapticHelper.impact(.medium)
         } label: {
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
                     .foregroundColor(color)
 
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, VaporwaveSpacing.lg)
+            .padding(.vertical, EchoelSpacing.lg)
             .background(
                 RoundedRectangle(cornerRadius: 10)
                     .fill(color.opacity(0.1))
@@ -385,15 +385,15 @@ struct EffectsChainView: View {
         let name = node.name.lowercased()
 
         if name.contains("filter") {
-            return VaporwaveColors.neonPurple
+            return EchoelBrand.violet
         } else if name.contains("reverb") {
-            return VaporwaveColors.neonCyan
+            return EchoelBrand.sky
         } else if name.contains("delay") {
-            return VaporwaveColors.coral
+            return EchoelBrand.coral
         } else if name.contains("compressor") {
-            return VaporwaveColors.coherenceHigh
+            return EchoelBrand.emerald
         } else {
-            return VaporwaveColors.neonPink
+            return EchoelBrand.coral
         }
     }
 }
@@ -406,13 +406,13 @@ struct NodeRow: View {
     let isSelected: Bool
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             nodeHeader
             if node.isBioReactive {
                 bioReactiveIndicator
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .background(nodeBackground)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(node.name), \(nodeDescription)\(node.isBioReactive ? ", bio-reactive" : "")")
@@ -420,7 +420,7 @@ struct NodeRow: View {
     }
 
     private var nodeHeader: some View {
-        HStack(spacing: VaporwaveSpacing.md) {
+        HStack(spacing: EchoelSpacing.md) {
             Image(systemName: nodeIcon)
                 .font(.system(size: 18))
                 .foregroundColor(nodeColor)
@@ -431,13 +431,13 @@ struct NodeRow: View {
                 )
                 .neonGlow(color: nodeColor, radius: 5)
 
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                 Text(node.name)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .foregroundColor(EchoelBrand.textPrimary)
                 Text(nodeDescription)
                     .font(.system(size: 11))
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             Spacer()
@@ -445,30 +445,30 @@ struct NodeRow: View {
             Button(action: { nodeGraph.removeNode(id: node.id) }) {
                 Image(systemName: "trash")
                     .font(.system(size: 14))
-                    .foregroundColor(VaporwaveColors.coherenceLow.opacity(0.7))
+                    .foregroundColor(EchoelBrand.coral.opacity(0.7))
             }
             .accessibilityLabel("Delete \(node.name)")
         }
     }
 
     private var bioReactiveIndicator: some View {
-        HStack(spacing: VaporwaveSpacing.xs) {
+        HStack(spacing: EchoelSpacing.xs) {
             Image(systemName: "heart.fill")
                 .font(.system(size: 10))
-                .foregroundColor(VaporwaveColors.neonPink)
+                .foregroundColor(EchoelBrand.coral)
             Text("Bio-Reactive")
                 .font(.system(size: 10, weight: .medium))
-                .foregroundColor(VaporwaveColors.neonPink)
+                .foregroundColor(EchoelBrand.coral)
             Spacer()
         }
     }
 
     private var nodeBackground: some View {
         RoundedRectangle(cornerRadius: 10)
-            .fill(isSelected ? VaporwaveColors.neonCyan.opacity(0.1) : Color.white.opacity(0.05))
+            .fill(isSelected ? EchoelBrand.sky.opacity(0.1) : Color.white.opacity(0.05))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? VaporwaveColors.neonCyan : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? EchoelBrand.sky : Color.clear, lineWidth: 1)
             )
     }
 
@@ -492,15 +492,15 @@ struct NodeRow: View {
         let name = node.name.lowercased()
 
         if name.contains("filter") {
-            return VaporwaveColors.neonPurple
+            return EchoelBrand.violet
         } else if name.contains("reverb") {
-            return VaporwaveColors.neonCyan
+            return EchoelBrand.sky
         } else if name.contains("delay") {
-            return VaporwaveColors.coral
+            return EchoelBrand.coral
         } else if name.contains("compressor") {
-            return VaporwaveColors.coherenceHigh
+            return EchoelBrand.emerald
         } else {
-            return VaporwaveColors.neonPink
+            return EchoelBrand.coral
         }
     }
 

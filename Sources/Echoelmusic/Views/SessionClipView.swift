@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Session Clip View
 // Ableton Live Session View inspired clip launcher
-// Full VaporwaveTheme Corporate Identity
+// EchoelBrand Design System
 
 // Wrapper view that owns the @StateObject, passes it to content via @ObservedObject
 @MainActor
@@ -56,7 +56,7 @@ private struct SessionClipContent: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -109,64 +109,64 @@ private struct SessionClipContent: View {
         let coherence = vm.coherence
         let coherenceColor = vm.coherenceColor
         HStack {
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                 Text("SESSION")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("\(trackCount) Tracks • \(sceneCount) Scenes")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.sky)
             }
 
             Spacer()
 
             // BPM Display
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Image(systemName: "metronome")
-                    .foregroundColor(VaporwaveColors.neonPink)
+                    .foregroundColor(EchoelBrand.coral)
 
                 Text(String(format: "%.1f", bpm))
-                    .font(VaporwaveTypography.dataSmall())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("BPM")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
-            .padding(.horizontal, VaporwaveSpacing.md)
-            .padding(.vertical, VaporwaveSpacing.sm)
-            .glassCard()
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.sm)
+            .modifier(GlassCard())
 
             // Bio Sync
             Button { vm.bioSyncEnabled.toggle(); HapticHelper.impact(.light) } label: {
-                HStack(spacing: VaporwaveSpacing.sm) {
+                HStack(spacing: EchoelSpacing.sm) {
                     Image(systemName: "heart.fill")
                     Text("Bio")
                 }
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(bioSync ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(bioSync ? EchoelBrand.coral : EchoelBrand.textTertiary)
             }
-            .padding(.horizontal, VaporwaveSpacing.md)
-            .padding(.vertical, VaporwaveSpacing.sm)
-            .background(bioSync ? VaporwaveColors.neonPink.opacity(0.2) : Color.clear)
-            .glassCard()
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.sm)
+            .background(bioSync ? EchoelBrand.coral.opacity(0.2) : Color.clear)
+            .modifier(GlassCard())
 
             // Coherence Display
             if bioSync {
                 VStack(spacing: 2) {
                     Text("\(Int(coherence * 100))")
-                        .font(VaporwaveTypography.dataSmall())
+                        .font(EchoelBrandFont.dataSmall())
                         .foregroundColor(coherenceColor)
 
                     Text("FLOW")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
-                .neonGlow(color: coherenceColor, radius: 6)
+                .shadow(color: coherenceColor.opacity(0.4), radius: 6)
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - Track Header Column
@@ -179,10 +179,10 @@ private struct SessionClipContent: View {
             // Add Track Button
             Button { vm.addTrack(); HapticHelper.impact(.medium) } label: {
                 Image(systemName: "plus.circle.fill")
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.sky)
             }
             .frame(width: trackHeaderWidth, height: 30)
-            .glassCard()
+            .modifier(GlassCard())
 
             // Track Headers
             ForEach(0..<trackCount, id: \.self) { index in
@@ -207,7 +207,7 @@ private struct SessionClipContent: View {
             Spacer()
         }
         .frame(width: trackHeaderWidth)
-        .background(VaporwaveColors.deepBlack.opacity(0.5))
+        .background(EchoelBrand.bgDeep.opacity(0.5))
     }
 
     // MARK: - Clip Grid
@@ -223,8 +223,8 @@ private struct SessionClipContent: View {
             HStack(spacing: 2) {
                 ForEach(0..<sceneCount, id: \.self) { idx in
                     Text("Scene \(idx + 1)")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
                         .frame(width: trackHeaderWidth, height: 30)
                 }
             }
@@ -260,10 +260,10 @@ private struct SessionClipContent: View {
             // Master Stop
             Button { vm.stopAll(); HapticHelper.impact(.medium) } label: {
                 Image(systemName: "stop.fill")
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
             .frame(width: 60, height: 30)
-            .glassCard()
+            .modifier(GlassCard())
 
             // Scene Launch Buttons
             ForEach(0..<sceneCount, id: \.self) { index in
@@ -277,29 +277,29 @@ private struct SessionClipContent: View {
             // Add Scene
             Button { vm.addScene(); HapticHelper.impact(.light) } label: {
                 Image(systemName: "plus")
-                    .foregroundColor(VaporwaveColors.neonPurple)
+                    .foregroundColor(EchoelBrand.violet)
             }
             .frame(width: 60, height: 60)
-            .glassCard()
+            .modifier(GlassCard())
 
             Spacer()
         }
         .frame(width: 60)
-        .background(VaporwaveColors.deepBlack.opacity(0.5))
+        .background(EchoelBrand.bgDeep.opacity(0.5))
     }
 
     // MARK: - Transport Bar
 
     private var transportBar: some View {
-        HStack(spacing: VaporwaveSpacing.lg) {
+        HStack(spacing: EchoelSpacing.lg) {
             // Transport Controls
-            HStack(spacing: VaporwaveSpacing.md) {
+            HStack(spacing: EchoelSpacing.md) {
                 Button {
                     session.stop()
                     HapticHelper.impact(.medium)
                 } label: {
                     Image(systemName: "stop.fill")
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
 
                 Button {
@@ -307,41 +307,41 @@ private struct SessionClipContent: View {
                     HapticHelper.impact(.medium)
                 } label: {
                     Image(systemName: session.isPlaying ? "pause.fill" : "play.fill")
-                        .foregroundColor(session.isPlaying ? VaporwaveColors.neonCyan : VaporwaveColors.textSecondary)
+                        .foregroundColor(session.isPlaying ? EchoelBrand.sky : EchoelBrand.textSecondary)
                 }
-                .neonGlow(color: session.isPlaying ? VaporwaveColors.neonCyan : .clear, radius: 8)
+                .shadow(color: session.isPlaying ? EchoelBrand.sky : .clear.opacity(0.4), radius: 8)
 
                 Button {
                     session.toggleRecord()
                     HapticHelper.notification(.warning)
                 } label: {
                     Image(systemName: "record.circle")
-                        .foregroundColor(session.isRecording ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
+                        .foregroundColor(session.isRecording ? EchoelBrand.coral : EchoelBrand.textSecondary)
                 }
-                .neonGlow(color: session.isRecording ? VaporwaveColors.neonPink : .clear, radius: 8)
+                .shadow(color: session.isRecording ? EchoelBrand.coral : .clear.opacity(0.4), radius: 8)
             }
             .font(.system(size: 20))
 
             Spacer()
 
             // Position Display
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Text(session.positionString)
-                    .font(VaporwaveTypography.dataSmall())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("BAR")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             Spacer()
 
             // Quantize
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Text("Q:")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
 
                 Picker("", selection: $session.quantize) {
                     Text("1 Bar").tag(QuantizeValue.bar)
@@ -351,18 +351,18 @@ private struct SessionClipContent: View {
                     Text("Off").tag(QuantizeValue.off)
                 }
                 .pickerStyle(.menu)
-                .font(VaporwaveTypography.caption())
+                .font(EchoelBrandFont.caption())
             }
 
             // Follow
             Toggle(isOn: $session.followPlayhead) {
                 Text("Follow")
-                    .font(VaporwaveTypography.caption())
+                    .font(EchoelBrandFont.caption())
             }
-            .toggleStyle(SwitchToggleStyle(tint: VaporwaveColors.neonCyan))
+            .toggleStyle(SwitchToggleStyle(tint: EchoelBrand.sky))
         }
-        .padding(VaporwaveSpacing.md)
-        .background(VaporwaveColors.deepBlack.opacity(0.8))
+        .padding(EchoelSpacing.md)
+        .background(EchoelBrand.bgDeep.opacity(0.8))
     }
 }
 
@@ -379,11 +379,11 @@ struct TrackHeaderCell: View {
     let onEffects: () -> Void
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.xs) {
+        VStack(spacing: EchoelSpacing.xs) {
             // Track Name
             Text(track.name)
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(isSelected ? track.color : VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(isSelected ? track.color : EchoelBrand.textSecondary)
                 .lineLimit(1)
 
             // Instrument Button
@@ -392,10 +392,10 @@ struct TrackHeaderCell: View {
                     Image(systemName: track.instrumentIcon)
                         .font(.system(size: 10))
                     Text(track.instrumentName)
-                        .font(VaporwaveTypography.label())
+                        .font(EchoelBrandFont.label())
                         .lineLimit(1)
                 }
-                .foregroundColor(VaporwaveColors.neonCyan)
+                .foregroundColor(EchoelBrand.sky)
             }
 
             // Effects Button
@@ -404,35 +404,35 @@ struct TrackHeaderCell: View {
                     Image(systemName: "waveform")
                         .font(.system(size: 8))
                     Text("\(track.effectCount) FX")
-                        .font(VaporwaveTypography.label())
+                        .font(EchoelBrandFont.label())
                 }
-                .foregroundColor(track.effectCount > 0 ? VaporwaveColors.neonPurple : VaporwaveColors.textTertiary)
+                .foregroundColor(track.effectCount > 0 ? EchoelBrand.violet : EchoelBrand.textTertiary)
             }
 
             // Buttons
             HStack(spacing: 4) {
                 Button(action: onMute) {
                     Text("M")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(track.isMuted ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(track.isMuted ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
                         .frame(width: 20, height: 18)
-                        .background(track.isMuted ? VaporwaveColors.coral : Color.clear)
+                        .background(track.isMuted ? EchoelBrand.coral : Color.clear)
                         .cornerRadius(3)
                 }
 
                 Button(action: onSolo) {
                     Text("S")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(track.isSoloed ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(track.isSoloed ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
                         .frame(width: 20, height: 18)
-                        .background(track.isSoloed ? VaporwaveColors.coherenceMedium : Color.clear)
+                        .background(track.isSoloed ? EchoelBrand.amber : Color.clear)
                         .cornerRadius(3)
                 }
 
                 Button(action: onArm) {
                     Image(systemName: "record.circle")
                         .font(.system(size: 10))
-                        .foregroundColor(track.isArmed ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary)
+                        .foregroundColor(track.isArmed ? EchoelBrand.coral : EchoelBrand.textTertiary)
                 }
             }
 
@@ -442,7 +442,7 @@ struct TrackHeaderCell: View {
                 .frame(height: 3)
         }
         .frame(width: 100, height: 80)
-        .padding(.vertical, VaporwaveSpacing.xs)
+        .padding(.vertical, EchoelSpacing.xs)
         .background(isSelected ? track.color.opacity(0.1) : Color.clear)
         .overlay(
             Rectangle()
@@ -470,14 +470,14 @@ struct ClipSlotCell: View {
         ZStack {
             // Background
             RoundedRectangle(cornerRadius: 4)
-                .fill(clip != nil ? trackColor.opacity(0.3) : VaporwaveColors.deepBlack.opacity(0.3))
+                .fill(clip != nil ? trackColor.opacity(0.3) : EchoelBrand.bgDeep.opacity(0.3))
 
             // Clip Content
             if let clip = clip {
                 VStack(spacing: 2) {
                     Text(clip.name)
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textPrimary)
                         .lineLimit(1)
 
                     // Waveform Preview
@@ -489,18 +489,18 @@ struct ClipSlotCell: View {
                 // Empty slot indicator
                 Image(systemName: "plus")
                     .font(.system(size: 14))
-                    .foregroundColor(VaporwaveColors.textTertiary.opacity(0.4))
+                    .foregroundColor(EchoelBrand.textTertiary.opacity(0.4))
             }
 
             // Playing Indicator
             if isPlaying {
                 RoundedRectangle(cornerRadius: 4)
-                    .stroke(VaporwaveColors.coherenceHigh, lineWidth: 2)
+                    .stroke(EchoelBrand.emerald, lineWidth: 2)
 
                 // Progress
                 GeometryReader { geo in
                     Rectangle()
-                        .fill(VaporwaveColors.coherenceHigh.opacity(0.3))
+                        .fill(EchoelBrand.emerald.opacity(0.3))
                         .frame(width: geo.size.width * 0.5) // Animated in real implementation
                 }
             }
@@ -510,7 +510,7 @@ struct ClipSlotCell: View {
                 Button(action: onStop) {
                     Image(systemName: "stop.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(VaporwaveColors.textSecondary)
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
             }
         }
@@ -596,19 +596,19 @@ struct SceneLaunchButton: View {
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isPlaying ? VaporwaveColors.coherenceHigh.opacity(0.3) : VaporwaveColors.deepBlack.opacity(0.5))
+                    .fill(isPlaying ? EchoelBrand.emerald.opacity(0.3) : EchoelBrand.bgDeep.opacity(0.5))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(isPlaying ? VaporwaveColors.coherenceHigh : VaporwaveColors.textTertiary.opacity(0.3), lineWidth: 1)
+                            .stroke(isPlaying ? EchoelBrand.emerald : EchoelBrand.textTertiary.opacity(0.3), lineWidth: 1)
                     )
 
                 Image(systemName: isPlaying ? "checkmark" : "play.fill")
                     .font(.system(size: 16))
-                    .foregroundColor(isPlaying ? VaporwaveColors.coherenceHigh : VaporwaveColors.textSecondary)
+                    .foregroundColor(isPlaying ? EchoelBrand.emerald : EchoelBrand.textSecondary)
             }
         }
         .frame(width: 60, height: 60)
-        .neonGlow(color: isPlaying ? VaporwaveColors.coherenceHigh : .clear, radius: 6)
+        .shadow(color: isPlaying ? EchoelBrand.emerald : .clear.opacity(0.4), radius: 6)
     }
 }
 
@@ -659,32 +659,32 @@ struct InstrumentBrowserSheet: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
                 HStack {
                     Text("INSTRUMENTS")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Spacer()
 
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
 
                 // Categories
                 ScrollView {
-                    VStack(spacing: VaporwaveSpacing.lg) {
+                    VStack(spacing: EchoelSpacing.lg) {
                         ForEach(categories, id: \.0) { category, icon, instruments in
-                            VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+                            VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                                 VaporwaveSectionHeader(category, icon: icon)
 
-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: VaporwaveSpacing.sm) {
+                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: EchoelSpacing.sm) {
                                     ForEach(instruments, id: \.name) { instrument in
                                         InstrumentCard(instrument: instrument) {
                                             onSelect(instrument)
@@ -695,7 +695,7 @@ struct InstrumentBrowserSheet: View {
                             }
                         }
                     }
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                 }
             }
         }
@@ -711,19 +711,19 @@ struct InstrumentCard: View {
             action()
             HapticHelper.impact(.medium)
         } label: {
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 Image(systemName: instrument.icon)
                     .font(.system(size: 24))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.sky)
 
                 Text(instrument.name)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(VaporwaveSpacing.md)
-            .glassCard()
+            .padding(EchoelSpacing.md)
+            .modifier(GlassCard())
         }
     }
 }
@@ -788,30 +788,30 @@ struct EffectsBrowserSheet: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 HStack {
                     Text("EFFECTS")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Spacer()
 
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
 
                 ScrollView {
-                    VStack(spacing: VaporwaveSpacing.lg) {
+                    VStack(spacing: EchoelSpacing.lg) {
                         ForEach(categories, id: \.0) { category, icon, effects in
-                            VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+                            VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                                 VaporwaveSectionHeader(category, icon: icon)
 
-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: VaporwaveSpacing.sm) {
+                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: EchoelSpacing.sm) {
                                     ForEach(effects, id: \.name) { effect in
                                         EffectCard(effect: effect) {
                                             onSelect(effect)
@@ -822,7 +822,7 @@ struct EffectsBrowserSheet: View {
                             }
                         }
                     }
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                 }
             }
         }
@@ -838,25 +838,25 @@ struct EffectCard: View {
             action()
             HapticHelper.impact(.light)
         } label: {
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Image(systemName: effect.icon)
                     .font(.system(size: 18))
-                    .foregroundColor(VaporwaveColors.neonPurple)
+                    .foregroundColor(EchoelBrand.violet)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(effect.name)
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Text(effect.category)
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
 
                 Spacer()
             }
-            .padding(VaporwaveSpacing.sm)
-            .glassCard()
+            .padding(EchoelSpacing.sm)
+            .modifier(GlassCard())
         }
     }
 }
@@ -888,9 +888,9 @@ class SessionClipViewModel: ObservableObject {
     var coherence: Float { 0.5 }
 
     var coherenceColor: Color {
-        if coherence > 0.7 { return VaporwaveColors.coherenceHigh }
-        if coherence > 0.4 { return VaporwaveColors.coherenceMedium }
-        return VaporwaveColors.coherenceLow
+        if coherence > 0.7 { return EchoelBrand.emerald }
+        if coherence > 0.4 { return EchoelBrand.amber }
+        return EchoelBrand.coral
     }
 
     var positionString: String {

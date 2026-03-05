@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Audio Routing Matrix View
 // Professional audio routing inspired by Reaper/Pro Tools
-// Full VaporwaveTheme Corporate Identity
+// EchoelBrand Design System
 
 @MainActor
 struct AudioRoutingMatrixView: View {
@@ -13,7 +13,7 @@ struct AudioRoutingMatrixView: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -43,51 +43,51 @@ struct AudioRoutingMatrixView: View {
 
     private var headerView: some View {
         HStack {
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                 Text("AUDIO ROUTING")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("\(audioRouter.channels.count) Channels • \(audioRouter.busses.count) Busses")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.sky)
             }
 
             Spacer()
 
             // Master Meter
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 StereoMeter(leftLevel: audioRouter.masterLeft, rightLevel: audioRouter.masterRight)
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("MASTER")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
 
                     Text(String(format: "%.1f dB", audioRouter.masterVolume))
-                        .font(VaporwaveTypography.dataSmall())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.dataSmall())
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
             }
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
             .glassCard()
 
             // Add Channel Button
             Button(action: { audioRouter.addChannel() }) {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 24))
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.sky)
             }
-            .neonGlow(color: VaporwaveColors.neonCyan, radius: 8)
+            .neonGlow(color: EchoelBrand.sky, radius: 8)
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - Channel Strip List
 
     private var channelStripList: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 ForEach(audioRouter.channels) { channel in
                     ChannelStripView(
                         channel: channel,
@@ -120,9 +120,9 @@ struct AudioRoutingMatrixView: View {
                     onVolumeChange: { audioRouter.masterVolume = $0 }
                 )
             }
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
         }
-        .background(VaporwaveColors.deepBlack.opacity(0.5))
+        .background(EchoelBrand.bgDeep.opacity(0.5))
     }
 
     // MARK: - Routing Matrix
@@ -131,18 +131,18 @@ struct AudioRoutingMatrixView: View {
         VStack(spacing: 0) {
             // Matrix Header
             Text("ROUTING MATRIX")
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
                 .frame(maxWidth: .infinity)
-                .padding(VaporwaveSpacing.sm)
-                .background(VaporwaveColors.deepBlack.opacity(0.8))
+                .padding(EchoelSpacing.sm)
+                .background(EchoelBrand.bgDeep.opacity(0.8))
 
             ScrollView {
-                VStack(spacing: VaporwaveSpacing.md) {
+                VStack(spacing: EchoelSpacing.md) {
                     // Input Section
                     VaporwaveSectionHeader("INPUTS", icon: "arrow.down.circle")
 
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: VaporwaveSpacing.sm) {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: EchoelSpacing.sm) {
                         ForEach(audioRouter.inputs) { input in
                             InputRouteCard(input: input, channels: audioRouter.channels) { channelId in
                                 audioRouter.routeInput(input.id, to: channelId)
@@ -152,7 +152,7 @@ struct AudioRoutingMatrixView: View {
 
                     // Sends Section
                     VaporwaveSectionHeader("SENDS", icon: "arrow.right.circle")
-                        .padding(.top, VaporwaveSpacing.md)
+                        .padding(.top, EchoelSpacing.md)
 
                     ForEach(audioRouter.busses) { bus in
                         SendMatrixRow(bus: bus, channels: audioRouter.channels) { channelId, amount in
@@ -162,7 +162,7 @@ struct AudioRoutingMatrixView: View {
 
                     // Outputs Section
                     VaporwaveSectionHeader("OUTPUTS", icon: "arrow.up.circle")
-                        .padding(.top, VaporwaveSpacing.md)
+                        .padding(.top, EchoelSpacing.md)
 
                     ForEach(audioRouter.outputs) { output in
                         OutputRouteCard(output: output, channels: audioRouter.channels, busses: audioRouter.busses) { sourceId in
@@ -172,7 +172,7 @@ struct AudioRoutingMatrixView: View {
 
                     // Sidechain Section
                     VaporwaveSectionHeader("SIDECHAIN", icon: "arrow.triangle.branch")
-                        .padding(.top, VaporwaveSpacing.md)
+                        .padding(.top, EchoelSpacing.md)
 
                     SidechainConfigView(
                         channels: audioRouter.channels,
@@ -180,10 +180,10 @@ struct AudioRoutingMatrixView: View {
                         sidechainTarget: $audioRouter.sidechainTarget
                     )
                 }
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
             }
         }
-        .background(VaporwaveColors.midnightBlue.opacity(0.5))
+        .background(EchoelBrand.bgCard.opacity(0.5))
     }
 }
 
@@ -200,17 +200,17 @@ struct ChannelStripView: View {
     let onEffects: () -> Void
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             // Channel Name
             Text(channel.name)
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(isSelected ? channel.color : VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(isSelected ? channel.color : EchoelBrand.textSecondary)
                 .lineLimit(1)
 
             // Input Label
             Text(channel.inputName)
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
 
             // Meter
             StereoMeter(leftLevel: channel.leftLevel, rightLevel: channel.rightLevel, height: 100)
@@ -224,15 +224,15 @@ struct ChannelStripView: View {
                 .frame(height: 120)
 
                 Text(String(format: "%.1f", channel.volumeDB))
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             // Pan
             HStack(spacing: 4) {
                 Text("L")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
 
                 PanKnob(value: Binding(
                     get: { channel.pan },
@@ -240,35 +240,35 @@ struct ChannelStripView: View {
                 ))
 
                 Text("R")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             // Buttons
-            HStack(spacing: VaporwaveSpacing.xs) {
+            HStack(spacing: EchoelSpacing.xs) {
                 Button(action: onMute) {
                     Text("M")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(channel.isMuted ? VaporwaveColors.deepBlack : VaporwaveColors.textSecondary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(channel.isMuted ? EchoelBrand.bgDeep : EchoelBrand.textSecondary)
                         .frame(width: 24, height: 24)
-                        .background(channel.isMuted ? VaporwaveColors.coral : Color.clear)
+                        .background(channel.isMuted ? EchoelBrand.coral : Color.clear)
                         .cornerRadius(4)
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
-                                .stroke(channel.isMuted ? VaporwaveColors.coral : VaporwaveColors.textTertiary, lineWidth: 1)
+                                .stroke(channel.isMuted ? EchoelBrand.coral : EchoelBrand.textTertiary, lineWidth: 1)
                         )
                 }
 
                 Button(action: onSolo) {
                     Text("S")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(channel.isSoloed ? VaporwaveColors.deepBlack : VaporwaveColors.textSecondary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(channel.isSoloed ? EchoelBrand.bgDeep : EchoelBrand.textSecondary)
                         .frame(width: 24, height: 24)
-                        .background(channel.isSoloed ? VaporwaveColors.coherenceMedium : Color.clear)
+                        .background(channel.isSoloed ? EchoelBrand.amber : Color.clear)
                         .cornerRadius(4)
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
-                                .stroke(channel.isSoloed ? VaporwaveColors.coherenceMedium : VaporwaveColors.textTertiary, lineWidth: 1)
+                                .stroke(channel.isSoloed ? EchoelBrand.amber : EchoelBrand.textTertiary, lineWidth: 1)
                         )
                 }
             }
@@ -279,12 +279,12 @@ struct ChannelStripView: View {
                     Image(systemName: "waveform")
                         .font(.system(size: 10))
                     Text("\(channel.effectCount)")
-                        .font(VaporwaveTypography.label())
+                        .font(EchoelBrandFont.label())
                 }
-                .foregroundColor(channel.effectCount > 0 ? VaporwaveColors.neonPurple : VaporwaveColors.textTertiary)
-                .padding(.horizontal, VaporwaveSpacing.sm)
+                .foregroundColor(channel.effectCount > 0 ? EchoelBrand.violet : EchoelBrand.textTertiary)
+                .padding(.horizontal, EchoelSpacing.sm)
                 .padding(.vertical, 4)
-                .background(channel.effectCount > 0 ? VaporwaveColors.neonPurple.opacity(0.2) : Color.clear)
+                .background(channel.effectCount > 0 ? EchoelBrand.violet.opacity(0.2) : Color.clear)
                 .cornerRadius(8)
             }
 
@@ -295,10 +295,10 @@ struct ChannelStripView: View {
                 .cornerRadius(2)
         }
         .frame(width: 70)
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? VaporwaveColors.deepBlack : Color.clear)
+                .fill(isSelected ? EchoelBrand.bgDeep : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(isSelected ? channel.color : Color.clear, lineWidth: 2)
@@ -315,14 +315,14 @@ struct BusStripView: View {
     let onVolumeChange: (Float) -> Void
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             Text(bus.name)
-                .font(VaporwaveTypography.caption())
+                .font(EchoelBrandFont.caption())
                 .foregroundColor(bus.color)
 
             Text("BUS")
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
 
             StereoMeter(leftLevel: bus.leftLevel, rightLevel: bus.rightLevel, height: 100)
 
@@ -333,8 +333,8 @@ struct BusStripView: View {
             .frame(height: 120)
 
             Text(String(format: "%.1f", bus.volumeDB))
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
 
             Rectangle()
                 .fill(bus.color)
@@ -342,7 +342,7 @@ struct BusStripView: View {
                 .cornerRadius(2)
         }
         .frame(width: 70)
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(bus.color.opacity(0.3), lineWidth: 1)
@@ -359,31 +359,31 @@ struct MasterStripView: View {
     let onVolumeChange: (Float) -> Void
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             Text("MASTER")
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.neonPink)
-                .neonGlow(color: VaporwaveColors.neonPink, radius: 6)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.coral)
+                .neonGlow(color: EchoelBrand.coral, radius: 6)
 
             StereoMeter(leftLevel: leftLevel, rightLevel: rightLevel, height: 100, showPeak: true)
 
             VerticalFader(value: Binding(
                 get: { volume },
                 set: { onVolumeChange($0) }
-            ), accentColor: VaporwaveColors.neonPink)
+            ), accentColor: EchoelBrand.coral)
             .frame(height: 120)
 
             Text(String(format: "%.1f dB", 20 * log10(Swift.max(volume, 0.0001))))
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textPrimary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Rectangle()
-                .fill(VaporwaveGradients.neon)
+                .fill(EchoelBrand.sky)
                 .frame(height: 4)
                 .cornerRadius(2)
         }
         .frame(width: 80)
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .glassCard()
     }
 }
@@ -414,7 +414,7 @@ struct MeterBar: View {
             ZStack(alignment: .bottom) {
                 // Background
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(VaporwaveColors.deepBlack)
+                    .fill(EchoelBrand.bgDeep)
 
                 // Level
                 RoundedRectangle(cornerRadius: 2)
@@ -424,7 +424,7 @@ struct MeterBar: View {
                 // Peak Indicator
                 if showPeak && level > 0.9 {
                     Rectangle()
-                        .fill(VaporwaveColors.neonPink)
+                        .fill(EchoelBrand.coral)
                         .frame(height: 2)
                         .offset(y: -geo.size.height * CGFloat(level) + 2)
                 }
@@ -436,9 +436,9 @@ struct MeterBar: View {
     private var meterGradient: LinearGradient {
         LinearGradient(
             gradient: Gradient(colors: [
-                VaporwaveColors.coherenceHigh,
-                VaporwaveColors.coherenceMedium,
-                VaporwaveColors.coherenceLow
+                EchoelBrand.emerald,
+                EchoelBrand.amber,
+                EchoelBrand.coral
             ]),
             startPoint: .bottom,
             endPoint: .top
@@ -448,14 +448,14 @@ struct MeterBar: View {
 
 struct VerticalFader: View {
     @Binding var value: Float
-    var accentColor: Color = VaporwaveColors.neonCyan
+    var accentColor: Color = EchoelBrand.sky
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .bottom) {
                 // Track
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(VaporwaveColors.deepBlack)
+                    .fill(EchoelBrand.bgDeep)
                     .frame(width: 8)
 
                 // Fill
@@ -465,7 +465,7 @@ struct VerticalFader: View {
 
                 // Handle
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(VaporwaveColors.textPrimary)
+                    .fill(EchoelBrand.textPrimary)
                     .frame(width: 30, height: 16)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
@@ -491,16 +491,16 @@ struct PanKnob: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(VaporwaveColors.textTertiary, lineWidth: 2)
+                .stroke(EchoelBrand.textTertiary, lineWidth: 2)
                 .frame(width: 30, height: 30)
 
             Circle()
-                .fill(VaporwaveColors.deepBlack)
+                .fill(EchoelBrand.bgDeep)
                 .frame(width: 26, height: 26)
 
             // Indicator
             Rectangle()
-                .fill(VaporwaveColors.neonCyan)
+                .fill(EchoelBrand.sky)
                 .frame(width: 2, height: 10)
                 .offset(y: -8)
                 .rotationEffect(.degrees(Double(value - 0.5) * 270))
@@ -523,14 +523,14 @@ struct InputRouteCard: View {
     let onRoute: (UUID?) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
             HStack {
                 Image(systemName: input.icon)
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .foregroundColor(EchoelBrand.sky)
 
                 Text(input.name)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
 
             Picker("Route to", selection: Binding(
@@ -543,9 +543,9 @@ struct InputRouteCard: View {
                 }
             }
             .pickerStyle(.menu)
-            .font(VaporwaveTypography.caption())
+            .font(EchoelBrandFont.caption())
         }
-        .padding(VaporwaveSpacing.sm)
+        .padding(EchoelSpacing.sm)
         .glassCard()
     }
 }
@@ -556,21 +556,21 @@ struct SendMatrixRow: View {
     let onSendChange: (UUID, Float) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
             HStack {
                 Circle()
                     .fill(bus.color)
                     .frame(width: 10, height: 10)
 
                 Text(bus.name)
-                    .font(VaporwaveTypography.body())
+                    .font(EchoelBrandFont.body())
                     .foregroundColor(bus.color)
 
                 Spacer()
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: VaporwaveSpacing.sm) {
+                HStack(spacing: EchoelSpacing.sm) {
                     ForEach(channels) { channel in
                         SendKnob(
                             channelName: channel.name,
@@ -582,7 +582,7 @@ struct SendMatrixRow: View {
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -597,7 +597,7 @@ struct SendKnob: View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .stroke(VaporwaveColors.textTertiary.opacity(0.3), lineWidth: 3)
+                    .stroke(EchoelBrand.textTertiary.opacity(0.3), lineWidth: 3)
                     .frame(width: 36, height: 36)
 
                 Circle()
@@ -607,8 +607,8 @@ struct SendKnob: View {
                     .rotationEffect(.degrees(-90))
 
                 Text(String(format: "%.0f", value * 100))
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .gesture(
                 DragGesture()
@@ -619,8 +619,8 @@ struct SendKnob: View {
             )
 
             Text(channelName)
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
                 .lineLimit(1)
         }
         .frame(width: 50)
@@ -636,11 +636,11 @@ struct OutputRouteCard: View {
     var body: some View {
         HStack {
             Image(systemName: output.icon)
-                .foregroundColor(VaporwaveColors.neonPink)
+                .foregroundColor(EchoelBrand.coral)
 
             Text(output.name)
-                .font(VaporwaveTypography.body())
-                .foregroundColor(VaporwaveColors.textPrimary)
+                .font(EchoelBrandFont.body())
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Spacer()
 
@@ -658,7 +658,7 @@ struct OutputRouteCard: View {
             }
             .pickerStyle(.menu)
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -669,12 +669,12 @@ struct SidechainConfigView: View {
     @Binding var sidechainTarget: UUID?
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             HStack {
                 VStack(alignment: .leading) {
                     Text("Source (Key)")
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textTertiary)
 
                     Picker("Source", selection: $sidechainSource) {
                         Text("None").tag(nil as UUID?)
@@ -686,12 +686,12 @@ struct SidechainConfigView: View {
                 }
 
                 Image(systemName: "arrow.right")
-                    .foregroundColor(VaporwaveColors.neonPurple)
+                    .foregroundColor(EchoelBrand.violet)
 
                 VStack(alignment: .leading) {
                     Text("Target (Comp)")
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textTertiary)
 
                     Picker("Target", selection: $sidechainTarget) {
                         Text("None").tag(nil as UUID?)
@@ -705,11 +705,11 @@ struct SidechainConfigView: View {
 
             if sidechainSource != nil && sidechainTarget != nil {
                 Text("Sidechain compression active")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonPurple)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.violet)
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -723,31 +723,31 @@ struct EffectsRackSheet: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
-            VStack(spacing: VaporwaveSpacing.md) {
+            VStack(spacing: EchoelSpacing.md) {
                 // Header
                 HStack {
                     Text("EFFECTS RACK")
-                        .font(VaporwaveTypography.sectionTitle())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.sectionTitle())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Spacer()
 
                     Text(channel.name)
-                        .font(VaporwaveTypography.caption())
+                        .font(EchoelBrandFont.caption())
                         .foregroundColor(channel.color)
 
                     Button(action: { isPresented = false }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
 
                 // Effects Chain
                 ScrollView {
-                    VStack(spacing: VaporwaveSpacing.sm) {
+                    VStack(spacing: EchoelSpacing.sm) {
                         ForEach(effects.indices, id: \.self) { index in
                             EffectSlotView(effect: $effects[index])
                         }
@@ -758,17 +758,17 @@ struct EffectsRackSheet: View {
                                 Image(systemName: "plus.circle.fill")
                                 Text("Add Effect")
                             }
-                            .font(VaporwaveTypography.body())
-                            .foregroundColor(VaporwaveColors.neonCyan)
+                            .font(EchoelBrandFont.body())
+                            .foregroundColor(EchoelBrand.sky)
                             .frame(maxWidth: .infinity)
-                            .padding(VaporwaveSpacing.lg)
+                            .padding(EchoelSpacing.lg)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(VaporwaveColors.neonCyan, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                                    .stroke(EchoelBrand.sky, style: StrokeStyle(lineWidth: 2, dash: [8]))
                             )
                         }
                     }
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                 }
             }
         }
@@ -791,50 +791,50 @@ struct EffectSlotView: View {
     @Binding var effect: AudioEffect
 
     var body: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             HStack {
                 // Power Button
                 Button(action: { effect.isEnabled.toggle() }) {
                     Image(systemName: "power")
-                        .foregroundColor(effect.isEnabled ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
+                        .foregroundColor(effect.isEnabled ? EchoelBrand.sky : EchoelBrand.textTertiary)
                 }
 
                 Text(effect.name)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(effect.isEnabled ? VaporwaveColors.textPrimary : VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(effect.isEnabled ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
 
                 Spacer()
 
                 // Effect Type Badge
                 Text(effect.type.rawValue.uppercased())
-                    .font(VaporwaveTypography.label())
+                    .font(EchoelBrandFont.label())
                     .foregroundColor(effect.type.color)
-                    .padding(.horizontal, VaporwaveSpacing.sm)
+                    .padding(.horizontal, EchoelSpacing.sm)
                     .padding(.vertical, 2)
                     .background(effect.type.color.opacity(0.2))
                     .cornerRadius(4)
 
                 Image(systemName: "line.3.horizontal")
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             // Parameters Preview
             if effect.isEnabled {
-                HStack(spacing: VaporwaveSpacing.lg) {
+                HStack(spacing: EchoelSpacing.lg) {
                     ForEach(effect.type.defaultParams, id: \.self) { param in
                         VStack(spacing: 2) {
                             Text("0")
-                                .font(VaporwaveTypography.dataSmall())
-                                .foregroundColor(VaporwaveColors.textSecondary)
+                                .font(EchoelBrandFont.dataSmall())
+                                .foregroundColor(EchoelBrand.textSecondary)
                             Text(param)
-                                .font(VaporwaveTypography.label())
-                                .foregroundColor(VaporwaveColors.textTertiary)
+                                .font(EchoelBrandFont.label())
+                                .foregroundColor(EchoelBrand.textTertiary)
                         }
                     }
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -856,16 +856,16 @@ class AudioRouterViewModel: ObservableObject {
     init() {
         // Sample data
         channels = [
-            AudioChannel(id: UUID(), name: "Drums", color: VaporwaveColors.neonPink, volume: 0.75, pan: 0.5, leftLevel: 0.7, rightLevel: 0.65),
-            AudioChannel(id: UUID(), name: "Bass", color: VaporwaveColors.neonCyan, volume: 0.8, pan: 0.5, leftLevel: 0.6, rightLevel: 0.6),
-            AudioChannel(id: UUID(), name: "Synth", color: VaporwaveColors.neonPurple, volume: 0.6, pan: 0.3, leftLevel: 0.5, rightLevel: 0.4),
-            AudioChannel(id: UUID(), name: "Vocals", color: VaporwaveColors.coral, volume: 0.7, pan: 0.5, leftLevel: 0.55, rightLevel: 0.55),
-            AudioChannel(id: UUID(), name: "FX", color: VaporwaveColors.lavender, volume: 0.5, pan: 0.7, leftLevel: 0.3, rightLevel: 0.4)
+            AudioChannel(id: UUID(), name: "Drums", color: EchoelBrand.coral, volume: 0.75, pan: 0.5, leftLevel: 0.7, rightLevel: 0.65),
+            AudioChannel(id: UUID(), name: "Bass", color: EchoelBrand.sky, volume: 0.8, pan: 0.5, leftLevel: 0.6, rightLevel: 0.6),
+            AudioChannel(id: UUID(), name: "Synth", color: EchoelBrand.violet, volume: 0.6, pan: 0.3, leftLevel: 0.5, rightLevel: 0.4),
+            AudioChannel(id: UUID(), name: "Vocals", color: EchoelBrand.coral, volume: 0.7, pan: 0.5, leftLevel: 0.55, rightLevel: 0.55),
+            AudioChannel(id: UUID(), name: "FX", color: EchoelBrand.violet, volume: 0.5, pan: 0.7, leftLevel: 0.3, rightLevel: 0.4)
         ]
 
         busses = [
-            AudioBus(id: UUID(), name: "Reverb", color: VaporwaveColors.neonCyan, volume: 0.6, leftLevel: 0.4, rightLevel: 0.4),
-            AudioBus(id: UUID(), name: "Delay", color: VaporwaveColors.neonPurple, volume: 0.5, leftLevel: 0.35, rightLevel: 0.35)
+            AudioBus(id: UUID(), name: "Reverb", color: EchoelBrand.sky, volume: 0.6, leftLevel: 0.4, rightLevel: 0.4),
+            AudioBus(id: UUID(), name: "Delay", color: EchoelBrand.violet, volume: 0.5, leftLevel: 0.35, rightLevel: 0.35)
         ]
 
         inputs = [
@@ -888,7 +888,7 @@ class AudioRouterViewModel: ObservableObject {
     func routeInput(_ inputId: UUID, to channelId: UUID?) { if let i = inputs.firstIndex(where: { $0.id == inputId }) { inputs[i].routedTo = channelId } }
     func setSend(from channelId: UUID, to busId: UUID, amount: Float) { if let i = channels.firstIndex(where: { $0.id == channelId }) { channels[i].sends[busId] = amount } }
     func routeToOutput(_ sourceId: UUID?, output: UUID) { if let i = outputs.firstIndex(where: { $0.id == output }) { outputs[i].sourceId = sourceId } }
-    func addChannel() { channels.append(AudioChannel(id: UUID(), name: "Track \(channels.count + 1)", color: VaporwaveColors.neonCyan, volume: 0.7, pan: 0.5, leftLevel: 0, rightLevel: 0)) }
+    func addChannel() { channels.append(AudioChannel(id: UUID(), name: "Track \(channels.count + 1)", color: EchoelBrand.sky, volume: 0.7, pan: 0.5, leftLevel: 0, rightLevel: 0)) }
 }
 
 struct AudioChannel: Identifiable {
@@ -951,12 +951,12 @@ enum EffectType: String {
 
     var color: Color {
         switch self {
-        case .eq: return VaporwaveColors.neonCyan
-        case .compressor: return VaporwaveColors.neonPink
-        case .reverb: return VaporwaveColors.neonPurple
-        case .delay: return VaporwaveColors.coral
-        case .distortion: return VaporwaveColors.coherenceLow
-        case .filter: return VaporwaveColors.lavender
+        case .eq: return EchoelBrand.sky
+        case .compressor: return EchoelBrand.coral
+        case .reverb: return EchoelBrand.violet
+        case .delay: return EchoelBrand.coral
+        case .distortion: return EchoelBrand.coral
+        case .filter: return EchoelBrand.violet
         }
     }
 

@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - MIDI Routing View
 // Professional MIDI 1.0/2.0/MPE routing matrix inspired by Ableton/Reaper
-// Full VaporwaveTheme Corporate Identity
+// EchoelBrand Design System
 
 @MainActor
 struct MIDIRoutingView: View {
@@ -20,7 +20,7 @@ struct MIDIRoutingView: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -55,80 +55,80 @@ struct MIDIRoutingView: View {
 
     private var headerView: some View {
         HStack {
-            VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                 Text("MIDI CONTROL")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("MIDI 1.0 / 2.0 / MPE")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.sky)
             }
 
             Spacer()
 
             // MIDI Activity Indicator
-            HStack(spacing: VaporwaveSpacing.sm) {
+            HStack(spacing: EchoelSpacing.sm) {
                 Circle()
-                    .fill(midiRouter.isReceiving ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary)
+                    .fill(midiRouter.isReceiving ? EchoelBrand.sky : EchoelBrand.textTertiary)
                     .frame(width: 8, height: 8)
                     .animation(.easeInOut(duration: 0.1), value: midiRouter.isReceiving)
 
                 Text("IN")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                 Circle()
-                    .fill(midiRouter.isSending ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary)
+                    .fill(midiRouter.isSending ? EchoelBrand.coral : EchoelBrand.textTertiary)
                     .frame(width: 8, height: 8)
                     .animation(.easeInOut(duration: 0.1), value: midiRouter.isSending)
 
                 Text("OUT")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
-            .padding(.horizontal, VaporwaveSpacing.md)
-            .padding(.vertical, VaporwaveSpacing.sm)
+            .padding(.horizontal, EchoelSpacing.md)
+            .padding(.vertical, EchoelSpacing.sm)
             .glassCard()
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - Tab Bar
 
     private var tabBarView: some View {
-        HStack(spacing: VaporwaveSpacing.sm) {
+        HStack(spacing: EchoelSpacing.sm) {
             ForEach(MIDITab.allCases, id: \.self) { tab in
                 Button(action: {
-                    withAnimation(VaporwaveAnimation.smooth) {
+                    withAnimation(EchoelAnimation.smooth) {
                         selectedTab = tab
                     }
                 }) {
                     Text(tab.rawValue)
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(selectedTab == tab ? VaporwaveColors.deepBlack : VaporwaveColors.textSecondary)
-                        .padding(.horizontal, VaporwaveSpacing.md)
-                        .padding(.vertical, VaporwaveSpacing.sm)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(selectedTab == tab ? EchoelBrand.bgDeep : EchoelBrand.textSecondary)
+                        .padding(.horizontal, EchoelSpacing.md)
+                        .padding(.vertical, EchoelSpacing.sm)
                         .background(
                             Capsule()
-                                .fill(selectedTab == tab ? VaporwaveColors.neonCyan : Color.clear)
+                                .fill(selectedTab == tab ? EchoelBrand.sky : Color.clear)
                         )
                         .overlay(
                             Capsule()
-                                .stroke(selectedTab == tab ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary, lineWidth: 1)
+                                .stroke(selectedTab == tab ? EchoelBrand.sky : EchoelBrand.textTertiary, lineWidth: 1)
                         )
                 }
-                .neonGlow(color: selectedTab == tab ? VaporwaveColors.neonCyan : .clear, radius: 8)
+                .neonGlow(color: selectedTab == tab ? EchoelBrand.sky : .clear, radius: 8)
             }
         }
-        .padding(.horizontal, VaporwaveSpacing.md)
-        .padding(.bottom, VaporwaveSpacing.md)
+        .padding(.horizontal, EchoelSpacing.md)
+        .padding(.bottom, EchoelSpacing.md)
     }
 
     // MARK: - Devices View
 
     private var devicesView: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             VaporwaveSectionHeader("INPUT DEVICES", icon: "pianokeys")
 
             ForEach(midiRouter.inputDevices, id: \.id) { device in
@@ -145,7 +145,7 @@ struct MIDIRoutingView: View {
             }
 
             VaporwaveSectionHeader("OUTPUT DEVICES", icon: "speaker.wave.3")
-                .padding(.top, VaporwaveSpacing.lg)
+                .padding(.top, EchoelSpacing.xl)
 
             ForEach(midiRouter.outputDevices, id: \.id) { device in
                 MIDIDeviceRow(
@@ -162,57 +162,57 @@ struct MIDIRoutingView: View {
 
             // Virtual MIDI 2.0 Source
             VaporwaveSectionHeader("VIRTUAL MIDI 2.0", icon: "waveform")
-                .padding(.top, VaporwaveSpacing.lg)
+                .padding(.top, EchoelSpacing.xl)
 
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 HStack {
                     Image(systemName: "antenna.radiowaves.left.and.right")
-                        .foregroundColor(VaporwaveColors.neonPurple)
+                        .foregroundColor(EchoelBrand.violet)
 
                     Text("Echoelmusic MIDI 2.0 Output")
-                        .font(VaporwaveTypography.body())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.body())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Spacer()
 
                     Text("UMP")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.neonCyan)
-                        .padding(.horizontal, VaporwaveSpacing.sm)
-                        .padding(.vertical, VaporwaveSpacing.xs)
-                        .background(VaporwaveColors.neonCyan.opacity(0.2))
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.sky)
+                        .padding(.horizontal, EchoelSpacing.sm)
+                        .padding(.vertical, EchoelSpacing.xs)
+                        .background(EchoelBrand.sky.opacity(0.2))
                         .cornerRadius(4)
 
-                    VaporwaveStatusIndicator(isActive: midiRouter.virtualSourceActive, activeColor: VaporwaveColors.neonPurple)
+                    VaporwaveStatusIndicator(isActive: midiRouter.virtualSourceActive, activeColor: EchoelBrand.violet)
                 }
 
                 Text("32-bit resolution • Per-note controllers • UMP protocol")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
             .glassCard()
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     private func emptyDeviceState(message: String) -> some View {
         HStack {
             Image(systemName: "cable.connector.horizontal")
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .foregroundColor(EchoelBrand.textTertiary)
             Text(message)
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textTertiary)
         }
         .frame(maxWidth: .infinity)
-        .padding(VaporwaveSpacing.lg)
+        .padding(EchoelSpacing.xl)
         .glassCard()
     }
 
     // MARK: - Routing Matrix View
 
     private var routingMatrixView: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             VaporwaveSectionHeader("ROUTING MATRIX", icon: "arrow.triangle.branch")
 
             // Matrix Grid
@@ -220,31 +220,31 @@ struct MIDIRoutingView: View {
                 // Header Row
                 HStack(spacing: 2) {
                     Text("IN / OUT")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
                         .frame(width: 80)
 
                     ForEach(midiRouter.outputDevices, id: \.id) { output in
                         Text(String(output.name.prefix(8)))
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.neonCyan)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.sky)
                             .frame(width: 60)
                             .lineLimit(1)
                     }
 
                     Text("Virtual")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.neonPurple)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.violet)
                         .frame(width: 60)
                 }
-                .padding(.vertical, VaporwaveSpacing.sm)
+                .padding(.vertical, EchoelSpacing.sm)
 
                 // Matrix Rows
                 ForEach(midiRouter.inputDevices, id: \.id) { input in
                     HStack(spacing: 2) {
                         Text(String(input.name.prefix(10)))
-                            .font(VaporwaveTypography.label())
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textSecondary)
                             .frame(width: 80, alignment: .leading)
                             .lineLimit(1)
 
@@ -259,27 +259,27 @@ struct MIDIRoutingView: View {
                         RoutingMatrixCell(
                             isRouted: midiRouter.isRoutedToVirtual(from: input.id),
                             onToggle: { midiRouter.toggleVirtualRoute(from: input.id) },
-                            color: VaporwaveColors.neonPurple
+                            color: EchoelBrand.violet
                         )
                     }
                 }
             }
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
             .glassCard()
 
             // Channel Filter
             VaporwaveSectionHeader("CHANNEL FILTER", icon: "line.3.horizontal.decrease.circle")
-                .padding(.top, VaporwaveSpacing.lg)
+                .padding(.top, EchoelSpacing.xl)
 
             channelFilterGrid
 
             // Message Filter
             VaporwaveSectionHeader("MESSAGE FILTER", icon: "slider.horizontal.3")
-                .padding(.top, VaporwaveSpacing.lg)
+                .padding(.top, EchoelSpacing.xl)
 
             messageFilterToggles
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     private var channelFilterGrid: some View {
@@ -287,35 +287,35 @@ struct MIDIRoutingView: View {
             ForEach(1...16, id: \.self) { channel in
                 Button(action: { midiRouter.toggleChannel(channel) }) {
                     Text("\(channel)")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(midiRouter.enabledChannels.contains(channel) ? VaporwaveColors.deepBlack : VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(midiRouter.enabledChannels.contains(channel) ? EchoelBrand.bgDeep : EchoelBrand.textTertiary)
                         .frame(width: 36, height: 36)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(midiRouter.enabledChannels.contains(channel) ? VaporwaveColors.neonCyan : Color.clear)
+                                .fill(midiRouter.enabledChannels.contains(channel) ? EchoelBrand.sky : Color.clear)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(midiRouter.enabledChannels.contains(channel) ? VaporwaveColors.neonCyan : VaporwaveColors.textTertiary.opacity(0.3), lineWidth: 1)
+                                .stroke(midiRouter.enabledChannels.contains(channel) ? EchoelBrand.sky : EchoelBrand.textTertiary.opacity(0.3), lineWidth: 1)
                         )
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 
     private var messageFilterToggles: some View {
-        VStack(spacing: VaporwaveSpacing.sm) {
+        VStack(spacing: EchoelSpacing.sm) {
             ForEach(MIDIMessageType.allCases, id: \.self) { type in
                 HStack {
                     Image(systemName: type.icon)
-                        .foregroundColor(VaporwaveColors.neonCyan)
+                        .foregroundColor(EchoelBrand.sky)
                         .frame(width: 24)
 
                     Text(type.name)
-                        .font(VaporwaveTypography.body())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.body())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Spacer()
 
@@ -323,36 +323,36 @@ struct MIDIRoutingView: View {
                         get: { midiRouter.enabledMessageTypes.contains(type) },
                         set: { _ in midiRouter.toggleMessageType(type) }
                     ))
-                    .toggleStyle(SwitchToggleStyle(tint: VaporwaveColors.neonCyan))
+                    .toggleStyle(SwitchToggleStyle(tint: EchoelBrand.sky))
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 
     // MARK: - Mappings View
 
     private var mappingsView: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             HStack {
                 VaporwaveSectionHeader("MIDI MAPPINGS", icon: "arrow.left.arrow.right")
 
                 Spacer()
 
                 Button(action: { showMIDILearn = true }) {
-                    HStack(spacing: VaporwaveSpacing.sm) {
+                    HStack(spacing: EchoelSpacing.sm) {
                         Image(systemName: "plus.circle.fill")
                         Text("MIDI Learn")
                     }
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonPink)
-                    .padding(.horizontal, VaporwaveSpacing.md)
-                    .padding(.vertical, VaporwaveSpacing.sm)
-                    .background(VaporwaveColors.neonPink.opacity(0.2))
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.coral)
+                    .padding(.horizontal, EchoelSpacing.md)
+                    .padding(.vertical, EchoelSpacing.sm)
+                    .background(EchoelBrand.coral.opacity(0.2))
                     .cornerRadius(16)
                 }
-                .neonGlow(color: VaporwaveColors.neonPink, radius: 6)
+                .neonGlow(color: EchoelBrand.coral, radius: 6)
             }
 
             if midiRouter.mappings.isEmpty {
@@ -373,65 +373,65 @@ struct MIDIRoutingView: View {
 
             // Quick Mappings Presets
             VaporwaveSectionHeader("QUICK PRESETS", icon: "star")
-                .padding(.top, VaporwaveSpacing.lg)
+                .padding(.top, EchoelSpacing.xl)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: VaporwaveSpacing.sm) {
-                QuickPresetCard(name: "Ableton Push", icon: "square.grid.3x3", color: VaporwaveColors.neonPurple) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: EchoelSpacing.sm) {
+                QuickPresetCard(name: "Ableton Push", icon: "square.grid.3x3", color: EchoelBrand.violet) {
                     midiRouter.loadPreset(.abletonPush)
                 }
-                QuickPresetCard(name: "Novation Launch", icon: "square.grid.4x3.fill", color: VaporwaveColors.neonCyan) {
+                QuickPresetCard(name: "Novation Launch", icon: "square.grid.4x3.fill", color: EchoelBrand.sky) {
                     midiRouter.loadPreset(.novationLaunch)
                 }
-                QuickPresetCard(name: "Akai MPK", icon: "pianokeys.inverse", color: VaporwaveColors.neonPink) {
+                QuickPresetCard(name: "Akai MPK", icon: "pianokeys.inverse", color: EchoelBrand.coral) {
                     midiRouter.loadPreset(.akaiMPK)
                 }
-                QuickPresetCard(name: "Generic CC", icon: "slider.horizontal.3", color: VaporwaveColors.coral) {
+                QuickPresetCard(name: "Generic CC", icon: "slider.horizontal.3", color: EchoelBrand.coral) {
                     midiRouter.loadPreset(.genericCC)
                 }
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 
     // MARK: - MPE View
 
     private var mpeView: some View {
-        VStack(spacing: VaporwaveSpacing.md) {
+        VStack(spacing: EchoelSpacing.md) {
             VaporwaveSectionHeader("MPE CONFIGURATION", icon: "waveform.path.ecg")
 
             // MPE Status
             HStack {
-                VStack(alignment: .leading, spacing: VaporwaveSpacing.xs) {
+                VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
                     Text("MIDI Polyphonic Expression")
-                        .font(VaporwaveTypography.body())
-                        .foregroundColor(VaporwaveColors.textPrimary)
+                        .font(EchoelBrandFont.body())
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Text("Per-note pitch bend, slide, pressure")
-                        .font(VaporwaveTypography.caption())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textTertiary)
                 }
 
                 Spacer()
 
                 Toggle("", isOn: $midiRouter.mpeEnabled)
-                    .toggleStyle(SwitchToggleStyle(tint: VaporwaveColors.neonPurple))
+                    .toggleStyle(SwitchToggleStyle(tint: EchoelBrand.violet))
             }
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
             .glassCard()
 
             if midiRouter.mpeEnabled {
                 // Zone Configuration
                 VaporwaveSectionHeader("ZONE CONFIGURATION", icon: "rectangle.split.3x1")
-                    .padding(.top, VaporwaveSpacing.md)
+                    .padding(.top, EchoelSpacing.md)
 
-                VStack(spacing: VaporwaveSpacing.md) {
+                VStack(spacing: EchoelSpacing.md) {
                     // Lower Zone
                     MPEZoneConfig(
                         title: "Lower Zone",
                         masterChannel: 1,
                         memberChannels: midiRouter.lowerZoneChannels,
                         pitchBendRange: $midiRouter.lowerPitchBend,
-                        color: VaporwaveColors.neonCyan,
+                        color: EchoelBrand.sky,
                         onChannelsChanged: { midiRouter.setLowerZoneChannels($0) }
                     )
 
@@ -441,27 +441,27 @@ struct MIDIRoutingView: View {
                         masterChannel: 16,
                         memberChannels: midiRouter.upperZoneChannels,
                         pitchBendRange: $midiRouter.upperPitchBend,
-                        color: VaporwaveColors.neonPink,
+                        color: EchoelBrand.coral,
                         onChannelsChanged: { midiRouter.setUpperZoneChannels($0) }
                     )
                 }
 
                 // Per-Note Controllers
                 VaporwaveSectionHeader("PER-NOTE CONTROLLERS", icon: "dial.high")
-                    .padding(.top, VaporwaveSpacing.md)
+                    .padding(.top, EchoelSpacing.md)
 
-                VStack(spacing: VaporwaveSpacing.sm) {
-                    PerNoteControllerRow(name: "Pitch Bend", cc: "PB", value: midiRouter.lastPitchBend, color: VaporwaveColors.neonCyan)
-                    PerNoteControllerRow(name: "Pressure", cc: "AT", value: midiRouter.lastPressure, color: VaporwaveColors.neonPink)
-                    PerNoteControllerRow(name: "Slide (CC74)", cc: "74", value: midiRouter.lastSlide, color: VaporwaveColors.neonPurple)
-                    PerNoteControllerRow(name: "Expression", cc: "11", value: midiRouter.lastExpression, color: VaporwaveColors.coral)
+                VStack(spacing: EchoelSpacing.sm) {
+                    PerNoteControllerRow(name: "Pitch Bend", cc: "PB", value: midiRouter.lastPitchBend, color: EchoelBrand.sky)
+                    PerNoteControllerRow(name: "Pressure", cc: "AT", value: midiRouter.lastPressure, color: EchoelBrand.coral)
+                    PerNoteControllerRow(name: "Slide (CC74)", cc: "74", value: midiRouter.lastSlide, color: EchoelBrand.violet)
+                    PerNoteControllerRow(name: "Expression", cc: "11", value: midiRouter.lastExpression, color: EchoelBrand.coral)
                 }
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
                 .glassCard()
 
                 // Voice Allocation
                 VaporwaveSectionHeader("VOICE ALLOCATION", icon: "person.3")
-                    .padding(.top, VaporwaveSpacing.md)
+                    .padding(.top, EchoelSpacing.md)
 
                 Picker("Mode", selection: $midiRouter.voiceAllocationMode) {
                     Text("Round Robin").tag(VoiceAllocationMode.roundRobin)
@@ -470,11 +470,11 @@ struct MIDIRoutingView: View {
                     Text("High Priority").tag(VoiceAllocationMode.highPriority)
                 }
                 .pickerStyle(.segmented)
-                .padding(VaporwaveSpacing.md)
+                .padding(EchoelSpacing.md)
                 .glassCard()
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
     }
 }
 
@@ -489,34 +489,34 @@ struct MIDIDeviceRow: View {
     var body: some View {
         HStack {
             Image(systemName: isInput ? "arrow.down.circle" : "arrow.up.circle")
-                .foregroundColor(isInput ? VaporwaveColors.neonCyan : VaporwaveColors.neonPink)
+                .foregroundColor(isInput ? EchoelBrand.sky : EchoelBrand.coral)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(device.name)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text(device.manufacturer)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             Spacer()
 
             if device.supportsMIDI2 {
                 Text("2.0")
-                    .font(VaporwaveTypography.label())
-                    .foregroundColor(VaporwaveColors.neonPurple)
-                    .padding(.horizontal, VaporwaveSpacing.sm)
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.violet)
+                    .padding(.horizontal, EchoelSpacing.sm)
                     .padding(.vertical, 2)
-                    .background(VaporwaveColors.neonPurple.opacity(0.2))
+                    .background(EchoelBrand.violet.opacity(0.2))
                     .cornerRadius(4)
             }
 
             Toggle("", isOn: Binding(get: { isEnabled }, set: { _ in onToggle() }))
-                .toggleStyle(SwitchToggleStyle(tint: isInput ? VaporwaveColors.neonCyan : VaporwaveColors.neonPink))
+                .toggleStyle(SwitchToggleStyle(tint: isInput ? EchoelBrand.sky : EchoelBrand.coral))
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -524,7 +524,7 @@ struct MIDIDeviceRow: View {
 struct RoutingMatrixCell: View {
     let isRouted: Bool
     let onToggle: () -> Void
-    var color: Color = VaporwaveColors.neonCyan
+    var color: Color = EchoelBrand.sky
 
     var body: some View {
         Button(action: onToggle) {
@@ -533,12 +533,12 @@ struct RoutingMatrixCell: View {
                 .frame(width: 60, height: 30)
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(isRouted ? color : VaporwaveColors.textTertiary.opacity(0.3), lineWidth: 1)
+                        .stroke(isRouted ? color : EchoelBrand.textTertiary.opacity(0.3), lineWidth: 1)
                 )
                 .overlay(
                     Image(systemName: isRouted ? "arrow.right" : "")
                         .font(.system(size: 12))
-                        .foregroundColor(VaporwaveColors.deepBlack)
+                        .foregroundColor(EchoelBrand.bgDeep)
                 )
         }
         .neonGlow(color: isRouted ? color : .clear, radius: 4)
@@ -553,12 +553,12 @@ struct MIDIMappingRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(mapping.parameterName)
-                    .font(VaporwaveTypography.body())
-                    .foregroundColor(VaporwaveColors.textPrimary)
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("Ch \(mapping.channel) • CC \(mapping.cc)")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.neonCyan)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.sky)
             }
 
             Spacer()
@@ -566,17 +566,17 @@ struct MIDIMappingRow: View {
             // Value Indicator
             VaporwaveProgressRing(
                 progress: Double(mapping.lastValue) / 127.0,
-                color: VaporwaveColors.neonPurple,
+                color: EchoelBrand.violet,
                 lineWidth: 3,
                 size: 30
             )
 
             Button(action: onDelete) {
                 Image(systemName: "trash")
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -589,17 +589,17 @@ struct QuickPresetCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: VaporwaveSpacing.sm) {
+            VStack(spacing: EchoelSpacing.sm) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundColor(color)
 
                 Text(name)
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(VaporwaveSpacing.md)
+            .padding(EchoelSpacing.md)
             .glassCard()
         }
         .neonGlow(color: color, radius: 6)
@@ -615,23 +615,23 @@ struct MPEZoneConfig: View {
     let onChannelsChanged: (Int) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+        VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
             HStack {
                 Text(title)
-                    .font(VaporwaveTypography.body())
+                    .font(EchoelBrandFont.body())
                     .foregroundColor(color)
 
                 Spacer()
 
                 Text("Master: Ch \(masterChannel)")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textTertiary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
             }
 
             HStack {
                 Text("Member Channels")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                 Spacer()
 
@@ -644,8 +644,8 @@ struct MPEZoneConfig: View {
 
             HStack {
                 Text("Pitch Bend Range")
-                    .font(VaporwaveTypography.caption())
-                    .foregroundColor(VaporwaveColors.textSecondary)
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                 Spacer()
 
@@ -659,7 +659,7 @@ struct MPEZoneConfig: View {
                 .frame(width: 180)
             }
         }
-        .padding(VaporwaveSpacing.md)
+        .padding(EchoelSpacing.md)
         .glassCard()
     }
 }
@@ -673,13 +673,13 @@ struct PerNoteControllerRow: View {
     var body: some View {
         HStack {
             Text(cc)
-                .font(VaporwaveTypography.label())
+                .font(EchoelBrandFont.label())
                 .foregroundColor(color)
                 .frame(width: 30)
 
             Text(name)
-                .font(VaporwaveTypography.caption())
-                .foregroundColor(VaporwaveColors.textSecondary)
+                .font(EchoelBrandFont.caption())
+                .foregroundColor(EchoelBrand.textSecondary)
 
             Spacer()
 
@@ -687,7 +687,7 @@ struct PerNoteControllerRow: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(VaporwaveColors.textTertiary.opacity(0.2))
+                        .fill(EchoelBrand.textTertiary.opacity(0.2))
 
                     RoundedRectangle(cornerRadius: 2)
                         .fill(color)
@@ -697,8 +697,8 @@ struct PerNoteControllerRow: View {
             .frame(width: 80, height: 8)
 
             Text(String(format: "%.0f", value * 127))
-                .font(VaporwaveTypography.label())
-                .foregroundColor(VaporwaveColors.textTertiary)
+                .font(EchoelBrandFont.label())
+                .foregroundColor(EchoelBrand.textTertiary)
                 .frame(width: 30, alignment: .trailing)
         }
     }
@@ -720,47 +720,47 @@ struct MIDILearnSheet: View {
 
     var body: some View {
         ZStack {
-            VaporwaveGradients.background.ignoresSafeArea()
+            EchoelBrand.bgDeep.ignoresSafeArea()
 
-            VStack(spacing: VaporwaveSpacing.lg) {
+            VStack(spacing: EchoelSpacing.xl) {
                 Text("MIDI LEARN")
-                    .font(VaporwaveTypography.sectionTitle())
-                    .foregroundColor(VaporwaveColors.textPrimary)
-                    .neonGlow(color: VaporwaveColors.neonPink, radius: 10)
+                    .font(EchoelBrandFont.sectionTitle())
+                    .foregroundColor(EchoelBrand.textPrimary)
+                    .neonGlow(color: EchoelBrand.coral, radius: 10)
 
                 // Listening Indicator
                 ZStack {
                     Circle()
-                        .fill(isListening ? VaporwaveColors.neonPink.opacity(0.3) : VaporwaveColors.textTertiary.opacity(0.1))
+                        .fill(isListening ? EchoelBrand.coral.opacity(0.3) : EchoelBrand.textTertiary.opacity(0.1))
                         .frame(width: 120, height: 120)
 
                     Circle()
-                        .stroke(isListening ? VaporwaveColors.neonPink : VaporwaveColors.textTertiary, lineWidth: 2)
+                        .stroke(isListening ? EchoelBrand.coral : EchoelBrand.textTertiary, lineWidth: 2)
                         .frame(width: 120, height: 120)
 
                     VStack {
                         Image(systemName: isListening ? "waveform" : "pianokeys")
                             .font(.system(size: 32))
-                            .foregroundColor(isListening ? VaporwaveColors.neonPink : VaporwaveColors.textSecondary)
+                            .foregroundColor(isListening ? EchoelBrand.coral : EchoelBrand.textSecondary)
 
                         Text(isListening ? "Listening..." : "Ready")
-                            .font(VaporwaveTypography.caption())
-                            .foregroundColor(VaporwaveColors.textSecondary)
+                            .font(EchoelBrandFont.caption())
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .neonGlow(color: isListening ? VaporwaveColors.neonPink : .clear, radius: 20)
+                .neonGlow(color: isListening ? EchoelBrand.coral : .clear, radius: 20)
 
                 if let cc = detectedCC, let channel = detectedChannel {
                     Text("Detected: Ch \(channel) CC \(cc)")
-                        .font(VaporwaveTypography.body())
-                        .foregroundColor(VaporwaveColors.neonCyan)
+                        .font(EchoelBrandFont.body())
+                        .foregroundColor(EchoelBrand.sky)
                 }
 
                 // Parameter Picker
-                VStack(alignment: .leading, spacing: VaporwaveSpacing.sm) {
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                     Text("MAP TO PARAMETER")
-                        .font(VaporwaveTypography.label())
-                        .foregroundColor(VaporwaveColors.textTertiary)
+                        .font(EchoelBrandFont.label())
+                        .foregroundColor(EchoelBrand.textTertiary)
 
                     Picker("Parameter", selection: $selectedParameter) {
                         ForEach(availableParameters, id: \.self) { param in
@@ -768,14 +768,14 @@ struct MIDILearnSheet: View {
                         }
                     }
                     .pickerStyle(.menu)
-                    .padding(VaporwaveSpacing.md)
+                    .padding(EchoelSpacing.md)
                     .glassCard()
                 }
 
                 Spacer()
 
                 // Action Buttons
-                HStack(spacing: VaporwaveSpacing.md) {
+                HStack(spacing: EchoelSpacing.md) {
                     Button(action: { isPresented = false }) {
                         Text("Cancel")
                             .vaporwaveButton(isActive: false)
@@ -793,7 +793,7 @@ struct MIDILearnSheet: View {
                         }
                     }) {
                         Text(isListening ? "Stop" : "Start Learning")
-                            .vaporwaveButton(isActive: true, activeColor: VaporwaveColors.neonPink)
+                            .vaporwaveButton(isActive: true, activeColor: EchoelBrand.coral)
                     }
 
                     if detectedCC != nil {
@@ -811,12 +811,12 @@ struct MIDILearnSheet: View {
                             }
                         }) {
                             Text("Save")
-                                .vaporwaveButton(isActive: true, activeColor: VaporwaveColors.neonCyan)
+                                .vaporwaveButton(isActive: true, activeColor: EchoelBrand.sky)
                         }
                     }
                 }
             }
-            .padding(VaporwaveSpacing.xl)
+            .padding(EchoelSpacing.xl)
         }
     }
 }
