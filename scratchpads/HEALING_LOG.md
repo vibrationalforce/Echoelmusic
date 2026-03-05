@@ -6,6 +6,44 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-05 — Test Coverage Analysis + Phase 1 Tests + Stub Cleanup
+
+**Branch:** `claude/analyze-test-coverage-9aFjV`
+
+**Key Discovery:**
+- Main app (Sources/Echoelmusic/) has ZERO test coverage — all 56 existing test methods only cover EchoelmusicComplete and EchoelmusicMVP sub-packages
+- Previous 2,688 tests were lost during codebase restructuring (March 2-4)
+- Only 2 test files remain across entire repo
+
+**Stub Audit (127 files scanned):**
+- Only 5 real stubs/placeholders found — codebase is surprisingly clean
+- No TODO, FIXME, or fatalError("not implemented") anywhere
+- 753 guard/if-let patterns indicate good optional handling
+
+**Fixes Applied:**
+1. Removed dead `startBioDataCapture()` function + call from RecordingControlsView
+2. Wired ChromaticTuner `.custom` case to `TuningManager.shared.concertPitch` (was hardcoded 440.0)
+3. Cleaned up misleading "biometrics removed" comment on coherence default in SessionClipView
+
+**Test Infrastructure Created:**
+- Created `Tests/EchoelmusicTests/` directory (SPM test target already declared in Package.swift)
+- Wrote `CoreSystemTests.swift` — 40+ test methods covering:
+  - SPSCQueue (enqueue/dequeue, FIFO order, overflow, metrics, peek, tryEnqueue)
+  - VideoFrameQueue (frame numbering, enqueue/dequeue)
+  - BioDataQueue (samples, normalized coherence)
+  - NumericExtensions (clamped, mapped, lerp)
+  - AudioConstants (buffer sizes, frequencies, coherence normalization, thresholds)
+  - MusicalNote (frequency-to-note, A4, middle C, edge cases)
+  - TuningReference (all presets, custom wiring to TuningManager, Codable)
+  - CircuitBreaker (state machine, open/close, threshold, force control, reset, configs)
+  - RetryPolicy (exponential backoff, max cap, presets)
+
+**Analysis Written:**
+- Full test coverage analysis at `scratchpads/TEST_COVERAGE_ANALYSIS_2026-03-05.md`
+- 143 source files, 9% module coverage, 4-phase test priority plan
+
+---
+
 ## Session: 2026-03-04 (cont. 2) — FL Mobile/Ableton/CapCut/DaVinci Combined UI
 
 **Directive:** "Maximum konzentrierter Ralph Wiggum FL Mobile, Ableton, InShot, CapCut and DaVinci Resolve Mode"
