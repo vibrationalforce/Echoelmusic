@@ -6,6 +6,22 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-05 (cont.) — Phase 2 Test Coverage: Audio & Infrastructure
+
+**Branch:** `claude/analyze-test-coverage-9aFjV`
+
+**Tests Created:**
+- `DSPTests.swift` — 30+ test methods covering EchoelDDSP (init, defaults, harmonics, noise, ADSR, vibrato, spectral morphing, timbre transfer, reverb), EchoelCore constants, TheConsole (bypass, legends, silent input, output count), SoundDNA (random seed, breeding, multi-gen, Codable), Garden (init, plantSeed, mutate, grow, noteOn, NaN safety), HeartSync (defaults, parameter mapping, edge cases, processing), EchoelPunish (flavors, punish button, zero drive), EchoelTime (styles, dry signal), EchoelMorph (pitch shift, robot mode), CrossfadeCurve (boundaries, equal power, monotonicity, clamping, Codable), CrossfadeRegion
+- `AudioEngineTests.swift` — 40+ test methods covering MetronomeSound (frequencies, Codable), MetronomeSubdivision (clicks, timing ratios), CountInMode (bars), MetronomeConfiguration (defaults, Codable), TunerReading (in-tune thresholds, confidence), MusicalNote extended (chromatic notes, extremes, zero/negative freq, 432Hz ref, equality), TuningReference (scientific, valid A4), MemoryPressureLevel (comparable, description), LogLevel (7 cases, comparable, emoji, osLogType), LogCategory (31 cases, osLog), LogEntry (formatted message, metadata, unique IDs, timestamp), SessionState.BioSettings/AudioSettings (defaults, Codable), EchoelLogger (shared, aliases, filtering)
+
+**Coverage Impact:**
+- Phase 1: CoreSystemTests.swift = 40+ methods (SPSCQueue, CircuitBreaker, NumericExtensions, AudioConstants, MusicalNote, TuningReference, RetryPolicy)
+- Phase 2: DSPTests.swift + AudioEngineTests.swift = 70+ additional methods
+- Total: ~110+ test methods for main Echoelmusic target (was 0)
+- Modules covered: Core, DSP, Audio (MetronomeEngine, ChromaticTuner, CrossfadeEngine)
+
+---
+
 ## Session: 2026-03-05 — Test Coverage Analysis + Phase 1 Tests + Stub Cleanup
 
 **Branch:** `claude/analyze-test-coverage-9aFjV`
