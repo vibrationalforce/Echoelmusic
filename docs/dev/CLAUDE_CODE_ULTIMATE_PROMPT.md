@@ -201,7 +201,7 @@ kernel void bioReactiveCymatics(
 **Neue Modi zu implementieren:**
 1. **Cymatics Mode** — Wassermustersimulation basierend auf Frequenz
 2. **Particle Field Enhanced** — GPU-beschleunigt, 8192 Partikel
-3. **Sacred Geometry Mode** — Fibonacci-Spiralen, Metatron's Cube
+3. **Geometric Pattern Mode** — Fibonacci-Spiralen, symmetrische Muster
 4. **Frequency Visualizer** — EEG-Style Darstellung der 8 Frequency Presets
 5. **Heart Coherence Mandala** — Radiale Muster pulsierend mit HRV
 

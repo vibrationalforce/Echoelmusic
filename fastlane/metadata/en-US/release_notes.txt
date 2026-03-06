@@ -16,12 +16,12 @@ Professional Streaming Engine
 - 8K UHD streaming support
 - Multi-platform streaming (YouTube, Twitch, TikTok)
 
-NeuroSpiritual Engine
-- Polyvagal Theory integration
-- FACS facial expression analysis
-- Psychosomatic state integration
+Body Expression Engine
+- Polyvagal Theory integration (Porges 1995)
+- FACS facial expression analysis (Ekman & Friesen 1978)
+- Mind-body state integration
 
-Quantum Health Biofeedback
+Bio-Reactive Collaboration
 - Unlimited participants per session
 - Real-time worldwide collaboration
 - 8 broadcasting platforms supported

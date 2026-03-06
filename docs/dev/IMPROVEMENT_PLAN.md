@@ -127,7 +127,7 @@
 - `Sources/Echoelmusic/Recording/README.md`
 - `Sources/Echoelmusic/Stream/README.md`
 - `Sources/Echoelmusic/Orchestral/README.md`
-- `Sources/Echoelmusic/NeuroSpiritual/README.md`
+- `Sources/Echoelmusic/BodyExpression/README.md`
 
 ### 4.2 Documentation Cleanup
 

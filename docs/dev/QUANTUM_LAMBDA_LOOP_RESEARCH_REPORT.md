@@ -701,7 +701,7 @@ Our coherence algorithms align with peer-reviewed HeartMath research:
 
 ### 6.2 Polyvagal Theory Integration
 
-Stephen Porges' Polyvagal Theory informs our NeuroSpiritualEngine:
+Stephen Porges' Polyvagal Theory (1995) informs our BodyExpressionEngine:
 
 ```swift
 enum PolyvagalState {

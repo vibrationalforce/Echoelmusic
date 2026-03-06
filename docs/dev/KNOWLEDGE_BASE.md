@@ -126,7 +126,7 @@ Protokolle:
 3. **Particles** - Bio-reactive Partikel-Physik
 4. **Spectrum** - FFT Analyzer mit 64 Bands
 5. **Waveform** - Oszilloskop-Darstellung
-6. **Mandala** - Sacred Geometry, radiale Symmetrie
+6. **Mandala** - Geometrische Muster, radiale Symmetrie
 7. **Cymatics** - Chladni-Muster (Klang-Figuren)
 8. **Vaporwave** - Retro Neon Grid Ästhetik
 9. **Nebula** - Kosmische Gaswolken
@@ -331,7 +331,7 @@ fluctuation = (1 - coherence) × energy
 
 ### Kunst
 - Cymatics (Hans Jenny)
-- Sacred Geometry
+- Geometric Patterns
 - Vaporwave Aesthetic
 - Generative Art
 

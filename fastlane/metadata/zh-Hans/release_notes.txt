@@ -16,12 +16,12 @@ Version 1.2.0 - Phase 10000 ULTIMATE MODE
 - 8K超高清流媒体支持
 - 多平台流媒体（YouTube、Twitch、TikTok）
 
-NeuroSpiritual引擎
-- 多迷走神经理论集成
-- FACS面部表情分析
-- 心身状态集成
+身体表达引擎
+- 多迷走神经理论集成 (Porges 1995)
+- FACS面部表情分析 (Ekman & Friesen 1978)
+- 身心状态集成
 
-Quantum Health Biofeedback
+生物反应协作
 - 每次会话无限参与者
 - 实时全球协作
 - 支持8个广播平台

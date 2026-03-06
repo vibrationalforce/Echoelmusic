@@ -92,7 +92,7 @@ Echoelmusic is a bio-reactive audio-visual platform that transforms biometric si
 - [ ] Developer/
 - [ ] Cloud/
 - [ ] Hardware/
-- [ ] NeuroSpiritual/
+- [ ] BodyExpression/
 - [ ] Lambda/
 
 ---

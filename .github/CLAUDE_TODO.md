@@ -28,11 +28,11 @@
 - [x] Real-Time HealthKit Streaming
 - [x] Coherence Calculation (SDNN, RMSSD, pNN50)
 - [x] Longevity Nutrition Engine (Blue Zones, Hallmarks of Aging)
-- [x] NeuroSpiritual Engine (FACS, Polyvagal, Reich Segments)
-- [x] Quantum Health Biofeedback Engine
+- [x] Body Expression Engine (FACS, Polyvagal, gesture mapping)
+- [x] Bio-Reactive Collaboration Engine
 
 ### Visual Systems (100%)
-- [x] 30+ Visual Modes (Sacred Geometry, Fractals, Quantum Waves, etc.)
+- [x] 30+ Visual Modes (Geometric Patterns, Fractals, Frequency Waves, etc.)
 - [x] Metal GPU Shaders
 - [x] 6 Visual Dimensions (2D through 6D Bio-Coherence Manifold)
 - [x] Visual Step Sequencer (nw_wrld inspired)

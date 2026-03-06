@@ -85,7 +85,7 @@ let visualMapper = MIDIToVisualMapper()
 
 // 5 Visualisierungen:
 visualMapper.cymaticsParameters    // Chladni patterns
-visualMapper.mandalaParameters     // Sacred geometry
+visualMapper.mandalaParameters     // Geometric patterns
 visualMapper.waveformParameters    // Oscilloscope
 visualMapper.spectralParameters    // FFT bars
 visualMapper.particleParameters    // Particle system

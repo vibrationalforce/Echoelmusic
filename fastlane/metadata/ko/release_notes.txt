@@ -16,12 +16,12 @@ Version 1.2.0 - Phase 10000 ULTIMATE MODE
 - 8K UHD 스트리밍 지원
 - 멀티 플랫폼 스트리밍 (YouTube, Twitch, TikTok)
 
-NeuroSpiritual 엔진
-- 다미주신경 이론 통합
-- FACS 표정 분석
+신체 표현 엔진
+- 다미주신경 이론 통합 (Porges 1995)
+- FACS 표정 분석 (Ekman & Friesen 1978)
 - 심신 상태 통합
 
-Quantum Health Biofeedback
+바이오리액티브 협업
 - 세션당 무제한 참가자
 - 실시간 전 세계 협업
 - 8개 방송 플랫폼 지원

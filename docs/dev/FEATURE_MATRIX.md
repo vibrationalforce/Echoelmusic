@@ -149,7 +149,7 @@
 |---------|--------|--------|
 | Metal Shader Pipeline | **REAL** | 6 Render-Pipelines + 25 Compute-Kernel, dynamisches Library-Loading |
 | Cymatics Renderer | **REAL** | MTKViewDelegate, Echtzeit-Uniform-Updates (Zeit, Freq, Coherence, HR) |
-| 25+ Compute Shaders | **REAL** | Cymatics, Mandala, Particles, Waveform, Spectral, Sacred Geometry, Fractal, Reaction-Diffusion, Voronoi, Aurora, Plasma, Fluid, Crystal, Fire, Ocean, Electric, Kaleidoscope, Nebula, Liquid Light, Coherence Field, Breathing Guide |
+| 25+ Compute Shaders | **REAL** | Cymatics, Mandala, Particles, Waveform, Spectral, Geometric Patterns, Fractal, Reaction-Diffusion, Voronoi, Aurora, Plasma, Fluid, Crystal, Fire, Ocean, Electric, Kaleidoscope, Nebula, Liquid Light, Coherence Field, Breathing Guide |
 | Bio-Reactive Visual Synth | **PARTIAL** | Architektur komplett (Signal → Modulation → Scene → Shader → Output) |
 | Immersive VR Engine | **PARTIAL** | 8 ImmersiveMode-Typen definiert, RealityKit-Geruest, RealityView-Content gestubbt |
 | ISF Shader Parser | **REAL** | Laedt Interactive Shader Format Dateien |

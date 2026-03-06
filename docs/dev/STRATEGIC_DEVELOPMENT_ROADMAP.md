@@ -223,24 +223,24 @@ saturation = attentionScore * 0.4
 | GSR | External sensors | 10 Hz |
 | EEG Bands | Muse/OpenBCI | 256 Hz |
 
-#### NeuroSpiritualEngine
+#### BodyExpressionEngine
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ NEUROSPIRITUAL INTEGRATION                                      │
+│ BODY EXPRESSION MAPPING                                          │
 ├─────────────────────────────────────────────────────────────────┤
-│ Consciousness States (10):                                      │
-│   Delta, Theta, Alpha, Beta, Gamma, Flow, Peak, Unitive        │
+│ EEG Frequency Bands (5):                                        │
+│   Delta, Theta, Alpha, Beta, Gamma                              │
 │                                                                 │
-│ Polyvagal States (5):                                           │
+│ Polyvagal States (5) — Porges 1995:                             │
 │   Ventral Vagal, Sympathetic, Dorsal, Blended, Social          │
 │                                                                 │
-│ FACS Analysis (8 Action Units):                                 │
+│ FACS Analysis (8 Action Units) — Ekman & Friesen 1978:          │
 │   Brow Raise, Furrow, Eye Widen, Cheek Raise, Lip Corner...    │
 │                                                                 │
-│ Duchenne Smile Detection: AU6 + AU12 = True Joy                │
+│ Duchenne Smile Detection: AU6 + AU12 = Genuine Smile           │
 │                                                                 │
-│ Reich/Lowen Segments (7):                                       │
-│   Ocular, Oral, Cervical, Thoracic, Diaphragm, Abdominal, Pelvic│
+│ Body Segments (7):                                               │
+│   Head, Neck, Upper Chest, Core, Diaphragm, Abdomen, Lower     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -256,12 +256,12 @@ struct BioMapping {
 }
 ```
 
-#### Quantum Health Biofeedback Engine
+#### Bio-Reactive Collaboration Engine
 - Unlimited participants per session
-- Group coherence/entanglement metrics
+- Group coherence synchronization metrics
 - Real-time broadcasting to 8 platforms
 - Privacy modes: Full, Aggregated, Anonymous
-- Quantum Health Score: 0-100 integrated metric
+- Bio-Coherence Score: 0-100 integrated metric
 
 #### Gap Analysis
 | Gap | Priority | Solution |

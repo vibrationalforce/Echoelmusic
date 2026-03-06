@@ -16,12 +16,12 @@ Version 1.2.0 - Phase 10000 ULTIMATE MODE
 - 8K UHDストリーミングサポート
 - マルチプラットフォームストリーミング（YouTube、Twitch、TikTok）
 
-NeuroSpiritualエンジン
-- ポリヴェーガル理論の統合
-- FACS表情分析
+身体表現エンジン
+- ポリヴェーガル理論の統合 (Porges 1995)
+- FACS表情分析 (Ekman & Friesen 1978)
 - 心身状態の統合
 
-Quantum Health Biofeedback
+バイオリアクティブコラボレーション
 - セッションあたり無制限の参加者
 - リアルタイム世界規模コラボレーション
 - 8つの配信プラットフォームをサポート

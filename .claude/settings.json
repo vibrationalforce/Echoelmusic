@@ -85,10 +85,10 @@
     "web": ["PWA", "WebApp"]
   },
   "engines": {
-    "audio": ["AudioEngine", "SpatialAudioEngine", "BinauralBeatGenerator", "LoopEngine"],
-    "visual": ["QuantumLightEmulator", "PhotonicsVisualizationEngine", "CymaticsRenderer"],
+    "audio": ["AudioEngine", "SpatialAudioEngine", "LoopEngine"],
+    "visual": ["PhotonicsVisualizationEngine", "CymaticsRenderer"],
     "biofeedback": ["HealthKitManager", "BioParameterMapper", "RealTimeHealthKitEngine"],
-    "quantum": ["QuantumLoopLightScience", "QuantumHealthBiofeedback"],
+    "collaboration": ["CollaborationSyncEngine", "GroupCoherenceEngine"],
     "wellness": ["CircadianRhythmEngine", "EvidenceBasedHRVTraining", "BioModulator"],
     "production": ["StreamEngine", "VideoProcessingEngine", "CreativeStudioEngine"]
   }

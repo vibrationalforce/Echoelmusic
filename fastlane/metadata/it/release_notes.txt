@@ -16,12 +16,12 @@ Motore di Streaming Professionale
 - Supporto streaming 8K UHD
 - Streaming multipiattaforma (YouTube, Twitch, TikTok)
 
-Motore NeuroSpiritual
-- Integrazione della Teoria Polivagale
-- Analisi delle espressioni facciali FACS
-- Integrazione degli stati psicosomatici
+Motore di Espressione Corporea
+- Integrazione della Teoria Polivagale (Porges 1995)
+- Analisi delle espressioni facciali FACS (Ekman & Friesen 1978)
+- Integrazione degli stati mente-corpo
 
-Quantum Health Biofeedback
+Collaborazione Bio-Reattiva
 - Partecipanti illimitati per sessione
 - Collaborazione mondiale in tempo reale
 - 8 piattaforme di trasmissione supportate
