@@ -163,6 +163,7 @@ jobs:
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -skipPackagePluginValidation \
+            -parallelizeTargets \
             CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             ONLY_ACTIVE_ARCH=NO \
@@ -209,27 +210,13 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 180
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: "Install iOS Simulator Runtime"
-        run: |
-          SDK_BUILD=$(xcodebuild -version -sdk iphonesimulator | grep -i "ProductBuildVersion" | awk '{print $2}')
-          echo "Required SDK build: $SDK_BUILD"
-          if xcrun simctl runtime list 2>/dev/null | grep -q "$SDK_BUILD"; then
-            echo "Matching simulator runtime already installed"
-          else
-            echo "Installing iOS simulator runtime (build: $SDK_BUILD)..."
-            xcodebuild -downloadPlatform iOS -buildVersion "$SDK_BUILD" 2>&1 || {
-              echo "Specific version failed, trying generic download..."
-              xcodebuild -downloadPlatform iOS 2>&1 || true
-            }
-          fi
 
       - name: "Cache Swift PM"
         uses: actions/cache@v4
@@ -309,6 +296,7 @@ jobs:
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -allowProvisioningUpdates \
+            -parallelizeTargets \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyPath "$API_KEY_PATH" \
@@ -519,22 +507,6 @@ jobs:
             exit 1
           fi
 
-          # Debug: inspect IPA contents for icons
-          echo "=== IPA Icon Debug ==="
-          mkdir -p /tmp/ipa_debug
-          unzip -o "$IPA" -d /tmp/ipa_debug > /dev/null 2>&1
-          echo "--- Info.plist CFBundleIcons ---"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons" /tmp/ipa_debug/Payload/*.app/Info.plist 2>&1 || echo "No CFBundleIcons key"
-          echo "--- Icon files in .app ---"
-          ls -la /tmp/ipa_debug/Payload/*.app/AppIcon* 2>/dev/null || echo "No AppIcon files at root"
-          ls -la /tmp/ipa_debug/Payload/*.app/Assets.car 2>/dev/null || echo "No Assets.car"
-          echo "--- actool-generated icon entries ---"
-          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" /tmp/ipa_debug/Payload/*.app/Info.plist 2>&1 || echo "No icon files in plist"
-          echo "--- All files matching Icon/icon ---"
-          find /tmp/ipa_debug/Payload/*.app -maxdepth 1 -name "*[Ii]con*" 2>/dev/null || echo "No icon files found"
-          echo "=== End Icon Debug ==="
-          rm -rf /tmp/ipa_debug
-
           echo "Uploading $IPA to TestFlight..."
           set +eo pipefail
           IPA_PATH="$IPA" fastlane ios upload 2>&1 | tee /tmp/upload.log
@@ -592,7 +564,7 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'macos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 180
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
@@ -608,6 +580,13 @@ jobs:
             .build
           key: ${{ runner.os }}-spm-macos-${{ hashFiles('Package.swift', 'Package.resolved') }}
           restore-keys: ${{ runner.os }}-spm-macos-
+
+      - name: "Cache DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-derived-macos-${{ hashFiles('project.yml') }}
+          restore-keys: ${{ runner.os }}-derived-macos-
 
       - name: "Install Tools & Generate Project"
         run: |
@@ -667,6 +646,7 @@ jobs:
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -allowProvisioningUpdates \
+            -parallelizeTargets \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyPath "$API_KEY_PATH" \
@@ -769,17 +749,29 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'watchos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 180
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-      - uses: actions/cache@v4
+
+      - name: "Cache Swift PM"
+        uses: actions/cache@v4
         with:
-          path: ~/.swiftpm
-          key: ${{ runner.os }}-spm-watchos-${{ hashFiles('Package.swift') }}
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-spm-watchos-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: ${{ runner.os }}-spm-watchos-
+
+      - name: "Cache DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-derived-watchos-${{ hashFiles('project.yml') }}
+          restore-keys: ${{ runner.os }}-derived-watchos-
 
       - name: "Install Tools & Generate Project"
         run: |
@@ -839,6 +831,7 @@ jobs:
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -allowProvisioningUpdates \
+            -parallelizeTargets \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyPath "$API_KEY_PATH" \
@@ -941,17 +934,29 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'tvos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 180
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-      - uses: actions/cache@v4
+
+      - name: "Cache Swift PM"
+        uses: actions/cache@v4
         with:
-          path: ~/.swiftpm
-          key: ${{ runner.os }}-spm-tvos-${{ hashFiles('Package.swift') }}
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-spm-tvos-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: ${{ runner.os }}-spm-tvos-
+
+      - name: "Cache DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-derived-tvos-${{ hashFiles('project.yml') }}
+          restore-keys: ${{ runner.os }}-derived-tvos-
 
       - name: "Install Tools & Generate Project"
         run: |
@@ -1011,6 +1016,7 @@ jobs:
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -allowProvisioningUpdates \
+            -parallelizeTargets \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyPath "$API_KEY_PATH" \
@@ -1113,17 +1119,29 @@ jobs:
       (needs.compile_check.result == 'success' || needs.compile_check.result == 'skipped') &&
       (github.event.inputs.platform == 'visionos' || github.event.inputs.platform == 'all') &&
       github.event.inputs.build_only != 'true'
-    timeout-minutes: 180
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-      - uses: actions/cache@v4
+
+      - name: "Cache Swift PM"
+        uses: actions/cache@v4
         with:
-          path: ~/.swiftpm
-          key: ${{ runner.os }}-spm-visionos-${{ hashFiles('Package.swift') }}
+          path: |
+            ~/.swiftpm
+            .build
+          key: ${{ runner.os }}-spm-visionos-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: ${{ runner.os }}-spm-visionos-
+
+      - name: "Cache DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-derived-visionos-${{ hashFiles('project.yml') }}
+          restore-keys: ${{ runner.os }}-derived-visionos-
 
       - name: "Install Tools & Generate Project"
         run: |
@@ -1183,6 +1201,7 @@ jobs:
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
             -allowProvisioningUpdates \
+            -parallelizeTargets \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyPath "$API_KEY_PATH" \
