@@ -90,12 +90,15 @@ class MicrophoneManager: NSObject, ObservableObject {
 
     /// Request microphone permission from the user
     func requestPermission() {
+        #if os(macOS) || os(watchOS) || os(tvOS)
+        log.audio("Microphone permission request not supported on this platform", level: .warning)
+        #else
         if #available(iOS 17.0, *) {
             Task {
                 let granted = await AVAudioApplication.requestRecordPermission()
                 await MainActor.run {
                     self.hasPermission = granted
-                                        if granted {
+                    if granted {
                         log.audio("Microphone permission granted")
                         try? AudioConfiguration.upgradeToPlayAndRecord()
                     } else {
@@ -116,6 +119,7 @@ class MicrophoneManager: NSObject, ObservableObject {
                 }
             }
         }
+        #endif
     }
 
 
@@ -131,9 +135,11 @@ class MicrophoneManager: NSObject, ObservableObject {
 
         do {
             // Configure the audio session for recording
+            #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.record, mode: .measurement, options: [])
             try audioSession.setActive(true)
+            #endif
 
             // Create and configure the audio engine
             audioEngine = AVAudioEngine()
@@ -187,7 +193,9 @@ class MicrophoneManager: NSObject, ObservableObject {
         complexDFT = nil
 
         // Deactivate the audio session
+        #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
         try? AVAudioSession.sharedInstance().setActive(false)
+        #endif
 
         self.isRecording = false
         self.audioLevel = 0.0
