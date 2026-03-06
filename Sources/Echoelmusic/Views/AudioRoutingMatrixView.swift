@@ -869,7 +869,7 @@ class AudioRouterViewModel: ObservableObject {
         ]
 
         inputs = [
-            AudioInput(id: UUID(), name: "Mic 1", icon: "mic.fill", routedTo: channels[3].id),
+            AudioInput(id: UUID(), name: "Mic 1", icon: "mic.fill", routedTo: channels.count > 3 ? channels[3].id : nil),
             AudioInput(id: UUID(), name: "Line In L", icon: "cable.connector", routedTo: nil),
             AudioInput(id: UUID(), name: "Line In R", icon: "cable.connector", routedTo: nil)
         ]

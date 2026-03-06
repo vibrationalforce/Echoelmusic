@@ -97,10 +97,18 @@ final class MixerDSPKernel {
         self.bufferSize = AVAudioFrameCount(bufferSize)
 
         // Standard stereo interleaved format
-        self.format = AVAudioFormat(
+        guard let audioFormat = AVAudioFormat(
             standardFormatWithSampleRate: sampleRate,
             channels: 2
-        )!
+        ) else {
+            // Fallback to 44100 Hz stereo — guaranteed valid
+            self.format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
+                ?? AVAudioFormat()
+            self.masterBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
+            self.scratchBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
+            return
+        }
+        self.format = audioFormat
 
         self.masterBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
         self.scratchBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
@@ -200,11 +208,11 @@ final class MixerDSPKernel {
 
         // Step 0: Clear master and all bus/aux channel buffers
         clearBuffer(masterBuffer, frameCount: frames)
-        for (channelID, _) in channelDSPs {
+        for (channelID, dsp) in channelDSPs {
             // Only clear bus/aux buffers (they accumulate from sends)
             if let channel = channels.first(where: { $0.id == channelID }),
                channel.type == .aux || channel.type == .bus {
-                clearBuffer(channelDSPs[channelID]!.buffer, frameCount: frames)
+                clearBuffer(dsp.buffer, frameCount: frames)
             }
         }
 
@@ -223,8 +231,8 @@ final class MixerDSPKernel {
                var dsp = channelDSPs[channel.id] {
                 copyBuffer(from: inputBuffer, to: dsp.buffer, frameCount: frames)
                 channelDSPs[channel.id] = dsp
-            } else if channelDSPs[channel.id] != nil {
-                clearBuffer(channelDSPs[channel.id]!.buffer, frameCount: frames)
+            } else if let existingDsp = channelDSPs[channel.id] {
+                clearBuffer(existingDsp.buffer, frameCount: frames)
             }
 
             guard isAudible, var dsp = channelDSPs[channel.id] else {
@@ -244,13 +252,14 @@ final class MixerDSPKernel {
             // Pre-fader sends
             for send in channel.sends where send.isEnabled && send.isPreFader {
                 guard let destID = send.destinationID,
-                      channelDSPs[destID] != nil else { continue }
+                      var destDsp = channelDSPs[destID] else { continue }
                 mixInto(
-                    destination: &channelDSPs[destID]!.buffer,
+                    destination: &destDsp.buffer,
                     source: dsp.buffer,
                     gain: send.level,
                     frameCount: frames
                 )
+                channelDSPs[destID] = destDsp
             }
 
             // Apply volume fader + stereo pan (equal-power pan law)
@@ -260,13 +269,14 @@ final class MixerDSPKernel {
             // Post-fader sends
             for send in channel.sends where send.isEnabled && !send.isPreFader {
                 guard let destID = send.destinationID,
-                      channelDSPs[destID] != nil else { continue }
+                      var destDsp = channelDSPs[destID] else { continue }
                 mixInto(
-                    destination: &channelDSPs[destID]!.buffer,
+                    destination: &destDsp.buffer,
                     source: dsp.buffer,
                     gain: send.level,
                     frameCount: frames
                 )
+                channelDSPs[destID] = destDsp
             }
 
             // Update real metering
@@ -277,16 +287,16 @@ final class MixerDSPKernel {
             )
 
             // Route to output destination (bus or master)
-            let destBuffer: UnsafeMutablePointer<AVAudioPCMBuffer>
             if let outputDest = channel.outputDestination,
                outputDest != masterChannel.id,
-               channelDSPs[outputDest] != nil {
+               var destDsp = channelDSPs[outputDest] {
                 mixInto(
-                    destination: &channelDSPs[outputDest]!.buffer,
+                    destination: &destDsp.buffer,
                     source: dsp.buffer,
                     gain: 1.0,
                     frameCount: frames
                 )
+                channelDSPs[outputDest] = destDsp
             } else {
                 // Route to master
                 mixInto(destination: &masterBuffer, source: dsp.buffer, gain: 1.0, frameCount: frames)
@@ -462,7 +472,11 @@ final class MixerDSPKernel {
 
     /// Creates a new zeroed stereo buffer.
     private static func createBuffer(format: AVAudioFormat, frameCount: AVAudioFrameCount) -> AVAudioPCMBuffer {
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)!
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
+            // Return minimal valid buffer as fallback
+            return AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1)
+                ?? AVAudioPCMBuffer()
+        }
         buffer.frameLength = frameCount
         // Zero the buffer
         if let channelData = buffer.floatChannelData {

@@ -555,7 +555,7 @@ public final class EchoelBeat: ObservableObject {
 
     private func ensureEngineRunning() {
         guard audioEngine?.isRunning != true else { return }
-        do { try audioEngine?.start() } catch { }
+        do { try audioEngine?.start() } catch { log.error("EchoelBeat: engine start failed - \(error)", category: .audio) }
     }
 
     // MARK: - Public API — Drum Pads

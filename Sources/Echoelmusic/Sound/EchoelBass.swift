@@ -357,14 +357,14 @@ public final class EchoelBass: ObservableObject {
         engine.attach(source)
         engine.connect(source, to: engine.mainMixerNode, format: audioFormat)
 
-        do { try engine.start() } catch { }
+        do { try engine.start() } catch { log.error("EchoelBass: engine start failed - \(error)", category: .audio) }
     }
 
     // MARK: - Public API
 
     public func start() {
         guard let engine = audioEngine, !engine.isRunning else { return }
-        do { try engine.start(); isPlaying = true } catch { isPlaying = false }
+        do { try engine.start(); isPlaying = true } catch { isPlaying = false; log.error("EchoelBass: start failed - \(error)", category: .audio) }
     }
 
     public func stop() {
@@ -378,7 +378,7 @@ public final class EchoelBass: ObservableObject {
 
     public func noteOn(note: Int, velocity: Float = 0.8) {
         if audioEngine?.isRunning != true {
-            do { try audioEngine?.start() } catch { }
+            do { try audioEngine?.start() } catch { log.error("EchoelBass: noteOn engine start failed - \(error)", category: .audio) }
         }
 
         voiceLock.lock()

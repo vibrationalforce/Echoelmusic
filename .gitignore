@@ -130,3 +130,12 @@ Tuist/Dependencies/
 graph.json
 manifest.json
 !docs/manifest.json
+
+# Claude Code local settings (may contain tokens)
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.local
+*.secret
+credentials.json
