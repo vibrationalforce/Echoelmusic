@@ -690,6 +690,16 @@ public class ProSessionEngine: ObservableObject {
         AudioClipScheduler(sampleRate: 44100, bufferSize: 512)
     }()
 
+    /// Track freeze engine for CPU optimization (offline rendering)
+    public private(set) lazy var freezeEngine: TrackFreezeEngine = {
+        TrackFreezeEngine()
+    }()
+
+    /// Crossfade engine for seamless clip transitions
+    public private(set) lazy var crossfadeEngine: CrossfadeEngine = {
+        CrossfadeEngine(sampleRate: 48000)
+    }()
+
     // MARK: - Private Properties
 
     private let log = ProfessionalLogger.shared

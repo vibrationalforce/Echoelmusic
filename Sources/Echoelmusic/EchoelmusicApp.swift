@@ -56,6 +56,11 @@ struct EchoelmusicApp: App {
         _ = MemoryPressureHandler.shared
         try? await Task.sleep(nanoseconds: 50_000_000)
 
+        launchPhase = "Tuning System"
+        launchProgress = 0.5
+        TuningBridge.shared.activate()
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
         launchPhase = "Creative Workspace"
         launchProgress = 0.6
         _ = EchoelCreativeWorkspace.shared

@@ -649,6 +649,22 @@ struct EchoelSettingsView: View {
                             }
                         }
 
+                        // MARK: - Sync
+                        settingsSection(title: "SYNC") {
+                            VStack(spacing: EchoelSpacing.sm) {
+                                settingsRow(
+                                    icon: "link",
+                                    label: "Ableton Link",
+                                    value: EchoelCreativeWorkspace.shared.linkClient.isEnabled ? "Active" : "Off"
+                                )
+                                settingsRow(
+                                    icon: "antenna.radiowaves.left.and.right",
+                                    label: "Link Peers",
+                                    value: "\(EchoelCreativeWorkspace.shared.linkClient.peers.count)"
+                                )
+                            }
+                        }
+
                         // MARK: - Bio-Feedback
                         settingsSection(title: "BIO-FEEDBACK") {
                             VStack(spacing: EchoelSpacing.sm) {
@@ -679,6 +695,19 @@ struct EchoelSettingsView: View {
                                 safetyWarning("Coordinate therapeutic use with your provider")
                             }
                             .padding(.horizontal, EchoelSpacing.md)
+                        }
+
+                        // MARK: - Tuning
+                        settingsSection(title: "TUNING") {
+                            VStack(spacing: EchoelSpacing.sm) {
+                                settingsRow(
+                                    icon: "tuningfork",
+                                    label: "Concert Pitch (A4)",
+                                    value: String(format: "%.1f Hz", TuningManager.shared.concertPitch)
+                                )
+                                KammertonWheelView()
+                                    .padding(.horizontal, EchoelSpacing.sm)
+                            }
                         }
 
                         // MARK: - About

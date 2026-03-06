@@ -30,6 +30,12 @@ final class EchoelCreativeWorkspace: ObservableObject {
     /// Bio-reactive DDSP synth for live performance
     let bioSynth: EchoelDDSP
 
+    /// Ableton Link client for tempo sync with external devices
+    let linkClient: AbletonLinkClient
+
+    /// Adaptive audio quality engine — adjusts buffer/sample rate based on system load
+    let adaptiveAudio: AdaptiveAudioEngine
+
     /// Current bio-coherence level (0-1) — driven by mic or HealthKit
     @Published var bioCoherence: Float = 0.5
 
@@ -55,6 +61,8 @@ final class EchoelCreativeWorkspace: ObservableObject {
         self.loopEngine = LoopEngine()
         self.loopEngine.setTempo(120.0)
         self.bioSynth = EchoelDDSP(harmonicCount: 32, sampleRate: 48000)
+        self.linkClient = AbletonLinkClient()
+        self.adaptiveAudio = AdaptiveAudioEngine()
 
         setupBridges()
         log.info("Creative Workspace initialized (DAW + Video + Bio-Reactive Synth)", category: .system)
