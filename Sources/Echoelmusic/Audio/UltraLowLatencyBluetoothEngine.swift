@@ -1185,7 +1185,7 @@ public struct BluetoothAudioView: View {
 
                 Toggle("", isOn: $engine.isDirectMonitoringActive)
                     .labelsHidden()
-                    .onChange(of: engine.isDirectMonitoringActive) { isOn in
+                    .onChange(of: engine.isDirectMonitoringActive) { _, isOn in
                         if isOn {
                             try? engine.enableDirectMonitoring()
                         } else {

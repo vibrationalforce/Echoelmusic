@@ -78,8 +78,7 @@ private struct SessionClipContent: View {
                     }
                 }
 
-                // Transport Bar
-                transportBar
+                // Transport controls removed — using global transport from MainNavigationHub
             }
 
             // Instrument Browser
@@ -164,6 +163,21 @@ private struct SessionClipContent: View {
                         .foregroundColor(EchoelBrand.textTertiary)
                 }
                 .shadow(color: coherenceColor.opacity(0.4), radius: 6)
+            }
+
+            // Quantize (compact, from transport)
+            HStack(spacing: EchoelSpacing.xs) {
+                Text("Q:")
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textTertiary)
+
+                Picker("", selection: $session.quantize) {
+                    Text("1 Bar").tag(QuantizeValue.bar)
+                    Text("1/4").tag(QuantizeValue.quarter)
+                    Text("Off").tag(QuantizeValue.off)
+                }
+                .pickerStyle(.menu)
+                .font(EchoelBrandFont.caption())
             }
         }
         .padding(EchoelSpacing.md)

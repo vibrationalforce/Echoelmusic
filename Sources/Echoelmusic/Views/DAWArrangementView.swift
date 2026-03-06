@@ -42,7 +42,7 @@ struct DAWArrangementView: View {
     }
 
     private var bpm: Double { max(workspace.globalBPM, 20.0) }
-    private var isPlaying: Bool { recordingEngine.isPlaying }
+    private var isPlaying: Bool { workspace.isPlaying }
     private var isRecording: Bool { recordingEngine.isRecording }
 
     /// Pixels per second at current zoom
@@ -69,7 +69,6 @@ struct DAWArrangementView: View {
                 if showMiniMixer {
                     miniMixerStrip
                 }
-                dawTransportBar
             }
 
             if showInstrumentBrowser {
@@ -279,7 +278,7 @@ struct DAWArrangementView: View {
                 Text("BPM")
             }
             .tint(EchoelBrand.primary)
-            .onChange(of: workspace.globalBPM) { newValue in
+            .onChange(of: workspace.globalBPM) { _, newValue in
                 metronome.setTempo(newValue)
             }
 
@@ -977,13 +976,7 @@ struct DAWArrangementView: View {
     }
 
     private func togglePlayback() {
-        if isPlaying {
-            recordingEngine.stopPlayback()
-            audioEngine.stop()
-        } else {
-            audioEngine.start()
-            try? recordingEngine.startPlayback()
-        }
+        EchoelCreativeWorkspace.shared.togglePlayback()
         HapticHelper.impact(.medium)
     }
 

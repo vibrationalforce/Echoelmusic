@@ -57,7 +57,7 @@ public struct EchoelPaywall: View {
         } message: {
             Text(store.errorMessage ?? "An error occurred")
         }
-        .onChange(of: store.errorMessage) { newValue in
+        .onChange(of: store.errorMessage) { _, newValue in
             showError = newValue != nil
         }
         .task {

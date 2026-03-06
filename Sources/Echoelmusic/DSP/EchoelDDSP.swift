@@ -1052,10 +1052,12 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
 
         // Copy to output
         left.withUnsafeMutableBufferPointer { ptr in
-            memcpy(ptr.baseAddress!, mixBufferL, frameCount * MemoryLayout<Float>.size)
+            guard let base = ptr.baseAddress else { return }
+            memcpy(base, mixBufferL, frameCount * MemoryLayout<Float>.size)
         }
         right.withUnsafeMutableBufferPointer { ptr in
-            memcpy(ptr.baseAddress!, mixBufferR, frameCount * MemoryLayout<Float>.size)
+            guard let base = ptr.baseAddress else { return }
+            memcpy(base, mixBufferR, frameCount * MemoryLayout<Float>.size)
         }
     }
 

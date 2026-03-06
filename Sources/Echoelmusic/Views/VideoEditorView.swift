@@ -61,8 +61,6 @@ struct VideoEditorView: View {
                         }
 
                         timelineSection
-
-                        transportControls
                     }
                 } else {
                     // iPad/Mac: side-by-side layout
@@ -77,8 +75,6 @@ struct VideoEditorView: View {
                     .padding(.horizontal, EchoelSpacing.md)
 
                     timelineSection
-
-                    transportControls
                 }
             }
         }
@@ -1469,7 +1465,7 @@ struct VideoPickerSheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .onChange(of: selectedItems) { _ in
+            .onChange(of: selectedItems) { _, _ in
                 Task {
                     await importSelectedVideos()
                     dismiss()
