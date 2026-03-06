@@ -371,7 +371,7 @@ public struct SettingsView: View {
                         ))
                     }
 
-                    Picker("Binaural State", selection: $appState.binauralState) {
+                    Picker("EEG Band", selection: $appState.binauralState) {
                         ForEach(BinauralState.allCases) { state in
                             Text(state.rawValue).tag(state)
                         }
@@ -442,8 +442,8 @@ public struct HealthDisclaimerView: View {
 
                         disclaimerItem(
                             icon: "car.fill",
-                            title: "Brainwave Entrainment",
-                            text: "Do NOT use audio/visual entrainment features while operating vehicles or heavy machinery."
+                            title: "Audio & Visual Safety",
+                            text: "Do NOT use pulsing audio/visual features while operating vehicles or heavy machinery."
                         )
 
                         disclaimerItem(

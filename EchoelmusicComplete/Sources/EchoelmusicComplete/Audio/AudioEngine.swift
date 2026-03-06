@@ -4,6 +4,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import os.log
 
 // MARK: - Audio Engine
 
@@ -59,7 +60,8 @@ public final class AudioEngine: ObservableObject {
     }
 
     deinit {
-        stop()
+        engine?.stop()
+        engine = nil
     }
 
     // MARK: - Audio Session
@@ -73,9 +75,7 @@ public final class AudioEngine: ObservableObject {
             try session.setPreferredIOBufferDuration(Double(AppConstants.bufferSize) / sampleRate)
             try session.setActive(true)
         } catch {
-            #if DEBUG
-            print("⚠️ [Audio] Session error: \(error)")
-            #endif
+            os_log(.error, "[Audio] Session error: %{public}@", error.localizedDescription)
         }
         #endif
     }
@@ -86,7 +86,7 @@ public final class AudioEngine: ObservableObject {
         engine = AVAudioEngine()
         guard let engine = engine else { return }
 
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: channelCount)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: channelCount) else { return }
 
         // Create mixer
         mainMixer = AVAudioMixerNode()
@@ -132,8 +132,8 @@ public final class AudioEngine: ObservableObject {
             engine.connect(node, to: mixer, format: format)
         }
 
-        // Multidimensional Brainwave Entrainment generators (stereo)
-        let binauralFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        // Spatial tone generators (stereo)
+        guard let binauralFormat = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else { return }
 
         binauralLeftNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
             self?.generateBinauralLeft(frameCount: frameCount, audioBufferList: audioBufferList) ?? noErr
@@ -176,9 +176,7 @@ public final class AudioEngine: ObservableObject {
             try engine?.start()
             isRunning = true
         } catch {
-            #if DEBUG
-            print("❌ [Audio] Engine start error: \(error)")
-            #endif
+            os_log(.error, "[Audio] Engine start error: %{public}@", error.localizedDescription)
         }
     }
 

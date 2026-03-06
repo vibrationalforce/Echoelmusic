@@ -2,6 +2,7 @@
 // Bio-reactive audio-visual experience
 
 import SwiftUI
+import os.log
 
 // MARK: - App Entry Point
 
@@ -93,7 +94,7 @@ final class AppState: ObservableObject {
             }
         }
 
-        print("🎵 Session started")
+        os_log(.info, "Session started")
     }
 
     func stopSession() {
@@ -111,7 +112,7 @@ final class AppState: ObservableObject {
         // Stop audio
         audioEngine.stop()
 
-        print("🎵 Session stopped - Duration: \(formatDuration(sessionDuration))")
+        os_log(.info, "Session stopped - Duration: %{public}@", formatDuration(sessionDuration))
     }
 
     private func updateSessionDuration() {

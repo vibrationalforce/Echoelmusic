@@ -3,6 +3,7 @@
 
 import Foundation
 import Network
+import os.log
 
 // MARK: - OSC Manager
 
@@ -39,7 +40,7 @@ public final class OSCManager: ObservableObject {
     public func connect() {
         // Setup sender
         let host = NWEndpoint.Host(targetHost)
-        let port = NWEndpoint.Port(rawValue: sendPort)!
+        guard let port = NWEndpoint.Port(rawValue: sendPort) else { return }
 
         sendConnection = NWConnection(host: host, port: port, using: .udp)
         sendConnection?.stateUpdateHandler = { [weak self] state in
@@ -59,15 +60,14 @@ public final class OSCManager: ObservableObject {
         // Setup receiver
         do {
             let params = NWParameters.udp
-            listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: receivePort)!)
+            guard let listenPort = NWEndpoint.Port(rawValue: receivePort) else { return }
+            listener = try NWListener(using: params, on: listenPort)
             listener?.newConnectionHandler = { [weak self] connection in
                 self?.handleIncomingConnection(connection)
             }
             listener?.start(queue: queue)
         } catch {
-            #if DEBUG
-            print("⚠️ [OSC] Listener error: \(error)")
-            #endif
+            os_log(.error, "[OSC] Listener error: %{public}@", error.localizedDescription)
         }
 
         isSending = true
@@ -157,9 +157,7 @@ public final class OSCManager: ObservableObject {
     private func sendMessage(_ data: Data) {
         sendConnection?.send(content: data, completion: .contentProcessed { error in
             if let error = error {
-                #if DEBUG
-                print("⚠️ [OSC] Send error: \(error)")
-                #endif
+                os_log(.error, "[OSC] Send error: %{public}@", error.localizedDescription)
             }
         })
     }
@@ -174,9 +172,7 @@ public final class OSCManager: ObservableObject {
     private func receiveMessage(_ connection: NWConnection) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, _, error in
             if let error = error {
-                #if DEBUG
-                print("⚠️ [OSC] Receive error: \(error)")
-                #endif
+                os_log(.error, "[OSC] Receive error: %{public}@", error.localizedDescription)
                 return
             }
 

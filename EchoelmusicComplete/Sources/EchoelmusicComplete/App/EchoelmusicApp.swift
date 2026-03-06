@@ -2,6 +2,7 @@
 // Main app entry point and state management
 
 import SwiftUI
+import os.log
 
 // MARK: - App Entry Point
 
@@ -95,9 +96,7 @@ public final class AppState: ObservableObject {
             }
         }
 
-        #if DEBUG
-        print("▶️ [Session] Started")
-        #endif
+        os_log(.info, "[Session] Started")
     }
 
     public func stopSession() {
@@ -115,9 +114,7 @@ public final class AppState: ObservableObject {
         // Stop audio
         audioEngine.stop()
 
-        #if DEBUG
-        print("⏹️ [Session] Stopped - Duration: \(formattedDuration)")
-        #endif
+        os_log(.info, "[Session] Stopped - Duration: %{public}@", formattedDuration)
     }
 
     private func updateSessionDuration() {

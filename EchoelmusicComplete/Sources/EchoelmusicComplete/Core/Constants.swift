@@ -39,7 +39,7 @@ public enum AppConstants {
 // MARK: - Audio Frequencies
 
 public enum AudioFrequencies {
-    // Brainwave entrainment frequencies (scientifically grounded)
+    // EEG band center frequencies (Berger 1929, Jasper & Andrews 1938)
     public static let delta: Float = 2.0    // Deep sleep, regeneration
     public static let theta: Float = 6.0    // Meditation, creativity
     public static let alpha: Float = 10.0   // Relaxation, learning
@@ -54,7 +54,7 @@ public enum AudioFrequencies {
     public static let a4Concert: Float = 442.0     // Common European concert pitch
     public static let a4ConcertHigh: Float = 443.0 // Berlin Philharmonic etc.
 
-    // Carrier frequencies for binaural
+    // Carrier frequency for spatial tone generation
     public static let binauralCarrier: Float = 200.0
 
     // Schumann resonance (Earth's natural EM frequency - for reference only)
@@ -87,8 +87,8 @@ public enum HealthDisclaimer {
     © 2026 Echoelmusic - For relaxation and creativity only.
     """
 
-    public static let binaural = """
-    Multidimensional Brainwave Entrainment should not be used while driving or operating machinery. \
+    public static let audioSafety = """
+    Audio features with pulsing tones should not be used while driving or operating machinery. \
     If you have epilepsy or are prone to seizures, consult a doctor before use.
     """
 }

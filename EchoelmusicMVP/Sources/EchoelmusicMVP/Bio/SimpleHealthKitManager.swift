@@ -3,6 +3,7 @@
 
 import Foundation
 import Combine
+import os.log
 
 #if canImport(HealthKit)
 import HealthKit
@@ -88,9 +89,7 @@ public final class SimpleHealthKitManager: ObservableObject {
         useSimulation = true
         #endif
 
-        #if DEBUG
-        print("❤️ [HealthKit] Manager initialized (simulation: \(useSimulation))")
-        #endif
+        os_log(.info, "[HealthKit] Manager initialized (simulation: %{public}d)", useSimulation)
     }
 
     // MARK: - Authorization
@@ -113,17 +112,13 @@ public final class SimpleHealthKitManager: ObservableObject {
         do {
             try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
             isAuthorized = true
-            #if DEBUG
-            print("✅ [HealthKit] Authorized")
-            #endif
+            os_log(.info, "[HealthKit] Authorized")
             return true
         } catch {
             errorMessage = "HealthKit authorization failed: \(error.localizedDescription)"
             useSimulation = true
             isAuthorized = true // Allow app to run with simulation
-            #if DEBUG
-            print("⚠️ [HealthKit] Auth failed, using simulation")
-            #endif
+            os_log(.warning, "[HealthKit] Auth failed, using simulation")
             return true
         }
         #else
@@ -147,9 +142,7 @@ public final class SimpleHealthKitManager: ObservableObject {
             #endif
         }
 
-        #if DEBUG
-        print("📊 [Bio] Monitoring started")
-        #endif
+        os_log(.info, "[Bio] Monitoring started")
     }
 
     public func stopMonitoring() {
@@ -164,9 +157,7 @@ public final class SimpleHealthKitManager: ObservableObject {
             #endif
         }
 
-        #if DEBUG
-        print("📊 [Bio] Monitoring stopped")
-        #endif
+        os_log(.info, "[Bio] Monitoring stopped")
     }
 
     // MARK: - Simulation
@@ -241,9 +232,7 @@ public final class SimpleHealthKitManager: ObservableObject {
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    #if DEBUG
-                    print("❌ [HealthKit] Heart rate query error: \(error)")
-                    #endif
+                    os_log(.error, "[HealthKit] Heart rate query error: %{public}@", error.localizedDescription)
                     return
                 }
                 self?.processHeartRateSamples(samples)
@@ -251,9 +240,7 @@ public final class SimpleHealthKitManager: ObservableObject {
 
             query.updateHandler = { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    #if DEBUG
-                    print("❌ [HealthKit] Heart rate update error: \(error)")
-                    #endif
+                    os_log(.error, "[HealthKit] Heart rate update error: %{public}@", error.localizedDescription)
                     return
                 }
                 self?.processHeartRateSamples(samples)
@@ -272,9 +259,7 @@ public final class SimpleHealthKitManager: ObservableObject {
                 limit: HKObjectQueryNoLimit
             ) { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    #if DEBUG
-                    print("❌ [HealthKit] HRV query error: \(error)")
-                    #endif
+                    os_log(.error, "[HealthKit] HRV query error: %{public}@", error.localizedDescription)
                     return
                 }
                 self?.processHRVSamples(samples)
@@ -282,9 +267,7 @@ public final class SimpleHealthKitManager: ObservableObject {
 
             query.updateHandler = { [weak self] _, samples, _, _, error in
                 if let error = error {
-                    #if DEBUG
-                    print("❌ [HealthKit] HRV update error: \(error)")
-                    #endif
+                    os_log(.error, "[HealthKit] HRV update error: %{public}@", error.localizedDescription)
                     return
                 }
                 self?.processHRVSamples(samples)

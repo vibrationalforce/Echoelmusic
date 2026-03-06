@@ -3,6 +3,7 @@
 
 import Foundation
 import AVFoundation
+import os.log
 
 // MARK: - Basic Audio Engine
 
@@ -47,7 +48,10 @@ public final class BasicAudioEngine: ObservableObject {
     }
 
     deinit {
-        stop()
+        audioEngine?.stop()
+        audioEngine = nil
+        toneNode = nil
+        reverbNode = nil
     }
 
     // MARK: - Audio Session Setup
@@ -58,13 +62,9 @@ public final class BasicAudioEngine: ObservableObject {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
-            #if DEBUG
-            print("🔊 [Audio] Session configured")
-            #endif
+            os_log(.info, "[Audio] Session configured")
         } catch {
-            #if DEBUG
-            print("❌ [Audio] Session error: \(error)")
-            #endif
+            os_log(.error, "[Audio] Session error: %{public}@", error.localizedDescription)
         }
         #endif
     }
@@ -75,10 +75,10 @@ public final class BasicAudioEngine: ObservableObject {
         audioEngine = AVAudioEngine()
         guard let engine = audioEngine else { return }
 
-        let format = AVAudioFormat(
+        guard let format = AVAudioFormat(
             standardFormatWithSampleRate: sampleRate,
             channels: channelCount
-        )!
+        ) else { return }
 
         // Create tone generator node
         toneNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
@@ -105,9 +105,7 @@ public final class BasicAudioEngine: ObservableObject {
         // Set volume
         engine.mainMixerNode.outputVolume = volume
 
-        #if DEBUG
-        print("🎛️ [Audio] Engine configured")
-        #endif
+        os_log(.info, "[Audio] Engine configured")
     }
 
     // MARK: - Tone Generation
@@ -174,13 +172,9 @@ public final class BasicAudioEngine: ObservableObject {
         do {
             try audioEngine?.start()
             isRunning = true
-            #if DEBUG
-            print("▶️ [Audio] Engine started")
-            #endif
+            os_log(.info, "[Audio] Engine started")
         } catch {
-            #if DEBUG
-            print("❌ [Audio] Failed to start engine: \(error)")
-            #endif
+            os_log(.error, "[Audio] Failed to start engine: %{public}@", error.localizedDescription)
         }
     }
 
@@ -193,9 +187,7 @@ public final class BasicAudioEngine: ObservableObject {
         reverbNode = nil
         isRunning = false
 
-        #if DEBUG
-        print("⏹️ [Audio] Engine stopped")
-        #endif
+        os_log(.info, "[Audio] Engine stopped")
     }
 
     // MARK: - Bio Data Integration

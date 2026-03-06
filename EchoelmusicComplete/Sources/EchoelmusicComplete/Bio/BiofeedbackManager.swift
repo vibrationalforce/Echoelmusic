@@ -47,7 +47,12 @@ public final class BiofeedbackManager: ObservableObject {
     }
 
     deinit {
-        stopMonitoring()
+        simulationTimer?.invalidate()
+        simulationTimer = nil
+        #if canImport(HealthKit)
+        if let query = heartRateQuery { healthStore?.stop(query) }
+        if let query = hrvQuery { healthStore?.stop(query) }
+        #endif
     }
 
     // MARK: - HealthKit Setup
