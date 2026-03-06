@@ -928,9 +928,9 @@ class SessionClipViewModel: ObservableObject {
     func toggleMute(_ index: Int) { guard index < tracks.count else { return }; tracks[index].isMuted.toggle() }
     func toggleSolo(_ index: Int) { guard index < tracks.count else { return }; tracks[index].isSoloed.toggle() }
     func toggleArm(_ index: Int) { guard index < tracks.count else { return }; tracks[index].isArmed.toggle() }
-    func togglePlay() { EchoelCreativeWorkspace.shared.isPlaying.toggle() }
+    func togglePlay() { EchoelCreativeWorkspace.shared.togglePlayback() }
     func toggleRecord() { isRecording.toggle() }
-    func stop() { EchoelCreativeWorkspace.shared.isPlaying = false; isRecording = false }
+    func stop() { if EchoelCreativeWorkspace.shared.isPlaying { EchoelCreativeWorkspace.shared.togglePlayback() }; isRecording = false }
     func stopAll() { activeScene = nil }
     func launchScene(_ index: Int) { activeScene = index; EchoelCreativeWorkspace.shared.isPlaying = true }
     func clipAt(track: Int, scene: Int) -> ClipViewClip? {

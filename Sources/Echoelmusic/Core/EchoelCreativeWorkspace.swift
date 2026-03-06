@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AVFoundation
+import Accelerate
 
 // MARK: - Creative Workspace
 
@@ -25,6 +26,15 @@ final class EchoelCreativeWorkspace: ObservableObject {
     let proSession: ProSessionEngine
     let proColor: ProColorGrading
     let loopEngine: LoopEngine
+
+    /// Connected AudioEngine for hardware output (set via connectAudioEngine)
+    private weak var audioEngine: AudioEngine?
+
+    /// Timer that drives audio rendering during playback
+    private var audioRenderTimer: Timer?
+
+    /// Audio render buffer size in frames
+    private let renderFrameCount: Int = 512
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -114,6 +124,16 @@ final class EchoelCreativeWorkspace: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Audio Engine Connection
+
+    /// Connect the AudioEngine for hardware output.
+    /// Must be called after both AudioEngine and workspace are initialized.
+    func connectAudioEngine(_ engine: AudioEngine) {
+        self.audioEngine = engine
+        engine.connectMixer(proMixer)
+        log.info("AudioEngine connected to Creative Workspace", category: .audio)
+    }
+
     // MARK: - Actions
 
     func setGlobalBPM(_ bpm: Double) {
@@ -139,13 +159,18 @@ final class EchoelCreativeWorkspace: ObservableObject {
         if isPlaying {
             videoEditor.pause()
             proSession.stop()
+            proMixer.isPlaying = false
             loopEngine.stopPlayback()
+            stopAudioRenderTimer()
         } else {
+            audioEngine?.start()
             Task { await videoEditor.play() }
             proSession.play()
+            proMixer.isPlaying = true
             if !loopEngine.loops.isEmpty {
                 loopEngine.startPlayback()
             }
+            startAudioRenderTimer()
         }
         isPlaying.toggle()
     }
@@ -153,5 +178,69 @@ final class EchoelCreativeWorkspace: ObservableObject {
     func updatePlaybackPosition(_ seconds: Double) {
         bpmGrid.updatePosition(seconds)
         videoEditor.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
+    }
+
+    // MARK: - Audio Render Loop
+
+    /// Start the audio render timer that pulls audio from ProSessionEngine
+    /// and pushes it to AudioEngine for hardware output.
+    ///
+    /// Render rate: ~93.75 Hz at 48kHz/512 frames — well within 10ms budget.
+    private func startAudioRenderTimer() {
+        stopAudioRenderTimer()
+
+        let sampleRate = proMixer.sampleRate
+        let frameCount = renderFrameCount
+        // Timer interval = buffer duration (e.g., 512/48000 ≈ 10.67ms)
+        let interval = Double(frameCount) / sampleRate
+
+        audioRenderTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.renderAndOutputAudio(frameCount: frameCount)
+            }
+        }
+    }
+
+    private func stopAudioRenderTimer() {
+        audioRenderTimer?.invalidate()
+        audioRenderTimer = nil
+    }
+
+    /// Render one block of audio from the session and send to hardware.
+    /// Chain: ProSessionEngine.renderAudio() → AVAudioPCMBuffer → AudioEngine.schedulePlayback()
+    private func renderAndOutputAudio(frameCount: Int) {
+        guard isPlaying, let audioEngine else { return }
+
+        // Render from session (clips, patterns, MIDI)
+        guard let stereo = proSession.renderAudio(frameCount: frameCount) else { return }
+        guard !stereo.left.isEmpty else { return }
+
+        // Create AVAudioPCMBuffer from rendered Float arrays
+        let sampleRate = proMixer.sampleRate
+        guard let format = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: sampleRate,
+            channels: 2,
+            interleaved: false
+        ) else { return }
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)) else { return }
+        buffer.frameLength = AVAudioFrameCount(frameCount)
+
+        guard let channelData = buffer.floatChannelData else { return }
+
+        // Copy rendered audio into buffer
+        let count = min(stereo.left.count, frameCount)
+        stereo.left.withUnsafeBufferPointer { src in
+            guard let srcBase = src.baseAddress else { return }
+            channelData[0].update(from: srcBase, count: count)
+        }
+        stereo.right.withUnsafeBufferPointer { src in
+            guard let srcBase = src.baseAddress else { return }
+            channelData[1].update(from: srcBase, count: count)
+        }
+
+        // Send to hardware output
+        audioEngine.schedulePlayback(buffer: buffer)
     }
 }

@@ -30,6 +30,7 @@ struct EchoelmusicApp: App {
                     .preferredColorScheme(themeManager.resolvedColorScheme)
                     .onAppear {
                         recordingEngine.connectAudioEngine(audioEngine)
+                        EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     }
             } else {
                 LaunchScreen(phase: "Loading...", progress: 0.5)
