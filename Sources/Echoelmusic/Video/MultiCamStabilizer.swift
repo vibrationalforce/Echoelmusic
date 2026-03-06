@@ -625,6 +625,7 @@ class VideoStabilizer: ObservableObject {
         }
 
         // Normalize weights
+        guard totalWeight > 0 else { return movingAverageCorrection(windowSize: 3) }
         weights = weights.map { $0 / totalWeight }
 
         // Apply kernel
@@ -865,7 +866,7 @@ class VideoStabilizer: ObservableObject {
                 avgRot += cumulative[j].rotation
             }
 
-            let count = CGFloat(end - start)
+            let count = CGFloat(max(1, end - start))
             smoothedPath.append(FrameMotion(
                 timestamp: cumulative[i].timestamp,
                 translation: CGPoint(x: avgX / count, y: avgY / count),

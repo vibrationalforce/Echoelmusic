@@ -91,7 +91,7 @@ public enum AudioMode: String, CaseIterable, Identifiable {
     public var description: String {
         switch self {
         case .ambient: return "Bio-reactive ambient tone"
-        case .binaural: return "Multidimensional Brainwave Entrainment for focus"
+        case .binaural: return "Spatial audio with bio-reactive frequency mapping"
         case .drone: return "Layered ambient drone"
         case .silence: return "Visualization only"
         }
@@ -120,18 +120,20 @@ public enum VisualizationType: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Binaural State
+// MARK: - EEG Frequency Band
 
-public enum BinauralState: String, CaseIterable, Identifiable {
+/// EEG frequency bands — standard neuroscience classification
+/// (Berger 1929, Jasper & Andrews 1938)
+public enum BrainwaveBand: String, CaseIterable, Identifiable {
     case delta = "Delta"      // 0.5-4 Hz - Deep sleep
-    case theta = "Theta"      // 4-8 Hz - Meditation
-    case alpha = "Alpha"      // 8-13 Hz - Relaxation
-    case beta = "Beta"        // 13-30 Hz - Focus
-    case gamma = "Gamma"      // 30-100 Hz - Peak performance
+    case theta = "Theta"      // 4-8 Hz - Relaxation
+    case alpha = "Alpha"      // 8-13 Hz - Calm alertness
+    case beta = "Beta"        // 13-30 Hz - Active focus
+    case gamma = "Gamma"      // 30-100 Hz - High-level cognition
 
     public var id: String { rawValue }
 
-    public var frequency: Double {
+    public var centerFrequency: Double {
         switch self {
         case .delta: return 2.0
         case .theta: return 6.0
@@ -143,11 +145,19 @@ public enum BinauralState: String, CaseIterable, Identifiable {
 
     public var description: String {
         switch self {
-        case .delta: return "Deep sleep & healing"
-        case .theta: return "Meditation & creativity"
-        case .alpha: return "Relaxation & calm"
-        case .beta: return "Focus & concentration"
-        case .gamma: return "Peak performance"
+        case .delta: return "Deep sleep range"
+        case .theta: return "Relaxation range"
+        case .alpha: return "Calm alertness range"
+        case .beta: return "Active focus range"
+        case .gamma: return "High-level cognition range"
         }
     }
+}
+
+/// Backwards compatibility alias
+public typealias BinauralState = BrainwaveBand
+
+extension BrainwaveBand {
+    /// Legacy accessor — use centerFrequency instead
+    public var frequency: Double { centerFrequency }
 }

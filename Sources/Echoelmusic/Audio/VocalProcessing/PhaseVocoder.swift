@@ -407,7 +407,7 @@ class PhaseVocoder {
                 sum += logMag[j]
                 count += 1
             }
-            envelope[i] = exp(sum / count)
+            envelope[i] = count > 0 ? exp(sum / count) : 1.0
         }
 
         return envelope

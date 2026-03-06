@@ -482,8 +482,9 @@ struct DAWArrangementView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 // Bar markers
-                let totalBars = max(16, Int(ceil((recordingEngine.currentSession?.duration ?? 30) * bpm / 240.0)) + 4)
-                let barWidth = (240.0 / bpm) * pixelsPerSecond // 4 beats per bar
+                let safeBpm = max(bpm, 20.0)
+                let totalBars = max(16, Int(ceil((recordingEngine.currentSession?.duration ?? 30) * safeBpm / 240.0)) + 4)
+                let barWidth = (240.0 / safeBpm) * pixelsPerSecond // 4 beats per bar
 
                 HStack(spacing: 0) {
                     ForEach(0..<totalBars, id: \.self) { bar in
@@ -619,7 +620,7 @@ struct DAWArrangementView: View {
     // MARK: - Beat Grid Overlay
 
     private var beatGridOverlay: some View {
-        let beatWidth = (60.0 / bpm) * pixelsPerSecond
+        let beatWidth = (60.0 / max(bpm, 20.0)) * pixelsPerSecond
         let barWidth = beatWidth * 4
         let totalBars = max(16, Int(ceil((recordingEngine.currentSession?.duration ?? 30) * bpm / 240.0)) + 4)
         let laneHeight = CGFloat(max(tracks.count, 1)) * 64 + CGFloat(EchoelSpacing.sm * 2)

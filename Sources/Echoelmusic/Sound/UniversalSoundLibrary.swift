@@ -549,7 +549,7 @@ class UniversalSoundLibrary: ObservableObject {
                     releaseTime: 100,
                     vibrato: Instrument.AudioCharacteristics.VibratoProfile(rate: 6, depth: 40)
                 ),
-                culturalContext: "Reed flute, mystical sound in Sufi music"
+                culturalContext: "Reed flute, meditative timbre in Sufi music"
             ),
 
             Instrument(

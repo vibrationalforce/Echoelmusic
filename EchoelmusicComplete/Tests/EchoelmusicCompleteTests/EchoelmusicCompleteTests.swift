@@ -106,32 +106,38 @@ final class VisualizationTypeTests: XCTestCase {
     }
 }
 
-// MARK: - Binaural State Tests
+// MARK: - Brainwave Band Tests (EEG Frequency Bands)
 
-final class BinauralStateTests: XCTestCase {
+final class BrainwaveBandTests: XCTestCase {
 
     func testAllCases() {
-        XCTAssertEqual(BinauralState.allCases.count, 5)
+        XCTAssertEqual(BrainwaveBand.allCases.count, 5)
     }
 
     func testDeltaFrequency() {
-        XCTAssertEqual(BinauralState.delta.frequency, 2.0, accuracy: 0.1)
+        XCTAssertEqual(BrainwaveBand.delta.centerFrequency, 2.0, accuracy: 0.1)
     }
 
     func testThetaFrequency() {
-        XCTAssertEqual(BinauralState.theta.frequency, 6.0, accuracy: 0.1)
+        XCTAssertEqual(BrainwaveBand.theta.centerFrequency, 6.0, accuracy: 0.1)
     }
 
     func testAlphaFrequency() {
-        XCTAssertEqual(BinauralState.alpha.frequency, 10.0, accuracy: 0.1)
+        XCTAssertEqual(BrainwaveBand.alpha.centerFrequency, 10.0, accuracy: 0.1)
     }
 
     func testBetaFrequency() {
-        XCTAssertEqual(BinauralState.beta.frequency, 20.0, accuracy: 0.1)
+        XCTAssertEqual(BrainwaveBand.beta.centerFrequency, 20.0, accuracy: 0.1)
     }
 
     func testGammaFrequency() {
-        XCTAssertEqual(BinauralState.gamma.frequency, 40.0, accuracy: 0.1)
+        XCTAssertEqual(BrainwaveBand.gamma.centerFrequency, 40.0, accuracy: 0.1)
+    }
+
+    func testBackwardsCompatibilityAlias() {
+        // BinauralState typealias should still work
+        let state: BinauralState = .alpha
+        XCTAssertEqual(state.frequency, 10.0, accuracy: 0.1)
     }
 }
 

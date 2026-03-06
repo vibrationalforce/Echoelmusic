@@ -20,7 +20,7 @@ Bio-reactive creative performance platform. Physiological data → real-time mus
 - **Mode:** RALPH WIGGUM LAMBDA — iterative tightening until tight
 - **SDK:** Must target iOS 26 SDK (ITMS-90725, deadline April 28, 2026)
 - **Architecture:** 100% JUCE-free, platform-native
-- **Commits:** 1,552+ | **Tests:** 56 suites | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
+- **Commits:** 1,560+ | **Tests:** 975+ methods / 214 classes / 14 files | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
 
 ---
 
@@ -254,9 +254,9 @@ Always prefix types to avoid conflicts:
 
 ---
 
-## KEY TESTS
+## KEY TESTS (14 files, 975+ methods)
 
-BioSignalDSPTests | EchoelDDSPTests | EchoelToolkitTests | ComprehensiveTestSuite | AudioEngineTests | SpatialAudioTests | MIDITests | HealthKitTests
+CoreSystemTests | CoreServicesTests | DSPTests | VDSPTests | AudioEngineTests | AdvancedEffectsTests | MIDITests | RecordingTests | BusinessTests | ExportTests | VideoTests | SoundTests | VocalAndNodesTests | HardwareThemeTests
 
 Run before ANY commit.
 

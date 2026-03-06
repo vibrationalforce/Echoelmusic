@@ -374,7 +374,7 @@ public final class EchoelModalBank: @unchecked Sendable {
 
     /// Recalculate absolute mode frequencies from ratios, stiffness, and size
     private func recalculateModeFrequencies() {
-        let baseFreq = frequency / size
+        let baseFreq = frequency / max(size, 0.001)
 
         for i in 0..<modeCount {
             let ratio = modeRatios[i]

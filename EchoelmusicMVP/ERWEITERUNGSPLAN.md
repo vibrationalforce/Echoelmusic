@@ -397,7 +397,7 @@ final class VisualizationTests: XCTestCase {
 ## Phase 2: Audio Erweiterung (Woche 2)
 
 ### Ziel
-Multidimensional Brainwave Entrainment und mehr Audio-Modi hinzufügen.
+Bio-reactive spatial audio und mehr Audio-Modi hinzufügen.
 
 ### Neue Dateien
 
@@ -427,7 +427,7 @@ public enum AudioMode: String, CaseIterable, Identifiable {
     public var description: String {
         switch self {
         case .tone: return "Einfacher bio-reaktiver Ton"
-        case .binaural: return "Multidimensional Brainwave Entrainment für Fokus/Entspannung"
+        case .binaural: return "Bio-reactive spatial audio für Fokus/Entspannung"
         case .drone: return "Atmosphärischer Ambient-Klang"
         case .silence: return "Nur Visualisierung, kein Audio"
         }
@@ -590,7 +590,7 @@ binauralEngine.stop()
 - [ ] Audio-Picker UI erstellen
 - [ ] Tests schreiben
 - [ ] Build testen
-- [ ] Commit: `git commit -m "feat: Add Multidimensional Brainwave Entrainment and drone audio"`
+- [ ] Commit: `git commit -m "feat: Add Bio-reactive spatial audio and drone audio"`
 
 ---
 
