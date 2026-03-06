@@ -360,14 +360,14 @@ class ChordPadViewModel: ObservableObject {
     private func setupDefaultPads() {
         // Default chord progression: I - V - vi - IV (Pop progression)
         chordPads = [
-            ChordPad(rootNote: 60, chordType: .major, color: .blue),      // C
-            ChordPad(rootNote: 62, chordType: .minor, color: .purple),    // Dm
-            ChordPad(rootNote: 64, chordType: .minor, color: .pink),      // Em
-            ChordPad(rootNote: 65, chordType: .major, color: .orange),    // F
-            ChordPad(rootNote: 67, chordType: .major, color: .green),     // G
-            ChordPad(rootNote: 69, chordType: .minor, color: .red),       // Am
+            ChordPad(rootNote: 60, chordType: .major, color: EchoelBrand.sky.opacity(0.8)),      // C
+            ChordPad(rootNote: 62, chordType: .minor, color: EchoelBrand.violet),    // Dm
+            ChordPad(rootNote: 64, chordType: .minor, color: EchoelBrand.rose),      // Em
+            ChordPad(rootNote: 65, chordType: .major, color: EchoelBrand.amber),    // F
+            ChordPad(rootNote: 67, chordType: .major, color: EchoelBrand.emerald),     // G
+            ChordPad(rootNote: 69, chordType: .minor, color: EchoelBrand.coral),       // Am
             ChordPad(rootNote: 71, chordType: .diminished, color: .gray), // Bdim
-            ChordPad(rootNote: 60, chordType: .major7, color: .cyan)      // Cmaj7
+            ChordPad(rootNote: 60, chordType: .major7, color: EchoelBrand.sky)      // Cmaj7
         ]
     }
 
@@ -625,27 +625,43 @@ struct DrumPadButton: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isPressed ? pad.color : pad.color.opacity(0.4))
+            RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            isPressed ? pad.color.opacity(0.8) : pad.color.opacity(0.25),
+                            isPressed ? pad.color.opacity(0.6) : pad.color.opacity(0.12)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(pad.color.opacity(0.8), lineWidth: 2)
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                        .strokeBorder(
+                            pad.color.opacity(isPressed ? 0.9 : 0.3),
+                            lineWidth: isPressed ? 1.5 : 0.5
+                        )
+                )
+                .shadow(
+                    color: isPressed ? pad.color.opacity(0.4) : Color.clear,
+                    radius: isPressed ? 8 : 0
                 )
 
-            VStack(spacing: 2) {
+            VStack(spacing: 3) {
                 Text(pad.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .font(EchoelBrandFont.label())
+                    .fontWeight(.semibold)
+                    .foregroundColor(isPressed ? .white : EchoelBrand.textPrimary)
 
-                Text("Note \(pad.midiNote)")
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.6))
+                Text("MIDI \(pad.midiNote)")
+                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textDisabled)
             }
         }
         .frame(height: 70)
-        .scaleEffect(isPressed ? 0.92 : 1.0)
-        .animation(.easeOut(duration: 0.05), value: isPressed)
+        .scaleEffect(isPressed ? 0.93 : 1.0)
+        .animation(.spring(response: 0.12, dampingFraction: 0.6), value: isPressed)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -685,18 +701,18 @@ enum DrumKit: String, CaseIterable {
         switch self {
         case .acoustic:
             return [
-                DrumPadModel(name: "Kick", midiNote: 36, color: .red),
-                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
-                DrumPadModel(name: "HiHat C", midiNote: 42, color: .yellow),
-                DrumPadModel(name: "HiHat O", midiNote: 46, color: .yellow),
-                DrumPadModel(name: "Tom Hi", midiNote: 50, color: .green),
-                DrumPadModel(name: "Tom Mid", midiNote: 47, color: .green),
-                DrumPadModel(name: "Tom Lo", midiNote: 45, color: .green),
-                DrumPadModel(name: "Crash", midiNote: 49, color: .cyan),
-                DrumPadModel(name: "Ride", midiNote: 51, color: .blue),
-                DrumPadModel(name: "Ride B", midiNote: 53, color: .blue),
-                DrumPadModel(name: "Clap", midiNote: 39, color: .purple),
-                DrumPadModel(name: "Rim", midiNote: 37, color: .pink),
+                DrumPadModel(name: "Kick", midiNote: 36, color: EchoelBrand.coral),
+                DrumPadModel(name: "Snare", midiNote: 38, color: EchoelBrand.amber),
+                DrumPadModel(name: "HiHat C", midiNote: 42, color: EchoelBrand.emerald),
+                DrumPadModel(name: "HiHat O", midiNote: 46, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Tom Hi", midiNote: 50, color: EchoelBrand.sky),
+                DrumPadModel(name: "Tom Mid", midiNote: 47, color: EchoelBrand.sky),
+                DrumPadModel(name: "Tom Lo", midiNote: 45, color: EchoelBrand.sky),
+                DrumPadModel(name: "Crash", midiNote: 49, color: EchoelBrand.violet),
+                DrumPadModel(name: "Ride", midiNote: 51, color: EchoelBrand.violet),
+                DrumPadModel(name: "Ride B", midiNote: 53, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Clap", midiNote: 39, color: EchoelBrand.violet),
+                DrumPadModel(name: "Rim", midiNote: 37, color: EchoelBrand.rose),
                 DrumPadModel(name: "Cowbell", midiNote: 56, color: .brown),
                 DrumPadModel(name: "Tamb", midiNote: 54, color: .brown),
                 DrumPadModel(name: "Shaker", midiNote: 70, color: .brown),
@@ -704,97 +720,97 @@ enum DrumKit: String, CaseIterable {
             ]
         case .tr808:
             return [
-                DrumPadModel(name: "Kick", midiNote: 36, color: .red),
-                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
-                DrumPadModel(name: "Clap", midiNote: 39, color: .orange),
-                DrumPadModel(name: "Rim", midiNote: 37, color: .yellow),
-                DrumPadModel(name: "Lo Tom", midiNote: 41, color: .green),
-                DrumPadModel(name: "Mid Tom", midiNote: 43, color: .green),
-                DrumPadModel(name: "Hi Tom", midiNote: 48, color: .green),
-                DrumPadModel(name: "Cl HiHat", midiNote: 42, color: .cyan),
-                DrumPadModel(name: "Op HiHat", midiNote: 46, color: .cyan),
-                DrumPadModel(name: "Cymbal", midiNote: 49, color: .blue),
-                DrumPadModel(name: "Cowbell", midiNote: 56, color: .purple),
-                DrumPadModel(name: "Conga Hi", midiNote: 62, color: .pink),
-                DrumPadModel(name: "Conga Md", midiNote: 63, color: .pink),
-                DrumPadModel(name: "Conga Lo", midiNote: 64, color: .pink),
+                DrumPadModel(name: "Kick", midiNote: 36, color: EchoelBrand.coral),
+                DrumPadModel(name: "Snare", midiNote: 38, color: EchoelBrand.amber),
+                DrumPadModel(name: "Clap", midiNote: 39, color: EchoelBrand.amber),
+                DrumPadModel(name: "Rim", midiNote: 37, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Lo Tom", midiNote: 41, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Mid Tom", midiNote: 43, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Hi Tom", midiNote: 48, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Cl HiHat", midiNote: 42, color: EchoelBrand.sky),
+                DrumPadModel(name: "Op HiHat", midiNote: 46, color: EchoelBrand.sky),
+                DrumPadModel(name: "Cymbal", midiNote: 49, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Cowbell", midiNote: 56, color: EchoelBrand.violet),
+                DrumPadModel(name: "Conga Hi", midiNote: 62, color: EchoelBrand.rose),
+                DrumPadModel(name: "Conga Md", midiNote: 63, color: EchoelBrand.rose),
+                DrumPadModel(name: "Conga Lo", midiNote: 64, color: EchoelBrand.rose),
                 DrumPadModel(name: "Maracas", midiNote: 70, color: .brown),
                 DrumPadModel(name: "Claves", midiNote: 75, color: .gray)
             ]
         case .tr909:
             return [
-                DrumPadModel(name: "Kick", midiNote: 36, color: .red),
-                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
-                DrumPadModel(name: "Clap", midiNote: 39, color: .orange),
-                DrumPadModel(name: "Rim", midiNote: 37, color: .yellow),
-                DrumPadModel(name: "Lo Tom", midiNote: 41, color: .green),
-                DrumPadModel(name: "Mid Tom", midiNote: 43, color: .green),
-                DrumPadModel(name: "Hi Tom", midiNote: 48, color: .green),
-                DrumPadModel(name: "Cl HH", midiNote: 42, color: .cyan),
-                DrumPadModel(name: "Op HH", midiNote: 46, color: .cyan),
-                DrumPadModel(name: "Crash", midiNote: 49, color: .blue),
-                DrumPadModel(name: "Ride", midiNote: 51, color: .blue),
-                DrumPadModel(name: "Perc 1", midiNote: 60, color: .purple),
-                DrumPadModel(name: "Perc 2", midiNote: 61, color: .purple),
-                DrumPadModel(name: "Perc 3", midiNote: 62, color: .pink),
+                DrumPadModel(name: "Kick", midiNote: 36, color: EchoelBrand.coral),
+                DrumPadModel(name: "Snare", midiNote: 38, color: EchoelBrand.amber),
+                DrumPadModel(name: "Clap", midiNote: 39, color: EchoelBrand.amber),
+                DrumPadModel(name: "Rim", midiNote: 37, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Lo Tom", midiNote: 41, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Mid Tom", midiNote: 43, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Hi Tom", midiNote: 48, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Cl HH", midiNote: 42, color: EchoelBrand.sky),
+                DrumPadModel(name: "Op HH", midiNote: 46, color: EchoelBrand.sky),
+                DrumPadModel(name: "Crash", midiNote: 49, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Ride", midiNote: 51, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Perc 1", midiNote: 60, color: EchoelBrand.violet),
+                DrumPadModel(name: "Perc 2", midiNote: 61, color: EchoelBrand.violet),
+                DrumPadModel(name: "Perc 3", midiNote: 62, color: EchoelBrand.rose),
                 DrumPadModel(name: "Perc 4", midiNote: 63, color: .brown),
                 DrumPadModel(name: "FX", midiNote: 80, color: .gray)
             ]
         case .electronic:
             return [
-                DrumPadModel(name: "Kick", midiNote: 36, color: .red),
-                DrumPadModel(name: "Sub Kick", midiNote: 35, color: .red),
-                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
-                DrumPadModel(name: "Clap", midiNote: 39, color: .orange),
-                DrumPadModel(name: "HiHat", midiNote: 42, color: .yellow),
-                DrumPadModel(name: "Open HH", midiNote: 46, color: .yellow),
-                DrumPadModel(name: "Perc Lo", midiNote: 60, color: .green),
-                DrumPadModel(name: "Perc Hi", midiNote: 62, color: .green),
-                DrumPadModel(name: "Crash", midiNote: 49, color: .cyan),
-                DrumPadModel(name: "FX Rise", midiNote: 81, color: .blue),
-                DrumPadModel(name: "FX Fall", midiNote: 82, color: .blue),
-                DrumPadModel(name: "Noise", midiNote: 83, color: .purple),
-                DrumPadModel(name: "Blip", midiNote: 84, color: .purple),
-                DrumPadModel(name: "Zap", midiNote: 85, color: .pink),
-                DrumPadModel(name: "Laser", midiNote: 86, color: .pink),
+                DrumPadModel(name: "Kick", midiNote: 36, color: EchoelBrand.coral),
+                DrumPadModel(name: "Sub Kick", midiNote: 35, color: EchoelBrand.coral),
+                DrumPadModel(name: "Snare", midiNote: 38, color: EchoelBrand.amber),
+                DrumPadModel(name: "Clap", midiNote: 39, color: EchoelBrand.amber),
+                DrumPadModel(name: "HiHat", midiNote: 42, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Open HH", midiNote: 46, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Perc Lo", midiNote: 60, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Perc Hi", midiNote: 62, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Crash", midiNote: 49, color: EchoelBrand.sky),
+                DrumPadModel(name: "FX Rise", midiNote: 81, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "FX Fall", midiNote: 82, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Noise", midiNote: 83, color: EchoelBrand.violet),
+                DrumPadModel(name: "Blip", midiNote: 84, color: EchoelBrand.violet),
+                DrumPadModel(name: "Zap", midiNote: 85, color: EchoelBrand.rose),
+                DrumPadModel(name: "Laser", midiNote: 86, color: EchoelBrand.rose),
                 DrumPadModel(name: "Glitch", midiNote: 87, color: .gray)
             ]
         case .hiphop:
             return [
-                DrumPadModel(name: "Boom", midiNote: 36, color: .red),
-                DrumPadModel(name: "808 Kick", midiNote: 35, color: .red),
-                DrumPadModel(name: "Snare", midiNote: 38, color: .orange),
-                DrumPadModel(name: "Clap", midiNote: 39, color: .orange),
-                DrumPadModel(name: "HiHat", midiNote: 42, color: .yellow),
-                DrumPadModel(name: "Open HH", midiNote: 46, color: .yellow),
-                DrumPadModel(name: "Rim", midiNote: 37, color: .green),
-                DrumPadModel(name: "Snap", midiNote: 40, color: .green),
-                DrumPadModel(name: "Perc 1", midiNote: 60, color: .cyan),
-                DrumPadModel(name: "Perc 2", midiNote: 61, color: .cyan),
-                DrumPadModel(name: "Scratch", midiNote: 29, color: .blue),
-                DrumPadModel(name: "Shout", midiNote: 30, color: .blue),
-                DrumPadModel(name: "Vox 1", midiNote: 31, color: .purple),
-                DrumPadModel(name: "Vox 2", midiNote: 32, color: .purple),
-                DrumPadModel(name: "FX 1", midiNote: 80, color: .pink),
+                DrumPadModel(name: "Boom", midiNote: 36, color: EchoelBrand.coral),
+                DrumPadModel(name: "808 Kick", midiNote: 35, color: EchoelBrand.coral),
+                DrumPadModel(name: "Snare", midiNote: 38, color: EchoelBrand.amber),
+                DrumPadModel(name: "Clap", midiNote: 39, color: EchoelBrand.amber),
+                DrumPadModel(name: "HiHat", midiNote: 42, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Open HH", midiNote: 46, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Rim", midiNote: 37, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Snap", midiNote: 40, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Perc 1", midiNote: 60, color: EchoelBrand.sky),
+                DrumPadModel(name: "Perc 2", midiNote: 61, color: EchoelBrand.sky),
+                DrumPadModel(name: "Scratch", midiNote: 29, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Shout", midiNote: 30, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Vox 1", midiNote: 31, color: EchoelBrand.violet),
+                DrumPadModel(name: "Vox 2", midiNote: 32, color: EchoelBrand.violet),
+                DrumPadModel(name: "FX 1", midiNote: 80, color: EchoelBrand.rose),
                 DrumPadModel(name: "FX 2", midiNote: 81, color: .gray)
             ]
         case .percussion:
             return [
-                DrumPadModel(name: "Conga Hi", midiNote: 62, color: .red),
-                DrumPadModel(name: "Conga Lo", midiNote: 64, color: .red),
-                DrumPadModel(name: "Bongo Hi", midiNote: 60, color: .orange),
-                DrumPadModel(name: "Bongo Lo", midiNote: 61, color: .orange),
-                DrumPadModel(name: "Timbale Hi", midiNote: 65, color: .yellow),
-                DrumPadModel(name: "Timbale Lo", midiNote: 66, color: .yellow),
-                DrumPadModel(name: "Cowbell", midiNote: 56, color: .green),
-                DrumPadModel(name: "Claves", midiNote: 75, color: .green),
-                DrumPadModel(name: "Guiro Sh", midiNote: 73, color: .cyan),
-                DrumPadModel(name: "Guiro Lg", midiNote: 74, color: .cyan),
-                DrumPadModel(name: "Maracas", midiNote: 70, color: .blue),
-                DrumPadModel(name: "Cabasa", midiNote: 69, color: .blue),
-                DrumPadModel(name: "Shaker", midiNote: 71, color: .purple),
-                DrumPadModel(name: "Tambour", midiNote: 54, color: .purple),
-                DrumPadModel(name: "Triangle", midiNote: 81, color: .pink),
+                DrumPadModel(name: "Conga Hi", midiNote: 62, color: EchoelBrand.coral),
+                DrumPadModel(name: "Conga Lo", midiNote: 64, color: EchoelBrand.coral),
+                DrumPadModel(name: "Bongo Hi", midiNote: 60, color: EchoelBrand.amber),
+                DrumPadModel(name: "Bongo Lo", midiNote: 61, color: EchoelBrand.amber),
+                DrumPadModel(name: "Timbale Hi", midiNote: 65, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Timbale Lo", midiNote: 66, color: EchoelBrand.amber.opacity(0.8)),
+                DrumPadModel(name: "Cowbell", midiNote: 56, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Claves", midiNote: 75, color: EchoelBrand.emerald),
+                DrumPadModel(name: "Guiro Sh", midiNote: 73, color: EchoelBrand.sky),
+                DrumPadModel(name: "Guiro Lg", midiNote: 74, color: EchoelBrand.sky),
+                DrumPadModel(name: "Maracas", midiNote: 70, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Cabasa", midiNote: 69, color: EchoelBrand.sky.opacity(0.8)),
+                DrumPadModel(name: "Shaker", midiNote: 71, color: EchoelBrand.violet),
+                DrumPadModel(name: "Tambour", midiNote: 54, color: EchoelBrand.violet),
+                DrumPadModel(name: "Triangle", midiNote: 81, color: EchoelBrand.rose),
                 DrumPadModel(name: "Woodblk", midiNote: 77, color: .gray)
             ]
         }
@@ -1073,21 +1089,43 @@ struct TouchKeyboardView: View {
     @StateObject private var viewModel = TouchKeyboardViewModel()
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: EchoelSpacing.sm) {
             // Header
             HStack {
-                Text("Keyboard")
-                    .font(.headline)
+                Text("KEYBOARD")
+                    .font(EchoelBrandFont.label())
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .tracking(2)
 
                 Spacer()
 
                 // Octave controls
-                HStack {
-                    Button("-") { viewModel.octave = max(0, viewModel.octave - 1) }
-                        .buttonStyle(.bordered)
-                    Text("Oct \(viewModel.octave)")
-                    Button("+") { viewModel.octave = min(8, viewModel.octave + 1) }
-                        .buttonStyle(.bordered)
+                HStack(spacing: EchoelSpacing.xs) {
+                    Button(action: { viewModel.octave = max(0, viewModel.octave - 1) }) {
+                        Image(systemName: "minus")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(EchoelBrand.textPrimary)
+                            .frame(width: 28, height: 28)
+                            .background(EchoelBrand.bgElevated)
+                            .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.xs))
+                    }
+                    .buttonStyle(.plain)
+
+                    Text("C\(viewModel.octave)")
+                        .font(EchoelBrandFont.dataSmall())
+                        .foregroundColor(EchoelBrand.sky)
+                        .monospacedDigit()
+                        .frame(width: 30)
+
+                    Button(action: { viewModel.octave = min(8, viewModel.octave + 1) }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(EchoelBrand.textPrimary)
+                            .frame(width: 28, height: 28)
+                            .background(EchoelBrand.bgElevated)
+                            .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.xs))
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 // Key width
@@ -1099,7 +1137,7 @@ struct TouchKeyboardView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 100)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, EchoelSpacing.md)
 
             // Keyboard
             ScrollView(.horizontal, showsIndicators: false) {
@@ -1109,6 +1147,10 @@ struct TouchKeyboardView: View {
                 )
             }
             .frame(height: 180)
+            .background(
+                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                    .fill(EchoelBrand.bgSurface)
+            )
         }
     }
 }
@@ -1163,24 +1205,42 @@ struct PianoKey: View {
 
     var body: some View {
         ZStack(alignment: isBlack ? .top : .bottom) {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(keyColor)
+            RoundedRectangle(cornerRadius: isBlack ? 3 : 5)
+                .fill(
+                    LinearGradient(
+                        colors: isBlack
+                            ? [keyColor, keyColor.opacity(0.7)]
+                            : [keyColor, keyColor.opacity(0.85)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .frame(width: isBlack ? width * 0.6 : width, height: isBlack ? 100 : 160)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: isBlack ? 3 : 5)
+                        .stroke(
+                            isBlack ? Color.white.opacity(0.06) : Color.black.opacity(0.12),
+                            lineWidth: 0.5
+                        )
+                )
+                .shadow(
+                    color: isPressed ? EchoelBrand.sky.opacity(0.3) : Color.black.opacity(isBlack ? 0.5 : 0.15),
+                    radius: isPressed ? 6 : 2,
+                    y: isPressed ? 0 : 2
                 )
 
             // Note name
             if !isBlack {
                 Text(noteName)
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-                    .padding(.bottom, 4)
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundColor(isPressed ? EchoelBrand.sky : Color(white: 0.55))
+                    .padding(.bottom, 6)
             }
         }
         .zIndex(isBlack ? 1 : 0)
         .offset(x: isBlack ? -width * 0.3 : 0)
+        .scaleEffect(isPressed ? 0.97 : 1.0)
+        .animation(.spring(response: 0.15, dampingFraction: 0.7), value: isPressed)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -1198,9 +1258,9 @@ struct PianoKey: View {
 
     private var keyColor: Color {
         if isPressed {
-            return isBlack ? .blue : .blue.opacity(0.7)
+            return isBlack ? EchoelBrand.sky : EchoelBrand.sky.opacity(0.4)
         }
-        return isBlack ? .black : .white
+        return isBlack ? Color(white: 0.12) : Color(white: 0.92)
     }
 
     private var noteName: String {

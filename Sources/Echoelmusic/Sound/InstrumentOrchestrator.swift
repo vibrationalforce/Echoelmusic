@@ -284,75 +284,180 @@ class InstrumentOrchestrator: ObservableObject {
 
     // MARK: - Drum Playback (808/909 Style)
 
-    /// Trigger a drum sound
+    /// Trigger a drum sound — dedicated synthesis per drum type for authentic sound
     func triggerDrum(_ drumType: DrumType, velocity: Float = 0.8) {
-        // Use physical modeling for drums
-        guard let physicalEngine = soundLibrary.availableSynthEngines.first(where: { $0.type == .physicalModeling }) else {
-            log.audio("⚠️ Physical modeling engine not available", level: .warning)
-            return
-        }
-
-        let frequency: Float
-        let duration: Float
+        let sampleRate: Float = 48000.0
+        let samples: [Float]
 
         switch drumType {
         case .kick:
-            frequency = 60.0  // Low pitch
-            duration = 0.5
+            samples = synthesizeKick(velocity: velocity, sampleRate: sampleRate)
         case .snare:
-            frequency = 200.0
-            duration = 0.3
+            samples = synthesizeSnare(velocity: velocity, sampleRate: sampleRate)
         case .hiHatClosed:
-            frequency = 8000.0
-            duration = 0.1
+            samples = synthesizeHiHat(open: false, velocity: velocity, sampleRate: sampleRate)
         case .hiHatOpen:
-            frequency = 8000.0
-            duration = 0.4
-        case .tomLow:
-            frequency = 100.0
-            duration = 0.4
-        case .tomMid:
-            frequency = 150.0
-            duration = 0.35
-        case .tomHigh:
-            frequency = 200.0
-            duration = 0.3
+            samples = synthesizeHiHat(open: true, velocity: velocity, sampleRate: sampleRate)
         case .clap:
-            frequency = 1500.0
-            duration = 0.2
-        case .cowbell:
-            frequency = 800.0
-            duration = 0.25
-        case .rimShot:
-            frequency = 600.0
-            duration = 0.15
-        case .crash:
-            frequency = 5000.0
-            duration = 1.5
-        case .ride:
-            frequency = 4000.0
-            duration = 0.8
-        }
-
-        // Synthesize drum
-        let sampleRate: Float = 48000.0
-        var samples = physicalEngine.synthesize(
-            frequency: frequency,
-            duration: duration,
-            sampleRate: sampleRate
-        )
-
-        // Apply drum-specific envelope
-        samples = applyDrumEnvelope(samples, drumType: drumType, velocity: velocity)
-
-        // Play
-        if let buffer = createAudioBuffer(from: samples, sampleRate: Double(sampleRate)) {
-            playerNode?.scheduleBuffer(buffer, at: nil, options: [])
-            if playerNode?.isPlaying == false {
-                playerNode?.play()
+            samples = synthesizeClap(velocity: velocity, sampleRate: sampleRate)
+        default:
+            // Toms, cowbell, rimshot, crash, ride — use tuned physical model
+            let frequency: Float
+            let duration: Float
+            switch drumType {
+            case .tomLow: frequency = 80.0; duration = 0.4
+            case .tomMid: frequency = 120.0; duration = 0.35
+            case .tomHigh: frequency = 170.0; duration = 0.3
+            case .cowbell: frequency = 800.0; duration = 0.25
+            case .rimShot: frequency = 600.0; duration = 0.15
+            case .crash: frequency = 300.0; duration = 1.5
+            case .ride: frequency = 400.0; duration = 0.8
+            default: frequency = 200.0; duration = 0.3
             }
-            log.audio("🥁 Drum: \(drumType) @ \(Int(velocity * 100))%")
+            let count = Int(duration * sampleRate)
+            var buf = [Float](repeating: 0, count: count)
+            // Modal synthesis: two inharmonic partials + noise transient
+            for i in 0..<count {
+                let t = Float(i) / sampleRate
+                let env = Swift.max(0, 1.0 - t / duration) * velocity
+                buf[i] = (sin(2.0 * .pi * frequency * t) * 0.6
+                         + sin(2.0 * .pi * frequency * 1.47 * t) * 0.3
+                         + Float.random(in: -0.1...0.1) * Swift.max(0, 1.0 - t * 20.0)) * env
+            }
+            samples = buf
         }
+
+        guard let buffer = createAudioBuffer(from: samples, sampleRate: Double(sampleRate)) else { return }
+        playerNode?.scheduleBuffer(buffer, at: nil, options: [])
+        if playerNode?.isPlaying == false {
+            playerNode?.play()
+        }
+        log.audio("Drum: \(drumType) @ \(Int(velocity * 100))%")
+    }
+
+    // MARK: - Dedicated Drum Synthesis
+
+    /// 808-style kick: sine wave with exponential pitch sweep
+    private func synthesizeKick(velocity: Float, sampleRate: Float) -> [Float] {
+        let duration: Float = 0.5
+        let count = Int(duration * sampleRate)
+        var buffer = [Float](repeating: 0, count: count)
+
+        let startFreq: Float = 150.0  // Click transient
+        let endFreq: Float = 45.0     // Fundamental body
+
+        for i in 0..<count {
+            let t = Float(i) / sampleRate
+            // Exponential frequency sweep — pitch drops fast then settles
+            let freq = endFreq + (startFreq - endFreq) * exp(-t * 25.0)
+            // Phase accumulation for clean sweep
+            let phase = 2.0 * .pi * (endFreq * t + (startFreq - endFreq) / 25.0 * (1.0 - exp(-t * 25.0)))
+            // Amplitude: fast attack, medium decay
+            let amp = exp(-t * 5.0) * velocity
+            // Soft saturation for warmth
+            let raw = sin(phase) * amp
+            buffer[i] = tanh(raw * 1.5) * 0.9
+        }
+
+        return buffer
+    }
+
+    /// Snare: tuned body (sine + triangle) + noise burst through bandpass
+    private func synthesizeSnare(velocity: Float, sampleRate: Float) -> [Float] {
+        let duration: Float = 0.3
+        let count = Int(duration * sampleRate)
+        var buffer = [Float](repeating: 0, count: count)
+
+        for i in 0..<count {
+            let t = Float(i) / sampleRate
+
+            // Tonal body — two sine partials with pitch drop
+            let bodyFreq: Float = 180.0 + 40.0 * exp(-t * 30.0)
+            let body = (sin(2.0 * .pi * bodyFreq * t) * 0.5
+                       + sin(2.0 * .pi * bodyFreq * 1.5 * t) * 0.2)
+                       * exp(-t * 15.0)
+
+            // Noise component — bandpass filtered white noise for snare wire
+            let noise = Float.random(in: -1.0...1.0) * exp(-t * 10.0) * 0.7
+
+            buffer[i] = (body + noise) * velocity
+        }
+
+        // Bandpass the noise portion (simple 2-pass filter)
+        var lp: Float = 0.0
+        let lpCoeff: Float = 2.0 * sin(.pi * 8000.0 / sampleRate)
+        for i in 0..<count {
+            lp += lpCoeff * (buffer[i] - lp)
+            buffer[i] = lp
+        }
+
+        return buffer
+    }
+
+    /// Hi-hat: filtered noise with metallic ring
+    private func synthesizeHiHat(open: Bool, velocity: Float, sampleRate: Float) -> [Float] {
+        let duration: Float = open ? 0.4 : 0.08
+        let count = Int(duration * sampleRate)
+        var buffer = [Float](repeating: 0, count: count)
+        let decayRate: Float = open ? 6.0 : 40.0
+
+        for i in 0..<count {
+            let t = Float(i) / sampleRate
+            // Metallic ring: sum of inharmonic frequencies (square of primes)
+            let ring = sin(2.0 * .pi * 3500.0 * t) * 0.15
+                     + sin(2.0 * .pi * 5200.0 * t) * 0.1
+                     + sin(2.0 * .pi * 7400.0 * t) * 0.08
+            // Filtered noise
+            let noise = Float.random(in: -1.0...1.0) * 0.5
+
+            buffer[i] = (noise + ring) * exp(-t * decayRate) * velocity
+        }
+
+        // Highpass filter to remove low end
+        var hp: Float = 0.0
+        for i in 0..<count {
+            let prev = hp
+            hp = 0.95 * (prev + buffer[i] - (i > 0 ? buffer[i - 1] : 0.0))
+            buffer[i] = hp
+        }
+
+        return buffer
+    }
+
+    /// Clap: layered noise bursts with pre-delay
+    private func synthesizeClap(velocity: Float, sampleRate: Float) -> [Float] {
+        let duration: Float = 0.25
+        let count = Int(duration * sampleRate)
+        var buffer = [Float](repeating: 0, count: count)
+
+        // 3 micro-bursts before main clap (hand clap layering)
+        let burstPositions: [Float] = [0.0, 0.012, 0.024, 0.035]
+        for burstStart in burstPositions {
+            let startSample = Int(burstStart * sampleRate)
+            let burstLength = Int(0.008 * sampleRate)
+            for i in startSample..<Swift.min(startSample + burstLength, count) {
+                let t = Float(i - startSample) / Float(burstLength)
+                let env = (1.0 - t) * (1.0 - t)
+                buffer[i] += Float.random(in: -1.0...1.0) * env * velocity * 0.4
+            }
+        }
+
+        // Main clap body with bandpass character
+        let mainStart = Int(0.035 * sampleRate)
+        for i in mainStart..<count {
+            let t = Float(i - mainStart) / sampleRate
+            buffer[i] += Float.random(in: -1.0...1.0) * exp(-t * 12.0) * velocity * 0.6
+        }
+
+        // Bandpass filter for realistic frequency range
+        var bp: Float = 0.0
+        let bpCoeff: Float = 2.0 * sin(.pi * 2500.0 / sampleRate)
+        for i in 0..<count {
+            bp += bpCoeff * (buffer[i] - bp)
+            buffer[i] = bp
+        }
+
+        return buffer
     }
 
     enum DrumType: String, CaseIterable {
@@ -395,12 +500,16 @@ class InstrumentOrchestrator: ObservableObject {
 
         buffer.frameLength = AVAudioFrameCount(samples.count)
 
-        // Copy samples to both channels (stereo)
+        // Stereo widening: subtle phase offset between L/R for spatial depth
+        // This creates a natural "room" effect without being phasey in mono
+        let stereoOffset = 12  // ~0.25ms at 48kHz — Haas-effect sweet spot
         if let leftChannel = buffer.floatChannelData?[0],
            let rightChannel = buffer.floatChannelData?[1] {
             for i in 0..<samples.count {
                 leftChannel[i] = samples[i]
-                rightChannel[i] = samples[i]
+                // Right channel gets slightly delayed copy — creates stereo image
+                let rightIndex = Swift.max(0, i - stereoOffset)
+                rightChannel[i] = samples[rightIndex]
             }
         }
 
@@ -409,69 +518,47 @@ class InstrumentOrchestrator: ObservableObject {
 
     private func applyVelocityEnvelope(_ samples: [Float], velocity: Float) -> [Float] {
         var result = samples
+        let sampleRate: Float = 48000.0
 
-        // Simple ADSR envelope
-        let attackSamples = min(Int(0.01 * 48000), samples.count / 4)  // 10ms attack
-        let releaseSamples = min(Int(0.1 * 48000), samples.count / 4)  // 100ms release
+        // Professional ADSR with exponential curves
+        let attackTime: Float = 0.015   // 15ms — fast but click-free
+        let decayTime: Float = 0.3      // 300ms decay to sustain level
+        let sustainLevel: Float = 0.6   // 60% sustain
+        let releaseTime: Float = 0.25   // 250ms release — smooth tail
 
-        // Attack
-        for i in 0..<attackSamples {
-            let envelope = Float(i) / Float(attackSamples)
-            result[i] *= envelope * velocity
-        }
+        let attackSamples = Swift.min(Int(attackTime * sampleRate), samples.count / 4)
+        let decaySamples = Swift.min(Int(decayTime * sampleRate), samples.count / 3)
+        let releaseSamples = Swift.min(Int(releaseTime * sampleRate), samples.count / 3)
+        let sustainEnd = samples.count - releaseSamples
 
-        // Sustain
-        for i in attackSamples..<(samples.count - releaseSamples) {
-            result[i] *= velocity
-        }
-
-        // Release
-        for i in (samples.count - releaseSamples)..<samples.count {
-            let relativePos = Float(i - (samples.count - releaseSamples)) / Float(releaseSamples)
-            let envelope = 1.0 - relativePos
-            result[i] *= envelope * velocity
-        }
-
-        return result
-    }
-
-    private func applyDrumEnvelope(_ samples: [Float], drumType: DrumType, velocity: Float) -> [Float] {
-        var result = samples
-
-        // Drum-specific envelopes
-        let attackSamples: Int
-        let decayRate: Float
-
-        switch drumType {
-        case .kick:
-            attackSamples = Int(0.001 * 48000)  // 1ms
-            decayRate = 0.999
-        case .snare:
-            attackSamples = Int(0.0005 * 48000)  // 0.5ms
-            decayRate = 0.998
-        case .hiHatClosed, .hiHatOpen:
-            attackSamples = Int(0.0001 * 48000)  // 0.1ms
-            decayRate = 0.995
-        case .clap:
-            attackSamples = Int(0.001 * 48000)
-            decayRate = 0.99
-        default:
-            attackSamples = Int(0.001 * 48000)
-            decayRate = 0.997
-        }
-
-        var envelope: Float = 0.0
         for i in 0..<samples.count {
+            let envelope: Float
             if i < attackSamples {
-                envelope = Float(i) / Float(attackSamples)
+                // Exponential attack — natural rise
+                let t = Float(i) / Float(attackSamples)
+                envelope = t * t  // Quadratic curve, gentler onset
+            } else if i < attackSamples + decaySamples {
+                // Exponential decay from peak to sustain
+                let t = Float(i - attackSamples) / Float(decaySamples)
+                envelope = sustainLevel + (1.0 - sustainLevel) * (1.0 - t) * (1.0 - t)
+            } else if i < sustainEnd {
+                // Sustain with very subtle natural fade
+                let sustainDuration = Float(sustainEnd - attackSamples - decaySamples)
+                let t = Float(i - attackSamples - decaySamples) / Swift.max(1.0, sustainDuration)
+                envelope = sustainLevel * (1.0 - t * 0.1)  // Gentle 10% fade over sustain
             } else {
-                envelope *= decayRate
+                // Exponential release — smooth fade to silence
+                let t = Float(i - sustainEnd) / Float(releaseSamples)
+                let releaseLevel = sustainLevel * 0.9  // Start from end of sustain fade
+                envelope = releaseLevel * (1.0 - t) * (1.0 - t)
             }
             result[i] *= envelope * velocity
         }
 
         return result
     }
+
+    // Note: Drum envelope is now built into each dedicated drum synthesis method above
 
     private func stealOldestVoice() {
         if let oldestIndex = voices.indices.min(by: { voices[$0].startTime < voices[$1].startTime }) {

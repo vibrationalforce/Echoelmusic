@@ -207,18 +207,38 @@ class UniversalSoundLibrary: ObservableObject {
 
         // MARK: - Synthesis Implementations
 
+        /// PolyBLEP anti-aliasing correction for oscillator discontinuities.
+        /// Eliminates aliasing artifacts at high frequencies without oversampling.
+        private func polyBLEP(_ t: Float, dt: Float) -> Float {
+            if t < dt {
+                let tn = t / dt
+                return tn + tn - tn * tn - 1.0
+            } else if t > 1.0 - dt {
+                let tn = (t - 1.0) / dt
+                return tn * tn + tn + tn + 1.0
+            }
+            return 0.0
+        }
+
         private func synthesizeSubtractive(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
             var buffer = [Float](repeating: 0, count: samples)
+            let cutoff = parameters.first { $0.name == "Cutoff" }?.value ?? 2000.0
+            let resonance = parameters.first { $0.name == "Resonance" }?.value ?? 0.3
 
-            // Sawtooth oscillator
+            let dt = frequency / sampleRate
+            var phase: Float = 0.0
+
+            // PolyBLEP anti-aliased sawtooth — eliminates digital harshness
             for i in 0..<samples {
-                let phase = Float(i) / sampleRate * frequency
-                buffer[i] = 2.0 * (phase - floor(phase)) - 1.0
+                var saw = 2.0 * phase - 1.0
+                saw -= polyBLEP(phase, dt: dt)
+                buffer[i] = saw
+                phase += dt
+                if phase >= 1.0 { phase -= 1.0 }
             }
 
-            // Apply lowpass filter (simplified)
-            let cutoff = parameters.first { $0.name == "Cutoff" }?.value ?? 1000.0
-            buffer = applyLowpassFilter(buffer, cutoff: cutoff, sampleRate: sampleRate)
+            // Resonant 2-pole (12dB/oct) state-variable filter
+            buffer = applyResonantFilter(buffer, cutoff: cutoff, resonance: resonance, sampleRate: sampleRate)
 
             return buffer
         }
@@ -226,13 +246,27 @@ class UniversalSoundLibrary: ObservableObject {
         private func synthesizeFM(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
             var buffer = [Float](repeating: 0, count: samples)
 
-            let modIndex = parameters.first { $0.name == "Mod Index" }?.value ?? 2.0
+            let modIndex = parameters.first { $0.name == "Mod Index" }?.value ?? 3.0
             let modRatio = parameters.first { $0.name == "Mod Ratio" }?.value ?? 2.0
 
+            // FM with modulator envelope for evolving timbre
+            var carrierPhase: Float = 0.0
+            var modulatorPhase: Float = 0.0
+            let carrierInc = frequency / sampleRate
+            let modInc = frequency * modRatio / sampleRate
+
             for i in 0..<samples {
-                let time = Float(i) / sampleRate
-                let modulator = modIndex * sin(2.0 * .pi * frequency * modRatio * time)
-                buffer[i] = sin(2.0 * .pi * frequency * time + modulator)
+                // Modulator envelope: fast attack, slow decay — timbre evolves over time
+                let t = Float(i) / Float(samples)
+                let modEnvelope = Swift.max(0.0, 1.0 - t * 0.6) // Decay mod index over note duration
+
+                let modSignal = modIndex * modEnvelope * sin(2.0 * .pi * modulatorPhase)
+                buffer[i] = sin(2.0 * .pi * carrierPhase + modSignal)
+
+                carrierPhase += carrierInc
+                modulatorPhase += modInc
+                if carrierPhase >= 1.0 { carrierPhase -= 1.0 }
+                if modulatorPhase >= 1.0 { modulatorPhase -= 1.0 }
             }
 
             return buffer
@@ -241,25 +275,31 @@ class UniversalSoundLibrary: ObservableObject {
         private func synthesizeWavetable(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
             var buffer = [Float](repeating: 0, count: samples)
 
-            // Create simple wavetable (mix of harmonics)
+            // Band-limited wavetable — harmonics capped at Nyquist
             let wavetableSize = 2048
             var wavetable = [Float](repeating: 0, count: wavetableSize)
+            let maxHarmonic = Swift.min(32, Int(sampleRate / (2.0 * frequency)))
 
-            for harmonic in 1...8 {
+            for harmonic in 1...Swift.max(1, maxHarmonic) {
+                // Sawtooth harmonic spectrum with Gibbs phenomenon reduction
                 let amplitude = 1.0 / Float(harmonic)
+                let gibbsWindow = cos(Float(harmonic - 1) / Float(maxHarmonic) * .pi * 0.5) // Lanczos sigma
                 for i in 0..<wavetableSize {
                     let phase = Float(i) / Float(wavetableSize) * Float(harmonic) * 2.0 * .pi
-                    wavetable[i] += amplitude * sin(phase)
+                    wavetable[i] += amplitude * gibbsWindow * sin(phase)
                 }
             }
 
-            // Read from wavetable
+            // Linear interpolation wavetable lookup — eliminates quantization noise
             var phase: Float = 0.0
             let phaseIncrement = frequency / sampleRate * Float(wavetableSize)
 
             for i in 0..<samples {
-                let index = Int(phase) % wavetableSize
-                buffer[i] = wavetable[index]
+                let wrappedPhase = phase.truncatingRemainder(dividingBy: Float(wavetableSize))
+                let index0 = Int(wrappedPhase)
+                let index1 = (index0 + 1) % wavetableSize
+                let frac = wrappedPhase - Float(index0)
+                buffer[i] = wavetable[index0] * (1.0 - frac) + wavetable[index1] * frac
                 phase += phaseIncrement
             }
 
@@ -269,16 +309,23 @@ class UniversalSoundLibrary: ObservableObject {
         private func synthesizeGranular(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
             var buffer = [Float](repeating: 0, count: samples)
 
-            let grainSize = Int(sampleRate * 0.05)  // 50ms grains
-            let grainSpacing = grainSize / 2
+            let grainSize = Int(sampleRate * 0.04)  // 40ms grains
+            let grainSpacing = grainSize / 3  // Dense overlap for smooth texture
 
+            // Slight pitch randomization per grain for richness
             var grainPosition = 0
             while grainPosition < samples {
-                // Generate grain
-                for i in 0..<min(grainSize, samples - grainPosition) {
-                    let envelope = sin(Float(i) / Float(grainSize) * .pi)  // Sine window
-                    let phase = Float(i) / sampleRate * frequency * 2.0 * .pi
-                    buffer[grainPosition + i] += sin(phase) * envelope * 0.5
+                let pitchJitter = 1.0 + Float.random(in: -0.02...0.02)
+                let grainFreq = frequency * pitchJitter
+
+                for i in 0..<Swift.min(grainSize, samples - grainPosition) {
+                    // Hann window — smoother than sine window, better overlap-add
+                    let t = Float(i) / Float(grainSize)
+                    let envelope = 0.5 * (1.0 - cos(2.0 * .pi * t))
+                    let phase = Float(i) / sampleRate * grainFreq * 2.0 * .pi
+                    // Mix sine + saw harmonics for texture
+                    let grain = sin(phase) * 0.7 + (2.0 * (Float(i) / sampleRate * grainFreq).truncatingRemainder(dividingBy: 1.0) - 1.0) * 0.3
+                    buffer[grainPosition + i] += grain * envelope * 0.4
                 }
                 grainPosition += grainSpacing
             }
@@ -289,51 +336,115 @@ class UniversalSoundLibrary: ObservableObject {
         private func synthesizeAdditive(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
             var buffer = [Float](repeating: 0, count: samples)
 
-            // Additive synthesis: sum of sine waves
-            let harmonicCount = 16
+            // Band-limited additive: cap at Nyquist, evolving harmonic amplitudes
+            let maxHarmonic = Swift.min(32, Int(sampleRate / (2.0 * frequency)))
+            let harmonicCount = Swift.max(1, maxHarmonic)
+
             for harmonic in 1...harmonicCount {
-                let amplitude = 1.0 / Float(harmonic)
+                let baseAmplitude = 1.0 / Float(harmonic)
+                let phaseInc = frequency * Float(harmonic) / sampleRate
+
+                var phase: Float = Float.random(in: 0.0...1.0) // Random start phase for warmth
                 for i in 0..<samples {
-                    let phase = Float(i) / sampleRate * frequency * Float(harmonic) * 2.0 * .pi
-                    buffer[i] += amplitude * sin(phase)
+                    // Slight amplitude evolution: higher harmonics fade faster
+                    let t = Float(i) / Float(samples)
+                    let fadeRate = 1.0 + Float(harmonic) * 0.3
+                    let amplitude = baseAmplitude * Swift.max(0.0, 1.0 - t * fadeRate * 0.15)
+                    buffer[i] += amplitude * sin(2.0 * .pi * phase)
+                    phase += phaseInc
+                    if phase >= 1.0 { phase -= 1.0 }
                 }
             }
 
-            // Normalize
-            let max = buffer.max() ?? 1.0
-            buffer = buffer.map { $0 / max }
+            // Soft-clip normalization — preserves dynamics, prevents hard clipping
+            let peak = buffer.map { abs($0) }.max() ?? 1.0
+            if peak > 0.01 {
+                let gain = 0.9 / peak
+                for i in 0..<samples {
+                    buffer[i] *= gain
+                }
+            }
 
             return buffer
         }
 
         private func synthesizePhysicalModel(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
-            // Karplus-Strong algorithm (plucked string)
-            let delayLength = Int(sampleRate / frequency)
-            var buffer = [Float](repeating: 0, count: samples)
-            var delayLine = [Float](repeating: 0, count: delayLength)
-
-            // Initialize with noise
-            for i in 0..<delayLength {
-                delayLine[i] = Float.random(in: -1...1)
+            // Extended Karplus-Strong with tuning correction and variable damping
+            let exactDelay = sampleRate / frequency
+            let delayLength = Int(exactDelay)
+            guard delayLength > 1 else {
+                // Frequency too high for physical model, fall back to sine
+                var buffer = [Float](repeating: 0, count: samples)
+                for i in 0..<samples {
+                    buffer[i] = sin(2.0 * .pi * Float(i) / sampleRate * frequency)
+                }
+                return buffer
             }
 
-            // Run feedback loop
-            var index = 0
+            var buffer = [Float](repeating: 0, count: samples)
+            var delayLine = [Float](repeating: 0, count: delayLength + 1)
+
+            // Band-limited noise excitation (filtered noise sounds more natural)
+            for i in 0..<delayLength {
+                delayLine[i] = Float.random(in: -0.9...0.9)
+            }
+            // Pre-filter the excitation for warmer attack
+            for i in 1..<delayLength {
+                delayLine[i] = delayLine[i] * 0.6 + delayLine[i - 1] * 0.4
+            }
+
+            // Fractional delay for accurate tuning (allpass interpolation)
+            let fracDelay = exactDelay - Float(delayLength)
+            let allpassCoeff = (1.0 - fracDelay) / (1.0 + fracDelay)
+            var allpassState: Float = 0.0
+
+            // Damping factor: higher frequencies decay faster (realistic string behavior)
+            let dampingBase: Float = 0.998
+            let frequencyDamping = Swift.max(0.990, dampingBase - (frequency / sampleRate) * 0.02)
+
+            var readIndex = 0
             for i in 0..<samples {
-                buffer[i] = delayLine[index]
+                let current = delayLine[readIndex]
+                let next = delayLine[(readIndex + 1) % (delayLength + 1)]
 
-                // Lowpass filter: average of current and next sample
-                let next = (index + 1) % delayLength
-                delayLine[index] = 0.996 * (delayLine[index] + delayLine[next]) / 2.0
+                // Allpass fractional delay interpolation
+                let interpolated = current + allpassCoeff * (next - allpassState)
+                allpassState = interpolated
 
-                index = next
+                buffer[i] = interpolated
+
+                // Two-point averaging lowpass + damping
+                delayLine[readIndex] = frequencyDamping * (interpolated + next) * 0.5
+
+                readIndex = (readIndex + 1) % (delayLength + 1)
             }
 
             return buffer
         }
 
+        /// Resonant 2-pole state-variable filter (12dB/oct).
+        /// Provides lowpass with adjustable resonance for warm, analog-like filtering.
+        private func applyResonantFilter(_ buffer: [Float], cutoff: Float, resonance: Float, sampleRate: Float) -> [Float] {
+            var filtered = [Float](repeating: 0, count: buffer.count)
+
+            // State-variable filter coefficients
+            let f = 2.0 * sin(.pi * Swift.min(cutoff, sampleRate * 0.45) / sampleRate)
+            let q = 1.0 - Swift.min(resonance, 0.95) // Clamp to prevent self-oscillation blow-up
+            var low: Float = 0.0
+            var band: Float = 0.0
+
+            for i in 0..<buffer.count {
+                low += f * band
+                let high = buffer[i] - low - q * band
+                band += f * high
+                filtered[i] = low
+            }
+
+            return filtered
+        }
+
+        /// Legacy one-pole lowpass filter (6dB/oct) for gentle rolloff
         private func applyLowpassFilter(_ buffer: [Float], cutoff: Float, sampleRate: Float) -> [Float] {
-            // Simple one-pole lowpass filter
             let rc = 1.0 / (cutoff * 2.0 * .pi)
             let dt = 1.0 / sampleRate
             let alpha = dt / (rc + dt)

@@ -293,19 +293,25 @@ struct MainNavigationHub: View {
     // MARK: - Workspace Content
 
     @ViewBuilder
+    @ViewBuilder
     private var workspaceContent: some View {
-        switch currentTab {
-        case .daw:
-            DAWArrangementView()
-        case .live:
-            SessionClipView()
-        case .synth:
-            EchoelSynthView()
-        case .fx:
-            EchoelFXView()
-        case .video:
-            VideoEditorView()
+        Group {
+            switch currentTab {
+            case .daw:
+                DAWArrangementView()
+            case .live:
+                SessionClipView()
+            case .synth:
+                EchoelSynthView()
+            case .fx:
+                EchoelFXView()
+            case .video:
+                VideoEditorView()
+            }
         }
+        .transition(.opacity)
+        .id(currentTab)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentTab)
     }
 
     // MARK: - Transport Bar
@@ -475,8 +481,9 @@ struct MainNavigationHub: View {
                     }()
 
                     RoundedRectangle(cornerRadius: 0.5)
-                        .fill(isLit ? segmentColor : segmentColor.opacity(0.1))
+                        .fill(isLit ? segmentColor : segmentColor.opacity(0.08))
                         .frame(width: 2.5, height: 8)
+                        .animation(.linear(duration: isLit ? 0.02 : 0.15), value: isLit)
                 }
             }
         }

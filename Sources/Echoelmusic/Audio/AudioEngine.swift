@@ -160,10 +160,17 @@ public class AudioEngine: ObservableObject {
                 }
 
                 Task { @MainActor [weak self] in
-                    // Smooth metering (decay)
-                    let smoothing: Float = 0.3
-                    self?.masterLevel = max(rmsL, (self?.masterLevel ?? 0) * (1.0 - smoothing))
-                    self?.masterLevelR = max(rmsR, (self?.masterLevelR ?? 0) * (1.0 - smoothing))
+                    guard let self else { return }
+                    // Professional peak-hold + smooth decay metering
+                    // Attack: instant (peak tracking), Decay: ~300ms (natural VU ballistic)
+                    let decayCoeff: Float = 0.92  // ~300ms decay at 48kHz/1024
+                    let prevL = self.masterLevel * decayCoeff
+                    let prevR = self.masterLevelR * decayCoeff
+                    // Scale RMS to approximate perceived loudness (0-1 range)
+                    let scaledL = Swift.min(rmsL * 3.0, 1.0)
+                    let scaledR = Swift.min(rmsR * 3.0, 1.0)
+                    self.masterLevel = Swift.max(scaledL, prevL)
+                    self.masterLevelR = Swift.max(scaledR, prevR)
                 }
             }
         }
