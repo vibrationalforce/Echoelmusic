@@ -439,11 +439,14 @@ class ChordPadViewModel: ObservableObject {
         guard let mpe = hub.mpeZoneManager else { return }
 
         var voices: [MPEZoneManager.MPEVoice] = []
-        let strumDelay = 0.03 // 30ms between notes
+        let strumDelayNs: UInt64 = 30_000_000 // 30ms between notes
 
-        for (index, note) in pad.notes.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * strumDelay) { [weak self] in
+        Task { @MainActor [weak self] in
+            for (index, note) in pad.notes.enumerated() {
                 guard self != nil else { return }
+                if index > 0 {
+                    try? await Task.sleep(nanoseconds: strumDelayNs)
+                }
                 if let voice = mpe.allocateVoice(note: note, velocity: velocity * (1.0 - Float(index) * 0.1)) {
                     voices.append(voice)
                     hub.triggerHaptic(intensity: 0.3, sharpness: 0.3)

@@ -105,9 +105,9 @@ class MicrophoneManager: NSObject, ObservableObject {
             }
         } else {
             AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self?.hasPermission = granted
-                                        if granted {
+                    if granted {
                         log.audio("Microphone permission granted")
                         try? AudioConfiguration.upgradeToPlayAndRecord()
                     } else {
@@ -162,17 +162,13 @@ class MicrophoneManager: NSObject, ObservableObject {
             audioEngine.prepare()
             try audioEngine.start()
 
-            DispatchQueue.main.async {
-                self.isRecording = true
-            }
+            self.isRecording = true
 
             log.audio("🎙️ Recording started with FFT enabled")
 
         } catch {
             log.audio("❌ Failed to start recording: \(error.localizedDescription)", level: .error)
-            DispatchQueue.main.async {
-                self.isRecording = false
-            }
+            self.isRecording = false
         }
     }
 
@@ -193,12 +189,10 @@ class MicrophoneManager: NSObject, ObservableObject {
         // Deactivate the audio session
         try? AVAudioSession.sharedInstance().setActive(false)
 
-        DispatchQueue.main.async {
-            self.isRecording = false
-            self.audioLevel = 0.0
-            self.frequency = 0.0
-            self.currentPitch = 0.0
-        }
+        self.isRecording = false
+        self.audioLevel = 0.0
+        self.frequency = 0.0
+        self.currentPitch = 0.0
 
         log.audio("⏹️ Recording stopped")
     }
@@ -237,8 +231,8 @@ class MicrophoneManager: NSObject, ObservableObject {
         // Perform YIN pitch detection for fundamental frequency
         let detectedPitch = pitchDetector.detectPitch(buffer: buffer, sampleRate: Float(sampleRate))
 
-        // Update UI on main thread with smoothing
-        DispatchQueue.main.async { [weak self] in
+        // Update UI on main actor with smoothing
+        Task { @MainActor [weak self] in
             guard let self = self else { return }
 
             // Smooth audio level changes

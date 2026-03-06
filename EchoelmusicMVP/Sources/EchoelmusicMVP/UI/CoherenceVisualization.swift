@@ -257,15 +257,15 @@ public struct BreathingGuideOverlay: View {
         }
 
         // Hold, then exhale
-        DispatchQueue.main.asyncAfter(deadline: .now() + inhaleSeconds + holdSeconds) {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64((inhaleSeconds + holdSeconds) * 1_000_000_000))
             withAnimation(.easeInOut(duration: exhaleSeconds)) {
                 breathPhase = 0.3
             }
 
             // Repeat cycle
-            DispatchQueue.main.asyncAfter(deadline: .now() + exhaleSeconds) {
-                startBreathingCycle()
-            }
+            try? await Task.sleep(nanoseconds: UInt64(exhaleSeconds * 1_000_000_000))
+            startBreathingCycle()
         }
     }
 }

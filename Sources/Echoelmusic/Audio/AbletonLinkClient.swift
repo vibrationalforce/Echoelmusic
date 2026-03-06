@@ -233,7 +233,7 @@ public class AbletonLinkClient: ObservableObject {
         multicastConnection = NWConnectionGroup(with: group, using: params)
 
         multicastConnection?.stateUpdateHandler = { [weak self] state in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 switch state {
                 case .ready:
                     log.audio("✅ Link: Multicast ready")
@@ -249,7 +249,7 @@ public class AbletonLinkClient: ObservableObject {
 
         multicastConnection?.setReceiveHandler(maximumMessageSize: 1024, rejectOversizedMessages: true) { [weak self] message, content, isComplete in
             if let data = content {
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self?.handleIncomingMessage(data: data, from: message.remoteEndpoint)
                 }
             }
@@ -282,7 +282,7 @@ public class AbletonLinkClient: ObservableObject {
                 connection.start(queue: self?.queue ?? .main)
                 connection.receiveMessage { data, _, _, _ in
                     if let data = data {
-                        DispatchQueue.main.async { [weak self] in
+                        Task { @MainActor [weak self] in
                             self?.handleIncomingMessage(data: data, from: nil)
                         }
                     }
@@ -300,7 +300,7 @@ public class AbletonLinkClient: ObservableObject {
     private func startUpdateLoop() {
         // High-frequency update for accurate timing (100 Hz)
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.updateSessionState()
             }
         }
@@ -321,7 +321,7 @@ public class AbletonLinkClient: ObservableObject {
     private func startDiscovery() {
         // Send periodic discovery messages
         discoveryTimer = Timer.scheduledTimer(withTimeInterval: LinkConstants.discoveryInterval, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.sendDiscovery()
                 self?.cleanupStalePeers()
             }
