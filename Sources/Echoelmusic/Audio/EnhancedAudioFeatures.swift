@@ -619,6 +619,7 @@ class SpectralAnalyzer {
             flux += max(diff, 0) // Half-wave rectification
         }
 
+        guard !spectrum.isEmpty else { return 0 }
         return flux / Float(spectrum.count)
     }
 
@@ -1477,9 +1478,10 @@ class VoiceProcessor {
             logSum += Darwin.log(mag)
             count += 1
         }
-        let geometricMean = exp(logSum / Float(count))
+        let geometricMean = count > 0 ? exp(logSum / Float(count)) : 0
 
         // Arithmetic mean
+        guard !spectrum.isEmpty else { return 0 }
         let arithmeticMean = spectrum.reduce(0, +) / Float(spectrum.count)
 
         return arithmeticMean > 0 ? geometricMean / arithmeticMean : 0

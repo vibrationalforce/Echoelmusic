@@ -208,12 +208,7 @@ class MicrophoneManager: NSObject, ObservableObject {
         let channelDataValue = channelData.pointee
 
         // Calculate RMS (amplitude/volume)
-        var sum: Float = 0.0
-        vDSP_sve(channelDataValue, 1, &sum, vDSP_Length(frameLength))
-        let mean = sum / Float(frameLength)
-
         var sumSquares: Float = 0.0
-        var meanNegative = -mean
         vDSP_measqv(channelDataValue, 1, &sumSquares, vDSP_Length(frameLength))
         let rms = sqrt(sumSquares)
 

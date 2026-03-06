@@ -244,9 +244,11 @@ public struct ParticleView: View {
             .onAppear {
                 initializeParticles()
             }
-            .onChange(of: isActive) { _, active in
-                if active {
-                    startAnimation()
+            .task(id: isActive) {
+                guard isActive else { return }
+                while !Task.isCancelled {
+                    updateParticles()
+                    try? await Task.sleep(nanoseconds: 16_000_000) // ~60fps
                 }
             }
         }
@@ -263,12 +265,6 @@ public struct ParticleView: View {
                 color: particleColor(),
                 opacity: Double.random(in: 0.4...0.9)
             )
-        }
-    }
-
-    private func startAnimation() {
-        Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
-            updateParticles()
         }
     }
 
@@ -331,7 +327,13 @@ public struct WaveformView: View {
                     )
                 }
             }
-            .onAppear { startAnimation() }
+            .task(id: isActive) {
+                guard isActive else { return }
+                while !Task.isCancelled {
+                    phase += 0.02 * (1 + bioData.normalizedCoherence)
+                    try? await Task.sleep(nanoseconds: 16_000_000) // ~60fps
+                }
+            }
         }
     }
 
@@ -362,13 +364,6 @@ public struct WaveformView: View {
         }
     }
 
-    private func startAnimation() {
-        guard isActive else { return }
-
-        Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
-            phase += 0.02 * (1 + bioData.normalizedCoherence)
-        }
-    }
 }
 
 // MARK: - Spectrum Visualization
