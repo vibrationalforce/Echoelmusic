@@ -151,7 +151,7 @@ struct LaunchScreen: View {
                 .padding(.bottom, EchoelSpacing.xxl)
 
                 // Version
-                Text("v1.0")
+                Text("v7.0")
                     .font(EchoelBrandFont.label())
                     .foregroundColor(EchoelBrand.textDisabled)
                     .padding(.bottom, EchoelSpacing.lg)

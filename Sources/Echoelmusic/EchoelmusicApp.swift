@@ -12,6 +12,8 @@ struct EchoelmusicApp: App {
     @StateObject private var themeManager = ThemeManager()
 
     @State private var isReady = false
+    @State private var launchPhase = "Initializing..."
+    @State private var launchProgress = 0.0
 
     init() {
         let mic = MicrophoneManager()
@@ -33,16 +35,41 @@ struct EchoelmusicApp: App {
                         EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     }
             } else {
-                LaunchScreen(phase: "Loading...", progress: 0.5)
+                LaunchScreen(phase: launchPhase, progress: launchProgress)
                     .task {
-                        await MainActor.run {
-                            _ = MemoryPressureHandler.shared
-                            _ = EchoelCreativeWorkspace.shared
-                            _ = CrashSafeStatePersistence.shared
-                        }
-                        isReady = true
+                        await initializeSystems()
                     }
             }
         }
+    }
+
+    /// Sequential initialization with progress feedback
+    @MainActor
+    private func initializeSystems() async {
+        launchPhase = "Audio Engine"
+        launchProgress = 0.2
+        // AudioEngine already initialized in init() — just let UI update
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        launchPhase = "Memory Manager"
+        launchProgress = 0.4
+        _ = MemoryPressureHandler.shared
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        launchPhase = "Creative Workspace"
+        launchProgress = 0.6
+        _ = EchoelCreativeWorkspace.shared
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        launchPhase = "State Persistence"
+        launchProgress = 0.8
+        _ = CrashSafeStatePersistence.shared
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        launchPhase = "Ready"
+        launchProgress = 1.0
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        isReady = true
     }
 }

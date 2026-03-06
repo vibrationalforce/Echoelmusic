@@ -83,9 +83,13 @@ struct DAWArrangementView: View {
         }
         .sheet(isPresented: $showSessionClips) {
             SessionClipView()
+                .environmentObject(audioEngine)
+                .environmentObject(recordingEngine)
         }
         .sheet(isPresented: $showEffectsChain) {
             DAWEffectsChainSheet()
+                .environmentObject(audioEngine)
+                .environmentObject(recordingEngine)
         }
         .sheet(isPresented: $showMasterExport) {
             MasterExportSheet()

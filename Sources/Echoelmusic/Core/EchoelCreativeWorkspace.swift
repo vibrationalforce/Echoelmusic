@@ -27,6 +27,12 @@ final class EchoelCreativeWorkspace: ObservableObject {
     let proColor: ProColorGrading
     let loopEngine: LoopEngine
 
+    /// Bio-reactive DDSP synth for live performance
+    let bioSynth: EchoelDDSP
+
+    /// Current bio-coherence level (0-1) — driven by mic or HealthKit
+    @Published var bioCoherence: Float = 0.5
+
     /// Connected AudioEngine for hardware output (set via connectAudioEngine)
     private weak var audioEngine: AudioEngine?
 
@@ -48,9 +54,10 @@ final class EchoelCreativeWorkspace: ObservableObject {
         self.proColor = ProColorGrading()
         self.loopEngine = LoopEngine()
         self.loopEngine.setTempo(120.0)
+        self.bioSynth = EchoelDDSP(harmonicCount: 32, sampleRate: 48000)
 
         setupBridges()
-        log.info("Creative Workspace initialized (DAW + Video)", category: .system)
+        log.info("Creative Workspace initialized (DAW + Video + Bio-Reactive Synth)", category: .system)
     }
 
     // MARK: - Bridges
@@ -131,7 +138,27 @@ final class EchoelCreativeWorkspace: ObservableObject {
     func connectAudioEngine(_ engine: AudioEngine) {
         self.audioEngine = engine
         engine.connectMixer(proMixer)
-        log.info("AudioEngine connected to Creative Workspace", category: .audio)
+
+        // Wire mic audio level as bio-coherence proxy
+        // When HealthKit is available, this will be replaced with real HRV coherence
+        engine.microphoneManager.$audioLevel
+            .throttle(for: .milliseconds(50), scheduler: DispatchQueue.main, latest: true)
+            .sink { [weak self] level in
+                guard let self else { return }
+                // Smooth the level into a coherence-like signal (0-1)
+                let smoothed = self.bioCoherence * 0.85 + level * 0.15
+                self.bioCoherence = smoothed
+                // Feed bio-reactive synth
+                self.bioSynth.applyBioReactive(
+                    coherence: smoothed,
+                    hrvVariability: 0.5,
+                    heartRate: 0.5,
+                    breathPhase: 0.5
+                )
+            }
+            .store(in: &cancellables)
+
+        log.info("AudioEngine connected to Creative Workspace (bio-reactive synth wired)", category: .audio)
     }
 
     // MARK: - Actions
