@@ -132,6 +132,7 @@ public class BreathDetector {
 
         // Compute adaptive thresholds from statistics
         let energies = frameFeatures.map { $0.energy }
+        guard !energies.isEmpty else { return [] }
         let sortedEnergies = energies.sorted()
         let medianEnergy = sortedEnergies[sortedEnergies.count / 2]
 
