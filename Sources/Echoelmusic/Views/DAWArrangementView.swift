@@ -769,113 +769,6 @@ struct DAWArrangementView: View {
         )
     }
 
-    // MARK: - DAW Transport Bar
-
-    private var dawTransportBar: some View {
-        HStack(spacing: EchoelSpacing.lg) {
-            // Position display
-            VStack(spacing: 2) {
-                Text(formatPosition(recordingEngine.currentTime))
-                    .font(EchoelBrandFont.dataSmall())
-                    .foregroundColor(EchoelBrand.textPrimary)
-                Text("POSITION")
-                    .font(EchoelBrandFont.label())
-                    .foregroundColor(EchoelBrand.textTertiary)
-            }
-            .frame(width: 80)
-
-            Spacer()
-
-            // Transport controls
-            HStack(spacing: EchoelSpacing.md) {
-                transportButton(icon: "backward.end.fill") {
-                    recordingEngine.seek(to: 0)
-                }
-
-                transportButton(icon: "backward.fill") {
-                    recordingEngine.seek(to: max(0, recordingEngine.currentTime - 5))
-                }
-
-                // Play/Stop
-                Button { togglePlayback() } label: {
-                    ZStack {
-                        Circle()
-                            .fill(isPlaying ? EchoelBrand.coral.opacity(0.3) : EchoelBrand.sky.opacity(0.2))
-                            .frame(width: 52, height: 52)
-                        Circle()
-                            .stroke(isPlaying ? EchoelBrand.coral : EchoelBrand.sky, lineWidth: 2)
-                            .frame(width: 52, height: 52)
-                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(isPlaying ? EchoelBrand.coral : EchoelBrand.sky)
-                    }
-                    .shadow(color: (isPlaying ? EchoelBrand.coral : EchoelBrand.sky).opacity(0.4), radius: 8)
-                }
-                .buttonStyle(.plain)
-
-                // Record
-                Button { toggleRecording() } label: {
-                    ZStack {
-                        Circle()
-                            .fill(isRecording ? EchoelBrand.coral.opacity(0.3) : Color.clear)
-                            .frame(width: 42, height: 42)
-                        Circle()
-                            .stroke(EchoelBrand.coral, lineWidth: 2)
-                            .frame(width: 42, height: 42)
-                        Circle()
-                            .fill(EchoelBrand.coral)
-                            .frame(width: 14, height: 14)
-                    }
-                    .shadow(color: isRecording ? EchoelBrand.coral.opacity(0.5) : .clear, radius: isRecording ? 10 : 0)
-                }
-                .buttonStyle(.plain)
-
-                transportButton(icon: "forward.fill") {
-                    recordingEngine.seek(to: recordingEngine.currentTime + 5)
-                }
-            }
-
-            Spacer()
-
-            // Live master meter
-            masterMeter
-                .frame(width: 80)
-        }
-        .padding(EchoelSpacing.md)
-        .background(EchoelBrand.bgDeep.opacity(0.8))
-    }
-
-    /// Live master output VU meter
-    private var masterMeter: some View {
-        HStack(spacing: 3) {
-            meterChannel(level: audioEngine.masterLevel, label: "L")
-            meterChannel(level: audioEngine.masterLevelR, label: "R")
-        }
-    }
-
-    private func meterChannel(level: Float, label: String) -> some View {
-        VStack(spacing: 1) {
-            // 12-segment LED meter
-            ForEach((0..<12).reversed(), id: \.self) { i in
-                let threshold = Float(i) / 12.0
-                let isLit = level > threshold
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(segmentColor(index: i))
-                    .frame(width: 14, height: 3)
-                    .opacity(isLit ? 1.0 : 0.15)
-            }
-            Text(label)
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(EchoelBrand.textTertiary)
-        }
-    }
-
-    private func segmentColor(index: Int) -> Color {
-        if index >= 10 { return EchoelBrand.coral } // red
-        if index >= 7 { return EchoelBrand.amber } // yellow
-        return EchoelBrand.emerald // green
-    }
-
     // MARK: - Instrument Browser
 
     private var instrumentBrowserOverlay: some View {
@@ -1012,19 +905,6 @@ struct DAWArrangementView: View {
         .buttonStyle(.plain)
     }
 
-    private func transportButton(icon: String, action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-            HapticHelper.impact(.light)
-        } label: {
-            Image(systemName: icon)
-                .font(.system(size: 16))
-                .foregroundColor(EchoelBrand.textSecondary)
-                .frame(width: 36, height: 36)
-        }
-        .buttonStyle(.plain)
-    }
-
     private func miniButton(label: String, isActive: Bool, color: Color, action: @escaping () -> Void) -> some View {
         Button {
             action()
@@ -1044,12 +924,6 @@ struct DAWArrangementView: View {
                 )
         }
         .buttonStyle(.plain)
-    }
-
-    private func formatPosition(_ time: TimeInterval) -> String {
-        let bar = Int(time * bpm / 240.0) + 1
-        let beatInBar = Int((time * bpm / 60.0).truncatingRemainder(dividingBy: 4)) + 1
-        return "\(bar).\(beatInBar)"
     }
 
     private func formatDuration(_ duration: TimeInterval) -> String {

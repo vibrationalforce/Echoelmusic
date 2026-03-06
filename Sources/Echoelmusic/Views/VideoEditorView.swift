@@ -859,94 +859,6 @@ struct VideoEditorView: View {
             .modifier(isSelected ? NeonGlow(color: color, radius: 8) : NeonGlow(color: .clear, radius: 0))
     }
 
-    // MARK: - Transport Controls
-
-    private var transportControls: some View {
-        HStack(spacing: EchoelSpacing.lg) {
-            Spacer()
-
-            // Beat-snap cut (previous beat)
-            if showBPMGrid {
-                transportButton(icon: "scissors") {
-                    // Snap to nearest beat
-                    let beatDuration = 60.0 / max(workspace.globalBPM, 20.0)
-                    currentTime = round(currentTime / beatDuration) * beatDuration
-                }
-            }
-
-            // Skip back
-            transportButton(icon: "backward.fill") {
-                currentTime = max(0, currentTime - 5)
-            }
-
-            // Previous beat
-            if showBPMGrid {
-                transportButton(icon: "backward.end.fill") {
-                    let beatDuration = 60.0 / max(workspace.globalBPM, 20.0)
-                    currentTime = max(0, currentTime - beatDuration)
-                }
-            }
-
-            // Play/Pause
-            Button {
-                workspace.togglePlayback()
-                isPlaying = workspace.isPlaying
-                HapticHelper.impact(.medium)
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(EchoelBrand.coral.opacity(0.2))
-                        .frame(width: 60, height: 60)
-
-                    Circle()
-                        .stroke(EchoelBrand.coral, lineWidth: 2)
-                        .frame(width: 60, height: 60)
-
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(EchoelBrand.coral)
-                }
-                .modifier(NeonGlow(color: EchoelBrand.coral, radius: isPlaying ? 15 : 8))
-            }
-            .buttonStyle(.plain)
-
-            // Next beat
-            if showBPMGrid {
-                transportButton(icon: "forward.end.fill") {
-                    let beatDuration = 60.0 / max(workspace.globalBPM, 20.0)
-                    currentTime += beatDuration
-                }
-            }
-
-            // Skip forward
-            transportButton(icon: "forward.fill") {
-                currentTime += 5
-            }
-
-            Spacer()
-
-            // Beat position display
-            if showBPMGrid {
-                let position = workspace.bpmGrid.grid.beatPosition(at: currentTime)
-                HStack(spacing: 4) {
-                    Text("Bar \(position.bar)")
-                        .font(EchoelBrandFont.caption())
-                        .foregroundColor(EchoelBrand.coral)
-                    Text("Beat \(position.beat)")
-                        .font(EchoelBrandFont.caption())
-                        .foregroundColor(EchoelBrand.textSecondary)
-                }
-                .padding(.horizontal, EchoelSpacing.sm)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule()
-                        .fill(EchoelBrand.bgDeep.opacity(0.6))
-                )
-            }
-        }
-        .padding(EchoelSpacing.md)
-    }
-
     // MARK: - Helper Views
 
     private func toolbarButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
@@ -967,16 +879,6 @@ struct VideoEditorView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isActive ? EchoelBrand.sky.opacity(0.15) : Color.clear)
             )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func transportButton(icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(EchoelBrand.textSecondary)
-                .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
     }
