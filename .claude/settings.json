@@ -63,11 +63,14 @@
       "rm -rf dist/"
     ]
   },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
+  },
   "workflow": {
     "branchPrefix": "claude/",
     "commitStyle": "conventional",
     "prRequired": true,
-    "testBeforeCommit": false,
+    "testBeforeCommit": true,
     "lintBeforeCommit": false
   },
   "context": {

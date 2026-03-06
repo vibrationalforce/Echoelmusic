@@ -20,7 +20,7 @@ Bio-reactive creative performance platform. Physiological data → real-time mus
 - **Mode:** RALPH WIGGUM LAMBDA — iterative tightening until tight
 - **SDK:** Must target iOS 26 SDK (ITMS-90725, deadline April 28, 2026)
 - **Architecture:** 100% JUCE-free, platform-native
-- **Commits:** 1,560+ | **Tests:** 975+ methods / 214 classes / 14 files | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
+- **Commits:** 1,560+ | **Tests:** 1,060+ methods / 230+ classes / 15 files | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
 
 ---
 
@@ -30,7 +30,7 @@ Bio-reactive creative performance platform. Physiological data → real-time mus
 Echoelmusic          ← Hauptmarke
 ├── EchoelTools      ← Creative instruments
 ├── EchoelWorks      ← DAW integration
-├── EchoelSync       ← Cross-platform sync (OSC, BLE, SharePlay)
+├── EchoelSync       ← Cross-platform sync (OSC, BLE, Ableton Link)
 └── EchoelWell       ← Wellness (NO health claims)
 ```
 
@@ -38,7 +38,7 @@ NEVER use "BLAB", "Vibrational Force", or legacy branding anywhere.
 
 ---
 
-## THE 12 ECHOELTOOLS (via EngineBus)
+## THE 12 ECHOELTOOLS
 
 ```
 EchoelCore (120Hz)
@@ -52,11 +52,31 @@ EchoelCore (120Hz)
 ├── EchoelVid      Capture, edit, stream, ProRes
 ├── EchoelLux      DMX 512, Art-Net, lasers, smart home
 ├── EchoelStage    External displays, projection mapping, AirPlay
-├── EchoelNet      SharePlay, Dante, cloud sync, <10ms
+├── EchoelNet      Ableton Link, Dante, cloud sync, <10ms
 └── EchoelAI       CoreML, LLM, stem separation, generative
 ```
 
-Communication: EngineBus (lock-free pub/sub). All tools react to BioSnapshot.
+Communication: Explicit wiring via `EchoelCreativeWorkspace` hub — `.connectAudioEngine()`, `.connectMixer()`, Combine observation. All tools react to BioSnapshot.
+
+### Component Wiring (actual architecture)
+
+```
+EchoelmusicApp (init)
+├─ AudioEngine(microphoneManager:)    ← master AVAudioEngine
+│   └─ connectMixer(ProMixEngine)     ← routing hub
+├─ RecordingEngine
+│   └─ connectAudioEngine(AudioEngine)
+└─ EchoelCreativeWorkspace.shared     ← central hub singleton
+    ├─ connectAudioEngine(AudioEngine) ← wires Combine pipelines
+    ├─ BPMGridEditEngine              ← beat/tempo sync
+    ├─ ProSessionEngine               ← multi-track sessions
+    ├─ VideoEditingEngine             ← timeline + compositing
+    ├─ ProColorGrading                ← live color
+    └─ EchoelDDSP (bioSynth)         ← bio-reactive synthesis
+        └─ mic audioLevel → bioCoherence → applyBioReactive()
+```
+
+All inter-component communication uses explicit Combine observation (`.sink`, `$property`) stored in `cancellables`. No implicit message bus.
 
 ---
 
@@ -254,9 +274,9 @@ Always prefix types to avoid conflicts:
 
 ---
 
-## KEY TESTS (14 files, 975+ methods)
+## KEY TESTS (15 files, 1,060+ methods)
 
-CoreSystemTests | CoreServicesTests | DSPTests | VDSPTests | AudioEngineTests | AdvancedEffectsTests | MIDITests | RecordingTests | BusinessTests | ExportTests | VideoTests | SoundTests | VocalAndNodesTests | HardwareThemeTests
+CoreSystemTests | CoreServicesTests | DSPTests | VDSPTests | AudioEngineTests | AdvancedEffectsTests | MIDITests | RecordingTests | BusinessTests | ExportTests | VideoTests | SoundTests | VocalAndNodesTests | HardwareThemeTests | IntegrationTests
 
 Run before ANY commit.
 
