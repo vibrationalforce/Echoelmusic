@@ -6,6 +6,43 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-06 — Deep Audit + TestFlight Polish
+
+**Branch:** `claude/analyze-test-coverage-9aFjV`
+
+**Goal:** Deep 3-agent parallel audit → fix everything → TestFlight deploy
+
+### 3-Agent Parallel Audit Results
+
+| Agent | Score | Key Finding |
+|-------|-------|-------------|
+| Core Systems | 9.3/10 | Architecture sound, zero blockers, all 10/12 tools operational |
+| UI Layer | Critical bugs found | Missing env objects in sheets, hardcoded dark mode (preview-only), missing themeManager |
+| Domain Logic | Integration gaps | Bio→audio pipeline disconnected, MIDI→synth not wired, visual engine CPU-only |
+
+### Fixes Applied (5 files, 321 insertions)
+
+1. **Settings View** — New `EchoelSettingsView` with theme toggle (Dark/Light/System), audio controls (master volume slider, engine status), bio-feedback info, safety warnings (per CLAUDE.md), about section (v7.0, build, developer)
+2. **Bio-Feedback Indicator** — Coherence ring + BIO/LIVE status in transport bar, driven by `workspace.bioCoherence`
+3. **Workspace Playback Wiring** — Play/stop buttons now call `workspace.togglePlayback()` which syncs ALL engines (audio, video, session, loops) instead of just `audioEngine.start()/stop()`
+4. **Launch Screen Phases** — Real initialization progress: Audio Engine (20%) → Memory Manager (40%) → Creative Workspace (60%) → State Persistence (80%) → Ready (100%)
+5. **Version Label** — `v1.0` → `v7.0` on launch screen
+6. **Environment Objects** — Fixed missing `@EnvironmentObject themeManager` in MainNavigationHub, added env objects to DAW sheet presentations (SessionClipView, DAWEffectsChainSheet)
+7. **Bio-Reactive Synth** — Added `EchoelDDSP` instance to `EchoelCreativeWorkspace`, wired mic audio level as coherence proxy → `applyBioReactive()` at 20Hz via Combine throttle
+8. **Settings Gear Button** — Added to desktop top bar
+
+### Remaining Known Issues (from audit)
+
+- **MIDI → Synth:** MIDI2Manager events don't reach EchoelPolyDDSP voices (needs wiring)
+- **Visual Engine:** SwiftUI Canvas, not Metal (120fps target not achievable)
+- **EchoelBio/EchoelVis/EchoelLux/EchoelAI:** Not in Sources/ (documented as future phases)
+- **Breathing/LF-HF:** Simulated in MVP package, not real sensor data
+- **NavigationView:** 4 views still use deprecated NavigationView (preview-only dark mode confirmed as non-issue)
+
+**Commit:** `4a66512` — `feat: deep audit polish — settings, bio-feedback, playback wiring, launch phases`
+
+---
+
 ## Session: 2026-03-06 — Full 100% Audit: Tests, Safety, Brand, CI
 
 **Branch:** `claude/analyze-test-coverage-9aFjV`
