@@ -248,13 +248,10 @@ struct EchoelSynthView: View {
         .background(EchoelBrand.bgDeep)
     }
 
+    @ViewBuilder
     private func presetSection(category: PresetCategory, library: SynthPresetLibrary) -> some View {
         let categoryPresets = library.presets(for: category)
-        guard !categoryPresets.isEmpty else {
-            return AnyView(EmptyView())
-        }
-
-        return AnyView(
+        if !categoryPresets.isEmpty {
             VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                 // Section header
                 HStack(spacing: EchoelSpacing.sm) {
@@ -282,7 +279,7 @@ struct EchoelSynthView: View {
                     }
                 }
             }
-        )
+        }
     }
 
     private func categoryDisplayName(_ category: PresetCategory) -> String {

@@ -102,14 +102,24 @@ struct DAWArrangementView: View {
             Group {
                 Button { togglePlayback(); HapticHelper.impact(.medium) } label: { EmptyView() }
                     .keyboardShortcut(.space, modifiers: [])
+                    .accessibilityLabel("Play/Pause")
+                    .accessibilityHint("Press Space to toggle playback")
                 Button { toggleRecording(); HapticHelper.impact(.heavy) } label: { EmptyView() }
                     .keyboardShortcut("r", modifiers: [])
+                    .accessibilityLabel("Record")
+                    .accessibilityHint("Press R to toggle recording")
                 Button { recordingEngine.undo(); HapticHelper.impact(.light) } label: { EmptyView() }
                     .keyboardShortcut("z", modifiers: .command)
+                    .accessibilityLabel("Undo")
+                    .accessibilityHint("Press Command+Z to undo")
                 Button { recordingEngine.redo(); HapticHelper.impact(.light) } label: { EmptyView() }
                     .keyboardShortcut("z", modifiers: [.command, .shift])
+                    .accessibilityLabel("Redo")
+                    .accessibilityHint("Press Command+Shift+Z to redo")
                 Button { showMixer = true } label: { EmptyView() }
                     .keyboardShortcut("m", modifiers: .command)
+                    .accessibilityLabel("Open Mixer")
+                    .accessibilityHint("Press Command+M to open mixer")
             }
             .frame(width: 0, height: 0)
             .opacity(0)

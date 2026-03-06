@@ -547,9 +547,14 @@ public final class EchoelDDSP: @unchecked Sendable {
                     buffer[i * 2 + 1] = buffer[i * 2 + 1] * dry + wetSample * wetGain
                 }
             } else {
-                // Mono path
-                let monoSlice = Array(buffer[0..<frameCount])
-                let wet = conv.process(monoSlice)
+                // Mono path — reuse pre-allocated buffer to avoid audio-thread allocation
+                if reverbFrameBuffer.count < frameCount {
+                    reverbFrameBuffer = [Float](repeating: 0, count: frameCount)
+                }
+                for i in 0..<frameCount {
+                    reverbFrameBuffer[i] = buffer[i]
+                }
+                let wet = conv.process(reverbFrameBuffer)
                 let dry = 1.0 - reverbMix
                 let wetGain = reverbMix
                 for i in 0..<frameCount {

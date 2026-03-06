@@ -174,6 +174,7 @@ public final class VoiceToQuantumMIDI: ObservableObject {
     private var activeHarmonyNotes: [UInt8] = []
     private var smoothedPitch: Float = 0
     private var cancellables = Set<AnyCancellable>()
+    private let audioProcessingQueue = DispatchQueue(label: "com.echoelmusic.voice-to-midi.processing", qos: .userInteractive)
 
     // YIN pitch detector parameters
     private let bufferSize: Int = 2048
@@ -244,9 +245,12 @@ public final class VoiceToQuantumMIDI: ObservableObject {
         }
 
         // Install tap on input
-        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, time in
-            Task { @MainActor in
-                self?.processAudioBuffer(buffer)
+        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, _ in
+            guard let self else { return }
+            self.audioProcessingQueue.async {
+                Task { @MainActor in
+                    self.processAudioBuffer(buffer)
+                }
             }
         }
 

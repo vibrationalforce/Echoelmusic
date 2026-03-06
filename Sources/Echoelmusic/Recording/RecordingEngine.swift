@@ -58,6 +58,7 @@ class RecordingEngine: ObservableObject {
 
     // MARK: - Undo/Redo Integration
     private let undoManager = UndoRedoManager.shared
+    private let audioProcessingQueue = DispatchQueue(label: "com.echoelmusic.recording.processing", qos: .userInteractive)
 
     /// Is currently recording
     @Published var isRecording: Bool = false
@@ -274,9 +275,12 @@ class RecordingEngine: ObservableObject {
 
         // Install tap to capture audio data
         // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
-        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, time in
-            Task { @MainActor [weak self] in
-                self?.processRecordingBuffer(buffer)
+        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
+            guard let self else { return }
+            self.audioProcessingQueue.async {
+                Task { @MainActor in
+                    self.processRecordingBuffer(buffer)
+                }
             }
         }
 
@@ -298,7 +302,7 @@ class RecordingEngine: ObservableObject {
         var sumSquares: Float = 0.0
         vDSP_svesq(channelDataValue, 1, &sumSquares, vDSP_Length(frameLength))
 
-        let rms = sqrt(sumSquares / Float(frameLength))
+        let rms = frameLength > 0 ? sqrt(sumSquares / Float(frameLength)) : 0
         recordingLevel = min(rms * 10.0, 1.0) // Normalize and clamp
 
         // Write to audio file

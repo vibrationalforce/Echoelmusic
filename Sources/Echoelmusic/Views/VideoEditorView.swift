@@ -109,10 +109,16 @@ struct VideoEditorView: View {
                     HapticHelper.impact(.medium)
                 } label: { EmptyView() }
                     .keyboardShortcut(.space, modifiers: [])
+                    .accessibilityLabel("Play/Pause")
+                    .accessibilityHint("Press Space to toggle playback")
                 Button { showExportSheet = true } label: { EmptyView() }
                     .keyboardShortcut("e", modifiers: .command)
+                    .accessibilityLabel("Export")
+                    .accessibilityHint("Press Command+E to export")
                 Button { showVideoPicker = true } label: { EmptyView() }
                     .keyboardShortcut("i", modifiers: .command)
+                    .accessibilityLabel("Import Video")
+                    .accessibilityHint("Press Command+I to import video")
             }
             .frame(width: 0, height: 0)
             .opacity(0)
@@ -134,6 +140,17 @@ struct VideoEditorView: View {
             }
 
             Spacer()
+
+            if let progress = importProgress {
+                HStack(spacing: EchoelSpacing.xs) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text(progress)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textSecondary)
+                }
+                .transition(.opacity)
+            }
 
             Spacer()
 

@@ -357,6 +357,7 @@ public struct DisclaimerView: View {
 public struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
+    @State private var showDisclaimer = false
 
     public var body: some View {
         NavigationView {
@@ -400,7 +401,9 @@ public struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Link("Health Disclaimer", destination: URL(string: "about:blank")!)
+                    Button("Health Disclaimer") {
+                        showDisclaimer = true
+                    }
                 }
             }
             .navigationTitle("Settings")
@@ -410,7 +413,86 @@ public struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showDisclaimer) {
+                HealthDisclaimerView()
+            }
         }
+    }
+}
+
+// MARK: - Health Disclaimer View
+
+public struct HealthDisclaimerView: View {
+    @Environment(\.dismiss) var dismiss
+
+    public var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Health & Safety Disclaimer")
+                        .font(.title2.bold())
+                        .padding(.bottom, 8)
+
+                    Group {
+                        disclaimerItem(
+                            icon: "exclamationmark.triangle.fill",
+                            title: "Not Medical Advice",
+                            text: "Echoelmusic provides biofeedback data for self-observation only. It is not intended for medical diagnosis, treatment, or prevention of any condition."
+                        )
+
+                        disclaimerItem(
+                            icon: "car.fill",
+                            title: "Brainwave Entrainment",
+                            text: "Do NOT use audio/visual entrainment features while operating vehicles or heavy machinery."
+                        )
+
+                        disclaimerItem(
+                            icon: "pills.fill",
+                            title: "Medications",
+                            text: "If you are taking medications or undergoing therapeutic treatment, coordinate use of biofeedback features with your healthcare provider."
+                        )
+
+                        disclaimerItem(
+                            icon: "eye.fill",
+                            title: "Visual Safety",
+                            text: "Visual effects are limited to max 3 Hz flash rate per W3C WCAG guidelines. If you experience discomfort, stop use immediately."
+                        )
+
+                        disclaimerItem(
+                            icon: "drop.fill",
+                            title: "Substance Use",
+                            text: "Do NOT use entrainment features under the influence of alcohol or drugs."
+                        )
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Disclaimer")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func disclaimerItem(icon: String, title: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.orange)
+                .font(.title3)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(text)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

@@ -184,6 +184,7 @@ public final class AudioToQuantumMIDI: ObservableObject {
     private let harmonicTolerance: Float = 0.03 // 3% tolerance for harmonic detection
 
     private var cancellables = Set<AnyCancellable>()
+    private let audioProcessingQueue = DispatchQueue(label: "com.echoelmusic.audio-to-midi.processing", qos: .userInteractive)
 
     // MARK: - Initialization
 
@@ -395,9 +396,12 @@ public final class AudioToQuantumMIDI: ObservableObject {
         }
 
         // Install tap for audio analysis
-        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, time in
-            Task { @MainActor in
-                self?.processAudioBuffer(buffer)
+        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, _ in
+            guard let self else { return }
+            self.audioProcessingQueue.async {
+                Task { @MainActor in
+                    self.processAudioBuffer(buffer)
+                }
             }
         }
 
