@@ -1457,6 +1457,7 @@ struct VideoPlayerView: UIViewRepresentable {
 
     class PlayerUIView: UIView {
         override class var layerClass: AnyClass { AVPlayerLayer.self }
+        // swiftlint:disable:next force_cast — guaranteed by layerClass override
         var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
     }
 }

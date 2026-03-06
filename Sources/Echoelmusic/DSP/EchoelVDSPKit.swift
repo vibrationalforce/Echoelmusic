@@ -210,11 +210,14 @@ public final class EchoelRealFFT: @unchecked Sendable {
         windowed.withUnsafeBufferPointer { inBuf in
             splitReal.withUnsafeMutableBufferPointer { realBuf in
                 splitImag.withUnsafeMutableBufferPointer { imagBuf in
+                    guard let realBase = realBuf.baseAddress,
+                          let imagBase = imagBuf.baseAddress,
+                          let inBase = inBuf.baseAddress else { return }
                     var splitComplex = DSPSplitComplex(
-                        realp: realBuf.baseAddress!,
-                        imagp: imagBuf.baseAddress!
+                        realp: realBase,
+                        imagp: imagBase
                     )
-                    inBuf.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: size / 2) { complexPtr in
+                    inBase.withMemoryRebound(to: DSPComplex.self, capacity: size / 2) { complexPtr in
                         vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(size / 2))
                     }
                     // Forward FFT
@@ -230,9 +233,11 @@ public final class EchoelRealFFT: @unchecked Sendable {
 
         splitReal.withUnsafeBufferPointer { realBuf in
             splitImag.withUnsafeBufferPointer { imagBuf in
+                guard let realBase = realBuf.baseAddress,
+                      let imagBase = imagBuf.baseAddress else { return }
                 var split = DSPSplitComplex(
-                    realp: UnsafeMutablePointer(mutating: realBuf.baseAddress!),
-                    imagp: UnsafeMutablePointer(mutating: imagBuf.baseAddress!)
+                    realp: UnsafeMutablePointer(mutating: realBase),
+                    imagp: UnsafeMutablePointer(mutating: imagBase)
                 )
                 // Magnitudes
                 vDSP_zvabs(&split, 1, &magnitudes, 1, vDSP_Length(halfSize))
@@ -260,11 +265,14 @@ public final class EchoelRealFFT: @unchecked Sendable {
         windowed.withUnsafeBufferPointer { inBuf in
             splitReal.withUnsafeMutableBufferPointer { realBuf in
                 splitImag.withUnsafeMutableBufferPointer { imagBuf in
+                    guard let realBase = realBuf.baseAddress,
+                          let imagBase = imagBuf.baseAddress,
+                          let inBase = inBuf.baseAddress else { return }
                     var splitComplex = DSPSplitComplex(
-                        realp: realBuf.baseAddress!,
-                        imagp: imagBuf.baseAddress!
+                        realp: realBase,
+                        imagp: imagBase
                     )
-                    inBuf.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: size / 2) { complexPtr in
+                    inBase.withMemoryRebound(to: DSPComplex.self, capacity: size / 2) { complexPtr in
                         vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(size / 2))
                     }
                     vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(FFT_FORWARD))
@@ -277,9 +285,11 @@ public final class EchoelRealFFT: @unchecked Sendable {
 
         splitReal.withUnsafeBufferPointer { realBuf in
             splitImag.withUnsafeBufferPointer { imagBuf in
+                guard let realBase = realBuf.baseAddress,
+                      let imagBase = imagBuf.baseAddress else { return }
                 var split = DSPSplitComplex(
-                    realp: UnsafeMutablePointer(mutating: realBuf.baseAddress!),
-                    imagp: UnsafeMutablePointer(mutating: imagBuf.baseAddress!)
+                    realp: UnsafeMutablePointer(mutating: realBase),
+                    imagp: UnsafeMutablePointer(mutating: imagBase)
                 )
                 vDSP_zvmags(&split, 1, &power, 1, vDSP_Length(halfSize))
             }
