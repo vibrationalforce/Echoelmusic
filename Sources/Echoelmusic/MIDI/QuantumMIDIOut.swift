@@ -708,18 +708,21 @@ public final class QuantumMIDIOut: ObservableObject {
         }
 
         // Fall back to round-robin
-        let voice = voicePool[nextVoiceIndex]
+        guard !voicePool.isEmpty else { return QuantumMIDIVoice() }
+        let voice = voicePool[nextVoiceIndex % voicePool.count]
         nextVoiceIndex = (nextVoiceIndex + 1) % voicePool.count
         return voice
     }
 
     private func allocateCoherenceWeightedVoice() -> QuantumMIDIVoice {
+        guard !voicePool.isEmpty else { return QuantumMIDIVoice() }
         // Voice selection stability increases with coherence
-        let coherenceIndex = Int(bioInput.coherence * Float(voicePool.count - 1))
+        let coherenceIndex = max(0, min(voicePool.count - 1, Int(bioInput.coherence * Float(voicePool.count - 1))))
         return voicePool[coherenceIndex]
     }
 
     private func allocateFibonacciVoice() -> QuantumMIDIVoice {
+        guard !voicePool.isEmpty, !fibonacciSequence.isEmpty else { return QuantumMIDIVoice() }
         // Use Fibonacci sequence for natural distribution
         let fibIndex = fibonacciSequence[nextVoiceIndex % fibonacciSequence.count] % voicePool.count
         nextVoiceIndex += 1
@@ -727,6 +730,7 @@ public final class QuantumMIDIOut: ObservableObject {
     }
 
     private func allocateGoldenRatioVoice() -> QuantumMIDIVoice {
+        guard !voicePool.isEmpty else { return QuantumMIDIVoice() }
         // Golden ratio stepping
         let goldenIndex = Int(Float(nextVoiceIndex) * QuantumMIDIConstants.phi) % voicePool.count
         nextVoiceIndex += 1
@@ -960,12 +964,14 @@ public final class QuantumMIDIOut: ObservableObject {
     }
 
     private func selectNoteFromCoherence(scaleLength: Int) -> Int {
+        guard scaleLength > 0 else { return 0 }
         // Coherence affects note selection probability
         let coherence = bioInput.coherence
 
         if intelligenceMode == .fibonacciHarmonic {
             // Fibonacci-weighted selection
-            let fibIndex = Int(coherence * Float(fibonacciSequence.count - 1))
+            guard !fibonacciSequence.isEmpty, scaleLength > 0 else { return 0 }
+            let fibIndex = max(0, min(fibonacciSequence.count - 1, Int(coherence * Float(fibonacciSequence.count - 1))))
             return fibonacciSequence[fibIndex] % scaleLength
         } else if intelligenceMode == .sacredGeometry {
             // Golden ratio selection

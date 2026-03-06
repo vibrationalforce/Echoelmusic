@@ -565,7 +565,9 @@ public final class AudioToQuantumMIDI: ObservableObject {
             // Is this a peak?
             if mag > prevMag && mag > nextMag && mag > peakThreshold {
                 // Parabolic interpolation for better frequency resolution
-                let delta = 0.5 * (prevMag - nextMag) / (prevMag - 2 * mag + nextMag)
+                let denominator = prevMag - 2 * mag + nextMag
+                guard abs(denominator) > 1e-10 else { continue }
+                let delta = 0.5 * (prevMag - nextMag) / denominator
                 let refinedBin = Float(i) + delta
                 let frequency = refinedBin * sampleRate / Float(fftSize)
 
