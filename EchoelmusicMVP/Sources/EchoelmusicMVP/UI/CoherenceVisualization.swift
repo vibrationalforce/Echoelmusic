@@ -50,6 +50,13 @@ public struct CoherenceVisualization: View {
                 startAnimations()
             }
         }
+        .task(id: isActive) {
+            guard isActive else { return }
+            while !Task.isCancelled {
+                animationPhase += 0.1
+                try? await Task.sleep(nanoseconds: 50_000_000) // 0.05s
+            }
+        }
     }
 
     // MARK: - Glow Rings
@@ -195,14 +202,7 @@ public struct CoherenceVisualization: View {
             rotationAngle = .pi * 2
         }
 
-        // Phase animation for particles
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
-            if !isActive {
-                timer.invalidate()
-                return
-            }
-            animationPhase += 0.1
-        }
+        // Phase animation now driven by .task(id: isActive) modifier
     }
 }
 
