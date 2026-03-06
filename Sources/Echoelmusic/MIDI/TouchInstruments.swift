@@ -841,8 +841,13 @@ class DrumPadViewModel: ObservableObject {
         let velocity = velocityCurve.apply(pressure)
         hub.triggerHaptic(intensity: velocity, sharpness: 0.8)
 
-        // For drums, we use MIDI 2.0 directly (not MPE - drums are typically on channel 10)
-        hub.midi2Manager?.sendNoteOn(channel: 9, note: pad.midiNote, velocity: velocity)
+        if hub.midi2Manager != nil {
+            // Route through MIDI 2.0 when connected (drums on channel 10)
+            hub.midi2Manager?.sendNoteOn(channel: 9, note: pad.midiNote, velocity: velocity)
+        } else {
+            // Fallback: play through EchoelBeat's built-in drum engine
+            EchoelBeat.shared.triggerDrumByNote(Int(pad.midiNote), velocity: velocity)
+        }
     }
 
     func padReleased(_ pad: DrumPadModel, hub: TouchInstrumentsHub) {
@@ -1229,6 +1234,9 @@ class TouchKeyboardViewModel: ObservableObject {
 
         if let voice = hub.mpeZoneManager?.allocateVoice(note: note, velocity: pressure) {
             activeVoices[note] = voice
+        } else {
+            // Fallback: play through InstrumentOrchestrator when MPE is not connected
+            InstrumentOrchestrator.shared.noteOn(midiNote: Int(note), velocity: pressure)
         }
     }
 
@@ -1238,6 +1246,8 @@ class TouchKeyboardViewModel: ObservableObject {
         if let voice = activeVoices[note] {
             hub.mpeZoneManager?.deallocateVoice(voice: voice)
             activeVoices.removeValue(forKey: note)
+        } else {
+            InstrumentOrchestrator.shared.noteOff(midiNote: Int(note))
         }
     }
 
