@@ -1,0 +1,54 @@
+{
+  "mcpServers": {
+    "perplexity": {
+      "type": "http",
+      "url": "https://mcp.perplexity.com/mcp"
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp"],
+      "env": {
+        "SUPABASE_URL": "${SUPABASE_URL}",
+        "SUPABASE_API_KEY": "${SUPABASE_API_KEY}"
+      }
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {}
+    },
+    "firecrawl": {
+      "type": "http",
+      "url": "https://api.firecrawl.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer ${FIRECRAWL_API_KEY}"
+      }
+    },
+    "next-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "tailwindcss": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "tailwindcss-mcp-server"]
+    },
+    "vibekanban": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-vibekanban"]
+    },
+    "gsd-memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "gsd-memory"]
+    }
+  }
+}
