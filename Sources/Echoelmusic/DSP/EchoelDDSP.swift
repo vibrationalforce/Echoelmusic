@@ -411,7 +411,7 @@ public final class EchoelDDSP: @unchecked Sendable {
                 amps[i] = (1.0 / pow(n, 0.8)) / detune
             }
         case .flat:
-            let val = 1.0 / Float(harmonicCount)
+            let val = harmonicCount > 0 ? 1.0 / Float(harmonicCount) : 0
             for i in 0..<harmonicCount { amps[i] = val }
         }
     }
@@ -422,7 +422,12 @@ public final class EchoelDDSP: @unchecked Sendable {
         vDSP_maxv(amps, 1, &maxAmp, vDSP_Length(amps.count))
         if maxAmp > 0 {
             var divisor = maxAmp
-            vDSP_vsdiv(amps, 1, &divisor, &amps, 1, vDSP_Length(amps.count))
+            // Use withUnsafeMutableBufferPointer to avoid Swift exclusivity violation
+            // vDSP supports in-place operation (same pointer for input and output)
+            amps.withUnsafeMutableBufferPointer { buf in
+                guard let ptr = buf.baseAddress else { return }
+                vDSP_vsdiv(ptr, 1, &divisor, ptr, 1, vDSP_Length(buf.count))
+            }
         }
     }
 
@@ -777,7 +782,10 @@ public final class EchoelDDSP: @unchecked Sendable {
         vDSP_maxv(profile, 1, &maxVal, vDSP_Length(harmonics))
         if maxVal > 0 {
             var div = maxVal
-            vDSP_vsdiv(profile, 1, &div, &profile, 1, vDSP_Length(harmonics))
+            profile.withUnsafeMutableBufferPointer { buf in
+                guard let ptr = buf.baseAddress else { return }
+                vDSP_vsdiv(ptr, 1, &div, ptr, 1, vDSP_Length(harmonics))
+            }
         }
         return profile
     }
@@ -932,7 +940,7 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
 
         // Spread panning across active voices
         let activeCount = voiceNotes.filter { $0 >= 0 }.count
-        if activeCount > 1 {
+        if activeCount > 1, maxVoices > 1 {
             let panSpread: Float = 0.6
             let normalized = Float(voiceIdx) / Float(maxVoices - 1)
             voicePans[voiceIdx] = (normalized * 2.0 - 1.0) * panSpread

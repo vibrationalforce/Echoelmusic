@@ -122,7 +122,7 @@ public final class ChromaticTuner {
     nonisolated(unsafe) private let audioEngine = AVAudioEngine()
     private let analysisQueue = DispatchQueue(label: "com.echoelmusic.tuner", qos: .userInteractive)
 
-    private let sampleRate: Double = 44100
+    private let sampleRate: Double = 48000
     private let bufferSize: AVAudioFrameCount = 4096
     private let minFrequency: Double = 27.5  // A0
     private let maxFrequency: Double = 4186  // C8

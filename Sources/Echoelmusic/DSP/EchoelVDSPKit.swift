@@ -379,7 +379,10 @@ public final class EchoelConvolution: @unchecked Sendable {
         var sum: Float = 0
         vDSP_sve(kernel, 1, &sum, vDSP_Length(taps))
         if sum > 0 {
-            vDSP_vsdiv(kernel, 1, &sum, &kernel, 1, vDSP_Length(taps))
+            kernel.withUnsafeMutableBufferPointer { buf in
+                guard let ptr = buf.baseAddress else { return }
+                vDSP_vsdiv(ptr, 1, &sum, ptr, 1, vDSP_Length(taps))
+            }
         }
 
         return kernel

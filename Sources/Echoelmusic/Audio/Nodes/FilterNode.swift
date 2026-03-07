@@ -20,7 +20,7 @@ class FilterNode: BaseEchoelmusicNode {
     private var currentFilterType: FilterType = .lowPass
 
     /// Sample rate
-    private var sampleRate: Double = 44100.0
+    private var sampleRate: Double = 48000.0
 
     /// Biquad filter state (z^-1 and z^-2 for both channels)
     private var x1: [Float] = [0.0, 0.0]  // x[n-1] for left/right

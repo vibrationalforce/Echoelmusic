@@ -689,7 +689,7 @@ public final class ProSessionEngine {
     // MARK: - Audio Scheduling
 
     /// Real-time audio scheduler for clip playback (MIDI, pattern, audio)
-    public private(set) var audioScheduler = AudioClipScheduler(sampleRate: 44100, bufferSize: 512)
+    public private(set) var audioScheduler = AudioClipScheduler(sampleRate: 48000, bufferSize: 512)
 
     /// Track freeze engine for CPU optimization (offline rendering)
     public private(set) var freezeEngine = TrackFreezeEngine()

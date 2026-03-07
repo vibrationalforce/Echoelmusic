@@ -176,7 +176,7 @@ public final class MetronomeEngine {
     private var upbeatBuffer: AVAudioPCMBuffer?
     private var subdivisionBuffer: AVAudioPCMBuffer?
 
-    private let sampleRate: Double = 44100
+    private let sampleRate: Double = 48000
     private let clickDuration: Double = 0.02 // 20ms click
 
     // MARK: - Initialization

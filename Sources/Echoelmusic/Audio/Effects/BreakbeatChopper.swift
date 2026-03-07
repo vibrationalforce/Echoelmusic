@@ -276,7 +276,7 @@ public final class BreakbeatChopper {
 
     // MARK: - Configuration
 
-    var sampleRate: Double = 44100.0
+    var sampleRate: Double = 48000.0
     var sliceCount: Int { slices.count }
 
     // Transient detection
@@ -1087,7 +1087,7 @@ extension BreakbeatChopper {
         guard !combinedAudio.isEmpty else { return }
 
         // Create buffer from combined audio
-        let sr: Double = 44100
+        let sr: Double = 48000
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sr, channels: 1),
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(combinedAudio.count)) else {
             return

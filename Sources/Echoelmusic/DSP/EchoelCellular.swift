@@ -400,6 +400,7 @@ public final class EchoelCellular: @unchecked Sendable {
     private func renderAdditive() -> Float {
         var sample: Float = 0
         let count = min(partialCount, cellCount)
+        guard count > 0 else { return 0 }
         let invCount = 1.0 / Float(count)
 
         for i in 0..<count {
@@ -424,7 +425,7 @@ public final class EchoelCellular: @unchecked Sendable {
         for i in 0..<cellCount {
             if smoothedWavetable[i] > 0 { aliveCount += 1 }
         }
-        let aliveRatio = aliveCount / Float(cellCount)
+        let aliveRatio = cellCount > 0 ? aliveCount / Float(cellCount) : 0
 
         // Dynamic modulation index based on CA density
         let modIndex = fmModIndex * aliveRatio
@@ -452,6 +453,7 @@ public final class EchoelCellular: @unchecked Sendable {
         var sample: Float = 0
         let row = grid2D[spectralFrameIndex % grid2DSize]
         let count = min(partialCount, grid2DSize)
+        guard count > 0 else { return 0 }
         let invCount = 1.0 / Float(count)
 
         for i in 0..<count {

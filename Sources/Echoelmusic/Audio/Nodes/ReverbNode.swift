@@ -32,7 +32,7 @@ class ReverbNode: BaseEchoelmusicNode {
     private var allpassIndices: [Int] = []
 
     /// Current sample rate
-    private var currentSampleRate: Double = 44100.0
+    private var currentSampleRate: Double = 48000.0
 
     /// Feedback amount for comb filters (0.0-1.0)
     private var feedback: Float = 0.84
@@ -120,7 +120,7 @@ class ReverbNode: BaseEchoelmusicNode {
         ]
 
         // Initialize buffers at default sample rate
-        initializeBuffers(sampleRate: 44100.0)
+        initializeBuffers(sampleRate: 48000.0)
     }
 
     /// Initialize delay buffers scaled to sample rate

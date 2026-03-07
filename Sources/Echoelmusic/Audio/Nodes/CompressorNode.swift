@@ -26,7 +26,7 @@ class CompressorNode: BaseEchoelmusicNode {
     private var detectionMode: DetectionMode = .peak
 
     /// Sample rate
-    private var sampleRate: Double = 44100.0
+    private var sampleRate: Double = 48000.0
 
     /// Envelope follower state (per channel)
     private var envelope: [Float] = [0.0, 0.0]

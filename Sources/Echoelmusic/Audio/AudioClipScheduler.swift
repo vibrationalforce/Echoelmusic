@@ -77,7 +77,7 @@ public final class AudioClipScheduler {
 
     // MARK: - Initialization
 
-    public init(sampleRate: Float = 44100, bufferSize: Int = 512) {
+    public init(sampleRate: Float = 48000, bufferSize: Int = 512) {
         self.sampleRate = sampleRate
         self.bufferSize = bufferSize
     }
