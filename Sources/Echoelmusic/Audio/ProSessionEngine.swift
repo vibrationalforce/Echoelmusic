@@ -689,25 +689,19 @@ public final class ProSessionEngine {
     // MARK: - Audio Scheduling
 
     /// Real-time audio scheduler for clip playback (MIDI, pattern, audio)
-    public private(set) lazy var audioScheduler: AudioClipScheduler = {
-        AudioClipScheduler(sampleRate: 44100, bufferSize: 512)
-    }()
+    public private(set) var audioScheduler = AudioClipScheduler(sampleRate: 44100, bufferSize: 512)
 
     /// Track freeze engine for CPU optimization (offline rendering)
-    public private(set) lazy var freezeEngine: TrackFreezeEngine = {
-        TrackFreezeEngine()
-    }()
+    public private(set) var freezeEngine = TrackFreezeEngine()
 
     /// Crossfade engine for seamless clip transitions
-    public private(set) lazy var crossfadeEngine: CrossfadeEngine = {
-        CrossfadeEngine(sampleRate: 48000)
-    }()
+    public private(set) var crossfadeEngine = CrossfadeEngine(sampleRate: 48000)
 
     // MARK: - Private Properties
 
     private let log = ProfessionalLogger.shared
     private var cancellables = Set<AnyCancellable>()
-    private var transportTimer: Timer?
+    nonisolated(unsafe) private var transportTimer: Timer?
     private var tapTempoTimestamps: [Date] = []
 
     /// Queued clip launches waiting for the next quantize boundary

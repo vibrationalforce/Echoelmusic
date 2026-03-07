@@ -413,7 +413,7 @@ final class VideoExportManager {
         let targetSize = resolution.size ?? assetSize
 
         var settings: [String: Any] = [
-            AVVideoCodecKey: format.codecType,
+            AVVideoCodecKey: format.codecType ?? .h264,
             AVVideoWidthKey: Int(targetSize.width),
             AVVideoHeightKey: Int(targetSize.height)
         ]
@@ -458,10 +458,12 @@ final class VideoExportManager {
     // MARK: - Progress Monitoring
 
     private func startProgressMonitoring(exportSession: AVAssetExportSession) {
+        nonisolated(unsafe) let session = exportSession
         progressTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
+            let currentProgress = Double(session.progress)
             Task { @MainActor in
-                self.exportProgress = Double(exportSession.progress)
+                self.exportProgress = currentProgress
             }
         }
     }

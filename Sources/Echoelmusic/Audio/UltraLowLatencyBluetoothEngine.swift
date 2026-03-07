@@ -496,7 +496,7 @@ final class LatencyMeasurement {
 /// Main engine for ultra-low latency Bluetooth audio
 @MainActor
 @Observable
-public final class UltraLowLatencyBluetoothEngine {
+public final class UltraLowLatencyBluetoothEngine: NSObject {
 
     // MARK: - Singleton
     public static let shared = UltraLowLatencyBluetoothEngine()

@@ -563,7 +563,6 @@ struct EchoelFXView: View {
             .buttonStyle(.plain)
 
             Button {
-                nodeGraph.objectWillChange.send()
                 node.isBypassed.toggle()
                 HapticHelper.impact(.medium)
             } label: {

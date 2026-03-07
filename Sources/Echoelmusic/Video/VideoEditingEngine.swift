@@ -25,8 +25,8 @@ final class VideoEditingEngine {
 
     // MARK: - Playback
 
-    private var player: AVPlayer?
-    private var playerItem: AVPlayerItem?
+    nonisolated(unsafe) private var player: AVPlayer?
+    nonisolated(unsafe) private var playerItem: AVPlayerItem?
     private var timeObserver: Any?
 
     // MARK: - Edit Modes
