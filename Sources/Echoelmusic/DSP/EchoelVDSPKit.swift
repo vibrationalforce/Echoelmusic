@@ -316,13 +316,18 @@ public final class EchoelConvolution: @unchecked Sendable {
     private let kernelSize: Int
     private var kernel: [Float]
     private var overlapBuffer: [Float]
+    /// Pre-allocated output buffer — avoids heap allocation on every process() call
+    private var outputBuffer: [Float]
+    private var maxInputLength: Int
 
     /// Initialize with FIR kernel
-    public init(kernel: [Float]) {
+    public init(kernel: [Float], maxInputLength: Int = 2048) {
         self.kernelSize = kernel.count
         // Reverse kernel for vDSP_conv (it uses correlation, not convolution)
         self.kernel = kernel.reversed()
         self.overlapBuffer = [Float](repeating: 0, count: kernelSize - 1)
+        self.maxInputLength = maxInputLength
+        self.outputBuffer = [Float](repeating: 0, count: maxInputLength + kernel.count - 1)
     }
 
     /// Update kernel coefficients
@@ -335,23 +340,34 @@ public final class EchoelConvolution: @unchecked Sendable {
     public func process(_ input: [Float]) -> [Float] {
         let inputLength = input.count
         let outputLength = inputLength + kernelSize - 1
-        var output = [Float](repeating: 0, count: outputLength)
 
-        vDSP_conv(input, 1, kernel, 1, &output, 1,
+        // Grow pre-allocated buffer if needed (rare path)
+        if outputLength > outputBuffer.count {
+            maxInputLength = inputLength
+            outputBuffer = [Float](repeating: 0, count: outputLength)
+        } else {
+            // Zero only the portion we'll use
+            outputBuffer.withUnsafeMutableBufferPointer { buf in
+                guard let ptr = buf.baseAddress else { return }
+                vDSP_vclr(ptr, 1, vDSP_Length(outputLength))
+            }
+        }
+
+        vDSP_conv(input, 1, kernel, 1, &outputBuffer, 1,
                   vDSP_Length(outputLength), vDSP_Length(kernelSize))
 
         // Apply overlap from previous frame
         for i in 0..<min(overlapBuffer.count, inputLength) {
-            output[i] += overlapBuffer[i]
+            outputBuffer[i] += overlapBuffer[i]
         }
 
         // Save overlap for next frame
         let overlapStart = inputLength
         for i in 0..<(kernelSize - 1) {
-            overlapBuffer[i] = (overlapStart + i < outputLength) ? output[overlapStart + i] : 0
+            overlapBuffer[i] = (overlapStart + i < outputLength) ? outputBuffer[overlapStart + i] : 0
         }
 
-        return Array(output.prefix(inputLength))
+        return Array(outputBuffer.prefix(inputLength))
     }
 
     // MARK: - Factory Methods
