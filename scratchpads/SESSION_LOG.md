@@ -6,6 +6,31 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-07b — MCPs + Triple Deep Analysis
+
+**Branch:** `claude/analyze-test-coverage-VsxOU`
+
+**What was done:**
+1. Installed 9 MCP servers (Perplexity, Supabase, Context7, Playwright, Firecrawl, Next.js, Tailwind, Vibe Kanban, GSD Memory)
+2. Ran 3 parallel analysis agents: Deep Audit, Deep Research, Multilevel Optimization
+3. Full report: `scratchpads/DEEP_ANALYSIS_2026-03-07.md`
+
+**Top 5 Critical Findings:**
+1. NSLock on audio thread (EchoelBass, TR808, EchoelBeat) — crash/glitch risk
+2. Xcode 16.2 in CI — iOS 26 SDK deadline April 28, 2026
+3. @unchecked Sendable data races across DSP layer
+4. No actual HealthKit (bio-coherence hardcoded 0.5)
+5. Multiple AVAudioEngine instances (4-6 competing)
+
+**Optimization Quick Wins Identified:**
+- Cache biquad coefficients (-40% CPU on EQ path)
+- Pre-allocate convolution buffer (eliminate RT allocs)
+- Dictionary lookup in NodeGraph (O(n) → O(1))
+- Remove .id(currentTab) (10x faster tab switch)
+- Parallelize CI builds (40-60% faster CI)
+
+---
+
 ## Session: 2026-03-07 — Deep Audit + Architecture Maximum
 
 **Branch:** `claude/analyze-test-coverage-9aFjV`
