@@ -33,9 +33,9 @@ public final class VisualStepSequencer {
 
     // MARK: - Configuration
 
-    nonisolated(unsafe) public static let stepCount: Int = 16
-    nonisolated(unsafe) public static let bpmRange: ClosedRange<Double> = 60...180
-    nonisolated(unsafe) public static let channelCount: Int = 8
+    public static let stepCount: Int = 16
+    public static let bpmRange: ClosedRange<Double> = 60...180
+    public static let channelCount: Int = 8
 
     // MARK: - Timing
 

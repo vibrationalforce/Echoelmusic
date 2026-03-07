@@ -248,10 +248,11 @@ public final class BPMTransitionEngine {
 
     private var transitionStartBPM: Double = 120
     private var transitionProgress: Double = 1.0
-    private var displayLink: CADisplayLink?
+    nonisolated(unsafe) private var displayLink: CADisplayLink?
     private var humanizePhase: Double = 0
     private var lastUpdateTime: CFTimeInterval = 0
-    private var cancellables = Set<AnyCancellable>()
+    private var lastObservedBioSourceBPM: Double = 70
+    private var bioDebounceTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
@@ -274,13 +275,29 @@ public final class BPMTransitionEngine {
 
     private func setupBindings() {
         // Auto-apply situation when bio-source changes significantly
-        $bioSourceBPM
-            .removeDuplicates()
-            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
-            .sink { [weak self] bpm in
-                self?.handleBioSourceChange(bpm)
+        observeBioSourceBPM()
+    }
+
+    private func observeBioSourceBPM() {
+        withObservationTracking {
+            _ = self.bioSourceBPM
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let newBPM = self.bioSourceBPM
+                if newBPM != self.lastObservedBioSourceBPM {
+                    self.lastObservedBioSourceBPM = newBPM
+                    // Debounce: cancel previous and wait 1 second
+                    self.bioDebounceTask?.cancel()
+                    self.bioDebounceTask = Task { @MainActor [weak self] in
+                        try? await Task.sleep(for: .seconds(1))
+                        guard !Task.isCancelled else { return }
+                        self?.handleBioSourceChange(newBPM)
+                    }
+                }
+                self.observeBioSourceBPM()
             }
-            .store(in: &cancellables)
+        }
     }
 
     // MARK: - Update Loop

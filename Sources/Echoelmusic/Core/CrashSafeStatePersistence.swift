@@ -180,7 +180,7 @@ public final class CrashSafeStatePersistence {
     // MARK: - State
 
     private var currentState: SessionState?
-    private var autoSaveTimer: Timer?
+    nonisolated(unsafe) private var autoSaveTimer: Timer?
     private var journalEntries: [JournalEntry] = []
 
     private struct JournalEntry: Codable {

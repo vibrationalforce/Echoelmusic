@@ -12,7 +12,6 @@
 // Subscribe once at app startup via TuningBridge.shared.activate()
 
 import Foundation
-import Combine
 import Observation
 
 // MARK: - Tuning Bridge
@@ -28,8 +27,8 @@ public final class TuningBridge {
 
     // MARK: - State
 
-    private var cancellables = Set<AnyCancellable>()
     private var isActive = false
+    private var lastPitch: Double = 0
 
     // MARK: - Initialization
 
@@ -43,16 +42,25 @@ public final class TuningBridge {
         isActive = true
 
         let tuning = TuningManager.shared
-
-        // Observe concert pitch changes
-        tuning.$concertPitch
-            .removeDuplicates()
-            .sink { [weak self] newPitch in
-                self?.propagatePitch(newPitch)
-            }
-            .store(in: &cancellables)
-
         log.log(.info, category: .audio, "TuningBridge: Activated (A4 = \(String(format: "%.3f", tuning.concertPitch)) Hz)")
+        observeConcertPitch()
+    }
+
+    private func observeConcertPitch() {
+        let tuning = TuningManager.shared
+        withObservationTracking {
+            _ = tuning.concertPitch
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let newPitch = TuningManager.shared.concertPitch
+                if newPitch != self.lastPitch {
+                    self.lastPitch = newPitch
+                    self.propagatePitch(newPitch)
+                }
+                self.observeConcertPitch()
+            }
+        }
     }
 
     // MARK: - MIDI Helper

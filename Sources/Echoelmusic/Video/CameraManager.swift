@@ -16,7 +16,7 @@ import Observation
 /// Full manual exposure, focus, white balance, zoom, stabilization, HDR, depth, photo & ProRes
 @MainActor
 @Observable
-public final class CameraManager {
+public final class CameraManager: NSObject {
 
     // MARK: - Published State — Basic
 
@@ -237,10 +237,10 @@ public final class CameraManager {
 
     // MARK: - KVO Observers
 
-    private var exposureObserver: NSKeyValueObservation?
-    private var focusObserver: NSKeyValueObservation?
-    private var whiteBalanceObserver: NSKeyValueObservation?
-    private var zoomObserver: NSKeyValueObservation?
+    nonisolated(unsafe) private var exposureObserver: NSKeyValueObservation?
+    nonisolated(unsafe) private var focusObserver: NSKeyValueObservation?
+    nonisolated(unsafe) private var whiteBalanceObserver: NSKeyValueObservation?
+    nonisolated(unsafe) private var zoomObserver: NSKeyValueObservation?
 
     // MARK: - Initialization
 

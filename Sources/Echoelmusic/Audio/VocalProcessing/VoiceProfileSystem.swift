@@ -951,18 +951,23 @@ public final class VoiceSynthesisEngine {
     private let profileManager = VoiceProfileManager.shared
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
-    private var cancellables = Set<AnyCancellable>()
-
     private init() {
-        // Forward characterizer state
-        characterizer.$isAnalyzing
-            .receive(on: RunLoop.main)
-            .sink { [weak self] val in self?.isTraining = val }
-            .store(in: &cancellables)
-        characterizer.$analysisProgress
-            .receive(on: RunLoop.main)
-            .sink { [weak self] val in self?.trainingProgress = val }
-            .store(in: &cancellables)
+        // Forward characterizer state using @Observable tracking
+        observeCharacterizer()
+    }
+
+    private func observeCharacterizer() {
+        withObservationTracking {
+            _ = characterizer.isAnalyzing
+            _ = characterizer.analysisProgress
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isTraining = self.characterizer.isAnalyzing
+                self.trainingProgress = self.characterizer.analysisProgress
+                self.observeCharacterizer()
+            }
+        }
     }
 
     // MARK: - Recording

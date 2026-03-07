@@ -1,6 +1,5 @@
 #if canImport(AVFoundation)
 import Foundation
-import Combine
 import AVFoundation
 import Accelerate
 import Observation
@@ -51,7 +50,6 @@ final class EchoelCreativeWorkspace {
     /// Audio render buffer size in frames
     private let renderFrameCount: Int = 512
 
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
 
@@ -74,15 +72,8 @@ final class EchoelCreativeWorkspace {
     // MARK: - Bridges
 
     private func setupBridges() {
-        // BPM Grid → Video Timeline sync
-        bpmGrid.$grid
-            .map(\.bpm)
-            .removeDuplicates()
-            .sink { [weak self] bpm in
-                self?.videoEditor.timeline.tempo = bpm
-                self?.globalBPM = bpm
-            }
-            .store(in: &cancellables)
+        // BPM Grid → Video Timeline sync (initial)
+        videoEditor.timeline.tempo = bpmGrid.grid.bpm
 
         // BPM Grid → beat-synced video effects
         bpmGrid.onBeat = { [weak self] beat, bar in
@@ -92,29 +83,51 @@ final class EchoelCreativeWorkspace {
             }
         }
 
-        videoEditor.timeline.tempo = bpmGrid.grid.bpm
+        // Observe BPM Grid changes
+        observeGridBPM()
+        // Observe session BPM changes
+        observeSessionBPM()
+        // Observe color wheel changes
+        observeColorWheels()
+        // Observe global BPM for loop engine + session
+        observeGlobalBPM()
+        // Observe global time signature for loop engine
+        observeGlobalTimeSignature()
+    }
 
-        // Global BPM → Session Engine
-        $globalBPM
-            .removeDuplicates()
-            .sink { [weak self] bpm in
-                self?.proSession.globalBPM = bpm
-            }
-            .store(in: &cancellables)
-
-        // Session BPM → Global
-        proSession.$globalBPM
-            .removeDuplicates()
-            .sink { [weak self] bpm in
-                self?.setGlobalBPM(bpm)
-            }
-            .store(in: &cancellables)
-
-        // Pro Color → Video Editor
-        proColor.$colorWheels
-            .removeDuplicates()
-            .sink { [weak self] wheels in
+    private func observeGridBPM() {
+        withObservationTracking {
+            _ = self.bpmGrid.grid.bpm
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
                 guard let self else { return }
+                let bpm = self.bpmGrid.grid.bpm
+                self.videoEditor.timeline.tempo = bpm
+                self.globalBPM = bpm
+                self.observeGridBPM()
+            }
+        }
+    }
+
+    private func observeSessionBPM() {
+        withObservationTracking {
+            _ = self.proSession.globalBPM
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.setGlobalBPM(self.proSession.globalBPM)
+                self.observeSessionBPM()
+            }
+        }
+    }
+
+    private func observeColorWheels() {
+        withObservationTracking {
+            _ = self.proColor.colorWheels
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let wheels = self.proColor.colorWheels
                 let grade = ColorGradeEffect(
                     exposure: wheels.exposure,
                     contrast: wheels.contrast,
@@ -123,23 +136,36 @@ final class EchoelCreativeWorkspace {
                     tint: wheels.tint
                 )
                 self.videoEditor.applyLiveGrade(grade)
+                self.observeColorWheels()
             }
-            .store(in: &cancellables)
+        }
+    }
 
-        // BPM → Loop Engine
-        $globalBPM
-            .removeDuplicates()
-            .sink { [weak self] bpm in
-                self?.loopEngine.setTempo(bpm)
+    private func observeGlobalBPM() {
+        withObservationTracking {
+            _ = self.globalBPM
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let bpm = self.globalBPM
+                self.proSession.globalBPM = bpm
+                self.loopEngine.setTempo(bpm)
+                self.observeGlobalBPM()
             }
-            .store(in: &cancellables)
+        }
+    }
 
-        $globalTimeSignature
-            .removeDuplicates()
-            .sink { [weak self] ts in
-                self?.loopEngine.setTimeSignature(beats: ts.numerator, noteValue: ts.denominator)
+    private func observeGlobalTimeSignature() {
+        withObservationTracking {
+            _ = self.globalTimeSignature
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let ts = self.globalTimeSignature
+                self.loopEngine.setTimeSignature(beats: ts.numerator, noteValue: ts.denominator)
+                self.observeGlobalTimeSignature()
             }
-            .store(in: &cancellables)
+        }
     }
 
     // MARK: - Audio Engine Connection
@@ -152,10 +178,18 @@ final class EchoelCreativeWorkspace {
 
         // Wire mic audio level as bio-coherence proxy
         // When HealthKit is available, this will be replaced with real HRV coherence
-        engine.microphoneManager.$audioLevel
-            .throttle(for: .milliseconds(50), scheduler: DispatchQueue.main, latest: true)
-            .sink { [weak self] level in
+        observeAudioLevel(engine.microphoneManager)
+
+        log.info("AudioEngine connected to Creative Workspace (bio-reactive synth wired)", category: .audio)
+    }
+
+    private func observeAudioLevel(_ micManager: MicrophoneManager) {
+        withObservationTracking {
+            _ = micManager.audioLevel
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
                 guard let self else { return }
+                let level = micManager.audioLevel
                 // Smooth the level into a coherence-like signal (0-1)
                 let smoothed = self.bioCoherence * 0.85 + level * 0.15
                 self.bioCoherence = smoothed
@@ -166,10 +200,9 @@ final class EchoelCreativeWorkspace {
                     heartRate: 0.5,
                     breathPhase: 0.5
                 )
+                self.observeAudioLevel(micManager)
             }
-            .store(in: &cancellables)
-
-        log.info("AudioEngine connected to Creative Workspace (bio-reactive synth wired)", category: .audio)
+        }
     }
 
     // MARK: - Actions

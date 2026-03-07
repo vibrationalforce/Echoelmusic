@@ -287,7 +287,7 @@ public final class BreakbeatChopper {
 
     private let audioEngine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
-    private var playbackTimer: Timer?
+    nonisolated(unsafe) private var playbackTimer: Timer?
 
     // DSP buffers
     private var granularBuffer: [Float] = []

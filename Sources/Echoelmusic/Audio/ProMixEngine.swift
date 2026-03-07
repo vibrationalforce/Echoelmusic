@@ -602,11 +602,7 @@ public final class ProMixEngine {
     /// Real-time DSP kernel that processes actual audio buffers.
     /// Manages per-channel buffer allocation, insert node chains,
     /// send routing, bus summing, and metering from real audio data.
-    private(set) lazy var dspKernel: MixerDSPKernel = {
-        let kernel = MixerDSPKernel(sampleRate: sampleRate, bufferSize: bufferSize)
-        kernel.addChannel(id: masterChannel.id)
-        return kernel
-    }()
+    private(set) var dspKernel: MixerDSPKernel
 
     // MARK: - Private
 
@@ -631,6 +627,9 @@ public final class ProMixEngine {
             inputSource: .bus,
             color: .slate
         )
+        let kernel = MixerDSPKernel(sampleRate: sampleRate, bufferSize: bufferSize)
+        kernel.addChannel(id: masterChannel.id)
+        self.dspKernel = kernel
         logger.log(.info, category: .audio, "ProMixEngine initialized (\(sampleRate)Hz, \(bufferSize) frames)")
     }
 
