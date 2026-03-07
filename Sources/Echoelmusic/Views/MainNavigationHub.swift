@@ -310,7 +310,6 @@ struct MainNavigationHub: View {
             }
         }
         .transition(.opacity)
-        .id(currentTab)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentTab)
     }
 
@@ -489,40 +488,9 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Bio-feedback indicator showing coherence level and engine status
+    /// Bio-feedback indicator — delegates to isolated subview to avoid re-rendering transport bar
     private var bioFeedbackIndicator: some View {
-        HStack(spacing: EchoelSpacing.xs) {
-            // Coherence ring — real bio-coherence from workspace
-            let level = CGFloat(EchoelCreativeWorkspace.shared.bioCoherence)
-            let coherenceColor: Color = level > 0.6 ? EchoelBrand.coherenceHigh
-                : level > 0.3 ? EchoelBrand.coherenceMedium
-                : EchoelBrand.coherenceLow
-
-            ZStack {
-                Circle()
-                    .stroke(coherenceColor.opacity(0.2), lineWidth: 2)
-                    .frame(width: 18, height: 18)
-
-                Circle()
-                    .trim(from: 0, to: max(0.05, level))
-                    .stroke(coherenceColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .frame(width: 18, height: 18)
-                    .rotationEffect(.degrees(-90))
-
-                Circle()
-                    .fill(coherenceColor)
-                    .frame(width: 5, height: 5)
-            }
-
-            VStack(alignment: .leading, spacing: 0) {
-                Text("BIO")
-                    .font(.system(size: 7, weight: .bold, design: .monospaced))
-                    .foregroundColor(EchoelBrand.textSecondary)
-                Text(audioEngine.isRunning ? "LIVE" : "OFF")
-                    .font(.system(size: 7, weight: .semibold, design: .monospaced))
-                    .foregroundColor(audioEngine.isRunning ? EchoelBrand.emerald : EchoelBrand.textDisabled)
-            }
-        }
+        BioFeedbackIndicatorView(isAudioRunning: audioEngine.isRunning)
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
@@ -803,6 +771,49 @@ struct EchoelSettingsView: View {
             Text(text)
                 .font(EchoelBrandFont.caption())
                 .foregroundColor(EchoelBrand.textSecondary)
+        }
+    }
+}
+
+// MARK: - Isolated Bio Feedback Indicator
+
+/// Isolated view that only re-renders when bioCoherence or audio running state changes.
+/// Prevents 60Hz+ coherence updates from triggering full transport bar re-render.
+private struct BioFeedbackIndicatorView: View {
+    let isAudioRunning: Bool
+    private let workspace = EchoelCreativeWorkspace.shared
+
+    var body: some View {
+        HStack(spacing: EchoelSpacing.xs) {
+            let level = CGFloat(workspace.bioCoherence)
+            let coherenceColor: Color = level > 0.6 ? EchoelBrand.coherenceHigh
+                : level > 0.3 ? EchoelBrand.coherenceMedium
+                : EchoelBrand.coherenceLow
+
+            ZStack {
+                Circle()
+                    .stroke(coherenceColor.opacity(0.2), lineWidth: 2)
+                    .frame(width: 18, height: 18)
+
+                Circle()
+                    .trim(from: 0, to: max(0.05, level))
+                    .stroke(coherenceColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .frame(width: 18, height: 18)
+                    .rotationEffect(.degrees(-90))
+
+                Circle()
+                    .fill(coherenceColor)
+                    .frame(width: 5, height: 5)
+            }
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text("BIO")
+                    .font(.system(size: 7, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                Text(isAudioRunning ? "LIVE" : "OFF")
+                    .font(.system(size: 7, weight: .semibold, design: .monospaced))
+                    .foregroundColor(isAudioRunning ? EchoelBrand.emerald : EchoelBrand.textDisabled)
+            }
         }
     }
 }
