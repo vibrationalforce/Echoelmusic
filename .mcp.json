@@ -1,0 +1,49 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {}
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "env": {}
+    },
+    "perplexity": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic-ai/mcp-perplexity-search"
+      ],
+      "env": {}
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase"
+      ],
+      "env": {}
+    },
+    "firecrawl": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {}
+    }
+  }
+}
