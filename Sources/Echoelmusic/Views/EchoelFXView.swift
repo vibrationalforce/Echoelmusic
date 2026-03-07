@@ -498,75 +498,27 @@ struct EchoelFXView: View {
         }
     }
 
+    private func nodeTextColor(node: EchoelmusicNode, isSelected: Bool) -> Color {
+        if node.isBypassed { return EchoelBrand.textTertiary }
+        return isSelected ? EchoelBrand.primary : EchoelBrand.textSecondary
+    }
+
+    private func nodeFillColor(node: EchoelmusicNode, isSelected: Bool) -> Color {
+        if node.isBypassed { return EchoelBrand.coral.opacity(0.05) }
+        return isSelected ? EchoelBrand.primary.opacity(0.08) : EchoelBrand.bgSurface
+    }
+
+    private func nodeStrokeColor(node: EchoelmusicNode, isSelected: Bool) -> Color {
+        if node.isBypassed { return EchoelBrand.coral.opacity(0.3) }
+        return isSelected ? EchoelBrand.borderActive : EchoelBrand.border
+    }
+
     private func nodePickerStrip(selectedNode: EchoelmusicNode) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: EchoelSpacing.sm) {
                 ForEach(nodeGraph.nodes, id: \.id) { node in
-                    HStack(spacing: 2) {
-                        Button {
-                            withAnimation(.easeInOut(duration: EchoelAnimation.quick)) {
-                                selectedNodeID = node.id
-                            }
-                            HapticHelper.impact(.light)
-                        } label: {
-                            HStack(spacing: EchoelSpacing.xs) {
-                                // Colored indicator dot
-                                Circle()
-                                    .fill(node.isBypassed ? EchoelBrand.textTertiary : accentColorForNode(node))
-                                    .frame(width: 6, height: 6)
-
-                                Image(systemName: iconForNode(node))
-                                    .font(.system(size: 11))
-
-                                Text(node.name)
-                                    .font(EchoelBrandFont.label())
-                                    .strikethrough(node.isBypassed, color: EchoelBrand.textTertiary)
-                            }
-                            .foregroundColor(
-                                node.isBypassed
-                                    ? EchoelBrand.textTertiary
-                                    : node.id == selectedNode.id
-                                        ? EchoelBrand.primary
-                                        : EchoelBrand.textSecondary
-                            )
-                        }
-                        .buttonStyle(.plain)
-
-                        // Bypass toggle button
-                        Button {
-                            nodeGraph.objectWillChange.send()
-                            node.isBypassed.toggle()
-                            HapticHelper.impact(.medium)
-                        } label: {
-                            Image(systemName: node.isBypassed ? "xmark.circle.fill" : "power.circle")
-                                .font(.system(size: 13))
-                                .foregroundColor(node.isBypassed ? EchoelBrand.coral : EchoelBrand.emerald)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, EchoelSpacing.sm + 2)
-                    .padding(.vertical, EchoelSpacing.xs + 2)
-                    .background(
-                        Capsule().fill(
-                            node.isBypassed
-                                ? EchoelBrand.coral.opacity(0.05)
-                                : node.id == selectedNode.id
-                                    ? EchoelBrand.primary.opacity(0.08)
-                                    : EchoelBrand.bgSurface
-                        )
-                    )
-                    .overlay(
-                        Capsule().stroke(
-                            node.isBypassed
-                                ? EchoelBrand.coral.opacity(0.3)
-                                : node.id == selectedNode.id
-                                    ? EchoelBrand.borderActive
-                                    : EchoelBrand.border,
-                            lineWidth: 1
-                        )
-                    )
-                    .accessibilityLabel("\(node.name) effect, \(node.isBypassed ? "bypassed" : "active")")
-                    .accessibilityAddTraits(node.id == selectedNode.id ? .isSelected : [])
+                    let isSelected: Bool = node.id == selectedNode.id
+                    nodePickerItem(node: node, isSelected: isSelected)
                 }
             }
             .padding(.horizontal, EchoelSpacing.md)
@@ -578,6 +530,55 @@ struct EchoelFXView: View {
                 .fill(EchoelBrand.border)
                 .frame(height: 1)
         }
+    }
+
+    private func nodePickerItem(node: EchoelmusicNode, isSelected: Bool) -> some View {
+        let dotColor: Color = node.isBypassed ? EchoelBrand.textTertiary : accentColorForNode(node)
+        let foreground: Color = nodeTextColor(node: node, isSelected: isSelected)
+        let fill: Color = nodeFillColor(node: node, isSelected: isSelected)
+        let stroke: Color = nodeStrokeColor(node: node, isSelected: isSelected)
+        let bypassIcon: String = node.isBypassed ? "xmark.circle.fill" : "power.circle"
+        let bypassColor: Color = node.isBypassed ? EchoelBrand.coral : EchoelBrand.emerald
+        let accessLabel: String = "\(node.name) effect, \(node.isBypassed ? "bypassed" : "active")"
+
+        return HStack(spacing: 2) {
+            Button {
+                withAnimation(.easeInOut(duration: EchoelAnimation.quick)) {
+                    selectedNodeID = node.id
+                }
+                HapticHelper.impact(.light)
+            } label: {
+                HStack(spacing: EchoelSpacing.xs) {
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: 6, height: 6)
+                    Image(systemName: iconForNode(node))
+                        .font(.system(size: 11))
+                    Text(node.name)
+                        .font(EchoelBrandFont.label())
+                        .strikethrough(node.isBypassed, color: EchoelBrand.textTertiary)
+                }
+                .foregroundColor(foreground)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                nodeGraph.objectWillChange.send()
+                node.isBypassed.toggle()
+                HapticHelper.impact(.medium)
+            } label: {
+                Image(systemName: bypassIcon)
+                    .font(.system(size: 13))
+                    .foregroundColor(bypassColor)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, EchoelSpacing.sm + 2)
+        .padding(.vertical, EchoelSpacing.xs + 2)
+        .background(Capsule().fill(fill))
+        .overlay(Capsule().stroke(stroke, lineWidth: 1))
+        .accessibilityLabel(accessLabel)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var emptyParameterState: some View {

@@ -120,8 +120,8 @@ public final class MemoryPressureHandler {
 
     // MARK: - Monitoring
 
-    private var memorySource: DispatchSourceMemoryPressure?
-    private var monitorTimer: Timer?
+    nonisolated(unsafe) private var memorySource: DispatchSourceMemoryPressure?
+    nonisolated(unsafe) private var monitorTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Statistics

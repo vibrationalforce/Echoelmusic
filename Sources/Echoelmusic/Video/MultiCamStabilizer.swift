@@ -18,7 +18,7 @@ import Observation
 
 @MainActor
 @Observable
-final class MultiCamManager {
+final class MultiCamManager: NSObject {
 
     // MARK: - Published State
 

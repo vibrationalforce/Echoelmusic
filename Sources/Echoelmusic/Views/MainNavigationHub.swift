@@ -294,7 +294,6 @@ struct MainNavigationHub: View {
     // MARK: - Workspace Content
 
     @ViewBuilder
-    @ViewBuilder
     private var workspaceContent: some View {
         Group {
             switch currentTab {

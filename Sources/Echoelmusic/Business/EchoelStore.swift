@@ -100,7 +100,7 @@ public final class EchoelStore {
 
     // MARK: - Private
 
-    private var transactionListener: Task<Void, Error>?
+    nonisolated(unsafe) private var transactionListener: Task<Void, Error>?
     private var cancellables = Set<AnyCancellable>()
 
     private static let sessionsKey = "echoelmusic_purchased_sessions"

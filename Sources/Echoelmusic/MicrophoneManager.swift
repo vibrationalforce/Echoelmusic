@@ -8,7 +8,7 @@ import Observation
 /// Now includes FFT for frequency detection and professional-grade DSP
 @MainActor
 @Observable
-final class MicrophoneManager {
+final class MicrophoneManager: NSObject {
 
     // MARK: - Observed Properties
 
@@ -37,7 +37,7 @@ final class MicrophoneManager {
     // MARK: - Private Properties
 
     /// The audio engine that processes audio input
-    private var audioEngine: AVAudioEngine?
+    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
 
     /// The input node that captures microphone data
     private var inputNode: AVAudioInputNode?

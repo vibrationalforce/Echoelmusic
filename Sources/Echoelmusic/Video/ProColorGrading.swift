@@ -12,7 +12,6 @@
 import Foundation
 import CoreImage
 import CoreGraphics
-import Combine
 import Observation
 
 // MARK: - CurvePoint
@@ -1047,8 +1046,6 @@ public final class ProColorGrading {
     private var nodeGrades: [ColorGrade] = [ColorGrade()]
     /// CIContext for rendering.
     private let ciContext: CIContext
-    /// Cancellables for Combine subscriptions.
-    private var cancellables = Set<AnyCancellable>()
 
     private let logger = ProfessionalLogger.shared
 
@@ -1064,21 +1061,29 @@ public final class ProColorGrading {
         logger.video("ProColorGrading: Initialized with \(nodeCount) node(s)")
     }
 
-    // MARK: - Combine Bindings
+    // MARK: - Observation Bindings
 
     private func setupBindings() {
-        // Sync published properties back to the active node grade whenever they change.
-        Publishers.CombineLatest3($colorWheels, $curves, $hslAdjustment)
-            .debounce(for: .milliseconds(16), scheduler: RunLoop.main)
-            .sink { [weak self] wheels, curves, hsl in
+        // Sync observed properties back to the active node grade whenever they change.
+        startObservingGradeProperties()
+    }
+
+    private func startObservingGradeProperties() {
+        withObservationTracking {
+            _ = self.colorWheels
+            _ = self.curves
+            _ = self.hslAdjustment
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 guard self.selectedNode < self.nodeGrades.count else { return }
-                self.nodeGrades[self.selectedNode].colorWheels = wheels
-                self.nodeGrades[self.selectedNode].curves = curves
-                self.nodeGrades[self.selectedNode].hslAdjustment = hsl
+                self.nodeGrades[self.selectedNode].colorWheels = self.colorWheels
+                self.nodeGrades[self.selectedNode].curves = self.curves
+                self.nodeGrades[self.selectedNode].hslAdjustment = self.hslAdjustment
                 self.grade = self.nodeGrades[self.selectedNode]
+                self.startObservingGradeProperties()
             }
-            .store(in: &cancellables)
+        }
     }
 
     // MARK: - Grade Application

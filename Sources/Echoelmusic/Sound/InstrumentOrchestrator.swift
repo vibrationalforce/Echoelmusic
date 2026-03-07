@@ -36,7 +36,7 @@ final class InstrumentOrchestrator {
     // MARK: - Audio Engine
 
     private(set) var isEngineReady: Bool = false
-    private var audioEngine: AVAudioEngine?
+    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
     private var mixerNode: AVAudioMixerNode?
 
@@ -66,7 +66,7 @@ final class InstrumentOrchestrator {
 
     // MARK: - Combine
 
-    private var cancellables = Set<AnyCancellable>()
+    nonisolated(unsafe) private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 

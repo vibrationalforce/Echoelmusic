@@ -13,7 +13,6 @@
 // Created: 2026-01-12
 
 import Foundation
-import Combine
 import SwiftUI
 import Observation
 
@@ -728,24 +727,17 @@ private struct SituationPickerView: View {
 // MARK: - Integration Extension
 
 extension BPMTransitionEngine {
-    /// Connect to UnifiedControlHub bio data
-    public func connectToBioData(heartRate: Published<Double>.Publisher, coherence: Published<Double>.Publisher) {
-        heartRate
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] hr in
-                self?.updateBioSource(heartRate: hr)
-            }
-            .store(in: &cancellables)
+    /// Update from bio data heart rate value
+    public func receiveBioHeartRate(_ hr: Double) {
+        updateBioSource(heartRate: hr)
+    }
 
-        coherence
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] coh in
-                // Only use coherence if no heart rate available
-                if self?.bioSourceBPM == 70 {
-                    self?.updateBioSource(coherence: coh)
-                }
-            }
-            .store(in: &cancellables)
+    /// Update from bio data coherence value
+    public func receiveBioCoherence(_ coh: Double) {
+        // Only use coherence if no heart rate available
+        if bioSourceBPM == 70 {
+            updateBioSource(coherence: coh)
+        }
     }
 }
 #endif
