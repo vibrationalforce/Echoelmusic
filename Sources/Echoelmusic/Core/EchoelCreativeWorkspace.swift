@@ -44,6 +44,9 @@ final class EchoelCreativeWorkspace {
     /// Connected AudioEngine for hardware output (set via connectAudioEngine)
     private weak var audioEngine: AudioEngine?
 
+    /// Timestamp for throttling bio-level observation (~60Hz max)
+    private var lastBioUpdate: CFAbsoluteTime = 0
+
     /// Timer that drives audio rendering during playback
     private var audioRenderTimer: Timer?
 
@@ -189,6 +192,15 @@ final class EchoelCreativeWorkspace {
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+
+                // Throttle to ~60Hz — halves MainActor Task dispatches
+                let now = CFAbsoluteTimeGetCurrent()
+                guard now - self.lastBioUpdate > 0.016 else {
+                    self.observeAudioLevel(micManager)
+                    return
+                }
+                self.lastBioUpdate = now
+
                 let level = micManager.audioLevel
                 // Smooth the level into a coherence-like signal (0-1)
                 let smoothed = self.bioCoherence * 0.85 + level * 0.15

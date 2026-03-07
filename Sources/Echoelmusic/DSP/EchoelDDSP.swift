@@ -939,7 +939,7 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         voiceAges[voiceIdx] = ageCounter
 
         // Spread panning across active voices
-        let activeCount = voiceNotes.filter { $0 >= 0 }.count
+        let activeCount = voiceNotes.reduce(0) { $0 + ($1 >= 0 ? 1 : 0) }
         if activeCount > 1, maxVoices > 1 {
             let panSpread: Float = 0.6
             let normalized = Float(voiceIdx) / Float(maxVoices - 1)
@@ -1089,7 +1089,7 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
 
     /// Number of currently active voices
     public var activeVoiceCount: Int {
-        voiceNotes.filter { $0 >= 0 }.count
+        voiceNotes.reduce(0) { $0 + ($1 >= 0 ? 1 : 0) }
     }
 
     /// Reset all voices
