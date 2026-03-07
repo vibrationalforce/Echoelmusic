@@ -74,11 +74,12 @@ final class VoiceAnalysisErrorTests: XCTestCase {
         XCTAssertNotNil(error.errorDescription)
     }
 
-    func testAllCasesHaveDescriptions() {
+    func testAllCasesHaveDescriptions() throws {
         let errors: [VoiceAnalysisError] = [.invalidFormat, .noAudioData, .tooShort]
         for error in errors {
             XCTAssertNotNil(error.errorDescription)
-            XCTAssertFalse(error.errorDescription!.isEmpty)
+            let description = try XCTUnwrap(error.errorDescription)
+            XCTAssertFalse(description.isEmpty)
         }
     }
 }

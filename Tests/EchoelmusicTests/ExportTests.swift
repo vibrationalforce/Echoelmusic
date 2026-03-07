@@ -156,11 +156,11 @@ final class BitrateTests: XCTestCase {
         XCTAssertNotNil(ExportPreset.Bitrate.videoLow.video)
     }
 
-    func testAudioBitrateOrdering() {
-        let lossless = ExportPreset.Bitrate.audioLossless.audio!
-        let high = ExportPreset.Bitrate.audioHigh.audio!
-        let medium = ExportPreset.Bitrate.audioMedium.audio!
-        let low = ExportPreset.Bitrate.audioLow.audio!
+    func testAudioBitrateOrdering() throws {
+        let lossless = try XCTUnwrap(ExportPreset.Bitrate.audioLossless.audio)
+        let high = try XCTUnwrap(ExportPreset.Bitrate.audioHigh.audio)
+        let medium = try XCTUnwrap(ExportPreset.Bitrate.audioMedium.audio)
+        let low = try XCTUnwrap(ExportPreset.Bitrate.audioLow.audio)
 
         XCTAssertGreaterThan(lossless, high)
         XCTAssertGreaterThan(high, medium)

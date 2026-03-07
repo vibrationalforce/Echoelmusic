@@ -281,11 +281,11 @@ final class TrackTests: XCTestCase {
         XCTAssertEqual(track.sends.first?.level ?? 0, 0.5, accuracy: 0.01)
     }
 
-    func testRemoveSend() {
+    func testRemoveSend() throws {
         var track = Track(name: "Send Test")
         let destID = UUID()
         track.addSend(to: destID, level: 0.5, preFader: false)
-        let sendID = track.sends.first!.id
+        let sendID = try XCTUnwrap(track.sends.first?.id)
         track.removeSend(id: sendID)
         XCTAssertTrue(track.sends.isEmpty)
     }

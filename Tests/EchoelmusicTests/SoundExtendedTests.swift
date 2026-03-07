@@ -601,7 +601,7 @@ final class TR808BassConfigExtendedTests: XCTestCase {
         }
     }
 
-    func testLongSlideHasLongestGlideTime() {
+    func testLongSlideHasLongestGlideTime() throws {
         let presets = [
             TR808BassConfig.classic808,
             TR808BassConfig.hardTrap,
@@ -609,11 +609,11 @@ final class TR808BassConfigExtendedTests: XCTestCase {
             TR808BassConfig.distorted808,
             TR808BassConfig.longSlide
         ]
-        let maxGlide = presets.map(\.pitchGlideTime).max()!
+        let maxGlide = try XCTUnwrap(presets.map(\.pitchGlideTime).max())
         XCTAssertEqual(maxGlide, TR808BassConfig.longSlide.pitchGlideTime)
     }
 
-    func testDeepSubHasLowestFilterCutoff() {
+    func testDeepSubHasLowestFilterCutoff() throws {
         let presets = [
             TR808BassConfig.classic808,
             TR808BassConfig.hardTrap,
@@ -621,11 +621,11 @@ final class TR808BassConfigExtendedTests: XCTestCase {
             TR808BassConfig.distorted808,
             TR808BassConfig.longSlide
         ]
-        let minCutoff = presets.map(\.filterCutoff).min()!
+        let minCutoff = try XCTUnwrap(presets.map(\.filterCutoff).min())
         XCTAssertEqual(minCutoff, TR808BassConfig.deepSub.filterCutoff)
     }
 
-    func testDistorted808HasHighestDrive() {
+    func testDistorted808HasHighestDrive() throws {
         let presets = [
             TR808BassConfig.classic808,
             TR808BassConfig.hardTrap,
@@ -633,7 +633,7 @@ final class TR808BassConfigExtendedTests: XCTestCase {
             TR808BassConfig.distorted808,
             TR808BassConfig.longSlide
         ]
-        let maxDrive = presets.map(\.drive).max()!
+        let maxDrive = try XCTUnwrap(presets.map(\.drive).max())
         XCTAssertEqual(maxDrive, TR808BassConfig.distorted808.drive)
     }
 

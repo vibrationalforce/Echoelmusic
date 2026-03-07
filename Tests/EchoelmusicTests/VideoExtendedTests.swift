@@ -1238,23 +1238,23 @@ final class LUTParseErrorTests: XCTestCase {
     func testFileNotFoundDescription() {
         let error = LUTParseError.fileNotFound
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("not found"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("not found"))
     }
 
     func testInvalidFormatDescription() {
         let error = LUTParseError.invalidFormat("bad header")
-        XCTAssertTrue(error.errorDescription!.contains("bad header"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("bad header"))
     }
 
     func testSizeMismatchDescription() {
         let error = LUTParseError.sizeMismatch(expected: 17, actual: 100)
-        XCTAssertTrue(error.errorDescription!.contains("17"))
-        XCTAssertTrue(error.errorDescription!.contains("100"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("17"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("100"))
     }
 
     func testInvalidValueDescription() {
         let error = LUTParseError.invalidValue(line: 42)
-        XCTAssertTrue(error.errorDescription!.contains("42"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("42"))
     }
 }
 
@@ -1516,19 +1516,19 @@ final class VideoEditingErrorTests: XCTestCase {
     func testCompositionCreationFailedDescription() {
         let error = VideoEditingError.compositionCreationFailed
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("composition"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("composition"))
     }
 
     func testClipNotFoundDescription() {
         let error = VideoEditingError.clipNotFound
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("not found"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("not found"))
     }
 
     func testInvalidTimeRangeDescription() {
         let error = VideoEditingError.invalidTimeRange
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("time range"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("time range"))
     }
 }
 
@@ -1607,7 +1607,7 @@ final class ChromaKeyErrorTests: XCTestCase {
 
     func testShaderCompilationFailedDescription() {
         let error = ChromaKeyError.shaderCompilationFailed("testShader")
-        XCTAssertTrue(error.errorDescription!.contains("testShader"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("testShader"))
     }
 
     func testEngineNotActiveDescription() {
@@ -1627,12 +1627,12 @@ final class ChromaKeyErrorTests: XCTestCase {
 
     func testTextureCreationFailedDescription() {
         let error = ChromaKeyError.textureCreationFailed("Matte")
-        XCTAssertTrue(error.errorDescription!.contains("Matte"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("Matte"))
     }
 
     func testPipelineStateNotFoundDescription() {
         let error = ChromaKeyError.pipelineStateNotFound("composite")
-        XCTAssertTrue(error.errorDescription!.contains("composite"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("composite"))
     }
 }
 #endif
@@ -1645,18 +1645,18 @@ final class MultiCamErrorTests: XCTestCase {
     func testNotSupportedDescription() {
         let error = MultiCamError.notSupported
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("not supported"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("not supported"))
     }
 
     func testPermissionDeniedDescription() {
         let error = MultiCamError.permissionDenied
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("permission"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("permission"))
     }
 
     func testConfigurationFailedDescription() {
         let error = MultiCamError.configurationFailed("bad port")
-        XCTAssertTrue(error.errorDescription!.contains("bad port"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("bad port"))
     }
 
     func testRecordingFailedDescription() {
@@ -1672,7 +1672,7 @@ final class StabilizationErrorTests: XCTestCase {
     func testNoVideoTrackDescription() {
         let error = StabilizationError.noVideoTrack
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("video track"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("video track"))
     }
 
     func testProcessingFailedDescription() {
@@ -1907,7 +1907,7 @@ final class StemRenderErrorTests: XCTestCase {
     func testAlreadyRenderingDescription() {
         let error = StemRenderError.alreadyRendering
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("already"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("already"))
     }
 
     func testNoStemsConfiguredDescription() {
@@ -1917,7 +1917,7 @@ final class StemRenderErrorTests: XCTestCase {
 
     func testNoTracksInStemDescription() {
         let error = StemRenderError.noTracksInStem("Vocals")
-        XCTAssertTrue(error.errorDescription!.contains("Vocals"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("Vocals"))
     }
 
     func testExportSessionFailedDescription() {
@@ -1927,14 +1927,14 @@ final class StemRenderErrorTests: XCTestCase {
 
     func testRenderFailedDescription() {
         let error = StemRenderError.renderFailed("Drums", "timeout")
-        XCTAssertTrue(error.errorDescription!.contains("Drums"))
-        XCTAssertTrue(error.errorDescription!.contains("timeout"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("Drums"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("timeout"))
     }
 
     func testCancelledDescription() {
         let error = StemRenderError.cancelled
         XCTAssertNotNil(error.errorDescription)
-        XCTAssertTrue(error.errorDescription!.contains("cancelled"))
+        XCTAssertTrue((error.errorDescription ?? "").contains("cancelled"))
     }
 }
 
