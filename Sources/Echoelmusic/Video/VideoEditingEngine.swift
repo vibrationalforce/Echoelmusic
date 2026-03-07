@@ -487,7 +487,9 @@ final class VideoEditingEngine {
         let interval = CMTime(value: 1, timescale: 30) // 30 Hz
 
         timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            self?.playhead = time
+            Task { @MainActor in
+                self?.playhead = time
+            }
         }
     }
 
