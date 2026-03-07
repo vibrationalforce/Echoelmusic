@@ -33,16 +33,31 @@ See `scratchpads/PLAN_ARCHITECTURE_MAXIMUM.md` for 5 initiatives:
 4. Real-time collaborative CRDTs
 5. DMX-512 over USB in Swift
 
+### Fixes Applied (cont.) — Commit `436ef8a`
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| 8 | 3× vDSP_vsdiv overlapping access (Swift exclusivity violation) | CRITICAL | `withUnsafeMutableBufferPointer` for safe in-place ops |
+| 9 | Division by zero: `1.0/Float(harmonicCount)` when count=0 | HIGH | Guard `harmonicCount > 0` |
+| 10 | Division by zero: `Float(maxVoices-1)` when maxVoices=1 | HIGH | Added `maxVoices > 1` guard |
+| 11 | Division by zero: `aliveCount/Float(cellCount)` when cellCount=0 | HIGH | Ternary guard |
+| 12 | Division by zero: `1.0/Float(count)` in renderAdditive/renderSpectral2D | HIGH | Early return guard |
+| 13 | 9× hardcoded 44100 sample rates in DSP engines | MEDIUM | Standardized to 48000 |
+
+Files: EchoelDDSP, EchoelVDSPKit, EchoelCellular, MetronomeEngine, ChromaticTuner, BreakbeatChopper, CompressorNode, FilterNode, ReverbNode, AudioClipScheduler, ProSessionEngine
+
 ### Audit Summary (Post-Fix)
 
 - **No force unwraps** in production code
 - **No `ObservableObject`** remaining (all `@Observable`)
 - **No `UIScreen.main`** usage
 - **No `print()`** outside DEBUG guard (only in ProfessionalLogger)
-- **All divisions guarded** (checked all 7 occurrences)
+- **All divisions guarded** (checked all critical occurrences)
 - **All deinits clean** (timers invalidated, resources released)
 - **All @Observable classes** have @MainActor
 - **Zero audio-thread allocation** in DDSP render paths
+- **No vDSP overlapping access violations** (all use withUnsafeMutableBufferPointer)
+- **Consistent 48kHz sample rate** across all DSP engines
 - **1,060+ test methods** across 21 files
 
 ---
