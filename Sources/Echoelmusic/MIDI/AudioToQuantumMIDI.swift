@@ -1,10 +1,7 @@
 // AudioToQuantumMIDI.swift
-// Echoelmusic - Universal Audio Input to Quantum MIDI Bridge
-// λ∞ Ralph Wiggum Apple Ökosystem Environment Lambda Loop Mode
+// Echoelmusic - Audio Input to MIDI Bridge
 //
-// "Mein Klinken-Kabel schmeckt nach Quantenverschränkung!" - Ralph Wiggum
-//
-// Created 2026-01-21 - Phase 10000.3 UNIVERSAL AUDIO INPUT
+// Created 2026-01-21
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // UNTERSTÜTZTE EINGABEN:

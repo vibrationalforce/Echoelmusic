@@ -1,6 +1,5 @@
 // CrashSafeStatePersistence.swift
 // Echoelmusic - Crash-Safe Session State Persistence
-// Phase 10000 Ralph Wiggum Lambda Loop Mode
 //
 // Automatically saves session state and recovers after crashes.
 // Uses atomic writes and journaling for data integrity.

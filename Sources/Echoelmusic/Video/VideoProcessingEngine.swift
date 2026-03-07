@@ -1,8 +1,8 @@
 // VideoProcessingEngine.swift
-// Echoelmusic - 2000% Ralph Wiggum Laser Feuerwehr LKW Fahrer Mode
+// Echoelmusic - Real-time Video Processing Engine
 //
-// Real-time 4K/8K video processing with quantum-synced effects
-// Zero-latency worldwide streaming and collaboration
+// 4K/8K video processing with synchronized effects
+// Low-latency streaming and collaboration
 //
 // Created by Echoelmusic Team
 // Copyright 2026 Echoelmusic. MIT License.

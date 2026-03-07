@@ -1,6 +1,5 @@
 // MemoryPressureHandler.swift
 // Echoelmusic - Automatic Memory Management Under Pressure
-// Phase 10000 Ralph Wiggum Lambda Loop Mode
 //
 // Monitors system memory and automatically frees resources when needed.
 // Prevents OOM crashes on resource-constrained devices.

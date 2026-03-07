@@ -1,6 +1,5 @@
 // AudioGraphBuilder.swift
 // Echoelmusic - Result Builder DSL for Audio Graph Construction
-// Phase 10000 Ralph Wiggum Lambda Loop Mode
 //
 // Declarative Swift DSL for building audio processing graphs.
 // Makes complex audio routing readable and maintainable.

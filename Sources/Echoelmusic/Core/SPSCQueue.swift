@@ -1,6 +1,5 @@
 // SPSCQueue.swift
 // Echoelmusic - Lock-Free Single Producer Single Consumer Queue
-// Phase 10000 Ralph Wiggum Lambda Loop Mode
 //
 // High-performance lock-free queue for real-time video frame transfer.
 // Zero-copy design with automatic memory management.

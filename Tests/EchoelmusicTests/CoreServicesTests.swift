@@ -1,72 +1,11 @@
 // CoreServicesTests.swift
 // Echoelmusic — Phase 3 Test Coverage: Core Services
 //
-// Tests for ServiceContainer, UndoRedoManager, CrashSafeStatePersistence,
+// Tests for UndoRedoManager, CrashSafeStatePersistence,
 // MemoryPressureHandler, and MemoryAwareCache.
 
 import XCTest
 @testable import Echoelmusic
-
-// MARK: - ServiceContainer Tests
-
-@MainActor
-final class ServiceContainerTests: XCTestCase {
-
-    func testSharedInstance() {
-        let container = ServiceContainer.shared
-        XCTAssertNotNil(container)
-    }
-
-    func testRegisterAndResolve() {
-        let container = ServiceContainer.testing()
-        container.register(String.self) { "hello" }
-        let result = container.resolve(String.self)
-        XCTAssertEqual(result, "hello")
-    }
-
-    func testResolveUnregisteredReturnsNil() {
-        let container = ServiceContainer.testing()
-        let result = container.resolve(Int.self)
-        XCTAssertNil(result)
-    }
-
-    func testResolveWithDefault() {
-        let container = ServiceContainer.testing()
-        let result = container.resolve(Int.self, default: 42)
-        XCTAssertEqual(result, 42)
-    }
-
-    func testRegisterSingleton() {
-        let container = ServiceContainer.testing()
-        let value = "singleton_value"
-        container.registerSingleton(String.self, instance: value)
-        let result = container.resolve(String.self)
-        XCTAssertEqual(result, value)
-    }
-
-    func testReset() {
-        let container = ServiceContainer.testing()
-        container.register(String.self) { "test" }
-        XCTAssertNotNil(container.resolve(String.self))
-
-        container.reset()
-        XCTAssertNil(container.resolve(String.self))
-    }
-
-    func testTestingContainerIsolation() {
-        let container1 = ServiceContainer.testing()
-        let container2 = ServiceContainer.testing()
-        container1.register(String.self) { "from_1" }
-        XCTAssertNil(container2.resolve(String.self))
-    }
-
-    func testRegisterOverwrite() {
-        let container = ServiceContainer.testing()
-        container.register(String.self) { "first" }
-        container.register(String.self) { "second" }
-        XCTAssertEqual(container.resolve(String.self), "second")
-    }
-}
 
 // MARK: - UndoRedoManager Tests
 

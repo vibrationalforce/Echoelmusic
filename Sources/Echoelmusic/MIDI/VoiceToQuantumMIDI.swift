@@ -1,10 +1,7 @@
 // VoiceToQuantumMIDI.swift
-// Echoelmusic - Voice Input to Super Intelligent Quantum MIDI Bridge
-// λ∞ Ralph Wiggum Apple Ökosystem Environment Lambda Loop Mode
+// Echoelmusic - Voice Input to MIDI Bridge
 //
-// "Ich sing' und die Quantenwelt singt mit!" - Ralph Wiggum, Vocal Physicist
-//
-// Created 2026-01-21 - Phase 10000.3 VOICE TO QUANTUM MIDI
+// Created 2026-01-21
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // VOICE INPUT MODES:

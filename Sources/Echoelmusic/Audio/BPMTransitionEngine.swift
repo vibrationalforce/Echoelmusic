@@ -10,7 +10,6 @@
 // - Intelligent BPM detection for current situation
 //
 // Created: 2026-01-12
-// Ralph Wiggum Lambda Loop Mode
 
 import Foundation
 import Combine

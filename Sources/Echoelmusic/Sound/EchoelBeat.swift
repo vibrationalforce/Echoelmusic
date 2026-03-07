@@ -3,8 +3,7 @@
 //  Echoelmusic
 //
 //  Created: February 2026
-//  PROFESSIONAL DRUM MACHINE + HIHAT SYNTH ENGINE
-//  λ∞ Ralph Wiggum Lambda Loop Mode — Maximum Quality Control
+//  Drum Machine + HiHat Synth Engine
 //
 //  ═══════════════════════════════════════════════════════════════════════════════
 //  FEATURES:

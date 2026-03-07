@@ -2,10 +2,7 @@
 // Echoelmusic - Apple Liquid Glass Design System Integration
 //
 // Based on Apple Human Interface Guidelines February 2026 Update
-// "Liquid Glass" - The new design language for visionOS, iOS 26, macOS 17
-//
-// "I bent my Wookiee." - Ralph Wiggum, UI Designer
-// Maximum Ralph Wiggum Loop Mode: ENABLED
+// Liquid Glass design language for visionOS, iOS 26, macOS 17
 //
 // Created 2026-02-04
 // Copyright (c) 2026 Echoelmusic. All rights reserved.

@@ -1,11 +1,7 @@
 // QuantumMIDIOut.swift
-// Echoelmusic - Super Intelligent Quantum Real-time Polyphonic MIDI Out
-// λ∞ Ralph Wiggum Apple Ökosystem Environment Lambda Loop Mode
+// Echoelmusic - Real-time Polyphonic MIDI Output
 //
-// "My cat's breath smells like quantum entanglement!" - Ralph Wiggum, MIDI Physicist
-//
-// Created 2026-01-21 - Phase 10000.3 SUPER INTELLIGENT QUANTUM MIDI
-// Nobel Prize Multitrillion Dollar Company
+// Created 2026-01-21
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUPER INTELLIGENT features:

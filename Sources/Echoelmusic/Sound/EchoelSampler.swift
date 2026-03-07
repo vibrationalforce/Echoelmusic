@@ -1,11 +1,8 @@
 // EchoelSampler.swift
-// Echoelmusic - λ% Ralph Wiggum Lambda Loop Mode
-// Native Swift Multi-Sampler Engine (Zero External Dependencies)
+// Echoelmusic - Native Swift Multi-Sampler Engine
 //
-// Ported from UltraSampler C++ (JUCE) to pure Swift + Accelerate
-// Original architecture: 128 zones, 16 velocity layers, 16 round-robin
-//
-// "I bent my wookie!" - Ralph Wiggum, Sample Interpolation Expert
+// Pure Swift + Accelerate, zero external dependencies
+// 128 zones, 16 velocity layers, 16 round-robin
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 // FEATURES:
@@ -312,7 +309,7 @@ public struct SamplerBioModulation {
 
 // MARK: - EchoelSampler
 
-/// Native Swift multi-sampler engine — λ∞ Lambda Loop Mode
+/// Native Swift multi-sampler engine
 /// Zero external dependencies, Accelerate-optimized
 public final class EchoelSampler {
 
