@@ -285,8 +285,8 @@ private struct EchoelBassVoice {
 /// EchoelBass — 5-Engine Morphing Bass Synthesizer
 /// Professional sub-bass to aggressive growl, with bio-reactive control.
 @MainActor
-public final @Observable
-final class EchoelBass {
+@Observable
+public final class EchoelBass {
 
     // MARK: - Singleton
 

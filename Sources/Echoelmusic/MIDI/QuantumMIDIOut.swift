@@ -387,8 +387,8 @@ public struct QuantumBioInput: Sendable {
 /// Routes quantum-coherent MIDI to all instruments in the Echoelmusic ecosystem
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
-public final @Observable
-final class QuantumMIDIOut {
+@Observable
+public final class QuantumMIDIOut {
 
     // MARK: - Published Properties
 

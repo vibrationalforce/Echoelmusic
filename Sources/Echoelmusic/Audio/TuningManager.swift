@@ -17,8 +17,8 @@ import Observation
 
 /// Global concert pitch manager — single source of truth for A4 reference
 @MainActor
-public final @Observable
-final class TuningManager {
+@Observable
+public final class TuningManager {
 
     // MARK: - Singleton
 

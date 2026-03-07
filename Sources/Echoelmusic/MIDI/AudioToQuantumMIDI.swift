@@ -122,8 +122,8 @@ public struct AudioInputDevice: Identifiable, Sendable {
 /// Supports microphone, line-in, audio interface, and audio files
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
-public final @Observable
-final class AudioToQuantumMIDI {
+@Observable
+public final class AudioToQuantumMIDI {
 
     // MARK: - Published Properties
 

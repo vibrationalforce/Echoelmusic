@@ -103,8 +103,8 @@ public enum FreezeError: LocalizedError {
 /// Professional track freeze/bounce engine
 /// Renders tracks with all effects offline to reduce real-time CPU load
 @MainActor
-public final @Observable
-final class TrackFreezeEngine {
+@Observable
+public final class TrackFreezeEngine {
 
     // MARK: - Published Properties
 

@@ -18,8 +18,8 @@ import Observation
 
 /// Connects TuningManager to all audio subsystems
 @MainActor
-public final @Observable
-final class TuningBridge {
+@Observable
+public final class TuningBridge {
 
     // MARK: - Singleton
 

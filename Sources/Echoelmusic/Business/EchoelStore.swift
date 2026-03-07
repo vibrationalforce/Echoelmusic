@@ -68,8 +68,8 @@ public enum EchoelEntitlement: Int, Comparable, Sendable {
 /// Central StoreKit 2 manager for Echoelmusic
 /// Handles product loading, purchases, entitlement verification, and transaction observation.
 @MainActor
-public final @Observable
-final class EchoelStore {
+@Observable
+public final class EchoelStore {
 
     // MARK: - Published State
 

@@ -143,8 +143,8 @@ public struct MetronomeConfiguration: Codable, Sendable {
 
 /// Professional metronome engine with synthesis-based click generation
 @MainActor
-public final @Observable
-final class MetronomeEngine {
+@Observable
+public final class MetronomeEngine {
 
     // MARK: - Published Properties
 

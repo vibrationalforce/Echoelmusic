@@ -261,8 +261,8 @@ public struct StemRenderResult: Sendable {
 /// Professional stem rendering engine
 /// Renders individual tracks or track groups with full effects processing
 @MainActor
-public final @Observable
-final class StemRenderingEngine {
+@Observable
+public final class StemRenderingEngine {
 
     // MARK: - Published State
 

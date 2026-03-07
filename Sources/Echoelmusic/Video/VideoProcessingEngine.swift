@@ -354,8 +354,8 @@ public struct VideoProcessingStats: Sendable {
 
 /// Main video processing engine with quantum sync and zero-latency pipeline
 @MainActor
-public final @Observable
-final class VideoProcessingEngine {
+@Observable
+public final class VideoProcessingEngine {
 
     // MARK: - Published Properties
 
@@ -866,8 +866,8 @@ final class VideoProcessingEngine {
 
 /// Worldwide zero-latency video streaming
 @MainActor
-public final @Observable
-final class VideoStreamingManager {
+@Observable
+public final class VideoStreamingManager {
 
     public enum StreamingProtocol: String, CaseIterable, Sendable {
         case rtmp = "RTMP"
@@ -918,8 +918,8 @@ final class VideoStreamingManager {
 
 /// Real-time worldwide video collaboration
 @MainActor
-public final @Observable
-final class VideoCollaborationHub {
+@Observable
+public final class VideoCollaborationHub {
 
     public struct Collaborator: Identifiable, Sendable {
         public let id: UUID
@@ -975,8 +975,8 @@ final class VideoCollaborationHub {
 
 /// High-quality video export with multiple formats
 @MainActor
-public final @Observable
-final class ProcessingExportManager {
+@Observable
+public final class ProcessingExportManager {
 
     public enum ExportFormat: String, CaseIterable, Sendable {
         case h264 = "H.264"

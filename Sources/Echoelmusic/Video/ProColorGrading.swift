@@ -1012,8 +1012,8 @@ public struct ColorGrade: Codable, Identifiable, Equatable, Sendable {
 /// interpolation, per-channel HSL qualification, 3D LUT support, and broadcast-quality
 /// monitoring scopes. Multiple serial nodes allow stacking independent grades.
 @MainActor
-public final @Observable
-final class ProColorGrading {
+@Observable
+public final class ProColorGrading {
 
     // MARK: - Published Properties
 

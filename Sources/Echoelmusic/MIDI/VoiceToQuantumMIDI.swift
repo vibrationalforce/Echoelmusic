@@ -132,8 +132,8 @@ public struct VoiceAnalysisData: Sendable {
 /// Bridge that connects voice input to the Super Intelligent Quantum MIDI Out system
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
-public final @Observable
-final class VoiceToQuantumMIDI {
+@Observable
+public final class VoiceToQuantumMIDI {
 
     // MARK: - Published Properties
 

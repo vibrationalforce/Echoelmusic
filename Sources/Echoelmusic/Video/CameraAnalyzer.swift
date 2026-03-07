@@ -12,7 +12,7 @@ import Observation
 ///
 /// Resource-efficient: processes every Nth frame, uses vDSP for fast averaging
 @MainActor
-final @Observable
+@Observable
 final class CameraAnalyzer {
 
     // MARK: - Published Output

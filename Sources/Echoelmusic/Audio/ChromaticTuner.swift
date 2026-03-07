@@ -99,8 +99,8 @@ public struct TunerReading: Sendable {
 
 /// Professional chromatic tuner with autocorrelation pitch detection
 @MainActor
-public final @Observable
-final class ChromaticTuner {
+@Observable
+public final class ChromaticTuner {
 
     // MARK: - Published Properties
 

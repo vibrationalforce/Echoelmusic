@@ -494,8 +494,8 @@ final class LatencyMeasurement {
 
 /// Main engine for ultra-low latency Bluetooth audio
 @MainActor
-public final @Observable
-final class UltraLowLatencyBluetoothEngine {
+@Observable
+public final class UltraLowLatencyBluetoothEngine {
 
     // MARK: - Singleton
     public static let shared = UltraLowLatencyBluetoothEngine()
@@ -989,8 +989,8 @@ extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
 
 /// Manages Bluetooth MIDI controllers
 @MainActor
-public final @Observable
-final class BluetoothMIDIManager {
+@Observable
+public final class BluetoothMIDIManager {
 
     public static let shared = BluetoothMIDIManager()
 

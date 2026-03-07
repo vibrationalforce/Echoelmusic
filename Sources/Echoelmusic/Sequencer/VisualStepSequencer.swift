@@ -19,8 +19,8 @@ import Observation
 
 /// 16-Step Visual Sequencer with Bio-Reactive Modulation
 @MainActor
-public final @Observable
-final class VisualStepSequencer {
+@Observable
+public final class VisualStepSequencer {
 
     // MARK: - Published State
 

@@ -204,8 +204,8 @@ public struct LauncherScene: Identifiable, Codable {
 
 /// Main clip launcher controller with bio-reactive features
 @MainActor
-public final @Observable
-final class ClipLauncherGrid {
+@Observable
+public final class ClipLauncherGrid {
 
     // MARK: - Published State
 
