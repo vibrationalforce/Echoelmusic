@@ -619,7 +619,7 @@ public final class ProMixEngine {
     public init(sampleRate: Double = 48000, bufferSize: Int = 256) {
         self.sampleRate = sampleRate
         self.bufferSize = bufferSize
-        self.masterChannel = ChannelStrip(
+        let master = ChannelStrip(
             name: "Master",
             type: .master,
             volume: 1.0,
@@ -628,7 +628,8 @@ public final class ProMixEngine {
             color: .slate
         )
         let kernel = MixerDSPKernel(sampleRate: sampleRate, bufferSize: bufferSize)
-        kernel.addChannel(id: masterChannel.id)
+        kernel.addChannel(id: master.id)
+        self.masterChannel = master
         self.dspKernel = kernel
         logger.log(.info, category: .audio, "ProMixEngine initialized (\(sampleRate)Hz, \(bufferSize) frames)")
     }
