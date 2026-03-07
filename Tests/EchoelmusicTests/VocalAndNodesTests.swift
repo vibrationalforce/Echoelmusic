@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import XCTest
 import Foundation
 @testable import Echoelmusic
@@ -1013,3 +1014,4 @@ final class EqualPowerPanTests: XCTestCase {
         XCTAssertEqual(right, 0.0, accuracy: 0.001)
     }
 }
+#endif

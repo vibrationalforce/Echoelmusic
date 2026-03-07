@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // TrackFreezeEngine.swift
 // Echoelmusic
 //
@@ -485,3 +486,4 @@ public final class TrackFreezeEngine {
         totalCPUSaved = 0
     }
 }
+#endif

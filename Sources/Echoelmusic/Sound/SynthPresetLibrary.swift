@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // SynthPresetLibrary.swift
 // Echoelmusic — AI Sample Engine Preset Database
 //
@@ -1322,3 +1323,4 @@ public final class SynthPresetLibrary {
         return report
     }
 }
+#endif

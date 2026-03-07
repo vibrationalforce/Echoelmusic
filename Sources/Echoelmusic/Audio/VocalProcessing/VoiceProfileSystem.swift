@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import Combine
 import AVFoundation
@@ -1097,3 +1098,4 @@ public final class VoiceSynthesisEngine {
         availableVoiceModels = models
     }
 }
+#endif

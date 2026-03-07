@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -324,3 +325,4 @@ class CompressorNode: BaseEchoelmusicNode {
         return detectionMode
     }
 }
+#endif

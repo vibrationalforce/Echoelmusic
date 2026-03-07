@@ -1,3 +1,4 @@
+#if canImport(CoreMIDI)
 import Foundation
 import CoreMIDI
 import Observation
@@ -358,3 +359,4 @@ extension MIDIController {
         }
     }
 }
+#endif

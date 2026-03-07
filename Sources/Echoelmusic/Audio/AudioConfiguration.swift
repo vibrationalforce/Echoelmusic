@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 
@@ -381,3 +382,4 @@ enum AudioConfiguration {
         #endif
     }
 }
+#endif

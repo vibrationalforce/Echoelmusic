@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 
@@ -224,3 +225,4 @@ class DelayNode: BaseEchoelmusicNode {
         }
     }
 }
+#endif

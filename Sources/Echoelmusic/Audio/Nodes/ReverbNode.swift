@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -302,3 +303,4 @@ class ReverbNode: BaseEchoelmusicNode {
         }
     }
 }
+#endif

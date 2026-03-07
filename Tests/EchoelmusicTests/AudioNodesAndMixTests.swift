@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AudioNodesAndMixTests.swift
 // Echoelmusic — Comprehensive tests for Audio Nodes, ProMixEngine, and ProSessionEngine types
 //
@@ -1627,3 +1628,4 @@ final class WaveformTests: XCTestCase {
         XCTAssertEqual(Source.Waveform.noise.rawValue, "noise")
     }
 }
+#endif

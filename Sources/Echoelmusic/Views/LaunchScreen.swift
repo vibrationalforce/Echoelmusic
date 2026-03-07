@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 // MARK: - Launch Screen — E + Wellen Animation
@@ -284,4 +285,5 @@ struct LaunchWaveformShape: Shape {
 #Preview {
     LaunchScreen()
 }
+#endif
 #endif

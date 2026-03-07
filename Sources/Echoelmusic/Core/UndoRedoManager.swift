@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import Observation
 
@@ -497,3 +498,4 @@ extension UndoRedoManager {
         updateState()
     }
 }
+#endif

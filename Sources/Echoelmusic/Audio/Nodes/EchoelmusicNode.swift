@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 
@@ -319,3 +320,4 @@ class BaseEchoelmusicNode: EchoelmusicNode {
         )
     }
 }
+#endif

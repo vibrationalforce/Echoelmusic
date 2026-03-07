@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -637,3 +638,4 @@ public enum EchoelVibe {
 }
 
 // Note: clamped(to:) extension moved to NumericExtensions.swift
+#endif

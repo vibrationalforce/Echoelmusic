@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -285,3 +286,4 @@ class FilterNode: BaseEchoelmusicNode {
         return currentFilterType
     }
 }
+#endif

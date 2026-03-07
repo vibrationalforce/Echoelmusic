@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 // MARK: - Vaporwave Theme → EchoelBrand Bridge
@@ -938,4 +939,5 @@ struct VaporwaveEmptyState: View {
         }
     }
 }
+#endif
 #endif

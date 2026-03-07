@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 // BPMTransitionEngine.swift
 // Echoelmusic
 //
@@ -730,3 +731,4 @@ extension BPMTransitionEngine {
             .store(in: &cancellables)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Track list view with individual track controls
@@ -353,3 +354,4 @@ extension Track.TrackType {
         }
     }
 }
+#endif

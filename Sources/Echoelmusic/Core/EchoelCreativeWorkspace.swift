@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import Combine
 import AVFoundation
@@ -281,3 +282,4 @@ final class EchoelCreativeWorkspace {
         audioEngine.schedulePlayback(buffer: buffer)
     }
 }
+#endif

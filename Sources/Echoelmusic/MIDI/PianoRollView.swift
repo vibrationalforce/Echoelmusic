@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import SwiftUI
 import AVFoundation
 import Observation
@@ -844,4 +845,5 @@ enum PerNoteExpression: String, CaseIterable {
 #Preview {
     PianoRollView()
 }
+#endif
 #endif

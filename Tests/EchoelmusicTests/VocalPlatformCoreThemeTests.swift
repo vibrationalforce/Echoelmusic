@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // VocalPlatformCoreThemeTests.swift
 // Echoelmusic
 //
@@ -1493,3 +1494,4 @@ final class BPMSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.currentBPM, snapshot.targetBPM)
     }
 }
+#endif

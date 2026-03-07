@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // BusinessTests.swift
 // Echoelmusic — Phase 4 Test Coverage: Business Logic
 //
@@ -136,3 +137,4 @@ final class DrumTypeTests: XCTestCase {
         XCTAssertTrue(cases.contains(.ride))
     }
 }
+#endif

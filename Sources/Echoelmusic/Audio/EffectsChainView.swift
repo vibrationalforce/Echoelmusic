@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Visual effects chain editor with node routing
@@ -520,3 +521,4 @@ struct NodeRow: View {
         }
     }
 }
+#endif

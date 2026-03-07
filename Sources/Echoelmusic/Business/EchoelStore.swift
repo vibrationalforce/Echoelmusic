@@ -1,3 +1,4 @@
+#if canImport(StoreKit)
 // EchoelStore.swift
 // Echoelmusic — StoreKit 2 Monetization Engine
 //
@@ -308,3 +309,4 @@ public final class EchoelStore {
         return transaction.expirationDate
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 
@@ -663,3 +664,4 @@ extension Track {
         return [synth1, synth2, drums, bio, vocals, auxReverb, auxDelay, master]
     }
 }
+#endif

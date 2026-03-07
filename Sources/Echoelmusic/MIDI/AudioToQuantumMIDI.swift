@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AudioToQuantumMIDI.swift
 // Echoelmusic - Audio Input to MIDI Bridge
 //
@@ -853,3 +854,4 @@ public enum AudioInputError: Error, LocalizedError {
         }
     }
 }
+#endif

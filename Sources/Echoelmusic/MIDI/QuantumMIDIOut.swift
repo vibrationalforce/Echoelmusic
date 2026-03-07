@@ -1,3 +1,4 @@
+#if canImport(CoreMIDI)
 // QuantumMIDIOut.swift
 // Echoelmusic - Real-time Polyphonic MIDI Output
 //
@@ -1083,3 +1084,4 @@ public enum QuantumChordType: String, CaseIterable, Identifiable, Sendable {
 }
 
 // Note: clamped(to:) extensions moved to NumericExtensions.swift
+#endif

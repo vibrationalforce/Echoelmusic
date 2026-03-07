@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // HardwareThemeTests.swift
 // Echoelmusic
 //
@@ -1144,3 +1145,4 @@ final class NotificationNameTests: XCTestCase {
         XCTAssertEqual(Notification.Name.sequencerStepTriggered.rawValue, "sequencerStepTriggered")
     }
 }
+#endif

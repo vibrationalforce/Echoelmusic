@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 import Observation
 
@@ -939,4 +940,5 @@ enum VoiceAllocationMode: String, CaseIterable {
 #Preview {
     MIDIRoutingView()
 }
+#endif
 #endif

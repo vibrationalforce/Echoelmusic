@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Echoelmusic — DAW + Video Production
@@ -77,3 +78,4 @@ struct EchoelmusicApp: App {
         isReady = true
     }
 }
+#endif

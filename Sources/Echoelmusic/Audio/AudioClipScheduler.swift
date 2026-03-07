@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -521,3 +522,4 @@ public final class AudioClipScheduler {
         trackStates.removeAll()
     }
 }
+#endif

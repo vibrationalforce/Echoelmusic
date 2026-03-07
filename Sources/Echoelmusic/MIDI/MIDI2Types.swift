@@ -1,3 +1,4 @@
+#if canImport(CoreMIDI)
 import Foundation
 import CoreMIDI
 
@@ -307,3 +308,4 @@ extension UInt32 {
         (Float(self) / 2147483648.0) - 1.0
     }
 }
+#endif

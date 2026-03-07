@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Combine
@@ -657,3 +658,4 @@ final class InstrumentOrchestrator {
 }
 
 // Note: AudioEngine filter/effect methods are defined in AudioEngine.swift
+#endif

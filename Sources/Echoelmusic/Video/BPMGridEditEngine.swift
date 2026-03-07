@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -1095,3 +1096,4 @@ extension BPMGridEditEngine {
         return nextBar - seconds
     }
 }
+#endif

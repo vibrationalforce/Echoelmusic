@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // CoreSystemTests.swift
 // Echoelmusic — Phase 1 Test Coverage
 //
@@ -343,4 +344,4 @@ final class TuningReferenceTests: XCTestCase {
         XCTAssertEqual(original, decoded)
     }
 }
-
+#endif

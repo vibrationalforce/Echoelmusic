@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 #if canImport(Metal)
@@ -1173,3 +1174,4 @@ enum BackgroundError: LocalizedError {
         }
     }
 }
+#endif

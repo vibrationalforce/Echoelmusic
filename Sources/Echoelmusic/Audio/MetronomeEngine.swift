@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // MetronomeEngine.swift
 // Echoelmusic
 //
@@ -459,3 +460,4 @@ public final class MetronomeEngine {
         timer = nil
     }
 }
+#endif

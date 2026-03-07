@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 //
 //  NumericExtensions.swift
 //  Echoelmusic
@@ -71,3 +72,4 @@ extension AVAudioPCMBuffer {
         return Array(UnsafeBufferPointer(start: data[channel], count: Int(frameLength)))
     }
 }
+#endif

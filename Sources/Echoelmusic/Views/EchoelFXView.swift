@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 // MARK: - EchoelFX View
@@ -901,3 +902,4 @@ struct EchoelFXView: View {
         }
     }
 }
+#endif

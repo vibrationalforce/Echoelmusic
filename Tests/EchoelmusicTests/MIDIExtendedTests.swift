@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // MIDIExtendedTests.swift
 // Echoelmusic — Extended MIDI Module Test Coverage
 //
@@ -1516,3 +1517,4 @@ final class VelocityCurveTests: XCTestCase {
         }
     }
 }
+#endif

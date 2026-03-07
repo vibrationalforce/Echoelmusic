@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 import Combine
@@ -349,3 +350,4 @@ public final class ProVocalChain {
         log.log(.info, category: .audio, "ProVocalChain: Loaded preset '\(preset.rawValue)'")
     }
 }
+#endif

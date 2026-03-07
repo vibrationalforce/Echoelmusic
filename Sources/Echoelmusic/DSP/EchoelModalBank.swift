@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -801,3 +802,4 @@ public final class EchoelModalBank: @unchecked Sendable {
         isRinging = false
     }
 }
+#endif

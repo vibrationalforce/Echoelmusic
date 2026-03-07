@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -634,3 +635,4 @@ public struct EchoelSpectralAnalyzer {
         return totalPower > 0 ? weightedSum / totalPower : 0
     }
 }
+#endif

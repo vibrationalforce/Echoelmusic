@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -1106,3 +1107,4 @@ extension BreakbeatChopper {
         log.info("Loaded \(genre.rawValue) genre kit as choppable break (\(drumPresets.count) hits)", category: .audio)
     }
 }
+#endif

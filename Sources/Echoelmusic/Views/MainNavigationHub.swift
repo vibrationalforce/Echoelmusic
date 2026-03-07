@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Main navigation — DAW + Video workspaces
@@ -806,3 +807,4 @@ struct EchoelSettingsView: View {
         }
     }
 }
+#endif

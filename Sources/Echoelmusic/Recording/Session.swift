@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 
 /// Recording session containing multiple tracks and settings
@@ -268,3 +269,4 @@ extension Session {
         return session
     }
 }
+#endif

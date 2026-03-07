@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // CrossfadeEngine.swift
 // Echoelmusic
 //
@@ -244,3 +245,4 @@ public final class CrossfadeEngine {
         return Double(samples) / sampleRate * 1000.0
     }
 }
+#endif

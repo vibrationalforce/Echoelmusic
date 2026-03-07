@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // MIDITests.swift
 // Echoelmusic — Phase 4 Test Coverage: MIDI 2.0 Types
 //
@@ -208,3 +209,4 @@ private func XCTAssertEqual(_ a: UInt32, _ b: UInt32, accuracy: UInt32, file: St
     let diff = a > b ? a - b : b - a
     XCTAssertLessThanOrEqual(diff, accuracy, "Values \(a) and \(b) differ by more than \(accuracy)", file: file, line: line)
 }
+#endif

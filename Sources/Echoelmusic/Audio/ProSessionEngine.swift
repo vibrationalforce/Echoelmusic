@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Combine
@@ -1447,3 +1448,4 @@ public final class ProSessionEngine {
 }
 
 // NOTE: clamped(to:) is defined in NumericExtensions.swift
+#endif

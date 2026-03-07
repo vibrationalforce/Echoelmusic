@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // DSPTests.swift
 // Echoelmusic — Phase 2 Test Coverage: DSP Engine Tests
 //
@@ -648,3 +649,4 @@ final class CrossfadeRegionTests: XCTestCase {
         XCTAssertEqual(region.duration(sampleRate: 44100.0), 48000.0 / 44100.0, accuracy: 0.001)
     }
 }
+#endif

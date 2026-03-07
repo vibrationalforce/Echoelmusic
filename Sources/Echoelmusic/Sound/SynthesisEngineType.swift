@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 
 // MARK: - Unified Synthesis Engine Type
@@ -200,4 +201,4 @@ public enum SynthesisCategory: String, CaseIterable, Sendable {
         SynthesisEngineType.allCases.filter { $0.category == self }
     }
 }
-
+#endif

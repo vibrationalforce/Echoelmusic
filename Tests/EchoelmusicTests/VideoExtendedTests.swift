@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // VideoExtendedTests.swift
 // Echoelmusic — Extended Video & Export Module Tests
 //
@@ -1952,3 +1953,4 @@ final class StemRenderPhaseTests: XCTestCase {
         XCTAssertEqual(StemRenderProgress.RenderPhase.complete.rawValue, "Complete")
     }
 }
+#endif

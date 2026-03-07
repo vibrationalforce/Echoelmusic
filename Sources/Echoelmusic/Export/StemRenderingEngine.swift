@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // StemRenderingEngine.swift
 // Echoelmusic - Professional Stem Rendering
 //
@@ -818,3 +819,4 @@ public enum StemRenderError: LocalizedError {
         }
     }
 }
+#endif

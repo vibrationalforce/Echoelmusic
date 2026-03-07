@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // RecordingTests.swift
 // Echoelmusic — Phase 4 Test Coverage: Recording & Session
 //
@@ -535,3 +536,4 @@ final class SessionTests: XCTestCase {
         XCTAssertFalse(session.name.isEmpty)
     }
 }
+#endif

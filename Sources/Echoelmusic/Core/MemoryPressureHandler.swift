@@ -1,3 +1,4 @@
+#if canImport(Combine)
 // MemoryPressureHandler.swift
 // Echoelmusic - Automatic Memory Management Under Pressure
 //
@@ -459,3 +460,4 @@ open class MemoryAwareCache<Key: Hashable, Value>: MemoryReleasable {
         }
     }
 }
+#endif

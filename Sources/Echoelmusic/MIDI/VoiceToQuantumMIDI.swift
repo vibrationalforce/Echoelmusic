@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // VoiceToQuantumMIDI.swift
 // Echoelmusic - Voice Input to MIDI Bridge
 //
@@ -726,3 +727,4 @@ private extension Float {
         return destination.lowerBound + clamped * (destination.upperBound - destination.lowerBound)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 import Observation
 
@@ -978,4 +979,5 @@ enum EffectType: String {
 #Preview {
     AudioRoutingMatrixView()
 }
+#endif
 #endif

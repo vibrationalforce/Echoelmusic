@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // VDSPTests.swift
 // Echoelmusic — Phase 3 Test Coverage: vDSP & Advanced Synthesis
 //
@@ -546,3 +547,4 @@ final class EchoelCellularTests: XCTestCase {
         }
     }
 }
+#endif

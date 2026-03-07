@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 //
 //  SoundExtendedTests.swift
 //  EchoelmusicTests
@@ -1551,3 +1552,4 @@ final class SamplerInterpolationExtendedTests: XCTestCase {
         XCTAssertNil(SamplerInterpolation(rawValue: ""))
     }
 }
+#endif

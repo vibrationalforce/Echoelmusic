@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // VideoTests.swift
 // Echoelmusic — Comprehensive Video Module Tests
 //
@@ -1561,4 +1562,5 @@ final class CameraManagerEnumTests: XCTestCase {
         XCTAssertTrue(cases.contains(.raw))
     }
 }
+#endif
 #endif

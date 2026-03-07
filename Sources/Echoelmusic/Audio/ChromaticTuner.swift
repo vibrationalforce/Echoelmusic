@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // ChromaticTuner.swift
 // Echoelmusic
 //
@@ -329,3 +330,4 @@ public final class ChromaticTuner {
         audioEngine.stop()
     }
 }
+#endif

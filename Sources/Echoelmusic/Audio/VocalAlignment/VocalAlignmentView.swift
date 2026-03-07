@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import SwiftUI
 import AVFoundation
 import os.log
@@ -515,4 +516,5 @@ struct DubTrackRow: View {
     VocalAlignmentView()
         .preferredColorScheme(.dark)
 }
+#endif
 #endif

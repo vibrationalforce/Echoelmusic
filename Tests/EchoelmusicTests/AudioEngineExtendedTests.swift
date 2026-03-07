@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AudioEngineExtendedTests.swift
 // Echoelmusic
 //
@@ -1605,3 +1606,4 @@ final class SequencerChannelTests: XCTestCase {
         XCTAssertEqual(VisualStepSequencer.bpmRange, 60...180)
     }
 }
+#endif

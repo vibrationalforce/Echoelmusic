@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // TuningBridge.swift
 // Echoelmusic
 //
@@ -68,3 +69,4 @@ public final class TuningBridge {
         log.log(.info, category: .audio, "TuningBridge: Concert pitch → \(String(format: "%.3f", pitch)) Hz")
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 // AbletonLinkClient.swift
 // Echoelmusic
 //
@@ -747,3 +748,4 @@ import Observation
 
 // Use actual EchoelBrand from Theme/EchoelmusicBrand.swift
 // No placeholder needed - import the real brand colors
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 //
 //  TR808BassSynth.swift
 //  Echoelmusic
@@ -1423,4 +1424,5 @@ struct TR808BassSynthView_Previews: PreviewProvider {
         TR808BassSynthView()
     }
 }
+#endif
 #endif

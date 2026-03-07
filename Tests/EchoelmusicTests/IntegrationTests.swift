@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // IntegrationTests.swift
 // Echoelmusic — Integration Test Coverage for Critical Untested Modules
 //
@@ -627,3 +628,4 @@ final class VideoEditingEngineIntegrationTests: XCTestCase {
         XCTAssertGreaterThan(editor.timeline.tempo, 0)
     }
 }
+#endif

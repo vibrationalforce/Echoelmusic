@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 // MARK: - EchoelSynth View
@@ -361,3 +362,4 @@ private struct PresetCardButtonStyle: ButtonStyle {
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import AVFoundation
 import SwiftUI
 import Accelerate
@@ -338,3 +339,4 @@ final class MicrophoneManager {
         audioEngine = nil
     }
 }
+#endif

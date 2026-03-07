@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 // LiquidGlassDesignSystem.swift
 // Echoelmusic - Apple Liquid Glass Design System Integration
 //
@@ -476,4 +477,5 @@ public struct LiquidGlassTabBar: View {
         .padding()
     }
 }
+#endif
 #endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AdvancedEffectsTests.swift
 // Echoelmusic — Phase 3 Test Coverage: Advanced DSP Effects
 //
@@ -159,3 +160,4 @@ final class SynthesisCategoryTests: XCTestCase {
         }
     }
 }
+#endif

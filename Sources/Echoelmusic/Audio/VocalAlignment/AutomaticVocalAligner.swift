@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -641,3 +642,4 @@ final class AutomaticVocalAligner {
         }
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import CoreImage
 import AVFoundation
@@ -801,3 +802,4 @@ enum ChromaKeyError: LocalizedError {
 }
 
 #endif // canImport(Metal)
+#endif

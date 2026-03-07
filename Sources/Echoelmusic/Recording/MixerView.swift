@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Professional mixer view with faders and metering
@@ -545,3 +546,4 @@ struct PhaseCorrelationMeter: View {
         }
     }
 }
+#endif

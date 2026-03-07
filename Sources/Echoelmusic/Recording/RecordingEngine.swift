@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -881,3 +882,4 @@ enum RecordingError: LocalizedError {
         }
     }
 }
+#endif

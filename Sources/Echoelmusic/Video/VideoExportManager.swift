@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import VideoToolbox
@@ -734,3 +735,4 @@ enum ExportError: LocalizedError {
         }
     }
 }
+#endif

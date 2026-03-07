@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AudioInterfaceRegistry.swift
 // Echoelmusic - λ Lambda Mode
 //
@@ -376,3 +377,4 @@ public final class AudioInterfaceRegistry {
         }
     }
 }
+#endif

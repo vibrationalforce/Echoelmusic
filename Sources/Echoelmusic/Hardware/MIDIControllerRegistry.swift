@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // MIDIControllerRegistry.swift
 // Echoelmusic - λ Lambda Mode
 //
@@ -267,3 +268,4 @@ public final class MIDIControllerRegistry {
                       platforms: [.macOS, .windows, .iOS]),
     ]
 }
+#endif

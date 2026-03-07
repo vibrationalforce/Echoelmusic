@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import Foundation
 import SwiftUI
 #if canImport(CoreHaptics)
@@ -1335,3 +1336,4 @@ final class TouchKeyboardViewModel {
 }
 
 // Note: mpeZoneManager and midi2Manager are defined as private vars in TouchInstrumentsHub
+#endif

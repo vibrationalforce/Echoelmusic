@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 //
 //  AppIcon.swift
 //  Echoelmusic
@@ -719,4 +720,5 @@ struct AppIconView_Previews: PreviewProvider {
         }
     }
 }
+#endif
 #endif

@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 // KammertonWheelView.swift
 // Echoelmusic
 //
@@ -325,4 +326,5 @@ struct KammertonWheelView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+#endif
 #endif

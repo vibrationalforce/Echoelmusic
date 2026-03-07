@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -387,3 +388,4 @@ public class BreathDetector {
         runningEnergyVariance = 0
     }
 }
+#endif

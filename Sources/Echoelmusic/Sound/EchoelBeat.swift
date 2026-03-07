@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 //
 //  EchoelBeat.swift
 //  Echoelmusic
@@ -1225,4 +1226,5 @@ struct EchoelBeatView_Previews: PreviewProvider {
         EchoelBeatView()
     }
 }
+#endif
 #endif

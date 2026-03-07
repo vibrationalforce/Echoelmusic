@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -1218,3 +1219,4 @@ class AdvancedDSPEffects {
 }
 
 // Note: clamped(to:) extension moved to NumericExtensions.swift
+#endif

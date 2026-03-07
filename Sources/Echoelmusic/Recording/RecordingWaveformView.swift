@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Real-time waveform visualization during recording
@@ -155,3 +156,4 @@ struct RecordingWaveformView_Previews: PreviewProvider {
         }
     }
 }
+#endif

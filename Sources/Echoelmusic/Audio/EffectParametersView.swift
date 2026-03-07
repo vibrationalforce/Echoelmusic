@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Effects parameter editor for fine-tuning audio node parameters
@@ -497,3 +498,4 @@ struct EffectParametersView: View {
         }
     }
 }
+#endif

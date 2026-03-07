@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // ProMixEngine.swift
 // Echoelmusic - Professional Mixing Engine
 //
@@ -1282,3 +1283,4 @@ public final class ProMixEngine {
 private func clamp(_ value: Float, _ minValue: Float, _ maxValue: Float) -> Float {
     min(max(value, minValue), maxValue)
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Combine
@@ -541,3 +542,4 @@ extension NodeGraph {
         return graph
     }
 }
+#endif

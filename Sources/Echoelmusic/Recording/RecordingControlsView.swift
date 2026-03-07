@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 import os.log
 
@@ -549,4 +550,5 @@ struct RecordingShareSheet: View {
         .frame(minWidth: 300, minHeight: 150)
     }
 }
+#endif
 #endif

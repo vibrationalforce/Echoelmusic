@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import SwiftUI
@@ -547,3 +548,4 @@ extension LoopEngine.Loop {
         return "\(bars) bars"
     }
 }
+#endif

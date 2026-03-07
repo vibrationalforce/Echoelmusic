@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import AudioToolbox
@@ -919,3 +920,4 @@ final class UniversalSoundLibrary {
         return report
     }
 }
+#endif

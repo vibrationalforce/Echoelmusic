@@ -1,3 +1,4 @@
+#if canImport(CoreMIDI)
 import Foundation
 import CoreMIDI
 import Observation
@@ -368,3 +369,4 @@ extension MPEZoneManager {
         return Date().timeIntervalSince(newest.timestamp)
     }
 }
+#endif

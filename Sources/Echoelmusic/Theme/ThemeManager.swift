@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 // ThemeManager.swift
 // Echoelmusic - Seamless Dark/Light Mode Toggle
 //
@@ -196,3 +197,4 @@ extension View {
         self.preferredColorScheme(themeManager.resolvedColorScheme)
     }
 }
+#endif

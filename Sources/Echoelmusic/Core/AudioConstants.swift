@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 
@@ -260,3 +261,4 @@ extension AVAudioFormat {
         )
     }
 }
+#endif

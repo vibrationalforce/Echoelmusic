@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 #if canImport(UIKit)
 import UIKit
@@ -523,3 +524,4 @@ public struct EchoelIconConfig {
         (1024, 1, "watch-marketing")
     ]
 }
+#endif

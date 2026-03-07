@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 import Observation
 
@@ -991,4 +992,5 @@ enum QuantizeValue: String {
 #Preview {
     SessionClipView()
 }
+#endif
 #endif

@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Real-time FFT visualization for mixer channels
@@ -114,3 +115,4 @@ struct CompactFFTMeter: View {
             .frame(height: 60)
     }
 }
+#endif

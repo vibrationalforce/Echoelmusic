@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 import Observation
@@ -363,3 +364,4 @@ public final class RealTimePitchCorrector {
         return scaleType.intervals.map { ($0 + rootNote) % 12 }
     }
 }
+#endif

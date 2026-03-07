@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // SoundTests.swift
 // Echoelmusic — Comprehensive unit tests for the Sound module
 //
@@ -1230,3 +1231,4 @@ final class DrumTypeTests: XCTestCase {
         XCTAssertEqual(InstrumentOrchestrator.DrumType.ride.rawValue, "ride")
     }
 }
+#endif

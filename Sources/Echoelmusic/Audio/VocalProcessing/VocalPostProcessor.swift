@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 import Observation
@@ -804,3 +805,4 @@ final class VocalPostProcessor {
         return "\(detectedNotes.count) notes detected, \(corrected) pitch-corrected, \(transposed) transposed, \(vibratoEdited) vibrato edited"
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(CoreMIDI)
 import Foundation
 import CoreMIDI
 import Observation
@@ -356,3 +357,4 @@ enum MIDI2Error: Error, LocalizedError {
         }
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // EchoelSampler.swift
 // Echoelmusic - Native Swift Multi-Sampler Engine
 //
@@ -851,3 +852,4 @@ public final class EchoelSampler {
         return sampler
     }
 }
+#endif

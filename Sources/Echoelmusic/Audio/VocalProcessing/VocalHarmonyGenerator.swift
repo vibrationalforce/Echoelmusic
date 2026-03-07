@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -282,3 +283,4 @@ public class VocalHarmonyGenerator {
         440.0 * powf(2.0, Float(note - 69) / 12.0)
     }
 }
+#endif

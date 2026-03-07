@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 import AVFoundation
 import PhotosUI
@@ -1509,4 +1510,5 @@ struct CameraPreviewLayer: UIViewRepresentable {
 #Preview {
     VideoEditorView()
 }
+#endif
 #endif

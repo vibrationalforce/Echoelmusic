@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -251,3 +252,4 @@ public class VocalDoublingEngine {
         sampleCounter = 0
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(Combine)
 // TuningManager.swift
 // Echoelmusic
 //
@@ -154,3 +155,4 @@ public final class TuningManager {
         return Swift.max(Self.minimumPitch, Swift.min(Self.maximumPitch, value))
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -1517,3 +1518,4 @@ func normalize(_ vector: SIMD3<Float>) -> SIMD3<Float> {
     let len = vector.length
     return len > 0 ? SIMD3<Float>(vector.x / len, vector.y / len, vector.z / len) : vector
 }
+#endif

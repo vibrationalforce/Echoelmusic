@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -468,3 +469,4 @@ struct PhaseVocoderFrame {
     let isTransient: Bool
     let rmsEnergy: Float
 }
+#endif

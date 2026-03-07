@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Combine
@@ -391,3 +392,4 @@ public final class AudioEngine {
     }
 
 }
+#endif

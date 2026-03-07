@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AudioGraphBuilder.swift
 // Echoelmusic - Result Builder DSL for Audio Graph Construction
 //
@@ -545,3 +546,4 @@ public extension AudioGraphBuilder {
         }
     }
 }
+#endif

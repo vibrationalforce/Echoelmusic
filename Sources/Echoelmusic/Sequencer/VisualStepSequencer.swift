@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 // VisualStepSequencer.swift
 // Echoelmusic - Bio-Reactive Visual Step Sequencer
 //
@@ -512,4 +513,5 @@ struct VisualStepSequencerView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+#endif
 #endif

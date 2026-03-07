@@ -1,3 +1,4 @@
+#if canImport(StoreKit)
 // EchoelPaywall.swift
 // Echoelmusic — Paywall / Subscription View
 //
@@ -303,3 +304,4 @@ private struct SubscriptionButton: View {
         }
     }
 }
+#endif

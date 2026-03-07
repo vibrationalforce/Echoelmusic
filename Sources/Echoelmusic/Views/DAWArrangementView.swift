@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 import Accelerate
 
@@ -1525,4 +1526,5 @@ extension DAWArrangementView {
         .environment(AudioEngine())
         .environment(RecordingEngine())
 }
+#endif
 #endif

@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // VideoProcessingEngine.swift
 // Echoelmusic - Real-time Video Processing Engine
 //
@@ -1032,3 +1033,4 @@ public final class ProcessingExportManager {
         progress = 0
     }
 }
+#endif

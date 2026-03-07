@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -438,3 +439,4 @@ class PitchDetector {
         return detectedPitches.sorted { $0.frequency < $1.frequency }
     }
 }
+#endif

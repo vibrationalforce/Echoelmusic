@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import CoreData
@@ -999,3 +1000,4 @@ enum VideoEditingError: LocalizedError {
         }
     }
 }
+#endif

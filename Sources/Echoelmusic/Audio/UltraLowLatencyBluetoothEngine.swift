@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 //
 //  UltraLowLatencyBluetoothEngine.swift
 //  Echoelmusic
@@ -1479,3 +1480,4 @@ struct LatencySettingsView: View {
 }
 
 #endif // canImport(CoreBluetooth)
+#endif

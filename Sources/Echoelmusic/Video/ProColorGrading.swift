@@ -1,3 +1,4 @@
+#if canImport(CoreImage)
 // ProColorGrading.swift
 // Echoelmusic - Professional Color Grading Engine
 //
@@ -1515,3 +1516,4 @@ private extension SIMD3 where Scalar == Float {
         abs(x) < .ulpOfOne && abs(y) < .ulpOfOne && abs(z) < .ulpOfOne
     }
 }
+#endif

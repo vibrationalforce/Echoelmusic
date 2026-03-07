@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // ExportTests.swift
 // Echoelmusic — Phase 4 Test Coverage: Export Pipeline
 //
@@ -286,3 +287,4 @@ final class CurvePointTests: XCTestCase {
         XCTAssertEqual(original, decoded)
     }
 }
+#endif

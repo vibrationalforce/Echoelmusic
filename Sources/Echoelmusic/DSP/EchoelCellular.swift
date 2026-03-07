@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -510,3 +511,4 @@ public final class EchoelCellular: @unchecked Sendable {
         }
     }
 }
+#endif

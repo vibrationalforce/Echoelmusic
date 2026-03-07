@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // ClipLauncherGrid.swift
 // Echoelmusic - Ableton Live-Style Clip Launcher
 //
@@ -1004,4 +1005,5 @@ struct ClipLauncherGridView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+#endif
 #endif

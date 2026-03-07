@@ -1,3 +1,4 @@
+#if canImport(SwiftUI)
 import SwiftUI
 
 /// Session browser and manager for loading/organizing recording sessions
@@ -354,3 +355,4 @@ struct SessionInfo: Identifiable {
     var createdAt: Date
     var modifiedAt: Date
 }
+#endif

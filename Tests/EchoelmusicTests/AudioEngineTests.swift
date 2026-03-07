@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // AudioEngineTests.swift
 // Echoelmusic — Phase 2 Test Coverage: Audio & Infrastructure Tests
 //
@@ -515,3 +516,4 @@ final class EchoelLoggerTests: XCTestCase {
         logger.performance("Perf test")
     }
 }
+#endif

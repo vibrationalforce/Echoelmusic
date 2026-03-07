@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import SwiftUI
 import AVFoundation
@@ -261,4 +262,5 @@ struct AudioFilePicker: UIViewControllerRepresentable {
         }
     }
 }
+#endif
 #endif

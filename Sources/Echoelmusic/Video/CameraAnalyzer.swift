@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 import Accelerate
@@ -233,3 +234,4 @@ final class CameraAnalyzer {
         isPulseDetecting = false
     }
 }
+#endif

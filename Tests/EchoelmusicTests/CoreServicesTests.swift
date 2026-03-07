@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // CoreServicesTests.swift
 // Echoelmusic — Phase 3 Test Coverage: Core Services
 //
@@ -384,3 +385,4 @@ final class MemoryPressureHandlerTests: XCTestCase {
         handler.forceCleanup()
     }
 }
+#endif

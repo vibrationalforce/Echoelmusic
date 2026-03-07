@@ -1,3 +1,4 @@
+#if canImport(Accelerate)
 import Foundation
 import Accelerate
 import Observation
@@ -675,3 +676,4 @@ public final class VibratoEngine {
         noteVibratos[id] = params
     }
 }
+#endif

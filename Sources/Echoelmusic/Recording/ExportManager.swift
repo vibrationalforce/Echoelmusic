@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 import Foundation
 import AVFoundation
 
@@ -354,4 +355,5 @@ extension ExportManager {
         viewController.present(activityVC, animated: true)
     }
 }
+#endif
 #endif

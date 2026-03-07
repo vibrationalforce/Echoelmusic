@@ -1,3 +1,4 @@
+#if canImport(AVFoundation)
 // MixerDSPKernel.swift
 // Echoelmusic - Mixer DSP Processing Kernel
 //
@@ -635,3 +636,4 @@ final class MixerDSPKernel {
         )
     }
 }
+#endif
