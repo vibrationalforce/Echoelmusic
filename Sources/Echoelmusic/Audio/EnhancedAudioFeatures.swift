@@ -582,6 +582,7 @@ class SpectralAnalyzer {
 
     private func detectPeaks(spectrum: [Float], frequencies: [Float], threshold: Float = 0.1) -> [Peak] {
         var peaks: [Peak] = []
+        guard spectrum.count >= 3 else { return peaks }
 
         // Find local maxima
         for i in 1..<spectrum.count - 1 {
