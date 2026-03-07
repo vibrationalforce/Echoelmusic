@@ -42,9 +42,27 @@ final class NodeGraph {
     /// Avoids recalculating processing order every audio frame
     private var cachedProcessingOrder: [UUID]?
 
+    /// O(1) node lookup by ID — avoids O(n) linear scan in process()
+    private var nodeLookup: [UUID: EchoelmusicNode] = [:]
+
+    /// Pre-built adjacency list for topological sort — avoids O(n*c) filter per node
+    private var incomingEdges: [UUID: [UUID]] = [:]
+
     /// Invalidate cached processing order when graph structure changes
     private func invalidateCache() {
         cachedProcessingOrder = nil
+        rebuildAdjacencyList()
+    }
+
+    /// Rebuild incoming-edge adjacency list from connections
+    private func rebuildAdjacencyList() {
+        incomingEdges.removeAll(keepingCapacity: true)
+        for node in nodes {
+            incomingEdges[node.id] = []
+        }
+        for connection in connections {
+            incomingEdges[connection.destinationNodeID, default: []].append(connection.sourceNodeID)
+        }
     }
 
 
@@ -53,6 +71,7 @@ final class NodeGraph {
     /// Add a node to the graph
     func addNode(_ node: EchoelmusicNode) {
         nodes.append(node)
+        nodeLookup[node.id] = node
         invalidateCache() // Graph structure changed
         log.audio("📊 Added node: \(node.name) (\(node.type.rawValue))")
     }
@@ -66,12 +85,13 @@ final class NodeGraph {
 
         // Remove node
         nodes.removeAll { $0.id == id }
+        nodeLookup.removeValue(forKey: id)
         invalidateCache() // Graph structure changed
     }
 
-    /// Get node by ID
+    /// Get node by ID — O(1) dictionary lookup
     func node(withID id: UUID) -> EchoelmusicNode? {
-        return nodes.first { $0.id == id }
+        return nodeLookup[id]
     }
 
 
@@ -173,6 +193,7 @@ final class NodeGraph {
     }
 
     /// Topological sort for processing order
+    /// Uses pre-built adjacency list for O(n+c) instead of O(n*c)
     private func topologicalSort() -> [UUID] {
         var result: [UUID] = []
         var visited = Set<UUID>()
@@ -180,8 +201,7 @@ final class NodeGraph {
 
         func visit(_ nodeID: UUID) {
             if temp.contains(nodeID) {
-                // Cycle detected - shouldn't happen with our checks
-                return
+                return // Cycle detected
             }
 
             if visited.contains(nodeID) {
@@ -190,11 +210,8 @@ final class NodeGraph {
 
             temp.insert(nodeID)
 
-            // Visit all dependencies (incoming connections)
-            let dependencies = connections
-                .filter { $0.destinationNodeID == nodeID }
-                .map { $0.sourceNodeID }
-
+            // Visit all dependencies using pre-built adjacency list
+            let dependencies = incomingEdges[nodeID] ?? []
             for depID in dependencies {
                 visit(depID)
             }
@@ -204,7 +221,6 @@ final class NodeGraph {
             result.append(nodeID)
         }
 
-        // Visit all nodes
         for node in nodes {
             visit(node.id)
         }
