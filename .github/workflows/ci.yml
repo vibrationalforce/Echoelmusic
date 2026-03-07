@@ -150,6 +150,7 @@ jobs:
           -destination '${{ matrix.destination }}' \
           -configuration Debug \
           -enableCodeCoverage YES \
+          -parallel-testing-enabled YES \
           -resultBundlePath TestResults \
           2>&1 | tee test.log | xcpretty || cat test.log
       # NOTE: Test failures MUST fail the build - do not add continue-on-error
@@ -242,6 +243,7 @@ jobs:
           -destination 'platform=macOS' \
           -configuration Debug \
           -enableCodeCoverage YES \
+          -parallel-testing-enabled YES \
           2>&1 | tee test.log | xcpretty || cat test.log
 
   # Job 4: Build - watchOS
@@ -353,7 +355,7 @@ jobs:
   performance-tests:
     name: Performance & Memory Tests
     runs-on: macos-15
-    needs: [build-test-ios, build-test-macos, build-watchos, build-tvos, build-visionos]
+    needs: [build-test-ios]
     continue-on-error: true
 
     steps:

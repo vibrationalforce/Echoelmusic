@@ -130,6 +130,7 @@ jobs:
             -scheme Echoelmusic \
             -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro' \
             -configuration Debug \
+            -parallel-testing-enabled YES \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee test-ios.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-ios.log; exit 1; }
           echo "[OK] iOS tests passed"
@@ -142,6 +143,7 @@ jobs:
             -scheme Echoelmusic-macOS \
             -destination 'platform=macOS' \
             -configuration Debug \
+            -parallel-testing-enabled YES \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee test-macos.log | xcpretty --test || { echo "TESTS FAILED — full log:"; tail -100 test-macos.log; exit 1; }
           echo "[OK] macOS tests passed"
