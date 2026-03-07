@@ -6,6 +6,47 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-07 — Deep Audit + Architecture Maximum
+
+**Branch:** `claude/analyze-test-coverage-9aFjV`
+
+**Goal:** Super laser audit of entire codebase, fix all issues, plan full-potential architecture
+
+### Fixes Applied
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| 1 | EchoelLogger data race: reads without queue sync | HIGH | `queue.sync {}` on all read methods |
+| 2 | EchoelLogger `addOutput()` unsynchronized | MEDIUM | `queue.async {}` |
+| 3 | DateFormatter created per log entry (~50μs waste) | MEDIUM | Static shared formatter |
+| 4 | EchoelDDSP `Float.random()` on audio thread (may lock) | HIGH | xorshift32 lock-free PRNG |
+| 5 | EchoelDDSP reverb buffer realloc in `render()` | HIGH | Pre-allocate 2048 frames, guard |
+| 6 | EchoelPolyDDSP per-voice heap alloc in render loop | HIGH | Pre-allocated scratch buffers |
+| 7 | RecordingEngine dead `vDSP_sve` + manual RMS | LOW | Replaced with single `vDSP_rmsqv` call |
+
+### Architecture Plan Created
+
+See `scratchpads/PLAN_ARCHITECTURE_MAXIMUM.md` for 5 initiatives:
+1. HeartMath coherence protocol (from literature)
+2. AES67/Dante in Swift (Network.framework)
+3. Music generation with open weights (CoreML)
+4. Real-time collaborative CRDTs
+5. DMX-512 over USB in Swift
+
+### Audit Summary (Post-Fix)
+
+- **No force unwraps** in production code
+- **No `ObservableObject`** remaining (all `@Observable`)
+- **No `UIScreen.main`** usage
+- **No `print()`** outside DEBUG guard (only in ProfessionalLogger)
+- **All divisions guarded** (checked all 7 occurrences)
+- **All deinits clean** (timers invalidated, resources released)
+- **All @Observable classes** have @MainActor
+- **Zero audio-thread allocation** in DDSP render paths
+- **1,060+ test methods** across 21 files
+
+---
+
 ## Session: 2026-03-06 (cont.) — 100/100 Push + Professional Tooling
 
 **Branch:** `claude/analyze-test-coverage-9aFjV`

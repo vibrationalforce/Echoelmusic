@@ -202,6 +202,20 @@ public final class EchoelDDSP: @unchecked Sendable {
     private var noiseOverlapBuffer: [Float]
     private var noiseFilterState: [Float]
 
+    /// Lock-free PRNG for audio-thread noise generation
+    /// xorshift32 — no locks, no syscalls, deterministic, fast
+    private var prngState: UInt32 = 0x12345678
+
+    /// Generate white noise sample in [-1, 1] without locking (audio-thread safe)
+    private func nextNoiseSample() -> Float {
+        // xorshift32 algorithm (Marsaglia 2003)
+        prngState ^= prngState << 13
+        prngState ^= prngState >> 17
+        prngState ^= prngState << 5
+        // Convert to float in [-1, 1]
+        return Float(Int32(bitPattern: prngState)) / Float(Int32.max)
+    }
+
     /// Vibrato phase accumulator
     private var vibratoPhase: Float = 0
 
@@ -269,8 +283,9 @@ public final class EchoelDDSP: @unchecked Sendable {
         self.morphSourceAmplitudes = [Float](repeating: 0, count: harmonicCount)
         self.morphTargetAmplitudes = [Float](repeating: 0, count: harmonicCount)
 
-        // Reverb IR buffer
-        self.reverbFrameBuffer = [Float](repeating: 0, count: frameSize)
+        // Reverb IR buffer — pre-allocate for max expected render size (2048 frames)
+        // Avoids any allocation on audio thread
+        self.reverbFrameBuffer = [Float](repeating: 0, count: max(frameSize, 2048))
 
         // Initialize convolution reverb with a synthetic IR
         self.reverbConvolution = EchoelConvolution(kernel: EchoelDDSP.generateReverbIR(
@@ -503,7 +518,8 @@ public final class EchoelDDSP: @unchecked Sendable {
             }
 
             // --- Multi-Band Noise (FIR-filtered via noiseMagnitudes) ---
-            let whiteNoise = Float.random(in: -1...1)
+            // Audio-thread safe: xorshift32 PRNG, no locks/syscalls
+            let whiteNoise = nextNoiseSample()
             var noiseSample = whiteNoise
 
             // Apply multi-band spectral shaping via cascaded one-pole filters
@@ -533,9 +549,8 @@ public final class EchoelDDSP: @unchecked Sendable {
             if stereo {
                 // Extract mono mix for reverb input
                 let monoCount = frameCount
-                if reverbFrameBuffer.count < monoCount {
-                    reverbFrameBuffer = [Float](repeating: 0, count: monoCount)
-                }
+                // Buffer pre-allocated in init — guard against unexpected sizes
+                guard reverbFrameBuffer.count >= monoCount else { return }
                 for i in 0..<monoCount {
                     reverbFrameBuffer[i] = (buffer[i * 2] + buffer[i * 2 + 1]) * 0.5
                 }
@@ -548,10 +563,8 @@ public final class EchoelDDSP: @unchecked Sendable {
                     buffer[i * 2 + 1] = buffer[i * 2 + 1] * dry + wetSample * wetGain
                 }
             } else {
-                // Mono path — reuse pre-allocated buffer to avoid audio-thread allocation
-                if reverbFrameBuffer.count < frameCount {
-                    reverbFrameBuffer = [Float](repeating: 0, count: frameCount)
-                }
+                // Mono path — reuse pre-allocated buffer (no audio-thread allocation)
+                guard reverbFrameBuffer.count >= frameCount else { return }
                 for i in 0..<frameCount {
                     reverbFrameBuffer[i] = buffer[i]
                 }
@@ -874,11 +887,13 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
     private var bioLfHfRatio: Float = 0.5
     private var bioCoherenceTrend: Float = 0
 
-    // MARK: - Scratch Buffers
+    // MARK: - Scratch Buffers (pre-allocated, zero audio-thread allocation)
 
     private var voiceBuffer: [Float]
     private var mixBufferL: [Float]
     private var mixBufferR: [Float]
+    private var scaledBufferL: [Float]
+    private var scaledBufferR: [Float]
 
     /// Initialize polyphonic DDSP
     public init(
@@ -896,10 +911,12 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         self.voiceAges = [Int](repeating: 0, count: maxVoices)
         self.voicePans = [Float](repeating: 0, count: maxVoices)
 
-        let maxFrameSize = 512
+        let maxFrameSize = 2048
         self.voiceBuffer = [Float](repeating: 0, count: maxFrameSize)
         self.mixBufferL = [Float](repeating: 0, count: maxFrameSize)
         self.mixBufferR = [Float](repeating: 0, count: maxFrameSize)
+        self.scaledBufferL = [Float](repeating: 0, count: maxFrameSize)
+        self.scaledBufferR = [Float](repeating: 0, count: maxFrameSize)
     }
 
     // MARK: - Note Control
@@ -1039,16 +1056,14 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
             // Equal-power pan (shared utility)
             let (leftGain, rightGain) = equalPowerPan(pan: voicePans[i], volume: 1.0)
 
-            // Mix into stereo buffers (vDSP accelerated)
+            // Mix into stereo buffers (vDSP accelerated, zero allocation)
             var lg = leftGain
             var rg = rightGain
-            var scaledL = [Float](repeating: 0, count: frameCount)
-            var scaledR = [Float](repeating: 0, count: frameCount)
 
-            vDSP_vsmul(voiceBuffer, 1, &lg, &scaledL, 1, vDSP_Length(frameCount))
-            vDSP_vsmul(voiceBuffer, 1, &rg, &scaledR, 1, vDSP_Length(frameCount))
-            vDSP_vadd(mixBufferL, 1, scaledL, 1, &mixBufferL, 1, vDSP_Length(frameCount))
-            vDSP_vadd(mixBufferR, 1, scaledR, 1, &mixBufferR, 1, vDSP_Length(frameCount))
+            vDSP_vsmul(voiceBuffer, 1, &lg, &scaledBufferL, 1, vDSP_Length(frameCount))
+            vDSP_vsmul(voiceBuffer, 1, &rg, &scaledBufferR, 1, vDSP_Length(frameCount))
+            vDSP_vadd(mixBufferL, 1, scaledBufferL, 1, &mixBufferL, 1, vDSP_Length(frameCount))
+            vDSP_vadd(mixBufferR, 1, scaledBufferR, 1, &mixBufferR, 1, vDSP_Length(frameCount))
         }
 
         // Copy to output

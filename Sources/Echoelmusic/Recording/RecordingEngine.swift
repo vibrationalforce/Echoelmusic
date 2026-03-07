@@ -297,15 +297,11 @@ final class RecordingEngine {
         let frameLength = Int(buffer.frameLength)
         let channelDataValue = channelData.pointee
 
-        // Calculate RMS for level meter
-        var sum: Float = 0.0
-        vDSP_sve(channelDataValue, 1, &sum, vDSP_Length(frameLength))
+        // Calculate RMS for level meter (vDSP_rmsqv computes sqrt(sum(x²)/n) in one call)
+        var rmsValue: Float = 0.0
+        vDSP_rmsqv(channelDataValue, 1, &rmsValue, vDSP_Length(frameLength))
 
-        var sumSquares: Float = 0.0
-        vDSP_svesq(channelDataValue, 1, &sumSquares, vDSP_Length(frameLength))
-
-        let rms = frameLength > 0 ? sqrt(sumSquares / Float(frameLength)) : 0
-        recordingLevel = min(rms * 10.0, 1.0) // Normalize and clamp
+        recordingLevel = min(rmsValue * 10.0, 1.0) // Normalize and clamp
 
         // Write to audio file
         if let file = audioFile {

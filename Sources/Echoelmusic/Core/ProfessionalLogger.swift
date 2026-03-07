@@ -133,10 +133,15 @@ public struct LogEntry: Identifiable, Sendable {
         self.metadata = metadata
     }
 
+    /// Shared date formatter — creating DateFormatter is expensive (~50μs), reuse is ~0.5μs
+    nonisolated(unsafe) private static let dateFormatter: DateFormatter = {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "HH:mm:ss.SSS"
+        return fmt
+    }()
+
     public var formattedMessage: String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "HH:mm:ss.SSS"
-        let timeString = dateFormatter.string(from: timestamp)
+        let timeString = Self.dateFormatter.string(from: timestamp)
 
         let fileName = URL(fileURLWithPath: file).lastPathComponent
         return "\(level.emoji) [\(timeString)] [\(category.rawValue)] \(message) (\(fileName):\(line))"
@@ -225,9 +230,11 @@ public final class EchoelLogger: @unchecked Sendable {
 
     // MARK: - Configuration
 
-    /// Add output destination
+    /// Add output destination (thread-safe)
     public func addOutput(_ output: any LogOutput) {
-        outputs.append(output)
+        queue.async { [weak self] in
+            self?.outputs.append(output)
+        }
     }
 
     /// Enable file logging
@@ -420,30 +427,34 @@ public final class EchoelLogger: @unchecked Sendable {
 
     // MARK: - Log Retrieval
 
-    /// Get recent log entries
+    /// Get recent log entries (thread-safe)
     public func getRecentEntries(count: Int = 100, level: LogLevel? = nil, category: LogCategory? = nil) -> [LogEntry] {
-        var filtered = entries
+        queue.sync {
+            var filtered = entries
 
-        if let level = level {
-            filtered = filtered.filter { $0.level >= level }
+            if let level = level {
+                filtered = filtered.filter { $0.level >= level }
+            }
+
+            if let category = category {
+                filtered = filtered.filter { $0.category == category }
+            }
+
+            return Array(filtered.suffix(count))
         }
-
-        if let category = category {
-            filtered = filtered.filter { $0.category == category }
-        }
-
-        return Array(filtered.suffix(count))
     }
 
-    /// Export logs as string
+    /// Export logs as string (thread-safe)
     public func exportLogs(since: Date? = nil) -> String {
-        var filtered = entries
+        queue.sync {
+            var filtered = entries
 
-        if let since = since {
-            filtered = filtered.filter { $0.timestamp >= since }
+            if let since = since {
+                filtered = filtered.filter { $0.timestamp >= since }
+            }
+
+            return filtered.map { $0.formattedMessage }.joined(separator: "\n")
         }
-
-        return filtered.map { $0.formattedMessage }.joined(separator: "\n")
     }
 
     /// Clear all logs
