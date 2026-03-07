@@ -53,7 +53,7 @@ public enum AudioConstants {
     public static let standardCarrierFrequency: Float = 440.0
 
     /// Alternative Carrier (432 Hz)
-    /// NOTE: No scientific evidence for "healing" properties.
+    /// NOTE: No scientific evidence for special sonic properties.
     /// Included for user preference only. Evidence: NONE
     public static let alternativeCarrierFrequency: Float = 432.0
 

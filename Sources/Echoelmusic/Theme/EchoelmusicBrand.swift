@@ -73,7 +73,7 @@ public struct EchoelBrand {
 
     // MARK: - Extended Palette (Functional Colors — bio-reactive UI only)
 
-    /// Emerald - Health, success, growth
+    /// Emerald - Vitality, success, growth
     public static let emerald = Color(red: 0.063, green: 0.725, blue: 0.506)  // #10B981
 
     /// Sky - Science, trust, clarity
@@ -443,7 +443,7 @@ public extension View {
     }
 }
 
-// MARK: - Health & Safety Disclaimers
+// MARK: - Safety Disclaimers
 
 /// Disclaimer text for biofeedback features
 public struct EchoelDisclaimer {

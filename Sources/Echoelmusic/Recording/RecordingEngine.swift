@@ -184,8 +184,8 @@ final class RecordingEngine {
         switch template {
         case .meditation:
             session = Session.meditationTemplate()
-        case .healing:
-            session = Session.healingTemplate()
+        case .recovery:
+            session = Session.recoveryTemplate()
         case .creative:
             session = Session.creativeTemplate()
         case .custom:

@@ -445,7 +445,7 @@ public final class EchoelBass {
         config = preset
     }
 
-    /// Update bio-reactive parameters from health sensors
+    /// Update bio-reactive parameters from biometric sensors
     public func updateBio(coherence: Float, heartRate: Float, hrv: Float, breathPhase: Float) {
         bioCoherence = coherence
         bioHeartRate = heartRate

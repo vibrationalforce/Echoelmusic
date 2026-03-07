@@ -526,8 +526,8 @@ final class SessionTests: XCTestCase {
         XCTAssertGreaterThan(session.tracks.count, 0)
     }
 
-    func testHealingTemplate() {
-        let session = Session.healingTemplate()
+    func testRecoveryTemplate() {
+        let session = Session.recoveryTemplate()
         XCTAssertFalse(session.name.isEmpty)
     }
 

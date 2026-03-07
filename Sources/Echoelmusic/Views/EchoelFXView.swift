@@ -667,11 +667,11 @@ struct EchoelFXView: View {
                 )
 
                 presetCard(
-                    name: "Healing",
+                    name: "Relax",
                     description: "Gentle reverb wash",
                     icon: "leaf",
                     accentColor: EchoelBrand.emerald,
-                    factory: NodeGraph.createHealingPreset
+                    factory: NodeGraph.createRelaxPreset
                 )
 
                 presetCard(
@@ -837,11 +837,11 @@ struct EchoelFXView: View {
                     )
 
                     presetCard(
-                        name: "Healing",
+                        name: "Relax",
                         description: "Gentle reverb wash",
                         icon: "leaf",
                         accentColor: EchoelBrand.emerald,
-                        factory: NodeGraph.createHealingPreset
+                        factory: NodeGraph.createRelaxPreset
                     )
 
                     presetCard(

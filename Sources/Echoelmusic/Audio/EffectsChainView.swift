@@ -200,8 +200,8 @@ struct EffectsChainView: View {
                     nodeGraph.loadFromPreset(NodeGraph.createBiofeedbackChain())
                 }
 
-                presetButton("Healing", icon: "leaf.fill", color: EchoelBrand.emerald) {
-                    nodeGraph.loadFromPreset(NodeGraph.createHealingPreset())
+                presetButton("Relax", icon: "leaf.fill", color: EchoelBrand.emerald) {
+                    nodeGraph.loadFromPreset(NodeGraph.createRelaxPreset())
                 }
 
                 presetButton("Energizing", icon: "bolt.fill", color: EchoelBrand.coral) {
@@ -311,8 +311,8 @@ struct EffectsChainView: View {
                         showPresets = false
                     }
 
-                    presetRow("Healing", description: "Deep reverb with gentle compression") {
-                        nodeGraph.loadFromPreset(NodeGraph.createHealingPreset())
+                    presetRow("Relax", description: "Deep reverb with gentle compression") {
+                        nodeGraph.loadFromPreset(NodeGraph.createRelaxPreset())
                         showPresets = false
                     }
 

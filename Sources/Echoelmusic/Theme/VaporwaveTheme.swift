@@ -933,7 +933,7 @@ struct VaporwaveEmptyState: View {
                 Text("Create")
                     .vaporwaveButton(isActive: false)
 
-                Text("Heal")
+                Text("Relax")
                     .vaporwaveButton(isActive: false)
             }
         }

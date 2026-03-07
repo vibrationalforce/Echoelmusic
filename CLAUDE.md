@@ -332,16 +332,16 @@ The `scratchpads/` directory is persistent memory across sessions:
 
 | File | Purpose |
 |------|---------|
-| `HEALING_LOG.md` | **Read first** — session history, key discoveries, commits |
+| `SESSION_LOG.md` | **Read first** — session history, key discoveries, commits |
 | `ARCHITECTURE_AUDIT_*.md` | Data flow diagrams, env object chains, init sequence |
 | `PLAN_*.md` | Feature/fix plans before implementation |
 
-**Start every session** by reading `scratchpads/HEALING_LOG.md`.
+**Start every session** by reading `scratchpads/SESSION_LOG.md`.
 
 ### 4-Phase Workflow
 
 **Phase 1 — Plan:**
-- Read `scratchpads/HEALING_LOG.md` for context
+- Read `scratchpads/SESSION_LOG.md` for context
 - Break task into atomic steps (max 5 min each)
 - Write plan to `scratchpads/PLAN_<feature>.md`
 - Include exact file paths, expected changes, test strategy
@@ -361,7 +361,7 @@ The `scratchpads/` directory is persistent memory across sessions:
 
 **Phase 4 — Ship:**
 - Commit with conventional prefix: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`
-- Update `scratchpads/HEALING_LOG.md` with session summary
+- Update `scratchpads/SESSION_LOG.md` with session summary
 - Push to feature branch
 
 ### Parallel Agent Strategy

@@ -318,7 +318,7 @@ struct RecordingControlsView: View {
                         .foregroundColor(.secondary)
 
                     templateButton(title: "Meditation", icon: "leaf.fill", template: .meditation)
-                    templateButton(title: "Healing", icon: "heart.fill", template: .healing)
+                    templateButton(title: "Recovery", icon: "heart.fill", template: .recovery)
                     templateButton(title: "Creative", icon: "sparkles", template: .creative)
                     templateButton(title: "Custom", icon: "wand.and.stars", template: .custom)
                 }
