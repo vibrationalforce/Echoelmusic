@@ -20,7 +20,7 @@ Bio-reactive creative performance platform. Physiological data → real-time mus
 - **Mode:** RALPH WIGGUM LAMBDA — iterative tightening until tight
 - **SDK:** Must target iOS 26 SDK (ITMS-90725, deadline April 28, 2026)
 - **Architecture:** 100% JUCE-free, platform-native
-- **Commits:** 1,560+ | **Tests:** 1,060+ methods / 230+ classes / 15 files | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
+- **Commits:** 1,560+ | **Tests:** 2,240+ methods / 425+ classes / 21 files | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
 
 ---
 
