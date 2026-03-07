@@ -8,7 +8,9 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import Foundation
+#if canImport(os)
 import os.log
+#endif
 
 /// Typealias for backwards compatibility
 public typealias ProfessionalLogger = EchoelLogger
@@ -41,6 +43,7 @@ public enum LogLevel: Int, Comparable, CaseIterable, Sendable {
         }
     }
 
+    #if canImport(os)
     public var osLogType: OSLogType {
         switch self {
         case .trace, .debug: return .debug
@@ -50,6 +53,7 @@ public enum LogLevel: Int, Comparable, CaseIterable, Sendable {
         case .critical: return .fault
         }
     }
+    #endif
 }
 
 // MARK: - Log Category
@@ -89,9 +93,11 @@ public enum LogCategory: String, CaseIterable, Sendable {
     case security = "Security"
     case interface = "Interface"
 
+    #if canImport(os)
     public var osLog: OSLog {
         OSLog(subsystem: "com.echoelmusic", category: rawValue)
     }
+    #endif
 }
 
 // MARK: - Log Entry
@@ -153,6 +159,7 @@ public final class ConsoleOutput: LogOutput, @unchecked Sendable {
         print(entry.formattedMessage)
         #endif
 
+        #if canImport(os)
         // Also write to os_log
         os_log(
             "%{public}@",
@@ -160,6 +167,7 @@ public final class ConsoleOutput: LogOutput, @unchecked Sendable {
             type: entry.level.osLogType,
             entry.message
         )
+        #endif
     }
 }
 
