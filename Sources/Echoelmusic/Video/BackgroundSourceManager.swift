@@ -7,25 +7,27 @@ import MetalKit
 import CoreImage
 import SwiftUI
 import Combine
+import Observation
 
 /// Background Source Manager for Chroma Key Compositing
 /// Supports multiple background types: images, videos, Echoelmusic visuals, virtual backgrounds
 /// Bio-reactive backgrounds driven by HRV coherence and heart rate
 @MainActor
-class BackgroundSourceManager: ObservableObject {
+@Observable
+final class BackgroundSourceManager {
 
     // MARK: - Published State
 
-    @Published var currentSource: BackgroundSource = .solidColor(.black)
-    @Published var availableSources: [BackgroundSource] = []
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String?
+    var currentSource: BackgroundSource = .solidColor(.black)
+    var availableSources: [BackgroundSource] = []
+    var isLoading: Bool = false
+    var errorMessage: String?
 
     // MARK: - Bio-Reactive Parameters
 
-    @Published var hrvCoherence: Float = 0.5  // 0-1
-    @Published var heartRate: Float = 70.0   // BPM
-    @Published var bioReactivityEnabled: Bool = true
+    var hrvCoherence: Float = 0.5  // 0-1
+    var heartRate: Float = 70.0   // BPM
+    var bioReactivityEnabled: Bool = true
 
     // MARK: - Metal & Core Image
 

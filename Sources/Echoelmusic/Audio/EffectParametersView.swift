@@ -3,7 +3,7 @@ import SwiftUI
 /// Effects parameter editor for fine-tuning audio node parameters
 struct EffectParametersView: View {
     let node: EchoelmusicNode
-    @ObservedObject var nodeGraph: NodeGraph
+    @Bindable var nodeGraph: NodeGraph
 
     var body: some View {
         NavigationView {

@@ -2,40 +2,42 @@ import Foundation
 import AVFoundation
 import Combine
 import SwiftUI
+import Observation
 
 /// Manages audio looping functionality with tempo-sync and quantization
 /// Supports loop recording, overdubbing, and playback
 @MainActor
-class LoopEngine: ObservableObject {
+@Observable
+final class LoopEngine {
 
     // MARK: - Published Properties
 
     /// Is currently recording a loop
-    @Published var isRecordingLoop: Bool = false
+    var isRecordingLoop: Bool = false
 
     /// Is currently playing loops
-    @Published var isPlayingLoops: Bool = false
+    var isPlayingLoops: Bool = false
 
     /// Current loop position (0.0 to 1.0)
-    @Published var loopPosition: Double = 0.0
+    var loopPosition: Double = 0.0
 
     /// Active loops
-    @Published var loops: [Loop] = []
+    var loops: [Loop] = []
 
     /// Current tempo (BPM)
-    @Published var tempo: Double = 120.0
+    var tempo: Double = 120.0
 
     /// Time signature
-    @Published var timeSignature: TimeSignature = TimeSignature(numerator: 4, denominator: 4)
+    var timeSignature: TimeSignature = TimeSignature(numerator: 4, denominator: 4)
 
     /// Metronome enabled
-    @Published var metronomeEnabled: Bool = false
+    var metronomeEnabled: Bool = false
 
     /// Is currently overdubbing
-    @Published var isOverdubbing: Bool = false
+    var isOverdubbing: Bool = false
 
     /// Loop being overdubbed
-    @Published var overdubLoopID: UUID?
+    var overdubLoopID: UUID?
 
 
     // MARK: - Loop Model

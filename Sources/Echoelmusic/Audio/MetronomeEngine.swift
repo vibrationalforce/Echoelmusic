@@ -10,6 +10,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import Observation
 
 // MARK: - Metronome Sound
 
@@ -143,24 +144,25 @@ public struct MetronomeConfiguration: Codable, Sendable {
 
 /// Professional metronome engine with synthesis-based click generation
 @MainActor
-public final class MetronomeEngine: ObservableObject {
+public final @Observable
+final class MetronomeEngine {
 
     // MARK: - Published Properties
 
-    @Published public var isRunning: Bool = false
-    @Published public var currentBeat: Int = 0
-    @Published public var currentBar: Int = 0
-    @Published public var isDownbeat: Bool = false
-    @Published public var tempo: Double = 120.0
-    @Published public var beatsPerBar: Int = 4
-    @Published public var noteValue: Int = 4
-    @Published public var configuration: MetronomeConfiguration
+    public var isRunning: Bool = false
+    public var currentBeat: Int = 0
+    public var currentBar: Int = 0
+    public var isDownbeat: Bool = false
+    public var tempo: Double = 120.0
+    public var beatsPerBar: Int = 4
+    public var noteValue: Int = 4
+    public var configuration: MetronomeConfiguration
 
     /// Visual flash trigger (briefly true on each beat)
-    @Published public var beatFlash: Bool = false
+    public var beatFlash: Bool = false
 
     /// Count-in beats remaining (0 when done)
-    @Published public var countInBeatsRemaining: Int = 0
+    public var countInBeatsRemaining: Int = 0
 
     // MARK: - Private Properties
 

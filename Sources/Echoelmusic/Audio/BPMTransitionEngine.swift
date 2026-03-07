@@ -14,6 +14,7 @@
 import Foundation
 import Combine
 import SwiftUI
+import Observation
 
 // MARK: - BPM Situation Presets
 
@@ -186,15 +187,16 @@ public struct BPMLockState {
 /// let currentBPM = engine.currentBPM
 /// ```
 @MainActor
-public class BPMTransitionEngine: ObservableObject {
+@Observable
+public final class BPMTransitionEngine {
 
     // MARK: - Published Properties
 
     /// Current interpolated BPM (use this for playback)
-    @Published public private(set) var currentBPM: Double = 120
+    public private(set) var currentBPM: Double = 120
 
     /// Target BPM (what we're transitioning to)
-    @Published public var targetBPM: Double = 120 {
+    public var targetBPM: Double = 120 {
         didSet {
             if !lockState.isLocked {
                 startTransition(to: targetBPM)
@@ -203,43 +205,43 @@ public class BPMTransitionEngine: ObservableObject {
     }
 
     /// Bio-influence amount (0 = no influence, 1 = full bio-reactive)
-    @Published public var bioInfluence: Double = 0.5 {
+    public var bioInfluence: Double = 0.5 {
         didSet {
             bioInfluence = max(0, min(1, bioInfluence))
         }
     }
 
     /// Humanize amount (0 = rigid, 1 = very human fluctuations)
-    @Published public var humanize: Double = 0.2 {
+    public var humanize: Double = 0.2 {
         didSet {
             humanize = max(0, min(1, humanize))
         }
     }
 
     /// Current situation preset
-    @Published public var situation: BPMSituation = .freeform {
+    public var situation: BPMSituation = .freeform {
         didSet {
             applySituationPreset()
         }
     }
 
     /// Transition mode
-    @Published public var transitionMode: BPMTransitionMode = .smooth
+    public var transitionMode: BPMTransitionMode = .smooth
 
     /// Lock state
-    @Published public var lockState = BPMLockState()
+    public var lockState = BPMLockState()
 
     /// Is currently transitioning
-    @Published public private(set) var isTransitioning: Bool = false
+    public private(set) var isTransitioning: Bool = false
 
     /// Min BPM limit
-    @Published public var minBPM: Double = 40
+    public var minBPM: Double = 40
 
     /// Max BPM limit
-    @Published public var maxBPM: Double = 200
+    public var maxBPM: Double = 200
 
     /// Bio-reactive source BPM (from heart rate, etc.)
-    @Published public var bioSourceBPM: Double = 70
+    public var bioSourceBPM: Double = 70
 
     // MARK: - Private Properties
 
@@ -556,7 +558,7 @@ public struct BPMSnapshot {
 
 /// BPM Control Panel View
 public struct BPMControlView: View {
-    @ObservedObject var engine: BPMTransitionEngine
+    @Bindable var engine: BPMTransitionEngine
     @State private var showSituationPicker = false
 
     public init(engine: BPMTransitionEngine) {
@@ -670,7 +672,7 @@ public struct BPMControlView: View {
 // MARK: - Situation Picker
 
 private struct SituationPickerView: View {
-    @ObservedObject var engine: BPMTransitionEngine
+    @Bindable var engine: BPMTransitionEngine
     @Binding var isPresented: Bool
 
     var body: some View {

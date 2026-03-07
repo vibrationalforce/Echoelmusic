@@ -1,23 +1,24 @@
 import SwiftUI
+import Observation
 
 // MARK: - Session Clip View
 // Ableton Live Session View inspired clip launcher
 // EchoelBrand Design System
 
-// Wrapper view that owns the @StateObject, passes it to content via @ObservedObject
+// Wrapper view that owns the @State, passes it to content
 @MainActor
 struct SessionClipView: View {
-    @StateObject private var session = SessionClipViewModel()
+    @State private var session = SessionClipViewModel()
 
     var body: some View {
         SessionClipContent(session: session)
     }
 }
 
-// Content view receives view model via @ObservedObject (no wrapper ambiguity)
+// Content view receives view model via @Bindable
 @MainActor
 private struct SessionClipContent: View {
-    @ObservedObject var session: SessionClipViewModel
+    @Bindable var session: SessionClipViewModel
     @State private var selectedTrack: Int?
     @State private var selectedScene: Int?
     @State private var showInstrumentBrowser = false
@@ -802,16 +803,17 @@ struct EffectCard: View {
 // MARK: - Models
 
 @MainActor
-class SessionClipViewModel: ObservableObject {
-    @Published var tracks: [ClipViewTrack] = []
-    @Published var scenes: [ClipViewScene] = []
-    @Published var clips: [[ClipViewClip?]] = []
-    @Published var isRecording = false
-    @Published var position: Double = 0
-    @Published var quantize: QuantizeValue = .bar
-    @Published var followPlayhead = true
-    @Published var activeScene: Int?
-    @Published var bioSyncEnabled = true
+@Observable
+final class SessionClipViewModel {
+    var tracks: [ClipViewTrack] = []
+    var scenes: [ClipViewScene] = []
+    var clips: [[ClipViewClip?]] = []
+    var isRecording = false
+    var position: Double = 0
+    var quantize: QuantizeValue = .bar
+    var followPlayhead = true
+    var activeScene: Int?
+    var bioSyncEnabled = true
 
     /// Live BPM from EchoelCreativeWorkspace (single source of truth)
     var bpm: Double { EchoelCreativeWorkspace.shared.globalBPM }

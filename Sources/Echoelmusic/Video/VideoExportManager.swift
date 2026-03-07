@@ -6,20 +6,22 @@ import ImageIO
 import UniformTypeIdentifiers
 #if canImport(UIKit)
 import UIKit
+import Observation
 #endif
 
 /// Video Export Manager with H.264/H.265/ProRes/Dolby Vision HDR support
 /// Optimized for hardware encoding on A12+ chips
 /// Batch export to multiple resolutions simultaneously
 @MainActor
-class VideoExportManager: ObservableObject {
+@Observable
+final class VideoExportManager {
 
     // MARK: - Published State
 
-    @Published var isExporting: Bool = false
-    @Published var exportProgress: Double = 0.0
-    @Published var currentExport: ExportJob?
-    @Published var exportQueue: [ExportJob] = []
+    var isExporting: Bool = false
+    var exportProgress: Double = 0.0
+    var currentExport: ExportJob?
+    var exportQueue: [ExportJob] = []
 
     // MARK: - Export Formats
 

@@ -6,8 +6,8 @@ import SwiftUI
 // Connects: NodeGraph, EffectsChainView, EffectParametersView
 
 struct EchoelFXView: View {
-    @EnvironmentObject var audioEngine: AudioEngine
-    @StateObject private var nodeGraph = NodeGraph()
+    @Environment(AudioEngine.self) var audioEngine
+    @State private var nodeGraph = NodeGraph()
     @State private var activePanel: FXPanel = .chain
     @State private var selectedNodeID: UUID?
     @State private var showPresetSheet = false

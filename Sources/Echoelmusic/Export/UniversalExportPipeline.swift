@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import VideoToolbox
 import CoreMedia
+import Observation
 
 /// Universal Export Pipeline
 /// Supports ALL formats for ALL platforms and use cases
@@ -27,13 +28,14 @@ import CoreMedia
 /// - Loudness: EBU R128, ATSC A/85, BS.1770
 /// - Timecode: SMPTE, LTC, MTC
 @MainActor
-class UniversalExportPipeline: ObservableObject {
+@Observable
+final class UniversalExportPipeline {
 
     // MARK: - Published State
 
-    @Published var availablePresets: [ExportPreset] = []
-    @Published var currentExport: ExportJob?
-    @Published var exportProgress: Float = 0.0
+    var availablePresets: [ExportPreset] = []
+    var currentExport: ExportJob?
+    var exportProgress: Float = 0.0
 
     // MARK: - Export Preset
 

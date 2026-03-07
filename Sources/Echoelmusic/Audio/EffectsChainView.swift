@@ -3,7 +3,7 @@ import SwiftUI
 /// Visual effects chain editor with node routing
 /// Uses EchoelBrand design system for consistent styling
 struct EffectsChainView: View {
-    @ObservedObject var nodeGraph: NodeGraph
+    @Bindable var nodeGraph: NodeGraph
 
     @State private var selectedNode: UUID?
     @State private var showNodePicker = false
@@ -402,7 +402,7 @@ struct EffectsChainView: View {
 
 struct NodeRow: View {
     let node: EchoelmusicNode
-    @ObservedObject var nodeGraph: NodeGraph
+    @Bindable var nodeGraph: NodeGraph
     let isSelected: Bool
 
     var body: some View {

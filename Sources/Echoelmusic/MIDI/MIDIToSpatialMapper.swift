@@ -1,5 +1,6 @@
 import Foundation
 import simd
+import Observation
 
 /// Maps MIDI/MPE parameters to spatial audio (Stereo, 3D, 4D, AFA Sound)
 ///
@@ -23,13 +24,14 @@ import simd
 /// - Phase-coherent synthesis
 /// - Bio-reactive field morphing
 @MainActor
-class MIDIToSpatialMapper: ObservableObject {
+@Observable
+final class MIDIToSpatialMapper {
 
     // MARK: - Published State
 
-    @Published var spatialMode: SpatialMode = .stereo
-    @Published var currentPosition: SpatialPosition = SpatialPosition(x: 0, y: 0, z: 1)
-    @Published var afaField: AFAField?
+    var spatialMode: SpatialMode = .stereo
+    var currentPosition: SpatialPosition = SpatialPosition(x: 0, y: 0, z: 1)
+    var afaField: AFAField?
 
     // MARK: - Spatial Modes
 

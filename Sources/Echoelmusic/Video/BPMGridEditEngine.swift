@@ -3,6 +3,7 @@ import AVFoundation
 import Accelerate
 #if canImport(Combine)
 import Combine
+import Observation
 #endif
 
 // ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════╗
@@ -608,29 +609,30 @@ public struct BPMGrid: Codable {
 
 /// Main engine for BPM-synchronized video editing
 @MainActor
-public class BPMGridEditEngine: ObservableObject {
+@Observable
+public final class BPMGridEditEngine {
 
     // MARK: - Published State
 
-    @Published public var grid: BPMGrid = BPMGrid()
-    @Published public var snapMode: SnapMode = .beat
-    @Published public var isSnapEnabled: Bool = true
-    @Published public var markers: [BeatMarker] = []
-    @Published public var beatSyncedEffects: [BeatSyncedEffect] = []
-    @Published public var isAnalyzing: Bool = false
-    @Published public var lastDetectionResult: BeatDetectionResult?
+    public var grid: BPMGrid = BPMGrid()
+    public var snapMode: SnapMode = .beat
+    public var isSnapEnabled: Bool = true
+    public var markers: [BeatMarker] = []
+    public var beatSyncedEffects: [BeatSyncedEffect] = []
+    public var isAnalyzing: Bool = false
+    public var lastDetectionResult: BeatDetectionResult?
 
     // Visual settings
-    @Published public var showBeatGrid: Bool = true
-    @Published public var showDownbeatLines: Bool = true
-    @Published public var showBeatNumbers: Bool = true
-    @Published public var gridOpacity: Float = 0.5
+    public var showBeatGrid: Bool = true
+    public var showDownbeatLines: Bool = true
+    public var showBeatNumbers: Bool = true
+    public var gridOpacity: Float = 0.5
 
     // Playback state
-    @Published public var currentBeat: Int = 1
-    @Published public var currentBar: Int = 1
-    @Published public var currentPosition: BeatPosition = BeatPosition()
-    @Published public var isOnBeat: Bool = false
+    public var currentBeat: Int = 1
+    public var currentBar: Int = 1
+    public var currentPosition: BeatPosition = BeatPosition()
+    public var isOnBeat: Bool = false
 
     // MARK: - Settings
 

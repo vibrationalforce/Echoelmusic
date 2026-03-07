@@ -8,6 +8,7 @@
 
 import SwiftUI
 import Combine
+import Observation
 
 // MARK: - App Theme Mode
 
@@ -50,15 +51,16 @@ public enum AppThemeMode: String, CaseIterable, Codable, Sendable {
 /// Central theme manager for seamless dark/light mode switching.
 /// Persists user preference via UserDefaults.
 @MainActor
-public final class ThemeManager: ObservableObject {
+@Observable
+public final class ThemeManager {
 
     // MARK: - Singleton
 
     public static let shared = ThemeManager()
 
-    // MARK: - Published State
+    // MARK: - Observed State
 
-    @Published public var currentMode: AppThemeMode {
+    public var currentMode: AppThemeMode {
         didSet {
             UserDefaults.standard.set(currentMode.rawValue, forKey: Self.themeKey)
         }
@@ -118,7 +120,7 @@ public final class ThemeManager: ObservableObject {
 /// Compact toggle button for dark/light mode switching
 public struct ThemeToggleButton: View {
 
-    @ObservedObject private var themeManager: ThemeManager
+    private var themeManager: ThemeManager
 
     public init(themeManager: ThemeManager = .shared) {
         self.themeManager = themeManager
@@ -152,7 +154,7 @@ public struct ThemeToggleButton: View {
 /// Full picker for Settings views
 public struct ThemeModePicker: View {
 
-    @ObservedObject private var themeManager: ThemeManager
+    private var themeManager: ThemeManager
 
     public init(themeManager: ThemeManager = .shared) {
         self.themeManager = themeManager

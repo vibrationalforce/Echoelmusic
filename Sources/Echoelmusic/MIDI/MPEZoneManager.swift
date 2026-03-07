@@ -1,6 +1,7 @@
 import Foundation
 import CoreMIDI
 import Combine
+import Observation
 
 /// MPE (MIDI Polyphonic Expression) Zone Manager
 ///
@@ -27,13 +28,14 @@ import Combine
 /// mpe.deallocateVoice(voice: voice)
 /// ```
 @MainActor
-class MPEZoneManager: ObservableObject {
+@Observable
+final class MPEZoneManager {
 
     // MARK: - Published State
 
-    @Published var activeVoices: [MPEVoice] = []
-    @Published var voiceCount: Int = 0
-    @Published var voiceAllocationMode: VoiceAllocationMode = .roundRobin
+    var activeVoices: [MPEVoice] = []
+    var voiceCount: Int = 0
+    var voiceAllocationMode: VoiceAllocationMode = .roundRobin
 
     // MARK: - MPE Voice Model
 

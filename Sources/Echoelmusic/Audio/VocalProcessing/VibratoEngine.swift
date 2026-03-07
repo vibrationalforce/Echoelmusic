@@ -1,6 +1,7 @@
 import Foundation
 import Accelerate
 import Combine
+import Observation
 
 /// Per-Note Vibrato Engine — Professional Vibrato Detection, Synthesis & Control
 ///
@@ -18,13 +19,14 @@ import Combine
 /// - Pitch modulation via phase vocoder
 /// - Envelope followers for rate/depth estimation
 @MainActor
-public class VibratoEngine: ObservableObject {
+@Observable
+public final class VibratoEngine {
 
     // MARK: - Published State
 
-    @Published var isAnalyzing: Bool = false
-    @Published var detectedVibrato: VibratoAnalysis?
-    @Published var noteVibratos: [UUID: VibratoParameters] = [:]
+    var isAnalyzing: Bool = false
+    var detectedVibrato: VibratoAnalysis?
+    var noteVibratos: [UUID: VibratoParameters] = [:]
 
     // MARK: - Types
 

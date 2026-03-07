@@ -325,14 +325,15 @@ public struct AudioRoute: Identifiable {
 
 /// Audio session configuration for Bluetooth
 @MainActor
-public class BluetoothAudioSession: ObservableObject {
+@Observable
+public final class BluetoothAudioSession {
 
-    @Published public var sampleRate: Double = 48000
-    @Published public var bufferSize: Int = 128
-    @Published public var inputChannels: Int = 2
-    @Published public var outputChannels: Int = 2
-    @Published public var isLowLatencyMode: Bool = true
-    @Published public var currentLatency: Double = 0
+    public var sampleRate: Double = 48000
+    public var bufferSize: Int = 128
+    public var inputChannels: Int = 2
+    public var outputChannels: Int = 2
+    public var isLowLatencyMode: Bool = true
+    public var currentLatency: Double = 0
 
     #if !os(macOS)
     private var audioSession: AVAudioSession { AVAudioSession.sharedInstance() }
@@ -493,28 +494,29 @@ final class LatencyMeasurement {
 
 /// Main engine for ultra-low latency Bluetooth audio
 @MainActor
-public final class UltraLowLatencyBluetoothEngine: NSObject, ObservableObject {
+public final @Observable
+final class UltraLowLatencyBluetoothEngine {
 
     // MARK: - Singleton
     public static let shared = UltraLowLatencyBluetoothEngine()
 
     // MARK: - Published State
-    @Published public var isScanning = false
-    @Published public var discoveredDevices: [BluetoothAudioDevice] = []
-    @Published public var connectedDevices: [BluetoothAudioDevice] = []
-    @Published public var activeOutputDevice: BluetoothAudioDevice?
-    @Published public var activeInputDevice: BluetoothAudioDevice?
+    public var isScanning = false
+    public var discoveredDevices: [BluetoothAudioDevice] = []
+    public var connectedDevices: [BluetoothAudioDevice] = []
+    public var activeOutputDevice: BluetoothAudioDevice?
+    public var activeInputDevice: BluetoothAudioDevice?
 
-    @Published public var currentLatency: LatencyCompensation = LatencyCompensation()
-    @Published public var directMonitoring = DirectMonitoringConfig()
-    @Published public var audioRoutes: [AudioRoute] = []
+    public var currentLatency: LatencyCompensation = LatencyCompensation()
+    public var directMonitoring = DirectMonitoringConfig()
+    public var audioRoutes: [AudioRoute] = []
 
-    @Published public var isDirectMonitoringActive = false
-    @Published public var measuredRoundTripLatency: Double = 0
+    public var isDirectMonitoringActive = false
+    public var measuredRoundTripLatency: Double = 0
 
     // Codec preferences
-    @Published public var preferLowLatency = true
-    @Published public var preferredCodec: BluetoothAudioCodec = .lc3
+    public var preferLowLatency = true
+    public var preferredCodec: BluetoothAudioCodec = .lc3
 
     // MARK: - Private Properties
 
@@ -987,13 +989,14 @@ extension UltraLowLatencyBluetoothEngine: CBCentralManagerDelegate {
 
 /// Manages Bluetooth MIDI controllers
 @MainActor
-public final class BluetoothMIDIManager: ObservableObject {
+public final @Observable
+final class BluetoothMIDIManager {
 
     public static let shared = BluetoothMIDIManager()
 
-    @Published public var discoveredControllers: [BluetoothAudioDevice] = []
-    @Published public var connectedControllers: [BluetoothAudioDevice] = []
-    @Published public var midiLatency: Double = 0
+    public var discoveredControllers: [BluetoothAudioDevice] = []
+    public var connectedControllers: [BluetoothAudioDevice] = []
+    public var midiLatency: Double = 0
 
     private var centralManager: CBCentralManager?
 
@@ -1025,9 +1028,10 @@ public final class BluetoothMIDIManager: ObservableObject {
 // MARK: - SwiftUI Views
 
 import SwiftUI
+import Observation
 
 public struct BluetoothAudioView: View {
-    @ObservedObject private var engine = UltraLowLatencyBluetoothEngine.shared
+    @Bindable private var engine = UltraLowLatencyBluetoothEngine.shared
     @State private var showLatencySettings = false
 
     public init() {}
@@ -1409,7 +1413,7 @@ struct SignalStrengthIndicator: View {
 }
 
 struct LatencySettingsView: View {
-    @ObservedObject private var engine = UltraLowLatencyBluetoothEngine.shared
+    @Bindable private var engine = UltraLowLatencyBluetoothEngine.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

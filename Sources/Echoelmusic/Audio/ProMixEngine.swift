@@ -11,6 +11,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import Observation
 
 // MARK: - Channel Color
 
@@ -560,21 +561,22 @@ public struct MixSnapshot: Identifiable, Codable, Sendable {
 /// mixer.processBlock(frameCount: 256)
 /// ```
 @MainActor
-public class ProMixEngine: ObservableObject {
+@Observable
+public final class ProMixEngine {
 
     // MARK: - Published Properties
 
     /// All channel strips in the mixer (excluding master).
-    @Published public var channels: [ChannelStrip] = []
+    public var channels: [ChannelStrip] = []
 
     /// The master output channel strip.
-    @Published public var masterChannel: ChannelStrip
+    public var masterChannel: ChannelStrip
 
     /// Transport state: whether the session is playing.
-    @Published public var isPlaying: Bool = false
+    public var isPlaying: Bool = false
 
     /// Current playback position (seconds).
-    @Published public var currentTime: TimeInterval = 0
+    public var currentTime: TimeInterval = 0
 
     // MARK: - Automation
 

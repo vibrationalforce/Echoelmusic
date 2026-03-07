@@ -2,12 +2,14 @@ import Foundation
 import AVFoundation
 import Accelerate
 import Combine
+import Observation
 
 // MARK: - Adaptive Audio Engine
 
 /// Dynamically adjusts audio quality and latency based on system resources
 @MainActor
-class AdaptiveAudioEngine: ObservableObject {
+@Observable
+final class AdaptiveAudioEngine {
 
     // MARK: - Quality Presets
 
@@ -47,11 +49,11 @@ class AdaptiveAudioEngine: ObservableObject {
 
     // MARK: - Published Properties
 
-    @Published var currentPreset: QualityPreset = .balanced
-    @Published var cpuUsage: Float = 0.0
-    @Published var currentLatency: TimeInterval = 0.0
-    @Published var isAdaptiveMode: Bool = true
-    @Published var bufferUnderrunCount: Int = 0
+    var currentPreset: QualityPreset = .balanced
+    var cpuUsage: Float = 0.0
+    var currentLatency: TimeInterval = 0.0
+    var isAdaptiveMode: Bool = true
+    var bufferUnderrunCount: Int = 0
 
     // MARK: - Private Properties
 
@@ -719,7 +721,8 @@ class SpectralAnalyzer {
 
 /// Mixes audio based on biometric data (coherence, HRV, heart rate, breathing)
 @MainActor
-class BioAdaptiveMixer: ObservableObject {
+@Observable
+final class BioAdaptiveMixer {
 
     // MARK: - Biometric State
 
@@ -734,7 +737,7 @@ class BioAdaptiveMixer: ObservableObject {
 
     // MARK: - Published Properties
 
-    @Published var currentState = BiometricState(
+    var currentState = BiometricState(
         coherence: 0.5,
         heartRate: 70,
         hrv: 50,
@@ -743,10 +746,10 @@ class BioAdaptiveMixer: ObservableObject {
         arousal: 0.5
     )
 
-    @Published var volumeAutomation: Float = 1.0
-    @Published var filterCutoff: Float = 8000.0
-    @Published var reverbAmount: Float = 0.3
-    @Published var effectsDepth: Float = 0.5
+    var volumeAutomation: Float = 1.0
+    var filterCutoff: Float = 8000.0
+    var reverbAmount: Float = 0.3
+    var effectsDepth: Float = 0.5
 
     // MARK: - Private Properties
 

@@ -3,10 +3,10 @@ import SwiftUI
 /// Main navigation — DAW + Video workspaces
 struct MainNavigationHub: View {
 
-    @EnvironmentObject var audioEngine: AudioEngine
-    @EnvironmentObject var microphoneManager: MicrophoneManager
-    @EnvironmentObject var recordingEngine: RecordingEngine
-    @EnvironmentObject var themeManager: ThemeManager
+    @Environment(AudioEngine.self) var audioEngine
+    @Environment(MicrophoneManager.self) var microphoneManager
+    @Environment(RecordingEngine.self) var recordingEngine
+    @Environment(ThemeManager.self) var themeManager
 
     @State private var currentTab: Tab = .daw
     @State private var sidebarExpanded = true
@@ -74,8 +74,8 @@ struct MainNavigationHub: View {
         }
         .sheet(isPresented: $showSettings) {
             EchoelSettingsView()
-                .environmentObject(themeManager)
-                .environmentObject(audioEngine)
+                .environment(themeManager)
+                .environment(audioEngine)
         }
     }
 
@@ -605,8 +605,8 @@ struct MainNavigationHub: View {
 // MARK: - Settings View
 
 struct EchoelSettingsView: View {
-    @EnvironmentObject var themeManager: ThemeManager
-    @EnvironmentObject var audioEngine: AudioEngine
+    @Environment(ThemeManager.self) var themeManager
+    @Environment(AudioEngine.self) var audioEngine
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

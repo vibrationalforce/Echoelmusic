@@ -3,8 +3,8 @@ import os.log
 
 /// Main recording controls view with session management
 struct RecordingControlsView: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
-    @EnvironmentObject var microphoneManager: MicrophoneManager
+    @Environment(RecordingEngine.self) var recordingEngine
+    @Environment(MicrophoneManager.self) var microphoneManager
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showSessionNamePrompt = false
@@ -81,13 +81,13 @@ struct RecordingControlsView: View {
         .sheet(isPresented: $showTrackList) {
             if let session = recordingEngine.currentSession {
                 TrackListView(session: .constant(session))
-                    .environmentObject(recordingEngine)
+                    .environment(recordingEngine)
             }
         }
         .sheet(isPresented: $showMixer) {
             if let session = recordingEngine.currentSession {
                 MixerView(session: .constant(session))
-                    .environmentObject(recordingEngine)
+                    .environment(recordingEngine)
             }
         }
         .sheet(isPresented: $showExportOptions) {

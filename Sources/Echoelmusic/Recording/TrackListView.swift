@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Track list view with individual track controls
 struct TrackListView: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     @Binding var session: Session
 
     @State private var showDeleteConfirmation = false
@@ -18,7 +18,7 @@ struct TrackListView: View {
                         // OPTIMIZED: Explicit id binding for stable identity during mutations
                         ForEach(session.tracks, id: \.id) { track in
                             TrackRow(track: track)
-                                .environmentObject(recordingEngine)
+                                .environment(recordingEngine)
                         }
                     }
                 }
@@ -62,7 +62,7 @@ struct TrackListView: View {
 
 /// Individual track row with controls
 struct TrackRow: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     let track: Track
 
     @State private var showTrackDetails = false

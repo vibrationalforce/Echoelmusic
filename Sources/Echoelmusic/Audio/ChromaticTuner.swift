@@ -11,6 +11,7 @@ import Foundation
 import AVFoundation
 import Accelerate
 import Combine
+import Observation
 
 // MARK: - Note Names
 
@@ -99,21 +100,22 @@ public struct TunerReading: Sendable {
 
 /// Professional chromatic tuner with autocorrelation pitch detection
 @MainActor
-public final class ChromaticTuner: ObservableObject {
+public final @Observable
+final class ChromaticTuner {
 
     // MARK: - Published Properties
 
-    @Published public private(set) var isActive: Bool = false
-    @Published public private(set) var currentReading: TunerReading?
-    @Published public private(set) var detectedFrequency: Double = 0
-    @Published public private(set) var detectedNote: MusicalNote?
-    @Published public private(set) var centsOffset: Double = 0
-    @Published public private(set) var signalLevel: Double = 0
-    @Published public var tuningReference: TuningReference = .standard440
-    @Published public var customA4: Double = 440.0
+    public private(set) var isActive: Bool = false
+    public private(set) var currentReading: TunerReading?
+    public private(set) var detectedFrequency: Double = 0
+    public private(set) var detectedNote: MusicalNote?
+    public private(set) var centsOffset: Double = 0
+    public private(set) var signalLevel: Double = 0
+    public var tuningReference: TuningReference = .standard440
+    public var customA4: Double = 440.0
 
     /// History of readings for smoothing display
-    @Published public private(set) var readingHistory: [TunerReading] = []
+    public private(set) var readingHistory: [TunerReading] = []
 
     // MARK: - Private Properties
 

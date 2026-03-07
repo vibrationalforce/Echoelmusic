@@ -32,6 +32,7 @@ import Combine
 
 #if canImport(SwiftUI)
 import SwiftUI
+import Observation
 #endif
 
 // MARK: - Drum Slot (Pre-Rendered from SynthPresetLibrary)
@@ -466,36 +467,37 @@ private struct DirtyDelay {
 /// Professional drum machine with real-time 808 hihat synthesis, roll sequencer,
 /// dirty delay, trap presets, and SynthPresetLibrary integration.
 @MainActor
-public final class EchoelBeat: ObservableObject {
+public final @Observable
+final class EchoelBeat {
 
     public static let shared = EchoelBeat()
 
     // ── Published State ──
 
-    @Published public var drumSlots: [DrumSlot] = []
-    @Published public var currentKit: String = "None"
-    @Published public var bpm: Float = 140
-    @Published public var swing: Float = 0
-    @Published public var masterLevel: Float = 0.8
-    @Published public var meterLevel: Float = 0.0
+    public var drumSlots: [DrumSlot] = []
+    public var currentKit: String = "None"
+    public var bpm: Float = 140
+    public var swing: Float = 0
+    public var masterLevel: Float = 0.8
+    public var meterLevel: Float = 0.0
 
     // HiHat
-    @Published public var hihatMode: HiHatMode = .closed
-    @Published public var hihatDecayMultiplier: Float = 1.0
-    @Published public var hihatTone: Float = 0.5          // 0 = dark, 1 = bright (controls BPF center)
+    public var hihatMode: HiHatMode = .closed
+    public var hihatDecayMultiplier: Float = 1.0
+    public var hihatTone: Float = 0.5          // 0 = dark, 1 = bright (controls BPF center)
 
     // Roll
-    @Published public var rollDivision: RollDivision = .sixteenth
-    @Published public var rollVelocityRamp: VelocityRamp = .crescendo
-    @Published public var rollPitchRamp: PitchRamp = .none
+    public var rollDivision: RollDivision = .sixteenth
+    public var rollVelocityRamp: VelocityRamp = .crescendo
+    public var rollPitchRamp: PitchRamp = .none
 
     // Delay
-    @Published public var delayConfig: DirtyDelayConfig = DirtyDelayConfig()
+    public var delayConfig: DirtyDelayConfig = DirtyDelayConfig()
 
     // Sequencer
-    @Published public var sequencerPattern: BeatPattern = BeatPattern(name: "Default")
-    @Published public var sequencerStep: Int = 0
-    @Published public var isSequencerPlaying: Bool = false
+    public var sequencerPattern: BeatPattern = BeatPattern(name: "Default")
+    public var sequencerStep: Int = 0
+    public var isSequencerPlaying: Bool = false
 
     // ── Audio Engine ──
 
@@ -919,7 +921,7 @@ public final class EchoelBeat: ObservableObject {
 
 #if canImport(SwiftUI)
 public struct EchoelBeatView: View {
-    @ObservedObject private var beat = EchoelBeat.shared
+    @Bindable private var beat = EchoelBeat.shared
 
     public init() {}
 

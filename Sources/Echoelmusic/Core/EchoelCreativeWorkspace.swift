@@ -2,21 +2,23 @@ import Foundation
 import Combine
 import AVFoundation
 import Accelerate
+import Observation
 
 // MARK: - Creative Workspace
 
 /// Unified workspace bridging Audio + Video engines into one workflow.
 /// BPM Grid syncs audio timing with video timeline.
 @MainActor
-final class EchoelCreativeWorkspace: ObservableObject {
+final @Observable
+final class EchoelCreativeWorkspace {
 
     static let shared = EchoelCreativeWorkspace()
 
     // MARK: - Published State
 
-    @Published var isPlaying: Bool = false
-    @Published var globalBPM: Double = 120.0
-    @Published var globalTimeSignature: TimeSignature = .fourFour
+    var isPlaying: Bool = false
+    var globalBPM: Double = 120.0
+    var globalTimeSignature: TimeSignature = .fourFour
 
     // MARK: - Engines
 
@@ -37,7 +39,7 @@ final class EchoelCreativeWorkspace: ObservableObject {
     let adaptiveAudio: AdaptiveAudioEngine
 
     /// Current bio-coherence level (0-1) — driven by mic or HealthKit
-    @Published var bioCoherence: Float = 0.5
+    var bioCoherence: Float = 0.5
 
     /// Connected AudioEngine for hardware output (set via connectAudioEngine)
     private weak var audioEngine: AudioEngine?

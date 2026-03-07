@@ -12,6 +12,7 @@ import Foundation
 import CoreImage
 import CoreGraphics
 import Combine
+import Observation
 
 // MARK: - CurvePoint
 
@@ -1011,32 +1012,33 @@ public struct ColorGrade: Codable, Identifiable, Equatable, Sendable {
 /// interpolation, per-channel HSL qualification, 3D LUT support, and broadcast-quality
 /// monitoring scopes. Multiple serial nodes allow stacking independent grades.
 @MainActor
-public final class ProColorGrading: ObservableObject {
+public final @Observable
+final class ProColorGrading {
 
     // MARK: - Published Properties
 
     /// The active color wheels for the selected node.
-    @Published public var colorWheels: ColorWheels = .neutral
+    public var colorWheels: ColorWheels = .neutral
     /// The active curves editor for the selected node.
-    @Published public var curves: CurvesEditor = .neutral
+    public var curves: CurvesEditor = .neutral
     /// The active HSL adjustment for the selected node.
-    @Published public var hslAdjustment: HSLAdjustment = .neutral
+    public var hslAdjustment: HSLAdjustment = .neutral
     /// LUT manager for loading and applying 3D LUTs.
-    @Published public var lutManager: LUTManager = LUTManager()
+    public var lutManager: LUTManager = LUTManager()
     /// Video scope configuration and analysis.
-    @Published public var scopes: VideoScopes = VideoScopes()
+    public var scopes: VideoScopes = VideoScopes()
 
     /// The current active grade (synced to selected node).
-    @Published public var grade: ColorGrade = ColorGrade()
+    public var grade: ColorGrade = ColorGrade()
     /// Library of saved grades.
-    @Published public var grades: [ColorGrade] = []
+    public var grades: [ColorGrade] = []
 
     /// Currently selected node index in the serial pipeline.
-    @Published public var selectedNode: Int = 0
+    public var selectedNode: Int = 0
     /// Total number of serial grading nodes.
-    @Published public var nodeCount: Int = 1
+    public var nodeCount: Int = 1
     /// Whether the entire grading pipeline is enabled.
-    @Published public var isEnabled: Bool = true
+    public var isEnabled: Bool = true
 
     // MARK: - Internal State
 

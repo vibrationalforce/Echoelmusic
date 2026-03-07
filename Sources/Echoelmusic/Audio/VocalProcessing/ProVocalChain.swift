@@ -2,6 +2,7 @@ import Foundation
 import Accelerate
 import Combine
 import QuartzCore
+import Observation
 
 /// Pro Vocal Processing Chain — Master Orchestrator
 ///
@@ -28,25 +29,26 @@ import QuartzCore
 /// - **Studio**: Post-production with full editing capabilities
 /// - **Bio-Reactive**: Live processing modulated by biometrics
 @MainActor
-public class ProVocalChain: ObservableObject {
+@Observable
+public final class ProVocalChain {
 
     // MARK: - Published State
 
-    @Published var mode: ProcessingMode = .live
-    @Published var isActive: Bool = false
-    @Published var inputLevel: Float = 0
-    @Published var outputLevel: Float = 0
+    var mode: ProcessingMode = .live
+    var isActive: Bool = false
+    var inputLevel: Float = 0
+    var outputLevel: Float = 0
 
     // Module bypass
-    @Published var pitchCorrectionEnabled: Bool = true
-    @Published var vibratoEnabled: Bool = true
-    @Published var formantEnabled: Bool = true
-    @Published var bioReactiveEnabled: Bool = true
-    @Published var deEsserEnabled: Bool = false
-    @Published var compressorEnabled: Bool = false
-    @Published var breathDetectionEnabled: Bool = false
-    @Published var harmonyEnabled: Bool = false
-    @Published var doublingEnabled: Bool = false
+    var pitchCorrectionEnabled: Bool = true
+    var vibratoEnabled: Bool = true
+    var formantEnabled: Bool = true
+    var bioReactiveEnabled: Bool = true
+    var deEsserEnabled: Bool = false
+    var compressorEnabled: Bool = false
+    var breathDetectionEnabled: Bool = false
+    var harmonyEnabled: Bool = false
+    var doublingEnabled: Bool = false
 
     // MARK: - Processing Chain Components
 
@@ -77,7 +79,7 @@ public class ProVocalChain: ObservableObject {
         var bioModulationActive: Bool = false
     }
 
-    @Published var stats: ProcessingStats = ProcessingStats()
+    var stats: ProcessingStats = ProcessingStats()
 
     // MARK: - Configuration
 

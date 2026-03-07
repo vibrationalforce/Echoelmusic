@@ -18,6 +18,7 @@
 import Foundation
 import StoreKit
 import Combine
+import Observation
 
 // MARK: - Product Identifiers
 
@@ -67,33 +68,34 @@ public enum EchoelEntitlement: Int, Comparable, Sendable {
 /// Central StoreKit 2 manager for Echoelmusic
 /// Handles product loading, purchases, entitlement verification, and transaction observation.
 @MainActor
-public final class EchoelStore: ObservableObject {
+public final @Observable
+final class EchoelStore {
 
     // MARK: - Published State
 
     /// All available products from App Store
-    @Published public private(set) var products: [Product] = []
+    public private(set) var products: [Product] = []
 
     /// Subscription products sorted by price
-    @Published public private(set) var subscriptions: [Product] = []
+    public private(set) var subscriptions: [Product] = []
 
     /// Consumable session products
-    @Published public private(set) var sessions: [Product] = []
+    public private(set) var sessions: [Product] = []
 
     /// Lifetime product
-    @Published public private(set) var lifetime: Product?
+    public private(set) var lifetime: Product?
 
     /// Current entitlement level
-    @Published public private(set) var entitlement: EchoelEntitlement = .free
+    public private(set) var entitlement: EchoelEntitlement = .free
 
     /// Whether a purchase is currently in progress
-    @Published public private(set) var isPurchasing = false
+    public private(set) var isPurchasing = false
 
     /// Number of purchased but unused sessions
-    @Published public private(set) var availableSessions: Int = 0
+    public private(set) var availableSessions: Int = 0
 
     /// Error message for display
-    @Published public var errorMessage: String?
+    public var errorMessage: String?
 
     // MARK: - Private
 

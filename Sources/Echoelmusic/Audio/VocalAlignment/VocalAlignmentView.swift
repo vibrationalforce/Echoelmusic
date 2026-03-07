@@ -5,7 +5,7 @@ import os.log
 /// Professional Vocal Alignment UI
 /// Touch-optimized interface for multi-track vocal alignment
 struct VocalAlignmentView: View {
-    @StateObject private var aligner = AutomaticVocalAligner()
+    @State private var aligner = AutomaticVocalAligner()
     @State private var showGuideFilePicker = false
     @State private var showDubFilePicker = false
     @State private var selectedTrackId: UUID?

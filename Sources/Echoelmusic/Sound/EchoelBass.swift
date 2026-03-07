@@ -35,6 +35,7 @@ import AVFoundation
 import Accelerate
 import Combine
 import SwiftUI
+import Observation
 
 // MARK: - Bass Engine Type
 
@@ -284,7 +285,8 @@ private struct EchoelBassVoice {
 /// EchoelBass — 5-Engine Morphing Bass Synthesizer
 /// Professional sub-bass to aggressive growl, with bio-reactive control.
 @MainActor
-public final class EchoelBass: ObservableObject {
+public final @Observable
+final class EchoelBass {
 
     // MARK: - Singleton
 
@@ -292,11 +294,11 @@ public final class EchoelBass: ObservableObject {
 
     // MARK: - Published State
 
-    @Published public var config = EchoelBassConfig.classic808
-    @Published public var isPlaying: Bool = false
-    @Published public var activeVoiceCount: Int = 0
-    @Published public var currentNote: Int? = nil
-    @Published public var meterLevel: Float = 0.0
+    public var config = EchoelBassConfig.classic808
+    public var isPlaying: Bool = false
+    public var activeVoiceCount: Int = 0
+    public var currentNote: Int? = nil
+    public var meterLevel: Float = 0.0
 
     // MARK: - Audio Engine
 
@@ -855,7 +857,7 @@ extension EchoelBass {
 // MARK: - SwiftUI View
 
 public struct EchoelBassView: View {
-    @ObservedObject private var bass = EchoelBass.shared
+    @Bindable private var bass = EchoelBass.shared
     @State private var selectedPreset: String = "808 Sub"
 
     private let presets: [(String, EchoelBassConfig)] = [

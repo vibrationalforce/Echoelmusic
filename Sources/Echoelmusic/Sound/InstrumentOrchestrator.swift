@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import Observation
 
 /// InstrumentOrchestrator - The Missing Link
 /// Connects: UI Selection → Sound Library → Synthesis Engines → Audio Output
@@ -17,7 +18,8 @@ import Combine
 /// - Modulates synthesis parameters based on HRV/coherence
 /// - Real-time parameter automation
 @MainActor
-class InstrumentOrchestrator: ObservableObject {
+@Observable
+final class InstrumentOrchestrator {
 
     // MARK: - Singleton
 
@@ -25,14 +27,14 @@ class InstrumentOrchestrator: ObservableObject {
 
     // MARK: - Published State
 
-    @Published var currentInstrument: UniversalSoundLibrary.Instrument?
-    @Published var currentSynthEngine: UniversalSoundLibrary.SynthEngine?
-    @Published var isPlaying: Bool = false
-    @Published var activeVoices: Int = 0
+    var currentInstrument: UniversalSoundLibrary.Instrument?
+    var currentSynthEngine: UniversalSoundLibrary.SynthEngine?
+    var isPlaying: Bool = false
+    var activeVoices: Int = 0
 
     // MARK: - Audio Engine
 
-    @Published private(set) var isEngineReady: Bool = false
+    private(set) var isEngineReady: Bool = false
     private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
     private var mixerNode: AVAudioMixerNode?

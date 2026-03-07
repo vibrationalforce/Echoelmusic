@@ -3,7 +3,7 @@ import SwiftUI
 /// Session browser and manager for loading/organizing recording sessions
 struct SessionBrowserView: View {
     private let log = ProfessionalLogger.shared
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     @Environment(\.dismiss) var dismiss
 
     @State private var sessions: [SessionInfo] = []

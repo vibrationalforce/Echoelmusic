@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import AVFoundation
 import Accelerate
+import Observation
 
 // MARK: - Voice Profile
 
@@ -260,13 +261,14 @@ public enum VoiceProfileCategory: String, Codable, Sendable, CaseIterable {
 /// Manages voice profiles — factory presets, custom profiles, persistence, and application to ProVocalChain.
 /// Extends the existing PresetManager pattern (QuantumPresets.swift).
 @MainActor
-public class VoiceProfileManager: ObservableObject {
+@Observable
+public final class VoiceProfileManager {
 
     public static let shared = VoiceProfileManager()
 
-    @Published public var profiles: [VoiceProfile] = []
-    @Published public var activeProfile: VoiceProfile?
-    @Published public var recentProfileIds: [UUID] = []
+    public var profiles: [VoiceProfile] = []
+    public var activeProfile: VoiceProfile?
+    public var recentProfileIds: [UUID] = []
 
     private let storageKey = "echoelmusic_voice_profiles_v1"
     private let recentKey = "echoelmusic_voice_profiles_recent"
@@ -613,11 +615,12 @@ public class VoiceProfileManager: ObservableObject {
 /// Analyzes a recorded voice sample to extract a voice fingerprint (MFCC, formants, pitch range).
 /// Uses the existing AudioFeatureExtractor from EnhancedMLModels.swift — no duplicate code.
 @MainActor
-public class VoiceCharacterizer: ObservableObject {
+@Observable
+public final class VoiceCharacterizer {
 
-    @Published public var isAnalyzing: Bool = false
-    @Published public var analysisProgress: Float = 0
-    @Published public var lastAnalysis: VoiceAnalysisResult?
+    public var isAnalyzing: Bool = false
+    public var analysisProgress: Float = 0
+    public var lastAnalysis: VoiceAnalysisResult?
 
     public struct VoiceAnalysisResult: Codable, Sendable {
         public let mfcc: [Float]
@@ -932,15 +935,16 @@ public enum VoiceAnalysisError: LocalizedError {
 /// Bridges voice characterization, ProVocalChain processing, and Apple Personal Voice API.
 /// Provides real-time voice transformation based on VoiceProfile targets.
 @MainActor
-public class VoiceSynthesisEngine: ObservableObject {
+@Observable
+public final class VoiceSynthesisEngine {
 
     public static let shared = VoiceSynthesisEngine()
 
-    @Published public var isRecording: Bool = false
-    @Published public var isTraining: Bool = false
-    @Published public var isSynthesizing: Bool = false
-    @Published public var trainingProgress: Float = 0
-    @Published public var availableVoiceModels: [String] = ["Natural", "Robot", "Clone 1", "Clone 2"]
+    public var isRecording: Bool = false
+    public var isTraining: Bool = false
+    public var isSynthesizing: Bool = false
+    public var trainingProgress: Float = 0
+    public var availableVoiceModels: [String] = ["Natural", "Robot", "Clone 1", "Clone 2"]
 
     private let characterizer = VoiceCharacterizer()
     private let profileManager = VoiceProfileManager.shared

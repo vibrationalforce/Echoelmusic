@@ -11,12 +11,14 @@
 
 import Foundation
 import Combine
+import Observation
 
 // MARK: - Tuning Manager
 
 /// Global concert pitch manager — single source of truth for A4 reference
 @MainActor
-public final class TuningManager: ObservableObject {
+public final @Observable
+final class TuningManager {
 
     // MARK: - Singleton
 
@@ -27,7 +29,7 @@ public final class TuningManager: ObservableObject {
 
     /// Concert pitch in Hz (A4 reference), 3 decimal places
     /// Default: 440.000 Hz (ISO 16 international standard)
-    @Published public var concertPitch: Double = 440.000 {
+    public var concertPitch: Double = 440.000 {
         didSet {
             let clamped = clamp(concertPitch)
             if clamped != concertPitch {
@@ -48,7 +50,7 @@ public final class TuningManager: ObservableObject {
     }
 
     /// Currently selected tuning reference preset
-    @Published public var selectedReference: TuningPreset = .standard440
+    public var selectedReference: TuningPreset = .standard440
 
     // MARK: - Combine Publisher
 

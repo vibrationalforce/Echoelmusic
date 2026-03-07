@@ -3,16 +3,18 @@ import SwiftUI
 import Combine
 import AVFoundation
 import UniformTypeIdentifiers
+import Observation
 
 /// Handles importing audio files into sessions
 @MainActor
-class AudioFileImporter: ObservableObject {
+@Observable
+final class AudioFileImporter {
 
     // MARK: - Published Properties
 
-    @Published var isImporting: Bool = false
-    @Published var importProgress: Double = 0.0
-    @Published var importError: String?
+    var isImporting: Bool = false
+    var importProgress: Double = 0.0
+    var importError: String?
 
     // MARK: - Supported Formats
 

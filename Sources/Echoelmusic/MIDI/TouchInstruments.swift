@@ -3,6 +3,7 @@ import SwiftUI
 import Combine
 #if canImport(CoreHaptics)
 import CoreHaptics
+import Observation
 #endif
 
 // MARK: - Touch Instruments Hub
@@ -11,15 +12,16 @@ import CoreHaptics
 /// Mobile-first design optimized for finger and Apple Pencil input
 
 @MainActor
-class TouchInstrumentsHub: ObservableObject {
+@Observable
+final class TouchInstrumentsHub {
 
     // MARK: - Published State
 
-    @Published var activeInstrument: InstrumentType = .chordPad
-    @Published var isPlaying: Bool = false
-    @Published var currentScale: TouchMusicalScale = .major
-    @Published var rootNote: UInt8 = 60 // Middle C
-    @Published var octave: Int = 4
+    var activeInstrument: InstrumentType = .chordPad
+    var isPlaying: Bool = false
+    var currentScale: TouchMusicalScale = .major
+    var rootNote: UInt8 = 60 // Middle C
+    var octave: Int = 4
 
     // MARK: - Dependencies
 
@@ -173,8 +175,8 @@ enum ChordType: String, CaseIterable {
 
 struct ChordPadView: View {
 
-    @ObservedObject var hub: TouchInstrumentsHub
-    @StateObject private var viewModel = ChordPadViewModel()
+    @Bindable var hub: TouchInstrumentsHub
+    @State private var viewModel = ChordPadViewModel()
 
     var body: some View {
         VStack(spacing: 16) {
@@ -328,13 +330,14 @@ struct ChordPad: Identifiable {
 // MARK: - Chord Pad View Model
 
 @MainActor
-class ChordPadViewModel: ObservableObject {
+@Observable
+final class ChordPadViewModel {
 
-    @Published var chordPads: [ChordPad] = []
-    @Published var pressedPads: Set<UUID> = []
-    @Published var playMode: PlayMode = .simultaneous
-    @Published var arpRate: Double = 120 // BPM
-    @Published var arpPattern: ArpPattern = .up
+    var chordPads: [ChordPad] = []
+    var pressedPads: Set<UUID> = []
+    var playMode: PlayMode = .simultaneous
+    var arpRate: Double = 120 // BPM
+    var arpPattern: ArpPattern = .up
 
     // Active voices for MPE
     private var activeVoices: [UUID: [MPEZoneManager.MPEVoice]] = [:]
@@ -524,7 +527,7 @@ class ChordPadViewModel: ObservableObject {
 // MARK: - Arpeggiator Controls
 
 struct ArpeggiatorControls: View {
-    @ObservedObject var viewModel: ChordPadViewModel
+    @Bindable var viewModel: ChordPadViewModel
 
     var body: some View {
         HStack(spacing: 20) {
@@ -553,8 +556,8 @@ struct ArpeggiatorControls: View {
 
 struct DrumPadView: View {
 
-    @ObservedObject var hub: TouchInstrumentsHub
-    @StateObject private var viewModel = DrumPadViewModel()
+    @Bindable var hub: TouchInstrumentsHub
+    @State private var viewModel = DrumPadViewModel()
 
     let columns = [
         GridItem(.flexible()),
@@ -823,16 +826,17 @@ enum DrumKit: String, CaseIterable {
 // MARK: - Drum Pad View Model
 
 @MainActor
-class DrumPadViewModel: ObservableObject {
+@Observable
+final class DrumPadViewModel {
 
-    @Published var pads: [DrumPadModel] = []
-    @Published var pressedPads: Set<UUID> = []
-    @Published var currentKit: DrumKit = .acoustic {
+    var pads: [DrumPadModel] = []
+    var pressedPads: Set<UUID> = []
+    var currentKit: DrumKit = .acoustic {
         didSet {
             pads = currentKit.pads
         }
     }
-    @Published var velocityCurve: VelocityCurve = .linear
+    var velocityCurve: VelocityCurve = .linear
 
     enum VelocityCurve: String, CaseIterable {
         case soft = "Soft"
@@ -880,8 +884,8 @@ class DrumPadViewModel: ObservableObject {
 
 struct MelodyPadView: View {
 
-    @ObservedObject var hub: TouchInstrumentsHub
-    @StateObject private var viewModel = MelodyPadViewModel()
+    @Bindable var hub: TouchInstrumentsHub
+    @State private var viewModel = MelodyPadViewModel()
 
     var body: some View {
         VStack(spacing: 16) {
@@ -992,7 +996,8 @@ struct MelodyGridBackground: View {
 // MARK: - Melody Pad View Model
 
 @MainActor
-class MelodyPadViewModel: ObservableObject {
+@Observable
+final class MelodyPadViewModel {
 
     struct TouchInfo {
         var location: CGPoint
@@ -1000,10 +1005,10 @@ class MelodyPadViewModel: ObservableObject {
         var voice: MPEZoneManager.MPEVoice?
     }
 
-    @Published var activeTouches: [Int: TouchInfo] = [:]
-    @Published var octaveRange: Int = 2
-    @Published var glideEnabled: Bool = false
-    @Published var glideTime: Double = 0.3
+    var activeTouches: [Int: TouchInfo] = [:]
+    var octaveRange: Int = 2
+    var glideEnabled: Bool = false
+    var glideTime: Double = 0.3
 
     private var lastNote: UInt8?
 
@@ -1088,8 +1093,8 @@ class MelodyPadViewModel: ObservableObject {
 
 struct TouchKeyboardView: View {
 
-    @ObservedObject var hub: TouchInstrumentsHub
-    @StateObject private var viewModel = TouchKeyboardViewModel()
+    @Bindable var hub: TouchInstrumentsHub
+    @State private var viewModel = TouchKeyboardViewModel()
 
     var body: some View {
         VStack(spacing: EchoelSpacing.sm) {
@@ -1162,8 +1167,8 @@ struct TouchKeyboardView: View {
 
 struct PianoKeyboardLayout: View {
 
-    @ObservedObject var viewModel: TouchKeyboardViewModel
-    @ObservedObject var hub: TouchInstrumentsHub
+    @Bindable var viewModel: TouchKeyboardViewModel
+    @Bindable var hub: TouchInstrumentsHub
 
     var body: some View {
         HStack(spacing: 1) {
@@ -1275,11 +1280,12 @@ struct PianoKey: View {
 // MARK: - Touch Keyboard View Model
 
 @MainActor
-class TouchKeyboardViewModel: ObservableObject {
+@Observable
+final class TouchKeyboardViewModel {
 
-    @Published var octave: Int = 4
-    @Published var keyWidth: Double = 55
-    @Published var pressedNotes: Set<UInt8> = []
+    var octave: Int = 4
+    var keyWidth: Double = 55
+    var pressedNotes: Set<UInt8> = []
 
     private var activeVoices: [UInt8: MPEZoneManager.MPEVoice] = [:]
 

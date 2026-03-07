@@ -5,11 +5,11 @@ import Accelerate
 // Professional DAW arrangement with REAL audio engine integration
 
 struct DAWArrangementView: View {
-    @EnvironmentObject var audioEngine: AudioEngine
-    @EnvironmentObject var recordingEngine: RecordingEngine
-    @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
+    @Environment(AudioEngine.self) var audioEngine
+    @Environment(RecordingEngine.self) var recordingEngine
+    @Bindable private var workspace = EchoelCreativeWorkspace.shared
 
-    @StateObject private var metronome = MetronomeEngine()
+    @State private var metronome = MetronomeEngine()
 
     @State private var selectedTrackID: UUID?
     @State private var timelineZoom: Double = 1.0
@@ -77,22 +77,22 @@ struct DAWArrangementView: View {
         }
         .sheet(isPresented: $showMixer) {
             RealMixerSheet()
-                .environmentObject(audioEngine)
-                .environmentObject(recordingEngine)
+                .environment(audioEngine)
+                .environment(recordingEngine)
         }
         .sheet(isPresented: $showSessionClips) {
             SessionClipView()
-                .environmentObject(audioEngine)
-                .environmentObject(recordingEngine)
+                .environment(audioEngine)
+                .environment(recordingEngine)
         }
         .sheet(isPresented: $showEffectsChain) {
             DAWEffectsChainSheet()
-                .environmentObject(audioEngine)
-                .environmentObject(recordingEngine)
+                .environment(audioEngine)
+                .environment(recordingEngine)
         }
         .sheet(isPresented: $showMasterExport) {
             MasterExportSheet()
-                .environmentObject(recordingEngine)
+                .environment(recordingEngine)
         }
         .onAppear {
             ensureSessionExists()
@@ -989,7 +989,7 @@ struct WaveformShape: Shape {
 // MARK: - DAW Effects Chain Sheet
 
 struct DAWEffectsChainSheet: View {
-    @StateObject private var nodeGraph = NodeGraph()
+    @State private var nodeGraph = NodeGraph()
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1016,7 +1016,7 @@ struct DAWEffectsChainSheet: View {
 // MARK: - Master Export Sheet
 
 struct MasterExportSheet: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     private let exportManager = ExportManager()
     @Environment(\.dismiss) private var dismiss
 
@@ -1322,8 +1322,8 @@ struct MasterExportSheet: View {
 // MARK: - Real Mixer Sheet
 
 struct RealMixerSheet: View {
-    @EnvironmentObject var audioEngine: AudioEngine
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(AudioEngine.self) var audioEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     @Environment(\.dismiss) private var dismiss
 
     private var tracks: [Track] {
@@ -1522,7 +1522,7 @@ extension DAWArrangementView {
 #if DEBUG
 #Preview {
     DAWArrangementView()
-        .environmentObject(AudioEngine())
-        .environmentObject(RecordingEngine())
+        .environment(AudioEngine())
+        .environment(RecordingEngine())
 }
 #endif

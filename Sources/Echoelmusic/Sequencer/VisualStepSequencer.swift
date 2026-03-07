@@ -14,20 +14,22 @@
 
 import SwiftUI
 import Combine
+import Observation
 
 // MARK: - Step Sequencer Core
 
 /// 16-Step Visual Sequencer with Bio-Reactive Modulation
 @MainActor
-public final class VisualStepSequencer: ObservableObject {
+public final @Observable
+final class VisualStepSequencer {
 
     // MARK: - Published State
 
-    @Published public var isPlaying: Bool = false
-    @Published public var currentStep: Int = 0
-    @Published public var bpm: Double = 120.0
-    @Published public var pattern: SequencerPattern = SequencerPattern()
-    @Published public var bioModulation: BioModulationState = BioModulationState()
+    public var isPlaying: Bool = false
+    public var currentStep: Int = 0
+    public var bpm: Double = 120.0
+    public var pattern: SequencerPattern = SequencerPattern()
+    public var bioModulation: BioModulationState = BioModulationState()
 
     // MARK: - Configuration
 
@@ -362,7 +364,7 @@ extension Notification.Name {
 // MARK: - SwiftUI View
 
 public struct VisualStepSequencerView: View {
-    @ObservedObject var sequencer = VisualStepSequencer.shared
+    @Bindable var sequencer = VisualStepSequencer.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}

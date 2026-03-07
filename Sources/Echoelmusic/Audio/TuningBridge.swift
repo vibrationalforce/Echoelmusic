@@ -12,12 +12,14 @@
 
 import Foundation
 import Combine
+import Observation
 
 // MARK: - Tuning Bridge
 
 /// Connects TuningManager to all audio subsystems
 @MainActor
-public final class TuningBridge: ObservableObject {
+public final @Observable
+final class TuningBridge {
 
     // MARK: - Singleton
 

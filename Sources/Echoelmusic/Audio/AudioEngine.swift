@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Combine
 import Accelerate
+import Observation
 
 /// Central audio engine for professional music production
 ///
@@ -15,40 +16,41 @@ import Accelerate
 ///
 /// This class acts as the central hub for all audio processing in Echoelmusic
 @MainActor
-public class AudioEngine: ObservableObject {
+@Observable
+public final class AudioEngine {
 
-    // MARK: - Published Properties
+    // MARK: - Observed Properties
 
     /// Whether the audio engine is currently running
-    @Published var isRunning: Bool = false
+    var isRunning: Bool = false
 
     /// Whether spatial audio is enabled
-    @Published var spatialAudioEnabled: Bool = false
+    var spatialAudioEnabled: Bool = false
 
     /// Whether input monitoring is enabled (mic recording on play)
-    @Published var inputMonitoringEnabled: Bool = false
+    var inputMonitoringEnabled: Bool = false
 
     /// Live master output level (0.0 - 1.0) for metering
-    @Published var masterLevel: Float = 0.0
+    var masterLevel: Float = 0.0
 
     /// Live master output level right channel (0.0 - 1.0)
-    @Published var masterLevelR: Float = 0.0
+    var masterLevelR: Float = 0.0
 
     // MARK: - Master Audio Engine (Hardware Output)
 
     /// The master AVAudioEngine that connects the entire audio graph to hardware output.
     /// This is the ONLY path to speakers/headphones (Bluetooth, wired, onboard).
     /// Graph: playerNode/generators → masterMixer → mainMixerNode → outputNode → hardware
-    private let masterEngine = AVAudioEngine()
+    @ObservationIgnored private let masterEngine = AVAudioEngine()
 
     /// Master mixer node for summing all audio sources before output
-    private let masterMixer = AVAudioMixerNode()
+    @ObservationIgnored private let masterMixer = AVAudioMixerNode()
 
     /// Player node for playing back audio buffers (from ProMixEngine, clips, etc.)
-    private let masterPlayerNode = AVAudioPlayerNode()
+    @ObservationIgnored private let masterPlayerNode = AVAudioPlayerNode()
 
     /// Master output volume (0.0 - 1.0)
-    @Published var masterVolume: Float = 0.85 {
+    var masterVolume: Float = 0.85 {
         didSet { masterMixer.outputVolume = masterVolume }
     }
 
@@ -64,7 +66,7 @@ public class AudioEngine: ObservableObject {
     // MARK: - Private Properties
 
     /// Cancellables for Combine subscriptions
-    private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
 
 

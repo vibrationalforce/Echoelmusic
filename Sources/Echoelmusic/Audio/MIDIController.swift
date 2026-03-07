@@ -1,16 +1,18 @@
 import Foundation
 import CoreMIDI
 import Combine
+import Observation
 
 /// MIDI controller support for external hardware control
 @MainActor
-class MIDIController: ObservableObject {
+@Observable
+final class MIDIController {
 
     // MARK: - Published Properties
 
-    @Published var isConnected: Bool = false
-    @Published var connectedDevices: [MIDIDevice] = []
-    @Published var lastMIDIMessage: MIDIMessage?
+    var isConnected: Bool = false
+    var connectedDevices: [MIDIDevice] = []
+    var lastMIDIMessage: MIDIMessage?
 
     // MARK: - MIDI Device Model
 

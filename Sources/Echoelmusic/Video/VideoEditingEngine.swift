@@ -2,21 +2,23 @@ import Foundation
 import AVFoundation
 import CoreData
 import Combine
+import Observation
 
 /// Video Editing Engine - Non-Linear Editor with Magnetic Timeline
 /// Supports unlimited tracks, keyframe animation, nested sequences
 /// Bio-reactive effects driven by HRV coherence and heart rate
 @MainActor
-class VideoEditingEngine: ObservableObject {
+@Observable
+final class VideoEditingEngine {
 
     // MARK: - Published State
 
-    @Published var timeline: Timeline
-    @Published var playhead: CMTime = .zero
-    @Published var isPlaying: Bool = false
-    @Published var selectedClips: Set<UUID> = []
-    @Published var editMode: EditMode = .select
-    @Published var currentGrade: ColorGradeEffect?
+    var timeline: Timeline
+    var playhead: CMTime = .zero
+    var isPlaying: Bool = false
+    var selectedClips: Set<UUID> = []
+    var editMode: EditMode = .select
+    var currentGrade: ColorGradeEffect?
 
     // MARK: - Undo/Redo Integration
     private let undoManager = UndoRedoManager.shared
@@ -574,14 +576,15 @@ class VideoEditingEngine: ObservableObject {
 // MARK: - Timeline Model
 
 @MainActor
-class Timeline: ObservableObject {
-    @Published var name: String
-    @Published var videoTracks: [VideoTrack]
-    @Published var audioTracks: [VideoTrack]
-    @Published var markers: [TimeMarker]
-    @Published var tempo: Double // BPM for beat snapping
-    @Published var duration: CMTime
-    @Published var textOverlays: [TextOverlay] = []
+@Observable
+final class Timeline {
+    var name: String
+    var videoTracks: [VideoTrack]
+    var audioTracks: [VideoTrack]
+    var markers: [TimeMarker]
+    var tempo: Double // BPM for beat snapping
+    var duration: CMTime
+    var textOverlays: [TextOverlay] = []
 
     init(name: String = "Untitled Timeline") {
         self.name = name
@@ -628,15 +631,16 @@ class Timeline: ObservableObject {
 // MARK: - Video Track Model (renamed to avoid conflict with Recording/Track)
 
 @MainActor
-class VideoTrack: ObservableObject, Identifiable {
+@Observable
+final class VideoTrack: Identifiable {
     let id = UUID()
-    @Published var name: String
-    @Published var type: VideoTrackType
-    @Published var clips: [VideoClip]
-    @Published var isMuted: Bool
-    @Published var isSolo: Bool
-    @Published var volume: Float // 0-1
-    @Published var isLocked: Bool
+    var name: String
+    var type: VideoTrackType
+    var clips: [VideoClip]
+    var isMuted: Bool
+    var isSolo: Bool
+    var volume: Float // 0-1
+    var isLocked: Bool
 
     enum VideoTrackType {
         case video

@@ -22,6 +22,7 @@ import UIKit
 
 #if canImport(AppKit)
 import AppKit
+import Observation
 #endif
 
 // MARK: - Video Resolution
@@ -353,19 +354,20 @@ public struct VideoProcessingStats: Sendable {
 
 /// Main video processing engine with quantum sync and zero-latency pipeline
 @MainActor
-public final class VideoProcessingEngine: ObservableObject {
+public final @Observable
+final class VideoProcessingEngine {
 
     // MARK: - Published Properties
 
-    @Published public private(set) var isRunning: Bool = false
-    @Published public private(set) var currentProject: VideoProject?
-    @Published public private(set) var stats: VideoProcessingStats = .zero
-    @Published public private(set) var activeEffects: [VideoEffectType] = []
-    @Published public var outputResolution: VideoResolution = .uhd4k
-    @Published public var outputFrameRate: VideoFrameRate = .smooth60
-    @Published public var quantumSyncEnabled: Bool = true
-    @Published public var bioReactiveEnabled: Bool = true
-    @Published public var zeroLatencyMode: Bool = true
+    public private(set) var isRunning: Bool = false
+    public private(set) var currentProject: VideoProject?
+    public private(set) var stats: VideoProcessingStats = .zero
+    public private(set) var activeEffects: [VideoEffectType] = []
+    public var outputResolution: VideoResolution = .uhd4k
+    public var outputFrameRate: VideoFrameRate = .smooth60
+    public var quantumSyncEnabled: Bool = true
+    public var bioReactiveEnabled: Bool = true
+    public var zeroLatencyMode: Bool = true
 
     // MARK: - Metal Resources
 
@@ -864,7 +866,8 @@ public final class VideoProcessingEngine: ObservableObject {
 
 /// Worldwide zero-latency video streaming
 @MainActor
-public final class VideoStreamingManager: ObservableObject {
+public final @Observable
+final class VideoStreamingManager {
 
     public enum StreamingProtocol: String, CaseIterable, Sendable {
         case rtmp = "RTMP"
@@ -887,12 +890,12 @@ public final class VideoStreamingManager: ObservableObject {
         case quantum = "Quantum Network"
     }
 
-    @Published public private(set) var isStreaming: Bool = false
-    @Published public private(set) var viewers: Int = 0
-    @Published public private(set) var uploadBitrate: Int = 0
-    @Published public private(set) var latency: TimeInterval = 0
-    @Published public var selectedProtocol: StreamingProtocol = .srt
-    @Published public var selectedPlatforms: Set<StreamingPlatform> = []
+    public private(set) var isStreaming: Bool = false
+    public private(set) var viewers: Int = 0
+    public private(set) var uploadBitrate: Int = 0
+    public private(set) var latency: TimeInterval = 0
+    public var selectedProtocol: StreamingProtocol = .srt
+    public var selectedPlatforms: Set<StreamingPlatform> = []
 
     public func startStream(to platforms: Set<StreamingPlatform>) async {
         selectedPlatforms = platforms
@@ -915,7 +918,8 @@ public final class VideoStreamingManager: ObservableObject {
 
 /// Real-time worldwide video collaboration
 @MainActor
-public final class VideoCollaborationHub: ObservableObject {
+public final @Observable
+final class VideoCollaborationHub {
 
     public struct Collaborator: Identifiable, Sendable {
         public let id: UUID
@@ -930,10 +934,10 @@ public final class VideoCollaborationHub: ObservableObject {
         }
     }
 
-    @Published public private(set) var collaborators: [Collaborator] = []
-    @Published public private(set) var isConnected: Bool = false
-    @Published public private(set) var sessionId: String?
-    @Published public var quantumSyncEnabled: Bool = true
+    public private(set) var collaborators: [Collaborator] = []
+    public private(set) var isConnected: Bool = false
+    public private(set) var sessionId: String?
+    public var quantumSyncEnabled: Bool = true
 
     public func createSession() async -> String {
         let id = UUID().uuidString.prefix(8).lowercased()
@@ -971,7 +975,8 @@ public final class VideoCollaborationHub: ObservableObject {
 
 /// High-quality video export with multiple formats
 @MainActor
-public final class ProcessingExportManager: ObservableObject {
+public final @Observable
+final class ProcessingExportManager {
 
     public enum ExportFormat: String, CaseIterable, Sendable {
         case h264 = "H.264"
@@ -1000,11 +1005,11 @@ public final class ProcessingExportManager: ObservableObject {
         case archive = "Archive Quality"
     }
 
-    @Published public private(set) var isExporting: Bool = false
-    @Published public private(set) var progress: Double = 0
-    @Published public private(set) var estimatedTimeRemaining: TimeInterval = 0
-    @Published public var selectedFormat: ExportFormat = .h265
-    @Published public var selectedPreset: ExportPreset = .uhd
+    public private(set) var isExporting: Bool = false
+    public private(set) var progress: Double = 0
+    public private(set) var estimatedTimeRemaining: TimeInterval = 0
+    public var selectedFormat: ExportFormat = .h265
+    public var selectedPreset: ExportPreset = .uhd
 
     public func export(project: VideoProject, to url: URL) async throws {
         isExporting = true

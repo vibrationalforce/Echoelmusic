@@ -1,6 +1,7 @@
 import Foundation
 import Accelerate
 import Combine
+import Observation
 
 /// Real-Time Pitch Corrector — Professional Auto-Tune Engine
 ///
@@ -15,60 +16,61 @@ import Combine
 ///
 /// Inspired by Antares Auto-Tune, Celemony Melodyne, Waves Tune
 @MainActor
-public class RealTimePitchCorrector: ObservableObject {
+@Observable
+public final class RealTimePitchCorrector {
 
     // MARK: - Published State
 
-    @Published var isActive: Bool = false
-    @Published var currentInputPitch: Float = 0       // Detected input Hz
-    @Published var currentOutputPitch: Float = 0      // Corrected output Hz
-    @Published var currentNote: String = ""           // e.g., "A4"
-    @Published var centsDeviation: Float = 0          // Cents from target
-    @Published var correctionAmount: Float = 0        // How much correction applied
+    var isActive: Bool = false
+    var currentInputPitch: Float = 0       // Detected input Hz
+    var currentOutputPitch: Float = 0      // Corrected output Hz
+    var currentNote: String = ""           // e.g., "A4"
+    var centsDeviation: Float = 0          // Cents from target
+    var correctionAmount: Float = 0        // How much correction applied
 
     // MARK: - Correction Settings
 
     /// Musical key for correction (0 = C, 1 = C#, ... 11 = B)
-    @Published var rootNote: Int = 0
+    var rootNote: Int = 0
 
     /// Scale type for note targeting
-    @Published var scaleType: ScaleType = .chromatic
+    var scaleType: ScaleType = .chromatic
 
     /// Correction speed in milliseconds (0 = instant/hard-tune, 200+ = natural)
-    @Published var correctionSpeed: Float = 50.0
+    var correctionSpeed: Float = 50.0
 
     /// How aggressively to correct (0 = no correction, 1 = full snap)
-    @Published var correctionStrength: Float = 0.8
+    var correctionStrength: Float = 0.8
 
     /// Humanize: preserve natural pitch micro-variations (0 = robotic, 1 = natural)
-    @Published var humanize: Float = 0.2
+    var humanize: Float = 0.2
 
     /// Flex-Tune threshold in cents — notes within this range aren't corrected
-    @Published var flexTuneThreshold: Float = 10.0
+    var flexTuneThreshold: Float = 10.0
 
     /// Per-note enable/disable (12 notes, true = correct, false = bypass)
-    @Published var noteEnabled: [Bool] = Array(repeating: true, count: 12)
+    var noteEnabled: [Bool] = Array(repeating: true, count: 12)
 
     /// Formant preservation during pitch shift
-    @Published var preserveFormants: Bool = true
+    var preserveFormants: Bool = true
 
     /// Formant shift in semitones (independent of pitch)
-    @Published var formantShift: Float = 0.0
+    var formantShift: Float = 0.0
 
     /// Reference tuning frequency (default A4 = 440 Hz)
-    @Published var referenceA4: Float = 440.0
+    var referenceA4: Float = 440.0
 
     /// Transpose output by semitones
-    @Published var transpose: Int = 0
+    var transpose: Int = 0
 
     /// Vibrato amount to add (0 = none, 1 = full)
-    @Published var vibratoDepth: Float = 0.0
-    @Published var vibratoRate: Float = 5.5  // Hz (typical singing vibrato)
+    var vibratoDepth: Float = 0.0
+    var vibratoRate: Float = 5.5  // Hz (typical singing vibrato)
 
     // MARK: - MIDI Target Mode
 
-    @Published var midiTargetMode: Bool = false
-    @Published var midiTargetNotes: Set<Int> = []  // Active MIDI note numbers
+    var midiTargetMode: Bool = false
+    var midiTargetNotes: Set<Int> = []  // Active MIDI note numbers
 
     // MARK: - Types
 

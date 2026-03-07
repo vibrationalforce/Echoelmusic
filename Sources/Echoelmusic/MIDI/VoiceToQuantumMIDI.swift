@@ -16,6 +16,7 @@ import Foundation
 import AVFoundation
 import Combine
 import Accelerate
+import Observation
 
 // MARK: - Voice to Quantum MIDI Constants
 
@@ -131,32 +132,33 @@ public struct VoiceAnalysisData: Sendable {
 /// Bridge that connects voice input to the Super Intelligent Quantum MIDI Out system
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
-public final class VoiceToQuantumMIDI: ObservableObject {
+public final @Observable
+final class VoiceToQuantumMIDI {
 
     // MARK: - Published Properties
 
-    @Published public var isActive: Bool = false
-    @Published public var mode: VoiceInputMode = .harmonizer
-    @Published public var harmonyMode: HarmonyMode = .major
-    @Published public var voiceData: VoiceAnalysisData = VoiceAnalysisData()
+    public var isActive: Bool = false
+    public var mode: VoiceInputMode = .harmonizer
+    public var harmonyMode: HarmonyMode = .major
+    public var voiceData: VoiceAnalysisData = VoiceAnalysisData()
 
     // Voice settings
-    @Published public var transpose: Int = 0              // Semitones (-24 to +24)
-    @Published public var harmonyVoices: Int = 3          // Number of harmony voices
-    @Published public var formantShift: Float = 0         // -1 (giant) to +1 (chipmunk)
-    @Published public var pitchCorrectStrength: Float = 0.5 // 0 = natural, 1 = hard tune
-    @Published public var voiceGain: Float = 1.0          // Input gain
+    public var transpose: Int = 0              // Semitones (-24 to +24)
+    public var harmonyVoices: Int = 3          // Number of harmony voices
+    public var formantShift: Float = 0         // -1 (giant) to +1 (chipmunk)
+    public var pitchCorrectStrength: Float = 0.5 // 0 = natural, 1 = hard tune
+    public var voiceGain: Float = 1.0          // Input gain
 
     // Scale for pitch correction
-    @Published public var rootNote: Int = 0               // 0 = C, 1 = C#, etc.
-    @Published public var scale: [Int] = [0, 2, 4, 5, 7, 9, 11] // Major scale
+    public var rootNote: Int = 0               // 0 = C, 1 = C#, etc.
+    public var scale: [Int] = [0, 2, 4, 5, 7, 9, 11] // Major scale
 
     // Target instruments
-    @Published public var leadInstrument: QuantumMIDIVoice.InstrumentTarget = .bioReactive
-    @Published public var harmonyInstruments: [QuantumMIDIVoice.InstrumentTarget] = [
+    public var leadInstrument: QuantumMIDIVoice.InstrumentTarget = .bioReactive
+    public var harmonyInstruments: [QuantumMIDIVoice.InstrumentTarget] = [
         .violins, .violas, .cellos
     ]
-    @Published public var choirInstruments: [QuantumMIDIVoice.InstrumentTarget] = [
+    public var choirInstruments: [QuantumMIDIVoice.InstrumentTarget] = [
         .sopranos, .altos, .tenors, .choirBasses
     ]
 

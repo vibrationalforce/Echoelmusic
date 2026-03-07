@@ -10,6 +10,7 @@
 import SwiftUI
 import Combine
 import AVFoundation
+import Observation
 
 // MARK: - Clip Model
 
@@ -204,27 +205,28 @@ public struct LauncherScene: Identifiable, Codable {
 
 /// Main clip launcher controller with bio-reactive features
 @MainActor
-public final class ClipLauncherGrid: ObservableObject {
+public final @Observable
+final class ClipLauncherGrid {
 
     // MARK: - Published State
 
-    @Published public var tracks: [LauncherTrack] = []
-    @Published public var scenes: [LauncherScene] = []
-    @Published public private(set) var isPlaying: Bool = false
-    @Published public var tempo: Double = 120.0
-    @Published public var globalQuantization: LauncherClip.Quantization = .bar1
-    @Published public private(set) var currentBeat: Double = 0
-    @Published public private(set) var currentBar: Int = 1
+    public var tracks: [LauncherTrack] = []
+    public var scenes: [LauncherScene] = []
+    public private(set) var isPlaying: Bool = false
+    public var tempo: Double = 120.0
+    public var globalQuantization: LauncherClip.Quantization = .bar1
+    public private(set) var currentBeat: Double = 0
+    public private(set) var currentBar: Int = 1
 
     // Bio-reactive
-    @Published public var bioReactiveEnabled: Bool = true
-    @Published public var coherenceThreshold: Float = 0.7  // Auto-launch threshold
-    @Published public private(set) var currentCoherence: Float = 0.5
+    public var bioReactiveEnabled: Bool = true
+    public var coherenceThreshold: Float = 0.7  // Auto-launch threshold
+    public private(set) var currentCoherence: Float = 0.5
 
     // Selection
-    @Published public var selectedClipID: UUID?
-    @Published public var selectedTrackID: UUID?
-    @Published public var selectedSceneIndex: Int?
+    public var selectedClipID: UUID?
+    public var selectedTrackID: UUID?
+    public var selectedSceneIndex: Int?
 
     // MARK: - Audio
 
@@ -636,11 +638,11 @@ public final class ClipLauncherGrid: ObservableObject {
 
 /// Main clip launcher grid view
 public struct ClipLauncherGridView: View {
-    @StateObject private var launcher: ClipLauncherGrid
+    @State private var launcher: ClipLauncherGrid
     @State private var showingSettings = false
 
     public init(launcher: ClipLauncherGrid? = nil) {
-        _launcher = StateObject(wrappedValue: launcher ?? ClipLauncherGrid())
+        _launcher = State(wrappedValue: launcher ?? ClipLauncherGrid())
     }
 
     public var body: some View {

@@ -5,8 +5,8 @@ import SwiftUI
 // Connects: TouchInstruments, SynthPresetLibrary, EchoelBass, EchoelBeat
 
 struct EchoelSynthView: View {
-    @EnvironmentObject var audioEngine: AudioEngine
-    @StateObject private var touchHub = TouchInstrumentsHub()
+    @Environment(AudioEngine.self) var audioEngine
+    @State private var touchHub = TouchInstrumentsHub()
     @State private var activePanel: SynthPanel = .keyboard
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass

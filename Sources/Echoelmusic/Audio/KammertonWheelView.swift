@@ -13,7 +13,7 @@ import Combine
 
 /// Rotary tuning wheel for setting concert pitch (A4 reference frequency)
 public struct KammertonWheelView: View {
-    @ObservedObject private var tuning: TuningManager
+    @Bindable private var tuning: TuningManager
 
     /// Drag state for the wheel rotation
     @State private var dragAngle: Double = 0
@@ -295,7 +295,7 @@ public struct KammertonWheelView: View {
 
 /// Compact inline tuning display for toolbars / settings rows
 public struct KammertonCompactView: View {
-    @ObservedObject private var tuning: TuningManager
+    @Bindable private var tuning: TuningManager
 
     public init(tuning: TuningManager = .shared) {
         self.tuning = tuning

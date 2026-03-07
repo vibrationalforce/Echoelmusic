@@ -1,4 +1,5 @@
 import SwiftUI
+import Observation
 
 // MARK: - Audio Routing Matrix View
 // Professional audio routing inspired by Reaper/Pro Tools
@@ -6,7 +7,7 @@ import SwiftUI
 
 @MainActor
 struct AudioRoutingMatrixView: View {
-    @StateObject private var audioRouter = AudioRouterViewModel()
+    @State private var audioRouter = AudioRouterViewModel()
     @State private var selectedChannel: AudioChannel?
     @State private var showEffectsRack = false
     @State private var showSendConfig = false
@@ -842,16 +843,17 @@ struct EffectSlotView: View {
 // MARK: - Models
 
 @MainActor
-class AudioRouterViewModel: ObservableObject {
-    @Published var channels: [AudioChannel] = []
-    @Published var busses: [AudioBus] = []
-    @Published var inputs: [AudioInput] = []
-    @Published var outputs: [AudioOutput] = []
-    @Published var masterVolume: Float = 0.8
-    @Published var masterLeft: Float = 0.6
-    @Published var masterRight: Float = 0.55
-    @Published var sidechainSource: UUID?
-    @Published var sidechainTarget: UUID?
+@Observable
+final class AudioRouterViewModel {
+    var channels: [AudioChannel] = []
+    var busses: [AudioBus] = []
+    var inputs: [AudioInput] = []
+    var outputs: [AudioOutput] = []
+    var masterVolume: Float = 0.8
+    var masterLeft: Float = 0.6
+    var masterRight: Float = 0.55
+    var sidechainSource: UUID?
+    var sidechainTarget: UUID?
 
     init() {
         // Sample data

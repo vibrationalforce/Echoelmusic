@@ -11,10 +11,10 @@ import Metal
 /// Professional video editing interface
 @MainActor
 struct VideoEditorView: View {
-    @StateObject private var engine = VideoEditingEngine()
-    @StateObject private var cameraAnalyzer = CameraAnalyzer()
+    @State private var engine = VideoEditingEngine()
+    @State private var cameraAnalyzer = CameraAnalyzer()
     @State private var cameraManager: CameraManager?
-    @ObservedObject private var workspace = EchoelCreativeWorkspace.shared
+    @Bindable private var workspace = EchoelCreativeWorkspace.shared
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showEffectsPanel = false
@@ -924,8 +924,8 @@ struct EditorVideoClip: Identifiable {
 // MARK: - Video Export Sheet
 
 struct VideoExportSheet: View {
-    @ObservedObject var engine: VideoEditingEngine
-    @StateObject private var exportManager = VideoExportManager()
+    @Bindable var engine: VideoEditingEngine
+    @State private var exportManager = VideoExportManager()
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTemplate: VideoTemplate = .youtube1080
     @State private var exportError: String?
@@ -1329,7 +1329,7 @@ struct VideoExportSheet: View {
 
 @available(iOS 16.0, *)
 struct VideoPickerSheet: View {
-    @ObservedObject var engine: VideoEditingEngine
+    @Bindable var engine: VideoEditingEngine
     @Binding var videoPlayer: AVPlayer?
     @Binding var currentTime: TimeInterval
     @Binding var importProgress: String?

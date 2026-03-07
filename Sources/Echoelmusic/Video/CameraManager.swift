@@ -8,6 +8,7 @@ import CoreImage
 import Combine
 #if canImport(Photos)
 import Photos
+import Observation
 #endif
 
 /// Professional Camera Manager for Real-Time Video Capture
@@ -15,80 +16,81 @@ import Photos
 /// Zero-copy texture pipeline from camera to Metal
 /// Full manual exposure, focus, white balance, zoom, stabilization, HDR, depth, photo & ProRes
 @MainActor
-public class CameraManager: NSObject, ObservableObject {
+@Observable
+public final class CameraManager {
 
     // MARK: - Published State — Basic
 
-    @Published public var isCapturing: Bool = false
-    @Published public var currentCamera: CameraPosition = .back
-    @Published public var currentResolution: Resolution = .hd1920x1080
-    @Published public var currentFrameRate: Int = 60
-    @Published public var availableCameras: [CameraPosition] = []
+    public var isCapturing: Bool = false
+    public var currentCamera: CameraPosition = .back
+    public var currentResolution: Resolution = .hd1920x1080
+    public var currentFrameRate: Int = 60
+    public var availableCameras: [CameraPosition] = []
 
     // MARK: - Published State — Professional Exposure
 
-    @Published public var exposureMode: ExposureMode = .auto
-    @Published public var currentISO: Float = 100
-    @Published public var currentShutterSpeed: CMTime = CMTime(value: 1, timescale: 60)
-    @Published public var exposureCompensation: Float = 0.0
-    @Published public var isoRange: ClosedRange<Float> = 32...3200
-    @Published public var shutterSpeedRange: ClosedRange<Double> = (1.0/8000)...(1.0/2)
+    public var exposureMode: ExposureMode = .auto
+    public var currentISO: Float = 100
+    public var currentShutterSpeed: CMTime = CMTime(value: 1, timescale: 60)
+    public var exposureCompensation: Float = 0.0
+    public var isoRange: ClosedRange<Float> = 32...3200
+    public var shutterSpeedRange: ClosedRange<Double> = (1.0/8000)...(1.0/2)
 
     // MARK: - Published State — Professional Focus
 
-    @Published public var focusMode: FocusMode = .continuousAuto
-    @Published public var focusPosition: Float = 0.5
-    @Published public var isFocusLocked: Bool = false
-    @Published public var focusPointOfInterest: CGPoint = CGPoint(x: 0.5, y: 0.5)
+    public var focusMode: FocusMode = .continuousAuto
+    public var focusPosition: Float = 0.5
+    public var isFocusLocked: Bool = false
+    public var focusPointOfInterest: CGPoint = CGPoint(x: 0.5, y: 0.5)
 
     // MARK: - Published State — White Balance
 
-    @Published public var whiteBalanceMode: WhiteBalanceMode = .auto
-    @Published public var colorTemperature: Float = 5500
-    @Published public var tint: Float = 0.0
+    public var whiteBalanceMode: WhiteBalanceMode = .auto
+    public var colorTemperature: Float = 5500
+    public var tint: Float = 0.0
 
     // MARK: - Published State — Zoom
 
-    @Published public var zoomFactor: CGFloat = 1.0
-    @Published public var maxZoomFactor: CGFloat = 1.0
-    @Published public var minZoomFactor: CGFloat = 1.0
+    public var zoomFactor: CGFloat = 1.0
+    public var maxZoomFactor: CGFloat = 1.0
+    public var minZoomFactor: CGFloat = 1.0
 
     // MARK: - Published State — Torch / Flash
 
-    @Published public var torchMode: TorchMode = .off
-    @Published public var torchLevel: Float = 1.0
+    public var torchMode: TorchMode = .off
+    public var torchLevel: Float = 1.0
 
     // MARK: - Published State — Stabilization
 
-    @Published public var stabilizationMode: StabilizationMode = .auto
-    @Published public var activeStabilizationMode: String = "Off"
+    public var stabilizationMode: StabilizationMode = .auto
+    public var activeStabilizationMode: String = "Off"
 
     // MARK: - Published State — HDR & Color
 
-    @Published public var isHDREnabled: Bool = false
-    @Published public var isHDRSupported: Bool = false
+    public var isHDREnabled: Bool = false
+    public var isHDRSupported: Bool = false
 
     // MARK: - Published State — Depth
 
-    @Published public var isDepthEnabled: Bool = false
-    @Published public var isDepthSupported: Bool = false
+    public var isDepthEnabled: Bool = false
+    public var isDepthSupported: Bool = false
 
     // MARK: - Published State — Recording
 
-    @Published public var isRecording: Bool = false
-    @Published public var recordingDuration: TimeInterval = 0
-    @Published public var isProResSupported: Bool = false
+    public var isRecording: Bool = false
+    public var recordingDuration: TimeInterval = 0
+    public var isProResSupported: Bool = false
 
     // MARK: - Published State — Photo
 
-    @Published public var isCapturingPhoto: Bool = false
-    @Published public var isRAWSupported: Bool = false
-    @Published public var lastCapturedPhotoData: Data?
+    public var isCapturingPhoto: Bool = false
+    public var isRAWSupported: Bool = false
+    public var lastCapturedPhotoData: Data?
 
     // MARK: - Performance Metrics
 
-    @Published public var actualFrameRate: Double = 0.0
-    @Published public var droppedFrames: Int = 0
+    public var actualFrameRate: Double = 0.0
+    public var droppedFrames: Int = 0
 
     // MARK: - Camera Positions
 

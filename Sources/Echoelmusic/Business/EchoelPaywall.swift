@@ -15,7 +15,7 @@ import StoreKit
 /// Main paywall for Echoelmusic Pro
 @available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
 public struct EchoelPaywall: View {
-    @ObservedObject private var store: EchoelStore
+    @Bindable private var store: EchoelStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedProduct: Product?

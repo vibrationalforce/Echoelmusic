@@ -2,22 +2,24 @@ import Foundation
 import AVFoundation
 import Combine
 import os.log
+import Observation
 
 /// Manages a graph of interconnected audio processing nodes
 /// Handles signal routing, parameter automation, and bio-reactivity
 @MainActor
-class NodeGraph: ObservableObject {
+@Observable
+final class NodeGraph {
 
     // MARK: - Published Properties
 
     /// All nodes in the graph
-    @Published var nodes: [EchoelmusicNode] = []
+    var nodes: [EchoelmusicNode] = []
 
     /// Active connections between nodes
-    @Published var connections: [NodeConnection] = []
+    var connections: [NodeConnection] = []
 
     /// Whether the graph is currently processing
-    @Published var isProcessing: Bool = false
+    var isProcessing: Bool = false
 
 
     // MARK: - Private Properties

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Observation
 
 // MARK: - Command Protocol
 /// Base protocol for all undoable/redoable actions
@@ -18,16 +19,17 @@ protocol UndoableCommand {
 /// Universal Undo/Redo system for Echoelmusic
 /// Supports audio editing, video editing, MIDI, and all other operations
 @MainActor
-final class UndoRedoManager: ObservableObject {
+final @Observable
+final class UndoRedoManager {
 
     // MARK: - Singleton
     static let shared = UndoRedoManager()
 
     // MARK: - Published State
-    @Published private(set) var canUndo: Bool = false
-    @Published private(set) var canRedo: Bool = false
-    @Published private(set) var undoActionName: String = ""
-    @Published private(set) var redoActionName: String = ""
+    private(set) var canUndo: Bool = false
+    private(set) var canRedo: Bool = false
+    private(set) var undoActionName: String = ""
+    private(set) var redoActionName: String = ""
 
     // MARK: - Command Stacks
     private var undoStack: [UndoableCommand] = []

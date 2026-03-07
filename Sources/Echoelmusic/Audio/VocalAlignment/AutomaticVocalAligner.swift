@@ -3,6 +3,7 @@ import AVFoundation
 import Accelerate
 import Combine
 import os.log
+import Observation
 
 /// Automatic Vocal Alignment Tool - Professional Multi-Track Vocal Sync
 /// Similar to VocAlign Pro, Synchro Arts Revoice Pro, and Melodyne ARA
@@ -21,23 +22,24 @@ import os.log
 /// - Podcast/interview alignment
 /// - Choir/ensemble tightening
 @MainActor
-class AutomaticVocalAligner: ObservableObject {
+@Observable
+final class AutomaticVocalAligner {
 
     // MARK: - Published State
 
-    @Published var isProcessing: Bool = false
-    @Published var progress: Float = 0.0
-    @Published var guideTrack: VocalTrack?
-    @Published var dubTracks: [VocalTrack] = []
-    @Published var alignmentResults: [UUID: AlignmentResult] = [:]
+    var isProcessing: Bool = false
+    var progress: Float = 0.0
+    var guideTrack: VocalTrack?
+    var dubTracks: [VocalTrack] = []
+    var alignmentResults: [UUID: AlignmentResult] = [:]
 
     // MARK: - Alignment Settings
 
-    @Published var tightness: Float = 0.8        // 0.0 = loose, 1.0 = tight
-    @Published var preserveFormants: Bool = true
-    @Published var maxStretch: Float = 2.0       // Maximum time-stretch ratio
-    @Published var analysisWindowMs: Float = 50  // Analysis window size
-    @Published var hopSizeMs: Float = 10         // Hop size between windows
+    var tightness: Float = 0.8        // 0.0 = loose, 1.0 = tight
+    var preserveFormants: Bool = true
+    var maxStretch: Float = 2.0       // Maximum time-stretch ratio
+    var analysisWindowMs: Float = 50  // Analysis window size
+    var hopSizeMs: Float = 10         // Hop size between windows
 
     // MARK: - Types
 

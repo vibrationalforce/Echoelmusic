@@ -16,6 +16,7 @@ import UIKit
 
 #if canImport(AppKit)
 import AppKit
+import Observation
 #endif
 
 // MARK: - Memory Pressure Level
@@ -83,7 +84,8 @@ public protocol MemoryReleasable: AnyObject {
 /// ```
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
 @MainActor
-public final class MemoryPressureHandler: ObservableObject {
+public final @Observable
+final class MemoryPressureHandler {
 
     // MARK: - Singleton
 
@@ -91,9 +93,9 @@ public final class MemoryPressureHandler: ObservableObject {
 
     // MARK: - Published State
 
-    @Published public private(set) var currentLevel: MemoryPressureLevel = .normal
-    @Published public private(set) var usedMemoryBytes: Int = 0
-    @Published public private(set) var availableMemoryBytes: Int = 0
+    public private(set) var currentLevel: MemoryPressureLevel = .normal
+    public private(set) var usedMemoryBytes: Int = 0
+    public private(set) var availableMemoryBytes: Int = 0
 
     // MARK: - Configuration
 

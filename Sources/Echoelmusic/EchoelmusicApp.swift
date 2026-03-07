@@ -1,15 +1,14 @@
 import SwiftUI
-import Combine
 
 /// Echoelmusic — DAW + Video Production
 /// Clean, minimal entry point
 @main
 struct EchoelmusicApp: App {
 
-    @StateObject private var audioEngine: AudioEngine
-    @StateObject private var microphoneManager: MicrophoneManager
-    @StateObject private var recordingEngine = RecordingEngine()
-    @StateObject private var themeManager = ThemeManager()
+    @State private var audioEngine: AudioEngine
+    @State private var microphoneManager: MicrophoneManager
+    @State private var recordingEngine = RecordingEngine()
+    @State private var themeManager = ThemeManager()
 
     @State private var isReady = false
     @State private var launchPhase = "Initializing..."
@@ -17,18 +16,18 @@ struct EchoelmusicApp: App {
 
     init() {
         let mic = MicrophoneManager()
-        _microphoneManager = StateObject(wrappedValue: mic)
-        _audioEngine = StateObject(wrappedValue: AudioEngine(microphoneManager: mic))
+        _microphoneManager = State(wrappedValue: mic)
+        _audioEngine = State(wrappedValue: AudioEngine(microphoneManager: mic))
     }
 
     var body: some Scene {
         WindowGroup {
             if isReady {
                 MainNavigationHub()
-                    .environmentObject(audioEngine)
-                    .environmentObject(microphoneManager)
-                    .environmentObject(recordingEngine)
-                    .environmentObject(themeManager)
+                    .environment(audioEngine)
+                    .environment(microphoneManager)
+                    .environment(recordingEngine)
+                    .environment(themeManager)
                     .preferredColorScheme(themeManager.resolvedColorScheme)
                     .onAppear {
                         recordingEngine.connectAudioEngine(audioEngine)

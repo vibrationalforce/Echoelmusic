@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Observation
 
 // MARK: - Piano Roll MIDI Editor
 /// Professional piano roll for MIDI note editing
@@ -7,7 +8,7 @@ import AVFoundation
 /// Features: Note drawing, velocity editing, per-note expression, quantization
 
 struct PianoRollView: View {
-    @StateObject private var viewModel = PianoRollViewModel()
+    @State private var viewModel = PianoRollViewModel()
 
     // MIDI 2.0 + MPE Integration
     var midi2Manager: MIDI2Manager?
@@ -225,7 +226,7 @@ struct PianoKeysView: View {
 // MARK: - Note Grid View
 
 struct NoteGridView: View {
-    @ObservedObject var viewModel: PianoRollViewModel
+    @Bindable var viewModel: PianoRollViewModel
     let scale: CGFloat
 
     var body: some View {
@@ -277,7 +278,7 @@ struct NoteGridView: View {
 
 struct MIDINoteView: View {
     let note: MIDINote
-    @ObservedObject var viewModel: PianoRollViewModel
+    @Bindable var viewModel: PianoRollViewModel
     let scale: CGFloat
     let isSelected: Bool
 
@@ -356,7 +357,7 @@ struct MIDINoteView: View {
 
 struct PlayheadView: View {
     let position: Double
-    @ObservedObject var viewModel: PianoRollViewModel
+    @Bindable var viewModel: PianoRollViewModel
     let scale: CGFloat
 
     var body: some View {
@@ -377,23 +378,24 @@ struct PlayheadView: View {
 // MARK: - View Model
 
 @MainActor
-class PianoRollViewModel: ObservableObject {
+@Observable
+final class PianoRollViewModel {
 
     // MARK: - Published Properties
 
-    @Published var notes: [MIDINote] = []
-    @Published var selectedNotes: Set<UUID> = []
-    @Published var editMode: EditMode = .select
-    @Published var quantize: Quantize = .sixteenth
-    @Published var defaultVelocity: Double = 100
-    @Published var isPlaying: Bool = false
-    @Published var playheadPosition: Double = 0 // In beats
+    var notes: [MIDINote] = []
+    var selectedNotes: Set<UUID> = []
+    var editMode: EditMode = .select
+    var quantize: Quantize = .sixteenth
+    var defaultVelocity: Double = 100
+    var isPlaying: Bool = false
+    var playheadPosition: Double = 0 // In beats
 
     // MARK: - MIDI 2.0 + MPE
 
-    @Published var expressionLane: PerNoteExpression? = nil // nil = hidden
-    @Published var useMPE: Bool = true // Use MPE for polyphonic expression
-    @Published var pitchBendRange: Int = 48 // Semitones (MPE default: 48)
+    var expressionLane: PerNoteExpression? = nil // nil = hidden
+    var useMPE: Bool = true // Use MPE for polyphonic expression
+    var pitchBendRange: Int = 48 // Semitones (MPE default: 48)
 
     var midi2Manager: MIDI2Manager?
     var mpeZoneManager: MPEZoneManager?

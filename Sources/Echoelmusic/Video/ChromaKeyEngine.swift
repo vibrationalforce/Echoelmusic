@@ -7,29 +7,31 @@ import SwiftUI
 #if canImport(Metal)
 import Metal
 import MetalKit
+import Observation
 
 /// Chroma Key Engine with 6-Pass Metal Pipeline for Real-Time Greenscreen/Bluescreen
 /// Supports iOS 15+ with optimized performance for 120 FPS @ 1080p on iPhone 16 Pro
 /// Features: Auto-Calibration, Multi-Color Key, Bio-Reactive Backgrounds
 @MainActor
-class ChromaKeyEngine: ObservableObject {
+@Observable
+final class ChromaKeyEngine {
 
     // MARK: - Published State
 
-    @Published var isActive: Bool = false
-    @Published var currentPreset: ChromaKeyPreset = .portrait
-    @Published var previewMode: PreviewMode = .normal
-    @Published var keyColor: KeyColor = .green
-    @Published var tolerance: Float = 0.3  // HSV distance tolerance (0-1)
-    @Published var edgeSoftness: Float = 0.5  // Edge feathering amount (0-1)
-    @Published var despillStrength: Float = 0.7  // Green/blue reflection removal (0-1)
-    @Published var lightWrapAmount: Float = 0.3  // Background color bleeding (0-1)
+    var isActive: Bool = false
+    var currentPreset: ChromaKeyPreset = .portrait
+    var previewMode: PreviewMode = .normal
+    var keyColor: KeyColor = .green
+    var tolerance: Float = 0.3  // HSV distance tolerance (0-1)
+    var edgeSoftness: Float = 0.5  // Edge feathering amount (0-1)
+    var despillStrength: Float = 0.7  // Green/blue reflection removal (0-1)
+    var lightWrapAmount: Float = 0.3  // Background color bleeding (0-1)
 
     // MARK: - Performance Metrics
 
-    @Published var currentFPS: Double = 0.0
-    @Published var processingTimeMs: Double = 0.0
-    @Published var isCalibrated: Bool = false
+    var currentFPS: Double = 0.0
+    var processingTimeMs: Double = 0.0
+    var isCalibrated: Bool = false
 
     // MARK: - Metal Components
 

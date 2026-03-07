@@ -10,6 +10,7 @@ import Vision
 #endif
 import Combine
 import Accelerate
+import Observation
 
 // MARK: - Multi-Camera Manager
 /// Professional multi-camera recording with synchronization
@@ -17,15 +18,16 @@ import Accelerate
 /// Features: Angle switching, timeline sync, live preview grid
 
 @MainActor
-class MultiCamManager: NSObject, ObservableObject {
+@Observable
+final class MultiCamManager {
 
     // MARK: - Published State
 
-    @Published var isMultiCamSupported: Bool = false
-    @Published var isCapturing: Bool = false
-    @Published var activeAngles: [CameraAngle] = []
-    @Published var primaryAngle: CameraAngle?
-    @Published var syncStatus: SyncStatus = .notSynced
+    var isMultiCamSupported: Bool = false
+    var isCapturing: Bool = false
+    var activeAngles: [CameraAngle] = []
+    var primaryAngle: CameraAngle?
+    var syncStatus: SyncStatus = .notSynced
 
     // MARK: - Camera Angles
 
@@ -403,14 +405,15 @@ extension MultiCamManager: AVCaptureVideoDataOutputSampleBufferDelegate {
 /// Real-time and post-processing capable
 
 @MainActor
-class VideoStabilizer: ObservableObject {
+@Observable
+final class VideoStabilizer {
 
     // MARK: - Published State
 
-    @Published var isStabilizing: Bool = false
-    @Published var stabilizationMode: StabilizationMode = .standard
-    @Published var stabilizationStrength: Float = 0.8 // 0-1
-    @Published var progress: Double = 0.0
+    var isStabilizing: Bool = false
+    var stabilizationMode: StabilizationMode = .standard
+    var stabilizationStrength: Float = 0.8 // 0-1
+    var progress: Double = 0.0
 
     // MARK: - Stabilization Modes
 

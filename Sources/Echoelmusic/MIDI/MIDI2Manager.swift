@@ -1,6 +1,7 @@
 import Foundation
 import CoreMIDI
 import Combine
+import Observation
 
 /// MIDI 2.0 Manager with Universal MIDI Packet (UMP) support
 ///
@@ -23,13 +24,14 @@ import Combine
 /// midi2.sendPerNoteController(channel: 0, note: 60, controller: .brightness, value: 0.5)
 /// ```
 @MainActor
-class MIDI2Manager: ObservableObject {
+@Observable
+final class MIDI2Manager {
 
     // MARK: - Published State
 
-    @Published var isInitialized: Bool = false
-    @Published var connectedEndpoints: [MIDIEndpointRef] = []
-    @Published var errorMessage: String?
+    var isInitialized: Bool = false
+    var connectedEndpoints: [MIDIEndpointRef] = []
+    var errorMessage: String?
 
     // MARK: - Private Properties
 

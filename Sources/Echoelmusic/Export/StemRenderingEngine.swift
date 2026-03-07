@@ -17,6 +17,7 @@ import Foundation
 import AVFoundation
 import Accelerate
 import Combine
+import Observation
 
 // MARK: - Stem Configuration
 
@@ -260,14 +261,15 @@ public struct StemRenderResult: Sendable {
 /// Professional stem rendering engine
 /// Renders individual tracks or track groups with full effects processing
 @MainActor
-public final class StemRenderingEngine: ObservableObject {
+public final @Observable
+final class StemRenderingEngine {
 
     // MARK: - Published State
 
-    @Published public private(set) var isRendering: Bool = false
-    @Published public private(set) var progress: StemRenderProgress?
-    @Published public private(set) var results: [StemRenderResult] = []
-    @Published public private(set) var lastError: String?
+    public private(set) var isRendering: Bool = false
+    public private(set) var progress: StemRenderProgress?
+    public private(set) var results: [StemRenderResult] = []
+    public private(set) var lastError: String?
 
     // MARK: - Configuration
 

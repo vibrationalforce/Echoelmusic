@@ -9,6 +9,7 @@
 
 import Foundation
 import Combine
+import Observation
 
 // MARK: - Session State
 
@@ -124,7 +125,8 @@ public struct SessionState: Codable, Sendable {
 /// ```
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
 @MainActor
-public final class CrashSafeStatePersistence: ObservableObject {
+public final @Observable
+final class CrashSafeStatePersistence {
 
     // MARK: - Singleton
 
@@ -132,9 +134,9 @@ public final class CrashSafeStatePersistence: ObservableObject {
 
     // MARK: - Published State
 
-    @Published public private(set) var lastSaveTime: Date?
-    @Published public private(set) var hasPendingRecovery: Bool = false
-    @Published public private(set) var isSaving: Bool = false
+    public private(set) var lastSaveTime: Date?
+    public private(set) var hasPendingRecovery: Bool = false
+    public private(set) var isSaving: Bool = false
 
     // MARK: - Configuration
 

@@ -1,34 +1,36 @@
 import AVFoundation
 import SwiftUI
 import Accelerate
+import Observation
 
 /// Manages microphone access and advanced audio processing
 /// Now includes FFT for frequency detection and professional-grade DSP
 @MainActor
-class MicrophoneManager: NSObject, ObservableObject {
+@Observable
+final class MicrophoneManager {
 
-    // MARK: - Published Properties
+    // MARK: - Observed Properties
 
     /// Current audio level (0.0 to 1.0)
-    @Published var audioLevel: Float = 0.0
+    var audioLevel: Float = 0.0
 
     /// Detected frequency in Hz (fundamental pitch from FFT)
-    @Published var frequency: Float = 0.0
+    var frequency: Float = 0.0
 
     /// Current pitch in Hz (fundamental frequency from YIN algorithm)
-    @Published var currentPitch: Float = 0.0
+    var currentPitch: Float = 0.0
 
     /// Whether we have microphone permission
-    @Published var hasPermission: Bool = false
+    var hasPermission: Bool = false
 
     /// Whether we're currently recording
-    @Published var isRecording: Bool = false
+    var isRecording: Bool = false
 
     /// Audio buffer for waveform visualization (last 512 samples)
-    @Published var audioBuffer: [Float]? = nil
+    var audioBuffer: [Float]? = nil
 
     /// FFT magnitudes for spectral visualization (256 bins)
-    @Published var fftMagnitudes: [Float]? = nil
+    var fftMagnitudes: [Float]? = nil
 
 
     // MARK: - Private Properties

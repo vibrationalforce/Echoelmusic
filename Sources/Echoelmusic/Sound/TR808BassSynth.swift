@@ -212,7 +212,8 @@ private struct DrumPlayback {
 /// EchoelBeat — Professional 808 Bass Synthesizer + Full Drum Machine
 /// Integrates with SynthPresetLibrary for access to 65+ parametric drum presets across 12 genre kits.
 @MainActor
-public final class TR808BassSynth: ObservableObject {
+public final @Observable
+final class TR808BassSynth {
 
     // MARK: - Singleton
 
@@ -220,23 +221,23 @@ public final class TR808BassSynth: ObservableObject {
 
     // MARK: - Published State
 
-    @Published public var config = TR808BassConfig.classic808
-    @Published public var isPlaying: Bool = false
-    @Published public var activeVoiceCount: Int = 0
-    @Published public var currentNote: Int? = nil
-    @Published public var meterLevel: Float = 0.0
+    public var config = TR808BassConfig.classic808
+    public var isPlaying: Bool = false
+    public var activeVoiceCount: Int = 0
+    public var currentNote: Int? = nil
+    public var meterLevel: Float = 0.0
 
     // MARK: - Drum Kit (SynthPresetLibrary Integration)
 
-    @Published public var drumSlots: [DrumSlot] = []
-    @Published public var currentDrumKit: String = "None"
+    public var drumSlots: [DrumSlot] = []
+    public var currentDrumKit: String = "None"
 
     // MARK: - Step Sequencer
 
-    @Published public var sequencerPattern: BeatPattern = BeatPattern(name: "Default")
-    @Published public var sequencerBPM: Float = 120
-    @Published public var sequencerStep: Int = 0
-    @Published public var isSequencerPlaying: Bool = false
+    public var sequencerPattern: BeatPattern = BeatPattern(name: "Default")
+    public var sequencerBPM: Float = 120
+    public var sequencerStep: Int = 0
+    public var isSequencerPlaying: Bool = false
 
     // Drum playback state (audio thread)
     private var drumPlaybacks: [DrumPlayback] = []
@@ -714,9 +715,10 @@ extension TR808BassSynth {
 // MARK: - SwiftUI View
 
 import SwiftUI
+import Observation
 
 public struct TR808BassSynthView: View {
-    @ObservedObject private var synth = TR808BassSynth.shared
+    @Bindable private var synth = TR808BassSynth.shared
     @State private var selectedPreset: String = "Classic 808"
 
     private let presets: [(String, TR808BassConfig)] = [

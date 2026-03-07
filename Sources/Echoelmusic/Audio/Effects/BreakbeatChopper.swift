@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Accelerate
+import Observation
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BREAKBEAT CHOPPER - JUNGLE & DNB SLICE MACHINE
@@ -232,44 +233,45 @@ enum ShuffleAlgorithm: String, CaseIterable {
 // MARK: - Breakbeat Chopper
 
 @MainActor
-public class BreakbeatChopper: ObservableObject {
+@Observable
+public final class BreakbeatChopper {
 
     private let log = ProfessionalLogger.shared
 
     // MARK: - Published State
 
     /// Original audio buffer
-    @Published var sourceBuffer: AVAudioPCMBuffer?
+    var sourceBuffer: AVAudioPCMBuffer?
 
     /// Detected slices
-    @Published var slices: [BreakSlice] = []
+    var slices: [BreakSlice] = []
 
     /// Current pattern
-    @Published var currentPattern: ChopPattern?
+    var currentPattern: ChopPattern?
 
     /// All saved patterns
-    @Published var patterns: [ChopPattern] = []
+    var patterns: [ChopPattern] = []
 
     /// Current playback position (step index)
-    @Published var currentStep: Int = 0
+    var currentStep: Int = 0
 
     /// Is playing
-    @Published var isPlaying: Bool = false
+    var isPlaying: Bool = false
 
     /// Master tempo (BPM)
-    @Published var tempo: Float = 170.0  // Classic jungle tempo
+    var tempo: Float = 170.0  // Classic jungle tempo
 
     /// Original break tempo (detected or set)
-    @Published var originalTempo: Float = 170.0
+    var originalTempo: Float = 170.0
 
     /// Stretch algorithm
-    @Published var stretchAlgorithm: StretchAlgorithm = .resample
+    var stretchAlgorithm: StretchAlgorithm = .resample
 
     /// Global pitch offset
-    @Published var globalPitch: Float = 0.0  // Semitones
+    var globalPitch: Float = 0.0  // Semitones
 
     /// Global swing
-    @Published var globalSwing: Float = 0.0  // 0-100%
+    var globalSwing: Float = 0.0  // 0-100%
 
     // MARK: - Configuration
 

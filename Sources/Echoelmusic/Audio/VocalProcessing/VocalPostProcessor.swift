@@ -1,6 +1,7 @@
 import Foundation
 import Accelerate
 import Combine
+import Observation
 
 /// Vocal Post-Production Editor — Per-Note Pitch & Parameter Editing
 ///
@@ -19,22 +20,23 @@ import Combine
 /// 2. Edit → User modifies note parameters
 /// 3. Render → Phase vocoder applies all edits non-destructively
 @MainActor
-class VocalPostProcessor: ObservableObject {
+@Observable
+final class VocalPostProcessor {
 
     // MARK: - Published State
 
-    @Published var isAnalyzing: Bool = false
-    @Published var isRendering: Bool = false
-    @Published var progress: Float = 0.0
-    @Published var detectedNotes: [VocalNote] = []
-    @Published var pitchCurve: [PitchPoint] = []
-    @Published var automationLanes: [AutomationLane] = []
+    var isAnalyzing: Bool = false
+    var isRendering: Bool = false
+    var progress: Float = 0.0
+    var detectedNotes: [VocalNote] = []
+    var pitchCurve: [PitchPoint] = []
+    var automationLanes: [AutomationLane] = []
 
     // MARK: - Analysis Settings
 
-    @Published var analysisHopSize: Int = 256         // Samples between analysis frames
-    @Published var noteSegmentationThreshold: Float = 0.5  // Cents threshold for note boundary
-    @Published var minimumNoteDuration: Float = 0.05  // Seconds (50ms min note length)
+    var analysisHopSize: Int = 256         // Samples between analysis frames
+    var noteSegmentationThreshold: Float = 0.5  // Cents threshold for note boundary
+    var minimumNoteDuration: Float = 0.05  // Seconds (50ms min note length)
 
     // MARK: - Types
 

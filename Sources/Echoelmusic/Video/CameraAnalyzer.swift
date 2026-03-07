@@ -4,6 +4,7 @@ import Accelerate
 import Combine
 #if canImport(CoreImage)
 import CoreImage
+import Observation
 #endif
 
 /// Analyzes camera frames for:
@@ -12,27 +13,28 @@ import CoreImage
 ///
 /// Resource-efficient: processes every Nth frame, uses vDSP for fast averaging
 @MainActor
-final class CameraAnalyzer: ObservableObject {
+final @Observable
+final class CameraAnalyzer {
 
     // MARK: - Published Output
 
     /// Average frame brightness (0–1), usable for filter modulation
-    @Published var brightness: Float = 0.5
+    var brightness: Float = 0.5
     /// Average red channel (0–1), used for pulse detection
-    @Published var redChannel: Float = 0.5
+    var redChannel: Float = 0.5
     /// Average hue (0–360)
-    @Published var dominantHue: Float = 180
+    var dominantHue: Float = 180
     /// Estimated BPM from pulse detection (0 = not detected)
-    @Published var estimatedBPM: Double = 0
+    var estimatedBPM: Double = 0
     /// Confidence of BPM estimate (0–1)
-    @Published var bpmConfidence: Double = 0
+    var bpmConfidence: Double = 0
     /// Whether pulse detection is active
-    @Published var isPulseDetecting: Bool = false
+    var isPulseDetecting: Bool = false
 
     // MARK: - Filter Modulation Output
 
     /// Normalized modulation value (0–1) from camera analysis
-    @Published var filterModulation: Float = 0.5
+    var filterModulation: Float = 0.5
     /// Modulation mode
     var modulationMode: ModulationMode = .brightness
 

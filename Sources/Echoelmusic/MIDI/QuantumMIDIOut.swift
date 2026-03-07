@@ -18,6 +18,7 @@ import Foundation
 import CoreMIDI
 import Combine
 import simd
+import Observation
 
 // MARK: - Quantum MIDI Constants
 
@@ -386,29 +387,30 @@ public struct QuantumBioInput: Sendable {
 /// Routes quantum-coherent MIDI to all instruments in the Echoelmusic ecosystem
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
-public final class QuantumMIDIOut: ObservableObject {
+public final @Observable
+final class QuantumMIDIOut {
 
     // MARK: - Published Properties
 
-    @Published public var isActive: Bool = false
-    @Published public var intelligenceMode: QuantumIntelligenceMode = .superIntelligent
-    @Published public var routing: QuantumMIDIRouting = QuantumMIDIRouting()
-    @Published public var bioInput: QuantumBioInput = QuantumBioInput()
+    public var isActive: Bool = false
+    public var intelligenceMode: QuantumIntelligenceMode = .superIntelligent
+    public var routing: QuantumMIDIRouting = QuantumMIDIRouting()
+    public var bioInput: QuantumBioInput = QuantumBioInput()
 
     // Voice state
-    @Published public private(set) var activeVoices: [QuantumMIDIVoice] = []
-    @Published public private(set) var voiceCount: Int = 0
-    @Published public private(set) var polyphony: Int = 16
+    public private(set) var activeVoices: [QuantumMIDIVoice] = []
+    public private(set) var voiceCount: Int = 0
+    public private(set) var polyphony: Int = 16
 
     // Quantum state
-    @Published public private(set) var globalCoherence: Float = 0.5
-    @Published public private(set) var entanglementPairs: Int = 0
-    @Published public private(set) var superpositionVoices: Int = 0
+    public private(set) var globalCoherence: Float = 0.5
+    public private(set) var entanglementPairs: Int = 0
+    public private(set) var superpositionVoices: Int = 0
 
     // Performance metrics
-    @Published public private(set) var noteOnCount: Int = 0
-    @Published public private(set) var noteOffCount: Int = 0
-    @Published public private(set) var updateRate: Double = 0.0
+    public private(set) var noteOnCount: Int = 0
+    public private(set) var noteOffCount: Int = 0
+    public private(set) var updateRate: Double = 0.0
 
     // MARK: - Private Properties
 

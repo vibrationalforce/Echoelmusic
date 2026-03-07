@@ -17,6 +17,7 @@ import Foundation
 import AVFoundation
 import Combine
 import Accelerate
+import Observation
 
 // MARK: - Audio Input Source
 
@@ -121,36 +122,37 @@ public struct AudioInputDevice: Identifiable, Sendable {
 /// Supports microphone, line-in, audio interface, and audio files
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
-public final class AudioToQuantumMIDI: ObservableObject {
+public final @Observable
+final class AudioToQuantumMIDI {
 
     // MARK: - Published Properties
 
-    @Published public var isActive: Bool = false
-    @Published public var inputSource: AudioInputSource = .microphone
-    @Published public var detectionMode: PitchDetectionMode = .hybrid
-    @Published public var availableDevices: [AudioInputDevice] = []
-    @Published public var selectedDevice: AudioInputDevice?
+    public var isActive: Bool = false
+    public var inputSource: AudioInputSource = .microphone
+    public var detectionMode: PitchDetectionMode = .hybrid
+    public var availableDevices: [AudioInputDevice] = []
+    public var selectedDevice: AudioInputDevice?
 
     // Detected notes
-    @Published public private(set) var detectedNotes: [DetectedNote] = []
-    @Published public private(set) var dominantNote: DetectedNote?
-    @Published public private(set) var isPolyphonic: Bool = false
+    public private(set) var detectedNotes: [DetectedNote] = []
+    public private(set) var dominantNote: DetectedNote?
+    public private(set) var isPolyphonic: Bool = false
 
     // Audio levels
-    @Published public private(set) var inputLevel: Float = 0
-    @Published public private(set) var peakLevel: Float = 0
-    @Published public private(set) var spectralCentroid: Float = 0
+    public private(set) var inputLevel: Float = 0
+    public private(set) var peakLevel: Float = 0
+    public private(set) var spectralCentroid: Float = 0
 
     // Settings
-    @Published public var inputGain: Float = 1.0
-    @Published public var noiseGate: Float = 0.01
-    @Published public var maxPolyphony: Int = 6
-    @Published public var noteOnThreshold: Float = 0.1
-    @Published public var noteOffThreshold: Float = 0.05
+    public var inputGain: Float = 1.0
+    public var noiseGate: Float = 0.01
+    public var maxPolyphony: Int = 6
+    public var noteOnThreshold: Float = 0.1
+    public var noteOffThreshold: Float = 0.05
 
     // Quantum MIDI routing
-    @Published public var routeToQuantumMIDI: Bool = true
-    @Published public var targetInstruments: [QuantumMIDIVoice.InstrumentTarget] = [.piano]
+    public var routeToQuantumMIDI: Bool = true
+    public var targetInstruments: [QuantumMIDIVoice.InstrumentTarget] = [.piano]
 
     // MARK: - Private Properties
 

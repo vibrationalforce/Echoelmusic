@@ -114,12 +114,13 @@ public struct LinkPeer: Identifiable, Equatable {
 
 /// Ableton Link client for tempo and phase synchronization
 @MainActor
-public class AbletonLinkClient: ObservableObject {
+@Observable
+public final class AbletonLinkClient {
 
     // MARK: - Published State
 
     /// Whether Link is enabled
-    @Published public var isEnabled: Bool = false {
+    public var isEnabled: Bool = false {
         didSet {
             if isEnabled {
                 startSession()
@@ -130,16 +131,16 @@ public class AbletonLinkClient: ObservableObject {
     }
 
     /// Current session state
-    @Published public private(set) var sessionState = LinkSessionState()
+    public private(set) var sessionState = LinkSessionState()
 
     /// Discovered peers
-    @Published public private(set) var peers: [LinkPeer] = []
+    public private(set) var peers: [LinkPeer] = []
 
     /// Is connected to Link network
-    @Published public private(set) var isConnected: Bool = false
+    public private(set) var isConnected: Bool = false
 
     /// Start/Stop sync enabled
-    @Published public var startStopSyncEnabled: Bool = true
+    public var startStopSyncEnabled: Bool = true
 
     // MARK: - Callbacks
 
@@ -671,7 +672,7 @@ extension AbletonLinkClient {
 
 /// Link status and control panel
 public struct AbletonLinkView: View {
-    @ObservedObject var client: AbletonLinkClient
+    @Bindable var client: AbletonLinkClient
 
     public init(client: AbletonLinkClient) {
         self.client = client
@@ -742,6 +743,7 @@ public struct AbletonLinkView: View {
 // MARK: - Supporting Types
 
 import SwiftUI
+import Observation
 
 // Use actual EchoelBrand from Theme/EchoelmusicBrand.swift
 // No placeholder needed - import the real brand colors

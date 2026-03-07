@@ -12,6 +12,7 @@ import Foundation
 import AVFoundation
 import Combine
 import Accelerate
+import Observation
 
 // MARK: - Freeze Configuration
 
@@ -103,14 +104,15 @@ public enum FreezeError: LocalizedError {
 /// Professional track freeze/bounce engine
 /// Renders tracks with all effects offline to reduce real-time CPU load
 @MainActor
-public final class TrackFreezeEngine: ObservableObject {
+public final @Observable
+final class TrackFreezeEngine {
 
     // MARK: - Published Properties
 
-    @Published public private(set) var freezeStates: [UUID: TrackFreezeState] = [:]
-    @Published public private(set) var freezeProgress: [UUID: Double] = [:]
-    @Published public private(set) var isProcessing: Bool = false
-    @Published public private(set) var totalCPUSaved: Double = 0
+    public private(set) var freezeStates: [UUID: TrackFreezeState] = [:]
+    public private(set) var freezeProgress: [UUID: Double] = [:]
+    public private(set) var isProcessing: Bool = false
+    public private(set) var totalCPUSaved: Double = 0
 
     // MARK: - Private Properties
 

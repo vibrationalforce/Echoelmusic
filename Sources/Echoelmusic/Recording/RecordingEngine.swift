@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Combine
 import Accelerate
+import Observation
 
 // MARK: - Circular Buffer for O(1) Performance
 /// High-performance circular buffer replacing Array.removeFirst() O(n) with O(1)
@@ -49,34 +50,35 @@ private struct RecordingCircularBuffer<T> {
 /// Manages multi-track audio recording with bio-signal integration
 /// Coordinates recording, playback, and real-time monitoring
 @MainActor
-class RecordingEngine: ObservableObject {
+@Observable
+final class RecordingEngine {
 
-    // MARK: - Published Properties
+    // MARK: - Observed Properties
 
     /// Current session being recorded/played
-    @Published var currentSession: Session?
+    var currentSession: Session?
 
     // MARK: - Undo/Redo Integration
     private let undoManager = UndoRedoManager.shared
     private let audioProcessingQueue = DispatchQueue(label: "com.echoelmusic.recording.processing", qos: .userInteractive)
 
     /// Is currently recording
-    @Published var isRecording: Bool = false
+    var isRecording: Bool = false
 
     /// Is currently playing back
-    @Published var isPlaying: Bool = false
+    var isPlaying: Bool = false
 
     /// Current playback/recording position (seconds)
-    @Published var currentTime: TimeInterval = 0.0
+    var currentTime: TimeInterval = 0.0
 
     /// Recording level (0.0 - 1.0)
-    @Published var recordingLevel: Float = 0.0
+    var recordingLevel: Float = 0.0
 
     /// Real-time waveform data for current recording
-    @Published var recordingWaveform: [Float] = []
+    var recordingWaveform: [Float] = []
 
     /// Current track being recorded
-    @Published var currentTrackID: UUID?
+    var currentTrackID: UUID?
 
 
     // MARK: - Private Properties
@@ -112,7 +114,7 @@ class RecordingEngine: ObservableObject {
     // MARK: - Retrospective Capture (Ableton-style)
 
     /// Enable/disable retrospective capture
-    @Published var isRetrospectiveCaptureEnabled: Bool = true
+    var isRetrospectiveCaptureEnabled: Bool = true
 
     /// Duration of retrospective buffer (seconds) - configurable for mobile
     private let retrospectiveBufferDuration: TimeInterval = 60.0
@@ -121,7 +123,7 @@ class RecordingEngine: ObservableObject {
     private var retrospectiveBuffer: RetrospectiveBuffer?
 
     /// Whether there's content available to capture
-    @Published var hasRetrospectiveContent: Bool = false
+    var hasRetrospectiveContent: Bool = false
 
 
     // MARK: - Initialization

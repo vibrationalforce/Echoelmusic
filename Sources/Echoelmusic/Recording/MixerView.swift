@@ -3,7 +3,7 @@ import SwiftUI
 /// Professional mixer view with faders and metering
 /// Uses VaporwaveTheme for consistent styling
 struct MixerView: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     @Binding var session: Session
 
     var body: some View {
@@ -15,18 +15,18 @@ struct MixerView: View {
                         ForEach(session.tracks, id: \.id) { track in
                             MixerChannelStrip(track: track)
                                 .frame(width: 100)
-                                .environmentObject(recordingEngine)
+                                .environment(recordingEngine)
                         }
 
                         // Phase Correlation Meter (Goniometer)
                         PhaseCorrelationMeter()
                             .frame(width: 120)
-                            .environmentObject(recordingEngine)
+                            .environment(recordingEngine)
 
                         // Master channel
                         MasterChannelStrip()
                             .frame(width: 100)
-                            .environmentObject(recordingEngine)
+                            .environment(recordingEngine)
                     }
                     .padding()
                 }
@@ -41,7 +41,7 @@ struct MixerView: View {
 
 /// Individual mixer channel strip
 struct MixerChannelStrip: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
     let track: Track
 
     var body: some View {
@@ -303,7 +303,7 @@ struct MixerChannelStrip: View {
 
 /// Master channel strip
 struct MasterChannelStrip: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
 
     var body: some View {
         VStack(spacing: VaporwaveSpacing.md) {
@@ -379,7 +379,7 @@ struct MasterChannelStrip: View {
 /// Goniometer-style phase correlation meter showing stereo field and phase relationship.
 /// Displays L/R correlation as a Lissajous-style vectorscope with a correlation bar.
 struct PhaseCorrelationMeter: View {
-    @EnvironmentObject var recordingEngine: RecordingEngine
+    @Environment(RecordingEngine.self) var recordingEngine
 
     var body: some View {
         VStack(spacing: VaporwaveSpacing.sm) {

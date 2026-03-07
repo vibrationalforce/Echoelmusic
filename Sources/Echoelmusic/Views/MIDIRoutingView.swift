@@ -1,4 +1,5 @@
 import SwiftUI
+import Observation
 
 // MARK: - MIDI Routing View
 // Professional MIDI 1.0/2.0/MPE routing matrix inspired by Ableton/Reaper
@@ -6,7 +7,7 @@ import SwiftUI
 
 @MainActor
 struct MIDIRoutingView: View {
-    @StateObject private var midiRouter = MIDIRouterViewModel()
+    @State private var midiRouter = MIDIRouterViewModel()
     @State private var selectedTab: MIDITab = .devices
     @State private var showMIDILearn = false
     @State private var selectedMapping: MIDIMappingItem?
@@ -828,31 +829,32 @@ struct MIDILearnSheet: View {
 // MARK: - View Models & Models
 
 @MainActor
-class MIDIRouterViewModel: ObservableObject {
-    @Published var inputDevices: [MIDIDeviceInfo] = []
-    @Published var outputDevices: [MIDIDeviceInfo] = []
-    @Published var enabledInputs: Set<UUID> = []
-    @Published var enabledOutputs: Set<UUID> = []
-    @Published var isReceiving = false
-    @Published var isSending = false
-    @Published var virtualSourceActive = true
-    @Published var mappings: [MIDIMappingItem] = []
-    @Published var enabledChannels: Set<Int> = Set(1...16)
-    @Published var enabledMessageTypes: Set<MIDIMessageType> = Set(MIDIMessageType.allCases)
-    @Published var routes: [(from: UUID, to: UUID)] = []
-    @Published var virtualRoutes: Set<UUID> = []
+@Observable
+final class MIDIRouterViewModel {
+    var inputDevices: [MIDIDeviceInfo] = []
+    var outputDevices: [MIDIDeviceInfo] = []
+    var enabledInputs: Set<UUID> = []
+    var enabledOutputs: Set<UUID> = []
+    var isReceiving = false
+    var isSending = false
+    var virtualSourceActive = true
+    var mappings: [MIDIMappingItem] = []
+    var enabledChannels: Set<Int> = Set(1...16)
+    var enabledMessageTypes: Set<MIDIMessageType> = Set(MIDIMessageType.allCases)
+    var routes: [(from: UUID, to: UUID)] = []
+    var virtualRoutes: Set<UUID> = []
 
     // MPE
-    @Published var mpeEnabled = false
-    @Published var lowerZoneChannels = 8
-    @Published var upperZoneChannels = 7
-    @Published var lowerPitchBend = 48
-    @Published var upperPitchBend = 48
-    @Published var voiceAllocationMode: VoiceAllocationMode = .roundRobin
-    @Published var lastPitchBend: Float = 0.5
-    @Published var lastPressure: Float = 0
-    @Published var lastSlide: Float = 0.5
-    @Published var lastExpression: Float = 0.7
+    var mpeEnabled = false
+    var lowerZoneChannels = 8
+    var upperZoneChannels = 7
+    var lowerPitchBend = 48
+    var upperPitchBend = 48
+    var voiceAllocationMode: VoiceAllocationMode = .roundRobin
+    var lastPitchBend: Float = 0.5
+    var lastPressure: Float = 0
+    var lastSlide: Float = 0.5
+    var lastExpression: Float = 0.7
 
     init() {
         // Simulate some devices

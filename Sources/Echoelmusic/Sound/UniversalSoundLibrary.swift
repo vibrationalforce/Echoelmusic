@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import AudioToolbox
 import Combine
+import Observation
 
 /// Universal Sound Library & Advanced Synthesis Engine
 /// Complete sound design system for ALL instruments worldwide + synthesis
@@ -24,14 +25,15 @@ import Combine
 /// - Sample-based (with advanced manipulation)
 /// - Spectral (FFT-based resynthesis)
 @MainActor
-class UniversalSoundLibrary: ObservableObject {
+@Observable
+final class UniversalSoundLibrary {
 
     // MARK: - Published State
 
-    @Published var availableInstruments: [Instrument] = []
-    @Published var availableSynthEngines: [SynthEngine] = []
-    @Published var currentPreset: SoundPreset?
-    @Published var sampleRate: Double = 48000.0
+    var availableInstruments: [Instrument] = []
+    var availableSynthEngines: [SynthEngine] = []
+    var currentPreset: SoundPreset?
+    var sampleRate: Double = 48000.0
 
     // MARK: - Instrument
 

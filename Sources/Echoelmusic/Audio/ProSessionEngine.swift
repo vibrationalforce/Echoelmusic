@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import Observation
 
 // MARK: - MIDINoteEvent
 
@@ -643,45 +644,46 @@ public struct SessionScene: Identifiable, Equatable {
 /// Manages tracks, scenes, clip launching with quantization,
 /// DJ crossfader, tap tempo, and pattern editing.
 @MainActor
-public class ProSessionEngine: ObservableObject {
+@Observable
+public final class ProSessionEngine {
 
     // MARK: - Published Properties
 
     /// All session tracks (columns in session view)
-    @Published public var tracks: [SessionTrack] = []
+    public var tracks: [SessionTrack] = []
 
     /// All scenes (rows in session view)
-    @Published public var scenes: [SessionScene] = []
+    public var scenes: [SessionScene] = []
 
     /// Return / bus tracks (e.g. Reverb, Delay sends)
-    @Published public var returnTracks: [SessionTrack] = []
+    public var returnTracks: [SessionTrack] = []
 
     /// The master track
-    @Published public var masterTrack: SessionTrack
+    public var masterTrack: SessionTrack
 
     /// Global session tempo in BPM
-    @Published public var globalBPM: Double = 120.0
+    public var globalBPM: Double = 120.0
 
     /// Whether the transport is playing
-    @Published public var isPlaying: Bool = false
+    public var isPlaying: Bool = false
 
     /// Current playback position in beats
-    @Published public var currentBeat: Double = 0.0
+    public var currentBeat: Double = 0.0
 
     /// DJ crossfader position (-1.0 = A, 0 = center, 1.0 = B)
-    @Published public var crossfaderPosition: Float = 0.0
+    public var crossfaderPosition: Float = 0.0
 
     /// Whether the metronome click is audible
-    @Published public var metronomeEnabled: Bool = false
+    public var metronomeEnabled: Bool = false
 
     /// Quantization applied to recorded clips
-    @Published public var recordQuantization: LaunchQuantize = .nextBeat
+    public var recordQuantization: LaunchQuantize = .nextBeat
 
     /// Global quantization for clip launching
-    @Published public var clipLaunchQuantize: LaunchQuantize = .nextBar
+    public var clipLaunchQuantize: LaunchQuantize = .nextBar
 
     /// Default recording length in bars
-    @Published public var loopLength: Int = 4
+    public var loopLength: Int = 4
 
     // MARK: - Audio Scheduling
 
