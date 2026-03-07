@@ -386,7 +386,6 @@ public struct QuantumBioInput: Sendable {
 
 /// The Super Intelligent Quantum Real-time Polyphonic MIDI Out Engine
 /// Routes quantum-coherent MIDI to all instruments in the Echoelmusic ecosystem
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
 @Observable
 public final class QuantumMIDIOut {

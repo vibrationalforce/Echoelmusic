@@ -14,7 +14,6 @@ import StoreKit
 // MARK: - Paywall View
 
 /// Main paywall for Echoelmusic Pro
-@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
 public struct EchoelPaywall: View {
     @Bindable private var store: EchoelStore
     @Environment(\.dismiss) private var dismiss
@@ -245,7 +244,6 @@ public struct EchoelPaywall: View {
 
 // MARK: - Subscription Button
 
-@available(iOS 15.0, macOS 12.0, watchOS 8.0, tvOS 15.0, *)
 private struct SubscriptionButton: View {
     let product: Product
     let isSelected: Bool

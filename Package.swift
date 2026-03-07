@@ -6,10 +6,10 @@ import PackageDescription
 let package = Package(
     name: "Echoelmusic",
     platforms: [
-        .iOS(.v15),        // iPhone & iPad - matches project.yml deployment target
-        .macOS(.v12),      // macOS Monterey+ for Apple Silicon & Intel
-        .watchOS(.v8),     // Apple Watch - Critical for bio-data collection
-        .tvOS(.v15),       // Apple TV - Large display visualizations
+        .iOS(.v17),        // iPhone & iPad - required for @Observable macro
+        .macOS(.v14),      // macOS Sonoma+ for @Observable support
+        .watchOS(.v10),    // Apple Watch - required for @Observable
+        .tvOS(.v17),       // Apple TV - required for @Observable
         .visionOS(.v1)     // Apple Vision Pro - Spatial Audio & Immersive
     ],
     products: [

@@ -121,7 +121,6 @@ public struct AudioInputDevice: Identifiable, Sendable {
 
 /// Universal Audio Input to Quantum MIDI Bridge
 /// Supports microphone, line-in, audio interface, and audio files
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 @MainActor
 @Observable
 public final class AudioToQuantumMIDI {
