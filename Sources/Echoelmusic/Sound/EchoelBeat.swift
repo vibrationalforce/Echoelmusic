@@ -28,7 +28,6 @@
 import Foundation
 import AVFoundation
 import Accelerate
-import Combine
 
 #if canImport(SwiftUI)
 import SwiftUI

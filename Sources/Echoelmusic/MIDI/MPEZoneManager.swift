@@ -1,6 +1,5 @@
 import Foundation
 import CoreMIDI
-import Combine
 import Observation
 
 /// MPE (MIDI Polyphonic Expression) Zone Manager

@@ -1,6 +1,5 @@
 import Foundation
 import CoreMIDI
-import Combine
 import Observation
 
 /// MIDI 2.0 Manager with Universal MIDI Packet (UMP) support

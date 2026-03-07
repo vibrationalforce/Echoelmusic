@@ -1,6 +1,5 @@
 import Foundation
 import Accelerate
-import Combine
 import Observation
 
 /// Per-Note Vibrato Engine — Professional Vibrato Detection, Synthesis & Control

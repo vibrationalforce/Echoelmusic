@@ -1,19 +1,11 @@
 import Foundation
 import Accelerate
 
-// ╔═══════════════════════════════════════════════════════════════════════════╗
-// ║                                                                           ║
-// ║   ███████╗ ██████╗██╗  ██╗ ██████╗ ███████╗██╗      ██████╗ ██████╗ ██████╗ ║
-// ║   ██╔════╝██╔════╝██║  ██║██╔═══██╗██╔════╝██║     ██╔════╝██╔═══██╗██╔══██╗║
-// ║   █████╗  ██║     ███████║██║   ██║█████╗  ██║     ██║     ██║   ██║██████╔╝║
-// ║   ██╔══╝  ██║     ██╔══██║██║   ██║██╔══╝  ██║     ██║     ██║   ██║██╔══██╗║
-// ║   ███████╗╚██████╗██║  ██║╚██████╔╝███████╗███████╗╚██████╗╚██████╔╝██║  ██║║
-// ║   ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝║
-// ║                                                                           ║
-// ║   🎵 Pure Native DSP - No JUCE, No Dependencies, Just Vibes 🎵            ║
-// ║   Cross-Platform: iOS • macOS • watchOS • tvOS • visionOS • Android       ║
-// ║                                                                           ║
-// ╚═══════════════════════════════════════════════════════════════════════════╝
+// EchoelCore.swift
+// Echoelmusic - Pure Native DSP Engine
+//
+// Cross-Platform: iOS, macOS, watchOS, tvOS, visionOS, Android
+// Zero external dependencies
 
 // MARK: - EchoelCore Configuration
 
@@ -30,14 +22,13 @@ public enum EchoelCore {
     /// Framework identifier
     public static let identifier = "com.echoelmusic.core"
 
-    /// Fun motto
-    public static let motto = "breath → sound → light → consciousness ✨"
+    /// Motto
+    public static let motto = "breath → sound → light"
 }
 
-// MARK: - 🔥 EchoelWarmth - Analog Hardware Emulations
+// MARK: - EchoelWarmth - Analog Hardware Emulations
 
-/// Classic analog hardware with that warm, fuzzy feeling
-/// "Like a hug for your audio" - EchoelWarmth
+/// Classic analog hardware emulations (tube, tape, transformer saturation)
 public enum EchoelWarmth {
 
     // MARK: - 🎛️ The Console - One Knob to Rule Them All
@@ -425,7 +416,7 @@ public enum EchoelPulse {
     }
 }
 
-// MARK: - 🎨 EchoelVibe - Creative Effects
+// MARK: - EchoelVibe - Creative Effects
 
 /// Fun, creative audio mangling
 /// "Make it weird, make it wonderful" - EchoelVibe

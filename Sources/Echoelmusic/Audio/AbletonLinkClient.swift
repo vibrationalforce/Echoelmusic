@@ -14,7 +14,6 @@
 
 import Foundation
 import Network
-import Combine
 
 // MARK: - Link Protocol Constants
 
@@ -558,8 +557,9 @@ public final class AbletonLinkClient {
             // Already at target phase
             callback()
         } else {
-            // Schedule callback
-            DispatchQueue.main.asyncAfter(deadline: .now() + waitTime) {
+            // Schedule callback after wait
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: UInt64(waitTime * 1_000_000_000))
                 callback()
             }
         }

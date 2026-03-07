@@ -8,13 +8,13 @@ import Observation
 /// Supports ALL formats for ALL platforms and use cases
 ///
 /// Output Formats:
-/// 🎵 Audio: WAV, AIFF, FLAC, ALAC, MP3, AAC, Opus, Vorbis
-/// 🎬 Video: H.264, H.265/HEVC, ProRes, DNxHD, AV1
-/// 📺 Broadcast: IMF, DCP, MXF, AS-11
-/// 📱 Social: Instagram, TikTok, YouTube, Facebook presets
-/// 🎮 Game: Wwise, FMOD compatible
-/// 🎪 Live: NDI, RTMP, SRT streaming
-/// 💿 Physical: CD-DA, Vinyl mastering, Cassette
+/// - Audio: WAV, AIFF, FLAC, ALAC, MP3, AAC, Opus, Vorbis
+/// - Video: H.264, H.265/HEVC, ProRes, DNxHD, AV1
+/// - Broadcast: IMF, DCP, MXF, AS-11
+/// - Social: Instagram, TikTok, YouTube, Facebook presets
+/// - Game: Wwise, FMOD compatible
+/// - Live: NDI, RTMP, SRT streaming
+/// - Physical: CD-DA, Vinyl mastering, Cassette
 ///
 /// Quality Levels:
 /// - Lossless: WAV/AIFF 24/32-bit, FLAC, ProRes

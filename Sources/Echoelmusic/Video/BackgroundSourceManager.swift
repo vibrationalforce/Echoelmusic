@@ -6,7 +6,6 @@ import MetalKit
 #endif
 import CoreImage
 import SwiftUI
-import Combine
 import Observation
 
 /// Background Source Manager for Chroma Key Compositing

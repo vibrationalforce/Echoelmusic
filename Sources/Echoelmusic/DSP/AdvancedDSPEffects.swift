@@ -5,18 +5,18 @@ import Accelerate
 /// Professional-grade audio effects for studio/broadcast/film
 ///
 /// Effects Included:
-/// 🎛️ Parametric EQ (32-band, surgical precision)
-/// 🔊 Multiband Compressor (broadcast-grade)
-/// 🎚️ De-Esser (vocal cleanup)
-/// 🔇 Gate/Expander (noise reduction)
-/// 🌊 Reverb (convolution + algorithmic)
-/// ⏱️ Delay (tape emulation + modern)
-/// 🎵 Chorus/Flanger/Phaser (modulation)
-/// 📢 Limiter (brick-wall, true peak)
-/// 🎤 Vocal Tuner (auto-tune style)
-/// 🎸 Distortion/Saturation (analog warmth)
-/// 🔊 Stereo Imaging (width control)
-/// 📊 Spectral Processing (FFT-based)
+/// - Parametric EQ (32-band, surgical precision)
+/// - Multiband Compressor (broadcast-grade)
+/// - De-Esser (vocal cleanup)
+/// - Gate/Expander (noise reduction)
+/// - Reverb (convolution + algorithmic)
+/// - Delay (tape emulation + modern)
+/// - Chorus/Flanger/Phaser (modulation)
+/// - Limiter (brick-wall, true peak)
+/// - Vocal Tuner (auto-tune style)
+/// - Distortion/Saturation (analog warmth)
+/// - Stereo Imaging (width control)
+/// - Spectral Processing (FFT-based)
 ///
 /// Standards:
 /// - Sample rates: 44.1kHz - 192kHz

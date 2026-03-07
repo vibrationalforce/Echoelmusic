@@ -1,19 +1,18 @@
 import Foundation
 import AVFoundation
 import AudioToolbox
-import Combine
 import Observation
 
 /// Universal Sound Library & Advanced Synthesis Engine
 /// Complete sound design system for ALL instruments worldwide + synthesis
 ///
 /// INSTRUMENTS COVERED:
-/// 🎹 Electronic: All synthesizers (analog, digital, FM, wavetable, granular)
-/// 🎸 String Instruments: Worldwide (guitar, violin, sitar, erhu, koto, oud, etc.)
-/// 🎺 Wind Instruments: Worldwide (flute, sax, shakuhachi, ney, didgeridoo, etc.)
-/// 🥁 Percussion: Worldwide (drums, tabla, gamelan, steel pan, etc.)
-/// 🎤 Vocal: All vocal techniques worldwide
-/// 🎵 Special: Sound FX, foley, nature sounds, experimental
+/// - Electronic: All synthesizers (analog, digital, FM, wavetable, granular)
+/// - String: Worldwide (guitar, violin, sitar, erhu, koto, oud, etc.)
+/// - Wind: Worldwide (flute, sax, shakuhachi, ney, didgeridoo, etc.)
+/// - Percussion: Worldwide (drums, tabla, gamelan, steel pan, etc.)
+/// - Vocal: All vocal techniques worldwide
+/// - Special: Sound FX, foley, nature sounds, experimental
 ///
 /// SYNTHESIS METHODS:
 /// - Subtractive (analog-style)

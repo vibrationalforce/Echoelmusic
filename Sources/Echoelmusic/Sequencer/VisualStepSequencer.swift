@@ -13,7 +13,6 @@
 // Copyright 2026 Echoelmusic. MIT License.
 
 import SwiftUI
-import Combine
 import Observation
 
 // MARK: - Step Sequencer Core

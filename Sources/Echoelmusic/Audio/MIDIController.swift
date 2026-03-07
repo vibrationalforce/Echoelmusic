@@ -1,6 +1,5 @@
 import Foundation
 import CoreMIDI
-import Combine
 import Observation
 
 /// MIDI controller support for external hardware control
