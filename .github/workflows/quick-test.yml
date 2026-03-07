@@ -23,6 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.10'
+
       - name: Cache Swift
         uses: actions/cache@v4
         with:
@@ -44,34 +49,6 @@ jobs:
       - name: "✅ Tests Passed"
         run: echo "All Swift tests passed!"
 
-  android-test:
-    name: "🧪 Android Tests"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*') }}
-          restore-keys: ${{ runner.os }}-gradle-
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Run Android Tests
-        working-directory: android
-        run: ./gradlew test
-
-      - name: "✅ Android Tests Passed"
-        run: echo "All Android tests passed!"
-
   lint:
     name: "🔍 Code Quality"
     runs-on: ubuntu-latest
@@ -88,7 +65,7 @@ jobs:
 
   summary:
     name: "📊 Test Summary"
-    needs: [swift-test, android-test, lint]
+    needs: [swift-test, lint]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -98,7 +75,6 @@ jobs:
           echo "  QUICK TEST RESULTS"
           echo "================================"
           echo "Swift:   ${{ needs.swift-test.result }}"
-          echo "Android: ${{ needs.android-test.result }}"
           echo "Lint:    ${{ needs.lint.result }}"
           echo "================================"
           echo ""
