@@ -49,12 +49,25 @@ class AdvancedDSPEffects {
             }
         }
 
+        /// Cached biquad coefficients — recomputed only when band parameters change
+        private struct CachedCoefficients {
+            var b0: Float = 0, b1: Float = 0, b2: Float = 0
+            var a1: Float = 0, a2: Float = 0
+            /// Filter state preserved across process() calls
+            var x1: Float = 0, x2: Float = 0
+            var y1: Float = 0, y2: Float = 0
+        }
+
         private var bands: [Band]
         private var sampleRate: Float
+        private var cachedCoeffs: [CachedCoefficients]
+        private var coeffsDirty: [Bool]
 
         init(bandCount: Int = 8, sampleRate: Float = 48000) {
             self.sampleRate = sampleRate
             self.bands = []
+            self.cachedCoeffs = []
+            self.coeffsDirty = []
 
             // Initialize bands across frequency spectrum
             let frequencies: [Float] = [60, 150, 400, 1000, 2500, 6000, 12000, 16000]
@@ -66,26 +79,33 @@ class AdvancedDSPEffects {
                     type: .peak,
                     enabled: true
                 ))
+                cachedCoeffs.append(CachedCoefficients())
+                coeffsDirty.append(true)
             }
         }
 
         func process(_ input: [Float]) -> [Float] {
             var output = input
 
-            for band in bands where band.enabled {
-                output = applyBand(output, band: band)
+            for index in bands.indices where bands[index].enabled {
+                if coeffsDirty[index] {
+                    recomputeCoefficients(for: index)
+                    coeffsDirty[index] = false
+                }
+                output = applyBiquadWithState(output, bandIndex: index)
             }
 
             return output
         }
 
-        private func applyBand(_ input: [Float], band: Band) -> [Float] {
-            // Biquad filter coefficients
+        /// Recompute biquad coefficients only when band parameters change
+        private func recomputeCoefficients(for index: Int) {
+            let band = bands[index]
             let omega = 2.0 * Float.pi * band.frequency / sampleRate
             let sinOmega = sin(omega)
             let cosOmega = cos(omega)
             let alpha = sinOmega / (2.0 * band.q)
-            let A = pow(10.0, band.gain / 40.0)  // Amplitude
+            let A = pow(10.0, band.gain / 40.0)
 
             var b0: Float = 0, b1: Float = 0, b2: Float = 0
             var a0: Float = 0, a1: Float = 0, a2: Float = 0
@@ -134,7 +154,6 @@ class AdvancedDSPEffects {
                 a2 = 1.0 - alpha
 
             case .bandPass:
-                // Bandpass with constant 0dB peak gain
                 b0 = alpha
                 b1 = 0.0
                 b2 = -alpha
@@ -143,7 +162,6 @@ class AdvancedDSPEffects {
                 a2 = 1.0 - alpha
 
             case .notch:
-                // Notch (band-reject) filter
                 b0 = 1.0
                 b1 = -2.0 * cosOmega
                 b2 = 1.0
@@ -152,7 +170,6 @@ class AdvancedDSPEffects {
                 a2 = 1.0 - alpha
 
             case .allPass:
-                // All-pass filter (phase shift only)
                 b0 = 1.0 - alpha
                 b1 = -2.0 * cosOmega
                 b2 = 1.0 + alpha
@@ -161,34 +178,38 @@ class AdvancedDSPEffects {
                 a2 = 1.0 - alpha
             }
 
-            // Normalize coefficients
-            b0 /= a0
-            b1 /= a0
-            b2 /= a0
-            a1 /= a0
-            a2 /= a0
-
-            // Apply biquad filter
-            return applyBiquad(input, b0: b0, b1: b1, b2: b2, a1: a1, a2: a2)
+            // Normalize and cache
+            cachedCoeffs[index].b0 = b0 / a0
+            cachedCoeffs[index].b1 = b1 / a0
+            cachedCoeffs[index].b2 = b2 / a0
+            cachedCoeffs[index].a1 = a1 / a0
+            cachedCoeffs[index].a2 = a2 / a0
         }
 
-        private func applyBiquad(_ input: [Float], b0: Float, b1: Float, b2: Float, a1: Float, a2: Float) -> [Float] {
+        /// Apply biquad using cached coefficients with persistent filter state
+        private func applyBiquadWithState(_ input: [Float], bandIndex: Int) -> [Float] {
             var output = [Float](repeating: 0, count: input.count)
-            var x1: Float = 0, x2: Float = 0
-            var y1: Float = 0, y2: Float = 0
+            let c = cachedCoeffs[bandIndex]
+            var x1 = c.x1, x2 = c.x2
+            var y1 = c.y1, y2 = c.y2
 
             for i in 0..<input.count {
                 let x0 = input[i]
-                let y0 = b0 * x0 + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+                let y0 = c.b0 * x0 + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2
 
                 output[i] = y0
 
-                // Shift delays
                 x2 = x1
                 x1 = x0
                 y2 = y1
                 y1 = y0
             }
+
+            // Persist filter state across calls
+            cachedCoeffs[bandIndex].x1 = x1
+            cachedCoeffs[bandIndex].x2 = x2
+            cachedCoeffs[bandIndex].y1 = y1
+            cachedCoeffs[bandIndex].y2 = y2
 
             return output
         }
@@ -205,6 +226,8 @@ class AdvancedDSPEffects {
             if let quality = q {
                 bands[index].q = quality
             }
+            // Mark dirty so coefficients are recomputed on next process()
+            coeffsDirty[index] = true
         }
     }
 
