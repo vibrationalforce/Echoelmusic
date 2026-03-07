@@ -395,21 +395,23 @@ public enum EchoelPulse {
             delayTime = 200.0 + breathNorm * 800.0
         }
 
-        /// Process audio with body sync
+        /// Process audio with body sync — vectorized with vDSP
         public func process(_ input: [Float]) -> [Float] {
             var output = input
+            let count = vDSP_Length(output.count)
 
-            // 🌬️ Breath envelope
-            let breathEnvelope = 0.8 + body.breathPhase * 0.2
-            for i in 0..<output.count {
-                output[i] *= breathEnvelope
-            }
+            // Breath envelope — constant scalar multiply via vDSP
+            var breathEnvelope = 0.8 + body.breathPhase * 0.2
+            vDSP_vsmul(output, 1, &breathEnvelope, &output, 1, count)
 
-            // ✨ Coherence warmth
+            // Coherence warmth — vectorized tanh via vForce
             if warmth > 0.01 {
-                for i in 0..<output.count {
-                    output[i] = tanh(output[i] * (1.0 + warmth * 2.0)) / (1.0 + warmth)
-                }
+                var scale = 1.0 + warmth * 2.0
+                vDSP_vsmul(output, 1, &scale, &output, 1, count)
+                var n = Int32(output.count)
+                vvtanhf(&output, output, &n)
+                var invWarmth = 1.0 / (1.0 + warmth)
+                vDSP_vsmul(output, 1, &invWarmth, &output, 1, count)
             }
 
             return output
