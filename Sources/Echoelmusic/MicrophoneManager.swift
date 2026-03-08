@@ -137,22 +137,32 @@ final class MicrophoneManager: NSObject {
         }
 
         do {
-            // Configure the audio session for recording
+            // DO NOT override audio session category here.
+            // AudioConfiguration.configureAudioSession() already sets .playAndRecord
+            // which supports both mic input and audio output.
+            // Setting .record here would kill ALL audio output (synths, drums, playback).
+            // .measurement mode also disables Bluetooth codec negotiation (A2DP/AAC).
             #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.record, mode: .measurement, options: [])
-            try audioSession.setActive(true)
+            if !AudioConfiguration.isSessionConfigured {
+                try AudioConfiguration.configureAudioSession()
+            }
             #endif
 
             // Create and configure the audio engine
             audioEngine = AVAudioEngine()
-            guard let audioEngine = audioEngine else { return }
+            guard let audioEngine = audioEngine else {
+                log.error("MicrophoneManager: failed to create AVAudioEngine", category: .audio)
+                return
+            }
 
             inputNode = audioEngine.inputNode
 
             // Get the input format from the microphone
             let recordingFormat = inputNode?.outputFormat(forBus: 0)
-            guard let format = recordingFormat else { return }
+            guard let format = recordingFormat else {
+                log.error("MicrophoneManager: failed to get microphone input format", category: .audio)
+                return
+            }
 
             // Store sample rate for frequency calculation
             sampleRate = format.sampleRate
