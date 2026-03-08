@@ -6,6 +6,39 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-08b — Build Fix + Timer Optimizations
+
+**Branch:** `claude/analyze-test-coverage-VsxOU`
+**Mode:** RALPH WIGGUM LAMBDA — Loop until TestFlight
+
+### Root Cause Found — Persistent Compile Error
+
+The `EchoelCreativeWorkspace.swift:305` error (`no member 'renderStereo'`) persisted through 5 builds because:
+- `bioSynth` was typed as `EchoelDDSP` (single-voice synth)
+- `renderStereo()` only exists on `EchoelPolyDDSP` (polyphonic wrapper, line 868)
+- Fix: Changed type to `EchoelPolyDDSP` — **Build #900 SUCCESS**
+
+### Timer Optimizations (6 files)
+
+Replaced `Task { @MainActor in }` with `MainActor.assumeIsolated` in Timer callbacks:
+- AbletonLinkClient (100Hz update + discovery) — timing-critical
+- ProSessionEngine (240Hz transport tick) — timing-critical
+- TR808BassSynth (sequencer step)
+- BreakbeatChopper (playback timer)
+- TouchInstruments (arpeggiator)
+- EchoelCreativeWorkspace (already fixed in prior session)
+
+### vDSP Exclusivity Fix
+
+- EchoelPolyDDSP.renderStereo(): Fixed `vDSP_vadd` in-place read/write exclusivity violation
+
+### Commits
+
+- `7d915c4` — fix: use EchoelPolyDDSP for bioSynth
+- `ebbbabb` — perf: replace Task with assumeIsolated in Timer callbacks
+
+---
+
 ## Session: 2026-03-08 — Optimization + Test Coverage Expansion
 
 **Branch:** `claude/analyze-test-coverage-VsxOU`
