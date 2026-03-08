@@ -866,7 +866,7 @@ public final class BPMGridEditEngine {
             return (120, 0)
         }
 
-        let confidence = Float(count) / Float(intervals.count)
+        let confidence = intervals.isEmpty ? Float(0) : Float(count) / Float(intervals.count)
         return (mostCommonBPM, confidence)
     }
 

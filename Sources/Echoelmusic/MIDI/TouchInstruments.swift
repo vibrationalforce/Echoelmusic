@@ -124,6 +124,7 @@ enum TouchMusicalScale: String, CaseIterable {
     }
 
     func noteInScale(degree: Int, root: UInt8) -> UInt8 {
+        guard !intervals.isEmpty else { return root }
         let octaveOffset = degree / intervals.count
         let scaleIndex = degree % intervals.count
         let note = Int(root) + (octaveOffset * 12) + intervals[scaleIndex]
