@@ -397,6 +397,11 @@ final class ChordPadViewModel {
                 hub.mpeZoneManager?.deallocateVoice(voice: voice)
             }
             activeVoices.removeValue(forKey: pad.id)
+        } else if hub.mpeZoneManager == nil {
+            // Fallback: release notes through InstrumentOrchestrator
+            for note in pad.notes {
+                InstrumentOrchestrator.shared.noteOff(midiNote: Int(note))
+            }
         }
 
         if playMode == .arpeggio {
@@ -425,21 +430,30 @@ final class ChordPadViewModel {
     }
 
     private func playChordSimultaneous(_ pad: ChordPad, velocity: Float, hub: TouchInstrumentsHub) {
-        guard let mpe = hub.mpeZoneManager else { return }
-
-        var voices: [MPEZoneManager.MPEVoice] = []
-
-        for note in pad.notes {
-            if let voice = mpe.allocateVoice(note: note, velocity: velocity) {
-                voices.append(voice)
+        if let mpe = hub.mpeZoneManager {
+            var voices: [MPEZoneManager.MPEVoice] = []
+            for note in pad.notes {
+                if let voice = mpe.allocateVoice(note: note, velocity: velocity) {
+                    voices.append(voice)
+                }
+            }
+            activeVoices[pad.id] = voices
+        } else {
+            // Fallback: play through InstrumentOrchestrator when MPE is not connected
+            for note in pad.notes {
+                InstrumentOrchestrator.shared.noteOn(midiNote: Int(note), velocity: velocity)
             }
         }
-
-        activeVoices[pad.id] = voices
     }
 
     private func playChordStrummed(_ pad: ChordPad, velocity: Float, hub: TouchInstrumentsHub) {
-        guard let mpe = hub.mpeZoneManager else { return }
+        guard let mpe = hub.mpeZoneManager else {
+            // Fallback: play chord notes without strum timing
+            for note in pad.notes {
+                InstrumentOrchestrator.shared.noteOn(midiNote: Int(note), velocity: velocity)
+            }
+            return
+        }
 
         var voices: [MPEZoneManager.MPEVoice] = []
         let strumDelayNs: UInt64 = 30_000_000 // 30ms between notes
@@ -1048,6 +1062,12 @@ final class MelodyPadViewModel {
                         updatedTouch.voice = newVoice
                         updatedTouch.note = note
                         hub.triggerHaptic(intensity: 0.3, sharpness: 0.5)
+                    } else if hub.mpeZoneManager == nil {
+                        // Fallback: retrigger through InstrumentOrchestrator
+                        InstrumentOrchestrator.shared.noteOff(midiNote: Int(existingTouch.note))
+                        InstrumentOrchestrator.shared.noteOn(midiNote: Int(note), velocity: 0.8)
+                        updatedTouch.note = note
+                        hub.triggerHaptic(intensity: 0.3, sharpness: 0.5)
                     }
                 }
             }
@@ -1069,9 +1089,20 @@ final class MelodyPadViewModel {
                     note: note,
                     voice: voice
                 )
+            } else if hub.mpeZoneManager == nil {
+                // Fallback: play through InstrumentOrchestrator when MPE is not connected
+                if let lastNote {
+                    InstrumentOrchestrator.shared.noteOff(midiNote: Int(lastNote))
+                }
+                InstrumentOrchestrator.shared.noteOn(midiNote: Int(note), velocity: 0.8)
 
-                hub.triggerHaptic(intensity: 0.5, sharpness: 0.6)
+                activeTouches[touchId] = TouchInfo(
+                    location: location,
+                    note: note,
+                    voice: nil
+                )
             }
+            hub.triggerHaptic(intensity: 0.5, sharpness: 0.6)
         }
 
         lastNote = note
@@ -1081,6 +1112,9 @@ final class MelodyPadViewModel {
         for (_, touch) in activeTouches {
             if let voice = touch.voice {
                 hub.mpeZoneManager?.deallocateVoice(voice: voice)
+            } else {
+                // Fallback: release through InstrumentOrchestrator
+                InstrumentOrchestrator.shared.noteOff(midiNote: Int(touch.note))
             }
         }
         activeTouches.removeAll()
