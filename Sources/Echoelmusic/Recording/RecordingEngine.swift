@@ -268,12 +268,22 @@ final class RecordingEngine {
     /// Setup audio engine tap for recording
     private func setupAudioRecording() throws {
         audioEngine = AVAudioEngine()
-        guard let engine = audioEngine else { return }
+        guard let engine = audioEngine else {
+            log.error("RecordingEngine: failed to create AVAudioEngine", category: .audio)
+            return
+        }
 
         inputNode = engine.inputNode
-        guard let input = inputNode else { return }
+        guard let input = inputNode else {
+            log.error("RecordingEngine: no input node available (mic permission?)", category: .audio)
+            return
+        }
 
         let inputFormat = input.outputFormat(forBus: 0)
+        guard inputFormat.sampleRate > 0 else {
+            log.error("RecordingEngine: invalid input format (sampleRate=0)", category: .audio)
+            return
+        }
 
         // Install tap to capture audio data
         // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
