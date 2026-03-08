@@ -239,22 +239,23 @@ final class EchoelCreativeWorkspace {
 
     func togglePlayback() {
         if isPlaying {
+            isPlaying = false
+            stopAudioRenderTimer()
             videoEditor.pause()
             proSession.stop()
             proMixer.isPlaying = false
             loopEngine.stopPlayback()
-            stopAudioRenderTimer()
         } else {
             audioEngine?.start()
-            Task { await videoEditor.play() }
-            proSession.play()
+            isPlaying = true
             proMixer.isPlaying = true
+            proSession.play()
+            Task { await videoEditor.play() }
             if !loopEngine.loops.isEmpty {
                 loopEngine.startPlayback()
             }
             startAudioRenderTimer()
         }
-        isPlaying.toggle()
     }
 
     func updatePlaybackPosition(_ seconds: Double) {
