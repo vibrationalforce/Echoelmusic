@@ -6,6 +6,40 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-08 — Post-Cleanup Test Coverage Analysis
+
+**Branch:** `claude/analyze-test-coverage-VsxOU`
+**Task:** Rebaseline test coverage after 26K LOC dead code removal
+
+### Key Findings
+
+- **89 source files** (down from 109), **46,857 LOC** (down from ~70K)
+- **21 test files**, **1,817 methods**, **15,603 LOC**
+- **54/89 files tested** (60.7%), **54/73 logic files** (73.8% excluding Views)
+- **76% of source LOC** is covered by at least one test reference
+
+### Critical Gaps Identified
+
+1. **RecordingEngine.swift** (891 LOC) — zero tests, CRITICAL
+2. **BPMTransitionEngine.swift** (743 LOC) — zero tests, HIGH
+3. **MixerDSPKernel.swift** (639 LOC) — zero tests, HIGH
+4. **AudioClipScheduler.swift** (525 LOC) — zero tests, HIGH
+5. **TrackFreezeEngine.swift** (489 LOC) — zero tests, HIGH
+6. **MIDI2Manager + MPEZoneManager** (732 LOC combined) — zero tests
+
+### Quality Gaps
+
+- No behavioral DSP output tests (only init/type tests)
+- No concurrency tests (@MainActor, async/await)
+- No performance regression tests (measure {} blocks)
+- No error path tests (audio interruptions)
+
+### Output
+
+- `scratchpads/TEST_COVERAGE_ANALYSIS_2026-03-08.md` — full analysis
+
+---
+
 ## Session: 2026-03-07b — MCPs + Triple Deep Analysis
 
 **Branch:** `claude/analyze-test-coverage-VsxOU`
