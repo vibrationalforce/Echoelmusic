@@ -6,33 +6,40 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
-## Session: 2026-03-08 — Post-Cleanup Test Coverage Analysis
+## Session: 2026-03-08 — Optimization + Test Coverage Expansion
 
 **Branch:** `claude/analyze-test-coverage-VsxOU`
-**Task:** Rebaseline test coverage after 26K LOC dead code removal
+**Mode:** RALPH WIGGUM LAMBDA — Maximum
 
-### Key Findings
+### Performance Fixes
 
-- **89 source files** (down from 109), **46,857 LOC** (down from ~70K)
-- **21 test files**, **1,817 methods**, **15,603 LOC**
-- **54/89 files tested** (60.7%), **54/73 logic files** (73.8% excluding Views)
-- **76% of source LOC** is covered by at least one test reference
+1. **EchoelVDSPKit** — Pre-allocated FFT windowed buffer (eliminates heap alloc on audio thread)
+2. **EchoelConvolution** — Clamp input to maxInputLength (no RT reallocation)
+3. **EchoelCreativeWorkspace** — Timer render: `assumeIsolated` replaces Task wrapper (~93 allocs/sec eliminated)
+4. **observeAudioLevel** — Re-register before throttle check (cleaner pattern)
 
-### Critical Gaps Identified
+### Verified Non-Issues (from DEEP_ANALYSIS)
 
-1. **RecordingEngine.swift** (891 LOC) — zero tests, CRITICAL
-2. **BPMTransitionEngine.swift** (743 LOC) — zero tests, HIGH
-3. **MixerDSPKernel.swift** (639 LOC) — zero tests, HIGH
-4. **AudioClipScheduler.swift** (525 LOC) — zero tests, HIGH
-5. **TrackFreezeEngine.swift** (489 LOC) — zero tests, HIGH
-6. **MIDI2Manager + MPEZoneManager** (732 LOC combined) — zero tests
+- C1 NSLock: **Already uses AudioUnfairLock** (os_unfair_lock) — safe
+- O2.2 NodeGraph: **Already has O(1) nodeLookup** — optimized
+- O4.3 .id(currentTab): **Not present** — no recreation issue
 
-### Quality Gaps
+### Test Coverage (+93 methods, +769 LOC)
 
-- No behavioral DSP output tests (only init/type tests)
-- No concurrency tests (@MainActor, async/await)
-- No performance regression tests (measure {} blocks)
-- No error path tests (audio interruptions)
+New: `RecordingAudioExtendedTests.swift` — 22 classes, 93 methods:
+- BPMSituation, BPMTransitionMode, BPMLockState, BPMSnapshot
+- MetronomeSound, MetronomeSubdivision, CountInMode, MetronomeConfiguration
+- MusicalNote, TuningReference, TunerReading
+- CrossfadeCurve, CrossfadeRegion, CrossfadeEngine
+- EqualPowerPan, TrackFreezeState, FreezeConfiguration, FreezeError
+
+### Updated Metrics
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Test files | 21 | 22 |
+| Test methods | 1,817 | 1,910 |
+| Test LOC | 15,603 | 16,372 |
 
 ### Output
 
