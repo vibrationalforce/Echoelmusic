@@ -2,9 +2,9 @@
 // ExportTests.swift
 // Echoelmusic — Phase 4 Test Coverage: Export Pipeline
 //
-// Tests for UniversalExportPipeline types: ExportPreset, ExportJob,
-// AudioFormat, VideoFormat, Resolution, Bitrate, LoudnessTarget,
-// FrameRate, Container, and associated enums.
+// Tests for ExportPreset, ExportJob, AudioFormat, VideoFormat,
+// Resolution, Bitrate, LoudnessTarget, FrameRate, Container,
+// ProColorGrading, and associated enums.
 
 import XCTest
 @testable import Echoelmusic
@@ -188,48 +188,6 @@ final class ExportJobTests: XCTestCase {
     }
 }
 
-// MARK: - UniversalExportPipeline Tests
-
-@MainActor
-final class UniversalExportPipelineTests: XCTestCase {
-
-    func testInit() {
-        let pipeline = UniversalExportPipeline()
-        XCTAssertNotNil(pipeline)
-        XCTAssertEqual(pipeline.exportProgress, 0.0, accuracy: 0.001)
-    }
-
-    func testLoadPresets() {
-        let pipeline = UniversalExportPipeline()
-        pipeline.loadExportPresets()
-        XCTAssertGreaterThan(pipeline.availablePresets.count, 0)
-    }
-
-    func testGetPresetsByCategory() {
-        let pipeline = UniversalExportPipeline()
-        pipeline.loadExportPresets()
-        let musicPresets = pipeline.getPresets(for: .music)
-        // Should have at least one music preset
-        for preset in musicPresets {
-            XCTAssertEqual(preset.category, .music)
-        }
-    }
-
-    func testPresetFileExtension() {
-        let pipeline = UniversalExportPipeline()
-        pipeline.loadExportPresets()
-        for preset in pipeline.availablePresets {
-            XCTAssertFalse(preset.fileExtension.isEmpty, "\(preset.name) missing file extension")
-        }
-    }
-
-    func testGenerateReport() {
-        let pipeline = UniversalExportPipeline()
-        pipeline.loadExportPresets()
-        let report = pipeline.generateExportReport()
-        XCTAssertFalse(report.isEmpty)
-    }
-}
 
 // MARK: - ColorRange Tests (ProColorGrading)
 

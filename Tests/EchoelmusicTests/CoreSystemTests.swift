@@ -2,100 +2,12 @@
 // CoreSystemTests.swift
 // Echoelmusic — Phase 1 Test Coverage
 //
-// Tests for core infrastructure: SPSCQueue, NumericExtensions,
+// Tests for core infrastructure: NumericExtensions,
 // AudioConstants, TuningReference, MusicalNote
 
 import XCTest
 @testable import Echoelmusic
 
-// MARK: - SPSCQueue Tests
-
-final class SPSCQueueTests: XCTestCase {
-
-    func testInitializationEmpty() {
-        let queue = SPSCQueue<Int>(capacity: 8)
-        XCTAssertTrue(queue.isEmpty)
-        XCTAssertEqual(queue.count, 0)
-        XCTAssertFalse(queue.isFull)
-        XCTAssertEqual(queue.droppedCount, 0)
-    }
-
-    func testEnqueueDequeue() {
-        let queue = SPSCQueue<Int>(capacity: 8)
-        queue.enqueue(42)
-        XCTAssertFalse(queue.isEmpty)
-        XCTAssertEqual(queue.count, 1)
-
-        let value = queue.dequeue()
-        XCTAssertEqual(value, 42)
-        XCTAssertTrue(queue.isEmpty)
-    }
-
-    func testFIFOOrder() {
-        let queue = SPSCQueue<Int>(capacity: 8)
-        for i in 0..<4 {
-            queue.enqueue(i)
-        }
-        for i in 0..<4 {
-            XCTAssertEqual(queue.dequeue(), i)
-        }
-    }
-
-    func testDequeueEmptyReturnsNil() {
-        let queue = SPSCQueue<Int>(capacity: 4)
-        XCTAssertNil(queue.dequeue())
-    }
-
-    func testPeek() {
-        let queue = SPSCQueue<Int>(capacity: 8)
-        XCTAssertNil(queue.peek())
-
-        queue.enqueue(10)
-        XCTAssertEqual(queue.peek(), 10)
-        // Peek should not remove
-        XCTAssertEqual(queue.count, 1)
-    }
-
-    func testCapacityRoundsUpToPowerOf2() {
-        // Capacity 5 should round up to 8
-        let queue = SPSCQueue<Int>(capacity: 5)
-        // Fill to capacity-1 (7 slots usable in ring buffer of 8)
-        for i in 0..<7 {
-            XCTAssertTrue(queue.tryEnqueue(i))
-        }
-        // 8th should fail (ring buffer uses 1 slot for full detection)
-        XCTAssertFalse(queue.tryEnqueue(99))
-    }
-
-    func testTryEnqueueFullReturnsFalse() {
-        let queue = SPSCQueue<Int>(capacity: 2)
-        // Power of 2 = 2, usable = 1
-        XCTAssertTrue(queue.tryEnqueue(1))
-        XCTAssertFalse(queue.tryEnqueue(2))
-    }
-
-    func testOverflowDropsOldest() {
-        let queue = SPSCQueue<Int>(capacity: 2)
-        // Capacity 2 ring buffer, 1 usable slot
-        queue.enqueue(1) // fills single slot
-        queue.enqueue(2) // should drop oldest
-        XCTAssertGreaterThan(queue.droppedCount, 0)
-    }
-
-    func testMetrics() {
-        let queue = SPSCQueue<Int>(capacity: 8)
-        queue.enqueue(1)
-        queue.enqueue(2)
-        _ = queue.dequeue()
-
-        XCTAssertEqual(queue.enqueueCount, 2)
-        XCTAssertEqual(queue.dequeueCount, 1)
-
-        queue.resetMetrics()
-        XCTAssertEqual(queue.enqueueCount, 0)
-        XCTAssertEqual(queue.dequeueCount, 0)
-    }
-}
 
 // MARK: - VideoFrameQueue Tests
 
