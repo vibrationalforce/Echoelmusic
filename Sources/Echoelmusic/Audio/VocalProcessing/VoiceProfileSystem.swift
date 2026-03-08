@@ -974,10 +974,14 @@ public final class VoiceSynthesisEngine {
 
     /// Start recording a voice sample for profile creation
     public func startRecording() throws {
+        // Ensure audio session supports recording without killing playback output.
+        // AudioConfiguration.configureAudioSession() sets .playAndRecord with .default mode
+        // which preserves Bluetooth codec negotiation (A2DP/AAC).
+        // Do NOT set .record or .measurement here — it kills audio output.
         #if !os(macOS)
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.record, mode: .measurement)
-        try session.setActive(true)
+        if !AudioConfiguration.isSessionConfigured {
+            try AudioConfiguration.configureAudioSession()
+        }
         #endif
 
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("voice_sample_\(UUID().uuidString).m4a")

@@ -377,14 +377,13 @@ public final class AudioToQuantumMIDI {
             throw AudioInputError.engineSetupFailed
         }
 
-        // Configure audio session
+        // Ensure audio session is configured for recording + playback.
+        // Do NOT use .measurement mode — it disables Bluetooth codec negotiation
+        // (A2DP/AAC/aptX), making Bluetooth headphones silent.
         #if os(iOS)
-        try AVAudioSession.sharedInstance().setCategory(
-            .playAndRecord,
-            mode: .measurement,
-            options: [.allowBluetooth, .defaultToSpeaker]
-        )
-        try AVAudioSession.sharedInstance().setActive(true)
+        if !AudioConfiguration.isSessionConfigured {
+            try AudioConfiguration.configureAudioSession()
+        }
         #endif
 
         inputNode = engine.inputNode

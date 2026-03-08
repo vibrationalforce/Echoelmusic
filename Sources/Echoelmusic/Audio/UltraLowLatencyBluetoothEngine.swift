@@ -345,9 +345,11 @@ public final class BluetoothAudioSession {
         // macOS uses CoreAudio HAL, not AVAudioSession
         return
         #else
+        // Use .default mode, NOT .measurement — .measurement disables Bluetooth
+        // codec negotiation (A2DP/AAC/aptX), making Bluetooth headphones silent.
         try audioSession.setCategory(
             .playAndRecord,
-            mode: .measurement,
+            mode: .default,
             options: [
                 .allowBluetooth,
                 .allowBluetoothA2DP,
