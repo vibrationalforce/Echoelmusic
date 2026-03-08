@@ -302,7 +302,7 @@ final class EchoelCreativeWorkspace {
         // Render bio-reactive synth (produces audio when voices are active)
         var bioLeft = [Float](repeating: 0, count: frameCount)
         var bioRight = [Float](repeating: 0, count: frameCount)
-        bioSynth.render(left: &bioLeft, right: &bioRight, frameCount: frameCount)
+        bioSynth.renderStereo(left: &bioLeft, right: &bioRight, frameCount: frameCount)
 
         // Check if we have any audio to output
         let hasSession = sessionAudio != nil && !(sessionAudio?.left.isEmpty ?? true)

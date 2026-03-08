@@ -1047,7 +1047,7 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
     // MARK: - Audio Rendering
 
     /// Render stereo audio from all active voices
-    public func render(left: inout [Float], right: inout [Float], frameCount: Int) {
+    public func renderStereo(left: inout [Float], right: inout [Float], frameCount: Int) {
         guard frameCount <= mixBufferL.count else { return }
 
         // Clear mix buffers
