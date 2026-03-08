@@ -1359,7 +1359,7 @@ extension TR808BassSynth {
         isSequencerPlaying = true
         sequencerStep = 0
 
-        let stepInterval = 60.0 / Double(sequencerBPM) / 4.0  // 16th notes
+        let stepInterval = 60.0 / max(Double(sequencerBPM), 20.0) / 4.0  // 16th notes
         sequencerTimer = Timer.scheduledTimer(withTimeInterval: stepInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.advanceSequencer()
