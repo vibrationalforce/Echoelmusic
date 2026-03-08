@@ -40,6 +40,10 @@ final class InstrumentOrchestrator {
     private var playerNode: AVAudioPlayerNode?
     private var mixerNode: AVAudioMixerNode?
 
+    /// Optional reference to main AudioEngine — when set, routes all playback through it
+    /// instead of using the local AVAudioEngine. Eliminates duplicate engine conflicts on iOS.
+    private weak var mainAudioEngine: AudioEngine?
+
     // MARK: - Sound Library
 
     private let soundLibrary = UniversalSoundLibrary()
@@ -135,6 +139,19 @@ final class InstrumentOrchestrator {
             isEngineReady = false
             log.error("InstrumentOrchestrator: Failed to start audio engine: \(engineError)", category: .audio)
         }
+    }
+
+    /// Connect to the main AudioEngine for unified audio output.
+    /// Stops the local AVAudioEngine and routes all playback through the main engine.
+    func connectMainAudioEngine(_ engine: AudioEngine) {
+        self.mainAudioEngine = engine
+        // Stop local engine — we'll use main engine's schedulePlayback() instead
+        audioEngine?.stop()
+        audioEngine = nil
+        playerNode = nil
+        mixerNode = nil
+        isEngineReady = true
+        log.audio("InstrumentOrchestrator: Connected to main AudioEngine — unified audio path")
     }
 
     private func setupDefaultInstrument() {
@@ -253,15 +270,21 @@ final class InstrumentOrchestrator {
             voices.append(voice)
             activeVoices += 1
 
-            // Schedule playback
-            playerNode?.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
-                Task { @MainActor in
+            // Schedule playback — prefer main engine, fallback to local
+            if let mainEngine = mainAudioEngine {
+                mainEngine.schedulePlayback(buffer: buffer)
+                Task { @MainActor [weak self] in
                     self?.voiceFinished(voice.id)
                 }
-            }
-
-            if playerNode?.isPlaying == false {
-                playerNode?.play()
+            } else if let player = playerNode {
+                player.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
+                    Task { @MainActor in
+                        self?.voiceFinished(voice.id)
+                    }
+                }
+                if !player.isPlaying {
+                    player.play()
+                }
             }
 
             log.audio("🎵 Note On: MIDI \(midiNote) @ \(Int(velocity * 100))% velocity")

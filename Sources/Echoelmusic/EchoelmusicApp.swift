@@ -33,6 +33,10 @@ struct EchoelmusicApp: App {
                     .onAppear {
                         recordingEngine.connectAudioEngine(audioEngine)
                         EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
+                        // Route instrument audio through main engine (unified pipeline)
+                        InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
+                        // Start audio engine immediately so synths, presets, and meters work
+                        audioEngine.start()
                     }
             } else {
                 LaunchScreen(phase: launchPhase, progress: launchProgress)
@@ -64,6 +68,9 @@ struct EchoelmusicApp: App {
         launchPhase = "Creative Workspace"
         launchProgress = 0.6
         _ = EchoelCreativeWorkspace.shared
+        // Pre-warm audio singletons so first key/drum tap has zero latency
+        _ = InstrumentOrchestrator.shared
+        _ = EchoelBeat.shared
         try? await Task.sleep(nanoseconds: 50_000_000)
 
         launchPhase = "State Persistence"

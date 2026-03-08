@@ -289,17 +289,27 @@ final class EchoelCreativeWorkspace {
         audioRenderTimer = nil
     }
 
-    /// Render one block of audio from the session and send to hardware.
-    /// Chain: ProSessionEngine.renderAudio() → AVAudioPCMBuffer → AudioEngine.schedulePlayback()
+    /// Render one block of audio from the session + bio-synth and send to hardware.
+    /// Chain: ProSessionEngine + EchoelDDSP → mix → AVAudioPCMBuffer → AudioEngine.schedulePlayback()
     private func renderAndOutputAudio(frameCount: Int) {
         guard isPlaying, let audioEngine else { return }
 
-        // Render from session (clips, patterns, MIDI)
-        guard let stereo = proSession.renderAudio(frameCount: frameCount) else { return }
-        guard !stereo.left.isEmpty else { return }
-
-        // Create AVAudioPCMBuffer from rendered Float arrays
         let sampleRate = proMixer.sampleRate
+
+        // Render from session (clips, patterns, MIDI)
+        let sessionAudio = proSession.renderAudio(frameCount: frameCount)
+
+        // Render bio-reactive synth (produces audio when voices are active)
+        var bioLeft = [Float](repeating: 0, count: frameCount)
+        var bioRight = [Float](repeating: 0, count: frameCount)
+        bioSynth.render(left: &bioLeft, right: &bioRight, frameCount: frameCount)
+
+        // Check if we have any audio to output
+        let hasSession = sessionAudio != nil && !(sessionAudio?.left.isEmpty ?? true)
+        let hasBio = bioLeft.contains(where: { $0 != 0 })
+        guard hasSession || hasBio else { return }
+
+        // Create AVAudioPCMBuffer
         guard let format = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: sampleRate,
@@ -312,15 +322,32 @@ final class EchoelCreativeWorkspace {
 
         guard let channelData = buffer.floatChannelData else { return }
 
-        // Copy rendered audio into buffer
-        let count = min(stereo.left.count, frameCount)
-        stereo.left.withUnsafeBufferPointer { src in
-            guard let srcBase = src.baseAddress else { return }
-            channelData[0].update(from: srcBase, count: count)
-        }
-        stereo.right.withUnsafeBufferPointer { src in
-            guard let srcBase = src.baseAddress else { return }
-            channelData[1].update(from: srcBase, count: count)
+        // Mix session + bio-synth into output buffer
+        if let stereo = sessionAudio, !stereo.left.isEmpty {
+            let count = min(stereo.left.count, frameCount)
+            stereo.left.withUnsafeBufferPointer { src in
+                guard let srcBase = src.baseAddress else { return }
+                channelData[0].update(from: srcBase, count: count)
+            }
+            stereo.right.withUnsafeBufferPointer { src in
+                guard let srcBase = src.baseAddress else { return }
+                channelData[1].update(from: srcBase, count: count)
+            }
+            // Add bio-synth on top of session audio
+            if hasBio {
+                vDSP_vadd(channelData[0], 1, bioLeft, 1, channelData[0], 1, vDSP_Length(frameCount))
+                vDSP_vadd(channelData[1], 1, bioRight, 1, channelData[1], 1, vDSP_Length(frameCount))
+            }
+        } else {
+            // Bio-synth only
+            bioLeft.withUnsafeBufferPointer { src in
+                guard let srcBase = src.baseAddress else { return }
+                channelData[0].update(from: srcBase, count: frameCount)
+            }
+            bioRight.withUnsafeBufferPointer { src in
+                guard let srcBase = src.baseAddress else { return }
+                channelData[1].update(from: srcBase, count: frameCount)
+            }
         }
 
         // Send to hardware output

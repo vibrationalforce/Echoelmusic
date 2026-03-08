@@ -532,6 +532,8 @@ public final class EchoelBeat {
 
     private init() {
         setupAudioEngine()
+        // Load default drum kit so drum pads produce sound immediately
+        loadDrumKit(genre: .electronic)
     }
 
     private func setupAudioEngine() {
