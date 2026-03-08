@@ -334,9 +334,12 @@ final class EchoelCreativeWorkspace {
                 channelData[1].update(from: srcBase, count: count)
             }
             // Add bio-synth on top of session audio
+            // Copy channel pointers to avoid Swift exclusivity violation with vDSP in-place ops
             if hasBio {
-                vDSP_vadd(channelData[0], 1, bioLeft, 1, channelData[0], 1, vDSP_Length(frameCount))
-                vDSP_vadd(channelData[1], 1, bioRight, 1, channelData[1], 1, vDSP_Length(frameCount))
+                let chL = channelData[0]
+                let chR = channelData[1]
+                vDSP_vadd(chL, 1, bioLeft, 1, chL, 1, vDSP_Length(frameCount))
+                vDSP_vadd(chR, 1, bioRight, 1, chR, 1, vDSP_Length(frameCount))
             }
         } else {
             // Bio-synth only
