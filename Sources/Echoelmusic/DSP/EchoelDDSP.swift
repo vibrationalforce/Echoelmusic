@@ -1,4 +1,3 @@
-#if canImport(Accelerate)
 import Foundation
 import Accelerate
 
@@ -1102,4 +1101,3 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         ageCounter = 0
     }
 }
-#endif
