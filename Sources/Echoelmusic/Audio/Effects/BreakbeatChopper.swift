@@ -757,7 +757,7 @@ public final class BreakbeatChopper {
 
         // Start playback timer
         playbackTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(stepDuration), repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.playNextStep()
             }
         }

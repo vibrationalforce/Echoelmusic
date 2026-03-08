@@ -759,7 +759,7 @@ public final class ProSessionEngine {
         // Tick at ~240 Hz for tight timing resolution
         let tickInterval: TimeInterval = 1.0 / 240.0
         transportTimer = Timer.scheduledTimer(withTimeInterval: tickInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            MainActor.assumeIsolated {
                 self?.transportTick(tickInterval)
             }
         }

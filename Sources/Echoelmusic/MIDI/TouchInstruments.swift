@@ -487,7 +487,7 @@ final class ChordPadViewModel {
         let interval = 60.0 / arpRate // Convert BPM to seconds
 
         arpTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.playNextArpNote(hub: hub)
             }
         }

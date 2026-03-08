@@ -300,7 +300,7 @@ public final class AbletonLinkClient {
     private func startUpdateLoop() {
         // High-frequency update for accurate timing (100 Hz)
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.updateSessionState()
             }
         }
@@ -321,7 +321,7 @@ public final class AbletonLinkClient {
     private func startDiscovery() {
         // Send periodic discovery messages
         discoveryTimer = Timer.scheduledTimer(withTimeInterval: LinkConstants.discoveryInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.sendDiscovery()
                 self?.cleanupStalePeers()
             }
