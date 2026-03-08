@@ -220,6 +220,108 @@ final class VideoExportManager {
         }
     }
 
+    // MARK: - Color Grading Integration
+
+    /// Optional color grading engine applied during export via AVVideoComposition.
+    var colorGrading: ProColorGrading?
+
+    /// Builds an AVVideoComposition that applies ProColorGrading CIFilters per frame.
+    func buildVideoComposition(
+        for composition: AVMutableComposition,
+        resolution: Resolution,
+        frameRate: FrameRate
+    ) -> AVVideoComposition? {
+        guard let grading = colorGrading, grading.isEnabled else { return nil }
+
+        let targetSize = resolution.size ?? composition.naturalSize
+        guard targetSize.width > 0, targetSize.height > 0 else { return nil }
+
+        let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+
+        let videoComposition = AVMutableVideoComposition(asset: composition) { request in
+            let source = request.sourceImage.clampedToExtent()
+
+            // Apply the full grading pipeline
+            let graded = grading.applyGrade(to: source)
+
+            // Crop back to render size
+            let cropped = graded.cropped(to: request.sourceImage.extent)
+            request.finish(with: cropped, context: ciContext)
+        }
+
+        videoComposition.renderSize = targetSize
+        videoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(frameRate.rawValue))
+
+        return videoComposition
+    }
+
+    // MARK: - Export with Effects
+
+    /// Export composition with color grading applied per-frame via CIFilter pipeline.
+    func exportWithEffects(
+        composition: AVMutableComposition,
+        to outputURL: URL,
+        format: ExportFormat = .h264_high,
+        resolution: Resolution = .hd1920x1080,
+        frameRate: FrameRate = .fps30,
+        quality: Quality = .high
+    ) async throws {
+        guard !isExporting else {
+            throw ExportError.exportAlreadyInProgress
+        }
+
+        isExporting = true
+        exportProgress = 0.0
+
+        let presetName: String
+        switch resolution {
+        case .uhd3840x2160: presetName = AVAssetExportPresetHighestQuality
+        case .hd1920x1080: presetName = AVAssetExportPresetHighestQuality
+        default: presetName = AVAssetExportPresetMediumQuality
+        }
+
+        guard let exportSession = AVAssetExportSession(
+            asset: composition,
+            presetName: presetName
+        ) else {
+            isExporting = false
+            throw ExportError.exportSessionCreationFailed
+        }
+
+        currentExportSession = exportSession
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = format.fileExtension == "mp4" ? .mp4 : .mov
+        exportSession.shouldOptimizeForNetworkUse = true
+
+        // Apply color grading as AVVideoComposition
+        if let videoComp = buildVideoComposition(
+            for: composition,
+            resolution: resolution,
+            frameRate: frameRate
+        ) {
+            exportSession.videoComposition = videoComp
+        }
+
+        startProgressMonitoring(exportSession: exportSession)
+        await exportSession.export()
+        stopProgressMonitoring()
+
+        switch exportSession.status {
+        case .completed:
+            log.video("VideoExportManager: Export with effects completed - \(outputURL.lastPathComponent)")
+        case .failed:
+            throw exportSession.error ?? ExportError.exportFailed
+        case .cancelled:
+            throw ExportError.exportCancelled
+        default:
+            throw ExportError.unexpectedExportStatus
+        }
+
+        isExporting = false
+        exportProgress = 1.0
+        currentExportSession = nil
+    }
+
     // MARK: - Export Session
 
     private var currentExportSession: AVAssetExportSession?

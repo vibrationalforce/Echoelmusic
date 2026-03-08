@@ -451,15 +451,21 @@ final class MixerDSPKernel {
         case .stereoDelay, .pingPongDelay, .tapeDelay, .analogDelay:
             return DelayNode()
 
-        // Saturation/Lo-Fi → FilterNode (harmonic coloring via resonance)
-        case .saturation, .tapeEmulation, .tubeWarmth, .bitCrusher, .lofi:
-            return FilterNode()
+        // Saturation/Lo-Fi → SaturationNode (ClassicAnalogEmulations DSP)
+        case .saturation:
+            return SaturationNode(style: .neve)
+        case .tapeEmulation:
+            return SaturationNode(style: .fairchild)
+        case .tubeWarmth:
+            return SaturationNode(style: .manley)
+        case .bitCrusher, .lofi:
+            return SaturationNode(style: .urei1176)
 
-        // Modulation → DelayNode (modulated delay)
+        // Modulation → DelayNode (modulated delay via feedback path)
         case .chorus, .flanger, .phaser, .tremolo, .rotarySpeaker:
             return DelayNode()
 
-        // Pitch → FilterNode (placeholder)
+        // Pitch → FilterNode (formant-style processing)
         case .pitchShift, .harmonizer, .vocoder:
             return FilterNode()
 

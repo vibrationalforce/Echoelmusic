@@ -353,8 +353,14 @@ final class EchoelCreativeWorkspace {
             }
         }
 
+        // Process through ProMixEngine (insert effects, sends, bus routing, metering)
+        let processedBuffer = proMixer.processAudioBlock(
+            inputBuffers: [proMixer.masterChannel.id: buffer],
+            frameCount: frameCount
+        )
+
         // Send to hardware output
-        audioEngine.schedulePlayback(buffer: buffer)
+        audioEngine.schedulePlayback(buffer: processedBuffer)
     }
 }
 #endif

@@ -1,16 +1,35 @@
 #if canImport(AVFoundation)
 import Foundation
 import AVFoundation
+import Accelerate
 
 /// Delay effect node with bio-reactive parameters
 /// HRV → Delay Time (coherence creates rhythmic echoes)
 /// Heart Rate → Feedback (tempo-synced repeats)
+///
+/// Implementation: Circular buffer delay line with one-pole LP in feedback path.
+/// Supports up to 2 seconds at 96kHz (192k samples per channel).
+///
+/// EchoelCore Native - No external dependencies
 @MainActor
 class DelayNode: BaseEchoelmusicNode {
 
-    // MARK: - AVAudioUnit Delay
+    // MARK: - Delay DSP State
 
-    private let delayUnit: AVAudioUnitDelay
+    /// Maximum delay in seconds
+    private let maxDelaySec: Double = 2.0
+
+    /// Circular delay buffers per channel (pre-allocated)
+    private var delayBuffers: [[Float]] = [[], []]
+
+    /// Write position per channel
+    private var writeIndex: [Int] = [0, 0]
+
+    /// Current sample rate
+    private var currentSampleRate: Double = 48000.0
+
+    /// One-pole LP filter state per channel (for feedback damping)
+    private var lpState: [Float] = [0.0, 0.0]
 
 
     // MARK: - Parameters
@@ -26,11 +45,8 @@ class DelayNode: BaseEchoelmusicNode {
     // MARK: - Initialization
 
     init() {
-        self.delayUnit = AVAudioUnitDelay()
-
         super.init(name: "Bio-Reactive Delay", type: .effect)
 
-        // Setup parameters
         parameters = [
             NodeParameter(
                 name: Params.delayTime,
@@ -78,11 +94,19 @@ class DelayNode: BaseEchoelmusicNode {
             )
         ]
 
-        // Configure delay
-        delayUnit.delayTime = 0.5  // 500ms
-        delayUnit.feedback = 30.0   // 30%
-        delayUnit.wetDryMix = 30.0  // 30% wet
-        delayUnit.lowPassCutoff = 8000.0  // 8kHz
+        allocateBuffers(sampleRate: 48000.0)
+    }
+
+    /// Pre-allocate delay buffers for maximum delay length.
+    private func allocateBuffers(sampleRate: Double) {
+        currentSampleRate = sampleRate
+        let maxSamples = Int(sampleRate * maxDelaySec) + 1
+        delayBuffers = [
+            [Float](repeating: 0.0, count: maxSamples),
+            [Float](repeating: 0.0, count: maxSamples)
+        ]
+        writeIndex = [0, 0]
+        lpState = [0.0, 0.0]
     }
 
 
@@ -93,24 +117,57 @@ class DelayNode: BaseEchoelmusicNode {
             return buffer
         }
 
-        // Apply delay parameters
-        if let delayTime = getParameter(name: Params.delayTime) {
-            delayUnit.delayTime = TimeInterval(delayTime)
+        guard let channelData = buffer.floatChannelData else {
+            return buffer
         }
 
-        if let feedback = getParameter(name: Params.feedback) {
-            delayUnit.feedback = feedback
+        let frameCount = Int(buffer.frameLength)
+        let channelCount = min(Int(buffer.format.channelCount), 2)
+
+        let delayTimeSec = getParameter(name: Params.delayTime) ?? 0.5
+        let feedbackPct = getParameter(name: Params.feedback) ?? 30.0
+        let wetDryPct = getParameter(name: Params.wetDryMix) ?? 30.0
+        let lpCutoff = getParameter(name: Params.lowPassCutoff) ?? 8000.0
+
+        let feedbackGain = feedbackPct / 100.0
+        let wetMix = wetDryPct / 100.0
+        let dryMix = 1.0 - wetMix
+
+        // One-pole LP coefficient: y = (1-a)*x + a*y_prev
+        let omega = 2.0 * Float.pi * lpCutoff / Float(currentSampleRate)
+        let lpCoeff = expf(-omega)
+
+        let delaySamples = Int(delayTimeSec * Float(currentSampleRate))
+        let bufferSize = delayBuffers[0].count
+
+        guard delaySamples > 0, bufferSize > 0 else { return buffer }
+
+        for ch in 0..<channelCount {
+            let samples = channelData[ch]
+
+            for frame in 0..<frameCount {
+                let input = samples[frame]
+
+                // Read from delay line (circular buffer)
+                var readIdx = writeIndex[ch] - delaySamples
+                if readIdx < 0 { readIdx += bufferSize }
+
+                let delayed = delayBuffers[ch][readIdx]
+
+                // One-pole LP on the delayed signal (feedback damping)
+                lpState[ch] = delayed * (1.0 - lpCoeff) + lpState[ch] * lpCoeff
+
+                // Write input + feedback into delay line
+                delayBuffers[ch][writeIndex[ch]] = input + lpState[ch] * feedbackGain
+
+                // Advance write pointer
+                writeIndex[ch] = (writeIndex[ch] + 1) % bufferSize
+
+                // Mix dry + wet
+                samples[frame] = input * dryMix + delayed * wetMix
+            }
         }
 
-        if let wetDryMix = getParameter(name: Params.wetDryMix) {
-            delayUnit.wetDryMix = wetDryMix
-        }
-
-        if let cutoff = getParameter(name: Params.lowPassCutoff) {
-            delayUnit.lowPassCutoff = cutoff
-        }
-
-        // Note: Full implementation would render through AVAudioUnit
         return buffer
     }
 
@@ -182,17 +239,28 @@ class DelayNode: BaseEchoelmusicNode {
     // MARK: - Lifecycle
 
     override func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount) {
-        // Delay is ready (uses AVAudioUnitDelay)
+        if abs(sampleRate - currentSampleRate) > 1.0 {
+            allocateBuffers(sampleRate: sampleRate)
+        }
     }
 
     override func start() {
         super.start()
-        log.audio("🎵 DelayNode started")
+        log.audio("DelayNode started (EchoelCore circular buffer)")
     }
 
     override func stop() {
         super.stop()
-        log.audio("🎵 DelayNode stopped")
+        log.audio("DelayNode stopped")
+    }
+
+    override func reset() {
+        super.reset()
+        for ch in 0..<delayBuffers.count {
+            vDSP_vclr(&delayBuffers[ch], 1, vDSP_Length(delayBuffers[ch].count))
+            writeIndex[ch] = 0
+            lpState[ch] = 0.0
+        }
     }
 
 
