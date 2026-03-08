@@ -372,6 +372,9 @@ final class UniversalSoundLibrary {
 
         private func synthesizePhysicalModel(frequency: Float, samples: Int, sampleRate: Float) -> [Float] {
             // Extended Karplus-Strong with tuning correction and variable damping
+            guard frequency > 0 else {
+                return [Float](repeating: 0, count: samples)
+            }
             let exactDelay = sampleRate / frequency
             let delayLength = Int(exactDelay)
             guard delayLength > 1 else {

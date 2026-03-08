@@ -86,7 +86,8 @@ struct TrackAutomationLane: Identifiable, Codable {
             let p0 = points[i]
             let p1 = points[i + 1]
             if time >= p0.time && time <= p1.time {
-                let t = Float((time - p0.time) / (p1.time - p0.time))
+                let duration = p1.time - p0.time
+                let t = duration > 0 ? Float((time - p0.time) / duration) : Float(0)
                 switch p0.curveType {
                 case .linear:
                     return p0.value + (p1.value - p0.value) * t

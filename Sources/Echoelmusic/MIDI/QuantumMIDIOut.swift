@@ -509,7 +509,7 @@ public final class QuantumMIDIOut {
         lastUpdateTime = now
         time += deltaTime
 
-        updateRate = 1.0 / deltaTime
+        updateRate = deltaTime > 0 ? 1.0 / deltaTime : updateRate
 
         // Update quantum phase
         updateQuantumPhase(deltaTime: Float(deltaTime))

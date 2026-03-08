@@ -1027,6 +1027,7 @@ final class MelodyPadViewModel {
     private var lastNote: UInt8?
 
     func handleTouch(location: CGPoint, size: CGSize, hub: TouchInstrumentsHub) {
+        guard size.width > 0, size.height > 0 else { return }
         // X = note (pitch), Y = expression (pitch bend / brightness)
         let normalizedX = Float(location.x / size.width)
         let normalizedY = Float(location.y / size.height)
