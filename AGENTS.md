@@ -244,6 +244,89 @@ Session N+10: Z4 + Z5 — SCAN + CLEAN + VERIFY
 
 ---
 
+## Top 5 Highest-Risk Files
+
+| # | Datei | LOC | Kernproblem |
+|---|-------|-----|-------------|
+| 1 | `Views/DAWArrangementView.swift` | 1.530 | **44 @State Variablen**, Timeline+Mixer+Effects+Sessions in einer View |
+| 2 | `Video/ProColorGrading.swift` | 1.524 | **43 Methoden**, Color Science + LUTs + UI vermischt |
+| 3 | `Audio/ProSessionEngine.swift` | 1.445 | **42 Methoden**, Multi-Track Session-Management |
+| 4 | `Views/VideoEditorView.swift` | 1.514 | SwiftUI View mit Video+Audio+Effects Logik |
+| 5 | `Audio/UltraLowLatencyBluetoothEngine.swift` | 1.490 | BLE Audio + Bio-Signal + Sync — Race Condition Risiko |
+
+---
+
+## Konkrete Refactoring-Schnitte
+
+### Schnitt 1: DAWArrangementView (1.530 → ~400)
+```
+DAWArrangementView.swift (1530)
+├── DAWTimelineView.swift         ← Timeline-Rendering
+├── DAWTrackListView.swift        ← Track-Liste + Auswahl
+├── DAWTransportControlsView.swift ← Play/Stop/Record
+├── DAWMixerStripView.swift       ← Inline-Mixer
+└── DAWArrangementViewModel.swift  ← 44 @State → @Observable
+```
+
+### Schnitt 2: AdvancedDSPEffects (1.245 → ~100 pro Datei)
+```
+AdvancedDSPEffects.swift (1245)
+├── DSP/Effects/CompressorEffect.swift
+├── DSP/Effects/ReverbEffect.swift
+├── DSP/Effects/DelayEffect.swift
+├── DSP/Effects/ChorusEffect.swift
+├── DSP/Effects/DistortionEffect.swift
+└── DSP/Effects/EffectFactory.swift  ← Registry + Factory
+```
+
+### Schnitt 3: SynthPresetLibrary (1.326 → ~300 + JSON)
+```
+SynthPresetLibrary.swift (1326)
+├── SynthPresetLibrary.swift       ← Lade-Logik (~300 LOC)
+└── Resources/Presets/
+    ├── bass_presets.json
+    ├── pad_presets.json
+    ├── lead_presets.json
+    └── fx_presets.json
+```
+
+### Schnitt 4: TouchInstruments (1.376 → ~400 pro Datei)
+```
+TouchInstruments.swift (1376)
+├── MIDI/Instruments/TouchPianoController.swift
+├── MIDI/Instruments/TouchDrumPadController.swift
+├── MIDI/Instruments/TouchXYPadController.swift
+└── MIDI/Instruments/TouchInstrumentProtocol.swift
+```
+
+### Schnitt 5: ProColorGrading (1.524 → ~400 pro Datei)
+```
+ProColorGrading.swift (1524)
+├── Video/ColorScience.swift       ← Farb-Algorithmen
+├── Video/LUTManager.swift         ← LUT Laden + Anwenden
+├── Video/GradingEngine.swift      ← Pipeline-Orchestrierung
+└── Video/GradingPresets.swift     ← Preset-Daten
+```
+
+---
+
+## Directory Health Scorecard
+
+| Ordner | Status | Notiz |
+|--------|--------|-------|
+| **Audio/** | KRITISCH | 7 Dateien >1.100 LOC, unklare Trennung |
+| **Views/** | KRITISCH | 7 von 9 Dateien >800 LOC (God-Views) |
+| **Video/** | ROT | 8 von 10 Dateien >800 LOC |
+| **Sound/** | ROT | 6 von 8 Dateien >800 LOC, duplizierter Synth-Code |
+| **DSP/** | GELB | 20+ Effekte in einzelner Datei |
+| **MIDI/** | GELB | TouchInstruments koppelt Gesten an Synthese |
+| **Recording/** | OK | Knapp unter der Grenze |
+| **Core/** | GESUND | Sauber modularisiert, keine Datei >800 LOC |
+| **Hardware/** | GESUND | Saubere Device-Abstraktion |
+| **Business/** | GESUND | Beide Dateien <400 LOC |
+
+---
+
 ## Regeln
 
 1. **Eine Zone pro Session.** Nicht springen.
