@@ -841,11 +841,16 @@ public final class UltraLowLatencyBluetoothEngine: NSObject {
 
         // Copy to ring buffer for processing
         let frameCount = Int(buffer.frameLength)
+        let channelCount = Int(buffer.format.channelCount)
         var samples = [Float](repeating: 0, count: frameCount)
 
-        // Mono mix
-        for i in 0..<frameCount {
-            samples[i] = (channelData[0][i] + channelData[1][i]) * 0.5
+        // Mono mix — handle both mono and stereo input
+        if channelCount >= 2 {
+            for i in 0..<frameCount {
+                samples[i] = (channelData[0][i] + channelData[1][i]) * 0.5
+            }
+        } else {
+            memcpy(&samples, channelData[0], frameCount * MemoryLayout<Float>.size)
         }
 
         _ = inputBuffer.write(samples)
