@@ -29,8 +29,8 @@ final class EchoelCreativeWorkspace {
     let proColor: ProColorGrading
     let loopEngine: LoopEngine
 
-    /// Bio-reactive DDSP synth for live performance
-    let bioSynth: EchoelDDSP
+    /// Bio-reactive polyphonic DDSP synth for live performance
+    let bioSynth: EchoelPolyDDSP
 
     /// Ableton Link client for tempo sync with external devices
     let linkClient: AbletonLinkClient
@@ -64,7 +64,7 @@ final class EchoelCreativeWorkspace {
         self.proColor = ProColorGrading()
         self.loopEngine = LoopEngine()
         self.loopEngine.setTempo(120.0)
-        self.bioSynth = EchoelDDSP(harmonicCount: 32, sampleRate: 48000)
+        self.bioSynth = EchoelPolyDDSP(harmonicCount: 32, sampleRate: 48000)
         self.linkClient = AbletonLinkClient()
         self.adaptiveAudio = AdaptiveAudioEngine()
 

@@ -1071,8 +1071,11 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
 
             vDSP_vsmul(voiceBuffer, 1, &lg, &scaledBufferL, 1, vDSP_Length(frameCount))
             vDSP_vsmul(voiceBuffer, 1, &rg, &scaledBufferR, 1, vDSP_Length(frameCount))
-            vDSP_vadd(mixBufferL, 1, scaledBufferL, 1, &mixBufferL, 1, vDSP_Length(frameCount))
-            vDSP_vadd(mixBufferR, 1, scaledBufferR, 1, &mixBufferR, 1, vDSP_Length(frameCount))
+            // Use vDSP_vadd with separate input copies to avoid Swift exclusivity violation
+            let mixL = mixBufferL
+            let mixR = mixBufferR
+            vDSP_vadd(mixL, 1, scaledBufferL, 1, &mixBufferL, 1, vDSP_Length(frameCount))
+            vDSP_vadd(mixR, 1, scaledBufferR, 1, &mixBufferR, 1, vDSP_Length(frameCount))
         }
 
         // Copy to output
