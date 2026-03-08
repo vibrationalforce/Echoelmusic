@@ -262,6 +262,25 @@ final class EchoelCreativeWorkspace {
         videoEditor.seek(to: CMTime(seconds: seconds, preferredTimescale: 600))
     }
 
+    // MARK: - Session ↔ Mixer Sync
+
+    /// Sync session track parameters (volume, pan, mute, solo) to ProMixEngine channels.
+    /// Called each render block so the mixer reflects the session view state.
+    private func syncSessionToMixer() {
+        let mixerAudioChannels = proMixer.channels.enumerated().filter {
+            $0.element.type == .audio || $0.element.type == .instrument
+        }
+
+        for (sessionIndex, track) in proSession.tracks.enumerated() {
+            guard sessionIndex < mixerAudioChannels.count else { break }
+            let mixerIndex = mixerAudioChannels[sessionIndex].offset
+            proMixer.channels[mixerIndex].volume = track.volume
+            proMixer.channels[mixerIndex].pan = track.pan
+            proMixer.channels[mixerIndex].mute = track.mute
+            proMixer.channels[mixerIndex].solo = track.solo
+        }
+    }
+
     // MARK: - Audio Render Loop
 
     /// Start the audio render timer that pulls audio from ProSessionEngine
@@ -290,26 +309,33 @@ final class EchoelCreativeWorkspace {
     }
 
     /// Render one block of audio from the session + bio-synth and send to hardware.
-    /// Chain: ProSessionEngine + EchoelDDSP → mix → AVAudioPCMBuffer → AudioEngine.schedulePlayback()
+    ///
+    /// Per-track routing: Each session track renders independently through its
+    /// corresponding ProMixEngine channel (insert effects, sends, bus routing, metering).
+    /// Bio-synth audio is mixed into the first available instrument channel.
+    ///
+    /// Chain: AudioClipScheduler → per-track [Float] → AVAudioPCMBuffer per channel
+    ///        → ProMixEngine.processAudioBlock() → master bus → AudioEngine.schedulePlayback()
     private func renderAndOutputAudio(frameCount: Int) {
         guard isPlaying, let audioEngine else { return }
 
         let sampleRate = proMixer.sampleRate
 
-        // Render from session (clips, patterns, MIDI)
-        let sessionAudio = proSession.renderAudio(frameCount: frameCount)
+        // Sync session track parameters → mixer channels (volume, pan, mute, solo)
+        syncSessionToMixer()
+
+        // Render per-track audio from session (clips, patterns, MIDI) — NOT pre-mixed
+        let trackBuffers = proSession.audioScheduler.renderAllTracks(frameCount: frameCount)
 
         // Render bio-reactive synth (produces audio when voices are active)
         var bioLeft = [Float](repeating: 0, count: frameCount)
         var bioRight = [Float](repeating: 0, count: frameCount)
         bioSynth.renderStereo(left: &bioLeft, right: &bioRight, frameCount: frameCount)
 
-        // Check if we have any audio to output
-        let hasSession = sessionAudio != nil && !(sessionAudio?.left.isEmpty ?? true)
         let hasBio = bioLeft.contains(where: { $0 != 0 })
-        guard hasSession || hasBio else { return }
+        guard !trackBuffers.isEmpty || hasBio else { return }
 
-        // Create AVAudioPCMBuffer
+        // Stereo format for all channel buffers
         guard let format = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: sampleRate,
@@ -317,45 +343,68 @@ final class EchoelCreativeWorkspace {
             interleaved: false
         ) else { return }
 
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)) else { return }
-        buffer.frameLength = AVAudioFrameCount(frameCount)
+        // Build per-channel input buffers for ProMixEngine
+        // Map session track indices → ProMixEngine audio channel UUIDs
+        let mixerAudioChannels = proMixer.channels.filter {
+            $0.type == .audio || $0.type == .instrument
+        }
+        var inputBuffers: [UUID: AVAudioPCMBuffer] = [:]
 
-        guard let channelData = buffer.floatChannelData else { return }
+        for (trackIndex, monoSamples) in trackBuffers {
+            guard trackIndex < mixerAudioChannels.count else { continue }
+            let channelID = mixerAudioChannels[trackIndex].id
 
-        // Mix session + bio-synth into output buffer
-        if let stereo = sessionAudio, !stereo.left.isEmpty {
-            let count = min(stereo.left.count, frameCount)
-            stereo.left.withUnsafeBufferPointer { src in
+            guard let trackBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)) else { continue }
+            trackBuffer.frameLength = AVAudioFrameCount(frameCount)
+            guard let chData = trackBuffer.floatChannelData else { continue }
+
+            // Copy mono track audio into both stereo channels
+            // (pan is applied by ProMixEngine's per-channel processing)
+            let count = min(monoSamples.count, frameCount)
+            monoSamples.withUnsafeBufferPointer { src in
                 guard let srcBase = src.baseAddress else { return }
-                channelData[0].update(from: srcBase, count: count)
+                chData[0].update(from: srcBase, count: count)
+                chData[1].update(from: srcBase, count: count)
             }
-            stereo.right.withUnsafeBufferPointer { src in
-                guard let srcBase = src.baseAddress else { return }
-                channelData[1].update(from: srcBase, count: count)
-            }
-            // Add bio-synth on top of session audio
-            // Copy channel pointers to avoid Swift exclusivity violation with vDSP in-place ops
-            if hasBio {
-                let chL = channelData[0]
-                let chR = channelData[1]
-                vDSP_vadd(chL, 1, bioLeft, 1, chL, 1, vDSP_Length(frameCount))
-                vDSP_vadd(chR, 1, bioRight, 1, chR, 1, vDSP_Length(frameCount))
-            }
-        } else {
-            // Bio-synth only
-            bioLeft.withUnsafeBufferPointer { src in
-                guard let srcBase = src.baseAddress else { return }
-                channelData[0].update(from: srcBase, count: frameCount)
-            }
-            bioRight.withUnsafeBufferPointer { src in
-                guard let srcBase = src.baseAddress else { return }
-                channelData[1].update(from: srcBase, count: frameCount)
+
+            inputBuffers[channelID] = trackBuffer
+        }
+
+        // Route bio-synth into the first instrument channel, or last audio channel
+        if hasBio {
+            let bioChannel = proMixer.channels.first(where: { $0.type == .instrument })
+                ?? mixerAudioChannels.last
+            if let bioChannelID = bioChannel?.id {
+                guard let bioBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)) else { return }
+                bioBuffer.frameLength = AVAudioFrameCount(frameCount)
+                guard let bioData = bioBuffer.floatChannelData else { return }
+
+                bioLeft.withUnsafeBufferPointer { src in
+                    guard let srcBase = src.baseAddress else { return }
+                    bioData[0].update(from: srcBase, count: frameCount)
+                }
+                bioRight.withUnsafeBufferPointer { src in
+                    guard let srcBase = src.baseAddress else { return }
+                    bioData[1].update(from: srcBase, count: frameCount)
+                }
+
+                // If this channel already has session audio, mix bio on top
+                if let existing = inputBuffers[bioChannelID],
+                   let existingData = existing.floatChannelData {
+                    let exL = existingData[0]
+                    let exR = existingData[1]
+                    vDSP_vadd(exL, 1, bioLeft, 1, exL, 1, vDSP_Length(frameCount))
+                    vDSP_vadd(exR, 1, bioRight, 1, exR, 1, vDSP_Length(frameCount))
+                } else {
+                    inputBuffers[bioChannelID] = bioBuffer
+                }
             }
         }
 
-        // Process through ProMixEngine (insert effects, sends, bus routing, metering)
+        // Process all channels through ProMixEngine
+        // (per-channel inserts, sends to reverb/delay buses, bus processing, master chain)
         let processedBuffer = proMixer.processAudioBlock(
-            inputBuffers: [proMixer.masterChannel.id: buffer],
+            inputBuffers: inputBuffers,
             frameCount: frameCount
         )
 
