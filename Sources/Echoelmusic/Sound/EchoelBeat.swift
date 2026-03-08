@@ -504,7 +504,9 @@ public final class EchoelBeat {
     private var audioEngine: AVAudioEngine?
     private var sourceNode: AVAudioSourceNode?
     private let sampleRate: Double = 48000.0
-    private let voiceLock = NSLock()
+    /// os_unfair_lock wrapper — priority-inheriting, no ObjC dispatch,
+    /// safe for real-time audio render callbacks.
+    private let voiceLock = AudioUnfairLock()
 
     // ── DSP State (audio thread) ──
 

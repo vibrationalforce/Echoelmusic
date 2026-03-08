@@ -255,7 +255,9 @@ public final class TR808BassSynth {
     // MARK: - Voice Management
 
     private var voices: [TR808Voice] = []
-    private let voiceLock = NSLock()
+    /// os_unfair_lock wrapper — priority-inheriting, no ObjC dispatch,
+    /// safe for real-time audio render callbacks.
+    private let voiceLock = AudioUnfairLock()
 
     // MARK: - DSP State
 

@@ -382,4 +382,30 @@ enum AudioConfiguration {
         #endif
     }
 }
+
+// MARK: - Audio-Safe Unfair Lock
+
+/// Heap-allocated `os_unfair_lock` wrapper with NSLock-compatible API.
+///
+/// Unlike NSLock, `os_unfair_lock`:
+/// - Has **priority inheritance** (prevents priority inversion on audio thread)
+/// - Has **zero ObjC dispatch overhead** (pure C syscall)
+/// - Is **orders of magnitude faster** in the uncontended case
+///
+/// Use this for all audio-thread synchronization instead of NSLock.
+/// The class wrapper ensures stable memory address (os_unfair_lock is a value
+/// type and must not be moved in memory after first use).
+final class AudioUnfairLock: @unchecked Sendable {
+    private var _lock = os_unfair_lock_s()
+
+    @inline(__always)
+    func lock() {
+        os_unfair_lock_lock(&_lock)
+    }
+
+    @inline(__always)
+    func unlock() {
+        os_unfair_lock_unlock(&_lock)
+    }
+}
 #endif

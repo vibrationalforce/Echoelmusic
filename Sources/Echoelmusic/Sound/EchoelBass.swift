@@ -311,7 +311,10 @@ public final class EchoelBass {
     // MARK: - Voice Management
 
     private var voices: [EchoelBassVoice] = []
-    private let voiceLock = NSLock()
+    /// Lock-free-friendly unfair lock for audio thread safety.
+    /// os_unfair_lock is priority-inheriting (no priority inversion) and has
+    /// zero ObjC dispatch overhead — safe for real-time audio callbacks.
+    private let voiceLock = AudioUnfairLock()
 
     // MARK: - DSP State
 
