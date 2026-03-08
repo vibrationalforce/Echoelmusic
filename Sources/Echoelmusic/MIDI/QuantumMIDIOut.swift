@@ -655,11 +655,12 @@ public final class QuantumMIDIOut {
     // MARK: - Voice Allocation
 
     private func allocateVoice(for instrument: QuantumMIDIVoice.InstrumentTarget) -> QuantumMIDIVoice {
+        guard !voicePool.isEmpty else { return QuantumMIDIVoice() }
         let strategy = intelligenceMode.voiceAllocationStrategy
 
         switch strategy {
         case .roundRobin:
-            let voice = voicePool[nextVoiceIndex]
+            let voice = voicePool[nextVoiceIndex % voicePool.count]
             nextVoiceIndex = (nextVoiceIndex + 1) % voicePool.count
             return voice
 
@@ -736,8 +737,9 @@ public final class QuantumMIDIOut {
     }
 
     private func allocateQuantumVoice() -> QuantumMIDIVoice {
+        guard !voicePool.isEmpty else { return QuantumMIDIVoice() }
         // Superposition-based allocation
-        var voice = voicePool[nextVoiceIndex]
+        var voice = voicePool[nextVoiceIndex % voicePool.count]
         nextVoiceIndex = (nextVoiceIndex + 1) % voicePool.count
 
         // Mark as in superposition until "observed"

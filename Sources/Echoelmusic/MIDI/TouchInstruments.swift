@@ -508,6 +508,7 @@ final class ChordPadViewModel {
 
         // Get next note based on pattern
         let notes = getArpNotes(pad.notes)
+        guard !notes.isEmpty else { return }
         let note = notes[arpNoteIndex % notes.count]
 
         if let voice = mpe.allocateVoice(note: note, velocity: arpVelocity) {

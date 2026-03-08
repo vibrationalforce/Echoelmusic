@@ -381,7 +381,9 @@ final class VideoEditingEngine {
 
         // Interpolate
         if let prev = prevKeyframe, let next = nextKeyframe {
-            let t = Float((time.seconds - prev.time.seconds) / (next.time.seconds - prev.time.seconds))
+            let duration = next.time.seconds - prev.time.seconds
+            guard duration > 0 else { return prev.value }
+            let t = Float((time.seconds - prev.time.seconds) / duration)
 
             switch next.interpolation {
             case .linear:

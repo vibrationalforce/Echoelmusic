@@ -290,7 +290,7 @@ final class MIDI2Manager {
             // Copy packet bytes
             let bytes = packet.bytes
             withUnsafeMutableBytes(of: &packetPtr.pointee.words) { wordsPtr in
-                for (index, byte) in bytes.enumerated() {
+                for (index, byte) in bytes.enumerated() where index < wordsPtr.count {
                     wordsPtr[index] = byte
                 }
             }
