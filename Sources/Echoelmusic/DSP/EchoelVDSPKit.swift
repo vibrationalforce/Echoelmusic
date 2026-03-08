@@ -80,6 +80,8 @@ public final class EchoelRealFFT: @unchecked Sendable {
 
     // Window buffer
     private var windowBuffer: [Float]
+    /// Pre-allocated windowed input — avoids heap allocation in forward()/inverse()
+    private var windowedBuffer: [Float]
     private var windowType: WindowType
 
     public enum WindowType: String, CaseIterable, Sendable {
@@ -139,6 +141,7 @@ public final class EchoelRealFFT: @unchecked Sendable {
         self.splitReal = [Float](repeating: 0, count: actualSize / 2)
         self.splitImag = [Float](repeating: 0, count: actualSize / 2)
         self.windowBuffer = [Float](repeating: 0, count: actualSize)
+        self.windowedBuffer = [Float](repeating: 0, count: actualSize)
         self.windowType = window
         updateWindow(window)
     }
@@ -204,11 +207,11 @@ public final class EchoelRealFFT: @unchecked Sendable {
         }
 
         // Apply window
-        var windowed = [Float](repeating: 0, count: size)
-        vDSP_vmul(input, 1, windowBuffer, 1, &windowed, 1, vDSP_Length(size))
+        // Use pre-allocated buffer — no heap allocation on audio thread
+        vDSP_vmul(input, 1, windowBuffer, 1, &windowedBuffer, 1, vDSP_Length(size))
 
         // Pack into split complex
-        windowed.withUnsafeBufferPointer { inBuf in
+        windowedBuffer.withUnsafeBufferPointer { inBuf in
             splitReal.withUnsafeMutableBufferPointer { realBuf in
                 splitImag.withUnsafeMutableBufferPointer { imagBuf in
                     guard let realBase = realBuf.baseAddress,
@@ -260,10 +263,10 @@ public final class EchoelRealFFT: @unchecked Sendable {
             return [Float](repeating: 0, count: size / 2)
         }
 
-        var windowed = [Float](repeating: 0, count: size)
-        vDSP_vmul(input, 1, windowBuffer, 1, &windowed, 1, vDSP_Length(size))
+        // Use pre-allocated buffer — no heap allocation on audio thread
+        vDSP_vmul(input, 1, windowBuffer, 1, &windowedBuffer, 1, vDSP_Length(size))
 
-        windowed.withUnsafeBufferPointer { inBuf in
+        windowedBuffer.withUnsafeBufferPointer { inBuf in
             splitReal.withUnsafeMutableBufferPointer { realBuf in
                 splitImag.withUnsafeMutableBufferPointer { imagBuf in
                     guard let realBase = realBuf.baseAddress,
@@ -337,14 +340,25 @@ public final class EchoelConvolution: @unchecked Sendable {
     }
 
     /// Apply convolution to input buffer (overlap-add for streaming)
+    /// - Note: Input size must not exceed maxInputLength passed at init.
+    ///   If it does, input is truncated to avoid heap allocation on audio thread.
     public func process(_ input: [Float]) -> [Float] {
-        let inputLength = input.count
+        var inputLength = input.count
+        let safeInput: [Float]
+
+        // Clamp to pre-allocated size — NEVER allocate on audio thread
+        if inputLength > maxInputLength {
+            inputLength = maxInputLength
+            safeInput = Array(input.prefix(maxInputLength))
+        } else {
+            safeInput = input
+        }
+
         let outputLength = inputLength + kernelSize - 1
 
-        // Grow pre-allocated buffer if needed (rare path)
         if outputLength > outputBuffer.count {
-            maxInputLength = inputLength
-            outputBuffer = [Float](repeating: 0, count: outputLength)
+            // Should not happen with clamped input — defensive only
+            return Array(repeating: 0, count: inputLength)
         } else {
             // Zero only the portion we'll use
             outputBuffer.withUnsafeMutableBufferPointer { buf in
@@ -353,7 +367,7 @@ public final class EchoelConvolution: @unchecked Sendable {
             }
         }
 
-        vDSP_conv(input, 1, kernel, 1, &outputBuffer, 1,
+        vDSP_conv(safeInput, 1, kernel, 1, &outputBuffer, 1,
                   vDSP_Length(outputLength), vDSP_Length(kernelSize))
 
         // Apply overlap from previous frame

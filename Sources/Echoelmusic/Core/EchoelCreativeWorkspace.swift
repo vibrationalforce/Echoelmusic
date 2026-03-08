@@ -193,12 +193,12 @@ final class EchoelCreativeWorkspace {
             Task { @MainActor [weak self] in
                 guard let self else { return }
 
-                // Throttle to ~60Hz — halves MainActor Task dispatches
+                // Re-register observation first (one-shot pattern)
+                self.observeAudioLevel(micManager)
+
+                // Throttle to ~60Hz — skip processing if too soon
                 let now = CFAbsoluteTimeGetCurrent()
-                guard now - self.lastBioUpdate > 0.016 else {
-                    self.observeAudioLevel(micManager)
-                    return
-                }
+                guard now - self.lastBioUpdate > 0.016 else { return }
                 self.lastBioUpdate = now
 
                 let level = micManager.audioLevel
@@ -212,7 +212,6 @@ final class EchoelCreativeWorkspace {
                     heartRate: 0.5,
                     breathPhase: 0.5
                 )
-                self.observeAudioLevel(micManager)
             }
         }
     }
@@ -277,8 +276,9 @@ final class EchoelCreativeWorkspace {
         // Timer interval = buffer duration (e.g., 512/48000 ≈ 10.67ms)
         let interval = Double(frameCount) / sampleRate
 
+        // Timer fires on main run loop — already on MainActor, no Task wrapper needed
         audioRenderTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            MainActor.assumeIsolated {
                 self?.renderAndOutputAudio(frameCount: frameCount)
             }
         }
