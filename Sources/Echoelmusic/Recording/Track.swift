@@ -326,11 +326,14 @@ struct Track: Identifiable, Codable {
     /// Generate waveform data for visualization
     mutating func generateWaveform(samples: Int = 100) {
         guard let url = url else { return }
+        guard samples > 0 else { return }
 
         do {
             let file = try AVAudioFile(forReading: url)
             let format = file.processingFormat
             let frameCount = AVAudioFrameCount(file.length)
+
+            guard frameCount > 0 else { return }
 
             guard let buffer = AVAudioPCMBuffer(
                 pcmFormat: format,
@@ -342,12 +345,14 @@ struct Track: Identifiable, Codable {
             // Sample buffer for waveform
             guard let channelData = buffer.floatChannelData?[0] else { return }
 
+            let pointCount = min(samples, Int(frameCount))
             var waveform: [Float] = []
-            let samplesPerPoint = Int(frameCount) / samples
+            let samplesPerPoint = max(Int(frameCount) / pointCount, 1)
 
-            for i in 0..<samples {
+            for i in 0..<pointCount {
                 let startIndex = i * samplesPerPoint
                 let endIndex = min(startIndex + samplesPerPoint, Int(frameCount))
+                guard endIndex > startIndex else { break }
 
                 var sum: Float = 0
                 for j in startIndex..<endIndex {

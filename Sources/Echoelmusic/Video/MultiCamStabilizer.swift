@@ -806,6 +806,7 @@ final class VideoStabilizer {
 
     private func calculateSmoothedPath(mode: StabilizationMode) {
         smoothedPath.removeAll()
+        guard !motionHistory.isEmpty else { return }
 
         // Calculate cumulative motion
         var cumulative: [FrameMotion] = []
