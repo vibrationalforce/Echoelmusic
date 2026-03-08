@@ -1193,7 +1193,12 @@ public struct EchoelBassView: View {
                     .buttonStyle(.plain)
                     .simultaneousGesture(
                         DragGesture(minimumDistance: 0)
-                            .onChanged { _ in bass.noteOn(note: note, velocity: 0.8) }
+                            .onChanged { value in
+                                // Only trigger on first contact (translation == .zero), not continuously
+                                if value.translation == .zero {
+                                    bass.noteOn(note: note, velocity: 0.8)
+                                }
+                            }
                             .onEnded { _ in bass.noteOff(note: note) }
                     )
                 }
