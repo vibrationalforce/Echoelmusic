@@ -825,8 +825,8 @@ final class SessionClipViewModel {
         set { EchoelCreativeWorkspace.shared.isPlaying = newValue }
     }
 
-    /// Default coherence level (bio-reactive mode provides live values)
-    var coherence: Float { 0.5 }
+    /// Live bio-coherence from EchoelCreativeWorkspace (mic-level proxy or HealthKit)
+    var coherence: Float { EchoelCreativeWorkspace.shared.bioCoherence }
 
     var coherenceColor: Color {
         if coherence > 0.7 { return EchoelBrand.emerald }
