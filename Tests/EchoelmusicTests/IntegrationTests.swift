@@ -49,11 +49,13 @@ final class CreativeWorkspaceTests: XCTestCase {
     func testBPMGridExists() {
         let workspace = EchoelCreativeWorkspace.shared
         XCTAssertNotNil(workspace.bpmGrid)
+        XCTAssertGreaterThan(workspace.bpmGrid.grid.bpm, 0, "BPM grid should have valid BPM")
     }
 
     func testVideoEditorExists() {
         let workspace = EchoelCreativeWorkspace.shared
         XCTAssertNotNil(workspace.videoEditor)
+        XCTAssertNotNil(workspace.videoEditor.timeline, "Video editor should have a timeline")
     }
 
     func testProMixerExists() {
@@ -73,7 +75,9 @@ final class CreativeWorkspaceTests: XCTestCase {
 
     func testLoopEngineExists() {
         let workspace = EchoelCreativeWorkspace.shared
-        XCTAssertNotNil(workspace.loopEngine)
+        let engine = workspace.loopEngine
+        XCTAssertNotNil(engine)
+        XCTAssertFalse(engine.isPlayingLoops, "Loop engine should not be playing by default")
     }
 
     func testBioSynthExists() {
@@ -223,6 +227,9 @@ final class LoopEngineIntegrationTests: XCTestCase {
     func testInitialization() {
         let engine = LoopEngine()
         XCTAssertNotNil(engine)
+        XCTAssertFalse(engine.isPlayingLoops)
+        XCTAssertTrue(engine.loops.isEmpty)
+        XCTAssertGreaterThan(engine.tempo, 0)
     }
 
     func testDefaultNotPlaying() {
