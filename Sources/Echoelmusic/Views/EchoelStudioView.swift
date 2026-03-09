@@ -1,6 +1,20 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
+// MARK: - Panel Context Environment Key
+
+/// Tells embedded views they're inside a bottom panel (skip their own headers)
+private struct IsEmbeddedInPanelKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var isEmbeddedInPanel: Bool {
+        get { self[IsEmbeddedInPanelKey.self] }
+        set { self[IsEmbeddedInPanelKey.self] = newValue }
+    }
+}
+
 // MARK: - EchoelStudio View
 // Unified creative workspace: audio + video on one BPM-synchronized timeline
 // Bottom panel drawers for instruments, mixer, FX, and video preview
@@ -12,7 +26,6 @@ struct EchoelStudioView: View {
 
     @State private var viewMode: ViewMode = .arrangement
     @State private var bottomPanel: BottomPanel?
-    @State private var bottomPanelHeight: CGFloat = 280
     @State private var selectedTrackID: UUID?
 
     #if os(iOS)
@@ -73,18 +86,22 @@ struct EchoelStudioView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Main content area
-            mainContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        GeometryReader { geo in
+            let panelHeight = isCompact ? min(geo.size.height * 0.42, 320) : 320
 
-            // Bottom panel (collapsible)
-            if let panel = bottomPanel {
-                bottomPanelView(panel)
+            VStack(spacing: 0) {
+                // Main content area
+                mainContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                // Bottom panel (collapsible)
+                if let panel = bottomPanel {
+                    bottomPanelView(panel, height: panelHeight)
+                }
+
+                // Bottom panel tab bar
+                bottomPanelTabBar
             }
-
-            // Bottom panel tab bar
-            bottomPanelTabBar
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
         .onAppear {
@@ -111,30 +128,33 @@ struct EchoelStudioView: View {
     // MARK: - Bottom Panel Content
 
     @ViewBuilder
-    private func bottomPanelView(_ panel: BottomPanel) -> some View {
+    private func bottomPanelView(_ panel: BottomPanel, height: CGFloat) -> some View {
         VStack(spacing: 0) {
             // Drag handle
             panelDragHandle(panel)
 
-            // Panel content
-            Group {
-                switch panel {
-                case .instruments:
-                    EchoelSynthView()
-                        .environment(audioEngine)
-                case .mixer:
-                    RealMixerSheet()
-                        .environment(audioEngine)
-                        .environment(recordingEngine)
-                case .fx:
-                    EchoelFXView()
-                        .environment(audioEngine)
-                case .video:
-                    VideoEditorView()
+            // Panel content in ScrollView for overflow handling
+            ScrollView {
+                Group {
+                    switch panel {
+                    case .instruments:
+                        EchoelSynthView()
+                            .environment(audioEngine)
+                    case .mixer:
+                        RealMixerSheet()
+                            .environment(audioEngine)
+                            .environment(recordingEngine)
+                    case .fx:
+                        EchoelFXView()
+                            .environment(audioEngine)
+                    case .video:
+                        VideoEditorView()
+                    }
                 }
+                .environment(\.isEmbeddedInPanel, true)
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: bottomPanelHeight)
+            .frame(height: height)
         }
         .background(EchoelBrand.bgSurface)
         .transition(.move(edge: .bottom).combined(with: .opacity))

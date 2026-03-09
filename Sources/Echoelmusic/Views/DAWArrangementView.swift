@@ -1427,6 +1427,7 @@ struct RealMixerSheet: View {
     @Environment(AudioEngine.self) var audioEngine
     @Environment(RecordingEngine.self) var recordingEngine
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.isEmbeddedInPanel) private var isEmbeddedInPanel
 
     private var tracks: [Track] {
         recordingEngine.currentSession?.tracks ?? []
@@ -1437,19 +1438,22 @@ struct RealMixerSheet: View {
             EchoelBrand.bgDeep
                 .ignoresSafeArea()
 
-            VStack(spacing: EchoelSpacing.md) {
-                HStack {
-                    Text("MIXER")
-                        .font(EchoelBrandFont.sectionTitle())
-                        .foregroundColor(EchoelBrand.textPrimary)
-                    Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(EchoelBrand.textSecondary)
+            VStack(spacing: isEmbeddedInPanel ? EchoelSpacing.sm : EchoelSpacing.md) {
+                // Header — skip when embedded in panel (panel has its own)
+                if !isEmbeddedInPanel {
+                    HStack {
+                        Text("MIXER")
+                            .font(EchoelBrandFont.sectionTitle())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                        Spacer()
+                        Button { dismiss() } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(EchoelBrand.textSecondary)
+                        }
                     }
+                    .padding(.horizontal, EchoelSpacing.md)
                 }
-                .padding(.horizontal, EchoelSpacing.md)
 
                 ScrollView(.horizontal) {
                     HStack(spacing: EchoelSpacing.md) {

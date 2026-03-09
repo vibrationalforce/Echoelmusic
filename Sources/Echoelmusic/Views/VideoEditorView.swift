@@ -33,6 +33,7 @@ struct VideoEditorView: View {
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
+    @Environment(\.isEmbeddedInPanel) private var isEmbeddedInPanel
 
     /// Whether on iPhone compact layout
     private var isCompact: Bool {
@@ -50,8 +51,10 @@ struct VideoEditorView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
-                headerSection
+                // Header (skip when embedded in bottom panel — panel has its own)
+                if !isEmbeddedInPanel {
+                    headerSection
+                }
 
                 if isCompact {
                     // iPhone: stacked layout (preview on top, timeline below)
