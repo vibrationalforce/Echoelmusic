@@ -58,6 +58,7 @@ struct EchoelStudioView: View {
 
     enum BottomPanel: String, CaseIterable, Identifiable {
         case instruments = "Instruments"
+        case pianoRoll = "Piano Roll"
         case mixer = "Mixer"
         case fx = "FX"
         case video = "Video"
@@ -67,6 +68,7 @@ struct EchoelStudioView: View {
         var icon: String {
             switch self {
             case .instruments: return "pianokeys"
+            case .pianoRoll: return "music.note.list"
             case .mixer: return "slider.vertical.3"
             case .fx: return "waveform.path.ecg"
             case .video: return "film"
@@ -76,6 +78,7 @@ struct EchoelStudioView: View {
         var color: Color {
             switch self {
             case .instruments: return EchoelBrand.sky
+            case .pianoRoll: return Color(red: 1, green: 0.8, blue: 0.2)
             case .mixer: return EchoelBrand.emerald
             case .fx: return EchoelBrand.violet
             case .video: return EchoelBrand.coral
@@ -140,6 +143,8 @@ struct EchoelStudioView: View {
                     case .instruments:
                         EchoelSynthView()
                             .environment(audioEngine)
+                    case .pianoRoll:
+                        PianoRollView()
                     case .mixer:
                         RealMixerSheet()
                             .environment(audioEngine)
