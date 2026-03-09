@@ -337,6 +337,9 @@ struct DAWArrangementView: View {
                     ForEach(tracks) { track in
                         trackRow(track: track)
                     }
+
+                    // Video track entry
+                    videoTrackRow
                 }
                 .padding(.horizontal, EchoelSpacing.sm)
             }
@@ -409,6 +412,45 @@ struct DAWArrangementView: View {
         }
     }
 
+    // MARK: - Video Track Row (Track List)
+
+    private var videoTrackRow: some View {
+        let videoColor = EchoelBrand.coral
+        let clipCount = workspace.videoEditor.videoClips.count
+
+        return HStack(spacing: EchoelSpacing.sm) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(videoColor)
+                .frame(width: 4, height: 40)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Video")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
+                    .lineLimit(1)
+                Text(clipCount > 0 ? "\(clipCount) clips" : "No clips")
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Image(systemName: "film")
+                .font(.system(size: 12))
+                .foregroundColor(videoColor.opacity(0.6))
+        }
+        .padding(EchoelSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(videoColor.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(videoColor.opacity(0.15), lineWidth: 0.5)
+        )
+    }
+
     // MARK: - Arrangement Timeline
 
     private var arrangementSection: some View {
@@ -425,6 +467,9 @@ struct DAWArrangementView: View {
                         ForEach(tracks) { track in
                             trackLane(track: track)
                         }
+
+                        // Video track (BPM-synced with audio)
+                        videoTrackLane
 
                         // Empty area for adding tracks
                         if tracks.isEmpty {
@@ -592,6 +637,74 @@ struct DAWArrangementView: View {
         }
     }
 
+    // MARK: - Video Track Lane
+
+    private var videoTrackLane: some View {
+        let videoClips = workspace.videoEditor.videoClips
+        let laneWidth = max(300, CGFloat(workspace.videoEditor.duration) * pixelsPerSecond + 20)
+        let videoColor = EchoelBrand.coral
+
+        return ZStack(alignment: .leading) {
+            // Lane background
+            RoundedRectangle(cornerRadius: 4)
+                .fill(videoColor.opacity(0.05))
+                .frame(width: laneWidth, height: 60)
+
+            // Video clip regions
+            ForEach(videoClips) { clip in
+                let clipStart = CGFloat(clip.startTime) * pixelsPerSecond
+                let clipDuration = CGFloat(clip.duration) * pixelsPerSecond
+
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(videoColor.opacity(0.25))
+                        .frame(width: max(20, clipDuration), height: 56)
+
+                    // Film strip pattern
+                    HStack(spacing: 2) {
+                        ForEach(0..<max(1, Int(clipDuration / 12)), id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(videoColor.opacity(0.15))
+                                .frame(width: 8, height: 40)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 8)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(videoColor.opacity(0.5), lineWidth: 1)
+                        .frame(width: max(20, clipDuration), height: 56)
+
+                    Text(clip.name)
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textPrimary)
+                        .padding(.horizontal, 4)
+                        .padding(.top, 2)
+                        .frame(width: max(20, clipDuration), alignment: .leading)
+                        .offset(y: -20)
+                }
+                .offset(x: clipStart)
+            }
+
+            // Empty state
+            if videoClips.isEmpty {
+                HStack(spacing: EchoelSpacing.xs) {
+                    Image(systemName: "film")
+                        .font(.system(size: 12))
+                        .foregroundColor(videoColor.opacity(0.4))
+                    Text("Drop video or use Video panel")
+                        .font(EchoelBrandFont.caption())
+                        .foregroundColor(EchoelBrand.textTertiary)
+                }
+                .padding(.leading, EchoelSpacing.sm)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(videoColor.opacity(0.15), lineWidth: 0.5)
+        )
+    }
+
     // MARK: - Zoom Control
 
     private var zoomControl: some View {
@@ -627,7 +740,7 @@ struct DAWArrangementView: View {
         let beatWidth = (60.0 / max(bpm, 20.0)) * pixelsPerSecond
         let barWidth = beatWidth * 4
         let totalBars = max(16, Int(ceil((recordingEngine.currentSession?.duration ?? 30) * bpm / 240.0)) + 4)
-        let laneHeight = CGFloat(max(tracks.count, 1)) * 64 + CGFloat(EchoelSpacing.sm * 2)
+        let laneHeight = CGFloat(max(tracks.count, 1) + 1) * 64 + CGFloat(EchoelSpacing.sm * 2) // +1 for video track
 
         return Canvas { context, size in
             for bar in 0..<totalBars {
