@@ -399,7 +399,8 @@ public final class EchoelSampler {
             zone = group.value[idx]
             roundRobinCounters[group.key] = counter + 1
         } else {
-            zone = matchingZones[0]
+            guard let first = matchingZones.first else { return }
+            zone = first
         }
 
         // Allocate voice (steal oldest if needed)

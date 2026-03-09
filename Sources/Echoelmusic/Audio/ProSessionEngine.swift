@@ -1431,7 +1431,9 @@ public final class ProSessionEngine {
                 pattern.patternSteps[step].isActive = true
                 pattern.patternSteps[step].velocity = 0.6
             }
-            engine.tracks[drumsIdx].clips[0] = pattern
+            if !engine.tracks[drumsIdx].clips.isEmpty {
+                engine.tracks[drumsIdx].clips[0] = pattern
+            }
         }
 
         engine.log.info("Live performance session created: 6 tracks, bio-reactive ready", category: .audio)

@@ -385,6 +385,7 @@ public final class EchoelCellular: @unchecked Sendable {
 
     /// Wavetable mode: CA tape IS the oscillator
     private func renderWavetable() -> Float {
+        guard cellCount > 0 else { return 0 }
         let phaseIncrement = frequency / sampleRate * Float(cellCount)
         wavetablePhase += phaseIncrement
         while wavetablePhase >= Float(cellCount) {

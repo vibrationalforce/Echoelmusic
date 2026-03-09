@@ -782,7 +782,7 @@ public final class EchoelModalBank: @unchecked Sendable {
 
     /// Get the current damping-adjusted decay time for the fundamental mode
     public func getEffectiveDecayTime() -> Float {
-        guard modeDecayRates[0] > 0 else { return 0 }
+        guard !modeDecayRates.isEmpty, modeDecayRates[0] > 0 else { return 0 }
         return 1.0 / (modeDecayRates[0] * Swift.max(0.01, damping))
     }
 
