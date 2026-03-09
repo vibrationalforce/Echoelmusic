@@ -10,26 +10,10 @@ struct MainNavigationHub: View {
     @Environment(ThemeManager.self) var themeManager
 
     @State private var showSettings = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    #if os(iOS)
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    #endif
-
-    private var isDesktop: Bool {
-        #if os(iOS)
-        return horizontalSizeClass == .regular
-        #else
-        return true
-        #endif
-    }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top bar (desktop only — mobile has no top bar, just studio)
-            if isDesktop {
-                topBar
-            }
+            topBar
 
             // Unified studio workspace
             EchoelStudioView()
