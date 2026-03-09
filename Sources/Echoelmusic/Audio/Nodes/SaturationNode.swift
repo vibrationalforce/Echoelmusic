@@ -129,7 +129,8 @@ class SaturationNode: BaseEchoelmusicNode {
 
             // Copy back using buffer pointer
             processed.withUnsafeBufferPointer { src in
-                ptr.update(from: src.baseAddress!, count: frameCount)
+                guard let base = src.baseAddress else { return }
+                ptr.update(from: base, count: frameCount)
             }
         }
 

@@ -259,7 +259,8 @@ class DelayNode: BaseEchoelmusicNode {
         for ch in 0..<delayBuffers.count {
             let count = delayBuffers[ch].count
             delayBuffers[ch].withUnsafeMutableBufferPointer { ptr in
-                vDSP_vclr(ptr.baseAddress!, 1, vDSP_Length(count))
+                guard let base = ptr.baseAddress else { return }
+                vDSP_vclr(base, 1, vDSP_Length(count))
             }
             writeIndex[ch] = 0
             lpState[ch] = 0.0
