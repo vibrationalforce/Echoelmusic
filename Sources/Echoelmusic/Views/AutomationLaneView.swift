@@ -190,8 +190,10 @@ struct AutomationLaneView: View {
             }
 
             // Extend to end
-            let lastY = height * CGFloat(1.0 - sortedPoints.last!.value)
-            path.addLine(to: CGPoint(x: width, y: lastY))
+            if let lastValue = sortedPoints.last?.value {
+                let lastY = height * CGFloat(1.0 - lastValue)
+                path.addLine(to: CGPoint(x: width, y: lastY))
+            }
 
             // Stroke
             context.stroke(path, with: .color(paramColor), lineWidth: 1.5)
