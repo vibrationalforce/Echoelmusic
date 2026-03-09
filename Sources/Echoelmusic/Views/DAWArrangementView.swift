@@ -28,7 +28,7 @@ struct DAWArrangementView: View {
 
     private var trackListWidth: CGFloat {
         #if os(iOS)
-        return horizontalSizeClass == .compact ? 120 : 180
+        return horizontalSizeClass == .compact ? 140 : 180
         #else
         return 180
         #endif
@@ -140,122 +140,108 @@ struct DAWArrangementView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
-                Text(recordingEngine.currentSession?.name.uppercased() ?? "DAW STUDIO")
-                    .font(EchoelBrandFont.sectionTitle())
-                    .foregroundColor(EchoelBrand.textPrimary)
-
-                Text("\(tracks.count) Tracks • \(formatDuration(recordingEngine.currentSession?.duration ?? 0))")
-                    .font(EchoelBrandFont.caption())
-                    .foregroundColor(EchoelBrand.textSecondary)
-            }
-
-            Spacer()
-
-            // BPM display with tempo controls
-            HStack(spacing: EchoelSpacing.xs) {
-                // Metronome toggle
-                Button {
-                    if metronome.isRunning {
-                        metronome.stop()
-                    } else {
-                        metronome.setTempo(bpm)
-                        metronome.start()
-                    }
-                    HapticHelper.impact(.light)
-                } label: {
-                    Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
-                        .font(.system(size: 14))
-                        .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
-                        .opacity(metronome.beatFlash ? 1.0 : 0.7)
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-
-                // Tempo down
-                Button {
-                    let newBPM = max(40, workspace.globalBPM - 1)
-                    workspace.globalBPM = newBPM
-                    metronome.setTempo(newBPM)
-                    HapticHelper.impact(.light)
-                } label: {
-                    Image(systemName: "minus")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(EchoelBrand.textTertiary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(EchoelBrand.bgElevated))
-                }
-                .buttonStyle(.plain)
-
-                // BPM value — tap for editor
-                Button {
-                    showTempoEditor.toggle()
-                } label: {
-                    HStack(spacing: EchoelSpacing.xs) {
-                        Text("\(Int(bpm))")
-                            .font(EchoelBrandFont.data())
-                            .foregroundColor(EchoelBrand.textPrimary)
-                        Text("BPM")
-                            .font(EchoelBrandFont.label())
-                            .foregroundColor(EchoelBrand.textSecondary)
-                    }
-                }
-                .buttonStyle(.plain)
-
-                // Tempo up
-                Button {
-                    let newBPM = min(300, workspace.globalBPM + 1)
-                    workspace.globalBPM = newBPM
-                    metronome.setTempo(newBPM)
-                    HapticHelper.impact(.light)
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(EchoelBrand.textTertiary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(EchoelBrand.bgElevated))
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, EchoelSpacing.sm)
-            .padding(.vertical, EchoelSpacing.xs)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
-            )
-            .modifier(GlassCard())
-            .popover(isPresented: $showTempoEditor) {
-                tempoEditorPopover
-            }
-
-            Spacer()
-
-            // Toolbar
+        VStack(spacing: EchoelSpacing.xs) {
+            // Row 1: BPM + tempo controls + toolbar
             HStack(spacing: EchoelSpacing.sm) {
-                if isCompact {
-                    toolbarButton(icon: "sidebar.left", label: "Tracks", isActive: showTrackList) {
-                        withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
+                // BPM display with tempo controls
+                HStack(spacing: EchoelSpacing.xs) {
+                    // Metronome toggle
+                    Button {
+                        if metronome.isRunning {
+                            metronome.stop()
+                        } else {
+                            metronome.setTempo(bpm)
+                            metronome.start()
+                        }
+                        HapticHelper.impact(.light)
+                    } label: {
+                        Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
+                            .font(.system(size: 14))
+                            .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
+                            .opacity(metronome.beatFlash ? 1.0 : 0.7)
+                            .frame(width: 28, height: 28)
                     }
+                    .buttonStyle(.plain)
+
+                    // Tempo down
+                    Button {
+                        let newBPM = max(40, workspace.globalBPM - 1)
+                        workspace.globalBPM = newBPM
+                        metronome.setTempo(newBPM)
+                        HapticHelper.impact(.light)
+                    } label: {
+                        Image(systemName: "minus")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(EchoelBrand.textTertiary)
+                            .frame(width: 22, height: 22)
+                            .background(Circle().fill(EchoelBrand.bgElevated))
+                    }
+                    .buttonStyle(.plain)
+
+                    // BPM value — tap for editor
+                    Button {
+                        showTempoEditor.toggle()
+                    } label: {
+                        HStack(spacing: EchoelSpacing.xs) {
+                            Text("\(Int(bpm))")
+                                .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                .foregroundColor(EchoelBrand.textPrimary)
+                            Text("BPM")
+                                .font(EchoelBrandFont.label())
+                                .foregroundColor(EchoelBrand.textSecondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    // Tempo up
+                    Button {
+                        let newBPM = min(300, workspace.globalBPM + 1)
+                        workspace.globalBPM = newBPM
+                        metronome.setTempo(newBPM)
+                        HapticHelper.impact(.light)
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(EchoelBrand.textTertiary)
+                            .frame(width: 22, height: 22)
+                            .background(Circle().fill(EchoelBrand.bgElevated))
+                    }
+                    .buttonStyle(.plain)
                 }
-                toolbarButton(icon: "slider.horizontal.3", label: "Mix", isActive: showMiniMixer) {
-                    withAnimation(.easeInOut(duration: 0.2)) { showMiniMixer.toggle() }
+                .padding(.horizontal, EchoelSpacing.sm)
+                .padding(.vertical, EchoelSpacing.xs)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
+                )
+                .modifier(GlassCard())
+                .popover(isPresented: $showTempoEditor) {
+                    tempoEditorPopover
                 }
-                toolbarButton(icon: "slider.vertical.3", label: "Full", isActive: showMixer) {
-                    showMixer = true
-                }
-                toolbarButton(icon: "waveform.path.ecg", label: "FX", isActive: showEffectsChain) {
-                    showEffectsChain = true
-                }
-                toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
-                    showMasterExport = true
-                }
-                toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
-                    addNewTrack()
+
+                Spacer()
+
+                // Toolbar icons
+                HStack(spacing: isCompact ? EchoelSpacing.xs : EchoelSpacing.sm) {
+                    if isCompact {
+                        toolbarButton(icon: "sidebar.left", label: "Tracks", isActive: showTrackList) {
+                            withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
+                        }
+                    }
+                    toolbarButton(icon: "slider.horizontal.3", label: "Mix", isActive: showMiniMixer) {
+                        withAnimation(.easeInOut(duration: 0.2)) { showMiniMixer.toggle() }
+                    }
+                    toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
+                        showMasterExport = true
+                    }
+                    toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
+                        addNewTrack()
+                    }
                 }
             }
         }
-        .padding(EchoelSpacing.md)
+        .padding(.horizontal, EchoelSpacing.sm)
+        .padding(.vertical, EchoelSpacing.xs)
     }
 
     // MARK: - Tempo Editor Popover
@@ -359,11 +345,11 @@ struct DAWArrangementView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(track.name)
-                    .font(EchoelBrandFont.body())
+                    .font(.system(size: isCompact ? 13 : 16, weight: .regular))
                     .foregroundColor(EchoelBrand.textPrimary)
                     .lineLimit(1)
                 Text(track.type.rawValue)
-                    .font(EchoelBrandFont.caption())
+                    .font(.system(size: isCompact ? 10 : 13))
                     .foregroundColor(EchoelBrand.textTertiary)
                     .lineLimit(1)
             }
@@ -425,11 +411,11 @@ struct DAWArrangementView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Video")
-                    .font(EchoelBrandFont.body())
+                    .font(.system(size: isCompact ? 13 : 16, weight: .regular))
                     .foregroundColor(EchoelBrand.textPrimary)
                     .lineLimit(1)
                 Text(clipCount > 0 ? "\(clipCount) clips" : "No clips")
-                    .font(EchoelBrandFont.caption())
+                    .font(.system(size: isCompact ? 10 : 13))
                     .foregroundColor(EchoelBrand.textTertiary)
                     .lineLimit(1)
             }
@@ -1002,15 +988,17 @@ struct DAWArrangementView: View {
 
     private func toolbarButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: EchoelSpacing.xs) {
+            VStack(spacing: 2) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
-                Text(label)
-                    .font(EchoelBrandFont.caption())
+                    .font(.system(size: isCompact ? 16 : 20))
+                if !isCompact {
+                    Text(label)
+                        .font(.system(size: 10, weight: .medium))
+                        .lineLimit(1)
+                }
             }
             .foregroundColor(isActive ? EchoelBrand.sky : EchoelBrand.textSecondary)
-            .padding(.horizontal, EchoelSpacing.sm)
-            .padding(.vertical, EchoelSpacing.xs)
+            .frame(width: isCompact ? 36 : 52, height: isCompact ? 36 : 48)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isActive ? EchoelBrand.sky.opacity(0.15) : Color.clear)

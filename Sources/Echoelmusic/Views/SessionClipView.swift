@@ -109,47 +109,53 @@ private struct SessionClipContent: View {
         let bioSync = vm.bioSyncEnabled
         let coherence = vm.coherence
         let coherenceColor = vm.coherenceColor
-        HStack {
-            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
+        HStack(spacing: EchoelSpacing.sm) {
+            // Session info
+            VStack(alignment: .leading, spacing: 2) {
                 Text("SESSION")
-                    .font(EchoelBrandFont.sectionTitle())
+                    .font(.system(size: isCompact ? 14 : 20, weight: .bold, design: .default))
                     .foregroundColor(EchoelBrand.textPrimary)
+                    .lineLimit(1)
 
                 Text("\(trackCount) Tracks • \(sceneCount) Scenes")
                     .font(EchoelBrandFont.caption())
                     .foregroundColor(EchoelBrand.sky)
+                    .lineLimit(1)
             }
+            .fixedSize(horizontal: true, vertical: false)
 
-            Spacer()
+            Spacer(minLength: EchoelSpacing.xs)
 
             // BPM Display
-            HStack(spacing: EchoelSpacing.sm) {
+            HStack(spacing: EchoelSpacing.xs) {
                 Image(systemName: "metronome")
+                    .font(.system(size: 12))
                     .foregroundColor(EchoelBrand.coral)
 
-                Text(String(format: "%.1f", bpm))
-                    .font(EchoelBrandFont.dataSmall())
+                Text("\(Int(bpm))")
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
                     .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("BPM")
                     .font(EchoelBrandFont.label())
                     .foregroundColor(EchoelBrand.textTertiary)
             }
-            .padding(.horizontal, EchoelSpacing.md)
-            .padding(.vertical, EchoelSpacing.sm)
+            .padding(.horizontal, EchoelSpacing.sm)
+            .padding(.vertical, EchoelSpacing.xs)
             .modifier(GlassCard())
 
             // Bio Sync
             Button { vm.bioSyncEnabled.toggle(); HapticHelper.impact(.light) } label: {
-                HStack(spacing: EchoelSpacing.sm) {
+                HStack(spacing: EchoelSpacing.xs) {
                     Image(systemName: "heart.fill")
+                        .font(.system(size: 12))
                     Text("Bio")
+                        .font(EchoelBrandFont.label())
                 }
-                .font(EchoelBrandFont.caption())
                 .foregroundColor(bioSync ? EchoelBrand.coral : EchoelBrand.textTertiary)
             }
-            .padding(.horizontal, EchoelSpacing.md)
-            .padding(.vertical, EchoelSpacing.sm)
+            .padding(.horizontal, EchoelSpacing.sm)
+            .padding(.vertical, EchoelSpacing.xs)
             .background(bioSync ? EchoelBrand.coral.opacity(0.2) : Color.clear)
             .modifier(GlassCard())
 
@@ -157,7 +163,7 @@ private struct SessionClipContent: View {
             if bioSync {
                 VStack(spacing: 2) {
                     Text("\(Int(coherence * 100))")
-                        .font(EchoelBrandFont.dataSmall())
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
                         .foregroundColor(coherenceColor)
 
                     Text("FLOW")
@@ -167,22 +173,18 @@ private struct SessionClipContent: View {
                 .shadow(color: coherenceColor.opacity(0.4), radius: 6)
             }
 
-            // Quantize (compact, from transport)
-            HStack(spacing: EchoelSpacing.xs) {
-                Text("Q:")
-                    .font(EchoelBrandFont.label())
-                    .foregroundColor(EchoelBrand.textTertiary)
-
-                Picker("", selection: $session.quantize) {
-                    Text("1 Bar").tag(QuantizeValue.bar)
-                    Text("1/4").tag(QuantizeValue.quarter)
-                    Text("Off").tag(QuantizeValue.off)
-                }
-                .pickerStyle(.menu)
-                .font(EchoelBrandFont.caption())
+            // Quantize
+            Picker("", selection: $session.quantize) {
+                Text("1 Bar").tag(QuantizeValue.bar)
+                Text("1/4").tag(QuantizeValue.quarter)
+                Text("Off").tag(QuantizeValue.off)
             }
+            .pickerStyle(.menu)
+            .font(EchoelBrandFont.caption())
+            .fixedSize()
         }
-        .padding(EchoelSpacing.md)
+        .padding(.horizontal, EchoelSpacing.sm)
+        .padding(.vertical, EchoelSpacing.xs)
     }
 
     // MARK: - Track Header Column

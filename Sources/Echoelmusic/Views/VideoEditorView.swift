@@ -127,48 +127,50 @@ struct VideoEditorView: View {
     // MARK: - Header Section
 
     private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
+        HStack(spacing: EchoelSpacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("VIDEO EDITOR")
-                    .font(EchoelBrandFont.sectionTitle())
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(EchoelBrand.textPrimary)
+                    .lineLimit(1)
 
                 Text("DAW + Video")
-                    .font(EchoelBrandFont.caption())
+                    .font(EchoelBrandFont.label())
                     .foregroundColor(EchoelBrand.textSecondary)
+                    .lineLimit(1)
             }
-
-            Spacer()
+            .fixedSize(horizontal: true, vertical: false)
 
             if let progress = importProgress {
                 HStack(spacing: EchoelSpacing.xs) {
                     ProgressView()
-                        .scaleEffect(0.8)
+                        .scaleEffect(0.7)
                     Text(progress)
-                        .font(EchoelBrandFont.caption())
+                        .font(EchoelBrandFont.label())
                         .foregroundColor(EchoelBrand.textSecondary)
+                        .lineLimit(1)
                 }
                 .transition(.opacity)
             }
 
             Spacer()
 
-            // Toolbar buttons
-            HStack(spacing: EchoelSpacing.sm) {
+            // Toolbar buttons — icon-only on compact
+            HStack(spacing: EchoelSpacing.xs) {
                 toolbarButton(icon: "metronome", label: "BPM", isActive: showBPMGrid) {
                     withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         showBPMGrid.toggle()
                     }
                 }
 
-                toolbarButton(icon: "square.stack.3d.up", label: "Effects", isActive: showEffectsPanel) {
+                toolbarButton(icon: "square.stack.3d.up", label: "FX", isActive: showEffectsPanel) {
                     withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         showEffectsPanel.toggle()
                     }
                 }
 
                 #if os(iOS)
-                toolbarButton(icon: "camera.fill", label: "Capture", isActive: showCameraCapture) {
+                toolbarButton(icon: "camera.fill", label: "Cam", isActive: showCameraCapture) {
                     withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) {
                         showCameraCapture.toggle()
                         if showCameraCapture {
@@ -176,7 +178,6 @@ struct VideoEditorView: View {
                                 if cameraManager == nil, let device = MTLCreateSystemDefaultDevice() {
                                     cameraManager = CameraManager(device: device)
                                 }
-                                // Wire camera frames to analyzer
                                 cameraManager?.onRawFrameCaptured = { [weak cameraAnalyzer] pixelBuffer, _ in
                                     cameraAnalyzer?.analyzePixelBuffer(pixelBuffer)
                                 }
@@ -190,12 +191,13 @@ struct VideoEditorView: View {
                 }
                 #endif
 
-                toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
+                toolbarButton(icon: "square.and.arrow.up", label: "Exp", isActive: false) {
                     showExportSheet = true
                 }
             }
         }
-        .padding(EchoelSpacing.md)
+        .padding(.horizontal, EchoelSpacing.sm)
+        .padding(.vertical, EchoelSpacing.xs)
     }
 
     // MARK: - Preview Section
@@ -869,15 +871,15 @@ struct VideoEditorView: View {
             action()
             HapticHelper.impact(.light)
         } label: {
-            VStack(spacing: EchoelSpacing.xs) {
+            VStack(spacing: 2) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
+                    .font(.system(size: 16))
                 Text(label)
-                    .font(EchoelBrandFont.caption())
+                    .font(.system(size: 9, weight: .medium))
+                    .lineLimit(1)
             }
             .foregroundColor(isActive ? EchoelBrand.sky : EchoelBrand.textSecondary)
-            .padding(.horizontal, EchoelSpacing.sm)
-            .padding(.vertical, EchoelSpacing.xs)
+            .frame(width: 44, height: 40)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isActive ? EchoelBrand.sky.opacity(0.15) : Color.clear)
