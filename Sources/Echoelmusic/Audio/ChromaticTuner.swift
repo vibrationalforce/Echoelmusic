@@ -187,8 +187,15 @@ public final class ChromaticTuner {
         // Copy data for analysis
         let samples = buffer.floatArray(channel: 0)
 
+        // Capture @MainActor-isolated properties before dispatching to background queue
+        let capturedSampleRate = self.sampleRate
+        let capturedThreshold = self.amplitudeThreshold
+        let capturedA4 = self.customA4
+        let capturedMinFreq = self.minFrequency
+        let capturedMaxFreq = self.maxFrequency
+
         analysisQueue.async { [weak self] in
-            guard let self = self else { return }
+            guard self != nil else { return }
 
             // Calculate amplitude
             var rms: Float = 0
@@ -196,26 +203,26 @@ public final class ChromaticTuner {
             let amplitude = Double(rms)
 
             // Only analyze if signal is above threshold
-            guard amplitude > self.amplitudeThreshold else {
-                Task { @MainActor in
-                    self.signalLevel = amplitude
-                    self.currentReading = nil
+            guard amplitude > capturedThreshold else {
+                Task { @MainActor [weak self] in
+                    self?.signalLevel = amplitude
+                    self?.currentReading = nil
                 }
                 return
             }
 
             // Detect pitch using autocorrelation
-            let frequency = self.detectPitch(samples: samples, sampleRate: self.sampleRate)
+            let frequency = self?.detectPitch(samples: samples, sampleRate: capturedSampleRate) ?? 0
 
-            guard frequency > self.minFrequency && frequency < self.maxFrequency else {
-                Task { @MainActor in
-                    self.signalLevel = amplitude
+            guard frequency > capturedMinFreq && frequency < capturedMaxFreq else {
+                Task { @MainActor [weak self] in
+                    self?.signalLevel = amplitude
                 }
                 return
             }
 
             // Calculate note and cents
-            let a4 = self.customA4
+            let a4 = capturedA4
             let note = MusicalNote.fromFrequency(frequency, referenceA4: a4)
             let cents = 1200.0 * log2(frequency / note.frequency)
 

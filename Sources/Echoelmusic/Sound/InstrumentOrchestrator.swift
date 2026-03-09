@@ -169,28 +169,25 @@ final class InstrumentOrchestrator {
     // MARK: - Bio-Data Connection
 
     private func connectToBioData() {
-        // Subscribe to UniversalCore bio-data updates
+        // Subscribe to UniversalCore bio-data updates on main queue
+        // to ensure @MainActor-isolated properties are accessed safely
         NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(bioDataUpdated(_:)),
-            name: NSNotification.Name("EchoelBioDataUpdated"),
-            object: nil
-        )
-    }
-
-    @objc private func bioDataUpdated(_ notification: Notification) {
-        if let coherence = notification.userInfo?["coherence"] as? Float {
-            bioCoherence = coherence
+            forName: NSNotification.Name("EchoelBioDataUpdated"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            if let coherence = notification.userInfo?["coherence"] as? Float {
+                self.bioCoherence = coherence
+            }
+            if let energy = notification.userInfo?["energy"] as? Float {
+                self.bioEnergy = energy
+            }
+            if let hr = notification.userInfo?["heartRate"] as? Float {
+                self.heartRate = hr
+            }
+            self.applyBioModulation()
         }
-        if let energy = notification.userInfo?["energy"] as? Float {
-            bioEnergy = energy
-        }
-        if let hr = notification.userInfo?["heartRate"] as? Float {
-            heartRate = hr
-        }
-
-        // Apply bio-modulation to synthesis
-        applyBioModulation()
     }
 
     // MARK: - Instrument Selection

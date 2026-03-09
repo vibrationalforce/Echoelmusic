@@ -1,7 +1,6 @@
 #if canImport(Accelerate)
 import Foundation
 import Accelerate
-import Combine
 import QuartzCore
 import Observation
 
@@ -96,7 +95,6 @@ public final class ProVocalChain {
     }
 
     private let config: ChainConfiguration
-    private var cancellables = Set<AnyCancellable>()
 
     // Active note tracking (for real-time vibrato)
     private var activeNoteId: UUID?

@@ -327,6 +327,10 @@ final class VideoExportManager {
     private var currentExportSession: AVAssetExportSession?
     private var progressTimer: Timer?
 
+    deinit {
+        progressTimer?.invalidate()
+    }
+
     // MARK: - Single Export
 
     func export(

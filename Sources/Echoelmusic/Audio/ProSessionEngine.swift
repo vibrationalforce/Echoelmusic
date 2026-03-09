@@ -1,7 +1,6 @@
 #if canImport(AVFoundation)
 import Foundation
 import AVFoundation
-import Combine
 import Observation
 
 // MARK: - MIDINoteEvent
@@ -700,7 +699,6 @@ public final class ProSessionEngine {
     // MARK: - Private Properties
 
     private let log = ProfessionalLogger.shared
-    private var cancellables = Set<AnyCancellable>()
     nonisolated(unsafe) private var transportTimer: Timer?
     private var tapTempoTimestamps: [Date] = []
 

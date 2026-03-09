@@ -658,7 +658,7 @@ class FairchildLimiter {
     func process(_ input: [Float]) -> [Float] {
         var output = [Float](repeating: 0, count: input.count)
 
-        let (attackMs, releaseMs) = timeConstants[min(timeConstant - 1, 5)]
+        let (attackMs, releaseMs) = timeConstants[max(0, min(timeConstant - 1, 5))]
         let attackCoeff = exp(-1.0 / (sampleRate * attackMs / 1000.0))
         let releaseCoeff = exp(-1.0 / (sampleRate * releaseMs / 1000.0))
 
@@ -837,8 +837,8 @@ class UREI1176Limiter {
     func process(_ input: [Float]) -> [Float] {
         var output = [Float](repeating: 0, count: input.count)
 
-        let attackIdx = min(Int(attack) - 1, 6)
-        let releaseIdx = min(Int(release) - 1, 6)
+        let attackIdx = max(0, min(Int(attack) - 1, 6))
+        let releaseIdx = max(0, min(Int(release) - 1, 6))
 
         let attackMs = attackTimes[attackIdx]
         let releaseMs = releaseTimes[releaseIdx]

@@ -18,7 +18,6 @@
 
 import Foundation
 import StoreKit
-import Combine
 import Observation
 
 // MARK: - Product Identifiers
@@ -101,7 +100,6 @@ public final class EchoelStore {
     // MARK: - Private
 
     nonisolated(unsafe) private var transactionListener: Task<Void, Error>?
-    private var cancellables = Set<AnyCancellable>()
 
     private static let sessionsKey = "echoelmusic_purchased_sessions"
 

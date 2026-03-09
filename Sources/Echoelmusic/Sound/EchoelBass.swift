@@ -34,7 +34,6 @@
 import Foundation
 import AVFoundation
 import Accelerate
-import Combine
 import SwiftUI
 import Observation
 
@@ -328,10 +327,6 @@ public final class EchoelBass {
     private var bioHeartRate: Float = 72.0
     private var bioHRV: Float = 50.0
     private var bioBreathPhase: Float = 0.0
-
-    // MARK: - Combine
-
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 

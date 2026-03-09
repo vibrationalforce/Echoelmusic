@@ -181,11 +181,11 @@ public final class MemoryPressureHandler {
             guard let self = self, let source = self.memorySource else { return }
             let event = source.data
 
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 if event.contains(.critical) {
-                    self.handlePressure(level: .critical)
+                    self?.handlePressure(level: .critical)
                 } else if event.contains(.warning) {
-                    self.handlePressure(level: .warning)
+                    self?.handlePressure(level: .warning)
                 }
             }
         }

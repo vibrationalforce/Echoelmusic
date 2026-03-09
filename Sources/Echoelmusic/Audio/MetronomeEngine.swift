@@ -357,9 +357,11 @@ public final class MetronomeEngine {
                     self.processBeat()
                 }
             } else {
-                // Subdivision click
-                if let buffer = self.subdivisionBuffer {
-                    self.playerNode.scheduleBuffer(buffer, completionHandler: nil)
+                // Subdivision click — hop to MainActor for @MainActor-isolated properties
+                Task { @MainActor [weak self] in
+                    if let buffer = self?.subdivisionBuffer {
+                        self?.playerNode.scheduleBuffer(buffer, completionHandler: nil)
+                    }
                 }
             }
 

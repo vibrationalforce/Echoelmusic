@@ -1,7 +1,6 @@
 #if canImport(AVFoundation)
 import Foundation
 import AVFoundation
-import Combine
 import os.log
 import Observation
 
@@ -24,9 +23,6 @@ final class NodeGraph {
 
 
     // MARK: - Private Properties
-
-    /// Cancellables for Combine
-    private var cancellables = Set<AnyCancellable>()
 
     /// Current bio-signal for reactivity
     private var currentBioSignal = BioSignal()

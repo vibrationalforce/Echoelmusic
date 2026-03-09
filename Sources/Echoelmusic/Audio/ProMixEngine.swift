@@ -11,7 +11,6 @@
 
 import Foundation
 import AVFoundation
-import Combine
 import Observation
 
 // MARK: - Channel Color
@@ -607,7 +606,6 @@ public final class ProMixEngine {
     // MARK: - Private
 
     private let logger = ProfessionalLogger.shared
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 

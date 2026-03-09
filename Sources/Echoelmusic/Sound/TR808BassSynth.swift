@@ -22,7 +22,6 @@
 import Foundation
 import AVFoundation
 import Accelerate
-import Combine
 
 // MARK: - 808 Bass Configuration
 
@@ -270,10 +269,6 @@ public final class TR808BassSynth {
     private var bioCoherence: Float = 0.5
     private var bioEnergy: Float = 0.5
 
-    // MARK: - Combine
-
-    private var cancellables = Set<AnyCancellable>()
-
     // MARK: - Initialization
 
     private init() {
@@ -469,11 +464,11 @@ public final class TR808BassSynth {
                 var env: Float
                 if voice.isReleasing {
                     let releaseElapsed = Float(time - voice.releaseStartTime)
-                    let releaseProgress = min(1.0, releaseElapsed / cfg.release)
+                    let releaseProgress = min(1.0, releaseElapsed / max(cfg.release, 0.001))
                     env = voice.releaseStartEnvelope * (1.0 - releaseProgress)
                 } else {
                     // Exponential decay
-                    let decayProgress = elapsed / cfg.decay
+                    let decayProgress = elapsed / max(cfg.decay, 0.001)
                     let decayCurve = pow(decayProgress, cfg.decayCurve)
                     env = max(cfg.sustain, 1.0 - decayCurve)
                 }
@@ -493,7 +488,7 @@ public final class TR808BassSynth {
                 var pitchMultiplier: Float = 1.0
 
                 if cfg.pitchGlideEnabled && voice.pitchGlideProgress < 1.0 {
-                    let glideProgress = min(1.0, elapsed / cfg.pitchGlideTime)
+                    let glideProgress = min(1.0, elapsed / max(cfg.pitchGlideTime, 0.001))
                     voice.pitchGlideProgress = glideProgress
 
                     // Apply glide curve (exponential)
@@ -506,7 +501,7 @@ public final class TR808BassSynth {
 
                 // Pitch envelope
                 if cfg.pitchEnvAmount != 0 {
-                    let pitchEnvProgress = min(1.0, elapsed / cfg.pitchEnvDecay)
+                    let pitchEnvProgress = min(1.0, elapsed / max(cfg.pitchEnvDecay, 0.001))
                     let pitchEnvOffset = cfg.pitchEnvAmount * (1.0 - pitchEnvProgress)
                     pitchMultiplier *= pow(2.0, pitchEnvOffset / 12.0)
                 }
