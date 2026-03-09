@@ -205,6 +205,249 @@ final class DSPCrossfadeCurveTests: XCTestCase {
     }
 }
 
+// MARK: - EchoelDDSP Render Tests
+
+final class EchoelDDSPRenderTests: XCTestCase {
+
+    func testRenderProducesOutput() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 256)
+        ddsp.noteOn(frequency: 440)
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(buffer: &buffer, frameCount: 256)
+        let hasNonZero = buffer.contains { $0 != 0 }
+        XCTAssertTrue(hasNonZero, "DDSP should produce non-zero output after noteOn")
+    }
+
+    func testRenderNaNGuard() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 256)
+        ddsp.noteOn(frequency: 440)
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(buffer: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "DDSP render must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "DDSP render must not produce Inf")
+        }
+    }
+
+    func testRenderStereo() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 128)
+        ddsp.noteOn(frequency: 440)
+        var buffer = [Float](repeating: 0, count: 256) // 128 frames * 2 channels
+        ddsp.render(buffer: &buffer, frameCount: 128, stereo: true)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN)
+            XCTAssertFalse(sample.isInfinite)
+        }
+    }
+
+    func testRenderZeroFrameCount() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 256)
+        ddsp.noteOn(frequency: 440)
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(buffer: &buffer, frameCount: 0)
+        // Buffer should remain all zeros
+        for sample in buffer {
+            XCTAssertEqual(sample, 0)
+        }
+    }
+
+    func testRenderExtremeFrequency() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 256)
+        ddsp.noteOn(frequency: 22000) // Near Nyquist
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(buffer: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "High frequency must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "High frequency must not produce Inf")
+        }
+    }
+
+    func testRenderSilenceBeforeNoteOn() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 256)
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(buffer: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertEqual(sample, 0, accuracy: 0.001, "Should be silent before noteOn")
+        }
+    }
+
+    func testAllSpectralShapesRender() {
+        let ddsp = EchoelDDSP(harmonicCount: 32, sampleRate: 48000, frameSize: 128)
+        for shape in EchoelDDSP.SpectralShape.allCases {
+            ddsp.spectralShape = shape
+            ddsp.noteOn(frequency: 440)
+            var buffer = [Float](repeating: 0, count: 128)
+            ddsp.render(buffer: &buffer, frameCount: 128)
+            for sample in buffer {
+                XCTAssertFalse(sample.isNaN, "NaN with shape \(shape)")
+                XCTAssertFalse(sample.isInfinite, "Inf with shape \(shape)")
+            }
+        }
+    }
+}
+
+// MARK: - EchoelPolyDDSP Render Tests
+
+final class EchoelPolyDDSPRenderTests: XCTestCase {
+
+    func testRenderStereoOutput() {
+        let poly = EchoelPolyDDSP(maxVoices: 4, sampleRate: 48000)
+        poly.noteOn(note: 60, velocity: 0.8)
+        var left = [Float](repeating: 0, count: 256)
+        var right = [Float](repeating: 0, count: 256)
+        poly.renderStereo(left: &left, right: &right, frameCount: 256)
+        let hasOutput = left.contains { $0 != 0 } || right.contains { $0 != 0 }
+        XCTAssertTrue(hasOutput, "PolyDDSP should produce output after noteOn")
+    }
+
+    func testRenderNaNGuard() {
+        let poly = EchoelPolyDDSP(maxVoices: 4, sampleRate: 48000)
+        poly.noteOn(note: 60, velocity: 0.8)
+        var left = [Float](repeating: 0, count: 256)
+        var right = [Float](repeating: 0, count: 256)
+        poly.renderStereo(left: &left, right: &right, frameCount: 256)
+        for i in 0..<256 {
+            XCTAssertFalse(left[i].isNaN, "Left NaN at \(i)")
+            XCTAssertFalse(right[i].isNaN, "Right NaN at \(i)")
+            XCTAssertFalse(left[i].isInfinite, "Left Inf at \(i)")
+            XCTAssertFalse(right[i].isInfinite, "Right Inf at \(i)")
+        }
+    }
+
+    func testVoiceStealing() {
+        let poly = EchoelPolyDDSP(maxVoices: 2, sampleRate: 48000, frameSize: 128)
+        // Exceed max voices
+        poly.noteOn(note: 60, velocity: 0.8)
+        poly.noteOn(note: 64, velocity: 0.8)
+        poly.noteOn(note: 67, velocity: 0.8) // Should steal a voice
+        XCTAssertLessThanOrEqual(poly.activeVoiceCount, 2, "Should not exceed maxVoices")
+        var left = [Float](repeating: 0, count: 128)
+        var right = [Float](repeating: 0, count: 128)
+        poly.renderStereo(left: &left, right: &right, frameCount: 128)
+        for i in 0..<128 {
+            XCTAssertFalse(left[i].isNaN, "Voice stealing must not produce NaN")
+        }
+    }
+
+    func testAllNotesOff() {
+        let poly = EchoelPolyDDSP(maxVoices: 4, sampleRate: 48000, frameSize: 128)
+        poly.noteOn(note: 60, velocity: 0.8)
+        poly.noteOn(note: 64, velocity: 0.8)
+        poly.allNotesOff()
+        XCTAssertEqual(poly.activeVoiceCount, 0, "All voices should be off")
+    }
+}
+
+// MARK: - ClassicAnalogEmulations Tests
+
+final class AnalogEmulationProcessTests: XCTestCase {
+
+    func testSSLBusCompressorSilence() {
+        let ssl = SSLBusCompressor(sampleRate: 48000)
+        let silence = [Float](repeating: 0, count: 256)
+        let output = ssl.process(silence)
+        XCTAssertEqual(output.count, 256)
+        for sample in output {
+            XCTAssertEqual(sample, 0, accuracy: 1e-6, "Silence in = silence out")
+        }
+    }
+
+    func testSSLBusCompressorNaNGuard() {
+        let ssl = SSLBusCompressor(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        let output = ssl.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "SSL must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "SSL must not produce Inf")
+        }
+    }
+
+    func testAPIBusCompressorNaNGuard() {
+        let api = APIBusCompressor(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.8 }
+        let output = api.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "API must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "API must not produce Inf")
+        }
+    }
+
+    func testPultecEQNaNGuard() {
+        let pultec = PultecEQP1A(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        let output = pultec.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "Pultec must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "Pultec must not produce Inf")
+        }
+    }
+
+    func testFairchildLimiterNaNGuard() {
+        let fairchild = FairchildLimiter(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        let output = fairchild.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "Fairchild must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "Fairchild must not produce Inf")
+        }
+    }
+
+    func testLA2ACompressorNaNGuard() {
+        let la2a = LA2ACompressor(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        let output = la2a.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "LA2A must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "LA2A must not produce Inf")
+        }
+    }
+
+    func testUREI1176NaNGuard() {
+        let urei = UREI1176Limiter(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        let output = urei.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "1176 must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "1176 must not produce Inf")
+        }
+    }
+
+    func testManleyVariMuNaNGuard() {
+        let manley = ManleyVariMu(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        let output = manley.process(signal)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "ManleyVariMu must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "ManleyVariMu must not produce Inf")
+        }
+    }
+
+    func testAnalogConsoleAllStyles() {
+        let console = AnalogConsole(sampleRate: 48000)
+        let signal = (0..<256).map { Float(sin(Double($0) * 0.1)) * 0.5 }
+        for style in AnalogConsole.HardwareStyle.allCases {
+            console.currentStyle = style
+            let output = console.process(signal)
+            XCTAssertEqual(output.count, 256)
+            for sample in output {
+                XCTAssertFalse(sample.isNaN, "NaN with style \(style)")
+                XCTAssertFalse(sample.isInfinite, "Inf with style \(style)")
+            }
+        }
+    }
+
+    func testClippingInputNaNGuard() {
+        let ssl = SSLBusCompressor(sampleRate: 48000)
+        // +6dB clipping signal
+        let clipping = [Float](repeating: 2.0, count: 256)
+        let output = ssl.process(clipping)
+        for sample in output {
+            XCTAssertFalse(sample.isNaN, "Clipping input must not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "Clipping input must not produce Inf")
+        }
+    }
+}
+
 // MARK: - CrossfadeRegion Tests
 
 final class DSPCrossfadeRegionTests: XCTestCase {
