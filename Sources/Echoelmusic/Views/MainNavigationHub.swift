@@ -1,7 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-/// Main navigation — DAW + Video workspaces
+/// Main navigation — EchoelStudio unified workspace
 struct MainNavigationHub: View {
 
     @Environment(AudioEngine.self) var audioEngine
@@ -9,70 +9,38 @@ struct MainNavigationHub: View {
     @Environment(RecordingEngine.self) var recordingEngine
     @Environment(ThemeManager.self) var themeManager
 
-    @State private var currentTab: Tab = .daw
-    @State private var sidebarExpanded = true
     @State private var showSettings = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    enum Tab: String, CaseIterable, Identifiable {
-        case daw = "DAW"
-        case live = "Live"
-        case synth = "Synth"
-        case fx = "FX"
-        case video = "Video"
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
-        var id: String { rawValue }
-
-        var icon: String {
-            switch self {
-            case .daw: return "pianokeys"
-            case .live: return "square.grid.3x3"
-            case .synth: return "waveform"
-            case .fx: return "waveform.path.ecg"
-            case .video: return "film"
-            }
-        }
-
-        var filledIcon: String {
-            switch self {
-            case .daw: return "pianokeys.inverse"
-            case .live: return "square.grid.3x3.fill"
-            case .synth: return "waveform.circle.fill"
-            case .fx: return "waveform.path.ecg.rectangle.fill"
-            case .video: return "film.fill"
-            }
-        }
-
-        var color: Color {
-            switch self {
-            case .daw: return EchoelBrand.sky
-            case .live: return EchoelBrand.emerald
-            case .synth: return EchoelBrand.primary
-            case .fx: return EchoelBrand.violet
-            case .video: return EchoelBrand.coral
-            }
-        }
+    private var isDesktop: Bool {
+        #if os(iOS)
+        return horizontalSizeClass == .regular
+        #else
+        return true
+        #endif
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                EchoelBrand.bgDeep
-                    .ignoresSafeArea()
+        VStack(spacing: 0) {
+            // Top bar (desktop only — mobile has no top bar, just studio)
+            if isDesktop {
+                topBar
+            }
 
-                if geometry.size.width > 768 {
-                    desktopLayout
-                } else {
-                    mobileLayout
-                }
-            }
+            // Unified studio workspace
+            EchoelStudioView()
+                .environment(audioEngine)
+                .environment(recordingEngine)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Transport bar (shared)
+            transportBar
         }
-        .onAppear {
-            // Ensure a session exists for DAW
-            if recordingEngine.currentSession == nil {
-                _ = recordingEngine.createSession(name: "New Project", template: .custom)
-            }
-        }
+        .background(EchoelBrand.bgDeep.ignoresSafeArea())
         .sheet(isPresented: $showSettings) {
             EchoelSettingsView()
                 .environment(themeManager)
@@ -80,110 +48,15 @@ struct MainNavigationHub: View {
         }
     }
 
-    // MARK: - Desktop Layout (iPad)
-
-    private var desktopLayout: some View {
-        VStack(spacing: 0) {
-            topBar
-
-            HStack(spacing: 0) {
-                if sidebarExpanded {
-                    sidebar
-                        .frame(width: 200)
-                        .transition(.move(edge: .leading))
-                }
-
-                workspaceContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-
-            transportBar
-        }
-    }
-
-    // MARK: - Mobile Layout (iPhone)
-
-    private var mobileLayout: some View {
-        VStack(spacing: 0) {
-            workspaceContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            transportBar
-
-            mobileTabBar
-        }
-    }
-
-    // MARK: - Top Bar
+    // MARK: - Top Bar (iPad)
 
     private var topBar: some View {
         HStack(spacing: EchoelSpacing.sm) {
-            Button(action: {
-                withAnimation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.85)) {
-                    sidebarExpanded.toggle()
-                }
-            }) {
-                Image(systemName: sidebarExpanded ? "sidebar.left" : "sidebar.leading")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(EchoelBrand.textSecondary)
-                    .frame(width: 30, height: 30)
-                    .background(
-                        RoundedRectangle(cornerRadius: EchoelRadius.xs)
-                            .fill(EchoelBrand.bgElevated.opacity(0.5))
-                    )
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            Text("ECHOELMUSIC")
+            Text("ECHOELSTUDIO")
                 .font(EchoelBrandFont.label())
                 .foregroundColor(EchoelBrand.textPrimary.opacity(0.7))
                 .tracking(4)
                 .kerning(0.5)
-
-            Spacer()
-
-            HStack(spacing: EchoelSpacing.xxs) {
-                ForEach(Tab.allCases) { tab in
-                    Button(action: {
-                        withAnimation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.78)) {
-                            currentTab = tab
-                        }
-                    }) {
-                        HStack(spacing: EchoelSpacing.xs) {
-                            Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
-                                .font(.system(size: 11, weight: currentTab == tab ? .semibold : .regular))
-                            Text(tab.rawValue)
-                                .font(EchoelBrandFont.label())
-                                .fontWeight(currentTab == tab ? .semibold : .regular)
-                        }
-                        .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
-                        .padding(.horizontal, EchoelSpacing.sm + EchoelSpacing.xs)
-                        .padding(.vertical, EchoelSpacing.xs + EchoelSpacing.xxs)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                                    .fill(currentTab == tab ? tab.color.opacity(0.1) : Color.clear)
-                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                                    .stroke(
-                                        currentTab == tab ? tab.color.opacity(0.18) : Color.clear,
-                                        lineWidth: 0.5
-                                    )
-                            }
-                        )
-                        .overlay(alignment: .bottom) {
-                            if currentTab == tab {
-                                Capsule()
-                                    .fill(tab.color)
-                                    .frame(width: 16, height: 2)
-                                    .offset(y: 1)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
 
             Spacer()
 
@@ -217,100 +90,6 @@ struct MainNavigationHub: View {
                 alignment: .bottom
             )
         )
-    }
-
-    // MARK: - Sidebar
-
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: EchoelSpacing.xxs) {
-            ForEach(Tab.allCases) { tab in
-                Button(action: {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.85)) {
-                        currentTab = tab
-                    }
-                }) {
-                    HStack(spacing: EchoelSpacing.sm + EchoelSpacing.xxs) {
-                        // Active indicator bar on leading edge
-                        RoundedRectangle(cornerRadius: 1)
-                            .fill(currentTab == tab ? tab.color : Color.clear)
-                            .frame(width: 2.5, height: 16)
-
-                        Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
-                            .font(.system(size: 14, weight: currentTab == tab ? .semibold : .regular))
-                            .frame(width: 20)
-
-                        Text(tab.rawValue)
-                            .font(.system(size: 13, weight: currentTab == tab ? .semibold : .regular))
-
-                        Spacer()
-
-                        if currentTab == tab {
-                            Circle()
-                                .fill(tab.color)
-                                .frame(width: 4, height: 4)
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
-                    .padding(.trailing, EchoelSpacing.sm)
-                    .padding(.vertical, EchoelSpacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                            .fill(currentTab == tab ? tab.color.opacity(0.08) : EchoelBrand.bgElevated.opacity(0.01))
-                    )
-                    .contentShape(RoundedRectangle(cornerRadius: EchoelRadius.sm))
-                }
-                .buttonStyle(.plain)
-            }
-
-            Spacer()
-
-            // Version label at sidebar bottom
-            Text("v7.0")
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .foregroundColor(EchoelBrand.textSecondary.opacity(0.5))
-                .padding(.bottom, EchoelSpacing.sm)
-                .frame(maxWidth: .infinity)
-        }
-        .padding(.top, EchoelSpacing.sm + EchoelSpacing.xs)
-        .padding(.horizontal, EchoelSpacing.sm)
-        .background(
-            EchoelBrand.bgSurface
-                .overlay(
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [EchoelBrand.border.opacity(0.3), EchoelBrand.border, EchoelBrand.border.opacity(0.3)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 0.5),
-                    alignment: .trailing
-                )
-        )
-    }
-
-    // MARK: - Workspace Content
-
-    @ViewBuilder
-    private var workspaceContent: some View {
-        Group {
-            switch currentTab {
-            case .daw:
-                DAWArrangementView()
-            case .live:
-                SessionClipView()
-            case .synth:
-                EchoelSynthView()
-            case .fx:
-                EchoelFXView()
-            case .video:
-                VideoEditorView()
-            }
-        }
-        .transition(.opacity)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentTab)
     }
 
     // MARK: - Transport Bar
@@ -498,75 +277,6 @@ struct MainNavigationHub: View {
         let seconds = Int(time) % 60
         let millis = Int((time.truncatingRemainder(dividingBy: 1)) * 100)
         return String(format: "%02d:%02d:%02d", minutes, seconds, millis)
-    }
-
-    // MARK: - Mobile Tab Bar
-
-    private var mobileTabBar: some View {
-        HStack(spacing: 0) {
-            ForEach(Tab.allCases) { tab in
-                Button(action: {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.75)) {
-                        currentTab = tab
-                    }
-                    HapticHelper.impact(.light)
-                }) {
-                    VStack(spacing: EchoelSpacing.xs) {
-                        ZStack {
-                            Image(systemName: currentTab == tab ? tab.filledIcon : tab.icon)
-                                .font(.system(size: 20, weight: currentTab == tab ? .semibold : .regular))
-                                .scaleEffect(currentTab == tab ? 1.1 : 1.0)
-                                .shadow(
-                                    color: currentTab == tab ? tab.color.opacity(0.4) : Color.clear,
-                                    radius: currentTab == tab ? 6 : 0
-                                )
-                        }
-                        .frame(height: 24)
-
-                        Text(tab.rawValue)
-                            .font(EchoelBrandFont.label())
-                            .fontWeight(currentTab == tab ? .semibold : .regular)
-                    }
-                    .foregroundColor(currentTab == tab ? tab.color : EchoelBrand.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, EchoelSpacing.sm + EchoelSpacing.xxs)
-                    .overlay(alignment: .top) {
-                        // Active tab indicator pill
-                        if currentTab == tab {
-                            Capsule()
-                                .fill(tab.color)
-                                .frame(width: 20, height: 2.5)
-                                .offset(y: -EchoelSpacing.xxs)
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(tab.rawValue) tab")
-                .accessibilityAddTraits(currentTab == tab ? .isSelected : [])
-            }
-        }
-        .padding(.bottom, EchoelSpacing.xs)
-        .background(
-            ZStack {
-                EchoelBrand.bgSurface.opacity(0.95)
-                if #available(iOS 15.0, *) {
-                    Rectangle().fill(.ultraThinMaterial).opacity(0.3)
-                }
-            }
-            .overlay(
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [EchoelBrand.border.opacity(0.8), EchoelBrand.border.opacity(0.2)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(height: 0.5),
-                alignment: .top
-            )
-        )
     }
 }
 
