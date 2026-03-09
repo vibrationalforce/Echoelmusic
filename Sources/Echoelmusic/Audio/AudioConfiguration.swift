@@ -11,8 +11,19 @@ enum AudioConfiguration {
     /// Preferred sample rate (48 kHz for pro audio)
     static let preferredSampleRate: Double = 48000.0
 
+    /// Float version for DSP APIs that require Float
+    static let preferredSampleRateFloat: Float = 48000.0
+
     /// Fallback sample rate if 48kHz unavailable
     static let fallbackSampleRate: Double = 44100.0
+
+    // MARK: - Default BPM
+
+    /// Default tempo (120 BPM industry standard)
+    static let defaultBPM: Double = 120.0
+
+    /// Float version for DSP APIs
+    static let defaultBPMFloat: Float = 120.0
 
 
     // MARK: - Buffer Configuration

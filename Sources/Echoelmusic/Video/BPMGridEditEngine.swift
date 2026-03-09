@@ -763,7 +763,7 @@ public final class BPMGridEditEngine {
             AVLinearPCMIsBigEndianKey: false,
             AVLinearPCMIsFloatKey: true,
             AVLinearPCMBitDepthKey: 32,
-            AVSampleRateKey: 44100,
+            AVSampleRateKey: AudioConfiguration.preferredSampleRate,
             AVNumberOfChannelsKey: 1
         ]
 
@@ -787,15 +787,16 @@ public final class BPMGridEditEngine {
         }
 
         // Perform onset detection and BPM estimation
-        let onsets = detectOnsets(samples: samples, sampleRate: 44100)
-        let (bpm, confidence) = estimateBPM(onsets: onsets, sampleRate: 44100)
+        let analysisRate = AudioConfiguration.preferredSampleRate
+        let onsets = detectOnsets(samples: samples, sampleRate: analysisRate)
+        let (bpm, confidence) = estimateBPM(onsets: onsets, sampleRate: analysisRate)
 
         // Find beat times
         let beatInterval = 60.0 / max(bpm, 20.0)
         var beats: [Double] = []
         var time = onsets.first ?? 0
 
-        let duration = Double(samples.count) / 44100.0
+        let duration = Double(samples.count) / analysisRate
         while time < duration {
             beats.append(time)
             time += beatInterval

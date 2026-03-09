@@ -233,7 +233,7 @@ public struct SampleZone: Identifiable {
 
     // Sample data (mono Float32, pre-loaded)
     public var sampleData: [Float] = []
-    public var sampleRate: Float = 44100
+    public var sampleRate: Float = AudioConfiguration.preferredSampleRateFloat
     public var loopStart: Int = 0
     public var loopEnd: Int = 0
     public var loopEnabled: Bool = false
@@ -331,7 +331,7 @@ public final class EchoelSampler {
 
     // Private state
     private var voices: [SamplerVoice]
-    private var sampleRate: Float = 44100
+    private var sampleRate: Float = AudioConfiguration.preferredSampleRateFloat
     private var roundRobinCounters: [Int: Int] = [:] // Group → current index
     private var currentBPM: Float = 120
     private var scratchBuffer: [Float]
@@ -345,7 +345,7 @@ public final class EchoelSampler {
 
     // MARK: - Init
 
-    public init(sampleRate: Float = 44100) {
+    public init(sampleRate: Float = AudioConfiguration.preferredSampleRateFloat) {
         self.sampleRate = sampleRate
         self.voices = (0..<SamplerConstants.maxVoices).map { _ in SamplerVoice() }
         self.scratchBuffer = [Float](repeating: 0, count: 4096)
@@ -833,7 +833,7 @@ public final class EchoelSampler {
     // MARK: - Presets
 
     /// Create a basic drum kit zone layout
-    public static func createDrumKit(sampleRate: Float = 44100) -> EchoelSampler {
+    public static func createDrumKit(sampleRate: Float = AudioConfiguration.preferredSampleRateFloat) -> EchoelSampler {
         let sampler = EchoelSampler(sampleRate: sampleRate)
         sampler.ampEnvelope = ADSREnvelope(attack: 0.001, decay: 0.3, sustain: 0, release: 0.05)
         sampler.filterCutoff = 12000
@@ -842,7 +842,7 @@ public final class EchoelSampler {
     }
 
     /// Create a melodic sampler with longer envelopes
-    public static func createMelodic(sampleRate: Float = 44100) -> EchoelSampler {
+    public static func createMelodic(sampleRate: Float = AudioConfiguration.preferredSampleRateFloat) -> EchoelSampler {
         let sampler = EchoelSampler(sampleRate: sampleRate)
         sampler.ampEnvelope = ADSREnvelope(attack: 0.05, decay: 0.5, sustain: 0.7, release: 1.0)
         sampler.filterCutoff = 6000

@@ -51,7 +51,7 @@ final class MicrophoneManager: NSObject {
     private let fftSize = 1024
 
     /// Sample rate (will be set from audio format)
-    private var sampleRate: Double = 44100.0
+    private var sampleRate: Double = AudioConfiguration.preferredSampleRate
 
     /// YIN pitch detector for fundamental frequency estimation
     private let pitchDetector = PitchDetector()
