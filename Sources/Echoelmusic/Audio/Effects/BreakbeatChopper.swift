@@ -303,14 +303,11 @@ public final class BreakbeatChopper {
     }
 
     deinit {
-        // Nonisolated cleanup — avoid calling @MainActor methods from deinit
+        // Nonisolated cleanup — stop directly since playerNode/audioEngine
+        // are reference-type locals that outlive self via copy
         playbackTimer?.invalidate()
-        let node = playerNode
-        let engine = audioEngine
-        DispatchQueue.main.async {
-            node.stop()
-            engine.stop()
-        }
+        playerNode.stop()
+        audioEngine.stop()
     }
 
     private func setupAudioEngine() {
