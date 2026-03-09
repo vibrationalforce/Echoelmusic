@@ -30,7 +30,9 @@ enum AudioConfiguration {
     static let normalBufferSize: AVAudioFrameCount = 512
 
     /// Current buffer size (defaults to low latency)
-    static var currentBufferSize: AVAudioFrameCount = lowLatencyBufferSize
+    /// Audio thread + main thread access — nonisolated(unsafe) because writes are
+    /// always followed by a full session reconfiguration (memory barrier).
+    nonisolated(unsafe) static var currentBufferSize: AVAudioFrameCount = lowLatencyBufferSize
 
     /// Calculate IO buffer duration for AVAudioSession
     static func ioBufferDuration(for sampleRate: Double) -> TimeInterval {
@@ -65,7 +67,8 @@ enum AudioConfiguration {
     // MARK: - Audio Session Configuration
 
     /// Whether the audio session has been successfully configured at least once.
-    private(set) static var isSessionConfigured = false
+    /// Written once during startup, read from multiple threads thereafter.
+    nonisolated(unsafe) private(set) static var isSessionConfigured = false
 
     /// Configure audio session for real-time performance.
     /// Falls back to playback-only if `.playAndRecord` fails (e.g. microphone
@@ -255,10 +258,13 @@ enum AudioConfiguration {
     // MARK: - Audio Interruption Handling
 
     /// Callback invoked when audio session should resume after interruption
-    static var onInterruptionResume: (() -> Void)?
+    nonisolated(unsafe) static var onInterruptionResume: (() -> Void)?
 
     /// Callback invoked when audio session is interrupted (phone call, Siri, etc.)
-    static var onInterruptionBegan: (() -> Void)?
+    nonisolated(unsafe) static var onInterruptionBegan: (() -> Void)?
+
+    /// Whether interruption handlers have already been registered (prevents duplicate observers)
+    nonisolated(unsafe) private static var interruptionHandlersRegistered = false
 
     /// Register for audio session interruption and route change notifications.
     /// Call once during app startup after configureAudioSession().
@@ -267,6 +273,12 @@ enum AudioConfiguration {
         log.audio("Audio interruption handlers: N/A on macOS")
         return
         #else
+        guard !interruptionHandlersRegistered else {
+            log.audio("Audio interruption handlers already registered — skipping")
+            return
+        }
+        interruptionHandlersRegistered = true
+
         NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),

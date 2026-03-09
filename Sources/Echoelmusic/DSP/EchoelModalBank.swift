@@ -536,6 +536,7 @@ public final class EchoelModalBank: @unchecked Sendable {
 
         let nyquist = sampleRate * 0.5
         let twoPi: Float = 2.0 * .pi
+        guard sampleRate > 0 else { return }
         let invSampleRate = 1.0 / sampleRate
         let smoothCoeff: Float = 0.999
         let oneMinusSmooth: Float = 1.0 - smoothCoeff

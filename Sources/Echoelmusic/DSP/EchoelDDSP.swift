@@ -416,7 +416,13 @@ public final class EchoelDDSP: @unchecked Sendable {
     }
 
     /// Normalize amplitude array in-place
+    /// Guards against NaN propagation: if any element is NaN, vDSP_maxv returns NaN
+    /// which fails the > 0 check. Explicitly clamp NaN to 0 first.
     private func normalizeAmplitudes(_ amps: inout [Float]) {
+        // Clamp NaN/Inf values to 0 before normalization (prevents NaN propagation to audio buffer)
+        for i in 0..<amps.count where !amps[i].isFinite {
+            amps[i] = 0
+        }
         var maxAmp: Float = 0
         vDSP_maxv(amps, 1, &maxAmp, vDSP_Length(amps.count))
         if maxAmp > 0 {

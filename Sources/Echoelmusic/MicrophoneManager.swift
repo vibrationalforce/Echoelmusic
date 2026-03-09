@@ -59,10 +59,34 @@ final class MicrophoneManager: NSObject {
     /// Dedicated queue for FFT/pitch processing — keeps audio render thread unblocked
     private let processingQueue = DispatchQueue(label: "com.echoelmusic.audio.processing", qos: .userInteractive)
 
+    // MARK: - Pre-allocated FFT Buffers (avoid per-callback allocation)
+
+    /// Pre-allocated buffers for FFT processing — reused every callback
+    private var fftRealParts: [Float]
+    private var fftWindow: [Float]
+    private var fftWindowedParts: [Float]
+    private var fftImagZeros: [Float]
+    private var fftMagnitudesBuffer: [Float]
+    private var fftVisualMagnitudes: [Float]
+    private var capturedBufferStorage: [Float]
+
     // MARK: - Initialization
 
     override init() {
+        // Pre-allocate FFT buffers to avoid per-callback heap allocation
+        self.fftRealParts = [Float](repeating: 0, count: fftSize)
+        self.fftWindow = [Float](repeating: 0, count: fftSize)
+        self.fftWindowedParts = [Float](repeating: 0, count: fftSize)
+        self.fftImagZeros = [Float](repeating: 0, count: fftSize)
+        self.fftMagnitudesBuffer = [Float](repeating: 0, count: fftSize / 2)
+        self.fftVisualMagnitudes = [Float](repeating: 0, count: 256)
+        self.capturedBufferStorage = [Float](repeating: 0, count: 512)
+
         super.init()
+
+        // Pre-compute Hann window once (never changes)
+        vDSP_hann_window(&fftWindow, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
+
         checkPermission()
     }
 
@@ -237,9 +261,10 @@ final class MicrophoneManager: NSObject {
         let normalizedLevel = min(rms * 15.0, 1.0)
 
         // Capture audio buffer for waveform visualization (last 512 samples)
+        // Uses pre-allocated storage to avoid per-callback allocation
         let bufferSampleCount = min(512, frameLength)
-        var capturedBuffer = [Float](repeating: 0, count: bufferSampleCount)
-        cblas_scopy(Int32(bufferSampleCount), channelDataValue, 1, &capturedBuffer, 1)
+        cblas_scopy(Int32(bufferSampleCount), channelDataValue, 1, &capturedBufferStorage, 1)
+        let capturedBuffer = Array(capturedBufferStorage.prefix(bufferSampleCount))
 
         // Perform FFT for frequency detection and get magnitudes
         let (detectedFrequency, magnitudes) = performFFT(on: channelDataValue, frameLength: frameLength)
@@ -274,68 +299,64 @@ final class MicrophoneManager: NSObject {
     }
 
     /// Perform FFT to detect fundamental frequency and return magnitudes
+    /// Uses pre-allocated buffers (fftRealParts, fftWindowedParts, etc.) to avoid
+    /// per-callback heap allocation on the processing queue.
     private func performFFT(on data: UnsafePointer<Float>, frameLength: Int) -> (frequency: Float, magnitudes: [Float]) {
         guard let dft = complexDFT else { return (0, []) }
 
-        // Prepare buffers
-        var realParts = [Float](repeating: 0, count: fftSize)
-
-        // Copy audio data to real parts (pad with zeros if needed)
+        // Zero-fill pre-allocated buffer, then copy audio data
+        memset(&fftRealParts, 0, fftSize * MemoryLayout<Float>.size)
         let copyLength = min(frameLength, fftSize)
-        for i in 0..<copyLength {
-            realParts[i] = data[i]
-        }
+        memcpy(&fftRealParts, data, copyLength * MemoryLayout<Float>.size)
 
-        // Apply Hann window to reduce spectral leakage
-        var window = [Float](repeating: 0, count: fftSize)
-        vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
-        var windowedParts = [Float](repeating: 0, count: fftSize)
-        vDSP_vmul(realParts, 1, window, 1, &windowedParts, 1, vDSP_Length(fftSize))
+        // Apply pre-computed Hann window to reduce spectral leakage
+        vDSP_vmul(fftRealParts, 1, fftWindow, 1, &fftWindowedParts, 1, vDSP_Length(fftSize))
 
         // Perform FFT via EchoelComplexDFT (handles overlapping access safety internally)
-        let imagZeros = [Float](repeating: 0, count: fftSize)
-        let result = dft.forward(real: windowedParts, imag: imagZeros)
-        realParts = result.real
+        let result = dft.forward(real: fftWindowedParts, imag: fftImagZeros)
+        let realParts = result.real
         let imagParts = result.imag
 
-        // Calculate magnitudes (power spectrum)
-        var magnitudes = [Float](repeating: 0, count: fftSize / 2)
-        for i in 0..<(fftSize / 2) {
-            magnitudes[i] = sqrt(realParts[i] * realParts[i] + imagParts[i] * imagParts[i])
+        // Calculate magnitudes (power spectrum) into pre-allocated buffer
+        let halfSize = fftSize / 2
+        for i in 0..<halfSize {
+            fftMagnitudesBuffer[i] = sqrt(realParts[i] * realParts[i] + imagParts[i] * imagParts[i])
         }
 
         // Downsample magnitudes for visualization (256 bins for spectral mode)
         let visualBins = 256
-        var visualMagnitudes = [Float](repeating: 0, count: visualBins)
-        let binRatio = Swift.max(1, magnitudes.count / visualBins)
+        let binRatio = Swift.max(1, halfSize / visualBins)
         for i in 0..<visualBins {
             let startIdx = i * binRatio
-            let endIdx = min(startIdx + binRatio, magnitudes.count)
-            guard startIdx < magnitudes.count else { break }
+            let endIdx = min(startIdx + binRatio, halfSize)
+            guard startIdx < halfSize else { break }
             var sum: Float = 0
             for j in startIdx..<endIdx {
-                sum += magnitudes[j]
+                sum += fftMagnitudesBuffer[j]
             }
-            visualMagnitudes[i] = sum / Float(binRatio)
+            fftVisualMagnitudes[i] = sum / Float(binRatio)
         }
 
         // Find peak frequency (ignore DC component at index 0)
-        guard magnitudes.count > 1 else { return (0, visualMagnitudes) }
+        guard halfSize > 1 else { return (0, Array(fftVisualMagnitudes)) }
         var maxMagnitude: Float = 0
         var maxIndex: vDSP_Length = 0
 
-        vDSP_maxvi(Array(magnitudes[1...]), 1, &maxMagnitude, &maxIndex, vDSP_Length(magnitudes.count - 1))
+        vDSP_maxvi(Array(fftMagnitudesBuffer[1...]), 1, &maxMagnitude, &maxIndex, vDSP_Length(halfSize - 1))
         maxIndex += 1 // Adjust for skipping index 0
 
         // Convert bin index to frequency
         let frequency = Float(maxIndex) * Float(sampleRate) / Float(fftSize)
 
+        // Return copy of visual magnitudes for UI (must be independent of mutable buffer)
+        let visualResult = Array(fftVisualMagnitudes)
+
         // Only return frequencies in audible/useful range
         if frequency > 50 && frequency < 2000 && maxMagnitude > 0.01 {
-            return (frequency, visualMagnitudes)
+            return (frequency, visualResult)
         }
 
-        return (0.0, visualMagnitudes)
+        return (0.0, visualResult)
     }
 
 

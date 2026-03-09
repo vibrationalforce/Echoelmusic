@@ -108,6 +108,11 @@ final class RecordingEngine {
     /// Maximum recording duration (seconds)
     private let maxDuration: TimeInterval = 3600 // 1 hour
 
+    deinit {
+        timer?.invalidate()
+        audioEngine?.stop()
+    }
+
     /// Audio format for recording
     private let recordingFormat: AVAudioFormat
 
