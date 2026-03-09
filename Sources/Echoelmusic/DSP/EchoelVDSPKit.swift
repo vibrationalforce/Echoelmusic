@@ -27,6 +27,10 @@ import Accelerate
 /// let dft = EchoelComplexDFT(size: 2048)
 /// let (outR, outI) = dft.forward(real: realIn, imag: imagIn)
 /// ```
+///
+/// Thread-safety: NOT safe for concurrent use. `@unchecked Sendable` because instances
+/// are stored in @MainActor classes but never accessed from multiple threads simultaneously.
+/// Pre-allocated output buffers are mutated on each call.
 public final class EchoelComplexDFT: @unchecked Sendable {
 
     public let size: Int
@@ -68,6 +72,8 @@ public final class EchoelComplexDFT: @unchecked Sendable {
 
 /// Real-to-complex FFT using vDSP_fft_zrop for maximum performance.
 /// ~100x faster than DFT for sizes >= 1024.
+///
+/// Thread-safety: NOT safe for concurrent use — mutable output buffers. Single-thread only.
 public final class EchoelRealFFT: @unchecked Sendable {
 
     public let size: Int
@@ -314,6 +320,8 @@ public final class EchoelRealFFT: @unchecked Sendable {
 // MARK: - Convolution Engine
 
 /// Fast FIR convolution using vDSP_conv for impulse response filtering
+///
+/// Thread-safety: NOT safe for concurrent use — mutable kernel/overlap buffers. Single-thread only.
 public final class EchoelConvolution: @unchecked Sendable {
 
     private let kernelSize: Int
@@ -440,6 +448,8 @@ public final class EchoelConvolution: @unchecked Sendable {
 // MARK: - Biquad Cascade Filter
 
 /// Hardware-accelerated biquad cascade using vDSP_biquad
+///
+/// Thread-safety: NOT safe for concurrent use — mutable state/coefficient arrays. Single-thread only.
 public final class EchoelBiquadCascade: @unchecked Sendable {
 
     /// Maximum sections (each section = 2nd order IIR = 12dB/oct)
@@ -581,6 +591,8 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
 // MARK: - Decimator (Sample Rate Reduction)
 
 /// Efficient decimation using vDSP_desamp for multirate DSP
+///
+/// Thread-safety: NOT safe for concurrent use — mutable anti-alias filter. Single-thread only.
 public final class EchoelDecimator: @unchecked Sendable {
 
     public let factor: Int
