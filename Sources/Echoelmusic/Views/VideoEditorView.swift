@@ -12,10 +12,12 @@ import Metal
 /// Professional video editing interface
 @MainActor
 struct VideoEditorView: View {
-    @State private var engine = VideoEditingEngine()
     @State private var cameraAnalyzer = CameraAnalyzer()
     @State private var cameraManager: CameraManager?
     @Bindable private var workspace = EchoelCreativeWorkspace.shared
+
+    /// Use workspace's shared video engine (BPM-synchronized with audio)
+    private var engine: VideoEditingEngine { workspace.videoEditor }
     @State private var selectedClipIndex: Int?
     @State private var timelineZoom: Double = 1.0
     @State private var showEffectsPanel = false
