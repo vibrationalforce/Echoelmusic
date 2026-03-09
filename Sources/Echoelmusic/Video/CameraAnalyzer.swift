@@ -201,6 +201,7 @@ final class CameraAnalyzer {
                     intervals.append(peakTimes[j] - peakTimes[j - 1])
                 }
 
+                guard !intervals.isEmpty else { return }
                 let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
                 guard avgInterval > 0.3 && avgInterval < 2.0 else { return } // 30-200 BPM range
 
