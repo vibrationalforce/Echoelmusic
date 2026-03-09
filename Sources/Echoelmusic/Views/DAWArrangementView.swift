@@ -22,6 +22,9 @@ struct DAWArrangementView: View {
     @State private var showMasterExport = false
     @State private var showTempoEditor = false
     @State private var showMiniMixer = false
+    @State private var automationTrackIDs: Set<UUID> = []
+    @State private var showAddAutomation = false
+    @State private var addAutomationTrackID: UUID?
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
@@ -94,6 +97,15 @@ struct DAWArrangementView: View {
         .sheet(isPresented: $showMasterExport) {
             MasterExportSheet()
                 .environment(recordingEngine)
+        }
+        .sheet(isPresented: $showAddAutomation) {
+            AutomationParameterPicker { parameter in
+                if let trackID = addAutomationTrackID {
+                    addAutomationLane(trackID: trackID, parameter: parameter)
+                    automationTrackIDs.insert(trackID)
+                }
+            }
+            .presentationDetents([.medium])
         }
         .onAppear {
             ensureSessionExists()
@@ -234,6 +246,19 @@ struct DAWArrangementView: View {
                     toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
                         showMasterExport = true
                     }
+                    toolbarButton(icon: "line.3.crossed.swirl.circle", label: "Auto", isActive: !automationTrackIDs.isEmpty) {
+                        // Toggle automation for selected track
+                        if let id = selectedTrackID {
+                            if automationTrackIDs.contains(id) {
+                                automationTrackIDs.remove(id)
+                            } else {
+                                automationTrackIDs.insert(id)
+                                if let track = tracks.first(where: { $0.id == id }), track.automationLanes.isEmpty {
+                                    addAutomationLane(trackID: id, parameter: .volume)
+                                }
+                            }
+                        }
+                    }
                     toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
                         addNewTrack()
                     }
@@ -363,6 +388,17 @@ struct DAWArrangementView: View {
                 miniButton(label: "S", isActive: track.isSoloed, color: EchoelBrand.sky) {
                     recordingEngine.setTrackSoloed(track.id, soloed: !track.isSoloed)
                 }
+                AutomationToggleButton(isShowing: automationTrackIDs.contains(track.id)) {
+                    if automationTrackIDs.contains(track.id) {
+                        automationTrackIDs.remove(track.id)
+                    } else {
+                        automationTrackIDs.insert(track.id)
+                        // Add default volume lane if none exist
+                        if track.automationLanes.isEmpty {
+                            addAutomationLane(trackID: track.id, parameter: .volume)
+                        }
+                    }
+                }
             }
         }
         .padding(EchoelSpacing.sm)
@@ -385,6 +421,26 @@ struct DAWArrangementView: View {
                 recordingEngine.setTrackSoloed(track.id, soloed: !track.isSoloed)
             } label: {
                 Label(track.isSoloed ? "Unsolo" : "Solo", systemImage: "headphones")
+            }
+            Divider()
+            Button {
+                if automationTrackIDs.contains(track.id) {
+                    automationTrackIDs.remove(track.id)
+                } else {
+                    automationTrackIDs.insert(track.id)
+                    if track.automationLanes.isEmpty {
+                        addAutomationLane(trackID: track.id, parameter: .volume)
+                    }
+                }
+            } label: {
+                Label(automationTrackIDs.contains(track.id) ? "Hide Automation" : "Show Automation",
+                      systemImage: "line.3.crossed.swirl.circle")
+            }
+            Button {
+                addAutomationTrackID = track.id
+                showAddAutomation = true
+            } label: {
+                Label("Add Automation Lane", systemImage: "plus.circle")
             }
             Divider()
             Button(role: .destructive) {
@@ -451,7 +507,47 @@ struct DAWArrangementView: View {
                     // Track lanes
                     VStack(spacing: EchoelSpacing.xs) {
                         ForEach(tracks) { track in
-                            trackLane(track: track)
+                            VStack(spacing: 0) {
+                                trackLane(track: track)
+
+                                // Automation lanes below track
+                                if automationTrackIDs.contains(track.id) {
+                                    ForEach(track.automationLanes.filter(\.isVisible)) { lane in
+                                        AutomationLaneView(
+                                            track: track,
+                                            lane: lane,
+                                            pixelsPerSecond: pixelsPerSecond,
+                                            totalDuration: Swift.max(track.duration, 30),
+                                            onUpdatePoint: { trackID, laneID, time, value in
+                                                updateAutomationPoint(trackID: trackID, laneID: laneID, time: time, value: value)
+                                            },
+                                            onAddPoint: { trackID, laneID, time, value in
+                                                addAutomationPoint(trackID: trackID, laneID: laneID, time: time, value: value)
+                                            },
+                                            onDeletePoint: { trackID, laneID, pointID in
+                                                deleteAutomationPoint(trackID: trackID, laneID: laneID, pointID: pointID)
+                                            }
+                                        )
+                                    }
+
+                                    // Add lane button
+                                    Button {
+                                        addAutomationTrackID = track.id
+                                        showAddAutomation = true
+                                    } label: {
+                                        HStack(spacing: EchoelSpacing.xs) {
+                                            Image(systemName: "plus")
+                                                .font(.system(size: 9))
+                                            Text("Add Lane")
+                                                .font(.system(size: 9, weight: .medium))
+                                        }
+                                        .foregroundColor(EchoelBrand.textTertiary)
+                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, EchoelSpacing.sm)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
                         }
 
                         // Video track (BPM-synced with audio)
@@ -982,6 +1078,47 @@ struct DAWArrangementView: View {
             try? recordingEngine.startRecording()
             HapticHelper.impact(.heavy)
         }
+    }
+
+    // MARK: - Automation Helpers
+
+    private func addAutomationLane(trackID: UUID, parameter: AutomatedParameter) {
+        guard var session = recordingEngine.currentSession,
+              let trackIdx = session.tracks.firstIndex(where: { $0.id == trackID }) else { return }
+        // Don't add duplicate parameter lanes
+        guard !session.tracks[trackIdx].automationLanes.contains(where: { $0.parameter == parameter }) else { return }
+        let lane = TrackAutomationLane(parameter: parameter)
+        session.tracks[trackIdx].automationLanes.append(lane)
+        recordingEngine.currentSession = session
+    }
+
+    private func addAutomationPoint(trackID: UUID, laneID: UUID, time: TimeInterval, value: Float) {
+        guard var session = recordingEngine.currentSession,
+              let trackIdx = session.tracks.firstIndex(where: { $0.id == trackID }),
+              let laneIdx = session.tracks[trackIdx].automationLanes.firstIndex(where: { $0.id == laneID }) else { return }
+        let point = TrackAutomationPoint(time: time, value: value)
+        session.tracks[trackIdx].automationLanes[laneIdx].points.append(point)
+        session.tracks[trackIdx].automationLanes[laneIdx].points.sort { $0.time < $1.time }
+        recordingEngine.currentSession = session
+    }
+
+    private func updateAutomationPoint(trackID: UUID, laneID: UUID, time: TimeInterval, value: Float) {
+        guard var session = recordingEngine.currentSession,
+              let trackIdx = session.tracks.firstIndex(where: { $0.id == trackID }),
+              let laneIdx = session.tracks[trackIdx].automationLanes.firstIndex(where: { $0.id == laneID }),
+              let pointIdx = session.tracks[trackIdx].automationLanes[laneIdx].points.indices.last else { return }
+        session.tracks[trackIdx].automationLanes[laneIdx].points[pointIdx].time = time
+        session.tracks[trackIdx].automationLanes[laneIdx].points[pointIdx].value = value
+        session.tracks[trackIdx].automationLanes[laneIdx].points.sort { $0.time < $1.time }
+        recordingEngine.currentSession = session
+    }
+
+    private func deleteAutomationPoint(trackID: UUID, laneID: UUID, pointID: UUID) {
+        guard var session = recordingEngine.currentSession,
+              let trackIdx = session.tracks.firstIndex(where: { $0.id == trackID }),
+              let laneIdx = session.tracks[trackIdx].automationLanes.firstIndex(where: { $0.id == laneID }) else { return }
+        session.tracks[trackIdx].automationLanes[laneIdx].points.removeAll { $0.id == pointID }
+        recordingEngine.currentSession = session
     }
 
     // MARK: - Helpers
@@ -1558,6 +1695,9 @@ struct RealMixerSheet: View {
                 liveMeterBar(level: audioEngine.masterLevelR)
             }
             .padding(.vertical, EchoelSpacing.sm)
+
+            // LUFS meter (broadcast loudness)
+            LUFSMeterView(levelL: audioEngine.masterLevel, levelR: audioEngine.masterLevelR)
 
             // Master fader
             Slider(
