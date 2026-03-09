@@ -90,7 +90,10 @@ final class RecordingEngine {
     private var inputNode: AVAudioInputNode?
 
     /// Audio file for current recording
-    private var audioFile: AVAudioFile?
+    /// Written from audioProcessingQueue in installTap callback — nonisolated(unsafe)
+    /// because writes are serialized on the processing queue and the file is only
+    /// set/cleared on MainActor when recording starts/stops (never concurrent).
+    nonisolated(unsafe) private var audioFile: AVAudioFile?
 
     /// Timer for position updates
     private var timer: Timer?
@@ -292,12 +295,12 @@ final class RecordingEngine {
 
         // Install tap to capture audio data
         // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
+        // IMPORTANT: Process buffer synchronously on audioProcessingQueue — AVAudioPCMBuffer
+        // memory may be reused after the callback returns (non-Sendable).
         input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
             guard let self else { return }
             self.audioProcessingQueue.async {
-                Task { @MainActor in
-                    self.processRecordingBuffer(buffer)
-                }
+                self.processRecordingBufferOffMainActor(buffer)
             }
         }
 
@@ -305,8 +308,10 @@ final class RecordingEngine {
         log.recording("🎙️ Audio recording engine started")
     }
 
-    /// Process incoming audio buffer during recording
-    private func processRecordingBuffer(_ buffer: AVAudioPCMBuffer) {
+    /// Process buffer on audioProcessingQueue — extracts data before crossing to MainActor.
+    /// AVAudioPCMBuffer is non-Sendable and its memory may be reused after the tap callback.
+    /// All buffer reads and file writes happen here; only computed Float values cross to MainActor.
+    nonisolated private func processRecordingBufferOffMainActor(_ buffer: AVAudioPCMBuffer) {
         guard let channelData = buffer.floatChannelData else { return }
 
         let frameLength = Int(buffer.frameLength)
@@ -315,10 +320,9 @@ final class RecordingEngine {
         // Calculate RMS for level meter (vDSP_rmsqv computes sqrt(sum(x²)/n) in one call)
         var rmsValue: Float = 0.0
         vDSP_rmsqv(channelDataValue, 1, &rmsValue, vDSP_Length(frameLength))
+        let level = min(rmsValue * 10.0, 1.0)
 
-        recordingLevel = min(rmsValue * 10.0, 1.0) // Normalize and clamp
-
-        // Write to audio file
+        // Write to audio file (on processing queue — audioFile is nonisolated(unsafe))
         if let file = audioFile {
             do {
                 try file.write(from: buffer)
@@ -327,22 +331,24 @@ final class RecordingEngine {
             }
         }
 
-        // Update waveform buffer for real-time display
-        updateWaveformBuffer(channelDataValue, frameLength: frameLength)
-    }
-
-    /// Update waveform buffer for real-time visualization
-    /// PERFORMANCE: Uses O(1) CircularBuffer instead of O(n) removeFirst()
-    private func updateWaveformBuffer(_ data: UnsafePointer<Float>, frameLength: Int) {
-        // Downsample to fit in circular buffer
-        let strideValue = max(1, frameLength / waveformBuffer.capacity)
-
+        // Extract waveform samples (downsample to max 1000 points)
+        let waveformCapacity = 1000
+        let strideValue = max(1, frameLength / waveformCapacity)
+        var waveformSamples: [Float] = []
+        waveformSamples.reserveCapacity(frameLength / strideValue)
         for i in Swift.stride(from: 0, to: frameLength, by: strideValue) {
-            waveformBuffer.append(data[i])
+            waveformSamples.append(channelDataValue[i])
         }
 
-        // Update published waveform (converts circular buffer to array)
-        recordingWaveform = waveformBuffer.toArray()
+        // Send only computed values to MainActor
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.recordingLevel = level
+            for sample in waveformSamples {
+                self.waveformBuffer.append(sample)
+            }
+            self.recordingWaveform = self.waveformBuffer.toArray()
+        }
     }
 
     /// Stop recording current track

@@ -39,6 +39,12 @@ import Accelerate
 /// EchoelDDSP — Harmonic+Noise Synthesizer with vDSP Vectorization
 /// Pure DSP engine with per-partial amplitude control, multi-band FIR noise,
 /// spectral morphing, extended bio-reactive mappings, and timbre transfer prep.
+///
+/// Thread-safety invariant: `@unchecked Sendable` because all access is serialized
+/// through `@MainActor` (stored in `EchoelCreativeWorkspace.bioSynth`).
+/// Both `applyBioReactive()` and `renderStereo()` are called exclusively from
+/// MainActor context (Timer → `MainActor.assumeIsolated`). Do NOT call from
+/// background threads without adding synchronization.
 public final class EchoelDDSP: @unchecked Sendable {
 
     // MARK: - Configuration
@@ -871,6 +877,8 @@ public final class EchoelDDSP: @unchecked Sendable {
 ///   - Stereo output with per-voice pan
 ///
 /// Performance: O(maxVoices * harmonicCount) per sample, SIMD-accelerated
+///
+/// Thread-safety: Same invariant as EchoelDDSP — all access serialized via @MainActor.
 public final class EchoelPolyDDSP: @unchecked Sendable {
 
     // MARK: - Configuration

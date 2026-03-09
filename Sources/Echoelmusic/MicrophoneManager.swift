@@ -195,9 +195,11 @@ final class MicrophoneManager: NSObject {
             complexDFT = EchoelComplexDFT(size: fftSize)
 
             // Install a tap to capture audio data — dispatch off the audio render thread
+            // Capture sampleRate locally to avoid reading @MainActor property from processingQueue
+            let capturedSampleRate = sampleRate
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
                 self?.processingQueue.async {
-                    self?.processAudioBuffer(buffer)
+                    self?.processAudioBuffer(buffer, sampleRate: capturedSampleRate)
                 }
             }
 
@@ -246,7 +248,8 @@ final class MicrophoneManager: NSObject {
     // MARK: - Audio Processing with FFT
 
     /// Process incoming audio data with FFT for frequency detection
-    private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
+    /// sampleRate is passed explicitly to avoid reading @MainActor property from processingQueue
+    private func processAudioBuffer(_ buffer: AVAudioPCMBuffer, sampleRate: Double) {
         guard let channelData = buffer.floatChannelData else { return }
 
         let frameLength = Int(buffer.frameLength)
@@ -267,10 +270,11 @@ final class MicrophoneManager: NSObject {
         let capturedBuffer = Array(capturedBufferStorage.prefix(bufferSampleCount))
 
         // Perform FFT for frequency detection and get magnitudes
-        let (detectedFrequency, magnitudes) = performFFT(on: channelDataValue, frameLength: frameLength)
+        let (detectedFrequency, magnitudes) = performFFT(on: channelDataValue, frameLength: frameLength, sampleRate: sampleRate)
 
         // Perform YIN pitch detection for fundamental frequency
         let detectedPitch = pitchDetector.detectPitch(buffer: buffer, sampleRate: Float(sampleRate))
+
 
         // Update UI on main actor with smoothing
         Task { @MainActor [weak self] in
@@ -301,7 +305,7 @@ final class MicrophoneManager: NSObject {
     /// Perform FFT to detect fundamental frequency and return magnitudes
     /// Uses pre-allocated buffers (fftRealParts, fftWindowedParts, etc.) to avoid
     /// per-callback heap allocation on the processing queue.
-    private func performFFT(on data: UnsafePointer<Float>, frameLength: Int) -> (frequency: Float, magnitudes: [Float]) {
+    private func performFFT(on data: UnsafePointer<Float>, frameLength: Int, sampleRate: Double) -> (frequency: Float, magnitudes: [Float]) {
         guard let dft = complexDFT else { return (0, []) }
 
         // Zero-fill pre-allocated buffer, then copy audio data

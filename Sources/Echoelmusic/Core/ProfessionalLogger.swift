@@ -218,8 +218,20 @@ public final class EchoelLogger: @unchecked Sendable {
 
     // MARK: - Properties
 
-    public var minimumLevel: LogLevel = .debug
-    public var enabledCategories: Set<LogCategory> = Set(LogCategory.allCases)
+    /// Config properties protected by configLock (read from any thread, written rarely)
+    private let configLock = AudioUnfairLock()
+    private var _minimumLevel: LogLevel = .debug
+    private var _enabledCategories: Set<LogCategory> = Set(LogCategory.allCases)
+
+    public var minimumLevel: LogLevel {
+        get { configLock.lock(); defer { configLock.unlock() }; return _minimumLevel }
+        set { configLock.lock(); defer { configLock.unlock() }; _minimumLevel = newValue }
+    }
+    public var enabledCategories: Set<LogCategory> {
+        get { configLock.lock(); defer { configLock.unlock() }; return _enabledCategories }
+        set { configLock.lock(); defer { configLock.unlock() }; _enabledCategories = newValue }
+    }
+
     private var outputs: [any LogOutput] = [ConsoleOutput.shared]
     private let queue = DispatchQueue(label: "com.echoelmusic.logger", qos: .utility)
 
