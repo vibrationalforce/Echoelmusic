@@ -10,6 +10,11 @@ import Observation
 @Observable
 final class LoopEngine {
 
+    deinit {
+        timer?.cancel()
+        timer = nil
+    }
+
     // MARK: - Published Properties
 
     /// Is currently recording a loop
