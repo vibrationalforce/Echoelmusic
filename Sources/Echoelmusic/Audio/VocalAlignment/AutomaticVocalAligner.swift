@@ -292,6 +292,7 @@ final class AutomaticVocalAligner {
 
         let hopSize = Int(hopSizeMs * sampleRate / 1000.0)
         let windowSize = Int(analysisWindowMs * sampleRate / 1000.0)
+        guard hopSize > 0, windowSize > 0, frameCount > windowSize else { return [] }
         let numFrames = (frameCount - windowSize) / hopSize
 
         var envelope = [Float](repeating: 0, count: numFrames)
@@ -322,6 +323,7 @@ final class AutomaticVocalAligner {
 
         let hopSize = Int(hopSizeMs * sampleRate / 1000.0)
         let windowSize = Int(analysisWindowMs * sampleRate / 1000.0)
+        guard hopSize > 0, windowSize > 0, frameCount > windowSize else { return [] }
         let numFrames = (frameCount - windowSize) / hopSize
 
         var pitchContour = [Float](repeating: 0, count: numFrames)

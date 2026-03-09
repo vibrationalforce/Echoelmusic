@@ -26,7 +26,7 @@ class PhaseVocoder {
         var formantEnvelopeOrder: Int = 30  // LPC order for formant estimation
 
         /// Overlap factor (fftSize / hopSize), typically 4
-        var overlapFactor: Int { fftSize / hopSize }
+        var overlapFactor: Int { hopSize > 0 ? fftSize / hopSize : 4 }
     }
 
     // MARK: - State
