@@ -130,7 +130,8 @@ public final class ProVocalChain {
     // MARK: - Setup
 
     private func setupBindings() {
-        // Bindings for future parameter automation
+        // Mode changes auto-configure module enables
+        // Stats and metering are updated per-block in processBlock()
     }
 
     // MARK: - Real-Time Processing
@@ -146,6 +147,7 @@ public final class ProVocalChain {
         // 1. Input metering
         var rms: Float = 0
         vDSP_rmsqv(input, 1, &rms, vDSP_Length(input.count))
+        inputLevel = rms
 
         // 2. Pitch Correction
         if pitchCorrectionEnabled {
@@ -186,6 +188,16 @@ public final class ProVocalChain {
         if doublingEnabled {
             output = doublingEngine.processMono(output)
         }
+
+        // 7. Output metering
+        var outputRms: Float = 0
+        vDSP_rmsqv(output, 1, &outputRms, vDSP_Length(output.count))
+        outputLevel = outputRms
+
+        // 8. Update processing stats
+        stats.pitchDetectionConfidence = pitchCorrector.correctionAmount
+        stats.correctionApplied = pitchCorrector.centsDeviation
+        stats.bioModulationActive = bioReactiveEnabled && mode == .bioReactive
 
         return output
     }
@@ -344,7 +356,8 @@ public final class ProVocalChain {
             pitchCorrector.correctionStrength = 0.8
             pitchCorrector.humanize = 0.2
             currentNoteVibrato = .default()
-            bioReactiveEnabled = false
+            bioReactiveEnabled = true
+            mode = .bioReactive
         }
 
         log.log(.info, category: .audio, "ProVocalChain: Loaded preset '\(preset.rawValue)'")

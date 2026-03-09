@@ -773,6 +773,63 @@ final class ProVocalChainTests: XCTestCase {
         XCTAssertEqual(highQuality.blockSize, 1024)
         XCTAssertEqual(highQuality.fftSize, 8192)
     }
+
+    @MainActor
+    func testProcessBlockUpdatesInputAndOutputLevels() {
+        let chain = ProVocalChain()
+        XCTAssertEqual(chain.inputLevel, 0)
+        XCTAssertEqual(chain.outputLevel, 0)
+
+        // Generate a sine wave test signal
+        let sampleCount = 512
+        let signal: [Float] = (0..<sampleCount).map { i in
+            sin(Float(i) * 2.0 * .pi * 440.0 / 48000.0) * 0.5
+        }
+
+        _ = chain.processBlock(signal)
+
+        XCTAssertGreaterThan(chain.inputLevel, 0, "Input level should be updated after processing")
+        XCTAssertGreaterThan(chain.outputLevel, 0, "Output level should be updated after processing")
+    }
+
+    @MainActor
+    func testProcessBlockEmptyInputReturnsEarly() {
+        let chain = ProVocalChain()
+        let result = chain.processBlock([])
+        XCTAssertTrue(result.isEmpty)
+        XCTAssertEqual(chain.inputLevel, 0)
+        XCTAssertEqual(chain.outputLevel, 0)
+    }
+
+    @MainActor
+    func testBioReactivePerformancePresetEnablesBioReactive() {
+        let chain = ProVocalChain()
+        chain.loadPreset(.bioReactivePerformance)
+        XCTAssertTrue(chain.bioReactiveEnabled, "Bio-reactive performance preset should enable bio-reactive mode")
+        XCTAssertEqual(chain.mode, .bioReactive, "Bio-reactive performance preset should set mode to bioReactive")
+    }
+
+    @MainActor
+    func testNonBioPresetsDisableBioReactive() {
+        let chain = ProVocalChain()
+        chain.bioReactiveEnabled = true
+        chain.loadPreset(.natural)
+        XCTAssertFalse(chain.bioReactiveEnabled, "Non-bio presets should disable bio-reactive mode")
+    }
+
+    @MainActor
+    func testStatsUpdatedAfterProcessBlock() {
+        let chain = ProVocalChain()
+        chain.bioReactiveEnabled = true
+        chain.mode = .bioReactive
+
+        let signal: [Float] = (0..<512).map { i in
+            sin(Float(i) * 2.0 * .pi * 440.0 / 48000.0) * 0.5
+        }
+        _ = chain.processBlock(signal)
+
+        XCTAssertTrue(chain.stats.bioModulationActive, "Stats should reflect bio-reactive mode is active")
+    }
 }
 
 // MARK: - VocalPostProcessor Tests
