@@ -495,7 +495,8 @@ final class VideoExportManager {
                         adaptor.append(pixelBuffer, withPresentationTime: presentationTime)
 
                         // Update progress
-                        let progress = presentationTime.seconds / composition.duration.seconds
+                        let durationSec = composition.duration.seconds
+                        let progress = durationSec > 0 ? presentationTime.seconds / durationSec : 0
                         Task { @MainActor in
                             self.exportProgress = progress
                         }
