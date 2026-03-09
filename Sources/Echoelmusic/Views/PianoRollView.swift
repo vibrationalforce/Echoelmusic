@@ -724,4 +724,297 @@ struct PianoRollView: View {
         viewModel.moveNote(id: note.id, deltaBeat: deltaBeat, deltaPitch: deltaPitch)
     }
 }
+
+// MARK: - Piano Roll Clip Sheet
+// Wraps PianoRollView for use in clip editing — persists notes to ClipViewClip
+
+struct PianoRollClipSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var clip: ClipViewClip?
+    let trackName: String
+    var onPlayNote: ((Int, Float) -> Void)?
+    var onStopNote: ((Int) -> Void)?
+
+    @State private var viewModel = PianoRollViewModel()
+
+    var body: some View {
+        ZStack {
+            EchoelBrand.bgDeep.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Header with save/close
+                HStack {
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Text("Cancel")
+                            .font(.system(size: 14))
+                            .foregroundColor(EchoelBrand.textSecondary)
+                    }
+
+                    Spacer()
+
+                    VStack(spacing: 2) {
+                        Text(clip?.name ?? "MIDI Clip")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(EchoelBrand.textPrimary)
+                        Text("\(trackName) • \(viewModel.notes.count) notes")
+                            .font(.system(size: 11))
+                            .foregroundColor(EchoelBrand.textTertiary)
+                    }
+
+                    Spacer()
+
+                    Button(action: {
+                        // Save notes to clip
+                        clip?.midiNotes = viewModel.notes
+                        isPresented = false
+                    }) {
+                        Text("Save")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(EchoelBrand.primary)
+                    }
+                }
+                .padding(.horizontal, EchoelSpacing.md)
+                .padding(.vertical, EchoelSpacing.sm)
+                .background(EchoelBrand.bgSurface)
+
+                // Embedded piano roll
+                PianoRollEditorView(
+                    viewModel: viewModel,
+                    onPlayNote: onPlayNote,
+                    onStopNote: onStopNote
+                )
+            }
+        }
+        .onAppear {
+            // Load existing clip notes into the editor
+            if let clip = clip {
+                viewModel.clipName = clip.name
+                viewModel.notes = clip.midiNotes
+            }
+        }
+    }
+}
+
+// MARK: - Embedded Piano Roll Editor
+// Reusable piano roll that accepts external viewModel + audio callbacks
+
+struct PianoRollEditorView: View {
+    @Bindable var viewModel: PianoRollViewModel
+    var onPlayNote: ((Int, Float) -> Void)?
+    var onStopNote: ((Int) -> Void)?
+
+    private let noteRowHeight: CGFloat = 14
+    private let keyboardWidth: CGFloat = 48
+    private let velocityLaneHeight: CGFloat = 80
+    private let headerBarHeight: CGFloat = 28
+    private let basePixelsPerBeat: CGFloat = 60
+
+    private var pixelsPerBeat: CGFloat {
+        basePixelsPerBeat * viewModel.zoom
+    }
+
+    private var gridHeight: CGFloat {
+        CGFloat(PianoRollViewModel.noteRange) * noteRowHeight
+    }
+
+    private var gridWidth: CGFloat {
+        CGFloat(viewModel.totalBeats) * pixelsPerBeat
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Toolbar
+            HStack(spacing: EchoelSpacing.sm) {
+                // Tool selector
+                ForEach(PianoRollViewModel.EditTool.allCases, id: \.self) { tool in
+                    Button {
+                        viewModel.tool = tool
+                    } label: {
+                        Image(systemName: tool.icon)
+                            .font(.system(size: 14))
+                            .foregroundColor(viewModel.tool == tool ? EchoelBrand.primary : EchoelBrand.textTertiary)
+                            .frame(width: 32, height: 28)
+                            .background(viewModel.tool == tool ? EchoelBrand.primary.opacity(0.2) : Color.clear)
+                            .cornerRadius(4)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Spacer()
+
+                // Snap
+                Picker("Snap", selection: $viewModel.snapDivision) {
+                    ForEach(PianoRollViewModel.SnapDivision.allCases, id: \.self) { snap in
+                        Text(snap.rawValue).tag(snap)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 70)
+
+                // Zoom
+                HStack(spacing: 4) {
+                    Button { viewModel.zoom = max(0.25, viewModel.zoom - 0.25) } label: {
+                        Image(systemName: "minus.magnifyingglass").font(.system(size: 12))
+                    }
+                    Text(String(format: "%.0f%%", viewModel.zoom * 100))
+                        .font(.system(size: 11, design: .monospaced))
+                        .frame(width: 40)
+                    Button { viewModel.zoom = min(4.0, viewModel.zoom + 0.25) } label: {
+                        Image(systemName: "plus.magnifyingglass").font(.system(size: 12))
+                    }
+                }
+                .foregroundColor(EchoelBrand.textSecondary)
+            }
+            .padding(.horizontal, EchoelSpacing.sm)
+            .padding(.vertical, 4)
+            .background(EchoelBrand.bgSurface)
+
+            // Grid
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    // Keyboard sidebar with live play
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            ForEach((Int(PianoRollViewModel.lowestNote)...Int(PianoRollViewModel.highestNote)).reversed(), id: \.self) { midiNote in
+                                let isBlack = PianoRollViewModel.isBlackKey(UInt8(midiNote))
+                                let isC = PianoRollViewModel.isC(UInt8(midiNote))
+
+                                HStack(spacing: 0) {
+                                    Text(isC ? PianoRollViewModel.noteName(for: UInt8(midiNote)) : "")
+                                        .font(.system(size: 8, design: .monospaced))
+                                        .foregroundColor(EchoelBrand.textTertiary)
+                                        .frame(width: 24, alignment: .trailing)
+
+                                    Rectangle()
+                                        .fill(isBlack ? Color.gray.opacity(0.6) : Color.gray.opacity(0.3))
+                                }
+                                .frame(width: keyboardWidth, height: noteRowHeight)
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { value in
+                                            if value.translation == .zero {
+                                                onPlayNote?(midiNote, 0.8)
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            onStopNote?(midiNote)
+                                        }
+                                )
+                            }
+                        }
+                    }
+                    .frame(width: keyboardWidth)
+
+                    // Note grid
+                    ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                        ZStack(alignment: .topLeading) {
+                            // Grid background
+                            Canvas { context, size in
+                                // Row backgrounds
+                                for i in 0..<PianoRollViewModel.noteRange {
+                                    let midiNote = PianoRollViewModel.highestNote - UInt8(i)
+                                    let isBlack = PianoRollViewModel.isBlackKey(midiNote)
+                                    let y = CGFloat(i) * noteRowHeight
+
+                                    if isBlack {
+                                        let rect = CGRect(x: 0, y: y, width: size.width, height: noteRowHeight)
+                                        context.fill(Path(rect), with: .color(.white.opacity(0.02)))
+                                    }
+                                }
+
+                                // Beat lines
+                                for beat in 0...Int(viewModel.totalBeats) {
+                                    let x = CGFloat(beat) * pixelsPerBeat
+                                    let isMeasure = beat % 4 == 0
+                                    var linePath = Path()
+                                    linePath.move(to: CGPoint(x: x, y: 0))
+                                    linePath.addLine(to: CGPoint(x: x, y: size.height))
+                                    context.stroke(linePath, with: .color(.white.opacity(isMeasure ? 0.3 : 0.1)), lineWidth: isMeasure ? 1 : 0.5)
+                                }
+                            }
+                            .frame(width: gridWidth, height: gridHeight)
+
+                            // Notes
+                            ForEach(viewModel.notes) { note in
+                                let x = CGFloat(note.startBeat) * pixelsPerBeat
+                                let row = Int(PianoRollViewModel.highestNote) - Int(note.note)
+                                let y = CGFloat(row) * noteRowHeight
+                                let w = CGFloat(note.duration) * pixelsPerBeat
+
+                                let isSelected = viewModel.selectedNoteIDs.contains(note.id)
+                                let color = noteColor(note.note)
+
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(color.opacity(Double(note.velocity) / 127.0 * 0.5 + 0.3))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .stroke(isSelected ? Color.white : color, lineWidth: isSelected ? 1.5 : 0.5)
+                                    )
+                                    .frame(width: max(4, w), height: noteRowHeight - 1)
+                                    .position(x: x + max(4, w) / 2, y: y + noteRowHeight / 2)
+                                    .onTapGesture {
+                                        switch viewModel.tool {
+                                        case .draw, .select:
+                                            viewModel.selectedNoteIDs = [note.id]
+                                        case .erase:
+                                            viewModel.deleteNote(id: note.id)
+                                        }
+                                    }
+                                    .gesture(
+                                        DragGesture()
+                                            .onChanged { value in
+                                                guard viewModel.tool == .select || viewModel.tool == .draw else { return }
+                                                let deltaBeat = Double(value.translation.width / pixelsPerBeat)
+                                                let deltaPitch = -Int(value.translation.height / noteRowHeight)
+                                                viewModel.moveNote(id: note.id, deltaBeat: deltaBeat, deltaPitch: deltaPitch)
+                                            }
+                                    )
+                            }
+                        }
+                        .frame(width: gridWidth, height: gridHeight)
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            guard viewModel.tool == .draw else { return }
+                            let beat = Double(location.x / pixelsPerBeat)
+                            let row = Int(location.y / noteRowHeight)
+                            let midiNote = UInt8(Int(PianoRollViewModel.highestNote) - row)
+                            guard midiNote >= PianoRollViewModel.lowestNote,
+                                  midiNote <= PianoRollViewModel.highestNote else { return }
+                            viewModel.addNote(note: midiNote, startBeat: beat)
+
+                            // Preview the note through the synth
+                            onPlayNote?(Int(midiNote), 0.8)
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(200))
+                                onStopNote?(Int(midiNote))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .background(EchoelBrand.bgDeep)
+    }
+
+    private func noteColor(_ midiNote: UInt8) -> Color {
+        let pc = Int(midiNote) % 12
+        switch pc {
+        case 0:  return .cyan       // C
+        case 1:  return .purple     // C#
+        case 2:  return .green      // D
+        case 3:  return .purple     // D#
+        case 4:  return .cyan       // E
+        case 5:  return .orange     // F
+        case 6:  return .purple     // F#
+        case 7:  return .green      // G
+        case 8:  return .purple     // G#
+        case 9:  return .yellow     // A
+        case 10: return .purple     // A#
+        case 11: return .orange     // B
+        default: return .gray
+        }
+    }
+}
 #endif

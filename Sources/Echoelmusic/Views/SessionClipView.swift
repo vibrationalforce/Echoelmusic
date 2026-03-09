@@ -24,6 +24,9 @@ private struct SessionClipContent: View {
     @State private var selectedScene: Int?
     @State private var showInstrumentBrowser = false
     @State private var showEffectsBrowser = false
+    @State private var showPianoRoll = false
+    @State private var editingClipTrack: Int = 0
+    @State private var editingClipScene: Int = 0
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -95,6 +98,21 @@ private struct SessionClipContent: View {
                 EffectsBrowserSheet(isPresented: $showEffectsBrowser, onSelect: { effect in
                     session.addEffectToTrack(selectedTrack ?? 0, effect: effect)
                 })
+            }
+
+            // Piano Roll Editor (opens on MIDI clip double-tap)
+            if showPianoRoll {
+                PianoRollClipSheet(
+                    isPresented: $showPianoRoll,
+                    clip: session.clipBinding(track: editingClipTrack, scene: editingClipScene),
+                    trackName: editingClipTrack < session.tracks.count ? session.tracks[editingClipTrack].name : "Track",
+                    onPlayNote: { note, velocity in
+                        session.playNoteForTrack(editingClipTrack, note: note, velocity: velocity)
+                    },
+                    onStopNote: { note in
+                        session.stopNoteForTrack(editingClipTrack, note: note)
+                    }
+                )
             }
         }
     }
@@ -256,7 +274,15 @@ private struct SessionClipContent: View {
                             trackColor: tracks[trackIndex].color,
                             isPlaying: vm.isClipPlaying(track: trackIndex, scene: sceneIndex),
                             onTap: { vm.toggleClip(track: trackIndex, scene: sceneIndex) },
-                            onDoubleTap: { vm.editClip(track: trackIndex, scene: sceneIndex) },
+                            onDoubleTap: {
+                                if vm.shouldOpenPianoRoll(track: trackIndex, scene: sceneIndex) {
+                                    editingClipTrack = trackIndex
+                                    editingClipScene = sceneIndex
+                                    showPianoRoll = true
+                                } else {
+                                    vm.editClip(track: trackIndex, scene: sceneIndex)
+                                }
+                            },
                             onStop: { vm.stopClip(track: trackIndex, scene: sceneIndex) },
                             onClear: { vm.clearClip(track: trackIndex, scene: sceneIndex) },
                             onDuplicate: { vm.duplicateClip(track: trackIndex, scene: sceneIndex) }
@@ -417,14 +443,25 @@ struct ClipSlotCell: View {
             // Clip Content
             if let clip = clip {
                 VStack(spacing: 2) {
-                    Text(clip.name)
-                        .font(EchoelBrandFont.label())
-                        .foregroundColor(EchoelBrand.textPrimary)
-                        .lineLimit(1)
+                    HStack(spacing: 3) {
+                        Image(systemName: clip.type == .midi ? "pianokeys" : "waveform")
+                            .font(.system(size: 8))
+                            .foregroundColor(trackColor)
 
-                    // Waveform Preview
-                    ClipWaveformPreview(color: trackColor)
-                        .frame(height: 20)
+                        Text(clip.name)
+                            .font(EchoelBrandFont.label())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                            .lineLimit(1)
+                    }
+
+                    if clip.type == .midi && !clip.midiNotes.isEmpty {
+                        // Mini piano roll preview
+                        MiniPianoRollPreview(notes: clip.midiNotes, color: trackColor)
+                            .frame(height: 20)
+                    } else {
+                        ClipWaveformPreview(color: trackColor)
+                            .frame(height: 20)
+                    }
                 }
                 .padding(4)
             } else {
@@ -497,6 +534,35 @@ struct ClipSlotCell: View {
                 } label: {
                     Label("Record", systemImage: "record.circle")
                 }
+            }
+        }
+    }
+}
+
+/// Mini piano roll preview showing note blocks inside a clip cell
+struct MiniPianoRollPreview: View {
+    let notes: [MIDINoteEvent]
+    let color: Color
+
+    var body: some View {
+        Canvas { context, size in
+            let width = size.width
+            let height = size.height
+            guard !notes.isEmpty else { return }
+
+            let minNote = notes.map(\.note).min() ?? 60
+            let maxNote = notes.map(\.note).max() ?? 72
+            let noteRange = max(1, Int(maxNote) - Int(minNote) + 1)
+            let maxBeat = notes.map { $0.startBeat + $0.duration }.max() ?? 4.0
+
+            for note in notes {
+                let x = CGFloat(note.startBeat / maxBeat) * width
+                let w = max(2, CGFloat(note.duration / maxBeat) * width)
+                let noteY = CGFloat(Int(maxNote) - Int(note.note)) / CGFloat(noteRange) * height
+                let h = max(1, height / CGFloat(noteRange))
+
+                let rect = CGRect(x: x, y: noteY, width: w, height: h)
+                context.fill(Path(roundedRect: rect, cornerRadius: 1), with: .color(color.opacity(0.8)))
             }
         }
     }
@@ -887,27 +953,140 @@ final class SessionClipViewModel {
     func toggleClip(track: Int, scene: Int) {
         guard track < clips.count, scene < clips[track].count else { return }
         let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
-        if clips[track][scene] != nil {
-            if loopEngine.isPlayingLoops {
-                loopEngine.stopPlayback()
+        if let clip = clips[track][scene] {
+            // Play existing clip
+            if clip.type == .midi {
+                // Play MIDI notes through the track's synth engine
+                playMIDIClip(clip, track: track)
             } else {
-                loopEngine.startPlayback()
+                if loopEngine.isPlayingLoops {
+                    loopEngine.stopPlayback()
+                } else {
+                    loopEngine.startPlayback()
+                }
             }
             EchoelCreativeWorkspace.shared.isPlaying = true
         } else {
-            loopEngine.setTempo(bpm)
-            let bars = quantize == .bar ? 4 : (quantize == .quarter ? 1 : 2)
-            loopEngine.startLoopRecording(bars: bars)
+            // Create new clip — MIDI for melodic tracks, audio for drums/bio
             guard track < tracks.count else { return }
-            clips[track][scene] = ClipViewClip(name: "\(tracks[track].name) \(scene + 1)")
+            let isMelodicTrack = ["Lead", "Pad", "Bass", "Keys"].contains(tracks[track].name) ||
+                                  tracks[track].instrumentName.contains("Synth") ||
+                                  tracks[track].instrumentName.contains("Wavetable") ||
+                                  tracks[track].instrumentName.contains("Granular") ||
+                                  tracks[track].instrumentName.contains("FM")
+            if isMelodicTrack {
+                // Create MIDI clip for piano roll editing
+                clips[track][scene] = ClipViewClip(
+                    name: "\(tracks[track].name) \(scene + 1)",
+                    type: .midi,
+                    trackIndex: track,
+                    sceneIndex: scene
+                )
+            } else {
+                // Audio recording for drums/bio
+                loopEngine.setTempo(bpm)
+                let bars = quantize == .bar ? 4 : (quantize == .quarter ? 1 : 2)
+                loopEngine.startLoopRecording(bars: bars)
+                clips[track][scene] = ClipViewClip(
+                    name: "\(tracks[track].name) \(scene + 1)",
+                    type: .audio,
+                    trackIndex: track,
+                    sceneIndex: scene
+                )
+            }
         }
+    }
+
+    /// Returns true if this clip should open the piano roll on double-tap
+    func shouldOpenPianoRoll(track: Int, scene: Int) -> Bool {
+        guard track < clips.count, scene < clips[track].count else { return false }
+        return clips[track][scene]?.type == .midi
     }
 
     func editClip(track: Int, scene: Int) {
         guard track < clips.count, scene < clips[track].count, clips[track][scene] != nil else { return }
+
+        if clips[track][scene]?.type == .midi {
+            // Piano roll editing is handled by the view layer (showPianoRoll sheet)
+            // This is called from onDoubleTap — the view will open the piano roll
+            return
+        }
+
+        // Audio clip overdub
         let loopEngine = EchoelCreativeWorkspace.shared.loopEngine
         if let lastLoop = loopEngine.loops.last {
             loopEngine.startOverdub(loopID: lastLoop.id)
+        }
+    }
+
+    /// Get a binding-compatible reference for editing clip MIDI data
+    func clipBinding(track: Int, scene: Int) -> Binding<ClipViewClip?> {
+        Binding(
+            get: { [weak self] in
+                guard let self, track < self.clips.count, scene < self.clips[track].count else { return nil }
+                return self.clips[track][scene]
+            },
+            set: { [weak self] newValue in
+                guard let self, track < self.clips.count, scene < self.clips[track].count else { return }
+                self.clips[track][scene] = newValue
+            }
+        )
+    }
+
+    /// Route note-on to the correct synth engine based on track instrument
+    func playNoteForTrack(_ track: Int, note: Int, velocity: Float) {
+        guard track < tracks.count else { return }
+        let instrumentName = tracks[track].instrumentName
+        let trackName = tracks[track].name
+
+        switch trackName {
+        case "Bass":
+            EchoelBass.shared.noteOn(note: note, velocity: velocity)
+        case "Lead", "Pad", "Keys":
+            EchoelSynth.shared.noteOn(note: note, velocity: velocity)
+        default:
+            // Route by instrument name
+            if instrumentName.contains("EchoSynth") || instrumentName.contains("Wavetable") ||
+               instrumentName.contains("FM") || instrumentName.contains("Granular") ||
+               instrumentName.contains("Subtractive") {
+                EchoelSynth.shared.noteOn(note: note, velocity: velocity)
+            } else {
+                EchoelBass.shared.noteOn(note: note, velocity: velocity)
+            }
+        }
+    }
+
+    /// Route note-off to the correct synth engine
+    func stopNoteForTrack(_ track: Int, note: Int) {
+        guard track < tracks.count else { return }
+        let trackName = tracks[track].name
+
+        switch trackName {
+        case "Bass":
+            EchoelBass.shared.noteOff(note: note)
+        default:
+            EchoelSynth.shared.noteOff(note: note)
+        }
+    }
+
+    /// Play MIDI clip through the track's synth
+    private func playMIDIClip(_ clip: ClipViewClip, track: Int) {
+        guard !clip.midiNotes.isEmpty else { return }
+
+        let bpmValue = bpm
+        let secondsPerBeat = 60.0 / bpmValue
+
+        for note in clip.midiNotes {
+            let startDelay = note.startBeat * secondsPerBeat
+            let duration = note.duration * secondsPerBeat
+
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(startDelay))
+                playNoteForTrack(track, note: Int(note.note), velocity: Float(note.velocity) / 127.0)
+
+                try? await Task.sleep(for: .seconds(duration))
+                stopNoteForTrack(track, note: Int(note.note))
+            }
         }
     }
 
@@ -941,6 +1120,28 @@ final class SessionClipViewModel {
         guard track < tracks.count else { return }
         tracks[track].instrumentName = instrument.name
         tracks[track].instrumentIcon = instrument.icon
+
+        // Route to real synth engine and set appropriate preset
+        switch instrument.name {
+        case "EchoSynth", "Subtractive":
+            EchoelSynth.shared.setPreset(.classicLead)
+        case "FM Synth":
+            EchoelSynth.shared.setPreset(.electricPiano)
+        case "Wavetable":
+            EchoelSynth.shared.setPreset(.retroWavetable)
+        case "Granular":
+            EchoelSynth.shared.setPreset(.warmPad)
+        case "Piano":
+            EchoelSynth.shared.setPreset(.electricPiano)
+        case "Strings":
+            EchoelSynth.shared.setPreset(.warmPad)
+        case "Brass":
+            EchoelSynth.shared.setPreset(.synthBrass)
+        case "HeartBeat Synth", "Coherence Pad", "Breath Organ", "Neural Drone":
+            EchoelSynth.shared.setPreset(.bioReactive)
+        default:
+            break
+        }
     }
     func addEffectToTrack(_ track: Int, effect: EffectInfo) {
         guard track < tracks.count else { return }
@@ -965,9 +1166,20 @@ struct ClipViewScene: Identifiable {
     var name: String
 }
 
+/// Clip types supported in session view
+enum ClipViewClipType: String, Sendable {
+    case audio    // Recorded audio loop
+    case midi     // MIDI notes (editable in piano roll)
+    case pattern  // Step sequencer pattern
+}
+
 struct ClipViewClip: Identifiable {
     let id = UUID()
     var name: String
+    var type: ClipViewClipType = .audio
+    var midiNotes: [MIDINoteEvent] = []  // MIDI data for piano roll clips
+    var trackIndex: Int = 0
+    var sceneIndex: Int = 0
 }
 
 struct InstrumentInfo {

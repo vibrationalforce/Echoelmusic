@@ -276,44 +276,112 @@ public final class SynthPresetLibrary {
     }
 
     private func renderTR808(_ preset: SynthPreset, frameCount: Int, sampleRate: Float) -> [Float] {
-        // TR808 renders through its own renderAudio method
-        // We generate a simple sine with pitch glide + click as fallback
+        // Professional 808 synthesis: pitch-swept sine + click transient + sub harmonic
+        // + analog saturation + body resonance + exponential envelope
         var buffer = [Float](repeating: 0, count: frameCount)
-        let attackSamples = Int(preset.attack * sampleRate)
-        let decaySamples = Int(preset.decay * sampleRate)
+
+        // Phase accumulators (continuous for clean synthesis)
+        var mainPhase: Double = 0.0
+        var clickPhase: Double = 0.0
+        var subPhase: Double = 0.0
+        var noiseState: UInt32 = 12345  // Deterministic noise for click texture
+
+        // Filter state for body resonance (2-pole lowpass)
+        var lp1: Float = 0.0
+        var lp2: Float = 0.0
+        let bodyFreq = Swift.min(preset.frequency * 3.0, 500.0)
+        let bodyCoeff = exp(-2.0 * Float.pi * bodyFreq / sampleRate)
 
         for i in 0..<frameCount {
             let t = Float(i) / sampleRate
 
-            // Pitch glide
-            let glideProgress = Swift.min(1.0, t / Swift.max(0.001, preset.pitchGlideTime))
-            let currentFreq = preset.frequency + preset.pitchGlide * (1.0 - glideProgress)
+            // ─── Exponential pitch glide (not linear — authentic 808) ───
+            let glideTime = Swift.max(0.001, preset.pitchGlideTime)
+            let glideProgress = Swift.min(1.0, t / glideTime)
+            let curved = 1.0 - exp(-4.0 * glideProgress)  // Exponential curve
+            let startFreq = preset.frequency + preset.pitchGlide
+            let currentFreq = startFreq - preset.pitchGlide * curved
 
-            // Oscillator
-            let phase = t * currentFreq * 2.0 * .pi
-            var sample = sin(phase) * preset.amplitude
+            // ─── Main oscillator (sine — the 808 body) ───
+            let mainInc = Double(currentFreq) / Double(sampleRate)
+            mainPhase += mainInc
+            if mainPhase >= 1.0 { mainPhase -= 1.0 }
+            var sample = sin(Float(mainPhase) * 2.0 * Float.pi)
 
-            // Click transient
-            if i < Int(0.003 * sampleRate) {
-                let clickPhase = t * preset.filterCutoff * 2.0 * .pi
-                sample += sin(clickPhase) * preset.clickAmount * (1.0 - t / 0.003)
+            // ─── Sub harmonic (octave below for weight) ───
+            let subInc = mainInc * 0.5
+            subPhase += subInc
+            if subPhase >= 1.0 { subPhase -= 1.0 }
+            let subOsc = sin(Float(subPhase) * 2.0 * Float.pi) * 0.3
+            sample += subOsc
+
+            // ─── Click transient (noise burst + pitched click) ───
+            let clickDuration: Float = 0.008  // 8ms click
+            if t < clickDuration {
+                let clickEnv = (1.0 - t / clickDuration)
+                let clickEnvSqr = clickEnv * clickEnv  // Faster decay
+
+                // Pitched click component
+                let clickFreq = Swift.max(preset.filterCutoff, 2000.0)
+                let cInc = Double(clickFreq) / Double(sampleRate)
+                clickPhase += cInc
+                if clickPhase >= 1.0 { clickPhase -= 1.0 }
+                let pitchedClick = sin(Float(clickPhase) * 2.0 * Float.pi) * clickEnvSqr
+
+                // Noise click component (adds snap/transient texture)
+                noiseState = noiseState &* 1103515245 &+ 12345
+                let noise = Float(Int32(bitPattern: noiseState)) / Float(Int32.max)
+                let noiseClick = noise * clickEnvSqr * 0.4
+
+                sample += (pitchedClick + noiseClick) * preset.clickAmount
             }
 
-            // Envelope
-            if i < attackSamples {
-                sample *= Float(i) / Float(Swift.max(1, attackSamples))
+            // ─── Body resonance (2-pole lowpass adds warmth) ───
+            let input = sample
+            lp1 = lp1 + (1.0 - bodyCoeff) * (input - lp1)
+            lp2 = lp2 + (1.0 - bodyCoeff) * (lp1 - lp2)
+            // Mix dry + filtered for body
+            sample = sample * 0.6 + lp2 * 0.4
+
+            // ─── Exponential amplitude envelope (authentic 808 decay curve) ───
+            let attackTime = Swift.max(0.0005, preset.attack)
+            let decayTime = Swift.max(0.01, preset.decay)
+            var env: Float
+            if t < attackTime {
+                env = t / attackTime
             } else {
-                let decayT = Float(i - attackSamples) / Float(Swift.max(1, decaySamples))
-                sample *= Swift.max(0, 1.0 - decayT)
+                // Exponential decay (not linear — this is what makes 808s sound right)
+                let decayElapsed = t - attackTime
+                env = exp(-3.0 * decayElapsed / decayTime)
             }
 
-            // Drive
+            sample *= env * preset.amplitude
+
+            // ─── Analog saturation (warm, not harsh) ───
             if preset.drive > 0 {
-                sample = tanh(sample * (1.0 + preset.drive * 4.0))
+                let driven = sample * (1.0 + preset.drive * 3.0)
+                let x2 = driven * driven
+                sample = driven * (27.0 + x2) / (27.0 + 9.0 * x2)
+            }
+
+            // ─── Low-pass filter for lo-fi presets ───
+            if preset.filterCutoff > 0 && preset.filterCutoff < 1000 {
+                let lpCoeff = exp(-2.0 * Float.pi * preset.filterCutoff / sampleRate)
+                lp1 = lp1 * lpCoeff + sample * (1.0 - lpCoeff)
+                sample = lp1
             }
 
             buffer[i] = sample
         }
+
+        // ─── Normalize to prevent clipping while maximizing loudness ───
+        var maxAbs: Float = 0.0
+        vDSP_maxmgv(buffer, 1, &maxAbs, vDSP_Length(frameCount))
+        if maxAbs > 0.01 {
+            var scale = 0.95 / maxAbs
+            vDSP_vsmul(buffer, 1, &scale, &buffer, 1, vDSP_Length(frameCount))
+        }
+
         return buffer
     }
 
@@ -354,23 +422,25 @@ public final class SynthPresetLibrary {
 
         // — KICKS —
         var kick808 = SynthPreset(name: "808 Kick", category: .drums, engine: .tr808, tags: ["kick", "808", "sub", "trap"])
-        kick808.frequency = 55
-        kick808.decay = 0.6
-        kick808.pitchGlide = 100
-        kick808.pitchGlideTime = 0.08
-        kick808.clickAmount = 0.3
-        kick808.drive = 0.2
-        kick808.duration = 0.8
+        kick808.frequency = 50
+        kick808.amplitude = 0.95
+        kick808.decay = 0.8
+        kick808.pitchGlide = 120
+        kick808.pitchGlideTime = 0.06
+        kick808.clickAmount = 0.35
+        kick808.drive = 0.25
+        kick808.duration = 1.0
         presets.append(kick808)
 
         var kickDeep = SynthPreset(name: "Deep Sub Kick", category: .drums, engine: .tr808, tags: ["kick", "sub", "deep"])
-        kickDeep.frequency = 40
-        kickDeep.decay = 0.9
-        kickDeep.pitchGlide = 80
-        kickDeep.pitchGlideTime = 0.12
+        kickDeep.frequency = 38
+        kickDeep.amplitude = 1.0
+        kickDeep.decay = 1.2
+        kickDeep.pitchGlide = 90
+        kickDeep.pitchGlideTime = 0.1
         kickDeep.clickAmount = 0.1
-        kickDeep.drive = 0.4
-        kickDeep.duration = 1.0
+        kickDeep.drive = 0.35
+        kickDeep.duration = 1.5
         presets.append(kickDeep)
 
         var kickPunchy = SynthPreset(name: "Punchy Kick", category: .drums, engine: .tr808, tags: ["kick", "punchy", "house"])
@@ -406,14 +476,15 @@ public final class SynthPresetLibrary {
 
         var snareNoise = SynthPreset(name: "Noise Snare", category: .drums, engine: .ddsp, tags: ["snare", "noise", "electronic"])
         snareNoise.frequency = 250
-        snareNoise.harmonicity = 0.1
-        snareNoise.noiseLevel = 0.8
+        snareNoise.harmonicity = 0.15
+        snareNoise.noiseLevel = 0.9
         snareNoise.noiseColor = "white"
-        snareNoise.attack = 0.001
-        snareNoise.decay = 0.15
+        snareNoise.brightness = 0.85
+        snareNoise.attack = 0.0005
+        snareNoise.decay = 0.18
         snareNoise.sustain = 0
-        snareNoise.release = 0.05
-        snareNoise.duration = 0.3
+        snareNoise.release = 0.04
+        snareNoise.duration = 0.25
         presets.append(snareNoise)
 
         var snareClap = SynthPreset(name: "Clap Snare", category: .drums, engine: .ddsp, tags: ["clap", "snare", "layered"])
@@ -771,6 +842,161 @@ public final class SynthPresetLibrary {
         snap.brightness = 0.75
         snap.duration = 0.08
         presets.append(snap)
+
+        // — ADDITIONAL GENRE-SPECIFIC DRUMS (March 2026 expansion) —
+
+        // Hard trap 808 snare with layered noise
+        var snareHardTrap = SynthPreset(name: "Hard Trap Snare", category: .drums, engine: .ddsp, tags: ["snare", "trap", "hard", "heavy"])
+        snareHardTrap.frequency = 200
+        snareHardTrap.harmonicity = 0.2
+        snareHardTrap.noiseLevel = 0.95
+        snareHardTrap.noiseColor = "white"
+        snareHardTrap.brightness = 1.0
+        snareHardTrap.attack = 0.0003
+        snareHardTrap.decay = 0.25
+        snareHardTrap.sustain = 0
+        snareHardTrap.release = 0.03
+        snareHardTrap.duration = 0.3
+        presets.append(snareHardTrap)
+
+        // House clap (tight, snappy)
+        var clapHouse = SynthPreset(name: "House Clap", category: .drums, engine: .ddsp, tags: ["clap", "house", "four-on-floor", "dance"])
+        clapHouse.frequency = 400
+        clapHouse.harmonicity = 0.02
+        clapHouse.noiseLevel = 0.9
+        clapHouse.noiseColor = "pink"
+        clapHouse.brightness = 0.7
+        clapHouse.attack = 0.001
+        clapHouse.decay = 0.15
+        clapHouse.sustain = 0
+        clapHouse.release = 0.06
+        clapHouse.duration = 0.25
+        presets.append(clapHouse)
+
+        // Techno perc (metallic click)
+        var percTechno = SynthPreset(name: "Techno Perc", category: .drums, engine: .modalBank, tags: ["perc", "techno", "metallic", "click"])
+        percTechno.frequency = 1800
+        percTechno.material = "bell"
+        percTechno.stiffness = 0.06
+        percTechno.damping = 0.04
+        percTechno.brightness = 0.9
+        percTechno.duration = 0.08
+        presets.append(percTechno)
+
+        // 909 snare (classic house/techno)
+        var snare909 = SynthPreset(name: "909 Snare", category: .drums, engine: .ddsp, tags: ["snare", "909", "house", "techno"])
+        snare909.frequency = 180
+        snare909.harmonicity = 0.18
+        snare909.noiseLevel = 0.75
+        snare909.noiseColor = "white"
+        snare909.brightness = 0.85
+        snare909.attack = 0.0005
+        snare909.decay = 0.22
+        snare909.sustain = 0
+        snare909.release = 0.05
+        snare909.duration = 0.3
+        presets.append(snare909)
+
+        // 909 kick (punchy, tight)
+        var kick909 = SynthPreset(name: "909 Kick", category: .drums, engine: .tr808, tags: ["kick", "909", "house", "techno", "punchy"])
+        kick909.frequency = 55
+        kick909.decay = 0.25
+        kick909.pitchGlide = 160
+        kick909.pitchGlideTime = 0.02
+        kick909.clickAmount = 0.5
+        kick909.drive = 0.2
+        kick909.duration = 0.4
+        presets.append(kick909)
+
+        // Vinyl crackle perc (lo-fi texture)
+        var percVinyl = SynthPreset(name: "Vinyl Crackle", category: .drums, engine: .ddsp, tags: ["perc", "lofi", "vinyl", "texture", "dusty"])
+        percVinyl.frequency = 4000
+        percVinyl.harmonicity = 0.01
+        percVinyl.noiseLevel = 0.5
+        percVinyl.noiseColor = "pink"
+        percVinyl.brightness = 0.3
+        percVinyl.attack = 0.01
+        percVinyl.decay = 0.3
+        percVinyl.sustain = 0.1
+        percVinyl.release = 0.2
+        percVinyl.duration = 0.5
+        presets.append(percVinyl)
+
+        // Trap hihat (pitched, fast)
+        var hatTrap = SynthPreset(name: "Trap Hat", category: .drums, engine: .ddsp, tags: ["hihat", "trap", "pitched", "fast"])
+        hatTrap.frequency = 10000
+        hatTrap.harmonicity = 0.005
+        hatTrap.noiseLevel = 0.95
+        hatTrap.noiseColor = "blue"
+        hatTrap.brightness = 1.0
+        hatTrap.attack = 0.0002
+        hatTrap.decay = 0.03
+        hatTrap.sustain = 0
+        hatTrap.duration = 0.05
+        presets.append(hatTrap)
+
+        // Boom kick (EDM/festival)
+        var kickBoom = SynthPreset(name: "Boom Kick", category: .drums, engine: .tr808, tags: ["kick", "edm", "festival", "boom", "big"])
+        kickBoom.frequency = 48
+        kickBoom.decay = 0.8
+        kickBoom.pitchGlide = 250
+        kickBoom.pitchGlideTime = 0.05
+        kickBoom.clickAmount = 0.4
+        kickBoom.drive = 0.5
+        kickBoom.duration = 1.0
+        presets.append(kickBoom)
+
+        // Glitch perc
+        var percGlitch = SynthPreset(name: "Glitch Perc", category: .drums, engine: .ddsp, tags: ["perc", "glitch", "digital", "idm"])
+        percGlitch.frequency = 6000
+        percGlitch.harmonicity = 0.5
+        percGlitch.noiseLevel = 0.4
+        percGlitch.noiseColor = "blue"
+        percGlitch.brightness = 0.95
+        percGlitch.attack = 0.0001
+        percGlitch.decay = 0.02
+        percGlitch.sustain = 0
+        percGlitch.duration = 0.04
+        presets.append(percGlitch)
+
+        // Maracas
+        var maracas = SynthPreset(name: "Maracas", category: .drums, engine: .ddsp, tags: ["maracas", "latin", "perc", "shake"])
+        maracas.frequency = 8000
+        maracas.harmonicity = 0.01
+        maracas.noiseLevel = 0.75
+        maracas.noiseColor = "white"
+        maracas.brightness = 0.85
+        maracas.attack = 0.001
+        maracas.decay = 0.05
+        maracas.sustain = 0
+        maracas.duration = 0.08
+        presets.append(maracas)
+
+        // Guiro
+        var guiro = SynthPreset(name: "Guiro", category: .drums, engine: .ddsp, tags: ["guiro", "latin", "perc", "scrape"])
+        guiro.frequency = 3000
+        guiro.harmonicity = 0.08
+        guiro.noiseLevel = 0.65
+        guiro.noiseColor = "pink"
+        guiro.brightness = 0.6
+        guiro.attack = 0.005
+        guiro.decay = 0.3
+        guiro.sustain = 0.2
+        guiro.release = 0.1
+        guiro.duration = 0.4
+        presets.append(guiro)
+
+        // Timbale (high, bright percussion)
+        var timbale = SynthPreset(name: "Timbale", category: .drums, engine: .modalBank, tags: ["timbale", "latin", "perc", "bright"])
+        timbale.frequency = 450
+        timbale.material = "drum"
+        timbale.stiffness = 0.006
+        timbale.damping = 0.01
+        timbale.strikePosition = 0.2
+        timbale.brightness = 0.85
+        timbale.size = 0.5
+        timbale.duration = 0.3
+        presets.append(timbale)
 
         // ═══════════════════════════════════════════════════════════
         // ECHOEL_BASS — Sub, 808, Reese, Acid, Synth
