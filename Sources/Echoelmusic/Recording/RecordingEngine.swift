@@ -803,7 +803,8 @@ class RetrospectiveBuffer {
     let channels: Int
 
     var duration: TimeInterval {
-        Double(count / channels) / sampleRate
+        guard channels > 0, sampleRate > 0 else { return 0 }
+        return Double(count / channels) / sampleRate
     }
 
     init(capacity: Int, sampleRate: Double, channels: Int) {
