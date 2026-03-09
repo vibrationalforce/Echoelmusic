@@ -668,7 +668,7 @@ struct PianoRollView: View {
 
     // MARK: - Gestures
 
-    private var gridTapGesture: some SpatialTapGesture {
+    private var gridTapGesture: some Gesture {
         SpatialTapGesture()
             .onEnded { value in
                 let beat = Double(value.location.x / pixelsPerBeat)
