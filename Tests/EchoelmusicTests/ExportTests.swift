@@ -191,7 +191,7 @@ final class ExportJobTests: XCTestCase {
 
 // MARK: - ColorRange Tests (ProColorGrading)
 
-final class ColorRangeTests: XCTestCase {
+final class ExportColorRangeTests: XCTestCase {
 
     func testAllCases() {
         let cases = ColorRange.allCases
@@ -224,7 +224,7 @@ final class ColorRangeTests: XCTestCase {
 
 // MARK: - CurvePoint Tests (ProColorGrading)
 
-final class CurvePointTests: XCTestCase {
+final class ExportCurvePointTests: XCTestCase {
 
     func testInit() {
         let point = CurvePoint(input: 0.5, output: 0.7)

@@ -139,7 +139,7 @@ final class EchoelDDSPTests: XCTestCase {
 
 // MARK: - CrossfadeCurve Tests
 
-final class CrossfadeCurveTests: XCTestCase {
+final class DSPCrossfadeCurveTests: XCTestCase {
 
     func testAllCurvesAtBoundaries() {
         for curve in CrossfadeCurve.allCases {
@@ -207,7 +207,7 @@ final class CrossfadeCurveTests: XCTestCase {
 
 // MARK: - CrossfadeRegion Tests
 
-final class CrossfadeRegionTests: XCTestCase {
+final class DSPCrossfadeRegionTests: XCTestCase {
 
     func testDuration() {
         let region = CrossfadeRegion(

@@ -217,7 +217,7 @@ final class FeatureAvailabilityTests: XCTestCase {
 
 // MARK: - SessionState Tests
 
-final class SessionStateTests: XCTestCase {
+final class VocalSessionStateTests: XCTestCase {
 
     func testDefaultInitialization() {
         let state = SessionState()
@@ -320,7 +320,7 @@ final class SessionStateTests: XCTestCase {
 
 // MARK: - SessionStateBuilder Tests
 
-final class SessionStateBuilderTests: XCTestCase {
+final class VocalSessionStateBuilderTests: XCTestCase {
 
     func testDefaultBuild() {
         let state = SessionStateBuilder().build()
@@ -432,7 +432,7 @@ final class SessionStateBuilderTests: XCTestCase {
 
 // MARK: - HapticHelper Tests
 
-final class HapticHelperTests: XCTestCase {
+final class VocalHapticHelperTests: XCTestCase {
 
     func testStyleCases() {
         let styles: [HapticHelper.Style] = [.light, .medium, .heavy, .selection]
@@ -460,7 +460,7 @@ final class HapticHelperTests: XCTestCase {
 
 // MARK: - AppThemeMode Tests
 
-final class AppThemeModeTests: XCTestCase {
+final class VocalAppThemeModeTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(AppThemeMode.allCases.count, 3)
@@ -532,7 +532,7 @@ final class AppThemeModeTests: XCTestCase {
 
 // MARK: - EchoelBrand Tests
 
-final class EchoelBrandTests: XCTestCase {
+final class VocalEchoelBrandTests: XCTestCase {
 
     func testTagline() {
         XCTAssertEqual(EchoelBrand.tagline.count, 1)
@@ -648,7 +648,7 @@ final class EchoelGradientsTests: XCTestCase {
 
 // MARK: - EchoelBrandFont Tests
 
-final class EchoelBrandFontTests: XCTestCase {
+final class VocalEchoelBrandFontTests: XCTestCase {
 
     func testPreferredFontName() {
         XCTAssertEqual(EchoelBrandFont.preferredFontName, "AtkinsonHyperlegible-Regular")
@@ -693,7 +693,7 @@ final class EchoelBrandFontTests: XCTestCase {
 
 // MARK: - EchoelSpacing Tests
 
-final class EchoelSpacingTests: XCTestCase {
+final class VocalEchoelSpacingTests: XCTestCase {
 
     func testSpacingValues() {
         XCTAssertEqual(EchoelSpacing.xxs, 2)
@@ -726,7 +726,7 @@ final class EchoelSpacingTests: XCTestCase {
 
 // MARK: - EchoelRadius Tests
 
-final class EchoelRadiusTests: XCTestCase {
+final class VocalEchoelRadiusTests: XCTestCase {
 
     func testRadiusValues() {
         XCTAssertEqual(EchoelRadius.xs, 4)
@@ -748,7 +748,7 @@ final class EchoelRadiusTests: XCTestCase {
 
 // MARK: - EchoelAnimation Tests
 
-final class EchoelAnimationTests: XCTestCase {
+final class VocalEchoelAnimationTests: XCTestCase {
 
     func testQuickTiming() {
         XCTAssertEqual(EchoelAnimation.quick, 0.15)
@@ -830,7 +830,7 @@ final class EchoelDisclaimerTests: XCTestCase {
 
 // MARK: - EchoelIconConfig Tests
 
-final class EchoelIconConfigTests: XCTestCase {
+final class VocalEchoelIconConfigTests: XCTestCase {
 
     func testSizesNotEmpty() {
         XCTAssertFalse(EchoelIconConfig.sizes.isEmpty)
@@ -951,7 +951,7 @@ final class VaporwaveTypographyTests: XCTestCase {
 
 // MARK: - VaporwaveSpacing Tests
 
-final class VaporwaveSpacingTests: XCTestCase {
+final class VocalVaporwaveSpacingTests: XCTestCase {
 
     func testSpacingMatchesEchoelSpacing() {
         XCTAssertEqual(VaporwaveSpacing.xs, EchoelSpacing.xs)
@@ -1010,7 +1010,7 @@ final class VaporwaveAnimationTests: XCTestCase {
 
 // MARK: - FreezeConfiguration Tests
 
-final class FreezeConfigurationTests: XCTestCase {
+final class VocalFreezeConfigurationTests: XCTestCase {
 
     func testDefaultValues() {
         let config = FreezeConfiguration()
@@ -1056,7 +1056,7 @@ final class FreezeConfigurationTests: XCTestCase {
 
 // MARK: - TrackFreezeState Tests
 
-final class TrackFreezeStateTests: XCTestCase {
+final class VocalTrackFreezeStateTests: XCTestCase {
 
     func testRawValues() {
         XCTAssertEqual(TrackFreezeState.unfrozen.rawValue, "unfrozen")
@@ -1088,7 +1088,7 @@ final class TrackFreezeStateTests: XCTestCase {
 
 // MARK: - FreezeError Tests
 
-final class FreezeErrorTests: XCTestCase {
+final class VocalFreezeErrorTests: XCTestCase {
 
     func testTrackNotFoundDescription() {
         XCTAssertEqual(FreezeError.trackNotFound.errorDescription, "Track not found")
@@ -1128,7 +1128,7 @@ final class FreezeErrorTests: XCTestCase {
 
 // MARK: - CrossfadeCurve Tests
 
-final class CrossfadeCurveTests: XCTestCase {
+final class VocalCrossfadeCurveTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(CrossfadeCurve.allCases.count, 6)
@@ -1235,7 +1235,7 @@ final class CrossfadeCurveTests: XCTestCase {
 
 // MARK: - CrossfadeRegion Tests
 
-final class CrossfadeRegionTests: XCTestCase {
+final class VocalCrossfadeRegionTests: XCTestCase {
 
     func testDefaultInit() {
         let region = CrossfadeRegion(startSample: 1000, lengthInSamples: 4800)
@@ -1296,7 +1296,7 @@ final class CrossfadeRegionTests: XCTestCase {
 
 // MARK: - BPMSituation Tests
 
-final class BPMSituationTests: XCTestCase {
+final class VocalBPMSituationTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(BPMSituation.allCases.count, 12)
@@ -1389,7 +1389,7 @@ final class BPMSituationTests: XCTestCase {
 
 // MARK: - BPMTransitionMode Tests
 
-final class BPMTransitionModeTests: XCTestCase {
+final class VocalBPMTransitionModeTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(BPMTransitionMode.allCases.count, 4)
@@ -1433,7 +1433,7 @@ final class BPMTransitionModeTests: XCTestCase {
 
 // MARK: - BPMLockState Tests
 
-final class BPMLockStateTests: XCTestCase {
+final class VocalBPMLockStateTests: XCTestCase {
 
     func testDefaultValues() {
         let lock = BPMLockState()
@@ -1458,7 +1458,7 @@ final class BPMLockStateTests: XCTestCase {
 
 // MARK: - BPMSnapshot Tests
 
-final class BPMSnapshotTests: XCTestCase {
+final class VocalBPMSnapshotTests: XCTestCase {
 
     func testInitialization() {
         let snapshot = BPMSnapshot(

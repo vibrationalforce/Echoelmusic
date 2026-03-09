@@ -14,7 +14,7 @@ import Foundation
 
 // MARK: - AudioNodeType Tests
 
-final class AudioNodeTypeTests: XCTestCase {
+final class ExtendedAudioNodeTypeTests: XCTestCase {
 
     func testCaseCount() {
         let cases: [AudioNodeType] = [.source, .effect, .mixer, .output, .analyzer, .splitter, .bioReactive]

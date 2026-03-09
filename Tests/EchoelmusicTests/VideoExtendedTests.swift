@@ -11,7 +11,7 @@ import Foundation
 
 // MARK: - TimeSignature Tests
 
-final class TimeSignatureTests: XCTestCase {
+final class ExtendedTimeSignatureTests: XCTestCase {
 
     func testDefaultInit() {
         let ts = TimeSignature()
@@ -123,7 +123,7 @@ final class TimeSignatureTests: XCTestCase {
 
 // MARK: - SnapMode Tests
 
-final class SnapModeTests: XCTestCase {
+final class ExtendedSnapModeTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(SnapMode.allCases.count, 9)
@@ -170,7 +170,7 @@ final class SnapModeTests: XCTestCase {
 
 // MARK: - BeatPosition Tests
 
-final class BeatPositionTests: XCTestCase {
+final class ExtendedBeatPositionTests: XCTestCase {
 
     func testDefaultInit() {
         let pos = BeatPosition()
@@ -275,7 +275,7 @@ final class BeatPositionTests: XCTestCase {
 
 // MARK: - BeatMarker Tests
 
-final class BeatMarkerTests: XCTestCase {
+final class ExtendedBeatMarkerTests: XCTestCase {
 
     func testMarkerTypeAllCasesCount() {
         XCTAssertEqual(BeatMarker.MarkerType.allCases.count, 10)
@@ -333,7 +333,7 @@ final class BeatMarkerTests: XCTestCase {
 
 // MARK: - TempoChange Tests
 
-final class TempoChangeTests: XCTestCase {
+final class ExtendedTempoChangeTests: XCTestCase {
 
     func testTempoChangeCurveAllCasesCount() {
         XCTAssertEqual(TempoChange.TempoChangeCurve.allCases.count, 4)
@@ -375,7 +375,7 @@ final class TempoChangeTests: XCTestCase {
 
 // MARK: - BeatSyncedTransition Tests
 
-final class BeatSyncedTransitionTests: XCTestCase {
+final class ExtendedBeatSyncedTransitionTests: XCTestCase {
 
     func testTransitionTypeAllCasesCount() {
         XCTAssertEqual(BeatSyncedTransition.TransitionType.allCases.count, 14)
@@ -434,7 +434,7 @@ final class BeatSyncedTransitionTests: XCTestCase {
 
 // MARK: - BeatSyncedEffect Tests
 
-final class BeatSyncedEffectTests: XCTestCase {
+final class ExtendedBeatSyncedEffectTests: XCTestCase {
 
     func testEffectTypeAllCasesCount() {
         XCTAssertEqual(BeatSyncedEffect.EffectType.allCases.count, 22)
@@ -499,7 +499,7 @@ final class BeatSyncedEffectTests: XCTestCase {
 
 // MARK: - BeatDetectionResult Tests
 
-final class BeatDetectionResultTests: XCTestCase {
+final class ExtendedBeatDetectionResultTests: XCTestCase {
 
     func testDefaultInit() {
         let r = BeatDetectionResult()
@@ -531,7 +531,7 @@ final class BeatDetectionResultTests: XCTestCase {
 
 // MARK: - BPMGrid Tests
 
-final class BPMGridTests: XCTestCase {
+final class ExtendedBPMGridTests: XCTestCase {
 
     func testDefaultInit() {
         let g = BPMGrid()
@@ -655,7 +655,7 @@ final class BPMGridTests: XCTestCase {
 
 // MARK: - CurvePoint Tests
 
-final class CurvePointTests: XCTestCase {
+final class ExtendedCurvePointTests: XCTestCase {
 
     func testInit() {
         let p = CurvePoint(input: 0.5, output: 0.7)
@@ -691,7 +691,7 @@ final class CurvePointTests: XCTestCase {
 
 // MARK: - ColorRange Tests
 
-final class ColorRangeTests: XCTestCase {
+final class ExtendedColorRangeTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(ColorRange.allCases.count, 8)
@@ -743,7 +743,7 @@ final class ColorRangeTests: XCTestCase {
 
 // MARK: - HSLValues Tests
 
-final class HSLValuesTests: XCTestCase {
+final class ExtendedHSLValuesTests: XCTestCase {
 
     func testDefaultInit() {
         let v = HSLValues()
@@ -792,7 +792,7 @@ final class HSLValuesTests: XCTestCase {
 
 // MARK: - WipeDirection Tests
 
-final class WipeDirectionTests: XCTestCase {
+final class ExtendedWipeDirectionTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(WipeDirection.allCases.count, 5)
@@ -817,7 +817,7 @@ final class WipeDirectionTests: XCTestCase {
 
 // MARK: - TransitionEasing Tests
 
-final class TransitionEasingTests: XCTestCase {
+final class ExtendedTransitionEasingTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(TransitionEasing.allCases.count, 5)
@@ -879,7 +879,7 @@ final class TransitionEasingTests: XCTestCase {
 
 // MARK: - GradeTransitionType Tests
 
-final class GradeTransitionTypeTests: XCTestCase {
+final class ExtendedGradeTransitionTypeTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(GradeTransitionType.allCases.count, 21)
@@ -929,7 +929,7 @@ final class GradeTransitionTypeTests: XCTestCase {
 
 // MARK: - ProTransition Tests
 
-final class ProTransitionTests: XCTestCase {
+final class ExtendedProTransitionTests: XCTestCase {
 
     func testDefaultInit() {
         let t = ProTransition()
@@ -980,7 +980,7 @@ final class ProTransitionTests: XCTestCase {
 
 // MARK: - ScopeType Tests
 
-final class ScopeTypeTests: XCTestCase {
+final class ExtendedScopeTypeTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(ScopeType.allCases.count, 5)
@@ -1013,7 +1013,7 @@ final class ScopeTypeTests: XCTestCase {
 
 // MARK: - ColorWheels Tests
 
-final class ColorWheelsTests: XCTestCase {
+final class ExtendedColorWheelsTests: XCTestCase {
 
     func testNeutralInit() {
         let cw = ColorWheels()
@@ -1076,7 +1076,7 @@ final class ColorWheelsTests: XCTestCase {
 
 // MARK: - CurvesEditor Tests
 
-final class CurvesEditorTests: XCTestCase {
+final class ExtendedCurvesEditorTests: XCTestCase {
 
     func testIdentityCurve() {
         let identity = CurvesEditor.identityCurve
@@ -1405,7 +1405,7 @@ final class ColorGradeTests: XCTestCase {
 
 // MARK: - KeyframeProperty Tests
 
-final class KeyframePropertyTests: XCTestCase {
+final class ExtendedKeyframePropertyTests: XCTestCase {
 
     func testRawValues() {
         XCTAssertEqual(KeyframeProperty.opacity.rawValue, "Opacity")
@@ -1419,7 +1419,7 @@ final class KeyframePropertyTests: XCTestCase {
 
 // MARK: - MarkerColor Tests
 
-final class MarkerColorTests: XCTestCase {
+final class ExtendedMarkerColorTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(MarkerColor.allCases.count, 6)
@@ -1437,7 +1437,7 @@ final class MarkerColorTests: XCTestCase {
 
 // MARK: - TextPreset Tests
 
-final class TextPresetTests: XCTestCase {
+final class ExtendedTextPresetTests: XCTestCase {
 
     func testAllCasesCount() {
         XCTAssertEqual(TextPreset.allCases.count, 7)
@@ -1511,7 +1511,7 @@ final class TextPresetTests: XCTestCase {
 
 // MARK: - VideoEditingError Tests
 
-final class VideoEditingErrorTests: XCTestCase {
+final class ExtendedVideoEditingErrorTests: XCTestCase {
 
     func testCompositionCreationFailedDescription() {
         let error = VideoEditingError.compositionCreationFailed

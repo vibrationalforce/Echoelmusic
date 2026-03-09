@@ -4,7 +4,7 @@ import XCTest
 
 // MARK: - BPMSituation Tests
 
-final class BPMSituationTests: XCTestCase {
+final class RecordingBPMSituationTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(BPMSituation.allCases.count, 12)
@@ -74,7 +74,7 @@ final class BPMSituationTests: XCTestCase {
 
 // MARK: - BPMTransitionMode Tests
 
-final class BPMTransitionModeTests: XCTestCase {
+final class RecordingBPMTransitionModeTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(BPMTransitionMode.allCases.count, 4)
@@ -102,7 +102,7 @@ final class BPMTransitionModeTests: XCTestCase {
 
 // MARK: - BPMLockState Tests
 
-final class BPMLockStateTests: XCTestCase {
+final class RecordingBPMLockStateTests: XCTestCase {
 
     func testDefaults() {
         let state = BPMLockState()
@@ -127,7 +127,7 @@ final class BPMLockStateTests: XCTestCase {
 
 // MARK: - BPMSnapshot Tests
 
-final class BPMSnapshotTests: XCTestCase {
+final class RecordingBPMSnapshotTests: XCTestCase {
 
     func testInit() {
         let snapshot = BPMSnapshot(
@@ -151,7 +151,7 @@ final class BPMSnapshotTests: XCTestCase {
 
 // MARK: - MetronomeSound Tests
 
-final class MetronomeSoundTests: XCTestCase {
+final class RecordingMetronomeSoundTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(MetronomeSound.allCases.count, 7)
@@ -193,7 +193,7 @@ final class MetronomeSoundTests: XCTestCase {
 
 // MARK: - MetronomeSubdivision Tests
 
-final class MetronomeSubdivisionTests: XCTestCase {
+final class RecordingMetronomeSubdivisionTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(MetronomeSubdivision.allCases.count, 5)
@@ -255,7 +255,7 @@ final class MetronomeSubdivisionTests: XCTestCase {
 
 // MARK: - CountInMode Tests
 
-final class CountInModeTests: XCTestCase {
+final class RecordingCountInModeTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(CountInMode.allCases.count, 4)
@@ -279,7 +279,7 @@ final class CountInModeTests: XCTestCase {
 
 // MARK: - MetronomeConfiguration Tests
 
-final class MetronomeConfigurationTests: XCTestCase {
+final class RecordingMetronomeConfigTests: XCTestCase {
 
     func testDefaults() {
         let config = MetronomeConfiguration()
@@ -326,7 +326,7 @@ final class MetronomeConfigurationTests: XCTestCase {
 
 // MARK: - MusicalNote Tests
 
-final class MusicalNoteTests: XCTestCase {
+final class RecordingMusicalNoteTests: XCTestCase {
 
     func testNoteNames() {
         XCTAssertEqual(MusicalNote.noteNames.count, 12)
@@ -387,7 +387,7 @@ final class MusicalNoteTests: XCTestCase {
 
 // MARK: - TuningReference Tests
 
-final class TuningReferenceTests: XCTestCase {
+final class RecordingTuningReferenceTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(TuningReference.allCases.count, 7)
@@ -429,7 +429,7 @@ final class TuningReferenceTests: XCTestCase {
 
 // MARK: - TunerReading Tests
 
-final class TunerReadingTests: XCTestCase {
+final class RecordingTunerReadingTests: XCTestCase {
 
     func testInTuneWithinThreshold() {
         let reading = TunerReading(frequency: 440.0, note: .fromFrequency(440.0),
@@ -459,7 +459,7 @@ final class TunerReadingTests: XCTestCase {
 
 // MARK: - CrossfadeCurve Tests
 
-final class CrossfadeCurveTests: XCTestCase {
+final class RecordingCrossfadeCurveTests: XCTestCase {
 
     func testAllCases() {
         XCTAssertEqual(CrossfadeCurve.allCases.count, 6)
@@ -537,7 +537,7 @@ final class CrossfadeCurveTests: XCTestCase {
 
 // MARK: - CrossfadeRegion Tests
 
-final class CrossfadeRegionTests: XCTestCase {
+final class RecordingCrossfadeRegionTests: XCTestCase {
 
     func testInit() {
         let region = CrossfadeRegion(startSample: 1000, lengthInSamples: 4800)
@@ -630,7 +630,7 @@ final class CrossfadeEngineTests: XCTestCase {
 
 // MARK: - EqualPowerPan Tests
 
-final class EqualPowerPanTests: XCTestCase {
+final class RecordingEqualPowerPanTests: XCTestCase {
 
     func testCenterPan() {
         let (gainL, gainR) = equalPowerPan(pan: 0.0, volume: 1.0)
@@ -677,7 +677,7 @@ final class EqualPowerPanTests: XCTestCase {
 
 // MARK: - TrackFreezeState Tests
 
-final class TrackFreezeStateTests: XCTestCase {
+final class RecordingTrackFreezeStateTests: XCTestCase {
 
     func testAllStates() {
         let states: [TrackFreezeState] = [.unfrozen, .freezing, .frozen, .unfreezing]
@@ -702,7 +702,7 @@ final class TrackFreezeStateTests: XCTestCase {
 
 // MARK: - FreezeConfiguration Tests
 
-final class FreezeConfigurationTests: XCTestCase {
+final class RecordingFreezeConfigurationTests: XCTestCase {
 
     func testDefaults() {
         let config = FreezeConfiguration()
@@ -743,7 +743,7 @@ final class FreezeConfigurationTests: XCTestCase {
 
 // MARK: - FreezeError Tests
 
-final class FreezeErrorTests: XCTestCase {
+final class RecordingFreezeErrorTests: XCTestCase {
 
     func testErrorDescriptions() {
         let errors: [FreezeError] = [

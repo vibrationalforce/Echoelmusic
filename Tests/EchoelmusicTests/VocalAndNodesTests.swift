@@ -595,7 +595,7 @@ final class VocalHarmonyGeneratorTests: XCTestCase {
 
 // MARK: - NodeType Tests
 
-final class NodeTypeTests: XCTestCase {
+final class VocalNodeTypeTests: XCTestCase {
 
     func testNodeTypeRawValues() {
         XCTAssertEqual(NodeType.generator.rawValue, "generator")
@@ -620,7 +620,7 @@ final class NodeTypeTests: XCTestCase {
 
 // MARK: - BioSignal Tests
 
-final class BioSignalTests: XCTestCase {
+final class VocalBioSignalTests: XCTestCase {
 
     func testBioSignalDefaultInit() {
         let signal = BioSignal()
@@ -653,7 +653,7 @@ final class BioSignalTests: XCTestCase {
 
 // MARK: - NodeParameter Tests
 
-final class NodeParameterTests: XCTestCase {
+final class VocalNodeParameterTests: XCTestCase {
 
     func testNodeParameterInit() {
         let param = NodeParameter(
@@ -692,7 +692,7 @@ final class NodeParameterTests: XCTestCase {
 
 // MARK: - NodeManifest Tests
 
-final class NodeManifestTests: XCTestCase {
+final class VocalNodeManifestTests: XCTestCase {
 
     func testNodeManifestCodable() throws {
         let manifest = NodeManifest(
@@ -1046,7 +1046,7 @@ final class NodeFactoryTests: XCTestCase {
 
 // MARK: - EqualPowerPan Tests
 
-final class EqualPowerPanTests: XCTestCase {
+final class VocalEqualPowerPanTests: XCTestCase {
 
     func testCenterPanEqualGains() {
         let (left, right) = equalPowerPan(pan: 0.0, volume: 1.0)

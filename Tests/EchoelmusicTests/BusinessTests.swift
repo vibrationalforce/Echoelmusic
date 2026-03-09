@@ -122,7 +122,7 @@ final class AudioConfigurationTests: XCTestCase {
 // MARK: - InstrumentOrchestrator.DrumType Tests
 
 @MainActor
-final class DrumTypeTests: XCTestCase {
+final class BusinessDrumTypeTests: XCTestCase {
 
     func testAllCases() {
         let cases = InstrumentOrchestrator.DrumType.allCases
