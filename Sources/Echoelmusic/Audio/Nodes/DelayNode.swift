@@ -257,7 +257,10 @@ class DelayNode: BaseEchoelmusicNode {
     override func reset() {
         super.reset()
         for ch in 0..<delayBuffers.count {
-            vDSP_vclr(&delayBuffers[ch], 1, vDSP_Length(delayBuffers[ch].count))
+            let count = delayBuffers[ch].count
+            delayBuffers[ch].withUnsafeMutableBufferPointer { ptr in
+                vDSP_vclr(ptr.baseAddress!, 1, vDSP_Length(count))
+            }
             writeIndex[ch] = 0
             lpState[ch] = 0.0
         }
