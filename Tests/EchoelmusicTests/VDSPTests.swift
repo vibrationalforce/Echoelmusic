@@ -337,7 +337,14 @@ final class EchoelModalBankTests: XCTestCase {
         bank.noteOn(frequency: 440, velocity: 0.9)
         XCTAssertTrue(bank.isActive())
         bank.noteOff()
-        // After noteOff with release, may still be active briefly
+        // After noteOff, bank may still be active during release tail — that's valid
+        // Render enough frames to exhaust release, then verify silence
+        var buffer = [Float](repeating: 0, count: 4096)
+        for _ in 0..<10 {
+            bank.render(buffer: &buffer, frameCount: 4096)
+        }
+        // After 40960 samples of release, bank should be inactive
+        XCTAssertFalse(bank.isActive(), "Bank should be inactive after extended release")
     }
 
     func testRender() {
@@ -383,12 +390,18 @@ final class EchoelModalBankTests: XCTestCase {
     }
 
     func testMorphMaterials() {
-        let bank = EchoelModalBank(modeCount: 16)
+        let bank = EchoelModalBank(modeCount: 16, sampleRate: 48000, frameSize: 64)
         bank.morphMaterials(from: .bell, to: .plate, blend: 0.5)
-        // Should not crash
         bank.noteOn(frequency: 440, velocity: 0.8)
         var buffer = [Float](repeating: 0, count: 64)
         bank.render(buffer: &buffer, frameCount: 64)
+        // Verify morphed output produces sound and no NaN/Inf
+        let hasNonZero = buffer.contains { $0 != 0 }
+        XCTAssertTrue(hasNonZero, "Morphed material should produce non-zero output")
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "Morphed output must not contain NaN")
+            XCTAssertFalse(sample.isInfinite, "Morphed output must not contain Inf")
+        }
     }
 
     func testSpectralEnvelope() {

@@ -560,6 +560,12 @@ public final class EchoelDDSP: @unchecked Sendable {
             }
         }
 
+        // --- NaN/Inf guard (pre-reverb) ---
+        let totalSamples = stereo ? frameCount * 2 : frameCount
+        for i in 0..<totalSamples where !buffer[i].isFinite {
+            buffer[i] = 0
+        }
+
         // --- Convolution Reverb (post-render, block-based) ---
         if reverbMix > 0, let conv = reverbConvolution {
             if stereo {
@@ -591,6 +597,12 @@ public final class EchoelDDSP: @unchecked Sendable {
                     let wetSample = i < wet.count ? wet[i] : 0
                     buffer[i] = buffer[i] * dry + wetSample * wetGain
                 }
+            }
+
+            // --- NaN/Inf guard (post-reverb) ---
+            let postCount = stereo ? frameCount * 2 : frameCount
+            for i in 0..<postCount where !buffer[i].isFinite {
+                buffer[i] = 0
             }
         }
     }
@@ -1090,6 +1102,12 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
             let mixR = mixBufferR
             vDSP_vadd(mixL, 1, scaledBufferL, 1, &mixBufferL, 1, vDSP_Length(frameCount))
             vDSP_vadd(mixR, 1, scaledBufferR, 1, &mixBufferR, 1, vDSP_Length(frameCount))
+        }
+
+        // NaN/Inf guard on mix buffers before copy
+        for i in 0..<frameCount {
+            if !mixBufferL[i].isFinite { mixBufferL[i] = 0 }
+            if !mixBufferR[i].isFinite { mixBufferR[i] = 0 }
         }
 
         // Copy to output

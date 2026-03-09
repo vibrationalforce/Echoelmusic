@@ -801,9 +801,13 @@ final class BeatPatternTests: XCTestCase {
 
     func testToggleOutOfBounds() {
         var pattern = BeatPattern(name: "Bounds", trackCount: 2, stepCount: 4)
-        // Should not crash
+        // Out-of-bounds toggles should be silently ignored
         pattern.toggle(track: 10, step: 0)
         pattern.toggle(track: 0, step: 100)
+        // Verify pattern state is unchanged after invalid toggles
+        XCTAssertEqual(pattern.tracks.count, 2, "Track count should be unchanged")
+        XCTAssertFalse(pattern.tracks[0][0].isActive, "No step should have been activated")
+        XCTAssertFalse(pattern.tracks[1][0].isActive, "No step should have been activated")
     }
 
     func testFourOnFloorPattern() {

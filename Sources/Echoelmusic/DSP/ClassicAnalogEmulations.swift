@@ -1,5 +1,13 @@
 import Foundation
 
+/// Sanitize output buffer — replace NaN/Inf with zero (audio-thread safe, no allocation)
+@inline(__always)
+private func sanitizeDSPOutput(_ buffer: inout [Float]) {
+    for i in 0..<buffer.count where !buffer[i].isFinite {
+        buffer[i] = 0
+    }
+}
+
 // MARK: - Classic Analog Hardware Emulations
 // Cross-Platform Support: iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+
 // Android: See android/app/src/main/kotlin/com/echoelmusic/dsp/ClassicAnalogEmulations.kt
@@ -154,7 +162,8 @@ class AnalogConsole {
         var output = [Float](repeating: 0, count: input.count)
         for i in 0..<input.count {
             let wet = processed[i] * outputGain
-            output[i] = input[i] * (1.0 - wetAmount) + wet * wetAmount
+            let mixed = input[i] * (1.0 - wetAmount) + wet * wetAmount
+            output[i] = mixed.isFinite ? mixed : 0
         }
 
         return output
@@ -294,6 +303,7 @@ class SSLBusCompressor {
         }
 
         gainReduction = maxGR
+        sanitizeDSPOutput(&output)
         return output
     }
 
@@ -402,6 +412,7 @@ class APIBusCompressor {
         }
 
         gainReduction = maxGR
+        sanitizeDSPOutput(&output)
         return output
     }
 }
@@ -468,6 +479,7 @@ class PultecEQP1A {
             output = applyTubeSaturation(output)
         }
 
+        sanitizeDSPOutput(&output)
         return output
     }
 
@@ -704,6 +716,7 @@ class FairchildLimiter {
         }
 
         gainReduction = maxGR
+        sanitizeDSPOutput(&output)
         return output
     }
 
@@ -801,6 +814,7 @@ class LA2ACompressor {
         }
 
         gainReduction = maxGR
+        sanitizeDSPOutput(&output)
         return output
     }
 }
@@ -887,6 +901,7 @@ class UREI1176Limiter {
         }
 
         gainReduction = maxGR
+        sanitizeDSPOutput(&output)
         return output
     }
 
@@ -996,6 +1011,7 @@ class ManleyVariMu {
         }
 
         gainReduction = maxGR
+        sanitizeDSPOutput(&output)
         return output
     }
 }

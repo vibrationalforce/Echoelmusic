@@ -389,7 +389,12 @@ public final class EchoelConvolution: @unchecked Sendable {
             overlapBuffer[i] = (overlapStart + i < outputLength) ? outputBuffer[overlapStart + i] : 0
         }
 
-        return Array(outputBuffer.prefix(inputLength))
+        // NaN/Inf guard — convolution can propagate NaN input
+        var result = Array(outputBuffer.prefix(inputLength))
+        for i in 0..<result.count where !result[i].isFinite {
+            result[i] = 0
+        }
+        return result
     }
 
     // MARK: - Factory Methods
@@ -578,6 +583,11 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
 
         // vDSP_biquad processes Float signals (setup uses Double coefficients internally)
         vDSP_biquad(setup, &delays, input, 1, &output, 1, vDSP_Length(count))
+
+        // NaN/Inf guard — IIR filters can go unstable with extreme coefficients
+        for i in 0..<count where !output[i].isFinite {
+            output[i] = 0
+        }
 
         return output
     }

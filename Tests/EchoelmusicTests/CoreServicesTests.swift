@@ -375,14 +375,19 @@ final class MemoryPressureHandlerTests: XCTestCase {
 
     func testReleaseMemory() {
         let handler = MemoryPressureHandler.shared
-        // Should not crash
         handler.releaseMemory(level: .warning)
+        // Verify handler remains in valid state after release
+        XCTAssertNotNil(handler.currentLevel)
+        XCTAssertGreaterThanOrEqual(handler.memoryUsage.usagePercent, 0)
+        XCTAssertLessThanOrEqual(handler.memoryUsage.usagePercent, 100.0)
     }
 
     func testForceCleanup() {
         let handler = MemoryPressureHandler.shared
-        // Should not crash
         handler.forceCleanup()
+        // Verify handler remains in valid state after cleanup
+        XCTAssertNotNil(handler.currentLevel)
+        XCTAssertGreaterThanOrEqual(handler.memoryUsage.usagePercent, 0)
     }
 }
 #endif

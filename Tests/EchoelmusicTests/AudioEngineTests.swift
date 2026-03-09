@@ -359,9 +359,9 @@ final class LogLevelTests: XCTestCase {
     }
 
     func testOsLogType() {
-        // Just verify they return valid types without crashing
         for level in LogLevel.allCases {
-            _ = level.osLogType
+            let osType = level.osLogType
+            XCTAssertNotNil(osType, "osLogType should be valid for \(level)")
         }
     }
 }
@@ -502,18 +502,25 @@ final class EchoelLoggerTests: XCTestCase {
         let logger = EchoelLogger.shared
         let originalLevel = logger.minimumLevel
         logger.setMinimumLevel(.warning)
-        // Should not crash — trace messages filtered out
         logger.trace("This should be filtered")
+        // Verify the minimum level was applied
+        XCTAssertEqual(logger.minimumLevel, .warning)
         logger.setMinimumLevel(originalLevel)
+        XCTAssertEqual(logger.minimumLevel, originalLevel)
     }
 
     func testLogDoesNotCrash() {
         let logger = EchoelLogger.shared
+        // Verify logger is properly configured before exercising all methods
+        XCTAssertNotNil(logger.minimumLevel)
         logger.log(.info, category: .audio, "Test message")
         logger.log(.error, category: .system, "Error test", metadata: ["key": "val"])
         logger.audio("Audio test")
         logger.midi("MIDI test")
         logger.performance("Perf test")
+        // Verify logger still functional after burst of calls
+        XCTAssertNotNil(logger.enabledCategories)
+        XCTAssertFalse(logger.enabledCategories.isEmpty)
     }
 }
 #endif

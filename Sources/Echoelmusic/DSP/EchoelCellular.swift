@@ -369,6 +369,9 @@ public final class EchoelCellular: @unchecked Sendable {
 
             sample *= gain
 
+            // NaN/Inf guard
+            if !sample.isFinite { sample = 0 }
+
             if stereo {
                 buffer[frame * 2] = sample
                 buffer[frame * 2 + 1] = sample
