@@ -32,6 +32,16 @@ final class EchoelCreativeWorkspace {
     /// Bio-reactive polyphonic DDSP synth for live performance
     let bioSynth: EchoelPolyDDSP
 
+    #if canImport(UIKit)
+    /// Stage output engine for external displays, projection mapping, AirPlay
+    let stageEngine: EchoelStageEngine
+    #endif
+
+    #if canImport(Metal)
+    /// Bio-reactive visual engine — 8 modes, Metal 120fps, Hilbert bio-mapping
+    let visEngine: EchoelVisEngine
+    #endif
+
     /// Ableton Link client for tempo sync with external devices
     let linkClient: AbletonLinkClient
 
@@ -65,6 +75,12 @@ final class EchoelCreativeWorkspace {
         self.loopEngine = LoopEngine()
         self.loopEngine.setTempo(120.0)
         self.bioSynth = EchoelPolyDDSP(harmonicCount: 32, sampleRate: 48000)
+        #if canImport(UIKit)
+        self.stageEngine = EchoelStageEngine.shared
+        #endif
+        #if canImport(Metal)
+        self.visEngine = EchoelVisEngine.shared
+        #endif
         self.linkClient = AbletonLinkClient()
         self.adaptiveAudio = AdaptiveAudioEngine()
 
@@ -212,6 +228,24 @@ final class EchoelCreativeWorkspace {
                     heartRate: 0.5,
                     breathPhase: 0.5
                 )
+                // Feed bio-reactive stage visuals
+                #if canImport(UIKit)
+                self.stageEngine.applyBioReactive(
+                    coherence: smoothed,
+                    hrv: 0.5,
+                    heartRate: 72.0,
+                    breathPhase: 0.5
+                )
+                #endif
+                // Feed bio-reactive visual engine
+                #if canImport(Metal)
+                self.visEngine.applyBioReactive(
+                    coherence: smoothed,
+                    hrv: 0.5,
+                    heartRate: 72.0,
+                    breathPhase: 0.5
+                )
+                #endif
             }
         }
     }
