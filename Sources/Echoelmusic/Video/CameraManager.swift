@@ -93,7 +93,7 @@ public final class CameraManager: NSObject {
 
     // MARK: - Camera Positions
 
-    public enum CameraPosition: String, CaseIterable {
+    public enum CameraPosition: String, CaseIterable, Sendable {
         case front = "Front"
         case back = "Back"
         case ultraWide = "Ultra Wide"
@@ -893,6 +893,8 @@ public final class CameraManager: NSObject {
         case .standard: activeStabilizationMode = "Standard"
         case .cinematic: activeStabilizationMode = "Cinematic"
         case .cinematicExtended: activeStabilizationMode = "Cinematic Extended"
+        case .cinematicExtendedEnhanced: activeStabilizationMode = "Cinematic Extended Enhanced"
+        case .previewOptimized: activeStabilizationMode = "Preview Optimized"
         case .auto: activeStabilizationMode = "Auto"
         @unknown default: activeStabilizationMode = "Unknown"
         }

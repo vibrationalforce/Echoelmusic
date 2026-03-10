@@ -257,7 +257,7 @@ public final class ChromaticTuner {
     // MARK: - Pitch Detection (Autocorrelation)
 
     /// Detect fundamental frequency using autocorrelation
-    private func detectPitch(samples: [Float], sampleRate: Double) -> Double {
+    nonisolated private func detectPitch(samples: [Float], sampleRate: Double) -> Double {
         let n = samples.count
 
         // Window the signal

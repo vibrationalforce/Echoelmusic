@@ -939,7 +939,7 @@ public enum VoiceAnalysisError: LocalizedError {
 @Observable
 public final class VoiceSynthesisEngine {
 
-    nonisolated(unsafe) public static let shared = VoiceSynthesisEngine()
+    public static let shared = VoiceSynthesisEngine()
 
     public var isRecording: Bool = false
     public var isTraining: Bool = false

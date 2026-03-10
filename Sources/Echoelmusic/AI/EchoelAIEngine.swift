@@ -58,7 +58,7 @@ public enum AITask: String, CaseIterable, Codable, Sendable {
 }
 
 /// Result of stem separation
-public struct StemSeparationResult: Sendable {
+public struct StemSeparationResult: @unchecked Sendable {
     public let stems: [AudioStem: AVAudioPCMBuffer]
     public let sampleRate: Double
     public let duration: TimeInterval
@@ -122,7 +122,7 @@ public final class EchoelAIEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelAIEngine()
+    public static let shared = EchoelAIEngine()
 
     // MARK: - State
 

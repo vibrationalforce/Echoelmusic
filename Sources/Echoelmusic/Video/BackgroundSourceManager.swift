@@ -2,8 +2,8 @@
 import Foundation
 import AVFoundation
 #if canImport(Metal)
-import Metal
-import MetalKit
+@preconcurrency import Metal
+@preconcurrency import MetalKit
 #endif
 import CoreImage
 import SwiftUI

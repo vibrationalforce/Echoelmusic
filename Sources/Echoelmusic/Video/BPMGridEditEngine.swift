@@ -1,6 +1,6 @@
 #if canImport(AVFoundation)
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 import Accelerate
 #if canImport(Combine)
 import Observation
@@ -34,7 +34,7 @@ import Observation
 // MARK: - Time Signature
 
 /// Musical time signature
-public struct TimeSignature: Codable, Equatable, Hashable {
+public struct TimeSignature: Codable, Equatable, Hashable, Sendable {
     public var numerator: Int      // Beats per bar (top number)
     public var denominator: Int    // Note value of beat (bottom number)
 

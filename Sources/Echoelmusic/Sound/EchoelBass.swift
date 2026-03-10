@@ -51,7 +51,7 @@ public enum BassEngineType: String, CaseIterable, Codable, Sendable {
 // MARK: - EchoelBass Configuration
 
 /// Full configuration for the 5-engine morphing bass
-public struct EchoelBassConfig: Codable, Equatable {
+public struct EchoelBassConfig: Codable, Equatable, Sendable {
 
     // MARK: - Engine Selection
 

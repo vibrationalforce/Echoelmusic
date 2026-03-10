@@ -122,9 +122,9 @@ public struct SynthPreset: Identifiable, Codable, Sendable {
 // MARK: - Synth Preset Library
 
 /// The AI Sample Engine — 1.2 GB of samples as ~50 KB of synth parameters
-public final class SynthPresetLibrary {
+public final class SynthPresetLibrary: @unchecked Sendable {
 
-    public static let shared = SynthPresetLibrary()
+    nonisolated(unsafe) public static let shared = SynthPresetLibrary()
 
     public private(set) var presets: [SynthPreset] = []
 
