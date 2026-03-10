@@ -265,7 +265,7 @@ public enum VoiceProfileCategory: String, Codable, Sendable, CaseIterable {
 @Observable
 public final class VoiceProfileManager {
 
-    public static let shared = VoiceProfileManager()
+    nonisolated(unsafe) public static let shared = VoiceProfileManager()
 
     public var profiles: [VoiceProfile] = []
     public var activeProfile: VoiceProfile?
@@ -939,7 +939,7 @@ public enum VoiceAnalysisError: LocalizedError {
 @Observable
 public final class VoiceSynthesisEngine {
 
-    public static let shared = VoiceSynthesisEngine()
+    nonisolated(unsafe) public static let shared = VoiceSynthesisEngine()
 
     public var isRecording: Bool = false
     public var isTraining: Bool = false

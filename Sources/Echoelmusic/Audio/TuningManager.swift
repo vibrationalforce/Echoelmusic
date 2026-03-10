@@ -24,7 +24,7 @@ public final class TuningManager {
     // MARK: - Singleton
 
     /// Shared instance — use this across all engines
-    public static let shared = TuningManager()
+    nonisolated(unsafe) public static let shared = TuningManager()
 
     // MARK: - Published State
 

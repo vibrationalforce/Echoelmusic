@@ -129,7 +129,7 @@ public final class CrashSafeStatePersistence {
 
     // MARK: - Singleton
 
-    public static let shared = CrashSafeStatePersistence()
+    nonisolated(unsafe) public static let shared = CrashSafeStatePersistence()
 
     // MARK: - Published State
 

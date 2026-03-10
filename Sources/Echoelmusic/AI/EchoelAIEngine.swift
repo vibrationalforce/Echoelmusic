@@ -108,7 +108,7 @@ public final class EchoelAIEngine {
 
     // MARK: - Singleton
 
-    public static let shared = EchoelAIEngine()
+    nonisolated(unsafe) public static let shared = EchoelAIEngine()
 
     // MARK: - State
 
