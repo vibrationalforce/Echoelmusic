@@ -288,7 +288,7 @@ final class VocalPostProcessor {
         guard rms > 0.005 else { return 0 }
 
         // YIN
-        let minLag = Int(sampleRate / 1500.0)
+        let minLag = max(Int(sampleRate / 1500.0), 1)
         let maxLag = min(Int(sampleRate / 60.0), n / 2)
         guard maxLag > minLag else { return 0 }
 
