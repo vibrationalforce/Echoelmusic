@@ -779,6 +779,7 @@ public final class EchoelSampler {
         name: String = "Multi-Sample"
     ) -> Int {
         let frameCount = Int(duration * sampleRate)
+        guard !velocityLayers.isEmpty, !notes.isEmpty else { return 0 }
         var loadedCount = 0
 
         for (noteIdx, note) in notes.enumerated() {
