@@ -231,21 +231,14 @@ public final class MemoryPressureHandler {
     }
 
     private func getMemoryStats() -> (used: Int, available: Int, total: Int) {
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-
-        nonisolated(unsafe) let taskSelf = mach_task_self_
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(taskSelf, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
-            }
-        }
-
-        let used = result == KERN_SUCCESS ? Int(info.resident_size) : 0
         let total = Int(ProcessInfo.processInfo.physicalMemory)
-        let available = total - used
-
-        return (used, available, total)
+        // Use os_proc_available_memory which is concurrency-safe (no mach_task_self_)
+        if #available(iOS 13.0, macOS 10.15, *) {
+            let available = Int(os_proc_available_memory())
+            let used = total - available
+            return (used, available, total)
+        }
+        return (0, total, total)
     }
 
     // MARK: - Pressure Handling

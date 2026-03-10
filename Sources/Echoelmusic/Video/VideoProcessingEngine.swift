@@ -26,11 +26,6 @@ import AppKit
 import Observation
 #endif
 
-/// Concurrency-safe accessor for mach_task_self_ (shared mutable global).
-private func echoelCurrentTaskPort() -> mach_port_t {
-    nonisolated(unsafe) let port = mach_task_self_
-    return port
-}
 
 // MARK: - Video Resolution
 
@@ -858,15 +853,13 @@ public final class VideoProcessingEngine {
     }
 
     private func calculateMemoryUsage() -> Int64 {
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-        let taskPort = echoelCurrentTaskPort()
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(taskPort, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
-            }
+        // Use os_proc_available_memory which is concurrency-safe (no mach_task_self_)
+        if #available(iOS 13.0, macOS 10.15, *) {
+            let available = os_proc_available_memory()
+            let total = Int64(ProcessInfo.processInfo.physicalMemory)
+            return total - available
         }
-        return result == KERN_SUCCESS ? Int64(info.resident_size) : 0
+        return 0
     }
 }
 
