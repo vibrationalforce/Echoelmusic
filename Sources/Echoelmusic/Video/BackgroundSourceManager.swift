@@ -1033,8 +1033,8 @@ class EchoelmusicVisualRenderer {
         audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
 
         do {
-            nonisolated(unsafe) let safeDevice = device
-            computePipeline = try await safeDevice.makeComputePipelineState(function: function)
+            // Use synchronous pipeline creation to avoid sending MTLDevice across actors
+            computePipeline = try device.makeComputePipelineState(function: function)
         } catch {
             log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
             return
