@@ -10,7 +10,7 @@ import AVFoundation
 /// - Nodes can react to bio-signals in real-time
 /// - Nodes are chain-able for complex signal flows
 /// - Thread-safe for real-time audio processing
-protocol EchoelmusicNode: AnyObject {
+@MainActor protocol EchoelmusicNode: AnyObject {
 
     // MARK: - Identity
 
