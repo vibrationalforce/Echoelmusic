@@ -128,11 +128,14 @@ public final class EchoelBioEngine {
             return false
         }
 
-        let readTypes: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
-            HKObjectType.quantityType(forIdentifier: .respiratoryRate)!
-        ]
+        guard let hrType = HKObjectType.quantityType(forIdentifier: .heartRate),
+              let hrvType = HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let brType = HKObjectType.quantityType(forIdentifier: .respiratoryRate) else {
+            log.log(.warning, category: .audio, "HealthKit quantity types unavailable")
+            isAuthorized = false
+            return false
+        }
+        let readTypes: Set<HKObjectType> = [hrType, hrvType, brType]
 
         do {
             try await healthStore.requestAuthorization(toShare: Set(), read: readTypes)
