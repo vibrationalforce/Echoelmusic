@@ -854,7 +854,7 @@ public final class VideoProcessingEngine {
     private func calculateMemoryUsage() -> Int64 {
         var info = mach_task_basic_info()
         var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-        let taskSelf = mach_task_self_
+        nonisolated(unsafe) let taskSelf = mach_task_self_
         let result = withUnsafeMutablePointer(to: &info) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
                 task_info(taskSelf, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)

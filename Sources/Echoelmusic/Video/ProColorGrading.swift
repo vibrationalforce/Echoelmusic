@@ -1092,7 +1092,19 @@ public final class ProColorGrading {
     /// Processes all enabled nodes in serial order.
     /// - Parameter image: Source CIImage.
     /// - Returns: Graded CIImage.
-    nonisolated public func applyGrade(to image: CIImage) -> CIImage {
+    /// Snapshot of grading state for use in nonisolated contexts (e.g. video composition handlers).
+    public struct GradingSnapshot: Sendable {
+        public let isEnabled: Bool
+        public let nodeGrades: [ColorGrade]
+    }
+
+    /// Capture current grading state for use off the main actor.
+    public func snapshot() -> GradingSnapshot {
+        GradingSnapshot(isEnabled: isEnabled, nodeGrades: nodeGrades)
+    }
+
+    /// Apply the full grading pipeline to a CIImage.
+    public func applyGrade(to image: CIImage) -> CIImage {
         guard isEnabled else { return image }
 
         var result = image
@@ -1101,6 +1113,29 @@ public final class ProColorGrading {
             let nodeGrade = nodeGrades[nodeIndex]
             guard nodeGrade.isEnabled else { continue }
             result = applySingleGrade(nodeGrade, to: result)
+        }
+
+        return result
+    }
+
+    /// Apply grading from a snapshot (nonisolated, safe for video composition handlers).
+    /// Uses CIFilter directly without accessing @MainActor instance methods.
+    nonisolated public static func applyGrade(to image: CIImage, from snapshot: GradingSnapshot) -> CIImage {
+        guard snapshot.isEnabled else { return image }
+
+        var result = image
+
+        for nodeGrade in snapshot.nodeGrades {
+            guard nodeGrade.isEnabled else { continue }
+            // Apply basic color controls per grade node
+            let filter = CIFilter(name: "CIColorControls")
+            filter?.setValue(result, forKey: kCIInputImageKey)
+            filter?.setValue(nodeGrade.colorWheels.saturation, forKey: kCIInputSaturationKey)
+            filter?.setValue(nodeGrade.colorWheels.contrast / 100.0, forKey: kCIInputContrastKey)
+            filter?.setValue(nodeGrade.colorWheels.exposure / 5.0, forKey: kCIInputBrightnessKey)
+            if let output = filter?.outputImage {
+                result = output
+            }
         }
 
         return result

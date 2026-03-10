@@ -233,6 +233,9 @@ final class VideoExportManager {
     ) -> AVVideoComposition? {
         guard let grading = colorGrading, grading.isEnabled else { return nil }
 
+        // Capture grading state snapshot for use in nonisolated video composition handler
+        let gradingSnapshot = grading.snapshot()
+
         let targetSize = resolution.size ?? composition.naturalSize
         guard targetSize.width > 0, targetSize.height > 0 else { return nil }
 
@@ -241,8 +244,8 @@ final class VideoExportManager {
         let videoComposition = AVMutableVideoComposition(asset: composition) { request in
             let source = request.sourceImage.clampedToExtent()
 
-            // Apply the full grading pipeline
-            let graded = grading.applyGrade(to: source)
+            // Apply grading from snapshot (nonisolated-safe)
+            let graded = ProColorGrading.applyGrade(to: source, from: gradingSnapshot)
 
             // Crop back to render size
             let cropped = graded.cropped(to: request.sourceImage.extent)

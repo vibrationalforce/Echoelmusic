@@ -225,7 +225,7 @@ public struct SequencerPattern: Codable, Equatable, Sendable {
         )
     }
 
-    public struct StepData: Codable, Equatable {
+    public struct StepData: Codable, Equatable, Sendable {
         public var isActive: Bool = false
         public var velocity: Float = 1.0
         public var parameter: Float = 0.5

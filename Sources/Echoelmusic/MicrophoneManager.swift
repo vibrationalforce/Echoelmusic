@@ -195,11 +195,10 @@ final class MicrophoneManager: NSObject {
             complexDFT = EchoelComplexDFT(size: fftSize)
 
             // Install a tap to capture audio data — dispatch off the audio render thread
-            // Capture sampleRate and processingQueue locally to avoid reading @MainActor properties from Sendable closure
+            // Capture sampleRate locally to avoid reading @MainActor property from Sendable closure
             let capturedSampleRate = sampleRate
-            let capturedQueue = processingQueue
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
-                capturedQueue.async { [weak self] in
+                Task { @MainActor [weak self] in
                     self?.processAudioBuffer(buffer, sampleRate: capturedSampleRate)
                 }
             }
