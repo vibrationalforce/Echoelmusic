@@ -12,7 +12,7 @@ import Observation
 @Observable
 final class EchoelCreativeWorkspace {
 
-    nonisolated(unsafe) static let shared = EchoelCreativeWorkspace()
+    static let shared = EchoelCreativeWorkspace()
 
     // MARK: - Published State
 

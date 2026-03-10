@@ -265,7 +265,7 @@ public enum VoiceProfileCategory: String, Codable, Sendable, CaseIterable {
 @Observable
 public final class VoiceProfileManager {
 
-    nonisolated(unsafe) public static let shared = VoiceProfileManager()
+    public static let shared = VoiceProfileManager()
 
     public var profiles: [VoiceProfile] = []
     public var activeProfile: VoiceProfile?

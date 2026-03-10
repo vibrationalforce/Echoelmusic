@@ -70,7 +70,7 @@ public final class EchoelBioEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelBioEngine()
+    public static let shared = EchoelBioEngine()
 
     // MARK: - Published State
 
@@ -496,7 +496,7 @@ public enum BioDataSource: String, Sendable {
 @preconcurrency @MainActor
 @Observable
 public final class EchoelBioEngine {
-    nonisolated(unsafe) public static let shared = EchoelBioEngine()
+    public static let shared = EchoelBioEngine()
     public var snapshot: BioSnapshot = BioSnapshot()
     public var isAuthorized: Bool = false
     public var isStreaming: Bool = false
