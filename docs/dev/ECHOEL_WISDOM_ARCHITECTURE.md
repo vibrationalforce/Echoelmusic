@@ -1,21 +1,21 @@
-# EchoelWisdom™ - Universal Knowledge Architecture 🌌
+# EchoelWisdom — Universal Knowledge Architecture
 
-**The Cosmic Library of Sound, Science, and Self**
+**Evidence-Based Knowledge System for Sound, Science, and Self-Discovery**
 
-*Vaporwave • Sci-Fi • Steampunk • Evidence-Based*
+*Retrofuturistic Aesthetic • Evidence-Based Content*
 
 ---
 
-## 🔮 Philosophy
+## Philosophy
 
-**The Aesthetic:** Accessing a cosmic library of infinite knowledge, retrofuturistic terminals, mystical interfaces
+**The Aesthetic:** Retrofuturistic terminals, immersive interfaces, sense of wonder
 
 **The Reality:** Peer-reviewed neuroscience, PubMed-backed evidence, independent studies, critical analysis
 
-**The Balance:** Have fun with the esoteric vibe, stay rigorous with the science
+**The Balance:** Engaging visual design, rigorous science underneath
 
-> "What ancient mystics imagined as cosmic records,
-> We build as distributed knowledge networks.
+> "What feels like exploring an infinite library
+> is actually navigating distributed knowledge networks.
 > Same wonder, better methodology."
 
 ---
@@ -38,9 +38,9 @@
 - Victorian typography meets cyberpunk
 
 **Language Style:**
-- Playful mystical references ("accessing the knowledge streams...")
-- But immediately followed by scientific sources
-- Example: "The ancient library reveals... (Source: PubMed PMID:12345678)"
+- Engaging, immersive language ("accessing the knowledge streams...")
+- Always followed by scientific sources
+- Example: "The library reveals... (Source: PubMed PMID:12345678)"
 
 ---
 
@@ -280,11 +280,11 @@ System Response:
 
 ## 🤖 Layer 2: Coaching Engine
 
-### Neuropsychospiritual Coaching
+### Evidence-Based Wellbeing Coaching
 
-**"Neuro"** - Brain science (neuroscience, polyvagal)
+**"Neuro"** - Brain science (neuroscience, polyvagal theory)
 **"Psycho"** - Mind processes (cognitive, emotional)
-**"Spiritual"** - Meaning, purpose, connection (secular, inclusive)
+**"Wellbeing"** - Meaning, purpose, connection (secular, evidence-based)
 
 **NOT:**
 - ❌ Religious indoctrination
@@ -327,10 +327,10 @@ Goal-setting, action planning:
 
 ### Personality & Tone
 
-**The Cosmic Librarian Aesthetic:**
+**The Knowledge Navigator Aesthetic:**
 - Wise but not condescending
 - Playful but not trivializing
-- Mystical language as flavor, not substance
+- Immersive language as flavor, not substance
 - Example: "Accessing the knowledge streams... [loading PubMed query]"
 
 **Voice Examples:**
@@ -548,7 +548,7 @@ Would you like to explore evidence-based approaches to using sound for emotional
 🌀 Quick Commands:
   /explain [topic]     /sources [last_query]
   /critique [concept]  /support [emotional]
-  /random_wisdom       /cosmic_joke
+  /random_wisdom       /random_joke
 
 Type your question or select a domain...
 ```
@@ -658,7 +658,7 @@ If HRV Shows:
 
 ## 🗂️ Knowledge Organization
 
-### Taxonomy (Inspired by Cosmic Library Aesthetic)
+### Taxonomy (Inspired by Knowledge Library Aesthetic)
 
 ```
 📜 The Archives
@@ -852,7 +852,7 @@ Before we begin, please understand:
    You can export or delete everything anytime.
 
 ✨ HAVE FUN WITH THE AESTHETIC
-   The "cosmic library" vibe is for enjoyment.
+   The "knowledge library" vibe is for enjoyment.
    The science behind it is very real.
 
 [ I Understand ] [ Read More ] [ Privacy Policy ]
@@ -995,7 +995,7 @@ It's simultaneously:
   • Emotional regulation
   • Cultural transmission
   • Aesthetic experience
-  • Spiritual transcendence
+  • Personal transcendence
   • Political resistance
   • Pure joy
 
@@ -1014,7 +1014,7 @@ on any angle? Evolutionary? Neuroscience? Philosophy?)"
 ```
 User: "Why do artists hate Spotify?"
 
-EchoelWisdom: "Buckle up, this is where the cosmic library gets political... 📊💰
+EchoelWisdom: "Buckle up, this is where the knowledge library gets political... 📊💰
 
 The Cold Hard Numbers:
 
@@ -1093,7 +1093,7 @@ Questions? Disagreements? I'm here for debate."
 ## 🌌 Final Philosophy
 
 **EchoelWisdom™ Is:**
-- A cosmic library of knowledge (aesthetic ✨)
+- A knowledge library of knowledge (aesthetic ✨)
 - Grounded in peer-reviewed science (substance 🔬)
 - Trauma-informed and empathetic (heart 💜)
 - Critically analytical, not dogmatic (mind 🧠)
@@ -1105,7 +1105,7 @@ But a tool that amplifies human capacity for critical thinking,
 emotional regulation, and meaning-making.
 
 Not a guru on a mountain,
-But a librarian in a cosmic archive,
+But a librarian in a knowledge archive,
 Helping you find the sources,
 Teaching you to evaluate them,
 Trusting you to draw your own conclusions.

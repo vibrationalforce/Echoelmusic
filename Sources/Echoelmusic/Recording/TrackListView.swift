@@ -45,15 +45,15 @@ struct TrackListView: View {
         VStack(spacing: 16) {
             Image(systemName: "waveform.circle")
                 .font(.system(size: 60))
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(EchoelBrand.textDisabled)
 
             Text("No Tracks Yet")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Text("Start recording to create your first track")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(EchoelBrand.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -86,19 +86,19 @@ struct TrackRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(track.name)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     HStack(spacing: 8) {
                         Text(track.type.rawValue)
                             .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(EchoelBrand.textSecondary)
 
                         Text("•")
-                            .foregroundColor(.white.opacity(0.3))
+                            .foregroundColor(EchoelBrand.textDisabled)
 
                         Text(formatDuration(track.duration))
                             .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
 
@@ -108,7 +108,7 @@ struct TrackRow: View {
                 Button(action: { showTrackDetails.toggle() }) {
                     Image(systemName: showTrackDetails ? "chevron.up" : "chevron.down")
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
             }
 
@@ -129,7 +129,7 @@ struct TrackRow: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
+                .fill(EchoelBrand.bgElevated)
         )
     }
 
@@ -143,11 +143,11 @@ struct TrackRow: View {
             }) {
                 Image(systemName: track.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     .font(.system(size: 16))
-                    .foregroundColor(track.isMuted ? .red : .white)
+                    .foregroundColor(track.isMuted ? .red : EchoelBrand.textPrimary)
                     .frame(width: 36, height: 36)
                     .background(
                         Circle()
-                            .fill(track.isMuted ? Color.red.opacity(0.2) : Color.white.opacity(0.1))
+                            .fill(track.isMuted ? Color.red.opacity(0.2) : EchoelBrand.bgElevated)
                     )
             }
 
@@ -157,11 +157,11 @@ struct TrackRow: View {
             }) {
                 Text("S")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(track.isSoloed ? .black : .white)
+                    .foregroundColor(track.isSoloed ? .black : EchoelBrand.textPrimary)
                     .frame(width: 36, height: 36)
                     .background(
                         Circle()
-                            .fill(track.isSoloed ? Color.yellow : Color.white.opacity(0.1))
+                            .fill(track.isSoloed ? Color.yellow : EchoelBrand.bgElevated)
                     )
             }
 
@@ -169,7 +169,7 @@ struct TrackRow: View {
             HStack(spacing: 8) {
                 Image(systemName: "speaker.fill")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                 Slider(
                     value: Binding(
@@ -182,7 +182,7 @@ struct TrackRow: View {
 
                 Text("\(Int(track.volume * 100))")
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(EchoelBrand.textSecondary)
                     .frame(width: 30)
             }
         }
@@ -193,20 +193,20 @@ struct TrackRow: View {
     private var trackDetailsView: some View {
         VStack(alignment: .leading, spacing: 12) {
             Divider()
-                .background(Color.white.opacity(0.2))
+                .background(EchoelBrand.bgElevated)
 
             // Pan control
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Pan")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     Spacer()
 
                     Text(panString(track.pan))
                         .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
 
                 Slider(
@@ -224,7 +224,7 @@ struct TrackRow: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Effects")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     ForEach(track.effects, id: \.self) { effectID in
                         HStack {
@@ -234,7 +234,7 @@ struct TrackRow: View {
 
                             Text(effectID)
                                 .font(.system(size: 11))
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(EchoelBrand.textSecondary)
                         }
                     }
                 }
@@ -273,7 +273,7 @@ struct TrackRow: View {
                 var centerPath = Path()
                 centerPath.move(to: CGPoint(x: 0, y: midY))
                 centerPath.addLine(to: CGPoint(x: width, y: midY))
-                context.stroke(centerPath, with: .color(.white.opacity(0.1)), lineWidth: 1)
+                context.stroke(centerPath, with: .color(EchoelBrand.bgElevated), lineWidth: 1)
 
                 // Draw waveform
                 let samplesPerPixel = max(1, data.count / Int(width))

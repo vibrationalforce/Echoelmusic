@@ -25,6 +25,7 @@ struct DAWArrangementView: View {
     @State private var automationTrackIDs: Set<UUID> = []
     @State private var showAddAutomation = false
     @State private var addAutomationTrackID: UUID?
+    @State private var recordingError: String?
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
@@ -140,6 +141,14 @@ struct DAWArrangementView: View {
             .frame(width: 0, height: 0)
             .opacity(0)
         )
+        .alert("Recording Error", isPresented: Binding(
+            get: { recordingError != nil },
+            set: { if !$0 { recordingError = nil } }
+        )) {
+            Button("OK") { recordingError = nil }
+        } message: {
+            Text(recordingError ?? "An unknown error occurred.")
+        }
     }
 
     /// Create a session if none exists
@@ -444,9 +453,13 @@ struct DAWArrangementView: View {
             }
             Divider()
             Button(role: .destructive) {
-                try? recordingEngine.deleteTrack(track.id)
-                if selectedTrackID == track.id {
-                    selectedTrackID = nil
+                do {
+                    try recordingEngine.deleteTrack(track.id)
+                    if selectedTrackID == track.id {
+                        selectedTrackID = nil
+                    }
+                } catch {
+                    recordingError = error.localizedDescription
                 }
             } label: {
                 Label("Delete Track", systemImage: "trash")
@@ -1070,13 +1083,18 @@ struct DAWArrangementView: View {
     }
 
     private func toggleRecording() {
-        if isRecording {
-            try? recordingEngine.stopRecording()
-            HapticHelper.notification(.success)
-        } else {
-            audioEngine.start()
-            try? recordingEngine.startRecording()
-            HapticHelper.impact(.heavy)
+        do {
+            if isRecording {
+                try recordingEngine.stopRecording()
+                HapticHelper.notification(.success)
+            } else {
+                audioEngine.start()
+                try recordingEngine.startRecording()
+                HapticHelper.impact(.heavy)
+            }
+        } catch {
+            recordingError = error.localizedDescription
+            HapticHelper.notification(.error)
         }
     }
 

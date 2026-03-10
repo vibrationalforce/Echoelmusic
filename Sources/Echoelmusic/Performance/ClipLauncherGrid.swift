@@ -717,7 +717,7 @@ public struct ClipLauncherGridView: View {
             // Position
             Text("\(launcher.currentBar).\(Int(launcher.currentBeat) + 1)")
                 .font(.system(.body, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundColor(EchoelBrand.textPrimary)
                 .frame(width: 60)
 
             Divider().frame(height: 30)
@@ -740,14 +740,14 @@ public struct ClipLauncherGridView: View {
                         .frame(width: 10, height: 10)
                     Text("\(Int(launcher.currentCoherence * 100))%")
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
             }
 
             // Settings
             Button(action: { showingSettings.toggle() }) {
                 Image(systemName: "gear")
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
         }
         .padding(.horizontal)
@@ -775,7 +775,7 @@ public struct ClipLauncherGridView: View {
                 VStack(spacing: 2) {
                     Text(track.name)
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
                         .lineLimit(1)
 
                     HStack(spacing: 4) {
@@ -838,7 +838,7 @@ public struct ClipLauncherGridView: View {
                     // Clip name
                     Text(clip.name)
                         .font(.system(size: 9))
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
                         .lineLimit(1)
 
                     // State indicator

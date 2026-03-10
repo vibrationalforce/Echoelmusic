@@ -42,11 +42,11 @@ struct EffectParametersView: View {
 
             Text(node.name)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Text(nodeType)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(EchoelBrand.textSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
@@ -65,12 +65,12 @@ struct EffectParametersView: View {
                     .foregroundColor(.pink)
                 Text("Bio-Reactive Parameters")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
 
             Text(bioReactiveDescription)
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(EchoelBrand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding()
@@ -334,7 +334,7 @@ struct EffectParametersView: View {
             parameterSection(title: "Settings") {
                 Text("No adjustable parameters available")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
         }
     }
@@ -345,7 +345,7 @@ struct EffectParametersView: View {
         HStack {
             Text("Bypass Effect")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Spacer()
 
@@ -356,7 +356,7 @@ struct EffectParametersView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(0.05))
+                .fill(EchoelBrand.bgElevated)
         )
     }
 
@@ -366,7 +366,7 @@ struct EffectParametersView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(EchoelBrand.textPrimary)
 
             content()
         }
@@ -384,7 +384,7 @@ struct EffectParametersView: View {
             HStack {
                 Text(label)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Spacer()
 
@@ -399,7 +399,7 @@ struct EffectParametersView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.05))
+                .fill(EchoelBrand.bgElevated)
         )
     }
 
@@ -417,7 +417,7 @@ struct EffectParametersView: View {
 
                     Image(systemName: "arrow.right")
                         .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.3))
+                        .foregroundColor(EchoelBrand.textDisabled)
 
                     Text(output)
                         .font(.system(size: 11, weight: .medium))
@@ -426,7 +426,7 @@ struct EffectParametersView: View {
 
                 Text(range)
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
         }
         .padding(.vertical, 6)

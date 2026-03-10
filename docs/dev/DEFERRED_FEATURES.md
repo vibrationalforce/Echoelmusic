@@ -50,7 +50,7 @@ Diese Features haben guten Code, aber irreführende Namen:
 
 | Aktuell | Neu | Grund |
 |---------|-----|-------|
-| `NeuroSpiritualEngine.swift` | `BodyExpressionMapper.swift` | FACS + Gesture behalten, "Spiritual" entfernen |
+| `NeuroSpiritualEngine.swift` | `BodyExpressionMapper.swift` | FACS + Gesture behalten, esoteric naming entfernen |
 | `QuantumHealthBiofeedbackEngine.swift` | `CollaborationSyncEngine.swift` | Multi-User behalten, "Quantum Health" entfernen |
 
 ---

@@ -69,23 +69,23 @@ struct SessionBrowserView: View {
     private var searchBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(EchoelBrand.textSecondary)
 
             TextField("Search sessions...", text: $searchText)
-                .foregroundColor(.white)
+                .foregroundColor(EchoelBrand.textPrimary)
                 .autocapitalization(.none)
 
             if !searchText.isEmpty {
                 Button(action: { searchText = "" }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(EchoelBrand.textSecondary)
                 }
             }
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.white.opacity(0.1))
+                .fill(EchoelBrand.bgElevated)
         )
         .padding(.horizontal)
         .padding(.top, 8)
@@ -128,17 +128,17 @@ struct SessionBrowserView: View {
         VStack(spacing: 20) {
             Image(systemName: "music.note.list")
                 .font(.system(size: 60))
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(EchoelBrand.textDisabled)
 
             Text(searchText.isEmpty ? "No Sessions Yet" : "No Results")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Text(searchText.isEmpty ?
                  "Create your first recording session to get started" :
                  "Try a different search term")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(EchoelBrand.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
@@ -284,14 +284,14 @@ struct SessionRow: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(session.name)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
 
                     HStack(spacing: 12) {
                         Label("\(session.trackCount)", systemImage: "waveform")
                         Label(durationString, systemImage: "clock")
                     }
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(EchoelBrand.textSecondary)
 
                     HStack(spacing: 8) {
                         Text(session.genre)
@@ -324,7 +324,7 @@ struct SessionRow: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(EchoelBrand.bgElevated)
             )
         }
         .buttonStyle(.plain)

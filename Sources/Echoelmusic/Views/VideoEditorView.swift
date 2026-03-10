@@ -29,6 +29,7 @@ struct VideoEditorView: View {
     @State private var showVideoPicker = false
     @State private var videoPlayer: AVPlayer?
     @State private var importProgress: String?
+    @State private var cameraError: String?
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -125,6 +126,14 @@ struct VideoEditorView: View {
             .frame(width: 0, height: 0)
             .opacity(0)
         )
+        .alert("Camera Error", isPresented: Binding(
+            get: { cameraError != nil },
+            set: { if !$0 { cameraError = nil } }
+        )) {
+            Button("OK") { cameraError = nil }
+        } message: {
+            Text(cameraError ?? "Could not access camera.")
+        }
     }
 
     // MARK: - Header Section
@@ -184,7 +193,12 @@ struct VideoEditorView: View {
                                 cameraManager?.onRawFrameCaptured = { [weak cameraAnalyzer] pixelBuffer, _ in
                                     cameraAnalyzer?.analyzePixelBuffer(pixelBuffer)
                                 }
-                                try? await cameraManager?.startCapture()
+                                do {
+                                    try await cameraManager?.startCapture()
+                                } catch {
+                                    cameraError = error.localizedDescription
+                                    showCameraCapture = false
+                                }
                             }
                         } else {
                             cameraManager?.stopCapture()
@@ -318,6 +332,7 @@ struct VideoEditorView: View {
                     Image(systemName: "play.rectangle.fill")
                         .font(.system(size: 60))
                         .foregroundColor(EchoelBrand.textTertiary)
+                        .accessibilityLabel("Video loaded, tap to play")
                 } else {
                     VStack(spacing: EchoelSpacing.md) {
                         Image(systemName: "film")
@@ -355,7 +370,11 @@ struct VideoEditorView: View {
                                     cameraManager?.onRawFrameCaptured = { [weak cameraAnalyzer] pixelBuffer, _ in
                                         cameraAnalyzer?.analyzePixelBuffer(pixelBuffer)
                                     }
-                                    try? await cameraManager?.startCapture()
+                                    do {
+                                        try await cameraManager?.startCapture()
+                                    } catch {
+                                        cameraError = error.localizedDescription
+                                    }
                                 }
                             } label: {
                                 HStack(spacing: EchoelSpacing.sm) {

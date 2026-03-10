@@ -906,7 +906,7 @@ public struct EchoelBassView: View {
 
                 Text("BASS")
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -923,7 +923,7 @@ public struct EchoelBassView: View {
             HStack(spacing: 4) {
                 Text(bass.config.engineA.rawValue)
                     .font(.caption2.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(Capsule().fill(engineColor(bass.config.engineA)))
@@ -938,7 +938,7 @@ public struct EchoelBassView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .bottom) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(EchoelBrand.border)
                         RoundedRectangle(cornerRadius: 4)
                             .fill(meterColor)
                             .frame(height: geo.size.height * CGFloat(bass.meterLevel))
@@ -974,7 +974,7 @@ public struct EchoelBassView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(
-                                    Capsule().fill(selectedPreset == name ? engineColor(preset.engineA) : Color.gray.opacity(0.2))
+                                    Capsule().fill(selectedPreset == name ? engineColor(preset.engineA) : EchoelBrand.border)
                                 )
                                 .foregroundColor(selectedPreset == name ? .white : .primary)
                         }
@@ -1184,7 +1184,7 @@ public struct EchoelBassView: View {
                             .frame(height: 60)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(bass.currentNote == note ? engineColor(bass.config.engineA) : Color.gray.opacity(0.2))
+                                    .fill(bass.currentNote == note ? engineColor(bass.config.engineA) : EchoelBrand.border)
                             )
                             .foregroundColor(bass.currentNote == note ? .white : .primary)
                     }
@@ -1205,7 +1205,7 @@ public struct EchoelBassView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.1))
+                .fill(EchoelBrand.bgElevated)
         )
     }
 

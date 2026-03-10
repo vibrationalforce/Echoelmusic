@@ -555,7 +555,7 @@ public final class EchoelBeat {
         guard let src = sourceNode else { return }
         engine.attach(src)
         engine.connect(src, to: engine.mainMixerNode, format: format)
-        do { try engine.start() } catch { /* retry on first trigger */ }
+        do { try engine.start() } catch { log.log(.warning, category: .audio, "EchoelBeat: engine start failed — \(error)") }
     }
 
     private func ensureEngineRunning() {
@@ -953,7 +953,7 @@ public struct EchoelBeatView: View {
             VStack(alignment: .leading) {
                 Text("EchoelBeat")
                     .font(.title2.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
                 Text("Drum Machine + HiHat Synth")
                     .font(.caption)
                     .foregroundColor(.gray)
@@ -993,8 +993,8 @@ public struct EchoelBeatView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(
-                            beat.currentKit == genre.rawValue ? Color.cyan : Color.gray.opacity(0.3)))
-                        .foregroundColor(beat.currentKit == genre.rawValue ? .black : .white)
+                            beat.currentKit == genre.rawValue ? Color.cyan : EchoelBrand.border))
+                        .foregroundColor(beat.currentKit == genre.rawValue ? .black : EchoelBrand.textPrimary)
                         .buttonStyle(.plain)
                 }
             }
@@ -1014,7 +1014,7 @@ public struct EchoelBeatView: View {
                         .frame(height: 48)
                         .background(RoundedRectangle(cornerRadius: 8)
                             .fill(padColor(slot.category)))
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
                 .buttonStyle(.plain)
             }
@@ -1037,7 +1037,7 @@ public struct EchoelBeatView: View {
                             .padding(.vertical, 10)
                             .background(RoundedRectangle(cornerRadius: 8)
                                 .fill(Color.cyan.opacity(mode == beat.hihatMode ? 0.8 : 0.3)))
-                            .foregroundColor(.white)
+                            .foregroundColor(EchoelBrand.textPrimary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1049,7 +1049,7 @@ public struct EchoelBeatView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(EchoelBrand.bgElevated))
     }
 
     // ── Roll Section ──
@@ -1091,7 +1091,7 @@ public struct EchoelBeatView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(EchoelBrand.bgElevated))
     }
 
     // ── Delay Section ──
@@ -1115,7 +1115,7 @@ public struct EchoelBeatView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(EchoelBrand.bgElevated))
     }
 
     // ── Trap Presets ──
@@ -1140,7 +1140,7 @@ public struct EchoelBeatView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(EchoelBrand.bgElevated))
     }
 
     // ── Step Sequencer Grid ──
@@ -1149,7 +1149,7 @@ public struct EchoelBeatView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Step Sequencer")
                 .font(.caption.bold())
-                .foregroundColor(.white)
+                .foregroundColor(EchoelBrand.textPrimary)
 
             if !beat.drumSlots.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -1198,7 +1198,7 @@ public struct EchoelBeatView: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(EchoelBrand.bgElevated))
     }
 
     // ── Helpers ──

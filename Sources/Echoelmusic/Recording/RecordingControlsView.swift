@@ -23,7 +23,7 @@ struct RecordingControlsView: View {
             HStack {
                 Text("Recording")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Spacer()
 
@@ -36,7 +36,7 @@ struct RecordingControlsView: View {
 
                         Text("\(session.tracks.count) tracks")
                             .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
             }
@@ -50,7 +50,7 @@ struct RecordingControlsView: View {
                         Text("New Session")
                     }
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(
@@ -122,12 +122,12 @@ struct RecordingControlsView: View {
 
                         Image(systemName: recordingEngine.isRecording ? "stop.fill" : "record.circle")
                             .font(.system(size: 24))
-                            .foregroundColor(.white)
+                            .foregroundColor(EchoelBrand.textPrimary)
                     }
 
                     Text(recordingEngine.isRecording ? "Stop" : "Record")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
             }
             .accessibilityLabel(recordingEngine.isRecording ? "Stop recording" : "Start recording")
@@ -139,11 +139,11 @@ struct RecordingControlsView: View {
             VStack(spacing: 4) {
                 Text(timeString(recordingEngine.currentTime))
                     .font(.system(size: 24, weight: .light, design: .monospaced))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text(recordingEngine.isRecording ? "Recording" : recordingEngine.isPlaying ? "Playing" : "Ready")
                     .font(.system(size: 10, weight: .light))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(EchoelBrand.textSecondary)
             }
 
             Spacer()
@@ -152,7 +152,7 @@ struct RecordingControlsView: View {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(Color.gray.opacity(0.3))
+                        .fill(EchoelBrand.border)
                         .frame(width: 60, height: 60)
 
                     // Animated level ring
@@ -169,12 +169,12 @@ struct RecordingControlsView: View {
 
                     Text("\(Int(recordingEngine.recordingLevel * 100))")
                         .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
 
                 Text("Level")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
         }
     }
@@ -187,7 +187,7 @@ struct RecordingControlsView: View {
             Button(action: togglePlayback) {
                 Image(systemName: recordingEngine.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
@@ -202,11 +202,11 @@ struct RecordingControlsView: View {
             Button(action: stopPlayback) {
                 Image(systemName: "stop.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(EchoelBrand.border)
                     )
             }
             .disabled(!recordingEngine.isPlaying)
@@ -243,15 +243,15 @@ struct RecordingControlsView: View {
                     if let session = recordingEngine.currentSession {
                         Text("(\(session.tracks.count))")
                             .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
+                            .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(EchoelBrand.textPrimary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(EchoelBrand.bgElevated)
                 )
             }
             .accessibilityLabel("View tracks, \(recordingEngine.currentSession?.tracks.count ?? 0) total")
@@ -265,12 +265,12 @@ struct RecordingControlsView: View {
                     Text("Mixer")
                         .font(.system(size: 11, weight: .medium))
                 }
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(EchoelBrand.textPrimary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(EchoelBrand.bgElevated)
                 )
             }
             .accessibilityLabel("Open mixer")
@@ -284,12 +284,12 @@ struct RecordingControlsView: View {
                     Text("Export")
                         .font(.system(size: 11, weight: .medium))
                 }
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(EchoelBrand.textPrimary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(EchoelBrand.bgElevated)
                 )
             }
             .disabled(recordingEngine.currentSession?.tracks.isEmpty ?? true)

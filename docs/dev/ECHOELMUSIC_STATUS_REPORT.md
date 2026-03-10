@@ -198,7 +198,7 @@ Circadian Photoreception & Mood Regulation:
   - Grün (520 nm): Balance, Harmonie
   - Cyan (490 nm): Kommunikation
   - Blau (470 nm): Ruhe, Schlaf (Melatonin)
-  - Violet (400 nm): Spiritualität
+  - Violet (400 nm): Kreativität, Entspannung
 
 **Wissenschaftliche Basis:**
 - Melanopsin-basierte Circadian Regulation

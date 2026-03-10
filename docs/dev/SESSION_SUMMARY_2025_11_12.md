@@ -349,7 +349,7 @@ EchoelWisdom (AI system):
   ✅ NO medical claims (wellness only)
 
 Aesthetic:
-  • Vaporwave/Sci-Fi (fun, mystical vibe)
+  • Vaporwave/Sci-Fi (immersive, retrofuturistic aesthetic)
   • Scientific rigor (evidence-based content)
   • "Have fun with the aesthetic, stay rigorous with science"
 ```

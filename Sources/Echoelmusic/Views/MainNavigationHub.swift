@@ -1,7 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-/// Main navigation — EchoelStudio unified workspace
+/// Main navigation — Echoelmusic unified workspace
 struct MainNavigationHub: View {
 
     @Environment(AudioEngine.self) var audioEngine
@@ -10,6 +10,7 @@ struct MainNavigationHub: View {
     @Environment(ThemeManager.self) var themeManager
 
     @State private var showSettings = false
+    @State private var recordingError: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,13 +31,21 @@ struct MainNavigationHub: View {
                 .environment(themeManager)
                 .environment(audioEngine)
         }
+        .alert("Recording Error", isPresented: Binding(
+            get: { recordingError != nil },
+            set: { if !$0 { recordingError = nil } }
+        )) {
+            Button("OK") { recordingError = nil }
+        } message: {
+            Text(recordingError ?? "An unknown error occurred.")
+        }
     }
 
     // MARK: - Top Bar (iPad)
 
     private var topBar: some View {
         HStack(spacing: EchoelSpacing.sm) {
-            Text("ECHOELSTUDIO")
+            Text("ECHOELMUSIC")
                 .font(EchoelBrandFont.label())
                 .foregroundColor(EchoelBrand.textPrimary.opacity(0.7))
                 .tracking(4)
@@ -57,6 +66,7 @@ struct MainNavigationHub: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
         }
         .padding(.horizontal, EchoelSpacing.md)
         .padding(.vertical, EchoelSpacing.sm)
@@ -157,12 +167,17 @@ struct MainNavigationHub: View {
                 .buttonStyle(.plain)
 
                 Button(action: {
-                    if recordingEngine.isRecording {
-                        try? recordingEngine.stopRecording()
-                        HapticHelper.notification(.success)
-                    } else {
-                        try? recordingEngine.startRecording()
-                        HapticHelper.impact(.heavy)
+                    do {
+                        if recordingEngine.isRecording {
+                            try recordingEngine.stopRecording()
+                            HapticHelper.notification(.success)
+                        } else {
+                            try recordingEngine.startRecording()
+                            HapticHelper.impact(.heavy)
+                        }
+                    } catch {
+                        recordingError = error.localizedDescription
+                        HapticHelper.notification(.error)
                     }
                 }) {
                     ZStack {

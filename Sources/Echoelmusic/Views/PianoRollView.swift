@@ -440,7 +440,7 @@ struct PianoRollView: View {
                             .padding(.trailing, 4)
                     }
                     .frame(height: noteRowHeight)
-                    .background(isBlack ? Color.white.opacity(0.03) : Color.clear)
+                    .background(isBlack ? EchoelBrand.bgElevated : Color.clear)
                     .overlay(alignment: .bottom) {
                         if isCNote {
                             Rectangle().fill(EchoelBrand.textSecondary.opacity(0.2)).frame(height: 0.5)
@@ -490,7 +490,7 @@ struct PianoRollView: View {
                 // Row fill for black keys
                 if isBlack {
                     let rect = CGRect(x: 0, y: y, width: size.width, height: rowH)
-                    context.fill(Path(rect), with: .color(Color.white.opacity(0.02)))
+                    context.fill(Path(rect), with: .color(EchoelBrand.bgElevated))
                 }
 
                 // Row separator — thicker for C notes
@@ -555,14 +555,14 @@ struct PianoRollView: View {
             .fill(noteColor.opacity(0.3 + velocityAlpha * 0.5))
             .overlay(
                 RoundedRectangle(cornerRadius: 2)
-                    .stroke(isSelected ? Color.white : noteColor.opacity(0.7), lineWidth: isSelected ? 1.5 : 0.5)
+                    .stroke(isSelected ? EchoelBrand.textPrimary : noteColor.opacity(0.7), lineWidth: isSelected ? 1.5 : 0.5)
             )
             .overlay(alignment: .leading) {
                 // Note name inside large-enough notes
                 if w > 30 {
                     Text(PianoRollViewModel.noteName(for: note.note))
                         .font(.system(size: 7, weight: .medium, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(EchoelBrand.textPrimary)
                         .padding(.leading, 3)
                 }
             }
@@ -888,7 +888,7 @@ struct PianoRollEditorView: View {
                                         .frame(width: 24, alignment: .trailing)
 
                                     Rectangle()
-                                        .fill(isBlack ? Color.gray.opacity(0.6) : Color.gray.opacity(0.3))
+                                        .fill(isBlack ? EchoelBrand.textSecondary : EchoelBrand.border)
                                 }
                                 .frame(width: keyboardWidth, height: noteRowHeight)
                                 .simultaneousGesture(
@@ -920,7 +920,7 @@ struct PianoRollEditorView: View {
 
                                     if isBlack {
                                         let rect = CGRect(x: 0, y: y, width: size.width, height: noteRowHeight)
-                                        context.fill(Path(rect), with: .color(.white.opacity(0.02)))
+                                        context.fill(Path(rect), with: .color(EchoelBrand.bgElevated))
                                     }
                                 }
 
@@ -931,7 +931,7 @@ struct PianoRollEditorView: View {
                                     var linePath = Path()
                                     linePath.move(to: CGPoint(x: x, y: 0))
                                     linePath.addLine(to: CGPoint(x: x, y: size.height))
-                                    context.stroke(linePath, with: .color(.white.opacity(isMeasure ? 0.3 : 0.1)), lineWidth: isMeasure ? 1 : 0.5)
+                                    context.stroke(linePath, with: .color(EchoelBrand.border.opacity(isMeasure ? 1.0 : 0.5)), lineWidth: isMeasure ? 1 : 0.5)
                                 }
                             }
                             .frame(width: gridWidth, height: gridHeight)
@@ -950,7 +950,7 @@ struct PianoRollEditorView: View {
                                     .fill(color.opacity(Double(note.velocity) / 127.0 * 0.5 + 0.3))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 2)
-                                            .stroke(isSelected ? Color.white : color, lineWidth: isSelected ? 1.5 : 0.5)
+                                            .stroke(isSelected ? EchoelBrand.textPrimary : color, lineWidth: isSelected ? 1.5 : 0.5)
                                     )
                                     .frame(width: max(4, w), height: noteRowHeight - 1)
                                     .position(x: x + max(4, w) / 2, y: y + noteRowHeight / 2)

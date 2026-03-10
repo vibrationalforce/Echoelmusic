@@ -466,7 +466,7 @@ struct NodeRow: View {
 
     private var nodeBackground: some View {
         RoundedRectangle(cornerRadius: 10)
-            .fill(isSelected ? EchoelBrand.sky.opacity(0.1) : Color.white.opacity(0.05))
+            .fill(isSelected ? EchoelBrand.sky.opacity(0.1) : EchoelBrand.bgElevated)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(isSelected ? EchoelBrand.sky : Color.clear, lineWidth: 1)

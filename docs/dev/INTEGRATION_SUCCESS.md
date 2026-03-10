@@ -30,20 +30,14 @@ init() {
 
 ### 2. **ContentView.swift - Uses AudioEngine** ✅
 ```swift
-@EnvironmentObject var audioEngine: AudioEngine
+@Environment(AudioEngine.self) var audioEngine
 
-// OLD:
-@StateObject private var binauralGenerator = BinauralBeatGenerator()  // ❌
-@StateObject private var healthKitManager = HealthKitManager()        // ❌
-
-// NEW:
-Uses audioEngine.toggleBinauralBeats()      // ✅
-Uses audioEngine.start() / .stop()          // ✅
-Uses audioEngine.currentBrainwaveState      // ✅
-Uses audioEngine.binauralAmplitude          // ✅
+// Uses audioEngine.start() / .stop()          // ✅
+// Uses audioEngine.masterVolume               // ✅
+// Uses audioEngine.masterLevel                // ✅
 ```
 
-**Result:** ✅ Keine Duplikation mehr!
+**Result:** Unified audio engine, no duplication.
 
 ---
 
@@ -81,7 +75,6 @@ User taps Record
 audioEngine.start()
     ↓
 ├─ microphoneManager.startRecording()
-├─ binauralGenerator.start() (if enabled)
 ├─ spatialAudioEngine.start() (if enabled)
 └─ bioParameterMapper.startUpdating()
 ```
@@ -149,9 +142,9 @@ Audio follows head movement! 🎧
 │ │ ✅ ASAF Supported (iOS 19+)     ││
 │ └──────────────────────────────────┘│
 │                                     │
-│ ┌─ Binaural Controls (if shown) ──┐│
-│ │ Brainwave State: [Alpha]        ││
-│ │ Volume: 30%  [━━━━━━━──]        ││
+│ ┌─ Spatial Audio Controls ────────┐│
+│ │ Mode: HRTF Binaural             ││
+│ │ Reverb: 30%  [━━━━━━━──]        ││
 │ └──────────────────────────────────┘│
 └─────────────────────────────────────┘
 ```
@@ -193,7 +186,7 @@ Audio follows head movement! 🎧
 ✅ **UI Components**
 ✅ **Spatial Audio Toggle**
 ✅ **Device Info Display**
-✅ **Binaural Controls**
+✅ **Spatial Audio Controls**
 ✅ **Status Indicators**
 
 ---

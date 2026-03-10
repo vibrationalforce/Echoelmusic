@@ -281,11 +281,11 @@ struct ChordPadButton: View {
             VStack(spacing: 4) {
                 Text(pad.chordName)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text(pad.chordType.rawValue)
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
         }
         .frame(height: 80)
@@ -674,7 +674,7 @@ struct DrumPadButton: View {
                 Text(pad.name)
                     .font(EchoelBrandFont.label())
                     .fontWeight(.semibold)
-                    .foregroundColor(isPressed ? .white : EchoelBrand.textPrimary)
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 Text("MIDI \(pad.midiNote)")
                     .font(.system(size: 8, weight: .medium, design: .monospaced))
@@ -997,11 +997,11 @@ struct MelodyGridBackground: View {
             HStack(spacing: 0) {
                 ForEach(0..<totalNotes, id: \.self) { index in
                     Rectangle()
-                        .fill(index % scale.intervals.count == 0 ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+                        .fill(index % scale.intervals.count == 0 ? Color.blue.opacity(0.2) : EchoelBrand.bgElevated)
                         .frame(width: noteWidth)
                         .overlay(
                             Rectangle()
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                                .stroke(EchoelBrand.border, lineWidth: 0.5)
                         )
                 }
             }
@@ -1264,7 +1264,7 @@ struct PianoKey: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: isBlack ? 3 : 5)
                         .stroke(
-                            isBlack ? Color.white.opacity(0.06) : Color.black.opacity(0.12),
+                            isBlack ? EchoelBrand.bgElevated : Color.black.opacity(0.12),
                             lineWidth: 0.5
                         )
                 )

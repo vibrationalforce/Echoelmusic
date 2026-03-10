@@ -780,7 +780,7 @@ public struct TR808BassSynthView: View {
 
                 Text("808")
                     .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(EchoelBrand.textPrimary)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -799,7 +799,7 @@ public struct TR808BassSynthView: View {
                 GeometryReader { geo in
                     ZStack(alignment: .bottom) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(EchoelBrand.border)
 
                         RoundedRectangle(cornerRadius: 4)
                             .fill(meterColor)
@@ -839,7 +839,7 @@ public struct TR808BassSynthView: View {
                                 .padding(.vertical, 8)
                                 .background(
                                     Capsule()
-                                        .fill(selectedPreset == name ? Color.orange : Color.gray.opacity(0.2))
+                                        .fill(selectedPreset == name ? Color.orange : EchoelBrand.border)
                                 )
                                 .foregroundColor(selectedPreset == name ? .white : .primary)
                         }
@@ -1015,7 +1015,7 @@ public struct TR808BassSynthView: View {
                             .frame(height: 60)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(synth.currentNote == note ? Color.orange : Color.gray.opacity(0.2))
+                                    .fill(synth.currentNote == note ? Color.orange : EchoelBrand.border)
                             )
                             .foregroundColor(synth.currentNote == note ? .white : .primary)
                     }
@@ -1035,7 +1035,7 @@ public struct TR808BassSynthView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.1))
+                .fill(EchoelBrand.bgElevated)
         )
     }
 
@@ -1072,7 +1072,7 @@ public struct TR808BassSynthView: View {
                                 .padding(.vertical, 6)
                                 .background(
                                     Capsule()
-                                        .fill(synth.currentDrumKit == genre.rawValue ? Color.cyan : Color.gray.opacity(0.2))
+                                        .fill(synth.currentDrumKit == genre.rawValue ? Color.cyan : EchoelBrand.border)
                                 )
                                 .foregroundColor(synth.currentDrumKit == genre.rawValue ? .white : .primary)
                         }
@@ -1098,7 +1098,7 @@ public struct TR808BassSynthView: View {
                                 RoundedRectangle(cornerRadius: 8)
                                     .fill(drumPadColor(for: slot.category))
                             )
-                            .foregroundColor(.white)
+                            .foregroundColor(EchoelBrand.textPrimary)
                         }
                         .buttonStyle(.plain)
                         .simultaneousGesture(
@@ -1163,7 +1163,7 @@ public struct TR808BassSynthView: View {
                     .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.gray.opacity(0.2)))
+                    .background(Capsule().fill(EchoelBrand.border))
                     .buttonStyle(.plain)
                 }
             }
@@ -1223,7 +1223,7 @@ public struct TR808BassSynthView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.08))
+                .fill(EchoelBrand.bgElevated)
         )
     }
 

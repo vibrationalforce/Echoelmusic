@@ -127,7 +127,7 @@ Overshadows existing "EchoCloud" products by being:
 - ✅ Real-time, always current knowledge base
 - ✅ Critical, social, and moral perspective
 - ✅ Trauma-informed approach (IEACP framework 2025)
-- ✅ Neuropsychospiritual coaching
+- ✅ Evidence-based wellbeing coaching
 - ✅ Empathetic, non-judgmental support
 - ✅ Crisis escalation protocols
 

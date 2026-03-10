@@ -126,7 +126,7 @@ struct MixerChannelStrip: View {
                         .frame(width: 28, height: 28)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(track.isMuted ? VaporwaveColors.coherenceLow : Color.white.opacity(0.2))
+                                .fill(track.isMuted ? VaporwaveColors.coherenceLow : EchoelBrand.bgElevated)
                         )
                 }
                 .accessibilityLabel("Mute \(track.name)")
@@ -142,7 +142,7 @@ struct MixerChannelStrip: View {
                         .frame(width: 28, height: 28)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(track.isSoloed ? VaporwaveColors.coherenceMedium : Color.white.opacity(0.2))
+                                .fill(track.isSoloed ? VaporwaveColors.coherenceMedium : EchoelBrand.bgElevated)
                         )
                 }
                 .accessibilityLabel("Solo \(track.name)")
@@ -158,7 +158,7 @@ struct MixerChannelStrip: View {
                         .frame(width: 28, height: 28)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(track.isPhaseInverted ? VaporwaveColors.neonCyan : Color.white.opacity(0.2))
+                                .fill(track.isPhaseInverted ? VaporwaveColors.neonCyan : EchoelBrand.bgElevated)
                         )
                 }
                 .accessibilityLabel("Phase invert \(track.name)")
@@ -192,7 +192,7 @@ struct MixerChannelStrip: View {
                     let isActive = track.volume >= segmentLevel
 
                     Rectangle()
-                        .fill(isActive ? meterColor(for: segmentLevel) : Color.gray.opacity(0.2))
+                        .fill(isActive ? meterColor(for: segmentLevel) : EchoelBrand.border)
                         .frame(height: (geometry.size.height - 38) / 20)
                         .cornerRadius(2)
                 }
@@ -220,14 +220,14 @@ struct MixerChannelStrip: View {
 
             // Knob indicator
             Circle()
-                .fill(Color.white)
+                .fill(EchoelBrand.textPrimary)
                 .frame(width: 6, height: 6)
                 .offset(y: -18)
                 .rotationEffect(.degrees(Double(track.pan) * 135))
 
             // Center dot
             Circle()
-                .fill(Color.white.opacity(0.5))
+                .fill(EchoelBrand.textSecondary)
                 .frame(width: 4, height: 4)
         }
         .gesture(
@@ -253,7 +253,7 @@ struct MixerChannelStrip: View {
             ZStack(alignment: .bottom) {
                 // Fader track
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(EchoelBrand.border)
                     .frame(width: 30)
 
                 // Fader fill
@@ -269,7 +269,7 @@ struct MixerChannelStrip: View {
 
                 // Fader thumb
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.white)
+                    .fill(EchoelBrand.textPrimary)
                     .frame(width: 40, height: 20)
                     .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
                     .position(
@@ -356,7 +356,7 @@ struct MasterChannelStrip: View {
                     let isActive = recordingEngine.recordingLevel >= segmentLevel
 
                     Rectangle()
-                        .fill(isActive ? meterColor(for: segmentLevel) : Color.gray.opacity(0.2))
+                        .fill(isActive ? meterColor(for: segmentLevel) : EchoelBrand.border)
                         .frame(height: (geometry.size.height - 38) / 20)
                         .cornerRadius(2)
                 }
@@ -454,30 +454,30 @@ struct PhaseCorrelationMeter: View {
                 width: radius * 2,
                 height: radius * 2
             ))
-            context.stroke(bgPath, with: .color(Color.white.opacity(0.1)), lineWidth: 0.5)
+            context.stroke(bgPath, with: .color(EchoelBrand.bgElevated), lineWidth: 0.5)
 
             // Crosshair (M/S axes, rotated 45°)
             var crossV = Path()
             crossV.move(to: CGPoint(x: center.x, y: center.y - radius))
             crossV.addLine(to: CGPoint(x: center.x, y: center.y + radius))
-            context.stroke(crossV, with: .color(Color.white.opacity(0.15)), lineWidth: 0.5)
+            context.stroke(crossV, with: .color(EchoelBrand.bgElevated), lineWidth: 0.5)
 
             var crossH = Path()
             crossH.move(to: CGPoint(x: center.x - radius, y: center.y))
             crossH.addLine(to: CGPoint(x: center.x + radius, y: center.y))
-            context.stroke(crossH, with: .color(Color.white.opacity(0.15)), lineWidth: 0.5)
+            context.stroke(crossH, with: .color(EchoelBrand.bgElevated), lineWidth: 0.5)
 
             // L/R diagonal axes (45° rotation)
             var diagLR = Path()
             let diag = radius * 0.707  // cos(45°)
             diagLR.move(to: CGPoint(x: center.x - diag, y: center.y + diag))
             diagLR.addLine(to: CGPoint(x: center.x + diag, y: center.y - diag))
-            context.stroke(diagLR, with: .color(Color.white.opacity(0.08)), lineWidth: 0.5)
+            context.stroke(diagLR, with: .color(EchoelBrand.bgElevated), lineWidth: 0.5)
 
             var diagRL = Path()
             diagRL.move(to: CGPoint(x: center.x - diag, y: center.y - diag))
             diagRL.addLine(to: CGPoint(x: center.x + diag, y: center.y + diag))
-            context.stroke(diagRL, with: .color(Color.white.opacity(0.08)), lineWidth: 0.5)
+            context.stroke(diagRL, with: .color(EchoelBrand.bgElevated), lineWidth: 0.5)
 
             // Simulated goniometer dots based on recording level
             let level = CGFloat(recordingEngine.recordingLevel)
@@ -530,7 +530,7 @@ struct PhaseCorrelationMeter: View {
 
                 // Center marker
                 Rectangle()
-                    .fill(Color.white.opacity(0.5))
+                    .fill(EchoelBrand.textSecondary)
                     .frame(width: 1, height: geometry.size.height)
                     .position(x: geometry.size.width * 0.5, y: geometry.size.height / 2)
 
@@ -538,7 +538,7 @@ struct PhaseCorrelationMeter: View {
                 let correlation: CGFloat = 0.8  // Default to in-phase
                 let needleX = geometry.size.width * ((correlation + 1) / 2)
                 Rectangle()
-                    .fill(Color.white)
+                    .fill(EchoelBrand.textPrimary)
                     .frame(width: 3, height: geometry.size.height - 2)
                     .cornerRadius(1.5)
                     .position(x: needleX, y: geometry.size.height / 2)

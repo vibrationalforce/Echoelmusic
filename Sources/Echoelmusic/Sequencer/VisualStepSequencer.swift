@@ -382,7 +382,7 @@ public struct VisualStepSequencerView: View {
                 // BPM Display
                 Text("\(Int(sequencer.bpm)) BPM")
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(EchoelBrand.textPrimary)
 
                 // Bio-lock toggle
                 Button(action: {
@@ -423,7 +423,7 @@ public struct VisualStepSequencerView: View {
                 Button(action: { sequencer.stop() }) {
                     Image(systemName: "stop.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.white)
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
                 .buttonStyle(.plain)
 
@@ -456,7 +456,7 @@ public struct VisualStepSequencerView: View {
                     }
                 } label: {
                     Image(systemName: "square.grid.2x2")
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(EchoelBrand.textPrimary)
                 }
             }
 
@@ -468,7 +468,7 @@ public struct VisualStepSequencerView: View {
                     Text("HR: \(Int(sequencer.bioModulation.heartRate))")
                 }
                 .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(EchoelBrand.textSecondary)
             }
         }
         .padding()
@@ -488,10 +488,10 @@ struct StepButton: View {
     var body: some View {
         Button(action: action) {
             RoundedRectangle(cornerRadius: 4)
-                .fill(isActive ? color : Color.white.opacity(0.1))
+                .fill(isActive ? color : EchoelBrand.bgElevated)
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(isCurrent ? Color.white : Color.clear, lineWidth: 2)
+                        .stroke(isCurrent ? EchoelBrand.textPrimary : Color.clear, lineWidth: 2)
                 )
                 .frame(width: 32, height: 32)
         }

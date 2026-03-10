@@ -469,21 +469,20 @@ ChatGPT: Bitte debuggen und optimieren."
 /// - Parameters:
 ///   - state: Target frequency preset (Delta, Theta, Alpha, etc.)
 ///   - baseFrequency: Carrier frequency in Hz (default: 440 Hz)
-/// - Returns: Configured tone generator
-func generateTone(
-    state: BrainwaveState,
-    baseFrequency: Float = 440.0
-) -> BinauralBeatGenerator {
-    let beatFrequency = state.targetFrequency
-    return BinauralBeatGenerator(
-        leftFrequency: baseFrequency,
-        rightFrequency: baseFrequency + beatFrequency
-    )
+/// - Returns: Configured spatial audio engine
+func configureSpatialAudio(
+    mode: SpatialAudioMode,
+    reverbBlend: Float = 0.3
+) -> SpatialAudioEngine {
+    let engine = SpatialAudioEngine()
+    engine.setMode(mode)
+    engine.setReverbBlend(reverbBlend)
+    return engine
 }
 
-// ❌ BAD: Unklar, keine Doku, Magic Numbers
+// BAD: Unklar, keine Doku, Magic Numbers
 func gen(s: Int, f: Float) -> Any {
-    return BBG(f, f + 10.0)
+    return SAE(f, f + 10.0)
 }
 ```
 

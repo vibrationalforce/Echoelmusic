@@ -3,7 +3,7 @@
 **Create from Within — Bio-Reactive Platform for Music, Film, Visuals & Light**
 
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](../../actions)
-[![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
+[![Swift](https://img.shields.io/badge/Swift-6.0+-orange.svg)](https://swift.org)
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -11,14 +11,14 @@
 
 ---
 
-## Downloads (Beta 2.6.1)
+## Downloads (v7.0)
 
 | Platform | Download | Formats | Status |
 |----------|----------|---------|--------|
 | **macOS** | [DMG](../../releases/latest/download/Echoelmusic-macOS.dmg) | VST3, AU, CLAP, Standalone | Ready |
 | **Windows** | [Installer](../../releases/latest/download/Echoelmusic-Windows-Setup.exe) | VST3, CLAP, Standalone | Ready |
 | **Linux** | [AppImage](../../releases/latest/download/Echoelmusic-Linux.AppImage) | VST3, CLAP, Standalone, Deb | Ready |
-| **iOS** | App Store | AUv3 Plugin + Host, Standalone, HealthKit | Coming Soon |
+| **iOS** | [App Store](https://apps.apple.com/app/echoelmusic/id6757957358) | AUv3 Plugin + Host, Standalone, HealthKit | TestFlight |
 | **Android** | Google Play | Standalone, Health Connect | Coming Soon |
 | **visionOS** | App Store | Immersive, Spatial Audio | Coming 2026 |
 
@@ -46,7 +46,7 @@ mkdir build && cd build && cmake .. && cmake --build .   # Desktop
 
 ## Architecture — EchoelToolkit
 
-498 classes consolidated into **10 unified Echoel\* tools + λ∞ Lambda**. All connected via **EngineBus** (lock-free pub/sub).
+**12 EchoelTools** — all connected via `EchoelCreativeWorkspace` hub (Combine observation).
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────┐

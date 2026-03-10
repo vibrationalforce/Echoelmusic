@@ -15,7 +15,7 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - EchoelStudio View
+// MARK: - Echoelmusic Workspace View
 // Unified creative workspace: audio + video on one BPM-synchronized timeline
 // Bottom panel drawers for instruments, mixer, FX, and video preview
 
