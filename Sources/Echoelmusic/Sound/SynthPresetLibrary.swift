@@ -271,8 +271,48 @@ public final class SynthPresetLibrary {
     }
 
     private func renderQuant(_ preset: SynthPreset, frameCount: Int, sampleRate: Float) -> [Float] {
-        // EchoelQuant engine not available — return silence
-        return [Float](repeating: 0, count: frameCount)
+        // Quantum texture engine: layered sine clusters with random phase drift
+        // Creates evolving drone/riser textures from harmonic partials
+        var buffer = [Float](repeating: 0, count: frameCount)
+        let partialCount = 12
+        var phases = (0..<partialCount).map { _ in Float.random(in: 0..<1.0) }
+        let baseFreq = preset.frequency
+
+        for i in 0..<frameCount {
+            let t = Float(i) / sampleRate
+            var sample: Float = 0.0
+
+            for p in 0..<partialCount {
+                // Spread partials logarithmically around base frequency
+                let ratio = 1.0 + Float(p) * 0.17 + Float.random(in: -0.01...0.01)
+                let freq = baseFreq * ratio
+                let phaseInc = freq / sampleRate
+
+                phases[p] += phaseInc
+                if phases[p] >= 1.0 { phases[p] -= 1.0 }
+
+                // Amplitude decreases for higher partials
+                let amp = 1.0 / Float(p + 1)
+                sample += sin(phases[p] * 2.0 * Float.pi) * amp
+            }
+
+            // Normalize by partial count
+            sample /= Float(partialCount) * 0.5
+
+            // Apply ADSR envelope
+            var env: Float = 1.0
+            if t < preset.attack {
+                env = t / Swift.max(0.001, preset.attack)
+            } else if t < preset.attack + preset.decay {
+                let decayProgress = (t - preset.attack) / Swift.max(0.001, preset.decay)
+                env = 1.0 - (1.0 - preset.sustain) * decayProgress
+            } else {
+                env = preset.sustain
+            }
+
+            buffer[i] = sample * env * preset.amplitude
+        }
+        return buffer
     }
 
     private func renderTR808(_ preset: SynthPreset, frameCount: Int, sampleRate: Float) -> [Float] {
