@@ -55,7 +55,7 @@ public enum SynthFilterMode: String, CaseIterable, Codable, Sendable {
 
 // MARK: - EchoelSynth Configuration
 
-public struct EchoelSynthConfig: Codable, Equatable {
+public struct EchoelSynthConfig: Codable, Equatable, Sendable {
 
     // MARK: - Engine Selection
     public var engine: SynthEngineType = .analog
@@ -223,7 +223,7 @@ public final class EchoelSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelSynth()
+    public static let shared = EchoelSynth()
 
     // MARK: - Published State
 

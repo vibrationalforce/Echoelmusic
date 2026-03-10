@@ -290,7 +290,7 @@ public final class EchoelBass {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelBass()
+    public static let shared = EchoelBass()
 
     // MARK: - Published State
 

@@ -199,7 +199,7 @@ public final class OSCEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = OSCEngine()
+    public static let shared = OSCEngine()
 
     // MARK: - State
 

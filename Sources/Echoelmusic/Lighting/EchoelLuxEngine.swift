@@ -138,7 +138,7 @@ public final class EchoelLuxEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelLuxEngine()
+    public static let shared = EchoelLuxEngine()
 
     // MARK: - State
 
