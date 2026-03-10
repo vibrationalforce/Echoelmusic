@@ -1,6 +1,6 @@
 {
-  "version": "10.1.0",
-  "build": "2026-02-19",
+  "version": "10.2.0",
+  "build": "2026-03-10",
   "features": {
     "monochromeDesign": true,
     "pureBlackBackground": true,
@@ -23,9 +23,14 @@
     "faqStructuredData": true,
     "faqKeyboardAccessibility": true,
     "wcag22AAA": true,
-    "10UnifiedTools": true
+    "10UnifiedTools": true,
+    "3Editions": true,
+    "8Personas": true,
+    "generativeWorlds": true,
+    "arWorlds": true
   },
   "changelog": [
+    "v10.2.0: Generative Worlds + AR Worlds (EchoelVis), Music Theory + AR History (EchoelAI), 3 Editions (Creative Suite, Research, SDK), 8 audience personas (was 4). EchoelToolkit.swift central reference.",
     "v10.1.0: Fix stale '25 tools' references → 10 unified tools across manifest.json, version.json. Bump cache version, update build date. Website reflects consolidated EchoelToolkit accurately.",
     "v10.0.0: 25 engines consolidated into 10 unified Echoel* tools — EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelField, EchoelBeam, EchoelNet, EchoelMind. Translation (20+ languages), Apple Foundation Models, 3D avatars (Gaussian Splatting), procedural worlds (6 biomes), dynamic NFTs, OSC/MSC/Mackie Control (17 protocols).",
     "v9.2.0: EchoelStage (12th tool) — external displays, smart glasses, AirPlay, projection, multi-screen, audience view. Dante + EchoelSync added to EchoelNet. Clickable tool-cap descriptions on website. External-Display-Rendering-Pipeline.",

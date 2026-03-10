@@ -85,12 +85,24 @@ Lambda: Consciousness state machine drives all tools through bus messages
 | **EchoelSeq** | Sequencer | Step sequencer, patterns, automation, Lambda scripting |
 | **EchoelMIDI** | MIDI/MPE control | MIDI 2.0, MPE, touch instruments, audio-to-MIDI, routing |
 | **EchoelBio** | Biometrics hub | HRV, HR, breathing, face, gaze, hands, motion, EEG. Rausch-inspired bio-event graph + signal deconvolution |
-| **EchoelField** | Visuals & video | 8 visual modes (particles, cymatics, Hilbert, 360), Metal 120fps, NLE video editor, multi-cam, ProRes, 3D avatars, procedural worlds |
+| **EchoelField** | Visuals & video | 10 visual modes (Generative Worlds, AR Worlds, particles, cymatics, Hilbert, 360), Metal 120fps, NLE video editor, multi-cam, ProRes, 3D avatars |
 | **EchoelBeam** | Lighting & stage | DMX 512, Art-Net, sACN, ILDA lasers, projection mapping, Dante/NDI, external displays, VR/XR, multi-screen output |
 | **EchoelNet** | Collaboration | 17 protocols: SharePlay, Dante, EchoelSync, OSC, MSC, Mackie, cloud sync, dynamic NFTs |
-| **EchoelMind** | Intelligence | CoreML, Apple Foundation Models, LLM, stem separation, AI composition, audio-to-MIDI, voice control, constitutional AI |
+| **EchoelMind** | Intelligence | CoreML, Apple Foundation Models, LLM, stem separation, AI composition, audio-to-MIDI, voice control, Music Theory (bio-reactive learning), AR History |
 
 Plus **λ∞ Lambda** — bio-reactive consciousness orchestrator. Drives all tools through EngineBus state transitions (studio, live, meditation, video, DJ, collaboration, immersive, research modes).
+
+### 3 Editions
+
+| Edition | Audience |
+|---------|----------|
+| **Creative Suite** | Musicians, filmmakers, performers, installation artists |
+| **Research Edition** | Universities, Fraunhofer, clinical researchers |
+| **Bio-Reactive Audio SDK** | Game developers (Unity, Unreal) |
+
+### 8 Audience Personas
+
+Musicians & Producers · DJs & Performers · Filmmakers & Artists · Installations & Staging · Therapists & Coaches · Education & Research · Game Developers · Accessibility
 
 ### Bio-Signal Processing (Rausch-inspired)
 

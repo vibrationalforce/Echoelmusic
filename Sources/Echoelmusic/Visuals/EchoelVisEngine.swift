@@ -25,7 +25,7 @@ import Observation
 
 // MARK: - Visual Mode
 
-/// 8 visualization modes for bio-reactive display
+/// 10 visualization modes for bio-reactive display
 public enum VisualMode: String, CaseIterable, Codable, Sendable {
     case waveform          = "Waveform"          // Audio waveform with bio-color
     case spectrum          = "Spectrum"           // FFT spectrum analyzer
@@ -35,6 +35,8 @@ public enum VisualMode: String, CaseIterable, Codable, Sendable {
     case flowField         = "Flow Field"         // Perlin noise flow field
     case kaleidoscope      = "Kaleidoscope"       // Symmetry-based pattern
     case nebula            = "Nebula"             // Volumetric cloud effect
+    case generativeWorlds  = "Generative Worlds"  // Abstract bio-reactive environments
+    case arWorlds          = "AR Worlds"           // Augmented reality at real locations
 }
 
 // MARK: - Visual Color Palette

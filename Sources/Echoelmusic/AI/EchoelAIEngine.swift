@@ -43,6 +43,20 @@ public enum AudioStem: String, CaseIterable, Codable, Sendable {
     }
 }
 
+// MARK: - AI Task
+
+/// AI task categories for on-device intelligence
+public enum AITask: String, CaseIterable, Codable, Sendable {
+    case stemSeparation   = "Stem Separation"    // Vocals, drums, bass, other
+    case autoEQ           = "Auto EQ"            // Spectral analysis → EQ
+    case tempoDetection   = "Tempo Detection"    // BPM extraction
+    case keyDetection     = "Key Detection"      // Musical key analysis
+    case classification   = "Classification"     // Instrument/genre detection
+    case composition      = "Composition"        // Generative AI composition
+    case musicTheory      = "Music Theory"       // Bio-reactive music learning
+    case arHistory        = "AR History"         // Discover music history in AR
+}
+
 /// Result of stem separation
 public struct StemSeparationResult: Sendable {
     public let stems: [AudioStem: AVAudioPCMBuffer]
