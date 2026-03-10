@@ -198,7 +198,8 @@ final class MicrophoneManager: NSObject {
             // Capture sampleRate locally to avoid reading @MainActor property from processingQueue
             let capturedSampleRate = sampleRate
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
-                self?.processingQueue.async {
+                guard let self = self else { return }
+                self.processingQueue.async { [weak self] in
                     self?.processAudioBuffer(buffer, sampleRate: capturedSampleRate)
                 }
             }

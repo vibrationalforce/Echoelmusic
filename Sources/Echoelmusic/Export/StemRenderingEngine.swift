@@ -15,7 +15,7 @@
 // Copyright © 2026 Echoelmusic. All rights reserved.
 
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 import Accelerate
 import Combine
 import Observation

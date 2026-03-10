@@ -177,16 +177,22 @@ final class InstrumentOrchestrator {
             queue: .main
         ) { [weak self] notification in
             guard let self = self else { return }
-            if let coherence = notification.userInfo?["coherence"] as? Float {
-                self.bioCoherence = coherence
+            let coherence = notification.userInfo?["coherence"] as? Float
+            let energy = notification.userInfo?["energy"] as? Float
+            let hr = notification.userInfo?["heartRate"] as? Float
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                if let coherence = coherence {
+                    self.bioCoherence = coherence
+                }
+                if let energy = energy {
+                    self.bioEnergy = energy
+                }
+                if let hr = hr {
+                    self.heartRate = hr
+                }
+                self.applyBioModulation()
             }
-            if let energy = notification.userInfo?["energy"] as? Float {
-                self.bioEnergy = energy
-            }
-            if let hr = notification.userInfo?["heartRate"] as? Float {
-                self.heartRate = hr
-            }
-            self.applyBioModulation()
         }
     }
 

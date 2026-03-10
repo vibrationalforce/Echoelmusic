@@ -26,7 +26,7 @@ import Accelerate
 // MARK: - 808 Bass Configuration
 
 /// Configuration for the 808 Bass Synthesizer
-public struct TR808BassConfig: Codable, Equatable {
+public struct TR808BassConfig: Codable, Equatable, Sendable {
 
     // MARK: - Pitch Glide Settings
 

@@ -1,6 +1,6 @@
 #if os(iOS)
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 #if canImport(Metal)
 import Metal
 #endif

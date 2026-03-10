@@ -217,8 +217,8 @@ public final class OSCEngine {
 
     // MARK: - Network
 
-    private var listener: NWListener?
-    private var sendConnection: NWConnection?
+    private nonisolated(unsafe) var listener: NWListener?
+    private nonisolated(unsafe) var sendConnection: NWConnection?
     private let sendQueue = DispatchQueue(label: "com.echoelmusic.osc.send", qos: .userInteractive)
     private let receiveQueue = DispatchQueue(label: "com.echoelmusic.osc.receive", qos: .userInteractive)
 
