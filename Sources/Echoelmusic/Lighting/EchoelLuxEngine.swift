@@ -432,7 +432,7 @@ public struct EchoelLuxView: View {
                     Label("Blackout", systemImage: "moon.fill")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, EchoelSpacing.sm)
-                        .background(Color.gray.opacity(0.3))
+                        .background(EchoelBrand.bgElevated)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }

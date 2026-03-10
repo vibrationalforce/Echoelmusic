@@ -1201,7 +1201,7 @@ public struct TR808BassSynthView: View {
                                         synth.sequencerPattern.toggle(track: trackIdx, step: step)
                                     }) {
                                         RoundedRectangle(cornerRadius: 3)
-                                            .fill(isActive ? drumPadColor(for: slot.category) : Color.gray.opacity(0.15))
+                                            .fill(isActive ? drumPadColor(for: slot.category) : EchoelBrand.bgElevated)
                                             .frame(width: 24, height: 24)
                                             .overlay(
                                                 Group {

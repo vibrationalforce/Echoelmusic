@@ -421,7 +421,7 @@ public struct BioStatusView: View {
             // Coherence ring
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 3)
+                    .stroke(EchoelBrand.border, lineWidth: 3)
                 Circle()
                     .trim(from: 0, to: bio.smoothCoherence)
                     .stroke(coherenceColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))

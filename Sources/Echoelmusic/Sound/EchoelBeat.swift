@@ -1181,7 +1181,7 @@ public struct EchoelBeatView: View {
 
                                     Button { beat.sequencerPattern.toggle(track: ti, step: si) } label: {
                                         RoundedRectangle(cornerRadius: 2)
-                                            .fill(active ? padColor(slot.category) : Color.gray.opacity(0.15))
+                                            .fill(active ? padColor(slot.category) : EchoelBrand.bgElevated)
                                             .frame(width: 22, height: 22)
                                             .overlay(Group {
                                                 if beat.sequencerStep == si && beat.isSequencerPlaying {
