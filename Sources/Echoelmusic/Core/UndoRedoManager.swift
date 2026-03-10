@@ -18,7 +18,7 @@ protocol UndoableCommand {
 // MARK: - Undo/Redo Manager
 /// Universal Undo/Redo system for Echoelmusic
 /// Supports audio editing, video editing, MIDI, and all other operations
-@MainActor
+@preconcurrency @MainActor
 @Observable
 final class UndoRedoManager {
 

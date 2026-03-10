@@ -107,7 +107,7 @@ final class LoopEngine {
 
     /// LAMBDA LOOP: High-precision timer for loop position updates
     /// DispatchSourceTimer provides ~50% lower jitter than Timer.scheduledTimer
-    private var timer: DispatchSourceTimer?
+    nonisolated(unsafe) private var timer: DispatchSourceTimer?
     private let timerQueue = DispatchQueue(label: "com.echoelmusic.loopengine.timer", qos: .userInteractive)
 
     /// Current loop start time

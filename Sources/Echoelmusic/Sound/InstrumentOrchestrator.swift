@@ -18,7 +18,7 @@ import Observation
 /// - Receives bio-data from EchoelUniversalCore
 /// - Modulates synthesis parameters based on HRV/coherence
 /// - Real-time parameter automation
-@MainActor
+@preconcurrency @MainActor
 @Observable
 final class InstrumentOrchestrator {
 

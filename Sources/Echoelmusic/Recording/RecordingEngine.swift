@@ -84,7 +84,7 @@ final class RecordingEngine {
     // MARK: - Private Properties
 
     /// Audio engine for recording/playback
-    private var audioEngine: AVAudioEngine?
+    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
 
     /// Input node for recording
     private var inputNode: AVAudioInputNode?
@@ -96,7 +96,7 @@ final class RecordingEngine {
     nonisolated(unsafe) private var audioFile: AVAudioFile?
 
     /// Timer for position updates
-    private var timer: Timer?
+    nonisolated(unsafe) private var timer: Timer?
 
     /// Waveform buffer for real-time display (max 1000 samples)
     /// Uses CircularBuffer for O(1) append instead of Array.removeFirst() O(n)

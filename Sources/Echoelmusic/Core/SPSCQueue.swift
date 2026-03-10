@@ -377,7 +377,7 @@ public final class BioDataQueue {
 
         /// Normalized coherence (0-1) - pre-calculated for performance
         public var normalizedCoherence: Float {
-            AudioConstants.Coherence.normalize(hrvCoherence)
+            min(max(hrvCoherence / 100.0, 0.0), 1.0)
         }
 
         public init(timestamp: Double, heartRate: Float, hrvCoherence: Float, breathPhase: Float) {
