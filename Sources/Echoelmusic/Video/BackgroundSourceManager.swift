@@ -1029,7 +1029,8 @@ class EchoelmusicVisualRenderer {
         }
 
         do {
-            computePipeline = try device.makeComputePipelineState(function: function)
+            nonisolated(unsafe) let safeDevice = device
+            computePipeline = try await safeDevice.makeComputePipelineState(function: function)
         } catch {
             log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
             return

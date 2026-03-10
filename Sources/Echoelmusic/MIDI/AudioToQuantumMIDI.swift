@@ -440,8 +440,10 @@ public final class AudioToQuantumMIDI {
             }
         }
 
-        // Schedule file playback (use synchronous overload to avoid sending non-Sendable types)
-        player.scheduleFile(file, at: nil)
+        // Schedule file playback — nonisolated(unsafe) to cross actor boundary safely
+        nonisolated(unsafe) let safePlayer = player
+        nonisolated(unsafe) let safeFile = file
+        await safePlayer.scheduleFile(safeFile, at: nil)
 
         try engine.start()
         player.play()
