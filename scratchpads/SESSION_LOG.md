@@ -6,6 +6,63 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-10 — Deep Dive Audit + Synth Engine + Tooling Upgrade
+
+**Branch:** `claude/implement-todo-item-Jz0Pa`
+**Commits:** `66f5075`, `f9139cb`
+
+### What Was Done
+
+#### 1. EchoelSynth — New 5-Engine Polyphonic Synth
+- Created `Sources/Echoelmusic/Sound/EchoelSynth.swift` (~780 lines)
+- 5 engines: Analog (detuned saw/square), FM (2-op DX7), Wavetable (8-shape morph), Pluck (Karplus-Strong), Pad (7-voice supersaw)
+- AVAudioSourceNode real-time rendering, 16-voice polyphony with voice stealing
+- SVF filter (LP/HP/BP), chorus, drive, stereo width
+- 9 presets: classicLead, electricPiano, bellKeys, pluckedGuitar, warmPad, synthBrass, crystalPluck, retroWavetable, bioReactive
+- Full SwiftUI view (EchoelSynthView) with engine selector, filter, ADSR, keyboard
+
+#### 2. Piano Roll Persistence Fixed
+- Created `PianoRollClipSheet` — loads/saves MIDI notes to ClipViewClip
+- Created `PianoRollEditorView` — reusable editor with tool selector, snap, zoom
+- Notes now persist in clip model instead of local @State
+
+#### 3. Clip Model Enhanced
+- `ClipViewClip` now has: type (audio/midi/pattern), midiNotes, trackIndex, sceneIndex
+- MIDI clips show mini piano roll preview, audio clips show waveform
+- Track-to-engine routing: Lead/Pad→EchoelSynth, Bass→EchoelBass, Drums→EchoelBeat
+
+#### 4. Drums Improved
+- 12 new drum presets in SynthPresetLibrary
+- TR808: exponential pitch glide (not linear), sub harmonic, noise-textured click, body resonance
+- renderQuant: implemented quantum texture engine (was returning silence)
+
+#### 5. Deep Dive Audit Results
+
+| System | Status | Notes |
+|--------|--------|-------|
+| Audio/Synth/MIDI | WORKS | All engines production-ready |
+| Video/Recording/Export | WORKS | NLE-grade, ProRes, chroma key |
+| Ableton Link | WORKS | Full protocol implementation |
+| HealthKit Bio | STUB | Mic audio proxy, not real HRV/HR |
+| Lighting/DMX | MISSING | Zero code |
+| AI/ML | MISSING | DDSP is pure DSP, no CoreML |
+| Step Sequencer | PARTIAL | Infrastructure present, UI missing |
+| OSC Network | MISSING | Format defined, no UDP implementation |
+
+#### 6. Claude Code Tooling Upgrade
+New agents:
+- `.claude/agents/dsp-reviewer.md` — DSP algorithm quality review
+- `.claude/agents/bio-safety-reviewer.md` — Health compliance review
+
+New commands:
+- `/ship` — Pre-release checklist (build, test, audio safety, bio compliance)
+- `/deep-dive` — Parallel 3-agent functional audit
+- `/workflow` — Workflow orchestration protocol
+
+Roadmap written to `scratchpads/PLAN_MISSING_SYSTEMS.md` with 5 sprints.
+
+---
+
 ## Session: 2026-03-09 — EchoelStudio Unified Workspace
 
 **Branch:** `claude/implement-todo-item-Jz0Pa`
