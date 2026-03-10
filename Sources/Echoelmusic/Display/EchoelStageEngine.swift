@@ -308,13 +308,20 @@ public final class EchoelStageEngine {
             resolution: newScreen.bounds.size,
             refreshRate: Double(newScreen.maximumFramesPerSecond),
             isAirPlay: newScreen.mirrored != nil,
-            screenIndex: UIScreen.screens.firstIndex(of: newScreen) ?? 0
+            screenIndex: connectedDisplays.count
         )
         connectedDisplays.append(info)
 
-        // Create external window for this screen
-        let externalWindow = UIWindow(frame: newScreen.bounds)
-        externalWindow.screen = newScreen
+        // Create external window for this screen's scene
+        let windowScene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.screen == newScreen }
+        let externalWindow: UIWindow
+        if let windowScene {
+            externalWindow = UIWindow(windowScene: windowScene)
+        } else {
+            externalWindow = UIWindow(frame: newScreen.bounds)
+        }
         externalWindow.rootViewController = createStageViewController()
         externalWindow.isHidden = false
         externalWindows.append(externalWindow)
@@ -340,12 +347,15 @@ public final class EchoelStageEngine {
 
     // MARK: - Display Scanning
 
-    /// Scan for all currently connected displays
+    /// Scan for all currently connected displays via UIWindowScene
     public func scanConnectedDisplays() {
         connectedDisplays = []
 
-        for (index, screen) in UIScreen.screens.enumerated() {
-            if index == 0 { continue } // Skip main screen
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        for (index, scene) in scenes.enumerated() {
+            // Skip the first scene (main display)
+            guard index > 0 else { continue }
+            let screen = scene.screen
 
             let info = StageDisplayInfo(
                 name: "Display \(index)",
@@ -365,10 +375,12 @@ public final class EchoelStageEngine {
         guard !isRunning else { return }
         isRunning = true
 
-        // Create windows for any connected external screens
-        for screen in UIScreen.screens.dropFirst() {
-            let window = UIWindow(frame: screen.bounds)
-            window.screen = screen
+        // Create windows for any connected external scenes (skip main)
+        let externalScenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .dropFirst()
+        for scene in externalScenes {
+            let window = UIWindow(windowScene: scene)
             window.rootViewController = createStageViewController()
             window.isHidden = false
             externalWindows.append(window)
