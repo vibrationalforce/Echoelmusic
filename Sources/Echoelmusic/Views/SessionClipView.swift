@@ -1073,7 +1073,7 @@ final class SessionClipViewModel {
     private func playMIDIClip(_ clip: ClipViewClip, track: Int) {
         guard !clip.midiNotes.isEmpty else { return }
 
-        let bpmValue = bpm
+        let bpmValue = max(bpm, 20.0)
         let secondsPerBeat = 60.0 / bpmValue
 
         for note in clip.midiNotes {
