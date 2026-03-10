@@ -1092,7 +1092,7 @@ public final class ProColorGrading {
     /// Processes all enabled nodes in serial order.
     /// - Parameter image: Source CIImage.
     /// - Returns: Graded CIImage.
-    public func applyGrade(to image: CIImage) -> CIImage {
+    nonisolated public func applyGrade(to image: CIImage) -> CIImage {
         guard isEnabled else { return image }
 
         var result = image

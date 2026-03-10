@@ -215,7 +215,7 @@ public final class VisualStepSequencer {
 
 // MARK: - Pattern Data
 
-public struct SequencerPattern: Codable, Equatable {
+public struct SequencerPattern: Codable, Equatable, Sendable {
     private var steps: [[StepData]]
 
     public init() {
@@ -270,7 +270,7 @@ public struct BioModulationState {
 
 // MARK: - Presets
 
-public struct SequencerPreset: Identifiable {
+public struct SequencerPreset: Identifiable, Sendable {
     public let id: String
     public let name: String
     public let description: String

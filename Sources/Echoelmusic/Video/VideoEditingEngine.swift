@@ -1,6 +1,6 @@
 #if canImport(AVFoundation)
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreData
 import Observation
 
