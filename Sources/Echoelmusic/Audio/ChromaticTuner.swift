@@ -237,7 +237,8 @@ public final class ChromaticTuner {
                 amplitude: amplitude
             )
 
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
                 self.detectedFrequency = frequency
                 self.detectedNote = note
                 self.centsOffset = cents

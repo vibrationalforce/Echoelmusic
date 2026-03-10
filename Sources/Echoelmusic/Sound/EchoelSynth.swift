@@ -223,7 +223,10 @@ public final class EchoelSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelSynth()
+    nonisolated(unsafe) public static let shared: EchoelSynth = {
+        let instance = EchoelSynth()
+        return instance
+    }()
 
     // MARK: - Published State
 

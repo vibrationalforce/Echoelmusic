@@ -206,7 +206,10 @@ public struct VisualUniforms: Sendable {
 @Observable
 public final class EchoelVisEngine {
 
-    nonisolated(unsafe) public static let shared = EchoelVisEngine()
+    nonisolated(unsafe) public static let shared: EchoelVisEngine = {
+        let instance = EchoelVisEngine()
+        return instance
+    }()
 
     // MARK: - State
 

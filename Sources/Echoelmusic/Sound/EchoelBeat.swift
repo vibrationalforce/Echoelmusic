@@ -470,7 +470,10 @@ private struct DirtyDelay {
 @Observable
 public final class EchoelBeat {
 
-    nonisolated(unsafe) public static let shared = EchoelBeat()
+    nonisolated(unsafe) public static let shared: EchoelBeat = {
+        let instance = EchoelBeat()
+        return instance
+    }()
 
     // ── Published State ──
 

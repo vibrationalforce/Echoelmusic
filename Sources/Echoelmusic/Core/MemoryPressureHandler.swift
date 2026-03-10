@@ -90,7 +90,10 @@ public final class MemoryPressureHandler {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = MemoryPressureHandler()
+    nonisolated(unsafe) public static let shared: MemoryPressureHandler = {
+        let instance = MemoryPressureHandler()
+        return instance
+    }()
 
     // MARK: - Published State
 

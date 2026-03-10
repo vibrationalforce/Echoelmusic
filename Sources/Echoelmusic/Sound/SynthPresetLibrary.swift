@@ -1489,7 +1489,7 @@ public final class SynthPresetLibrary {
 
     /// Render any preset to raw Float32 audio — the universal bridge to all Echoelmusic engines.
     /// Used by BreakbeatChopper for synthetic break loading and TR808BassSynth (EchoelBeat) for drum kits.
-    public func renderPresetToAudio(_ preset: SynthPreset, targetSampleRate: Float = AudioConfiguration.preferredSampleRateFloat) -> (data: [Float], sampleRate: Float) {
+    public func renderPresetToAudio(_ preset: SynthPreset, targetSampleRate: Float = 48000.0) -> (data: [Float], sampleRate: Float) {
         let sampleRate = targetSampleRate
         let frameCount = Int(preset.duration * sampleRate)
         guard frameCount > 0 else { return ([], sampleRate) }
@@ -1514,7 +1514,7 @@ public final class SynthPresetLibrary {
     }
 
     /// Render a preset to AVAudioPCMBuffer — direct bridge for BreakbeatChopper source loading
-    public func renderPresetToBuffer(_ preset: SynthPreset, targetSampleRate: Float = AudioConfiguration.preferredSampleRateFloat) -> AVAudioPCMBuffer? {
+    public func renderPresetToBuffer(_ preset: SynthPreset, targetSampleRate: Float = 48000.0) -> AVAudioPCMBuffer? {
         let (data, sampleRate) = renderPresetToAudio(preset, targetSampleRate: targetSampleRate)
         guard !data.isEmpty else { return nil }
 

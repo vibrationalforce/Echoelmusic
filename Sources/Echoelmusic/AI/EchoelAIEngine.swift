@@ -108,7 +108,10 @@ public final class EchoelAIEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelAIEngine()
+    nonisolated(unsafe) public static let shared: EchoelAIEngine = {
+        let instance = EchoelAIEngine()
+        return instance
+    }()
 
     // MARK: - State
 
@@ -324,7 +327,10 @@ public final class EchoelAIEngine {
             var corr: Float = 0
             let count = windowCount - lag
             guard count > 0 else { continue }
-            vDSP_dotpr(onsets, 1, onsets.advanced(by: lag), 1, &corr, vDSP_Length(count))
+            onsets.withUnsafeBufferPointer { buf in
+                guard let base = buf.baseAddress else { return }
+                vDSP_dotpr(base, 1, base.advanced(by: lag), 1, &corr, vDSP_Length(count))
+            }
             if corr > bestCorr {
                 bestCorr = corr
                 bestLag = lag
@@ -427,30 +433,30 @@ public struct EchoelAIView: View {
     public init() {}
 
     public var body: some View {
-        VStack(spacing: EchoelSpacing.medium) {
-            VaporwaveSectionHeader(title: "EchoelAI", icon: "brain")
+        VStack(spacing: EchoelSpacing.md) {
+            VaporwaveSectionHeader("EchoelAI", icon: "brain")
 
             if ai.isProcessing {
                 ProgressView(value: ai.progress)
-                    .tint(EchoelBrand.accentPrimary)
+                    .tint(EchoelBrand.accent)
                     .padding(.horizontal)
             }
 
             // Analysis results
             GlassCard {
-                VStack(spacing: EchoelSpacing.small) {
+                VStack(spacing: EchoelSpacing.sm) {
                     analysisRow("Tempo", "\(Int(ai.lastAnalysis.tempo)) BPM", "metronome")
                     analysisRow("Key", ai.lastAnalysis.key, "music.note")
                     analysisRow("Loudness", String(format: "%.1f LUFS", ai.lastAnalysis.loudnessLUFS), "speaker.wave.3.fill")
                     analysisRow("True Peak", String(format: "%.1f dBFS", ai.lastAnalysis.truePeak), "waveform.badge.exclamationmark")
                     analysisRow("Brightness", String(format: "%.0f Hz", ai.lastAnalysis.spectralCentroid), "sun.max.fill")
                 }
-                .padding(EchoelSpacing.medium)
+                .padding(EchoelSpacing.md)
             }
 
             // Stem separation
             GlassCard {
-                VStack(alignment: .leading, spacing: EchoelSpacing.small) {
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                     Text("Stem Separation")
                         .font(EchoelBrandFont.label())
                         .foregroundStyle(.secondary)
@@ -459,14 +465,14 @@ public struct EchoelAIView: View {
                         HStack {
                             Image(systemName: stem.icon)
                                 .frame(width: 20)
-                                .foregroundStyle(EchoelBrand.accentPrimary)
+                                .foregroundStyle(EchoelBrand.accent)
                             Text(stem.rawValue)
                                 .font(EchoelBrandFont.body())
                             Spacer()
                         }
                     }
                 }
-                .padding(EchoelSpacing.medium)
+                .padding(EchoelSpacing.md)
             }
         }
     }
@@ -475,7 +481,7 @@ public struct EchoelAIView: View {
         HStack {
             Image(systemName: icon)
                 .frame(width: 20)
-                .foregroundStyle(EchoelBrand.accentPrimary)
+                .foregroundStyle(EchoelBrand.accent)
             Text(label)
                 .font(EchoelBrandFont.body())
             Spacer()

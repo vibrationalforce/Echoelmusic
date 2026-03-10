@@ -278,12 +278,18 @@ public final class CameraManager: NSObject {
     }
 
     deinit {
-        recordingTimer?.invalidate()
-        fpsTimer?.invalidate()
-        exposureObserver?.invalidate()
-        focusObserver?.invalidate()
-        whiteBalanceObserver?.invalidate()
-        zoomObserver?.invalidate()
+        let recTimer = recordingTimer
+        let fTimer = fpsTimer
+        let expObs = exposureObserver
+        let focObs = focusObserver
+        let wbObs = whiteBalanceObserver
+        let zObs = zoomObserver
+        recTimer?.invalidate()
+        fTimer?.invalidate()
+        expObs?.invalidate()
+        focObs?.invalidate()
+        wbObs?.invalidate()
+        zObs?.invalidate()
     }
 
     // MARK: - Discover Cameras

@@ -23,7 +23,10 @@ public final class TuningBridge {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = TuningBridge()
+    nonisolated(unsafe) public static let shared: TuningBridge = {
+        let instance = TuningBridge()
+        return instance
+    }()
 
     // MARK: - State
 

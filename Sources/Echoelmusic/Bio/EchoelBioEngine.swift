@@ -70,7 +70,10 @@ public final class EchoelBioEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelBioEngine()
+    nonisolated(unsafe) public static let shared: EchoelBioEngine = {
+        let instance = EchoelBioEngine()
+        return instance
+    }()
 
     // MARK: - Published State
 
@@ -417,7 +420,7 @@ public struct BioStatusView: View {
     public init() {}
 
     public var body: some View {
-        HStack(spacing: EchoelSpacing.small) {
+        HStack(spacing: EchoelSpacing.sm) {
             // Coherence ring
             ZStack {
                 Circle()
@@ -441,7 +444,7 @@ public struct BioStatusView: View {
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "waveform.path.ecg")
-                        .foregroundStyle(EchoelBrand.accentPrimary)
+                        .foregroundStyle(EchoelBrand.accent)
                         .font(.system(size: 10))
                     Text(String(format: "%.0f", bio.snapshot.hrvRMSSD))
                         .font(EchoelBrandFont.dataSmall())
@@ -493,7 +496,10 @@ public enum BioDataSource: String, Sendable {
 @MainActor
 @Observable
 public final class EchoelBioEngine {
-    nonisolated(unsafe) public static let shared = EchoelBioEngine()
+    nonisolated(unsafe) public static let shared: EchoelBioEngine = {
+        let instance = EchoelBioEngine()
+        return instance
+    }()
     public var snapshot: BioSnapshot = BioSnapshot()
     public var isAuthorized: Bool = false
     public var isStreaming: Bool = false
@@ -502,7 +508,7 @@ public final class EchoelBioEngine {
     public var smoothHeartRate: Double = 72.0
     public var smoothBreathPhase: Double = 0.5
     public var smoothBreathDepth: Double = 0.5
-    private init() {}
+    @MainActor private init() {}
 
     public func requestAuthorization() async -> Bool { false }
     public func startStreaming() { isStreaming = true }

@@ -217,7 +217,10 @@ public final class TR808BassSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = TR808BassSynth()
+    nonisolated(unsafe) public static let shared: TR808BassSynth = {
+        let instance = TR808BassSynth()
+        return instance
+    }()
 
     // MARK: - Published State
 

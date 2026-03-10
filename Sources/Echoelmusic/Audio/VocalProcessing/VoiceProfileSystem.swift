@@ -265,7 +265,10 @@ public enum VoiceProfileCategory: String, Codable, Sendable, CaseIterable {
 @Observable
 public final class VoiceProfileManager {
 
-    nonisolated(unsafe) public static let shared = VoiceProfileManager()
+    nonisolated(unsafe) public static let shared: VoiceProfileManager = {
+        let instance = VoiceProfileManager()
+        return instance
+    }()
 
     public var profiles: [VoiceProfile] = []
     public var activeProfile: VoiceProfile?
@@ -274,6 +277,7 @@ public final class VoiceProfileManager {
     private let storageKey = "echoelmusic_voice_profiles_v1"
     private let recentKey = "echoelmusic_voice_profiles_recent"
 
+    @MainActor
     private init() {
         loadFactoryProfiles()
         loadCustomProfiles()
@@ -939,7 +943,10 @@ public enum VoiceAnalysisError: LocalizedError {
 @Observable
 public final class VoiceSynthesisEngine {
 
-    nonisolated(unsafe) public static let shared = VoiceSynthesisEngine()
+    nonisolated(unsafe) public static let shared: VoiceSynthesisEngine = {
+        let instance = VoiceSynthesisEngine()
+        return instance
+    }()
 
     public var isRecording: Bool = false
     public var isTraining: Bool = false
@@ -951,6 +958,7 @@ public final class VoiceSynthesisEngine {
     private let profileManager = VoiceProfileManager.shared
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
+    @MainActor
     private init() {
         // Forward characterizer state using @Observable tracking
         observeCharacterizer()

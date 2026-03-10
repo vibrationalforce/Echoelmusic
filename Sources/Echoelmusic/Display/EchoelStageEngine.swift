@@ -194,7 +194,10 @@ public struct StageCue: Identifiable, Codable, Sendable {
 @Observable
 public final class EchoelStageEngine {
 
-    nonisolated(unsafe) public static let shared = EchoelStageEngine()
+    nonisolated(unsafe) public static let shared: EchoelStageEngine = {
+        let instance = EchoelStageEngine()
+        return instance
+    }()
 
     // MARK: - State
 

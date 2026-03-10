@@ -199,7 +199,10 @@ public final class OSCEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = OSCEngine()
+    nonisolated(unsafe) public static let shared: OSCEngine = {
+        let instance = OSCEngine()
+        return instance
+    }()
 
     // MARK: - State
 
@@ -360,11 +363,11 @@ public struct OSCSettingsView: View {
     public init() {}
 
     public var body: some View {
-        VStack(spacing: EchoelSpacing.medium) {
-            VaporwaveSectionHeader(title: "OSC Network", icon: "network")
+        VStack(spacing: EchoelSpacing.md) {
+            VaporwaveSectionHeader("OSC Network", icon: "network")
 
             GlassCard {
-                VStack(spacing: EchoelSpacing.small) {
+                VStack(spacing: EchoelSpacing.sm) {
                     // Status
                     HStack {
                         Circle()
@@ -416,8 +419,8 @@ public struct OSCSettingsView: View {
                         Text(engine.isRunning ? "Stop OSC" : "Start OSC")
                             .font(EchoelBrandFont.body())
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, EchoelSpacing.small)
-                            .background(engine.isRunning ? Color.red.opacity(0.3) : EchoelBrand.accentPrimary.opacity(0.3))
+                            .padding(.vertical, EchoelSpacing.sm)
+                            .background(engine.isRunning ? Color.red.opacity(0.3) : EchoelBrand.accent.opacity(0.3))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
@@ -427,7 +430,7 @@ public struct OSCSettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(EchoelSpacing.medium)
+                .padding(EchoelSpacing.md)
             }
 
             // Predefined addresses
@@ -447,7 +450,7 @@ public struct OSCSettingsView: View {
                         oscAddressRow("/echoelmusic/audio/pitch", "float Hz")
                     }
                 }
-                .padding(EchoelSpacing.medium)
+                .padding(EchoelSpacing.md)
             }
         }
     }
@@ -456,7 +459,7 @@ public struct OSCSettingsView: View {
         HStack {
             Text(address)
                 .font(EchoelBrandFont.dataSmall())
-                .foregroundStyle(EchoelBrand.accentPrimary)
+                .foregroundStyle(EchoelBrand.accent)
             Spacer()
             Text(type)
                 .font(EchoelBrandFont.dataSmall())

@@ -787,7 +787,7 @@ public final class BPMGridEditEngine {
         }
 
         // Perform onset detection and BPM estimation
-        let analysisRate = AudioConfiguration.preferredSampleRate
+        let analysisRate = Int(AudioConfiguration.preferredSampleRate)
         let onsets = detectOnsets(samples: samples, sampleRate: analysisRate)
         let (bpm, confidence) = estimateBPM(onsets: onsets, sampleRate: analysisRate)
 
@@ -796,7 +796,7 @@ public final class BPMGridEditEngine {
         var beats: [Double] = []
         var time = onsets.first ?? 0
 
-        let duration = Double(samples.count) / analysisRate
+        let duration = Double(samples.count) / Double(analysisRate)
         while time < duration {
             beats.append(time)
             time += beatInterval

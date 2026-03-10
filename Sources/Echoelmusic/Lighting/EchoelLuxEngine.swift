@@ -138,7 +138,10 @@ public final class EchoelLuxEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelLuxEngine()
+    nonisolated(unsafe) public static let shared: EchoelLuxEngine = {
+        let instance = EchoelLuxEngine()
+        return instance
+    }()
 
     // MARK: - State
 
@@ -354,8 +357,8 @@ public struct EchoelLuxView: View {
     public init() {}
 
     public var body: some View {
-        VStack(spacing: EchoelSpacing.medium) {
-            VaporwaveSectionHeader(title: "EchoelLux", icon: "lightbulb.fill")
+        VStack(spacing: EchoelSpacing.md) {
+            VaporwaveSectionHeader("EchoelLux", icon: "lightbulb.fill")
 
             // Status bar
             GlassCard {
@@ -370,12 +373,12 @@ public struct EchoelLuxView: View {
                         .font(EchoelBrandFont.caption())
                         .foregroundStyle(.secondary)
                 }
-                .padding(EchoelSpacing.small)
+                .padding(EchoelSpacing.sm)
             }
 
             // Master dimmer
             GlassCard {
-                VStack(spacing: EchoelSpacing.small) {
+                VStack(spacing: EchoelSpacing.sm) {
                     HStack {
                         Text("Master")
                             .font(EchoelBrandFont.label())
@@ -384,21 +387,21 @@ public struct EchoelLuxView: View {
                             .font(EchoelBrandFont.data())
                     }
                     Slider(value: $lux.masterDimmer, in: 0...1)
-                        .tint(EchoelBrand.accentPrimary)
+                        .tint(EchoelBrand.accent)
                 }
-                .padding(EchoelSpacing.small)
+                .padding(EchoelSpacing.sm)
             }
 
             // Bio-reactive toggle
             GlassCard {
                 Toggle("Bio-Reactive Lighting", isOn: $lux.bioReactiveEnabled)
                     .font(EchoelBrandFont.body())
-                    .padding(EchoelSpacing.small)
+                    .padding(EchoelSpacing.sm)
             }
 
             // Fixture list
             GlassCard {
-                VStack(alignment: .leading, spacing: EchoelSpacing.small) {
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                     Text("Fixtures")
                         .font(EchoelBrandFont.label())
                         .foregroundStyle(.secondary)
@@ -417,17 +420,17 @@ public struct EchoelLuxView: View {
                         }
                     }
                 }
-                .padding(EchoelSpacing.small)
+                .padding(EchoelSpacing.sm)
             }
 
             // Control buttons
-            HStack(spacing: EchoelSpacing.medium) {
+            HStack(spacing: EchoelSpacing.md) {
                 Button(action: {
                     if lux.isRunning { lux.stop() } else { lux.start() }
                 }) {
                     Label(lux.isRunning ? "Stop" : "Start", systemImage: lux.isRunning ? "stop.fill" : "play.fill")
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, EchoelSpacing.small)
+                        .padding(.vertical, EchoelSpacing.sm)
                         .background(lux.isRunning ? Color.red.opacity(0.3) : Color.green.opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
@@ -435,7 +438,7 @@ public struct EchoelLuxView: View {
                 Button(action: { lux.blackout() }) {
                     Label("Blackout", systemImage: "moon.fill")
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, EchoelSpacing.small)
+                        .padding(.vertical, EchoelSpacing.sm)
                         .background(Color.gray.opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
