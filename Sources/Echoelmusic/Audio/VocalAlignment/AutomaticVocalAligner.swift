@@ -91,10 +91,7 @@ final class AutomaticVocalAligner {
     }
 
     deinit {
-        let engine = audioEngine
-        Task { @MainActor in
-            engine.stop()
-        }
+        // AVAudioEngine stops automatically on deallocation
     }
 
     // MARK: - Setup

@@ -304,14 +304,7 @@ public final class BreakbeatChopper {
 
     deinit {
         playbackTimer?.invalidate()
-        // Capture references for nonisolated deinit — AVAudioPlayerNode/AVAudioEngine
-        // are not Sendable, so stop them via local copies
-        let player = playerNode
-        let engine = audioEngine
-        Task { @MainActor in
-            player.stop()
-            engine.stop()
-        }
+        // AVAudioEngine/AVAudioPlayerNode stop automatically on deallocation
     }
 
     private func setupAudioEngine() {

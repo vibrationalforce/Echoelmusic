@@ -1028,6 +1028,10 @@ class EchoelmusicVisualRenderer {
             return
         }
 
+        // Allocate param and audio buffers first (before async call)
+        paramsBuffer = device.makeBuffer(length: MemoryLayout<VisualParamsCPU>.stride, options: .storageModeShared)
+        audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
+
         do {
             nonisolated(unsafe) let safeDevice = device
             computePipeline = try await safeDevice.makeComputePipelineState(function: function)
@@ -1035,10 +1039,6 @@ class EchoelmusicVisualRenderer {
             log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
             return
         }
-
-        // Allocate param and audio buffers
-        paramsBuffer = device.makeBuffer(length: MemoryLayout<VisualParamsCPU>.stride, options: .storageModeShared)
-        audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
 
         if paramsBuffer == nil || audioBuffer == nil {
             log.video("EchoelmusicVisualRenderer: Failed to allocate Metal buffers", level: .error)
