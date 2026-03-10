@@ -87,6 +87,9 @@ targets:
         NSPhotoLibraryUsageDescription: "Echoelmusic can save captured photos and recorded video to your photo library"
         NSPhotoLibraryAddUsageDescription: "Echoelmusic can save captured photos and recorded video to your photo library"
         NSLocalNetworkUsageDescription: "Echoelmusic uses local network for connecting to external audio interfaces"
+        NSHealthShareUsageDescription: "Echoelmusic reads your heart rate and HRV data to create bio-reactive audio experiences that respond to your body."
+        NSHealthUpdateUsageDescription: "Echoelmusic may save your meditation and coherence training sessions to HealthKit."
+        NSMotionUsageDescription: "Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking."
         NSBonjourServices:
           - "_midi._udp"
         ITSAppUsesNonExemptEncryption: false
