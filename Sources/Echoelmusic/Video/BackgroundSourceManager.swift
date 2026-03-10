@@ -1029,7 +1029,7 @@ class EchoelmusicVisualRenderer {
         }
 
         do {
-            computePipeline = try await device.makeComputePipelineState(function: function)
+            computePipeline = try device.makeComputePipelineState(function: function)
         } catch {
             log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
             return

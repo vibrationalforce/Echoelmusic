@@ -440,8 +440,8 @@ public final class AudioToQuantumMIDI {
             }
         }
 
-        // Schedule file playback
-        await player.scheduleFile(file, at: nil)
+        // Schedule file playback (use synchronous overload to avoid sending non-Sendable types)
+        player.scheduleFile(file, at: nil)
 
         try engine.start()
         player.play()

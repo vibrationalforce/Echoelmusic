@@ -1100,28 +1100,33 @@ public final class CameraManager: NSObject {
         invalidateObservers()
 
         exposureObserver = device.observe(\.iso, options: .new) { [weak self] dev, _ in
+            let iso = dev.iso
             Task { @MainActor in
-                self?.currentISO = dev.iso
+                self?.currentISO = iso
             }
         }
 
         focusObserver = device.observe(\.lensPosition, options: .new) { [weak self] dev, _ in
+            let pos = dev.lensPosition
             Task { @MainActor in
-                self?.focusPosition = dev.lensPosition
+                self?.focusPosition = pos
             }
         }
 
         whiteBalanceObserver = device.observe(\.deviceWhiteBalanceGains, options: .new) { [weak self] dev, _ in
             let tempTint = dev.temperatureAndTintValues(for: dev.deviceWhiteBalanceGains)
+            let temp = tempTint.temperature
+            let tintVal = tempTint.tint
             Task { @MainActor in
-                self?.colorTemperature = tempTint.temperature
-                self?.tint = tempTint.tint
+                self?.colorTemperature = temp
+                self?.tint = tintVal
             }
         }
 
         zoomObserver = device.observe(\.videoZoomFactor, options: .new) { [weak self] dev, _ in
+            let zoom = dev.videoZoomFactor
             Task { @MainActor in
-                self?.zoomFactor = dev.videoZoomFactor
+                self?.zoomFactor = zoom
             }
         }
     }
@@ -1197,18 +1202,21 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
 
         let presentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        // Capture non-Sendable values for safe transfer to MainActor
+        nonisolated(unsafe) let capturedBuffer = pixelBuffer
+        nonisolated(unsafe) let capturedTime = presentationTime
 
         Task { @MainActor in
             // Raw frame callback (for analysis — lightweight, every frame)
-            self.onRawFrameCaptured?(pixelBuffer, presentationTime)
+            self.onRawFrameCaptured?(capturedBuffer, capturedTime)
 
-            guard let texture = self.createTexture(from: pixelBuffer) else {
+            guard let texture = self.createTexture(from: capturedBuffer) else {
                 self.droppedFrames += 1
                 return
             }
             self.frameCount += 1
-            self.lastFrameTime = presentationTime
-            self.onFrameCaptured?(texture, presentationTime)
+            self.lastFrameTime = capturedTime
+            self.onFrameCaptured?(texture, capturedTime)
         }
     }
 
@@ -1232,14 +1240,17 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         didFinishProcessingPhoto photo: AVCapturePhoto,
         error: Error?
     ) {
+        // Extract data before crossing actor boundary (AVCapturePhoto is non-Sendable)
+        let photoData = photo.fileDataRepresentation()
+        let capturedError = error
         Task { @MainActor in
-            if let error = error {
-                self.photoContinuation?.resume(throwing: error)
+            if let capturedError {
+                self.photoContinuation?.resume(throwing: capturedError)
                 self.photoContinuation = nil
                 return
             }
 
-            guard let data = photo.fileDataRepresentation() else {
+            guard let data = photoData else {
                 self.photoContinuation?.resume(throwing: CameraError.photoCaptureFailed)
                 self.photoContinuation = nil
                 return
@@ -1283,8 +1294,9 @@ extension CameraManager: AVCaptureDepthDataOutputDelegate {
         timestamp: CMTime,
         connection: AVCaptureConnection
     ) {
+        nonisolated(unsafe) let capturedDepth = depthData
         Task { @MainActor in
-            self.onDepthDataCaptured?(depthData)
+            self.onDepthDataCaptured?(capturedDepth)
         }
     }
 }

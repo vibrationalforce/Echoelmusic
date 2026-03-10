@@ -306,7 +306,9 @@ final class VideoExportManager {
         }
 
         startProgressMonitoring(exportSession: exportSession)
-        await exportSession.export()
+        // AVAssetExportSession is non-Sendable; use nonisolated(unsafe) for async export
+        nonisolated(unsafe) let session = exportSession
+        await session.export()
         stopProgressMonitoring()
 
         switch exportSession.status {
@@ -396,8 +398,9 @@ final class VideoExportManager {
             // Start progress monitoring
             startProgressMonitoring(exportSession: exportSession)
 
-            // Export
-            await exportSession.export()
+            // Export (nonisolated(unsafe) to avoid sending non-Sendable across actors)
+            nonisolated(unsafe) let session = exportSession
+            await session.export()
 
             stopProgressMonitoring()
 

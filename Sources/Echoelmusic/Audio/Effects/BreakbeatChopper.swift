@@ -303,11 +303,15 @@ public final class BreakbeatChopper {
     }
 
     deinit {
-        // Nonisolated cleanup — stop directly since playerNode/audioEngine
-        // are reference-type locals that outlive self via copy
         playbackTimer?.invalidate()
-        playerNode.stop()
-        audioEngine.stop()
+        // Capture references for nonisolated deinit — AVAudioPlayerNode/AVAudioEngine
+        // are not Sendable, so stop them via local copies
+        let player = playerNode
+        let engine = audioEngine
+        Task { @MainActor in
+            player.stop()
+            engine.stop()
+        }
     }
 
     private func setupAudioEngine() {
