@@ -855,7 +855,7 @@ public final class VideoProcessingEngine {
     private func calculateMemoryUsage() -> Int64 {
         // Use os_proc_available_memory which is concurrency-safe (no mach_task_self_)
         if #available(iOS 13.0, macOS 10.15, *) {
-            let available = os_proc_available_memory()
+            let available = Int64(os_proc_available_memory())
             let total = Int64(ProcessInfo.processInfo.physicalMemory)
             return total - available
         }
