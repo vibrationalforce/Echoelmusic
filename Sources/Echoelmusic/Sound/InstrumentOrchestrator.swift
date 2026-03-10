@@ -175,8 +175,7 @@ final class InstrumentOrchestrator {
             forName: NSNotification.Name("EchoelBioDataUpdated"),
             object: nil,
             queue: .main
-        ) { [weak self] notification in
-            guard let self = self else { return }
+        ) { notification in
             let coherence = notification.userInfo?["coherence"] as? Float
             let energy = notification.userInfo?["energy"] as? Float
             let hr = notification.userInfo?["heartRate"] as? Float
