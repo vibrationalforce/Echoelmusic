@@ -70,7 +70,7 @@ final class InstrumentOrchestrator {
 
     // MARK: - Combine
 
-    @ObservationIgnored private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored nonisolated(unsafe) private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
 

@@ -19,7 +19,7 @@ import Observation
 // MARK: - Step Sequencer Core
 
 /// 16-Step Visual Sequencer with Bio-Reactive Modulation
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class VisualStepSequencer {
 
@@ -87,7 +87,7 @@ public final class VisualStepSequencer {
 
     // MARK: - Singleton
 
-    public static let shared = VisualStepSequencer()
+    nonisolated(unsafe) public static let shared = VisualStepSequencer()
 
     private init() {}
 
