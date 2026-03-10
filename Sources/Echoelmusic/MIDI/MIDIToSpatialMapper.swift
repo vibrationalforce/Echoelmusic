@@ -237,7 +237,7 @@ final class MIDIToSpatialMapper {
     private func calculateAFAPosition(index: Int, total: Int, geometry: AFAField.FieldGeometry) -> SpatialPosition {
         switch geometry {
         case .circle(let radius, _):
-            let angle = (2.0 * .pi * Float(index)) / Float(total)
+            let angle = total > 0 ? (2.0 * .pi * Float(index)) / Float(total) : 0
             return SpatialPosition(
                 x: radius * cos(angle),
                 y: radius * sin(angle),
@@ -247,7 +247,7 @@ final class MIDIToSpatialMapper {
         case .sphere(let radius, _):
             // Fibonacci sphere distribution
             let phi: Float = .pi * (3.0 - sqrt(5.0))  // Golden angle
-            let y = 1.0 - (Float(index) / Float(total - 1)) * 2.0
+            let y = total > 1 ? 1.0 - (Float(index) / Float(total - 1)) * 2.0 : 0
             let radiusAtY = sqrt(1.0 - y * y)
             let theta = phi * Float(index)
 
@@ -258,7 +258,7 @@ final class MIDIToSpatialMapper {
             )
 
         case .spiral(let turns, _):
-            let t = Float(index) / Float(total)
+            let t = total > 0 ? Float(index) / Float(total) : 0
             let angle = Float(turns) * 2.0 * .pi * t
             let radius = t  // Expand outward
 

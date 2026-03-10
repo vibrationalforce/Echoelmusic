@@ -822,7 +822,7 @@ public final class QuantumMIDIOut {
         }
 
         // Calculate global coherence
-        globalCoherence = coherenceHistory.reduce(0, +) / Float(coherenceHistory.count)
+        globalCoherence = coherenceHistory.isEmpty ? 0 : coherenceHistory.reduce(0, +) / Float(coherenceHistory.count)
 
         // Count superposition voices
         superpositionVoices = activeVoices.filter { $0.quantumState.superposition > 0.5 }.count
