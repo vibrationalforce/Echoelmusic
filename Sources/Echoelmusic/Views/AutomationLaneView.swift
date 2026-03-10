@@ -98,6 +98,7 @@ struct AutomationLaneView: View {
             .gesture(
                 SpatialTapGesture()
                     .onEnded { value in
+                        guard width > 0, height > 0 else { return }
                         let time = Double(value.location.x / width) * totalDuration
                         let normalizedValue = Float(1.0 - value.location.y / height)
                         let clampedValue = Swift.max(0, Swift.min(1, normalizedValue))
@@ -225,6 +226,7 @@ struct AutomationLaneView: View {
             .gesture(
                 DragGesture(minimumDistance: 1)
                     .onChanged { drag in
+                        guard width > 0, height > 0 else { return }
                         let newTime = Swift.max(0, Double(drag.location.x / width) * totalDuration)
                         let newValue = Swift.max(0, Swift.min(1, Float(1.0 - drag.location.y / height)))
                         onUpdatePoint(track.id, lane.id, newTime, newValue)
