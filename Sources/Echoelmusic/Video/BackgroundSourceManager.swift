@@ -1033,8 +1033,16 @@ class EchoelmusicVisualRenderer {
         audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
 
         do {
-            // Use synchronous pipeline creation to avoid sending MTLDevice across actors
-            computePipeline = try device.makeComputePipelineState(function: function)
+            // Use completion handler variant to keep device on MainActor
+            computePipeline = try await withCheckedThrowingContinuation { continuation in
+                device.makeComputePipelineState(function: function) { pipeline, error in
+                    if let pipeline {
+                        continuation.resume(returning: pipeline)
+                    } else {
+                        continuation.resume(throwing: error ?? NSError(domain: "Metal", code: -1))
+                    }
+                }
+            }
         } catch {
             log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
             return
