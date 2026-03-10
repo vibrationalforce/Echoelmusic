@@ -1033,17 +1033,15 @@ class EchoelmusicVisualRenderer {
         audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
 
         do {
-            // Use completion handler variant to keep device on MainActor
-            computePipeline = try await withCheckedThrowingContinuation { continuation in
-                device.makeComputePipelineState(function: function) { pipeline, error in
-                    if let pipeline {
-                        nonisolated(unsafe) let safePipeline = pipeline
-                        continuation.resume(returning: safePipeline)
-                    } else {
-                        continuation.resume(throwing: error ?? NSError(domain: "Metal", code: -1))
-                    }
+            // Create pipeline on a detached task to avoid MainActor sending issues
+            nonisolated(unsafe) let safeFunction = function
+            let pipeline = try await Task.detached {
+                guard let dev = MTLCreateSystemDefaultDevice() else {
+                    throw NSError(domain: "Metal", code: -1, userInfo: [NSLocalizedDescriptionKey: "No Metal device"])
                 }
-            }
+                return try dev.makeComputePipelineState(function: safeFunction)
+            }.value
+            computePipeline = pipeline
         } catch {
             log.video("EchoelmusicVisualRenderer: Pipeline error: \(error)", level: .error)
             return
