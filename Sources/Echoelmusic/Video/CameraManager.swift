@@ -14,7 +14,7 @@ import Observation
 /// Optimized for 120 FPS @ 1080p on iPhone 16 Pro
 /// Zero-copy texture pipeline from camera to Metal
 /// Full manual exposure, focus, white balance, zoom, stabilization, HDR, depth, photo & ProRes
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class CameraManager: NSObject {
 
@@ -228,11 +228,11 @@ public final class CameraManager: NSObject {
 
     private var lastFrameTime: CMTime?
     private var frameCount: Int = 0
-    private var fpsTimer: Timer?
+    nonisolated(unsafe) private var fpsTimer: Timer?
 
     // MARK: - Recording State
 
-    private var recordingTimer: Timer?
+    nonisolated(unsafe) private var recordingTimer: Timer?
     private var photoContinuation: CheckedContinuation<Data, Error>?
 
     // MARK: - KVO Observers
@@ -278,18 +278,12 @@ public final class CameraManager: NSObject {
     }
 
     deinit {
-        let recTimer = recordingTimer
-        let fTimer = fpsTimer
-        let expObs = exposureObserver
-        let focObs = focusObserver
-        let wbObs = whiteBalanceObserver
-        let zObs = zoomObserver
-        recTimer?.invalidate()
-        fTimer?.invalidate()
-        expObs?.invalidate()
-        focObs?.invalidate()
-        wbObs?.invalidate()
-        zObs?.invalidate()
+        recordingTimer?.invalidate()
+        fpsTimer?.invalidate()
+        exposureObserver?.invalidate()
+        focusObserver?.invalidate()
+        whiteBalanceObserver?.invalidate()
+        zoomObserver?.invalidate()
     }
 
     // MARK: - Discover Cameras

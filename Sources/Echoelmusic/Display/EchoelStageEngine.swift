@@ -190,14 +190,11 @@ public struct StageCue: Identifiable, Codable, Sendable {
 /// - Creates UIWindow per external screen
 /// - Renders scenes via display link for smooth animation
 /// - Bio-reactive: coherence → color, HRV → transition speed, HR → pulse, breath → opacity
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelStageEngine {
 
-    nonisolated(unsafe) public static let shared: EchoelStageEngine = {
-        let instance = EchoelStageEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelStageEngine()
 
     // MARK: - State
 

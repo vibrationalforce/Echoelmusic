@@ -64,16 +64,13 @@ public enum BioDataSource: String, Sendable {
 // MARK: - EchoelBioEngine
 
 /// Real biofeedback engine with HealthKit integration
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelBioEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: EchoelBioEngine = {
-        let instance = EchoelBioEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelBioEngine()
 
     // MARK: - Published State
 
@@ -493,13 +490,10 @@ public enum BioDataSource: String, Sendable {
     case fallback = "Simulated"
 }
 
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelBioEngine {
-    nonisolated(unsafe) public static let shared: EchoelBioEngine = {
-        let instance = EchoelBioEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelBioEngine()
     public var snapshot: BioSnapshot = BioSnapshot()
     public var isAuthorized: Bool = false
     public var isStreaming: Bool = false
@@ -508,7 +502,7 @@ public final class EchoelBioEngine {
     public var smoothHeartRate: Double = 72.0
     public var smoothBreathPhase: Double = 0.5
     public var smoothBreathDepth: Double = 0.5
-    @MainActor private init() {}
+    private init() {}
 
     public func requestAuthorization() async -> Bool { false }
     public func startStreaming() { isStreaming = true }

@@ -8,7 +8,7 @@ import Observation
 
 /// Unified workspace bridging Audio + Video engines into one workflow.
 /// BPM Grid syncs audio timing with video timeline.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 final class EchoelCreativeWorkspace {
 

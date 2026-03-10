@@ -132,16 +132,13 @@ public struct LightingScene: Identifiable, Codable, Sendable {
 // MARK: - EchoelLux Engine
 
 /// DMX 512 lighting controller via Art-Net
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelLuxEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: EchoelLuxEngine = {
-        let instance = EchoelLuxEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelLuxEngine()
 
     // MARK: - State
 
@@ -160,13 +157,13 @@ public final class EchoelLuxEngine {
 
     // MARK: - Network
 
-    private var connection: NWConnection?
+    nonisolated(unsafe) private var connection: NWConnection?
     private let sendQueue = DispatchQueue(label: "com.echoelmusic.artnet", qos: .userInteractive)
     private var targetHost: String = "255.255.255.255" // Broadcast by default
     private var targetPort: UInt16 = ArtNetConstants.port
 
     /// Update rate (max 44 packets/sec per Art-Net spec, we use 40Hz)
-    private var updateTimer: Timer?
+    nonisolated(unsafe) private var updateTimer: Timer?
 
     // MARK: - Safety
 
@@ -361,67 +358,63 @@ public struct EchoelLuxView: View {
             VaporwaveSectionHeader("EchoelLux", icon: "lightbulb.fill")
 
             // Status bar
-            GlassCard {
-                HStack {
-                    Circle()
-                        .fill(lux.isRunning ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
-                    Text(lux.isRunning ? "Art-Net Active" : "Offline")
-                        .font(EchoelBrandFont.body())
-                    Spacer()
-                    Text("\(lux.fixtures.count) fixtures")
-                        .font(EchoelBrandFont.caption())
-                        .foregroundStyle(.secondary)
-                }
-                .padding(EchoelSpacing.sm)
+            HStack {
+                Circle()
+                    .fill(lux.isRunning ? Color.green : Color.red)
+                    .frame(width: 8, height: 8)
+                Text(lux.isRunning ? "Art-Net Active" : "Offline")
+                    .font(EchoelBrandFont.body())
+                Spacer()
+                Text("\(lux.fixtures.count) fixtures")
+                    .font(EchoelBrandFont.caption())
+                    .foregroundStyle(.secondary)
             }
+            .padding(EchoelSpacing.sm)
+            .glassCard()
 
             // Master dimmer
-            GlassCard {
-                VStack(spacing: EchoelSpacing.sm) {
-                    HStack {
-                        Text("Master")
-                            .font(EchoelBrandFont.label())
-                        Spacer()
-                        Text("\(Int(lux.masterDimmer * 100))%")
-                            .font(EchoelBrandFont.data())
-                    }
-                    Slider(value: $lux.masterDimmer, in: 0...1)
-                        .tint(EchoelBrand.accent)
+            VStack(spacing: EchoelSpacing.sm) {
+                HStack {
+                    Text("Master")
+                        .font(EchoelBrandFont.label())
+                    Spacer()
+                    Text("\(Int(lux.masterDimmer * 100))%")
+                        .font(EchoelBrandFont.data())
                 }
-                .padding(EchoelSpacing.sm)
+                Slider(value: $lux.masterDimmer, in: 0...1)
+                    .tint(EchoelBrand.accent)
             }
+            .padding(EchoelSpacing.sm)
+            .glassCard()
 
             // Bio-reactive toggle
-            GlassCard {
-                Toggle("Bio-Reactive Lighting", isOn: $lux.bioReactiveEnabled)
-                    .font(EchoelBrandFont.body())
-                    .padding(EchoelSpacing.sm)
-            }
+            Toggle("Bio-Reactive Lighting", isOn: $lux.bioReactiveEnabled)
+                .font(EchoelBrandFont.body())
+                .padding(EchoelSpacing.sm)
+                .glassCard()
 
             // Fixture list
-            GlassCard {
-                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
-                    Text("Fixtures")
-                        .font(EchoelBrandFont.label())
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                Text("Fixtures")
+                    .font(EchoelBrandFont.label())
+                    .foregroundStyle(.secondary)
 
-                    ForEach(lux.fixtures) { fixture in
-                        HStack {
-                            Circle()
-                                .fill(fixture.isEnabled ? Color.green : Color.gray)
-                                .frame(width: 6, height: 6)
-                            Text(fixture.name)
-                                .font(EchoelBrandFont.body())
-                            Spacer()
-                            Text("\(fixture.type.rawValue) @\(fixture.startAddress)")
-                                .font(EchoelBrandFont.dataSmall())
-                                .foregroundStyle(.secondary)
-                        }
+                ForEach(lux.fixtures) { fixture in
+                    HStack {
+                        Circle()
+                            .fill(fixture.isEnabled ? Color.green : Color.gray)
+                            .frame(width: 6, height: 6)
+                        Text(fixture.name)
+                            .font(EchoelBrandFont.body())
+                        Spacer()
+                        Text("\(fixture.type.rawValue) @\(fixture.startAddress)")
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .padding(EchoelSpacing.sm)
             }
+            .padding(EchoelSpacing.sm)
+            .glassCard()
 
             // Control buttons
             HStack(spacing: EchoelSpacing.md) {

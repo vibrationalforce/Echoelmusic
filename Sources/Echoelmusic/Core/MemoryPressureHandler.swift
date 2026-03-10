@@ -84,16 +84,13 @@ public protocol MemoryReleasable: AnyObject {
 /// }
 /// ```
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class MemoryPressureHandler {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: MemoryPressureHandler = {
-        let instance = MemoryPressureHandler()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = MemoryPressureHandler()
 
     // MARK: - Published State
 

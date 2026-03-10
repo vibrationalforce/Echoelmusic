@@ -284,16 +284,13 @@ private struct EchoelBassVoice {
 
 /// EchoelBass — 5-Engine Morphing Bass Synthesizer
 /// Professional sub-bass to aggressive growl, with bio-reactive control.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelBass {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: EchoelBass = {
-        let instance = EchoelBass()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelBass()
 
     // MARK: - Published State
 

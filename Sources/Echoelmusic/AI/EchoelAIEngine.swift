@@ -102,16 +102,13 @@ public struct LUFSMeasurement: Sendable {
 // MARK: - EchoelAI Engine
 
 /// On-device audio intelligence engine
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelAIEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: EchoelAIEngine = {
-        let instance = EchoelAIEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelAIEngine()
 
     // MARK: - State
 
@@ -443,37 +440,35 @@ public struct EchoelAIView: View {
             }
 
             // Analysis results
-            GlassCard {
-                VStack(spacing: EchoelSpacing.sm) {
-                    analysisRow("Tempo", "\(Int(ai.lastAnalysis.tempo)) BPM", "metronome")
-                    analysisRow("Key", ai.lastAnalysis.key, "music.note")
-                    analysisRow("Loudness", String(format: "%.1f LUFS", ai.lastAnalysis.loudnessLUFS), "speaker.wave.3.fill")
-                    analysisRow("True Peak", String(format: "%.1f dBFS", ai.lastAnalysis.truePeak), "waveform.badge.exclamationmark")
-                    analysisRow("Brightness", String(format: "%.0f Hz", ai.lastAnalysis.spectralCentroid), "sun.max.fill")
-                }
-                .padding(EchoelSpacing.md)
+            VStack(spacing: EchoelSpacing.sm) {
+                analysisRow("Tempo", "\(Int(ai.lastAnalysis.tempo)) BPM", "metronome")
+                analysisRow("Key", ai.lastAnalysis.key, "music.note")
+                analysisRow("Loudness", String(format: "%.1f LUFS", ai.lastAnalysis.loudnessLUFS), "speaker.wave.3.fill")
+                analysisRow("True Peak", String(format: "%.1f dBFS", ai.lastAnalysis.truePeak), "waveform.badge.exclamationmark")
+                analysisRow("Brightness", String(format: "%.0f Hz", ai.lastAnalysis.spectralCentroid), "sun.max.fill")
             }
+            .padding(EchoelSpacing.md)
+            .glassCard()
 
             // Stem separation
-            GlassCard {
-                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
-                    Text("Stem Separation")
-                        .font(EchoelBrandFont.label())
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                Text("Stem Separation")
+                    .font(EchoelBrandFont.label())
+                    .foregroundStyle(.secondary)
 
-                    ForEach(AudioStem.allCases.filter { $0 != .full }, id: \.self) { stem in
-                        HStack {
-                            Image(systemName: stem.icon)
-                                .frame(width: 20)
-                                .foregroundStyle(EchoelBrand.accent)
-                            Text(stem.rawValue)
-                                .font(EchoelBrandFont.body())
-                            Spacer()
-                        }
+                ForEach(AudioStem.allCases.filter { $0 != .full }, id: \.self) { stem in
+                    HStack {
+                        Image(systemName: stem.icon)
+                            .frame(width: 20)
+                            .foregroundStyle(EchoelBrand.accent)
+                        Text(stem.rawValue)
+                            .font(EchoelBrandFont.body())
+                        Spacer()
                     }
                 }
-                .padding(EchoelSpacing.md)
             }
+            .padding(EchoelSpacing.md)
+            .glassCard()
         }
     }
 

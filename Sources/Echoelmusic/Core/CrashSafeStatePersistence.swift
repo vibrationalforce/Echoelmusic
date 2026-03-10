@@ -123,16 +123,13 @@ public struct SessionState: Codable, Sendable {
 /// }
 /// ```
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class CrashSafeStatePersistence {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: CrashSafeStatePersistence = {
-        let instance = CrashSafeStatePersistence()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = CrashSafeStatePersistence()
 
     // MARK: - Published State
 

@@ -466,14 +466,11 @@ private struct DirtyDelay {
 
 /// Professional drum machine with real-time 808 hihat synthesis, roll sequencer,
 /// dirty delay, trap presets, and SynthPresetLibrary integration.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelBeat {
 
-    nonisolated(unsafe) public static let shared: EchoelBeat = {
-        let instance = EchoelBeat()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelBeat()
 
     // ── Published State ──
 

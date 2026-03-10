@@ -50,16 +50,13 @@ public enum AppThemeMode: String, CaseIterable, Codable, Sendable {
 
 /// Central theme manager for seamless dark/light mode switching.
 /// Persists user preference via UserDefaults.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class ThemeManager {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: ThemeManager = {
-        let instance = ThemeManager()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = ThemeManager()
 
     // MARK: - Observed State
 

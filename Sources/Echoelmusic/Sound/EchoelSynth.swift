@@ -217,16 +217,13 @@ private struct EchoelSynthVoice {
 
 /// EchoelSynth — 5-Engine Polyphonic Melodic Synthesizer
 /// Covers Lead, Keys, Pad, Pluck — all with real-time AVAudioSourceNode rendering.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: EchoelSynth = {
-        let instance = EchoelSynth()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelSynth()
 
     // MARK: - Published State
 

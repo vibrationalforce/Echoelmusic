@@ -202,14 +202,11 @@ public struct VisualUniforms: Sendable {
 /// - Hilbert curve maps 1D bio data to 2D visual space
 ///
 /// Performance targets: <30% CPU, 120fps on ProMotion, <200MB memory
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class EchoelVisEngine {
 
-    nonisolated(unsafe) public static let shared: EchoelVisEngine = {
-        let instance = EchoelVisEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = EchoelVisEngine()
 
     // MARK: - State
 

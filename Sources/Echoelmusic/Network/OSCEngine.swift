@@ -193,16 +193,13 @@ public struct OSCMessage: Sendable {
 // MARK: - OSC Engine
 
 /// Bidirectional OSC sender/receiver engine
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class OSCEngine {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: OSCEngine = {
-        let instance = OSCEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = OSCEngine()
 
     // MARK: - State
 
@@ -366,92 +363,90 @@ public struct OSCSettingsView: View {
         VStack(spacing: EchoelSpacing.md) {
             VaporwaveSectionHeader("OSC Network", icon: "network")
 
-            GlassCard {
-                VStack(spacing: EchoelSpacing.sm) {
-                    // Status
-                    HStack {
-                        Circle()
-                            .fill(engine.isRunning ? Color.green : Color.red)
-                            .frame(width: 8, height: 8)
-                        Text(engine.isRunning ? "Connected" : "Disconnected")
-                            .font(EchoelBrandFont.body())
-                        Spacer()
-                        Text("\(engine.messageCount) msgs")
-                            .font(EchoelBrandFont.caption())
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Divider()
-
-                    // Send config
-                    HStack {
-                        Text("Send to:")
-                            .font(EchoelBrandFont.label())
-                        TextField("Host", text: $engine.sendHost)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 140)
-                        Text(":")
-                        TextField("Port", value: $engine.sendPort, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 70)
-                    }
-
-                    // Receive config
-                    HStack {
-                        Text("Listen on:")
-                            .font(EchoelBrandFont.label())
-                        Spacer()
-                        TextField("Port", value: $engine.receivePort, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 70)
-                    }
-
-                    Divider()
-
-                    // Toggle
-                    Button(action: {
-                        if engine.isRunning {
-                            engine.stop()
-                        } else {
-                            engine.start()
-                        }
-                    }) {
-                        Text(engine.isRunning ? "Stop OSC" : "Start OSC")
-                            .font(EchoelBrandFont.body())
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, EchoelSpacing.sm)
-                            .background(engine.isRunning ? Color.red.opacity(0.3) : EchoelBrand.accent.opacity(0.3))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-
-                    if !engine.lastReceivedAddress.isEmpty {
-                        Text("Last: \(engine.lastReceivedAddress)")
-                            .font(EchoelBrandFont.dataSmall())
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(spacing: EchoelSpacing.sm) {
+                // Status
+                HStack {
+                    Circle()
+                        .fill(engine.isRunning ? Color.green : Color.red)
+                        .frame(width: 8, height: 8)
+                    Text(engine.isRunning ? "Connected" : "Disconnected")
+                        .font(EchoelBrandFont.body())
+                    Spacer()
+                    Text("\(engine.messageCount) msgs")
+                        .font(EchoelBrandFont.caption())
+                        .foregroundStyle(.secondary)
                 }
-                .padding(EchoelSpacing.md)
+
+                Divider()
+
+                // Send config
+                HStack {
+                    Text("Send to:")
+                        .font(EchoelBrandFont.label())
+                    TextField("Host", text: $engine.sendHost)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 140)
+                    Text(":")
+                    TextField("Port", value: $engine.sendPort, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 70)
+                }
+
+                // Receive config
+                HStack {
+                    Text("Listen on:")
+                        .font(EchoelBrandFont.label())
+                    Spacer()
+                    TextField("Port", value: $engine.receivePort, format: .number)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 70)
+                }
+
+                Divider()
+
+                // Toggle
+                Button(action: {
+                    if engine.isRunning {
+                        engine.stop()
+                    } else {
+                        engine.start()
+                    }
+                }) {
+                    Text(engine.isRunning ? "Stop OSC" : "Start OSC")
+                        .font(EchoelBrandFont.body())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, EchoelSpacing.sm)
+                        .background(engine.isRunning ? Color.red.opacity(0.3) : EchoelBrand.accent.opacity(0.3))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                if !engine.lastReceivedAddress.isEmpty {
+                    Text("Last: \(engine.lastReceivedAddress)")
+                        .font(EchoelBrandFont.dataSmall())
+                        .foregroundStyle(.secondary)
+                }
             }
+            .padding(EchoelSpacing.md)
+            .glassCard()
 
             // Predefined addresses
-            GlassCard {
-                VStack(alignment: .leading, spacing: EchoelSpacing.tiny) {
-                    Text("Echoelmusic OSC Addresses")
-                        .font(EchoelBrandFont.label())
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
+                Text("Echoelmusic OSC Addresses")
+                    .font(EchoelBrandFont.label())
+                    .foregroundStyle(.secondary)
 
-                    Group {
-                        oscAddressRow("/echoelmusic/bio/heart/bpm", "float [40-200]")
-                        oscAddressRow("/echoelmusic/bio/heart/hrv", "float [0-1]")
-                        oscAddressRow("/echoelmusic/bio/breath/rate", "float [4-30]")
-                        oscAddressRow("/echoelmusic/bio/breath/phase", "float [0-1]")
-                        oscAddressRow("/echoelmusic/bio/coherence", "float [0-1]")
-                        oscAddressRow("/echoelmusic/audio/rms", "float [0-1]")
-                        oscAddressRow("/echoelmusic/audio/pitch", "float Hz")
-                    }
+                Group {
+                    oscAddressRow("/echoelmusic/bio/heart/bpm", "float [40-200]")
+                    oscAddressRow("/echoelmusic/bio/heart/hrv", "float [0-1]")
+                    oscAddressRow("/echoelmusic/bio/breath/rate", "float [4-30]")
+                    oscAddressRow("/echoelmusic/bio/breath/phase", "float [0-1]")
+                    oscAddressRow("/echoelmusic/bio/coherence", "float [0-1]")
+                    oscAddressRow("/echoelmusic/audio/rms", "float [0-1]")
+                    oscAddressRow("/echoelmusic/audio/pitch", "float Hz")
                 }
-                .padding(EchoelSpacing.md)
             }
+            .padding(EchoelSpacing.md)
+            .glassCard()
         }
     }
 

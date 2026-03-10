@@ -17,17 +17,14 @@ import Observation
 // MARK: - Tuning Manager
 
 /// Global concert pitch manager — single source of truth for A4 reference
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class TuningManager {
 
     // MARK: - Singleton
 
     /// Shared instance — use this across all engines
-    nonisolated(unsafe) public static let shared: TuningManager = {
-        let instance = TuningManager()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = TuningManager()
 
     // MARK: - Published State
 

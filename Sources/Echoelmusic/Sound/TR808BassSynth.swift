@@ -211,16 +211,13 @@ private struct DrumPlayback {
 
 /// EchoelBeat — Professional 808 Bass Synthesizer + Full Drum Machine
 /// Integrates with SynthPresetLibrary for access to 65+ parametric drum presets across 12 genre kits.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class TR808BassSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: TR808BassSynth = {
-        let instance = TR808BassSynth()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = TR808BassSynth()
 
     // MARK: - Published State
 

@@ -261,14 +261,11 @@ public enum VoiceProfileCategory: String, Codable, Sendable, CaseIterable {
 
 /// Manages voice profiles — factory presets, custom profiles, persistence, and application to ProVocalChain.
 /// Extends the existing PresetManager pattern (QuantumPresets.swift).
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class VoiceProfileManager {
 
-    nonisolated(unsafe) public static let shared: VoiceProfileManager = {
-        let instance = VoiceProfileManager()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = VoiceProfileManager()
 
     public var profiles: [VoiceProfile] = []
     public var activeProfile: VoiceProfile?
@@ -277,7 +274,6 @@ public final class VoiceProfileManager {
     private let storageKey = "echoelmusic_voice_profiles_v1"
     private let recentKey = "echoelmusic_voice_profiles_recent"
 
-    @MainActor
     private init() {
         loadFactoryProfiles()
         loadCustomProfiles()
@@ -619,7 +615,7 @@ public final class VoiceProfileManager {
 
 /// Analyzes a recorded voice sample to extract a voice fingerprint (MFCC, formants, pitch range).
 /// Uses the existing AudioFeatureExtractor from EnhancedMLModels.swift — no duplicate code.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class VoiceCharacterizer {
 
@@ -939,14 +935,11 @@ public enum VoiceAnalysisError: LocalizedError {
 
 /// Bridges voice characterization, ProVocalChain processing, and Apple Personal Voice API.
 /// Provides real-time voice transformation based on VoiceProfile targets.
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class VoiceSynthesisEngine {
 
-    nonisolated(unsafe) public static let shared: VoiceSynthesisEngine = {
-        let instance = VoiceSynthesisEngine()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = VoiceSynthesisEngine()
 
     public var isRecording: Bool = false
     public var isTraining: Bool = false
@@ -958,7 +951,6 @@ public final class VoiceSynthesisEngine {
     private let profileManager = VoiceProfileManager.shared
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
-    @MainActor
     private init() {
         // Forward characterizer state using @Observable tracking
         observeCharacterizer()

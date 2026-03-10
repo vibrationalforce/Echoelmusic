@@ -17,16 +17,13 @@ import Observation
 // MARK: - Tuning Bridge
 
 /// Connects TuningManager to all audio subsystems
-@MainActor
+@preconcurrency @MainActor
 @Observable
 public final class TuningBridge {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared: TuningBridge = {
-        let instance = TuningBridge()
-        return instance
-    }()
+    nonisolated(unsafe) public static let shared = TuningBridge()
 
     // MARK: - State
 
