@@ -42,7 +42,7 @@ struct MixerFFTView: View {
                 cornerSize: CGSize(width: 2, height: 2)
             )
 
-            context.fill(barPath, with: .color(.white.opacity(0.1)))
+            context.fill(barPath, with: .color(EchoelBrand.bgElevated))
         }
     }
 

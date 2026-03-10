@@ -1086,6 +1086,31 @@ struct VideoExportSheet: View {
                 }
             }
         }
+        .overlay {
+            if exportManager.isExporting {
+                ZStack {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: EchoelSpacing.md) {
+                        ProgressView("Exporting...")
+                            .progressViewStyle(.circular)
+                            .tint(EchoelBrand.primary)
+                            .foregroundColor(EchoelBrand.textPrimary)
+
+                        Text("\(Int(exportManager.exportProgress * 100))%")
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundColor(EchoelBrand.textPrimary)
+                    }
+                    .padding(EchoelSpacing.xl)
+                    .background(
+                        RoundedRectangle(cornerRadius: EchoelRadius.lg)
+                            .fill(EchoelBrand.bgSurface)
+                    )
+                }
+                .allowsHitTesting(true)
+            }
+        }
     }
 
     // MARK: - Template Grid

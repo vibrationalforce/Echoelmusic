@@ -699,6 +699,8 @@ public struct ClipLauncherGridView: View {
                     .font(.title2)
                     .foregroundColor(launcher.isPlaying ? .red : .green)
             }
+            .accessibilityLabel(launcher.isPlaying ? "Stop playback" : "Start playback")
+            .accessibilityHint("Toggles global clip launcher playback")
 
             Divider().frame(height: 30)
 
@@ -710,6 +712,8 @@ public struct ClipLauncherGridView: View {
                 TextField("", value: $launcher.tempo, format: .number)
                     .frame(width: 60)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityLabel("Tempo in BPM")
+                    .accessibilityValue("\(Int(launcher.tempo)) BPM")
             }
 
             Divider().frame(height: 30)
@@ -742,6 +746,8 @@ public struct ClipLauncherGridView: View {
                         .font(.caption)
                         .foregroundColor(EchoelBrand.textPrimary)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Bio coherence \(Int(launcher.currentCoherence * 100)) percent")
             }
 
             // Settings
@@ -749,6 +755,8 @@ public struct ClipLauncherGridView: View {
                 Image(systemName: "gear")
                     .foregroundColor(EchoelBrand.textPrimary)
             }
+            .accessibilityLabel("Clip launcher settings")
+            .accessibilityHint("Opens grid, bio-reactive, and quantization settings")
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -788,6 +796,9 @@ public struct ClipLauncherGridView: View {
                         .frame(width: 20, height: 16)
                         .background(track.isMuted ? Color.orange.opacity(0.3) : Color.clear)
                         .cornerRadius(2)
+                        .accessibilityLabel("Mute \(track.name)")
+                        .accessibilityHint(track.isMuted ? "Unmutes this track" : "Mutes this track")
+                        .accessibilityAddTraits(track.isMuted ? .isSelected : [])
 
                         // Solo
                         Button(action: { launcher.toggleSolo(trackIndex: index) }) {
@@ -798,6 +809,9 @@ public struct ClipLauncherGridView: View {
                         .frame(width: 20, height: 16)
                         .background(track.isSoloed ? Color.yellow.opacity(0.3) : Color.clear)
                         .cornerRadius(2)
+                        .accessibilityLabel("Solo \(track.name)")
+                        .accessibilityHint(track.isSoloed ? "Removes solo from this track" : "Solos this track")
+                        .accessibilityAddTraits(track.isSoloed ? .isSelected : [])
                     }
                 }
                 .frame(width: 80, height: 40)
@@ -821,6 +835,9 @@ public struct ClipLauncherGridView: View {
             .frame(width: 60, height: 50)
             .background(launcher.selectedSceneIndex == index ? Color.green.opacity(0.5) : Color(white: 0.2))
         }
+        .accessibilityLabel("Launch \(scene.name)")
+        .accessibilityHint("Launches all clips in \(scene.name)")
+        .accessibilityAddTraits(launcher.selectedSceneIndex == index ? .isSelected : [])
     }
 
     // MARK: - Clip Cell
@@ -868,6 +885,34 @@ public struct ClipLauncherGridView: View {
             )
         }
         .cornerRadius(4)
+        .accessibilityLabel(clipAccessibilityLabel(clip: clip, trackIndex: trackIndex, clipIndex: clipIndex))
+        .accessibilityHint(clipAccessibilityHint(clip: clip))
+    }
+
+    private func clipAccessibilityLabel(clip: LauncherClip, trackIndex: Int, clipIndex: Int) -> String {
+        let trackName = trackIndex < launcher.tracks.count ? launcher.tracks[trackIndex].name : "Track \(trackIndex + 1)"
+        let sceneName = clipIndex < launcher.scenes.count ? launcher.scenes[clipIndex].name : "Scene \(clipIndex + 1)"
+
+        if clip.type == .empty {
+            return "Empty pad, \(trackName), \(sceneName)"
+        }
+
+        let stateDescription: String
+        switch clip.state {
+        case .stopped: stateDescription = "stopped"
+        case .queued: stateDescription = "queued"
+        case .playing: stateDescription = "playing"
+        case .recording: stateDescription = "recording"
+        }
+
+        return "\(clip.name), \(stateDescription), \(trackName), \(sceneName)"
+    }
+
+    private func clipAccessibilityHint(clip: LauncherClip) -> String {
+        if clip.type == .empty {
+            return "Empty clip slot"
+        }
+        return clip.state == .playing ? "Stops this clip" : "Launches this clip"
     }
 
     private func clipStateColor(_ state: LauncherClip.ClipState) -> Color {
@@ -897,9 +942,11 @@ public struct ClipLauncherGridView: View {
                     .frame(width: 60, height: 30)
                     .background(Color(white: 0.15))
             }
+            .accessibilityLabel("Stop all clips")
+            .accessibilityHint("Stops all playing and queued clips across all tracks")
 
             // Stop buttons for each track
-            ForEach(Array(launcher.tracks.enumerated()), id: \.element.id) { index, _ in
+            ForEach(Array(launcher.tracks.enumerated()), id: \.element.id) { index, track in
                 Button(action: { launcher.stopTrackClips(trackIndex: index) }) {
                     Image(systemName: "stop.fill")
                         .font(.system(size: 10))
@@ -907,6 +954,8 @@ public struct ClipLauncherGridView: View {
                         .frame(width: 80, height: 30)
                         .background(Color(white: 0.15))
                 }
+                .accessibilityLabel("Stop \(track.name)")
+                .accessibilityHint("Stops all clips in \(track.name)")
             }
         }
     }
@@ -929,6 +978,8 @@ public struct ClipLauncherGridView: View {
                         .frame(height: 60)
                         .rotationEffect(.degrees(-90))
                         .frame(width: 60, height: 80)
+                        .accessibilityLabel("\(track.name) volume")
+                        .accessibilityValue("\(Int(track.volume * 100)) percent")
 
                         // Volume value
                         Text("\(Int(track.volume * 100))")

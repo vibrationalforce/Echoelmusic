@@ -33,12 +33,12 @@ struct RecordingWaveformView: View {
         var centerPath = Path()
         centerPath.move(to: CGPoint(x: 0, y: midY))
         centerPath.addLine(to: CGPoint(x: size.width, y: midY))
-        context.stroke(centerPath, with: .color(.white.opacity(0.2)), lineWidth: 1)
+        context.stroke(centerPath, with: .color(EchoelBrand.bgElevated), lineWidth: 1)
 
         // Draw placeholder text
         let text = Text("Waiting for audio...")
             .font(.system(size: 12))
-            .foregroundColor(.white.opacity(0.4))
+            .foregroundColor(EchoelBrand.textSecondary)
         context.draw(text, at: CGPoint(x: size.width / 2, y: midY))
     }
 
@@ -51,7 +51,7 @@ struct RecordingWaveformView: View {
         var centerPath = Path()
         centerPath.move(to: CGPoint(x: 0, y: midY))
         centerPath.addLine(to: CGPoint(x: width, y: midY))
-        context.stroke(centerPath, with: .color(.white.opacity(0.1)), lineWidth: 1)
+        context.stroke(centerPath, with: .color(EchoelBrand.bgElevated), lineWidth: 1)
 
         // Draw waveform path
         var waveformPath = Path()
@@ -115,7 +115,7 @@ struct RecordingWaveformView: View {
             ),
             cornerSize: CGSize(width: 2, height: 2)
         )
-        context.fill(backgroundRect, with: .color(.white.opacity(0.1)))
+        context.fill(backgroundRect, with: .color(EchoelBrand.bgElevated))
 
         // Level fill
         let fillHeight = indicatorHeight * CGFloat(level)

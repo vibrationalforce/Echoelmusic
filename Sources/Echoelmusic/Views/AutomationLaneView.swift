@@ -218,7 +218,7 @@ struct AutomationLaneView: View {
             .frame(width: isHovered ? 10 : 7, height: isHovered ? 10 : 7)
             .overlay(
                 Circle()
-                    .stroke(Color.white.opacity(0.8), lineWidth: isHovered ? 1.5 : 0.5)
+                    .stroke(EchoelBrand.textPrimary, lineWidth: isHovered ? 1.5 : 0.5)
             )
             .shadow(color: paramColor.opacity(0.5), radius: isHovered ? 4 : 0)
             .position(x: x, y: y)

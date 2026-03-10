@@ -392,6 +392,9 @@ public struct VisualStepSequencerView: View {
                         .foregroundColor(sequencer.bioModulation.tempoLockEnabled ? .red : .gray)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Bio tempo lock")
+                .accessibilityHint("Syncs tempo to heart rate when enabled")
+                .accessibilityAddTraits(sequencer.bioModulation.tempoLockEnabled ? .isSelected : [])
             }
 
             // Step Grid
@@ -406,13 +409,16 @@ public struct VisualStepSequencerView: View {
 
                         // Steps
                         ForEach(0..<VisualStepSequencer.stepCount, id: \.self) { step in
+                            let isActive = sequencer.pattern.isActive(channel: channel, step: step)
                             StepButton(
-                                isActive: sequencer.pattern.isActive(channel: channel, step: step),
+                                isActive: isActive,
                                 isCurrent: sequencer.currentStep == step && sequencer.isPlaying,
                                 color: channel.color
                             ) {
                                 sequencer.toggleStep(channel: channel, step: step)
                             }
+                            .accessibilityLabel("\(channel.name) step \(step + 1), \(isActive ? "active" : "inactive")")
+                            .accessibilityHint("Double-tap to \(isActive ? "deactivate" : "activate") this step")
                         }
                     }
                 }
@@ -426,6 +432,8 @@ public struct VisualStepSequencerView: View {
                         .foregroundColor(EchoelBrand.textPrimary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Stop")
+                .accessibilityHint("Stops playback and resets to step 1")
 
                 Button(action: {
                     if sequencer.isPlaying {
@@ -439,6 +447,8 @@ public struct VisualStepSequencerView: View {
                         .foregroundColor(.cyan)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(sequencer.isPlaying ? "Pause" : "Play")
+                .accessibilityHint(sequencer.isPlaying ? "Pauses sequencer playback" : "Starts sequencer playback")
 
                 // BPM Slider
                 Slider(value: $sequencer.bpm, in: VisualStepSequencer.bpmRange)
@@ -458,6 +468,8 @@ public struct VisualStepSequencerView: View {
                     Image(systemName: "square.grid.2x2")
                         .foregroundColor(EchoelBrand.textPrimary)
                 }
+                .accessibilityLabel("Presets")
+                .accessibilityHint("Opens pattern preset selection")
             }
 
             // Bio Status

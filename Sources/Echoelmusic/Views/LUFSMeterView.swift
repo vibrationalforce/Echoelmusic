@@ -185,7 +185,7 @@ struct LUFSMeterView: View {
                     // Target line at -14 LUFS (streaming standard)
                     let targetX = geo.size.width * CGFloat((60 - 14) / 60.0)
                     Rectangle()
-                        .fill(Color.white.opacity(0.4))
+                        .fill(EchoelBrand.textDisabled)
                         .frame(width: 0.5)
                         .offset(x: targetX)
                 }

@@ -351,23 +351,7 @@ struct EchoelSettingsView: View {
 
                         // MARK: - Bio-Feedback
                         settingsSection(title: "BIO-FEEDBACK") {
-                            VStack(spacing: EchoelSpacing.sm) {
-                                settingsRow(
-                                    icon: "heart.fill",
-                                    label: "Bio-Reactive Mode",
-                                    value: "Active"
-                                )
-
-                                HStack {
-                                    Image(systemName: "exclamationmark.triangle")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(EchoelBrand.amber)
-                                    Text("Bio data is for self-observation, not medical diagnosis.")
-                                        .font(EchoelBrandFont.caption())
-                                        .foregroundColor(EchoelBrand.textSecondary)
-                                }
-                                .padding(.horizontal, EchoelSpacing.md)
-                            }
+                            BioFeedbackSettingsContent()
                         }
 
                         // MARK: - Safety
@@ -480,6 +464,101 @@ struct EchoelSettingsView: View {
             Text(text)
                 .font(EchoelBrandFont.caption())
                 .foregroundColor(EchoelBrand.textSecondary)
+        }
+    }
+}
+
+// MARK: - Bio-Feedback Settings Content
+
+/// HealthKit authorization and bio streaming controls for the settings sheet.
+/// Extracted to isolate @Bindable observation from the rest of EchoelSettingsView.
+private struct BioFeedbackSettingsContent: View {
+    @Bindable private var bio = EchoelBioEngine.shared
+    @State private var isRequesting = false
+
+    var body: some View {
+        VStack(spacing: EchoelSpacing.sm) {
+            // Authorization status
+            HStack {
+                Image(systemName: bio.isAuthorized ? "heart.fill" : "heart.slash")
+                    .font(.system(size: 14))
+                    .foregroundColor(bio.isAuthorized ? EchoelBrand.primary : EchoelBrand.textSecondary)
+                    .frame(width: 24)
+
+                Text("HealthKit")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
+
+                Spacer()
+
+                if bio.isAuthorized {
+                    Text("Authorized")
+                        .font(EchoelBrandFont.dataSmall())
+                        .foregroundColor(EchoelBrand.emerald)
+                } else {
+                    Button(action: {
+                        isRequesting = true
+                        Task {
+                            let granted = await bio.requestAuthorization()
+                            isRequesting = false
+                            if granted {
+                                bio.startStreaming()
+                            }
+                        }
+                    }) {
+                        if isRequesting {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Text("Authorize")
+                                .font(EchoelBrandFont.dataSmall())
+                                .foregroundColor(EchoelBrand.primary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRequesting)
+                }
+            }
+            .padding(.horizontal, EchoelSpacing.md)
+
+            // Streaming status
+            HStack {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: 14))
+                    .foregroundColor(bio.isStreaming ? EchoelBrand.emerald : EchoelBrand.textSecondary)
+                    .frame(width: 24)
+
+                Text("Bio Streaming")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textPrimary)
+
+                Spacer()
+
+                Text(bio.isStreaming ? bio.snapshot.source.rawValue : "Off")
+                    .font(EchoelBrandFont.dataSmall())
+                    .foregroundColor(bio.isStreaming ? EchoelBrand.emerald : EchoelBrand.textSecondary)
+            }
+            .padding(.horizontal, EchoelSpacing.md)
+
+            // Disclaimer
+            HStack {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 12))
+                    .foregroundColor(EchoelBrand.amber)
+                Text("Bio data is for self-observation, not medical diagnosis.")
+                    .font(EchoelBrandFont.caption())
+                    .foregroundColor(EchoelBrand.textSecondary)
+            }
+            .padding(.horizontal, EchoelSpacing.md)
+        }
+        .task {
+            // Auto-request on appear if not yet authorized
+            if !bio.isAuthorized && !bio.isStreaming {
+                let granted = await bio.requestAuthorization()
+                if granted {
+                    bio.startStreaming()
+                }
+            }
         }
     }
 }
