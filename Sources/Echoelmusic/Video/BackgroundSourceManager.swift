@@ -1033,13 +1033,15 @@ class EchoelmusicVisualRenderer {
         audioBuffer = device.makeBuffer(length: 4096 * MemoryLayout<Float>.stride, options: .storageModeShared)
 
         do {
-            // Create pipeline on a detached task to avoid MainActor sending issues
-            nonisolated(unsafe) let safeFunction = function
+            // Create pipeline on detached task with kernel name to avoid sending MainActor values
+            let name = kernelName
             let pipeline = try await Task.detached {
-                guard let dev = MTLCreateSystemDefaultDevice() else {
-                    throw NSError(domain: "Metal", code: -1, userInfo: [NSLocalizedDescriptionKey: "No Metal device"])
+                guard let dev = MTLCreateSystemDefaultDevice(),
+                      let lib = dev.makeDefaultLibrary(),
+                      let fn = lib.makeFunction(name: name) else {
+                    throw NSError(domain: "Metal", code: -1, userInfo: [NSLocalizedDescriptionKey: "Pipeline setup failed"])
                 }
-                return try dev.makeComputePipelineState(function: safeFunction)
+                return try dev.makeComputePipelineState(function: fn)
             }.value
             computePipeline = pipeline
         } catch {
