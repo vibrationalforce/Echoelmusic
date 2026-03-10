@@ -272,7 +272,7 @@ public final class EchoelBioEngine {
     private nonisolated func processHeartRateSamples(_ samples: [HKSample]?) {
         guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else { return }
 
-        let latestSample = quantitySamples.last!
+        guard let latestSample = quantitySamples.last else { return }
         let bpm = latestSample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
 
         // Calculate RR interval from HR: RR = 60000 / HR (in ms)
@@ -302,7 +302,7 @@ public final class EchoelBioEngine {
 
         // Apple provides SDNN, not RMSSD — we use our own RMSSD calculation
         // But SDNN can serve as a fallback
-        let latestSample = quantitySamples.last!
+        guard let latestSample = quantitySamples.last else { return }
         let sdnn = latestSample.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
 
         Task { @MainActor [weak self] in
@@ -319,7 +319,7 @@ public final class EchoelBioEngine {
     private nonisolated func processBreathRateSamples(_ samples: [HKSample]?) {
         guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else { return }
 
-        let latestSample = quantitySamples.last!
+        guard let latestSample = quantitySamples.last else { return }
         let rate = latestSample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
 
         Task { @MainActor [weak self] in
