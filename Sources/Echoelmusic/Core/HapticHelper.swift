@@ -4,6 +4,7 @@ import UIKit
 #endif
 
 /// Lightweight haptic feedback helper for UI interactions
+@MainActor
 enum HapticHelper {
 
     enum Style {

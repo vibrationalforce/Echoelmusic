@@ -1,6 +1,6 @@
 #if canImport(AVFoundation)
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 
 /// Manages export of recording sessions to various formats
 /// Handles audio mixdown, bio-data export, and format conversion
