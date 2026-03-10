@@ -160,12 +160,7 @@ public final class ConsoleOutput: LogOutput, @unchecked Sendable {
     public static let shared = ConsoleOutput()
 
     public func write(_ entry: LogEntry) {
-        #if DEBUG
-        print(entry.formattedMessage)
-        #endif
-
         #if canImport(os)
-        // Also write to os_log
         os_log(
             "%{public}@",
             log: entry.category.osLog,
