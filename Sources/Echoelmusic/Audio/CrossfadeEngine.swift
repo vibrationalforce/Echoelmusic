@@ -151,16 +151,18 @@ public final class CrossfadeEngine {
             }
 
             // Apply crossfade region — pre-compute reciprocal to avoid division per sample
-            let invCrossfade = 1.0 / Float(actualCrossfade)
-            for i in 0..<actualCrossfade {
-                let position = Float(i) * invCrossfade
-                let fadeOut = curve.fadeOutGain(at: position)
-                let fadeIn = curve.fadeInGain(at: position)
+            if actualCrossfade > 0 {
+                let invCrossfade = 1.0 / Float(actualCrossfade)
+                for i in 0..<actualCrossfade {
+                    let position = Float(i) * invCrossfade
+                    let fadeOut = curve.fadeOutGain(at: position)
+                    let fadeIn = curve.fadeInGain(at: position)
 
-                let outSample = outData[preCrossfadeLength + i] * fadeOut
-                let inSample = inData[i] * fadeIn
+                    let outSample = outData[preCrossfadeLength + i] * fadeOut
+                    let inSample = inData[i] * fadeIn
 
-                resultData[preCrossfadeLength + i] = outSample + inSample
+                    resultData[preCrossfadeLength + i] = outSample + inSample
+                }
             }
 
             // Copy post-crossfade region from incoming
