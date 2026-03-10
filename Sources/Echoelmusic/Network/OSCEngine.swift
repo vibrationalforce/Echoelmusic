@@ -307,7 +307,11 @@ public final class OSCEngine {
     private func startListener() {
         let params = NWParameters.udp
         do {
-            listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: receivePort)!)
+            guard let port = NWEndpoint.Port(rawValue: receivePort) else {
+                log.log(.error, category: .audio, "OSC invalid port: \(receivePort)")
+                return
+            }
+            listener = try NWListener(using: params, on: port)
         } catch {
             log.log(.error, category: .audio, "OSC listener failed: \(error.localizedDescription)")
             return
