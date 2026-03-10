@@ -1037,7 +1037,8 @@ class EchoelmusicVisualRenderer {
             computePipeline = try await withCheckedThrowingContinuation { continuation in
                 device.makeComputePipelineState(function: function) { pipeline, error in
                     if let pipeline {
-                        continuation.resume(returning: pipeline)
+                        nonisolated(unsafe) let safePipeline = pipeline
+                        continuation.resume(returning: safePipeline)
                     } else {
                         continuation.resume(throwing: error ?? NSError(domain: "Metal", code: -1))
                     }
