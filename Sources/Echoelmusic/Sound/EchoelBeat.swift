@@ -515,6 +515,7 @@ public final class EchoelBeat {
     nonisolated(unsafe) private var rollState = RollState()
     nonisolated(unsafe) private var dirtyDelay = DirtyDelay()
     nonisolated(unsafe) private var currentTime: Double = 0.0
+    nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
 
     // Sample-accurate sequencer state (audio thread, under voiceLock)
     nonisolated(unsafe) private var seqGlobalSamplePos: Int = 0
@@ -850,11 +851,16 @@ public final class EchoelBeat {
 
         currentTime += Double(frameCount) / sampleRate
 
-        // Throttled meter + step UI update
-        Task { @MainActor in
-            self.meterLevel = peak
-            if self.isSeqRunning {
-                self.sequencerStep = self.seqLastStep
+        // Meter update throttled to ~20Hz (every 50ms) to avoid
+        // heap-allocating a Task on every render callback (375+/sec)
+        if currentTime - lastMeterUpdate > 0.05 {
+            lastMeterUpdate = currentTime
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.meterLevel = peak
+                if self.isSeqRunning {
+                    self.sequencerStep = self.seqLastStep
+                }
             }
         }
     }
