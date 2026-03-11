@@ -200,8 +200,15 @@ final class MicrophoneManager: NSObject {
             // Tap runs on audio thread — do NOT access @MainActor self in outer closure.
             // Only capture [weak self] in the inner Task that dispatches to MainActor.
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { buffer, _ in
+                // Extract all buffer data synchronously while memory is valid
+                // AVAudioPCMBuffer is non-Sendable — its memory is reused after this closure returns
+                guard let channelData = buffer.floatChannelData else { return }
+                let frameLength = Int(buffer.frameLength)
+                guard frameLength > 0 else { return }
+                let channelDataPtr = channelData.pointee
+                let samples = Array(UnsafeBufferPointer(start: channelDataPtr, count: frameLength))
                 Task { @MainActor [weak self] in
-                    self?.processAudioBuffer(buffer, sampleRate: capturedSampleRate)
+                    self?.processExtractedAudio(samples, frameLength: frameLength, sampleRate: capturedSampleRate)
                 }
             }
 
@@ -249,59 +256,53 @@ final class MicrophoneManager: NSObject {
 
     // MARK: - Audio Processing with FFT
 
-    /// Process incoming audio data with FFT for frequency detection
-    /// sampleRate is passed explicitly to avoid reading @MainActor property from processingQueue
-    private func processAudioBuffer(_ buffer: AVAudioPCMBuffer, sampleRate: Double) {
-        guard let channelData = buffer.floatChannelData else { return }
-
-        let frameLength = Int(buffer.frameLength)
-        let channelDataValue = channelData.pointee
-
-        // Calculate RMS (amplitude/volume)
+    /// Process pre-extracted audio samples with FFT for frequency detection
+    /// Called with data copied synchronously from AVAudioPCMBuffer while memory was valid
+    private func processExtractedAudio(_ samples: [Float], frameLength: Int, sampleRate: Double) {
+        // Calculate RMS (amplitude/volume) from copied samples
         var sumSquares: Float = 0.0
-        vDSP_measqv(channelDataValue, 1, &sumSquares, vDSP_Length(frameLength))
+        samples.withUnsafeBufferPointer { ptr in
+            guard let base = ptr.baseAddress else { return }
+            vDSP_measqv(base, 1, &sumSquares, vDSP_Length(frameLength))
+        }
         let rms = sqrt(sumSquares)
 
         // Normalize to 0-1 range with better sensitivity
         let normalizedLevel = min(rms * 15.0, 1.0)
 
         // Capture audio buffer for waveform visualization (last 512 samples)
-        // Uses pre-allocated storage to avoid per-callback allocation
         let bufferSampleCount = min(512, frameLength)
-        cblas_scopy(Int32(bufferSampleCount), channelDataValue, 1, &capturedBufferStorage, 1)
-        let capturedBuffer = Array(capturedBufferStorage.prefix(bufferSampleCount))
+        let capturedBuffer = Array(samples.prefix(bufferSampleCount))
 
         // Perform FFT for frequency detection and get magnitudes
-        let (detectedFrequency, magnitudes) = performFFT(on: channelDataValue, frameLength: frameLength, sampleRate: sampleRate)
-
-        // Perform YIN pitch detection for fundamental frequency
-        let detectedPitch = pitchDetector.detectPitch(buffer: buffer, sampleRate: Float(sampleRate))
-
-
-        // Update UI on main actor with smoothing
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-
-            // Smooth audio level changes
-            self.audioLevel = self.audioLevel * 0.7 + normalizedLevel * 0.3
-
-            // Smooth frequency changes (only update if significantly different)
-            if detectedFrequency > 50 { // Ignore very low frequencies (likely noise)
-                self.frequency = self.frequency * 0.8 + detectedFrequency * 0.2
-            }
-
-            // Smooth pitch changes (YIN is more robust than FFT for voice)
-            if detectedPitch > 0 {
-                self.currentPitch = self.currentPitch * 0.8 + detectedPitch * 0.2
-            } else {
-                // Decay pitch to zero if no pitch detected
-                self.currentPitch *= 0.9
-            }
-
-            // Update audio buffer and FFT magnitudes for visualizations
-            self.audioBuffer = capturedBuffer
-            self.fftMagnitudes = magnitudes
+        let (detectedFrequency, magnitudes) = samples.withUnsafeBufferPointer { ptr -> (Float, [Float]) in
+            guard let base = ptr.baseAddress else { return (0, []) }
+            return performFFT(on: base, frameLength: frameLength, sampleRate: sampleRate)
         }
+
+        // Perform YIN pitch detection using safe [Float] overload
+        let detectedPitch = pitchDetector.detectPitch(samples: samples, sampleRate: Float(sampleRate))
+
+        // Already on MainActor — update UI directly with smoothing
+        // Smooth audio level changes
+        self.audioLevel = self.audioLevel * 0.7 + normalizedLevel * 0.3
+
+        // Smooth frequency changes (only update if significantly different)
+        if detectedFrequency > 50 { // Ignore very low frequencies (likely noise)
+            self.frequency = self.frequency * 0.8 + detectedFrequency * 0.2
+        }
+
+        // Smooth pitch changes (YIN is more robust than FFT for voice)
+        if detectedPitch > 0 {
+            self.currentPitch = self.currentPitch * 0.8 + detectedPitch * 0.2
+        } else {
+            // Decay pitch to zero if no pitch detected
+            self.currentPitch *= 0.9
+        }
+
+        // Update audio buffer and FFT magnitudes for visualizations
+        self.audioBuffer = capturedBuffer
+        self.fftMagnitudes = magnitudes
     }
 
     /// Perform FFT to detect fundamental frequency and return magnitudes

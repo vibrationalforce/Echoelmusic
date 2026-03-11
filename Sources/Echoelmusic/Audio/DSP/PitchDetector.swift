@@ -57,6 +57,72 @@ class PitchDetector {
     /// 3. Find absolute minimum below threshold
     /// 4. Parabolic interpolation for sub-sample accuracy
     ///
+    /// Detect pitch from pre-extracted audio samples (safe — no buffer lifetime issues)
+    /// - Parameters:
+    ///   - samples: Audio samples copied from the buffer while memory was valid
+    ///   - sampleRate: Sample rate of the audio (typically 44100 or 48000 Hz)
+    /// - Returns: Detected pitch in Hz, or 0.0 if no pitch detected
+    func detectPitch(samples: [Float], sampleRate: Float) -> Float {
+        let frameLength = samples.count
+        guard frameLength > 0 else { return 0.0 }
+
+        return samples.withUnsafeBufferPointer { ptr -> Float in
+            guard let channelData = ptr.baseAddress else { return 0.0 }
+
+            // Check for silence (RMS below threshold)
+            let rms = calculateRMS(channelData, frameLength: frameLength)
+            guard rms > silenceThreshold else {
+                return 0.0
+            }
+
+            // Calculate buffer size for YIN (half the frame length for efficiency)
+            let bufferSize = frameLength / 2
+
+            // Calculate lag range based on frequency constraints
+            let minLag = Int(sampleRate / maxFrequency)
+            let maxLag = min(Int(sampleRate / minFrequency), bufferSize)
+
+            guard maxLag > minLag else { return 0.0 }
+            guard maxLag <= maxBufferSize else { return 0.0 }
+
+            // Step 1: Calculate difference function (using pre-allocated buffer)
+            for i in 0..<maxLag {
+                differenceBuffer[i] = 0
+            }
+            calculateDifferenceFunction(channelData,
+                                       frameLength: frameLength,
+                                       differenceFunction: &differenceBuffer,
+                                       maxLag: maxLag)
+
+            // Step 2: Cumulative mean normalized difference function (pre-allocated)
+            for i in 0..<maxLag {
+                cmndfBuffer[i] = 0
+            }
+            calculateCMNDF(differenceFunction: differenceBuffer,
+                          cmndf: &cmndfBuffer,
+                          maxLag: maxLag)
+
+            // Step 3: Find absolute minimum below threshold
+            guard let tau = findAbsoluteMinimum(cmndf: cmndfBuffer,
+                                               minLag: minLag,
+                                               maxLag: maxLag,
+                                               threshold: threshold) else {
+                return 0.0
+            }
+
+            // Step 4: Parabolic interpolation for sub-sample accuracy
+            let refinedTau = parabolicInterpolation(cmndf: cmndfBuffer, tau: tau)
+
+            // Convert lag (tau) to frequency
+            let pitch = sampleRate / refinedTau
+            return pitch
+        }
+    }
+
+    /// Detect pitch from an AVAudioPCMBuffer
+    ///
+    /// WARNING: Only call this while the buffer's memory is still valid (synchronously
+    /// in the installTap callback). Do NOT pass AVAudioPCMBuffer across async boundaries.
     /// - Parameters:
     ///   - buffer: Audio buffer containing PCM samples
     ///   - sampleRate: Sample rate of the audio (typically 44100 or 48000 Hz)
