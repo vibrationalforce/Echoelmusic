@@ -265,10 +265,10 @@ public final class EchoelDDSP: @unchecked Sendable {
         sampleRate: Float = 48000.0,
         frameSize: Int = 192
     ) {
-        self.harmonicCount = harmonicCount
-        self.noiseBandCount = noiseBandCount
-        self.sampleRate = sampleRate
-        self.frameSize = frameSize
+        self.harmonicCount = max(1, harmonicCount)
+        self.noiseBandCount = max(1, noiseBandCount)
+        self.sampleRate = max(1, sampleRate)
+        self.frameSize = max(1, frameSize)
 
         self.harmonicAmplitudes = [Float](repeating: 0, count: harmonicCount)
         self.noiseMagnitudes = [Float](repeating: 0, count: noiseBandCount)

@@ -721,7 +721,9 @@ public enum VoiceQuantumError: Error, LocalizedError {
 
 private extension Float {
     func mapped(from source: ClosedRange<Float>, to destination: ClosedRange<Float>) -> Float {
-        let normalized = (self - source.lowerBound) / (source.upperBound - source.lowerBound)
+        let range = source.upperBound - source.lowerBound
+        guard range > .ulpOfOne else { return destination.lowerBound }
+        let normalized = (self - source.lowerBound) / range
         let clamped = max(0, min(1, normalized))
         return destination.lowerBound + clamped * (destination.upperBound - destination.lowerBound)
     }

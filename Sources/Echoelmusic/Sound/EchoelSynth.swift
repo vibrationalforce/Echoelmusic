@@ -304,8 +304,8 @@ public final class EchoelSynth {
     public func stop() {
         isPlaying = false
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
         activeVoiceCount = 0
         currentNote = nil
     }
@@ -376,8 +376,8 @@ public final class EchoelSynth {
 
     public func allNotesOff() {
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
         activeVoiceCount = 0
         currentNote = nil
     }
@@ -403,6 +403,7 @@ public final class EchoelSynth {
 
         // tryLock: never block the audio thread — output silence if lock is held
         guard voiceLock.try() else { return }
+        defer { voiceLock.unlock() }
 
         var voicesToRemove: [Int] = []
         var peak: Float = 0.0
@@ -520,8 +521,6 @@ public final class EchoelSynth {
         for index in voicesToRemove.sorted().reversed() {
             if index < voices.count { voices.remove(at: index) }
         }
-
-        voiceLock.unlock()
 
         // Soft-limiter: prevent digital clipping from polyphonic voice sum
         // 16 voices at level 0.8 can produce amplitude up to 12.8

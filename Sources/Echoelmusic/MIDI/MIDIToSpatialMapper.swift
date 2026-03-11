@@ -300,7 +300,9 @@ final class MIDIToSpatialMapper {
         from: ClosedRange<Double>,
         to: ClosedRange<Double>
     ) -> Float {
-        let normalized = (value - from.lowerBound) / (from.upperBound - from.lowerBound)
+        let range = from.upperBound - from.lowerBound
+        guard range > .ulpOfOne else { return Float(to.lowerBound) }
+        let normalized = (value - from.lowerBound) / range
         let clamped = max(0, min(1, normalized))
         let mapped = to.lowerBound + clamped * (to.upperBound - to.lowerBound)
         return Float(mapped)

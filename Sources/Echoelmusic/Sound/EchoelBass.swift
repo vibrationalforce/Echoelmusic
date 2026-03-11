@@ -371,8 +371,8 @@ public final class EchoelBass {
     public func stop() {
         isPlaying = false
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
         activeVoiceCount = 0
         currentNote = nil
     }
@@ -433,8 +433,8 @@ public final class EchoelBass {
 
     public func allNotesOff() {
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
         activeVoiceCount = 0
         currentNote = nil
     }
@@ -461,6 +461,7 @@ public final class EchoelBass {
 
         // tryLock: never block the audio thread — output silence if lock is held
         guard voiceLock.try() else { return }
+        defer { voiceLock.unlock() }
 
         var voicesToRemove: [Int] = []
         var peak: Float = 0.0
@@ -589,8 +590,6 @@ public final class EchoelBass {
         for index in voicesToRemove.sorted().reversed() {
             if index < voices.count { voices.remove(at: index) }
         }
-
-        voiceLock.unlock()
 
         currentTime += Double(frameCount) / sampleRate
 

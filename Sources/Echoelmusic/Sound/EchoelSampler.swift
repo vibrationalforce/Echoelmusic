@@ -346,7 +346,7 @@ public final class EchoelSampler {
     // MARK: - Init
 
     public init(sampleRate: Float = 48000.0) {
-        self.sampleRate = sampleRate
+        self.sampleRate = max(1, sampleRate)
         self.voices = (0..<SamplerConstants.maxVoices).map { _ in SamplerVoice() }
         self.scratchBuffer = [Float](repeating: 0, count: 4096)
     }

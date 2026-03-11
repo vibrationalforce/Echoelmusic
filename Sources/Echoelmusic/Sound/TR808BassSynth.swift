@@ -342,8 +342,8 @@ public final class TR808BassSynth {
         isPlaying = false
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
 
         activeVoiceCount = 0
         currentNote = nil
@@ -417,8 +417,8 @@ public final class TR808BassSynth {
     /// All notes off (panic)
     public func allNotesOff() {
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         voices.removeAll()
-        voiceLock.unlock()
 
         activeVoiceCount = 0
         currentNote = nil
@@ -447,6 +447,7 @@ public final class TR808BassSynth {
 
         // tryLock: never block the audio thread — output silence if lock is held
         guard voiceLock.try() else { return }
+        defer { voiceLock.unlock() }
 
         var voicesToRemove: [Int] = []
         var peak: Float = 0.0
@@ -619,8 +620,6 @@ public final class TR808BassSynth {
             }
         }
 
-        voiceLock.unlock()
-
         // Update time
         currentTime += Double(frameCount) / sampleRate
 
@@ -706,8 +705,8 @@ extension TR808BassSynth {
         let semitones = Float(value) / 8192.0 * 48.0  // ±48 semitones
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         // Apply to voice on this channel (simplified - would need voice-channel mapping)
-        voiceLock.unlock()
     }
 }
 
@@ -1277,8 +1276,8 @@ extension TR808BassSynth {
         }
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         drumPlaybacks.removeAll()
-        voiceLock.unlock()
 
         drumSlots = newSlots
         currentDrumKit = genre.rawValue
@@ -1308,8 +1307,8 @@ extension TR808BassSynth {
         }
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         drumPlaybacks.removeAll()
-        voiceLock.unlock()
 
         drumSlots = newSlots
         currentDrumKit = "Full Kit"

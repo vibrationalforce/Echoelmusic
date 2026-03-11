@@ -654,8 +654,8 @@ public final class EchoelBeat {
     /// Stop any active roll
     public func stopRoll() {
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         rollState.isActive = false
-        voiceLock.unlock()
     }
 
     // MARK: - Public API — Sequencer
@@ -665,18 +665,18 @@ public final class EchoelBeat {
         ensureEngineRunning()
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         seqGlobalSamplePos = 0
         seqLastStep = -1
         isSeqRunning = true
-        voiceLock.unlock()
 
         isSequencerPlaying = true
     }
 
     public func stopSequencer() {
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         isSeqRunning = false
-        voiceLock.unlock()
 
         isSequencerPlaying = false
         sequencerStep = 0
@@ -699,8 +699,8 @@ public final class EchoelBeat {
         }
 
         voiceLock.lock()
+        defer { voiceLock.unlock() }
         drumPlaybacks.removeAll()
-        voiceLock.unlock()
 
         drumSlots = newSlots
         currentKit = genre.rawValue
@@ -730,6 +730,7 @@ public final class EchoelBeat {
 
         // tryLock: never block the audio thread — output silence if lock is held
         guard voiceLock.try() else { return }
+        defer { voiceLock.unlock() }
 
         // Snapshot drum slots (value-type COW)
         let slots = drumSlots
@@ -820,8 +821,6 @@ public final class EchoelBeat {
         // Cleanup finished voices
         drumPlaybacks.removeAll { !$0.isActive }
         hihatVoices.removeAll { !$0.isActive }
-
-        voiceLock.unlock()
 
         currentTime += Double(frameCount) / sampleRate
 
