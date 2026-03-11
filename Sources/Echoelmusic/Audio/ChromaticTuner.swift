@@ -148,8 +148,12 @@ public final class ChromaticTuner {
         let inputNode = audioEngine.inputNode
         let format = inputNode.outputFormat(forBus: 0)
 
+        // Do NOT call @MainActor methods directly from the tap callback —
+        // it runs on the audio thread and triggers dispatch_assert_queue_fail.
         inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: format) { [weak self] buffer, _ in
-            self?.processAudioBuffer(buffer)
+            Task { @MainActor [weak self] in
+                self?.processAudioBuffer(buffer)
+            }
         }
 
         try audioEngine.start()

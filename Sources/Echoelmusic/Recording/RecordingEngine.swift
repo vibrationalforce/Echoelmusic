@@ -301,10 +301,12 @@ final class RecordingEngine {
         // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
         // IMPORTANT: Process buffer synchronously on audioProcessingQueue — AVAudioPCMBuffer
         // memory may be reused after the callback returns (non-Sendable).
+        // Capture queue and nonisolated method ref to avoid accessing @MainActor self
+        // on the audio thread. processRecordingBufferOffMainActor is nonisolated.
+        let processingQueue = self.audioProcessingQueue
         input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
-            guard let self else { return }
-            self.audioProcessingQueue.async {
-                self.processRecordingBufferOffMainActor(buffer)
+            processingQueue.async {
+                self?.processRecordingBufferOffMainActor(buffer)
             }
         }
 

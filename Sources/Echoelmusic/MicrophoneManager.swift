@@ -197,7 +197,9 @@ final class MicrophoneManager: NSObject {
             // Install a tap to capture audio data — dispatch off the audio render thread
             // Capture sampleRate locally to avoid reading @MainActor property from Sendable closure
             let capturedSampleRate = sampleRate
-            inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { [weak self] buffer, _ in
+            // Tap runs on audio thread — do NOT access @MainActor self in outer closure.
+            // Only capture [weak self] in the inner Task that dispatches to MainActor.
+            inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { buffer, _ in
                 Task { @MainActor [weak self] in
                     self?.processAudioBuffer(buffer, sampleRate: capturedSampleRate)
                 }

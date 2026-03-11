@@ -394,11 +394,12 @@ public final class AudioToQuantumMIDI {
         }
 
         // Install tap for audio analysis
+        // Avoid accessing @MainActor self on the audio thread — capture queue locally
+        let processingQueue = self.audioProcessingQueue
         inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, _ in
-            guard let self else { return }
-            self.audioProcessingQueue.async {
-                Task { @MainActor in
-                    self.processAudioBuffer(buffer)
+            processingQueue.async {
+                Task { @MainActor [weak self] in
+                    self?.processAudioBuffer(buffer)
                 }
             }
         }
@@ -434,8 +435,8 @@ public final class AudioToQuantumMIDI {
         engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
 
         // Install tap for analysis
-        engine.mainMixerNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: file.processingFormat) { [weak self] buffer, time in
-            Task { @MainActor in
+        engine.mainMixerNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: file.processingFormat) { buffer, _ in
+            Task { @MainActor [weak self] in
                 self?.processAudioBuffer(buffer)
             }
         }

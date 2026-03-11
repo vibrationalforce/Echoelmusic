@@ -244,11 +244,12 @@ public final class VoiceToQuantumMIDI {
         }
 
         // Install tap on input
+        // Avoid accessing @MainActor self on the audio thread — capture queue locally
+        let processingQueue = self.audioProcessingQueue
         inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, _ in
-            guard let self else { return }
-            self.audioProcessingQueue.async {
-                Task { @MainActor in
-                    self.processAudioBuffer(buffer)
+            processingQueue.async {
+                Task { @MainActor [weak self] in
+                    self?.processAudioBuffer(buffer)
                 }
             }
         }
