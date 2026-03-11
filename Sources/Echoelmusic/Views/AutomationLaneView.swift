@@ -127,7 +127,7 @@ struct AutomationLaneView: View {
 
     private func automationCurve(width: CGFloat, height: CGFloat) -> some View {
         Canvas { context, _ in
-            guard lane.points.count >= 2 else {
+            guard lane.points.count >= 2, totalDuration > 0 else {
                 // Single point or no points — draw flat line at default
                 let val = lane.points.first?.value ?? lane.parameter.defaultValue
                 let y = height * CGFloat(1.0 - val)

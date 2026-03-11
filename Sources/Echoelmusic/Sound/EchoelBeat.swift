@@ -534,10 +534,31 @@ public final class EchoelBeat {
 
     private init() {
         setupAudioEngine()
-        // Defer drum kit loading to avoid blocking app launch with DSP rendering.
-        // 16 drum presets × synthesis = heavy work that can trigger iOS watchdog.
-        Task { @MainActor [weak self] in
-            self?.loadDrumKit(genre: .electronic)
+        // Defer drum kit loading to background to avoid blocking app launch.
+        // 16 drum presets × synthesis = heavy DSP work that triggers iOS watchdog
+        // if run on @MainActor during startup.
+        let sr = Float(sampleRate)
+        Task.detached { [weak self] in
+            let library = await SynthPresetLibrary.shared
+            let presetList = library.drumPresets(for: .electronic)
+
+            var newSlots: [DrumSlot] = []
+            for (i, preset) in presetList.prefix(16).enumerated() {
+                let audio = library.renderDrumHit(preset, targetSampleRate: sr)
+                newSlots.append(DrumSlot(
+                    name: preset.name, audioData: audio, sampleRate: sr,
+                    midiNote: 36 + i, category: preset.tags.first ?? ""))
+            }
+
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.voiceLock.lock()
+                defer { self.voiceLock.unlock() }
+                self.drumPlaybacks.removeAll()
+                self.drumSlots = newSlots
+                self.currentKit = SynthPresetLibrary.GenreKit.electronic.rawValue
+                self.sequencerPattern = BeatPattern(name: SynthPresetLibrary.GenreKit.electronic.rawValue, trackCount: newSlots.count)
+            }
         }
     }
 

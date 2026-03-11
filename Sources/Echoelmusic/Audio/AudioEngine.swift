@@ -135,16 +135,23 @@ public final class AudioEngine {
         // AVAudioSession is not yet active (first launch, mic permission pending).
         // Fall back to standard 48kHz stereo to avoid crashing on connect().
         let processingFormat: AVAudioFormat
-        if outputFormat.sampleRate > 0 && outputFormat.channelCount > 0 {
-            processingFormat = AVAudioFormat(
+        if outputFormat.sampleRate > 0 && outputFormat.channelCount > 0,
+           let customFormat = AVAudioFormat(
                 commonFormat: .pcmFormatFloat32,
                 sampleRate: outputFormat.sampleRate,
                 channels: min(outputFormat.channelCount, 2),
                 interleaved: false
-            ) ?? AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)!
-        } else {
+           ) {
+            processingFormat = customFormat
+        } else if let fallback48 = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) {
             log.audio("⚠️ Output format invalid (\(outputFormat.sampleRate)Hz, \(outputFormat.channelCount)ch) — using 48kHz stereo fallback", level: .warning)
-            processingFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)!
+            processingFormat = fallback48
+        } else if let fallback44 = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2) {
+            log.audio("⚠️ All 48kHz formats failed — using 44.1kHz stereo fallback", level: .warning)
+            processingFormat = fallback44
+        } else {
+            log.audio("CRITICAL: Cannot create any audio format — skipping engine setup", level: .error)
+            return
         }
 
         masterEngine.connect(masterPlayerNode, to: masterMixer, format: processingFormat)

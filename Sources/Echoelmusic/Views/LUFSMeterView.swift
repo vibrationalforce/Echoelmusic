@@ -73,14 +73,18 @@ final class LUFSMeterState {
         if momentaryBuffer.count > momentaryWindow {
             momentaryBuffer.removeFirst(momentaryBuffer.count - momentaryWindow)
         }
-        momentaryLUFS = momentaryBuffer.reduce(Float(0), +) / Float(momentaryBuffer.count)
+        if !momentaryBuffer.isEmpty {
+            momentaryLUFS = momentaryBuffer.reduce(Float(0), +) / Float(momentaryBuffer.count)
+        }
 
         // Short-term (3s sliding window)
         shortTermBuffer.append(instantLUFS)
         if shortTermBuffer.count > shortTermWindow {
             shortTermBuffer.removeFirst(shortTermBuffer.count - shortTermWindow)
         }
-        shortTermLUFS = shortTermBuffer.reduce(Float(0), +) / Float(shortTermBuffer.count)
+        if !shortTermBuffer.isEmpty {
+            shortTermLUFS = shortTermBuffer.reduce(Float(0), +) / Float(shortTermBuffer.count)
+        }
 
         // Integrated (gated — only count blocks above -70 LUFS absolute gate)
         if instantLUFS > -70 {
@@ -92,8 +96,10 @@ final class LUFSMeterState {
         // LRA approximation (range between 10th and 95th percentile)
         if shortTermBuffer.count > 10 {
             let sorted = shortTermBuffer.sorted()
-            let low = sorted[Int(Double(sorted.count) * 0.1)]
-            let high = sorted[Int(Double(sorted.count) * 0.95)]
+            let lowIndex = min(Int(Double(sorted.count) * 0.1), sorted.count - 1)
+            let highIndex = min(Int(Double(sorted.count) * 0.95), sorted.count - 1)
+            let low = sorted[lowIndex]
+            let high = sorted[highIndex]
             loudnessRange = high - low
         }
     }

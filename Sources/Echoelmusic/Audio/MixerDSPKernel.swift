@@ -104,6 +104,7 @@ final class MixerDSPKernel {
         ) else {
             // Fallback to 44100 Hz stereo — guaranteed valid
             self.format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
+                ?? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)
                 ?? AVAudioFormat()
             self.masterBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
             self.scratchBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
