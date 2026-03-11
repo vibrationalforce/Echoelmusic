@@ -541,12 +541,16 @@ public final class EchoelBeat {
     private func setupAudioEngine() {
         audioEngine = AVAudioEngine()
         guard let engine = audioEngine,
-              let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else { return }
+              let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
+            log.log(.warning, category: .audio, "EchoelBeat: failed to create audio engine or format")
+            return
+        }
 
         sourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, abl -> OSStatus in
             guard let self = self else { return noErr }
             let ablPtr = UnsafeMutableAudioBufferListPointer(abl)
-            guard let left = ablPtr[0].mData?.assumingMemoryBound(to: Float.self),
+            guard ablPtr.count >= 2,
+                  let left = ablPtr[0].mData?.assumingMemoryBound(to: Float.self),
                   let right = ablPtr[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
             self.renderAudio(left: left, right: right, frameCount: Int(frameCount))
             return noErr
@@ -559,8 +563,12 @@ public final class EchoelBeat {
     }
 
     private func ensureEngineRunning() {
-        guard audioEngine?.isRunning != true else { return }
-        do { try audioEngine?.start() } catch { log.error("EchoelBeat: engine start failed - \(error)", category: .audio) }
+        guard let engine = audioEngine else {
+            setupAudioEngine()
+            return
+        }
+        guard !engine.isRunning else { return }
+        do { try engine.start() } catch { log.error("EchoelBeat: engine start failed - \(error)", category: .audio) }
     }
 
     // MARK: - Public API — Drum Pads

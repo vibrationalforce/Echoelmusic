@@ -34,7 +34,10 @@ import Accelerate
 public final class EchoelComplexDFT: @unchecked Sendable {
 
     public let size: Int
-    private let setup: OpaquePointer
+    private let setup: OpaquePointer?
+
+    /// Whether the DFT setup was successfully created
+    public var isValid: Bool { setup != nil }
 
     /// Pre-allocated output buffers (avoids overlapping access violations)
     private var outReal: [Float]
@@ -42,25 +45,44 @@ public final class EchoelComplexDFT: @unchecked Sendable {
 
     /// Create a forward complex DFT of the given size.
     /// - Parameter size: Transform length (need not be power of 2).
+    /// Falls back gracefully if vDSP setup allocation fails (returns zero output).
     public init(size: Int) {
         precondition(size > 0, "DFT size must be positive")
-        guard let s = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(size), .FORWARD) else {
-            preconditionFailure("EchoelComplexDFT: cannot create DFT setup for size \(size)")
+        // Try requested size, then fall back to smaller sizes on memory pressure
+        if let s = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(size), .FORWARD) {
+            self.size = size
+            self.setup = s
+        } else if size > 512, let s = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(512), .FORWARD) {
+            self.size = 512
+            self.setup = s
+        } else if size > 256, let s = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(256), .FORWARD) {
+            self.size = 256
+            self.setup = s
+        } else if let s = vDSP_DFT_zop_CreateSetup(nil, vDSP_Length(128), .FORWARD) {
+            self.size = 128
+            self.setup = s
+        } else {
+            // Catastrophic memory — degrade gracefully instead of crashing
+            self.size = size
+            self.setup = nil
         }
-        self.size = size
-        self.setup = s
-        self.outReal = [Float](repeating: 0, count: size)
-        self.outImag = [Float](repeating: 0, count: size)
+        self.outReal = [Float](repeating: 0, count: self.size)
+        self.outImag = [Float](repeating: 0, count: self.size)
     }
 
     deinit {
-        vDSP_DFT_DestroySetup(setup)
+        if let setup {
+            vDSP_DFT_DestroySetup(setup)
+        }
     }
 
     /// Execute the forward DFT.
     /// Input arrays are copied internally to prevent overlapping access.
-    /// - Returns: Tuple of (realOut, imagOut) arrays of length `size`.
+    /// - Returns: Tuple of (realOut, imagOut) arrays of length `size`. Returns zeros if setup failed.
     public func forward(real: [Float], imag: [Float]) -> (real: [Float], imag: [Float]) {
+        guard let setup else {
+            return (outReal, outImag)
+        }
         var inReal = real
         var inImag = imag
         vDSP_DFT_Execute(setup, &inReal, &inImag, &outReal, &outImag)

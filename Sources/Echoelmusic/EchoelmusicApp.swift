@@ -16,12 +16,8 @@ struct EchoelmusicApp: App {
         _microphoneManager = State(wrappedValue: mic)
         _audioEngine = State(wrappedValue: AudioEngine(microphoneManager: mic))
 
-        // Eager init of singletons so first interaction has zero latency
+        // Eager init of critical singletons — memory handler first for pressure monitoring
         _ = MemoryPressureHandler.shared
-        TuningBridge.shared.activate()
-        _ = EchoelCreativeWorkspace.shared
-        _ = InstrumentOrchestrator.shared
-        _ = EchoelBeat.shared
         _ = CrashSafeStatePersistence.shared
     }
 
@@ -34,6 +30,12 @@ struct EchoelmusicApp: App {
                 .environment(themeManager)
                 .preferredColorScheme(themeManager.resolvedColorScheme)
                 .onAppear {
+                    // Deferred singleton init — after UI is ready, avoids blocking app launch
+                    TuningBridge.shared.activate()
+                    _ = EchoelCreativeWorkspace.shared
+                    _ = InstrumentOrchestrator.shared
+                    _ = EchoelBeat.shared
+
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)

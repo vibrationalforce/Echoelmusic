@@ -310,13 +310,22 @@ public final class EchoelVisEngine {
             return
         }
         self.device = device
-        self.commandQueue = device.makeCommandQueue()
+
+        guard let queue = device.makeCommandQueue() else {
+            log.log(.error, category: .system, "EchoelVis: Failed to create Metal command queue")
+            return
+        }
+        self.commandQueue = queue
 
         // Allocate uniform buffer
-        uniformBuffer = device.makeBuffer(
+        guard let uniforms = device.makeBuffer(
             length: MemoryLayout<VisualUniforms>.stride,
             options: .storageModeShared
-        )
+        ) else {
+            log.log(.error, category: .system, "EchoelVis: Failed to allocate uniform buffer")
+            return
+        }
+        uniformBuffer = uniforms
 
         // Initialize particle buffer
         initializeParticleBuffer()
