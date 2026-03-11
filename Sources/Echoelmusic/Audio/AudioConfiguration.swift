@@ -430,5 +430,11 @@ final class AudioUnfairLock: @unchecked Sendable {
     func unlock() {
         os_unfair_lock_unlock(&_lock)
     }
+
+    /// Non-blocking try-lock for audio thread — returns `true` if lock acquired.
+    @inline(__always)
+    func `try`() -> Bool {
+        os_unfair_lock_trylock(&_lock)
+    }
 }
 #endif
