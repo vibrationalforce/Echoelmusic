@@ -29,8 +29,10 @@ struct EchoelmusicApp: App {
                 .environment(recordingEngine)
                 .environment(themeManager)
                 .preferredColorScheme(themeManager.resolvedColorScheme)
-                .onAppear {
-                    // Deferred singleton init — after UI is ready, avoids blocking app launch
+                .task {
+                    // Deferred singleton init — runs after first frame renders.
+                    // Using .task instead of .onAppear to avoid blocking the main thread
+                    // with heavy DSP/Metal initialization during app launch.
                     TuningBridge.shared.activate()
                     _ = EchoelCreativeWorkspace.shared
                     _ = InstrumentOrchestrator.shared

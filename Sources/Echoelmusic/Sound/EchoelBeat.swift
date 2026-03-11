@@ -534,8 +534,11 @@ public final class EchoelBeat {
 
     private init() {
         setupAudioEngine()
-        // Load default drum kit so drum pads produce sound immediately
-        loadDrumKit(genre: .electronic)
+        // Defer drum kit loading to avoid blocking app launch with DSP rendering.
+        // 16 drum presets × synthesis = heavy work that can trigger iOS watchdog.
+        Task { @MainActor [weak self] in
+            self?.loadDrumKit(genre: .electronic)
+        }
     }
 
     private func setupAudioEngine() {

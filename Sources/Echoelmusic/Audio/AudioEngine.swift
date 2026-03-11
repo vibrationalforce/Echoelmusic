@@ -130,12 +130,22 @@ public final class AudioEngine {
 
         // Connect: playerNode → masterMixer → mainMixerNode (→ outputNode is automatic)
         let outputFormat = masterEngine.outputNode.outputFormat(forBus: 0)
-        let processingFormat = AVAudioFormat(
-            commonFormat: .pcmFormatFloat32,
-            sampleRate: outputFormat.sampleRate,
-            channels: min(outputFormat.channelCount, 2),
-            interleaved: false
-        ) ?? outputFormat
+
+        // Guard against invalid output format (0 Hz / 0 channels) — happens when
+        // AVAudioSession is not yet active (first launch, mic permission pending).
+        // Fall back to standard 48kHz stereo to avoid crashing on connect().
+        let processingFormat: AVAudioFormat
+        if outputFormat.sampleRate > 0 && outputFormat.channelCount > 0 {
+            processingFormat = AVAudioFormat(
+                commonFormat: .pcmFormatFloat32,
+                sampleRate: outputFormat.sampleRate,
+                channels: min(outputFormat.channelCount, 2),
+                interleaved: false
+            ) ?? AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)!
+        } else {
+            log.audio("⚠️ Output format invalid (\(outputFormat.sampleRate)Hz, \(outputFormat.channelCount)ch) — using 48kHz stereo fallback", level: .warning)
+            processingFormat = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)!
+        }
 
         masterEngine.connect(masterPlayerNode, to: masterMixer, format: processingFormat)
         masterEngine.connect(masterMixer, to: masterEngine.mainMixerNode, format: processingFormat)
@@ -206,6 +216,8 @@ public final class AudioEngine {
                     log.audio("Master AVAudioEngine started after session reconfiguration")
                 } catch {
                     log.audio("CRITICAL: Master engine start failed after retry: \(error)", level: .error)
+                    // Don't set isRunning — engine never started
+                    return
                 }
             }
         }
