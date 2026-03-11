@@ -208,7 +208,7 @@ public struct VisualUniforms: Sendable {
 @Observable
 public final class EchoelVisEngine {
 
-    nonisolated(unsafe) public static let shared = EchoelVisEngine()
+    @MainActor public static let shared = EchoelVisEngine()
 
     // MARK: - State
 

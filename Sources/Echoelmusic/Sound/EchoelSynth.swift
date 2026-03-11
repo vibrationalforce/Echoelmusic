@@ -226,7 +226,7 @@ public final class EchoelSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = EchoelSynth()
+    @MainActor public static let shared = EchoelSynth()
 
     // MARK: - Published State
 
