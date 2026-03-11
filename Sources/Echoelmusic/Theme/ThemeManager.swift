@@ -56,7 +56,7 @@ public final class ThemeManager {
 
     // MARK: - Singleton
 
-    public static let shared = ThemeManager()
+    nonisolated(unsafe) public static let shared = ThemeManager()
 
     // MARK: - Observed State
 

@@ -87,7 +87,7 @@ public final class VisualStepSequencer {
 
     // MARK: - Singleton
 
-    public static let shared = VisualStepSequencer()
+    nonisolated(unsafe) public static let shared = VisualStepSequencer()
 
     private init() {}
 

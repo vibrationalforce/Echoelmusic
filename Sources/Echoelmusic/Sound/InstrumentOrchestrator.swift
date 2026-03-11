@@ -24,7 +24,7 @@ final class InstrumentOrchestrator {
 
     // MARK: - Singleton
 
-    static let shared = InstrumentOrchestrator()
+    nonisolated(unsafe) static let shared = InstrumentOrchestrator()
 
     // MARK: - Published State
 
