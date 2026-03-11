@@ -180,6 +180,7 @@ public final class AbletonLinkClient {
         discoveryTimer?.invalidate()
         discoveryTimer = nil
         multicastConnection?.cancel()
+        unicastListener?.cancel()
     }
 
     // MARK: - Session Management
