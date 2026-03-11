@@ -522,6 +522,19 @@ public final class EchoelSynth {
 
         voiceLock.unlock()
 
+        // Soft-limiter: prevent digital clipping from polyphonic voice sum
+        // 16 voices at level 0.8 can produce amplitude up to 12.8
+        let voiceCount = Float(max(1, voices.count))
+        let gainComp = 1.0 / sqrt(voiceCount)
+        for i in 0..<frameCount {
+            let sL = leftBuffer[i] * gainComp
+            let sR = rightBuffer[i] * gainComp
+            let xL2 = sL * sL
+            let xR2 = sR * sR
+            leftBuffer[i] = sL * (27.0 + xL2) / (27.0 + 9.0 * xL2)
+            rightBuffer[i] = sR * (27.0 + xR2) / (27.0 + 9.0 * xR2)
+        }
+
         currentTime += Double(frameCount) / sampleRate
 
         // Meter update (~20Hz)
