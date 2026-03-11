@@ -266,10 +266,19 @@ public final class BPMTransitionEngine {
 
     // MARK: - Setup
 
+    private var displayLinkTarget: BPMDisplayLinkTarget?
+
     private func setupDisplayLink() {
-        displayLink = CADisplayLink(target: self, selector: #selector(updateBPM))
-        displayLink?.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
-        displayLink?.add(to: .main, forMode: .common)
+        let target = BPMDisplayLinkTarget(action: { [weak self] displayLink in
+            MainActor.assumeIsolated {
+                self?.updateBPM(displayLink)
+            }
+        })
+        displayLinkTarget = target
+        let link = CADisplayLink(target: target, selector: #selector(BPMDisplayLinkTarget.handleDisplayLink(_:)))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+        link.add(to: .main, forMode: .common)
+        displayLink = link
     }
 
     private func setupBindings() {
@@ -301,7 +310,7 @@ public final class BPMTransitionEngine {
 
     // MARK: - Update Loop
 
-    @objc private func updateBPM(_ displayLink: CADisplayLink) {
+    private func updateBPM(_ displayLink: CADisplayLink) {
         let currentTime = displayLink.timestamp
         let deltaTime = lastUpdateTime > 0 ? currentTime - lastUpdateTime : 0
         lastUpdateTime = currentTime
@@ -738,6 +747,23 @@ extension BPMTransitionEngine {
         if bioSourceBPM == 70 {
             updateBioSource(coherence: coh)
         }
+    }
+}
+
+// MARK: - Display Link Target
+
+/// Non-isolated proxy target for CADisplayLink to avoid retain cycle.
+/// CADisplayLink retains its target strongly — using self directly creates
+/// a cycle (self → displayLink → self). This proxy breaks the cycle.
+private final class BPMDisplayLinkTarget {
+    let action: (CADisplayLink) -> Void
+
+    init(action: @escaping (CADisplayLink) -> Void) {
+        self.action = action
+    }
+
+    @objc func handleDisplayLink(_ displayLink: CADisplayLink) {
+        action(displayLink)
     }
 }
 #endif

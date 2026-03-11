@@ -671,24 +671,26 @@ final class BackgroundSourceManager {
 
     // MARK: - Display Link (for video frame updates)
 
+    private var displayLinkTarget: BGDisplayLinkTarget?
+
     private func startDisplayLink() {
         #if os(iOS)
-        let displayLink = CADisplayLink(target: self, selector: #selector(displayLinkCallback))
-        displayLink.add(to: .main, forMode: .common)
-        self.displayLink = displayLink
+        let target = BGDisplayLinkTarget(action: { [weak self] in
+            Task { @MainActor in
+                _ = try? await self?.getCurrentTexture(size: CGSize(width: 1920, height: 1080))
+            }
+        })
+        displayLinkTarget = target
+        let link = CADisplayLink(target: target, selector: #selector(BGDisplayLinkTarget.handleDisplayLink))
+        link.add(to: .main, forMode: .common)
+        self.displayLink = link
         #endif
     }
 
     private func stopDisplayLink() {
         displayLink?.invalidate()
         displayLink = nil
-    }
-
-    @objc private func displayLinkCallback() {
-        // Update video frame
-        Task { @MainActor in
-            _ = try? await getCurrentTexture(size: CGSize(width: 1920, height: 1080))
-        }
+        displayLinkTarget = nil
     }
 
     // MARK: - Camera Capture
@@ -1182,6 +1184,21 @@ enum BackgroundError: LocalizedError {
         case .blurRenderingFailed:
             return "Failed to render blur effect"
         }
+    }
+}
+
+// MARK: - Display Link Target
+
+/// Non-isolated proxy target for CADisplayLink to avoid retain cycle.
+private final class BGDisplayLinkTarget {
+    let action: () -> Void
+
+    init(action: @escaping () -> Void) {
+        self.action = action
+    }
+
+    @objc func handleDisplayLink() {
+        action()
     }
 }
 #endif
