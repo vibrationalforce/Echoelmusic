@@ -207,6 +207,9 @@ private struct EchoelSynthVoice {
     var svfIC1eq: Float = 0.0
     var svfIC2eq: Float = 0.0
 
+    // FM parameter smoothing (prevents zipper noise)
+    var smoothedFMAmount: Float = 0.0
+
     // Chorus state
     var chorusPhase: Double = 0.0
 
@@ -499,11 +502,14 @@ public final class EchoelSynth {
 
                 peak = Swift.max(peak, abs(sample))
 
-                // ─── Stereo output with width ───
+                // ─── Stereo output with equal-power panning ───
+                // cos/sin panning preserves perceived loudness across the stereo field.
+                // Linear panning causes a -3dB dip at center — this eliminates that.
                 let spread = cfg.stereoWidth * 0.5
-                let pan = Float(v.midiNote - 60) / 60.0 * spread  // Note-based stereo spread
-                leftBuffer[frame] += sample * (1.0 - pan)
-                rightBuffer[frame] += sample * (1.0 + pan)
+                let panNorm = Float(v.midiNote - 60) / 60.0 * spread  // [-1, 1] range
+                let theta = (panNorm + 1.0) * 0.5 * Float.pi * 0.5   // [0, π/2]
+                leftBuffer[frame] += sample * cos(theta)
+                rightBuffer[frame] += sample * sin(theta)
             }
 
             voices[voiceIndex] = v
@@ -588,9 +594,11 @@ public final class EchoelSynth {
 
             let modWithFeedback = sin((Float(v.fmModPhase) + feedback) * 2.0 * Float.pi)
 
-            // FM amount with mod envelope decay
-            let fmAmount = cfg.fmDepth * 4.0 * v.fmModEnvelope
-            let carrierPhaseOffset = Double(modWithFeedback * fmAmount)
+            // FM amount with mod envelope decay + parameter smoothing
+            // Exponential smoothing prevents zipper noise when fmDepth changes
+            let targetFMAmount = cfg.fmDepth * 4.0 * v.fmModEnvelope
+            v.smoothedFMAmount += (targetFMAmount - v.smoothedFMAmount) * 0.005
+            let carrierPhaseOffset = Double(modWithFeedback * v.smoothedFMAmount)
 
             v.phase += phaseInc
             if v.phase >= 1.0 { v.phase -= 1.0 }
@@ -622,8 +630,8 @@ public final class EchoelSynth {
             let shape1 = min(7, shape0 + 1)
             let shapeFrac = shapeIndex - Float(shape0)
 
-            let s0 = wavetableShape(shape: shape0, phase: ph)
-            let s1 = wavetableShape(shape: shape1, phase: ph)
+            let s0 = wavetableShape(shape: shape0, phase: ph, freq: freq)
+            let s1 = wavetableShape(shape: shape1, phase: ph, freq: freq)
 
             return s0 * (1.0 - shapeFrac) + s1 * shapeFrac
 
@@ -695,25 +703,73 @@ public final class EchoelSynth {
 
     // MARK: - Wavetable Shapes
 
-    private func wavetableShape(shape: Int, phase: Float) -> Float {
+    /// Band-limited wavetable shapes using additive synthesis
+    /// Prevents aliasing by only generating harmonics below Nyquist.
+    /// For shapes that are already band-limited (sine, half-rect), uses direct computation.
+    private func wavetableShape(shape: Int, phase: Float, freq: Float = 440.0) -> Float {
+        let nyquist = Float(sampleRate) * 0.5
+        let maxHarmonics = max(1, Int(nyquist / max(1.0, freq)))
+
         switch shape {
-        case 0: // Sine
+        case 0: // Sine — already band-limited
             return sin(phase)
-        case 1: // Triangle
-            let t = phase / (2.0 * Float.pi)
-            return 4.0 * abs(t - 0.5) - 1.0
-        case 2: // Saw
-            return phase / Float.pi - 1.0
-        case 3: // Square
-            return phase < Float.pi ? 1.0 : -1.0
-        case 4: // Pulse (25%)
-            return phase < Float.pi * 0.5 ? 1.0 : -1.0
-        case 5: // Half-rectified sine
+
+        case 1: // Triangle — band-limited additive (odd harmonics, alternating sign, 1/n²)
+            var sample: Float = 0
+            for n in stride(from: 1, through: min(maxHarmonics, 64), by: 2) {
+                let sign: Float = ((n / 2) % 2 == 0) ? 1.0 : -1.0
+                let nf = Float(n)
+                sample += sign * sin(phase * nf) / (nf * nf)
+            }
+            return sample * (8.0 / (Float.pi * Float.pi))
+
+        case 2: // Saw — band-limited additive (all harmonics, 1/n)
+            var sample: Float = 0
+            for n in 1...min(maxHarmonics, 64) {
+                let nf = Float(n)
+                let sign: Float = (n % 2 == 0) ? 1.0 : -1.0
+                sample += sign * sin(phase * nf) / nf
+            }
+            return sample * (2.0 / Float.pi)
+
+        case 3: // Square — band-limited additive (odd harmonics, 1/n)
+            var sample: Float = 0
+            for n in stride(from: 1, through: min(maxHarmonics, 64), by: 2) {
+                let nf = Float(n)
+                sample += sin(phase * nf) / nf
+            }
+            return sample * (4.0 / Float.pi)
+
+        case 4: // Pulse (25%) — band-limited via Fourier series
+            var sample: Float = 0
+            let duty: Float = 0.25
+            for n in 1...min(maxHarmonics, 64) {
+                let nf = Float(n)
+                sample += sin(Float.pi * nf * duty) * sin(phase * nf) / nf
+            }
+            return sample * (4.0 / Float.pi)
+
+        case 5: // Half-rectified sine — naturally limited harmonics
             return phase < Float.pi ? sin(phase) : 0.0
-        case 6: // Full-rectified sine (abs sine)
-            return abs(sin(phase)) * 2.0 - 1.0
-        case 7: // Metallic (sine + 3rd + 5th harmonic)
+
+        case 6: // Full-rectified sine — band-limited via even harmonics
+            // |sin(x)| = 2/π - (4/π) * Σ cos(2nx) / (4n²-1)
+            var sample: Float = 2.0 / Float.pi
+            for n in 1...min(maxHarmonics / 2, 32) {
+                let nf = Float(n)
+                sample -= (4.0 / Float.pi) * cos(phase * 2.0 * nf) / (4.0 * nf * nf - 1.0)
+            }
+            return sample * Float.pi * 0.5 - 1.0  // Scale to [-1, 1] range
+
+        case 7: // Metallic — already band-limited (only harmonics 1, 3, 5)
+            if freq * 5.0 > nyquist {
+                // Drop harmonics above Nyquist
+                var sample = sin(phase) * 0.6
+                if freq * 3.0 < nyquist { sample += sin(phase * 3.0) * 0.25 }
+                return sample
+            }
             return sin(phase) * 0.6 + sin(phase * 3.0) * 0.25 + sin(phase * 5.0) * 0.15
+
         default:
             return sin(phase)
         }
