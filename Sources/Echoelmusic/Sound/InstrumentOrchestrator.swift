@@ -129,16 +129,10 @@ final class InstrumentOrchestrator {
         }
         engine.connect(player, to: mixer, format: format)
 
-        // Start the engine
-        do {
-            try engine.start()
-            isPlaying = true
-            isEngineReady = true
-            log.audio("🎵 InstrumentOrchestrator: Audio engine started")
-        } catch let engineError {
-            isEngineReady = false
-            log.error("InstrumentOrchestrator: Failed to start audio engine: \(engineError)", category: .audio)
-        }
+        // Engine is prepared but NOT started here — started via connectMainAudioEngine()
+        // or lazily on first use. Avoids competing with master AudioEngine at app launch.
+        isEngineReady = true
+        log.audio("InstrumentOrchestrator: audio engine prepared (deferred start)")
     }
 
     /// Connect to the main AudioEngine for unified audio output.

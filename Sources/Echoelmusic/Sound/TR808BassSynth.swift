@@ -316,11 +316,9 @@ public final class TR808BassSynth {
         engine.attach(source)
         engine.connect(source, to: engine.mainMixerNode, format: audioFormat)
 
-        do {
-            try engine.start()
-        } catch {
-            // Engine failed to start - will retry on first note
-        }
+        // Engine is prepared but NOT started here — started lazily on first noteOn/start()
+        // to avoid competing with the master AudioEngine at app launch.
+        log.audio("TR808BassSynth: audio engine prepared (deferred start)")
     }
 
     // MARK: - Public API

@@ -358,7 +358,9 @@ public final class EchoelBass {
         engine.attach(source)
         engine.connect(source, to: engine.mainMixerNode, format: audioFormat)
 
-        do { try engine.start() } catch { log.error("EchoelBass: engine start failed - \(error)", category: .audio) }
+        // Engine is prepared but NOT started here — started lazily on first noteOn/start()
+        // to avoid competing with the master AudioEngine at app launch.
+        log.audio("EchoelBass: audio engine prepared (deferred start)")
     }
 
     // MARK: - Public API

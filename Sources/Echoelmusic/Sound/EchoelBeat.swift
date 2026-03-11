@@ -559,7 +559,9 @@ public final class EchoelBeat {
         guard let src = sourceNode else { return }
         engine.attach(src)
         engine.connect(src, to: engine.mainMixerNode, format: format)
-        do { try engine.start() } catch { log.log(.warning, category: .audio, "EchoelBeat: engine start failed — \(error)") }
+        // Engine is prepared but NOT started here — started lazily via ensureEngineRunning()
+        // to avoid competing with the master AudioEngine at app launch.
+        log.log(.info, category: .audio, "EchoelBeat: audio engine prepared (deferred start)")
     }
 
     private func ensureEngineRunning() {
