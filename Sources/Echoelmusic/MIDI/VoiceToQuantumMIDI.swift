@@ -400,6 +400,7 @@ public final class VoiceToQuantumMIDI {
 
     private func processHarmonizerMode(note: UInt8, velocity: Float) {
         guard let midiOut = quantumMIDIOut else { return }
+        guard !harmonyInstruments.isEmpty else { return }
 
         let intervals = harmonyMode.intervals
         let voicesToUse = min(harmonyVoices, intervals.count)

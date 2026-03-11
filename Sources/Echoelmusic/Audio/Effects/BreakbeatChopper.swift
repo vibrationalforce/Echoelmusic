@@ -895,6 +895,7 @@ public final class BreakbeatChopper {
         guard var pattern = currentPattern else { return }
 
         // High coherence = more structured patterns
+        guard !slices.isEmpty else { return }
         if signal.coherence > 70 {
             // Use original order slices
             for i in 0..<pattern.steps.count {
