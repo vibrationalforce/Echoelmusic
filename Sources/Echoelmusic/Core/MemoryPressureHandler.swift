@@ -209,6 +209,7 @@ public final class MemoryPressureHandler {
         usedMemoryBytes = stats.used
         availableMemoryBytes = stats.available
 
+        guard stats.total > 0 else { return }
         let usageRatio = Double(stats.used) / Double(stats.total)
 
         let newLevel: MemoryPressureLevel
@@ -300,7 +301,7 @@ public final class MemoryPressureHandler {
             usedBytes: stats.used,
             availableBytes: stats.available,
             totalBytes: stats.total,
-            usagePercent: Double(stats.used) / Double(stats.total) * 100
+            usagePercent: stats.total > 0 ? Double(stats.used) / Double(stats.total) * 100 : 0
         )
     }
 

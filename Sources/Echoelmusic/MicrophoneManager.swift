@@ -346,7 +346,8 @@ final class MicrophoneManager: NSObject {
         var maxMagnitude: Float = 0
         var maxIndex: vDSP_Length = 0
 
-        vDSP_maxvi(Array(fftMagnitudesBuffer[1...]), 1, &maxMagnitude, &maxIndex, vDSP_Length(halfSize - 1))
+        let searchBuffer = Array(fftMagnitudesBuffer[1...])
+        vDSP_maxvi(searchBuffer, 1, &maxMagnitude, &maxIndex, vDSP_Length(halfSize - 1))
         maxIndex += 1 // Adjust for skipping index 0
 
         // Convert bin index to frequency

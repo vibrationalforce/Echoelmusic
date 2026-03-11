@@ -328,6 +328,7 @@ final class EchoelCreativeWorkspace {
         let sampleRate = proMixer.sampleRate
         let frameCount = renderFrameCount
         // Timer interval = buffer duration (e.g., 512/48000 ≈ 10.67ms)
+        guard sampleRate > 0 else { return }
         let interval = Double(frameCount) / sampleRate
 
         // Timer fires on main run loop — already on MainActor, no Task wrapper needed
@@ -425,11 +426,15 @@ final class EchoelCreativeWorkspace {
 
                 // If this channel already has session audio, mix bio on top
                 if let existing = inputBuffers[bioChannelID],
-                   let existingData = existing.floatChannelData {
-                    let exL = existingData[0]
-                    let exR = existingData[1]
-                    vDSP_vadd(exL, 1, bioLeft, 1, exL, 1, vDSP_Length(frameCount))
-                    vDSP_vadd(exR, 1, bioRight, 1, exR, 1, vDSP_Length(frameCount))
+                   let existingData = existing.floatChannelData,
+                   existing.format.channelCount >= 2 {
+                    // Copy existing data to temp buffers to avoid vDSP overlapping access
+                    var tempL = [Float](repeating: 0, count: frameCount)
+                    var tempR = [Float](repeating: 0, count: frameCount)
+                    memcpy(&tempL, existingData[0], frameCount * MemoryLayout<Float>.size)
+                    memcpy(&tempR, existingData[1], frameCount * MemoryLayout<Float>.size)
+                    vDSP_vadd(tempL, 1, bioLeft, 1, existingData[0], 1, vDSP_Length(frameCount))
+                    vDSP_vadd(tempR, 1, bioRight, 1, existingData[1], 1, vDSP_Length(frameCount))
                 } else {
                     inputBuffers[bioChannelID] = bioBuffer
                 }
