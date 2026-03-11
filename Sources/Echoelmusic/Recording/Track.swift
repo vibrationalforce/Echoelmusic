@@ -319,7 +319,7 @@ struct Track: Identifiable, Codable {
         self.modifiedAt = Date()
 
         // Get duration from file
-        if let asset = try? AVAudioFile(forReading: url) {
+        if let asset = try? AVAudioFile(forReading: url), asset.fileFormat.sampleRate > 0 {
             self.duration = Double(asset.length) / asset.fileFormat.sampleRate
         }
     }

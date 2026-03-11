@@ -85,7 +85,7 @@ final class AudioFileImporter {
             type: .audio
         )
         track.url = destURL
-        track.duration = Double(audioFile.length) / format.sampleRate
+        track.duration = format.sampleRate > 0 ? Double(audioFile.length) / format.sampleRate : 0
 
         // Generate waveform
         track.generateWaveform()
