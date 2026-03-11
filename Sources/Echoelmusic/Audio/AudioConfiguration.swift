@@ -47,6 +47,7 @@ enum AudioConfiguration {
 
     /// Calculate IO buffer duration for AVAudioSession
     static func ioBufferDuration(for sampleRate: Double) -> TimeInterval {
+        guard sampleRate > 0 else { return Double(currentBufferSize) / preferredSampleRate }
         return Double(currentBufferSize) / sampleRate
     }
 
