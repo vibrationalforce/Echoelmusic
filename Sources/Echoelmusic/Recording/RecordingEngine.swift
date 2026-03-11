@@ -304,10 +304,20 @@ final class RecordingEngine {
         // Process buffer synchronously in the tap closure while memory is valid.
         // AVAudioPCMBuffer is non-Sendable — its memory is reused after the callback.
         // File write and DSP happen here; only computed Float values cross to MainActor.
+        // CRITICAL: Do NOT capture [weak self] + guard let self in the outer closure.
+        // guard let self creates a strong ref to @MainActor self on the audio thread,
+        // triggering dispatch_assert_queue_fail under Swift 6 strict concurrency.
+        // Instead, capture nonisolated(unsafe) audioFile directly for the file write.
+        nonisolated(unsafe) let file = self.audioFile
         input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
-            guard let self else { return }
             // Write to file synchronously while buffer memory is valid
-            self.writeBufferToFile(buffer)
+            if let file {
+                do {
+                    try file.write(from: buffer)
+                } catch {
+                    log.error("Failed to write audio buffer to recording file: \(error)")
+                }
+            }
             // Extract data synchronously, then dispatch computed values
             guard let channelData = buffer.floatChannelData else { return }
             let frameLength = Int(buffer.frameLength)
@@ -342,16 +352,8 @@ final class RecordingEngine {
         log.recording("🎙️ Audio recording engine started")
     }
 
-    /// Write buffer to audio file synchronously (called from tap closure while memory is valid)
-    nonisolated private func writeBufferToFile(_ buffer: AVAudioPCMBuffer) {
-        if let file = audioFile {
-            do {
-                try file.write(from: buffer)
-            } catch {
-                log.error("Failed to write audio buffer to recording file: \(error)")
-            }
-        }
-    }
+    // File write is now inlined in the installTap closure to avoid
+    // guard let self on the audio thread (dispatch_assert_queue_fail)
 
     /// Stop recording current track
     func stopRecording() throws {
