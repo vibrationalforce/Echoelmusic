@@ -1382,7 +1382,7 @@ extension TR808BassSynth {
             }
         }
 
-        sequencerStep = (sequencerStep + 1) % sequencerPattern.stepCount
+        sequencerStep = (sequencerStep + 1) % Swift.max(1, sequencerPattern.stepCount)
     }
 
     /// Load a factory pattern preset

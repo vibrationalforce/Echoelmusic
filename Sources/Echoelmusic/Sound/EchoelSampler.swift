@@ -749,7 +749,7 @@ public final class EchoelSampler {
         zone.sampleRate = sampleRate
         zone.loopEnabled = loopEnabled
 
-        if loopEnabled {
+        if loopEnabled && synthOutput.count >= 2 {
             // Find zero crossing near 80% mark for clean loop
             let searchStart = Int(Float(synthOutput.count) * 0.75)
             var loopEnd = synthOutput.count

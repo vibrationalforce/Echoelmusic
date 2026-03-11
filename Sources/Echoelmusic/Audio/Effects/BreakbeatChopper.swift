@@ -781,7 +781,7 @@ public final class BreakbeatChopper {
 
         // Check probability
         if Float.random(in: 0...1) > step.probability {
-            currentStep = (currentStep + 1) % pattern.length
+            currentStep = (currentStep + 1) % Swift.max(1, pattern.length)
             return
         }
 
@@ -798,7 +798,7 @@ public final class BreakbeatChopper {
             playSlice(slice, roll: step.roll)
         }
 
-        currentStep = (currentStep + 1) % pattern.length
+        currentStep = (currentStep + 1) % Swift.max(1, pattern.length)
     }
 
     /// Play a single slice
