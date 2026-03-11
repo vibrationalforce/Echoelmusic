@@ -133,15 +133,21 @@ public struct LogEntry: Identifiable, Sendable {
         self.metadata = metadata
     }
 
-    /// Shared date formatter — creating DateFormatter is expensive (~50μs), reuse is ~0.5μs
-    nonisolated(unsafe) private static let dateFormatter: DateFormatter = {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "HH:mm:ss.SSS"
-        return fmt
-    }()
+    /// Thread-safe time formatting using C strftime + milliseconds.
+    /// DateFormatter is NOT thread-safe — concurrent access from multiple
+    /// logging threads corrupts internal state or crashes.
+    private static func formatTime(_ date: Date) -> String {
+        var time = time_t(date.timeIntervalSince1970)
+        var tm = tm()
+        localtime_r(&time, &tm)
+        let ms = Int((date.timeIntervalSince1970.truncatingRemainder(dividingBy: 1)) * 1000)
+        var buf = [CChar](repeating: 0, count: 16)
+        strftime(&buf, buf.count, "%H:%M:%S", &tm)
+        return String(cString: buf) + String(format: ".%03d", ms)
+    }
 
     public var formattedMessage: String {
-        let timeString = Self.dateFormatter.string(from: timestamp)
+        let timeString = Self.formatTime(timestamp)
 
         let fileName = URL(fileURLWithPath: file).lastPathComponent
         return "\(level.emoji) [\(timeString)] [\(category.rawValue)] \(message) (\(fileName):\(line))"
