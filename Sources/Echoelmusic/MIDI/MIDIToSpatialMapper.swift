@@ -280,7 +280,7 @@ final class MIDIToSpatialMapper {
         case .fibonacci(_):
             // Same as sphere case
             let phi: Float = .pi * (3.0 - sqrt(5.0))
-            let y = 1.0 - (Float(index) / Float(total - 1)) * 2.0
+            let y = total > 1 ? 1.0 - (Float(index) / Float(total - 1)) * 2.0 : 0.0
             let radiusAtY = sqrt(1.0 - y * y)
             let theta = phi * Float(index)
 
