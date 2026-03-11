@@ -217,7 +217,7 @@ public final class TR808BassSynth {
 
     // MARK: - Singleton
 
-    nonisolated(unsafe) public static let shared = TR808BassSynth()
+    @MainActor public static let shared = TR808BassSynth()
 
     // MARK: - Published State
 

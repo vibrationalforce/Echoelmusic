@@ -23,7 +23,7 @@ protocol UndoableCommand {
 final class UndoRedoManager {
 
     // MARK: - Singleton
-    nonisolated(unsafe) static let shared = UndoRedoManager()
+    @MainActor static let shared = UndoRedoManager()
 
     // MARK: - Published State
     private(set) var canUndo: Bool = false

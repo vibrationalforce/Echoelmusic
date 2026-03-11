@@ -124,7 +124,7 @@ public struct SynthPreset: Identifiable, Codable, Sendable {
 /// The AI Sample Engine — 1.2 GB of samples as ~50 KB of synth parameters
 public final class SynthPresetLibrary: @unchecked Sendable {
 
-    nonisolated(unsafe) public static let shared = SynthPresetLibrary()
+    @MainActor public static let shared = SynthPresetLibrary()
 
     public private(set) var presets: [SynthPreset] = []
 
