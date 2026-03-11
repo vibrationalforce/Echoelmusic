@@ -269,6 +269,7 @@ final class MIDIToSpatialMapper {
             )
 
         case .grid(let rows, let cols, let spacing):
+            guard cols > 0 else { return SpatialPosition(x: 0, y: 0, z: 0) }
             let row = index / cols
             let col = index % cols
             return SpatialPosition(

@@ -991,7 +991,7 @@ struct MelodyGridBackground: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let totalNotes = scale.intervals.count * octaveRange
+            let totalNotes = max(1, scale.intervals.count * octaveRange)
             let noteWidth = geometry.size.width / CGFloat(totalNotes)
 
             HStack(spacing: 0) {
