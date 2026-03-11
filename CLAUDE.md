@@ -326,9 +326,42 @@ UDP. Target: <5ms LAN.
 
 ## DEVELOPMENT WORKFLOW
 
+### Persistent Memory (memory/)
+
+The `memory/` directory is **durable knowledge** that persists across all sessions:
+
+| File | Purpose |
+|------|---------|
+| `decisions.md` | Architectural and strategic decisions with rationale and review dates |
+| `people.md` | Key contributors, collaborators, contacts |
+| `preferences.md` | User preferences for workflow, communication, tooling |
+| `user.md` | User profile, project vision, working style |
+
+**SESSION START (mandatory):**
+1. Read ALL files in `memory/` to restore context
+2. Read `scratchpads/SESSION_LOG.md` for recent session history
+3. Read `memory/decisions.md` for any decisions due for review
+
+**SESSION END (mandatory):**
+1. Update `memory/` files with any new discoveries, decisions, or preferences learned during the session
+2. Log new decisions to `memory/decisions.md` AND `decisions.csv` (see Decision Logging below)
+3. Update `scratchpads/SESSION_LOG.md` with session summary
+
+### Decision Logging (decisions.csv)
+
+Machine-readable decision log at repo root. Format:
+```
+date,decision,reasoning,expected_outcome,review_date,status
+```
+
+- Log every architectural/strategic decision the user describes
+- Review dates default to 30 days from decision date
+- Run `./review.sh` to surface decisions due for review
+- Daily cron job auto-flags overdue decisions with `REVIEW_DUE`
+
 ### Long-Term Memory (scratchpads/)
 
-The `scratchpads/` directory is persistent memory across sessions:
+The `scratchpads/` directory is session-specific logs and plans:
 
 | File | Purpose |
 |------|---------|
@@ -336,7 +369,7 @@ The `scratchpads/` directory is persistent memory across sessions:
 | `ARCHITECTURE_AUDIT_*.md` | Data flow diagrams, env object chains, init sequence |
 | `PLAN_*.md` | Feature/fix plans before implementation |
 
-**Start every session** by reading `scratchpads/SESSION_LOG.md`.
+**Start every session** by reading `memory/` first, then `scratchpads/SESSION_LOG.md`.
 
 ### 4-Phase Workflow
 

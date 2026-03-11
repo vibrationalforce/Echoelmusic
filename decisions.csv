@@ -1,0 +1,3 @@
+date,decision,reasoning,expected_outcome,review_date,status
+2026-03-11,"Created persistent memory system (memory/ directory)","scratchpads/ is session-specific; need durable cross-session knowledge store","Faster session starts and no repeated discovery of known facts",2026-04-10,ACTIVE
+2026-03-11,"Created decision logging system (decisions.csv + review.sh + cron)","Systematic tracking of architectural decisions with automated review reminders","Decisions are reviewed on schedule and not forgotten",2026-04-10,ACTIVE
