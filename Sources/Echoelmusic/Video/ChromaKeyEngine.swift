@@ -243,6 +243,7 @@ final class ChromaKeyEngine {
         }
 
         // Adjust global tolerance based on calibration
+        guard !perRegionTolerance.isEmpty else { return }
         let avgVariance = perRegionTolerance.reduce(SIMD3<Float>.zero, +) / Float(perRegionTolerance.count)
         let avgVarianceMagnitude = length(avgVariance)
 

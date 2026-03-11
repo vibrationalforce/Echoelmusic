@@ -498,7 +498,7 @@ private struct BioFeedbackSettingsContent: View {
                 } else {
                     Button(action: {
                         isRequesting = true
-                        Task {
+                        Task { @MainActor in
                             let granted = await bio.requestAuthorization()
                             isRequesting = false
                             if granted {

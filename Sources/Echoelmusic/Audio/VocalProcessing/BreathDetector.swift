@@ -318,6 +318,7 @@ public class BreathDetector {
     }
 
     private func computeZCR(_ frame: [Float]) -> Float {
+        guard frame.count > 1 else { return 0 }
         var crossings = 0
         for i in 1..<frame.count {
             if (frame[i] >= 0 && frame[i - 1] < 0) || (frame[i] < 0 && frame[i - 1] >= 0) {

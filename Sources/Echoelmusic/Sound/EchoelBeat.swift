@@ -628,9 +628,10 @@ public final class EchoelBeat {
         voiceLock.lock()
         defer { voiceLock.unlock() }
 
-        let beatsPerSecond = Double(bpm) / 60.0
-        let triggersPerSecond = beatsPerSecond * Double(rollDivision.stepsPerBeat)
-        let samplesPerTrigger = Int(sampleRate / triggersPerSecond)
+        let beatsPerSecond = Double(max(bpm, 20.0)) / 60.0
+        let triggersPerSecond = beatsPerSecond * Double(max(rollDivision.stepsPerBeat, 1))
+        guard triggersPerSecond > 0, sampleRate > 0 else { return }
+        let samplesPerTrigger = max(1, Int(sampleRate / triggersPerSecond))
 
         rollState = RollState(
             isActive: true,
@@ -719,7 +720,8 @@ public final class EchoelBeat {
         let dlyCfg = delayConfig
         let sr = Float(sampleRate)
 
-        voiceLock.lock()
+        // tryLock: never block the audio thread — output silence if lock is held
+        guard voiceLock.try() else { return }
 
         // Snapshot drum slots (value-type COW)
         let slots = drumSlots

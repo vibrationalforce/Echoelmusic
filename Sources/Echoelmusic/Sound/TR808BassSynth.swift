@@ -445,7 +445,8 @@ public final class TR808BassSynth {
         memset(leftBuffer, 0, frameCount * MemoryLayout<Float>.size)
         memset(rightBuffer, 0, frameCount * MemoryLayout<Float>.size)
 
-        voiceLock.lock()
+        // tryLock: never block the audio thread — output silence if lock is held
+        guard voiceLock.try() else { return }
 
         var voicesToRemove: [Int] = []
         var peak: Float = 0.0

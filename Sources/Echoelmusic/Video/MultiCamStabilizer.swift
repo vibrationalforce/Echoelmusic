@@ -839,9 +839,11 @@ final class VideoStabilizer {
             windowSize = 60
         case .locked:
             // For locked, target is the average position
-            let avgX = cumulative.map { $0.translation.x }.reduce(0, +) / CGFloat(cumulative.count)
-            let avgY = cumulative.map { $0.translation.y }.reduce(0, +) / CGFloat(cumulative.count)
-            let avgRot = cumulative.map { $0.rotation }.reduce(0, +) / CGFloat(cumulative.count)
+            guard !cumulative.isEmpty else { return }
+            let count = CGFloat(cumulative.count)
+            let avgX = cumulative.map { $0.translation.x }.reduce(0, +) / count
+            let avgY = cumulative.map { $0.translation.y }.reduce(0, +) / count
+            let avgRot = cumulative.map { $0.rotation }.reduce(0, +) / count
 
             smoothedPath = cumulative.map { motion in
                 FrameMotion(

@@ -368,6 +368,7 @@ public final class EchoelBioEngine {
 
         // Calculate variance of successive differences
         let diffs = zip(rrIntervals.dropFirst(), rrIntervals).map { $0 - $1 }
+        guard !diffs.isEmpty else { return }
         let mean = diffs.reduce(0, +) / Double(diffs.count)
         let variance = diffs.reduce(0.0) { $0 + ($1 - mean) * ($1 - mean) } / Double(diffs.count)
 
