@@ -201,6 +201,9 @@ public final class EchoelDDSP: @unchecked Sendable {
     private var vdspSinBuffer: [Float]
     private var vdspCosBuffer: [Float]
 
+    /// Pre-computed noise filter coefficients (avoids exp() on audio thread)
+    private var noiseFilterAlphas: [Float]
+
     /// Multi-band noise: FIR-filtered noise via overlap-add
     private var noiseFFTBuffer: [Float]
     private var noiseOutputBuffer: [Float]
@@ -283,6 +286,13 @@ public final class EchoelDDSP: @unchecked Sendable {
         self.noiseOutputBuffer = [Float](repeating: 0, count: frameSize + fftSize)
         self.noiseOverlapBuffer = [Float](repeating: 0, count: fftSize)
         self.noiseFilterState = [Float](repeating: 0, count: noiseBandCount)
+
+        // Pre-compute noise filter coefficients (avoids exp() on audio thread)
+        let spacing = 1.0 / Float(noiseBandCount)
+        self.noiseFilterAlphas = (0..<noiseBandCount).map { band in
+            let centerFreq = Float(band + 1) * spacing
+            return exp(-2.0 * Float.pi * centerFreq * 0.5)
+        }
 
         // Spectral morph buffers
         self.morphSourceAmplitudes = [Float](repeating: 0, count: harmonicCount)
@@ -547,11 +557,9 @@ public final class EchoelDDSP: @unchecked Sendable {
             // with noiseMagnitudes as band gains. Each band tracks its own state,
             // creating a proper spectral envelope rather than cycling a single band.
             noiseSample = 0
-            let bandSpacing = 1.0 / Float(noiseBandCount)
             for band in 0..<noiseBandCount {
-                // Per-band filter coefficient: higher band = tighter filtering
-                let centerFreq = Float(band + 1) * bandSpacing
-                let alpha = exp(-2.0 * Float.pi * centerFreq * 0.5)
+                // Pre-computed alpha coefficients — no exp() on audio thread
+                let alpha = noiseFilterAlphas[band]
                 let filtered = whiteNoise * (1.0 - alpha) + noiseFilterState[band] * alpha
                 noiseFilterState[band] = filtered
                 noiseSample += filtered * noiseMagnitudes[band]

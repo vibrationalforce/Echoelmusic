@@ -755,7 +755,8 @@ public final class EchoelSynth {
         case 6: // Full-rectified sine — band-limited via even harmonics
             // |sin(x)| = 2/π - (4/π) * Σ cos(2nx) / (4n²-1)
             var sample: Float = 2.0 / Float.pi
-            for n in 1...min(maxHarmonics / 2, 32) {
+            let maxEvenHarmonics = max(1, min(maxHarmonics / 2, 32))
+            for n in 1...maxEvenHarmonics {
                 let nf = Float(n)
                 sample -= (4.0 / Float.pi) * cos(phase * 2.0 * nf) / (4.0 * nf * nf - 1.0)
             }
