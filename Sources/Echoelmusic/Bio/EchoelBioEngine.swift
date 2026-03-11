@@ -139,9 +139,20 @@ public final class EchoelBioEngine {
 
         do {
             try await healthStore.requestAuthorization(toShare: Set(), read: readTypes)
-            isAuthorized = true
-            log.log(.info, category: .audio, "HealthKit authorization granted")
-            return true
+            // requestAuthorization does NOT throw when user denies — check actual status
+            let hrStatus = healthStore.authorizationStatus(for: hrType)
+            let authorized = hrStatus == .sharingAuthorized || hrStatus == .notDetermined
+            // Note: .notDetermined means user hasn't been asked yet for this specific type,
+            // but after requestAuthorization it means sharing wasn't requested (read-only).
+            // For read types, Apple hides denial — we detect via query returning no data.
+            // Best-effort: check if at least heart rate is readable.
+            isAuthorized = authorized
+            if authorized {
+                log.log(.info, category: .audio, "HealthKit authorization granted")
+            } else {
+                log.log(.warning, category: .audio, "HealthKit authorization denied by user")
+            }
+            return authorized
         } catch {
             log.log(.error, category: .audio, "HealthKit authorization failed: \(error.localizedDescription)")
             isAuthorized = false

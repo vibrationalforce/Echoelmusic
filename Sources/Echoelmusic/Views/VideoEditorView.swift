@@ -131,6 +131,12 @@ struct VideoEditorView: View {
             set: { if !$0 { cameraError = nil } }
         )) {
             Button("OK") { cameraError = nil }
+            if cameraError?.contains("denied") == true || cameraError?.contains("permission") == true {
+                Button("Open Settings") {
+                    cameraError = nil
+                    openAppSettings()
+                }
+            }
         } message: {
             Text(cameraError ?? "Could not access camera.")
         }

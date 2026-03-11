@@ -83,12 +83,16 @@ struct RecordingControlsView: View {
             if let session = recordingEngine.currentSession {
                 TrackListView(session: .constant(session))
                     .environment(recordingEngine)
+            } else {
+                ContentUnavailableView("No Session", systemImage: "waveform.slash", description: Text("Start a recording session first."))
             }
         }
         .sheet(isPresented: $showMixer) {
             if let session = recordingEngine.currentSession {
                 MixerView(session: .constant(session))
                     .environment(recordingEngine)
+            } else {
+                ContentUnavailableView("No Session", systemImage: "slider.horizontal.3", description: Text("Start a recording session first."))
             }
         }
         .sheet(isPresented: $showExportOptions) {
@@ -97,6 +101,8 @@ struct RecordingControlsView: View {
         .sheet(isPresented: $showShareSheet) {
             if let url = shareURL {
                 RecordingShareSheet(items: [url])
+            } else {
+                ContentUnavailableView("Nothing to Share", systemImage: "square.and.arrow.up.slash", description: Text("Record something first."))
             }
         }
         .onDisappear {

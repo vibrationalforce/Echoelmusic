@@ -24,6 +24,9 @@ final class MicrophoneManager: NSObject {
     /// Whether we have microphone permission
     var hasPermission: Bool = false
 
+    /// Whether the user explicitly denied microphone permission
+    var permissionDenied: Bool = false
+
     /// Whether we're currently recording
     var isRecording: Bool = false
 
@@ -127,9 +130,11 @@ final class MicrophoneManager: NSObject {
                     self.hasPermission = granted
                     if granted {
                         log.audio("Microphone permission granted")
+                        self.permissionDenied = false
                         try? AudioConfiguration.upgradeToPlayAndRecord()
                     } else {
                         log.audio("Microphone permission denied", level: .error)
+                        self.permissionDenied = true
                     }
                 }
             }
@@ -139,9 +144,11 @@ final class MicrophoneManager: NSObject {
                     self?.hasPermission = granted
                     if granted {
                         log.audio("Microphone permission granted")
+                        self?.permissionDenied = false
                         try? AudioConfiguration.upgradeToPlayAndRecord()
                     } else {
                         log.audio("Microphone permission denied", level: .error)
+                        self?.permissionDenied = true
                     }
                 }
             }
@@ -377,5 +384,17 @@ final class MicrophoneManager: NSObject {
         }
         audioEngine = nil
     }
+}
+
+// MARK: - Settings Utility
+
+/// Open iOS Settings app to allow the user to re-enable denied permissions.
+@MainActor
+func openAppSettings() {
+    #if os(iOS)
+    if let url = URL(string: UIApplication.openSettingsURLString) {
+        UIApplication.shared.open(url)
+    }
+    #endif
 }
 #endif
