@@ -90,7 +90,7 @@ final class RecordingEngine {
     private var inputNode: AVAudioInputNode?
 
     /// Audio file for current recording
-    /// Written from audioProcessingQueue in installTap callback — nonisolated(unsafe)
+    /// Written from installTap callback on audio thread — nonisolated(unsafe)
     /// because writes are serialized on the processing queue and the file is only
     /// set/cleared on MainActor when recording starts/stops (never concurrent).
     nonisolated(unsafe) private var audioFile: AVAudioFile?
@@ -301,12 +301,40 @@ final class RecordingEngine {
         // Reduced from 4096 to 1024 for lower latency (85ms → 21ms at 48kHz)
         // IMPORTANT: Process buffer synchronously on audioProcessingQueue — AVAudioPCMBuffer
         // memory may be reused after the callback returns (non-Sendable).
-        // Capture queue and nonisolated method ref to avoid accessing @MainActor self
-        // on the audio thread. processRecordingBufferOffMainActor is nonisolated.
-        let processingQueue = self.audioProcessingQueue
+        // Process buffer synchronously in the tap closure while memory is valid.
+        // AVAudioPCMBuffer is non-Sendable — its memory is reused after the callback.
+        // File write and DSP happen here; only computed Float values cross to MainActor.
         input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
-            processingQueue.async {
-                self?.processRecordingBufferOffMainActor(buffer)
+            guard let self else { return }
+            // Write to file synchronously while buffer memory is valid
+            self.writeBufferToFile(buffer)
+            // Extract data synchronously, then dispatch computed values
+            guard let channelData = buffer.floatChannelData else { return }
+            let frameLength = Int(buffer.frameLength)
+            let channelDataValue = channelData.pointee
+
+            // Calculate RMS for level meter
+            var rmsValue: Float = 0.0
+            vDSP_rmsqv(channelDataValue, 1, &rmsValue, vDSP_Length(frameLength))
+            let level = min(rmsValue * 10.0, 1.0)
+
+            // Extract waveform samples (downsample to max 1000 points)
+            let waveformCapacity = 1000
+            let strideValue = max(1, frameLength / waveformCapacity)
+            var waveformSamples: [Float] = []
+            waveformSamples.reserveCapacity(frameLength / strideValue)
+            for i in Swift.stride(from: 0, to: frameLength, by: strideValue) {
+                waveformSamples.append(channelDataValue[i])
+            }
+
+            // Send only computed values to MainActor
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.recordingLevel = level
+                for sample in waveformSamples {
+                    self.waveformBuffer.append(sample)
+                }
+                self.recordingWaveform = self.waveformBuffer.toArray()
             }
         }
 
@@ -314,46 +342,14 @@ final class RecordingEngine {
         log.recording("🎙️ Audio recording engine started")
     }
 
-    /// Process buffer on audioProcessingQueue — extracts data before crossing to MainActor.
-    /// AVAudioPCMBuffer is non-Sendable and its memory may be reused after the tap callback.
-    /// All buffer reads and file writes happen here; only computed Float values cross to MainActor.
-    nonisolated private func processRecordingBufferOffMainActor(_ buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData else { return }
-
-        let frameLength = Int(buffer.frameLength)
-        let channelDataValue = channelData.pointee
-
-        // Calculate RMS for level meter (vDSP_rmsqv computes sqrt(sum(x²)/n) in one call)
-        var rmsValue: Float = 0.0
-        vDSP_rmsqv(channelDataValue, 1, &rmsValue, vDSP_Length(frameLength))
-        let level = min(rmsValue * 10.0, 1.0)
-
-        // Write to audio file (on processing queue — audioFile is nonisolated(unsafe))
+    /// Write buffer to audio file synchronously (called from tap closure while memory is valid)
+    nonisolated private func writeBufferToFile(_ buffer: AVAudioPCMBuffer) {
         if let file = audioFile {
             do {
                 try file.write(from: buffer)
             } catch {
                 log.error("Failed to write audio buffer to recording file: \(error)")
             }
-        }
-
-        // Extract waveform samples (downsample to max 1000 points)
-        let waveformCapacity = 1000
-        let strideValue = max(1, frameLength / waveformCapacity)
-        var waveformSamples: [Float] = []
-        waveformSamples.reserveCapacity(frameLength / strideValue)
-        for i in Swift.stride(from: 0, to: frameLength, by: strideValue) {
-            waveformSamples.append(channelDataValue[i])
-        }
-
-        // Send only computed values to MainActor
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            self.recordingLevel = level
-            for sample in waveformSamples {
-                self.waveformBuffer.append(sample)
-            }
-            self.recordingWaveform = self.waveformBuffer.toArray()
         }
     }
 
