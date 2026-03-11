@@ -951,6 +951,10 @@ public final class VoiceSynthesisEngine {
     private let profileManager = VoiceProfileManager.shared
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
+    /// Cached personal voice to avoid repeated `speechVoices()` enumeration
+    /// which triggers languageassetd and causes memory pressure (MRE kills)
+    private var cachedPersonalVoice: AnyObject?
+    private var personalVoiceLookupDone = false
     private init() {
         // Forward characterizer state using @Observable tracking
         observeCharacterizer()
@@ -1085,14 +1089,29 @@ public final class VoiceSynthesisEngine {
         let synthesizer = AVSpeechSynthesizer()
         let utterance = AVSpeechUtterance(string: text)
 
-        // Find personal voice
-        let voices = AVSpeechSynthesisVoice.speechVoices()
-        if let personalVoice = voices.first(where: { $0.voiceTraits.contains(.isPersonalVoice) }) {
-            utterance.voice = personalVoice
+        // Use cached personal voice to avoid repeated speechVoices() enumeration.
+        // Each speechVoices() call triggers languageassetd to load all language assets,
+        // which can exceed the daemon's 6MB Jetsam limit and crash (MREExceptionFatalLimitInactive).
+        if let voice = resolvePersonalVoice() {
+            utterance.voice = voice
         }
 
         synthesizer.speak(utterance)
         log.info("🎤 Speaking with Personal Voice: \"\(text.prefix(50))...\"", category: .audio)
+    }
+
+    /// Resolve personal voice once and cache the result to avoid repeated
+    /// full voice enumeration that triggers languageassetd memory pressure.
+    @available(iOS 17.0, macOS 14.0, *)
+    private func resolvePersonalVoice() -> AVSpeechSynthesisVoice? {
+        if personalVoiceLookupDone {
+            return cachedPersonalVoice as? AVSpeechSynthesisVoice
+        }
+        personalVoiceLookupDone = true
+        let voice = AVSpeechSynthesisVoice.speechVoices()
+            .first(where: { $0.voiceTraits.contains(.isPersonalVoice) })
+        cachedPersonalVoice = voice
+        return voice
     }
     #endif
 
