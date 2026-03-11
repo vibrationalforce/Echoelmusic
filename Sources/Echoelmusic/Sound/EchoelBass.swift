@@ -294,7 +294,8 @@ public final class EchoelBass {
 
     // MARK: - Published State
 
-    public var config = EchoelBassConfig.classic808
+    /// Read from audio render thread (struct copy). Written from MainActor only.
+    @ObservationIgnored nonisolated(unsafe) public var config = EchoelBassConfig.classic808
     public var isPlaying: Bool = false
     public var activeVoiceCount: Int = 0
     public var currentNote: Int? = nil
@@ -315,18 +316,18 @@ public final class EchoelBass {
     /// zero ObjC dispatch overhead — safe for real-time audio callbacks.
     private let voiceLock = AudioUnfairLock()
 
-    // MARK: - DSP State
+    // MARK: - DSP State (accessed from audio render thread, synchronized by voiceLock)
 
-    private var currentTime: Double = 0.0
-    private var lastMeterUpdate: Double = 0.0
-    private var peakLevel: Float = 0.0
+    nonisolated(unsafe) private var currentTime: Double = 0.0
+    nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
+    nonisolated(unsafe) private var peakLevel: Float = 0.0
 
-    // MARK: - Bio-Reactive
+    // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
-    private var bioCoherence: Float = 0.5
-    private var bioHeartRate: Float = 72.0
-    private var bioHRV: Float = 50.0
-    private var bioBreathPhase: Float = 0.0
+    nonisolated(unsafe) private var bioCoherence: Float = 0.5
+    nonisolated(unsafe) private var bioHeartRate: Float = 72.0
+    nonisolated(unsafe) private var bioHRV: Float = 50.0
+    nonisolated(unsafe) private var bioBreathPhase: Float = 0.0
 
     // MARK: - Initialization
 

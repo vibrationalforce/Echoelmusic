@@ -221,7 +221,8 @@ public final class TR808BassSynth {
 
     // MARK: - Published State
 
-    public var config = TR808BassConfig.classic808
+    /// Read from audio render thread (struct copy). Written from MainActor only.
+    @ObservationIgnored nonisolated(unsafe) public var config = TR808BassConfig.classic808
     public var isPlaying: Bool = false
     public var activeVoiceCount: Int = 0
     public var currentNote: Int? = nil
@@ -239,8 +240,8 @@ public final class TR808BassSynth {
     public var sequencerStep: Int = 0
     public var isSequencerPlaying: Bool = false
 
-    // Drum playback state (audio thread)
-    private var drumPlaybacks: [DrumPlayback] = []
+    // Drum playback state (audio thread, under voiceLock)
+    nonisolated(unsafe) private var drumPlaybacks: [DrumPlayback] = []
     private let maxDrumPlaybacks = 32
     private var sequencerTimer: Timer?
 
@@ -258,16 +259,16 @@ public final class TR808BassSynth {
     /// safe for real-time audio render callbacks.
     private let voiceLock = AudioUnfairLock()
 
-    // MARK: - DSP State
+    // MARK: - DSP State (accessed from audio render thread, synchronized by voiceLock)
 
-    private var currentTime: Double = 0.0
-    private var lastMeterUpdate: Double = 0.0
-    private var peakLevel: Float = 0.0
+    nonisolated(unsafe) private var currentTime: Double = 0.0
+    nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
+    nonisolated(unsafe) private var peakLevel: Float = 0.0
 
-    // MARK: - Bio-Reactive
+    // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
-    private var bioCoherence: Float = 0.5
-    private var bioEnergy: Float = 0.5
+    nonisolated(unsafe) private var bioCoherence: Float = 0.5
+    nonisolated(unsafe) private var bioEnergy: Float = 0.5
 
     // MARK: - Initialization
 

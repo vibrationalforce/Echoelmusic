@@ -508,18 +508,18 @@ public final class EchoelBeat {
     /// safe for real-time audio render callbacks.
     private let voiceLock = AudioUnfairLock()
 
-    // ── DSP State (audio thread) ──
+    // ── DSP State (audio thread, under voiceLock) ──
 
-    private var drumPlaybacks: [DrumPlayback] = []
-    private var hihatVoices: [HiHatVoice] = []
-    private var rollState = RollState()
-    private var dirtyDelay = DirtyDelay()
-    private var currentTime: Double = 0.0
+    nonisolated(unsafe) private var drumPlaybacks: [DrumPlayback] = []
+    nonisolated(unsafe) private var hihatVoices: [HiHatVoice] = []
+    nonisolated(unsafe) private var rollState = RollState()
+    nonisolated(unsafe) private var dirtyDelay = DirtyDelay()
+    nonisolated(unsafe) private var currentTime: Double = 0.0
 
-    // Sample-accurate sequencer state
-    private var seqGlobalSamplePos: Int = 0
-    private var seqLastStep: Int = -1
-    private var isSeqRunning: Bool = false
+    // Sample-accurate sequencer state (audio thread, under voiceLock)
+    nonisolated(unsafe) private var seqGlobalSamplePos: Int = 0
+    nonisolated(unsafe) private var seqLastStep: Int = -1
+    nonisolated(unsafe) private var isSeqRunning: Bool = false
 
     private let maxDrumPlaybacks = 32
     private let maxHiHatVoices = 8
