@@ -246,10 +246,15 @@ public final class VoiceToQuantumMIDI {
         // Install tap on input
         // Avoid accessing @MainActor self on the audio thread — capture queue locally
         let processingQueue = self.audioProcessingQueue
-        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, _ in
+        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { buffer, _ in
+            // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
+            guard let channelData = buffer.floatChannelData?[0] else { return }
+            let frameCount = Int(buffer.frameLength)
+            let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
+            let bufferSampleRate = Float(buffer.format.sampleRate)
             processingQueue.async {
                 Task { @MainActor [weak self] in
-                    self?.processAudioBuffer(buffer)
+                    self?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
                 }
             }
         }
@@ -259,14 +264,12 @@ public final class VoiceToQuantumMIDI {
 
     // MARK: - Audio Processing
 
-    private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData?[0] else { return }
-        let frameCount = Int(buffer.frameLength)
-
+    /// Process pre-extracted samples (buffer data copied synchronously on audio thread)
+    private func processExtractedSamples(_ samples: [Float], frameCount: Int, sampleRate: Float) {
         // Copy to YIN buffer
         let samplesToProcess = min(frameCount, bufferSize)
         for i in 0..<samplesToProcess {
-            yinBuffer[i] = channelData[i] * voiceGain
+            yinBuffer[i] = samples[i] * voiceGain
         }
 
         // Calculate RMS amplitude
@@ -281,7 +284,6 @@ public final class VoiceToQuantumMIDI {
         }
 
         // Detect pitch using YIN algorithm
-        let sampleRate = Float(buffer.format.sampleRate)
         if let (frequency, confidence) = detectPitchYIN(sampleRate: sampleRate) {
             voiceData.isVoiced = true
             voiceData.confidence = confidence

@@ -169,7 +169,7 @@ public final class AudioEngine {
             // Under Swift 6 strict concurrency, accessing a @MainActor instance from
             // a non-main thread triggers dispatch_assert_queue_fail → EXC_BREAKPOINT.
             // vDSP is pure C — safe to call on any thread without self.
-            masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { [weak self] buffer, _ in
+            masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { buffer, _ in
                 guard let channelData = buffer.floatChannelData else { return }
                 let frameLength = UInt(buffer.frameLength)
                 guard frameLength > 0 else { return }

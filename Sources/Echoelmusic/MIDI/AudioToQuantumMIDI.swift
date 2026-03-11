@@ -396,10 +396,15 @@ public final class AudioToQuantumMIDI {
         // Install tap for audio analysis
         // Avoid accessing @MainActor self on the audio thread — capture queue locally
         let processingQueue = self.audioProcessingQueue
-        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { [weak self] buffer, _ in
+        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { buffer, _ in
+            // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
+            guard let channelData = buffer.floatChannelData?[0] else { return }
+            let frameCount = Int(buffer.frameLength)
+            let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
+            let bufferSampleRate = Float(buffer.format.sampleRate)
             processingQueue.async {
                 Task { @MainActor [weak self] in
-                    self?.processAudioBuffer(buffer)
+                    self?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
                 }
             }
         }
@@ -436,8 +441,13 @@ public final class AudioToQuantumMIDI {
 
         // Install tap for analysis
         engine.mainMixerNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: file.processingFormat) { buffer, _ in
+            // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
+            guard let channelData = buffer.floatChannelData?[0] else { return }
+            let frameCount = Int(buffer.frameLength)
+            let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
+            let bufferSampleRate = Float(buffer.format.sampleRate)
             Task { @MainActor [weak self] in
-                self?.processAudioBuffer(buffer)
+                self?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
             }
         }
 
@@ -454,14 +464,12 @@ public final class AudioToQuantumMIDI {
 
     // MARK: - Audio Processing
 
-    private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData?[0] else { return }
-        let frameCount = Int(buffer.frameLength)
-
+    /// Process pre-extracted samples (buffer data copied synchronously on audio thread)
+    private func processExtractedSamples(_ samples: [Float], frameCount: Int, sampleRate: Float) {
         // Apply input gain
         let samplesToProcess = min(frameCount, bufferSize)
         for i in 0..<samplesToProcess {
-            analysisBuffer[i] = channelData[i] * inputGain
+            analysisBuffer[i] = samples[i] * inputGain
         }
 
         // Calculate input level (RMS)
@@ -479,16 +487,16 @@ public final class AudioToQuantumMIDI {
         // Detect based on mode
         switch detectionMode {
         case .monophonic:
-            detectMonophonic(sampleRate: Float(buffer.format.sampleRate))
+            detectMonophonic(sampleRate: sampleRate)
 
         case .polyphonic:
-            detectPolyphonic(sampleRate: Float(buffer.format.sampleRate))
+            detectPolyphonic(sampleRate: sampleRate)
 
         case .percussive:
-            detectPercussive(sampleRate: Float(buffer.format.sampleRate))
+            detectPercussive(sampleRate: sampleRate)
 
         case .hybrid:
-            detectHybrid(sampleRate: Float(buffer.format.sampleRate))
+            detectHybrid(sampleRate: sampleRate)
         }
 
         // Route to Quantum MIDI

@@ -150,9 +150,13 @@ public final class ChromaticTuner {
 
         // Do NOT call @MainActor methods directly from the tap callback —
         // it runs on the audio thread and triggers dispatch_assert_queue_fail.
-        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: format) { [weak self] buffer, _ in
+        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: format) { buffer, _ in
+            // Extract samples synchronously while buffer memory is valid (non-Sendable)
+            let samples = buffer.floatArray(channel: 0)
+            guard !samples.isEmpty else { return }
+            let bufferSampleRate = buffer.format.sampleRate
             Task { @MainActor [weak self] in
-                self?.processAudioBuffer(buffer)
+                self?.processExtractedSamples(samples, sampleRate: bufferSampleRate)
             }
         }
 
@@ -185,14 +189,13 @@ public final class ChromaticTuner {
 
     // MARK: - Audio Processing
 
-    private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
-        guard buffer.floatChannelData != nil else { return }
-
-        // Copy data for analysis
-        let samples = buffer.floatArray(channel: 0)
+    /// Process pre-extracted samples (called from MainActor after sync extraction on audio thread)
+    private func processExtractedSamples(_ samples: [Float], sampleRate bufferSampleRate: Double) {
+        // Use buffer's sample rate if available, fall back to stored
+        let effectiveSampleRate = bufferSampleRate > 0 ? bufferSampleRate : self.sampleRate
 
         // Capture @MainActor-isolated properties before dispatching to background queue
-        let capturedSampleRate = self.sampleRate
+        let capturedSampleRate = effectiveSampleRate
         let capturedThreshold = self.amplitudeThreshold
         let capturedA4 = self.customA4
         let capturedMinFreq = self.minFrequency
@@ -228,7 +231,7 @@ public final class ChromaticTuner {
             // Calculate note and cents
             let a4 = capturedA4
             let note = MusicalNote.fromFrequency(frequency, referenceA4: a4)
-            let cents = 1200.0 * log2(frequency / note.frequency)
+            let cents = note.frequency > 0 ? 1200.0 * log2(frequency / note.frequency) : 0
 
             // Confidence based on autocorrelation clarity
             let confidence = min(1.0, amplitude / 0.1)
