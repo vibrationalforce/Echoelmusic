@@ -84,7 +84,11 @@ final class EchoelCreativeWorkspace {
         self.linkClient = AbletonLinkClient()
         self.adaptiveAudio = AdaptiveAudioEngine()
 
-        setupBridges()
+        // Defer bridge setup to avoid blocking first frame render.
+        // Bridges set up Combine subscriptions that aren't needed until playback.
+        Task { @MainActor [weak self] in
+            self?.setupBridges()
+        }
         log.info("Creative Workspace initialized (DAW + Video + Bio-Reactive Synth)", category: .system)
     }
 

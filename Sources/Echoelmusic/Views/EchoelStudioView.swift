@@ -22,7 +22,6 @@ extension EnvironmentValues {
 struct EchoelStudioView: View {
     @Environment(AudioEngine.self) var audioEngine
     @Environment(RecordingEngine.self) var recordingEngine
-    @Bindable private var workspace = EchoelCreativeWorkspace.shared
 
     @State private var viewMode: ViewMode = .arrangement
     @State private var bottomPanel: BottomPanel?

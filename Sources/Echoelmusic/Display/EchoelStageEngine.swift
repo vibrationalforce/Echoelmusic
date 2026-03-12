@@ -267,9 +267,12 @@ public final class EchoelStageEngine {
         ]
 
         setupScreenNotifications()
-        scanConnectedDisplays()
-
-        log.log(.info, category: .system, "EchoelStage initialized — \(connectedDisplays.count) display(s) detected")
+        // Defer display scan to avoid accessing UIApplication.shared.connectedScenes
+        // before the app's scene is fully set up (causes crash on first launch).
+        Task { @MainActor [weak self] in
+            self?.scanConnectedDisplays()
+            log.log(.info, category: .system, "EchoelStage initialized — \(self?.connectedDisplays.count ?? 0) display(s) detected")
+        }
     }
 
     deinit {
