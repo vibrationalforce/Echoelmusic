@@ -354,15 +354,130 @@ public final class EchoelAIEngine {
 
     // MARK: - Key Detection
 
-    /// Detect musical key via chroma features
+    /// Detect musical key via chroma feature extraction + Krumhansl-Schmuckler key profiles.
+    ///
+    /// Computes a 12-bin chromagram from the FFT magnitude spectrum, then correlates
+    /// against the Krumhansl-Kessler major/minor key profiles for all 12 roots.
+    /// Returns the key with the highest Pearson correlation.
+    ///
+    /// Reference: Krumhansl, C.L. (1990) *Cognitive Foundations of Musical Pitch*.
     private func detectKey(buffer: AVAudioPCMBuffer) -> String {
-        // Simplified: would need proper chroma feature extraction + key profile matching
-        // Krumhansl-Schmuckler key-finding algorithm
-        let keys = ["C major", "G major", "D major", "A major", "E major", "B major",
-                    "F major", "Bb major", "Eb major", "Ab major",
-                    "A minor", "E minor", "B minor", "D minor", "G minor", "C minor"]
-        // Without proper chroma analysis, return placeholder
-        return keys[0]
+        guard let channelData = buffer.floatChannelData else { return "Unknown" }
+        let frameCount = Int(buffer.frameLength)
+        let sampleRate = buffer.format.sampleRate
+        let fftSize = 4096
+        guard frameCount >= fftSize else { return "Unknown" }
+
+        // --- FFT via vDSP ---
+        let log2n = vDSP_Length(Foundation.log2(Double(fftSize)))
+        guard let fftSetup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else {
+            return "Unknown"
+        }
+        defer { vDSP_destroy_fftsetup(fftSetup) }
+
+        // Apply Hann window
+        var windowed = [Float](repeating: 0, count: fftSize)
+        var window = [Float](repeating: 0, count: fftSize)
+        vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
+        vDSP_vmul(channelData[0], 1, window, 1, &windowed, vDSP_Length(fftSize))
+
+        // Pack into split complex (copy to avoid overlapping access)
+        let halfSize = fftSize / 2
+        var realPart = [Float](repeating: 0, count: halfSize)
+        var imagPart = [Float](repeating: 0, count: halfSize)
+        windowed.withUnsafeBufferPointer { inputPtr in
+            inputPtr.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: halfSize) { complexPtr in
+                var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
+                vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(halfSize))
+            }
+        }
+
+        var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
+        vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(kFFTDirection_Forward))
+
+        // Compute magnitude spectrum
+        var magnitudes = [Float](repeating: 0, count: halfSize)
+        vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(halfSize))
+
+        // --- Build 12-bin chromagram ---
+        var chroma = [Float](repeating: 0, count: 12)
+        let binResolution = sampleRate / Double(fftSize)
+
+        // Map each FFT bin to its nearest pitch class (A4 = 440 Hz reference)
+        for bin in 1..<halfSize {
+            let freq = Double(bin) * binResolution
+            guard freq >= 27.5 && freq <= 4186.0 else { continue } // A0 to C8
+            let midiNote = 69.0 + 12.0 * Foundation.log2(freq / 440.0)
+            let pitchClass = Int(round(midiNote).truncatingRemainder(dividingBy: 12))
+            let safeIndex = ((pitchClass % 12) + 12) % 12
+            chroma[safeIndex] += magnitudes[bin]
+        }
+
+        // Normalize chroma vector
+        var maxVal: Float = 0
+        vDSP_maxv(chroma, 1, &maxVal, vDSP_Length(12))
+        if maxVal > 0 {
+            vDSP_vsdiv(chroma, 1, &maxVal, &chroma, 1, vDSP_Length(12))
+        }
+
+        // --- Krumhansl-Kessler key profiles ---
+        // Pitch classes: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
+        let majorProfile: [Float] = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09,
+                                     2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
+        let minorProfile: [Float] = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53,
+                                     2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
+
+        let noteNames = ["C", "C#", "D", "Eb", "E", "F",
+                         "F#", "G", "Ab", "A", "Bb", "B"]
+
+        // Correlate chroma with rotated profiles for all 24 keys
+        var bestKey = "C major"
+        var bestCorrelation: Float = -.greatestFiniteMagnitude
+
+        for root in 0..<12 {
+            // Rotate profile so index 0 aligns with root
+            let rotatedMajor = (0..<12).map { majorProfile[($0 - root + 12) % 12] }
+            let rotatedMinor = (0..<12).map { minorProfile[($0 - root + 12) % 12] }
+
+            let majorCorr = pearsonCorrelation(chroma, rotatedMajor)
+            let minorCorr = pearsonCorrelation(chroma, rotatedMinor)
+
+            if majorCorr > bestCorrelation {
+                bestCorrelation = majorCorr
+                bestKey = "\(noteNames[root]) major"
+            }
+            if minorCorr > bestCorrelation {
+                bestCorrelation = minorCorr
+                bestKey = "\(noteNames[root]) minor"
+            }
+        }
+
+        return bestKey
+    }
+
+    /// Pearson correlation coefficient between two equal-length vectors
+    private func pearsonCorrelation(_ x: [Float], _ y: [Float]) -> Float {
+        let n = vDSP_Length(x.count)
+        var meanX: Float = 0, meanY: Float = 0
+        vDSP_meanv(x, 1, &meanX, n)
+        vDSP_meanv(y, 1, &meanY, n)
+
+        var dx = [Float](repeating: 0, count: x.count)
+        var dy = [Float](repeating: 0, count: y.count)
+        var negMeanX = -meanX, negMeanY = -meanY
+        vDSP_vsadd(x, 1, &negMeanX, &dx, 1, n)
+        vDSP_vsadd(y, 1, &negMeanY, &dy, 1, n)
+
+        var dotProduct: Float = 0
+        vDSP_dotpr(dx, 1, dy, 1, &dotProduct, n)
+
+        var sumSqX: Float = 0, sumSqY: Float = 0
+        vDSP_dotpr(dx, 1, dx, 1, &sumSqX, n)
+        vDSP_dotpr(dy, 1, dy, 1, &sumSqY, n)
+
+        let denom = sqrt(sumSqX * sumSqY)
+        guard denom > 0 else { return 0 }
+        return dotProduct / denom
     }
 
     // MARK: - Spectral Centroid
