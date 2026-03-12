@@ -170,9 +170,21 @@ final class RecordingEngine {
                 } else if let settingsFormat = AVAudioFormat(settings: [AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVFormatIDKey: kAudioFormatLinearPCM]) {
                     self.recordingFormat = settingsFormat
                 } else {
-                    // Theoretically unreachable — every Apple device supports 44.1kHz mono PCM
-                    log.recording("CRITICAL: Cannot create any audio format", level: .error)
-                    fatalError("No valid audio format available — audio hardware not functional")
+                    // Theoretically unreachable — every Apple device supports 44.1kHz mono PCM.
+                    // Construct a guaranteed-valid format via AudioStreamBasicDescription.
+                    log.recording("CRITICAL: All AVAudioFormat initializers failed — using raw ASBD", level: .error)
+                    var asbd = AudioStreamBasicDescription(
+                        mSampleRate: 44100,
+                        mFormatID: kAudioFormatLinearPCM,
+                        mFormatFlags: kAudioFormatFlagIsFloat | kAudioFormatFlagIsNonInterleaved,
+                        mBytesPerPacket: 4,
+                        mFramesPerPacket: 1,
+                        mBytesPerFrame: 4,
+                        mChannelsPerFrame: 1,
+                        mBitsPerChannel: 32,
+                        mReserved: 0
+                    )
+                    self.recordingFormat = AVAudioFormat(streamDescription: &asbd)!
                 }
             }
             return

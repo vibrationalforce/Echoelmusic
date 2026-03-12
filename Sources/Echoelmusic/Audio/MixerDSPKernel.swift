@@ -539,8 +539,9 @@ final class MixerDSPKernel {
         guard let channelData = buffer.floatChannelData else { return }
         let frames = vDSP_Length(min(frameCount, Int(buffer.frameLength)))
         let channelCount = Int(buffer.format.channelCount)
+        guard frames > 0 else { return }
 
-        if channelCount >= 2 {
+        if channelCount >= 2, buffer.stride > 0 {
             var gL = gainL
             var gR = gainR
             vDSP_vsmul(channelData[0], 1, &gL, channelData[0], 1, frames)

@@ -386,7 +386,8 @@ public final class EchoelAIEngine {
         var realPart = [Float](repeating: 0, count: halfSize)
         var imagPart = [Float](repeating: 0, count: halfSize)
         windowed.withUnsafeBufferPointer { inputPtr in
-            inputPtr.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: halfSize) { complexPtr in
+            guard let base = inputPtr.baseAddress else { return }
+            base.withMemoryRebound(to: DSPComplex.self, capacity: halfSize) { complexPtr in
                 var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
                 vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(halfSize))
             }

@@ -635,7 +635,8 @@ public final class EchoelSampler {
         let data: [Float]
         if let channelData = buffer.floatChannelData {
             let length = Int(buffer.frameLength)
-            if format.channelCount >= 2 {
+            let bufferChannels = Int(buffer.format.channelCount)
+            if format.channelCount >= 2 && bufferChannels >= 2 {
                 // Mix stereo to mono
                 var mono = [Float](repeating: 0, count: length)
                 let left = channelData[0]
