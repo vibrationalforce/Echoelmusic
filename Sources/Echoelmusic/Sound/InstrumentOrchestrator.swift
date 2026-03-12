@@ -72,6 +72,9 @@ final class InstrumentOrchestrator {
 
     @ObservationIgnored nonisolated(unsafe) private var cancellables = Set<AnyCancellable>()
 
+    /// Stored observer token from NotificationCenter — must be retained to keep observer alive
+    @ObservationIgnored private var bioObserver: (any NSObjectProtocol)?
+
     // MARK: - Initialization
 
     private init() {
@@ -85,8 +88,11 @@ final class InstrumentOrchestrator {
     }
 
     deinit {
-        // KRITISCH: NotificationCenter Observer entfernen um Memory Leak zu verhindern
-        NotificationCenter.default.removeObserver(self)
+        // Remove stored observer token — removeObserver(self) was wrong because
+        // addObserver(forName:) returns a token, not self.
+        if let observer = bioObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
         audioEngine?.stop()
         cancellables.removeAll()
     }
@@ -165,7 +171,7 @@ final class InstrumentOrchestrator {
     private func connectToBioData() {
         // Subscribe to UniversalCore bio-data updates on main queue
         // to ensure @MainActor-isolated properties are accessed safely
-        NotificationCenter.default.addObserver(
+        bioObserver = NotificationCenter.default.addObserver(
             forName: NSNotification.Name("EchoelBioDataUpdated"),
             object: nil,
             queue: .main
