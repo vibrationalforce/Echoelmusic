@@ -160,8 +160,14 @@ final class RecordingEngine {
                 self.recordingFormat = fallback44
             } else {
                 log.recording("❌ Cannot create any audio format — using default 44.1kHz mono", level: .error)
-                // AVAudioFormat(commonFormat:) is non-optional — guaranteed valid.
-                self.recordingFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false)
+                // 44.1kHz mono Float32 non-interleaved — practically guaranteed to succeed.
+                guard let lastResort = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false) else {
+                    // Absolute fallback — create a minimal valid format
+                    self.recordingFormat = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)
+                        ?? AVAudioFormat(settings: [AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVFormatIDKey: kAudioFormatLinearPCM])!
+                    return
+                }
+                self.recordingFormat = lastResort
             }
             return
         }

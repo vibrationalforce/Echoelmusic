@@ -102,9 +102,13 @@ final class MixerDSPKernel {
             standardFormatWithSampleRate: sampleRate,
             channels: 2
         ) else {
-            // Fallback to 44100 Hz stereo — AVAudioFormat(commonFormat:) is non-optional, guaranteed valid.
-            self.format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
-                ?? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false)
+            // Fallback to 44100 Hz stereo
+            if let fallback = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
+                ?? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false) {
+                self.format = fallback
+            } else {
+                self.format = AVAudioFormat(settings: [AVSampleRateKey: 44100, AVNumberOfChannelsKey: 2, AVFormatIDKey: kAudioFormatLinearPCM])!
+            }
             self.masterBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
             self.scratchBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
             return
