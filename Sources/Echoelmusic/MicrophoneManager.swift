@@ -215,7 +215,9 @@ final class MicrophoneManager: NSObject {
                 guard frameLength > 0 else { return }
                 let channelDataPtr = channelData.pointee
                 let samples = Array(UnsafeBufferPointer(start: channelDataPtr, count: frameLength))
-                Task { @MainActor in
+                // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+                // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
+                DispatchQueue.main.async {
                     weakSelf?.processExtractedAudio(samples, frameLength: frameLength, sampleRate: capturedSampleRate)
                 }
             }

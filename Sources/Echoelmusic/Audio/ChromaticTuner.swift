@@ -157,7 +157,9 @@ public final class ChromaticTuner {
             let samples = buffer.floatArray(channel: 0)
             guard !samples.isEmpty else { return }
             let bufferSampleRate = buffer.format.sampleRate
-            Task { @MainActor in
+            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+            // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
+            DispatchQueue.main.async {
                 weakSelf?.processExtractedSamples(samples, sampleRate: bufferSampleRate)
             }
         }

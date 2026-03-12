@@ -857,9 +857,10 @@ public final class EchoelBeat {
         // heap-allocating a Task on every render callback (375+/sec)
         if currentTime - lastMeterUpdate > 0.05 {
             lastMeterUpdate = currentTime
-            // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
+            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+            // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
             nonisolated(unsafe) weak var weakSelf = self
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 guard let s = weakSelf else { return }
                 s.meterLevel = peak
                 if s.isSeqRunning {

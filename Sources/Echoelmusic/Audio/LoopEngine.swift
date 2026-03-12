@@ -481,7 +481,7 @@ final class LoopEngine {
         let newTimer = DispatchSource.makeTimerSource(flags: [], queue: timerQueue)
         newTimer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(4))
         newTimer.setEventHandler { [weak self] in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.updatePosition()
             }
         }

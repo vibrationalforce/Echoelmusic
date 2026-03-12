@@ -165,9 +165,9 @@ public final class AudioEngine {
         let meterFormat = masterMixer.outputFormat(forBus: 0)
         if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
             // CRITICAL: Tap callbacks run on the audio thread (RealtimeMessenger.mServiceQueue).
-            // Under Swift 6 / iOS 26, even [weak self] in Task{} triggers
-            // dispatch_assert_queue_fail → EXC_BREAKPOINT when self is @MainActor.
-            // Fix: capture as nonisolated(unsafe) weak var before the closure.
+            // Under Swift 6 / iOS 26, Task { @MainActor } created on the audio thread
+            // triggers dispatch_assert_queue_fail → EXC_BREAKPOINT.
+            // Fix: Use DispatchQueue.main.async — bypasses Swift concurrency entirely.
             nonisolated(unsafe) weak var weakSelf = self
             masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { buffer, _ in
                 guard let channelData = buffer.floatChannelData else { return }
@@ -184,15 +184,12 @@ public final class AudioEngine {
                     rmsR = rmsL
                 }
 
-                // Scale RMS on audio thread, then dispatch only Float values to MainActor
                 let scaledL = Swift.min(rmsL * 3.0, 1.0)
                 let scaledR = Swift.min(rmsR * 3.0, 1.0)
 
-                Task { @MainActor in
+                DispatchQueue.main.async {
                     guard let s = weakSelf else { return }
-                    // Professional peak-hold + smooth decay metering
-                    // Attack: instant (peak tracking), Decay: ~300ms (natural VU ballistic)
-                    let decayCoeff: Float = 0.92  // ~300ms decay at 48kHz/1024
+                    let decayCoeff: Float = 0.92
                     s.masterLevel = Swift.max(scaledL, s.masterLevel * decayCoeff)
                     s.masterLevelR = Swift.max(scaledR, s.masterLevelR * decayCoeff)
                 }

@@ -342,8 +342,9 @@ final class RecordingEngine {
             }
 
             // Send only computed values to MainActor
-            // weakSelf captured as nonisolated(unsafe) to avoid actor isolation check on audio thread
-            Task { @MainActor in
+            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+            // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
+            DispatchQueue.main.async {
                 guard let s = weakSelf else { return }
                 s.recordingLevel = level
                 for sample in waveformSamples {

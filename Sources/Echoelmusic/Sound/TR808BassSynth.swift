@@ -627,11 +627,15 @@ public final class TR808BassSynth {
             lastMeterUpdate = currentTime
             peakLevel = peak
 
-            Task { @MainActor in
-                self.meterLevel = peak
-                self.activeVoiceCount = self.voices.count
-                if self.voices.isEmpty {
-                    self.isPlaying = false
+            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+            // Task { @MainActor } crashes on audio render thread (dispatch_assert_queue_fail)
+            nonisolated(unsafe) weak var weakSelf = self
+            DispatchQueue.main.async {
+                guard let s = weakSelf else { return }
+                s.meterLevel = peak
+                s.activeVoiceCount = s.voices.count
+                if s.voices.isEmpty {
+                    s.isPlaying = false
                 }
             }
         }

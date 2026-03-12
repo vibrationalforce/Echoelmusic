@@ -353,12 +353,13 @@ public final class MetronomeEngine {
             let isMainBeat = subdivisionCount % clicksPerBeat == 0
 
             if isMainBeat {
-                Task { @MainActor in
+                // DispatchQueue.main.async bypasses Swift concurrency runtime —
+                // Task { @MainActor } can crash from GCD queues under Swift 6
+                DispatchQueue.main.async {
                     self.processBeat()
                 }
             } else {
-                // Subdivision click — hop to MainActor for @MainActor-isolated properties
-                Task { @MainActor [weak self] in
+                DispatchQueue.main.async { [weak self] in
                     if let buffer = self?.subdivisionBuffer {
                         self?.playerNode.scheduleBuffer(buffer, completionHandler: nil)
                     }
@@ -401,9 +402,8 @@ public final class MetronomeEngine {
         // Visual flash
         if configuration.flashOnBeat {
             beatFlash = true
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 100_000_000) // 100ms flash
-                self.beatFlash = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.beatFlash = false
             }
         }
     }

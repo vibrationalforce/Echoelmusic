@@ -404,10 +404,10 @@ public final class AudioToQuantumMIDI {
             let frameCount = Int(buffer.frameLength)
             let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
             let bufferSampleRate = Float(buffer.format.sampleRate)
-            processingQueue.async {
-                Task { @MainActor in
-                    weakSelf?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
-                }
+            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+            // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
+            DispatchQueue.main.async {
+                weakSelf?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
             }
         }
 
@@ -450,7 +450,9 @@ public final class AudioToQuantumMIDI {
             let frameCount = Int(buffer.frameLength)
             let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
             let bufferSampleRate = Float(buffer.format.sampleRate)
-            Task { @MainActor in
+            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
+            // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
+            DispatchQueue.main.async {
                 weakSelf2?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
             }
         }
