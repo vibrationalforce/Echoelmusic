@@ -156,7 +156,7 @@ public final class AbletonLinkClient {
     // MARK: - Properties
 
     nonisolated(unsafe) private var multicastConnection: NWConnectionGroup?
-    private var unicastListener: NWListener?
+    nonisolated(unsafe) private var unicastListener: NWListener?
     nonisolated(unsafe) private var updateTimer: Timer?
     nonisolated(unsafe) private var discoveryTimer: Timer?
     private let queue = DispatchQueue(label: "com.echoelmusic.link", qos: .userInteractive)
