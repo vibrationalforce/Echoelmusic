@@ -269,12 +269,15 @@ final class InstrumentOrchestrator {
             // Schedule playback — prefer main engine, fallback to local
             if let mainEngine = mainAudioEngine {
                 mainEngine.schedulePlayback(buffer: buffer)
-                Task { @MainActor [weak self] in
+                // schedulePlayback is fire-and-forget; mark voice finished on main thread
+                DispatchQueue.main.async { [weak self] in
                     self?.voiceFinished(voice.id)
                 }
             } else if let player = playerNode {
+                // AVAudioPlayerNode completion runs on audio thread —
+                // DispatchQueue.main.async avoids Swift 6 dispatch_assert_queue_fail
                 player.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
-                    Task { @MainActor in
+                    DispatchQueue.main.async {
                         self?.voiceFinished(voice.id)
                     }
                 }

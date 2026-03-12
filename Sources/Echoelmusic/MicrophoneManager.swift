@@ -140,7 +140,9 @@ final class MicrophoneManager: NSObject {
             }
         } else {
             AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
-                Task { @MainActor in
+                // Permission callback runs on arbitrary queue — DispatchQueue.main.async
+                // avoids Swift 6 dispatch_assert_queue_fail
+                DispatchQueue.main.async {
                     self?.hasPermission = granted
                     if granted {
                         log.audio("Microphone permission granted")

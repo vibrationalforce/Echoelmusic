@@ -125,7 +125,9 @@ final class MIDIController {
             { packetList, refCon, srcConnRefCon in
                 // Handle MIDI packets
                 guard let controller = refCon?.assumingMemoryBound(to: MIDIController.self).pointee else { return }
-                Task { @MainActor in
+                // CoreMIDI callback runs on internal thread — DispatchQueue.main.async
+                // avoids Swift 6 dispatch_assert_queue_fail
+                DispatchQueue.main.async {
                     controller.handleMIDIPackets(packetList)
                 }
             },

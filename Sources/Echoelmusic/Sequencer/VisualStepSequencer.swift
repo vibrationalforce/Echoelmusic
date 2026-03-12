@@ -115,7 +115,8 @@ public final class VisualStepSequencer {
     private func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: stepInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            // Timer runs on main RunLoop — use MainActor.assumeIsolated for zero-cost dispatch
+            MainActor.assumeIsolated {
                 self?.advanceStep()
             }
         }

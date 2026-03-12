@@ -292,7 +292,9 @@ public final class EchoelBioEngine {
         // Calculate RR interval from HR: RR = 60000 / HR (in ms)
         let rrInterval = 60000.0 / max(bpm, 40.0)
 
-        Task { @MainActor [weak self] in
+        // HealthKit callbacks run on system query thread — DispatchQueue.main.async
+        // avoids Swift 6 dispatch_assert_queue_fail
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.snapshot.heartRate = bpm
             self.snapshot.timestamp = latestSample.startDate
@@ -319,7 +321,7 @@ public final class EchoelBioEngine {
         guard let latestSample = quantitySamples.last else { return }
         let sdnn = latestSample.quantity.doubleValue(for: HKUnit.secondUnit(with: .milli))
 
-        Task { @MainActor [weak self] in
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             // Use SDNN as approximate coherence indicator if we don't have enough RR intervals
             if self.rrIntervals.count < 5 {
@@ -336,7 +338,7 @@ public final class EchoelBioEngine {
         guard let latestSample = quantitySamples.last else { return }
         let rate = latestSample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
 
-        Task { @MainActor [weak self] in
+        DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.snapshot.breathRate = rate
         }

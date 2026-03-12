@@ -492,7 +492,8 @@ public final class QuantumMIDIOut {
     private func startUpdateLoop() {
         let interval = 1.0 / QuantumMIDIConstants.updateHz
         updateTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            // Timer runs on main RunLoop — use MainActor.assumeIsolated for zero-cost dispatch
+            MainActor.assumeIsolated {
                 self?.tick()
             }
         }

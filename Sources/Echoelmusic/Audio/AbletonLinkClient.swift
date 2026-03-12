@@ -233,25 +233,28 @@ public final class AbletonLinkClient {
 
         multicastConnection = NWConnectionGroup(with: group, using: params)
 
-        multicastConnection?.stateUpdateHandler = { [weak self] state in
-            Task { @MainActor in
+        // Network framework callbacks run on internal queues — NOT MainActor.
+        // DispatchQueue.main.async bypasses Swift concurrency runtime (dispatch_assert_queue_fail).
+        nonisolated(unsafe) weak var weakSelf = self
+        multicastConnection?.stateUpdateHandler = { state in
+            DispatchQueue.main.async {
                 switch state {
                 case .ready:
                     log.audio("✅ Link: Multicast ready")
-                    self?.isConnected = true
+                    weakSelf?.isConnected = true
                 case .failed(let error):
                     log.audio("❌ Link: Multicast failed - \(error)", level: .error)
-                    self?.isConnected = false
+                    weakSelf?.isConnected = false
                 default:
                     break
                 }
             }
         }
 
-        multicastConnection?.setReceiveHandler(maximumMessageSize: 1024, rejectOversizedMessages: true) { [weak self] message, content, isComplete in
+        multicastConnection?.setReceiveHandler(maximumMessageSize: 1024, rejectOversizedMessages: true) { message, content, isComplete in
             if let data = content {
-                Task { @MainActor in
-                    self?.handleIncomingMessage(data: data, from: message.remoteEndpoint)
+                DispatchQueue.main.async {
+                    weakSelf?.handleIncomingMessage(data: data, from: message.remoteEndpoint)
                 }
             }
         }
@@ -267,8 +270,7 @@ public final class AbletonLinkClient {
         do {
             unicastListener = try NWListener(using: params, on: NWEndpoint.Port(integerLiteral: LinkConstants.port))
 
-            unicastListener?.stateUpdateHandler = { [weak self] state in
-                guard self != nil else { return }
+            unicastListener?.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
                     log.audio("✅ Link: Unicast listener ready")
@@ -279,12 +281,15 @@ public final class AbletonLinkClient {
                 }
             }
 
-            unicastListener?.newConnectionHandler = { [weak self] connection in
-                connection.start(queue: self?.queue ?? .main)
+            // nonisolated(unsafe) avoids Swift 6 actor isolation check on Network queue
+            nonisolated(unsafe) weak var weakSelf = self
+            let capturedQueue = self.queue
+            unicastListener?.newConnectionHandler = { connection in
+                connection.start(queue: capturedQueue)
                 connection.receiveMessage { data, _, _, _ in
                     if let data = data {
-                        Task { @MainActor [weak self] in
-                            self?.handleIncomingMessage(data: data, from: nil)
+                        DispatchQueue.main.async {
+                            weakSelf?.handleIncomingMessage(data: data, from: nil)
                         }
                     }
                 }
@@ -647,14 +652,14 @@ extension AbletonLinkClient {
     public func connectToBPMEngine(_ engine: BPMTransitionEngine) {
         // Sync tempo from Link to engine
         onTempoChange = { tempo in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 engine.setTargetBPM(tempo, instant: false)
             }
         }
 
         // Sync play state
         onPlayStateChange = { isPlaying in
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 if isPlaying {
                     engine.unlockBPM()
                 } else {

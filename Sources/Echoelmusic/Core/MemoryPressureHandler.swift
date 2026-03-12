@@ -181,11 +181,12 @@ public final class MemoryPressureHandler {
             guard let self = self, let source = self.memorySource else { return }
             let event = source.data
 
-            Task { @MainActor [weak self] in
+            // DispatchSource on .main queue — already on main thread
+            MainActor.assumeIsolated {
                 if event.contains(.critical) {
-                    self?.handlePressure(level: .critical)
+                    self.handlePressure(level: .critical)
                 } else if event.contains(.warning) {
-                    self?.handlePressure(level: .warning)
+                    self.handlePressure(level: .warning)
                 }
             }
         }
@@ -196,7 +197,7 @@ public final class MemoryPressureHandler {
     private func startMonitoring() {
         // Poll memory usage every 5 seconds
         monitorTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.updateMemoryStats()
             }
         }

@@ -205,8 +205,11 @@ public final class ChromaticTuner {
         let capturedMinFreq = self.minFrequency
         let capturedMaxFreq = self.maxFrequency
 
-        analysisQueue.async { [weak self] in
-            guard self != nil else { return }
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on analysis queue.
+        // detectPitch is nonisolated so safe to call from background queue.
+        nonisolated(unsafe) weak var weakSelf = self
+        analysisQueue.async {
+            guard let s = weakSelf else { return }
 
             // Calculate amplitude
             var rms: Float = 0
@@ -215,19 +218,19 @@ public final class ChromaticTuner {
 
             // Only analyze if signal is above threshold
             guard amplitude > capturedThreshold else {
-                Task { @MainActor [weak self] in
-                    self?.signalLevel = amplitude
-                    self?.currentReading = nil
+                DispatchQueue.main.async {
+                    weakSelf?.signalLevel = amplitude
+                    weakSelf?.currentReading = nil
                 }
                 return
             }
 
-            // Detect pitch using autocorrelation
-            let frequency = self?.detectPitch(samples: samples, sampleRate: capturedSampleRate) ?? 0
+            // Detect pitch using autocorrelation (nonisolated — safe on background queue)
+            let frequency = s.detectPitch(samples: samples, sampleRate: capturedSampleRate)
 
             guard frequency > capturedMinFreq && frequency < capturedMaxFreq else {
-                Task { @MainActor [weak self] in
-                    self?.signalLevel = amplitude
+                DispatchQueue.main.async {
+                    weakSelf?.signalLevel = amplitude
                 }
                 return
             }
@@ -248,18 +251,18 @@ public final class ChromaticTuner {
                 amplitude: amplitude
             )
 
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.detectedFrequency = frequency
-                self.detectedNote = note
-                self.centsOffset = cents
-                self.signalLevel = amplitude
-                self.currentReading = reading
+            DispatchQueue.main.async {
+                guard let s = weakSelf else { return }
+                s.detectedFrequency = frequency
+                s.detectedNote = note
+                s.centsOffset = cents
+                s.signalLevel = amplitude
+                s.currentReading = reading
 
                 // Update history
-                self.readingHistory.append(reading)
-                if self.readingHistory.count > self.maxHistorySize {
-                    self.readingHistory.removeFirst()
+                s.readingHistory.append(reading)
+                if s.readingHistory.count > s.maxHistorySize {
+                    s.readingHistory.removeFirst()
                 }
             }
         }

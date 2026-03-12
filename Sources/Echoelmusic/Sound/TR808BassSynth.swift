@@ -292,8 +292,11 @@ public final class TR808BassSynth {
         guard let audioFormat = format else { return }
 
         // Create source node for real-time synthesis
-        sourceNode = AVAudioSourceNode { [weak self] _, timeStamp, frameCount, audioBufferList -> OSStatus in
-            guard let self = self else { return noErr }
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
+        // [weak self] on @MainActor class triggers dispatch_assert_queue_fail.
+        nonisolated(unsafe) weak var weakSelf = self
+        sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+            guard let s = weakSelf else { return noErr }
 
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
 
@@ -303,7 +306,7 @@ public final class TR808BassSynth {
             }
 
             // Render audio on audio thread
-            self.renderAudio(
+            s.renderAudio(
                 leftBuffer: leftBuffer,
                 rightBuffer: rightBuffer,
                 frameCount: Int(frameCount)

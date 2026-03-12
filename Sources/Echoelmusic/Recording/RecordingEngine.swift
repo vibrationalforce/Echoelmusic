@@ -113,6 +113,8 @@ final class RecordingEngine {
 
     deinit {
         timer?.invalidate()
+        // Remove tap before stopping to avoid deadlock with audio thread callback
+        inputNode?.removeTap(onBus: 0)
         audioEngine?.stop()
     }
 
@@ -161,13 +163,17 @@ final class RecordingEngine {
             } else {
                 log.recording("❌ Cannot create any audio format — using default 44.1kHz mono", level: .error)
                 // 44.1kHz mono Float32 non-interleaved — practically guaranteed to succeed.
-                guard let lastResort = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false) else {
-                    // Absolute fallback — create a minimal valid format
-                    self.recordingFormat = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)
-                        ?? AVAudioFormat(settings: [AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVFormatIDKey: kAudioFormatLinearPCM])!
-                    return
+                if let lastResort = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 1, interleaved: false) {
+                    self.recordingFormat = lastResort
+                } else if let mono44 = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) {
+                    self.recordingFormat = mono44
+                } else if let settingsFormat = AVAudioFormat(settings: [AVSampleRateKey: 44100, AVNumberOfChannelsKey: 1, AVFormatIDKey: kAudioFormatLinearPCM]) {
+                    self.recordingFormat = settingsFormat
+                } else {
+                    // Theoretically unreachable — every Apple device supports 44.1kHz mono PCM
+                    log.recording("CRITICAL: Cannot create any audio format", level: .error)
+                    fatalError("No valid audio format available — audio hardware not functional")
                 }
-                self.recordingFormat = lastResort
             }
             return
         }
@@ -688,7 +694,8 @@ final class RecordingEngine {
     /// Start position update timer
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            // Timer runs on main RunLoop — MainActor.assumeIsolated for zero-cost dispatch
+            MainActor.assumeIsolated {
                 self?.updatePosition()
             }
         }

@@ -572,14 +572,16 @@ public final class EchoelBeat {
         }
 
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
+        // Use `s` not `self` to avoid special self-rebinding semantics.
         nonisolated(unsafe) weak var weakSelf = self
         sourceNode = AVAudioSourceNode { _, _, frameCount, abl -> OSStatus in
-            guard let self = weakSelf else { return noErr }
+            guard let s = weakSelf else { return noErr }
             let ablPtr = UnsafeMutableAudioBufferListPointer(abl)
             guard ablPtr.count >= 2,
                   let left = ablPtr[0].mData?.assumingMemoryBound(to: Float.self),
                   let right = ablPtr[1].mData?.assumingMemoryBound(to: Float.self) else { return noErr }
-            self.renderAudio(left: left, right: right, frameCount: Int(frameCount))
+            s.renderAudio(left: left, right: right, frameCount: Int(frameCount))
             return noErr
         }
 

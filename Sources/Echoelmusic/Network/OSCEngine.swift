@@ -317,25 +317,31 @@ public final class OSCEngine {
             return
         }
 
-        listener?.newConnectionHandler = { [weak self] connection in
-            connection.start(queue: self?.receiveQueue ?? .main)
-            self?.receiveLoop(connection: connection)
+        // Network framework callbacks run on internal queues — avoid [weak self]
+        // access on non-main thread for @MainActor class
+        nonisolated(unsafe) weak var weakSelf = self
+        let capturedQueue = self.receiveQueue
+        listener?.newConnectionHandler = { connection in
+            connection.start(queue: capturedQueue)
+            weakSelf?.receiveLoop(connection: connection)
         }
 
         listener?.start(queue: receiveQueue)
     }
 
     private nonisolated func receiveLoop(connection: NWConnection) {
-        connection.receiveMessage { [weak self] data, _, _, error in
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on Network queue
+        nonisolated(unsafe) weak var weakSelf = self
+        connection.receiveMessage { data, _, _, error in
             if let data = data, let message = OSCMessage.decode(from: data) {
-                Task { @MainActor [weak self] in
-                    self?.messageCount += 1
-                    self?.lastReceivedAddress = message.address
-                    self?.onMessageReceived?(message)
+                DispatchQueue.main.async {
+                    weakSelf?.messageCount += 1
+                    weakSelf?.lastReceivedAddress = message.address
+                    weakSelf?.onMessageReceived?(message)
                 }
             }
             if error == nil {
-                self?.receiveLoop(connection: connection)
+                weakSelf?.receiveLoop(connection: connection)
             }
         }
     }

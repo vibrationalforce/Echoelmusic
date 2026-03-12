@@ -344,14 +344,17 @@ public final class EchoelBass {
         let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
         guard let audioFormat = format else { return }
 
-        sourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, audioBufferList -> OSStatus in
-            guard let self = self else { return noErr }
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
+        // [weak self] on @MainActor class triggers dispatch_assert_queue_fail.
+        nonisolated(unsafe) weak var weakSelf = self
+        sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+            guard let s = weakSelf else { return noErr }
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             guard let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
                   let rightBuffer = ablPointer[1].mData?.assumingMemoryBound(to: Float.self) else {
                 return noErr
             }
-            self.renderAudio(leftBuffer: leftBuffer, rightBuffer: rightBuffer, frameCount: Int(frameCount))
+            s.renderAudio(leftBuffer: leftBuffer, rightBuffer: rightBuffer, frameCount: Int(frameCount))
             return noErr
         }
 

@@ -209,8 +209,9 @@ public final class EchoelLuxEngine {
         connection?.start(queue: sendQueue)
 
         // 40Hz update rate (within Art-Net spec limit of 44Hz)
+        // Timer.scheduledTimer runs on main RunLoop — MainActor.assumeIsolated for zero-cost dispatch
         updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 40.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            MainActor.assumeIsolated {
                 self?.sendDMXFrame()
             }
         }

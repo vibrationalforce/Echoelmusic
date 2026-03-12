@@ -347,21 +347,20 @@ public final class MetronomeEngine {
             leeway: .milliseconds(1)
         )
 
-        timer?.setEventHandler { [weak self] in
-            guard let self = self else { return }
-
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on timerQueue.
+        // [weak self] + guard let self on @MainActor class triggers dispatch_assert_queue_fail.
+        nonisolated(unsafe) weak var weakSelf = self
+        timer?.setEventHandler {
             let isMainBeat = subdivisionCount % clicksPerBeat == 0
 
             if isMainBeat {
-                // DispatchQueue.main.async bypasses Swift concurrency runtime —
-                // Task { @MainActor } can crash from GCD queues under Swift 6
                 DispatchQueue.main.async {
-                    self.processBeat()
+                    weakSelf?.processBeat()
                 }
             } else {
-                DispatchQueue.main.async { [weak self] in
-                    if let buffer = self?.subdivisionBuffer {
-                        self?.playerNode.scheduleBuffer(buffer, completionHandler: nil)
+                DispatchQueue.main.async {
+                    if let buffer = weakSelf?.subdivisionBuffer {
+                        weakSelf?.playerNode.scheduleBuffer(buffer, completionHandler: nil)
                     }
                 }
             }

@@ -369,7 +369,7 @@ public final class CrashSafeStatePersistence {
 
     private func startAutoSave() {
         autoSaveTimer = Timer.scheduledTimer(withTimeInterval: autoSaveInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.autoSaveIfNeeded()
             }
         }

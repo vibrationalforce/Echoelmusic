@@ -58,9 +58,13 @@ final class MIDI2Manager {
         do {
             // Create MIDI client
             var client: MIDIClientRef = 0
+            // CoreMIDI notification runs on system thread — dispatch to main to avoid
+            // Swift 6 dispatch_assert_queue_fail accessing @MainActor state
+            nonisolated(unsafe) weak var weakSelf = self
             let clientStatus = MIDIClientCreateWithBlock("Echoelmusic_MIDI2_Client" as CFString, &client) { notification in
-                // Handle MIDI notifications
-                self.handleMIDINotification(notification)
+                DispatchQueue.main.async {
+                    weakSelf?.handleMIDINotification(notification)
+                }
             }
 
             guard clientStatus == noErr else {
