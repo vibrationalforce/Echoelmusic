@@ -205,7 +205,8 @@ final class MicrophoneManager: NSObject {
             // Capture sampleRate locally to avoid reading @MainActor property from Sendable closure
             let capturedSampleRate = sampleRate
             // Tap runs on audio thread — do NOT access @MainActor self in outer closure.
-            // Only capture [weak self] in the inner Task that dispatches to MainActor.
+            // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread.
+            nonisolated(unsafe) weak var weakSelf = self
             inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { buffer, _ in
                 // Extract all buffer data synchronously while memory is valid
                 // AVAudioPCMBuffer is non-Sendable — its memory is reused after this closure returns
@@ -214,8 +215,8 @@ final class MicrophoneManager: NSObject {
                 guard frameLength > 0 else { return }
                 let channelDataPtr = channelData.pointee
                 let samples = Array(UnsafeBufferPointer(start: channelDataPtr, count: frameLength))
-                Task { @MainActor [weak self] in
-                    self?.processExtractedAudio(samples, frameLength: frameLength, sampleRate: capturedSampleRate)
+                Task { @MainActor in
+                    weakSelf?.processExtractedAudio(samples, frameLength: frameLength, sampleRate: capturedSampleRate)
                 }
             }
 

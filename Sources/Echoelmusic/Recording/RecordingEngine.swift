@@ -312,7 +312,8 @@ final class RecordingEngine {
         // triggering dispatch_assert_queue_fail under Swift 6 strict concurrency.
         // Instead, capture nonisolated(unsafe) audioFile directly for the file write.
         nonisolated(unsafe) let file = self.audioFile
-        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
+        nonisolated(unsafe) weak var weakSelf = self
+        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, _ in
             // Write to file synchronously while buffer memory is valid
             if let file {
                 do {
@@ -341,13 +342,14 @@ final class RecordingEngine {
             }
 
             // Send only computed values to MainActor
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.recordingLevel = level
+            // weakSelf captured as nonisolated(unsafe) to avoid actor isolation check on audio thread
+            Task { @MainActor in
+                guard let s = weakSelf else { return }
+                s.recordingLevel = level
                 for sample in waveformSamples {
-                    self.waveformBuffer.append(sample)
+                    s.waveformBuffer.append(sample)
                 }
-                self.recordingWaveform = self.waveformBuffer.toArray()
+                s.recordingWaveform = s.waveformBuffer.toArray()
             }
         }
 

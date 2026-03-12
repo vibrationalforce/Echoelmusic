@@ -246,6 +246,8 @@ public final class VoiceToQuantumMIDI {
         // Install tap on input
         // Avoid accessing @MainActor self on the audio thread — capture queue locally
         let processingQueue = self.audioProcessingQueue
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
+        nonisolated(unsafe) weak var weakSelf = self
         inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { buffer, _ in
             // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
             guard let channelData = buffer.floatChannelData?[0] else { return }
@@ -253,8 +255,8 @@ public final class VoiceToQuantumMIDI {
             let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
             let bufferSampleRate = Float(buffer.format.sampleRate)
             processingQueue.async {
-                Task { @MainActor [weak self] in
-                    self?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
+                Task { @MainActor in
+                    weakSelf?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
                 }
             }
         }

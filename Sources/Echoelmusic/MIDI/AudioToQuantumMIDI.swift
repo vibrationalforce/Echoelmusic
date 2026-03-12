@@ -396,6 +396,8 @@ public final class AudioToQuantumMIDI {
         // Install tap for audio analysis
         // Avoid accessing @MainActor self on the audio thread — capture queue locally
         let processingQueue = self.audioProcessingQueue
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
+        nonisolated(unsafe) weak var weakSelf = self
         inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { buffer, _ in
             // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
             guard let channelData = buffer.floatChannelData?[0] else { return }
@@ -403,8 +405,8 @@ public final class AudioToQuantumMIDI {
             let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
             let bufferSampleRate = Float(buffer.format.sampleRate)
             processingQueue.async {
-                Task { @MainActor [weak self] in
-                    self?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
+                Task { @MainActor in
+                    weakSelf?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
                 }
             }
         }
@@ -440,14 +442,16 @@ public final class AudioToQuantumMIDI {
         engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
 
         // Install tap for analysis
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
+        nonisolated(unsafe) weak var weakSelf2 = self
         engine.mainMixerNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: file.processingFormat) { buffer, _ in
             // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
             guard let channelData = buffer.floatChannelData?[0] else { return }
             let frameCount = Int(buffer.frameLength)
             let samples = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
             let bufferSampleRate = Float(buffer.format.sampleRate)
-            Task { @MainActor [weak self] in
-                self?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
+            Task { @MainActor in
+                weakSelf2?.processExtractedSamples(samples, frameCount: frameCount, sampleRate: bufferSampleRate)
             }
         }
 

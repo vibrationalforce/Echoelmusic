@@ -571,8 +571,10 @@ public final class EchoelBeat {
             return
         }
 
-        sourceNode = AVAudioSourceNode { [weak self] _, _, frameCount, abl -> OSStatus in
-            guard let self = self else { return noErr }
+        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread
+        nonisolated(unsafe) weak var weakSelf = self
+        sourceNode = AVAudioSourceNode { _, _, frameCount, abl -> OSStatus in
+            guard let self = weakSelf else { return noErr }
             let ablPtr = UnsafeMutableAudioBufferListPointer(abl)
             guard ablPtr.count >= 2,
                   let left = ablPtr[0].mData?.assumingMemoryBound(to: Float.self),
@@ -855,11 +857,13 @@ public final class EchoelBeat {
         // heap-allocating a Task on every render callback (375+/sec)
         if currentTime - lastMeterUpdate > 0.05 {
             lastMeterUpdate = currentTime
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.meterLevel = peak
-                if self.isSeqRunning {
-                    self.sequencerStep = self.seqLastStep
+            // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
+            nonisolated(unsafe) weak var weakSelf = self
+            Task { @MainActor in
+                guard let s = weakSelf else { return }
+                s.meterLevel = peak
+                if s.isSeqRunning {
+                    s.sequencerStep = s.seqLastStep
                 }
             }
         }

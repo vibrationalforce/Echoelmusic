@@ -164,11 +164,11 @@ public final class AudioEngine {
         // Install metering tap on master mixer for live VU meters
         let meterFormat = masterMixer.outputFormat(forBus: 0)
         if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
-            // IMPORTANT: Do NOT capture [weak self] in the outer closure.
-            // Tap callbacks run on the audio thread (RealtimeMessenger.mServiceQueue).
-            // Under Swift 6 strict concurrency, accessing a @MainActor instance from
-            // a non-main thread triggers dispatch_assert_queue_fail → EXC_BREAKPOINT.
-            // vDSP is pure C — safe to call on any thread without self.
+            // CRITICAL: Tap callbacks run on the audio thread (RealtimeMessenger.mServiceQueue).
+            // Under Swift 6 / iOS 26, even [weak self] in Task{} triggers
+            // dispatch_assert_queue_fail → EXC_BREAKPOINT when self is @MainActor.
+            // Fix: capture as nonisolated(unsafe) weak var before the closure.
+            nonisolated(unsafe) weak var weakSelf = self
             masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { buffer, _ in
                 guard let channelData = buffer.floatChannelData else { return }
                 let frameLength = UInt(buffer.frameLength)
@@ -188,13 +188,13 @@ public final class AudioEngine {
                 let scaledL = Swift.min(rmsL * 3.0, 1.0)
                 let scaledR = Swift.min(rmsR * 3.0, 1.0)
 
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
+                Task { @MainActor in
+                    guard let s = weakSelf else { return }
                     // Professional peak-hold + smooth decay metering
                     // Attack: instant (peak tracking), Decay: ~300ms (natural VU ballistic)
                     let decayCoeff: Float = 0.92  // ~300ms decay at 48kHz/1024
-                    self.masterLevel = Swift.max(scaledL, self.masterLevel * decayCoeff)
-                    self.masterLevelR = Swift.max(scaledR, self.masterLevelR * decayCoeff)
+                    s.masterLevel = Swift.max(scaledL, s.masterLevel * decayCoeff)
+                    s.masterLevelR = Swift.max(scaledR, s.masterLevelR * decayCoeff)
                 }
             }
         }
