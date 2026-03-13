@@ -86,8 +86,8 @@ final class RecordingEngine {
     /// Audio engine for recording/playback
     nonisolated(unsafe) private var audioEngine: AVAudioEngine?
 
-    /// Input node for recording
-    private var inputNode: AVAudioInputNode?
+    /// Input node for recording — nonisolated(unsafe) for deinit cleanup
+    nonisolated(unsafe) private var inputNode: AVAudioInputNode?
 
     /// Audio file for current recording
     /// Written from installTap callback on audio thread — nonisolated(unsafe)

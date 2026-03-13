@@ -103,7 +103,13 @@ final class MIDIController {
     }
 
     deinit {
-        cleanup()
+        // Perform cleanup directly — deinit is nonisolated, cannot call @MainActor methods
+        if inputPort != 0 {
+            MIDIPortDispose(inputPort)
+        }
+        if midiClient != 0 {
+            MIDIClientDispose(midiClient)
+        }
     }
 
     // MARK: - MIDI Setup

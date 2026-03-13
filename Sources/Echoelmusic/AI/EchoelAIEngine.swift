@@ -379,7 +379,7 @@ public final class EchoelAIEngine {
         var windowed = [Float](repeating: 0, count: fftSize)
         var window = [Float](repeating: 0, count: fftSize)
         vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
-        vDSP_vmul(channelData[0], 1, window, 1, &windowed, vDSP_Length(fftSize))
+        vDSP_vmul(channelData[0], 1, window, 1, &windowed, 1, vDSP_Length(fftSize))
 
         // Pack into split complex (copy to avoid overlapping access)
         let halfSize = fftSize / 2
