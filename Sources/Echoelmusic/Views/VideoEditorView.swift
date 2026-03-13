@@ -1345,8 +1345,12 @@ struct VideoExportSheet: View {
         exportError = nil
         exportSuccess = false
 
-        guard let composition = try? await engine.buildComposition() else {
-            exportError = "No video content to export"
+        let composition: AVMutableComposition
+        do {
+            composition = try await engine.buildComposition()
+        } catch {
+            log.video("Export composition build failed: \(error)", level: .error)
+            exportError = "Failed to build composition: \(error.localizedDescription)"
             return
         }
 

@@ -500,7 +500,11 @@ extension NodeGraph {
         graph.addNode(reverb)
 
         // Connect: Input → Filter → Reverb → Output
-        try? graph.connect(from: filter.id, to: reverb.id)
+        do {
+            try graph.connect(from: filter.id, to: reverb.id)
+        } catch {
+            log.audio("NodeGraph: failed to connect filter → reverb: \(error)", level: .error)
+        }
 
         return graph
     }
@@ -524,8 +528,12 @@ extension NodeGraph {
         graph.addNode(reverb)
 
         // Connect: Input → Filter → Compressor → Reverb → Output
-        try? graph.connect(from: filter.id, to: compressor.id)
-        try? graph.connect(from: compressor.id, to: reverb.id)
+        do {
+            try graph.connect(from: filter.id, to: compressor.id)
+            try graph.connect(from: compressor.id, to: reverb.id)
+        } catch {
+            log.audio("NodeGraph: failed to connect production chain: \(error)", level: .error)
+        }
 
         return graph
     }

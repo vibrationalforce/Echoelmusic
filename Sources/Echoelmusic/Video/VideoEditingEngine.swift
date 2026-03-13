@@ -523,7 +523,14 @@ final class VideoEditingEngine {
             // Insert clips
             for clip in track.clips {
                 guard let asset = clip.asset else { continue }
-                guard let assetTrack = try? await loadFirstTrack(from: asset, mediaType: .video) else { continue }
+                let assetTrack: AVAssetTrack
+                do {
+                    guard let track = try await loadFirstTrack(from: asset, mediaType: .video) else { continue }
+                    assetTrack = track
+                } catch {
+                    log.video("Failed to load video track from clip \(clip.name): \(error)", level: .warning)
+                    continue
+                }
 
                 let timeRange = CMTimeRange(start: clip.inPoint, duration: clip.duration)
 
@@ -547,7 +554,14 @@ final class VideoEditingEngine {
             // Insert clips
             for clip in track.clips {
                 guard let asset = clip.asset else { continue }
-                guard let assetTrack = try? await loadFirstTrack(from: asset, mediaType: .audio) else { continue }
+                let assetTrack: AVAssetTrack
+                do {
+                    guard let track = try await loadFirstTrack(from: asset, mediaType: .audio) else { continue }
+                    assetTrack = track
+                } catch {
+                    log.video("Failed to load audio track from clip \(clip.name): \(error)", level: .warning)
+                    continue
+                }
 
                 let timeRange = CMTimeRange(start: clip.inPoint, duration: clip.duration)
 

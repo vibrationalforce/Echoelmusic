@@ -441,11 +441,17 @@ struct RecordingControlsView: View {
 
     private func toggleRecording() {
         if recordingEngine.isRecording {
-            try? recordingEngine.stopRecording()
+            do {
+                try recordingEngine.stopRecording()
+            } catch {
+                log.recording("Failed to stop recording: \(error)", level: .error)
+            }
         } else {
-            try? recordingEngine.startRecording()
-
-            // Recording started via engine
+            do {
+                try recordingEngine.startRecording()
+            } catch {
+                log.recording("Failed to start recording: \(error)", level: .error)
+            }
         }
     }
 
@@ -453,7 +459,11 @@ struct RecordingControlsView: View {
         if recordingEngine.isPlaying {
             recordingEngine.pausePlayback()
         } else {
-            try? recordingEngine.startPlayback()
+            do {
+                try recordingEngine.startPlayback()
+            } catch {
+                log.recording("Failed to start playback: \(error)", level: .error)
+            }
         }
     }
 

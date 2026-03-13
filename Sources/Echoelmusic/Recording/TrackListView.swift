@@ -33,7 +33,11 @@ struct TrackListView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 if let trackID = trackToDelete {
-                    try? recordingEngine.deleteTrack(trackID)
+                    do {
+                        try recordingEngine.deleteTrack(trackID)
+                    } catch {
+                        log.recording("Failed to delete track: \(error)", level: .error)
+                    }
                 }
             }
         } message: {
@@ -242,7 +246,11 @@ struct TrackRow: View {
 
             // Delete button
             Button(action: {
-                try? recordingEngine.deleteTrack(track.id)
+                do {
+                    try recordingEngine.deleteTrack(track.id)
+                } catch {
+                    log.recording("Failed to delete track: \(error)", level: .error)
+                }
             }) {
                 HStack {
                     Image(systemName: "trash")
