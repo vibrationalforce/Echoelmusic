@@ -87,6 +87,10 @@ public final class AudioEngine {
     init(microphoneManager: MicrophoneManager) {
         self.microphoneManager = microphoneManager
 
+        // Initialize heap pointers immediately — reading uninitialized memory is UB
+        _rawMeterL.initialize(to: 0)
+        _rawMeterR.initialize(to: 0)
+
         // Configure audio session for optimal performance
         do {
             try AudioConfiguration.configureAudioSession()
@@ -176,8 +180,6 @@ public final class AudioEngine {
         // into @Observable properties — zero actor references on audio thread.
         let meterFormat = masterMixer.outputFormat(forBus: 0)
         if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
-            _rawMeterL.initialize(to: 0)
-            _rawMeterR.initialize(to: 0)
             let ptrL = _rawMeterL
             let ptrR = _rawMeterR
 
@@ -277,6 +279,14 @@ public final class AudioEngine {
         let outputs = route.outputs.map { "\($0.portName) (\($0.portType.rawValue))" }
         return outputs.isEmpty ? "No output" : outputs.joined(separator: ", ")
         #endif
+    }
+
+    deinit {
+        meterPollTimer?.invalidate()
+        _rawMeterL.deinitialize(count: 1)
+        _rawMeterL.deallocate()
+        _rawMeterR.deinitialize(count: 1)
+        _rawMeterR.deallocate()
     }
 
     /// Stop the audio engine

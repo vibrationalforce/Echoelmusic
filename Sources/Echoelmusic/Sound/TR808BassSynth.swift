@@ -241,29 +241,31 @@ public final class TR808BassSynth {
     public var isSequencerPlaying: Bool = false
 
     // Drum playback state (audio thread, under voiceLock)
-    nonisolated(unsafe) private var drumPlaybacks: [DrumPlayback] = []
+    @ObservationIgnored nonisolated(unsafe) private var drumPlaybacks: [DrumPlayback] = []
     private let maxDrumPlaybacks = 32
-    private var sequencerTimer: Timer?
+    @ObservationIgnored private var sequencerTimer: Timer?
 
     // MARK: - Audio Engine
 
-    private var audioEngine: AVAudioEngine?
-    private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     private let sampleRate: Double = 48000.0
     private let maxVoices = 8
 
     // MARK: - Voice Management
+    // @ObservationIgnored: voices accessed from audio render thread — observation
+    // registrar lock on RT causes priority inversion → deadlock / watchdog kill.
 
-    private var voices: [TR808Voice] = []
+    @ObservationIgnored private var voices: [TR808Voice] = []
     /// os_unfair_lock wrapper — priority-inheriting, no ObjC dispatch,
     /// safe for real-time audio render callbacks.
     private let voiceLock = AudioUnfairLock()
 
     // MARK: - DSP State (accessed from audio render thread, synchronized by voiceLock)
 
-    nonisolated(unsafe) private var currentTime: Double = 0.0
-    nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
-    nonisolated(unsafe) private var peakLevel: Float = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var currentTime: Double = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var peakLevel: Float = 0.0
     /// Heap-allocated meter storage — written from audio render thread, read from main thread timer
     @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private let _rawVoiceCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
@@ -271,8 +273,8 @@ public final class TR808BassSynth {
 
     // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
-    nonisolated(unsafe) private var bioCoherence: Float = 0.5
-    nonisolated(unsafe) private var bioEnergy: Float = 0.5
+    @ObservationIgnored nonisolated(unsafe) private var bioCoherence: Float = 0.5
+    @ObservationIgnored nonisolated(unsafe) private var bioEnergy: Float = 0.5
 
     // MARK: - Initialization
 
@@ -299,8 +301,11 @@ public final class TR808BassSynth {
     }
 
     deinit {
-        // Note: Can't call MainActor-isolated methods from nonisolated deinit
-        // AVAudioEngine deallocation handles cleanup automatically
+        meterPollTimer?.invalidate()
+        _rawMeter.deinitialize(count: 1)
+        _rawMeter.deallocate()
+        _rawVoiceCount.deinitialize(count: 1)
+        _rawVoiceCount.deallocate()
     }
 
     // MARK: - Audio Engine Setup
@@ -363,6 +368,8 @@ public final class TR808BassSynth {
 
     /// Stop the synthesizer
     public func stop() {
+        meterPollTimer?.invalidate()
+        meterPollTimer = nil
         isPlaying = false
 
         voiceLock.lock()

@@ -303,14 +303,16 @@ public final class EchoelBass {
 
     // MARK: - Audio Engine
 
-    private var audioEngine: AVAudioEngine?
-    private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     private let sampleRate: Double = 48000.0
     private let maxVoices = 8
 
     // MARK: - Voice Management
+    // @ObservationIgnored: voices accessed from audio render thread — observation
+    // registrar lock on RT causes priority inversion → deadlock / watchdog kill.
 
-    private var voices: [EchoelBassVoice] = []
+    @ObservationIgnored private var voices: [EchoelBassVoice] = []
     /// Lock-free-friendly unfair lock for audio thread safety.
     /// os_unfair_lock is priority-inheriting (no priority inversion) and has
     /// zero ObjC dispatch overhead — safe for real-time audio callbacks.
@@ -318,9 +320,9 @@ public final class EchoelBass {
 
     // MARK: - DSP State (accessed from audio render thread, synchronized by voiceLock)
 
-    nonisolated(unsafe) private var currentTime: Double = 0.0
-    nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
-    nonisolated(unsafe) private var peakLevel: Float = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var currentTime: Double = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var peakLevel: Float = 0.0
     /// Heap-allocated meter storage — written from audio render thread, read from main thread timer
     @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private let _rawVoiceCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
@@ -328,10 +330,10 @@ public final class EchoelBass {
 
     // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
-    nonisolated(unsafe) private var bioCoherence: Float = 0.5
-    nonisolated(unsafe) private var bioHeartRate: Float = 72.0
-    nonisolated(unsafe) private var bioHRV: Float = 50.0
-    nonisolated(unsafe) private var bioBreathPhase: Float = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var bioCoherence: Float = 0.5
+    @ObservationIgnored nonisolated(unsafe) private var bioHeartRate: Float = 72.0
+    @ObservationIgnored nonisolated(unsafe) private var bioHRV: Float = 50.0
+    @ObservationIgnored nonisolated(unsafe) private var bioBreathPhase: Float = 0.0
 
     // MARK: - Initialization
 
@@ -389,6 +391,14 @@ public final class EchoelBass {
         log.audio("EchoelBass: audio engine prepared (deferred start)")
     }
 
+    deinit {
+        meterPollTimer?.invalidate()
+        _rawMeter.deinitialize(count: 1)
+        _rawMeter.deallocate()
+        _rawVoiceCount.deinitialize(count: 1)
+        _rawVoiceCount.deallocate()
+    }
+
     // MARK: - Public API
 
     public func start() {
@@ -397,6 +407,8 @@ public final class EchoelBass {
     }
 
     public func stop() {
+        meterPollTimer?.invalidate()
+        meterPollTimer = nil
         isPlaying = false
         voiceLock.lock()
         defer { voiceLock.unlock() }

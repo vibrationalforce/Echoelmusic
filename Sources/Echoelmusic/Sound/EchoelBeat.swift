@@ -501,8 +501,8 @@ public final class EchoelBeat {
 
     // ── Audio Engine ──
 
-    private var audioEngine: AVAudioEngine?
-    private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     private let sampleRate: Double = 48000.0
     /// os_unfair_lock wrapper — priority-inheriting, no ObjC dispatch,
     /// safe for real-time audio render callbacks.
@@ -510,12 +510,12 @@ public final class EchoelBeat {
 
     // ── DSP State (audio thread, under voiceLock) ──
 
-    nonisolated(unsafe) private var drumPlaybacks: [DrumPlayback] = []
-    nonisolated(unsafe) private var hihatVoices: [HiHatVoice] = []
-    nonisolated(unsafe) private var rollState = RollState()
-    nonisolated(unsafe) private var dirtyDelay = DirtyDelay()
-    nonisolated(unsafe) private var currentTime: Double = 0.0
-    nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var drumPlaybacks: [DrumPlayback] = []
+    @ObservationIgnored nonisolated(unsafe) private var hihatVoices: [HiHatVoice] = []
+    @ObservationIgnored nonisolated(unsafe) private var rollState = RollState()
+    @ObservationIgnored nonisolated(unsafe) private var dirtyDelay = DirtyDelay()
+    @ObservationIgnored nonisolated(unsafe) private var currentTime: Double = 0.0
+    @ObservationIgnored nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
     /// Heap-allocated meter + sequencer step storage — written from audio render thread,
     /// read from main thread timer. No actor hop needed.
     @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
@@ -524,9 +524,9 @@ public final class EchoelBeat {
     @ObservationIgnored private var meterPollTimer: Timer?
 
     // Sample-accurate sequencer state (audio thread, under voiceLock)
-    nonisolated(unsafe) private var seqGlobalSamplePos: Int = 0
-    nonisolated(unsafe) private var seqLastStep: Int = -1
-    nonisolated(unsafe) private var isSeqRunning: Bool = false
+    @ObservationIgnored nonisolated(unsafe) private var seqGlobalSamplePos: Int = 0
+    @ObservationIgnored nonisolated(unsafe) private var seqLastStep: Int = -1
+    @ObservationIgnored nonisolated(unsafe) private var isSeqRunning: Bool = false
 
     private let maxDrumPlaybacks = 32
     private let maxHiHatVoices = 8
@@ -571,6 +571,16 @@ public final class EchoelBeat {
                 self.sequencerPattern = BeatPattern(name: SynthPresetLibrary.GenreKit.electronic.rawValue, trackCount: newSlots.count)
             }
         }
+    }
+
+    deinit {
+        meterPollTimer?.invalidate()
+        _rawMeter.deinitialize(count: 1)
+        _rawMeter.deallocate()
+        _rawSeqStep.deinitialize(count: 1)
+        _rawSeqStep.deallocate()
+        _rawSeqRunning.deinitialize(count: 1)
+        _rawSeqRunning.deallocate()
     }
 
     private func setupAudioEngine() {
