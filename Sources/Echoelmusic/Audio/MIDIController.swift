@@ -103,7 +103,7 @@ final class MIDIController {
     }
 
     deinit {
-        // MIDI resources are cleaned up when references are released
+        cleanup()
     }
 
     // MARK: - MIDI Setup

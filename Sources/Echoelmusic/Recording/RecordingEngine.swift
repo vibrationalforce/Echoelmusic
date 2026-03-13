@@ -732,7 +732,11 @@ final class RecordingEngine {
 
         // Stop at max duration
         if currentTime >= maxDuration && isRecording {
-            try? stopRecording()
+            do {
+                try stopRecording()
+            } catch {
+                log.recording("Failed to stop recording at max duration: \(error)", level: .error)
+            }
         }
 
         // Stop at session end
@@ -744,7 +748,11 @@ final class RecordingEngine {
     /// Generate track file URL
     private func trackFileURL(sessionID: UUID, trackID: UUID) -> URL {
         let sessionDir = sessionsDirectory.appendingPathComponent(sessionID.uuidString, isDirectory: true)
-        try? FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
+        } catch {
+            log.recording("Failed to create session directory: \(error)", level: .error)
+        }
         return sessionDir.appendingPathComponent("\(trackID.uuidString).caf")
     }
 }

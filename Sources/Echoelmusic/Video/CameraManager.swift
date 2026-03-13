@@ -278,6 +278,7 @@ public final class CameraManager: NSObject {
     }
 
     deinit {
+        captureSession.stopRunning()
         recordingTimer?.invalidate()
         fpsTimer?.invalidate()
         exposureObserver?.invalidate()
