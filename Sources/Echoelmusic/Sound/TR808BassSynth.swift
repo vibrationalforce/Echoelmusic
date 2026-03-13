@@ -264,6 +264,10 @@ public final class TR808BassSynth {
     nonisolated(unsafe) private var currentTime: Double = 0.0
     nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
     nonisolated(unsafe) private var peakLevel: Float = 0.0
+    /// Heap-allocated meter storage — written from audio render thread, read from main thread timer
+    @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
+    @ObservationIgnored nonisolated(unsafe) private let _rawVoiceCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+    @ObservationIgnored private var meterPollTimer: Timer?
 
     // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
@@ -273,7 +277,25 @@ public final class TR808BassSynth {
     // MARK: - Initialization
 
     private init() {
+        _rawMeter.initialize(to: 0)
+        _rawVoiceCount.initialize(to: 0)
         setupAudioEngine()
+        startMeterPollTimer()
+    }
+
+    /// Poll raw meter values from audio render thread into @Observable properties.
+    private func startMeterPollTimer() {
+        meterPollTimer?.invalidate()
+        let ptrM = _rawMeter
+        let ptrV = _rawVoiceCount
+        meterPollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.meterLevel = ptrM.pointee
+                self.activeVoiceCount = ptrV.pointee
+                if self.activeVoiceCount == 0 { self.isPlaying = false }
+            }
+        }
     }
 
     deinit {
@@ -625,22 +647,12 @@ public final class TR808BassSynth {
         // Update time
         currentTime += Double(frameCount) / sampleRate
 
-        // Update meter (throttled)
+        // Meter update (~20Hz) — write to heap pointers, no actor hop
         if currentTime - lastMeterUpdate > 0.05 {
             lastMeterUpdate = currentTime
             peakLevel = peak
-
-            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
-            // Task { @MainActor } crashes on audio render thread (dispatch_assert_queue_fail)
-            nonisolated(unsafe) weak var weakSelf = self
-            DispatchQueue.main.async {
-                guard let s = weakSelf else { return }
-                s.meterLevel = peak
-                s.activeVoiceCount = s.voices.count
-                if s.voices.isEmpty {
-                    s.isPlaying = false
-                }
-            }
+            _rawMeter.pointee = peak
+            _rawVoiceCount.pointee = voices.count
         }
     }
 

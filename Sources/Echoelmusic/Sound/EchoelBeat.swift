@@ -516,6 +516,12 @@ public final class EchoelBeat {
     nonisolated(unsafe) private var dirtyDelay = DirtyDelay()
     nonisolated(unsafe) private var currentTime: Double = 0.0
     nonisolated(unsafe) private var lastMeterUpdate: Double = 0.0
+    /// Heap-allocated meter + sequencer step storage — written from audio render thread,
+    /// read from main thread timer. No actor hop needed.
+    @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
+    @ObservationIgnored nonisolated(unsafe) private let _rawSeqStep = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+    @ObservationIgnored nonisolated(unsafe) private let _rawSeqRunning = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
+    @ObservationIgnored private var meterPollTimer: Timer?
 
     // Sample-accurate sequencer state (audio thread, under voiceLock)
     nonisolated(unsafe) private var seqGlobalSamplePos: Int = 0
@@ -534,7 +540,11 @@ public final class EchoelBeat {
     // MARK: - Initialization
 
     private init() {
+        _rawMeter.initialize(to: 0)
+        _rawSeqStep.initialize(to: -1)
+        _rawSeqRunning.initialize(to: false)
         setupAudioEngine()
+        startMeterPollTimer()
         // Defer drum kit loading to background to avoid blocking app launch.
         // 16 drum presets × synthesis = heavy DSP work that triggers iOS watchdog
         // if run on @MainActor during startup.
@@ -591,6 +601,23 @@ public final class EchoelBeat {
         // Engine is prepared but NOT started here — started lazily via ensureEngineRunning()
         // to avoid competing with the master AudioEngine at app launch.
         log.log(.info, category: .audio, "EchoelBeat: audio engine prepared (deferred start)")
+    }
+
+    /// Poll raw meter/sequencer values from audio thread into @Observable properties.
+    private func startMeterPollTimer() {
+        meterPollTimer?.invalidate()
+        let ptrM = _rawMeter
+        let ptrStep = _rawSeqStep
+        let ptrRunning = _rawSeqRunning
+        meterPollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.meterLevel = ptrM.pointee
+                if ptrRunning.pointee {
+                    self.sequencerStep = ptrStep.pointee
+                }
+            }
+        }
     }
 
     private func ensureEngineRunning() {
@@ -855,20 +882,13 @@ public final class EchoelBeat {
 
         currentTime += Double(frameCount) / sampleRate
 
-        // Meter update throttled to ~20Hz (every 50ms) to avoid
-        // heap-allocating a Task on every render callback (375+/sec)
+        // Meter update throttled to ~20Hz (every 50ms).
+        // Write to heap pointer — no actor hop, no closure creation on audio thread.
         if currentTime - lastMeterUpdate > 0.05 {
             lastMeterUpdate = currentTime
-            // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
-            // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)
-            nonisolated(unsafe) weak var weakSelf = self
-            DispatchQueue.main.async {
-                guard let s = weakSelf else { return }
-                s.meterLevel = peak
-                if s.isSeqRunning {
-                    s.sequencerStep = s.seqLastStep
-                }
-            }
+            _rawMeter.pointee = peak
+            _rawSeqStep.pointee = seqLastStep
+            _rawSeqRunning.pointee = isSeqRunning
         }
     }
 

@@ -37,6 +37,12 @@ public final class AudioEngine {
     /// Live master output level right channel (0.0 - 1.0)
     var masterLevelR: Float = 0.0
 
+    /// Heap-allocated meter storage written from audio tap, read from main thread timer.
+    /// Float writes are atomic on ARM64. No locks needed.
+    @ObservationIgnored nonisolated(unsafe) private let _rawMeterL = UnsafeMutablePointer<Float>.allocate(capacity: 1)
+    @ObservationIgnored nonisolated(unsafe) private let _rawMeterR = UnsafeMutablePointer<Float>.allocate(capacity: 1)
+    @ObservationIgnored private var meterPollTimer: Timer?
+
     // MARK: - Master Audio Engine (Hardware Output)
 
     /// The master AVAudioEngine that connects the entire audio graph to hardware output.
@@ -161,14 +167,20 @@ public final class AudioEngine {
         masterMixer.outputVolume = masterVolume
         masterEngine.mainMixerNode.outputVolume = 1.0
 
-        // Install metering tap on master mixer for live VU meters
+        // Install metering tap on master mixer for live VU meters.
+        // CRITICAL: Tap callbacks run on RealtimeMessenger.mServiceQueue (audio thread).
+        // iOS 26 Swift 6 runtime inserts actor isolation checks when creating closures
+        // that capture @MainActor references — even through nonisolated(unsafe).
+        // Fix: Capture raw UnsafeMutablePointer<Float> (not self). The tap writes
+        // directly to heap-allocated storage. A timer on main thread polls values
+        // into @Observable properties — zero actor references on audio thread.
         let meterFormat = masterMixer.outputFormat(forBus: 0)
         if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
-            // CRITICAL: Tap callbacks run on the audio thread (RealtimeMessenger.mServiceQueue).
-            // Under Swift 6 / iOS 26, Task { @MainActor } created on the audio thread
-            // triggers dispatch_assert_queue_fail → EXC_BREAKPOINT.
-            // Fix: Use DispatchQueue.main.async — bypasses Swift concurrency entirely.
-            nonisolated(unsafe) weak var weakSelf = self
+            _rawMeterL.initialize(to: 0)
+            _rawMeterR.initialize(to: 0)
+            let ptrL = _rawMeterL
+            let ptrR = _rawMeterR
+
             masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { buffer, _ in
                 guard let channelData = buffer.floatChannelData else { return }
                 let frameLength = UInt(buffer.frameLength)
@@ -187,12 +199,9 @@ public final class AudioEngine {
                 let scaledL = rmsL.isNaN ? Float(0) : Swift.min(rmsL * 3.0, 1.0)
                 let scaledR = rmsR.isNaN ? Float(0) : Swift.min(rmsR * 3.0, 1.0)
 
-                DispatchQueue.main.async {
-                    guard let s = weakSelf else { return }
-                    let decayCoeff: Float = 0.92
-                    s.masterLevel = Swift.max(scaledL, s.masterLevel * decayCoeff)
-                    s.masterLevelR = Swift.max(scaledR, s.masterLevelR * decayCoeff)
-                }
+                // Direct write to heap pointer — no actor hop, no closure capture of self
+                ptrL.pointee = scaledL
+                ptrR.pointee = scaledR
             }
         }
 
@@ -235,8 +244,28 @@ public final class AudioEngine {
             microphoneManager.startRecording()
         }
 
+        // Start meter polling timer — reads raw values from audio tap, writes to @Observable properties.
+        // ~60Hz matches display refresh; runs on main RunLoop (MainActor).
+        startMeterPollTimer()
+
         isRunning = true
         log.audio("AudioEngine started (production mode) — output: \(currentOutputDescription)")
+    }
+
+    /// Poll raw meter values from audio tap into @Observable properties.
+    /// Runs on main RunLoop — MainActor-safe. Applies decay smoothing.
+    private func startMeterPollTimer() {
+        meterPollTimer?.invalidate()
+        let ptrL = _rawMeterL
+        let ptrR = _rawMeterR
+        meterPollTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let decayCoeff: Float = 0.92
+                self.masterLevel = Swift.max(ptrL.pointee, self.masterLevel * decayCoeff)
+                self.masterLevelR = Swift.max(ptrR.pointee, self.masterLevelR * decayCoeff)
+            }
+        }
     }
 
     /// Human-readable description of the current audio output route
@@ -252,6 +281,9 @@ public final class AudioEngine {
 
     /// Stop the audio engine
     func stop() {
+        meterPollTimer?.invalidate()
+        meterPollTimer = nil
+
         // Stop microphone
         microphoneManager.stopRecording()
 
