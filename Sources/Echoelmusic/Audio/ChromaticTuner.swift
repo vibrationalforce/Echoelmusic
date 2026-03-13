@@ -119,7 +119,7 @@ public final class ChromaticTuner {
 
     // MARK: - Private Properties
 
-    nonisolated(unsafe) private let audioEngine = AVAudioEngine()
+    @ObservationIgnored nonisolated(unsafe) private let audioEngine = AVAudioEngine()
     private let analysisQueue = DispatchQueue(label: "com.echoelmusic.tuner", qos: .userInteractive)
 
     private let sampleRate: Double = 48000

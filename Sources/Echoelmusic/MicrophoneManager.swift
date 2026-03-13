@@ -40,10 +40,10 @@ final class MicrophoneManager: NSObject {
     // MARK: - Private Properties
 
     /// The audio engine that processes audio input
-    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
+    @ObservationIgnored nonisolated(unsafe) private var audioEngine: AVAudioEngine?
 
     /// The input node that captures microphone data
-    private var inputNode: AVAudioInputNode?
+    @ObservationIgnored private var inputNode: AVAudioInputNode?
 
     /// FFT setup for frequency analysis
     private var complexDFT: EchoelComplexDFT?

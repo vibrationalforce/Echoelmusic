@@ -36,9 +36,9 @@ final class InstrumentOrchestrator {
     // MARK: - Audio Engine
 
     private(set) var isEngineReady: Bool = false
-    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
-    private var playerNode: AVAudioPlayerNode?
-    private var mixerNode: AVAudioMixerNode?
+    @ObservationIgnored nonisolated(unsafe) private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private var playerNode: AVAudioPlayerNode?
+    @ObservationIgnored private var mixerNode: AVAudioMixerNode?
 
     /// Optional reference to main AudioEngine — when set, routes all playback through it
     /// instead of using the local AVAudioEngine. Eliminates duplicate engine conflicts on iOS.

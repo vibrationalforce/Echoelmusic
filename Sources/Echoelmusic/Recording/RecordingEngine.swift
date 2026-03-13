@@ -84,19 +84,19 @@ final class RecordingEngine {
     // MARK: - Private Properties
 
     /// Audio engine for recording/playback
-    nonisolated(unsafe) private var audioEngine: AVAudioEngine?
+    @ObservationIgnored nonisolated(unsafe) private var audioEngine: AVAudioEngine?
 
     /// Input node for recording — nonisolated(unsafe) for deinit cleanup
-    nonisolated(unsafe) private var inputNode: AVAudioInputNode?
+    @ObservationIgnored nonisolated(unsafe) private var inputNode: AVAudioInputNode?
 
     /// Audio file for current recording
     /// Written from installTap callback on audio thread — nonisolated(unsafe)
     /// because writes are serialized on the processing queue and the file is only
     /// set/cleared on MainActor when recording starts/stops (never concurrent).
-    nonisolated(unsafe) private var audioFile: AVAudioFile?
+    @ObservationIgnored nonisolated(unsafe) private var audioFile: AVAudioFile?
 
     /// Timer for position updates
-    nonisolated(unsafe) private var timer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var timer: Timer?
 
     /// Waveform buffer for real-time display (max 1000 samples)
     /// Uses CircularBuffer for O(1) append instead of Array.removeFirst() O(n)
