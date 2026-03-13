@@ -202,7 +202,7 @@ public final class CameraManager: NSObject {
 
     /// The AVCaptureSession used for camera preview and capture.
     /// Exposed for CameraPreviewLayer (UIViewRepresentable) to create AVCaptureVideoPreviewLayer.
-    public let captureSession = AVCaptureSession()
+    nonisolated(unsafe) public let captureSession = AVCaptureSession()
     private var videoDevice: AVCaptureDevice?
     private var videoInput: AVCaptureDeviceInput?
     private var videoOutput: AVCaptureVideoDataOutput?

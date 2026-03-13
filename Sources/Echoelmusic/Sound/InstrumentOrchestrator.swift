@@ -73,7 +73,7 @@ final class InstrumentOrchestrator {
     @ObservationIgnored nonisolated(unsafe) private var cancellables = Set<AnyCancellable>()
 
     /// Stored observer token from NotificationCenter — must be retained to keep observer alive
-    @ObservationIgnored private var bioObserver: (any NSObjectProtocol)?
+    @ObservationIgnored nonisolated(unsafe) private var bioObserver: (any NSObjectProtocol)?
 
     // MARK: - Initialization
 
