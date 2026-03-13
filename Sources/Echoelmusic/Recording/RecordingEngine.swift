@@ -184,7 +184,12 @@ final class RecordingEngine {
                         mBitsPerChannel: 32,
                         mReserved: 0
                     )
-                    self.recordingFormat = AVAudioFormat(streamDescription: &asbd)!
+                    if let asbdFormat = AVAudioFormat(streamDescription: &asbd) {
+                        self.recordingFormat = asbdFormat
+                    } else {
+                        log.recording("FATAL: Cannot create any AVAudioFormat — recording disabled", level: .error)
+                        self.recordingFormat = AVAudioFormat()
+                    }
                 }
             }
             return

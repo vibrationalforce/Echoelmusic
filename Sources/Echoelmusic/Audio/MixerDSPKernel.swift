@@ -107,7 +107,11 @@ final class MixerDSPKernel {
                 ?? AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 44100, channels: 2, interleaved: false) {
                 self.format = fallback
             } else {
-                self.format = AVAudioFormat(settings: [AVSampleRateKey: 44100, AVNumberOfChannelsKey: 2, AVFormatIDKey: kAudioFormatLinearPCM])!
+                self.format = AVAudioFormat(settings: [
+                    AVSampleRateKey: 44100,
+                    AVNumberOfChannelsKey: 2,
+                    AVFormatIDKey: kAudioFormatLinearPCM
+                ]) ?? AVAudioFormat()
             }
             self.masterBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
             self.scratchBuffer = MixerDSPKernel.createBuffer(format: format, frameCount: AVAudioFrameCount(bufferSize))
