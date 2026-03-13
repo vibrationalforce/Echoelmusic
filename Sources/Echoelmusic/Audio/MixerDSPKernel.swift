@@ -354,7 +354,10 @@ final class MixerDSPKernel {
         let masterGain = masterChannel.mute ? Float(0) : masterChannel.volume
         applyGain(masterBuffer, gainL: masterGain, gainR: masterGain, frameCount: frames)
 
-        // Step 5: Master metering
+        // Step 5: NaN/Inf scrub — prevents corrupt audio reaching DAC
+        sanitizeBuffer(masterBuffer, frameCount: frames)
+
+        // Step 6: Master metering
         masterChannel.metering = computeMetering(
             buffer: masterBuffer,
             frameCount: frames,
@@ -510,6 +513,23 @@ final class MixerDSPKernel {
             vDSP_vclr(channelData[ch], 1, frames)
         }
         buffer.frameLength = AVAudioFrameCount(frames)
+    }
+
+    /// Replaces NaN and Infinity values with zero to prevent corrupt audio reaching the DAC.
+    /// Uses vDSP threshold clip — no branching, no allocation, audio-thread safe.
+    private func sanitizeBuffer(_ buffer: AVAudioPCMBuffer, frameCount: Int) {
+        guard let channelData = buffer.floatChannelData else { return }
+        let frames = min(frameCount, Int(buffer.frameCapacity))
+        guard frames > 0 else { return }
+        for ch in 0..<Int(buffer.format.channelCount) {
+            let ptr = channelData[ch]
+            for i in 0..<frames {
+                let sample = ptr[i]
+                if sample.isNaN || sample.isInfinite {
+                    ptr[i] = 0
+                }
+            }
+        }
     }
 
     /// Copies audio data from one buffer to another.

@@ -184,8 +184,8 @@ public final class AudioEngine {
                     rmsR = rmsL
                 }
 
-                let scaledL = Swift.min(rmsL * 3.0, 1.0)
-                let scaledR = Swift.min(rmsR * 3.0, 1.0)
+                let scaledL = rmsL.isNaN ? Float(0) : Swift.min(rmsL * 3.0, 1.0)
+                let scaledR = rmsR.isNaN ? Float(0) : Swift.min(rmsR * 3.0, 1.0)
 
                 DispatchQueue.main.async {
                     guard let s = weakSelf else { return }
