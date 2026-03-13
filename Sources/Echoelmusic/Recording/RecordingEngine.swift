@@ -874,7 +874,7 @@ class RetrospectiveBuffer {
 
     /// Write buffer contents to audio file
     func writeToFile(url: URL, format: AVAudioFormat) throws {
-        guard count > 0 else { return }
+        guard count > 0, channels > 0 else { return }
 
         let audioFile = try AVAudioFile(
             forWriting: url,
