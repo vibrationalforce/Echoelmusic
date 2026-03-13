@@ -1447,7 +1447,7 @@ struct VideoPickerSheet: View {
             guard durationSeconds > 0 else { continue }
 
             let clip = VideoClip(
-                name: "Clip \(engine.timeline.videoTracks.first?.clips.count ?? 0 + 1)",
+                name: "Clip \((engine.timeline.videoTracks.first?.clips.count ?? 0) + 1)",
                 asset: asset,
                 startTime: CMTime(seconds: currentTime, preferredTimescale: 600),
                 duration: duration,
