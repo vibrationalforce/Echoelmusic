@@ -1027,9 +1027,10 @@ public final class CameraManager: NSObject {
         recordingDuration = 0
 
         recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.recordingDuration += 0.1
+            // Timer fires on main RunLoop — MainActor.assumeIsolated avoids
+            // dispatch_assert_queue_fail that Task { @MainActor } triggers under Swift 6
+            MainActor.assumeIsolated {
+                self?.recordingDuration += 0.1
             }
         }
 
@@ -1100,16 +1101,18 @@ public final class CameraManager: NSObject {
     private func setupDeviceObservers(_ device: AVCaptureDevice) {
         invalidateObservers()
 
+        // KVO callbacks run on arbitrary queues — use DispatchQueue.main.async
+        // instead of Task { @MainActor } to avoid dispatch_assert_queue_fail under Swift 6
         exposureObserver = device.observe(\.iso, options: .new) { [weak self] dev, _ in
             let iso = dev.iso
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.currentISO = iso
             }
         }
 
         focusObserver = device.observe(\.lensPosition, options: .new) { [weak self] dev, _ in
             let pos = dev.lensPosition
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.focusPosition = pos
             }
         }
@@ -1118,7 +1121,7 @@ public final class CameraManager: NSObject {
             let tempTint = dev.temperatureAndTintValues(for: dev.deviceWhiteBalanceGains)
             let temp = tempTint.temperature
             let tintVal = tempTint.tint
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.colorTemperature = temp
                 self?.tint = tintVal
             }
@@ -1126,7 +1129,7 @@ public final class CameraManager: NSObject {
 
         zoomObserver = device.observe(\.videoZoomFactor, options: .new) { [weak self] dev, _ in
             let zoom = dev.videoZoomFactor
-            Task { @MainActor in
+            DispatchQueue.main.async {
                 self?.zoomFactor = zoom
             }
         }
@@ -1147,8 +1150,8 @@ public final class CameraManager: NSObject {
 
     private func startFPSMonitoring() {
         fpsTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
+            MainActor.assumeIsolated {
+                guard let self = self else { return }
                 self.actualFrameRate = Double(self.frameCount)
                 self.frameCount = 0
             }

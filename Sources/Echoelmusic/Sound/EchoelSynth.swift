@@ -259,8 +259,8 @@ public final class EchoelSynth {
     // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
     nonisolated(unsafe) private var bioCoherence: Float = 0.5
-    private var bioHeartRate: Float = 72.0
-    private var bioHRV: Float = 50.0
+    nonisolated(unsafe) private var bioHeartRate: Float = 72.0
+    nonisolated(unsafe) private var bioHRV: Float = 50.0
     nonisolated(unsafe) private var bioBreathPhase: Float = 0.0
 
     // MARK: - Initialization

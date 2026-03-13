@@ -489,7 +489,9 @@ final class VideoEditingEngine {
         let interval = CMTime(value: 1, timescale: 30) // 30 Hz
 
         timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            Task { @MainActor in
+            // queue: .main ensures callback is on main thread —
+            // use assumeIsolated instead of Task { @MainActor } to avoid Swift 6 crash
+            MainActor.assumeIsolated {
                 self?.playhead = time
             }
         }
