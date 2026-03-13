@@ -91,8 +91,8 @@ final class MIDIController {
 
     // MARK: - Private Properties
 
-    private var midiClient: MIDIClientRef = 0
-    private var inputPort: MIDIPortRef = 0
+    nonisolated(unsafe) private var midiClient: MIDIClientRef = 0
+    nonisolated(unsafe) private var inputPort: MIDIPortRef = 0
     private var mappings: [MIDIMapping] = []
     private var messageHandlers: [(MIDIMessage) -> Void] = []
 
