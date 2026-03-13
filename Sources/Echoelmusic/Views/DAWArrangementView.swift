@@ -183,6 +183,7 @@ struct DAWArrangementView: View {
                             .frame(width: 28, height: 28)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(metronome.isRunning ? "Stop metronome" : "Start metronome")
 
                     // Tempo down
                     Button {
@@ -198,6 +199,7 @@ struct DAWArrangementView: View {
                             .background(Circle().fill(EchoelBrand.bgElevated))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Decrease tempo")
 
                     // BPM value — tap for editor
                     Button {
@@ -213,6 +215,7 @@ struct DAWArrangementView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("\(Int(bpm)) BPM, tap to edit tempo")
 
                     // Tempo up
                     Button {
@@ -228,6 +231,7 @@ struct DAWArrangementView: View {
                             .background(Circle().fill(EchoelBrand.bgElevated))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Increase tempo")
                 }
                 .padding(.horizontal, EchoelSpacing.sm)
                 .padding(.vertical, EchoelSpacing.xs)
@@ -1160,6 +1164,7 @@ struct DAWArrangementView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private func miniButton(label: String, isActive: Bool, color: Color, action: @escaping () -> Void) -> some View {
