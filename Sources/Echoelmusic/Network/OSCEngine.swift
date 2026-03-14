@@ -330,18 +330,16 @@ public final class OSCEngine {
     }
 
     private nonisolated func receiveLoop(connection: NWConnection) {
-        // nonisolated(unsafe) avoids Swift 6 actor isolation check on Network queue
-        nonisolated(unsafe) weak var weakSelf = self
-        connection.receiveMessage { data, _, _, error in
+        connection.receiveMessage { [weak self] data, _, _, error in
             if let data = data, let message = OSCMessage.decode(from: data) {
-                DispatchQueue.main.async {
-                    weakSelf?.messageCount += 1
-                    weakSelf?.lastReceivedAddress = message.address
-                    weakSelf?.onMessageReceived?(message)
+                Task { @MainActor [weak self] in
+                    self?.messageCount += 1
+                    self?.lastReceivedAddress = message.address
+                    self?.onMessageReceived?(message)
                 }
             }
             if error == nil {
-                weakSelf?.receiveLoop(connection: connection)
+                self?.receiveLoop(connection: connection)
             }
         }
     }

@@ -438,7 +438,11 @@ final class ChromaKeyEngine {
 
         // Commit and wait
         commandBuffer.commit()
-        await commandBuffer.completed()
+        await withUnsafeContinuation { continuation in
+            commandBuffer.addCompletedHandler { _ in
+                continuation.resume()
+            }
+        }
 
         // Calculate performance metrics
         let elapsedTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0
