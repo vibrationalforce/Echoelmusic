@@ -49,7 +49,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26.2'
   BUILD_NUMBER: ${{ github.run_number }}
   CLEAN_BUILD: ${{ github.event.inputs.clean_build }}
 
@@ -104,7 +104,7 @@ jobs:
   # ===========================================================================
   compile_check:
     name: "Compile Check"
-    runs-on: macos-15
+    runs-on: macos-26
     needs: preflight
     if: needs.preflight.outputs.ready == 'true' && github.event.inputs.skip_compile_check != 'true'
     timeout-minutes: 60
@@ -202,7 +202,7 @@ jobs:
   # ===========================================================================
   ios:
     name: "iOS"
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [preflight, compile_check]
     if: |
       always() &&
@@ -570,7 +570,7 @@ jobs:
   # ===========================================================================
   macos:
     name: "macOS"
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [preflight, compile_check]
     if: |
       always() &&
@@ -755,7 +755,7 @@ jobs:
   # ===========================================================================
   watchos:
     name: "watchOS"
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [preflight, compile_check]
     if: |
       always() &&
@@ -940,7 +940,7 @@ jobs:
   # ===========================================================================
   tvos:
     name: "tvOS"
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [preflight, compile_check]
     if: |
       always() &&
@@ -1125,7 +1125,7 @@ jobs:
   # ===========================================================================
   visionos:
     name: "visionOS"
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [preflight, compile_check]
     if: |
       always() &&

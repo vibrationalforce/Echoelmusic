@@ -17,13 +17,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26.2'
   XCODEGEN_VERSION: '2.42.0'
 
 jobs:
   build-check:
     name: "PR Build Check"
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
 
     steps:

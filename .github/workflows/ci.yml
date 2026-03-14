@@ -21,14 +21,14 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: '16.2'
+  XCODE_VERSION: '26.2'
   XCODEGEN_VERSION: '2.42.0'
 
 jobs:
   # Job 1: Code Quality & Linting
   code-quality:
     name: Code Quality & Linting
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
     - name: Checkout code
@@ -75,7 +75,7 @@ jobs:
   # Job 2: Build & Test - iOS
   build-test-ios:
     name: Build & Test (iOS)
-    runs-on: macos-15
+    runs-on: macos-26
     needs: code-quality
 
     strategy:
@@ -189,7 +189,7 @@ jobs:
   # Job 3: Build & Test - macOS
   build-test-macos:
     name: Build & Test (macOS)
-    runs-on: macos-15
+    runs-on: macos-26
     needs: code-quality
 
     steps:
@@ -249,7 +249,7 @@ jobs:
   # Job 4: Build - watchOS
   build-watchos:
     name: Build (watchOS)
-    runs-on: macos-15
+    runs-on: macos-26
     needs: code-quality
 
     steps:
@@ -284,7 +284,7 @@ jobs:
   # Job 5: Build - tvOS
   build-tvos:
     name: Build (tvOS)
-    runs-on: macos-15
+    runs-on: macos-26
     needs: code-quality
 
     steps:
@@ -319,7 +319,7 @@ jobs:
   # Job 6: Build - visionOS
   build-visionos:
     name: Build (visionOS)
-    runs-on: macos-15
+    runs-on: macos-26
     needs: code-quality
 
     steps:
@@ -354,7 +354,7 @@ jobs:
   # Job 7: Performance Tests
   performance-tests:
     name: Performance & Memory Tests
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [build-test-ios]
     continue-on-error: true
 
@@ -423,7 +423,7 @@ jobs:
   # Job 6: Build Archive (Release)
   build-archive:
     name: Build Archive (Release)
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [build-test-ios, build-test-macos]
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
@@ -481,7 +481,7 @@ jobs:
   # Job 7: Documentation Generation
   generate-docs:
     name: Generate Documentation
-    runs-on: macos-15
+    runs-on: macos-26
     if: github.ref == 'refs/heads/main'
 
     steps:

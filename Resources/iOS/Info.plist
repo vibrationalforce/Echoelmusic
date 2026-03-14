@@ -98,11 +98,10 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>MinimumOSVersion</key>
-	<string>15.0</string>
+	<string>17.0</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
-		<string>microphone</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
