@@ -60,7 +60,6 @@
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
-		<string>microphone</string>
 	</array>
 
 	<!-- Supported Interface Orientations -->
@@ -98,7 +97,7 @@
 
 	<!-- Minimum iOS Version -->
 	<key>MinimumOSVersion</key>
-	<string>16.0</string>
+	<string>17.0</string>
 
 	<!-- iTunes File Sharing (disabled for security) -->
 	<key>UIFileSharingEnabled</key>

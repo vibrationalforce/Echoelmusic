@@ -136,7 +136,6 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         UIRequiredDeviceCapabilities:
           - arm64
-          - microphone
     settings:
       base:
         PRODUCT_NAME: Echoelmusic
