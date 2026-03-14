@@ -521,7 +521,7 @@ public final class EchoelBeat {
     @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private let _rawSeqStep = UnsafeMutablePointer<Int>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private let _rawSeqRunning = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
-    @ObservationIgnored private var meterPollTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
     // Sample-accurate sequencer state (audio thread, under voiceLock)
     @ObservationIgnored nonisolated(unsafe) private var seqGlobalSamplePos: Int = 0

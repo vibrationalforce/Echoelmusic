@@ -41,7 +41,7 @@ public final class AudioEngine {
     /// Float writes are atomic on ARM64. No locks needed.
     @ObservationIgnored nonisolated(unsafe) private let _rawMeterL = UnsafeMutablePointer<Float>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private let _rawMeterR = UnsafeMutablePointer<Float>.allocate(capacity: 1)
-    @ObservationIgnored private var meterPollTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
     // MARK: - Master Audio Engine (Hardware Output)
 

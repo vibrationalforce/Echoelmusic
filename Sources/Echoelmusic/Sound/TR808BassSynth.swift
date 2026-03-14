@@ -269,7 +269,7 @@ public final class TR808BassSynth {
     /// Heap-allocated meter storage — written from audio render thread, read from main thread timer
     @ObservationIgnored nonisolated(unsafe) private let _rawMeter = UnsafeMutablePointer<Float>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private let _rawVoiceCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-    @ObservationIgnored private var meterPollTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
     // MARK: - Bio-Reactive (written from MainActor, read from audio thread — atomic Float reads)
 
