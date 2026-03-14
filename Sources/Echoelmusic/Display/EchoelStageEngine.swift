@@ -267,9 +267,10 @@ public final class EchoelStageEngine {
         ]
 
         setupScreenNotifications()
-        // Defer display scan to avoid accessing UIApplication.shared.connectedScenes
-        // before the app's scene is fully set up (causes crash on first launch).
+        // Defer display scan until UIApplication.shared.connectedScenes is populated.
+        // Accessing connectedScenes before the window scene is fully set up crashes on launch.
         Task { @MainActor [weak self] in
+            await self?.waitForSceneReady()
             self?.scanConnectedDisplays()
             log.log(.info, category: .system, "EchoelStage initialized — \(self?.connectedDisplays.count ?? 0) display(s) detected")
         }
@@ -281,6 +282,22 @@ public final class EchoelStageEngine {
 
     private nonisolated func stopNonisolated() {
         // Cleanup happens on deinit — no network resources to cancel
+    }
+
+    // MARK: - Scene Readiness
+
+    /// Wait until UIApplication.shared.connectedScenes has at least one active window scene.
+    /// This prevents crashes when the stage engine is initialized before the app's scene is ready.
+    private func waitForSceneReady() async {
+        // Up to 2 seconds (20 × 100ms) for the scene to become available
+        for _ in 0..<20 {
+            let hasActiveScene = !UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .isEmpty
+            if hasActiveScene { return }
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+        }
+        log.log(.warning, category: .system, "EchoelStage: scene not ready after 2s — skipping display scan")
     }
 
     // MARK: - Screen Notifications
@@ -355,6 +372,7 @@ public final class EchoelStageEngine {
         connectedDisplays = []
 
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        guard !scenes.isEmpty else { return }
         for (index, scene) in scenes.enumerated() {
             // Skip the first scene (main display)
             guard index > 0 else { continue }
