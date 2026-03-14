@@ -245,6 +245,9 @@ public final class EchoelStageEngine {
     /// Notification observers
     private var notificationCancellables: Set<AnyCancellable> = []
 
+    /// Whether UIApplication.shared.connectedScenes is safe to access
+    private var isSceneReady = false
+
     /// Frame counter for animations
     private var frameCount: UInt64 = 0
 
@@ -271,6 +274,7 @@ public final class EchoelStageEngine {
         // Accessing connectedScenes before the window scene is fully set up crashes on launch.
         Task { @MainActor [weak self] in
             await self?.waitForSceneReady()
+            self?.isSceneReady = true
             self?.scanConnectedDisplays()
             log.log(.info, category: .system, "EchoelStage initialized — \(self?.connectedDisplays.count ?? 0) display(s) detected")
         }
@@ -321,7 +325,7 @@ public final class EchoelStageEngine {
     }
 
     private func handleScreenConnected(_ notification: Notification) {
-        guard let newScreen = notification.object as? UIScreen else { return }
+        guard isSceneReady, let newScreen = notification.object as? UIScreen else { return }
 
         let info = StageDisplayInfo(
             name: "External Display \(connectedDisplays.count + 1)",
@@ -370,6 +374,7 @@ public final class EchoelStageEngine {
     /// Scan for all currently connected displays via UIWindowScene
     public func scanConnectedDisplays() {
         connectedDisplays = []
+        guard isSceneReady else { return }
 
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
         guard !scenes.isEmpty else { return }
@@ -397,6 +402,11 @@ public final class EchoelStageEngine {
         isRunning = true
 
         // Create windows for any connected external scenes (skip main)
+        guard isSceneReady else {
+            startDisplayLink()
+            log.log(.info, category: .system, "EchoelStage started — scene not ready, skipping external displays")
+            return
+        }
         let externalScenes = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .dropFirst()
