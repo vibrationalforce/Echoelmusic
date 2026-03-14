@@ -296,6 +296,31 @@ Run before ANY commit.
 
 Android build is disabled. TestFlight needs 60min timeout (30min+ compile).
 
+### GitHub API Access
+
+Token stored in `.claude/settings.local.json` (gitignored, NEVER committed).
+
+**Read token:**
+```bash
+GITHUB_TOKEN=$(python3 -c "import json; print(json.load(open('.claude/settings.local.json'))['github']['token'])" 2>/dev/null)
+```
+
+**Available commands:**
+- `/testflight-deploy` — Full pre-flight + deploy to TestFlight
+- `/github` — GitHub API operations (PRs, issues, workflow status)
+
+**If token missing:** Ask user to create `.claude/settings.local.json`:
+```json
+{
+  "github": {
+    "token_name": "claude-code",
+    "token": "ghp_...",
+    "owner": "vibrationalforce",
+    "repo": "Echoelmusic"
+  }
+}
+```
+
 ---
 
 ## OSC (EchoelSync)

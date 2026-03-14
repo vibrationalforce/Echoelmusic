@@ -27,14 +27,34 @@ Tests must pass. If not, fix before deploying.
 git push -u origin $(git branch --show-current)
 ```
 
-### 5. Trigger TestFlight workflow
+### 5. Read GitHub token from local settings
 ```bash
-gh workflow run testflight.yml --ref $(git branch --show-current)
+GITHUB_TOKEN=$(python3 -c "import json; print(json.load(open('.claude/settings.local.json'))['github']['token'])" 2>/dev/null)
 ```
+If token is not found, ask the user to set it up in `.claude/settings.local.json`.
 
-### 6. Monitor
+### 6. Trigger TestFlight workflow
 ```bash
-gh run list --workflow=testflight.yml --limit=1
+curl -s -X POST \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/actions/workflows/testflight.yml/dispatches" \
+  -d "{\"ref\":\"$(git branch --show-current)\"}" -w "\n%{http_code}"
+```
+HTTP 204 = success.
+
+### 7. Monitor workflow status
+```bash
+sleep 5 && curl -s \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/actions/runs?per_page=1" | python3 -c "
+import json,sys
+r=json.load(sys.stdin)['workflow_runs'][0]
+print(f'Run: {r[\"name\"]} #{r[\"run_number\"]}')
+print(f'Status: {r[\"status\"]}')
+print(f'URL: {r[\"html_url\"]}')
+"
 ```
 
 Report the workflow run URL and status.
