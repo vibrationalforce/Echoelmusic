@@ -139,3 +139,6 @@ manifest.json
 .env.local
 *.secret
 credentials.json
+
+# Local metrics tracking (pi-autoresearch style)
+metrics.jsonl
