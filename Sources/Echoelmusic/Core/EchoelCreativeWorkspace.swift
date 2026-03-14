@@ -86,11 +86,12 @@ final class EchoelCreativeWorkspace {
         self.proSession = ProSessionEngine()
         self.proColor = ProColorGrading()
         self.loopEngine = LoopEngine()
-        self.loopEngine.setTempo(120.0)
         self.bioSynth = EchoelPolyDDSP(harmonicCount: 32, sampleRate: 48000)
         self.linkClient = AbletonLinkClient()
         self.adaptiveAudio = AdaptiveAudioEngine()
 
+        // Must be after ALL stored properties are initialized (@Observable macro requirement)
+        self.loopEngine.setTempo(120.0)
         log.info("Creative Workspace lightweight init complete", category: .system)
     }
 
