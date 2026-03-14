@@ -247,7 +247,7 @@ public final class BPMTransitionEngine {
 
     private var transitionStartBPM: Double = 120
     private var transitionProgress: Double = 1.0
-    nonisolated(unsafe) private var displayLink: CADisplayLink?
+    @ObservationIgnored nonisolated(unsafe) private var displayLink: CADisplayLink?
     private var humanizePhase: Double = 0
     private var lastUpdateTime: CFTimeInterval = 0
     private var lastObservedBioSourceBPM: Double = 70

@@ -285,9 +285,9 @@ public final class BreakbeatChopper {
 
     // MARK: - Audio Engine
 
-    private let audioEngine = AVAudioEngine()
-    private let playerNode = AVAudioPlayerNode()
-    nonisolated(unsafe) private var playbackTimer: Timer?
+    @ObservationIgnored private let audioEngine = AVAudioEngine()
+    @ObservationIgnored private let playerNode = AVAudioPlayerNode()
+    @ObservationIgnored nonisolated(unsafe) private var playbackTimer: Timer?
 
     // DSP buffers
     private var granularBuffer: [Float] = []

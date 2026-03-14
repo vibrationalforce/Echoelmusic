@@ -699,7 +699,7 @@ public final class ProSessionEngine {
     // MARK: - Private Properties
 
     private let log = ProfessionalLogger.shared
-    nonisolated(unsafe) private var transportTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var transportTimer: Timer?
     private var tapTempoTimestamps: [Date] = []
 
     /// Queued clip launches waiting for the next quantize boundary

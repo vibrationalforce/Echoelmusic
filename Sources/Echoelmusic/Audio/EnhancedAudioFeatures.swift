@@ -57,7 +57,7 @@ final class AdaptiveAudioEngine {
 
     // MARK: - Private Properties
 
-    nonisolated(unsafe) private var timer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var timer: Timer?
     private var performanceHistory: [Float] = []
     private let maxHistorySize = 30 // 30 seconds at 1Hz sampling
 

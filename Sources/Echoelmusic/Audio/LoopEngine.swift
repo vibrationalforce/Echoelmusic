@@ -100,14 +100,14 @@ final class LoopEngine {
     // MARK: - Private Properties
 
     /// Audio engine for loop playback
-    private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private var audioEngine: AVAudioEngine?
 
     /// Audio players for each loop
-    private var players: [UUID: AVAudioPlayerNode] = [:]
+    @ObservationIgnored private var players: [UUID: AVAudioPlayerNode] = [:]
 
     /// LAMBDA LOOP: High-precision timer for loop position updates
     /// DispatchSourceTimer provides ~50% lower jitter than Timer.scheduledTimer
-    nonisolated(unsafe) private var timer: DispatchSourceTimer?
+    @ObservationIgnored nonisolated(unsafe) private var timer: DispatchSourceTimer?
     private let timerQueue = DispatchQueue(label: "com.echoelmusic.loopengine.timer", qos: .userInteractive)
 
     /// Current loop start time

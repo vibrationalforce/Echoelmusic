@@ -34,8 +34,6 @@
 import Foundation
 import AVFoundation
 import Accelerate
-import SwiftUI
-import Observation
 
 // MARK: - Bass Engine Type
 

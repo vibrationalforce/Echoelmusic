@@ -166,9 +166,9 @@ public final class MetronomeEngine {
 
     // MARK: - Private Properties
 
-    private let audioEngine = AVAudioEngine()
-    private let playerNode = AVAudioPlayerNode()
-    nonisolated(unsafe) private var timer: DispatchSourceTimer?
+    @ObservationIgnored private let audioEngine = AVAudioEngine()
+    @ObservationIgnored private let playerNode = AVAudioPlayerNode()
+    @ObservationIgnored nonisolated(unsafe) private var timer: DispatchSourceTimer?
     private let timerQueue = DispatchQueue(label: "com.echoelmusic.metronome", qos: .userInteractive)
 
     // Pre-generated click buffers
