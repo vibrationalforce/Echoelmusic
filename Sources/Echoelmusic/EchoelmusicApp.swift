@@ -34,7 +34,10 @@ struct EchoelmusicApp: App {
                     // Using .task instead of .onAppear to avoid blocking the main thread
                     // with heavy DSP/Metal initialization during app launch.
                     TuningBridge.shared.activate()
-                    _ = EchoelCreativeWorkspace.shared
+
+                    // Complete heavy workspace init (StageEngine, VisEngine, default session)
+                    EchoelCreativeWorkspace.shared.deferredSetup()
+
                     _ = InstrumentOrchestrator.shared
                     _ = EchoelBeat.shared
 

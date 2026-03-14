@@ -21,32 +21,41 @@ final class EchoelCreativeWorkspace {
     var globalTimeSignature: TimeSignature = .fourFour
 
     // MARK: - Engines
+    //
+    // Subsystems use private(set) var + lazy initialization via deferredSetup().
+    // The workspace singleton must be constructible without heavy work so that
+    // views accessing EchoelCreativeWorkspace.shared don't block the first frame
+    // render and trigger the iOS watchdog. Heavy engines are created in
+    // deferredSetup(), called from EchoelmusicApp.task after the first frame.
 
-    let bpmGrid: BPMGridEditEngine
-    let videoEditor: VideoEditingEngine
-    let proMixer: ProMixEngine
-    let proSession: ProSessionEngine
-    let proColor: ProColorGrading
-    let loopEngine: LoopEngine
+    private(set) var bpmGrid: BPMGridEditEngine
+    private(set) var videoEditor: VideoEditingEngine
+    private(set) var proMixer: ProMixEngine
+    private(set) var proSession: ProSessionEngine
+    private(set) var proColor: ProColorGrading
+    private(set) var loopEngine: LoopEngine
 
     /// Bio-reactive polyphonic DDSP synth for live performance
-    let bioSynth: EchoelPolyDDSP
+    private(set) var bioSynth: EchoelPolyDDSP
 
     #if canImport(UIKit)
     /// Stage output engine for external displays, projection mapping, AirPlay
-    let stageEngine: EchoelStageEngine
+    private(set) var stageEngine: EchoelStageEngine?
     #endif
 
     #if canImport(Metal)
     /// Bio-reactive visual engine — 8 modes, Metal 120fps, Hilbert bio-mapping
-    let visEngine: EchoelVisEngine
+    private(set) var visEngine: EchoelVisEngine?
     #endif
 
     /// Ableton Link client for tempo sync with external devices
-    let linkClient: AbletonLinkClient
+    private(set) var linkClient: AbletonLinkClient
 
     /// Adaptive audio quality engine — adjusts buffer/sample rate based on system load
-    let adaptiveAudio: AdaptiveAudioEngine
+    private(set) var adaptiveAudio: AdaptiveAudioEngine
+
+    /// Whether deferred heavy init has completed
+    private(set) var isReady: Bool = false
 
     /// Current bio-coherence level (0-1) — driven by mic or HealthKit
     var bioCoherence: Float = 0.5
@@ -67,29 +76,43 @@ final class EchoelCreativeWorkspace {
     // MARK: - Init
 
     private init() {
+        // LIGHTWEIGHT init — only set default values.
+        // Heavy engine creation is deferred to deferredSetup() called from
+        // EchoelmusicApp.task after the first frame renders. This prevents
+        // the iOS watchdog from killing the app during launch.
         self.bpmGrid = BPMGridEditEngine(bpm: 120, timeSignature: .fourFour)
         self.videoEditor = VideoEditingEngine()
-        self.proMixer = ProMixEngine.defaultSession()
-        self.proSession = ProSessionEngine.defaultSession()
+        self.proMixer = ProMixEngine(sampleRate: 48000, bufferSize: 256)
+        self.proSession = ProSessionEngine()
         self.proColor = ProColorGrading()
         self.loopEngine = LoopEngine()
         self.loopEngine.setTempo(120.0)
         self.bioSynth = EchoelPolyDDSP(harmonicCount: 32, sampleRate: 48000)
+        self.linkClient = AbletonLinkClient()
+        self.adaptiveAudio = AdaptiveAudioEngine()
+
+        log.info("Creative Workspace lightweight init complete", category: .system)
+    }
+
+    /// Complete heavy initialization — call from .task after first frame renders.
+    /// Creates StageEngine, VisEngine, default session channels, and bridges.
+    func deferredSetup() {
+        guard !isReady else { return }
+
+        // Upgrade ProMixEngine to full default session with channels + aux buses
+        self.proMixer = ProMixEngine.defaultSession()
+        self.proSession = ProSessionEngine.defaultSession()
+
         #if canImport(UIKit)
         self.stageEngine = EchoelStageEngine.shared
         #endif
         #if canImport(Metal)
         self.visEngine = EchoelVisEngine.shared
         #endif
-        self.linkClient = AbletonLinkClient()
-        self.adaptiveAudio = AdaptiveAudioEngine()
 
-        // Defer bridge setup to avoid blocking first frame render.
-        // Bridges set up Combine subscriptions that aren't needed until playback.
-        Task { @MainActor [weak self] in
-            self?.setupBridges()
-        }
-        log.info("Creative Workspace initialized (DAW + Video + Bio-Reactive Synth)", category: .system)
+        setupBridges()
+        isReady = true
+        log.info("Creative Workspace deferred setup complete (DAW + Video + Bio-Reactive Synth)", category: .system)
     }
 
     // MARK: - Bridges
@@ -234,7 +257,7 @@ final class EchoelCreativeWorkspace {
                 )
                 // Feed bio-reactive stage visuals
                 #if canImport(UIKit)
-                self.stageEngine.applyBioReactive(
+                self.stageEngine?.applyBioReactive(
                     coherence: smoothed,
                     hrv: 0.5,
                     heartRate: 72.0,
@@ -243,7 +266,7 @@ final class EchoelCreativeWorkspace {
                 #endif
                 // Feed bio-reactive visual engine
                 #if canImport(Metal)
-                self.visEngine.applyBioReactive(
+                self.visEngine?.applyBioReactive(
                     coherence: smoothed,
                     hrv: 0.5,
                     heartRate: 72.0,
