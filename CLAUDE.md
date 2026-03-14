@@ -442,6 +442,42 @@ Agent 3: Domain logic (Audio, bio, visual, lighting pipelines)
 
 ---
 
+## UI DESIGN CONSTRAINTS (Uncodixfy)
+
+When generating SwiftUI views, follow clean design principles. Avoid AI-default patterns.
+
+**Reference aesthetic:** Linear, Raycast, Stripe, GitHub — functional, minimal, precise.
+
+**BANNED patterns:**
+- Border radii > 16px (no pill shapes, no 20-32px radii)
+- Glassmorphism, frosted panels, blur hazes, soft gradients
+- Decorative KPI card grids, fake charts, hero sections inside dashboards
+- "Eyebrow" labels (tiny uppercase with letter-spacing above headings)
+- Glow effects, neon accents, shadow layers > 8px blur
+- Transform/scale animations on hover/tap (use opacity/color only)
+- Nested panel types (card-in-card, panel-in-panel)
+- Decorative copy ("Live Pulse", "Neural Sync", "Quantum Flow")
+- Floating cards with large shadows
+
+**REQUIRED patterns:**
+- Solid fills or borders on buttons, 8-12px radius max
+- Subtle borders (1px, muted color), max 8px shadow blur
+- Sidebars: 240-260px fixed, solid background, 1px border
+- Forms: labels above inputs, no floating labels, simple focus ring
+- Tables: left-aligned text, subtle row hover, clean grid
+- Color: use existing palette, dark muted backgrounds, avoid neon
+- Transitions: 100-200ms, opacity/color only
+- Bio-signal displays: legible numbers first, visualization second
+- Flash rate: max 3 Hz (W3C WCAG epilepsy compliance)
+
+**SCIENCE-FIRST display:**
+- Real biometric data only — no decorative visualizations
+- HR, HRV, coherence: large legible numbers, small trend sparklines
+- No "control room cosplay" or "premium dashboard" aesthetic
+- Every visual element must reflect actual data or serve a control function
+
+---
+
 ## DO NOT
 
 - Restructure project without approval
