@@ -438,7 +438,7 @@ final class ChromaKeyEngine {
 
         // Commit and wait
         commandBuffer.commit()
-        commandBuffer.waitUntilCompleted()
+        await commandBuffer.completed()
 
         // Calculate performance metrics
         let elapsedTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0

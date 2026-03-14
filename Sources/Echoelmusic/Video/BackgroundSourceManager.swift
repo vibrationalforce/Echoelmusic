@@ -1121,7 +1121,7 @@ class EchoelmusicVisualRenderer {
 
         encoder.endEncoding()
         cmdBuffer.commit()
-        cmdBuffer.waitUntilCompleted()
+        await cmdBuffer.completed()
 
         return texture
     }
