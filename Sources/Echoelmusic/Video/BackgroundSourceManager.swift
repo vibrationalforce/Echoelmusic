@@ -388,6 +388,9 @@ final class BackgroundSourceManager {
     // MARK: - Angular Gradient (Custom)
 
     private func renderAngularGradient(colors: [Color], size: CGSize) throws -> CIImage {
+        guard colors.count >= 2 else {
+            throw BackgroundError.gradientRenderingFailed
+        }
         // Custom angular gradient using Core Graphics
         #if os(iOS)
         let renderer = UIGraphicsImageRenderer(size: size)
