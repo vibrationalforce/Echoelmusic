@@ -869,6 +869,7 @@ public final class VoiceCharacterizer {
 
         // Find peaks in voice formant ranges
         var peaks: [(freq: Float, mag: Float)] = []
+        guard smoothed.count > 4 else { return peaks }
         for i in 2..<(smoothed.count - 2) {
             let freq = Float(i) * sampleRate / Float(frameSize)
             guard freq > 200 && freq < 5000 else { continue }

@@ -198,6 +198,7 @@ enum ShuffleAlgorithm: String, CaseIterable {
 
         case .thirds:
             // Rotate in groups of 3: ABC -> BCA
+            guard result.count >= 3 else { break }
             for i in stride(from: 0, to: result.count - 2, by: 3) {
                 let temp = result[i]
                 result[i] = result[i + 1]
