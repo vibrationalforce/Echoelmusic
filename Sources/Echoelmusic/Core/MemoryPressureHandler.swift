@@ -177,16 +177,18 @@ public final class MemoryPressureHandler {
             queue: .main
         )
 
-        memorySource?.setEventHandler { [weak self] in
-            guard let self = self, let source = self.memorySource else { return }
+        nonisolated(unsafe) weak var weakSelf = self
+        nonisolated(unsafe) let src = memorySource
+        memorySource?.setEventHandler { @Sendable in
+            guard let source = src else { return }
             let event = source.data
 
             // DispatchSource on .main queue — already on main thread
             MainActor.assumeIsolated {
                 if event.contains(.critical) {
-                    self.handlePressure(level: .critical)
+                    weakSelf?.handlePressure(level: .critical)
                 } else if event.contains(.warning) {
-                    self.handlePressure(level: .warning)
+                    weakSelf?.handlePressure(level: .warning)
                 }
             }
         }

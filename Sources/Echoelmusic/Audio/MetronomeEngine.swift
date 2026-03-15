@@ -338,7 +338,6 @@ public final class MetronomeEngine {
 
         timer = DispatchSource.makeTimerSource(queue: timerQueue)
 
-        var subdivisionCount = 0
         let clicksPerBeat = configuration.subdivision.clicksPerBeat
 
         timer?.schedule(
@@ -350,7 +349,9 @@ public final class MetronomeEngine {
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on timerQueue.
         // [weak self] + guard let self on @MainActor class triggers dispatch_assert_queue_fail.
         nonisolated(unsafe) weak var weakSelf = self
-        timer?.setEventHandler {
+        // subdivisionCount is only accessed from serial timerQueue — no concurrent mutation.
+        nonisolated(unsafe) var subdivisionCount = 0
+        timer?.setEventHandler { @Sendable in
             let isMainBeat = subdivisionCount % clicksPerBeat == 0
 
             if isMainBeat {

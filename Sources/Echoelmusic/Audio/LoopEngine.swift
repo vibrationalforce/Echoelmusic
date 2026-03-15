@@ -480,9 +480,10 @@ final class LoopEngine {
         timer?.cancel()
         let newTimer = DispatchSource.makeTimerSource(flags: [], queue: timerQueue)
         newTimer.schedule(deadline: .now(), repeating: .milliseconds(33), leeway: .milliseconds(4))
-        newTimer.setEventHandler { [weak self] in
+        nonisolated(unsafe) weak var weakSelf = self
+        newTimer.setEventHandler { @Sendable in
             DispatchQueue.main.async {
-                self?.updatePosition()
+                weakSelf?.updatePosition()
             }
         }
         newTimer.resume()
