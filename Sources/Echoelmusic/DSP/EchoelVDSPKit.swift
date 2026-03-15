@@ -632,10 +632,11 @@ public final class EchoelDecimator: @unchecked Sendable {
 
     /// Initialize with decimation factor and anti-alias filter taps
     public init(factor: Int, filterTaps: Int = 63) {
-        self.factor = max(1, factor)
+        let safeFactor = max(1, factor)
+        self.factor = safeFactor
         // Design anti-alias lowpass at Nyquist/factor
         self.antiAliasFilter = EchoelConvolution.lowpassKernel(
-            cutoffHz: 1.0 / Float(2 * factor),
+            cutoffHz: 1.0 / Float(2 * safeFactor),
             sampleRate: 1.0,
             taps: filterTaps
         )
