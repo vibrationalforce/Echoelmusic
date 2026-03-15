@@ -609,9 +609,11 @@ public final class VibratoEngine {
         let threshold = rms * 0.3
 
         // Use a sliding window to detect vibrato presence
-        let windowSize = max(1, Int(sampleRate * 0.1))  // 100ms windows
+        let windowSize = max(2, Int(sampleRate * 0.1))  // 100ms windows, min 2 for valid hop
+        let hopSize = max(1, windowSize / 2)
 
-        for i in stride(from: 0, to: contour.count - windowSize, by: windowSize / 2) {
+        guard contour.count > windowSize else { return 0 }
+        for i in stride(from: 0, to: contour.count - windowSize, by: hopSize) {
             let window = Array(contour[i..<i + windowSize])
             var windowRms: Float = 0
             vDSP_rmsqv(window, 1, &windowRms, vDSP_Length(windowSize))

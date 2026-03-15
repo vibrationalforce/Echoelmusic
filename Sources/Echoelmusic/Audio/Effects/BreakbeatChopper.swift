@@ -178,6 +178,7 @@ enum ShuffleAlgorithm: String, CaseIterable {
 
         case .everyOther:
             // Swap every other pair
+            guard result.count >= 2 else { break }
             for i in stride(from: 0, to: result.count - 1, by: 2) {
                 result.swapAt(i, i + 1)
             }

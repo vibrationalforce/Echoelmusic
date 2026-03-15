@@ -478,7 +478,10 @@ public final class StemRenderingEngine {
             guard let trackURL = track.url else { continue }
 
             let asset = AVURLAsset(url: trackURL)
-            guard let assetTrack = try? await asset.loadTracks(withMediaType: .audio).first else { continue }
+            guard let assetTrack = try? await asset.loadTracks(withMediaType: .audio).first else {
+                log.log(.warning, category: .audio, "Stem render: failed to load audio track from \(trackURL.lastPathComponent)")
+                continue
+            }
 
             let compTrack = composition.addMutableTrack(
                 withMediaType: .audio,
