@@ -329,7 +329,8 @@ public final class EchoelDDSP: @unchecked Sendable {
         }
 
         // Diffuse tail (exponential decay)
-        let decayRate = -6.9 / (decay * sampleRate)  // -60dB decay
+        let decayProduct = max(decay * sampleRate, 0.001)
+        let decayRate = -6.9 / decayProduct  // -60dB decay
         for i in earlyEnd..<length {
             let envelope = exp(decayRate * Float(i))
             ir[i] = Float.random(in: -1...1) * envelope * 0.3
