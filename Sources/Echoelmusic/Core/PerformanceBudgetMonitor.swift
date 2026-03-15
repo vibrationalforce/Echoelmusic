@@ -13,7 +13,11 @@
 
 import Foundation
 import Combine
+#if canImport(os)
 import os
+#endif
+
+#if canImport(Darwin)
 
 // MARK: - Budget Threshold
 
@@ -341,3 +345,5 @@ public final class PerformanceBudgetMonitor: @unchecked Sendable {
         return Float(info.phys_footprint) / (1024 * 1024) // Bytes → MB
     }
 }
+
+#endif // canImport(Darwin)

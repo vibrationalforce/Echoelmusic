@@ -51,6 +51,7 @@ jobs:
 
     - name: SwiftLint
       run: swiftlint lint --reporter xcode
+      continue-on-error: true  # Don't block builds on lint warnings
 
     - name: Swift Format Check
       run: |

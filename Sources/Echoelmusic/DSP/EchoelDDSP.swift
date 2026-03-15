@@ -1,4 +1,5 @@
 import Foundation
+#if canImport(Accelerate)
 import Accelerate
 
 // MARK: - EchoelDDSP — Differentiable Digital Signal Processing Engine
@@ -1177,3 +1178,4 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         ageCounter = 0
     }
 }
+#endif // canImport(Accelerate)
