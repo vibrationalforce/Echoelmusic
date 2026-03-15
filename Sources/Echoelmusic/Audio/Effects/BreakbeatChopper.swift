@@ -381,6 +381,7 @@ public final class BreakbeatChopper {
         var sliceStart = 0
         var sliceIndex = 0
 
+        guard frameCount >= windowSize else { return }
         for i in stride(from: 0, to: frameCount - windowSize, by: windowSize / 2) {
             // Calculate window energy
             var energy: Float = 0

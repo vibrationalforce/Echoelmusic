@@ -693,6 +693,7 @@ final class VocalPostProcessor {
 
         let contoursPerSample = Float(editedContour.count) / Float(audio.count)
 
+        guard audio.count >= blockSize else { return audio }
         for blockStart in stride(from: 0, to: audio.count - blockSize, by: blockSize) {
             let blockEnd = min(blockStart + blockSize, audio.count)
             let block = Array(audio[blockStart..<blockEnd])

@@ -661,10 +661,12 @@ public struct LUTManager: Sendable {
     public func apply(lut: LUT3D, to image: CIImage, intensity: Float = 1.0) -> CIImage {
         let intensity = intensity.clamped(to: 0...1)
         let dimension = lut.size
+        let requiredSize = dimension * dimension * dimension
+        guard requiredSize > 0, lut.data.count >= requiredSize else { return image }
 
         // Build the color cube data (RGBA float array)
         var cubeData = [Float]()
-        cubeData.reserveCapacity(dimension * dimension * dimension * 4)
+        cubeData.reserveCapacity(requiredSize * 4)
 
         for b in 0..<dimension {
             for g in 0..<dimension {

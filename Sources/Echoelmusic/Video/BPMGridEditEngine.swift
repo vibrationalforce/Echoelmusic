@@ -824,6 +824,7 @@ public final class BPMGridEditEngine {
         var onsets: [Double] = []
         var lastEnergy: Float = 0
 
+        guard samples.count >= windowSize else { return onsets }
         for i in stride(from: 0, to: samples.count - windowSize, by: hopSize) {
             let window = Array(samples[i..<i+windowSize])
             let energy = window.reduce(0) { $0 + $1 * $1 } / Float(windowSize)
