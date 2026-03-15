@@ -309,7 +309,7 @@ public final class PerformanceBudgetMonitor: @unchecked Sendable {
         var totalCPU: Float = 0
         for i in 0..<Int(threadCount) {
             var info = thread_basic_info_data_t()
-            var infoCount = mach_msg_type_number_t(THREAD_BASIC_INFO_COUNT)
+            var infoCount = mach_msg_type_number_t(MemoryLayout<thread_basic_info_data_t>.size / MemoryLayout<integer_t>.size)
 
             let kr = withUnsafeMutablePointer(to: &info) { infoPtr in
                 infoPtr.withMemoryRebound(to: integer_t.self, capacity: Int(infoCount)) { rawPtr in
