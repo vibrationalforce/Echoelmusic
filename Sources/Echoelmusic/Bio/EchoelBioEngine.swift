@@ -93,6 +93,7 @@ public final class EchoelBioEngine {
     private var hrvQuery: HKAnchoredObjectQuery?
     private var breathRateQuery: HKAnchoredObjectQuery?
     private var cancellables = Set<AnyCancellable>()
+    private var breathTimerCancellable: AnyCancellable?
 
     // MARK: - HRV Calculation
 
@@ -193,6 +194,8 @@ public final class EchoelBioEngine {
         hrvQuery = nil
         breathRateQuery = nil
         cancellables.removeAll()
+        breathTimerCancellable?.cancel()
+        breathTimerCancellable = nil
 
         isStreaming = false
         log.log(.info, category: .audio, "Bio streaming stopped")
@@ -397,15 +400,17 @@ public final class EchoelBioEngine {
 
     /// When HealthKit unavailable, use microphone RMS as coherence proxy
     private func startFallbackMode() {
+        // Cancel any existing breath timer to prevent accumulation
+        breathTimerCancellable?.cancel()
         // Simulate slow breath oscillation for demo purposes
         let breathTimer = Timer.publish(every: 1.0 / 20.0, on: .main, in: .common).autoconnect()
-        breathTimer.sink { [weak self] _ in
+        breathTimerCancellable = breathTimer.sink { [weak self] _ in
             guard let self = self else { return }
             // Sinusoidal breath simulation at ~12 breaths/min
             let phase = Date().timeIntervalSinceReferenceDate * (12.0 / 60.0) * 2.0 * Double.pi
             self.snapshot.breathPhase = (sin(phase) + 1.0) / 2.0
             self.smoothBreathPhase = self.snapshot.breathPhase
-        }.store(in: &cancellables)
+        }
     }
 
     // MARK: - Bio → Audio Parameter Bridge
