@@ -186,7 +186,7 @@ struct PianoRollView: View {
     private let basePixelsPerBeat: CGFloat = 60
 
     private var pixelsPerBeat: CGFloat {
-        basePixelsPerBeat * viewModel.zoom
+        basePixelsPerBeat * max(0.25, viewModel.zoom)
     }
 
     private var gridHeight: CGFloat {
@@ -812,7 +812,7 @@ struct PianoRollEditorView: View {
     private let basePixelsPerBeat: CGFloat = 60
 
     private var pixelsPerBeat: CGFloat {
-        basePixelsPerBeat * viewModel.zoom
+        basePixelsPerBeat * max(0.25, viewModel.zoom)
     }
 
     private var gridHeight: CGFloat {

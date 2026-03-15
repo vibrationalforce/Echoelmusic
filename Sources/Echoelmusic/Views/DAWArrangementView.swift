@@ -51,7 +51,7 @@ struct DAWArrangementView: View {
     private var isRecording: Bool { recordingEngine.isRecording }
 
     /// Pixels per second at current zoom
-    private var pixelsPerSecond: CGFloat { 50.0 * timelineZoom }
+    private var pixelsPerSecond: CGFloat { 50.0 * max(0.25, timelineZoom) }
 
     /// Tracks from real session
     private var tracks: [Track] {
