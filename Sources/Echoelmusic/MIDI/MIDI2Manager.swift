@@ -62,8 +62,10 @@ final class MIDI2Manager {
             // Swift 6 dispatch_assert_queue_fail accessing @MainActor state
             nonisolated(unsafe) weak var weakSelf = self
             let clientStatus = MIDIClientCreateWithBlock("Echoelmusic_MIDI2_Client" as CFString, &client) { notification in
+                // Dereference pointer synchronously — it is only valid during this callback
+                let messageID = notification.pointee.messageID
                 DispatchQueue.main.async {
-                    weakSelf?.handleMIDINotification(notification)
+                    weakSelf?.handleMIDINotification(messageID)
                 }
             }
 
@@ -135,10 +137,8 @@ final class MIDI2Manager {
 
     // MARK: - MIDI Notification Handling
 
-    private func handleMIDINotification(_ notification: UnsafePointer<MIDINotification>) {
-        let notif = notification.pointee
-
-        switch notif.messageID {
+    private func handleMIDINotification(_ messageID: MIDINotificationMessageID) {
+        switch messageID {
         case .msgSetupChanged:
             log.midi("[MIDI2] Setup changed")
             // Rescan endpoints
