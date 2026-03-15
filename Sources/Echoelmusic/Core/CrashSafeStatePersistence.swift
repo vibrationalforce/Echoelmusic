@@ -219,10 +219,18 @@ public final class CrashSafeStatePersistence {
     public func quickSave(_ state: SessionState) {
         currentState = state
 
+        let encodedData: Data?
+        do {
+            encodedData = try JSONEncoder().encode(state)
+        } catch {
+            log.log(.error, category: .system, "Failed to encode session state: \(error.localizedDescription)")
+            encodedData = nil
+        }
+
         let entry = JournalEntry(
             timestamp: Date(),
             operation: "update",
-            data: try? JSONEncoder().encode(state)
+            data: encodedData
         )
         journalEntries.append(entry)
 

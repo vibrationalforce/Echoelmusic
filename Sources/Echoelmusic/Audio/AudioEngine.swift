@@ -306,7 +306,11 @@ public final class AudioEngine {
         // Deactivate audio session to power down audio hardware.
         // notifyOthersOnDeactivation lets other apps resume playback.
         #if canImport(AVFoundation) && !os(macOS)
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            log.audio("Failed to deactivate audio session: \(error.localizedDescription)")
+        }
         #endif
 
         isRunning = false

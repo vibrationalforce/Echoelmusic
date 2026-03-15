@@ -67,7 +67,7 @@ final class AudioFileImporter {
             throw ImportError.invalidFormat
         }
         let sessionDir = documentsPath.appendingPathComponent("Sessions/\(session.id.uuidString)", isDirectory: true)
-        try? FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
 
         let trackID = UUID()
         let destURL = sessionDir.appendingPathComponent("\(trackID.uuidString).caf")
