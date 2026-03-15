@@ -714,6 +714,7 @@ final class RecordingEngine {
 
     /// Start position update timer
     private func startTimer() {
+        timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             // Timer runs on main RunLoop — MainActor.assumeIsolated for zero-cost dispatch
             MainActor.assumeIsolated {

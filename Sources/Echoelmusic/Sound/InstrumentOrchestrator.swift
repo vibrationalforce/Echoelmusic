@@ -175,12 +175,12 @@ final class InstrumentOrchestrator {
             forName: NSNotification.Name("EchoelBioDataUpdated"),
             object: nil,
             queue: .main
-        ) { notification in
+        ) { [weak self] notification in
             let coherence = notification.userInfo?["coherence"] as? Float
             let energy = notification.userInfo?["energy"] as? Float
             let hr = notification.userInfo?["heartRate"] as? Float
-            Task { @MainActor [weak self] in
-                guard let self = self else { return }
+            Task { @MainActor in
+                guard let self else { return }
                 if let coherence = coherence {
                     self.bioCoherence = coherence
                 }
