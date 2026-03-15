@@ -924,11 +924,12 @@ public final class QuantumMIDIOut {
     /// Generate bio-reactive melody phrase
     public func generateBioReactivePhrase(length: Int = 8, instrument: QuantumMIDIVoice.InstrumentTarget = .piano) {
         let scale = bioReactiveScale()
+        guard !scale.isEmpty else { return }
         let baseNote: UInt8 = 60  // Middle C
 
         for i in 0..<length {
             let scaleIndex = selectNoteFromCoherence(scaleLength: scale.count)
-            let note = baseNote + UInt8(scale[scaleIndex])
+            let note = baseNote + UInt8(scale[min(scaleIndex, scale.count - 1)])
             let velocity = bioInput.quantumVelocity * (0.8 + Float(i % 4) * 0.05)
 
             // Schedule note with bio-reactive timing
