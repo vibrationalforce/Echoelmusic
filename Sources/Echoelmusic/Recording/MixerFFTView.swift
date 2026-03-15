@@ -47,8 +47,9 @@ struct MixerFFTView: View {
     }
 
     private func drawFFTBars(context: GraphicsContext, size: CGSize) {
+        guard !fftMagnitudes.isEmpty else { return }
         let barWidth = (size.width - CGFloat(barCount - 1) * 2) / CGFloat(barCount)
-        let binRatio = fftMagnitudes.count / barCount
+        let binRatio = max(1, fftMagnitudes.count / barCount)
 
         for i in 0..<barCount {
             // Get average magnitude for this bar
