@@ -1,0 +1,25 @@
+{
+  "name": "echoelmusic-promo-videos",
+  "version": "1.0.0",
+  "description": "Programmatic promo videos for Echoelmusic",
+  "scripts": {
+    "studio": "npx remotion studio src/index.ts",
+    "render:promo": "npx remotion render src/index.ts EchoelPromo out/promo.mp4",
+    "render:features": "npx remotion render src/index.ts FeatureShowcase out/features.mp4",
+    "render:all": "npm run render:promo && npm run render:features"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@remotion/cli": "^4.0.435",
+    "@remotion/player": "^4.0.435",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remotion": "^4.0.435"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "typescript": "^5.9.3"
+  }
+}
