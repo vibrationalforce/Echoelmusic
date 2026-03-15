@@ -398,7 +398,7 @@ public final class AudioToQuantumMIDI {
         let processingQueue = self.audioProcessingQueue
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
         nonisolated(unsafe) weak var weakSelf = self
-        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { buffer, _ in
+        inputNode?.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: audioFormat) { @Sendable buffer, _ in
             // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
             guard let channelData = buffer.floatChannelData?[0] else { return }
             let frameCount = Int(buffer.frameLength)
@@ -444,7 +444,7 @@ public final class AudioToQuantumMIDI {
         // Install tap for analysis
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
         nonisolated(unsafe) weak var weakSelf2 = self
-        engine.mainMixerNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: file.processingFormat) { buffer, _ in
+        engine.mainMixerNode.installTap(onBus: 0, bufferSize: AVAudioFrameCount(bufferSize), format: file.processingFormat) { @Sendable buffer, _ in
             // Extract buffer data synchronously while memory is valid (non-Sendable AVAudioPCMBuffer)
             guard let channelData = buffer.floatChannelData?[0] else { return }
             let frameCount = Int(buffer.frameLength)

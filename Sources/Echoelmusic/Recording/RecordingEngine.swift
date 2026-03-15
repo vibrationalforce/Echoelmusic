@@ -336,7 +336,7 @@ final class RecordingEngine {
         // Instead, capture nonisolated(unsafe) audioFile directly for the file write.
         nonisolated(unsafe) let file = self.audioFile
         nonisolated(unsafe) weak var weakSelf = self
-        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, _ in
+        input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { @Sendable buffer, _ in
             // Write to file synchronously while buffer memory is valid
             if let file {
                 do {

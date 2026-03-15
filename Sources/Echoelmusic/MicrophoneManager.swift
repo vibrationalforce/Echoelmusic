@@ -209,7 +209,7 @@ final class MicrophoneManager: NSObject {
             // Tap runs on audio thread — do NOT access @MainActor self in outer closure.
             // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread.
             nonisolated(unsafe) weak var weakSelf = self
-            inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { buffer, _ in
+            inputNode?.installTap(onBus: 0, bufferSize: UInt32(fftSize), format: format) { @Sendable buffer, _ in
                 // Extract all buffer data synchronously while memory is valid
                 // AVAudioPCMBuffer is non-Sendable — its memory is reused after this closure returns
                 guard let channelData = buffer.floatChannelData else { return }

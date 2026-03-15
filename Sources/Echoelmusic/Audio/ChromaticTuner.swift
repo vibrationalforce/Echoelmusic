@@ -152,7 +152,7 @@ public final class ChromaticTuner {
         // it runs on the audio thread and triggers dispatch_assert_queue_fail.
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio thread
         nonisolated(unsafe) weak var weakSelf = self
-        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: format) { buffer, _ in
+        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: format) { @Sendable buffer, _ in
             // Extract samples synchronously while buffer memory is valid (non-Sendable)
             let samples = buffer.floatArray(channel: 0)
             guard !samples.isEmpty else { return }

@@ -183,7 +183,7 @@ public final class AudioEngine {
             let ptrL = _rawMeterL
             let ptrR = _rawMeterR
 
-            masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { buffer, _ in
+            masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { @Sendable buffer, _ in
                 guard let channelData = buffer.floatChannelData else { return }
                 let frameLength = UInt(buffer.frameLength)
                 guard frameLength > 0 else { return }
