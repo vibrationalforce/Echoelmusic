@@ -310,7 +310,9 @@ public final class VibratoEngine {
             let block = Array(audio[blockStart..<blockEnd])
 
             // Average modulation for this block
-            let modSlice = Array(modulationCents[blockStart..<min(blockStart + blockSize, modulationCents.count)])
+            let modEnd = min(blockStart + blockSize, modulationCents.count)
+            guard modEnd > blockStart else { continue }
+            let modSlice = Array(modulationCents[blockStart..<modEnd])
             var avgMod: Float = 0
             vDSP_meanv(modSlice, 1, &avgMod, vDSP_Length(modSlice.count))
 

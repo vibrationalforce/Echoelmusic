@@ -14,8 +14,8 @@ private struct RecordingCircularBuffer<T> {
     let capacity: Int
 
     init(capacity: Int, defaultValue: T) {
-        self.capacity = capacity
-        self.buffer = [T](repeating: defaultValue, count: capacity)
+        self.capacity = max(1, capacity)
+        self.buffer = [T](repeating: defaultValue, count: max(1, capacity))
     }
 
     mutating func append(_ element: T) {
