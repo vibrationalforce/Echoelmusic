@@ -131,7 +131,11 @@ final class MicrophoneManager: NSObject {
                     if granted {
                         log.audio("Microphone permission granted")
                         self.permissionDenied = false
-                        try? AudioConfiguration.upgradeToPlayAndRecord()
+                        do {
+                            try AudioConfiguration.upgradeToPlayAndRecord()
+                        } catch {
+                            log.audio("Failed to upgrade audio session to play-and-record: \(error.localizedDescription)", level: .error)
+                        }
                     } else {
                         log.audio("Microphone permission denied", level: .error)
                         self.permissionDenied = true
@@ -147,7 +151,11 @@ final class MicrophoneManager: NSObject {
                     if granted {
                         log.audio("Microphone permission granted")
                         self?.permissionDenied = false
-                        try? AudioConfiguration.upgradeToPlayAndRecord()
+                        do {
+                            try AudioConfiguration.upgradeToPlayAndRecord()
+                        } catch {
+                            log.audio("Failed to upgrade audio session to play-and-record: \(error.localizedDescription)", level: .error)
+                        }
                     } else {
                         log.audio("Microphone permission denied", level: .error)
                         self?.permissionDenied = true
@@ -254,7 +262,11 @@ final class MicrophoneManager: NSObject {
 
         // Deactivate the audio session
         #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-        try? AVAudioSession.sharedInstance().setActive(false)
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            log.audio("Failed to deactivate audio session: \(error.localizedDescription)", level: .warning)
+        }
         #endif
 
         self.isRecording = false

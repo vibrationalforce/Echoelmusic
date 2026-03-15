@@ -278,6 +278,9 @@ enum AudioConfiguration {
     /// Whether interruption handlers have already been registered (prevents duplicate observers)
     nonisolated(unsafe) private static var interruptionHandlersRegistered = false
 
+    /// Stored observer tokens to prevent leaks
+    nonisolated(unsafe) private static var observerTokens: [Any] = []
+
     /// Register for audio session interruption and route change notifications.
     /// Call once during app startup after configureAudioSession().
     static func registerInterruptionHandlers() {
@@ -291,7 +294,7 @@ enum AudioConfiguration {
         }
         interruptionHandlersRegistered = true
 
-        NotificationCenter.default.addObserver(
+        let interruptionToken = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),
             queue: .main
@@ -299,7 +302,7 @@ enum AudioConfiguration {
             handleAudioInterruption(notification)
         }
 
-        NotificationCenter.default.addObserver(
+        let routeChangeToken = NotificationCenter.default.addObserver(
             forName: AVAudioSession.routeChangeNotification,
             object: AVAudioSession.sharedInstance(),
             queue: .main
@@ -307,13 +310,15 @@ enum AudioConfiguration {
             handleRouteChange(notification)
         }
 
-        NotificationCenter.default.addObserver(
+        let mediaResetToken = NotificationCenter.default.addObserver(
             forName: AVAudioSession.mediaServicesWereResetNotification,
             object: AVAudioSession.sharedInstance(),
             queue: .main
         ) { _ in
             handleMediaServicesReset()
         }
+
+        observerTokens = [interruptionToken, routeChangeToken, mediaResetToken]
 
         log.audio("Audio interruption handlers registered")
         #endif // !os(macOS)

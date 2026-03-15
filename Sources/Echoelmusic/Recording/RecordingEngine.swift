@@ -145,7 +145,11 @@ final class RecordingEngine {
         self.sessionsDirectory = documentsPath.appendingPathComponent("Sessions", isDirectory: true)
 
         // Create directory if needed
-        try? FileManager.default.createDirectory(at: sessionsDirectory, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: sessionsDirectory, withIntermediateDirectories: true)
+        } catch {
+            log.recording("Failed to create sessions directory: \(error.localizedDescription)", level: .error)
+        }
 
         // Setup recording format (48kHz, stereo, float32)
         guard let format = AVAudioFormat(

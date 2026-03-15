@@ -15,7 +15,6 @@ struct RecordingControlsView: View {
     @State private var showExportOptions = false
     @State private var shareURL: URL?
     @State private var showShareSheet = false
-    @State private var bioDataTimer: Timer?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -104,10 +103,6 @@ struct RecordingControlsView: View {
             } else {
                 ContentUnavailableView("Nothing to Share", systemImage: "square.and.arrow.up.slash", description: Text("Record something first."))
             }
-        }
-        .onDisappear {
-            bioDataTimer?.invalidate()
-            bioDataTimer = nil
         }
     }
     // MARK: - Recording Controls Section
