@@ -1536,7 +1536,7 @@ struct VideoPlayerView: View {
 
 // MARK: - Camera Preview Layer (UIViewRepresentable)
 
-#if os(iOS)
+#if canImport(UIKit)
 /// SwiftUI wrapper for AVCaptureVideoPreviewLayer — shows live camera feed.
 struct CameraPreviewLayer: UIViewRepresentable {
     let cameraManager: CameraManager
