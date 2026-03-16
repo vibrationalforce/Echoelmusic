@@ -2,7 +2,7 @@
 import SwiftUI
 
 /// Professional mixer view with faders and metering
-/// Uses VaporwaveTheme for consistent styling
+/// Uses EchoelBrand design tokens for consistent styling
 struct MixerView: View {
     @Environment(RecordingEngine.self) var recordingEngine
     @Binding var session: Session

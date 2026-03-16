@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - EchoelFX View
 // Adaptive effects processor view for iPhone (portrait/landscape) and iPad
-// LiquidGlass design system with EchoelBrand tokens
+// EchoelSurface design system with EchoelBrand tokens
 // Connects: NodeGraph, EffectsChainView, EffectParametersView
 
 struct EchoelFXView: View {

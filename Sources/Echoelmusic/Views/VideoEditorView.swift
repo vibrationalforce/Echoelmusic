@@ -869,7 +869,7 @@ struct VideoEditorView: View {
                     .fill(EchoelBrand.coral)
                     .frame(width: 2)
                     .offset(x: CGFloat(currentTime * 10 * timelineZoom))
-                    .modifier(NeonGlow(color: EchoelBrand.coral, radius: 5))
+                    .modifier(EchoelSubtleGlow(color: EchoelBrand.coral, radius: 5))
             }
         }
     }
@@ -889,7 +889,7 @@ struct VideoEditorView: View {
                     .lineLimit(1)
                     .padding(.horizontal, 4)
             )
-            .modifier(isSelected ? NeonGlow(color: color, radius: 8) : NeonGlow(color: .clear, radius: 0))
+            .modifier(isSelected ? EchoelSubtleGlow(color: color, radius: 8) : EchoelSubtleGlow(color: .clear, radius: 0))
     }
 
     // MARK: - Helper Views
