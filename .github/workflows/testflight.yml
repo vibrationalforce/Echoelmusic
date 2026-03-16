@@ -146,9 +146,13 @@ jobs:
           key: ${{ runner.os }}-spm-compile-${{ hashFiles('Package.swift', 'Package.resolved') }}
           restore-keys: ${{ runner.os }}-spm-compile-
 
-      - name: "Install XcodeGen & Generate Project"
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Generate Xcode Project"
         run: |
-          brew install xcodegen || true
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"PLACEHOLDER1\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
@@ -248,9 +252,13 @@ jobs:
           key: ${{ runner.os }}-derived-ios-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-derived-ios-
 
-      - name: "Install Tools & Generate Project"
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Install Fastlane & Generate Project"
         run: |
-          brew install xcodegen || true
           gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
@@ -602,9 +610,13 @@ jobs:
           key: ${{ runner.os }}-derived-macos-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-derived-macos-
 
-      - name: "Install Tools & Generate Project"
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Install Fastlane & Generate Project"
         run: |
-          brew install xcodegen || true
           gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
@@ -787,9 +799,13 @@ jobs:
           key: ${{ runner.os }}-derived-watchos-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-derived-watchos-
 
-      - name: "Install Tools & Generate Project"
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Install Fastlane & Generate Project"
         run: |
-          brew install xcodegen || true
           gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
@@ -972,9 +988,13 @@ jobs:
           key: ${{ runner.os }}-derived-tvos-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-derived-tvos-
 
-      - name: "Install Tools & Generate Project"
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Install Fastlane & Generate Project"
         run: |
-          brew install xcodegen || true
           gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
@@ -1157,9 +1177,13 @@ jobs:
           key: ${{ runner.os }}-derived-visionos-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-derived-visionos-
 
-      - name: "Install Tools & Generate Project"
+      - name: "Setup XcodeGen"
+        uses: ./.github/actions/setup-xcodegen
+        with:
+          version: '2.42.0'
+
+      - name: "Install Fastlane & Generate Project"
         run: |
-          brew install xcodegen || true
           gem install fastlane:2.225.0 -N --no-document
           sed -i '' "s/DEVELOPMENT_TEAM: \"\"/DEVELOPMENT_TEAM: \"${{ secrets.APPLE_TEAM_ID }}\"/" project.yml
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
