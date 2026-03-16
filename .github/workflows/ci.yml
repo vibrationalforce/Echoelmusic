@@ -123,16 +123,21 @@ jobs:
 
     - name: Generate Xcode Project
       run: |
-        # Set placeholder Team ID for simulator build (no actual signing needed)
+        set +e
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
         echo "=== XcodeGen version ==="
-        xcodegen --version || echo "xcodegen not found!"
+        xcodegen --version 2>&1 || echo "xcodegen not found!"
+        echo "=== project.yml options ==="
+        head -20 project.yml
         echo "=== Generating project ==="
-        xcodegen generate --spec project.yml 2>&1 || {
-          echo "::error title=XcodeGen Failed::xcodegen generate failed. Check project.yml for unsupported options."
-          cat project.yml | head -20
+        XCODEGEN_OUTPUT=$(xcodegen generate --spec project.yml 2>&1)
+        XCODEGEN_EXIT=$?
+        echo "$XCODEGEN_OUTPUT"
+        if [ $XCODEGEN_EXIT -ne 0 ]; then
+          ERROR_MSG=$(echo "$XCODEGEN_OUTPUT" | tr '\n' ' ' | head -c 500)
+          echo "::error title=XcodeGen Failed::$ERROR_MSG"
           exit 1
-        }
+        fi
 
     - name: Resolve Swift Package Dependencies
       run: |
@@ -228,16 +233,21 @@ jobs:
 
     - name: Generate Xcode Project
       run: |
-        # Set placeholder Team ID for simulator build (no actual signing needed)
+        set +e
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
         echo "=== XcodeGen version ==="
-        xcodegen --version || echo "xcodegen not found!"
+        xcodegen --version 2>&1 || echo "xcodegen not found!"
+        echo "=== project.yml options ==="
+        head -20 project.yml
         echo "=== Generating project ==="
-        xcodegen generate --spec project.yml 2>&1 || {
-          echo "::error title=XcodeGen Failed::xcodegen generate failed. Check project.yml for unsupported options."
-          cat project.yml | head -20
+        XCODEGEN_OUTPUT=$(xcodegen generate --spec project.yml 2>&1)
+        XCODEGEN_EXIT=$?
+        echo "$XCODEGEN_OUTPUT"
+        if [ $XCODEGEN_EXIT -ne 0 ]; then
+          ERROR_MSG=$(echo "$XCODEGEN_OUTPUT" | tr '\n' ' ' | head -c 500)
+          echo "::error title=XcodeGen Failed::$ERROR_MSG"
           exit 1
-        }
+        fi
 
     - name: Build for Testing (macOS)
       run: |
@@ -401,16 +411,21 @@ jobs:
 
     - name: Generate Xcode Project
       run: |
-        # Set placeholder Team ID for simulator build (no actual signing needed)
+        set +e
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
         echo "=== XcodeGen version ==="
-        xcodegen --version || echo "xcodegen not found!"
+        xcodegen --version 2>&1 || echo "xcodegen not found!"
+        echo "=== project.yml options ==="
+        head -20 project.yml
         echo "=== Generating project ==="
-        xcodegen generate --spec project.yml 2>&1 || {
-          echo "::error title=XcodeGen Failed::xcodegen generate failed. Check project.yml for unsupported options."
-          cat project.yml | head -20
+        XCODEGEN_OUTPUT=$(xcodegen generate --spec project.yml 2>&1)
+        XCODEGEN_EXIT=$?
+        echo "$XCODEGEN_OUTPUT"
+        if [ $XCODEGEN_EXIT -ne 0 ]; then
+          ERROR_MSG=$(echo "$XCODEGEN_OUTPUT" | tr '\n' ' ' | head -c 500)
+          echo "::error title=XcodeGen Failed::$ERROR_MSG"
           exit 1
-        }
+        fi
 
     - name: Run Performance Tests
       run: |
