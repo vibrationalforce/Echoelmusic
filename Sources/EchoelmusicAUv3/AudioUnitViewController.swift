@@ -114,28 +114,30 @@ final class AUv3ViewModel {
     }
 
     private func syncFromTree() {
-        if let p = parameterTree.parameter(withAddress: 0) { wetDry = p.value }
-        if let p = parameterTree.parameter(withAddress: 1) { roomSize = p.value }
-        if let p = parameterTree.parameter(withAddress: 2) { damping = p.value }
-        if let p = parameterTree.parameter(withAddress: 3) { delayTime = p.value }
-        if let p = parameterTree.parameter(withAddress: 4) { feedback = p.value }
-        if let p = parameterTree.parameter(withAddress: 5) { filterCutoff = p.value }
-        if let p = parameterTree.parameter(withAddress: 6) { filterResonance = p.value }
-        if let p = parameterTree.parameter(withAddress: 7) { inputGain = p.value }
-        if let p = parameterTree.parameter(withAddress: 8) { outputGain = p.value }
+        typealias Addr = DSPKernel.ParameterAddress
+        if let p = parameterTree.parameter(withAddress: Addr.wetDry.rawValue) { wetDry = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.roomSize.rawValue) { roomSize = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.damping.rawValue) { damping = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.delayTime.rawValue) { delayTime = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.feedback.rawValue) { feedback = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.filterCutoff.rawValue) { filterCutoff = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.filterResonance.rawValue) { filterResonance = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.inputGain.rawValue) { inputGain = p.value }
+        if let p = parameterTree.parameter(withAddress: Addr.outputGain.rawValue) { outputGain = p.value }
     }
 
     func parameterChanged(address: AUParameterAddress, value: AUValue) {
+        typealias Addr = DSPKernel.ParameterAddress
         switch address {
-        case 0: wetDry = value
-        case 1: roomSize = value
-        case 2: damping = value
-        case 3: delayTime = value
-        case 4: feedback = value
-        case 5: filterCutoff = value
-        case 6: filterResonance = value
-        case 7: inputGain = value
-        case 8: outputGain = value
+        case Addr.wetDry.rawValue: wetDry = value
+        case Addr.roomSize.rawValue: roomSize = value
+        case Addr.damping.rawValue: damping = value
+        case Addr.delayTime.rawValue: delayTime = value
+        case Addr.feedback.rawValue: feedback = value
+        case Addr.filterCutoff.rawValue: filterCutoff = value
+        case Addr.filterResonance.rawValue: filterResonance = value
+        case Addr.inputGain.rawValue: inputGain = value
+        case Addr.outputGain.rawValue: outputGain = value
         default: break
         }
     }
