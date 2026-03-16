@@ -40,7 +40,7 @@ public final class AUv3Host {
     public static func instantiate() async throws -> EchoelmusicAudioUnit {
         let audioUnit = try EchoelmusicAudioUnit(
             componentDescription: componentDescription,
-            options: .loadInProcess
+            options: []
         )
         os_log(.info, log: auLog, "AUv3 instantiated for standalone use")
         return audioUnit

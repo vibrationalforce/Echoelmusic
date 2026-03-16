@@ -36,7 +36,7 @@ public final class EchoelVoiceViewController: AUViewController {
         }
     }
 
-    public override func createAudioUnit(
+    public func createAudioUnit(
         with componentDescription: AudioComponentDescription
     ) async throws -> AUAudioUnit {
         let au = try EchoelVoiceAudioUnit(
@@ -56,15 +56,15 @@ public final class EchoelVoiceViewController: AUViewController {
     // MARK: - UI Setup
 
     private func setupUI(audioUnit: EchoelVoiceAudioUnit) {
-        guard let parameterTree = audioUnit.parameterTree else { return }
+        guard let tree = audioUnit.parameterTree else { return }
 
         let viewModel = EchoelVoiceViewModel(
-            parameterTree: parameterTree,
+            parameterTree: tree,
             kernel: audioUnit.dspKernel
         )
 
-        parameterObservationToken = parameterTree.token(
-            byAddingParameterObserver: { [weak viewModel] address, value in
+        parameterObservationToken = tree.token(
+            byAddingParameterObserver: { [weak viewModel] (address: AUParameterAddress, value: AUValue) in
                 Task { @MainActor in
                     viewModel?.parameterChanged(address: address, value: value)
                 }
@@ -73,7 +73,7 @@ public final class EchoelVoiceViewController: AUViewController {
 
         let pluginView = EchoelVoicePluginView(viewModel: viewModel)
         let hosting = UIHostingController(rootView: pluginView)
-        hosting.view.backgroundColor = .clear
+        hosting.view.backgroundColor = UIColor.clear
 
         addChild(hosting)
         view.addSubview(hosting.view)

@@ -37,7 +37,7 @@ public final class AudioUnitViewController: AUViewController {
     }
 
     /// Called by the host to provide the audio unit instance
-    public override func createAudioUnit(
+    public func createAudioUnit(
         with componentDescription: AudioComponentDescription
     ) async throws -> AUAudioUnit {
         let au = try EchoelmusicAudioUnit(
@@ -57,13 +57,13 @@ public final class AudioUnitViewController: AUViewController {
     // MARK: - UI Setup
 
     private func setupUI(audioUnit: EchoelmusicAudioUnit) {
-        guard let parameterTree = audioUnit.parameterTree else { return }
+        guard let tree = audioUnit.parameterTree else { return }
 
-        let viewModel = AUv3ViewModel(parameterTree: parameterTree)
+        let viewModel = AUv3ViewModel(parameterTree: tree)
 
         // Observe parameter changes from host automation
-        parameterObservationToken = parameterTree.token(
-            byAddingParameterObserver: { [weak viewModel] address, value in
+        parameterObservationToken = tree.token(
+            byAddingParameterObserver: { [weak viewModel] (address: AUParameterAddress, value: AUValue) in
                 Task { @MainActor in
                     viewModel?.parameterChanged(address: address, value: value)
                 }
@@ -72,7 +72,7 @@ public final class AudioUnitViewController: AUViewController {
 
         let pluginView = AUv3PluginView(viewModel: viewModel)
         let hosting = UIHostingController(rootView: pluginView)
-        hosting.view.backgroundColor = .clear
+        hosting.view.backgroundColor = UIColor.clear
 
         addChild(hosting)
         view.addSubview(hosting.view)

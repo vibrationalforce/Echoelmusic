@@ -242,39 +242,57 @@ final class DSPKernel {
         let reverbFeedback = 0.7 + roomSize * 0.28
         let damp = dampingValue * 0.4
 
-        let combBuffers = isLeft ? &combBuffersL : &combBuffersR
-        let combIndices = isLeft ? &combIndicesL : &combIndicesR
-        let dampedValues = isLeft ? &dampedValuesL : &dampedValuesR
-        let allpassBuffers = isLeft ? &allpassBuffersL : &allpassBuffersR
-        let allpassIndices = isLeft ? &allpassIndicesL : &allpassIndicesR
-
         var combSum: Float = 0
 
-        for i in 0..<combBuffers.count {
-            let bufSize = combBuffers[i].count
-            guard bufSize > 0 else { continue }
+        if isLeft {
+            for i in 0..<combBuffersL.count {
+                let bufSize = combBuffersL[i].count
+                guard bufSize > 0 else { continue }
+                let delayed = combBuffersL[i][combIndicesL[i]]
+                dampedValuesL[i] = delayed * (1.0 - damp) + dampedValuesL[i] * damp
+                combBuffersL[i][combIndicesL[i]] = sample + dampedValuesL[i] * reverbFeedback
+                combIndicesL[i] = (combIndicesL[i] + 1) % bufSize
+                combSum += delayed
+            }
 
-            let delayed = combBuffers[i][combIndices[i]]
-            dampedValues[i] = delayed * (1.0 - damp) + dampedValues[i] * damp
-            combBuffers[i][combIndices[i]] = sample + dampedValues[i] * reverbFeedback
-            combIndices[i] = (combIndices[i] + 1) % bufSize
-            combSum += delayed
+            var output = combSum * 0.125
+
+            for i in 0..<allpassBuffersL.count {
+                let bufSize = allpassBuffersL[i].count
+                guard bufSize > 0 else { continue }
+                let delayed = allpassBuffersL[i][allpassIndicesL[i]]
+                let temp = output + delayed * 0.5
+                allpassBuffersL[i][allpassIndicesL[i]] = temp
+                allpassIndicesL[i] = (allpassIndicesL[i] + 1) % bufSize
+                output = delayed - output * 0.5
+            }
+
+            return sample * (1.0 - wetDry) + output * wetDry
+        } else {
+            for i in 0..<combBuffersR.count {
+                let bufSize = combBuffersR[i].count
+                guard bufSize > 0 else { continue }
+                let delayed = combBuffersR[i][combIndicesR[i]]
+                dampedValuesR[i] = delayed * (1.0 - damp) + dampedValuesR[i] * damp
+                combBuffersR[i][combIndicesR[i]] = sample + dampedValuesR[i] * reverbFeedback
+                combIndicesR[i] = (combIndicesR[i] + 1) % bufSize
+                combSum += delayed
+            }
+
+            var output = combSum * 0.125
+
+            for i in 0..<allpassBuffersR.count {
+                let bufSize = allpassBuffersR[i].count
+                guard bufSize > 0 else { continue }
+                let delayed = allpassBuffersR[i][allpassIndicesR[i]]
+                let temp = output + delayed * 0.5
+                allpassBuffersR[i][allpassIndicesR[i]] = temp
+                allpassIndicesR[i] = (allpassIndicesR[i] + 1) % bufSize
+                output = delayed - output * 0.5
+            }
+
+            return sample * (1.0 - wetDry) + output * wetDry
         }
-
-        var output = combSum * 0.125
-
-        for i in 0..<allpassBuffers.count {
-            let bufSize = allpassBuffers[i].count
-            guard bufSize > 0 else { continue }
-
-            let delayed = allpassBuffers[i][allpassIndices[i]]
-            let temp = output + delayed * 0.5
-            allpassBuffers[i][allpassIndices[i]] = temp
-            allpassIndices[i] = (allpassIndices[i] + 1) % bufSize
-            output = delayed - output * 0.5
-        }
-
-        return sample * (1.0 - wetDry) + output * wetDry
     }
 
     // MARK: - Delay Processing

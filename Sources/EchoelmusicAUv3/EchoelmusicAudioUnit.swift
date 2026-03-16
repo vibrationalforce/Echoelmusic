@@ -226,6 +226,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         _parameterTree = AUParameterTree.createTree(
             withChildren: [reverbGroup, delayGroup, filterGroup, gainGroup]
         )
+        self.parameterTree = _parameterTree
 
         // Parameter value provider (read from kernel)
         _parameterTree.implementorValueProvider = { [weak self] param in
@@ -264,10 +265,6 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     // MARK: - AUAudioUnit Overrides
 
-    public override var parameterTree: AUParameterTree? {
-        return _parameterTree
-    }
-
     public override var inputBusses: AUAudioUnitBusArray {
         return _inputBusArray
     }
@@ -290,13 +287,12 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - Factory Presets
 
     public override var factoryPresets: [AUAudioUnitPreset]? {
-        return [
-            AUAudioUnitPreset(number: 0, name: "Clean"),
-            AUAudioUnitPreset(number: 1, name: "Small Room"),
-            AUAudioUnitPreset(number: 2, name: "Large Hall"),
-            AUAudioUnitPreset(number: 3, name: "Echo Chamber"),
-            AUAudioUnitPreset(number: 4, name: "Bio-Reactive")
-        ]
+        return (0..<5).map { index in
+            let preset = AUAudioUnitPreset()
+            preset.number = index
+            preset.name = ["Clean", "Small Room", "Large Hall", "Echo Chamber", "Bio-Reactive"][index]
+            return preset
+        }
     }
 
     public override var currentPreset: AUAudioUnitPreset? {

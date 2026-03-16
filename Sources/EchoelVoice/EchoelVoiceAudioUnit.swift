@@ -290,6 +290,7 @@ public final class EchoelVoiceAudioUnit: AUAudioUnit {
         _parameterTree = AUParameterTree.createTree(
             withChildren: [pitchGroup, formantGroup, harmonyGroup, gainGroup]
         )
+        self.parameterTree = _parameterTree
 
         // Parameter value provider
         _parameterTree.implementorValueProvider = { [weak self] param in
@@ -336,7 +337,6 @@ public final class EchoelVoiceAudioUnit: AUAudioUnit {
 
     // MARK: - AUAudioUnit Overrides
 
-    public override var parameterTree: AUParameterTree? { _parameterTree }
     public override var inputBusses: AUAudioUnitBusArray { _inputBusArray }
     public override var outputBusses: AUAudioUnitBusArray { _outputBusArray }
     public override var canProcessInPlace: Bool { true }
@@ -347,15 +347,13 @@ public final class EchoelVoiceAudioUnit: AUAudioUnit {
     // MARK: - Factory Presets
 
     public override var factoryPresets: [AUAudioUnitPreset]? {
-        [
-            AUAudioUnitPreset(number: 0, name: "Natural"),
-            AUAudioUnitPreset(number: 1, name: "Pop"),
-            AUAudioUnitPreset(number: 2, name: "Auto-Tune"),
-            AUAudioUnitPreset(number: 3, name: "Hard Tune"),
-            AUAudioUnitPreset(number: 4, name: "Harmony"),
-            AUAudioUnitPreset(number: 5, name: "Octave Up"),
-            AUAudioUnitPreset(number: 6, name: "Choir")
-        ]
+        let names = ["Natural", "Pop", "Auto-Tune", "Hard Tune", "Harmony", "Octave Up", "Choir"]
+        return names.enumerated().map { index, name in
+            let preset = AUAudioUnitPreset()
+            preset.number = index
+            preset.name = name
+            return preset
+        }
     }
 
     public override var currentPreset: AUAudioUnitPreset? {
