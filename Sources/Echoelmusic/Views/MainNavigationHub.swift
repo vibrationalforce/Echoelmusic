@@ -26,6 +26,7 @@ struct MainNavigationHub: View {
             transportBar
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
+        .echoelAmbientGlow(intensity: 0.6)
         .sheet(isPresented: $showSettings) {
             EchoelSettingsView()
                 .environment(themeManager)
@@ -579,20 +580,32 @@ private struct BioFeedbackIndicatorView: View {
                 : EchoelBrand.coherenceLow
 
             ZStack {
+                // Echo rings (brand identity — concentric circles)
                 Circle()
-                    .stroke(coherenceColor.opacity(0.2), lineWidth: 2)
-                    .frame(width: 18, height: 18)
+                    .stroke(coherenceColor.opacity(0.04), lineWidth: 0.3)
+                    .frame(width: 28, height: 28)
+
+                Circle()
+                    .stroke(coherenceColor.opacity(0.06), lineWidth: 0.4)
+                    .frame(width: 22, height: 22)
+
+                // Coherence arc (progress ring)
+                Circle()
+                    .stroke(coherenceColor.opacity(0.15), lineWidth: 2)
+                    .frame(width: 16, height: 16)
 
                 Circle()
                     .trim(from: 0, to: max(0.05, level))
                     .stroke(coherenceColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .frame(width: 18, height: 18)
+                    .frame(width: 16, height: 16)
                     .rotationEffect(.degrees(-90))
 
+                // Heart pulse dot (brand waveform accent)
                 Circle()
                     .fill(coherenceColor)
-                    .frame(width: 5, height: 5)
+                    .frame(width: 4, height: 4)
             }
+            .frame(width: 30, height: 30)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("BIO")

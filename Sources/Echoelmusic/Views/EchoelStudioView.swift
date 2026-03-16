@@ -106,6 +106,7 @@ struct EchoelStudioView: View {
             }
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
+        .echoelWaveBackground(lineCount: 3, animated: false)
         .onAppear {
             ensureSessionExists()
         }
