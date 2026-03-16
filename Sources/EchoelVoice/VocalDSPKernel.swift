@@ -293,7 +293,9 @@ final class VocalDSPKernel {
         let frames = Int(frameCount)
 
         // Process channel 0 (mono vocal processing, copy to channel 1 if stereo)
-        guard inputBuffers.count > 0, outputBuffers.count > 0,
+        guard frames > 0,
+              inputBuffers.count > 0, outputBuffers.count > 0,
+              inputRingBuffer.count > 0,
               let inputData = inputBuffers[0].mData?.assumingMemoryBound(to: Float.self),
               let outputData = outputBuffers[0].mData?.assumingMemoryBound(to: Float.self) else {
             return
