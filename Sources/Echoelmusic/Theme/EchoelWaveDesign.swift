@@ -2,8 +2,8 @@
 import SwiftUI
 
 // MARK: - Echoelmusic Wave Design System
-// Brand visual identity: EKG waveform mark, echo rings, heart pulse dot.
-// Derived from echoelmusic.com SVG mark — monochrome, science-first.
+// Brand visual identity: "E" letter + 3 sine wave curves underneath.
+// Derived from docs/app-icon.svg — monochrome, science-first.
 //
 // Usage:
 //   EchoelWaveformMark()                           — standalone brand mark
@@ -12,203 +12,144 @@ import SwiftUI
 //   EchoRingsView(pulsePhase: phase)               — animated rings
 //   AmbientGlowBackground()                        — subtle radial glow
 
-// MARK: - Waveform Shape (Brand Mark)
+// MARK: - Brand Wave Shape
 
-/// The Echoelmusic waveform — EKG-like heartbeat path from brand SVG.
-/// Renders the signature waveform that appears in the logo and OG image.
-/// Path normalized to unit rect (0...1), scaled to any size.
-public struct EchoelWaveformShape: Shape {
+/// Three sine wave curves — the Echoelmusic brand mark waves.
+/// Matches the 3 S-curves from docs/app-icon.svg (1024x1024 viewBox).
+/// Each wave is a triple cubic bezier with ~55px amplitude.
+public struct EchoelBrandWaveShape: Shape {
+
+    /// Which wave index (0, 1, 2) — controls vertical position
+    public var waveIndex: Int
+
+    public init(waveIndex: Int = 0) {
+        self.waveIndex = waveIndex
+    }
 
     public func path(in rect: CGRect) -> Path {
         let w = rect.width
         let h = rect.height
-        let midY = h * 0.5
 
-        // Scale factors from SVG viewBox 0-200 to rect
-        func x(_ v: CGFloat) -> CGFloat { (v / 200.0) * w }
-        func y(_ v: CGFloat) -> CGFloat { (v / 200.0) * h }
+        // SVG viewBox is 1024x1024
+        // Waves span x: 245-779, y centers: 610, 710, 810
+        // Normalize to rect
+        func x(_ v: CGFloat) -> CGFloat { (v / 1024.0) * w }
+        func y(_ v: CGFloat) -> CGFloat { (v / 1024.0) * h }
+
+        // Y-center for this wave (610, 710, 810 in SVG space)
+        let centerY: CGFloat = 610.0 + CGFloat(waveIndex) * 100.0
 
         var path = Path()
 
-        // Flatline entry
-        path.move(to: CGPoint(x: x(15), y: midY))
-        path.addLine(to: CGPoint(x: x(48), y: midY))
+        // Triple S-curve matching SVG cubic beziers
+        // M 245,centerY
+        path.move(to: CGPoint(x: x(245), y: y(centerY)))
 
-        // QRS complex (the sharp heartbeat spike)
-        path.addLine(to: CGPoint(x: x(60), y: y(62)))   // R-wave up
-        path.addLine(to: CGPoint(x: x(72), y: y(136)))   // S-wave down
-        path.addLine(to: CGPoint(x: x(82), y: y(76)))    // Recovery
-
-        // ST segment + T-wave (smooth curve back to baseline)
+        // C 295,centerY-55  375,centerY-55  425,centerY
         path.addCurve(
-            to: CGPoint(x: x(100), y: midY),
-            control1: CGPoint(x: x(86), y: y(88)),
-            control2: CGPoint(x: x(92), y: midY)
+            to: CGPoint(x: x(425), y: y(centerY)),
+            control1: CGPoint(x: x(295), y: y(centerY - 55)),
+            control2: CGPoint(x: x(375), y: y(centerY - 55))
         )
 
-        // Secondary undulation
-        path.addLine(to: CGPoint(x: x(110), y: midY))
+        // C 475,centerY+55  549,centerY+55  599,centerY
         path.addCurve(
-            to: CGPoint(x: x(130), y: y(78)),
-            control1: CGPoint(x: x(116), y: midY),
-            control2: CGPoint(x: x(122), y: y(78))
-        )
-        path.addCurve(
-            to: CGPoint(x: x(148), y: midY),
-            control1: CGPoint(x: x(138), y: y(78)),
-            control2: CGPoint(x: x(142), y: midY)
+            to: CGPoint(x: x(599), y: y(centerY)),
+            control1: CGPoint(x: x(475), y: y(centerY + 55)),
+            control2: CGPoint(x: x(549), y: y(centerY + 55))
         )
 
-        // Trailing ripple
+        // C 649,centerY-55  729,centerY-55  779,centerY
         path.addCurve(
-            to: CGPoint(x: x(164), y: y(120)),
-            control1: CGPoint(x: x(154), y: midY),
-            control2: CGPoint(x: x(158), y: y(120))
-        )
-        path.addCurve(
-            to: CGPoint(x: x(185), y: midY),
-            control1: CGPoint(x: x(168), y: y(120)),
-            control2: CGPoint(x: x(172), y: y(104))
+            to: CGPoint(x: x(779), y: y(centerY)),
+            control1: CGPoint(x: x(649), y: y(centerY - 55)),
+            control2: CGPoint(x: x(729), y: y(centerY - 55))
         )
 
         return path
     }
 }
 
-// MARK: - Waveform Mark (Composite Brand View)
+// MARK: - Brand Mark (Composite View)
 
-/// Complete Echoelmusic brand mark: waveform + echo rings + heart pulse dot.
-/// Bio-reactive: coherence level modulates color warmth and glow intensity.
+/// Complete Echoelmusic brand mark: "E" letter + 3 sine wave curves.
+/// Matches docs/app-icon.svg. Bio-reactive: coherence modulates color warmth.
 public struct EchoelWaveformMark: View {
 
-    /// Bio-coherence level (0-1). Nil = static monochrome.
+    /// Bio-coherence level (0-1). Nil = static monochrome (#E0E0E0).
     public var bioCoherence: Float?
 
-    /// Whether to show the concentric echo rings behind the waveform
-    public var showEchoRings: Bool
-
-    /// Whether to animate the pulse dot
+    /// Whether to animate wave glow
     public var animated: Bool
 
-    @State private var pulseScale: CGFloat = 1.0
+    /// Wave opacities matching SVG: 0.8, 0.4, 0.2
+    private let waveOpacities: [CGFloat] = [0.8, 0.4, 0.2]
+
+    @State private var glowPhase: CGFloat = 0
 
     public init(
         bioCoherence: Float? = nil,
-        showEchoRings: Bool = true,
         animated: Bool = true
     ) {
         self.bioCoherence = bioCoherence
-        self.showEchoRings = showEchoRings
         self.animated = animated
     }
 
     public var body: some View {
         GeometryReader { geo in
             let size = min(geo.size.width, geo.size.height)
+            let strokeWidth = max(2, size * 0.03)
 
             ZStack {
-                // Echo rings (concentric circles, decreasing opacity)
-                if showEchoRings {
-                    echoRings(size: size)
+                // "E" letter — positioned in upper portion (matching SVG y=470/1024)
+                Text("E")
+                    .font(.system(size: size * 0.52, weight: .bold, design: .default))
+                    .foregroundColor(brandColor)
+                    .position(
+                        x: geo.size.width * 0.5,
+                        y: geo.size.height * 0.40
+                    )
+
+                // Three sine wave curves underneath
+                ForEach(0..<3, id: \.self) { i in
+                    // Glow layer
+                    EchoelBrandWaveShape(waveIndex: i)
+                        .stroke(
+                            brandColor.opacity(waveOpacities[i] * 0.3),
+                            style: StrokeStyle(lineWidth: strokeWidth * 1.5, lineCap: .round)
+                        )
+                        .blur(radius: size * 0.01)
+
+                    // Main stroke
+                    EchoelBrandWaveShape(waveIndex: i)
+                        .stroke(
+                            brandColor.opacity(waveOpacities[i]),
+                            style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round)
+                        )
                 }
-
-                // Glow layer (soft blur behind waveform)
-                EchoelWaveformShape()
-                    .stroke(
-                        waveformColor.opacity(0.3),
-                        style: StrokeStyle(lineWidth: size * 0.04, lineCap: .round, lineJoin: .round)
-                    )
-                    .blur(radius: size * 0.02)
-
-                // Main waveform stroke
-                EchoelWaveformShape()
-                    .stroke(
-                        waveformGradient,
-                        style: StrokeStyle(lineWidth: size * 0.015, lineCap: .round, lineJoin: .round)
-                    )
-
-                // Crisp top layer
-                EchoelWaveformShape()
-                    .stroke(
-                        waveformColor,
-                        style: StrokeStyle(lineWidth: size * 0.01, lineCap: .round, lineJoin: .round)
-                    )
-
-                // Heart pulse dot at R-wave peak
-                Circle()
-                    .fill(waveformColor.opacity(0.9))
-                    .frame(width: size * 0.04, height: size * 0.04)
-                    .scaleEffect(pulseScale)
-                    .position(
-                        x: (60.0 / 200.0) * geo.size.width,
-                        y: (62.0 / 200.0) * geo.size.height
-                    )
-
-                // Outer pulse ring
-                Circle()
-                    .fill(waveformColor.opacity(0.4))
-                    .frame(width: size * 0.06, height: size * 0.06)
-                    .scaleEffect(pulseScale * 1.2)
-                    .position(
-                        x: (60.0 / 200.0) * geo.size.width,
-                        y: (62.0 / 200.0) * geo.size.height
-                    )
             }
         }
         .aspectRatio(1, contentMode: .fit)
         .onAppear {
             guard animated else { return }
-            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                pulseScale = 1.3
+            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                glowPhase = 1.0
             }
         }
     }
 
-    // MARK: - Echo Rings
-
-    private func echoRings(size: CGFloat) -> some View {
-        ZStack {
-            Circle()
-                .stroke(Color(white: 0.878).opacity(0.08), lineWidth: 0.5)
-                .frame(width: size * 0.30, height: size * 0.30)
-
-            Circle()
-                .stroke(Color(white: 0.878).opacity(0.06), lineWidth: 0.4)
-                .frame(width: size * 0.55, height: size * 0.55)
-
-            Circle()
-                .stroke(Color(white: 0.878).opacity(0.04), lineWidth: 0.3)
-                .frame(width: size * 0.82, height: size * 0.82)
-        }
-        // Offset to center on waveform heart (not geometric center)
-        .offset(x: -size * 0.04, y: 0)
-    }
-
     // MARK: - Color Computation
 
-    private var waveformColor: Color {
+    private var brandColor: Color {
         guard let coherence = bioCoherence else {
             return Color(white: 0.878) // #E0E0E0 monochrome default
         }
         let c = CGFloat(max(0, min(1, coherence)))
         // Low coherence: cool gray → High coherence: warm white
         return Color(
-            red: 0.878 + c * 0.122,      // → 1.0 at full coherence
-            green: 0.878 + c * 0.05,      // slight warm shift
-            blue: 0.878 - c * 0.1         // reduce blue for warmth
-        )
-    }
-
-    private var waveformGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                waveformColor.opacity(0.6),
-                waveformColor,
-                waveformColor.opacity(0.8),
-                waveformColor.opacity(0.6)
-            ],
-            startPoint: .leading,
-            endPoint: .trailing
+            red: 0.878 + c * 0.122,
+            green: 0.878 + c * 0.05,
+            blue: 0.878 - c * 0.1
         )
     }
 }
