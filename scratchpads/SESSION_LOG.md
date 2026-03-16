@@ -6,6 +6,31 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## Session: 2026-03-16 — EchoelVoice AUv3 + Claude Code Enhancement
+**Branch:** `claude/auv3-plugin-bundle-KIwCN`
+
+### Commits
+- feat: add EchoelVoice AUv3 vocal processor plugin
+- feat: integrate everything-claude-code patterns
+
+### Key Discoveries
+- `@Observable` requires `import Observation` and iOS 17+ deployment target
+- `CADisplayLink` requires NSObject — use `Timer.scheduledTimer` closure API instead
+- `Foundation.log()` unreliable for Float — use `logf()` for C math
+- `deinit` is nonisolated in Swift 6 — use `nonisolated(unsafe)` for timer properties
+- `vDSP_DFT_DestroySetup()` needed in deinit to prevent memory leak
+
+### Architecture
+- EchoelVoice: standalone AUv3 extension with VocalDSPKernel (YIN pitch, 19 scales, harmony)
+- CIE 1931 spectral mapping for frequency→color visualization
+- 4 new agents, 5 new commands, 1 rules file added to .claude/
+
+### Unresolved
+- CI build verification pending
+- TestFlight deployment not yet attempted
+
+---
+
 ## Session: 2026-03-10 — Deep Dive Audit + Synth Engine + Tooling Upgrade
 
 **Branch:** `claude/implement-todo-item-Jz0Pa`
