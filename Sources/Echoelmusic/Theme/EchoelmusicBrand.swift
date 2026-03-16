@@ -401,7 +401,7 @@ public struct EchoelPrimaryButton: ButtonStyle {
                 RoundedRectangle(cornerRadius: EchoelRadius.md)
                     .fill(EchoelBrand.primary)
             )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
@@ -424,7 +424,7 @@ public struct EchoelSecondaryButton: ButtonStyle {
                             .fill(Color.white.opacity(configuration.isPressed ? 0.08 : 0.03))
                     )
             )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }

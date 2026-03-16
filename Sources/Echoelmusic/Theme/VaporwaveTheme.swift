@@ -260,8 +260,7 @@ struct NeonGlow: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .shadow(color: color.opacity(0.3), radius: radius)
-            .shadow(color: color.opacity(0.15), radius: radius * 2)
+            .shadow(color: color.opacity(0.3), radius: min(radius, 8))
     }
 }
 
@@ -744,7 +743,7 @@ struct VaporwavePrimaryButton: View {
                 Capsule()
                     .fill(EchoelBrand.primary)
             )
-            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .opacity(isHovered ? 0.85 : 1.0)
         }
         .buttonStyle(.plain)
         #if !os(watchOS)
@@ -839,8 +838,7 @@ struct VaporwaveWorkspaceCard: View {
             .padding(EchoelSpacing.xl)
             .frame(maxWidth: .infinity)
             .glassCard(isActive: isHovered)
-            .scaleEffect(isHovered ? 1.02 : 1.0)
-            .offset(y: isHovered ? -4 : 0)
+            .opacity(isHovered ? 0.9 : 1.0)
         }
         .buttonStyle(.plain)
         #if !os(watchOS)

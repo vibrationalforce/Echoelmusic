@@ -289,8 +289,8 @@ struct ChordPadButton: View {
             }
         }
         .frame(height: 80)
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .opacity(isPressed ? 0.7 : 1.0)
+        .animation(.easeOut(duration: 0.1), value: isPressed)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -682,8 +682,8 @@ struct DrumPadButton: View {
             }
         }
         .frame(height: 70)
-        .scaleEffect(isPressed ? 0.93 : 1.0)
-        .animation(.spring(response: 0.12, dampingFraction: 0.6), value: isPressed)
+        .opacity(isPressed ? 0.65 : 1.0)
+        .animation(.easeOut(duration: 0.1), value: isPressed)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -1284,8 +1284,8 @@ struct PianoKey: View {
         }
         .zIndex(isBlack ? 1 : 0)
         .offset(x: isBlack ? -width * 0.3 : 0)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.15, dampingFraction: 0.7), value: isPressed)
+        .opacity(isPressed ? 0.75 : 1.0)
+        .animation(.easeOut(duration: 0.1), value: isPressed)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

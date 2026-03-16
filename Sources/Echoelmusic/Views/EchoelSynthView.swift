@@ -353,12 +353,11 @@ struct EchoelSynthView: View {
 
 // MARK: - Preset Card Button Style
 
-/// Provides subtle scale and highlight feedback on press
+/// Provides subtle opacity feedback on press
 private struct PresetCardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .opacity(configuration.isPressed ? 0.85 : 1.0)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
