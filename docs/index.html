@@ -181,8 +181,12 @@
             color: var(--text); text-decoration: none;
             font-size: clamp(1.25rem, 2vw, 1.5rem);
         }
-        .nav-logo svg { width: 28px; height: 28px; }
-        .nav-logo span { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+        .nav-logo svg { width: 28px; height: 28px; flex-shrink: 0; }
+        .nav-logo span {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            white-space: nowrap; pointer-events: none;
+            font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
+        }
 
         .nav-links { display: none; align-items: center; gap: 4px; }
         .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {
@@ -210,6 +214,7 @@
             width: 40px; height: 40px; background: none; border: none;
             cursor: pointer; z-index: 1001; position: relative;
             display: flex; align-items: center; justify-content: center;
+            grid-column: 3; justify-self: end;
         }
         .burger span {
             display: block; width: 20px; height: 1.5px; background: var(--text);
