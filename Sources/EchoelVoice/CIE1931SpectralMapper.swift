@@ -95,9 +95,9 @@ struct CIE1931SpectralMapper {
         guard frequency < 20000 else { return 380 }  // Above hearing → violet
 
         // Logarithmic mapping: 20Hz→700nm, 20kHz→380nm
-        let logMin: Float = Foundation.log(20.0)
-        let logMax: Float = Foundation.log(20000.0)
-        let logFreq = Foundation.log(frequency)
+        let logMin = logf(20.0)
+        let logMax = logf(20000.0)
+        let logFreq = logf(frequency)
 
         let t = (logFreq - logMin) / (logMax - logMin)  // 0 (low) to 1 (high)
         return 700 - t * (700 - 380)  // Red to Violet

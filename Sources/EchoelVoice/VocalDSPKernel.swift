@@ -149,6 +149,11 @@ final class VocalDSPKernel {
 
     init() {}
 
+    deinit {
+        if let setup = fftSetup { vDSP_DFT_DestroySetup(setup) }
+        if let setup = ifftSetup { vDSP_DFT_DestroySetup(setup) }
+    }
+
     // MARK: - Configuration
 
     func prepare(sampleRate: Double, maxFrames: AVAudioFrameCount, channelCount: Int) {
@@ -422,7 +427,7 @@ final class VocalDSPKernel {
         }
 
         // Convert Hz to MIDI note
-        let midiNote = 69.0 + 12.0 * Foundation.log(detectedPitch / 440.0) / Foundation.log(2.0)
+        let midiNote = 69.0 + 12.0 * logf(detectedPitch / 440.0) / logf(2.0)
 
         // Find nearest scale note
         let noteClass = ((Int(round(midiNote)) % 12) + 12) % 12

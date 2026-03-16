@@ -2,6 +2,8 @@
 import UIKit
 import CoreAudioKit
 import SwiftUI
+import Observation
+import QuartzCore
 import os
 
 /// View controller for the EchoelVoice AUv3 plugin UI
@@ -122,7 +124,7 @@ final class EchoelVoiceViewModel {
 
     private let parameterTree: AUParameterTree
     private let kernel: VocalDSPKernel
-    private var displayLink: CADisplayLink?
+    nonisolated(unsafe) private var spectralTimer: Timer?
 
     static let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     static let scaleNames = [
@@ -136,7 +138,7 @@ final class EchoelVoiceViewModel {
         self.parameterTree = parameterTree
         self.kernel = kernel
         syncFromTree()
-        startDisplayLink()
+        startSpectralTimer()
     }
 
     private func syncFromTree() {
@@ -178,22 +180,25 @@ final class EchoelVoiceViewModel {
         parameterTree.parameter(withAddress: address)?.value = value
     }
 
-    // MARK: - Display Link for Spectral Updates
+    // MARK: - Spectral Update Timer
 
-    private func startDisplayLink() {
-        displayLink = CADisplayLink(target: self, selector: #selector(updateSpectral))
-        displayLink?.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60)
-        displayLink?.add(to: .main, forMode: .common)
+    private func startSpectralTimer() {
+        spectralTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.updateSpectral()
+            }
+        }
     }
 
-    @objc private func updateSpectral() {
+    private func updateSpectral() {
         spectralColor = CIE1931SpectralMapper.bandsToColor(kernel.spectralBands)
         dominantFrequency = kernel.dominantFrequency
         rmsLevel = kernel.rmsLevel
     }
 
-    deinit {
-        displayLink?.invalidate()
+    func stopTimer() {
+        spectralTimer?.invalidate()
+        spectralTimer = nil
     }
 }
 

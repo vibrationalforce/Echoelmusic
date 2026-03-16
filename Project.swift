@@ -339,7 +339,7 @@ let project = Project(
             platform: .iOS,
             product: .appExtension,
             bundleId: "com.echoelmusic.app.voice",
-            deploymentTarget: .iOS(targetVersion: "15.0", devices: [.iphone, .ipad]),
+            deploymentTarget: .iOS(targetVersion: "17.0", devices: [.iphone, .ipad]),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "EchoelVoice",
                 "NSExtension": [
