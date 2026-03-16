@@ -20,13 +20,13 @@ let project = Project(
     ),
     settings: .settings(
         base: [
-            "SWIFT_VERSION": "5.9",
+            "SWIFT_VERSION": "6.0",
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "ENABLE_PREVIEWS": "YES",
-            "IPHONEOS_DEPLOYMENT_TARGET": "15.0",
-            "MACOSX_DEPLOYMENT_TARGET": "12.0",
-            "WATCHOS_DEPLOYMENT_TARGET": "8.0",
-            "TVOS_DEPLOYMENT_TARGET": "15.0",
+            "IPHONEOS_DEPLOYMENT_TARGET": "17.0",
+            "MACOSX_DEPLOYMENT_TARGET": "14.0",
+            "WATCHOS_DEPLOYMENT_TARGET": "10.0",
+            "TVOS_DEPLOYMENT_TARGET": "17.0",
             "XROS_DEPLOYMENT_TARGET": "1.0",
             "SWIFT_OPTIMIZATION_LEVEL": "-Onone",
             "SWIFT_COMPILATION_MODE": "wholemodule",

@@ -511,4 +511,23 @@ public final class EchoelVoiceAudioUnit: AUAudioUnit {
         }
     }
 }
+
+// MARK: - Factory Function
+
+/// AUv3 factory entry point for DAW instantiation (Logic, GarageBand, AUM, etc.)
+/// Referenced by Info.plist AudioComponentFactoryFunction key.
+@_cdecl("EchoelVoiceAudioUnitFactory")
+public func EchoelVoiceAudioUnitFactory(
+    _ desc: UnsafePointer<AudioComponentDescription>
+) -> Unmanaged<AnyObject>? {
+    do {
+        let audioUnit = try EchoelVoiceAudioUnit(
+            componentDescription: desc.pointee,
+            options: []
+        )
+        return Unmanaged.passRetained(audioUnit)
+    } catch {
+        return nil
+    }
+}
 #endif
