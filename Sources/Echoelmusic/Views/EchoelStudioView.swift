@@ -270,18 +270,13 @@ struct EchoelStudioView: View {
             }
         }
         .background(
-            ZStack {
-                EchoelBrand.bgSurface.opacity(0.95)
-                if #available(iOS 15.0, *) {
-                    Rectangle().fill(.ultraThinMaterial).opacity(0.3)
-                }
-            }
-            .overlay(
-                Rectangle()
-                    .fill(EchoelBrand.border)
-                    .frame(height: 0.5),
-                alignment: .top
-            )
+            EchoelBrand.bgSurface
+                .overlay(
+                    Rectangle()
+                        .fill(EchoelBrand.border)
+                        .frame(height: 0.5),
+                    alignment: .top
+                )
         )
     }
 

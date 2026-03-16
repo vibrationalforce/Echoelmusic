@@ -90,11 +90,11 @@ public struct EchoelBrand {
     /// Deep background — true black (website CI)
     public static let bgDeep = Color.black  // #000000
 
-    /// Surface background — Cards, panels (very subtle gray lift)
-    public static let bgSurface = Color(white: 0.04)  // #0A0A0A
+    /// Surface background — Cards, panels (visible lift from deep black)
+    public static let bgSurface = Color(white: 0.09)  // #171717
 
-    /// Elevated background — Modals, popovers
-    public static let bgElevated = Color(white: 0.08)  // #141414
+    /// Elevated background — Modals, popovers (clearly distinct from surface)
+    public static let bgElevated = Color(white: 0.14)  // #242424
 
     /// Glass overlay (neutral white tint, matching website --glass: rgba(255,255,255,0.02))
     public static let bgGlass = Color.white.opacity(0.02)
@@ -104,14 +104,14 @@ public struct EchoelBrand {
     /// Primary text - High emphasis (#E0E0E0)
     public static let textPrimary = Color(red: 0.878, green: 0.878, blue: 0.878)  // #E0E0E0
 
-    /// Secondary text - Medium emphasis (55% of primary)
-    public static let textSecondary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
+    /// Secondary text - Medium emphasis (65% of primary)
+    public static let textSecondary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.65)
 
     /// Tertiary text - Low emphasis — WCAG AA compliant
-    public static let textTertiary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.55)
+    public static let textTertiary = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.45)
 
     /// Disabled text
-    public static let textDisabled = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.20)
+    public static let textDisabled = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.28)
 
     // MARK: - Bio-Reactive Colors (Evidence-Based — functional, not brand)
 
@@ -140,11 +140,11 @@ public struct EchoelBrand {
 
     // MARK: - Border & Divider
 
-    /// Default border (neutral gray, matching website --border: rgba(224,224,224,0.06))
-    public static let border = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.06)
+    /// Default border (visible separation between panels and cards)
+    public static let border = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.15)
 
     /// Active/focused border
-    public static let borderActive = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.3)
+    public static let borderActive = Color(red: 0.878, green: 0.878, blue: 0.878).opacity(0.45)
 
     // MARK: - Frequency Band Colors (for audio spectrum visualization)
 
@@ -353,16 +353,15 @@ public struct EchoelGlow: ViewModifier {
     let radius: CGFloat
     let intensity: Double
 
-    public init(color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.3) {
+    public init(color: Color = EchoelBrand.primary, radius: CGFloat = 6, intensity: Double = 0.3) {
         self.color = color
-        self.radius = radius
+        self.radius = min(radius, 8)  // Max 8px per design rules
         self.intensity = intensity
     }
 
     public func body(content: Content) -> some View {
         content
             .shadow(color: color.opacity(intensity), radius: radius)
-            .shadow(color: color.opacity(intensity * 0.5), radius: radius * 2)
     }
 }
 
@@ -401,7 +400,7 @@ public struct EchoelPrimaryButton: ButtonStyle {
                 RoundedRectangle(cornerRadius: EchoelRadius.md)
                     .fill(EchoelBrand.primary)
             )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
@@ -424,7 +423,7 @@ public struct EchoelSecondaryButton: ButtonStyle {
                             .fill(Color.white.opacity(configuration.isPressed ? 0.08 : 0.03))
                     )
             )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(.easeOut(duration: EchoelAnimation.quick), value: configuration.isPressed)
     }
 }
@@ -433,7 +432,7 @@ public struct EchoelSecondaryButton: ButtonStyle {
 
 public extension View {
     /// Apply professional glow effect (monochrome gray by default)
-    func echoelGlow(_ color: Color = EchoelBrand.primary, radius: CGFloat = 12, intensity: Double = 0.3) -> some View {
+    func echoelGlow(_ color: Color = EchoelBrand.primary, radius: CGFloat = 6, intensity: Double = 0.3) -> some View {
         modifier(EchoelGlow(color: color, radius: radius, intensity: intensity))
     }
 

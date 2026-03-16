@@ -12,6 +12,18 @@ struct MainNavigationHub: View {
     @State private var showSettings = false
     @State private var recordingError: String?
 
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    private var isCompact: Bool {
+        #if os(iOS)
+        return horizontalSizeClass == .compact
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             topBar
@@ -71,18 +83,13 @@ struct MainNavigationHub: View {
         .padding(.horizontal, EchoelSpacing.md)
         .padding(.vertical, EchoelSpacing.sm)
         .background(
-            ZStack {
-                EchoelBrand.bgSurface.opacity(0.92)
-                if #available(iOS 15.0, *) {
-                    Rectangle().fill(.ultraThinMaterial).opacity(0.25)
-                }
-            }
-            .overlay(
-                Rectangle()
-                    .fill(EchoelBrand.border)
-                    .frame(height: 0.5),
-                alignment: .bottom
-            )
+            EchoelBrand.bgSurface
+                .overlay(
+                    Rectangle()
+                        .fill(EchoelBrand.border)
+                        .frame(height: 0.5),
+                    alignment: .bottom
+                )
         )
     }
 
@@ -141,12 +148,8 @@ struct MainNavigationHub: View {
                             .offset(x: isPlaying ? 0 : 1) // Optical center for play triangle
                     }
                     .shadow(
-                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.35) : Color.clear,
-                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 10 : 0
-                    )
-                    .shadow(
-                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.15) : Color.clear,
-                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 20 : 0
+                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.3) : Color.clear,
+                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 6 : 0
                     )
                 }
                 .buttonStyle(.plain)
@@ -205,17 +208,19 @@ struct MainNavigationHub: View {
                 .foregroundColor(EchoelBrand.textSecondary)
                 .monospacedDigit()
 
-            transportDivider
+            if !isCompact {
+                transportDivider
 
-            // Bio-feedback indicator (mic level as proxy when no HealthKit)
-            bioFeedbackIndicator
+                // Bio-feedback indicator (mic level as proxy when no HealthKit)
+                bioFeedbackIndicator
 
-            transportDivider
+                transportDivider
 
-            // Stereo LED meters
-            HStack(spacing: EchoelSpacing.xs) {
-                segmentedMeter(level: audioEngine.masterLevel, label: "L")
-                segmentedMeter(level: audioEngine.masterLevelR, label: "R")
+                // Stereo LED meters
+                HStack(spacing: EchoelSpacing.xs) {
+                    segmentedMeter(level: audioEngine.masterLevel, label: "L")
+                    segmentedMeter(level: audioEngine.masterLevelR, label: "R")
+                }
             }
         }
         .padding(.horizontal, EchoelSpacing.md)
