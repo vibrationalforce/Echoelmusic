@@ -524,7 +524,7 @@ struct RecordingControlsView: View {
 
 // MARK: - Share Sheet
 
-#if os(iOS) || os(visionOS)
+#if canImport(UIKit)
 import UIKit
 
 /// Cross-platform share sheet for recording export (renamed to avoid conflict with PrivacyPolicy.ShareSheet)

@@ -334,7 +334,7 @@ class ExportManager {
 
 // MARK: - Share Sheet Helper
 
-#if os(iOS)
+#if canImport(UIKit)
 import UIKit
 
 extension ExportManager {

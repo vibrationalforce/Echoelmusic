@@ -1496,7 +1496,7 @@ struct VideoTransferable: Transferable {
 
 // MARK: - AVPlayer SwiftUI Wrapper
 
-#if os(iOS)
+#if canImport(UIKit)
 import UIKit
 
 /// UIViewRepresentable wrapper for AVPlayerLayer — shows video playback
