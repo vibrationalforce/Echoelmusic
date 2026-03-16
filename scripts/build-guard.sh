@@ -128,7 +128,7 @@ fi
 pass "Access level patterns (validated at compile time with -warnings-as-errors)"
 
 # 1f. @escaping missing in TaskGroup closures
-TASKGROUP_CLOSURES=$(grep -rn 'addTask\s*{' Sources/ --include="*.swift" 2>/dev/null | wc -l)
+TASKGROUP_CLOSURES=$(grep -rn 'addTask\s*{' Sources/ --include="*.swift" 2>/dev/null | wc -l || true)
 if [[ $TASKGROUP_CLOSURES -gt 0 ]]; then
     pass "TaskGroup closures found ($TASKGROUP_CLOSURES) — compiler validates @escaping"
 fi

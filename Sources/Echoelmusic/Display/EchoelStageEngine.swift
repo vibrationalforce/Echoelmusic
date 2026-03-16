@@ -1,16 +1,6 @@
 #if canImport(UIKit)
-//
-//  EchoelStageEngine.swift
-//  Echoelmusic — External Display + Projection Mapping + AirPlay
-//
-//  Manages external displays (HDMI, AirPlay, CarPlay) for stage visuals.
-//  Bio-reactive mapping: coherence → scene color, HRV → transition speed,
-//  heart rate → visual pulse, breath phase → opacity modulation.
-//
-//  Supports: External displays via UIScreen, AirPlay mirroring,
-//  projection mapping with warping, multi-display layouts,
-//  NDI output for broadcast integration.
-//
+// EchoelStageEngine.swift — External Display + Projection Mapping + AirPlay
+// Bio-reactive stage visuals: coherence → color, HRV → transitions, HR → pulse
 
 import Foundation
 import UIKit
