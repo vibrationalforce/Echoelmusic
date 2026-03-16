@@ -8,9 +8,13 @@
 // Created by Echoelmusic Team
 // Copyright 2026 Echoelmusic. MIT License.
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
 import AVFoundation
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Clip Model
 

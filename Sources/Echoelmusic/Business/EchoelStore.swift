@@ -18,7 +18,9 @@
 
 import Foundation
 import StoreKit
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Product Identifiers
 

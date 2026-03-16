@@ -13,8 +13,12 @@
 //
 // Copyright 2026 Echoelmusic. MIT License.
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Step Sequencer Core
 

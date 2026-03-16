@@ -1,6 +1,8 @@
 import Foundation
 import simd
+#if canImport(Observation)
 import Observation
+#endif
 
 /// Maps MIDI/MPE parameters to spatial audio (Stereo, 3D, 4D, AFA Sound)
 ///

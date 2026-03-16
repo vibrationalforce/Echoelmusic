@@ -17,9 +17,13 @@
 
 import Foundation
 import CoreMIDI
+#if canImport(Combine)
 import Combine
+#endif
 import simd
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Quantum MIDI Constants
 

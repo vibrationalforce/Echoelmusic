@@ -9,7 +9,9 @@
 // Created 2026-01-16
 
 import Foundation
+#if canImport(Combine)
 import Combine
+#endif
 
 #if canImport(UIKit)
 import UIKit

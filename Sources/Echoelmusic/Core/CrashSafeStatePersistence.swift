@@ -8,7 +8,9 @@
 // Created 2026-01-16
 
 import Foundation
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Session State
 

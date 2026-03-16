@@ -12,7 +12,9 @@
 // Created 2026-03-14
 
 import Foundation
+#if canImport(Combine)
 import Combine
+#endif
 #if canImport(os)
 import os
 #endif

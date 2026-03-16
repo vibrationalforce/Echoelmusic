@@ -4,8 +4,12 @@
 
 import Foundation
 import UIKit
+#if canImport(Observation)
 import Observation
+#endif
+#if canImport(Combine)
 import Combine
+#endif
 import os
 
 // MARK: - Display Info

@@ -2,7 +2,9 @@
 import Foundation
 @preconcurrency import AVFoundation
 import CoreData
+#if canImport(Observation)
 import Observation
+#endif
 
 /// Video Editing Engine - Non-Linear Editor with Magnetic Timeline
 /// Supports unlimited tracks, keyframe animation, nested sequences

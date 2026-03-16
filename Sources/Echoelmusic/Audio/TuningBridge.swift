@@ -12,7 +12,9 @@
 // Subscribe once at app startup via TuningBridge.shared.activate()
 
 import Foundation
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Tuning Bridge
 

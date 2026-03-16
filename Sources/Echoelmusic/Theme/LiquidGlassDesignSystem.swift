@@ -8,7 +8,9 @@
 // Created 2026-02-04
 // Copyright (c) 2026 Echoelmusic. All rights reserved.
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 #if canImport(UIKit)
 import UIKit

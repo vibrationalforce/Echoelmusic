@@ -6,8 +6,12 @@ import AVFoundation
 @preconcurrency import MetalKit
 #endif
 import CoreImage
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 /// Background Source Manager for Chroma Key Compositing
 /// Supports multiple background types: images, videos, Echoelmusic visuals, virtual backgrounds

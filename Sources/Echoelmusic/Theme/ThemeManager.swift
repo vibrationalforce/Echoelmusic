@@ -7,8 +7,12 @@
 //
 // Copyright (c) 2026 Echoelmusic. All rights reserved.
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - App Theme Mode
 

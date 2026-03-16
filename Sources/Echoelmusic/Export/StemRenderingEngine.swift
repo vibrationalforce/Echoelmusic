@@ -17,8 +17,12 @@
 import Foundation
 @preconcurrency import AVFoundation
 import Accelerate
+#if canImport(Combine)
 import Combine
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Stem Configuration
 

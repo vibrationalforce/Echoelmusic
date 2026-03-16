@@ -12,7 +12,9 @@
 import Foundation
 import CoreImage
 import CoreGraphics
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - CurvePoint
 

@@ -16,8 +16,12 @@
 
 import Foundation
 import HealthKit
+#if canImport(Observation)
 import Observation
+#endif
+#if canImport(Combine)
 import Combine
+#endif
 
 // MARK: - Bio Data Snapshot
 
@@ -489,7 +493,9 @@ public struct BioStatusView: View {
 #else
 // Non-HealthKit platforms (macOS, Linux)
 import Foundation
+#if canImport(Observation)
 import Observation
+#endif
 
 public struct BioSnapshot: Sendable {
     public var heartRate: Double = 72.0

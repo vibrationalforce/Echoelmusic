@@ -11,7 +11,9 @@
 
 import Foundation
 import AVFoundation
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Channel Color
 

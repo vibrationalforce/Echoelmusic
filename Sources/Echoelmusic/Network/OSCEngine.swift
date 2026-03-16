@@ -14,8 +14,12 @@
 
 import Foundation
 import Network
+#if canImport(Observation)
 import Observation
+#endif
+#if canImport(Combine)
 import Combine
+#endif
 
 // MARK: - OSC Types
 

@@ -749,8 +749,12 @@ public struct AbletonLinkView: View {
 
 // MARK: - Supporting Types
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 // Use actual EchoelBrand from Theme/EchoelmusicBrand.swift
 // No placeholder needed - import the real brand colors

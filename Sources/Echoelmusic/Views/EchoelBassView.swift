@@ -6,8 +6,12 @@
 //  Extracted from EchoelBass.swift — keeps view layer separate from audio engine.
 //
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 public struct EchoelBassView: View {
     @Bindable private var bass = EchoelBass.shared

@@ -9,7 +9,9 @@ import CoreImage
 import Vision
 #endif
 import Accelerate
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Multi-Camera Manager
 /// Professional multi-camera recording with synchronization

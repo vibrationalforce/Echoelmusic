@@ -21,7 +21,9 @@ import Foundation
 import Metal
 import QuartzCore
 import Accelerate
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Visual Mode
 

@@ -11,8 +11,12 @@
 // Precision: 3 decimal places (0.001 Hz)
 
 import Foundation
+#if canImport(Combine)
 import Combine
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Tuning Manager
 

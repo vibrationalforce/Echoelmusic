@@ -5,8 +5,12 @@
 
 import Foundation
 import AVFoundation
+#if canImport(Observation)
 import Observation
+#endif
+#if canImport(Combine)
 import Combine
+#endif
 
 // MARK: - Audio Step
 

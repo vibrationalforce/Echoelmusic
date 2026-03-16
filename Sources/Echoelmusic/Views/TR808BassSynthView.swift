@@ -6,8 +6,12 @@
 //  Extracted from TR808BassSynth.swift — keeps view layer separate from audio engine.
 //
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 public struct TR808BassSynthView: View {
     @Bindable private var synth = TR808BassSynth.shared

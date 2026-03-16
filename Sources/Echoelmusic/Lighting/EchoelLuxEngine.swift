@@ -13,7 +13,9 @@
 
 import Foundation
 import Network
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Art-Net Protocol
 

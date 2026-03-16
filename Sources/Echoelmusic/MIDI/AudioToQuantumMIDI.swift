@@ -16,9 +16,13 @@
 
 import Foundation
 import AVFoundation
+#if canImport(Combine)
 import Combine
+#endif
 import Accelerate
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Audio Input Source
 

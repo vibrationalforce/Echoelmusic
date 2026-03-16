@@ -13,8 +13,12 @@
 // Created: 2026-01-12
 
 import Foundation
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - BPM Situation Presets
 

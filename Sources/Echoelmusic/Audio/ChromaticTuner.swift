@@ -11,7 +11,9 @@
 import Foundation
 import AVFoundation
 import Accelerate
+#if canImport(Observation)
 import Observation
+#endif
 
 // MARK: - Note Names
 

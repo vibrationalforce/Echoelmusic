@@ -7,7 +7,9 @@
 //
 // Default: 440.000 Hz (ISO 16)
 
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 // MARK: - Kammerton Wheel View
 
