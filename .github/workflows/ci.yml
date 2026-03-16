@@ -125,7 +125,14 @@ jobs:
       run: |
         # Set placeholder Team ID for simulator build (no actual signing needed)
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        xcodegen generate --spec project.yml
+        echo "=== XcodeGen version ==="
+        xcodegen --version || echo "xcodegen not found!"
+        echo "=== Generating project ==="
+        xcodegen generate --spec project.yml 2>&1 || {
+          echo "::error title=XcodeGen Failed::xcodegen generate failed. Check project.yml for unsupported options."
+          cat project.yml | head -20
+          exit 1
+        }
 
     - name: Resolve Swift Package Dependencies
       run: |
@@ -223,7 +230,14 @@ jobs:
       run: |
         # Set placeholder Team ID for simulator build (no actual signing needed)
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        xcodegen generate --spec project.yml
+        echo "=== XcodeGen version ==="
+        xcodegen --version || echo "xcodegen not found!"
+        echo "=== Generating project ==="
+        xcodegen generate --spec project.yml 2>&1 || {
+          echo "::error title=XcodeGen Failed::xcodegen generate failed. Check project.yml for unsupported options."
+          cat project.yml | head -20
+          exit 1
+        }
 
     - name: Build for Testing (macOS)
       run: |
@@ -270,7 +284,11 @@ jobs:
     - name: Generate Xcode Project
       run: |
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        xcodegen generate --spec project.yml
+        xcodegen --version || echo "xcodegen not found!"
+        xcodegen generate --spec project.yml 2>&1 || {
+          echo "::error title=XcodeGen Failed::xcodegen generate failed"
+          exit 1
+        }
 
     - name: Build watchOS
       run: |
@@ -305,7 +323,11 @@ jobs:
     - name: Generate Xcode Project
       run: |
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        xcodegen generate --spec project.yml
+        xcodegen --version || echo "xcodegen not found!"
+        xcodegen generate --spec project.yml 2>&1 || {
+          echo "::error title=XcodeGen Failed::xcodegen generate failed"
+          exit 1
+        }
 
     - name: Build tvOS
       run: |
@@ -340,7 +362,11 @@ jobs:
     - name: Generate Xcode Project
       run: |
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        xcodegen generate --spec project.yml
+        xcodegen --version || echo "xcodegen not found!"
+        xcodegen generate --spec project.yml 2>&1 || {
+          echo "::error title=XcodeGen Failed::xcodegen generate failed"
+          exit 1
+        }
 
     - name: Build visionOS
       run: |
@@ -377,7 +403,14 @@ jobs:
       run: |
         # Set placeholder Team ID for simulator build (no actual signing needed)
         sed -i '' 's/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "XXXXXXXXXX"/' project.yml || true
-        xcodegen generate --spec project.yml
+        echo "=== XcodeGen version ==="
+        xcodegen --version || echo "xcodegen not found!"
+        echo "=== Generating project ==="
+        xcodegen generate --spec project.yml 2>&1 || {
+          echo "::error title=XcodeGen Failed::xcodegen generate failed. Check project.yml for unsupported options."
+          cat project.yml | head -20
+          exit 1
+        }
 
     - name: Run Performance Tests
       run: |
