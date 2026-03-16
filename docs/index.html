@@ -173,7 +173,7 @@
         }
         .nav-bar {
             max-width: var(--max-w); margin: 0 auto; height: 64px;
-            display: flex; align-items: center; justify-content: space-between;
+            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
         }
         .nav-logo, .nav-logo:visited, .nav-logo:active, .nav-logo:link {
             display: flex; align-items: center; gap: 10px;
@@ -182,6 +182,7 @@
             font-size: clamp(1.25rem, 2vw, 1.5rem);
         }
         .nav-logo svg { width: 28px; height: 28px; }
+        .nav-logo span { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
 
         .nav-links { display: none; align-items: center; gap: 4px; }
         .nav-links a, .nav-links a:visited, .nav-links a:active, .nav-links a:link {

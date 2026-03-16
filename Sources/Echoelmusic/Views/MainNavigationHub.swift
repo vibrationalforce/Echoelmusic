@@ -45,7 +45,15 @@ struct MainNavigationHub: View {
     // MARK: - Top Bar (iPad)
 
     private var topBar: some View {
-        HStack(spacing: EchoelSpacing.sm) {
+        HStack(spacing: 0) {
+            // Brand mark (E + 3 waves) — top-left
+            EchoelWaveformMark(animated: false)
+                .frame(width: 28, height: 28)
+                .padding(.trailing, EchoelSpacing.sm)
+
+            Spacer()
+
+            // Centered brand name
             Text("ECHOELMUSIC")
                 .font(EchoelBrandFont.label())
                 .foregroundColor(EchoelBrand.textPrimary.opacity(0.7))
@@ -54,7 +62,7 @@ struct MainNavigationHub: View {
 
             Spacer()
 
-            // Settings gear
+            // Settings gear — top-right
             Button(action: { showSettings = true }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 14, weight: .medium))
