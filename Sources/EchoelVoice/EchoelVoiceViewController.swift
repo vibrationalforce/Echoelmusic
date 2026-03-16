@@ -124,7 +124,7 @@ final class EchoelVoiceViewModel {
 
     private let parameterTree: AUParameterTree
     private let kernel: VocalDSPKernel
-    nonisolated(unsafe) private var spectralTimer: Timer?
+    private var spectralTimer: Timer?
 
     static let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     static let scaleNames = [
@@ -184,7 +184,7 @@ final class EchoelVoiceViewModel {
 
     private func startSpectralTimer() {
         spectralTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            Task { @MainActor in
                 self?.updateSpectral()
             }
         }
@@ -204,6 +204,7 @@ final class EchoelVoiceViewModel {
 
 // MARK: - SwiftUI Plugin View
 
+@MainActor
 struct EchoelVoicePluginView: View {
     @Bindable var viewModel: EchoelVoiceViewModel
 
