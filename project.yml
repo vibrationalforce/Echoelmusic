@@ -169,6 +169,7 @@ targets:
         excludes:
           - "**/*.md"
     info:
+      path: Resources/EchoelmusicAUv3/Info.plist
       properties:
         CFBundleDisplayName: EchoelmusicAUv3
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -191,6 +192,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.auv3
+        INFOPLIST_FILE: Resources/EchoelmusicAUv3/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         SKIP_INSTALL: YES
@@ -211,6 +214,7 @@ targets:
         excludes:
           - "**/*.md"
     info:
+      path: Resources/EchoelVoice/Info.plist
       properties:
         CFBundleDisplayName: EchoelVoice
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -236,6 +240,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.voice
+        INFOPLIST_FILE: Resources/EchoelVoice/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         SKIP_INSTALL: YES
