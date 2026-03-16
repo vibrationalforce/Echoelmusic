@@ -34,6 +34,20 @@ Architectural and strategic decisions with context and rationale.
 - **Expected outcome:** Faster iteration cycles, fewer regressions, self-improving system
 - **Review date:** 2026-04-16
 
+### 2026-03-16 Replace LiquidGlass with EchoelSurface Design System
+- **Decision:** Removed all glassmorphism (blur, .ultraThinMaterial, glow blend modes, >8px shadows, pill shapes) and replaced with EchoelSurface — solid fills, subtle 1px borders, shadows capped at 8px, corners capped at 12px
+- **Reasoning:** LiquidGlass violated every design constraint in CLAUDE.md (glassmorphism, glow effects, large shadows, scale animations). Corporate design requires Linear/Stripe aesthetic — functional, minimal, precise
+- **Alternatives considered:** Keeping LiquidGlass with reduced effects — rejected, fundamentally wrong approach
+- **Expected outcome:** Clean, compliant UI matching brand identity. Backward-compatible type aliases prevent breaking existing code
+- **Review date:** 2026-04-16
+
+### 2026-03-16 Wire All 12 EchoelTools into App
+- **Decision:** Initialize EchoelSeqEngine, EchoelLuxEngine, EchoelAIEngine, OSCEngine in workspace.deferredSetup(). Add Sequencer, Bio, Lighting, AI panels to EchoelStudioView bottom bar (scrollable)
+- **Reasoning:** 4 engines had code but were never initialized. 4 views existed but had no navigation path. Users couldn't access major advertised features
+- **Alternatives considered:** Leaving uninitialized (broken UX) — rejected
+- **Expected outcome:** All 12 EchoelTools accessible from studio workspace
+- **Review date:** 2026-04-16
+
 ---
 
 ### 2026-03-11 Persistent Memory System

@@ -54,6 +54,18 @@ final class EchoelCreativeWorkspace {
     /// Adaptive audio quality engine — adjusts buffer/sample rate based on system load
     private(set) var adaptiveAudio: AdaptiveAudioEngine
 
+    /// Step sequencer engine — pattern-based MIDI/audio sequencing
+    private(set) var seqEngine: EchoelSeqEngine?
+
+    /// DMX 512 / Art-Net lighting engine
+    private(set) var luxEngine: EchoelLuxEngine?
+
+    /// AI engine — CoreML, stem separation, generative
+    private(set) var aiEngine: EchoelAIEngine?
+
+    /// OSC network engine — UDP sync with external tools
+    private(set) var oscEngine: OSCEngine?
+
     /// Whether deferred heavy init has completed
     private(set) var isReady: Bool = false
 
@@ -111,9 +123,15 @@ final class EchoelCreativeWorkspace {
         self.visEngine = EchoelVisEngine.shared
         #endif
 
+        // Initialize remaining EchoelTools engines
+        self.seqEngine = EchoelSeqEngine.shared
+        self.luxEngine = EchoelLuxEngine.shared
+        self.aiEngine = EchoelAIEngine.shared
+        self.oscEngine = OSCEngine.shared
+
         setupBridges()
         isReady = true
-        log.info("Creative Workspace deferred setup complete (DAW + Video + Bio-Reactive Synth)", category: .system)
+        log.info("Creative Workspace deferred setup complete (all 12 EchoelTools)", category: .system)
     }
 
     // MARK: - Bridges

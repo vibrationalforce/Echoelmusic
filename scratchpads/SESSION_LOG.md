@@ -6,6 +6,51 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## 2026-03-16 — Corporate Design Enforcement & Integration Audit
+
+### Commits
+- `a077d3a` fix: replace EKG heartbeat with correct brand mark (E + 3 sine waves)
+- `7a75128` fix: enforce corporate design constraints across UI (7 files)
+- (pending) feat: wire all 12 EchoelTools into workspace and studio view
+
+### What Changed
+
+**Design System Overhaul:**
+- LiquidGlassDesignSystem.swift → EchoelSurface: solid fills, 1px borders, max 8px shadow, max 12px corners
+- Removed all glassmorphism (.ultraThinMaterial), glow effects (.plusLighter blend), blur effects
+- Removed all scale animations on interaction → opacity only
+- Backward-compatible type aliases kept (LiquidGlass = EchoelSurface)
+
+**Integration Gaps Fixed:**
+- 4 engines were never initialized: EchoelSeqEngine, EchoelLuxEngine, EchoelAIEngine, OSCEngine
+- Added initialization in EchoelCreativeWorkspace.deferredSetup()
+- Added 4 new bottom panels to EchoelStudioView: Sequencer, Bio, Lighting, AI
+- Bottom panel bar now scrollable to fit all 9 panels
+
+### Audit Findings (for reference)
+
+**Fully Integrated Tools (before this session):**
+- EchoelSynth (Instruments panel), EchoelMix (Mixer), EchoelFX (FX), EchoelMIDI (Piano Roll), EchoelVid (Video)
+
+**Newly Integrated Tools (this session):**
+- EchoelSeq → VisualStepSequencerView, EchoelBio → BioStatusView, EchoelLux → EchoelLuxView, EchoelAI → EchoelAIView
+
+**Still Backend-Only (initialized but no dedicated panel):**
+- EchoelStage (receives bio-reactive data, outputs to external displays)
+- EchoelNet (AbletonLink in settings, OSC engine now initialized)
+- EchoelVis (Metal 120fps engine, receives bio data — no UI mode switcher yet)
+
+### Brand Compliance Status
+- AppIcon: Correct (E + 3 sine waves)
+- Colors: EchoelBrand palette used throughout
+- Typography: EchoelBrandFont + EchoelSpacing tokens
+- No legacy branding, no pseudoscience terminology
+- All design constraints met (no blur, no glow, max 8px shadow, max 12px corners)
+
+---
+
+---
+
 ## Session: 2026-03-16 — EchoelVoice AUv3 + Claude Code Enhancement
 **Branch:** `claude/auv3-plugin-bundle-KIwCN`
 

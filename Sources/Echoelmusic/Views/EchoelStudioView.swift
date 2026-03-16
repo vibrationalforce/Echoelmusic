@@ -57,30 +57,42 @@ struct EchoelStudioView: View {
 
     enum BottomPanel: String, CaseIterable, Identifiable {
         case instruments = "Instruments"
+        case sequencer = "Sequencer"
         case pianoRoll = "Piano Roll"
         case mixer = "Mixer"
         case fx = "FX"
+        case bio = "Bio"
         case video = "Video"
+        case lighting = "Lighting"
+        case ai = "AI"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
             case .instruments: return "pianokeys"
+            case .sequencer: return "square.grid.3x3"
             case .pianoRoll: return "music.note.list"
             case .mixer: return "slider.vertical.3"
             case .fx: return "waveform.path.ecg"
+            case .bio: return "heart.fill"
             case .video: return "film"
+            case .lighting: return "light.max"
+            case .ai: return "cpu"
             }
         }
 
         var color: Color {
             switch self {
             case .instruments: return EchoelBrand.sky
+            case .sequencer: return EchoelBrand.amber
             case .pianoRoll: return Color(red: 1, green: 0.8, blue: 0.2)
             case .mixer: return EchoelBrand.emerald
             case .fx: return EchoelBrand.violet
-            case .video: return EchoelBrand.coral
+            case .bio: return EchoelBrand.coral
+            case .video: return EchoelBrand.rose
+            case .lighting: return Color(red: 1, green: 0.8, blue: 0.4)
+            case .ai: return EchoelBrand.sky
             }
         }
     }
@@ -143,6 +155,8 @@ struct EchoelStudioView: View {
                     case .instruments:
                         EchoelSynthView()
                             .environment(audioEngine)
+                    case .sequencer:
+                        VisualStepSequencerView()
                     case .pianoRoll:
                         PianoRollView()
                     case .mixer:
@@ -152,8 +166,14 @@ struct EchoelStudioView: View {
                     case .fx:
                         EchoelFXView()
                             .environment(audioEngine)
+                    case .bio:
+                        BioStatusView()
                     case .video:
                         VideoEditorView()
+                    case .lighting:
+                        EchoelLuxView()
+                    case .ai:
+                        EchoelAIView()
                     }
                 }
                 .environment(\.isEmbeddedInPanel, true)
@@ -228,7 +248,9 @@ struct EchoelStudioView: View {
                 .frame(width: 1, height: 28)
                 .padding(.horizontal, EchoelSpacing.sm)
 
-            // Panel tabs
+            // Panel tabs — scrollable for all 9 tools
+            ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
             ForEach(BottomPanel.allCases) { panel in
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -252,7 +274,7 @@ struct EchoelStudioView: View {
                         }
                     }
                     .foregroundColor(isActive ? panel.color : EchoelBrand.textSecondary)
-                    .frame(maxWidth: .infinity)
+                    .frame(width: isCompact ? 52 : 72)
                     .padding(.vertical, isCompact ? EchoelSpacing.sm : EchoelSpacing.sm + EchoelSpacing.xxs)
                     .background(
                         isActive ? panel.color.opacity(0.08) : Color.clear
@@ -269,6 +291,8 @@ struct EchoelStudioView: View {
                 .accessibilityLabel("\(panel.rawValue) panel")
                 .accessibilityAddTraits(bottomPanel == panel ? .isSelected : [])
             }
+            } // HStack (scrollable panels)
+            } // ScrollView
         }
         .background(
             ZStack {
