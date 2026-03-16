@@ -882,7 +882,27 @@ final class MIDIRouterViewModel {
     func toggleVirtualRoute(from: UUID) { if virtualRoutes.contains(from) { virtualRoutes.remove(from) } else { virtualRoutes.insert(from) } }
     func addMapping(_ mapping: MIDIMappingItem) { mappings.append(mapping) }
     func removeMapping(_ id: UUID) { mappings.removeAll { $0.id == id } }
-    func loadPreset(_ preset: MIDIPreset) { /* Load preset mappings */ }
+    func loadPreset(_ preset: MIDIPreset) {
+        mappings.removeAll()
+        switch preset {
+        case .abletonPush:
+            mpeEnabled = true
+            lowerZoneChannels = 8
+            upperZoneChannels = 7
+            lowerPitchBend = 48
+            upperPitchBend = 48
+            voiceAllocationMode = .roundRobin
+        case .novationLaunch:
+            mpeEnabled = false
+            enabledChannels = Set(1...16)
+        case .akaiMPK:
+            mpeEnabled = false
+            enabledChannels = Set([1, 2, 3, 4])
+        case .genericCC:
+            mpeEnabled = false
+            enabledChannels = Set([1])
+        }
+    }
     func setLowerZoneChannels(_ count: Int) { lowerZoneChannels = count }
     func setUpperZoneChannels(_ count: Int) { upperZoneChannels = count }
 }
