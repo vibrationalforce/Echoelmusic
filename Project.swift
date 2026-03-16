@@ -115,6 +115,7 @@ let project = Project(
             ],
             entitlements: .file(path: "Echoelmusic.entitlements"),
             dependencies: [
+                .target(name: "EchoelmusicAUv3"),
                 .target(name: "EchoelmusicWidgets"),
                 .target(name: "EchoelmusicWatch"),
                 .target(name: "EchoelmusicTV")
