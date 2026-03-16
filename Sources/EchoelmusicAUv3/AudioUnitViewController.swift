@@ -2,6 +2,7 @@
 import UIKit
 import CoreAudioKit
 import SwiftUI
+import Observation
 import os
 
 /// View controller for the AUv3 plugin UI

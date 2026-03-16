@@ -51,10 +51,13 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     ) throws {
         try super.init(componentDescription: componentDescription, options: options)
 
-        let defaultFormat = AVAudioFormat(
+        guard let defaultFormat = AVAudioFormat(
             standardFormatWithSampleRate: 48000,
             channels: 2
-        )!
+        ) else {
+            throw NSError(domain: "com.echoelmusic.app.auv3", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Failed to create default audio format"])
+        }
 
         inputBus = try AUAudioUnitBus(format: defaultFormat)
         outputBus = try AUAudioUnitBus(format: defaultFormat)
@@ -396,7 +399,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         )
 
         os_log(.info, log: Self.auLog,
-               "Render resources allocated: %.0f Hz, %d ch, %d max frames",
+               "Render resources allocated: %.0f Hz, %u ch, %u max frames",
                format.sampleRate, format.channelCount, maximumFramesToRender)
     }
 
