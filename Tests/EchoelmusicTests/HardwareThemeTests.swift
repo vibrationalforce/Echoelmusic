@@ -313,65 +313,58 @@ final class AppThemeModeTests: XCTestCase {
     }
 }
 
-// MARK: - LiquidGlass.Tint Tests
+// MARK: - EchoelSurface.Tint Tests
 
-final class LiquidGlassTintTests: XCTestCase {
+final class EchoelSurfaceTintTests: XCTestCase {
 
     func testAllCasesCount() {
-        XCTAssertEqual(LiquidGlass.Tint.allCases.count, 9)
+        XCTAssertEqual(EchoelSurface.Tint.allCases.count, 8)
     }
 
-    func testOpacityValues() {
-        XCTAssertEqual(LiquidGlass.Tint.clear.opacity, 0.1, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.subtle.opacity, 0.2, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.vibrant.opacity, 0.4, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.ultraThin.opacity, 0.05, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.thick.opacity, 0.6, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.chromatic.opacity, 0.3, accuracy: 0.001)
+    func testFillOpacityValues() {
+        XCTAssertEqual(EchoelSurface.Tint.clear.fillOpacity, 0.04, accuracy: 0.001)
+        XCTAssertEqual(EchoelSurface.Tint.subtle.fillOpacity, 0.08, accuracy: 0.001)
+        XCTAssertEqual(EchoelSurface.Tint.vibrant.fillOpacity, 0.15, accuracy: 0.001)
+        XCTAssertEqual(EchoelSurface.Tint.muted.fillOpacity, 0.06, accuracy: 0.001)
+        XCTAssertEqual(EchoelSurface.Tint.accent.fillOpacity, 0.12, accuracy: 0.001)
     }
 
     func testCoherenceTintOpacity() {
-        XCTAssertEqual(LiquidGlass.Tint.coherenceLow.opacity, 0.25, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.coherenceMedium.opacity, 0.35, accuracy: 0.001)
-        XCTAssertEqual(LiquidGlass.Tint.coherenceHigh.opacity, 0.45, accuracy: 0.001)
-    }
-
-    func testBlurValues() {
-        XCTAssertEqual(LiquidGlass.Tint.clear.blur, 20)
-        XCTAssertEqual(LiquidGlass.Tint.ultraThin.blur, 20)
-        XCTAssertEqual(LiquidGlass.Tint.subtle.blur, 30)
-        XCTAssertEqual(LiquidGlass.Tint.vibrant.blur, 40)
-        XCTAssertEqual(LiquidGlass.Tint.thick.blur, 50)
-        XCTAssertEqual(LiquidGlass.Tint.coherenceLow.blur, 35)
-        XCTAssertEqual(LiquidGlass.Tint.coherenceMedium.blur, 35)
-        XCTAssertEqual(LiquidGlass.Tint.coherenceHigh.blur, 35)
+        XCTAssertEqual(EchoelSurface.Tint.coherenceLow.fillOpacity, 0.10, accuracy: 0.001)
+        XCTAssertEqual(EchoelSurface.Tint.coherenceMedium.fillOpacity, 0.12, accuracy: 0.001)
+        XCTAssertEqual(EchoelSurface.Tint.coherenceHigh.fillOpacity, 0.15, accuracy: 0.001)
     }
 
     func testRawValues() {
+        XCTAssertEqual(EchoelSurface.Tint.clear.rawValue, "Clear")
+        XCTAssertEqual(EchoelSurface.Tint.coherenceHigh.rawValue, "Coherence High")
+    }
+
+    func testLiquidGlassTypeAlias() {
+        // Verify backward compatibility
         XCTAssertEqual(LiquidGlass.Tint.clear.rawValue, "Clear")
-        XCTAssertEqual(LiquidGlass.Tint.coherenceHigh.rawValue, "Coherence High")
     }
 }
 
-// MARK: - LiquidGlass.DepthLevel Tests
+// MARK: - EchoelSurface.DepthLevel Tests
 
-final class LiquidGlassDepthLevelTests: XCTestCase {
+final class EchoelSurfaceDepthLevelTests: XCTestCase {
 
     func testAllCasesCount() {
-        XCTAssertEqual(LiquidGlass.DepthLevel.allCases.count, 6)
+        XCTAssertEqual(EchoelSurface.DepthLevel.allCases.count, 6)
     }
 
     func testRawValues() {
-        XCTAssertEqual(LiquidGlass.DepthLevel.background.rawValue, 0)
-        XCTAssertEqual(LiquidGlass.DepthLevel.base.rawValue, 1)
-        XCTAssertEqual(LiquidGlass.DepthLevel.elevated.rawValue, 2)
-        XCTAssertEqual(LiquidGlass.DepthLevel.floating.rawValue, 3)
-        XCTAssertEqual(LiquidGlass.DepthLevel.overlay.rawValue, 4)
-        XCTAssertEqual(LiquidGlass.DepthLevel.modal.rawValue, 5)
+        XCTAssertEqual(EchoelSurface.DepthLevel.background.rawValue, 0)
+        XCTAssertEqual(EchoelSurface.DepthLevel.base.rawValue, 1)
+        XCTAssertEqual(EchoelSurface.DepthLevel.elevated.rawValue, 2)
+        XCTAssertEqual(EchoelSurface.DepthLevel.floating.rawValue, 3)
+        XCTAssertEqual(EchoelSurface.DepthLevel.overlay.rawValue, 4)
+        XCTAssertEqual(EchoelSurface.DepthLevel.modal.rawValue, 5)
     }
 
     func testShadowRadiusIncreases() {
-        let levels = LiquidGlass.DepthLevel.allCases.sorted { $0.rawValue < $1.rawValue }
+        let levels = EchoelSurface.DepthLevel.allCases.sorted { $0.rawValue < $1.rawValue }
         for i in 0..<(levels.count - 1) {
             XCTAssertLessThanOrEqual(
                 levels[i].shadowRadius,
@@ -381,53 +374,60 @@ final class LiquidGlassDepthLevelTests: XCTestCase {
         }
     }
 
+    func testShadowRadiusCappedAt8() {
+        // Design constraint: max 8px shadow blur
+        for level in EchoelSurface.DepthLevel.allCases {
+            XCTAssertLessThanOrEqual(
+                level.shadowRadius, 8,
+                "\(level) shadow radius \(level.shadowRadius) exceeds 8px limit"
+            )
+        }
+    }
+
     func testShadowRadiusValues() {
-        XCTAssertEqual(LiquidGlass.DepthLevel.background.shadowRadius, 0)
-        XCTAssertEqual(LiquidGlass.DepthLevel.base.shadowRadius, 2)
-        XCTAssertEqual(LiquidGlass.DepthLevel.elevated.shadowRadius, 8)
-        XCTAssertEqual(LiquidGlass.DepthLevel.floating.shadowRadius, 16)
-        XCTAssertEqual(LiquidGlass.DepthLevel.overlay.shadowRadius, 24)
-        XCTAssertEqual(LiquidGlass.DepthLevel.modal.shadowRadius, 32)
+        XCTAssertEqual(EchoelSurface.DepthLevel.background.shadowRadius, 0)
+        XCTAssertEqual(EchoelSurface.DepthLevel.base.shadowRadius, 1)
+        XCTAssertEqual(EchoelSurface.DepthLevel.elevated.shadowRadius, 3)
+        XCTAssertEqual(EchoelSurface.DepthLevel.floating.shadowRadius, 5)
+        XCTAssertEqual(EchoelSurface.DepthLevel.overlay.shadowRadius, 7)
+        XCTAssertEqual(EchoelSurface.DepthLevel.modal.shadowRadius, 8)
     }
 
     func testZOffset() {
-        XCTAssertEqual(LiquidGlass.DepthLevel.background.zOffset, 0)
-        XCTAssertEqual(LiquidGlass.DepthLevel.base.zOffset, 10)
-        XCTAssertEqual(LiquidGlass.DepthLevel.elevated.zOffset, 20)
-        XCTAssertEqual(LiquidGlass.DepthLevel.modal.zOffset, 50)
+        XCTAssertEqual(EchoelSurface.DepthLevel.background.zOffset, 0)
+        XCTAssertEqual(EchoelSurface.DepthLevel.base.zOffset, 10)
+        XCTAssertEqual(EchoelSurface.DepthLevel.elevated.zOffset, 20)
+        XCTAssertEqual(EchoelSurface.DepthLevel.modal.zOffset, 50)
     }
 }
 
-// MARK: - LiquidGlass.CornerStyle Tests
+// MARK: - EchoelSurface.CornerStyle Tests
 
-final class LiquidGlassCornerStyleTests: XCTestCase {
+final class EchoelSurfaceCornerStyleTests: XCTestCase {
 
     func testSharpRadius() {
-        let radius = LiquidGlass.CornerStyle.sharp.radius(for: CGSize(width: 100, height: 100))
+        let radius = EchoelSurface.CornerStyle.sharp.radius(for: CGSize(width: 100, height: 100))
         XCTAssertEqual(radius, 0)
     }
 
     func testRoundedRadius() {
-        let radius = LiquidGlass.CornerStyle.rounded.radius(for: CGSize(width: 100, height: 100))
-        XCTAssertEqual(radius, 12)
+        let radius = EchoelSurface.CornerStyle.rounded.radius(for: CGSize(width: 100, height: 100))
+        XCTAssertEqual(radius, 8, "Rounded should be 8px per design constraints")
     }
 
     func testContinuousRadius() {
         let size = CGSize(width: 200, height: 100)
-        let radius = LiquidGlass.CornerStyle.continuous.radius(for: size)
-        XCTAssertEqual(radius, 20, "Continuous should be 20% of min dimension")
+        let radius = EchoelSurface.CornerStyle.continuous.radius(for: size)
+        XCTAssertEqual(radius, 12, "Continuous should be 12px max per design constraints")
     }
 
-    func testPillRadius() {
-        let size = CGSize(width: 200, height: 50)
-        let radius = LiquidGlass.CornerStyle.pill.radius(for: size)
-        XCTAssertEqual(radius, 25, "Pill should be half of min dimension")
-    }
-
-    func testCircleRadius() {
-        let size = CGSize(width: 100, height: 100)
-        let radius = LiquidGlass.CornerStyle.circle.radius(for: size)
-        XCTAssertEqual(radius, 50)
+    func testAllRadiiWithinLimit() {
+        // Design constraint: max 12px corner radius (no pills)
+        let size = CGSize(width: 200, height: 100)
+        for style in [EchoelSurface.CornerStyle.sharp, .rounded, .continuous] {
+            let radius = style.radius(for: size)
+            XCTAssertLessThanOrEqual(radius, 12, "Corner radius exceeds 12px limit")
+        }
     }
 }
 

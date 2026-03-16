@@ -1,64 +1,56 @@
 #if canImport(SwiftUI)
 // LiquidGlassDesignSystem.swift
-// Echoelmusic - Apple Liquid Glass Design System Integration
+// Echoelmusic — Solid Design System
 //
-// Based on Apple Human Interface Guidelines February 2026 Update
-// Liquid Glass design language for visionOS, iOS 26, macOS 17
+// Clean, minimal design: solid fills, subtle borders, no glassmorphism.
+// Follows Echoelmusic design constraints (no blur, no glow, max 8px shadow).
 //
-// Created 2026-02-04
 // Copyright (c) 2026 Echoelmusic. All rights reserved.
 
 #if canImport(SwiftUI)
 import SwiftUI
 #endif
 
-#if canImport(UIKit)
-import UIKit
-#endif
+// MARK: - Echoel Surface
 
-// MARK: - Liquid Glass Material
+/// Clean surface system — solid fills with subtle borders
+public struct EchoelSurface {
 
-/// Apple's Liquid Glass material system (HIG February 2026)
-/// Combines depth, translucency, and environmental awareness
-public struct LiquidGlass {
+    // MARK: - Tints
 
-    // MARK: - Glass Tints
-
-    /// Glass tint colors for different contexts
+    /// Surface tint colors for different contexts
     public enum Tint: String, CaseIterable, Sendable {
         case clear = "Clear"
         case subtle = "Subtle"
         case vibrant = "Vibrant"
-        case ultraThin = "Ultra Thin"
-        case thick = "Thick"
-        case chromatic = "Chromatic"
+        case muted = "Muted"
+        case accent = "Accent"
 
         /// Bio-reactive tints (Echoelmusic specific)
         case coherenceLow = "Coherence Low"
         case coherenceMedium = "Coherence Medium"
         case coherenceHigh = "Coherence High"
 
-        public var opacity: Double {
+        public var fillOpacity: Double {
             switch self {
-            case .clear: return 0.1
-            case .subtle: return 0.2
-            case .vibrant: return 0.4
-            case .ultraThin: return 0.05
-            case .thick: return 0.6
-            case .chromatic: return 0.3
-            case .coherenceLow: return 0.25
-            case .coherenceMedium: return 0.35
-            case .coherenceHigh: return 0.45
+            case .clear: return 0.04
+            case .subtle: return 0.08
+            case .vibrant: return 0.15
+            case .muted: return 0.06
+            case .accent: return 0.12
+            case .coherenceLow: return 0.10
+            case .coherenceMedium: return 0.12
+            case .coherenceHigh: return 0.15
             }
         }
 
-        public var blur: CGFloat {
+        public var fillColor: Color {
             switch self {
-            case .clear, .ultraThin: return 20
-            case .subtle, .chromatic: return 30
-            case .vibrant: return 40
-            case .thick: return 50
-            case .coherenceLow, .coherenceMedium, .coherenceHigh: return 35
+            case .clear, .subtle, .muted: return Color.white
+            case .vibrant, .accent: return Color.blue
+            case .coherenceLow: return Color.orange
+            case .coherenceMedium: return Color.yellow
+            case .coherenceHigh: return Color.green
             }
         }
     }
@@ -74,14 +66,15 @@ public struct LiquidGlass {
         case overlay = 4
         case modal = 5
 
+        /// Shadow radius capped at 8px per design constraints
         public var shadowRadius: CGFloat {
             switch self {
             case .background: return 0
-            case .base: return 2
-            case .elevated: return 8
-            case .floating: return 16
-            case .overlay: return 24
-            case .modal: return 32
+            case .base: return 1
+            case .elevated: return 3
+            case .floating: return 5
+            case .overlay: return 7
+            case .modal: return 8
             }
         }
 
@@ -92,133 +85,64 @@ public struct LiquidGlass {
 
     // MARK: - Corner Styles
 
-    /// Liquid Glass corner radius styles
+    /// Corner radius styles (max 12px per design constraints)
     public enum CornerStyle: Sendable {
         case sharp
-        case rounded
-        case continuous     // Apple's squircle
-        case pill
-        case circle
+        case rounded      // 8px
+        case continuous   // 12px (squircle)
 
         public func radius(for size: CGSize) -> CGFloat {
             switch self {
             case .sharp: return 0
-            case .rounded: return 12
-            case .continuous: return min(size.width, size.height) * 0.2
-            case .pill: return min(size.width, size.height) / 2
-            case .circle: return min(size.width, size.height) / 2
+            case .rounded: return 8
+            case .continuous: return 12
             }
         }
     }
 }
 
-// MARK: - Liquid Glass View Modifier
+// MARK: - Surface View Modifier
 
-/// Apply Liquid Glass effect to any view
-public struct LiquidGlassModifier: ViewModifier {
-    let tint: LiquidGlass.Tint
-    let depth: LiquidGlass.DepthLevel
-    let cornerStyle: LiquidGlass.CornerStyle
-    let isInteractive: Bool
+/// Apply clean surface styling to any view
+public struct SurfaceModifier: ViewModifier {
+    let tint: EchoelSurface.Tint
+    let depth: EchoelSurface.DepthLevel
+    let cornerStyle: EchoelSurface.CornerStyle
 
-    @State private var isPressed = false
     @Environment(\.colorScheme) private var colorScheme
 
     public func body(content: Content) -> some View {
         content
-            .background(glassBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(surfaceBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(borderColor, lineWidth: 1)
+            )
             .shadow(
                 color: shadowColor,
                 radius: depth.shadowRadius,
                 x: 0,
-                y: depth.shadowRadius / 4
+                y: depth.shadowRadius / 3
             )
-            .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
     }
 
-    private var glassBackground: some View {
-        ZStack {
-            // Base blur (ultraThinMaterial requires watchOS 10.0+)
-            #if os(watchOS)
-            Rectangle()
-                .fill(Color.black.opacity(0.3))
-            #else
-            Rectangle()
-                .fill(.ultraThinMaterial)
-            #endif
-
-            // Tint overlay
-            Rectangle()
-                .fill(tintGradient)
-                .opacity(tint.opacity)
-
-            // Inner highlight (top edge)
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.3),
-                            Color.white.opacity(0.0)
-                        ],
-                        startPoint: .top,
-                        endPoint: .center
-                    )
-                )
-
-            // Specular highlight
-            Circle()
-                .fill(Color.white.opacity(0.1))
-                .blur(radius: 20)
-                .offset(x: -30, y: -30)
-                .scaleEffect(0.5)
-        }
+    private var surfaceBackground: some View {
+        Rectangle()
+            .fill(tint.fillColor.opacity(tint.fillOpacity))
+            .background(colorScheme == .dark ? Color(white: 0.12) : Color(white: 0.97))
     }
 
-    private var tintGradient: LinearGradient {
-        switch tint {
-        case .coherenceLow:
-            return LinearGradient(
-                colors: [Color.orange.opacity(0.3), Color.red.opacity(0.2)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .coherenceMedium:
-            return LinearGradient(
-                colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.2)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .coherenceHigh:
-            return LinearGradient(
-                colors: [Color.green.opacity(0.3), Color.cyan.opacity(0.2)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .chromatic:
-            return LinearGradient(
-                colors: [
-                    Color.pink.opacity(0.2),
-                    Color.purple.opacity(0.2),
-                    Color.cyan.opacity(0.2)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        default:
-            return LinearGradient(
-                colors: [Color.white.opacity(0.1), Color.white.opacity(0.05)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
+    private var borderColor: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.08)
+            : Color.black.opacity(0.06)
     }
 
     private var shadowColor: Color {
         colorScheme == .dark
-            ? Color.black.opacity(0.5)
-            : Color.black.opacity(0.15)
+            ? Color.black.opacity(0.4)
+            : Color.black.opacity(0.08)
     }
 }
 
@@ -226,24 +150,22 @@ public struct LiquidGlassModifier: ViewModifier {
 
 extension View {
 
-    /// Apply Liquid Glass material effect
-    public func liquidGlass(
-        tint: LiquidGlass.Tint = .subtle,
-        depth: LiquidGlass.DepthLevel = .elevated,
-        cornerStyle: LiquidGlass.CornerStyle = .continuous,
-        interactive: Bool = false
+    /// Apply clean surface styling
+    public func echoelSurface(
+        tint: EchoelSurface.Tint = .subtle,
+        depth: EchoelSurface.DepthLevel = .elevated,
+        cornerStyle: EchoelSurface.CornerStyle = .continuous
     ) -> some View {
-        modifier(LiquidGlassModifier(
+        modifier(SurfaceModifier(
             tint: tint,
             depth: depth,
-            cornerStyle: cornerStyle,
-            isInteractive: interactive
+            cornerStyle: cornerStyle
         ))
     }
 
-    /// Bio-reactive Liquid Glass that responds to coherence
-    public func bioReactiveLiquidGlass(coherence: Double) -> some View {
-        let tint: LiquidGlass.Tint
+    /// Bio-reactive surface that responds to coherence
+    public func bioReactiveSurface(coherence: Double) -> some View {
+        let tint: EchoelSurface.Tint
         if coherence >= 0.6 {
             tint = .coherenceHigh
         } else if coherence >= 0.4 {
@@ -251,18 +173,39 @@ extension View {
         } else {
             tint = .coherenceLow
         }
-
-        return self.liquidGlass(tint: tint, depth: .floating)
+        return self.echoelSurface(tint: tint, depth: .floating)
     }
 }
 
-// MARK: - Liquid Glass Button
+// MARK: - Backward Compatibility
 
-/// Button styled with Liquid Glass effect
-public struct LiquidGlassButton: View {
+/// Type aliases for existing code referencing LiquidGlass
+public typealias LiquidGlass = EchoelSurface
+
+extension View {
+    /// Backward-compatible alias — applies clean surface styling
+    public func liquidGlass(
+        tint: EchoelSurface.Tint = .subtle,
+        depth: EchoelSurface.DepthLevel = .elevated,
+        cornerStyle: EchoelSurface.CornerStyle = .continuous,
+        interactive: Bool = false
+    ) -> some View {
+        echoelSurface(tint: tint, depth: depth, cornerStyle: cornerStyle)
+    }
+
+    /// Backward-compatible alias
+    public func bioReactiveLiquidGlass(coherence: Double) -> some View {
+        bioReactiveSurface(coherence: coherence)
+    }
+}
+
+// MARK: - Surface Button
+
+/// Button with clean surface styling
+public struct SurfaceButton: View {
     let title: String
     let icon: String?
-    let tint: LiquidGlass.Tint
+    let tint: EchoelSurface.Tint
     let action: () -> Void
 
     @State private var isPressed = false
@@ -270,7 +213,7 @@ public struct LiquidGlassButton: View {
     public init(
         _ title: String,
         icon: String? = nil,
-        tint: LiquidGlass.Tint = .vibrant,
+        tint: EchoelSurface.Tint = .vibrant,
         action: @escaping () -> Void
     ) {
         self.title = title
@@ -297,11 +240,11 @@ public struct LiquidGlassButton: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .liquidGlass(tint: tint, depth: .elevated, interactive: true)
+            .echoelSurface(tint: tint, depth: .elevated)
         }
         .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.96 : 1.0)
-        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isPressed)
+        .opacity(isPressed ? 0.7 : 1.0)
+        .animation(.easeOut(duration: 0.15), value: isPressed)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in isPressed = true }
@@ -310,17 +253,20 @@ public struct LiquidGlassButton: View {
     }
 }
 
-// MARK: - Liquid Glass Card
+/// Backward-compatible alias
+public typealias LiquidGlassButton = SurfaceButton
 
-/// Card component with Liquid Glass effect
-public struct LiquidGlassCard<Content: View>: View {
-    let depth: LiquidGlass.DepthLevel
-    let tint: LiquidGlass.Tint
+// MARK: - Surface Card
+
+/// Card component with clean surface styling
+public struct SurfaceCard<Content: View>: View {
+    let depth: EchoelSurface.DepthLevel
+    let tint: EchoelSurface.Tint
     let content: () -> Content
 
     public init(
-        depth: LiquidGlass.DepthLevel = .elevated,
-        tint: LiquidGlass.Tint = .subtle,
+        depth: EchoelSurface.DepthLevel = .elevated,
+        tint: EchoelSurface.Tint = .subtle,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.depth = depth
@@ -331,15 +277,17 @@ public struct LiquidGlassCard<Content: View>: View {
     public var body: some View {
         content()
             .padding(16)
-            .liquidGlass(tint: tint, depth: depth)
+            .echoelSurface(tint: tint, depth: depth)
     }
 }
 
+/// Backward-compatible alias
+public typealias LiquidGlassCard = SurfaceCard
 
-// MARK: - Liquid Glass Navigation Bar
+// MARK: - Surface Navigation Bar
 
-/// Navigation bar with Liquid Glass backdrop
-public struct LiquidGlassNavigationBar: View {
+/// Navigation bar with clean surface backdrop
+public struct SurfaceNavigationBar: View {
     let title: String
     let leadingAction: (() -> Void)?
     let trailingAction: (() -> Void)?
@@ -384,14 +332,17 @@ public struct LiquidGlassNavigationBar: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 56)
-        .liquidGlass(tint: .ultraThin, depth: .floating)
+        .echoelSurface(tint: .muted, depth: .floating)
     }
 }
 
-// MARK: - Liquid Glass Tab Bar
+/// Backward-compatible alias
+public typealias LiquidGlassNavigationBar = SurfaceNavigationBar
 
-/// Tab bar with Liquid Glass effect
-public struct LiquidGlassTabBar: View {
+// MARK: - Surface Tab Bar
+
+/// Tab bar with clean surface styling
+public struct SurfaceTabBar: View {
     @Binding var selectedTab: Int
     let tabs: [(icon: String, title: String)]
 
@@ -404,7 +355,7 @@ public struct LiquidGlassTabBar: View {
         HStack(spacing: 0) {
             ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
                 Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    withAnimation(.easeOut(duration: 0.15)) {
                         selectedTab = index
                     }
                     #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
@@ -434,32 +385,29 @@ public struct LiquidGlassTabBar: View {
         }
         .padding(.horizontal, 8)
         .padding(.bottom, 8)
-        .liquidGlass(tint: .subtle, depth: .floating)
+        .echoelSurface(tint: .subtle, depth: .floating)
     }
 }
 
+/// Backward-compatible alias
+public typealias LiquidGlassTabBar = SurfaceTabBar
 
 // MARK: - Preview
 
 #if DEBUG
-#Preview("Liquid Glass Components") {
+#Preview("Surface Components") {
     ZStack {
-        // Background
-        LinearGradient(
-            colors: [Color.purple.opacity(0.3), Color.blue.opacity(0.3)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+        Color(white: 0.08)
+            .ignoresSafeArea()
 
         VStack(spacing: 20) {
-            LiquidGlassNavigationBar(
+            SurfaceNavigationBar(
                 title: "Echoelmusic",
                 leadingAction: {},
                 trailingAction: {}
             )
 
-            LiquidGlassCard(tint: .chromatic) {
+            SurfaceCard(tint: .accent) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Creative Session")
                         .font(.headline)
@@ -470,8 +418,8 @@ public struct LiquidGlassTabBar: View {
             }
 
             HStack(spacing: 16) {
-                LiquidGlassButton("Start", icon: "play.fill", tint: .coherenceHigh) {}
-                LiquidGlassButton("Pause", icon: "pause.fill", tint: .subtle) {}
+                SurfaceButton("Start", icon: "play.fill", tint: .coherenceHigh) {}
+                SurfaceButton("Pause", icon: "pause.fill", tint: .subtle) {}
             }
 
             Spacer()

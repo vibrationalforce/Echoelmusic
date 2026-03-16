@@ -74,9 +74,8 @@ struct MainNavigationHub: View {
         .background(
             ZStack {
                 EchoelBrand.bgSurface.opacity(0.92)
-                if #available(iOS 15.0, *) {
-                    Rectangle().fill(.ultraThinMaterial).opacity(0.25)
-                }
+                // Solid surface — no glassmorphism
+                Rectangle().fill(EchoelBrand.bgElevated.opacity(0.15))
             }
             .overlay(
                 Rectangle()
@@ -142,12 +141,8 @@ struct MainNavigationHub: View {
                             .offset(x: isPlaying ? 0 : 1) // Optical center for play triangle
                     }
                     .shadow(
-                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.35) : Color.clear,
-                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 10 : 0
-                    )
-                    .shadow(
-                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.15) : Color.clear,
-                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 20 : 0
+                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.25) : Color.clear,
+                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 6 : 0
                     )
                 }
                 .buttonStyle(.plain)

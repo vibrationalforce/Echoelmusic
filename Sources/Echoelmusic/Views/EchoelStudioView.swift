@@ -273,9 +273,8 @@ struct EchoelStudioView: View {
         .background(
             ZStack {
                 EchoelBrand.bgSurface.opacity(0.95)
-                if #available(iOS 15.0, *) {
-                    Rectangle().fill(.ultraThinMaterial).opacity(0.3)
-                }
+                // Solid surface — no glassmorphism
+                Rectangle().fill(EchoelBrand.bgElevated.opacity(0.15))
             }
             .overlay(
                 Rectangle()

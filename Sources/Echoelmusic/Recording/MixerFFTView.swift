@@ -93,13 +93,11 @@ struct MixerFFTView: View {
                 )
             )
 
-            // Add glow for high levels
+            // Brighter fill for high levels (opacity only, no glow)
             if normalizedHeight > 0.7 {
-                var glowContext = context
-                glowContext.blendMode = .plusLighter
-                glowContext.fill(
+                context.fill(
                     barPath,
-                    with: .color(trackColor.opacity(Double(normalizedHeight - 0.7)))
+                    with: .color(trackColor.opacity(Double(normalizedHeight - 0.4)))
                 )
             }
         }

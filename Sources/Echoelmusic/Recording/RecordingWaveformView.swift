@@ -87,14 +87,12 @@ struct RecordingWaveformView: View {
             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         )
 
-        // Add glow effect based on level
+        // Thicker stroke at higher levels (opacity only, no glow)
         if level > 0.1 {
-            var glowContext = context
-            glowContext.blendMode = .plusLighter
-            glowContext.stroke(
+            context.stroke(
                 waveformPath,
-                with: .color(.cyan.opacity(Double(level))),
-                style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                with: .color(.cyan.opacity(Double(level) * 0.5)),
+                style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
             )
         }
     }

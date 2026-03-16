@@ -112,13 +112,12 @@ public struct EchoelWaveformMark: View {
 
                 // Three sine wave curves underneath
                 ForEach(0..<3, id: \.self) { i in
-                    // Glow layer
+                    // Soft layer (wider, lower opacity — no blur)
                     EchoelBrandWaveShape(waveIndex: i)
                         .stroke(
-                            brandColor.opacity(waveOpacities[i] * 0.3),
+                            brandColor.opacity(waveOpacities[i] * 0.2),
                             style: StrokeStyle(lineWidth: strokeWidth * 1.5, lineCap: .round)
                         )
-                        .blur(radius: size * 0.01)
 
                     // Main stroke
                     EchoelBrandWaveShape(waveIndex: i)
