@@ -26,10 +26,10 @@ const TOOLS = [
   { name: "EchoelBio", icon: "heart.text.square", desc: "HRV, HR, breathing, ARKit" },
   { name: "EchoelVis", icon: "eye", desc: "8 modes, Metal 120fps" },
   { name: "EchoelVid", icon: "video", desc: "Capture, edit, stream, ProRes" },
-  { name: "EchoelLux", icon: "lightbulb", desc: "DMX 512, Art-Net, lasers" },
+  { name: "EchoelLux", icon: "lightbulb", desc: "DMX 512, Art-Net, smart home" },
   { name: "EchoelStage", icon: "display", desc: "External displays, AirPlay" },
-  { name: "EchoelNet", icon: "network", desc: "Ableton Link, Dante, <10ms" },
-  { name: "EchoelAI", icon: "brain", desc: "CoreML, LLM, stem separation" },
+  { name: "EchoelNet", icon: "network", desc: "OSC, Ableton Link, <10ms" },
+  { name: "EchoelAI", icon: "brain", desc: "CoreML, stem separation" },
 ];
 
 interface Props {
