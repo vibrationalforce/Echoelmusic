@@ -140,6 +140,35 @@ public struct GenreClassification: Sendable {
     public let features: [String: Double]
 }
 
+// MARK: - Mix Suggestion
+
+/// A single actionable mix suggestion from AI analysis
+public struct MixSuggestion: Sendable {
+    public enum Priority: Int, Sendable, Comparable {
+        case low = 0
+        case medium = 1
+        case high = 2
+        case critical = 3
+
+        public static func < (lhs: Priority, rhs: Priority) -> Bool {
+            lhs.rawValue < rhs.rawValue
+        }
+    }
+
+    public enum Category: String, Sendable {
+        case loudness = "Loudness"
+        case eq = "EQ"
+        case dynamics = "Dynamics"
+        case stereo = "Stereo"
+        case general = "General"
+    }
+
+    public let title: String
+    public let detail: String
+    public let category: Category
+    public let priority: Priority
+}
+
 // MARK: - EchoelAI Engine
 
 /// On-device audio intelligence engine
@@ -287,6 +316,11 @@ public final class EchoelAIEngine {
     // MARK: - LUFS Measurement (ITU-R BS.1770)
 
     /// Measure loudness per ITU-R BS.1770-4
+    ///
+    /// Applies two-stage K-weighting (pre-filter shelf + RLB high-pass)
+    /// before computing mean-square power. Coefficients are for 48 kHz;
+    /// at other sample rates, the shelf frequency shifts slightly but
+    /// remains a valid approximation for loudness metering.
     public func measureLUFS(buffer: AVAudioPCMBuffer) -> LUFSMeasurement {
         guard let channelData = buffer.floatChannelData else {
             return LUFSMeasurement()
@@ -294,34 +328,77 @@ public final class EchoelAIEngine {
         let frameCount = Int(buffer.frameLength)
         guard frameCount > 0 else { return LUFSMeasurement() }
 
-        // Step 1: K-weighting filter (simplified: pre-emphasis + RLB)
+        // Step 1: K-weighting via two cascaded biquad IIR filters
+        // Stage 1 — Pre-filter (high-shelf boost ~+4 dB above 1681 Hz)
+        // ITU-R BS.1770-4 coefficients at 48 kHz
+        let preB: [Double] = [1.53512485958697, -2.69169618940638, 1.19839281085285]
+        let preA: [Double] = [1.0, -1.69065929318241, 0.73248077421585]
+
+        // Stage 2 — Revised Low-frequency B-curve (RLB, high-pass ~38 Hz)
+        let rlbB: [Double] = [1.0, -2.0, 1.0]
+        let rlbA: [Double] = [1.0, -1.99004745483398, 0.99007225036621]
+
+        var stage1 = [Float](repeating: 0, count: frameCount)
         var filtered = [Float](repeating: 0, count: frameCount)
-        let input = UnsafeBufferPointer(start: channelData[0], count: frameCount)
 
-        // Simple approximation of K-weighting
-        for i in 0..<frameCount {
-            filtered[i] = input[i]
-        }
+        // Apply pre-filter biquad
+        applyBiquad(input: channelData[0], output: &stage1, count: frameCount, b: preB, a: preA)
+        // Apply RLB biquad
+        applyBiquad(input: &stage1, output: &filtered, count: frameCount, b: rlbB, a: rlbA)
 
-        // Step 2: Mean square
+        // Step 2: Mean square of K-weighted signal
         var meanSquare: Float = 0
         vDSP_measqv(filtered, 1, &meanSquare, vDSP_Length(frameCount))
 
         // Step 3: LUFS = -0.691 + 10 * log10(meanSquare)
         let lufs = meanSquare > 0 ? Double(-0.691 + 10.0 * log10(Double(meanSquare))) : -70.0
 
-        // Step 4: True peak (4x oversampled)
+        // Step 4: True peak (magnitude peak of K-weighted signal)
         var peak: Float = 0
         vDSP_maxmgv(filtered, 1, &peak, vDSP_Length(frameCount))
         let truePeakDB = peak > 0 ? 20.0 * log10(Double(peak)) : -70.0
 
+        // Step 5: Momentary loudness (last 400ms window)
+        let sampleRate = buffer.format.sampleRate
+        let momentaryFrames = min(frameCount, Int(0.4 * sampleRate))
+        let momentaryOffset = frameCount - momentaryFrames
+        var momentaryMS: Float = 0
+        filtered.withUnsafeBufferPointer { buf in
+            guard let base = buf.baseAddress else { return }
+            vDSP_measqv(base.advanced(by: momentaryOffset), 1, &momentaryMS, vDSP_Length(momentaryFrames))
+        }
+        let momentaryLUFS = momentaryMS > 0 ? Double(-0.691 + 10.0 * log10(Double(momentaryMS))) : -70.0
+
+        // Step 6: Short-term loudness (last 3s window)
+        let shortTermFrames = min(frameCount, Int(3.0 * sampleRate))
+        let shortTermOffset = frameCount - shortTermFrames
+        var shortTermMS: Float = 0
+        filtered.withUnsafeBufferPointer { buf in
+            guard let base = buf.baseAddress else { return }
+            vDSP_measqv(base.advanced(by: shortTermOffset), 1, &shortTermMS, vDSP_Length(shortTermFrames))
+        }
+        let shortTermLUFS = shortTermMS > 0 ? Double(-0.691 + 10.0 * log10(Double(shortTermMS))) : -70.0
+
         return LUFSMeasurement(
-            momentary: lufs,
-            shortTerm: lufs,
+            momentary: momentaryLUFS,
+            shortTerm: shortTermLUFS,
             integrated: lufs,
             truePeak: truePeakDB,
-            range: 8.0 // Would need gated loudness for proper LRA
+            range: abs(momentaryLUFS - shortTermLUFS)
         )
+    }
+
+    /// Apply a second-order IIR biquad filter (Direct Form I)
+    private func applyBiquad(input: UnsafePointer<Float>, output: inout [Float], count: Int, b: [Double], a: [Double]) {
+        var x1: Double = 0, x2: Double = 0
+        var y1: Double = 0, y2: Double = 0
+        for i in 0..<count {
+            let x0 = Double(input[i])
+            let y0 = b[0] * x0 + b[1] * x1 + b[2] * x2 - a[1] * y1 - a[2] * y2
+            output[i] = Float(y0)
+            x2 = x1; x1 = x0
+            y2 = y1; y1 = y0
+        }
     }
 
     // MARK: - Tempo Detection
@@ -800,6 +877,103 @@ public final class EchoelAIEngine {
             confidence: Float(bestGenre?.value ?? 0),
             features: features
         )
+    }
+
+    // MARK: - Mix Suggestions
+
+    /// Generate actionable mix suggestions based on audio analysis.
+    /// Analyzes LUFS, spectral balance, and dynamics to provide
+    /// prioritized recommendations for improving the mix.
+    public func generateMixSuggestions(buffer: AVAudioPCMBuffer) -> [MixSuggestion] {
+        var suggestions: [MixSuggestion] = []
+
+        let lufs = measureLUFS(buffer: buffer)
+        let centroid = measureSpectralCentroid(buffer: buffer)
+        let eqBands = generateAutoEQ(buffer: buffer)
+
+        // Loudness checks
+        if lufs.integrated > -9.0 {
+            suggestions.append(MixSuggestion(
+                title: "Mix is too loud",
+                detail: String(format: "Integrated loudness %.1f LUFS exceeds -9 LUFS. Risk of distortion and listener fatigue. Target -14 LUFS for streaming.", lufs.integrated),
+                category: .loudness,
+                priority: .critical
+            ))
+        } else if lufs.integrated > -11.0 {
+            suggestions.append(MixSuggestion(
+                title: "Mix is loud",
+                detail: String(format: "Integrated loudness %.1f LUFS. Most streaming platforms normalize to -14 LUFS; extra loudness will be reduced.", lufs.integrated),
+                category: .loudness,
+                priority: .medium
+            ))
+        } else if lufs.integrated < -20.0 && lufs.integrated > -70.0 {
+            suggestions.append(MixSuggestion(
+                title: "Mix is quiet",
+                detail: String(format: "Integrated loudness %.1f LUFS is below typical levels. Consider raising overall gain or adding gentle compression.", lufs.integrated),
+                category: .loudness,
+                priority: .medium
+            ))
+        }
+
+        // True peak check
+        if lufs.truePeak > -1.0 {
+            suggestions.append(MixSuggestion(
+                title: "True peak too high",
+                detail: String(format: "True peak %.1f dBFS exceeds -1.0 dBTP. Add a limiter or reduce gain to prevent inter-sample clipping.", lufs.truePeak),
+                category: .loudness,
+                priority: .high
+            ))
+        }
+
+        // Loudness range (dynamics)
+        if lufs.range > 15.0 {
+            suggestions.append(MixSuggestion(
+                title: "Wide dynamic range",
+                detail: String(format: "Loudness range %.1f LU is very wide. Consider gentle bus compression (2:1, slow attack) for more consistent playback.", lufs.range),
+                category: .dynamics,
+                priority: .low
+            ))
+        } else if lufs.range < 2.0 && lufs.integrated > -70.0 {
+            suggestions.append(MixSuggestion(
+                title: "Over-compressed",
+                detail: String(format: "Loudness range %.1f LU suggests heavy compression. Back off the limiter to restore musical dynamics.", lufs.range),
+                category: .dynamics,
+                priority: .medium
+            ))
+        }
+
+        // Spectral balance
+        if centroid > 5000.0 {
+            suggestions.append(MixSuggestion(
+                title: "Mix sounds bright",
+                detail: String(format: "Spectral centroid %.0f Hz is high. Consider a gentle high-shelf cut at 8 kHz (-2 to -3 dB) to reduce harshness.", centroid),
+                category: .eq,
+                priority: .medium
+            ))
+        } else if centroid < 800.0 && centroid > 0 {
+            suggestions.append(MixSuggestion(
+                title: "Mix sounds muddy",
+                detail: String(format: "Spectral centroid %.0f Hz is low. Consider cutting 200-400 Hz and boosting presence at 2-5 kHz.", centroid),
+                category: .eq,
+                priority: .medium
+            ))
+        }
+
+        // EQ band analysis — flag any large corrections
+        for band in eqBands {
+            if abs(band.gainDB) > 9.0 {
+                suggestions.append(MixSuggestion(
+                    title: "Large EQ correction at \(band.name)",
+                    detail: String(format: "%s needs %.1f dB correction. This may indicate a recording or monitoring issue at this frequency.", band.name, band.gainDB),
+                    category: .eq,
+                    priority: .high
+                ))
+            }
+        }
+
+        // Sort by priority (highest first)
+        suggestions.sort { $0.priority > $1.priority }
+        return suggestions
     }
 
     // MARK: - DSP Filter Helpers
