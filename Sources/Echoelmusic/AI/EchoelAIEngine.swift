@@ -113,6 +113,33 @@ public struct LUFSMeasurement: Sendable {
     public var range: Double = 0.0
 }
 
+// MARK: - EQ Band
+
+/// A single EQ band with frequency and gain
+public struct EQBand: Sendable {
+    public let name: String
+    public let frequency: Double
+    public var gainDB: Float
+}
+
+// MARK: - Chord Detection Result
+
+/// Result of chord detection analysis
+public struct ChordDetectionResult: Sendable {
+    public let chord: String
+    public let confidence: Float
+    public let chroma: [Float]
+}
+
+// MARK: - Genre Classification
+
+/// Result of genre classification
+public struct GenreClassification: Sendable {
+    public let genre: String
+    public let confidence: Float
+    public let features: [String: Double]
+}
+
 // MARK: - EchoelAI Engine
 
 /// On-device audio intelligence engine
@@ -510,6 +537,269 @@ public final class EchoelAIEngine {
         }
 
         return sumMag > 0 ? sumWeighted / sumMag : 2000.0
+    }
+
+    // MARK: - Auto-EQ
+
+    /// Generate EQ correction curve from spectral analysis.
+    /// Compares the input spectrum against a target curve (pink noise reference)
+    /// and returns per-band gain adjustments in dB.
+    ///
+    /// Bands: 31, 63, 125, 250, 500, 1k, 2k, 4k, 8k, 16k Hz
+    public func generateAutoEQ(buffer: AVAudioPCMBuffer, targetLUFS: Double = -14.0) -> [EQBand] {
+        guard let channelData = buffer.floatChannelData else { return [] }
+        let frameCount = Int(buffer.frameLength)
+        let sampleRate = buffer.format.sampleRate
+        let fftSize = 4096
+        guard frameCount >= fftSize else { return [] }
+
+        // FFT
+        let log2n = vDSP_Length(Foundation.log2(Double(fftSize)))
+        guard let fftSetup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else { return [] }
+        defer { vDSP_destroy_fftsetup(fftSetup) }
+
+        let halfSize = fftSize / 2
+        var windowed = [Float](repeating: 0, count: fftSize)
+        var window = [Float](repeating: 0, count: fftSize)
+        vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
+        vDSP_vmul(channelData[0], 1, window, 1, &windowed, 1, vDSP_Length(fftSize))
+
+        var realPart = [Float](repeating: 0, count: halfSize)
+        var imagPart = [Float](repeating: 0, count: halfSize)
+        windowed.withUnsafeBufferPointer { inputPtr in
+            guard let base = inputPtr.baseAddress else { return }
+            base.withMemoryRebound(to: DSPComplex.self, capacity: halfSize) { complexPtr in
+                var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
+                vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(halfSize))
+            }
+        }
+        var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
+        vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(kFFTDirection_Forward))
+
+        var magnitudes = [Float](repeating: 0, count: halfSize)
+        vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(halfSize))
+
+        // Band center frequencies
+        let bandFreqs: [Double] = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
+        let bandNames = ["31 Hz", "63 Hz", "125 Hz", "250 Hz", "500 Hz", "1 kHz", "2 kHz", "4 kHz", "8 kHz", "16 kHz"]
+
+        // Pink noise reference (each octave has equal energy → -3dB/octave)
+        // Normalized so 1kHz = 0 dB
+        let pinkReference: [Float] = [6.0, 3.0, 0.0, -3.0, -6.0, -9.0, -12.0, -15.0, -18.0, -21.0]
+
+        var bands: [EQBand] = []
+        let binWidth = sampleRate / Double(fftSize)
+
+        for (i, freq) in bandFreqs.enumerated() {
+            let lowFreq = freq / sqrt(2.0)
+            let highFreq = freq * sqrt(2.0)
+            let lowBin = max(1, Int(lowFreq / binWidth))
+            let highBin = min(halfSize - 1, Int(highFreq / binWidth))
+
+            guard highBin > lowBin else {
+                bands.append(EQBand(name: bandNames[i], frequency: freq, gainDB: 0))
+                continue
+            }
+
+            var bandEnergy: Float = 0
+            for bin in lowBin...highBin {
+                bandEnergy += magnitudes[bin]
+            }
+            bandEnergy /= Float(highBin - lowBin + 1)
+
+            let bandDB = bandEnergy > 0 ? 10.0 * log10(Double(bandEnergy)) : -60.0
+            let correction = Float(-bandDB) + pinkReference[i]
+            let clampedGain = max(-12.0, min(12.0, correction))
+
+            bands.append(EQBand(name: bandNames[i], frequency: freq, gainDB: clampedGain))
+        }
+
+        return bands
+    }
+
+    // MARK: - Chord Detection
+
+    /// Detect the most likely chord from an audio buffer using chroma features.
+    /// Returns chord name (e.g., "C major", "Am7", "G7")
+    public func detectChord(buffer: AVAudioPCMBuffer) -> ChordDetectionResult {
+        guard let channelData = buffer.floatChannelData else {
+            return ChordDetectionResult(chord: "Unknown", confidence: 0, chroma: Array(repeating: 0, count: 12))
+        }
+        let frameCount = Int(buffer.frameLength)
+        let sampleRate = buffer.format.sampleRate
+        let fftSize = 4096
+        guard frameCount >= fftSize else {
+            return ChordDetectionResult(chord: "Unknown", confidence: 0, chroma: Array(repeating: 0, count: 12))
+        }
+
+        // Compute chroma (reuse FFT approach from detectKey)
+        let log2n = vDSP_Length(Foundation.log2(Double(fftSize)))
+        guard let fftSetup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else {
+            return ChordDetectionResult(chord: "Unknown", confidence: 0, chroma: Array(repeating: 0, count: 12))
+        }
+        defer { vDSP_destroy_fftsetup(fftSetup) }
+
+        var windowed = [Float](repeating: 0, count: fftSize)
+        var window = [Float](repeating: 0, count: fftSize)
+        vDSP_hann_window(&window, vDSP_Length(fftSize), Int32(vDSP_HANN_NORM))
+        vDSP_vmul(channelData[0], 1, window, 1, &windowed, 1, vDSP_Length(fftSize))
+
+        let halfSize = fftSize / 2
+        var realPart = [Float](repeating: 0, count: halfSize)
+        var imagPart = [Float](repeating: 0, count: halfSize)
+        windowed.withUnsafeBufferPointer { inputPtr in
+            guard let base = inputPtr.baseAddress else { return }
+            base.withMemoryRebound(to: DSPComplex.self, capacity: halfSize) { complexPtr in
+                var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
+                vDSP_ctoz(complexPtr, 2, &splitComplex, 1, vDSP_Length(halfSize))
+            }
+        }
+        var splitComplex = DSPSplitComplex(realp: &realPart, imagp: &imagPart)
+        vDSP_fft_zrip(fftSetup, &splitComplex, 1, log2n, FFTDirection(kFFTDirection_Forward))
+
+        var magnitudes = [Float](repeating: 0, count: halfSize)
+        vDSP_zvmags(&splitComplex, 1, &magnitudes, 1, vDSP_Length(halfSize))
+
+        // Build chromagram
+        var chroma = [Float](repeating: 0, count: 12)
+        let binResolution = sampleRate / Double(fftSize)
+        for bin in 1..<halfSize {
+            let freq = Double(bin) * binResolution
+            guard freq >= 65.0 && freq <= 2100.0 else { continue } // C2 to C7
+            let midiNote = 69.0 + 12.0 * Foundation.log2(freq / 440.0)
+            let pitchClass = Int(round(midiNote).truncatingRemainder(dividingBy: 12))
+            let safeIndex = ((pitchClass % 12) + 12) % 12
+            chroma[safeIndex] += magnitudes[bin]
+        }
+
+        // Normalize
+        var maxVal: Float = 0
+        vDSP_maxv(chroma, 1, &maxVal, vDSP_Length(12))
+        if maxVal > 0 {
+            vDSP_vsdiv(chroma, 1, &maxVal, &chroma, 1, vDSP_Length(12))
+        }
+
+        // Match against chord templates
+        let noteNames = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
+
+        // Chord templates: intervals from root
+        let chordTypes: [(name: String, intervals: [Int])] = [
+            ("major", [0, 4, 7]),
+            ("minor", [0, 3, 7]),
+            ("7", [0, 4, 7, 10]),
+            ("m7", [0, 3, 7, 10]),
+            ("maj7", [0, 4, 7, 11]),
+            ("dim", [0, 3, 6]),
+            ("aug", [0, 4, 8]),
+            ("sus4", [0, 5, 7]),
+            ("sus2", [0, 2, 7]),
+        ]
+
+        var bestChord = "Unknown"
+        var bestScore: Float = 0
+
+        for root in 0..<12 {
+            for chordType in chordTypes {
+                var template = [Float](repeating: 0, count: 12)
+                for interval in chordType.intervals {
+                    template[(root + interval) % 12] = 1.0
+                }
+
+                var score: Float = 0
+                vDSP_dotpr(chroma, 1, template, 1, &score, vDSP_Length(12))
+
+                // Penalize non-chord tones
+                for i in 0..<12 {
+                    if template[i] == 0 && chroma[i] > 0.3 {
+                        score -= chroma[i] * 0.5
+                    }
+                }
+
+                if score > bestScore {
+                    bestScore = score
+                    let suffix = chordType.name == "major" ? "" : chordType.name == "minor" ? "m" : chordType.name
+                    bestChord = "\(noteNames[root])\(suffix)"
+                }
+            }
+        }
+
+        let confidence = min(1.0, bestScore / Float(3.0))
+        return ChordDetectionResult(chord: bestChord, confidence: confidence, chroma: chroma)
+    }
+
+    // MARK: - Genre Classification
+
+    /// Classify audio genre based on spectral and temporal features.
+    /// Uses a rule-based heuristic (no ML model required).
+    public func classifyGenre(buffer: AVAudioPCMBuffer) -> GenreClassification {
+        guard let channelData = buffer.floatChannelData else {
+            return GenreClassification(genre: "Unknown", confidence: 0, features: [:])
+        }
+        let frameCount = Int(buffer.frameLength)
+        guard frameCount > 0 else {
+            return GenreClassification(genre: "Unknown", confidence: 0, features: [:])
+        }
+
+        // Feature extraction
+        var rms: Float = 0
+        vDSP_rmsqv(channelData[0], 1, &rms, vDSP_Length(frameCount))
+
+        let centroid = measureSpectralCentroid(buffer: buffer)
+        let tempo = detectTempo(buffer: buffer)
+
+        // Zero crossing rate (indicator of noisiness/percussiveness)
+        var zeroCrossings = 0
+        for i in 1..<frameCount {
+            if (channelData[0][i] >= 0) != (channelData[0][i - 1] >= 0) {
+                zeroCrossings += 1
+            }
+        }
+        let zcr = Double(zeroCrossings) / Double(frameCount)
+
+        var features: [String: Double] = [
+            "rms": Double(rms),
+            "centroid": centroid,
+            "tempo": tempo,
+            "zcr": zcr
+        ]
+
+        // Rule-based classification
+        var scores: [String: Double] = [:]
+
+        // Electronic/EDM: high tempo (120-150), moderate centroid, steady rhythm
+        scores["Electronic"] = tempo >= 118 && tempo <= 150 ? 0.6 : 0.1
+        if centroid > 1500 && centroid < 4000 { scores["Electronic"]! += 0.3 }
+
+        // Ambient: low tempo (<100), low ZCR, low centroid
+        scores["Ambient"] = tempo < 100 ? 0.5 : 0.1
+        if zcr < 0.05 { scores["Ambient"]! += 0.3 }
+        if centroid < 2000 { scores["Ambient"]! += 0.2 }
+
+        // Rock: moderate tempo (100-140), high RMS, high ZCR
+        scores["Rock"] = tempo >= 100 && tempo <= 140 ? 0.4 : 0.1
+        if rms > 0.15 { scores["Rock"]! += 0.3 }
+        if zcr > 0.1 { scores["Rock"]! += 0.2 }
+
+        // Jazz: moderate tempo (80-140), high centroid variation
+        scores["Jazz"] = tempo >= 80 && tempo <= 140 ? 0.4 : 0.1
+        if centroid > 2500 { scores["Jazz"]! += 0.2 }
+
+        // Hip-Hop: 80-110 BPM, strong bass
+        scores["Hip-Hop"] = tempo >= 78 && tempo <= 115 ? 0.5 : 0.1
+        if centroid < 2500 { scores["Hip-Hop"]! += 0.3 }
+
+        // Classical: low ZCR, wide dynamic range, moderate centroid
+        scores["Classical"] = zcr < 0.04 ? 0.5 : 0.1
+        if centroid > 1000 && centroid < 3000 { scores["Classical"]! += 0.2 }
+
+        let bestGenre = scores.max(by: { $0.value < $1.value })
+        features["confidence"] = bestGenre?.value ?? 0
+
+        return GenreClassification(
+            genre: bestGenre?.key ?? "Unknown",
+            confidence: Float(bestGenre?.value ?? 0),
+            features: features
+        )
     }
 
     // MARK: - DSP Filter Helpers
