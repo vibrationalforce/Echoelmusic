@@ -254,7 +254,7 @@ struct VaporwaveFullBackground: View {
 
 // MARK: - View Modifiers (monochrome)
 
-struct NeonGlow: ViewModifier {
+struct EchoelSubtleGlow: ViewModifier {
     let color: Color
     let radius: CGFloat
 
@@ -263,6 +263,9 @@ struct NeonGlow: ViewModifier {
             .shadow(color: color.opacity(0.3), radius: min(radius, 8))
     }
 }
+
+/// Backward compatibility alias
+typealias NeonGlow = EchoelSubtleGlow
 
 struct GlassCard: ViewModifier {
     let isActive: Bool
@@ -322,7 +325,7 @@ struct VaporwaveButton: ViewModifier {
 
 extension View {
     func neonGlow(color: Color = EchoelBrand.primary, radius: CGFloat = 12) -> some View {
-        modifier(NeonGlow(color: color, radius: radius))
+        modifier(EchoelSubtleGlow(color: color, radius: radius))
     }
 
     func glassCard(isActive: Bool = false, showAccentBar: Bool = false, cornerRadius: CGFloat = EchoelRadius.lg) -> some View {

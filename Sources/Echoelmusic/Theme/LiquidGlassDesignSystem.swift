@@ -7,9 +7,7 @@
 //
 // Copyright (c) 2026 Echoelmusic. All rights reserved.
 
-#if canImport(SwiftUI)
 import SwiftUI
-#endif
 
 // MARK: - Echoel Surface
 
