@@ -12,7 +12,7 @@
 
     <!-- Cache Guardian: breaks stale SW/CDN cache loops — runs BEFORE anything else -->
     <script>
-    (function(){var V='10.2.0',K='echoel-nuke';try{
+    (function(){var V='10.2.1',K='echoel-nuke';try{
     var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
     fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
     if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
@@ -560,8 +560,9 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-            .reveal, .reveal-stagger > * { opacity: 1; transform: none; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .reveal, .reveal-stagger > * { opacity: 1 !important; transform: none !important; }
+            .h1-line, .hero-claim, .hero-sub, .hero-category, .hero-cta-group, .cap-map { opacity: 1 !important; transform: none !important; }
         }
         @media (prefers-contrast: high) {
             :root { --dim: rgba(224,224,224,0.9); --border: rgba(224,224,224,0.2); }

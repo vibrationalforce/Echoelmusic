@@ -1,6 +1,6 @@
 {
-  "version": "10.2.0",
-  "build": "2026-03-10",
+  "version": "10.2.1",
+  "build": "2026-03-17",
   "features": {
     "monochromeDesign": true,
     "pureBlackBackground": true,
@@ -30,6 +30,7 @@
     "arWorlds": true
   },
   "changelog": [
+    "v10.2.1: Fix hero content invisible with Reduce Motion (prefers-reduced-motion). All animated elements now get explicit opacity:1 fallback. SW cache bump to v10.2.1.",
     "v10.2.1: Website aligned with actual codebase — 12 tools (EchoelSynth, EchoelFX, EchoelMix, EchoelSeq, EchoelMIDI, EchoelBio, EchoelVis, EchoelVid, EchoelLux, EchoelStage, EchoelNet, EchoelAI). Removed non-existent features from website. EngineBus → EchoelCreativeWorkspace.",
     "v10.2.0: Generative Worlds + AR Worlds (EchoelVis), 3 Editions (Creative Suite, Research, SDK), 8 audience personas (was 4). EchoelToolkit.swift central reference.",
     "v10.1.0: Fix stale '25 tools' references → 12 unified tools across manifest.json, version.json. Bump cache version, update build date.",
