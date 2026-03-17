@@ -26,7 +26,7 @@ struct EffectParametersView: View {
                 }
                 .padding()
             }
-            .background(Color.black.opacity(0.9))
+            .background(EchoelBrand.bgDeep.opacity(0.9))
             .navigationTitle("Parameters")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -351,7 +351,7 @@ struct EffectParametersView: View {
 
             Toggle("", isOn: .constant(false))
                 .labelsHidden()
-                .tint(.cyan)
+                .tint(EchoelBrand.accent)
         }
         .padding()
         .background(
@@ -394,7 +394,7 @@ struct EffectParametersView: View {
             }
 
             Slider(value: value, in: range)
-                .tint(.cyan)
+                .tint(EchoelBrand.accent)
         }
         .padding()
         .background(
@@ -454,15 +454,15 @@ struct EffectParametersView: View {
         let name = node.name.lowercased()
 
         if name.contains("filter") {
-            return .purple
+            return EchoelBrand.violet
         } else if name.contains("reverb") {
             return .blue
         } else if name.contains("delay") {
-            return .orange
+            return EchoelBrand.amber
         } else if name.contains("compressor") {
             return .green
         } else {
-            return .cyan
+            return EchoelBrand.accent
         }
     }
 
