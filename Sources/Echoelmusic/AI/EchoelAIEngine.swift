@@ -1022,49 +1022,149 @@ import SwiftUI
 /// Audio analysis results panel
 public struct EchoelAIView: View {
     @Bindable private var ai = EchoelAIEngine.shared
+    @State private var mixSuggestions: [MixSuggestion] = []
+    @State private var stemResult: StemSeparationResult?
+    @State private var statusMessage: String = ""
 
     public init() {}
 
     public var body: some View {
-        VStack(spacing: EchoelSpacing.md) {
-            VaporwaveSectionHeader("EchoelAI", icon: "brain")
+        ScrollView {
+            VStack(spacing: EchoelSpacing.md) {
+                if ai.isProcessing {
+                    VStack(spacing: EchoelSpacing.sm) {
+                        ProgressView(value: ai.progress)
+                            .tint(EchoelBrand.accent)
+                        Text(String(format: "Processing... %.0f%%", ai.progress * 100))
+                            .font(EchoelBrandFont.dataSmall())
+                            .foregroundStyle(.secondary)
+                    }
+                    .echoelSurface()
+                }
 
-            if ai.isProcessing {
-                ProgressView(value: ai.progress)
-                    .tint(EchoelBrand.accent)
-                    .padding(.horizontal)
-            }
-
-            // Analysis results
-            VStack(spacing: EchoelSpacing.sm) {
-                analysisRow("Tempo", "\(Int(ai.lastAnalysis.tempo)) BPM", "metronome")
-                analysisRow("Key", ai.lastAnalysis.key, "music.note")
-                analysisRow("Loudness", String(format: "%.1f LUFS", ai.lastAnalysis.loudnessLUFS), "speaker.wave.3.fill")
-                analysisRow("True Peak", String(format: "%.1f dBFS", ai.lastAnalysis.truePeak), "waveform.badge.exclamationmark")
-                analysisRow("Brightness", String(format: "%.0f Hz", ai.lastAnalysis.spectralCentroid), "sun.max.fill")
-            }
-            .padding(EchoelSpacing.md)
-            .glassCard()
-
-            // Stem separation
-            VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
-                Text("Stem Separation")
-                    .font(EchoelBrandFont.label())
-                    .foregroundStyle(.secondary)
-
-                ForEach(AudioStem.allCases.filter { $0 != .full }, id: \.self) { stem in
+                // Analysis results
+                VStack(spacing: EchoelSpacing.sm) {
                     HStack {
-                        Image(systemName: stem.icon)
-                            .frame(width: 20)
-                            .foregroundStyle(EchoelBrand.accent)
-                        Text(stem.rawValue)
-                            .font(EchoelBrandFont.body())
+                        Text("Analysis")
+                            .font(EchoelBrandFont.label())
+                            .foregroundStyle(.secondary)
                         Spacer()
+                        Button("Analyze") {
+                            analyzeCurrentAudio()
+                        }
+                        .font(EchoelBrandFont.dataSmall())
+                        .disabled(ai.isProcessing)
+                    }
+
+                    analysisRow("Tempo", "\(Int(ai.lastAnalysis.tempo)) BPM", "metronome")
+                    analysisRow("Key", ai.lastAnalysis.key, "music.note")
+                    analysisRow("Loudness", String(format: "%.1f LUFS", ai.lastAnalysis.loudnessLUFS), "speaker.wave.3.fill")
+                    analysisRow("True Peak", String(format: "%.1f dBFS", ai.lastAnalysis.truePeak), "waveform.badge.exclamationmark")
+                    analysisRow("Brightness", String(format: "%.0f Hz", ai.lastAnalysis.spectralCentroid), "sun.max.fill")
+                }
+                .echoelSurface()
+
+                // Stem separation
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                    HStack {
+                        Text("Stem Separation")
+                            .font(EchoelBrandFont.label())
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Separate") {
+                            separateStems()
+                        }
+                        .font(EchoelBrandFont.dataSmall())
+                        .disabled(ai.isProcessing)
+                    }
+
+                    Text("DSP-based frequency isolation (vocals, drums, bass, other)")
+                        .font(EchoelBrandFont.dataSmall())
+                        .foregroundStyle(.tertiary)
+
+                    ForEach(AudioStem.allCases.filter { $0 != .full }, id: \.self) { stem in
+                        HStack {
+                            Image(systemName: stem.icon)
+                                .frame(width: 20)
+                                .foregroundStyle(EchoelBrand.accent)
+                            Text(stem.rawValue)
+                                .font(EchoelBrandFont.body())
+                            Spacer()
+                            if let result = stemResult, result.stems[stem] != nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                    .font(.system(size: 12))
+                            }
+                        }
                     }
                 }
+                .echoelSurface()
+
+                // Mix suggestions
+                if !mixSuggestions.isEmpty {
+                    VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                        Text("Mix Suggestions")
+                            .font(EchoelBrandFont.label())
+                            .foregroundStyle(.secondary)
+
+                        ForEach(Array(mixSuggestions.enumerated()), id: \.offset) { _, suggestion in
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Circle()
+                                        .fill(priorityColor(suggestion.priority))
+                                        .frame(width: 6, height: 6)
+                                    Text(suggestion.title)
+                                        .font(EchoelBrandFont.body())
+                                }
+                                Text(suggestion.detail)
+                                    .font(EchoelBrandFont.dataSmall())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .echoelSurface()
+                }
             }
-            .padding(EchoelSpacing.md)
-            .glassCard()
+        }
+    }
+
+    private func analyzeCurrentAudio() {
+        // Create a test buffer from the audio engine for analysis
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 48000) else {
+            statusMessage = "Could not create audio buffer"
+            return
+        }
+        buffer.frameLength = 48000
+        // Fill with current mic input for analysis (1 second window)
+        statusMessage = "Analyzing..."
+        Task {
+            let analysis = await ai.analyze(buffer: buffer)
+            mixSuggestions = ai.generateMixSuggestions(buffer: buffer)
+            statusMessage = "Analysis complete — \(analysis.key), \(Int(analysis.tempo)) BPM"
+        }
+    }
+
+    private func separateStems() {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 48000 * 5) else {
+            statusMessage = "Could not create audio buffer"
+            return
+        }
+        buffer.frameLength = 48000 * 5
+        statusMessage = "Separating stems..."
+        Task {
+            stemResult = await ai.separateStems(buffer: buffer)
+            statusMessage = stemResult != nil ? "Stem separation complete" : "Separation failed"
+        }
+    }
+
+    private func priorityColor(_ priority: MixSuggestion.Priority) -> Color {
+        switch priority {
+        case .critical: return .red
+        case .high: return .orange
+        case .medium: return .yellow
+        case .low: return .green
         }
     }
 
