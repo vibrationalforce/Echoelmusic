@@ -378,9 +378,9 @@ public struct VisualStepSequencerView: View {
         VStack(spacing: 16) {
             // Header
             HStack {
-                Text("VISUAL SEQUENCER")
+                Text("SEQUENCER")
                     .font(.system(size: 14, weight: .bold, design: .monospaced))
-                    .foregroundColor(.cyan)
+                    .foregroundColor(EchoelBrand.accent)
 
                 Spacer()
 
@@ -402,28 +402,28 @@ public struct VisualStepSequencerView: View {
                 .accessibilityAddTraits(sequencer.bioModulation.tempoLockEnabled ? .isSelected : [])
             }
 
-            // Step Grid
-            VStack(spacing: 4) {
-                ForEach(VisualStepSequencer.Channel.allCases) { channel in
-                    HStack(spacing: 4) {
-                        // Channel Label
-                        Text(channel.name)
-                            .font(.system(size: 8, weight: .medium))
-                            .foregroundColor(channel.color.opacity(0.8))
-                            .frame(width: 60, alignment: .leading)
+            // Step Grid (scrollable for iPhone)
+            ScrollView(.horizontal, showsIndicators: false) {
+                VStack(spacing: 3) {
+                    ForEach(VisualStepSequencer.Channel.allCases) { channel in
+                        HStack(spacing: 3) {
+                            Text(channel.name)
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(channel.color.opacity(0.8))
+                                .frame(width: 50, alignment: .leading)
 
-                        // Steps
-                        ForEach(0..<VisualStepSequencer.stepCount, id: \.self) { step in
-                            let isActive = sequencer.pattern.isActive(channel: channel, step: step)
-                            StepButton(
-                                isActive: isActive,
-                                isCurrent: sequencer.currentStep == step && sequencer.isPlaying,
-                                color: channel.color
-                            ) {
-                                sequencer.toggleStep(channel: channel, step: step)
+                            ForEach(0..<VisualStepSequencer.stepCount, id: \.self) { step in
+                                let isActive = sequencer.pattern.isActive(channel: channel, step: step)
+                                StepButton(
+                                    isActive: isActive,
+                                    isCurrent: sequencer.currentStep == step && sequencer.isPlaying,
+                                    color: channel.color
+                                ) {
+                                    sequencer.toggleStep(channel: channel, step: step)
+                                }
+                                .accessibilityLabel("\(channel.name) step \(step + 1), \(isActive ? "active" : "inactive")")
+                                .accessibilityHint("Double-tap to \(isActive ? "deactivate" : "activate") this step")
                             }
-                            .accessibilityLabel("\(channel.name) step \(step + 1), \(isActive ? "active" : "inactive")")
-                            .accessibilityHint("Double-tap to \(isActive ? "deactivate" : "activate") this step")
                         }
                     }
                 }
@@ -449,7 +449,7 @@ public struct VisualStepSequencerView: View {
                 }) {
                     Image(systemName: sequencer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(.cyan)
+                        .foregroundColor(EchoelBrand.accent)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(sequencer.isPlaying ? "Pause" : "Play")
@@ -457,7 +457,7 @@ public struct VisualStepSequencerView: View {
 
                 // BPM Slider
                 Slider(value: $sequencer.bpm, in: VisualStepSequencer.bpmRange)
-                    .tint(.cyan)
+                    .tint(EchoelBrand.accent)
                     .frame(width: 150)
                     .accessibilityLabel("Tempo")
                     .accessibilityValue("\(Int(sequencer.bpm)) BPM")
@@ -489,8 +489,12 @@ public struct VisualStepSequencerView: View {
             }
         }
         .padding()
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(16)
+        .background(EchoelBrand.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: EchoelRadius.lg)
+                .stroke(EchoelBrand.border, lineWidth: 1)
+        )
     }
 }
 
@@ -504,13 +508,13 @@ struct StepButton: View {
 
     var body: some View {
         Button(action: action) {
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: EchoelRadius.xs)
                 .fill(isActive ? color : EchoelBrand.bgElevated)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(isCurrent ? EchoelBrand.textPrimary : Color.clear, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: EchoelRadius.xs)
+                        .stroke(isCurrent ? EchoelBrand.textPrimary : EchoelBrand.border.opacity(0.3), lineWidth: isCurrent ? 2 : 0.5)
                 )
-                .frame(width: 32, height: 32)
+                .frame(width: 26, height: 26)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isActive ? "Step active" : "Step inactive")
