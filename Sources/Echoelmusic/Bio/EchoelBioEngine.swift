@@ -560,6 +560,7 @@ public final class EchoelBioEngine {
     public var snapshot: BioSnapshot = BioSnapshot()
     public var isAuthorized: Bool = false
     public var isStreaming: Bool = false
+    public var dataSource: BioDataSource = .fallback
     public var smoothCoherence: Double = 0.5
     public var smoothHRV: Double = 0.5
     public var smoothHeartRate: Double = 72.0
