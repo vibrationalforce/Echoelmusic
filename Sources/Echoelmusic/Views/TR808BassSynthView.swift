@@ -539,11 +539,11 @@ public struct TR808BassSynthView: View {
 
     private func drumPadColor(for category: String) -> Color {
         switch category {
-        case "kick": return Color.red.opacity(0.7)
-        case "snare", "clap": return Color.orange.opacity(0.7)
-        case "hihat", "closed", "open", "ride", "crash", "pedal": return Color.cyan.opacity(0.7)
-        case "tom", "floor", "mid", "high": return Color.blue.opacity(0.7)
-        default: return Color.purple.opacity(0.7)
+        case "kick": return EchoelBrand.coral.opacity(0.7)
+        case "snare", "clap": return EchoelBrand.amber.opacity(0.7)
+        case "hihat", "closed", "open", "ride", "crash", "pedal": return EchoelBrand.accent.opacity(0.7)
+        case "tom", "floor", "mid", "high": return EchoelBrand.sky.opacity(0.7)
+        default: return EchoelBrand.violet.opacity(0.7)
         }
     }
 }
