@@ -148,43 +148,30 @@ struct VaporwaveGradients {
 
 // MARK: - Animated Background (monochrome)
 
-/// Monochrome background with subtle depth
+/// Monochrome background with subtle depth — solid fills only, no blur
 struct VaporwaveAnimatedBackground: View {
     var body: some View {
         ZStack {
             // True black base
             EchoelBrand.bgDeep
 
-            // Subtle depth blob (gray, top-left)
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [EchoelBrand.primary.opacity(0.03), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 250
-                    )
-                )
-                .frame(width: 500, height: 500)
-                .offset(x: -150, y: -200)
-                .blur(radius: 60)
+            // Subtle depth gradient (top-left) — no blur
+            RadialGradient(
+                colors: [EchoelBrand.primary.opacity(0.03), .clear],
+                center: UnitPoint(x: 0.2, y: 0.2),
+                startRadius: 0,
+                endRadius: 400
+            )
 
-            // Subtle depth blob (gray, bottom-right)
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [EchoelBrand.primary.opacity(0.02), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 200
-                    )
-                )
-                .frame(width: 400, height: 400)
-                .offset(x: 150, y: 200)
-                .blur(radius: 50)
+            // Subtle depth gradient (bottom-right) — no blur
+            RadialGradient(
+                colors: [EchoelBrand.primary.opacity(0.02), .clear],
+                center: UnitPoint(x: 0.8, y: 0.8),
+                startRadius: 0,
+                endRadius: 300
+            )
         }
         .ignoresSafeArea()
-        .drawingGroup()
     }
 }
 

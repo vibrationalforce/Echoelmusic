@@ -26,7 +26,6 @@ struct MainNavigationHub: View {
             transportBar
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
-        .echoelAmbientGlow(intensity: 0.6)
         .sheet(isPresented: $showSettings) {
             EchoelSettingsView()
                 .environment(themeManager)
@@ -134,24 +133,20 @@ struct MainNavigationHub: View {
                 }) {
                     ZStack {
                         let isPlaying = EchoelCreativeWorkspace.shared.isPlaying
-                        // Outer glow ring when playing
-                        Circle()
-                            .fill(isPlaying ? EchoelBrand.primary.opacity(0.08) : Color.clear)
-                            .frame(width: 42, height: 42)
 
                         Circle()
                             .fill(isPlaying ? EchoelBrand.primary.opacity(0.15) : EchoelBrand.bgElevated)
                             .frame(width: 36, height: 36)
+                            .overlay(
+                                Circle()
+                                    .stroke(isPlaying ? EchoelBrand.primary.opacity(0.3) : EchoelBrand.border, lineWidth: 1)
+                            )
 
                         Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(isPlaying ? EchoelBrand.primary : EchoelBrand.textPrimary)
-                            .offset(x: isPlaying ? 0 : 1) // Optical center for play triangle
+                            .offset(x: isPlaying ? 0 : 1)
                     }
-                    .shadow(
-                        color: EchoelCreativeWorkspace.shared.isPlaying ? EchoelBrand.primary.opacity(0.25) : Color.clear,
-                        radius: EchoelCreativeWorkspace.shared.isPlaying ? 6 : 0
-                    )
                 }
                 .buttonStyle(.plain)
 
