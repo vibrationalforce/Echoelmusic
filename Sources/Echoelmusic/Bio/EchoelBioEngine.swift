@@ -444,41 +444,76 @@ public struct BioStatusView: View {
 
     public var body: some View {
         HStack(spacing: EchoelSpacing.sm) {
-            // Coherence ring
+            // Coherence ring — grayed out when using fallback data
             ZStack {
                 Circle()
                     .stroke(EchoelBrand.border, lineWidth: 3)
                 Circle()
-                    .trim(from: 0, to: bio.smoothCoherence)
-                    .stroke(coherenceColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .trim(from: 0, to: isRealData ? bio.smoothCoherence : 0)
+                    .stroke(isRealData ? coherenceColor : EchoelBrand.textSecondary.opacity(0.3), style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                Text(String(format: "%.0f", bio.smoothCoherence * 100))
-                    .font(EchoelBrandFont.dataSmall())
+                if isRealData {
+                    Text(String(format: "%.0f", bio.smoothCoherence * 100))
+                        .font(EchoelBrandFont.dataSmall())
+                } else {
+                    Text("—")
+                        .font(EchoelBrandFont.dataSmall())
+                        .foregroundStyle(.secondary)
+                }
             }
             .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {
                     Image(systemName: "heart.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(isRealData ? .red : .gray)
                         .font(.system(size: 10))
-                    Text("\(Int(bio.smoothHeartRate))")
+                    Text(isRealData ? "\(Int(bio.smoothHeartRate))" : "—")
                         .font(EchoelBrandFont.data())
+                        .foregroundStyle(isRealData ? EchoelBrand.textPrimary : .secondary)
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "waveform.path.ecg")
-                        .foregroundStyle(EchoelBrand.accent)
+                        .foregroundStyle(isRealData ? EchoelBrand.accent : .gray)
                         .font(.system(size: 10))
-                    Text(String(format: "%.0f", bio.snapshot.hrvRMSSD))
+                    Text(isRealData ? String(format: "%.0f", bio.snapshot.hrvRMSSD) : "—")
                         .font(EchoelBrandFont.dataSmall())
                         .foregroundStyle(.secondary)
                 }
             }
 
-            // Source indicator
-            Circle()
-                .fill(bio.isStreaming ? Color.green : Color.orange)
-                .frame(width: 6, height: 6)
+            // Source badge
+            VStack(spacing: 1) {
+                Circle()
+                    .fill(sourceColor)
+                    .frame(width: 6, height: 6)
+                Text(sourceLabel)
+                    .font(.system(size: 7, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    /// Whether we have real physiological data (not simulated fallback)
+    private var isRealData: Bool {
+        bio.isStreaming && bio.dataSource != .fallback
+    }
+
+    private var sourceLabel: String {
+        switch bio.dataSource {
+        case .healthKit, .appleWatch, .chestStrap: return "HK"
+        case .arkit: return "AR"
+        case .microphone: return "MIC"
+        case .fallback: return "OFF"
+        }
+    }
+
+    private var sourceColor: Color {
+        switch bio.dataSource {
+        case .healthKit, .appleWatch, .chestStrap: return .green
+        case .arkit: return .blue
+        case .microphone: return .orange
+        case .fallback: return .gray
         }
     }
 

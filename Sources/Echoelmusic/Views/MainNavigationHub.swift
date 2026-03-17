@@ -574,50 +574,65 @@ private struct BioFeedbackSettingsContent: View {
 private struct BioFeedbackIndicatorView: View {
     let isAudioRunning: Bool
     private let workspace = EchoelCreativeWorkspace.shared
+    @Bindable private var bio = EchoelBioEngine.shared
 
     var body: some View {
         HStack(spacing: EchoelSpacing.xs) {
             let level = CGFloat(workspace.bioCoherence)
-            let coherenceColor: Color = level > 0.6 ? EchoelBrand.coherenceHigh
-                : level > 0.3 ? EchoelBrand.coherenceMedium
-                : EchoelBrand.coherenceLow
+            let hasRealData = bio.isStreaming && bio.dataSource != .fallback
+            let coherenceColor: Color = hasRealData
+                ? (level > 0.6 ? EchoelBrand.coherenceHigh
+                    : level > 0.3 ? EchoelBrand.coherenceMedium
+                    : EchoelBrand.coherenceLow)
+                : EchoelBrand.textDisabled
 
             ZStack {
-                // Echo rings (brand identity — concentric circles)
-                Circle()
-                    .stroke(coherenceColor.opacity(0.04), lineWidth: 0.3)
-                    .frame(width: 28, height: 28)
-
-                Circle()
-                    .stroke(coherenceColor.opacity(0.06), lineWidth: 0.4)
-                    .frame(width: 22, height: 22)
-
                 // Coherence arc (progress ring)
                 Circle()
                     .stroke(coherenceColor.opacity(0.15), lineWidth: 2)
                     .frame(width: 16, height: 16)
 
                 Circle()
-                    .trim(from: 0, to: max(0.05, level))
+                    .trim(from: 0, to: hasRealData ? max(0.05, level) : 0)
                     .stroke(coherenceColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                     .frame(width: 16, height: 16)
                     .rotationEffect(.degrees(-90))
 
-                // Heart pulse dot (brand waveform accent)
+                // Heart pulse dot
                 Circle()
                     .fill(coherenceColor)
                     .frame(width: 4, height: 4)
             }
-            .frame(width: 30, height: 30)
+            .frame(width: 22, height: 22)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("BIO")
                     .font(.system(size: 7, weight: .bold, design: .monospaced))
                     .foregroundColor(EchoelBrand.textSecondary)
-                Text(isAudioRunning ? "LIVE" : "OFF")
+                Text(bioSourceLabel)
                     .font(.system(size: 7, weight: .semibold, design: .monospaced))
-                    .foregroundColor(isAudioRunning ? EchoelBrand.emerald : EchoelBrand.textDisabled)
+                    .foregroundColor(bioSourceColor)
             }
+        }
+    }
+
+    private var bioSourceLabel: String {
+        guard isAudioRunning else { return "OFF" }
+        switch bio.dataSource {
+        case .healthKit, .appleWatch, .chestStrap: return "HK"
+        case .arkit: return "AR"
+        case .microphone: return "MIC"
+        case .fallback: return "SIM"
+        }
+    }
+
+    private var bioSourceColor: Color {
+        guard isAudioRunning else { return EchoelBrand.textDisabled }
+        switch bio.dataSource {
+        case .healthKit, .appleWatch, .chestStrap: return EchoelBrand.emerald
+        case .arkit: return EchoelBrand.sky
+        case .microphone: return EchoelBrand.amber
+        case .fallback: return EchoelBrand.textSecondary
         }
     }
 }
