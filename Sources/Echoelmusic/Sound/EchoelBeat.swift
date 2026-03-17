@@ -1045,7 +1045,7 @@ public struct EchoelBeatView: View {
                     .foregroundColor(EchoelBrand.accent)
                 Slider(value: $beat.bpm, in: 60...200, step: 1)
                     .frame(width: 100)
-                    .tint(.cyan)
+                    .tint(EchoelBrand.accent)
             }
 
             // Transport
@@ -1071,7 +1071,7 @@ public struct EchoelBeatView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(
-                            beat.currentKit == genre.rawValue ? Color.cyan : EchoelBrand.border))
+                            beat.currentKit == genre.rawValue ? EchoelBrand.accent : EchoelBrand.border))
                         .foregroundColor(beat.currentKit == genre.rawValue ? .black : EchoelBrand.textPrimary)
                         .buttonStyle(.plain)
                 }
@@ -1114,7 +1114,7 @@ public struct EchoelBeatView: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                             .background(RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.cyan.opacity(mode == beat.hihatMode ? 0.8 : 0.3)))
+                                .fill(EchoelBrand.accent.opacity(mode == beat.hihatMode ? 0.8 : 0.3)))
                             .foregroundColor(EchoelBrand.textPrimary)
                     }
                     .buttonStyle(.plain)
@@ -1122,7 +1122,7 @@ public struct EchoelBeatView: View {
                 Spacer()
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Tone").font(.system(size: 9)).foregroundColor(.gray)
-                    Slider(value: $beat.hihatTone, in: 0...1).frame(width: 80).tint(.cyan)
+                    Slider(value: $beat.hihatTone, in: 0...1).frame(width: 80).tint(EchoelBrand.accent)
                 }
             }
         }
@@ -1137,13 +1137,13 @@ public struct EchoelBeatView: View {
             HStack {
                 Text("Roll Engine")
                     .font(.caption.bold())
-                    .foregroundColor(.orange)
+                    .foregroundColor(EchoelBrand.amber)
                 Spacer()
                 Button("ROLL") { beat.startRoll(triggers: 8) }
                     .font(.caption2.bold())
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Capsule().fill(Color.orange))
+                    .background(Capsule().fill(EchoelBrand.amber))
                     .foregroundColor(.black)
                     .buttonStyle(.plain)
             }
@@ -1152,19 +1152,19 @@ public struct EchoelBeatView: View {
                     Text("Division").font(.system(size: 9)).foregroundColor(.gray)
                     Picker("", selection: $beat.rollDivision) {
                         ForEach(RollDivision.allCases, id: \.rawValue) { Text($0.rawValue).tag($0) }
-                    }.pickerStyle(.menu).tint(.orange)
+                    }.pickerStyle(.menu).tint(EchoelBrand.amber)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Velocity").font(.system(size: 9)).foregroundColor(.gray)
                     Picker("", selection: $beat.rollVelocityRamp) {
                         ForEach(VelocityRamp.allCases, id: \.rawValue) { Text($0.rawValue).tag($0) }
-                    }.pickerStyle(.menu).tint(.orange)
+                    }.pickerStyle(.menu).tint(EchoelBrand.amber)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Pitch").font(.system(size: 9)).foregroundColor(.gray)
                     Picker("", selection: $beat.rollPitchRamp) {
                         ForEach(PitchRamp.allCases, id: \.rawValue) { Text($0.rawValue).tag($0) }
-                    }.pickerStyle(.menu).tint(.orange)
+                    }.pickerStyle(.menu).tint(EchoelBrand.amber)
                 }
             }
         }
@@ -1179,16 +1179,16 @@ public struct EchoelBeatView: View {
             HStack {
                 Text("Dirty Delay")
                     .font(.caption.bold())
-                    .foregroundColor(.purple)
+                    .foregroundColor(EchoelBrand.violet)
                 Spacer()
-                Toggle("", isOn: $beat.delayConfig.isEnabled).labelsHidden().tint(.purple)
+                Toggle("", isOn: $beat.delayConfig.isEnabled).labelsHidden().tint(EchoelBrand.violet)
             }
             if beat.delayConfig.isEnabled {
                 HStack(spacing: 12) {
-                    paramSlider("Time", value: $beat.delayConfig.delayTime, range: 0.05...0.5, color: .purple)
-                    paramSlider("FB", value: $beat.delayConfig.feedback, range: 0...0.95, color: .purple)
-                    paramSlider("Sat", value: $beat.delayConfig.saturation, range: 0...1, color: .purple)
-                    paramSlider("Mix", value: $beat.delayConfig.mix, range: 0...0.8, color: .purple)
+                    paramSlider("Time", value: $beat.delayConfig.delayTime, range: 0.05...0.5, color: EchoelBrand.violet)
+                    paramSlider("FB", value: $beat.delayConfig.feedback, range: 0...0.95, color: EchoelBrand.violet)
+                    paramSlider("Sat", value: $beat.delayConfig.saturation, range: 0...1, color: EchoelBrand.violet)
+                    paramSlider("Mix", value: $beat.delayConfig.mix, range: 0...0.8, color: EchoelBrand.violet)
                 }
             }
         }
@@ -1240,7 +1240,7 @@ public struct EchoelBeatView: View {
                                     .font(.system(size: 7).monospacedDigit())
                                     .frame(width: 22, height: 12)
                                     .foregroundColor(beat.sequencerStep == s && beat.isSequencerPlaying
-                                                     ? .cyan : .gray)
+                                                     ? EchoelBrand.accent : .gray)
                             }
                         }
                         // Tracks

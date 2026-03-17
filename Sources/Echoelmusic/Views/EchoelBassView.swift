@@ -313,7 +313,7 @@ public struct EchoelBassView: View {
                 if bass.config.glideEnabled {
                     Slider(value: $bass.config.glideTime, in: 0.01...0.5)
                         .frame(width: 100)
-                        .tint(.orange)
+                        .tint(EchoelBrand.amber)
                     Text(String(format: "%.0fms", bass.config.glideTime * 1000))
                         .font(.caption2.monospacedDigit())
                 }
