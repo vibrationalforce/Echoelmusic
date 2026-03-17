@@ -249,55 +249,55 @@ public struct EchoelBrandFont {
         #endif
     }
 
-    /// Hero title (44pt bold)
+    /// Hero title — scales with Dynamic Type (base: 44pt, relative to .largeTitle)
     public static func heroTitle() -> Font {
         fontAvailable
-            ? .custom(preferredFontNameBold, size: 44)
+            ? .custom(preferredFontNameBold, size: 44, relativeTo: .largeTitle)
             : .system(size: 44, weight: .bold, design: .rounded)
     }
 
-    /// Section title (28pt semibold)
+    /// Section title — scales with Dynamic Type (base: 28pt, relative to .title)
     public static func sectionTitle() -> Font {
         fontAvailable
-            ? .custom(preferredFontNameBold, size: 28)
+            ? .custom(preferredFontNameBold, size: 28, relativeTo: .title)
             : .system(size: 28, weight: .semibold, design: .rounded)
     }
 
-    /// Card title (20pt semibold)
+    /// Card title — scales with Dynamic Type (base: 20pt, relative to .title3)
     public static func cardTitle() -> Font {
         fontAvailable
-            ? .custom(preferredFontNameBold, size: 20)
+            ? .custom(preferredFontNameBold, size: 20, relativeTo: .title3)
             : .system(size: 20, weight: .semibold, design: .default)
     }
 
-    /// Body text (16pt regular)
+    /// Body text — scales with Dynamic Type (base: 16pt, relative to .body)
     public static func body() -> Font {
         fontAvailable
-            ? .custom(preferredFontName, size: 16)
+            ? .custom(preferredFontName, size: 16, relativeTo: .body)
             : .system(size: 16, weight: .regular, design: .default)
     }
 
-    /// Caption (13pt regular)
+    /// Caption — scales with Dynamic Type (base: 13pt, relative to .caption)
     public static func caption() -> Font {
         fontAvailable
-            ? .custom(preferredFontName, size: 13)
+            ? .custom(preferredFontName, size: 13, relativeTo: .caption)
             : .system(size: 13, weight: .regular, design: .default)
     }
 
-    /// Data display (24pt monospace) - Use system monospace for data
+    /// Data display (24pt monospace) — scales relative to .title2
     public static func data() -> Font {
-        .system(size: 24, weight: .medium, design: .monospaced)
+        .system(.title2, design: .monospaced, weight: .medium)
     }
 
-    /// Small data (14pt monospace)
+    /// Small data (14pt monospace) — scales relative to .footnote
     public static func dataSmall() -> Font {
-        .system(size: 14, weight: .medium, design: .monospaced)
+        .system(.footnote, design: .monospaced, weight: .medium)
     }
 
-    /// Label (12pt medium)
+    /// Label — scales with Dynamic Type (base: 12pt, relative to .caption2)
     public static func label() -> Font {
         fontAvailable
-            ? .custom(preferredFontName, size: 12)
+            ? .custom(preferredFontName, size: 12, relativeTo: .caption2)
             : .system(size: 12, weight: .medium, design: .default)
     }
 }
@@ -523,5 +523,55 @@ public struct EchoelIconConfig {
         (98, 2, "watch"), (108, 2, "watch"),
         (1024, 1, "watch-marketing")
     ]
+}
+
+// MARK: - Accessibility Helpers
+
+#if canImport(UIKit)
+import UIKit
+#endif
+
+/// Accessibility-safe animation that respects Reduce Motion setting
+public extension View {
+    /// Apply animation only when Reduce Motion is OFF (WCAG 2.3.3)
+    @ViewBuilder
+    func echoelAnimation<V: Equatable>(_ animation: Animation?, value: V) -> some View {
+        #if canImport(UIKit)
+        if UIAccessibility.isReduceMotionEnabled {
+            self
+        } else {
+            self.animation(animation, value: value)
+        }
+        #else
+        self.animation(animation, value: value)
+        #endif
+    }
+
+    /// Apply animation only when Reduce Motion is OFF (non-value variant)
+    @ViewBuilder
+    func echoelAnimation(_ animation: Animation?) -> some View {
+        #if canImport(UIKit)
+        if UIAccessibility.isReduceMotionEnabled {
+            self
+        } else {
+            self.animation(animation)
+        }
+        #else
+        self.animation(animation)
+        #endif
+    }
+}
+
+/// Run withAnimation only when Reduce Motion is OFF
+public func echoelWithAnimation<Result>(_ animation: Animation? = .default, _ body: () throws -> Result) rethrows -> Result {
+    #if canImport(UIKit)
+    if UIAccessibility.isReduceMotionEnabled {
+        return try body()
+    } else {
+        return try withAnimation(animation, body)
+    }
+    #else
+    return try withAnimation(animation, body)
+    #endif
 }
 #endif
