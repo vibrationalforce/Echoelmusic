@@ -56,7 +56,7 @@ let project = Project(
             platform: .iOS,
             product: .app,
             bundleId: "com.echoelmusic.app",
-            deploymentTarget: .iOS(targetVersion: "15.0", devices: [.iphone, .ipad]),
+            deploymentTarget: .iOS(targetVersion: "17.0", devices: [.iphone, .ipad]),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
                 "CFBundleShortVersionString": "10000.1.0",
@@ -151,7 +151,7 @@ let project = Project(
             platform: .iOS,
             product: .appExtension,
             bundleId: "com.echoelmusic.app.widgets",
-            deploymentTarget: .iOS(targetVersion: "15.0", devices: [.iphone, .ipad]),
+            deploymentTarget: .iOS(targetVersion: "17.0", devices: [.iphone, .ipad]),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic Widgets",
                 "NSExtension": [
@@ -184,7 +184,7 @@ let project = Project(
             platform: .watchOS,
             product: .watch2App,
             bundleId: "com.echoelmusic.app.watchkitapp",
-            deploymentTarget: .watchOS(targetVersion: "8.0"),
+            deploymentTarget: .watchOS(targetVersion: "10.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
                 "WKApplication": true,
@@ -208,7 +208,7 @@ let project = Project(
                     "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app.watchkitapp",
                     "TARGETED_DEVICE_FAMILY": "4",
                     "SKIP_INSTALL": "YES",
-                    "WATCHOS_DEPLOYMENT_TARGET": "8.0"
+                    "WATCHOS_DEPLOYMENT_TARGET": "10.0"
                 ],
                 defaultSettings: .recommended
             )
@@ -220,7 +220,7 @@ let project = Project(
             platform: .tvOS,
             product: .app,
             bundleId: "com.echoelmusic.app",
-            deploymentTarget: .tvOS(targetVersion: "15.0"),
+            deploymentTarget: .tvOS(targetVersion: "17.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
                 "UILaunchScreen": [:],
@@ -243,7 +243,7 @@ let project = Project(
                 base: [
                     "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
                     "TARGETED_DEVICE_FAMILY": "3",
-                    "TVOS_DEPLOYMENT_TARGET": "15.0",
+                    "TVOS_DEPLOYMENT_TARGET": "17.0",
                     "ENABLE_BITCODE": "NO"
                 ],
                 defaultSettings: .recommended
@@ -384,7 +384,7 @@ let project = Project(
             platform: .macOS,
             product: .app,
             bundleId: "com.echoelmusic.app",
-            deploymentTarget: .macOS(targetVersion: "12.0"),
+            deploymentTarget: .macOS(targetVersion: "14.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
                 "LSApplicationCategoryType": "public.app-category.music",
@@ -408,7 +408,7 @@ let project = Project(
             settings: .settings(
                 base: [
                     "PRODUCT_BUNDLE_IDENTIFIER": "com.echoelmusic.app",
-                    "MACOSX_DEPLOYMENT_TARGET": "12.0",
+                    "MACOSX_DEPLOYMENT_TARGET": "14.0",
                     "ENABLE_HARDENED_RUNTIME": "YES",
                     "ENABLE_PREVIEWS": "YES"
                 ],
@@ -422,7 +422,7 @@ let project = Project(
             platform: .iOS,
             product: .unitTests,
             bundleId: "com.echoelmusic.tests",
-            deploymentTarget: .iOS(targetVersion: "15.0", devices: [.iphone, .ipad]),
+            deploymentTarget: .iOS(targetVersion: "17.0", devices: [.iphone, .ipad]),
             infoPlist: .default,
             sources: [
                 "Tests/EchoelmusicTests/**/*.swift"
@@ -448,7 +448,7 @@ let project = Project(
             platform: .iOS,
             product: .uiTests,
             bundleId: "com.echoelmusic.uitests",
-            deploymentTarget: .iOS(targetVersion: "15.0", devices: [.iphone, .ipad]),
+            deploymentTarget: .iOS(targetVersion: "17.0", devices: [.iphone, .ipad]),
             infoPlist: .default,
             sources: [
                 "Tests/EchoelmusicUITests/**/*.swift"
