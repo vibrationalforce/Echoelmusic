@@ -59,8 +59,8 @@ let project = Project(
             deploymentTarget: .iOS(targetVersion: "17.0", devices: [.iphone, .ipad]),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000",
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)",
                 "UILaunchScreen": [:],
                 "UIApplicationSceneManifest": [
                     "UIApplicationSupportsMultipleScenes": false
@@ -157,8 +157,8 @@ let project = Project(
                 "NSExtension": [
                     "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
                 ],
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000"
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)"
             ]),
             sources: [
                 "Sources/Echoelmusic/Widgets/**/*.swift"
@@ -190,8 +190,8 @@ let project = Project(
                 "WKApplication": true,
                 "WKCompanionAppBundleIdentifier": "com.echoelmusic.app",
                 "WKWatchOnly": false,
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000",
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)",
                 "NSHealthShareUsageDescription": "Echoelmusic Watch uses your heart rate and HRV data for bio-reactive experiences.",
                 "NSHealthUpdateUsageDescription": "Echoelmusic Watch may update your Mindful Minutes."
             ]),
@@ -225,8 +225,8 @@ let project = Project(
                 "CFBundleDisplayName": "Echoelmusic",
                 "UILaunchScreen": [:],
                 "UIUserInterfaceStyle": "Automatic",
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000",
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)",
                 "UIBackgroundModes": ["audio"],
                 "NSMicrophoneUsageDescription": "Echoelmusic TV uses your microphone for voice-to-sound synthesis.",
                 "NSBluetoothAlwaysUsageDescription": "Echoelmusic TV connects to MIDI controllers and audio devices."
@@ -263,8 +263,8 @@ let project = Project(
                     "UIApplicationSupportsMultipleScenes": true,
                     "UISceneConfigurations": [:]
                 ],
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000",
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)",
                 "UIBackgroundModes": ["audio"],
                 "NSCameraUsageDescription": "Echoelmusic Vision uses camera for eye tracking and hand gestures.",
                 "NSFaceIDUsageDescription": "Echoelmusic Vision uses facial tracking for expression-based control."
@@ -314,8 +314,8 @@ let project = Project(
                         ]
                     ]
                 ],
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000"
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)"
             ]),
             sources: [
                 "Sources/EchoelmusicAUv3/**/*.swift"
@@ -388,8 +388,8 @@ let project = Project(
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Echoelmusic",
                 "LSApplicationCategoryType": "public.app-category.music",
-                "CFBundleShortVersionString": "10000.1.0",
-                "CFBundleVersion": "10000",
+                "CFBundleShortVersionString": "7.0.0",
+                "CFBundleVersion": "$(BUILD_NUMBER:=1)",
                 "NSCameraUsageDescription": "Echoelmusic uses your camera for facial expression tracking.",
                 "NSMicrophoneUsageDescription": "Echoelmusic uses your microphone for voice-to-sound synthesis.",
                 "NSBluetoothAlwaysUsageDescription": "Echoelmusic connects to MIDI controllers and audio devices.",

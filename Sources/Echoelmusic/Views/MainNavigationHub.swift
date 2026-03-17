@@ -380,7 +380,7 @@ struct EchoelSettingsView: View {
                         // MARK: - About
                         settingsSection(title: "ABOUT") {
                             VStack(spacing: EchoelSpacing.sm) {
-                                settingsRow(icon: "info.circle", label: "Version", value: "7.0")
+                                settingsRow(icon: "info.circle", label: "Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "7.0")
                                 settingsRow(icon: "hammer", label: "Build", value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "dev")
                                 settingsRow(icon: "person", label: "Developer", value: "Echoel")
                                 settingsRow(icon: "building.2", label: "Studio", value: "Hamburg")
