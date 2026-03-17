@@ -46,12 +46,12 @@ struct EchoelmusicApp: App {
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
                     audioEngine.start()
 
-                    // Request HealthKit authorization for bio-reactive features
-                    // If granted, streaming starts automatically. If denied, mic fallback is used.
-                    let bioGranted = await EchoelBioEngine.shared.requestAuthorization()
-                    if bioGranted {
-                        EchoelBioEngine.shared.startStreaming()
-                    }
+                    // Request HealthKit authorization, then start bio streaming.
+                    // Must happen AFTER workspace.deferredSetup() so engines are ready,
+                    // but auth must complete BEFORE startStreaming() so HealthKit data
+                    // is used instead of mic fallback.
+                    _ = await EchoelBioEngine.shared.requestAuthorization()
+                    EchoelBioEngine.shared.startStreaming()
                 }
         }
     }

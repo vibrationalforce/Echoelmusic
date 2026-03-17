@@ -158,8 +158,8 @@ final class EchoelCreativeWorkspace {
 
         setupBridges()
 
-        // Start bio-feedback streaming (HealthKit if authorized, mic fallback otherwise)
-        bioEngine.startStreaming()
+        // Bio streaming is started from EchoelmusicApp.task AFTER HealthKit authorization.
+        // Do NOT start here — would lock into fallback mode before auth completes.
 
         isReady = true
         log.info("Creative Workspace deferred setup complete (all 12 EchoelTools)", category: .system)
