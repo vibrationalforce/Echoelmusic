@@ -356,7 +356,7 @@ struct MIDIRoutingView: View {
                     .padding(.horizontal, EchoelSpacing.md)
                     .padding(.vertical, EchoelSpacing.sm)
                     .background(EchoelBrand.coral.opacity(0.2))
-                    .cornerRadius(16)
+                    .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.lg))
                 }
                 .neonGlow(color: EchoelBrand.coral, radius: 6)
             }

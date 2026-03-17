@@ -986,7 +986,7 @@ struct DAWArrangementView: View {
 
     private var instrumentBrowserOverlay: some View {
         ZStack {
-            Color.black.opacity(0.5)
+            EchoelBrand.bgDeep.opacity(0.5)
                 .ignoresSafeArea()
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: EchoelAnimation.smooth)) { showInstrumentBrowser = false }

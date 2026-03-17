@@ -137,7 +137,7 @@ public struct TR808BassSynthView: View {
                                 .padding(.vertical, 8)
                                 .background(
                                     Capsule()
-                                        .fill(selectedPreset == name ? Color.orange : EchoelBrand.border)
+                                        .fill(selectedPreset == name ? EchoelBrand.amber : EchoelBrand.border)
                                 )
                                 .foregroundColor(selectedPreset == name ? .white : .primary)
                         }
@@ -172,7 +172,7 @@ public struct TR808BassSynthView: View {
                                 .font(.caption.monospacedDigit())
                         }
                         Slider(value: $synth.config.pitchGlideTime, in: 0.01...0.5)
-                            .tint(.orange)
+                            .tint(EchoelBrand.amber)
                     }
 
                     // Glide Range
@@ -185,7 +185,7 @@ public struct TR808BassSynthView: View {
                                 .font(.caption.monospacedDigit())
                         }
                         Slider(value: $synth.config.pitchGlideRange, in: -24...0)
-                            .tint(.orange)
+                            .tint(EchoelBrand.amber)
                     }
 
                     // Glide Curve
@@ -198,7 +198,7 @@ public struct TR808BassSynthView: View {
                                 .font(.caption)
                         }
                         Slider(value: $synth.config.pitchGlideCurve, in: 0...1)
-                            .tint(.orange)
+                            .tint(EchoelBrand.amber)
                     }
                 }
             }
@@ -206,7 +206,7 @@ public struct TR808BassSynthView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.orange.opacity(0.1))
+                .fill(EchoelBrand.amber.opacity(0.1))
         )
     }
 
@@ -265,7 +265,7 @@ public struct TR808BassSynthView: View {
                     Text("Drive")
                         .font(.caption)
                     Slider(value: $synth.config.drive, in: 0...1)
-                        .tint(.purple)
+                        .tint(EchoelBrand.violet)
                     Text(String(format: "%.0f%%", synth.config.drive * 100))
                         .font(.caption2.monospacedDigit())
                 }
@@ -275,7 +275,7 @@ public struct TR808BassSynthView: View {
                     Text("Filter")
                         .font(.caption)
                     Slider(value: $synth.config.filterCutoff, in: 20...2000)
-                        .tint(.purple)
+                        .tint(EchoelBrand.violet)
                     Text(String(format: "%.0f Hz", synth.config.filterCutoff))
                         .font(.caption2.monospacedDigit())
                 }
@@ -285,7 +285,7 @@ public struct TR808BassSynthView: View {
                     Text("Level")
                         .font(.caption)
                     Slider(value: $synth.config.level, in: 0...1)
-                        .tint(.purple)
+                        .tint(EchoelBrand.violet)
                     Text(String(format: "%.0f%%", synth.config.level * 100))
                         .font(.caption2.monospacedDigit())
                 }
@@ -294,7 +294,7 @@ public struct TR808BassSynthView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.purple.opacity(0.1))
+                .fill(EchoelBrand.violet.opacity(0.1))
         )
     }
 
@@ -313,7 +313,7 @@ public struct TR808BassSynthView: View {
                             .frame(height: 60)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(synth.currentNote == note ? Color.orange : EchoelBrand.border)
+                                    .fill(synth.currentNote == note ? EchoelBrand.amber : EchoelBrand.border)
                             )
                             .foregroundColor(synth.currentNote == note ? .white : .primary)
                     }
@@ -370,7 +370,7 @@ public struct TR808BassSynthView: View {
                                 .padding(.vertical, 6)
                                 .background(
                                     Capsule()
-                                        .fill(synth.currentDrumKit == genre.rawValue ? Color.cyan : EchoelBrand.border)
+                                        .fill(synth.currentDrumKit == genre.rawValue ? EchoelBrand.accent : EchoelBrand.border)
                                 )
                                 .foregroundColor(synth.currentDrumKit == genre.rawValue ? .white : .primary)
                         }
@@ -412,7 +412,7 @@ public struct TR808BassSynthView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.cyan.opacity(0.1))
+                .fill(EchoelBrand.accent.opacity(0.1))
         )
     }
 
@@ -436,7 +436,7 @@ public struct TR808BassSynthView: View {
 
                 Slider(value: $synth.sequencerBPM, in: 60...200, step: 1)
                     .frame(width: 100)
-                    .tint(.cyan)
+                    .tint(EchoelBrand.accent)
 
                 Button(action: {
                     if synth.isSequencerPlaying {
@@ -478,7 +478,7 @@ public struct TR808BassSynthView: View {
                                 Text("\(step + 1)")
                                     .font(.system(size: 8).monospacedDigit())
                                     .frame(width: 24, height: 14)
-                                    .foregroundColor(synth.sequencerStep == step && synth.isSequencerPlaying ? .cyan : .secondary)
+                                    .foregroundColor(synth.sequencerStep == step && synth.isSequencerPlaying ? EchoelBrand.accent : .secondary)
                             }
                         }
 

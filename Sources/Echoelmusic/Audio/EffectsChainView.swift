@@ -278,7 +278,7 @@ struct EffectsChainView: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(.cyan)
+                    .foregroundColor(EchoelBrand.accent)
                     .frame(width: 40)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -294,7 +294,7 @@ struct EffectsChainView: View {
                 Spacer()
 
                 Image(systemName: "plus.circle.fill")
-                    .foregroundColor(.cyan)
+                    .foregroundColor(EchoelBrand.accent)
             }
             .padding(.vertical, 8)
         }

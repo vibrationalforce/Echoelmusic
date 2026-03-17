@@ -390,7 +390,7 @@ struct EffectParametersView: View {
 
                 Text(String(format: format, value.wrappedValue * multiplier) + unit)
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.cyan)
+                    .foregroundColor(EchoelBrand.accent)
             }
 
             Slider(value: value, in: range)
@@ -421,7 +421,7 @@ struct EffectParametersView: View {
 
                     Text(output)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.cyan)
+                        .foregroundColor(EchoelBrand.accent)
                 }
 
                 Text(range)

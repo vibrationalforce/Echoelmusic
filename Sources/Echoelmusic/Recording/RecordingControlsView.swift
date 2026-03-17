@@ -31,7 +31,7 @@ struct RecordingControlsView: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(session.name)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.cyan)
+                            .foregroundColor(EchoelBrand.accent)
 
                         Text("\(session.tracks.count) tracks")
                             .font(.system(size: 10))
@@ -54,7 +54,7 @@ struct RecordingControlsView: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.cyan.opacity(0.3))
+                            .fill(EchoelBrand.accent.opacity(0.3))
                     )
                 }
                 .accessibilityLabel("Create new recording session")
@@ -73,7 +73,7 @@ struct RecordingControlsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 15)
-                .fill(Color.black.opacity(0.4))
+                .fill(EchoelBrand.bgDeep.opacity(0.4))
         )
         .sheet(isPresented: $showSessionNamePrompt) {
             sessionNamePromptView
@@ -192,7 +192,7 @@ struct RecordingControlsView: View {
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(recordingEngine.isPlaying ? Color.cyan : Color.cyan.opacity(0.3))
+                            .fill(recordingEngine.isPlaying ? EchoelBrand.accent : EchoelBrand.accent.opacity(0.3))
                     )
             }
             .disabled(recordingEngine.isRecording)
@@ -223,7 +223,7 @@ struct RecordingControlsView: View {
                     ),
                     in: 0...session.duration
                 )
-                .tint(.cyan)
+                .tint(EchoelBrand.accent)
                 .disabled(recordingEngine.isRecording || recordingEngine.isPlaying)
             }
         }

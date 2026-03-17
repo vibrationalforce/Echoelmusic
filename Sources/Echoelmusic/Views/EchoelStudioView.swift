@@ -253,7 +253,7 @@ struct EchoelStudioView: View {
             HStack(spacing: 0) {
             ForEach(BottomPanel.allCases) { panel in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    echoelWithAnimation(.easeInOut(duration: 0.2)) {
                         if bottomPanel == panel {
                             bottomPanel = nil
                         } else {

@@ -1095,7 +1095,7 @@ struct VideoExportSheet: View {
         .overlay {
             if exportManager.isExporting {
                 ZStack {
-                    Color.black.opacity(0.5)
+                    EchoelBrand.bgDeep.opacity(0.5)
                         .ignoresSafeArea()
 
                     VStack(spacing: EchoelSpacing.md) {

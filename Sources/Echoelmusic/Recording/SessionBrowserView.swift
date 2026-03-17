@@ -38,7 +38,7 @@ struct SessionBrowserView: View {
                     sessionList
                 }
             }
-            .background(Color.black.opacity(0.9))
+            .background(EchoelBrand.bgDeep.opacity(0.9))
             .navigationTitle("Sessions")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -298,15 +298,15 @@ struct SessionRow: View {
                             .font(.system(size: 10))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(Color.cyan.opacity(0.2)))
-                            .foregroundColor(.cyan)
+                            .background(Capsule().fill(EchoelBrand.accent.opacity(0.2)))
+                            .foregroundColor(EchoelBrand.accent)
 
                         Text(session.mood)
                             .font(.system(size: 10))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(Color.purple.opacity(0.2)))
-                            .foregroundColor(.purple)
+                            .background(Capsule().fill(EchoelBrand.violet.opacity(0.2)))
+                            .foregroundColor(EchoelBrand.violet)
                     }
                 }
 

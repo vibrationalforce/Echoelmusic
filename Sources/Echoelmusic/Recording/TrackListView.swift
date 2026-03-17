@@ -25,7 +25,7 @@ struct TrackListView: View {
                 }
                 .padding()
             }
-            .background(Color.black.opacity(0.9))
+            .background(EchoelBrand.bgDeep.opacity(0.9))
             .navigationTitle("Tracks")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -182,7 +182,7 @@ struct TrackRow: View {
                     ),
                     in: 0...1
                 )
-                .tint(.cyan)
+                .tint(EchoelBrand.accent)
 
                 Text("\(Int(track.volume * 100))")
                     .font(.system(size: 11, design: .monospaced))
@@ -220,7 +220,7 @@ struct TrackRow: View {
                     ),
                     in: -1...1
                 )
-                .tint(.purple)
+                .tint(EchoelBrand.violet)
             }
 
             // Effects
@@ -234,7 +234,7 @@ struct TrackRow: View {
                         HStack {
                             Image(systemName: "waveform.path")
                                 .font(.system(size: 10))
-                                .foregroundColor(.cyan)
+                                .foregroundColor(EchoelBrand.accent)
 
                             Text(effectID)
                                 .font(.system(size: 11))
@@ -349,11 +349,11 @@ extension Track.TrackType {
 
     var color: Color {
         switch self {
-        case .audio: return .cyan
+        case .audio: return EchoelBrand.accent
         case .voice: return .green
-        case .binaural: return .purple
+        case .binaural: return EchoelBrand.violet
         case .spatial: return .blue
-        case .master: return .orange
+        case .master: return EchoelBrand.amber
         case .instrument: return .pink
         case .aux: return .yellow
         case .bus: return .teal

@@ -213,7 +213,7 @@ public struct EchoelBassView: View {
                     Text("Cutoff")
                         .font(.caption)
                     Slider(value: $bass.config.filterCutoff, in: 20...20000)
-                        .tint(.cyan)
+                        .tint(EchoelBrand.accent)
                     Text(String(format: "%.0f Hz", bass.config.filterCutoff))
                         .font(.caption2.monospacedDigit())
                 }
@@ -222,7 +222,7 @@ public struct EchoelBassView: View {
                     Text("Resonance")
                         .font(.caption)
                     Slider(value: $bass.config.filterResonance, in: 0...1)
-                        .tint(.cyan)
+                        .tint(EchoelBrand.accent)
                     Text(String(format: "%.0f%%", bass.config.filterResonance * 100))
                         .font(.caption2.monospacedDigit())
                 }
@@ -231,7 +231,7 @@ public struct EchoelBassView: View {
                     Text("Env Amt")
                         .font(.caption)
                     Slider(value: $bass.config.filterEnvAmount, in: 0...10000)
-                        .tint(.cyan)
+                        .tint(EchoelBrand.accent)
                     Text(String(format: "%.0f Hz", bass.config.filterEnvAmount))
                         .font(.caption2.monospacedDigit())
                 }
@@ -240,7 +240,7 @@ public struct EchoelBassView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.cyan.opacity(0.1))
+                .fill(EchoelBrand.accent.opacity(0.1))
         )
     }
 
@@ -291,17 +291,17 @@ public struct EchoelBassView: View {
             HStack(spacing: 16) {
                 VStack(spacing: 4) {
                     Text("Drive").font(.caption)
-                    Slider(value: $bass.config.drive, in: 0...1).tint(.purple)
+                    Slider(value: $bass.config.drive, in: 0...1).tint(EchoelBrand.violet)
                     Text(String(format: "%.0f%%", bass.config.drive * 100)).font(.caption2.monospacedDigit())
                 }
                 VStack(spacing: 4) {
                     Text("Width").font(.caption)
-                    Slider(value: $bass.config.stereoWidth, in: 0...1).tint(.purple)
+                    Slider(value: $bass.config.stereoWidth, in: 0...1).tint(EchoelBrand.violet)
                     Text(String(format: "%.0f%%", bass.config.stereoWidth * 100)).font(.caption2.monospacedDigit())
                 }
                 VStack(spacing: 4) {
                     Text("Level").font(.caption)
-                    Slider(value: $bass.config.level, in: 0...1).tint(.purple)
+                    Slider(value: $bass.config.level, in: 0...1).tint(EchoelBrand.violet)
                     Text(String(format: "%.0f%%", bass.config.level * 100)).font(.caption2.monospacedDigit())
                 }
             }
@@ -322,7 +322,7 @@ public struct EchoelBassView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.purple.opacity(0.1))
+                .fill(EchoelBrand.violet.opacity(0.1))
         )
     }
 

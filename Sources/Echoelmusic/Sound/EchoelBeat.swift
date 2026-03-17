@@ -1042,7 +1042,7 @@ public struct EchoelBeatView: View {
             VStack {
                 Text(String(format: "%.0f BPM", beat.bpm))
                     .font(.caption.monospacedDigit().bold())
-                    .foregroundColor(.cyan)
+                    .foregroundColor(EchoelBrand.accent)
                 Slider(value: $beat.bpm, in: 60...200, step: 1)
                     .frame(width: 100)
                     .tint(.cyan)
@@ -1105,7 +1105,7 @@ public struct EchoelBeatView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("HiHat Synth (808)")
                 .font(.caption.bold())
-                .foregroundColor(.cyan)
+                .foregroundColor(EchoelBrand.accent)
             HStack(spacing: 12) {
                 ForEach(HiHatMode.allCases, id: \.rawValue) { mode in
                     Button(action: { beat.triggerHiHat(mode: mode) }) {
