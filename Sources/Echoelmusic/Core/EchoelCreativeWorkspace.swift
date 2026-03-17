@@ -139,6 +139,23 @@ final class EchoelCreativeWorkspace {
             }
         }
 
+        // Wire step sequencer triggers → bio-synth audio output
+        NotificationCenter.default.addObserver(
+            forName: .sequencerStepTriggered,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            MainActor.assumeIsolated {
+                guard let self,
+                      let info = notification.userInfo,
+                      let channel = info["channel"] as? VisualStepSequencer.Channel,
+                      let velocity = info["velocity"] as? Float else { return }
+                // Map sequencer channels to MIDI notes (C3 = 60 base)
+                let baseNote = 60 + channel.rawValue * 2
+                self.bioSynth.noteOn(note: baseNote, velocity: velocity)
+            }
+        }
+
         setupBridges()
 
         // Start bio-feedback streaming (HealthKit if authorized, mic fallback otherwise)

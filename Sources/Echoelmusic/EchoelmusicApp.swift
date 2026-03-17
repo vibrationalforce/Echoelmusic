@@ -45,6 +45,13 @@ struct EchoelmusicApp: App {
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
                     audioEngine.start()
+
+                    // Request HealthKit authorization for bio-reactive features
+                    // If granted, streaming starts automatically. If denied, mic fallback is used.
+                    let bioGranted = await EchoelBioEngine.shared.requestAuthorization()
+                    if bioGranted {
+                        EchoelBioEngine.shared.startStreaming()
+                    }
                 }
         }
     }
