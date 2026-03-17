@@ -66,7 +66,7 @@ struct MainNavigationHub: View {
                 Image(systemName: "gearshape")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(EchoelBrand.textSecondary)
-                    .frame(width: 30, height: 30)
+                    .frame(minWidth: 44, minHeight: 44)
                     .background(
                         RoundedRectangle(cornerRadius: EchoelRadius.xs)
                             .fill(EchoelBrand.bgElevated.opacity(0.5))
@@ -121,10 +121,11 @@ struct MainNavigationHub: View {
                     Image(systemName: "backward.fill")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(EchoelBrand.textSecondary)
-                        .frame(width: 28, height: 28)
+                        .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Seek backward 5 seconds")
 
                 Button(action: {
                     // Toggle workspace playback — syncs ALL engines (audio, video, session, loops)
@@ -149,6 +150,7 @@ struct MainNavigationHub: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(EchoelCreativeWorkspace.shared.isPlaying ? "Pause playback" : "Play")
 
                 Button(action: {
                     if EchoelCreativeWorkspace.shared.isPlaying {
@@ -160,10 +162,11 @@ struct MainNavigationHub: View {
                     Image(systemName: "stop.fill")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(EchoelBrand.textSecondary)
-                        .frame(width: 28, height: 28)
+                        .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Stop playback")
 
                 Button(action: {
                     do {
@@ -190,10 +193,11 @@ struct MainNavigationHub: View {
                                 .frame(width: 18, height: 18)
                         }
                     }
-                    .frame(width: 28, height: 28)
+                    .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(recordingEngine.isRecording ? "Stop recording" : "Start recording")
             }
 
             Spacer()
@@ -268,6 +272,8 @@ struct MainNavigationHub: View {
     /// Bio-feedback indicator — delegates to isolated subview to avoid re-rendering transport bar
     private var bioFeedbackIndicator: some View {
         BioFeedbackIndicatorView(isAudioRunning: audioEngine.isRunning)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Bio feedback, \(audioEngine.isRunning ? "active" : "inactive")")
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
