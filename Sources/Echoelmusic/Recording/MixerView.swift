@@ -176,7 +176,7 @@ struct MixerChannelStrip: View {
             .padding(.bottom, VaporwaveSpacing.sm)
         }
         .padding(VaporwaveSpacing.md)
-        .glassCard()
+        .echoelSurface()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(track.name) channel strip")
     }

@@ -91,7 +91,7 @@ struct MIDIRoutingView: View {
             }
             .padding(.horizontal, EchoelSpacing.md)
             .padding(.vertical, EchoelSpacing.sm)
-            .glassCard()
+            .echoelSurface()
         }
         .padding(EchoelSpacing.md)
     }
@@ -197,7 +197,7 @@ struct MIDIRoutingView: View {
                     .foregroundColor(EchoelBrand.textTertiary)
             }
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
         }
         .padding(EchoelSpacing.md)
     }
@@ -212,7 +212,7 @@ struct MIDIRoutingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(EchoelSpacing.xl)
-        .glassCard()
+        .echoelSurface()
     }
 
     // MARK: - Routing Matrix View
@@ -271,7 +271,7 @@ struct MIDIRoutingView: View {
                 }
             }
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
 
             // Channel Filter
             VaporwaveSectionHeader("CHANNEL FILTER", icon: "line.3.horizontal.decrease.circle")
@@ -308,7 +308,7 @@ struct MIDIRoutingView: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 
     private var messageFilterToggles: some View {
@@ -334,7 +334,7 @@ struct MIDIRoutingView: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 
     // MARK: - Mappings View
@@ -423,7 +423,7 @@ struct MIDIRoutingView: View {
                     .toggleStyle(SwitchToggleStyle(tint: EchoelBrand.violet))
             }
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
 
             if midiRouter.mpeEnabled {
                 // Zone Configuration
@@ -463,7 +463,7 @@ struct MIDIRoutingView: View {
                     PerNoteControllerRow(name: "Expression", cc: "11", value: midiRouter.lastExpression, color: EchoelBrand.coral)
                 }
                 .padding(EchoelSpacing.md)
-                .glassCard()
+                .echoelSurface()
 
                 // Voice Allocation
                 VaporwaveSectionHeader("VOICE ALLOCATION", icon: "person.3")
@@ -477,7 +477,7 @@ struct MIDIRoutingView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(EchoelSpacing.md)
-                .glassCard()
+                .echoelSurface()
             }
         }
         .padding(EchoelSpacing.md)
@@ -523,7 +523,7 @@ struct MIDIDeviceRow: View {
                 .toggleStyle(SwitchToggleStyle(tint: isInput ? EchoelBrand.sky : EchoelBrand.coral))
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -583,7 +583,7 @@ struct MIDIMappingRow: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -606,7 +606,7 @@ struct QuickPresetCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
         }
         .neonGlow(color: color, radius: 6)
     }
@@ -666,7 +666,7 @@ struct MPEZoneConfig: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -775,7 +775,7 @@ struct MIDILearnSheet: View {
                     }
                     .pickerStyle(.menu)
                     .padding(EchoelSpacing.md)
-                    .glassCard()
+                    .echoelSurface()
                 }
 
                 Spacer()

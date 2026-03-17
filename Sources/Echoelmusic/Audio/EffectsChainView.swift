@@ -80,7 +80,7 @@ struct EffectsChainView: View {
             }
         }
         .padding()
-        .glassCard()
+        .echoelSurface()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Effects signal flow with \(nodeGraph.nodes.count) nodes")
     }

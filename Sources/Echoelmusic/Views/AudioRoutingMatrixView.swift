@@ -72,7 +72,7 @@ struct AudioRoutingMatrixView: View {
                 }
             }
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
 
             // Add Channel Button
             Button(action: { audioRouter.addChannel() }) {
@@ -386,7 +386,7 @@ struct MasterStripView: View {
         }
         .frame(width: 80)
         .padding(EchoelSpacing.sm)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -548,7 +548,7 @@ struct InputRouteCard: View {
             .font(EchoelBrandFont.caption())
         }
         .padding(EchoelSpacing.sm)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -585,7 +585,7 @@ struct SendMatrixRow: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -661,7 +661,7 @@ struct OutputRouteCard: View {
             .pickerStyle(.menu)
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -712,7 +712,7 @@ struct SidechainConfigView: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
@@ -837,7 +837,7 @@ struct EffectSlotView: View {
             }
         }
         .padding(EchoelSpacing.md)
-        .glassCard()
+        .echoelSurface()
     }
 }
 
