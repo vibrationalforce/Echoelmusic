@@ -69,8 +69,11 @@ final class EchoelCreativeWorkspace {
     /// Whether deferred heavy init has completed
     private(set) var isReady: Bool = false
 
-    /// Current bio-coherence level (0-1) — driven by mic or HealthKit
+    /// Current bio-coherence level (0-1) — driven by EchoelBioEngine (HealthKit or mic fallback)
     var bioCoherence: Float = 0.5
+
+    /// Bio-feedback engine — real HealthKit data or mic-level fallback
+    private let bioEngine = EchoelBioEngine.shared
 
     /// Connected AudioEngine for hardware output (set via connectAudioEngine)
     private weak var audioEngine: AudioEngine?
@@ -130,6 +133,10 @@ final class EchoelCreativeWorkspace {
         self.oscEngine = OSCEngine.shared
 
         setupBridges()
+
+        // Start bio-feedback streaming (HealthKit if authorized, mic fallback otherwise)
+        bioEngine.startStreaming()
+
         isReady = true
         log.info("Creative Workspace deferred setup complete (all 12 EchoelTools)", category: .system)
     }
@@ -263,35 +270,52 @@ final class EchoelCreativeWorkspace {
                 guard now - self.lastBioUpdate > 0.016 else { return }
                 self.lastBioUpdate = now
 
-                let level = micManager.audioLevel
-                // Smooth the level into a coherence-like signal (0-1)
-                let smoothed = self.bioCoherence * 0.85 + level * 0.15
-                self.bioCoherence = smoothed
-                // Feed bio-reactive synth
+                // Get real bio parameters from EchoelBioEngine (HealthKit or fallback)
+                let bio = self.bioEngine.audioParameters()
+
+                // Use bio coherence if streaming, otherwise fall back to mic level
+                let coherence: Float
+                if self.bioEngine.isStreaming && self.bioEngine.dataSource != .fallback {
+                    coherence = bio.coherence
+                } else {
+                    let level = micManager.audioLevel
+                    coherence = self.bioCoherence * 0.85 + level * 0.15
+                }
+                self.bioCoherence = coherence
+
+                // Feed bio-reactive synth with real data
                 self.bioSynth.applyBioReactive(
-                    coherence: smoothed,
-                    hrvVariability: 0.5,
-                    heartRate: 0.5,
-                    breathPhase: 0.5
+                    coherence: coherence,
+                    hrvVariability: bio.hrv,
+                    heartRate: bio.heartRate / 200.0, // Normalize HR to 0-1 range
+                    breathPhase: bio.breathPhase,
+                    breathDepth: bio.breathDepth
                 )
                 // Feed bio-reactive stage visuals
                 #if canImport(UIKit)
                 self.stageEngine?.applyBioReactive(
-                    coherence: smoothed,
-                    hrv: 0.5,
-                    heartRate: 72.0,
-                    breathPhase: 0.5
+                    coherence: coherence,
+                    hrv: bio.hrv,
+                    heartRate: bio.heartRate,
+                    breathPhase: bio.breathPhase
                 )
                 #endif
                 // Feed bio-reactive visual engine
                 #if canImport(Metal)
                 self.visEngine?.applyBioReactive(
-                    coherence: smoothed,
-                    hrv: 0.5,
-                    heartRate: 72.0,
-                    breathPhase: 0.5
+                    coherence: coherence,
+                    hrv: bio.hrv,
+                    heartRate: bio.heartRate,
+                    breathPhase: bio.breathPhase
                 )
                 #endif
+                // Feed bio-reactive lighting engine (Art-Net/DMX)
+                self.luxEngine?.applyBioReactive(
+                    coherence: coherence,
+                    hrv: bio.hrv,
+                    heartRate: bio.heartRate,
+                    breathPhase: bio.breathPhase
+                )
             }
         }
     }
