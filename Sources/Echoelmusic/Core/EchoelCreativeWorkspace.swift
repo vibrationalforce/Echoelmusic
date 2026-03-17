@@ -132,6 +132,13 @@ final class EchoelCreativeWorkspace {
         self.aiEngine = EchoelAIEngine.shared
         self.oscEngine = OSCEngine.shared
 
+        // Handle incoming OSC messages for external control
+        self.oscEngine?.onMessageReceived = { [weak self] message in
+            Task { @MainActor [weak self] in
+                self?.handleOSCMessage(message)
+            }
+        }
+
         setupBridges()
 
         // Start bio-feedback streaming (HealthKit if authorized, mic fallback otherwise)
@@ -316,11 +323,43 @@ final class EchoelCreativeWorkspace {
                     heartRate: bio.heartRate,
                     breathPhase: bio.breathPhase
                 )
+                // Send bio data via OSC to external apps (Max/MSP, TouchDesigner, etc.)
+                self.oscEngine?.sendBioData(
+                    heartRate: bio.heartRate,
+                    hrv: bio.hrv,
+                    breathRate: Float(self.bioEngine.snapshot.breathRate),
+                    breathPhase: bio.breathPhase,
+                    coherence: coherence,
+                    audioRMS: micManager.audioLevel,
+                    audioPitch: 0 // TODO: wire pitch detection
+                )
             }
         }
     }
 
     // MARK: - Actions
+
+    /// Handle incoming OSC messages for external control
+    private func handleOSCMessage(_ message: OSCMessage) {
+        switch message.address {
+        case "/echoelmusic/transport/play":
+            if !isPlaying { togglePlayback() }
+        case "/echoelmusic/transport/stop":
+            if isPlaying { togglePlayback() }
+        case "/echoelmusic/transport/bpm":
+            if case .float(let bpm) = message.arguments.first {
+                setGlobalBPM(Double(bpm))
+            }
+        case "/echoelmusic/lux/blackout":
+            luxEngine?.blackout()
+        case "/echoelmusic/lux/master":
+            if case .float(let level) = message.arguments.first {
+                luxEngine?.masterDimmer = level
+            }
+        default:
+            break
+        }
+    }
 
     func setGlobalBPM(_ bpm: Double) {
         bpmGrid.setBPM(bpm)

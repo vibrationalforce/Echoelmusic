@@ -435,7 +435,7 @@ public struct OSCSettingsView: View {
                 }
             }
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
 
             // Predefined addresses
             VStack(alignment: .leading, spacing: EchoelSpacing.xs) {
@@ -454,7 +454,7 @@ public struct OSCSettingsView: View {
                 }
             }
             .padding(EchoelSpacing.md)
-            .glassCard()
+            .echoelSurface()
         }
     }
 
