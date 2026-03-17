@@ -10,7 +10,7 @@ import MetalKit
 import Observation
 
 /// Chroma Key Engine with 6-Pass Metal Pipeline for Real-Time Greenscreen/Bluescreen
-/// Supports iOS 15+ with optimized performance for 120 FPS @ 1080p on iPhone 16 Pro
+/// Supports iOS 17+ with optimized performance for 120 FPS @ 1080p on iPhone 16 Pro
 /// Features: Auto-Calibration, Multi-Color Key, Bio-Reactive Backgrounds
 @MainActor
 @Observable

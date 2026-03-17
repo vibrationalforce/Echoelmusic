@@ -9,7 +9,7 @@ private func sanitizeDSPOutput(_ buffer: inout [Float]) {
 }
 
 // MARK: - Classic Analog Hardware Emulations
-// Cross-Platform Support: iOS 15+, macOS 12+, watchOS 8+, tvOS 15+, visionOS 1+
+// Cross-Platform Support: iOS 17+, macOS 14+, watchOS 10+, tvOS 17+, visionOS 1+
 // Android: See android/app/src/main/kotlin/com/echoelmusic/dsp/ClassicAnalogEmulations.kt
 // High-end studio equipment emulation with simplified controls
 //
