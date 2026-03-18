@@ -1,7 +1,9 @@
 # =============================================================================
 # ECHOELMUSIC - TRIGGER TESTFLIGHT ON MAIN UPDATE
 # =============================================================================
-# When main is updated (from auto-merge), trigger the TestFlight workflow
+# When main is updated (from direct push, NOT auto-merge), trigger TestFlight.
+# Note: auto-merge-claude.yml already dispatches TestFlight after merging.
+# GITHUB_TOKEN pushes from auto-merge don't trigger this, so no duplicates.
 # =============================================================================
 name: Trigger TestFlight
 
@@ -14,7 +16,6 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'project.yml'
-      - '.github/workflows/**'
       - 'fastlane/**'
 
 permissions:
@@ -43,8 +44,8 @@ jobs:
                 ref: 'main',
                 inputs: {
                   platform: 'all',
-                  clean_build: 'true',
-                  skip_compile_check: 'true'
+                  clean_build: 'false',
+                  skip_compile_check: 'false'
                 }
               });
               console.log('TestFlight workflow dispatched successfully!');
