@@ -66,6 +66,7 @@ struct EchoelStudioView: View {
         case video = "Video"
         case lighting = "Lighting"
         case stage = "Stage"
+        case network = "Network"
         case ai = "AI"
 
         var id: String { rawValue }
@@ -82,6 +83,7 @@ struct EchoelStudioView: View {
             case .video: return "film"
             case .lighting: return "light.max"
             case .stage: return "display"
+            case .network: return "network"
             case .ai: return "cpu"
             }
         }
@@ -98,6 +100,7 @@ struct EchoelStudioView: View {
             case .video: return EchoelBrand.rose
             case .lighting: return Color(red: 1, green: 0.8, blue: 0.4)
             case .stage: return Color(red: 0.4, green: 0.8, blue: 1.0)
+            case .network: return EchoelBrand.emerald
             case .ai: return EchoelBrand.sky
             }
         }
@@ -182,6 +185,8 @@ struct EchoelStudioView: View {
                         EchoelLuxView()
                     case .stage:
                         EchoelStageView()
+                    case .network:
+                        EchoelNetView()
                     case .ai:
                         EchoelAIView()
                     }
