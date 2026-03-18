@@ -151,16 +151,17 @@ final class RecordingEngine {
             log.recording("Failed to create sessions directory: \(error.localizedDescription)", level: .error)
         }
 
-        // Setup recording format (48kHz, stereo, float32)
+        // Setup recording format (system sample rate, stereo, float32)
+        let recordingSampleRate = AudioConfiguration.preferredSampleRate
         guard let format = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
-            sampleRate: 48000,
+            sampleRate: recordingSampleRate,
             channels: 2,
             interleaved: false
         ) else {
-            log.recording("❌ Failed to create recording format - using fallback", level: .error)
+            log.recording("Failed to create recording format - using fallback", level: .error)
             // Fallback to standard format
-            if let fallback48 = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) {
+            if let fallback48 = AVAudioFormat(standardFormatWithSampleRate: recordingSampleRate, channels: 2) {
                 self.recordingFormat = fallback48
             } else if let fallback44 = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2) {
                 self.recordingFormat = fallback44
