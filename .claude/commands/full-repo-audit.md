@@ -85,13 +85,16 @@ Identifiziere Stubs durch:
 
 ## PHASE 4: BUILD & TEST STATUS
 
-### 4.1 Build-Analyse
+### 4.1 Build-Analyse (plattform-bewusst)
+Auf macOS:
 ```bash
 swift build 2>&1 | grep -E "(error|warning|note)"
 ```
+Auf Linux/Web-Sessions: CI-Status über GitHub API prüfen.
 - Liste alle Compiler-Warnings
 - Liste alle Compiler-Errors
 - Identifiziere deprecated API-Verwendung
+- Prüfe iOS 26 SDK Targeting (ITMS-90725, Deadline: 28. April 2026)
 
 ### 4.2 Test-Analyse
 - Welche Tests existieren?
