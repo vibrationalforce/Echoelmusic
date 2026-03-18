@@ -87,6 +87,10 @@ final class EchoelCreativeWorkspace {
     /// Audio render buffer size in frames
     private let renderFrameCount: Int = 512
 
+    /// Notification observer token for sequencer step triggers
+    @ObservationIgnored
+    private var sequencerObserver: (any NSObjectProtocol)?
+
 
     // MARK: - Init
 
@@ -108,6 +112,12 @@ final class EchoelCreativeWorkspace {
         // Must be after ALL stored properties are initialized (@Observable macro requirement)
         self.loopEngine.setTempo(120.0)
         log.info("Creative Workspace lightweight init complete", category: .system)
+    }
+
+    nonisolated deinit {
+        if let observer = sequencerObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     /// Complete heavy initialization — call from .task after first frame renders.
@@ -140,7 +150,7 @@ final class EchoelCreativeWorkspace {
         }
 
         // Wire step sequencer triggers → bio-synth audio output
-        NotificationCenter.default.addObserver(
+        sequencerObserver = NotificationCenter.default.addObserver(
             forName: .sequencerStepTriggered,
             object: nil,
             queue: .main
