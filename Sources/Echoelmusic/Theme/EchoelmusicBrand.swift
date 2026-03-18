@@ -477,7 +477,12 @@ public struct EchoelDisclaimer {
     WARNINGS:
     • Photosensitive users: Some visual effects may trigger seizures
     • Cardiac conditions: Consult physician before using HRV features
+    • Do NOT use while operating vehicles or heavy machinery
+    • Do NOT use under the influence of alcohol or drugs
+    • If using biofeedback alongside therapeutic treatment, coordinate with your healthcare provider
+    • Visual flash rate limited to 3 Hz (WCAG 2.3.1 compliance)
     • Children: Parental supervision recommended
+    • Bio data is for self-observation only, NOT medical diagnosis
 
     © Echoelmusic. All rights reserved.
     """
