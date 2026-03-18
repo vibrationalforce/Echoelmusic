@@ -10,7 +10,6 @@ import Observation
 struct AudioRoutingMatrixView: View {
     @State private var audioRouter = AudioRouterViewModel()
     @State private var selectedChannel: AudioChannel?
-    @State private var showEffectsRack = false
     @State private var showSendConfig = false
 
     var body: some View {
@@ -34,10 +33,11 @@ struct AudioRoutingMatrixView: View {
                 }
             }
         }
-        .sheet(isPresented: $showEffectsRack) {
-            if let channel = selectedChannel {
-                EffectsRackSheet(channel: channel, isPresented: $showEffectsRack)
-            }
+        .sheet(item: $selectedChannel) { channel in
+            EffectsRackSheet(channel: channel, isPresented: Binding(
+                get: { selectedChannel != nil },
+                set: { if !$0 { selectedChannel = nil } }
+            ))
         }
     }
 
@@ -101,7 +101,6 @@ struct AudioRoutingMatrixView: View {
                         onSolo: { audioRouter.toggleSolo(channel.id) },
                         onEffects: {
                             selectedChannel = channel
-                            showEffectsRack = true
                         }
                     )
                 }
