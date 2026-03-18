@@ -173,7 +173,8 @@ class PhaseVocoder {
 
             // Extract and window the frame (reuse pre-allocated buffer)
             input.withUnsafeBufferPointer { inputPtr in
-                vDSP_vmul(inputPtr.baseAddress! + inputOffset, 1,
+                guard let base = inputPtr.baseAddress else { return }
+                vDSP_vmul(base + inputOffset, 1,
                           analysisWindow, 1,
                           &windowedFrameBuffer, 1, vDSP_Length(n))
             }
