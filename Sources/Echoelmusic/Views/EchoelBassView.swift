@@ -335,7 +335,7 @@ public struct EchoelBassView: View {
 
             HStack(spacing: 4) {
                 ForEach([36, 38, 40, 41, 43, 45, 47, 48], id: \.self) { note in
-                    Button(action: {}) {
+                    Button(action: { bass.noteOn(note: note) }) {
                         Text(noteNameForMIDI(note))
                             .font(.caption2)
                             .frame(maxWidth: .infinity)

@@ -306,7 +306,7 @@ public struct TR808BassSynthView: View {
             // Simple octave keyboard (C1 - C2 for bass)
             HStack(spacing: 4) {
                 ForEach([36, 38, 40, 41, 43, 45, 47, 48], id: \.self) { note in
-                    Button(action: {}) {
+                    Button(action: { synth.noteOn(note: note) }) {
                         Text(noteNameForMIDI(note))
                             .font(.caption2)
                             .frame(maxWidth: .infinity)
@@ -384,7 +384,7 @@ public struct TR808BassSynthView: View {
                 let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 4)
                 LazyVGrid(columns: columns, spacing: 4) {
                     ForEach(Array(synth.drumSlots.prefix(16).enumerated()), id: \.element.id) { index, slot in
-                        Button(action: {}) {
+                        Button(action: { synth.triggerDrum(slotIndex: index) }) {
                             VStack(spacing: 2) {
                                 Text(drumPadShortName(slot.name))
                                     .font(.system(size: 10, weight: .bold))
