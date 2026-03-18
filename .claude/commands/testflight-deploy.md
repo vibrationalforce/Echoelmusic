@@ -10,40 +10,55 @@ git status
 ```
 If there are uncommitted changes, commit them first.
 
-### 2. Verify build
+### 2. Verify build (platform-aware)
+On macOS with Xcode:
 ```bash
 swift build 2>&1 | tail -20
 ```
-Build must pass. If not, fix before deploying.
-
-### 3. Verify tests
+On Linux/web sessions (no Xcode): Skip local build — CI will verify.
+Check latest CI status instead:
 ```bash
-swift test 2>&1 | tail -30
+GITHUB_TOKEN=$(python3 -c "import json; print(json.load(open('.claude/settings.local.json'))['github']['token'])" 2>/dev/null)
+curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/vibrationalforce/Echoelmusic/actions/runs?per_page=3" | python3 -c "
+import json,sys
+for r in json.load(sys.stdin).get('workflow_runs',[])[:3]:
+    print(f'{r[\"status\"]:12} {r[\"conclusion\"] or \"pending\":12} {r[\"name\"]:20} {r[\"created_at\"][:16]}')
+"
 ```
-Tests must pass. If not, fix before deploying.
 
-### 4. Push to remote
+### 3. Verify tests (platform-aware)
+On macOS: `swift test 2>&1 | tail -30`
+On Linux: Skip — CI runs tests. Check CI status from step 2.
+
+### 4. iOS 26 SDK Validation
+Verify project.yml targets iOS 26 SDK (ITMS-90725 deadline: April 28, 2026):
+```bash
+grep -E "deploymentTarget|IPHONEOS_DEPLOYMENT_TARGET" project.yml | head -5
+```
+
+### 5. Push to remote
 ```bash
 git push -u origin $(git branch --show-current)
 ```
 
-### 5. Read GitHub token from local settings
+### 6. Read GitHub token from local settings
 ```bash
 GITHUB_TOKEN=$(python3 -c "import json; print(json.load(open('.claude/settings.local.json'))['github']['token'])" 2>/dev/null)
 ```
 If token is not found, ask the user to set it up in `.claude/settings.local.json`.
 
-### 6. Trigger TestFlight workflow
+### 7. Trigger TestFlight workflow
 ```bash
 curl -s -X POST \
   -H "Authorization: Bearer $GITHUB_TOKEN" \
   -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/vibrationalforce/Echoelmusic/actions/workflows/testflight.yml/dispatches" \
-  -d "{\"ref\":\"$(git branch --show-current)\"}" -w "\n%{http_code}"
+  -d "{\"ref\":\"$(git branch --show-current)\",\"inputs\":{\"platform\":\"ios\",\"skip_tests\":\"true\"}}" -w "\n%{http_code}"
 ```
-HTTP 204 = success.
+HTTP 204 = success. Use `"platform":"all"` for multi-platform deploy.
 
-### 7. Monitor workflow status
+### 8. Monitor workflow status
 ```bash
 sleep 5 && curl -s \
   -H "Authorization: Bearer $GITHUB_TOKEN" \

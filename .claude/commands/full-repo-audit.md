@@ -10,7 +10,7 @@ Führe eine **vollständige, systematische Analyse** des gesamten Echoelmusic-Re
 - Analysiere die komplette Verzeichnisstruktur
 - Identifiziere alle Module, Packages und deren Abhängigkeiten
 - Erstelle ein Dependency-Graph der Komponenten
-- Prüfe Package.swift, CMakeLists.txt, build.gradle.kts
+- Prüfe Package.swift, project.yml (XcodeGen), build.gradle.kts
 
 ### 1.2 Design Patterns
 - Identifiziere verwendete Design Patterns (MVC, MVVM, Observer, etc.)
