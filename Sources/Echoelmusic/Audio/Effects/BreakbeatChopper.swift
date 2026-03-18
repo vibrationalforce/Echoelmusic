@@ -725,11 +725,12 @@ public final class BreakbeatChopper {
 
     /// Create stutter/roll pattern
     func createRollPattern(sliceIndex: Int, divisions: Int, length: Int = 8) {
-        var pattern = ChopPattern(name: "Roll x\(divisions)", length: length)
+        let safeDivisions = max(1, divisions)
+        var pattern = ChopPattern(name: "Roll x\(safeDivisions)", length: length)
 
         for i in 0..<length {
             var step = ChopperPatternStep(sliceIndex: sliceIndex)
-            step.velocity = 1.0 - Float(i % divisions) * 0.1  // Velocity roll
+            step.velocity = 1.0 - Float(i % safeDivisions) * 0.1  // Velocity roll
             pattern.steps[i] = step
         }
 
@@ -810,7 +811,7 @@ public final class BreakbeatChopper {
               let format = sourceBuffer?.format else { return }
 
         // Handle roll/stutter
-        let divisions = roll?.divisions ?? 1
+        let divisions = max(1, roll?.divisions ?? 1)
         let rollLength = audio.count / divisions
 
         for d in 0..<divisions {
