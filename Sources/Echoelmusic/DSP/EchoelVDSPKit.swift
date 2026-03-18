@@ -514,7 +514,8 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
 
     /// Set a parametric EQ band
     public func setParametricEQ(section: Int, frequency: Float, gain: Float, q: Float, sampleRate: Float) {
-        guard section < sectionCount, q > .ulpOfOne, sampleRate > .ulpOfOne else { return }
+        guard section < sectionCount else { return }
+        guard q > Float.ulpOfOne, sampleRate > Float.ulpOfOne else { return }
 
         let a = pow(10.0, Double(gain) / 40.0)
         let w0 = 2.0 * Double.pi * Double(frequency) / Double(sampleRate)
@@ -539,7 +540,8 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
 
     /// Set a lowpass filter on given section
     public func setLowpass(section: Int, frequency: Float, q: Float = 0.707, sampleRate: Float) {
-        guard section < sectionCount, q > .ulpOfOne, sampleRate > .ulpOfOne else { return }
+        guard section < sectionCount else { return }
+        guard q > Float.ulpOfOne, sampleRate > Float.ulpOfOne else { return }
 
         let w0 = 2.0 * Double.pi * Double(frequency) / Double(sampleRate)
         let alpha = sin(w0) / (2.0 * Double(q))
@@ -563,7 +565,8 @@ public final class EchoelBiquadCascade: @unchecked Sendable {
 
     /// Set a highpass filter on given section
     public func setHighpass(section: Int, frequency: Float, q: Float = 0.707, sampleRate: Float) {
-        guard section < sectionCount, q > .ulpOfOne, sampleRate > .ulpOfOne else { return }
+        guard section < sectionCount else { return }
+        guard q > Float.ulpOfOne, sampleRate > Float.ulpOfOne else { return }
 
         let w0 = 2.0 * Double.pi * Double(frequency) / Double(sampleRate)
         let alpha = sin(w0) / (2.0 * Double(q))
