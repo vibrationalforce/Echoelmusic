@@ -448,7 +448,7 @@ public final class EchoelSeqEngine {
                 if let idx = patterns.firstIndex(where: { $0.id == nextEntry.patternID }) {
                     activePatternIndex = idx
                 }
-            } else if chain.isLooping {
+            } else if chain.isLooping, !chain.entries.isEmpty {
                 chainPosition = 0
                 let firstEntry = chain.entries[0]
                 if let idx = patterns.firstIndex(where: { $0.id == firstEntry.patternID }) {

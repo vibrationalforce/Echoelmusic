@@ -24,7 +24,7 @@ private final class MetalVisLayerView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        metalLayer.contentsScale = UIScreen.main.scale
+        metalLayer.contentsScale = UITraitCollection.current.displayScale
         metalLayer.pixelFormat = .bgra8Unorm
         metalLayer.framebufferOnly = true
     }

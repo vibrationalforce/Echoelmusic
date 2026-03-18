@@ -173,9 +173,12 @@ final class LoopEngine {
 
             // Quantize to nearest bar if enabled
             let barDuration = barDurationSeconds()
-            let quantizedDuration = quantizeEnabled
-                ? round(duration / barDuration) * barDuration
-                : duration
+            let quantizedDuration: TimeInterval
+            if quantizeEnabled, barDuration > 0 {
+                quantizedDuration = round(duration / barDuration) * barDuration
+            } else {
+                quantizedDuration = duration
+            }
 
             loops[lastLoopIndex].duration = quantizedDuration
 
