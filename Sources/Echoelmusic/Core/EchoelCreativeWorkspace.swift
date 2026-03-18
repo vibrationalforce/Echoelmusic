@@ -87,9 +87,10 @@ final class EchoelCreativeWorkspace {
     /// Audio render buffer size in frames
     private let renderFrameCount: Int = 512
 
-    /// Notification observer token for sequencer step triggers
+    /// Notification observer token for sequencer step triggers.
+    /// nonisolated(unsafe) for deinit cleanup (NSObjectProtocol is not Sendable).
     @ObservationIgnored
-    private var sequencerObserver: (any NSObjectProtocol)?
+    nonisolated(unsafe) private var sequencerObserver: (any NSObjectProtocol)?
 
 
     // MARK: - Init
@@ -155,13 +156,14 @@ final class EchoelCreativeWorkspace {
             object: nil,
             queue: .main
         ) { [weak self] notification in
+            // Extract values from notification BEFORE MainActor boundary
+            // to avoid sending non-Sendable Notification across isolation domains
+            guard let info = notification.userInfo,
+                  let channel = info["channel"] as? VisualStepSequencer.Channel,
+                  let velocity = info["velocity"] as? Float else { return }
+            let baseNote = 60 + channel.rawValue * 2
             MainActor.assumeIsolated {
-                guard let self,
-                      let info = notification.userInfo,
-                      let channel = info["channel"] as? VisualStepSequencer.Channel,
-                      let velocity = info["velocity"] as? Float else { return }
-                // Map sequencer channels to MIDI notes (C3 = 60 base)
-                let baseNote = 60 + channel.rawValue * 2
+                guard let self else { return }
                 self.bioSynth.noteOn(note: baseNote, velocity: velocity)
             }
         }
