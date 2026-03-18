@@ -286,7 +286,7 @@ struct VideoEditorView: View {
                                         .foregroundColor(EchoelBrand.bgDeep)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 3)
-                                        .background(Capsule().fill(EchoelBrand.coral))
+                                        .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(EchoelBrand.coral))
                                 }
                                 .buttonStyle(.plain)
 
@@ -298,7 +298,7 @@ struct VideoEditorView: View {
                             .padding(.horizontal, EchoelSpacing.sm)
                             .padding(.vertical, 4)
                             .background(
-                                Capsule()
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                     .fill(EchoelBrand.bgDeep.opacity(0.7))
                             )
                             .padding(.bottom, EchoelSpacing.sm)
@@ -321,7 +321,7 @@ struct VideoEditorView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .fill(cameraAnalyzer.isPulseDetecting ? EchoelBrand.coral.opacity(0.15) : EchoelBrand.bgDeep.opacity(0.5))
                                 )
                             }
@@ -361,7 +361,7 @@ struct VideoEditorView: View {
                                 .foregroundColor(EchoelBrand.bgDeep)
                                 .padding(.horizontal, EchoelSpacing.lg)
                                 .padding(.vertical, EchoelSpacing.md)
-                                .background(Capsule().fill(EchoelBrand.primary))
+                                .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(EchoelBrand.primary))
                             }
                             .buttonStyle(.plain)
 
@@ -392,7 +392,7 @@ struct VideoEditorView: View {
                                 .padding(.horizontal, EchoelSpacing.lg)
                                 .padding(.vertical, EchoelSpacing.md)
                                 .background(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .stroke(EchoelBrand.primary, lineWidth: 1)
                                 )
                             }
@@ -412,7 +412,7 @@ struct VideoEditorView: View {
                             .padding(.horizontal, EchoelSpacing.sm)
                             .padding(.vertical, EchoelSpacing.xs)
                             .background(
-                                Capsule()
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                     .fill(EchoelBrand.bgDeep.opacity(0.8))
                             )
                         Spacer()
@@ -732,9 +732,9 @@ struct VideoEditorView: View {
                 .padding(.horizontal, EchoelSpacing.sm)
                 .padding(.vertical, 4)
                 .background(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                         .fill(EchoelBrand.coral.opacity(0.15))
-                        .overlay(Capsule().stroke(EchoelBrand.coral.opacity(0.4), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: EchoelRadius.sm).stroke(EchoelBrand.coral.opacity(0.4), lineWidth: 1))
                 )
             }
             .buttonStyle(.plain)
@@ -806,7 +806,7 @@ struct VideoEditorView: View {
             .padding(.horizontal, EchoelSpacing.sm)
             .padding(.vertical, 4)
             .background(
-                Capsule()
+                RoundedRectangle(cornerRadius: EchoelRadius.sm)
                     .fill(workspace.bpmGrid.snapMode != .off ? EchoelBrand.sky.opacity(0.1) : Color.clear)
             )
         }
@@ -1166,7 +1166,7 @@ struct VideoExportSheet: View {
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(
-                            Capsule()
+                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                 .fill(
                                     isSelected
                                         ? template.accentColor.opacity(0.15)
@@ -1181,7 +1181,7 @@ struct VideoExportSheet: View {
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(
-                                Capsule()
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                     .fill(EchoelBrand.emerald.opacity(0.15))
                             )
                     }
@@ -1331,7 +1331,7 @@ struct VideoExportSheet: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, EchoelSpacing.md)
             .background(
-                Capsule()
+                RoundedRectangle(cornerRadius: EchoelRadius.sm)
                     .fill(exportManager.isExporting ? EchoelBrand.textTertiary : selectedTemplate.accentColor)
             )
         }

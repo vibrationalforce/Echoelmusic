@@ -84,7 +84,7 @@ public struct EchoelBassView: View {
                     .foregroundColor(EchoelBrand.textPrimary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Capsule().fill(engineColor(bass.config.engineA)))
+                    .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(engineColor(bass.config.engineA)))
 
                 Text(String(format: "%.0f%%", (1.0 - bass.config.morphPosition) * 100))
                     .font(.caption2.monospacedDigit())
@@ -132,7 +132,7 @@ public struct EchoelBassView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(
-                                    Capsule().fill(selectedPreset == name ? engineColor(preset.engineA) : EchoelBrand.border)
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(selectedPreset == name ? engineColor(preset.engineA) : EchoelBrand.border)
                                 )
                                 .foregroundColor(selectedPreset == name ? .white : .primary)
                         }

@@ -125,8 +125,8 @@ struct MIDIRoutingView: View {
                 .foregroundColor(fgColor)
                 .padding(.horizontal, EchoelSpacing.md)
                 .padding(.vertical, EchoelSpacing.sm)
-                .background(Capsule().fill(fillColor))
-                .overlay(Capsule().stroke(strokeColor, lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(fillColor))
+                .overlay(RoundedRectangle(cornerRadius: EchoelRadius.sm).stroke(strokeColor, lineWidth: 1))
         }
         .neonGlow(color: glowColor, radius: 8)
     }

@@ -251,7 +251,7 @@ struct RecordingControlsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                         .fill(EchoelBrand.bgElevated)
                 )
             }
@@ -270,7 +270,7 @@ struct RecordingControlsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                         .fill(EchoelBrand.bgElevated)
                 )
             }
@@ -289,7 +289,7 @@ struct RecordingControlsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                         .fill(EchoelBrand.bgElevated)
                 )
             }

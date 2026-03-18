@@ -19,6 +19,7 @@
 
 import Foundation
 import Metal
+import MetalKit
 import QuartzCore
 import Accelerate
 #if canImport(Observation)
@@ -306,6 +307,35 @@ public final class EchoelVisEngine {
 
     // MARK: - Metal Setup
 
+    /// Shader function name mapping for each visual mode
+    private static let fragmentFunctions: [VisualMode: String] = [
+        .waveform: "waveformFragment",
+        .spectrum: "spectrumFragment",
+        .hilbertMap: "hilbertMapFragment",
+        .bioGraph: "bioGraphFragment",
+        .flowField: "flowFieldFragment",
+        .kaleidoscope: "kaleidoscopeFragment",
+        .nebula: "nebulaFragment",
+        .generativeWorlds: "generativeWorldsFragment",
+        .arWorlds: "arWorldsFragment"
+    ]
+
+    /// Hilbert grid buffer for Metal (flattened 2D grid)
+    private var hilbertGridBuffer: MTLBuffer?
+
+    /// Waveform/spectrum data buffers for Metal
+    private var waveformBuffer: MTLBuffer?
+    private var spectrumBuffer: MTLBuffer?
+
+    /// Current drawable layer (set by SwiftUI view)
+    public var metalLayer: CAMetalLayer? {
+        didSet {
+            metalLayer?.device = device
+            metalLayer?.pixelFormat = .bgra8Unorm
+            metalLayer?.framebufferOnly = true
+        }
+    }
+
     private func setupMetal() {
         guard let device = MTLCreateSystemDefaultDevice() else {
             log.log(.error, category: .system, "EchoelVis: No Metal device available")
@@ -329,10 +359,75 @@ public final class EchoelVisEngine {
         }
         uniformBuffer = uniforms
 
+        // Allocate audio data buffers (pre-allocated, max 4096 samples)
+        waveformBuffer = device.makeBuffer(length: MemoryLayout<Float>.stride * 4096, options: .storageModeShared)
+        spectrumBuffer = device.makeBuffer(length: MemoryLayout<Float>.stride * 4096, options: .storageModeShared)
+
+        // Allocate Hilbert grid buffer (max 32x32 = 1024 cells)
+        hilbertGridBuffer = device.makeBuffer(length: MemoryLayout<Float>.stride * 1024, options: .storageModeShared)
+
+        // Build render pipelines
+        setupPipelines()
+
         // Initialize particle buffer
         initializeParticleBuffer()
 
         log.log(.info, category: .system, "EchoelVis: Metal pipeline ready (\(device.name))")
+    }
+
+    private func setupPipelines() {
+        guard let device else { return }
+        guard let library = device.makeDefaultLibrary() else {
+            log.log(.error, category: .system, "EchoelVis: No Metal shader library found")
+            return
+        }
+
+        guard let vertexFunc = library.makeFunction(name: "fullscreenVertex") else {
+            log.log(.error, category: .system, "EchoelVis: Missing fullscreenVertex shader")
+            return
+        }
+
+        // Create pipeline for each fullscreen fragment mode
+        for (mode, funcName) in Self.fragmentFunctions {
+            guard let fragmentFunc = library.makeFunction(name: funcName) else {
+                log.log(.error, category: .system, "EchoelVis: Missing shader \(funcName)")
+                continue
+            }
+
+            let desc = MTLRenderPipelineDescriptor()
+            desc.vertexFunction = vertexFunc
+            desc.fragmentFunction = fragmentFunc
+            desc.colorAttachments[0].pixelFormat = .bgra8Unorm
+            desc.colorAttachments[0].isBlendingEnabled = true
+            desc.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+            desc.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+
+            do {
+                pipelineStates[mode] = try device.makeRenderPipelineState(descriptor: desc)
+            } catch {
+                log.log(.error, category: .system, "EchoelVis: Pipeline error for \(mode.rawValue): \(error.localizedDescription)")
+            }
+        }
+
+        // Particle vertex pipeline (uses point primitives)
+        if let particleVert = library.makeFunction(name: "particleVertex"),
+           let particleFrag = library.makeFunction(name: "particleFragment") {
+            let desc = MTLRenderPipelineDescriptor()
+            desc.vertexFunction = particleVert
+            desc.fragmentFunction = particleFrag
+            desc.colorAttachments[0].pixelFormat = .bgra8Unorm
+            desc.colorAttachments[0].isBlendingEnabled = true
+            desc.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+            desc.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+
+            do {
+                pipelineStates[.particles] = try device.makeRenderPipelineState(descriptor: desc)
+            } catch {
+                log.log(.error, category: .system, "EchoelVis: Particle pipeline error: \(error.localizedDescription)")
+            }
+        }
+
+        log.log(.info, category: .system, "EchoelVis: \(pipelineStates.count) render pipelines built")
     }
 
     private func initializeParticleBuffer() {
@@ -448,12 +543,10 @@ public final class EchoelVisEngine {
             updateBioState(deltaTime: deltaTime)
         }
 
-        // Mode-specific update
+        // Mode-specific CPU update
         switch currentMode {
         case .particles:
             updateParticles(deltaTime: deltaTime)
-        case .flowField:
-            updateFlowField(deltaTime: deltaTime)
         case .hilbertMap:
             updateHilbertMap()
         default:
@@ -462,6 +555,94 @@ public final class EchoelVisEngine {
 
         // Update uniforms
         updateUniforms()
+
+        // Metal render pass
+        renderToDrawable()
+    }
+
+    // MARK: - Metal Render Pass
+
+    private func renderToDrawable() {
+        guard let metalLayer,
+              let commandQueue,
+              let drawable = metalLayer.nextDrawable(),
+              let commandBuffer = commandQueue.makeCommandBuffer() else { return }
+
+        let renderPassDesc = MTLRenderPassDescriptor()
+        renderPassDesc.colorAttachments[0].texture = drawable.texture
+        renderPassDesc.colorAttachments[0].loadAction = .clear
+        renderPassDesc.colorAttachments[0].storeAction = .store
+        renderPassDesc.colorAttachments[0].clearColor = MTLClearColor(red: 0.01, green: 0.01, blue: 0.03, alpha: 1.0)
+
+        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDesc) else { return }
+
+        if currentMode == .particles {
+            renderParticles(encoder: encoder)
+        } else {
+            renderFullscreen(encoder: encoder)
+        }
+
+        encoder.endEncoding()
+        commandBuffer.present(drawable)
+        commandBuffer.commit()
+    }
+
+    private func renderFullscreen(encoder: MTLRenderCommandEncoder) {
+        guard let pipeline = pipelineStates[currentMode],
+              let uniformBuffer else { return }
+
+        encoder.setRenderPipelineState(pipeline)
+        encoder.setFragmentBuffer(uniformBuffer, offset: 0, index: 0)
+
+        // Mode-specific buffers
+        switch currentMode {
+        case .waveform:
+            if let buf = waveformBuffer {
+                updateAudioBuffer(buf, data: waveformData)
+                encoder.setFragmentBuffer(buf, offset: 0, index: 1)
+                var count = UInt32(min(waveformData.count, 4096))
+                encoder.setFragmentBytes(&count, length: MemoryLayout<UInt32>.stride, index: 2)
+            }
+        case .spectrum:
+            if let buf = spectrumBuffer {
+                updateAudioBuffer(buf, data: spectrumData)
+                encoder.setFragmentBuffer(buf, offset: 0, index: 1)
+                var count = UInt32(min(spectrumData.count, 4096))
+                encoder.setFragmentBytes(&count, length: MemoryLayout<UInt32>.stride, index: 2)
+            }
+        case .hilbertMap:
+            if let buf = hilbertGridBuffer {
+                var gridSizeU = UInt32(hilbertGridSize)
+                encoder.setFragmentBuffer(buf, offset: 0, index: 1)
+                encoder.setFragmentBytes(&gridSizeU, length: MemoryLayout<UInt32>.stride, index: 2)
+            }
+        default:
+            break
+        }
+
+        // Fullscreen triangle (3 vertices, no vertex buffer needed)
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+    }
+
+    private func renderParticles(encoder: MTLRenderCommandEncoder) {
+        guard let pipeline = pipelineStates[.particles],
+              let particleBuffer,
+              let uniformBuffer else { return }
+
+        encoder.setRenderPipelineState(pipeline)
+        encoder.setVertexBuffer(particleBuffer, offset: 0, index: 0)
+        encoder.setVertexBuffer(uniformBuffer, offset: 0, index: 1)
+        encoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: activeParticleCount)
+    }
+
+    private func updateAudioBuffer(_ buffer: MTLBuffer, data: [Float]) {
+        guard !data.isEmpty else { return }
+        let count = min(data.count, 4096)
+        let ptr = buffer.contents().bindMemory(to: Float.self, capacity: count)
+        data.withUnsafeBufferPointer { src in
+            guard let baseAddress = src.baseAddress else { return }
+            ptr.update(from: baseAddress, count: count)
+        }
     }
 
     // MARK: - Bio State Update
@@ -532,23 +713,32 @@ public final class EchoelVisEngine {
     // MARK: - Flow Field
 
     private func updateFlowField(deltaTime: Float) {
-        // Perlin-like flow field driven by bio signals
-        // Flow direction modulated by breath phase
-        // Turbulence from HRV, color from coherence
-        // (Metal compute shader does the heavy lifting)
+        // Flow field is rendered entirely in the fragment shader (flowFieldFragment)
+        // using procedural noise. No CPU-side data needed — bio uniforms drive it.
     }
 
     // MARK: - Hilbert Map
 
     private func updateHilbertMap() {
-        guard !spectrumData.isEmpty else { return }
+        guard !spectrumData.isEmpty, let hilbertGridBuffer else { return }
 
         // Map spectrum data to 2D grid using Hilbert curve
-        _ = HilbertSensorMapper.mapToGrid(
+        let grid = HilbertSensorMapper.mapToGrid(
             values: spectrumData,
             gridSize: hilbertGridSize
         )
-        // Grid data is passed to Metal shader via buffer
+
+        // Flatten 2D grid to 1D buffer for Metal
+        let cellCount = min(hilbertGridSize * hilbertGridSize, 1024)
+        let ptr = hilbertGridBuffer.contents().bindMemory(to: Float.self, capacity: cellCount)
+        var idx = 0
+        for row in grid {
+            for value in row {
+                guard idx < cellCount else { break }
+                ptr[idx] = value
+                idx += 1
+            }
+        }
     }
 
     // MARK: - Uniforms

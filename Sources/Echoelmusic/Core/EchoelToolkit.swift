@@ -21,10 +21,10 @@ public enum EchoelTool: String, CaseIterable, Codable, Sendable {
     case bio    = "EchoelBio"     // HRV, HR, breathing, ARKit, EEG
     case vis    = "EchoelVis"     // 10 modes incl. Generative & AR Worlds
     case vid    = "EchoelVid"     // Capture, edit, stream, ProRes
-    case lux    = "EchoelLux"     // DMX 512, Art-Net, lasers, smart home
+    case lux    = "EchoelLux"     // DMX 512, Art-Net, 9 fixture types
     case stage  = "EchoelStage"   // External displays, projection, AirPlay
-    case net    = "EchoelNet"     // Ableton Link, Dante, cloud sync
-    case ai     = "EchoelAI"      // CoreML, LLM, stem sep, Music Theory, AR History
+    case net    = "EchoelNet"     // Ableton Link, OSC
+    case ai     = "EchoelAI"      // LUFS, tempo, key, chord, genre, stem separation
 }
 
 // MARK: - Edition

@@ -7,8 +7,8 @@
 //  Bio-reactive mapping: coherence → color, HRV → saturation,
 //  heart rate → strobe (capped 3 Hz for WCAG epilepsy safety).
 //
-//  Supports: DMX 512, Art-Net 4, generic fixtures, RGB/RGBW,
-//  moving heads, smart home (HomeKit bridge).
+//  Supports: DMX 512, Art-Net 4, generic fixtures, RGB/RGBW/RGBWA+UV,
+//  moving heads, LED bars, laser, fog, strobe.
 //
 
 import Foundation
@@ -240,30 +240,91 @@ public final class EchoelLuxEngine {
     public func setColor(_ fixture: DMXFixture, color: LightColor) {
         guard fixture.isEnabled else { return }
         let addr = Int(fixture.startAddress) - 1 // DMX is 1-indexed
+        let dim = masterDimmer
 
         switch fixture.type {
-        case .rgb:
-            guard addr + 2 < ArtNetConstants.channelsPerUniverse else { return }
-            dmxData[addr] = UInt8(Float(color.red) * masterDimmer)
-            dmxData[addr + 1] = UInt8(Float(color.green) * masterDimmer)
-            dmxData[addr + 2] = UInt8(Float(color.blue) * masterDimmer)
-        case .rgbw:
-            guard addr + 3 < ArtNetConstants.channelsPerUniverse else { return }
-            dmxData[addr] = UInt8(Float(color.red) * masterDimmer)
-            dmxData[addr + 1] = UInt8(Float(color.green) * masterDimmer)
-            dmxData[addr + 2] = UInt8(Float(color.blue) * masterDimmer)
-            dmxData[addr + 3] = UInt8(Float(color.white) * masterDimmer)
         case .dimmer:
             guard addr < ArtNetConstants.channelsPerUniverse else { return }
-            dmxData[addr] = UInt8(Float(max(color.red, max(color.green, color.blue))) * masterDimmer)
+            dmxData[addr] = UInt8(Float(max(color.red, max(color.green, color.blue))) * dim)
+
+        case .rgb, .ledBar:
+            // LED Bar uses same 3-ch RGB per pixel
+            guard addr + 2 < ArtNetConstants.channelsPerUniverse else { return }
+            dmxData[addr] = UInt8(Float(color.red) * dim)
+            dmxData[addr + 1] = UInt8(Float(color.green) * dim)
+            dmxData[addr + 2] = UInt8(Float(color.blue) * dim)
+
+        case .rgbw:
+            guard addr + 3 < ArtNetConstants.channelsPerUniverse else { return }
+            dmxData[addr] = UInt8(Float(color.red) * dim)
+            dmxData[addr + 1] = UInt8(Float(color.green) * dim)
+            dmxData[addr + 2] = UInt8(Float(color.blue) * dim)
+            dmxData[addr + 3] = UInt8(Float(color.white) * dim)
+
+        case .rgbwau:
+            // 6 ch: R, G, B, White, Amber, UV
+            guard addr + 5 < ArtNetConstants.channelsPerUniverse else { return }
+            dmxData[addr] = UInt8(Float(color.red) * dim)
+            dmxData[addr + 1] = UInt8(Float(color.green) * dim)
+            dmxData[addr + 2] = UInt8(Float(color.blue) * dim)
+            dmxData[addr + 3] = UInt8(Float(color.white) * dim)
+            // Amber: warm blend from red+green
+            let amber = UInt8(min(Float(color.red), Float(color.green)) * dim * 0.5)
+            dmxData[addr + 4] = amber
+            // UV: inverse of white warmth (cool = more UV)
+            dmxData[addr + 5] = UInt8(Float(255 - color.white) * dim * 0.3)
+
+        case .movingHead:
+            // 8 ch: pan, tilt, R, G, B, dimmer, strobe, gobo
+            guard addr + 7 < ArtNetConstants.channelsPerUniverse else { return }
+            // Pan/tilt retain current values (set via setMovingHeadPosition)
+            dmxData[addr + 2] = UInt8(Float(color.red) * dim)
+            dmxData[addr + 3] = UInt8(Float(color.green) * dim)
+            dmxData[addr + 4] = UInt8(Float(color.blue) * dim)
+            dmxData[addr + 5] = UInt8(255.0 * dim) // dimmer
+            // strobe + gobo retain current values
+
+        case .laser:
+            // 5 ch: on/off, color(R), color(G), color(B), pattern
+            guard addr + 4 < ArtNetConstants.channelsPerUniverse else { return }
+            let brightness = max(color.red, max(color.green, color.blue))
+            dmxData[addr] = brightness > 0 ? UInt8(255.0 * dim) : 0  // on/off
+            dmxData[addr + 1] = UInt8(Float(color.red) * dim)
+            dmxData[addr + 2] = UInt8(Float(color.green) * dim)
+            dmxData[addr + 3] = UInt8(Float(color.blue) * dim)
+            // pattern channel retains current value
+
+        case .fogMachine:
+            // 2 ch: intensity, fan speed
+            guard addr + 1 < ArtNetConstants.channelsPerUniverse else { return }
+            let intensity = Float(max(color.red, max(color.green, color.blue))) * dim
+            dmxData[addr] = UInt8(intensity)
+            // Fan speed proportional to intensity (min 30% when active to prevent burnout)
+            dmxData[addr + 1] = intensity > 0 ? UInt8(max(76, intensity * 0.8)) : 0
+
         case .strobeLight:
             guard addr + 1 < ArtNetConstants.channelsPerUniverse else { return }
-            dmxData[addr] = UInt8(Float(color.red) * masterDimmer)
-            // Strobe rate channel — cap at 3 Hz for epilepsy safety
+            dmxData[addr] = UInt8(Float(color.red) * dim)
+            // Strobe rate channel — cap at 3 Hz for WCAG epilepsy safety
             dmxData[addr + 1] = min(UInt8(maxStrobeHz / 25.0 * 255.0), color.green)
-        default:
-            break
         }
+    }
+
+    /// Set moving head pan/tilt position (0-1 normalized)
+    public func setMovingHeadPosition(_ fixture: DMXFixture, pan: Float, tilt: Float) {
+        guard fixture.type == .movingHead, fixture.isEnabled else { return }
+        let addr = Int(fixture.startAddress) - 1
+        guard addr + 1 < ArtNetConstants.channelsPerUniverse else { return }
+        dmxData[addr] = UInt8(max(0, min(1, pan)) * 255)
+        dmxData[addr + 1] = UInt8(max(0, min(1, tilt)) * 255)
+    }
+
+    /// Set moving head gobo pattern (0-255)
+    public func setMovingHeadGobo(_ fixture: DMXFixture, gobo: UInt8) {
+        guard fixture.type == .movingHead, fixture.isEnabled else { return }
+        let addr = Int(fixture.startAddress) - 1
+        guard addr + 7 < ArtNetConstants.channelsPerUniverse else { return }
+        dmxData[addr + 7] = gobo
     }
 
     /// Set all fixtures to a color

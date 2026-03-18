@@ -323,11 +323,11 @@ struct EchoelSynthView: View {
                                 .padding(.horizontal, EchoelSpacing.xs + 2)
                                 .padding(.vertical, 2)
                                 .background(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .fill(EchoelBrand.primary.opacity(0.08))
                                 )
                                 .overlay(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .stroke(EchoelBrand.border, lineWidth: 0.5)
                                 )
                         }

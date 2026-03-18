@@ -1,16 +1,19 @@
 #if canImport(AVFoundation)
 //
 //  EchoelAIEngine.swift
-//  Echoelmusic — AI/ML Audio Intelligence Engine
+//  Echoelmusic — Audio Intelligence Engine
 //
-//  On-device audio intelligence using CoreML + Accelerate:
-//  - Stem Separation (vocals, drums, bass, other)
-//  - Intelligent loudness normalization (LUFS targeting)
-//  - Auto-EQ based on spectral analysis
-//  - Tempo/key detection
-//  - Audio classification (instrument, genre)
+//  On-device audio intelligence using vDSP + Accelerate:
+//  - LUFS measurement (ITU-R BS.1770-4)
+//  - Auto-EQ (spectral analysis → 10-band correction)
+//  - Tempo detection (onset + autocorrelation)
+//  - Key detection (Krumhansl-Schmuckler profiles)
+//  - Chord detection (chroma template matching)
+//  - Genre classification (rule-based heuristic)
+//  - Stem separation (frequency-band isolation)
+//  - Mix suggestions (rule-based)
 //
-//  All processing happens on-device. No cloud dependency.
+//  All processing on-device, zero dependencies.
 //
 
 import Foundation
@@ -49,14 +52,11 @@ public enum AudioStem: String, CaseIterable, Codable, Sendable {
 
 /// AI task categories for on-device intelligence
 public enum AITask: String, CaseIterable, Codable, Sendable {
-    case stemSeparation   = "Stem Separation"    // Vocals, drums, bass, other
-    case autoEQ           = "Auto EQ"            // Spectral analysis → EQ
-    case tempoDetection   = "Tempo Detection"    // BPM extraction
-    case keyDetection     = "Key Detection"      // Musical key analysis
-    case classification   = "Classification"     // Instrument/genre detection
-    case composition      = "Composition"        // Generative AI composition
-    case musicTheory      = "Music Theory"       // Bio-reactive music learning
-    case arHistory        = "AR History"         // Discover music history in AR
+    case stemSeparation   = "Stem Separation"    // Frequency-band isolation (vocals, drums, bass, other)
+    case autoEQ           = "Auto EQ"            // Spectral analysis → 10-band EQ correction
+    case tempoDetection   = "Tempo Detection"    // Onset + autocorrelation BPM extraction
+    case keyDetection     = "Key Detection"      // Krumhansl-Schmuckler key profiles
+    case classification   = "Classification"     // Rule-based genre + chord detection
 }
 
 /// Result of stem separation
@@ -247,10 +247,12 @@ public final class EchoelAIEngine {
         return analysis
     }
 
-    // MARK: - Stem Separation (DSP-based)
+    // MARK: - Stem Separation (Frequency-Band Isolation)
 
-    /// Separate audio into stems using spectral processing
-    /// Without a CoreML model, uses frequency-band isolation
+    /// Separate audio into stems using frequency-band filtering.
+    /// Uses cascaded biquad filters — bass (<250Hz), vocals (300-4000Hz),
+    /// drums (80-8000Hz), other (>4000Hz). Quality is basic compared to
+    /// ML-based separation (Demucs/Spleeter) but runs fully on-device.
     public func separateStems(buffer: AVAudioPCMBuffer) async -> StemSeparationResult? {
         guard let channelData = buffer.floatChannelData else { return nil }
         let frameCount = Int(buffer.frameLength)

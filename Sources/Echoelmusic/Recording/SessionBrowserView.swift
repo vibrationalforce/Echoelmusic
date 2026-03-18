@@ -298,14 +298,14 @@ struct SessionRow: View {
                             .font(.system(size: 10))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(EchoelBrand.accent.opacity(0.2)))
+                            .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(EchoelBrand.accent.opacity(0.2)))
                             .foregroundColor(EchoelBrand.accent)
 
                         Text(session.mood)
                             .font(.system(size: 10))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(EchoelBrand.violet.opacity(0.2)))
+                            .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(EchoelBrand.violet.opacity(0.2)))
                             .foregroundColor(EchoelBrand.violet)
                     }
                 }

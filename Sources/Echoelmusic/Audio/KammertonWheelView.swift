@@ -169,7 +169,7 @@ public struct KammertonWheelView: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(
-                                Capsule()
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                     .fill(tuning.selectedReference == preset
                                           ? Color.accentColor.opacity(0.2)
                                           : Color.secondary.opacity(0.1))

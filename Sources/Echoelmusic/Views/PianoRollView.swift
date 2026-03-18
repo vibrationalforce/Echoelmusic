@@ -1001,19 +1001,19 @@ struct PianoRollEditorView: View {
     private func noteColor(_ midiNote: UInt8) -> Color {
         let pc = Int(midiNote) % 12
         switch pc {
-        case 0:  return .cyan       // C
-        case 1:  return .purple     // C#
-        case 2:  return .green      // D
-        case 3:  return .purple     // D#
-        case 4:  return .cyan       // E
-        case 5:  return .orange     // F
-        case 6:  return .purple     // F#
-        case 7:  return .green      // G
-        case 8:  return .purple     // G#
-        case 9:  return .yellow     // A
-        case 10: return .purple     // A#
-        case 11: return .orange     // B
-        default: return .gray
+        case 0:  return EchoelBrand.sky        // C
+        case 1:  return EchoelBrand.violet     // C#
+        case 2:  return EchoelBrand.emerald    // D
+        case 3:  return EchoelBrand.violet     // D#
+        case 4:  return EchoelBrand.sky        // E
+        case 5:  return EchoelBrand.amber      // F
+        case 6:  return EchoelBrand.violet     // F#
+        case 7:  return EchoelBrand.emerald    // G
+        case 8:  return EchoelBrand.violet     // G#
+        case 9:  return EchoelBrand.accent     // A
+        case 10: return EchoelBrand.violet     // A#
+        case 11: return EchoelBrand.amber      // B
+        default: return EchoelBrand.border
         }
     }
 }

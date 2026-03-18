@@ -212,7 +212,7 @@ struct EchoelFXView: View {
                     )
                     .overlay(alignment: .bottom) {
                         if activePanel == panel {
-                            Capsule()
+                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                 .fill(EchoelBrand.primary)
                                 .frame(width: 32, height: 2)
                                 .padding(.bottom, 1)
@@ -426,7 +426,7 @@ struct EchoelFXView: View {
             .padding(.vertical, EchoelSpacing.sm)
             .overlay(alignment: .bottom) {
                 if activePanel == panel {
-                    Capsule()
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                         .fill(EchoelBrand.primary)
                         .frame(width: 28, height: 2)
                 }
@@ -574,8 +574,8 @@ struct EchoelFXView: View {
         }
         .padding(.horizontal, EchoelSpacing.sm + 2)
         .padding(.vertical, EchoelSpacing.xs + 2)
-        .background(Capsule().fill(fill))
-        .overlay(Capsule().stroke(stroke, lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(fill))
+        .overlay(RoundedRectangle(cornerRadius: EchoelRadius.sm).stroke(stroke, lineWidth: 1))
         .accessibilityLabel(accessLabel)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -622,7 +622,7 @@ struct EchoelFXView: View {
                 .padding(.horizontal, EchoelSpacing.lg)
                 .padding(.vertical, EchoelSpacing.sm + 2)
                 .background(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                         .fill(EchoelBrand.primary)
                 )
             }
@@ -804,11 +804,11 @@ struct EchoelFXView: View {
         .padding(.horizontal, EchoelSpacing.sm + 2)
         .padding(.vertical, EchoelSpacing.xs)
         .background(
-            Capsule()
+            RoundedRectangle(cornerRadius: EchoelRadius.sm)
                 .fill(EchoelBrand.bgElevated)
         )
         .overlay(
-            Capsule()
+            RoundedRectangle(cornerRadius: EchoelRadius.sm)
                 .stroke(EchoelBrand.border, lineWidth: 1)
         )
         .accessibilityLabel("\(nodeGraph.nodes.count) active nodes")

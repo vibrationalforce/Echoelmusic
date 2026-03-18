@@ -62,6 +62,7 @@ struct EchoelStudioView: View {
         case mixer = "Mixer"
         case fx = "FX"
         case bio = "Bio"
+        case visuals = "Visuals"
         case video = "Video"
         case lighting = "Lighting"
         case ai = "AI"
@@ -76,6 +77,7 @@ struct EchoelStudioView: View {
             case .mixer: return "slider.vertical.3"
             case .fx: return "waveform.path.ecg"
             case .bio: return "heart.fill"
+            case .visuals: return "eye"
             case .video: return "film"
             case .lighting: return "light.max"
             case .ai: return "cpu"
@@ -90,6 +92,7 @@ struct EchoelStudioView: View {
             case .mixer: return EchoelBrand.emerald
             case .fx: return EchoelBrand.violet
             case .bio: return EchoelBrand.coral
+            case .visuals: return Color(red: 0.6, green: 0.4, blue: 1.0)
             case .video: return EchoelBrand.rose
             case .lighting: return Color(red: 1, green: 0.8, blue: 0.4)
             case .ai: return EchoelBrand.sky
@@ -168,6 +171,8 @@ struct EchoelStudioView: View {
                             .environment(audioEngine)
                     case .bio:
                         BioStatusView()
+                    case .visuals:
+                        EchoelVisView()
                     case .video:
                         VideoEditorView()
                     case .lighting:
@@ -281,7 +286,7 @@ struct EchoelStudioView: View {
                     )
                     .overlay(alignment: .top) {
                         if isActive {
-                            Capsule()
+                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                 .fill(panel.color)
                                 .frame(width: 20, height: 2)
                         }

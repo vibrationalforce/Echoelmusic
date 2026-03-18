@@ -1070,7 +1070,7 @@ public struct EchoelBeatView: View {
                         .font(.caption)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Capsule().fill(
+                        .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(
                             beat.currentKit == genre.rawValue ? EchoelBrand.accent : EchoelBrand.border))
                         .foregroundColor(beat.currentKit == genre.rawValue ? .black : EchoelBrand.textPrimary)
                         .buttonStyle(.plain)
@@ -1143,7 +1143,7 @@ public struct EchoelBeatView: View {
                     .font(.caption2.bold())
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Capsule().fill(EchoelBrand.amber))
+                    .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(EchoelBrand.amber))
                     .foregroundColor(.black)
                     .buttonStyle(.plain)
             }
@@ -1210,7 +1210,7 @@ public struct EchoelBeatView: View {
                             .font(.caption2)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.yellow.opacity(0.3)))
+                            .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(Color.yellow.opacity(0.3)))
                             .foregroundColor(.yellow)
                             .buttonStyle(.plain)
                     }

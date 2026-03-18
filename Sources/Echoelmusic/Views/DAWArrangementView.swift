@@ -1381,7 +1381,7 @@ struct MasterExportSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, EchoelSpacing.md)
                         .background(
-                            Capsule()
+                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                 .fill(isExporting ? EchoelBrand.textTertiary : EchoelBrand.primary)
                         )
                     }
@@ -1504,7 +1504,7 @@ struct MasterExportSheet: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .fill(EchoelBrand.emerald.opacity(0.15))
                                 )
                         }

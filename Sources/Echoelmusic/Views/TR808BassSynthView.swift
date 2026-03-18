@@ -136,7 +136,7 @@ public struct TR808BassSynthView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .fill(selectedPreset == name ? EchoelBrand.amber : EchoelBrand.border)
                                 )
                                 .foregroundColor(selectedPreset == name ? .white : .primary)
@@ -369,7 +369,7 @@ public struct TR808BassSynthView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
                                 .background(
-                                    Capsule()
+                                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
                                         .fill(synth.currentDrumKit == genre.rawValue ? EchoelBrand.accent : EchoelBrand.border)
                                 )
                                 .foregroundColor(synth.currentDrumKit == genre.rawValue ? .white : .primary)
@@ -461,7 +461,7 @@ public struct TR808BassSynthView: View {
                     .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Capsule().fill(EchoelBrand.border))
+                    .background(RoundedRectangle(cornerRadius: EchoelRadius.sm).fill(EchoelBrand.border))
                     .buttonStyle(.plain)
                 }
             }
