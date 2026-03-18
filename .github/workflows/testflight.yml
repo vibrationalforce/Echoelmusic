@@ -621,7 +621,22 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
+      - name: "Check Scheme Exists"
+        id: check_scheme
+        run: |
+          SCHEME="Echoelmusic-macOS"
+          if xcodebuild -project Echoelmusic.xcodeproj -list 2>/dev/null | grep -q "$SCHEME"; then
+            echo "scheme_exists=true" >> $GITHUB_OUTPUT
+            echo "Scheme '$SCHEME' found"
+          else
+            echo "scheme_exists=false" >> $GITHUB_OUTPUT
+            echo "::warning title=Scheme Not Found::Scheme '$SCHEME' does not exist in project. Skipping macOS build."
+            echo "## macOS Build Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Scheme '$SCHEME' not found in project.yml. Add it when ready for macOS deployment." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: "Setup API Key & Keychain"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -640,6 +655,7 @@ jobs:
           echo "Fresh keychain ready"
 
       - name: "Setup Signing Certificates"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -657,6 +673,7 @@ jobs:
           fi
 
       - name: "Archive"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -696,6 +713,7 @@ jobs:
           echo "=== ARCHIVE SUCCESSFUL ==="
 
       - name: "Export"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -729,6 +747,7 @@ jobs:
           [ $RESULT -ne 0 ] && { echo "=== EXPORT FAILED ==="; tail -50 /tmp/export.log; exit 1; }
 
       - name: "Upload to TestFlight"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -737,7 +756,7 @@ jobs:
         run: fastlane mac upload
 
       - name: "Error Summary"
-        if: failure()
+        if: failure() && steps.check_scheme.outputs.scheme_exists == 'true'
         run: |
           echo "## macOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           for f in /tmp/archive.log /tmp/export.log; do
@@ -810,7 +829,22 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
+      - name: "Check Scheme Exists"
+        id: check_scheme
+        run: |
+          SCHEME="Echoelmusic-watchOS"
+          if xcodebuild -project Echoelmusic.xcodeproj -list 2>/dev/null | grep -q "$SCHEME"; then
+            echo "scheme_exists=true" >> $GITHUB_OUTPUT
+            echo "Scheme '$SCHEME' found"
+          else
+            echo "scheme_exists=false" >> $GITHUB_OUTPUT
+            echo "::warning title=Scheme Not Found::Scheme '$SCHEME' does not exist in project. Skipping watchOS build."
+            echo "## watchOS Build Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Scheme '$SCHEME' not found in project.yml. Add it when ready for watchOS deployment." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: "Setup API Key & Keychain"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -829,6 +863,7 @@ jobs:
           echo "Fresh keychain ready"
 
       - name: "Setup Signing Certificates"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -846,6 +881,7 @@ jobs:
           fi
 
       - name: "Archive"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -886,6 +922,7 @@ jobs:
           echo "=== ARCHIVE SUCCESSFUL ==="
 
       - name: "Export"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -919,6 +956,7 @@ jobs:
           [ $RESULT -ne 0 ] && { echo "=== EXPORT FAILED ==="; tail -50 /tmp/export.log; exit 1; }
 
       - name: "Upload to TestFlight"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -927,7 +965,7 @@ jobs:
         run: fastlane ios upload_watchos
 
       - name: "Error Summary"
-        if: failure()
+        if: failure() && steps.check_scheme.outputs.scheme_exists == 'true'
         run: |
           echo "## watchOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           for f in /tmp/archive.log /tmp/export.log; do
@@ -999,7 +1037,22 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
+      - name: "Check Scheme Exists"
+        id: check_scheme
+        run: |
+          SCHEME="Echoelmusic-tvOS"
+          if xcodebuild -project Echoelmusic.xcodeproj -list 2>/dev/null | grep -q "$SCHEME"; then
+            echo "scheme_exists=true" >> $GITHUB_OUTPUT
+            echo "Scheme '$SCHEME' found"
+          else
+            echo "scheme_exists=false" >> $GITHUB_OUTPUT
+            echo "::warning title=Scheme Not Found::Scheme '$SCHEME' does not exist in project. Skipping tvOS build."
+            echo "## tvOS Build Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Scheme '$SCHEME' not found in project.yml. Add it when ready for tvOS deployment." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: "Setup API Key & Keychain"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -1018,6 +1071,7 @@ jobs:
           echo "Fresh keychain ready"
 
       - name: "Setup Signing Certificates"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1035,6 +1089,7 @@ jobs:
           fi
 
       - name: "Archive"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1075,6 +1130,7 @@ jobs:
           echo "=== ARCHIVE SUCCESSFUL ==="
 
       - name: "Export"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1108,6 +1164,7 @@ jobs:
           [ $RESULT -ne 0 ] && { echo "=== EXPORT FAILED ==="; tail -50 /tmp/export.log; exit 1; }
 
       - name: "Upload to TestFlight"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1116,7 +1173,7 @@ jobs:
         run: fastlane ios upload_tvos
 
       - name: "Error Summary"
-        if: failure()
+        if: failure() && steps.check_scheme.outputs.scheme_exists == 'true'
         run: |
           echo "## tvOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           for f in /tmp/archive.log /tmp/export.log; do
@@ -1188,7 +1245,22 @@ jobs:
           sed -i '' "s/\${BUILD_NUMBER:=1}/${{ env.BUILD_NUMBER }}/" project.yml
           xcodegen generate --spec project.yml
 
+      - name: "Check Scheme Exists"
+        id: check_scheme
+        run: |
+          SCHEME="Echoelmusic-visionOS"
+          if xcodebuild -project Echoelmusic.xcodeproj -list 2>/dev/null | grep -q "$SCHEME"; then
+            echo "scheme_exists=true" >> $GITHUB_OUTPUT
+            echo "Scheme '$SCHEME' found"
+          else
+            echo "scheme_exists=false" >> $GITHUB_OUTPUT
+            echo "::warning title=Scheme Not Found::Scheme '$SCHEME' does not exist in project. Skipping visionOS build."
+            echo "## visionOS Build Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Scheme '$SCHEME' not found in project.yml. Add it when ready for visionOS deployment." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: "Setup API Key & Keychain"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -1207,6 +1279,7 @@ jobs:
           echo "Fresh keychain ready"
 
       - name: "Setup Signing Certificates"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1224,6 +1297,7 @@ jobs:
           fi
 
       - name: "Archive"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1264,6 +1338,7 @@ jobs:
           echo "=== ARCHIVE SUCCESSFUL ==="
 
       - name: "Export"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1297,6 +1372,7 @@ jobs:
           [ $RESULT -ne 0 ] && { echo "=== EXPORT FAILED ==="; tail -50 /tmp/export.log; exit 1; }
 
       - name: "Upload to TestFlight"
+        if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -1305,7 +1381,7 @@ jobs:
         run: fastlane ios upload_visionos
 
       - name: "Error Summary"
-        if: failure()
+        if: failure() && steps.check_scheme.outputs.scheme_exists == 'true'
         run: |
           echo "## visionOS Deploy Failed" >> $GITHUB_STEP_SUMMARY
           for f in /tmp/archive.log /tmp/export.log; do
