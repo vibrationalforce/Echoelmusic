@@ -62,6 +62,10 @@ class PhaseVocoder {
     private var spectralEnvelope: [Float]
     private var trueEnvelope: [Float]
 
+    // Reusable work buffers for timeStretch loop (avoid per-frame allocation)
+    private var windowedFrameBuffer: [Float]
+    private var windowedOutputBuffer: [Float]
+
     // MARK: - Initialization
 
     init(config: Configuration = Configuration()) {
@@ -102,6 +106,10 @@ class PhaseVocoder {
         // Formant buffers
         spectralEnvelope = [Float](repeating: 0, count: halfN + 1)
         trueEnvelope = [Float](repeating: 0, count: halfN + 1)
+
+        // Work buffers for timeStretch loop (reusable, avoid per-frame allocation)
+        windowedFrameBuffer = [Float](repeating: 0, count: n)
+        windowedOutputBuffer = [Float](repeating: 0, count: n)
 
         // Setup vDSP DFT
         fftSetup = vDSP_DFT_zrop_CreateSetup(nil, vDSP_Length(n), .FORWARD)
@@ -163,14 +171,15 @@ class PhaseVocoder {
             let inputOffset = frame * analysisHop
             guard inputOffset + n <= input.count else { break }
 
-            // Extract and window the frame
-            var windowedFrame = [Float](repeating: 0, count: n)
-            vDSP_vmul(Array(input[inputOffset..<inputOffset + n]), 1,
-                      analysisWindow, 1,
-                      &windowedFrame, 1, vDSP_Length(n))
+            // Extract and window the frame (reuse pre-allocated buffer)
+            input.withUnsafeBufferPointer { inputPtr in
+                vDSP_vmul(inputPtr.baseAddress! + inputOffset, 1,
+                          analysisWindow, 1,
+                          &windowedFrameBuffer, 1, vDSP_Length(n))
+            }
 
             // Forward FFT
-            performFFT(windowedFrame)
+            performFFT(windowedFrameBuffer)
 
             // Convert to magnitude/phase
             cartesianToPolar()
@@ -184,15 +193,14 @@ class PhaseVocoder {
             // Inverse FFT
             let resynthesized = performIFFT()
 
-            // Window the output frame
-            var windowedOutput = [Float](repeating: 0, count: n)
+            // Window the output frame (reuse pre-allocated buffer)
             vDSP_vmul(resynthesized, 1, synthesisWindow, 1,
-                      &windowedOutput, 1, vDSP_Length(n))
+                      &windowedOutputBuffer, 1, vDSP_Length(n))
 
             // Overlap-add
             let outputOffset = frame * synthesisHop
             for i in 0..<n where outputOffset + i < output.count {
-                output[outputOffset + i] += windowedOutput[i]
+                output[outputOffset + i] += windowedOutputBuffer[i]
             }
         }
 
