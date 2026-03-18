@@ -507,6 +507,8 @@ private struct BioFeedbackSettingsContent: View {
                             let granted = await bio.requestAuthorization()
                             isRequesting = false
                             if granted {
+                                // Stop fallback streaming, restart with HealthKit
+                                bio.stopStreaming()
                                 bio.startStreaming()
                             }
                         }
