@@ -847,29 +847,29 @@ public final class EchoelAIEngine {
 
         // Electronic/EDM: high tempo (120-150), moderate centroid, steady rhythm
         scores["Electronic"] = tempo >= 118 && tempo <= 150 ? 0.6 : 0.1
-        if centroid > 1500 && centroid < 4000 { scores["Electronic"]! += 0.3 }
+        if centroid > 1500 && centroid < 4000 { scores["Electronic", default: 0] += 0.3 }
 
         // Ambient: low tempo (<100), low ZCR, low centroid
         scores["Ambient"] = tempo < 100 ? 0.5 : 0.1
-        if zcr < 0.05 { scores["Ambient"]! += 0.3 }
-        if centroid < 2000 { scores["Ambient"]! += 0.2 }
+        if zcr < 0.05 { scores["Ambient", default: 0] += 0.3 }
+        if centroid < 2000 { scores["Ambient", default: 0] += 0.2 }
 
         // Rock: moderate tempo (100-140), high RMS, high ZCR
         scores["Rock"] = tempo >= 100 && tempo <= 140 ? 0.4 : 0.1
-        if rms > 0.15 { scores["Rock"]! += 0.3 }
-        if zcr > 0.1 { scores["Rock"]! += 0.2 }
+        if rms > 0.15 { scores["Rock", default: 0] += 0.3 }
+        if zcr > 0.1 { scores["Rock", default: 0] += 0.2 }
 
         // Jazz: moderate tempo (80-140), high centroid variation
         scores["Jazz"] = tempo >= 80 && tempo <= 140 ? 0.4 : 0.1
-        if centroid > 2500 { scores["Jazz"]! += 0.2 }
+        if centroid > 2500 { scores["Jazz", default: 0] += 0.2 }
 
         // Hip-Hop: 80-110 BPM, strong bass
         scores["Hip-Hop"] = tempo >= 78 && tempo <= 115 ? 0.5 : 0.1
-        if centroid < 2500 { scores["Hip-Hop"]! += 0.3 }
+        if centroid < 2500 { scores["Hip-Hop", default: 0] += 0.3 }
 
         // Classical: low ZCR, wide dynamic range, moderate centroid
         scores["Classical"] = zcr < 0.04 ? 0.5 : 0.1
-        if centroid > 1000 && centroid < 3000 { scores["Classical"]! += 0.2 }
+        if centroid > 1000 && centroid < 3000 { scores["Classical", default: 0] += 0.2 }
 
         let bestGenre = scores.max(by: { $0.value < $1.value })
         features["confidence"] = bestGenre?.value ?? 0
