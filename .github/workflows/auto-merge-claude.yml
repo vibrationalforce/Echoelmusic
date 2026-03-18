@@ -114,7 +114,7 @@ jobs:
                 ref: 'main',
                 inputs: {
                   platform: 'all',
-                  clean_build: 'true'
+                  clean_build: 'false'
                 }
               });
               console.log('TestFlight workflow dispatched successfully!');
