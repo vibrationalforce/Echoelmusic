@@ -705,4 +705,202 @@ final class StageOutputViewController: UIViewController {
     }
 }
 
+// MARK: - EchoelStageView
+
+#if canImport(SwiftUI)
+import SwiftUI
+
+/// Stage panel — external display management, projection mapping, cue list
+public struct EchoelStageView: View {
+    @Bindable private var stage = EchoelStageEngine.shared
+
+    public init() {}
+
+    public var body: some View {
+        ScrollView {
+            VStack(spacing: EchoelSpacing.md) {
+                // Status bar
+                HStack {
+                    Circle()
+                        .fill(stage.isRunning ? Color.green : Color.red)
+                        .frame(width: 8, height: 8)
+                    Text(stage.isRunning ? "Stage Active" : "Standby")
+                        .font(EchoelBrandFont.body())
+                    Spacer()
+                    Text("\(stage.connectedDisplays.count) display(s)")
+                        .font(EchoelBrandFont.caption())
+                        .foregroundStyle(.secondary)
+                }
+                .echoelSurface()
+
+                // Output mode
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                    Text("Output Mode")
+                        .font(EchoelBrandFont.label())
+                        .foregroundStyle(.secondary)
+                    Picker("Mode", selection: $stage.outputMode) {
+                        ForEach(StageOutputMode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                .echoelSurface()
+
+                // Connected displays
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                    HStack {
+                        Text("Displays")
+                            .font(EchoelBrandFont.label())
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button(action: { stage.scanConnectedDisplays() }) {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundStyle(EchoelBrand.accent)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if stage.connectedDisplays.isEmpty {
+                        Text("No external displays detected")
+                            .font(EchoelBrandFont.caption())
+                            .foregroundStyle(.tertiary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, EchoelSpacing.md)
+                    } else {
+                        ForEach(stage.connectedDisplays) { display in
+                            HStack {
+                                Image(systemName: display.isAirPlay ? "airplayvideo" : "display")
+                                    .foregroundStyle(EchoelBrand.accent)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(display.name)
+                                        .font(EchoelBrandFont.body())
+                                    Text("\(Int(display.resolution.width))x\(Int(display.resolution.height)) @ \(Int(display.refreshRate))Hz")
+                                        .font(EchoelBrandFont.caption())
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                            }
+                            .echoelSurface()
+                        }
+                    }
+                }
+                .echoelSurface()
+
+                // Bio-reactive toggle
+                Toggle("Bio-Reactive Stage", isOn: $stage.bioReactiveEnabled)
+                    .font(EchoelBrandFont.body())
+                    .echoelSurface()
+
+                // Scene selector
+                VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                    Text("Scenes")
+                        .font(EchoelBrandFont.label())
+                        .foregroundStyle(.secondary)
+
+                    ForEach(stage.scenes) { scene in
+                        Button(action: { stage.setActiveScene(scene) }) {
+                            HStack {
+                                Circle()
+                                    .fill(Color(
+                                        red: Double(scene.backgroundColor.red),
+                                        green: Double(scene.backgroundColor.green),
+                                        blue: Double(scene.backgroundColor.blue)
+                                    ))
+                                    .frame(width: 12, height: 12)
+                                Text(scene.name)
+                                    .font(EchoelBrandFont.body())
+                                Spacer()
+                                if stage.activeScene?.id == scene.id {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(EchoelBrand.accent)
+                                }
+                                Text(scene.visualMode.rawValue)
+                                    .font(EchoelBrandFont.caption())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .echoelSurface()
+                    }
+                }
+                .echoelSurface()
+
+                // Cue list
+                if !stage.cues.isEmpty {
+                    VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
+                        HStack {
+                            Text("Cue List")
+                                .font(EchoelBrandFont.label())
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Next Cue") { stage.fireNextCue() }
+                                .font(EchoelBrandFont.caption())
+                                .buttonStyle(.plain)
+                                .foregroundStyle(EchoelBrand.accent)
+                        }
+
+                        ForEach(Array(stage.cues.enumerated()), id: \.element.id) { index, cue in
+                            HStack {
+                                Text("Q\(index + 1)")
+                                    .font(EchoelBrandFont.data())
+                                    .foregroundStyle(index == stage.currentCueIndex ? EchoelBrand.accent : .secondary)
+                                Text(cue.name)
+                                    .font(EchoelBrandFont.body())
+                                Spacer()
+                                Text("\(cue.transitionDuration, specifier: "%.1f")s")
+                                    .font(EchoelBrandFont.caption())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .echoelSurface()
+                }
+
+                // Transport
+                HStack(spacing: EchoelSpacing.lg) {
+                    Button(action: {
+                        if stage.isRunning {
+                            stage.stop()
+                        } else {
+                            stage.start()
+                        }
+                    }) {
+                        HStack(spacing: EchoelSpacing.sm) {
+                            Image(systemName: stage.isRunning ? "stop.fill" : "play.fill")
+                            Text(stage.isRunning ? "Stop Stage" : "Start Stage")
+                        }
+                        .font(EchoelBrandFont.body())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, EchoelSpacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(stage.isRunning ? EchoelBrand.coral : EchoelBrand.accent)
+                        )
+                        .foregroundColor(.white)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .echoelSurface()
+
+                // FPS target
+                VStack(spacing: EchoelSpacing.sm) {
+                    HStack {
+                        Text("Target FPS")
+                            .font(EchoelBrandFont.label())
+                        Spacer()
+                        Text("\(Int(stage.targetFPS))")
+                            .font(EchoelBrandFont.data())
+                    }
+                    Slider(value: $stage.targetFPS, in: 30...120, step: 10)
+                        .tint(EchoelBrand.accent)
+                }
+                .echoelSurface()
+            }
+            .padding(EchoelSpacing.md)
+        }
+    }
+}
+#endif
+
 #endif
