@@ -48,6 +48,20 @@ Architectural and strategic decisions with context and rationale.
 - **Expected outcome:** All 12 EchoelTools accessible from studio workspace
 - **Review date:** 2026-04-16
 
+### 2026-03-18 Scheme Check Before Archive in TestFlight CI
+- **Decision:** Add "Check Scheme Exists" step to watchOS/macOS/tvOS/visionOS jobs in testflight.yml
+- **Reasoning:** Only iOS scheme exists in project.yml. Auto-merge dispatches platform:all, causing 4 jobs to fail on missing schemes
+- **Alternatives considered:** Change auto-merge to dispatch ios-only (too limiting for future), remove non-iOS jobs (lose them permanently)
+- **Expected outcome:** Non-iOS jobs skip gracefully with warning; ready when schemes are added to project.yml
+- **Review date:** 2026-04-17
+
+### 2026-03-18 Platform-Aware Skills
+- **Decision:** Upgraded testflight-deploy, ship, scan, full-repo-audit to detect Linux/web environment
+- **Reasoning:** `swift build` unavailable on Linux/web sessions. Skills must fall back to GitHub CI API checks
+- **Alternatives considered:** Only run skills on macOS — rejected, limits CI-driven workflows
+- **Expected outcome:** Skills work in all environments (macOS, Linux, web)
+- **Review date:** 2026-04-17
+
 ---
 
 ### 2026-03-11 Persistent Memory System

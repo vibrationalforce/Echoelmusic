@@ -1,3 +1,6 @@
 date,decision,reasoning,expected_outcome,review_date,status
 2026-03-11,"Created persistent memory system (memory/ directory)","scratchpads/ is session-specific; need durable cross-session knowledge store","Faster session starts and no repeated discovery of known facts",2026-04-10,ACTIVE
 2026-03-11,"Created decision logging system (decisions.csv + review.sh + cron)","Systematic tracking of architectural decisions with automated review reminders","Decisions are reviewed on schedule and not forgotten",2026-04-10,ACTIVE
+2026-03-18,"Added scheme existence checks to TestFlight workflow for non-iOS platforms","watchOS/macOS/tvOS/visionOS schemes don't exist yet but workflow dispatches platform:all","Non-iOS jobs skip gracefully instead of failing the whole workflow",2026-04-17,ACTIVE
+2026-03-18,"Disabled clean_build on auto-merge TestFlight dispatch","Clean builds waste 60+ min CI; incremental builds sufficient for auto-merge","Faster CI turnaround on auto-merged changes",2026-04-17,ACTIVE
+2026-03-18,"Upgraded 5 skills for platform-awareness and iOS 26 SDK validation","Skills assumed macOS/Xcode; sessions often run on Linux/web where swift build unavailable","Skills work correctly in both macOS and Linux/web environments",2026-04-17,ACTIVE
