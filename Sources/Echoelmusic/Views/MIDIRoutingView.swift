@@ -732,7 +732,7 @@ struct MIDILearnSheet: View {
                 Text("MIDI LEARN")
                     .font(EchoelBrandFont.sectionTitle())
                     .foregroundColor(EchoelBrand.textPrimary)
-                    .neonGlow(color: EchoelBrand.coral, radius: 10)
+                    .neonGlow(color: EchoelBrand.coral, radius: 8)
 
                 // Listening Indicator
                 ZStack {
@@ -754,7 +754,7 @@ struct MIDILearnSheet: View {
                             .foregroundColor(EchoelBrand.textSecondary)
                     }
                 }
-                .neonGlow(color: isListening ? EchoelBrand.coral : .clear, radius: 20)
+                .neonGlow(color: isListening ? EchoelBrand.coral : .clear, radius: 8)
 
                 if let cc = detectedCC, let channel = detectedChannel {
                     Text("Detected: Ch \(channel) CC \(cc)")

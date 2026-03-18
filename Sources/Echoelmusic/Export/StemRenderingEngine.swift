@@ -586,7 +586,7 @@ public final class StemRenderingEngine {
         }
         try audioFile.read(into: buffer)
 
-        guard let floatData = buffer.floatChannelData else { return (0, 0) }
+        guard let floatData = buffer.floatChannelData, buffer.format.channelCount > 0 else { return (0, 0) }
         let channelData = floatData[0]
         let count = Int(buffer.frameLength)
 

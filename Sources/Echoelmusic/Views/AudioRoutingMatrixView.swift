@@ -306,6 +306,8 @@ struct ChannelStripView: View {
                 )
         )
         .onTapGesture { onSelect() }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Channel: \(channel.name)")
     }
 }
 

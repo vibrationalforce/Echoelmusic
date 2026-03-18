@@ -72,7 +72,7 @@ struct RecordingControlsView: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 15)
+            RoundedRectangle(cornerRadius: 12)
                 .fill(EchoelBrand.bgDeep.opacity(0.4))
         )
         .sheet(isPresented: $showSessionNamePrompt) {

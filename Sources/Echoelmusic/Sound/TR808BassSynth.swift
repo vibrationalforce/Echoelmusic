@@ -327,7 +327,8 @@ public final class TR808BassSynth {
 
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
 
-            guard let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
+            guard ablPointer.count >= 2,
+                  let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
                   let rightBuffer = ablPointer[1].mData?.assumingMemoryBound(to: Float.self) else {
                 return noErr
             }

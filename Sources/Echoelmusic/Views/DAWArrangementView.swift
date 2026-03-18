@@ -424,6 +424,8 @@ struct DAWArrangementView: View {
                 .stroke(isSelected ? trackColor : Color.clear, lineWidth: 1)
         )
         .onTapGesture { selectedTrackID = track.id }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Track: \(track.name)")
         .contextMenu {
             Button {
                 recordingEngine.setTrackMuted(track.id, muted: !track.isMuted)

@@ -534,7 +534,8 @@ final class InstrumentOrchestrator {
         // Stereo widening: subtle phase offset between L/R for spatial depth
         // This creates a natural "room" effect without being phasey in mono
         let stereoOffset = 12  // ~0.25ms at 48kHz — Haas-effect sweet spot
-        if let leftChannel = buffer.floatChannelData?[0],
+        if buffer.format.channelCount >= 2,
+           let leftChannel = buffer.floatChannelData?[0],
            let rightChannel = buffer.floatChannelData?[1] {
             for i in 0..<samples.count {
                 leftChannel[i] = samples[i]

@@ -496,6 +496,8 @@ struct ClipSlotCell: View {
         .frame(width: 100, height: 60)
         .onTapGesture(count: 2, perform: onDoubleTap)
         .onTapGesture(count: 1, perform: onTap)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(clip != nil ? "Clip: \(clip?.name ?? "Loaded")" : "Empty clip slot")
         .onHover { isHovered = $0 }
         .contextMenu {
             if clip != nil {

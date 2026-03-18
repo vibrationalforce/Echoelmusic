@@ -343,7 +343,7 @@ struct MasterChannelStrip: View {
                         .stroke(VaporwaveColors.neonPink.opacity(0.3), lineWidth: 2)
                 )
         )
-        .neonGlow(color: VaporwaveColors.neonPink, radius: 10)
+        .neonGlow(color: VaporwaveColors.neonPink, radius: 8)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Master channel strip")
     }

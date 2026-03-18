@@ -360,7 +360,7 @@ final class EchoelCreativeWorkspace {
                     breathPhase: bio.breathPhase,
                     coherence: coherence,
                     audioRMS: micManager.audioLevel,
-                    audioPitch: 0 // TODO: wire pitch detection
+                    audioPitch: micManager.currentPitch
                 )
             }
         }

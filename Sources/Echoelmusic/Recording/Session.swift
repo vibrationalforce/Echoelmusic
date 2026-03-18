@@ -90,10 +90,15 @@ struct Session: Identifiable, Codable {
 
     /// Get session directory URL
     func getSessionDirectory() -> URL {
-        let documentsPath = FileManager.default.urls(
+        guard let documentsPath = FileManager.default.urls(
             for: .documentDirectory,
             in: .userDomainMask
-        )[0]
+        ).first else {
+            // Fallback to temporary directory if documents unavailable
+            return FileManager.default.temporaryDirectory
+                .appendingPathComponent("Sessions")
+                .appendingPathComponent(id.uuidString)
+        }
 
         return documentsPath
             .appendingPathComponent("Sessions")
@@ -128,10 +133,12 @@ struct Session: Identifiable, Codable {
 
     /// Load session from disk
     static func load(id: UUID) throws -> Session {
-        let documentsPath = FileManager.default.urls(
+        guard let documentsPath = FileManager.default.urls(
             for: .documentDirectory,
             in: .userDomainMask
-        )[0]
+        ).first else {
+            throw NSError(domain: "Session", code: -1, userInfo: [NSLocalizedDescriptionKey: "Documents directory unavailable"])
+        }
 
         let sessionFile = documentsPath
             .appendingPathComponent("Sessions")

@@ -308,7 +308,8 @@ public final class EchoelSynth {
         sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
             guard let s = weakSelf else { return noErr }
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            guard let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
+            guard ablPointer.count >= 2,
+                  let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
                   let rightBuffer = ablPointer[1].mData?.assumingMemoryBound(to: Float.self) else {
                 return noErr
             }
