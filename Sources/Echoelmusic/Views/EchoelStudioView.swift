@@ -18,13 +18,24 @@ extension EnvironmentValues {
 // MARK: - Echoelmusic Workspace View
 // Unified creative workspace: audio + video on one BPM-synchronized timeline
 // Bottom panel drawers for instruments, mixer, FX, and video preview
+//
+// Panel Architecture: 5 tabs, each with sub-tools accessible via segmented picker
+//   Create  → Instruments, Sequencer, Piano Roll
+//   Mix     → Mixer, FX
+//   Bio     → Bio status
+//   Media   → Visuals, Video, Lighting, Stage
+//   Connect → Network, AI
 
 struct EchoelStudioView: View {
     @Environment(AudioEngine.self) var audioEngine
     @Environment(RecordingEngine.self) var recordingEngine
 
     @State private var viewMode: ViewMode = .arrangement
-    @State private var bottomPanel: BottomPanel?
+    @State private var activeTab: ToolTab?
+    @State private var createSubtab: CreateSubtab = .instruments
+    @State private var mixSubtab: MixSubtab = .mixer
+    @State private var mediaSubtab: MediaSubtab = .visuals
+    @State private var connectSubtab: ConnectSubtab = .network
     @State private var selectedTrackID: UUID?
 
     #if os(iOS)
@@ -53,58 +64,44 @@ struct EchoelStudioView: View {
         }
     }
 
-    // MARK: - Bottom Panel
+    // MARK: - Tool Tabs (5 categories)
 
-    enum BottomPanel: String, CaseIterable, Identifiable {
-        case instruments = "Instruments"
-        case sequencer = "Sequencer"
-        case pianoRoll = "Piano Roll"
-        case mixer = "Mixer"
-        case fx = "FX"
+    enum ToolTab: String, CaseIterable, Identifiable {
+        case create = "Create"
+        case mix = "Mix"
         case bio = "Bio"
-        case visuals = "Visuals"
-        case video = "Video"
-        case lighting = "Lighting"
-        case stage = "Stage"
-        case network = "Network"
-        case ai = "AI"
+        case media = "Media"
+        case connect = "Connect"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
-            case .instruments: return "pianokeys"
-            case .sequencer: return "square.grid.3x3"
-            case .pianoRoll: return "music.note.list"
-            case .mixer: return "slider.vertical.3"
-            case .fx: return "waveform.path.ecg"
+            case .create: return "pianokeys"
+            case .mix: return "slider.vertical.3"
             case .bio: return "heart.fill"
-            case .visuals: return "eye"
-            case .video: return "film"
-            case .lighting: return "light.max"
-            case .stage: return "display"
-            case .network: return "network"
-            case .ai: return "cpu"
+            case .media: return "eye"
+            case .connect: return "network"
             }
         }
 
         var color: Color {
             switch self {
-            case .instruments: return EchoelBrand.sky
-            case .sequencer: return EchoelBrand.amber
-            case .pianoRoll: return Color(red: 1, green: 0.8, blue: 0.2)
-            case .mixer: return EchoelBrand.emerald
-            case .fx: return EchoelBrand.violet
+            case .create: return EchoelBrand.sky
+            case .mix: return EchoelBrand.emerald
             case .bio: return EchoelBrand.coral
-            case .visuals: return Color(red: 0.6, green: 0.4, blue: 1.0)
-            case .video: return EchoelBrand.rose
-            case .lighting: return Color(red: 1, green: 0.8, blue: 0.4)
-            case .stage: return Color(red: 0.4, green: 0.8, blue: 1.0)
-            case .network: return EchoelBrand.emerald
-            case .ai: return EchoelBrand.sky
+            case .media: return EchoelBrand.violet
+            case .connect: return EchoelBrand.amber
             }
         }
     }
+
+    // MARK: - Subtabs
+
+    enum CreateSubtab: String, CaseIterable { case instruments = "Instruments", sequencer = "Sequencer", pianoRoll = "Piano Roll" }
+    enum MixSubtab: String, CaseIterable { case mixer = "Mixer", fx = "FX" }
+    enum MediaSubtab: String, CaseIterable { case visuals = "Visuals", video = "Video", lighting = "Lighting", stage = "Stage" }
+    enum ConnectSubtab: String, CaseIterable { case network = "Network", ai = "AI" }
 
     // MARK: - Body
 
@@ -118,12 +115,12 @@ struct EchoelStudioView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // Bottom panel (collapsible)
-                if let panel = bottomPanel {
-                    bottomPanelView(panel, height: panelHeight)
+                if let tab = activeTab {
+                    bottomPanelView(tab, height: panelHeight)
                 }
 
-                // Bottom panel tab bar
-                bottomPanelTabBar
+                // Bottom tab bar — 5 clear categories
+                bottomTabBar
             }
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
@@ -152,43 +149,55 @@ struct EchoelStudioView: View {
     // MARK: - Bottom Panel Content
 
     @ViewBuilder
-    private func bottomPanelView(_ panel: BottomPanel, height: CGFloat) -> some View {
+    private func bottomPanelView(_ tab: ToolTab, height: CGFloat) -> some View {
         VStack(spacing: 0) {
-            // Drag handle
-            panelDragHandle(panel)
+            // Panel header with subtab picker
+            panelHeader(tab)
 
-            // Panel content in ScrollView for overflow handling
+            // Panel content
             ScrollView {
                 Group {
-                    switch panel {
-                    case .instruments:
-                        EchoelSynthView()
-                            .environment(audioEngine)
-                    case .sequencer:
-                        VisualStepSequencerView()
-                    case .pianoRoll:
-                        PianoRollView()
-                    case .mixer:
-                        RealMixerSheet()
-                            .environment(audioEngine)
-                            .environment(recordingEngine)
-                    case .fx:
-                        EchoelFXView()
-                            .environment(audioEngine)
+                    switch tab {
+                    case .create:
+                        switch createSubtab {
+                        case .instruments:
+                            EchoelSynthView()
+                                .environment(audioEngine)
+                        case .sequencer:
+                            VisualStepSequencerView()
+                        case .pianoRoll:
+                            PianoRollView()
+                        }
+                    case .mix:
+                        switch mixSubtab {
+                        case .mixer:
+                            RealMixerSheet()
+                                .environment(audioEngine)
+                                .environment(recordingEngine)
+                        case .fx:
+                            EchoelFXView()
+                                .environment(audioEngine)
+                        }
                     case .bio:
                         BioStatusView()
-                    case .visuals:
-                        EchoelVisView()
-                    case .video:
-                        VideoEditorView()
-                    case .lighting:
-                        EchoelLuxView()
-                    case .stage:
-                        EchoelStageView()
-                    case .network:
-                        EchoelNetView()
-                    case .ai:
-                        EchoelAIView()
+                    case .media:
+                        switch mediaSubtab {
+                        case .visuals:
+                            EchoelVisView()
+                        case .video:
+                            VideoEditorView()
+                        case .lighting:
+                            EchoelLuxView()
+                        case .stage:
+                            EchoelStageView()
+                        }
+                    case .connect:
+                        switch connectSubtab {
+                        case .network:
+                            EchoelNetView()
+                        case .ai:
+                            EchoelAIView()
+                        }
                     }
                 }
                 .environment(\.isEmbeddedInPanel, true)
@@ -200,25 +209,24 @@ struct EchoelStudioView: View {
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
-    private func panelDragHandle(_ panel: BottomPanel) -> some View {
-        HStack {
-            // Panel title
-            HStack(spacing: EchoelSpacing.sm) {
-                Image(systemName: panel.icon)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(panel.color)
-                Text(panel.rawValue.uppercased())
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(EchoelBrand.textSecondary)
-                    .tracking(1.5)
-            }
+    // MARK: - Panel Header (title + subtab picker + close)
+
+    private func panelHeader(_ tab: ToolTab) -> some View {
+        HStack(spacing: EchoelSpacing.sm) {
+            // Tab icon + title
+            Image(systemName: tab.icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(tab.color)
+
+            // Subtab picker (inline segmented control)
+            subtabPicker(for: tab)
 
             Spacer()
 
             // Close button
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    bottomPanel = nil
+                    activeTab = nil
                 }
             } label: {
                 Image(systemName: "xmark")
@@ -250,9 +258,52 @@ struct EchoelStudioView: View {
         )
     }
 
-    // MARK: - Bottom Panel Tab Bar
+    @ViewBuilder
+    private func subtabPicker(for tab: ToolTab) -> some View {
+        switch tab {
+        case .create:
+            segmentedPicker(CreateSubtab.allCases, selection: $createSubtab, color: tab.color) { $0.rawValue }
+        case .mix:
+            segmentedPicker(MixSubtab.allCases, selection: $mixSubtab, color: tab.color) { $0.rawValue }
+        case .bio:
+            Text("BIO")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(EchoelBrand.textSecondary)
+                .tracking(1.5)
+        case .media:
+            segmentedPicker(MediaSubtab.allCases, selection: $mediaSubtab, color: tab.color) { $0.rawValue }
+        case .connect:
+            segmentedPicker(ConnectSubtab.allCases, selection: $connectSubtab, color: tab.color) { $0.rawValue }
+        }
+    }
 
-    private var bottomPanelTabBar: some View {
+    /// Compact segmented picker for subtabs
+    private func segmentedPicker<T: Hashable>(_ items: [T], selection: Binding<T>, color: Color, label: @escaping (T) -> String) -> some View {
+        HStack(spacing: 2) {
+            ForEach(items, id: \T.self) { item in
+                let isActive = selection.wrappedValue == item
+                Button {
+                    selection.wrappedValue = item
+                    HapticHelper.impact(.light)
+                } label: {
+                    Text(label(item))
+                        .font(.system(size: 10, weight: isActive ? .bold : .medium))
+                        .foregroundColor(isActive ? color : EchoelBrand.textSecondary)
+                        .padding(.horizontal, EchoelSpacing.sm)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(isActive ? color.opacity(0.12) : Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Bottom Tab Bar (5 tabs)
+
+    private var bottomTabBar: some View {
         HStack(spacing: 0) {
             // View mode toggle (Arrangement / Session)
             viewModeToggle
@@ -263,56 +314,51 @@ struct EchoelStudioView: View {
                 .frame(width: 1, height: 28)
                 .padding(.horizontal, EchoelSpacing.sm)
 
-            // Panel tabs — scrollable for all 9 tools
-            ScrollView(.horizontal, showsIndicators: false) {
+            // 5 tool tabs — no scrolling needed
             HStack(spacing: 0) {
-            ForEach(BottomPanel.allCases) { panel in
-                Button {
-                    echoelWithAnimation(.easeInOut(duration: 0.2)) {
-                        if bottomPanel == panel {
-                            bottomPanel = nil
-                        } else {
-                            bottomPanel = panel
+                ForEach(ToolTab.allCases) { tab in
+                    Button {
+                        echoelWithAnimation(.easeInOut(duration: 0.2)) {
+                            if activeTab == tab {
+                                activeTab = nil
+                            } else {
+                                activeTab = tab
+                            }
                         }
-                    }
-                    HapticHelper.impact(.light)
-                } label: {
-                    let isActive = bottomPanel == panel
-                    VStack(spacing: EchoelSpacing.xxs) {
-                        Image(systemName: panel.icon)
-                            .font(.system(size: isCompact ? 16 : 14, weight: isActive ? .semibold : .regular))
-                            .symbolRenderingMode(.hierarchical)
+                        HapticHelper.impact(.light)
+                    } label: {
+                        let isActive = activeTab == tab
+                        VStack(spacing: EchoelSpacing.xxs) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: isCompact ? 16 : 14, weight: isActive ? .semibold : .regular))
+                                .symbolRenderingMode(.hierarchical)
 
-                        if !isCompact {
-                            Text(panel.rawValue)
-                                .font(EchoelBrandFont.label())
+                            Text(tab.rawValue)
+                                .font(.system(size: isCompact ? 9 : 10, weight: isActive ? .bold : .medium))
+                        }
+                        .foregroundColor(isActive ? tab.color : EchoelBrand.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, isCompact ? EchoelSpacing.sm : EchoelSpacing.sm + EchoelSpacing.xxs)
+                        .background(
+                            isActive ? tab.color.opacity(0.08) : Color.clear
+                        )
+                        .overlay(alignment: .top) {
+                            if isActive {
+                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                                    .fill(tab.color)
+                                    .frame(width: 20, height: 2)
+                            }
                         }
                     }
-                    .foregroundColor(isActive ? panel.color : EchoelBrand.textSecondary)
-                    .frame(width: isCompact ? 52 : 72)
-                    .padding(.vertical, isCompact ? EchoelSpacing.sm : EchoelSpacing.sm + EchoelSpacing.xxs)
-                    .background(
-                        isActive ? panel.color.opacity(0.08) : Color.clear
-                    )
-                    .overlay(alignment: .top) {
-                        if isActive {
-                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                                .fill(panel.color)
-                                .frame(width: 20, height: 2)
-                        }
-                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(tab.rawValue) panel")
+                    .accessibilityAddTraits(activeTab == tab ? .isSelected : [])
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(panel.rawValue) panel")
-                .accessibilityAddTraits(bottomPanel == panel ? .isSelected : [])
             }
-            } // HStack (scrollable panels)
-            } // ScrollView
         }
         .background(
             ZStack {
                 EchoelBrand.bgSurface.opacity(0.95)
-                // Solid surface — no glassmorphism
                 Rectangle().fill(EchoelBrand.bgElevated.opacity(0.15))
             }
             .overlay(

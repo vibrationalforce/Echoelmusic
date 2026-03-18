@@ -20,7 +20,6 @@ struct DAWArrangementView: View {
     @State private var showSessionClips = false
     @State private var showEffectsChain = false
     @State private var showMasterExport = false
-    @State private var showTempoEditor = false
     @State private var showMiniMixer = false
     @State private var automationTrackIDs: Set<UUID> = []
     @State private var showAddAutomation = false
@@ -161,182 +160,64 @@ struct DAWArrangementView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: EchoelSpacing.xs) {
-            // Row 1: BPM + tempo controls + toolbar
-            HStack(spacing: EchoelSpacing.sm) {
-                // BPM display with tempo controls
-                HStack(spacing: EchoelSpacing.xs) {
-                    // Metronome toggle
-                    Button {
-                        if metronome.isRunning {
-                            metronome.stop()
+        HStack(spacing: EchoelSpacing.sm) {
+            // Metronome toggle (compact — BPM is in transport bar)
+            Button {
+                if metronome.isRunning {
+                    metronome.stop()
+                } else {
+                    metronome.setTempo(bpm)
+                    metronome.start()
+                }
+                HapticHelper.impact(.light)
+            } label: {
+                Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
+                    .font(.system(size: 14))
+                    .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
+                    .opacity(metronome.beatFlash ? 1.0 : 0.7)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(metronome.isRunning ? "Stop metronome" : "Start metronome")
+
+            Spacer()
+
+            // Toolbar icons
+            HStack(spacing: isCompact ? EchoelSpacing.xs : EchoelSpacing.sm) {
+                if isCompact {
+                    toolbarButton(icon: "sidebar.left", label: "Tracks", isActive: showTrackList) {
+                        withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
+                    }
+                }
+                toolbarButton(icon: "slider.horizontal.3", label: "Mix", isActive: showMiniMixer) {
+                    withAnimation(.easeInOut(duration: 0.2)) { showMiniMixer.toggle() }
+                }
+                toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
+                    showMasterExport = true
+                }
+                toolbarButton(icon: "line.3.crossed.swirl.circle", label: "Auto", isActive: !automationTrackIDs.isEmpty) {
+                    if let id = selectedTrackID {
+                        if automationTrackIDs.contains(id) {
+                            automationTrackIDs.remove(id)
                         } else {
-                            metronome.setTempo(bpm)
-                            metronome.start()
-                        }
-                        HapticHelper.impact(.light)
-                    } label: {
-                        Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
-                            .font(.system(size: 14))
-                            .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
-                            .opacity(metronome.beatFlash ? 1.0 : 0.7)
-                            .frame(width: 28, height: 28)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(metronome.isRunning ? "Stop metronome" : "Start metronome")
-
-                    // Tempo down
-                    Button {
-                        let newBPM = max(40, workspace.globalBPM - 1)
-                        workspace.globalBPM = newBPM
-                        metronome.setTempo(newBPM)
-                        HapticHelper.impact(.light)
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(EchoelBrand.textTertiary)
-                            .frame(width: 22, height: 22)
-                            .background(Circle().fill(EchoelBrand.bgElevated))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Decrease tempo")
-
-                    // BPM value — tap for editor
-                    Button {
-                        showTempoEditor.toggle()
-                    } label: {
-                        HStack(spacing: EchoelSpacing.xs) {
-                            Text("\(Int(bpm))")
-                                .font(.system(size: 16, weight: .medium, design: .monospaced))
-                                .foregroundColor(EchoelBrand.textPrimary)
-                            Text("BPM")
-                                .font(EchoelBrandFont.label())
-                                .foregroundColor(EchoelBrand.textSecondary)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(Int(bpm)) BPM, tap to edit tempo")
-
-                    // Tempo up
-                    Button {
-                        let newBPM = min(300, workspace.globalBPM + 1)
-                        workspace.globalBPM = newBPM
-                        metronome.setTempo(newBPM)
-                        HapticHelper.impact(.light)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(EchoelBrand.textTertiary)
-                            .frame(width: 22, height: 22)
-                            .background(Circle().fill(EchoelBrand.bgElevated))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Increase tempo")
-                }
-                .padding(.horizontal, EchoelSpacing.sm)
-                .padding(.vertical, EchoelSpacing.xs)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
-                )
-                .modifier(GlassCard())
-                .popover(isPresented: $showTempoEditor) {
-                    tempoEditorPopover
-                }
-
-                Spacer()
-
-                // Toolbar icons
-                HStack(spacing: isCompact ? EchoelSpacing.xs : EchoelSpacing.sm) {
-                    if isCompact {
-                        toolbarButton(icon: "sidebar.left", label: "Tracks", isActive: showTrackList) {
-                            withAnimation(.easeInOut(duration: 0.2)) { showTrackList.toggle() }
-                        }
-                    }
-                    toolbarButton(icon: "slider.horizontal.3", label: "Mix", isActive: showMiniMixer) {
-                        withAnimation(.easeInOut(duration: 0.2)) { showMiniMixer.toggle() }
-                    }
-                    toolbarButton(icon: "square.and.arrow.up", label: "Export", isActive: false) {
-                        showMasterExport = true
-                    }
-                    toolbarButton(icon: "line.3.crossed.swirl.circle", label: "Auto", isActive: !automationTrackIDs.isEmpty) {
-                        // Toggle automation for selected track
-                        if let id = selectedTrackID {
-                            if automationTrackIDs.contains(id) {
-                                automationTrackIDs.remove(id)
-                            } else {
-                                automationTrackIDs.insert(id)
-                                if let track = tracks.first(where: { $0.id == id }), track.automationLanes.isEmpty {
-                                    addAutomationLane(trackID: id, parameter: .volume)
-                                }
+                            automationTrackIDs.insert(id)
+                            if let track = tracks.first(where: { $0.id == id }), track.automationLanes.isEmpty {
+                                addAutomationLane(trackID: id, parameter: .volume)
                             }
                         }
                     }
-                    toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
-                        addNewTrack()
-                    }
+                }
+                toolbarButton(icon: "plus.circle", label: "Add", isActive: false) {
+                    addNewTrack()
                 }
             }
         }
         .padding(.horizontal, EchoelSpacing.sm)
         .padding(.vertical, EchoelSpacing.xs)
-    }
-
-    // MARK: - Tempo Editor Popover
-
-    private var tempoEditorPopover: some View {
-        VStack(spacing: EchoelSpacing.md) {
-            Text("TEMPO")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(EchoelBrand.textSecondary)
-                .tracking(1.5)
-
-            Text("\(Int(workspace.globalBPM))")
-                .font(.system(size: 48, weight: .light, design: .monospaced))
-                .foregroundColor(EchoelBrand.textPrimary)
-
-            Slider(
-                value: $workspace.globalBPM,
-                in: 40...300,
-                step: 1
-            ) {
-                Text("BPM")
-            }
-            .tint(EchoelBrand.primary)
-            .onChange(of: workspace.globalBPM) { _, newValue in
-                metronome.setTempo(newValue)
-            }
-
-            // Quick presets
-            HStack(spacing: EchoelSpacing.sm) {
-                ForEach([80, 100, 120, 140, 160], id: \.self) { preset in
-                    Button {
-                        workspace.globalBPM = Double(preset)
-                        metronome.setTempo(Double(preset))
-                        HapticHelper.impact(.light)
-                    } label: {
-                        Text("\(preset)")
-                            .font(EchoelBrandFont.dataSmall())
-                            .foregroundColor(
-                                Int(workspace.globalBPM) == preset ? EchoelBrand.bgDeep : EchoelBrand.textSecondary
-                            )
-                            .frame(width: 44, height: 32)
-                            .background(
-                                RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                                    .fill(
-                                        Int(workspace.globalBPM) == preset
-                                            ? EchoelBrand.primary
-                                            : EchoelBrand.bgElevated
-                                    )
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .padding(EchoelSpacing.lg)
-        .frame(width: 280)
-        .background(EchoelBrand.bgSurface)
     }
 
     // MARK: - Track List
@@ -598,34 +479,65 @@ struct DAWArrangementView: View {
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: EchoelSpacing.md) {
-            Image(systemName: "waveform.badge.plus")
-                .font(.system(size: 48))
-                .foregroundColor(EchoelBrand.textTertiary)
+        VStack(spacing: EchoelSpacing.lg) {
+            // Brand mark — larger, animated, gives the empty state life
+            EchoelWaveformMark(bioCoherence: Float(EchoelCreativeWorkspace.shared.bioCoherence), animated: true)
+                .frame(width: 64, height: 64)
+                .padding(.bottom, EchoelSpacing.xs)
 
-            Text("Tap Record or Add Track to start")
-                .font(EchoelBrandFont.body())
-                .foregroundColor(EchoelBrand.textSecondary)
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("Start creating")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(EchoelBrand.textPrimary)
 
-            Button {
-                addNewTrack()
-            } label: {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Add Track")
-                }
-                .font(EchoelBrandFont.body())
-                .foregroundColor(EchoelBrand.sky)
-                .padding(.horizontal, EchoelSpacing.lg)
-                .padding(.vertical, EchoelSpacing.sm)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(EchoelBrand.sky.opacity(0.5), lineWidth: 1)
-                )
+                Text("Add a track, hit record, or open an instrument")
+                    .font(EchoelBrandFont.body())
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .multilineTextAlignment(.center)
             }
-            .buttonStyle(.plain)
+
+            // Quick-start buttons
+            HStack(spacing: EchoelSpacing.md) {
+                quickStartButton(icon: "plus.circle.fill", label: "Add Track", color: EchoelBrand.sky) {
+                    addNewTrack()
+                }
+
+                quickStartButton(icon: "circle.fill", label: "Record", color: EchoelBrand.coral) {
+                    toggleRecording()
+                }
+
+                quickStartButton(icon: "pianokeys", label: "Instrument", color: EchoelBrand.amber) {
+                    showInstrumentBrowser = true
+                }
+            }
         }
-        .frame(maxWidth: .infinity, minHeight: 200)
+        .frame(maxWidth: .infinity, minHeight: 240)
+    }
+
+    private func quickStartButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: {
+            action()
+            HapticHelper.impact(.medium)
+        }) {
+            VStack(spacing: EchoelSpacing.sm) {
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .foregroundColor(color)
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(EchoelBrand.textSecondary)
+            }
+            .frame(width: 80, height: 72)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(color.opacity(0.15), lineWidth: 0.5)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var timelineRuler: some View {

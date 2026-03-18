@@ -45,19 +45,20 @@ struct MainNavigationHub: View {
 
     private var topBar: some View {
         HStack(spacing: 0) {
-            // Brand mark (E + 3 waves) — top-left
-            EchoelWaveformMark(animated: false)
-                .frame(width: 28, height: 28)
-                .padding(.trailing, EchoelSpacing.sm)
+            // Brand mark + wordmark — left-aligned identity
+            HStack(spacing: EchoelSpacing.sm) {
+                EchoelWaveformMark(bioCoherence: Float(EchoelCreativeWorkspace.shared.bioCoherence), animated: true)
+                    .frame(width: 32, height: 32)
 
-            Spacer()
-
-            // Centered brand name
-            Text("ECHOELMUSIC")
-                .font(EchoelBrandFont.label())
-                .foregroundColor(EchoelBrand.textPrimary.opacity(0.7))
-                .tracking(4)
-                .kerning(0.5)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Echoel")
+                        .font(.system(size: 16, weight: .semibold, design: .default))
+                        .foregroundColor(EchoelBrand.textPrimary)
+                    Text("Create from Within")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(EchoelBrand.textSecondary)
+                }
+            }
 
             Spacer()
 
@@ -67,29 +68,21 @@ struct MainNavigationHub: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(EchoelBrand.textSecondary)
                     .frame(minWidth: 44, minHeight: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: EchoelRadius.xs)
-                            .fill(EchoelBrand.bgElevated.opacity(0.5))
-                    )
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Settings")
         }
         .padding(.horizontal, EchoelSpacing.md)
-        .padding(.vertical, EchoelSpacing.sm)
+        .padding(.vertical, EchoelSpacing.xs)
         .background(
-            ZStack {
-                EchoelBrand.bgSurface.opacity(0.92)
-                // Solid surface — no glassmorphism
-                Rectangle().fill(EchoelBrand.bgElevated.opacity(0.15))
-            }
-            .overlay(
-                Rectangle()
-                    .fill(EchoelBrand.border)
-                    .frame(height: 0.5),
-                alignment: .bottom
-            )
+            EchoelBrand.bgSurface.opacity(0.92)
+                .overlay(
+                    Rectangle()
+                        .fill(EchoelBrand.border)
+                        .frame(height: 0.5),
+                    alignment: .bottom
+                )
         )
     }
 
