@@ -95,6 +95,10 @@ final class RecordingEngine {
     /// set/cleared on MainActor when recording starts/stops (never concurrent).
     @ObservationIgnored nonisolated(unsafe) private var audioFile: AVAudioFile?
 
+    /// Pre-allocated scratch buffer for waveform downsampling in audio tap callback.
+    /// Avoids heap allocation on audio thread. Max 1000 samples per callback.
+    @ObservationIgnored nonisolated(unsafe) private var waveformScratch = [Float](repeating: 0, count: 1000)
+
     /// Timer for position updates
     @ObservationIgnored nonisolated(unsafe) private var timer: Timer?
 
@@ -360,14 +364,16 @@ final class RecordingEngine {
             vDSP_rmsqv(channelDataValue, 1, &rmsValue, vDSP_Length(frameLength))
             let level = min(rmsValue * 10.0, 1.0)
 
-            // Extract waveform samples (downsample to max 1000 points)
+            // Extract waveform samples into pre-allocated scratch buffer (no heap alloc)
             let waveformCapacity = 1000
             let strideValue = max(1, frameLength / waveformCapacity)
-            var waveformSamples: [Float] = []
-            waveformSamples.reserveCapacity(frameLength / strideValue)
+            var sampleCount = 0
             for i in Swift.stride(from: 0, to: frameLength, by: strideValue) {
-                waveformSamples.append(channelDataValue[i])
+                guard sampleCount < waveformCapacity else { break }
+                weakSelf?.waveformScratch[sampleCount] = channelDataValue[i]
+                sampleCount += 1
             }
+            let capturedCount = sampleCount
 
             // Send only computed values to MainActor
             // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
@@ -375,8 +381,8 @@ final class RecordingEngine {
             DispatchQueue.main.async {
                 guard let s = weakSelf else { return }
                 s.recordingLevel = level
-                for sample in waveformSamples {
-                    s.waveformBuffer.append(sample)
+                for i in 0..<capturedCount {
+                    s.waveformBuffer.append(s.waveformScratch[i])
                 }
                 s.recordingWaveform = s.waveformBuffer.toArray()
             }
