@@ -45,20 +45,16 @@ struct MainNavigationHub: View {
 
     private var topBar: some View {
         HStack(spacing: 0) {
-            // Brand mark + wordmark — left-aligned identity
-            HStack(spacing: EchoelSpacing.sm) {
-                EchoelWaveformMark(bioCoherence: Float(EchoelCreativeWorkspace.shared.bioCoherence), animated: true)
-                    .frame(width: 32, height: 32)
+            // Brand mark — matches website nav (E + waves logo)
+            EchoelWaveformMark(bioCoherence: Float(EchoelCreativeWorkspace.shared.bioCoherence), animated: true)
+                .frame(width: 28, height: 28)
 
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Echoel")
-                        .font(.system(size: 16, weight: .semibold, design: .default))
-                        .foregroundColor(EchoelBrand.textPrimary)
-                    Text("Create from Within")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(EchoelBrand.textSecondary)
-                }
-            }
+            Spacer()
+
+            // Wordmark — centered, "Echoelmusic" only (no tagline)
+            Text("Echoelmusic")
+                .font(.system(size: 15, weight: .semibold, design: .default))
+                .foregroundColor(EchoelBrand.textPrimary)
 
             Spacer()
 
