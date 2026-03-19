@@ -125,6 +125,13 @@ public final class AudioEngine {
                 log.audio("Failed to resume master engine: \(error)", level: .error)
             }
         }
+        AudioConfiguration.onRouteDeviceLost = { [weak self] in
+            // Apple HIG: pause playback when headphones are unplugged
+            // to prevent unexpected audio from speakers
+            self?.masterEngine.pause()
+            self?.isRunning = false
+            log.audio("Audio route lost — engine paused (headphones unplugged)")
+        }
 
         log.audio("AudioEngine initialized — master output wired to hardware")
         log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")

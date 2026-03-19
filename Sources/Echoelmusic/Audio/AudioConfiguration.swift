@@ -275,6 +275,10 @@ enum AudioConfiguration {
     /// Callback invoked when audio session is interrupted (phone call, Siri, etc.)
     nonisolated(unsafe) static var onInterruptionBegan: (() -> Void)?
 
+    /// Callback invoked when audio output device becomes unavailable (headphones unplugged).
+    /// Apple HIG requires pausing playback to prevent unexpected speaker output.
+    nonisolated(unsafe) static var onRouteDeviceLost: (() -> Void)?
+
     /// Whether interruption handlers have already been registered (prevents duplicate observers)
     nonisolated(unsafe) private static var interruptionHandlersRegistered = false
 
@@ -366,7 +370,8 @@ enum AudioConfiguration {
 
         switch reason {
         case .oldDeviceUnavailable:
-            log.audio("Audio device disconnected (headphones removed)", level: .warning)
+            log.audio("Audio device disconnected (headphones removed) — pausing playback", level: .warning)
+            onRouteDeviceLost?()
         case .newDeviceAvailable:
             log.audio("New audio device connected")
         case .categoryChange:

@@ -224,6 +224,8 @@ final class MicrophoneManager: NSObject {
                 let frameLength = Int(buffer.frameLength)
                 guard frameLength > 0 else { return }
                 let channelDataPtr = channelData.pointee
+                // Note: Array allocation in installTap is acceptable — this is NOT the render block.
+                // The tap runs on a separate I/O thread with more tolerance than internalRenderBlock.
                 let samples = Array(UnsafeBufferPointer(start: channelDataPtr, count: frameLength))
                 // DispatchQueue.main.async bypasses Swift concurrency runtime entirely —
                 // Task { @MainActor } crashes on audio thread (dispatch_assert_queue_fail)

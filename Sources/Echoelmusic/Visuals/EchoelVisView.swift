@@ -20,6 +20,7 @@ import UIKit
 private final class MetalVisLayerView: UIView {
     override class var layerClass: AnyClass { CAMetalLayer.self }
 
+    // swiftlint:disable:next force_cast — guaranteed by layerClass override
     var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
 
     override init(frame: CGRect) {

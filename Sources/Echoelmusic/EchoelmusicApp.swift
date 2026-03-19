@@ -10,6 +10,7 @@ struct EchoelmusicApp: App {
     @State private var microphoneManager: MicrophoneManager
     @State private var recordingEngine = RecordingEngine()
     @State private var themeManager = ThemeManager()
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let mic = MicrophoneManager()
@@ -52,6 +53,25 @@ struct EchoelmusicApp: App {
                     // is used instead of mic fallback.
                     _ = await EchoelBioEngine.shared.requestAuthorization()
                     EchoelBioEngine.shared.startStreaming()
+                }
+                .onChange(of: scenePhase) { oldPhase, newPhase in
+                    switch newPhase {
+                    case .active:
+                        // Resuming from background — re-activate audio session
+                        // to recover from potential interruption
+                        if oldPhase == .background {
+                            audioEngine.start()
+                            log.log(.info, category: .system, "App active — audio engine resumed")
+                        }
+                    case .background:
+                        // Audio continues in background (UIBackgroundModes=audio).
+                        // Auto-save timer handles state persistence.
+                        log.log(.info, category: .system, "App backgrounded")
+                    case .inactive:
+                        break
+                    @unknown default:
+                        break
+                    }
                 }
         }
     }
