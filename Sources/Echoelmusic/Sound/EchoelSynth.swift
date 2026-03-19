@@ -315,13 +315,16 @@ public final class EchoelSynth {
         log.audio("EchoelSynth: source node created (not yet attached to master engine)")
     }
 
-    /// Connect to the master AudioEngine — attaches sourceNode to the shared engine graph.
+    /// Store reference to the master AudioEngine. Source node is attached lazily on first noteOn.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-        guard let source = sourceNode, !isAttachedToMaster else { return }
+    }
+
+    private func ensureAttachedToMaster() {
+        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
         engine.attachSourceNode(source)
         isAttachedToMaster = true
-        log.audio("EchoelSynth: attached to master AudioEngine")
+        log.audio("EchoelSynth: source node attached to master engine")
     }
 
     deinit {
@@ -349,6 +352,7 @@ public final class EchoelSynth {
     }
 
     public func noteOn(note: Int, velocity: Float = 0.8) {
+        ensureAttachedToMaster()
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }

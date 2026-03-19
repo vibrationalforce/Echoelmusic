@@ -600,13 +600,16 @@ public final class EchoelBeat {
         log.log(.info, category: .audio, "EchoelBeat: source node created (not yet attached to master engine)")
     }
 
-    /// Connect to the master AudioEngine — attaches sourceNode to the shared engine graph.
+    /// Store reference to the master AudioEngine. Source node is attached lazily on first trigger.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-        guard let source = sourceNode, !isAttachedToMaster else { return }
+    }
+
+    private func ensureAttachedToMaster() {
+        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
         engine.attachSourceNode(source)
         isAttachedToMaster = true
-        log.log(.info, category: .audio, "EchoelBeat: attached to master AudioEngine")
+        log.log(.info, category: .audio, "EchoelBeat: source node attached to master engine")
     }
 
     /// Poll raw meter/sequencer values from audio thread into @Observable properties.
@@ -627,6 +630,7 @@ public final class EchoelBeat {
     }
 
     private func ensureEngineRunning() {
+        ensureAttachedToMaster()
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }

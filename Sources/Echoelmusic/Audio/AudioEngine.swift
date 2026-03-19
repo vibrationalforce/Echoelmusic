@@ -472,15 +472,27 @@ public final class AudioEngine {
     ///
     /// - Parameter sourceNode: The generator node to attach
     func attachSourceNode(_ sourceNode: AVAudioSourceNode) {
-        let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)
-            ?? AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
-        guard let audioFormat = format else {
-            log.audio("Cannot attach source node — no valid audio format", level: .error)
+        // Use the masterMixer's input format to avoid sample rate / channel mismatch.
+        // After attach, the sourceNode's outputFormat reflects the engine's native format.
+        masterEngine.attach(sourceNode)
+        let format = sourceNode.outputFormat(forBus: 0)
+
+        // Guard against invalid format (0 Hz can happen before audio session is active)
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            // Fallback: use masterMixer's output format
+            let fallback = masterMixer.outputFormat(forBus: 0)
+            guard fallback.sampleRate > 0, fallback.channelCount > 0 else {
+                log.audio("Cannot attach source node — no valid audio format available", level: .error)
+                masterEngine.detach(sourceNode)
+                return
+            }
+            masterEngine.connect(sourceNode, to: masterMixer, format: fallback)
+            log.audio("Source node attached to master engine (fallback format: \(fallback.sampleRate)Hz)")
             return
         }
-        masterEngine.attach(sourceNode)
-        masterEngine.connect(sourceNode, to: masterMixer, format: audioFormat)
-        log.audio("Source node attached to master engine")
+
+        masterEngine.connect(sourceNode, to: masterMixer, format: format)
+        log.audio("Source node attached to master engine (\(format.sampleRate)Hz, \(format.channelCount)ch)")
     }
 
     /// Detach a previously attached source node from the master engine.
