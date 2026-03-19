@@ -45,6 +45,15 @@ struct EchoelmusicApp: App {
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
+
+                    // Wire all sound generators to the master engine.
+                    // Each synth's AVAudioSourceNode is attached to masterMixer → hardware.
+                    // This prevents competing AVAudioEngine instances (crash on iOS).
+                    EchoelSynth.shared.connectToMasterEngine(audioEngine)
+                    EchoelBass.shared.connectToMasterEngine(audioEngine)
+                    EchoelBeat.shared.connectToMasterEngine(audioEngine)
+                    TR808BassSynth.shared.connectToMasterEngine(audioEngine)
+
                     audioEngine.start()
 
                     // Request HealthKit authorization, then start bio streaming.

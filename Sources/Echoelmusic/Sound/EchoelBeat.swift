@@ -501,8 +501,9 @@ public final class EchoelBeat {
 
     // ── Audio Engine ──
 
-    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var isAttachedToMaster: Bool = false
     private let sampleRate: Double = 48000.0
     /// os_unfair_lock wrapper — priority-inheriting, no ObjC dispatch,
     /// safe for real-time audio render callbacks.
@@ -543,7 +544,7 @@ public final class EchoelBeat {
         _rawMeter.initialize(to: 0)
         _rawSeqStep.initialize(to: -1)
         _rawSeqRunning.initialize(to: false)
-        setupAudioEngine()
+        createSourceNode()
         startMeterPollTimer()
         // Defer drum kit loading to background to avoid blocking app launch.
         // 16 drum presets × synthesis = heavy DSP work that triggers iOS watchdog
@@ -583,17 +584,9 @@ public final class EchoelBeat {
         _rawSeqRunning.deallocate()
     }
 
-    private func setupAudioEngine() {
-        audioEngine = AVAudioEngine()
-        guard let engine = audioEngine,
-              let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
-            log.log(.warning, category: .audio, "EchoelBeat: failed to create audio engine or format")
-            return
-        }
-
-        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread
-        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
-        // Use `s` not `self` to avoid special self-rebinding semantics.
+    /// Create the AVAudioSourceNode for DSP rendering.
+    /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
+    private func createSourceNode() {
         nonisolated(unsafe) weak var weakSelf = self
         sourceNode = AVAudioSourceNode { _, _, frameCount, abl -> OSStatus in
             guard let s = weakSelf else { return noErr }
@@ -604,13 +597,16 @@ public final class EchoelBeat {
             s.renderAudio(left: left, right: right, frameCount: Int(frameCount))
             return noErr
         }
+        log.log(.info, category: .audio, "EchoelBeat: source node created (not yet attached to master engine)")
+    }
 
-        guard let src = sourceNode else { return }
-        engine.attach(src)
-        engine.connect(src, to: engine.mainMixerNode, format: format)
-        // Engine is prepared but NOT started here — started lazily via ensureEngineRunning()
-        // to avoid competing with the master AudioEngine at app launch.
-        log.log(.info, category: .audio, "EchoelBeat: audio engine prepared (deferred start)")
+    /// Connect to the master AudioEngine — attaches sourceNode to the shared engine graph.
+    public func connectToMasterEngine(_ engine: AudioEngine) {
+        masterAudioEngine = engine
+        guard let source = sourceNode, !isAttachedToMaster else { return }
+        engine.attachSourceNode(source)
+        isAttachedToMaster = true
+        log.log(.info, category: .audio, "EchoelBeat: attached to master AudioEngine")
     }
 
     /// Poll raw meter/sequencer values from audio thread into @Observable properties.
@@ -631,12 +627,9 @@ public final class EchoelBeat {
     }
 
     private func ensureEngineRunning() {
-        guard let engine = audioEngine else {
-            setupAudioEngine()
-            return
+        if masterAudioEngine?.isRunning != true {
+            masterAudioEngine?.start()
         }
-        guard !engine.isRunning else { return }
-        do { try engine.start() } catch { log.error("EchoelBeat: engine start failed - \(error)", category: .audio) }
     }
 
     // MARK: - Public API — Drum Pads

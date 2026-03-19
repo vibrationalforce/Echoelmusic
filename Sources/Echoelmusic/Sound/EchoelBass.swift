@@ -301,8 +301,12 @@ public final class EchoelBass {
 
     // MARK: - Audio Engine
 
-    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    /// Weak reference to the master AudioEngine — set via connectToMasterEngine().
+    /// All audio output routes through the master engine (no private AVAudioEngine).
+    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
+    /// Whether the source node is attached to the master engine
+    @ObservationIgnored private var isAttachedToMaster: Bool = false
     private let sampleRate: Double = 48000.0
     private let maxVoices = 8
 
@@ -338,7 +342,7 @@ public final class EchoelBass {
     private init() {
         _rawMeter.initialize(to: 0)
         _rawVoiceCount.initialize(to: 0)
-        setupAudioEngine()
+        createSourceNode()
         startMeterPollTimer()
     }
 
@@ -359,13 +363,9 @@ public final class EchoelBass {
 
     // MARK: - Audio Engine Setup
 
-    private func setupAudioEngine() {
-        audioEngine = AVAudioEngine()
-        guard let engine = audioEngine else { return }
-
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
-        guard let audioFormat = format else { return }
-
+    /// Create the AVAudioSourceNode for DSP rendering.
+    /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
+    private func createSourceNode() {
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
         // [weak self] on @MainActor class triggers dispatch_assert_queue_fail.
         nonisolated(unsafe) weak var weakSelf = self
@@ -380,14 +380,17 @@ public final class EchoelBass {
             s.renderAudio(leftBuffer: leftBuffer, rightBuffer: rightBuffer, frameCount: Int(frameCount))
             return noErr
         }
+        log.audio("EchoelBass: source node created (not yet attached to master engine)")
+    }
 
-        guard let source = sourceNode else { return }
-        engine.attach(source)
-        engine.connect(source, to: engine.mainMixerNode, format: audioFormat)
-
-        // Engine is prepared but NOT started here — started lazily on first noteOn/start()
-        // to avoid competing with the master AudioEngine at app launch.
-        log.audio("EchoelBass: audio engine prepared (deferred start)")
+    /// Connect to the master AudioEngine — attaches sourceNode to the shared engine graph.
+    /// Must be called after AudioEngine.start() from EchoelmusicApp.task.
+    public func connectToMasterEngine(_ engine: AudioEngine) {
+        masterAudioEngine = engine
+        guard let source = sourceNode, !isAttachedToMaster else { return }
+        engine.attachSourceNode(source)
+        isAttachedToMaster = true
+        log.audio("EchoelBass: attached to master AudioEngine")
     }
 
     deinit {
@@ -401,13 +404,12 @@ public final class EchoelBass {
     // MARK: - Public API
 
     public func start() {
-        guard let engine = audioEngine, !engine.isRunning else { return }
-        do { try engine.start(); isPlaying = true } catch { isPlaying = false; log.error("EchoelBass: start failed - \(error)", category: .audio) }
+        // Ensure master engine is running — bass routes through the shared engine
+        masterAudioEngine?.start()
+        isPlaying = true
     }
 
     public func stop() {
-        meterPollTimer?.invalidate()
-        meterPollTimer = nil
         isPlaying = false
         voiceLock.lock()
         defer { voiceLock.unlock() }
@@ -417,8 +419,9 @@ public final class EchoelBass {
     }
 
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        if audioEngine?.isRunning != true {
-            do { try audioEngine?.start() } catch { log.error("EchoelBass: noteOn engine start failed - \(error)", category: .audio) }
+        // Ensure master engine is running so audio reaches hardware
+        if masterAudioEngine?.isRunning != true {
+            masterAudioEngine?.start()
         }
 
         voiceLock.lock()

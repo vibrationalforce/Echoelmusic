@@ -240,8 +240,10 @@ public final class EchoelSynth {
 
     // MARK: - Audio Engine
 
-    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    /// Weak reference to the master AudioEngine — set via connectToMasterEngine().
+    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var isAttachedToMaster: Bool = false
     private let sampleRate: Double = 48000.0
     private let maxVoices = 16
 
@@ -274,7 +276,7 @@ public final class EchoelSynth {
     private init() {
         _rawMeter.initialize(to: 0)
         _rawVoiceCount.initialize(to: 0)
-        setupAudioEngine()
+        createSourceNode()
         startMeterPollTimer()
     }
 
@@ -295,15 +297,9 @@ public final class EchoelSynth {
 
     // MARK: - Audio Engine Setup
 
-    private func setupAudioEngine() {
-        audioEngine = AVAudioEngine()
-        guard let engine = audioEngine else { return }
-
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
-        guard let audioFormat = format else { return }
-
-        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
-        // [weak self] on @MainActor class triggers dispatch_assert_queue_fail.
+    /// Create the AVAudioSourceNode for DSP rendering.
+    /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
+    private func createSourceNode() {
         nonisolated(unsafe) weak var weakSelf = self
         sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
             guard let s = weakSelf else { return noErr }
@@ -316,14 +312,16 @@ public final class EchoelSynth {
             s.renderAudio(leftBuffer: leftBuffer, rightBuffer: rightBuffer, frameCount: Int(frameCount))
             return noErr
         }
+        log.audio("EchoelSynth: source node created (not yet attached to master engine)")
+    }
 
-        guard let source = sourceNode else { return }
-        engine.attach(source)
-        engine.connect(source, to: engine.mainMixerNode, format: audioFormat)
-
-        // Engine is prepared but NOT started here — started lazily on first noteOn/start()
-        // to avoid competing with the master AudioEngine at app launch.
-        log.audio("EchoelSynth: audio engine prepared (deferred start)")
+    /// Connect to the master AudioEngine — attaches sourceNode to the shared engine graph.
+    public func connectToMasterEngine(_ engine: AudioEngine) {
+        masterAudioEngine = engine
+        guard let source = sourceNode, !isAttachedToMaster else { return }
+        engine.attachSourceNode(source)
+        isAttachedToMaster = true
+        log.audio("EchoelSynth: attached to master AudioEngine")
     }
 
     deinit {
@@ -337,13 +335,11 @@ public final class EchoelSynth {
     // MARK: - Public API
 
     public func start() {
-        guard let engine = audioEngine, !engine.isRunning else { return }
-        do { try engine.start(); isPlaying = true } catch { isPlaying = false; log.error("EchoelSynth: start failed - \(error)", category: .audio) }
+        masterAudioEngine?.start()
+        isPlaying = true
     }
 
     public func stop() {
-        meterPollTimer?.invalidate()
-        meterPollTimer = nil
         isPlaying = false
         voiceLock.lock()
         defer { voiceLock.unlock() }
@@ -353,8 +349,8 @@ public final class EchoelSynth {
     }
 
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        if audioEngine?.isRunning != true {
-            do { try audioEngine?.start() } catch { log.error("EchoelSynth: noteOn engine start failed - \(error)", category: .audio) }
+        if masterAudioEngine?.isRunning != true {
+            masterAudioEngine?.start()
         }
 
         voiceLock.lock()

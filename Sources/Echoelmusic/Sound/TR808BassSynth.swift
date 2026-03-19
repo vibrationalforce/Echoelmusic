@@ -247,8 +247,9 @@ public final class TR808BassSynth {
 
     // MARK: - Audio Engine
 
-    @ObservationIgnored private var audioEngine: AVAudioEngine?
+    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
+    @ObservationIgnored private var isAttachedToMaster: Bool = false
     private let sampleRate: Double = 48000.0
     private let maxVoices = 8
 
@@ -281,7 +282,7 @@ public final class TR808BassSynth {
     private init() {
         _rawMeter.initialize(to: 0)
         _rawVoiceCount.initialize(to: 0)
-        setupAudioEngine()
+        createSourceNode()
         startMeterPollTimer()
     }
 
@@ -310,67 +311,43 @@ public final class TR808BassSynth {
 
     // MARK: - Audio Engine Setup
 
-    private func setupAudioEngine() {
-        audioEngine = AVAudioEngine()
-
-        guard let engine = audioEngine else { return }
-
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)
-        guard let audioFormat = format else { return }
-
-        // Create source node for real-time synthesis
-        // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
-        // [weak self] on @MainActor class triggers dispatch_assert_queue_fail.
+    /// Create the AVAudioSourceNode for DSP rendering.
+    /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
+    private func createSourceNode() {
         nonisolated(unsafe) weak var weakSelf = self
         sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
             guard let s = weakSelf else { return noErr }
-
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-
             guard ablPointer.count >= 2,
                   let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
                   let rightBuffer = ablPointer[1].mData?.assumingMemoryBound(to: Float.self) else {
                 return noErr
             }
-
-            // Render audio on audio thread
-            s.renderAudio(
-                leftBuffer: leftBuffer,
-                rightBuffer: rightBuffer,
-                frameCount: Int(frameCount)
-            )
-
+            s.renderAudio(leftBuffer: leftBuffer, rightBuffer: rightBuffer, frameCount: Int(frameCount))
             return noErr
         }
+        log.audio("TR808BassSynth: source node created (not yet attached to master engine)")
+    }
 
-        guard let source = sourceNode else { return }
-
-        engine.attach(source)
-        engine.connect(source, to: engine.mainMixerNode, format: audioFormat)
-
-        // Engine is prepared but NOT started here — started lazily on first noteOn/start()
-        // to avoid competing with the master AudioEngine at app launch.
-        log.audio("TR808BassSynth: audio engine prepared (deferred start)")
+    /// Connect to the master AudioEngine — attaches sourceNode to the shared engine graph.
+    public func connectToMasterEngine(_ engine: AudioEngine) {
+        masterAudioEngine = engine
+        guard let source = sourceNode, !isAttachedToMaster else { return }
+        engine.attachSourceNode(source)
+        isAttachedToMaster = true
+        log.audio("TR808BassSynth: attached to master AudioEngine")
     }
 
     // MARK: - Public API
 
     /// Start the synthesizer
     public func start() {
-        guard let engine = audioEngine, !engine.isRunning else { return }
-
-        do {
-            try engine.start()
-            isPlaying = true
-        } catch {
-            isPlaying = false
-        }
+        masterAudioEngine?.start()
+        isPlaying = true
     }
 
     /// Stop the synthesizer
     public func stop() {
-        meterPollTimer?.invalidate()
-        meterPollTimer = nil
         isPlaying = false
 
         voiceLock.lock()
@@ -383,13 +360,9 @@ public final class TR808BassSynth {
 
     /// Trigger a note with velocity
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        // Ensure engine is running
-        if audioEngine?.isRunning != true {
-            do {
-                try audioEngine?.start()
-            } catch let engineError {
-                log.log(.error, category: .audio, "TR808BassSynth failed to start: \(engineError)")
-            }
+        // Ensure master engine is running
+        if masterAudioEngine?.isRunning != true {
+            masterAudioEngine?.start()
         }
 
         voiceLock.lock()

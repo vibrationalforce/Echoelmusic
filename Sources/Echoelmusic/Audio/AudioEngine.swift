@@ -464,5 +464,33 @@ public final class AudioEngine {
         )
     }
 
+    // MARK: - Source Node Registration
+
+    /// Attach an AVAudioSourceNode (synth/drum generator) to the master engine.
+    /// This routes the generator's output through masterMixer → mainMixerNode → hardware.
+    /// All sound generators MUST use this instead of creating private AVAudioEngines.
+    ///
+    /// - Parameter sourceNode: The generator node to attach
+    func attachSourceNode(_ sourceNode: AVAudioSourceNode) {
+        let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2)
+            ?? AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)
+        guard let audioFormat = format else {
+            log.audio("Cannot attach source node — no valid audio format", level: .error)
+            return
+        }
+        masterEngine.attach(sourceNode)
+        masterEngine.connect(sourceNode, to: masterMixer, format: audioFormat)
+        log.audio("Source node attached to master engine")
+    }
+
+    /// Detach a previously attached source node from the master engine.
+    ///
+    /// - Parameter sourceNode: The generator node to remove
+    func detachSourceNode(_ sourceNode: AVAudioSourceNode) {
+        masterEngine.disconnectNodeOutput(sourceNode)
+        masterEngine.detach(sourceNode)
+        log.audio("Source node detached from master engine")
+    }
+
 }
 #endif
