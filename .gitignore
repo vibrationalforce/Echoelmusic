@@ -134,6 +134,11 @@ manifest.json
 # Claude Code local settings (may contain tokens)
 .claude/settings.local.json
 
+# GStack skill dependencies (install via: cd .claude/skills/gstack && ./setup)
+.claude/skills/gstack/node_modules/
+.claude/skills/gstack/bun.lock
+.claude/skills/gstack/browse/dist/
+
 # Secrets
 .env
 .env.local

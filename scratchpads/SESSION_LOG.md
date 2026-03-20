@@ -6,6 +6,45 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## 2026-03-20 — GStack Toolkit Integration + Matt Pocock Patterns
+
+### Branch: `claude/implement-gstack-toolkit-jYr6Q`
+
+### What Changed
+
+**GStack Toolkit (garrytan/gstack) — Full 21 Skills:**
+- Cloned into `.claude/skills/gstack/` and ran setup (Bun 1.3.9)
+- All 21 SKILL.md files generated, browse binary compiled
+- Playwright Chromium download failed (environment network block) — use existing Playwright MCP instead
+- Added to `skills-lock.json` as GitHub source reference
+- Updated `.gitignore` for gstack node_modules/dist
+
+**Merged Commands (GStack + Echoelmusic):**
+- `/review` — Paranoid staff engineer audit with: scope drift detection, two-pass review (CRITICAL + INFORMATIONAL), fix-first flow (AUTO-FIX + ASK), Echoelmusic audio thread safety, Swift 6 concurrency, bio-safety, crash prevention
+- `/ship` — Full automated ship: base branch merge, platform-aware tests, pre-landing review, audio/bio safety audits, performance baseline, bisectable commits, PR creation
+
+**New Command:**
+- `/worktree` — Parallel development guide based on Matt Pocock's pattern. Git worktrees for independent Claude Code sessions
+
+**Matt Pocock Research Findings:**
+- Git worktree = `claude --worktree` / `-w` for parallel sessions
+- Plan mode mandatory before implementation ("night and day" difference)
+- Subagent strategy: explicit 3-agent parallel audits
+- TDD vertical slice: RED-GREEN-REFACTOR one behavior at a time
+- Context window management: minimum viable context philosophy
+- 17 Matt Pocock skills available at mattpocock/skills
+
+**New GStack Skills Available:**
+- Planning: /office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review
+- Design: /design-consultation, /design-review
+- QA: /qa, /qa-only, /browse
+- Review: /review (merged), /codex
+- Safety: /careful, /freeze, /guard, /unfreeze
+- Ship: /ship (merged), /document-release, /retro
+- Meta: /gstack-upgrade, /setup-browser-cookies, /investigate
+
+---
+
 ## 2026-03-18 — Ralph Wiggum Lambda: CI Fix + Skills Upgrade + Quality Audit
 
 ### Branch: `claude/evaluate-deep-audith-scope-LxqKm`

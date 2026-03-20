@@ -1,65 +1,218 @@
-# Ship — Pre-Release Checklist
+# Ship — Full Automated Ship Workflow
 
-Run the complete pre-release verification pipeline before any TestFlight or App Store submission.
+One-command release: merge base, run tests, review diff, audit safety, commit, push, create PR. Combines GStack's comprehensive shipping with Echoelmusic's iOS-specific pre-release checks.
 
-## Steps (execute ALL sequentially):
+User says `/ship` → DO IT. Non-interactive except for blockers.
 
-### 0. iOS 26 SDK Validation (ITMS-90725)
-Verify project targets iOS 26 SDK (deadline: April 28, 2026):
+**Only stop for:**
+- On base branch (abort)
+- Merge conflicts that can't be auto-resolved
+- Test failures
+- Pre-landing review ASK items needing judgment
+- iOS 26 SDK validation failure (BLOCKER)
+- Audio thread safety violations (CRITICAL)
+
+**Never stop for:**
+- Uncommitted changes (always include)
+- CHANGELOG content (auto-generate)
+- Commit message approval (auto-commit)
+
+---
+
+## Step 0: Detect Base Branch
+
 ```bash
-grep -E "deploymentTarget|IPHONEOS_DEPLOYMENT_TARGET|SDK" project.yml | head -5
+_BASE=$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null || gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo "main")
+echo "BASE: $_BASE"
 ```
-BLOCKER if not targeting iOS 26 SDK.
 
-### 1. Build Verification (platform-aware)
-On macOS with Xcode:
+---
+
+## Step 1: Pre-Flight
+
+### 1a: Branch Check
+If on base branch: "You're on the base branch. Ship from a feature branch." → ABORT.
+
+### 1b: iOS 26 SDK Validation (ITMS-90725)
+```bash
+grep -rE "deploymentTarget|IPHONEOS_DEPLOYMENT_TARGET|SDK" project.yml Project.swift 2>/dev/null | head -5
+```
+**BLOCKER** if not targeting iOS 26 SDK (deadline: April 28, 2026).
+
+### 1c: Status & Scope
+```bash
+git status
+git diff $_BASE...HEAD --stat
+git log $_BASE..HEAD --oneline
+```
+
+---
+
+## Step 2: Merge Base Branch (before tests)
+
+```bash
+git fetch origin $_BASE && git merge origin/$_BASE --no-edit
+```
+
+If merge conflicts: try auto-resolve simple ones (VERSION, CHANGELOG ordering). Complex conflicts → STOP.
+
+---
+
+## Step 3: Run Tests (platform-aware)
+
+**On macOS with Xcode:**
 ```bash
 swift build 2>&1
-```
-On Linux/web sessions: Check latest CI build status via GitHub API.
-Must pass with zero errors. Warnings documented but non-blocking.
-
-### 2. Test Suite (platform-aware)
-On macOS:
-```bash
 swift test 2>&1
 ```
-On Linux: Check latest CI test results via GitHub API.
-Must pass 100%. No skipped tests without documented reason.
 
-### 3. Audio Thread Safety Audit
-Use the `audio-thread-reviewer` agent to scan all render callbacks for violations:
+**On Linux/web sessions:**
+Check latest CI build and test results via GitHub API:
+```bash
+GITHUB_TOKEN=$(python3 -c "import json; print(json.load(open('.claude/settings.local.json'))['github']['token'])" 2>/dev/null)
+gh run list --workflow ci.yml --limit 3 --json status,conclusion,headBranch
+```
+
+Must pass with zero errors. **If any test fails → STOP.**
+
+---
+
+## Step 3.5: Pre-Landing Review
+
+Run the full `/review` command inline (all steps from review.md). Key additions for /ship context:
+
+### Audio Thread Safety Audit
+Launch `audio-thread-reviewer` agent to scan ALL render callbacks:
 - No malloc, no locks, no ObjC, no file I/O, no GCD on audio thread
 
-### 4. Bio-Safety Compliance
-Use the `bio-safety-reviewer` agent to verify:
-- All disclaimers present
+### Bio-Safety Compliance
+Launch `bio-safety-reviewer` agent to verify:
+- All safety disclaimers present
 - No unauthorized health claims
-- Flash rate <3 Hz
-- Privacy compliance
+- Flash rate ≤ 3 Hz (W3C WCAG)
+- Privacy compliance for health data
 
-### 5. Crash Path Scan
+### Crash Path Scan
 Search for:
 - Force unwraps (`!` not preceded by guard/if-let)
 - Unguarded divisions
 - Unguarded array access
-- Missing `@MainActor` on ObservableObject
+- Missing `@MainActor` on `@Observable`
 - Missing `.environmentObject()` injection
 
-### 6. Performance Baseline
-Verify targets:
-- Audio latency: <10ms
-- CPU: <30%
-- Memory: <200MB
-- Visual FPS: 120fps
-- Bio loop: 120Hz
+### Fix-First Flow
+- AUTO-FIX obvious issues directly
+- ASK for judgment calls in ONE batched AskUserQuestion
+- If ANY code fixes applied: commit fixed files, then re-run tests (Step 3)
+- If no fixes: continue to Step 4
 
-### 7. Git Status
+---
+
+## Step 4: Performance Baseline
+
+Verify targets are met (or document current baseline):
+
+| Metric | Target | FAIL |
+|--------|--------|------|
+| Audio Latency | <10ms | >15ms |
+| CPU | <30% | >50% |
+| Memory | <200MB | >300MB |
+| Visual FPS | 120fps | <60fps |
+| Bio Loop | 120Hz | <60Hz |
+
+On Linux/web: Note "Performance verification requires device testing" and continue.
+
+---
+
+## Step 5: Commit (bisectable chunks)
+
+### 5a: Analyze and group changes into logical commits
+
+**Commit ordering** (earlier first):
+1. Infrastructure: config changes, new files
+2. Core: DSP, engines, services (with their tests)
+3. UI: Views, view models (with their tests)
+4. Final: VERSION + CHANGELOG + docs
+
+### 5b: Rules
+- Model + test → same commit
+- Service + test → same commit
+- Each commit independently valid (no broken imports)
+- Conventional prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`, `perf:`
+
+---
+
+## Step 5.5: Verification Gate
+
+**IRON LAW: NO PUSH WITHOUT FRESH VERIFICATION.**
+
+If ANY code changed after Step 3's test run:
+1. Re-run tests. Paste fresh output.
+2. "Should work now" → RUN IT.
+3. "Already tested earlier" → Code changed. Test again.
+
+**If tests fail here → STOP. Do not push.**
+
+---
+
+## Step 6: Push
+
 ```bash
-git status
-git log --oneline -10
+git push -u origin $(git branch --show-current)
 ```
-Clean working tree. All changes committed with conventional prefixes.
 
-## Output
-Report: SHIP / NO-SHIP with blocker list if NO-SHIP.
+---
+
+## Step 7: Create PR
+
+```bash
+gh pr create --base $_BASE --title "<type>: <summary>" --body "$(cat <<'EOF'
+## Summary
+<bullet points describing what shipped>
+
+## Echoelmusic Checks
+- [x] iOS 26 SDK validated (ITMS-90725)
+- [x] Audio thread safety audit: PASS
+- [x] Bio-safety compliance: PASS
+- [x] Crash path scan: PASS
+- [x] Performance baseline: documented
+
+## Pre-Landing Review
+<findings from Step 3.5, or "No issues found.">
+
+## Test Results
+- [x] swift build: PASS
+- [x] swift test: PASS (N tests)
+
+## Test plan
+<what to verify on device>
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+Output the PR URL.
+
+---
+
+## Step 8: Update Session Log
+
+Update `scratchpads/SESSION_LOG.md` with:
+- What was shipped
+- PR URL
+- Any concerns or follow-ups
+
+---
+
+## Important Rules
+
+- **Never skip tests.** If tests fail, stop.
+- **Never skip audio thread safety audit.** Audio crashes = user trust destroyed.
+- **Never skip bio-safety check.** Health claim violations = legal risk.
+- **Never force push.** Regular `git push` only.
+- **Never skip iOS 26 SDK validation.** ITMS-90725 = App Store rejection.
+- **Platform-aware:** Use GitHub API for build/test verification on Linux/web.
+- **The goal:** User says `/ship`, next thing they see is the review + PR URL.
+
+STATUS: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT

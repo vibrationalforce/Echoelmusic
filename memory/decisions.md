@@ -62,6 +62,20 @@ Architectural and strategic decisions with context and rationale.
 - **Expected outcome:** Skills work in all environments (macOS, Linux, web)
 - **Review date:** 2026-04-17
 
+### 2026-03-20 Integrate GStack Toolkit (All 21 Skills)
+- **Decision:** Cloned garrytan/gstack into `.claude/skills/gstack/` with full 21 skills. Merged `/review` and `/ship` commands with Echoelmusic-specific checks (audio thread safety, bio-safety, iOS 26 SDK, Swift 6 concurrency)
+- **Reasoning:** GStack adds YC-style planning (/office-hours, /plan-ceo-review, /plan-eng-review), paranoid code review with fix-first flow, browser-based QA, and one-command shipping. Complements existing Ralph Wiggum Lambda workflow
+- **Alternatives considered:** Install subset only — rejected per user preference ("Alles"). Prefix GStack skills to avoid conflicts — rejected, merged instead
+- **Expected outcome:** 21 new workflow skills, comprehensive review pipeline, faster shipping cadence
+- **Review date:** 2026-04-19
+
+### 2026-03-20 Git Worktree Command for Parallel Development
+- **Decision:** Added `/worktree` command based on Matt Pocock's pattern for parallel Claude Code sessions
+- **Reasoning:** Worktrees enable multiple Claude instances to work independently on the same repo. Massive throughput increase for independent tasks (audio + UI, bio + visual, tests + docs)
+- **Alternatives considered:** Single-session sequential work — slower for independent tasks
+- **Expected outcome:** Parallel development capability, better utilization of Claude Code sessions
+- **Review date:** 2026-04-19
+
 ---
 
 ### 2026-03-11 Persistent Memory System
