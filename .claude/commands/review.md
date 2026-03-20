@@ -1,199 +1,156 @@
-# Review — Paranoid Staff Engineer Code Audit
+# Review — Staff Engineer Code Audit (GStack + Echoelmusic)
 
-Comprehensive pre-landing review combining GStack's structural analysis with Echoelmusic's domain-specific safety checks. Analyzes diff against base branch for production-breaking bugs that tests don't catch.
+Perform a structured pre-landing code review combining GStack's paranoid diff analysis with Echoelmusic's domain-specific safety checks. Use when asked to "review", "code review", "pre-landing review", or "check my diff".
 
-Use when: "review this PR", "code review", "pre-landing review", "check my diff".
+## Steps (execute sequentially):
 
-## Step 0: Detect Base Branch
+### 0. Detect Base Branch
 
 ```bash
 _BASE=$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null || gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo "main")
 echo "BASE: $_BASE"
 ```
 
-Use the result as "the base branch" in all subsequent steps.
-
-## Step 1: Check Branch
-
-1. `git branch --show-current` — if on base branch, stop: "Nothing to review."
-2. `git fetch origin $_BASE --quiet && git diff origin/$_BASE --stat` — if no diff, stop.
-
-## Step 1.5: Scope Drift Detection
-
-Before reviewing quality, check: **did they build what was requested — nothing more, nothing less?**
-
-1. Read commit messages: `git log origin/$_BASE..HEAD --oneline`
-2. Read `scratchpads/PLAN_*.md` or PR description for stated intent
-3. Compare files changed against stated intent
-
-Output:
-```
-Scope Check: [CLEAN / DRIFT DETECTED / REQUIREMENTS MISSING]
-Intent: <1-line summary of what was requested>
-Delivered: <1-line summary of what the diff actually does>
-```
-
-This is INFORMATIONAL — does not block the review.
-
-## Step 2: Get the Diff
+### 1. Scope Changes
 
 ```bash
 git fetch origin $_BASE --quiet
-git diff origin/$_BASE
+git diff origin/$_BASE --stat
+git log origin/$_BASE..HEAD --oneline
 ```
 
-## Step 3: Two-Pass Review
+If no diff from base, review last 5 commits:
+```bash
+git diff HEAD~5...HEAD --stat
+git log HEAD~5..HEAD --oneline
+```
 
-### Pass 1 — CRITICAL (blocks shipping)
+### 1.5. Scope Drift Detection
 
-**Echoelmusic Audio Thread Safety:**
-- [ ] No `malloc`, `free`, `new`, `delete` in render blocks
-- [ ] No `NSLock`, `pthread_mutex`, `DispatchQueue`, `Task`, `async/await` on audio thread
-- [ ] No `@objc` method calls in DSP kernels
-- [ ] No `String()`, `Array.append`, `Dictionary` ops on audio thread
-- [ ] No `os_log`, `print`, `fopen` in render paths
-- [ ] Pre-allocated buffers only; ring buffer for lock-free patterns
+Before reviewing code quality, check: **did they build what was requested?**
 
-**Echoelmusic Swift 6 Concurrency:**
-- [ ] `@MainActor` on ALL `@Observable` classes that touch UI
-- [ ] `@Sendable` closures don't capture `@MainActor` refs unsafely
+1. Read commit messages (`git log origin/<base>..HEAD --oneline`)
+2. Identify the **stated intent** — what was this branch supposed to accomplish?
+3. Compare files changed against stated intent
+4. Flag:
+   - **SCOPE CREEP:** Files changed unrelated to stated intent, "while I was in there" changes
+   - **MISSING REQUIREMENTS:** Requirements not addressed in the diff
+
+Output: `Scope Check: [CLEAN / DRIFT DETECTED / REQUIREMENTS MISSING]`
+
+### 2. Structural Review — Two-Pass Analysis
+
+For each changed file, apply two review passes:
+
+**Pass 1 — CRITICAL (production-breaking):**
+
+| Category | What to hunt |
+|----------|-------------|
+| Race Conditions | Concurrent state mutation, missing locks, TOCTOU, async/await gaps |
+| Trust Boundaries | Unvalidated external input, LLM output used without type-checking |
+| Data Safety | Unguarded divisions, unguarded array access, force unwraps |
+| Enum Completeness | New enum values not handled in all switch/if chains (read code OUTSIDE diff) |
+| Integer Overflow | Arithmetic on user-supplied values without bounds checking |
+| Deadlocks | Lock ordering violations, nested async waits |
+
+**Pass 2 — INFORMATIONAL (code quality):**
+
+| Category | What to hunt |
+|----------|-------------|
+| Dead Code | Unreachable branches, unused imports, commented-out code |
+| Magic Values | Hardcoded strings/numbers where config should be used |
+| Conditional Side Effects | State mutations inside conditions that may not execute |
+| Test Gaps | Changed code paths without corresponding test coverage |
+
+### 3. Echoelmusic Domain Checks
+
+**Audio Thread Safety** (use `audio-thread-reviewer` agent for deep scan):
+- [ ] No `malloc`, `free`, `new`, `delete` on audio thread
+- [ ] No `Array.append`, `Array.init`, `String()`, `Dictionary` ops on audio thread
+- [ ] No `NSLog`, `print`, `os_log` in render blocks
+- [ ] No `@objc` method calls in render blocks
+- [ ] No `DispatchQueue`, `Task`, `async/await` on audio thread
+- [ ] No `NSLock`, `pthread_mutex`, `semaphore` on audio thread
+- [ ] No file I/O on audio thread
+- [ ] AUv3 render blocks capture kernel, not self
+
+**Swift 6 Concurrency:**
+- [ ] `@MainActor` on all `@Observable` classes that touch UI
+- [ ] `@Sendable` closures don't capture @MainActor refs
 - [ ] No `self` before `super.init()` in init chains
-- [ ] `@Observable` init assigns ALL stored properties before using `self`
 - [ ] All Combine subscriptions stored in `cancellables`
+- [ ] `nonisolated(unsafe)` for audio thread parameters
 
-**Echoelmusic Crash Prevention:**
-- [ ] No force unwraps (`!` on optionals) — use `guard let`
-- [ ] All divisions guarded (`divisor != 0`)
-- [ ] All array access bounds-checked (`index < array.count`)
+**Platform & Safety:**
+- [ ] No force unwraps (`!` on optionals)
+- [ ] All divisions guarded (divisor can't be zero)
+- [ ] All array access bounds-checked
 - [ ] No `@EnvironmentObject` without matching `.environmentObject()` injection
-
-**Race Conditions & Data Safety:**
-- Shared mutable state without synchronization
-- Read-after-write without ensuring order
-- Concurrent collection mutations
-- `nonisolated(unsafe)` misuse (only for atomic-width audio params)
-
-**Trust Boundary Violations:**
-- External/user input used without validation
-- API responses used without type checking before storage
-
-### Pass 2 — INFORMATIONAL (does not block)
-
-**Echoelmusic Code Quality:**
-- [ ] No `print()` — use `log.log(.info, category:, "...")` only
+- [ ] No `print()` — use `log.log(.info, ...)` only
 - [ ] No UIKit usage without `#if canImport(UIKit)`
-- [ ] No `Color.magenta` (doesn't exist — use `Color(red:1,green:0,blue:1)`)
-- [ ] Conventional commit messages used
-- [ ] Changes scoped to one concern per commit
-- [ ] No hardcoded values where config should be used
-- [ ] Math `log()` not shadowed by EchoelLogger — use `Foundation.log()` or `logf()`
-
-**Architecture:**
 - [ ] No new dependencies added without approval
 - [ ] No new top-level directories
-- [ ] No `ObservableObject` (use `@Observable` iOS 17+)
-- [ ] No `UIScreen.main` (deprecated)
+- [ ] Conventional commit messages used
 
-**Bio-Safety Compliance:**
-- [ ] Flash rate ≤ 3 Hz (W3C WCAG epilepsy)
+**Bio-Safety Compliance** (use `bio-safety-reviewer` agent if bio code changed):
 - [ ] No unauthorized health claims
-- [ ] Safety disclaimers present for brainwave entrainment
-- [ ] Data labeled as "self-observation, NOT medical diagnosis"
+- [ ] Flash rate < 3 Hz (W3C WCAG epilepsy compliance)
+- [ ] Privacy compliance for health data
+- [ ] All disclaimers present
 
-**Enum & Value Completeness:**
-When diff introduces new enum values, use Grep to find all switch/if statements handling sibling values. Read those files to verify new value is handled.
+### 4. Risk Assessment
 
-**Dead Code & Consistency:**
-- Unused imports, variables, functions
-- Inconsistent naming patterns
-- Stale comments referencing removed code
+Rate each finding:
+| Severity | Meaning |
+|----------|---------|
+| CRITICAL | Will crash, data race, security issue, or fail to compile |
+| HIGH | Silent data loss, performance regression, trust boundary violation |
+| MEDIUM | Code smell, maintainability concern, missing test coverage |
+| LOW | Style, naming, minor improvement |
 
-## Step 4: Specialized Agent Reviews
+### 5. Fix-First Review
 
-For changes touching audio or bio code, launch agents in parallel:
+**Every finding gets action — not just critical ones.**
 
-- **Audio changes:** Launch `audio-thread-reviewer` agent for deep DSP audit
-- **Bio changes:** Launch `bio-safety-reviewer` agent for health compliance
+**Step 5a:** Classify each finding as AUTO-FIX or ASK:
+- AUTO-FIX: Mechanical fixes (deprecated API, missing null check, dead code, stale imports)
+- ASK: Judgment calls (architecture, race conditions, design decisions)
 
-## Step 5: Fix-First Flow
-
-### 5a: Classify each finding as AUTO-FIX or ASK
-
-**AUTO-FIX** (apply directly):
-- Missing `#if canImport` guards
-- `print()` → `log.log()` conversion
-- Deprecated API replacement (`UIScreen.main`, `ObservableObject`)
-- Missing `@MainActor` on `@Observable` classes
-- Dead imports
-
-**ASK** (need user judgment):
-- Race conditions
-- Architecture changes
-- Trust boundary violations
-- Force unwrap removal (may need logic change)
-
-### 5b: Auto-fix all AUTO-FIX items
-
-Apply each fix. Output one line per fix:
+**Step 5b:** Apply all AUTO-FIX items directly. Output one line per fix:
 `[AUTO-FIXED] [file:line] Problem → what you did`
 
-### 5c: Batch-ask about ASK items
+**Step 5c:** Batch-ask about ASK items in ONE AskUserQuestion:
+- List each with number, severity, problem, recommended fix
+- Per-item options: A) Fix B) Skip
+- Include overall RECOMMENDATION
 
-Present remaining items in ONE AskUserQuestion with per-item A) Fix / B) Skip options.
+**Step 5d:** Apply user-approved fixes.
 
-### 5d: Apply user-approved fixes
+### 6. Verification of Claims
 
-Apply fixes for items where user chose "Fix."
+Before producing final output:
+- If you claim "this is safe" → cite the specific line proving safety
+- If you claim "this is handled elsewhere" → read and cite the handling code
+- If you claim "tests cover this" → name the test file and method
+- Never say "likely handled" or "probably tested" — verify or flag as unknown
 
-**Important:** Never commit, push, or create PRs — that's /ship's job.
+### 7. Report
 
-## Step 5.5: TODOS Cross-Reference
-
-If `scratchpads/SESSION_LOG.md` or any `scratchpads/PLAN_*.md` exists, cross-reference:
-- Does this PR close any planned items?
-- Does this PR create work that should become a task?
-
-## Step 5.6: Documentation Staleness Check
-
-For each `.md` file in repo root (CLAUDE.md, README.md, etc.):
-- If code changes affect features described in that doc but the doc wasn't updated, flag as INFORMATIONAL:
-  "Documentation may be stale: [file] describes [feature] but code changed."
-
-## Step 6: Report
-
-Output structured review:
+Output a structured review:
 ```
 ## Code Review — [branch] ([N] commits)
 
-### Scope Check
-[CLEAN / DRIFT / MISSING from Step 1.5]
+Scope Check: [CLEAN / DRIFT / MISSING]
 
 ### Findings
 | # | File | Line | Severity | Category | Issue |
 |---|------|------|----------|----------|-------|
 
 ### Auto-Fixed
-[List of auto-applied fixes]
+[list of auto-fixed items]
 
 ### Summary
 APPROVE / CHANGES REQUESTED with blocker count
 
-STATUS: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
+Pre-Landing Review: N issues — M auto-fixed, K asked (J fixed, L skipped)
 ```
-
-## Severity Ratings
-
-| Severity | Meaning |
-|----------|---------|
-| CRITICAL | Will crash, fail to compile, or corrupt data |
-| HIGH | Data race, security issue, audio thread violation, silent data loss |
-| MEDIUM | Performance issue, code smell, missing platform guard |
-| LOW | Style, naming, minor improvement |
-
-## Rules
-
-- Read the FULL diff before commenting. Don't flag issues already fixed in the diff.
-- Fix-first, not read-only. AUTO-FIX directly, ASK before judgment calls.
-- Be terse. One line problem, one line fix. No preamble.
-- Only flag real problems. Skip anything that's fine.
-- Verify claims: "this is handled elsewhere" → cite the code. Never say "probably tested."
