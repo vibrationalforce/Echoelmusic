@@ -15,14 +15,29 @@
         "reason": "Protects uncommitted work and biometric test data"
       },
       {
-        "pattern": "git push --force main",
+        "pattern": "git push --force",
         "action": "block",
         "reason": "Production branch protection - use PRs"
       },
       {
-        "pattern": "git push --force master",
+        "pattern": "git push --force-with-lease",
         "action": "block",
-        "reason": "Production branch protection - use PRs"
+        "reason": "Force push blocked - use regular push"
+      },
+      {
+        "pattern": "git clean -f",
+        "action": "block",
+        "reason": "Protects untracked files from deletion"
+      },
+      {
+        "pattern": "git checkout -- .",
+        "action": "block",
+        "reason": "Discards all uncommitted changes - use git stash instead"
+      },
+      {
+        "pattern": "git branch -D",
+        "action": "warn",
+        "reason": "Force-deleting branch - confirm intent"
       },
       {
         "pattern": "rm -rf Sources/",
@@ -37,12 +52,22 @@
       {
         "pattern": "rm -rf Tests/",
         "action": "block",
-        "reason": "Test suite protection (10000+ tests)"
+        "reason": "Test suite protection (1060+ tests)"
       },
       {
         "pattern": "rm -rf docs/",
         "action": "block",
         "reason": "Website/WebApp protection"
+      },
+      {
+        "pattern": "rm -rf .claude/",
+        "action": "block",
+        "reason": "Claude Code configuration protection"
+      },
+      {
+        "pattern": "rm -rf memory/",
+        "action": "block",
+        "reason": "Persistent memory protection"
       },
       {
         "pattern": "DROP TABLE",
@@ -53,6 +78,21 @@
         "pattern": "DELETE FROM",
         "action": "warn",
         "reason": "Potential data loss - confirm intent"
+      },
+      {
+        "pattern": "curl | sh",
+        "action": "block",
+        "reason": "Pipe-to-shell blocked - download and inspect first"
+      },
+      {
+        "pattern": "curl | bash",
+        "action": "block",
+        "reason": "Pipe-to-shell blocked - download and inspect first"
+      },
+      {
+        "pattern": "eval $(",
+        "action": "warn",
+        "reason": "Dynamic eval - verify command is safe"
       }
     ],
     "allowedDestructive": [

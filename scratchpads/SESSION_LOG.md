@@ -6,6 +6,28 @@ Read this FIRST when continuing work on Echoelmusic.
 
 ---
 
+## 2026-03-20 — GStack + Matt Pocock + Toolkit Hardening
+
+### Branch: `claude/implement-gstack-toolkit-jYr6Q`
+
+### Commit 3: Toolkit Hardening
+
+**New Commands:**
+- `/debug` — Rapid diagnostics: build status, test status, code quality scan, recommended action
+- `/test` — Incremental test runner: maps changed files → affected test suites, runs only what's needed
+
+**New Agents:**
+- `concurrency-reviewer` — Swift 6 specialist: @Observable/@MainActor audit, @Sendable violations, Task isolation, nonisolated(unsafe) misuse, init ordering, Combine leak detection
+- `ui-state-reviewer` — SwiftUI state management: @EnvironmentObject chain validation, NavigationStack consistency, sheet/popover state, @State/@Binding misuse
+
+**Enhanced:**
+- `build-error-resolver` — Added executable protocol: capture → parse → fix → re-build → report loop (max 5 iterations)
+- `/review` — Extended by linter with full GStack merge (scope drift, Greptile triage, enum completeness, suppressions, escalation protocol)
+- `settings.json` — Git guardrails hardened: blocks force push (all variants), git clean -f, checkout -- ., pipe-to-shell (curl|sh), protects .claude/ and memory/ dirs
+- `.mcp.json` — Added XcodeBuildMCP + iOS Simulator MCP (disabled, enable on macOS)
+
+---
+
 ## 2026-03-20 — GStack Toolkit Integration + Matt Pocock Patterns
 
 ### Branch: `claude/implement-gstack-toolkit-jYr6Q`

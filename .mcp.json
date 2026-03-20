@@ -49,6 +49,20 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "gsd-memory"]
+    },
+    "xcode-build": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/xcode-build-mcp@latest"],
+      "disabled": true,
+      "_comment": "Enable on macOS with Xcode. Provides direct build, test, simulator access."
+    },
+    "ios-simulator": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "ios-simulator-mcp@latest"],
+      "disabled": true,
+      "_comment": "Enable on macOS. Launch simulators, take screenshots, capture logs."
     }
   }
 }
