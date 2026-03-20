@@ -82,124 +82,57 @@ struct MainNavigationHub: View {
         )
     }
 
-    // MARK: - Transport Bar
+    // MARK: - Transport Bar (Ableton-Style)
+
+    @State private var tapTempoTimes: [Date] = []
+    @State private var isLoopEnabled = false
 
     private var transportBar: some View {
         HStack(spacing: 0) {
-            // BPM Section
-            HStack(spacing: EchoelSpacing.xxs) {
-                Text("\(Int(EchoelCreativeWorkspace.shared.globalBPM))")
-                    .font(EchoelBrandFont.dataSmall())
-                    .foregroundColor(EchoelBrand.textPrimary)
-                    .monospacedDigit()
-                Text("BPM")
-                    .font(.system(size: 9, weight: .semibold, design: .default))
-                    .foregroundColor(EchoelBrand.textSecondary)
-                    .padding(.top, 1)
-            }
+            // Position Display (Bars.Beats.Ticks — Ableton style)
+            positionDisplay
 
             transportDivider
 
-            // Transport Controls
-            HStack(spacing: EchoelSpacing.sm + EchoelSpacing.xxs) {
-                Button(action: {
-                    let newTime = max(0, recordingEngine.currentTime - 5.0)
-                    recordingEngine.seek(to: newTime)
-                    HapticHelper.impact(.light)
-                }) {
-                    Image(systemName: "backward.fill")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(EchoelBrand.textSecondary)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Seek backward 5 seconds")
+            // BPM + Tap Tempo + Time Signature
+            bpmSection
 
-                Button(action: {
-                    // Toggle workspace playback — syncs ALL engines (audio, video, session, loops)
-                    EchoelCreativeWorkspace.shared.togglePlayback()
-                    HapticHelper.impact(.medium)
-                }) {
-                    ZStack {
-                        let isPlaying = EchoelCreativeWorkspace.shared.isPlaying
+            transportDivider
 
-                        Circle()
-                            .fill(isPlaying ? EchoelBrand.primary.opacity(0.15) : EchoelBrand.bgElevated)
-                            .frame(width: 36, height: 36)
-                            .overlay(
-                                Circle()
-                                    .stroke(isPlaying ? EchoelBrand.primary.opacity(0.3) : EchoelBrand.border, lineWidth: 1)
-                            )
-
-                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(isPlaying ? EchoelBrand.primary : EchoelBrand.textPrimary)
-                            .offset(x: isPlaying ? 0 : 1)
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(EchoelCreativeWorkspace.shared.isPlaying ? "Pause playback" : "Play")
-
-                Button(action: {
-                    if EchoelCreativeWorkspace.shared.isPlaying {
-                        EchoelCreativeWorkspace.shared.togglePlayback()
-                    }
-                    audioEngine.stop()
-                    HapticHelper.impact(.light)
-                }) {
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(EchoelBrand.textSecondary)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Stop playback")
-
-                Button(action: {
-                    do {
-                        if recordingEngine.isRecording {
-                            try recordingEngine.stopRecording()
-                            HapticHelper.notification(.success)
-                        } else {
-                            try recordingEngine.startRecording()
-                            HapticHelper.impact(.heavy)
-                        }
-                    } catch {
-                        recordingError = error.localizedDescription
-                        HapticHelper.notification(.error)
-                    }
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(recordingEngine.isRecording ? EchoelBrand.coral : EchoelBrand.coral.opacity(0.4))
-                            .frame(width: 12, height: 12)
-
-                        if recordingEngine.isRecording {
-                            Circle()
-                                .stroke(EchoelBrand.coral.opacity(0.3), lineWidth: 1.5)
-                                .frame(width: 18, height: 18)
-                        }
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(recordingEngine.isRecording ? "Stop recording" : "Start recording")
-            }
+            // Transport Controls (centered)
+            transportControls
 
             Spacer()
 
-            // Time display
-            Text(formatTime(recordingEngine.currentTime))
-                .font(EchoelBrandFont.dataSmall())
-                .foregroundColor(EchoelBrand.textSecondary)
-                .monospacedDigit()
+            // Loop Toggle
+            Button {
+                isLoopEnabled.toggle()
+                HapticHelper.impact(.light)
+            } label: {
+                Image(systemName: "repeat")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(isLoopEnabled ? EchoelBrand.amber : EchoelBrand.textTertiary)
+                    .frame(minWidth: 32, minHeight: 32)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(isLoopEnabled ? EchoelBrand.amber.opacity(0.12) : Color.clear)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isLoopEnabled ? "Disable loop" : "Enable loop")
 
             transportDivider
 
-            // Bio-feedback indicator (mic level as proxy when no HealthKit)
+            // Time display (MM:SS:ms)
+            Text(formatTime(recordingEngine.currentTime))
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .foregroundColor(EchoelBrand.textSecondary)
+                .monospacedDigit()
+                .frame(minWidth: 60)
+
+            transportDivider
+
+            // Bio-feedback indicator
             bioFeedbackIndicator
 
             transportDivider
@@ -221,6 +154,189 @@ struct MainNavigationHub: View {
                     alignment: .top
                 )
         )
+    }
+
+    /// Bars.Beats.Ticks position display (Ableton Live style)
+    private var positionDisplay: some View {
+        let bpm = max(EchoelCreativeWorkspace.shared.globalBPM, 20.0)
+        let time = recordingEngine.currentTime
+        let beatsPerSecond = bpm / 60.0
+        let totalBeats = time * beatsPerSecond
+        let bars = Int(totalBeats / 4) + 1
+        let beats = Int(totalBeats.truncatingRemainder(dividingBy: 4)) + 1
+        let ticks = Int((totalBeats.truncatingRemainder(dividingBy: 1)) * 100)
+
+        return HStack(spacing: 1) {
+            Text(String(format: "%3d", bars))
+                .foregroundColor(EchoelBrand.textPrimary)
+            Text(".")
+                .foregroundColor(EchoelBrand.textTertiary)
+            Text(String(format: "%d", beats))
+                .foregroundColor(EchoelBrand.primary)
+            Text(".")
+                .foregroundColor(EchoelBrand.textTertiary)
+            Text(String(format: "%02d", ticks))
+                .foregroundColor(EchoelBrand.textSecondary)
+        }
+        .font(.system(size: 13, weight: .medium, design: .monospaced))
+        .frame(minWidth: 70)
+    }
+
+    /// BPM display with tap tempo (Ableton style)
+    private var bpmSection: some View {
+        HStack(spacing: EchoelSpacing.xs) {
+            // Time Signature
+            Text("4/4")
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .foregroundColor(EchoelBrand.textSecondary)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(EchoelBrand.bgElevated)
+                )
+
+            // BPM value
+            Text(String(format: "%.1f", EchoelCreativeWorkspace.shared.globalBPM))
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundColor(EchoelBrand.textPrimary)
+                .monospacedDigit()
+                .frame(minWidth: 44)
+
+            // Tap tempo button
+            Button {
+                handleTapTempo()
+                HapticHelper.impact(.light)
+            } label: {
+                Text("TAP")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(EchoelBrand.coral)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3)
+                            .stroke(EchoelBrand.coral.opacity(0.4), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tap tempo")
+        }
+    }
+
+    /// Transport control buttons (Ableton-style layout)
+    private var transportControls: some View {
+        HStack(spacing: EchoelSpacing.xs) {
+            // Return to start
+            Button(action: {
+                recordingEngine.seek(to: 0)
+                HapticHelper.impact(.light)
+            }) {
+                Image(systemName: "backward.end.fill")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .frame(minWidth: 32, minHeight: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Return to start")
+
+            // Play/Pause
+            Button(action: {
+                EchoelCreativeWorkspace.shared.togglePlayback()
+                HapticHelper.impact(.medium)
+            }) {
+                ZStack {
+                    let isPlaying = EchoelCreativeWorkspace.shared.isPlaying
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(isPlaying ? EchoelBrand.emerald.opacity(0.15) : EchoelBrand.bgElevated)
+                        .frame(width: 32, height: 28)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(isPlaying ? EchoelBrand.emerald.opacity(0.4) : EchoelBrand.border, lineWidth: 1)
+                        )
+
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(isPlaying ? EchoelBrand.emerald : EchoelBrand.textPrimary)
+                        .offset(x: isPlaying ? 0 : 1)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(EchoelCreativeWorkspace.shared.isPlaying ? "Pause" : "Play")
+
+            // Stop
+            Button(action: {
+                if EchoelCreativeWorkspace.shared.isPlaying {
+                    EchoelCreativeWorkspace.shared.togglePlayback()
+                }
+                audioEngine.stop()
+                HapticHelper.impact(.light)
+            }) {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(EchoelBrand.textSecondary)
+                    .frame(minWidth: 32, minHeight: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Stop")
+
+            // Record
+            Button(action: {
+                do {
+                    if recordingEngine.isRecording {
+                        try recordingEngine.stopRecording()
+                        HapticHelper.notification(.success)
+                    } else {
+                        try recordingEngine.startRecording()
+                        HapticHelper.impact(.heavy)
+                    }
+                } catch {
+                    recordingError = error.localizedDescription
+                    HapticHelper.notification(.error)
+                }
+            }) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(recordingEngine.isRecording ? EchoelBrand.coral.opacity(0.2) : Color.clear)
+                        .frame(width: 32, height: 28)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(recordingEngine.isRecording ? EchoelBrand.coral.opacity(0.5) : EchoelBrand.border, lineWidth: 1)
+                        )
+
+                    Circle()
+                        .fill(recordingEngine.isRecording ? EchoelBrand.coral : EchoelBrand.coral.opacity(0.5))
+                        .frame(width: 10, height: 10)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(recordingEngine.isRecording ? "Stop recording" : "Record")
+        }
+    }
+
+    /// Tap tempo calculation
+    private func handleTapTempo() {
+        let now = Date()
+        tapTempoTimes.append(now)
+
+        // Keep only last 6 taps within 3 seconds
+        tapTempoTimes = tapTempoTimes.filter { now.timeIntervalSince($0) < 3.0 }
+
+        guard tapTempoTimes.count >= 2 else { return }
+
+        var intervals: [TimeInterval] = []
+        for i in 1..<tapTempoTimes.count {
+            intervals.append(tapTempoTimes[i].timeIntervalSince(tapTempoTimes[i - 1]))
+        }
+
+        let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
+        guard avgInterval > 0 else { return }
+
+        let newBPM = 60.0 / avgInterval
+        let clampedBPM = max(20.0, min(300.0, newBPM))
+        EchoelCreativeWorkspace.shared.globalBPM = clampedBPM
     }
 
     /// Visual divider between transport bar sections

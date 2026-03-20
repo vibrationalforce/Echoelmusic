@@ -12,6 +12,31 @@ struct DAWArrangementView: View {
 
     @State private var metronome = MetronomeEngine()
 
+    // MARK: - Edit Modes (Ableton-style)
+
+    enum EditMode: String, CaseIterable {
+        case select = "Select"
+        case draw = "Draw"
+        case razor = "Razor"
+
+        var icon: String {
+            switch self {
+            case .select: return "arrow.up.left.and.arrow.down.right"
+            case .draw: return "pencil"
+            case .razor: return "scissors"
+            }
+        }
+
+        var shortcut: String {
+            switch self {
+            case .select: return "V"
+            case .draw: return "B"
+            case .razor: return "C"
+            }
+        }
+    }
+
+    @State private var editMode: EditMode = .select
     @State private var selectedTrackID: UUID?
     @State private var timelineZoom: Double = 1.0
     @State private var showMixer = false
@@ -25,6 +50,8 @@ struct DAWArrangementView: View {
     @State private var showAddAutomation = false
     @State private var addAutomationTrackID: UUID?
     @State private var recordingError: String?
+    @State private var snapEnabled = true
+    @State private var gridDivision: Int = 4 // 1/4 note grid
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
@@ -161,7 +188,7 @@ struct DAWArrangementView: View {
 
     private var headerSection: some View {
         HStack(spacing: EchoelSpacing.sm) {
-            // Metronome toggle (compact — BPM is in transport bar)
+            // Metronome toggle
             Button {
                 if metronome.isRunning {
                     metronome.stop()
@@ -172,17 +199,59 @@ struct DAWArrangementView: View {
                 HapticHelper.impact(.light)
             } label: {
                 Image(systemName: metronome.isRunning ? "metronome.fill" : "metronome")
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                     .foregroundColor(metronome.isRunning ? EchoelBrand.coral : EchoelBrand.textSecondary)
                     .opacity(metronome.beatFlash ? 1.0 : 0.7)
-                    .frame(width: 32, height: 32)
+                    .frame(width: 28, height: 28)
                     .background(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: 4)
                             .fill(metronome.isRunning ? EchoelBrand.coral.opacity(0.1) : Color.clear)
                     )
             }
             .buttonStyle(.plain)
             .accessibilityLabel(metronome.isRunning ? "Stop metronome" : "Start metronome")
+
+            // Edit Mode Toolbar (Ableton-style: Select / Draw / Razor)
+            editModeToolbar
+
+            // Snap toggle
+            Button {
+                snapEnabled.toggle()
+                HapticHelper.impact(.light)
+            } label: {
+                Image(systemName: "square.grid.3x3.topleft.filled")
+                    .font(.system(size: 11))
+                    .foregroundColor(snapEnabled ? EchoelBrand.sky : EchoelBrand.textTertiary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(snapEnabled ? EchoelBrand.sky.opacity(0.1) : Color.clear)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(snapEnabled ? "Disable snap" : "Enable snap")
+
+            // Grid division picker
+            if !isCompact {
+                Menu {
+                    Button("1/1 Bar") { gridDivision = 1 }
+                    Button("1/2") { gridDivision = 2 }
+                    Button("1/4") { gridDivision = 4 }
+                    Button("1/8") { gridDivision = 8 }
+                    Button("1/16") { gridDivision = 16 }
+                    Button("1/32") { gridDivision = 32 }
+                } label: {
+                    Text("1/\(gridDivision)")
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundColor(EchoelBrand.textSecondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(EchoelBrand.bgElevated)
+                        )
+                }
+            }
 
             Spacer()
 
@@ -218,6 +287,40 @@ struct DAWArrangementView: View {
         }
         .padding(.horizontal, EchoelSpacing.sm)
         .padding(.vertical, EchoelSpacing.xs)
+    }
+
+    /// Ableton-style edit mode selector (Select / Draw / Razor)
+    private var editModeToolbar: some View {
+        HStack(spacing: 1) {
+            ForEach(EditMode.allCases, id: \.self) { mode in
+                Button {
+                    editMode = mode
+                    HapticHelper.impact(.light)
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: mode.icon)
+                            .font(.system(size: 10, weight: editMode == mode ? .semibold : .regular))
+                        if !isCompact {
+                            Text(mode.shortcut)
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        }
+                    }
+                    .foregroundColor(editMode == mode ? EchoelBrand.textPrimary : EchoelBrand.textTertiary)
+                    .padding(.horizontal, isCompact ? 8 : 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(editMode == mode ? EchoelBrand.primary.opacity(0.12) : Color.clear)
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(mode.rawValue) tool")
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 5)
+                .fill(EchoelBrand.bgElevated.opacity(0.5))
+        )
     }
 
     // MARK: - Track List

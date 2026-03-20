@@ -432,27 +432,569 @@ struct VideoEditorView: View {
         }
     }
 
-    // MARK: - Effects Panel
+    // MARK: - Effects Panel (DaVinci Resolve Style)
+
+    @State private var colorTab: ColorGradingTab = .wheels
+
+    enum ColorGradingTab: String, CaseIterable {
+        case wheels = "Wheels"
+        case curves = "Curves"
+        case effects = "FX"
+        case scopes = "Scopes"
+
+        var icon: String {
+            switch self {
+            case .wheels: return "dial.medium"
+            case .curves: return "chart.line.uptrend.xyaxis"
+            case .effects: return "sparkles"
+            case .scopes: return "waveform.path"
+            }
+        }
+    }
 
     private var effectsPanel: some View {
-        VStack(alignment: .leading, spacing: EchoelSpacing.md) {
-            Text("EFFECTS")
-                .font(EchoelBrandFont.label())
-                .foregroundColor(EchoelBrand.textSecondary)
-                .tracking(2)
+        VStack(spacing: 0) {
+            // Tab selector (DaVinci-style)
+            HStack(spacing: 1) {
+                ForEach(ColorGradingTab.allCases, id: \.self) { tab in
+                    Button {
+                        colorTab = tab
+                        HapticHelper.impact(.light)
+                    } label: {
+                        VStack(spacing: 2) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 11, weight: colorTab == tab ? .semibold : .regular))
+                            Text(tab.rawValue)
+                                .font(.system(size: 8, weight: colorTab == tab ? .bold : .medium))
+                        }
+                        .foregroundColor(colorTab == tab ? EchoelBrand.primary : EchoelBrand.textTertiary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(
+                            colorTab == tab ? EchoelBrand.primary.opacity(0.1) : Color.clear
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .background(EchoelBrand.bgElevated)
 
+            // Panel content
             ScrollView {
-                VStack(spacing: EchoelSpacing.sm) {
-                    effectCategory("Color", effects: ["Auto Color", "LUT", "Color Grade", "HDR"])
-                    effectCategory("Style", effects: ["Cinematic", "Vintage", "Neon Glow", "Glitch"])
-                    effectCategory("Bio-Reactive", effects: ["Coherence Pulse", "Heart Sync", "Breath Flow"])
-                    effectCategory("AI", effects: ["Style Transfer", "Face Enhance", "Background Remove"])
+                switch colorTab {
+                case .wheels:
+                    colorWheelsPanel
+                case .curves:
+                    colorCurvesPanel
+                case .effects:
+                    effectsListPanel
+                case .scopes:
+                    scopesPanel
                 }
             }
         }
-        .frame(width: 250)
-        .padding(EchoelSpacing.md)
+        .frame(width: 280)
         .modifier(GlassCard())
+    }
+
+    // MARK: - Color Wheels (DaVinci Lift/Gamma/Gain)
+
+    private var colorWheelsPanel: some View {
+        VStack(spacing: EchoelSpacing.md) {
+            // Three-way color wheels
+            HStack(spacing: EchoelSpacing.sm) {
+                colorWheel(label: "LIFT", sublabel: "Shadows")
+                colorWheel(label: "GAMMA", sublabel: "Midtones")
+                colorWheel(label: "GAIN", sublabel: "Highlights")
+            }
+            .padding(.top, EchoelSpacing.sm)
+
+            // Master offset wheel
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("OFFSET")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+
+                // Simplified master wheel
+                ZStack {
+                    Circle()
+                        .stroke(EchoelBrand.border, lineWidth: 1)
+                        .frame(width: 50, height: 50)
+
+                    Circle()
+                        .fill(EchoelBrand.primary.opacity(0.15))
+                        .frame(width: 50, height: 50)
+
+                    // Color gradient ring
+                    Circle()
+                        .stroke(
+                            AngularGradient(
+                                colors: [.red, .yellow, .green, .cyan, .blue, Color(red: 1, green: 0, blue: 1), .red],
+                                center: .center
+                            ),
+                            lineWidth: 3
+                        )
+                        .frame(width: 50, height: 50)
+                        .opacity(0.5)
+
+                    // Center indicator
+                    Circle()
+                        .fill(EchoelBrand.textPrimary)
+                        .frame(width: 4, height: 4)
+                }
+            }
+
+            // Primary adjustments (DaVinci primary bar style)
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("PRIMARY")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                colorSlider(label: "EXP", value: Binding(
+                    get: { engine.currentGrade?.exposure ?? 0 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: $0, contrast: engine.currentGrade?.contrast ?? 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: engine.currentGrade?.temperature ?? 0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -2...2, color: EchoelBrand.amber)
+
+                colorSlider(label: "CON", value: Binding(
+                    get: { (engine.currentGrade?.contrast ?? 1) - 1 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: $0 + 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: engine.currentGrade?.temperature ?? 0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -1...1, color: EchoelBrand.primary)
+
+                colorSlider(label: "SAT", value: Binding(
+                    get: { (engine.currentGrade?.saturation ?? 1) - 1 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: engine.currentGrade?.contrast ?? 1, saturation: $0 + 1, temperature: engine.currentGrade?.temperature ?? 0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -1...1, color: EchoelBrand.coral)
+
+                colorSlider(label: "HUE", value: Binding(
+                    get: { engine.currentGrade?.tint ?? 0 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: engine.currentGrade?.contrast ?? 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: engine.currentGrade?.temperature ?? 0, tint: $0)) }
+                ), range: -1...1, color: EchoelBrand.violet)
+
+                colorSlider(label: "TEMP", value: Binding(
+                    get: { engine.currentGrade?.temperature ?? 0 },
+                    set: { engine.applyLiveGrade(ColorGradeEffect(exposure: engine.currentGrade?.exposure ?? 0, contrast: engine.currentGrade?.contrast ?? 1, saturation: engine.currentGrade?.saturation ?? 1, temperature: $0, tint: engine.currentGrade?.tint ?? 0)) }
+                ), range: -1...1, color: EchoelBrand.sky)
+            }
+
+            // Reset button
+            Button {
+                engine.applyLiveGrade(ColorGradeEffect())
+                HapticHelper.impact(.medium)
+            } label: {
+                HStack(spacing: EchoelSpacing.xs) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 10))
+                    Text("Reset All")
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .foregroundColor(EchoelBrand.textSecondary)
+                .padding(.horizontal, EchoelSpacing.md)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(EchoelBrand.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(EchoelSpacing.sm)
+    }
+
+    /// Individual color wheel (DaVinci Resolve style)
+    private func colorWheel(label: String, sublabel: String) -> some View {
+        VStack(spacing: 4) {
+            ZStack {
+                // Gradient ring
+                Circle()
+                    .stroke(
+                        AngularGradient(
+                            colors: [.red, .yellow, .green, .cyan, .blue, Color(red: 1, green: 0, blue: 1), .red],
+                            center: .center
+                        ),
+                        lineWidth: 4
+                    )
+                    .frame(width: 60, height: 60)
+
+                // Inner fill
+                Circle()
+                    .fill(EchoelBrand.bgDeep.opacity(0.8))
+                    .frame(width: 52, height: 52)
+
+                // Center crosshair
+                Group {
+                    Rectangle()
+                        .fill(EchoelBrand.textTertiary.opacity(0.3))
+                        .frame(width: 0.5, height: 20)
+                    Rectangle()
+                        .fill(EchoelBrand.textTertiary.opacity(0.3))
+                        .frame(width: 20, height: 0.5)
+                }
+
+                // Position indicator
+                Circle()
+                    .fill(EchoelBrand.textPrimary)
+                    .frame(width: 4, height: 4)
+            }
+
+            Text(label)
+                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                .foregroundColor(EchoelBrand.textSecondary)
+                .tracking(1)
+
+            Text(sublabel)
+                .font(.system(size: 7))
+                .foregroundColor(EchoelBrand.textTertiary)
+        }
+    }
+
+    // MARK: - Color Curves (DaVinci Style)
+
+    private var colorCurvesPanel: some View {
+        VStack(spacing: EchoelSpacing.md) {
+            // RGB Curves display
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("RGB CURVES")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Curves graph area
+                ZStack {
+                    // Grid
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(EchoelBrand.bgDeep)
+                        .frame(height: 160)
+
+                    // Grid lines
+                    Canvas { context, size in
+                        let gridCount = 4
+                        for i in 1..<gridCount {
+                            let x = size.width * CGFloat(i) / CGFloat(gridCount)
+                            let y = size.height * CGFloat(i) / CGFloat(gridCount)
+
+                            context.stroke(
+                                Path { p in p.move(to: CGPoint(x: x, y: 0)); p.addLine(to: CGPoint(x: x, y: size.height)) },
+                                with: .color(EchoelBrand.border.opacity(0.3)),
+                                lineWidth: 0.5
+                            )
+                            context.stroke(
+                                Path { p in p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: size.width, y: y)) },
+                                with: .color(EchoelBrand.border.opacity(0.3)),
+                                lineWidth: 0.5
+                            )
+                        }
+
+                        // Diagonal (identity line)
+                        context.stroke(
+                            Path { p in p.move(to: CGPoint(x: 0, y: size.height)); p.addLine(to: CGPoint(x: size.width, y: 0)) },
+                            with: .color(EchoelBrand.textTertiary.opacity(0.3)),
+                            lineWidth: 1
+                        )
+
+                        // Master curve (slight S-curve for demo)
+                        let contrast = engine.currentGrade?.contrast ?? 1.0
+                        context.stroke(
+                            Path { p in
+                                p.move(to: CGPoint(x: 0, y: size.height))
+                                let cp1x = size.width * 0.25
+                                let cp1y = size.height * CGFloat(1.0 - 0.25 * contrast)
+                                let cp2x = size.width * 0.75
+                                let cp2y = size.height * CGFloat(1.0 - 0.75 * contrast)
+                                p.addCurve(
+                                    to: CGPoint(x: size.width, y: 0),
+                                    control1: CGPoint(x: cp1x, y: cp1y),
+                                    control2: CGPoint(x: cp2x, y: cp2y)
+                                )
+                            },
+                            with: .color(.white.opacity(0.8)),
+                            lineWidth: 1.5
+                        )
+                    }
+                    .frame(height: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(EchoelBrand.border, lineWidth: 0.5)
+                )
+            }
+
+            // Channel selector
+            HStack(spacing: EchoelSpacing.xs) {
+                channelButton("Master", color: .white)
+                channelButton("R", color: .red)
+                channelButton("G", color: .green)
+                channelButton("B", color: .blue)
+            }
+
+            // Hue vs Sat curve (DaVinci secondary)
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("HUE vs SAT")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(EchoelBrand.bgDeep)
+                        .frame(height: 60)
+
+                    // Rainbow background
+                    LinearGradient(
+                        colors: [.red, .yellow, .green, .cyan, .blue, Color(red: 1, green: 0, blue: 1), .red],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .opacity(0.15)
+                    .frame(height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                    // Flat line (no adjustment)
+                    Rectangle()
+                        .fill(EchoelBrand.textSecondary.opacity(0.5))
+                        .frame(height: 0.5)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(EchoelBrand.border, lineWidth: 0.5)
+                )
+            }
+        }
+        .padding(EchoelSpacing.sm)
+    }
+
+    private func channelButton(_ label: String, color: Color) -> some View {
+        Button {
+            HapticHelper.impact(.light)
+        } label: {
+            Text(label)
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(color.opacity(0.8))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(color.opacity(0.08))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Effects List
+
+    private var effectsListPanel: some View {
+        VStack(spacing: EchoelSpacing.sm) {
+            effectCategory("Color", effects: ["Auto Color", "LUT", "Color Grade", "HDR"])
+            effectCategory("Style", effects: ["Cinematic", "Vintage", "Neon Glow", "Glitch"])
+            effectCategory("Bio-Reactive", effects: ["Coherence Pulse", "Heart Sync", "Breath Flow"])
+            effectCategory("AI", effects: ["Style Transfer", "Face Enhance", "Background Remove"])
+        }
+        .padding(EchoelSpacing.sm)
+    }
+
+    // MARK: - Scopes Panel (DaVinci Resolve Style)
+
+    private var scopesPanel: some View {
+        VStack(spacing: EchoelSpacing.md) {
+            // Waveform scope
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("WAVEFORM")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(EchoelBrand.bgDeep)
+                        .frame(height: 120)
+
+                    // Simulated waveform scope
+                    Canvas { context, size in
+                        // Horizontal level lines
+                        for level in [0.0, 0.25, 0.5, 0.75, 1.0] {
+                            let y = size.height * (1.0 - CGFloat(level))
+                            context.stroke(
+                                Path { p in p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: size.width, y: y)) },
+                                with: .color(EchoelBrand.border.opacity(0.3)),
+                                lineWidth: 0.5
+                            )
+                        }
+
+                        // Green waveform distribution (simulated luma)
+                        let exposure = CGFloat(engine.currentGrade?.exposure ?? 0)
+                        let contrast = CGFloat(engine.currentGrade?.contrast ?? 1)
+                        let midpoint = size.height * (0.5 - exposure * 0.3)
+
+                        for x in stride(from: 0.0, to: size.width, by: 1.0) {
+                            let normalizedX = x / size.width
+                            let scatter = CGFloat.random(in: 0.15...0.45) * contrast
+                            let yCenter = midpoint + sin(normalizedX * .pi * 4) * 10
+                            let yTop = max(0, yCenter - scatter * size.height * 0.5)
+                            let yBottom = min(size.height, yCenter + scatter * size.height * 0.5)
+
+                            context.fill(
+                                Path(CGRect(x: x, y: yTop, width: 1, height: yBottom - yTop)),
+                                with: .color(EchoelBrand.emerald.opacity(0.4))
+                            )
+                        }
+                    }
+                    .frame(height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                    // Level labels
+                    VStack {
+                        Text("100")
+                            .font(.system(size: 7, design: .monospaced))
+                            .foregroundColor(EchoelBrand.textTertiary)
+                        Spacer()
+                        Text("0")
+                            .font(.system(size: 7, design: .monospaced))
+                            .foregroundColor(EchoelBrand.textTertiary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(4)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(EchoelBrand.border, lineWidth: 0.5)
+                )
+            }
+
+            // Vectorscope
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("VECTORSCOPE")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(EchoelBrand.bgDeep)
+                        .frame(height: 140)
+
+                    // Vectorscope visualization
+                    Canvas { context, size in
+                        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+                        let radius = min(size.width, size.height) * 0.4
+
+                        // Outer ring
+                        context.stroke(
+                            Path { p in p.addEllipse(in: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)) },
+                            with: .color(EchoelBrand.border.opacity(0.3)),
+                            lineWidth: 0.5
+                        )
+
+                        // Inner ring
+                        context.stroke(
+                            Path { p in p.addEllipse(in: CGRect(x: center.x - radius * 0.5, y: center.y - radius * 0.5, width: radius, height: radius)) },
+                            with: .color(EchoelBrand.border.opacity(0.2)),
+                            lineWidth: 0.5
+                        )
+
+                        // Crosshair
+                        context.stroke(
+                            Path { p in p.move(to: CGPoint(x: center.x, y: center.y - radius)); p.addLine(to: CGPoint(x: center.x, y: center.y + radius)) },
+                            with: .color(EchoelBrand.border.opacity(0.2)),
+                            lineWidth: 0.5
+                        )
+                        context.stroke(
+                            Path { p in p.move(to: CGPoint(x: center.x - radius, y: center.y)); p.addLine(to: CGPoint(x: center.x + radius, y: center.y)) },
+                            with: .color(EchoelBrand.border.opacity(0.2)),
+                            lineWidth: 0.5
+                        )
+
+                        // Color target markers (R, Mg, B, Cy, G, Yl)
+                        let targets: [(String, Color, Double)] = [
+                            ("R", .red, 0), ("Yl", .yellow, 60), ("G", .green, 120),
+                            ("Cy", .cyan, 180), ("B", .blue, 240), ("Mg", Color(red: 1, green: 0, blue: 1), 300)
+                        ]
+                        for (label, color, angleDeg) in targets {
+                            let angle = angleDeg * .pi / 180 - .pi / 2
+                            let x = center.x + cos(angle) * radius * 0.85
+                            let y = center.y + sin(angle) * radius * 0.85
+                            context.fill(
+                                Path { p in p.addEllipse(in: CGRect(x: x - 2, y: y - 2, width: 4, height: 4)) },
+                                with: .color(color.opacity(0.5))
+                            )
+                            let _ = label // marker labels handled by overlay
+                        }
+
+                        // Simulated data scatter
+                        let saturation = CGFloat(engine.currentGrade?.saturation ?? 1)
+                        let temperature = CGFloat(engine.currentGrade?.temperature ?? 0)
+                        for _ in 0..<80 {
+                            let angle = Double.random(in: 0...(2 * .pi))
+                            let dist = Double.random(in: 0...1) * Double(radius * 0.3 * saturation)
+                            let offsetX = temperature * Double(radius) * 0.2
+                            let x = center.x + cos(angle) * dist + offsetX
+                            let y = center.y + sin(angle) * dist
+                            context.fill(
+                                Path { p in p.addEllipse(in: CGRect(x: x - 0.5, y: y - 0.5, width: 1, height: 1)) },
+                                with: .color(EchoelBrand.emerald.opacity(0.5))
+                            )
+                        }
+                    }
+                    .frame(height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(EchoelBrand.border, lineWidth: 0.5)
+                )
+            }
+
+            // RGB Parade (mini)
+            VStack(spacing: EchoelSpacing.xs) {
+                Text("RGB PARADE")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(EchoelBrand.textTertiary)
+                    .tracking(1.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack(spacing: 2) {
+                    paradeChannel(color: .red)
+                    paradeChannel(color: .green)
+                    paradeChannel(color: .blue)
+                }
+                .frame(height: 60)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(EchoelBrand.bgDeep)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(EchoelBrand.border, lineWidth: 0.5)
+                )
+            }
+        }
+        .padding(EchoelSpacing.sm)
+    }
+
+    /// Single RGB parade channel
+    private func paradeChannel(color: Color) -> some View {
+        Canvas { context, size in
+            let exposure = CGFloat(engine.currentGrade?.exposure ?? 0)
+            let baseLevel = 0.4 + exposure * 0.2
+
+            for x in stride(from: 0.0, to: size.width, by: 1.0) {
+                let scatter = CGFloat.random(in: 0.1...0.35)
+                let yCenter = size.height * (1.0 - baseLevel)
+                let yTop = max(0, yCenter - scatter * size.height * 0.4)
+                let yBottom = min(size.height, yCenter + scatter * size.height * 0.3)
+
+                context.fill(
+                    Path(CGRect(x: x, y: yTop, width: 1, height: yBottom - yTop)),
+                    with: .color(color.opacity(0.35))
+                )
+            }
+        }
     }
 
     // MARK: - Quick Effects Strip (CapCut/InShot Style)
