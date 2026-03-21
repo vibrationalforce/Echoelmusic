@@ -192,9 +192,9 @@ private struct SessionClipContent: View {
             .modifier(GlassCard())
 
             // Track Headers
-            ForEach(0..<trackCount, id: \.self) { index in
+            ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
                 TrackHeaderCell(
-                    track: tracks[index],
+                    track: track,
                     isSelected: selectedTrack == index,
                     onSelect: { selectedTrack = index },
                     onMute: { vm.toggleMute(index) },
@@ -223,12 +223,10 @@ private struct SessionClipContent: View {
     private func makeClipGrid(_ vm: SessionClipViewModel) -> some View {
         let tracks = vm.tracks
         let scenes = vm.scenes
-        let sceneCount = scenes.count
-        let trackCount = tracks.count
         VStack(spacing: 2) {
             // Scene Headers
             HStack(spacing: 2) {
-                ForEach(0..<sceneCount, id: \.self) { idx in
+                ForEach(Array(scenes.enumerated()), id: \.element.id) { idx, _ in
                     Text("Scene \(idx + 1)")
                         .font(EchoelBrandFont.label())
                         .foregroundColor(EchoelBrand.textTertiary)
@@ -236,13 +234,13 @@ private struct SessionClipContent: View {
                 }
             }
 
-            // Clip Slots
-            ForEach(0..<trackCount, id: \.self) { trackIndex in
+            // Clip Slots — use Identifiable ForEach to avoid index OOB
+            ForEach(Array(tracks.enumerated()), id: \.element.id) { trackIndex, track in
                 HStack(spacing: 2) {
-                    ForEach(0..<sceneCount, id: \.self) { sceneIndex in
+                    ForEach(Array(scenes.enumerated()), id: \.element.id) { sceneIndex, _ in
                         ClipSlotCell(
                             clip: vm.clipAt(track: trackIndex, scene: sceneIndex),
-                            trackColor: tracks[trackIndex].color,
+                            trackColor: track.color,
                             isPlaying: vm.isClipPlaying(track: trackIndex, scene: sceneIndex),
                             onTap: { vm.toggleClip(track: trackIndex, scene: sceneIndex) },
                             onDoubleTap: {
@@ -281,9 +279,9 @@ private struct SessionClipContent: View {
             .modifier(GlassCard())
 
             // Scene Launch Buttons
-            ForEach(0..<sceneCount, id: \.self) { index in
+            ForEach(Array(scenes.enumerated()), id: \.element.id) { index, scene in
                 SceneLaunchButton(
-                    scene: scenes[index],
+                    scene: scene,
                     isPlaying: activeScene == index,
                     onLaunch: { vm.launchScene(index) }
                 )
