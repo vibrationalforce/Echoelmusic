@@ -66,6 +66,39 @@ final class EchoelCreativeWorkspace {
     /// OSC network engine — UDP sync with external tools
     private(set) var oscEngine: OSCEngine?
 
+    /// AUv3 plugin hosting engine — discover, host, route external audio units
+    private(set) var interAppEngine: InterAppAudioEngine?
+
+    /// Pro cue system — live performance cue list with GO/PAUSE/BACK
+    private(set) var cueSystem: ProCueSystem?
+
+    /// AI composer — algorithmic + Markov chain music generation
+    private(set) var composerEngine: AIComposerEngine?
+
+    #if canImport(CoreBluetooth)
+    /// EEG sensor bridge — BLE device connection + FFT band extraction
+    private(set) var eegBridge: EEGSensorBridge?
+    #endif
+
+    /// Oura Ring REST client — sleep, readiness, activity metrics
+    private(set) var ouraClient: OuraRingClient?
+
+    #if canImport(Network)
+    /// Cross-device sync protocol — Bonjour discovery, clock sync, state relay
+    private(set) var syncProtocol: EchoelSyncProtocol?
+
+    /// AES67-compatible network audio transport
+    private(set) var danteTransport: DanteTransport?
+
+    /// NDI-compatible video streaming engine
+    private(set) var ndiEngine: NDISyphonEngine?
+    #endif
+
+    #if os(visionOS)
+    /// visionOS immersive experience engine
+    private(set) var immersiveEngine: VisionOSImmersiveEngine?
+    #endif
+
     /// Whether deferred heavy init has completed
     private(set) var isReady: Bool = false
 
@@ -142,6 +175,26 @@ final class EchoelCreativeWorkspace {
         self.luxEngine = EchoelLuxEngine.shared
         self.aiEngine = EchoelAIEngine.shared
         self.oscEngine = OSCEngine.shared
+
+        // Initialize new engines (feature matrix completion)
+        self.interAppEngine = InterAppAudioEngine.shared
+        self.cueSystem = ProCueSystem.shared
+        self.composerEngine = AIComposerEngine.shared
+
+        #if canImport(CoreBluetooth)
+        self.eegBridge = EEGSensorBridge.shared
+        #endif
+        self.ouraClient = OuraRingClient.shared
+
+        #if canImport(Network)
+        self.syncProtocol = EchoelSyncProtocol.shared
+        self.danteTransport = DanteTransport.shared
+        self.ndiEngine = NDISyphonEngine.shared
+        #endif
+
+        #if os(visionOS)
+        self.immersiveEngine = VisionOSImmersiveEngine.shared
+        #endif
 
         // Handle incoming OSC messages for external control
         self.oscEngine?.onMessageReceived = { [weak self] message in
@@ -371,6 +424,7 @@ final class EchoelCreativeWorkspace {
     /// Handle incoming OSC messages for external control
     private func handleOSCMessage(_ message: OSCMessage) {
         switch message.address {
+        // Transport
         case "/echoelmusic/transport/play":
             if !isPlaying { togglePlayback() }
         case "/echoelmusic/transport/stop":
@@ -379,11 +433,41 @@ final class EchoelCreativeWorkspace {
             if case .float(let bpm) = message.arguments.first {
                 setGlobalBPM(Double(bpm))
             }
+        // Lighting
         case "/echoelmusic/lux/blackout":
             luxEngine?.blackout()
         case "/echoelmusic/lux/master":
             if case .float(let level) = message.arguments.first {
                 luxEngine?.masterDimmer = level
+            }
+        // Cue system
+        case "/echoelmusic/cue/go":
+            cueSystem?.go()
+        case "/echoelmusic/cue/pause":
+            cueSystem?.pause()
+        case "/echoelmusic/cue/back":
+            cueSystem?.back()
+        // Sequencer
+        case "/echoelmusic/sequencer/start":
+            seqEngine?.start()
+        case "/echoelmusic/sequencer/stop":
+            seqEngine?.stop()
+        // Visual mode
+        case "/echoelmusic/visual/mode":
+            if case .string(let modeName) = message.arguments.first {
+                #if canImport(Metal)
+                if let mode = VisualMode(rawValue: modeName) {
+                    visEngine?.setMode(mode)
+                }
+                #endif
+            }
+        // Mixer levels
+        case let addr where addr.hasPrefix("/echoelmusic/mixer/channel/"):
+            if case .float(let level) = message.arguments.first {
+                let parts = addr.split(separator: "/")
+                if parts.count >= 4, let ch = Int(parts[3]), ch < proMixer.channels.count {
+                    proMixer.channels[ch].volume = level
+                }
             }
         default:
             break
