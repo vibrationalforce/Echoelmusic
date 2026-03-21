@@ -30,8 +30,8 @@ struct EchoelStudioView: View {
     @Environment(AudioEngine.self) var audioEngine
     @Environment(RecordingEngine.self) var recordingEngine
 
-    @State private var viewMode: ViewMode = .arrangement
-    @State private var activeTab: ToolTab?
+    @State private var viewMode: ViewMode = .session
+    @State private var activeTab: ToolTab? = .create
     @State private var createSubtab: CreateSubtab = .instruments
     @State private var mixSubtab: MixSubtab = .mixer
     @State private var mediaSubtab: MediaSubtab = .visuals
@@ -124,7 +124,6 @@ struct EchoelStudioView: View {
             }
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
-        .echoelWaveBackground(lineCount: 3, animated: false)
         .onAppear {
             ensureSessionExists()
         }

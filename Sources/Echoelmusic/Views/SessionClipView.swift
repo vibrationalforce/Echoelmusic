@@ -128,77 +128,48 @@ private struct SessionClipContent: View {
         let coherence = vm.coherence
         let coherenceColor = vm.coherenceColor
         HStack(spacing: EchoelSpacing.sm) {
-            // Session info
-            VStack(alignment: .leading, spacing: 2) {
-                Text("SESSION")
-                    .font(.system(size: isCompact ? 14 : 20, weight: .bold, design: .default))
-                    .foregroundColor(EchoelBrand.textPrimary)
-                    .lineLimit(1)
-
-                Text("\(trackCount) Tracks • \(sceneCount) Scenes")
-                    .font(EchoelBrandFont.caption())
-                    .foregroundColor(EchoelBrand.sky)
-                    .lineLimit(1)
-            }
-            .fixedSize(horizontal: true, vertical: false)
+            // Track/Scene count (compact)
+            Text("\(trackCount)T \(sceneCount)S")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundColor(EchoelBrand.textTertiary)
 
             Spacer(minLength: EchoelSpacing.xs)
 
-            // BPM Display
-            HStack(spacing: EchoelSpacing.xs) {
-                Image(systemName: "metronome")
-                    .font(.system(size: 12))
-                    .foregroundColor(EchoelBrand.coral)
-
-                Text("\(Int(bpm))")
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundColor(EchoelBrand.textPrimary)
-
-                Text("BPM")
-                    .font(EchoelBrandFont.label())
-                    .foregroundColor(EchoelBrand.textTertiary)
-            }
-            .padding(.horizontal, EchoelSpacing.sm)
-            .padding(.vertical, EchoelSpacing.xs)
-            .modifier(GlassCard())
-
-            // Bio Sync
+            // Bio Sync + Coherence (combined, compact)
             Button { vm.bioSyncEnabled.toggle(); HapticHelper.impact(.light) } label: {
-                HStack(spacing: EchoelSpacing.xs) {
+                HStack(spacing: 4) {
                     Image(systemName: "heart.fill")
-                        .font(.system(size: 12))
-                    Text("Bio")
-                        .font(EchoelBrandFont.label())
+                        .font(.system(size: 10))
+
+                    if bioSync {
+                        Text("\(Int(coherence * 100))")
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundColor(coherenceColor)
+                    } else {
+                        Text("Off")
+                            .font(.system(size: 10, weight: .medium))
+                    }
                 }
                 .foregroundColor(bioSync ? EchoelBrand.coral : EchoelBrand.textTertiary)
+                .padding(.horizontal, EchoelSpacing.sm)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(bioSync ? EchoelBrand.coral.opacity(0.1) : Color.clear)
+                )
             }
-            .padding(.horizontal, EchoelSpacing.sm)
-            .padding(.vertical, EchoelSpacing.xs)
-            .background(bioSync ? EchoelBrand.coral.opacity(0.2) : Color.clear)
-            .modifier(GlassCard())
-
-            // Coherence Display
-            if bioSync {
-                VStack(spacing: 2) {
-                    Text("\(Int(coherence * 100))")
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
-                        .foregroundColor(coherenceColor)
-
-                    Text("FLOW")
-                        .font(EchoelBrandFont.label())
-                        .foregroundColor(EchoelBrand.textTertiary)
-                }
-                .shadow(color: coherenceColor.opacity(0.4), radius: 6)
-            }
+            .buttonStyle(.plain)
 
             // Quantize
-            Picker("", selection: $session.quantize) {
+            Picker("Q", selection: $session.quantize) {
                 Text("1 Bar").tag(QuantizeValue.bar)
+                Text("1/2").tag(QuantizeValue.half)
                 Text("1/4").tag(QuantizeValue.quarter)
+                Text("1/8").tag(QuantizeValue.eighth)
                 Text("Off").tag(QuantizeValue.off)
             }
             .pickerStyle(.menu)
-            .font(EchoelBrandFont.caption())
+            .font(.system(size: 10, weight: .medium))
             .fixedSize()
         }
         .padding(.horizontal, EchoelSpacing.sm)
@@ -911,13 +882,13 @@ final class SessionClipViewModel {
     }
 
     init() {
-        // Default tracks representing the core Echoelmusic instruments
+        // Default tracks — distinct colors, ready to perform
         tracks = [
-            ClipViewTrack(name: "Drums", color: EchoelBrand.primary, instrumentName: "EchoelBeat", instrumentIcon: "square.grid.3x3"),
-            ClipViewTrack(name: "Bass", color: EchoelBrand.primary.opacity(0.7), instrumentName: "EchoSynth", instrumentIcon: "waveform"),
-            ClipViewTrack(name: "Lead", color: Color.white, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
-            ClipViewTrack(name: "Pad", color: EchoelBrand.primary.opacity(0.5), instrumentName: "Granular", instrumentIcon: "sparkles"),
-            ClipViewTrack(name: "Bio", color: EchoelBrand.coherenceHigh, instrumentName: "Coherence", instrumentIcon: "heart.fill")
+            ClipViewTrack(name: "Drums", color: EchoelBrand.amber, instrumentName: "EchoelBeat", instrumentIcon: "square.grid.3x3"),
+            ClipViewTrack(name: "Bass", color: EchoelBrand.sky, instrumentName: "EchoSynth", instrumentIcon: "waveform"),
+            ClipViewTrack(name: "Lead", color: EchoelBrand.violet, instrumentName: "Wavetable", instrumentIcon: "waveform.badge.plus"),
+            ClipViewTrack(name: "Pad", color: EchoelBrand.emerald, instrumentName: "Granular", instrumentIcon: "sparkles"),
+            ClipViewTrack(name: "Bio", color: EchoelBrand.coral, instrumentName: "Coherence", instrumentIcon: "heart.fill")
         ]
 
         scenes = (1...8).map { ClipViewScene(name: "Scene \($0)") }

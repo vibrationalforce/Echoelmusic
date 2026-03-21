@@ -41,20 +41,19 @@ struct MainNavigationHub: View {
         }
     }
 
-    // MARK: - Top Bar (iPad)
+    // MARK: - Top Bar (Clean — no branding, functional only)
 
     private var topBar: some View {
-        HStack(spacing: 0) {
-            // Brand mark — matches website nav (E + waves logo)
-            EchoelWaveformMark(bioCoherence: Float(EchoelCreativeWorkspace.shared.bioCoherence), animated: true)
-                .frame(width: 28, height: 28)
-
-            Spacer()
-
-            // Wordmark — centered, "Echoelmusic" only (no tagline)
-            Text("Echoelmusic")
-                .font(.system(size: 15, weight: .semibold, design: .default))
-                .foregroundColor(EchoelBrand.textPrimary)
+        HStack(spacing: EchoelSpacing.sm) {
+            // CPU / Performance indicator
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(audioEngine.isRunning ? EchoelBrand.emerald : EchoelBrand.textTertiary)
+                    .frame(width: 6, height: 6)
+                Text(audioEngine.isRunning ? "Audio" : "Off")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(audioEngine.isRunning ? EchoelBrand.emerald : EchoelBrand.textTertiary)
+            }
 
             Spacer()
 
@@ -70,7 +69,7 @@ struct MainNavigationHub: View {
             .accessibilityLabel("Settings")
         }
         .padding(.horizontal, EchoelSpacing.md)
-        .padding(.vertical, EchoelSpacing.xs)
+        .frame(height: 36)
         .background(
             EchoelBrand.bgSurface.opacity(0.92)
                 .overlay(

@@ -582,24 +582,13 @@ struct DAWArrangementView: View {
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: EchoelSpacing.lg) {
-            // Brand mark — larger, animated, gives the empty state life
-            EchoelWaveformMark(bioCoherence: Float(EchoelCreativeWorkspace.shared.bioCoherence), animated: true)
-                .frame(width: 64, height: 64)
-                .padding(.bottom, EchoelSpacing.xs)
-
+        VStack(spacing: EchoelSpacing.md) {
             VStack(spacing: EchoelSpacing.xs) {
-                Text("Start creating")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(EchoelBrand.textPrimary)
-
-                Text("Add a track, hit record, or open an instrument")
-                    .font(EchoelBrandFont.body())
+                Text("Empty project")
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(EchoelBrand.textSecondary)
-                    .multilineTextAlignment(.center)
             }
 
-            // Quick-start buttons
             HStack(spacing: EchoelSpacing.md) {
                 quickStartButton(icon: "plus.circle.fill", label: "Add Track", color: EchoelBrand.sky) {
                     addNewTrack()
@@ -608,13 +597,9 @@ struct DAWArrangementView: View {
                 quickStartButton(icon: "circle.fill", label: "Record", color: EchoelBrand.coral) {
                     toggleRecording()
                 }
-
-                quickStartButton(icon: "pianokeys", label: "Instrument", color: EchoelBrand.amber) {
-                    showInstrumentBrowser = true
-                }
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 240)
+        .frame(maxWidth: .infinity, minHeight: 160)
     }
 
     private func quickStartButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
