@@ -552,8 +552,10 @@ public final class EchoelSeqEngine {
             var newPattern: [[Bool]] = []
 
             for i in 0..<minCount {
+                let secondIdx = counts[0] + i
+                guard i < pattern.count, secondIdx < pattern.count else { break }
                 var combined = pattern[i]
-                combined.append(contentsOf: pattern[counts[0] + i])
+                combined.append(contentsOf: pattern[secondIdx])
                 newPattern.append(combined)
             }
 

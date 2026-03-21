@@ -674,7 +674,8 @@ public final class QuantumMIDIOut {
             let availableIndices = voicePool.indices.filter { index in
                 !activeVoices.contains(where: { $0.id == voicePool[index].id })
             }
-            let index = availableIndices.randomElement() ?? 0
+            let index = availableIndices.randomElement() ?? voicePool.startIndex
+            guard voicePool.indices.contains(index) else { return QuantumMIDIVoice() }
             return voicePool[index]
 
         case .adaptive:

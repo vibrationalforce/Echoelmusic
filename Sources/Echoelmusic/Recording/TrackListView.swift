@@ -284,7 +284,8 @@ struct TrackRow: View {
                 context.stroke(centerPath, with: .color(EchoelBrand.bgElevated), lineWidth: 1)
 
                 // Draw waveform
-                let samplesPerPixel = max(1, data.count / Int(width))
+                let intWidth = max(1, Int(width))
+                let samplesPerPixel = max(1, data.count / intWidth)
                 var waveformPath = Path()
 
                 for x in 0..<Int(width) {

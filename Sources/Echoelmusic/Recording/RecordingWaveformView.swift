@@ -55,7 +55,8 @@ struct RecordingWaveformView: View {
 
         // Draw waveform path
         var waveformPath = Path()
-        let pointsPerPixel = max(1, waveformData.count / Int(width))
+        let intWidth = max(1, Int(width))
+        let pointsPerPixel = max(1, waveformData.count / intWidth)
 
         for x in 0..<Int(width) {
             let dataIndex = x * pointsPerPixel
