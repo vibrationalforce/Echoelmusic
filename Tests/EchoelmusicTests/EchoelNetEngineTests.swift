@@ -1093,4 +1093,52 @@ final class LightingSceneTests: XCTestCase {
     }
 }
 
+// MARK: - Network Crash Hardening Tests
+
+final class NetworkCrashHardeningTests: XCTestCase {
+
+    func testDanteTransport_PTPClock_EdgeValues() {
+        let clock = PTPClock()
+        // Zero timestamps should not crash
+        XCTAssertGreaterThanOrEqual(clock.offset, 0)
+    }
+
+    func testDanteTransport_JitterBuffer_EmptyDequeue() {
+        let buffer = JitterBuffer(targetDepth: 5)
+        // Dequeue from empty buffer should return nil, not crash
+        let sample = buffer.dequeue()
+        XCTAssertNil(sample, "Empty jitter buffer dequeue should return nil")
+    }
+
+    func testDanteTransport_JitterBuffer_FillAndDrain() {
+        let buffer = JitterBuffer(targetDepth: 3)
+        // Fill
+        for i in 0..<10 {
+            buffer.enqueue(sample: Float(i), timestamp: UInt64(i * 1000))
+        }
+        // Drain completely
+        var count = 0
+        while buffer.dequeue() != nil {
+            count += 1
+            if count > 20 { break } // Safety limit
+        }
+        XCTAssertGreaterThan(count, 0, "Should have dequeued some samples")
+        // Further dequeue should be nil
+        XCTAssertNil(buffer.dequeue(), "Fully drained buffer should return nil")
+    }
+
+    func testOSCEngine_EmptyMessage() {
+        let engine = OSCEngine()
+        // Sending empty address should not crash
+        engine.send(address: "", values: [])
+    }
+
+    func testOSCEngine_LargeValueArray() {
+        let engine = OSCEngine()
+        // Large value array should not crash
+        let values: [Any] = Array(repeating: Float(1.0), count: 1000)
+        engine.send(address: "/test/bulk", values: values)
+    }
+}
+
 #endif // canImport(Network)

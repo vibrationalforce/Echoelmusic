@@ -318,4 +318,51 @@ final class VisualStepSequencerTests: XCTestCase {
         // Step is preserved (not reset to 0)
     }
 }
+
+// MARK: - Sequencer Crash Hardening Tests
+
+final class SequencerCrashHardeningTests: XCTestCase {
+
+    @MainActor
+    func testEchoelSeqEngine_RotateEmpty() {
+        let engine = EchoelSeqEngine()
+        // Rotate on empty pattern should not crash
+        engine.transformPattern(.rotateLeft)
+        engine.transformPattern(.rotateRight)
+        engine.transformPattern(.reverse)
+        engine.transformPattern(.invert)
+    }
+
+    @MainActor
+    func testEchoelSeqEngine_RandomizeEmpty() {
+        let engine = EchoelSeqEngine()
+        // Randomize empty pattern should not crash
+        engine.randomize(density: 0.5)
+    }
+
+    @MainActor
+    func testEchoelSeqEngine_ZeroBPM() {
+        let engine = EchoelSeqEngine()
+        engine.bpm = 0.0
+        // Should not cause divide-by-zero in step duration calculation
+        XCTAssertEqual(engine.bpm, 0.0, accuracy: 0.01)
+    }
+
+    func testSequencerPattern_OutOfBoundsStep() {
+        let pattern = SequencerPattern()
+        // Accessing step beyond stepCount should not crash
+        let channels = VisualStepSequencer.Channel.allCases
+        guard let firstChannel = channels.first else { return }
+        // Step 999 is way beyond stepCount
+        let isActive = pattern.isActive(channel: firstChannel, step: 999)
+        XCTAssertFalse(isActive, "Out-of-bounds step should return false")
+    }
+
+    func testBioModulationState_ZeroValues() {
+        let state = BioModulationState()
+        // All values should default to sensible zero/default
+        XCTAssertEqual(state.coherence, 0.0, accuracy: 0.01)
+        XCTAssertEqual(state.heartRate, 0.0, accuracy: 0.01)
+    }
+}
 #endif

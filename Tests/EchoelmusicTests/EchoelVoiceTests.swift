@@ -1366,4 +1366,69 @@ final class EchoelVoiceFactoryTests: XCTestCase {
                        "Kernel parameter should sync with parameter tree")
     }
 }
+
+// MARK: - VocalDSPKernel Crash Hardening Tests
+
+final class VocalDSPKernelCrashHardeningTests: XCTestCase {
+
+    func testKernel_ZeroSampleRate() {
+        let kernel = VocalDSPKernel(sampleRate: 0)
+        // Should not crash with zero sample rate
+        XCTAssertNotNil(kernel)
+    }
+
+    func testKernel_ExtremeParameters() {
+        let kernel = VocalDSPKernel(sampleRate: 48000)
+        // Set all parameters to extreme values — should not crash
+        kernel.setParameter(address: .pitchShift, value: 24.0) // 2 octaves up
+        kernel.setParameter(address: .formantShift, value: -24.0) // 2 octaves down
+        kernel.setParameter(address: .harmonicBalance, value: 1.0)
+        kernel.setParameter(address: .deEss, value: 1.0)
+        kernel.setParameter(address: .inputGain, value: 4.0) // Max gain
+        XCTAssertEqual(kernel.getParameter(address: .pitchShift), 24.0, accuracy: 0.01)
+    }
+
+    func testPhaseVocoder_EmptyInput() {
+        let vocoder = PhaseVocoder()
+        // Empty input should not crash
+        let result = vocoder.process(input: [], pitchShift: 1.0)
+        XCTAssertTrue(result.isEmpty, "Empty input should produce empty output")
+    }
+
+    func testPhaseVocoder_SingleSample() {
+        let vocoder = PhaseVocoder()
+        // Single sample — too small for FFT
+        let result = vocoder.process(input: [0.5], pitchShift: 1.0)
+        // Should handle gracefully (either process or return as-is)
+        XCTAssertFalse(result.contains { $0.isNaN }, "Single sample should not produce NaN")
+    }
+
+    func testPhaseVocoder_IdentityPitchShift() {
+        let vocoder = PhaseVocoder()
+        let input = [Float](repeating: 0.5, count: 4096)
+        let result = vocoder.process(input: input, pitchShift: 1.0)
+        // Identity pitch shift should not produce NaN
+        XCTAssertFalse(result.contains { $0.isNaN }, "Identity shift should not produce NaN")
+    }
+
+    func testPhaseVocoder_ExtremePitchShift() {
+        let vocoder = PhaseVocoder()
+        let input = (0..<4096).map { Float(sin(Double($0) * 0.1)) }
+        // Extreme pitch shift up
+        let resultUp = vocoder.process(input: input, pitchShift: 4.0)
+        XCTAssertFalse(resultUp.contains { $0.isNaN }, "High pitch shift should not produce NaN")
+        XCTAssertFalse(resultUp.contains { $0.isInfinite }, "High pitch shift should not produce Inf")
+        // Extreme pitch shift down
+        let resultDown = vocoder.process(input: input, pitchShift: 0.25)
+        XCTAssertFalse(resultDown.contains { $0.isNaN }, "Low pitch shift should not produce NaN")
+    }
+
+    func testPhaseVocoder_ZeroPitchShift() {
+        let vocoder = PhaseVocoder()
+        let input = [Float](repeating: 0.5, count: 4096)
+        // Zero pitch shift — edge case
+        let result = vocoder.process(input: input, pitchShift: 0.0)
+        XCTAssertFalse(result.contains { $0.isNaN }, "Zero pitch shift should not produce NaN")
+    }
+}
 #endif

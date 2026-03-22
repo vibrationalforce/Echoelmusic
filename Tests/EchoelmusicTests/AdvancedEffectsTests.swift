@@ -1154,4 +1154,127 @@ final class SamplerFilterTypeTests: XCTestCase {
         XCTAssertEqual(SamplerFilterType.notch.rawValue, "Notch")
     }
 }
+
+// MARK: - Crash Hardening Edge Case Tests
+
+final class CrashHardeningTests: XCTestCase {
+
+    // MARK: - BreakbeatChopper Edge Cases
+
+    func testBreakbeatChopper_EstimateTempo_EmptySlices() {
+        let chopper = BreakbeatChopper()
+        // Should not crash with no slices — defaults to 170 BPM
+        chopper.estimateTempo()
+        XCTAssertEqual(chopper.originalTempo, 170.0,
+            "Empty slices should default to jungle tempo")
+    }
+
+    func testBreakbeatChopper_EstimateTempo_FewSlices() {
+        let chopper = BreakbeatChopper()
+        // Less than 4 slices should not crash — defaults to 170 BPM
+        chopper.createEvenSlices(count: 2, totalLength: 44100)
+        chopper.estimateTempo()
+        XCTAssertEqual(chopper.originalTempo, 170.0,
+            "< 4 slices should default to jungle tempo")
+    }
+
+    func testBreakbeatChopper_EstimateTempo_ValidSlices() {
+        let chopper = BreakbeatChopper()
+        chopper.createEvenSlices(count: 8, totalLength: 88200)
+        chopper.estimateTempo()
+        // Should calculate a reasonable BPM, not crash
+        XCTAssertGreaterThan(chopper.originalTempo, 0,
+            "Valid slices should produce positive BPM")
+    }
+
+    func testBreakbeatChopper_CreateEvenSlices_ZeroCount() {
+        let chopper = BreakbeatChopper()
+        chopper.createEvenSlices(count: 0, totalLength: 44100)
+        XCTAssertEqual(chopper.slices.count, 0,
+            "Zero count should produce no slices")
+        // Tempo estimation should not crash
+        chopper.estimateTempo()
+    }
+
+    func testBreakbeatChopper_CreateEvenSlices_ZeroLength() {
+        let chopper = BreakbeatChopper()
+        chopper.createEvenSlices(count: 8, totalLength: 0)
+        // All slices should have 0 length
+        for slice in chopper.slices {
+            XCTAssertEqual(slice.lengthSamples, 0)
+        }
+    }
+
+    // MARK: - BreakSlice Edge Cases
+
+    func testBreakSlice_ZeroLengthSlice() {
+        let slice = BreakSlice(start: 100, end: 100, index: 0)
+        XCTAssertEqual(slice.lengthSamples, 0,
+            "Same start/end should produce zero length")
+    }
+
+    func testBreakSlice_NegativeLength() {
+        let slice = BreakSlice(start: 500, end: 100, index: 0)
+        XCTAssertEqual(slice.lengthSamples, -400,
+            "Inverted start/end produces negative length")
+    }
+
+    // MARK: - Shuffle Algorithm Edge Cases
+
+    func testShuffleAlgorithm_EmptyArray() {
+        let empty: [Int] = []
+        for algo in ShuffleAlgorithm.allCases {
+            let result = algo.apply(to: empty)
+            XCTAssertTrue(result.isEmpty,
+                "\(algo.rawValue) should handle empty array without crash")
+        }
+    }
+
+    // MARK: - AutomationLane Edge Cases
+
+    func testAutomationLane_ValueAtTime_EmptyPoints() {
+        let param = AutomationParameter(
+            name: "Test",
+            range: 0...1,
+            defaultValue: 0.5
+        )
+        let lane = AutomationLane(parameter: param)
+        // Should return default value, not crash
+        let value = lane.valueAt(time: 1.0)
+        XCTAssertEqual(value, 0.5,
+            "Empty points should return default value")
+    }
+
+    func testAutomationLane_ValueAtTime_SinglePoint() {
+        let param = AutomationParameter(
+            name: "Test",
+            range: 0...1,
+            defaultValue: 0.5
+        )
+        var lane = AutomationLane(parameter: param)
+        lane.addPoint(value: 0.8, at: 1.0)
+        // Single point — should return that value for any time
+        let value = lane.valueAt(time: 5.0)
+        XCTAssertEqual(value, 0.8,
+            "Single point should return its value")
+    }
+
+    func testAutomationLane_ValueAtTime_BoundaryTimes() {
+        let param = AutomationParameter(
+            name: "Test",
+            range: 0...1,
+            defaultValue: 0.5
+        )
+        var lane = AutomationLane(parameter: param)
+        lane.addPoint(value: 0.0, at: 0.0)
+        lane.addPoint(value: 1.0, at: 10.0)
+        // Before first point
+        XCTAssertEqual(lane.valueAt(time: -1.0), 0.0)
+        // After last point
+        XCTAssertEqual(lane.valueAt(time: 100.0), 1.0)
+        // At exact points
+        XCTAssertEqual(lane.valueAt(time: 0.0), 0.0)
+        XCTAssertEqual(lane.valueAt(time: 10.0), 1.0)
+    }
+}
 #endif

@@ -536,4 +536,60 @@ final class SessionTests: XCTestCase {
         XCTAssertFalse(session.name.isEmpty)
     }
 }
+
+// MARK: - Recording Crash Hardening Tests
+
+final class RecordingCrashHardeningTests: XCTestCase {
+
+    func testAutomationLane_InterpolateEmptyPoints() {
+        let param = AutomationParameter(name: "Volume", range: 0...1, defaultValue: 0.8)
+        let lane = AutomationLane(parameter: param)
+        // Empty points should return default, not crash
+        XCTAssertEqual(lane.valueAt(time: 0.0), 0.8, accuracy: 0.01)
+        XCTAssertEqual(lane.valueAt(time: 1.0), 0.8, accuracy: 0.01)
+        XCTAssertEqual(lane.valueAt(time: -1.0), 0.8, accuracy: 0.01)
+    }
+
+    func testAutomationLane_NegativeTime() {
+        let param = AutomationParameter(name: "Pan", range: -1...1, defaultValue: 0.0)
+        var lane = AutomationLane(parameter: param)
+        lane.addPoint(value: 0.5, at: 0.0)
+        lane.addPoint(value: 1.0, at: 5.0)
+        // Negative time should not crash
+        let value = lane.valueAt(time: -10.0)
+        XCTAssertFalse(value.isNaN, "Negative time should not produce NaN")
+    }
+
+    func testTrack_EmptyAutomation() {
+        var track = Track(name: "Test", type: .audio)
+        // Accessing automation on track with no lanes should not crash
+        XCTAssertEqual(track.automationLanes.count, 0)
+        track.volume = 0.5
+        XCTAssertEqual(track.volume, 0.5, accuracy: 0.01)
+    }
+
+    func testSession_EmptyTracks() {
+        let session = Session(name: "Empty", tracks: [])
+        XCTAssertEqual(session.tracks.count, 0)
+        XCTAssertFalse(session.name.isEmpty)
+    }
+
+    func testCircularBuffer_EmptyRead() {
+        let buffer = CircularBuffer<Float>(capacity: 16)
+        // Reading from empty buffer should return nil
+        let sample = buffer.dequeue()
+        XCTAssertNil(sample, "Empty circular buffer dequeue should return nil")
+    }
+
+    func testCircularBuffer_OverflowWrite() {
+        let buffer = CircularBuffer<Float>(capacity: 4)
+        // Writing more than capacity should wrap, not crash
+        for i in 0..<100 {
+            buffer.enqueue(Float(i))
+        }
+        // Should still be readable
+        let sample = buffer.dequeue()
+        XCTAssertNotNil(sample, "Overflowed buffer should still have data")
+    }
+}
 #endif

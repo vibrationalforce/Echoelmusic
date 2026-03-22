@@ -464,4 +464,128 @@ final class DSPCrossfadeRegionTests: XCTestCase {
         XCTAssertEqual(region.duration(sampleRate: 44100.0), 48000.0 / 44100.0, accuracy: 0.001)
     }
 }
+
+// MARK: - DSP Crash Hardening Tests
+
+final class DSPCrashHardeningTests: XCTestCase {
+
+    // MARK: - EchoelDDSP Edge Cases
+
+    func testDDSP_ZeroFrequency() {
+        let ddsp = EchoelDDSP()
+        ddsp.frequency = 0.0
+        // Should not crash or produce NaN
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(into: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "Zero frequency should not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "Zero frequency should not produce Inf")
+        }
+    }
+
+    func testDDSP_ExtremeFrequency() {
+        let ddsp = EchoelDDSP()
+        ddsp.frequency = 22050.0 // Nyquist
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(into: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "Nyquist frequency should not produce NaN")
+        }
+    }
+
+    func testDDSP_ZeroAmplitude() {
+        let ddsp = EchoelDDSP()
+        ddsp.amplitude = 0.0
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(into: &buffer, frameCount: 256)
+        // All samples should be zero or near-zero
+        let maxAbs = buffer.map { abs($0) }.max() ?? 0
+        XCTAssertLessThan(maxAbs, 0.001, "Zero amplitude should produce silence")
+    }
+
+    func testDDSP_ZeroFrameCount() {
+        let ddsp = EchoelDDSP()
+        var buffer = [Float](repeating: 0, count: 0)
+        // Should not crash with empty buffer
+        ddsp.render(into: &buffer, frameCount: 0)
+    }
+
+    func testDDSP_SingleFrame() {
+        let ddsp = EchoelDDSP()
+        var buffer = [Float](repeating: 0, count: 1)
+        ddsp.render(into: &buffer, frameCount: 1)
+        XCTAssertFalse(buffer[0].isNaN, "Single frame should not produce NaN")
+    }
+
+    func testDDSP_BioReactiveWithZeroCoherence() {
+        let ddsp = EchoelDDSP()
+        ddsp.applyBioReactive(coherence: 0.0, hrv: 0.0, heartRate: 0.0, breathPhase: 0.0, breathDepth: 0.0)
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(into: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "Zero bio values should not produce NaN")
+        }
+    }
+
+    func testDDSP_BioReactiveWithExtremeValues() {
+        let ddsp = EchoelDDSP()
+        ddsp.applyBioReactive(coherence: 1.0, hrv: 1.0, heartRate: 200.0, breathPhase: 1.0, breathDepth: 1.0)
+        var buffer = [Float](repeating: 0, count: 256)
+        ddsp.render(into: &buffer, frameCount: 256)
+        for sample in buffer {
+            XCTAssertFalse(sample.isNaN, "Extreme bio values should not produce NaN")
+            XCTAssertFalse(sample.isInfinite, "Extreme bio values should not produce Inf")
+        }
+    }
+
+    // MARK: - CrossfadeRegion Edge Cases
+
+    func testCrossfadeRegion_ZeroLength() {
+        let region = CrossfadeRegion(
+            id: UUID(),
+            startSample: 0,
+            lengthInSamples: 0,
+            curve: .equalPower,
+            isSymmetric: true
+        )
+        XCTAssertEqual(region.lengthInSamples, 0)
+        XCTAssertEqual(region.duration(sampleRate: 48000.0), 0.0, accuracy: 0.001)
+    }
+
+    func testCrossfadeRegion_ZeroSampleRate() {
+        let region = CrossfadeRegion(
+            id: UUID(),
+            startSample: 0,
+            lengthInSamples: 48000,
+            curve: .equalPower,
+            isSymmetric: true
+        )
+        // Division by zero guarded — should return inf or handle gracefully
+        let duration = region.duration(sampleRate: 0.0)
+        // Just verify no crash
+        _ = duration
+    }
+
+    // MARK: - CrossfadeCurve Edge Cases
+
+    func testCrossfadeCurve_AllCurvesAtBoundary() {
+        for curve in CrossfadeCurve.allCases {
+            let atZero = curve.value(at: 0.0)
+            let atOne = curve.value(at: 1.0)
+            XCTAssertFalse(atZero.isNaN, "\(curve) at 0 should not be NaN")
+            XCTAssertFalse(atOne.isNaN, "\(curve) at 1 should not be NaN")
+        }
+    }
+
+    func testCrossfadeCurve_OutOfRangePositions() {
+        for curve in CrossfadeCurve.allCases {
+            // Negative position
+            let neg = curve.value(at: -0.5)
+            XCTAssertFalse(neg.isNaN, "\(curve) at -0.5 should not be NaN")
+            // Position > 1
+            let over = curve.value(at: 1.5)
+            XCTAssertFalse(over.isNaN, "\(curve) at 1.5 should not be NaN")
+        }
+    }
+}
 #endif

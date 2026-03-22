@@ -444,6 +444,10 @@ public final class BreakbeatChopper {
         }
 
         // Calculate average time between kicks (assuming 4/4)
+        guard slices.count > 0 else {
+            originalTempo = 170.0
+            return
+        }
         let avgSliceLength = slices.map { $0.lengthSamples }.reduce(0, +) / slices.count
         guard avgSliceLength > 0 else {
             originalTempo = 170.0

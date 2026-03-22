@@ -517,7 +517,7 @@ public final class DanteTransport {
         sapPacket.append(sdpData)
 
         let host = NWEndpoint.Host("224.2.127.254")
-        let port = NWEndpoint.Port(rawValue: 9875)!
+        guard let port = NWEndpoint.Port(rawValue: 9875) else { return }
         let connection = NWConnection(host: host, port: port, using: .udp)
         connection.start(queue: queue)
         connection.send(content: sapPacket, completion: .contentProcessed { _ in

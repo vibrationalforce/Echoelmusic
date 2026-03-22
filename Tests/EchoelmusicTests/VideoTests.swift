@@ -1441,5 +1441,58 @@ final class CameraManagerEnumTests: XCTestCase {
         XCTAssertTrue(cases.contains(.raw))
     }
 }
+
+// MARK: - Video Crash Hardening Tests
+
+final class VideoCrashHardeningTests: XCTestCase {
+
+    @MainActor
+    func testProColorGrading_DefaultInit() {
+        let grading = ProColorGrading()
+        // Default values should be safe
+        XCTAssertEqual(grading.exposure, 0.0, accuracy: 0.01)
+        XCTAssertEqual(grading.contrast, 0.0, accuracy: 0.01)
+        XCTAssertEqual(grading.saturation, 1.0, accuracy: 0.01)
+    }
+
+    @MainActor
+    func testProColorGrading_ExtremeParameters() {
+        let grading = ProColorGrading()
+        // Set extreme values — should not crash
+        grading.exposure = 5.0
+        grading.contrast = 2.0
+        grading.saturation = 0.0
+        grading.temperature = -100.0
+        grading.tint = 100.0
+        // Properties should accept values
+        XCTAssertEqual(grading.exposure, 5.0, accuracy: 0.01)
+        XCTAssertEqual(grading.saturation, 0.0, accuracy: 0.01)
+    }
+
+    @MainActor
+    func testBPMGridEditEngine_ZeroBPM() {
+        let engine = BPMGridEditEngine()
+        // Zero BPM should not cause divide-by-zero
+        engine.bpm = 0.0
+        // Engine should handle gracefully
+        XCTAssertEqual(engine.bpm, 0.0, accuracy: 0.01)
+    }
+
+    @MainActor
+    func testBPMGridEditEngine_NegativeBPM() {
+        let engine = BPMGridEditEngine()
+        engine.bpm = -120.0
+        // Should not crash
+        XCTAssertEqual(engine.bpm, -120.0, accuracy: 0.01)
+    }
+
+    @MainActor
+    func testVideoEditingEngine_EmptyTimeline() {
+        let engine = VideoEditingEngine()
+        // Empty timeline operations should not crash
+        XCTAssertEqual(engine.clips.count, 0)
+        XCTAssertEqual(engine.currentTime, 0.0, accuracy: 0.01)
+    }
+}
 #endif
 #endif

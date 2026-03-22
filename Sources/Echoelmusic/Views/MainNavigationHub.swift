@@ -330,6 +330,7 @@ struct MainNavigationHub: View {
             intervals.append(tapTempoTimes[i].timeIntervalSince(tapTempoTimes[i - 1]))
         }
 
+        guard !intervals.isEmpty else { return }
         let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
         guard avgInterval > 0 else { return }
 

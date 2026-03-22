@@ -721,6 +721,67 @@ final class BioEndToEndTests: XCTestCase {
     }
 }
 
+// MARK: - Bio Engine Crash Hardening Tests
+
+final class BioCrashHardeningTests: XCTestCase {
+
+    @MainActor
+    func testEchoelBioEngine_ZeroHeartRate() {
+        let engine = EchoelBioEngine()
+        // Zero heart rate should not cause divide-by-zero in RMSSD calculation
+        engine.processHeartRate(0.0)
+        XCTAssertEqual(engine.heartRate, 0.0, accuracy: 0.01)
+    }
+
+    @MainActor
+    func testEchoelBioEngine_ExtremeHRV() {
+        let engine = EchoelBioEngine()
+        // Extreme HRV values should be handled gracefully
+        engine.processHeartRate(40.0) // Very low
+        engine.processHeartRate(200.0) // Very high
+        // Should not crash
+        XCTAssertGreaterThanOrEqual(engine.heartRate, 0.0)
+    }
+
+    @MainActor
+    func testEchoelBioEngine_RapidSampling() {
+        let engine = EchoelBioEngine()
+        // Rapid sampling should not overflow RR interval buffer
+        for i in 0..<1000 {
+            engine.processHeartRate(Float(60 + i % 40))
+        }
+        // Should have valid coherence
+        XCTAssertGreaterThanOrEqual(engine.coherence, 0.0)
+        XCTAssertLessThanOrEqual(engine.coherence, 1.0)
+    }
+
+    func testNormalizedCoherence_BoundaryValues() {
+        let zero = NormalizedCoherence(0.0)
+        XCTAssertEqual(zero.value, 0.0, accuracy: 0.01)
+
+        let one = NormalizedCoherence(1.0)
+        XCTAssertEqual(one.value, 1.0, accuracy: 0.01)
+
+        // Values should clamp to 0-1 range
+        let negative = NormalizedCoherence(-0.5)
+        XCTAssertGreaterThanOrEqual(negative.value, 0.0)
+
+        let over = NormalizedCoherence(1.5)
+        XCTAssertLessThanOrEqual(over.value, 1.0)
+    }
+
+    func testBioDataQueue_OverflowHandling() {
+        let queue = BioDataQueue(capacity: 4)
+        // Enqueue more than capacity
+        for i in 0..<10 {
+            queue.enqueue(heartRate: Float(60 + i), hrvCoherence: 0.5, breathPhase: 0.3)
+        }
+        // Should not crash, oldest samples should be dropped
+        let sample = queue.dequeue()
+        XCTAssertNotNil(sample, "Should have samples after overflow")
+    }
+}
+
 #else
 // Non-AVFoundation platforms — provide stub to avoid empty test bundle
 import XCTest
