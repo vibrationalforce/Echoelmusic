@@ -249,7 +249,7 @@ public final class EchoelSyncProtocol {
 
     private init() {
         localPeerName = ProcessInfo.processInfo.hostName
-        localPeerIDBytes = localPeerID.uuid.0.withUnsafeBytes { ptr in
+        localPeerIDBytes = withUnsafeBytes(of: localPeerID.uuid) { ptr in
             // Use first 8 bytes of UUID
             var value: UInt64 = 0
             withUnsafeMutableBytes(of: &value) { dest in
@@ -394,9 +394,11 @@ public final class EchoelSyncProtocol {
         let params = NWParameters.udp
         params.includePeerToPeer = true
 
+        let listenPort: NWEndpoint.Port
         do {
-            guard let port = NWEndpoint.Port(rawValue: defaultPort) else { return }
-            listener = try NWListener(using: params, on: port)
+            guard let p = NWEndpoint.Port(rawValue: defaultPort) else { return }
+            listenPort = p
+            listener = try NWListener(using: params, on: listenPort)
         } catch {
             log.log(.error, category: .network, "Sync: Listener creation failed — \(error.localizedDescription)")
             return
@@ -419,7 +421,7 @@ public final class EchoelSyncProtocol {
         listener?.stateUpdateHandler = { state in
             switch state {
             case .ready:
-                log.log(.info, category: .network, "Sync: Listener ready on port \(port)")
+                log.log(.info, category: .network, "Sync: Listener ready on port \(listenPort)")
             case .failed(let error):
                 log.log(.error, category: .network, "Sync: Listener failed — \(error.localizedDescription)")
             default:

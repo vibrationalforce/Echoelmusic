@@ -222,7 +222,7 @@ public final class InterAppAudioEngine {
                     manufacturer: component.manufacturerName,
                     componentDescription: desc,
                     isInstrument: true,
-                    version: component.version
+                    version: UInt32(component.version)
                 ))
             }
 
@@ -234,7 +234,7 @@ public final class InterAppAudioEngine {
                     manufacturer: component.manufacturerName,
                     componentDescription: desc,
                     isInstrument: false,
-                    version: component.version
+                    version: UInt32(component.version)
                 ))
             }
 
@@ -606,16 +606,31 @@ public final class InterAppAudioEngine {
             return nil
         }
 
-        return await withCheckedContinuation { continuation in
-            node.auAudioUnit.requestViewController { viewController in
-                if let vc = viewController {
-                    log.info("Plugin UI loaded for: \(node.auAudioUnit.componentName ?? "unknown")", category: .audio)
-                    continuation.resume(returning: vc)
-                } else {
-                    log.info("Plugin provides no custom UI: \(node.auAudioUnit.componentName ?? "unknown")", category: .audio)
-                    continuation.resume(returning: nil)
+        // AUAudioUnit on iOS 26+ does not expose requestViewController directly.
+        // Use the AVAudioUnit's AUAudioUnit and perform selector-based fallback.
+        let auUnit = node.auAudioUnit
+        let name = auUnit.componentName ?? "unknown"
+
+        // Attempt to use the performSelector approach for backward compatibility
+        if auUnit.responds(to: NSSelectorFromString("requestViewControllerWithCompletionHandler:")) {
+            return await withCheckedContinuation { continuation in
+                let selector = NSSelectorFromString("requestViewControllerWithCompletionHandler:")
+                typealias CompletionBlock = @convention(block) (UIViewController?) -> Void
+                let block: CompletionBlock = { viewController in
+                    if let vc = viewController {
+                        log.info("Plugin UI loaded for: \(name)", category: .audio)
+                        continuation.resume(returning: vc)
+                    } else {
+                        log.info("Plugin provides no custom UI: \(name)", category: .audio)
+                        continuation.resume(returning: nil)
+                    }
                 }
+                let blockObj = unsafeBitCast(block, to: AnyObject.self)
+                _ = auUnit.perform(selector, with: blockObj)
             }
+        } else {
+            log.info("Plugin does not support requestViewController: \(name)", category: .audio)
+            return nil
         }
     }
     #endif

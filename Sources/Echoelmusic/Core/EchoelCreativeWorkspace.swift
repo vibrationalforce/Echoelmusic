@@ -452,7 +452,7 @@ final class EchoelCreativeWorkspace {
             cueSystem?.back()
         // Sequencer
         case "/echoelmusic/sequencer/start":
-            seqEngine?.start()
+            seqEngine?.play()
         case "/echoelmusic/sequencer/stop":
             seqEngine?.stop()
         // Visual mode

@@ -623,15 +623,20 @@ public final class NDISyphonEngine {
                     let g1 = Float(bgra[bgraOffset1 + 1])
                     let r1 = Float(bgra[bgraOffset1 + 2])
 
-                    let y0 = UInt8(clamping: Int(0.257 * r0 + 0.504 * g0 + 0.098 * b0 + 16))
-                    let y1 = UInt8(clamping: Int(0.257 * r1 + 0.504 * g1 + 0.098 * b1 + 16))
+                    // Break up expressions for Swift compiler performance
+                    let luma0: Float = 0.257 * r0 + 0.504 * g0 + 0.098 * b0 + 16
+                    let luma1: Float = 0.257 * r1 + 0.504 * g1 + 0.098 * b1 + 16
+                    let y0 = UInt8(clamping: Int(luma0))
+                    let y1 = UInt8(clamping: Int(luma1))
 
                     let rAvg = (r0 + r1) * 0.5
                     let gAvg = (g0 + g1) * 0.5
                     let bAvg = (b0 + b1) * 0.5
 
-                    let u = UInt8(clamping: Int(-0.148 * rAvg - 0.291 * gAvg + 0.439 * bAvg + 128))
-                    let v = UInt8(clamping: Int(0.439 * rAvg - 0.368 * gAvg - 0.071 * bAvg + 128))
+                    let uVal: Float = -0.148 * rAvg - 0.291 * gAvg + 0.439 * bAvg + 128
+                    let vVal: Float = 0.439 * rAvg - 0.368 * gAvg - 0.071 * bAvg + 128
+                    let u = UInt8(clamping: Int(uVal))
+                    let v = UInt8(clamping: Int(vVal))
 
                     let uyvyOffset = (y * width + x) * 2
                     uyvy[uyvyOffset] = u
@@ -657,14 +662,15 @@ public final class NDISyphonEngine {
             let yPlane = nv12Base.assumingMemoryBound(to: UInt8.self)
             let uvPlane = yPlane.advanced(by: ySize)
 
-            // Y plane
+            // Y plane — break up expressions for compiler performance
             for y in 0..<height {
                 for x in 0..<width {
                     let offset = (y * width + x) * 4
                     let b = Float(bgra[offset])
                     let g = Float(bgra[offset + 1])
                     let r = Float(bgra[offset + 2])
-                    yPlane[y * width + x] = UInt8(clamping: Int(0.257 * r + 0.504 * g + 0.098 * b + 16))
+                    let luma: Float = 0.257 * r + 0.504 * g + 0.098 * b + 16
+                    yPlane[y * width + x] = UInt8(clamping: Int(luma))
                 }
             }
 
@@ -676,8 +682,10 @@ public final class NDISyphonEngine {
                     let g = Float(bgra[offset + 1])
                     let r = Float(bgra[offset + 2])
 
-                    let u = UInt8(clamping: Int(-0.148 * r - 0.291 * g + 0.439 * b + 128))
-                    let v = UInt8(clamping: Int(0.439 * r - 0.368 * g - 0.071 * b + 128))
+                    let uVal: Float = -0.148 * r - 0.291 * g + 0.439 * b + 128
+                    let vVal: Float = 0.439 * r - 0.368 * g - 0.071 * b + 128
+                    let u = UInt8(clamping: Int(uVal))
+                    let v = UInt8(clamping: Int(vVal))
 
                     let uvOffset = (y / 2) * width + x
                     uvPlane[uvOffset] = u
