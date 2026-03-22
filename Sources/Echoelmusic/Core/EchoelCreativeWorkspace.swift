@@ -227,7 +227,7 @@ final class EchoelCreativeWorkspace {
         // Do NOT start here — would lock into fallback mode before auth completes.
 
         isReady = true
-        log.info("Creative Workspace deferred setup complete (all 12 EchoelTools)", category: .system)
+        log.info("Creative Workspace deferred setup complete (12 EchoelTools + 9 production engines)", category: .system)
     }
 
     // MARK: - Bridges
