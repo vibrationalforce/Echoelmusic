@@ -250,6 +250,27 @@ targets:
         SUPPORTS_MACCATALYST: YES
     dependencies: []
 
+  # ===========================================================================
+  # UI Tests — App Store Screenshots
+  # ===========================================================================
+  EchoelmusicUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/EchoelmusicUITests
+        type: group
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echoelmusic.app.uitests
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        TEST_HOST: ""
+        TEST_TARGET_NAME: Echoelmusic
+    dependencies:
+      - target: Echoelmusic
+
 # =============================================================================
 # SCHEMES
 # =============================================================================
@@ -271,3 +292,15 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  EchoelmusicScreenshots:
+    build:
+      targets:
+        Echoelmusic: all
+        EchoelmusicUITests: [testing]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - EchoelmusicUITests

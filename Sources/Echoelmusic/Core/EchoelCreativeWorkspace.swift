@@ -120,6 +120,9 @@ final class EchoelCreativeWorkspace {
     /// Audio render buffer size in frames
     private let renderFrameCount: Int = 512
 
+    /// FFT for feeding visual engine with spectrum data
+    private let visualFFT = EchoelRealFFT(size: 1024, window: .hann)
+
     /// Notification observer token for sequencer step triggers.
     /// nonisolated(unsafe) for deinit cleanup (NSObjectProtocol is not Sendable).
     @ObservationIgnored
@@ -672,6 +675,17 @@ final class EchoelCreativeWorkspace {
 
         // Send to hardware output
         audioEngine.schedulePlayback(buffer: processedBuffer)
+
+        // Feed visual engine with audio FFT data (~60Hz, aligned with render loop)
+        #if canImport(Metal)
+        if let vis = visEngine, let masterData = processedBuffer.floatChannelData, processedBuffer.frameLength > 0 {
+            let count = Int(processedBuffer.frameLength)
+            let waveform = Array(UnsafeBufferPointer(start: masterData[0], count: count))
+            vis.updateWaveform(waveform)
+            let spectrum = visualFFT.forward(waveform).magnitudes
+            vis.updateSpectrum(spectrum)
+        }
+        #endif
     }
 }
 #endif

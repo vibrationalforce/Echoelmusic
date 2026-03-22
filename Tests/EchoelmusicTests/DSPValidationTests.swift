@@ -303,18 +303,18 @@ final class CellularCoherenceValidationTests: XCTestCase {
 
     /// High coherence → harmonic rules (90, 150, 60)
     func testHighCoherenceSelectsHarmonicRule() {
-        let cell = EchoelCellular(gridSize: 64, sampleRate: 48000)
+        let cell = EchoelCellular(cellCount: 64, sampleRate: 48000)
         cell.coherence = 1.0
-        let harmonicRules = CARule.harmonicRules
+        let harmonicRules = EchoelCellular.CARule.harmonicRules
         XCTAssertTrue(harmonicRules.contains(cell.rule),
                       "Coherence 1.0 should select a harmonic rule, got \(cell.rule)")
     }
 
     /// Low coherence → chaotic rules (110, 30)
     func testLowCoherenceSelectsChaoticRule() {
-        let cell = EchoelCellular(gridSize: 64, sampleRate: 48000)
+        let cell = EchoelCellular(cellCount: 64, sampleRate: 48000)
         cell.coherence = 0.0
-        let harmonicRules = CARule.harmonicRules
+        let harmonicRules = EchoelCellular.CARule.harmonicRules
         // At coherence 0, we expect either the first harmonic rule or a chaotic one
         // The exact behavior depends on the mapping, so just verify it's deterministic
         let rule1 = cell.rule
@@ -324,7 +324,7 @@ final class CellularCoherenceValidationTests: XCTestCase {
 
     /// Coherence sweep produces valid rules (no crash, no invalid state)
     func testCoherenceSweepProducesValidRules() {
-        let cell = EchoelCellular(gridSize: 64, sampleRate: 48000)
+        let cell = EchoelCellular(cellCount: 64, sampleRate: 48000)
         var seenRules = Set<UInt8>()
 
         for i in stride(from: Float(0), through: 1.0, by: 0.05) {

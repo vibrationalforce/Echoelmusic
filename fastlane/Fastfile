@@ -212,6 +212,59 @@ platform :ios do
       derived_data_path: "./build/DerivedData"
     )
   end
+
+  desc "Capture App Store screenshots"
+  lane :screenshots do
+    capture_screenshots(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "EchoelmusicScreenshots",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      concurrent_simulators: true,
+      override_status_bar: true,
+      dark_mode: false,
+      stop_after_first_error: false,
+      derived_data_path: "./build/DerivedData"
+    )
+  end
+
+  desc "Capture iPhone-only screenshots"
+  lane :screenshots_iphone do
+    capture_screenshots(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "EchoelmusicScreenshots",
+      devices: ["iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone SE (3rd generation)"],
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: false,
+      override_status_bar: true,
+      derived_data_path: "./build/DerivedData"
+    )
+  end
+
+  desc "Capture iPad-only screenshots"
+  lane :screenshots_ipad do
+    capture_screenshots(
+      project: "Echoelmusic.xcodeproj",
+      scheme: "EchoelmusicScreenshots",
+      devices: ["iPad Pro 13-inch (M4)", "iPad Pro 11-inch (M4)"],
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: false,
+      override_status_bar: true,
+      derived_data_path: "./build/DerivedData"
+    )
+  end
+
+  desc "Upload screenshots to App Store Connect"
+  lane :upload_screenshots do
+    api_key = setup_api_key
+    upload_to_app_store(
+      api_key: api_key,
+      skip_binary_upload: true,
+      skip_metadata: false,
+      screenshots_path: "./fastlane/screenshots",
+      overwrite_screenshots: true
+    )
+  end
 end
 
 # =============================================================================
