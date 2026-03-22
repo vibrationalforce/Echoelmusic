@@ -120,7 +120,8 @@ public enum ImmersiveLOD: Int, Comparable, Sendable {
 }
 
 /// Protocol for immersive engine capabilities (allows cross-platform stubs)
-public protocol ImmersiveEngineProtocol: AnyObject, Sendable {
+@MainActor
+public protocol ImmersiveEngineProtocol: AnyObject {
     var currentMode: ImmersiveMode { get }
     var isImmersiveActive: Bool { get }
     var bioState: SpatialBioState { get }

@@ -99,24 +99,24 @@ public enum EEGConnectionState: String, Sendable {
 
 private enum EEGServiceUUIDs {
     /// Muse 2 / Muse S primary service
-    static let museControl = CBUUID(string: "0000FE8D-0000-1000-8000-00805F9B34FB")
+    nonisolated(unsafe) static let museControl = CBUUID(string: "0000FE8D-0000-1000-8000-00805F9B34FB")
     /// NeuroSky TGAM module
-    static let neuroskyData = CBUUID(string: "0000FFE0-0000-1000-8000-00805F9B34FB")
+    nonisolated(unsafe) static let neuroskyData = CBUUID(string: "0000FFE0-0000-1000-8000-00805F9B34FB")
     /// OpenBCI Ganglion BLE service
-    static let openBCIGanglion = CBUUID(string: "FE84")
+    nonisolated(unsafe) static let openBCIGanglion = CBUUID(string: "FE84")
 
-    static let allServices: [CBUUID] = [museControl, neuroskyData, openBCIGanglion]
+    nonisolated(unsafe) static let allServices: [CBUUID] = [museControl, neuroskyData, openBCIGanglion]
 }
 
 private enum EEGCharacteristicUUIDs {
     /// Muse data stream characteristic
-    static let museEEGData = CBUUID(string: "273E0003-4C4D-454D-96BE-F03BAC821358")
+    nonisolated(unsafe) static let museEEGData = CBUUID(string: "273E0003-4C4D-454D-96BE-F03BAC821358")
     /// Muse control characteristic (start/stop streaming)
-    static let museControl = CBUUID(string: "273E0001-4C4D-454D-96BE-F03BAC821358")
+    nonisolated(unsafe) static let museControl = CBUUID(string: "273E0001-4C4D-454D-96BE-F03BAC821358")
     /// NeuroSky raw data
-    static let neuroskyRawData = CBUUID(string: "0000FFE1-0000-1000-8000-00805F9B34FB")
+    nonisolated(unsafe) static let neuroskyRawData = CBUUID(string: "0000FFE1-0000-1000-8000-00805F9B34FB")
     /// OpenBCI Ganglion data
-    static let openBCIData = CBUUID(string: "2D30C082-F39F-4CE6-923F-3484EA480596")
+    nonisolated(unsafe) static let openBCIData = CBUUID(string: "2D30C082-F39F-4CE6-923F-3484EA480596")
 }
 
 // MARK: - Thread-Safe Circular Buffer
