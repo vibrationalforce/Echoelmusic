@@ -188,8 +188,8 @@ public final class NDISyphonEngine {
 
     #if canImport(Metal)
     private var metalDevice: MTLDevice?
-    private var conversionBuffer: UnsafeMutableRawPointer?
-    private var conversionBufferSize: Int = 0
+    nonisolated(unsafe) private var conversionBuffer: UnsafeMutableRawPointer?
+    nonisolated(unsafe) private var conversionBufferSize: Int = 0
     #endif
 
     private let streamQueue = DispatchQueue(

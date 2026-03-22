@@ -634,10 +634,11 @@ public final class EEGSensorBridge: NSObject {
 
 // MARK: - CBCentralManagerDelegate
 
-extension EEGSensorBridge: CBCentralManagerDelegate {
+extension EEGSensorBridge: @preconcurrency CBCentralManagerDelegate {
     public nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        let state = central.state
         Task { @MainActor in
-            switch central.state {
+            switch state {
             case .poweredOn:
                 log.log(.info, category: .biofeedback, "EEG: Bluetooth powered on")
                 if connectionState == .scanning {
@@ -664,19 +665,23 @@ extension EEGSensorBridge: CBCentralManagerDelegate {
         rssi RSSI: NSNumber
     ) {
         let name = peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? "Unknown EEG"
+        let peripheralID = peripheral.identifier
+        nonisolated(unsafe) let capturedPeripheral = peripheral
         Task { @MainActor in
             // Avoid duplicates
-            guard !discoveredDevices.contains(where: { $0.peripheral.identifier == peripheral.identifier }) else { return }
-            discoveredDevices.append((name: name, peripheral: peripheral))
+            guard !discoveredDevices.contains(where: { $0.peripheral.identifier == peripheralID }) else { return }
+            discoveredDevices.append((name: name, peripheral: capturedPeripheral))
             log.log(.info, category: .biofeedback, "EEG: Discovered \(name) (RSSI: \(RSSI))")
         }
     }
 
     public nonisolated func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        let pName = peripheral.name ?? "EEG Device"
+        nonisolated(unsafe) let capturedPeripheral = peripheral
         Task { @MainActor in
             connectionState = .connected
-            deviceName = peripheral.name ?? "EEG Device"
-            peripheral.discoverServices(EEGServiceUUIDs.allServices)
+            deviceName = pName
+            capturedPeripheral.discoverServices(EEGServiceUUIDs.allServices)
             log.log(.info, category: .biofeedback, "EEG: Connected to \(deviceName)")
         }
     }
@@ -698,10 +703,13 @@ extension EEGSensorBridge: CBCentralManagerDelegate {
 
 // MARK: - CBPeripheralDelegate
 
-extension EEGSensorBridge: CBPeripheralDelegate {
+extension EEGSensorBridge: @preconcurrency CBPeripheralDelegate {
     public nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        nonisolated(unsafe) let capturedPeripheral = peripheral
+        let services = peripheral.services
+        let err = error
         Task { @MainActor in
-            guard let services = peripheral.services, error == nil else {
+            guard let services, err == nil else {
                 log.log(.error, category: .biofeedback, "EEG: Service discovery failed — \(error?.localizedDescription ?? "unknown")")
                 return
             }
@@ -723,14 +731,16 @@ extension EEGSensorBridge: CBPeripheralDelegate {
             log.log(.info, category: .biofeedback, "EEG: Identified \(deviceType.rawValue) — \(snapshot.sampleRate)Hz, \(snapshot.activeChannels) channels")
 
             for service in services {
-                peripheral.discoverCharacteristics(nil, for: service)
+                capturedPeripheral.discoverCharacteristics(nil, for: service)
             }
         }
     }
 
     public nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        let characteristics = service.characteristics
+        let err = error
         Task { @MainActor in
-            guard let characteristics = service.characteristics, error == nil else { return }
+            guard let characteristics, err == nil else { return }
 
             for characteristic in characteristics {
                 switch characteristic.uuid {
