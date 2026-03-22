@@ -706,7 +706,7 @@ extension EEGSensorBridge: @preconcurrency CBCentralManagerDelegate {
 extension EEGSensorBridge: @preconcurrency CBPeripheralDelegate {
     public nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         nonisolated(unsafe) let capturedPeripheral = peripheral
-        let services = peripheral.services
+        nonisolated(unsafe) let services = peripheral.services
         let err = error
         Task { @MainActor in
             guard let services, err == nil else {
@@ -737,7 +737,7 @@ extension EEGSensorBridge: @preconcurrency CBPeripheralDelegate {
     }
 
     public nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        let characteristics = service.characteristics
+        nonisolated(unsafe) let characteristics = service.characteristics
         let err = error
         Task { @MainActor in
             guard let characteristics, err == nil else { return }
