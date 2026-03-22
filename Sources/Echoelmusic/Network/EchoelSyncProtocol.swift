@@ -472,17 +472,16 @@ public final class EchoelSyncProtocol {
     }
 
     private nonisolated func receiveLoop(connection: NWConnection, peerID: UUID) {
-        nonisolated(unsafe) weak var weakSelf = self
-        nonisolated(unsafe) let capturedConnection = connection
-        connection.receiveMessage { data, _, _, error in
-            if let data = data {
-                let capturedData = data
-                Task { @MainActor in
-                    weakSelf?.handleReceivedData(capturedData, from: peerID)
+        connection.receiveMessage { [weak self] data, _, _, error in
+            if let data {
+                DispatchQueue.main.async { [weak self] in
+                    MainActor.assumeIsolated {
+                        self?.handleReceivedData(data, from: peerID)
+                    }
                 }
             }
             if error == nil {
-                weakSelf?.receiveLoop(connection: capturedConnection, peerID: peerID)
+                self?.receiveLoop(connection: connection, peerID: peerID)
             }
         }
     }
