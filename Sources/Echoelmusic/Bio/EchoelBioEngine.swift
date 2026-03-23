@@ -60,6 +60,8 @@ public enum BioDataSource: String, Sendable {
     case healthKit = "HealthKit"
     case appleWatch = "Apple Watch"
     case chestStrap = "Chest Strap"
+    case camera = "Camera rPPG"
+    case ouraRing = "Oura Ring"
     case arkit = "ARKit Face"
     case microphone = "Microphone"
     case fallback = "Simulated"
@@ -502,6 +504,8 @@ public struct BioStatusView: View {
     private var sourceLabel: String {
         switch bio.dataSource {
         case .healthKit, .appleWatch, .chestStrap: return "HK"
+        case .camera: return "CAM"
+        case .ouraRing: return "OURA"
         case .arkit: return "AR"
         case .microphone: return "MIC"
         case .fallback: return "OFF"
@@ -511,6 +515,8 @@ public struct BioStatusView: View {
     private var sourceColor: Color {
         switch bio.dataSource {
         case .healthKit, .appleWatch, .chestStrap: return .green
+        case .camera: return EchoelBrand.sky
+        case .ouraRing: return EchoelBrand.violet
         case .arkit: return .blue
         case .microphone: return .orange
         case .fallback: return .gray
@@ -548,6 +554,8 @@ public enum BioDataSource: String, Sendable {
     case healthKit = "HealthKit"
     case appleWatch = "Apple Watch"
     case chestStrap = "Chest Strap"
+    case camera = "Camera rPPG"
+    case ouraRing = "Oura Ring"
     case arkit = "ARKit Face"
     case microphone = "Microphone"
     case fallback = "Simulated"

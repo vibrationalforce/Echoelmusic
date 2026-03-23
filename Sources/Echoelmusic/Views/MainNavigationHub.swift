@@ -10,22 +10,54 @@ struct MainNavigationHub: View {
     @Environment(ThemeManager.self) var themeManager
 
     @State private var showSettings = false
+    @State private var showStudio = false
     @State private var recordingError: String?
 
     var body: some View {
         VStack(spacing: 0) {
-            topBar
+            if showStudio {
+                // Full studio mode
+                VStack(spacing: 0) {
+                    topBar
 
-            // Unified studio workspace
-            EchoelStudioView()
-                .environment(audioEngine)
-                .environment(recordingEngine)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    EchoelStudioView()
+                        .environment(audioEngine)
+                        .environment(recordingEngine)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Transport bar (shared)
-            transportBar
+                    transportBar
+                }
+            } else {
+                // Bio Music — the main experience
+                BioMusicView()
+            }
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
+        .overlay(alignment: .topTrailing) {
+            // Toggle between Bio Music and Studio
+            Button {
+                showStudio.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: showStudio ? "heart.fill" : "slider.horizontal.3")
+                        .font(.system(size: 12, weight: .medium))
+                    Text(showStudio ? "Bio Music" : "Studio")
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .padding(.horizontal, EchoelSpacing.sm)
+                .padding(.vertical, EchoelSpacing.xs)
+                .background(EchoelBrand.bgElevated)
+                .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.sm))
+                .overlay(
+                    RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                        .stroke(EchoelBrand.border, lineWidth: 1)
+                )
+                .foregroundStyle(EchoelBrand.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, EchoelSpacing.md)
+            .padding(.top, EchoelSpacing.xs)
+        }
         .sheet(isPresented: $showSettings) {
             EchoelSettingsView()
                 .environment(themeManager)
@@ -728,6 +760,8 @@ private struct BioFeedbackIndicatorView: View {
         guard isAudioRunning else { return "OFF" }
         switch bio.dataSource {
         case .healthKit, .appleWatch, .chestStrap: return "HK"
+        case .camera: return "CAM"
+        case .ouraRing: return "OURA"
         case .arkit: return "AR"
         case .microphone: return "MIC"
         case .fallback: return "SIM"
@@ -738,6 +772,8 @@ private struct BioFeedbackIndicatorView: View {
         guard isAudioRunning else { return EchoelBrand.textDisabled }
         switch bio.dataSource {
         case .healthKit, .appleWatch, .chestStrap: return EchoelBrand.emerald
+        case .camera: return EchoelBrand.sky
+        case .ouraRing: return EchoelBrand.violet
         case .arkit: return EchoelBrand.sky
         case .microphone: return EchoelBrand.amber
         case .fallback: return EchoelBrand.textSecondary
