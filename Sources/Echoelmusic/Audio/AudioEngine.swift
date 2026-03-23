@@ -214,8 +214,9 @@ public final class AudioEngine {
             }
         }
 
-        // Prepare engine (pre-allocates buffers)
-        masterEngine.prepare()
+        // NOTE: Do NOT call masterEngine.prepare() here.
+        // Source nodes are attached after init via connectToMasterEngine().
+        // prepare() is called in start() after the full graph is wired.
         log.audio("Master AVAudioEngine graph: playerNode → masterMixer → mainMixer → outputNode → hardware")
     }
 
@@ -230,6 +231,8 @@ public final class AudioEngine {
     func start() {
         // Start master audio engine — this is required for ANY audio output
         if !masterEngine.isRunning {
+            // Re-prepare after any graph modifications (source node attachments)
+            masterEngine.prepare()
             do {
                 try masterEngine.start()
                 log.audio("Master AVAudioEngine started — audio output active")
