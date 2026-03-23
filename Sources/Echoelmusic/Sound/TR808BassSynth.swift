@@ -330,20 +330,23 @@ public final class TR808BassSynth {
         log.audio("TR808BassSynth: source node created (not yet attached to master engine)")
     }
 
-    /// Connect to master AudioEngine and attach source node immediately.
-    /// Must be called BEFORE audioEngine.start() to avoid modifying a running graph.
+    /// Store reference to the master AudioEngine. Source node is attached lazily on first noteOn.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-        guard !isAttachedToMaster, let source = sourceNode else { return }
+    }
+
+    private func ensureAttachedToMaster() {
+        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
         engine.attachSourceNode(source)
         isAttachedToMaster = true
-        log.audio("TR808BassSynth: source node attached to master engine (eager)")
+        log.audio("TR808BassSynth: source node attached to master engine")
     }
 
     // MARK: - Public API
 
     /// Start the synthesizer
     public func start() {
+        ensureAttachedToMaster()
         masterAudioEngine?.start()
         isPlaying = true
     }
@@ -362,10 +365,7 @@ public final class TR808BassSynth {
 
     /// Trigger a note with velocity
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        guard isAttachedToMaster else {
-            log.audio("TR808BassSynth.noteOn: not attached — ignoring", level: .warning)
-            return
-        }
+        ensureAttachedToMaster()
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }

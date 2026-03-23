@@ -214,9 +214,8 @@ public final class AudioEngine {
             }
         }
 
-        // NOTE: Do NOT call masterEngine.prepare() here.
-        // Source nodes are attached after init via connectToMasterEngine().
-        // prepare() is called in start() after the full graph is wired.
+        // Prepare engine (pre-allocates buffers)
+        masterEngine.prepare()
         log.audio("Master AVAudioEngine graph: playerNode → masterMixer → mainMixer → outputNode → hardware")
     }
 
@@ -231,8 +230,6 @@ public final class AudioEngine {
     func start() {
         // Start master audio engine — this is required for ANY audio output
         if !masterEngine.isRunning {
-            // Re-prepare after any graph modifications (source node attachments)
-            masterEngine.prepare()
             do {
                 try masterEngine.start()
                 log.audio("Master AVAudioEngine started — audio output active")
@@ -473,29 +470,46 @@ public final class AudioEngine {
     /// This routes the generator's output through masterMixer → mainMixerNode → hardware.
     /// All sound generators MUST use this instead of creating private AVAudioEngines.
     ///
+    /// Safe to call while engine is running — pauses during graph mutation to prevent
+    /// EXC_BREAKPOINT crashes from concurrent render thread access during node attachment.
+    ///
     /// - Parameter sourceNode: The generator node to attach
     func attachSourceNode(_ sourceNode: AVAudioSourceNode) {
-        // Use the masterMixer's input format to avoid sample rate / channel mismatch.
-        // After attach, the sourceNode's outputFormat reflects the engine's native format.
+        // Pause engine during graph modification. AVAudioEngine can crash
+        // (EXC_BREAKPOINT in AudioToolbox) if attach/connect is called
+        // while the render thread is actively pulling audio buffers.
+        let wasRunning = masterEngine.isRunning
+        if wasRunning {
+            masterEngine.pause()
+        }
+
         masterEngine.attach(sourceNode)
         let format = sourceNode.outputFormat(forBus: 0)
 
         // Guard against invalid format (0 Hz can happen before audio session is active)
-        guard format.sampleRate > 0, format.channelCount > 0 else {
+        if format.sampleRate > 0, format.channelCount > 0 {
+            masterEngine.connect(sourceNode, to: masterMixer, format: format)
+            log.audio("Source node attached to master engine (\(format.sampleRate)Hz, \(format.channelCount)ch)")
+        } else {
             // Fallback: use masterMixer's output format
             let fallback = masterMixer.outputFormat(forBus: 0)
-            guard fallback.sampleRate > 0, fallback.channelCount > 0 else {
+            if fallback.sampleRate > 0, fallback.channelCount > 0 {
+                masterEngine.connect(sourceNode, to: masterMixer, format: fallback)
+                log.audio("Source node attached to master engine (fallback format: \(fallback.sampleRate)Hz)")
+            } else {
                 log.audio("Cannot attach source node — no valid audio format available", level: .error)
                 masterEngine.detach(sourceNode)
-                return
             }
-            masterEngine.connect(sourceNode, to: masterMixer, format: fallback)
-            log.audio("Source node attached to master engine (fallback format: \(fallback.sampleRate)Hz)")
-            return
         }
 
-        masterEngine.connect(sourceNode, to: masterMixer, format: format)
-        log.audio("Source node attached to master engine (\(format.sampleRate)Hz, \(format.channelCount)ch)")
+        // Restart engine if it was running before graph modification
+        if wasRunning {
+            do {
+                try masterEngine.start()
+            } catch {
+                log.audio("Failed to restart engine after source node attachment: \(error)", level: .error)
+            }
+        }
     }
 
     /// Detach a previously attached source node from the master engine.
