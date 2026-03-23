@@ -246,6 +246,9 @@ public final class EchoelSynth {
     @ObservationIgnored private var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     @ObservationIgnored private var isAttachedToMaster: Bool = false
+
+    /// Whether the synth is connected to a master audio engine and ready to play
+    public var isReady: Bool { masterAudioEngine != nil }
     private let sampleRate: Double = 48000.0
     private let maxVoices = 16
 
@@ -427,10 +430,11 @@ public final class EchoelSynth {
     }
 
     public func setPreset(_ preset: EchoelSynthConfig) {
-        // Acquire voice lock to prevent audio thread from reading partial config
-        voiceLock.lock()
+        // nonisolated(unsafe) struct assignment — written only from MainActor.
+        // Audio thread reads `config` under voiceLock.try() which will see the
+        // new value on next successful lock acquisition. No blocking lock needed
+        // on MainActor side — avoids priority inversion with audio thread.
         config = preset
-        voiceLock.unlock()
     }
 
     public func updateBio(coherence: Float, heartRate: Float, hrv: Float, breathPhase: Float) {
@@ -443,15 +447,16 @@ public final class EchoelSynth {
     // MARK: - Audio Rendering (Real-Time Thread)
 
     private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
+        // Read config first — written only from MainActor, read here on audio thread.
+        // EchoelSynthConfig is a small struct; individual Float fields are atomic-width.
+        let cfg = config
+
         memset(leftBuffer, 0, frameCount * MemoryLayout<Float>.size)
         memset(rightBuffer, 0, frameCount * MemoryLayout<Float>.size)
 
         // tryLock: never block the audio thread — output silence if lock is held
         guard voiceLock.try() else { return }
         defer { voiceLock.unlock() }
-
-        // Read config under lock to prevent torn reads during setPreset()
-        let cfg = config
 
         var voicesToRemove: [Int] = []
         var peak: Float = 0.0

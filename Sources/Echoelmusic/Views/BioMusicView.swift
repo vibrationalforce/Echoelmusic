@@ -3,20 +3,16 @@ import SwiftUI
 
 // MARK: - Generative Music Engine
 
-/// Manages bio-reactive generative music playback.
-/// Chord progressions, arpeggiation speed, and timbre respond to coherence/HRV/HR.
+/// Bio-reactive generative music. Chords + arpeggio respond to coherence/HRV/HR.
 ///
-/// Musical design:
-/// - High coherence → major/lydian chords, slow arpeggios, warm timbre
-/// - Low coherence  → minor/sparse, faster arpeggios, brighter timbre
-/// - HR modulates vibrato subtly
-/// - Breath phase shapes amplitude (swell on inhale)
+/// High coherence → major chords, slow arpeggios, warm timbre
+/// Low coherence  → minor chords, faster arpeggios, brighter timbre
 @MainActor
 @Observable
 final class BioMusicEngine {
     var isPlaying = false
-    var currentChordIndex = 0
     var activeNotes: [Int] = []
+    var currentChordIndex = 0
 
     private var arpTimer: Timer?
     private var bioFeedTimer: Timer?
@@ -25,67 +21,65 @@ final class BioMusicEngine {
     private var arpIndex = 0
 
     private let bio = EchoelBioEngine.shared
-    private let synth = EchoelSynth.shared
 
-    // Chord voicings — root position, close voicing for warmth
-    // High coherence: Cmaj9, Fmaj7, Am7, G6 (warm, resolved)
     private let warmChords: [[Int]] = [
-        [48, 52, 55, 59, 62],   // Cmaj9   (C E G B D)
-        [53, 57, 60, 64],       // Fmaj7   (F A C E)
-        [57, 60, 64, 67],       // Am7     (A C E G)
-        [55, 59, 62, 66],       // G6/9    (G B D F#)
+        [48, 52, 55, 59, 62],   // Cmaj9
+        [53, 57, 60, 64],       // Fmaj7
+        [57, 60, 64, 67],       // Am7
+        [55, 59, 62, 66],       // G6/9
     ]
 
-    // Low coherence: Cm9, Fm7, Abmaj7, Gm7 (darker, unresolved)
     private let coolChords: [[Int]] = [
-        [48, 51, 55, 58, 62],   // Cm9     (C Eb G Bb D)
-        [53, 56, 60, 63],       // Fm7     (F Ab C Eb)
-        [56, 60, 63, 67],       // Abmaj7  (Ab C Eb G)
-        [55, 58, 62, 65],       // Gm7     (G Bb D F)
+        [48, 51, 55, 58, 62],   // Cm9
+        [53, 56, 60, 63],       // Fm7
+        [56, 60, 63, 67],       // Abmaj7
+        [55, 58, 62, 65],       // Gm7
     ]
-
-    // MARK: - Playback Control
 
     func start() {
         guard !isPlaying else { return }
-        isPlaying = true
 
-        // Warm pad preset — long attack, big stereo, chorus
+        let synth = EchoelSynth.shared
+
+        // Verify synth is connected before playing
+        guard synth.isReady else {
+            log.log(.error, category: .audio, "BioMusicEngine: synth not connected to audio engine")
+            return
+        }
+
+        isPlaying = true
+        arpIndex = 0
+        currentChordIndex = 0
+
         synth.setPreset(.warmPad)
 
-        // Start arpeggiator
-        scheduleArp()
+        // Small delay to let preset apply before first note
+        arpTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.isPlaying else { return }
+                self.playNextArpNote()
+                self.scheduleArp()
+            }
+        }
 
-        // Chord changes every ~4 seconds
         chordTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.advanceChord()
             }
         }
 
-        // Bio → synth parameter feed at 15 Hz
         bioFeedTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 15.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.feedBio()
             }
         }
-
-        // Play first chord immediately
-        advanceChord()
     }
 
     func stop() {
-        guard isPlaying else { return }
         isPlaying = false
+        invalidateTimers()
 
-        arpTimer?.invalidate()
-        arpTimer = nil
-        chordTimer?.invalidate()
-        chordTimer = nil
-        bioFeedTimer?.invalidate()
-        bioFeedTimer = nil
-
-        // Gentle release — noteOff triggers ADSR release (2s for pad)
+        let synth = EchoelSynth.shared
         for note in activeNotes {
             synth.noteOff(note: note)
         }
@@ -121,36 +115,35 @@ final class BioMusicEngine {
         stopCameraFeed()
     }
 
-    // MARK: - Generative Logic
+    // MARK: - Private
+
+    private func invalidateTimers() {
+        arpTimer?.invalidate()
+        arpTimer = nil
+        chordTimer?.invalidate()
+        chordTimer = nil
+        bioFeedTimer?.invalidate()
+        bioFeedTimer = nil
+    }
 
     private func advanceChord() {
         guard isPlaying else { return }
-
-        let coherence = bio.smoothCoherence
-        let chords = coherence > 0.5 ? warmChords : coolChords
-
+        let chords = bio.smoothCoherence > 0.5 ? warmChords : coolChords
         currentChordIndex = (currentChordIndex + 1) % chords.count
         arpIndex = 0
-
-        // Reschedule arp with new chord + tempo
         scheduleArp()
     }
 
     private func scheduleArp() {
         arpTimer?.invalidate()
-
-        // Arp speed: high coherence = slow (meditative), low = faster (restless)
         let coherence = bio.smoothCoherence
-        let interval = max(0.2, min(0.8, 0.8 - coherence * 0.5))
+        let interval = max(0.25, min(0.8, 0.8 - coherence * 0.5))
 
         arpTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.playNextArpNote()
             }
         }
-
-        // Play first note immediately
-        playNextArpNote()
     }
 
     private func playNextArpNote() {
@@ -160,29 +153,26 @@ final class BioMusicEngine {
         let hrv = Float(bio.smoothHRV)
         let chords = coherence > 0.5 ? warmChords : coolChords
         let chord = chords[currentChordIndex % chords.count]
-
         guard !chord.isEmpty else { return }
 
-        // Release previous arp note (keep previous one ringing for overlap)
-        if activeNotes.count > 2 {
+        // Release oldest note if too many active (keep max 3 ringing)
+        while activeNotes.count > 2 {
             let oldest = activeNotes.removeFirst()
-            synth.noteOff(note: oldest)
+            EchoelSynth.shared.noteOff(note: oldest)
         }
 
-        // Pick note from chord — ascending arpeggio
         let note = chord[arpIndex % chord.count]
         arpIndex += 1
 
-        // Velocity shaped by HRV: higher HRV = gentler touch
-        let velocity = max(0.25, min(0.85, Float(0.35 + hrv * 0.4)))
-        synth.noteOn(note: note, velocity: velocity)
+        let velocity = max(0.2, min(0.85, Float(0.35 + hrv * 0.4)))
+        EchoelSynth.shared.noteOn(note: note, velocity: velocity)
         activeNotes.append(note)
     }
 
     private func feedBio() {
         guard isPlaying else { return }
         let params = bio.audioParameters()
-        synth.updateBio(
+        EchoelSynth.shared.updateBio(
             coherence: params.coherence,
             heartRate: params.heartRate,
             hrv: params.hrv,
@@ -193,55 +183,40 @@ final class BioMusicEngine {
 
 // MARK: - BioMusicView
 
-/// Heartbeat → Music. One screen. Minimal.
-///
-/// Layout:
-/// - Top: source indicator (tiny)
-/// - Center: breathing coherence ring + HR
-/// - Bottom: play/stop + source tabs
 struct BioMusicView: View {
 
     @Bindable private var bio = EchoelBioEngine.shared
     @State private var engine = BioMusicEngine()
     @State private var cameraAnalyzer = CameraAnalyzer()
-    @State private var selectedSource = 0 // 0=watch, 1=camera, 2=oura
+    @State private var selectedSource = 0
 
     var body: some View {
         ZStack {
-            // Background — subtle coherence color wash
-            coherenceGradient
-                .ignoresSafeArea()
+            coherenceGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Status line
                 statusBar
                     .padding(.horizontal, EchoelSpacing.md)
                     .padding(.top, EchoelSpacing.sm)
 
                 Spacer()
 
-                // Central ring
                 breathingRing
-                    .frame(height: 260)
 
                 Spacer()
 
-                // Metrics row
                 metricsRow
                     .padding(.horizontal, EchoelSpacing.xl)
 
                 Spacer()
 
-                // Play
                 playControl
                     .padding(.bottom, EchoelSpacing.lg)
 
-                // Source tabs
                 sourceTabs
                     .padding(.horizontal, EchoelSpacing.md)
                     .padding(.bottom, EchoelSpacing.sm)
 
-                // Legal
                 Text("Not a medical device. For self-observation only.")
                     .font(.system(size: 8))
                     .foregroundStyle(Color.white.opacity(0.2))
@@ -255,10 +230,12 @@ struct BioMusicView: View {
 
     private var coherenceGradient: some View {
         let c = bio.smoothCoherence
-        let color: Color = c > 0.7 ? EchoelBrand.coherenceHigh : (c > 0.4 ? EchoelBrand.coherenceMedium : EchoelBrand.coherenceLow)
+        let tint: Color = c > 0.7 ? EchoelBrand.coherenceHigh
+            : c > 0.4 ? EchoelBrand.coherenceMedium
+            : EchoelBrand.coherenceLow
 
         return LinearGradient(
-            colors: [Color.black, color.opacity(engine.isPlaying ? 0.08 : 0)],
+            colors: [Color.black, tint.opacity(engine.isPlaying ? 0.08 : 0)],
             startPoint: .top,
             endPoint: .bottom
         )
@@ -310,19 +287,17 @@ struct BioMusicView: View {
             : EchoelBrand.coherenceLow
 
         return ZStack {
-            // Outer coherence arc
             Circle()
                 .stroke(Color.white.opacity(0.06), lineWidth: 2)
                 .frame(width: 220, height: 220)
 
             Circle()
-                .trim(from: 0, to: coherence)
+                .trim(from: 0, to: max(0, min(1, coherence)))
                 .stroke(ringColor.opacity(0.6), style: StrokeStyle(lineWidth: 2, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .frame(width: 220, height: 220)
                 .animation(.easeInOut(duration: 1.5), value: coherence)
 
-            // Inner breathing circle — scales with breath phase
             let breathScale = isConnected ? (0.85 + bio.smoothBreathPhase * 0.15) : 0.9
             Circle()
                 .fill(ringColor.opacity(engine.isPlaying ? 0.06 : 0.03))
@@ -330,19 +305,15 @@ struct BioMusicView: View {
                 .scaleEffect(breathScale)
                 .animation(.easeInOut(duration: 0.5), value: bio.smoothBreathPhase)
 
-            // Heart rate display
             VStack(spacing: 6) {
-                // Heart icon — pulses at heart rate
                 Image(systemName: "heart.fill")
                     .font(.system(size: 18))
                     .foregroundStyle(isConnected ? ringColor : Color.white.opacity(0.15))
 
-                // BPM number
                 Text(isConnected ? "\(Int(bio.smoothHeartRate))" : "—")
                     .font(.system(size: 56, weight: .ultraLight, design: .monospaced))
                     .foregroundStyle(Color.white.opacity(isConnected ? 0.9 : 0.2))
 
-                // Coherence percentage
                 if isConnected {
                     Text("\(Int(coherence * 100))% coherence")
                         .font(.system(size: 11, weight: .regular, design: .monospaced))
@@ -358,20 +329,17 @@ struct BioMusicView: View {
         HStack {
             metric(
                 value: isConnected ? String(format: "%.0f", bio.snapshot.hrvRMSSD) : "—",
-                unit: "ms",
-                label: "HRV"
+                unit: "ms", label: "HRV"
             )
             Spacer()
             metric(
                 value: isConnected ? String(format: "%.0f", bio.snapshot.breathRate) : "—",
-                unit: "/m",
-                label: "Breath"
+                unit: "/m", label: "Breath"
             )
             Spacer()
             metric(
                 value: engine.isPlaying ? "♪" : "—",
-                unit: "",
-                label: "Sound"
+                unit: "", label: "Sound"
             )
         }
     }
@@ -394,7 +362,7 @@ struct BioMusicView: View {
         }
     }
 
-    // MARK: - Play Control
+    // MARK: - Play
 
     private var playControl: some View {
         Button {
@@ -406,17 +374,13 @@ struct BioMusicView: View {
         } label: {
             ZStack {
                 Circle()
-                    .fill(engine.isPlaying
-                        ? Color.white.opacity(0.08)
-                        : Color.white.opacity(0.04))
+                    .fill(Color.white.opacity(engine.isPlaying ? 0.08 : 0.04))
                     .frame(width: 64, height: 64)
-
                 Circle()
                     .stroke(Color.white.opacity(engine.isPlaying ? 0.3 : 0.12), lineWidth: 1.5)
                     .frame(width: 64, height: 64)
-
                 Image(systemName: engine.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 22, weight: .regular))
+                    .font(.system(size: 22))
                     .foregroundStyle(Color.white.opacity(engine.isPlaying ? 0.8 : 0.5))
                     .offset(x: engine.isPlaying ? 0 : 1.5)
             }
@@ -466,15 +430,15 @@ struct BioMusicView: View {
         bio.stopStreaming()
 
         switch index {
-        case 0: // Apple Watch / HealthKit
+        case 0:
             Task {
                 _ = await bio.requestAuthorization()
                 bio.startStreaming()
             }
-        case 1: // Camera rPPG
+        case 1:
             cameraAnalyzer.startPulseDetection()
             engine.startCameraFeed(analyzer: cameraAnalyzer)
-        case 2: // Oura Ring
+        case 2:
             Task {
                 let client = OuraRingClient.shared
                 guard client.authState == .authenticated else { return }
