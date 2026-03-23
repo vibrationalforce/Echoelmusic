@@ -31,12 +31,16 @@ struct EchoelmusicApp: App {
                 .environment(themeManager)
                 .preferredColorScheme(themeManager.resolvedColorScheme)
                 .task {
-                    // PHASE 1: Wire audio FIRST so instruments respond immediately.
-                    // connectToMasterEngine is lightweight (stores a weak reference),
-                    // ensureAttachedToMaster does the actual attach on first noteOn.
+                    // PHASE 1: Attach ALL source nodes to the audio graph BEFORE starting.
+                    // connectToMasterEngine now eagerly attaches source nodes.
+                    // Attaching to a running engine can cause EXC_BREAKPOINT crashes.
                     EchoelSynth.shared.connectToMasterEngine(audioEngine)
                     EchoelBass.shared.connectToMasterEngine(audioEngine)
                     TR808BassSynth.shared.connectToMasterEngine(audioEngine)
+                    _ = EchoelBeat.shared  // init singleton before connecting
+                    EchoelBeat.shared.connectToMasterEngine(audioEngine)
+
+                    // Now start engine with full graph wired
                     audioEngine.start()
 
                     // PHASE 2: Deferred heavy init — workspace, orchestrator, bio.
@@ -44,12 +48,10 @@ struct EchoelmusicApp: App {
                     EchoelCreativeWorkspace.shared.deferredSetup()
 
                     _ = InstrumentOrchestrator.shared
-                    _ = EchoelBeat.shared
 
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
-                    EchoelBeat.shared.connectToMasterEngine(audioEngine)
 
                     // PHASE 3: HealthKit (async — waits for user permission dialog)
                     _ = await EchoelBioEngine.shared.requestAuthorization()

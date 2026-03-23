@@ -383,18 +383,14 @@ public final class EchoelBass {
         log.audio("EchoelBass: source node created (not yet attached to master engine)")
     }
 
-    /// Store reference to the master AudioEngine. Source node is attached lazily on first noteOn
-    /// to avoid modifying the engine graph during startup (which can crash).
+    /// Connect to master AudioEngine and attach source node immediately.
+    /// Must be called BEFORE audioEngine.start() to avoid modifying a running graph.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-    }
-
-    /// Attach source node to master engine on demand (first note trigger).
-    private func ensureAttachedToMaster() {
-        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
+        guard !isAttachedToMaster, let source = sourceNode else { return }
         engine.attachSourceNode(source)
         isAttachedToMaster = true
-        log.audio("EchoelBass: source node attached to master engine")
+        log.audio("EchoelBass: source node attached to master engine (eager)")
     }
 
     deinit {
@@ -423,9 +419,10 @@ public final class EchoelBass {
     }
 
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        // Lazy attach: first noteOn wires source node into master engine graph
-        ensureAttachedToMaster()
-        // Ensure master engine is running so audio reaches hardware
+        guard isAttachedToMaster else {
+            log.audio("EchoelBass.noteOn: not attached — ignoring", level: .warning)
+            return
+        }
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }
