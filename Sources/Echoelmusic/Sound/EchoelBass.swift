@@ -301,9 +301,9 @@ public final class EchoelBass {
 
     // MARK: - Audio Engine
 
-    /// Weak reference to the master AudioEngine — set via connectToMasterEngine().
-    /// All audio output routes through the master engine (no private AVAudioEngine).
-    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
+    /// Strong reference to the master AudioEngine — both are app-lifetime objects.
+    /// Weak ref caused nil crashes on scene transitions.
+    @ObservationIgnored private var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     /// Whether the source node is attached to the master engine
     @ObservationIgnored private var isAttachedToMaster: Bool = false

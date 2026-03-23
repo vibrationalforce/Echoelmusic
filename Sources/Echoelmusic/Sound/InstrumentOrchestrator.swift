@@ -35,14 +35,14 @@ final class InstrumentOrchestrator {
 
     // MARK: - Audio Engine
 
+    /// True only when the master AudioEngine is connected and ready for playback.
+    /// No local AVAudioEngine — all audio routes through the single master engine.
     private(set) var isEngineReady: Bool = false
-    @ObservationIgnored nonisolated(unsafe) private var audioEngine: AVAudioEngine?
-    @ObservationIgnored private var playerNode: AVAudioPlayerNode?
-    @ObservationIgnored private var mixerNode: AVAudioMixerNode?
 
-    /// Optional reference to main AudioEngine — when set, routes all playback through it
-    /// instead of using the local AVAudioEngine. Eliminates duplicate engine conflicts on iOS.
-    private weak var mainAudioEngine: AudioEngine?
+    /// Strong reference to master AudioEngine. Both are app-lifetime objects
+    /// (singleton + @State in App). Weak ref was causing nil-deref crashes
+    /// when SwiftUI re-evaluated state during scene phase changes.
+    private var masterEngine: AudioEngine?
 
     // MARK: - Sound Library
 
@@ -78,80 +78,29 @@ final class InstrumentOrchestrator {
     // MARK: - Initialization
 
     private init() {
-        setupAudioEngine()
         setupDefaultInstrument()
         connectToBioData()
 
-        log.audio("✅ InstrumentOrchestrator: Initialized")
-        log.audio("🎹 Available Instruments: \(soundLibrary.availableInstruments.count)")
-        log.audio("🎛️ Synthesis Engines: \(soundLibrary.availableSynthEngines.count)")
+        log.audio("InstrumentOrchestrator: Initialized (waiting for master AudioEngine)")
+        log.audio("  Instruments: \(soundLibrary.availableInstruments.count)")
+        log.audio("  Synth Engines: \(soundLibrary.availableSynthEngines.count)")
     }
 
     deinit {
-        // Remove stored observer token — removeObserver(self) was wrong because
-        // addObserver(forName:) returns a token, not self.
         if let observer = bioObserver {
             NotificationCenter.default.removeObserver(observer)
         }
-        audioEngine?.stop()
         cancellables.removeAll()
     }
 
-    // MARK: - Audio Engine Setup
+    // MARK: - Audio Engine Connection
 
-    private func setupAudioEngine() {
-        // Ensure AVAudioSession is configured before creating AVAudioEngine.
-        // On first launch the session may not be active yet (e.g. mic permission pending).
-        if !AudioConfiguration.isSessionConfigured {
-            do {
-                try AudioConfiguration.configureAudioSession()
-            } catch {
-                log.warning("InstrumentOrchestrator: AVAudioSession not ready, deferring engine start: \(error)", category: .audio)
-                return
-            }
-        }
-
-        audioEngine = AVAudioEngine()
-
-        guard let engine = audioEngine else {
-            log.audio("InstrumentOrchestrator: Failed to create AVAudioEngine")
-            return
-        }
-
-        // Create player node for synthesized audio
-        playerNode = AVAudioPlayerNode()
-        mixerNode = engine.mainMixerNode
-
-        guard let player = playerNode,
-              let mixer = mixerNode else { return }
-
-        // Attach player to engine
-        engine.attach(player)
-
-        // Connect player → mixer → output (SAFE: ohne force unwrap)
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: 48000, channels: 2) else {
-            log.audio("InstrumentOrchestrator: Failed to create audio format")
-            return
-        }
-        engine.connect(player, to: mixer, format: format)
-
-        // Engine is prepared but NOT started here — started via connectMainAudioEngine()
-        // or lazily on first use. Avoids competing with master AudioEngine at app launch.
-        isEngineReady = true
-        log.audio("InstrumentOrchestrator: audio engine prepared (deferred start)")
-    }
-
-    /// Connect to the main AudioEngine for unified audio output.
-    /// Stops the local AVAudioEngine and routes all playback through the main engine.
+    /// Connect to the master AudioEngine. All playback routes through this single engine.
+    /// No local AVAudioEngine is created — eliminates duplicate engine conflicts on iOS.
     func connectMainAudioEngine(_ engine: AudioEngine) {
-        self.mainAudioEngine = engine
-        // Stop local engine — we'll use main engine's schedulePlayback() instead
-        audioEngine?.stop()
-        audioEngine = nil
-        playerNode = nil
-        mixerNode = nil
+        self.masterEngine = engine
         isEngineReady = true
-        log.audio("InstrumentOrchestrator: Connected to main AudioEngine — unified audio path")
+        log.audio("InstrumentOrchestrator: Connected to master AudioEngine")
     }
 
     private func setupDefaultInstrument() {
@@ -224,75 +173,56 @@ final class InstrumentOrchestrator {
 
     /// Play a MIDI note
     func noteOn(midiNote: Int, velocity: Float = 0.8) {
-        guard isEngineReady, mainAudioEngine != nil || playerNode != nil else {
-            log.warning("InstrumentOrchestrator: Audio engine not ready, ignoring noteOn", category: .audio)
+        guard let engine = masterEngine, isEngineReady else {
+            log.warning("InstrumentOrchestrator: Master engine not connected, ignoring noteOn", category: .audio)
             return
         }
 
         guard let synthEngine = currentSynthEngine else {
-            log.audio("⚠️ No synthesis engine selected", level: .warning)
+            log.warning("InstrumentOrchestrator: No synthesis engine selected", category: .audio)
             return
         }
 
-        // Check polyphony limit
+        // Polyphony limit
         if activeVoices >= maxVoices {
-            // Steal oldest voice
             stealOldestVoice()
         }
 
-        // Calculate frequency from MIDI note
         let frequency = midiNoteToFrequency(midiNote)
-
-        // Apply bio-modulation to parameters
         let modulatedVelocity = velocity * (0.5 + bioCoherence * 0.5)
 
-        // Synthesize audio
-        let duration: Float = 2.0  // 2 seconds max
         let sampleRate: Float = 48000.0
         let samples = synthEngine.synthesize(
             frequency: frequency,
-            duration: duration,
+            duration: 2.0,
             sampleRate: sampleRate
         )
 
-        // Apply velocity envelope
         let envelopedSamples = applyVelocityEnvelope(samples, velocity: modulatedVelocity)
 
-        // Create audio buffer
-        if let buffer = createAudioBuffer(from: envelopedSamples, sampleRate: Double(sampleRate)) {
-            // Create voice
-            let voice = Voice(
-                id: UUID(),
-                midiNote: midiNote,
-                velocity: velocity,
-                startTime: Date().timeIntervalSince1970,
-                isActive: true,
-                audioBuffer: buffer
-            )
-            voices.append(voice)
-            activeVoices += 1
+        guard let buffer = createAudioBuffer(from: envelopedSamples, sampleRate: Double(sampleRate)) else {
+            log.warning("InstrumentOrchestrator: Failed to create audio buffer", category: .audio)
+            return
+        }
 
-            // Schedule playback — prefer main engine, fallback to local
-            if let mainEngine = mainAudioEngine {
-                mainEngine.schedulePlayback(buffer: buffer)
-                // schedulePlayback is fire-and-forget; mark voice finished on main thread
-                DispatchQueue.main.async { [weak self] in
-                    self?.voiceFinished(voice.id)
-                }
-            } else if let player = playerNode {
-                // AVAudioPlayerNode completion runs on audio thread —
-                // DispatchQueue.main.async avoids Swift 6 dispatch_assert_queue_fail
-                player.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
-                    DispatchQueue.main.async {
-                        self?.voiceFinished(voice.id)
-                    }
-                }
-                if !player.isPlaying {
-                    player.play()
-                }
-            }
+        let voice = Voice(
+            id: UUID(),
+            midiNote: midiNote,
+            velocity: velocity,
+            startTime: Date().timeIntervalSince1970,
+            isActive: true,
+            audioBuffer: buffer
+        )
+        voices.append(voice)
+        activeVoices += 1
 
-            log.audio("🎵 Note On: MIDI \(midiNote) @ \(Int(velocity * 100))% velocity")
+        // Single path: master engine → hardware
+        engine.schedulePlayback(buffer: buffer)
+
+        // Voice cleanup — schedulePlayback is fire-and-forget
+        let voiceId = voice.id
+        Task { @MainActor [weak self] in
+            self?.voiceFinished(voiceId)
         }
     }
 
@@ -307,10 +237,9 @@ final class InstrumentOrchestrator {
 
     /// Stop all notes
     func allNotesOff() {
-        playerNode?.stop()
         voices.removeAll()
         activeVoices = 0
-        log.audio("🛑 All Notes Off")
+        log.audio("All Notes Off")
     }
 
     // MARK: - Drum Playback (808/909 Style)
@@ -358,16 +287,9 @@ final class InstrumentOrchestrator {
             samples = buf
         }
 
-        guard let buffer = createAudioBuffer(from: samples, sampleRate: Double(sampleRate)) else { return }
-        if let mainEngine = mainAudioEngine {
-            mainEngine.schedulePlayback(buffer: buffer)
-        } else {
-            playerNode?.scheduleBuffer(buffer, at: nil, options: [])
-            if playerNode?.isPlaying == false {
-                playerNode?.play()
-            }
-        }
-        log.audio("Drum: \(drumType) @ \(Int(velocity * 100))%")
+        guard let buffer = createAudioBuffer(from: samples, sampleRate: Double(sampleRate)),
+              let engine = masterEngine else { return }
+        engine.schedulePlayback(buffer: buffer)
     }
 
     // MARK: - Dedicated Drum Synthesis

@@ -234,7 +234,8 @@ public final class ClipLauncherGrid {
 
     // MARK: - Audio
 
-    private var audioEngine: AVAudioEngine?
+    /// Master engine reference — all clip playback routes through this
+    private var masterEngine: AudioEngine?
     private var players: [UUID: AVAudioPlayerNode] = [:]
     private var playbackTimer: Timer?
 
@@ -264,7 +265,13 @@ public final class ClipLauncherGrid {
     }
 
     private func setupAudioEngine() {
-        audioEngine = AVAudioEngine()
+        // No-op: audio engine is connected via connectAudioEngine()
+    }
+
+    /// Connect to master AudioEngine for unified audio output.
+    public func connectAudioEngine(_ engine: AudioEngine) {
+        masterEngine = engine
+        log.audio("ClipLauncherGrid: Connected to master AudioEngine")
     }
 
     // MARK: - Playback Control
@@ -273,12 +280,6 @@ public final class ClipLauncherGrid {
     public func play() {
         isPlaying = true
         startPlaybackTimer()
-
-        do {
-            try audioEngine?.start()
-        } catch {
-            log.audio("Audio engine start failed: \(error)", level: .error)
-        }
     }
 
     /// Stop global playback
@@ -288,7 +289,6 @@ public final class ClipLauncherGrid {
         stopAllClips()
         currentBeat = 0
         currentBar = 1
-        audioEngine?.stop()
     }
 
     /// Toggle playback

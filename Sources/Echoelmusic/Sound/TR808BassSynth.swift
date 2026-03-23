@@ -247,7 +247,8 @@ public final class TR808BassSynth {
 
     // MARK: - Audio Engine
 
-    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
+    /// Strong ref — both are app-lifetime objects. Weak ref caused nil crashes.
+    @ObservationIgnored private var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     @ObservationIgnored private var isAttachedToMaster: Bool = false
     private let sampleRate: Double = 48000.0

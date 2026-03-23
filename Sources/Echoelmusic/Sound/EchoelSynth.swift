@@ -240,8 +240,10 @@ public final class EchoelSynth {
 
     // MARK: - Audio Engine
 
-    /// Weak reference to the master AudioEngine — set via connectToMasterEngine().
-    @ObservationIgnored private weak var masterAudioEngine: AudioEngine?
+    /// Strong reference to the master AudioEngine — set via connectToMasterEngine().
+    /// Both are app-lifetime objects (singleton + @State in App). Weak ref caused
+    /// nil-deref crashes when SwiftUI re-evaluated state during scene transitions.
+    @ObservationIgnored private var masterAudioEngine: AudioEngine?
     @ObservationIgnored private var sourceNode: AVAudioSourceNode?
     @ObservationIgnored private var isAttachedToMaster: Bool = false
     private let sampleRate: Double = 48000.0

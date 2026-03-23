@@ -287,7 +287,9 @@ public final class BreakbeatChopper {
 
     // MARK: - Audio Engine
 
-    @ObservationIgnored private let audioEngine = AVAudioEngine()
+    /// Master engine reference — when set, slice playback routes through it
+    private var masterEngine: AudioEngine?
+    @ObservationIgnored private var localAudioEngine: AVAudioEngine?
     @ObservationIgnored private let playerNode = AVAudioPlayerNode()
     @ObservationIgnored nonisolated(unsafe) private var playbackTimer: Timer?
 
@@ -309,10 +311,20 @@ public final class BreakbeatChopper {
         // AVAudioEngine/AVAudioPlayerNode stop automatically on deallocation
     }
 
+    /// Connect to master AudioEngine for unified audio output.
+    func connectAudioEngine(_ engine: AudioEngine) {
+        masterEngine = engine
+        localAudioEngine?.stop()
+        localAudioEngine = nil
+        log.info("BreakbeatChopper: Connected to master AudioEngine", category: .audio)
+    }
+
     private func setupAudioEngine() {
-        audioEngine.attach(playerNode)
-        audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: nil)
-        audioEngine.prepare()
+        let engine = AVAudioEngine()
+        localAudioEngine = engine
+        engine.attach(playerNode)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: nil)
+        engine.prepare()
     }
 
     private func createDefaultPatterns() {
@@ -747,8 +759,14 @@ public final class BreakbeatChopper {
     func play() throws {
         guard !isPlaying else { return }
 
-        try audioEngine.start()
-        playerNode.play()
+        if masterEngine == nil {
+            guard let engine = localAudioEngine else {
+                log.warning("BreakbeatChopper: No audio engine available", category: .audio)
+                return
+            }
+            try engine.start()
+            playerNode.play()
+        }
         isPlaying = true
         currentStep = 0
 
@@ -771,7 +789,9 @@ public final class BreakbeatChopper {
     func stop() {
         playbackTimer?.invalidate()
         playbackTimer = nil
-        playerNode.stop()
+        if masterEngine == nil {
+            playerNode.stop()
+        }
         isPlaying = false
         currentStep = 0
         log.info("Chopper stopped", category: .audio)
@@ -832,11 +852,14 @@ public final class BreakbeatChopper {
                 }
             }
 
-            // Schedule with delay for roll effect
-            let rollDelay = Double(d) * Double(rollLength) / sampleRate
-            let scheduleTime = AVAudioTime(sampleTime: playerNode.lastRenderTime?.sampleTime ?? 0 + Int64(rollDelay * sampleRate), atRate: sampleRate)
-
-            playerNode.scheduleBuffer(buffer, at: scheduleTime)
+            // Schedule playback through master engine or local fallback
+            if let master = masterEngine {
+                master.schedulePlayback(buffer: buffer)
+            } else {
+                let rollDelay = Double(d) * Double(rollLength) / sampleRate
+                let scheduleTime = AVAudioTime(sampleTime: playerNode.lastRenderTime?.sampleTime ?? 0 + Int64(rollDelay * sampleRate), atRate: sampleRate)
+                playerNode.scheduleBuffer(buffer, at: scheduleTime)
+            }
         }
     }
 

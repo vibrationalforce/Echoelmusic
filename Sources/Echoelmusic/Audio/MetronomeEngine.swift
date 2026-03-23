@@ -168,7 +168,11 @@ public final class MetronomeEngine {
 
     // MARK: - Private Properties
 
-    @ObservationIgnored private let audioEngine = AVAudioEngine()
+    /// Optional master engine — when set, click buffers route through it
+    /// instead of the local AVAudioEngine. Eliminates duplicate engine conflicts.
+    private var masterEngine: AudioEngine?
+
+    @ObservationIgnored private var localAudioEngine: AVAudioEngine?
     @ObservationIgnored private let playerNode = AVAudioPlayerNode()
     @ObservationIgnored nonisolated(unsafe) private var timer: DispatchSourceTimer?
     private let timerQueue = DispatchQueue(label: "com.echoelmusic.metronome", qos: .userInteractive)
@@ -191,16 +195,35 @@ public final class MetronomeEngine {
 
     // MARK: - Audio Setup
 
+    /// Connect to master AudioEngine for unified audio output.
+    public func connectAudioEngine(_ engine: AudioEngine) {
+        masterEngine = engine
+        // Tear down local engine if it was running
+        localAudioEngine?.stop()
+        localAudioEngine = nil
+        log.audio("MetronomeEngine: Connected to master AudioEngine")
+    }
+
     private func setupAudio() {
-        audioEngine.attach(playerNode)
+        let engine = AVAudioEngine()
+        localAudioEngine = engine
+        engine.attach(playerNode)
 
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
             log.audio("MetronomeEngine: Failed to create audio format")
             return
         }
-        audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: format)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
+        engine.mainMixerNode.outputVolume = configuration.volume
+    }
 
-        audioEngine.mainMixerNode.outputVolume = configuration.volume
+    /// Schedule a click buffer through master engine or local fallback
+    private func scheduleClick(_ buffer: AVAudioPCMBuffer) {
+        if let master = masterEngine {
+            master.schedulePlayback(buffer: buffer)
+        } else {
+            playerNode.scheduleBuffer(buffer, completionHandler: nil)
+        }
     }
 
     /// Generate synthesized click buffers
@@ -260,12 +283,19 @@ public final class MetronomeEngine {
     public func start() {
         guard !isRunning else { return }
 
-        do {
-            try audioEngine.start()
-            playerNode.play()
-        } catch {
-            log.audio("Metronome audio engine start failed: \(error)")
-            return
+        // Only start local engine if no master engine connected
+        if masterEngine == nil {
+            do {
+                guard let engine = localAudioEngine else {
+                    log.audio("MetronomeEngine: No audio engine available")
+                    return
+                }
+                try engine.start()
+                playerNode.play()
+            } catch {
+                log.audio("Metronome audio engine start failed: \(error)")
+                return
+            }
         }
 
         currentBeat = 0
@@ -285,8 +315,10 @@ public final class MetronomeEngine {
         isRunning = false
         timer?.cancel()
         timer = nil
-        playerNode.stop()
-        audioEngine.stop()
+        if masterEngine == nil {
+            playerNode.stop()
+            localAudioEngine?.stop()
+        }
         countInBeatsRemaining = 0
         beatFlash = false
     }
@@ -363,7 +395,7 @@ public final class MetronomeEngine {
             } else {
                 DispatchQueue.main.async {
                     if let buffer = weakSelf?.subdivisionBuffer {
-                        weakSelf?.playerNode.scheduleBuffer(buffer, completionHandler: nil)
+                        weakSelf?.scheduleClick(buffer)
                     }
                 }
             }
@@ -378,14 +410,14 @@ public final class MetronomeEngine {
     private func processBeat() {
         let isDown = currentBeat == 0
 
-        // Play appropriate click
+        // Play appropriate click through master engine or local fallback
         if isDown && configuration.accentDownbeat {
             if let buffer = downbeatBuffer {
-                playerNode.scheduleBuffer(buffer, completionHandler: nil)
+                scheduleClick(buffer)
             }
         } else {
             if let buffer = upbeatBuffer {
-                playerNode.scheduleBuffer(buffer, completionHandler: nil)
+                scheduleClick(buffer)
             }
         }
 

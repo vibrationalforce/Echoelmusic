@@ -106,8 +106,9 @@ final class RecordingEngine {
     /// Uses CircularBuffer for O(1) append instead of Array.removeFirst() O(n)
     private var waveformBuffer = RecordingCircularBuffer<Float>(capacity: 1000, defaultValue: 0.0)
 
-    /// Reference to main audio engine for audio routing
-    private weak var mainAudioEngine: AudioEngine?
+    /// Reference to main audio engine for audio routing.
+    /// Strong ref — both are app-lifetime objects. Weak ref caused nil on scene transitions.
+    private var mainAudioEngine: AudioEngine?
 
     /// Directory for storing session files
     private let sessionsDirectory: URL
