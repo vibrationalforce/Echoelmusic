@@ -479,8 +479,10 @@ struct BioMusicView: View {
     }
 
     private var pulseInterval: Double {
-        guard bio.smoothHeartRate > 40 else { return 1.0 }
-        return 60.0 / bio.smoothHeartRate
+        let hr = bio.smoothHeartRate
+        guard hr > 30, hr < 250 else { return 1.0 }
+        // Clamp to safe animation duration range [0.25s, 2.0s]
+        return max(0.25, min(2.0, 60.0 / hr))
     }
 
     // MARK: - Source Switching

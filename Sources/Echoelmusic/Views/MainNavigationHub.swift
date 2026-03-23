@@ -14,9 +14,14 @@ struct MainNavigationHub: View {
     @State private var recordingError: String?
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            // BioMusicView always exists — prevents coordinator destruction on toggle
+            BioMusicView()
+                .opacity(showStudio ? 0 : 1)
+                .allowsHitTesting(!showStudio)
+
+            // Studio overlays when active
             if showStudio {
-                // Full studio mode
                 VStack(spacing: 0) {
                     topBar
 
@@ -27,9 +32,6 @@ struct MainNavigationHub: View {
 
                     transportBar
                 }
-            } else {
-                // Bio Music — the main experience
-                BioMusicView()
             }
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())

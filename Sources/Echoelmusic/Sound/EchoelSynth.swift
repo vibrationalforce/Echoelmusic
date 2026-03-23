@@ -389,8 +389,8 @@ public final class EchoelSynth {
             }
 
             // Initialize Karplus-Strong buffer for pluck engine
-            let freq = 440.0 * pow(2.0, (Double(note) - 69.0) / 12.0)
-            let bufferSize = max(2, Int(sampleRate / freq))
+            let freq = max(20.0, 440.0 * pow(2.0, (Double(note) - 69.0) / 12.0))
+            let bufferSize = max(2, min(4096, Int(sampleRate / freq)))
             voice.pluckBuffer = (0..<bufferSize).map { _ in
                 // Noise burst excitation shaped by brightness
                 Float.random(in: -1.0...1.0)
@@ -427,7 +427,10 @@ public final class EchoelSynth {
     }
 
     public func setPreset(_ preset: EchoelSynthConfig) {
+        // Acquire voice lock to prevent audio thread from reading partial config
+        voiceLock.lock()
         config = preset
+        voiceLock.unlock()
     }
 
     public func updateBio(coherence: Float, heartRate: Float, hrv: Float, breathPhase: Float) {
@@ -440,14 +443,15 @@ public final class EchoelSynth {
     // MARK: - Audio Rendering (Real-Time Thread)
 
     private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
-        let cfg = config
-
         memset(leftBuffer, 0, frameCount * MemoryLayout<Float>.size)
         memset(rightBuffer, 0, frameCount * MemoryLayout<Float>.size)
 
         // tryLock: never block the audio thread — output silence if lock is held
         guard voiceLock.try() else { return }
         defer { voiceLock.unlock() }
+
+        // Read config under lock to prevent torn reads during setPreset()
+        let cfg = config
 
         var voicesToRemove: [Int] = []
         var peak: Float = 0.0
@@ -691,9 +695,9 @@ public final class EchoelSynth {
 
         case .pluck:
             // ─── Pluck: Karplus-Strong physical modeling ───
-            guard !v.pluckBuffer.isEmpty else { return 0.0 }
-
             let bufSize = v.pluckBuffer.count
+            guard bufSize >= 2 else { return 0.0 }
+
             let idx = v.pluckIndex % bufSize
             let output = v.pluckBuffer[idx]
 
