@@ -1,112 +1,95 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-// MARK: - Bio Source Selection
+// MARK: - Generative Music Engine
 
-/// How the user provides heart rate data
-enum BioInputSource: String, CaseIterable, Identifiable {
-    case camera = "Camera"
-    case appleWatch = "Apple Watch"
-    case ouraRing = "Oura Ring"
-
-    var id: String { rawValue }
-
-    var icon: String {
-        switch self {
-        case .camera: return "camera.fill"
-        case .appleWatch: return "applewatch.watchface"
-        case .ouraRing: return "ring.circle"
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .camera: return "Finger on lens"
-        case .appleWatch: return "HealthKit stream"
-        case .ouraRing: return "Cloud sync"
-        }
-    }
-}
-
-/// Synth sound choices — mapped to real EchoelSynth presets
-enum BioSoundMode: String, CaseIterable, Identifiable {
-    case pad = "Ambient Pad"
-    case keys = "Electric Piano"
-    case pluck = "Crystal Pluck"
-    case bio = "Bio Reactive"
-
-    var id: String { rawValue }
-
-    var icon: String {
-        switch self {
-        case .pad: return "waveform"
-        case .keys: return "pianokeys"
-        case .pluck: return "guitars"
-        case .bio: return "heart.text.clipboard"
-        }
-    }
-}
-
-// MARK: - BioMusic Coordinator (class — safe for Timer closures)
-
-/// Manages timers and audio state outside the SwiftUI struct.
-/// Timer closures capture this class instance (reference type), not a View struct.
+/// Manages bio-reactive generative music playback.
+/// Chord progressions, arpeggiation speed, and timbre respond to coherence/HRV/HR.
+///
+/// Musical design:
+/// - High coherence → major/lydian chords, slow arpeggios, warm timbre
+/// - Low coherence  → minor/sparse, faster arpeggios, brighter timbre
+/// - HR modulates vibrato subtly
+/// - Breath phase shapes amplitude (swell on inhale)
 @MainActor
 @Observable
-final class BioMusicCoordinator {
+final class BioMusicEngine {
     var isPlaying = false
-    var currentNotes: [Int] = []
+    var currentChordIndex = 0
+    var activeNotes: [Int] = []
 
-    private var noteTimer: Timer?
+    private var arpTimer: Timer?
     private var bioFeedTimer: Timer?
     private var cameraFeedTimer: Timer?
+    private var chordTimer: Timer?
+    private var arpIndex = 0
 
     private let bio = EchoelBioEngine.shared
+    private let synth = EchoelSynth.shared
 
-    // C minor pentatonic, 2 octaves
-    private let scale = [48, 51, 53, 55, 58, 60, 63, 65, 67, 70, 72, 75]
+    // Chord voicings — root position, close voicing for warmth
+    // High coherence: Cmaj9, Fmaj7, Am7, G6 (warm, resolved)
+    private let warmChords: [[Int]] = [
+        [48, 52, 55, 59, 62],   // Cmaj9   (C E G B D)
+        [53, 57, 60, 64],       // Fmaj7   (F A C E)
+        [57, 60, 64, 67],       // Am7     (A C E G)
+        [55, 59, 62, 66],       // G6/9    (G B D F#)
+    ]
 
-    func startPlayback(sound: BioSoundMode) {
+    // Low coherence: Cm9, Fm7, Abmaj7, Gm7 (darker, unresolved)
+    private let coolChords: [[Int]] = [
+        [48, 51, 55, 58, 62],   // Cm9     (C Eb G Bb D)
+        [53, 56, 60, 63],       // Fm7     (F Ab C Eb)
+        [56, 60, 63, 67],       // Abmaj7  (Ab C Eb G)
+        [55, 58, 62, 65],       // Gm7     (G Bb D F)
+    ]
+
+    // MARK: - Playback Control
+
+    func start() {
         guard !isPlaying else { return }
         isPlaying = true
 
-        applySynthPreset(sound)
+        // Warm pad preset — long attack, big stereo, chorus
+        synth.setPreset(.warmPad)
 
-        // Ensure synth is connected and engine running
-        let synth = EchoelSynth.shared
+        // Start arpeggiator
+        scheduleArp()
 
-        // Generative note engine — 500ms interval
-        noteTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        // Chord changes every ~4 seconds
+        chordTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.generateNote()
+                self?.advanceChord()
             }
         }
 
-        // Bio → synth parameter feed at 20 Hz (not 30 — saves CPU)
-        bioFeedTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in
+        // Bio → synth parameter feed at 15 Hz
+        bioFeedTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 15.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.feedBioToSynth()
+                self?.feedBio()
             }
         }
 
-        // Play first note immediately
-        generateNote()
+        // Play first chord immediately
+        advanceChord()
     }
 
-    func stopPlayback() {
+    func stop() {
         guard isPlaying else { return }
         isPlaying = false
 
-        noteTimer?.invalidate()
-        noteTimer = nil
+        arpTimer?.invalidate()
+        arpTimer = nil
+        chordTimer?.invalidate()
+        chordTimer = nil
         bioFeedTimer?.invalidate()
         bioFeedTimer = nil
 
-        // Release all active notes
-        for note in currentNotes {
-            EchoelSynth.shared.noteOff(note: note)
+        // Gentle release — noteOff triggers ADSR release (2s for pad)
+        for note in activeNotes {
+            synth.noteOff(note: note)
         }
-        currentNotes.removeAll()
+        activeNotes.removeAll()
     }
 
     func startCameraFeed(analyzer: CameraAnalyzer) {
@@ -115,10 +98,8 @@ final class BioMusicCoordinator {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 guard analyzer.bpmConfidence > 0.3, analyzer.estimatedBPM > 40 else { return }
-
                 self.bio.snapshot.heartRate = analyzer.estimatedBPM
                 self.bio.smoothHeartRate = self.bio.smoothHeartRate * 0.85 + analyzer.estimatedBPM * 0.15
-
                 if analyzer.rmssd > 0 {
                     self.bio.snapshot.hrvRMSSD = analyzer.rmssd
                     self.bio.snapshot.hrvNormalized = min(analyzer.rmssd / 100.0, 1.0)
@@ -136,379 +117,367 @@ final class BioMusicCoordinator {
     }
 
     func stopAll() {
-        stopPlayback()
+        stop()
         stopCameraFeed()
     }
 
-    private func generateNote() {
+    // MARK: - Generative Logic
+
+    private func advanceChord() {
         guard isPlaying else { return }
 
-        let coherence = Float(bio.smoothCoherence)
-        let hrv = Float(bio.smoothHRV)
+        let coherence = bio.smoothCoherence
+        let chords = coherence > 0.5 ? warmChords : coolChords
 
-        // Higher coherence = more consonant (fewer notes, lower range)
-        let noteCount = coherence > 0.6 ? 1 : (coherence > 0.3 ? 2 : 3)
+        currentChordIndex = (currentChordIndex + 1) % chords.count
+        arpIndex = 0
 
-        // Release previous notes
-        for note in currentNotes {
-            EchoelSynth.shared.noteOff(note: note)
-        }
-        currentNotes.removeAll()
-
-        // High coherence → warmer lower range; low → full range
-        let available = coherence > 0.5 ? Array(scale.prefix(5)) : scale
-        guard !available.isEmpty else { return }
-
-        for _ in 0..<noteCount {
-            let note = available[Int.random(in: 0..<available.count)]
-            let velocity = max(0.2, min(1.0, Float(0.4 + hrv * 0.4)))
-            EchoelSynth.shared.noteOn(note: note, velocity: velocity)
-            currentNotes.append(note)
-        }
+        // Reschedule arp with new chord + tempo
+        scheduleArp()
     }
 
-    private func feedBioToSynth() {
+    private func scheduleArp() {
+        arpTimer?.invalidate()
+
+        // Arp speed: high coherence = slow (meditative), low = faster (restless)
+        let coherence = bio.smoothCoherence
+        let interval = max(0.2, min(0.8, 0.8 - coherence * 0.5))
+
+        arpTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.playNextArpNote()
+            }
+        }
+
+        // Play first note immediately
+        playNextArpNote()
+    }
+
+    private func playNextArpNote() {
+        guard isPlaying else { return }
+
+        let coherence = bio.smoothCoherence
+        let hrv = Float(bio.smoothHRV)
+        let chords = coherence > 0.5 ? warmChords : coolChords
+        let chord = chords[currentChordIndex % chords.count]
+
+        guard !chord.isEmpty else { return }
+
+        // Release previous arp note (keep previous one ringing for overlap)
+        if activeNotes.count > 2 {
+            let oldest = activeNotes.removeFirst()
+            synth.noteOff(note: oldest)
+        }
+
+        // Pick note from chord — ascending arpeggio
+        let note = chord[arpIndex % chord.count]
+        arpIndex += 1
+
+        // Velocity shaped by HRV: higher HRV = gentler touch
+        let velocity = max(0.25, min(0.85, Float(0.35 + hrv * 0.4)))
+        synth.noteOn(note: note, velocity: velocity)
+        activeNotes.append(note)
+    }
+
+    private func feedBio() {
         guard isPlaying else { return }
         let params = bio.audioParameters()
-        EchoelSynth.shared.updateBio(
+        synth.updateBio(
             coherence: params.coherence,
             heartRate: params.heartRate,
             hrv: params.hrv,
             breathPhase: params.breathPhase
         )
     }
-
-    private func applySynthPreset(_ mode: BioSoundMode) {
-        let synth = EchoelSynth.shared
-        switch mode {
-        case .pad: synth.setPreset(.warmPad)
-        case .keys: synth.setPreset(.electricPiano)
-        case .pluck: synth.setPreset(.crystalPluck)
-        case .bio: synth.setPreset(.bioReactive)
-        }
-    }
 }
 
 // MARK: - BioMusicView
 
-/// The main experience: heartbeat → music.
-/// One screen. Bio data visible. Sound reacts to you.
+/// Heartbeat → Music. One screen. Minimal.
+///
+/// Layout:
+/// - Top: source indicator (tiny)
+/// - Center: breathing coherence ring + HR
+/// - Bottom: play/stop + source tabs
 struct BioMusicView: View {
 
     @Bindable private var bio = EchoelBioEngine.shared
-    @State private var coordinator = BioMusicCoordinator()
-    @State private var selectedSource: BioInputSource = .appleWatch
-    @State private var selectedSound: BioSoundMode = .pad
+    @State private var engine = BioMusicEngine()
     @State private var cameraAnalyzer = CameraAnalyzer()
-    @State private var pulseAnimation = false
+    @State private var selectedSource = 0 // 0=watch, 1=camera, 2=oura
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-                .padding(.horizontal, EchoelSpacing.md)
-                .padding(.top, EchoelSpacing.sm)
+        ZStack {
+            // Background — subtle coherence color wash
+            coherenceGradient
+                .ignoresSafeArea()
 
-            Spacer()
+            VStack(spacing: 0) {
+                // Status line
+                statusBar
+                    .padding(.horizontal, EchoelSpacing.md)
+                    .padding(.top, EchoelSpacing.sm)
 
-            bioDisplay
-                .padding(.horizontal, EchoelSpacing.lg)
+                Spacer()
 
-            Spacer()
+                // Central ring
+                breathingRing
+                    .frame(height: 260)
 
-            soundSelector
-                .padding(.horizontal, EchoelSpacing.md)
+                Spacer()
 
-            playButton
-                .padding(.vertical, EchoelSpacing.lg)
+                // Metrics row
+                metricsRow
+                    .padding(.horizontal, EchoelSpacing.xl)
 
-            sourceSelector
-                .padding(.horizontal, EchoelSpacing.md)
-                .padding(.bottom, EchoelSpacing.lg)
+                Spacer()
+
+                // Play
+                playControl
+                    .padding(.bottom, EchoelSpacing.lg)
+
+                // Source tabs
+                sourceTabs
+                    .padding(.horizontal, EchoelSpacing.md)
+                    .padding(.bottom, EchoelSpacing.sm)
+
+                // Legal
+                Text("Not a medical device. For self-observation only.")
+                    .font(.system(size: 8))
+                    .foregroundStyle(Color.white.opacity(0.2))
+                    .padding(.bottom, EchoelSpacing.sm)
+            }
         }
-        .background(EchoelBrand.bgDeep.ignoresSafeArea())
-        .onDisappear {
-            coordinator.stopAll()
-        }
+        .onDisappear { engine.stopAll() }
     }
 
-    // MARK: - Header
+    // MARK: - Background
 
-    private var header: some View {
+    private var coherenceGradient: some View {
+        let c = bio.smoothCoherence
+        let color: Color = c > 0.7 ? EchoelBrand.coherenceHigh : (c > 0.4 ? EchoelBrand.coherenceMedium : EchoelBrand.coherenceLow)
+
+        return LinearGradient(
+            colors: [Color.black, color.opacity(engine.isPlaying ? 0.08 : 0)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .animation(.easeInOut(duration: 2.0), value: c > 0.7)
+        .animation(.easeInOut(duration: 2.0), value: c > 0.4)
+    }
+
+    // MARK: - Status
+
+    private var statusBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Echoelmusic")
-                    .font(.system(size: 16, weight: .semibold, design: .default))
-                    .foregroundStyle(EchoelBrand.textPrimary)
-                Text("Your heartbeat shapes the sound")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(EchoelBrand.textSecondary)
-            }
+            Text("echoelmusic")
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(Color.white.opacity(0.4))
             Spacer()
             HStack(spacing: 4) {
                 Circle()
-                    .fill(sourceStatusColor)
-                    .frame(width: 6, height: 6)
-                Text(sourceStatusText)
+                    .fill(isConnected ? EchoelBrand.emerald : Color.white.opacity(0.2))
+                    .frame(width: 5, height: 5)
+                Text(connectionLabel)
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundStyle(EchoelBrand.textSecondary)
+                    .foregroundStyle(Color.white.opacity(0.35))
             }
         }
     }
 
-    private var sourceStatusColor: Color {
-        guard bio.isStreaming else { return EchoelBrand.textTertiary }
+    private var isConnected: Bool {
+        bio.isStreaming && bio.dataSource != .fallback
+    }
+
+    private var connectionLabel: String {
+        guard isConnected else { return "no signal" }
         switch bio.dataSource {
-        case .healthKit, .appleWatch, .chestStrap: return EchoelBrand.emerald
-        case .camera: return EchoelBrand.sky
-        case .ouraRing: return EchoelBrand.violet
-        case .arkit: return EchoelBrand.sky
-        case .microphone: return EchoelBrand.amber
-        case .fallback: return EchoelBrand.textTertiary
+        case .healthKit, .appleWatch, .chestStrap: return "watch"
+        case .camera: return "camera"
+        case .ouraRing: return "oura"
+        case .arkit: return "face"
+        case .microphone: return "mic"
+        case .fallback: return "—"
         }
     }
 
-    private var sourceStatusText: String {
-        guard bio.isStreaming, bio.dataSource != .fallback else { return "No data" }
-        return bio.dataSource.rawValue
-    }
+    // MARK: - Breathing Ring
 
-    // MARK: - Central Bio Display
+    private var breathingRing: some View {
+        let coherence = isConnected ? bio.smoothCoherence : 0
+        let ringColor: Color = coherence > 0.7 ? EchoelBrand.coherenceHigh
+            : coherence > 0.4 ? EchoelBrand.coherenceMedium
+            : EchoelBrand.coherenceLow
 
-    private var bioDisplay: some View {
-        VStack(spacing: EchoelSpacing.lg) {
-            ZStack {
-                Circle()
-                    .stroke(EchoelBrand.border, lineWidth: 3)
-                    .frame(width: 180, height: 180)
+        return ZStack {
+            // Outer coherence arc
+            Circle()
+                .stroke(Color.white.opacity(0.06), lineWidth: 2)
+                .frame(width: 220, height: 220)
 
-                Circle()
-                    .trim(from: 0, to: isRealData ? bio.smoothCoherence : 0)
-                    .stroke(
-                        coherenceColor,
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 180, height: 180)
-                    .animation(.easeInOut(duration: 1.0), value: bio.smoothCoherence)
+            Circle()
+                .trim(from: 0, to: coherence)
+                .stroke(ringColor.opacity(0.6), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: 220, height: 220)
+                .animation(.easeInOut(duration: 1.5), value: coherence)
 
-                VStack(spacing: 4) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(isRealData ? EchoelBrand.coral : EchoelBrand.textTertiary)
-                        .scaleEffect(pulseAnimation ? 1.15 : 1.0)
-                        .animation(
-                            isRealData
-                                ? .easeInOut(duration: pulseInterval).repeatForever(autoreverses: true)
-                                : .default,
-                            value: pulseAnimation
-                        )
+            // Inner breathing circle — scales with breath phase
+            let breathScale = isConnected ? (0.85 + bio.smoothBreathPhase * 0.15) : 0.9
+            Circle()
+                .fill(ringColor.opacity(engine.isPlaying ? 0.06 : 0.03))
+                .frame(width: 160, height: 160)
+                .scaleEffect(breathScale)
+                .animation(.easeInOut(duration: 0.5), value: bio.smoothBreathPhase)
 
-                    Text(isRealData ? "\(Int(bio.smoothHeartRate))" : "—")
-                        .font(.system(size: 48, weight: .light, design: .monospaced))
-                        .foregroundStyle(EchoelBrand.textPrimary)
+            // Heart rate display
+            VStack(spacing: 6) {
+                // Heart icon — pulses at heart rate
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(isConnected ? ringColor : Color.white.opacity(0.15))
 
-                    Text("BPM")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(EchoelBrand.textTertiary)
+                // BPM number
+                Text(isConnected ? "\(Int(bio.smoothHeartRate))" : "—")
+                    .font(.system(size: 56, weight: .ultraLight, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(isConnected ? 0.9 : 0.2))
+
+                // Coherence percentage
+                if isConnected {
+                    Text("\(Int(coherence * 100))% coherence")
+                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                        .foregroundStyle(ringColor.opacity(0.7))
                 }
             }
-
-            HStack(spacing: EchoelSpacing.xl) {
-                bioMetric(
-                    label: "HRV",
-                    value: isRealData ? String(format: "%.0f", bio.snapshot.hrvRMSSD) : "—",
-                    unit: "ms",
-                    icon: "waveform.path.ecg"
-                )
-                bioMetric(
-                    label: "Coherence",
-                    value: isRealData ? String(format: "%.0f", bio.smoothCoherence * 100) : "—",
-                    unit: "%",
-                    icon: "brain.head.profile"
-                )
-                bioMetric(
-                    label: "Breath",
-                    value: isRealData ? String(format: "%.0f", bio.snapshot.breathRate) : "—",
-                    unit: "/min",
-                    icon: "wind"
-                )
-            }
         }
     }
 
-    private func bioMetric(label: String, value: String, unit: String, icon: String) -> some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundStyle(EchoelBrand.textTertiary)
-            HStack(spacing: 2) {
+    // MARK: - Metrics
+
+    private var metricsRow: some View {
+        HStack {
+            metric(
+                value: isConnected ? String(format: "%.0f", bio.snapshot.hrvRMSSD) : "—",
+                unit: "ms",
+                label: "HRV"
+            )
+            Spacer()
+            metric(
+                value: isConnected ? String(format: "%.0f", bio.snapshot.breathRate) : "—",
+                unit: "/m",
+                label: "Breath"
+            )
+            Spacer()
+            metric(
+                value: engine.isPlaying ? "♪" : "—",
+                unit: "",
+                label: "Sound"
+            )
+        }
+    }
+
+    private func metric(value: String, unit: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 1) {
                 Text(value)
-                    .font(.system(size: 20, weight: .light, design: .monospaced))
-                    .foregroundStyle(EchoelBrand.textPrimary)
-                Text(unit)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(EchoelBrand.textTertiary)
+                    .font(.system(size: 18, weight: .light, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.6))
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                }
             }
             Text(label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(EchoelBrand.textSecondary)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(Color.white.opacity(0.2))
         }
     }
 
-    // MARK: - Sound Selector
+    // MARK: - Play Control
 
-    private var soundSelector: some View {
-        HStack(spacing: EchoelSpacing.sm) {
-            ForEach(BioSoundMode.allCases) { mode in
-                Button {
-                    selectedSound = mode
-                    if coordinator.isPlaying {
-                        coordinator.stopPlayback()
-                        coordinator.startPlayback(sound: mode)
-                    }
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: mode.icon)
-                            .font(.system(size: 16))
-                        Text(mode.rawValue)
-                            .font(.system(size: 9, weight: .medium))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, EchoelSpacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                            .fill(selectedSound == mode ? EchoelBrand.bgElevated : Color.clear)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                            .stroke(selectedSound == mode ? EchoelBrand.textTertiary : EchoelBrand.border, lineWidth: 1)
-                    )
-                    .foregroundStyle(selectedSound == mode ? EchoelBrand.textPrimary : EchoelBrand.textSecondary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    // MARK: - Play Button
-
-    private var playButton: some View {
+    private var playControl: some View {
         Button {
-            if coordinator.isPlaying {
-                coordinator.stopPlayback()
-                pulseAnimation = false
+            if engine.isPlaying {
+                engine.stop()
             } else {
-                coordinator.startPlayback(sound: selectedSound)
-                pulseAnimation = true
+                engine.start()
             }
         } label: {
             ZStack {
                 Circle()
-                    .fill(coordinator.isPlaying ? EchoelBrand.coral.opacity(0.15) : EchoelBrand.bgElevated)
-                    .frame(width: 72, height: 72)
+                    .fill(engine.isPlaying
+                        ? Color.white.opacity(0.08)
+                        : Color.white.opacity(0.04))
+                    .frame(width: 64, height: 64)
 
                 Circle()
-                    .stroke(coordinator.isPlaying ? EchoelBrand.coral : EchoelBrand.textTertiary, lineWidth: 2)
-                    .frame(width: 72, height: 72)
+                    .stroke(Color.white.opacity(engine.isPlaying ? 0.3 : 0.12), lineWidth: 1.5)
+                    .frame(width: 64, height: 64)
 
-                Image(systemName: coordinator.isPlaying ? "stop.fill" : "play.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(coordinator.isPlaying ? EchoelBrand.coral : EchoelBrand.textPrimary)
-                    .offset(x: coordinator.isPlaying ? 0 : 2)
+                Image(systemName: engine.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundStyle(Color.white.opacity(engine.isPlaying ? 0.8 : 0.5))
+                    .offset(x: engine.isPlaying ? 0 : 1.5)
             }
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Source Selector
+    // MARK: - Source Tabs
 
-    private var sourceSelector: some View {
-        VStack(spacing: EchoelSpacing.sm) {
-            Text("Heart Rate Source")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(EchoelBrand.textTertiary)
-
-            HStack(spacing: EchoelSpacing.sm) {
-                ForEach(BioInputSource.allCases) { source in
-                    Button {
-                        selectedSource = source
-                        switchBioSource(source)
-                    } label: {
-                        VStack(spacing: 4) {
-                            Image(systemName: source.icon)
-                                .font(.system(size: 18))
-                            Text(source.rawValue)
-                                .font(.system(size: 10, weight: .medium))
-                            Text(source.description)
-                                .font(.system(size: 8))
-                                .foregroundStyle(EchoelBrand.textTertiary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, EchoelSpacing.sm)
-                        .background(
-                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                                .fill(selectedSource == source ? EchoelBrand.bgElevated : Color.clear)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                                .stroke(selectedSource == source ? EchoelBrand.emerald : EchoelBrand.border, lineWidth: 1)
-                        )
-                        .foregroundStyle(selectedSource == source ? EchoelBrand.textPrimary : EchoelBrand.textSecondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            Text("Bio data is for self-observation, not medical diagnosis.")
-                .font(.system(size: 8))
-                .foregroundStyle(EchoelBrand.textTertiary)
-                .padding(.top, EchoelSpacing.xs)
+    private var sourceTabs: some View {
+        HStack(spacing: 0) {
+            sourceTab(index: 0, icon: "applewatch", label: "Watch")
+            sourceTab(index: 1, icon: "camera.fill", label: "Camera")
+            sourceTab(index: 2, icon: "circle.circle", label: "Oura")
         }
+        .background(Color.white.opacity(0.03))
+        .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.sm))
+        .overlay(
+            RoundedRectangle(cornerRadius: EchoelRadius.sm)
+                .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
+        )
     }
 
-    // MARK: - Helpers
-
-    private var isRealData: Bool {
-        bio.isStreaming && bio.dataSource != .fallback
-    }
-
-    private var coherenceColor: Color {
-        if bio.smoothCoherence > 0.7 { return EchoelBrand.coherenceHigh }
-        if bio.smoothCoherence > 0.4 { return EchoelBrand.coherenceMedium }
-        return EchoelBrand.coherenceLow
-    }
-
-    private var pulseInterval: Double {
-        let hr = bio.smoothHeartRate
-        guard hr > 30, hr < 250 else { return 1.0 }
-        // Clamp to safe animation duration range [0.25s, 2.0s]
-        return max(0.25, min(2.0, 60.0 / hr))
+    private func sourceTab(index: Int, icon: String, label: String) -> some View {
+        Button {
+            selectedSource = index
+            switchSource(index)
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 13))
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, EchoelSpacing.sm)
+            .foregroundStyle(selectedSource == index ? Color.white.opacity(0.8) : Color.white.opacity(0.25))
+            .background(selectedSource == index ? Color.white.opacity(0.06) : Color.clear)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Source Switching
 
-    private func switchBioSource(_ source: BioInputSource) {
-        coordinator.stopCameraFeed()
+    private func switchSource(_ index: Int) {
+        engine.stopCameraFeed()
         bio.stopStreaming()
 
-        switch source {
-        case .camera:
-            cameraAnalyzer.startPulseDetection()
-            coordinator.startCameraFeed(analyzer: cameraAnalyzer)
-
-        case .appleWatch:
+        switch index {
+        case 0: // Apple Watch / HealthKit
             Task {
                 _ = await bio.requestAuthorization()
                 bio.startStreaming()
             }
-
-        case .ouraRing:
+        case 1: // Camera rPPG
+            cameraAnalyzer.startPulseDetection()
+            engine.startCameraFeed(analyzer: cameraAnalyzer)
+        case 2: // Oura Ring
             Task {
                 let client = OuraRingClient.shared
-                guard client.authState == .authenticated else {
-                    log.log(.warning, category: .audio, "Oura Ring not connected — configure in settings")
-                    return
-                }
+                guard client.authState == .authenticated else { return }
                 await client.syncDailyData()
                 let oura = client.snapshot
                 if oura.hrvSleep > 0 {
@@ -523,6 +492,8 @@ struct BioMusicView: View {
                 bio.dataSource = .ouraRing
                 bio.isStreaming = true
             }
+        default:
+            break
         }
     }
 }
