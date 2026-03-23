@@ -224,7 +224,7 @@ final class InstrumentOrchestrator {
 
     /// Play a MIDI note
     func noteOn(midiNote: Int, velocity: Float = 0.8) {
-        guard isEngineReady, playerNode != nil else {
+        guard isEngineReady, mainAudioEngine != nil || playerNode != nil else {
             log.warning("InstrumentOrchestrator: Audio engine not ready, ignoring noteOn", category: .audio)
             return
         }
@@ -359,9 +359,13 @@ final class InstrumentOrchestrator {
         }
 
         guard let buffer = createAudioBuffer(from: samples, sampleRate: Double(sampleRate)) else { return }
-        playerNode?.scheduleBuffer(buffer, at: nil, options: [])
-        if playerNode?.isPlaying == false {
-            playerNode?.play()
+        if let mainEngine = mainAudioEngine {
+            mainEngine.schedulePlayback(buffer: buffer)
+        } else {
+            playerNode?.scheduleBuffer(buffer, at: nil, options: [])
+            if playerNode?.isPlaying == false {
+                playerNode?.play()
+            }
         }
         log.audio("Drum: \(drumType) @ \(Int(velocity * 100))%")
     }
