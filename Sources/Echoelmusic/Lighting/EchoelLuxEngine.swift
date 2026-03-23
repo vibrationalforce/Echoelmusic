@@ -159,13 +159,13 @@ public final class EchoelLuxEngine {
 
     // MARK: - Network
 
-    nonisolated(unsafe) private var connection: NWConnection?
+    @ObservationIgnored nonisolated(unsafe) private var connection: NWConnection?
     private let sendQueue = DispatchQueue(label: "com.echoelmusic.artnet", qos: .userInteractive)
     private var targetHost: String = "255.255.255.255" // Broadcast by default
     private var targetPort: UInt16 = ArtNetConstants.port
 
     /// Update rate (max 44 packets/sec per Art-Net spec, we use 40Hz)
-    nonisolated(unsafe) private var updateTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var updateTimer: Timer?
 
     // MARK: - Safety
 
