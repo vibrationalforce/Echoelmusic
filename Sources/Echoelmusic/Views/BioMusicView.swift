@@ -47,6 +47,148 @@ enum BioSoundMode: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - BioMusic Coordinator (class — safe for Timer closures)
+
+/// Manages timers and audio state outside the SwiftUI struct.
+/// Timer closures capture this class instance (reference type), not a View struct.
+@MainActor
+@Observable
+final class BioMusicCoordinator {
+    var isPlaying = false
+    var currentNotes: [Int] = []
+
+    private var noteTimer: Timer?
+    private var bioFeedTimer: Timer?
+    private var cameraFeedTimer: Timer?
+
+    private let bio = EchoelBioEngine.shared
+
+    // C minor pentatonic, 2 octaves
+    private let scale = [48, 51, 53, 55, 58, 60, 63, 65, 67, 70, 72, 75]
+
+    func startPlayback(sound: BioSoundMode) {
+        guard !isPlaying else { return }
+        isPlaying = true
+
+        applySynthPreset(sound)
+
+        // Ensure synth is connected and engine running
+        let synth = EchoelSynth.shared
+
+        // Generative note engine — 500ms interval
+        noteTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.generateNote()
+            }
+        }
+
+        // Bio → synth parameter feed at 20 Hz (not 30 — saves CPU)
+        bioFeedTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.feedBioToSynth()
+            }
+        }
+
+        // Play first note immediately
+        generateNote()
+    }
+
+    func stopPlayback() {
+        guard isPlaying else { return }
+        isPlaying = false
+
+        noteTimer?.invalidate()
+        noteTimer = nil
+        bioFeedTimer?.invalidate()
+        bioFeedTimer = nil
+
+        // Release all active notes
+        for note in currentNotes {
+            EchoelSynth.shared.noteOff(note: note)
+        }
+        currentNotes.removeAll()
+    }
+
+    func startCameraFeed(analyzer: CameraAnalyzer) {
+        cameraFeedTimer?.invalidate()
+        cameraFeedTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                guard analyzer.bpmConfidence > 0.3, analyzer.estimatedBPM > 40 else { return }
+
+                self.bio.snapshot.heartRate = analyzer.estimatedBPM
+                self.bio.smoothHeartRate = self.bio.smoothHeartRate * 0.85 + analyzer.estimatedBPM * 0.15
+
+                if analyzer.rmssd > 0 {
+                    self.bio.snapshot.hrvRMSSD = analyzer.rmssd
+                    self.bio.snapshot.hrvNormalized = min(analyzer.rmssd / 100.0, 1.0)
+                    self.bio.smoothHRV = self.bio.snapshot.hrvNormalized
+                }
+                self.bio.dataSource = .camera
+                if !self.bio.isStreaming { self.bio.startStreaming() }
+            }
+        }
+    }
+
+    func stopCameraFeed() {
+        cameraFeedTimer?.invalidate()
+        cameraFeedTimer = nil
+    }
+
+    func stopAll() {
+        stopPlayback()
+        stopCameraFeed()
+    }
+
+    private func generateNote() {
+        guard isPlaying else { return }
+
+        let coherence = Float(bio.smoothCoherence)
+        let hrv = Float(bio.smoothHRV)
+
+        // Higher coherence = more consonant (fewer notes, lower range)
+        let noteCount = coherence > 0.6 ? 1 : (coherence > 0.3 ? 2 : 3)
+
+        // Release previous notes
+        for note in currentNotes {
+            EchoelSynth.shared.noteOff(note: note)
+        }
+        currentNotes.removeAll()
+
+        // High coherence → warmer lower range; low → full range
+        let available = coherence > 0.5 ? Array(scale.prefix(5)) : scale
+        guard !available.isEmpty else { return }
+
+        for _ in 0..<noteCount {
+            let note = available[Int.random(in: 0..<available.count)]
+            let velocity = max(0.2, min(1.0, Float(0.4 + hrv * 0.4)))
+            EchoelSynth.shared.noteOn(note: note, velocity: velocity)
+            currentNotes.append(note)
+        }
+    }
+
+    private func feedBioToSynth() {
+        guard isPlaying else { return }
+        let params = bio.audioParameters()
+        EchoelSynth.shared.updateBio(
+            coherence: params.coherence,
+            heartRate: params.heartRate,
+            hrv: params.hrv,
+            breathPhase: params.breathPhase
+        )
+    }
+
+    private func applySynthPreset(_ mode: BioSoundMode) {
+        let synth = EchoelSynth.shared
+        switch mode {
+        case .pad: synth.setPreset(.warmPad)
+        case .keys: synth.setPreset(.electricPiano)
+        case .pluck: synth.setPreset(.crystalPluck)
+        case .bio: synth.setPreset(.bioReactive)
+        }
+    }
+}
+
 // MARK: - BioMusicView
 
 /// The main experience: heartbeat → music.
@@ -54,49 +196,38 @@ enum BioSoundMode: String, CaseIterable, Identifiable {
 struct BioMusicView: View {
 
     @Bindable private var bio = EchoelBioEngine.shared
+    @State private var coordinator = BioMusicCoordinator()
     @State private var selectedSource: BioInputSource = .appleWatch
     @State private var selectedSound: BioSoundMode = .pad
-    @State private var isPlaying = false
-    @State private var showSourcePicker = false
     @State private var cameraAnalyzer = CameraAnalyzer()
     @State private var pulseAnimation = false
-    @State private var bioUpdateTimer: Timer?
-
-    // Generative note engine
-    @State private var noteTimer: Timer?
-    @State private var currentNotes: [Int] = []
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             header
                 .padding(.horizontal, EchoelSpacing.md)
                 .padding(.top, EchoelSpacing.sm)
 
             Spacer()
 
-            // Central bio display
             bioDisplay
                 .padding(.horizontal, EchoelSpacing.lg)
 
             Spacer()
 
-            // Sound mode selector
             soundSelector
                 .padding(.horizontal, EchoelSpacing.md)
 
-            // Play button
             playButton
                 .padding(.vertical, EchoelSpacing.lg)
 
-            // Source selector
             sourceSelector
                 .padding(.horizontal, EchoelSpacing.md)
                 .padding(.bottom, EchoelSpacing.lg)
         }
         .background(EchoelBrand.bgDeep.ignoresSafeArea())
         .onDisappear {
-            stopPlayback()
+            coordinator.stopAll()
         }
     }
 
@@ -113,7 +244,6 @@ struct BioMusicView: View {
                     .foregroundStyle(EchoelBrand.textSecondary)
             }
             Spacer()
-            // Source indicator
             HStack(spacing: 4) {
                 Circle()
                     .fill(sourceStatusColor)
@@ -146,9 +276,7 @@ struct BioMusicView: View {
 
     private var bioDisplay: some View {
         VStack(spacing: EchoelSpacing.lg) {
-            // Heart rate — big, central
             ZStack {
-                // Coherence ring
                 Circle()
                     .stroke(EchoelBrand.border, lineWidth: 3)
                     .frame(width: 180, height: 180)
@@ -163,14 +291,15 @@ struct BioMusicView: View {
                     .frame(width: 180, height: 180)
                     .animation(.easeInOut(duration: 1.0), value: bio.smoothCoherence)
 
-                // HR number
                 VStack(spacing: 4) {
                     Image(systemName: "heart.fill")
                         .font(.system(size: 24))
                         .foregroundStyle(isRealData ? EchoelBrand.coral : EchoelBrand.textTertiary)
                         .scaleEffect(pulseAnimation ? 1.15 : 1.0)
                         .animation(
-                            isRealData ? .easeInOut(duration: pulseInterval).repeatForever(autoreverses: true) : .default,
+                            isRealData
+                                ? .easeInOut(duration: pulseInterval).repeatForever(autoreverses: true)
+                                : .default,
                             value: pulseAnimation
                         )
 
@@ -184,7 +313,6 @@ struct BioMusicView: View {
                 }
             }
 
-            // Secondary metrics
             HStack(spacing: EchoelSpacing.xl) {
                 bioMetric(
                     label: "HRV",
@@ -192,14 +320,12 @@ struct BioMusicView: View {
                     unit: "ms",
                     icon: "waveform.path.ecg"
                 )
-
                 bioMetric(
                     label: "Coherence",
                     value: isRealData ? String(format: "%.0f", bio.smoothCoherence * 100) : "—",
                     unit: "%",
                     icon: "brain.head.profile"
                 )
-
                 bioMetric(
                     label: "Breath",
                     value: isRealData ? String(format: "%.0f", bio.snapshot.breathRate) : "—",
@@ -236,7 +362,10 @@ struct BioMusicView: View {
             ForEach(BioSoundMode.allCases) { mode in
                 Button {
                     selectedSound = mode
-                    applySynthPreset(mode)
+                    if coordinator.isPlaying {
+                        coordinator.stopPlayback()
+                        coordinator.startPlayback(sound: mode)
+                    }
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: mode.icon)
@@ -265,25 +394,27 @@ struct BioMusicView: View {
 
     private var playButton: some View {
         Button {
-            if isPlaying {
-                stopPlayback()
+            if coordinator.isPlaying {
+                coordinator.stopPlayback()
+                pulseAnimation = false
             } else {
-                startPlayback()
+                coordinator.startPlayback(sound: selectedSound)
+                pulseAnimation = true
             }
         } label: {
             ZStack {
                 Circle()
-                    .fill(isPlaying ? EchoelBrand.coral.opacity(0.15) : EchoelBrand.bgElevated)
+                    .fill(coordinator.isPlaying ? EchoelBrand.coral.opacity(0.15) : EchoelBrand.bgElevated)
                     .frame(width: 72, height: 72)
 
                 Circle()
-                    .stroke(isPlaying ? EchoelBrand.coral : EchoelBrand.textTertiary, lineWidth: 2)
+                    .stroke(coordinator.isPlaying ? EchoelBrand.coral : EchoelBrand.textTertiary, lineWidth: 2)
                     .frame(width: 72, height: 72)
 
-                Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                Image(systemName: coordinator.isPlaying ? "stop.fill" : "play.fill")
                     .font(.system(size: 28))
-                    .foregroundStyle(isPlaying ? EchoelBrand.coral : EchoelBrand.textPrimary)
-                    .offset(x: isPlaying ? 0 : 2) // Optical center for play icon
+                    .foregroundStyle(coordinator.isPlaying ? EchoelBrand.coral : EchoelBrand.textPrimary)
+                    .offset(x: coordinator.isPlaying ? 0 : 2)
             }
         }
         .buttonStyle(.plain)
@@ -328,7 +459,6 @@ struct BioMusicView: View {
                 }
             }
 
-            // Safety disclaimer
             Text("Bio data is for self-observation, not medical diagnosis.")
                 .font(.system(size: 8))
                 .foregroundStyle(EchoelBrand.textTertiary)
@@ -348,183 +478,50 @@ struct BioMusicView: View {
         return EchoelBrand.coherenceLow
     }
 
-    /// Pulse interval derived from heart rate
     private var pulseInterval: Double {
         guard bio.smoothHeartRate > 40 else { return 1.0 }
         return 60.0 / bio.smoothHeartRate
     }
 
-    // MARK: - Actions
+    // MARK: - Source Switching
 
     private func switchBioSource(_ source: BioInputSource) {
+        coordinator.stopCameraFeed()
         bio.stopStreaming()
 
         switch source {
         case .camera:
-            // Camera rPPG — start pulse detection, feed into bio engine
-            cameraAnalyzer.togglePulseDetection()
-            // Camera feeds into bio engine via timer
-            startCameraBioFeed()
+            cameraAnalyzer.startPulseDetection()
+            coordinator.startCameraFeed(analyzer: cameraAnalyzer)
 
         case .appleWatch:
-            // HealthKit — already wired
             Task {
                 _ = await bio.requestAuthorization()
                 bio.startStreaming()
             }
 
         case .ouraRing:
-            // Oura cloud sync — use last-known HRV data
-            startOuraBioFeed()
-        }
-    }
-
-    private func startCameraBioFeed() {
-        // Poll camera analyzer and push to bio engine
-        bioUpdateTimer?.invalidate()
-        bioUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { _ in
-            Task { @MainActor in
-                if cameraAnalyzer.bpmConfidence > 0.3, cameraAnalyzer.estimatedBPM > 40 {
-                    bio.snapshot.heartRate = cameraAnalyzer.estimatedBPM
-                    bio.smoothHeartRate = bio.smoothHeartRate * 0.85 + cameraAnalyzer.estimatedBPM * 0.15
-                    // Feed camera HRV (RMSSD) to bio engine
-                    if cameraAnalyzer.rmssd > 0 {
-                        bio.snapshot.hrvRMSSD = cameraAnalyzer.rmssd
-                        bio.snapshot.hrvNormalized = min(cameraAnalyzer.rmssd / 100.0, 1.0)
-                        bio.smoothHRV = bio.snapshot.hrvNormalized
-                    }
-                    bio.dataSource = .camera
-                    if !bio.isStreaming { bio.startStreaming() }
+            Task {
+                let client = OuraRingClient.shared
+                guard client.authState == .authenticated else {
+                    log.log(.warning, category: .audio, "Oura Ring not connected — configure in settings")
+                    return
                 }
-            }
-        }
-    }
-
-    private func startOuraBioFeed() {
-        // Oura Ring provides resting HR and HRV from sleep data
-        Task {
-            let client = OuraRingClient.shared
-            guard client.authState == .authenticated else {
-                log.log(.warning, category: .audio, "Oura Ring not connected — configure in settings")
-                return
-            }
-            await client.syncDailyData()
-            let oura = client.snapshot
-            // Map Oura sleep HRV to bio engine
-            if oura.hrvSleep > 0 {
-                bio.snapshot.hrvRMSSD = oura.hrvSleep
-                bio.snapshot.hrvNormalized = min(oura.hrvSleep / 100.0, 1.0)
-                bio.smoothHRV = bio.snapshot.hrvNormalized
-            }
-            if oura.restingHR > 0 {
-                bio.snapshot.heartRate = Double(oura.restingHR)
-                bio.smoothHeartRate = Double(oura.restingHR)
-            }
-            bio.dataSource = .healthKit // closest available source type
-            bio.isStreaming = true
-        }
-    }
-
-    private func applySynthPreset(_ mode: BioSoundMode) {
-        let synth = EchoelSynth.shared
-        switch mode {
-        case .pad:
-            synth.setPreset(.warmPad)
-        case .keys:
-            synth.setPreset(.electricPiano)
-        case .pluck:
-            synth.setPreset(.crystalPluck)
-        case .bio:
-            synth.setPreset(.bioReactive)
-        }
-    }
-
-    private func startPlayback() {
-        isPlaying = true
-        pulseAnimation = true
-
-        applySynthPreset(selectedSound)
-
-        // Start generative note engine — coherence influences note choice
-        startGenerativeEngine()
-
-        // Start bio → synth parameter feed
-        startBioSynthFeed()
-    }
-
-    private func stopPlayback() {
-        isPlaying = false
-        pulseAnimation = false
-
-        // Release all notes
-        for note in currentNotes {
-            EchoelSynth.shared.noteOff(note: note)
-        }
-        currentNotes.removeAll()
-
-        noteTimer?.invalidate()
-        noteTimer = nil
-        bioUpdateTimer?.invalidate()
-        bioUpdateTimer = nil
-    }
-
-    /// Generative note engine — plays notes influenced by bio data
-    private func startGenerativeEngine() {
-        // Base scale: C minor pentatonic, spread across 2 octaves
-        let baseNotes = [48, 51, 53, 55, 58, 60, 63, 65, 67, 70, 72, 75]
-
-        // Note interval adapts to heart rate (faster HR = faster notes)
-        noteTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-            Task { @MainActor in
-                guard isPlaying else { return }
-
-                let coherence = Float(bio.smoothCoherence)
-                let hrv = Float(bio.smoothHRV)
-
-                // Higher coherence = more consonant (fewer notes, lower in scale)
-                // Lower coherence = more dissonant (more notes, wider spread)
-                let noteCount = coherence > 0.6 ? 1 : (coherence > 0.3 ? 2 : 3)
-
-                // Release previous notes
-                for note in currentNotes {
-                    EchoelSynth.shared.noteOff(note: note)
+                await client.syncDailyData()
+                let oura = client.snapshot
+                if oura.hrvSleep > 0 {
+                    bio.snapshot.hrvRMSSD = oura.hrvSleep
+                    bio.snapshot.hrvNormalized = min(oura.hrvSleep / 100.0, 1.0)
+                    bio.smoothHRV = bio.snapshot.hrvNormalized
                 }
-                currentNotes.removeAll()
-
-                // Pick notes based on coherence
-                let availableNotes = coherence > 0.5
-                    ? Array(baseNotes.prefix(5))   // High coherence: stay in lower, warmer range
-                    : baseNotes                     // Low coherence: full range
-
-                for _ in 0..<noteCount {
-                    guard !availableNotes.isEmpty else { break }
-                    let note = availableNotes[Int.random(in: 0..<availableNotes.count)]
-                    let velocity = Float(0.4 + hrv * 0.4) // HRV affects velocity
-                    EchoelSynth.shared.noteOn(note: note, velocity: velocity)
-                    currentNotes.append(note)
+                if oura.restingHR > 0 {
+                    bio.snapshot.heartRate = Double(oura.restingHR)
+                    bio.smoothHeartRate = Double(oura.restingHR)
                 }
+                bio.dataSource = .ouraRing
+                bio.isStreaming = true
             }
         }
-    }
-
-    /// Feed bio parameters to synth in real time
-    private func startBioSynthFeed() {
-        // Bio → synth parameter mapping runs on a timer
-        // This feeds coherence, HRV, HR, breath to the synth's updateBio method
-        let feedTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { _ in
-            Task { @MainActor in
-                guard isPlaying else { return }
-                let params = bio.audioParameters()
-                EchoelSynth.shared.updateBio(
-                    coherence: params.coherence,
-                    heartRate: params.heartRate,
-                    hrv: params.hrv,
-                    breathPhase: params.breathPhase
-                )
-            }
-        }
-        // Store reference to prevent deallocation
-        bioUpdateTimer = feedTimer
     }
 }
 
