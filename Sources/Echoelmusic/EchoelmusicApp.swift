@@ -31,12 +31,16 @@ struct EchoelmusicApp: App {
                 .environment(themeManager)
                 .preferredColorScheme(themeManager.resolvedColorScheme)
                 .task {
-                    // Deferred singleton init — runs after first frame renders.
-                    // Using .task instead of .onAppear to avoid blocking the main thread
-                    // with heavy DSP/Metal initialization during app launch.
-                    TuningBridge.shared.activate()
+                    // PHASE 1: Wire audio FIRST so instruments respond immediately.
+                    // connectToMasterEngine is lightweight (stores a weak reference),
+                    // ensureAttachedToMaster does the actual attach on first noteOn.
+                    EchoelSynth.shared.connectToMasterEngine(audioEngine)
+                    EchoelBass.shared.connectToMasterEngine(audioEngine)
+                    TR808BassSynth.shared.connectToMasterEngine(audioEngine)
+                    audioEngine.start()
 
-                    // Complete heavy workspace init (StageEngine, VisEngine, default session)
+                    // PHASE 2: Deferred heavy init — workspace, orchestrator, bio.
+                    TuningBridge.shared.activate()
                     EchoelCreativeWorkspace.shared.deferredSetup()
 
                     _ = InstrumentOrchestrator.shared
@@ -45,21 +49,9 @@ struct EchoelmusicApp: App {
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
-
-                    // Wire all sound generators to the master engine.
-                    // Each synth's AVAudioSourceNode is attached to masterMixer → hardware.
-                    // This prevents competing AVAudioEngine instances (crash on iOS).
-                    EchoelSynth.shared.connectToMasterEngine(audioEngine)
-                    EchoelBass.shared.connectToMasterEngine(audioEngine)
                     EchoelBeat.shared.connectToMasterEngine(audioEngine)
-                    TR808BassSynth.shared.connectToMasterEngine(audioEngine)
 
-                    audioEngine.start()
-
-                    // Request HealthKit authorization, then start bio streaming.
-                    // Must happen AFTER workspace.deferredSetup() so engines are ready,
-                    // but auth must complete BEFORE startStreaming() so HealthKit data
-                    // is used instead of mic fallback.
+                    // PHASE 3: HealthKit (async — waits for user permission dialog)
                     _ = await EchoelBioEngine.shared.requestAuthorization()
                     EchoelBioEngine.shared.startStreaming()
                 }

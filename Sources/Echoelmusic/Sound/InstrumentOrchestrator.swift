@@ -558,9 +558,9 @@ final class InstrumentOrchestrator {
         let sustainLevel: Float = 0.6   // 60% sustain
         let releaseTime: Float = 0.25   // 250ms release — smooth tail
 
-        let attackSamples = Swift.min(Int(attackTime * sampleRate), samples.count / 4)
-        let decaySamples = Swift.min(Int(decayTime * sampleRate), samples.count / 3)
-        let releaseSamples = Swift.min(Int(releaseTime * sampleRate), samples.count / 3)
+        let attackSamples = Swift.max(1, Swift.min(Int(attackTime * sampleRate), samples.count / 4))
+        let decaySamples = Swift.max(1, Swift.min(Int(decayTime * sampleRate), samples.count / 3))
+        let releaseSamples = Swift.max(1, Swift.min(Int(releaseTime * sampleRate), samples.count / 3))
         let sustainEnd = samples.count - releaseSamples
 
         for i in 0..<samples.count {
