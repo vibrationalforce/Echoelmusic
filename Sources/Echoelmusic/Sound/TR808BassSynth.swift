@@ -258,7 +258,7 @@ public final class TR808BassSynth {
     // @ObservationIgnored: voices accessed from audio render thread — observation
     // registrar lock on RT causes priority inversion → deadlock / watchdog kill.
 
-    @ObservationIgnored private var voices: [TR808Voice] = []
+    @ObservationIgnored nonisolated(unsafe) private var voices: [TR808Voice] = []
     /// os_unfair_lock wrapper — priority-inheriting, no ObjC dispatch,
     /// safe for real-time audio render callbacks.
     private let voiceLock = AudioUnfairLock()
@@ -319,9 +319,9 @@ public final class TR808BassSynth {
             log.audio("TR808BassSynth: failed to create AVAudioFormat — source node not created", level: .error)
             return
         }
-        nonisolated(unsafe) weak var weakSelf = self
-        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, audioBufferList -> OSStatus in
-            guard let s = weakSelf else { return noErr }
+        nonisolated(unsafe) let rawSelf = Unmanaged<AnyObject>.passUnretained(self).toOpaque()
+        sourceNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
+            let s = Unmanaged<TR808BassSynth>.fromOpaque(rawSelf).takeUnretainedValue()
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             guard ablPointer.count >= 2,
                   let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
@@ -652,7 +652,7 @@ public final class TR808BassSynth {
     // MARK: - DSP Utilities
 
     /// Analog-style soft saturation
-    private func applySaturation(_ input: Float, drive: Float) -> Float {
+    nonisolated private func applySaturation(_ input: Float, drive: Float) -> Float {
         let driven = input * (1.0 + drive * 3.0)
         // Soft clipping using tanh approximation
         let x = driven

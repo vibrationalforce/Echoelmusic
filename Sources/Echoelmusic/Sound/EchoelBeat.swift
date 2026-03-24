@@ -592,9 +592,9 @@ public final class EchoelBeat {
             log.log(.error, category: .audio, "EchoelBeat: failed to create AVAudioFormat — source node not created")
             return
         }
-        nonisolated(unsafe) weak var weakSelf = self
-        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, abl -> OSStatus in
-            guard let s = weakSelf else { return noErr }
+        nonisolated(unsafe) let rawSelf = Unmanaged<AnyObject>.passUnretained(self).toOpaque()
+        sourceNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, abl -> OSStatus in
+            let s = Unmanaged<EchoelBeat>.fromOpaque(rawSelf).takeUnretainedValue()
             let ablPtr = UnsafeMutableAudioBufferListPointer(abl)
             guard ablPtr.count >= 2,
                   let left = ablPtr[0].mData?.assumingMemoryBound(to: Float.self),
@@ -911,7 +911,7 @@ public final class EchoelBeat {
     // MARK: - HiHat DSP (per-sample)
 
     /// Render one sample of 808 hihat: 6 square osc → SVF BPF → HPF → VCA
-    private func renderHiHatSample(_ voice: inout HiHatVoice, sampleRate sr: Float) -> Float {
+    nonisolated private func renderHiHatSample(_ voice: inout HiHatVoice, sampleRate sr: Float) -> Float {
         // ── Square Wave Oscillator Bank (TR-808 metallic noise) ──
         var metallic: Float = 0.0
         let freqs = Self.hihatOscFreqs

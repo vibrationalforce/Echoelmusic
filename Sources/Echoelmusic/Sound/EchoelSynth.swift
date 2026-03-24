@@ -256,7 +256,7 @@ public final class EchoelSynth {
 
     // @ObservationIgnored: voices accessed from audio render thread — observation
     // registrar lock on RT causes priority inversion → deadlock / watchdog kill.
-    @ObservationIgnored private var voices: [EchoelSynthVoice] = []
+    @ObservationIgnored nonisolated(unsafe) private var voices: [EchoelSynthVoice] = []
     private let voiceLock = AudioUnfairLock()
 
     // MARK: - DSP State (accessed from audio render thread, synchronized by voiceLock)
@@ -314,9 +314,13 @@ public final class EchoelSynth {
             log.audio("EchoelSynth: failed to create audio format", level: .error)
             return
         }
-        nonisolated(unsafe) weak var weakSelf = self
-        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, audioBufferList -> OSStatus in
-            guard let s = weakSelf else { return noErr }
+        // CRITICAL: Swift 6 iOS 26 runtime inserts actor isolation checks on ANY
+        // method dispatch through a @MainActor reference — even nonisolated methods.
+        // Fix: erase actor annotation via Unmanaged<AnyObject> raw pointer.
+        // SAFETY: EchoelSynth is a process-lifetime singleton; pointer always valid.
+        nonisolated(unsafe) let rawSelf = Unmanaged<AnyObject>.passUnretained(self).toOpaque()
+        sourceNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
+            let s = Unmanaged<EchoelSynth>.fromOpaque(rawSelf).takeUnretainedValue()
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             guard ablPointer.count >= 2,
                   let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
@@ -617,7 +621,7 @@ public final class EchoelSynth {
 
     // MARK: - Engine Renderers
 
-    private func renderEngine(cfg: EchoelSynthConfig, voice v: inout EchoelSynthVoice, freq: Float, phaseInc: Double, elapsed: Float, sr: Float) -> Float {
+    nonisolated private func renderEngine(cfg: EchoelSynthConfig, voice v: inout EchoelSynthVoice, freq: Float, phaseInc: Double, elapsed: Float, sr: Float) -> Float {
         switch cfg.engine {
 
         case .analog:
@@ -785,7 +789,7 @@ public final class EchoelSynth {
     /// Band-limited wavetable shapes using additive synthesis
     /// Prevents aliasing by only generating harmonics below Nyquist.
     /// For shapes that are already band-limited (sine, half-rect), uses direct computation.
-    private func wavetableShape(shape: Int, phase: Float, freq: Float = 440.0) -> Float {
+    nonisolated private func wavetableShape(shape: Int, phase: Float, freq: Float = 440.0) -> Float {
         let nyquist = Float(sampleRate) * 0.5
         let maxHarmonics = max(1, Int(nyquist / max(1.0, freq)))
 
@@ -858,7 +862,7 @@ public final class EchoelSynth {
     // MARK: - DSP Utilities
 
     /// SVF (State Variable Filter) — Cytomic/Chamberlin implementation
-    private func svfFilter(input: Float, cutoff: Float, resonance: Float, sr: Float, mode: SynthFilterMode, ic1eq: inout Float, ic2eq: inout Float) -> Float {
+    nonisolated private func svfFilter(input: Float, cutoff: Float, resonance: Float, sr: Float, mode: SynthFilterMode, ic1eq: inout Float, ic2eq: inout Float) -> Float {
         let g = tan(Float.pi * min(cutoff, sr * 0.49) / sr)
         let k = 2.0 - 2.0 * resonance  // damping
         let a1 = 1.0 / (1.0 + g * (g + k))
@@ -880,7 +884,7 @@ public final class EchoelSynth {
     }
 
     /// PolyBLEP anti-aliasing correction
-    private func polyBLEP(t: Float, dt: Float) -> Float {
+    nonisolated private func polyBLEP(t: Float, dt: Float) -> Float {
         var blep: Float = 0.0
         var tVal = t
         if tVal < dt {
@@ -894,7 +898,7 @@ public final class EchoelSynth {
     }
 
     /// tanh soft saturation
-    private func tanhSaturation(_ input: Float, drive: Float) -> Float {
+    nonisolated private func tanhSaturation(_ input: Float, drive: Float) -> Float {
         let driven = input * (1.0 + drive * 4.0)
         let x2 = driven * driven
         return driven * (27.0 + x2) / (27.0 + 9.0 * x2)

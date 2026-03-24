@@ -314,7 +314,7 @@ public final class EchoelBass {
     // @ObservationIgnored: voices accessed from audio render thread — observation
     // registrar lock on RT causes priority inversion → deadlock / watchdog kill.
 
-    @ObservationIgnored private var voices: [EchoelBassVoice] = []
+    @ObservationIgnored nonisolated(unsafe) private var voices: [EchoelBassVoice] = []
     /// Lock-free-friendly unfair lock for audio thread safety.
     /// os_unfair_lock is priority-inheriting (no priority inversion) and has
     /// zero ObjC dispatch overhead — safe for real-time audio callbacks.
@@ -368,13 +368,13 @@ public final class EchoelBass {
     private func createSourceNode() {
         // nonisolated(unsafe) avoids Swift 6 actor isolation check on audio render thread.
         // [weak self] on @MainActor class triggers dispatch_assert_queue_fail.
-        nonisolated(unsafe) weak var weakSelf = self
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 2, interleaved: false) else {
             log.audio("EchoelBass: failed to create AVAudioFormat — source node not created", level: .error)
             return
         }
-        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, audioBufferList -> OSStatus in
-            guard let s = weakSelf else { return noErr }
+        nonisolated(unsafe) let rawSelf = Unmanaged<AnyObject>.passUnretained(self).toOpaque()
+        sourceNode = AVAudioSourceNode(format: format) { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
+            let s = Unmanaged<EchoelBass>.fromOpaque(rawSelf).takeUnretainedValue()
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             guard ablPointer.count >= 2,
                   let leftBuffer = ablPointer[0].mData?.assumingMemoryBound(to: Float.self),
@@ -658,7 +658,7 @@ public final class EchoelBass {
     // MARK: - Engine Renderers
 
     /// Render a single sample from the specified engine type
-    private func renderEngine(type: BassEngineType, voice v: inout EchoelBassVoice, freq: Float, phaseInc: Double, elapsed: Float, cfg: EchoelBassConfig, sr: Float, isEngineA: Bool) -> Float {
+    nonisolated private func renderEngine(type: BassEngineType, voice v: inout EchoelBassVoice, freq: Float, phaseInc: Double, elapsed: Float, cfg: EchoelBassConfig, sr: Float, isEngineA: Bool) -> Float {
         switch type {
 
         case .sub808:
@@ -797,7 +797,7 @@ public final class EchoelBass {
     // MARK: - DSP Utilities
 
     /// PolyBLEP anti-aliasing correction
-    private func polyBLEP(t: Float, dt: Float) -> Float {
+    nonisolated private func polyBLEP(t: Float, dt: Float) -> Float {
         var blep: Float = 0.0
         var tVal = t
         // Check discontinuity at 0/1
@@ -834,7 +834,7 @@ public final class EchoelBass {
     }
 
     /// tanh soft saturation
-    private func tanhSaturation(_ input: Float, drive: Float) -> Float {
+    nonisolated private func tanhSaturation(_ input: Float, drive: Float) -> Float {
         let driven = input * (1.0 + drive * 4.0)
         // Fast tanh approximation
         let x2 = driven * driven
