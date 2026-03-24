@@ -315,8 +315,12 @@ public final class TR808BassSynth {
     /// Create the AVAudioSourceNode for DSP rendering.
     /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
     private func createSourceNode() {
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 2, interleaved: false) else {
+            log.audio("TR808BassSynth: failed to create AVAudioFormat — source node not created", level: .error)
+            return
+        }
         nonisolated(unsafe) weak var weakSelf = self
-        sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, audioBufferList -> OSStatus in
             guard let s = weakSelf else { return noErr }
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             guard ablPointer.count >= 2,
@@ -330,23 +334,20 @@ public final class TR808BassSynth {
         log.audio("TR808BassSynth: source node created (not yet attached to master engine)")
     }
 
-    /// Store reference to the master AudioEngine. Source node is attached lazily on first noteOn.
+    /// Store reference to the master AudioEngine and eagerly attach the source node.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-    }
-
-    private func ensureAttachedToMaster() {
-        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
-        engine.attachSourceNode(source)
-        isAttachedToMaster = true
-        log.audio("TR808BassSynth: source node attached to master engine")
+        if !isAttachedToMaster, let source = sourceNode {
+            engine.attachSourceNode(source)
+            isAttachedToMaster = true
+            log.audio("TR808BassSynth: source node attached (eager)")
+        }
     }
 
     // MARK: - Public API
 
     /// Start the synthesizer
     public func start() {
-        ensureAttachedToMaster()
         masterAudioEngine?.start()
         isPlaying = true
     }
@@ -365,7 +366,10 @@ public final class TR808BassSynth {
 
     /// Trigger a note with velocity
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        ensureAttachedToMaster()
+        guard isAttachedToMaster else {
+            log.audio("TR808BassSynth: noteOn ignored — not attached", level: .error)
+            return
+        }
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }

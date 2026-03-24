@@ -188,7 +188,7 @@ struct BioMusicView: View {
     @Bindable private var bio = EchoelBioEngine.shared
     @State private var engine = BioMusicEngine()
     @State private var cameraAnalyzer = CameraAnalyzer()
-    @State private var selectedSource = 0
+    @State private var cameraActive = false
 
     var body: some View {
         ZStack {
@@ -201,21 +201,23 @@ struct BioMusicView: View {
 
                 Spacer()
 
-                breathingRing
+                if !cameraActive {
+                    fingerPlacementGuide
+                } else {
+                    breathingRing
+                }
 
                 Spacer()
 
-                metricsRow
-                    .padding(.horizontal, EchoelSpacing.xl)
+                if cameraActive {
+                    metricsRow
+                        .padding(.horizontal, EchoelSpacing.xl)
 
-                Spacer()
+                    Spacer()
+                }
 
                 playControl
                     .padding(.bottom, EchoelSpacing.lg)
-
-                sourceTabs
-                    .padding(.horizontal, EchoelSpacing.md)
-                    .padding(.bottom, EchoelSpacing.sm)
 
                 Text("Not a medical device. For self-observation only.")
                     .font(.system(size: 8))
@@ -224,6 +226,98 @@ struct BioMusicView: View {
             }
         }
         .onDisappear { engine.stopAll() }
+    }
+
+    // MARK: - Finger Placement Guide
+
+    /// Visual instruction: place finger over rear camera + flash
+    private var fingerPlacementGuide: some View {
+        VStack(spacing: 24) {
+            // Phone rear camera illustration
+            ZStack {
+                // Phone body
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.04))
+                    .frame(width: 140, height: 200)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+
+                VStack(spacing: 10) {
+                    // Camera lens cluster
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.03))
+                            .frame(width: 60, height: 60)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+                            )
+
+                        // Camera lens
+                        Circle()
+                            .fill(Color.white.opacity(0.06))
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                            .overlay(
+                                Circle()
+                                    .fill(Color.white.opacity(0.1))
+                                    .frame(width: 12, height: 12)
+                            )
+
+                        // Flash LED
+                        Circle()
+                            .fill(Color.yellow.opacity(0.3))
+                            .frame(width: 8, height: 8)
+                            .offset(x: 18, y: -18)
+                    }
+                    .offset(y: -30)
+
+                    // Finger overlay — translucent red circle over camera area
+                    ZStack {
+                        // Finger tip shape
+                        Capsule()
+                            .fill(Color.red.opacity(0.15))
+                            .frame(width: 80, height: 100)
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                            )
+
+                        Text("Finger")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.red.opacity(0.5))
+                    }
+                    .offset(y: -50)
+                }
+            }
+
+            VStack(spacing: 8) {
+                Text("Place your finger")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.7))
+
+                Text("Cover the rear camera and flash\nwith your fingertip. Press gently.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.white.opacity(0.35))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.red.opacity(0.4))
+                        .frame(width: 6, height: 6)
+                    Text("Light passes through skin to detect pulse")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.white.opacity(0.25))
+                }
+                .padding(.top, 4)
+            }
+        }
     }
 
     // MARK: - Background
@@ -253,35 +347,19 @@ struct BioMusicView: View {
             Spacer()
             HStack(spacing: 4) {
                 Circle()
-                    .fill(isConnected ? EchoelBrand.emerald : Color.white.opacity(0.2))
+                    .fill(cameraActive ? EchoelBrand.emerald : Color.white.opacity(0.2))
                     .frame(width: 5, height: 5)
-                Text(connectionLabel)
+                Text(cameraActive ? "camera" : "place finger")
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .foregroundStyle(Color.white.opacity(0.35))
             }
         }
     }
 
-    private var isConnected: Bool {
-        bio.isStreaming && bio.dataSource != .fallback
-    }
-
-    private var connectionLabel: String {
-        guard isConnected else { return "no signal" }
-        switch bio.dataSource {
-        case .healthKit, .appleWatch, .chestStrap: return "watch"
-        case .camera: return "camera"
-        case .ouraRing: return "oura"
-        case .arkit: return "face"
-        case .microphone: return "mic"
-        case .fallback: return "—"
-        }
-    }
-
     // MARK: - Breathing Ring
 
     private var breathingRing: some View {
-        let coherence = isConnected ? bio.smoothCoherence : 0
+        let coherence = bio.smoothCoherence
         let ringColor: Color = coherence > 0.7 ? EchoelBrand.coherenceHigh
             : coherence > 0.4 ? EchoelBrand.coherenceMedium
             : EchoelBrand.coherenceLow
@@ -298,7 +376,7 @@ struct BioMusicView: View {
                 .frame(width: 220, height: 220)
                 .animation(.easeInOut(duration: 1.5), value: coherence)
 
-            let breathScale = isConnected ? (0.85 + bio.smoothBreathPhase * 0.15) : 0.9
+            let breathScale = 0.85 + bio.smoothBreathPhase * 0.15
             Circle()
                 .fill(ringColor.opacity(engine.isPlaying ? 0.06 : 0.03))
                 .frame(width: 160, height: 160)
@@ -308,17 +386,15 @@ struct BioMusicView: View {
             VStack(spacing: 6) {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 18))
-                    .foregroundStyle(isConnected ? ringColor : Color.white.opacity(0.15))
+                    .foregroundStyle(ringColor)
 
-                Text(isConnected ? "\(Int(bio.smoothHeartRate))" : "—")
+                Text("\(Int(bio.smoothHeartRate))")
                     .font(.system(size: 56, weight: .ultraLight, design: .monospaced))
-                    .foregroundStyle(Color.white.opacity(isConnected ? 0.9 : 0.2))
+                    .foregroundStyle(Color.white.opacity(0.9))
 
-                if isConnected {
-                    Text("\(Int(coherence * 100))% coherence")
-                        .font(.system(size: 11, weight: .regular, design: .monospaced))
-                        .foregroundStyle(ringColor.opacity(0.7))
-                }
+                Text("\(Int(coherence * 100))% coherence")
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundStyle(ringColor.opacity(0.7))
             }
         }
     }
@@ -328,12 +404,12 @@ struct BioMusicView: View {
     private var metricsRow: some View {
         HStack {
             metric(
-                value: isConnected ? String(format: "%.0f", bio.snapshot.hrvRMSSD) : "—",
+                value: String(format: "%.0f", bio.snapshot.hrvRMSSD),
                 unit: "ms", label: "HRV"
             )
             Spacer()
             metric(
-                value: isConnected ? String(format: "%.0f", bio.snapshot.breathRate) : "—",
+                value: String(format: "%.0f", bio.snapshot.breathRate),
                 unit: "/m", label: "Breath"
             )
             Spacer()
@@ -368,7 +444,14 @@ struct BioMusicView: View {
         Button {
             if engine.isPlaying {
                 engine.stop()
+                cameraAnalyzer.stopPulseDetection()
+                engine.stopCameraFeed()
+                cameraActive = false
             } else {
+                // Start camera rPPG and music together
+                cameraAnalyzer.startPulseDetection()
+                engine.startCameraFeed(analyzer: cameraAnalyzer)
+                cameraActive = true
                 engine.start()
             }
         } label: {
@@ -386,79 +469,6 @@ struct BioMusicView: View {
             }
         }
         .buttonStyle(.plain)
-    }
-
-    // MARK: - Source Tabs
-
-    private var sourceTabs: some View {
-        HStack(spacing: 0) {
-            sourceTab(index: 0, icon: "applewatch", label: "Watch")
-            sourceTab(index: 1, icon: "camera.fill", label: "Camera")
-            sourceTab(index: 2, icon: "circle.circle", label: "Oura")
-        }
-        .background(Color.white.opacity(0.03))
-        .clipShape(RoundedRectangle(cornerRadius: EchoelRadius.sm))
-        .overlay(
-            RoundedRectangle(cornerRadius: EchoelRadius.sm)
-                .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
-        )
-    }
-
-    private func sourceTab(index: Int, icon: String, label: String) -> some View {
-        Button {
-            selectedSource = index
-            switchSource(index)
-        } label: {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                Text(label)
-                    .font(.system(size: 9, weight: .medium))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, EchoelSpacing.sm)
-            .foregroundStyle(selectedSource == index ? Color.white.opacity(0.8) : Color.white.opacity(0.25))
-            .background(selectedSource == index ? Color.white.opacity(0.06) : Color.clear)
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Source Switching
-
-    private func switchSource(_ index: Int) {
-        engine.stopCameraFeed()
-        bio.stopStreaming()
-
-        switch index {
-        case 0:
-            Task {
-                _ = await bio.requestAuthorization()
-                bio.startStreaming()
-            }
-        case 1:
-            cameraAnalyzer.startPulseDetection()
-            engine.startCameraFeed(analyzer: cameraAnalyzer)
-        case 2:
-            Task {
-                let client = OuraRingClient.shared
-                guard client.authState == .authenticated else { return }
-                await client.syncDailyData()
-                let oura = client.snapshot
-                if oura.hrvSleep > 0 {
-                    bio.snapshot.hrvRMSSD = oura.hrvSleep
-                    bio.snapshot.hrvNormalized = min(oura.hrvSleep / 100.0, 1.0)
-                    bio.smoothHRV = bio.snapshot.hrvNormalized
-                }
-                if oura.restingHR > 0 {
-                    bio.snapshot.heartRate = Double(oura.restingHR)
-                    bio.smoothHeartRate = Double(oura.restingHR)
-                }
-                bio.dataSource = .ouraRing
-                bio.isStreaming = true
-            }
-        default:
-            break
-        }
     }
 }
 

@@ -302,11 +302,20 @@ public final class EchoelSynth {
 
     // MARK: - Audio Engine Setup
 
-    /// Create the AVAudioSourceNode for DSP rendering.
+    /// Create the AVAudioSourceNode for DSP rendering with explicit 48kHz stereo format.
     /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
     private func createSourceNode() {
+        guard let format = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: sampleRate,
+            channels: 2,
+            interleaved: false
+        ) else {
+            log.audio("EchoelSynth: failed to create audio format", level: .error)
+            return
+        }
         nonisolated(unsafe) weak var weakSelf = self
-        sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, audioBufferList -> OSStatus in
             guard let s = weakSelf else { return noErr }
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             guard ablPointer.count >= 2,
@@ -317,19 +326,19 @@ public final class EchoelSynth {
             s.renderAudio(leftBuffer: leftBuffer, rightBuffer: rightBuffer, frameCount: Int(frameCount))
             return noErr
         }
-        log.audio("EchoelSynth: source node created (not yet attached to master engine)")
+        log.audio("EchoelSynth: source node created (\(sampleRate)Hz stereo, not yet attached)")
     }
 
-    /// Store reference to the master AudioEngine. Source node is attached lazily on first noteOn.
+    /// Connect to master engine and immediately attach source node.
+    /// MUST be called BEFORE engine.start() to avoid graph mutation on running engine.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-    }
-
-    private func ensureAttachedToMaster() {
-        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
-        engine.attachSourceNode(source)
-        isAttachedToMaster = true
-        log.audio("EchoelSynth: source node attached to master engine")
+        // Attach eagerly — engine is not yet started at this point in app init
+        if !isAttachedToMaster, let source = sourceNode {
+            engine.attachSourceNode(source)
+            isAttachedToMaster = true
+            log.audio("EchoelSynth: source node attached to master engine (eager)")
+        }
     }
 
     deinit {
@@ -357,7 +366,10 @@ public final class EchoelSynth {
     }
 
     public func noteOn(note: Int, velocity: Float = 0.8) {
-        ensureAttachedToMaster()
+        guard isAttachedToMaster else {
+            log.audio("EchoelSynth: noteOn ignored — not attached to master engine", level: .error)
+            return
+        }
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }

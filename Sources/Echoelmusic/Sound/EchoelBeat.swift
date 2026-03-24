@@ -588,8 +588,12 @@ public final class EchoelBeat {
     /// Create the AVAudioSourceNode for DSP rendering.
     /// The node is NOT attached to any engine yet — call connectToMasterEngine() to wire it up.
     private func createSourceNode() {
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: sampleRate, channels: 2, interleaved: false) else {
+            log.log(.error, category: .audio, "EchoelBeat: failed to create AVAudioFormat — source node not created")
+            return
+        }
         nonisolated(unsafe) weak var weakSelf = self
-        sourceNode = AVAudioSourceNode { _, _, frameCount, abl -> OSStatus in
+        sourceNode = AVAudioSourceNode(format: format) { _, _, frameCount, abl -> OSStatus in
             guard let s = weakSelf else { return noErr }
             let ablPtr = UnsafeMutableAudioBufferListPointer(abl)
             guard ablPtr.count >= 2,
@@ -601,16 +605,14 @@ public final class EchoelBeat {
         log.log(.info, category: .audio, "EchoelBeat: source node created (not yet attached to master engine)")
     }
 
-    /// Store reference to the master AudioEngine. Source node is attached lazily on first trigger.
+    /// Store reference to the master AudioEngine and eagerly attach the source node.
     public func connectToMasterEngine(_ engine: AudioEngine) {
         masterAudioEngine = engine
-    }
-
-    private func ensureAttachedToMaster() {
-        guard !isAttachedToMaster, let engine = masterAudioEngine, let source = sourceNode else { return }
-        engine.attachSourceNode(source)
-        isAttachedToMaster = true
-        log.log(.info, category: .audio, "EchoelBeat: source node attached to master engine")
+        if !isAttachedToMaster, let source = sourceNode {
+            engine.attachSourceNode(source)
+            isAttachedToMaster = true
+            log.log(.info, category: .audio, "EchoelBeat: source node attached to master engine (eager)")
+        }
     }
 
     /// Poll raw meter/sequencer values from audio thread into @Observable properties.
@@ -631,7 +633,10 @@ public final class EchoelBeat {
     }
 
     private func ensureEngineRunning() {
-        ensureAttachedToMaster()
+        guard isAttachedToMaster else {
+            log.log(.error, category: .audio, "EchoelBeat: trigger ignored — not attached")
+            return
+        }
         if masterAudioEngine?.isRunning != true {
             masterAudioEngine?.start()
         }
