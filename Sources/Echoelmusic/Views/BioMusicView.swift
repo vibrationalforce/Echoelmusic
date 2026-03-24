@@ -189,6 +189,8 @@ struct BioMusicView: View {
     @State private var engine = BioMusicEngine()
     @State private var cameraAnalyzer = CameraAnalyzer()
     @State private var cameraActive = false
+    @State private var cameraManager: CameraManager?
+    @State private var cameraError: String?
 
     var body: some View {
         ZStack {
@@ -210,10 +212,22 @@ struct BioMusicView: View {
                 Spacer()
 
                 if cameraActive {
+                    signalStabilityBar
+                        .padding(.horizontal, EchoelSpacing.xl)
+                        .padding(.bottom, EchoelSpacing.sm)
+
                     metricsRow
                         .padding(.horizontal, EchoelSpacing.xl)
 
                     Spacer()
+                }
+
+                if let error = cameraError {
+                    Text(error)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(EchoelBrand.coral.opacity(0.8))
+                        .padding(.horizontal, EchoelSpacing.lg)
+                        .padding(.bottom, EchoelSpacing.sm)
                 }
 
                 playControl
@@ -225,7 +239,10 @@ struct BioMusicView: View {
                     .padding(.bottom, EchoelSpacing.sm)
             }
         }
-        .onDisappear { engine.stopAll() }
+        .onDisappear {
+            engine.stopAll()
+            teardownCamera()
+        }
     }
 
     // MARK: - Finger Placement Guide
@@ -347,11 +364,90 @@ struct BioMusicView: View {
             Spacer()
             HStack(spacing: 4) {
                 Circle()
-                    .fill(cameraActive ? EchoelBrand.emerald : Color.white.opacity(0.2))
+                    .fill(statusDotColor)
                     .frame(width: 5, height: 5)
-                Text(cameraActive ? "camera" : "place finger")
+                Text(statusLabel)
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .foregroundStyle(Color.white.opacity(0.35))
+            }
+        }
+    }
+
+    private var statusDotColor: Color {
+        guard cameraActive else { return Color.white.opacity(0.2) }
+        if cameraAnalyzer.signalQuality > 0.6 { return EchoelBrand.emerald }
+        if cameraAnalyzer.isFingerDetected { return EchoelBrand.amber }
+        return EchoelBrand.coral
+    }
+
+    private var statusLabel: String {
+        guard cameraActive else { return "place finger" }
+        if cameraAnalyzer.signalQuality > 0.6 { return "signal stable" }
+        if cameraAnalyzer.isFingerDetected { return "measuring..." }
+        return "no finger detected"
+    }
+
+    // MARK: - Signal Stability Bar
+
+    private var signalStabilityBar: some View {
+        let quality = cameraAnalyzer.signalQuality
+        let fingerDetected = cameraAnalyzer.isFingerDetected
+        let confidence = cameraAnalyzer.bpmConfidence
+
+        let barColor: Color = quality > 0.6 ? EchoelBrand.emerald
+            : quality > 0.3 ? EchoelBrand.amber
+            : EchoelBrand.coral
+
+        return VStack(spacing: 6) {
+            // Signal quality bar
+            HStack(spacing: 8) {
+                // Finger icon
+                Image(systemName: fingerDetected ? "hand.point.up.fill" : "hand.point.up")
+                    .font(.system(size: 11))
+                    .foregroundStyle(fingerDetected ? EchoelBrand.emerald : Color.white.opacity(0.2))
+
+                // Quality bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white.opacity(0.06))
+                            .frame(height: 4)
+
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(barColor)
+                            .frame(width: geo.size.width * max(0, min(1, quality)), height: 4)
+                            .animation(.easeInOut(duration: 0.3), value: quality)
+                    }
+                }
+                .frame(height: 4)
+
+                // Quality percentage
+                Text("\(Int(quality * 100))%")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(barColor)
+                    .frame(minWidth: 32, alignment: .trailing)
+            }
+
+            // Status text
+            HStack(spacing: 6) {
+                if !fingerDetected {
+                    Text("Cover rear camera + flash with fingertip")
+                        .font(.system(size: 9))
+                        .foregroundStyle(Color.white.opacity(0.3))
+                } else if confidence < 0.3 {
+                    Text("Hold still — detecting pulse...")
+                        .font(.system(size: 9))
+                        .foregroundStyle(EchoelBrand.amber.opacity(0.6))
+                } else if quality > 0.6 {
+                    Text("Signal locked — \(Int(cameraAnalyzer.estimatedBPM)) BPM")
+                        .font(.system(size: 9))
+                        .foregroundStyle(EchoelBrand.emerald.opacity(0.6))
+                } else {
+                    Text("Stabilizing — press firmly, stay still")
+                        .font(.system(size: 9))
+                        .foregroundStyle(EchoelBrand.amber.opacity(0.6))
+                }
+                Spacer()
             }
         }
     }
@@ -446,13 +542,12 @@ struct BioMusicView: View {
                 engine.stop()
                 cameraAnalyzer.stopPulseDetection()
                 engine.stopCameraFeed()
+                teardownCamera()
                 cameraActive = false
             } else {
-                // Start camera rPPG and music together
-                cameraAnalyzer.startPulseDetection()
-                engine.startCameraFeed(analyzer: cameraAnalyzer)
-                cameraActive = true
-                engine.start()
+                Task { @MainActor in
+                    await startCameraAndMusic()
+                }
             }
         } label: {
             ZStack {
@@ -469,6 +564,64 @@ struct BioMusicView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Camera Lifecycle
+
+    private func startCameraAndMusic() async {
+        cameraError = nil
+
+        // 1. Initialize CameraManager if needed
+        #if canImport(Metal)
+        if cameraManager == nil {
+            guard let device = MTLCreateSystemDefaultDevice() else {
+                cameraError = "Metal not available on this device"
+                return
+            }
+            guard let manager = CameraManager(device: device) else {
+                cameraError = "Failed to initialize camera"
+                return
+            }
+            cameraManager = manager
+        }
+        #else
+        cameraError = "Camera requires Metal GPU"
+        return
+        #endif
+
+        guard let manager = cameraManager else { return }
+
+        // 2. Wire raw frame callback → CameraAnalyzer
+        manager.onRawFrameCaptured = { [cameraAnalyzer] pixelBuffer, _ in
+            cameraAnalyzer.analyzePixelBuffer(pixelBuffer)
+        }
+
+        // 3. Start camera capture (handles permission request internally)
+        do {
+            try await manager.startCapture(camera: .back, resolution: .hd1280x720, frameRate: 30)
+        } catch {
+            cameraError = "Camera access denied — enable in Settings"
+            log.log(.error, category: .biofeedback, "Camera start failed: \(error)")
+            return
+        }
+
+        // 4. Enable torch for PPG illumination
+        manager.setTorchMode(.on, level: 1.0)
+
+        // 5. Start pulse detection + bio feed + music
+        cameraAnalyzer.startPulseDetection()
+        engine.startCameraFeed(analyzer: cameraAnalyzer)
+        cameraActive = true
+        engine.start()
+
+        log.log(.info, category: .biofeedback, "Camera PPG started — torch on, 30fps, rear camera")
+    }
+
+    private func teardownCamera() {
+        cameraManager?.setTorchMode(.off)
+        cameraManager?.stopCapture()
+        cameraManager?.onRawFrameCaptured = nil
+        cameraManager = nil
     }
 }
 
