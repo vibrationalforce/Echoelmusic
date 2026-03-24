@@ -227,8 +227,8 @@ public final class EchoelSyncProtocol {
 
     // MARK: - Network Objects
 
-    private nonisolated(unsafe) var listener: NWListener?
-    private nonisolated(unsafe) var browser: NWBrowser?
+    @ObservationIgnored private nonisolated(unsafe) var listener: NWListener?
+    @ObservationIgnored private nonisolated(unsafe) var browser: NWBrowser?
     private var peerConnections: [UUID: NWConnection] = [:]
     private let networkQueue = DispatchQueue(label: "com.echoelmusic.sync", qos: .userInteractive)
 

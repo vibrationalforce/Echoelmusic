@@ -228,19 +228,19 @@ public final class CameraManager: NSObject {
 
     private var lastFrameTime: CMTime?
     private var frameCount: Int = 0
-    nonisolated(unsafe) private var fpsTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var fpsTimer: Timer?
 
     // MARK: - Recording State
 
-    nonisolated(unsafe) private var recordingTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var recordingTimer: Timer?
     private var photoContinuation: CheckedContinuation<Data, Error>?
 
     // MARK: - KVO Observers
 
-    nonisolated(unsafe) private var exposureObserver: NSKeyValueObservation?
-    nonisolated(unsafe) private var focusObserver: NSKeyValueObservation?
-    nonisolated(unsafe) private var whiteBalanceObserver: NSKeyValueObservation?
-    nonisolated(unsafe) private var zoomObserver: NSKeyValueObservation?
+    @ObservationIgnored nonisolated(unsafe) private var exposureObserver: NSKeyValueObservation?
+    @ObservationIgnored nonisolated(unsafe) private var focusObserver: NSKeyValueObservation?
+    @ObservationIgnored nonisolated(unsafe) private var whiteBalanceObserver: NSKeyValueObservation?
+    @ObservationIgnored nonisolated(unsafe) private var zoomObserver: NSKeyValueObservation?
 
     // MARK: - Initialization
 

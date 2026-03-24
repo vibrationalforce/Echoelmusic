@@ -251,7 +251,7 @@ public final class DanteTransport {
     private var rtpTimestamp: UInt32 = 0
     private let ssrc: UInt32 = UInt32.random(in: 0...UInt32.max)
     private let jitterBuffer = JitterBuffer(maxDepth: 10)
-    nonisolated(unsafe) private var sendTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var sendTimer: Timer?
 
     /// Callback for received audio samples
     public var onAudioReceived: (([Float], Int) -> Void)?  // samples, channelCount

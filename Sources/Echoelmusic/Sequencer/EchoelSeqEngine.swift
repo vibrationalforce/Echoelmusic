@@ -255,7 +255,7 @@ public final class EchoelSeqEngine {
     // MARK: - Timing
 
     private var timer: Timer?
-    nonisolated(unsafe) private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored nonisolated(unsafe) private var cancellables = Set<AnyCancellable>()
 
     /// Step interval accounting for swing on even/odd steps
     private func stepInterval(forStep step: Int) -> TimeInterval {

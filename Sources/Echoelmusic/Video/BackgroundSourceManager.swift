@@ -42,7 +42,7 @@ final class BackgroundSourceManager {
     // MARK: - Video Playback
 
     private var videoPlayer: AVPlayer?
-    nonisolated(unsafe) private var loopObserver: NSObjectProtocol?
+    @ObservationIgnored nonisolated(unsafe) private var loopObserver: NSObjectProtocol?
     private var videoOutput: AVPlayerItemVideoOutput?
     private var displayLink: CADisplayLink?
 

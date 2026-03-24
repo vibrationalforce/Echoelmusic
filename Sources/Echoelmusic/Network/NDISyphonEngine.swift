@@ -11,6 +11,7 @@
 import Foundation
 import Network
 import Combine
+import Observation
 
 #if canImport(Metal)
 import Metal
@@ -188,8 +189,8 @@ public final class NDISyphonEngine {
 
     #if canImport(Metal)
     private var metalDevice: MTLDevice?
-    nonisolated(unsafe) private var conversionBuffer: UnsafeMutableRawPointer?
-    nonisolated(unsafe) private var conversionBufferSize: Int = 0
+    @ObservationIgnored nonisolated(unsafe) private var conversionBuffer: UnsafeMutableRawPointer?
+    @ObservationIgnored nonisolated(unsafe) private var conversionBufferSize: Int = 0
     #endif
 
     private let streamQueue = DispatchQueue(

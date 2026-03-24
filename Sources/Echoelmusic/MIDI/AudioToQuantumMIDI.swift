@@ -171,7 +171,7 @@ public final class AudioToQuantumMIDI {
     private let bufferSize: Int = 4096
     private let fftSize: Int = 4096
     private var analysisBuffer: [Float] = []
-    nonisolated(unsafe) private var complexDFT: EchoelComplexDFT?
+    @ObservationIgnored nonisolated(unsafe) private var complexDFT: EchoelComplexDFT?
     private var fftRealBuffer: [Float] = []
     private var fftImagBuffer: [Float] = []
     private var magnitudeSpectrum: [Float] = []

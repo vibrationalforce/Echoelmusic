@@ -122,8 +122,8 @@ public final class MemoryPressureHandler {
 
     // MARK: - Monitoring
 
-    nonisolated(unsafe) private var memorySource: DispatchSourceMemoryPressure?
-    nonisolated(unsafe) private var monitorTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var memorySource: DispatchSourceMemoryPressure?
+    @ObservationIgnored nonisolated(unsafe) private var monitorTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Statistics

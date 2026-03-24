@@ -330,7 +330,7 @@ final class VideoExportManager {
     // MARK: - Export Session
 
     private var currentExportSession: AVAssetExportSession?
-    nonisolated(unsafe) private var progressTimer: Timer?
+    @ObservationIgnored nonisolated(unsafe) private var progressTimer: Timer?
 
     deinit {
         progressTimer?.invalidate()

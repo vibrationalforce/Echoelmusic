@@ -101,7 +101,7 @@ public final class EchoelStore {
 
     // MARK: - Private
 
-    nonisolated(unsafe) private var transactionListener: Task<Void, Error>?
+    @ObservationIgnored nonisolated(unsafe) private var transactionListener: Task<Void, Error>?
 
     private static let sessionsKey = "echoelmusic_purchased_sessions"
 
