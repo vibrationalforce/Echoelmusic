@@ -34,24 +34,35 @@ struct EchoelmusicApp: App {
                     // PHASE 1: Wire ALL sound generators BEFORE engine.start().
                     // connectToMasterEngine eagerly attaches source nodes to the graph.
                     // Graph mutation on a running engine causes EXC_BREAKPOINT crashes.
+                    log.log(.info, category: .system, "STARTUP [1/10] Connecting EchoelSynth...")
                     EchoelSynth.shared.connectToMasterEngine(audioEngine)
+                    log.log(.info, category: .system, "STARTUP [2/10] Connecting EchoelBass...")
                     EchoelBass.shared.connectToMasterEngine(audioEngine)
+                    log.log(.info, category: .system, "STARTUP [3/10] Connecting TR808BassSynth...")
                     TR808BassSynth.shared.connectToMasterEngine(audioEngine)
+                    log.log(.info, category: .system, "STARTUP [4/10] Connecting EchoelBeat...")
                     EchoelBeat.shared.connectToMasterEngine(audioEngine)
+                    log.log(.info, category: .system, "STARTUP [5/10] Starting audio engine...")
                     audioEngine.start()
 
                     // PHASE 2: Deferred heavy init — workspace, orchestrator, bio.
+                    log.log(.info, category: .system, "STARTUP [6/10] Activating TuningBridge...")
                     TuningBridge.shared.activate()
+                    log.log(.info, category: .system, "STARTUP [7/10] Running deferredSetup...")
                     EchoelCreativeWorkspace.shared.deferredSetup()
+                    log.log(.info, category: .system, "STARTUP [8/10] Initializing InstrumentOrchestrator...")
 
                     _ = InstrumentOrchestrator.shared
 
+                    log.log(.info, category: .system, "STARTUP [9/10] Wiring engines...")
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
                     InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
 
                     // PHASE 3: HealthKit (async — waits for user permission dialog)
+                    log.log(.info, category: .system, "STARTUP [10/10] Requesting HealthKit authorization...")
                     _ = await EchoelBioEngine.shared.requestAuthorization()
+                    log.log(.info, category: .system, "STARTUP COMPLETE — all systems initialized")
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {

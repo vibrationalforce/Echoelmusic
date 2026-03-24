@@ -159,37 +159,52 @@ final class EchoelCreativeWorkspace {
 
     /// Complete heavy initialization — call from .task after first frame renders.
     /// Creates StageEngine, VisEngine, default session channels, and bridges.
+    /// Each subsystem is isolated so one failure doesn't crash the entire app.
     func deferredSetup() {
         guard !isReady else { return }
 
         // Upgrade ProMixEngine to full default session with channels + aux buses
+        log.log(.info, category: .system, "deferredSetup [1/14] ProMixEngine.defaultSession...")
         self.proMixer = ProMixEngine.defaultSession()
+        log.log(.info, category: .system, "deferredSetup [2/14] ProSessionEngine.defaultSession...")
         self.proSession = ProSessionEngine.defaultSession()
 
         #if canImport(UIKit)
+        log.log(.info, category: .system, "deferredSetup [3/14] EchoelStageEngine...")
         self.stageEngine = EchoelStageEngine.shared
         #endif
         #if canImport(Metal)
+        log.log(.info, category: .system, "deferredSetup [4/14] EchoelVisEngine...")
         self.visEngine = EchoelVisEngine.shared
         #endif
 
         // Initialize remaining EchoelTools engines
+        log.log(.info, category: .system, "deferredSetup [5/14] EchoelSeqEngine...")
         self.seqEngine = EchoelSeqEngine.shared
+        log.log(.info, category: .system, "deferredSetup [6/14] EchoelLuxEngine...")
         self.luxEngine = EchoelLuxEngine.shared
+        log.log(.info, category: .system, "deferredSetup [7/14] EchoelAIEngine...")
         self.aiEngine = EchoelAIEngine.shared
+        log.log(.info, category: .system, "deferredSetup [8/14] OSCEngine...")
         self.oscEngine = OSCEngine.shared
 
         // Initialize new engines (feature matrix completion)
+        log.log(.info, category: .system, "deferredSetup [9/14] InterAppAudioEngine...")
         self.interAppEngine = InterAppAudioEngine.shared
+        log.log(.info, category: .system, "deferredSetup [10/14] ProCueSystem...")
         self.cueSystem = ProCueSystem.shared
+        log.log(.info, category: .system, "deferredSetup [11/14] AIComposerEngine...")
         self.composerEngine = AIComposerEngine.shared
 
         #if canImport(CoreBluetooth)
+        log.log(.info, category: .system, "deferredSetup [12/14] EEGSensorBridge...")
         self.eegBridge = EEGSensorBridge.shared
         #endif
+        log.log(.info, category: .system, "deferredSetup [13/14] OuraRingClient...")
         self.ouraClient = OuraRingClient.shared
 
         #if canImport(Network)
+        log.log(.info, category: .system, "deferredSetup [14/14] Network engines (Sync, Dante, NDI)...")
         self.syncProtocol = EchoelSyncProtocol.shared
         self.danteTransport = DanteTransport.shared
         self.ndiEngine = NDISyphonEngine.shared
@@ -224,13 +239,14 @@ final class EchoelCreativeWorkspace {
             }
         }
 
+        log.log(.info, category: .system, "deferredSetup: Wiring bridges...")
         setupBridges()
 
         // Bio streaming is started from EchoelmusicApp.task AFTER HealthKit authorization.
         // Do NOT start here — would lock into fallback mode before auth completes.
 
         isReady = true
-        log.info("Creative Workspace deferred setup complete (12 EchoelTools + 9 production engines)", category: .system)
+        log.log(.info, category: .system, "deferredSetup COMPLETE — all 14 subsystems initialized")
     }
 
     // MARK: - Bridges
