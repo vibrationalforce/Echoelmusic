@@ -1,5 +1,8 @@
 #if canImport(SwiftUI)
 import SwiftUI
+#if canImport(Metal)
+import Metal
+#endif
 
 // MARK: - Generative Music Engine
 
