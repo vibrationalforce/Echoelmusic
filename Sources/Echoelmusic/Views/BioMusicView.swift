@@ -3,6 +3,9 @@ import SwiftUI
 #if canImport(Metal)
 import Metal
 #endif
+#if canImport(AVFoundation)
+import AVFoundation
+#endif
 
 // MARK: - Generative Music Engine
 
@@ -635,8 +638,16 @@ struct BioMusicView: View {
             return
         }
 
-        // 4. Enable torch for PPG illumination
-        manager.setTorchMode(.on, level: 1.0)
+        // 4. Enable torch for PPG illumination — required for finger-on-lens detection
+        if let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+           videoDevice.hasTorch {
+            manager.setTorchMode(.on, level: 1.0)
+        } else {
+            cameraError = "This device has no flash — PPG requires rear flash for pulse detection"
+            manager.stopCapture()
+            log.log(.error, category: .biofeedback, "No torch available — PPG cannot work")
+            return
+        }
 
         // 5. Start pulse detection + bio feed + music
         cameraAnalyzer.startPulseDetection()
