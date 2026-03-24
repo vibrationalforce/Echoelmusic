@@ -458,7 +458,11 @@ public final class EchoelSynth {
 
     // MARK: - Audio Rendering (Real-Time Thread)
 
-    private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
+    /// Audio render callback — called from AURemoteIO::IOThread.
+    /// MUST be nonisolated: Swift 6 runtime enforces @MainActor isolation checks
+    /// even through nonisolated(unsafe) weak references. Without this, the audio
+    /// thread triggers dispatch_assert_queue_fail → EXC_BREAKPOINT.
+    nonisolated private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         // Read config first — written only from MainActor, read here on audio thread.
         // EchoelSynthConfig is a small struct; individual Float fields are atomic-width.
         let cfg = config

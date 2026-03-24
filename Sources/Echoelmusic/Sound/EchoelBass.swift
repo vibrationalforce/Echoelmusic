@@ -503,7 +503,10 @@ public final class EchoelBass {
 
     // MARK: - Audio Rendering (Real-Time Thread)
 
-    private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
+    /// Audio render callback — called from AURemoteIO::IOThread.
+    /// MUST be nonisolated: Swift 6 runtime enforces @MainActor isolation checks
+    /// even through nonisolated(unsafe) weak references → EXC_BREAKPOINT.
+    nonisolated private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         let cfg = config
 
         memset(leftBuffer, 0, frameCount * MemoryLayout<Float>.size)

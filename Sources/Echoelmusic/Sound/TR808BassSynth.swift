@@ -451,7 +451,10 @@ public final class TR808BassSynth {
 
     // MARK: - Audio Rendering (Real-Time Thread)
 
-    private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
+    /// Audio render callback — called from AURemoteIO::IOThread.
+    /// MUST be nonisolated: Swift 6 runtime enforces @MainActor isolation checks
+    /// even through nonisolated(unsafe) weak references → EXC_BREAKPOINT.
+    nonisolated private func renderAudio(leftBuffer: UnsafeMutablePointer<Float>, rightBuffer: UnsafeMutablePointer<Float>, frameCount: Int) {
         // Get config snapshot for thread safety
         let cfg = config
 
