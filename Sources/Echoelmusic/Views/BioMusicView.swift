@@ -89,6 +89,7 @@ final class BioMusicEngine {
         activeNotes.removeAll()
     }
 
+    #if os(iOS)
     func startCameraFeed(analyzer: CameraAnalyzer) {
         cameraFeedTimer?.invalidate()
         cameraFeedTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
@@ -112,10 +113,13 @@ final class BioMusicEngine {
         cameraFeedTimer?.invalidate()
         cameraFeedTimer = nil
     }
+    #endif
 
     func stopAll() {
         stop()
+        #if os(iOS)
         stopCameraFeed()
+        #endif
     }
 
     // MARK: - Private
@@ -190,10 +194,12 @@ struct BioMusicView: View {
 
     @Bindable private var bio = EchoelBioEngine.shared
     @State private var engine = BioMusicEngine()
-    @State private var cameraAnalyzer = CameraAnalyzer()
     @State private var cameraActive = false
-    @State private var cameraManager: CameraManager?
     @State private var cameraError: String?
+    #if os(iOS)
+    @State private var cameraAnalyzer = CameraAnalyzer()
+    @State private var cameraManager: CameraManager?
+    #endif
 
     var body: some View {
         ZStack {
@@ -215,9 +221,11 @@ struct BioMusicView: View {
                 Spacer()
 
                 if cameraActive {
+                    #if os(iOS)
                     signalStabilityBar
                         .padding(.horizontal, EchoelSpacing.xl)
                         .padding(.bottom, EchoelSpacing.sm)
+                    #endif
 
                     metricsRow
                         .padding(.horizontal, EchoelSpacing.xl)
@@ -244,7 +252,9 @@ struct BioMusicView: View {
         }
         .onDisappear {
             engine.stopAll()
+            #if os(iOS)
             teardownCamera()
+            #endif
         }
     }
 
@@ -378,20 +388,29 @@ struct BioMusicView: View {
 
     private var statusDotColor: Color {
         guard cameraActive else { return Color.white.opacity(0.2) }
+        #if os(iOS)
         if cameraAnalyzer.signalQuality > 0.6 { return EchoelBrand.emerald }
         if cameraAnalyzer.isFingerDetected { return EchoelBrand.amber }
         return EchoelBrand.coral
+        #else
+        return EchoelBrand.emerald
+        #endif
     }
 
     private var statusLabel: String {
         guard cameraActive else { return "place finger" }
+        #if os(iOS)
         if cameraAnalyzer.signalQuality > 0.6 { return "signal stable" }
         if cameraAnalyzer.isFingerDetected { return "measuring..." }
         return "no finger detected"
+        #else
+        return "active"
+        #endif
     }
 
     // MARK: - Signal Stability Bar
 
+    #if os(iOS)
     private var signalStabilityBar: some View {
         let quality = cameraAnalyzer.signalQuality
         let fingerDetected = cameraAnalyzer.isFingerDetected
@@ -454,6 +473,7 @@ struct BioMusicView: View {
             }
         }
     }
+    #endif
 
     // MARK: - Breathing Ring
 
@@ -543,14 +563,20 @@ struct BioMusicView: View {
         Button {
             if engine.isPlaying {
                 engine.stop()
+                #if os(iOS)
                 cameraAnalyzer.stopPulseDetection()
                 engine.stopCameraFeed()
                 teardownCamera()
+                #endif
                 cameraActive = false
             } else {
+                #if os(iOS)
                 Task { @MainActor in
                     await startCameraAndMusic()
                 }
+                #else
+                engine.start()
+                #endif
             }
         } label: {
             ZStack {
@@ -571,6 +597,7 @@ struct BioMusicView: View {
 
     // MARK: - Camera Lifecycle
 
+    #if os(iOS)
     private func startCameraAndMusic() async {
         cameraError = nil
 
@@ -626,6 +653,7 @@ struct BioMusicView: View {
         cameraManager?.onRawFrameCaptured = nil
         cameraManager = nil
     }
+    #endif
 }
 
 #endif
