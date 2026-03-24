@@ -15,27 +15,16 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - Echoelmusic Workspace View
-// Unified creative workspace: audio + video on one BPM-synchronized timeline
-// Bottom panel drawers for instruments, mixer, FX, and video preview
-//
-// Panel Architecture: 5 tabs, each with sub-tools accessible via segmented picker
-//   Create  → Instruments, Sequencer, Piano Roll
-//   Mix     → Mixer, FX
-//   Bio     → Bio status
-//   Media   → Visuals, Video, Lighting, Stage
-//   Connect → Network, AI
+// MARK: - Echoelmusic Studio View
+// Focused workspace: Synth + Bio panels
+// Bottom panel drawers for synth control and bio-feedback status
 
 struct EchoelStudioView: View {
     @Environment(AudioEngine.self) var audioEngine
     @Environment(RecordingEngine.self) var recordingEngine
 
     @State private var viewMode: ViewMode = .session
-    @State private var activeTab: ToolTab? = .create
-    @State private var createSubtab: CreateSubtab = .instruments
-    @State private var mixSubtab: MixSubtab = .mixer
-    @State private var mediaSubtab: MediaSubtab = .visuals
-    @State private var connectSubtab: ConnectSubtab = .network
+    @State private var activeTab: ToolTab? = .synth
     @State private var selectedTrackID: UUID?
 
     #if os(iOS)
@@ -64,44 +53,28 @@ struct EchoelStudioView: View {
         }
     }
 
-    // MARK: - Tool Tabs (5 categories)
+    // MARK: - Tool Tabs (focused: Synth + Bio)
 
     enum ToolTab: String, CaseIterable, Identifiable {
-        case create = "Create"
-        case mix = "Mix"
+        case synth = "Synth"
         case bio = "Bio"
-        case media = "Media"
-        case connect = "Connect"
 
         var id: String { rawValue }
 
         var icon: String {
             switch self {
-            case .create: return "pianokeys"
-            case .mix: return "slider.vertical.3"
+            case .synth: return "pianokeys"
             case .bio: return "heart.fill"
-            case .media: return "eye"
-            case .connect: return "network"
             }
         }
 
         var color: Color {
             switch self {
-            case .create: return EchoelBrand.sky
-            case .mix: return EchoelBrand.emerald
+            case .synth: return EchoelBrand.sky
             case .bio: return EchoelBrand.coral
-            case .media: return EchoelBrand.violet
-            case .connect: return EchoelBrand.amber
             }
         }
     }
-
-    // MARK: - Subtabs
-
-    enum CreateSubtab: String, CaseIterable { case instruments = "Instruments", sequencer = "Sequencer", pianoRoll = "Piano Roll" }
-    enum MixSubtab: String, CaseIterable { case mixer = "Mixer", fx = "FX" }
-    enum MediaSubtab: String, CaseIterable { case visuals = "Visuals", video = "Video", lighting = "Lighting", stage = "Stage" }
-    enum ConnectSubtab: String, CaseIterable { case network = "Network", ai = "AI" }
 
     // MARK: - Body
 
@@ -157,46 +130,11 @@ struct EchoelStudioView: View {
             ScrollView {
                 Group {
                     switch tab {
-                    case .create:
-                        switch createSubtab {
-                        case .instruments:
-                            EchoelSynthView()
-                                .environment(audioEngine)
-                        case .sequencer:
-                            VisualStepSequencerView()
-                        case .pianoRoll:
-                            PianoRollView()
-                        }
-                    case .mix:
-                        switch mixSubtab {
-                        case .mixer:
-                            RealMixerSheet()
-                                .environment(audioEngine)
-                                .environment(recordingEngine)
-                        case .fx:
-                            EchoelFXView()
-                                .environment(audioEngine)
-                        }
+                    case .synth:
+                        EchoelSynthView()
+                            .environment(audioEngine)
                     case .bio:
                         BioStatusView()
-                    case .media:
-                        switch mediaSubtab {
-                        case .visuals:
-                            EchoelVisView()
-                        case .video:
-                            VideoEditorView()
-                        case .lighting:
-                            EchoelLuxView()
-                        case .stage:
-                            EchoelStageView()
-                        }
-                    case .connect:
-                        switch connectSubtab {
-                        case .network:
-                            EchoelNetView()
-                        case .ai:
-                            EchoelAIView()
-                        }
                     }
                 }
                 .environment(\.isEmbeddedInPanel, true)
@@ -259,48 +197,13 @@ struct EchoelStudioView: View {
 
     @ViewBuilder
     private func subtabPicker(for tab: ToolTab) -> some View {
-        switch tab {
-        case .create:
-            segmentedPicker(CreateSubtab.allCases, selection: $createSubtab, color: tab.color) { $0.rawValue }
-        case .mix:
-            segmentedPicker(MixSubtab.allCases, selection: $mixSubtab, color: tab.color) { $0.rawValue }
-        case .bio:
-            Text("BIO")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(EchoelBrand.textSecondary)
-                .tracking(1.5)
-        case .media:
-            segmentedPicker(MediaSubtab.allCases, selection: $mediaSubtab, color: tab.color) { $0.rawValue }
-        case .connect:
-            segmentedPicker(ConnectSubtab.allCases, selection: $connectSubtab, color: tab.color) { $0.rawValue }
-        }
+        Text(tab.rawValue.uppercased())
+            .font(.system(size: 10, weight: .bold))
+            .foregroundColor(EchoelBrand.textSecondary)
+            .tracking(1.5)
     }
 
-    /// Compact segmented picker for subtabs
-    private func segmentedPicker<T: Hashable>(_ items: [T], selection: Binding<T>, color: Color, label: @escaping (T) -> String) -> some View {
-        HStack(spacing: 2) {
-            ForEach(items, id: \T.self) { item in
-                let isActive = selection.wrappedValue == item
-                Button {
-                    selection.wrappedValue = item
-                    HapticHelper.impact(.light)
-                } label: {
-                    Text(label(item))
-                        .font(.system(size: 10, weight: isActive ? .bold : .medium))
-                        .foregroundColor(isActive ? color : EchoelBrand.textSecondary)
-                        .padding(.horizontal, EchoelSpacing.sm)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(isActive ? color.opacity(0.12) : Color.clear)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    // MARK: - Bottom Tab Bar (5 tabs)
+    // MARK: - Bottom Tab Bar
 
     private var bottomTabBar: some View {
         HStack(spacing: 0) {
@@ -313,7 +216,7 @@ struct EchoelStudioView: View {
                 .frame(width: 1, height: 28)
                 .padding(.horizontal, EchoelSpacing.sm)
 
-            // 5 tool tabs — no scrolling needed
+            // Synth + Bio tabs
             HStack(spacing: 0) {
                 ForEach(ToolTab.allCases) { tab in
                     Button {

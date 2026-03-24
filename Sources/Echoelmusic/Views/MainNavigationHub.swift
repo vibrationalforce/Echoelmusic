@@ -1,7 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-/// Main navigation — Echoelmusic unified workspace
+/// Main navigation — Bio-reactive synthesizer
 struct MainNavigationHub: View {
 
     @Environment(AudioEngine.self) var audioEngine
@@ -473,22 +473,6 @@ struct EchoelSettingsView: View {
                                     icon: "mic",
                                     label: "Input Monitoring",
                                     value: audioEngine.inputMonitoringEnabled ? "On" : "Off"
-                                )
-                            }
-                        }
-
-                        // MARK: - Sync
-                        settingsSection(title: "SYNC") {
-                            VStack(spacing: EchoelSpacing.sm) {
-                                settingsRow(
-                                    icon: "link",
-                                    label: "Ableton Link",
-                                    value: EchoelCreativeWorkspace.shared.linkClient.isEnabled ? "Active" : "Off"
-                                )
-                                settingsRow(
-                                    icon: "antenna.radiowaves.left.and.right",
-                                    label: "Link Peers",
-                                    value: "\(EchoelCreativeWorkspace.shared.linkClient.peers.count)"
                                 )
                             }
                         }

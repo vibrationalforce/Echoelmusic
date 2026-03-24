@@ -1,7 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-/// Echoelmusic — DAW + Video Production
+/// Echoelmusic — Bio-Reactive Synthesizer
 /// Clean, minimal entry point. No intro animation — straight to the app.
 @main
 struct EchoelmusicApp: App {
@@ -31,38 +31,26 @@ struct EchoelmusicApp: App {
                 .environment(themeManager)
                 .preferredColorScheme(themeManager.resolvedColorScheme)
                 .task {
-                    // PHASE 1: Wire ALL sound generators BEFORE engine.start().
-                    // connectToMasterEngine eagerly attaches source nodes to the graph.
+                    // PHASE 1: Wire core synth BEFORE engine.start().
                     // Graph mutation on a running engine causes EXC_BREAKPOINT crashes.
-                    log.log(.info, category: .system, "STARTUP [1/10] Connecting EchoelSynth...")
+                    log.log(.info, category: .system, "STARTUP [1/6] Connecting EchoelSynth...")
                     EchoelSynth.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [2/10] Connecting EchoelBass...")
+                    log.log(.info, category: .system, "STARTUP [2/6] Connecting EchoelBass...")
                     EchoelBass.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [3/10] Connecting TR808BassSynth...")
-                    TR808BassSynth.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [4/10] Connecting EchoelBeat...")
-                    EchoelBeat.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [5/10] Starting audio engine...")
+                    log.log(.info, category: .system, "STARTUP [3/6] Starting audio engine...")
                     audioEngine.start()
 
-                    // PHASE 2: Deferred heavy init — workspace, orchestrator, bio.
-                    log.log(.info, category: .system, "STARTUP [6/10] Activating TuningBridge...")
+                    // PHASE 2: Workspace + bio wiring
+                    log.log(.info, category: .system, "STARTUP [4/6] Wiring workspace...")
                     TuningBridge.shared.activate()
-                    log.log(.info, category: .system, "STARTUP [7/10] Running deferredSetup...")
                     EchoelCreativeWorkspace.shared.deferredSetup()
-                    log.log(.info, category: .system, "STARTUP [8/10] Initializing InstrumentOrchestrator...")
-
-                    _ = InstrumentOrchestrator.shared
-
-                    log.log(.info, category: .system, "STARTUP [9/10] Wiring engines...")
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
-                    InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
 
                     // PHASE 3: HealthKit (async — waits for user permission dialog)
-                    log.log(.info, category: .system, "STARTUP [10/10] Requesting HealthKit authorization...")
+                    log.log(.info, category: .system, "STARTUP [5/6] Requesting HealthKit authorization...")
                     _ = await EchoelBioEngine.shared.requestAuthorization()
-                    log.log(.info, category: .system, "STARTUP COMPLETE — all systems initialized")
+                    log.log(.info, category: .system, "STARTUP [6/6] COMPLETE — Synth + Bio ready")
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
