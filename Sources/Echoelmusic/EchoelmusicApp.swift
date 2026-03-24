@@ -40,17 +40,22 @@ struct EchoelmusicApp: App {
                     log.log(.info, category: .system, "STARTUP [3/6] Starting audio engine...")
                     audioEngine.start()
 
-                    // PHASE 2: Workspace + bio wiring
-                    log.log(.info, category: .system, "STARTUP [4/6] Wiring workspace...")
+                    // PHASE 2: Workspace + touch instrument wiring
+                    log.log(.info, category: .system, "STARTUP [4/7] Wiring workspace...")
                     TuningBridge.shared.activate()
                     EchoelCreativeWorkspace.shared.deferredSetup()
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
 
+                    // Touch instruments (keyboard, drums, melody XY) fall back to
+                    // InstrumentOrchestrator when MPE is unavailable — must be wired.
+                    log.log(.info, category: .system, "STARTUP [5/7] Connecting InstrumentOrchestrator...")
+                    InstrumentOrchestrator.shared.connectMainAudioEngine(audioEngine)
+
                     // PHASE 3: HealthKit (async — waits for user permission dialog)
-                    log.log(.info, category: .system, "STARTUP [5/6] Requesting HealthKit authorization...")
+                    log.log(.info, category: .system, "STARTUP [6/7] Requesting HealthKit authorization...")
                     _ = await EchoelBioEngine.shared.requestAuthorization()
-                    log.log(.info, category: .system, "STARTUP [6/6] COMPLETE — Synth + Bio ready")
+                    log.log(.info, category: .system, "STARTUP [7/7] COMPLETE — Synth + Bio ready")
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
