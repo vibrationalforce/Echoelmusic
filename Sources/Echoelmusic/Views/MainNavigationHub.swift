@@ -5,7 +5,6 @@ import SwiftUI
 struct MainNavigationHub: View {
 
     @Environment(AudioEngine.self) var audioEngine
-    @Environment(MicrophoneManager.self) var microphoneManager
     @Environment(RecordingEngine.self) var recordingEngine
     @Environment(ThemeManager.self) var themeManager
 
@@ -122,22 +121,13 @@ struct MainNavigationHub: View {
 
     private var transportBar: some View {
         HStack(spacing: 0) {
-            // Position Display (Bars.Beats.Ticks — Ableton style)
             positionDisplay
-
             transportDivider
-
-            // BPM + Tap Tempo + Time Signature
             bpmSection
-
             transportDivider
-
-            // Transport Controls (centered)
             transportControls
-
             Spacer()
 
-            // Loop Toggle
             Button {
                 isLoopEnabled.toggle()
                 HapticHelper.impact(.light)
@@ -156,7 +146,6 @@ struct MainNavigationHub: View {
 
             transportDivider
 
-            // Time display (MM:SS:ms)
             Text(formatTime(recordingEngine.currentTime))
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundColor(EchoelBrand.textSecondary)
@@ -164,13 +153,9 @@ struct MainNavigationHub: View {
                 .frame(minWidth: 60)
 
             transportDivider
-
-            // Bio-feedback indicator
             bioFeedbackIndicator
-
             transportDivider
 
-            // Stereo LED meters
             HStack(spacing: EchoelSpacing.xs) {
                 segmentedMeter(level: audioEngine.masterLevel, label: "L")
                 segmentedMeter(level: audioEngine.masterLevelR, label: "R")
@@ -189,7 +174,6 @@ struct MainNavigationHub: View {
         )
     }
 
-    /// Bars.Beats.Ticks position display (Ableton Live style)
     private var positionDisplay: some View {
         let bpm = max(EchoelCreativeWorkspace.shared.globalBPM, 20.0)
         let time = recordingEngine.currentTime
@@ -215,28 +199,21 @@ struct MainNavigationHub: View {
         .frame(minWidth: 70)
     }
 
-    /// BPM display with tap tempo (Ableton style)
     private var bpmSection: some View {
         HStack(spacing: EchoelSpacing.xs) {
-            // Time Signature
             Text("4/4")
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .foregroundColor(EchoelBrand.textSecondary)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 2)
-                .background(
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(EchoelBrand.bgElevated)
-                )
+                .background(RoundedRectangle(cornerRadius: 3).fill(EchoelBrand.bgElevated))
 
-            // BPM value
             Text(String(format: "%.1f", EchoelCreativeWorkspace.shared.globalBPM))
                 .font(.system(size: 13, weight: .bold, design: .monospaced))
                 .foregroundColor(EchoelBrand.textPrimary)
                 .monospacedDigit()
                 .frame(minWidth: 44)
 
-            // Tap tempo button
             Button {
                 handleTapTempo()
                 HapticHelper.impact(.light)
@@ -256,10 +233,8 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Transport control buttons (Ableton-style layout)
     private var transportControls: some View {
         HStack(spacing: EchoelSpacing.xs) {
-            // Return to start
             Button(action: {
                 recordingEngine.seek(to: 0)
                 HapticHelper.impact(.light)
@@ -273,14 +248,12 @@ struct MainNavigationHub: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Return to start")
 
-            // Play/Pause
             Button(action: {
                 EchoelCreativeWorkspace.shared.togglePlayback()
                 HapticHelper.impact(.medium)
             }) {
                 ZStack {
                     let isPlaying = EchoelCreativeWorkspace.shared.isPlaying
-
                     RoundedRectangle(cornerRadius: 4)
                         .fill(isPlaying ? EchoelBrand.emerald.opacity(0.15) : EchoelBrand.bgElevated)
                         .frame(width: 32, height: 28)
@@ -288,7 +261,6 @@ struct MainNavigationHub: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .stroke(isPlaying ? EchoelBrand.emerald.opacity(0.4) : EchoelBrand.border, lineWidth: 1)
                         )
-
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(isPlaying ? EchoelBrand.emerald : EchoelBrand.textPrimary)
@@ -298,7 +270,6 @@ struct MainNavigationHub: View {
             .buttonStyle(.plain)
             .accessibilityLabel(EchoelCreativeWorkspace.shared.isPlaying ? "Pause" : "Play")
 
-            // Stop
             Button(action: {
                 if EchoelCreativeWorkspace.shared.isPlaying {
                     EchoelCreativeWorkspace.shared.togglePlayback()
@@ -315,7 +286,6 @@ struct MainNavigationHub: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Stop")
 
-            // Record
             Button(action: {
                 do {
                     if recordingEngine.isRecording {
@@ -338,7 +308,6 @@ struct MainNavigationHub: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .stroke(recordingEngine.isRecording ? EchoelBrand.coral.opacity(0.5) : EchoelBrand.border, lineWidth: 1)
                         )
-
                     Circle()
                         .fill(recordingEngine.isRecording ? EchoelBrand.coral : EchoelBrand.coral.opacity(0.5))
                         .frame(width: 10, height: 10)
@@ -349,31 +318,22 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Tap tempo calculation
     private func handleTapTempo() {
         let now = Date()
         tapTempoTimes.append(now)
-
-        // Keep only last 6 taps within 3 seconds
         tapTempoTimes = tapTempoTimes.filter { now.timeIntervalSince($0) < 3.0 }
-
         guard tapTempoTimes.count >= 2 else { return }
-
         var intervals: [TimeInterval] = []
         for i in 1..<tapTempoTimes.count {
             intervals.append(tapTempoTimes[i].timeIntervalSince(tapTempoTimes[i - 1]))
         }
-
         guard !intervals.isEmpty else { return }
         let avgInterval = intervals.reduce(0, +) / Double(intervals.count)
         guard avgInterval > 0 else { return }
-
         let newBPM = 60.0 / avgInterval
-        let clampedBPM = max(20.0, min(300.0, newBPM))
-        EchoelCreativeWorkspace.shared.globalBPM = clampedBPM
+        EchoelCreativeWorkspace.shared.globalBPM = max(20.0, min(300.0, newBPM))
     }
 
-    /// Visual divider between transport bar sections
     private var transportDivider: some View {
         Rectangle()
             .fill(EchoelBrand.border)
@@ -381,14 +341,12 @@ struct MainNavigationHub: View {
             .padding(.horizontal, EchoelSpacing.sm)
     }
 
-    /// Segmented LED-style level meter (DAW transport style)
     private func segmentedMeter(level: Float, label: String) -> some View {
         HStack(spacing: EchoelSpacing.xxs) {
             Text(label)
                 .font(.system(size: 8, weight: .semibold, design: .monospaced))
                 .foregroundColor(EchoelBrand.textSecondary)
                 .frame(width: 8)
-
             HStack(spacing: 1) {
                 ForEach(0..<16, id: \.self) { segment in
                     let threshold = Float(segment) / 16.0
@@ -398,7 +356,6 @@ struct MainNavigationHub: View {
                         if segment >= 10 { return EchoelBrand.amber }
                         return EchoelBrand.emerald
                     }()
-
                     RoundedRectangle(cornerRadius: 0.5)
                         .fill(isLit ? segmentColor : segmentColor.opacity(0.08))
                         .frame(width: 2.5, height: 8)
@@ -408,7 +365,6 @@ struct MainNavigationHub: View {
         }
     }
 
-    /// Bio-feedback indicator — delegates to isolated subview to avoid re-rendering transport bar
     private var bioFeedbackIndicator: some View {
         BioFeedbackIndicatorView(isAudioRunning: audioEngine.isRunning)
             .accessibilityElement(children: .combine)
@@ -434,55 +390,23 @@ struct EchoelSettingsView: View {
         NavigationView {
             ZStack {
                 EchoelBrand.bgDeep.ignoresSafeArea()
-
                 ScrollView {
                     VStack(spacing: EchoelSpacing.lg) {
-
-                        // MARK: - Appearance
                         settingsSection(title: "APPEARANCE") {
                             ThemeModePicker(themeManager: themeManager)
                                 .padding(.horizontal, EchoelSpacing.md)
                         }
-
-                        // MARK: - Audio
                         settingsSection(title: "AUDIO") {
                             VStack(spacing: EchoelSpacing.sm) {
-                                settingsRow(
-                                    icon: "speaker.wave.2",
-                                    label: "Master Volume",
-                                    value: "\(Int(audioEngine.masterVolume * 100))%"
-                                )
-
-                                Slider(
-                                    value: Binding(
-                                        get: { Double(audioEngine.masterVolume) },
-                                        set: { audioEngine.masterVolume = Float($0) }
-                                    ),
-                                    in: 0...1
-                                )
-                                .tint(EchoelBrand.primary)
-                                .padding(.horizontal, EchoelSpacing.md)
-
-                                settingsRow(
-                                    icon: "waveform",
-                                    label: "Audio Engine",
-                                    value: audioEngine.isRunning ? "Running" : "Stopped"
-                                )
-
-                                settingsRow(
-                                    icon: "mic",
-                                    label: "Input Monitoring",
-                                    value: audioEngine.inputMonitoringEnabled ? "On" : "Off"
-                                )
+                                settingsRow(icon: "speaker.wave.2", label: "Master Volume", value: "\(Int(audioEngine.masterVolume * 100))%")
+                                Slider(value: Binding(get: { Double(audioEngine.masterVolume) }, set: { audioEngine.masterVolume = Float($0) }), in: 0...1)
+                                    .tint(EchoelBrand.primary)
+                                    .padding(.horizontal, EchoelSpacing.md)
+                                settingsRow(icon: "waveform", label: "Audio Engine", value: audioEngine.isRunning ? "Running" : "Stopped")
+                                settingsRow(icon: "mic", label: "Input Monitoring", value: audioEngine.inputMonitoringEnabled ? "On" : "Off")
                             }
                         }
-
-                        // MARK: - Bio-Feedback
-                        settingsSection(title: "BIO-FEEDBACK") {
-                            BioFeedbackSettingsContent()
-                        }
-
-                        // MARK: - Safety
+                        settingsSection(title: "BIO-FEEDBACK") { BioFeedbackSettingsContent() }
                         settingsSection(title: "SAFETY") {
                             VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
                                 safetyWarning("NOT while operating vehicles")
@@ -492,28 +416,18 @@ struct EchoelSettingsView: View {
                             }
                             .padding(.horizontal, EchoelSpacing.md)
                         }
-
-                        // MARK: - Tuning
                         settingsSection(title: "TUNING") {
                             VStack(spacing: EchoelSpacing.sm) {
-                                settingsRow(
-                                    icon: "tuningfork",
-                                    label: "Concert Pitch (A4)",
-                                    value: String(format: "%.1f Hz", TuningManager.shared.concertPitch)
-                                )
-                                KammertonWheelView()
-                                    .padding(.horizontal, EchoelSpacing.sm)
+                                settingsRow(icon: "tuningfork", label: "Concert Pitch (A4)", value: String(format: "%.1f Hz", TuningManager.shared.concertPitch))
+                                KammertonWheelView().padding(.horizontal, EchoelSpacing.sm)
                             }
                         }
-
-                        // MARK: - About
                         settingsSection(title: "ABOUT") {
                             VStack(spacing: EchoelSpacing.sm) {
                                 settingsRow(icon: "info.circle", label: "Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "7.0")
                                 settingsRow(icon: "hammer", label: "Build", value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "dev")
                                 settingsRow(icon: "person", label: "Developer", value: "Echoel")
                                 settingsRow(icon: "building.2", label: "Studio", value: "Hamburg")
-
                                 Text("Create from Within")
                                     .font(EchoelBrandFont.caption())
                                     .foregroundColor(EchoelBrand.textSecondary)
@@ -536,8 +450,6 @@ struct EchoelSettingsView: View {
         }
     }
 
-    // MARK: - Helpers
-
     private func settingsSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: EchoelSpacing.sm) {
             Text(title)
@@ -545,149 +457,84 @@ struct EchoelSettingsView: View {
                 .foregroundColor(EchoelBrand.textSecondary)
                 .tracking(2)
                 .padding(.horizontal, EchoelSpacing.lg)
-
-            VStack(spacing: EchoelSpacing.xs) {
-                content()
-            }
-            .padding(.vertical, EchoelSpacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: EchoelRadius.md)
-                    .fill(EchoelBrand.bgSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: EchoelRadius.md)
-                            .stroke(EchoelBrand.border, lineWidth: 0.5)
-                    )
-            )
-            .padding(.horizontal, EchoelSpacing.md)
+            VStack(spacing: EchoelSpacing.xs) { content() }
+                .padding(.vertical, EchoelSpacing.md)
+                .background(
+                    RoundedRectangle(cornerRadius: EchoelRadius.md)
+                        .fill(EchoelBrand.bgSurface)
+                        .overlay(RoundedRectangle(cornerRadius: EchoelRadius.md).stroke(EchoelBrand.border, lineWidth: 0.5))
+                )
+                .padding(.horizontal, EchoelSpacing.md)
         }
     }
 
     private func settingsRow(icon: String, label: String, value: String) -> some View {
         HStack {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundColor(EchoelBrand.primary)
-                .frame(width: 24)
-
-            Text(label)
-                .font(EchoelBrandFont.body())
-                .foregroundColor(EchoelBrand.textPrimary)
-
+            Image(systemName: icon).font(.system(size: 14)).foregroundColor(EchoelBrand.primary).frame(width: 24)
+            Text(label).font(EchoelBrandFont.body()).foregroundColor(EchoelBrand.textPrimary)
             Spacer()
-
-            Text(value)
-                .font(EchoelBrandFont.dataSmall())
-                .foregroundColor(EchoelBrand.textSecondary)
+            Text(value).font(EchoelBrandFont.dataSmall()).foregroundColor(EchoelBrand.textSecondary)
         }
         .padding(.horizontal, EchoelSpacing.md)
     }
 
     private func safetyWarning(_ text: String) -> some View {
         HStack(alignment: .top, spacing: EchoelSpacing.xs) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 10))
-                .foregroundColor(EchoelBrand.amber)
-                .padding(.top, 2)
-
-            Text(text)
-                .font(EchoelBrandFont.caption())
-                .foregroundColor(EchoelBrand.textSecondary)
+            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 10)).foregroundColor(EchoelBrand.amber).padding(.top, 2)
+            Text(text).font(EchoelBrandFont.caption()).foregroundColor(EchoelBrand.textSecondary)
         }
     }
 }
 
 // MARK: - Bio-Feedback Settings Content
 
-/// HealthKit authorization and bio streaming controls for the settings sheet.
-/// Extracted to isolate @Bindable observation from the rest of EchoelSettingsView.
 private struct BioFeedbackSettingsContent: View {
     @Bindable private var bio = EchoelBioEngine.shared
     @State private var isRequesting = false
 
     var body: some View {
         VStack(spacing: EchoelSpacing.sm) {
-            // Authorization status
             HStack {
-                Image(systemName: bio.isAuthorized ? "heart.fill" : "heart.slash")
-                    .font(.system(size: 14))
-                    .foregroundColor(bio.isAuthorized ? EchoelBrand.primary : EchoelBrand.textSecondary)
-                    .frame(width: 24)
-
-                Text("HealthKit")
-                    .font(EchoelBrandFont.body())
-                    .foregroundColor(EchoelBrand.textPrimary)
-
+                Image(systemName: bio.isAuthorized ? "heart.fill" : "heart.slash").font(.system(size: 14)).foregroundColor(bio.isAuthorized ? EchoelBrand.primary : EchoelBrand.textSecondary).frame(width: 24)
+                Text("HealthKit").font(EchoelBrandFont.body()).foregroundColor(EchoelBrand.textPrimary)
                 Spacer()
-
                 if bio.isAuthorized {
-                    Text("Authorized")
-                        .font(EchoelBrandFont.dataSmall())
-                        .foregroundColor(EchoelBrand.emerald)
+                    Text("Authorized").font(EchoelBrandFont.dataSmall()).foregroundColor(EchoelBrand.emerald)
                 } else {
                     Button(action: {
                         isRequesting = true
                         Task { @MainActor in
                             let granted = await bio.requestAuthorization()
                             isRequesting = false
-                            if granted {
-                                // Stop fallback streaming, restart with HealthKit
-                                bio.stopStreaming()
-                                bio.startStreaming()
-                            }
+                            if granted { bio.stopStreaming(); bio.startStreaming() }
                         }
                     }) {
-                        if isRequesting {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Text("Authorize")
-                                .font(EchoelBrandFont.dataSmall())
-                                .foregroundColor(EchoelBrand.primary)
-                        }
+                        if isRequesting { ProgressView().controlSize(.small) }
+                        else { Text("Authorize").font(EchoelBrandFont.dataSmall()).foregroundColor(EchoelBrand.primary) }
                     }
-                    .buttonStyle(.plain)
-                    .disabled(isRequesting)
+                    .buttonStyle(.plain).disabled(isRequesting)
                 }
             }
             .padding(.horizontal, EchoelSpacing.md)
 
-            // Streaming status
             HStack {
-                Image(systemName: "waveform.path.ecg")
-                    .font(.system(size: 14))
-                    .foregroundColor(bio.isStreaming ? EchoelBrand.emerald : EchoelBrand.textSecondary)
-                    .frame(width: 24)
-
-                Text("Bio Streaming")
-                    .font(EchoelBrandFont.body())
-                    .foregroundColor(EchoelBrand.textPrimary)
-
+                Image(systemName: "waveform.path.ecg").font(.system(size: 14)).foregroundColor(bio.isStreaming ? EchoelBrand.emerald : EchoelBrand.textSecondary).frame(width: 24)
+                Text("Bio Streaming").font(EchoelBrandFont.body()).foregroundColor(EchoelBrand.textPrimary)
                 Spacer()
-
-                Text(bio.isStreaming ? bio.snapshot.source.rawValue : "Off")
-                    .font(EchoelBrandFont.dataSmall())
-                    .foregroundColor(bio.isStreaming ? EchoelBrand.emerald : EchoelBrand.textSecondary)
+                Text(bio.isStreaming ? bio.snapshot.source.rawValue : "Off").font(EchoelBrandFont.dataSmall()).foregroundColor(bio.isStreaming ? EchoelBrand.emerald : EchoelBrand.textSecondary)
             }
             .padding(.horizontal, EchoelSpacing.md)
 
-            // Disclaimer
             HStack {
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 12))
-                    .foregroundColor(EchoelBrand.amber)
-                Text("Bio data is for self-observation, not medical diagnosis.")
-                    .font(EchoelBrandFont.caption())
-                    .foregroundColor(EchoelBrand.textSecondary)
+                Image(systemName: "exclamationmark.triangle").font(.system(size: 12)).foregroundColor(EchoelBrand.amber)
+                Text("Bio data is for self-observation, not medical diagnosis.").font(EchoelBrandFont.caption()).foregroundColor(EchoelBrand.textSecondary)
             }
             .padding(.horizontal, EchoelSpacing.md)
         }
         .task {
-            // Auto-request on appear if not yet authorized
             if !bio.isAuthorized && !bio.isStreaming {
                 let granted = await bio.requestAuthorization()
-                if granted {
-                    bio.startStreaming()
-                }
+                if granted { bio.startStreaming() }
             }
         }
     }
@@ -695,8 +542,6 @@ private struct BioFeedbackSettingsContent: View {
 
 // MARK: - Isolated Bio Feedback Indicator
 
-/// Isolated view that only re-renders when bioCoherence or audio running state changes.
-/// Prevents 60Hz+ coherence updates from triggering full transport bar re-render.
 private struct BioFeedbackIndicatorView: View {
     let isAudioRunning: Bool
     private let workspace = EchoelCreativeWorkspace.shared
@@ -707,37 +552,21 @@ private struct BioFeedbackIndicatorView: View {
             let level = CGFloat(workspace.bioCoherence)
             let hasRealData = bio.isStreaming && bio.dataSource != .fallback
             let coherenceColor: Color = hasRealData
-                ? (level > 0.6 ? EchoelBrand.coherenceHigh
-                    : level > 0.3 ? EchoelBrand.coherenceMedium
-                    : EchoelBrand.coherenceLow)
+                ? (level > 0.6 ? EchoelBrand.coherenceHigh : level > 0.3 ? EchoelBrand.coherenceMedium : EchoelBrand.coherenceLow)
                 : EchoelBrand.textDisabled
 
             ZStack {
-                // Coherence arc (progress ring)
-                Circle()
-                    .stroke(coherenceColor.opacity(0.15), lineWidth: 2)
-                    .frame(width: 16, height: 16)
-
-                Circle()
-                    .trim(from: 0, to: hasRealData ? max(0.05, level) : 0)
+                Circle().stroke(coherenceColor.opacity(0.15), lineWidth: 2).frame(width: 16, height: 16)
+                Circle().trim(from: 0, to: hasRealData ? max(0.05, level) : 0)
                     .stroke(coherenceColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .frame(width: 16, height: 16)
-                    .rotationEffect(.degrees(-90))
-
-                // Heart pulse dot
-                Circle()
-                    .fill(coherenceColor)
-                    .frame(width: 4, height: 4)
+                    .frame(width: 16, height: 16).rotationEffect(.degrees(-90))
+                Circle().fill(coherenceColor).frame(width: 4, height: 4)
             }
             .frame(width: 22, height: 22)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("BIO")
-                    .font(.system(size: 7, weight: .bold, design: .monospaced))
-                    .foregroundColor(EchoelBrand.textSecondary)
-                Text(bioSourceLabel)
-                    .font(.system(size: 7, weight: .semibold, design: .monospaced))
-                    .foregroundColor(bioSourceColor)
+                Text("BIO").font(.system(size: 7, weight: .bold, design: .monospaced)).foregroundColor(EchoelBrand.textSecondary)
+                Text(bioSourceLabel).font(.system(size: 7, weight: .semibold, design: .monospaced)).foregroundColor(bioSourceColor)
             }
         }
     }
