@@ -25,7 +25,6 @@ struct EchoelStudioView: View {
 
     @State private var viewMode: ViewMode = .session
     @State private var activeTab: ToolTab? = .synth
-    @State private var selectedTrackID: UUID?
 
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -92,7 +91,7 @@ struct EchoelStudioView: View {
                     bottomPanelView(tab, height: panelHeight)
                 }
 
-                // Bottom tab bar — 5 clear categories
+                // Synth + Bio tabs
                 bottomTabBar
             }
         }
