@@ -36,7 +36,11 @@ struct EchoelInstrumentView: View {
     // Recording
     @State private var isRecording = false
     @State private var recordedFileURL: URL?
-    @State private var showShareSheet = false
+    @State private var showExportSheet = false
+
+    // Export Settings
+    @State private var exportSampleRate: ExportSampleRate = .sr48000
+    @State private var exportBitDepth: ExportBitDepth = .bit24
 
     // Coherence for ring color
     @Bindable private var bio = EchoelBioEngine.shared
@@ -45,6 +49,27 @@ struct EchoelInstrumentView: View {
         case off = "Off"
         case pulse = "Pulse"
         case face = "Face"
+    }
+
+    enum ExportSampleRate: Double, CaseIterable {
+        case sr44100 = 44100
+        case sr48000 = 48000
+        case sr96000 = 96000
+        var label: String {
+            switch self {
+            case .sr44100: return "44.1 kHz"
+            case .sr48000: return "48 kHz"
+            case .sr96000: return "96 kHz"
+            }
+        }
+    }
+
+    enum ExportBitDepth: Int, CaseIterable {
+        case bit8 = 8
+        case bit16 = 16
+        case bit24 = 24
+        case bit32 = 32
+        var label: String { "\(rawValue)-bit" }
     }
 
     // MARK: - Root Note Options
@@ -94,9 +119,13 @@ struct EchoelInstrumentView: View {
         .onChange(of: bioMode) { _, newMode in
             switchBioMode(to: newMode)
         }
-        .sheet(isPresented: $showShareSheet) {
+        .sheet(isPresented: $showExportSheet) {
             if let url = recordedFileURL {
-                ShareSheet(url: url)
+                ExportSettingsSheet(
+                    sourceURL: url,
+                    sampleRate: $exportSampleRate,
+                    bitDepth: $exportBitDepth
+                )
             }
         }
     }
@@ -412,8 +441,8 @@ struct EchoelInstrumentView: View {
 
     private var exportButton: some View {
         Button {
-            if let url = recordedFileURL {
-                showShareSheet = true
+            if recordedFileURL != nil {
+                showExportSheet = true
             }
         } label: {
             Image(systemName: "square.and.arrow.up")
@@ -494,17 +523,32 @@ struct EchoelInstrumentView: View {
         }
     }
 
+    @State private var recordingStartTime: Date?
+
     private func toggleRecording() {
         if isRecording {
             // Stop recording synth output
             audioEngine.stopOutputRecording()
             isRecording = false
+
+            // Quantize recorded file to exact bar length for tight loops
+            if let url = recordedFileURL, let startTime = recordingStartTime {
+                let duration = Date().timeIntervalSince(startTime)
+                let barDuration = (60.0 / bpm) * 4.0 // 4/4 time
+                let bars = max(1.0, round(duration / barDuration))
+                let quantizedDuration = bars * barDuration
+                // Trim or pad to exact bar boundary
+                trimToExactDuration(url: url, targetDuration: quantizedDuration)
+                log.log(.info, category: .audio, "Loop quantized: \(Int(bars)) bars @ \(Int(bpm)) BPM = \(String(format: "%.2f", quantizedDuration))s")
+            }
+
             HapticHelper.notification(.success)
         } else {
             // Start recording synth output (captures everything the user hears)
             do {
                 let url = try audioEngine.startOutputRecording()
                 recordedFileURL = url
+                recordingStartTime = Date()
                 isRecording = true
                 HapticHelper.impact(.heavy)
             } catch {
@@ -513,12 +557,284 @@ struct EchoelInstrumentView: View {
             }
         }
     }
+
+    /// Trim audio file to exact duration for tight BPM-quantized loops
+    private func trimToExactDuration(url: URL, targetDuration: TimeInterval) {
+        do {
+            let file = try AVAudioFile(forReading: url)
+            let format = file.processingFormat
+            let targetFrames = AVAudioFrameCount(targetDuration * format.sampleRate)
+            let actualFrames = AVAudioFrameCount(file.length)
+
+            // Only trim if file is longer than target (don't pad)
+            guard actualFrames > targetFrames else { return }
+
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: targetFrames) else { return }
+            try file.read(into: buffer, frameCount: targetFrames)
+
+            // Overwrite file with trimmed version
+            let trimmedFile = try AVAudioFile(forWriting: url, settings: format.settings)
+            try trimmedFile.write(from: buffer)
+
+            log.log(.info, category: .audio, "Trimmed loop: \(actualFrames) → \(targetFrames) frames")
+        } catch {
+            log.log(.error, category: .audio, "Loop trim failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Export Settings Sheet
+
+private struct ExportSettingsSheet: View {
+    let sourceURL: URL
+    @Binding var sampleRate: EchoelInstrumentView.ExportSampleRate
+    @Binding var bitDepth: EchoelInstrumentView.ExportBitDepth
+    @Environment(\.dismiss) private var dismiss
+    @State private var isExporting = false
+    @State private var exportedURL: URL?
+    @State private var showShareSheet = false
+    @State private var exportError: String?
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(red: 0.04, green: 0.04, blue: 0.04).ignoresSafeArea()
+
+                VStack(spacing: 24) {
+                    // Sample Rate
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("SAMPLE RATE")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color.white.opacity(0.5))
+                            .tracking(2)
+
+                        HStack(spacing: 8) {
+                            ForEach(EchoelInstrumentView.ExportSampleRate.allCases, id: \.self) { rate in
+                                Button {
+                                    sampleRate = rate
+                                } label: {
+                                    Text(rate.label)
+                                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                        .foregroundColor(sampleRate == rate ? .black : Color.white.opacity(0.7))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(sampleRate == rate ? Color.white : Color.white.opacity(0.1))
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
+                    // Bit Depth
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("BIT DEPTH")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color.white.opacity(0.5))
+                            .tracking(2)
+
+                        HStack(spacing: 8) {
+                            ForEach(EchoelInstrumentView.ExportBitDepth.allCases, id: \.self) { depth in
+                                Button {
+                                    bitDepth = depth
+                                } label: {
+                                    Text(depth.label)
+                                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                        .foregroundColor(bitDepth == depth ? .black : Color.white.opacity(0.7))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .fill(bitDepth == depth ? Color.white : Color.white.opacity(0.1))
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
+                    // File Info
+                    VStack(spacing: 4) {
+                        Text("WAV \(sampleRate.label) / \(bitDepth.label)")
+                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color.white)
+
+                        if let fileSize = try? FileManager.default.attributesOfItem(atPath: sourceURL.path)[.size] as? Int {
+                            let mbSize = Double(fileSize) / 1_048_576.0
+                            Text(String(format: "Source: %.1f MB", mbSize))
+                                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                .foregroundColor(Color.white.opacity(0.4))
+                        }
+                    }
+                    .padding(.top, 8)
+
+                    // Export Button
+                    Button {
+                        exportWAV()
+                    } label: {
+                        HStack {
+                            if isExporting {
+                                ProgressView().controlSize(.small).tint(.black)
+                            }
+                            Text(isExporting ? "Rendering..." : "Export WAV")
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        }
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isExporting)
+
+                    if let error = exportError {
+                        Text(error)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(EchoelBrand.coral)
+                    }
+
+                    Spacer()
+                }
+                .padding(24)
+            }
+            .navigationTitle("Export")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(Color.white.opacity(0.7))
+                }
+            }
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = exportedURL {
+                ShareSheetView(url: url)
+            }
+        }
+    }
+
+    private func exportWAV() {
+        isExporting = true
+        exportError = nil
+
+        Task {
+            do {
+                let url = try await renderWAV(
+                    source: sourceURL,
+                    sampleRate: sampleRate.rawValue,
+                    bitDepth: bitDepth.rawValue
+                )
+                exportedURL = url
+                isExporting = false
+                showShareSheet = true
+            } catch {
+                exportError = error.localizedDescription
+                isExporting = false
+            }
+        }
+    }
+
+    /// Offline render: CAF source → WAV at target sample rate and bit depth
+    private func renderWAV(source: URL, sampleRate: Double, bitDepth: Int) async throws -> URL {
+        let sourceFile = try AVAudioFile(forReading: source)
+        let sourceFormat = sourceFile.processingFormat
+
+        // Determine PCM format
+        let commonFormat: AVAudioCommonFormat
+        switch bitDepth {
+        case 8: commonFormat = .pcmFormatInt16 // AVFoundation minimum is 16-bit for WAV
+        case 16: commonFormat = .pcmFormatInt16
+        case 24: commonFormat = .pcmFormatInt32 // 24-bit stored in 32-bit container
+        case 32: commonFormat = .pcmFormatFloat32
+        default: commonFormat = .pcmFormatFloat32
+        }
+
+        guard let outputFormat = AVAudioFormat(
+            commonFormat: commonFormat,
+            sampleRate: sampleRate,
+            channels: min(sourceFormat.channelCount, 2),
+            interleaved: commonFormat == .pcmFormatInt16 || commonFormat == .pcmFormatInt32
+        ) else {
+            throw NSError(domain: "Export", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot create output format"])
+        }
+
+        // Output file
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let exportDir = documentsPath.appendingPathComponent("Exports", isDirectory: true)
+        try FileManager.default.createDirectory(at: exportDir, withIntermediateDirectories: true)
+
+        let rateStr = sampleRate >= 1000 ? "\(Int(sampleRate / 1000))k" : "\(Int(sampleRate))"
+        let fileName = "echoelmusic_\(rateStr)_\(bitDepth)bit_\(Int(Date().timeIntervalSince1970)).wav"
+        let outputURL = exportDir.appendingPathComponent(fileName)
+
+        // WAV file settings
+        var settings: [String: Any] = outputFormat.settings
+        settings[AVFormatIDKey] = kAudioFormatLinearPCM
+        settings[AVLinearPCMIsFloatKey] = (commonFormat == .pcmFormatFloat32)
+        settings[AVLinearPCMBitDepthKey] = bitDepth == 8 ? 16 : bitDepth // Clamp 8→16
+        settings[AVSampleRateKey] = sampleRate
+        settings[AVNumberOfChannelsKey] = min(Int(sourceFormat.channelCount), 2)
+
+        let outputFile = try AVAudioFile(forWriting: outputURL, settings: settings)
+
+        // Read + convert in chunks
+        let bufferSize: AVAudioFrameCount = 8192
+        guard let readBuffer = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: bufferSize) else {
+            throw NSError(domain: "Export", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot create read buffer"])
+        }
+
+        // If sample rates differ, use AVAudioConverter
+        if abs(sourceFormat.sampleRate - sampleRate) > 1.0 || sourceFormat.commonFormat != commonFormat {
+            guard let converter = AVAudioConverter(from: sourceFormat, to: outputFormat) else {
+                throw NSError(domain: "Export", code: 3, userInfo: [NSLocalizedDescriptionKey: "Cannot create format converter"])
+            }
+
+            let ratio = sampleRate / sourceFormat.sampleRate
+            let convertedCapacity = AVAudioFrameCount(Double(bufferSize) * ratio) + 128
+            guard let convertedBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: convertedCapacity) else {
+                throw NSError(domain: "Export", code: 4, userInfo: [NSLocalizedDescriptionKey: "Cannot create conversion buffer"])
+            }
+
+            while sourceFile.framePosition < sourceFile.length {
+                try sourceFile.read(into: readBuffer)
+                guard readBuffer.frameLength > 0 else { break }
+
+                convertedBuffer.frameLength = 0
+                var error: NSError?
+                converter.convert(to: convertedBuffer, error: &error) { _, outStatus in
+                    outStatus.pointee = .haveData
+                    return readBuffer
+                }
+                if let error { throw error }
+                if convertedBuffer.frameLength > 0 {
+                    try outputFile.write(from: convertedBuffer)
+                }
+            }
+        } else {
+            // Same format — direct copy
+            while sourceFile.framePosition < sourceFile.length {
+                try sourceFile.read(into: readBuffer)
+                guard readBuffer.frameLength > 0 else { break }
+                try outputFile.write(from: readBuffer)
+            }
+        }
+
+        let outputSize = try FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int ?? 0
+        log.log(.info, category: .audio, "Exported WAV: \(fileName) (\(outputSize / 1024)KB)")
+        return outputURL
+    }
 }
 
 // MARK: - Share Sheet (UIKit bridge)
 
 #if canImport(UIKit)
-private struct ShareSheet: UIViewControllerRepresentable {
+private struct ShareSheetView: UIViewControllerRepresentable {
     let url: URL
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
