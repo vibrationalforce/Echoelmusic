@@ -126,11 +126,16 @@ public final class AudioEngine {
             }
         }
         AudioConfiguration.onRouteDeviceLost = { [weak self] in
-            // Apple HIG: pause playback when headphones are unplugged
-            // to prevent unexpected audio from speakers
-            self?.masterEngine.pause()
-            self?.isRunning = false
-            log.audio("Audio route lost — engine paused (headphones unplugged)")
+            guard let self else { return }
+            // Pause briefly for route change to settle, then auto-restart
+            // on new output (speaker). Prevents permanent silence after
+            // headphone disconnect — previously required background/foreground cycle.
+            self.masterEngine.pause()
+            self.isRunning = false
+            log.audio("Audio route lost — restarting on new output...")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.start()
+            }
         }
 
         log.audio("AudioEngine initialized — master output wired to hardware")
@@ -465,6 +470,60 @@ public final class AudioEngine {
             inputBuffers: [channelID: buffer],
             frameCount: Int(buffer.frameLength)
         )
+    }
+
+    // MARK: - Output Recording (Synth Capture)
+
+    /// Recording state — true while output is being captured to file
+    var isRecordingOutput: Bool = false
+
+    @ObservationIgnored private var outputRecordingFile: AVAudioFile?
+
+    /// Start recording the master output (everything the user hears) to a file.
+    /// Captures synth output including bio-reactive modulation.
+    /// Uses mainMixerNode tap (bus 0 is free — metering tap is on masterMixer).
+    func startOutputRecording() throws -> URL {
+        guard !isRecordingOutput else {
+            throw NSError(domain: "AudioEngine", code: 1, userInfo: [NSLocalizedDescriptionKey: "Already recording output"])
+        }
+
+        let format = masterEngine.mainMixerNode.outputFormat(forBus: 0)
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            throw NSError(domain: "AudioEngine", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid output format"])
+        }
+
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let recordingsDir = documentsPath.appendingPathComponent("Recordings", isDirectory: true)
+        try FileManager.default.createDirectory(at: recordingsDir, withIntermediateDirectories: true)
+
+        let fileName = "echoelmusic_\(Int(Date().timeIntervalSince1970)).caf"
+        let fileURL = recordingsDir.appendingPathComponent(fileName)
+
+        let file = try AVAudioFile(forWriting: fileURL, settings: format.settings)
+        outputRecordingFile = file
+
+        masterEngine.mainMixerNode.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
+            guard let self, let file = self.outputRecordingFile else { return }
+            do {
+                try file.write(from: buffer)
+            } catch {
+                log.audio("Output recording write error: \(error)", level: .error)
+            }
+        }
+
+        isRecordingOutput = true
+        log.audio("Started output recording to \(fileURL.lastPathComponent)")
+        return fileURL
+    }
+
+    /// Stop recording the master output.
+    func stopOutputRecording() {
+        guard isRecordingOutput else { return }
+        masterEngine.mainMixerNode.removeTap(onBus: 0)
+        outputRecordingFile = nil
+        isRecordingOutput = false
+        log.audio("Stopped output recording")
     }
 
     // MARK: - Source Node Registration
