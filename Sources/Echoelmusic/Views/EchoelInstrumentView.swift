@@ -21,8 +21,8 @@ struct EchoelInstrumentView: View {
     @State private var rootNote: UInt8 = 48 // C3
     @State private var rootNoteName: String = "C"
 
-    // Synth Engine
-    @State private var currentEngine: SynthEngineType = .pad
+    // Synth Engine (exposed as Sound Worlds)
+    @State private var currentWorld: SoundWorld = .underwater
 
     // BPM
     @State private var bpm: Double = 120.0
@@ -49,6 +49,103 @@ struct EchoelInstrumentView: View {
         case off = "Off"
         case pulse = "Pulse"
         case face = "Face"
+    }
+
+    /// Immersive sound environments — each one shapes the entire synth character
+    enum SoundWorld: String, CaseIterable {
+        case underwater = "Underwater"
+        case cave = "Cave"
+        case atmosphere = "Atmosphere"
+        case midnight = "Midnight"
+        case glass = "Glass"
+        case drift = "Drift"
+        case ember = "Ember"
+        case void_ = "Void"
+
+        /// Apply this world's synth configuration
+        func apply() {
+            var cfg = EchoelSynth.shared.config
+            switch self {
+            case .underwater:
+                // Deep, submerged. Heavy lowpass, slow movement, muted highs.
+                cfg.engine = .pad
+                cfg.padVoiceCount = 7; cfg.padSpread = 30.0; cfg.padChorusRate = 0.15; cfg.padChorusDepth = 0.8
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 800.0; cfg.filterResonance = 0.4
+                cfg.filterEnvAmount = 1500.0; cfg.filterEnvDecay = 1.2
+                cfg.attack = 0.8; cfg.decay = 1.5; cfg.sustain = 0.7; cfg.release = 3.0
+                cfg.chorusAmount = 0.7; cfg.drive = 0.0; cfg.stereoWidth = 0.9
+                cfg.vibratoRate = 2.0; cfg.vibratoDepth = 0.08
+
+            case .cave:
+                // Metallic resonances, long reverb tails, plucked echoes
+                cfg.engine = .pluck
+                cfg.pluckDamping = 0.15; cfg.pluckDecay = 0.998; cfg.pluckBrightness = 0.6; cfg.pluckStretch = 0.15
+                cfg.filterMode = .bandpass; cfg.filterCutoff = 2000.0; cfg.filterResonance = 0.6
+                cfg.filterEnvAmount = 3000.0; cfg.filterEnvDecay = 0.8
+                cfg.attack = 0.001; cfg.decay = 2.0; cfg.sustain = 0.0; cfg.release = 2.5
+                cfg.chorusAmount = 0.3; cfg.drive = 0.05; cfg.stereoWidth = 0.7
+
+            case .atmosphere:
+                // Wide, floating pads. Slow shimmer. Fog and wind.
+                cfg.engine = .wavetable
+                cfg.wtPosition = 0.3; cfg.wtModSpeed = 0.08
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 4000.0; cfg.filterResonance = 0.15
+                cfg.filterEnvAmount = 2000.0; cfg.filterEnvDecay = 2.0
+                cfg.attack = 1.5; cfg.decay = 2.0; cfg.sustain = 0.8; cfg.release = 4.0
+                cfg.chorusAmount = 0.5; cfg.drive = 0.0; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 3.0; cfg.vibratoDepth = 0.05
+
+            case .midnight:
+                // Dark analog warmth. Detuned, intimate, close.
+                cfg.engine = .analog
+                cfg.analogDetune = 20.0; cfg.analogVoices = 5; cfg.analogWaveform = 0.0
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 1500.0; cfg.filterResonance = 0.25
+                cfg.filterEnvAmount = 3000.0; cfg.filterEnvDecay = 0.5
+                cfg.attack = 0.03; cfg.decay = 0.6; cfg.sustain = 0.5; cfg.release = 1.0
+                cfg.chorusAmount = 0.4; cfg.drive = 0.1; cfg.stereoWidth = 0.6
+
+            case .glass:
+                // Crystalline FM bells. Bright, fragile, shimmering.
+                cfg.engine = .fm
+                cfg.fmRatio = 3.5; cfg.fmDepth = 1.0; cfg.fmFeedback = 0.08; cfg.fmModDecay = 2.5
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 12000.0; cfg.filterResonance = 0.05
+                cfg.filterEnvAmount = 0.0
+                cfg.attack = 0.001; cfg.decay = 3.0; cfg.sustain = 0.0; cfg.release = 2.0
+                cfg.chorusAmount = 0.2; cfg.drive = 0.0; cfg.stereoWidth = 0.5
+
+            case .drift:
+                // Evolving wavetable textures. Slow morphing. Hypnotic.
+                cfg.engine = .wavetable
+                cfg.wtPosition = 0.0; cfg.wtModSpeed = 0.25
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 6000.0; cfg.filterResonance = 0.2
+                cfg.filterEnvAmount = 1000.0; cfg.filterEnvDecay = 1.5
+                cfg.attack = 0.3; cfg.decay = 1.0; cfg.sustain = 0.7; cfg.release = 2.0
+                cfg.chorusAmount = 0.6; cfg.drive = 0.05; cfg.stereoWidth = 0.8
+                cfg.vibratoRate = 4.0; cfg.vibratoDepth = 0.03
+
+            case .ember:
+                // Warm distortion, crackling energy. Analog heat.
+                cfg.engine = .analog
+                cfg.analogDetune = 8.0; cfg.analogVoices = 3; cfg.analogWaveform = 0.4
+                cfg.analogPWM = 0.6
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 2500.0; cfg.filterResonance = 0.35
+                cfg.filterEnvAmount = 5000.0; cfg.filterEnvDecay = 0.2
+                cfg.attack = 0.01; cfg.decay = 0.4; cfg.sustain = 0.6; cfg.release = 0.5
+                cfg.chorusAmount = 0.1; cfg.drive = 0.3; cfg.stereoWidth = 0.4
+
+            case .void_:
+                // Almost nothing. Sub-bass drone. Infinite space.
+                cfg.engine = .pad
+                cfg.padVoiceCount = 3; cfg.padSpread = 5.0; cfg.padChorusRate = 0.05; cfg.padChorusDepth = 0.3
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 300.0; cfg.filterResonance = 0.5
+                cfg.filterEnvAmount = 500.0; cfg.filterEnvDecay = 3.0
+                cfg.attack = 2.0; cfg.decay = 3.0; cfg.sustain = 0.9; cfg.release = 5.0
+                cfg.chorusAmount = 0.2; cfg.drive = 0.0; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 1.0; cfg.vibratoDepth = 0.02
+                cfg.octave = -1
+            }
+            EchoelSynth.shared.config = cfg
+        }
     }
 
     enum ExportSampleRate: Double, CaseIterable {
@@ -114,7 +211,7 @@ struct EchoelInstrumentView: View {
         .persistentSystemOverlays(.hidden)
         .statusBarHidden()
         .onAppear {
-            applySynthEngine(currentEngine)
+            currentWorld.apply()
         }
         .onChange(of: bioMode) { _, newMode in
             switchBioMode(to: newMode)
@@ -249,8 +346,8 @@ struct EchoelInstrumentView: View {
 
             Divider().frame(height: 20).opacity(0.3)
 
-            // 3. Synth Engine
-            enginePicker
+            // 3. Sound World
+            worldPicker
 
             Divider().frame(height: 20).opacity(0.3)
 
@@ -344,25 +441,25 @@ struct EchoelInstrumentView: View {
         }
     }
 
-    // MARK: - Engine Picker
+    // MARK: - Sound World Picker
 
-    private var enginePicker: some View {
+    private var worldPicker: some View {
         Menu {
-            ForEach(SynthEngineType.allCases, id: \.self) { engine in
+            ForEach(SoundWorld.allCases, id: \.self) { world in
                 Button {
-                    currentEngine = engine
-                    applySynthEngine(engine)
+                    currentWorld = world
+                    world.apply()
                 } label: {
                     HStack {
-                        Text(engine.rawValue)
-                        if engine == currentEngine {
+                        Text(world.rawValue)
+                        if world == currentWorld {
                             Image(systemName: "checkmark")
                         }
                     }
                 }
             }
         } label: {
-            Text(currentEngine.rawValue)
+            Text(currentWorld.rawValue)
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .foregroundColor(Color.white.opacity(0.7))
         }
@@ -456,52 +553,7 @@ struct EchoelInstrumentView: View {
 
     // MARK: - Actions
 
-    private func applySynthEngine(_ engine: SynthEngineType) {
-        var cfg = EchoelSynth.shared.config
-        cfg.engine = engine
-        // Apply sensible defaults per engine
-        switch engine {
-        case .analog:
-            cfg.analogDetune = 12.0
-            cfg.analogVoices = 3
-            cfg.attack = 0.01
-            cfg.decay = 0.3
-            cfg.sustain = 0.7
-            cfg.release = 0.4
-        case .fm:
-            cfg.fmRatio = 2.0
-            cfg.fmDepth = 0.5
-            cfg.attack = 0.003
-            cfg.decay = 1.0
-            cfg.sustain = 0.0
-            cfg.release = 0.5
-        case .wavetable:
-            cfg.wtPosition = 0.0
-            cfg.wtModSpeed = 0.0
-            cfg.attack = 0.05
-            cfg.decay = 0.5
-            cfg.sustain = 0.6
-            cfg.release = 0.8
-        case .pluck:
-            cfg.pluckDamping = 0.3
-            cfg.pluckBrightness = 0.8
-            cfg.attack = 0.001
-            cfg.decay = 1.0
-            cfg.sustain = 0.0
-            cfg.release = 0.3
-        case .pad:
-            cfg.padVoiceCount = 7
-            cfg.padSpread = 20.0
-            cfg.padChorusRate = 0.3
-            cfg.chorusAmount = 0.4
-            cfg.attack = 0.5
-            cfg.decay = 0.8
-            cfg.sustain = 0.8
-            cfg.release = 1.5
-            cfg.stereoWidth = 0.6
-        }
-        EchoelSynth.shared.config = cfg
-    }
+    // Sound world application happens via SoundWorld.apply() — no separate function needed
 
     private func switchBioMode(to mode: BioMode) {
         // Stop all bio sources first
