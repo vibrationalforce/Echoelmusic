@@ -39,7 +39,6 @@ final class SmileDetector: NSObject {
 
         let config = ARFaceTrackingConfiguration()
         config.maximumNumberOfTrackedFaces = 1
-        // 30fps is default; we don't need 60fps for expression
         if #available(iOS 17.0, *) {
             config.videoHDRAllowed = false
         }
@@ -88,7 +87,6 @@ private final class FaceTrackingDelegate: NSObject, ARSessionDelegate, @unchecke
     }
 
     func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
-        // Throttle updates
         let now = CACurrentMediaTime()
         guard now - lastUpdateTime >= FaceTrackingDelegate.updateInterval else { return }
         lastUpdateTime = now
