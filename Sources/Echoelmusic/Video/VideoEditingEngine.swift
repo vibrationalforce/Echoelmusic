@@ -3,6 +3,14 @@ import Foundation
 @preconcurrency import AVFoundation
 import CoreData
 #if canImport(Observation)
+
+/// Lightweight clip model for timeline display (previously in VideoEditorView)
+struct EditorVideoClip: Identifiable {
+    let id = UUID()
+    let name: String
+    let startTime: Double
+    let duration: Double
+}
 import Observation
 #endif
 

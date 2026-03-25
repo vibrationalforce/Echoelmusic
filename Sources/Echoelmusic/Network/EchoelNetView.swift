@@ -3,13 +3,10 @@ import SwiftUI
 
 /// EchoelNet panel — OSC networking + Ableton Link sync
 struct EchoelNetView: View {
-    @Environment(\.isEmbeddedInPanel) private var isEmbeddedInPanel
 
     var body: some View {
         VStack(spacing: EchoelSpacing.lg) {
-            if !isEmbeddedInPanel {
-                VaporwaveSectionHeader("EchoelNet", icon: "network")
-            }
+            VaporwaveSectionHeader("EchoelNet", icon: "network")
 
             // OSC Settings
             OSCSettingsView()

@@ -32,7 +32,7 @@ final class SmileDetector: NSObject {
 
     func startDetecting() {
         guard SmileDetector.isSupported else {
-            log.log(.info, category: .bio, "SmileDetector: TrueDepth not available")
+            log.log(.info, category: .biofeedback, "SmileDetector: TrueDepth not available")
             return
         }
         guard !isDetecting else { return }
@@ -58,7 +58,7 @@ final class SmileDetector: NSObject {
         delegate = arDelegate
         isDetecting = true
 
-        log.log(.info, category: .bio, "SmileDetector: Started headless face tracking")
+        log.log(.info, category: .biofeedback, "SmileDetector: Started headless face tracking")
     }
 
     func stopDetecting() {
@@ -68,7 +68,7 @@ final class SmileDetector: NSObject {
         isDetecting = false
         smileAmount = 0
 
-        log.log(.info, category: .bio, "SmileDetector: Stopped")
+        log.log(.info, category: .biofeedback, "SmileDetector: Stopped")
     }
 }
 
@@ -79,7 +79,7 @@ private final class FaceTrackingDelegate: NSObject, ARSessionDelegate, @unchecke
     private let onSmile: @Sendable (Float) -> Void
 
     /// Throttle to ~15fps to reduce MainActor hops
-    @MainActor private static let updateInterval: TimeInterval = 1.0 / 15.0
+    private static let updateInterval: TimeInterval = 1.0 / 15.0
     private var lastUpdateTime: TimeInterval = 0
 
     init(onSmile: @escaping @Sendable (Float) -> Void) {
