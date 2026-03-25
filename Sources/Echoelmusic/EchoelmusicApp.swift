@@ -33,11 +33,11 @@ struct EchoelmusicApp: App {
                 .task {
                     // PHASE 1: Wire core synth BEFORE engine.start().
                     // Graph mutation on a running engine causes EXC_BREAKPOINT crashes.
-                    log.log(.info, category: .system, "STARTUP [1/7] Connecting EchoelSynth...")
+                    log.log(.info, category: .system, "STARTUP [1/6] Connecting EchoelSynth...")
                     EchoelSynth.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [2/7] Connecting EchoelBass...")
+                    log.log(.info, category: .system, "STARTUP [2/6] Connecting EchoelBass...")
                     EchoelBass.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [3/7] Starting audio engine...")
+                    log.log(.info, category: .system, "STARTUP [3/6] Starting audio engine...")
                     audioEngine.start()
 
                     // PHASE 2: Workspace wiring
