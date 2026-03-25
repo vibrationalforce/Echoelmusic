@@ -12,10 +12,6 @@ struct EchoelInstrumentView: View {
 
     // MARK: - State
 
-    @State private var touchLocation: CGPoint?
-    @State private var lastNote: Int?
-    @State private var currentNoteName: String = ""
-
     // Scale & Key
     @State private var currentScale: TouchMusicalScale = .pentatonicMinor
     @State private var rootNote: UInt8 = 48 // C3
@@ -169,6 +165,9 @@ struct EchoelInstrumentView: View {
         var label: String { "\(rawValue)-bit" }
     }
 
+    // Active touches for multi-touch visualization
+    @State private var activeTouches: [MultiTouchInstrumentView.ActiveTouch] = []
+
     // MARK: - Root Note Options
 
     private static let noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -185,9 +184,28 @@ struct EchoelInstrumentView: View {
                 // Faint octave guide lines
                 octaveGuides(in: geometry.size)
 
-                // Touch visualization
-                if let location = touchLocation {
-                    touchIndicator(at: location)
+                // Rhythm orbs — bouncing in tempo
+                RhythmOrbsView(bpm: bpm, orbCount: 4, color: Color.white)
+
+                // Multi-touch instrument surface (UIKit, polyphonic)
+                #if canImport(UIKit)
+                MultiTouchInstrumentView(
+                    scale: currentScale,
+                    rootNote: rootNote
+                ) { touches in
+                    activeTouches = touches
+                    // Bio smile → wavetable morph
+                    #if os(iOS)
+                    if bioMode == .face, smileDetector.isDetecting {
+                        EchoelSynth.shared.config.wtPosition = smileDetector.smileAmount
+                    }
+                    #endif
+                }
+                #endif
+
+                // Touch visualization — one circle per finger
+                ForEach(activeTouches) { touch in
+                    touchIndicator(at: touch.location, noteName: touch.noteName)
                 }
 
                 // Bottom bar
@@ -196,15 +214,6 @@ struct EchoelInstrumentView: View {
                     bottomBar
                 }
             }
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        handleTouch(at: value.location, in: geometry.size)
-                    }
-                    .onEnded { _ in
-                        handleTouchEnd()
-                    }
-            )
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
@@ -227,64 +236,8 @@ struct EchoelInstrumentView: View {
         }
     }
 
-    // MARK: - Touch Handling
-
-    private func handleTouch(at location: CGPoint, in size: CGSize) {
-        guard size.width > 0, size.height > 0 else { return }
-
-        touchLocation = location
-
-        // X → pitch (scale-quantized, 2 octaves)
-        let normalizedX = Float(location.x / size.width)
-        let totalDegrees = currentScale.intervals.count * 2 // 2 octaves
-        let degree = Int(normalizedX * Float(totalDegrees))
-        let midiNote = Int(currentScale.noteInScale(degree: degree, root: rootNote))
-        let clampedNote = max(21, min(108, midiNote)) // Piano range
-
-        // Y → filter cutoff (top=bright 12kHz, bottom=dark 200Hz)
-        let normalizedY = Float(location.y / size.height)
-        let cutoff = 200.0 + (1.0 - normalizedY) * 11800.0
-        EchoelSynth.shared.config.filterCutoff = cutoff
-
-        // Note changed? Retrigger
-        if clampedNote != lastNote {
-            if let last = lastNote {
-                EchoelSynth.shared.noteOff(note: last)
-            }
-            EchoelSynth.shared.noteOn(note: clampedNote, velocity: 0.8)
-            lastNote = clampedNote
-            currentNoteName = midiNoteName(clampedNote)
-            HapticHelper.impact(.light)
-        }
-
-        // Bio smile → wavetable morph + brightness
-        #if os(iOS)
-        if bioMode == .face, smileDetector.isDetecting {
-            EchoelSynth.shared.config.wtPosition = smileDetector.smileAmount
-        }
-        #endif
-    }
-
-    private func handleTouchEnd() {
-        if let last = lastNote {
-            EchoelSynth.shared.noteOff(note: last)
-        }
-        lastNote = nil
-
-        // Fade out touch indicator
-        withAnimation(.easeOut(duration: 0.3)) {
-            touchLocation = nil
-        }
-        currentNoteName = ""
-    }
-
-    // MARK: - MIDI Note Name
-
-    private func midiNoteName(_ note: Int) -> String {
-        let name = Self.noteNames[note % 12]
-        let octave = (note / 12) - 1
-        return "\(name)\(octave)"
-    }
+    // Touch handling now via MultiTouchInstrumentView (UIKit polyphonic)
+    // All noteOn/noteOff happens in MultiTouchInstrumentView.Coordinator
 
     // MARK: - Octave Guide Lines
 
@@ -304,7 +257,7 @@ struct EchoelInstrumentView: View {
     // MARK: - Touch Indicator
 
     @ViewBuilder
-    private func touchIndicator(at location: CGPoint) -> some View {
+    private func touchIndicator(at location: CGPoint, noteName: String = "") -> some View {
         let coherence = CGFloat(bio.smoothCoherence)
         let coherenceColor: Color = bio.isStreaming && bio.dataSource != .fallback
             ? (coherence > 0.6 ? EchoelBrand.coherenceHigh
@@ -324,12 +277,15 @@ struct EchoelInstrumentView: View {
                 .frame(width: 30, height: 30)
 
             // Note name
-            Text(currentNoteName)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundColor(Color.white.opacity(0.4))
-                .offset(y: -32)
+            if !noteName.isEmpty {
+                Text(noteName)
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundColor(Color.white.opacity(0.4))
+                    .offset(y: -32)
+            }
         }
         .position(location)
+        .allowsHitTesting(false)
     }
 
     // MARK: - Bottom Bar
