@@ -327,7 +327,7 @@ struct EchoelInstrumentView: View {
                 octaveGuides(in: geometry.size)
 
                 // Rhythm orbs — bouncing in tempo
-                RhythmOrbsView(bpm: bpm, orbCount: 4, worldColor: currentWorld.orbColor)
+                // Visual space — clean, no distractions
 
                 // Multi-touch instrument surface (UIKit, polyphonic)
                 #if canImport(UIKit)
