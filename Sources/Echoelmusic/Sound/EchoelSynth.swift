@@ -381,22 +381,26 @@ public final class EchoelSynth {
         voiceLock.lock()
         defer { voiceLock.unlock() }
 
-        // Retrigger existing voice on same note
+        // Retrigger existing voice on same note — smooth crossfade, no click
         if let idx = voices.firstIndex(where: { $0.midiNote == note && $0.isActive }) {
             voices[idx].startTime = currentTime
-            voices[idx].ampEnvelope = 0.0
+            // Preserve current ampEnvelope for smooth attack ramp (no hard reset to 0)
+            // The attack stage will ramp FROM current level TO 1.0
             voices[idx].filterEnvelope = 1.0
             voices[idx].fmModEnvelope = 1.0
             voices[idx].isReleasing = false
             voices[idx].envStage = .attack
             voices[idx].velocity = velocity
-            voices[idx].phase = 0.0
-            voices[idx].fmModPhase = 0.0
+            // DON'T reset phase — prevents discontinuity click
         } else {
-            // Voice stealing — oldest first
+            // Voice stealing — put oldest voice into fast release (no click)
             if voices.count >= maxVoices {
                 if let oldIdx = voices.indices.min(by: { voices[$0].startTime < voices[$1].startTime }) {
-                    voices.remove(at: oldIdx)
+                    voices[oldIdx].isReleasing = true
+                    voices[oldIdx].releaseStartTime = currentTime
+                    voices[oldIdx].releaseStartEnvelope = voices[oldIdx].ampEnvelope
+                    voices[oldIdx].envStage = .release
+                    // Voice will be cleaned up naturally when envelope reaches 0
                 }
             }
 
@@ -440,7 +444,13 @@ public final class EchoelSynth {
     public func allNotesOff() {
         voiceLock.lock()
         defer { voiceLock.unlock() }
-        voices.removeAll()
+        // Graceful release — no instant kill to prevent clicks
+        for i in voices.indices where !voices[i].isReleasing {
+            voices[i].isReleasing = true
+            voices[i].releaseStartTime = currentTime
+            voices[i].releaseStartEnvelope = voices[i].ampEnvelope
+            voices[i].envStage = .release
+        }
         activeVoiceCount = 0
         currentNote = nil
     }

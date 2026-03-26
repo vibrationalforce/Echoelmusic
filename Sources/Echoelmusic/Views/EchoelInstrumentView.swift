@@ -49,95 +49,192 @@ struct EchoelInstrumentView: View {
 
     /// Immersive sound environments — each one shapes the entire synth character
     enum SoundWorld: String, CaseIterable {
+        // Nature
         case underwater = "Underwater"
+        case jungle = "Jungle"
+        case waterfall = "Waterfall"
+        case ocean = "Ocean"
+        case forest = "Forest"
+        case rain = "Rain"
+        // Spaces
         case cave = "Cave"
         case atmosphere = "Atmosphere"
         case midnight = "Midnight"
+        // Textures
         case glass = "Glass"
         case drift = "Drift"
+        case silk = "Silk"
         case ember = "Ember"
+        case aurora = "Aurora"
         case void_ = "Void"
 
         /// Apply this world's synth configuration
         @MainActor func apply() {
-            var cfg = EchoelSynth.shared.config
+            // Start fresh — reset octave to 0, all params explicit
+            var cfg = EchoelSynthConfig()
             switch self {
+
+            // ─── NATURE ───────────────────────────────────────
+
             case .underwater:
-                // Deep, submerged. Heavy lowpass, slow movement, muted highs.
+                // Deep submerged pressure. Muted, heavy, slow breathing.
                 cfg.engine = .pad
-                cfg.padVoiceCount = 7; cfg.padSpread = 30.0; cfg.padChorusRate = 0.15; cfg.padChorusDepth = 0.8
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 800.0; cfg.filterResonance = 0.4
-                cfg.filterEnvAmount = 1500.0; cfg.filterEnvDecay = 1.2
-                cfg.attack = 0.8; cfg.decay = 1.5; cfg.sustain = 0.7; cfg.release = 3.0
-                cfg.chorusAmount = 0.7; cfg.drive = 0.0; cfg.stereoWidth = 0.9
-                cfg.vibratoRate = 2.0; cfg.vibratoDepth = 0.08
+                cfg.padVoiceCount = 7; cfg.padSpread = 35.0
+                cfg.padChorusRate = 0.1; cfg.padChorusDepth = 0.9
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 600.0; cfg.filterResonance = 0.45
+                cfg.filterEnvAmount = 1200.0; cfg.filterEnvDecay = 1.8
+                cfg.attack = 1.2; cfg.decay = 2.0; cfg.sustain = 0.7; cfg.release = 4.0
+                cfg.chorusAmount = 0.8; cfg.stereoWidth = 0.95
+                cfg.vibratoRate = 1.5; cfg.vibratoDepth = 0.1
+                cfg.octave = -1
+
+            case .jungle:
+                // Tropical density. Layered FM birds + pluck drops. Alive.
+                cfg.engine = .fm
+                cfg.fmRatio = 5.0; cfg.fmDepth = 0.8; cfg.fmFeedback = 0.12; cfg.fmModDecay = 0.4
+                cfg.filterMode = .bandpass; cfg.filterCutoff = 3500.0; cfg.filterResonance = 0.35
+                cfg.filterEnvAmount = 4000.0; cfg.filterEnvDecay = 0.3
+                cfg.attack = 0.002; cfg.decay = 0.5; cfg.sustain = 0.1; cfg.release = 0.8
+                cfg.chorusAmount = 0.4; cfg.stereoWidth = 0.8
+                cfg.vibratoRate = 6.0; cfg.vibratoDepth = 0.15
+
+            case .waterfall:
+                // White noise wash + deep resonant bass. Rushing water.
+                cfg.engine = .pad
+                cfg.padVoiceCount = 7; cfg.padSpread = 40.0
+                cfg.padChorusRate = 0.5; cfg.padChorusDepth = 1.0
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 3000.0; cfg.filterResonance = 0.3
+                cfg.filterEnvAmount = 4000.0; cfg.filterEnvDecay = 0.6
+                cfg.attack = 0.3; cfg.decay = 0.8; cfg.sustain = 0.6; cfg.release = 2.5
+                cfg.chorusAmount = 0.9; cfg.drive = 0.08; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 3.5; cfg.vibratoDepth = 0.12
+
+            case .ocean:
+                // Vast, slow tidal movement. Low drone + high shimmer.
+                cfg.engine = .wavetable
+                cfg.wtPosition = 0.5; cfg.wtModSpeed = 0.04
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 1200.0; cfg.filterResonance = 0.2
+                cfg.filterEnvAmount = 3000.0; cfg.filterEnvDecay = 3.0
+                cfg.attack = 2.0; cfg.decay = 3.0; cfg.sustain = 0.75; cfg.release = 5.0
+                cfg.chorusAmount = 0.6; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 0.8; cfg.vibratoDepth = 0.06
+
+            case .forest:
+                // Wooden, organic plucks. Soft resonance. Dappled light.
+                cfg.engine = .pluck
+                cfg.pluckDamping = 0.35; cfg.pluckDecay = 0.996; cfg.pluckBrightness = 0.5
+                cfg.pluckStretch = 0.08
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 4000.0; cfg.filterResonance = 0.2
+                cfg.filterEnvAmount = 2000.0; cfg.filterEnvDecay = 0.5
+                cfg.attack = 0.001; cfg.decay = 1.5; cfg.sustain = 0.0; cfg.release = 1.5
+                cfg.chorusAmount = 0.25; cfg.stereoWidth = 0.6
+                cfg.vibratoRate = 2.0; cfg.vibratoDepth = 0.02
+
+            case .rain:
+                // Gentle patter. High FM droplets with long release tails.
+                cfg.engine = .fm
+                cfg.fmRatio = 7.0; cfg.fmDepth = 0.4; cfg.fmFeedback = 0.0; cfg.fmModDecay = 0.08
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 8000.0; cfg.filterResonance = 0.1
+                cfg.filterEnvAmount = 2000.0; cfg.filterEnvDecay = 0.1
+                cfg.attack = 0.001; cfg.decay = 0.8; cfg.sustain = 0.0; cfg.release = 2.0
+                cfg.chorusAmount = 0.5; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 0.5; cfg.vibratoDepth = 0.01
+
+            // ─── SPACES ───────────────────────────────────────
 
             case .cave:
-                // Metallic resonances, long reverb tails, plucked echoes
+                // Metallic resonances. Plucked stalactites. Long echoes.
                 cfg.engine = .pluck
-                cfg.pluckDamping = 0.15; cfg.pluckDecay = 0.998; cfg.pluckBrightness = 0.6; cfg.pluckStretch = 0.15
-                cfg.filterMode = .bandpass; cfg.filterCutoff = 2000.0; cfg.filterResonance = 0.6
-                cfg.filterEnvAmount = 3000.0; cfg.filterEnvDecay = 0.8
-                cfg.attack = 0.001; cfg.decay = 2.0; cfg.sustain = 0.0; cfg.release = 2.5
-                cfg.chorusAmount = 0.3; cfg.drive = 0.05; cfg.stereoWidth = 0.7
+                cfg.pluckDamping = 0.1; cfg.pluckDecay = 0.999; cfg.pluckBrightness = 0.7
+                cfg.pluckStretch = 0.2
+                cfg.filterMode = .bandpass; cfg.filterCutoff = 2200.0; cfg.filterResonance = 0.65
+                cfg.filterEnvAmount = 3000.0; cfg.filterEnvDecay = 1.0
+                cfg.attack = 0.001; cfg.decay = 3.0; cfg.sustain = 0.0; cfg.release = 3.5
+                cfg.chorusAmount = 0.35; cfg.drive = 0.03; cfg.stereoWidth = 0.75
 
             case .atmosphere:
-                // Wide, floating pads. Slow shimmer. Fog and wind.
+                // High altitude. Thin air. Wide floating shimmer.
                 cfg.engine = .wavetable
-                cfg.wtPosition = 0.3; cfg.wtModSpeed = 0.08
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 4000.0; cfg.filterResonance = 0.15
-                cfg.filterEnvAmount = 2000.0; cfg.filterEnvDecay = 2.0
-                cfg.attack = 1.5; cfg.decay = 2.0; cfg.sustain = 0.8; cfg.release = 4.0
-                cfg.chorusAmount = 0.5; cfg.drive = 0.0; cfg.stereoWidth = 1.0
-                cfg.vibratoRate = 3.0; cfg.vibratoDepth = 0.05
+                cfg.wtPosition = 0.3; cfg.wtModSpeed = 0.06
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 5000.0; cfg.filterResonance = 0.12
+                cfg.filterEnvAmount = 2000.0; cfg.filterEnvDecay = 2.5
+                cfg.attack = 1.8; cfg.decay = 2.5; cfg.sustain = 0.8; cfg.release = 5.0
+                cfg.chorusAmount = 0.55; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 2.5; cfg.vibratoDepth = 0.04
 
             case .midnight:
-                // Dark analog warmth. Detuned, intimate, close.
+                // Dark analog warmth. Detuned, intimate, close. Velvet.
                 cfg.engine = .analog
-                cfg.analogDetune = 20.0; cfg.analogVoices = 5; cfg.analogWaveform = 0.0
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 1500.0; cfg.filterResonance = 0.25
-                cfg.filterEnvAmount = 3000.0; cfg.filterEnvDecay = 0.5
-                cfg.attack = 0.03; cfg.decay = 0.6; cfg.sustain = 0.5; cfg.release = 1.0
-                cfg.chorusAmount = 0.4; cfg.drive = 0.1; cfg.stereoWidth = 0.6
+                cfg.analogDetune = 22.0; cfg.analogVoices = 5; cfg.analogWaveform = 0.0
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 1200.0; cfg.filterResonance = 0.2
+                cfg.filterEnvAmount = 2500.0; cfg.filterEnvDecay = 0.6
+                cfg.attack = 0.05; cfg.decay = 0.8; cfg.sustain = 0.5; cfg.release = 1.5
+                cfg.chorusAmount = 0.45; cfg.drive = 0.08; cfg.stereoWidth = 0.65
+                cfg.vibratoRate = 3.0; cfg.vibratoDepth = 0.02
+
+            // ─── TEXTURES ─────────────────────────────────────
 
             case .glass:
                 // Crystalline FM bells. Bright, fragile, shimmering.
                 cfg.engine = .fm
-                cfg.fmRatio = 3.5; cfg.fmDepth = 1.0; cfg.fmFeedback = 0.08; cfg.fmModDecay = 2.5
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 12000.0; cfg.filterResonance = 0.05
+                cfg.fmRatio = 3.5; cfg.fmDepth = 1.2; cfg.fmFeedback = 0.06; cfg.fmModDecay = 3.0
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 14000.0; cfg.filterResonance = 0.03
                 cfg.filterEnvAmount = 0.0
-                cfg.attack = 0.001; cfg.decay = 3.0; cfg.sustain = 0.0; cfg.release = 2.0
-                cfg.chorusAmount = 0.2; cfg.drive = 0.0; cfg.stereoWidth = 0.5
+                cfg.attack = 0.001; cfg.decay = 4.0; cfg.sustain = 0.0; cfg.release = 3.0
+                cfg.chorusAmount = 0.25; cfg.stereoWidth = 0.55
 
             case .drift:
-                // Evolving wavetable textures. Slow morphing. Hypnotic.
+                // Evolving wavetable. Slow morphing. Hypnotic tide.
                 cfg.engine = .wavetable
-                cfg.wtPosition = 0.0; cfg.wtModSpeed = 0.25
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 6000.0; cfg.filterResonance = 0.2
-                cfg.filterEnvAmount = 1000.0; cfg.filterEnvDecay = 1.5
-                cfg.attack = 0.3; cfg.decay = 1.0; cfg.sustain = 0.7; cfg.release = 2.0
-                cfg.chorusAmount = 0.6; cfg.drive = 0.05; cfg.stereoWidth = 0.8
-                cfg.vibratoRate = 4.0; cfg.vibratoDepth = 0.03
+                cfg.wtPosition = 0.0; cfg.wtModSpeed = 0.2
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 6000.0; cfg.filterResonance = 0.18
+                cfg.filterEnvAmount = 1200.0; cfg.filterEnvDecay = 1.8
+                cfg.attack = 0.4; cfg.decay = 1.2; cfg.sustain = 0.7; cfg.release = 2.5
+                cfg.chorusAmount = 0.65; cfg.drive = 0.03; cfg.stereoWidth = 0.85
+                cfg.vibratoRate = 3.5; cfg.vibratoDepth = 0.025
+
+            case .silk:
+                // Ultra-smooth pad. No edges. Pure warmth. Like fabric.
+                cfg.engine = .pad
+                cfg.padVoiceCount = 7; cfg.padSpread = 15.0
+                cfg.padChorusRate = 0.2; cfg.padChorusDepth = 0.6
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 2500.0; cfg.filterResonance = 0.08
+                cfg.filterEnvAmount = 800.0; cfg.filterEnvDecay = 1.5
+                cfg.attack = 1.0; cfg.decay = 1.5; cfg.sustain = 0.85; cfg.release = 3.0
+                cfg.chorusAmount = 0.5; cfg.stereoWidth = 0.7
+                cfg.vibratoRate = 2.0; cfg.vibratoDepth = 0.015
 
             case .ember:
-                // Warm distortion, crackling energy. Analog heat.
+                // Warm distortion, crackling analog energy. Fireplace.
                 cfg.engine = .analog
-                cfg.analogDetune = 8.0; cfg.analogVoices = 3; cfg.analogWaveform = 0.4
-                cfg.analogPWM = 0.6
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 2500.0; cfg.filterResonance = 0.35
-                cfg.filterEnvAmount = 5000.0; cfg.filterEnvDecay = 0.2
-                cfg.attack = 0.01; cfg.decay = 0.4; cfg.sustain = 0.6; cfg.release = 0.5
-                cfg.chorusAmount = 0.1; cfg.drive = 0.3; cfg.stereoWidth = 0.4
+                cfg.analogDetune = 10.0; cfg.analogVoices = 3; cfg.analogWaveform = 0.35
+                cfg.analogPWM = 0.55
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 2200.0; cfg.filterResonance = 0.3
+                cfg.filterEnvAmount = 4500.0; cfg.filterEnvDecay = 0.25
+                cfg.attack = 0.008; cfg.decay = 0.5; cfg.sustain = 0.55; cfg.release = 0.6
+                cfg.chorusAmount = 0.15; cfg.drive = 0.35; cfg.stereoWidth = 0.45
+                cfg.vibratoRate = 4.5; cfg.vibratoDepth = 0.02
+
+            case .aurora:
+                // Northern lights. Slow spectral sweep. Ethereal color shifts.
+                cfg.engine = .wavetable
+                cfg.wtPosition = 0.7; cfg.wtModSpeed = 0.12
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 3500.0; cfg.filterResonance = 0.25
+                cfg.filterEnvAmount = 3500.0; cfg.filterEnvDecay = 2.0
+                cfg.attack = 1.0; cfg.decay = 2.0; cfg.sustain = 0.75; cfg.release = 4.0
+                cfg.chorusAmount = 0.7; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 1.5; cfg.vibratoDepth = 0.06
 
             case .void_:
-                // Almost nothing. Sub-bass drone. Infinite space.
+                // Almost nothing. Sub-bass pressure. Infinite darkness.
                 cfg.engine = .pad
-                cfg.padVoiceCount = 3; cfg.padSpread = 5.0; cfg.padChorusRate = 0.05; cfg.padChorusDepth = 0.3
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 300.0; cfg.filterResonance = 0.5
-                cfg.filterEnvAmount = 500.0; cfg.filterEnvDecay = 3.0
-                cfg.attack = 2.0; cfg.decay = 3.0; cfg.sustain = 0.9; cfg.release = 5.0
-                cfg.chorusAmount = 0.2; cfg.drive = 0.0; cfg.stereoWidth = 1.0
-                cfg.vibratoRate = 1.0; cfg.vibratoDepth = 0.02
+                cfg.padVoiceCount = 3; cfg.padSpread = 4.0
+                cfg.padChorusRate = 0.03; cfg.padChorusDepth = 0.2
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 250.0; cfg.filterResonance = 0.55
+                cfg.filterEnvAmount = 400.0; cfg.filterEnvDecay = 4.0
+                cfg.attack = 3.0; cfg.decay = 4.0; cfg.sustain = 0.9; cfg.release = 6.0
+                cfg.chorusAmount = 0.15; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 0.5; cfg.vibratoDepth = 0.015
                 cfg.octave = -1
             }
             EchoelSynth.shared.config = cfg
