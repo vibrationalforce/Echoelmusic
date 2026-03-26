@@ -22,6 +22,9 @@ public final class AudioEngine {
     @ObservationIgnored nonisolated(unsafe) private let _rawMeterR = UnsafeMutablePointer<Float>.allocate(capacity: 1)
     @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
+    /// Always-on retrospective capture buffer (last 30s of audio)
+    let retrospectiveBuffer = RetrospectiveBuffer()
+
     @ObservationIgnored private let masterEngine = AVAudioEngine()
     @ObservationIgnored private let masterMixer = AVAudioMixerNode()
     @ObservationIgnored private let masterPlayerNode = AVAudioPlayerNode()
@@ -118,7 +121,10 @@ public final class AudioEngine {
         if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
             let ptrL = _rawMeterL
             let ptrR = _rawMeterR
+            let retroBuf = retrospectiveBuffer
             masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { @Sendable buffer, _ in
+                // Always-on retrospective capture (lock-free ring buffer)
+                retroBuf.write(buffer: buffer)
                 guard let channelData = buffer.floatChannelData else { return }
                 let frameLength = UInt(buffer.frameLength)
                 guard frameLength > 0 else { return }

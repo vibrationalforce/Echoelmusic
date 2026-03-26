@@ -474,6 +474,9 @@ struct EchoelInstrumentView: View {
             // 1. Loop Record
             recordButton
 
+            // 1b. Retrospective Capture (save last 4 bars)
+            captureButton
+
             Divider().frame(height: 20).opacity(0.3)
 
             // 2. Key / Scale
@@ -537,6 +540,33 @@ struct EchoelInstrumentView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isRecording ? "Stop recording" : "Record")
+    }
+
+    // MARK: - Capture Button (Retrospective — save last N bars)
+
+    private var captureButton: some View {
+        Button {
+            captureRetrospective()
+        } label: {
+            Image(systemName: "arrow.uturn.backward.circle")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(Color.white.opacity(0.5))
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Capture last 4 bars")
+    }
+
+    private func captureRetrospective() {
+        do {
+            let url = try audioEngine.retrospectiveBuffer.capture(bars: 4, bpm: bpm)
+            recordedFileURL = url
+            HapticHelper.notification(.success)
+            log.log(.info, category: .audio, "Retrospective capture: 4 bars saved")
+        } catch {
+            log.log(.error, category: .audio, "Capture failed: \(error.localizedDescription)")
+            HapticHelper.notification(.error)
+        }
     }
 
     // MARK: - Key/Scale Picker
