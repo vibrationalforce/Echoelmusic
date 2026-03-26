@@ -68,24 +68,16 @@ struct EchoelInstrumentView: View {
         case aurora = "Aurora"
         case void_ = "Void"
 
-        /// Visual color palette for rhythm orbs, matched to sound character
-        var orbColor: RhythmOrbsView.WorldColor {
+        /// Touch-reactive particle style matched to sound character
+        var particleStyle: TouchParticleView.ParticleStyle {
             switch self {
-            case .underwater: return .nature(.underwater)
-            case .jungle: return .nature(.jungle)
-            case .waterfall: return .nature(.waterfall)
-            case .ocean: return .nature(.ocean)
-            case .forest: return .nature(.forest)
-            case .rain: return .nature(.rain)
-            case .cave: return .space(.cave)
-            case .atmosphere: return .space(.atmosphere)
-            case .midnight: return .space(.midnight)
-            case .glass: return .texture(.glass)
-            case .drift: return .texture(.drift)
-            case .silk: return .texture(.silk)
-            case .ember: return .texture(.ember)
-            case .aurora: return .texture(.aurora)
-            case .void_: return .texture(.void_)
+            case .underwater, .ocean, .waterfall: return .water
+            case .jungle, .forest: return .organic
+            case .rain: return .rain
+            case .atmosphere, .aurora, .void_: return .stars
+            case .midnight, .ember: return .warmth
+            case .glass, .drift, .silk: return .crystal
+            case .cave: return .cave
             }
         }
 
@@ -351,6 +343,12 @@ struct EchoelInstrumentView: View {
                     #endif
                 }
                 #endif
+
+                // Touch-reactive particles — like touching water, stars, or clouds
+                TouchParticleView(
+                    touches: activeTouches,
+                    worldStyle: currentWorld.particleStyle
+                )
 
                 // Touch visualization — one circle per finger
                 ForEach(activeTouches) { touch in
