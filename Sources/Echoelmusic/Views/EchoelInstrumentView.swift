@@ -165,8 +165,16 @@ struct EchoelInstrumentView: View {
         var label: String { "\(rawValue)-bit" }
     }
 
+    /// Represents one active finger on the instrument surface
+    struct ActiveTouchPoint: Identifiable {
+        let id: String
+        let location: CGPoint
+        let midiNote: Int
+        let noteName: String
+    }
+
     // Active touches for multi-touch visualization
-    @State private var activeTouches: [MultiTouchInstrumentView.ActiveTouch] = []
+    @State private var activeTouches: [ActiveTouchPoint] = []
 
     // MARK: - Root Note Options
 
@@ -193,7 +201,14 @@ struct EchoelInstrumentView: View {
                     scale: currentScale,
                     rootNote: rootNote
                 ) { touches in
-                    activeTouches = touches
+                    activeTouches = touches.map { t in
+                        ActiveTouchPoint(
+                            id: "\(t.id)",
+                            location: t.location,
+                            midiNote: t.midiNote,
+                            noteName: t.noteName
+                        )
+                    }
                     // Bio smile → wavetable morph
                     #if os(iOS)
                     if bioMode == .face, smileDetector.isDetecting {
