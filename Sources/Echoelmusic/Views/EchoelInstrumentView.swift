@@ -59,7 +59,7 @@ struct EchoelInstrumentView: View {
         case void_ = "Void"
 
         /// Apply this world's synth configuration
-        func apply() {
+        @MainActor func apply() {
             var cfg = EchoelSynth.shared.config
             switch self {
             case .underwater:
