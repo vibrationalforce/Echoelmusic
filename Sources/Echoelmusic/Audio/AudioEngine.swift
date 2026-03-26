@@ -23,7 +23,7 @@ public final class AudioEngine {
     @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
     /// Always-on retrospective capture buffer (last 30s of audio)
-    let retrospectiveBuffer = RetrospectiveBuffer()
+    let retrospectiveBuffer = AudioCaptureRing()
 
     @ObservationIgnored private let masterEngine = AVAudioEngine()
     @ObservationIgnored private let masterMixer = AVAudioMixerNode()

@@ -48,7 +48,7 @@ struct TouchParticleView: View {
                 switch self {
                 case .water:
                     // Rippling outward, blue-cyan, slow drift
-                    let angle = CGFloat.random(in: 0...(2 * .pi))
+                    let angle = CGFloat.random(in: 0 ... (2.0 * CGFloat.pi))
                     let speed = CGFloat.random(in: 0.3...1.5)
                     p.vx = cos(angle) * speed
                     p.vy = sin(angle) * speed
@@ -102,7 +102,7 @@ struct TouchParticleView: View {
 
                 case .crystal:
                     // Sharp, quick, bright white-blue
-                    let angle = CGFloat.random(in: 0...(2 * .pi))
+                    let angle = CGFloat.random(in: 0 ... (2.0 * CGFloat.pi))
                     let speed = CGFloat.random(in: 0.5...2.5)
                     p.vx = cos(angle) * speed
                     p.vy = sin(angle) * speed

@@ -11,7 +11,7 @@ import AVFoundation
 /// Thread safety: Written from audio tap callback (background), read from MainActor.
 /// Uses lock-free ring buffer pattern with atomic write index.
 @MainActor
-final class RetrospectiveBuffer {
+final class AudioCaptureRing {
 
     /// Maximum capture duration in seconds
     let maxDuration: TimeInterval = 30.0
@@ -42,7 +42,7 @@ final class RetrospectiveBuffer {
         bufferR = [Float](repeating: 0, count: cap)
         writeIndex = 0
         totalFramesWritten = 0
-        log.audio("RetrospectiveBuffer: Allocated \(cap * 2 * 4 / 1024)KB for \(Int(maxDuration))s circular capture")
+        log.audio("AudioCaptureRing: Allocated \(cap * 2 * 4 / 1024)KB for \(Int(maxDuration))s circular capture")
     }
 
     /// Start capturing — call this once on app launch
@@ -52,7 +52,7 @@ final class RetrospectiveBuffer {
             prepare()
         }
         isCapturing = true
-        log.audio("RetrospectiveBuffer: Capturing started (always-on)")
+        log.audio("AudioCaptureRing: Capturing started (always-on)")
     }
 
     // MARK: - Write (called from audio tap — background thread)
@@ -90,7 +90,7 @@ final class RetrospectiveBuffer {
         let availableFrames = min(totalFramesWritten, capacity)
         let captureFrames = min(requestedFrames, availableFrames)
         guard captureFrames > 0 else {
-            throw NSError(domain: "RetrospectiveBuffer", code: 1,
+            throw NSError(domain: "AudioCaptureRing", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "No audio captured yet"])
         }
 
@@ -101,20 +101,20 @@ final class RetrospectiveBuffer {
             channels: 2,
             interleaved: false
         ) else {
-            throw NSError(domain: "RetrospectiveBuffer", code: 2,
+            throw NSError(domain: "AudioCaptureRing", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "Cannot create audio format"])
         }
 
         // Create buffer
         guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(captureFrames)) else {
-            throw NSError(domain: "RetrospectiveBuffer", code: 3,
+            throw NSError(domain: "AudioCaptureRing", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: "Cannot create output buffer"])
         }
         outputBuffer.frameLength = AVAudioFrameCount(captureFrames)
 
         guard let outL = outputBuffer.floatChannelData?[0],
               let outR = outputBuffer.floatChannelData?[1] else {
-            throw NSError(domain: "RetrospectiveBuffer", code: 4,
+            throw NSError(domain: "AudioCaptureRing", code: 4,
                           userInfo: [NSLocalizedDescriptionKey: "Cannot access output channels"])
         }
 
@@ -140,7 +140,7 @@ final class RetrospectiveBuffer {
         let file = try AVAudioFile(forWriting: fileURL, settings: format.settings)
         try file.write(from: outputBuffer)
 
-        log.audio("RetrospectiveBuffer: Captured \(bars) bars (\(String(format: "%.1f", requestedDuration))s) → \(fileName)")
+        log.audio("AudioCaptureRing: Captured \(bars) bars (\(String(format: "%.1f", requestedDuration))s) → \(fileName)")
         return fileURL
     }
 }
