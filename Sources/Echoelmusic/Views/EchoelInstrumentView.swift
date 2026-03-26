@@ -38,6 +38,11 @@ struct EchoelInstrumentView: View {
     @State private var exportSampleRate: ExportSampleRate = .sr48000
     @State private var exportBitDepth: ExportBitDepth = .bit24
 
+    // Motion control
+    #if canImport(CoreMotion)
+    @State private var motionController = MotionMusicController()
+    #endif
+
     // Coherence for ring color
     @Bindable private var bio = EchoelBioEngine.shared
 
@@ -341,6 +346,25 @@ struct EchoelInstrumentView: View {
                         EchoelSynth.shared.config.wtPosition = smileDetector.smileAmount
                     }
                     #endif
+
+                    // Motion sensors → sound shaping
+                    #if canImport(CoreMotion)
+                    if motionController.isActive {
+                        // Tilt adds filter offset on top of touch Y-axis
+                        let motionFilterOffset = (motionController.filterAmount - 0.5) * 3000.0
+                        EchoelSynth.shared.config.filterCutoff += motionFilterOffset
+
+                        // Rotation → chorus/vibrato intensity
+                        EchoelSynth.shared.config.vibratoDepth = motionController.rotationIntensity * 0.3
+
+                        // Shake → momentary drive burst
+                        if motionController.shakeDetected {
+                            EchoelSynth.shared.config.drive = 0.5
+                        } else {
+                            // Restore world default drive
+                        }
+                    }
+                    #endif
                 }
                 #endif
 
@@ -368,6 +392,14 @@ struct EchoelInstrumentView: View {
         .statusBarHidden()
         .onAppear {
             currentWorld.apply()
+            #if canImport(CoreMotion)
+            motionController.start()
+            #endif
+        }
+        .onDisappear {
+            #if canImport(CoreMotion)
+            motionController.stop()
+            #endif
         }
         .onChange(of: bioMode) { _, newMode in
             switchBioMode(to: newMode)
