@@ -49,80 +49,80 @@ struct TouchParticleView: View {
                 case .water:
                     // Rippling outward, blue-cyan, slow drift
                     let angle = CGFloat.random(in: 0 ... (2.0 * CGFloat.pi))
-                    let speed = CGFloat.random(in: 0.3...1.5)
+                    let speed = CGFloat.random(in: 0.3 ... 1.5)
                     p.vx = cos(angle) * speed
                     p.vy = sin(angle) * speed
-                    p.size = CGFloat.random(in: 3...8)
-                    p.hue = Double.random(in: 195...220) / 360.0
-                    p.saturation = Double.random(in: 0.4...0.7)
-                    p.brightness = Double.random(in: 0.4...0.7)
-                    p.opacity = CGFloat.random(in: 0.15...0.4)
-                    p.life = CGFloat.random(in: 0.6...1.0)
+                    p.size = CGFloat.random(in: 3 ... 8)
+                    p.hue = Double.random(in: 195 ... 220) / 360.0
+                    p.saturation = Double.random(in: 0.4 ... 0.7)
+                    p.brightness = Double.random(in: 0.4 ... 0.7)
+                    p.opacity = CGFloat.random(in: 0.15 ... 0.4)
+                    p.life = CGFloat.random(in: 0.6 ... 1.0)
 
                 case .organic:
                     // Floating upward, green spores
-                    p.vx = CGFloat.random(in: -0.8...0.8)
-                    p.vy = CGFloat.random(in: -1.5...-0.3)
-                    p.size = CGFloat.random(in: 2...6)
-                    p.hue = Double.random(in: 90...150) / 360.0
-                    p.saturation = Double.random(in: 0.3...0.6)
-                    p.brightness = Double.random(in: 0.3...0.6)
-                    p.opacity = CGFloat.random(in: 0.1...0.35)
+                    p.vx = CGFloat.random(in: -0.8 ... 0.8)
+                    p.vy = CGFloat.random(in: -1.5 ... -0.3)
+                    p.size = CGFloat.random(in: 2 ... 6)
+                    p.hue = Double.random(in: 90 ... 150) / 360.0
+                    p.saturation = Double.random(in: 0.3 ... 0.6)
+                    p.brightness = Double.random(in: 0.3 ... 0.6)
+                    p.opacity = CGFloat.random(in: 0.1 ... 0.35)
 
                 case .rain:
                     // Falling down, blue-gray
-                    p.vx = CGFloat.random(in: -0.2...0.2)
-                    p.vy = CGFloat.random(in: 1.0...3.0)
-                    p.size = CGFloat.random(in: 1.5...3.5)
-                    p.hue = Double.random(in: 210...230) / 360.0
+                    p.vx = CGFloat.random(in: -0.2 ... 0.2)
+                    p.vy = CGFloat.random(in: 1.0 ... 3.0)
+                    p.size = CGFloat.random(in: 1.5 ... 3.5)
+                    p.hue = Double.random(in: 210 ... 230) / 360.0
                     p.saturation = 0.15
-                    p.brightness = Double.random(in: 0.5...0.7)
-                    p.opacity = CGFloat.random(in: 0.2...0.45)
+                    p.brightness = Double.random(in: 0.5 ... 0.7)
+                    p.opacity = CGFloat.random(in: 0.2 ... 0.45)
 
                 case .stars:
                     // Twinkling, barely moving, white-cyan-violet
-                    p.vx = CGFloat.random(in: -0.15...0.15)
-                    p.vy = CGFloat.random(in: -0.15...0.15)
-                    p.size = CGFloat.random(in: 1...4)
-                    p.hue = Double.random(in: 180...280) / 360.0
-                    p.saturation = Double.random(in: 0.1...0.4)
-                    p.brightness = Double.random(in: 0.6...1.0)
-                    p.opacity = CGFloat.random(in: 0.2...0.7)
-                    p.life = CGFloat.random(in: 0.4...1.0)
+                    p.vx = CGFloat.random(in: -0.15 ... 0.15)
+                    p.vy = CGFloat.random(in: -0.15 ... 0.15)
+                    p.size = CGFloat.random(in: 1 ... 4)
+                    p.hue = Double.random(in: 180 ... 280) / 360.0
+                    p.saturation = Double.random(in: 0.1 ... 0.4)
+                    p.brightness = Double.random(in: 0.6 ... 1.0)
+                    p.opacity = CGFloat.random(in: 0.2 ... 0.7)
+                    p.life = CGFloat.random(in: 0.4 ... 1.0)
 
                 case .warmth:
                     // Rising embers, orange-red glow
-                    p.vx = CGFloat.random(in: -0.5...0.5)
-                    p.vy = CGFloat.random(in: -1.8...-0.5)
-                    p.size = CGFloat.random(in: 2...5)
-                    p.hue = Double.random(in: 10...40) / 360.0
-                    p.saturation = Double.random(in: 0.6...0.9)
-                    p.brightness = Double.random(in: 0.5...0.8)
-                    p.opacity = CGFloat.random(in: 0.15...0.4)
+                    p.vx = CGFloat.random(in: -0.5 ... 0.5)
+                    p.vy = CGFloat.random(in: -1.8 ... -0.5)
+                    p.size = CGFloat.random(in: 2 ... 5)
+                    p.hue = Double.random(in: 10 ... 40) / 360.0
+                    p.saturation = Double.random(in: 0.6 ... 0.9)
+                    p.brightness = Double.random(in: 0.5 ... 0.8)
+                    p.opacity = CGFloat.random(in: 0.15 ... 0.4)
 
                 case .crystal:
                     // Sharp, quick, bright white-blue
                     let angle = CGFloat.random(in: 0 ... (2.0 * CGFloat.pi))
-                    let speed = CGFloat.random(in: 0.5...2.5)
+                    let speed = CGFloat.random(in: 0.5 ... 2.5)
                     p.vx = cos(angle) * speed
                     p.vy = sin(angle) * speed
-                    p.size = CGFloat.random(in: 1...3)
-                    p.hue = Double.random(in: 200...240) / 360.0
-                    p.saturation = Double.random(in: 0.05...0.2)
-                    p.brightness = Double.random(in: 0.7...1.0)
-                    p.opacity = CGFloat.random(in: 0.3...0.6)
-                    p.life = CGFloat.random(in: 0.3...0.7)
+                    p.size = CGFloat.random(in: 1 ... 3)
+                    p.hue = Double.random(in: 200 ... 240) / 360.0
+                    p.saturation = Double.random(in: 0.05 ... 0.2)
+                    p.brightness = Double.random(in: 0.7 ... 1.0)
+                    p.opacity = CGFloat.random(in: 0.3 ... 0.6)
+                    p.life = CGFloat.random(in: 0.3 ... 0.7)
 
                 case .cave:
                     // Slow floating dust, amber-brown
-                    p.vx = CGFloat.random(in: -0.3...0.3)
-                    p.vy = CGFloat.random(in: -0.5...0.3)
-                    p.size = CGFloat.random(in: 2...5)
-                    p.hue = Double.random(in: 25...45) / 360.0
-                    p.saturation = Double.random(in: 0.3...0.5)
-                    p.brightness = Double.random(in: 0.3...0.5)
-                    p.opacity = CGFloat.random(in: 0.1...0.25)
-                    p.life = CGFloat.random(in: 0.5...1.0)
+                    p.vx = CGFloat.random(in: -0.3 ... 0.3)
+                    p.vy = CGFloat.random(in: -0.5 ... 0.3)
+                    p.size = CGFloat.random(in: 2 ... 5)
+                    p.hue = Double.random(in: 25 ... 45) / 360.0
+                    p.saturation = Double.random(in: 0.3 ... 0.5)
+                    p.brightness = Double.random(in: 0.3 ... 0.5)
+                    p.opacity = CGFloat.random(in: 0.1 ... 0.25)
+                    p.life = CGFloat.random(in: 0.5 ... 1.0)
                 }
 
                 particles.append(p)
