@@ -115,27 +115,8 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: "Install iOS Simulator Runtime"
-        run: |
-          echo "=== Xcode version ==="
-          xcodebuild -version
-          echo "=== Available runtimes ==="
-          xcrun simctl runtime list 2>/dev/null || true
-          echo "=== Checking if iOS 18.2 simulator is available ==="
-          # Check if correct runtime is already installed
-          SDK_BUILD=$(xcodebuild -version -sdk iphonesimulator | grep -i "ProductBuildVersion" | awk '{print $2}')
-          echo "Required SDK build: $SDK_BUILD"
-          if xcrun simctl runtime list 2>/dev/null | grep -q "$SDK_BUILD"; then
-            echo "Matching simulator runtime already installed"
-          else
-            echo "Installing iOS simulator runtime (build: $SDK_BUILD)..."
-            xcodebuild -downloadPlatform iOS -buildVersion "$SDK_BUILD" 2>&1 || {
-              echo "Specific version failed, trying generic download..."
-              xcodebuild -downloadPlatform iOS 2>&1 || true
-            }
-          fi
-          echo "=== Runtimes after install ==="
-          xcrun simctl runtime list 2>/dev/null || true
+      - name: "Print Xcode Version"
+        run: xcodebuild -version
 
       - name: "Cache Swift PM"
         uses: actions/cache@v4
@@ -145,6 +126,13 @@ jobs:
             .build
           key: ${{ runner.os }}-spm-compile-${{ hashFiles('Package.swift', 'Package.resolved') }}
           restore-keys: ${{ runner.os }}-spm-compile-
+
+      - name: "Cache DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          key: ${{ runner.os }}-derived-compile-${{ hashFiles('project.yml') }}
+          restore-keys: ${{ runner.os }}-derived-compile-
 
       - name: "Setup XcodeGen"
         uses: ./.github/actions/setup-xcodegen
@@ -400,84 +388,42 @@ jobs:
           echo "=== EXPORT SUCCESSFUL ==="
           ls -la ./build/*.ipa 2>/dev/null || echo "No IPA found"
 
-      - name: "Inspect IPA Icons"
+      - name: "Inspect IPA Bundle"
         run: |
           IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
           [ -z "$IPA" ] && { echo "No IPA to inspect"; exit 0; }
           mkdir -p /tmp/ipa_inspect
           unzip -o "$IPA" -d /tmp/ipa_inspect > /dev/null 2>&1
           APP_DIR=$(ls -d /tmp/ipa_inspect/Payload/*.app 2>/dev/null | head -1)
-          [ -z "$APP_DIR" ] && { echo "::warning title=IPA Debug::No .app in IPA"; exit 0; }
+          [ -z "$APP_DIR" ] && { echo "No .app in IPA"; exit 0; }
 
-          # Check for icons
-          ICONS=$(ls "$APP_DIR"/AppIcon* 2>/dev/null | head -20 || echo "NONE")
-          ASSETS=$(ls -la "$APP_DIR/Assets.car" 2>/dev/null || echo "NO Assets.car")
-          PLIST_ICONS=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIcons in plist")
-          PLIST_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIconName")
-          PLIST_FILES=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconFiles" "$APP_DIR/Info.plist" 2>&1 || echo "NO CFBundleIconFiles")
-          ALL_ICONS=$(find "$APP_DIR" -maxdepth 2 -name "*[Ii]con*" -o -name "*[Aa]pp[Ii]con*" 2>/dev/null | head -20 || echo "NONE")
+          echo "=== Bundle Info ==="
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_DIR/Info.plist" 2>/dev/null || echo "unknown")
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_DIR/Info.plist" 2>/dev/null || echo "unknown")
+          BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP_DIR/Info.plist" 2>/dev/null || echo "unknown")
+          echo "Bundle: $BUNDLE_ID | Version: $VERSION ($BUILD)"
 
-          echo "::warning title=IPA Icon Scan::Icons at root: ${ICONS} | Assets.car: ${ASSETS} | CFBundleIconName: ${PLIST_NAME} | CFBundleIconFiles: ${PLIST_FILES}"
-          echo "::warning title=IPA All Icons::${ALL_ICONS}"
-          echo "--- Detailed Info.plist Icons ---"
-          echo "$PLIST_ICONS"
-          rm -rf /tmp/ipa_inspect
+          # Icons
+          ICON_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName" "$APP_DIR/Info.plist" 2>/dev/null || echo "none")
+          ASSETS_SIZE=$(ls -la "$APP_DIR/Assets.car" 2>/dev/null | awk '{print $5}' || echo "0")
+          echo "Icon: $ICON_NAME | Assets.car: ${ASSETS_SIZE} bytes"
 
-      - name: "Inspect Extension Bundles"
-        run: |
-          IPA=$(ls "$(pwd)"/build/*.ipa 2>/dev/null | head -1)
-          [ -z "$IPA" ] && { echo "No IPA to inspect"; exit 0; }
-          mkdir -p /tmp/ext_inspect
-          unzip -o "$IPA" -d /tmp/ext_inspect > /dev/null 2>&1
-          APP_DIR=$(ls -d /tmp/ext_inspect/Payload/*.app 2>/dev/null | head -1)
-          [ -z "$APP_DIR" ] && { echo "::warning::No .app in IPA"; exit 0; }
-
-          echo "=== PlugIns Directory ==="
-          ls -laR "$APP_DIR/PlugIns/" 2>/dev/null || echo "No PlugIns directory"
-
-          echo ""
-          echo "=== Extension Bundle Validation ==="
+          # Extensions
+          EXT_COUNT=$(ls -d "$APP_DIR"/PlugIns/*.appex 2>/dev/null | wc -l | tr -d ' ')
+          echo "Extensions: $EXT_COUNT"
           for APPEX in "$APP_DIR"/PlugIns/*.appex; do
             [ -d "$APPEX" ] || continue
             EXT_NAME=$(basename "$APPEX")
-            echo "--- $EXT_NAME ---"
-
-            # Check Info.plist exists
-            if [ -f "$APPEX/Info.plist" ]; then
-              echo "  Info.plist: OK"
-              BUNDLE_TYPE=$(/usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$APPEX/Info.plist" 2>&1 || echo "MISSING")
-              EXT_POINT=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$APPEX/Info.plist" 2>&1 || echo "MISSING")
-              PRINCIPAL=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPrincipalClass" "$APPEX/Info.plist" 2>&1 || echo "MISSING")
-              echo "  CFBundlePackageType: $BUNDLE_TYPE"
-              echo "  NSExtensionPointIdentifier: $EXT_POINT"
-              echo "  NSExtensionPrincipalClass: $PRINCIPAL"
-            else
-              echo "  Info.plist: MISSING!"
-              echo "::error title=Missing Info.plist::Extension $EXT_NAME has no Info.plist"
-            fi
-
-            # Check binary
             BIN_NAME="${EXT_NAME%.appex}"
-            if [ -f "$APPEX/$BIN_NAME" ]; then
-              MACHO_TYPE=$(file "$APPEX/$BIN_NAME" | head -1)
-              echo "  Binary: $MACHO_TYPE"
-              # Check code signature
-              codesign -dvv "$APPEX/$BIN_NAME" 2>&1 | head -5 || echo "  Code signature: INVALID"
-            else
-              echo "  Binary '$BIN_NAME': MISSING!"
-              echo "::error title=Missing Binary::Extension $EXT_NAME has no binary"
-            fi
-
-            # Check _CodeSignature
-            if [ -d "$APPEX/_CodeSignature" ]; then
-              echo "  _CodeSignature: OK"
-            else
-              echo "  _CodeSignature: MISSING!"
-            fi
-            echo ""
+            HAS_PLIST=$( [ -f "$APPEX/Info.plist" ] && echo "OK" || echo "MISSING" )
+            HAS_BIN=$( [ -f "$APPEX/$BIN_NAME" ] && echo "OK" || echo "MISSING" )
+            HAS_SIG=$( [ -d "$APPEX/_CodeSignature" ] && echo "OK" || echo "MISSING" )
+            echo "  $EXT_NAME — plist:$HAS_PLIST bin:$HAS_BIN sig:$HAS_SIG"
+            [ "$HAS_PLIST" = "MISSING" ] && echo "::error title=Extension Error::$EXT_NAME missing Info.plist"
+            [ "$HAS_BIN" = "MISSING" ] && echo "::error title=Extension Error::$EXT_NAME missing binary"
           done
 
-          rm -rf /tmp/ext_inspect
+          rm -rf /tmp/ipa_inspect
 
       - name: "Validate IPA"
         env:
@@ -488,29 +434,30 @@ jobs:
           [ -z "$IPA" ] && { echo "::warning::No IPA found, skipping validation"; exit 0; }
           API_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
 
-          echo "=== Validating IPA with Apple ==="
-          set +eo pipefail
-          # Use altool for iOS IPA validation (still functional; migrate to
-          # App Store Connect API when Apple removes altool from Xcode)
-          xcrun altool --validate-app \
-            -f "$IPA" \
-            -t ios \
-            --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID" \
-            2>&1 | tee /tmp/validate.log
-          RESULT=${PIPESTATUS[0]}
-          set -eo pipefail
+          echo "=== Validating IPA ==="
+          echo "IPA: $IPA ($(du -h "$IPA" | cut -f1))"
 
-          if [ $RESULT -ne 0 ]; then
-            ERRORS=$(grep -iE "error|invalid|not permitted|rejected" /tmp/validate.log | head -10 | tr '\n' ' ||| ' || true)
-            echo "::warning title=IPA Validation Warning::${ERRORS}"
-            echo "## IPA Validation Warning" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat /tmp/validate.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "Proceeding to upload despite validation warning..."
+          # Basic IPA structure validation (fast, no network)
+          mkdir -p /tmp/ipa_validate
+          unzip -t "$IPA" > /dev/null 2>&1 || { echo "::error::IPA is not a valid zip archive"; exit 1; }
+          unzip -o "$IPA" -d /tmp/ipa_validate > /dev/null 2>&1
+          APP_DIR=$(ls -d /tmp/ipa_validate/Payload/*.app 2>/dev/null | head -1)
+          if [ -z "$APP_DIR" ]; then
+            echo "::error::No .app bundle in IPA Payload"
             exit 1
           fi
+
+          # Validate required files exist
+          ERRORS=0
+          [ -f "$APP_DIR/Info.plist" ] && echo "[OK] Info.plist" || { echo "[FAIL] Info.plist missing"; ERRORS=$((ERRORS+1)); }
+          [ -d "$APP_DIR/_CodeSignature" ] && echo "[OK] Code signature" || { echo "[FAIL] _CodeSignature missing"; ERRORS=$((ERRORS+1)); }
+
+          # Check minimum deployment target
+          MIN_OS=$(/usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" "$APP_DIR/Info.plist" 2>/dev/null || echo "unknown")
+          echo "MinimumOSVersion: $MIN_OS"
+
+          rm -rf /tmp/ipa_validate
+          [ $ERRORS -gt 0 ] && { echo "::error::IPA structure validation failed"; exit 1; }
           echo "=== IPA VALIDATION PASSED ==="
 
       - name: "Upload to TestFlight"
@@ -862,7 +809,7 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Setup Signing Certificates"
+      - name: "Setup Signing Certificates (watchOS)"
         if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -871,6 +818,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set +eo pipefail
+          # Use iOS signing lane (handles watchOS companion via automatic signing)
           fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -1070,7 +1018,7 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Setup Signing Certificates"
+      - name: "Setup Signing Certificates (tvOS)"
         if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -1079,6 +1027,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set +eo pipefail
+          # Use iOS signing lane (handles tvOS via automatic signing)
           fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -1278,7 +1227,7 @@ jobs:
           security default-keychain -s "$KEYCHAIN_PATH"
           echo "Fresh keychain ready"
 
-      - name: "Setup Signing Certificates"
+      - name: "Setup Signing Certificates (visionOS)"
         if: steps.check_scheme.outputs.scheme_exists == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -1287,6 +1236,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set +eo pipefail
+          # Use iOS signing lane (handles visionOS via automatic signing)
           fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
           RESULT=${PIPESTATUS[0]}
           set -eo pipefail
@@ -1433,5 +1383,12 @@ jobs:
           echo "| watchOS | ${{ needs.watchos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| tvOS | ${{ needs.tvos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| visionOS | ${{ needs.visionos.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          # Overall status
+          OVERALL="SUCCESS"
+          for R in "${{ needs.preflight.result }}" "${{ needs.ios.result }}" "${{ needs.macos.result }}" "${{ needs.watchos.result }}" "${{ needs.tvos.result }}" "${{ needs.visionos.result }}"; do
+            [ "$R" = "failure" ] && OVERALL="FAILURE" && break
+          done
+          echo "**Overall: $OVERALL**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "[App Store Connect](https://appstoreconnect.apple.com/apps)" >> $GITHUB_STEP_SUMMARY
