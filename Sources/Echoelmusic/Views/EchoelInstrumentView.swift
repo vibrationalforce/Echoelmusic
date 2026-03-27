@@ -334,7 +334,7 @@ struct EchoelInstrumentView: View {
 
     // MARK: - Kammerton Control (Concert Pitch — keyboard input)
 
-    @State private var kammertonText: String = String(format: "%.2f", TuningManager.shared.concertPitch)
+    @State private var kammertonText: String = "440.00"
     @FocusState private var kammertonFocused: Bool
 
     private var kammertonControl: some View {
@@ -353,6 +353,16 @@ struct EchoelInstrumentView: View {
                 .onSubmit { applyKammerton() }
                 .onChange(of: kammertonFocused) { _, focused in
                     if !focused { applyKammerton() }
+                }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") {
+                            applyKammerton()
+                            kammertonFocused = false
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                    }
                 }
 
             Text("Hz")
