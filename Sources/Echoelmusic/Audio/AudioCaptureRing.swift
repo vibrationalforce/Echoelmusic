@@ -48,7 +48,7 @@ final class AudioCaptureRing {
     /// Start capturing — call this once on app launch
     func startCapturing(engine: AudioEngine) {
         guard !isCapturing else { return }
-        guard !bufferL.isEmpty else {
+        if bufferL.isEmpty {
             prepare()
         }
         isCapturing = true
