@@ -8,7 +8,6 @@ struct EchoelmusicApp: App {
 
     @State private var audioEngine: AudioEngine
     @State private var microphoneManager: MicrophoneManager
-    @State private var recordingEngine = RecordingEngine()
     @State private var themeManager = ThemeManager()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -27,7 +26,6 @@ struct EchoelmusicApp: App {
             MainNavigationHub()
                 .environment(audioEngine)
                 .environment(microphoneManager)
-                .environment(recordingEngine)
                 .environment(themeManager)
                 .preferredColorScheme(themeManager.resolvedColorScheme)
                 .task {
@@ -41,13 +39,12 @@ struct EchoelmusicApp: App {
                     audioEngine.start()
 
                     // PHASE 2: Workspace wiring
-                    log.log(.info, category: .system, "STARTUP [4/6] Wiring workspace...")
+                    log.log(.info, category: .system, "STARTUP [4/4] Wiring workspace...")
                     TuningBridge.shared.activate()
                     EchoelCreativeWorkspace.shared.deferredSetup()
-                    recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
 
-                    log.log(.info, category: .system, "STARTUP [5/5] COMPLETE — Synth ready")
+                    log.log(.info, category: .system, "STARTUP COMPLETE — Synth ready")
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
