@@ -19,10 +19,9 @@ struct EchoelInstrumentView: View {
     // Sound preset
     @State private var currentSound: SoundPreset = .silk
 
-    /// Curated sound presets — fewer, better. Each one carefully tuned.
+    /// Curated sound presets — each one carefully tuned for maximum quality.
     enum SoundPreset: String, CaseIterable {
         case silk = "Silk"
-        case glass = "Glass"
         case ocean = "Ocean"
         case forest = "Forest"
         case ember = "Ember"
@@ -34,67 +33,68 @@ struct EchoelInstrumentView: View {
             switch self {
 
             case .silk:
-                // Ultra-smooth pad. No edges. Pure warmth. Like fabric.
+                // Ultra-smooth pad. No edges. Pure warmth. Like fabric on skin.
+                // 7 detuned voices create natural beating patterns.
+                // Very slow chorus mimics tape ensemble effect.
                 cfg.engine = .pad
-                cfg.padVoiceCount = 7; cfg.padSpread = 15.0
-                cfg.padChorusRate = 0.2; cfg.padChorusDepth = 0.6
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 2500.0; cfg.filterResonance = 0.08
-                cfg.filterEnvAmount = 800.0; cfg.filterEnvDecay = 1.5
-                cfg.attack = 1.0; cfg.decay = 1.5; cfg.sustain = 0.85; cfg.release = 3.0
-                cfg.chorusAmount = 0.5; cfg.stereoWidth = 0.7
-                cfg.vibratoRate = 2.0; cfg.vibratoDepth = 0.015
-
-            case .glass:
-                // Crystalline FM bells. Bright, fragile, shimmering.
-                cfg.engine = .fm
-                cfg.fmRatio = 3.5; cfg.fmDepth = 1.2; cfg.fmFeedback = 0.06; cfg.fmModDecay = 3.0
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 14000.0; cfg.filterResonance = 0.03
-                cfg.filterEnvAmount = 0.0
-                cfg.attack = 0.001; cfg.decay = 4.0; cfg.sustain = 0.0; cfg.release = 3.0
-                cfg.chorusAmount = 0.25; cfg.stereoWidth = 0.55
+                cfg.padVoiceCount = 7; cfg.padSpread = 18.0
+                cfg.padChorusRate = 0.15; cfg.padChorusDepth = 0.7
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 3000.0; cfg.filterResonance = 0.06
+                cfg.filterEnvAmount = 1200.0; cfg.filterEnvDecay = 2.0
+                cfg.attack = 0.8; cfg.decay = 2.0; cfg.sustain = 0.9; cfg.release = 3.5
+                cfg.chorusAmount = 0.55; cfg.stereoWidth = 0.75
+                cfg.vibratoRate = 1.8; cfg.vibratoDepth = 0.012
 
             case .ocean:
-                // Slow wavetable morph. Tidal breathing rhythm.
+                // Deep wavetable morph simulating tidal harmonic shifts.
+                // Very slow modulation matches natural breathing rhythm.
+                // Wide stereo field, -1 octave for sub-bass presence.
                 cfg.engine = .wavetable
-                cfg.wtPosition = 0.5; cfg.wtModSpeed = 0.03
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 1000.0; cfg.filterResonance = 0.18
-                cfg.filterEnvAmount = 2500.0; cfg.filterEnvDecay = 3.5
-                cfg.attack = 2.5; cfg.decay = 3.5; cfg.sustain = 0.7; cfg.release = 6.0
-                cfg.chorusAmount = 0.65; cfg.stereoWidth = 1.0
-                cfg.vibratoRate = 0.08; cfg.vibratoDepth = 0.08
+                cfg.wtPosition = 0.4; cfg.wtModSpeed = 0.025
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 1200.0; cfg.filterResonance = 0.15
+                cfg.filterEnvAmount = 2800.0; cfg.filterEnvDecay = 4.0
+                cfg.attack = 2.0; cfg.decay = 4.0; cfg.sustain = 0.75; cfg.release = 7.0
+                cfg.chorusAmount = 0.7; cfg.stereoWidth = 1.0
+                cfg.vibratoRate = 0.06; cfg.vibratoDepth = 0.06
                 cfg.octave = -1
 
             case .forest:
-                // Wood resonance. Plucked strings. Organic.
+                // Karplus-Strong physical modeling — wood/string resonance.
+                // Moderate damping for organic decay. Gentle chorus for depth.
+                // Natural pluck excitation with controlled brightness.
                 cfg.engine = .pluck
-                cfg.pluckDamping = 0.4; cfg.pluckDecay = 0.995; cfg.pluckBrightness = 0.45
-                cfg.pluckStretch = 0.1
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 3500.0; cfg.filterResonance = 0.15
-                cfg.filterEnvAmount = 1500.0; cfg.filterEnvDecay = 0.6
-                cfg.attack = 0.001; cfg.decay = 1.8; cfg.sustain = 0.0; cfg.release = 2.0
-                cfg.chorusAmount = 0.3; cfg.stereoWidth = 0.65
-                cfg.vibratoRate = 1.5; cfg.vibratoDepth = 0.015
+                cfg.pluckDamping = 0.35; cfg.pluckDecay = 0.997; cfg.pluckBrightness = 0.5
+                cfg.pluckStretch = 0.08
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 4000.0; cfg.filterResonance = 0.12
+                cfg.filterEnvAmount = 1800.0; cfg.filterEnvDecay = 0.5
+                cfg.attack = 0.001; cfg.decay = 2.2; cfg.sustain = 0.0; cfg.release = 2.5
+                cfg.chorusAmount = 0.35; cfg.stereoWidth = 0.7
+                cfg.vibratoRate = 1.2; cfg.vibratoDepth = 0.01
 
             case .ember:
-                // Warm distortion, crackling analog energy.
+                // Warm analog with controlled saturation. Crackling energy.
+                // PWM adds movement, moderate drive for harmonic richness.
+                // Fast filter envelope for percussive attack.
                 cfg.engine = .analog
-                cfg.analogDetune = 10.0; cfg.analogVoices = 3; cfg.analogWaveform = 0.35
-                cfg.analogPWM = 0.55
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 2200.0; cfg.filterResonance = 0.3
-                cfg.filterEnvAmount = 4500.0; cfg.filterEnvDecay = 0.25
-                cfg.attack = 0.008; cfg.decay = 0.5; cfg.sustain = 0.55; cfg.release = 0.6
-                cfg.chorusAmount = 0.15; cfg.drive = 0.35; cfg.stereoWidth = 0.45
-                cfg.vibratoRate = 4.5; cfg.vibratoDepth = 0.02
+                cfg.analogDetune = 12.0; cfg.analogVoices = 4; cfg.analogWaveform = 0.3
+                cfg.analogPWM = 0.5
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 2400.0; cfg.filterResonance = 0.25
+                cfg.filterEnvAmount = 5000.0; cfg.filterEnvDecay = 0.2
+                cfg.attack = 0.005; cfg.decay = 0.6; cfg.sustain = 0.5; cfg.release = 0.8
+                cfg.chorusAmount = 0.2; cfg.drive = 0.3; cfg.stereoWidth = 0.5
+                cfg.vibratoRate = 4.0; cfg.vibratoDepth = 0.018
 
             case .midnight:
-                // Dark analog warmth. Detuned, intimate, close.
+                // Dark analog warmth. Heavy detuning for richness.
+                // Low filter cutoff creates intimate, close sound.
+                // 5 voices with wide unison spread.
                 cfg.engine = .analog
-                cfg.analogDetune = 22.0; cfg.analogVoices = 5; cfg.analogWaveform = 0.0
-                cfg.filterMode = .lowpass; cfg.filterCutoff = 1200.0; cfg.filterResonance = 0.2
-                cfg.filterEnvAmount = 2500.0; cfg.filterEnvDecay = 0.6
-                cfg.attack = 0.05; cfg.decay = 0.8; cfg.sustain = 0.5; cfg.release = 1.5
-                cfg.chorusAmount = 0.45; cfg.drive = 0.08; cfg.stereoWidth = 0.65
-                cfg.vibratoRate = 3.0; cfg.vibratoDepth = 0.02
+                cfg.analogDetune = 25.0; cfg.analogVoices = 5; cfg.analogWaveform = 0.0
+                cfg.filterMode = .lowpass; cfg.filterCutoff = 1400.0; cfg.filterResonance = 0.18
+                cfg.filterEnvAmount = 2800.0; cfg.filterEnvDecay = 0.7
+                cfg.attack = 0.04; cfg.decay = 1.0; cfg.sustain = 0.55; cfg.release = 1.8
+                cfg.chorusAmount = 0.5; cfg.drive = 0.06; cfg.stereoWidth = 0.7
+                cfg.vibratoRate = 2.5; cfg.vibratoDepth = 0.018
             }
             EchoelSynth.shared.config = cfg
         }
@@ -332,35 +332,54 @@ struct EchoelInstrumentView: View {
         }
     }
 
-    // MARK: - Kammerton Control (Concert Pitch)
+    // MARK: - Kammerton Control (Concert Pitch — keyboard input)
+
+    @State private var kammertonText: String = String(format: "%.2f", TuningManager.shared.concertPitch)
+    @FocusState private var kammertonFocused: Bool
 
     private var kammertonControl: some View {
-        HStack(spacing: 6) {
-            Button {
-                TuningManager.shared.nudge(by: -0.5)
-            } label: {
-                Image(systemName: "minus")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color.white.opacity(0.5))
-                    .frame(width: 24, height: 24)
-            }
-            .buttonStyle(.plain)
+        HStack(spacing: 4) {
+            Text("A4")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(Color.white.opacity(0.4))
 
-            Text(String(format: "%.1f Hz", TuningManager.shared.concertPitch))
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .foregroundColor(Color.white.opacity(0.7))
-                .frame(minWidth: 56)
+            TextField("440.00", text: $kammertonText)
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundColor(Color.white.opacity(0.8))
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.decimalPad)
+                .frame(width: 72)
+                .focused($kammertonFocused)
+                .onSubmit { applyKammerton() }
+                .onChange(of: kammertonFocused) { _, focused in
+                    if !focused { applyKammerton() }
+                }
 
-            Button {
-                TuningManager.shared.nudge(by: 0.5)
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color.white.opacity(0.5))
-                    .frame(width: 24, height: 24)
-            }
-            .buttonStyle(.plain)
+            Text("Hz")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(Color.white.opacity(0.4))
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.white.opacity(0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.white.opacity(kammertonFocused ? 0.2 : 0.08), lineWidth: 0.5)
+                )
+        )
+    }
+
+    private func applyKammerton() {
+        guard let value = Double(kammertonText.replacingOccurrences(of: ",", with: ".")) else {
+            // Reset to current value if input is invalid
+            kammertonText = String(format: "%.2f", TuningManager.shared.concertPitch)
+            return
+        }
+        let clamped = Swift.max(392.0, Swift.min(494.0, value))
+        TuningManager.shared.concertPitch = clamped
+        kammertonText = String(format: "%.2f", TuningManager.shared.concertPitch)
     }
 }
 
