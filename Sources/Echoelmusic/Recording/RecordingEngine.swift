@@ -317,20 +317,17 @@ final class RecordingEngine {
     private func setupAudioRecording() throws {
         audioEngine = AVAudioEngine()
         guard let engine = audioEngine else {
-            log.error("RecordingEngine: failed to create AVAudioEngine", category: .audio)
-            return
+            throw RecordingError.exportFailed("Failed to create AVAudioEngine")
         }
 
         inputNode = engine.inputNode
         guard let input = inputNode else {
-            log.error("RecordingEngine: no input node available (mic permission?)", category: .audio)
-            return
+            throw RecordingError.exportFailed("No input node available (check microphone permission)")
         }
 
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0 else {
-            log.error("RecordingEngine: invalid input format (sampleRate=0)", category: .audio)
-            return
+            throw RecordingError.exportFailed("Invalid input format (sampleRate=0)")
         }
 
         // Install tap to capture audio data
@@ -358,6 +355,7 @@ final class RecordingEngine {
             // Extract data synchronously, then dispatch computed values
             guard let channelData = buffer.floatChannelData else { return }
             let frameLength = Int(buffer.frameLength)
+            guard frameLength > 0 else { return }
             let channelDataValue = channelData.pointee
 
             // Calculate RMS for level meter
@@ -458,11 +456,14 @@ final class RecordingEngine {
                 guard let url = track.url else { continue }
                 do {
                     let audioFile = try AVAudioFile(forReading: url)
+                    let frameCapacity = AVAudioFrameCount(audioFile.length)
+                    guard frameCapacity > 0 else { continue }
                     guard let buffer = AVAudioPCMBuffer(
                         pcmFormat: audioFile.processingFormat,
-                        frameCapacity: AVAudioFrameCount(audioFile.length)
+                        frameCapacity: frameCapacity
                     ) else { continue }
                     try audioFile.read(into: buffer)
+                    guard buffer.frameLength > 0 else { continue }
 
                     // Apply track volume
                     let channelCount = Int(buffer.format.channelCount)
@@ -917,10 +918,11 @@ class RetrospectiveBuffer {
 
         // De-interleave from circular buffer
         let startIndex = count < capacity ? 0 : writeIndex
-        for i in 0..<Int(frameCount) {
-            let bufferIndex = (startIndex + i * channels) % capacity
+        for frame in 0..<Int(frameCount) {
+            let baseIndex = (startIndex + frame * channels) % capacity
             for ch in 0..<channels {
-                channelData[ch][i] = buffer[(bufferIndex + ch) % capacity]
+                let sampleIndex = (baseIndex + ch) % capacity
+                channelData[ch][frame] = buffer[sampleIndex]
             }
         }
 

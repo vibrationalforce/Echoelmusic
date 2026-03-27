@@ -657,7 +657,8 @@ struct EchoelInstrumentView: View {
             // Quantize recorded file to exact bar length for tight loops
             if let url = recordedFileURL, let startTime = recordingStartTime {
                 let duration = Date().timeIntervalSince(startTime)
-                let barDuration = (60.0 / bpm) * 4.0 // 4/4 time
+                let safeBPM = max(bpm, 20.0)
+                let barDuration = (60.0 / safeBPM) * 4.0 // 4/4 time
                 let bars = max(1.0, round(duration / barDuration))
                 let quantizedDuration = bars * barDuration
                 // Trim or pad to exact bar boundary
@@ -686,13 +687,21 @@ struct EchoelInstrumentView: View {
         do {
             let file = try AVAudioFile(forReading: url)
             let format = file.processingFormat
+            guard format.sampleRate > 0 else {
+                log.log(.error, category: .audio, "Loop trim skipped: invalid sampleRate=0")
+                return
+            }
             let targetFrames = AVAudioFrameCount(targetDuration * format.sampleRate)
+            guard targetFrames > 0 else { return }
             let actualFrames = AVAudioFrameCount(file.length)
 
             // Only trim if file is longer than target (don't pad)
             guard actualFrames > targetFrames else { return }
 
-            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: targetFrames) else { return }
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: targetFrames) else {
+                log.log(.error, category: .audio, "Loop trim failed: cannot allocate buffer (\(targetFrames) frames)")
+                return
+            }
             try file.read(into: buffer, frameCount: targetFrames)
 
             // Overwrite file with trimmed version
@@ -866,11 +875,14 @@ private struct ExportSettingsSheet: View {
     private func renderWAV(source: URL, sampleRate: Double, bitDepth: Int) async throws -> URL {
         let sourceFile = try AVAudioFile(forReading: source)
         let sourceFormat = sourceFile.processingFormat
+        guard sourceFormat.sampleRate > 0 else {
+            throw NSError(domain: "Export", code: 10, userInfo: [NSLocalizedDescriptionKey: "Source file has invalid sample rate"])
+        }
 
-        // Determine PCM format
+        // Determine PCM format (AVFoundation minimum is 16-bit for WAV)
+        let effectiveBitDepth = max(bitDepth, 16)
         let commonFormat: AVAudioCommonFormat
-        switch bitDepth {
-        case 8: commonFormat = .pcmFormatInt16 // AVFoundation minimum is 16-bit for WAV
+        switch effectiveBitDepth {
         case 16: commonFormat = .pcmFormatInt16
         case 24: commonFormat = .pcmFormatInt32 // 24-bit stored in 32-bit container
         case 32: commonFormat = .pcmFormatFloat32
@@ -900,7 +912,7 @@ private struct ExportSettingsSheet: View {
         var settings: [String: Any] = outputFormat.settings
         settings[AVFormatIDKey] = kAudioFormatLinearPCM
         settings[AVLinearPCMIsFloatKey] = (commonFormat == .pcmFormatFloat32)
-        settings[AVLinearPCMBitDepthKey] = bitDepth == 8 ? 16 : bitDepth // Clamp 8→16
+        settings[AVLinearPCMBitDepthKey] = effectiveBitDepth
         settings[AVSampleRateKey] = sampleRate
         settings[AVNumberOfChannelsKey] = min(Int(sourceFormat.channelCount), 2)
 

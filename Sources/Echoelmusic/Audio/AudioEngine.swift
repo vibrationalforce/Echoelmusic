@@ -288,9 +288,11 @@ public final class AudioEngine {
         let fileURL = recordingsDir.appendingPathComponent(fileName)
         let file = try AVAudioFile(forWriting: fileURL, settings: format.settings)
         outputRecordingFile = file
-        masterEngine.mainMixerNode.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buffer, _ in
-            guard let self, let file = self.outputRecordingFile else { return }
-            do { try file.write(from: buffer) }
+        // Capture file directly — do NOT capture self on audio thread
+        // (guard let self on @MainActor triggers dispatch_assert_queue_fail)
+        nonisolated(unsafe) let capturedFile = file
+        masterEngine.mainMixerNode.installTap(onBus: 0, bufferSize: 4096, format: format) { @Sendable buffer, _ in
+            do { try capturedFile.write(from: buffer) }
             catch { log.audio("Output recording write error: \(error)", level: .error) }
         }
         isRecordingOutput = true
