@@ -47,10 +47,7 @@ struct EchoelmusicApp: App {
                     recordingEngine.connectAudioEngine(audioEngine)
                     EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
 
-                    // PHASE 3: HealthKit (async — waits for user permission dialog)
-                    log.log(.info, category: .system, "STARTUP [5/6] Requesting HealthKit authorization...")
-                    _ = await EchoelBioEngine.shared.requestAuthorization()
-                    log.log(.info, category: .system, "STARTUP [6/6] COMPLETE — Synth + Bio ready")
+                    log.log(.info, category: .system, "STARTUP [5/5] COMPLETE — Synth ready")
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {

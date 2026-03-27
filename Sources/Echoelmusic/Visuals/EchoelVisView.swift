@@ -135,31 +135,9 @@ public struct EchoelVisView: View {
                     .padding(.horizontal, EchoelSpacing.md)
                 }
 
-                // Bio state + controls row
+                // Controls row
                 HStack(spacing: EchoelSpacing.md) {
-                    // Bio indicator
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Coherence")
-                            .font(EchoelBrandFont.dataSmall())
-                            .foregroundStyle(.secondary)
-                        Text(String(format: "%.0f%%", vis.bioState.coherence * 100))
-                            .font(EchoelBrandFont.data())
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("HR")
-                            .font(EchoelBrandFont.dataSmall())
-                            .foregroundStyle(.secondary)
-                        Text(String(format: "%.0f", vis.bioState.heartRate))
-                            .font(EchoelBrandFont.data())
-                    }
-
                     Spacer()
-
-                    Toggle("Bio", isOn: $vis.bioReactiveEnabled)
-                        .font(EchoelBrandFont.dataSmall())
-                        .toggleStyle(.switch)
-                        .labelsHidden()
 
                     // Start/Stop
                     Button(action: {

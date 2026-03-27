@@ -23,11 +23,8 @@ struct EchoelInstrumentView: View {
     // BPM
     @State private var bpm: Double = 120.0
 
-    // Bio
-    @State private var bioMode: BioMode = .off
-    #if os(iOS)
-    @State private var smileDetector = SmileDetector()
-    #endif
+    // Visualizations
+    @State private var showVisualizer = false
 
     // Recording
     @State private var isRecording = false
@@ -43,14 +40,6 @@ struct EchoelInstrumentView: View {
     @State private var motionController: MotionMusicController?
     #endif
 
-    // Coherence for ring color
-    @Bindable private var bio = EchoelBioEngine.shared
-
-    enum BioMode: String, CaseIterable {
-        case off = "Off"
-        case pulse = "Pulse"
-        case face = "Face"
-    }
 
     /// Immersive sound environments — each one shapes the entire synth character
     enum SoundWorld: String, CaseIterable {
@@ -340,13 +329,6 @@ struct EchoelInstrumentView: View {
                             noteName: t.noteName
                         )
                     }
-                    // Bio smile → wavetable morph
-                    #if os(iOS)
-                    if bioMode == .face, smileDetector.isDetecting {
-                        EchoelSynth.shared.config.wtPosition = smileDetector.smileAmount
-                    }
-                    #endif
-
                     // Motion sensors → sound shaping
                     #if canImport(CoreMotion)
                     if let mc = motionController, mc.isActive {
@@ -396,8 +378,8 @@ struct EchoelInstrumentView: View {
             motionController?.stop()
             #endif
         }
-        .onChange(of: bioMode) { _, newMode in
-            switchBioMode(to: newMode)
+        .sheet(isPresented: $showVisualizer) {
+            EchoelVisView()
         }
         .sheet(isPresented: $showExportSheet) {
             if let url = recordedFileURL {
@@ -432,17 +414,10 @@ struct EchoelInstrumentView: View {
 
     @ViewBuilder
     private func touchIndicator(at location: CGPoint, noteName: String = "") -> some View {
-        let coherence = CGFloat(bio.smoothCoherence)
-        let coherenceColor: Color = bio.isStreaming && bio.dataSource != .fallback
-            ? (coherence > 0.6 ? EchoelBrand.coherenceHigh
-                : coherence > 0.3 ? EchoelBrand.coherenceMedium
-                : EchoelBrand.coherenceLow)
-            : Color.white.opacity(0.3)
-
         ZStack {
-            // Coherence ring
+            // Touch ring
             Circle()
-                .stroke(coherenceColor.opacity(0.4), lineWidth: 2)
+                .stroke(Color.white.opacity(0.15), lineWidth: 2)
                 .frame(width: 44, height: 44)
 
             // Touch point
@@ -489,8 +464,8 @@ struct EchoelInstrumentView: View {
 
             Divider().frame(height: 20).opacity(0.3)
 
-            // 5. Bio Mode
-            bioModePicker
+            // 5. Visualizer
+            visualizerButton
 
             Divider().frame(height: 20).opacity(0.3)
 
@@ -658,40 +633,21 @@ struct EchoelInstrumentView: View {
         }
     }
 
-    // MARK: - Bio Mode Picker
+    // MARK: - Visualizer Button
 
-    private var bioModePicker: some View {
-        Menu {
-            ForEach(BioMode.allCases, id: \.self) { mode in
-                Button {
-                    bioMode = mode
-                } label: {
-                    HStack {
-                        Text(mode.rawValue)
-                        if mode == bioMode {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
+    private var visualizerButton: some View {
+        Button {
+            showVisualizer = true
         } label: {
             HStack(spacing: 3) {
-                Circle()
-                    .fill(bioModeColor)
-                    .frame(width: 5, height: 5)
-                Text("BIO")
+                Image(systemName: "waveform.path")
+                    .font(.system(size: 10, weight: .medium))
+                Text("VIS")
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundColor(Color.white.opacity(0.7))
             }
+            .foregroundColor(Color.white.opacity(0.7))
         }
-    }
-
-    private var bioModeColor: Color {
-        switch bioMode {
-        case .off: return Color.white.opacity(0.3)
-        case .pulse: return EchoelBrand.coral
-        case .face: return EchoelBrand.sky
-        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Export Button
@@ -714,26 +670,6 @@ struct EchoelInstrumentView: View {
     // MARK: - Actions
 
     // Sound world application happens via SoundWorld.apply() — no separate function needed
-
-    private func switchBioMode(to mode: BioMode) {
-        // Stop all bio sources first
-        #if os(iOS)
-        smileDetector.stopDetecting()
-        #endif
-        // CameraAnalyzer managed by EchoelBioEngine
-
-        switch mode {
-        case .off:
-            break
-        case .pulse:
-            // Rear camera PPG — handled by existing bio pipeline
-            bio.startStreaming()
-        case .face:
-            #if os(iOS)
-            smileDetector.startDetecting()
-            #endif
-        }
-    }
 
     @State private var recordingStartTime: Date?
 
