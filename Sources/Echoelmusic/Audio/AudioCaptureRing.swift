@@ -10,14 +10,15 @@ import AVFoundation
 ///
 /// Thread safety: Written from audio tap callback (background), read from MainActor.
 /// Uses lock-free ring buffer pattern with atomic write index.
-@MainActor
-final class AudioCaptureRing {
+/// Not @MainActor — write() is called from audio tap callback thread.
+/// All mutable state is nonisolated(unsafe) for lock-free audio-thread access.
+final class AudioCaptureRing: @unchecked Sendable {
 
     /// Maximum capture duration in seconds
     let maxDuration: TimeInterval = 30.0
 
     /// Whether the buffer is actively capturing
-    var isCapturing: Bool = false
+    nonisolated(unsafe) var isCapturing: Bool = false
 
     // MARK: - Private
 

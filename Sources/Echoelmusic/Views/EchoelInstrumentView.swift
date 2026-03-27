@@ -38,9 +38,9 @@ struct EchoelInstrumentView: View {
     @State private var exportSampleRate: ExportSampleRate = .sr48000
     @State private var exportBitDepth: ExportBitDepth = .bit24
 
-    // Motion control
+    // Motion control — lazy init to prevent crash on startup
     #if canImport(CoreMotion)
-    @State private var motionController = MotionMusicController()
+    @State private var motionController: MotionMusicController?
     #endif
 
     // Coherence for ring color
@@ -349,19 +349,12 @@ struct EchoelInstrumentView: View {
 
                     // Motion sensors → sound shaping
                     #if canImport(CoreMotion)
-                    if motionController.isActive {
-                        // Tilt adds filter offset on top of touch Y-axis
-                        let motionFilterOffset = (motionController.filterAmount - 0.5) * 3000.0
+                    if let mc = motionController, mc.isActive {
+                        let motionFilterOffset = (mc.filterAmount - 0.5) * 3000.0
                         EchoelSynth.shared.config.filterCutoff += motionFilterOffset
-
-                        // Rotation → chorus/vibrato intensity
-                        EchoelSynth.shared.config.vibratoDepth = motionController.rotationIntensity * 0.3
-
-                        // Shake → momentary drive burst
-                        if motionController.shakeDetected {
+                        EchoelSynth.shared.config.vibratoDepth = mc.rotationIntensity * 0.3
+                        if mc.shakeDetected {
                             EchoelSynth.shared.config.drive = 0.5
-                        } else {
-                            // Restore world default drive
                         }
                     }
                     #endif
@@ -393,12 +386,14 @@ struct EchoelInstrumentView: View {
         .onAppear {
             currentWorld.apply()
             #if canImport(CoreMotion)
-            motionController.start()
+            let mc = MotionMusicController()
+            motionController = mc
+            mc.start()
             #endif
         }
         .onDisappear {
             #if canImport(CoreMotion)
-            motionController.stop()
+            motionController?.stop()
             #endif
         }
         .onChange(of: bioMode) { _, newMode in
