@@ -35,11 +35,6 @@ struct EchoelInstrumentView: View {
     @State private var exportSampleRate: ExportSampleRate = .sr48000
     @State private var exportBitDepth: ExportBitDepth = .bit24
 
-    // Motion control — lazy init to prevent crash on startup
-    #if canImport(CoreMotion)
-    @State private var motionController: MotionMusicController?
-    #endif
-
 
     /// Immersive sound environments — each one shapes the entire synth character
     enum SoundWorld: String, CaseIterable {
@@ -329,17 +324,6 @@ struct EchoelInstrumentView: View {
                             noteName: t.noteName
                         )
                     }
-                    // Motion sensors → sound shaping
-                    #if canImport(CoreMotion)
-                    if let mc = motionController, mc.isActive {
-                        let motionFilterOffset = (mc.filterAmount - 0.5) * 3000.0
-                        EchoelSynth.shared.config.filterCutoff += motionFilterOffset
-                        EchoelSynth.shared.config.vibratoDepth = mc.rotationIntensity * 0.3
-                        if mc.shakeDetected {
-                            EchoelSynth.shared.config.drive = 0.5
-                        }
-                    }
-                    #endif
                 }
                 #endif
 
@@ -367,17 +351,8 @@ struct EchoelInstrumentView: View {
         .statusBarHidden()
         .onAppear {
             currentWorld.apply()
-            #if canImport(CoreMotion)
-            let mc = MotionMusicController()
-            motionController = mc
-            mc.start()
-            #endif
         }
-        .onDisappear {
-            #if canImport(CoreMotion)
-            motionController?.stop()
-            #endif
-        }
+        .onDisappear {}
         .sheet(isPresented: $showVisualizer) {
             EchoelVisView()
         }
