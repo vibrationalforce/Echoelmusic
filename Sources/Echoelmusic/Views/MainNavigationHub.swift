@@ -1,18 +1,15 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-/// Main navigation — one-screen bio-reactive instrument.
-/// All previous UI (Studio, Transport, Settings) replaced with EchoelInstrumentView.
+/// Main navigation — one-screen touch synth instrument.
 struct MainNavigationHub: View {
 
     @Environment(AudioEngine.self) var audioEngine
-    @Environment(RecordingEngine.self) var recordingEngine
     @Environment(ThemeManager.self) var themeManager
 
     var body: some View {
         EchoelInstrumentView()
             .environment(audioEngine)
-            .environment(recordingEngine)
     }
 }
 
