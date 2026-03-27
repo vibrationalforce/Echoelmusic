@@ -1,6 +1,5 @@
-#if canImport(SwiftUI) && canImport(AVFoundation)
+#if canImport(SwiftUI)
 import SwiftUI
-import AVFoundation
 
 /// Full-screen touch synth instrument.
 /// Black touch surface = the instrument. Bottom bar = minimal controls.
