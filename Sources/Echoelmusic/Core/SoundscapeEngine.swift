@@ -1,10 +1,10 @@
-#if canImport(SwiftUI)
+#if canImport(AVFoundation)
 import Foundation
+import AVFoundation
 import Observation
-import Combine
 
 /// Central hub: fuses bio data, weather, and circadian context into soundscape parameters.
-/// Replaces EchoelCreativeWorkspace with a radically focused scope.
+/// Creates an AVAudioSourceNode that renders DDSP output into the AudioEngine graph.
 @MainActor @Observable
 final class SoundscapeEngine {
 
@@ -21,8 +21,12 @@ final class SoundscapeEngine {
     private var audioEngine: AudioEngine?
     private let weatherProvider = WeatherProvider()
     private let circadianClock = CircadianClock()
-    private let ambienceSynth = EchoelDDSP(sampleRate: 48000)
 
+    /// DDSP synth — nonisolated(unsafe) because audio thread reads it
+    nonisolated(unsafe) private let ambienceSynth = EchoelDDSP(sampleRate: 48000)
+
+    /// AVAudioSourceNode that bridges DDSP render to AVAudioEngine graph
+    private var sourceNode: AVAudioSourceNode?
     private var updateTimer: Timer?
 
     // MARK: - Lifecycle
@@ -30,6 +34,28 @@ final class SoundscapeEngine {
     func connect(audio: AudioEngine, bio: EchoelBioEngine) {
         self.audioEngine = audio
         self.bioEngine = bio
+
+        // Create source node with render block that pulls from DDSP
+        let synth = ambienceSynth
+        let node = AVAudioSourceNode { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
+            let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            let count = Int(frameCount)
+
+            // Render mono from DDSP
+            var monoBuffer = [Float](repeating: 0, count: count)
+            synth.render(buffer: &monoBuffer, frameCount: count)
+
+            // Copy to all output channels
+            for buffer in ablPointer {
+                guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                for i in 0..<count {
+                    data[i] = monoBuffer[i]
+                }
+            }
+            return noErr
+        }
+        self.sourceNode = node
+        audio.attachSourceNode(node)
 
         // Start 60Hz update loop for bio → synth parameter mapping
         updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
@@ -39,13 +65,12 @@ final class SoundscapeEngine {
         }
 
         weatherProvider.startUpdating()
-        log.log(.info, category: .system, "SoundscapeEngine connected")
+        log.log(.info, category: .system, "SoundscapeEngine connected — source node attached")
     }
 
     func togglePlayback() {
         isPlaying.toggle()
         if isPlaying {
-            // Set a base frequency for ambient generation (A3 = 220Hz)
             ambienceSynth.amplitude = 0.6
             ambienceSynth.noteOn(frequency: 220.0)
         } else {
@@ -82,10 +107,12 @@ final class SoundscapeEngine {
         )
 
         // 4. Apply bio-reactive parameters to synth
+        // Normalize heart rate: 40-200 BPM → 0-1
+        let normalizedHR = ((state.heartRate - 40) / 160).clamped(to: 0...1)
         ambienceSynth.applyBioReactive(
             coherence: Float(state.coherence),
             hrvVariability: Float(state.hrv),
-            heartRate: Float(state.heartRate.clamped(to: 0...1)),
+            heartRate: Float(normalizedHR),
             breathPhase: Float(state.breathPhase)
         )
 
@@ -123,6 +150,9 @@ final class SoundscapeEngine {
 
     deinit {
         updateTimer?.invalidate()
+        if let node = sourceNode {
+            audioEngine?.detachSourceNode(node)
+        }
     }
 }
 
@@ -135,7 +165,7 @@ struct SoundscapeState {
     var breathPhase: Double = 0.5
     var coherence: Double = 0.5
     var lfHfRatio: Double = 1.0
-    var source: BioDataSource = .simulated
+    var source: BioDataSource = .fallback
 
     // Weather
     var temperature: Double = 0.5
