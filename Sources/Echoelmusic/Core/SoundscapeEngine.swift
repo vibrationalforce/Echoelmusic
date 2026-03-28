@@ -46,7 +46,8 @@ final class SoundscapeEngine {
         isPlaying.toggle()
         if isPlaying {
             // Set a base frequency for ambient generation (A3 = 220Hz)
-            ambienceSynth.noteOn(frequency: 220.0, amplitude: 0.6)
+            ambienceSynth.amplitude = 0.6
+            ambienceSynth.noteOn(frequency: 220.0)
         } else {
             ambienceSynth.noteOff()
         }
@@ -59,7 +60,7 @@ final class SoundscapeEngine {
         guard isPlaying, let bio = bioEngine else { return }
 
         // 1. Read bio snapshot
-        let snapshot = bio.currentSnapshot
+        let snapshot = bio.snapshot
 
         // 2. Read environmental context
         let weather = weatherProvider.current
@@ -100,11 +101,11 @@ final class SoundscapeEngine {
     private func applyWeatherModulation(_ weather: WeatherSnapshot) {
         // Temperature → reverb warmth (cold = wet/spacious, warm = dry/close)
         let reverbBlend = (1.0 - weather.temperature.clamped(to: 0...1)) * 0.6
-        ambienceSynth.setReverbBlend(Float(reverbBlend))
+        ambienceSynth.reverbMix = Float(reverbBlend)
 
         // Wind → noise floor
         let noiseFloor = weather.windSpeed.clamped(to: 0...1) * 0.15
-        ambienceSynth.setNoiseLevel(Float(noiseFloor))
+        ambienceSynth.noiseLevel = Float(noiseFloor) + 0.1
     }
 
     private func applyCircadianModulation(_ phase: CircadianPhase) {
