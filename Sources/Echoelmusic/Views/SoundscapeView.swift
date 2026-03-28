@@ -163,14 +163,13 @@ struct SoundscapeView: View {
 extension BioDataSource {
     var displayName: String {
         switch self {
-        case .healthKit: return "Apple Watch"
-        case .appleWatch: return "Apple Watch"
+        case .healthKit, .appleWatch: return "Apple Watch"
+        case .chestStrap: return "Chest Strap"
         case .ouraRing: return "Oura Ring"
         case .camera: return "Camera"
-        case .arKitFace: return "Face Tracking"
+        case .arkit: return "Face Tracking"
         case .microphone: return "Microphone"
-        case .simulated: return "Simulated"
-        default: return "Unknown"
+        case .fallback: return "Simulated"
         }
     }
 }
