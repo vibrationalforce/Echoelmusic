@@ -1,64 +1,59 @@
 #if canImport(SwiftUI)
 import SwiftUI
 
-/// Echoelmusic — Bio-Reactive Synthesizer
-/// Clean, minimal entry point. No intro animation — straight to the app.
+/// Echoelmusic — Bio-Reactive Soundscape Generator
+/// Your body, weather, and time of day create evolving ambient soundscapes.
 @main
 struct EchoelmusicApp: App {
 
     @State private var audioEngine: AudioEngine
     @State private var microphoneManager: MicrophoneManager
-    @State private var themeManager = ThemeManager()
+    @State private var bioEngine: EchoelBioEngine
+    @State private var soundscapeEngine: SoundscapeEngine
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let mic = MicrophoneManager()
-        _microphoneManager = State(wrappedValue: mic)
-        _audioEngine = State(wrappedValue: AudioEngine(microphoneManager: mic))
+        let audio = AudioEngine(microphoneManager: mic)
+        let bio = EchoelBioEngine()
+        let soundscape = SoundscapeEngine()
 
-        // Eager init of critical singletons — memory handler first for pressure monitoring
+        _microphoneManager = State(wrappedValue: mic)
+        _audioEngine = State(wrappedValue: audio)
+        _bioEngine = State(wrappedValue: bio)
+        _soundscapeEngine = State(wrappedValue: soundscape)
+
         _ = MemoryPressureHandler.shared
-        _ = CrashSafeStatePersistence.shared
     }
 
     var body: some Scene {
         WindowGroup {
-            MainNavigationHub()
+            SoundscapeView()
                 .environment(audioEngine)
-                .environment(microphoneManager)
-                .environment(themeManager)
-                .preferredColorScheme(themeManager.resolvedColorScheme)
+                .environment(bioEngine)
+                .environment(soundscapeEngine)
                 .task {
-                    // PHASE 1: Wire core synth BEFORE engine.start().
-                    // Graph mutation on a running engine causes EXC_BREAKPOINT crashes.
-                    log.log(.info, category: .system, "STARTUP [1/4] Connecting EchoelSynth...")
-                    EchoelSynth.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [2/4] Connecting EchoelBass...")
-                    EchoelBass.shared.connectToMasterEngine(audioEngine)
-                    log.log(.info, category: .system, "STARTUP [3/4] Starting audio engine...")
+                    log.log(.info, category: .system, "STARTUP [1/3] Starting audio engine...")
                     audioEngine.start()
 
-                    // PHASE 2: Workspace wiring
-                    log.log(.info, category: .system, "STARTUP [4/4] Wiring workspace...")
-                    TuningBridge.shared.activate()
-                    EchoelCreativeWorkspace.shared.deferredSetup()
-                    EchoelCreativeWorkspace.shared.connectAudioEngine(audioEngine)
+                    log.log(.info, category: .system, "STARTUP [2/3] Starting bio streaming...")
+                    bioEngine.startStreaming()
 
-                    log.log(.info, category: .system, "STARTUP COMPLETE — Synth ready")
+                    log.log(.info, category: .system, "STARTUP [3/3] Connecting soundscape engine...")
+                    soundscapeEngine.connect(audio: audioEngine, bio: bioEngine)
+
+                    log.log(.info, category: .system, "STARTUP COMPLETE — Soundscape ready")
                 }
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     switch newPhase {
                     case .active:
-                        // Resuming from background — re-activate audio session
-                        // to recover from potential interruption
                         if oldPhase == .background {
                             audioEngine.start()
-                            log.log(.info, category: .system, "App active — audio engine resumed")
+                            bioEngine.startStreaming()
+                            log.log(.info, category: .system, "App active — audio + bio resumed")
                         }
                     case .background:
-                        // Audio continues in background (UIBackgroundModes=audio).
-                        // Auto-save timer handles state persistence.
-                        log.log(.info, category: .system, "App backgrounded")
+                        log.log(.info, category: .system, "App backgrounded — audio continues")
                     case .inactive:
                         break
                     @unknown default:
