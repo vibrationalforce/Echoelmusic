@@ -1,134 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Cache Control: never cache HTML in browser -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
-    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
-    <script>
-    (function(){var V='10.2.1',K='echoel-nuke';try{
-    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
-    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
-    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
-    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
-    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
-    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
-    </script>
-
-    <title>Legal Notice / Impressum - Echoelmusic</title>
-    <meta name="description" content="Legal notice and provider information for Echoelmusic.">
+    <title>Impressum — Echoelmusic</title>
+    <meta name="description" content="Impressum / Legal Notice — Echoelmusic">
     <meta name="theme-color" content="#000000">
-    <meta property="og:title" content="Legal Notice / Impressum - Echoelmusic">
-    <meta property="og:description" content="Legal notice and provider information for Echoelmusic.">
-    <meta property="og:url" content="https://echoelmusic.com/impressum.html">
-    <meta property="og:image" content="https://echoelmusic.com/og-image.png">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:site_name" content="Echoelmusic">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Legal Notice / Impressum - Echoelmusic">
-    <meta name="twitter:description" content="Legal notice and provider information for Echoelmusic.">
-    <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
+    <meta name="robots" content="noindex">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
     <link rel="canonical" href="https://echoelmusic.com/impressum.html">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Legal Notice","item":"https://echoelmusic.com/impressum.html"}]}</script>
-    <link rel="stylesheet" href="shared.css?v=10.2">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'Atkinson Hyperlegible'; src: url('fonts/atkinson-bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif; background: #000; color: #e0e0e0; -webkit-font-smoothing: antialiased; line-height: 1.6; font-size: 14px; }
+        a { color: inherit; text-decoration: none; }
+        a:focus-visible { outline: 2px solid #e0e0e0; outline-offset: 2px; }
+        .page { max-width: 600px; margin: 0 auto; padding: 80px 24px 60px; }
+        .back { display: inline-block; color: rgba(224,224,224,0.4); font-size: 13px; margin-bottom: 40px; transition: color 0.2s; }
+        .back:hover { color: #e0e0e0; }
+        h1 { font-size: clamp(24px, 5vw, 32px); font-weight: 700; letter-spacing: -1px; margin-bottom: 32px; }
+        h2 { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(224,224,224,0.35); margin-bottom: 12px; margin-top: 32px; }
+        p { color: rgba(224,224,224,0.6); line-height: 1.75; margin-bottom: 8px; }
+        p a { color: rgba(224,224,224,0.8); border-bottom: 1px solid rgba(224,224,224,0.2); transition: color 0.2s; }
+        p a:hover { color: #e0e0e0; }
+    </style>
 </head>
 <body>
-    <a href="#main" class="skip-link">Skip to main content</a>
-    <div class="nav">
-        <div class="nav-bar">
-            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
-                <span>Echoelmusic</span>
-            </a>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="tools.html">Tools</a>
-                <a href="faq.html">FAQ</a>
-                <a href="support.html">Support</a>
-                <a href="https://apps.apple.com/app/echoelmusic/id6757957358" class="nav-cta">Download Free</a>
-            </div>
-            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
-        </div>
+    <div class="page">
+        <a href="/" class="back">&larr; Back</a>
+        <h1>Impressum</h1>
+
+        <h2>Angaben gem&auml;&szlig; &sect; 5 DDG</h2>
+        <p>Michael Terbuyken<br>Stresemannstra&szlig;e 374E<br>22761 Hamburg</p>
+
+        <h2>Kontakt</h2>
+        <p><a href="mailto:echoel@tropicaldrones.com">echoel@tropicaldrones.com</a></p>
+
+        <h2>Verantwortlich f&uuml;r den Inhalt</h2>
+        <p>Michael Terbuyken (Anschrift wie oben)</p>
+
+        <h2>Haftungshinweis</h2>
+        <p>Trotz sorgf&auml;ltiger Kontrolle &uuml;bernehmen wir keine Haftung f&uuml;r die Inhalte externer Links. F&uuml;r den Inhalt verlinkter Seiten sind ausschlie&szlig;lich deren Betreiber verantwortlich.</p>
     </div>
-    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
-        <nav>
-            <a href="/">Home</a>
-            <a href="tools.html">Tools</a>
-            <a href="faq.html">FAQ</a>
-            <a href="support.html">Support</a>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
-            <a href="impressum.html">Legal Notice</a>
-        </nav>
-    </div>
-
-    <main id="main" class="subpage">
-        <div class="subpage-hero">
-            <h1>Legal Notice</h1>
-            <p class="date">Provider identification pursuant to applicable law</p>
-        </div>
-
-        <section>
-            <h2>Provider</h2>
-            <div class="contact-box">
-                <p><strong>Michael Terbuyken</strong></p>
-                <p>Stresemannstra&szlig;e 374E</p>
-                <p>22761 Hamburg, Germany</p>
-            </div>
-        </section>
-
-        <section>
-            <h2>Contact</h2>
-            <div class="contact-box">
-                <p><a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
-            </div>
-        </section>
-
-        <section>
-            <h2>Responsible for content</h2>
-            <p>Michael Terbuyken (address as above)</p>
-        </section>
-
-        <section>
-            <h2>EU Online Dispute Resolution</h2>
-            <p>The European Commission provides a platform for online dispute resolution: <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a></p>
-        </section>
-
-        <section>
-            <h2>Disclaimer</h2>
-            <p>All content on this website is provided for informational purposes. We make reasonable efforts to keep it accurate and up to date but assume no liability for completeness or correctness. External links lead to third-party content outside our control.</p>
-            <p>All original content is protected by copyright. Reproduction requires prior written consent.</p>
-        </section>
-    </main>
-
-    <footer>
-        <span class="footer-copy">&copy; 2026 Echoelmusic</span>
-        <div class="footer-links">
-            <a href="faq.html">FAQ</a>
-            <a href="support.html">Support</a>
-            <a href="privacy.html">Privacy</a>
-            <a href="terms.html">Terms</a>
-            <a href="health.html">Health</a>
-            <a href="security.html">Security</a>
-            <a href="accessibility.html">Accessibility</a>
-            <a href="impressum.html">Legal Notice</a>
-        </div>
-    </footer>
-
-<script src="shared.js?v=10.2"></script>
 </body>
 </html>
