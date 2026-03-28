@@ -5,7 +5,7 @@ import Combine
 import Accelerate
 import Observation
 
-/// Central audio engine for professional music production
+/// Central audio engine for bio-reactive soundscape generation
 @MainActor
 @Observable
 public final class AudioEngine {
@@ -23,7 +23,8 @@ public final class AudioEngine {
     @ObservationIgnored nonisolated(unsafe) private var meterPollTimer: Timer?
 
     /// Always-on retrospective capture buffer (last 30s of audio)
-    let retrospectiveBuffer = AudioCaptureRing()
+    /// Stores recent audio for potential session export
+    @ObservationIgnored private var retrospectiveFrames: [[Float]] = []
 
     @ObservationIgnored private let masterEngine = AVAudioEngine()
     @ObservationIgnored private let masterMixer = AVAudioMixerNode()
@@ -34,7 +35,6 @@ public final class AudioEngine {
     }
 
     let microphoneManager: MicrophoneManager
-    private var nodeGraph: NodeGraph?
     @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
     convenience init() {
@@ -55,7 +55,6 @@ public final class AudioEngine {
         }
 
         AudioConfiguration.setAudioThreadPriority()
-        nodeGraph = NodeGraph.createProductionChain()
         setupMasterEngine()
 
         AudioConfiguration.onInterruptionBegan = { [weak self] in
@@ -83,7 +82,6 @@ public final class AudioEngine {
         }
 
         log.audio("AudioEngine initialized — master output wired to hardware")
-        log.audio("   Node Graph: \(nodeGraph?.nodes.count ?? 0) nodes loaded")
         log.audio("   Master Engine: \(masterEngine.isRunning ? "Running" : "Ready")")
     }
 
@@ -121,10 +119,7 @@ public final class AudioEngine {
         if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0 {
             let ptrL = _rawMeterL
             let ptrR = _rawMeterR
-            let retroBuf = retrospectiveBuffer
             masterMixer.installTap(onBus: 0, bufferSize: 1024, format: meterFormat) { @Sendable buffer, _ in
-                // Always-on retrospective capture (lock-free ring buffer)
-                retroBuf.write(buffer: buffer)
                 guard let channelData = buffer.floatChannelData else { return }
                 let frameLength = UInt(buffer.frameLength)
                 guard frameLength > 0 else { return }
@@ -220,22 +215,6 @@ public final class AudioEngine {
     var currentLevel: Float { microphoneManager.audioLevel }
     var currentPitch: Float { microphoneManager.currentPitch }
 
-    func setFilterCutoff(_ frequency: Float) { nodeGraph?.setParameter(.filterCutoff, value: frequency) }
-    func setFilterResonance(_ resonance: Float) { nodeGraph?.setParameter(.filterResonance, value: resonance) }
-    func setReverbWetness(_ wetness: Float) { nodeGraph?.setParameter(.reverbWet, value: wetness) }
-    func setReverbSize(_ size: Float) { nodeGraph?.setParameter(.reverbSize, value: size) }
-    func setDelayTime(_ time: Float) { nodeGraph?.setParameter(.delayTime, value: time) }
-    func setMasterVolume(_ volume: Float) { nodeGraph?.setParameter(.masterVolume, value: volume) }
-    func setTempo(_ bpm: Float) { nodeGraph?.setParameter(.tempo, value: bpm) }
-
-    private(set) var proMixEngine: ProMixEngine?
-
-    func connectMixer(_ mixer: ProMixEngine) {
-        self.proMixEngine = mixer
-        mixer.dspKernel.prepare()
-        log.audio("ProMixEngine connected to AudioEngine (\(mixer.channels.count) channels)")
-    }
-
     func schedulePlayback(buffer: AVAudioPCMBuffer) {
         guard masterEngine.isRunning else {
             log.audio("Cannot schedule playback — master engine not running", level: .warning)
@@ -252,17 +231,6 @@ public final class AudioEngine {
         }
         masterPlayerNode.scheduleBuffer(buffer, at: nil, options: loopCount, completionHandler: nil)
         if !masterPlayerNode.isPlaying { masterPlayerNode.play() }
-    }
-
-    func processAndOutput(inputBuffers: [UUID: AVAudioPCMBuffer], frameCount: Int) {
-        guard let mixer = proMixEngine else { return }
-        let outputBuffer = mixer.processAudioBlock(inputBuffers: inputBuffers, frameCount: frameCount)
-        schedulePlayback(buffer: outputBuffer)
-    }
-
-    func routeAudioThroughMixer(buffer: AVAudioPCMBuffer, channelID: UUID) -> AVAudioPCMBuffer? {
-        guard let mixer = proMixEngine else { return nil }
-        return mixer.processAudioBlock(inputBuffers: [channelID: buffer], frameCount: Int(buffer.frameLength))
     }
 
     // MARK: - Output Recording (Synth Capture)
