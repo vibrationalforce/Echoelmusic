@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoel</title>
-    <meta name="description" content="Echoel — Music Producer">
+    <title>Echoel — Michael Terbuyken</title>
+    <meta name="description" content="Echoel — Music producer, sound artist and creator of multisensory installations. Based in Hamburg.">
     <meta name="theme-color" content="#000000">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Echoel">
-    <meta property="og:description" content="Music Producer">
+    <meta property="og:title" content="Echoel — Michael Terbuyken">
+    <meta property="og:description" content="Music producer, sound artist and creator of multisensory installations. Based in Hamburg.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://echoelmusic.com">
     <meta property="og:image" content="https://echoelmusic.com/og-image.png">
@@ -18,8 +18,8 @@
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Echoel">
-    <meta name="twitter:description" content="Music Producer">
+    <meta name="twitter:title" content="Echoel — Michael Terbuyken">
+    <meta name="twitter:description" content="Music producer, sound artist and creator of multisensory installations. Based in Hamburg.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
 
     <!-- Icons -->
@@ -51,80 +51,152 @@
             background: #000;
             color: #e0e0e0;
             -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 24px;
+            line-height: 1.6;
+            font-size: 14px;
         }
 
         a { color: inherit; text-decoration: none; }
         a:focus-visible { outline: 2px solid #e0e0e0; outline-offset: 2px; }
         ::selection { background: rgba(224,224,224,0.3); color: #fff; }
 
-        .logo {
-            margin-bottom: 32px;
+        .page {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 80px 24px 60px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 56px;
             opacity: 0;
             animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s forwards;
         }
-        .logo svg { width: 80px; height: 80px; }
+
+        .logo { margin-bottom: 24px; }
+        .logo svg { width: 72px; height: 72px; }
 
         .name {
-            font-size: clamp(32px, 8vw, 56px);
+            font-size: clamp(32px, 8vw, 48px);
             font-weight: 700;
             letter-spacing: -2px;
             line-height: 1;
-            margin-bottom: 12px;
-            opacity: 0;
-            animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s forwards;
+            margin-bottom: 8px;
         }
 
         .tagline {
-            font-size: clamp(13px, 2vw, 15px);
-            color: rgba(224,224,224,0.55);
+            font-size: clamp(12px, 2vw, 14px);
+            color: rgba(224,224,224,0.5);
             font-weight: 400;
             letter-spacing: 3px;
             text-transform: uppercase;
+        }
+
+        /* Bio */
+        .bio {
+            margin-bottom: 48px;
+            opacity: 0;
+            animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s forwards;
+        }
+        .bio p {
+            color: rgba(224,224,224,0.6);
+            line-height: 1.75;
+            margin-bottom: 16px;
+        }
+        .bio p:last-child { margin-bottom: 0; }
+
+        /* Sections */
+        .section {
             margin-bottom: 40px;
             opacity: 0;
             animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.4s forwards;
         }
-
-        .social {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.55s forwards;
+        .section:last-of-type {
+            animation-delay: 0.55s;
         }
 
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(224,224,224,0.35);
+            margin-bottom: 16px;
+        }
+
+        .project-list {
+            list-style: none;
+        }
+        .project-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(224,224,224,0.06);
+        }
+        .project-list li:last-child { border-bottom: none; }
+        .project-list a {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(224,224,224,0.7);
+            transition: color 0.2s;
+        }
+        .project-list a:hover { color: #e0e0e0; }
+        .project-name { font-weight: 600; }
+        .project-desc {
+            font-size: 13px;
+            color: rgba(224,224,224,0.35);
+        }
+        .project-arrow {
+            color: rgba(224,224,224,0.2);
+            transition: color 0.2s, transform 0.2s;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+        .project-list a:hover .project-arrow {
+            color: rgba(224,224,224,0.5);
+            transform: translateX(2px);
+        }
+
+        /* Venues */
+        .venues {
+            color: rgba(224,224,224,0.4);
+            line-height: 1.8;
+            font-size: 13px;
+        }
+
+        /* Social */
+        .social {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.65s forwards;
+        }
         .social a {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(224,224,224,0.55);
+            color: rgba(224,224,224,0.4);
             transition: color 0.2s, transform 0.2s;
         }
         .social a:hover {
             color: #e0e0e0;
             transform: translateY(-2px);
         }
-        .social a svg { width: 22px; height: 22px; }
+        .social a svg { width: 20px; height: 20px; }
 
+        /* Contact */
         .contact {
+            text-align: center;
             font-size: 13px;
-            color: rgba(224,224,224,0.4);
+            color: rgba(224,224,224,0.35);
             opacity: 0;
-            animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.7s forwards;
+            animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s forwards;
         }
         .contact a {
-            color: rgba(224,224,224,0.4);
+            color: rgba(224,224,224,0.5);
             transition: color 0.2s;
         }
         .contact a:hover { color: #e0e0e0; }
@@ -136,37 +208,66 @@
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation: none !important; transition: none !important; }
-            .logo, .name, .tagline, .social, .contact { opacity: 1 !important; transform: none !important; }
+            .header, .bio, .section, .social, .contact { opacity: 1 !important; transform: none !important; }
         }
     </style>
 </head>
 <body>
-    <div class="logo">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
-            <g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round">
-                <path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/>
-                <path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/>
-                <path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/>
-            </g>
-        </svg>
+    <div class="page">
+
+        <div class="header">
+            <div class="logo">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
+                    <g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round">
+                        <path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/>
+                        <path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/>
+                        <path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/>
+                    </g>
+                </svg>
+            </div>
+            <h1 class="name">Echoel</h1>
+            <p class="tagline">Music Producer</p>
+        </div>
+
+        <div class="bio">
+            <p>Michael Terbuyken is a musician, sound artist and creator of interactive multisensory installations, based in Hamburg since 2006. He studied Digital Media with a focus on sound at Hochschule Darmstadt (Media, Arts and Sciences) and continued with Musicology in Hamburg, working across the fields of art, science, medicine and technology.</p>
+            <p>Since 2009 he has been building interactive installations in public space that combine vibration, water, sound and light. Audiences are invited to move, feel and participate — the space itself becomes the instrument. His work has been shown at Documenta Kassel, Ars Electronica Linz, Fusion Festival, Kampnagel Hamburg, Golden Pudel Club, Kater Blau Berlin, Ritter Butzke Berlin, Garbicz Festival, the Canadian Embassy Berlin, Redlight Radio Amsterdam and many others.</p>
+            <p>In music production he moves freely between genres. Currently active in several projects spanning electronic music, autotune-driven future pop, and collaborative vegan food content.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Projects</div>
+            <ul class="project-list">
+                <li><a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Loewe Immerlieb</span><br><span class="project-desc">Duo with his partner — regular releases</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://digitalewarme.de" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Digitale W&auml;rme</span><br><span class="project-desc">Electronic music</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://nia9ara.de" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Nia9ara</span><br><span class="project-desc">Autotune, 808s, electric guitar, retro-futuristic sounds</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://www.tropicaldrones.com/supernaturalhealingkillers/" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Super Natural Healing Killers</span><br><span class="project-desc">Electronic music</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://www.instagram.com/xt14_artist" target="_blank" rel="noopener noreferrer"><div><span class="project-name">XT14</span><br><span class="project-desc">Artist project</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Tropical Drones</span><br><span class="project-desc">Artist collective &amp; label</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://veganmom.de" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Anna.Elisie / Veganmom</span><br><span class="project-desc">Vegan food blog — with his partner</span></div><span class="project-arrow">&rarr;</span></a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Selected Venues &amp; Festivals</div>
+            <p class="venues">Documenta Kassel &middot; Ars Electronica Linz &middot; Fusion Festival L&auml;rz &middot; Garbicz Festival &middot; Kampnagel Hamburg &middot; Golden Pudel Club Hamburg &middot; G&auml;ngeviertel Hamburg &middot; S&uuml;dpol Hamburg &middot; Kater Blau Berlin &middot; Ritter Butzke Berlin &middot; Rummels Bucht Berlin &middot; Canadian Embassy Berlin &middot; Redlight Radio Amsterdam &middot; Albert und Tina Wien &middot; Konotor 80 Leipzig &middot; P8 Karlsruhe &middot; Projekt 42 M&ouml;nchengladbach &middot; Off the Radar Festival &middot; Int. Short Film Festival Detmold &middot; Film Festival Bilkent University Ankara</p>
+        </div>
+
+        <div class="social">
+            <a href="https://instagram.com/echoelmusic" aria-label="Instagram" rel="noopener noreferrer" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="https://tiktok.com/@echoelmusic" aria-label="TikTok" rel="noopener noreferrer" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/></svg>
+            </a>
+            <a href="https://youtube.com/@echoelmusic" aria-label="YouTube" rel="noopener noreferrer" target="_blank">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+        </div>
+
+        <p class="contact"><a href="mailto:echoel@tropicaldrones.com">echoel@tropicaldrones.com</a></p>
+
     </div>
-
-    <h1 class="name">Echoel</h1>
-    <p class="tagline">Music Producer</p>
-
-    <div class="social">
-        <a href="https://instagram.com/echoelmusic" aria-label="Instagram" rel="noopener noreferrer" target="_blank">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-        </a>
-        <a href="https://tiktok.com/@echoelmusic" aria-label="TikTok" rel="noopener noreferrer" target="_blank">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/></svg>
-        </a>
-        <a href="https://youtube.com/@echoelmusic" aria-label="YouTube" rel="noopener noreferrer" target="_blank">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-        </a>
-    </div>
-
-    <p class="contact"><a href="mailto:michaelterbuyken@gmail.com">michaelterbuyken@gmail.com</a></p>
 </body>
 </html>
