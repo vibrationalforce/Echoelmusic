@@ -107,10 +107,12 @@ final class SoundscapeEngine {
         )
 
         // 4. Apply bio-reactive parameters to synth
+        // Normalize heart rate: 40-200 BPM → 0-1
+        let normalizedHR = ((state.heartRate - 40) / 160).clamped(to: 0...1)
         ambienceSynth.applyBioReactive(
             coherence: Float(state.coherence),
             hrvVariability: Float(state.hrv),
-            heartRate: Float(state.heartRate.clamped(to: 0...1)),
+            heartRate: Float(normalizedHR),
             breathPhase: Float(state.breathPhase)
         )
 
