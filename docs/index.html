@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echoel — Michael Terbuyken</title>
-    <meta name="description" content="Echoel — Music producer, sound artist and multisensory installation artist based in Hamburg. Shown at Documenta, Ars Electronica, Fusion Festival.">
+    <title>Echoel — Michael Terbuyken | Music Producer &amp; Artist, Hamburg</title>
+    <meta name="description" content="Echoel (Michael Terbuyken) — Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Based in Hamburg. Shown at Documenta, Ars Electronica, Fusion Festival.">
     <meta name="theme-color" content="#000000">
+    <meta name="keywords" content="Echoel, Michael Terbuyken, music producer, sound artist, Hamburg, multisensory installation, vibration installation, water light sound, Documenta, Ars Electronica, Fusion Festival, Tropical Drones, electronic music">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Echoel — Michael Terbuyken">
-    <meta property="og:description" content="Music producer, sound artist and multisensory installation artist based in Hamburg.">
+    <meta property="og:title" content="Echoel — Music Producer &amp; Artist">
+    <meta property="og:description" content="Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Hamburg.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://echoelmusic.com">
     <meta property="og:image" content="https://echoelmusic.com/og-image.png">
@@ -18,8 +19,8 @@
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Echoel — Michael Terbuyken">
-    <meta name="twitter:description" content="Music producer, sound artist and multisensory installation artist based in Hamburg.">
+    <meta name="twitter:title" content="Echoel — Music Producer &amp; Artist">
+    <meta name="twitter:description" content="Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Hamburg.">
     <meta name="twitter:image" content="https://echoelmusic.com/og-image.png">
 
     <!-- Icons -->
@@ -31,6 +32,25 @@
     <!-- Fonts -->
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Michael Terbuyken",
+      "alternateName": "Echoel",
+      "url": "https://echoelmusic.com",
+      "jobTitle": "Music Producer & Sound Artist",
+      "address": { "@type": "PostalAddress", "addressLocality": "Hamburg", "addressCountry": "DE" },
+      "sameAs": [
+        "https://instagram.com/echoelmusic",
+        "https://tiktok.com/@echoelmusic",
+        "https://youtube.com/@echoelmusic",
+        "https://www.tropicaldrones.com/"
+      ]
+    }
+    </script>
 
     <style>
         @font-face {
@@ -67,13 +87,23 @@
 
         .header {
             text-align: center;
-            margin-bottom: 56px;
+            margin-bottom: 48px;
             opacity: 0;
             animation: fade-up 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s forwards;
         }
 
         .logo { margin-bottom: 24px; }
         .logo svg { width: 72px; height: 72px; }
+
+        /* Animated waves */
+        .wave1 { animation: wave-drift 4s ease-in-out infinite; }
+        .wave2 { animation: wave-drift 4s ease-in-out 0.4s infinite; }
+        .wave3 { animation: wave-drift 4s ease-in-out 0.8s infinite; }
+
+        @keyframes wave-drift {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(4px); }
+        }
 
         .name {
             font-size: clamp(32px, 8vw, 48px);
@@ -220,30 +250,30 @@
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text>
                     <g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round">
-                        <path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/>
-                        <path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/>
-                        <path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/>
+                        <path class="wave1" d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/>
+                        <path class="wave2" d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/>
+                        <path class="wave3" d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/>
                     </g>
                 </svg>
             </div>
             <h1 class="name">Echoel</h1>
-            <p class="tagline">Music Producer</p>
+            <p class="tagline">Music Producer &amp; Artist</p>
         </div>
 
         <div class="bio">
-            <p>Music producer, sound artist and multisensory installation artist based in Hamburg. Studied Digital Media (Sound) at Hochschule Darmstadt and Musicology in Hamburg. Since 2009, building interactive vibration, water, sound, light and video installations with musical performance shown at Documenta, Ars Electronica, Fusion Festival, Kampnagel, Golden Pudel Club, Kater Blau, Garbicz and more. Active across multiple music projects with Tropical Drones collective.</p>
+            <p>Music producer, sound artist and inventor of walk-in vibrating water, light and sound installations. Based in Hamburg. Studied Digital Media (Sound) and Musicology. Creating interactive multisensory installations with video and musical performance since 2009. Active across multiple music projects with <a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer" style="color:rgba(224,224,224,0.8);border-bottom:1px solid rgba(224,224,224,0.2);">Tropical Drones</a> collective.</p>
         </div>
 
         <div class="section">
             <div class="section-title">Projects</div>
             <ul class="project-list">
-                <li><a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Loewe Immerlieb</span><br><span class="project-desc">Duo with his partner — regular releases</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://www.instagram.com/loewe.immerlieb" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Loewe Immerlieb</span><br><span class="project-desc">Duo — regular releases</span></div><span class="project-arrow">&rarr;</span></a></li>
                 <li><a href="https://digitalewaerme.de" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Digitale W&auml;rme</span><br><span class="project-desc">Electronic music</span></div><span class="project-arrow">&rarr;</span></a></li>
-                <li><a href="https://nia9ara.de" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Nia9ara</span><br><span class="project-desc">Autotune, 808s, electric guitar, retro-futuristic sounds</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://nia9ara.de" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Nia9ara</span><br><span class="project-desc">Autotune, 808s, electric guitar, retro-futuristic</span></div><span class="project-arrow">&rarr;</span></a></li>
                 <li><a href="https://www.tropicaldrones.com/supernaturalhealingkillers/" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Super Natural Healing Killers</span><br><span class="project-desc">Electronic music</span></div><span class="project-arrow">&rarr;</span></a></li>
-                <li><a href="https://www.instagram.com/xt14_artist" target="_blank" rel="noopener noreferrer"><div><span class="project-name">XT14</span><br><span class="project-desc">Artist project</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://www.instagram.com/xt14_artist" target="_blank" rel="noopener noreferrer"><div><span class="project-name">XT14</span></div><span class="project-arrow">&rarr;</span></a></li>
                 <li><a href="https://www.tropicaldrones.com/" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Tropical Drones</span><br><span class="project-desc">Artist collective &amp; label</span></div><span class="project-arrow">&rarr;</span></a></li>
-                <li><a href="https://www.instagram.com/anna.elisie" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Anna.Elisie / Veganmom</span><br><span class="project-desc">Vegan food blog — with his partner</span></div><span class="project-arrow">&rarr;</span></a></li>
+                <li><a href="https://www.instagram.com/anna.elisie" target="_blank" rel="noopener noreferrer"><div><span class="project-name">Anna.Elisie / Veganmom</span><br><span class="project-desc">Vegan food blog</span></div><span class="project-arrow">&rarr;</span></a></li>
             </ul>
         </div>
 
