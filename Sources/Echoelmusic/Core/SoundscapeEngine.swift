@@ -111,17 +111,13 @@ final class SoundscapeEngine {
     private func applyCircadianModulation(_ phase: CircadianPhase) {
         switch phase {
         case .sleep:
-            // Deep, slow, dark
-            ambienceSynth.setSpectralShape(.dark)
+            ambienceSynth.spectralShape = .dark
         case .wake:
-            // Gentle brightening
-            ambienceSynth.setSpectralShape(.natural)
+            ambienceSynth.spectralShape = .natural
         case .active:
-            // Full spectrum, responsive
-            ambienceSynth.setSpectralShape(.bright)
+            ambienceSynth.spectralShape = .bright
         case .windDown:
-            // Gradually darkening
-            ambienceSynth.setSpectralShape(.natural)
+            ambienceSynth.spectralShape = .natural
         }
     }
 
