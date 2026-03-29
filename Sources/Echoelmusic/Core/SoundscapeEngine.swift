@@ -66,6 +66,13 @@ final class SoundscapeEngine {
         }
 
         weatherProvider.startUpdating()
+
+        // Auto-sync Oura data every 10 minutes if connected
+        startOuraAutoSync()
+
+        // Monitor audio route changes for Bluetooth speakers
+        setupAudioRouteMonitoring()
+
         log.log(.info, category: .system, "SoundscapeEngine connected — source node attached")
     }
 
@@ -171,8 +178,63 @@ final class SoundscapeEngine {
         circadianClock.ouraSnapshot = oura.snapshot
     }
 
+    // MARK: - Oura Auto-Sync
+
+    private var ouraTimer: Timer?
+
+    private func startOuraAutoSync() {
+        guard ouraClient != nil else { return }
+        // Initial sync
+        Task { await refreshOuraData() }
+        // Then every 10 minutes
+        ouraTimer = Timer.scheduledTimer(withTimeInterval: 600, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.refreshOuraData()
+            }
+        }
+        log.log(.info, category: .system, "Oura auto-sync started (10 min interval)")
+    }
+
+    // MARK: - Audio Route Monitoring
+
+    /// Current audio output device name
+    var audioOutputName: String = "Speaker"
+
+    private func setupAudioRouteMonitoring() {
+        #if canImport(AVFoundation) && !os(macOS)
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor [weak self] in
+                self?.updateAudioRoute()
+            }
+        }
+        updateAudioRoute()
+        #endif
+    }
+
+    private func updateAudioRoute() {
+        #if canImport(AVFoundation) && !os(macOS)
+        let route = AVAudioSession.sharedInstance().currentRoute
+        if let output = route.outputs.first {
+            audioOutputName = output.portName
+            let isBluetooth = output.portType == .bluetoothA2DP
+                || output.portType == .bluetoothLE
+                || output.portType == .bluetoothHFP
+            if isBluetooth {
+                log.log(.info, category: .audio, "Bluetooth audio: \(output.portName)")
+            }
+        } else {
+            audioOutputName = "Speaker"
+        }
+        #endif
+    }
+
     deinit {
         updateTimer?.invalidate()
+        ouraTimer?.invalidate()
         if let node = sourceNode {
             audioEngine?.detachSourceNode(node)
         }
