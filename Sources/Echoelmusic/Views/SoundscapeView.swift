@@ -10,15 +10,38 @@ struct SoundscapeView: View {
     @Environment(EchoelBioEngine.self) private var bio
     @Environment(\.modelContext) private var modelContext
     @State private var showSettings = false
+    @State private var showHistory = false
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Settings button (top right)
+                // Top bar
                 HStack {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.white.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Session history")
+
                     Spacer()
+
+                    // Session timer
+                    if engine.sessionTracker.isActive {
+                        Text(formatTimer(engine.sessionTracker.currentDuration))
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.25))
+                            .monospacedDigit()
+                    }
+
+                    Spacer()
+
                     Button {
                         showSettings = true
                     } label: {
@@ -58,6 +81,17 @@ struct SoundscapeView: View {
             SettingsView()
                 .environment(engine)
         }
+        .sheet(isPresented: $showHistory) {
+            SessionHistoryView()
+        }
+    }
+
+    // MARK: - Timer Format
+
+    private func formatTimer(_ seconds: Int) -> String {
+        let m = seconds / 60
+        let s = seconds % 60
+        return String(format: "%d:%02d", m, s)
     }
 
     // MARK: - Coherence Ring
@@ -103,19 +137,38 @@ struct SoundscapeView: View {
     // MARK: - Bio Display
 
     private var bioDisplay: some View {
-        HStack(spacing: 32) {
-            metricItem(
-                value: String(format: "%.0f", engine.state.hrv * 100),
-                label: "HRV"
-            )
-            metricItem(
-                value: String(format: "%.0f%%", engine.state.coherence * 100),
-                label: "Coherence"
-            )
-            metricItem(
-                value: engine.state.circadianPhase.rawValue.capitalized,
-                label: "Phase"
-            )
+        VStack(spacing: 16) {
+            HStack(spacing: 32) {
+                metricItem(
+                    value: String(format: "%.0f", engine.state.hrv * 100),
+                    label: "HRV"
+                )
+                metricItem(
+                    value: String(format: "%.0f%%", engine.state.coherence * 100),
+                    label: "Coherence"
+                )
+                metricItem(
+                    value: engine.state.circadianPhase.rawValue.capitalized,
+                    label: "Phase"
+                )
+            }
+
+            // Confidence bar
+            let conf = engine.bioSourceManager.confidence
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(.white.opacity(conf > 0 ? 0.25 : 0.05))
+                    .frame(width: 20, height: 3)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(.white.opacity(conf > 0.3 ? 0.25 : 0.05))
+                    .frame(width: 20, height: 3)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(.white.opacity(conf > 0.6 ? 0.25 : 0.05))
+                    .frame(width: 20, height: 3)
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(.white.opacity(conf > 0.9 ? 0.25 : 0.05))
+                    .frame(width: 20, height: 3)
+            }
         }
     }
 
