@@ -34,7 +34,7 @@ struct EchoelmusicApp: App {
                     audioEngine.start()
 
                     log.log(.info, category: .system, "STARTUP [2/3] Starting bio streaming...")
-                    EchoelBioEngine.shared.startStreaming()
+                    soundscapeEngine.bioSourceManager.startStreaming()
 
                     log.log(.info, category: .system, "STARTUP [3/3] Connecting soundscape engine...")
                     soundscapeEngine.connect(audio: audioEngine, bio: EchoelBioEngine.shared)
@@ -46,7 +46,7 @@ struct EchoelmusicApp: App {
                     case .active:
                         if oldPhase == .background {
                             audioEngine.start()
-                            EchoelBioEngine.shared.startStreaming()
+                            soundscapeEngine.bioSourceManager.startStreaming()
                             log.log(.info, category: .system, "App active — audio + bio resumed")
                         }
                     case .background:

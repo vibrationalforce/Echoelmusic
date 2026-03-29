@@ -14,18 +14,13 @@ struct SettingsView: View {
                 Section {
                     bioSourceRow(
                         name: "Apple Watch",
-                        status: EchoelBioEngine.shared.dataSource == .healthKit
-                            || EchoelBioEngine.shared.dataSource == .appleWatch
+                        status: engine.bioSourceManager.primarySource == .healthKit
+                            || engine.bioSourceManager.primarySource == .appleWatch
                             ? "Connected" : "Not connected",
-                        connected: EchoelBioEngine.shared.dataSource == .healthKit
-                            || EchoelBioEngine.shared.dataSource == .appleWatch
+                        connected: engine.bioSourceManager.primarySource == .healthKit
+                            || engine.bioSourceManager.primarySource == .appleWatch
                     )
-                    bioSourceRow(
-                        name: "Camera rPPG",
-                        status: EchoelBioEngine.shared.dataSource == .camera
-                            ? "Active" : "Available",
-                        connected: EchoelBioEngine.shared.dataSource == .camera
-                    )
+                    cameraRow
                     ouraRow
                 } header: {
                     Text("Bio Sources")
@@ -79,6 +74,25 @@ struct SettingsView: View {
             Spacer()
             Text(status)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var cameraRow: some View {
+        HStack {
+            Circle()
+                .fill(engine.bioSourceManager.isCameraActive ? Color.green : Color.gray.opacity(0.3))
+                .frame(width: 8, height: 8)
+            Text("Camera rPPG")
+            Spacer()
+            Button(engine.bioSourceManager.isCameraActive ? "Stop" : "Start") {
+                if engine.bioSourceManager.isCameraActive {
+                    engine.bioSourceManager.stopCamera()
+                } else {
+                    engine.bioSourceManager.startCamera()
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
     }
 
