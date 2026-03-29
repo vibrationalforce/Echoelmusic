@@ -133,24 +133,9 @@ final class BioSourceManager {
 // MARK: - CameraAnalyzer Convenience
 
 private extension CameraAnalyzer {
-    var isFingerDetected: Bool {
-        bpmConfidence > 0.3
-    }
-
-    var heartRate: Double {
-        estimatedBPM
-    }
-
-    var hrvRMSSD: Double {
-        rmssd
-    }
-
-    func startCapture() {
-        startPulseDetection()
-    }
-
-    func stopCapture() {
-        stopPulseDetection()
-    }
+    var heartRate: Double { estimatedBPM }
+    var hrvRMSSD: Double { rmssd }
+    func startCapture() { startPulseDetection() }
+    func stopCapture() { stopPulseDetection() }
 }
 #endif
