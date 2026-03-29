@@ -1,5 +1,6 @@
 #if canImport(SwiftUI)
 import SwiftUI
+import SwiftData
 
 /// Main view — bio-reactive soundscape with live biometric display.
 /// Minimal, clean. Science-first: real numbers, no decoration.
@@ -7,6 +8,7 @@ struct SoundscapeView: View {
 
     @Environment(SoundscapeEngine.self) private var engine
     @Environment(EchoelBioEngine.self) private var bio
+    @Environment(\.modelContext) private var modelContext
     @State private var showSettings = false
 
     var body: some View {
@@ -137,6 +139,11 @@ struct SoundscapeView: View {
     private var playButton: some View {
         Button {
             engine.togglePlayback()
+            // Auto-save session when stopping
+            if !engine.isPlaying, let session = engine.lastCompletedSession {
+                modelContext.insert(session)
+                log.log(.info, category: .system, "Session saved: \(session.durationSeconds)s, avg coherence \(String(format: "%.0f%%", session.avgCoherence * 100))")
+            }
         } label: {
             ZStack {
                 Circle()

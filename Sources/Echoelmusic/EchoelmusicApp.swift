@@ -1,5 +1,6 @@
 #if canImport(SwiftUI)
 import SwiftUI
+import SwiftData
 
 /// Echoelmusic — Bio-Reactive Soundscape Generator
 /// Your body, weather, and time of day create evolving ambient soundscapes.
@@ -29,6 +30,7 @@ struct EchoelmusicApp: App {
                 .environment(audioEngine)
                 .environment(EchoelBioEngine.shared)
                 .environment(soundscapeEngine)
+                .modelContainer(for: SoundscapeSession.self)
                 .task {
                     log.log(.info, category: .system, "STARTUP [1/3] Starting audio engine...")
                     audioEngine.start()
