@@ -22,6 +22,11 @@ Bio-reactive creative performance platform. Physiological data drives real-time 
 - Uses parallel agent strategy for large audits
 - Tracks decisions systematically (decisions.csv)
 
+## Future Ideas (Parking Lot)
+- **Multikopfkugelige Vibrations-Interdentalbuerstchen** — Zahnpflege-Hardware mit Sonic-Feedback. Vibrations-Expertise aus Installationen uebertragen. Den Schweden (TePe) einen draufsetzen.
+- **Tauchfliegen** — Details TBD
+- **Ernaehrungsberatung** — Details TBD
+
 ## Key Dates
 - iOS 26 SDK deadline: April 28, 2026
 - TestFlight build: 22572541274
