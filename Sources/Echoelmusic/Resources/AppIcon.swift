@@ -3,6 +3,69 @@
 //  AppIcon.swift
 //  Echoelmusic
 //
+
+// MARK: - Brand Wave Shape (inlined from deleted EchoelWaveDesign.swift)
+
+import SwiftUI
+
+/// SVG-matched triple S-curve wave for app icon and brand mark.
+struct EchoelBrandWaveShape: Shape {
+    var waveIndex: Int
+
+    init(waveIndex: Int = 0) {
+        self.waveIndex = waveIndex
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func x(_ v: CGFloat) -> CGFloat { (v / 1024.0) * w }
+        func y(_ v: CGFloat) -> CGFloat { (v / 1024.0) * h }
+        let centerY: CGFloat = 610.0 + CGFloat(waveIndex) * 100.0
+
+        var path = Path()
+        path.move(to: CGPoint(x: x(245), y: y(centerY)))
+        path.addCurve(to: CGPoint(x: x(425), y: y(centerY)),
+                       control1: CGPoint(x: x(295), y: y(centerY - 55)),
+                       control2: CGPoint(x: x(375), y: y(centerY - 55)))
+        path.addCurve(to: CGPoint(x: x(599), y: y(centerY)),
+                       control1: CGPoint(x: x(475), y: y(centerY + 55)),
+                       control2: CGPoint(x: x(549), y: y(centerY + 55)))
+        path.addCurve(to: CGPoint(x: x(779), y: y(centerY)),
+                       control1: CGPoint(x: x(649), y: y(centerY - 55)),
+                       control2: CGPoint(x: x(729), y: y(centerY - 55)))
+        return path
+    }
+}
+
+/// Complete brand mark: "E" letter + 3 sine waves on black background.
+struct EchoelWaveformMark: View {
+    var animated: Bool = false
+
+    private let brandColor = Color(white: 0.878)
+    private let waveOpacities: [CGFloat] = [0.8, 0.4, 0.2]
+
+    var body: some View {
+        GeometryReader { geo in
+            let size = min(geo.size.width, geo.size.height)
+            ZStack {
+                Color.black
+                Text("E")
+                    .font(.system(size: size * 0.52, weight: .bold))
+                    .foregroundColor(brandColor)
+                    .offset(y: -size * 0.05)
+
+                ForEach(0..<3, id: \.self) { i in
+                    EchoelBrandWaveShape(waveIndex: i)
+                        .stroke(brandColor.opacity(waveOpacities[i]),
+                                style: StrokeStyle(lineWidth: max(2, size * 0.03), lineCap: .round))
+                }
+            }
+            .frame(width: size, height: size)
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+}
 //  Programmatic App Icon Generation for All Platforms
 //  Monochrome E + 3 waves — matches echoelmusic.com
 //
