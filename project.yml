@@ -53,7 +53,7 @@ settings:
 targets:
 
   # ===========================================================================
-  # iOS App (iPhone + iPad) — DAW + Video
+  # iOS App — Bio-Reactive Soundscape Generator
   # ===========================================================================
   Echoelmusic:
     type: application
@@ -82,39 +82,21 @@ targets:
         LSRequiresIPhoneOS: true
 
         # === Privacy Strings (ITMS-90683 compliance) ===
-        NSMicrophoneUsageDescription: "Echoelmusic uses your microphone to capture audio for bio-reactive processing and voice-to-music transformation."
-        NSHealthShareUsageDescription: "Echoelmusic reads your heart rate and HRV data to create bio-reactive audio experiences that respond to your body."
-        NSHealthUpdateUsageDescription: "Echoelmusic may save your meditation and coherence training sessions to HealthKit."
-        NSCameraUsageDescription: "Echoelmusic uses your camera for face tracking to control audio parameters with your facial expressions."
-        NSFaceIDUsageDescription: "Echoelmusic uses TrueDepth camera for face tracking to map your expressions to audio-visual parameters."
-        NSBluetoothAlwaysUsageDescription: "Echoelmusic connects to Bluetooth MIDI controllers and audio devices for professional music creation."
-        NSBluetoothPeripheralUsageDescription: "Echoelmusic connects to Bluetooth MIDI controllers for music creation."
-        NSLocalNetworkUsageDescription: "Echoelmusic uses local network for DMX lighting control, Art-Net, and connecting to external audio interfaces."
-        NSHomeKitUsageDescription: "Echoelmusic connects to HomeKit accessories for bio-reactive smart lighting control synchronized with your music."
-        NSLocationWhenInUseUsageDescription: "Echoelmusic uses your location to discover nearby DMX lighting fixtures and network audio devices."
-        NSLocationAlwaysAndWhenInUseUsageDescription: "Echoelmusic uses your location to discover nearby DMX lighting fixtures and network audio devices."
-        NSMotionUsageDescription: "Echoelmusic uses motion data for gesture-based audio control and spatial audio head tracking."
-        NSEyeTrackingUsageDescription: "Echoelmusic uses eye tracking for immersive gaze-based audio control on supported devices."
-        NSPhotoLibraryUsageDescription: "Echoelmusic can save visualizations, session screenshots, and captured photos to your photo library."
-        NSPhotoLibraryAddUsageDescription: "Echoelmusic can save generated art, captured photos, and recorded video to your photo library."
+        NSMicrophoneUsageDescription: "Echoelmusic uses your microphone for breath detection to shape bio-reactive soundscapes."
+        NSHealthShareUsageDescription: "Echoelmusic reads your heart rate and HRV data to generate soundscapes that respond to your body in real-time."
+        NSHealthUpdateUsageDescription: "Echoelmusic may save coherence session summaries to HealthKit."
+        NSCameraUsageDescription: "Echoelmusic uses your camera for pulse detection (rPPG) to measure heart rate without a wearable."
+        NSFaceIDUsageDescription: "Echoelmusic uses TrueDepth camera for facial expression tracking to modulate soundscapes."
+        NSBluetoothAlwaysUsageDescription: "Echoelmusic connects to EEG headbands and wearable sensors for bio-reactive soundscape generation."
+        NSBluetoothPeripheralUsageDescription: "Echoelmusic connects to EEG headbands for brainwave-reactive audio."
+        NSLocationWhenInUseUsageDescription: "Echoelmusic uses your location to fetch weather data that shapes your soundscape."
 
-        # === Networking ===
-        NSBonjourServices:
-          - "_http._tcp"
-          - "_rtsp._tcp"
-          - "_artnet._udp"
-          - "_osc._udp"
-          - "_midi._udp"
-          - "_echoelmusic._tcp"
-        NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
         ITSAppUsesNonExemptEncryption: false
 
         # === Background Modes ===
         UIBackgroundModes:
           - audio
           - bluetooth-central
-          - bluetooth-peripheral
 
         # === UI Configuration ===
         UILaunchScreen: {}
