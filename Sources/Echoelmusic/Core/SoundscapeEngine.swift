@@ -17,8 +17,8 @@ final class SoundscapeEngine {
 
     // MARK: - Engines
 
-    private var bioEngine: EchoelBioEngine?
     private var audioEngine: AudioEngine?
+    let bioSourceManager = BioSourceManager()
     private let weatherProvider = WeatherProvider()
     private var circadianClock = CircadianClock()
     private var ouraClient: OuraRingClient?
@@ -34,7 +34,6 @@ final class SoundscapeEngine {
 
     func connect(audio: AudioEngine, bio: EchoelBioEngine) {
         self.audioEngine = audio
-        self.bioEngine = bio
 
         // Create source node with render block that pulls from DDSP
         let synth = ambienceSynth
@@ -90,10 +89,11 @@ final class SoundscapeEngine {
     // MARK: - Update Loop
 
     private func update() {
-        guard isPlaying, let bio = bioEngine else { return }
+        guard isPlaying else { return }
 
-        // 1. Read bio snapshot
-        let snapshot = bio.snapshot
+        // 1. Update bio source manager (fuses all sources)
+        bioSourceManager.update()
+        let snapshot = bioSourceManager.snapshot
 
         // 2. Read environmental context
         let weather = weatherProvider.current
