@@ -1,4 +1,4 @@
-# CLAUDE.md — Echoelmusic v7.0 ULTIMATE
+# CLAUDE.md — Echoelmusic v8.0 Soundscape
 
 ## IDENTITY
 
@@ -7,7 +7,7 @@ Developer: Echoel (Michael Terbuyken) @ Studio Hamburg
 App Apple ID: 6757957358
 Bundle: com.echoelmusic.*
 
-Bio-reactive creative performance platform. Physiological data → real-time music, visuals, light.
+Bio-reactive ambient soundscape generator. Your body, weather, and time of day create evolving sound.
 
 **SCIENCE-ONLY.** No esoteric terminology. No chakras, auras, energy healing. Evidence-based biofeedback. Every wellness claim requires peer-reviewed citation.
 
@@ -15,46 +15,47 @@ Bio-reactive creative performance platform. Physiological data → real-time mus
 
 ## CURRENT STATE
 
-- **Branch:** `claude/analyze-test-coverage-9aFjV`
-- **TestFlight Build:** `22572541274`
+- **Branch:** `main`
 - **Mode:** RALPH WIGGUM LAMBDA — iterative tightening until tight
 - **SDK:** Must target iOS 26 SDK (ITMS-90725, deadline April 28, 2026)
-- **Architecture:** 100% JUCE-free, platform-native
-- **Commits:** 1,560+ | **Tests:** 1,060+ methods / 230+ classes / 15 files | **Swift 85%** | Kotlin 4.8% | C++ 4.7%
+- **Architecture:** Focused soundscape generator (stripped from 12-tool suite)
+- **Files:** 34 source / 9 tests | ~13,000 lines | **Swift 100%**
 
 ---
 
 ## BRAND
 
-```
-Echoelmusic          ← Hauptmarke
-├── EchoelTools      ← Creative instruments
-├── EchoelWorks      ← DAW integration
-├── EchoelSync       ← Cross-platform sync (OSC, BLE, Ableton Link)
-└── EchoelWell       ← Wellness (NO health claims)
-```
+Echoelmusic — Bio-reactive ambient soundscape generator.
 
 NEVER use "BLAB", "Vibrational Force", or legacy branding anywhere.
 
 ---
 
-## THE 12 ECHOELTOOLS
+## ARCHITECTURE
 
 ```
-EchoelCore (120Hz)
-├── EchoelSynth    DDSP, 12 bio-mappings, vDSP, spectral morphing, timbre transfer
-├── EchoelMix      Console, metering, BPM sync, multi-track
-├── EchoelFX       20+ effects, Neve/SSL emulation
-├── EchoelSeq      Step sequencer, patterns, automation
-├── EchoelMIDI     MIDI 2.0, MPE, touch instruments
-├── EchoelBio      HRV, HR, breathing, ARKit face (52 blendshapes), hands, EEG
-├── EchoelVis      8 modes, Metal 120fps, Hilbert bio-mapping
-├── EchoelVid      Capture, edit, stream, ProRes
-├── EchoelLux      DMX 512, Art-Net, lasers, smart home
-├── EchoelStage    External displays, projection mapping, AirPlay
-├── EchoelNet      Ableton Link, Dante, cloud sync, <10ms
-└── EchoelAI       CoreML, LLM, stem separation, generative
+EchoelmusicApp (@main)
+├── AudioEngine (AVAudioEngine)
+├── BioSourceManager (multi-wearable fusion)
+│   ├── HealthKit (Apple Watch HR, HRV, breathing)
+│   ├── CameraAnalyzer (rPPG pulse from finger/face)
+│   ├── OuraRingClient (sleep, readiness, resting HR)
+│   └── EEGSensorBridge (Muse/NeuroSky)
+├── SoundscapeEngine (central hub)
+│   ├── WeatherProvider (WeatherKit + time-based fallback)
+│   ├── CircadianClock (4 phases + Oura sleep data)
+│   ├── EchoelDDSP (bio-reactive harmonic pad)
+│   ├── EchoelCellular (texture layer)
+│   └── AVAudioSourceNode → AudioEngine → Speaker
+├── EchoelStore (StoreKit 2 subscriptions)
+└── Views
+    ├── SoundscapeView (coherence ring, bio metrics, confidence)
+    ├── SettingsView (bio sources, Oura connect, audio output)
+    ├── OnboardingView (3-page HealthKit flow)
+    └── SessionHistoryView (SwiftData)
 ```
+
+AUv3 Generator Plugin (augn): Bio-reactive soundscape usable in Logic Pro, GarageBand, AUM.
 
 Communication: Explicit wiring via `EchoelCreativeWorkspace` hub — `.connectAudioEngine()`, `.connectMixer()`, Combine observation. All tools react to BioSnapshot.
 
@@ -95,17 +96,16 @@ All inter-component communication uses explicit Combine observation (`.sink`, `$
 ## REPO STRUCTURE
 
 ```
-Echoelmusic/           ← Main iOS app target
-EchoelmusicComplete/   ← Full feature set
-EchoelmusicMVP/        ← MVP subset
-CoherenceCore/         ← Swift Package (core DSP)
-Sources/               ← Shared sources
-Tests/                 ← 56 test suites
-android/               ← Kotlin/Compose
-docs/                  ← Website (GitHub Pages)
-fastlane/              ← CI/CD
-.ai/                   ← Session context
-.claude/               ← Claude Code config
+Sources/Echoelmusic/   ← Main iOS app (32 files)
+  Audio/               ← AudioEngine, AudioConfiguration, BreathDetector, VibratoEngine
+  Bio/                 ← BioSourceManager, EchoelBioEngine, OuraRingClient, CameraAnalyzer, EEG
+  Core/                ← SoundscapeEngine, WeatherProvider, CircadianClock, EchoelStore, SessionStore
+  DSP/                 ← EchoelDDSP, EchoelCellular, EchoelModalBank, EchoelVDSPKit
+  Views/               ← SoundscapeView, SettingsView, OnboardingView, SessionHistoryView
+Sources/EchoelmusicAUv3/ ← AUv3 Generator Plugin (2 files)
+Tests/                 ← 9 test files (Audio, Bio, DSP, Core)
+docs/                  ← Website (GitHub Pages — artist landing page)
+.github/workflows/     ← CI/CD (testflight.yml, ci.yml, etc.)
 ```
 
 DO NOT create new top-level directories.
