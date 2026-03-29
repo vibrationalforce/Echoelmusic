@@ -29,6 +29,8 @@ final class SoundscapeEngine {
     /// AVAudioSourceNode that bridges DDSP render to AVAudioEngine graph
     private var sourceNode: AVAudioSourceNode?
     private var updateTimer: Timer?
+    let sessionTracker = SessionTracker()
+    private var sampleCounter: Int = 0
 
     // MARK: - Lifecycle
 
@@ -75,13 +77,26 @@ final class SoundscapeEngine {
         log.log(.info, category: .system, "SoundscapeEngine connected — source node attached")
     }
 
+    /// Last completed session (for saving to SwiftData)
+    var lastCompletedSession: SoundscapeSession?
+
     func togglePlayback() {
         isPlaying.toggle()
         if isPlaying {
             ambienceSynth.amplitude = 0.6
             ambienceSynth.noteOn(frequency: 220.0)
+            sessionTracker.start(
+                source: bioSourceManager.primarySource,
+                phase: circadianClock.currentPhase,
+                weather: weatherProvider.current.condition
+            )
         } else {
             ambienceSynth.noteOff()
+            lastCompletedSession = sessionTracker.stop(
+                source: bioSourceManager.primarySource,
+                phase: circadianClock.currentPhase,
+                weather: weatherProvider.current.condition
+            )
         }
         log.log(.info, category: .audio, "Soundscape \(isPlaying ? "playing" : "paused")")
     }
@@ -129,6 +144,17 @@ final class SoundscapeEngine {
 
         // 6. Apply circadian modulation
         applyCircadianModulation(circadian)
+
+        // 7. Record bio sample for session history (~1Hz, every 60th frame)
+        sampleCounter += 1
+        if sampleCounter >= 60 {
+            sampleCounter = 0
+            sessionTracker.recordSample(
+                hr: state.heartRate,
+                hrv: state.hrv,
+                coherence: state.coherence
+            )
+        }
     }
 
     // MARK: - Environmental Modulation
