@@ -7,12 +7,29 @@ struct SoundscapeView: View {
 
     @Environment(SoundscapeEngine.self) private var engine
     @Environment(EchoelBioEngine.self) private var bio
+    @State private var showSettings = false
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // Settings button (top right)
+                HStack {
+                    Spacer()
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.white.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Settings")
+                }
+                .padding(.top, 8)
+
                 Spacer()
 
                 // Coherence ring — subtle visual feedback
@@ -35,6 +52,10 @@ struct SoundscapeView: View {
             .padding(.horizontal, 24)
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .environment(engine)
+        }
     }
 
     // MARK: - Coherence Ring
@@ -151,10 +172,16 @@ struct SoundscapeView: View {
         let source = engine.state.source
         let weather = engine.state.weatherCondition
 
-        return Text("\(source.displayName) · \(weather.rawValue.capitalized)")
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(.white.opacity(0.15))
-            .kerning(1)
+        return VStack(spacing: 4) {
+            Text("\(source.displayName) · \(weather.rawValue.capitalized)")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.white.opacity(0.15))
+                .kerning(1)
+
+            Text(engine.audioOutputName)
+                .font(.system(size: 10, weight: .regular))
+                .foregroundStyle(.white.opacity(0.1))
+        }
     }
 }
 
