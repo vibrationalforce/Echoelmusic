@@ -421,14 +421,28 @@ public final class EchoelBioEngine {
     private func startFallbackMode() {
         // Cancel any existing breath timer to prevent accumulation
         breathTimerCancellable?.cancel()
-        // Simulate slow breath oscillation for demo purposes
+        // Simulate slow bio oscillation for demo/preview purposes
         let breathTimer = Timer.publish(every: 1.0 / 20.0, on: .main, in: .common).autoconnect()
         breathTimerCancellable = breathTimer.sink { [weak self] _ in
             guard let self = self else { return }
-            // Sinusoidal breath simulation at ~12 breaths/min
-            let phase = Date().timeIntervalSinceReferenceDate * (12.0 / 60.0) * 2.0 * Double.pi
-            self.snapshot.breathPhase = (sin(phase) + 1.0) / 2.0
+            let t = Date().timeIntervalSinceReferenceDate
+
+            // Breath: sinusoidal at ~12 breaths/min
+            let breathPhase = (12.0 / 60.0) * 2.0 * Double.pi
+            self.snapshot.breathPhase = (sin(t * breathPhase) + 1.0) / 2.0
             self.smoothBreathPhase = self.snapshot.breathPhase
+
+            // Heart rate: gentle drift around 68 BPM (slow sine, ~0.05 Hz)
+            self.snapshot.heartRate = 68.0 + sin(t * 0.05 * 2.0 * Double.pi) * 4.0
+            self.smoothHeartRate = self.snapshot.heartRate
+
+            // Coherence: slow drift around 0.55 (very slow, ~0.02 Hz)
+            self.snapshot.coherence = 0.55 + sin(t * 0.02 * 2.0 * Double.pi) * 0.15
+            self.smoothCoherence = self.snapshot.coherence
+
+            // HRV: slow drift around 0.5
+            self.snapshot.hrvNormalized = 0.5 + sin(t * 0.03 * 2.0 * Double.pi) * 0.1
+            self.smoothHRV = self.snapshot.hrvNormalized
         }
     }
 
