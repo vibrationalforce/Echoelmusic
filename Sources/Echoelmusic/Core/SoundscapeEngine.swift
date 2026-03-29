@@ -26,6 +26,17 @@ final class SoundscapeEngine {
     /// DDSP synth — nonisolated(unsafe) because audio thread reads it
     nonisolated(unsafe) private let ambienceSynth = EchoelDDSP(sampleRate: 48000)
 
+    /// Cellular automata texture layer — evolving generative texture
+    nonisolated(unsafe) private let textureSynth: EchoelCellular = {
+        let t = EchoelCellular(cellCount: 128, sampleRate: 48000)
+        t.synthMode = .additive
+        t.rule = .rule90  // Fractal — organic texture
+        t.gain = 0.15     // Subtle background layer
+        t.frequency = 110  // A2 base
+        t.evolutionRate = 8 // Slow evolution
+        return t
+    }()
+
     /// AVAudioSourceNode that bridges DDSP render to AVAudioEngine graph
     private var sourceNode: AVAudioSourceNode?
     private var updateTimer: Timer?
@@ -39,19 +50,24 @@ final class SoundscapeEngine {
 
         // Create source node with render block that pulls from DDSP
         let synth = ambienceSynth
+        let texture = textureSynth
         let node = AVAudioSourceNode { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             let count = Int(frameCount)
 
-            // Render mono from DDSP
-            var monoBuffer = [Float](repeating: 0, count: count)
-            synth.render(buffer: &monoBuffer, frameCount: count)
+            // Render DDSP pad layer
+            var padBuffer = [Float](repeating: 0, count: count)
+            synth.render(buffer: &padBuffer, frameCount: count)
 
-            // Copy to all output channels
+            // Render cellular texture layer
+            var textureBuffer = [Float](repeating: 0, count: count)
+            texture.render(buffer: &textureBuffer, frameCount: count)
+
+            // Mix: pad + texture
             for buffer in ablPointer {
                 guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 for i in 0..<count {
-                    data[i] = monoBuffer[i]
+                    data[i] = padBuffer[i] + textureBuffer[i]
                 }
             }
             return noErr
@@ -139,7 +155,11 @@ final class SoundscapeEngine {
             breathPhase: Float(state.breathPhase)
         )
 
-        // 5. Apply weather modulation
+        // 5. Update texture layer bio-reactivity
+        textureSynth.coherence = Float(state.coherence)
+        textureSynth.frequency = circadianClock.suggestedBaseFrequency * 0.5 // One octave below pad
+
+        // 6. Apply weather modulation
         applyWeatherModulation(weather)
 
         // 6. Apply circadian modulation
