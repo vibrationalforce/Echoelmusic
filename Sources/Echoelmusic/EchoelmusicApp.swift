@@ -10,55 +10,73 @@ struct EchoelmusicApp: App {
     @State private var audioEngine: AudioEngine
     @State private var microphoneManager: MicrophoneManager
     @State private var soundscapeEngine: SoundscapeEngine
+    @State private var store: EchoelStore
+    @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "onboardingComplete")
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let mic = MicrophoneManager()
         let audio = AudioEngine(microphoneManager: mic)
-        let soundscape = SoundscapeEngine()
 
         _microphoneManager = State(wrappedValue: mic)
         _audioEngine = State(wrappedValue: audio)
-        _soundscapeEngine = State(wrappedValue: soundscape)
+        _soundscapeEngine = State(wrappedValue: SoundscapeEngine())
+        _store = State(wrappedValue: EchoelStore())
 
         _ = MemoryPressureHandler.shared
     }
 
     var body: some Scene {
         WindowGroup {
-            SoundscapeView()
-                .environment(audioEngine)
-                .environment(EchoelBioEngine.shared)
-                .environment(soundscapeEngine)
-                .modelContainer(for: SoundscapeSession.self)
-                .task {
-                    log.log(.info, category: .system, "STARTUP [1/3] Starting audio engine...")
-                    audioEngine.start()
-
-                    log.log(.info, category: .system, "STARTUP [2/3] Starting bio streaming...")
-                    soundscapeEngine.bioSourceManager.startStreaming()
-
-                    log.log(.info, category: .system, "STARTUP [3/3] Connecting soundscape engine...")
-                    soundscapeEngine.connect(audio: audioEngine, bio: EchoelBioEngine.shared)
-
-                    log.log(.info, category: .system, "STARTUP COMPLETE — Soundscape ready")
-                }
-                .onChange(of: scenePhase) { oldPhase, newPhase in
-                    switch newPhase {
-                    case .active:
-                        if oldPhase == .background {
-                            audioEngine.start()
-                            soundscapeEngine.bioSourceManager.startStreaming()
-                            log.log(.info, category: .system, "App active — audio + bio resumed")
+            Group {
+                if hasCompletedOnboarding {
+                    SoundscapeView()
+                } else {
+                    OnboardingView(isComplete: $hasCompletedOnboarding)
+                        .onChange(of: hasCompletedOnboarding) { _, complete in
+                            if complete {
+                                UserDefaults.standard.set(true, forKey: "onboardingComplete")
+                            }
                         }
-                    case .background:
-                        log.log(.info, category: .system, "App backgrounded — audio continues")
-                    case .inactive:
-                        break
-                    @unknown default:
-                        break
-                    }
                 }
+            }
+            .environment(audioEngine)
+            .environment(EchoelBioEngine.shared)
+            .environment(soundscapeEngine)
+            .environment(store)
+            .modelContainer(for: SoundscapeSession.self)
+            .task {
+                log.log(.info, category: .system, "STARTUP [1/4] Starting audio engine...")
+                audioEngine.start()
+
+                log.log(.info, category: .system, "STARTUP [2/4] Starting bio streaming...")
+                soundscapeEngine.bioSourceManager.startStreaming()
+
+                log.log(.info, category: .system, "STARTUP [3/4] Connecting soundscape engine...")
+                soundscapeEngine.connect(audio: audioEngine, bio: EchoelBioEngine.shared)
+
+                log.log(.info, category: .system, "STARTUP [4/4] Loading store products...")
+                await store.loadProducts()
+                await store.updateSubscriptionStatus()
+
+                log.log(.info, category: .system, "STARTUP COMPLETE — Soundscape ready")
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                switch newPhase {
+                case .active:
+                    if oldPhase == .background {
+                        audioEngine.start()
+                        soundscapeEngine.bioSourceManager.startStreaming()
+                        log.log(.info, category: .system, "App active — audio + bio resumed")
+                    }
+                case .background:
+                    log.log(.info, category: .system, "App backgrounded — audio continues")
+                case .inactive:
+                    break
+                @unknown default:
+                    break
+                }
+            }
         }
     }
 }
