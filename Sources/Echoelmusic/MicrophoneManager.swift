@@ -56,8 +56,7 @@ final class MicrophoneManager: NSObject {
     /// Sample rate (will be set from audio format)
     private var sampleRate: Double = AudioConfiguration.preferredSampleRate
 
-    /// YIN pitch detector for fundamental frequency estimation
-    private let pitchDetector = PitchDetector()
+    /// Pitch detection disabled (PitchDetector removed in soundscape refactor)
 
     /// Dedicated queue for FFT/pitch processing — keeps audio render thread unblocked
     private let processingQueue = DispatchQueue(label: "com.echoelmusic.audio.processing", qos: .userInteractive)
@@ -306,10 +305,9 @@ final class MicrophoneManager: NSObject {
             return performFFT(on: base, frameLength: frameLength, sampleRate: sampleRate)
         }
 
-        // Perform YIN pitch detection using safe [Float] overload
-        let detectedPitch = pitchDetector.detectPitch(samples: samples, sampleRate: Float(sampleRate))
+        // Pitch detection disabled (soundscape refactor)
+        let detectedPitch: Float = 0
 
-        // Already on MainActor — update UI directly with smoothing
         // Smooth audio level changes
         self.audioLevel = self.audioLevel * 0.7 + normalizedLevel * 0.3
 

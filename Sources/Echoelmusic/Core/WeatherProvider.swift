@@ -20,7 +20,8 @@ struct WeatherSnapshot: Sendable {
 
 // MARK: - Weather Provider
 
-/// Fetches weather data via WeatherKit. Falls back to neutral values if unavailable.
+/// Weather context for soundscape modulation.
+/// Uses time-based approximation. WeatherKit can be enabled when entitlement is configured.
 @MainActor @Observable
 final class WeatherProvider: NSObject, CLLocationManagerDelegate {
 
@@ -28,7 +29,7 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
 
     private let locationManager = CLLocationManager()
     private var lastUpdate: Date = .distantPast
-    private let updateInterval: TimeInterval = 600 // 10 minutes
+    private let updateInterval: TimeInterval = 600
 
     override init() {
         super.init()
@@ -39,14 +40,17 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
     func startUpdating() {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
+        // Apply initial time-based weather
+        applyTimeBasedFallback()
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
         Task { @MainActor in
             guard Date().timeIntervalSince(lastUpdate) > updateInterval else { return }
             lastUpdate = Date()
-            await fetchWeather(for: location)
+            // WeatherKit disabled — using time-based approximation
+            // Enable fetchWeatherKit() when WeatherKit entitlement is configured
+            applyTimeBasedFallback()
         }
     }
 
@@ -54,7 +58,6 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
         Task { @MainActor in
             applyTimeBasedFallback()
         }
-        log.log(.warning, category: .system, "Weather location unavailable — using time-based fallback")
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -62,7 +65,6 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
             switch manager.authorizationStatus {
             case .denied, .restricted:
                 applyTimeBasedFallback()
-                log.log(.info, category: .system, "Location denied — weather using time-based fallback")
             case .authorizedWhenInUse, .authorizedAlways:
                 manager.startUpdatingLocation()
             default:
@@ -71,10 +73,10 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
         }
     }
 
-    /// Time-based weather approximation when location is unavailable
+    /// Time-based weather approximation
     private func applyTimeBasedFallback() {
         let hour = Calendar.current.component(.hour, from: Date())
-        // Simulate temperature curve: coolest at 5am, warmest at 15pm
+        // Temperature curve: coolest at 5am, warmest at 3pm
         let tempCurve = sin(Double(hour - 5) / 24.0 * .pi * 2) * 0.3 + 0.5
         current = WeatherSnapshot(
             temperature: tempCurve.clamped(to: 0...1),
@@ -84,47 +86,14 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
         )
     }
 
-    private func fetchWeather(for location: CLLocation) async {
-        #if canImport(WeatherKit)
-        do {
-            let weather = try await WeatherService.shared.weather(for: location)
-            let temp = weather.currentWeather.temperature.converted(to: .celsius).value
-            // Normalize: -10°C = 0.0, 40°C = 1.0
-            let normalizedTemp = ((temp + 10) / 50).clamped(to: 0...1)
-            let normalizedWind = (weather.currentWeather.wind.speed.converted(to: .kilometersPerHour).value / 80).clamped(to: 0...1)
-            let normalizedHumidity = weather.currentWeather.humidity
-
-            let condition: WeatherCondition
-            switch weather.currentWeather.condition {
-            case .clear, .mostlyClear, .hot:
-                condition = .clear
-            case .cloudy, .mostlyCloudy, .partlyCloudy:
-                condition = .cloudy
-            case .rain, .drizzle, .heavyRain:
-                condition = .rain
-            case .snow, .heavySnow, .sleet, .freezingRain:
-                condition = .snow
-            case .thunderstorms, .tropicalStorm, .hurricane:
-                condition = .storm
-            case .foggy, .haze, .smoky:
-                condition = .fog
-            case .windy, .breezy:
-                condition = .wind
-            default:
-                condition = .clear
-            }
-
-            current = WeatherSnapshot(
-                temperature: normalizedTemp,
-                condition: condition,
-                windSpeed: normalizedWind,
-                humidity: normalizedHumidity
-            )
-            log.log(.info, category: .system, "Weather updated: \(condition.rawValue), \(Int(temp))°C")
-        } catch {
-            log.log(.warning, category: .system, "WeatherKit error: \(error.localizedDescription)")
-        }
-        #endif
-    }
+    // MARK: - WeatherKit (Enable when entitlement is ready)
+    // To enable: add WeatherKit capability in Xcode, then uncomment below
+    // and call fetchWeatherKit(for:) instead of applyTimeBasedFallback()
+    //
+    // private func fetchWeatherKit(for location: CLLocation) async {
+    //     Add WeatherKit framework import
+    //     let weather = try await WeatherService.shared.weather(for: location)
+    //     ...
+    // }
 }
 #endif

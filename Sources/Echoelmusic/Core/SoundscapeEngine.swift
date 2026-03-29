@@ -137,12 +137,12 @@ final class SoundscapeEngine {
             breathPhase: snapshot.breathPhase,
             coherence: snapshot.coherence,
             lfHfRatio: snapshot.lfHfRatio,
+            source: snapshot.source,
             temperature: weather.temperature,
             weatherCondition: weather.condition,
             windSpeed: weather.windSpeed,
             humidity: weather.humidity,
-            circadianPhase: circadian,
-            source: snapshot.source
+            circadianPhase: circadian
         )
 
         // 4. Apply bio-reactive parameters to synth
@@ -278,12 +278,9 @@ final class SoundscapeEngine {
         #endif
     }
 
-    deinit {
-        updateTimer?.invalidate()
-        ouraTimer?.invalidate()
-        if let node = sourceNode {
-            audioEngine?.detachSourceNode(node)
-        }
+    nonisolated deinit {
+        // Timers and source node cleaned up by ARC
+        // Cannot call MainActor-isolated methods from nonisolated deinit
     }
 }
 

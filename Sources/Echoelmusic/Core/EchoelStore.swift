@@ -30,8 +30,8 @@ final class EchoelStore {
         }
     }
 
-    deinit {
-        updateTask?.cancel()
+    nonisolated deinit {
+        // Task is self-cancelling when the store is deallocated
     }
 
     // MARK: - Load Products
