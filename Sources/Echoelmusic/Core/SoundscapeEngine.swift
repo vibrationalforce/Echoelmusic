@@ -20,7 +20,8 @@ final class SoundscapeEngine {
     private var bioEngine: EchoelBioEngine?
     private var audioEngine: AudioEngine?
     private let weatherProvider = WeatherProvider()
-    private let circadianClock = CircadianClock()
+    private var circadianClock = CircadianClock()
+    private var ouraClient: OuraRingClient?
 
     /// DDSP synth — nonisolated(unsafe) because audio thread reads it
     nonisolated(unsafe) private let ambienceSynth = EchoelDDSP(sampleRate: 48000)
@@ -136,6 +137,7 @@ final class SoundscapeEngine {
     }
 
     private func applyCircadianModulation(_ phase: CircadianPhase) {
+        // Spectral shape based on phase
         switch phase {
         case .sleep:
             ambienceSynth.spectralShape = .dark
@@ -146,6 +148,27 @@ final class SoundscapeEngine {
         case .windDown:
             ambienceSynth.spectralShape = .natural
         }
+
+        // Adjust base frequency to circadian range
+        if isPlaying {
+            ambienceSynth.frequency = circadianClock.suggestedBaseFrequency
+        }
+
+        // Adjust vibrato speed to circadian modulation speed
+        ambienceSynth.vibratoRate = 2.0 * phase.modulationSpeed
+    }
+
+    /// Connect Oura Ring for enhanced circadian detection
+    func connectOura(_ client: OuraRingClient) {
+        self.ouraClient = client
+        log.log(.info, category: .system, "Oura Ring connected to SoundscapeEngine")
+    }
+
+    /// Update Oura data (call periodically, e.g. every 10 min)
+    func refreshOuraData() async {
+        guard let oura = ouraClient else { return }
+        await oura.syncDailyData()
+        circadianClock.ouraSnapshot = oura.snapshot
     }
 
     deinit {
