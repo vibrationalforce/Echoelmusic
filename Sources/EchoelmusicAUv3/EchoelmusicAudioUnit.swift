@@ -262,8 +262,9 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     public override var fullState: [String: Any]? {
         get {
             var s = super.fullState ?? [:]
-            for p in [coherenceParam!, hrvParam!, heartRateParam!, breathPhaseParam!,
-                      baseFreqParam!, textureAmountParam!, reverbMixParam!, masterGainParam!] {
+            let params = [coherenceParam, hrvParam, heartRateParam, breathPhaseParam,
+                          baseFreqParam, textureAmountParam, reverbMixParam, masterGainParam]
+            for p in params.compactMap({ $0 }) {
                 s[p.identifier] = p.value
             }
             return s
@@ -271,8 +272,9 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         set {
             super.fullState = newValue
             guard let s = newValue else { return }
-            for p in [coherenceParam!, hrvParam!, heartRateParam!, breathPhaseParam!,
-                      baseFreqParam!, textureAmountParam!, reverbMixParam!, masterGainParam!] {
+            let params = [coherenceParam, hrvParam, heartRateParam, breathPhaseParam,
+                          baseFreqParam, textureAmountParam, reverbMixParam, masterGainParam]
+            for p in params.compactMap({ $0 }) {
                 if let v = s[p.identifier] as? Float { p.value = v }
             }
         }
@@ -298,7 +300,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     public override var internalRenderBlock: AUInternalRenderBlock {
         let synthRef = self.synth
         let textureRef = self.texture
-        let gainParam = self.masterGainParam!
+        let gainParam = self.masterGainParam
 
         return { (actionFlags, timestamp, frameCount, outputBusNumber,
                   outputData, renderEvent, pullInputBlock) in
@@ -314,7 +316,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             textureRef.render(buffer: &texBuffer, frameCount: count)
 
             // Mix and apply master gain
-            let gain = gainParam.value
+            let gain = gainParam?.value ?? 0.7
             let ablPointer = UnsafeMutableAudioBufferListPointer(outputData)
             for buf in ablPointer {
                 guard let data = buf.mData?.assumingMemoryBound(to: Float.self) else { continue }
