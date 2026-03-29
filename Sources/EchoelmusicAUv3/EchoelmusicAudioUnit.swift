@@ -3,13 +3,13 @@ import Foundation
 import AVFoundation
 import os
 
-/// AUv3 Audio Unit — Bio-Reactive Audio Processor
+/// AUv3 Audio Unit — Bio-Reactive Soundscape Generator
 ///
-/// Exposes Echoelmusic's DSP chain (reverb + delay + filter) as a
-/// standard Audio Unit v3 effect plugin. Compatible with GarageBand,
-/// Logic Pro, AUM, and any AUv3 host.
+/// Produces ambient soundscapes from DDSP synthesis driven by
+/// bio-reactive parameters (coherence, HRV, heart rate, breath).
+/// Parameters are automatable from Logic Pro, GarageBand, AUM, etc.
 ///
-/// Component: aufx/echl/Echo (effect processor)
+/// Component: augn/echl/Echo (generator — no audio input needed)
 public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     private static let auLog = OSLog(
@@ -19,31 +19,30 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     // MARK: - DSP
 
-    private let kernel = DSPKernel()
+    private let synth = EchoelDDSP(sampleRate: 48000)
+    private let texture = EchoelCellular(cellCount: 128, sampleRate: 48000)
+    private var isNoteOn = false
 
     // MARK: - Buses
 
-    private var _inputBusArray: AUAudioUnitBusArray!
     private var _outputBusArray: AUAudioUnitBusArray!
-    private var inputBus: AUAudioUnitBus!
     private var outputBus: AUAudioUnitBus!
 
-    // MARK: - Parameter Tree
+    // MARK: - Parameters
 
     private var _parameterTree: AUParameterTree!
 
-    // Parameter nodes (retained for observation)
-    private var wetDryParam: AUParameter!
-    private var roomSizeParam: AUParameter!
-    private var dampingParam: AUParameter!
-    private var delayTimeParam: AUParameter!
-    private var feedbackParam: AUParameter!
-    private var filterCutoffParam: AUParameter!
-    private var filterResonanceParam: AUParameter!
-    private var inputGainParam: AUParameter!
-    private var outputGainParam: AUParameter!
+    // Bio parameters (automatable from host)
+    private var coherenceParam: AUParameter!
+    private var hrvParam: AUParameter!
+    private var heartRateParam: AUParameter!
+    private var breathPhaseParam: AUParameter!
+    private var baseFreqParam: AUParameter!
+    private var textureAmountParam: AUParameter!
+    private var reverbMixParam: AUParameter!
+    private var masterGainParam: AUParameter!
 
-    // MARK: - Initialization
+    // MARK: - Init
 
     public override init(
         componentDescription: AudioComponentDescription,
@@ -52,213 +51,165 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         try super.init(componentDescription: componentDescription, options: options)
 
         guard let defaultFormat = AVAudioFormat(
-            standardFormatWithSampleRate: 48000,
-            channels: 2
+            standardFormatWithSampleRate: 48000, channels: 2
         ) else {
             throw NSError(domain: "com.echoelmusic.app.auv3", code: -1,
-                          userInfo: [NSLocalizedDescriptionKey: "Failed to create default audio format"])
+                          userInfo: [NSLocalizedDescriptionKey: "Failed to create audio format"])
         }
 
-        inputBus = try AUAudioUnitBus(format: defaultFormat)
         outputBus = try AUAudioUnitBus(format: defaultFormat)
-
-        _inputBusArray = AUAudioUnitBusArray(
-            audioUnit: self, busType: .input, busses: [inputBus]
-        )
         _outputBusArray = AUAudioUnitBusArray(
             audioUnit: self, busType: .output, busses: [outputBus]
         )
 
-        setupParameterTree()
+        // Configure texture
+        texture.synthMode = .additive
+        texture.rule = .rule90
+        texture.gain = 0.15
+        texture.frequency = 110
+        texture.evolutionRate = 8
 
-        os_log(.info, log: Self.auLog, "AUv3 initialized")
+        setupParameterTree()
+        os_log(.info, log: Self.auLog, "AUv3 Generator initialized")
     }
 
-    // MARK: - Parameter Tree Setup
+    // MARK: - Parameter Tree
+
+    enum ParameterAddress: UInt64 {
+        case coherence = 0
+        case hrv = 1
+        case heartRate = 2
+        case breathPhase = 3
+        case baseFrequency = 4
+        case textureAmount = 5
+        case reverbMix = 6
+        case masterGain = 7
+    }
 
     private func setupParameterTree() {
-        // Reverb group
-        wetDryParam = AUParameterTree.createParameter(
-            withIdentifier: "wetDry",
-            name: "Wet/Dry Mix",
-            address: DSPKernel.ParameterAddress.wetDry.rawValue,
-            min: 0.0, max: 1.0,
-            unit: .generic,
-            unitName: nil,
+        coherenceParam = AUParameterTree.createParameter(
+            withIdentifier: "coherence", name: "Coherence",
+            address: ParameterAddress.coherence.rawValue,
+            min: 0, max: 1, unit: .generic, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        wetDryParam.value = 0.3
+        coherenceParam.value = 0.5
 
-        roomSizeParam = AUParameterTree.createParameter(
-            withIdentifier: "roomSize",
-            name: "Room Size",
-            address: DSPKernel.ParameterAddress.roomSize.rawValue,
-            min: 0.0, max: 1.0,
-            unit: .generic,
-            unitName: nil,
+        hrvParam = AUParameterTree.createParameter(
+            withIdentifier: "hrv", name: "HRV",
+            address: ParameterAddress.hrv.rawValue,
+            min: 0, max: 1, unit: .generic, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        roomSizeParam.value = 0.5
+        hrvParam.value = 0.5
 
-        dampingParam = AUParameterTree.createParameter(
-            withIdentifier: "damping",
-            name: "Damping",
-            address: DSPKernel.ParameterAddress.damping.rawValue,
-            min: 0.0, max: 1.0,
-            unit: .generic,
-            unitName: nil,
+        heartRateParam = AUParameterTree.createParameter(
+            withIdentifier: "heartRate", name: "Heart Rate",
+            address: ParameterAddress.heartRate.rawValue,
+            min: 0, max: 1, unit: .generic, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        dampingParam.value = 0.5
+        heartRateParam.value = 0.5
 
-        let reverbGroup = AUParameterTree.createGroup(
-            withIdentifier: "reverb",
-            name: "Reverb",
-            children: [wetDryParam, roomSizeParam, dampingParam]
-        )
-
-        // Delay group
-        delayTimeParam = AUParameterTree.createParameter(
-            withIdentifier: "delayTime",
-            name: "Delay Time",
-            address: DSPKernel.ParameterAddress.delayTime.rawValue,
-            min: 0.01, max: 2.0,
-            unit: .seconds,
-            unitName: nil,
+        breathPhaseParam = AUParameterTree.createParameter(
+            withIdentifier: "breathPhase", name: "Breath Phase",
+            address: ParameterAddress.breathPhase.rawValue,
+            min: 0, max: 1, unit: .generic, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        delayTimeParam.value = 0.25
+        breathPhaseParam.value = 0.5
 
-        feedbackParam = AUParameterTree.createParameter(
-            withIdentifier: "feedback",
-            name: "Feedback",
-            address: DSPKernel.ParameterAddress.feedback.rawValue,
-            min: 0.0, max: 0.9,
-            unit: .generic,
-            unitName: nil,
+        baseFreqParam = AUParameterTree.createParameter(
+            withIdentifier: "baseFrequency", name: "Base Frequency",
+            address: ParameterAddress.baseFrequency.rawValue,
+            min: 40, max: 440, unit: .hertz, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        feedbackParam.value = 0.4
+        baseFreqParam.value = 220
 
-        let delayGroup = AUParameterTree.createGroup(
-            withIdentifier: "delay",
-            name: "Delay",
-            children: [delayTimeParam, feedbackParam]
-        )
-
-        // Filter group
-        filterCutoffParam = AUParameterTree.createParameter(
-            withIdentifier: "filterCutoff",
-            name: "Filter Cutoff",
-            address: DSPKernel.ParameterAddress.filterCutoff.rawValue,
-            min: 20.0, max: 20000.0,
-            unit: .hertz,
-            unitName: nil,
+        textureAmountParam = AUParameterTree.createParameter(
+            withIdentifier: "textureAmount", name: "Texture",
+            address: ParameterAddress.textureAmount.rawValue,
+            min: 0, max: 1, unit: .generic, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        filterCutoffParam.value = 8000.0
+        textureAmountParam.value = 0.3
 
-        filterResonanceParam = AUParameterTree.createParameter(
-            withIdentifier: "filterResonance",
-            name: "Resonance",
-            address: DSPKernel.ParameterAddress.filterResonance.rawValue,
-            min: 0.1, max: 20.0,
-            unit: .generic,
-            unitName: nil,
+        reverbMixParam = AUParameterTree.createParameter(
+            withIdentifier: "reverbMix", name: "Reverb",
+            address: ParameterAddress.reverbMix.rawValue,
+            min: 0, max: 1, unit: .generic, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        filterResonanceParam.value = 0.707
+        reverbMixParam.value = 0.3
 
-        let filterGroup = AUParameterTree.createGroup(
-            withIdentifier: "filter",
-            name: "Filter",
-            children: [filterCutoffParam, filterResonanceParam]
-        )
-
-        // Gain group
-        inputGainParam = AUParameterTree.createParameter(
-            withIdentifier: "inputGain",
-            name: "Input Gain",
-            address: DSPKernel.ParameterAddress.inputGain.rawValue,
-            min: 0.0, max: 2.0,
-            unit: .linearGain,
-            unitName: nil,
+        masterGainParam = AUParameterTree.createParameter(
+            withIdentifier: "masterGain", name: "Master Gain",
+            address: ParameterAddress.masterGain.rawValue,
+            min: 0, max: 1, unit: .linearGain, unitName: nil,
             flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+            valueStrings: nil, dependentParameters: nil
         )
-        inputGainParam.value = 1.0
+        masterGainParam.value = 0.7
 
-        outputGainParam = AUParameterTree.createParameter(
-            withIdentifier: "outputGain",
-            name: "Output Gain",
-            address: DSPKernel.ParameterAddress.outputGain.rawValue,
-            min: 0.0, max: 2.0,
-            unit: .linearGain,
-            unitName: nil,
-            flags: [.flag_IsReadable, .flag_IsWritable],
-            valueStrings: nil,
-            dependentParameters: nil
+        let bioGroup = AUParameterTree.createGroup(
+            withIdentifier: "bio", name: "Bio-Reactive",
+            children: [coherenceParam, hrvParam, heartRateParam, breathPhaseParam]
         )
-        outputGainParam.value = 1.0
-
-        let gainGroup = AUParameterTree.createGroup(
-            withIdentifier: "gain",
-            name: "Gain",
-            children: [inputGainParam, outputGainParam]
+        let soundGroup = AUParameterTree.createGroup(
+            withIdentifier: "sound", name: "Sound",
+            children: [baseFreqParam, textureAmountParam, reverbMixParam, masterGainParam]
         )
 
-        // Build tree
-        _parameterTree = AUParameterTree.createTree(
-            withChildren: [reverbGroup, delayGroup, filterGroup, gainGroup]
-        )
+        _parameterTree = AUParameterTree.createTree(withChildren: [bioGroup, soundGroup])
         self.parameterTree = _parameterTree
 
-        // Parameter value provider (read from kernel)
-        _parameterTree.implementorValueProvider = { [weak self] param in
-            guard let self,
-                  let address = DSPKernel.ParameterAddress(rawValue: param.address) else {
-                return param.value
+        // Value provider — read from synth
+        let synthRef = synth
+        let textureRef = texture
+        _parameterTree.implementorValueProvider = { param in
+            guard let addr = ParameterAddress(rawValue: param.address) else { return param.value }
+            switch addr {
+            case .coherence:    return synthRef.harmonicity
+            case .hrv:          return synthRef.brightness
+            case .heartRate:    return param.value
+            case .breathPhase:  return synthRef.amplitude
+            case .baseFrequency: return synthRef.frequency
+            case .textureAmount: return textureRef.gain
+            case .reverbMix:    return synthRef.reverbMix
+            case .masterGain:   return param.value
             }
-            return self.kernel.getParameter(address: address)
         }
 
-        // Parameter value observer (write to kernel)
+        // Value observer — write to synth
         _parameterTree.implementorValueObserver = { [weak self] param, value in
             guard let self,
-                  let address = DSPKernel.ParameterAddress(rawValue: param.address) else {
-                return
-            }
-            self.kernel.setParameter(address: address, value: value)
-        }
-
-        // String value provider
-        _parameterTree.implementorStringFromValueCallback = { param, valuePtr in
-            let value = valuePtr?.pointee ?? param.value
-            switch param.address {
-            case DSPKernel.ParameterAddress.filterCutoff.rawValue:
-                if value >= 1000 {
-                    return String(format: "%.1f kHz", value / 1000)
-                }
-                return String(format: "%.0f Hz", value)
-            case DSPKernel.ParameterAddress.delayTime.rawValue:
-                return String(format: "%.0f ms", value * 1000)
-            default:
-                return String(format: "%.2f", value)
+                  let addr = ParameterAddress(rawValue: param.address) else { return }
+            switch addr {
+            case .coherence, .hrv, .heartRate, .breathPhase:
+                self.synth.applyBioReactive(
+                    coherence: self.coherenceParam.value,
+                    hrvVariability: self.hrvParam.value,
+                    heartRate: self.heartRateParam.value,
+                    breathPhase: self.breathPhaseParam.value
+                )
+                self.texture.coherence = self.coherenceParam.value
+            case .baseFrequency:
+                self.synth.frequency = value
+                self.texture.frequency = value * 0.5
+            case .textureAmount:
+                self.texture.gain = value
+            case .reverbMix:
+                self.synth.reverbMix = value
+            case .masterGain:
+                break // Applied in render
             }
         }
     }
@@ -266,119 +217,64 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     // MARK: - AUAudioUnit Overrides
 
     public override var inputBusses: AUAudioUnitBusArray {
-        return _inputBusArray
+        // Generator — no inputs
+        AUAudioUnitBusArray(audioUnit: self, busType: .input, busses: [])
     }
 
-    public override var outputBusses: AUAudioUnitBusArray {
-        return _outputBusArray
-    }
+    public override var outputBusses: AUAudioUnitBusArray { _outputBusArray }
 
-    public override var canProcessInPlace: Bool { true }
-
+    public override var canProcessInPlace: Bool { false }
     public override var supportsUserPresets: Bool { true }
-
     public override var latency: TimeInterval { 0 }
+    public override var tailTime: TimeInterval { 2.0 }
 
-    public override var tailTime: TimeInterval {
-        // Reverb + delay tail
-        return Double(delayTimeParam.value) + 2.0
-    }
-
-    // MARK: - Factory Presets
+    // MARK: - Presets
 
     public override var factoryPresets: [AUAudioUnitPreset]? {
-        return (0..<5).map { index in
-            let preset = AUAudioUnitPreset()
-            preset.number = index
-            preset.name = ["Clean", "Small Room", "Large Hall", "Echo Chamber", "Bio-Reactive"][index]
-            return preset
+        (0..<3).map { i in
+            let p = AUAudioUnitPreset()
+            p.number = i
+            p.name = ["Ambient Calm", "Deep Sleep", "Active Focus"][i]
+            return p
         }
     }
 
     public override var currentPreset: AUAudioUnitPreset? {
         didSet {
-            guard let preset = currentPreset else { return }
-            if preset.number >= 0 {
-                applyFactoryPreset(preset.number)
+            guard let p = currentPreset, p.number >= 0 else { return }
+            switch p.number {
+            case 0: // Ambient Calm
+                baseFreqParam.value = 220; coherenceParam.value = 0.7
+                textureAmountParam.value = 0.2; reverbMixParam.value = 0.4
+            case 1: // Deep Sleep
+                baseFreqParam.value = 55; coherenceParam.value = 0.8
+                textureAmountParam.value = 0.1; reverbMixParam.value = 0.6
+            case 2: // Active Focus
+                baseFreqParam.value = 330; coherenceParam.value = 0.5
+                textureAmountParam.value = 0.4; reverbMixParam.value = 0.2
+            default: break
             }
         }
     }
 
-    private func applyFactoryPreset(_ number: Int) {
-        switch number {
-        case 0: // Clean
-            wetDryParam.value = 0.0
-            delayTimeParam.value = 0.01
-            feedbackParam.value = 0.0
-            filterCutoffParam.value = 20000
-            inputGainParam.value = 1.0
-            outputGainParam.value = 1.0
-
-        case 1: // Small Room
-            wetDryParam.value = 0.2
-            roomSizeParam.value = 0.3
-            dampingParam.value = 0.6
-            delayTimeParam.value = 0.01
-            feedbackParam.value = 0.0
-            filterCutoffParam.value = 12000
-
-        case 2: // Large Hall
-            wetDryParam.value = 0.5
-            roomSizeParam.value = 0.85
-            dampingParam.value = 0.3
-            delayTimeParam.value = 0.01
-            feedbackParam.value = 0.0
-            filterCutoffParam.value = 6000
-
-        case 3: // Echo Chamber
-            wetDryParam.value = 0.3
-            roomSizeParam.value = 0.5
-            dampingParam.value = 0.4
-            delayTimeParam.value = 0.375
-            feedbackParam.value = 0.6
-            filterCutoffParam.value = 5000
-
-        case 4: // Bio-Reactive
-            wetDryParam.value = 0.3
-            roomSizeParam.value = 0.5
-            dampingParam.value = 0.5
-            delayTimeParam.value = 0.25
-            feedbackParam.value = 0.4
-            filterCutoffParam.value = 8000
-
-        default:
-            break
-        }
-    }
-
-    // MARK: - State Save/Restore
+    // MARK: - State
 
     public override var fullState: [String: Any]? {
         get {
-            var state = super.fullState ?? [:]
-            state["wetDry"] = wetDryParam.value
-            state["roomSize"] = roomSizeParam.value
-            state["damping"] = dampingParam.value
-            state["delayTime"] = delayTimeParam.value
-            state["feedback"] = feedbackParam.value
-            state["filterCutoff"] = filterCutoffParam.value
-            state["filterResonance"] = filterResonanceParam.value
-            state["inputGain"] = inputGainParam.value
-            state["outputGain"] = outputGainParam.value
-            return state
+            var s = super.fullState ?? [:]
+            for p in [coherenceParam!, hrvParam!, heartRateParam!, breathPhaseParam!,
+                      baseFreqParam!, textureAmountParam!, reverbMixParam!, masterGainParam!] {
+                s[p.identifier] = p.value
+            }
+            return s
         }
         set {
             super.fullState = newValue
-            guard let state = newValue else { return }
-            if let v = state["wetDry"] as? Float { wetDryParam.value = v }
-            if let v = state["roomSize"] as? Float { roomSizeParam.value = v }
-            if let v = state["damping"] as? Float { dampingParam.value = v }
-            if let v = state["delayTime"] as? Float { delayTimeParam.value = v }
-            if let v = state["feedback"] as? Float { feedbackParam.value = v }
-            if let v = state["filterCutoff"] as? Float { filterCutoffParam.value = v }
-            if let v = state["filterResonance"] as? Float { filterResonanceParam.value = v }
-            if let v = state["inputGain"] as? Float { inputGainParam.value = v }
-            if let v = state["outputGain"] as? Float { outputGainParam.value = v }
+            guard let s = newValue else { return }
+            for p in [coherenceParam!, hrvParam!, heartRateParam!, breathPhaseParam!,
+                      baseFreqParam!, textureAmountParam!, reverbMixParam!, masterGainParam!] {
+                if let v = s[p.identifier] as? Float { p.value = v }
+            }
         }
     }
 
@@ -386,68 +282,49 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
 
     public override func allocateRenderResources() throws {
         try super.allocateRenderResources()
-
-        let format = outputBus.format
-        kernel.prepare(
-            sampleRate: format.sampleRate,
-            maxFrames: maximumFramesToRender,
-            channelCount: Int(format.channelCount)
-        )
-
-        os_log(.info, log: Self.auLog,
-               "Render resources allocated: %.0f Hz, %u ch, %u max frames",
-               format.sampleRate, format.channelCount, maximumFramesToRender)
+        // Start generating
+        synth.amplitude = 0.6
+        synth.noteOn(frequency: baseFreqParam.value)
+        isNoteOn = true
+        os_log(.info, log: Self.auLog, "Generator started: %.0f Hz", baseFreqParam.value)
     }
 
     public override func deallocateRenderResources() {
         super.deallocateRenderResources()
-        kernel.reset()
-        os_log(.info, log: Self.auLog, "Render resources deallocated")
+        if isNoteOn { synth.noteOff(); isNoteOn = false }
+        os_log(.info, log: Self.auLog, "Generator stopped")
     }
 
     public override var internalRenderBlock: AUInternalRenderBlock {
-        let kernel = self.kernel
+        let synthRef = self.synth
+        let textureRef = self.texture
+        let gainParam = self.masterGainParam!
 
         return { (actionFlags, timestamp, frameCount, outputBusNumber,
                   outputData, renderEvent, pullInputBlock) in
 
-            // Pull input from host
-            guard let pullInputBlock else {
-                return kAudioUnitErr_NoConnection
+            let count = Int(frameCount)
+
+            // Render DDSP pad
+            var padBuffer = [Float](repeating: 0, count: count)
+            synthRef.render(buffer: &padBuffer, frameCount: count)
+
+            // Render texture
+            var texBuffer = [Float](repeating: 0, count: count)
+            textureRef.render(buffer: &texBuffer, frameCount: count)
+
+            // Mix and apply master gain
+            let gain = gainParam.value
+            let ablPointer = UnsafeMutableAudioBufferListPointer(outputData)
+            for buf in ablPointer {
+                guard let data = buf.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                for i in 0..<count {
+                    data[i] = (padBuffer[i] + texBuffer[i]) * gain
+                }
             }
-
-            var pullFlags: AudioUnitRenderActionFlags = []
-            let status = pullInputBlock(&pullFlags, timestamp, frameCount, 0, outputData)
-            guard status == noErr else { return status }
-
-            // Process through DSP kernel (in-place)
-            kernel.process(
-                inputBufferList: UnsafePointer(outputData),
-                outputBufferList: outputData,
-                frameCount: frameCount
-            )
 
             return noErr
         }
-    }
-}
-
-// MARK: - Factory Function
-
-/// AUv3 factory entry point for DAW instantiation (Logic, GarageBand, AUM, etc.)
-/// Referenced by Info.plist AudioComponentFactoryFunction key.
-@_cdecl("EchoelmusicAudioUnitFactory")
-public func EchoelmusicAudioUnitFactory(
-    _ desc: UnsafePointer<AudioComponentDescription>
-) -> Unmanaged<AnyObject>? {
-    do {
-        let audioUnit = try EchoelmusicAudioUnit(
-            componentDescription: desc.pointee,
-            options: []
-        )
-        return Unmanaged.passRetained(audioUnit)
-    } catch {
-        return nil
     }
 }
 #endif

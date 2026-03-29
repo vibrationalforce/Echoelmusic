@@ -162,15 +162,16 @@ targets:
           NSExtensionPointIdentifier: com.apple.AudioUnit-UI
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).AudioUnitViewController
           AudioComponents:
-            - name: "Echoelmusic Technologies: EchoelmusicAUv3"
-              description: "Bio-Reactive Audio Effect"
+            - name: "Echoelmusic: Bio-Reactive Soundscape"
+              description: "Bio-Reactive Ambient Soundscape Generator"
               manufacturer: Echo
-              type: aufx
+              type: augn
               subtype: echl
               version: 10000
               sandboxSafe: true
               tags:
-                - Effects
+                - Generator
+                - Ambient
     entitlements:
       path: EchoelmusicAUv3.entitlements
     settings:
