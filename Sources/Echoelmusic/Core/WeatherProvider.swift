@@ -61,12 +61,13 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        Task { @MainActor in
-            switch manager.authorizationStatus {
+        let status = manager.authorizationStatus
+        Task { @MainActor [weak self] in
+            switch status {
             case .denied, .restricted:
-                applyTimeBasedFallback()
+                self?.applyTimeBasedFallback()
             case .authorizedWhenInUse, .authorizedAlways:
-                manager.startUpdatingLocation()
+                self?.locationManager.startUpdatingLocation()
             default:
                 break
             }
