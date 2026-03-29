@@ -51,8 +51,37 @@ final class WeatherProvider: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        // Graceful degradation — keep neutral values
-        log.log(.warning, category: .system, "Weather location error: \(error.localizedDescription)")
+        Task { @MainActor in
+            applyTimeBasedFallback()
+        }
+        log.log(.warning, category: .system, "Weather location unavailable — using time-based fallback")
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            switch manager.authorizationStatus {
+            case .denied, .restricted:
+                applyTimeBasedFallback()
+                log.log(.info, category: .system, "Location denied — weather using time-based fallback")
+            case .authorizedWhenInUse, .authorizedAlways:
+                manager.startUpdatingLocation()
+            default:
+                break
+            }
+        }
+    }
+
+    /// Time-based weather approximation when location is unavailable
+    private func applyTimeBasedFallback() {
+        let hour = Calendar.current.component(.hour, from: Date())
+        // Simulate temperature curve: coolest at 5am, warmest at 15pm
+        let tempCurve = sin(Double(hour - 5) / 24.0 * .pi * 2) * 0.3 + 0.5
+        current = WeatherSnapshot(
+            temperature: tempCurve.clamped(to: 0...1),
+            condition: .clear,
+            windSpeed: 0.05,
+            humidity: 0.5
+        )
     }
 
     private func fetchWeather(for location: CLLocation) async {
