@@ -23,6 +23,10 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
     private let texture = EchoelCellular(cellCount: 128, sampleRate: 48000)
     private var isNoteOn = false
 
+    /// Pre-allocated scratch buffers for render block — NO heap allocation on audio thread
+    nonisolated(unsafe) private var padScratch = [Float](repeating: 0, count: 4096)
+    nonisolated(unsafe) private var texScratch = [Float](repeating: 0, count: 4096)
+
     // MARK: - Buses
 
     private var _outputBusArray: AUAudioUnitBusArray!
@@ -301,19 +305,21 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
         let synthRef = self.synth
         let textureRef = self.texture
         let gainParam = self.masterGainParam
+        let padRef = self.padScratch
+        let texRef = self.texScratch
 
         return { (actionFlags, timestamp, frameCount, outputBusNumber,
                   outputData, renderEvent, pullInputBlock) in
 
-            let count = Int(frameCount)
+            let count = min(Int(frameCount), 4096)
 
-            // Render DDSP pad
-            var padBuffer = [Float](repeating: 0, count: count)
-            synthRef.render(buffer: &padBuffer, frameCount: count)
+            // Use pre-allocated scratch (captured by value — COW safe since we own them)
+            var pad = padRef
+            var tex = texRef
+            for i in 0..<count { pad[i] = 0; tex[i] = 0 }
 
-            // Render texture
-            var texBuffer = [Float](repeating: 0, count: count)
-            textureRef.render(buffer: &texBuffer, frameCount: count)
+            synthRef.render(buffer: &pad, frameCount: count)
+            textureRef.render(buffer: &tex, frameCount: count)
 
             // Mix and apply master gain
             let gain = gainParam?.value ?? 0.7
@@ -321,7 +327,7 @@ public final class EchoelmusicAudioUnit: AUAudioUnit {
             for buf in ablPointer {
                 guard let data = buf.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 for i in 0..<count {
-                    data[i] = (padBuffer[i] + texBuffer[i]) * gain
+                    data[i] = (pad[i] + tex[i]) * gain
                 }
             }
 

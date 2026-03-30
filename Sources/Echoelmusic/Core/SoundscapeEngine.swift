@@ -40,6 +40,13 @@ final class SoundscapeEngine {
     /// Pointer for lock-free audio thread flag — is the soundscape actively generating?
     nonisolated(unsafe) private var _isGeneratingPtr: UnsafeMutablePointer<Bool>?
 
+    /// Pre-allocated scratch buffers for audio render block — NO heap allocation
+    nonisolated(unsafe) private var _padScratch = [Float](repeating: 0, count: 4096)
+    nonisolated(unsafe) private var _texScratch = [Float](repeating: 0, count: 4096)
+
+    /// NotificationCenter observer token for cleanup
+    private var routeChangeObserver: NSObjectProtocol?
+
     /// AVAudioSourceNode that bridges DDSP render to AVAudioEngine graph
     private var sourceNode: AVAudioSourceNode?
     private var updateTimer: Timer?
@@ -54,6 +61,10 @@ final class SoundscapeEngine {
         // Create source node with render block that pulls from DDSP
         let synth = ambienceSynth
         let texture = textureSynth
+        // Capture pre-allocated scratch buffers (COW — first mutation copies once, then reuses)
+        let padRef = _padScratch
+        let texRef = _texScratch
+
         // Capture pointer to atomic flag — safe for audio thread read
         nonisolated(unsafe) let isGeneratingPtr = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
         isGeneratingPtr.initialize(to: false)
@@ -61,30 +72,30 @@ final class SoundscapeEngine {
 
         let node = AVAudioSourceNode { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            let count = Int(frameCount)
+            let count = min(Int(frameCount), 4096)
 
             // Output silence when not playing
             guard isGeneratingPtr.pointee else {
                 for buffer in ablPointer {
                     guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
-                    for i in 0..<count { data[i] = 0 }
+                    memset(data, 0, count * MemoryLayout<Float>.size)
                 }
                 return noErr
             }
 
-            // Render DDSP pad layer
-            var padBuffer = [Float](repeating: 0, count: count)
-            synth.render(buffer: &padBuffer, frameCount: count)
+            // Use pre-allocated scratch buffers
+            var pad = padRef
+            var tex = texRef
+            for i in 0..<count { pad[i] = 0; tex[i] = 0 }
 
-            // Render cellular texture layer
-            var textureBuffer = [Float](repeating: 0, count: count)
-            texture.render(buffer: &textureBuffer, frameCount: count)
+            synth.render(buffer: &pad, frameCount: count)
+            texture.render(buffer: &tex, frameCount: count)
 
             // Mix: pad + texture
             for buffer in ablPointer {
                 guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 for i in 0..<count {
-                    data[i] = padBuffer[i] + textureBuffer[i]
+                    data[i] = pad[i] + tex[i]
                 }
             }
             return noErr
@@ -267,11 +278,11 @@ final class SoundscapeEngine {
 
     private func setupAudioRouteMonitoring() {
         #if canImport(AVFoundation) && !os(macOS)
-        NotificationCenter.default.addObserver(
+        routeChangeObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.routeChangeNotification,
             object: nil,
             queue: .main
-        ) { [weak self] notification in
+        ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.updateAudioRoute()
             }
@@ -300,6 +311,9 @@ final class SoundscapeEngine {
     nonisolated deinit {
         _isGeneratingPtr?.deinitialize(count: 1)
         _isGeneratingPtr?.deallocate()
+        if let observer = routeChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 }
 
