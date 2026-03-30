@@ -37,6 +37,9 @@ final class SoundscapeEngine {
         return t
     }()
 
+    /// Pointer for lock-free audio thread flag — is the soundscape actively generating?
+    nonisolated(unsafe) private var _isGeneratingPtr: UnsafeMutablePointer<Bool>?
+
     /// AVAudioSourceNode that bridges DDSP render to AVAudioEngine graph
     private var sourceNode: AVAudioSourceNode?
     private var updateTimer: Timer?
@@ -51,9 +54,23 @@ final class SoundscapeEngine {
         // Create source node with render block that pulls from DDSP
         let synth = ambienceSynth
         let texture = textureSynth
+        // Capture pointer to atomic flag — safe for audio thread read
+        nonisolated(unsafe) let isGeneratingPtr = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
+        isGeneratingPtr.initialize(to: false)
+        self._isGeneratingPtr = isGeneratingPtr
+
         let node = AVAudioSourceNode { @Sendable _, _, frameCount, audioBufferList -> OSStatus in
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
             let count = Int(frameCount)
+
+            // Output silence when not playing
+            guard isGeneratingPtr.pointee else {
+                for buffer in ablPointer {
+                    guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                    for i in 0..<count { data[i] = 0 }
+                }
+                return noErr
+            }
 
             // Render DDSP pad layer
             var padBuffer = [Float](repeating: 0, count: count)
@@ -100,13 +117,15 @@ final class SoundscapeEngine {
         isPlaying.toggle()
         if isPlaying {
             ambienceSynth.amplitude = 0.6
-            ambienceSynth.noteOn(frequency: 220.0)
+            ambienceSynth.noteOn(frequency: circadianClock.suggestedBaseFrequency)
+            _isGeneratingPtr?.pointee = true
             sessionTracker.start(
                 source: bioSourceManager.primarySource,
                 phase: circadianClock.currentPhase,
                 weather: weatherProvider.current.condition
             )
         } else {
+            _isGeneratingPtr?.pointee = false
             ambienceSynth.noteOff()
             lastCompletedSession = sessionTracker.stop(
                 source: bioSourceManager.primarySource,
@@ -279,8 +298,8 @@ final class SoundscapeEngine {
     }
 
     nonisolated deinit {
-        // Timers and source node cleaned up by ARC
-        // Cannot call MainActor-isolated methods from nonisolated deinit
+        _isGeneratingPtr?.deinitialize(count: 1)
+        _isGeneratingPtr?.deallocate()
     }
 }
 
