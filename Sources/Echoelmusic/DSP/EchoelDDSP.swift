@@ -65,7 +65,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     // MARK: - Harmonic Parameters
 
     /// Fundamental frequency (Hz)
-    public var frequency: Float = 220.0
+    public var frequency: Float = 110.0      // A2 — deep, warm base
 
     /// Per-partial amplitudes (normalized 0-1)
     /// Index 0 = fundamental, index 1 = 2nd harmonic, etc.
@@ -75,7 +75,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var harmonicLevel: Float = 0.8
 
     /// Harmonicity: blend between harmonic and noise (0 = noise, 1 = pure harmonic)
-    public var harmonicity: Float = 0.7
+    public var harmonicity: Float = 0.85     // High harmonicity = warm, pure tone
 
     // MARK: - Noise Parameters
 
@@ -83,7 +83,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var noiseMagnitudes: [Float]
 
     /// Global noise amplitude (0-1)
-    public var noiseLevel: Float = 0.3
+    public var noiseLevel: Float = 0.05      // Very low noise — clean pad
 
     /// Noise color preset
     public var noiseColor: NoiseColor = .pink {
@@ -93,19 +93,19 @@ public final class EchoelDDSP: @unchecked Sendable {
     // MARK: - Envelope
 
     /// Global amplitude (0-1)
-    public var amplitude: Float = 0.8
+    public var amplitude: Float = 0.5        // Moderate — room for modulation
 
     /// Attack time (seconds)
-    public var attack: Float = 0.01
+    public var attack: Float = 2.0           // Slow fade in — pad character
 
     /// Decay time (seconds)
-    public var decay: Float = 0.1
+    public var decay: Float = 1.0            // Long decay — sustaining pad
 
     /// Sustain level (0-1)
     public var sustain: Float = 0.8
 
     /// Release time (seconds)
-    public var release: Float = 0.3
+    public var release: Float = 3.0           // Long release — ambient tail
 
     /// Envelope curve type
     public var envelopeCurve: EnvelopeCurve = .exponential
@@ -113,15 +113,15 @@ public final class EchoelDDSP: @unchecked Sendable {
     // MARK: - Convolution Reverb
 
     /// Reverb wet/dry mix (0 = dry, 1 = fully wet)
-    public var reverbMix: Float = 0.0
+    public var reverbMix: Float = 0.35        // Warm ambient reverb
 
     /// Reverb decay time in seconds (controls IR length)
-    public var reverbDecay: Float = 1.5
+    public var reverbDecay: Float = 3.0       // Long reverb tail — spacious
 
     // MARK: - Spectral Control
 
     /// Spectral envelope shape
-    public var spectralShape: SpectralShape = .natural {
+    public var spectralShape: SpectralShape = .dark {      // Dark = warm rolloff
         didSet {
             if morphTarget == nil {
                 updateSpectralEnvelope()
@@ -130,7 +130,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     }
 
     /// Spectral brightness (0 = dark, 1 = bright)
-    public var brightness: Float = 0.5 {
+    public var brightness: Float = 0.3 {      // Warm — low brightness default
         didSet { updateSpectralEnvelope() }
     }
 
@@ -708,45 +708,38 @@ public final class EchoelDDSP: @unchecked Sendable {
         lfHfRatio: Float = 0.5,
         coherenceTrend: Float = 0
     ) {
-        // 1. Coherence → Harmonicity (core mapping: pure vs noisy)
-        harmonicity = 0.3 + coherence * 0.7
+        // =====================================================================
+        // HEART RATE = PRIMARY MODULATION SOURCE
+        // Inspired by Mayer wave (~0.1Hz) and baroreflex oscillation (~0.15Hz)
+        // Heart rate drives filter sweep + amplitude pulse
+        // =====================================================================
 
-        // 2. HRV variability → Brightness (calm = warm, stressed = bright)
-        brightness = 0.2 + hrvVariability * 0.6
+        // 1. Heart rate → Low-frequency filter modulation
+        //    Maps normalized HR (0-1) to a slow filter sweep.
+        //    Resting HR = warm/closed, elevated HR = brighter/open
+        let hrFilterMod = heartRate * 0.4     // 0 → closed, 0.4 → open
+        brightness = 0.15 + hrFilterMod       // Range: 0.15 (very warm) to 0.55
         updateSpectralEnvelope()
 
-        // 3. Breathing phase → Amplitude modulation (breathe = swell)
-        amplitude = 0.4 + breathPhase * 0.35
+        // 2. Heart rate → Amplitude pulse (subtle heartbeat feel)
+        //    Convert normalized HR to BPM-scaled vibrato
+        //    60 BPM = 1 Hz, 120 BPM = 2 Hz
+        let bpmHz = heartRate * 2.0 + 0.5    // Range: 0.5 Hz to 2.5 Hz
+        vibratoRate = bpmHz
+        vibratoDepth = 0.08 + heartRate * 0.07  // Subtle: 0.08 to 0.15 semitones
 
-        // 4. Breathing depth → Noise filter sweep (deep breath = open filter)
-        noiseLevel = 0.1 + (1.0 - breathDepth) * 0.4
+        // 3. Coherence → Harmonicity (pure vs noisy)
+        //    High coherence = pure harmonic pad, low = slightly textured
+        harmonicity = 0.7 + coherence * 0.25   // Range: 0.7 to 0.95
 
-        // 5. Heart rate → Vibrato rate (subtle: 0-3Hz pulsing linked to heartbeat)
-        let bpmNormalized = heartRate
-        vibratoRate = bpmNormalized * 3.0
-        vibratoDepth = bpmNormalized * 0.15  // Max 0.15 semitones
+        // 4. HRV → Reverb depth (calm/high HRV = more spacious, stressed = dry)
+        reverbMix = 0.2 + hrvVariability * 0.35  // Range: 0.2 to 0.55
 
-        // 6. LF/HF ratio → Spectral tilt (sympathetic = bright attack, parasympathetic = warm)
-        let tilt = lfHfRatio
-        for i in 0..<harmonicCount {
-            let n = Float(i + 1)
-            let tiltFactor = pow(n / Float(harmonicCount), tilt - 0.5)
-            harmonicAmplitudes[i] *= tiltFactor
-        }
+        // 5. Breath phase → Gentle amplitude swell (secondary modulation)
+        amplitude = 0.35 + breathPhase * 0.2   // Range: 0.35 to 0.55
 
-        // 7. Coherence trend → Spectral morphing toward brighter/darker
-        if coherenceTrend > 0.1 {
-            // Rising coherence → morph toward natural (harmonic purity)
-            morphTarget = .natural
-            morphPosition = min(1.0, coherenceTrend)
-        } else if coherenceTrend < -0.1 {
-            // Falling coherence → morph toward metallic (tension)
-            morphTarget = .metallic
-            morphPosition = min(1.0, -coherenceTrend)
-        } else {
-            morphTarget = nil
-            morphPosition = 0
-        }
+        // 6. Noise stays very low — clean analog pad character
+        noiseLevel = 0.02 + (1.0 - coherence) * 0.06  // Range: 0.02 to 0.08
     }
 
     /// Legacy 3-parameter bio-reactive interface (backwards compatible)

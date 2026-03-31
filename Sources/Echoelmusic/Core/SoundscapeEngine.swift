@@ -31,9 +31,10 @@ final class SoundscapeEngine {
         let t = EchoelCellular(cellCount: 128, sampleRate: 48000)
         t.synthMode = .additive
         t.rule = .rule90  // Fractal — organic texture
-        t.gain = 0.15     // Subtle background layer
-        t.frequency = 110  // A2 base
-        t.evolutionRate = 8 // Slow evolution
+        t.gain = 0.06     // Very subtle — background shimmer only
+        t.frequency = 55   // A1 — deep sub-texture
+        t.evolutionRate = 3 // Very slow evolution — glacial movement
+        t.smoothing = 0.7  // High smoothing — no harsh transitions
         return t
     }()
 

@@ -11,10 +11,10 @@ enum CircadianPhase: String, Sendable, CaseIterable {
     /// Suggested base frequency range for this phase
     var baseFrequencyRange: ClosedRange<Float> {
         switch self {
-        case .sleep:    return 55...110     // A1-A2
-        case .wake:     return 110...220    // A2-A3
-        case .active:   return 165...330    // E3-E4
-        case .windDown: return 110...220    // A2-A3
+        case .sleep:    return 55...82      // A1-E2 — deep, sub-bass
+        case .wake:     return 82...110     // E2-A2 — gentle low
+        case .active:   return 110...165    // A2-E3 — warm mid
+        case .windDown: return 82...110     // E2-A2 — settling back
         }
     }
 
