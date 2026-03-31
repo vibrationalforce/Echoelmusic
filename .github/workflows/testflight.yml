@@ -278,15 +278,10 @@ jobs:
           ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          set +eo pipefail
-          fastlane ios setup_signing 2>&1 | tee /tmp/signing.log
-          RESULT=${PIPESTATUS[0]}
-          set -eo pipefail
-          if [ $RESULT -ne 0 ]; then
-            ERRORS=$(tail -30 /tmp/signing.log | tr '\n' ' | ')
-            echo "::error title=Signing Setup Failed::${ERRORS}"
-            exit 1
-          fi
+          echo "Skipping Fastlane cert — using xcodebuild -allowProvisioningUpdates for automatic signing"
+          echo "API Key: AuthKey_${ASC_KEY_ID}.p8"
+          echo "Team: ${APPLE_TEAM_ID}"
+          echo "Signing will be handled by xcodebuild archive step"
 
       - name: "Archive"
         env:
