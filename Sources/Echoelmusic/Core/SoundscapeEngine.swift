@@ -274,13 +274,12 @@ final class SoundscapeEngine {
     // MARK: - Environmental Modulation
 
     private func applyWeatherModulation(_ weather: WeatherSnapshot) {
-        // Temperature → reverb warmth (cold = wet/spacious, warm = dry/close)
-        let reverbBlend = (1.0 - weather.temperature.clamped(to: 0...1)) * 0.6
-        ambienceSynth.reverbMix = Float(reverbBlend)
-
-        // Wind → noise floor
-        let noiseFloor = weather.windSpeed.clamped(to: 0...1) * 0.15
-        ambienceSynth.noiseLevel = Float(noiseFloor) + 0.1
+        let reverbBlend = (1.0 - weather.temperature.clamped(to: 0...1)) * 0.4
+        let noiseFloor = weather.windSpeed.clamped(to: 0...1) * 0.1
+        for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
+            voice.reverbMix = Float(reverbBlend) + 0.15
+            voice.noiseLevel = Float(noiseFloor) + 0.01
+        }
     }
 
     private func applyCircadianModulation(_ phase: CircadianPhase) {

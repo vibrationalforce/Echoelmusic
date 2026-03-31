@@ -7,6 +7,8 @@ struct SettingsView: View {
     @Environment(SoundscapeEngine.self) private var engine
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showCameraMeasurement = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -82,17 +84,25 @@ struct SettingsView: View {
             Circle()
                 .fill(engine.bioSourceManager.isCameraActive ? Color.green : Color.gray.opacity(0.3))
                 .frame(width: 8, height: 8)
-            Text("Camera rPPG")
+            Text("Camera Pulse")
             Spacer()
-            Button(engine.bioSourceManager.isCameraActive ? "Stop" : "Start") {
-                if engine.bioSourceManager.isCameraActive {
+            if engine.bioSourceManager.isCameraActive {
+                Button("Stop") {
                     engine.bioSourceManager.stopCamera()
-                } else {
-                    engine.bioSourceManager.startCamera()
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            } else {
+                Button("Measure") {
+                    showCameraMeasurement = true
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+        }
+        .sheet(isPresented: $showCameraMeasurement) {
+            CameraMeasurementView()
+                .environment(engine)
         }
     }
 
