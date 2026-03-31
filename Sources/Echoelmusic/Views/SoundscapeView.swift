@@ -62,6 +62,12 @@ struct SoundscapeView: View {
 
                 Spacer()
 
+                // Harmony sliders
+                if engine.isPlaying {
+                    harmonySliders
+                        .padding(.bottom, 16)
+                }
+
                 // Bio metrics
                 bioDisplay
 
@@ -127,6 +133,36 @@ struct SoundscapeView: View {
                     .textCase(.uppercase)
                     .kerning(2)
             }
+        }
+    }
+
+    // MARK: - Harmony Sliders
+
+    private var harmonySliders: some View {
+        @Bindable var eng = engine
+        return VStack(spacing: 10) {
+            harmonySlider(label: "Root", value: $eng.mixRoot)
+            harmonySlider(label: "Fifth", value: $eng.mixFifth)
+            harmonySlider(label: "Octave", value: $eng.mixOctave)
+            harmonySlider(label: "High", value: $eng.mixHigh)
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func harmonySlider(label: String, value: Binding<Float>) -> some View {
+        HStack(spacing: 10) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.white.opacity(0.25))
+                .frame(width: 44, alignment: .leading)
+
+            Slider(value: value, in: 0...0.6)
+                .tint(.white.opacity(0.2))
+
+            Text(String(format: "%.0f%%", value.wrappedValue * 100))
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.2))
+                .frame(width: 30, alignment: .trailing)
         }
     }
 

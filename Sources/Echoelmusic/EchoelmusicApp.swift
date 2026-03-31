@@ -11,7 +11,6 @@ struct EchoelmusicApp: App {
     @State private var microphoneManager: MicrophoneManager
     @State private var soundscapeEngine: SoundscapeEngine
     @State private var store: EchoelStore
-    @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "onboardingComplete")
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -28,18 +27,7 @@ struct EchoelmusicApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                if hasCompletedOnboarding {
-                    SoundscapeView()
-                } else {
-                    OnboardingView(isComplete: $hasCompletedOnboarding)
-                        .onChange(of: hasCompletedOnboarding) { _, complete in
-                            if complete {
-                                UserDefaults.standard.set(true, forKey: "onboardingComplete")
-                            }
-                        }
-                }
-            }
+            SoundscapeView()
             .environment(audioEngine)
             .environment(EchoelBioEngine.shared)
             .environment(soundscapeEngine)

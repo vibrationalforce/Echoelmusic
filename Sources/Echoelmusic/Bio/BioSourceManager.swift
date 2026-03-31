@@ -1,5 +1,6 @@
 #if canImport(AVFoundation)
 import Foundation
+import AVFoundation
 import Observation
 
 /// Fuses multiple bio sources (Apple Watch, Camera rPPG, Oura Ring)
@@ -41,20 +42,38 @@ final class BioSourceManager {
         stopCamera()
     }
 
-    /// Start camera-based pulse detection (finger on lens)
+    /// Start camera-based pulse detection (finger on lens + torch)
     func startCamera() {
         guard cameraAnalyzer == nil else { return }
         let analyzer = CameraAnalyzer()
         analyzer.startCapture()
         cameraAnalyzer = analyzer
         isCameraActive = true
-        log.log(.info, category: .biofeedback, "Camera rPPG started")
+        enableTorch(true)
+        log.log(.info, category: .biofeedback, "Camera rPPG started with torch")
     }
 
     func stopCamera() {
+        enableTorch(false)
         cameraAnalyzer?.stopCapture()
         cameraAnalyzer = nil
         isCameraActive = false
+    }
+
+    /// Enable/disable camera torch for rPPG pulse illumination
+    private func enableTorch(_ on: Bool) {
+        #if canImport(AVFoundation) && !os(macOS)
+        guard let device = AVCaptureDevice.default(for: .video),
+              device.hasTorch else { return }
+        do {
+            try device.lockForConfiguration()
+            device.torchMode = on ? .on : .off
+            if on { try device.setTorchModeOn(level: 0.5) } // Half brightness
+            device.unlockForConfiguration()
+        } catch {
+            log.log(.warning, category: .biofeedback, "Torch control failed: \(error.localizedDescription)")
+        }
+        #endif
     }
 
     // MARK: - Fusion

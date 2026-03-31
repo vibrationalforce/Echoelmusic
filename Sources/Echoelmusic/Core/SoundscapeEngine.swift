@@ -23,20 +23,65 @@ final class SoundscapeEngine {
     private var circadianClock = CircadianClock()
     private var ouraClient: OuraRingClient?
 
-    /// DDSP synth — nonisolated(unsafe) because audio thread reads it
-    nonisolated(unsafe) private let ambienceSynth = EchoelDDSP(sampleRate: 48000)
+    // MARK: - Multi-Voice Chord Pad
+    // 4 DDSP voices in musical intervals = rich meditative chord
+    // User can mix levels via sliders
 
-    /// Cellular automata texture layer — evolving generative texture
+    /// Root voice (e.g. A2 = 110Hz)
+    nonisolated(unsafe) private let voiceRoot = EchoelDDSP(sampleRate: 48000)
+    /// Fifth (e.g. E3 = 165Hz, ratio 3:2)
+    nonisolated(unsafe) private let voiceFifth = EchoelDDSP(sampleRate: 48000)
+    /// Octave (e.g. A3 = 220Hz)
+    nonisolated(unsafe) private let voiceOctave = EchoelDDSP(sampleRate: 48000)
+    /// High shimmer (e.g. E4 = 330Hz, soft)
+    nonisolated(unsafe) private let voiceHigh = EchoelDDSP(sampleRate: 48000)
+
+    // User-controllable mix levels (exposed to UI via sliders)
+    var mixRoot: Float = 0.40 { didSet { _mixLevels.pointee = (mixRoot, mixFifth, mixOctave, mixHigh) } }
+    var mixFifth: Float = 0.25 { didSet { _mixLevels.pointee = (mixRoot, mixFifth, mixOctave, mixHigh) } }
+    var mixOctave: Float = 0.20 { didSet { _mixLevels.pointee = (mixRoot, mixFifth, mixOctave, mixHigh) } }
+    var mixHigh: Float = 0.10 { didSet { _mixLevels.pointee = (mixRoot, mixFifth, mixOctave, mixHigh) } }
+
+    /// Lock-free mix levels for audio thread
+    nonisolated(unsafe) private let _mixLevels: UnsafeMutablePointer<(Float, Float, Float, Float)> = {
+        let p = UnsafeMutablePointer<(Float, Float, Float, Float)>.allocate(capacity: 1)
+        p.initialize(to: (0.40, 0.25, 0.20, 0.10))
+        return p
+    }()
+
+    /// Cellular automata texture layer — subtle background shimmer
     nonisolated(unsafe) private let textureSynth: EchoelCellular = {
         let t = EchoelCellular(cellCount: 128, sampleRate: 48000)
         t.synthMode = .additive
-        t.rule = .rule90  // Fractal — organic texture
-        t.gain = 0.06     // Very subtle — background shimmer only
-        t.frequency = 55   // A1 — deep sub-texture
-        t.evolutionRate = 3 // Very slow evolution — glacial movement
-        t.smoothing = 0.7  // High smoothing — no harsh transitions
+        t.rule = .rule90
+        t.gain = 0.03       // Very quiet shimmer
+        t.frequency = 55
+        t.evolutionRate = 2  // Glacial
+        t.smoothing = 0.8
         return t
     }()
+
+    /// Configure all voices for warm meditative pad
+    private func configureVoices() {
+        for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
+            voice.harmonicity = 0.95      // Very pure
+            voice.noiseLevel = 0.01       // Almost no noise
+            voice.spectralShape = .dark   // Warm rolloff
+            voice.brightness = 0.2        // Dark and warm
+            voice.attack = 0.8            // Gentle fade in
+            voice.decay = 0.3
+            voice.sustain = 0.9           // Full sustain
+            voice.release = 2.0           // Long ambient tail
+            voice.reverbMix = 0.3
+            voice.reverbDecay = 2.5
+            voice.vibratoDepth = 0.03     // Very subtle
+        }
+        // Slight detuning for analog warmth
+        voiceFifth.vibratoRate = 0.1      // Slow drift
+        voiceOctave.vibratoRate = 0.07
+        voiceHigh.vibratoRate = 0.13
+        voiceHigh.brightness = 0.15       // Extra dark for high voice
+    }
 
     /// Pointer for lock-free audio thread flag — is the soundscape actively generating?
     nonisolated(unsafe) private var _isGeneratingPtr: UnsafeMutablePointer<Bool>?
@@ -58,13 +103,17 @@ final class SoundscapeEngine {
 
     func connect(audio: AudioEngine, bio: EchoelBioEngine) {
         self.audioEngine = audio
+        configureVoices()
 
         // Create source node with render block that pulls from DDSP
-        let synth = ambienceSynth
+        let root = voiceRoot
+        let fifth = voiceFifth
+        let octave = voiceOctave
+        let high = voiceHigh
         let texture = textureSynth
-        // Capture pre-allocated scratch buffers (COW — first mutation copies once, then reuses)
         let padRef = _padScratch
         let texRef = _texScratch
+        let mixPtr = _mixLevels
 
         // Capture pointer to atomic flag — safe for audio thread read
         nonisolated(unsafe) let isGeneratingPtr = UnsafeMutablePointer<Bool>.allocate(capacity: 1)
@@ -84,19 +133,28 @@ final class SoundscapeEngine {
                 return noErr
             }
 
-            // Use pre-allocated scratch buffers
+            // Render 4 voices into scratch buffers
             var pad = padRef
             var tex = texRef
             for i in 0..<count { pad[i] = 0; tex[i] = 0 }
 
-            synth.render(buffer: &pad, frameCount: count)
+            // Render each voice and mix with levels
+            var v1 = [Float](repeating: 0, count: count)
+            var v2 = [Float](repeating: 0, count: count)
+            var v3 = [Float](repeating: 0, count: count)
+            var v4 = [Float](repeating: 0, count: count)
+            root.render(buffer: &v1, frameCount: count)
+            fifth.render(buffer: &v2, frameCount: count)
+            octave.render(buffer: &v3, frameCount: count)
+            high.render(buffer: &v4, frameCount: count)
             texture.render(buffer: &tex, frameCount: count)
 
-            // Mix: pad + texture
+            // Mix all voices with user-controllable levels + texture
+            let mix = mixPtr.pointee
             for buffer in ablPointer {
                 guard let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
                 for i in 0..<count {
-                    data[i] = pad[i] + tex[i]
+                    data[i] = v1[i] * mix.0 + v2[i] * mix.1 + v3[i] * mix.2 + v4[i] * mix.3 + tex[i]
                 }
             }
             return noErr
@@ -128,8 +186,12 @@ final class SoundscapeEngine {
     func togglePlayback() {
         isPlaying.toggle()
         if isPlaying {
-            ambienceSynth.amplitude = 0.6
-            ambienceSynth.noteOn(frequency: circadianClock.suggestedBaseFrequency)
+            let baseFreq = circadianClock.suggestedBaseFrequency
+            // Start chord: root, fifth (3:2), octave (2:1), high fifth (3:1)
+            voiceRoot.noteOn(frequency: baseFreq)
+            voiceFifth.noteOn(frequency: baseFreq * 1.5)     // Perfect fifth
+            voiceOctave.noteOn(frequency: baseFreq * 2.0)    // Octave
+            voiceHigh.noteOn(frequency: baseFreq * 3.0)      // Octave + fifth
             _isGeneratingPtr?.pointee = true
             sessionTracker.start(
                 source: bioSourceManager.primarySource,
@@ -138,7 +200,10 @@ final class SoundscapeEngine {
             )
         } else {
             _isGeneratingPtr?.pointee = false
-            ambienceSynth.noteOff()
+            voiceRoot.noteOff()
+            voiceFifth.noteOff()
+            voiceOctave.noteOff()
+            voiceHigh.noteOff()
             lastCompletedSession = sessionTracker.stop(
                 source: bioSourceManager.primarySource,
                 phase: circadianClock.currentPhase,
@@ -174,19 +239,19 @@ final class SoundscapeEngine {
             circadianPhase: circadian
         )
 
-        // 4. Apply bio-reactive parameters to synth
+        // 4. Apply bio-reactive parameters to ALL voices
         // Heart rate is PRIMARY modulation source
-        // Normalize heart rate: 40-200 BPM → 0-1
         let normalizedHR = ((state.heartRate - 40) / 160).clamped(to: 0...1)
-        ambienceSynth.applyBioReactive(
-            coherence: Float(state.coherence),
-            hrvVariability: Float(state.hrv),
-            heartRate: Float(normalizedHR)
-        )
+        for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
+            voice.applyBioReactive(
+                coherence: Float(state.coherence),
+                hrvVariability: Float(state.hrv),
+                heartRate: Float(normalizedHR)
+            )
+        }
 
-        // 5. Update texture layer bio-reactivity
+        // 5. Update texture layer
         textureSynth.coherence = Float(state.coherence)
-        textureSynth.frequency = circadianClock.suggestedBaseFrequency * 0.5 // One octave below pad
 
         // 6. Apply weather modulation
         applyWeatherModulation(weather)
@@ -219,25 +284,26 @@ final class SoundscapeEngine {
     }
 
     private func applyCircadianModulation(_ phase: CircadianPhase) {
-        // Spectral shape based on phase
+        let shape: EchoelDDSP.SpectralShape
         switch phase {
-        case .sleep:
-            ambienceSynth.spectralShape = .dark
-        case .wake:
-            ambienceSynth.spectralShape = .natural
-        case .active:
-            ambienceSynth.spectralShape = .bright
-        case .windDown:
-            ambienceSynth.spectralShape = .natural
+        case .sleep:    shape = .dark
+        case .wake:     shape = .natural
+        case .active:   shape = .natural
+        case .windDown: shape = .dark
         }
 
-        // Adjust base frequency to circadian range
+        // Update base frequency and shape for all voices
         if isPlaying {
-            ambienceSynth.frequency = circadianClock.suggestedBaseFrequency
+            let baseFreq = circadianClock.suggestedBaseFrequency
+            voiceRoot.frequency = baseFreq
+            voiceFifth.frequency = baseFreq * 1.5
+            voiceOctave.frequency = baseFreq * 2.0
+            voiceHigh.frequency = baseFreq * 3.0
         }
 
-        // Adjust vibrato speed to circadian modulation speed
-        ambienceSynth.vibratoRate = 2.0 * phase.modulationSpeed
+        for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
+            voice.spectralShape = shape
+        }
     }
 
     /// Connect Oura Ring for enhanced circadian detection
@@ -310,6 +376,8 @@ final class SoundscapeEngine {
     nonisolated deinit {
         _isGeneratingPtr?.deinitialize(count: 1)
         _isGeneratingPtr?.deallocate()
+        _mixLevels.deinitialize(count: 1)
+        _mixLevels.deallocate()
         if let observer = routeChangeObserver {
             NotificationCenter.default.removeObserver(observer)
         }
