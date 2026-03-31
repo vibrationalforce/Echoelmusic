@@ -85,7 +85,7 @@ public protocol MemoryReleasable: AnyObject {
 ///     }
 /// }
 /// ```
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 @preconcurrency @MainActor
 @Observable
 public final class MemoryPressureHandler {
@@ -343,7 +343,7 @@ extension MemoryPressureHandler {
 // MARK: - Memory Cache Base Class
 
 /// Base class for memory-pressure-aware caches
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 open class MemoryAwareCache<Key: Hashable, Value>: MemoryReleasable {
 
     private var cache: [Key: CacheEntry] = [:]

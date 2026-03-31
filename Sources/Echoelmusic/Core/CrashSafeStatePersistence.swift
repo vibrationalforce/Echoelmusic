@@ -124,7 +124,7 @@ public struct SessionState: Codable, Sendable {
 ///     // Resume session
 /// }
 /// ```
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 @preconcurrency @MainActor
 @Observable
 public final class CrashSafeStatePersistence {
@@ -434,7 +434,7 @@ public final class CrashSafeStatePersistence {
 // MARK: - Session State Builder
 
 /// Builder for creating session state updates
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 public struct SessionStateBuilder {
 
     private var state: SessionState

@@ -29,7 +29,7 @@ import Foundation
 /// - Exactly ONE producer thread may call `enqueue()`
 /// - Exactly ONE consumer thread may call `dequeue()`
 /// - Multiple threads may call `count` and `isEmpty`
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 public final class SPSCQueue<Element> {
 
     // MARK: - Constants
@@ -279,7 +279,7 @@ public final class SPSCQueue<Element> {
 /// Specialized SPSC queue for video frames
 ///
 /// Holds Metal textures with timestamps for zero-copy frame transfer.
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 public final class VideoFrameQueue {
 
     /// Video frame with texture and timing
@@ -358,7 +358,7 @@ public final class VideoFrameQueue {
 /// Specialized SPSC queue for biometric data
 ///
 /// Designed for streaming bio data from HealthKit to audio/visual engines.
-@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, *)
+
 public final class BioDataQueue {
 
     /// Biometric data sample
