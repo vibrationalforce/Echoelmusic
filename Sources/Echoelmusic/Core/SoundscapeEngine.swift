@@ -45,7 +45,7 @@ final class SoundscapeEngine {
     nonisolated(unsafe) private var _texScratch = [Float](repeating: 0, count: 4096)
 
     /// NotificationCenter observer token for cleanup
-    private var routeChangeObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var routeChangeObserver: NSObjectProtocol?
 
     /// AVAudioSourceNode that bridges DDSP render to AVAudioEngine graph
     private var sourceNode: AVAudioSourceNode?
