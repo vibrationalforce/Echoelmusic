@@ -61,26 +61,35 @@ final class SoundscapeEngine {
         return t
     }()
 
-    /// Configure all voices for warm meditative pad
+    /// Configure all voices — dark trance pad (Timbaland "Cry Me A River" inspired)
+    /// Minor chord, filter sweep, pulsing LFO, analog character
     private func configureVoices() {
         for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
-            voice.harmonicity = 0.95      // Very pure
-            voice.noiseLevel = 0.01       // Almost no noise
-            voice.spectralShape = .dark   // Warm rolloff
-            voice.brightness = 0.2        // Dark and warm
-            voice.attack = 0.8            // Gentle fade in
-            voice.decay = 0.3
-            voice.sustain = 0.9           // Full sustain
-            voice.release = 2.0           // Long ambient tail
-            voice.reverbMix = 0.3
-            voice.reverbDecay = 2.5
-            voice.vibratoDepth = 0.03     // Very subtle
+            voice.harmonicity = 0.75       // Less pure = more analog/thick character
+            voice.noiseLevel = 0.04        // Slight noise = analog warmth
+            voice.spectralShape = .dark    // Dark rolloff
+            voice.brightness = 0.25        // Dark but not dead
+            voice.attack = 0.3             // Quick but smooth
+            voice.decay = 0.5
+            voice.sustain = 0.8            // Strong sustain
+            voice.release = 1.5
+            voice.reverbMix = 0.35         // Spacious
+            voice.reverbDecay = 2.0
+            voice.vibratoDepth = 0.06      // Slight detune wobble
         }
-        // Slight detuning for analog warmth
-        voiceFifth.vibratoRate = 0.1      // Slow drift
-        voiceOctave.vibratoRate = 0.07
-        voiceHigh.vibratoRate = 0.13
-        voiceHigh.brightness = 0.15       // Extra dark for high voice
+        // Individual voice character
+        voiceRoot.vibratoRate = 0.15       // Very slow drift
+        voiceRoot.brightness = 0.3         // Root slightly brighter
+
+        voiceFifth.vibratoRate = 0.12      // Different drift = phasing
+        voiceFifth.brightness = 0.2
+
+        voiceOctave.vibratoRate = 0.18
+        voiceOctave.brightness = 0.15      // Darker up top
+
+        voiceHigh.vibratoRate = 0.1
+        voiceHigh.brightness = 0.1         // Very dark shimmer
+        voiceHigh.harmonicity = 0.65       // More texture on high voice
     }
 
     /// Pointer for lock-free audio thread flag — is the soundscape actively generating?
@@ -187,11 +196,12 @@ final class SoundscapeEngine {
         isPlaying.toggle()
         if isPlaying {
             let baseFreq = circadianClock.suggestedBaseFrequency
-            // Start chord: root, fifth (3:2), octave (2:1), high fifth (3:1)
+            // Minor chord: root, minor 3rd (6:5), fifth (3:2), octave (2:1)
+            // Dark, moody, Timbaland-style
             voiceRoot.noteOn(frequency: baseFreq)
-            voiceFifth.noteOn(frequency: baseFreq * 1.5)     // Perfect fifth
-            voiceOctave.noteOn(frequency: baseFreq * 2.0)    // Octave
-            voiceHigh.noteOn(frequency: baseFreq * 3.0)      // Octave + fifth
+            voiceFifth.noteOn(frequency: baseFreq * 1.2)     // Minor third (6:5)
+            voiceOctave.noteOn(frequency: baseFreq * 1.5)    // Perfect fifth (3:2)
+            voiceHigh.noteOn(frequency: baseFreq * 2.0)      // Octave
             _isGeneratingPtr?.pointee = true
             sessionTracker.start(
                 source: bioSourceManager.primarySource,
@@ -295,9 +305,9 @@ final class SoundscapeEngine {
         if isPlaying {
             let baseFreq = circadianClock.suggestedBaseFrequency
             voiceRoot.frequency = baseFreq
-            voiceFifth.frequency = baseFreq * 1.5
-            voiceOctave.frequency = baseFreq * 2.0
-            voiceHigh.frequency = baseFreq * 3.0
+            voiceFifth.frequency = baseFreq * 1.2     // Minor third
+            voiceOctave.frequency = baseFreq * 1.5    // Fifth
+            voiceHigh.frequency = baseFreq * 2.0      // Octave
         }
 
         for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {

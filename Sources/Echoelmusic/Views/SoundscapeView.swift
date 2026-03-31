@@ -71,9 +71,13 @@ struct SoundscapeView: View {
                 // Bio metrics
                 bioDisplay
 
+                // Biofeedback signal status LED
+                signalStatusLED
+                    .padding(.top, 16)
+
                 // Play/Pause
                 playButton
-                    .padding(.top, 32)
+                    .padding(.top, 24)
                     .padding(.bottom, 16)
 
                 // Source indicator
@@ -132,6 +136,45 @@ struct SoundscapeView: View {
                     .foregroundStyle(.white.opacity(0.25))
                     .textCase(.uppercase)
                     .kerning(2)
+            }
+        }
+    }
+
+    // MARK: - Signal Status LED
+
+    private var signalStatusLED: some View {
+        let source = engine.bioSourceManager.primarySource
+        let conf = engine.bioSourceManager.confidence
+
+        let color: Color = {
+            if source == .fallback { return .gray }
+            if conf > 0.7 { return .green }
+            if conf > 0.4 { return .yellow }
+            return .red
+        }()
+
+        let label: String = {
+            if source == .fallback { return "No Signal" }
+            if conf > 0.7 { return "Signal Stable" }
+            if conf > 0.4 { return "Signal Weak" }
+            return "Searching..."
+        }()
+
+        return HStack(spacing: 8) {
+            // Pulsing LED dot
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+                .shadow(color: color.opacity(0.6), radius: source != .fallback ? 4 : 0)
+
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(color.opacity(0.7))
+
+            if source != .fallback {
+                Text("via \(source.displayName)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.2))
             }
         }
     }

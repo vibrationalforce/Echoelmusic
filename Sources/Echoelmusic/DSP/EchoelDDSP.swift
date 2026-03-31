@@ -75,7 +75,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var harmonicLevel: Float = 0.8
 
     /// Harmonicity: blend between harmonic and noise (0 = noise, 1 = pure harmonic)
-    public var harmonicity: Float = 0.92      // Very pure — clean analog pad
+    public var harmonicity: Float = 0.75      // Thick analog character — not too pure
 
     // MARK: - Noise Parameters
 
@@ -83,7 +83,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var noiseMagnitudes: [Float]
 
     /// Global noise amplitude (0-1)
-    public var noiseLevel: Float = 0.02      // Minimal noise — clean analog
+    public var noiseLevel: Float = 0.04      // Slight noise — analog grit
 
     /// Noise color preset
     public var noiseColor: NoiseColor = .pink {
@@ -130,7 +130,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     }
 
     /// Spectral brightness (0 = dark, 1 = bright)
-    public var brightness: Float = 0.3 {      // Warm — low brightness default
+    public var brightness: Float = 0.25 {     // Dark trance character
         didSet { updateSpectralEnvelope() }
     }
 
@@ -701,9 +701,9 @@ public final class EchoelDDSP: @unchecked Sendable {
     ///   - coherenceTrend: Coherence derivative (-1=dropping, 0=stable, 1=rising)
     /// Smoothed bio parameters — prevent per-frame artifacts
     private var _smoothedBrightness: Float = 0.25
-    private var _smoothedVibratoRate: Float = 1.0
-    private var _smoothedVibratoDepth: Float = 0.1
+    private var _smoothedAmplitude: Float = 0.45
     private var _spectralUpdateCounter: Int = 0
+    private var _lfoPhase: Float = 0  // Internal LFO for filter sweep
 
     public func applyBioReactive(
         coherence: Float,
@@ -715,43 +715,47 @@ public final class EchoelDDSP: @unchecked Sendable {
         coherenceTrend: Float = 0
     ) {
         // =====================================================================
-        // HEART RATE = PRIMARY MODULATION SOURCE
-        // Smooth all parameter changes to prevent clicks/artifacts
+        // HEART RATE = PRIMARY MODULATION
+        // Dark trance pad: filter sweep + amplitude pulse synced to HR
         // =====================================================================
 
-        let smoothCoeff: Float = 0.97  // Heavy smoothing — glacial parameter changes
+        let smoothCoeff: Float = 0.95
 
-        // 1. Heart rate → Filter brightness (smoothed)
-        let targetBrightness: Float = 0.15 + heartRate * 0.35
+        // 1. Heart rate → Filter sweep (LFO synced to approximate pulse rate)
+        //    HR normalized 0-1 maps to LFO speed: ~0.8 Hz (resting) to ~2 Hz (active)
+        let lfoSpeed: Float = 0.8 + heartRate * 1.2
+        _lfoPhase += lfoSpeed / 60.0  // 60 Hz update rate
+        if _lfoPhase > 1.0 { _lfoPhase -= 1.0 }
+        let lfoValue = (1.0 + sinf(_lfoPhase * .pi * 2)) * 0.5 // 0-1 sine LFO
+
+        // Filter sweep: dark (0.15) to slightly open (0.45) with LFO
+        let targetBrightness: Float = 0.15 + lfoValue * 0.25 + heartRate * 0.1
         _smoothedBrightness = _smoothedBrightness * smoothCoeff + targetBrightness * (1.0 - smoothCoeff)
         brightness = _smoothedBrightness
 
-        // Only recalculate spectral envelope every ~30 frames (2x/sec at 60Hz)
+        // Recalculate spectral envelope 4x/sec
         _spectralUpdateCounter += 1
-        if _spectralUpdateCounter >= 30 {
+        if _spectralUpdateCounter >= 15 {
             _spectralUpdateCounter = 0
             updateSpectralEnvelope()
         }
 
-        // 2. Heart rate → Vibrato (smoothed — subtle heartbeat pulse)
-        let targetRate: Float = 0.8 + heartRate * 1.2   // 0.8 - 2.0 Hz
-        let targetDepth: Float = 0.05 + heartRate * 0.05 // 0.05 - 0.10 semitones
-        _smoothedVibratoRate = _smoothedVibratoRate * smoothCoeff + targetRate * (1.0 - smoothCoeff)
-        _smoothedVibratoDepth = _smoothedVibratoDepth * smoothCoeff + targetDepth * (1.0 - smoothCoeff)
-        vibratoRate = _smoothedVibratoRate
-        vibratoDepth = _smoothedVibratoDepth
+        // 2. Heart rate → Amplitude pulse (subtle pump synced to heartbeat)
+        let ampPulse: Float = 0.4 + lfoValue * 0.15  // 0.4 to 0.55
+        _smoothedAmplitude = _smoothedAmplitude * smoothCoeff + ampPulse * (1.0 - smoothCoeff)
+        amplitude = _smoothedAmplitude
 
-        // 3. Coherence → Harmonicity (already smooth from bio engine)
-        harmonicity = 0.85 + coherence * 0.1   // Range: 0.85 to 0.95
+        // 3. Vibrato: very slow detune drift (not heartbeat-synced — just analog feel)
+        // vibratoRate and vibratoDepth set in configureVoices(), not changed here
 
-        // 4. HRV → Reverb depth
-        reverbMix = 0.15 + hrvVariability * 0.25  // Range: 0.15 to 0.40
+        // 4. Coherence → Harmonicity (calm = slightly purer)
+        harmonicity = 0.65 + coherence * 0.2   // 0.65 to 0.85 — always thick
 
-        // 5. Amplitude stays stable — no breath modulation
-        amplitude = 0.45
+        // 5. HRV → Reverb (calm = spacious)
+        reverbMix = 0.25 + hrvVariability * 0.2  // 0.25 to 0.45
 
-        // 6. Noise minimal
-        noiseLevel = 0.01 + (1.0 - coherence) * 0.03  // Range: 0.01 to 0.04
+        // 6. Noise — slight analog grit
+        noiseLevel = 0.02 + (1.0 - coherence) * 0.04  // 0.02 to 0.06
     }
 
     /// Legacy 3-parameter bio-reactive interface (backwards compatible)
