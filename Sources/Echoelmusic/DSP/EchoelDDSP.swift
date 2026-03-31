@@ -75,7 +75,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var harmonicLevel: Float = 0.8
 
     /// Harmonicity: blend between harmonic and noise (0 = noise, 1 = pure harmonic)
-    public var harmonicity: Float = 0.85     // High harmonicity = warm, pure tone
+    public var harmonicity: Float = 0.92      // Very pure — clean analog pad
 
     // MARK: - Noise Parameters
 
@@ -83,7 +83,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var noiseMagnitudes: [Float]
 
     /// Global noise amplitude (0-1)
-    public var noiseLevel: Float = 0.05      // Very low noise — clean pad
+    public var noiseLevel: Float = 0.02      // Minimal noise — clean analog
 
     /// Noise color preset
     public var noiseColor: NoiseColor = .pink {
@@ -96,16 +96,16 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var amplitude: Float = 0.5        // Moderate — room for modulation
 
     /// Attack time (seconds)
-    public var attack: Float = 2.0           // Slow fade in — pad character
+    public var attack: Float = 0.5            // Half second — audible but smooth
 
     /// Decay time (seconds)
-    public var decay: Float = 1.0            // Long decay — sustaining pad
+    public var decay: Float = 0.5             // Moderate decay into sustain
 
     /// Sustain level (0-1)
     public var sustain: Float = 0.8
 
     /// Release time (seconds)
-    public var release: Float = 3.0           // Long release — ambient tail
+    public var release: Float = 2.0            // Ambient release tail
 
     /// Envelope curve type
     public var envelopeCurve: EnvelopeCurve = .exponential
@@ -113,10 +113,10 @@ public final class EchoelDDSP: @unchecked Sendable {
     // MARK: - Convolution Reverb
 
     /// Reverb wet/dry mix (0 = dry, 1 = fully wet)
-    public var reverbMix: Float = 0.35        // Warm ambient reverb
+    public var reverbMix: Float = 0.25         // Moderate reverb
 
     /// Reverb decay time in seconds (controls IR length)
-    public var reverbDecay: Float = 3.0       // Long reverb tail — spacious
+    public var reverbDecay: Float = 2.0        // Moderate reverb tail
 
     // MARK: - Spectral Control
 
@@ -699,6 +699,12 @@ public final class EchoelDDSP: @unchecked Sendable {
     ///   - breathDepth: Breathing depth (0-1)
     ///   - lfHfRatio: LF/HF power ratio (normalized 0-1)
     ///   - coherenceTrend: Coherence derivative (-1=dropping, 0=stable, 1=rising)
+    /// Smoothed bio parameters — prevent per-frame artifacts
+    private var _smoothedBrightness: Float = 0.25
+    private var _smoothedVibratoRate: Float = 1.0
+    private var _smoothedVibratoDepth: Float = 0.1
+    private var _spectralUpdateCounter: Int = 0
+
     public func applyBioReactive(
         coherence: Float,
         hrvVariability: Float = 0.5,
@@ -710,36 +716,42 @@ public final class EchoelDDSP: @unchecked Sendable {
     ) {
         // =====================================================================
         // HEART RATE = PRIMARY MODULATION SOURCE
-        // Inspired by Mayer wave (~0.1Hz) and baroreflex oscillation (~0.15Hz)
-        // Heart rate drives filter sweep + amplitude pulse
+        // Smooth all parameter changes to prevent clicks/artifacts
         // =====================================================================
 
-        // 1. Heart rate → Low-frequency filter modulation
-        //    Maps normalized HR (0-1) to a slow filter sweep.
-        //    Resting HR = warm/closed, elevated HR = brighter/open
-        let hrFilterMod = heartRate * 0.4     // 0 → closed, 0.4 → open
-        brightness = 0.15 + hrFilterMod       // Range: 0.15 (very warm) to 0.55
-        updateSpectralEnvelope()
+        let smoothCoeff: Float = 0.97  // Heavy smoothing — glacial parameter changes
 
-        // 2. Heart rate → Amplitude pulse (subtle heartbeat feel)
-        //    Convert normalized HR to BPM-scaled vibrato
-        //    60 BPM = 1 Hz, 120 BPM = 2 Hz
-        let bpmHz = heartRate * 2.0 + 0.5    // Range: 0.5 Hz to 2.5 Hz
-        vibratoRate = bpmHz
-        vibratoDepth = 0.08 + heartRate * 0.07  // Subtle: 0.08 to 0.15 semitones
+        // 1. Heart rate → Filter brightness (smoothed)
+        let targetBrightness: Float = 0.15 + heartRate * 0.35
+        _smoothedBrightness = _smoothedBrightness * smoothCoeff + targetBrightness * (1.0 - smoothCoeff)
+        brightness = _smoothedBrightness
 
-        // 3. Coherence → Harmonicity (pure vs noisy)
-        //    High coherence = pure harmonic pad, low = slightly textured
-        harmonicity = 0.7 + coherence * 0.25   // Range: 0.7 to 0.95
+        // Only recalculate spectral envelope every ~30 frames (2x/sec at 60Hz)
+        _spectralUpdateCounter += 1
+        if _spectralUpdateCounter >= 30 {
+            _spectralUpdateCounter = 0
+            updateSpectralEnvelope()
+        }
 
-        // 4. HRV → Reverb depth (calm/high HRV = more spacious, stressed = dry)
-        reverbMix = 0.2 + hrvVariability * 0.35  // Range: 0.2 to 0.55
+        // 2. Heart rate → Vibrato (smoothed — subtle heartbeat pulse)
+        let targetRate: Float = 0.8 + heartRate * 1.2   // 0.8 - 2.0 Hz
+        let targetDepth: Float = 0.05 + heartRate * 0.05 // 0.05 - 0.10 semitones
+        _smoothedVibratoRate = _smoothedVibratoRate * smoothCoeff + targetRate * (1.0 - smoothCoeff)
+        _smoothedVibratoDepth = _smoothedVibratoDepth * smoothCoeff + targetDepth * (1.0 - smoothCoeff)
+        vibratoRate = _smoothedVibratoRate
+        vibratoDepth = _smoothedVibratoDepth
 
-        // 5. Breath phase → Gentle amplitude swell (secondary modulation)
-        amplitude = 0.35 + breathPhase * 0.2   // Range: 0.35 to 0.55
+        // 3. Coherence → Harmonicity (already smooth from bio engine)
+        harmonicity = 0.85 + coherence * 0.1   // Range: 0.85 to 0.95
 
-        // 6. Noise stays very low — clean analog pad character
-        noiseLevel = 0.02 + (1.0 - coherence) * 0.06  // Range: 0.02 to 0.08
+        // 4. HRV → Reverb depth
+        reverbMix = 0.15 + hrvVariability * 0.25  // Range: 0.15 to 0.40
+
+        // 5. Amplitude stays stable — no breath modulation
+        amplitude = 0.45
+
+        // 6. Noise minimal
+        noiseLevel = 0.01 + (1.0 - coherence) * 0.03  // Range: 0.01 to 0.04
     }
 
     /// Legacy 3-parameter bio-reactive interface (backwards compatible)

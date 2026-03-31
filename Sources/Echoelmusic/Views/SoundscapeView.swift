@@ -98,10 +98,10 @@ struct SoundscapeView: View {
 
     private var coherenceRing: some View {
         let coherence = engine.state.coherence
-        let breathPhase = engine.state.breathPhase
+        let hr = engine.state.heartRate
 
         return ZStack {
-            // Outer ring — coherence level
+            // Outer ring — coherence glow
             Circle()
                 .stroke(
                     Color.white.opacity(0.03 + coherence * 0.12),
@@ -109,18 +109,14 @@ struct SoundscapeView: View {
                 )
                 .frame(width: 200, height: 200)
 
-            // Inner pulse — breath phase
+            // Inner pulse — heart rate driven (subtle glow)
             Circle()
-                .fill(Color.white.opacity(0.02 + breathPhase * 0.06))
-                .frame(
-                    width: 120 + breathPhase * 40,
-                    height: 120 + breathPhase * 40
-                )
-                .animation(.easeInOut(duration: 1.5), value: breathPhase)
+                .fill(Color.white.opacity(0.02 + coherence * 0.04))
+                .frame(width: 140, height: 140)
 
-            // Heart rate number
+            // Heart rate number (primary)
             VStack(spacing: 4) {
-                Text("\(Int(engine.state.heartRate))")
+                Text("\(Int(hr))")
                     .font(.system(size: 48, weight: .light, design: .rounded))
                     .foregroundStyle(.white.opacity(0.7))
                     .contentTransition(.numericText())

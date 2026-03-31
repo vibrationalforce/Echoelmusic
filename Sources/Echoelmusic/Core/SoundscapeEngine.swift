@@ -165,9 +165,7 @@ final class SoundscapeEngine {
         state = SoundscapeState(
             heartRate: snapshot.heartRate,
             hrv: snapshot.hrvNormalized,
-            breathPhase: snapshot.breathPhase,
             coherence: snapshot.coherence,
-            lfHfRatio: snapshot.lfHfRatio,
             source: snapshot.source,
             temperature: weather.temperature,
             weatherCondition: weather.condition,
@@ -177,13 +175,13 @@ final class SoundscapeEngine {
         )
 
         // 4. Apply bio-reactive parameters to synth
+        // Heart rate is PRIMARY modulation source
         // Normalize heart rate: 40-200 BPM → 0-1
         let normalizedHR = ((state.heartRate - 40) / 160).clamped(to: 0...1)
         ambienceSynth.applyBioReactive(
             coherence: Float(state.coherence),
             hrvVariability: Float(state.hrv),
-            heartRate: Float(normalizedHR),
-            breathPhase: Float(state.breathPhase)
+            heartRate: Float(normalizedHR)
         )
 
         // 5. Update texture layer bio-reactivity
@@ -321,12 +319,10 @@ final class SoundscapeEngine {
 // MARK: - Unified State
 
 struct SoundscapeState {
-    // Bio
+    // Bio (heart rate is primary)
     var heartRate: Double = 72
     var hrv: Double = 0.5
-    var breathPhase: Double = 0.5
     var coherence: Double = 0.5
-    var lfHfRatio: Double = 1.0
     var source: BioDataSource = .fallback
 
     // Weather
