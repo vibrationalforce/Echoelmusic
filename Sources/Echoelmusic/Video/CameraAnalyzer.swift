@@ -212,6 +212,37 @@ final class CameraAnalyzer {
 
     // MARK: - Pulse Detection (Bandpass + Peak)
 
+    /// Process pre-extracted RGB values (called from MainActor via BioSourceManager)
+    /// This avoids the @MainActor crash from accessing pixel buffers on background threads.
+    func processExtractedRGB(avgR: Float, avgG: Float, avgB: Float) {
+        brightness = (avgR + avgG + avgB) / 3.0
+        redChannel = avgR
+
+        // Variance approximation (use red channel deviation from mean)
+        let varianceR: Float = 0.01 // Approximation — full variance needs buffer history
+
+        // Finger detection
+        let isFingerFrame = avgR > 0.5 && avgR > avgG * 1.3 && avgR > avgB * 1.5
+
+        fingerDetectionBuffer.append(isFingerFrame)
+        if fingerDetectionBuffer.count > fingerDetectionWindow {
+            fingerDetectionBuffer.removeFirst()
+        }
+
+        let fingerFrames = fingerDetectionBuffer.filter { $0 }.count
+        isFingerDetected = fingerFrames > (fingerDetectionWindow * 7 / 10)
+
+        // Pulse detection
+        if isPulseDetecting && isFingerDetected {
+            processPulseSignal(avgR: avgR)
+        } else if isPulseDetecting && !isFingerDetected {
+            bpmConfidence = max(0, bpmConfidence - 0.02)
+            signalQuality = max(0, signalQuality - 0.02)
+        }
+    }
+
+    // MARK: - Pulse Signal Processing
+
     /// Toggle pulse detection on/off
     func togglePulseDetection() {
         isPulseDetecting.toggle()

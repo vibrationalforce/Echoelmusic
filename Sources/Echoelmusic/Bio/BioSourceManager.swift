@@ -50,7 +50,40 @@ final class BioSourceManager {
 
         let capture = CameraCapture()
         capture.onFrame = { [weak analyzer] pixelBuffer in
-            analyzer?.analyzePixelBuffer(pixelBuffer)
+            // Extract RGB averages on capture thread (safe — pixel buffer is valid here)
+            CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+
+            let width = CVPixelBufferGetWidth(pixelBuffer)
+            let height = CVPixelBufferGetHeight(pixelBuffer)
+            guard let base = CVPixelBufferGetBaseAddress(pixelBuffer) else { return }
+            let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+
+            // Quick center-region average (every 8th pixel for speed)
+            let regionX = width / 4, regionY = height / 4
+            let regionW = width / 2, regionH = height / 2
+            var totalR: Float = 0, totalG: Float = 0, totalB: Float = 0, count: Float = 0
+
+            for y in stride(from: regionY, to: regionY + regionH, by: 8) {
+                let row = base.advanced(by: y * bytesPerRow)
+                for x in stride(from: regionX, to: regionX + regionW, by: 8) {
+                    let pixel = row.advanced(by: x * 4)
+                    totalB += Float(pixel.load(fromByteOffset: 0, as: UInt8.self))
+                    totalG += Float(pixel.load(fromByteOffset: 1, as: UInt8.self))
+                    totalR += Float(pixel.load(fromByteOffset: 2, as: UInt8.self))
+                    count += 1
+                }
+            }
+
+            guard count > 0 else { return }
+            let avgR = totalR / count / 255.0
+            let avgG = totalG / count / 255.0
+            let avgB = totalB / count / 255.0
+
+            // Dispatch results to MainActor for CameraAnalyzer
+            Task { @MainActor [weak analyzer] in
+                analyzer?.processExtractedRGB(avgR: avgR, avgG: avgG, avgB: avgB)
+            }
         }
 
         cameraAnalyzer = analyzer
