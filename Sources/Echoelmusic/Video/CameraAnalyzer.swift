@@ -45,6 +45,9 @@ final class CameraAnalyzer {
     /// Calculated RMSSD from camera PPG
     var rmssd: Double = 0
 
+    /// Frame counter for debugging
+    private var frameCount: Int = 0
+
     // MARK: - Filter Modulation Output
 
     /// Normalized modulation value (0–1) from camera analysis
@@ -198,7 +201,7 @@ final class CameraAnalyzer {
 
         // Finger is "detected" when >70% of recent frames match
         let fingerFrames = fingerDetectionBuffer.filter { $0 }.count
-        isFingerDetected = fingerFrames > (fingerDetectionWindow * 7 / 10)
+        isFingerDetected = fingerFrames > (fingerDetectionWindow / 2)
 
         // Pulse detection
         if isPulseDetecting && isFingerDetected {
@@ -215,14 +218,18 @@ final class CameraAnalyzer {
     /// Process pre-extracted RGB values (called from MainActor via BioSourceManager)
     /// This avoids the @MainActor crash from accessing pixel buffers on background threads.
     func processExtractedRGB(avgR: Float, avgG: Float, avgB: Float) {
+        frameCount += 1
         brightness = (avgR + avgG + avgB) / 3.0
         redChannel = avgR
 
-        // Variance approximation (use red channel deviation from mean)
-        let varianceR: Float = 0.01 // Approximation — full variance needs buffer history
+        // Log every 60 frames (~2 sec at 30fps)
+        if frameCount % 60 == 0 {
+            log.log(.info, category: .biofeedback,
+                "rPPG frame \(frameCount): R=\(String(format:"%.2f",avgR)) G=\(String(format:"%.2f",avgG)) B=\(String(format:"%.2f",avgB)) finger=\(isFingerDetected) pulse=\(isPulseDetecting) bpm=\(Int(estimatedBPM))")
+        }
 
-        // Finger detection
-        let isFingerFrame = avgR > 0.5 && avgR > avgG * 1.3 && avgR > avgB * 1.5
+        // Finger detection: high red dominance when finger covers lens + torch on
+        let isFingerFrame = avgR > 0.4 && avgR > avgG * 1.2 && avgR > avgB * 1.3
 
         fingerDetectionBuffer.append(isFingerFrame)
         if fingerDetectionBuffer.count > fingerDetectionWindow {
@@ -230,7 +237,7 @@ final class CameraAnalyzer {
         }
 
         let fingerFrames = fingerDetectionBuffer.filter { $0 }.count
-        isFingerDetected = fingerFrames > (fingerDetectionWindow * 7 / 10)
+        isFingerDetected = fingerFrames > (fingerDetectionWindow / 2)
 
         // Pulse detection
         if isPulseDetecting && isFingerDetected {

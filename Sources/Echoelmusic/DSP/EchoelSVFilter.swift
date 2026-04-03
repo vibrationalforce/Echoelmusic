@@ -24,7 +24,7 @@ public final class EchoelSVFilter: @unchecked Sendable {
     }
 
     /// Resonance [0-1] (0.7 = musical, 0.95 = near self-oscillation)
-    public var resonance: Float = 0.5 {
+    public var resonance: Float = 0.3 {      // Gentle — no harsh peaking
         didSet { updateCoefficients() }
     }
 

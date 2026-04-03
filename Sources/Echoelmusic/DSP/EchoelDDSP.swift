@@ -75,7 +75,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var harmonicLevel: Float = 0.8
 
     /// Harmonicity: blend between harmonic and noise (0 = noise, 1 = pure harmonic)
-    public var harmonicity: Float = 0.75      // Thick analog character — not too pure
+    public var harmonicity: Float = 0.88      // Clean pad — mostly harmonic
 
     // MARK: - Noise Parameters
 
@@ -83,7 +83,7 @@ public final class EchoelDDSP: @unchecked Sendable {
     public var noiseMagnitudes: [Float]
 
     /// Global noise amplitude (0-1)
-    public var noiseLevel: Float = 0.04      // Slight noise — analog grit
+    public var noiseLevel: Float = 0.01      // Minimal noise — clean
 
     /// Noise color preset
     public var noiseColor: NoiseColor = .pink {
@@ -119,10 +119,10 @@ public final class EchoelDDSP: @unchecked Sendable {
     public let filterLFO = EchoelLFO(sampleRate: 48000)
 
     /// LFO modulation depth on filter cutoff [0-1]
-    public var lfoToFilterDepth: Float = 0.5
+    public var lfoToFilterDepth: Float = 0.15     // Gentle filter sweep
 
     /// Base filter cutoff (before modulation) [20-20000 Hz]
-    public var filterCutoff: Float = 3000.0
+    public var filterCutoff: Float = 5000.0     // Start more open
 
     /// Isochronic brainwave entrainment
     public let entrainment = EchoelEntrainment(sampleRate: 48000)

@@ -17,10 +17,10 @@ public final class EchoelLFO: @unchecked Sendable {
     // MARK: - Parameters
 
     /// LFO rate in Hz [0.01 - 20]
-    public var rate: Float = 1.0
+    public var rate: Float = 0.2       // Slow — one sweep every 5 seconds
 
     /// LFO depth [0 - 1]
-    public var depth: Float = 0.5
+    public var depth: Float = 0.3      // Gentle modulation
 
     /// Waveform shape
     public var waveform: Waveform = .sine

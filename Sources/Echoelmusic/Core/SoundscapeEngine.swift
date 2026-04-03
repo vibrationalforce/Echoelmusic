@@ -67,35 +67,34 @@ final class SoundscapeEngine {
     /// All 4 DDSP voices (for SoundDesignView access)
     var allVoices: [EchoelDDSP] { [voiceRoot, voiceFifth, voiceOctave, voiceHigh] }
 
-    /// Configure all voices — dark trance pad (Timbaland "Cry Me A River" inspired)
-    /// Minor chord, filter sweep, pulsing LFO, analog character
+    /// Configure all voices — warm meditative pad
+    /// Clean, gentle, musical. User tunes via Sound Design panel.
     private func configureVoices() {
         for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
-            voice.harmonicity = 0.75       // Less pure = more analog/thick character
-            voice.noiseLevel = 0.04        // Slight noise = analog warmth
-            voice.spectralShape = .dark    // Dark rolloff
-            voice.brightness = 0.25        // Dark but not dead
-            voice.attack = 0.3             // Quick but smooth
-            voice.decay = 0.5
-            voice.sustain = 0.8            // Strong sustain
-            voice.release = 1.5
-            voice.reverbMix = 0.35         // Spacious
+            voice.harmonicity = 0.9        // Clean harmonic
+            voice.noiseLevel = 0.01        // Almost silent noise
+            voice.spectralShape = .dark    // Warm rolloff
+            voice.brightness = 0.2         // Dark and warm
+            voice.attack = 0.5             // Smooth fade in
+            voice.decay = 0.3
+            voice.sustain = 0.85           // Full sustain
+            voice.release = 2.0
+            voice.reverbMix = 0.3          // Spacious
             voice.reverbDecay = 2.0
-            voice.vibratoDepth = 0.06      // Slight detune wobble
+            voice.vibratoDepth = 0.02      // Very subtle drift
+            voice.filterCutoff = 5000      // Open filter
+            voice.lfoToFilterDepth = 0.1   // Very gentle sweep
+            voice.filter.resonance = 0.2   // No harsh peaks
+            voice.filterLFO.rate = 0.15    // Very slow LFO
+            voice.filterLFO.depth = 0.2    // Subtle
+            voice.entrainment.depth = 0.0  // Off by default — user enables
         }
-        // Individual voice character
-        voiceRoot.vibratoRate = 0.15       // Very slow drift
-        voiceRoot.brightness = 0.3         // Root slightly brighter
-
-        voiceFifth.vibratoRate = 0.12      // Different drift = phasing
-        voiceFifth.brightness = 0.2
-
-        voiceOctave.vibratoRate = 0.18
-        voiceOctave.brightness = 0.15      // Darker up top
-
-        voiceHigh.vibratoRate = 0.1
-        voiceHigh.brightness = 0.1         // Very dark shimmer
-        voiceHigh.harmonicity = 0.65       // More texture on high voice
+        // Slight per-voice detuning for width
+        voiceRoot.vibratoRate = 0.08
+        voiceFifth.vibratoRate = 0.06
+        voiceOctave.vibratoRate = 0.1
+        voiceHigh.vibratoRate = 0.05
+        voiceHigh.amplitude = 0.35         // High voice quieter
     }
 
     /// Pointer for lock-free audio thread flag — is the soundscape actively generating?
