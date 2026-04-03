@@ -23,6 +23,9 @@ final class SoundscapeEngine {
     private var circadianClock = CircadianClock()
     private var ouraClient: OuraRingClient?
 
+    /// MIDI input receiver (MIDI 2.0 + MPE)
+    let midiInput = MIDIInput()
+
     // MARK: - Multi-Voice Chord Pad
     // 4 DDSP voices in musical intervals = rich meditative chord
     // User can mix levels via sliders
@@ -189,6 +192,9 @@ final class SoundscapeEngine {
         // Monitor audio route changes for Bluetooth speakers
         setupAudioRouteMonitoring()
 
+        // Wire MIDI input to DDSP voices
+        setupMIDI()
+
         log.log(.info, category: .system, "SoundscapeEngine connected — source node attached")
     }
 
@@ -315,6 +321,47 @@ final class SoundscapeEngine {
 
         for voice in [voiceRoot, voiceFifth, voiceOctave, voiceHigh] {
             voice.spectralShape = shape
+        }
+    }
+
+    // MARK: - MIDI
+
+    private func setupMIDI() {
+        // Note On → play frequency on root voice (or all voices as chord)
+        midiInput.onNoteOn = { [weak self] note, velocity, channel in
+            guard let self else { return }
+            let freq = 440.0 * powf(2.0, Float(note - 69) / 12.0) // MIDI to Hz
+            self.voiceRoot.noteOn(frequency: freq)
+            self.voiceRoot.amplitude = velocity * 0.5
+            // Build chord from root
+            self.voiceFifth.noteOn(frequency: freq * 1.2)   // Minor third
+            self.voiceOctave.noteOn(frequency: freq * 1.5)  // Fifth
+            self.voiceHigh.noteOn(frequency: freq * 2.0)    // Octave
+            self._isGeneratingPtr?.pointee = true
+            self.isPlaying = true
+        }
+        midiInput.onNoteOff = { [weak self] note, channel in
+            self?.voiceRoot.noteOff()
+            self?.voiceFifth.noteOff()
+            self?.voiceOctave.noteOff()
+            self?.voiceHigh.noteOff()
+        }
+        // CC1 (Mod Wheel) → filter cutoff
+        midiInput.onCC = { [weak self] cc, value, channel in
+            guard let self else { return }
+            if cc == 1 {
+                let cutoff = 200.0 + value * 8000.0
+                for voice in self.allVoices { voice.filterCutoff = cutoff }
+            }
+        }
+        // Pitch bend → frequency detune
+        midiInput.onPitchBend = { [weak self] bend, channel in
+            guard let self else { return }
+            let semitones = bend * 2.0 // ±2 semitones range
+            let ratio = powf(2.0, semitones / 12.0)
+            // Apply pitch bend to root, others follow proportionally
+            let baseFreq = self.voiceRoot.frequency
+            self.voiceRoot.frequency = baseFreq * ratio
         }
     }
 

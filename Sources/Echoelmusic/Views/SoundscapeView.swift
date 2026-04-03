@@ -137,6 +137,8 @@ struct SoundscapeView: View {
                     .textCase(.uppercase)
                     .kerning(2)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Heart rate \(Int(hr)) BPM, Coherence \(Int(coherence * 100)) percent")
         }
     }
 
