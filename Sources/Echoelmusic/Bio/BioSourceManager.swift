@@ -26,6 +26,7 @@ final class BioSourceManager {
     private let bioEngine = EchoelBioEngine.shared
     private var cameraAnalyzer: CameraAnalyzer?
     private let ouraClient = OuraRingClient.shared
+    private var cameraCapture: CameraCapture?
 
     /// Whether camera pulse detection is active
     var isCameraActive: Bool = false
@@ -46,16 +47,36 @@ final class BioSourceManager {
     func startCamera() {
         guard cameraAnalyzer == nil else { return }
         let analyzer = CameraAnalyzer()
-        analyzer.startCapture()
+        analyzer.startPulseDetection()
+
+        let capture = CameraCapture()
+        // Connect frame callback: captured frames → analyzer
+        capture.onFrame = { [weak analyzer] pixelBuffer in
+            analyzer?.analyzePixelBuffer(pixelBuffer)
+        }
+
+        Task {
+            do {
+                try await capture.start()
+                await MainActor.run { [weak self] in
+                    self?.enableTorch(true)
+                }
+                log.log(.info, category: .biofeedback, "Camera rPPG started — frames flowing to analyzer")
+            } catch {
+                log.log(.error, category: .biofeedback, "Camera start failed: \(error.localizedDescription)")
+            }
+        }
+
         cameraAnalyzer = analyzer
+        cameraCapture = capture
         isCameraActive = true
-        enableTorch(true)
-        log.log(.info, category: .biofeedback, "Camera rPPG started with torch")
     }
 
     func stopCamera() {
         enableTorch(false)
-        cameraAnalyzer?.stopCapture()
+        cameraCapture?.stop()
+        cameraCapture = nil
+        cameraAnalyzer?.stopPulseDetection()
         cameraAnalyzer = nil
         isCameraActive = false
     }

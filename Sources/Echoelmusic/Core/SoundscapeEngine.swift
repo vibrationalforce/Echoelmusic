@@ -61,6 +61,9 @@ final class SoundscapeEngine {
         return t
     }()
 
+    /// All 4 DDSP voices (for SoundDesignView access)
+    var allVoices: [EchoelDDSP] { [voiceRoot, voiceFifth, voiceOctave, voiceHigh] }
+
     /// Configure all voices — dark trance pad (Timbaland "Cry Me A River" inspired)
     /// Minor chord, filter sweep, pulsing LFO, analog character
     private func configureVoices() {

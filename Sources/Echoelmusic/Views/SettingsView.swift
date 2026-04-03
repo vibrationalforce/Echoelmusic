@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showCameraMeasurement = false
+    @State private var showSoundDesign = false
 
     var body: some View {
         NavigationStack {
@@ -42,6 +43,15 @@ struct SettingsView: View {
                     Text("Connect Bluetooth speakers via iOS Settings > Bluetooth.")
                 }
 
+                // Sound Design (debug)
+                Section {
+                    Button("Sound Design Panel") {
+                        showSoundDesign = true
+                    }
+                } header: {
+                    Text("Developer")
+                }
+
                 // Info
                 Section {
                     HStack {
@@ -63,6 +73,10 @@ struct SettingsView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showSoundDesign) {
+            SoundDesignView()
+                .environment(engine)
+        }
     }
 
     // MARK: - Rows

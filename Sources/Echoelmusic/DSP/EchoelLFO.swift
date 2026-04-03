@@ -1,0 +1,92 @@
+import Foundation
+
+/// Free-running Low Frequency Oscillator for modulation.
+/// Audio-thread safe — no allocation, no branching.
+public final class EchoelLFO: @unchecked Sendable {
+
+    // MARK: - Waveform
+
+    public enum Waveform: String, CaseIterable, Sendable {
+        case sine
+        case triangle
+        case square
+        case sawtooth
+        case sampleAndHold
+    }
+
+    // MARK: - Parameters
+
+    /// LFO rate in Hz [0.01 - 20]
+    public var rate: Float = 1.0
+
+    /// LFO depth [0 - 1]
+    public var depth: Float = 0.5
+
+    /// Waveform shape
+    public var waveform: Waveform = .sine
+
+    // MARK: - State
+
+    private var phase: Float = 0
+    private var sampleRate: Float
+    private var sAndHValue: Float = 0  // Sample & Hold current value
+
+    // MARK: - Init
+
+    public init(sampleRate: Float = 48000) {
+        self.sampleRate = sampleRate
+    }
+
+    // MARK: - Process
+
+    /// Get next LFO value. Returns [-depth, +depth]. Audio-thread safe.
+    @inline(__always)
+    public func next() -> Float {
+        // Advance phase
+        phase += rate / sampleRate
+        if phase >= 1.0 {
+            phase -= 1.0
+            // Update S&H on phase reset
+            sAndHValue = Float.random(in: -1...1)
+        }
+
+        let raw: Float
+        switch waveform {
+        case .sine:
+            raw = sinf(phase * Float.pi * 2)
+
+        case .triangle:
+            // 0→0.25: rise 0→1, 0.25→0.75: fall 1→-1, 0.75→1: rise -1→0
+            if phase < 0.25 {
+                raw = phase * 4.0
+            } else if phase < 0.75 {
+                raw = 1.0 - (phase - 0.25) * 4.0
+            } else {
+                raw = -1.0 + (phase - 0.75) * 4.0
+            }
+
+        case .square:
+            raw = phase < 0.5 ? 1.0 : -1.0
+
+        case .sawtooth:
+            raw = 2.0 * phase - 1.0
+
+        case .sampleAndHold:
+            raw = sAndHValue
+        }
+
+        return raw * depth
+    }
+
+    /// Get next LFO value as unipolar [0, depth]
+    @inline(__always)
+    public func nextUnipolar() -> Float {
+        return (next() + depth) * 0.5
+    }
+
+    /// Reset phase
+    public func reset() {
+        phase = 0
+        sAndHValue = 0
+    }
+}

@@ -110,6 +110,23 @@ public final class EchoelDDSP: @unchecked Sendable {
     /// Envelope curve type
     public var envelopeCurve: EnvelopeCurve = .exponential
 
+    // MARK: - Resonant Filter + LFO + Entrainment
+
+    /// State Variable Filter (lowpass/highpass/bandpass/notch)
+    public let filter = EchoelSVFilter(sampleRate: 48000)
+
+    /// Free-running LFO for filter modulation
+    public let filterLFO = EchoelLFO(sampleRate: 48000)
+
+    /// LFO modulation depth on filter cutoff [0-1]
+    public var lfoToFilterDepth: Float = 0.5
+
+    /// Base filter cutoff (before modulation) [20-20000 Hz]
+    public var filterCutoff: Float = 3000.0
+
+    /// Isochronic brainwave entrainment
+    public let entrainment = EchoelEntrainment(sampleRate: 48000)
+
     // MARK: - Convolution Reverb
 
     /// Reverb wet/dry mix (0 = dry, 1 = fully wet)
@@ -573,7 +590,17 @@ public final class EchoelDDSP: @unchecked Sendable {
             let mixed = harmonicSample * harmonicity + noiseSample * noiseLevel * (1.0 - harmonicity)
 
             // Apply envelope and gain
-            let sample = mixed * amplitude * envelopeValue
+            var sample = mixed * amplitude * envelopeValue
+
+            // --- Resonant Filter (SVF) ---
+            // LFO modulates filter cutoff around the base cutoff
+            let lfoMod = filterLFO.next()  // [-depth, +depth]
+            let modulatedCutoff = filterCutoff * (1.0 + lfoMod * lfoToFilterDepth)
+            filter.cutoff = max(20, min(modulatedCutoff, 18000))
+            sample = filter.process(sample)
+
+            // --- Isochronic Brainwave Entrainment ---
+            sample = entrainment.process(sample)
 
             if stereo {
                 buffer[frame * 2] = sample
