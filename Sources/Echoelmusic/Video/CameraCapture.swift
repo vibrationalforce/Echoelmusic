@@ -3,12 +3,13 @@ import Foundation
 import AVFoundation
 
 /// Minimal AVCaptureSession for rPPG pulse detection.
-/// Captures low-resolution video frames and delivers them via callback.
-/// The torch illuminates the finger for pulse signal extraction.
+/// Captures low-resolution video frames from the back camera.
+/// Delivers pixel buffers via callback for CameraAnalyzer processing.
 final class CameraCapture: NSObject, @unchecked Sendable {
 
     private let session = AVCaptureSession()
     private let captureQueue = DispatchQueue(label: "com.echoelmusic.camera.capture", qos: .userInitiated)
+    private let sessionQueue = DispatchQueue(label: "com.echoelmusic.camera.session")
 
     /// Called for each captured frame (on captureQueue — NOT main thread)
     nonisolated(unsafe) var onFrame: ((CVPixelBuffer) -> Void)?
@@ -18,54 +19,62 @@ final class CameraCapture: NSObject, @unchecked Sendable {
 
     // MARK: - Start
 
-    /// Start camera capture. Requests permission if needed.
     func start() async throws {
-        // 1. Check/request camera permission
+        // 1. Request camera permission
         let status = AVCaptureDevice.authorizationStatus(for: .video)
-        switch status {
-        case .notDetermined:
+        if status == .notDetermined {
             let granted = await AVCaptureDevice.requestAccess(for: .video)
-            guard granted else {
-                throw CameraCaptureError.permissionDenied
-            }
-        case .denied, .restricted:
+            guard granted else { throw CameraCaptureError.permissionDenied }
+        } else if status == .denied || status == .restricted {
             throw CameraCaptureError.permissionDenied
-        case .authorized:
-            break
-        @unknown default:
-            break
         }
 
-        // 2. Find back camera (for finger-on-lens rPPG)
+        // 2. Configure and start on background thread (required by Apple)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            sessionQueue.async { [weak self] in
+                guard let self else {
+                    continuation.resume(throwing: CameraCaptureError.configurationFailed)
+                    return
+                }
+                do {
+                    try self.configureSession()
+                    self.session.startRunning()
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+
+        log.log(.info, category: .biofeedback, "CameraCapture started")
+    }
+
+    private func configureSession() throws {
+        session.beginConfiguration()
+        defer { session.commitConfiguration() }
+
+        session.sessionPreset = .low
+
+        // Find back camera
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
             throw CameraCaptureError.noCamera
         }
 
-        // 3. Configure device for low-res, high frame rate
+        // Configure device
         try device.lockForConfiguration()
-        // Low resolution sufficient for pulse detection
-        if device.supportsSessionPreset(.low) {
-            session.sessionPreset = .low
-        } else {
-            session.sessionPreset = .medium
-        }
-        // Lock exposure and white balance for consistent signal
-        if device.isExposureModeSupported(.locked) {
-            device.exposureMode = .locked
-        }
-        if device.isWhiteBalanceModeSupported(.locked) {
-            device.whiteBalanceMode = .locked
+        if device.isExposureModeSupported(.continuousAutoExposure) {
+            device.exposureMode = .continuousAutoExposure
         }
         device.unlockForConfiguration()
 
-        // 4. Create input
+        // Input
         let input = try AVCaptureDeviceInput(device: device)
         guard session.canAddInput(input) else {
             throw CameraCaptureError.configurationFailed
         }
         session.addInput(input)
 
-        // 5. Create video output
+        // Output
         let output = AVCaptureVideoDataOutput()
         output.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
@@ -77,20 +86,17 @@ final class CameraCapture: NSObject, @unchecked Sendable {
             throw CameraCaptureError.configurationFailed
         }
         session.addOutput(output)
-
-        // 6. Start session
-        session.startRunning()
-
-        log.log(.info, category: .biofeedback, "CameraCapture started (back camera, low-res)")
     }
 
     // MARK: - Stop
 
     func stop() {
-        session.stopRunning()
-        // Remove all inputs/outputs for clean restart
-        for input in session.inputs { session.removeInput(input) }
-        for output in session.outputs { session.removeOutput(output) }
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            self.session.stopRunning()
+            for input in self.session.inputs { self.session.removeInput(input) }
+            for output in self.session.outputs { self.session.removeOutput(output) }
+        }
         log.log(.info, category: .biofeedback, "CameraCapture stopped")
     }
 }

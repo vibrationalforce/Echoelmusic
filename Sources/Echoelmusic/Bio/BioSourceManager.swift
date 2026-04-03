@@ -47,29 +47,33 @@ final class BioSourceManager {
     func startCamera() {
         guard cameraAnalyzer == nil else { return }
         let analyzer = CameraAnalyzer()
-        analyzer.startPulseDetection()
 
         let capture = CameraCapture()
-        // Connect frame callback: captured frames → analyzer
         capture.onFrame = { [weak analyzer] pixelBuffer in
             analyzer?.analyzePixelBuffer(pixelBuffer)
         }
 
-        Task {
+        cameraAnalyzer = analyzer
+        cameraCapture = capture
+
+        Task { [weak self] in
             do {
                 try await capture.start()
                 await MainActor.run { [weak self] in
                     self?.enableTorch(true)
+                    self?.isCameraActive = true
+                    analyzer.startPulseDetection()
                 }
-                log.log(.info, category: .biofeedback, "Camera rPPG started — frames flowing to analyzer")
+                log.log(.info, category: .biofeedback, "Camera rPPG started — frames flowing")
             } catch {
                 log.log(.error, category: .biofeedback, "Camera start failed: \(error.localizedDescription)")
+                await MainActor.run { [weak self] in
+                    self?.cameraAnalyzer = nil
+                    self?.cameraCapture = nil
+                    self?.isCameraActive = false
+                }
             }
         }
-
-        cameraAnalyzer = analyzer
-        cameraCapture = capture
-        isCameraActive = true
     }
 
     func stopCamera() {
