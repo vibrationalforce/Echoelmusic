@@ -28,13 +28,13 @@ final class SoundscapeEngine {
     // User can mix levels via sliders
 
     /// Root voice (e.g. A2 = 110Hz)
-    nonisolated(unsafe) private let voiceRoot = EchoelDDSP(sampleRate: 48000)
+    nonisolated(unsafe) let voiceRoot = EchoelDDSP(sampleRate: 48000)
     /// Fifth (e.g. E3 = 165Hz, ratio 3:2)
-    nonisolated(unsafe) private let voiceFifth = EchoelDDSP(sampleRate: 48000)
+    nonisolated(unsafe) let voiceFifth = EchoelDDSP(sampleRate: 48000)
     /// Octave (e.g. A3 = 220Hz)
-    nonisolated(unsafe) private let voiceOctave = EchoelDDSP(sampleRate: 48000)
+    nonisolated(unsafe) let voiceOctave = EchoelDDSP(sampleRate: 48000)
     /// High shimmer (e.g. E4 = 330Hz, soft)
-    nonisolated(unsafe) private let voiceHigh = EchoelDDSP(sampleRate: 48000)
+    nonisolated(unsafe) let voiceHigh = EchoelDDSP(sampleRate: 48000)
 
     // User-controllable mix levels (exposed to UI via sliders)
     var mixRoot: Float = 0.40 { didSet { _mixLevels.pointee = (mixRoot, mixFifth, mixOctave, mixHigh) } }
