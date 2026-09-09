@@ -28093,3 +28093,47 @@ kompiliert aber `Sources/` ALLEIN und beweist über die neue Testdatei NICHTS. N
 `Build for Testing` in der CI/CD-Pipeline tut das.
 
 Commit `1e2d6db0`.
+
+## #1164 — Die iPad-Zeile stand DREIMAL, 209 B davon wörtlich doppelt (2026-09-09)
+
+**Auslöser:** die Kopfraum-Warnung der eigenen Check-in-Notiz — `CLAUDE.md` stand 1.402 B
+unter der 150.000-B-Decke, also braucht der nächste Absatz dort ZUERST eine Auslagerung.
+Die Auslagerung wurde ein Befund.
+
+**Gemessen:** unter der Plattform-Reifeleiter standen DREI ⛔-Blöcke (723 + 947 + 523 B) für
+EINE Geschichte, und zwei trugen denselben 209-B-Satz wörtlich
+(`git grep -c "Niemand hatte das entschieden" -- CLAUDE.md` → **2**). Das ist die #912-Form
+eine Stufe schlimmer: dort setzte #746 einen ZEIGER und ließ den Text stehen, und der
+Decken-Wächter konnte es nicht sehen, weil er nur fragt, ob die ZIEL-Sektion existiert.
+Hier gab es gar keinen Zeiger — nur den Text zweimal.
+
+**Der dritte Block war zusätzlich ein Zeiger ohne Bezug:** „Dieser Satz war bis 2026-07-31
+eine BEHAUPTUNG" — welcher Satz? Zwischen ihm und jedem möglichen Antezedens lagen die
+beiden anderen Blöcke. **Ein demonstrativer Zeiger verrottet still, weil er nie eine
+Zeilennummer nennt, die jemand rot machen könnte.**
+
+**Verschoben nach `memory/LEDGER_COUNTS.md` §S** (wortgleich, S.1–S.3). In `CLAUDE.md`
+blieb das GESETZ: Entscheidung (v1.0 = iPhone), Begründung (Sequenzierung + fehlender
+Sensor, KEIN Ökosystem-Verzicht) und der Aufwand (vier Einstellungen + Wächter + zwei
+Prosa-Blöcke, NIE „eine Zeile").
+
+**Beide Seiten gemessen (#912):** `CLAUDE.md` 148.598 → **147.692 B** (−906; Reserve
+1.402 → **2.308**). Ledger-Seite bewusst ohne Literal (Festpunkt, §R).
+
+⭐ **Nebenwirkung, die die Tabelle darüber ehrlich macht:** die iPad-Zelle sagt seit jeher
+„die ⛔-Notiz unter dieser Tabelle" — Einzahl, während drei dort standen. Sie war nicht
+veraltet, sondern von Anfang an unter-gezählt. Jetzt steht dort genau EINE.
+
+**Wächter:** EINE Zeile in der bestehenden Zeugen-Tabelle von
+`TheLawFileStaysUnderItsCeilingTests`, keine neue Datei (#416). Als Mutant getrieben,
+nicht gelesen: grün am echten Baum, rot wenn die Nadel aus dem Ledger fällt, rot wenn der
+Block in `CLAUDE.md` wieder anwächst, rot bei beidem.
+
+⚠️ **Bewusst NICHT getan:** eine Überschriften-Behauptung für §S. Die Datei pinnt
+Überschriften nur für §A–§G; §H–§R haben keine. Eine einzelne für §S wäre eine erfundene
+Konvention. Das Umbenennungs-Risiko besteht für §H–§S gleichmäßig — bekannt und einheitlich,
+keine neue Lücke.
+
+**Gates #1163:** `Build for Testing` = **success** auf `1e2d6db0` — der neue Wächter
+`TheBioFollowTempoLaneHasNoDoorTests.swift` KOMPILIERT. `Run Tests` lief beim Lesen noch;
+zum Test-Verdikt sage ich nichts (Fenster-Gesetz #807).
