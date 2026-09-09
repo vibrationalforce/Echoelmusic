@@ -131,7 +131,12 @@ Deprecated from main flow: the old SoundscapeEngine, ClipEngine, MomentCaptureVi
   BioSourceManager, Oura/EEG bridges, WeatherProvider, CircadianClock files have all
   been REMOVED in cleanup (2026-06-19 audit) — they no longer exist. (HealthKit + rPPG
   are now LIVE, not deprecated.) The genuinely app-unwired pure cores remaining are
-  BioModulation, CloudSync und — nachgetragen 2026-08-23 (#757) — **`Core/BioSpaceMap`**
+  **`Studio/BioModulation`** und **`Core/CloudSync`** (⚠️ #1165 — die Pfade sind KEINE
+  Kosmetik: `Core/BioModulationMap` ist eine ANDERE, LEBENDE Datei, deren `isMeasured` die
+  „gemessen"-Anzeige in BEIDEN Synth-Stimmen und im Bio-Panel gated. Der naheliegende
+  `git grep -c BioModulation -- Sources` liefert darum ZEHN Dateien für einen Namen, den diese
+  Zeile unverdrahtet nennt — mit Wortgrenze und ohne die Superstring-Nachbarin sind es NULL.
+  Wer hier „aufräumt", löscht plausibel das lebende Gate) und — nachgetragen 2026-08-23 (#757) — **`Core/BioSpaceMap`**
   (null Produktions-Aufrufer; die bio→Objekt-Abbildung, die WIRKLICH sendet, steht in
   `Sync/ADMOSCSender` selbst). Dazu — nachgetragen 2026-08-31 (#921) —
   **`Core/VisualModulation`** (nicht mit dem verdrahteten `BioVisualParams` verwechseln;
