@@ -27730,3 +27730,39 @@ kommentar-gestrippten Text (`SourceText.codeOnly`) und prüft zusätzlich, dass 
 Deklaration IM gemessenen Fenster liegt. Gleiche Fehlerklasse wie #762 eine Datei weiter:
 ein Vermerk ÜBER eine Ansicht wird als deren Code gelesen. **Zweimal an einem Tag hat ein
 Mutant einen Wächter gerettet, den Lesen nicht gerettet hätte.**
+
+## 2026-09-09 — Zyklus ohne Scheibe: eine Beinahe-Falschmeldung, widerlegt statt gemeldet
+
+**Gates zuerst, und diesmal mit dem Beleg, der zählt.** `Xcode Compile Check` Lauf 2484
+auf `17b2050c` = **success** (baut nur `Sources/`). Wichtiger: CI/CD Lauf 5949, Schritt
+**`Build for Testing` = success** — damit ist belegt, dass der neue Wächter
+`TheLaunchScreenIsTheSystemDefaultTests.swift` **kompiliert**. `Run Tests` lief beim
+Nachsehen noch; ob die fünf Ansprüche GRÜN sind, ist damit **unbewiesen** (alle fünf
+waren gegen den echten Baum transkribiert). ⚠️ Der Compile-Check allein hätte das NIE
+gesagt: er baut `Tests/CISmoke` nicht.
+
+**Gesuchte Scheibe: keine gefunden — und das ist das Ergebnis.** Alles Visuelle ist
+gesperrt (sieben Posten warten auf das Auge des Founders), die #1152-Klasse ist für sechs
+Flächen abgeschlossen, beide selbstgenannten doctor-Blindflecke sind zu (#1154, #1155),
+die C1a-Liste ist abgearbeitet (#1156), und die zwei CRITICALs sind founder-gated. Ich
+habe keine Prosa-Scheibe erfunden, um den Zyklus zu füllen.
+
+⛔ **BEINAHE-FALSCHMELDUNG, und sie ist die DRITTE Variante desselben Messfehlers heute.**
+Ich prüfte, ob der ausgelieferte „Reduce Motion"-Pfad auf dem Beamer eine
+Abnahme-Bitte hat, mit
+`grep -rn "reduceMotion" … | grep -i "NEEDS-FOUNDER-VERIFY"` → **null Treffer**, also
+scheinbar dieselbe Lücke wie #1152b. **Falsch.** Die Bitte steht in
+`ExternalDisplayScene.swift:255`, der Token `reduceMotion` in Zeile 259 — **vier Zeilen
+auseinander**, und eine Pipe aus zwei zeilenweisen greps kann zwei Zeilen nie zugleich
+sehen. Richtig gemessen (`founder-verify.py` ohne Filter): die Bitte ist da, sie ist unter
+**ui** einsortiert statt unter visual — deshalb fehlte sie in `--area visual`. Kein Defekt,
+eine vertretbare Einordnung.
+
+**Die Lehre bleibt bewusst HIER und wandert NICHT nach `.claude/rules/context.md`.** Die
+Regel dort („eine Messung, die still WENIGER als die Wahrheit liefern kann, ist keine
+Messung") deckt den Fall schon ab und trägt bereits zwei Beispiele; ein drittes kostet
+jede künftige Sitzung Kontext, ohne die Regel zu ändern. Die konkrete Form für die
+Nachwelt: **Marker und beschriebener Token stehen oft nicht auf derselben Zeile — wer
+zwei zeilenweise greps hintereinanderschaltet, misst „beides in EINER Zeile" und nennt
+das Ergebnis fälschlich „nirgends".** Mit `-A`/`-B`-Kontext arbeiten oder das Werkzeug
+fragen, das die Datei versteht.
