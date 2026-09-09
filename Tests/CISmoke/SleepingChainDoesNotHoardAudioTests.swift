@@ -333,4 +333,58 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
             .map(String.init)
             .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
     }
+    // MARK: - #1196b: the drain is a BULK fill, not an element loop
+
+    /// The drain this whole file is about runs ON THE AUDIO THREAD, and until #1196b it
+    /// zeroed its ring buffers element by element. That is the part nobody had costed: the
+    /// ⛔ block in `noteRenderSleeping` argues at length about the THREAD SAFETY of the resets
+    /// it calls, and says nothing about how long they take.
+    ///
+    /// MEASURED WORST CASE. `EchoelDelay` takes `maxDelaySeconds: 2.0`, so one delay line is
+    /// 131 072 floats per channel; granular, harmonizer, chorus, flanger and tape all bottom
+    /// out in the SAME `EchoelDelayLine.reset()`; the reverb tank adds ~26 000 through a
+    /// NESTED array-of-arrays loop. A full drain is on the order of 1.8 MB of Array-subscript
+    /// stores — each with a bounds check, the loop with a uniqueness check — inside a 10.67 ms
+    /// render deadline at 512 frames / 48 kHz. And it CONVOYS: `idleQuietFrames` advances per
+    /// block, so when the composer stops, poly / lead / bass / touch cross the 2.5 s threshold
+    /// in the SAME block.
+    ///
+    /// `.claude/rules/swift-audio.md` lists `memcpy`/`memmove` as SAFE on the audio thread and
+    /// does not list an Array subscript loop. `update(repeating:)` is the bulk form; the
+    /// result is bit-identical, it is the same zeroes written the fast way.
+    ///
+    /// ⚠️ THIS CLAIM DOES NOT WEAKEN THE OWNERSHIP RULE the rest of this file pins. Making the
+    /// drain cheaper is not a licence to call it from both threads — `testTheDrainIsGatedOn\
+    /// EachStagesOwnEnableFlag` above is still the load-bearing one.
+    /// ⛔ THE TWO ABSENCE ASSERTIONS THIS CLAIM WANTED ARE NOT HERE, AND THE REASON IS A TOOL
+    /// GAP, NOT A JUDGEMENT ABOUT THE LAW. The natural form for a retraction is
+    /// `XCTAssertFalse(src.contains("<the old spelling>"))`. Measured: `scripts/moved-needles.py`
+    /// has NO polarity awareness — `git grep -n "XCTAssertFalse\|polarity\|absence" scripts/
+    /// moved-needles.py` returns nothing — so it reports every absence needle as
+    /// "[GONE from Sources]" forever. `scripts/foreign-needles.py` already skips absence
+    /// assertions (#1191); `moved-needles.py` is the half that does not, and teaching it is its
+    /// own slice. A permanently red checker is how `continue-on-error` stayed invisible for
+    /// fourteen hours, so the checker is kept honest and the assertions wait.
+    ///
+    /// WHAT IS LOST BY WAITING, stated so nobody thinks it is nothing: someone could re-add the
+    /// element loop while KEEPING the bulk fill and these four assertions would stay green. The
+    /// result would be a double zero-fill — slower than today, still correct, and not the
+    /// regression this claim exists to catch. Restore the two absence assertions in the same
+    /// commit that gives `moved-needles.py` its polarity.
+    func testTheAudioThreadDrainUsesABulkFill() throws {
+        let delay = try codeLines("Sources/Echoelmusic/DSP/EchoelDelayLine.swift").joined(separator: "\n")
+        XCTAssertTrue(delay.contains("buffer.withUnsafeMutableBufferPointer { $0.update(repeating: 0) }"), """
+            `EchoelDelayLine.reset()` is back to an element-by-element zero loop. It is called \
+            from the audio thread by `noteRenderSleeping`, for up to 131 072 floats per \
+            channel, and it is the shared bottom of delay, granular, harmonizer, chorus, \
+            flanger and tape (#1196b).
+            """)
+        let reverb = try codeLines("Sources/Echoelmusic/DSP/EchoelReverb.swift").joined(separator: "\n")
+        XCTAssertEqual(reverb.components(separatedBy: ".withUnsafeMutableBufferPointer { $0.update(repeating: 0) }").count - 1, 4, """
+            `EchoelReverb.reset()` no longer bulk-fills all FOUR of its tanks (comb L/R, \
+            allpass L/R). A nested array-of-arrays element loop pays two bounds checks per \
+            store, on the audio thread (#1196b).
+            """)
+    }
+
 }

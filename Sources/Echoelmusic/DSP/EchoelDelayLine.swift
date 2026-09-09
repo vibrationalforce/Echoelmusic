@@ -136,8 +136,31 @@ public final class EchoelDelayLine: @unchecked Sendable {
 
     // MARK: - Reset
 
+    /// ⚠️ THIS RUNS ON THE AUDIO THREAD, and that is why the fill is bulk (#1196b).
+    /// `PolySynthVoice.renderOnAudioThread` calls `EchoelFXChain.noteRenderSleeping()` 2.5 s
+    /// after a voice goes quiet, and that drains every ENABLED stage — delay, granular,
+    /// harmonizer, chorus, flanger and tape all bottom out HERE. `EchoelDelay` alone takes
+    /// `maxDelaySeconds: 2.0`, so one `reset()` can clear 131 072 floats per channel; a whole
+    /// drain is on the order of 1.8 MB, inside a 10.67 ms render deadline — and four voices
+    /// go quiet in the SAME block when the composer stops, so it convoys.
+    ///
+    /// A per-element Array-subscript zero loop — the shape this used to be — is NOT lowered
+    /// to a `memset`: every element carries a bounds check and the loop carries the array's
+    /// uniqueness check. (The retracted spelling is deliberately NOT quoted here: the guard
+    /// asserts its ABSENCE from this file, and a quote of it in prose is the #491 shape —
+    /// it survives only because `codeLines` happens to strip `//` lines, and a guard that
+    /// depends on that accident is one refactor from failing on correct code. It also makes
+    /// `scripts/moved-needles.py` report this file forever.) A single
+    /// `update(repeating:)` is one exclusivity check and one bulk store — `memcpy`/`memset`
+    /// class writes are on the SAFE list in `.claude/rules/swift-audio.md`, an Array subscript
+    /// loop is not. Bit-identical result; it is the same zeroes, written the fast way.
+    ///
+    /// ⚠️ THE CALLER'S THREAD-OWNERSHIP RULE IS UNCHANGED and is what makes this safe at all:
+    /// the audio thread drains a stage only while its enable flag is TRUE, the control plane
+    /// only while it is FALSE (the reasoning is in `EchoelFXChain.noteRenderSleeping`'s ⛔
+    /// block — do not weaken it on the strength of this one being faster).
     public func reset() {
-        for i in 0..<capacity { buffer[i] = 0 }
+        buffer.withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
         writeIndex = 0
         apPrev = 0
     }

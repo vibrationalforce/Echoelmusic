@@ -118,16 +118,25 @@ public final class EchoelReverb: @unchecked Sendable {
         return (inL * dry + wetL * m, inR * dry + wetR * m)
     }
 
+    /// ⚠️ AUDIO-THREAD REACHABLE — bulk fill, not a nested element loop (#1196b). Same reason
+    /// as `EchoelDelayLine.reset()`, and this one was the worse shape: a NESTED
+    /// array-of-arrays loop, so every store paid two bounds checks plus the inner array's
+    /// uniqueness check. The tank is ~26 000 floats; the cost was never the tank, it was the
+    /// per-element overhead. Bit-identical result.
+    ///
+    /// ⚠️ The caller's ownership rule (audio thread drains only ENABLED stages, control plane
+    /// only DISABLED ones) is untouched — see `EchoelFXChain.noteRenderSleeping`. Making this
+    /// faster is not a licence to call it from both sides.
     public func reset() {
         for i in 0..<combCount {
-            for j in 0..<combBufL[i].count { combBufL[i][j] = 0 }
-            for j in 0..<combBufR[i].count { combBufR[i][j] = 0 }
+            combBufL[i].withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
+            combBufR[i].withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
             combIdxL[i] = 0; combIdxR[i] = 0
             combStoreL[i] = 0; combStoreR[i] = 0
         }
         for i in 0..<apCount {
-            for j in 0..<apBufL[i].count { apBufL[i][j] = 0 }
-            for j in 0..<apBufR[i].count { apBufR[i][j] = 0 }
+            apBufL[i].withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
+            apBufR[i].withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
             apIdxL[i] = 0; apIdxR[i] = 0
         }
     }
