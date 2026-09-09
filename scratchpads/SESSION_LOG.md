@@ -29254,3 +29254,49 @@ jede zitierte Ledger-Sektion hat ihren Header.
 **Offen (Task AS):** diesen Handgriff zu einem Werkzeug machen — ein Nadel-Prüfer für die
 Nicht-`Sources`-Dateien, die Wächter lesen. Bis dahin gilt: wer `CLAUDE.md` umschreibt, macht
 die Handprüfung im selben Commit.
+
+## #1191 — `scripts/foreign-needles.py`: der Nadel-Prüfer für die Dateien, die kein Prüfer las (2026-09-09)
+
+**Warum.** #1190 hat es bewiesen: eine Umformulierung in `CLAUDE.md` zerschnitt zwei wörtliche
+Nadeln von `TheVocalChainStopsAtTheAutotuneTests`, und **alle vier Rot-Prüfer blieben grün**.
+`moved-needles.py` sagt seinen blinden Fleck in der eigenen Ausgabe (`-- Sources` ONLY, #1182);
+`dead-needles.py` ist noch enger — jede seiner Formen ist darauf gegated, dass die Wächter-Datei
+NUR `Sources/`-Pfade nennt, und genau dieses Gate hält seine Fehlalarmrate bei null. Wächter, die
+gegen `CLAUDE.md`, `project.yml`, `docs/*.html`, `ContentPipeline/CLAIMS.md`, `decisions.csv`,
+`fastlane/…` oder `Info.plist` prüfen, deckte **nichts** ab.
+
+**Was das Werkzeug tut.** Es findet in `Tests/CISmoke/*.swift` die Bindungen an Nicht-Swift-
+Repo-Dateien (drei Lader-Formen), zieht daraus `XCTAssertTrue/False(x.contains("…"))` samt
+POLARITÄT, und prüft jede Nadel gegen die Datei auf der Platte. **Reichweite heute: 30 Dateien,
+40 Bindungen, 57 Nadeln** — die Handprüfung von #1190 sah 11 und 14.
+
+**Drei bewusst stille Stellen, benannt statt versteckt:** eine Nadel mit undecodierbarem Escape
+wird übersprungen (geteilte `decode_needle` aus `dead-needles.py`, die lieber gar nicht rät) ·
+eine Datei, die nicht existiert, wird übersprungen · eine ABWESENHEITS-Behauptung durch einen
+kommentar-strippenden Lader wird übersprungen, weil das Strippen sie erklären könnte. Die
+Gegenrichtung bleibt meldbar: Strippen ENTFERNT nur.
+
+**Und ein Werkzeug, das nichts findet, meldet Exit 2, nicht 0** (`context.md` §2 — ein Parser,
+der nichts trifft, ist ein Befund, kein Bestehen).
+
+⛔ **Die Wiederverwendung ging schief, und die Selbstprüfung hat es gefangen.** Ich importierte
+`dead-needles.stripping_helpers`, weil der Name passte — sein `HELPER_DEF` ist aber eine harte
+Namensliste von FÜNF Ladern und sieht keinen der Lader, die diese Dateien lesen (`text`,
+`rawFile`, `file`, `codeLines`). Anspruch 4 wurde rot. **Die Richtung ist der Punkt:** ein
+unerkannter Stripp-Lader hätte einen FEHLALARM erzeugt. Ersetzt durch eine namens-agnostische
+Erkennung; `decode_needle` und `strip_comments` bleiben geteilt, weil die dieselbe Frage stellen.
+
+⛔ **Und der ERSTE echte Lauf fand genau einen Treffer — den des Werkzeugs selbst.**
+`TheNeedleCheckerNamesBothErrorDirectionsTests` hat eine Zusicherung ZURÜCKGEZOGEN und sie als
+`//`-Zitat samt Begründung stehen lassen (die #491-Falle, absichtlich dokumentiert). Roh gelesen
+parst diese Zeile als lebend. Reparatur: den Wächter-Quelltext kommentar-schwärzen, BEVOR man
+Zusicherungen extrahiert — dasselbe, was `dead-needles.py` mit der Datei tut, die es DURCHSUCHT
+(#456). Als Anspruch 6b festgehalten.
+
+⭐ **Bekannter Positivfall gefahren, nicht behauptet:** ein Mutanten-Wurzelverzeichnis (Temp-Dir
++ Symlink auf `Tests/CISmoke` + eine umformulierte Kopie von `CLAUDE.md`) reproduziert den
+#1190-Bruch. **Kontrolle Exit 0 · Mutant Exit 1 und nennt BEIDE Nadeln beim Namen.**
+
+**Mitgezogen:** `moved-needles.py` zeigt in seiner Scope-Warnung jetzt auf den Nachbarn — das ist
+die Stelle, an der eine Sitzung den blinden Fleck ohnehin liest. Alle fünf Prüfer Exit 0,
+`--selftest` 8 Ansprüche grün.

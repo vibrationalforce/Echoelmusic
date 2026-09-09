@@ -239,7 +239,7 @@ def report(hits, label: str) -> int:
     print(f"moved-needles: {label}")
     if not hits:
         print("  no removed Sources/ line is a needle in the blocking bundle.")
-        print("  ⚠️ SCOPE: this diffs `-- Sources` ONLY. Guards in this bundle also read\n     CLAUDE.md, memory/LEDGER_COUNTS.md, docs/, fastlane/metadata/, scripts/ and\n     Tests/CISmoke/CLAUDE.md — a needle broken THERE is invisible here (#1182).")
+        print("  ⚠️ SCOPE: this diffs `-- Sources` ONLY. Guards in this bundle also read\n     CLAUDE.md, memory/LEDGER_COUNTS.md, docs/, fastlane/metadata/, scripts/ and\n     Tests/CISmoke/CLAUDE.md — a needle broken THERE is invisible here (#1182).\n     Since #1191 that half has its own checker: `python3 scripts/foreign-needles.py`.")
         return 0
     for line, files, present in hits:
         state = "still in Sources" if present else "GONE from Sources"
