@@ -6494,3 +6494,88 @@ gelöscht:
 ### S.3 — Block 3 (die wörtliche Wiederholung von Block 1)
 
 ⛔ **Dieser Satz war bis 2026-07-31 eine BEHAUPTUNG, kein Zustand** — und er stand hier, während `project.yml` an ALLEN VIER iOS-Targets `TARGETED_DEVICE_FAMILY: "1,2"` setzte, die App also an iPad ausgeliefert wurde. Niemand hatte das entschieden; es war ein Default, den niemand nachgelesen hat. Founder-Frage („Sind alle Fenster adaptiv für alle Geräte?") plus Delegation („Du entscheidest zukunftsweisend") → jetzt wirklich `"1"` (#292), abgesichert durch `Tests/CISmoke/DeviceFamilyIsPhoneOnlyTests.swift`.
+
+
+---
+
+## T — Die Vokal-Kette: die Bau-Geschichte, die nicht mehr jede Sitzung bezahlt (#839/#841/#849, verschoben aus CLAUDE.md #1190)
+
+**Warum verschoben.** Die `CLAUDE.md`-Zeile war 3.542 B und trug zwei Sorten Text in einem
+Satzfluss: das GESETZ (was heute auf seiner Stimme liegt, was türlos ist, was eine Sackgasse
+ist, was nach außen behauptet werden darf) und die BAU-GESCHICHTE (welche Scheibe an welchem
+Tag welche Geräteprobe bestand). Nur die erste Sorte muss vor der ersten Arbeitszeile jeder
+Sitzung geladen sein. Die zweite ist wertvoll und wird deshalb hier WÖRTLICH aufbewahrt, nicht
+gekürzt — der Ledger löscht nichts.
+
+⚠️ **Gemessen, nicht geschätzt, und zwar auf BEIDEN Seiten (#912-Lehre: ein Verschieben ist
+erst eines, wenn die Quelle nachweislich kürzer ist).** Die Byte-Zahlen stehen in T.2.
+
+### T.1 — Die Zeile, wie sie bis #1190 in CLAUDE.md stand (wörtlich)
+
+> - **Vokal-Kette (Founder-Ask 2026-08-20) — WAS AUF SEINER STIMME LIEGT UND WAS NICHT (#700/#701):** ⛔ **JEDE „Tür"/„Sheet"-Nennung dieses Absatzes ist seit #1024 UNERREICHBAR** — das Input-Sheet lebt, kompiliert und ist vollständig verdrahtet, aber nichts setzt `showInput` mehr (Founder-Befehl, siehe die #1024-Zeile im Register unten). Gebaut ja, bedienbar nein. **Monitoring + Autotune sitzen auf dem Monitorpfad** (`input → notchEQ → voiceTunePitch → monitorMixer`; die Tune-Stufe ist seit #858 FEST verdrahtet und bei AUS bypassed — der Live-Umbau starb an fünf Geräte-Logs; beide `AVAudioUnit`-GRAPHknoten; Charakter-Presets #681 in derselben Tür `AudioInputPickerView`) — **Harmonizer auf seiner Stimme SCHALTBAR seit #841 (Tür im Input-Sheet, default AUS, session-lokal wie die Tune-Regler) · Granular auf seiner Stimme SCHALTBAR seit #849 (V1b-3: „Granular texture" im selben Sheet, default AUS; Mix/Grain/Pitch als `EchoelValueField`s mit den Spannen der FX-Panel-Reihen; EIN gemeinsamer `pushVoicePreset()` trägt BEIDE Stufen, damit keine Tür die andere zurücksetzt).** ⭐ #839 (V1b-1) hat die mic-eigene `EchoelFXChain` auf den Monitor-Insert montiert (`MonitorInsertAU`, der V1a-Knoten, dessen `insert in` seine v424-Logs beweisen) — **NEUTRAL: alle 15 Stufen explizit AUS**, Ausgang bit-exakt gleich dem Eingang (E2E-Wächter durch den echten Render-Block; die Werks-Defaults Saturation/Chorus/Limiter=AN sind Synth-Bus-Tuning und werden deshalb aktiv ausgeschaltet). FÜNF `EchoelFXChain(`-Stellen: der Insert + zwei Vorschauen in `FXCuratedLibrary` + die zwei SYNTH-Stimmen. **#841 (V1b-2) hat dem Harmonizer die Tür gegeben**: „Harmony voices" im Input-Sheet (bestehendes Sheet, Kette wächst nicht), zwei BENANNTE Intervall-Picker (`HarmonyInterval`, „keine semitone Schritte") + Mix-`EchoelValueField`; EIN Apply-Pfad in den Insert, den der #840-Raten-Neubau re-appliziert; Diag-Zeile `monitor: harmony on/off`. Default AUS — bis der Sänger schaltet, bleibt alles bit-neutral, und die KLINGENDEN Synth-Instanzen bearbeiten weiter nur die erzeugte MUSIK. Nach AUSSEN ist nichts über-behauptet — Store-Text, `ContentPipeline/CLAIMS.md` und `EchoelFXView`s Kopf sind zeilenweise geprüft und ehrlich. ⛔ **Neu ist nur der ORT, nicht der Befund:** `PLAN_VOCAL_CHAIN_2026-08-20.md`, `decisions.csv:398`, `VoicePitchCorrector.swift` und `EchoelGranular.swift` sagen es alle schon — diese Zeile ist die erste, die eine Sitzung zuerst liest. **Leiter-Stand** (`decisions.csv:398`, Mechanik #669): V1a leere Pass-Through-AU = ✅ gerätebewiesen (`insert in`, v424) · #822 `processInPlace` = ✅ · **V1b-1 Kette neutral montiert = ✅ (#839; Wächter nachweislich AUSGEFÜHRT grün; Geräteprobe = unveränderter Monitor-Klang)** · **V1b-2 Harmonizer-Tür = ✅ (#841, default aus; Geräteprobe = Toggle an → zwei Harmoniestimmen hörbar)** · **V1b-3 Granular-Tür = ✅ (#849, default aus; Geräteprobe = Toggle an → Grain-Wolke unter der Stimme hörbar, AUS → exakt der normale Monitor)** · V0 bleibt die HÖR-Bestätigung, hält den Bau aber nicht an (Founder 2026-08-25, wörtlich beauftragt: „latenzfrei… Harmonizer und Granular… ressourcenschonend“; **KEIN Voice clone**, Frage geschlossen). Wächter: `Tests/CISmoke/TheVocalChainStopsAtTheAutotuneTests.swift` (#364: er verbietet V1b NICHT; sein Kopf trägt die zwei Rücknahmen dieser Zeile — erfundenes SESSION_LOG-Zitat und der V1a-Namensdreher — damit sie nicht in der immer-geladenen Datei liegen).
+
+### T.2 — Was in CLAUDE.md BLIEB und was ging
+
+**Geblieben (GESETZ — eine Sitzung entscheidet daraus):** alle Türen dieses Absatzes sind seit
+#1024 unerreichbar · Monitoring + Autotune sitzen auf dem Monitorpfad, Tune seit #858 fest
+verdrahtet und bei AUS bypassed · der Live-Umbau der Tune-Stufe ist eine SACKGASSE (fünf
+Geräte-Logs) · Harmonizer und Granular liegen schaltbar auf seiner Stimme, beide default AUS,
+beide im SELBEN Sheet, EIN gemeinsamer `pushVoicePreset()` · die Kette ist NEUTRAL, alle 15
+Stufen explizit aus, Ausgang bit-exakt gleich dem Eingang · nach außen ist nichts
+über-behauptet · KEIN Voice clone, Frage geschlossen · V0 hält den Bau nicht an · der
+Wächter-Name.
+
+**Gegangen (BAU-GESCHICHTE — steht oben in T.1 wörtlich):** der Leiter-Stand V1a → #822 → V1b-1
+→ V1b-2 → V1b-3 mit je seiner Geräteprobe · die fünf `EchoelFXChain(`-Stellen · die
+#839-Montage-Details (v424-Logs, E2E-Wächter durch den echten Render-Block) · die
+#841-Details (zwei benannte Intervall-Picker, Mix-Feld, #840-Raten-Neubau, Diag-Zeile) · die
+#849-Details (Mix/Grain/Pitch-Spannen) · „beide `AVAudioUnit`-GRAPHknoten" · die
+Charakter-Presets #681 · der Vier-Datei-Zeiger „Neu ist nur der ORT" · der Hinweis auf die zwei
+Rücknahmen im Wächter-Kopf (die Rücknahmen selbst liegen unverändert dort, nicht hier).
+
+⚠️ **Ein Zeiger ersetzt keine Messung.** `wc -c CLAUDE.md` vor der Scheibe: **148.505 B** bei
+einer Decke von 150.000 B — **1.495 B Luft**, also eine einzige Register-Zeile vom roten
+Wächter entfernt. Der Nachher-Wert steht im Commit-Text von #1190; wer ihn hier braucht, misst
+ihn selbst (`wc -c CLAUDE.md`) — eine Zahl in einer Datei, die nichts nachführt, ist ein Datum
+(#818).
+
+⭐ **Warum ausgerechnet diese Zeile und nicht die längere daneben.** Die drei größeren Zeilen
+der CURRENT-STATE-Liste (`Absent (not wired)`, `Live pipeline`, `Presentation`) sind fast
+vollständig GESETZ: sie sagen, was behauptet, gelöscht oder angehängt werden darf. Die
+Vokal-Kette war die längste Zeile, deren Mehrheit BELEG für bereits ausgelieferte Arbeit ist —
+Beleg gehört in den Ledger, Erlaubnis in die immer-geladene Datei.
+
+### T.3 — Der Beinahe-Fehler dieser Scheibe: zwei Wächter-Nadeln, die kein Werkzeug rot gemacht hätte
+
+⛔ **Die erste Fassung der gekürzten Zeile hat ZWEI Nadeln zerschnitten.**
+`TheVocalChainStopsAtTheAutotuneTests` Anspruch 5 liest `CLAUDE.md` und verlangt DREI
+wörtliche Zeichenketten. Die erste (`Monitoring + Autotune sitzen auf dem Monitorpfad`)
+überlebte zufällig; die anderen beiden nicht, weil ich zwei Aussagen zu einer
+zusammengezogen hatte:
+
+> „Harmonizer auf seiner Stimme SCHALTBAR seit #841" · „Granular auf seiner Stimme SCHALTBAR seit #849"
+
+wurde zu „Harmonizer (#841) und Granular (#849) liegen SCHALTBAR auf seiner Stimme" — inhaltlich
+identisch, als Nadel tot. Repariert wurde die PROSA, nicht der Wächter: die Nadel IST hier das
+Gesetz, und ein Wächter, der eine wahre Aussage verlangt, ist kein Hindernis (#364).
+
+⚠️ **Warum kein Werkzeug das gefangen hätte, und das ist die eigentliche Lehre.** Alle vier
+Rot-Prüfer liefen VOR und NACH dem Schnitt mit Exit 0. `scripts/moved-needles.py` sagt es in
+seiner eigenen Ausgabe: es diffed **`-- Sources` ONLY** (#1182) — eine Nadel, die auf
+`CLAUDE.md`, `memory/LEDGER_COUNTS.md`, `docs/` oder `fastlane/metadata/` zeigt, ist dort
+unsichtbar. Gefunden habe ich es durch eine Handprüfung: erst `grep -l '"CLAUDE.md"'` über
+`Tests/CISmoke/`, dann die `contains`-Nadeln jedes gebundenen Handles gegen die Datei.
+
+⚠️ **Und die erste Handprüfung war selbst defekt, in genau der Richtung, vor der
+`.claude/rules/context.md` §2 warnt.** Sie meldete zwei Fehltreffer, beide unecht: einer, weil
+sie die POLARITÄT ignorierte (`XCTAssertFalse` verlangt Abwesenheit — „snapshot (10 Hz poll)"
+MUSS fehlen), einer, weil `unicode_escape` auf UTF-8-Quelltext aus „löst" ein „lÃ¶st" machte.
+Ein Prüfer, der falsch ALARM schlägt, ist harmlos; derselbe Prüfer hätte mit umgekehrtem
+Vorzeichen still durchgewunken. **Ein Nadel-Prüfer braucht Polarität UND Kodierung, sonst misst
+er etwas anderes als die Frage.** Endstand: 11 Dateien mit gebundenem `CLAUDE.md`-Handle,
+14 Nadeln, 0 Verletzungen.
+
+⭐ **Offene Arbeit, absichtlich NICHT in dieser Scheibe** (eine Änderung pro Commit): diesen
+Handgriff zu einem Werkzeug machen — entweder als Erweiterung von `scripts/dead-needles.py`
+oder als eigener Prüfer, der die Nadeln JEDER Nicht-`Sources`-Datei prüft, die ein Wächter
+liest. Bis dahin gilt: **wer `CLAUDE.md` umschreibt, macht die Handprüfung im selben Commit.**

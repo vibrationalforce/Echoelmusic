@@ -29215,3 +29215,42 @@ Mutanten werden nach EXIT-CODE beurteilt, nicht nach der Zahl der FAIL-Zeilen.
 eingetragen, statt eine tote Liste wiederzubeleben, die niemand liest.
 
 Tabellenform nach dem Einfügen geprüft: DEAD-ENDS 34 Zeilen, PLAYBOOKS 20, null kaputte.
+
+## #1190 — CLAUDE.md-Diät: die Bau-Geschichte der Vokal-Kette in den Ledger (2026-09-09)
+
+**Warum.** `CLAUDE.md` stand bei **148.505 B** unter einer harten Decke von 150.000 B
+(`Tests/CISmoke/TheLawFileStaysUnderItsCeilingTests`) — **1.495 B Luft**, also eine einzige
+Register-Zeile vom Rot entfernt. Verschärfend: der Wächter läuft NICHT auf Commits, die nur
+`CLAUDE.md` anfassen (#1176), das Rot fiele also auf die nächste `Sources/`-Änderung und läse
+sich wie deren Fehler.
+
+**Was.** Die Vokal-Ketten-Zeile (3.542 B) war die längste, deren Mehrheit BELEG für bereits
+ausgelieferte Arbeit ist statt GESETZ. Der Leiter-Stand V1a→V1b-3 mit seinen Geräteproben, die
+#839/#841/#849-Montage-Details, die fünf `EchoelFXChain(`-Stellen und der Vier-Datei-Zeiger
+liegen jetzt **wörtlich** in `memory/LEDGER_COUNTS.md` §T. In `CLAUDE.md` blieb, was eine
+Sitzung zum Entscheiden braucht: Türlosigkeit seit #1024 · Monitorpfad + Tune seit #858 fest
+verdrahtet · der Live-Umbau als SACKGASSE · beide Schalter default AUS im selben Sheet · die
+Bit-Neutralität der 15 Stufen · nichts nach außen über-behauptet · KEIN Voice clone ·
+Wächter-Name.
+
+**Ergebnis:** 148.505 → **147.021 B**, Luft **1.495 → 2.979 B**. Ledger +9,1 KB (Original
+verbatim + Begründung). Ledger-Sektionen A–S → A–T (`grep -c '^## [A-Z] — '` = 20).
+
+⛔ **BEINAHE-FEHLER, und er ist die eigentliche Ausbeute.** Die erste Fassung zog zwei Aussagen
+zu einer zusammen und zerschnitt damit **zwei wörtliche Nadeln** von
+`TheVocalChainStopsAtTheAutotuneTests` Anspruch 5 („Harmonizer auf seiner Stimme SCHALTBAR seit
+#841" · „Granular auf seiner Stimme SCHALTBAR seit #849"). **Alle vier Rot-Prüfer blieben
+grün** — `moved-needles.py` diffed `-- Sources` ONLY (#1182) und sieht `CLAUDE.md` gar nicht.
+Repariert wurde die PROSA, nicht der Wächter: die Nadel IST hier das Gesetz (#364).
+
+⚠️ **Und die Handprüfung, die es fand, war selbst zuerst defekt** — in der harmlosen Richtung:
+sie meldete zwei unechte Fehltreffer, einen weil sie die POLARITÄT ignorierte
+(`XCTAssertFalse` verlangt Abwesenheit), einen weil `unicode_escape` auf UTF-8-Quelltext aus
+„löst" ein „lÃ¶st" machte. Mit umgekehrtem Vorzeichen hätte derselbe Prüfer still
+durchgewunken. Endstand nach der Reparatur: **11 Dateien mit gebundenem `CLAUDE.md`-Handle,
+14 Nadeln, 0 Verletzungen.** Zusätzlich geprüft: jede zitierte `Tests/CISmoke/*.swift` existiert,
+jede zitierte Ledger-Sektion hat ihren Header.
+
+**Offen (Task AS):** diesen Handgriff zu einem Werkzeug machen — ein Nadel-Prüfer für die
+Nicht-`Sources`-Dateien, die Wächter lesen. Bis dahin gilt: wer `CLAUDE.md` umschreibt, macht
+die Handprüfung im selben Commit.
