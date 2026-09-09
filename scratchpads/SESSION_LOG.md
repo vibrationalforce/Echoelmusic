@@ -27914,3 +27914,48 @@ Lauf; ein Wächter würde nur die Prosa bewachen, die auf ihn verweist.
 `decisions.csv OK — 754 decisions, 6 columns each.`
 
 Commit `376fec9d`.
+
+## 2026-09-09 — #1160 · „nur `SpatialScene` ist versioniert" — falsch, und in der teuren Richtung
+
+**Wo.** `.claude/skills/ultracode-teams/SKILL.md:52`, die Zeile des *Persistence &
+Schema-Migration Steward*. Sie ist die Stelle, aus der eine Sitzung ableitet, ob
+Schema-Versionierung in diesem Repo noch GEBAUT werden muss.
+
+**Gemessen (`git grep -n "var schemaVersion" -- Sources`, ausgeführt, nicht gelesen):**
+**ZEHN** persistierte Typen tragen einen echten gespeicherten Stempel —
+`Project` · `Timeline` · `Clip` · `Arrangement` · `SynthPatch` · `TrackFX` · `MoodPreset` ·
+`PerformerSignature` · `FieldAutoPlay.Params` · `RoleRhythm.Params`. Alle mit
+`decodeIfPresent`-Defaults; `Project` zusätzlich mit einem EXPLIZITEN Encoder, der den
+AKTUELLEN Stempel schreibt, damit eine aus einer Vor-Stempel-Datei geladene und neu
+gespeicherte Aufnahme nicht für immer `0` behauptet.
+
+**Und der eine Typ, den der Satz nannte, ist der einzige, der KEIN Dokumentstempel ist.**
+`SpatialScene.schemaVersion` ist ein `static let` — eine Draht-Format-Konstante für die
+Reihenfolge zwischen Peers (`self.version = Self.schemaVersion`), ohne Decode-Rückfall und
+ohne etwas zu migrieren. Die Ausnahme stand als Regel da.
+
+**Warum das eine Scheibe wert ist und kein Achselzucken.** Wer den alten Satz las, hätte zehn
+Stempel neu gebaut, die es gibt — und die **sechs `Tests/CISmoke`-Wächter** bereits festnageln
+(`PersistedVersionStampSmokeTests` u. a.). Die Aufgabe der Rolle ist HALTEN einer bestehenden
+Konvention, nicht Einführen einer neuen. Der Nachbar-Halbsatz („~12 stores") stimmt dagegen:
+gezählt genau 12 `*Store`-Typen — Befehl steht jetzt daneben.
+
+**Form der Reparatur:** der BEFEHL steht neben der Behauptung, keine nackte Zahl (#818) — die
+Menge wächst mit jedem neuen persistierten Typ.
+
+**Bewusst KEIN Wächter, zwei Gründe.** (1) Ein Scan „in dieser Datei steht nicht ‚nur X ist
+versioniert'" träfe den ⛔-Absatz, der den alten Satz ZITIERT — die selbstreferenzielle
+Nadel-Falle (#491). (2) Ein siebter Stempel-Wächter wäre eine Zweitheimat neben
+`PersistedVersionStampSmokeTests` (#416).
+
+**Nebenbefunde des Zyklus, beide SAUBER (damit der nächste Sweep den Boden nicht neu abläuft):**
+· `doctor --section C`: `ADMStreamStatusLine` steht als transitiv türlos in der Ausgabe und ist
+  KEIN Defekt — es ist am Blatt (`NetworkActivityDot.swift:127`) registriert und von
+  `TheStageStatusLineHasNoDoorTests` gepinnt; absichtlich nicht in CLAUDE.md.
+· MPE-Ausdruck (#939/#942): `expressionGain` UND `renderCutoffScale` werden beide in `panic()`
+  **und** `reset()` auf 1 zurückgesetzt und an beiden Schreibern über `clampExpressionScale`
+  geklammert. Die #939-Rüge („klebriger Wert, den kein Bedienelement löschen kann") ist an
+  beiden Dimensionen erledigt; die bewusste Abwesenheit eines `didSet` auf `renderCutoffScale`
+  ist im Quelltext mit Begründung festgehalten.
+
+Commit `4bc0235b`.
