@@ -28876,3 +28876,40 @@ sicherer, wenn ihre eigenen Vorbedingungen am Aufrufort gelten.**
 abgelehnten Fix und dem, was ein ZWEITER Aufrufer mitbringen muss (relevant, wenn #1024 die
 Mikrofon-Tür zurückholt). Nur `///`-Zeilen (`git diff -U0 | grep -vc '^+ *///'` = 0). Vier
 Rot-Prüfer exit 0, `founder-verify` unverändert 111/99.
+
+---
+
+## #1182 — `moved-needles.py` sieht nur `Sources/`, und ich habe vier Zyklen lang sein Exit 0 als Beleg zitiert (2026-09-09)
+
+**Frage aus dem eigenen Weckruf: welche Nadel-FORM übersieht das Werkzeug systematisch?**
+Getrieben, nicht gelesen (#941).
+
+**Gemessen:** `removed_lines()` läuft `git diff -U0 … -- Sources`. Wächter in diesem Bundle
+lesen aber auch andere Bäume — gezählt über String-Literale in `Tests/CISmoke/*.swift`:
+`CLAUDE.md` 18 · `memory/LEDGER_COUNTS.md` 10 · `docs/` (mehrere Seiten, `sitemap.xml`) ·
+`fastlane/metadata/**` · `ContentPipeline/CLAIMS.md` · `scripts/*.py` · `Tests/CISmoke/CLAUDE.md`.
+
+**Bewiesen durch einen Mutanten, nicht durch Lesen:** die Zeile
+`<loc>https://echoelmusic.com/</loc>` aus `docs/sitemap.xml` entfernt — sie wird von
+`WebsitePagesAreFindableAndHonestTests` wörtlich gepinnt — und `moved-needles.py` meldete
+**exit 0** mit „no removed Sources/ line is a needle in the blocking bundle". Danach
+byte-identisch wiederhergestellt (`git diff --numstat` = 0 Zeilen).
+
+**⚠️ DER SCHADEN WAR SCHON ANGEFALLEN, und zwar bei mir.** #1175, #1177, #1178 und #1180 haben
+je `CLAUDE.md`, `memory/LEDGER_COUNTS.md` oder `Tests/CISmoke/CLAUDE.md` geändert und jeweils
+„alle vier Rot-Prüfer exit 0" als Beleg protokolliert. Für DIESEN Prüfer war das Exit-0 über
+genau jene Dateien **strukturell aussagelos**. Die Meldung nennt „Sources/" im Satz — aber
+gelesen wird der Exit-Code, nicht das Wort.
+
+**Reparatur (klein, kein Fehlalarm-Risiko):** die NEGATIV-Meldung druckt jetzt ihren eigenen
+Umfang, dreizeilig, mit den Bäumen, die sie nicht sieht. Dazu der ⛔-Block im Docstring mit dem
+Mutanten-Beleg. **Der Exit-Code ist unverändert**, der Selbsttest bleibt grün.
+
+**⚠️ BEWUSST NICHT ERWEITERT.** Den Diff zu verbreitern braucht pro Datei eine Antwort auf „ist
+die Nadel an ihrer neuen Adresse noch erreichbar", und `still_in_sources()` hat `-- Sources`
+fest verdrahtet. Schlecht gemacht verfehlt es dieselbe Klasse oder feuert bei jeder
+Prosa-Änderung. **Den Umfang zu benennen ist heute billig und richtig; ihn zu erweitern ist eine
+eigene Scheibe mit eigenem Wächter.**
+
+**Nebenbei: #1181s Gate ist grün** (Lauf 2497, `1dbde7f3`, `Compile (iOS device SDK, no
+signing)` = success). Damit sind #1179, #1180 und #1181 alle durch.

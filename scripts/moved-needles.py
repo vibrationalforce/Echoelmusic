@@ -9,6 +9,27 @@ guard went RED, and four TestFlight builds (454–458) shipped over it. The CI/C
 `tail -200 test.log` (#807), and the test's line fell outside that window on every run until
 #1091's, three days later.
 
+⛔ WHAT THIS TOOL CANNOT SEE, measured by DRIVING it (#1182, 2026-09-09). `removed_lines()`
+runs `git diff -U0 … -- Sources`, so a needle that pins text OUTSIDE `Sources/` is invisible.
+That is not a corner case here: guards in this bundle read `CLAUDE.md` (18 string literals),
+`memory/LEDGER_COUNTS.md` (10), `docs/*.html`, `docs/sitemap.xml`, `fastlane/metadata/**`,
+`ContentPipeline/CLAIMS.md`, `scripts/*.py` and `Tests/CISmoke/CLAUDE.md`.
+
+Proven, not reasoned: a mutant removed `<loc>https://echoelmusic.com/</loc>` from
+`docs/sitemap.xml` — a line `WebsitePagesAreFindableAndHonestTests` pins verbatim — and this
+tool exited 0. The working tree was restored byte-identically afterwards.
+
+⚠️ THE COST IS FALSE CONFIDENCE, AND IT WAS ALREADY BEING PAID. Cycles #1175, #1177, #1178 and
+#1180 each edited `CLAUDE.md`, `memory/LEDGER_COUNTS.md` or `Tests/CISmoke/CLAUDE.md` and each
+recorded "all four rot-checkers exit 0" as evidence. For THIS checker that exit code was
+structurally uninformative about those files. The negative message now says so out loud,
+because a reader quotes the exit code, not the word "Sources/" inside the sentence.
+
+⚠️ NOT EXTENDED HERE, on purpose. Widening the diff needs a per-file answer to "is the needle
+still reachable at its new address", and `still_in_sources()` hard-codes `-- Sources`. Doing it
+badly would either miss the same class or fire on every prose edit. Naming the scope is cheap
+and correct today; widening it is its own slice with its own guard.
+
 WHY `dead-needles.py` COULD NOT SEE IT, which is the whole reason for a second tool: it asks
 "is this needle absent from Sources/?" — and `HStack(spacing: 8) {` was still present in
 dozens of places. The guard was red because the needle had left the DECLARATION its scan is
@@ -218,6 +239,7 @@ def report(hits, label: str) -> int:
     print(f"moved-needles: {label}")
     if not hits:
         print("  no removed Sources/ line is a needle in the blocking bundle.")
+        print("  ⚠️ SCOPE: this diffs `-- Sources` ONLY. Guards in this bundle also read\n     CLAUDE.md, memory/LEDGER_COUNTS.md, docs/, fastlane/metadata/, scripts/ and\n     Tests/CISmoke/CLAUDE.md — a needle broken THERE is invisible here (#1182).")
         return 0
     for line, files, present in hits:
         state = "still in Sources" if present else "GONE from Sources"
