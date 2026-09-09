@@ -277,13 +277,45 @@ HELPER_DEF = re.compile(
 PATH_CONST = re.compile(r'static\s+let\s+(\w+)\s*=\s*"([^"]*)"')
 
 
+# ⭐ #1167 — A HELPER CAN STRIP *SOMETIMES*, AND THE #944 GATE COULD NOT SEE IT.
+# `stripping_helpers` asked "does this body mention `SourceText.codeOnly(`?" while the
+# question it is used for is "does the text this call returns have its comments blanked?".
+# Two helpers in the bundle answer the first yes and the second *it depends*:
+# `TheBioVisualFieldsSayTheyAreDeadTests.read(_:stripped:)` and
+# `EveryPermissionPromptHasACapabilityTests.swiftSources(strip:)`, both written as
+# `return flag ? SourceText.codeOnly(text) : text`. The first has a call site that passes
+# `stripped: false` ON PURPOSE — its needle lives in a `///` comment — so the tool reported a
+# CORRECT guard as dead (`TheBioVisualFieldsSayTheyAreDeadTests.swift:135`,
+# `'only END appends are safe'`, which is at `Studio/BioVisualParams.swift:107` inside a doc
+# comment). That is the #665 defect this script argues against in its own header: a checker
+# with false alarms is a checker nobody reads.
+#
+# The repair is at the CALL SITE, not the helper. Rejecting every conditional helper outright
+# would also drop its unconditional siblings (`read(Self.renderer)` two claims later), buying
+# quiet with reach. So a conditional helper now carries its flag NAME and its declared DEFAULT,
+# and each bind resolves the flag for itself.
+#
+# ⚠️ REACH, STATED RATHER THAN IMPLIED: only the TERNARY spelling is recognised. A helper that
+# wrote `if stripped { return SourceText.codeOnly(text) }` reads as unconditional here and its
+# raw call sites could still false-alarm. Measured today: zero such helpers
+# (`grep -rn "? SourceText.codeOnly" Tests/CISmoke/*.swift` finds exactly the two above, and
+# no `if`-gated form exists). Registered, not rushed — widening on a shape with no instance
+# is how a gate acquires a branch nobody has ever driven.
+GATED_STRIP = re.compile(r'(\w+)\s*\?\s*SourceText\.codeOnly\(')
+
+
 def stripping_helpers(code):
-    """Names of source-reading helpers in THIS file whose body calls `SourceText.codeOnly(`.
+    """Source-reading helpers in THIS file that return `SourceText.codeOnly(…)` text.
+
+    Maps helper name -> `None` when it strips UNCONDITIONALLY, or `(flag, default)` when the
+    `codeOnly` call is gated on a parameter — `flag` being that parameter's name and `default`
+    its declared value (`True`/`False`), or `None` when the signature declares none. A bind
+    through a gated helper is accepted only if the flag resolves TRUE at that call site.
 
     Brace-matched rather than line-windowed (`Tests/CISmoke/CLAUDE.md` §2, #408): this repo
     writes 30-40-line doc blocks, so any fixed window is unsound by construction.
     """
-    found = set()
+    found = {}
     for match in HELPER_DEF.finditer(code):
         opening = code.find("{", match.end())
         if opening < 0:
@@ -297,9 +329,50 @@ def stripping_helpers(code):
                 if depth == 0:
                     break
             i += 1
-        if "SourceText.codeOnly(" in code[opening:i]:
-            found.add(match.group(1))
+        body = code[opening:i]
+        if "SourceText.codeOnly(" not in body:
+            continue
+        gated = GATED_STRIP.search(body)
+        if gated is None:
+            found[match.group(1)] = None
+            continue
+        flag = gated.group(1)
+        declared = re.search(r'\b%s\s*:\s*Bool\s*=\s*(true|false)\b' % re.escape(flag),
+                             code[match.start():opening])
+        found[match.group(1)] = (flag, declared.group(1) == "true" if declared else None)
     return found
+
+
+def call_arguments(text, first_argument_at):
+    """The call's argument text, given the offset of its FIRST argument (paren depth 1).
+
+    `None` when the closing paren is not found — unresolvable, which the caller turns into a
+    SKIP, never a guess (#665: quiet when unsure). `text` here has comments blanked but string
+    literals intact, so a `)` inside a failure message could miscount (the #963 defect one file
+    over); erring to `None` keeps that miscount silent rather than wrong.
+    """
+    depth, i = 1, first_argument_at
+    while i < len(text):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+            if depth == 0:
+                return text[first_argument_at:i]
+        i += 1
+    return None
+
+
+def strips_at_call(chunk, first_argument_at, gate):
+    """Does the gated helper actually strip AT THIS CALL SITE?"""
+    flag, default = gate
+    arguments = call_arguments(chunk, first_argument_at)
+    if arguments is None:
+        return False
+    override = re.search(r'\b%s\s*:\s*(true|false)\b' % re.escape(flag), arguments)
+    if override is not None:
+        return override.group(1) == "true"
+    return default is True
 
 
 def source_receivers(chunk, helpers, consts, allow_legacy):
@@ -326,9 +399,13 @@ def source_receivers(chunk, helpers, consts, allow_legacy):
         return names
     binder = re.compile(
         r'\blet\s+([A-Za-z_]\w*)\s*=\s*(?:try\s+)?(?:XCTUnwrap\()?\s*'
-        r'(?:Self\.)?(?:%s)\(\s*(?:Self\.)?([A-Za-z_"][^),]*)' % "|".join(sorted(helpers)))
+        r'(?:Self\.)?(%s)\(\s*(?:Self\.)?([A-Za-z_"][^),]*)' % "|".join(sorted(helpers)))
     for match in binder.finditer(chunk):
-        argument = match.group(2).strip()
+        gate = helpers.get(match.group(2))
+        # #1167 — a helper that strips only when a flag says so is resolved PER CALL SITE.
+        if gate is not None and not strips_at_call(chunk, match.start(3), gate):
+            continue
+        argument = match.group(3).strip()
         if argument.startswith('"'):
             resolved = argument[1:]
         else:
