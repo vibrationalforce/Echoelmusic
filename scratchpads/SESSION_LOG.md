@@ -27766,3 +27766,45 @@ Nachwelt: **Marker und beschriebener Token stehen oft nicht auf derselben Zeile 
 zwei zeilenweise greps hintereinanderschaltet, misst „beides in EINER Zeile" und nennt
 das Ergebnis fälschlich „nirgends".** Mit `-A`/`-B`-Kontext arbeiten oder das Werkzeug
 fragen, das die Datei versteht.
+
+## 2026-09-09 — #1157 · Der OSC-Draht-Vertrag ist jetzt gepinnt (und heute sauber)
+
+**Warum, und der Defekt ist AKTENKUNDIG, nicht ausgedacht.** Die OSC-Sektion von
+`CLAUDE.md` sagt es über sich selbst: *„corrected 2026-07-04; the old list named
+eeg/{band}, audio/rms, audio/pitch which are NEVER sent"*. Drei Phantom-Adressen standen
+monatelang im Integrations-Vertrag. Diesen Vertrag lesen Leute AUSSERHALB des Repos — ein
+Lichtpult, ein Raum-Renderer, jemandes Max-Patch — und ein Phantom-Eintrag kostet dort
+eine Debug-Sitzung gegen einen Socket, der nie sprechen wird. Nichts leitete die Liste neu
+her; ein Umbenennen in `OSCSender` bricht sie ohne Compiler-Fehler und ohne roten Test.
+
+**Audit-Ergebnis zuerst.** 15 dokumentierte Adress-Token, **0** fehlen im Code · 8
+Code-Familien, **0** undokumentiert · genau EIN `/adm/obj/`-Formatierer mit genau EINEM
+Aufrufer (`ADMOSCSender`, wie der Vertrag sagt). ⚠️ `SpatialSceneOSCFormatter` sah kurz
+wie ein zweiter Sender aus — ist aber der Formatierer, den `ADMOSCSender` ruft. Der
+Vertrag hält heute in BEIDE Richtungen. Aufgeschrieben, damit der nächste Sweep nicht
+denselben Boden abläuft.
+
+**Der Wächter prüft die Richtung, die WIRKLICH versagt hat, exakt** (Doku → Code, weil
+die Gesetzesdatei die Token ausschreibt) **und die andere auf FAMILIEN-Ebene** (Code →
+Doku, weil die Gesetzesdatei die vier Ereignis-Blätter bewusst als kompakte Alternative
+schreibt — jeden vollen Pfad zu verlangen hieße, ihre eigene Notation rot zu machen).
+Anspruch 3 prüft, dass beide Scans überhaupt etwas gefunden haben.
+
+⛔ **DER MUTANT FAND EIN LOCH, DAS LESEN NICHT GEFUNDEN HÄTTE.** Anspruch 1 benutzte ein
+blankes `contains`. Ich habe im Code `…/heart/sdnn` zu `…/heart/sdnn2` umbenannt — und der
+Anspruch blieb **GRÜN**, weil die alte Adresse ein PRÄFIX der neuen ist. Ein Umbenennen ist
+genau die Änderung, für die dieser Wächter existiert. Er verlangt jetzt, dass die Adresse
+dort ENDET, wo der Code sie endet: an der schließenden Anführung, an einem `/`, oder am
+Beginn einer Interpolation. Fünf Mutanten insgesamt gefahren.
+
+⛔ **UND DER BENOTUNGS-ABSATZ WAR ZWEIMAL FALSCH.** Ich schrieb ACHT Prüfungen aus dem
+Kopf (es sind sieben), und das Rezept daneben war ein blankes `grep -c XCTAssert` — das
+zählt genau diesen Satz mit. Beides korrigiert, mit verankerten Rezepten. Das ist die
+#1156-Falle, diesmal in einer ZÄHLUNG statt in einem Scan: **eine Zahl aus dem Kopf ist
+keine Zahl, und ein Zähl-Rezept kann sich selbst fangen.**
+
+**Gate-Nachtrag zu #1156:** CI/CD 5949, `Build for Testing` = success (der Wächter
+kompiliert), `Run Tests` = **failure** — aber das Log-Fenster zeigt
+`** TEST EXECUTE FAILED **` bei durchweg BESTANDENEN Tests: die dokumentierte
+#396-Klon-Lotterie, Infrastruktur, kein echter roter Test. Ob die fünf Ansprüche von
+#1156 gelaufen und grün sind, bleibt aus diesem Fenster **unbewiesen** (#807/#1040).
