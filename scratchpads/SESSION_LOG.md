@@ -28793,3 +28793,46 @@ der diese Grenze schon für fünf Fälle besitzt — eine eigene Datei wäre #41
 26 Stellen positiv zu scannen wäre die #646-Falle (jede harmlose Umbenennung macht ihn rot), und
 das Ergebnis ist eine MESSUNG, keine Repo-Invariante. Nur Kommentarzeilen geändert
 (`git diff | grep -vc '^+//'` = 0), 11 Ansprüche unverändert. Vier Rot-Prüfer exit 0.
+
+---
+
+## #1180 — Die Lauf-Liste kann eine VERALTETE Seite liefern, und nichts sagt es (2026-09-09)
+
+**Gefunden beim Lesen von #1179s Gate.** Dieselbe Abfrage, Minuten auseinander:
+
+| Zeit | Filter | `total_count` | neuester Lauf |
+|---|---|---|---|
+| 12:03 | `{branch}` | 1468 | `c87beb47`, Lauf 2494 — korrekt |
+| 13:25 | `{branch}` | **1404** | `b3f7381b`, Lauf 2453 — **vom 2026-09-08** |
+| 13:26 | keiner | 2495 | `ea5db916`, Lauf 2495 — korrekt |
+| 13:27 | `{branch}` | 1469 | `ea5db916`, Lauf 2495 — wieder korrekt |
+
+**Warum das hier gefährlich ist und nicht bloß Rauschen.** #1176 hat festgestellt: ein
+Doku-Commit erzeugt KEINEN Lauf. Eine Sitzung, die diese Regel anwendet, sieht „der neueste Lauf
+ist nicht mein sha" und schließt „kein Gate gefeuert — erwartet, nichts zu lesen". **Eine
+veraltete Seite erzeugt DIESELBE Beobachtung.** Sie kann also eine falsche Schlussfolgerung
+still bestätigen — genau die Richtung, die `.claude/rules/context.md` §2 „beruhigend" nennt, nur
+eine Ebene über den greps, um die es dort geht.
+
+**Der Detektor ist `total_count` PLUS `head_sha`.** Ein `total_count`, der zwischen zwei Aufrufen
+SINKT (1468 → 1404), ist aus echten Läufen unmöglich und der billige Hinweis. Dann: den
+`head_sha` der obersten Zeile gegen `git rev-parse HEAD` halten. Unterschiedlich und gerade
+gepusht ⇒ veraltete Seite ⇒ **neu abfragen, nicht schließen.**
+
+**⛔ UND MEINE ZWISCHEN-REPARATUR WAR FALSCH — das ist der Teil, der aufgeschrieben gehört.**
+Zwischen dem veralteten und dem frischen Aufruf habe ich `status: "completed"` in den Filter
+gesetzt, bekam den richtigen Lauf und war einen Satz davon entfernt, „der nackte
+`{branch}`-Filter ist die kaputte Form; nimm `status` dazu" ins Gesetz zu schreiben. Dann
+lieferte der NACKTE Filter ebenfalls den richtigen Lauf. **Zwei Variablen hatten sich geändert —
+der Filter UND die Uhr — und ich hatte die Erholung derjenigen zugeschrieben, die ich
+kontrollierte.** Ursache ist eine vorübergehend veraltete Replik auf API-Seite; keine
+Abfrageform vermeidet sie, es gibt also kein Rezept zu merken, nur eine Prüfung auszuführen.
+**Eine Reparatur, die einmal „gewirkt" hat, ist ein Zufall, bis die Variable isoliert ist.**
+
+**Nebenbei erledigt: #1179s Gate ist GRÜN** (Lauf 2495, `ea5db916`, Xcode Compile Check =
+success, 13:08→13:15).
+
+**Heimat:** `Tests/CISmoke/CLAUDE.md` §5, ganz oben — vor allen anderen Leseregeln, weil es die
+Voraussetzung für sie alle ist (#416: §5 besitzt CI-Lesen schon). Kein Wächter: der Befund
+betrifft eine fremde API, kein Repo-Faktum, und ein Text-Scan darauf wäre die #491-Falle.
+Vier Rot-Prüfer exit 0.

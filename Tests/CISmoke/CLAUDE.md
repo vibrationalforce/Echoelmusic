@@ -428,6 +428,37 @@ its own known positive is not a measurement.
 
 `mcp__github__actions_list` → `list_workflow_jobs`, `workflow_jobs_filter {"filter":"latest"}`.
 
+⛔ **BEFORE ANY OF THE BELOW: `list_workflow_runs` CAN SERVE YOU A STALE PAGE, AND NOTHING IN
+THE RESPONSE SAYS SO** (#1180, measured 2026-09-09). Three calls, same `resource_id`, minutes
+apart:
+
+| when | filter | `total_count` | newest run |
+|---|---|---|---|
+| 12:03 | `{branch}` | 1468 | `c87beb47`, run 2494 — correct, just pushed |
+| 13:25 | `{branch}` | **1404** | `b3f7381b`, run 2453 — **from 2026-09-08** |
+| 13:26 | none | 2495 | `ea5db916`, run 2495 — correct |
+| 13:27 | `{branch}` | 1469 | `ea5db916`, run 2495 — correct again |
+
+**WHY THIS IS DANGEROUS HERE SPECIFICALLY, and not just noise.** #1176 established that a
+docs-only commit produces NO run. A session applying that rule sees "the newest run is not my
+sha" and concludes "no gate fired — expected, nothing to read". **A stale page produces the
+IDENTICAL observation.** So it can silently confirm a wrong conclusion — `.claude/rules/context.md`
+§2's "fails in the reassuring direction", one level up from the greps that section is about.
+
+**THE DETECTOR IS `total_count` PLUS `head_sha`, NOT the run list.** A `total_count` that moves
+DOWN between two calls (1468 → 1404) is impossible from real runs and is the cheap tell. Then:
+**compare the newest row's `head_sha` against your actual HEAD** (`git rev-parse HEAD`). If they
+differ and you just pushed, you are looking at a stale page — **re-query; do not conclude.**
+
+⛔ **AND MY MID-INVESTIGATION FIX WAS WRONG, which is the part worth writing down.** Between the
+stale call and the fresh one I added `status: "completed"` to the filter, it returned the correct
+run, and I was one sentence from recording "the bare `{branch}` filter is the broken shape; add
+`status`". Then the BARE filter returned the correct run too. **Two variables had changed —
+the filter AND the clock — and I had attributed the recovery to the one I controlled.** The cause
+is transient replica staleness on the API side; no query shape avoids it, so there is no recipe
+to memorise, only a check to run. A repair that "worked" once is a coincidence until the variable
+is isolated.
+
 - Step **"Build for Testing" = `success`** ⇒ this bundle **compiles**. That is the claim a
   compile-only gate can support; `Xcode Compile Check` builds `Sources/` **only** and proves
   nothing about a test file.
