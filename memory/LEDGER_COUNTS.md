@@ -6395,3 +6395,57 @@ die Konvention dieser Datei `grep -c '^## [A-Z] — ' memory/LEDGER_COUNTS.md` i
 
 ⭐ **DIE PROSA-ZITATE IN FÜNF DATEIEN SIND UMGESIEDELT, NICHT VERWORFEN — es sind SECHS Zitate, weil `EchoelValueField` zwei trägt — und das war der eigentliche Blocker, den keine Register-Zeile vorhergesagt hatte** (die #472-Lehre: eine registrierte Entblockung ist erst dann eine, wenn man NACH dem Ausführen noch einmal grept). `Core/PerTrackParameterKeyPath.swift` hatte einen ZEIGER auf den `DATA MODEL (honest):`-Block der Ansicht — der Block ist jetzt dort EINGERÜCKT statt ein drittes Mal zitiert, denn dieselbe Zeile hatte schon eine `:11-16`-Zeilenspanne an #472 verloren. **Zwei Zitat-Ausfälle, zwei Mechanismen, eine Datei: ein Zeiger ist nur so haltbar wie das, worauf er zeigt.** Die zwei `EchoelValueField`-Prämissen stehen jetzt als HISTORISCHER Beleg — die SwiftUI-Behauptungen sind unverändert, der Zeuge im Repo ist weg, und die zweite (`⚠️ HONEST LIMIT`) wird dadurch SCHÄRFER: diese Datei ist der einzige verbliebene Abhängige. `DSP/EchoelDDSP.swift` benutzte die Türlosigkeit als Prämisse — „null Instanziierungsstellen" hätte ein Wieder-Einhängen still falsifiziert, „gelöscht" kann das nicht, das Argument ist also STÄRKER geworden. `Core/AutomationPlayer.swift`s ⛔-Rücknahme bleibt, gerade WEIL der Code, den sie korrigiert, nicht mehr nachlesbar ist. Und `Sequencer/ClipAutomationEdit.swift` zitierte „TimelineAutomationRow's static helpers" — seit #472 falsch, nach #473 gegenstandslos.
     ⛔ **UND DAS NACH-DEM-SCHNEIDEN-GREPEN HAT EINEN VERWAISTEN NACHBARN GEFUNDEN, den niemand aufgeschrieben hatte:** `AutomationPlayer.extraAutomatableDescriptors` hatte von #473 bis #559 **null** Aufrufer in `Sources/` — sein einziger Leser war `TimelineAutomationTargetOption`. NICHT mitgelöscht: es ist das Placebo-Gesetz in ausführbarer Form („biete nur einen Parameter an, der wirklich Audio bewegt") und genau das, was eine künftige Automations-Fläche zuerst braucht. ⭐ **Und genau so ist es gekommen: seit #559 liest es `Studio/AutomationStatusStrip.swift`** (die Automations-Anzeige im Sound-Panel). Der Eintrag bleibt als BELEG dafür, dass „türlos, aber nicht löschbar" eine eigene Kategorie ist — und weil der Vermerk an der Deklaration steht, konnte er dort im selben Commit mitgezogen werden statt hier zu verjähren.
+
+---
+
+## S — Die iPad-Zeile: dieselbe Provenienz DREIMAL erzählt, 209 B davon wörtlich doppelt (#292/#912, verschoben aus CLAUDE.md #1164)
+
+**Warum verschoben, und der Grund ist diesmal nicht „zu lang", sondern ein MESSBARER Defekt.**
+Unter der Plattform-Reifeleiter standen DREI ⛔-Blöcke (723 + 947 + 523 = 2.193 B), die
+zusammen EINE Geschichte erzählen. Zwei davon teilten diesen Satz **wörtlich**, 209 B:
+
+> während `project.yml` an ALLEN VIER iOS-Targets `TARGETED_DEVICE_FAMILY: "1,2"` setzte, die App also an iPad ausgeliefert wurde. Niemand hatte das entschieden; es war ein Default, den niemand nachgelesen hat.
+
+`git grep -c "Niemand hatte das entschieden" -- CLAUDE.md` → **2**, und beide Treffer in
+derselben Datei, vier Zeilen auseinander. Das ist die #912-Form eine Stufe schlimmer: dort
+hatte #746 einen ZEIGER gesetzt und den Text stehen lassen; hier stand gar kein Zeiger,
+sondern **der Text selbst zweimal**.
+
+⛔ **Und der dritte Block begann mit „Dieser Satz war bis 2026-07-31 eine BEHAUPTUNG, kein
+Zustand" — ein Zeiger ohne Bezug.** WELCHER Satz? Zwischen ihm und allem, worauf „dieser"
+zeigen könnte, lagen die beiden anderen ⛔-Blöcke. Ein Leser, der bei Zeile 235 einsteigt,
+hat kein Antezedens; ein Leser, der von oben liest, hat die Geschichte schon zweimal gehört.
+**Gleiche Lehre wie §R: ein Zeiger ist nur so haltbar wie das, worauf er zeigt** — und ein
+demonstrativer Zeiger („dieser Satz") verrottet still, weil er nie eine Zeilennummer nennt,
+die jemand rot machen könnte.
+
+⭐ **NEBENWIRKUNG, die die Tabelle darüber EHRLICH macht:** die iPad-Zelle sagt seit jeher
+„plus zwei Prosa-Blöcke, die beim Ändern falsch werden: der `#`-Block über der Einstellung
+und **die ⛔-Notiz** unter dieser Tabelle" — Einzahl, während drei dort standen. Die Zelle
+war also nicht falsch geworden, sie war von Anfang an unter-gezählt. Nach der
+Zusammenlegung steht dort genau EINE ⛔-Notiz und der Satz stimmt wörtlich.
+
+⚠️ **Ein Verschieben ist erst dann eines, wenn BEIDE Seiten GEMESSEN sind (#912)** — gemessen,
+nicht vorhergesagt: `CLAUDE.md` 148,598 → siehe unten (die Zahl steht im SESSION_LOG-Eintrag
+zu #1164, nicht hier — ein Literal über die Decke gehört an die Stelle, die die Decke misst).
+Die LEDGER-Seite bekommt bewusst kein Literal (Festpunkt-Problem, §R). Messen:
+`wc -c CLAUDE.md memory/LEDGER_COUNTS.md`.
+
+**WAS IN `CLAUDE.md` GEBLIEBEN IST (Gesetz, nicht Geschichte):** die Entscheidung (v1.0 =
+iPhone) samt ihrer Begründung (Sequenzierung + fehlender Sensor, KEIN Verzicht aufs
+Ökosystem) · der Aufwand („nicht eine Zeile": vier Einstellungen + Wächter + zwei
+Prosa-Blöcke) · das verallgemeinerte Gesetz („ein Slogan, der Arbeit KLEINER macht als sie
+ist, ist gefährlicher als eine falsche Zahl"). Alles Übrige steht hier — wortgleich, nichts
+gelöscht:
+
+### S.1 — Block 1 (stand als erster unter der Tabelle)
+
+⛔ **Was hier bis 2026-07-31 stand, war doppelt irreführend, und die zweite Fassung desselben Tages auch.** Erst: „iPhone-only for v10 MVP. iPad / Mac / Watch / Vision deferred to v1.1+" — während `project.yml` an ALLEN VIER iOS-Targets `TARGETED_DEVICE_FAMILY: "1,2"` setzte, die App also an iPad ausgeliefert wurde. Niemand hatte das entschieden; es war ein Default, den niemand nachgelesen hat. Dann, nach der Korrektur auf `"1"` (#292), las sich der Absatz wie ein **Ausschluss** von iPad/Vision — genau falsch herum, wie der Founder Stunden später klarstellte. Die Entscheidung (v1.0 = iPhone) steht; ihre BEGRÜNDUNG ist Sequenzierung und der fehlende Sensor auf iPad, nicht ein Verzicht auf das Ökosystem.
+
+### S.2 — Block 2 (der Slogan in vier Dateien)
+
+⛔ **Und die iPad-Zeile trug bis zur Reviewer-Nachlese am selben Tag einen Slogan, der in VIER Dateien gleichzeitig stand und in jeder falsch war:** „Wiederanschalten ist EINE Zeile" (hier, in `project.yml`, im Commit-Text und in `decisions.csv`) — während der Wächter, den **derselbe Commit** installierte, wörtlich sagt „change the settings AND this test in the same commit". Zwei Sätze aus einem Changeset, die einander widersprechen; der eingängigere war der falsche. Es sind vier Einstellungen plus der Wächter plus zwei Prosa-Blöcke, die beim Ändern falsch werden. **Lehre, weil sie sich von der üblichen unterscheidet:** hier war nicht eine Zahl veraltet, sondern eine Behauptung wurde nie geprüft, weil sie gut klang und niemandem wehtat — und sie ist genau der Satz, aus dem eine künftige iPad-Rückkehr ihren Aufwand schätzt. Ein Slogan, der Arbeit KLEINER macht als sie ist, ist gefährlicher als eine falsche Zahl.
+
+### S.3 — Block 3 (die wörtliche Wiederholung von Block 1)
+
+⛔ **Dieser Satz war bis 2026-07-31 eine BEHAUPTUNG, kein Zustand** — und er stand hier, während `project.yml` an ALLEN VIER iOS-Targets `TARGETED_DEVICE_FAMILY: "1,2"` setzte, die App also an iPad ausgeliefert wurde. Niemand hatte das entschieden; es war ein Default, den niemand nachgelesen hat. Founder-Frage („Sind alle Fenster adaptiv für alle Geräte?") plus Delegation („Du entscheidest zukunftsweisend") → jetzt wirklich `"1"` (#292), abgesichert durch `Tests/CISmoke/DeviceFamilyIsPhoneOnlyTests.swift`.

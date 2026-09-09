@@ -331,6 +331,18 @@ final class TheLawFileStaysUnderItsCeilingTests: XCTestCase {
              + "ordinary de-shouting could touch (#912). The LAW — which four producers are "
              + "hot, why the metronome surface is the most dangerous, the guard — stays in "
              + "CLAUDE.md; only the chain moved"),
+            ("Niemand hatte das entschieden", "memory/LEDGER_COUNTS.md", "§S",
+             "the iPad provenance (#292) — the SAME story stood under the platform ladder in "
+             + "THREE blocks, and this 209-byte sentence was in TWO of them WORD FOR WORD. "
+             + "That is #912 one step worse: there a pointer was set and the text left behind; "
+             + "here there was no pointer, just the text twice. The third block opened with "
+             + "\"Dieser Satz\" — a demonstrative whose antecedent the other two had buried, "
+             + "and a pointer with no line number nobody can redden. This needle is the "
+             + "MEASUREMENT of the whole story (the shipping config contradicted the doc and "
+             + "nobody had decided it), carries no caps that ordinary de-shouting could touch "
+             + "(#912), and no paraphrase of the block survives it. The LAW stayed in "
+             + "CLAUDE.md: the decision, its reason, and that re-enabling iPad is four "
+             + "settings + a guard + two prose blocks, never \"one line\""),
             ("RUN_DESTINATION_DEVICE_NAME", "Tests/CISmoke/CLAUDE.md", "§5b",
              "the Clone-2 evidence from the #763 gate-discriminator move — the log line that "
              + "settled which simulator clone dies under #396")
