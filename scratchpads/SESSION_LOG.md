@@ -27609,3 +27609,45 @@ hier nicht Fleiß, sondern das Zerstören der einzigen Messung, die noch fehlt.
 (gesamt) bzw. `--since <sha>` (nur neu). Was fehlt, ist eine Geräte-Sitzung — genau das, was der
 Ship-Gate-Absatz in CLAUDE.md über die zwei offenen Checks schon sagt: **beide sind sensorisch,
 keine Sitzung kann sie durch Bauen schließen.**
+
+## 2026-09-09 — #1154 · doctor C1c: der Blindfleck, den das Werkzeug über sich selbst aufschrieb
+
+**Ausgangspunkt.** Sektion C von `scripts/doctor.py` trug ihre Grenze wörtlich im
+Quelltext: *„A view name inside a STRING literal followed by `(` still counts as a
+construction site. No such string exists today; nothing pins that."* Eine ungepinnte
+Grenze ist ein Versprechen — und diese fällt in die STILLE Richtung: eine türlose
+Ansicht, deren Name zufällig in einer Log-Zeile, einer OSC-Adresse oder einer
+Diag-Zeile steht, gilt als konstruiert und taucht in C1 gar nicht erst auf. Weniger
+Befunde, keine Warnung, und der saubere Lauf danach liest sich als Beleg. Genau die
+Form des maskierten Build-Gates, für die dieses Werkzeug existiert.
+
+**Die Messung.** Ein zweiter Durchgang über DIESELBE Lesung mit geleerten
+String-Innereien (`_code_only(..., blank_strings=True)`), also genau EINE Variable
+anders. Wer in der Strings-behalten-Lesung konstruiert wird und in der
+Strings-geleerten nirgends, verdankt sein „erreichbar" allein einem Literal. Heute:
+leere Liste — ab jetzt als Messung, nicht als Behauptung.
+
+**Der Test prüft ZUERST sich selbst** (`.claude/rules/context.md` §2: ein Scan, der
+nicht feuern kann, ist kein Freispruch). Ändert das Leeren nirgends eine Zahl, ist der
+Durchgang wirkungslos, und „null String-Only-Views" ist Schweigen — das wird als
+Instrumentenfehler gemeldet, nicht als Häkchen.
+
+⛔ **UND DER ERSTE ENTWURF GENAU DIESES SELBSTTESTS KONNTE NICHT FEUERN.** Er lief über
+`swift`, also `tracked("Sources/*.swift") + tracked("Sources/**/*.swift")` — git's `*`
+kreuzt `/`, jede Datei steht zweimal drin, jede Zahl war verdoppelt, und „Leeren hat
+nichts geändert" war konstruktionsbedingt unerreichbar. Die String-Only-Prüfung selbst
+blieb heil (zweimal null ist null), also sah nichts falsch aus. Gefunden durch das
+Fahren der Mutanten, nicht durch Lesen: **der Wächter gegen einen Scan, der nicht
+feuern kann, WAR der Scan, der nicht feuern konnte.** Er läuft jetzt über `bodies` (ein
+Dict, entdoppelt); die Begründung steht an der Schleife.
+
+**Verifikation — zwei Mutanten in einem isolierten Sandbox-Klon, nicht per Inspektion:**
+· eine Ansicht, deren einziges Vorkommen in einem `os_log`-String liegt → C1 listet sie
+  NIRGENDS (der Blindfleck, reproduziert), C1c nennt sie mit der zitierten Zeile.
+· `blank_strings=True` entfernt → die Instrumentenfehler-WARN feuert.
+
+**Beide Prosa-Heimaten der zurückgezogenen Grenze sind im selben Commit mitgezogen**
+(#456): der `code = {...}`-Vermerk und der gedruckte LIMITS-Block.
+
+**Doctor voll:** 2 CRITICALs, beide die bekannten founder-gated Workflow-Posten,
+unverändert. Laufzeit 11,9 s.
