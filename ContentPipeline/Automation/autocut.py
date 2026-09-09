@@ -86,6 +86,16 @@ BRAND_MARK_FRACTION = 0.62    # Marke innerhalb der Platte
 BRAND_MARGIN_FRACTION = 0.045 # Abstand zum Rand
 BRAND_LOGO = "docs/favicon-512.png"
 
+# ── Auto-Zoom: wo passiert etwas? ────────────────────────────────────────────────────
+# Founder 2026-09-09: "An die richtigen Ausschnitte heranzoomen wo was passiert bei
+# bildschirmaufnahmen etc."
+ZOOM_COLS = 48             # Analyse-Raster; grob genug für reines Python, fein genug für eine Ecke
+ZOOM_ROWS = 27
+ZOOM_FPS = 4               # Abtastrate der Analyse — nicht die Bildrate der Ausgabe
+ZOOM_COVERAGE = 0.75       # so viel der Gesamt-Veränderung muss im Ausschnitt liegen
+ZOOM_PAD = 0.10            # Luft um das gefundene Rechteck
+ZOOM_MIN_FRACTION = 0.25   # niemals enger als ein Viertel der Bildbreite/-höhe
+
 # ⛔ KEIN GRÜN. `EchoelTheme.accent` (bio-green) trägt dort den Vermerk "signal only" — es
 #    bedeutet ein gemessenes Signal. Als Zierfarbe in einem Video bräche es die eigene CI,
 #    und zwar an der Stelle, an der die CI am sichtbarsten ist. Die Marke ist Tinte auf Grund.
@@ -282,6 +292,122 @@ def pick_highlights(env: list[float], hop_ms: int, clip_seconds: float,
 
 # ── ffmpeg-Hülle — NICHT in diesem Container getrieben ───────────────────────────────
 
+def activity_grid(frames: list[bytes], cols: int, rows: int) -> list[float]:
+    """Wie viel hat sich je Rasterzelle über den ganzen Clip verändert?
+
+    ⭐ VERÄNDERUNG, NICHT HELLIGKEIT. Eine Bildschirmaufnahme ist grösstenteils stillstehend;
+       "wo passiert etwas" heisst dort buchstäblich "wo ändern sich Pixel". Das ist eine
+       ANDERE Frage als die von `highlights` (dort: wo ist es laut) — und für eine stumme
+       Bildschirmaufnahme die einzige, die überhaupt eine Antwort hat.
+
+    ⚠️ Absolute Differenz aufeinanderfolgender Abtastungen, NICHT gegen das erste Bild:
+       gegen ein festes Referenzbild würde ein einmaliges Scrollen den Rest des Clips
+       dauerhaft als "aktiv" markieren, auch wenn dort danach nichts mehr geschieht.
+    """
+    size = cols * rows
+    acc = [0.0] * size
+    previous = None
+    for frame in frames:
+        if len(frame) < size:
+            continue                                   # Halbes Bild am Ende: verwerfen
+        if previous is not None:
+            for i in range(size):
+                acc[i] += abs(frame[i] - previous[i])
+        previous = frame
+    return acc
+
+
+def activity_box(activity: list[float], cols: int, rows: int,
+                 coverage: float = ZOOM_COVERAGE) -> tuple[int, int, int, int]:
+    """Kleinstes Zellen-Rechteck, das `coverage` der Gesamtveränderung enthält.
+
+    Verfahren: Zellen nach Veränderung absteigend nehmen, bis der Anteil erreicht ist, dann
+    deren umschliessendes Rechteck. Einfach und robust — und wichtiger: es kann NICHT auf
+    einen einzelnen Ausreisser zusammenschnurren, weil der Anteil erst mit genug Zellen
+    zusammenkommt.
+
+    ⚠️ Bei völlig regungslosem Material ist die Summe 0. Dann gibt es keine "Stelle, wo etwas
+       passiert", und die ehrliche Antwort ist das GANZE Bild — nicht eine willkürliche Ecke.
+    """
+    total = sum(activity)
+    if total <= 0 or not activity:
+        return (0, 0, cols - 1, rows - 1)
+    order = sorted(range(len(activity)), key=lambda i: activity[i], reverse=True)
+    taken, running = [], 0.0
+    for i in order:
+        taken.append(i)
+        running += activity[i]
+        if running >= total * coverage:
+            break
+    xs = [i % cols for i in taken]
+    ys = [i // cols for i in taken]
+    return (min(xs), min(ys), max(xs), max(ys))
+
+
+def crop_rect(box: tuple[int, int, int, int], cols: int, rows: int,
+              width: int, height: int, aspect: float | None = None,
+              pad: float = ZOOM_PAD,
+              min_fraction: float = ZOOM_MIN_FRACTION) -> tuple[int, int, int, int]:
+    """Zellen-Rechteck → Pixel-Zuschnitt (x, y, w, h), gepolstert, seitenverhältnis-treu,
+    im Bild gehalten und mit GERADEN Kanten.
+
+    ⚠️ GERADE KANTEN SIND KEINE KOSMETIK: h264 mit yuv420p verlangt gerade Breite und Höhe.
+       Ein ungerader Zuschnitt lässt ffmpeg abbrechen — mit einer Meldung über Pixelformate,
+       die nichts über die eigentliche Ursache sagt.
+
+    ⚠️ `min_fraction` verhindert den unbrauchbaren Extremfall: ein blinkender Cursor ist eine
+       winzige, sehr aktive Fläche, und ein Zuschnitt darauf wäre ein Standbild vom Cursor.
+    """
+    x0, y0, x1, y1 = box
+    cw, ch = width / cols, height / rows
+    px0, py0 = x0 * cw, y0 * ch
+    px1, py1 = (x1 + 1) * cw, (y1 + 1) * ch
+
+    bw, bh = px1 - px0, py1 - py0
+    px0 -= bw * pad
+    px1 += bw * pad
+    py0 -= bh * pad
+    py1 += bh * pad
+
+    bw = max(px1 - px0, width * min_fraction)
+    bh = max(py1 - py0, height * min_fraction)
+    cx, cy = (px0 + px1) / 2, (py0 + py1) / 2
+
+    if aspect and aspect > 0:
+        if bw / bh < aspect:
+            bw = bh * aspect
+        else:
+            bh = bw / aspect
+
+    if bw > width:
+        bw = float(width)
+        bh = bw / aspect if aspect else bh
+    if bh > height:
+        bh = float(height)
+        bw = bh * aspect if aspect else bw
+
+    x = min(max(cx - bw / 2, 0.0), width - bw)
+    y = min(max(cy - bh / 2, 0.0), height - bh)
+
+    # ⛔ ERST STAND HIER EINE EINZIGE RUNDUNGSFUNKTION `max(2, …)` FÜR ALLE VIER WERTE, und
+    #    der Selbsttest hat sie sofort rot gemacht: für BREITE und HÖHE ist die Untergrenze 2
+    #    richtig (ein Zuschnitt von 0 Pixeln ist keiner), für die POSITION ist sie falsch —
+    #    x=0 ist gültig, und aus 0 wurde 2, also lag der Zuschnitt bei Vollbild um zwei Pixel
+    #    ausserhalb (x+w = 1922 bei 1920). Zwei verschiedene Grössen, zwei verschiedene
+    #    Untergrenzen; eine gemeinsame "Hilfsfunktion" hat genau das verwischt.
+    def even_size(v: float) -> int:
+        return max(2, int(v) // 2 * 2)
+
+    def even_pos(v: float) -> int:
+        return max(0, int(v) // 2 * 2)
+
+    w_i, h_i = even_size(bw), even_size(bh)
+    # Nach dem Abrunden kann die Position noch überstehen — erst jetzt endgültig klemmen.
+    x_i = min(even_pos(x), max(0, width - w_i))
+    y_i = min(even_pos(y), max(0, height - h_i))
+    return (x_i, y_i, w_i, h_i)
+
+
 def require(tool: str) -> str:
     path = shutil.which(tool)
     if path is None:
@@ -471,6 +597,107 @@ def cmd_brand(args) -> int:
     apply_brand(src, dst, args.position)
     print(f"  {os.path.basename(dst)}  {os.path.getsize(dst)/1e6:.1f} MB")
     print("  Das Original ist unangetastet.")
+    return 0
+
+
+def read_activity_frames(path: str, cols: int = ZOOM_COLS,
+                         rows: int = ZOOM_ROWS, fps: int = ZOOM_FPS) -> list[bytes]:
+    """Graue Miniaturbilder als Strom — dieselbe Bauform wie `read_envelope` (#1183):
+    nie das ganze Video im Speicher, jedes Bild sofort auf `cols*rows` Byte reduziert."""
+    require("ffmpeg")
+    size = cols * rows
+    out: list[bytes] = []
+    with tempfile.TemporaryFile() as err_file:
+        proc = subprocess.Popen(
+            ["ffmpeg", "-v", "error", "-i", path, "-an",
+             "-vf", f"fps={fps},scale={cols}:{rows}", "-f", "rawvideo",
+             "-pix_fmt", "gray", "-"],
+            stdout=subprocess.PIPE, stderr=err_file)
+        try:
+            carry = b""
+            while True:
+                block = proc.stdout.read(size * 32)
+                if not block:
+                    break
+                buf = carry + block
+                whole = len(buf) // size
+                for k in range(whole):
+                    out.append(buf[k * size:(k + 1) * size])
+                carry = buf[whole * size:]
+            proc.stdout.close()
+            code = proc.wait()
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+                proc.wait()
+        err_file.seek(0)
+        message = err_file.read().decode("utf-8", "replace").strip()
+    if code != 0:
+        raise Missing(f"ffmpeg konnte das Bild von '{os.path.basename(path)}' nicht lesen "
+                      f"(Code {code}).\n    {message[:400]}")
+    if len(out) < 2:
+        raise Missing(f"'{os.path.basename(path)}' liefert weniger als zwei Bilder — ohne "
+                      f"zwei Bilder gibt es keine Veränderung zu messen.")
+    return out
+
+
+def video_size(path: str) -> tuple[int, int]:
+    """Breite und Höhe aus ffmpeg selbst (kein ffprobe, #1184)."""
+    require("ffmpeg")
+    with tempfile.TemporaryFile() as err_file:
+        subprocess.run(["ffmpeg", "-hide_banner", "-i", path], stdout=subprocess.DEVNULL,
+                       stderr=err_file)
+        err_file.seek(0)
+        text = err_file.read().decode("utf-8", "replace")
+    for line in text.splitlines():
+        if "Video:" in line:
+            for token in line.replace(",", " ").split():
+                parts = token.split("x")
+                if len(parts) == 2 and all(p.isdigit() for p in parts):
+                    return int(parts[0]), int(parts[1])
+    raise Missing(f"Keine Bildgröße in '{os.path.basename(path)}' gefunden.")
+
+
+ASPECTS = {"quelle": None, "16:9": 16 / 9, "9:16": 9 / 16, "1:1": 1.0, "4:5": 4 / 5}
+
+
+def cmd_zoom(args) -> int:
+    src = args.input
+    width, height = video_size(src)
+    frames = read_activity_frames(src)
+    activity = activity_grid(frames, ZOOM_COLS, ZOOM_ROWS)
+    box = activity_box(activity, ZOOM_COLS, ZOOM_ROWS, args.coverage)
+    aspect = ASPECTS[args.aspect]
+    x, y, w, h = crop_rect(box, ZOOM_COLS, ZOOM_ROWS, width, height, aspect)
+
+    moved = sum(activity)
+    print(f"autocut zoom: {os.path.basename(src)}  ({width}×{height}, "
+          f"{len(frames)} Abtastungen)")
+    if moved <= 0:
+        print("  ⛔ NICHTS BEWEGT SICH in diesem Clip. Es gibt keine Stelle, an die man "
+              "heranzoomen könnte —\n     der Zuschnitt bleibt das ganze Bild.")
+    print(f"  Ausschnitt: {w}×{h} bei ({x}, {y})  — {100*w*h/(width*height):.0f} % der Fläche")
+
+    if not args.write:
+        print("  (nur gemessen — mit --write wird geschnitten)")
+        return 0
+
+    stem = os.path.splitext(os.path.basename(src))[0]
+    outdir = args.outdir or os.path.dirname(os.path.abspath(src))
+    os.makedirs(outdir, exist_ok=True)
+    dst = os.path.join(outdir, f"{stem}_zoom.mp4")
+    if os.path.abspath(src) == os.path.abspath(dst):
+        raise Missing("Der Zuschnitt würde das Original überschreiben.")
+    require("ffmpeg")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src,
+                    "-vf", f"crop={w}:{h}:{x}:{y}",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                    "-c:a", "copy", dst], check=True)
+    print(f"  → {os.path.basename(dst)}   (Original unangetastet)")
+    if args.brand:
+        branded = os.path.join(outdir, f"{stem}_zoom_echoel.mp4")
+        apply_brand(dst, branded, args.position)
+        print(f"  → {os.path.basename(branded)}")
     return 0
 
 
@@ -767,6 +994,54 @@ def drive(workdir: str) -> int:
         check("Marke verweigert das Überschreiben des Originals", False,
               "ffmpeg brach ab, statt dass autocut es sauber ablehnt")
 
+    # ── Auto-Zoom gegen echtes Material ──────────────────────────────────────────────
+    # Eine "Bildschirmaufnahme": ruhige helle Fläche, und NUR unten rechts blinkt ein Kasten.
+    screen = os.path.join(workdir, "drive_screen.mp4")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+                    "-i", "color=c=0xF2F2F2:s=1280x720:d=6:r=25",
+                    "-vf", "drawbox=x=980:y=560:w=180:h=110:"
+                           "color=black@1.0:t=fill:enable='lt(mod(t,1),0.5)'",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", screen], check=True)
+
+    w0, h0 = video_size(screen)
+    grid = read_activity_frames(screen)
+    act = activity_grid(grid, ZOOM_COLS, ZOOM_ROWS)
+    zbox = activity_box(act, ZOOM_COLS, ZOOM_ROWS, ZOOM_COVERAGE)
+    zx, zy, zw, zh = crop_rect(zbox, ZOOM_COLS, ZOOM_ROWS, w0, h0, None)
+
+    # Der blinkende Kasten liegt bei x 980..1160, y 560..670 von 1280×720.
+    covers = zx <= 980 and zy <= 560 and zx + zw >= 1160 and zy + zh >= 670
+    check("Zoom findet den blinkenden Bereich in echtem Material", covers,
+          f"Zuschnitt ({zx},{zy}) {zw}×{zh}")
+    check("Zoom schneidet wirklich zu, statt das Vollbild zurückzugeben",
+          zw * zh < w0 * h0 * 0.75,
+          f"{100 * zw * zh / (w0 * h0):.0f} % der Fläche")
+
+    zoomed = os.path.join(out, "drive_zoom.mp4")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", screen,
+                    "-vf", f"crop={zw}:{zh}:{zx}:{zy}", "-c:v", "libx264",
+                    "-preset", "veryfast", zoomed], check=True)
+    zw2, zh2 = video_size(zoomed)
+    check("der geschnittene Clip hat genau die berechnete Grösse",
+          (zw2, zh2) == (zw, zh), f"{zw2}×{zh2} gegen {zw}×{zh}")
+
+    # ⚠️ Und er muss den Kasten WIRKLICH ENTHALTEN. Eine Grössenprüfung allein wäre blind
+    #    dafür, dass der Zuschnitt an der falschen Stelle sitzt: der Ausschnitt muss ZEITLICH
+    #    zwischen hell und dunkel wechseln, weil der Kasten blinkt.
+    def mean_luma_at(path: str, when: float) -> int:
+        raw = subprocess.run(
+            ["ffmpeg", "-v", "error", "-ss", f"{when:.2f}", "-i", path, "-frames:v", "1",
+             "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+            capture_output=True, check=True).stdout
+        if not raw:
+            raise Missing("Kein Bildpunkt — Zeitpunkt hinter dem Ende?")
+        return raw[0]
+
+    bright = mean_luma_at(zoomed, 0.75)   # Kasten AUS
+    dark = mean_luma_at(zoomed, 2.25)     # Kasten AN
+    check("im Ausschnitt blinkt es wirklich (er sitzt an der richtigen Stelle)",
+          bright - dark > 20, f"hell {bright} gegen dunkel {dark}")
+
     print(f"\n--drive: {'alles grün' if fails == 0 else f'{fails} FEHLER'}")
     return 0 if fails == 0 else 1
 
@@ -877,6 +1152,95 @@ def selftest() -> int:
     check("Strom-Leser über leerem Ton liefert nichts, statt zu krachen",
           envelope_from_stream(ShortReader(b"", 8), hop) == [])
 
+    # ── Auto-Zoom: die reine Rechnung ────────────────────────────────────────────────
+    cols, rows = 48, 27
+
+    def frame_with_blob(cx: int, cy: int, value: int) -> bytes:
+        """Grauwert-Miniatur: ruhiger Grund, ein Fleck bei (cx, cy)."""
+        buf = bytearray([40] * (cols * rows))
+        for y in range(max(0, cy - 2), min(rows, cy + 3)):
+            for x in range(max(0, cx - 2), min(cols, cx + 3)):
+                buf[y * cols + x] = value
+        return bytes(buf)
+
+    # Der Fleck flackert unten rechts, sonst passiert nichts.
+    seq = [frame_with_blob(40, 21, 40 if i % 2 else 220) for i in range(12)]
+    act = activity_grid(seq, cols, rows)
+    box = activity_box(act, cols, rows)
+    check("Zoom findet die Zelle, in der sich etwas ändert",
+          box[0] >= 36 and box[1] >= 17 and box[2] <= 44 and box[3] <= 25, f"{box}")
+
+    # ⚠️ Gegen ein FESTES Referenzbild wäre eine einmalige Änderung für immer "aktiv".
+    #    Hier bewegt sich der Fleck EINMAL und bleibt dann liegen — die spätere Ruhe
+    #    darf nicht als Aktivität zählen.
+    # ⛔ ERST PRÜFTE DIESER ANSPRUCH NUR, WIE VIELE ZELLEN AKTIV SIND — und ein Mutant, der
+    #    gegen das ERSTE Bild statt gegen das vorige rechnet, kam grün durch: er markiert
+    #    DIESELBEN Zellen, nur zehnmal so hoch. Die Menge der aktiven Zellen kann die beiden
+    #    Verfahren gar nicht unterscheiden; die SUMME kann es. Ein einmaliger Wechsel muss
+    #    genau EINEN Übergang wert sein, nicht zehn.
+    once = [frame_with_blob(8, 5, 40)] + [frame_with_blob(8, 5, 220)] * 10
+    one_step = sum(activity_grid([frame_with_blob(8, 5, 40),
+                                  frame_with_blob(8, 5, 220)], cols, rows))
+    act2 = activity_grid(once, cols, rows)
+    check("ein einmaliger Wechsel zählt EINMAL, nicht für den Rest des Clips",
+          act2 and abs(sum(act2) - one_step) < 1e-6,
+          f"Summe {sum(act2):.0f}, ein Übergang wäre {one_step:.0f}")
+
+    still = [frame_with_blob(10, 10, 100)] * 6
+    check("völlig ruhiges Material ergibt das GANZE Bild, keine willkürliche Ecke",
+          activity_box(activity_grid(still, cols, rows), cols, rows) == (0, 0, cols - 1, rows - 1))
+
+    # ⛔ ERST PRÜFTE DIES EINEN EINZIGEN ZUSCHNITT, UND DER WAR ZUFÄLLIG SCHON GERADE (480×270):
+    #    ein Mutant, der das Abrunden weglässt, kam grün durch. Ein Anspruch über eine
+    #    Rundungsregel braucht einen Fall, in dem ohne sie etwas UNGERADES herauskäme —
+    #    sonst prüft er die Regel gar nicht. Jetzt viele Bildgrössen und Kästen, darunter
+    #    krumme Seitenlängen, für die die Rasterteilung nicht aufgeht.
+    odd_seen = False
+    bad_even, bad_inside = [], []
+    for (fw, fh) in ((1920, 1080), (1280, 720), (1001, 563), (854, 480), (720, 1280)):
+        for bx in (0, 7, 23, 40, cols - 1):
+            for by in (0, 5, 13, rows - 1):
+                b = (bx, by, min(cols - 1, bx + 3), min(rows - 1, by + 2))
+                for asp in (None, 16 / 9, 9 / 16, 1.0):
+                    cx_, cy_, cw_, ch_ = crop_rect(b, cols, rows, fw, fh, asp)
+                    if any(v % 2 for v in (cx_, cy_, cw_, ch_)):
+                        bad_even.append((fw, fh, b, asp, (cx_, cy_, cw_, ch_)))
+                    if cx_ < 0 or cy_ < 0 or cx_ + cw_ > fw or cy_ + ch_ > fh:
+                        bad_inside.append((fw, fh, b, asp, (cx_, cy_, cw_, ch_)))
+                    if (fw * 1.0 / cols) % 2 or (fh * 1.0 / rows) % 2:
+                        odd_seen = True
+    check("Zuschnitt hat IMMER gerade Kanten (h264 verlangt das)",
+          not bad_even and odd_seen,
+          f"{len(bad_even)} krumme von {5*5*4*4} Fällen" if bad_even else
+          "alle 400 Fälle gerade, krumme Rasterteilungen dabei")
+    check("Zuschnitt bleibt IMMER im Bild", not bad_inside,
+          f"{len(bad_inside)} ausserhalb" if bad_inside else "alle 400 Fälle innerhalb")
+
+    # Die Polsterung hat einen Zweck: die Handlung soll nicht am Ausschnittrand kleben.
+    # Ein grosser Kasten, bei dem die Mindestgrösse NICHT greift — sonst prüfte der Anspruch
+    # die Mindestgrösse statt die Polsterung.
+    big = (10, 5, 37, 21)
+    bw_px = (big[2] + 1 - big[0]) * 1920 / cols
+    bh_px = (big[3] + 1 - big[1]) * 1080 / rows
+    padded = crop_rect(big, cols, rows, 1920, 1080, aspect=None)
+    check("um die Handlung bleibt Luft (die Polsterung wirkt)",
+          padded[2] > bw_px + 2 and padded[3] > bh_px + 2,
+          f"Kasten {bw_px:.0f}×{bh_px:.0f} → Ausschnitt {padded[2]}×{padded[3]}")
+
+    tiny = crop_rect((24, 13, 24, 13), cols, rows, 1920, 1080, aspect=None)
+    check("Zuschnitt schnurrt NICHT auf einen blinkenden Cursor zusammen",
+          tiny[2] >= 1920 * ZOOM_MIN_FRACTION and tiny[3] >= 1080 * ZOOM_MIN_FRACTION,
+          f"{tiny[2]}×{tiny[3]}")
+
+    tall = crop_rect((20, 10, 28, 16), cols, rows, 1920, 1080, aspect=9 / 16)
+    ratio = tall[2] / tall[3]
+    check("Hochformat 9:16 wird eingehalten", abs(ratio - 9 / 16) < 0.02,
+          f"{tall[2]}×{tall[3]} = {ratio:.3f}")
+
+    wide = crop_rect((0, 0, cols - 1, rows - 1), cols, rows, 1920, 1080, aspect=16 / 9)
+    check("ein Vollbild-Kasten sprengt das Bild nicht",
+          wide[0] + wide[2] <= 1920 and wide[1] + wide[3] <= 1080, f"{wide}")
+
     print(f"\nselftest: {'alle Ansprüche grün' if fails == 0 else f'{fails} FEHLER'}")
     return 0 if fails == 0 else 1
 
@@ -900,6 +1264,18 @@ def main(argv: list[str]) -> int:
     ss.add_argument("b")
     ss.add_argument("--max-offset", type=float, default=DEFAULT_MAX_OFFSET_S, dest="max_offset")
     ss.set_defaults(fn=cmd_sync)
+
+    sz = sub.add_parser("zoom", help="an die Stelle heranzoomen, wo etwas passiert")
+    sz.add_argument("input")
+    sz.add_argument("--aspect", default="quelle", choices=list(ASPECTS),
+                    help="Seitenverhältnis der Ausgabe (9:16 = Hochformat)")
+    sz.add_argument("--coverage", type=float, default=ZOOM_COVERAGE,
+                    help="Anteil der Veränderung, der im Ausschnitt liegen muss")
+    sz.add_argument("--write", action="store_true", help="wirklich schneiden")
+    sz.add_argument("--brand", action="store_true", help="Marke danach einbrennen")
+    sz.add_argument("--position", default="br", choices=["br", "bl", "tr", "tl"])
+    sz.add_argument("--outdir")
+    sz.set_defaults(fn=cmd_zoom)
 
     sb = sub.add_parser("brand", help="Echoel-Marke einbrennen (neue Datei)")
     sb.add_argument("input")

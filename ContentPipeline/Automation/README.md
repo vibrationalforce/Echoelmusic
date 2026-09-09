@@ -17,6 +17,7 @@ sich selbst für leer erklärt und zwei Werkzeuge enthält.
 | `sync` | misst den Versatz zweier Aufnahmen über den TON und **verweigert die Antwort**, wenn er sich nicht sicher ist (Exit 2) |
 | `highlights` | findet die lautesten Stellen und schneidet sie auf Wunsch (`--brand` brennt die Marke gleich ein) |
 | `brand` | Echoel-Marke einbrennen — **immer in eine neue Datei**, das Original bleibt |
+| `zoom` | an die Stelle heranzoomen, **wo etwas passiert** — `--aspect 9:16` macht Hochformat daraus |
 | `--selftest` | treibt die reinen Kerne gegen synthetische Signale mit BEKANNTER Verschiebung — braucht kein ffmpeg |
 | `--drive ORDNER` | baut zwei echte Videos mit bekanntem Versatz und fährt alles durch — braucht ffmpeg |
 
@@ -66,3 +67,28 @@ das, was die Uncodixfy-Regeln verlangen — Glasoptik, Verlauf und Schein sind d
 ANNAHME, keine Messung von Spannung; das Werkzeug druckt darum je Clip seinen Wert, damit man
 ihm widersprechen kann. Wenn der Founder etwas anderes meint (Bewegung im Bild, Gesicht,
 Sprache), ist das eine eigene Scheibe und keine Feineinstellung.
+
+## Auto-Zoom (#1186)
+
+Founder 2026-09-09: *"An die richtigen Ausschnitte heranzoomen wo was passiert bei
+bildschirmaufnahmen etc."*
+
+**Wonach es sucht: VERÄNDERUNG, nicht Lautstärke.** Eine Bildschirmaufnahme steht
+grösstenteils still; „wo passiert etwas" heisst dort buchstäblich „wo ändern sich Pixel".
+Das ist eine **andere Frage als bei `highlights`** — und für eine stumme Aufnahme die
+einzige, die überhaupt eine Antwort hat.
+
+Ablauf: 4 Bilder/s auf ein 48×27-Raster → Differenz zum VORIGEN Bild (nicht zum ersten:
+sonst gilt ein einmaliges Scrollen für den Rest des Clips als „aktiv") → kleinstes Rechteck,
+das 75 % der Veränderung enthält → 10 % Luft drumherum → Seitenverhältnis → Zuschnitt.
+
+Vier Sicherungen, jede mit eigenem Anspruch und eigenem Mutanten:
+- **nie enger als ein Viertel des Bildes** — sonst wäre ein blinkender Cursor ein Standbild
+- **immer gerade Kanten** — h264 bricht sonst ab, mit einer Meldung über Pixelformate, die
+  nichts über die Ursache sagt
+- **immer im Bild**, auch bei krummen Rasterteilungen (400 Fälle geprüft)
+- **völlig ruhiges Material → das GANZE Bild**, keine willkürliche Ecke
+
+⚠️ **Grenze der ersten Fassung: EIN Ausschnitt für den ganzen Clip.** Wandert die Handlung,
+gewinnt die Stelle mit der meisten Bewegung. Ein Zoom, der mitwandert, ist eine eigene
+Scheibe — und die Frage, ob Schnitte oder weiche Fahrten, gehört dem Founder.

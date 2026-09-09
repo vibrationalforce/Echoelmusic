@@ -89,6 +89,7 @@ while true; do
   echo "  2) Sync       — Versatz zweier Aufnahmen über den Ton messen"
   echo "  3) Highlights — die lautesten Stellen finden und schneiden"
   echo "  4) Marke      — Echoel-Logo einbrennen (schreibt eine NEUE Datei)"
+  echo "  5) Zoom       — an die Stelle heranzoomen, wo etwas passiert"
   echo "  q) Schluss"
   echo
   read -r -p "Auswahl: " choice
@@ -134,6 +135,24 @@ while true; do
       if [ -n "$IN" ]; then
         read -r -p "Ecke? br=unten-rechts bl tr tl [br] " P; P="${P:-br}"
         "$PY" "$SCRIPT" brand "$IN" --position "$P"
+      fi
+      ;;
+    5)
+      IN=$(ask_path "Bildschirmaufnahme hierher ziehen, dann Enter: ")
+      if [ -n "$IN" ]; then
+        echo "  Format: quelle (unverändert) · 9:16 (Hochformat) · 1:1 · 4:5 · 16:9"
+        read -r -p "Format? [quelle] " A; A="${A:-quelle}"
+        read -r -p "Wirklich schneiden? (sonst nur messen) [j/N] " W
+        if [ "$W" = "j" ] || [ "$W" = "J" ]; then
+          read -r -p "Echoel-Marke einbrennen? [j/N] " B
+          if [ "$B" = "j" ] || [ "$B" = "J" ]; then
+            "$PY" "$SCRIPT" zoom "$IN" --aspect "$A" --write --brand
+          else
+            "$PY" "$SCRIPT" zoom "$IN" --aspect "$A" --write
+          fi
+        else
+          "$PY" "$SCRIPT" zoom "$IN" --aspect "$A"
+        fi
       fi
       ;;
     q|Q) exit 0 ;;

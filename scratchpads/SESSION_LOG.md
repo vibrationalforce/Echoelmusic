@@ -29071,3 +29071,54 @@ Einzug trennen Rand und weiche Kante nur um 14 Punkte, mit Einzug um 108).
 
 **Offen bleibt** die `.command` selbst (kein macOS hier) — die Menüpunkte 4 und die
 Marken-Frage bei Highlights sind ungetestet wie der Rest der Datei.
+
+## #1186 — Auto-Zoom: an die Stelle, wo etwas passiert (2026-09-09)
+
+**FOUNDER-ASK, wörtlich:** *"An die richtigen Ausschnitte heranzoomen wo was passiert bei
+bildschirmaufnahmen etc."*
+
+⭐ **Das beantwortet nebenbei meine eigene offene Frage.** Ich hatte gefragt, ob „spannend"
+wirklich LAUT heisst. Für eine BILDSCHIRMaufnahme lautet die Antwort: nein — dort ist die
+Frage „wo ändern sich Pixel", und für eine stumme Aufnahme ist das die einzige Frage, die
+überhaupt eine Antwort hat. `highlights` (Lautstärke) und `zoom` (Veränderung) sind damit
+zwei verschiedene Werkzeuge für zwei verschiedene Materialarten, nicht zwei Einstellungen.
+
+**Verfahren:** 4 Bilder/s auf ein 48×27-Raster → Differenz zum VORIGEN Bild → kleinstes
+Rechteck mit 75 % der Veränderung → 10 % Luft → Seitenverhältnis (`quelle`/`9:16`/`1:1`/`4:5`/
+`16:9`) → Zuschnitt. Reine Kerne (`activity_grid`, `activity_box`, `crop_rect`) ohne ffmpeg,
+Hülle wie `read_envelope` als Strom.
+
+⚠️ **Differenz zum VORIGEN Bild, nicht zum ersten** — sonst gälte ein einmaliges Scrollen für
+den Rest des Clips als „aktiv".
+
+### Ein echter Fehler, vom Selbsttest sofort gefangen
+`crop_rect` gab `(2, 2, 1920, 1080)` auf einem 1920×1080-Bild zurück — zwei Pixel ausserhalb.
+Ursache: EINE gemeinsame Rundungsfunktion `max(2, …)` für alle vier Werte. Für BREITE und HÖHE
+ist die Untergrenze 2 richtig, für die POSITION ist sie falsch (x=0 ist gültig, wurde zu 2).
+**Zwei verschiedene Grössen, zwei verschiedene Untergrenzen — eine gemeinsame „Hilfsfunktion"
+hat genau das verwischt.** Getrennt in `even_size`/`even_pos`, danach endgültig geklemmt.
+
+### Zwei Ansprüche waren zu schwach, beide von Mutanten entlarvt
+⛔ **„Zählt Veränderung, nicht Abweichung vom ersten Bild"** prüfte, WIE VIELE Zellen aktiv
+sind. Ein Mutant, der gegen das erste Bild rechnet, markiert DIESELBEN Zellen — nur zehnmal so
+hoch. **Die Menge der aktiven Zellen kann die beiden Verfahren gar nicht unterscheiden; die
+SUMME kann es.** Jetzt: ein einmaliger Wechsel muss genau EINEN Übergang wert sein (4500 gegen
+45000).
+⛔ **„Gerade Kanten"** prüfte EINEN Zuschnitt, und der war zufällig schon gerade (480×270).
+**Ein Anspruch über eine Rundungsregel braucht einen Fall, in dem ohne sie etwas UNGERADES
+herauskäme** — sonst prüft er die Regel gar nicht. Jetzt 400 Fälle über fünf Bildgrössen
+(darunter 1001×563, wo die Rasterteilung nicht aufgeht) und vier Seitenverhältnisse; der
+Mutant erzeugt 100 bzw. 156 krumme davon.
+
+**Stand: acht Zoom-Ansprüche im Selbsttest, vier weitere in `--drive` gegen echtes Material
+(blinkender Kasten unten rechts in einer 1280×720-„Bildschirmaufnahme"), und SIEBEN Mutanten
+machen sie nachweislich rot** — Differenz gegen das erste Bild · gerade Kanten (Grösse) ·
+gerade Kanten (Position) · Mindestgrösse · Seitenverhältnis · ruhig→Ecke · Polsterung.
+
+⚠️ Der `--drive`-Anspruch prüft nicht nur die GRÖSSE des Zuschnitts, sondern dass es darin
+zeitlich WIRKLICH BLINKT (hell 255 gegen dunkel 116) — eine Grössenprüfung allein wäre blind
+dafür, dass der Ausschnitt an der falschen Stelle sitzt.
+
+**Grenze der ersten Fassung, ehrlich benannt:** EIN Ausschnitt für den ganzen Clip. Wandert
+die Handlung, gewinnt die Stelle mit der meisten Bewegung. Ein mitwandernder Zoom ist eine
+eigene Scheibe, und ob Schnitte oder weiche Fahrten gehört dem Founder.
