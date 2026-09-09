@@ -58,6 +58,24 @@
 //     exists to make the tempting NEXT move (delete the two readerless meters) go red, not
 //     to claim a catch it does not have.
 //
+//  ⛔ THE MANDATORY REVIEW OF #1197 CORRECTED THREE THINGS IN THIS FILE AND ONE ELSEWHERE,
+//  and the one elsewhere was a RED it caused, not a nit it found:
+//   · `TheMenuHostReadsNoHotStateTests.meterProperties()` DERIVES the hot set from the same
+//     60 Hz closure by taking the FIRST `self.` on each line. #1197's one-line guard shape
+//     `if next != self.hot { self.hot = next }` puts a READ first, so five producers vanished
+//     and the derived set collapsed nine → four. Two assertions there went red, and the
+//     second-order damage was worse: three NEGATIVE freeze-scans consume that set and would
+//     have passed for having nothing to look for (#367). Repaired in the same commit — that
+//     scanner now reads every `self.` on the line, which is what its own limit note
+//     prescribed. Verified by transcription on three trees: pre-#1197 9→9 (a no-op there),
+//     #1197 4→9.
+//   · claim 5's property list was HARD-CODED, against the sibling's explicit instruction. It
+//     now derives from the closure text, so a tenth unguarded publication cannot hide.
+//   · claim 7's message claimed ADJACENCY that a whole-file substring scan cannot prove.
+//     Trimmed to what the needle establishes.
+//  The lesson worth keeping: a change that alters the SHAPE of a scanned region must be
+//  driven against every guard that scans it, not only the guard it ships with.
+//
 
 import XCTest
 
@@ -176,17 +194,29 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
     // MARK: - 5. the 60 Hz poll republishes nothing that did not move
 
     /// REGRESSION (#1197). `@Observable` invalidates on ASSIGNMENT, not on change: a write
-    /// of the identical value still takes the registrar lock, looks the keypath up and marks
-    /// every observing view dirty. `startMeterPollTimer` fires 60x per second for the whole
-    /// life of the process, and SEVEN of its nine values are frozen whenever detailed
-    /// metering is off — which is the DEFAULT. So the poll spent main-actor time, 60 times a
-    /// second, republishing bytes that had not changed, in competition with the render loop.
+    /// of the identical value still takes the registrar lock and looks the keypath up.
+    /// `startMeterPollTimer` fires 60x per second for the life of an engine RUN, and SEVEN of
+    /// its nine values are frozen whenever detailed metering is off — which is the DEFAULT.
+    /// ~20 s after audio stops it is ALL NINE, because `x * 0.92` in `Float` has a fixed
+    /// point in the denormals: the level meters decay toward zero and never arrive.
     ///
-    /// This claim says: every one of the nine publications is compare-then-assign.
+    /// ⛔ THE FIRST VERSION OF THIS DOC SAID "the whole life of the process", "marks every
+    /// observing view dirty" and "in competition with the render loop". All three were
+    /// overstated and the mandatory review retracted them: `stop()` invalidates the timer,
+    /// there are no observers for the frozen seven while metering is off, and the render loop
+    /// is not on the main actor at all. The retraction is kept visible rather than edited
+    /// away — an overstated perf note is a premise a later session clears a different change
+    /// with (#496 is the same shape, one layer up).
+    ///
+    /// This claim says one thing: every publication in that closure is compare-then-assign.
+    ///
+    /// ⚠️ It is a SHAPE pin, not a semantic one. `if self.prop != next {` — the same test
+    /// written the other way round — would go RED on correct code. The failure message
+    /// carries the expected spelling for exactly that reason.
     func testTheMeterPollAssignsOnlyWhatMoved() throws {
         let body = try meterPollBody()
         var unguarded: [String] = []
-        for name in Self.polledMeters {
+        for name in try polledMeters() {
             let assignments = Self.occurrences(of: "self.\(name) =", in: body)
             // The trailing " {" is NOT cosmetic. `masterLevel` is a PREFIX of
             // `masterLevelR`, so the bare needle counts the stereo guard as a second mono
@@ -204,9 +234,11 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
                 let next<X> = <source>
                 if next<X> != self.<prop> { self.<prop> = next<X> }
 
-            A bare assignment here is not a style question. It is one registrar mutation per
-            property per tick, 60 ticks a second, forever — the churn half of the founder's
-            2026-09-09 "zu viel Arbeitsspeicher / Störungen im Sound" report.
+            A bare assignment here is one registrar mutation per property per tick, 60 ticks
+            a second, for the whole run — against an EMPTY observer table while the mastering
+            readout is closed, which is the default. Measured: ~420 no-op mutations per
+            second, and ~20 s after audio stops all nine sit at the decay's denormal fixed
+            point and never move again.
 
             ⚠️ This does NOT say every `@Observable` write must be guarded (#364).
             `Transport.setTempo` DEPENDS on same-value writes reaching its observers. The
@@ -239,24 +271,60 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
     /// COUNTERWEIGHT (#364). The compare-then-assign is right for a meter and WRONG for a
     /// tempo. If the warning naming `Transport.setTempo` is lost, the next reader sees a
     /// tidy pattern and spreads it into a path that depends on same-value writes.
+    ///
+    /// ⚠️ WHAT THIS NEEDLE CAN AND CANNOT PROVE, stated before the claim (#408). It is a
+    /// whole-file substring scan: it proves the NAME survives somewhere in
+    /// `AudioEngine.swift`, NOT that it still sits beside the compare-then-assign. The first
+    /// version of this message claimed adjacency, which the scan has no notion of. Adjacency
+    /// is not scannable here — `codeText` strips comments and the warning IS a comment — so
+    /// the message is trimmed to the truth rather than the needle being oversold.
     func testTheSiteKeepsTheWarningAgainstGeneralising() throws {
         let owner = try codeText(Self.owner, stripComments: false)
         XCTAssertTrue(owner.contains("Transport.setTempo"), """
-            `\(Self.owner)` no longer names `Transport.setTempo` next to the #1197
-            compare-then-assign. That note is the only thing standing between this local
-            optimisation and a repo-wide "guard every @Observable write" rule that would
-            break the tempo path.
+            `\(Self.owner)` no longer mentions `Transport.setTempo` anywhere. That note is
+            the only thing standing between the #1197 compare-then-assign and a repo-wide
+            "guard every @Observable write" rule, which would break the tempo path — tempo
+            DEPENDS on same-value writes reaching its observers.
+
+            If the note moved rather than died, move this needle with it.
             """)
     }
 
     // MARK: - the polled block
 
-    /// The nine `@Observable` values the 60 Hz timer publishes.
-    private static let polledMeters = [
-        "masterLevel", "masterLevelR", "masterPeakDb", "masterLUFS",
-        "masterOutputLUFSShortTerm", "masterOutputTruePeakMaxDb",
-        "masterOutputTruePeakDb", "masterOutputLUFSIntegrated", "masterOutputLRA",
-    ]
+    /// The `@Observable` values the 60 Hz timer publishes — DERIVED from the closure, never
+    /// listed.
+    ///
+    /// ⛔ THE FIRST VERSION HARD-CODED NINE LITERALS, and the sibling guard that scans the
+    /// same closure carries the instruction against it verbatim: "Do not replace it with a
+    /// hard-coded property list — move the anchor." A list cannot see a TENTH publication
+    /// added without a guard — the claim would iterate the list and stay green. Derived from
+    /// the text, it maintains itself.
+    ///
+    /// The needle is the ASSIGNMENT (`self.<name> =`), which is what makes a property a
+    /// producer; the read half of a compare-then-assign lands on `{` and is skipped.
+    private func polledMeters() throws -> [String] {
+        let body = try meterPollBody()
+        var names: Set<String> = []
+        var cursor = body.startIndex
+        while let hit = body.range(of: "self.", range: cursor..<body.endIndex) {
+            cursor = hit.upperBound
+            let rest = body[hit.upperBound...]
+            let name = String(rest.prefix { $0.isLetter || $0.isNumber || $0 == "_" })
+            guard !name.isEmpty, name.hasPrefix("master") else { continue }
+            let after = rest.dropFirst(name.count).drop { $0 == " " }
+            guard after.first == "=", after.dropFirst().first != "=" else { continue }
+            names.insert(name)
+        }
+        guard names.count >= 5 else {
+            throw Anchor(reason: """
+                only \(names.count) published meter(s) derived from the 60 Hz closure. The \
+                closure publishes nine; a collapsed set makes claim 5 pass for having nothing \
+                to check (#367). Fix the derivation — do NOT lower this floor.
+                """)
+        }
+        return names.sorted()
+    }
 
     private static func occurrences(of needle: String, in text: String) -> Int {
         guard !needle.isEmpty else { return 0 }

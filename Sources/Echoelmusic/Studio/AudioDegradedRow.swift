@@ -47,7 +47,10 @@ struct AudioDegradedRow: View {
 
     /// ⚠️ READ EXACTLY TWO PROPERTIES IN THIS BODY — `degraded` and `lastAudioError` — and never
     /// `masterLevel`, `masterLevelR`, `isRunning` or anything the meter poll writes. Both of these
-    /// change at most a handful of times per session; a meter value changes ~15×/s and would make
+    /// change at most a handful of times per session; a meter value is published at 60 Hz (the
+    /// meter poll's rate — #1197 measured it; the “~15×/s” that stood here was the
+    /// FeedbackGuard's `% 4` sub-rate inside the same closure, pinned to the wrong quantity)
+    /// and would make
     /// this view, and any menu presented above it, rebuild at that rate.
     @Environment(AudioEngine.self) private var audioEngine
 

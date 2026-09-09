@@ -1962,30 +1962,64 @@ public final class AudioEngine {
                 let decayCoeff: Float = 0.92
                 // #1197 — ASSIGN ONLY WHEN THE VALUE MOVED. `@Observable` invalidates on
                 // ASSIGNMENT, not on change: every write below ran `withMutation`
-                // (registrar lock + keypath lookup) and marked every observing view dirty
-                // even when the number was byte-identical. Seven of the nine values are
-                // FROZEN whenever detailed metering is off — which is the DEFAULT
-                // (`_detailedMetering.initialize(to: false)`), flipped true only while a
-                // mastering readout is on screen. With it off the tap never touches those
-                // pointers, so this timer republished the same bytes 60x per second, for
-                // the whole life of the process, competing with the render loop for the
-                // main actor. That is the memory/crackle half of the founder's
-                // 2026-09-09 report, not a cosmetic tidy.
+                // (registrar lock + keypath lookup) whether or not the number had changed.
+                //
+                // ⛔ THE FIRST VERSION OF THIS BLOCK OVERSOLD ITS OWN CHANGE, and the
+                // mandatory review took it apart line by line. It is corrected here rather
+                // than quietly trimmed, because an overstated perf note becomes the premise
+                // a later session clears a different change with (#496 is the same shape).
+                // Three claims were wrong:
+                //   · "marked every observing view dirty" — with detailed metering OFF
+                //     there are NO observers for those seven; the cost was a lock against
+                //     an empty lookup table, not an invalidation.
+                //   · "competing with the render loop" — the render loop is not on the main
+                //     actor at all, and SwiftUI coalesces a tick's invalidations into ONE
+                //     pass. While audio PLAYS, `masterLevel` moves on most ticks anyway, so
+                //     the SwiftUI-side saving during the reported symptom is ZERO.
+                //   · "memory" — a same-value `withMutation` allocates nothing. There is no
+                //     path from this line to the founder's "zu viel Arbeitsspeicher".
+                //
+                // WHAT IT ACTUALLY BUYS, measured:
+                //   · ~420 no-op registrar mutations per second removed while the mastering
+                //     readout is closed — which is the DEFAULT
+                //     (`_detailedMetering.initialize(to: false)`; `setDetailedMetering` has
+                //     exactly two callers, `MasterLoudnessGrid`'s appear/disappear).
+                //   · `masterPeakDb` and `masterLUFS` stop being published at all: ZERO
+                //     readers in `Sources/` and `Tests/` today — measured, not assumed.
+                //     They are KEPT (a mastering surface is the natural next reader, and
+                //     "no reader today" is not "no reader", #756), just no longer paid for.
+                //   · The strongest one, which the first version missed entirely:
+                //     `x * 0.92` in `Float` has a FIXED POINT in the denormals. From 0.5 it
+                //     reaches ~8.4e-45 after ~1200 ticks and never moves again — the level
+                //     meters never reach exactly 0. So ~20 s after audio stops ALL NINE are
+                //     frozen, and this timer now goes completely quiet instead of writing
+                //     nine identical values 60x/s for the rest of the run.
                 //
                 // Nothing is lost: a reader cannot distinguish a re-published identical
-                // value from no publication at all. Two of the nine (`masterPeakDb`,
-                // `masterLUFS`) have ZERO readers outside this file today — measured, not
-                // assumed — so their writes were pure cost. They are kept (a mastering
-                // surface may read them again) but no longer paid for 60x/s.
+                // value from no publication at all.
                 //
-                // NaN behaves correctly by accident and is worth naming: `!=` is true for
-                // NaN against anything, so a NaN simply assigns every tick as before. The
-                // guard never SWALLOWS a value, it only skips a repeat.
+                // NaN: `!=` is true for NaN against anything, so a NaN would assign every
+                // tick exactly as before — the guard never SWALLOWS a value, it only skips
+                // a repeat. ⚠️ Today that is UNREACHABLE: every one of the nine is clamped
+                // at its source (`isNaN ? 0` for the levels, `Swift.max(floorDb, …)` for the
+                // dB readouts, a `guard meanSquare > 1e-12` for the LUFS ones). Written down
+                // as a property of the mechanism, NOT as something that happens — the honest
+                // failure mode is the opposite one: a NaN arriving would DEFEAT this
+                // optimisation permanently for that property.
                 //
                 // WARNING — do NOT generalise this into a rule for every `@Observable`
                 // write. `Transport.setTempo` DEPENDS on same-value writes reaching its
                 // observers; a change-guard there would be a regression. The property
                 // decides, never the pattern.
+                //
+                // ⚠️ THIS CLOSURE IS SCANNED BY A GUARD, and the guard's derivation broke on
+                // the shape below. `TheMenuHostReadsNoHotStateTests.meterProperties()` took
+                // the FIRST `self.` per line; `if next != self.hot { self.hot = next }` puts
+                // a READ first, so five producers vanished from the derived hot set and three
+                // negative freeze-scans went green for having nothing to look for. Repaired
+                // in the same commit (it now scans every `self.` on the line). Named here
+                // because the next person to reshape these lines needs to know a scanner
+                // reads them.
                 let nextLevelL = Swift.max(self._rawMeterL.pointee, self.masterLevel * decayCoeff)
                 if nextLevelL != self.masterLevel { self.masterLevel = nextLevelL }
                 let nextLevelR = Swift.max(self._rawMeterR.pointee, self.masterLevelR * decayCoeff)

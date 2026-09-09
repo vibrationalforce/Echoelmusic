@@ -92,7 +92,9 @@ final class TheSilentEngineHasAWayBackTests: XCTestCase {
     }
 
     /// FREEZE LAW. The leaf may read exactly the two fields it renders. `AudioEngine` also
-    /// publishes `masterLevel`/`masterLevelR` from the meter poll (~15 Hz); reading either here
+    /// publishes `masterLevel`/`masterLevelR` from the meter poll (60 Hz — corrected by #1197;
+    /// the “~15 Hz” that stood here was the FeedbackGuard's `% 4` sub-rate inside the SAME
+    /// closure, a rate pinned to the wrong operation); reading either here
     /// would make this view — and any menu open above it — rebuild at that rate.
     func testTheLeafReadsNoMeterValue() throws {
         let src = try source(Self.row)

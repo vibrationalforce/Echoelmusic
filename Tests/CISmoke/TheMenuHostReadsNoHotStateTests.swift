@@ -875,20 +875,36 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
         }
         var names: Set<String> = []
         for line in lines[lo..<hi] {
-            // ⚠️ LIMIT: the FIRST `self.` on the line only. `if self.x { self.hot = v }`, or
-            // two assignments separated by `;`, drops a producer silently. No such line
-            // exists in this closure today; stated because the failure direction is a
-            // quiet omission from the hot set, not a loud one.
-            guard let range = line.range(of: "self.") else { continue }
-            let rest = line[range.upperBound...]
-            let name = String(rest.prefix { isWordChar($0) })
-            guard !name.isEmpty else { continue }
-            // Only an ASSIGNMENT makes the property a producer; a read inside the closure does
-            // not. `&+=`, `+=` and `==` are deliberately not assignments for this purpose.
-            let after = rest.dropFirst(name.count).drop { $0 == " " }
-            guard after.first == "=", after.dropFirst().first != "=" else { continue }
-            guard isObservationTracked(name, in: lines) else { continue }
-            names.insert(name)
+            // ⭐ EVERY `self.` ON THE LINE, NOT THE FIRST — repaired by #1197, which is the
+            // change that made the old form wrong. The limit note that stood here named this
+            // exact shape (`if self.x { self.hot = v }`) and said "no such line exists in this
+            // closure today". #1197 wrote five of them: the compare-then-assign guard
+            // `if next != self.hot { self.hot = next }` puts a READ first and the ASSIGNMENT
+            // second, so first-occurrence scanning dropped five producers and collapsed the
+            // derived set from nine names to four.
+            //
+            // That is the FALSE-GREEN direction this whole file exists to prevent: the three
+            // negative scans below consume this set, so a shrunken set makes them pass for
+            // having nothing to look for (#367) — and the floor assertion that catches it
+            // would have tempted the next author to lower the floor rather than fix the scan.
+            //
+            // The repair was PRESCRIBED by the old note, not invented here. A guard whose own
+            // comment names its hole is a guard that told you how to fix it.
+            var cursor = line.startIndex
+            while let range = line.range(of: "self.", range: cursor..<line.endIndex) {
+                cursor = range.upperBound
+                let rest = line[range.upperBound...]
+                let name = String(rest.prefix { isWordChar($0) })
+                guard !name.isEmpty else { continue }
+                // Only an ASSIGNMENT makes the property a producer; a read inside the closure
+                // does not. `&+=`, `+=` and `==` are deliberately not assignments here — and
+                // neither is the `!= self.hot {` half of a compare-then-assign, which lands on
+                // `{` and is skipped.
+                let after = rest.dropFirst(name.count).drop { $0 == " " }
+                guard after.first == "=", after.dropFirst().first != "=" else { continue }
+                guard isObservationTracked(name, in: lines) else { continue }
+                names.insert(name)
+            }
         }
         return names
     }
