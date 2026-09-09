@@ -329,7 +329,25 @@ def stripping_helpers(code):
                 if depth == 0:
                     break
             i += 1
-        body = code[opening:i]
+        # ⛔ #1169 — READ VERBATIM, A HELPER'S DOC COMMENT COULD QUALIFY IT AS STRIPPING.
+        # This gate is the #944 promise that a raw-reading receiver "cannot enter, by
+        # construction"; a body whose `///` block merely NAMES `SourceText.codeOnly(` while its
+        # code returns the file verbatim entered anyway, and its needles were then checked
+        # against comment-blanked `Sources/` — a false "dead needle" on a correct guard, i.e.
+        # #1167 arriving through a SECOND door in the same function. Blanking here covers the
+        # ternary detection below too, which had the identical hazard one line further on.
+        #
+        # MEASURED BOTH WAYS BEFORE CHANGING ANYTHING: zero disagreement across the whole
+        # bundle today, so this alters no verdict. It is LATENT, and it is fixed rather than
+        # registered because the shape is not hypothetical — #1168 found the identical
+        # misclassification LIVE TWICE in `count-pins.py`
+        # (`TheAlwaysOnBioPathIsNamedTests.closure`,
+        # `TheFilmicCurveDoesNotBendTheHueTests.shader`). One file-move away and it lands here.
+        # #456: the repair goes in EVERY home, not only where it currently bites.
+        #
+        # ⚠️ String literals SURVIVE `strip_comments`, so a helper carrying the spelling inside
+        # a needle would still qualify. None does today; that is a limit, not a fix.
+        body = strip_comments(code[opening:i])
         if "SourceText.codeOnly(" not in body:
             continue
         gated = GATED_STRIP.search(body)
@@ -1236,6 +1254,48 @@ def selftest():
     if absent != ["var voiceTuneStrength: Float = 1"]:
         print(f"selftest: shape 3 found {absent} — it must report the one plain needle that is "
               "absent from the corpus, or the test above is vacuous")
+        ok = False
+
+    # 1b. #1169 — THE HELPER GATE, driven as a COMPOSITION (`stripping_helpers` feeding
+    #     `shape3_findings`), not as a lookup. A helper whose DOC COMMENT names
+    #     `SourceText.codeOnly(` while its code returns the file verbatim must NOT qualify: its
+    #     receiver reads raw text, so a needle living in a comment is present for the guard and
+    #     absent from this tool's blanked corpus — a false "dead needle" on a correct guard.
+    #     Driving `stripping_helpers` alone would answer a different question; what matters is
+    #     that the RECEIVER never enters shape 3.
+    # ⛔ THE FIRST FIXTURE HERE DID NOT BITE, and only running the mutation showed it: the
+    #    misleading comment sat ABOVE the `func`, while the gate reads `code[opening:i]` —
+    #    the body from its opening brace. Reverting the blanking left this selftest GREEN,
+    #    which is #941/#941b for the third time in this file: a selftest that does not drive
+    #    the real decision pins nothing. The comment now sits INSIDE the body.
+    lying = ('    private func source(_ p: String) throws -> String {\n'
+             '        // NOTE: the caller wants SourceText.codeOnly(text) here one day.\n'
+             '        return try String(contentsOf: url, encoding: .utf8)\n'
+             '    }\n')
+    honest = lying.replace('        return try String(contentsOf: url, encoding: .utf8)\n',
+                           '        return SourceText.codeOnly('
+                           'try String(contentsOf: url, encoding: .utf8))\n')
+    assert "SourceText.codeOnly(" in honest and honest != lying   # the fixtures really differ
+    user = ('    func b() throws {\n'
+            '        let code = try source("Sources/X.swift")\n'
+            '        XCTAssertTrue(code.contains("A NOTE ONLY IN A COMMENT"))\n'
+            '    }\n')
+    lied = [n for _, n in shape3_findings(user, "corpus without it",
+                                          stripping_helpers(lying + user), {}, False)]
+    if lied:
+        print(f"selftest: the helper gate qualified a RAW loader on its comment alone "
+              f"({lied}) — that is #1167 through a second door: a guard reading raw text gets "
+              "its needles judged against blanked source, and a note in a comment reads as "
+              "dead. Blank the body before classifying.", file=sys.stderr)
+        ok = False
+    # …and a genuinely stripping helper of the SAME name must still qualify, or the check above
+    # is satisfied by the gate simply never accepting anything (#926, the vacuous pass).
+    told = [n for _, n in shape3_findings(user, "corpus without it",
+                                          stripping_helpers(honest + user), {}, False)]
+    if told != ["A NOTE ONLY IN A COMMENT"]:
+        print(f"selftest: a real stripping helper stopped qualifying ({told}) — the #944 "
+              "widening is gone and every path-argument receiver is now invisible.",
+              file=sys.stderr)
         ok = False
 
     # 2. The receiver scope, which #666 had to narrow from per-FILE to per-FUNCTION after seven
