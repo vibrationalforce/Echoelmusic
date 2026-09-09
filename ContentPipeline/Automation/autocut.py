@@ -95,6 +95,13 @@ ZOOM_FPS = 4               # Abtastrate der Analyse — nicht die Bildrate der A
 ZOOM_COVERAGE = 0.75       # so viel der Gesamt-Veränderung muss im Ausschnitt liegen
 ZOOM_PAD = 0.10            # Luft um das gefundene Rechteck
 ZOOM_MIN_FRACTION = 0.25   # niemals enger als ein Viertel der Bildbreite/-höhe
+ZOOM_MIN_CONCENTRATION = 0.50
+# ⭐ DIESE SCHWELLE IST AN ECHTEM FOUNDER-MATERIAL GEMESSEN, nicht geschätzt (#1187).
+#    "Konzentration" = welcher Anteil der Gesamtveränderung in den aktivsten 10 % der Zellen
+#    liegt. Gemessen an drei echten iPhone-Bildschirmaufnahmen der App: 20,3 % · 33,2 % ·
+#    33,9 %. An synthetischem Material mit EINER blinkenden Stelle: 100 %.
+#    Bei einer laufenden Echoel-Sitzung bewegt sich der GANZE Schirm (Bio-Visual, Pegel,
+#    Zahlen) — es gibt dort keine "eine Stelle", und 50 % trennt beide Lagen sauber.
 
 # ⛔ KEIN GRÜN. `EchoelTheme.accent` (bio-green) trägt dort den Vermerk "signal only" — es
 #    bedeutet ein gemessenes Signal. Als Zierfarbe in einem Video bräche es die eigene CI,
@@ -342,6 +349,31 @@ def activity_box(activity: list[float], cols: int, rows: int,
     xs = [i % cols for i in taken]
     ys = [i // cols for i in taken]
     return (min(xs), min(ys), max(xs), max(ys))
+
+
+def concentration(activity: list[float]) -> float:
+    """Welcher Anteil der Veränderung liegt in den aktivsten 10 % der Zellen?
+
+    ⛔ DIESE FUNKTION EXISTIERT, WEIL DER ZOOM AUF ECHTEM MATERIAL NICHTS TAT — und das erst
+       auffiel, als ich ihn auf die Bildschirmaufnahmen des Founders losliess. An
+       synthetischem Material mit EINER blinkenden Stelle arbeitete er perfekt; an drei echten
+       Aufnahmen der laufenden App gab er 100 % der Fläche zurück, also gar keinen Zoom.
+       **Der Grund ist kein Fehler, sondern das Material**: bei laufender App bewegt sich der
+       ganze Schirm. Falsch war nicht das Ergebnis, sondern dass das Werkzeug es nicht SAGTE —
+       ein stiller Vollbild-"Zoom" sieht aus wie ein Zoom, der nichts gefunden hat, und nicht
+       wie einer, der etwas gefunden hat, das überall ist.
+
+    ⭐ GESETZ: ein Werkzeug an SYNTHETISCHEM Material zu prüfen beweist die RECHNUNG, nie den
+       NUTZEN. Beides braucht seine eigene Probe, und die zweite braucht echtes Material.
+    """
+    # ⛔ HIER STAND ZUSÄTZLICH `if not activity: return 0.0` — überflüssig, und ein Mutant hat
+    #    es bewiesen: bei leerer Liste ist `sum([])` gleich 0, also greift die Zeile darunter
+    #    ohnehin. Eine Wache, die man abschalten kann, ohne dass etwas rot wird, wacht nicht.
+    total = sum(activity)
+    if total <= 0:
+        return 0.0
+    top = sorted(activity, reverse=True)[:max(1, len(activity) // 10)]
+    return sum(top) / total
 
 
 def crop_rect(box: tuple[int, int, int, int], cols: int, rows: int,
@@ -671,11 +703,25 @@ def cmd_zoom(args) -> int:
     x, y, w, h = crop_rect(box, ZOOM_COLS, ZOOM_ROWS, width, height, aspect)
 
     moved = sum(activity)
+    conc = concentration(activity)
     print(f"autocut zoom: {os.path.basename(src)}  ({width}×{height}, "
           f"{len(frames)} Abtastungen)")
+    print(f"  Konzentration: {conc:.0%} der Veränderung in den aktivsten 10 % der Fläche")
+
     if moved <= 0:
-        print("  ⛔ NICHTS BEWEGT SICH in diesem Clip. Es gibt keine Stelle, an die man "
-              "heranzoomen könnte —\n     der Zuschnitt bleibt das ganze Bild.")
+        print("  ⛔ NICHTS BEWEGT SICH in diesem Clip. Es gibt keine Stelle, an die man\n"
+              "     heranzoomen könnte.")
+        return 2
+    if conc < ZOOM_MIN_CONCENTRATION and not args.force:
+        print(f"  ⛔ DIE VERÄNDERUNG IST ÜBER DAS GANZE BILD VERTEILT "
+              f"(unter {ZOOM_MIN_CONCENTRATION:.0%}).\n"
+              f"     Es gibt hier keine EINE Stelle — bei einer laufenden Echoel-Sitzung\n"
+              f"     bewegt sich der ganze Schirm. Ein Ausschnitt wäre willkürlich, und ein\n"
+              f"     willkürlicher Zoom sieht absichtlich aus.\n"
+              f"     Was hilft: einen kurzen Abschnitt herausschneiden, in dem NUR eine\n"
+              f"     Bedienung passiert — oder --force, wenn du es trotzdem willst.")
+        return 2
+
     print(f"  Ausschnitt: {w}×{h} bei ({x}, {y})  — {100*w*h/(width*height):.0f} % der Fläche")
 
     if not args.write:
@@ -1042,6 +1088,21 @@ def drive(workdir: str) -> int:
     check("im Ausschnitt blinkt es wirklich (er sitzt an der richtigen Stelle)",
           bright - dark > 20, f"hell {bright} gegen dunkel {dark}")
 
+    # ⭐ DER FALL DES ECHTEN MATERIALS (#1187): bei laufender App bewegt sich der GANZE
+    #    Schirm. Ein Rauschbild ist die härteste Form davon — der Zoom muss hier VERWEIGERN,
+    #    nicht einen willkürlichen Ausschnitt liefern.
+    busy = os.path.join(workdir, "drive_busy.mp4")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+                    "-i", "nullsrc=s=640x360:d=4:r=25",
+                    "-vf", "geq=random(1)*255:128:128", "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p", busy], check=True)
+    busy_conc = concentration(activity_grid(read_activity_frames(busy),
+                                            ZOOM_COLS, ZOOM_ROWS))
+    check("Veränderung über das ganze Bild wird als NICHT konzentriert erkannt",
+          busy_conc < ZOOM_MIN_CONCENTRATION, f"{busy_conc:.0%}")
+    check("konzentriertes Material liegt klar darüber",
+          concentration(act) > ZOOM_MIN_CONCENTRATION, f"{concentration(act):.0%}")
+
     print(f"\n--drive: {'alles grün' if fails == 0 else f'{fails} FEHLER'}")
     return 0 if fails == 0 else 1
 
@@ -1186,6 +1247,25 @@ def selftest() -> int:
           act2 and abs(sum(act2) - one_step) < 1e-6,
           f"Summe {sum(act2):.0f}, ein Übergang wäre {one_step:.0f}")
 
+    # ── Konzentration: gibt es überhaupt EINE Stelle? ────────────────────────────────
+    check("eine einzelne blinkende Stelle ist hoch konzentriert",
+          concentration(act) > ZOOM_MIN_CONCENTRATION, f"{concentration(act):.0%}")
+
+    # Veränderung überall — der Fall der laufenden App. Jede Zelle ändert sich um denselben
+    # Betrag, also trägt jede gleich viel; die aktivsten 10 % tragen dann auch nur 10 %.
+    everywhere = []
+    for i in range(10):
+        buf = bytearray(cols * rows)
+        for j in range(cols * rows):
+            buf[j] = 60 if (i + j) % 2 else 200
+        everywhere.append(bytes(buf))
+    conc_spread = concentration(activity_grid(everywhere, cols, rows))
+    check("Veränderung ÜBERALL ist NICHT konzentriert (der Zoom muss hier verweigern)",
+          conc_spread < ZOOM_MIN_CONCENTRATION, f"{conc_spread:.0%}")
+
+    check("ohne jede Veränderung ist die Konzentration 0, nicht undefiniert",
+          concentration([0.0] * 100) == 0.0 and concentration([]) == 0.0)
+
     still = [frame_with_blob(10, 10, 100)] * 6
     check("völlig ruhiges Material ergibt das GANZE Bild, keine willkürliche Ecke",
           activity_box(activity_grid(still, cols, rows), cols, rows) == (0, 0, cols - 1, rows - 1))
@@ -1271,6 +1351,8 @@ def main(argv: list[str]) -> int:
                     help="Seitenverhältnis der Ausgabe (9:16 = Hochformat)")
     sz.add_argument("--coverage", type=float, default=ZOOM_COVERAGE,
                     help="Anteil der Veränderung, der im Ausschnitt liegen muss")
+    sz.add_argument("--force", action="store_true",
+                    help="auch zoomen, wenn die Veränderung über das ganze Bild verteilt ist")
     sz.add_argument("--write", action="store_true", help="wirklich schneiden")
     sz.add_argument("--brand", action="store_true", help="Marke danach einbrennen")
     sz.add_argument("--position", default="br", choices=["br", "bl", "tr", "tl"])

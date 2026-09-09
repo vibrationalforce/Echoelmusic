@@ -29122,3 +29122,39 @@ dafür, dass der Ausschnitt an der falschen Stelle sitzt.
 **Grenze der ersten Fassung, ehrlich benannt:** EIN Ausschnitt für den ganzen Clip. Wandert
 die Handlung, gewinnt die Stelle mit der meisten Bewegung. Ein mitwandernder Zoom ist eine
 eigene Scheibe, und ob Schnitte oder weiche Fahrten gehört dem Founder.
+
+## #1187 — der Zoom tat auf ECHTEM Material nichts (2026-09-09)
+
+⛔ **DER WICHTIGSTE BEFUND DIESER RUNDE, und er kam erst, als ich das Werkzeug auf die
+Bildschirmaufnahmen des Founders losliess.** #1186 war grün: acht Ansprüche im Selbsttest,
+vier in `--drive`, sieben Mutanten rot. An synthetischem Material mit EINER blinkenden Stelle
+arbeitete der Zoom perfekt (12 % × 15 % der Fläche). An **drei echten iPhone-Aufnahmen der
+laufenden App** gab er **100 % der Fläche** zurück — also gar keinen Zoom, stumm.
+
+**Der Grund ist kein Fehler, sondern das Material.** Zeilenprofil der 08-20-Aufnahme: keine
+Zeile unter 0,8 %, die meisten bei 3–6 %; die 25 aktivsten von 1296 Zellen tragen 11 %. Bei
+laufender App bewegt sich der GANZE Schirm — Bio-Visual, Pegel, Zahlen. Es gibt dort keine
+„eine Stelle", und 100 % ist die richtige Antwort.
+
+**Falsch war, dass das Werkzeug es nicht SAGTE.** Ein stiller Vollbild-„Zoom" sieht aus wie
+einer, der nichts gefunden hat — nicht wie einer, der etwas gefunden hat, das überall ist.
+
+**Gebaut:** `concentration(activity)` = Anteil der Veränderung in den aktivsten 10 % der
+Zellen. Gemessen — nicht geschätzt: **20,3 % · 33,2 % · 33,9 %** an echtem Founder-Material
+gegen **100 %** synthetisch, **15 %** an Rauschen. Schwelle 50 % trennt beide Lagen sauber.
+`zoom` **verweigert** darunter (Exit 2, wie `sync` unter 1,25× Vertrauen) und nennt die
+Abhilfe: einen Abschnitt herausschneiden, in dem NUR eine Bedienung passiert — oder `--force`.
+
+⭐ **GESETZ: ein Werkzeug an SYNTHETISCHEM Material zu prüfen beweist die RECHNUNG, nie den
+NUTZEN.** Beides braucht seine eigene Probe, und die zweite braucht echtes Material. Alle
+Mutanten dieser Runde prüften die Rechnung; keiner konnte den Nutzen prüfen, weil dafür ein
+zweites Material nötig ist, das kein Test erzeugt.
+
+**Nebenbefund aus der Mutationsprobe:** die Wache `if not activity: return 0.0` war
+überflüssig — bei leerer Liste ist `sum([])` gleich 0, die Zeile darunter greift ohnehin. Ein
+Mutant, der sie abschaltet, blieb grün. **Eine Wache, die man abschalten kann, ohne dass etwas
+rot wird, wacht nicht.** Entfernt; die verbleibende ist nachweislich wirksam.
+
+⚠️ Zwei meiner eigenen Mutanten waren schlecht gebaut und ich habe es benannt statt es als
+Testlücke zu buchen: einer war per Konstruktion wirkungslos (`len(top) < len(activity)` ist
+immer wahr), einer verfehlte die Nadel wegen eines literalen `\n` im Shell-Argument.

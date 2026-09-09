@@ -89,6 +89,21 @@ Vier Sicherungen, jede mit eigenem Anspruch und eigenem Mutanten:
 - **immer im Bild**, auch bei krummen Rasterteilungen (400 Fälle geprüft)
 - **völlig ruhiges Material → das GANZE Bild**, keine willkürliche Ecke
 
+⛔ **AUF ECHTEM MATERIAL TAT ER ZUERST NICHTS — und das ist der wichtigste Befund dieser
+Runde (#1187).** An synthetischem Material mit EINER blinkenden Stelle arbeitete er perfekt.
+An drei echten iPhone-Bildschirmaufnahmen der laufenden App gab er **100 % der Fläche** zurück,
+also gar keinen Zoom. Der Grund ist kein Fehler, sondern das Material: **bei laufender App
+bewegt sich der ganze Schirm** (Bio-Visual, Pegel, Zahlen). Gemessene Konzentration —
+Anteil der Veränderung in den aktivsten 10 % der Fläche — **20,3 % · 33,2 % · 33,9 %** gegen
+**100 %** bei einer einzelnen Stelle.
+
+Seither **verweigert** `zoom` unter 50 % Konzentration, so wie `sync` unter 1,25× Vertrauen:
+ein willkürlicher Ausschnitt sieht absichtlich aus und ist schlimmer als keiner. `--force`
+macht es trotzdem.
+
+⭐ **GESETZ: ein Werkzeug an synthetischem Material zu prüfen beweist die RECHNUNG, nie den
+NUTZEN.** Beides braucht seine eigene Probe, und die zweite braucht echtes Material.
+
 ⚠️ **Grenze der ersten Fassung: EIN Ausschnitt für den ganzen Clip.** Wandert die Handlung,
 gewinnt die Stelle mit der meisten Bewegung. Ein Zoom, der mitwandert, ist eine eigene
 Scheibe — und die Frage, ob Schnitte oder weiche Fahrten, gehört dem Founder.
