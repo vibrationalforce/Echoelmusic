@@ -27,7 +27,7 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 5 tests, 7 assertion statements (`grep -c`, measured; two run inside loops — 512 and
+//   · 6 tests, 9 assertion statements (`grep -c`, measured; two run inside loops — 512 and
 //     2 000 executions). Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
@@ -37,7 +37,9 @@
 //     into the delay line — that is a different boundary with a real cost per frame, owned by
 //     the sanitize-at-the-boundary pattern in `applyBioReactive`, not by this slice.
 //
-// ⭐ GRADING (§3). ONE finding, two boundaries, verified by transcription against the parent
+// ⭐ GRADING (§3). TWO findings, THREE boundaries — the third (#1170, the poly engine's own
+// sample rate) was added later and its own grading sits on its test. The two below are #588's,
+// verified by transcription against the parent
 // (the behavioural tests name no new symbol, so they COMPILE against the parent). On the parent,
 // `fb = min(max(NaN, 0), 0.95)` is NaN, `wL = inL + lpL * NaN` is NaN from frame 0 — but the
 // transcription showed the FIRST DRAFT of test 1 still green there, because at the default
@@ -144,6 +146,52 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
         XCTAssertFalse(body.contains("Swift.min(Swift.max("),
                        "The NaN-transparent clamp idiom is back in the one setter whose output "
                        + "reaches an `Int(_:)` conversion on the audio thread.")
+    }
+
+    // MARK: - THE THIRD BOUNDARY: the poly engine's own sample rate (#1170)
+
+    /// A THIRD boundary of this file's law, found by sweeping the `min(max(` idiom this header
+    /// already names. `EchoelDDSP.init` has always clamped `self.sampleRate = max(1, sampleRate)`.
+    /// `EchoelPolyDDSP.init`, in the SAME file, stored it raw — and the poly engine reads its OWN
+    /// `sampleRate` in four audio-thread expressions (the portamento coefficient and three
+    /// `exp(-Float(frameCount) / sampleRate / τ)` envelopes). At 0 those give inf; at NaN they
+    /// give NaN, the coefficients go NaN, and the bus is permanently silent.
+    ///
+    /// `max(1, x)` is NaN-safe BY ARGUMENT ORDER — `NaN >= 1` is false, so it returns 1. The
+    /// reversed `max(x, 1)` passes NaN straight through, which is why the scan below demands
+    /// this exact spelling and not merely "a max somewhere".
+    ///
+    /// ⚠️ LATENT, NOT LIVE, and said plainly rather than implied: every production caller passes
+    /// a `static let 48_000` (`BioReactiveSynthVoice`, `PolySynthVoice`, `SubBassVoice`), so no
+    /// hardware rate reaches this initialiser today. It is closed on engineering.md's boundary
+    /// rule and because the sibling one constructor up already spells the guard — #937, one form
+    /// repaired and its twin left broken, in the same file, on the same property name.
+    ///
+    /// ⛔ THE SWEEP THAT FOUND IT FIRST COUNTED A COMMENT AS A THIRD ASSIGNMENT — the #762
+    /// hazard, hit one turn after it was fixed in two separate rot-checkers the same day. Hence
+    /// `source(_:)` here, which blanks comments; a raw scan of this file reports three sites and
+    /// two of them "unguarded".
+    func testBothSampleRateAssignmentsInTheDSPFileAreClamped() throws {
+        let dsp = try source("Sources/Echoelmusic/DSP/EchoelDDSP.swift")
+        let assignments = dsp.components(separatedBy: "self.sampleRate = ").dropFirst()
+        // COUNTERWEIGHT (#926): a vacuous pass if both initialisers were ever deleted or the
+        // property renamed. Two is the shipped shape — EchoelDDSP and EchoelPolyDDSP.
+        XCTAssertEqual(assignments.count, 2, """
+            EchoelDDSP.swift no longer has exactly two `self.sampleRate = ` assignments \
+            (found \(assignments.count)). If a voice engine was added, clamp its rate the same \
+            way and raise this number; if one was removed, lower it. Do not delete this claim — \
+            it is the only thing standing between a zero/NaN rate and NaN render coefficients.
+            """)
+        for assignment in assignments {
+            XCTAssertTrue(assignment.hasPrefix("max(1, sampleRate)"), """
+                A `self.sampleRate = ` in EchoelDDSP.swift is not clamped with the exact \
+                spelling `max(1, sampleRate)`. Argument order is the whole point: `max(1, NaN)` \
+                returns 1 because `NaN >= 1` is false, while `max(NaN, 1)` returns NaN and the \
+                poly engine's four audio-thread `exp(-frameCount / sampleRate / τ)` terms then \
+                go NaN — permanent silence, the class this file exists for. Found instead: \
+                \(assignment.prefix(40))
+                """)
+        }
     }
 
     // MARK: - source access (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)

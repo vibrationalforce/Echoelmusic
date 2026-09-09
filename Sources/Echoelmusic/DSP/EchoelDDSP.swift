@@ -2862,7 +2862,22 @@ public final class EchoelPolyDDSP: @unchecked Sendable {
         frameSize: Int = 192
     ) {
         self.maxVoices = maxVoices
-        self.sampleRate = sampleRate
+        // #1170 — SAME SPELLING AS THE SINGLE-VOICE INIT ABOVE, which has always clamped.
+        // This one did not, and the poly engine reads its OWN `sampleRate` in four
+        // audio-thread expressions (the portamento coefficient and the three
+        // `exp(-Float(frameCount) / sampleRate / τ)` envelopes). At 0 those give inf and the
+        // coefficients collapse; at NaN they give NaN, the coefficients go NaN, and the bus
+        // is permanently silent — the failure class CLAUDE.md says has already shipped once.
+        // `max(1, x)` is NaN-SAFE by argument order (`NaN >= 1` is false, so it returns 1);
+        // the reversed `max(x, 1)` would pass NaN straight through.
+        //
+        // LATENT, NOT LIVE: every production caller passes a `static let 48_000`
+        // (BioReactiveSynthVoice, PolySynthVoice, SubBassVoice), so no hardware rate reaches
+        // here today. It is closed on engineering.md's boundary rule — non-finite at a DSP
+        // boundary is an edge case, not an impossibility — and because the sibling one
+        // constructor up already spells the guard, which is #937: one form repaired, its twin
+        // left broken, in the same file, on the same property.
+        self.sampleRate = max(1, sampleRate)
         let hc = max(1, harmonicCount)   // ONE spelling of the clamp for both members
         self.harmonicCount = hc
         let ct = UnsafeMutablePointer<Float>.allocate(capacity: hc)
