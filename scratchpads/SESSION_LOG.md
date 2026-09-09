@@ -28186,3 +28186,48 @@ Test-Verdikt bleibt **unbewiesen** (#807), nicht „grün".
 
 **Doctor:** Sektion C und D ohne neuen Befund; die zwei CRITICALs in Sektion A sind die
 bekannten founder-gated Workflow-Masken.
+
+## #1167 — dead-needles nannte einen Wächter tot, weil er Quelltext ABSICHTLICH roh liest (2026-09-09)
+
+Der Rot-Prüfer `scripts/dead-needles.py` beendete sich mit 1 auf einem KORREKTEN Baum:
+
+```
+dead-needles: 1 needle(s) asserted present but ABSENT from Sources/:
+  Tests/CISmoke/TheBioVisualFieldsSayTheyAreDeadTests.swift:135  'only END appends are safe'
+```
+
+**Fehlalarm, eine Wurzel.** Sein #944-Gatter `stripping_helpers` fragte „nennt dieser
+Helfer-Rumpf `SourceText.codeOnly(`?", während die Frage, für die es benutzt wird, lautet
+„sind in dem Text, den DIESER Aufruf zurückgibt, die Kommentare geleert?". Zwei Helfer im
+blockierenden Bundle beantworten die erste mit ja und die zweite mit *kommt darauf an* — beide
+als `return flag ? SourceText.codeOnly(text) : text` geschrieben
+(`TheBioVisualFieldsSayTheyAreDeadTests.read(_:stripped:)`,
+`EveryPermissionPromptHasACapabilityTests.swiftSources(strip:)`). Die erste hat eine
+Aufrufstelle mit `stripped: false`, und der Grund steht darüber: die Nadel lebt in einem
+`///`-Kommentar (`Studio/BioVisualParams.swift:107`). Das ist der #665-Defekt, gegen den dieses
+Skript im eigenen Kopf argumentiert — im Skript selbst.
+
+**Die Reparatur sitzt an der AUFRUFSTELLE, nicht am Helfer.** Jeden bedingten Helfer pauschal
+abzulehnen hätte auch seine unbedingten Geschwister mitgenommen (dieselbe Datei bindet zwei
+Ansprüche später `let view = try read(Self.renderer)`) — Ruhe für Reichweite gekauft. Ein
+bedingter Helfer trägt jetzt seinen Flaggen-NAMEN und seinen deklarierten VORGABEWERT, und
+jede Bindung löst die Flagge für sich auf (`strips_at_call`). Unauflösbar = ÜBERSPRUNGEN, nie
+geraten (#665).
+
+**Als MUTANTEN gefahren, nicht gelesen** (Arbeitsbaum danach byte-gleich):
+· vorher 1 Fehlbefund / exit 1 · nachher 0 / exit 0, `--selftest` OK
+· M1 Müll-Nadel am GESTRIPPTEN Geschwister → gemeldet auf :147 (Reichweite überlebt)
+· M2 Aufrufstelle auf `stripped: true` gedreht → gemeldet auf :135 (das Gatter liest den
+  AUFRUF, nicht den Helfer-Namen)
+· M3 M1 plus gelöschter `= true`-Vorgabewert → STILL (sichere Richtung)
+
+**Reichweite offen gesagt:** nur die TERNÄRE Schreibweise wird erkannt. Ein
+`if stripped { return SourceText.codeOnly(text) }` läse sich weiter als unbedingt. Heute
+gemessen: null solcher Helfer. Im Quellkommentar registriert, nicht überstürzt — ein Gatter
+auf eine Form zu erweitern, die es nicht gibt, ist wie ein Zweig, den nie jemand gefahren hat.
+
+⚠️ `scripts/count-pins.py` hat DIESELBE Wurzel an einem anderen Wächter
+(`TheHarmonicMappingHasNoDoorTests.swift:148`, `raw()`-Lader, Nadel in zwei `///`-Zeilen) und
+bleibt bewusst für die eigene Scheibe liegen — eine Ralph-Änderung pro Commit.
+
+Commit `26f37f06`.
