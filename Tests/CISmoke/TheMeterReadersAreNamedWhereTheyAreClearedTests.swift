@@ -44,6 +44,20 @@
 //     (#343): claim 1 is only meaningful while `masterLevelR` still discriminates, and the
 //     AU6 row is only closed while the third `applyBioReactive` owner stays gone.
 //
+//  ⭐ CLAIMS 5–7 ADDED BY #1197 (2026-09-09), same law family: the AU5 note is about these
+//  nine meter properties being a 60 Hz landmine, and #1197 is the slice that stopped them
+//  being one. One home per law (#416) — they belong here, not in a new bundle.
+//
+//  GRADING of 5–7, transcribed in Python and driven against `git show HEAD:<path>` and the
+//  worktree. 4 assertions (claim 5: 1, claim 6: 2, claim 7: 1):
+//   · claim 5 — REGRESSION. On the parent ALL NINE properties were bare assignments
+//     (a=1, g=0 each). One finding, nine witnesses — not nine findings (#486).
+//   · claim 7 — REGRESSION. The parent `AudioEngine.swift` never named `Transport.setTempo`,
+//     so nothing stopped the compare-then-assign from being read as a repo-wide rule.
+//   · claim 6 — COUNTERWEIGHT, green on both trees, and deliberately so (#343/#433): it
+//     exists to make the tempting NEXT move (delete the two readerless meters) go red, not
+//     to claim a catch it does not have.
+//
 
 import XCTest
 
@@ -159,6 +173,138 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
             """)
     }
 
+    // MARK: - 5. the 60 Hz poll republishes nothing that did not move
+
+    /// REGRESSION (#1197). `@Observable` invalidates on ASSIGNMENT, not on change: a write
+    /// of the identical value still takes the registrar lock, looks the keypath up and marks
+    /// every observing view dirty. `startMeterPollTimer` fires 60x per second for the whole
+    /// life of the process, and SEVEN of its nine values are frozen whenever detailed
+    /// metering is off — which is the DEFAULT. So the poll spent main-actor time, 60 times a
+    /// second, republishing bytes that had not changed, in competition with the render loop.
+    ///
+    /// This claim says: every one of the nine publications is compare-then-assign.
+    func testTheMeterPollAssignsOnlyWhatMoved() throws {
+        let body = try meterPollBody()
+        var unguarded: [String] = []
+        for name in Self.polledMeters {
+            let assignments = Self.occurrences(of: "self.\(name) =", in: body)
+            // The trailing " {" is NOT cosmetic. `masterLevel` is a PREFIX of
+            // `masterLevelR`, so the bare needle counts the stereo guard as a second mono
+            // guard and reports a correctly guarded property as unguarded — a red on a
+            // clean tree. Every guard in the block is `!= self.<prop> {`.
+            let guards = Self.occurrences(of: "!= self.\(name) {", in: body)
+            if assignments != 1 || guards != 1 {
+                unguarded.append("\(name) (\(assignments) assignment(s), \(guards) guard(s))")
+            }
+        }
+        XCTAssertTrue(unguarded.isEmpty, """
+            the 60 Hz meter poll assigns without first comparing: \(unguarded.joined(separator: ", ")).
+
+            Expected shape per value, exactly once each:
+                let next<X> = <source>
+                if next<X> != self.<prop> { self.<prop> = next<X> }
+
+            A bare assignment here is not a style question. It is one registrar mutation per
+            property per tick, 60 ticks a second, forever — the churn half of the founder's
+            2026-09-09 "zu viel Arbeitsspeicher / Störungen im Sound" report.
+
+            ⚠️ This does NOT say every `@Observable` write must be guarded (#364).
+            `Transport.setTempo` DEPENDS on same-value writes reaching its observers. The
+            claim is scoped to these nine meter properties inside this one timer.
+            """)
+    }
+
+    // MARK: - 6. counterweight — the two readerless meters are kept, not deleted
+
+    /// COUNTERWEIGHT. `masterPeakDb` and `masterLUFS` have ZERO readers outside the engine
+    /// today (measured, not assumed). The tempting follow-up is to delete them — and that
+    /// would be wrong twice: a mastering surface is the natural next reader, and deleting a
+    /// published value to save a write is the opposite of what #1197 did (it kept the value
+    /// and stopped paying for the repeat).
+    func testTheReaderlessMetersAreStillPublished() throws {
+        let body = try meterPollBody()
+        for name in ["masterPeakDb", "masterLUFS"] {
+            XCTAssertTrue(body.contains("self.\(name) ="), """
+                `\(name)` is no longer published by the meter poll. It has no reader outside
+                `\(Self.owner)` today, so nothing would have gone red — but "no reader today"
+                is not "no reader" (#756: the conclusion can hold while the witness rots).
+                If this removal is deliberate, remove the property and its pointer too, and
+                say so here — a half-removal leaves a declared value that silently freezes.
+                """)
+        }
+    }
+
+    // MARK: - 7. counterweight — the warning against generalising stays at the site
+
+    /// COUNTERWEIGHT (#364). The compare-then-assign is right for a meter and WRONG for a
+    /// tempo. If the warning naming `Transport.setTempo` is lost, the next reader sees a
+    /// tidy pattern and spreads it into a path that depends on same-value writes.
+    func testTheSiteKeepsTheWarningAgainstGeneralising() throws {
+        let owner = try codeText(Self.owner, stripComments: false)
+        XCTAssertTrue(owner.contains("Transport.setTempo"), """
+            `\(Self.owner)` no longer names `Transport.setTempo` next to the #1197
+            compare-then-assign. That note is the only thing standing between this local
+            optimisation and a repo-wide "guard every @Observable write" rule that would
+            break the tempo path.
+            """)
+    }
+
+    // MARK: - the polled block
+
+    /// The nine `@Observable` values the 60 Hz timer publishes.
+    private static let polledMeters = [
+        "masterLevel", "masterLevelR", "masterPeakDb", "masterLUFS",
+        "masterOutputLUFSShortTerm", "masterOutputTruePeakMaxDb",
+        "masterOutputTruePeakDb", "masterOutputLUFSIntegrated", "masterOutputLRA",
+    ]
+
+    private static func occurrences(of needle: String, in text: String) -> Int {
+        guard !needle.isEmpty else { return 0 }
+        var count = 0
+        var cursor = text.startIndex
+        while let found = text.range(of: needle, range: cursor..<text.endIndex) {
+            count += 1
+            cursor = found.upperBound
+        }
+        return count
+    }
+
+    /// The comment-stripped body of `startMeterPollTimer`, delimited by BRACE COUNT and not
+    /// by a line count or a neighbouring declaration — both of which this repo has watched
+    /// rot (#408). If the braces do not balance (a string literal carrying one would do it)
+    /// this throws loudly rather than scanning a truncated block: a scan that silently sees
+    /// less than the truth is not a measurement (`.claude/rules/context.md` §2).
+    private func meterPollBody() throws -> String {
+        let code = try codeText(Self.owner)
+        guard let head = code.range(of: "private func startMeterPollTimer()") else {
+            throw Anchor(reason: """
+                `startMeterPollTimer` is gone from \(Self.owner) — renamed or restructured. \
+                Re-anchor claims 5 and 6; do NOT let them skip (#454).
+                """)
+        }
+        guard let open = code.range(of: "{", range: head.upperBound..<code.endIndex) else {
+            throw Anchor(reason: "no opening brace after `startMeterPollTimer` — re-anchor.")
+        }
+        var depth = 0
+        var index = open.lowerBound
+        while index < code.endIndex {
+            let character = code[index]
+            if character == "{" { depth += 1 }
+            if character == "}" {
+                depth -= 1
+                if depth == 0 {
+                    return String(code[open.upperBound..<index])
+                }
+            }
+            index = code.index(after: index)
+        }
+        throw Anchor(reason: """
+            the braces of `startMeterPollTimer` do not balance in the comment-stripped text. \
+            Something carries an unpaired brace (a string literal is the usual cause). Fix the \
+            extractor — do not widen it until it stops throwing.
+            """)
+    }
+
     // MARK: - source access
 
     private struct Anchor: Error { let reason: String }
@@ -174,7 +320,8 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
         return root
     }
 
-    private func codeText(_ relativePath: String) throws -> String {
+    private func codeText(_ relativePath: String,
+                          stripComments: Bool = true) throws -> String {
         let path = try repoRoot().appendingPathComponent(relativePath)
         guard FileManager.default.fileExists(atPath: path.path) else {
             throw Anchor(reason: """
@@ -182,7 +329,10 @@ final class TheMeterReadersAreNamedWhereTheyAreClearedTests: XCTestCase {
                 Re-anchor this scan; do not let it skip (#454).
                 """)
         }
-        return SourceText.codeOnly(try String(contentsOf: path, encoding: .utf8))
+        let raw = try String(contentsOf: path, encoding: .utf8)
+        // Claim 7 reasons about a COMMENT and must not have it stripped; every other caller
+        // reasons about code and must.
+        return stripComments ? SourceText.codeOnly(raw) : raw
     }
 
     private func boardText() throws -> String {

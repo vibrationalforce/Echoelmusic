@@ -1960,12 +1960,42 @@ public final class AudioEngine {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 let decayCoeff: Float = 0.92
-                self.masterLevel = Swift.max(self._rawMeterL.pointee, self.masterLevel * decayCoeff)
-                self.masterLevelR = Swift.max(self._rawMeterR.pointee, self.masterLevelR * decayCoeff)
+                // #1197 — ASSIGN ONLY WHEN THE VALUE MOVED. `@Observable` invalidates on
+                // ASSIGNMENT, not on change: every write below ran `withMutation`
+                // (registrar lock + keypath lookup) and marked every observing view dirty
+                // even when the number was byte-identical. Seven of the nine values are
+                // FROZEN whenever detailed metering is off — which is the DEFAULT
+                // (`_detailedMetering.initialize(to: false)`), flipped true only while a
+                // mastering readout is on screen. With it off the tap never touches those
+                // pointers, so this timer republished the same bytes 60x per second, for
+                // the whole life of the process, competing with the render loop for the
+                // main actor. That is the memory/crackle half of the founder's
+                // 2026-09-09 report, not a cosmetic tidy.
+                //
+                // Nothing is lost: a reader cannot distinguish a re-published identical
+                // value from no publication at all. Two of the nine (`masterPeakDb`,
+                // `masterLUFS`) have ZERO readers outside this file today — measured, not
+                // assumed — so their writes were pure cost. They are kept (a mastering
+                // surface may read them again) but no longer paid for 60x/s.
+                //
+                // NaN behaves correctly by accident and is worth naming: `!=` is true for
+                // NaN against anything, so a NaN simply assigns every tick as before. The
+                // guard never SWALLOWS a value, it only skips a repeat.
+                //
+                // WARNING — do NOT generalise this into a rule for every `@Observable`
+                // write. `Transport.setTempo` DEPENDS on same-value writes reaching its
+                // observers; a change-guard there would be a regression. The property
+                // decides, never the pattern.
+                let nextLevelL = Swift.max(self._rawMeterL.pointee, self.masterLevel * decayCoeff)
+                if nextLevelL != self.masterLevel { self.masterLevel = nextLevelL }
+                let nextLevelR = Swift.max(self._rawMeterR.pointee, self.masterLevelR * decayCoeff)
+                if nextLevelR != self.masterLevelR { self.masterLevelR = nextLevelR }
                 // Peak / LUFS already carry their own hold/windowing in the meter;
                 // publish them straight through.
-                self.masterPeakDb = self._peakDb.pointee
-                self.masterLUFS = self._lufs.pointee
+                let nextPeakDb = self._peakDb.pointee
+                if nextPeakDb != self.masterPeakDb { self.masterPeakDb = nextPeakDb }
+                let nextLUFS = self._lufs.pointee
+                if nextLUFS != self.masterLUFS { self.masterLUFS = nextLUFS }
                 // #316b: the tap sits at the chain output, which is upstream of the ONE
                 // remaining gain (`mainMixerNode.outputVolume`). Adding the trim in dB is
                 // exact (see `outputTrimDb`) and keeps the audio thread untouched.
@@ -1974,15 +2004,28 @@ public final class AudioEngine {
                 // loudness percentiles, so a constant gain cancels out of it entirely.
                 // Offsetting it would have been a silent 1 dB error in a number nobody
                 // would have checked — the kind this repo keeps finding a month later.
-                self.masterOutputLUFSShortTerm =
+                let nextShortTerm =
                     AudioEngine.trimmed(self._lufsS.pointee, floor: EchoelLoudnessMeter.floorLUFS)
-                self.masterOutputTruePeakMaxDb =
+                if nextShortTerm != self.masterOutputLUFSShortTerm {
+                    self.masterOutputLUFSShortTerm = nextShortTerm
+                }
+                let nextTruePeakMax =
                     AudioEngine.trimmed(self._tpMax.pointee, floor: EchoelMeter.floorDb)
-                self.masterOutputTruePeakDb =
+                if nextTruePeakMax != self.masterOutputTruePeakMaxDb {
+                    self.masterOutputTruePeakMaxDb = nextTruePeakMax
+                }
+                let nextTruePeak =
                     AudioEngine.trimmed(self._truePeakDb.pointee, floor: EchoelMeter.floorDb)
-                self.masterOutputLUFSIntegrated =
+                if nextTruePeak != self.masterOutputTruePeakDb {
+                    self.masterOutputTruePeakDb = nextTruePeak
+                }
+                let nextIntegrated =
                     AudioEngine.trimmed(self._lufsI.pointee, floor: EchoelLoudnessMeter.floorLUFS)
-                self.masterOutputLRA = self._lra.pointee
+                if nextIntegrated != self.masterOutputLUFSIntegrated {
+                    self.masterOutputLUFSIntegrated = nextIntegrated
+                }
+                let nextLRA = self._lra.pointee
+                if nextLRA != self.masterOutputLRA { self.masterOutputLRA = nextLRA }
                 // FeedbackGuard for live input monitoring (~15 Hz, only while monitoring).
                 #if os(iOS)
                 self.monitorPollTick &+= 1
