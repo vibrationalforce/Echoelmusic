@@ -28913,3 +28913,65 @@ eigene Scheibe mit eigenem Wächter.**
 
 **Nebenbei: #1181s Gate ist grün** (Lauf 2497, `1dbde7f3`, `Compile (iOS device SDK, no
 signing)` = success). Damit sind #1179, #1180 und #1181 alle durch.
+
+## #1183 — autocut: das Werkzeug, das der Founder bestellt hat (2026-09-09)
+
+**FOUNDER-ASK, live, wörtlich:** *"Das Dauer leider ewig mit dem Drive kannst du mir eine
+autocut application bauen, die ich auf dem Mac Book installiere? Oder soll ich das Repo hier
+mit Davinci Resolve verbinden?"* — auf Nachfrage: *"Soll alles können. Aktuell Auto Sync der
+Clips und herausschneiden der spannendsten Stellen"* und *"Videos hochladen"* als das, was
+ewig dauert.
+
+**Entschieden (Council):** keine Mac-App (neues Target = Signierung + Wartung + zweites
+Produkt; dazu hat diese Sitzung kein macOS und kein Xcode, könnte sie also weder bauen noch
+testen), kein Resolve-Pfad zuerst (Free und Studio haben verschiedene Skripting-Zugänge, und
+welche Fassung er hat, ist unbekannt). Stattdessen: `ContentPipeline/Automation/autocut.py` +
+`Autocut.command` zum Doppelklicken. Plan: `scratchpads/PLAN_AUTOCUT_2026-09-09.md`.
+
+**Geliefert:** `proxy` (480p + Kontaktbogen — gegen seinen genannten Engpass) · `sync`
+(Hüllkurven-Korrelation grob→fein, Parabel-Verfeinerung, **verweigert** unter Vertrauen 1,25×
+mit Exit 2) · `highlights` (Präfixsummen, überlappungsfrei, `--write` schneidet) · `--selftest`.
+
+### Vier Befunde, und drei davon fand die Mutationsprobe an meinem EIGENEN Test
+
+1. **`read_mono` hätte den Speicher gesprengt.** Erste Fassung las den ganzen Ton in eine
+   Python-Liste: 2 h × 8000 Hz = 57,6 Mio Werte ≈ 1,8 GB — auf GENAU dem Material, für das er
+   das Werkzeug bestellt hat. Ersetzt durch `read_envelope`, das ffmpeg als Strom fährt und
+   jedes Fenster sofort zu EINEM Wert reduziert. Der Fehler wäre erst auf seiner Maschine
+   aufgetaucht, an der größten Datei.
+2. **Der neue Strom-Leser war ungetestet**, weil dieser Container kein ffmpeg hat. Zerteil-
+   Logik als `envelope_from_stream(reader, hop)` herausgehoben — kennt kein ffmpeg, braucht nur
+   `.read(n)`, ist damit hier prüfbar.
+3. **Der erste Test dafür war WIRKUNGSLOS, nachgewiesen statt vermutet.** Ein Mutant
+   (`carry = b""`) kam grün durch: `io.BytesIO.read(n)` liefert IMMER genau n Bytes, also endet
+   dort nie ein Block mitten im Fenster — und genau dafür existiert der Überhang. Ersetzt durch
+   eine `ShortReader`-Klasse, die das Wunsch-Maß IGNORIERT und krumme Häppchen liefert, wie
+   eine echte Pipe. **#941 aus der Gegenrichtung: der Test modellierte alles außer der
+   Entscheidung, die er prüfen sollte.**
+4. **Und der Vergleich lief zweimal gegen die falsche Größe.** (a) Der Testausschnitt waren die
+   ersten 0,5 s = STILLE, also 50 Nullen gegen 50 Nullen; ein zweiter Mutant (jedes Fenster
+   durch das erste ersetzt) kam deshalb durch. Ausschnitt auf einen Burst verschoben, plus ein
+   `assert`, das Gleichförmigkeit selbst rot macht. (b) Danach war der Test rot auf SAUBEREM
+   Code: `envelope` rechnet float64, der Strom liest float32 von ffmpeg — Unterschied 3e-9, und
+   NICHTS davon prüft die Zerteilung. Bezug ist jetzt derselbe Ton nach dem float32-Rundlauf.
+
+**Beweislage am Ende:** Selbsttest grün; drei Mutanten (Überhang verworfen · Fenster wiederholt
+· NaN-Filter entfernt) machen ihn nachweislich ROT. Die ffmpeg-Hülle und die `.command` sind
+**ungetestet** — kein ffmpeg, kein macOS hier. Das steht im Kopf beider Dateien, in der README
+und im Plan; der erste echte Lauf gehört dem Founder.
+
+⚠️ **`Autocut.command`: `read -p` wurde vermieden.** Bash druckt dessen Prompt nur an einem
+echten Terminal, und in einer Kommando-Substitution ist das nicht garantiert — ein unsichtbarer
+Prompt sieht aus wie ein hängendes Fenster. Der Prompt geht jetzt selbst nach stderr.
+
+⚠️ **`ContentPipeline/Automation/README.md` sagte "Noch leer, absichtlich"** und wäre mit
+diesem Commit zur einzigen falschen Beschreibung des Verzeichnisses geworden (#456).
+Mitgezogen.
+
+⚠️ **Rost-Prüfer alle Exit 0 — und das sagt hier weniger als sonst.** Nach #1182 diffed
+`moved-needles.py` NUR `-- Sources`; dieser Commit fasst `Sources/` gar nicht an. Sein grünes
+Häkchen ist über diese Arbeit strukturell aussagelos, nicht beruhigend.
+
+**Offen:** `sync` schreibt noch nicht aus (Scheibe 2, erst nach seinem ersten echten Lauf) ·
+"spannend" ist heute ENERGIE und sagt das auch (Scheibe 3 braucht seine Antwort, was er meint)
+· Resolve-Übergabe erst, wenn bekannt ist: Free oder Studio.
