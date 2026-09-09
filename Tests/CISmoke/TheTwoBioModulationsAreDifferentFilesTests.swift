@@ -13,9 +13,17 @@
 //
 // The register named the first one BARE ("BioModulation, CloudSync"), while its neighbours in the
 // same sentence carried paths (`Core/BioSpaceMap`, `Core/VisualModulation`). So the obvious way to
-// CHECK that register entry — `git grep -c BioModulation -- Sources` — returned TEN files for a
+// CHECK that register entry — `git grep -c BioModulation -- Sources` — returned ten files for a
 // name the sentence calls unwired. With a word boundary, and excluding the superstring neighbour,
-// it is ZERO. This is law #1157 (a bare needle matches a SUPERSTRING) landing on the register line
+// it is ZERO.
+//
+// ⛔ THAT TEN IS A DATE, NOT A FACT, and #1165's own CLAUDE.md clause carried it as a literal for
+// one cycle before #1166 removed it: the count rises with every new `Sources/` file that calls the
+// live gate, and nothing goes red. It is kept HERE, past tense, as the provenance of the find —
+// which is what a guard header is for. The durable half is the INFLATION (a bare needle counts the
+// neighbour) and the ZERO (a state the claims below pin), never the ten.
+//
+// This is law #1157 (a bare needle matches a SUPERSTRING) landing on the register line
 // itself, and it runs in the expensive direction: a session "cleaning up the unwired
 // BioModulation" follows that grep straight into the LIVE gate.
 //

@@ -134,9 +134,14 @@ Deprecated from main flow: the old SoundscapeEngine, ClipEngine, MomentCaptureVi
   **`Studio/BioModulation`** und **`Core/CloudSync`** (⚠️ #1165 — die Pfade sind KEINE
   Kosmetik: `Core/BioModulationMap` ist eine ANDERE, LEBENDE Datei, deren `isMeasured` die
   „gemessen"-Anzeige in BEIDEN Synth-Stimmen und im Bio-Panel gated. Der naheliegende
-  `git grep -c BioModulation -- Sources` liefert darum ZEHN Dateien für einen Namen, den diese
-  Zeile unverdrahtet nennt — mit Wortgrenze und ohne die Superstring-Nachbarin sind es NULL.
-  Wer hier „aufräumt", löscht plausibel das lebende Gate) und — nachgetragen 2026-08-23 (#757) — **`Core/BioSpaceMap`**
+  `git grep -c BioModulation -- Sources` zählt die lebende Nachbarin MIT und meldet darum
+  Treffer für einen Namen, den diese Zeile unverdrahtet nennt; mit Wortgrenze und ohne sie
+  sind es NULL. Wer hier „aufräumt", löscht plausibel das lebende Gate. ⛔ Hier stand die
+  Trefferzahl als Literal, einen Zyklus lang — und sie driftet mit jeder neuen `Sources/`-Datei,
+  die das Gate ruft, ohne dass etwas rot wird: dieselbe #818-Löschung und dieselbe
+  `EchoelModalBank`-Lehre, dass ein Vermerk, der ein `grep` ZITIERT, schneller altert als einer,
+  der eine Tatsache behauptet. Die NULL bleibt — sie ist ein Zustand, kein Datum, und
+  `TheTwoBioModulationsAreDifferentFilesTests` pinnt sie) und — nachgetragen 2026-08-23 (#757) — **`Core/BioSpaceMap`**
   (null Produktions-Aufrufer; die bio→Objekt-Abbildung, die WIRKLICH sendet, steht in
   `Sync/ADMOSCSender` selbst). Dazu — nachgetragen 2026-08-31 (#921) —
   **`Core/VisualModulation`** (nicht mit dem verdrahteten `BioVisualParams` verwechseln;
