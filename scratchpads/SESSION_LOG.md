@@ -28277,3 +28277,37 @@ Roh-Pfad ZÄHLT wirklich, er überspringt nicht) · M3 die Kommentar-Leerung zur
 neue Selbsttest wird rot. `--selftest` 31 Prüfungen, 0 Fehler (vorher 26).
 
 **Alle VIER Rot-Prüfer stehen jetzt auf exit 0.** Commit `5905b17e`.
+
+## #1169 — dasselbe Loch, zweite Tür: das Helfer-Gatter ließ sich von einem KOMMENTAR qualifizieren (2026-09-09)
+
+Dritte Scheibe derselben Familie. `stripping_helpers` in `dead-needles.py` ist das #944-Gatter,
+dessen erklärtes Versprechen lautet, ein roh lesender Empfänger könne „by construction" nicht
+eintreten. Es las den Helfer-Rumpf **wörtlich** — also qualifizierte sich ein Rumpf, dessen
+KOMMENTAR `SourceText.codeOnly(` nur nennt, während sein Code die Datei unverändert
+zurückgibt. Seine Nadeln wurden dann gegen kommentar-geleertes `Sources/` geprüft, und eine
+Notiz, die in einem Kommentar lebt, liest sich als tot: **exakt der #1167-Fehlalarm, durch eine
+andere Tür derselben Funktion.** Die Leerung deckt zugleich die Ternär-Erkennung eine Zeile
+weiter unten ab, die dieselbe Gefahr hatte.
+
+**Vorher UND nachher gemessen: null Abweichung im ganzen Bundle** — kein Urteil bewegt sich.
+Es ist LATENT und wird trotzdem repariert statt registriert, weil die Form nicht hypothetisch
+ist: #1168 fand dieselbe Fehlklassifikation **zweimal LIVE** in `count-pins.py`. Ein
+Datei-Umzug entfernt. #456 — die Reparatur zieht in JEDES Zuhause, nicht nur dorthin, wo sie
+gerade beißt.
+
+⛔ **UND DER SELBSTTEST, DEN ICH DAFÜR SCHRIEB, BISS NICHT — sichtbar erst durch das Fahren der
+Mutation.** Der irreführende Kommentar saß ÜBER dem `func`, während das Gatter
+`code[opening:i]` liest — den Rumpf ab seiner öffnenden Klammer. Das Zurücknehmen der Leerung
+ließ den Selbsttest GRÜN. Das ist #941/#941b **zum dritten Mal in dieser Datei**: ein
+Selbsttest, der die echte Entscheidung nicht fährt, pinnt nichts. Der Kommentar steht jetzt IM
+Rumpf, und die Mutation färbt ihn rot.
+
+**Mutanten** (Arbeitsbaum danach byte-gleich): A Leerung zurücknehmen → ROT (mit der schlechten
+Fixture war es GRÜN) · B Gatter alles ablehnen lassen → ROT auf dem Gegengewicht UND auf der
+#944-Plain-Bind-Prüfung, damit der neue Fall nicht durch ein Gatter erfüllt wird, das gar
+nichts akzeptiert (#926).
+
+Grenze im Quelltext: String-Literale überleben `strip_comments`. Heute trägt keiner die
+Schreibweise so.
+
+**Alle vier Rot-Prüfer exit 0.** Commit `ccee983b`.
