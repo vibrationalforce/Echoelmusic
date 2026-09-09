@@ -468,6 +468,29 @@ its own known positive is not a measurement.
   named guards had failed. The line xcodebuild actually writes is
       Test case 'Suite.testName()' failed on 'Clone 1 of iPhone 17 …' (0.039 seconds)
   so the literal `failed (` can never occur — the word is followed by ` on `, not ` (`.
+- ⛔ **#1174 — THE NEEDLE ABOVE CANNOT SEE A TEST THAT *TRAPS*, AND THAT IS A DIFFERENT
+  QUESTION FROM AN ASSERTION FAILURE.** `" failed on "` is written when an `XCTAssert` fails.
+  A test that hits a Swift **trap** (`Int(.nan)`, an out-of-bounds index, a force-unwrap of
+  nil) kills the clone instead: no `failed on` line, no `error:`, no `❌` — just
+  `** TEST EXECUTE FAILED **` and a hole in the timeline. **Identical to #396 from outside.**
+  This is not hypothetical: 2026-09-09 shipped three guards that CONSTRUCT DSP types at
+  degenerate sample rates (`ANonFiniteControlCannotReachTheRenderTests`), i.e. exactly the
+  shape that traps when the fix under test is wrong, and the job log could not answer whether
+  they had run.
+  **THE DISCRIMINATOR IS THE STEP'S OWN HISTORY, not the log.** Read the `Run Tests` step
+  conclusion of the two or three runs BEFORE yours (`list_workflow_jobs`, perPage 1, page 4).
+  A failure that was already there before your slice is not your slice. Measured that day:
+  `bd60cd7b` → `a2777602` → `5e65e6e0` → `9584541a` → `411f103d`, **every one** `Run Tests` =
+  `failure` with `Build for Testing` = `success`, and the earliest predates the first DSP
+  construction test — so the shape is the chronic one.
+  ⛔ **AND THE OBVIOUS VERSION OF THIS IDEA DOES NOT WORK HERE.** "Compare against a docs-only
+  commit" needs a docs-only RUN, and there is none: `ci.yml` did not fire at all for `1835a2ab`
+  or `2b63c106` (both `scratchpads/` + `decisions.csv` only). You cannot get a zero-Swift
+  control run on this branch; use the preceding-runs history instead.
+  ⚠️ And check `git show --stat` before calling any commit docs-only — I called `a2777602`
+  docs-only from its subject line, and it changes a `Tests/CISmoke/*.swift` file.
+  **What this buys is a NEGATIVE, and say it as one:** "my slice did not cause this". It is
+  still not proof the new guards ran (#445 — absence proves nothing, and the window is a tail).
   **THE NEEDLE IS `" failed on "` ON A LINE CONTAINING `"Test case "`.** Same class as #667
   one layer down: the discriminator was right, the search term could not match the format.
   ⛔ **AND THAT SENTENCE PRESCRIBES A LINE PREDICATE THAT THE TOOL NO LONGER USES (#739), for

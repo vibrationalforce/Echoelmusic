@@ -28519,3 +28519,48 @@ dem bestehenden Zuhause der Mess-Gesetze (#416), nicht als neue Datei.
 
 **Doctor im selben Durchlauf:** dieselben ZWEI CRITICALs wie immer, beide in
 `.github/workflows/**` (founder-gated, berichten statt editieren). Nichts Neues.
+
+## #1174 — die Nadel für „Test fehlgeschlagen" kann einen Test, der ABSTÜRZT, nicht sehen (2026-09-09)
+
+**Gate für #1172 gelesen:** `Build for Testing` = **success** (11:00:55 auf `411f103d`) —
+die FX-Ketten-Reparatur und ihre drei Wächter kompilieren, samt der zwei Zeilen, die ich
+vorab als compile-riskant markiert hatte. **`Run Tests` = failure.**
+
+**Und genau dort wurde eine Lücke im Triage-Rezept sichtbar.** `Tests/CISmoke/CLAUDE.md` §5
+kennt zwei Nadeln: `❌`/`error:` für einen Compile-Fehler (#667) und `" failed on "` auf einer
+`"Test case "`-Zeile für einen fehlgeschlagenen `XCTAssert` (#679). **Ein Test, der TRAPPT,
+schreibt keine von beiden.** Er tötet den Klon: kein `failed on`, kein `error:`, nur
+`** TEST EXECUTE FAILED **` und ein Loch in der Zeitachse — **von außen identisch mit #396.**
+
+Das ist nicht theoretisch: #1171 und #1172 haben Wächter geliefert, die DSP-Typen bei
+ENTARTETEN Raten KONSTRUIEREN — also genau die Form, die abstürzt, wenn die geprüfte
+Reparatur falsch ist. Das Job-Log konnte die Frage nicht beantworten.
+
+**Was die Frage beantwortet, ist die GESCHICHTE DES SCHRITTS, nicht das Log.** Gemessen:
+
+| Commit | Build for Testing | Run Tests |
+|---|---|---|
+| `bd60cd7b` (#1165) | success | **failure** |
+| `a2777602` (#1166) | success | **failure** |
+| `5e65e6e0` (#1170) | success | **failure** |
+| `9584541a` (#1171) | success | **failure** |
+| `411f103d` (#1172) | success | **failure** |
+
+Der früheste liegt **vor** dem ersten DSP-Konstruktions-Test. Ein Fehler, der schon da war,
+gehört nicht der eigenen Scheibe.
+
+⛔ **UND DIE NAHELIEGENDE FASSUNG DIESER IDEE FUNKTIONIERT HIER NICHT.** „Vergleiche mit einem
+reinen Docs-Commit" braucht einen Docs-LAUF, und den gibt es nicht: `ci.yml` ist für
+`1835a2ab` und `2b63c106` (nur `scratchpads/` + `decisions.csv`) **gar nicht gelaufen**. Auf
+diesem Zweig ist kein Null-Swift-Kontrolllauf zu bekommen.
+
+⛔ **Und ich habe `a2777602` zuerst aus der Betreffzeile heraus „docs-only" genannt** —
+`git show --stat` sagt, es ändert eine `Tests/CISmoke/*.swift`-Datei. Vor dem Wort „docs-only"
+gehört der Stat gelesen; sonst baut man die Basislinie auf einer Vermutung.
+
+⚠️ **Was das kauft, ist ein NEGATIV, und so ist es auch formuliert:** „meine Scheibe ist nicht
+die Ursache". Es ist **kein** Beweis, dass die drei neuen Wächter gelaufen sind (#445 —
+Abwesenheit beweist nichts, und das Fenster ist ein Tail mit 962 s Loch).
+
+Eingetragen in `Tests/CISmoke/CLAUDE.md` §5, dem bestehenden Zuhause des CI-Lesens (#416).
+Kein Wächter — es ist ein Triage-Rezept, keine Repo-Tatsache. Alle vier Rot-Prüfer exit 0.
