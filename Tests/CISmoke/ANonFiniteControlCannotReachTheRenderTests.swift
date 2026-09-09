@@ -32,7 +32,7 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 12 tests, 21 assertion statements (`grep -c`, measured; nine run inside loops — 512,
+//   · 16 tests, 33 assertion statements (`grep -c`, measured; nine run inside loops — 512,
 //     2 000 executions). Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
@@ -70,6 +70,25 @@
 // neighbour"), caught here only because the numbers were re-run before the commit. `EchoelDDSP`
 // was mis-grouped in the same sentence for the same reason and is now stated from its own site.
 //
+// ⭐ #1195'S OWN SWEEP, RECORDED SO NOBODY RE-RUNS IT. `Sequencer/` + `Bio/`, the two
+// directories #1179 and #1181 did not cover, searched for the same `Int(x * rate)` shape:
+// TEN hits, and only the one this slice repairs was open on a live path.
+//
+//   · `WarpedClipPlan` (3 hits)  — guards `engineSampleRate > 0, .isFinite` itself, AND has
+//     zero production construction sites.
+//   · `SamplerVoice:90`          — `srcFormat.sampleRate` off an `AVAudioFormat`, which
+//     cannot be non-finite or non-positive.
+//   · `TimelineAudioSink:92`     — a millis conversion of an already-sanitised rate.
+//   · `AudioRegionPlayback` (2)  — `guard sampleRate > 0` ONLY, so `+inf` reaches
+//     `Int(_:)`. NOT repaired here and that is deliberate: both are doorless
+//     (`startFrame` has zero callers, `frameCount` only a COMMENT mention — the #527
+//     audio-lane layer), and one Ralph slice repairs one thing. If a producer for that
+//     layer ever returns, these two are the first stop.
+//   · `Bio/BioEventGraph:97,100` — `Int(0.3 * sampleRate)` with NO guard at all, and the
+//     initialiser stores the raw rate. REPORT ONLY: the Rausch triad is READ-ONLY without
+//     explicit founder approval (CLAUDE.md). Its one production construction passes a
+//     constant, so it is closed by its caller, not by itself.
+//
 // ⚠️ THE HOUSE IDIOM HAS EXACTLY ONE HOLE, AND IT IS NOT NaN. Transcribed, not assumed:
 // `x > 0` is FALSE for nan, -inf, 0 and negatives — so the common guard closes every case
 // #588 was written about — and TRUE for +inf, which then reaches `Int()` and traps. That is
@@ -85,10 +104,11 @@
 // make this paragraph wrong — sanitise the rate in the same commit, do not delete the method
 // on the strength of this note (#364).
 //
-// ⭐ GRADING (§3). FIVE findings, SIX boundaries — the third (#1170, the poly engine's own
+// ⭐ GRADING (§3). SIX findings, SEVEN boundaries — the third (#1170, the poly engine's own
 // sample rate), the fourth (#1171, the shared delay line's constructor), the fifth (#1172,
 // the FX chain handing the raw rate to fifteen stages) and the sixth (#1194, the felt sub's
-// two audio-thread character mirrors) were added later and
+// two audio-thread character mirrors) and the seventh (#1195, the document-side
+// seconds→ticks conversion) were added later and
 // their grading sits on their own tests. The two below are #588's,
 // verified by transcription against the parent
 // (the behavioural tests name no new symbol, so they COMPILE against the parent). On the parent,
@@ -424,6 +444,61 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
             The NaN-transparent clamp idiom is back on an audio-thread mirror, in the one file \
             whose own `subGain` comment bans it by name.
             """)
+    }
+
+    // MARK: - THE SEVENTH BOUNDARY: seconds → ticks (#1195)
+
+    /// A SEVENTH boundary, and the first in this file that is NOT on the audio path —
+    /// `TimelineTime.ticks(fromSeconds:bpm:)`, the DOCUMENT-side conversion. It belongs
+    /// here anyway because the failure is this file's own: `Int(_:)` TRAPS on NaN and on
+    /// ±inf, which is a CRASH, not silence.
+    ///
+    /// WHAT WAS OPEN. `guard bpm > 0` and nothing else. That reads like a guard and closes
+    /// only half of what it looks like it closes — FALSE for NaN, TRUE for `+inf` — and
+    /// `seconds` was not checked at all. Both are `Double`s that arrive from a DECODED
+    /// document, so the input is not under this file's control.
+    ///
+    /// ⚠️ LATENT ON THE LIVE PATH, AND THE HONEST VERSION IS THE MIXED ONE. Measured:
+    /// `TimelineStore.setAudioRegionWindow` (the caller that does NOT guard `isFinite`) has
+    /// ZERO production callers — the audio-lane door went with #121 Slice 4 (#527). The two
+    /// LIVE callers reach it through `RegionNoteWindow.offsetTicks`, which guards
+    /// `contentOffsetSeconds.isFinite` itself. What was NOT closed on the live path is
+    /// `bpm`: no caller checks it, and `+inf` passed the old guard.
+    ///
+    /// ⭐ WHY THE REPAIR WENT IN THE SHARED FUNCTION. Two callers, asymmetric protection,
+    /// one of them protecting by accident (`max(0, x)` is NaN-safe by ARGUMENT ORDER and
+    /// says nothing about `+inf`) — the #1171 shape, where one of N entry points spells the
+    /// guard and the pothole is shared. Fixing the function closes both and any third.
+    func testNonFiniteSecondsCannotTrapTheTickConversion() {
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: .nan, bpm: 120), 0)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: .infinity, bpm: 120), 0)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: -.infinity, bpm: 120), 0)
+    }
+
+    /// The half the old `bpm > 0` genuinely missed: `+inf` passes `> 0`.
+    func testNonFiniteTempoCannotTrapTheTickConversion() {
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: 1, bpm: .infinity), 0)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: 1, bpm: .nan), 0)
+    }
+
+    /// FINITE inputs can still overflow `Int` — the hole an `isFinite` guard alone leaves.
+    /// `1e300 × 2 × 480` is finite and roughly 1e303; `Int(_:)` traps on it just as hard.
+    func testAnAstronomicalButFiniteOffsetIsCappedRatherThanConverted() {
+        let capped = TimelineTime.ticks(fromSeconds: 1e300, bpm: 120)
+        XCTAssertEqual(Double(capped), TimelineTime.tickMagnitudeCeiling)
+        let negative = TimelineTime.ticks(fromSeconds: -1e300, bpm: 120)
+        XCTAssertEqual(Double(negative), -TimelineTime.tickMagnitudeCeiling)
+    }
+
+    /// COUNTERWEIGHT (#343). Ordinary values are untouched, and the SIGN survives — the
+    /// obvious wrong repair is clamping to `0...ceiling`, which would silently turn every
+    /// negative offset into 0 and look like a tightened guard.
+    func testOrdinaryTicksConversionsAreUnchanged() {
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: 0.5, bpm: 120), 480)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: 1.0, bpm: 60), 480)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: -0.25, bpm: 120), -240)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: 0, bpm: 120), 0)
+        XCTAssertEqual(TimelineTime.ticks(fromSeconds: 1, bpm: 0), 0)
     }
 
     // MARK: - source access (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)

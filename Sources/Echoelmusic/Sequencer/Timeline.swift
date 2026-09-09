@@ -790,12 +790,42 @@ public enum TimelineTime {
         return Double(ticks) / Double(ticksPerQuarter) * (60.0 / bpm)
     }
 
+    /// The largest tick magnitude this conversion will produce. Named, not inlined,
+    /// because it is a SAFETY bound and not a musical one: `Int(_:)` TRAPS on any Double
+    /// outside `Int`'s range, and two FINITE Doubles can multiply past it (`1e300 * 120`).
+    /// 1e15 ticks is ~2.6e11 bars at 480 ticks/quarter — beyond any project, and three
+    /// orders of magnitude inside `Int64`. A value that hits this ceiling is already
+    /// nonsense; the ceiling only decides that it arrives as a number instead of a crash.
+    public static let tickMagnitudeCeiling: Double = 1e15
+
     /// Seconds → ticks at a tempo (the inverse of `seconds(fromTicks:)`, rounded).
     /// Used by front-trim to convert a media offset into the furthest the leading edge
     /// may extend left without revealing media before its start.
+    ///
+    /// ⚠️ THE GUARD IS LOAD-BEARING AND THE CEILING DOES NOT REPLACE IT (#1195). `Int(_:)`
+    /// is a Swift TRAP for NaN and for ±inf, and `bpm > 0` alone closes NEITHER hole the
+    /// way it looks: it is FALSE for NaN (good) and TRUE for `+inf` (a trap one line later).
+    /// That is CLAUDE.md's own note that the house `> 0` idiom has exactly one hole and it
+    /// is not NaN. `seconds` had no guard at all.
+    ///
+    /// ⛔ AND `clamped(to:)` ALONE WOULD BE WRONG HERE, which is why the guard stays above
+    /// it rather than being replaced by it: `clamped(to:)` maps NaN to the range's LOWER
+    /// bound, and this range is symmetric — a NaN would come back as `-1e15`, i.e. the
+    /// largest possible wrong answer instead of the neutral 0 every other degenerate input
+    /// returns. The house helper is NaN-SAFE, not NaN-NEUTRAL, and the difference only
+    /// matters when the lower bound is not the neutral value.
+    ///
+    /// ⚠️ TWO CALLERS, ASYMMETRIC PROTECTION — the reason the repair belongs in this shared
+    /// function and not at a call site. `RegionNoteWindow.offsetTicks` guards
+    /// `contentOffsetSeconds.isFinite` itself and always did; `TimelineStore`
+    /// `.setAudioRegionWindow` guards only `max(0, contentOffsetSeconds)`, which closes NaN
+    /// by argument order and passes `+inf` straight through — and that same function DOES
+    /// check `gain.isFinite` two lines above, so the author considered non-finite input for
+    /// one field and not the other. Neither caller guards `bpm`.
     public static func ticks(fromSeconds seconds: Double, bpm: Double) -> Int {
-        guard bpm > 0 else { return 0 }
-        return Int((seconds * bpm / 60.0 * Double(ticksPerQuarter)).rounded())
+        guard bpm > 0, bpm.isFinite, seconds.isFinite else { return 0 }
+        let raw = (seconds * bpm / 60.0 * Double(ticksPerQuarter)).rounded()
+        return Int(raw.clamped(to: -tickMagnitudeCeiling...tickMagnitudeCeiling))
     }
 }
 
