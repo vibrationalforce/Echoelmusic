@@ -27,11 +27,57 @@ public final class EchoelDelayLine: @unchecked Sendable {
     public let sampleRate: Float
     public let maxDelaySamples: Int
 
+    /// Upper bound on the frame count that reaches `Int(_:)` in `init` (#1171). 2^20 frames
+    /// is ~21.8 s at 48 kHz — TEN TIMES the longest line any shipped stage requests (2.0 s,
+    /// `EchoelDelay`'s default) — so no real request can touch it. It exists to turn an
+    /// overflow into a BOUNDED allocation instead of a trap.
+    ///
+    /// The size is chosen, not arbitrary: the capacity rounds up to the next power of two, so
+    /// this cap costs at most 2^21 Floats = 8 MB on a garbage input. The first draft used
+    /// 2^22 and would have allocated 33 MB against a 200 MB budget — for an input that is
+    /// already nonsense. A defensive bound that is itself expensive is a poor bound.
+    private static let maxFrames: Float = 1_048_576
+
     // MARK: - Init
 
+    /// #1171 — THE TRAP IS HERE, AND IT WAS GUARDED AT ONE CALLER OUT OF FIVE.
+    /// `Int(_: Float)` traps on `.nan`, on `.infinity`, and on any finite value past
+    /// `Int.max`. The old line read
+    /// `Swift.max(4, Int((maxDelaySeconds * sampleRate).rounded(.up)) + 4)` — and
+    /// `Swift.max` runs AFTER the conversion, so the net hung behind the hole.
+    ///
+    /// FIVE stage initialisers build a line from a rate they did not check —
+    /// `EchoelTape`, `EchoelHarmonizer`, `EchoelChorus`, `EchoelDelay` all store
+    /// `self.sr = sampleRate` raw. `EchoelGranular` is the ONLY one that guards, and its
+    /// comment names this exact site: "reaches `Int((inf * sr).rounded(.up))` inside
+    /// `EchoelDelayLine.init`, which TRAPS". That is #937 — one form repaired, four twins
+    /// left broken — so the repair belongs at the shared site, not at five call sites.
+    /// `EchoelGranular`'s guard stays: it is now belt-and-braces, and correct.
+    ///
+    /// BIT-IDENTICAL FOR EVERY PREVIOUSLY-VALID INPUT. The clamp keeps the old SHAPE —
+    /// `Swift.max(4, Int(...) + 4)` — and only bounds what feeds the conversion, so a
+    /// 0.05 s line at 48 kHz still yields 2404 exactly as before — verified across every
+    /// request the shipped stages actually make (0.05/0.12/1.0/2.0 s at 44.1/48/96 kHz).
+    /// ONE input changes, and it is named rather than hidden: a rate of exactly 0 used to
+    /// produce `wanted = 4`, i.e. a two-sample line that can hold no delay at all; it now
+    /// falls back to 48 kHz and yields the requested length. That input was never valid.
+    /// Argument order is
+    /// deliberate: `Swift.max(0, NaN)` returns 0 because `NaN >= 0` is false, while the
+    /// reversed `Swift.max(NaN, 0)` returns NaN and traps one line later.
+    ///
+    /// ⚠️ LATENT, NOT LIVE: every caller today passes a literal 48 kHz, or is guarded
+    /// upstream (`MonitorInsertAU` checks `negotiated.isFinite, negotiated > 0`). Closed on
+    /// engineering.md's boundary rule — non-finite at a DSP boundary is an edge case, not an
+    /// impossibility — and because a trap is a crash, not a degraded sound.
     public init(maxDelaySeconds: Float = 2.0, sampleRate: Float = 48000) {
-        self.sampleRate = sampleRate
-        let wanted = Swift.max(4, Int((maxDelaySeconds * sampleRate).rounded(.up)) + 4)
+        let rate = (sampleRate.isFinite && sampleRate > 0) ? sampleRate : 48000
+        let seconds = (maxDelaySeconds.isFinite && maxDelaySeconds > 0) ? maxDelaySeconds : 2.0
+        self.sampleRate = rate
+        // `seconds * rate` is finite-times-finite, which cannot be NaN but CAN overflow to
+        // `.infinity`; `Swift.min` catches that. The cap is ~21.8 s at 48 kHz — ten times the
+        // longest line any stage asks for (2.0 s), so no real request is touched.
+        let frames = Swift.min(Self.maxFrames, Swift.max(0, (seconds * rate).rounded(.up)))
+        let wanted = Swift.max(4, Int(frames) + 4)
         self.capacity = EchoelDelayLine.nextPowerOfTwo(wanted)
         self.mask = capacity - 1
         self.maxDelaySamples = capacity - 2

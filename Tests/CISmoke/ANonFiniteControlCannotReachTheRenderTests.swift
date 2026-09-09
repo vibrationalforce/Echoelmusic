@@ -27,7 +27,7 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 6 tests, 9 assertion statements (`grep -c`, measured; two run inside loops — 512 and
+//   · 8 tests, 13 assertion statements (`grep -c`, measured; four run inside loops — 512,
 //     2 000 executions). Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
@@ -37,8 +37,9 @@
 //     into the delay line — that is a different boundary with a real cost per frame, owned by
 //     the sanitize-at-the-boundary pattern in `applyBioReactive`, not by this slice.
 //
-// ⭐ GRADING (§3). TWO findings, THREE boundaries — the third (#1170, the poly engine's own
-// sample rate) was added later and its own grading sits on its test. The two below are #588's,
+// ⭐ GRADING (§3). THREE findings, FOUR boundaries — the third (#1170, the poly engine's own
+// sample rate) and the fourth (#1171, the shared delay line's constructor) were added later and
+// their grading sits on their own tests. The two below are #588's,
 // verified by transcription against the parent
 // (the behavioural tests name no new symbol, so they COMPILE against the parent). On the parent,
 // `fb = min(max(NaN, 0), 0.95)` is NaN, `wL = inL + lpL * NaN` is NaN from frame 0 — but the
@@ -191,6 +192,67 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
                 go NaN — permanent silence, the class this file exists for. Found instead: \
                 \(assignment.prefix(40))
                 """)
+        }
+    }
+
+    // MARK: - THE FOURTH BOUNDARY: the shared delay line's constructor (#1171)
+
+    /// END-TO-END, because this one CAN be driven: `EchoelDelayLine` is a plain value type
+    /// with a public init, so the parent's behaviour is a trap and the child's is a line.
+    ///
+    /// `Int(_: Float)` traps on `.nan`, on `.infinity`, and on any finite value past
+    /// `Int.max`. The parent computed
+    /// `Swift.max(4, Int((maxDelaySeconds * sampleRate).rounded(.up)) + 4)` — `Swift.max`
+    /// runs AFTER the conversion, so the net hung behind the hole. FIVE stage initialisers
+    /// reach this site with a rate they never checked (`EchoelTape`, `EchoelHarmonizer`,
+    /// `EchoelChorus`, `EchoelDelay`); `EchoelGranular` was the only one that guarded, and
+    /// its own comment names this exact line as the thing that TRAPS. #937 — one form
+    /// repaired, four twins left broken — so the repair went to the shared site.
+    ///
+    /// ⚠️ This test cannot be written as "assert it does not crash": a trap takes the whole
+    /// process down, so on the parent this method does not fail, it ABORTS the runner. That
+    /// is a louder red than an assertion, not a quieter one, and it is why the arithmetic
+    /// claims below matter — they are what distinguishes "did not crash" from "built the
+    /// right line".
+    func testTheDelayLineSurvivesNonFiniteConstruction() {
+        for (seconds, rate) in [(Float(0.05), Float.infinity),
+                                (Float(0.05), Float.nan),
+                                (Float.infinity, Float(48000)),
+                                (Float.nan, Float(48000)),
+                                (Float(3e38), Float(48000)),
+                                (Float(0.05), Float(0))] {
+            let line = EchoelDelayLine(maxDelaySeconds: seconds, sampleRate: rate)
+            XCTAssertTrue(line.sampleRate.isFinite && line.sampleRate > 0, """
+                EchoelDelayLine kept a non-finite or non-positive sampleRate \
+                (\(line.sampleRate)) from seconds=\(seconds) rate=\(rate). Every read/write \
+                tap is derived from it.
+                """)
+            XCTAssertGreaterThan(line.maxDelaySamples, 0, """
+                EchoelDelayLine built a zero-length line from seconds=\(seconds) \
+                rate=\(rate) — it would read and write the same cell forever.
+                """)
+        }
+    }
+
+    /// COUNTERWEIGHT (#343): the repair's whole claim is "bit-identical for every request the
+    /// shipped stages actually make". These are those requests, with the capacities the
+    /// PARENT produced — so if the clamp ever changes a real line, this goes red, not the
+    /// test above. 0.05 s is Tape and Chorus, 0.12 s the Harmonizer, 1.0 s Granular, 2.0 s
+    /// the Delay default.
+    func testEveryRealDelayRequestKeepsItsParentCapacity() {
+        for (seconds, rate, expected) in [(Float(0.05), Float(48000), 4096),
+                                          (Float(0.12), Float(48000), 8192),
+                                          (Float(1.0), Float(48000), 65536),
+                                          (Float(2.0), Float(48000), 131072),
+                                          (Float(0.05), Float(44100), 4096)] {
+            let line = EchoelDelayLine(maxDelaySeconds: seconds, sampleRate: rate)
+            XCTAssertEqual(line.maxDelaySamples, expected - 2, """
+                A real delay request changed size: \(seconds)s @ \(rate) Hz now gives \
+                \(line.maxDelaySamples + 2) frames, not \(expected). The #1171 clamp is only \
+                allowed to bound inputs that would TRAP; every valid request must keep the \
+                capacity it had before.
+                """)
+            XCTAssertEqual(line.sampleRate, rate, "a valid rate must pass through unchanged")
         }
     }
 
