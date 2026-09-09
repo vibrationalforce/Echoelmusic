@@ -27874,3 +27874,43 @@ genau den „Build & Test (iOS)"-Job; `perPage 1, page 1` liefert nur den Lint-J
 **Ergebnis: keine Scheibe.** Vier Vertrags-Flächen an einem Tag gemessen, drei davon in diesem
 Zyklus, alle sauber. Das ist das Ergebnis, kein Platzhalter — und es wird hier notiert, damit
 der nächste Sweep nicht denselben Boden abläuft.
+
+## 2026-09-09 — #1159 · Vier feste Zahlen für EINE Größe in `review.sh` — gelöscht, nicht nachgeführt
+
+**Der Befund.** `review.sh` trug **vier** eingefrorene Literale für dieselbe Größe (den
+Review-Rückstand), während der ausgelieferte Code die Zahl auf JEDEM Lauf live druckt:
+
+| Zeile | Text | Stand |
+|---|---|---|
+| 58 | `MEASURED EFFECT: 246 due -> 219, with 27 skipped.` | drei Zahlen, alle abgelaufen |
+| 68 | `219 decisions really have never been reviewed … four and a half months` | Zahl **und** Dauer |
+| 90 | `skim 132 due decisions` | abgelaufen |
+| 142 | `because 216 items is a backlog` | abgelaufen |
+
+Live gemessen am selben Tag:
+`BACKLOG: 291 due, oldest 2026-04-10; 34 past-dated row(s) skipped as no longer in force.`
+
+**Die Ironie ist aktenkundig, nicht behauptet:** derselbe Kommentarblock sagt zwei Absätze
+weiter *„the number that goes in the comment is the one the SHIPPED code prints"* — und stand
+vier Zeilen über einem Literal, das der ausgelieferte Code widerlegt.
+
+**Reparatur = LÖSCHEN (#818), nicht Nachführen.** Der Rückstand hat keinen automatischen
+Flagger (#810 — es gibt keinen Cron), also wächst er monoton: jedes Literal hier ist ein
+DATUM, kein Sachverhalt. Die Dauer („vier und ein halber Monat") ist die schlimmste Form —
+sie altert an jedem Tag, an dem niemand die Datei anfasst. Das BACKLOG-Print nennt Anzahl
+UND das Datum des ältesten Eintrags; daraus rechnet der Leser die Dauer selbst und irrt sich nie.
+
+**Was bewusst BLEIBT:** die LEHRE des Absatzes — der ausgelieferte Terminal-Status-Filter ist
+ENGER als der Prototyp, mit dem ich damals gemessen habe (`confirmed`, `assessed`, `amended`,
+`parked` sind nicht in der Liste). Diese Aussage ist eine Tatsache über den Code, keine Zahl.
+
+**KEIN Wächter, und das ist eine Entscheidung (#491).** Ein Scan „in `review.sh` steht keine
+feste Rückstandszahl" träfe die ⛔-Rücknahme, die genau diese vier Zahlen ZITIERT — die
+selbstreferenzielle Nadel-Falle. Der ausgelieferte Code druckt die Wahrheit ohnehin auf jedem
+Lauf; ein Wächter würde nur die Prosa bewachen, die auf ihn verweist.
+
+**Verifiziert nach dem Schnitt:** außerhalb des Rücknahme-Absatzes kein Treffer mehr ·
+`bash review.sh` druckt die BACKLOG-Zeile weiter · `bash review.sh --check` →
+`decisions.csv OK — 754 decisions, 6 columns each.`
+
+Commit `376fec9d`.
