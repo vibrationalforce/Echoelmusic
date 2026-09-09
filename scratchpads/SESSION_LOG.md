@@ -28231,3 +28231,49 @@ auf eine Form zu erweitern, die es nicht gibt, ist wie ein Zweig, den nie jemand
 bleibt bewusst für die eigene Scheibe liegen — eine Ralph-Änderung pro Commit.
 
 Commit `26f37f06`.
+
+## #1168 — count-pins hatte einen DRITTEN Zustand, den sein eigener Vermerk vorhergesagt hat (2026-09-09)
+
+Der zweite Rot-Prüfer, gleiche Wurzel wie #1167, andere Mechanik. Er meldete auf korrektem Baum:
+
+```
+RED  TheHarmonicMappingHasNoDoorTests.swift:148  pinned 2, actual 0
+     needle='NO REACHABLE WRITER (#1153'  in PolySynthVoice.swift
+```
+
+**Der Vermerk stand seit #977 im Werkzeug selbst**, wörtlich: „There is a THIRD state the
+heuristic cannot express: … reads RAW, unstripped text. If one of its pins ever resolves, this
+tool would strip where the guard does not, and a needle inside a comment would give a false
+RED." **Er hat sich eingelöst.** Der Wächter bindet über `raw(_ relativePath:)` — Datei
+wörtlich. Die Nadel steht zweimal in `///`-Doc-Kommentaren (`PolySynthVoice.swift` 118, 143),
+`grep -c` sagt 2, und **beide** Textkörper des Werkzeugs löschen solche Zeilen. Also 0, also
+rot, also exit 1 auf sauberem Baum.
+
+**#1050 IST das Gegengewicht und wurde ZUERST geprüft**, nicht weggewunken — es steht in
+derselben Datei, dass ein roh lesender Wächter „das Erste ist, was man ÜBER den Wächter prüft":
+dort war eine Roh-Zählung 9 echte Aufrufstellen plus 5 Kommentar-Nennungen und wanderte bei
+Prosa-Änderungen. Hier trifft es nicht zu, und **der Unterschied ist die NADEL, nicht der
+Leser**: `.sheet(` hat eine Code- und eine Prosa-Form zum Verwechseln; `NO REACHABLE WRITER`
+existiert nur als Doc-Notiz. Die zwei zu pinnen IST die Behauptung — der Wächterkopf sagt, eine
+Rücknahme müsse zitieren, was sie streicht, also scannt er absichtlich POSITIV.
+
+**Änderung:** ein Klassifizierer `stripper_of` mit drei Zuständen (`codeOnly` · `lines` · `raw`)
+· neu `string_helpers` für Lader mit Pfad-ARGUMENT (genau die Form, die der null-argumentige
+`line_helpers` nie sieht) · die zwei Pfad-Bindungen fangen den Helfer-NAMEN jetzt ein · Cache
+hält drei Textkörper. Die dateiweite Schätzung behält ihre exakte alte Bedeutung.
+
+⛔ **#762 in meinem EIGENEN ersten Entwurf, gemessen VOR dem Ausliefern:** wörtlich gelesen
+klassifiziert ein Helfer als strippend, dessen DOC-KOMMENTAR `SourceText.codeOnly` nennt,
+während sein Code roh ist — zwei lebende Fälle (`TheAlwaysOnBioPathIsNamedTests.closure`,
+`TheFilmicCurveDoesNotBendTheHueTests.shader`), heute beide folgenlos, beide genau die
+Falsch-Rot-Form, die diese Änderung beenden soll. Der Rumpf wird jetzt vor dem Klassifizieren
+geleert. Grenze im Quelltext genannt: String-Literale überleben den Blanker.
+
+**Als MUTANTEN gefahren** (Arbeitsbaum danach byte-gleich):
+· vorher 1 ROT / exit 1 · nachher 0 / exit 0, **dieselben 168 von 238 Pins geprüft** (keine
+Reichweite verloren) · M1 denselben Lader echt strippen lassen → ROT kehrt zurück, 2/0 (das
+Urteil folgt dem LADER, nicht der Datei) · M2 Pin 2→3 durch den Roh-Lader → ROT, 3/2 (der
+Roh-Pfad ZÄHLT wirklich, er überspringt nicht) · M3 die Kommentar-Leerung zurücknehmen → der
+neue Selbsttest wird rot. `--selftest` 31 Prüfungen, 0 Fehler (vorher 26).
+
+**Alle VIER Rot-Prüfer stehen jetzt auf exit 0.** Commit `5905b17e`.
