@@ -28137,3 +28137,52 @@ keine neue Lücke.
 **Gates #1163:** `Build for Testing` = **success** auf `1e2d6db0` — der neue Wächter
 `TheBioFollowTempoLaneHasNoDoorTests.swift` KOMPILIERT. `Run Tests` lief beim Lesen noch;
 zum Test-Verdikt sage ich nichts (Fenster-Gesetz #807).
+
+## #1165 — Der unverdrahtete Kern und das lebende Gate unterscheiden sich um drei Buchstaben (2026-09-09)
+
+**Anlass:** Nach-Messung des GANZEN „app-unwired pure cores"-Registers — die Sorte Vermerk, von
+der CLAUDE.md selbst sagt, dass sie verrottet (der VocoderCore-Eintrag stand monatelang auf
+„unverifiziert, behaupte nichts", bis zwei greps ihn auflösten).
+
+**Register-Ergebnis, aufgeschrieben damit die nächste Runde es nicht neu läuft:** alle NEUN
+genannten Kerne (`BioSpaceMap`, `VisualModulation`, `VBAPPanner`, `AmbisonicsEncode`,
+`LightFixtureGroup`, `BioPhaser`, `BioTempoDirector`, `VocoderMapping`, `BrainwaveModulation`)
+haben weiterhin **null** externe Code-Referenzen — wortgrenzen-genau, Kommentare gestrippt,
+Deklarationsdatei je Typ aufgelöst. Register korrekt.
+
+**Der Defekt liegt darin, WIE zwei davon benannt sind.** `Studio/BioModulation.swift` (null
+Aufrufer, im Register) und `Core/BioModulationMap.swift` (**LEBEND** — `isMeasured` gated die
+„gemessen"-Anzeige in BEIDEN Synth-Stimmen und im Bio-Panel). Der Satz nannte den ersten BAR,
+während seine Nachbarn im selben Atemzug Pfade trugen. Also liefert die naheliegende Prüfung
+`git grep -c BioModulation -- Sources` **ZEHN Dateien** für einen Namen, den der Satz
+unverdrahtet nennt; wortgrenzen-genau ohne die Superstring-Nachbarin sind es **NULL**.
+
+⭐ **Das ist Gesetz #1157 auf der Register-Zeile SELBST, und es läuft in die teure Richtung:**
+wer „den unverdrahteten BioModulation aufräumt", folgt diesem grep ins lebende Gate. Verwandt
+mit #1163s Zwilling, eine Ebene tiefer — dort ein Beinahe-Zwilling des ausgelieferten
+VERHALTENS, hier eines ausgelieferten NAMENS.
+
+⛔ **Mein erster Sweep fiel in BEIDE Löcher, und das ist der Grund, warum der Wächter eine
+eigene `wholeWordCount()` hat.** Ein blankes `contains` meldete vier Treffer für BioModulation
+(alle waren BioModulationMap), und meine Eigen-Datei-Ausnahme verglich Dateinamen mit Typnamen,
+also zählte jeder `VocoderMapping`-Treffer INNERHALB von `VocoderCore.swift` als extern. Zwei
+Fehlfunde, beide vor dem Berichten widerlegt (Wortgrenzen + Deklarationsdatei auflösen).
+
+**Reparatur:** beide Kerne tragen jetzt ihre Pfade plus einen Satz, warum der naive grep lügt.
+`CLAUDE.md` 147.692 → **148.190 B** (+498; Kopfraum **1.810**).
+
+**Wächter:** `Tests/CISmoke/TheTwoBioModulationsAreDifferentFilesTests.swift`, 4 Ansprüche.
+Tragend ist Anspruch 4 (die Pfade), auf HEAD ROT; 1–3 sind Gegengewichte. Anspruch 2 ist POSITIV
+auf das lebende Gate — verliert es alle Aufrufer, wird er rot, statt die Warnung still
+gegenstandslos zu machen. Als Mutant getrieben: grün am Baum; Gate-Aufrufer killen → nur 2 rot;
+`ClockSource` einen Aufrufer geben → nur 3 rot; Pfad entfernen → nur 4 rot. Zusatzmessung M4:
+blankes `contains` zählt 4, wortgrenzen-genau 0.
+
+**Gates #1164 (`8daedae3`):** `Build for Testing` = **success** — die neue Zeugen-Zeile
+kompiliert. `Run Tests` = failure, und das ist die dokumentierte **Clone-2-Lotterie**:
+`Failed to launch app ... "Clone 2 of iPhone 17"`, während Clone 1 Tests grün durchdruckt,
+plus `** TEST EXECUTE FAILED **`. Kein Compile-Fehler, kein benannter Testfehlschlag.
+Test-Verdikt bleibt **unbewiesen** (#807), nicht „grün".
+
+**Doctor:** Sektion C und D ohne neuen Befund; die zwei CRITICALs in Sektion A sind die
+bekannten founder-gated Workflow-Masken.
