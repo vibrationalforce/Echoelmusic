@@ -74,6 +74,7 @@ a fact about the past that a later removal cannot undo.
     python3 scripts/founder-verify.py --all       # the full instruction for every ask
     python3 scripts/founder-verify.py --area bio  # one area, full instructions
     python3 scripts/founder-verify.py --setup     # grouped by the EQUIPMENT a session needs
+    python3 scripts/founder-verify.py --since-deploy   # ONLY what is new in the build he holds
 
 Read-only, no dependencies, no network, no build — the doctor.py house rules.
 """
@@ -403,6 +404,41 @@ def collect():
 # ⚠️ AN ASK THAT MERELY MOVED IS CORRECTLY NOT "NEW". Editing lines above a marker shifts
 # its number without touching it; git reports no addition, and the ask stays out of the
 # filtered view. That is the intent: the founder is asking what CHANGED, not what slid.
+DEPLOY_FILE = ".deploy/release"
+
+
+def _repo_root() -> str:
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__))) or "."
+
+
+def previous_deploy_ref(log_text: str):
+    """The SECOND-newest sha in `git log --format=%H -- .deploy/release`, or None.
+
+    ⭐ SECOND-newest, not newest, and the off-by-one matters more than it looks. Any touch of
+    `.deploy/release` ships a build (#1151), so the NEWEST such commit is the build the founder
+    is holding. Diffing against it would answer "what changed since this build was cut" —
+    always nothing — instead of "what is new IN this build", which is the question a device
+    session asks. The baseline is therefore the commit that shipped the PREVIOUS build.
+
+    ⛔ NONE ON FEWER THAN TWO, never a fallback to the one we have. With a single deploy commit
+    there is no previous build, and quietly diffing against the current one would print an
+    empty checklist that reads exactly like "nothing to test" (#1152b is the cost of an ask
+    the founder never sees). The caller turns None into exit 2 — this file's word for "the
+    instrument could not look".
+    """
+    shas = [line.strip() for line in log_text.split("\n") if line.strip()]
+    return shas[1] if len(shas) >= 2 else None
+
+
+def _git_text(argv):
+    """stdout of a git command run at the repo root, or None if it could not run."""
+    try:
+        out = subprocess.run(["git"] + argv, capture_output=True, text=True, cwd=_repo_root())
+    except OSError:
+        return None
+    return out.stdout if out.returncode == 0 else None
+
+
 def added_lines_since(ref: str):
     """Post-image line numbers added or reworded since `ref`, per path. None = cannot tell."""
     try:
@@ -711,6 +747,23 @@ def selftest() -> int:
         bad.append(f"an unresolvable ref returned {got_bad!r} instead of None — "
                    "that prints 'nothing changed' for a question nobody answered")
 
+    # 11. THE DEPLOY BASELINE, and the claim that matters is the OFF-BY-ONE. `git log` prints
+    #     newest first, so the newest sha is the build the founder is HOLDING; diffing against
+    #     it answers "what changed since this build was cut" — always nothing. Taking [1] is
+    #     the whole point of the helper, so a fixture pins WHICH one, not merely that something
+    #     came back. Fewer than two shas must be None: silently comparing against the current
+    #     build prints an empty checklist that reads like "nothing to test" (#1152b's cost).
+    for text, want, why in [
+        ("aaa\nbbb\n", "bbb", "two shas: the SECOND is the previous build"),
+        ("aaa\nbbb\nccc\n", "bbb", "three shas: still the second, never the last"),
+        ("aaa\n", None, "one sha: no previous build exists"),
+        ("", None, "no shas at all: git answered nothing"),
+        ("aaa\n\nbbb\n\n", "bbb", "blank lines are not shas"),
+    ]:
+        got_ref = previous_deploy_ref(text)
+        if got_ref != want:
+            bad.append(f"previous_deploy_ref({text!r}) = {got_ref!r}, want {want!r} — {why}")
+
     for line in bad:
         print("FAIL:", line)
     print(f"selftest: {'FAILED' if bad else 'ok'} ({len(bad)} problem(s))")
@@ -730,6 +783,29 @@ def main() -> int:
         except IndexError:
             print("--since needs a git ref (e.g. the previous deploy's bump commit)")
             return 2
+    # `--since-deploy` is the same question with the baseline resolved for you. It exists
+    # because the hand form is `git log -2 --format=%H -- .deploy/release | tail -1`, which is
+    # easy to get off by one — and getting it off by one prints an EMPTY checklist, which reads
+    # like "nothing to test" rather than like a mistake.
+    # ⚠️ `args.index` is an exact match, so `--since-deploy` does not satisfy `"--since" in
+    # args`; the two are read independently and refusing both together is deliberate.
+    if "--since-deploy" in args:
+        if since is not None:
+            print("--since and --since-deploy both given; they set the same baseline. Pick one.")
+            return 2
+        log_text = _git_text(["log", "-2", "--format=%H", "--", DEPLOY_FILE])
+        since = previous_deploy_ref(log_text) if log_text is not None else None
+        if since is None:
+            print(f"Cannot resolve the PREVIOUS deploy commit from `{DEPLOY_FILE}`.\n"
+                  f"   `git log -2 --format=%H -- {DEPLOY_FILE}` must name two commits; with "
+                  f"fewer there is no previous build to compare against. No list given rather "
+                  f"than an empty one that reads like 'nothing to test'.")
+            return 2
+        line = _git_text(["show", f"{since}:{DEPLOY_FILE}"])
+        shipped = line.split("\n")[0].strip() if line else "version line unreadable"
+        print(f"--since-deploy → {since[:8]}, the commit that shipped the PREVIOUS build")
+        print(f"   that build: {shipped}\n")
+
     only = None
     if "--area" in args:
         try:
