@@ -28836,3 +28836,43 @@ success, 13:08→13:15).
 Voraussetzung für sie alle ist (#416: §5 besitzt CI-Lesen schon). Kein Wächter: der Befund
 betrifft eine fremde API, kein Repo-Faktum, und ein Text-Scan darauf wäre die #491-Falle.
 Vier Rot-Prüfer exit 0.
+
+---
+
+## #1181 — Der Sweep eine Ebene höher: wieder ein NEGATIV, aber mit einer Zwei-Sprung-Invariante (2026-09-09)
+
+**#1179 hat `DSP/` durchsucht. Diesmal `Audio/` + `Tools/`, wo die AUFRUFER sitzen.** Sechs
+Treffer, alle geschlossen — und zwei davon aus Gründen, die man nur durch Messen sieht:
+
+| Stelle | warum sicher |
+|---|---|
+| `AudioEngine:3545` `Int(clamped)` | Aufrufer prüft `rate > 0`, `binToHz` prüft `fftSize > 0` |
+| `LatencyCompensation:36` | `sampleRate > 0` PLUS `max(0, …)` in der SICHEREN Argumentreihenfolge |
+| `MultiTrackRecorder:277`, `RetroCapture:222` | `AVAudioFormat.sampleRate` in einem Log |
+| `PolySynthVoice:249` | statische Konstante |
+| `PolySynthVoice:1262` `Int(cmd.pitch)` | **`pitch` ist `Int32`** — `Int32 → Int` kann auf 64 Bit nicht trappen |
+
+Der letzte ist die Lehre in Kleinformat: `Int(cmd.pitch)` SIEHT aus wie die Falle aus #1171/#1172
+und ist eine andere Operation, weil der Quelltyp ganzzahlig ist. **Eine Falle erkennt man am TYP,
+nicht an der Schreibweise.**
+
+**⚠️ DER ECHTE BEFUND: `applyNotchDefence` wird UNBEDINGT gerufen und ist nur durch eine
+Zwei-Sprung-Invariante sicher.** Der Aufrufer schreibt `applyNotchDefence(candidates:)` AUSSERHALB
+seines `if`; die `monitorTapSampleRate > 0`-Prüfung dort oben entscheidet nur, ob `candidates`
+GEFÜLLT wird. Der Schleifenrumpf erreicht also eine gültige Rate ausschließlich deshalb, weil ein
+ungeprüfter Tick das Array LEER lässt. Das steht nirgends — und die Zeile darin nutzt
+`Swift.max(hz, 40)`, also die NaN-DURCHLÄSSIGE Argumentreihenfolge (CLAUDE.mds eigenes Gesetz:
+sicher wäre `max(40, hz)`), deren Ergebnis in `Int(clamped)` in einer Log-Zeile landet.
+
+**⛔ UND DIE NAHELIEGENDE REPARATUR IST ABGELEHNT — das ist der Teil, der Wert hat.**
+`hz.clamped(to: 40...(rate * 0.45))` wäre die NaN-sichere Hilfe, die CLAUDE.md empfiehlt. Aber
+`ClosedRange` **trappt bei der KONSTRUKTION**, wenn `upperBound < lowerBound` — also für jede Rate
+unter ~88,9 Hz. Die aufgeräumt aussehende Reparatur tauscht einen UNERREICHBAREN NaN-Trap gegen
+einen ERREICHBAREN Bereichs-Trap, auf dem Audio-Pfad, ohne hörbaren Gewinn. Das `min(max(…))`
+degradiert bei umgekehrtem Bereich anstandslos und BLEIBT. **Eine Hilfsfunktion ist nur dann
+sicherer, wenn ihre eigenen Vorbedingungen am Aufrufort gelten.**
+
+**Geschrieben statt gebaut:** die Invariante steht jetzt im Doc-Kopf der Funktion, mitsamt dem
+abgelehnten Fix und dem, was ein ZWEITER Aufrufer mitbringen muss (relevant, wenn #1024 die
+Mikrofon-Tür zurückholt). Nur `///`-Zeilen (`git diff -U0 | grep -vc '^+ *///'` = 0). Vier
+Rot-Prüfer exit 0, `founder-verify` unverändert 111/99.

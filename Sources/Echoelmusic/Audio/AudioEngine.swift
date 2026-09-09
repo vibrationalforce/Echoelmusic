@@ -3511,6 +3511,30 @@ public final class AudioEngine {
     /// Lautsprecher) — es darf GAR NICHT erst hörbar piepsen (Log zeigt „notch engaged
     /// … Hz"); danach normal singen und pfeifen — Stimme und Pfeifton dürfen NICHT
     /// dünner werden (kein fälschliches Notchen).
+    /// ⚠️ THIS FUNCTION IS CALLED UNCONDITIONALLY AND IS SAFE ONLY BY A TWO-HOP INVARIANT
+    /// (#1181, measured — nothing stated it before). The caller runs `applyNotchDefence(...)`
+    /// OUTSIDE its `if`; the `monitorTapSampleRate > 0` check up there gates only whether
+    /// `candidates` gets FILLED. So the loop body below is reached with a valid rate purely
+    /// because an unvalidated tick leaves the array EMPTY and the loop never runs.
+    ///
+    /// That matters for one line: `Swift.min(Swift.max(hz, 40), monitorTapSampleRate * 0.45)`
+    /// uses `max`'s NaN-TRANSPARENT argument order (`max(hz, 40)` returns `hz` when `hz` is
+    /// NaN — CLAUDE.md's own law; the NaN-safe order is `max(40, hz)`), and the result feeds
+    /// `Int(clamped)` in a log line, where `Int(nan)` is a Swift TRAP. Today nothing can
+    /// deliver NaN: `binToHz` guards `fftSize > 0`, and the rate comes from an `AVAudioFormat`.
+    /// A `rate` of 0 would invert the clamp (lower 40, upper 0) and write a 0 Hz band.
+    ///
+    /// ⛔ DO NOT "FIX" THIS WITH `hz.clamped(to: 40...(rate * 0.45))`. That was considered and
+    /// REJECTED: `ClosedRange` construction TRAPS when `upperBound < lowerBound`, i.e. for any
+    /// rate below ~88.9 Hz — so the tidy-looking repair swaps an unreachable NaN trap for a
+    /// reachable range trap, on the audio path, for no audible gain. The `min(max(…))` form
+    /// degrades gracefully on an inverted range and stays.
+    ///
+    /// ⚠️ WHAT A SECOND CALLER MUST CARRY. If the microphone is re-doored (#1024) or this is
+    /// invoked from anywhere else, the new site must guarantee `monitorTapSampleRate > 0`
+    /// itself — the guard does not travel with the argument. Note the inconsistency this
+    /// paragraph exists to flag: `binWidthHz` two lines into the body DOES defend itself
+    /// (`monitorSpectrumFFT.size > 0 ? … : 0`) while the line beside it delegates upward.
     private func applyNotchDefence(candidates: [FeedbackGuard.HowlDetector.Candidate]) {
         guard notchEQ.bands.count >= notchBands.count else { return }
         let binWidthHz = monitorSpectrumFFT.size > 0
