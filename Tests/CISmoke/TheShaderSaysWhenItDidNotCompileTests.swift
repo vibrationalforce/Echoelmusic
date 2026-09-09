@@ -27,11 +27,21 @@
 // diagnostic — a line that only reached `os_log` was invisible in every "bitte Log mit offenem
 // Visual" round.
 //
-// ⚠️ HONEST GRADING. No local Swift toolchain (§0). **Six assertions across three claims**
-// (3 · 2 · 1), driven against both trees. Against the pre-slice tree, claims 1 and 2 are
-// **RED on all five of their assertions** — none of the four rungs existed and the `guard`
-// swallowed the compile error with `try?`. Claim 3 is green on both. So **5 REGRESSION
+// ⚠️ HONEST GRADING. No local Swift toolchain (§0). #1055 shipped **six assertions across
+// three claims** (3 · 2 · 1), driven against both trees. Against the pre-slice tree, claims 1
+// and 2 are **RED on all five of their assertions** — none of the four rungs existed and the
+// `guard` swallowed the compile error with `try?`. Claim 3 is green on both. So **5 REGRESSION
 // CATCHES, 1 COUNTERWEIGHT**. Counted from the driven run, not from the outline (#1054).
+//
+// ⭐ #1196 ADDED THREE MORE CLAIMS (4 · 5 · 6), for a file total of **ten assertions across six
+// claims** (`grep -c`, measured — do not carry the old six forward). Driven the same way:
+// **3 REGRESSION CATCHES** (the shared-pipeline field, the device-identity reuse branch, and
+// the success-only cache — all absent from the parent) and **3 COUNTERWEIGHTS**, green on
+// both trees. The counterweights are not filler here: "exactly one `makeLibrary(source:)`",
+// "exactly one `colorPixelFormat` assignment" and the matching descriptor format are the
+// PREMISES that make sharing one pipeline across two mounts correct. If any of them stops
+// holding, sharing becomes a rendering bug — so they are pinned as invariants, not as proof
+// that #1196 landed.
 
 import Foundation
 import XCTest
@@ -98,6 +108,72 @@ final class TheShaderSaysWhenItDidNotCompileTests: XCTestCase {
             must leave `pipeline` nil and let the draw loop show its calm clear-colour pulse — \
             never a crash. Reporting a failure and surviving it are the two halves of this \
             slice; do not trade the second for the first.
+            """)
+    }
+
+    // MARK: - #1196: the compile happens ONCE per process, not once per mount
+
+    /// claim 4 — the 72 KB of MSL below is compiled ONCE and the pipeline is reused.
+    ///
+    /// WHAT WAS OPEN. `configure(device:)` handed `Self.shaderSource` — measured 72 763
+    /// characters / 1 034 lines — to `makeLibrary(source:)` on EVERY renderer, and a renderer
+    /// is born on every mount. There are TWO production mounts (`FloatingVisualWindow`, the
+    /// external display) and the floating one is TORN DOWN AND REBUILT by two reachable
+    /// controls: the header's picture toggle and the donut switch. So an ordinary session
+    /// recompiled the whole shader several times, synchronously, on the main thread.
+    ///
+    /// WHY IT IS AN AUDIO BUG AND NOT ONLY A STUTTER. A runtime MSL compile of that size is
+    /// hundreds of milliseconds with the Metal compiler running in-process. The render
+    /// deadline of a running `AVAudioEngine` at 512 frames / 48 kHz is 10.67 ms. The founder
+    /// reported both halves of exactly this on 2026-09-09: "Knisterfreier Sound bitte" and
+    /// "es scheint zwischendurch zu viel Arbeitsspeicher zu verbrauchen".
+    ///
+    /// ⚠️ THE LOAD-BEARING INVARIANT IS THE PIXEL FORMAT, and claim 6 below is why this claim
+    /// is safe rather than merely smaller. A pipeline state is bound to the colour format it
+    /// was built against; sharing one across two views is correct ONLY while both views agree.
+    /// They do, because the format is set in the single shared `makeUIView`.
+    func testTheShaderIsCompiledOncePerProcess() throws {
+        let src = try source()
+        XCTAssertTrue(src.contains("nonisolated(unsafe) private static var sharedPipeline: MTLRenderPipelineState?"), """
+            The process-wide pipeline cache is gone. Without it every mount of the visual \
+            recompiles ~72 KB of MSL on the main thread, which is a crackle in the audio \
+            and a memory step the founder can see (#1196).
+            """)
+        XCTAssertTrue(src.contains("if let cached = Self.sharedPipeline, Self.sharedPipelineDevice === device {"), """
+            The reuse branch is gone, or no longer tests DEVICE IDENTITY. A bare bool would \
+            hand a pipeline built for one device to another (#1196).
+            """)
+        XCTAssertEqual(src.components(separatedBy: "device.makeLibrary(source:").count - 1, 1, """
+            There must be exactly ONE `makeLibrary(source:)` call site. A second one would \
+            reintroduce the per-mount compile behind a different name.
+            """)
+    }
+
+    /// claim 5 — only a SUCCESSFUL build is cached. Caching a nil pipeline would turn one
+    /// failed compile into a permanently flat picture for the rest of the process, and the
+    /// failure rungs claim 1 pins would never fire again to say why. This is the assertion
+    /// that keeps #1196 from undoing #1055.
+    func testOnlyASuccessfulPipelineIsCached() throws {
+        let src = try source()
+        XCTAssertTrue(src.contains("if let built = pipeline {"), """
+            The cache is being written unconditionally. A nil pipeline stored here is a \
+            permanent flat picture with no further diagnosis (#1196 must not undo #1055).
+            """)
+    }
+
+    /// claim 6 — the premise claim 4 rests on: the drawable's colour format is set in exactly
+    /// ONE place, the shared `makeUIView`, so every mount agrees with the format the pipeline
+    /// descriptor hard-codes. The day a second mount sets its own, sharing the pipeline
+    /// becomes wrong — and this goes red instead of the picture going subtly wrong.
+    func testEveryMountAgreesOnTheDrawableFormat() throws {
+        let src = try source()
+        XCTAssertEqual(src.components(separatedBy: "view.colorPixelFormat = ").count - 1, 1, """
+            The drawable colour format is set in more than one place. A shared \
+            `MTLRenderPipelineState` is only valid for views that agree on it (#1196).
+            """)
+        XCTAssertTrue(src.contains("desc.colorAttachments[0].pixelFormat = .bgra8Unorm_srgb"), """
+            The pipeline descriptor's format no longer matches the view's — the shared \
+            pipeline would be rejected or render wrong (#1196 / B9b).
             """)
     }
 }

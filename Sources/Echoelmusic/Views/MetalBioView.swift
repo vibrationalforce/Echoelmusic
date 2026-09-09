@@ -591,6 +591,34 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
 
     private var commandQueue: MTLCommandQueue?
     private var pipeline: MTLRenderPipelineState?
+
+    /// PROCESS-WIDE COMPILED PIPELINE (#1196). The shader below is ~72 KB / ~1 000 lines of
+    /// MSL in a Swift string, and `configure(device:)` used to hand ALL of it to
+    /// `makeLibrary(source:)` on every renderer — synchronously, on the main thread. A fresh
+    /// renderer is born on every mount, and the file's own note at the `draw` loop says so:
+    /// hiding and re-showing the floating window, flipping the donut toggle, or opening the
+    /// beamer each built one. The compile is hundreds of milliseconds and tens of MB of
+    /// transient compiler allocation — long past the 10.67 ms render deadline of a running
+    /// `AVAudioEngine`, which is heard as a crackle, and visible as the memory step the
+    /// founder reported as "zwischendurch zu viel Arbeitsspeicher" (2026-09-09).
+    ///
+    /// ⚠️ THE PIPELINE IS SHARED, THE COMMAND QUEUE IS NOT — deliberately, and this is the
+    /// line to read before "tidying" the queue in here too. An `MTLRenderPipelineState` is
+    /// immutable and explicitly shareable, so two views using one changes nothing about how
+    /// either draws. A command queue is a SUBMISSION order: the floating window and the
+    /// external display are independent renderers, and folding their submissions into one
+    /// queue is a behaviour change with no measured benefit — the queue is cheap next to a
+    /// 72 KB compile.
+    ///
+    /// ⚠️ ONLY A SUCCESSFUL BUILD IS CACHED. Caching a nil pipeline would turn one failed
+    /// compile into a permanently flat picture for the rest of the process, and the failure
+    /// breadcrumbs below would never fire again to say why.
+    ///
+    /// `nonisolated(unsafe)`, the house idiom, because `MetalBioRenderer` is not actor-
+    /// isolated: the ONE writer is `configure(device:)`, whose ONE caller is
+    /// `makeUIView(context:)` — SwiftUI calls that on the main thread.
+    nonisolated(unsafe) private static var sharedPipelineDevice: MTLDevice?
+    nonisolated(unsafe) private static var sharedPipeline: MTLRenderPipelineState?
     /// `uniforms` are what the GPU sees THIS frame; `target` is what the latest bio /
     /// look update asked for. Every draw eases `uniforms` toward `target` (time-based
     /// exponential smoothing) so discrete updates — a stepped HR, a new note's colour,
@@ -811,6 +839,21 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
 
     func configure(device: MTLDevice) {
         commandQueue = device.makeCommandQueue()
+
+        // #1196: reuse the already-compiled pipeline when one exists for THIS device.
+        // The identity test is `===` on the device, not a bool: `MTLCreateSystemDefaultDevice()`
+        // returns the same object today, and a cached pipeline is only valid for the device
+        // that built it — a `hasCompiled` flag would silently hand a foreign pipeline to a
+        // second device if one ever appeared.
+        if let cached = Self.sharedPipeline, Self.sharedPipelineDevice === device {
+            pipeline = cached
+            // Its own rung, and NOT the "compiling" one: the two must stay distinguishable in
+            // `echoel_diag.log`, because "compiling shader" appearing once per session instead
+            // of once per toggle IS the proof that this repair works on the device.
+            EchoelCrashLog.breadcrumb("visual: shader reused — no recompile")
+            return
+        }
+
         // Compile the shader at runtime; on failure leave `pipeline` nil → the draw
         // loop falls back to a calm clear-colour pulse (never a crash).
         //
@@ -845,6 +888,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         desc.fragmentFunction = ffn
         desc.colorAttachments[0].pixelFormat = .bgra8Unorm_srgb   // must match the view (B9b)
         pipeline = try? device.makeRenderPipelineState(descriptor: desc)
+        if let built = pipeline {
+            Self.sharedPipeline = built
+            Self.sharedPipelineDevice = device
+        }
         EchoelCrashLog.breadcrumb(
             pipeline == nil ? "visual: pipeline state FAILED — flat pulse only"
                             : "visual: shader ready")
