@@ -28359,3 +28359,57 @@ findings, THREE boundaries". Alle vier Rot-Prüfer exit 0. Commit `5e65e6e0`.
 
 ⚠️ **Gate steht aus:** das ist die erste Swift-Änderung dieser Runde — `Build for Testing` MUSS
 gelesen werden, bevor irgendetwas als grün gilt.
+
+## #1171 — die geteilte Delay-Line STÜRZTE bei nicht-endlicher Rate, und genau EIN Aufrufer von fünf wusste das (2026-09-09)
+
+**Der Befund ist eine Klasse härter als #1170.** Dort war die Folge eines NaN dauerhafte
+Stille; hier ist sie ein **Absturz**. `EchoelDelayLine.init` rechnete
+`Int((maxDelaySeconds * sampleRate).rounded(.up))` — und `Int(_: Float)` **trappt** bei
+`nan`, `inf` und bei Überlauf. Kein Optional, kein Fehler: das Programm endet.
+
+**Der Beleg, dass das niemand für theoretisch hielt:** `EchoelGranular.swift` hat einen
+Schutz davor, und sein Kommentar nennt die Stelle wörtlich („reaches
+`Int((inf * sr).rounded(.up))` inside `EchoelDelayLine.init`, which TRAPS"). **Ein
+Aufrufer von fünf.** Die anderen vier reichen ihre Rate roh durch. Ein Schutz am
+Aufrufer schützt nur diesen einen Aufrufer — das Gesetz gehört an die Grenze, an der
+gerechnet wird.
+
+**Was geändert wurde,** in `EchoelDelayLine` (der Kind-Init):
+`rate` und `seconds` werden auf endlich-und-positiv geprüft (sonst 48000 bzw. 2.0), das
+Ergebnis wird zusätzlich gegen `maxFrames` gedeckelt.
+
+⚠️ **Der Deckel ist eine MESSUNG, kein Gefühl.** Der erste Entwurf nahm 4 194 304 Frames —
+das wären ~33 MB Zuweisung aus Müll-Eingabe, gegen ein Gesamtbudget von 200 MB. Gemessen
+und auf **1 048 576** gesenkt: ~21,8 s bei 48 kHz, im schlimmsten Fall ≤8,4 MB. Jede echte
+Anforderung der App liegt weit darunter.
+
+**Bit-Identität ist geprüft, nicht gehofft.** Float32-Simulation aller sechs echten
+Anfragen (0,05 s / 0,12 s / 1,0 s / 2,0 s bei 48 kHz, 0,05 s bei 44,1 kHz): dieselbe
+Kapazität wie vorher. **Genau EINE Eingabe ändert ihr Verhalten** — Rate exakt 0 — und die
+steht im Quelltext benannt, statt versteckt zu werden.
+
+**Wächter:** ZWEI neue Tests in `ANonFiniteControlCannotReachTheRenderTests` (#588, das
+bestehende Zuhause dieses Gesetzes — eine neue Datei wäre #416):
+`testTheDelayLineSurvivesNonFiniteConstruction` (sechs entartete Paare) und
+`testEveryRealDelayRequestKeepsItsParentCapacity` (das Gegengewicht: die fünf echten
+Anfragen behalten ihre Kapazität, sonst wäre die Reparatur ein stiller Klangwechsel).
+
+⛔ **Ein Mutantenlauf bestand, obwohl er scheitern MUSSTE.** Meine erste Transkription
+fragte nur `"isFinite" in init` — nach dem Löschen des Raten-Schutzes blieb der
+Sekunden-Schutz stehen und die Frage blieb wahr. Neu getrieben mit einer Transkription,
+die die ZWEI Entscheidungen modelliert, die der Swift-Test wirklich trifft; danach bissen
+alle drei Mutanten.
+
+⛔ **Und eine Nadel traf nichts (#1163).** Mein erster Sweep suchte `self.sampleRate\w* = `
+und fand in sechs von sieben FX-Stufen nichts — die Eigenschaft heißt dort `sr`. Als
+BEFUND behandelt, nicht als Freispruch, und pro Stufe neu gemessen.
+
+**AUFGESCHRIEBEN, NICHT REPARIERT (eigene Scheibe):** `EchoelFXChain.init` berechnet ein
+sauber geschütztes `self.sampleRateHz` — und reicht die **rohe** `sampleRate` an alle
+sieben Unterstufen weiter. Der Schutz gilt für das eigene Feld, nicht für die Kinder.
+
+Kopfzahlen der Wächter-Datei neu gemessen: 6 Tests / 9 Zusicherungen → **8 / 13**, „TWO
+findings, THREE boundaries" → „THREE findings, FOUR boundaries". Alle vier Rot-Prüfer
+exit 0. Commit `9584541a`.
+
+⚠️ **Gate steht aus:** Swift-Änderung → nur `Build for Testing` beweist sie.
