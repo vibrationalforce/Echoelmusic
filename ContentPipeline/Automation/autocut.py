@@ -70,6 +70,32 @@ PROXY_HEIGHT = 480
 PROXY_CRF = 32
 CONTACT_TILE = "4x4"
 
+# ── Echoel CI (Corporate Identity) ───────────────────────────────────────────────────
+# Founder 2026-09-09: "Echoelmusic CI soll auch mit eingebaut werden. Siehe Website und
+# Echoelmusic Repo." NEBEN JEDEM WERT STEHT SEINE QUELLE — diese Datei darf keine ZWEITE
+# Palette werden, die von der App wegdriftet. Nachmessen statt glauben:
+#   Sources/Echoelmusic/Studio/EchoelTheme.swift   (die App)
+#   docs/index.html  --bg/--text                   (die Website)
+#   docs/logo-horizontal.svg                       (nennt sich selbst "CI v7.1")
+BRAND_INK = "0xe0e0e0"     # EchoelTheme.text (0.878³) == Website --text #e0e0e0
+BRAND_GROUND = "black"     # EchoelTheme.bg == Website --bg #000
+BRAND_PLATE_ALPHA = 0.75   # massive Fläche, KEIN Glas — Uncodixfy verbietet Glasoptik
+BRAND_BORDER_ALPHA = 0.20  # 1 px, gedämpft — Website --border rgba(224,224,224,0.08..0.2)
+BRAND_PLATE_FRACTION = 0.13   # Plattenhöhe als Anteil der Videohöhe
+BRAND_MARK_FRACTION = 0.62    # Marke innerhalb der Platte
+BRAND_MARGIN_FRACTION = 0.045 # Abstand zum Rand
+BRAND_LOGO = "docs/favicon-512.png"
+
+# ⛔ KEIN GRÜN. `EchoelTheme.accent` (bio-green) trägt dort den Vermerk "signal only" — es
+#    bedeutet ein gemessenes Signal. Als Zierfarbe in einem Video bräche es die eigene CI,
+#    und zwar an der Stelle, an der die CI am sichtbarsten ist. Die Marke ist Tinte auf Grund.
+#
+# ⛔ KEIN TEXT. Die Wortmarke bräuchte den ffmpeg-Filter `drawtext`, und ob der da ist, lässt
+#    sich NICHT am Bau-Flag ablesen: die Binärdatei dieser Prüfung meldet
+#    `--enable-libfreetype` und hat trotzdem NULL drawtext in `-filters`. Ein Bau-Flag ist
+#    eine Absicht, die Filterliste ist die Tatsache. Die Bildmarke braucht keine Schrift und
+#    läuft deshalb überall.
+
 
 class Missing(RuntimeError):
     """Ein externes Werkzeug fehlt. Laut, nie still."""
@@ -344,6 +370,110 @@ def read_envelope(path: str, sample_rate: int = PROBE_RATE,
     return out
 
 
+def repo_root() -> str:
+    """Die Wurzel des Repos, von DIESER Datei aus — nicht vom Arbeitsverzeichnis.
+    Ein Doppelklick startet die `.command` im Automation-Ordner, ein Terminal irgendwo."""
+    return os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+
+
+def brand_logo_path() -> str:
+    path = os.path.join(repo_root(), BRAND_LOGO)
+    if not os.path.exists(path):
+        raise Missing(f"Die Marke fehlt: {BRAND_LOGO}\n"
+                      f"    erwartet unter {path}\n"
+                      f"    (autocut liest sie aus dem Repo — starte es aus dem Repo heraus.)")
+    return path
+
+
+def brand_filter(height: int, position: str) -> str:
+    """Marke auf massiver Platte, unten rechts (oder wohin `position` zeigt).
+
+    ⚠️ DIE PLATTE IST NICHT DEKORATION. Die Marke ist HELLE Tinte (#e0e0e0); auf hellem
+       Material verschwindet sie sonst. Gemessen an einem hellgrauen Testbild: ohne Platte
+       kaum sichtbar, mit Platte auf hell UND dunkel lesbar. Massive Füllung plus 1-px-Rand
+       ist genau das, was die Uncodixfy-Regeln VERLANGEN — Glasoptik, Verlauf und Schein
+       sind dort verboten.
+
+    ⚠️ WARUM DIE HELLIGKEIT ZUR DECKKRAFT WIRD. `docs/favicon-512.png` ist RGB OHNE
+       Alpha-Kanal (gemessen: PNG-Farbtyp 2, kein tRNS) — direkt überlagert klebte ein
+       schwarzes Quadrat im Bild. Die Marke ist aber helle Tinte auf schwarzem Grund, also
+       IST ihre Helligkeit ihre Deckkraft; `geq` baut daraus den fehlenden Alpha-Kanal.
+
+    ⚠️ `drawbox` kennt `W`/`H` NICHT (dort sind `w`/`h` die Box selbst) — es braucht `iw`/`ih`.
+       Mit `W` schlägt es fehl, und unter `-v error` sagt ffmpeg nur "Invalid argument",
+       ohne die Ursache zu nennen.
+    """
+    plate = max(32, int(height * BRAND_PLATE_FRACTION))
+    mark = max(16, int(plate * BRAND_MARK_FRACTION))
+    margin = max(8, int(height * BRAND_MARGIN_FRACTION))
+    inset = (plate - mark) // 2
+
+    if position not in ("br", "bl", "tr", "tl"):
+        raise Missing(f"Unbekannte Position '{position}' — erlaubt: br bl tr tl")
+    left = position.endswith("l")
+    top = position.startswith("t")
+    box_x = f"{margin}" if left else f"iw-{margin + plate}"
+    box_y = f"{margin}" if top else f"ih-{margin + plate}"
+    ov_x = f"{margin + inset}" if left else f"W-{margin + plate - inset}"
+    ov_y = f"{margin + inset}" if top else f"H-{margin + plate - inset}"
+
+    return (
+        f"[1:v]format=rgba,"
+        f"geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='max(r(X,Y),max(g(X,Y),b(X,Y)))',"
+        f"scale={mark}:{mark}[mark];"
+        f"[0:v]drawbox=x={box_x}:y={box_y}:w={plate}:h={plate}:"
+        f"color={BRAND_GROUND}@{BRAND_PLATE_ALPHA}:t=fill,"
+        f"drawbox=x={box_x}:y={box_y}:w={plate}:h={plate}:"
+        f"color={BRAND_INK}@{BRAND_BORDER_ALPHA}:t=1[plate];"
+        f"[plate][mark]overlay={ov_x}:{ov_y}"
+    )
+
+
+def video_height(path: str) -> int:
+    """Höhe aus ffmpeg selbst — wir haben absichtlich kein ffprobe (#1184)."""
+    require("ffmpeg")
+    with tempfile.TemporaryFile() as err_file:
+        subprocess.run(["ffmpeg", "-hide_banner", "-i", path], stdout=subprocess.DEVNULL,
+                       stderr=err_file)
+        err_file.seek(0)
+        text = err_file.read().decode("utf-8", "replace")
+    for line in text.splitlines():
+        if "Video:" in line:
+            for token in line.replace(",", " ").split():
+                if "x" in token and token.replace("x", "").isdigit():
+                    parts = token.split("x")
+                    if len(parts) == 2 and all(p.isdigit() for p in parts):
+                        return int(parts[1])
+    raise Missing(f"Keine Bildgröße in '{os.path.basename(path)}' gefunden — hat die Datei "
+                  f"überhaupt ein Bild?")
+
+
+def apply_brand(src: str, dst: str, position: str = "br") -> None:
+    """Marke einbrennen. IMMER in eine NEUE Datei — Einbrennen ist unumkehrbar."""
+    if os.path.abspath(src) == os.path.abspath(dst):
+        raise Missing("Die Marke würde das Original überschreiben. Einbrennen ist "
+                      "unumkehrbar — autocut schreibt grundsätzlich eine neue Datei.")
+    require("ffmpeg")
+    logo = brand_logo_path()
+    flt = brand_filter(video_height(src), position)
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src, "-i", logo,
+                    "-filter_complex", flt,
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                    "-c:a", "copy", dst], check=True)
+
+
+def cmd_brand(args) -> int:
+    src = args.input
+    stem = os.path.splitext(os.path.basename(src))[0]
+    outdir = args.outdir or os.path.dirname(os.path.abspath(src))
+    os.makedirs(outdir, exist_ok=True)
+    dst = os.path.join(outdir, f"{stem}_echoel.mp4")
+    apply_brand(src, dst, args.position)
+    print(f"  {os.path.basename(dst)}  {os.path.getsize(dst)/1e6:.1f} MB")
+    print("  Das Original ist unangetastet.")
+    return 0
+
+
 def cmd_proxy(args) -> int:
     """Kleine Datei + Kontaktbogen — gegen den genannten Engpass 'Videos hochladen'."""
     src = args.input
@@ -412,7 +542,15 @@ def cmd_highlights(args) -> int:
                             "-i", src, "-t", f"{h.duration_seconds:.3f}",
                             "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
                             "-c:a", "aac", out], check=True)
-            print(f"     → {os.path.basename(out)}")
+            if getattr(args, "brand", False):
+                # ⚠️ ZWEI Dateien, nicht eine überschriebene: der rohe Schnitt bleibt liegen.
+                #    Einbrennen ist unumkehrbar, und wer die Marke anders setzen will, soll
+                #    nicht neu schneiden müssen.
+                branded = os.path.join(outdir, f"{stem}_hl{i:02d}_echoel.mp4")
+                apply_brand(out, branded, args.position)
+                print(f"     → {os.path.basename(out)}  +  {os.path.basename(branded)}")
+            else:
+                print(f"     → {os.path.basename(out)}")
     else:
         print("  (nur gemessen — mit --write werden die Clips geschrieben)")
     return 0
@@ -509,6 +647,125 @@ def drive(workdir: str) -> int:
         # sonst hat `-ss` danebengegriffen und wir hätten Stille exportiert.
         check(f"geschnittener Clip {i} trägt den lauten Teil",
               loud > 3 * (sum(env) / len(env)), f"Mittel {loud:.4f}")
+
+    # ── Die Marke (CI) ───────────────────────────────────────────────────────────────
+    src = paths["a"]
+    before = (os.path.getsize(src), os.path.getmtime(src))
+    branded = os.path.join(out, "drive_branded.mp4")
+    apply_brand(src, branded, "br")
+    check("Marke schreibt eine NEUE Datei", os.path.exists(branded))
+    check("Marke lässt das Original unangetastet",
+          (os.path.getsize(src), os.path.getmtime(src)) == before)
+
+    # ⛔ ERST PRÜFTE DIESER BLOCK NUR "Ecke ändert sich, Mitte nicht", UND BEIDE MUTANTEN
+    #    KAMEN DURCH: eine auf VOLLBILD skalierte Marke sitzt wegen `overlay=W-…` fast ganz
+    #    ausserhalb des Bildes, und eine WEGGELASSENE Platte ändert die Ecke ja trotzdem.
+    #    Die Ansprüche prüften, DASS etwas passiert, nicht WO und nicht WOZU. Jetzt:
+    #    die drei anderen Ecken müssen unberührt bleiben (Ort), und auf HELLEM Material muss
+    #    die Ecke deutlich DUNKLER werden (Zweck der Platte — genau das, was die Marke auf
+    #    einer Bildschirmaufnahme überhaupt lesbar macht).
+    def quadrants(path: str) -> dict:
+        raw = subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", path, "-frames:v", "1",
+             "-vf", "scale=64:36", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+            capture_output=True, check=True).stdout
+        if len(raw) < 64 * 36:
+            raise Missing("Graubild zu kurz — ffmpeg hat kein Vollbild geliefert")
+        rows = [raw[y * 64:(y + 1) * 64] for y in range(36)]
+
+        def patch(x0, y0):
+            return sum(sum(r[x0:x0 + 12]) for r in rows[y0:y0 + 10])
+
+        return {"tl": patch(2, 2), "tr": patch(50, 2),
+                "bl": patch(2, 24), "br": patch(50, 24),
+                "mitte": patch(26, 13)}
+
+    before_q = quadrants(src)
+    after_q = quadrants(branded)
+    check("Marke verändert die gewählte Ecke (br)", before_q["br"] != after_q["br"],
+          f"{before_q['br']} → {after_q['br']}")
+    untouched = [k for k in ("tl", "tr", "bl", "mitte") if before_q[k] != after_q[k]]
+    check("Marke fasst NUR ihre Ecke an", not untouched,
+          f"mit-verändert: {untouched}" if untouched else "die anderen vier Felder bleiben gleich")
+
+    # Der Zweck der Platte, an HELLEM Material gemessen — dem Fall einer Bildschirmaufnahme.
+    light = os.path.join(workdir, "drive_light.mp4")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+                    "-i", "color=c=0xF2F2F2:s=854x480:d=1:r=25",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", light], check=True)
+    light_branded = os.path.join(out, "drive_light_echoel.mp4")
+    apply_brand(light, light_branded, "br")
+    # ⛔ ERST WURDE MIT DEM 64×36-RASTER OBEN GEMESSEN, UND DER ANSPRUCH WAR ZU RECHT ROT:
+    #    11 % statt der verlangten 25 %. Nicht die Platte war zu schwach, sondern das
+    #    MESSFELD zu gross — es war rund fünfmal so breit wie die Platte, also verdünnte der
+    #    unveränderte Rand den Effekt. Ein Messfeld, das nicht deckungsgleich mit der Sache
+    #    ist, misst den Durchschnitt aus Sache und Umgebung. Jetzt schneidet ffmpeg exakt das
+    #    Plattenrechteck heraus und mittelt es auf EINEN Wert — keine Rasterarithmetik.
+    def plate_luma(path: str) -> int:
+        h = video_height(path)
+        plate = max(32, int(h * BRAND_PLATE_FRACTION))
+        margin = max(8, int(h * BRAND_MARGIN_FRACTION))
+        raw = subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", path, "-frames:v", "1",
+             "-vf", f"crop={plate}:{plate}:iw-{margin + plate}:ih-{margin + plate},"
+                    f"scale=1:1", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+            capture_output=True, check=True).stdout
+        if not raw:
+            raise Missing("Kein Bildpunkt zurückgekommen — Zuschnitt ausserhalb des Bildes?")
+        return raw[0]
+
+    lb, la = plate_luma(light), plate_luma(light_branded)
+    check("die Platte dunkelt auf hellem Material wirklich ab", la < lb * 0.75,
+          f"Helligkeit {lb} → {la} (mindestens 25 % dunkler verlangt)")
+
+    # ⛔ UND HIER FEHLTE DER WICHTIGSTE ANSPRUCH ÜBERHAUPT, gefunden durch einen Mutanten,
+    #    der die Marke auf Vollbild skaliert: sie landet dann wegen `overlay=W-…` fast ganz
+    #    AUSSERHALB des Bildes, und übrig bleibt eine leere dunkle Platte OHNE LOGO. Alle
+    #    bisherigen Ansprüche blieben grün — sie prüften die Platte (dunkel), den Ort (Ecke)
+    #    und die Unversehrtheit des Originals, aber KEINER prüfte, ob die Marke selbst da ist.
+    #    Ein Wasserzeichen ohne Zeichen bestand jede Prüfung. Gemessen wird jetzt der KONTRAST
+    #    INNERHALB der Platte: helle Tinte auf dunklem Grund spreizt die Helligkeit, eine leere
+    #    Platte ist gleichförmig.
+    def plate_contrast(path: str) -> int:
+        # ⚠️ 15 % EINZUG, UND DAS IST DER GANZE ANSPRUCH. Ohne Einzug liegen der 1-px-Rand der
+        #    Platte und ihre weichgezeichnete Kante gegen den hellen Grund MIT im Messfeld, und
+        #    die erzeugen für sich schon Kontrast: gemessen bei 480p 84 mit Marke gegen 70 ohne
+        #    — 14 Punkte Abstand, aus denen keine Schwelle etwas machen kann. Mit Einzug sind es
+        #    111 gegen 3.
+        # ⛔ UND ICH HABE DAS ZUERST BEI 1080p GEPRÜFT UND ENTWARNUNG GEGEBEN: dort ist der Rand
+        #    1 px von 140 und stört kaum (10), bei den 480p dieses Tests ist er 1 von 62 und
+        #    dominiert. Eine Messung in einem anderen MASSSTAB als die geprüfte Sache ist eine
+        #    andere Messung — sie kann in beide Richtungen beruhigen.
+        h = video_height(path)
+        plate = max(32, int(h * BRAND_PLATE_FRACTION))
+        margin = max(8, int(h * BRAND_MARGIN_FRACTION))
+        inset = max(2, int(plate * 0.15))
+        side = plate - 2 * inset
+        raw = subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", path, "-frames:v", "1",
+             "-vf", f"crop={side}:{side}:iw-{margin + plate - inset}:ih-{margin + plate - inset},"
+                    f"scale=8:8", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+            capture_output=True, check=True).stdout
+        if len(raw) < 64:
+            raise Missing("Zu wenige Bildpunkte für den Kontrast der Platte")
+        return max(raw[:64]) - min(raw[:64])
+
+    contrast = plate_contrast(light_branded)
+    check("die MARKE selbst steht auf der Platte (nicht nur ein leerer Kasten)",
+          contrast > 40, f"Kontrast in der Platte: {contrast} (mehr als 40 verlangt)")
+
+    try:
+        apply_brand(src, src, "br")
+        check("Marke verweigert das Überschreiben des Originals", False, "hat NICHT verweigert")
+    except Missing:
+        check("Marke verweigert das Überschreiben des Originals", True)
+    except subprocess.CalledProcessError:
+        # ⚠️ Ohne unseren Schutz verweigert ffmpeg SELBST (Ein- und Ausgabe dieselbe Datei)
+        #    und wirft. Das ist ebenfalls "nicht überschrieben", aber als Absturz statt als
+        #    Befund — deshalb hier als FAIL gewertet: ein Werkzeug, das mit einem Stacktrace
+        #    endet, hat dem Nutzer nichts erklärt.
+        check("Marke verweigert das Überschreiben des Originals", False,
+              "ffmpeg brach ab, statt dass autocut es sauber ablehnt")
 
     print(f"\n--drive: {'alles grün' if fails == 0 else f'{fails} FEHLER'}")
     return 0 if fails == 0 else 1
@@ -644,12 +901,22 @@ def main(argv: list[str]) -> int:
     ss.add_argument("--max-offset", type=float, default=DEFAULT_MAX_OFFSET_S, dest="max_offset")
     ss.set_defaults(fn=cmd_sync)
 
+    sb = sub.add_parser("brand", help="Echoel-Marke einbrennen (neue Datei)")
+    sb.add_argument("input")
+    sb.add_argument("--position", default="br", choices=["br", "bl", "tr", "tl"],
+                    help="Ecke: br unten-rechts (Standard), bl, tr, tl")
+    sb.add_argument("--outdir")
+    sb.set_defaults(fn=cmd_brand)
+
     sh = sub.add_parser("highlights", help="die spannendsten Stellen finden")
     sh.add_argument("input")
     sh.add_argument("--count", type=int, default=5)
     sh.add_argument("--length", type=float, default=20.0, help="Clip-Länge in Sekunden")
     sh.add_argument("--gap", type=float, default=5.0, help="Mindestabstand zwischen Clips")
     sh.add_argument("--write", action="store_true", help="Clips wirklich schreiben")
+    sh.add_argument("--brand", action="store_true",
+                    help="Echoel-Marke in die geschriebenen Clips einbrennen")
+    sh.add_argument("--position", default="br", choices=["br", "bl", "tr", "tl"])
     sh.add_argument("--outdir")
     sh.set_defaults(fn=cmd_highlights)
 

@@ -29018,3 +29018,56 @@ Lautstärkeverlauf. Genau dafür misst `sync` sein Vertrauen und verweigert im Z
 
 ⚠️ Rost-Prüfer alle Exit 0; nach #1182 sagt `moved-needles` über diesen Commit strukturell
 nichts (er diffed nur `-- Sources`, das hier unberührt ist).
+
+## #1185 — die Echoel-CI in der Ausgabe; fünf Mutanten, und der fünfte fand einen fehlenden Anspruch (2026-09-09)
+
+**FOUNDER-ASK, wörtlich:** *"Echoelmusic CI soll auch mit eingebaut werden. Siehe Website und
+Echoelmusic Repo."* Gelesen als **Corporate Identity**, nicht als GitHub Actions — der Verweis
+geht auf die Website, und `docs/logo-horizontal.svg` nennt sich im eigenen Kommentar „CI v7.1".
+
+**Gemessen statt entworfen:** Tinte `#e0e0e0` (`EchoelTheme.text` == Website `--text`), Grund
+`#000` (== `--bg`), Rand 1 px bei 20 % (== `--border`), Marke `docs/favicon-512.png`. Jeder Wert
+steht im Quelltext NEBEN seiner Quelle, damit diese Datei keine zweite Palette wird.
+
+**Zwei bewusste Auslassungen, beide mit Grund:**
+· **Kein Grün.** `EchoelTheme.accent` trägt dort „signal only" — es bedeutet ein GEMESSENES
+  Signal. Als Zierfarbe in einem Video bräche es die CI an der sichtbarsten Stelle.
+· **Kein Text.** Die Wortmarke bräuchte `drawtext`. ⛔ **Und ob der da ist, steht NICHT im
+  Bau-Flag:** die geprüfte Binärdatei meldet `--enable-libfreetype` und hat **null** `drawtext`
+  in `-filters`. Ich hatte das Flag gelesen und „geht" geschlossen — **die direkte Messung stand
+  eine Ausgabe vorher da und enthielt es nicht.** Dieselbe Klasse wie #1184: eine SCHWÄCHERE
+  Messung einer bereits vorliegenden STÄRKEREN vorgezogen. **Ein Bau-Flag ist eine Absicht, die
+  Filterliste ist die Tatsache.**
+
+### Drei technische Funde, die eine spätere Sitzung sonst neu bezahlt
+1. **`docs/favicon-512.png` hat KEINEN Alpha-Kanal** (PNG-Farbtyp 2, kein `tRNS`) — direkt
+   überlagert klebt ein schwarzes Quadrat im Bild. Die Marke ist helle Tinte auf Schwarz, also
+   IST ihre Helligkeit ihre Deckkraft; `geq` baut daraus den fehlenden Alpha-Kanal.
+2. **`drawbox` kennt `W`/`H` nicht** — dort sind `w`/`h` die Box selbst, gebraucht wird
+   `iw`/`ih`. Unter `-v error` meldet ffmpeg nur „Invalid argument" ohne die Ursache.
+3. **Die Platte ist Pflicht, nicht Zierde.** Ohne sie ist die helle Marke auf heller
+   Bildschirmaufnahme unlesbar (gemessen: 242 → 238 statt 242 → 66).
+
+### Die Mutationsprobe fand mehr als der Bau — und ich habe dreimal das Falsche gezählt
+⛔ **Zählfehler 1: FAIL-Zeilen statt Exit-Code.** Ohne Überschreib-Schutz verweigert ffmpeg
+SELBST und der Lauf stürzt ab — Exit 1, aber null FAIL-Zeilen. Mein Maß las das als grün.
+⛔ **Zählfehler 2: Mutant außerhalb des Repos.** Die Kopie lag im Scratchpad, `repo_root()`
+kommt aus `__file__`, also fand sie das Logo nicht und brach VOR den Marken-Ansprüchen ab.
+⛔ **Zählfehler 3: bei der falschen Auflösung geprüft.** Ich maß den Rand-Einfluss bei 1080p
+(1 px von 140 → 10 Punkte, harmlos) und gab Entwarnung; der Test fährt 480p (1 px von 62 →
+dominiert, 70 Punkte). **Eine Messung in einem anderen MASSSTAB als die geprüfte Sache ist eine
+andere Messung** — und sie kann in beide Richtungen beruhigen.
+
+⭐ **Der eigentliche Fund: ein Anspruch, den es gar nicht gab.** Ein Mutant, der die Marke auf
+Vollbild skaliert, schiebt sie wegen `overlay=W-…` fast ganz aus dem Bild — übrig bleibt eine
+LEERE dunkle Platte ohne Logo. Alle bisherigen Ansprüche blieben grün: sie prüften, dass die
+Platte dunkel ist, dass sie in der richtigen Ecke sitzt, dass das Original unberührt bleibt —
+**keiner prüfte, ob die Marke selbst da ist. Ein Wasserzeichen ohne Zeichen bestand jede
+Prüfung.** Der neue Anspruch misst den Kontrast INNERHALB der Platte, mit 15 % Einzug (ohne
+Einzug trennen Rand und weiche Kante nur um 14 Punkte, mit Einzug um 108).
+
+**Stand: fünf Marken-Ansprüche in `--drive`, fünf Mutanten machen sie nachweislich rot**
+(Überschreib-Schutz weg · Platte weg · falsche Ecke · Marke auf Vollbild · Marke unsichtbar).
+
+**Offen bleibt** die `.command` selbst (kein macOS hier) — die Menüpunkte 4 und die
+Marken-Frage bei Highlights sind ungetestet wie der Rest der Datei.

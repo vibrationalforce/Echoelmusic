@@ -70,6 +70,15 @@ erscheinen lassen; sie kostete danach zehn Minuten.
   Geräte im Raum teilen nur den Lautstärkeverlauf: andere Mikrofone, andere Abstände, anderer
   Hall. Genau dafür misst `sync` sein Vertrauen und verweigert im Zweifel.
 
+## Scheibe CI — GEBAUT (#1185)
+
+Founder: *"Echoelmusic CI soll auch mit eingebaut werden."* Marke auf massiver Platte, Ecke
+wählbar, `brand` als eigener Befehl und `highlights --write --brand` als Kette. Fünf Ansprüche
+in `--drive`, und **fünf Mutanten machen sie nachweislich rot** — der letzte davon fand einen
+Anspruch, den es gar nicht gab: eine Marke mit Deckkraft 0 hinterlässt eine LEERE Platte, und
+alle bisherigen Prüfungen (dunkel? in der richtigen Ecke? Original unberührt?) blieben grün.
+**Ein Wasserzeichen ohne Zeichen bestand jede Prüfung.**
+
 ## Offene Scheiben
 
 - **2 — `sync` schreibt aus.** Heute misst er nur und druckt. Ausrichten kostet ein

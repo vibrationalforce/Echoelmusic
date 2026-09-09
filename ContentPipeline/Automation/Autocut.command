@@ -88,6 +88,7 @@ while true; do
   echo "  1) Proxy      — kleine Datei zum Hochladen (dein genanntes Problem)"
   echo "  2) Sync       — Versatz zweier Aufnahmen über den Ton messen"
   echo "  3) Highlights — die lautesten Stellen finden und schneiden"
+  echo "  4) Marke      — Echoel-Logo einbrennen (schreibt eine NEUE Datei)"
   echo "  q) Schluss"
   echo
   read -r -p "Auswahl: " choice
@@ -117,10 +118,22 @@ while true; do
         read -r -p "Wie lang je Clip in Sekunden? [20] " L; L="${L:-20}"
         read -r -p "Wirklich schneiden? (sonst nur Liste) [j/N] " W
         if [ "$W" = "j" ] || [ "$W" = "J" ]; then
-          "$PY" "$SCRIPT" highlights "$IN" --count "$N" --length "$L" --write
+          read -r -p "Echoel-Marke einbrennen? [j/N] " B
+          if [ "$B" = "j" ] || [ "$B" = "J" ]; then
+            "$PY" "$SCRIPT" highlights "$IN" --count "$N" --length "$L" --write --brand
+          else
+            "$PY" "$SCRIPT" highlights "$IN" --count "$N" --length "$L" --write
+          fi
         else
           "$PY" "$SCRIPT" highlights "$IN" --count "$N" --length "$L"
         fi
+      fi
+      ;;
+    4)
+      IN=$(ask_path "Video hierher ziehen, dann Enter: ")
+      if [ -n "$IN" ]; then
+        read -r -p "Ecke? br=unten-rechts bl tr tl [br] " P; P="${P:-br}"
+        "$PY" "$SCRIPT" brand "$IN" --position "$P"
       fi
       ;;
     q|Q) exit 0 ;;
