@@ -29300,3 +29300,34 @@ Zusicherungen extrahiert — dasselbe, was `dead-needles.py` mit der Datei tut, 
 **Mitgezogen:** `moved-needles.py` zeigt in seiner Scope-Warnung jetzt auf den Nachbarn — das ist
 die Stelle, an der eine Sitzung den blinden Fleck ohnehin liest. Alle fünf Prüfer Exit 0,
 `--selftest` 8 Ansprüche grün.
+
+## #1192 — der neue Prüfer hängt jetzt an einer Nadel (2026-09-09)
+
+**Warum.** #1191 lieferte `scripts/foreign-needles.py`, aber das Werkzeug selbst war an nichts
+verankert: löscht es jemand, oder fällt eine seiner zwei stillen Reparaturen weg, wird nichts
+rot. Genau die Lage, aus der `continue-on-error` vierzehn Stunden unsichtbar blieb.
+
+**Was.** `Tests/CISmoke/TheForeignNeedleCheckerGuardsTheOtherHalfTests.swift` (6 Ansprüche,
+8 Zusicherungen) pinnt: das Werkzeug existiert · es trägt seine Herkunft (#1190) und die
+Messung der Lücke (#1182) · der **Vakuum-Ausgang** (null Nadeln = Exit 2, nicht 0) · das
+**Kommentar-Schwärzen** des Wächter-Quelltexts vor der Extraktion · die **Polarität** ·
+und dass `moved-needles.py` UND `Tests/CISmoke/CLAUDE.md` eine Sitzung darauf zeigen.
+
+⭐ **Der Wächter liegt selbst in der Reichweite seines Werkzeugs** — er prüft eine `.py`-Datei,
+also kontrolliert `foreign-needles.py` seine eigene Verankerung. Reichweite dadurch 57 → 64
+Nadeln (31 Dateien, 43 Bindungen).
+
+**Mitgezogen:** `Tests/CISmoke/CLAUDE.md` nennt jetzt die VIERTE Verrottungsform (eine Nadel
+gegen eine Nicht-Swift-Datei) samt Befehl, direkt nach den drei bestehenden — dort liest eine
+Sitzung ohnehin, welche Prüfer es gibt. Und `foreign-needles.py` zitiert #1182 als Beleg dafür,
+warum ein ZWEITES Werkzeug richtig ist statt einer Verbreiterung des ersten.
+
+**BENOTUNG (§3), transkribiert gegen `git show HEAD:<pfad>` und den Arbeitsbaum, jede
+Zusicherung gefahren:** 0 REGRESSIONEN · **2 VORWÄRTS-Wächter** (die `#1182`-Nadel und die
+Verzeichnisgesetz-Nadel sind am Elternbaum rot, weil DIESER Commit beide Texte schreibt — als
+Regression gebucht wäre das der schmeichelnde Fehler) · **6 GEGENGEWICHTE**, auf beiden Bäumen
+grün, und sie sind der Zweck der Datei · 0 Anker-Abwesenheiten. Die Datei kompiliert gegen den
+Elternbaum (sie nennt kein neues Symbol), die Urteile sind also echte Urteile.
+
+Alle fünf Prüfer Exit 0. Erste Scheibe seit #1189, die `Tests/` anfasst — es feuert also wieder
+ein echtes Gate.

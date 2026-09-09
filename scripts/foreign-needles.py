@@ -2,7 +2,7 @@
 """Guards that read a NON-Swift repo file: is the needle still true there?
 
 WHY THIS EXISTS (#1191). `scripts/moved-needles.py` says so in its own output: it diffs
-`-- Sources` ONLY. `scripts/dead-needles.py` is narrower still — every one of its shapes is
+`-- Sources` ONLY (#1182). `scripts/dead-needles.py` is narrower still — every one of its shapes is
 gated on the guard file naming ONLY `Sources/` paths, deliberately, because that gate is what
 keeps its false-alarm rate at zero. So a guard that asserts a literal against `CLAUDE.md`,
 `project.yml`, `docs/*.html`, `ContentPipeline/CLAIMS.md`, `decisions.csv`, `fastlane/…` or

@@ -234,6 +234,30 @@ scan, so open the others first — and a quoted needle is matched in its escaped
 2026-08-28→09-06 window were invisible to it. Three sweeps (#1094–#1099, #1103: 56 guard
 readings) found seven reds, ALL in the window since 2026-09-05; the older window was clean.
 
+**The FOURTH shape is a needle against a file that is not Swift at all (#1191), and the three
+tools above are all blind to it by construction.** `dead-needles.py` gates every shape on the
+guard file naming ONLY `Sources/` paths — that gate is what keeps its false-alarm rate at zero,
+so widening it would cost more than it buys. `moved-needles.py` diffs `-- Sources` ONLY (#1182).
+Yet guards in this bundle assert literals against `CLAUDE.md`, `project.yml`, `docs/*.html`,
+`ContentPipeline/CLAIMS.md`, `decisions.csv`, `fastlane/metadata/`, `Resources/iOS/Info.plist`
+and this very file. #1190 proved the cost: a prose slimming reworded two sentences in
+`CLAUDE.md`, cut both needles of `TheVocalChainStopsAtTheAutotuneTests` claim 5, and all four
+checkers exited 0.
+
+```
+python3 scripts/foreign-needles.py           # 0 = every literal is on the side its assertion
+                                             # demands · 1 = a broken needle · 2 = it extracted
+                                             # NOTHING, which is a finding, not a pass
+python3 scripts/foreign-needles.py --selftest # after touching it
+```
+
+It carries POLARITY (`XCTAssertFalse` demands ABSENCE — the first hand sweep ignored that and
+reported two findings that were not real) and three stated blind spots: an undecodable escape,
+a file not on disk, and an ABSENCE claim read through a comment-stripping loader. **Run it after
+any edit to `CLAUDE.md`, the website, the store text or this file** — the guard that would go red
+is one nothing else watches, and the CI ceiling guard does not even run on a `CLAUDE.md`-only
+commit (#1176).
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:
