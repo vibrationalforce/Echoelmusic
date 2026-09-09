@@ -92,6 +92,12 @@ silently shows the wrong ones. The real repair is ordering the file, not widenin
   the known case was among them). Count with `-c` or no cap; capture the token after `=` and
   compare it rather than negating with a lookahead. **A parser that matches nothing is a
   finding, never a pass** — and neither of these announces itself.
+- **Two counts that agree are not a set comparison.** `grep -l '^import Accelerate' | wc -l` and
+  `grep -l 'canImport(Accelerate)' | wc -l` both returned 7 over `DSP/` on 2026-09-09, which reads
+  as "all seven are guarded". The intersection is SIX: one file imports bare, and a different file
+  carries the guard without a line-initial import. The equal totals were a coincidence of two
+  different sets. When the question is "is set A inside set B", print the DIFFERENCE per file; a
+  pair of totals cannot answer it, and it fails in the reassuring direction.
 
 ## 3. Reading CI
 

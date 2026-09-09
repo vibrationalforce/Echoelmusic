@@ -28483,3 +28483,39 @@ boundaries" → „FOUR findings, FIVE boundaries". Alle vier Rot-Prüfer exit 0
 Commit `411f103d`. Gate für #1171 (`9584541a`) vorher gelesen: `Build for Testing` = success.
 
 ⚠️ **Gate steht aus:** Swift-Änderung → nur `Build for Testing` beweist sie.
+
+## Null-Befund + Mess-Lehre: „zwei gleiche Zahlen sind kein Mengenvergleich" (2026-09-09, zwischen den Scheiben)
+
+**Geprüft, während das #1172-Gate lief** — eine Zahl in einer IMMER GELADENEN Datei, im
+Verzeichnis, in dem ich gerade gearbeitet habe. `.claude/rules/swift-audio.md` behauptet:
+„today 40 files, set exactly `{Foundation, Accelerate}` (7 take Accelerate)" und
+„`EchoelWSOLA.swift` imports Accelerate **unguarded** where the other 6 use `#if canImport`".
+
+**Beides stimmt.** 40 Dateien (git-tracked ebenfalls 40), Import-Menge exakt
+`{Foundation, Accelerate}`, 7 nehmen Accelerate, und genau `EchoelWSOLA.swift` tut es
+ungeschützt. **Keine Änderung nötig** — der Vermerk ist aktuell und hat schon einen
+Wächter (`TheDSPLayerStaysFoundationOnlyTests`). Der bloße Import ist dort kein Defekt,
+sondern eine dokumentierte Inkonsistenz; die Begründung der Regel ist Hygiene und
+Einbahn-Abhängigkeit, nicht Portabilität.
+
+⛔ **ABER MEINE ERSTE MESSUNG HÄTTE FAST DAS GEGENTEIL GESAGT.** Ich zählte:
+
+```
+grep -l '^import Accelerate'      Sources/Echoelmusic/DSP/*.swift | wc -l   -> 7
+grep -l 'canImport(Accelerate)'   Sources/Echoelmusic/DSP/*.swift | wc -l   -> 7
+```
+
+Sieben und sieben — das liest sich wie „alle sieben sind geschützt", also wie ein Beleg
+dafür, dass die Prosa VERALTET ist. **Die Schnittmenge ist SECHS.** Eine Datei importiert
+bloß, eine ANDERE trägt das Gatter ohne zeilen-initialen Import. Zwei verschiedene Mengen,
+zufällig gleich groß.
+
+⭐ **DIE LEHRE, und sie ist neu neben den zwei Formen, die §2 schon kennt:** die bekannten
+Fallen (`| head -N`, `(?!x)` hinter `\s*`) liefern WENIGER als die Wahrheit. Diese liefert
+die RICHTIGE ZAHL für die FALSCHE FRAGE. Wenn die Frage „liegt Menge A in Menge B" lautet,
+muss die DIFFERENZ pro Datei gedruckt werden; ein Zahlenpaar kann sie nicht beantworten —
+und es scheitert in der beruhigenden Richtung. Eingetragen in `.claude/rules/context.md` §2,
+dem bestehenden Zuhause der Mess-Gesetze (#416), nicht als neue Datei.
+
+**Doctor im selben Durchlauf:** dieselben ZWEI CRITICALs wie immer, beide in
+`.github/workflows/**` (founder-gated, berichten statt editieren). Nichts Neues.
