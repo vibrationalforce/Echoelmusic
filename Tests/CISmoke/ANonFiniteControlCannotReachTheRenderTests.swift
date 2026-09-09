@@ -27,7 +27,7 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 8 tests, 13 assertion statements (`grep -c`, measured; four run inside loops — 512,
+//   · 11 tests, 18 assertion statements (`grep -c`, measured; nine run inside loops — 512,
 //     2 000 executions). Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
@@ -37,8 +37,9 @@
 //     into the delay line — that is a different boundary with a real cost per frame, owned by
 //     the sanitize-at-the-boundary pattern in `applyBioReactive`, not by this slice.
 //
-// ⭐ GRADING (§3). THREE findings, FOUR boundaries — the third (#1170, the poly engine's own
-// sample rate) and the fourth (#1171, the shared delay line's constructor) were added later and
+// ⭐ GRADING (§3). FOUR findings, FIVE boundaries — the third (#1170, the poly engine's own
+// sample rate), the fourth (#1171, the shared delay line's constructor) and the fifth (#1172,
+// the FX chain handing the raw rate to fifteen stages) were added later and
 // their grading sits on their own tests. The two below are #588's,
 // verified by transcription against the parent
 // (the behavioural tests name no new symbol, so they COMPILE against the parent). On the parent,
@@ -254,6 +255,80 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
                 """)
             XCTAssertEqual(line.sampleRate, rate, "a valid rate must pass through unchanged")
         }
+    }
+
+    // MARK: - #1172 — the FX chain guarded its own field and nothing it built
+
+    /// FINDING FOUR-B. `EchoelFXChain.init` computed a sanitised `sampleRateHz` and then handed
+    /// the RAW `sampleRate` to all FIFTEEN stages. `EchoelReverb.init` — whose ONLY construction
+    /// site in the whole tree is that line — scales its Freeverb tuning by `sampleRate / 44100`
+    /// and converts with `Int(...)`, so a non-finite rate TRAPS there exactly as it used to trap
+    /// in the delay line (#1171). Building the chain is therefore the whole test: if the raw
+    /// value still reached the reverb, this crashes rather than fails.
+    ///
+    /// ⛔ AND `1e30` IS IN THE LIST ON PURPOSE. It is FINITE and POSITIVE, so it satisfies the
+    /// chain's original `sampleRate > 0 && sampleRate.isFinite` guard — and it still traps
+    /// (~2.5e28 frames on the first comb). A ceiling, not just a finiteness test, is what closes
+    /// this boundary; without `maxPlausibleRate` this case would still be a crash.
+    func testTheFXChainSurvivesEveryDegenerateConstructionRate() {
+        for rate in [Float.nan, .infinity, -.infinity, 0, -48_000, 1e30] {
+            let chain = EchoelFXChain(sampleRate: rate)
+            var buf = [Float](repeating: 0.25, count: 64)
+            chain.processBufferMono(&buf, frameCount: 64)
+            XCTAssertTrue(buf.allSatisfy { $0.isFinite }, """
+                EchoelFXChain(sampleRate: \(rate)) produced a non-finite sample. The chain must \
+                fall back to 48 kHz for any rate it cannot use — a degenerate rate may not reach \
+                a stage's coefficient maths.
+                """)
+        }
+    }
+
+    /// COUNTERWEIGHT (#926/#343). Two ways the test above could pass while the repair is wrong:
+    /// the chain could clamp EVERY rate to 48 kHz (losing 44.1/96 kHz support), or it could be
+    /// neutered into producing nothing. Both go red here — a real rate must pass through and
+    /// still make sound.
+    func testTheFXChainStillWorksAtEveryRealRate() {
+        for rate in [Float(44_100), 48_000, 96_000, 192_000] {
+            let chain = EchoelFXChain(sampleRate: rate)
+            var buf = (0..<128).map { Float(sin(Double($0) * 0.19)) * 0.5 }
+            chain.processBufferMono(&buf, frameCount: 128)
+            XCTAssertTrue(buf.allSatisfy { $0.isFinite }, "\(rate) Hz produced a non-finite sample")
+            XCTAssertTrue(buf.contains { $0 != 0 }, """
+                The chain went silent at \(rate) Hz. The #1172 sanitiser is only allowed to \
+                replace a rate that would trap; every rate a real device offers must still run.
+                """)
+        }
+    }
+
+    /// COUNTERWEIGHT (#762-safe, reads through `source(_:)`). Pins the SHAPE, so a later stage
+    /// added with the raw value goes red here even if it happens not to trap. The count is the
+    /// second half: a "repair" that deletes stages cannot satisfy the first half vacuously.
+    ///
+    /// ⛔ THE COUNT IS ALSO A RETRACTION. #1171 recorded this finding as "all seven sub-stages"
+    /// in its own commit body and session log. Measured with comments blanked: FIFTEEN
+    /// constructions of fourteen distinct types. The number was written from a partial read of
+    /// the initialiser, not from a count — the #1163 lesson one level up: a survey is a memory
+    /// of one look, and only the executable count is the measurement.
+    func testTheFXChainHandsTheSanitisedRateToEveryStage() throws {
+        let src = try source("Sources/Echoelmusic/DSP/EchoelFXChain.swift")
+        guard let start = src.range(of: "public init(sampleRate: Float = 48000) {"),
+              let end = src.range(of: "\n    }\n", range: start.upperBound..<src.endIndex) else {
+            throw BoundaryAnchorMissing(reason: """
+                EchoelFXChain's initialiser no longer matches its anchor. Re-anchor this scan; \
+                do not let it pass by finding nothing (#1163).
+                """)
+        }
+        let body = String(src[start.upperBound..<end.lowerBound])
+        XCTAssertEqual(body.components(separatedBy: "(sampleRate: rate)").count - 1, 15, """
+            EchoelFXChain.init no longer builds fifteen stages from the sanitised `rate`. If a \
+            stage was added, give it `rate`; if one was removed, correct this count and the \
+            "fifteen" in the initialiser's own comment.
+            """)
+        XCTAssertFalse(body.contains("(sampleRate: sampleRate)"), """
+            A stage is being built from the RAW `sampleRate` again. That is the #1172 defect: \
+            the chain's guard then protects only the field it stores, not what it constructs — \
+            and EchoelReverb.init traps on a rate it cannot scale.
+            """)
     }
 
     // MARK: - source access (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)

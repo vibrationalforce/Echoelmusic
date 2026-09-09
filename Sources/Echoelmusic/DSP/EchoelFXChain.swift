@@ -184,28 +184,52 @@ public final class EchoelFXChain: @unchecked Sendable {
 
     // MARK: - Init
 
+    /// The widest rate this chain accepts before falling back to 48 kHz.
+    ///
+    /// ⚠️ THE BOUND IS NOT DECORATION — a FINITE rate can trap. `EchoelReverb.init` scales its
+    /// Freeverb tuning by `sampleRate / 44100` and then converts with `Int(...)`, which traps
+    /// on overflow just as it does on nan/inf. Measured: at `1e30` the first comb asks for
+    /// ~2.5e28 frames and the initialiser TRAPS — and `1e30` passes an `isFinite && > 0` test,
+    /// so a guard without a ceiling would have let exactly that case through.
+    ///
+    /// 192 kHz is four times the highest rate any Apple audio device offers (iOS tops out at
+    /// 48 kHz), and it is chosen so nothing downstream silently shortens: 2 s at 192 kHz is
+    /// 384 000 frames, inside `EchoelDelayLine`'s own 1 048 576-frame cap (#1171).
+    private static let maxPlausibleRate: Float = 192_000
+
     public init(sampleRate: Float = 48000) {
-        self.sampleRateHz = sampleRate > 0 && sampleRate.isFinite ? sampleRate : 48000
-        self.filterL = EchoelSVFilter(sampleRate: sampleRate)
-        self.filterR = EchoelSVFilter(sampleRate: sampleRate)
-        self.tape = EchoelTape(sampleRate: sampleRate)
-        self.bitcrush = EchoelBitcrush(sampleRate: sampleRate)
-        self.harmonizer = EchoelHarmonizer(sampleRate: sampleRate)
-        self.granular = EchoelGranular(sampleRate: sampleRate)
-        self.chorus = EchoelChorus(sampleRate: sampleRate)
+        // ONE sanitised value for the whole chain. Before #1172 this line computed a guarded
+        // rate for `sampleRateHz` and then handed the RAW `sampleRate` to all fifteen stages —
+        // its own guard protected the field it stored and nothing it constructed.
+        // ⚠️ `isFinite` here is REDUNDANT and kept on purpose — measured, not assumed: deleting
+        // it leaves every degenerate case still covered, because `NaN > 0` is false and
+        // `inf <= 192000` is false. It stays because that is the exact argument-order reasoning
+        // CLAUDE.md records as having already shipped a permanent-silence bug; the explicit test
+        // makes the NaN case readable without it. A mutant that removes it does NOT go red, so
+        // do not read this term as load-bearing — the CEILING is (mutant B).
+        let rate = (sampleRate.isFinite && sampleRate > 0 && sampleRate <= Self.maxPlausibleRate)
+            ? sampleRate : 48000
+        self.sampleRateHz = rate
+        self.filterL = EchoelSVFilter(sampleRate: rate)
+        self.filterR = EchoelSVFilter(sampleRate: rate)
+        self.tape = EchoelTape(sampleRate: rate)
+        self.bitcrush = EchoelBitcrush(sampleRate: rate)
+        self.harmonizer = EchoelHarmonizer(sampleRate: rate)
+        self.granular = EchoelGranular(sampleRate: rate)
+        self.chorus = EchoelChorus(sampleRate: rate)
         // Gentle default: low wet mix + modest depth + slow rate → ensemble
         // warmth and width without an obvious "seasick" wobble.
         self.chorus.mix = 0.22
         self.chorus.depth = 0.35
         self.chorus.rate = 0.45
-        self.flanger = EchoelFlanger(sampleRate: sampleRate)
-        self.phaser = EchoelPhaser(sampleRate: sampleRate)
-        self.tremolo = EchoelTremolo(sampleRate: sampleRate)
-        self.delay = EchoelDelay(sampleRate: sampleRate)
-        self.reverb = EchoelReverb(sampleRate: sampleRate)
-        self.widener = EchoelStereoWidener(sampleRate: sampleRate)
-        self.compressor = EchoelCompressor(sampleRate: sampleRate)
-        self.limiter = EchoelLimiter(sampleRate: sampleRate)
+        self.flanger = EchoelFlanger(sampleRate: rate)
+        self.phaser = EchoelPhaser(sampleRate: rate)
+        self.tremolo = EchoelTremolo(sampleRate: rate)
+        self.delay = EchoelDelay(sampleRate: rate)
+        self.reverb = EchoelReverb(sampleRate: rate)
+        self.widener = EchoelStereoWidener(sampleRate: rate)
+        self.compressor = EchoelCompressor(sampleRate: rate)
+        self.limiter = EchoelLimiter(sampleRate: rate)
     }
 
     /// Configure both channels of the tone filter together (control plane).

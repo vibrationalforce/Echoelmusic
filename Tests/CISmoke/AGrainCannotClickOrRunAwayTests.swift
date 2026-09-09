@@ -211,7 +211,13 @@ final class AGrainCannotClickOrRunAwayTests: XCTestCase {
             ("declaration",   "public let granular: EchoelGranular"),
             ("bypass flag",   "public var granularEnabled: Bool = false"),
             ("crackle reset", "if newValue && !granularEnabled { granular.reset() }"),
-            ("construction",  "self.granular = EchoelGranular(sampleRate: sampleRate)"),
+            // ⛔ #1172 BROKE THIS NEEDLE FOR THE EXACT REASON THE COMMENT ABOVE NAMES. It read
+            // `EchoelGranular(sampleRate: sampleRate)`; the chain now hands every stage a
+            // sanitised local `rate`, so the needle named a spelling a harmless refactor
+            // changed. The question this line asks is "is the stage CONSTRUCTED", so it now
+            // stops at the label. Whether the argument is the sanitised one is a different
+            // question with its own home (#416) — ANonFiniteControlCannotReachTheRenderTests.
+            ("construction",  "self.granular = EchoelGranular(sampleRate:"),
             ("render path",   "if granularEnabled { (l, r) = granular.processStereo(l, r) }"),
             ("sleep drain",   "if granularEnabled { granular.reset() }"),
         ]
