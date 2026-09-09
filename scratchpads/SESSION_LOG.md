@@ -28413,3 +28413,73 @@ findings, THREE boundaries" → „THREE findings, FOUR boundaries". Alle vier R
 exit 0. Commit `9584541a`.
 
 ⚠️ **Gate steht aus:** Swift-Änderung → nur `Build for Testing` beweist sie.
+
+## #1172 — die FX-Kette schützte die Rate, die sie SPEICHERT, und keine der fünfzehn, die sie WEITERGIBT (2026-09-09)
+
+**Der Befund stand seit #1171 aufgeschrieben und war absichtlich liegengelassen.**
+`EchoelFXChain.init` rechnete ein sauber geprüftes `sampleRateHz` aus — und übergab
+danach die **rohe** `sampleRate` an jede Stufe, die sie baut. Der eigene Schutz galt
+einem Feld und nichts von dem, was daraus entsteht.
+
+⛔ **#1171 schrieb „alle sieben Unterstufen" — in Commit-Text UND Log. Gemessen sind es
+FÜNFZEHN Konstruktionen von vierzehn Typen.** Die Sieben stammte aus einem TEILWEISEN
+Lesen des Initialisierers, nicht aus einer Zählung. Dieselbe Lehre wie #1163 eine Ebene
+höher: **eine Übersicht ist die Erinnerung an EINEN Blick; nur die ausführbare Zählung
+ist die Messung.** Anspruch 3 des Wächters IST jetzt diese Zählung.
+
+**Die Falle ist der HALL.** `EchoelReverb.init` skaliert Freeverbs Abstimmung mit
+`sampleRate / 44100` und wandelt mit `Int(...)` — und `Swift.max(1, …)` läuft NACH der
+Wandlung, genau die Form, die #1171 in der Delay-Line geschlossen hat. Seine **einzige**
+Konstruktionsstelle im ganzen Baum ist die Zeile, die dieser Commit ändert; die Kette zu
+schützen schließt ihn also vollständig.
+
+⭐ **Und eine ENDLICHE Rate stürzt auch ab** — deshalb ist es eine DECKE und nicht nur
+ein Endlichkeits-Test. Gegen die echten Abstimmungstabellen transkribiert:
+
+| Eingabe | Folge im Elternzustand |
+|---|---|
+| `nan` / `±inf` | `Int(nan)` / `Int(inf)` → **TRAP** |
+| `1e30` | ~2,5e28 Frames → **TRAP** — und besteht `isFinite && > 0` |
+| `0` / `-48000` | 24-Frame-Tank, entartet, aber kein Absturz |
+
+Die alte Schreibweise hätte `1e30` durchgelassen. `maxPlausibleRate = 192_000` ist das
+Vierfache der höchsten Rate, die ein Apple-Gerät anbietet, und ist so gewählt, dass
+nichts stromabwärts still kürzt: 2 s bei 192 kHz sind 384 000 Frames, innerhalb der
+1 048 576-Decke der Delay-Line (#1171).
+
+**Bit-identisch für jede echte Rate** — der Hall-Tank kommt bei 44,1 / 48 / 88,2 / 96 /
+192 kHz auf exakt die Größe des Elternzustands (25450 / 27688 / 50900 / 55390 / 110790
+Frames), weil der Ternär `sampleRate` unangetastet zurückgibt, wenn sie brauchbar ist.
+
+**Wächter:** DREI Tests in `ANonFiniteControlCannotReachTheRenderTests` (#588, das
+Zuhause dieses Gesetzes für vier weitere Grenzen — eine neue Datei wäre #416).
+
+⛔ **ZWEI DINGE FANDEN DIE MUTANTEN, DIE LESEN NICHT GEFUNDEN HÄTTE.**
+1. **Mutant E kam zuerst am FALSCHEN Test rot heraus.** Meine Transkription hatte nur
+   die BEDINGUNG des Ternärs erfasst, nicht seinen Ja-Zweig — `? 48000 : 48000` wurde
+   dadurch als „gar kein Schutz" modelliert. **#941 zum fünften Mal:** eine Prüfung, die
+   die echte Entscheidung nicht modelliert, nagelt das Falsche fest. Neu getrieben mit
+   beiden Zweigen.
+2. **Mutant C (`isFinite` löschen) bleibt GRÜN** — und das ist ein echter Befund über
+   meinen EIGENEN Schutz, kein Loch im Test. Mit der Decke sind `NaN > 0` und
+   `inf <= 192000` beide falsch, der Term ist also redundant. Er BLEIBT (die
+   Argumentreihenfolge-Begründung hat hier schon einmal einen Stille-Bug ausgeliefert),
+   aber der Quelltext sagt jetzt **redundant-per-Messung** statt es als tragend zu
+   suggerieren.
+
+**Ein ZWEITER Wächter brach — aus genau dem Grund, den sein eigener Kommentar nennt.**
+`moved-needles` fing `AGrainCannotClickOrRunAwayTests`, das
+`EchoelGranular(sampleRate: sampleRate)` festnagelte: eine Nadel, die eine SCHREIBWEISE
+nennt, die ein harmloser Umbau ändert — die #646-Gefahr, die der Kommentar daneben
+ausführlich beschreibt. Neu verankert am Label, weil die Frage dieser Zeile „wird die
+Stufe KONSTRUIERT" lautet.
+
+**Latent, nicht live:** von fünf Konstruktionsstellen der Kette übergeben drei ein
+Literal oder ein `static let` 48 kHz, zwei nutzen den Default, und `MonitorInsertAU`
+prüft `isFinite && > 0` stromaufwärts.
+
+Kopfzahlen neu gemessen: 8 Tests / 13 Zusicherungen → **11 / 18**, „THREE findings, FOUR
+boundaries" → „FOUR findings, FIVE boundaries". Alle vier Rot-Prüfer exit 0.
+Commit `411f103d`. Gate für #1171 (`9584541a`) vorher gelesen: `Build for Testing` = success.
+
+⚠️ **Gate steht aus:** Swift-Änderung → nur `Build for Testing` beweist sie.
