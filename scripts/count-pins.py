@@ -189,10 +189,16 @@ APPEND = re.compile(r'appendingPathComponent\(\s*\n?\s*"([^"]+\.swift)"\s*\)')
 # #905: `(?:\w+:\s*)?` — a LABELLED argument (`try code(at: Self.view)`) is still a binding
 # to a path. Without it ten of the twenty-five unresolved pins were reported as "not bound
 # to a path" while being bound to one, one regex group away.
+# #1168 — the helper NAME is now a capture group (was a bare `\w+`), so the bind can ask
+# `string_helpers` which text this particular loader returns instead of falling through to the
+# file-wide guess, which cannot say "raw".
 BIND_LITERAL = re.compile(
-    r'let\s+(\w+)\s*=\s*(?:try\s+)?\w+\(\s*(?:\w+:\s*)?"([^"]+\.swift)"\s*\)')
+    r'let\s+(\w+)\s*=\s*(?:try\s+)?(\w+)\(\s*(?:\w+:\s*)?"([^"]+\.swift)"\s*\)')
 BIND_CONST = re.compile(
-    r'let\s+(\w+)\s*=\s*(?:try\s+)?\w+\(\s*(?:\w+:\s*)?Self\.(\w+)\s*\)')
+    r'let\s+(\w+)\s*=\s*(?:try\s+)?(\w+)\(\s*(?:\w+:\s*)?Self\.(\w+)\s*\)')
+STRING_HELPER_DEF = re.compile(
+    r'(?:private\s+|internal\s+|public\s+)?func\s+(\w+)\s*\([^)]*\)'
+    r'(?:\s*throws)?\s*->\s*String\s*\{')
 FUNC = re.compile(r'^\s*(?:private\s+|internal\s+|public\s+)?func\s', re.M)
 CONST = re.compile(r'static let (\w+)\s*=\s*"([^"]+\.swift)"')
 
@@ -231,8 +237,74 @@ def resolve_path(raw):
     return os.path.join("Sources/Echoelmusic", raw.lstrip("/"))
 
 
+# ⭐ #1168 — THE THIRD STATE THIS TOOL'S OWN #977 NOTE PREDICTED AND COULD NOT EXPRESS.
+# Its words, above: "There is a THIRD state the heuristic cannot express: … reads RAW,
+# unstripped text. If one of its pins ever resolves, this tool would strip where the guard
+# does not, and a needle inside a comment would give a false RED."
+#
+# IT RESOLVED. `TheHarmonicMappingHasNoDoorTests:148` pins
+# `NO REACHABLE WRITER (#1153` at 2 through `raw(_ relativePath:)`, which returns the file
+# verbatim. `grep -c` on `PolySynthVoice.swift` says 2 — both `///` doc comments (lines 118
+# and 143). BOTH of this tool's bodies delete them (`codeOnly` blanks them; the line filter
+# drops any line starting `//`), so it measured 0 and called a correct guard RED, exit 1 on a
+# clean tree. Same family as #1167 one tool over: the loader was resolved and then ASSUMED to
+# strip.
+#
+# ⚠️ AND #1050 IS THE COUNTERWEIGHT THAT HAD TO BE CHECKED FIRST, not waved past — it says
+# in this file that a raw-reading guard is "the first thing to check ABOUT the guard", because
+# there a raw count was 9 real call sites plus 5 mentions in comments and drifted on prose
+# edits. It does not apply here, and the difference is the needle, not the reader: `.sheet(`
+# has a CODE form and a PROSE form to conflate; `NO REACHABLE WRITER (#1153` only ever exists
+# as a doc note. Pinning its two occurrences IS the claim — the guard's own header says a
+# retraction must quote what it strikes, so it scans POSITIVELY on purpose.
+def stripper_of(body):
+    """Which text a loader returns: "codeOnly", "lines" (drops `//` lines), or "raw".
+
+    Order matters: a helper can mention both. `SourceText.codeOnly` wins because it is the
+    actual transform; `hasPrefix("//` is the repo's line-filter idiom (96 sites today, all of
+    that spelling). A helper that does neither returns the file verbatim — the third state.
+    """
+    # ⛔ #762 IN MY OWN FIRST DRAFT, MEASURED BEFORE SHIPPING: read verbatim, a helper whose
+    # DOC COMMENT mentions `SourceText.codeOnly` classifies as stripping while its code is raw.
+    # Two live cases (`TheAlwaysOnBioPathIsNamedTests.closure`,
+    # `TheFilmicCurveDoesNotBendTheHueTests.shader`) — neither produces a wrong verdict today,
+    # both are the exact false-RED shape this change exists to end. So the body is blanked
+    # first. ⚠️ String literals SURVIVE `code_only`, so a helper carrying the spelling inside a
+    # needle would still fool this; none does today, and that is a limit, not a fix.
+    code = _wm.code_only(body)
+    if "SourceText.codeOnly" in code:
+        return "codeOnly"
+    if 'hasPrefix("//' in code:
+        return "lines"
+    return "raw"
+
+
+def string_helpers(text):
+    """Loaders that take a path and return `String` → their stripper (#1168).
+
+    The `-> [String]` twin below answers the same question for zero-argument helpers. This one
+    exists because the shape that produced the false RED — `let src = try raw(Self.voice)` —
+    binds through a helper with an ARGUMENT, which `line_helpers` never sees, so the flag fell
+    through to the file-wide guess (LIMIT 3) and that guess has no way to say "raw".
+
+    An unparsable signature is simply absent from the map — unresolved, never guessed, exactly
+    as `line_helpers` treats a helper with no single path literal.
+    """
+    out = {}
+    for m in STRING_HELPER_DEF.finditer(text):
+        depth, i, start = 1, m.end(), m.end()
+        while i < len(text) and depth:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        out[m.group(1)] = stripper_of(text[start:i])
+    return out
+
+
 def line_helpers(text):
-    """#977: zero-argument `-> [String]` helpers → (source path, does it use codeOnly).
+    """#977: zero-argument `-> [String]` helpers → (source path, its stripper).
 
     Brace-matched from the opening `{`, not regex-delimited: these bodies contain `{ }`
     (a `guard … else { throw XCTSkip }`), so a lazy `.*?\\}` would stop at the first one
@@ -251,12 +323,12 @@ def line_helpers(text):
         body = text[start:i]
         paths = APPEND.findall(body)
         if len(paths) == 1:
-            out[m.group(1)] = (paths[0], "SourceText.codeOnly" in body)
+            out[m.group(1)] = (paths[0], stripper_of(body))
     return out
 
 
 def pins(root):
-    """Yield (test, line, needle, pinned, source_path, blank_stripper, why, mode).
+    """Yield (test, line, needle, pinned, source_path, stripper, why, mode).
 
     `mode` is "occurrences" for shapes A/B and "lines" for shape C — see the SHAPE_C
     comment: counting a line-filter pin by occurrences is a false RED, not a near miss.
@@ -266,16 +338,21 @@ def pins(root):
         consts = dict(CONST.findall(text))
         helpers = line_helpers(text)
         binds = {}
+        strings = string_helpers(text)
         for m in BIND_LITERAL.finditer(text):
-            binds.setdefault(m.group(1), []).append((m.start(), m.group(2), None))
+            binds.setdefault(m.group(1), []).append(
+                (m.start(), m.group(3), strings.get(m.group(2))))
         for m in BIND_CONST.finditer(text):
-            if m.group(2) in consts:
-                binds.setdefault(m.group(1), []).append((m.start(), consts[m.group(2)], None))
+            if m.group(3) in consts:
+                binds.setdefault(m.group(1), []).append(
+                    (m.start(), consts[m.group(3)], strings.get(m.group(2))))
         for m in BIND_HELPER.finditer(text):
             hit = helpers.get(m.group(2))
             if hit is not None:
                 binds.setdefault(m.group(1), []).append((m.start(), hit[0], hit[1]))
-        blanks = "SourceText.codeOnly" in text
+        # LIMIT 3, unchanged in MEANING: the file-wide guess still only ever says codeOnly
+        # or lines. It cannot say "raw" — only a resolved helper can (#1168).
+        blanks = "codeOnly" if "SourceText.codeOnly" in text else "lines"
         for rx, shape in ((SHAPE_A, "A"), (SHAPE_B, "B"), (SHAPE_C, "C")):
             for m in rx.finditer(text):
                 if shape == "A":
@@ -323,7 +400,9 @@ def run(root, show_all):
             except OSError:
                 cache[full] = None
             else:
-                cache[full] = (_wm.code_only(raw), drop_comment_lines(raw))
+                cache[full] = {"codeOnly": _wm.code_only(raw),
+                               "lines": drop_comment_lines(raw),
+                               "raw": raw}
         pair = cache[full]
         if pair is None:
             unresolved.append((test, line, needle, f"cannot read {path}"))
@@ -332,7 +411,7 @@ def run(root, show_all):
         if resolved_needle is None:
             unresolved.append((test, line, needle, "escape this tool does not model"))
             continue
-        body = pair[0 if blanks else 1]
+        body = pair[blanks]
         # #977: the guard's OWN arithmetic, not a uniform one. Shape C filters an
         # array of lines, so two hits on one line are ONE there and TWO here.
         if mode == "lines":
@@ -465,7 +544,22 @@ def selftest():
     # depending on where the path sits, either miss it or miss the stripper below it.
     check("helper resolves its path past an inner brace block",
           h.get("engineLines", (None, None))[0] == "Sources/Echoelmusic/Audio/X.swift")
-    check("helper reports its OWN stripper", h.get("engineLines", (None, None))[1] is True)
+    # #1168 — the flag is a tri-state now ("codeOnly" / "lines" / "raw"), not a bool. The
+    # bool could not name the state a guard that reads the file VERBATIM is in, which is
+    # exactly the state that produced a false RED on a correct tree.
+    check("helper reports its OWN stripper",
+          h.get("engineLines", (None, None))[1] == "codeOnly")
+    check("a loader that neither blanks nor filters is RAW",
+          stripper_of("return try String(contentsOf: path, encoding: .utf8)") == "raw")
+    # #762 — the blanking, driven. Measured live twice before shipping (two helper bodies
+    # whose DOC COMMENT names the stripper while their code is raw), so this is a fixed bug,
+    # not a hypothetical.
+    check("a stripper named only in a COMMENT does not classify the body",
+          stripper_of("        // returns SourceText.codeOnly text\n"
+                      "        return try String(contentsOf: p)\n") == "raw")
+    check("codeOnly wins when a body mentions both",
+          stripper_of('SourceText.codeOnly(t)  // not .filter { $0.hasPrefix("//") }')
+          == "codeOnly")
     check("a helper with no path literal is absent, not guessed",
           line_helpers('    private func x() throws -> [String] {\n        return []\n    }\n')
           == {})
@@ -524,11 +618,39 @@ def selftest():
         got = [r for r in pins(tmp) if r[6] is None]
         check("the file heuristic and the helper disagree in this fixture",
               "SourceText.codeOnly" in open(os.path.join(tmp, "Tests/CISmoke/T.swift")).read()
-              and bool(got) and got[0][5] is False)
+              and bool(got) and got[0][5] == "lines")
         with contextlib.redirect_stdout(io.StringIO()):
             rc = run(tmp, False)
         # 2 lines hold `keep()` unstripped; `codeOnly` would blank the trailing one → 1.
         check("the HELPER's stripper wins over the file-wide guess", rc == 0)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        # #1168 END-TO-END — the composition, not the classifier. Driven as a MUTANT against
+        # the real bundle too: before this change `TheHarmonicMappingHasNoDoorTests:148` was
+        # the tool's only RED and the guard was correct; after it, 0 RED and the same 168 pins
+        # are still checked, so the third state bought reach at no cost.
+        os.makedirs(os.path.join(tmp, "Tests/CISmoke"))
+        os.makedirs(os.path.join(tmp, "Sources/Echoelmusic/Audio"))
+        with open(os.path.join(tmp, "Sources/Echoelmusic/Audio/Z.swift"), "w") as f:
+            # The needle exists ONLY in a doc comment — the shape of a "this flag has no
+            # writer" note, which is what the live guard pins and what both strippers erase.
+            f.write("/// NOTE MARKER (#1)\nfunc f() {}\n")
+        with open(os.path.join(tmp, "Tests/CISmoke/T.swift"), "w") as f:
+            f.write('    private func raw(_ rel: String) throws -> String {\n'
+                    '        return try String(contentsOf: root().appendingPathComponent(rel))\n'
+                    '    }\n'
+                    'func testRaw() {\n'
+                    '    let src = try raw("Sources/Echoelmusic/Audio/Z.swift")\n'
+                    '    XCTAssertEqual(src.components(separatedBy: "NOTE MARKER (#1").count '
+                    '- 1, 1, "")\n'
+                    '}\n')
+        got = [r for r in pins(tmp) if r[6] is None]
+        check("a path-argument loader that does not strip resolves to RAW",
+              bool(got) and got[0][5] == "raw")
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = run(tmp, False)
+        # Either stripper erases the doc line -> actual 0 -> RED. Green only via the raw text.
+        check("a needle living only in a comment is GREEN through a raw loader", rc == 0)
 
     print(f"selftest: {'OK' if not failures else 'FAILED'}, {len(failures)} failure(s) "
           f"of {len(total)} checks")
