@@ -29190,3 +29190,28 @@ gut aus. Nötig war, das ERGEBNIS ANZUSEHEN. **Eine Kennzahl über ein Bild ist 
 
 Wächter: zwei `--drive`-Ansprüche (quer und hoch), ein Mutant, der wieder nach Höhe skaliert,
 wird nachweislich rot.
+
+## #1189 — die Sackgassen des Tages ins Harness-Ledger (2026-09-09)
+
+CLAUDE.md verlangt es ausdrücklich („append ONE row for any real dead-end hit or reliable
+playbook found, so the loop climbs instead of circling") — und ich hatte es sechs Scheiben
+lang versäumt. Nachgetragen: **drei DEAD-ENDS, zwei PLAYBOOKS**, jeder mit dem Befehl, der
+ihn wieder herleitet.
+
+**DEAD-ENDS:** Google Drive aus diesem Container holen (Egress-Richtlinie lehnt beide Hosts
+beim CONNECT ab; der Connector listet zwar, sein Download ist Base64 und bei 436 MB
+unbrauchbar) · ein ffmpeg-**Bau-Flag** lesen, um über die Existenz eines Filters zu
+entscheiden (`--enable-libfreetype` gemeldet, **null** `drawtext` in `-filters`) · aus „nicht
+auf dem PATH" auf „nicht verfügbar" schliessen (das Wheel `imageio-ffmpeg` liefert eine echte
+Binärdatei, und der eigene `watch-clip`-Skill sagt das seit dem 2026-08-12 in seiner ERSTEN
+Zeile).
+
+**PLAYBOOKS:** ein Medien-Werkzeug erst an ECHTEM Material fahren UND dann HINSEHEN (zwei
+Schritte, keiner davon ein Test — die Zoom- und die Proxy-Lehre in einer Zeile) · eine
+Overlay-Prüfung muss die ANWESENHEIT des Zeichens messen, nicht nur eine Veränderung, und
+Mutanten werden nach EXIT-CODE beurteilt, nicht nach der Zahl der FAIL-Zeilen.
+
+⚠️ **Der LEADERBOARD-Abschnitt ist leer und wird nicht gepflegt** — dort absichtlich nichts
+eingetragen, statt eine tote Liste wiederzubeleben, die niemand liest.
+
+Tabellenform nach dem Einfügen geprüft: DEAD-ENDS 34 Zeilen, PLAYBOOKS 20, null kaputte.
