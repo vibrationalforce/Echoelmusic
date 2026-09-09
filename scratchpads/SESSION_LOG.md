@@ -28975,3 +28975,46 @@ Häkchen ist über diese Arbeit strukturell aussagelos, nicht beruhigend.
 **Offen:** `sync` schreibt noch nicht aus (Scheibe 2, erst nach seinem ersten echten Lauf) ·
 "spannend" ist heute ENERGIE und sagt das auch (Scheibe 3 braucht seine Antwort, was er meint)
 · Resolve-Übergabe erst, wenn bekannt ist: Free oder Studio.
+
+## #1184 — die ffmpeg-Hälfte WAR prüfbar; „nicht auf dem PATH" ≠ „nicht verfügbar" (2026-09-09)
+
+**Der Befund über den Befund.** #1183 schrieb in VIER Dateien "die ffmpeg-Hülle ist
+ungetestet, dieser Container hat kein ffmpeg". Die MESSUNG stimmte (`command -v ffmpeg` →
+nichts), die SCHLUSSFOLGERUNG nicht: das Wheel `imageio-ffmpeg` liefert eine echte Binärdatei,
+und **der eigene `watch-clip`-Skill sagt das seit 2026-08-12 in seiner ersten Zeile** — er war
+die ganze Zeit im Kontext dieser Sitzung. Aufgefallen ist es nur, weil ich denselben Skill
+wegen eines ANDEREN, längst reparierten Befunds öffnete.
+
+⭐ **GESETZ: "nicht auf dem PATH" ist nicht "nicht verfügbar".** Der Unterschied hat eine ganze
+Prüfung als unmöglich erscheinen lassen; sie kostete danach zehn Minuten. Verwandt mit der
+`\s*`-Lehre in `.claude/rules/context.md` §2, aber eine Stufe früher: dort liefert eine
+Messung still zu WENIG, hier beantwortet eine korrekte Messung eine ANDERE Frage als die
+gestellte. Beide scheitern in der beruhigenden Richtung.
+
+⚠️ **Und die Notiz, mit der ich in diesen Zyklus ging, war selbst überholt:** ich führte
+"watch-clip behauptet, ffmpeg sei vorinstalliert" als offenen Befund. Die Datei ist längst
+repariert und führt mit genau der Gegenwarnung. Ein aus der Zusammenfassung übernommener
+Befund gehört am Objekt nachgemessen, bevor er Arbeit auslöst.
+
+**Geliefert:**
+· **`--drive ORDNER`** — baut zwei echte Videos mit BEKANNTEM Versatz (2,0 s) und fährt sync,
+  highlights und den Schnitt durch. Grün: Versatz auf 0 ms getroffen (Vertrauen 1,60×), die
+  drei lautesten Stellen gefunden, die geschnittenen Clips tragen wirklich den lauten Teil
+  (Mittel 0,32/0,54 gegen 0,05 im Ganzen). Ohne ffmpeg sagt es höflich ab (Exit 3), statt zu
+  krachen. **Ein von Hand gefahrener Beweis altert zu einer Behauptung; dieser ist ein Befehl** —
+  und für den Founder der billige Weg, sein eigenes ffmpeg zu prüfen, BEVOR er Material anfasst.
+· **`probe()` gelöscht** — null Aufrufer (`grep -n "probe(" autocut.py` → nur die eigene
+  Signatur), Dead-Code-Verbot `engineering.md` §2. Der Gewinn ist nicht kosmetisch: es war der
+  EINZIGE ffprobe-Nutzer. **autocut braucht jetzt nur noch ffmpeg**, die `.command` prüft eine
+  Sache weniger, und niemand wird grundlos zum Installieren geschickt.
+· Vier Prosa-Heimaten mitgezogen (#456): Kopf von `autocut.py`, `Autocut.command`,
+  `Automation/README.md`, `PLAN_AUTOCUT_2026-09-09.md`. Dazu die Begründung an
+  `envelope_from_stream`, die "dieser Container hat kein ffmpeg" als Existenzgrund führte —
+  der echte Grund ist ZWEI Prüfebenen: der Selbsttest kommt ohne ffmpeg aus, `--drive` nicht.
+
+**Ehrlich offen bleibt:** die `.command` selbst (kein macOS hier) und ob ECHTES Kameramaterial
+syncet — die Testvideos teilen denselben ERZEUGTEN Ton, zwei Geräte im Raum teilen nur den
+Lautstärkeverlauf. Genau dafür misst `sync` sein Vertrauen und verweigert im Zweifel.
+
+⚠️ Rost-Prüfer alle Exit 0; nach #1182 sagt `moved-needles` über diesen Commit strukturell
+nichts (er diffed nur `-- Sources`, das hier unberührt ist).

@@ -24,22 +24,30 @@ Eine behauptete Wiederverwendung wäre hier falsch.
 ═══════════════════════════════════════════════════════════════════════════════════════
 WAS BEWIESEN IST UND WAS NICHT — vor dem ersten Lauf lesen.
 
-  · Die REINEN KERNE (Hüllkurve, Korrelation, Fenster-Auswahl, Strom-Zerteilung) sind mit
-    `--selftest` gegen synthetische Signale mit BEKANNTER Verschiebung getrieben. Das lief —
-    und drei Mutanten machen den Selbsttest nachweislich ROT, er ist also nicht wirkungslos.
-  · Die FFMPEG-HÜLLE (Extraktion, Encoding) ist NICHT getrieben — in diesem Container gibt
-    es kein ffmpeg. Der erste echte Lauf ist deiner.
-  · Deshalb: `python3 autocut.py --selftest` ZUERST. Er braucht kein ffmpeg und muss grün
-    sein, bevor du dem Werkzeug ein Video gibst.
+  · `--selftest` treibt die REINEN KERNE (Hüllkurve, Korrelation, Fenster-Auswahl,
+    Strom-Zerteilung) gegen synthetische Signale mit BEKANNTER Verschiebung. Braucht kein
+    ffmpeg. Drei Mutanten machen ihn nachweislich ROT, er ist also nicht wirkungslos.
+  · `--drive ORDNER` treibt die FFMPEG-HÜLLE: es baut zwei echte Videos mit bekanntem
+    Versatz und fährt sync, highlights und den Schnitt durch. Beides lief hier grün.
+  · ⛔ VIER DATEIEN SAGTEN "die ffmpeg-Hülle ist ungetestet". Das stimmte nur, solange
+    niemand nachsah: `ffmpeg` fehlt zwar im PATH dieses Containers, aber das Wheel
+    `imageio-ffmpeg` liefert eine echte Binärdatei (siehe .claude/skills/watch-clip). "Nicht
+    auf dem PATH" ist nicht dasselbe wie "nicht verfügbar" — und der Unterschied hat eine
+    ganze Prüfung als unmöglich erscheinen lassen, die zehn Minuten kostete.
+  · WAS WEITERHIN NUR DEIN MAC BEWEISEN KANN: die `.command` selbst (kein macOS hier) und
+    ob ECHTES Kameramaterial syncet — die Testvideos teilen denselben erzeugten Ton, zwei
+    Geräte im Raum teilen nur den Lautstärkeverlauf.
 
-BRAUCHT: ffmpeg + ffprobe  (`brew install ffmpeg`). Sonst nichts — kein numpy, kein pip.
+  Reihenfolge auf deinem Mac:  `--selftest`  →  `--drive /tmp/ac`  →  echtes Material.
+
+BRAUCHT: ffmpeg. Sonst nichts — kein ffprobe, kein numpy, kein pip.
+         (`brew install ffmpeg` bringt trotzdem beide mit, das schadet nicht.)
 ═══════════════════════════════════════════════════════════════════════════════════════
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import math
 import os
 import shutil
@@ -253,25 +261,25 @@ def require(tool: str) -> str:
     if path is None:
         raise Missing(
             f"'{tool}' nicht gefunden. Auf dem Mac:  brew install ffmpeg\n"
-            f"    (autocut braucht ffmpeg UND ffprobe; sonst nichts.)")
+            f"    (autocut braucht NUR ffmpeg; sonst nichts.)")
     return path
 
 
-def probe(path: str) -> dict:
-    require("ffprobe")
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries",
-         "format=duration,size:stream=width,height,codec_type,codec_name",
-         "-of", "json", path],
-        capture_output=True, text=True, check=True).stdout
-    return json.loads(out)
+# ⛔ HIER STAND EIN `probe()` MIT NULL AUFRUFERN — gemessen, nicht vermutet
+#    (`grep -n "probe(" autocut.py` → nur die eigene Signatur). Gelöscht nach dem Dead-Code-
+#    Verbot in `.claude/rules/engineering.md` §2. Der Gewinn ist nicht kosmetisch: es war das
+#    EINZIGE, was `ffprobe` verlangte. autocut braucht jetzt nur noch `ffmpeg` — eine
+#    Abhängigkeit weniger auf dem Rechner des Founders, und die `.command` prüft eine Sache
+#    weniger. Wer wieder Metadaten braucht: `ffmpeg -hide_banner -i DATEI 2>&1` druckt Dauer,
+#    Auflösung, fps und Codec, ohne ein zweites Programm zu verlangen.
 
 
 def envelope_from_stream(reader, hop: int, block_hops: int = 64) -> list[float]:
     """float32-Rohstrom → Hüllkurve, ohne je alles zu halten. `reader` braucht nur `.read(n)`.
 
-    ⭐ DASS DIESE FUNKTION KEIN FFMPEG KENNT, IST DER PUNKT. Dieser Container hat kein ffmpeg,
-       also wäre die Zerteil-Logik sonst der einzige ungetestete Rechenteil des Werkzeugs —
+    ⭐ DASS DIESE FUNKTION KEIN FFMPEG KENNT, IST DER PUNKT. Sie ist damit im `--selftest`
+       prüfbar, der bewusst OHNE ffmpeg auskommt — sonst wäre die Zerteil-Logik nur über
+       `--drive` erreichbar, also nur dort, wo ffmpeg schon läuft. Zwei Prüfebenen statt einer;
        und sie hat die eine Stelle, an der ein stiller Fehler wohnt: den ÜBERHANG, wenn ein
        gelesener Block nicht auf einer Fenstergrenze endet. Der Selbsttest treibt sie gegen
        `envelope` und verlangt BITGLEICHE Werte, bei absichtlich schlecht passender Blockgröße.
@@ -412,6 +420,100 @@ def cmd_highlights(args) -> int:
 
 # ── Selbsttest: treibt die reinen Kerne, braucht kein ffmpeg ─────────────────────────
 
+def drive(workdir: str) -> int:
+    """Ende-zu-Ende gegen ECHTE Dateien: baut zwei Videos mit BEKANNTEM Versatz und fährt
+    alle drei Befehle durch.
+
+    ⭐ WARUM DAS EXISTIERT. `--selftest` treibt die Rechnung, fasst aber kein ffmpeg an. Nach
+       dem ersten Bau stand in vier Dateien "die ffmpeg-Hülle ist ungetestet" — und das war
+       nur solange wahr, wie niemand nachsah. Ein einmal von Hand gefahrener Beweis altert
+       zu einer Behauptung; dieser hier ist ein Befehl. Für den Founder ist er zusätzlich der
+       billige Weg, sein eigenes ffmpeg zu prüfen, BEVOR er echtes Material anfasst.
+
+    ⚠️ WAS ER NICHT BEWEIST: dass echtes Kameramaterial syncet. Diese Videos teilen denselben
+       erzeugten Ton. Zwei Geräte im Raum teilen NUR den Lautstärkeverlauf — verschiedene
+       Mikrofone, verschiedene Abstände, verschiedener Hall. Deshalb misst `sync` sein
+       Vertrauen und verweigert im Zweifel.
+    """
+    require("ffmpeg")
+    os.makedirs(workdir, exist_ok=True)
+    truth = 2.0
+    sr = 44100
+    fails = 0
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        nonlocal fails
+        print(f"  {'PASS' if ok else 'FAIL'}  {name}{'  — ' + detail if detail else ''}")
+        if not ok:
+            fails += 1
+
+    import wave                                       # nur hier gebraucht
+
+    def write_wav(path: str, lead: float) -> None:
+        n = int(sr * 40.0)
+        frames = bytearray(n * 2)
+        for at, width in ((3.0, 0.6), (7.4, 0.3), (12.1, 1.1), (19.8, 0.4),
+                          (26.5, 0.9), (33.2, 0.5)):
+            t0 = int((at + lead) * sr)
+            for i in range(t0, min(n, t0 + int(width * sr))):
+                v = int(math.sin(2 * math.pi * 220 * i / sr) * 0.8 * 32000)
+                struct.pack_into("<h", frames, i * 2, v)
+        with wave.open(path, "wb") as f:
+            f.setnchannels(1)
+            f.setsampwidth(2)
+            f.setframerate(sr)
+            f.writeframes(bytes(frames))
+
+    print(f"autocut --drive  (Arbeitsordner: {workdir})")
+    paths = {}
+    for name, lead in (("a", 0.0), ("b", truth)):
+        wav = os.path.join(workdir, f"drive_{name}.wav")
+        mp4 = os.path.join(workdir, f"drive_{name}.mp4")
+        write_wav(wav, lead)
+        subprocess.run(["ffmpeg", "-y", "-v", "error",
+                        "-f", "lavfi", "-i", "color=c=blue:s=640x360:r=25:d=40",
+                        "-i", wav, "-c:v", "libx264", "-preset", "ultrafast",
+                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", mp4], check=True)
+        paths[name] = mp4
+
+    res = sync_offset(read_envelope(paths["a"]), read_envelope(paths["b"]),
+                      FINE_HOP_MS, DEFAULT_MAX_OFFSET_S)
+    err = abs(res.offset_seconds - truth)
+    check(f"sync findet die bekannten {truth:+.2f} s durch echtes ffmpeg",
+          res.trustworthy and err < 0.05,
+          f"gemessen {res.offset_seconds:+.3f} s, Fehler {err*1000:.0f} ms, "
+          f"Vertrauen {res.confidence:.2f}×")
+
+    env = read_envelope(paths["a"])
+    hits = pick_highlights(env, FINE_HOP_MS, clip_seconds=1.0, count=3, min_gap_seconds=2.0)
+    # Die drei LÄNGSTEN Bursts liegen bei 12,1 s · 26,5 s · 3,0 s. Ein Fenster darf davor
+    # beginnen, muss den Burst aber treffen.
+    wanted = (12.1, 26.5, 3.0)
+    got = sorted(h.start_seconds for h in hits)
+    ok = len(hits) == 3 and all(
+        any(w - 1.0 <= g <= w + 1.0 for g in got) for w in wanted)
+    check("highlights trifft die drei lautesten Stellen", ok,
+          f"{[round(g, 2) for g in got]}")
+
+    out = os.path.join(workdir, "drive_out")
+    os.makedirs(out, exist_ok=True)
+    for i, h in enumerate(hits[:2], 1):
+        clip = os.path.join(out, f"drive_hl{i:02d}.mp4")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{h.start_seconds:.3f}",
+                        "-i", paths["a"], "-t", f"{h.duration_seconds:.3f}",
+                        "-c:v", "libx264", "-preset", "veryfast", "-c:a", "aac", clip],
+                       check=True)
+        clip_env = read_envelope(clip)
+        loud = (sum(clip_env) / len(clip_env)) if clip_env else 0.0
+        # Der geschnittene Clip muss WESENTLICH lauter sein als der Schnitt des Ganzen —
+        # sonst hat `-ss` danebengegriffen und wir hätten Stille exportiert.
+        check(f"geschnittener Clip {i} trägt den lauten Teil",
+              loud > 3 * (sum(env) / len(env)), f"Mittel {loud:.4f}")
+
+    print(f"\n--drive: {'alles grün' if fails == 0 else f'{fails} FEHLER'}")
+    return 0 if fails == 0 else 1
+
+
 def selftest() -> int:
     """Treibt `sync_offset` und `pick_highlights` selbst (#941: die Prüfung muss die
     ECHTE Entscheidung modellieren, nicht eine Nachbildung davon)."""
@@ -525,6 +627,8 @@ def selftest() -> int:
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(
         prog="autocut", description="Sync · Highlights · Upload-Proxy für Echoel-Rohmaterial")
+    p.add_argument("--drive", metavar="ORDNER",
+                   help="Ende-zu-Ende gegen echte, selbst gebaute Videos (braucht ffmpeg)")
     p.add_argument("--selftest", action="store_true",
                    help="treibt die reinen Kerne, braucht kein ffmpeg — VOR dem ersten echten Lauf")
     sub = p.add_subparsers(dest="cmd")
@@ -552,6 +656,12 @@ def main(argv: list[str]) -> int:
     args = p.parse_args(argv)
     if args.selftest:
         return selftest()
+    if args.drive:
+        try:
+            return drive(args.drive)
+        except Missing as exc:
+            print(f"autocut: {exc}", file=sys.stderr)
+            return 3
     if not getattr(args, "fn", None):
         p.print_help()
         return 1
@@ -561,7 +671,7 @@ def main(argv: list[str]) -> int:
         print(f"autocut: {exc}", file=sys.stderr)
         return 3
     except subprocess.CalledProcessError as exc:
-        print(f"autocut: ffmpeg/ffprobe brach ab ({exc.returncode}).", file=sys.stderr)
+        print(f"autocut: ffmpeg brach ab ({exc.returncode}).", file=sys.stderr)
         return 4
 
 

@@ -9,10 +9,10 @@
 #    richtigen Ordner. Eine GUI bräuchte ein Fenster-Framework, das dieses Repo nicht hat
 #    (ZERO dependencies) und das diese Sitzung ohne macOS nicht testen könnte.
 #
-# ⚠️ WAS HIER NICHT GETESTET IST: ALLES unter dieser Zeile. Die Sitzung, die es schreibt, hat
-#    kein macOS und kein ffmpeg. Der Selbsttest weiter unten ist der einzige Teil, der schon
-#    grün lief — und er läuft absichtlich als ERSTES, damit ein kaputtes Python auffällt,
-#    bevor du ein Video anfasst.
+# ⚠️ WAS HIER NICHT GETESTET IST: diese Datei selbst. Die Sitzung, die sie schreibt, hat kein
+#    macOS. Das Werkzeug DAHINTER ist getrieben — `--selftest` (Rechnung) und `--drive`
+#    (echtes ffmpeg, echte Videos) liefen beide grün. Der Selbsttest läuft hier absichtlich
+#    als ERSTES, damit ein kaputtes Python auffällt, bevor du ein Video anfasst.
 
 set -u
 cd "$(dirname "$0")" || exit 1
@@ -35,13 +35,14 @@ if ! command -v "$PY" >/dev/null 2>&1; then
 fi
 
 # ── 2. Läuft ffmpeg? Kein Abbruch — der Selbsttest braucht es nicht. ────────────────
+# ⛔ Hier wurde auch `ffprobe` geprüft. autocut braucht es nicht mehr — sein einziger Nutzer
+#    war eine Funktion mit null Aufrufern (#1184). Eine Prüfung auf ein Programm, das das
+#    Werkzeug gar nicht ruft, schickt Leute grundlos zum Installieren.
 HAVE_FFMPEG=1
-for t in ffmpeg ffprobe; do
-  if ! command -v "$t" >/dev/null 2>&1; then
-    HAVE_FFMPEG=0
-    echo "FEHLT: $t"
-  fi
-done
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  HAVE_FFMPEG=0
+  echo "FEHLT: ffmpeg"
+fi
 if [ "$HAVE_FFMPEG" -eq 0 ]; then
   echo
   echo "  So installierst du es:   brew install ffmpeg"
@@ -83,6 +84,7 @@ ask_path() {
 
 while true; do
   echo "Was soll ich tun?"
+  echo "  0) Prüfen     — baut Testvideos und fährt alles durch (--drive)"
   echo "  1) Proxy      — kleine Datei zum Hochladen (dein genanntes Problem)"
   echo "  2) Sync       — Versatz zweier Aufnahmen über den Ton messen"
   echo "  3) Highlights — die lautesten Stellen finden und schneiden"
@@ -92,6 +94,9 @@ while true; do
   echo
 
   case "$choice" in
+    0)
+      "$PY" "$SCRIPT" --drive "${TMPDIR:-/tmp}/autocut-drive"
+      ;;
     1)
       IN=$(ask_path "Video hierher ziehen, dann Enter: ")
       [ -n "$IN" ] && "$PY" "$SCRIPT" proxy "$IN"

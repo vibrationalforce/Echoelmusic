@@ -52,14 +52,23 @@ ein Menü mit Datei-hierher-ziehen.
 3. **Vertrauen = Spitze / zweitbeste Spitze.** Ein falscher Sync sieht richtiger aus als gar
    keiner. Unter 1,25× **verweigert** das Werkzeug und gibt Exit 2 zurück.
 
-## Was NICHT bewiesen ist — und warum das so bleiben muss, bis er läuft
+## Was bewiesen ist — korrigiert #1184
 
-Dieser Container hat **kein ffmpeg** (gemessen) und **kein macOS**. Also:
-- Die reinen Kerne sind getrieben. Das lief.
-- Die ffmpeg-Hülle und die `.command` sind **ungetestet**. Der erste echte Lauf ist seiner.
+Die erste Fassung dieses Abschnitts sagte: "die ffmpeg-Hülle ist ungetestet, dieser Container
+hat kein ffmpeg". **Die Messung stimmte, die Schlussfolgerung nicht.** `ffmpeg` fehlt im PATH,
+aber das Wheel `imageio-ffmpeg` liefert eine echte Binärdatei — der eigene `watch-clip`-Skill
+sagt das seit 2026-08-12, und ich hatte ihn im Kontext. **"Nicht auf dem PATH" ist nicht
+dasselbe wie "nicht verfügbar".** Der Unterschied hat eine ganze Prüfung als unmöglich
+erscheinen lassen; sie kostete danach zehn Minuten.
 
-Das steht im Kopf beider Dateien. Eine "getestet"-Behauptung wäre hier die teuerste Sorte
-Falschaussage: er würde ihr sein Material anvertrauen.
+- ✅ `--selftest` — die Rechnung. Drei Mutanten machen ihn nachweislich rot.
+- ✅ `--drive ORDNER` — die ffmpeg-Hülle, gegen selbst gebaute Videos mit bekanntem Versatz:
+  Versatz auf 0 ms getroffen (Vertrauen 1,60×), die drei lautesten Stellen gefunden, die
+  geschnittenen Clips tragen wirklich den lauten Teil (Mittel 0,32/0,54 gegen 0,05 im Ganzen).
+- ❌ Die `.command` selbst — kein macOS hier.
+- ❌ Ob ECHTES Kameramaterial syncet — die Testvideos teilen denselben ERZEUGTEN Ton. Zwei
+  Geräte im Raum teilen nur den Lautstärkeverlauf: andere Mikrofone, andere Abstände, anderer
+  Hall. Genau dafür misst `sync` sein Vertrauen und verweigert im Zweifel.
 
 ## Offene Scheiben
 

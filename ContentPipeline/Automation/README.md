@@ -16,15 +16,26 @@ sich selbst für leer erklärt und zwei Werkzeuge enthält.
 | `proxy` | 480p-Datei + Kontaktbogen — gegen "Videos hochladen dauert ewig" |
 | `sync` | misst den Versatz zweier Aufnahmen über den TON und **verweigert die Antwort**, wenn er sich nicht sicher ist (Exit 2) |
 | `highlights` | findet die lautesten Stellen und schneidet sie auf Wunsch |
-| `--selftest` | treibt die reinen Kerne gegen synthetische Signale mit BEKANNTER Verschiebung |
+| `--selftest` | treibt die reinen Kerne gegen synthetische Signale mit BEKANNTER Verschiebung — braucht kein ffmpeg |
+| `--drive ORDNER` | baut zwei echte Videos mit bekanntem Versatz und fährt alles durch — braucht ffmpeg |
 
-**Was bewiesen ist:** die Rechen-Kerne — `--selftest` läuft grün, und drei Mutanten
-(Überhang verworfen · Fenster wiederholt · NaN-Filter entfernt) machen ihn nachweislich
-ROT. Ein grüner Test, der nicht rot werden kann, beweist nichts.
-**Was NICHT bewiesen ist:** alles, was ffmpeg anfasst — dieser Container hat kein ffmpeg und
-kein macOS. Der erste echte Lauf gehört dem Founder.
+**Was bewiesen ist:** die Rechen-Kerne (`--selftest`, grün; drei Mutanten machen ihn
+nachweislich ROT — ein grüner Test, der nicht rot werden kann, beweist nichts) UND die
+ffmpeg-Hülle (`--drive`, grün gegen echte Videos: Versatz auf 0 ms getroffen, die drei
+lautesten Stellen gefunden, die geschnittenen Clips tragen wirklich den lauten Teil).
 
-**Braucht:** `python3` + `brew install ffmpeg`. Sonst nichts, kein pip, kein numpy.
+⛔ Hier stand "alles was ffmpeg anfasst ist nicht bewiesen". Das stimmte nur, solange
+niemand nachsah: `ffmpeg` fehlt im PATH dieses Containers, aber das Wheel `imageio-ffmpeg`
+liefert eine echte Binärdatei (`.claude/skills/watch-clip`). **"Nicht auf dem PATH" ist nicht
+dasselbe wie "nicht verfügbar"** — der Unterschied hat eine ganze Prüfung als unmöglich
+erscheinen lassen, die zehn Minuten kostete.
+
+**Was NUR der Mac beweisen kann:** die `.command` selbst, und ob ECHTES Kameramaterial
+syncet — die Testvideos teilen denselben erzeugten Ton, zwei Geräte im Raum teilen nur den
+Lautstärkeverlauf.
+
+**Braucht:** `python3` + `ffmpeg`. **Kein ffprobe** (der einzige Nutzer war eine Funktion ohne
+Aufrufer, #1184), kein pip, kein numpy.
 
 ⚠️ "spannendste Stelle" ist hier als **Energie** definiert (laut = spannend). Das ist eine
 ANNAHME, keine Messung von Spannung; das Werkzeug druckt darum je Clip seinen Wert, damit man
