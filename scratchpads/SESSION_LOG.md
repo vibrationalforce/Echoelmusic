@@ -27688,3 +27688,45 @@ reproduziert) · Lauf abgeschaltet → Instrumentenfehler-WARN feuert.
 `Resources/iOS/Info.plist` wurde nur GELESEN — founder-gated; eine Abweichung wird auf
 der Swift-Seite repariert. Realer Baum unverändert: Sektion B sauber, voller Doktor
 weiter 2 CRITICALs (beide die bekannten Workflow-Posten).
+
+## 2026-09-09 — #1156 · Der Marken-Startbildschirm ist an KEINEM Ende verdrahtet
+
+**Gefunden, indem ich die C1a-Liste des Doktors ABGEARBEITET statt überlesen habe.**
+`AppIconView` und `LaunchScreenView` werden ausschließlich in `#if DEBUG` gebaut, und
+keine der beiden Deklarationen sagte das. Das Gesetz des Werkzeugs: unerreichbar ist
+kein Defekt — unerreichbar UND nirgends aufgeschrieben schon.
+
+**Zwei Hälften, zwei verschiedene Urteile.**
+· `AppIconView` = **Design-Asset-Renderer, Parken korrekt.** Das ausgelieferte Icon kommt
+  aus `Assets.xcassets/AppIcon.appiconset` (plus Mac/TV/Vision/Watch daneben). Vermerk an
+  die Deklaration, damit niemand das aus Werkzeug-Ausgabe neu herleiten muss (#1147).
+· `LaunchScreenView` = **kann von Swift aus GAR NICHT der Startbildschirm werden.** iOS
+  zeichnet ihn, BEVOR Swift läuft; er kommt aus dem `UILaunchScreen`-Dictionary der
+  Info.plist oder aus einem Storyboard. Eine Sitzung, die die türlose Ansicht „repariert",
+  indem sie sie irgendwo einhängt, liefert eine Änderung, die nichts tut, und glaubt die
+  Lücke geschlossen. Diese Sackgasse steht jetzt an der Deklaration und ist gepinnt.
+
+**Die ECHTE Lücke — und sie ist founder-gated.** `Resources/iOS/Info.plist:49` deklariert
+`<key>UILaunchScreen</key>` gefolgt von einem LEEREN `<dict/>`; das Startfenster nimmt
+also den System-Standard-Hintergrund. Daneben liegt
+`Assets.xcassets/LaunchScreenBackground.colorset`: **reines Schwarz in BEIDEN
+Erscheinungen, NULL Referenzen im ganzen Repo** — genau das Asset, das jenes leere
+Dictionary über `UIColorName` benennen würde. Folge auf einem hellen Gerät: der Kaltstart
+zeigt erst ein helles Fenster, dann die schwarze App. Zwei Artefakte zeigen auf eine
+Absicht, die niemand zu Ende verdrahtet hat. Info.plist = berichten, nicht editieren —
+also ist das ein BERICHT, kein Verhaltenswechsel.
+
+**Wächter** `TheLaunchScreenIsTheSystemDefaultTests`: 5 Ansprüche, 9 `XCTAssert` + 2
+`XCTFail`-Anker, alle POSITIV. Er verbietet die Reparatur NICHT (#364) — am Tag, an dem
+`UIColorName` gesetzt wird, geht Anspruch 2 absichtlich rot und nennt die Prosa, die
+mitzuziehen ist. Vier Mutanten gefahren, nicht gelesen.
+
+⛔ **UND EINER FEUERTE IM ERSTEN ENTWURF NICHT.** Anspruch 3 ankerte auf dem ersten
+Vorkommen des Literals `#if DEBUG` — und der Vermerk, den DIESELBE Scheibe an
+`LaunchScreenView` schrieb, ZITIERT diese Direktive zweihundert Zeilen über der echten.
+Aus „alles vor dem DEBUG-Block" wurde damit „alles vor meinem eigenen Absatz", die
+Deklaration fiel aus dem Fenster, und die Null bedeutete nichts. Er liest jetzt
+kommentar-gestrippten Text (`SourceText.codeOnly`) und prüft zusätzlich, dass die
+Deklaration IM gemessenen Fenster liegt. Gleiche Fehlerklasse wie #762 eine Datei weiter:
+ein Vermerk ÜBER eine Ansicht wird als deren Code gelesen. **Zweimal an einem Tag hat ein
+Mutant einen Wächter gerettet, den Lesen nicht gerettet hätte.**
