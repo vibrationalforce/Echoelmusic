@@ -159,6 +159,25 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// the audio thread drains a stage only while its enable flag is TRUE, the control plane
     /// only while it is FALSE (the reasoning is in `EchoelFXChain.noteRenderSleeping`'s ⛔
     /// block — do not weaken it on the strength of this one being faster).
+    ///
+    /// ⛔ AND THAT RULE RESTS ON SOURCE ORDER, NOT ON THE MEMORY MODEL — `PolySynthVoice`
+    /// says so itself, and #1196b's mandatory review is what connected the two halves. THIS
+    /// CHANGE SHARPENS THE CONSEQUENCE IF THE RACE EVER FIRES, at unchanged probability, and
+    /// that is the one thing a future session must not learn from a crash report instead:
+    /// `fxEnabled` is a plain non-atomic `Bool` with no fence, and the control-plane drain is
+    /// reachable from a live user control (the FX sheet). Under the element loop this
+    /// degraded to a HALF-CLEARED BUFFER — an audible click. `withUnsafeMutableBufferPointer`
+    /// swaps the array for the empty-storage singleton for the duration of the closure, so a
+    /// concurrent `read(delaySamples:)` would index a ZERO-COUNT array: `Index out of range`,
+    /// i.e. a TRAP on the audio thread. Click → crash.
+    ///
+    /// NOT REVERTED, and the reasoning is the trade, not a shrug: the crackle this repairs is
+    /// certain and reported from the device; the race is documented-but-unobserved. The
+    /// candidate remedy for a later slice is `vDSP_vclr`, whose implicit array-to-pointer
+    /// conversion is believed not to perform that swap — BELIEVED, not measured, and it would
+    /// give this file its first `import Accelerate`. Do not take it on the strength of this
+    /// sentence; the honest fix for the underlying hazard is to fence `fxEnabled`, which is a
+    /// different slice with a different owner.
     public func reset() {
         buffer.withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
         writeIndex = 0
