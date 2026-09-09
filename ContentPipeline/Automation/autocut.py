@@ -66,7 +66,15 @@ DEFAULT_MAX_OFFSET_S = 120.0
 MIN_CONFIDENCE = 1.25      # Spitze muss die zweitbeste um diesen Faktor schlagen
 FINE_WINDOW_S = 2.0        # ± um den groben Treffer
 
-PROXY_HEIGHT = 480
+PROXY_LONG_SIDE = 854
+# ⛔ HIER STAND `PROXY_HEIGHT = 480` MIT `scale=-2:480`, UND DAS MASS WAR DIE FALSCHE SEITE.
+#    Gemessen an einer echten iPhone-Aufnahme des Founders (1320×2868, hochkant): daraus wird
+#    220×480 = 106k Bildpunkte, während ein QUERFORMAT-Video bei derselben Einstellung
+#    854×480 = 410k bekommt. Hochformat bekam also VIERMAL weniger Auflösung aus derselben
+#    Zahl — und bei einer hochkanten Bildschirmaufnahme begrenzt die BREITE die Lesbarkeit,
+#    nicht die Höhe. Die lange Seite ist das richtige Mass; sie ist in beiden Lagen dieselbe
+#    Grösse. (Gefunden, weil ich den Proxy an echtem Material gefahren habe statt an meinem
+#    eigenen Testclip — dieselbe Lehre wie #1187, drittes Mal an einem Tag.)
 PROXY_CRF = 32
 CONTACT_TILE = "4x4"
 
@@ -757,8 +765,13 @@ def cmd_proxy(args) -> int:
     sheet = os.path.join(outdir, f"{stem}_contact.jpg")
     require("ffmpeg")
 
+    src_w, src_h = video_size(src)
+    if src_w >= src_h:
+        scale = f"scale={PROXY_LONG_SIDE}:-2"
+    else:
+        scale = f"scale=-2:{PROXY_LONG_SIDE}"
     subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src,
-                    "-vf", f"scale=-2:{PROXY_HEIGHT}", "-c:v", "libx264",
+                    "-vf", scale, "-c:v", "libx264",
                     "-preset", "veryfast", "-crf", str(PROXY_CRF),
                     "-c:a", "aac", "-b:a", "96k", proxy], check=True)
     subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src,
@@ -1102,6 +1115,23 @@ def drive(workdir: str) -> int:
           busy_conc < ZOOM_MIN_CONCENTRATION, f"{busy_conc:.0%}")
     check("konzentriertes Material liegt klar darüber",
           concentration(act) > ZOOM_MIN_CONCENTRATION, f"{concentration(act):.0%}")
+
+    # ── Proxy: die LANGE Seite ist das Mass, in beiden Lagen (#1188) ─────────────────
+    for label, size in (("quer", "854x480"), ("hoch", "480x854")):
+        raw_clip = os.path.join(workdir, f"drive_proxy_{label}.mp4")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+                        "-i", f"testsrc=s={size}:d=2:r=25", "-c:v", "libx264",
+                        "-pix_fmt", "yuv420p", raw_clip], check=True)
+
+        class ProxyArgs:
+            input = raw_clip
+            outdir = os.path.join(out, f"proxy_{label}")
+        cmd_proxy(ProxyArgs())
+        made = os.path.join(ProxyArgs.outdir,
+                            f"drive_proxy_{label}_proxy.mp4")
+        pw, ph = video_size(made)
+        check(f"Proxy ({label}) misst die LANGE Seite, nicht die Höhe",
+              max(pw, ph) == PROXY_LONG_SIDE, f"{pw}×{ph}, lange Seite {max(pw, ph)}")
 
     print(f"\n--drive: {'alles grün' if fails == 0 else f'{fails} FEHLER'}")
     return 0 if fails == 0 else 1

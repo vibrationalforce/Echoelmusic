@@ -13,7 +13,7 @@ sich selbst für leer erklärt und zwei Werkzeuge enthält.
 
 | Befehl | Tut |
 |---|---|
-| `proxy` | 480p-Datei + Kontaktbogen — gegen "Videos hochladen dauert ewig" |
+| `proxy` | kleine Datei + Kontaktbogen — gegen "Videos hochladen dauert ewig"; **lange Seite 854 px**, damit Hochformat nicht benachteiligt wird (#1188) |
 | `sync` | misst den Versatz zweier Aufnahmen über den TON und **verweigert die Antwort**, wenn er sich nicht sicher ist (Exit 2) |
 | `highlights` | findet die lautesten Stellen und schneidet sie auf Wunsch (`--brand` brennt die Marke gleich ein) |
 | `brand` | Echoel-Marke einbrennen — **immer in eine neue Datei**, das Original bleibt |

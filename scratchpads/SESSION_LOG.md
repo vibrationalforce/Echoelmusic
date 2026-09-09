@@ -29158,3 +29158,35 @@ rot wird, wacht nicht.** Entfernt; die verbleibende ist nachweislich wirksam.
 ⚠️ Zwei meiner eigenen Mutanten waren schlecht gebaut und ich habe es benannt statt es als
 Testlücke zu buchen: einer war per Konstruktion wirkungslos (`len(top) < len(activity)` ist
 immer wahr), einer verfehlte die Nadel wegen eines literalen `\n` im Shell-Argument.
+
+## #1188 — der Proxy benachteiligte Hochformat um das Vierfache (2026-09-09)
+
+**Anlass:** der Founder legte eine 436-MB-Bildschirmaufnahme in einen Google-Drive-Ordner.
+⛔ **Drive ist von hier aus NICHT erreichbar** — gemessen, nicht vermutet: die Netzwerk-
+Richtlinie dieser Umgebung lehnt `drive.google.com` und `drive.usercontent.google.com` beim
+CONNECT mit 403 ab (`recentRelayFailures` im Proxy-Status nennt beide Hosts namentlich). Der
+Drive-CONNECTOR listet den Ordner problemlos; sein `download_file_content` liefert aber
+Base64, und 436 MB wären ~582 MB in einem Werkzeugergebnis. **Nicht versucht** — das ist die
+Sorte Aktion, die eine Sitzung zerlegt, und der Umweg kostet eine Rückfrage.
+
+**Dabei den eigentlichen Fund gemacht.** Ich habe `proxy` an DREI echten Aufnahmen des
+Founders gemessen (25×, 29×, 110× kleiner) und dann den Proxy ANGESEHEN statt nur seine
+Grösse zu notieren: bei der hochkanten iPhone-Aufnahme (1320×2868) war der Text unlesbar.
+
+⛔ **`PROXY_HEIGHT = 480` mit `scale=-2:480` misst die FALSCHE SEITE.** Querformat bekommt
+854×480 = 410k Bildpunkte, Hochformat 220×480 = **106k** — viermal weniger aus derselben
+Zahl. Und bei einer hochkanten Bildschirmaufnahme begrenzt die BREITE die Lesbarkeit, nicht
+die Höhe. Ersetzt durch `PROXY_LONG_SIDE = 854`, orientierungsabhängig angewandt: Querformat
+unverändert 854×480, Hochformat jetzt 394×854.
+
+**Der Gewinn ist fast gratis:** 0,4 MB → 0,5 MB für die VIERFACHE Auflösung. Im Vergleichsbild
+sind auf der neuen Seite „Self-Observation", „loop 3/8", „Key C" und sogar die Buildnummer
+lesbar; auf der alten ist alles Matsch.
+
+⭐ **Dritte Wiederholung derselben Lehre an einem Tag, und diesmal in einer neuen Form:**
+#1187 war „an echtem Material FAHREN". Hier reichte das nicht — die Zahl (25–110× kleiner) sah
+gut aus. Nötig war, das ERGEBNIS ANZUSEHEN. **Eine Kennzahl über ein Bild ist keine Aussage
+über das Bild.**
+
+Wächter: zwei `--drive`-Ansprüche (quer und hoch), ein Mutant, der wieder nach Höhe skaliert,
+wird nachweislich rot.
