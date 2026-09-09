@@ -29331,3 +29331,22 @@ Elternbaum (sie nennt kein neues Symbol), die Urteile sind also echte Urteile.
 
 Alle fünf Prüfer Exit 0. Erste Scheibe seit #1189, die `Tests/` anfasst — es feuert also wieder
 ein echtes Gate.
+
+### #1192 — Gate gelesen (2026-09-09 20:00 UTC)
+
+`74d66c97`, beide echten Gates:
+
+- **`Xcode Compile Check` #2498 = SUCCESS.** Sagt über die neue Testdatei NICHTS — es baut
+  `Sources/` allein. Trotzdem notiert, weil sein Fehlen die Frage offenlassen würde.
+- **`Echoelmusic CI/CD Pipeline` #5963 → Schritt `Build for Testing` = SUCCESS** (19:06:09 →
+  19:11:14). **Das IST das Urteil, das gefehlt hat:** `TheForeignNeedleCheckerGuardsTheOtherHalfTests`
+  kompiliert. Der „nie kompiliert"-Vorbehalt aus #1192 ist damit geschlossen.
+- `Run Tests` = failure mit `** TEST EXECUTE FAILED **` — die bekannte #396/#445-Form (ein
+  Simulator-Klon stirbt mitten im Lauf). Im sichtbaren Fenster steht KEIN `failed`-Testfall,
+  jeder sichtbare ist `passed`. ⚠️ **Und daraus folgt kein „alles grün"** (#807): das Job-Log
+  ist `tail -200`, ein früherer Fehler hinterlässt darin keine Spur. Was belastbar ist: nichts
+  Rotes ist MEINS, und die Kompilierfrage ist mit Ja beantwortet.
+
+**Nebenbei gemessen und im Werkzeug festgehalten:** `foreign-needles.py` scannt absichtlich nur
+`Tests/CISmoke/`. Die nicht-blockierende Suite bindet heute **null** Nicht-Swift-Dateien
+(Befehl steht im Dateikopf) — die Beschränkung ist also gemessen, nicht angenommen.

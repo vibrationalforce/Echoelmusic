@@ -56,6 +56,16 @@ ARE reused, because those two ask the same question in both files.
 without resolving the flag. That is deliberately coarse in the SAFE direction: it can only add
 a skip, never a finding.
 
+⚠️ IT SCANS `Tests/CISmoke/` ONLY, AND THAT IS MEASURED RATHER THAN ASSUMED. The
+non-blocking suite is the obvious second place to look, and today it has nothing to find:
+
+    grep -rlP 'try\s+\w+\("(?!Sources/)[^"]+\.(md|html|yml|yaml|txt|json|csv|plist)"\)|appendingPathComponent\("(?!Sources/)[^"]+\.(md|html|yml|yaml|txt|json|csv|plist)"\)' Tests/EchoelmusicTests/*.swift | wc -l
+
+returns 0 across all of `Tests/EchoelmusicTests/`. The number of files there is a date, not a
+fact (`git ls-files 'Tests/EchoelmusicTests/*.swift' | wc -l`); the ZERO is the point. If a
+guard there ever binds a foreign file, widen `scan`'s `guard_dir` — the rest of this script
+does not care which directory it walked. Deliberate scope, re-derivable, not an oversight.
+
 A RUN THAT EXTRACTS ZERO NEEDLES EXITS 2, NOT 0. `.claude/rules/context.md` §2: a parser that
 matches nothing is a finding, never a pass. That is how the first hand sweep would have failed
 silently if its regex had been one character wrong.
