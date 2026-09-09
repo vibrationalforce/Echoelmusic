@@ -27959,3 +27959,42 @@ Nadel-Falle (#491). (2) Ein siebter Stempel-Wächter wäre eine Zweitheimat nebe
   ist im Quelltext mit Begründung festgehalten.
 
 Commit `4bc0235b`.
+
+## 2026-09-09 — #1161 · Ein Verdacht, widerlegt — und der KLEINE echte Rest
+
+**Der Verdacht.** `ContentPipeline/CLAIMS.md:53` lizenziert: „Das Bild ist SPIELBAR … im
+schwebenden Fenster UND im Vollbild". #1069 hat das Vollbild gelöscht — also eine
+Marketing-Behauptung auf eine tote Fläche, die #184-Klasse.
+
+**WIDERLEGT, vor dem Melden.** `WindowSize` hat VIER Stufen (`small, medium, large,
+fullscreen`); Vollbild ist eine GRÖSSE des schwebenden Fensters, nicht die gelöschte zweite
+Fläche. Gelöscht ist der SEPARATE Deckel `.fullScreenCover($showVisual)`. Und der Anspruch ist
+sogar stärker als gedacht: die Spielfläche hat KEIN Größen-Gate — der Kommentar an der
+Montagestelle sagt wörtlich „PLAY SURFACE at EVERY size".
+
+**Was echt und klein blieb — zwei Dinge, beide in derselben Registerzeile:**
+1. Der Beleg zeigte auf `FloatingVisualWindow.swift:791`; die Stelle ist **895**. Ersetzt durch
+   den BEFEHL (`git grep -n "TouchInstrumentView(" -- Sources` → ein Code-Treffer, der zweite
+   ist ein Kommentar in `FieldAutoPlay.swift`) — eine Zeilennummer ist ein Datum.
+2. Die Formulierung „Fenster UND Vollbild" ist WAHR, liest sich aber als ZWEI Flächen — genau
+   das hat diese Prüfung auf die falsche Fährte geschickt. Präzisiert auf „in jeder
+   Größenstufe, bis hinauf zu Vollbild", mit der Herleitung daneben.
+
+**⭐ KURSKORREKTUR MITTEN IM ZYKLUS, und sie ist die eigentliche Lehre.** Ich hatte
+`docs/faq.html:134` schon umformuliert. Dann gemessen: „movable/floating window or fullscreen"
+steht an **SECHS** Stellen in `docs/` (`git grep -c "window or fullscreen" -- docs`), zweimal
+davon im JSON-LD-Block, den Suchmaschinen lesen. Die Formulierung ist für einen Leser RICHTIG —
+sie nennt zwei ZUSTÄNDE einer Fläche. **Eine von sechs anzufassen hätte fünf abweichende
+Zwillinge hinterlassen** — schlechter als eine Ungenauigkeit, die es nicht gibt. Die Änderung
+ist per `git checkout` zurückgenommen; die Website ist unverändert. Der Registereintrag sagt
+das jetzt ausdrücklich, damit der nächste Sweep sie nicht „korrigiert".
+
+**Gesetz daraus, neben #456 („Prosa zieht in JEDEM Zuhause mit"): die Umkehrung gilt auch —
+wenn eine Formulierung in N Heimaten steht und RICHTIG ist, ist das Anfassen EINER davon
+ein Defekt.** Erst zählen, dann formulieren.
+
+**Gates:** die letzten Commits berühren keinen Pfad des `Xcode Compile Check`-Filters
+(`Sources/**`, `Tests/**`, `project.yml`, `Package.*`, `Resources/iOS/Info.plist`,
+`scripts/check-infoplist.sh`) — es startet KEIN Lauf, absichtlich. Nichts Rotes offen.
+
+Commit `7ac667ab`.
