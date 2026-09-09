@@ -26,6 +26,17 @@
 // `memory/LEDGER_COUNTS.md`, and keep LAW (what a session must do) in `CLAUDE.md`. The ledger
 // deletes nothing, so nothing is lost by moving.
 //
+// ⛔ THIS GUARD DOES NOT RUN ON THE COMMITS IT WATCHES (#1176, measured 2026-09-09). No
+// workflow in the repo names `CLAUDE.md` in a path filter, and `ci.yml` — which builds this
+// bundle — fires only on `Sources/**`, `Tests/**`, `Package.swift`, `project.yml` and itself.
+// A commit that changes ONLY `CLAUDE.md` can therefore push the file past this ceiling and
+// never reach this assertion; the red lands on whoever next touches `Sources/` or `Tests/`,
+// which reads like their fault and is not. `ci.yml` makes exactly this argument for ITSELF
+// inside its own trigger block; nobody carried it across to the law file. The repair is one
+// line under `paths:` and is FOUNDER-GATED (`.github/workflows/**` = report, do not edit).
+// Until then a `CLAUDE.md` edit is self-graded: measure `wc -c` against the ceiling in the
+// same commit. Full measurement and the retraction it corrects: `Tests/CISmoke/CLAUDE.md` §5.
+//
 // ⚠️ WHY IT READS BYTES AND NOT CHARACTERS. `.claude/rules/context.md` §2 records that this
 // repo's prose carries hundreds of multi-byte marker glyphs (⛔ ⚠️ ⭐) plus German, and that a
 // char claim needs Python. The doctor's threshold is on BYTES, and this guard has to test the

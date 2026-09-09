@@ -491,6 +491,29 @@ its own known positive is not a measurement.
   docs-only from its subject line, and it changes a `Tests/CISmoke/*.swift` file.
   **What this buys is a NEGATIVE, and say it as one:** "my slice did not cause this". It is
   still not proof the new guards ran (#445 — absence proves nothing, and the window is a tail).
+- ⛔ **#1176 — WHICH COMMITS PRODUCE A RUN AT ALL, measured rather than assumed, because #1174
+  above got it wrong one cycle later.** My own check-in asserted "CLAUDE.md is in the ci.yml
+  path filter". It is not. `ci.yml` fires on exactly five paths:
+
+      Sources/**   Tests/**   Package.swift   project.yml   .github/workflows/ci.yml
+
+  and `xcode-compile-check.yml` on eight, none of which is `CLAUDE.md` either. **No workflow in
+  the repo names `CLAUDE.md` in any path filter** (`grep -l CLAUDE.md .github/workflows/*.yml`
+  → nothing). So #1174's paragraph was right that scratchpads+decisions.csv produce no run, and
+  right for the wrong reason about the rest: `e1190468` ran only because it touched
+  `Tests/CISmoke/CLAUDE.md`, which is `Tests/**`.
+  ⭐ **THE CONSEQUENCE IS ABOUT A GUARD, NOT ABOUT TRIVIA.**
+  `TheLawFileStaysUnderItsCeilingTests` watches `CLAUDE.md`'s 150,000 B ceiling and lives in
+  `Tests/CISmoke/` — so a commit that changes ONLY `CLAUDE.md` can push that file past the
+  ceiling and **never run the guard that watches it**. The red then lands on whoever next
+  touches `Sources/` or `Tests/`, i.e. on the wrong commit, and reads like their fault.
+  ⚠️ `ci.yml` states this exact reasoning for ITSELF, eight lines into its own trigger block —
+  *"The gate must test its own changes. Without this path a repair to this file … ships
+  unexercised, which is how the `|| cat` mask survived."* The same argument covers the law file
+  and its guard, and nobody carried it across. **Repair is founder-gated** (`.github/workflows/**`
+  = report, do not edit): one line, `- 'CLAUDE.md'`, under ci.yml's `paths:`.
+  ⚠️ Until then, a `CLAUDE.md` edit is **self-graded**: measure `wc -c CLAUDE.md` against 150,000
+  in the same commit and write the number down. Do not assume a gate will catch it.
   **THE NEEDLE IS `" failed on "` ON A LINE CONTAINING `"Test case "`.** Same class as #667
   one layer down: the discriminator was right, the search term could not match the format.
   ⛔ **AND THAT SENTENCE PRESCRIBES A LINE PREDICATE THAT THE TOOL NO LONGER USES (#739), for

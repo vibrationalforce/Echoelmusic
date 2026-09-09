@@ -28612,3 +28612,40 @@ Member.
 Sieben Geräte-Verify-Posten warten schon auf das Auge des Founders; eine achte unbestätigte
 UI-Änderung macht seine Rückmeldung unlesbar — dasselbe Argument, das die Visuals sperrt. Die
 Fläche ist als EINE benannte Scheibe vermerkt, für nach seiner Rückmeldung.
+
+## #1176 — der Decken-Wächter läuft NICHT auf den Commits, die er bewacht (2026-09-09)
+
+**Gefunden, weil ich es eine Stunde vorher falsch behauptet hatte.** Mein eigener Weckruf
+schrieb „CLAUDE.md ist im ci.yml-Pfadfilter". **Ist es nicht.** Gemessen:
+
+```
+ci.yml   paths:  Sources/**  Tests/**  Package.swift  project.yml  .github/workflows/ci.yml
+xcode-compile-check.yml: acht Pfade, CLAUDE.md ist keiner
+grep -l CLAUDE.md .github/workflows/*.yml  ->  NICHTS
+```
+
+#1174 lag richtig, dass `scratchpads/` + `decisions.csv` keinen Lauf erzeugen — aber aus dem
+falschen Grund für den Rest: `e1190468` lief nur, weil es `Tests/CISmoke/CLAUDE.md` anfasste,
+also `Tests/**`.
+
+⭐ **DIE FOLGE BETRIFFT EINEN WÄCHTER, NICHT NUR KOSMETIK.**
+`TheLawFileStaysUnderItsCeilingTests` bewacht die 150.000-B-Decke von `CLAUDE.md` und liegt in
+`Tests/CISmoke/`. Ein Commit, der **nur** `CLAUDE.md` ändert, kann die Datei also über die
+Decke schieben und **den Wächter nie auslösen**. Das Rot landet dann bei dem, der als Nächstes
+`Sources/` oder `Tests/` anfasst — beim falschen Commit, und es liest sich wie dessen Schuld.
+
+⚠️ **Und `ci.yml` führt genau dieses Argument für SICH SELBST**, acht Zeilen in seinem eigenen
+Trigger-Block: *„The gate must test its own changes. Without this path a repair to this file …
+ships unexercised, which is how the `|| cat` mask survived."* Dieselbe Begründung deckt die
+Gesetzes-Datei und ihren Wächter ab — sie wurde nie hinübergetragen.
+
+**Reparatur ist founder-gated** (`.github/workflows/**` = berichten, nicht editieren): EINE
+Zeile, `- 'CLAUDE.md'`, unter `ci.yml`s `paths:`. Als Founder-Bericht vermerkt.
+
+⚠️ **Bis dahin ist jede CLAUDE.md-Änderung SELBST-BENOTET.** Für #1175 nachgeholt und hier
+notiert: **149.276 B von 150.000, Kopfraum 724.** Unter der Decke — aber kein Gate hat das
+geprüft, ich habe es gemessen.
+
+Zwei Zuhause, EINE Liste (#416): die Messung steht in `Tests/CISmoke/CLAUDE.md` §5 neben dem
+#1174-Absatz, den sie korrigiert; der Wächter-Kopf nennt nur seine eigene Blindheit und zeigt
+dorthin, statt die Pfadliste zu wiederholen. Alle vier Rot-Prüfer exit 0.
