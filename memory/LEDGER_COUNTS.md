@@ -6083,6 +6083,49 @@ Literal-Zahl für diesen Rückstand") träfe die Rücknahme, die die alte Zahl z
 zurückzunehmen — dieselbe Falle, in die der #809-Wächter eine Stunde vorher lief.
 
 
+
+**DIE VIER RÜCKNAHMEN DER CLAUDE.md-ZEILE (verschoben aus CLAUDE.md, #1177).** Die Zeile trägt
+seither nur noch das GESETZ plus diesen Zeiger; ihre Geschichte steht hier, weil sie Provenienz
+ist und die immer-geladene Datei 2 131 B dafür bezahlt hat.
+
+1. **#810 — die Zahl selbst** („heute 50 Bitten in 48 Dateien", das Werkzeug sagte 51 in 49):
+   gelöscht statt nachgeführt, siehe die Tabelle oben.
+2. **#773 — „Es weiß NICHT, welche schon beantwortet sind (es gibt keine ‚erledigt'-Konvention)":**
+   hinfällig. Die Konvention ist `VERIFIED-JJJJ-MM-TT` auf DERSELBEN Zeile wie der Marker. Sie
+   verlangt ein ECHTES Datum, nicht das Wort — sonst hätte das Werkzeug seine eigene Dokumentation
+   als Antwort gelesen (#753 eine Ebene höher). **Zum Zeitpunkt von #1177 trägt weiterhin KEINE
+   Bitte die Marke** (`none answered yet` in der Kopfzeile des Werkzeugs); welche erledigt sind,
+   weiß nur der Founder.
+3. **#753 — die Zeile zählte sich selbst als Bitte mit:** der Marker ist auch ein gewöhnliches
+   Substantiv, das Werkzeug las seine eigene Beschreibung als 54. Auftrag. Solche Prosa-Stellen
+   stehen seither getrennt unter NOT ASKS.
+4. **#1162 — „Vier — zwei hier, zwei in Wächter-Köpfen":** alle DREI Zahlen abgelaufen, gemessen
+   15 · 1 · 14. Gleiche Löschung, gleicher Grund: die Menge wächst mit JEDEM Wächter, der über den
+   Rückstand SCHREIBT.
+
+**⛔ UND #1162 HAT NUR EINES VON ZWEI ZUHAUSEN REPARIERT — gefunden 2026-09-09 (#1177), beim
+Verschieben.** Der ⚠️-Block über den zwei Nennern steht sechs Absätze weiter oben in DIESER Datei
+und sagte dort weiter „die vier NOT-ASKS-Prosastellen (zwei in `CLAUDE.md`, zwei in
+Wächter-Köpfen, #753)", während CLAUDE.md die Vier schon zurückgenommen hatte. Das ist exakt
+**#456** (Prosa zieht in JEDEM Zuhause mit, nicht nur dort, wo man gerade schreibt) — und hier in
+der Datei, deren ganze Aufgabe das Führen von Zahlen-Ketten ist. Die drei Zahlen dieses Abschnitts,
+neu gemessen am selben Tag mit den Befehlen, die daneben stehen:
+
+| Größe | im ⚠️-Block oben (Stand #810) | gemessen 2026-09-09 |
+|---|---|---|
+| `python3 scripts/founder-verify.py` | 51 Bitten in 49 Dateien | **111 Bitten in 99 Dateien** |
+| `git grep -l NEEDS-FOUNDER-VERIFY -- Sources Tests CLAUDE.md \| wc -l` | 50 Dateien | **106 Dateien** |
+| NOT-ASKS-Prosastellen | „vier — zwei hier, zwei in Wächter-Köpfen" | **15 — 1 in `CLAUDE.md`, 14 in Wächtern** (5 davon in `TheDeviceChecklistOnlyAsksWhatExistsTests.swift`) |
+
+**Der ⚠️-Block oben wird NICHT nachgeführt, sondern datiert gelesen** — er beschreibt den Stand
+#810 und sein Argument (zwei Definitionen, ein Name) ist von der Zahl unabhängig und heute stärker
+als damals: der Abstand der beiden Nenner ist von 1 auf 7 gewachsen. **Was hier als Gesetz bleibt:
+eine Zahl im LEDGER ist nur dann haltbar, wenn ihre Zeile ein DATUM trägt.** Ein Kommentar hinter
+einem Befehl (`# 51 Bitten in 49 Dateien`) trägt keines und liest sich wie eine Ausgabe von heute —
+dieselbe Falle wie ein zitiertes `grep` im Quelltext (die `EchoelModalBank`-Lehre), nur in dem
+Dokument, das sie eigentlich verwaltet.
+
+
 ## I — Die #473-Zahlengeschichte der TimelineAutomationRow (verschoben aus CLAUDE.md, #856)
 
 Verschoben 2026-08-28, weil CLAUDE.md seine 150.000-B-Decke gerissen hatte (#849 war der Übertritts-Commit, gefunden vom Ceiling-Wächter-Nachmessen im Brand-Audit). Wortlaut:

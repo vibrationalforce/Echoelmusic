@@ -28649,3 +28649,55 @@ geprüft, ich habe es gemessen.
 Zwei Zuhause, EINE Liste (#416): die Messung steht in `Tests/CISmoke/CLAUDE.md` §5 neben dem
 #1174-Absatz, den sie korrigiert; der Wächter-Kopf nennt nur seine eigene Blindheit und zeigt
 dorthin, statt die Pfadliste zu wiederholen. Alle vier Rot-Prüfer exit 0.
+
+---
+
+## #1177 — Die Auslagerung fand DREI abgelaufene Zahlen im Ledger selbst (2026-09-09)
+
+**Die Scheibe.** `CLAUDE.md` stand auf 149.276 B, Kopfraum 724, und #1176 hatte gerade gezeigt,
+dass KEIN Gate diese Decke auf einem CLAUDE.md-only-Commit prüft. Also die #538-Reparatur:
+Provenienz aus der immer-geladenen Datei in `memory/LEDGER_COUNTS.md`, Gesetz bleibt.
+
+**Gewählt: der Founder-Verify-Schwanz von Zeile 35** (2.131 B von 3.870 B der Zeile). Er trug
+VIER Rücknahmen — #810 (die Zahl), #773 (die „erledigt"-Konvention), #753 (die Zeile zählte
+sich selbst mit), #1162 (die NOT-ASKS-Menge). Alle vier sind Provenienz. Das GESETZ dahinter
+sind fünf Sätze: der Befehl ist die Messung, zwei Nenner, die `VERIFIED-JJJJ-MM-TT`-Marke,
+NOT ASKS, kein Wächter (#491).
+
+**⚠️ #912 — beide Seiten gemessen, nicht nur die Quelle:**
+
+| | vorher | nachher |
+|---|---|---|
+| `CLAUDE.md` | 149.276 B | **148.505 B** (Kopfraum **1.495**) |
+| Zeile-35-Schwanz | 1.881 B | 1.110 B |
+| `memory/LEDGER_COUNTS.md` | 678.530 B | 681.707 B (+3.177) |
+| Sektionen (`grep -c '^## [A-Z] — '`) | 19 | 19 (§H gewachsen, keine neue) |
+
+**⛔ DER EIGENTLICHE FUND liegt nicht in der Quelle, sondern im ZIEL.** Beim Vergleich, was §H
+schon trägt und was nicht, stand dort weiter „die vier NOT-ASKS-Prosastellen (zwei in
+`CLAUDE.md`, zwei in Wächter-Köpfen)". **#1162 hatte die Vier in CLAUDE.md zurückgenommen und
+§H nicht angefasst** — exakt #456 (Prosa zieht in JEDEM Zuhause mit), und zwar in der Datei,
+deren ganze Aufgabe das Führen von Zahlen-Ketten ist. Nachgemessen am selben Tag, mit den
+Befehlen, die im ⚠️-Block danebenstehen:
+
+```
+python3 scripts/founder-verify.py            # Stand #810: 51/49  →  heute 111 Bitten in 99 Dateien
+git grep -l NEEDS-FOUNDER-VERIFY -- Sources Tests CLAUDE.md | wc -l   # 50  →  106
+NOT ASKS                                     # „vier"  →  15 (1 in CLAUDE.md, 14 in Wächtern)
+```
+
+**Der ⚠️-Block wird NICHT nachgeführt, sondern datiert gelesen.** Sein Argument — zwei
+Definitionen unter einem Namen — ist von der Zahl unabhängig und heute STÄRKER: der Abstand
+der beiden Nenner ist von 1 auf 7 gewachsen. Nachgeführt wird nichts, ergänzt wird eine
+datierte Zeile.
+
+**Gesetz, neu und im Ledger notiert:** *eine Zahl im LEDGER ist nur haltbar, wenn ihre Zeile
+ein DATUM trägt.* Ein Kommentar hinter einem Befehl (`# 51 Bitten in 49 Dateien`) trägt keines
+und liest sich wie eine Ausgabe von heute — dieselbe Falle wie ein zitiertes `grep` im
+Quelltext (die `EchoelModalBank`-Lehre), nur in dem Dokument, das sie verwalten soll.
+
+**Geprüft vor dem Commit:** kein Wächter pinnt eine der sechs gelöschten Phrasen
+(`git grep -c` über `Tests Sources scripts` = 0 für alle sechs) · `founder-verify.py` liest
+`CLAUDE.md` unverändert als GENAU EINE NOT-ASK-Stelle, die Kopfzahl 111/99 bewegt sich nicht ·
+kein #416-Doppel (der neue Gesetzessatz existiert genau einmal im Baum) · alle vier Rot-Prüfer
+exit 0. Decken-Wächter selbst-benotet, weil #1176: 148.505 < 150.000.
