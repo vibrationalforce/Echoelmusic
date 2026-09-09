@@ -27998,3 +27998,44 @@ ein Defekt.** Erst zählen, dann formulieren.
 `scripts/check-infoplist.sh`) — es startet KEIN Lauf, absichtlich. Nichts Rotes offen.
 
 Commit `7ac667ab`.
+
+## 2026-09-09 — #1162 · Drei Zahlen für den NOT-ASKS-Abschnitt, alle drei abgelaufen
+
+**Gefunden beim BENUTZEN des Werkzeugs, nicht beim Suchen.** `--since-deploy` (#1158) zum
+ersten Mal gegen das echte Repo gefahren — es löst sauber auf (`8540ad3e` = der Commit, der
+v10.79.464 schickte) und meldet **1 NEUE Bitte** in dem Build, den der Founder hält, von 111
+offenen. Der Nebeneffekt war der Fund: sein NOT-ASKS-Abschnitt druckt **15**, während CLAUDE.md
+**vier** behauptete.
+
+| Behauptung in CLAUDE.md | Gemessen |
+|---|---|
+| „Vier solche Prosa-Stellen" | **15** |
+| „zwei hier" (in CLAUDE.md) | **1** |
+| „zwei in Wächter-Köpfen" | **14** |
+
+**Alle drei falsch — und zwar in dem Absatz, dessen EIGENES Thema ist, dass eine
+Rückstandszahl ein Datum ist.** Zwei Sätze höher hatte er sein eigenes Literal („50 Bitten in
+48 Dateien") aus genau diesem Grund schon gelöscht. Die Zahlen daneben überlebten, weil sie
+eine ANDERE Größe zählen und niemand sie mitgeprüft hat.
+
+**Warum die Menge wächst:** der Marker ist auch ein gewöhnliches Substantiv (#753). Jeder neue
+Wächter, der ÜBER den Rückstand schreibt, erzeugt eine weitere NOT-ASKS-Zeile — es sind heute
+14 in `Tests/CISmoke`. Die Zahl kann also nur steigen und ist damit nie ein Sachverhalt.
+
+**Gelöscht statt nachgeführt (#818).** Der Befehl steht schon daneben und IST die Messung.
+**Kein Wächter** (#491, plus der Nachbarsatz hat diese Entscheidung schon getroffen). Geprüft,
+dass kein bestehender Wächter die alte Zahl pinnt: die mehreren „four" in
+`TheDeviceChecklistOnlyAsksWhatExistsTests` gehören zu #816s unmöglichen Abschnitten, einem
+anderen Gegenstand.
+
+**Decke:** CLAUDE.md 147.753 → 148.012 B (Decke 150.000, Kopfraum **1.988**). Die erste Fassung
+der Rücknahme wiederholte die Begründung, die zwei Sätze höher steht; auf einen Zeiger gekürzt
+(#416) — daher kommt fast die ganze Ersparnis.
+
+⚠️ **Kopfraum-Hinweis für die nächste Sitzung: unter 2 KB.** Der nächste Absatz in dieser Datei
+braucht vorher eine Auslagerung nach `memory/LEDGER_COUNTS.md`.
+
+**Kein anderer Front war offen:** Genre-Scheiben S1–S5 gebaut und grün, S6 blockiert auf dem
+OHR; Visuals gesperrt; Gates ohne Lauf (kein gefilterter Pfad berührt).
+
+Commit `37050277`.
