@@ -12,6 +12,11 @@
 //     block computes `Int(startFrac * Float(count))`, where `Int(Float.nan)` is a Swift TRAP.
 //     Not silence: a CRASH, on the audio thread.
 //
+// ⚠️ "Two" is the ORIGINAL scope of this file, kept as written rather than rewritten each time —
+// the boundaries added since are named in their own test docs and counted in GRADING below. The
+// heading stays honest only because that count is maintained; if you add a seventh, move the
+// count, not this sentence (#818: a number in prose is a date, not a fact).
+//
 // ⛔ AND THE DELAY ONE OUTLIVED ITS OWN DIAGNOSIS BY A MONTH, which is the part worth a guard.
 // The `spread` line in the same function was switched to the NaN-safe `clamped(to:)` earlier,
 // and the comment beside it said, in effect: the two lines above are still unsafe, but fixing
@@ -27,7 +32,7 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 11 tests, 18 assertion statements (`grep -c`, measured; nine run inside loops — 512,
+//   · 12 tests, 21 assertion statements (`grep -c`, measured; nine run inside loops — 512,
 //     2 000 executions). Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
@@ -80,9 +85,10 @@
 // make this paragraph wrong — sanitise the rate in the same commit, do not delete the method
 // on the strength of this note (#364).
 //
-// ⭐ GRADING (§3). FOUR findings, FIVE boundaries — the third (#1170, the poly engine's own
-// sample rate), the fourth (#1171, the shared delay line's constructor) and the fifth (#1172,
-// the FX chain handing the raw rate to fifteen stages) were added later and
+// ⭐ GRADING (§3). FIVE findings, SIX boundaries — the third (#1170, the poly engine's own
+// sample rate), the fourth (#1171, the shared delay line's constructor), the fifth (#1172,
+// the FX chain handing the raw rate to fifteen stages) and the sixth (#1194, the felt sub's
+// two audio-thread character mirrors) were added later and
 // their grading sits on their own tests. The two below are #588's,
 // verified by transcription against the parent
 // (the behavioural tests name no new symbol, so they COMPILE against the parent). On the parent,
@@ -371,6 +377,52 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
             A stage is being built from the RAW `sampleRate` again. That is the #1172 defect: \
             the chain's guard then protects only the field it stores, not what it constructs — \
             and EchoelReverb.init traps on a rate it cannot scale.
+            """)
+    }
+
+    // MARK: - THE SIXTH BOUNDARY: the felt sub's character mirrors (#1194)
+
+    /// A SIXTH boundary, found by the same sweep that found the third — and this one is the
+    /// only site in `Sources/` where the retracted idiom was written into a
+    /// `nonisolated(unsafe)` AUDIO-THREAD MIRROR. Measured:
+    /// `git grep -n "didSet.*min(max(" -- Sources` returned exactly these two lines and
+    /// nothing else, so this claim closes the shape rather than sampling it.
+    ///
+    /// WHY IT MATTERS HERE. `SubBassVoice` writes `audioPresence`/`audioHeat` on the main
+    /// actor and reads them in the render block (`SubCharacter.coefficients(presence:heat:)`,
+    /// once per block). Two `didSet`s FOUR LINES ABOVE — `subGain` and `mixLevel` — already
+    /// carry a long comment banning `min(max(…))` by name, for this exact failure class. The
+    /// file stated its own law and then broke it twice under it, which is #937's shape again:
+    /// one form repaired, its twin left, same file, same bridge.
+    ///
+    /// ⚠️ LATENT, NOT LIVE — said plainly, because the honest verdict is what makes the note
+    /// re-usable. `SubCharacter.coefficients` opens with
+    /// `presence.isFinite ? … : defaultPresence`, so a NaN mirror is neutralised one jump
+    /// later. That is a guard in a DIFFERENT file protecting this one, and it holds only while
+    /// `SubCharacter` stays the single consumer. #546's lesson runs the other way here: there,
+    /// following the value one jump further RETRACTED a claim; here it downgrades a live bug to
+    /// a latent one — and downgrading is not dismissing (engineering.md's boundary rule).
+    ///
+    /// ⭐ THE SWEEP'S OTHER RESULT IS A NEGATIVE AND IS RECORDED SO NOBODY RE-RUNS IT. The
+    /// entrainment chain (`PolySynthVoice.clampUnit` -> `BioEntrainmentDirector.target` ->
+    /// `EchoelEntrainment.process`) uses the retracted idiom at four consecutive sites and is
+    /// nonetheless NaN-CLOSED — by comparison, not by clamping: `q >= qualityFloor`,
+    /// `depth > 0` and `depth > 0.01` are each FALSE for NaN, so every gate fails closed and
+    /// the render returns the sample untouched. Do not "repair" those four; the property that
+    /// saves them is the same argument-order law this header is about, used deliberately.
+    func testTheSubCharacterMirrorsClampNaNSafely() throws {
+        let src = try source("Sources/Echoelmusic/Tools/SubBassVoice.swift")
+        XCTAssertTrue(src.contains("didSet { audioPresence = subPresence.clamped(to: 0...1) }"), """
+            The felt sub's presence mirror is read on the audio thread and must be NaN-safe at \
+            the boundary, like `subGain` and `mixLevel` four lines above it — not one file \
+            downstream in `SubCharacter`.
+            """)
+        XCTAssertTrue(src.contains("didSet { audioHeat = subHeat.clamped(to: 0...1) }"), """
+            Same boundary, same law as `subPresence` (#1194).
+            """)
+        XCTAssertFalse(src.contains("min(max(subPresence"), """
+            The NaN-transparent clamp idiom is back on an audio-thread mirror, in the one file \
+            whose own `subGain` comment bans it by name.
             """)
     }
 

@@ -98,12 +98,19 @@ public final class SubBassVoice {
     /// small speakers (SubCharacter; founder "sub culture" ask 2026-07-16). The
     /// 0.5 default reproduces the previous hard-coded shaping bit-identically.
     public var subPresence: Float = SubCharacter.defaultPresence {
-        didSet { audioPresence = min(max(subPresence, 0), 1) }
+        // NaN-safe `clamped(to:)` for the reason spelled out on `subGain` above — not
+        // repeated here (#416). What is worth saying at THIS pair: the mirror is read on
+        // the audio thread (`SubCharacter.coefficients(presence:heat:)`, once per block in
+        // the render), and until #1194 a NaN survived this clamp and was caught only by
+        // `SubCharacter`'s own `isFinite` fallback — in a DIFFERENT file. A guard one file
+        // away is not the boundary rule; it is luck that a second consumer would not share.
+        didSet { audioPresence = subPresence.clamped(to: 0...1) }
     }
     /// Sub character "heat" [0…1] — loudness-compensated tanh drive (character,
     /// not level). 0.5 default = the previous hard-coded drive, bit-identical.
     public var subHeat: Float = SubCharacter.defaultHeat {
-        didSet { audioHeat = min(max(subHeat, 0), 1) }
+        // Same repair, same reason as `subPresence` directly above (#1194).
+        didSet { audioHeat = subHeat.clamped(to: 0...1) }
     }
     /// Audio-thread mirrors of the character params (same bridge as `audioSubGain`).
     @ObservationIgnored
