@@ -1137,7 +1137,10 @@ def section_c() -> Section:
     #
     # ⚠️ LIMIT: `blank_strings` stays False, because the declaration haystack must survive.
     # A view name inside a STRING literal followed by `(` still counts as a construction site.
-    # No such string exists today; nothing pins that.
+    # ⭐ THAT SENTENCE USED TO END "no such string exists today; nothing pins that" — C1c below
+    # now pins it, on this same reading with the strings blanked, so the claim is MEASURED on
+    # every run instead of asserted here. The limit itself is unchanged: this dict still keeps
+    # strings on purpose.
     code = {f: _code_only(read(f)) for f in swift}
     # ⭐ #1048 — `bodies` IS THE RELEASE READING FROM HERE ON. Everything below asks "can a
     # user reach this", and a user runs a Release build, so a call inside `#if DEBUG` must not
@@ -1292,6 +1295,74 @@ def section_c() -> Section:
             "(ImmersiveStageView, BroadcastView while RTMP is unlinked); the test per entry is "
             "whether that parking is WRITTEN DOWN in CLAUDE.md. Undocumented + unreachable is the "
             "defect, not unreachable by itself."))
+
+    # C1c (#1154). PINS THE LIMIT THIS SECTION ALREADY NAMES ABOUT ITSELF. The `code = {...}`
+    # comment above says it verbatim: "A view name inside a STRING literal followed by `(` still
+    # counts as a construction site. No such string exists today; nothing pins that." An unpinned
+    # limit is a promise, and THIS one fails in the silent direction — a doorless view whose name
+    # happens to sit inside a log message, an OSC address or a diag line is counted as constructed
+    # and then simply never appears in C1. Fewer findings, no warning, and the clean run afterwards
+    # reads as evidence. Same shape as the masked build gate this whole tool exists for.
+    #
+    # The measurement is one more pass over the SAME reading with string interiors blanked
+    # (`_code_only(..., blank_strings=True)`), so exactly ONE variable differs. A name constructed
+    # in the strings-kept reading and nowhere in the strings-blanked one owes its entire
+    # "reachable" verdict to text inside a literal.
+    #
+    # ⚠️ AND THE CHECK CHECKS ITSELF FIRST, because a scan that cannot fire is not a pass
+    # (`.claude/rules/context.md` §2: a measurement that can silently return LESS than the truth
+    # is not a measurement). If blanking changes NO count, the strings pass is inert — the helper
+    # broke, or the reading drifted — and "zero string-only views" is then silence, not a clean
+    # bill. It is reported as an instrument fault instead.
+    #
+    # ⛔ IT WALKS `bodies`, NOT `swift`, AND THE FIRST DRAFT WALKED `swift`. That list is
+    # `tracked("Sources/*.swift") + tracked("Sources/**/*.swift")`, and git's `*` crosses `/`, so
+    # every file appears TWICE; `bodies` is a dict and deduplicates them. Double-counting leaves
+    # the string-only test itself intact (twice zero is zero) and silently BREAKS the self-test
+    # below: every count differs, so "blanking changed nothing" could never be true. Caught by
+    # driving the mutant, not by reading — the check that guards against a scan that cannot fire
+    # was the scan that could not fire.
+    literal_free_uses: dict[str, int] = {}
+    for f in bodies:
+        for m in _CONSTRUCTION.finditer(_release_only(_code_only(read(f), blank_strings=True))):
+            literal_free_uses[m.group(1)] = literal_free_uses.get(m.group(1), 0) + 1
+    if not any(literal_free_uses.get(i, 0) != n for i, n in uses_count.items()):
+        sec.findings.append(Finding(
+            WARN,
+            "C1c cannot fire — blanking string literals changed no construction count",
+            ["scripts/doctor.py  _code_only(blank_strings=True) had no effect on Sources/"],
+            "Swift sources here carry identifiers inside string literals everywhere (log lines, "
+            "OSC addresses, diag text), so the two readings MUST differ. Equal counts mean the "
+            "strings pass is inert, not that the tree is clean — and the C1c verdict would then "
+            "be silence dressed as a pass. Repair the helper before trusting any C1 line.",
+        ))
+    else:
+        string_only: list[str] = []
+        for name, (df, dline) in sorted(declared_at.items()):
+            if uses_count.get(name, 0) == 0 or literal_free_uses.get(name, 0) > 0:
+                continue
+            site = ""
+            for sf in sorted(sites_of.get(name, set()), key=str):
+                for i, ln in enumerate(bodies[sf].split("\n"), 1):
+                    if re.search(rf"\b{re.escape(name)}\s*[({{]", ln):
+                        site = f"{rel(sf)}:{i}  {ln.strip()[:110]}"
+                        break
+                if site:
+                    break
+            string_only.append(f"{rel(df)}:{dline}  struct {name}: View — every construction "
+                               f"site is inside a string literal  ->  {site}")
+        if string_only:
+            sec.findings.append(Finding(
+                WARN,
+                "View types whose only construction site is text inside a string literal",
+                string_only,
+                "C1 reports these as reachable and they are not: the scan matched a name inside a "
+                "literal, not a call. Read the quoted site — if it is a log message or an address, "
+                "the view belongs in the C1 list above and its parking must be written down in "
+                "CLAUDE.md. If it is genuinely built from a string at runtime (the "
+                "ExternalDisplaySceneDelegate class, reached from an Info.plist key), say so at "
+                "the declaration, because no grep-based audit can see that door.",
+            ))
 
     # C2. A modal flag with no setter is a slot that can never open — and in this repo those
     # slots still cost their share of the SwiftUI metadata budget that causes the black screen.
@@ -1757,7 +1828,8 @@ def main() -> int:
         "Reachability is grep-based: it proves a NAME is never constructed, not that a surface is",
         "  unreachable at runtime. The chain to a rendering parent still has to be read by hand.",
         "  Comments no longer count as calls (#762 — the note documenting a doorless view used",
-        "  to hide it); STRING LITERALS still do. No such string exists today, nothing pins that.",
+        "  to hide it); a STRING LITERAL still can — C1c pins that no view relies on one,",
+        "  and says so with the quoted line when one ever does.",
         "And an entry point can live OUTSIDE Swift entirely: `ExternalDisplaySceneDelegate` has",
         "  zero references in Sources/ and is reached from an Info.plist string. A grep-based",
         "  audit calls that file dead and is wrong. Section B checks the plist name RESOLVES;",
