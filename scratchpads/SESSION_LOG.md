@@ -27651,3 +27651,40 @@ Dict, entdoppelt); die Begründung steht an der Schleife.
 
 **Doctor voll:** 2 CRITICALs, beide die bekannten founder-gated Workflow-Posten,
 unverändert. Laufzeit 11,9 s.
+
+## 2026-09-09 — #1155 · doctor: der NÄCHSTE plist-Einstiegspunkt, nicht nur der bekannte
+
+**Der zweite Blindfleck aus dem LIMITS-Block.** Sektion B prüfte eine WERT-FORM
+(`$(PRODUCT_MODULE_NAME).X`). Eine Klasse braucht diese Form nicht: ein blankes
+`<string>ExternalDisplaySceneDelegate</string>` unter demselben Schlüssel löst zur
+Laufzeit genauso auf — und die Regex sah es nicht. Fehlerrichtung: **grüne Sektion,
+kein Fehler.** Die gedruckte Grenze sagte es selbst („nothing here finds the next such
+entry point on its own"); eine ungepinnte Grenze ist ein Versprechen.
+
+**Zweiter Durchgang, nach SCHLÜSSEL statt nach Form** — jeder plist-Schlüssel, den iOS
+als Klassennamen behandelt, egal wie der Wert aussieht. Die beiden Durchgänge sind
+absichtlich eine VEREINIGUNG: der Form-Durchgang fängt weiter einen präfixierten Namen
+unter einem Schlüssel, den hier niemand gelistet hat. Geparst mit `plistlib`, nicht mit
+mehr Regex, weil der Wert vier Ebenen tief sitzt; die Zeilennummer wird danach aus dem
+Rohtext geholt, damit der Befund in zehn Sekunden von Hand prüfbar bleibt.
+
+**Ehrliche Grenze, am Code notiert:** ein blanker Apple-Klassenname (`UIWindowScene`
+unter `UISceneClassName`) ist nicht unserer und wird übersprungen; ein Name mit
+`$(…)`-Modulpräfix ist immer unserer und wird immer geprüft.
+
+**Selbsttest wie bei C1c:** die iOS-plist verdrahtet heute einen Scene-Delegate, also
+bedeutet „null Schlüsselwerte gesehen", dass der Lauf kaputt ist — dann ist „keine
+Befunde" Schweigen, kein Freispruch. ⚠️ **Er beweist den LAUF, nicht die
+SCHLÜSSEL-MENGE**: ein einziger gelisteter Schlüssel genügt ihm. Im Mutanten gemessen —
+nur den Delegate-Schlüssel zu entfernen ließ `UISceneClassName` weiter greifen und der
+Lauf wurde grün. Den heutigen Schlüssel hart zu pinnen würde beim nächsten
+plist-Umbau veralten, also bleibt der schwächere Test und die Grenze steht geschrieben.
+
+**Mutanten (isolierter Sandbox-Klon):** blanker, nicht existierender Delegate-Name →
+gefunden, richtige Zeile, `UIWindowScene` daneben korrekt NICHT gemeldet · derselbe Baum
+mit abgeschaltetem Schlüssel-Durchgang → der Befund verschwindet (Blindfleck
+reproduziert) · Lauf abgeschaltet → Instrumentenfehler-WARN feuert.
+
+`Resources/iOS/Info.plist` wurde nur GELESEN — founder-gated; eine Abweichung wird auf
+der Swift-Seite repariert. Realer Baum unverändert: Sektion B sauber, voller Doktor
+weiter 2 CRITICALs (beide die bekannten Workflow-Posten).
