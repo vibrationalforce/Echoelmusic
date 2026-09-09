@@ -28311,3 +28311,51 @@ Grenze im Quelltext: String-Literale überleben `strip_comments`. Heute trägt k
 Schreibweise so.
 
 **Alle vier Rot-Prüfer exit 0.** Commit `ccee983b`.
+
+## #1170 — die Poly-Engine speicherte ihre Samplerate ungeklammert, die Schwester immer (2026-09-09)
+
+**Erste Produkt-Scheibe nach drei Werkzeug-Runden.** Gefunden, indem der `min(max(`-Sweep zu
+Ende geführt wurde, den #1163 begonnen und dann verlassen hatte: 189 Stellen in 58 Dateien.
+
+**Die zwei, deren geklammerter Ausdruck eine DIVISION enthält, sind beide SICHER** — beides
+Widerlegungen, keine Befunde: `EchoelSVFilter:111` (Zähler eine Zeile höher NaN-geschützt, und
+der Init klammert `sampleRate > 0 ? … : 48000`, was NaN-sicher ist, weil `NaN > 0` falsch ist) ·
+`PulsePeriodEstimator:83` (`lagF > 0` vorher geschützt).
+
+**Der Befund fiel seitlich aus demselben grep:**
+
+```
+L875   EchoelDDSP.init       self.sampleRate = max(1, sampleRate)   <- immer geklammert
+L2865  EchoelPolyDDSP.init   self.sampleRate = sampleRate           <- roh
+```
+
+Dieselbe Datei, derselbe Eigenschaftsname, eine geschützt, eine nicht — **#937: eine Form
+repariert, ihr Zwilling stehen gelassen.** Es zählt, weil die Poly-Engine ihre EIGENE
+`sampleRate` in **vier Audio-Thread-Ausdrücken** liest (Portamento-Koeffizient + drei
+`exp(-Float(frameCount) / sampleRate / τ)`-Hüllkurven). Bei 0 → inf, Koeffizienten fallen
+zusammen; bei NaN → NaN, und der Bus ist **dauerhaft stumm** — die Klasse, die CLAUDE.md als
+schon einmal ausgeliefert führt.
+
+`max(1, x)` ist NaN-sicher **wegen der Argumentreihenfolge** (`NaN >= 1` ist falsch → gibt 1
+zurück). Das umgedrehte `max(x, 1)` lässt NaN durch. Deshalb verlangt der Wächter die exakte
+Schreibweise; Mutant B beweist, dass er die Umdrehung fängt.
+
+**LATENT, nicht live** — jeder Produktions-Aufrufer übergibt ein `static let 48_000`. Geschlossen
+auf die Grenzregel aus `engineering.md`, nicht weil es heute brennt.
+
+⛔ **UND MEIN EIGENER SWEEP ZÄHLTE EINEN KOMMENTAR ALS DRITTE ZUWEISUNG** — die #762-Gefahr, eine
+Runde nachdem ich sie am selben Tag in ZWEI Rot-Prüfern repariert hatte (#1168/#1169). Ein roher
+Scan meldet drei Stellen, zwei davon „ungeschützt"; mit geleerten Kommentaren sind es zwei, eine
+davon. Die Rücknahme steht am Test.
+
+**Wächter:** EIN Test in `ANonFiniteControlCannotReachTheRenderTests` (#588), das dieses Gesetz
+für zwei andere Grenzen bereits besitzt — eine neue Datei wäre #416. Mutanten: A ein Wort
+zurücknehmen → ROT (**tragend**, der Elternzustand) · B Reihenfolge drehen → ROT · C eine
+Zuweisung löschen → ZÄHL-Anspruch ROT (kein vakuumer Pass, #926).
+
+Die Kopfzahlen der Wächter-Datei waren durch die Ergänzung veraltet und sind per `grep -c`
+neu gemessen: 5 Tests / 7 Zusicherungen → **6 / 9**, „ONE finding, two boundaries" → „TWO
+findings, THREE boundaries". Alle vier Rot-Prüfer exit 0. Commit `5e65e6e0`.
+
+⚠️ **Gate steht aus:** das ist die erste Swift-Änderung dieser Runde — `Build for Testing` MUSS
+gelesen werden, bevor irgendetwas als grün gilt.
