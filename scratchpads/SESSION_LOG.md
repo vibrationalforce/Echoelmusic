@@ -28743,3 +28743,53 @@ ihr Datum. Der Ledger löscht nichts — das ist der Unterschied zur immer-gelad
 **Geprüft:** vier Rot-Prüfer exit 0 · kein Wächter pinnt eine der drei geänderten Phrasen
 (`git grep -c` über `Tests Sources scripts` = 0) · Sektionen unverändert 19 · `CLAUDE.md`
 unberührt bei 148.505 B.
+
+---
+
+## #1179 — Die Trap-Klasse durchgesucht: ein NEGATIV, und der eigene Gruppierungsfehler mit drin (2026-09-09)
+
+**Frage:** #1171 und #1172 schlossen je EINE Konstruktor-Falle (`Int(nan)`/`Int(inf)`/`Int(overflow)`
+sind Swift-TRAPS, und `Swift.max(1, Int(x))` rettet NICHT — die Klammer läuft NACH der
+Konvertierung). Gibt es eine dritte?
+
+```
+grep -rnE 'Int\(.*(sampleRate|rate|scale|sr)\b' Sources/Echoelmusic/DSP/*.swift   ->  26
+```
+
+**Antwort: NEIN — jede der 26 ist über ihren Aufrufer geschlossen.** Gemessen, nicht gelesen:
+EchoelReverb (EINE Stelle, in `EchoelFXChain`, seit #1172 mit Decke) · EchoelDDSPs Hüllkurven
+(EINE Stelle, `BioReactiveSynthVoice:299`, übergibt `Float(Self.sampleRate)` = eine KONSTANTE
+`48_000`) · EchoelLoudnessMeter (EINE Stelle, hinter `meterFormat.sampleRate > 0`) · PitchTracker
+(eigene `guard`-Zeile PLUS Wache an der Aufrufstelle) · EchoelSpaceReverb, EchoelModalBank,
+EchoelWSOLA (null Produktionsstellen).
+
+**⚠️ DAS LOCH DER HAUS-WACHE IST NICHT NaN — transkribiert, nicht angenommen:**
+
+| Wert | `x > 0` | erreicht `Int()`? |
+|---|---|---|
+| nan · −inf · 0 · negativ | false | nein |
+| **+inf** | **true** | **JA → TRAP** |
+| 192000 | true | ja, harmlos |
+
+Deshalb hat #1172 eine DECKE gewählt und nicht `isFinite && > 0`: **nicht Endlichkeit ist die
+Eigenschaft, sondern Größe.** Ein neuer `Int(x * rate)`-Aufruf ist NICHT geschlossen, wenn man
+das benachbarte `> 0` abschreibt.
+
+**⚠️ EINE Konvertierung hat gar keine Raten-Wache und ist nur sicher, weil sie niemand ruft:**
+`StudioCalculator.loopSamples(bars:)`. `git grep` findet die Deklaration und ZWEI Tests, null
+Produktions-Aufrufer. Die Tempo-Hälfte IST geschützt (`quarterNoteSeconds` gibt 0 zurück, wenn
+`bpm > 0` falsch ist — deckt nan und null ab), die RATEN-Hälfte nicht. Wer sie verdrahtet, muss
+die Rate im selben Commit sanieren — **nicht löschen** (#364).
+
+**⛔ UND DIE ERSTE FASSUNG DER LISTE HATTE `EchoelSpaceReverb` IM ERSTEN PUNKT**, also als
+„durch die FX-Kette geschützt". Die Kette konstruiert es gar nicht: null Produktionsstellen, ein
+Test. Geschrieben aus der FORM der Nachbarnamen statt gemessen — der **#867-Defekt**
+(„wer einen NACHBARN mit-behauptet, misst den Nachbarn mit"). `EchoelDDSP` war im selben Satz
+falsch gruppiert. Gefangen nur, weil ich die Zahlen VOR dem Commit noch einmal laufen ließ; die
+Rücknahme steht im Wächter-Kopf, damit sie nicht bloß hier liegt.
+
+**Heimat:** der Kopf von `Tests/CISmoke/ANonFiniteControlCannotReachTheRenderTests.swift` (#588),
+der diese Grenze schon für fünf Fälle besitzt — eine eigene Datei wäre #416. **KEIN neuer Test**:
+26 Stellen positiv zu scannen wäre die #646-Falle (jede harmlose Umbenennung macht ihn rot), und
+das Ergebnis ist eine MESSUNG, keine Repo-Invariante. Nur Kommentarzeilen geändert
+(`git diff | grep -vc '^+//'` = 0), 11 Ansprüche unverändert. Vier Rot-Prüfer exit 0.

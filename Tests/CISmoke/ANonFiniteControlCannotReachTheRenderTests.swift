@@ -37,6 +37,49 @@
 //     into the delay line — that is a different boundary with a real cost per frame, owned by
 //     the sanitize-at-the-boundary pattern in `applyBioReactive`, not by this slice.
 //
+// ⭐ THE REST OF THIS CLASS IS SWEPT AND CLEAN — a NEGATIVE, measured 2026-09-09 (#1179),
+// recorded so nobody re-runs the sweep and nobody "fixes" twenty-six call sites at once.
+//
+//   grep -rnE 'Int\(.*(sampleRate|rate|scale|sr)\b' Sources/Echoelmusic/DSP/*.swift   ->  26
+//
+// Every one of those conversions can trap the same way #1171 and #1172 did (`Int(nan)`,
+// `Int(inf)` and `Int(overflow)` are all Swift TRAPS, and `Swift.max(1, Int(x))` does NOT
+// save you — the clamp runs AFTER the conversion). Followed to their callers, none is
+// reachable today:
+//
+//   · EchoelReverb  — exactly ONE production construction site, in `EchoelFXChain`, whose
+//     rate #1172 sanitises with a CEILING before handing it on.
+//   · EchoelDDSP's envelope conversions  — one production site,
+//     `BioReactiveSynthVoice.swift:299`, and it passes `Float(Self.sampleRate)` where that is
+//     `private static let sampleRate: Double = 48_000`. A constant, not a runtime value.
+//   · EchoelLoudnessMeter  — one external site (`AudioEngine`), behind
+//     `if meterFormat.sampleRate > 0 && meterFormat.channelCount > 0`.
+//   · PitchTracker  — `guard sampleRate > 0, maxHz > minHz, minHz > 0 else { return nil }`,
+//     and its one call site guards `monitorTapSampleRate > 0` again.
+//   · EchoelSpaceReverb, EchoelModalBank, EchoelWSOLA  — zero production construction sites.
+//
+// ⛔ THE FIRST DRAFT OF THE LIST ABOVE PUT `EchoelSpaceReverb` IN THE FIRST BULLET, i.e.
+// claimed the FX chain protects it. It does not construct it at all: `git grep -c` finds zero
+// production sites and one test. Written from the shape of the neighbouring names rather than
+// measured — the #867 defect ("whoever claims a NEIGHBOUR in a register line has to measure the
+// neighbour"), caught here only because the numbers were re-run before the commit. `EchoelDDSP`
+// was mis-grouped in the same sentence for the same reason and is now stated from its own site.
+//
+// ⚠️ THE HOUSE IDIOM HAS EXACTLY ONE HOLE, AND IT IS NOT NaN. Transcribed, not assumed:
+// `x > 0` is FALSE for nan, -inf, 0 and negatives — so the common guard closes every case
+// #588 was written about — and TRUE for +inf, which then reaches `Int()` and traps. That is
+// why #1172 chose a CEILING (`<= maxPlausibleRate`) rather than `isFinite && > 0`: finiteness
+// is not the property that matters, magnitude is. A new `Int(x * rate)` site is NOT closed by
+// copying the neighbouring `> 0`.
+//
+// ⚠️ ONE CONVERSION HAS NO RATE GUARD AT ALL and is safe only because nothing calls it:
+// `StudioCalculator.loopSamples(bars:)` -> `Int((loopSeconds * sampleRate).rounded())`.
+// `git grep -n "loopSamples(" -- Sources Tests` finds its own declaration and TWO tests, and
+// no production caller. Its tempo half IS guarded (`quarterNoteSeconds` returns 0 for
+// `bpm > 0` false, which covers nan and zero), its RATE half is not. Wiring it is what would
+// make this paragraph wrong — sanitise the rate in the same commit, do not delete the method
+// on the strength of this note (#364).
+//
 // ⭐ GRADING (§3). FOUR findings, FIVE boundaries — the third (#1170, the poly engine's own
 // sample rate), the fourth (#1171, the shared delay line's constructor) and the fifth (#1172,
 // the FX chain handing the raw rate to fifteen stages) were added later and
