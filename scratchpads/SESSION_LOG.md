@@ -27808,3 +27808,41 @@ kompiliert), `Run Tests` = **failure** — aber das Log-Fenster zeigt
 `** TEST EXECUTE FAILED **` bei durchweg BESTANDENEN Tests: die dokumentierte
 #396-Klon-Lotterie, Infrastruktur, kein echter roter Test. Ob die fünf Ansprüche von
 #1156 gelaufen und grün sind, bleibt aus diesem Fenster **unbewiesen** (#807/#1040).
+
+## 2026-09-09 — Licht-Vertrag geprüft (sauber) · #1158 `--since-deploy`
+
+**Zwei Audits derselben Art wie #1157, beide SAUBER — aufgeschrieben, damit niemand denselben
+Boden noch einmal abläuft.**
+
+**1. Art-Net-Kanalbelegung.** CLAUDE.md behauptet „`ArtNetSender.dmxChannels` belegt VIER
+(acht bei 16 Bit)" — **stimmt**, beide Erzeuger (Bio UND Musik, `MusicMediaMap`) liefern
+exakt 4 bzw. 8 Bytes. ⚠️ Die Draht-Breite ist trotzdem `4 × fixtureCount`, weil
+`DMXFixtureFan.fanned` das Block-Muster vervielfacht — die Behauptung gilt der FUNKTION,
+nicht dem Paket, und der Fan dokumentiert sich selbst sauber. Sauber gedeckelt: `fanned`
+klemmt auf `universeSlots` (512) und auf `maxFixtures`, `artDMXPacket` schneidet >512 ab
+und füllt auf gerade Länge. **Kein Defekt.**
+
+**2. sACN gegen Art-Net — die Frage war eine SICHERHEITS-Asymmetrie.** Wenn das
+Blitz-Gesetz (≤3 Hz) nur auf einem der beiden Ausgänge greift, ist es kein Gesetz. Gemessen:
+`SACNSender` benutzt **dieselbe** Abbildung (`ArtNetSender.dmxChannels`), **dasselbe**
+Master-Gesetz (`masteredDimmer`), **dieselbe** `FlashGuard.slewedDimmer`-Rampe für Dimmer
+UND Farbe, **denselben** Tick (`FlashGuard.senderTickMilliseconds`) und **denselben** Fan.
+**Keine Asymmetrie.** Und bereits bewacht (`FlashSlewIsPerSecondTests`,
+`TheLightReachesMoreThanOneLampTests` u. a.) — ein weiterer Wächter wäre #416.
+
+**#1158 — `--since-deploy`.** `--since <sha>` ist die Abwehr gegen #1152b (ausgelieferte
+Änderung ohne Abnahme-Bitte, beim nächsten Freeze-Lift unsichtbar). Sie wirkt nur, wenn der
+Aufruf trivial ist — und die Handform
+`git log -2 --format=%H -- .deploy/release | tail -1` ist leicht um eins daneben. **Und um
+eins daneben druckt eine LEERE Liste, die wie „nichts zu testen" aussieht statt wie ein
+Fehler.** Ich habe den Befehl heute dreimal von Hand hergeleitet.
+
+**Das Off-by-one IST der Punkt:** `git log` druckt neueste zuerst, und jede Berührung von
+`.deploy/release` liefert einen Build (#1151) — der NEUESTE Commit ist also der Build in
+seiner Hand. Dagegen zu diffen fragt „was hat sich geändert, seit dieser Build geschnitten
+wurde", und das ist immer nichts. Basis ist Index **[1]**, nie [0]. Weniger als zwei
+Deploy-Commits → `None` → Exit 2, nie ein Rückfall auf den aktuellen Build.
+
+Selftest-Anspruch 11 pinnt den Index mit fünf Fixtures, und sie unterscheiden einen
+funktionierenden Parser von einem kaputten: das Umstellen auf `[0]` lässt **vier** davon
+fallen. Das ist der Standard, den diese Datei nach #738/#739 selbst aufgeschrieben hat.
