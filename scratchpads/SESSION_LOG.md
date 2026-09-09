@@ -27846,3 +27846,31 @@ Deploy-Commits → `None` → Exit 2, nie ein Rückfall auf den aktuellen Build.
 Selftest-Anspruch 11 pinnt den Index mit fünf Fixtures, und sie unterscheiden einen
 funktionierenden Parser von einem kaputten: das Umstellen auf `[0]` lässt **vier** davon
 fallen. Das ist der Standard, den diese Datei nach #738/#739 selbst aufgeschrieben hat.
+
+## 2026-09-09 — Gate-Nachweis für #1157 · Widget-Vertrag geprüft (sauber) · keine Scheibe
+
+**Gate für #1157 (`3ec59358`), CI/CD 5950:** `Build for Testing` = **success** → der neue
+Wächter `TheWireContractMatchesTheLawTests` **kompiliert**. `Run Tests` = failure, wie auf
+5949 davor; auf 5949 habe ich die Signatur bestätigt (`** TEST EXECUTE FAILED **` neben
+lauter bestandenen Tests = #396-Klon-Lotterie). Für 5950 ist der EINZELBEFUND aus dem
+Tail-Fenster **unbewiesen** — das Fenster endet im Artefakt-Upload. Ich sage nicht „grün".
+⚠️ **Billiges Rezept gefunden:** `list_workflow_jobs` mit **perPage 1, page 4** liefert
+genau den „Build & Test (iOS)"-Job; `perPage 1, page 1` liefert nur den Lint-Job.
+
+**Drei weitere Vertrags-Prüfungen, alle SAUBER — aufgeschrieben, damit niemand sie wiederholt.**
+· **Widget ↔ App: kein Schlüssel-Vertrag, der brechen kann.** Das Widget-Target **kompiliert
+  `BioFeedbackManager.swift` direkt** (Foundation-Werttypen, kein App-Modul-Import) — Schreiber
+  und Leser sind DERSELBE Code. Ein Tippfehler in einem Schlüssel ist strukturell unmöglich;
+  fiele die Datei aus dem Target, wäre es ein Compile-Fehler, kein stilles Nichts.
+  `AppGroupStore` (Dateinamen-basiert) wird vom Widget gar nicht benutzt.
+· **Widget-Auffrischung.** `reloadWidgetsIfDue()` hat genau EINEN Aufrufer, auf dem
+  Publish-Tick — **exakt so, wie der Dateikopf es selbst beschreibt**, inklusive der Folge
+  („nach Sitzungsende nur noch `.after(next)`, von WidgetKit budgetiert"). Die zweite
+  Timeline-Eintragung zur Ablaufzeit ist die dokumentierte Antwort darauf. Kein Defekt.
+· **MIDI-OUT** wurde NICHT neu geprüft: die Behauptungen (MPE OUT schaltbar, zweiter Schalter
+  hängt am ersten, EIN Besitzer) sind bereits von `MIDIOutQualitySwitchesTests` gepinnt — ein
+  zweiter Wächter wäre #416.
+
+**Ergebnis: keine Scheibe.** Vier Vertrags-Flächen an einem Tag gemessen, drei davon in diesem
+Zyklus, alle sauber. Das ist das Ergebnis, kein Platzhalter — und es wird hier notiert, damit
+der nächste Sweep nicht denselben Boden abläuft.
