@@ -140,7 +140,13 @@ Deprecated from main flow: the old SoundscapeEngine, ClipEngine, MomentCaptureVi
   `AmbisonicsEncode`, `LightFixtureGroup` (+`LightFixture`), `BioPhaser` (+`BioPhaserSource`) —
   je 1–2 Testdateien, sonst nur Kommentar-Nennungen. Befehl und Zähl-Kette:
   `memory/LEDGER_COUNTS.md` §Q. Nicht löschen (EchoelLux L2/L3 und der EchoelRender-Pfad
-  brauchen genau sie), nicht als klingend/leuchtend zitieren. ⛔ #756 nannte `BioSpaceMap` als BELEG dafür, dass die
+  brauchen genau sie), nicht als klingend/leuchtend zitieren. Dazu — nachgetragen 2026-09-09 (#1163) —
+  **`Core/BioTempoDirector`**: die ganze „Follow pulse"-Tempo-Spur, fertig gebaut und
+  getestet — `git grep -n BioTempoDirector -- Sources` = eigene Datei + DREI Kommentare,
+  **null Konstruktionen, null Aufrufe**; der Dateikopf sagt es selbst. **Gefährlichste
+  Sorte türlos: ein ZWILLING des lebenden Servos** (der ist inline in `EchoelStudioView`,
+  gespeist von `BioComposer.tempo(for:)` über `compose`) — wer den Tempo-Glide repariert,
+  editiert plausibel die Datei, die nichts ausliefert; wer eine BPM-Spur plant, baut neu. ⛔ #756 nannte `BioSpaceMap` als BELEG dafür, dass die
   Website-Zeile „breath→azimuth, coherence→distance, HRV→elevation" stimmt. Der SCHLUSS
   hält, der ZEUGE nicht — geprüft wurde der Inhalt der Karte, nicht ob jemand sie ruft. NOW WIRED — do NOT list these as unwired: BioVisualParams
   (read by `MetalBioView`; `EchoelBioEngine` names it only in a doc comment — audit 2026-09-02), FeedbackGuard (AudioEngine duck loop; ⛔ seine „Audio input"-Tür
