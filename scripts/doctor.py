@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import plistlib
 import re
 import shutil
 import subprocess
@@ -1037,10 +1038,85 @@ def section_b() -> Section:
                 name = m.group(1)
                 if not re.search(r"\bclass\s+" + re.escape(name) + r"\b", swift_all):
                     missing.append(f"{rel(pl)}:{i + 1}  '{name}' — no `class {name}` in Sources/")
+    # ⭐ #1155 — THE SCAN ABOVE ASKS FOR A VALUE SHAPE, AND A CLASS NAME DOES NOT NEED THAT
+    # SHAPE. `$(PRODUCT_MODULE_NAME).` is a convenience, not a requirement: a bare
+    # `<string>ExternalDisplaySceneDelegate</string>` under the same key resolves at runtime just
+    # as well, and the regex above would not see it. That is a measurement which can silently
+    # return LESS than the truth (`.claude/rules/context.md` §2) — the failure mode is a green
+    # section, not an error. So this second pass asks by KEY instead: every plist key iOS treats
+    # as a class name, whatever the value looks like. The two passes are a UNION on purpose —
+    # the shape pass still catches a prefixed name under a key nobody listed here.
+    #
+    # It parses with `plistlib` rather than more regex, because the value can sit at any depth
+    # (the scene delegate lives four levels down, inside UIApplicationSceneManifest →
+    # UISceneConfigurations → an array → a dict). The line number is recovered afterwards by
+    # finding the value in the raw text, so the finding stays hand-checkable.
+    #
+    # ⚠️ HONEST LIMIT: a bare name from Apple's own frameworks (`UIWindowScene` under
+    # `UISceneClassName`) is not ours to find in `Sources/` and is skipped. A name carrying a
+    # `$(…)` module prefix is always OURS and is always checked.
+    class_keys = {"UISceneDelegateClassName", "NSPrincipalClass", "NSExtensionPrincipalClass",
+                  "CLKComplicationPrincipalClass", "WKExtensionDelegateClassName",
+                  "UIApplicationDelegateClassName", "UISceneClassName"}
+    apple_prefixes = ("UI", "NS", "AV", "WK", "CLK", "SK", "PH", "CA")
+
+    def _walk_plist(node, out):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                if k in class_keys and isinstance(v, str):
+                    out.append(v)
+                _walk_plist(v, out)
+        elif isinstance(node, list):
+            for v in node:
+                _walk_plist(v, out)
+
+    keyed_seen = 0
+    for pl in sorted(tracked("*.plist")):
+        raw = read(pl)
+        values: list[str] = []
+        try:
+            _walk_plist(plistlib.loads(raw.encode("utf-8")), values)
+        except Exception:
+            sec.findings.append(Finding(
+                WARN, "A plist could not be parsed, so its class names were not checked",
+                [f"{rel(pl)}  plistlib refused the file"],
+                "The key-based pass below is blind for this file. An unparsable plist is also a "
+                "shipping risk in its own right — read it before assuming it is only this "
+                "checker's problem."))
+            continue
+        for value in values:
+            keyed_seen += 1
+            name = value.split(".")[-1] if value.startswith("$(") else value
+            if name == value and name.startswith(apple_prefixes):
+                continue                      # Apple's own class, not declared in Sources/
+            if re.search(r"\bclass\s+" + re.escape(name) + r"\b", swift_all):
+                continue
+            line = next((i + 1 for i, ln in enumerate(raw.split("\n")) if value in ln), 0)
+            entry = f"{rel(pl)}:{line}  '{name}' — no `class {name}` in Sources/"
+            if entry not in missing:
+                missing.append(entry)
+    # ⚠️ AND THE PASS SAYS WHETHER IT COULD SEE ANYTHING AT ALL. `Resources/iOS/Info.plist`
+    # carries `UISceneDelegateClassName` today, so zero keyed values means the walk broke — the
+    # key set drifted, the nesting changed, the file moved — and "no findings" would then be
+    # silence dressed as a pass. Same law as C1c in section C: a scan that cannot fire is a
+    # finding, never a green.
+    #
+    # ⚠️ AND IT PROVES THE WALK, NOT THE KEY SET. Any ONE listed key satisfies it, so a key that
+    # matters could still be missing from the set while a neighbour keeps the count above zero.
+    # Measured in the mutant: emptying the delegate key alone left `UISceneClassName` matching
+    # and the run went green. Pinning today's exact key would go stale the moment the founder
+    # restructures the plist, so the weaker test stands and the limit is written here instead.
+    if keyed_seen == 0:
+        sec.findings.append(Finding(
+            WARN, "The plist class-name pass found no keys to check — it cannot fire",
+            ["scripts/doctor.py  no listed class key matched in any tracked *.plist"],
+            "At least one scene-delegate class name is wired in Resources/iOS/Info.plist, so this "
+            "pass must see it. Zero means the walk or the key set is broken, not that the plists "
+            "are clean. Repair the checker before trusting this section.")) 
     if missing:
         sec.findings.append(Finding(
             WARN, "A plist names a Swift class that is not declared",
-            missing,
+            sorted(missing),
             "iOS resolves this name at RUNTIME, so a rename breaks the feature with no compile "
             "error and no failing test. Info.plist is founder-gated — restore the Swift class "
             "name rather than editing the plist, and say so in the status delta."))
@@ -1832,8 +1908,10 @@ def main() -> int:
         "  and says so with the quoted line when one ever does.",
         "And an entry point can live OUTSIDE Swift entirely: `ExternalDisplaySceneDelegate` has",
         "  zero references in Sources/ and is reached from an Info.plist string. A grep-based",
-        "  audit calls that file dead and is wrong. Section B checks the plist name RESOLVES;",
-        "  nothing here finds the next such entry point on its own.",
+        "  audit calls that file dead and is wrong. Section B now resolves every class name",
+        "  under the plist keys iOS treats as class names, prefixed or bare, at any depth — so",
+        "  the NEXT such entry point is found too, as long as its key is in that list. A key",
+        "  nobody listed, or an entry point outside a plist altogether, still is not.",
         "Nothing here compiles or runs anything. A green doctor says the instruments look honest,",
         "  never that the code works.",
         "Sound, feel and device behaviour are outside its reach entirely — those need a listen.",
