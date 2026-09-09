@@ -28039,3 +28039,57 @@ braucht vorher eine Auslagerung nach `memory/LEDGER_COUNTS.md`.
 OHR; Visuals gesperrt; Gates ohne Lauf (kein gefilterter Pfad berührt).
 
 Commit `37050277`.
+
+## 2026-09-09 — #1163 · Eine ganze Tempo-Spur ist gebaut, getestet — und stand in keinem Register
+
+**Wie der Zyklus anfing (und warum der WEG hier mehr wert ist als der Fund).** Als NaN-Jagd:
+CLAUDE.md nennt `min(max(…))` als Form, die schon einmal Dauerstille verursacht hat.
+`git grep -o "min(max(" -- Sources | wc -l` → **191**. Zu viele für eine Scheibe, also verengt
+auf die eine, die CLAUDE.md selbst nennt: die Tempo-Klammer in `BioComposer.tempo(for:)`.
+
+**ZWEI Verdachte starben an der Messung — beide vor dem Melden:**
+1. *„NaN erreicht die Uhr."* Nein: der Quelltext an der Stelle sagt es selbst — `PatternEngine.
+   glideTempo` öffnet mit dem NaN-sicheren `clamped(to:)` gegen dieselben Grenzen. Eine Ebene
+   tiefer schon gefangen, und dort steht ein ⛔-Block genau darüber.
+2. *„Der Flow-Servo ist nur ein Log-String."* **Beinahe-Falschmeldung.** Meine erste Nadel war
+   `\.tempo(for:` plus `BioComposer.tempo(` — sie übersieht den UNQUALIFIZIERTEN Aufruf
+   innerhalb des eigenen Typs: `BioComposer.swift:862  let playTempo = tempo(for: input)`. Der
+   Servo ist sehr wohl live. **Gesetz: eine Nadel, die eine AUFRUFFORM verfehlt, ist derselbe
+   Defekt wie eine, die gar nichts trifft** — nur sieht sie aus wie ein Fund statt wie ein Pass.
+
+**Was übrig blieb, gemessen und dreifach geprüft:** `Core/BioTempoDirector` —
+`git grep -n BioTempoDirector -- Sources` liefert die eigene Datei plus **drei Kommentare**.
+Null Konstruktionen, null Aufrufe. Eine fertige „Follow pulse"-Spur: `TempoMode`
+locked/bioFollow, Kohärenz-Blend zur Resonanz-BPM, Ein-Pol-Glide, NaN-sicheres `clampTempo`,
+das Transports eigene Grenzen liest — plus eigene Testdatei.
+
+**Der Dateikopf ist ehrlich** („deliberately NOT wired to playback yet"). **Der Defekt ist das
+Register:** CLAUDE.mds Liste der app-unverdrahteten Kerne nannte BioModulation, CloudSync,
+BioSpaceMap, VisualModulation und vier `Sync/`-Kerne — diesen nicht. Und das ist die Liste,
+aus der eine Sitzung ableitet, was noch zu BAUEN ist.
+
+**Warum es die gefährlichste Form in dieser Liste ist:** kein verwaistes Hilfsmittel, sondern
+ein **ZWILLING** ausgelieferten Verhaltens. Der lebende Servo ist `BioComposer.tempo(for:)` →
+`compose` → der Inline-Konvergenzblock in `EchoelStudioView`. Wer „den Tempo-Glide repariert",
+editiert plausibel die Datei, die nichts ausliefert. Wer eine BPM-Spur PLANT, baut neu.
+
+**Wächter:** `Tests/CISmoke/TheBioFollowTempoLaneHasNoDoorTests.swift`, vier Ansprüche.
+Er VERBIETET das Verdrahten nicht (#364) — Anspruch 1 nennt in der Fehlermeldung die
+Register-Zeile UND die T1-Aufzählung der Tempo-Quellen, die beide am selben Tag mitziehen müssen.
+**Als MUTANT getrieben, nicht gelesen:** alle vier grün; Anspruch 1 wird rot bei jeder der drei
+Verdrahtungsformen einzeln (`BioTempoDirector(`, `BioTempoDirector.minTempo`,
+`: BioTempoDirector`) und bleibt grün, wenn die Einspritzung ein KOMMENTAR ist (#762).
+
+**⚠️ Benotung im Kopf war zuerst falsch und ist korrigiert:** ich schrieb „Anspruch 1 ist
+tragend", weil er den Fund AUSSPRICHT. Tragend ist der, der VOR der Scheibe ROT ist — das ist
+Anspruch 4 (die Register-Zeile; `grep -c` auf CLAUDE.md war 0). 1–3 sind Gegengewichte.
+
+**⚠️ Decke:** CLAUDE.md 148.012 → **148.598 B**, Kopfraum **1.402**. Erste Fassung des Eintrags
+kostete 837 B, gekürzt auf die zwei tragenden Tatsachen. **Der nächste Absatz dort braucht
+vorher eine Auslagerung ins Ledger.**
+
+**Gate-Hinweis:** dieser Push berührt `Tests/**`, also startet `Xcode Compile Check` — der
+kompiliert aber `Sources/` ALLEIN und beweist über die neue Testdatei NICHTS. Nur
+`Build for Testing` in der CI/CD-Pipeline tut das.
+
+Commit `1e2d6db0`.
