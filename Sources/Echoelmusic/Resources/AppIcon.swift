@@ -246,6 +246,15 @@ public struct AppIconGenerator {
 
 /// App icon matching echoelmusic.com: "E" + 3 sine wave curves, monochrome #E0E0E0 on #000.
 /// Uses EchoelBrandWaveShape from EchoelWaveDesign.swift for consistent wave rendering.
+///
+/// ⚠️ **PREVIEW-ONLY, AND THAT IS CORRECT (#1156, measured).** Its only construction sites sit
+/// inside this file's `#if DEBUG` block, so a Release build contains no caller. It is not the
+/// shipped icon and was never meant to be — iOS takes the icon from the asset catalogue
+/// (`Assets.xcassets/AppIcon.appiconset`, plus the Mac/TV/Vision/Watch sets beside it). This
+/// view is the RENDERER those PNGs are exported from, a design tool with a legitimate parking
+/// spot. `doctor --section C` lists it under "built ONLY in a DEBUG branch"; the note is here so
+/// the next reader does not have to re-derive that from the tool's output (#1147 — a register
+/// entry does not reach the line a session reads first).
 public struct AppIconView: View {
     let size: CGFloat
 
@@ -296,6 +305,24 @@ public struct AppIconView: View {
 // MARK: - Launch Screen View
 
 /// Launch screen matching echoelmusic.com: monochrome E + waves on black.
+///
+/// ⛔ **THIS IS NOT THE APP'S LAUNCH SCREEN, AND IT CANNOT BECOME ONE FROM SWIFT (#1156).**
+/// iOS draws the launch screen before any Swift runs: it comes from the `UILaunchScreen`
+/// dictionary in `Info.plist` (or a storyboard), never from a SwiftUI `View`. Wiring this type
+/// to something would change nothing about what a user sees at launch. Like `AppIconView` above,
+/// its only construction site is this file's `#if DEBUG` block — a design tool, correctly parked.
+///
+/// ⚠️ **MEASURED BESIDE IT, AND IT IS A REAL GAP — BUT THE REPAIR IS FOUNDER-GATED.**
+/// `Resources/iOS/Info.plist` declares `<key>UILaunchScreen</key>` followed by an EMPTY `<dict/>`,
+/// so the launch window uses the system default background. Meanwhile
+/// `Assets.xcassets/LaunchScreenBackground.colorset` exists, is pure black in BOTH the light and
+/// the dark appearance, and has ZERO references anywhere in the repo — it is exactly the asset
+/// that empty dictionary would name via `UIColorName`. Consequence on a light-appearance device:
+/// a cold launch shows a bright window first and the app's black surface second. Two artefacts
+/// point at an intent nobody finished wiring.
+/// `Info.plist` is founder-gated (report, do not edit — `.claude/rules/context.md` §3), so this
+/// stays a REPORT. Guard: `Tests/CISmoke/TheLaunchScreenIsTheSystemDefaultTests.swift` — it
+/// does NOT forbid the repair (#364) — it pins today's state and names this prose the day it changes.
 public struct LaunchScreenView: View {
 
     public init() {}
