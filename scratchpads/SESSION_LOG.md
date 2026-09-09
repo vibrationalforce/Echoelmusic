@@ -28564,3 +28564,51 @@ Abwesenheit beweist nichts, und das Fenster ist ein Tail mit 962 s Loch).
 
 Eingetragen in `Tests/CISmoke/CLAUDE.md` §5, dem bestehenden Zuhause des CI-Lesens (#416).
 Kein Wächter — es ist ein Triage-Rezept, keine Repo-Tatsache. Alle vier Rot-Prüfer exit 0.
+
+## #1175 — „5 von 10" stimmt; der RÜCKSTAND dahinter ist eine Scheibe, nicht fünf (2026-09-09)
+
+**Geprüft wurde die Zahl mit der schlechtesten Bilanz der ganzen Datei** — die
+Adaptivitäts-Zahl, die laut `LEDGER_COUNTS` §F VIERMAL falsch war (2 von 11 → 3 von 11 mit
+einem Panel ohne Gitter → eine vierte Fassung, die Stunden hielt).
+
+**NULL-BEFUND: heute stimmt alles.** Gemessen mit den Befehlen, die CLAUDE.md selbst
+danebenschreibt:
+
+| Behauptung | gemessen |
+|---|---|
+| Nenner 10 | **10** ✅ |
+| der ⛔-Block-Befehl liefert 11 | **11** ✅ |
+| `soundPanel` sieben Gitter | **7** ✅ |
+| `moodPanel` zwei · `visualPanel` zwei | **2 / 2** ✅ |
+| `mixerPanel` eins · `masterPanel` eins | **1 / 1** ✅ |
+| 13 Gitter über 5 Wirte | **13 / 5** ✅ |
+
+⭐ **DER FUND IST NICHT DIE ZAHL, SONDERN WAS SIE SUGGERIERT.** Der Satz „Die anderen fünf …
+stapeln weiter starr" liest sich wie FÜNF offene Arbeitseinheiten. Gemessen, den Aufrufern
+zwei Ebenen gefolgt:
+
+- `menuPanelHost` ist der **WIRT** (erreicht transitiv alles — CLAUDE.md sagt das an anderer
+  Stelle selbst), zählt also nicht,
+- `videoPanel` und `bioPanel` tragen **null** Zahlenfelder,
+- `effectsPanel` zwei Picker (in seinem eigenen Rumpf),
+- **genau EINE** Fläche hat Inhalt zum Umbrechen: `tempoToolsPanel` — 2 Felder + 3 Schalter,
+  und die sitzen in **zwei** seiner vier Zeilen-Member (`metronomeRow`, `hapticsRow`);
+  `tapTempoRow` und `variationsCard` tragen keine.
+
+**Der Rückstand ist eine Scheibe, nicht fünf.** Klausel in CLAUDE.md ergänzt (+635 B,
+149.276, Kopfraum **724** — die nächste Ergänzung dort braucht ZUERST eine Auslagerung).
+
+⛔ **§Fs EIGENES GESETZ, AUS DER GEGENRICHTUNG — und ich bin genau hineingelaufen.** §F sagt
+„folge dem AUFRUFER", weil ein GITTER in einem Member liegen kann, das kein Panel ist. Beim
+Zählen des INHALTS gilt dasselbe rückwärts: die starren Panel-Rümpfe **delegieren** an eigene
+Member, also untercountet jede Zählung im Rumpf. Meine erste Erhebung tat das und meldete
+„`effectsPanel` 2 Felder, `tempoToolsPanel` 0" — **beide falsch, und beide genau verkehrt
+herum**: `effectsPanel` hat 0 Felder, die 2 gehören `metronomeRow` unter `tempoToolsPanel`.
+Aufgefallen nur, weil die zweite Erhebung widersprach; eine allein hätte ich geglaubt.
+Aufgelöst durch Attribuierung JEDER der 52 `EchoelValueField(`-Stellen an ihr deklarierendes
+Member.
+
+⚠️ **`tempoToolsPanel` NICHT gebaut, und das ist eine Entscheidung, keine Vergesslichkeit.**
+Sieben Geräte-Verify-Posten warten schon auf das Auge des Founders; eine achte unbestätigte
+UI-Änderung macht seine Rückmeldung unlesbar — dasselbe Argument, das die Visuals sperrt. Die
+Fläche ist als EINE benannte Scheibe vermerkt, für nach seiner Rückmeldung.
