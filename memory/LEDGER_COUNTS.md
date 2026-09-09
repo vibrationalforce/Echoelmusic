@@ -6064,13 +6064,15 @@ also ein Datum, und Provenienz ist genau das, was hier gehört.
 Handzählen liefert eine ANDERE Zahl als das Werkzeug, ohne dass eines von beiden falsch ist:
 
 ```
-python3 scripts/founder-verify.py                                   # 51 Bitten in 49 Dateien
-git grep -l NEEDS-FOUNDER-VERIFY -- Sources Tests CLAUDE.md          # 50 Dateien
+python3 scripts/founder-verify.py                            # Stand #810 (2026-08-25): 51 Bitten in 49 Dateien
+git grep -l NEEDS-FOUNDER-VERIFY -- Sources Tests CLAUDE.md  # Stand #810 (2026-08-25): 50 Dateien
+# Heutige Werte NICHT hier ablesen — die datierte Tabelle unten (#1177) oder die Befehle selbst.
 ```
 
-`git grep -l` zählt jede Datei, die den Marker TRÄGT — einschließlich der vier
-NOT-ASKS-Prosastellen (zwei in `CLAUDE.md`, zwei in Wächter-Köpfen, #753) und `CLAUDE.md`
-selbst. Das Werkzeug zählt Dateien mit einer echten BITTE. Wer die Zahl per `grep` prüft,
+`git grep -l` zählt jede Datei, die den Marker TRÄGT — einschließlich der NOT-ASKS-Prosastellen
+(#753) und `CLAUDE.md` selbst.  ⛔ Hier stand „der vier … (zwei in `CLAUDE.md`, zwei in
+Wächter-Köpfen)"; #1162 hatte die Vier bereits in `CLAUDE.md` zurückgenommen und DIESE Zeile
+nicht (#456). Die heutige Aufteilung steht in der datierten Tabelle unten, nicht hier. Das Werkzeug zählt Dateien mit einer echten BITTE. Wer die Zahl per `grep` prüft,
 prüft eine andere Größe und liest den Unterschied als Drift.
 
 **Und die Marker-Datei-Zahl ist über mindestens zehn Commits STABIL** (HEAD, HEAD~2, HEAD~5,

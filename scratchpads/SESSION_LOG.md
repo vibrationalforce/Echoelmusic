@@ -28701,3 +28701,45 @@ Quelltext (die `EchoelModalBank`-Lehre), nur in dem Dokument, das sie verwalten 
 `CLAUDE.md` unverändert als GENAU EINE NOT-ASK-Stelle, die Kopfzahl 111/99 bewegt sich nicht ·
 kein #416-Doppel (der neue Gesetzessatz existiert genau einmal im Baum) · alle vier Rot-Prüfer
 exit 0. Decken-Wächter selbst-benotet, weil #1176: 148.505 < 150.000.
+
+---
+
+## #1178 — Das Gesetz von #1177, angewandt auf den Block, der es beschreibt (2026-09-09)
+
+**#1177 schrieb: *eine Zahl im Ledger ist nur haltbar, wenn ihre Zeile ein DATUM trägt* — und
+ließ die zwei Zeilen, aus denen dieses Gesetz abgeleitet wurde, undatiert stehen.** Das
+Code-Fenster in §H sagte weiter `# 51 Bitten in 49 Dateien` und `# 50 Dateien`, direkt über
+einer neuen Tabelle mit 111/99 und 106. Wer den Block zuerst liest, liest die abgelaufenen
+Zahlen; die Prosa daneben („wird datiert gelesen") kann das nicht heilen, wenn kein Datum
+DASTEHT.
+
+**Der Sweep davor, weil ein Einzelfall keine Klasse ist.** Gesucht wurden Befehlszeilen mit
+Zahlen-Kommentar in allen vier immer-geladenen Gesetzes-Dateien:
+
+```
+grep -cE '^(.*(git |grep |python3 |wc |awk |sed |find ).*)#[^#]*[0-9]' <datei>
+   CLAUDE.md 14 · Tests/CISmoke/CLAUDE.md 10 · .claude/rules/context.md 1 · LEDGER 11
+```
+
+⚠️ **36 Treffer und fast alle FEHLALARM** — das Muster liest `#1024`, `#456` usw. als
+Shell-Kommentar, weil eine Slice-Nummer mit demselben Zeichen beginnt. Von Hand durchgesehen
+bleiben **zwei** echte Fälle, und beide sind die §H-Zeilen. Die drei Kommentare in
+`Tests/CISmoke/CLAUDE.md` (`# 0 = clean`, `# 0 = every COUNT PIN …`) sind nach dem #1177-Gesetz
+korrekt: **0 ist ein ZUSTAND, kein Datum** — ein Werkzeug, das sauber meldet, meldet immer 0.
+
+**Zwei Änderungen, beide in `memory/LEDGER_COUNTS.md` §H (+327 B):**
+1. Beide Befehlszeilen tragen jetzt `# Stand #810 (2026-08-25): …`, plus eine dritte
+   Kommentarzeile, die sagt, wo die heutigen Werte stehen.
+2. **Ein zweiter #456-Fund im selben Block:** der Satz darunter behauptete weiter „der vier
+   NOT-ASKS-Prosastellen (zwei in `CLAUDE.md`, zwei in Wächter-Köpfen)". #1162 hatte die Vier in
+   `CLAUDE.md` zurückgenommen und diese Zeile nicht — dieselbe Auslassung, die #1177 eine
+   Ebene höher gefunden hat, ein Absatz weiter unten. Ersetzt durch die Rücknahme plus Zeiger
+   auf die datierte Tabelle.
+
+**Was das NICHT ist:** eine Nachführung. Die alten Zahlen bleiben stehen, sie bekommen nur
+ihr Datum. Der Ledger löscht nichts — das ist der Unterschied zur immer-geladenen Datei, wo
+#818 gelöscht statt nachgeführt hätte.
+
+**Geprüft:** vier Rot-Prüfer exit 0 · kein Wächter pinnt eine der drei geänderten Phrasen
+(`git grep -c` über `Tests Sources scripts` = 0) · Sektionen unverändert 19 · `CLAUDE.md`
+unberührt bei 148.505 B.
