@@ -55,7 +55,15 @@
 # status in two casings — plus `resolved`/`RESOLVED` and `in-progress`/`in_progress`.
 # A case-sensitive list catches half of each pair and looks like it works.
 #
-# MEASURED EFFECT: 246 due -> 219, with 27 skipped. ⛔ The first version of this line
+# MEASURED EFFECT: the filter removes rows, and the size of what it removes is printed
+# live — see the BACKLOG line. ⛔ FOUR FIXED NUMBERS STOOD IN THIS FILE FOR THE SAME
+# QUANTITY (#1159, measured 2026-09-09): "246 due -> 219, with 27 skipped" here, "219
+# decisions" below, "132 due" at the head of the python block, and "216 items" beside the
+# BACKLOG print — while the shipped code printed 291. FOUR values, none of them current,
+# in the file whose own next paragraph says *the number that goes in the comment is the one
+# the SHIPPED code prints*. They are DELETED rather than refreshed (#818): a backlog with
+# no automatic flag (#810) only grows, so any literal here is a date, not a fact, and the
+# script already prints the live one on every run. ⛔ An earlier version of this same line
 # said "-> 216" and "30 skipped" — the numbers from the PROTOTYPE, whose terminal set
 # also held `confirmed`, `assessed`, `amended` and `parked`. Those four are not in the
 # shipped list (each is one or two rows and none clearly means "no longer in force"), so
@@ -65,8 +73,10 @@
 # only as the size of this change; the live figures are the BACKLOG line the script now
 # prints on every run.
 #
-# The change is small on purpose: the backlog is NOT mostly noise. 219 decisions really
-# have never been reviewed, the oldest dated 2026-04-10 — four and a half months.
+# The change is small on purpose: the backlog is NOT mostly noise. Most of those rows
+# really have never been reviewed, and the BACKLOG line names both the count and the date
+# of the oldest — a DURATION written here ("four and a half months") ages every day it is
+# not edited, which is why it is gone rather than corrected.
 # Nothing flags them (#810: there is no cron), and a 30-day default on every row makes
 # the backlog unbounded by design. Fixing the filter does not fix that, and this line
 # must not be read as having done so.
@@ -87,7 +97,7 @@ command -v python3 >/dev/null 2>&1 || { echo "review.sh needs python3 to parse t
 CSV="$CSV" MODE="$MODE" python3 - <<'PY'
 import csv, os, sys, datetime, signal
 
-# `./review.sh | head` is the normal way to skim 132 due decisions, and python
+# `./review.sh | head` is the normal way to skim a backlog this size, and python
 # turns the resulting SIGPIPE into a traceback on stderr. Restore the default
 # handler so a truncated read stays quiet — the cron pipes this into a log file.
 try:
@@ -139,7 +149,7 @@ print(f"=== Decision Review — {today} ===")
 print()
 
 due = [r for r in body if is_due(r)]
-# The size and the age FIRST, because 216 items is a backlog and not a to-do list, and a
+# The size and the age FIRST, because a list this long is a backlog and not a to-do list, and a
 # reader who starts at the first entry cannot tell which they are looking at. `skipped`
 # is printed so the filter never quietly grows into hiding real work.
 skipped = sum(1 for r in body if r[4] <= today and not_in_force(r))
