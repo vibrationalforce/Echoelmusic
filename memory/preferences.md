@@ -27,9 +27,14 @@ User preferences for development workflow, communication, and tooling.
   `git -c user.name=Claude -c user.email=noreply@anthropic.com commit …`; `git config` und jedes
   History-Rewrite (amend/rebase) blockt der Auto-Mode-Klassifikator. `Co-Authored-By`-Trailer bleibt.
   Hook-Vorgabe, keine Founder-Entscheidung — nicht auf „Echoel" zurückdrehen.
-- **Push-Disziplin (2026-09-10, #1239):** vor jedem Push `xcode-compile-check.yml` lesen — ein Push,
-  während der Kopf-Lauf `in_progress` ist, CANCELT ihn (#2529–#2535 so verloren); `queued` ist unschädlich.
-  Docs-Commits lokal sammeln und zusammen mit dem nächsten Code-/Deploy-Commit pushen.
+- **Push-Disziplin (2026-09-10, #1239, präzisiert 17:56):** `xcode-compile-check.yml` hat
+  `concurrency: cancel-in-progress: true` UND einen `paths:`-Filter (`Sources/**`, `Tests/**`,
+  `project.yml`, `Package.swift`, `Package.resolved`, `Resources/iOS/Info.plist`, das Skript, die
+  Workflow-Datei). Folge: ein Push, der einen dieser Pfade berührt, cancelt den laufenden
+  Kopf-Lauf (#2529–#2535 so verloren) — ein Push, der NUR `scratchpads/`, `memory/`, `docs/`,
+  `CLAUDE.md` berührt, löst gar keinen Lauf aus und cancelt darum nichts (gemessen: 195d906 über
+  5cf53a2, #2540 blieb stehen). Also: Code-Pushes erst, wenn der Kopf-Lauf nicht `in_progress`
+  ist; Docs-Pushes jederzeit.
 - **Commit-Messages mit deutschen „…"-Anführungszeichen:** immer über `-F <datei>`, nie inline `-m`.
 
 ## Session Workflow
