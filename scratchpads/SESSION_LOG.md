@@ -29757,3 +29757,19 @@ keine Zugriffsverfolgung, der pointee bleibt über den Zeiger mutierbar. Claim 5
 macOS-Warteschlange lieferte seit `56db8f0` (16:54) kein grünes Compile mehr für drei `Sources/`-Commits (#1233,
 #1236, #1237). Regel ab jetzt: vor einem Push `actions_list` auf `xcode-compile-check.yml`; ist der Kopf-Lauf
 `in_progress`, wartet der Push, bis er fertig ist. `cab96f3` wartet auf #2536 (`d30f39b`, läuft seit 17:11:51).
+
+## #1240 Ultraplan-Zeile 19 — Ratchet auf Anker-Miss-Skips (2026-09-10, ~17:22 UTC, `1e50508`)
+
+Gemessen (Python, Drei-Zeilen-Fenster wie im Wächter): 393 `throw XCTSkip`-Stellen in `Tests/CISmoke`, 302 mit `fileExists`
+in den drei Zeilen darüber (Baum fehlt → ehrlicher Skip), **91** Anker-Miss-Skips (Datei da, Anker nicht). Unter
+`xcodebuild test-without-building` ist ein Skip kein Rot; ein Rename von `stop(reason:)` machte aus einem Wächter ein
+stilles Grün, und der einzige Detektor ist der abgeleitete Skip-Needle im 200-Zeilen-Fenster (#806/#807). Neuer Wächter
+`TheAnchorMissSkipsDoNotGrowTests` (4 Claims): Ratchet ≤ 89 (nur abwärts; eigene Datei ausgeschlossen, Needle aus zwei
+Teilen zusammengesetzt) · die zwei vom Audit gesampelten Stellen failen jetzt (`TheMasterGainMovesInSmallStepsTests`
+`return XCTFail`; `TheAudioLanesHaveNoProducerTests.body(of:in:)` `XCTFail` + `throw AnchorMissing`, damit der
+`try`-Vertrag der Aufrufer bleibt — die zwei anderen Skips derselben Datei, unbalancierte Klammern und fehlender
+Enumerator, sind Baum-/Struktur-Fälle und bleiben) · `gh-test-verdict.py:104` trug „268 of the 358 files" — heute
+305 von 487, in Wochen um 31 Dateien veraltet → der Befehl steht dort · Gegengewicht: Scan findet > 100. Transkription
+gegen `ec8dd2b`: 1–3 rot dort, grün hier; 4 grün/grün. `--selftest` OK. Prüfer exit 0. ⚠️ Der Wächter läuft hier
+nicht; Swift-Fallen, die die Transkription nicht sieht: `lines[max(0, index - 3)...index]` ist ein `ArraySlice`,
+`joined` darauf ist definiert — ein Compile-Fehler wäre `TEST BUILD FAILED` im CI/CD, also Gate-Lesung für `1e50508`.
