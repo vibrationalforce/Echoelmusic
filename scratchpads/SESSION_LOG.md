@@ -29892,3 +29892,28 @@ das weder Pass noch Fail, nur „nicht im tail-200". Was das Fenster BEWEIST: da
 5994–6005 (bis `5cf53a2`) sind `queued`/`in_progress` — macOS-Runner-Warteschlange, ~50–80 min je Lauf. Gelesen über
 `get_job_logs failed_only` (tail 200), nicht über den Verdict-Parser, weil die Ausgabe hier inline kam und nicht in eine
 Datei geschrieben wurde.
+
+
+## Compile #2540 grün · CI/CD 5994–5997 · Deploy v10.79.468 (2026-09-10, ~18:15 UTC)
+
+**Xcode Compile Check #2540 auf `5cf53a2` = success** (queued 17:42:50, fertig 18:08:55 — 26 min Warteschlange hinter drei
+CI/CD-Jobs auf dem macOS-Pool). Deckt `Sources/` von #1244 (`e11d36f`) und #1245 (`a96d130`). Damit ist JEDER
+`Sources/`-Commit dieser Sitzung compile-belegt (#2536 · #2539 · #2540). ⭐ Nebenbefund, in `memory/preferences.md`
+festgehalten: `xcode-compile-check.yml` hat einen `paths:`-Filter (`Sources/**`, `Tests/**`, `project.yml`, `Package.*`,
+`Info.plist`, das Skript, sich selbst) — die drei Docs-Pushes `f64d920`/`195d906`/`95f4e18` lösten KEINEN Lauf aus und
+haben #2540 darum nicht gecancelt. Die Push-Disziplin aus #1239 gilt nur für Pushes, die diese Pfade berühren.
+
+**CI/CD 5994 (`ca263cc`, #1221) · 5995 (`eea75c1`, #1223) · 5996 (`56db8f0`, #1227) · 5997 (`09b76de`, #1233):** alle
+vier Conclusion `failure`, #396-Signatur. Für 5997 mit 130-Zeilen-Fenster gelesen: `IDETestOperationsObserverDebug …
+Testing started completed`, `** TEST EXECUTE FAILED **`, davor und danach nur `passed`-Zeilen — kein Testname mit
+`failed`. 5994–5996 mit 40-Zeilen-Fenster (nur Artefakt-Upload sichtbar; 6475–6489 Ergebnis-Dateien wie bei den
+gelesenen Läufen) — per #807 KEINE Aussage über einzelne Tests, nur: das Bundle hat gebaut und die Suite ist gelaufen.
+Warteschlange danach: 5998–6005 (bis `5cf53a2`) noch `queued`/`in_progress`.
+
+**Deploy v10.79.468 = `3eef86b`** (EIN Commit, nur `.deploy/release`, +110/−5): Sektion 0/0b neu (A Visual · B Bio ·
+C Takt/MIDI/Licht · D Hygiene, Umfang #1216–#1245), 467 → 0c/0d, 466 → 0e/0f, `founder-verify.py --since 18b5615`
+angehängt (12 neue Bitten, vor NOT ASKS geschnitten). Wächter `TheDeployNoteNamesRealDoorsTests` transkribiert gegen
+die ANGEWANDTE Datei (nicht nur den Preview): 1 Chip-Labels = Strip GRÜN · 2 Pfad-Tokens `Bio · Field · Master ·
+Save/Export · Video` alle real GRÜN · 3 Diagnostics GRÜN · 4 `--since` GRÜN · 5 `NICHT NUR EIN BUMP` GRÜN. Prüfer
+(`moved-needles` · `dead-needles` · `foreign-needles`) alle exit 0 — die zwei #1245-Fragen von `moved-needles` sind
+weg. Der Bump liegt außerhalb des Compile-paths-Filters; `testflight.yml` ist der Lauf, der zählt — Lesung folgt.
