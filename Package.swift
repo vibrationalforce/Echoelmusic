@@ -33,11 +33,21 @@ let package = Package(
         //
         // ⚠️ WHY NOT BUMP THE TOOLS VERSION TO 6.0 INSTEAD. That is the other honest fix and
         // it was rejected deliberately: tools-version 6.0 flips the default Swift LANGUAGE
-        // MODE to 6 for every target. Combined with the `-warnings-as-errors` below, that
-        // turns today's strict-concurrency warnings into build failures — a large, untestable
-        // change (there is no local toolchain here) smuggled in behind a one-line platform
-        // fix. If the tools version is ever bumped, it must be its own slice, and it must
-        // carry an explicit `.swiftLanguageMode(.v5)` to keep today's semantics.
+        // MODE to 6 for THIS manifest's targets, i.e. for `swift build` / `swift test` on the
+        // founder's Mac. ⛔ What stood here next — "that turns today's strict-concurrency
+        // warnings into build failures — a large, untestable change" — described the Swift 6
+        // migration as FUTURE risk, and it is SHIPPED REALITY (#1226, audit 2026-09-10
+        // `ship-path-5`): `project.yml` sets `SWIFT_VERSION: "6.0"`, so every gate that ships
+        // (`xcode-compile-check.yml`, the `ci.yml` xcodebuild jobs, the `testflight.yml`
+        // archive) already compiles `Sources/` in Swift 6 language mode with strict
+        // concurrency as errors. Two build definitions, two rule sets: code that passes
+        // `swift build` here (mode 5, `-warnings-as-errors`, `StrictConcurrency=targeted`)
+        // can still fail the Xcode gate on a Swift 6 isolation error, and code that compiles
+        // in Xcode with a warning fails SwiftPM's warnings-as-errors. Aligning the two
+        // (tools-version 6.0 + explicit `.swiftLanguageMode(.v6)` + dropping the string
+        // platform form) changes LOCAL-build semantics and is its own Council slice; do not
+        // "protect" a hurdle the shipping gates cleared long ago. Until then: a red local
+        // build is not proof the gate is red, and vice versa — read the gate.
         //
         // ⚠️ SCOPE, so nobody over-reads this: SwiftPM does NOT build the app. XcodeGen +
         // `project.yml` set `IPHONEOS_DEPLOYMENT_TARGET`, and both CI gates go through
