@@ -49,7 +49,7 @@ Reihenfolge = (Schwere nach außen) → (Ship-Gate-Nähe) → (Council-Sequenz) 
 | 6 | HealthKit: `maxMeasurementAge` (Größenordnung 10 min, > 180 s) | Audit `bio-pipeline-2` | S | `HealthKitBioPublisher.swift` + Test | ✅ #1215 (600 s, NEEDS-FOUNDER-VERIFY am Ort) |
 | 7 | Kamera-Kohärenz: rollende RR-Historie (~64) am `lastRespirationBeatTime`-Cursor statt 10-s-Fenster → Kohärenz ab ~16 s bei 60 bpm | Audit `bio-pipeline-3` (Chance-Hälfte) | S → F (Verify) | `CameraRPPGBioPublisher.swift`; `AFreshTakeStartsWithNoHeldFrameTests`-Prosa | ✅ #1220 (Historie 64 = Gurt-Parität, am Atem-Cursor, in `stop()` geleert; NEEDS-FOUNDER-VERIFY an der Kapazität; Prosa in OSCSender · EngineBus · ADMOSCSender · CLAUDE.md ×2 · zwei Wächter-Köpfe mitgezogen) |
 | 8 | `generate()` unter BPM-Lock loggt `.user`, nicht `.flowServo` | Audit `sequencer-core-1` | S | `EchoelStudioView.swift` (1 Zeile), `TempoInvariantTests.swift` | ✅ #1217 (Anspruch 3b) |
-| 9 | **Integrations-Hub + 2 Spokes** (`integrations.html`, `reaper-osc.html`, `touchdesigner-osc.html`) mit HowTo/FAQ-JSON-LD, ADM-Leaves ab #1210 | Council Schritt 2 · Marketing Aktion 2 · Audit `output-sync-7` | S | `docs/*.html` (docs-only) | |
+| 9 | **Integrations-Hub + 2 Spokes** (`integrations.html`, `reaper-osc.html`, `touchdesigner-osc.html`) mit HowTo/FAQ-JSON-LD, ADM-Leaves ab #1210 | Council Schritt 2 · Marketing Aktion 2 · Audit `output-sync-7` | S | `docs/*.html` (docs-only) | ✅ #1241 (`3e0c79f`; `.tox`/`.ReaperOSC`-Binaries bleiben Founder/Gerät) |
 | 10 | `fastlane/metadata`: Keywords en/de + en-GB, Description-Erstzeilen, `colour`→`color`, „Meditativ" raus | Marketing Aktion 3 · Audit `docs-claims-4` | S + C | `fastlane/metadata/**` | Kopie → Council; `deliver` erst nach Founder-Lesung |
 | 11 | Website-Stale-Copy: meta description, „not planned"-Sätze, Specs-Kachel, spielbares Visual + externer Bildschirm | Marketing Aktion 4 · Audit `docs-claims-2/3/5/7` | S | `docs/index.html`, `docs/overview.html`, `docs/tools.html` | ✅ #1238 (`d30f39b`; `tools.html` brauchte nichts — trug die Bühne schon; Store-Text → Zeile 10) |
 | 12 | Richtung 3 schließen (a): `._2_0`-UMP-Virtual-Source neben der `._1_0`-Quelle, Schalter im `midiOutSection` | Council Schritt 3a | S | `Audio/MIDIOutput.swift` + Wächter | |
@@ -95,3 +95,5 @@ steht in Council §9, was sich je Frage verschiebt.
 - Ein VERIFIED-Datum, das einem Zyklus widerspricht (z. B. der Renderer bewegt sich nach #1210 nicht).
 - Eine Founder-Antwort auf Frage 1 mit „Nein" — dann wird Schritt 23 zur Grand-Council-Epic mit
   Flip Nr. 19, und die Zyklen 3–21 bleiben trotzdem die Reihenfolge.
+
+**Nachtrag 2026-09-10 (nach Zeile 9):** Visual-/Render-Ressourcen-Audit → `scratchpads/VISUAL_AUDIT_2026-09-10.md`, sechs Scheiben V1–V6 in der Reihenfolge V5→V3→V4→V2→V1→V6; sie gehen VOR Zeile 12 (Feature), weil sie den Founder-Ask direkt bedienen.

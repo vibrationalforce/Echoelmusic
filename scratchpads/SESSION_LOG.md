@@ -29773,3 +29773,27 @@ Enumerator, sind Baum-/Struktur-Fälle und bleiben) · `gh-test-verdict.py:104` 
 gegen `ec8dd2b`: 1–3 rot dort, grün hier; 4 grün/grün. `--selftest` OK. Prüfer exit 0. ⚠️ Der Wächter läuft hier
 nicht; Swift-Fallen, die die Transkription nicht sieht: `lines[max(0, index - 3)...index]` ist ein `ArraySlice`,
 `joined` darauf ist definiert — ein Compile-Fehler wäre `TEST BUILD FAILED` im CI/CD, also Gate-Lesung für `1e50508`.
+
+## #1241 Ultraplan-Zeile 9 — Integrations-Hub + zwei Spokes (2026-09-10, ~17:25 UTC, `3e0c79f`) · Gate-Lesung #2536 · Visual-Audit
+
+**#1241:** `docs/integrations.html` (Adressbuch: OSC-Feed 8000 mit der Stille-Regel, ADM-OSC 9000 in v1.0-Form, DMX-Karte
+8/16-bit für 6454/5568, virtuelle MIDI-Quelle, Empfänger-Einzeiler, „kein Eingangs-Socket") + `reaper-osc.html` (HowTo)
++ `touchdesigner-osc.html` (HowTo), erzeugt aus der Shell von `artnet-sacn-from-a-phone.html` per Generator im Scratchpad
+(Nav/Footer/Meta identisch, Breadcrumb + TechArticle/FAQPage/HowTo-JSON-LD, Descriptions 154/138/140). Sitemap, Links aus
+index/faq/tools, Spokes aus dem Hub. Zwei veraltete Kohärenz-Zeilen korrigiert (`VJ_BRIDGE.md`, `ADMOSCSender`-Kopf —
+beide sagten „Kamera erreicht sie nie", falsch seit #1220). Wächter `TheIntegrationHubIsPublishedTests` (5 Claims):
+Seiten/Sitemap/Links · jede von `OSCSender` gesendete Adresse (13 Literale minus motion/motion-event/eeg) als `<code>`
+auf dem Hub, die Nie-Gesendeten als „never sent" · ADM v1.0 ohne `/position/` · vier Ports · Gegengewicht kein
+`NWListener`. 1–4 rot auf `48d0be7`, grün hier; 5 grün/grün. Zusätzlich die drei seitenweiten Site-Wächter
+transkribiert (Motion-Konjunktion, Hue, JSON-LD-bidirectional): 0 Treffer auf den drei neuen Seiten. ⚠️ Erste Fassung
+verkaufte „since v10.79.468" für das Kamera-HRV-Gate — eine Version, die noch nicht existiert; vor dem Commit entfernt.
+Store-Text (docs-claims-3) weiter Zeile 10.
+
+**Gate-Lesung:** `Xcode Compile Check` #2536 auf `d30f39b` = **success** (17:11:51 → 17:18:46). Deckt `Sources/` aller
+Scheiben bis dahin: #1233 (BioStripView), #1236 (CameraRPPGBioPublisher/CameraAnalyzer), #1237 (SPSCQueue). Die Läufe
+#2529–#2535 waren `cancelled` (eigene Folge-Pushes). Noch OHNE Compile-Beleg: #1239 (`let` auf den Ring-Zeigern,
+`cab96f3`), #1241 (ein Kommentar in `ADMOSCSender`). CI/CD-Test-Läufe: s. nächste Lesung.
+
+**Visual-Audit (read-only Explore-Agent, auf den Founder-Ask „resourcensparende Audio Visual Performance"):** sechs
+Befunde in `scratchpads/VISUAL_AUDIT_2026-09-10.md` (V1–V6, Reihenfolge V5→V3→V4→V2→V1→V6), plus die Liste dessen,
+was sauber ist. Kein Messwert im Repo — Code-Lesung.
