@@ -325,6 +325,39 @@ final class TheCoherenceTrendHasAProducerTests: XCTestCase {
             """)
     }
 
+    // MARK: - SAME-SOURCE LOSS  the tracked sensor stops measuring → no slope (#1224)
+
+    /// #1224 (audit 2026-09-10 `bio-pipeline-5`). The interleave claim above proves a
+    /// DIFFERENT source's unmeasured frame must not touch the tracked run. This is the other
+    /// half: when the SAME source that was climbing stops measuring, the level goes neutral on
+    /// that frame and the derivative must too — before #1224 it held the last slope of a body
+    /// nobody measured any more. Transcribed (§0) against `eea75c1`: RED there (the branch
+    /// returned the held value, > 0.30 after the climb), GREEN here.
+    func testTheTrackedSourceLosingMeasurementReportsNoSlope() {
+        var trend = CoherenceTrend()
+        var climbed: Float = 0
+        for step in 0..<9 {
+            climbed = trend.update(coherence: 0.40 + 0.02 * Float(step), measured: true,
+                                   source: Self.oneSensor, at: TimeInterval(step))
+        }
+        XCTAssertTrue(climbed > 0.30, "the control climb did not clear the deadband — the zero below would prove nothing")
+        let lost = trend.update(coherence: 0, measured: false, source: Self.oneSensor, at: 9)
+        XCTAssertEqual(lost, 0, """
+            The tracked sensor stopped measuring and the trend kept its last slope. The LEVEL \
+            went neutral on this same frame; a derivative of a body nobody measures is a \
+            movement nobody made (#1224).
+            """)
+        // Counterweight — a source that never had a run still changes nothing (the interleave law).
+        var held = CoherenceTrend()
+        var last: Float = 0
+        for step in 0..<9 {
+            last = held.update(coherence: 0.40 + 0.02 * Float(step), measured: true,
+                               source: Self.oneSensor, at: TimeInterval(step))
+        }
+        let after = held.update(coherence: 0, measured: false, source: Self.unmeasuredSource, at: 9.5)
+        XCTAssertEqual(after, last, accuracy: 1e-6, "an unmeasured frame from a source that never had a run moved the tracked value (#1224)")
+    }
+
     // MARK: - NON-FINITE INPUT
 
     func testANonFiniteReadingDropsTheRunAndNeverPropagates() {

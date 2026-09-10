@@ -29559,3 +29559,20 @@ der Helfer ist rein und gehört ins Gate): 1 (400 späte Ticks bleiben auf dem R
 `.now`, Deadline aus dem Helfer, Anker gemerkt). Transkribiert: 1–3 ROT auf `1bf6530` (Helfer fehlt) / GRÜN hier, 4
 ROT/GRÜN. Drei Nadel-Prüfer exit 0. **NEEDS-FOUNDER-VERIFY** am Helfer: 16 Takte 120 BPM, Click an, Bio-Panel offen —
 bleiben Noten und Click bis zum Ende genäht? Ehrlich: kompilat-unbelegt bis zum Gate; die Wirkung ist ein Gerätehören.
+
+## #1224 — Ultraplan-Zyklus 11: der Trend der verfolgten Quelle wird 0, wenn SIE aufhört zu messen (2026-09-10)
+
+Audit `bio-pipeline-5`. `CoherenceTrend.update` hielt im `guard measured`-Zweig den gemeldeten Wert für JEDE Quelle —
+richtig für die dazwischenliegende Wrist-Frame ohne Kohärenz (#920c-Interleave-Gesetz), falsch für die Quelle, die
+selbst verfolgt wurde: ihr PEGEL geht auf demselben Frame auf neutral (`coherenceForSound`), die ABLEITUNG meldete
+weiter die letzte Steigung eines Körpers, den niemand mehr misst. Jetzt: `if runs.removeValue(forKey: source) != nil
+{ value = 0 }` — eine Quelle, die einen Run HATTE, meldet keine Steigung; eine ohne Run ändert nichts (die Asymmetrie
+trägt das Interleave-Gesetz weiter). Neuer Anspruch `testTheTrackedSourceLosingMeasurementReportsNoSlope` in
+`TheCoherenceTrendHasAProducerTests` (Kontrolle: Anstieg > 0,30; Verlust → 0; Gegengewicht: fremde Quelle ohne Run
+hält). Transkribiert (Python-Port von `update` inkl. Konstanten 0,05 · 4 s · 6 s): ROT auf `eea75c1` (hält > 0,30),
+GRÜN hier; das bestehende Interleave-Claim bleibt in BEIDEN Semantiken grün. Drei Prüfer exit 0.
+**`audio-dsp-4` VERWORFEN, nicht vergessen:** `ANonFiniteControlCannotReachTheRenderTests` hält die Entrainment-Kette
+(`clampUnit` → `target` → `process`) ausdrücklich unrepariert — NaN-geschlossen per Vergleich (`q >= qualityFloor`,
+`depth > 0`, `depth > 0.01` sind für NaN falsch), „do not repair those four". Nachgeprüft: `motionEnergy` ist 0, also
+q = 1, und ein NaN in `coherence` fällt als `depth = NaN` an `depth > 0` → inaktiv. Der Audit re-litigiert eine
+aufgeschriebene Entscheidung; Ergebnis wäre identisch (inaktiv). Kein Code.

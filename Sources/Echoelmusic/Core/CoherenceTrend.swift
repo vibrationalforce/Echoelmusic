@@ -136,7 +136,14 @@ public struct CoherenceTrend: Sendable, Equatable {
             // Drop only THIS sensor's history — a wrist frame carrying no coherence says
             // nothing about the camera's trajectory — and HOLD the reported value. Returning 0
             // here is what made the interleaved wrist feed deafen the whole tracker.
-            runs[source] = nil
+            //
+            // ⭐ UNLESS THIS SENSOR WAS THE ONE BEING TRACKED (#1224, audit 2026-09-10
+            // `bio-pipeline-5`): when the source that HAD a run stops measuring, the LEVEL goes
+            // neutral on this very frame (`coherenceForSound`) while the DERIVATIVE kept
+            // reporting the last slope of a body nobody measures any more. A run that existed
+            // and is dropped reports no slope; a source that never had one (the interleaved
+            // wrist) changes nothing — that asymmetry is what keeps the hold above true.
+            if runs.removeValue(forKey: source) != nil { value = 0 }
             return value
         }
         guard var run = runs[source] else {
