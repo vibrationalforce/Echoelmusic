@@ -5,14 +5,19 @@
 //
 // Pure value type (Foundation only). The jitter is SEEDED and per-index, so a
 // humanized take is fully reproducible and unit-tested — same seed, same feel.
-// Applied at MIDI export (where real ticks exist), not baked into the grid, so a
-// user can switch between Tight and Humanized non-destructively.
+// Applied where real ticks exist, not baked into the grid, so a user can switch
+// between Tight and Humanized non-destructively. ⚠️ TWO callers, TWO tick spaces
+// (#1231, audit 2026-09-10 `sequencer-core-5`): `MIDIFileExporter` applies it at 96 PPQ,
+// `TouchQuantizer.microtiming` (built in `FloatingVisualWindow` from touch life) at
+// `Note.ticksPerQuarter` = 480. `timingTicks` is therefore in the CALLER's tick space;
+// "applied at MIDI export" alone, which stood here, named one of the two.
 
 import Foundation
 
 /// Per-note timing + velocity variation. `tight` = no change (perfect grid).
 public struct Humanizer: Sendable, Equatable {
-    /// Maximum ± timing jitter in MIDI ticks (96 PPQ → 24 ticks per 16th).
+    /// Maximum ± timing jitter in the CALLER's ticks (MIDI export: 96 PPQ → 24 ticks per
+    /// 16th; TouchQuantizer: 480 PPQ → 120 per 16th — the same number is 5× finer there).
     public var timingTicks: Int
     /// Maximum ± velocity variation as a fraction (0.12 = ±12%).
     public var velocityJitter: Float

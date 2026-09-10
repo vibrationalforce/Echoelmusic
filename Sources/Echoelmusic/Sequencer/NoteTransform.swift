@@ -57,7 +57,8 @@ public enum NoteTransform {
     // MARK: Humanize
 
     /// Bounded, deterministic timing + velocity variation on a selection —
-    /// the edit-time sibling of `Humanizer` (which humanizes at MIDI export).
+    /// the edit-time sibling of `Humanizer` (which humanizes at MIDI export and, at 480 PPQ,
+    /// in `TouchQuantizer` — #1231).
     /// Jitter is seeded per NOTE ID (stable UUID fold), so the result is
     /// independent of array order and identical across launches: same
     /// selection + same seed → the same "performance", always. Starts are
