@@ -1504,3 +1504,17 @@ beschränken (#292, `afcf3aa`).
 - **Erwartung / Review 2026-10-10:** `docs/integrations/` + Adress-Wächter existieren; A0, Sperrfrist und
   AUv3-Epic-Zeile vom Founder beantwortet; Multicast-Antrag gestellt; mindestens ein `VERIFIED-`-Datum im
   Baum; kein AUv3-/Link-/Streaming-Satz in Copy vor Geräte-Beleg. `decisions.csv` Zeilen 795–797.
+
+### 2026-09-10 — Deep Audit + drei Korrekturzyklen (#1208–#1211): Golden-Test ≠ Richtigkeit
+
+- **Befund mit Folgen:** ADM-OSC sendete seit seiner Entstehung `/adm/obj/{n}/position/azimuth` —
+  eine Adressform, die in keiner Spec-Version existiert (Spec-Tabelle `/azim /elev /dist /x /y /z`,
+  `docs/adm-osc.bs` 116–122, 2026-09-10 aus dem Upstream geladen). Vier Golden-Tests pinnten die
+  falschen Strings. Repariert mit #1210 (`8180b27`), Wächter `TheADMOSCLeavesAreTheSpecsTests`.
+- **Gesetz (csv-Zeile 799, Ledger-Playbook):** für jedes fremd definierte Wire-Format (ADM-OSC, E1.31,
+  Art-Net, UMP) zusätzlich EINEN Wächter gegen die Spec-Tabelle, Spec beim Schreiben laden.
+- **Renderer-Verify offen** (NEEDS-FOUNDER-VERIFY im Sender-Kopf); bis dahin ADM-OSC nicht als
+  „funktioniert mit L-ISA/FletcherMachine" bewerben.
+- **Weitere Zyklen:** #1208 Delay-NaN-Klammern (`audio-dsp-1`), #1209 Privacy-Link (`ship-path-1`),
+  #1211 CLAUDE.md-Status (Watch nicht eingebettet · 60 fps/~1 Hz · Kohärenz auf Kamera bei Ruhepuls
+  abwesend). Volle Schlange: `scratchpads/ULTRAPLAN_2026-09-10.md`; Review 2026-10-10.
