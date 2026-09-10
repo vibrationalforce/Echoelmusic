@@ -166,6 +166,10 @@
         <div class="faq-section">
             <h2>MIDI &amp; Hardware</h2>
             <div class="faq-item">
+                <div class="faq-question" role="button" tabindex="0" aria-expanded="false">Where is the list of every OSC address, port and DMX channel Echoel sends?</div>
+                <div class="faq-answer">On the <a href="integrations.html">integrations page</a> &mdash; the OSC bio feed (UDP 8000), ADM-OSC objects (UDP 9000), the virtual MIDI source, and the Art-Net (6454) / sACN (5568) channel map, with step-by-step spokes for <a href="reaper-osc.html">Reaper</a> and <a href="touchdesigner-osc.html">TouchDesigner</a>.</div>
+            </div>
+            <div class="faq-item">
                 <div class="faq-question" role="button" tabindex="0" aria-expanded="false">What MIDI features are supported?</div>
                 <div class="faq-answer">All MIDI lives inside <strong>EchoelMIDI</strong>. <strong>MIDI 2.0-ready input</strong> (Universal MIDI Packets — parses both 1.0 and 2.0 traffic): notes and pitch bend reach the built-in performer voice &mdash; one monophonic voice. Slide (CC&nbsp;74) opens that voice&rsquo;s filter and Press (channel pressure) swells it &mdash; both channel-wide, both reaching the one voice. Air-CC (CC&nbsp;21&ndash;31) is parsed and carried on the control bus, but no voice consumes it. Output is a virtual &ldquo;Echoelmusic&rdquo; <strong>MIDI&nbsp;1.0</strong> source any DAW can record, created once you enable a MIDI route in the routing panel. <strong>MPE output</strong> ships: turn on the two switches in the routing panel and notes go out over member channels 2&ndash;16, each carrying Glide (pitch bend), Slide (CC&nbsp;74) and Press (channel pressure), with the zone announced. MPE <em>input</em> zone handling (per-note channels, pressure), native MIDI&nbsp;2.0 out, inter-app tempo sync and audio-to-MIDI are on the roadmap, not in the app today.</div>
             </div>

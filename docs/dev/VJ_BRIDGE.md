@@ -1,5 +1,9 @@
 # Echoel → VJ / Visual / Broadcast bridge
 
+> **Published, reader-facing version:** `docs/integrations.html` (+ `reaper-osc.html`,
+> `touchdesigner-osc.html`), #1241. Keep the address table here and there in step —
+> `TheIntegrationHubIsPublishedTests` pins the page against `OSCSender`, not against this file.
+
 **Echoel is the bio-driven SOURCE at the front of your pipeline.** It already speaks
 the input languages of the major pro tools over open standards — so your body, breath
 and music can drive Resolume, TouchDesigner, OBS, lighting desks and spatial rigs
@@ -26,10 +30,11 @@ receiving app at the phone's IP (UDP). Default namespace:
 > · A channel-creating receiver (TouchDesigner's OSC In CHOP) will not create a channel that
 >   has never been sent. If an address is missing from your CHOP, the sensor has not measured
 >   it yet — it is not a connection fault.
-> · `/coherence` is the one most likely to stay absent for a whole take. It needs ≥16 accepted
->   RR intervals; the chest strap reaches that after ~16 beats, but the **camera** derives its
->   RR series from a fixed 10-second window (~10 intervals at a resting heart rate), so on a
->   camera session it may never appear. Map coherence when you are on a strap.
+> · `/coherence` is the last address to appear on every take. It needs ≥16 accepted RR
+>   intervals: ~16 beats on the chest strap, and since #1220 ~16 seconds at rest on the
+>   **camera** too (a per-take rolling RR history; before #1220 the camera rebuilt its series
+>   from a fixed 10 s window and could stay silent for a whole resting take). Map coherence to
+>   something that can wait ~16 s.
 
 | Address | Range | Meaning |
 |---|---|---|

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.21.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>TouchDesigner over OSC: one CHOP channel per body signal — Echoelmusic</title>
+    <meta name="description" content="An OSC In CHOP on UDP 8000 turns Echoel&#x27;s heartbeat, breath and coherence into CHOP channels. Select, lag, range, then drive TOPs and COMPs.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="TouchDesigner over OSC: one CHOP channel per body signal — Echoelmusic">
+    <meta property="og:description" content="An OSC In CHOP on UDP 8000 turns Echoel&#x27;s heartbeat, breath and coherence into CHOP channels. Select, lag, range, then drive TOPs and COMPs.">
+    <meta property="og:url" content="https://echoelmusic.com/touchdesigner-osc.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TouchDesigner over OSC: one CHOP channel per body signal — Echoelmusic">
+    <meta name="twitter:description" content="An OSC In CHOP on UDP 8000 turns Echoel&#x27;s heartbeat, breath and coherence into CHOP channels. Select, lag, range, then drive TOPs and COMPs.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/touchdesigner-osc.html">
+    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/touchdesigner-osc.html">
+    
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"},{"@type":"ListItem","position":3,"name":"TouchDesigner over OSC","item":"https://echoelmusic.com/touchdesigner-osc.html"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Receive a heartbeat, breath and coherence as CHOP channels in TouchDesigner","description":"An OSC In CHOP on UDP 8000 turns Echoel's bio addresses into named channels; select, lag and range them, then drive TOPs and COMPs.","totalTime":"PT10M","tool":[{"@type":"HowToTool","name":"TouchDesigner"},{"@type":"HowToTool","name":"Echoel on iPhone"}],"step":[{"@type":"HowToStep","name":"Receive","text":"OSC In CHOP, port 8000; in Echoel Routing ▸ OSC host = this computer, patchbay Body → OSC out."},{"@type":"HowToStep","name":"Select and shape","text":"Select CHOP for breath/phase, heart/bpm and coherence; Lag CHOP on the pulse; Math CHOP to range."},{"@type":"HowToStep","name":"Drive something","text":"Breath phase into a scale, bpm into a noise period, coherence into a blur size, the heartbeat event into a Trigger CHOP."}]}</script>
+    <link rel="stylesheet" href="shared.css?v=10.22.0">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>.spec-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:0.95em}.spec-table th,.spec-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table th{color:var(--dim,#9a9a9a);font-weight:600}.spec-table code{white-space:nowrap}@media (max-width:600px){.spec-table{display:block;overflow-x:auto}}</style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <div class="nav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+                <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+                <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+                <a href="support.html">Support</a>
+                <span class="nav-cta nav-cta--soon" aria-disabled="true">Coming Soon</span>
+            </div>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+        </nav>
+    </div>
+
+        <main id="main">
+        <h1>TouchDesigner: one CHOP channel per body signal</h1>
+        <p class="lead">TouchDesigner's OSC In CHOP turns every address it hears into a named channel. Echoel sends the body as OSC, so a heartbeat, a breath phase and a coherence value become CHOP channels you patch into anything — a Noise TOP's period, a Geometry COMP's scale, a light's intensity.</p>
+
+        <h2>1. Receive</h2>
+        <ol>
+            <li>Add an <strong>OSC In CHOP</strong>. Network Port: <strong>8000</strong> (Echoel's default; any free port works if you change it on both ends). Leave the address filter open for now.</li>
+            <li>In Echoel: <strong>Routing ▸ OSC</strong>, host = this computer's IP, port 8000; patchbay <strong>Body → OSC out</strong>.</li>
+            <li>Put a finger on the camera. Within a couple of seconds the CHOP grows a channel per address that has been measured — pulse first, breath as soon as the breath estimator has a cycle, coherence after about sixteen accepted beats.</li>
+        </ol>
+        <p>A channel that never appears is not a connection fault: Echoel sends an address only while its value is measured. The demo body sends everything and announces itself on <code>/echoelmusic/bio/synthetic</code> (1), so you can wire the network with the demo and know when the real performer takes over (0).</p>
+
+        <h2>2. Select and shape</h2>
+        <ol>
+            <li>Add a <strong>Select CHOP</strong> after the OSC In and name the channels you actually use — for a first patch <code>*breath/phase</code>, <code>*heart/bpm</code>, <code>*coherence</code>. Never select <code>*motion*</code> or <code>*eeg*</code>: those addresses exist in the sender and are never sent.</li>
+            <li>Add a <strong>Lag CHOP</strong> (or Filter) on the pulse: the beat rate updates roughly once a second, and a lag of 0.5–1 s turns steps into a glide.</li>
+            <li>Add a <strong>Math CHOP</strong> to range: bpm 60–120 → 0–1, breath phase is already 0–1, coherence is already 0–1.</li>
+        </ol>
+
+        <h2>3. Drive something</h2>
+        <ul>
+            <li><strong>Breath → scale</strong>: reference <code>op('select1')['breath/phase']</code> (or the exact channel name your CHOP shows) in a Geometry COMP's scale — the object breathes with the performer.</li>
+            <li><strong>Pulse → period</strong>: bpm into a Noise TOP's period or a Speed CHOP — faster body, faster texture.</li>
+            <li><strong>Coherence → sharpness</strong>: coherence into a Blur TOP's filter size, inverted — a settling performer brings the image into focus.</li>
+            <li><strong>Beat → trigger</strong>: the <code>event/heartbeat</code> channel pulses per beat; feed it to a Trigger CHOP for an envelope on every heartbeat.</li>
+        </ul>
+
+        <h2>Frame-rate note</h2>
+        <p>Continuous addresses arrive about once a second; events per beat. TouchDesigner cooks at your project rate regardless — put the smoothing in a Lag or Filter CHOP rather than expecting the source to interpolate. That is deliberate on Echoel's side: it sends measurements, not animation.</p>
+
+        <h2>Also from the same phone</h2>
+        <p>The same performer's pulse can drive DMX fixtures in your rig over <a href="artnet-sacn-from-a-phone.html">Art-Net or sACN</a>, and a spatial object over ADM-OSC, at the same time as the CHOP feed. Ports, the full address list and the DMX channel map are on the <a href="integrations.html">integrations page</a>.</p>
+    </main>
+
+    <footer>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; Concept in development</span>
+        <div class="footer-links">
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+            <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+            <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="impressum.html">Legal Notice</a>
+        </div>
+    </footer>
+
+<script src="shared.js?v=10.22.0"></script>
+</body>
+</html>

@@ -35,8 +35,9 @@
 //  neutral positions:
 //    breath phase → azimuth    sound sweeps L↔R with the breath — needs `hasMeasuredBreath`
 //    coherence    → distance   coherent = pulled close; scattered = far — needs a pulse
-//                              AND a non-zero coherence, which a camera take may never
-//                              reach (16 RR intervals)
+//                              AND a non-zero coherence: 16 accepted RR intervals, ~16 s
+//                              at rest on the camera since #1220 (⛔ "which a camera take
+//                              may never reach" stood here — true before the rolling history)
 //    HRV          → elevation  calm lifts the object — needs a pulse AND a non-zero HRV
 //    motion       → gain       movement brings it forward — DORMANT in this build
 //                              (#215): nothing measures motion, so the BIO arm sends no

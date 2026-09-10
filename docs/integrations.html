@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.21.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic</title>
+    <meta name="description" content="Every address, port and DMX channel Echoel sends. OSC bio feed on UDP 8000, ADM-OSC objects on 9000, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic">
+    <meta property="og:description" content="Every address, port and DMX channel Echoel sends. OSC bio feed on UDP 8000, ADM-OSC objects on 9000, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
+    <meta property="og:url" content="https://echoelmusic.com/integrations.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Integrations: OSC, ADM-OSC, MIDI, Art-Net, sACN — Echoelmusic">
+    <meta name="twitter:description" content="Every address, port and DMX channel Echoel sends. OSC bio feed on UDP 8000, ADM-OSC objects on 9000, a virtual MIDI source, Art-Net on 6454, sACN on 5568.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/integrations.html">
+    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/integrations.html">
+    
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Echoel integrations — OSC, ADM-OSC, MIDI, Art-Net and sACN address book","description":"Every address, port and channel Echoel sends: OSC bio feed on UDP 8000, ADM-OSC objects on 9000, a virtual MIDI source, Art-Net on 6454 and sACN on 5568.","author":{"@type":"Organization","name":"Echoelmusic"},"publisher":{"@type":"Organization","name":"Echoelmusic"},"mainEntityOfPage":"https://echoelmusic.com/integrations.html"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does an OSC address not appear in my receiver?","acceptedAnswer":{"@type":"Answer","text":"Echoel sends a bio address only while that channel is measured. Silence means not measured, never measured as zero. Coherence needs sixteen accepted beats and is the last address to appear on a take."}},{"@type":"Question","name":"Which ports does Echoel use?","acceptedAnswer":{"@type":"Answer","text":"OSC on UDP 8000 by default, ADM-OSC on UDP 9000 by default (both configurable in Routing), Art-Net on UDP 6454 and sACN on UDP 5568, all unicast to the IP you enter."}},{"@type":"Question","name":"Does Echoel receive OSC?","acceptedAnswer":{"@type":"Answer","text":"No. Echoel has no inbound socket in this build; it is a source only."}}]}</script>
+    <link rel="stylesheet" href="shared.css?v=10.22.0">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>.spec-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:0.95em}.spec-table th,.spec-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table th{color:var(--dim,#9a9a9a);font-weight:600}.spec-table code{white-space:nowrap}@media (max-width:600px){.spec-table{display:block;overflow-x:auto}}</style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <div class="nav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+                <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+                <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+                <a href="support.html">Support</a>
+                <span class="nav-cta nav-cta--soon" aria-disabled="true">Coming Soon</span>
+            </div>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+        </nav>
+    </div>
+
+        <main id="main">
+        <h1>Integrations — what Echoel sends, and how to receive it</h1>
+        <p class="lead">Echoel is the body-driven source at the front of your pipeline. Your pulse, breath and the music they compose leave the phone over open standards only — OSC, ADM-OSC, MIDI, Art-Net and sACN — so Reaper, TouchDesigner, Resolume, a lighting desk or a spatial renderer can follow a performer without any SDK on either side. This page is the address book. Two step-by-step spokes: <a href="reaper-osc.html">Reaper</a> and <a href="touchdesigner-osc.html">TouchDesigner</a>; the light half has its own page on <a href="artnet-sacn-from-a-phone.html">Art-Net and sACN</a>.</p>
+
+        <h2>One rule before any mapping: silence means "not measured"</h2>
+        <p>Every bio address is sent only while its own channel is actually measured. A finger that slips off the camera does not send a zero — it sends nothing, and your receiver holds its last value. That is deliberate: a structural 0 would collapse a bound scale or pull a grand master to black with no way to tell it from a performer who really stopped. Two consequences: a receiver that creates channels on first arrival (TouchDesigner's OSC In CHOP) will not show an address that has never been sent, and <code>/echoelmusic/bio/coherence</code> is the last to appear on every take because it needs sixteen accepted beats.</p>
+
+        <h2>OSC out — UDP, default port 8000</h2>
+        <p>Set the receiver's IP and port in <strong>Routing ▸ OSC</strong> and connect <strong>Body → OSC out</strong> in the patchbay. One datagram per message, no bundles. Floats throughout.</p>
+        <table class="spec-table">
+            <thead><tr><th>Address</th><th>Range</th><th>Meaning</th></tr></thead>
+            <tbody>
+            <tr><td><code>/echoelmusic/bio/synthetic</code></td><td>0 or 1</td><td>Whose body this is: 1 = the built-in demo generator, 0 = a measured source. Sent first in every tick that carries a value; latch it as state.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/bpm</code></td><td>40–200</td><td>Heart rate — only while a pulse is measured.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/hrv</code></td><td>0–1</td><td>Normalised HRV — needs a pulse and a non-zero HRV.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/rmssd</code></td><td>ms</td><td>RMSSD — only when the source can state it: strap and camera both refuse to state an HRV when fewer than 80 % of the raw beats survive hygiene.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/sdnn</code></td><td>ms</td><td>SDNN — same rule.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/pnn50</code></td><td>0–1</td><td>pNN50 — same rule.</td></tr>
+            <tr><td><code>/echoelmusic/bio/breath/rate</code></td><td>3–40</td><td>Breaths per minute — sent only inside that plausibility band.</td></tr>
+            <tr><td><code>/echoelmusic/bio/breath/phase</code></td><td>0–1</td><td>Inhale→exhale phase, smooth — rides the rate's gate because 0 is a real position.</td></tr>
+            <tr><td><code>/echoelmusic/bio/coherence</code></td><td>0–1</td><td>HRV coherence — needs 16 accepted beats; on the camera about 16 seconds at rest, on a strap about 16 beats.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>bang</td><td>One message per detected beat: <code>[confidence, aux]</code>.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/breath/inhale</code></td><td>bang</td><td>Inhale onset.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/breath/exhale</code></td><td>bang</td><td>Exhale onset.</td></tr>
+            <tr><td><code>/echoelmusic/bio/event/coherence</code></td><td>bang</td><td>A coherence shift.</td></tr>
+            <tr><td><code>/echoelmusic/mod/&lt;key&gt;</code></td><td>float</td><td>Every applied modulation-matrix output, keyed by destination (for example <code>seq.tempo</code>).</td></tr>
+            </tbody>
+        </table>
+
+        <p>Three addresses exist in the sender and are not on the wire: <code>/echoelmusic/bio/motion</code> and <code>/echoelmusic/bio/event/motion</code> — never sent, nothing measures motion — and <code>/echoelmusic/bio/event/eeg</code> — never sent, no producer. Do not wait on them.</p>
+
+        <h2>ADM-OSC — spatial objects, default port 9000</h2>
+        <p>Connect <strong>Music</strong> or <strong>Body → ADM-OSC</strong>. Echoel drives one object, <code>/adm/obj/{n}/…</code> with <em>n</em> set in Routing, in the address shape of the ADM-OSC v1.0 spec that L-ISA, d&amp;b Soundscape, Fletcher Machine and the open-source renderers read:</p>
+        <table class="spec-table">
+            <thead><tr><th>Address</th><th>Range</th><th>Driven by</th></tr></thead>
+            <tbody>
+            <tr><td><code>/adm/obj/n/azim</code></td><td>−180 … 180°</td><td>pitch while notes sound; breath phase otherwise</td></tr>
+            <tr><td><code>/adm/obj/n/elev</code></td><td>−90 … 90°</td><td>pitch height while notes sound; HRV otherwise</td></tr>
+            <tr><td><code>/adm/obj/n/dist</code></td><td>0 … 1</td><td>level while notes sound; coherence otherwise (pulled close when coherent)</td></tr>
+            <tr><td><code>/adm/obj/n/gain</code></td><td>0 … 1</td><td>the master level while notes sound; not sent by the body arm</td></tr>
+            </tbody>
+        </table>
+        <p>The body arm follows the same measured-only rule: an axis simply stops being driven rather than being sent to an extreme. Start your scene from a sane object position — Echoel will not push it to a default.</p>
+
+        <h2>Light — Art-Net (UDP 6454) and sACN (UDP 5568)</h2>
+        <p>One fixture's worth of DMX, unicast to the node or console IP you enter, universe selectable, resolution selectable. The channel map is the same for both protocols:</p>
+        <table class="spec-table">
+            <thead><tr><th>8-bit</th><th>16-bit (coarse, fine)</th><th>Channel</th><th>Source</th></tr></thead>
+            <tbody>
+            <tr><td>1</td><td>1, 2</td><td>Dimmer</td><td>the music's level; from the body alone, 0.3 + 0.7 × coherence (never fully dark)</td></tr>
+            <tr><td>2</td><td>3, 4</td><td>Red</td><td rowspan="3">the sounding chord, transposed into visible light (CIE 1931, mixed in OKLab)</td></tr>
+            <tr><td>3</td><td>5, 6</td><td>Green</td></tr>
+            <tr><td>4</td><td>7, 8</td><td>Blue</td></tr>
+            </tbody>
+        </table>
+        <p>Grand Master and Blackout sit in the app; the dimmer is slew-limited in the sender so a heartbeat can never strobe past 3 Hz. sACN packets carry the source name <code>Echoelmusic</code> (<code>Echoelmusic (DEMO)</code> on the demo body) so a console shows who is sending; a fixed priority of 100. Patch the desk's own fixtures on top — Echoel is a source, not a console. The long version: <a href="artnet-sacn-from-a-phone.html">Art-Net and sACN from a phone</a>.</p>
+
+        <h2>MIDI out — a virtual source called "Echoelmusic"</h2>
+        <p>Any DAW or synth on the device sees a CoreMIDI source named <strong>Echoelmusic</strong> the moment <strong>Music → MIDI out</strong> is routed. Notes go out on channel 1 by default; switch on <strong>MPE note layout</strong> in Routing to spread notes over member channels, and <strong>Per-note expression</strong> to send the body's glide, slide and press with each note (bend, CC74, channel pressure, stated immediately before the note-on). Over the network the same source is reachable through Apple's Network MIDI session, over USB through IDAM, over Bluetooth through the pairing picker in Routing. Clock: 24 PPQN MIDI clock with start/stop when the transport runs.</p>
+
+        <h2>Receivers, in one line each</h2>
+        <ul>
+            <li><strong>Reaper</strong> — OSC learn on any parameter or action; <a href="reaper-osc.html">step by step</a>.</li>
+            <li><strong>TouchDesigner</strong> — OSC In CHOP on port 8000, one channel per address; <a href="touchdesigner-osc.html">step by step</a>.</li>
+            <li><strong>Resolume Arena / Avenue</strong> — Preferences ▸ OSC ▸ enable input on the port you set in Echoel; right-click any parameter ▸ Edit OSC, breathe, and it learns the address.</li>
+            <li><strong>grandMA3, QLC+, any console</strong> — receive Art-Net or sACN on the universe you chose; patch a 4- or 8-channel generic RGB fixture with dimmer at the map above.</li>
+            <li><strong>L-ISA, Soundscape, Fletcher Machine</strong> — point ADM-OSC at the renderer's OSC input; object index <em>n</em> in Routing.</li>
+        </ul>
+
+        <h2>What is not here</h2>
+        <p>Echoel has no inbound socket: it does not receive OSC, and there is no bidirectional session. Motion and EEG addresses exist in the sender and are never sent. Live streaming was never built. Everything above is in the shipping app; nothing on this page is a roadmap item.</p>
+
+        <div class="contact-box">
+            <h3>Integrating Echoel into a rig?</h3>
+            <p>Tell us what the receiving end is — software and version, protocol, port, universe — and what you see. That is usually the whole answer.</p>
+            <a href="mailto:echoel@tropicaldrones.com">echoel@tropicaldrones.com</a>
+        </div>
+    </main>
+
+    <footer>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; Concept in development</span>
+        <div class="footer-links">
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+            <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+            <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="impressum.html">Legal Notice</a>
+        </div>
+    </footer>
+
+<script src="shared.js?v=10.22.0"></script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Cache Control: never cache HTML in browser -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Cache Guardian: breaks stale SW/CDN cache loops -->
+    <script>
+    (function(){var V='10.21.0',K='echoel-nuke';try{
+    var t=sessionStorage.getItem(K);if(t&&Date.now()-parseInt(t)<60000)return;
+    fetch('/version.json?_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+    if(!d.version||d.version===V)return;sessionStorage.setItem(K,''+Date.now());var p=[];
+    if('caches' in window)p.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+    if(navigator.serviceWorker)p.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+    Promise.all(p).then(function(){window.location.reload()});}).catch(function(){});}catch(e){}})();
+    </script>
+
+    <title>Reaper over OSC: play a plug-in from your pulse — Echoelmusic</title>
+    <meta name="description" content="Set Reaper to listen on UDP 8000, point Echoel at it, and learn any plug-in parameter or action from the breath or the pulse. Ten minutes.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="Reaper over OSC: play a plug-in from your pulse — Echoelmusic">
+    <meta property="og:description" content="Set Reaper to listen on UDP 8000, point Echoel at it, and learn any plug-in parameter or action from the breath or the pulse. Ten minutes.">
+    <meta property="og:url" content="https://echoelmusic.com/reaper-osc.html">
+    <meta property="og:image" content="https://echoelmusic.com/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Echoelmusic">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Reaper over OSC: play a plug-in from your pulse — Echoelmusic">
+    <meta name="twitter:description" content="Set Reaper to listen on UDP 8000, point Echoel at it, and learn any plug-in parameter or action from the breath or the pulse. Ten minutes.">
+    <meta name="twitter:image" content="https://echoelmusic.com/og-cover.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="favicon-512.png">
+    <link rel="canonical" href="https://echoelmusic.com/reaper-osc.html">
+    <link rel="alternate" hreflang="en" href="https://echoelmusic.com/reaper-osc.html">
+    
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"},{"@type":"ListItem","position":3,"name":"Reaper over OSC","item":"https://echoelmusic.com/reaper-osc.html"}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Play a Reaper parameter from your pulse with Echoel over OSC","description":"Set Reaper to listen for OSC on UDP 8000, point Echoel's OSC out at the computer, and learn any plug-in parameter or action from the breath or the pulse.","totalTime":"PT10M","tool":[{"@type":"HowToTool","name":"Reaper"},{"@type":"HowToTool","name":"Echoel on iPhone"}],"step":[{"@type":"HowToStep","name":"Tell Reaper to listen","text":"Options ▸ Preferences ▸ Control/OSC/web ▸ Add ▸ OSC, mode Local port, listen port 8000."},{"@type":"HowToStep","name":"Point Echoel at Reaper","text":"Routing ▸ OSC: host = the computer's IP, port 8000; connect Body → OSC out in the patchbay."},{"@type":"HowToStep","name":"Learn a parameter","text":"Open a plug-in, Param ▸ Learn, breathe until Reaper shows /echoelmusic/bio/breath/phase, click OK."}]}</script>
+    <link rel="stylesheet" href="shared.css?v=10.22.0">
+    <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
+    <style>.spec-table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:0.95em}.spec-table th,.spec-table td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--border,#2a2a2a)}.spec-table th{color:var(--dim,#9a9a9a);font-weight:600}.spec-table code{white-space:nowrap}@media (max-width:600px){.spec-table{display:block;overflow-x:auto}}</style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <div class="nav">
+        <div class="nav-bar">
+            <a href="/" class="nav-logo" aria-label="Echoelmusic Home">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><text x="50" y="46" text-anchor="middle" font-family="'Atkinson Hyperlegible',sans-serif" font-weight="700" font-size="52" fill="#e0e0e0">E</text><g stroke="#e0e0e0" fill="none" stroke-width="3" stroke-linecap="round"><path d="M24,60 C29,54 37,54 42,60 C47,66 53,66 58,60 C63,54 71,54 76,60" opacity="0.8"/><path d="M24,70 C29,64 37,64 42,70 C47,76 53,76 58,70 C63,64 71,64 76,70" opacity="0.4"/><path d="M24,80 C29,74 37,74 42,80 C47,86 53,86 58,80 C63,74 71,74 76,80" opacity="0.2"/></g></svg>
+                <span>Echoelmusic</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+                <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+                <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+                <a href="support.html">Support</a>
+                <span class="nav-cta nav-cta--soon" aria-disabled="true">Coming Soon</span>
+            </div>
+            <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" role="dialog" aria-label="Navigation menu">
+        <nav>
+            <a href="/">Home</a>
+                <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+                <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+                <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+        </nav>
+    </div>
+
+        <main id="main">
+        <h1>Reaper: play a track or a plug-in from your pulse over OSC</h1>
+        <p class="lead">Reaper learns any OSC address the way it learns a MIDI controller: open the learn window, move the source, click. Echoel is the source. Ten minutes from an empty project to a filter that opens with your breath.</p>
+
+        <h2>Before you start</h2>
+        <ul>
+            <li>Phone and computer on the same network (a phone hotspot works; latency is a few milliseconds on a LAN).</li>
+            <li>The computer's IP address — <em>System Settings ▸ Network</em> on a Mac, <code>ipconfig</code> on Windows.</li>
+            <li>A bio source running in Echoel: camera pulse (finger on the lens) or a Bluetooth chest strap. The demo body works for wiring up, and announces itself on <code>/echoelmusic/bio/synthetic</code> so you cannot mistake it for a performer later.</li>
+        </ul>
+
+        <h2>1. Tell Reaper to listen</h2>
+        <ol>
+            <li><strong>Options ▸ Preferences ▸ Control/OSC/web ▸ Add</strong>.</li>
+            <li>Control surface mode: <strong>OSC (Open Sound Control)</strong>. Pattern config: <em>Default</em> is fine — learn does not need a pattern file.</li>
+            <li>Mode: <strong>Local port</strong> (receive only). Local listen port: <strong>8000</strong>, the port Echoel sends to by default. If something else already owns 8000, pick another and change it in Echoel too.</li>
+            <li>Leave <em>Allow binding messages to REAPER actions and FX learn</em> ticked. OK.</li>
+        </ol>
+
+        <h2>2. Point Echoel at Reaper</h2>
+        <ol>
+            <li>In Echoel open <strong>Routing</strong>, section <strong>OSC</strong>: host = the computer's IP, port = the port from step 1.</li>
+            <li>In the patchbay connect <strong>Body → OSC out</strong>. The feed starts as soon as a value is measured; nothing is sent while nothing is measured.</li>
+        </ol>
+
+        <h2>3. Learn a parameter</h2>
+        <ol>
+            <li>Insert any plug-in on a track — ReaEQ, a synth, anything with a knob — and open its window.</li>
+            <li>Click <strong>Param ▸ Learn</strong> (or <em>Param ▸ FX parameter list ▸ Learn</em>) and pick the parameter.</li>
+            <li>Breathe. Reaper shows the incoming address — <code>/echoelmusic/bio/breath/phase</code> for the breath, <code>/echoelmusic/bio/heart/bpm</code> for the pulse — the moment Echoel sends it. Click <strong>OK</strong>.</li>
+            <li>Set the parameter's range under <em>Param ▸ Parameter modulation/MIDI link</em> if 0–1 should map to less than the full travel.</li>
+        </ol>
+        <p>Actions learn the same way: <strong>Actions ▸ Show action list ▸ Add</strong> under <em>Shortcuts for selected action</em>, then trigger the source. The per-beat bang <code>/echoelmusic/bio/event/heartbeat</code> is the one to bind to an action — a marker, a sample trigger, a transport toggle.</p>
+
+        <h2>Which address for what</h2>
+        <table class="spec-table">
+            <thead><tr><th>Want</th><th>Bind</th><th>Why</th></tr></thead>
+            <tbody>
+            <tr><td>a slow, continuous sweep</td><td><code>/echoelmusic/bio/breath/phase</code></td><td>0→1 over each breath, smooth, always present once breath is measured</td></tr>
+            <tr><td>a value that follows effort</td><td><code>/echoelmusic/bio/heart/bpm</code></td><td>40–200; set a range in Reaper so 60–120 covers the travel</td></tr>
+            <tr><td>a value that follows settling</td><td><code>/echoelmusic/bio/coherence</code></td><td>0–1; appears after ~16 beats, so map it to something that can wait</td></tr>
+            <tr><td>a trigger on every beat</td><td><code>/echoelmusic/bio/event/heartbeat</code></td><td>an action, a sampler, a marker</td></tr>
+            </tbody>
+        </table>
+
+        <h2>Prefer MIDI?</h2>
+        <p>Route <strong>Music → MIDI out</strong> instead and Reaper sees a device called <strong>Echoelmusic</strong> — over the network through Apple's Network MIDI session (Audio MIDI Setup ▸ MIDI Studio ▸ Network on a Mac), over USB through IDAM, or over Bluetooth. Arm a track with that input and the body-composed take records as notes. Switch on <em>MPE note layout</em> in Routing for a per-note synth.</p>
+
+        <h2>If nothing arrives</h2>
+        <ul>
+            <li>Reaper's learn window shows nothing: check the port matches on both ends, and that the phone shows a measured pulse — no value, no packet.</li>
+            <li>An address you expected is missing: it has not been measured yet. Coherence takes ~16 beats; HRV needs a clean contact.</li>
+            <li>Values freeze when the finger slips: expected. Echoel holds silence rather than sending zero; your parameter keeps its last value.</li>
+        </ul>
+        <p>The full address list, ports and the DMX map are on the <a href="integrations.html">integrations page</a>.</p>
+    </main>
+
+    <footer>
+        <span class="footer-copy">&copy; 2026 Echoelmusic &middot; Concept in development</span>
+        <div class="footer-links">
+            <a href="overview.html">Overview</a>
+            <a href="tools.html">Tools</a>
+                <a href="brainstorming.html">Brainstorming</a>
+            <a href="architecture.html">Architecture</a>
+            <a href="faq.html">FAQ</a>
+            <a href="artist.html">Artist</a>
+            <a href="support.html">Support</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="health.html">Health</a>
+            <a href="security.html">Security</a>
+            <a href="accessibility.html">Accessibility</a>
+            <a href="impressum.html">Legal Notice</a>
+        </div>
+    </footer>
+
+<script src="shared.js?v=10.22.0"></script>
+</body>
+</html>
