@@ -99,7 +99,15 @@ public final class EchoelFlanger: @unchecked Sendable {
     @inline(__always)
     public func processStereo(_ inL: Float, _ inR: Float) -> (Float, Float) {
         let m = clamp01(mix)
-        let fb = Swift.min(Swift.max(feedback, -0.95), 0.95)
+        // #1206b — `feedback` multiplies the WRITE-BACK two lines below, so a NaN here is the
+        // WORST latch this family has: it goes into the ring buffer, and `EchoelDelayLine`'s own
+        // header records why that never heals — the drain that would call `reset()` is gated on
+        // the output being under 1e-5, and `NaN < 1e-5` is FALSE. #1206 repaired the LFO latch
+        // (which heals the moment a finite rate arrives) and left this one four lines away.
+        // ⚠️ THE `isFinite` TERNARY IS NOT DECORATION HERE. `clamped(to:)` maps NaN to the
+        // range's LOWER bound, and this range's lower bound is -0.95 — maximum NEGATIVE
+        // feedback, i.e. the loudest thing the stage can do. Neutral is 0, so it is named.
+        let fb = (feedback.isFinite ? feedback : 0).clamped(to: -0.95...0.95)
         let v = lfo.next()
         // #1206 — see the chorus. Same unbounded `depth`, shorter line (3 ms base, 20 ms
         // capacity), so it reaches its end stops sooner.
@@ -153,7 +161,10 @@ public final class EchoelPhaser: @unchecked Sendable {
     @inline(__always)
     public func processStereo(_ inL: Float, _ inR: Float) -> (Float, Float) {
         let m = clamp01(mix)
-        let fb = Swift.min(Swift.max(feedback, 0.0), 0.95)
+        // #1206b — same law. A NaN `fb` reaches `var s = x + last * fb`, and `last` plus all
+        // `stages` entries of `z` then hold NaN for the life of the instance. No ternary needed:
+        // this range's lower bound IS the neutral value.
+        let fb = feedback.clamped(to: 0.0...0.95)
         // One LFO value, inverted for the right channel.
         let u = (lfo.next() * 0.5 + 0.5)         // [0, 1]
         let uR = 1.0 - u
@@ -226,14 +237,22 @@ public final class EchoelTremolo: @unchecked Sendable {
 
 // MARK: - Shared helpers
 
-/// ⚠️ ARGUMENT ORDER IS THE WHOLE POINT — do not "tidy" it back (#1206).
-///
-/// `Swift.min(x, y)` is `y < x ? y : x` and `Swift.max(x, y)` is `y >= x ? y : x`. Every
-/// comparison against NaN is false, so the operand that comes FIRST is what a NaN returns.
-/// Written `Swift.min(Swift.max(x, 0), 1)` — the spelling that stood here — a NaN passes
-/// straight through both calls and the "clamp" is a no-op. Written with the known-good bound
-/// first, a NaN lands on that bound. For every FINITE input the two spellings are bit-identical,
-/// which is why this repair has no audible surface and why nothing caught it.
+/// ⛔ THESE USE `clamped(to:)`, AND #1206's FIRST ATTEMPT DID NOT — that is the correction, not
+/// a style change. The spelling that stood here was `Swift.min(Swift.max(x, 0), 1)`, which is
+/// NaN-TRANSPARENT: every comparison against NaN is false, so `Swift.max(x, 0)` returns `x` and
+/// the "clamp" is a no-op. #1206 repaired it by reversing the operands. That works, but it
+/// invents a second spelling of a decision this repo already owns — CLAUDE.md says in as many
+/// words to *"use the NaN-safe `clamped(to:)` (`Core/FloatingPointClamp.swift`) for anything
+/// that reaches the audio thread"*, `EchoelDelay` was migrated to it by #588, and
+/// `EchoelDelayLine` (also `DSP/`, also the render path) already calls it. One definition per
+/// decision (#416). ⚠️ `clamped(to:)` maps NaN to the range's LOWER bound, so it is only the
+/// right tool where that bound is also the NEUTRAL value — true for both helpers here, NOT true
+/// for the flanger's feedback, which is why that one carries an explicit `isFinite` ternary.
+/// For every FINITE input the shipped `clamped(to:)` is bit-identical to the ORIGINAL spelling —
+/// it is literally `min(max(self, lo), hi)` behind an `isNaN` guard — so this repair has no
+/// audible surface at all. (#1206's reversed-operand form was bit-identical too, with exactly
+/// ONE exception: `-0.0` came back as `-0.0` instead of `+0.0`. Inert downstream, and moot now,
+/// but recorded because #1206's commit claimed "bit-identical for every finite input" without it.)
 ///
 /// ⭐ FOR `clampRate` THIS IS LATCHING, not merely wrong-for-one-sample. `EchoelLFO.next()`
 /// does `phase += rate / sampleRate` and resets on `phase >= 1.0`; with a NaN rate the phase
@@ -242,18 +261,31 @@ public final class EchoelTremolo: @unchecked Sendable {
 ///
 /// ⚠️ LATENT TODAY, and say so rather than claiming a save. No shipped producer emits NaN into
 /// these fields: `JSONDecoder`'s default `nonConformingFloatDecodingStrategy` is `.throw`, the
-/// UI fields carry finite ranges, `GenreFX` and `FXCuratedLibrary` are literals, and the one
-/// live 30 Hz writer (`FXBioModulator`) is already guarded by `FXModulation.clamp01`, which
-/// spells it `x.isFinite ? x : 0`. This is closed on engineering.md's boundary rule.
+/// UI fields carry finite ranges, and `GenreFX` and `FXCuratedLibrary` are literals.
+/// ⛔ #1206 ALSO WROTE "the one live 30 Hz writer (`FXBioModulator`) is guarded by
+/// `FXModulation.clamp01`", and that sentence is wrong twice. The guard is
+/// `FXModulation.combine(…)`, whose ternary is `v.isFinite ? v : base` — same conclusion, other
+/// function, and its fallback `base` is read live off the chain, so it is NaN-safe only while
+/// the chain value is finite. And `FXBioModulator` writes `chorus.mix`, `flanger.mix`,
+/// `phaser.mix` and `tremolo.depth` — NEVER `chorus.depth` or `flanger.depth`, the two fields
+/// #1206 bounded. It is not a writer into these fields at all.
+/// ⚠️ The producer #1206 MISSED is `FXPreset.morphed(to:amount:)`: it clamps its own `amount`
+/// with the NaN-transparent idiom, so a NaN amount makes every interpolated field NaN at once —
+/// including `flangerFeedback` and `phaserFeedback`, the two #1206b bounds. Latent only because
+/// its fader carries a `0...1` range. This is closed on engineering.md's boundary rule.
 ///
-/// ⚠️ AND IT DOES NOT CLOSE THE CLASS. The same NaN-transparent spelling occurs ~74 times under
-/// `DSP/` and ~309 across `Sources/` (`grep -rnE '(Swift\.)?min\(\s*(Swift\.)?max\('`), many
-/// already guarded by an explicit `isFinite` ternary and many not. Fixing them in one commit is
-/// exactly what `ANonFiniteControlCannotReachTheRenderTests` warns against; this slice repairs
-/// the two helpers in THIS file and nothing else.
+/// ⚠️ AND IT DOES NOT CLOSE THE CLASS. The same NaN-transparent spelling occurs many times under
+/// `DSP/` and across `Sources/` — ⛔ two figures stood here and are deleted rather than
+/// refreshed: they were measured BEFORE the repair and printed after it, and this very doc block
+/// is one of the hits its own regex counts. Run
+/// `grep -rnE '(Swift\.)?min\(\s*(Swift\.)?max\(' --include='*.swift' Sources/` and READ the
+/// hits; many are already guarded by an `isFinite` ternary in the same expression and several
+/// are comments warning about the idiom. Fixing them in one commit is exactly what
+/// `ANonFiniteControlCannotReachTheRenderTests` warns against. #1206b closes all FOUR clamps in
+/// THIS file and nothing else — ⛔ #1206 claimed that boundary while closing only two of them.
 @inline(__always) private func clamp01(_ x: Float) -> Float {
-    Swift.min(1.0, Swift.max(0.0, x))
+    x.clamped(to: 0.0...1.0)
 }
 @inline(__always) private func clampRate(_ x: Float) -> Float {
-    Swift.min(8.0, Swift.max(0.05, x))
+    x.clamped(to: 0.05...8.0)
 }

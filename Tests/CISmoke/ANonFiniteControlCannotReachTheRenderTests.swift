@@ -32,8 +32,13 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 22 tests, 48 assertion statements (`grep -c '^    func test'` and `grep -c XCTAssert`,
-//     measured 2026-09-10; several run inside loops or over 3 000–4 000-sample arrays).
+//   · 24 tests, 50 assertion STATEMENTS, measured 2026-09-10. ⛔ The recipe printed here one
+//     commit ago was `grep -c XCTAssert` and it FALSIFIED ITSELF: the token now occurs on this
+//     very line, so the command returns one more than the number beside it. Adding a recipe to
+//     prose put the recipe inside its own corpus. The honest command excludes comment lines:
+//         grep -c '^    func test' <file>
+//         grep -E 'XCTAssert' <file> | grep -vE '^\s*//' | wc -l
+//     (several assertions run inside loops or over 2 000–4 000-sample arrays).
 //     Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
@@ -105,7 +110,10 @@
 // make this paragraph wrong — sanitise the rate in the same commit, do not delete the method
 // on the strength of this note (#364).
 //
-// ⭐ GRADING (§3). SIX findings, SEVEN boundaries — the third (#1170, the poly engine's own
+// ⭐ GRADING (§3). SEVEN findings, EIGHT boundaries (⛔ this read "SIX findings, SEVEN
+// boundaries" while the same sentence already enumerated through the eighth — the heading at
+// the top was bumped and this line was not, which is exactly the #818 shape it warns about) —
+// the third (#1170, the poly engine's own
 // sample rate), the fourth (#1171, the shared delay line's constructor), the fifth (#1172,
 // the FX chain handing the raw rate to fifteen stages) and the sixth (#1194, the felt sub's
 // two audio-thread character mirrors), the seventh (#1195, the document-side
@@ -133,42 +141,97 @@
 // ⭐ #1206'S GRADING, and its own measured NEGATIVE. Six tests added; every expectation was
 // derived by re-implementing chorus, flanger, LFO and delay line in float32 Python and driving
 // BOTH trees, because a CI round trip is a lottery ticket (#686). Result:
-//   · SEVEN REGRESSION assertions, red on the parent: chorus depth 50-vs-1, flanger depth
-//     50-vs-1, the two NaN-depth equalities, the tremolo latching claim, and claim 6's two
-//     positive needles. Claim 6's two NEGATIVE needles are red on the parent too but are the
-//     SAME absence seen from the other side (#486) — one finding, not four.
-//   · SEVEN COUNTERWEIGHT assertions, green on both trees: depth still shapes the sound inside
-//     [0, 1] (chorus and flanger), the output is finite, the output is non-zero, and the count
-//     pin. Without the first two, all four equalities above are satisfied by a clamp that pins
-//     every depth to one value or by a stage that stopped making sound.
-//   · Stripper: **PROPHYLAKTISCH (0 of 10 verdicts flip)** — measured, not assumed, on both
-//     trees with and without comment-stripping. It is close to load-bearing by construction and
-//     was written to stay clear of it: the doc block over `clamp01` QUOTES the retracted
-//     spelling, so the two negative needles were deliberately written with the shipped literals
-//     (`x, 0.0), 1.0`) while the prose quotes the shorter form (`x, 0), 1`). Either guard alone
-//     would do; both together mean a future prose edit cannot redden a correct tree (#491).
+// ⛔ #1206'S OWN TALLY WAS WRONG IN BOTH DIRECTIONS AND IS REPLACED BY A MEASURED ONE. It said
+// "SEVEN regressions / SEVEN counterweights", which does not even sum to the file's assertion
+// count. Three separate errors, all found by driving every assertion rather than by counting
+// the diff: the COUNT PIN was filed as a green-on-both counterweight while it is red on the
+// parent (the parent has `let exc = depth * spreadMs`, so its count is 0, not 2); "two positive
+// needles" was three; and there were four genuine counterweights, not seven. A tally that
+// misfiles a red assertion as a counterweight is the defect §3 exists to stop, committed in the
+// paragraph that performs §3. (That count pin is retracted for a different reason — see
+// `testEveryModFXClampIsTheHouseNaNSafeOne`.)
 //
-// ⛔ THE NaN HALF IS LATENT, AND THE RANGE HALF IS NOT. Say them apart. No shipped producer
-// emits NaN into these fields (`JSONDecoder`'s default `nonConformingFloatDecodingStrategy` is
-// `.throw`; the UI fields carry finite ranges; `FXBioModulator` is guarded by
-// `FXModulation.clamp01`, which spells it `x.isFinite ? x : 0`). An OUT-OF-RANGE depth is a
-// different story: `FXPreset.init(from:)`'s `f(_:_:)` decodes any finite Float and
-// `FXPresetStore` reads a user-writable file.
+// MEASURED, #1206 + #1206b together, every assertion driven against both trees:
+//   · REGRESSIONS, red on the parent — chorus depth 50-vs-1 · flanger depth 50-vs-1 · the two
+//     NaN-depth equalities · the tremolo latching claim · the flanger and phaser feedback
+//     claims (four assertions) · claim 6's four positive needles and its absence needle. The
+//     absence needle and the positive needles are the SAME absence from two sides (#486): one
+//     finding, not five.
+//   · COUNTERWEIGHTS, green on both trees — depth still shapes the sound inside [0, 1] (chorus
+//     and flanger), the output is finite, the output is non-zero; and feedback still shapes it
+//     (flanger and phaser). Without these, every equality above is satisfied by a clamp that
+//     pins its parameter to one value, or by a stage that stopped making sound.
+//   · Stripper: **TRAGEND (1 of 10 verdicts flips)** — measured on both trees with and without
+//     comment-stripping, and this flipped category between #1206 and #1206b. #1206's needle set
+//     was PROPHYLAKTISCH (0 of 10): its absence needles carried the shipped literals
+//     (`x, 0.0), 1.0`) while the doc block quoted a shorter form, so they could not collide.
+//     #1206b's absence needle is the whole idiom `Swift.min(Swift.max(`, which the retracted
+//     quote in `EchoelModFX`'s doc block DOES contain. Without `SourceText.codeOnly` that
+//     assertion is red on a correct tree. This is the #491 shape working as intended: the
+//     retraction lives inside the absence claim's own corpus, and the stripper is what makes
+//     that safe. Do not replace the loader with a raw read.
+//
+// ⚠️ `moved-needles.py` reports ONE hit on this slice and it is answered, not ignored:
+// `Swift.min(1.0, Swift.max(0.0, x))` left `Sources/` and this file still names it — at exactly
+// one line, inside a `///` retraction that explains why #1206's spelling was replaced. It cites,
+// it does not scan (the tool marks it `(prose)`). Nothing to re-anchor.
+//
+// ⛔ THE REACHABILITY SENTENCE #1206 WAS PROUDEST OF WAS HALF WRONG, and it is the half a later
+// session would have planned from. It said an out-of-range depth is "not latent" because
+// "`FXPresetStore` reads a user-writable file". Measured: `FXPresetStore` writes into
+// `AppGroupStore(subdirectory: "FXPresets")`, which resolves to the App Group container or
+// Application Support — never `Documents`; `Resources/iOS/Info.plist` carries neither
+// `UIFileSharingEnabled` nor `LSSupportsOpeningDocumentsInPlace`; and there is no `fileImporter`
+// for FX presets at all. So that file is not reachable from Files.app, and the only writer is
+// the app snapshotting its own chain — whose depth came from a `0...1` field or a literal. It is
+// CIRCULAR: the app cannot produce the out-of-range value it would then persist.
+//
+// The real out-of-range vector is the one #1206 did not name: `Resources/Community/fx/*.json`,
+// loaded by `CommunityLibrary.fx` through the same unchecked `f(_:_:)`. A merged community
+// preset carrying `"chorusDepth": 5` ships that value to every user. That is a genuine hazard
+// and a better argument — it is a REPO-side door, not an end-user one.
+//
+// So both halves are latent for a user on a stock device; they differ in WHO can trip them, not
+// in whether anyone can. The NaN half stays latent for its own reasons: `JSONDecoder`'s default
+// `nonConformingFloatDecodingStrategy` is `.throw`, and the UI fields carry finite ranges.
+//
+// ⛔ AND #1206'S PRODUCER LIST MISSED ONE AND NAMED ANOTHER WRONG.
+//   · MISSED: `FXPreset.morphed(to:amount:)` clamps its own `amount` with the NaN-transparent
+//     idiom, so a NaN amount makes EVERY interpolated field NaN — `chorusDepth`,
+//     `flangerDepth`, `flangerFeedback`, `phaserFeedback`, the rates — and `EchoelFXView` then
+//     stamps the result onto every chain. It runs from a live fader binding on every value
+//     change. Latent only because that field carries a `0...1` range; that is the reason to
+//     state, not to omit the writer. It is also the most plausible future NaN producer for the
+//     fields #1206b bounds.
+//   · NAMED WRONG: `FXBioModulator` was cited as "guarded by `FXModulation.clamp01`". The value
+//     it writes comes from `FXModulation.combine(…)`, whose guard is `v.isFinite ? v : base` —
+//     same conclusion, different function, and the fallback `base` is read live off the chain,
+//     so it is NaN-safe only while the chain value is finite. And it writes `chorus.mix`,
+//     `flanger.mix`, `phaser.mix` and `tremolo.depth` — it NEVER writes `chorus.depth` or
+//     `flanger.depth`, the two fields #1206 bounded. Calling it "the one live 30 Hz writer INTO
+//     THESE FIELDS" was simply not true.
 //
 // ⭐ AND #1206 DELIBERATELY DID NOT SWEEP THE CLASS — a measured negative, recorded so nobody
 // re-runs it and nobody "fixes" three hundred call sites at once (the same discipline the
 // #1179 note above asks for):
 //
-//   grep -rnE '(Swift\.)?min\(\s*(Swift\.)?max\(' --include='*.swift' Sources/  ->  309
-//   ... the same, restricted to Sources/Echoelmusic/DSP/                            ->   74
+//   grep -rnE '(Swift\.)?min\(\s*(Swift\.)?max\(' --include='*.swift' Sources/
+//   ... the same, restricted to Sources/Echoelmusic/DSP/
 //
-// Many of those 74 are already closed by an explicit `isFinite` ternary in the same expression
-// (`EchoelGranular`, `EchoelFDNReverb`, `ChannelInsertFX`, `SubCharacter`, `EchoelDDSP`), and
-// several of the hits are COMMENTS quoting the idiom in order to warn about it — including two
-// in `EchoelDelayLine` and three in `EchoelDelay`. So 74 is an upper bound on candidates, NOT a
-// count of defects, and anyone acting on it must read the hits rather than the number.
-// #1206 repaired the two helpers in ONE file, chosen because that file's `clampRate` feeds an
-// LFO phase accumulator that LATCHES.
+// ⛔ THE TWO NUMBERS THAT STOOD HERE (309 and 74) ARE DELETED, NOT REFRESHED, and the reason is
+// worth more than the figures. They were measured on the PARENT and printed in the PRESENT
+// tense next to the recipe, so anyone who ran the quoted command on the shipped tree got a
+// different answer than the sentence promised — the `EchoelModalBank` lesson verbatim. Worse,
+// the note COUNTED ITSELF: the doc block in `EchoelModFX` that quotes the retracted spelling
+// matches the census regex and is one of the hits. Run the command; do not read a number here.
+//
+// What is DURABLE, and is why the census is mentioned at all: many hits are already closed by
+// an explicit `isFinite` ternary in the same expression (`EchoelGranular`, `EchoelFDNReverb`,
+// `ChannelInsertFX`, `SubCharacter`, `EchoelDDSP`), and several are COMMENTS quoting the idiom
+// in order to warn about it — in `EchoelDelayLine`, in `EchoelDelay`, and now here. So the
+// count is an upper bound on CANDIDATES, never a count of defects: read the hits.
+// #1206/#1206b repaired all four clamps in ONE file, chosen because two of them feed state that
+// LATCHES — an LFO phase accumulator and a delay-line write-back.
 
 import Foundation
 import XCTest
@@ -569,11 +632,16 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     /// producer: `FXPreset.init(from:)`'s `f(_:_:)` decodes a Float with no range check, and
     /// `FXPresetStore` reads a user-writable file.
     ///
-    /// At `depth = 50` the excursion is ±350 ms around a 12 ms centre, so BOTH taps sit on the
-    /// line's end stops — `msToSamples` floors at 1.0, `readAllpass` ceilings at
-    /// `maxDelaySamples` — and the LFO switches between two fixed integer taps. A hard
-    /// alternation, not a chorus. After the clamp, `depth = 50` is indistinguishable from
-    /// `depth = 1`, which is what this asserts.
+    /// At `depth = 50` the excursion is ±350 ms around a 12 ms centre, so the taps spend most of
+    /// every LFO cycle on the line's end stops — `msToSamples` floors at 1.0, `readAllpass`
+    /// ceilings at `maxDelaySamples`. Measured over a full cycle: pinned at 1.0 for 39 % of
+    /// samples, pinned at the ceiling for 52 %, genuinely sweeping for **9 %**. So it is a hard
+    /// alternation between a 1-sample tap and an 85 ms tap for ~91 % of the time, not a chorus.
+    /// ⛔ An earlier wording said "two exact integers, alternating with the LFO" without the
+    /// share — absolute where the mechanism is 91 %. (Both end stops ARE exact integers, so
+    /// #1205's `eta` cap engages on that same ~91 % — an extra argument for THAT fix which
+    /// #1205 did not make.) After the clamp, `depth = 50` is indistinguishable from `depth = 1`,
+    /// which is what this asserts.
     func testTheChorusBoundsItsDepthLikeItsMix() {
         XCTAssertEqual(runChorus(depth: 50), runChorus(depth: 1), """
             `EchoelChorus.depth` is no longer bounded to its documented [0, 1] at the use site. \
@@ -616,8 +684,17 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     /// Every mod-FX stage funnels its `rate` setter through `clampRate`. Spelled
     /// `Swift.min(Swift.max(x, 0.05), 8.0)` a NaN passed straight through into
     /// `EchoelLFO.rate`, and `next()` does `phase += rate / sampleRate` with a reset on
-    /// `phase >= 1.0`: once the phase is NaN that comparison is false FOREVER. The LFO never
-    /// recovers, and nothing short of a new instance heals it. The tremolo is the stage where
+    /// `phase >= 1.0`: once the phase is NaN that comparison is false FOREVER.
+    ///
+    /// ⛔ "AND NOTHING SHORT OF A NEW INSTANCE HEALS IT" STOOD HERE AND IS FALSE.
+    /// `EchoelLFO.reset()` sets `phase = 0` and is reachable from four production sites — each
+    /// enable flag's `willSet` in `EchoelFXChain` (i.e. a user toggling the stage off and on),
+    /// `noteRenderSleeping()`, `resetAll()`, and each stage's own `reset()`. What is TRUE is
+    /// narrower and is the point: a `reset()` does not help while the rate is still NaN, because
+    /// the next sample re-poisons the phase. So the latch is real but RECOVERABLE — and that
+    /// distinction is load-bearing, because the flanger's ring-buffer latch (#1206b, below) is
+    /// NOT recoverable, and #1206 described the recoverable one in the unrecoverable one's
+    /// language. The tremolo is the stage where
     /// that surfaces as NaN in the OUTPUT (its gain is computed straight from the LFO), which
     /// is why the assertion lives here rather than on the chorus.
     func testANonFiniteRateCannotLatchTheLFOPhase() {
@@ -649,41 +726,113 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
             """)
     }
 
-    /// REGRESSION (#1206). SOURCE-TEXT SCAN (§1) — the half a behavioural test cannot state:
-    /// WHY the spelling is what it is. Both helpers are `private` and inlined, so nothing can
-    /// call them directly.
+    // MARK: - #1206b — the two clamps the first attempt left standing
+
+    private func runFlanger(feedback: Float, frames: Int = 2000) -> [Float] {
+        let fx = EchoelFlanger(sampleRate: 48000)
+        fx.feedback = feedback
+        return (0..<frames).map { fx.processStereo(tone($0), tone($0)).0 }
+    }
+
+    private func runPhaser(feedback: Float, frames: Int = 2000) -> [Float] {
+        let fx = EchoelPhaser(sampleRate: 48000)
+        fx.feedback = feedback
+        return (0..<frames).map { fx.processStereo(tone($0), tone($0)).0 }
+    }
+
+    /// REGRESSION (#1206b), and the one #1206 should have caught. END-TO-END BEHAVIOUR.
     ///
-    /// ⚠️ The negative needles are the load-bearing half. A future edit that "tidies" the
-    /// argument order back is bit-identical for every finite input and would pass every
-    /// behavioural claim above except the two NaN ones — and those two are LATENT, so a
-    /// reviewer could reasonably read them as theoretical. The absence assertion is what makes
-    /// the order a rule rather than a preference.
-    func testTheModFXClampHelpersPutTheKnownGoodValueFirst() throws {
+    /// ⛔ #1206 REPAIRED THE RECOVERABLE LATCH AND LEFT THE UNRECOVERABLE ONE FOUR LINES AWAY.
+    /// It named `Swift.min(Swift.max(…))` as the defect, fixed the two private helpers, and its
+    /// own commit body then cited `feedback` as an already-bounded NEIGHBOUR to imitate — while
+    /// `feedback` was spelled with exactly the idiom the same paragraph indicted. Two of four
+    /// clamps in the file, and the two it skipped have the worse consumers:
+    ///
+    ///   · FLANGER — `fb` multiplies the delay-line WRITE-BACK. A NaN goes into the ring, and
+    ///     `EchoelDelayLine`'s own header says why that never heals: the drain that would call
+    ///     `reset()` is gated on the output being under 1e-5, and `NaN < 1e-5` is FALSE, so the
+    ///     poisoned chain never sleeps. The LFO latch #1206 did fix recovers the moment a finite
+    ///     rate arrives; this one does not recover at all.
+    ///   · PHASER — `var s = x + last * fb`, then `last = s` and every `z[i]`. Fourteen state
+    ///     values, permanently.
+    ///
+    /// ⭐ THE LESSON IS NOT "GREP HARDER". It is that a slice which names a defect CLASS has to
+    /// enumerate the class in the file it is editing before it claims a boundary — #1206's
+    /// "this slice repairs the two helpers in THIS file and nothing else" reads like a
+    /// considered scope and was really an incomplete census.
+    func testTheFeedbackClampsAreNaNSafeToo() {
+        XCTAssertTrue(runFlanger(feedback: .nan).allSatisfy { $0.isFinite }, """
+            a non-finite `feedback` reaches the flanger's delay-line write-back again. That \
+            poisons the ring buffer, and the sleep drain cannot clear it because the drain is \
+            gated on the output being below 1e-5 and `NaN < 1e-5` is false (#1206b).
+            """)
+        XCTAssertEqual(runFlanger(feedback: .nan), runFlanger(feedback: 0), """
+            a non-finite flanger `feedback` no longer lands on the NEUTRAL value. \
+            ⚠️ `clamped(to:)` maps NaN to the range's LOWER bound, and this range's lower bound \
+            is -0.95 — maximum NEGATIVE feedback, the loudest thing the stage can do. The \
+            explicit `isFinite ? feedback : 0` ternary is what makes zero the landing (#1206b).
+            """)
+        XCTAssertTrue(runPhaser(feedback: .nan).allSatisfy { $0.isFinite }, """
+            a non-finite `feedback` reaches the phaser's recursion again — it lands in `last` \
+            and in all six `z[i]` and stays there for the life of the instance (#1206b).
+            """)
+        XCTAssertEqual(runPhaser(feedback: .nan), runPhaser(feedback: 0), """
+            a non-finite phaser `feedback` no longer lands on zero. Here the range's lower \
+            bound IS the neutral value, so `clamped(to:)` alone is enough (#1206b).
+            """)
+    }
+
+    /// COUNTERWEIGHT (#343). The four equalities above are all satisfied by a stage that
+    /// ignores `feedback` entirely, or by one that stopped producing output.
+    func testFeedbackStillShapesTheSoundInsideItsRange() {
+        XCTAssertNotEqual(runFlanger(feedback: 0.5), runFlanger(feedback: 0), """
+            `feedback` no longer changes the flanger anywhere inside its range (#1206b).
+            """)
+        XCTAssertNotEqual(runPhaser(feedback: 0.5), runPhaser(feedback: 0), """
+            `feedback` no longer changes the phaser anywhere inside its range (#1206b).
+            """)
+    }
+
+    /// REGRESSION (#1206b). SOURCE-TEXT SCAN (§1) — the half a behavioural test cannot state:
+    /// WHICH clamp is used, and therefore whether a FIFTH one added later inherits the law.
+    /// All four sites are `private` or inlined, so nothing can call them directly.
+    ///
+    /// ⛔ #1206'S VERSION OF THIS CLAIM PINNED THE CLAMP'S LOCATION AND IS RETRACTED (#364).
+    /// It asserted `code.contains("let exc = clamp01(depth) * spreadMs")` and pinned that at
+    /// exactly 2. Clamping `depth` in its SETTER instead — which is what `rate` already does
+    /// four lines up in the same file — is a correct and arguably better repair, and it would
+    /// have reddened those two assertions on a correct tree while every behavioural claim above
+    /// stayed green. A guard must not forbid a correct repair. The property is proven by
+    /// behaviour (`testTheChorusBoundsItsDepthLikeItsMix` and its three siblings), which is
+    /// indifferent to where the bound lives; only the SPELLING is pinned here, and only because
+    /// a re-tidy of it is bit-identical for finite inputs.
+    ///
+    /// ⛔ AND THE SPELLING ITSELF CHANGED. #1206 reversed the operands
+    /// (`Swift.min(1.0, Swift.max(0.0, x))`). That is correct but invents a second spelling of a
+    /// decision the repo already owns: CLAUDE.md says to use `clamped(to:)` from
+    /// `Core/FloatingPointClamp.swift` for anything reaching the audio thread, #588 migrated
+    /// `EchoelDelay` to it, and `EchoelDelayLine` — same directory, same render path — already
+    /// calls it. One definition per decision (#416).
+    func testEveryModFXClampIsTheHouseNaNSafeOne() throws {
         let code = try source("Sources/Echoelmusic/DSP/EchoelModFX.swift")
-        XCTAssertTrue(code.contains("Swift.min(1.0, Swift.max(0.0, x))"), """
-            `clamp01` in EchoelModFX no longer puts the known-good bound first. \
-            `Swift.max(x, 0)` returns x for NaN because every comparison against NaN is false, \
-            so the old order made the clamp a no-op for NaN (#1206).
-            """)
-        XCTAssertTrue(code.contains("Swift.min(8.0, Swift.max(0.05, x))"), """
-            `clampRate` in EchoelModFX no longer puts the known-good bound first. This one is \
-            the latching path: it feeds `EchoelLFO.rate` (#1206).
-            """)
-        XCTAssertFalse(code.contains("Swift.min(Swift.max(x, 0.0), 1.0)"), """
-            the NaN-transparent spelling of `clamp01` is back. It is bit-identical for finite \
-            inputs, which is exactly why only this scan can see it (#1206).
-            """)
-        XCTAssertFalse(code.contains("Swift.min(Swift.max(x, 0.05), 8.0)"), """
-            the NaN-transparent spelling of `clampRate` is back (#1206).
-            """)
-        XCTAssertTrue(code.contains("let exc = clamp01(depth) * spreadMs"), """
-            a mod-FX stage reads `depth` raw again. Both the chorus and the flanger must route \
-            it through the bounded helper, the way `mix` and `feedback` already are (#1206).
-            """)
-        XCTAssertEqual(code.components(separatedBy: "let exc = clamp01(depth) * spreadMs").count - 1, 2, """
-            COUNT PIN: exactly two stages compute an excursion from `depth` — chorus and \
-            flanger. A third would be a new delay-driving stage that this claim has not been \
-            checked against; a first would mean one of them lost its bound (#1206).
+        for needle in ["x.clamped(to: 0.0...1.0)",
+                       "x.clamped(to: 0.05...8.0)",
+                       "(feedback.isFinite ? feedback : 0).clamped(to: -0.95...0.95)",
+                       "feedback.clamped(to: 0.0...0.95)"] {
+            XCTAssertTrue(code.contains(needle), """
+                `\(needle)` is gone from EchoelModFX. All four control clamps in that file use \
+                the house NaN-safe `clamped(to:)`; a hand-rolled `min(max(…))` is \
+                NaN-transparent by argument order and bit-identical for finite inputs, so only \
+                this scan can see the difference (#1206b).
+                """)
+        }
+        XCTAssertFalse(code.contains("Swift.min(Swift.max("), """
+            a hand-ordered `Swift.min(Swift.max(…))` is back in EchoelModFX. Every comparison \
+            against NaN is false, so that form returns whatever NaN went in. Use \
+            `clamped(to:)`, or an explicit `isFinite` ternary where the range's LOWER bound is \
+            not the neutral value — the flanger's feedback is the case that needs the ternary \
+            (#1206b). ⚠️ This is an ABSENCE claim over comment-stripped source, so the doc \
+            block above `clamp01` may quote the retracted spelling freely (#491).
             """)
     }
 
