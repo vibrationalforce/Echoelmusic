@@ -4,7 +4,9 @@
 // High-performance lock-free queue for real-time video frame transfer.
 // Zero-copy design with automatic memory management.
 //
-// Supported Platforms: iOS, macOS, watchOS, tvOS, visionOS, Linux
+// Supported Platforms: iOS, macOS, watchOS, tvOS, visionOS
+// (⛔ "Linux" stood here — the fences are libkern `OSMemoryBarrier`, and no CI job builds
+// this package on ubuntu; corrected with #1237, which also removed the last `OSAtomic*` calls.)
 // Created 2026-01-16
 
 import Foundation
@@ -39,6 +41,15 @@ public final class SPSCQueue<Element> {
     /// Cache line size for padding (64 bytes on most architectures)
     private static var cacheLineSize: Int { 64 }
 
+    /// Slots per padded word: every index AND every counter is allocated with this stride
+    /// so that no two of them share a cache line (#1237). The three counters used to be
+    /// `allocate(capacity: 1)` — 16-byte malloc quanta, so all three typically sat on ONE
+    /// line that the producer (dropped/enqueue) and the consumer (dequeue) both wrote on
+    /// every operation, while the header above promised "cache-line aligned to prevent
+    /// false sharing". True for the indices, false for the counters, and the counters are
+    /// bumped on the render thread per dequeued command.
+    private static var paddedWordCapacity: Int { cacheLineSize / MemoryLayout<Int>.size }
+
     // MARK: - Storage
 
     /// Ring buffer storage
@@ -60,15 +71,25 @@ public final class SPSCQueue<Element> {
     /// Padded to prevent false sharing
     private var tail: UnsafeMutablePointer<Int>
 
-    // MARK: - Metrics
+    // MARK: - Metrics (Cache-Line Padded, ONE writer each)
 
-    /// Number of dropped elements due to overflow
+    /// Each counter has exactly ONE writer — `_droppedCount` and `_enqueueCount` the
+    /// producer, `_dequeueCount` the consumer — so a plain `pointee += 1` is the whole
+    /// operation (#1237). The `OSAtomicIncrement64Barrier` that stood here was a full
+    /// `dmb ish` fence per increment for a counter nobody races on; the readers
+    /// (`droppedCount` & co.) are diagnostics, read as a single aligned word on any
+    /// thread, exactly as `head`/`tail` are read by `count`/`isEmpty`. A reader may see a
+    /// value one increment stale; it can never see a torn one. `&+=` on purpose: the old
+    /// atomic wrapped at `Int.max`, a checked `+=` would trap — never on the render thread,
+    /// even for a count nobody reaches.
+
+    /// Number of dropped elements due to overflow (producer writes)
     private var _droppedCount: UnsafeMutablePointer<Int>
 
-    /// Total enqueue operations
+    /// Total enqueue operations (producer writes)
     private var _enqueueCount: UnsafeMutablePointer<Int>
 
-    /// Total dequeue operations
+    /// Total dequeue operations (consumer writes)
     private var _dequeueCount: UnsafeMutablePointer<Int>
 
     // MARK: - Initialization
@@ -87,20 +108,20 @@ public final class SPSCQueue<Element> {
         buffer.initialize(repeating: nil, count: powerOf2Capacity)
 
         // Allocate cache-line padded indices
-        head = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.cacheLineSize / MemoryLayout<Int>.size)
+        head = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.paddedWordCapacity)
         head.initialize(to: 0)
 
-        tail = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.cacheLineSize / MemoryLayout<Int>.size)
+        tail = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.paddedWordCapacity)
         tail.initialize(to: 0)
 
-        // Allocate metrics
-        _droppedCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+        // Allocate metrics — same stride as the indices, one line each (#1237)
+        _droppedCount = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.paddedWordCapacity)
         _droppedCount.initialize(to: 0)
 
-        _enqueueCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+        _enqueueCount = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.paddedWordCapacity)
         _enqueueCount.initialize(to: 0)
 
-        _dequeueCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+        _dequeueCount = UnsafeMutablePointer<Int>.allocate(capacity: SPSCQueue.paddedWordCapacity)
         _dequeueCount.initialize(to: 0)
     }
 
@@ -189,28 +210,37 @@ public final class SPSCQueue<Element> {
     @discardableResult
     @inline(__always)
     public func enqueue(_ element: Element) -> Bool {
-        let currentTail = OSAtomicAdd64Barrier(0, UnsafeMutablePointer<Int64>(OpaquePointer(tail)))
-        let currentHead = OSAtomicAdd64Barrier(0, UnsafeMutablePointer<Int64>(OpaquePointer(head)))
+        // Plain loads, the `tryEnqueue` form (#1237). `OSAtomicAdd64Barrier(0, …)` stood
+        // here for both: an atomic read-modify-write of `head` — a STORE to the consumer's
+        // padded line on every enqueue, the false sharing the padding exists to prevent —
+        // plus a full fence on the producer's own `tail`. Neither buys ordering the ring
+        // needs: the slot store below is control-dependent on the `head` load (a store is
+        // never made visible ahead of the branch that guards it), and the consumer's own
+        // barrier before its `head` publish guarantees its slot load has completed before
+        // this producer can observe the freed index. `tryEnqueue` has shipped on exactly
+        // this pairing since the ring was written; the two paths now differ only in the
+        // dropped-count bookkeeping.
+        let currentTail = tail.pointee
+        let currentHead = head.pointee
 
-        let nextTail = (Int(currentTail) + 1) & mask
+        let nextTail = (currentTail + 1) & mask
 
         // Full: the only slot we could take belongs to the consumer. Refuse, count it,
         // and touch NOTHING — no head write, and no tail publish either (publishing a
         // tail we did not fill is what corrupted the ring above).
-        if nextTail == Int(currentHead) & mask {
-            OSAtomicIncrement64Barrier(UnsafeMutablePointer<Int64>(OpaquePointer(_droppedCount)))
+        if nextTail == currentHead {
+            _droppedCount.pointee &+= 1
             return false
         }
 
         // Store element
-        let index = Int(currentTail) & mask
-        buffer[index] = element
+        buffer[currentTail] = element
 
         // Publish tail (memory barrier ensures element is visible)
         OSMemoryBarrier()
         tail.pointee = nextTail
 
-        OSAtomicIncrement64Barrier(UnsafeMutablePointer<Int64>(OpaquePointer(_enqueueCount)))
+        _enqueueCount.pointee &+= 1
 
         return true
     }
@@ -238,7 +268,7 @@ public final class SPSCQueue<Element> {
         OSMemoryBarrier()
         tail.pointee = nextTail
 
-        OSAtomicIncrement64Barrier(UnsafeMutablePointer<Int64>(OpaquePointer(_enqueueCount)))
+        _enqueueCount.pointee &+= 1
 
         return true
     }
@@ -273,7 +303,7 @@ public final class SPSCQueue<Element> {
         OSMemoryBarrier()
         head.pointee = (currentHead + 1) & mask
 
-        OSAtomicIncrement64Barrier(UnsafeMutablePointer<Int64>(OpaquePointer(_dequeueCount)))
+        _dequeueCount.pointee &+= 1
 
         return element
     }
