@@ -305,6 +305,10 @@ public final class MemoryPressureHandler {
         // does not announce relief, so inventing a recovery here would be the same category of
         // guess this slice just removed. A reader gets "the highest pressure seen so far",
         // which is a true statement about the run.
+        // NEEDS-FOUNDER-VERIFY: eine normale Sitzung fahren und danach das `echoel_diag.log`
+        // ansehen. Die Zeile "Handling Warning pressure" darf NICHT mehr auftauchen, solange
+        // das Telefon nicht wirklich unter Speicherdruck steht — sie kam vorher fuenf
+        // Sekunden nach jedem Start auf jedem Geraet (#1201).
         currentLevel = level
         pressureEventCount += 1
         log.warning("MemoryPressureHandler: Handling \(level.description) pressure")

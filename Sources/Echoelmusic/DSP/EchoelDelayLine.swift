@@ -178,6 +178,9 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// give this file its first `import Accelerate`. Do not take it on the strength of this
     /// sentence; the honest fix for the underlying hazard is to fence `fxEnabled`, which is a
     /// different slice with a different owner.
+    // NEEDS-FOUNDER-VERIFY: eine Sequenz spielen, stoppen, rund fuenf Sekunden warten, dann
+    // im Master-Panel die Zeile `N late` ablesen. Der Ausschlag, der ~2,5 s NACH dem Stoppen
+    // kam (alle Stimmen leeren ihre Puffer im selben Block), soll verschwunden sein (#1196b).
     public func reset() {
         buffer.withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
         writeIndex = 0

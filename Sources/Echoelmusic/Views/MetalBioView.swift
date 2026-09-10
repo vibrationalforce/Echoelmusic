@@ -868,6 +868,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // ⚠️ `makeLibrary` is the only one whose message is worth carrying: it is the one
         // that fails on an edit to the shader text, and its `localizedDescription` names the
         // MSL line. The other two are structural (a renamed entry point) and say so by name.
+        // NEEDS-FOUNDER-VERIFY: Diagnostics öffnen und das `echoel_diag.log` teilen, nachdem
+        // Du das Visual-Fenster mehrmals auf- und zugemacht hast. Die Zeile
+        // "visual: compiling shader" darf pro SITZUNG nur EINMAL vorkommen, nicht einmal
+        // pro Umschalten — daneben steht dann "visual: shader reused — no recompile" (#1196).
         EchoelCrashLog.breadcrumb("visual: compiling shader")
         let library: MTLLibrary
         do {
