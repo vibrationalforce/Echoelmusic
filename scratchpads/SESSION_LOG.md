@@ -29742,3 +29742,18 @@ grün/grün. ⚠️ Erste Transkription zeigte Claim 1 ROT auf dem Worktree — 
 „Create from Within"-Pillar der Overview, das der Audit nicht genannt hatte; der Wächter fand es, bevor der Commit
 stand. `fastlane/metadata` (docs-claims-3, Store-Text) bewusst nicht angefasst → Zeile 10 (Council, Founder-Lesung vor
 `deliver`). Prüfer exit 0.
+
+## #1239 — die sechs SPSCQueue-Zeiger sind `let` (2026-09-10, ~17:15 UTC, `cab96f3`, Push zurückgehalten)
+
+Follow-up aus der #1237-Review, eine Scheibe später wie angekündigt. Gemessen: `buffer`/`head`/`tail` und die drei
+Zähler werden genau einmal in `init` zugewiesen (Zeilen 107–124), danach nirgends (`grep -n "^\s*\(buffer\|head\|tail\|
+_droppedCount\|_enqueueCount\|_dequeueCount\) = "` → nur die sechs `init`-Zeilen). Ein `var`-Stored-Property einer
+Klasse trägt Swifts DYNAMISCHE Exklusivitätsprüfung — jedes `self.head`/`self.tail` in `dequeue()` kann ein
+`swift_beginAccess` (TLS-Lookup, kein Lock, aber ein Aufruf pro Index-Read) auf dem Render-Thread kosten; `let` hat
+keine Zugriffsverfolgung, der pointee bleibt über den Zeiger mutierbar. Claim 5 in
+`TheSPSCCountersLiveOnTheirOwnLinesTests` (Text: sechs `private let … UnsafeMutablePointer<`), transkribiert rot auf
+`a9e6d3b`, grün hier. **Push-Disziplin, gelernt an diesem Nachmittag:** Compile-Check #2529–#2535 sind ALLE
+`cancelled` — jeder Folge-Push innerhalb der ~9 min Laufzeit bricht den laufenden ab (Concurrency-Gruppe), und die
+macOS-Warteschlange lieferte seit `56db8f0` (16:54) kein grünes Compile mehr für drei `Sources/`-Commits (#1233,
+#1236, #1237). Regel ab jetzt: vor einem Push `actions_list` auf `xcode-compile-check.yml`; ist der Kopf-Lauf
+`in_progress`, wartet der Push, bis er fertig ist. `cab96f3` wartet auf #2536 (`d30f39b`, läuft seit 17:11:51).
