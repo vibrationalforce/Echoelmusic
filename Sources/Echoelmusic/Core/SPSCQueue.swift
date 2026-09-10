@@ -52,8 +52,14 @@ public final class SPSCQueue<Element> {
 
     // MARK: - Storage
 
+    // All six pointers are `let` (#1239): each is assigned once in `init` and never again, and a
+    // `var` stored property of a class carries Swift's DYNAMIC exclusivity check — every
+    // `self.head` read on the render thread could pay a `swift_beginAccess` (a TLS lookup, not a
+    // lock, but a call per index read on the one lock-free spine). A `let` has no access
+    // tracking; the pointee stays mutable through the pointer. Found by the #1237 review.
+
     /// Ring buffer storage
-    private var buffer: UnsafeMutablePointer<Element?>
+    private let buffer: UnsafeMutablePointer<Element?>
 
     /// Buffer capacity (always power of 2 for fast modulo)
     private let capacity: Int
@@ -65,11 +71,11 @@ public final class SPSCQueue<Element> {
 
     /// Head index (consumer reads, producer checks)
     /// Padded to prevent false sharing
-    private var head: UnsafeMutablePointer<Int>
+    private let head: UnsafeMutablePointer<Int>
 
     /// Tail index (producer writes, consumer checks)
     /// Padded to prevent false sharing
-    private var tail: UnsafeMutablePointer<Int>
+    private let tail: UnsafeMutablePointer<Int>
 
     // MARK: - Metrics (Cache-Line Padded, ONE writer each)
 
@@ -84,13 +90,13 @@ public final class SPSCQueue<Element> {
     /// even for a count nobody reaches.
 
     /// Number of dropped elements due to overflow (producer writes)
-    private var _droppedCount: UnsafeMutablePointer<Int>
+    private let _droppedCount: UnsafeMutablePointer<Int>
 
     /// Total enqueue operations (producer writes)
-    private var _enqueueCount: UnsafeMutablePointer<Int>
+    private let _enqueueCount: UnsafeMutablePointer<Int>
 
     /// Total dequeue operations (consumer writes)
-    private var _dequeueCount: UnsafeMutablePointer<Int>
+    private let _dequeueCount: UnsafeMutablePointer<Int>
 
     // MARK: - Initialization
 

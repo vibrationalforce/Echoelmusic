@@ -11,6 +11,9 @@
 // padded line on every enqueue. Tens of commands per second today; still the render thread's
 // spine (`PolySynthVoice` dequeues in its render block), and a header that lies about it.
 //
+// (5, #1239) LET: the six ring pointers are `let` — assigned once in `init` — so a render-thread
+// index read carries no `swift_beginAccess`; the #1237 review named it, one slice later.
+//
 // WHAT THIS PINS. (1) STRIDE, by text: no `allocate(capacity: 1)` in the file — every word is
 // allocated with `paddedWordCapacity`. (2) NO FENCED COUNTERS, by text: no `OSAtomic*` call
 // remains; the ordering the ring needs lives in the FIVE `OSMemoryBarrier()` fences (release
@@ -121,6 +124,19 @@ final class TheSPSCCountersLiveOnTheirOwnLinesTests: XCTestCase {
         XCTAssertEqual(h.q.enqueueCount, h.total)
         XCTAssertEqual(h.q.dequeueCount, h.total)
         XCTAssertEqual(h.q.droppedCount, 0, "`tryEnqueue` never counts a drop (#1237)")
+    }
+
+    /// Claim 5 (#1239) — the six ring pointers are `let`, so no index read carries a dynamic
+    /// exclusivity check on the render thread. Each is assigned once in `init`; a `var` here
+    /// is a `swift_beginAccess` per `self.head`/`self.tail` read in `dequeue()`.
+    func testTheRingPointersAreLetSoReadsCarryNoExclusivityCheck() throws {
+        let src = try text("Sources/Echoelmusic/Core/SPSCQueue.swift")
+        for name in ["buffer", "head", "tail", "_droppedCount", "_enqueueCount", "_dequeueCount"] {
+            XCTAssertTrue(src.contains("    private let \(name): UnsafeMutablePointer<"),
+                          "`\(name)` is no longer a `let` — a `var` stored property reintroduces the dynamic exclusivity check on every render-thread read (#1239)")
+            XCTAssertFalse(src.contains("    private var \(name): UnsafeMutablePointer<"),
+                           "`\(name)` is declared `var` again (#1239)")
+        }
     }
 
     private func text(_ relativePath: String) throws -> String {
