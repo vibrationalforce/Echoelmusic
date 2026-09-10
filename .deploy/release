@@ -1,5 +1,5 @@
-build: v10.79.466 — Sieben Reparaturen gegen Knistern und Speicher, alle auf Deinen Befund
-branch: claude/echoelmusic-neustart-auv3-6ri2ek (tokenless deploy via .deploy/release bump)
+build: v10.79.467 — Dreizehn Reparaturen: kein Absturz aus einer Projektdatei, weniger Rechenlast im Klang, ehrlicheres Bio
+branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
   ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
   sein. CI greift mit `grep -m1 -oE 'v[0-9]+\.[0-9]+\.[0-9]+'` über die GESAMTE Datei und
@@ -49,9 +49,71 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
-  Der Vorgänger ist 10.79.465 (und davor 10.79.464).
+  Der Vorgänger ist 10.79.466 (und davor 10.79.465).
 
-  ── 0. WAS IN 10.79.466 NEU IST ──────────────────────────────────────────
+  ── 0. WAS IN 10.79.467 NEU IST ─────────────────────────────────────────
+
+  **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt
+  alles seit 466 — dreizehn Scheiben (#1203–#1215), keine davon je auf einem Gerät gelaufen.
+  Ich sortiere nach dem, was Du MERKEN kannst.
+
+  **A. Ein Absturz weniger (#1212).** Eine Projektdatei („Open project") mit einem kaputten
+  Grundton konnte die App beim Öffnen hart abstürzen lassen. Jetzt wird der Grundton beim
+  Laden auf C…H gefaltet — dieselbe Regel, die die Tonart selbst benutzt.
+
+  **B. Weniger Rechenlast im Klang, ohne Klangänderung (#1213, #1214).** Der Vorschau-Sampler
+  lief mit 44,1 kHz in einem 48-kHz-Graphen; die Engine hat deshalb auf JEDEM Audio-Block
+  einen Sample-Rate-Wandler mitlaufen lassen, der Stille umgerechnet hat. Jetzt Graph-Rate.
+  Und das Delay hat für den Tone-Regler zwei Transzendente PRO SAMPLE gerechnet; jetzt einmal
+  beim Setzen. Beides bit-identisch im Klang — hörbar ist nichts, messbar nur CPU/Thermik.
+
+  **C. Bio ehrlicher (#1215).** Beim Start mit der Watch als einziger Quelle konnte eine bis zu
+  59 Minuten alte Puls-Probe als lebender Körper erscheinen. Jetzt gilt ein Höchstalter von
+  10 Minuten — ältere Proben werden verworfen, die Anzeige bleibt lieber leer als alt.
+  Das ist ein Urteilswert; ob 10 Minuten passen, steht unten als Bitte.
+
+  **D. Aus der Neustart-Sitzung, jetzt erstmals im Build (#1203–#1207b, #1208).** Das Leeren
+  des Delays kann keinen gleichzeitigen Leser mehr abstürzen lassen · das aufgenommene Bild
+  besitzt seine Ziel-Textur · der Allpass-Interpolator klingelt bei ganzzahliger Verzögerung
+  nicht mehr ewig · jeder Steuerwert der Modulations-Effekte, des Delays und einer
+  Projektdatei wird geklammert, bevor er rechnet (ein NaN konnte den Klang DAUERHAFT
+  stumm schalten — die Klasse, die #1206b/#1207/#1208 geschlossen haben).
+
+  **E. Nach außen (#1209, #1210).** Die Datenschutzerklärung ist jetzt IN der App verlinkt
+  (Learn-Ansicht) — App Review 5.1.1(i) für eine HealthKit-App. Und ADM-OSC sendet die
+  Adressnamen der Spec (`/azim /elev /dist`), nicht mehr erfundene `/position/…`-Namen;
+  ein FletcherMachine/L-ISA/SPAT liest die Objekte damit erstmals.
+
+  **Was ich NICHT beweisen kann:** alles oben ist compile-verifiziert (Xcode Compile Check
+  #2523 grün auf `517d97a`), die Wächter sind transkribiert, nicht ausgeführt. Ob der
+  Wandler-Wegfall (B) auf dem Gerät kühler läuft, sieht nur Dein Gerät.
+
+  Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
+  hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
+
+  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+
+  Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since e066acb`
+  (e066acb = der 466-Bump). Drei Bitten sind neu; die Watch-Bitte ist die aus C.
+
+  Founder device-session checklist — 3 NEW or REWORDED since `e066acb`, of 118 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
+
+  ── BIO  (1)
+     Bio/HealthKitBioPublisher.swift:48
+        NEEDS-FOUNDER-VERIFY: start the app with the Watch as the only source after >10 min without a Watch reading — …
+
+  ── SYNC  (1)
+     Sync/ADMOSCSender.swift:29
+        NEEDS-FOUNDER-VERIFY: one object visibly moving in a real ADM-OSC renderer (FletcherMachine, L-ISA, SPAT, or t…
+
+  ── OTHER  (1)
+     CISmoke/TheAllpassInterpolatorCannotRingForeverTests.swift:87
+        NEEDS-FOUNDER-VERIFY — und das REZEPT ist beim ersten Mal falsch gewesen, in beiden Haelften. Es sagte "Tiefe …
+
+
+  ── 0c. WAS IN 10.79.466 NEU WAR (Vorgänger) ──────────────────────────────────────────
 
   **Dein Befund vom 09.09.: „Knisterfreier Sound bitte. Es scheint zwischendurch zu viel
   Arbeitsspeicher zu verbrauchen. Vermeide Störungen im Sound."**
@@ -105,7 +167,7 @@ notes: |
   im Code zurückgenommen statt still zu trimmen. Punkt 4 ist ein sauberer Aufräum-Commit,
   nicht die Knister-Reparatur. Die Knister-Reparatur sind 1 und 2.
 
-  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+  ── 0d. NEU BEANTWORTBAR IN 10.79.466 (dem VORGÄNGER, nicht diesem Build) ─────────────────────────────────
 
   Gedruckt mit `python3 scripts/founder-verify.py --since 53c64a35`, also nicht von Hand
   zusammengesucht. Vier Bitten, und drei davon beantwortet ein Blick ins Log.
