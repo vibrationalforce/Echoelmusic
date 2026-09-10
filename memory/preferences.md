@@ -22,6 +22,15 @@ User preferences for development workflow, communication, and tooling.
 - **Build:** XcodeGen (`project.yml`) + Fastlane + GitHub Actions (`testflight.yml` primary)
 - **Dependencies:** Zero external dependencies policy
 - **SDK Target:** iOS 18 deployment floor (Package.swift + project.yml + Info.plist); Xcode 26.2 in CI
+- **Commit-Identität in Web-Sessions (seit 2026-09-10, `a96d130`):** der Stop-Hook der Umgebung verlangt
+  Committer `Claude <noreply@anthropic.com>` (sonst zeigt GitHub „Unverified"). Pro Befehl
+  `git -c user.name=Claude -c user.email=noreply@anthropic.com commit …`; `git config` und jedes
+  History-Rewrite (amend/rebase) blockt der Auto-Mode-Klassifikator. `Co-Authored-By`-Trailer bleibt.
+  Hook-Vorgabe, keine Founder-Entscheidung — nicht auf „Echoel" zurückdrehen.
+- **Push-Disziplin (2026-09-10, #1239):** vor jedem Push `xcode-compile-check.yml` lesen — ein Push,
+  während der Kopf-Lauf `in_progress` ist, CANCELT ihn (#2529–#2535 so verloren); `queued` ist unschädlich.
+  Docs-Commits lokal sammeln und zusammen mit dem nächsten Code-/Deploy-Commit pushen.
+- **Commit-Messages mit deutschen „…"-Anführungszeichen:** immer über `-F <datei>`, nie inline `-m`.
 
 ## Session Workflow
 - Read scratchpads/SESSION_LOG.md and memory/ at session start
