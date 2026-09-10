@@ -29350,3 +29350,60 @@ ein echtes Gate.
 **Nebenbei gemessen und im Werkzeug festgehalten:** `foreign-needles.py` scannt absichtlich nur
 `Tests/CISmoke/`. Die nicht-blockierende Suite bindet heute **null** Nicht-Swift-Dateien
 (Befehl steht im Dateikopf) — die Beschränkung ist also gemessen, nicht angenommen.
+
+## #1207/#1207b — eine Projektdatei konnte den Filter-LFO dauerhaft töten (2026-09-10)
+
+**Founder-Auftrag (unverändert):** „Knisterfreier Sound bitte. Es scheint zwischendurch zu
+viel Arbeitsspeicher zu verbrauchen. Vermeide Störungen im Sound"
+
+**Befund.** `SynthPatch.init(from:)` wandte auf kein `Bounds`-Feld eine Bereichsprüfung an,
+obwohl die Sound-Panel-Zeilen und `SoundPrompt.clamp` die Konstante seit #441 lesen. Lebende
+Tür: „Open project" → `.fileImporter` → `ProjectStore.importProject` → `Project` → eingebettetes
+`SynthPatch` → `apply(to:)`. Bei `filterLFORate` rastet es dauerhaft ein; in float32 gemessen
+wird die Sinus-Eingabe bei Sample 7 646 (0,159 s) nicht-endlich, `phase` selbst bei 48 064.
+Kein NaN nötig und keins möglich (`nonConformingFloatDecodingStrategy` = `.throw`).
+
+**#1207.** Siebzehn Klammer-Zeilen aus `SoundPrompt.clamp` nach `SynthPatch.clampToBounds()`
+gehoben, EINE Definition (#416), vom Dekoder als letzte Zeile gerufen. Wächter-Nadeln im selben
+Commit umgezogen (#456).
+
+**#1207b — zwölf Review-Befunde, zwei davon Code.**
+· `Bounds` deckte 17 von 20 dekodierten Render-Feldern ab. `outputLevel` (Multiplikator auf jedem
+  Sample jeder Stimme, `didSet` weist nur nicht-endliche ab), `warmthDrive`, `timbreBlend` fehlten.
+  Drei Einträge ergänzt; die „Output"-Zeile liest jetzt dieselbe Konstante.
+· Der EINRAST-Ort blieb unrepariert: `EchoelLFO.reset()` hat keinen Produktions-Aufrufer, ein
+  neuer Patch räumt die Phase also nicht weg. Wrap jetzt total —
+  `phase -= phase.rounded(.down)` hinter `!(phase >= 0 && phase < 1)` mit `isFinite ? … : 0`.
+  Bit-identisch bei 0,25/0,6/2/6,5/20 Hz, ein Float-Vergleich mehr pro Sample.
+· Symptom war falsch beschrieben: kein NaN-Audio — der Render klemmt NaN auf die UNTERE
+  Cutoff-Grenze, der Filter bleibt bei 20 Hz stehen (Dauer-Stille-Klasse).
+· Zwei NACHBAR-Wächter trugen Prosa, die #1207 falsch gemacht hat, und kein Prüfer kann das
+  sehen (Doc-Blöcke, keine Nadeln): `PatchVibratoAnchorTests`, `FilterCutoffClampTests`.
+
+⭐ **GESETZ, drittes Vorkommen in drei Zyklen:** eine Scheibe benennt eine Defekt-KLASSE und
+behebt eine Teilmenge. #1206 → 2 von 4 Klammern, #1207 → 17 von 20 Feldern. Die Klasse in der
+bearbeiteten Datei AUFZÄHLEN, bevor man eine Grenze behauptet. In #1207b erstmals befolgt:
+`git grep "phase >= 1\|phase -= 1"` → genau zwei Wraps, der zweite (`EchoelEntrainment`) ist
+mit einer feindlichen Rate nicht erreichbar (Frequenz aus einem fünffachen Enum-`switch`).
+
+⭐ **Und ein Wächter hat seine eigene Ablösung vorhergesagt.** #1207s Gegengewicht behauptete,
+eine rohe 3.4e38-Rate rastet ein — durch #1207b FALSCH. Seine Meldung sagte, was dann zu tun
+ist. Der Gefahren-Beweis läuft jetzt gegen `OldWrapLFO`, eine Transkription des Vor-Fix-Wraps,
+die niemand mehr „reparieren" kann (die `applyOldPromptBounds`-Form).
+
+**GATES.** Compile Check #2518 (`8220f15a`) und #2519 (`b57bed6a`) beide success.
+CI/CD 5984: `Build for Testing` success, `Run Tests` failure = chronisch #396.
+`gh-test-verdict.py`: 0 Compile-Fehler, 0 Fehlschläge, 0 Skips, 167 sichtbar durchgelaufen,
+5 slow-type-check-Warnungen, alle in fremden Dateien. Neue Wächter kompilieren nachweislich,
+Ausführung unbelegt (#445/#807).
+
+⚠️ **`list_workflow_runs` lieferte eine VERALTETE Seite** (`total_count` 1493 → 916, neuester
+Lauf vom 23.08.) — der #1180-Fall, erstmals in freier Wildbahn getroffen. Erkannt am sinkenden
+`total_count`; neu abgefragt statt geschlossen.
+
+**NEUE AUFGABE #56:** `Project.keyRoot` ist ein ungeklammerter `Int`, `60 + rootIndex` TRAPT —
+ein ABSTURZ aus einer Datei, hinter derselben Tür. Schwerer als #1207.
+
+**SITZUNGSENDE auf Founder-Befehl** („Hier alles stoppen und Übergabe Protokoll für den
+nächsten Chat"). Protokoll: `scratchpads/HANDOVER_2026-09-10.md`. Baum sauber, alles gepusht,
+nichts deployt, keine offenen Hintergrund-Jobs.
