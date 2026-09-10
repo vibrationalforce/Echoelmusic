@@ -39,7 +39,13 @@ nonisolated(unsafe) property access — Atomic-width reads
 - Types: `PascalCase` (`VocalDSPKernel`, `EchoelVoiceAudioUnit`)
 - Functions/Properties: `camelCase` (`processBlock`, `detectedPitch`)
 - Constants: `camelCase` (`defaultSampleRate`)
-- Test methods: `test[Unit]_[Scenario]_[Expected]`
+- Test methods: **sentence-style** in the blocking bundle — `testTheXDoesY` in a
+  `TheXDoesYTests` file, per `Tests/CISmoke/CLAUDE.md` §2 (#374). ⛔ The underscore form
+  `test[Unit]_[Scenario]_[Expected]` stood here alone and is followed by 0 of the bundle's
+  methods (#1232, audit `tests-guards-7`; measure:
+  `git grep -ho 'func test[A-Za-z0-9]*_[A-Za-z0-9]*_[A-Za-z0-9_]*' -- 'Tests/CISmoke/*.swift' | wc -l`
+  against `git grep -ho 'func test[A-Za-z0-9_]*' -- 'Tests/CISmoke/*.swift' | wc -l`). It
+  remains the convention of `Tests/EchoelmusicTests` only (about a third there).
 - Commit prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`, `perf:`
 
 ## Logging
