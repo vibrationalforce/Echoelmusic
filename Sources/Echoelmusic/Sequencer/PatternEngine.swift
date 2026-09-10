@@ -133,6 +133,25 @@ public final class PatternEngine {
     // only mutated on the main actor.
     @ObservationIgnored nonisolated(unsafe) private var timer: DispatchSourceTimer?
 
+    /// IDEAL uptime (seconds on the `DispatchTime` clock) of the tick most recently scheduled —
+    /// the grid anchor the NEXT deadline is derived from (#1223, audit 2026-09-10
+    /// `sequencer-core-2`). ⛔ Until #1223 every re-arm was `.now() + interval` from inside
+    /// the handler, so each tick's main-thread latency δ (timer fire + the handler's own
+    /// `transport?.tick` / `onStep` / `onTick` fan-out) became a PERMANENT phase loss: the
+    /// note clock ran at ≤ nominal BPM and slipped against the click (`MetronomeVoice`, an
+    /// audio-thread phase accumulator resynced only at Start) and against gear following the
+    /// 24-PPQN MIDI clock (a REPEATING timer, absolute cadence). ~4 ms mean latency at 120 BPM
+    /// 16ths (125 ms) is ~3 % slow — a click/notes seam after a few bars, worst while the UI
+    /// churns. `Transport.currentTick(at:)` derives position from the LATE tick, so the drift
+    /// was internally consistent and invisible to the roll. Now `advance()` re-arms from THIS
+    /// anchor (`TickAnchor.grid`); `play()` and the `setTempo` re-arm start a fresh grid
+    /// (`.now`). `nonisolated(unsafe)` is not needed: only the main actor touches it.
+    @ObservationIgnored private var nextTickUptime: Double = 0
+
+    /// Where the next deadline is measured from. `.now` starts a fresh grid (Play, a user tempo
+    /// edit); `.grid` continues the ideal one (every tick), so handler latency cannot accumulate.
+    private enum TickAnchor { case now, grid }
+
     // MARK: - Init
 
     public init() {
@@ -314,7 +333,9 @@ public final class PatternEngine {
             // advance() schedules it. Passing `currentStep` here inverted the swing
             // for the one step right after a mid-play tempo change.
             let justPlayed = (currentStep + PatternEngine.stepCount - 1) % PatternEngine.stepCount
-            scheduleTick(after: PatternEngine.swingGap(afterStep: justPlayed, base: base, swing: swing))
+            // A user edit is a new grid (`.now`), not a continuation — the old ideal was
+            // computed at the old tempo.
+            scheduleTick(after: PatternEngine.swingGap(afterStep: justPlayed, base: base, swing: swing), from: .now)
         }
     }
 
@@ -504,7 +525,7 @@ public final class PatternEngine {
         // apart. (⛔ The first version of this comment said "two copies" while THREE more
         // survived in this same file — `setTempo`'s re-arm and `advance`'s next-gap. Both
         // now read the helper too; there is one formula in the app.)
-        scheduleTick(after: Transport.stepDuration(atTempo: tempo))
+        scheduleTick(after: Transport.stepDuration(atTempo: tempo), from: .now)
     }
 
     /// Stop the timer and reset `currentStep` to 0. Safe to call while stopped.
@@ -537,8 +558,9 @@ public final class PatternEngine {
 
     // MARK: - Timer (self-rescheduling, swing-aware)
 
-    /// Schedules one tick after `interval`. Re-armed by `advance()` so each gap
-    /// can carry a different (swing) duration.
+    /// Schedules one tick after `interval`, measured from `anchor` (#1223: from the ideal grid
+    /// on every tick, from now on Play and on a user tempo edit). Re-armed by `advance()` so
+    /// each gap can carry a different (swing) duration.
     ///
     /// Uses a DispatchSourceTimer **on the main queue** with zero leeway: it fires
     /// precisely on time and, unlike a RunLoop Timer, keeps firing while the run
@@ -556,10 +578,17 @@ public final class PatternEngine {
     /// isn't. (Builds 1769/1777 crashed exactly here — first with `assumeIsolated`,
     /// then with `Task`.) The only crash-safe options from a non-main thread are
     /// `DispatchQueue.main.async { … }` or, as here, firing on `.main` directly.
-    private func scheduleTick(after interval: TimeInterval) {
+    private func scheduleTick(after interval: TimeInterval, from anchor: TickAnchor) {
         timer?.cancel()
+        let now = PatternEngine.uptimeSeconds(DispatchTime.now())
+        let ideal = anchor == .grid ? nextTickUptime : now
+        let deadline = PatternEngine.nextDeadline(ideal: ideal, gap: interval, now: now)
+        nextTickUptime = deadline
         let t = DispatchSource.makeTimerSource(queue: .main)
-        t.schedule(deadline: .now() + interval, leeway: .nanoseconds(0))
+        // `nextDeadline` returns a finite value ≥ 0 for any finite input (`now` is an uptime),
+        // so the conversion cannot trap; the max is belt-and-braces against a negative `now`.
+        t.schedule(deadline: DispatchTime(uptimeNanoseconds: UInt64(Swift.max(deadline, 0) * 1_000_000_000)),
+                   leeway: .nanoseconds(0))
         t.setEventHandler { [weak self] in
             MainActor.assumeIsolated { self?.advance() }
         }
@@ -622,7 +651,28 @@ public final class PatternEngine {
         // each beat-pair the same total length (tempo preserved). Shared with the
         // setTempo re-arm via swingGap so the two paths can never diverge again.
         let base = Transport.stepDuration(atTempo: tempo)
-        scheduleTick(after: PatternEngine.swingGap(afterStep: step, base: base, swing: swing))
+        // From the GRID, not from now (#1223): this handler ran δ late, and `.now() + gap`
+        // would make δ permanent. See `nextTickUptime`.
+        scheduleTick(after: PatternEngine.swingGap(afterStep: step, base: base, swing: swing), from: .grid)
+    }
+
+    /// The next deadline on the ideal grid: `ideal + gap`, unless the clock is more than one
+    /// whole step behind — then the app was suspended or the main thread stalled, and the grid
+    /// restarts from `now` instead of bursting the missed steps (#1223). Less than one step
+    /// behind stays on the grid: the timer fires at once for that one step and the following
+    /// deadline is back on time. Pure + `nonisolated` so the blocking bundle can drive it
+    /// without a timer. Non-finite or non-positive gaps fall back to `now` (the gap is
+    /// `Transport.stepDuration`, pinned always-schedulable, so this is a boundary, not a path).
+    /// NEEDS-FOUNDER-VERIFY: 16 bars at 120 BPM with the click on and the Bio panel open —
+    /// do notes and click stay seamed to the end, where before #1223 they drifted apart (#1223)?
+    nonisolated static func nextDeadline(ideal: Double, gap: Double, now: Double) -> Double {
+        guard ideal.isFinite, gap.isFinite, gap > 0, now.isFinite else { return now }
+        let next = ideal + gap
+        return next < now - gap ? now : next
+    }
+
+    nonisolated static func uptimeSeconds(_ t: DispatchTime) -> Double {
+        Double(t.uptimeNanoseconds) / 1_000_000_000
     }
 
     /// The gap (seconds) that FOLLOWS `justPlayedStep` — the wait before the next

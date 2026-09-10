@@ -29539,3 +29539,23 @@ drei Zeilen, (2) Manifest deklariert SystemBootTime · UserDefaults · FileTimes
 deklariert, hat aber keinen gemessenen Aufrufer — nicht verlangt, nicht verboten), (3) `- target: EchoelmusicWidgets`
 eingebettet, sonst wäre die Zwei die veraltete Hälfte. PRÄVENTIV: GRÜN/GRÜN auf `ca263cc` und hier, transkribiert.
 Grenze wie `DeviceFamilyIsPhoneOnlyTests`: Text, nicht Archiv — ein `ls .app` in `testflight.yml` wäre founder-gated.
+
+## #1223 — Ultraplan-Zyklus 10: die Step-Clock hält ihr Ideal-Raster (2026-09-10)
+
+Audit `sequencer-core-2`, nachgemessen: `scheduleTick` armte `deadline: .now() + interval` als LETZTE Zeile von
+`advance()` — nach `transport?.tick`, `onStep`-Fan-out, `onTick` und Glide-Relais. Timer-Latenz UND Handler-Laufzeit
+wurden damit zu dauerhaftem Phasenverlust: Noten-Clock ≤ nominal, Drift gegen den Click (Audio-Thread-Akkumulator, nur
+bei Start resynct) und gegen Gear am 24-PPQN-MIDI-Clock (repeating Timer). ~4 ms bei 120 BPM 16teln ≈ 3 % zu langsam —
+Naht nach wenigen Takten, am schlimmsten bei UI-Churn. `Transport.currentTick(at:)` rechnet vom SPÄTEN Tick, die Roll sah
+nichts. Jetzt: `nextTickUptime` (Ideal-Deadline der letzten Planung) + `TickAnchor { now, grid }`; `advance()` armt
+`from: .grid`, `play()` und das `setTempo`-Re-arm `from: .now` (ein Nutzer-Edit ist ein neues Raster, das alte Ideal war im
+alten Tempo). Reiner Helfer `nextDeadline(ideal:gap:now:)`: `ideal + gap`, außer die Uhr ist mehr als EINEN Schritt
+hinten (Suspend/Stall) → Neustart bei `now` statt Burst der verpassten Schritte; unter einem Schritt bleibt das Raster
+(ein Sofort-Tick, dann wieder pünktlich); nicht-endliche/nicht-positive Gaps → `now`. `DispatchTime(uptimeNanoseconds:)`
+aus `max(deadline, 0)`.
+**Wächter:** `TheStepClockKeepsItsGridTests` (BLOCKIEREND — Abweichung vom Ultraplan, der `TempoStabilityTests` nannte:
+der Helfer ist rein und gehört ins Gate): 1 (400 späte Ticks bleiben auf dem Raster), 2 (Re-Anker > 1 Schritt, Raster
+< 1 Schritt, Grenze = 1 Schritt), 3 (NaN/inf/0/−1 → now), 4 (Text: kein `.now() + interval`, genau EIN `.grid`, ZWEI
+`.now`, Deadline aus dem Helfer, Anker gemerkt). Transkribiert: 1–3 ROT auf `1bf6530` (Helfer fehlt) / GRÜN hier, 4
+ROT/GRÜN. Drei Nadel-Prüfer exit 0. **NEEDS-FOUNDER-VERIFY** am Helfer: 16 Takte 120 BPM, Click an, Bio-Panel offen —
+bleiben Noten und Click bis zum Ende genäht? Ehrlich: kompilat-unbelegt bis zum Gate; die Wirkung ist ein Gerätehören.

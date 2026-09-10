@@ -1538,3 +1538,9 @@ beschränken (#292, `afcf3aa`).
 - **Warum:** Audit `bio-pipeline-3`: `minIntervals` = 16 gegen ~10 Intervalle je Ruhe-Fenster — Kohärenz war auf der Flaggschiff-Quelle strukturell 0; vier LIVE-Kanäle, Flow-Servo und OSC/ADM-Ausgang liefen auf dem Neutral.
 - **Warum 64:** `PolarH10BioPublisher.maxRRIntervals` = 64 — eine Historienlänge für beide Quellen, ~64 s bei 60 bpm (0,04-Hz-Raster erreichbar, Atemwechsel binnen einer Minute sichtbar). Keine Messung, Parität; NEEDS-FOUNDER-VERIFY am Ort.
 - **Review:** 2026-10-10 — nach Geräteprobe: Flackern? dann Kappe/Hold prüfen, nicht die Historie abschaffen.
+
+### 2026-09-10 — Step-Clock armt vom Ideal-Raster, Re-Anker erst ab einem ganzen Schritt Rückstand (#1223)
+- **Entscheidung:** `PatternEngine.scheduleTick` rechnet die nächste Deadline aus `nextTickUptime + gap` (Anker `.grid` in `advance()`), nicht aus `.now() + gap`; `play()` und Nutzer-Tempo-Edits starten ein frisches Raster (`.now`).
+- **Warum:** Audit `sequencer-core-2` — Handler-Latenz wurde pro Tick zu dauerhaftem Phasenverlust; Click (Audio-Akkumulator) und MIDI-Clock (repeating Timer) hielten absolute Kadenz, die Noten nicht.
+- **Re-Anker-Regel:** > 1 Schritt hinten (Suspend/Stall) → Neustart bei `now` ohne Burst; ≤ 1 Schritt → Raster halten (ein Sofort-Tick). Grenze = genau ein Schritt, im Wächter gepinnt. Alternative „immer aufholen" verworfen: nach einem Suspend würden Dutzende Schritte in Millisekunden feuern.
+- **Review:** 2026-10-10 nach Geräteprobe (16 Takte gegen den Click, NEEDS-FOUNDER-VERIFY am Helfer).
