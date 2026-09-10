@@ -186,23 +186,13 @@ public enum SoundPrompt {
     /// and `min(max(x, lo), hi)` passes NaN straight through by argument order (the house rule in
     /// `Core/FloatingPointClamp.swift`, which has cost this repo shipped permanent silence).
     private static func clamp(_ p: inout SynthPatch) {
-        typealias B = SynthPatch.Bounds
-        p.brightness = p.brightness.clamped(to: B.brightness)
-        p.harmonicity = p.harmonicity.clamped(to: B.harmonicity)
-        p.harmonicLevel = p.harmonicLevel.clamped(to: B.harmonicLevel)
-        p.noiseLevel = p.noiseLevel.clamped(to: B.noiseLevel)
-        p.sustain = p.sustain.clamped(to: B.sustain)
-        p.reverbMix = p.reverbMix.clamped(to: B.reverbMix)
-        p.filterResonance = p.filterResonance.clamped(to: B.filterResonance)
-        p.lfoToFilterDepth = p.lfoToFilterDepth.clamped(to: B.lfoToFilterDepth)
-        p.filterLFODepth = p.filterLFODepth.clamped(to: B.filterLFODepth)
-        p.vibratoDepth = p.vibratoDepth.clamped(to: B.vibratoDepth)
-        p.attack = p.attack.clamped(to: B.attack)
-        p.decay = p.decay.clamped(to: B.decay)
-        p.release = p.release.clamped(to: B.release)
-        p.filterCutoff = p.filterCutoff.clamped(to: B.filterCutoff)
-        p.filterLFORate = p.filterLFORate.clamped(to: B.filterLFORate)
-        p.reverbDecay = p.reverbDecay.clamped(to: B.reverbDecay)
-        p.vibratoRate = p.vibratoRate.clamped(to: B.vibratoRate)
+        // #1207 — the seventeen lines that stood here now live ONCE, on the type that owns
+        // the bounds (`SynthPatch.clampToBounds()`), because the DECODER needed exactly the
+        // same list and a second copy is how a later bounded field gets clamped on one path
+        // and not the other (#416). Nothing about this call site changed otherwise: the
+        // clamp is still unconditional, still the last thing between "Describe it" and the
+        // audio thread, and still `clamped(to:)` rather than `min(max(…))` for the NaN
+        // reason spelled out above.
+        p.clampToBounds()
     }
 }

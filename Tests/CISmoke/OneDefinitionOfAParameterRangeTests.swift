@@ -34,6 +34,75 @@
 // LFO, and whether 19 Hz "sounds better" than 12 Hz is a device listen. What is checkable is
 // that the number the row offers is the number the app keeps.
 
+// ⭐ #1207 — A THIRD WRITER JOINED, AND IT WAS THE ONE WITH NO BOUND AT ALL. The rows and
+// the prompt shared `SynthPatch.Bounds` since #441; `SynthPatch.init(from:)` applied NO range
+// check to any field. That decoder is reachable from a LIVE door — "Open project" →
+// `.fileImporter` → `ProjectStore.importProject(fromDocument:)` → `Project` → its embedded
+// `SynthPatch` → `apply(to:)`. The seventeen clamp lines now live ONCE, on
+// `SynthPatch.clampToBounds()`, and both writers call it (#416).
+//
+// ⛔ THE NEEDLES OF `testThePromptClampReadsTheSharedBound` MOVED FILES IN THIS COMMIT (#456).
+// They pointed at `SoundPrompt.swift`; the code they name is now in `SynthPatch.swift`, and the
+// prompt is asserted to ROUTE through it. Leaving them where they were would have been a guard
+// red on a correct tree — the exact §4 failure this bundle keeps paying for.
+//
+// ⭐ GRADING (§3), transcribed in Python against BOTH trees (no local toolchain, §0) — the
+// comment stripper re-implemented, every needle in the two changed tests driven, plus the two
+// behavioural claims simulated in float32.
+//   · SOURCE SCANS (19 assertion statements in `testThePromptClampReadsTheSharedBound`):
+//     parent = `typealias B = Bounds` 0, field needles 0/17, `p.clampToBounds()` absent.
+//     That is ONE ABSENCE — `clampToBounds` does not exist on the parent — reported once
+//     (#486), NOT nineteen findings. Worktree: 17/17 + both singles present.
+//   · `testAPatchFileCannotCarryAValueTheRowRefuses` — a true REGRESSION for its named reason
+//     (#367): on the parent the decoder returns the raw value, so the very first field already
+//     fails — the ceiling assertion on the `upperBound * 1e6` probe and the floor assertion on
+//     the `-1e6` probe. ⛔ "both bound assertions fail" stood here; per PROBE exactly one of
+//     the two fails (a huge value passes the floor, a negative one passes the ceiling). Both
+//     fail only when read across both probes of the same field. FORWARD it is not: the door,
+//     the type and the encoder all predate this commit; only the clamp is new.
+//   · `testAStoredLFORateCannotLatchTheOscillatorIntoNaN` — REWRITTEN by #1207b, and the
+//     reason is worth keeping: #1207's counterweight asserted that a RAW 3.4e38 rate still
+//     latches the oscillator, and #1207b's `next()` fix made that FALSE. Its own message said
+//     what to do ("either the oscillator gained its own guard — good, say so here — or this
+//     counterweight has stopped measuring anything"), and this is that. The hazard proof now
+//     runs against `OldWrapLFO`, a TRANSCRIPTION of the pre-fix wrap, so it can never be
+//     "fixed" out from under the claim — the same device `applyOldPromptBounds` uses at the
+//     top of this file. Grading: the decode assertion and the three `next()` assertions
+//     (huge / hostile-negative / NaN rate) are REGRESSIONS on the parent; the transcription
+//     counterweight and the five-rate BIT-IDENTITY sweep are green on both trees, and the
+//     second of those is what makes the wrap change safe rather than merely safe-sounding
+//     (verified in float32 at 0,25 / 0,6 / 2 / 6,5 / 20 Hz before pushing).
+//   · `testTheThreeRowlessFieldsAreBoundedToo` (#1207b) — REGRESSIONS on the #1207 tree too,
+//     not only on its parent: `outputLevel`, `warmthDrive` and `timbreBlend` had no `Bounds`
+//     entry, so #1207 shipped clamping 17 of the 20 decoded fields that reach the render.
+//     `outputLevel` is the one that mattered — a per-sample multiplier on every voice whose
+//     `didSet` rejects only NON-finite. Its two nil-counterweights and the row-chain needle
+//     are green on the #1207 tree and red on ITS parent (the row held a literal there).
+//   · STRIPPER: PROPHYLAKTISCH — 0 flips of 38 verdicts (19 needles x 2 trees), measured, not
+//     assumed. No retracted spelling of these needles
+//     is quoted anywhere in either source file, measured raw vs. `codeOnly` on both trees. Said
+//     rather than claimed — three slices in a row once claimed load-bearing without measuring.
+//   · `moved-needles.py` REPORTS ONE HIT AND IT IS ANSWERED, NOT IGNORED (#1092): the string
+//     `typealias B = SynthPatch.Bounds` left `Sources/` with this commit and still occurs in
+//     this file — inside the `fields` helper, as THIS TEST'S OWN Swift. It is not a needle;
+//     the needle is `typealias B = Bounds`, against `SynthPatch.swift`.
+//     ⛔ TWO CORRECTIONS #1207b OWES THIS BULLET. It cited a LINE NUMBER, which this repo's
+//     own law says is a date and not a fact — it was already off by six when written. And it
+//     said "exactly one `contains("typealias` in the file", a recipe that FALSIFIES ITSELF:
+//     writing it put a second occurrence in the prose, so running it returns two. The durable
+//     claim is the one that does not count its own sentence — exactly one such needle stands
+//     in CODE, and it names the new spelling.
+//   · `moved-needles.py` REPORTS TWO MORE HITS AFTER #1207b, both `[still in Sources]`, and
+//     both are ANSWERED: `if phase >= 1.0 {` and `phase -= 1.0` occur in this file as the body
+//     of `OldWrapLFO`, a deliberate TRANSCRIPTION of the pre-fix oscillator — Swift, not
+//     needles. Nothing scans for them. They also still occur in `Sources/`, in
+//     `EchoelEntrainment.process`, which is a different and unreachable instance of the same
+//     shape (its rate is a five-case enum `switch`) — see `EchoelLFO.next()`'s doc for why it
+//     is left alone.
+//   · WHAT NO TEST HERE CAN SHOW: that a clamped project file sounds like the one the sender
+//     saved. A file written by THIS app cannot be out of range (its rows are bounded by the
+//     same constant), so the only patch this can alter is one Echoel did not write.
+
 import Foundation
 import XCTest
 @testable import Echoelmusic
@@ -329,18 +398,188 @@ final class OneDefinitionOfAParameterRangeTests: XCTestCase {
         }
     }
 
-    /// And so does the writer on the other side of the same panel.
+    /// And so does the writer on the other side of the same panel — but SINCE #1207 it does
+    /// it by CALLING the one applier instead of holding its own copy of the list.
+    ///
+    /// ⛔ THE SEVENTEEN `clamped(to: B.<field>)` NEEDLES USED TO POINT AT `SoundPrompt.swift`
+    /// AND NOW POINT AT `SynthPatch.swift`. That is not a weakening: #1207 needed the SAME
+    /// seventeen lines in the decoder, and a second copy is precisely how a bounded field
+    /// added later gets clamped on one path and forgotten on the other (#416). The needles
+    /// moved with the code in the same commit (#456) rather than being deleted; what this
+    /// test asserts is unchanged in substance — every bounded field is folded into the
+    /// shared constant, by a writer that does not restate the number.
     func testThePromptClampReadsTheSharedBound() throws {
-        let text = try source("Sources/Echoelmusic/DSP/SoundPrompt.swift")
-        XCTAssertTrue(text.contains("typealias B = SynthPatch.Bounds"), """
-            `SoundPrompt.clamp` no longer aliases `SynthPatch.Bounds`. It is the writer that
-            shares the panel with the rows; if it grows its own numbers again, #441 is undone.
+        let patchSource = try source("Sources/Echoelmusic/DSP/SynthPatch.swift")
+        XCTAssertTrue(patchSource.contains("typealias B = Bounds"), """
+            `SynthPatch.clampToBounds` no longer aliases `Bounds`. It is the ONE writer that
+            folds a patch into the range its rows offer; if it grows its own numbers again,
+            #441 is undone.
             """)
         for f in fields {
-            XCTAssertTrue(text.contains("clamped(to: B.\(f.name))"), """
-                `SoundPrompt.clamp` no longer clamps \(f.name) into the shared bound.
+            XCTAssertTrue(patchSource.contains("clamped(to: B.\(f.name))"), """
+                `SynthPatch.clampToBounds` no longer clamps \(f.name) into the shared bound. \
+                Both the "Describe it" prompt and the project-file decoder route through this \
+                one function, so a field dropped here is unbounded on BOTH paths at once.
                 """)
         }
+
+        let promptSource = try source("Sources/Echoelmusic/DSP/SoundPrompt.swift")
+        XCTAssertTrue(promptSource.contains("p.clampToBounds()"), """
+            `SoundPrompt.clamp` no longer routes through `SynthPatch.clampToBounds()`. If it \
+            grew its own list back, the prompt and the decoder can drift apart field by \
+            field — which is the #416 defect this call site exists to prevent.
+            """)
+    }
+
+    /// #1207 — THE DECODER IS THE THIRD WRITER, and it was the one with no bound at all.
+    /// END-TO-END BEHAVIOUR (§1): real `JSONEncoder`/`JSONDecoder` on the shipped pure
+    /// value type, no mocks, no view.
+    ///
+    /// The memberwise init stays UNCLAMPED on purpose — every in-app producer already
+    /// writes through a bounded row — so encoding an out-of-range patch really does put the
+    /// raw number in the JSON, and only the decode can pull it back.
+    func testAPatchFileCannotCarryAValueTheRowRefuses() throws {
+        for f in fields {
+            let probes: [Float] = [f.bound.upperBound * 1e6, -1e6]
+            for raw in probes {
+                var wild = SynthPatch(name: "Wild")
+                f.write(&wild, raw)
+                let data = try JSONEncoder().encode(wild)
+                XCTAssertTrue(String(data: data, encoding: .utf8)?.contains("\"\(f.name)\"") == true,
+                              "\(f.name) is not in the encoded JSON — this row proves nothing.")
+                let back = try JSONDecoder().decode(SynthPatch.self, from: data)
+                let got = f.read(back)
+                XCTAssertGreaterThanOrEqual(got, f.bound.lowerBound, """
+                    A decoded patch carries \(f.name) = \(got), below its row's floor of \
+                    \(f.bound.lowerBound). A project file is user-supplied: `EchoelStudioView`'s \
+                    "Open project" `.fileImporter` hands it to `ProjectStore.importProject`, and \
+                    the decoded `SynthPatch` goes straight to `apply(to:)`.
+                    """)
+                XCTAssertLessThanOrEqual(got, f.bound.upperBound, """
+                    A decoded patch carries \(f.name) = \(got), above its row's ceiling of \
+                    \(f.bound.upperBound). Same live door as the floor message above.
+                    """)
+            }
+        }
+    }
+
+    /// The NAMED consequence (#367) — this is why the decode clamp is worth a slice rather
+    /// than being tidy. `filterLFORate` is not merely "wrong sounding" out of range: it
+    /// LATCHES. `apply(to:)` writes it raw to `EchoelLFO.rate`, and `next()` does
+    /// `phase += rate / sampleRate` with the wrap gated on `phase >= 1.0`, so a huge rate
+    /// walks `phase` up without bound (the `-= 1.0` is a no-op at that magnitude) until
+    /// `sinf` sees `inf` and returns NaN on every sample after.
+    ///
+    /// ⚠️ TWO DIFFERENT MILESTONES, MEASURED IN FLOAT32, and the SOUND dies at the earlier
+    /// one: the argument `phase * 2 * .pi` overflows on sample **7 646** (0,159 s at
+    /// 48 kHz) while `phase` is still finite; `phase` itself only becomes `+inf` on sample
+    /// **48 064** (1,0013 s). The 50 000-sample budget below is sized against the LATER
+    /// figure on purpose — it must hold even if a future `Float`-precision detail moves the
+    /// earlier one — so the counterweight has ~42 000 samples of headroom today, not 2 000.
+    ///
+    /// ⚠️ NO NaN IS NEEDED AND NONE COULD BE DELIVERED: `JSONDecoder`'s
+    /// `nonConformingFloatDecodingStrategy` defaults to `.throw`, so JSON cannot carry one.
+    /// A large FINITE number is the entire vector, and JSON carries those happily.
+    func testAStoredLFORateCannotLatchTheOscillatorIntoNaN() throws {
+        let json = Data(#"{"name":"Hostile","filterLFORate":3.4e38}"#.utf8)
+        let decoded = try JSONDecoder().decode(SynthPatch.self, from: json)
+        XCTAssertLessThanOrEqual(decoded.filterLFORate, SynthPatch.Bounds.filterLFORate.upperBound,
+                                 "A file-supplied LFO rate reached the voice unbounded.")
+
+        XCTAssertFalse(lfoGoesNonFinite(rate: decoded.filterLFORate), """
+            The LFO produced a non-finite sample from the DECODED rate \(decoded.filterLFORate) Hz.
+            """)
+
+        // #1207b, the DEFENCE IN DEPTH the review asked for: the decode clamp guards the FILE
+        // path, `next()`'s wrap guards the oscillator whatever any writer hands it. Both, not
+        // either — a clamp is path-specific and `EchoelLFO.rate` has exactly one writer TODAY,
+        // which is a fact about today rather than an invariant.
+        XCTAssertFalse(lfoGoesNonFinite(rate: 3.4e38), """
+            An UNBOUNDED rate still walks the oscillator to a non-finite phase. `next()`'s wrap \
+            is supposed to be total: `phase -= phase.rounded(.down)` for a finite phase, 0 for a \
+            non-finite one, entered through the NEGATED test so a NaN phase cannot skip it.
+            """)
+        XCTAssertFalse(lfoGoesNonFinite(rate: -3.4e38),
+                       "A hostile NEGATIVE rate still strands the phase.")
+        XCTAssertFalse(lfoGoesNonFinite(rate: .nan),
+                       "A NaN rate still latches the phase — the negated wrap test is the point.")
+
+        // COUNTERWEIGHT 1 (§2/#343) — the hazard was REAL. The old wrap is transcribed here
+        // rather than driven from `Sources/`, for the reason `applyOldPromptBounds` above gives:
+        // a reference implementation stops being a reference once it is "fixed".
+        XCTAssertTrue(oldWrapGoesNonFinite(rate: 3.4e38), """
+            The transcribed PRE-#1207b wrap no longer reproduces the defect. Either the \
+            transcription drifted from `if phase >= 1.0 { phase -= 1.0 }` or Float semantics \
+            changed; re-derive before trusting the assertions above.
+            """)
+
+        // COUNTERWEIGHT 2 — and this is the one that makes the fix safe rather than merely
+        // safe-sounding: for every rate the app actually uses, the new wrap is BIT-IDENTICAL
+        // to the old one. Verified in float32 before shipping at 0.25 / 0.6 / 2 / 6.5 / 20 Hz —
+        // the shipped writers (`EchoelDelay` 0.6 + 6.5, `EchoelModFX` 0.25/0.4/0.6,
+        // `EchoelFXChain` 0.45) and the row's ceiling.
+        for rate in [Float(0.25), 0.6, 2, 6.5, 20] {
+            let lfo = EchoelLFO(sampleRate: 48_000)
+            lfo.rate = rate
+            lfo.depth = 1
+            var old = OldWrapLFO(rate: rate)
+            for n in 0..<20_000 {
+                let a = lfo.next(), b = old.next()
+                if a != b {
+                    XCTFail("""
+                        The wrap changed a LEGITIMATE rate: at \(rate) Hz, sample \(n) is \
+                        \(a) and was \(b). `phase -= phase.rounded(.down)` must subtract \
+                        exactly 1.0 on [1, 2), so every ordinary rate is untouched.
+                        """)
+                    return
+                }
+            }
+        }
+    }
+
+    /// #1207b — the THREE fields `Bounds` did not cover until the review found them. They have
+    /// no Sound-panel row (only `outputLevel` does), so they are not in `fields`; each reaches
+    /// the render path through the SAME `apply(to:)` and the SAME importer as the seventeen.
+    func testTheThreeRowlessFieldsAreBoundedToo() throws {
+        func decode(_ body: String) throws -> SynthPatch {
+            try JSONDecoder().decode(SynthPatch.self, from: Data("{\"name\":\"X\",\(body)}".utf8))
+        }
+
+        // `outputLevel` multiplies EVERY sample of every voice (`synth.patchOutputLevel`), and
+        // its `didSet` rejects only non-finite — so a finite 1e30 was a full-scale voice.
+        // ⚠️ `XCTUnwrap`, not a bare `XCTAssertEqual`: `outputLevel` and `warmthDrive` are
+        // `Float?`, and the accuracy overload takes a non-optional — writing it the obvious
+        // way does not compile, which is the kind of thing a bundle with no local toolchain
+        // only learns at the gate.
+        let loud = try XCTUnwrap(try decode("\"outputLevel\":1e30").outputLevel)
+        XCTAssertEqual(loud, SynthPatch.Bounds.outputLevel.upperBound, accuracy: 1e-6,
+                       "A file-supplied outputLevel is unbounded — this is a loudness hazard.")
+        let quiet = try XCTUnwrap(try decode("\"outputLevel\":-1e30").outputLevel)
+        XCTAssertEqual(quiet, SynthPatch.Bounds.outputLevel.lowerBound, accuracy: 1e-6,
+                       "A negative outputLevel would invert the phase of every voice.")
+
+        let cold = try XCTUnwrap(try decode("\"warmthDrive\":-5").warmthDrive)
+        XCTAssertEqual(cold, 0, accuracy: 1e-6,
+                       "warmthDrive drives `analogWarmth`, which clamps nothing downstream.")
+        let hot = try XCTUnwrap(try decode("\"warmthDrive\":900").warmthDrive)
+        XCTAssertEqual(hot, 1, accuracy: 1e-6)
+        XCTAssertEqual(try decode("\"timbreBlend\":9").timbreBlend, 1, accuracy: 1e-6,
+                       "timbreBlend is the raw weight in `a * (1 - blend) + tap * blend`.")
+
+        // COUNTERWEIGHT — the two OPTIONALS keep their `nil`. Folding a MISSING value onto a
+        // bound would invent a trim the patch never asked for, and `nil` means unity / clean.
+        let bare = try decode("\"attack\":0.5")
+        XCTAssertNil(bare.outputLevel, "An absent outputLevel must stay nil (= unity), not 0.3.")
+        XCTAssertNil(bare.warmthDrive, "An absent warmthDrive must stay nil (= clean), not 0.")
+
+        // COUNTERWEIGHT — the shipped row and the bound are ONE constant (#441), so the number
+        // a finger can reach is the number a file may keep.
+        let rowSource = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        XCTAssertTrue(rowSource.contains("range: SynthPatch.Bounds.outputLevel"), """
+            The "Output" row went back to a literal range. It and `clampToBounds` would then \
+            drift apart, and a decode clamp that disagrees with the row is worse than none — \
+            it silently rewrites what the user just typed.
+            """)
     }
 
     /// The chain, in the #426 form: the cutoff bound is not restated here, it IS the engine's.
@@ -364,6 +603,42 @@ final class OneDefinitionOfAParameterRangeTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Drive a real `EchoelLFO` and say whether it ever leaves the finite numbers.
+    /// 50 000 samples ≈ 1,04 s at 48 kHz — past BOTH pre-fix milestones (7 646 and 48 064).
+    private func lfoGoesNonFinite(rate: Float, samples: Int = 50_000) -> Bool {
+        let lfo = EchoelLFO(sampleRate: 48_000)
+        lfo.rate = rate
+        lfo.depth = 1
+        for _ in 0..<samples {
+            if !lfo.next().isFinite { return true }
+        }
+        return false
+    }
+
+    /// The PRE-#1207b oscillator, transcribed exactly: `if phase >= 1.0 { phase -= 1.0 }`,
+    /// sine only. ⚠️ Transcribed on purpose and NOT driven from `Sources/` — a reference
+    /// implementation that is kept in step with the code it is measured against has stopped
+    /// being a reference (the same note `applyOldPromptBounds` carries at the top of this file).
+    private struct OldWrapLFO {
+        var phase: Float = 0
+        let rate: Float
+        let sampleRate: Float = 48_000
+        mutating func next() -> Float {
+            phase += rate / sampleRate
+            if phase >= 1.0 { phase -= 1.0 }
+            return sinf(phase * Float.pi * 2)
+        }
+    }
+
+    private func oldWrapGoesNonFinite(rate: Float, samples: Int = 50_000) -> Bool {
+        var lfo = OldWrapLFO(rate: rate)
+        for _ in 0..<samples {
+            if !lfo.next().isFinite { return true }
+        }
+        return false
+    }
+
 
     /// ⚠️ `SourceText.codeOnly`, not the raw file. This repo answers a removal with a ⛔ block that
     /// QUOTES the token it removed — `// ⛔ this row used to read SynthPatch.Bounds.decay` would

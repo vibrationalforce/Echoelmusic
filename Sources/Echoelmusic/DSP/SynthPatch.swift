@@ -197,6 +197,126 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
 
         public static let vibratoRate: ClosedRange<Float> = 0...12
         public static let vibratoDepth: ClosedRange<Float> = 0...1
+
+        // ⭐ THE LAST THREE ARRIVED WITH #1207b, and the reason they were missing is worth
+        // keeping: `Bounds` was written for the SEVENTEEN Sound-panel rows, so its scope was
+        // "what the prompt and the rows share". #1207 then adopted that scope for the
+        // DECODER without re-deciding it — and the decoder's threat model is different. Its
+        // question is not "which fields does a prompt write" but "which fields can a FILE
+        // carry into the render path", and these three can:
+        //   · `outputLevel`  → `synth.patchOutputLevel`, a per-sample multiplier on every
+        //     voice. Its `didSet` rejects only NON-FINITE, so a finite `1e30` from a file was
+        //     a full-scale voice on every note. `EchoelDDSP`'s own doc already named this
+        //     exposure in prose; nothing acted on it. The range is the shipped "Output" row
+        //     (0,3…1,5), and `loudnessNormalized()`'s own trim (0,45…1,4) sits inside it, so
+        //     no normalised factory patch is cut.
+        //   · `warmthDrive`  → `analogWarmth(x, drive:)` = `x + drive * (shaped - x)`, no
+        //     clamp anywhere downstream. Shipped values are 0,22…0,30.
+        //   · `timbreBlend`  → `harmonicAmplitudes[i] = a * (1 - blend) + tap * blend`, raw.
+        //     Shipped values are 0 and 0,9; the field's own comment already says 0…1.
+        // #1206 shipped fixing two of four clamps and had to be corrected the next cycle;
+        // this is the same shape one layer up, caught by the same mandatory review.
+        //
+        // ⚠️ THE 17 vs 20 SPLIT IS DELIBERATE AND MUST NOT BE FLATTENED. The guard's
+        // `fields` table is the SEVENTEEN ROWS — that is what `testEveryRowReadsTheSharedBound`
+        // is about, and these three have no row (only `outputLevel` does, and it now reads
+        // this constant). They are covered by their own assertions instead.
+        public static let timbreBlend: ClosedRange<Float> = 0...1
+        /// The shipped "Output" row's range, so the row and the file agree (#441/#416).
+        public static let outputLevel: ClosedRange<Float> = 0.3...1.5
+        public static let warmthDrive: ClosedRange<Float> = 0...1
+    }
+
+    /// Fold every bounded field back inside `Bounds`. THE ONE applier of that constant
+    /// (#416) — `SoundPrompt.clamp` and `init(from:)` both call this, so a bounded field
+    /// added later cannot be clamped in one place and forgotten in the other.
+    ///
+    /// ⭐ WHY THE DECODER NEEDS IT AT ALL, measured rather than assumed (#1207). The
+    /// custom decoder honours the `decodeIfPresent` law and applied no range check to any
+    /// `Bounds` FIELD, so a hand-edited or third-party project JSON could carry any finite
+    /// `Float` straight to the render path. ⛔ "NO range check" stood here and is too wide
+    /// by two: the voice half was ALREADY guarded — `voiceProfileBlend` clamped to 0…1 and
+    /// `voiceProfileTaps` sanitised to finite/≥0 since #593a — and a `grep` of the same
+    /// function refutes the sentence. `filterLFORate` is the one that does not merely sound wrong, it
+    /// LATCHES: `apply(to:)` writes it raw to `EchoelLFO.rate`, whose `next()` does
+    /// `phase += rate / sampleRate` with the reset gated on `phase >= 1.0`. At 48 kHz a
+    /// stored `3.4e38` adds `7.08e33` per sample, the `-= 1.0` is a no-op at that
+    /// magnitude. Simulated in float32 rather than estimated, and the two milestones are
+    /// NOT the same number — which is worth writing down, because the obvious one is the
+    /// later one: the OUTPUT goes non-finite on sample **7 646** (0,159 s), when the sine
+    /// argument `phase * Float.pi * 2` overflows `Float` while `phase` itself is still
+    /// finite; `phase` only saturates to `+inf` on sample **48 064** (1,0013 s). From the
+    /// first of those, `sinf` sees `inf` and returns NaN on every sample.
+    ///
+    /// ⛔ TWO SENTENCES THAT STOOD HERE WERE WRONG, BOTH FLATTERING, and #1207b fixes the
+    /// mechanism they described rather than only the words:
+    ///   · "nothing short of a new patch can clear it" — a new patch did NOT clear it.
+    ///     `EchoelLFO.reset()` had no production caller, so `phase` survived any later
+    ///     patch and the voice stayed broken for the life of the `EchoelDDSP` instance.
+    ///     Repaired at the source: `next()`'s wrap is now total, so no rate can strand
+    ///     `phase` at all (see its doc).
+    ///   · "NaN on every sample … of the voice" implied NaN AUDIO. It does not reach the
+    ///     samples: the render folds `lfoMod` into a cutoff ending in
+    ///     `.clamped(to: cutoffRange)`, and the NaN-safe clamp maps NaN to the LOWER
+    ///     bound. The real symptom is a filter pinned at 20 Hz — this repo's permanent-
+    ///     silence class, and much harder to recognise than a crackle.
+    /// No NaN is needed to get there and none could be: `JSONDecoder`'s
+    /// `nonConformingFloatDecodingStrategy` defaults to `.throw`, so JSON cannot deliver
+    /// one. A large FINITE number is the whole vector, and JSON delivers those happily.
+    ///
+    /// ⚠️ THE DOOR IS LIVE, which is what separates this from the FX-preset path #1206b
+    /// had to retract a reachability claim about. `EchoelStudioView`'s "Open project"
+    /// toolbar button sets `projectImportPresented`, its `.fileImporter` hands the URL to
+    /// `ProjectStore.importProject(fromDocument:)`, that decodes a `Project`, and a
+    /// `Project` carries a whole `SynthPatch`. A user really can pick that file.
+    /// ⚠️ TWO HOPS THE FIRST VERSION SKIPPED, because "live" is not the same as
+    /// "one tap": importing only SAVES to the library — the user must then tap the row to
+    /// `open(p)` — and the sheet's own button is `.disabled(projects.projects.isEmpty)`,
+    /// so on a fresh install the door is shut until a take has been saved. The decode
+    /// itself happens on import, which is why the clamp belongs there and not at `open`.
+    ///
+    /// ⚠️ IT CANNOT CUT A SHIPPED OR USER-SET VALUE — the #430 `decay` invariant, and the
+    /// reason this is safe to run on EVERY decode rather than only on import. Measured
+    /// across ALL THREE banks — `PatchLibrary`, this file's `factory`, and
+    /// `Sequencer/GenrePatches` — plus every decoder default: nothing sits outside its own
+    /// bound. ⛔ The first version said "across `PatchLibrary` and this file", which is two
+    /// of the three, in a slice whose own guard file carries a ⛔ block about exactly that
+    /// omission (`Drone Bed` is not in the bank the earlier sweep read). The conclusion was
+    /// unchanged when the third bank was added; the SCOPE sentence was not. The Sound panel's rows read the SAME `Bounds`,
+    /// so a value a finger can set is a value this keeps. Only a file this app did not
+    /// write can be touched at all.
+    ///
+    /// ⚠️ NOT NaN-NEUTRAL, and that is deliberate rather than overlooked: `clamped(to:)`
+    /// maps NaN to the range's LOWER bound, so a NaN would land on 0 Hz (LFO stopped) /
+    /// 20 Hz cutoff (dark) rather than on the value the patch meant. Silent and safe beats
+    /// NaN, and the decoder cannot produce one anyway (see above). ⛔ "a non-finite" stood
+    /// here and covers one case too many: NaN and `-inf` land on the LOWER bound, `+inf`
+    /// on the UPPER one (20 Hz rate, 18 kHz cutoff). Both are bounded, which is the point —
+    /// but a stated safety property has to name the value it actually produces.
+    public mutating func clampToBounds() {
+        typealias B = Bounds
+        attack = attack.clamped(to: B.attack)
+        decay = decay.clamped(to: B.decay)
+        sustain = sustain.clamped(to: B.sustain)
+        release = release.clamped(to: B.release)
+        harmonicity = harmonicity.clamped(to: B.harmonicity)
+        harmonicLevel = harmonicLevel.clamped(to: B.harmonicLevel)
+        brightness = brightness.clamped(to: B.brightness)
+        noiseLevel = noiseLevel.clamped(to: B.noiseLevel)
+        filterCutoff = filterCutoff.clamped(to: B.filterCutoff)
+        filterResonance = filterResonance.clamped(to: B.filterResonance)
+        lfoToFilterDepth = lfoToFilterDepth.clamped(to: B.lfoToFilterDepth)
+        filterLFORate = filterLFORate.clamped(to: B.filterLFORate)
+        filterLFODepth = filterLFODepth.clamped(to: B.filterLFODepth)
+        reverbMix = reverbMix.clamped(to: B.reverbMix)
+        reverbDecay = reverbDecay.clamped(to: B.reverbDecay)
+        vibratoRate = vibratoRate.clamped(to: B.vibratoRate)
+        vibratoDepth = vibratoDepth.clamped(to: B.vibratoDepth)
+        timbreBlend = timbreBlend.clamped(to: B.timbreBlend)
+        // The two OPTIONALS keep their `nil`, which means "unity" / "clean" — folding a
+        // missing value onto a bound would invent a trim the patch never asked for.
+        if let v = outputLevel { outputLevel = v.clamped(to: B.outputLevel) }
+        if let v = warmthDrive { warmthDrive = v.clamped(to: B.warmthDrive) }
     }
 
     public init(
@@ -308,6 +428,13 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
             voiceProfileLabel = nil
             voiceProfileBlend = nil
         }
+
+        // #1207 — LAST, so it folds the DECODED values and never the fallbacks-that-were-
+        // never-read: every `?? default` above is already inside its own bound (measured),
+        // so absence still yields exactly the memberwise default and the #95 `decodeIfPresent`
+        // law is untouched. See `clampToBounds()` for why a file-supplied `filterLFORate`
+        // is the one that latches the LFO into permanent NaN.
+        clampToBounds()
     }
 
     // MARK: - Loudness normalisation (founder 2026-07-11 "angleichen")
@@ -801,8 +928,13 @@ public struct ResolvedPatch: Sendable, Equatable {
         // exist: the line directly ABOVE writes the raw negative into the live render parameter
         // unconditionally, and `1.0 + lfoMod * lfoToFilterDepth` in the render path does invert
         // with it. The sentinel only decides what a LATER bio frame does; with bio off, or
-        // before the first frame, the negative simply stands. Clamping at decode is the real
-        // fix and is not this task's.
+        // before the first frame, the negative simply stands.
+        // ⭐ THE ERRAND THIS PARAGRAPH REGISTERED IS DONE (#1207): "clamping at decode is the
+        // real fix and is not this task's" stood here after the decode clamp shipped, in the
+        // same file, 490 lines below the call — so a later reader would have re-opened a
+        // closed errand. `init(from:)` ends in `clampToBounds()`, and `lfoToFilterDepth` is
+        // folded into 0…1 there, so a file-supplied negative can no longer arrive. A negative
+        // set IN MEMORY still can: the memberwise init stays unclamped on purpose.
         synth.bioBaseLFOToFilterDepth = lfoToFilterDepth
         synth.filterLFO.rate = filterLFORate
         synth.filterLFO.depth = filterLFODepth

@@ -67,14 +67,20 @@ final class PatchVibratoAnchorTests: XCTestCase {
 
     /// Every patch the app can hand the engine without the user typing anything.
     ///
-    /// ⚠️ AND THAT PHRASE IS THE COVERAGE HOLE, NOT A BOAST. It excludes exactly the patches that
-    /// CAN break the invariant asserted below: user/saved patches out of `PatchStore`, which
-    /// arrive through `Codable` with bare `decodeIfPresent ?? default` and no domain clamp. A
-    /// saved patch carrying `vibratoDepth > 1` or `vibratoRate > 12` hits the anchored path's
-    /// output clamp, so its live value stops equalling its stored value — and with bio OFF it
-    /// does not, because `apply(to:)` writes it raw. Shipped patches are all inside the domain,
-    /// so nothing here is failing today; the honest statement is that this guard covers the
-    /// built-ins and says nothing about hand-edited files.
+    /// ⛔ THIS PARAGRAPH DESCRIBED A HOLE THAT #1207 CLOSED, and it is rewritten rather than
+    /// deleted because the reasoning is still the reason this guard is scoped the way it is.
+    /// It read: "user/saved patches out of `PatchStore` … arrive through `Codable` with bare
+    /// `decodeIfPresent ?? default` and **no domain clamp**. A saved patch carrying
+    /// `vibratoDepth > 1` or `vibratoRate > 12` …". Both examples are now impossible:
+    /// `SynthPatch.init(from:)` ends in `clampToBounds()`, which folds every `Bounds` field —
+    /// `vibratoRate` into 0…12 and `vibratoDepth` into 0…1 among them. A DECODED patch is
+    /// therefore inside the domain by construction, and no `PatchStore` file can break the
+    /// invariant asserted below.
+    /// ⚠️ WHAT REMAINS TRUE, and it is narrower: the memberwise `init` is deliberately NOT
+    /// clamped, so a patch built IN MEMORY can still be out of domain. This guard reads the
+    /// built-ins, which are all inside it, so it says nothing about that path.
+    /// (Nothing here goes red either way — this is prose, which is why no needle checker
+    /// could see it and why the #456 sweep has to be done by hand.)
     private var shippedPatches: [(label: String, patch: SynthPatch)] {
         SynthPatch.factory.map { (label: "factory “\($0.name)”", patch: $0) }
         + MusicStyle.offered.map { (label: "genre “\($0.rawValue)”", patch: $0.synthPatch) }

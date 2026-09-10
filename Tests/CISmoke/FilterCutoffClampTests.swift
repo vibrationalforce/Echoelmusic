@@ -211,8 +211,12 @@ final class FilterCutoffClampTests: XCTestCase {
     /// Every `SynthPatch` compiled into the binary. `PatchLibrary` is included even though it is
     /// doorless dead data today (zero consumers outside its own file) — it holds the repo's
     /// highest cutoff, so leaving it out is how a preset drifts toward the ceiling unseen, and
-    /// including it costs nothing. Saved `PatchStore` patches remain out of scope; they are not
-    /// compiled in, and `PatchVibratoAnchorTests` carries the same caveat for the same reason.
+    /// including it costs nothing. Saved `PatchStore` patches remain out of scope because they
+    /// are not compiled in — ⛔ but the REASON stated next to that used to be a missing decode
+    /// clamp, and since #1207 `SynthPatch.init(from:)` ends in `clampToBounds()`, which folds
+    /// `filterCutoff` into `Bounds.filterCutoff` (= `EchoelDDSP.cutoffRange`). A decoded patch
+    /// cannot exceed the ceiling this file guards. `PatchVibratoAnchorTests` carried the same
+    /// caveat and is corrected in the same commit (#456).
     private var shippedPatches: [(label: String, patch: SynthPatch)] {
         SynthPatch.factory.map { (label: "factory “\($0.name)”", patch: $0) }
         + MusicStyle.offered.map { (label: "genre “\($0.rawValue)”", patch: $0.synthPatch) }
