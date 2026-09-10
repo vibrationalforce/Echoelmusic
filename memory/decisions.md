@@ -1518,3 +1518,12 @@ beschränken (#292, `afcf3aa`).
 - **Weitere Zyklen:** #1208 Delay-NaN-Klammern (`audio-dsp-1`), #1209 Privacy-Link (`ship-path-1`),
   #1211 CLAUDE.md-Status (Watch nicht eingebettet · 60 fps/~1 Hz · Kohärenz auf Kamera bei Ruhepuls
   abwesend). Volle Schlange: `scratchpads/ULTRAPLAN_2026-09-10.md`; Review 2026-10-10.
+
+### 2026-09-10 — HealthKit-Proben haben ein Höchstalter (#1215) · zwei Ressourcen-Scheiben (#1213/#1214) · Übergabe-Punkt #56 (#1212)
+- **Entscheidung:** `HealthKitBioPublisher.maxMeasurementAge = 600 s` (Urteilswert, benannt, Marker am Ort). Eine Probe
+  älter als das ist nicht der Körper; die Watch-Anzeige darf lieber leer sein als alt.
+- **Warum:** Audit `bio-pipeline-2` — die verankerte Abfrage liefert beim Start bis zu eine Stunde alte Proben, der
+  Empfangszeit-Stempel (#98c2) machte sie zum lebenden Puls. 180-s-Designfall bleibt (Gegengewicht im Wächter).
+- **Dazu:** #1213 Sampler auf 48 kHz (kein SRC pro Block auf dem immer angehängten `previewVoice`), #1214 Delay-Ton-Cache
+  (kein `powf`/`expf` pro Sample), #1212 `keyRoot`-Faltung gegen den `60 + Int.max`-Trap aus einer Projektdatei.
+- **Review:** 2026-10-10 — Founder-Blick, ob 10 min Watch-Wartezeit passt.

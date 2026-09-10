@@ -26,6 +26,14 @@
 (`Tests/CISmoke/CLAUDE.md` §5): `Xcode Compile Check` baut `Sources/` allein; die neuen Wächter
 beweist erst CI/CD „Build for Testing".
 
+
+**Nachtrag 2026-09-10, zweite Runde (#1212–#1215), auf die Founder-Frage „Übernahme geklappt? TestFlight
+ressourcensparender? Bio auf bestem Stand?":** Übergabe-Punkt #56 (`Project.keyRoot`-Trap) geschlossen (#1212) ·
+Audit `audio-dsp-5` (#1213, Sampler auf Graph-Rate, kein SRC pro Block) und `audio-dsp-2` (#1214, Delay-Ton-Cache)
+geschlossen · Zyklus 6 (#1215, HealthKit `maxMeasurementAge` 600 s) geschlossen. `HANDOVER_2026-09-10.md` der
+Neustart-Sitzung hierher geholt, damit sie mit dem nächsten Code-Commit `main` erreicht (#697). Offen aus derselben
+Runde: Zyklus 5 (Polar), Zyklus 7 (Kamera-Kohärenz, braucht Gerät), Cron-Entscheidung (§2 Punkt 8).
+
 ## 1. Die Schlange (nächste ~25 Zyklen)
 
 Reihenfolge = (Schwere nach außen) → (Ship-Gate-Nähe) → (Council-Sequenz) → (Marketing). Spalte
@@ -38,7 +46,7 @@ Reihenfolge = (Schwere nach außen) → (Ship-Gate-Nähe) → (Council-Sequenz) 
 | 3 | Art-Net-Default auf Unicast, `stateUpdateHandler` → `lastError`, PatchbayView-Satz + `artnet-sacn-from-a-phone.html` | Audit `output-sync-2` (hoch) | S | `Sync/ArtNetSender.swift`, `Studio/PatchbayView.swift`, `docs/artnet-sacn-from-a-phone.html` | |
 | 4 | sACN/Art-Net Keep-alive ≥ 0,8 s + `Stream_Terminated` (0x40 ×3) in `stop()` | Audit `output-sync-3` (hoch) | S | `SACNSender.swift`, `ArtNetSender.swift`, `SACNSenderTests.swift` | |
 | 5 | Polar: `lastNotificationAt`-Gate ≤ 3 s + Sensor-Contact-Bits `0x06` | Audit `bio-pipeline-1` | S | `PolarH10BioPublisher.swift` + Parser-Test | |
-| 6 | HealthKit: `maxMeasurementAge` (Größenordnung 10 min, > 180 s) | Audit `bio-pipeline-2` | S | `HealthKitBioPublisher.swift` + Test | |
+| 6 | HealthKit: `maxMeasurementAge` (Größenordnung 10 min, > 180 s) | Audit `bio-pipeline-2` | S | `HealthKitBioPublisher.swift` + Test | ✅ #1215 (600 s, NEEDS-FOUNDER-VERIFY am Ort) |
 | 7 | Kamera-Kohärenz: rollende RR-Historie (~64) am `lastRespirationBeatTime`-Cursor statt 10-s-Fenster → Kohärenz ab ~16 s bei 60 bpm | Audit `bio-pipeline-3` (Chance-Hälfte) | S → F (Verify) | `CameraRPPGBioPublisher.swift`; `AFreshTakeStartsWithNoHeldFrameTests`-Prosa | NEEDS-FOUNDER-VERIFY |
 | 8 | `generate()` unter BPM-Lock loggt `.user`, nicht `.flowServo` | Audit `sequencer-core-1` | S | `EchoelStudioView.swift` (1 Zeile), `TempoInvariantTests.swift` | |
 | 9 | **Integrations-Hub + 2 Spokes** (`integrations.html`, `reaper-osc.html`, `touchdesigner-osc.html`) mit HowTo/FAQ-JSON-LD, ADM-Leaves ab #1210 | Council Schritt 2 · Marketing Aktion 2 · Audit `output-sync-7` | S | `docs/*.html` (docs-only) | |
