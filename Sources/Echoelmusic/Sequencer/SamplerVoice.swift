@@ -43,12 +43,22 @@ public final class SamplerVoice: @unchecked Sendable {
 
     // MARK: - Constants
 
-    /// Maximum sample length, in mono 32-bit float frames (~2s @ 44.1 kHz).
-    public static let maxSampleFrames: Int = 88_200
+    /// Maximum sample length, in mono 32-bit float frames (~2 s @ 48 kHz).
+    public static let maxSampleFrames: Int = 96_000
 
-    /// Render format: mono float32 at 44.1 kHz. Master mixer matrix-mixes
-    /// to the engine's hardware format.
-    public static let sampleRate: Double = 44_100
+    /// Render format: mono float32 at 48 kHz — the graph's own rate
+    /// (`AudioConfiguration.preferredSampleRate`), like every other source node.
+    ///
+    /// #1213 (audit 2026-09-10 `audio-dsp-5`) — this WAS 44.1 kHz, the only source node in a
+    /// 48 kHz graph pinned below it. `AVAudioEngine` connects a source whose format differs
+    /// from the mixer's through an implicit sample-rate converter, and `previewVoice` is
+    /// attached for the life of the engine (`BeatPlayer.attach(to:)`), so that converter ran
+    /// on EVERY render block — resampling silence — and each timeline lane added another.
+    /// Matching the graph removes the converter; `loadSample` still resamples any file to
+    /// `Self.sampleRate` at LOAD time, so a 44.1 kHz WAV is unaffected in pitch or length.
+    /// The old comment's "master mixer matrix-mixes to the hardware format" was true of the
+    /// CHANNEL layout, not the rate — the rate conversion was real work, done every block.
+    public static let sampleRate: Double = 48_000
 
     // MARK: - Public state
 
