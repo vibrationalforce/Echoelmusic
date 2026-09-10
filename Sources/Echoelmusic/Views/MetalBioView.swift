@@ -589,6 +589,14 @@ struct MetalBioView: UIViewRepresentable {
 /// Floats updated from the main actor, so no cross-thread state races.
 final class MetalBioRenderer: NSObject, MTKViewDelegate {
 
+    /// #1244 — byte equality of two trivial structs (the uniforms are plain `Float` fields).
+    /// A BYTE compare rather than `==` on purpose: `BioUniforms` is not `Equatable`, and bytes
+    /// treat an identical NaN as identical, which is exactly the "the image cannot differ"
+    /// question — a `Float ==` would report NaN ≠ NaN and encode a frame that changes nothing.
+    nonisolated static func bytesEqual<T>(_ a: T, _ b: T) -> Bool {
+        withUnsafeBytes(of: a) { ab in withUnsafeBytes(of: b) { bb in ab.elementsEqual(bb) } }
+    }
+
     private var commandQueue: MTLCommandQueue?
     private var pipeline: MTLRenderPipelineState?
 
@@ -625,6 +633,11 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// a governor detail change — GLIDE instead of snapping. This is the felt
     /// "smoothness/Wirkung": the body modulates the look continuously, never in jerks.
     private var uniforms = BioUniforms()
+    /// #1244 — the uniforms of the last frame actually ENCODED, and whether one was. When the
+    /// next frame's uniforms are byte-identical the GPU pass is skipped and the last presented
+    /// image stays on the layer. See the skip in `draw(in:)` for why this is not a pause.
+    private var lastEncodedUniforms = BioUniforms()
+    private var hasEncodedOnce = false
     private var target = BioUniforms()
     private var hasTarget = false
     /// WATER DISH (#1101): the drive the dish sees this frame (music level + finger energy,
@@ -1352,10 +1365,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // demote the tier (lets it back off detail/FPS if the GPU can't keep up).
             governor?.recordFrame(timestamp: nowGov)
         }
-        guard let drawable = view.currentDrawable,
-              let pass = view.currentRenderPassDescriptor,
-              let queue = commandQueue,
-              let buffer = queue.makeCommandBuffer() else { return }
+        // #1244: the drawable guard that stood HERE moved below the uniform easing — see the
+        // skip there. Nothing between here and the encoder touched the drawable, the pass or
+        // the command buffer (measured before the move), and Apple's guidance is to acquire
+        // the drawable as LATE as possible: an early request can block on the drawable pool.
 
         // Real elapsed time since the last drawn frame — drives both the smoothing and
         // the phase integration, so everything is frame-rate independent.
@@ -1657,6 +1670,38 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         }
         // Keep `time` as a free-running clock for the secondary motion in the shader.
         uniforms.time = reduceMotion ? 0 : Float(nowT - startTime)
+
+        // #1244 (visual audit V2) — SKIP THE GPU PASS WHEN THE PICTURE CANNOT HAVE CHANGED.
+        // The shader reads nothing but `uniforms` (no textures, no per-frame vertex data —
+        // `setVertexBytes`/`setFragmentBytes` below are its whole input), so byte-identical
+        // uniforms mean a byte-identical image, and returning before the drawable is acquired
+        // leaves the last presented frame on the layer. When does that happen? Never while
+        // motion runs (`time` advances every frame). Under Reduce Motion — the accessibility
+        // switch, AND the `.minimal` tier that thermal `.critical` / battery < 10 % forces —
+        // `time` is 0 and the phases are frozen, so once the bio and touch easings settle
+        // (Float easing converges to exact equality within seconds) the renderer drew sixty
+        // identical frames a second at full drawable size, on the device that could least
+        // afford it. Now it draws none until something moves.
+        //
+        // ⚠️ THIS IS NOT A PAUSE, on purpose. `isPaused`/`preferredFramesPerSecond` stay as
+        // `makeUIView` set them — the display link keeps its 60 Hz cadence (reconfiguring it is
+        // the flicker class the pin exists for), `lastFrameTime` was already advanced above so
+        // `dt` stays honest, and the first change to any uniform encodes on the very next tick.
+        // Held off while a take or a still wants the drawable (`wantsCapture`): the recorder
+        // needs a rendered texture on its frame, identical or not. The comparison is over the
+        // struct's bytes (NaN-tolerant; the uniforms are sanitized upstream anyway).
+        // NEEDS-FOUNDER-VERIFY: Reduce Motion on, hold still — does the picture stay (no
+        // black, no flicker) and resume the moment a finger touches the visual?
+        if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {
+            return
+        }
+        lastEncodedUniforms = uniforms
+        hasEncodedOnce = true
+
+        guard let drawable = view.currentDrawable,
+              let pass = view.currentRenderPassDescriptor,
+              let queue = commandQueue,
+              let buffer = queue.makeCommandBuffer() else { return }
 
         if let pipeline,
            let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
