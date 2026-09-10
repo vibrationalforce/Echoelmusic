@@ -638,6 +638,9 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// image stays on the layer. See the skip in `draw(in:)` for why this is not a pause.
     private var lastEncodedUniforms = BioUniforms()
     private var hasEncodedOnce = false
+    /// #1245 — the resolution lever as last applied, so a change re-allocates the drawable on
+    /// its own frame instead of waiting out the settle window (see the size code in `draw`).
+    private var lastRenderScale: CGFloat = 1
     private var target = BioUniforms()
     private var hasTarget = false
     /// WATER DISH (#1101): the drive the dish sees this frame (music level + finger energy,
@@ -1073,14 +1076,27 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // re-allocation as it does for every other resize. Held at 1 while a take or a
             // still wants the drawable (`wantsCapture`): the recorder's pool is sized from
             // the drawable, and a take keeps the size it started with.
-            // NEEDS-FOUNDER-VERIFY: force `.low` (Low Power Mode on) — is the picture
-            // acceptably soft at 0.7, and does a running recording keep full size?
+            // The external stage's renderer shares this governor (`ExternalDisplayScene`), so a
+            // beamer output drops with the tier too — intended (the same device is hot), and part
+            // of the ask below. NEEDS-FOUNDER-VERIFY: force `.low` (Low Power Mode on) — is the
+            // picture acceptably soft at 0.7, on the phone and on a connected screen, and does a
+            // recording STARTED in that state come out at full size?
             let renderScale: CGFloat = {
                 guard !wantsCapture, let tierScale = governor?.settings.visualDetailScale else { return 1 }
                 return CGFloat(max(0.5, min(1, tierScale)))
             }()
-            let want = CGSize(width: max(1, view.bounds.width * scale * renderScale),
-                              height: max(1, view.bounds.height * scale * renderScale))
+            // #1245 (review of #1243): a LEVER change is a deliberate step, not a layout
+            // animation — it re-allocates on the frame it happens, bypassing the two-frame
+            // settle wait. Without this, record-start on a demoted tier flipped `wantsCapture`
+            // (and so `renderScale` → 1) at frame N while the drawable only grew at N+3;
+            // `readyToCapture` is true at N+1, `VideoRecorder.ingest` sizes the writer from the
+            // FIRST buffer, so the whole take would have been locked to the reduced size —
+            // the inverse of what the lever promises. Rounded to whole pixels (F3): a
+            // fractional `want` against a layer-rounded `have` could re-fire every other frame.
+            let leverMoved = renderScale != lastRenderScale
+            lastRenderScale = renderScale
+            let want = CGSize(width: max(1, (view.bounds.width * scale * renderScale).rounded()),
+                              height: max(1, (view.bounds.height * scale * renderScale).rounded()))
             let have = view.drawableSize
             if abs(want.width - have.width) > 0.5 || abs(want.height - have.height) > 0.5 {
                 if abs(want.width - pendingDrawableSize.width) < 0.5,
@@ -1090,7 +1106,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                     pendingDrawableSize = want
                     pendingStableFrames = 0
                 }
-                if pendingStableFrames >= 2 || have.width <= 2 || have.height <= 2 {
+                if pendingStableFrames >= 2 || have.width <= 2 || have.height <= 2 || leverMoved {
                     view.drawableSize = want
                 }
             } else {
@@ -1695,13 +1711,18 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {
             return
         }
-        lastEncodedUniforms = uniforms
-        hasEncodedOnce = true
 
         guard let drawable = view.currentDrawable,
               let pass = view.currentRenderPassDescriptor,
               let queue = commandQueue,
               let buffer = queue.makeCommandBuffer() else { return }
+        // #1245 (review of #1244): the record is written AFTER the guard, never before. A nil
+        // drawable (pool exhausted, layer just re-sized by the settle machinery, first frames)
+        // presents nothing; had the record been written first, every later settled tick would
+        // have skipped against a frame that never reached the layer — a stale or blank image
+        // held until a uniform moved. "Encoded" means a command buffer exists for it.
+        lastEncodedUniforms = uniforms
+        hasEncodedOnce = true
 
         if let pipeline,
            let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {

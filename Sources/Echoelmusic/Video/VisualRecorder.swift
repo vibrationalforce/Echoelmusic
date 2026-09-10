@@ -404,7 +404,8 @@ final class VisualRecorder {
     /// ⚠️ HOW MUCH — corrected by the mandatory review, because the first version quoted
     /// `1080p → 8.3 MB` and this app never captures at 1080p. The recorded texture is the
     /// FLOATING WINDOW'S drawable, sized from its on-screen bounds (`MetalBioView` sets
-    /// `drawableSize` from `bounds × screen.scale`, `autoResizeDrawable = false`), and the
+    /// `drawableSize` from `bounds × screen.scale` — since #1243 times the tier's resolution
+    /// lever, which is 1 whenever a capture is wanted, `autoResizeDrawable = false`), and the
     /// window offers four sizes. On a modern phone that spans roughly **0.7 MB per buffer at
     /// the small size to ~12 MB at fullscreen** — the window's own tooltip says the same thing
     /// from the user's side ("the video is rendered at the window's on-screen size"). The pool

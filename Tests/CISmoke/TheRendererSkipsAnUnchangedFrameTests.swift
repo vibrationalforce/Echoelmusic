@@ -48,9 +48,19 @@ final class TheRendererSkipsAnUnchangedFrameTests: XCTestCase {
         XCTAssertTrue(src.contains("if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {"),
                       "the unchanged-frame skip lost a gate: it must yield to a take/still and must never skip the first frame (#1244)")
         guard let skip = src.range(of: "if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {") else { return }
-        let after = String(src[skip.upperBound...].prefix(300))
+        let after = String(src[skip.upperBound...].prefix(1200))
         XCTAssertTrue(after.contains("lastEncodedUniforms = uniforms") && after.contains("hasEncodedOnce = true"),
-                      "the encoded-uniforms record is not updated right after the skip decision (#1244)")
+                      "the encoded-uniforms record is not updated after the skip decision (#1244)")
+        // #1245 (review): the record is written AFTER the drawable guard — a nil drawable presents
+        // nothing and must not count as encoded, or every settled tick afterwards skips against a
+        // frame that never reached the layer.
+        if let guardAt = after.range(of: "guard let drawable = view.currentDrawable,"),
+           let record = after.range(of: "lastEncodedUniforms = uniforms") {
+            XCTAssertTrue(guardAt.upperBound < record.lowerBound,
+                          "the encoded record is written before the drawable guard again — a nil drawable would poison the skip (#1245)")
+        } else {
+            XCTFail("the drawable guard or the record is not within reach of the skip (#1245)")
+        }
     }
 
     /// Claim 3 — counterweight: it is a skip, not a pause.

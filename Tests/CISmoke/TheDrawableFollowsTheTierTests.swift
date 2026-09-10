@@ -31,7 +31,7 @@ final class TheDrawableFollowsTheTierTests: XCTestCase {
     /// Claim 1 — the wanted drawable size carries the tier factor.
     func testTheWantedDrawableSizeCarriesTheTierFactor() throws {
         let src = try text("Sources/Echoelmusic/Views/MetalBioView.swift")
-        XCTAssertTrue(src.contains("let want = CGSize(width: max(1, view.bounds.width * scale * renderScale),"),
+        XCTAssertTrue(src.contains("let want = CGSize(width: max(1, (view.bounds.width * scale * renderScale).rounded()),"),
                       "the drawable is sized without the tier factor again — `.low`/`.minimal` then change the look and not the cost (#1243)")
         XCTAssertTrue(src.contains("let tierScale = governor?.settings.visualDetailScale") && src.contains("return CGFloat(max(0.5, min(1, tierScale)))"),
                       "`renderScale` is no longer the clamped tier detail scale (#1243)")
@@ -44,6 +44,17 @@ final class TheDrawableFollowsTheTierTests: XCTestCase {
                       "the resolution lever no longer yields to a take/still — the recorder pools at the drawable's size, and a mid-take step would re-pool against a writer sized for the start (#1243)")
         XCTAssertTrue(src.contains("let (readyToCapture, wantsCapture): (Bool, Bool) = MainActor.assumeIsolated {"),
                       "`wantsCapture` no longer comes from the ONE capture question at the top of draw(in:) (#985/#1243)")
+    }
+
+    /// Claim 5 (#1245, review) — a lever change re-allocates on its own frame, and the wanted
+    /// size is whole pixels. Record-start on a demoted tier otherwise captured two frames at the
+    /// reduced size and the writer locked the whole take to it.
+    func testALeverChangeBypassesTheSettleWaitAndWantsWholePixels() throws {
+        let src = try text("Sources/Echoelmusic/Views/MetalBioView.swift")
+        XCTAssertTrue(src.contains("let leverMoved = renderScale != lastRenderScale") && src.contains("|| leverMoved {"),
+                      "a resolution-lever change waits out the settle window again — a take started on a demoted tier is then sized from a reduced first frame (#1245)")
+        XCTAssertTrue(src.contains("(view.bounds.width * scale * renderScale).rounded()"),
+                      "`want` is fractional again — against a layer-rounded `have` the settle check can re-fire every other frame (#1245)")
     }
 
     /// Claim 3 — counterweight: the default tiers leave the picture untouched.
