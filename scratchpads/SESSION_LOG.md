@@ -29917,3 +29917,20 @@ die ANGEWANDTE Datei (nicht nur den Preview): 1 Chip-Labels = Strip GRÜN · 2 P
 Save/Export · Video` alle real GRÜN · 3 Diagnostics GRÜN · 4 `--since` GRÜN · 5 `NICHT NUR EIN BUMP` GRÜN. Prüfer
 (`moved-needles` · `dead-needles` · `foreign-needles`) alle exit 0 — die zwei #1245-Fragen von `moved-needles` sind
 weg. Der Bump liegt außerhalb des Compile-paths-Filters; `testflight.yml` ist der Lauf, der zählt — Lesung folgt.
+
+
+## TestFlight 468 gelandet · CI/CD 5998–6005 (2026-09-10, ~19:08 UTC)
+
+**TestFlight #2588 auf `3eef86b` (v10.79.468) = success** (18:14:24 → 18:38:51). Job `iOS`: Archive 18:25–18:29, Export & Upload
+18:29–18:31, **„Verify build landed in App Store Connect" 18:31–18:36 success**, Error Summary übersprungen. Job `Compile Check`
+im selben Workflow: „Compile (iOS device SDK, no signing)" + „Compile ecosystem targets" success — damit ist auch der
+Deploy-Kopf selbst compile-belegt, nicht nur `5cf53a2` mit identischen Sources. Vier Jobs, vier grün.
+
+**CI/CD 5998 (`82cbbf6`) · 5999 (`f37e692`) · 6000–6004 (Docs-Köpfe) · 6005 (`5cf53a2`, #1244/#1245):** alle Conclusion
+`failure`, #396-Signatur. 6005 mit 120-Zeilen-Fenster gelesen: nur `passed`-Zeilen, kein Testname `failed`, Artefakt mit
+6583 Ergebnis-Dateien — die Suite ist mit den Wächtern von #1243–#1245 gebaut und gelaufen. 5998–6004 nur über
+Conclusion + Artefakt-Zeile gelesen; per #807 keine Aussage über einzelne Tests. Die macOS-Warteschlange ist damit leer.
+
+**Sitzungsende.** Founder-Bericht ist im Chat abgeschickt (Kopie `scratchpad/founder_report_2026-09-10.md`, außerhalb des
+Repos). Offene Reminder: keine (der 19:05-Reminder hat gefeuert und ist damit deaktiviert). Offener Rückstand: Ultraplan
+Zeile 12 (Feature), 10/13/15 (Council), 22–25 HOLD, V6 (Founder-Frage Recorder-fps), Council §9 fünf Fragen.
