@@ -1527,3 +1527,8 @@ beschränken (#292, `afcf3aa`).
 - **Dazu:** #1213 Sampler auf 48 kHz (kein SRC pro Block auf dem immer angehängten `previewVoice`), #1214 Delay-Ton-Cache
   (kein `powf`/`expf` pro Sample), #1212 `keyRoot`-Faltung gegen den `60 + Int.max`-Trap aus einer Projektdatei.
 - **Review:** 2026-10-10 — Founder-Blick, ob 10 min Watch-Wartezeit passt.
+
+### 2026-09-10 — Cron des 24h-Mandats pausiert (Founder-Delegation)
+- **Entscheidung:** `trig_01Mio4dc5T4KJPfRZKguy9mn` `enabled=false` — nicht gelöscht (Historie), nicht umgehängt (Text veraltet, #885).
+- **Warum:** feuerte stündlich in die gestoppte wozlie-Sitzung; Founder: „Du optimierst alles und entscheidest alles."
+- **Rückweg:** `update_trigger enabled:true` oder `persistent_session_id` auf eine lebende Sitzung.

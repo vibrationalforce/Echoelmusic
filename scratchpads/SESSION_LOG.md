@@ -29446,4 +29446,35 @@ abwesend — Servo und vier LIVE-Kanäle laufen auf 0,5). Ultraplan-Zyklen 5–7
 **TestFlight-Stand:** letzter Build v10.79.466 (Lauf 2586, `e066acb`, #1194–#1202). #1203–#1214 sind NICHT in
 TestFlight. Bump auf v10.79.467 erst nach grünem Compile Check für `2b387b3`.
 
-**Gate-Lesung für 8fc7ceb/087aa03/2b387b3:** steht unten, sobald gelesen.
+**Gate-Lesung (gelesen 16:10 UTC):** `Xcode Compile Check` #2522 (2b387b3) → **cancelled** durch meinen
+Folge-Push (beweist nichts, #1152-Lehre) · **#2523 (517d97a, deckt #1212–#1215) → success** · CI/CD #5988 `Build & Test`
+beim Lesen queued → Test-Bundle-Kompilat der vier neuen Wächter UNBELEGT. **957adab-Testjob (102937945750) ausgewertet:**
+`Build for Testing` success, `Run Tests` failure — `gh-test-verdict`: 167 sichtbar passed, 0 Compile-Fehler, 0 Skips,
+**1 `failed`: `TheAutomatableSetHasOneWriterTests.testBrightnessIsAutomatableOnlyWhileItsSentinelIsOutOfRange` auf
+Clone 2, 48,6 s, ohne Assert-Text.** Alle drei Zusicherungen gegen HEAD transkribiert: grün (kein `bioBaseBrightness > 0`,
+Default `-1` da, Deskriptor-min 0). Das ist die im `HARNESS_LEDGER` (Zeile ~257, #638-Zyklus) dokumentierte
+#396-Clone-2-Signatur — **kein Befund über den Test, nichts angefasst.** Meine sieben neuen Wächter liegen außerhalb
+des 200-Zeilen-Fensters (1235-s-Loch) — Ausführung unbelegt, Kompilat für 957adab belegt.
+
+**Deploy v10.79.467 (`18b5615`, 16:12 UTC)** — dreizehn Scheiben #1203–#1215, Notiz nach Merkbarkeit sortiert (A Absturz,
+B Rechenlast, C Bio, D Neustart-Scheiben, E außen), `--since e066acb` gedruckt (3 neue Bitten), Deploy-Wächter
+transkribiert (Tokens Bio · Field · Master · Save/Export · Video). TestFlight-Lauf beim Schreiben noch nicht gelesen —
+Wecker 16:45 UTC.
+
+**Founder 16:0x UTC: „Du optimierst alles und entscheidest alles."** Entschieden: Cron `trig_01Mio4dc5T4KJPfRZKguy9mn`
+**PAUSIERT** (enabled=false, Historie bleibt; er feuerte stündlich in `session_014nAZhmBhNNMa7NTn1FsmVB`, die sich selbst
+gestoppt hatte, mit dem seit Monaten überholten wozlie-Text). Reversibel: `update_trigger enabled:true` oder
+`persistent_session_id` auf eine lebende Sitzung. Eigene Kadenz hier über `send_later`.
+
+## #1216 — Ultraplan-Zyklus 5: der Gurt publiziert keinen toten Körper (2026-09-10)
+
+Audit `bio-pipeline-1`, nachgemessen: die Publish-Schleife stempelte `latestHR` jede Sekunde neu, solange die Zahl
+plausibel war — zwischen Link-Verlust und `didDisconnectPeripheral` (BLE-Supervision-Timeout) lief der Bus auf einem
+eingefrorenen Puls; und `parseHRMeasurement` ignorierte die Sensor-Contact-Bits (Flags Bit 1–2). Jetzt: Empfangs-Uhr
+`lastNotificationAt` im HRM-Handler, Schleife publiziert nur bei `≤ 3 s` (`maxNotificationAgeSeconds`, nonisolated —
+die CLAUDE.md-Tabelle zum `static let` auf einer `@MainActor`-Klasse); Parser liefert bei „supported && !detected" (0, [])
+— HR 0 fällt an `isPlausibleBPM`, keine Phantom-Beats. Gurte ohne Contact-Support unverändert (Gegengewicht).
+Wächter `TheStrapCannotPublishADeadBodyTests` (Anspruch 1 Parser ROT/GRÜN, 2 Schleife per Text ROT/GRÜN, 3 GRÜN/GRÜN).
+NEEDS-FOUNDER-VERIFY bleibt der Gurt-Eintreff-Posten aus CLAUDE.md; nichts Neues angehängt.
+
+**Gate-Lesung für #1216:** steht unten, sobald gelesen.

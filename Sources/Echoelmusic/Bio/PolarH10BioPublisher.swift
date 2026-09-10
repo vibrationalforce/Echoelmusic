@@ -100,6 +100,15 @@ public final class PolarH10BioPublisher: NSObject {
 
     @ObservationIgnored
     private var latestHR: Int = 0
+    /// #1216 (audit 2026-09-10 `bio-pipeline-1`) — receipt clock of the last HRM notification.
+    /// The publish loop below re-published `latestHR` every second for as long as it held a
+    /// plausible number, so between a link loss and iOS's `didDisconnectPeripheral` (the BLE
+    /// supervision timeout, seconds) the bus kept receiving a FROZEN pulse that `freshBio`/
+    /// `usableBio` accepted as live — music, visual, OSC egress and the Health writer all ran
+    /// on a body that had stopped talking. The HRM notifies at ~1 Hz; three seconds is three
+    /// missed notifications, well inside the supervision timeout and well outside jitter.
+    private var lastNotificationAt: CFAbsoluteTime = 0
+    nonisolated static let maxNotificationAgeSeconds: CFAbsoluteTime = 3   // nonisolated: read by a non-actor guard (CLAUDE.md build-error table)
 
     @ObservationIgnored
     private var rrIntervals: [Double] = []
@@ -180,7 +189,10 @@ public final class PolarH10BioPublisher: NSObject {
                 // Plausibility gate on the strap's own HR field, which is transmitted
                 // separately from the RR intervals and can arrive corrupted on its own.
                 // The old `> 0` test let a garbage packet through as a real pulse.
-                if RRIntervalHygiene.isPlausibleBPM(self.latestHR) {
+                // #1216 — AND the strap has spoken within `maxNotificationAgeSeconds`: a frozen
+                // `latestHR` from a strap that went silent is not re-stamped as a live frame.
+                if RRIntervalHygiene.isPlausibleBPM(self.latestHR),
+                   CFAbsoluteTimeGetCurrent() - self.lastNotificationAt <= Self.maxNotificationAgeSeconds {
                     // ARTIFACT REJECTION before any HRV number is derived. The strap is
                     // the source we call most accurate — it was the only one with none.
                     // Segments, not a flat array: RMSSD and pNN50 read successive pairs,
@@ -290,6 +302,15 @@ public final class PolarH10BioPublisher: NSObject {
         let hr16 = (flags & 0x01) != 0
         let energyPresent = (flags & 0x08) != 0
         let rrPresent = (flags & 0x10) != 0
+        // #1216 — Bluetooth Heart Rate Measurement flags, bits 1–2: `10` = sensor contact
+        // supported, contact NOT detected; `11` = supported and detected; `0x` = the strap does
+        // not report contact. A strap that keeps sending its last HR with the electrodes off the
+        // skin is exactly the dead body the publish loop must not carry, so "supported and not
+        // detected" parses as no measurement — HR 0 (fails `isPlausibleBPM`) and NO RR intervals
+        // (no phantom heartbeat events on stage). Straps without contact support are unchanged.
+        let contactSupported = (flags & 0x02) != 0
+        let contactDetected  = (flags & 0x04) != 0
+        if contactSupported && !contactDetected { return (0, []) }
 
         var idx = data.startIndex + 1
         var hr = 0
@@ -474,6 +495,7 @@ extension PolarH10BioPublisher: CBPeripheralDelegate {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.latestHR = parsed.hr
+            self.lastNotificationAt = CFAbsoluteTimeGetCurrent()   // #1216 — receipt clock
             for rr in parsed.rrIntervals {
                 self.rrIntervals.append(rr)
                 if self.rrIntervals.count > self.maxRRIntervals {
