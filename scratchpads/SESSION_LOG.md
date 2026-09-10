@@ -29597,3 +29597,18 @@ rotes Gate und umgekehrt. Angleichung (tools-version 6.0 + `.swiftLanguageMode(.
 geschrieben, nie gelesen (`git grep -n shouldAutoPlay -- Sources` → drei Zeilen, alle Plumbing). Gelöscht, ⛔-Vermerk
 am Binding-Ort. Kein Wächter (tote Leitung; kommt Autoplay, kommt es mit Verbraucher und Wächter). Prüfer exit 0 für
 beide. Kompilat-unbelegt bis zum Gate — eine gelöschte Bindung ist genau die Sorte, die der Compile-Check fängt.
+
+## #1228 — Ultraplan-Zyklus 15: EIN End-to-End-Render-Wächter im blockierenden Bundle (2026-09-10)
+
+Audit `tests-guards-3`: 403 von 487 CISmoke-Dateien scannen Text, fünf rendern eine Stimme, keine behauptet einen ganzen
+Render. Neu `TheDDSPRenderIsDeterministicAndBoundedTests`: `EchoelDDSP(harmonicCount: 32, 48 kHz, noiseSeed)` wie die
+App, fester Patch (`SynthPatch(name:brightness:).apply(to:)`), fester Ruhe-Körper (`applyBioReactive` alle 0,5, Trend
+0), `noteOn(220)`, Render in 192er-Blöcken. (1) gleicher Seed → byte-identisch über 4096 Frames, anderer Seed → anders
+(Gegengewicht gegen Vakuität); (2) alle Samples endlich, Peak ≤ 2,0 — SANITY-Decke einer un-gemasterten Stimme
+(max-normalisierte Partialtöne × amplitude 0,5), kein Lautheitsgesetz, der −1-dBFS-Trim sitzt am Master; (3) RMS > 0
+(die Dauer-Stille-Klasse #22/#29/#295); (4) 60 s Blöcke rendern endlich, KEINE Zeitmessung (CI-Wallclock ≠ Latenz).
+**Ehrlich, §0:** NICHT transkribiert — Eigenschaften der gerenderten Samples, kein Python-Port. Erster Lauf ist der
+CI/CD-Run-Tests-Job; Erwartung GRÜN auf beiden Bäumen (präventiv). Ein Rot dort ist ein Befund über die Stimme (z. B.
+unseeded Entropie oder Peak > 2), erst lesen, dann „reparieren". Unsicherheiten benannt: die Determinismus-Behauptung
+setzt voraus, dass `Float.random` nur im Reverb-IR (`generateReverbIR`, Pfad `useConvolutionReverb == false`) vorkommt —
+gemessen: `grep -n random EchoelDDSP.swift` → nur dort; Drift und Rauschen laufen über den per-Voice-xorshift.
