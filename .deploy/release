@@ -1,4 +1,4 @@
-build: v10.79.467 — Dreizehn Reparaturen: kein Absturz aus einer Projektdatei, weniger Rechenlast im Klang, ehrlicheres Bio
+build: v10.79.468 — Das Bild kostet weniger, wo das Gerät es braucht; Bio ehrlicher auf Kamera und Gurt; Takt und Licht halten (#1216–#1245)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
   ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
@@ -51,7 +51,112 @@ notes: |
 
   Der Vorgänger ist 10.79.466 (und davor 10.79.465).
 
-  ── 0. WAS IN 10.79.467 NEU IST ─────────────────────────────────────────
+  ── 0. WAS IN 10.79.468 NEU IST ─────────────────────────────────────────
+
+  **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt alles
+  seit 467 — die Scheiben #1216 bis #1244, keine davon je auf einem Gerät gelaufen. Ich
+  sortiere nach dem, was Du MERKEN kannst; die Ressourcen-Hälfte steht zuerst, weil Du
+  danach gefragt hast.
+
+  **A. Das Bild kostet weniger, wo das Gerät es braucht (#1243, #1244, #1242).** Bisher hat
+  die Qualitätsstufe (Thermik, Akku) nur die RING-DICHTE gesenkt — die GPU hat weiter ein
+  Vollbild in voller Auflösung gerechnet, auch bei „kritisch". Jetzt sinkt bei der Stufe
+  „low" (Stromsparmodus) und „minimal" auch die Render-AUFLÖSUNG (0,7 bzw. 0,5 linear, also
+  ~49 % / ~25 % der Pixel); in der Normalstufe ist das Bild byte-identisch zu vorher. Läuft
+  eine Aufnahme, bleibt die Auflösung voll. Zweitens: steht das Bild still (Reduce Motion, oder
+  die Stufe „minimal" erzwingt es), zeichnet der Renderer nicht mehr 60 identische Frames pro
+  Sekunde, sondern gar keinen, bis sich etwas ändert — das letzte Bild bleibt stehen, kein
+  Pausieren, keine Cadence-Änderung. Drittens: der Spektral-Donut rechnet seine FFT mit 30
+  statt 60 Hz; seine Bewegung ist zeitbasiert, also gleich schnell, nur halb so oft gerechnet.
+
+  **B. Die eine lock-freie Warteschlange, weniger Reibung (#1237, #1239).** Die drei
+  Diagnose-Zähler der SPSC-Queue lagen auf EINER Cache-Line, die Audio-Thread und Main-Thread
+  bei jeder Operation mit Voll-Fence beschrieben haben; und `enqueue()` hat mit einem Atomic
+  auf die Zeile des Consumers GESCHRIEBEN. Jetzt liegen alle Wörter auf eigenen Lines, die
+  Zähler zählen ohne Fence, die Zeiger sind `let`. Klang unverändert; messbar nur Thermik.
+
+  **C. Bio ehrlicher, auf beiden Quellen (#1216, #1220, #1233, #1236).** Der Gurt publiziert
+  keinen toten Körper mehr (Meldung älter als 3 s oder Kontakt-Bits „kein Kontakt" → nichts).
+  Die Kamera rechnet Kohärenz auf einer rollenden Schlag-Historie — bisher brauchte sie
+  ≥ 17 Schläge in 10 s, also ≥ 102 bpm, sonst blieb Kohärenz auf der Kamera für die ganze
+  Sitzung bei 0 und alle vier Kohärenz-Mappings, der Flow-Servo, `/coherence` und ADM-OSC-
+  Distanz liefen auf Neutral; jetzt kommt sie bei Ruhepuls nach ~16 s. Die Kamera weigert
+  sich wie der Gurt, eine HRV zu nennen, wenn weniger als 80 % der Schläge die Hygiene
+  überleben (schlechter Fingerkontakt → „—" statt einer kleinen Zahl, auch auf OSC). Und die
+  HRV-Zelle im **Bio**-Panel zeigt eine gemessene SDNN der Watch in Millisekunden statt einer
+  einheitslosen Normalisierung.
+
+  **D. Takt und Licht (#1223, #1218, #1219, #1221).** Die Step-Clock armt vom Ideal-Raster,
+  nicht von „jetzt + Intervall" — Handler-Latenz wurde bisher zu dauerhaftem Phasenverlust
+  gegen Click und MIDI-Clock (~3 % zu langsam bei 120 BPM Sechzehnteln). Nach einem Suspend
+  Neustart am Raster statt Burst. Art-Net und sACN senden Keep-alive alle 0,8 s (ein Node, der
+  4 s nichts hört, hält oder geht schwarz) und sACN sagt beim Stop Stream_Terminated; Art-Net
+  sendet unicast an die eingetragene Adresse (Broadcast erreicht auf iOS nichts). MPE OUT stellt
+  Bend/Slide/Press VOR dem Note-on statt danach — der erste Puffer jeder Note spielte bisher
+  auf den alten Werten des Kanals.
+
+  **E. Kleines, Ehrliches (#1224–#1232, #1234, #1235, #1240, #1241).** Kohärenz-Trend fällt auf
+  0, wenn die Quelle nicht mehr misst · vierte `register(defaults:)` und tote `shouldAutoPlay`-
+  Leitung entfernt · das Datenschutz-Manifest deklariert keine Disk-Space-API mehr und wird
+  jetzt geparst statt nur gescannt (der erste Versuch war ein unparsebares plist — der Wächter
+  hat es gefunden) · Website: Hero verkauft den Mechanismus statt „calm down", das spielbare
+  Bild und die Beamer-Bühne stehen auf der Startseite, und es gibt `integrations.html` mit
+  jeder Adresse, jedem Port und der DMX-Karte plus Reaper- und TouchDesigner-Anleitung.
+
+  **Was ich NICHT beweisen kann:** alles oben ist compile-verifiziert (Xcode Compile Check
+  #2536 grün auf `d30f39b` für #1216–#1237; #2539 auf `c3227d0` für #1239/#1242/#1243;
+  #2540 auf `5cf53a2` für #1244/#1245), die Wächter sind transkribiert, nicht ausgeführt. Ob A
+  auf dem Gerät kühler läuft und ob das stehende Bild unter Reduce Motion flackerfrei bleibt,
+  sieht nur Dein Gerät — die Bitten dazu stehen unten, gedruckt.
+
+  Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
+  hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
+
+  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+
+  Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since 18b5615`
+  (18b5615 = der 467-Bump). Die drei VISUAL-Bitten sind die aus A, die zwei BIO-Bitten aus C,
+  die AUDIO-Bitte aus D.
+
+  Founder device-session checklist — 12 NEW or REWORDED since `18b5615`, of 130 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
+
+  ── VISUAL  (4)
+     Studio/SpectralDonutView.swift:49
+        the Canvas, for the same picture. NEEDS-FOUNDER-VERIFY: open the donut look, play a loop — do the rings still …
+     Views/MetalBioView.swift:1081
+        of the ask below. NEEDS-FOUNDER-VERIFY: force `.low` (Low Power Mode on) — is the picture acceptably soft at 0…
+     Views/MetalBioView.swift:1709
+        NEEDS-FOUNDER-VERIFY: Reduce Motion on, hold still — does the picture stay (no black, no flicker) and resume t…
+     CISmoke/TheDonutClocksAtHalfRateTests.swift:23
+        smooth is a device question (NEEDS-FOUNDER-VERIFY at the constant).
+
+  ── OTHER  (4)
+     CISmoke/TheDrawableFollowsTheTierTests.swift:23
+        recording's size are device questions (NEEDS-FOUNDER-VERIFY at the lever).
+     CISmoke/TheLightStreamsStayAliveAndSayGoodbyeTests.swift:22
+        green on both. NEEDS-FOUNDER-VERIFY: a console (sACNView is free) showing the source stay present through a 10…
+     CISmoke/TheRendererSkipsAnUnchangedFrameTests.swift:24
+        with no flicker is a device question (NEEDS-FOUNDER-VERIFY at the skip).
+     CISmoke/TheStepClockKeepsItsGridTests.swift:23
+        seamed over 16 bars is a device listen — NEEDS-FOUNDER-VERIFY at the helper.
+
+  ── BIO  (2)
+     Bio/CameraRPPGBioPublisher.swift:567
+        NEEDS-FOUNDER-VERIFY: camera take at rest for ~90 s — does the Bio panel's coherence leave 0 after ~16 beats a…
+     Bio/CameraRPPGBioPublisher.swift:1582
+        NEEDS-FOUNDER-VERIFY: camera take with a deliberately poor finger contact — does the Bio panel's HRV cell read…
+
+  ── AUDIO  (1)
+     Sequencer/PatternEngine.swift:666
+        NEEDS-FOUNDER-VERIFY: 16 bars at 120 BPM with the click on and the Bio panel open — do notes and click stay se…
+
+  ── SYNC  (1)
+     CISmoke/TheArtNetDefaultIsUnicastTests.swift:23
+        sACN half green on both. NEEDS-FOUNDER-VERIFY (Wireshark on the LAN, route on, default host): packets to 192.1…
+
+  ── 0c. WAS IN 10.79.467 NEU WAR (Vorgänger) ─────────────────────────────
 
   **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt
   alles seit 466 — dreizehn Scheiben (#1203–#1215), keine davon je auf einem Gerät gelaufen.
@@ -91,7 +196,7 @@ notes: |
   Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
   hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
 
-  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+  ── 0d. NEU BEANTWORTBAR IN 10.79.467 (dem VORGÄNGER, nicht diesem Build) ─────────
 
   Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since e066acb`
   (e066acb = der 466-Bump). Drei Bitten sind neu; die Watch-Bitte ist die aus C.
@@ -113,7 +218,7 @@ notes: |
         NEEDS-FOUNDER-VERIFY — und das REZEPT ist beim ersten Mal falsch gewesen, in beiden Haelften. Es sagte "Tiefe …
 
 
-  ── 0c. WAS IN 10.79.466 NEU WAR (Vorgänger) ──────────────────────────────────────────
+  ── 0e. WAS IN 10.79.466 NEU WAR (Vor-Vorgänger) ──────────────────────────────────────────
 
   **Dein Befund vom 09.09.: „Knisterfreier Sound bitte. Es scheint zwischendurch zu viel
   Arbeitsspeicher zu verbrauchen. Vermeide Störungen im Sound."**
@@ -167,7 +272,7 @@ notes: |
   im Code zurückgenommen statt still zu trimmen. Punkt 4 ist ein sauberer Aufräum-Commit,
   nicht die Knister-Reparatur. Die Knister-Reparatur sind 1 und 2.
 
-  ── 0d. NEU BEANTWORTBAR IN 10.79.466 (dem VORGÄNGER, nicht diesem Build) ─────────────────────────────────
+  ── 0f. NEU BEANTWORTBAR IN 10.79.466 (dem VOR-VORGÄNGER, nicht diesem Build) ─────────────────────────────────
 
   Gedruckt mit `python3 scripts/founder-verify.py --since 53c64a35`, also nicht von Hand
   zusammengesucht. Vier Bitten, und drei davon beantwortet ein Blick ins Log.
