@@ -208,6 +208,64 @@ def carried_in_code(needle: str, text: str) -> bool:
     return False
 
 
+ASSERT_OPENER = re.compile(r"XCTAssert(True|False)\(\s*(!\s*)?")
+
+
+def absence_only(needle: str, text: str) -> bool:
+    """Does this guard mention `needle` ONLY inside assertions that demand its ABSENCE?
+
+    WHY (#1200). This tool asks "which guard anchors on a line this change removed". For a
+    PRESENCE needle that is the right question and a removal is a red. For an ABSENCE needle —
+    `XCTAssertFalse(code.contains("<retracted spelling>"))` — the removal is the guard being
+    SATISFIED, and reporting it makes the checker permanently noisy on a correct tree.
+
+    That is not hypothetical: #1196b withheld two real absence assertions rather than ship a
+    checker that would report them forever, and a checker nobody can keep green is the exact
+    mechanism that made `continue-on-error` invisible for fourteen hours. `foreign-needles.py`
+    has carried polarity since #1191; this was the half that did not.
+
+    ⚠️ LINE-SCOPED, and the limit is stated rather than engineered around. It takes the LAST
+    assertion opener BEFORE the needle on the same line. Every absence assertion in this bundle
+    is written that way — opener and needle together, the message on the lines below. An
+    assertion split across lines before its needle reads as PRESENCE here, which keeps the hit
+    and costs one reading; the opposite default would hide a real red.
+
+    ⚠️ ALL code occurrences must be absence assertions. One plain mention in code and the
+    answer is False: a needle that is both asserted absent and used as an anchor elsewhere is a
+    presence needle for this tool's purpose.
+    """
+    saw = False
+    in_block = False
+    for raw in text.split("\n"):
+        line = raw.strip()
+        fences = line.replace('\"\"\"#', "").count('\"\"\"')
+        if in_block:
+            if fences % 2 == 1:
+                in_block = False
+            continue
+        if line.startswith(("//", "/*", "*")):
+            continue
+        for form in (line, unescaped(line)):
+            index = form.find(needle)
+            if index < 0:
+                continue
+            opening = form.find('\"\"\"')
+            if fences % 2 == 1 and opening != -1 and opening < index:
+                break                       # inside the failure message, not an assertion
+            saw = True
+            openers = list(ASSERT_OPENER.finditer(form[:index]))
+            if not openers:
+                return False
+            last = openers[-1]
+            wants_present = (last.group(1) == "True") != bool(last.group(2))
+            if wants_present:
+                return False
+            break
+        if fences % 2 == 1:
+            in_block = True
+    return saw
+
+
 def scan(diff_args: list[str], at: str | None) -> list[tuple[str, list[str], bool]]:
     """(removed line, guard files containing it, still in Sources at the new state).
 
@@ -217,11 +275,27 @@ def scan(diff_args: list[str], at: str | None) -> list[tuple[str, list[str], boo
     guards = guard_texts(at)
     hits = []
     for line in removed_lines(diff_args):
-        files = sorted(
-            n.rsplit("/", 1)[-1] + ("" if carried_in_code(line, t) else " (prose)")
-            for n, t in guards.items() if line in t or line in unescaped(t))
+        present = still_in_sources(line, at)
+        files = []
+        for name, text in guards.items():
+            if not (line in text or line in unescaped(text)):
+                continue
+            base = name.rsplit("/", 1)[-1]
+            if not carried_in_code(line, text):
+                files.append(base + " (prose)")
+                continue
+            # #1200 — POLARITY. An ABSENCE assertion whose text has just left `Sources/` is the
+            # guard doing its job, not a question for the committer. Reporting it would make
+            # this checker permanently red on a correct tree, and a checker nobody can keep
+            # green stops being read.
+            if absence_only(line, text):
+                if not present:
+                    continue
+                files.append(base + " (absence — RED: the text is still in Sources)")
+                continue
+            files.append(base)
         if files:
-            hits.append((line, files, still_in_sources(line, at)))
+            hits.append((line, sorted(files), present))
     return hits
 
 
@@ -316,6 +390,26 @@ def selftest() -> int:
     else:
         ok = False
         print(f"selftest 5 FAIL — carried_in_code gave {got}, wanted {[w for _, w in cases]}")
+    # `absence_only` — polarity (#1200). Both directions, plus the two ways it must say NO.
+    m = "for i in 0..<capacity { buffer[i] = 0 }"
+    polarity_cases = [
+        ('XCTAssertFalse(code.contains("' + m + '"), "back")', True),
+        ('XCTAssertTrue(!code.contains("' + m + '"))', True),
+        ('XCTAssertTrue(code.contains("' + m + '"))', False),
+        ('let anchor = "' + m + '"', False),                    # plain code mention
+        ('XCTAssertFalse(code.contains("' + m + '"))\n'
+         'XCTAssertTrue(other.contains("' + m + '"))', False),  # mixed → presence wins
+        ('// a comment naming ' + m + ' and nothing else', False),   # no code occurrence
+        ('XCTAssertTrue(ok, """\n  message naming ' + m + '\n  """)', False),
+    ]
+    got_p = [absence_only(m, text) for text, _ in polarity_cases]
+    if got_p == [want for _, want in polarity_cases]:
+        print("selftest 6 OK — absence assertions are recognised in both spellings, and a "
+              "plain mention, a mixed guard, a comment and a fenced message are not")
+    else:
+        ok = False
+        print(f"selftest 6 FAIL — absence_only gave {got_p}, "
+              f"wanted {[w for _, w in polarity_cases]}")
     return 0 if ok else 1
 
 

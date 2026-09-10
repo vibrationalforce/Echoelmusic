@@ -356,21 +356,24 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
     /// ⚠️ THIS CLAIM DOES NOT WEAKEN THE OWNERSHIP RULE the rest of this file pins. Making the
     /// drain cheaper is not a licence to call it from both threads — `testTheDrainIsGatedOn\
     /// EachStagesOwnEnableFlag` above is still the load-bearing one.
-    /// ⛔ THE TWO ABSENCE ASSERTIONS THIS CLAIM WANTED ARE NOT HERE, AND THE REASON IS A TOOL
-    /// GAP, NOT A JUDGEMENT ABOUT THE LAW. The natural form for a retraction is
-    /// `XCTAssertFalse(src.contains("<the old spelling>"))`. Measured: `scripts/moved-needles.py`
-    /// has NO polarity awareness — `git grep -n "XCTAssertFalse\|polarity\|absence" scripts/
-    /// moved-needles.py` returns nothing — so it reports every absence needle as
-    /// "[GONE from Sources]" forever. `scripts/foreign-needles.py` already skips absence
-    /// assertions (#1191); `moved-needles.py` is the half that does not, and teaching it is its
-    /// own slice. A permanently red checker is how `continue-on-error` stayed invisible for
-    /// fourteen hours, so the checker is kept honest and the assertions wait.
+    /// ⭐ THE TWO ABSENCE ASSERTIONS ARE HERE SINCE #1200, and the delay is worth recording
+    /// because it is the shape of an honest tool debt. #1196b wanted them and withheld them:
+    /// `scripts/moved-needles.py` had no polarity awareness, so it reported every absence
+    /// needle as "[GONE from Sources]" forever, and a permanently red checker is exactly how
+    /// `continue-on-error` stayed invisible for fourteen hours. `foreign-needles.py` had
+    /// carried polarity since #1191; this was the half that did not. #1200 taught it, and the
+    /// assertions came back in that same commit — as the withheld note instructed.
     ///
-    /// WHAT IS LOST BY WAITING, stated so nobody thinks it is nothing: someone could re-add the
-    /// element loop while KEEPING the bulk fill and these four assertions would stay green. The
-    /// result would be a double zero-fill — slower than today, still correct, and not the
-    /// regression this claim exists to catch. Restore the two absence assertions in the same
-    /// commit that gives `moved-needles.py` its polarity.
+    /// WHAT THEY ADD, which is precisely what the note said was lost by waiting: someone could
+    /// re-add the element loop while KEEPING the bulk fill, and the two positive assertions
+    /// below would stay green. The result is a double zero-fill — slower than today, still
+    /// correct, and not the regression this claim exists to catch.
+    ///
+    /// ⚠️ The retracted spellings appear here ONLY inside the absence assertions themselves.
+    /// That is the #491 shape and it is deliberate: an absence assertion must name what it
+    /// forbids. What must NOT happen is quoting the same spelling in the prose beside them —
+    /// #1196b did exactly that and only survived because `codeLines` happens to strip comment
+    /// lines, so a refactor of that helper would have reddened a correct tree.
     func testTheAudioThreadDrainUsesABulkFill() throws {
         let delay = try codeLines("Sources/Echoelmusic/DSP/EchoelDelayLine.swift").joined(separator: "\n")
         XCTAssertTrue(delay.contains("buffer.withUnsafeMutableBufferPointer { $0.update(repeating: 0) }"), """
@@ -384,6 +387,20 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
             `EchoelReverb.reset()` no longer bulk-fills all FOUR of its tanks (comb L/R, \
             allpass L/R). A nested array-of-arrays element loop pays two bounds checks per \
             store, on the audio thread (#1196b).
+            """)
+        // #1200 — the two ABSENCE halves, withheld by #1196b until the checker could tell a
+        // satisfied retraction from a broken anchor. Without these, re-adding the loop BESIDE
+        // the bulk fill stays green.
+        XCTAssertFalse(delay.contains("for i in 0..<capacity { buffer[i] = 0 }"), """
+            the element-by-element zero loop is back in `EchoelDelayLine.reset()`, alongside \
+            the bulk fill. Both together zero the buffer twice: correct, slower than either \
+            alone, and invisible to the positive assertion above.
+            """)
+        XCTAssertFalse(reverb.contains("for j in 0..<combBufL[i].count"), """
+            the nested array-of-arrays element loop is back in `EchoelReverb.reset()`. The \
+            comb-L tank is checked as the representative of the four: they were written and \
+            removed together, and pinning one spelling is enough to catch the paste that \
+            brings them back.
             """)
     }
 
