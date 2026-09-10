@@ -350,6 +350,136 @@ final class RecordingCanBeStoppedWithoutThePictureTests: XCTestCase {
             """)
     }
 
+    // MARK: - 9. the frame OWNS the texture it is the destination of
+
+    /// REGRESSION (#1204). `CVMetalTextureGetTexture` hands back a texture CoreVideo owns; it
+    /// is valid only while its `CVMetalTexture` wrapper lives. In `capture` the wrapper's last
+    /// USE was that one getter call, and Swift ARC is not scope-based — so it could be released
+    /// there, while the blit it is the DESTINATION of is still in flight. Release the wrapper
+    /// early and `CVMetalTextureCacheFlush` — which `releaseResources` calls — is free to treat
+    /// the cache entry as unused and recycle it under the GPU.
+    ///
+    /// ⛔ SAY THAT NARROWLY. An earlier draft of this claim said the destination "stayed alive
+    /// only because" `MetalBioView` uses `makeCommandBuffer()`. The mandatory review measured
+    /// that down: `box.pb` already pins the IOSurface and `dst` is a strong reference the
+    /// retained command buffer also holds, so the OBJECT was never at risk of deallocation.
+    /// What was unheld is the WRAPPER, which is what marks the cache entry in use. Smaller
+    /// hazard, still real, and enough on its own.
+    ///
+    /// ⚠️ THE SLICE ALSO CREATED A NEED IT HAD TO ANSWER, which is why `cache` is boxed too:
+    /// once a `CVMetalTexture` provably outlives `capture`, `releaseResources()` setting
+    /// `textureCache = nil` — reachable from `stop()` with a blit in flight — raises exactly
+    /// the question this file answers explicitly for the pool. Owning it beats assuming it.
+    ///
+    /// ⚠️ IT DOES NOT RETIRE THE CROSS-FILE INVARIANT: the blit has TWO textures and the
+    /// SOURCE is the drawable, which this file does not own. Asserting the fix generally when
+    /// it covers one half is #1198b's exact mistake.
+    ///
+    /// SOURCE-TEXT SCAN (§1): it proves the ownership is written down, not that a GPU ran.
+    ///
+    /// ⛔ AND THE `dead-needles.py` GREEN DOES NOT COVER THESE NEEDLES. An earlier draft of
+    /// this header claimed that tool would have caught a needle that cannot match. It would
+    /// not: its shape 3 only reads a `contains` assertion whose receiver is PROVABLY source
+    /// text — the `Self.` binds it knows, or a helper that provably returns
+    /// `SourceText.codeOnly(…)`. This file binds through its own hand-rolled `codeLines`, so
+    /// NONE of its nine claims are in that net. The needles here were transcribed by hand
+    /// against both trees instead; that is the evidence, not the tool's exit code.
+    ///
+    /// GRADING against `git show HEAD:<path>` (§3), transcribed in Python (§0, no toolchain):
+    /// FOUR REGRESSIONS — the two fields, the argument pair, and the USE. The USE is its own
+    /// finding, not a second witness: a captured field nothing reads is a dead capture and may
+    /// be dropped, so owning without using proves nothing. Its POSITION is a fifth, separate
+    /// assertion for the same reason claim 8 checks order — see the note on it below.
+    /// THREE COUNTERWEIGHTS, green on both trees (#343).
+    ///
+    /// ⛔ A SIXTH NEEDLE WAS WRITTEN AND REMOVED BEFORE IT SHIPPED, because it could only ever
+    /// have been red: it pinned the `releaseResources` warning about `MetalBioView`'s
+    /// command-buffer choice — text that lives ONLY in a `///` block, which `codeLines` drops.
+    /// A prose obligation belongs in a failure MESSAGE, not in a scan (the same reason
+    /// CLAUDE.md deliberately gets no text-scan guard, #491). It is in the first message below.
+    func testTheBoxedFrameOwnsItsDestinationTexture() throws {
+        let text = try codeLines(Self.recorder).joined(separator: "\n")
+
+        XCTAssertTrue(text.contains("let tex: CVMetalTexture"), """
+            `FrameBox` no longer carries the frame's `CVMetalTexture`. Releasing that wrapper \
+            while the blit is in flight lets `CVMetalTextureCacheFlush` recycle the cache \
+            entry under the GPU (#1204). If you removed the field on purpose, pull the ⭐ block \
+            on `FrameBox` and the safety bullets of `releaseResources` along in the SAME \
+            commit (#364).
+            """)
+
+        XCTAssertTrue(text.contains("let cache: CVMetalTextureCache"), """
+            `FrameBox` no longer carries the texture cache. #1204 made that load-bearing: a \
+            boxed `CVMetalTexture` now provably outlives `capture`, and `releaseResources()` \
+            — reachable from `stop()` with a blit in flight — sets `textureCache = nil`. \
+            Whether a `CVMetalTexture` retains its cache is then an ASSUMPTION; owning it is \
+            the answer this file gives for the pool one bullet away.
+            """)
+
+        // ⚠️ ONE assertion for both arguments on purpose. `CVPixelBuffer` and `CVMetalTexture`
+        // are both typealiases of `CVImageBuffer`, so the call site would compile with `pb:`
+        // and `tex:` swapped — the labels are the only thing separating them.
+        XCTAssertTrue(text.contains("tex: cvTex, cache: cache"), """
+            the `FrameBox` built in `capture` no longer receives the texture wrapper and its \
+            cache, so the fields exist and own nothing (#1204).
+            """)
+
+        // Its own finding, not a second witness for the fields: a stored field that nothing
+        // reads is a DEAD capture. Ownership a compiler may optimise away is a belief about
+        // optimisation, which is the class of argument this repo keeps retracting.
+        for held in ["withExtendedLifetime(box.tex) {}", "withExtendedLifetime(box.cache) {}"] {
+            XCTAssertTrue(text.contains(held), """
+                `\(held)` is gone. Nothing in the GPU-completion handler then USES that boxed \
+                value, so the capture is dead and may be dropped; `withExtendedLifetime` is \
+                the documented way to hold it to the one moment it stops being needed. Two \
+                separate calls on purpose — one call over a tuple would rest on `_fixLifetime` \
+                keeping every element of an aggregate alive, which is a belief about lowering \
+                (#1204).
+                """)
+        }
+
+        // ⭐ POSITION, not presence — the fifth assertion, and the mandatory review is what
+        // asked for it. Move the `withExtendedLifetime` line up beside `let box = …` and every
+        // assertion above stays green while the fix is VOID: the lifetime would end inside
+        // `capture`, which is exactly the pre-#1204 state. Same defect claim 1 in this file is
+        // written positionally to avoid.
+        let capture = try memberBody(
+            startingWith: "func capture(from source: MTLTexture", in: Self.recorder)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        guard let handler = capture.firstIndex(where: {
+            $0.hasPrefix("commandBuffer.addCompletedHandler")
+        }) else {
+            XCTFail("""
+                `capture` no longer registers a GPU-completion handler. #1204's whole claim is                 that the destination texture lives until that handler runs; with no handler                 there is nothing for the boxed lifetime to reach.
+                """)
+            return
+        }
+        guard let hold = capture.firstIndex(where: {
+            $0.hasPrefix("withExtendedLifetime(")
+        }) else {
+            XCTFail("the lifetime extension is gone from `capture` entirely (#1204).")
+            return
+        }
+        XCTAssertGreaterThan(hold, handler, """
+            the `withExtendedLifetime` call sits OUTSIDE the GPU-completion handler. Then the             wrapper's lifetime ends when `capture` returns — the exact state #1204 exists to             leave, with every presence check still green.
+            """)
+
+        // COUNTERWEIGHT: the thing being boxed must still be the thing the blit writes into.
+        // Box a different wrapper and every assertion above stays green.
+        XCTAssertTrue(text.contains("let dst = CVMetalTextureGetTexture(cvTex)"), """
+            the blit destination is no longer derived from `cvTex`, so boxing `cvTex` no \
+            longer extends the lifetime of anything this frame writes into (#1204).
+            """)
+
+        // COUNTERWEIGHT: the release path this all guards must still exist. If `stop()` stopped
+        // releasing, the ownership argument above would be true and pointless.
+        XCTAssertTrue(text.contains("CVMetalTextureCacheFlush(textureCache, 0)"), """
+            `releaseResources` no longer flushes the texture cache. That flush is the hazard \
+            #1204's boxed wrapper exists to be safe against; without it this claim guards a \
+            danger that is no longer there, and the prose above must be re-argued (#364).
+            """)
+    }
+
     // MARK: - Source helpers
 
     /// Lines of a member, from the line that starts with `prefix` to the closing `}` at that

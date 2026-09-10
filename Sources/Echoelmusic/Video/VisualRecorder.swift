@@ -299,10 +299,16 @@ final class VisualRecorder {
         // @Sendable GPU-completion closure captures ONLY that box. The timestamp is
         // sampled NOW (at capture), not in the async handler.
         // INVARIANT: the pooled `pb` must not be recycled until this handler runs — it
-        // isn't, because each frame dequeues a fresh buffer and hands its only reference
-        // to the box, which releases it after `ingest`.
+        // isn't, because each frame dequeues a fresh buffer and every reference to it lives in
+        // the box, which releases them after `ingest`. (⛔ This said "its ONLY reference" and
+        // #1204 made that literally false one line later: `tex` wraps the SAME buffer, so the
+        // box now holds two. Harmless — they die together — but a sentence amended by the very
+        // diff that falsified its neighbour is how a comment starts lying.)
+        // #1204 puts the CoreVideo texture wrapper AND its cache in the same box, for the same
+        // reason one and two hazards over: see `FrameBox`.
         let box = FrameBox(sink: video, pb: pb,
-                           pts: CMTime(seconds: CACurrentMediaTime(), preferredTimescale: 600))
+                           pts: CMTime(seconds: CACurrentMediaTime(), preferredTimescale: 600),
+                           tex: cvTex, cache: cache)
         // #985: the still is consumed HERE, not in the completion handler — the flag must fall on
         // the frame that was actually blitted, and this line runs on the main-thread draw loop
         // where the flag lives. Clearing it inside the @Sendable GPU closure would be a
@@ -321,6 +327,18 @@ final class VisualRecorder {
             // A still asked for on a NON-recording frame must not be fed to the file sink:
             // `ingest` would open a writer for a take nobody started.
             if recording { box.sink.ingest(box.pb, at: box.pts) }
+            // #1204 — THE BOX'S TEXTURE FIELD HAS TO BE USED, OR OWNING IT PROVES NOTHING.
+            // A stored field that nothing ever reads is a dead capture, and a dead capture is
+            // precisely what a compiler may drop; "the struct is captured whole so ARC keeps
+            // it" is a belief about optimisation, and this file has already paid for one of
+            // those. `withExtendedLifetime` is the documented way to say KEEP THIS UNTIL HERE.
+            // It emits no work — it exists to make the field live all the way to GPU
+            // completion, which is the only moment the destination texture stops being needed.
+            // TWO calls, not one over a tuple: `_fixLifetime` on an aggregate keeping every
+            // element alive is a belief about lowering, and the block above spends a paragraph
+            // refusing to lean on exactly that class of belief. Two lines, no belief.
+            withExtendedLifetime(box.tex) {}
+            withExtendedLifetime(box.cache) {}
         }
     }
 
@@ -409,15 +427,28 @@ final class VisualRecorder {
     /// ⚠️ WHY RELEASING IS SAFE WHILE A BLIT IS IN FLIGHT — two reasons for two DIFFERENT
     /// hazards, not belt-and-braces (the first version presented them as interchangeable, and
     /// a reader who invalidated one would have believed the other still covered them):
-    ///  · the TEXTURE-CACHE FLUSH is safe because the command buffer retains the destination
-    ///    texture it was handed at ENCODE time. ⚠️ That holds only because `MetalBioView`
-    ///    creates its command buffer with RETAINED references (`makeCommandBuffer()`, not
-    ///    `makeCommandBufferWithUnretainedReferences()`). That invariant lives in another
-    ///    file and no guard pins it; do not switch that call without reading this line.
+    ///  · the TEXTURE-CACHE FLUSH is safe because the frame's own `CVMetalTexture` wrapper
+    ///    travels in the `FrameBox` and is released only after the GPU-completion handler has
+    ///    run (#1204). A flush releases the cache's textures for buffers NO LONGER IN USE, and
+    ///    this one demonstrably still is. ⛔ Until #1204 this bullet rested on something else:
+    ///    that `MetalBioView` builds its command buffer with RETAINED references
+    ///    (`makeCommandBuffer()`, not `makeCommandBufferWithUnretainedReferences()`) — an
+    ///    invariant in ANOTHER FILE that no guard pins and that nothing there warns about.
+    ///    ⚠️ THAT INVARIANT IS STILL LIVE FOR THE OTHER HALF OF THE BLIT: the SOURCE texture
+    ///    is `MetalBioView`'s drawable, which this file does not own and cannot box. So the
+    ///    line still matters — it is just no longer the only thing holding the destination up.
     ///  · the POOL RELEASE is safe because a `CVPixelBuffer` keeps its own pool alive, so
     ///    `box.pb` cannot lose its backing when our reference goes away.
-    /// Do not reason from the local `cvTex` surviving to the end of `capture` — Swift ARC is
-    /// not scope-based and may release it at last use, well before the deferred release runs.
+    ///  · the CACHE RELEASE (`textureCache = nil`) is safe because the frame's box holds the
+    ///    cache too (#1204). This bullet did not exist before that slice and did not need to:
+    ///    no `CVMetalTexture` provably outlived `capture`, so nothing could be orphaned. Now
+    ///    one does, and `stop()`'s release can fire with a blit in flight — so the question
+    ///    "does a `CVMetalTexture` retain its cache?" became load-bearing. It is answered by
+    ///    owning the cache rather than by assuming the answer.
+    /// ⛔ THE SENTENCE THAT STOOD HERE WAS RIGHT AND WAS BEING USED AS AN EXCUSE: "do not
+    /// reason from the local `cvTex` surviving to the end of `capture` — Swift ARC is not
+    /// scope-based and may release it at last use". Correct, and the answer to it is to give
+    /// the wrapper an owner that outlives the GPU, not to lean on a neighbouring file.
     ///
     /// The width/height reset is not cosmetic either: `ensureResources` decides on
     /// `pool == nil || poolWidth != width`, so a stale size beside a nil pool is a state that
@@ -454,10 +485,49 @@ final class VisualRecorder {
 
     /// Recorder + non-Sendable pixel buffer + timestamp ferried into the @Sendable
     /// GPU completion handler (same escape hatch as the RGB sample queue).
+    ///
+    /// ⭐ `tex` AND `cache` ARE NOT READ BY THE HANDLER, AND THAT IS THE WHOLE POINT (#1204).
+    /// They are here to be OWNED until the GPU finishes. `CVMetalTextureGetTexture` hands back
+    /// a texture CoreVideo owns, valid only while its `CVMetalTexture` wrapper lives; Swift ARC
+    /// is not scope-based, so in `capture` the wrapper's last USE is that one getter call and
+    /// it may be released there — before the blit it is the destination of has run.
+    ///
+    /// ⛔ SAY THE HAZARD NARROWLY. The first draft of this block said the destination "stayed
+    /// alive by accident" of `MetalBioView` using `makeCommandBuffer()`, i.e. that the texture
+    /// would otherwise have been DEALLOCATED. That over-claims, and the mandatory review
+    /// measured why: `pb` in this same box already pins the IOSurface the texture is backed
+    /// by, and `dst` is a strong Swift reference the retained command buffer also holds. Both
+    /// the object and its backing were held. What was NOT held is the thing Apple's contract
+    /// is actually about — the WRAPPER, which is what tells the texture cache the entry is
+    /// still in use. Release it early and `CVMetalTextureCacheFlush` (which this file calls,
+    /// see `releaseResources`) is free to treat the entry as unused and recycle it while the
+    /// GPU is still writing. That is the real hazard, it is enough on its own, and it does not
+    /// need the bigger claim.
+    ///
+    /// ⚠️ `cache` IS HERE BECAUSE THIS SLICE CREATED ITS NEED — it is not tidiness. Before
+    /// #1204 no `CVMetalTexture` provably outlived `capture`, so `releaseResources()` setting
+    /// `textureCache = nil` was uncontroversial. Now one demonstrably does: `stop()`'s
+    /// conditional release fires while the last take's blit can still be in flight. Whether a
+    /// `CVMetalTexture` retains its cache is exactly the question this file answers explicitly
+    /// for the pool one bullet below ("a `CVPixelBuffer` keeps its own pool alive") — so it is
+    /// answered here by OWNERSHIP rather than by assumption, at the cost of one field.
+    ///
+    /// ⚠️ IT DOES NOT MAKE THE COMMAND BUFFER'S RETENTION IRRELEVANT — say which texture, or
+    /// this is the #1198b mistake again (an argument true of ONE thing, asserted generally).
+    /// The blit has two textures. This box covers the DESTINATION. The SOURCE is the drawable,
+    /// owned by the `CAMetalLayer` and held by `MetalBioView` only as a local for the duration
+    /// of its `draw`, and it still depends on that call. Do not delete the warning at
+    /// `releaseResources` on the strength of this one.
+    ///
+    /// ⚠️ `CVPixelBuffer` and `CVMetalTexture` are BOTH typealiases of `CVImageBuffer`, so
+    /// `pb:` and `tex:` are the same Swift type and swapping them at the call site COMPILES.
+    /// The field names are the only thing keeping them apart; there is no type-checker here.
     private struct FrameBox: @unchecked Sendable {
         let sink: VideoRecorder
         let pb: CVPixelBuffer
         let pts: CMTime
+        let tex: CVMetalTexture
+        let cache: CVMetalTextureCache
     }
 }
 #endif
