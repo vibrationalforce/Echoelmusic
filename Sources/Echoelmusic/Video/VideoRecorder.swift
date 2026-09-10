@@ -231,8 +231,10 @@ final class VideoRecorder {
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
                 AVVideoMaxKeyFrameIntervalKey: 60,
                 // Declare the nominal source rate = the Metal visual's draw-loop baseline
-                // (MetalBioView.preferredFramesPerSecond = 60; AdaptiveQuality balanced/high
-                // tiers = 60, throttling to 30/24 only under thermal/battery load). This is
+                // (MetalBioView.preferredFramesPerSecond = 60, PINNED — ⛔ "AdaptiveQuality
+                // balanced/high tiers = 60, throttling to 30/24 under thermal/battery load"
+                // stood here and describes nothing that runs: `AdaptiveQuality.targetFPS` has
+                // no consumer and the renderer never changes its rate; #1242). This is
                 // the SOURCE for VideoRecorder — VisualRecorder feeds the recorded frames from
                 // that draw loop, NOT the 15 Hz rPPG camera path. The 60-frame GOP keeps a
                 // keyframe ≈ every second at that rate. Per-frame PTS stamps stay truthful if

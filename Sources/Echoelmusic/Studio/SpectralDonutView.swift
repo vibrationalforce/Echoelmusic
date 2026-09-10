@@ -40,8 +40,18 @@ struct SpectralDonutView: View {
     /// Reference-type smoother held across frames (eased ring values + cached colours).
     @State private var state = DonutState()
 
+    /// The donut's own clock (#1242, visual audit V5). It was 1/60 — a full 1024-point FFT,
+    /// fresh band arrays and a Canvas pass on the MAIN thread sixty times a second, ungoverned
+    /// (this look reads no governor, see `bandCount`). Every motion in `draw` is TIME-based
+    /// (`dt = date − lastDate`, `k = 1 − 0.0001^dt`, `t = date`), so halving the clock changes
+    /// what the eye sees only in temporal resolution, never in speed or shape — and a ring that
+    /// eases over hundreds of milliseconds does not need 60 samples of it. Half the FFT, half
+    /// the Canvas, for the same picture. NEEDS-FOUNDER-VERIFY: open the donut look, play a
+    /// loop — do the rings still read as smooth, not stepped?
+    nonisolated static let frameInterval: TimeInterval = 1.0 / 30.0
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: reduceMotion)) { timeline in
+        TimelineView(.animation(minimumInterval: Self.frameInterval, paused: reduceMotion)) { timeline in
             Canvas { ctx, size in
                 draw(ctx, size, date: timeline.date)
             }
