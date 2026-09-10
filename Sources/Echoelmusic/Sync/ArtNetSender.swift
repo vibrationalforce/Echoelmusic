@@ -32,8 +32,12 @@ import Observation
 @Observable
 public final class ArtNetSender {
 
-    /// Art-Net node host. Unicast to the node's IP is most reliable; limited
-    /// broadcast (255.255.255.255) reaches every node on the LAN.
+    /// Art-Net node host — UNICAST to the node's IP. #1219 (audit 2026-09-10 `output-sync-2`):
+    /// the default WAS limited broadcast 255.255.255.255, which iOS gates behind the
+    /// multicast/broadcast networking entitlement this app does not hold — an operator who
+    /// switched the route on without typing a node IP saw the patchbay dot go "sending" while
+    /// nothing could reach the rig. The default is now the same unicast address sACN has always
+    /// used (`defaultHost`); a typed broadcast address still works where the OS allows it.
     public var host: String {
         didSet { Self.persistTarget(host, port, universe); reconnectIfActive() }
     }
@@ -140,7 +144,18 @@ public final class ArtNetSender {
     @ObservationIgnored private var lastChannels: [UInt8] = []
     @ObservationIgnored private var lastTarget: Float = 0
 
-    public init(host: String = "255.255.255.255", port: UInt16 = 6454, universe: Int = 0) {
+    /// The one unicast default both light outputs share (CLAUDE.md PLATFORM NOTES: "DMX:
+    /// Requires network 192.168.1.100"). `SACNSender.init` carries the same literal.
+    public nonisolated static let defaultHost = "192.168.1.100"
+
+    /// #1219 — the OS's own word on the socket, for the patchbay to show. `nil` while nothing
+    /// has gone wrong; the last `.failed`/`.waiting` state or send error otherwise, cleared
+    /// when the connection reports `.ready` or a send succeeds. The sending DOT deliberately
+    /// does not read this (UDP reaches `.ready` for any routable literal — the dot's own
+    /// note); this is the complementary half: what the OS refused, not what it accepted.
+    public private(set) var lastError: String?
+
+    public init(host: String = ArtNetSender.defaultHost, port: UInt16 = 6454, universe: Int = 0) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
         let p = d.integer(forKey: Self.portKey)
@@ -200,6 +215,19 @@ public final class ArtNetSender {
         params.allowLocalEndpointReuse = true
         let endpoint = NWEndpoint.hostPort(host: .init(host), port: nwPort)
         let conn = NWConnection(to: endpoint, using: params)
+        // #1219 — surface `.failed`/`.waiting` (no route, broadcast without entitlement, no
+        // interface) into `lastError`. Runs on `.main` (the start queue), hence assumeIsolated.
+        conn.stateUpdateHandler = { [weak self] state in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                switch state {
+                case .failed(let error):  self.lastError = "Art-Net: \(error.localizedDescription)"
+                case .waiting(let error): self.lastError = "Art-Net waiting: \(error.localizedDescription)"
+                case .ready:              self.lastError = nil
+                default:                  break
+                }
+            }
+        }
         conn.start(queue: .main)
         self.connection = conn
     }
@@ -282,7 +310,15 @@ public final class ArtNetSender {
 
     private func send(_ data: Data) {
         guard let conn = connection else { return }
-        conn.send(content: data, completion: .contentProcessed { _ in })
+        // #1219 — a send the OS refuses (e.g. EPERM on a broadcast literal) is the error an
+        // operator needs to see; a send it accepts clears it. Same queue as the state handler.
+        conn.send(content: data, completion: .contentProcessed { [weak self] error in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if let error { self.lastError = "Art-Net send: \(error.localizedDescription)" }
+                else if self.lastError?.hasPrefix("Art-Net send:") == true { self.lastError = nil }
+            }
+        })
     }
 
     // MARK: - Pure kernels (testable without a socket)

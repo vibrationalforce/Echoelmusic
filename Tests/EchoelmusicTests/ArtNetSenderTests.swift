@@ -127,7 +127,7 @@ final class ArtNetSenderTests: XCTestCase {
     @MainActor
     func testInit_defaultEndpoint() {
         let s = ArtNetSender()
-        XCTAssertEqual(s.host, "255.255.255.255")
+        XCTAssertEqual(s.host, "192.168.1.100")   // unicast since #1219 — same default as sACN
         XCTAssertEqual(s.port, 6454)
         XCTAssertEqual(s.universe, 0)
         XCTAssertFalse(s.isActive)

@@ -299,7 +299,14 @@ struct PatchbayView: View {
                       universe: sacnUniverse, universeRange: 1...63_999)
             outputRow("Art-Net · Light", sender: artNet, host: artNetHost, port: artNetPort,
                       universe: artNetUniverse, universeRange: 0...32_767)
-            Text("Target IP + port per output — changes take effect immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net sends by broadcast (255.255.255.255) to all LAN nodes by default.")
+            // #1219 — the OS's refusal, if any. `lastError` moves only on a state change or a
+            // refused send, never per tick: a cold read for this host body.
+            if let artNetError = artNet.lastError {
+                Text(artNetError)
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("Target IP + port per output — changes take effect immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }

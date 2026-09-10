@@ -15,7 +15,7 @@ import XCTest
 /// exactly like the right one.
 ///
 /// THE FIX IS NOT `stateUpdateHandler`. UDP reaches `.ready` for any routable IPv4 literal, and
-/// both light senders default to exactly those (255.255.255.255 and 192.168.1.100) — so that
+/// both light senders default to exactly that (192.168.1.100 — Art-Net unicast since #1219) — so that
 /// change would leave a wrong-IP rig filled green. `lastSentTimestamp` is stamped by all four
 /// senders after handing a datagram to the OS and had ZERO readers; this wires it.
 ///
