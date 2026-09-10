@@ -7420,7 +7420,8 @@ struct EchoelStudioView: View {
             groupHeader("Level")
             AdaptiveCardGrid(spacing: 14) {
                 EchoelValueField(label: "Output", value: outputLevelBinding,
-                                 range: Float(0.3)...Float(1.5), decimals: 2,
+                                 // #1207b — the row and the decoder read ONE constant (#441).
+                                 range: SynthPatch.Bounds.outputLevel, decimals: 2,
                                  onChange: { applySoundLive() })
             }
             Text("This sound's own loudness, so one instrument does not sit far above or below the others. 1.00 = unity. The built-in sounds arrive pre-matched; this trims from there.")
