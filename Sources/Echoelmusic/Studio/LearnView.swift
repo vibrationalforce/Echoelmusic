@@ -62,6 +62,7 @@ struct LearnView: View {
                     announcementsSection
                 }
                 #endif
+                privacyRow
             }
             .padding(16)
         }
@@ -105,6 +106,27 @@ struct LearnView: View {
         }
     }
     #endif
+
+    /// App Review 5.1.1(i) (#1209): a HealthKit app links its privacy policy IN the app, not only
+    /// in App Store Connect — the metadata half was done (`fastlane/metadata/*/privacy_url.txt`),
+    /// the in-app half had zero occurrences under `Sources/`. One static `Link`: it reads no hot
+    /// state, so the 10.76.50 root-churn law is untouched, and it opens the SAME page the store
+    /// metadata names, so the two halves of the guideline point at one document. Lives in the
+    /// library rather than the 174-pt header, which has no room for a third element.
+    /// Guard: `Tests/CISmoke/ThePrivacyPolicyHasAnInAppDoorTests.swift`.
+    private static let privacyURL = URL(string: "https://echoelmusic.com/privacy")
+
+    @ViewBuilder
+    private var privacyRow: some View {
+        if let url = Self.privacyURL {
+            Link(destination: url) {
+                Text("Privacy policy")
+                    .font(EchoelTheme.font(13))
+                    .foregroundStyle(EchoelTheme.accent)
+            }
+            .accessibilityHint("Opens echoelmusic.com/privacy in your browser. Heart data stays on this device.")
+        }
+    }
 
     private func row(_ entry: LearnEntry) -> some View {
         Button { selected = entry } label: {
