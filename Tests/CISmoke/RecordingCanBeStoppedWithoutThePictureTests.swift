@@ -17,6 +17,26 @@
 // `AVAudioEngine` behind it and a Metal device to reach the recording state at all, and there
 // is no local toolchain to stand that up. House pattern (`BioFXReachesEveryChainTests`,
 // `ActiveTargetsIsAPerEditFactTests`). It proves the path is WRITTEN; it cannot tap it.
+//
+// ⭐ CLAIMS 5–7 ADDED BY #1198 (2026-09-10). Same file, same function, adjacent law: claim 4
+// pins WHERE the re-entry guard sits in `stop()`, and #1198's release has to sit directly
+// below it for the same double-tap reason. One home (#416) — not a new bundle.
+//
+// GRADING of 5–7, transcribed in Python and driven against `git show HEAD:<path>` and the
+// worktree:
+//  · claims 5 and 6 — REGRESSION, and they are ONE finding with two witnesses (#486):
+//    `releaseResources()` did not exist on the parent, so claim 5 finds no `defer` and claim 6
+//    finds no member. Counting that as two catches would be the flattering direction (#433).
+//  · claim 7 — COUNTERWEIGHT, green on both trees and deliberately so. It is only interesting
+//    AFTER #1198: once the pool is released on every stop, the rebuild in `capture` is what
+//    separates a recorder that works twice from one that works once — and that failure would
+//    be SILENT (a nil pool returns early, and a take with no frames reports itself "empty").
+//
+// ⚠️ WHAT NO CLAIM HERE CAN SEE. Whether the memory actually comes back is an INSTRUMENTS
+// reading on a device, not a source scan. What is pinned is that the release is written, sits
+// in the one position that is safe, clears every field its creator set, and cannot leave the
+// next take without a pool. NEEDS-FOUNDER-VERIFY: record two or three takes in a row and watch
+// whether the app's memory returns to its pre-take level.
 
 import Foundation
 import XCTest
