@@ -29811,3 +29811,21 @@ Konsument) → ⛔-Korrektur im Kommentar. Wächter `TheDonutClocksAtHalfRateTes
 1/60-Literal) und 3 rot auf `7534646`, grün hier; 2 (Zeit-basiertes Easing als Gegengewicht — wer es per-Frame
 umschreibt, halbiert mit dem Takt die Bewegung) grün/grün. Prüfer exit 0. Push sofort: Compile-Lauf für `7534646` war
 `queued`, nicht `in_progress` — ein Push kostet dann keinen Lauf (nur eine Requeue).
+
+## #1243 Visual-Audit V1 — Drawable-Auflösung folgt der Stufe (2026-09-10, ~17:36 UTC, `23a61ec`, Push wartet auf Compile-Status)
+
+Gemessen: `visualDetailScale` erreichte `MetalBioView` nur als `ringDensity`-Uniform (`:1315`), das der Shader in eine Dichte
+klammert (`:2465`); die Fragment-Schleifen sind fix (`k < 6`, `k < 5`). Das Drawable war immer `bounds × screen.scale` (`:1044`).
+Also: `.low`/`.minimal` änderten den LOOK, die GPU-Kosten nicht — bei thermal `.critical` weiter ~8 MP Fragment-Arbeit pro
+Frame. Jetzt `renderScale = clamp(visualDetailScale, 0.5, 1)` als linearer Faktor auf `want` an der EINEN Stelle, die das
+Drawable dimensioniert (Settled-Size-Maschine trägt die Re-Allokation); 1 bei `.balanced`/`.high` → ausgeliefertes Bild
+byte-identisch; ~49 %/~25 % Pixel bei `.low`/`.minimal`. **Still während Capture:** die Capture-Frage (`wantsFrameCapture`,
+#985: eine Frage, nicht zwei) wird oben in `draw(in:)` einmal gestellt und als Tupel `(readyToCapture, wantsCapture)`
+zurückgegeben; `renderScale` ist 1, solange `wantsCapture` — der Recorder poolt in Drawable-Größe (`ensureResources`
+re-poolt bei Größenwechsel, aber der `AVAssetWriter` ist auf die Startgröße konfiguriert; kein `AVVideoScalingModeKey` in
+`VideoRecorder`). Frame-Rate bleibt gepinnt. AdaptiveQuality-Docs nachgezogen (`allowSpectralDonuts`: „no reachable door"
+war seit #747 falsch). NEEDS-FOUNDER-VERIFY am Hebel. Wächter `TheDrawableFollowsTheTierTests` (4 Claims): 1/2 Text rot
+auf `0d004d1`, grün hier; 3 (Stufenwerte, Verhalten auf dem reinen Kern) und 4 (60-fps-Pin) grün/grün. Prüfer exit 0.
+**V3 verworfen** (Drawable früh anfordern blockiert auf den Pool — Apple: so spät wie möglich; die Verdeckungs-Hälfte gehört
+zu V2). **V4 zurückgestellt** (vier 5-Element-Arrays pro Frame auf dem Main-Thread ≈ Mikrosekunden; Regressionsfläche in
+der Anti-Strobe-Slot-Logik). Stand in `scratchpads/VISUAL_AUDIT_2026-09-10.md`.
