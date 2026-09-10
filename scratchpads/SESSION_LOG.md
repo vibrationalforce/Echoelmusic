@@ -29526,3 +29526,16 @@ Wächter: `TheMPEInputHasNoZonesTests` Anspruch 12 — Textordnung INNERHALB der
 `0x90`-Zeile — genannt nur vom neuen Anspruch selbst, erreicht. Ehrlich: Textordnung ist die Grenze, kein Byte-Spion ohne
 virtuelle Destination; hörbar nur am MPE-Rig (kein eigener Marker — #548-Gurt-/Rig-Posten deckt es).
 Ultraplan-Zeilen 3/4/5/8/14 als ✅ nachgetragen (waren leer, obwohl #1216–#1219 gelandet sind).
+
+## #1222 — Ultraplan-Zyklus 9: der Privacy-Manifest-Eintrag hat einen Wächter (2026-09-10)
+
+Audit `ship-path-4`: `git grep -ln 'PrivacyInfo\|xcprivacy' -- Tests/CISmoke` → 0. Das Manifest erreicht das Bundle nur
+über zwei handgesetzte `sources:`-Einträge (`project.yml` App + Widget, `type: file` + `buildPhase: resources`); die Datei
+selbst dokumentiert, dass ein `resources:`-Block von XcodeGen still verworfen wurde und das Manifest „nie ausgeliefert"
+war. Kein Gate sieht den Bundle-Inhalt — Apple lehnt beim UPLOAD ab (ITMS-91053), und die Required-Reason-Aufrufer sind
+gemessen da: `systemUptime` (7 Dateien), `UserDefaults` (41), `.creationDateKey` (`VideoLibraryPanel`). Neuer Wächter
+`ThePrivacyManifestIsDeclaredForBothTargetsTests`: (1) genau zwei Einträge, je `type: file` + `buildPhase: resources` in
+drei Zeilen, (2) Manifest deklariert SystemBootTime · UserDefaults · FileTimestamp je mit Reasons-Array (DiskSpace ist
+deklariert, hat aber keinen gemessenen Aufrufer — nicht verlangt, nicht verboten), (3) `- target: EchoelmusicWidgets`
+eingebettet, sonst wäre die Zwei die veraltete Hälfte. PRÄVENTIV: GRÜN/GRÜN auf `ca263cc` und hier, transkribiert.
+Grenze wie `DeviceFamilyIsPhoneOnlyTests`: Text, nicht Archiv — ein `ls .app` in `testflight.yml` wäre founder-gated.

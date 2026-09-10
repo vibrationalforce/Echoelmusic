@@ -58,7 +58,7 @@ Reihenfolge = (Schwere nach außen) → (Ship-Gate-Nähe) → (Council-Sequenz) 
 | 15 | OSC-in Control-Whitelist (`NWListener`, `/echoelmusic/ctrl/*`, `bpm` nur `.studioLocked` über neuen `TempoSource`-Fall `.remoteControl`, Opt-in default AUS, Loopback-Test) | Council Schritt 4 | S + C | `Sync/`, `PatchbayView`, `TempoInvariantTests` | M |
 | 16 | Step-Clock: Ideal-Deadline statt `.now()+interval` (Re-Anker nach Suspend) | Audit `sequencer-core-2` | S → F | `PatternEngine.swift`, `TempoStabilityTests.swift` | NEEDS-FOUNDER-VERIFY gegen den Click |
 | 17 | EIN End-to-End-Render-Wächter `TheDDSPRenderIsDeterministicAndBoundedTests` | Audit `tests-guards-3` | S | `Tests/CISmoke/` | |
-| 18 | PrivacyInfo-Wächter (zwei `- path: Resources/PrivacyInfo.xcprivacy` + `buildPhase: resources`) | Audit `ship-path-4` | S | `Tests/CISmoke/` | |
+| 18 | PrivacyInfo-Wächter (zwei `- path: Resources/PrivacyInfo.xcprivacy` + `buildPhase: resources`) | Audit `ship-path-4` | S | `Tests/CISmoke/` | ✅ #1222 (`ThePrivacyManifestIsDeclaredForBothTargetsTests`, präventiv GRÜN/GRÜN) |
 | 19 | Anker-Skip-Ratchet (`throw XCTSkip` ohne `fileExists` ≤ heute) + `gh-test-verdict.py:105` Zahl → Befehl | Audit `tests-guards-2` (Widerleger: Migration = #806-Sackgasse, Ratchet ist die kleine Form) | S | `Tests/CISmoke/`, `scripts/` | |
 | 20 | `Package.swift`-Kommentar: Xcode baut schon Swift 6 | Audit `ship-path-5` | S | `Package.swift` | |
 | 21 | Niedrige Hygiene in Reihe: `studio-ui-1` (showVisual-Notiz), `audio-dsp-2` (Koeffizient cachen), `audio-dsp-4`, `bio-pipeline-4/5/6`, `studio-ui-3/5`, `sequencer-core-3/4/5`, `ship-path-6`, `tests-guards-6/7`, `output-sync-6` | Audit | S | je 1–2 Dateien | |
