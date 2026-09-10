@@ -66,11 +66,14 @@ public struct QualitySettings: Sendable, Equatable {
     /// cadence hitch; see `MetalBioView.draw(in:)`). Its one live role is as the value
     /// the measured-FPS demotion below compares against.
     public var targetFPS: Int
-    /// Multiplier on visual detail (ring density / particle counts). 0.5…1.0.
+    /// Multiplier on visual detail (ring density) — and, since #1243, the LINEAR factor on
+    /// the Metal drawable's resolution while nothing is recording, which is the half that
+    /// actually moves GPU cost (the shader's loops are fixed-count). 0.5…1.0.
     public var visualDetailScale: Float
-    /// Whether the expensive spectral-donut overlay may render. NO CONSUMER —
-    /// `SpectralDonutView` has no reachable door (its only mount sits behind a flag
-    /// with no live setter), so this gates nothing today.
+    /// Whether the expensive spectral-donut overlay may render. NO CONSUMER — and ⛔ the
+    /// reason that stood here ("no reachable door") is stale since #747: the donut IS
+    /// reachable in `FloatingVisualWindow`; it just reads no governor, on purpose (menu-freeze
+    /// law, see its `bandCount`). Its clock is 30 Hz since #1242. This flag still gates nothing.
     public var allowSpectralDonuts: Bool
     /// CEILING (not a target) on the control-plane bio poll rate, in Hz. Consumed via
     /// `PollingRateCeiling`, which can only ever LENGTHEN a loop's interval: at the

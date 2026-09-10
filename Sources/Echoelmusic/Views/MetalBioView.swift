@@ -986,7 +986,12 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // validation failure that once forced this to be permanently false). The single first
         // frame after record-start is skipped (~16 ms, imperceptible). Runs on the main-thread
         // draw loop, so the MTKView property write is main-actor-safe.
-        let readyToCapture: Bool = MainActor.assumeIsolated {
+        // #1243: the closure also hands out `wantsCapture` — the SAME question, asked once —
+        // because the drawable-resolution lever below must stand down while a take or a
+        // still needs the drawable at full size (the recorder pools pixel buffers at the
+        // drawable's size; a resolution step mid-take would re-pool against a writer that
+        // was configured for the size the take started at).
+        let (readyToCapture, wantsCapture): (Bool, Bool) = MainActor.assumeIsolated {
             // #985: `wantsFrameCapture` is `isRecording || stillRequested` — this line must ask
             // the ONE question, not two, so a still and a take can never disagree about whether
             // the drawable has to be readable this frame.
@@ -1000,7 +1005,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                 view.framebufferOnly = desired
                 lastFramebufferOnly = desired
             }
-            return ready
+            return (ready, wantCapture)
         }
         // Pull the live governor + bio HERE — the CADisplayLink draw loop runs on the main
         // thread (so `assumeIsolated` is a safe no-op assertion) and is OFF the SwiftUI
@@ -1042,8 +1047,27 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // image on the layer. This kills the fullscreen/resize glitch class
             // for EVERY resize path (our snap, safe-area shifts, rotation).
             let scale = view.window?.screen.scale ?? view.contentScaleFactor
-            let want = CGSize(width: max(1, view.bounds.width * scale),
-                              height: max(1, view.bounds.height * scale))
+            // #1243 (visual audit V1): the tier's `visualDetailScale` used to reach the GPU only
+            // as a ring-DENSITY multiplier — the fragment shader's loops are fixed-count, so
+            // `.low`/`.minimal` changed the LOOK and left the cost untouched: a full-screen
+            // drawable at native scale is ~8 MP of fragment work per frame at 60 fps, even at
+            // thermal `.critical`. The one lever that scales the cost is the drawable's pixel
+            // count, and this is the one place the drawable is sized. Linear factor = the
+            // tier's detail scale (1.0 at `.balanced`/`.high`, 0.7 at `.low`, 0.5 at
+            // `.minimal` — see `AdaptiveQuality.settings(for:)`), so pixel work falls to ~49 %
+            // / ~25 % exactly when the governor says the device cannot afford it; the layer
+            // scales the smaller image up, the settled-size machinery below carries the
+            // re-allocation as it does for every other resize. Held at 1 while a take or a
+            // still wants the drawable (`wantsCapture`): the recorder's pool is sized from
+            // the drawable, and a take keeps the size it started with.
+            // NEEDS-FOUNDER-VERIFY: force `.low` (Low Power Mode on) — is the picture
+            // acceptably soft at 0.7, and does a running recording keep full size?
+            let renderScale: CGFloat = {
+                guard !wantsCapture, let tierScale = governor?.settings.visualDetailScale else { return 1 }
+                return CGFloat(max(0.5, min(1, tierScale)))
+            }()
+            let want = CGSize(width: max(1, view.bounds.width * scale * renderScale),
+                              height: max(1, view.bounds.height * scale * renderScale))
             let have = view.drawableSize
             if abs(want.width - have.width) > 0.5 || abs(want.height - have.height) > 0.5 {
                 if abs(want.width - pendingDrawableSize.width) < 0.5,
