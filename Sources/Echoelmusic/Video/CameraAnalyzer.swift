@@ -158,6 +158,16 @@ final class CameraAnalyzer {
     /// `RRIntervalHygiene.acceptedFraction` read near 1.0 on a broken contact. Consumers run
     /// their own hygiene (`RRIntervalHygiene.acceptedSegments`) and get both the beats and the
     /// honest survival rate.
+    ///
+    /// ⛔ "CONSUMERS" WAS ONE, AND IT IS DOORLESS (#1236, audit 2026-09-10). Measured: the only
+    /// reader of `rrWindowMs` (the publisher's pass-through of this array) is
+    /// `AnalysisPoincareView`, one of the four analysis views the CLAUDE.md register lists as
+    /// deliberately unmounted — so on the shipping path NOTHING ran hygiene on the camera's
+    /// beats, and the frame's RMSSD/SDNN/pNN50 left for the bus and OSC ungated. Since #1236
+    /// `CameraRPPGBioPublisher` reads this array itself for `RRIntervalHygiene.canStateHRV`
+    /// before publishing any HRV field (the strap's gate, same fraction, same sentinel 0). Two
+    /// readers now, one reachable; the plural above was a description of a consumer that did
+    /// not exist on any reachable path.
     var rawIntervalsMs: [Double] = []
     /// Calculated RMSSD from camera PPG
     var rmssd: Double = 0

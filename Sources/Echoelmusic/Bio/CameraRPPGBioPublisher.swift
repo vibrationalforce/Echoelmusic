@@ -1563,10 +1563,30 @@ public final class CameraRPPGBioPublisher {
                     }
                     continue
                 }
-                let rmssdMs = Float(self.analyzer.rmssd)
+                // HONESTY GATE (#1236, audit 2026-09-10 `bio-pipeline-6`) — the strap's
+                // `RRIntervalHygiene.canStateHRV`, applied to the SAME raw series the analyzer
+                // hands `AnalysisPoincareView`. Until here the lower-trust source was the one
+                // WITHOUT the gate: `detectPeaks` bands (0.3…1.5 s) and IQR-cleans, but a window
+                // whose beats alternate dropped/doubled passes the band beat by beat and fails
+                // only the successive-difference (Malik) test — the strap refused to state such
+                // an RMSSD, the camera put it on `/echoelmusic/bio/heart/rmssd` (gated on `> 0`)
+                // and into `hrvForSound`. The strip already hid it (`plausibleHRVms`), so the
+                // number reached the lighting desk and never the screen. One boolean gates all
+                // FOUR HRV fields, as on the strap: a frame with RMSSD "—" and SDNN present would
+                // be the inconsistency the strap parity exists to prevent. 0 is the house "not
+                // measured" sentinel — `hrvForSound` reads it as neutral, the strip as "—".
+                // ⚠️ `rawIntervalsMs` is the fresh 10 s window, not a rolling history: the
+                // fraction is judged per window, which is what `canStateHRV` (no minimum count)
+                // is built for. `acceptedSegments` itself is NOT copied across — whether its
+                // gap structure suits rPPG is the open measurement the SDNN comment below names.
+                // NEEDS-FOUNDER-VERIFY: camera take with a deliberately poor finger contact —
+                // does the Bio panel's HRV cell read "—" instead of a small number, and does it
+                // recover within ~10 s of a firm contact?
+                let trustworthy = RRIntervalHygiene.canStateHRV(rrMs: self.analyzer.rawIntervalsMs)
+                let rmssdMs = trustworthy ? Float(self.analyzer.rmssd) : 0
                 // ONE shared normalization ceiling across all bio sources (was ÷200 here,
                 // the outlier — BLE + HealthKit already use the house 100 ms ceiling).
-                let hrv = Float(HRVNormalization.normalize(self.analyzer.rmssd))
+                let hrv = trustworthy ? Float(HRVNormalization.normalize(self.analyzer.rmssd)) : 0
                 // analyzer.rrIntervals are already in milliseconds.
                 let rrMs = self.analyzer.rrIntervals
 
@@ -1723,7 +1743,7 @@ public final class CameraRPPGBioPublisher {
                     // exact class #459 removed one layer up, re-entering through the back door.
                     // `testSDNNDeliberatelyStaysFlat` pins the FORM (`sdnn(rrMs:`), not the
                     // argument, so nothing goes red if it happens.
-                    hrvSDNNms: Float(HRVMetrics.sdnn(rrMs: rrMs)),
+                    hrvSDNNms: trustworthy ? Float(HRVMetrics.sdnn(rrMs: rrMs)) : 0,
                     // pNN50 DOES read consecutive pairs, so it gets the same treatment as
                     // RMSSD one layer up: pooled only within runs of genuinely adjacent
                     // beats. `rrIntervals` is twice-compacted (see `RRAdjacency`), so a flat
@@ -1739,7 +1759,7 @@ public final class CameraRPPGBioPublisher {
                     // ~1 Hz); it was that an edit to either copy would have left RMSSD and
                     // pNN50 disagreeing about which beats are adjacent, in the same frame,
                     // and making those two agree is the whole point of #425.
-                    hrvPNN50: Float(HRVMetrics.pnn50(segments: self.analyzer.rrSegments))
+                    hrvPNN50: trustworthy ? Float(HRVMetrics.pnn50(segments: self.analyzer.rrSegments)) : 0
                 )
                 bus.publish(bio: frame)
                 // Anchor the hold to this good frame (see lastGoodBioFrame docs).
