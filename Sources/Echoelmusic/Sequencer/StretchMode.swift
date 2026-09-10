@@ -30,6 +30,14 @@ public enum StretchMode: String, CaseIterable, Codable, Sendable {
     /// starts — an off-grid/stepless placement enters as "mid-region" and plays
     /// the honest Clean chain). Per-consumer `capabilities` on
     /// `StretchPlan.resolve` stay the truth mechanism.
+    /// ⛔ THE "Executors: OFFLINE pre-render … (AudioClipPlayer) AND … (TimelineAudioSink …)"
+    /// SENTENCE ABOVE IS FALSE (#1230, audit 2026-09-10 `tests-guards-6`), kept verbatim as
+    /// the retracted claim: `git grep -n "EchoelWSOLA(" -- Sources` → 0. Both files exist;
+    /// neither constructs the core, and the editor preview went with the piano roll (#475).
+    /// The 206-line core stays (the `EchoelModalBank`/`EchoelCellular` class: kept, test-
+    /// only). `isImplemented` below stays `true` ON PURPOSE — regions persist `stretchMode`,
+    /// so a flip is a document question, not a tidy-up. Do not plan a beats-stretch feature
+    /// on this case without first giving `EchoelWSOLA` a constructor.
     case beats
     /// Signalsmith Stretch (MIT C++): highest transient fidelity — FOUNDER-GATED
     /// dependency (first C++ in the tree, contained bridge). Executor: approved slice only.
@@ -71,7 +79,7 @@ public enum StretchMode: String, CaseIterable, Codable, Sendable {
     public var isImplemented: Bool {
         switch self {
         case .clean, .tape: return true      // tape = pitch-follows-tempo on the spectral node
-        case .beats:        return true      // WSOLA offline pre-render (editor preview)
+        case .beats:        return true      // ⚠️ nothing constructs EchoelWSOLA (#1230) — persisted-region question, see the case doc
         case .studio:       return false     // Signalsmith — founder-gated dependency slice
         }
     }

@@ -145,7 +145,9 @@ Deprecated from main flow: the old SoundscapeEngine, ClipEngine, MomentCaptureVi
   (null Produktions-Aufrufer; die bio→Objekt-Abbildung, die WIRKLICH sendet, steht in
   `Sync/ADMOSCSender` selbst). Dazu — nachgetragen 2026-08-31 (#921) —
   **`Core/VisualModulation`** (nicht mit dem verdrahteten `BioVisualParams` verwechseln;
-  Wächter `TheVisualModulationCoreHasNoCallerTests`). Dazu — nachgetragen 2026-09-02 (Audit) —
+  Wächter `TheVisualModulationCoreHasNoCallerTests`). Dazu — #1230 — **`DSP/EchoelWSOLA`**
+  (`git grep -n "EchoelWSOLA(" -- Sources` → 0; `StretchMode.beats.isImplemented` bleibt
+  bewusst `true`, Regionen persistieren `stretchMode`). Dazu — nachgetragen 2026-09-02 (Audit) —
   **VIER `Sync/`-Kerne mit null Code-Aufrufern außerhalb der eigenen Datei:** `VBAPPanner`,
   `AmbisonicsEncode`, `LightFixtureGroup` (+`LightFixture`), `BioPhaser` (+`BioPhaserSource`) —
   je 1–2 Testdateien, sonst nur Kommentar-Nennungen. Befehl und Zähl-Kette:
