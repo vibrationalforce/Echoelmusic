@@ -36,6 +36,20 @@ public final class HealthKitBioPublisher {
     @ObservationIgnored
     private var lastTimestamp: Date?
 
+    /// #1215 (audit 2026-09-10 `bio-pipeline-2`) — the OLDEST measurement this bridge will still
+    /// publish as a body. On start with only the Watch as source, the anchored query's initial
+    /// batch delivers the newest heart-rate sample of the last HOUR; the receipt-time stamp below
+    /// (correct for the 4–5 s Watch latency and the 180 s resting cadence) then presented a
+    /// 45-minute-old number as a live pulse for the strip's 5 s and as the body for the
+    /// composer's 90 s. Ten minutes is a JUDGMENT value: comfortably above the 180 s design case
+    /// the tests pin, well below the hour the query can hand back. A frame older than this is
+    /// dropped whole — the same trade as the `hasHRSample` gate: a headline number that is not
+    /// the body now should not be shown as one.
+    /// NEEDS-FOUNDER-VERIFY: start the app with the Watch as the only source after >10 min
+    /// without a Watch reading — the strip must show NO pulse until the next Watch sample, not an
+    /// old one; then decide whether 10 min is the right wait.
+    static let maxMeasurementAge: TimeInterval = 600
+
     public init(engine: EchoelBioEngine = .shared) {
         self.engine = engine
     }
@@ -111,6 +125,10 @@ public final class HealthKitBioPublisher {
         // headline number is invented should not be shown as a measurement.
         guard engine.hasHRSample else { return }
         let snap = engine.snapshot
+        // #1215 — measurement age, on the MEASUREMENT clock (`snap.timestamp` is the sample's
+        // date, set in EchoelBioEngine's HR handler). Sits BEFORE the dedup so a snapshot that
+        // is too old never becomes `lastTimestamp` — the next, fresh sample publishes normally.
+        guard Date().timeIntervalSince(snap.timestamp) <= Self.maxMeasurementAge else { return }
         guard snap.timestamp != lastTimestamp else { return }
         lastTimestamp = snap.timestamp
 

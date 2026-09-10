@@ -29407,4 +29407,43 @@ Seiten behalten).
 sechs „session limit"-Meldungen. Für diese Sitzung kein Stopp; die Übergabe ist in Ultraplan §2 Punkt 8
 und in der Basis (#1207/#1207b gemerged) berücksichtigt.
 
-**Gate-Lesung nach dem Push:** steht unten, sobald gelesen.
+**Gate-Lesung nach dem Push (957adab = #1208–#1211, ein Push):** `Xcode Compile Check` #2520 → **success**
+(deckt `Sources/` der drei Code-Scheiben) · CI/CD #5985, Job „Build & Test (iOS)": **`Build for Testing` = success**
+(die drei neuen CISmoke-Wächter KOMPILIEREN), `Run Tests` beim Lesen noch in Arbeit → Ausführung UNBELEGT (#445/#807),
+nicht „grün". Auto-Merge #3420 hat 957adab nach `main` gezogen (kein Gate davor, #683). `aaa2e35` (#1211b, nur
+`memory/`) hat erwartungsgemäß keinen Lauf ausgelöst und fährt als Passagier mit.
+
+## #1212–#1214 — Übergabe-Punkt #56 geschlossen, zwei Ressourcen-Scheiben (2026-09-10, Founder-Frage „Übernahme geklappt? TestFlight ressourcensparender? Bio auf bestem Stand?")
+
+**Übernahme gemessen, nicht geglaubt.** `origin/claude/echoelmusic-neustart-auv3-6ri2ek` steht auf `ad8d86d` (#1207c,
+nur Docs); die Code-Commits #1203–#1207b sind auf `main` und in dieser Basis (`57dd7b7`). **`HANDOVER_2026-09-10.md`
+liegt NUR auf jenem Zweig** — Docs-only löst keinen Merge aus (#697), also erreicht das Protokoll `main` erst, wenn
+dort wieder Code gepusht wird oder jemand es herüberholt. Der Stunden-Cron `trig_01Mio4dc5T4KJPfRZKguy9mn` feuert
+weiter (58 * * * *, zuletzt 14:58 UTC) in `session_014nAZhmBhNNMa7NTn1FsmVB` — die WOZLIE-Sitzung, nicht einmal die
+Neustart-Sitzung; Founder-Entscheidung (löschen / pausieren / umhängen), hier nicht angefasst.
+
+**#1212 — `Project.keyRoot` gefaltet (Übergabe §4, #56 BD, der schwerste offene Punkt).** Roher `Int` mit `?? 0`;
+`EchoelStudioView:11184` schreibt `rootIndex = p.keyRoot`, Zeilen 1085/4498/10477 rechnen `60 + rootIndex` →
+`60 + Int.max` TRAPT hinter der lebenden „Open project"-Tür. Faltung `((r % 12) + 12) % 12` = `MusicalKey.init(root:)`
+(#416: ein Gesetz, keine Klammer, die 13→11 macht, wo der Schlüssel 1 liest). Wächter
+`TheProjectKeyRootIsAPitchClassTests` (3 Ansprüche, transkribiert ROT/GRÜN · ROT/GRÜN · GRÜN/GRÜN).
+
+**#1213 — Sampler auf 48 kHz (Audit `audio-dsp-5`, nachgemessen).** `SamplerVoice.sampleRate` 44_100 war der
+einzige Quellknoten unter `AudioConfiguration.preferredSampleRate`; `previewVoice` hängt dauerhaft am Graphen →
+impliziter SRC auf JEDEM Block, Stille resampelnd. Jetzt 48_000 / 96_000 Frames; `loadSample` resampelt weiter beim
+Laden. Wächter `TheSamplerRendersAtTheGraphRateTests` (Anspruch 1 ROT/GRÜN, 2+3 Gegengewichte GRÜN/GRÜN — ⛔ der
+erste Kopf nannte Anspruch 2 eltern-rot; die Transkription sagte GRÜN, und die Transkription ist die Messung).
+
+**#1214 — Delay-Ton-Koeffizient gecacht (Audit `audio-dsp-2`, nachgemessen).** `processStereo` rief `toneCoefficient()`
+pro Sample (`powf`+`expf`); jetzt `tone { didSet { toneG = … } }`, Cache im `init` gesät, #1208-Klammer bleibt im Cache.
+Wächter `TheDelayToneCoefficientIsCachedTests` (Anspruch 1 ROT/GRÜN, 2+3 GRÜN/GRÜN).
+
+**Was NICHT geschlossen ist (ehrliche Antwort auf „Bio auf bestem Stand?"):** drei gemessene Lücken aus dem Audit —
+`bio-pipeline-1` (Polar: eingefrorener HR wird jede Sekunde neu gestempelt, Kontakt-Bits ignoriert), `bio-pipeline-2`
+(HealthKit: bis zu 59 min alte Probe als frisch), `bio-pipeline-3` (Kamera: Kohärenz bei Ruhepuls strukturell
+abwesend — Servo und vier LIVE-Kanäle laufen auf 0,5). Ultraplan-Zyklen 5–7; Zyklus 7 braucht das Gerät.
+
+**TestFlight-Stand:** letzter Build v10.79.466 (Lauf 2586, `e066acb`, #1194–#1202). #1203–#1214 sind NICHT in
+TestFlight. Bump auf v10.79.467 erst nach grünem Compile Check für `2b387b3`.
+
+**Gate-Lesung für 8fc7ceb/087aa03/2b387b3:** steht unten, sobald gelesen.
