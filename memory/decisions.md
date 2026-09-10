@@ -1474,3 +1474,33 @@ beschränken (#292, `afcf3aa`).
   iPhone inert, eine Karte, keine Ansicht; gehört in die iPad-Runde, nicht in einen unsichtbaren
   Pixel-Eingriff ohne Auge.
 - Review: 2026-10-07. `decisions.csv:748`.
+
+### 2026-09-10 — Grand Council: DMMW-Pfad, AUv3 in alle Richtungen, Broadcast/Collab/XR/Mapping (PROPOSED)
+
+- **Founder-Ask (wörtlich):** „Lässt sich der DMMW Pfad wieder öffnen? Deep Council. Wir wollen seamless
+  AUv3 Integration in alle Richtungen." Vorbilder: Ableton, Reaper, FL, Logic, Imaginando, ACE Studio,
+  Resolume Arena, TouchDesigner, Laser und Licht, Broadcast/Streaming/Live-Collab/XR.
+- **Status: PROPOSED** — fünf Binärfragen an den Founder (`scratchpads/GRAND_COUNCIL_DMMW_AUV3_2026-09-10.md`
+  §9). `decisions.csv:685` (keine DAW-Tür, keine Löschung bis zur Founder-Antwort) gilt weiter.
+- **Urteil:** DMMW bleibt als PRODUKT geschlossen (Timeline, Multitrack-Mixer, AUv3-HOSTING, RTMP im Prozess).
+  Geöffnet wird die ECOSYSTEM-POSITION — Echoel sitzt IM RIG von Ableton/Logic/AUM/Resolume/TD/BEYOND:
+  als Draht (Richtung 3: virtuelle MIDI-Quelle, RTP-MIDI, Bluetooth-MIDI-Picker [existiert:
+  `BluetoothMIDIPairingView`, `PatchbayView.swift:116`], IDAM, OSC/Art-Net/sACN/ADM-OSC), als gesteuerter
+  Knoten (OSC-in-Whitelist, neu), auf ihrem Taktgitter (Ableton Link, Loop-only, NACH Multicast-Entitlement)
+  und als Stimme (Echoel ALS AUv3 `aumu`, eigene Epic per #590-Revisit, NACH Ship-Gate 1+5 und nach der
+  gemeldeten Warm-Sequenz; Scheibe 1 = stummes hello, Deploy-Budget 1). Hosting bleibt CUT; Audiobus, NDI,
+  Syphon, ILDA-Streams, eigene ReplayKit-Extension, In-App-Social-Scheduler: nie. Broadcast =
+  System-Bildschirmaufnahme-Rezept (Pipeline), HaishinKit WATCH bis v1.2. SharePlay „Echoel Live" bleibt
+  v1.1. Vision/XR, Watch-Transport, ArtPollReply: WATCH mit Review-Datum.
+- **Begründung:** Der Founder fragt Lesart B („nahtlos in die Welt von Ableton/Resolume/TD") im Vokabular
+  von Lesart A („DMMW öffnen"). Fünf der sechs Audio-Vorbilder sind Desktop — ein iOS-Appex erreicht
+  keines; Draht und Takt erreichen alle. Brücke (`BioFeedbackPublisher`, `isFresh`), Render-Vorlage
+  (`MonitorInsertAudioUnit`) und Foundation-only-DSP existieren; Hosting hat keinen Ort. Gemessene Grenze
+  ist die Prüfschleife (`python3 scripts/founder-verify.py` → 116 Bitten / 0 Antworten).
+- **Zwei Faktenbasis-Korrekturen (vom Richter gefunden, von der Sitzung nachgemessen):** (1) der
+  Bluetooth-MIDI-Picker ist gebaut und betürt — nicht neu bauen; (2) die App-Group-Brücke trägt bereits
+  `timestamp` + `isFresh` + `glanceFreshnessWindow` — das Appex muss den Zustand ANZEIGEN, nicht erfinden.
+  (3) Flip-Zähler laut `DMMW_FEASIBILITY_2026-09-02.md:35` = 18; ein Workstation-Ja wäre Nr. 19, nicht 20.
+- **Erwartung / Review 2026-10-10:** `docs/integrations/` + Adress-Wächter existieren; A0, Sperrfrist und
+  AUv3-Epic-Zeile vom Founder beantwortet; Multicast-Antrag gestellt; mindestens ein `VERIFIED-`-Datum im
+  Baum; kein AUv3-/Link-/Streaming-Satz in Copy vor Geräte-Beleg. `decisions.csv` Zeilen 795–797.
