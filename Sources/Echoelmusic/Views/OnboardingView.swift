@@ -14,8 +14,10 @@ import SwiftUI
 struct OnboardingView: View {
 
     @Binding var isComplete: Bool
-    /// Retained for binding parity with EchoelmusicApp; unused in v10.
-    @Binding var shouldAutoPlay: Bool
+    // ⛔ `@Binding var shouldAutoPlay` STOOD HERE, "retained for binding parity", until #1227
+    // (audit 2026-09-10 `studio-ui-3`): bound through from an `@State` in `EchoelmusicApp`
+    // that nothing wrote and nothing read — dead plumbing on both ends. If autoplay is ever
+    // wanted it returns together with its consumer and a guard, not as a binding first.
     @State private var currentPage = 0
     /// Gates the Start button — the user must acknowledge the safety notice.
     @State private var acknowledgedSafety = false

@@ -238,7 +238,6 @@ struct EchoelmusicApp: App {
     // sheet closing; its tick runs only while its toggle is on.
     @State private var harmonyFollower = DiatonicHarmonyFollower()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @State private var shouldAutoPlay = false
     /// Set when the user taps "Continue to Echoelmusic" in Safe Mode — renders the full
     /// app for the rest of this process even though this launch booted into Safe Mode.
     @State private var forceNormalMode = false
@@ -459,7 +458,7 @@ struct EchoelmusicApp: App {
             } else if hasCompletedOnboarding {
                 mainContent
             } else {
-                OnboardingView(isComplete: $hasCompletedOnboarding, shouldAutoPlay: $shouldAutoPlay)
+                OnboardingView(isComplete: $hasCompletedOnboarding)
                     .onAppear {
                         EchoelCrashLog.breadcrumb("ui branch: ONBOARDING (not yet completed)")
                         // Confirm the launch healthy HERE too, or a brand-new user meets

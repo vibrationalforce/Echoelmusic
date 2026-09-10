@@ -29585,3 +29585,15 @@ sei geleert. Harmlos (`register` ist idempotent), irreführend (zweite Registrie
 #580-Deadlock verbietet). Zeile gelöscht, ⛔-Vermerk am Ort. `EveryFlagSaysWhatItGatesTests` pinnt jetzt zusätzlich die
 ZAHL der Registrierungszeilen (`== expectedRegistered.count`) — das Set darüber absorbiert Duplikate; transkribiert
 (`codeOnly`-Zeilen mit `register(defaults:`): 4 auf `4dbcd80` → ROT, 3 hier → GRÜN. Prüfer exit 0.
+
+## #1226 / #1227 — Ultraplan-Zyklen 13–14: zwei Hygiene-Scheiben ohne Verhaltensänderung (2026-09-10)
+
+**#1226 (`ship-path-5`)** — `Package.swift` beschrieb die Swift-6-Migration als KÜNFTIGES Risiko („turns today's
+strict-concurrency warnings into build failures"), während `project.yml` `SWIFT_VERSION: "6.0"` setzt und jedes
+ausliefernde Gate `Sources/` längst im Swift-6-Modus baut. Kommentar ehrlich gemacht: zwei Build-Definitionen, zwei
+Regelsätze (lokal Modus 5 + warnings-as-errors + targeted; Gate Modus 6); ein rotes lokales `swift build` beweist kein
+rotes Gate und umgekehrt. Angleichung (tools-version 6.0 + `.swiftLanguageMode(.v6)`) bleibt Council. Doc-only.
+**#1227 (`studio-ui-3`)** — `shouldAutoPlay`: `@State` in `EchoelmusicApp`, `@Binding` in `OnboardingView`, nie
+geschrieben, nie gelesen (`git grep -n shouldAutoPlay -- Sources` → drei Zeilen, alle Plumbing). Gelöscht, ⛔-Vermerk
+am Binding-Ort. Kein Wächter (tote Leitung; kommt Autoplay, kommt es mit Verbraucher und Wächter). Prüfer exit 0 für
+beide. Kompilat-unbelegt bis zum Gate — eine gelöschte Bindung ist genau die Sorte, die der Compile-Check fängt.
