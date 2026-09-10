@@ -14,7 +14,7 @@
 //
 // ⚠️ "Two" is the ORIGINAL scope of this file, kept as written rather than rewritten each time —
 // the boundaries added since are named in their own test docs and counted in GRADING below. The
-// heading stays honest only because that count is maintained; if you add a seventh, move the
+// heading stays honest only because that count is maintained; if you add a ninth, move the
 // count, not this sentence (#818: a number in prose is a date, not a fact).
 //
 // ⛔ AND THE DELAY ONE OUTLIVED ITS OWN DIAGNOSIS BY A MONTH, which is the part worth a guard.
@@ -32,8 +32,9 @@
 // the two worst outcomes this codebase knows.
 //
 // ⚠️ HONEST LIMITS.
-//   · 16 tests, 33 assertion statements (`grep -c`, measured; nine run inside loops — 512,
-//     2 000 executions). Tests 1–3 are END-TO-END BEHAVIOUR on the
+//   · 22 tests, 48 assertion statements (`grep -c '^    func test'` and `grep -c XCTAssert`,
+//     measured 2026-09-10; several run inside loops or over 3 000–4 000-sample arrays).
+//     Tests 1–3 are END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
 //     slabs and trigger plumbing, which a smoke test should not fake; the setter is the ONLY
@@ -107,8 +108,8 @@
 // ⭐ GRADING (§3). SIX findings, SEVEN boundaries — the third (#1170, the poly engine's own
 // sample rate), the fourth (#1171, the shared delay line's constructor), the fifth (#1172,
 // the FX chain handing the raw rate to fifteen stages) and the sixth (#1194, the felt sub's
-// two audio-thread character mirrors) and the seventh (#1195, the document-side
-// seconds→ticks conversion) were added later and
+// two audio-thread character mirrors), the seventh (#1195, the document-side
+// seconds→ticks conversion) and the EIGHTH (#1206, the mod-FX control fields) were added later and
 // their grading sits on their own tests. The two below are #588's,
 // verified by transcription against the parent
 // (the behavioural tests name no new symbol, so they COMPILE against the parent). On the parent,
@@ -128,6 +129,46 @@
 //     the negative needle searches for `Swift.min(Swift.max(` with the module prefix, and the
 //     prose never spells the prefix. A grading claimed from construction instead of from the
 //     drive is exactly the class this bundle's §3 exists to stop — same lesson, smaller stakes.
+
+// ⭐ #1206'S GRADING, and its own measured NEGATIVE. Six tests added; every expectation was
+// derived by re-implementing chorus, flanger, LFO and delay line in float32 Python and driving
+// BOTH trees, because a CI round trip is a lottery ticket (#686). Result:
+//   · SEVEN REGRESSION assertions, red on the parent: chorus depth 50-vs-1, flanger depth
+//     50-vs-1, the two NaN-depth equalities, the tremolo latching claim, and claim 6's two
+//     positive needles. Claim 6's two NEGATIVE needles are red on the parent too but are the
+//     SAME absence seen from the other side (#486) — one finding, not four.
+//   · SEVEN COUNTERWEIGHT assertions, green on both trees: depth still shapes the sound inside
+//     [0, 1] (chorus and flanger), the output is finite, the output is non-zero, and the count
+//     pin. Without the first two, all four equalities above are satisfied by a clamp that pins
+//     every depth to one value or by a stage that stopped making sound.
+//   · Stripper: **PROPHYLAKTISCH (0 of 10 verdicts flip)** — measured, not assumed, on both
+//     trees with and without comment-stripping. It is close to load-bearing by construction and
+//     was written to stay clear of it: the doc block over `clamp01` QUOTES the retracted
+//     spelling, so the two negative needles were deliberately written with the shipped literals
+//     (`x, 0.0), 1.0`) while the prose quotes the shorter form (`x, 0), 1`). Either guard alone
+//     would do; both together mean a future prose edit cannot redden a correct tree (#491).
+//
+// ⛔ THE NaN HALF IS LATENT, AND THE RANGE HALF IS NOT. Say them apart. No shipped producer
+// emits NaN into these fields (`JSONDecoder`'s default `nonConformingFloatDecodingStrategy` is
+// `.throw`; the UI fields carry finite ranges; `FXBioModulator` is guarded by
+// `FXModulation.clamp01`, which spells it `x.isFinite ? x : 0`). An OUT-OF-RANGE depth is a
+// different story: `FXPreset.init(from:)`'s `f(_:_:)` decodes any finite Float and
+// `FXPresetStore` reads a user-writable file.
+//
+// ⭐ AND #1206 DELIBERATELY DID NOT SWEEP THE CLASS — a measured negative, recorded so nobody
+// re-runs it and nobody "fixes" three hundred call sites at once (the same discipline the
+// #1179 note above asks for):
+//
+//   grep -rnE '(Swift\.)?min\(\s*(Swift\.)?max\(' --include='*.swift' Sources/  ->  309
+//   ... the same, restricted to Sources/Echoelmusic/DSP/                            ->   74
+//
+// Many of those 74 are already closed by an explicit `isFinite` ternary in the same expression
+// (`EchoelGranular`, `EchoelFDNReverb`, `ChannelInsertFX`, `SubCharacter`, `EchoelDDSP`), and
+// several of the hits are COMMENTS quoting the idiom in order to warn about it — including two
+// in `EchoelDelayLine` and three in `EchoelDelay`. So 74 is an upper bound on candidates, NOT a
+// count of defects, and anyone acting on it must read the hits rather than the number.
+// #1206 repaired the two helpers in ONE file, chosen because that file's `clampRate` feeds an
+// LFO phase accumulator that LATCHES.
 
 import Foundation
 import XCTest
@@ -499,6 +540,151 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
         XCTAssertEqual(TimelineTime.ticks(fromSeconds: -0.25, bpm: 120), -240)
         XCTAssertEqual(TimelineTime.ticks(fromSeconds: 0, bpm: 120), 0)
         XCTAssertEqual(TimelineTime.ticks(fromSeconds: 1, bpm: 0), 0)
+    }
+
+    // MARK: - EIGHTH BOUNDARY (#1206) — the mod-FX control fields
+
+    /// A 220 Hz half-amplitude tone, the signal every mod-FX claim below is driven with.
+    /// Deterministic and identical across runs, so two configurations can be compared
+    /// sample-for-sample without a tolerance (#442).
+    private func tone(_ n: Int) -> Float { sinf(2 * .pi * 220 * Float(n) / 48000) * 0.5 }
+
+    private func runChorus(depth: Float, mix: Float = 0.5, frames: Int = 4000) -> [Float] {
+        let fx = EchoelChorus(sampleRate: 48000)
+        fx.depth = depth; fx.mix = mix
+        return (0..<frames).map { fx.processStereo(tone($0), tone($0)).0 }
+    }
+
+    private func runFlanger(depth: Float, frames: Int = 3000) -> [Float] {
+        let fx = EchoelFlanger(sampleRate: 48000)
+        fx.depth = depth
+        return (0..<frames).map { fx.processStereo(tone($0), tone($0)).0 }
+    }
+
+    /// REGRESSION (#1206). END-TO-END BEHAVIOUR on the shipped `EchoelChorus`.
+    ///
+    /// `depth` is documented `[0, 1]` and its UI field carries `0...1`, but the stored property
+    /// took anything and `processStereo` used it RAW — while `mix` one line above and the
+    /// flanger's `feedback` were both bounded at the use site. A preset JSON is the reachable
+    /// producer: `FXPreset.init(from:)`'s `f(_:_:)` decodes a Float with no range check, and
+    /// `FXPresetStore` reads a user-writable file.
+    ///
+    /// At `depth = 50` the excursion is ±350 ms around a 12 ms centre, so BOTH taps sit on the
+    /// line's end stops — `msToSamples` floors at 1.0, `readAllpass` ceilings at
+    /// `maxDelaySamples` — and the LFO switches between two fixed integer taps. A hard
+    /// alternation, not a chorus. After the clamp, `depth = 50` is indistinguishable from
+    /// `depth = 1`, which is what this asserts.
+    func testTheChorusBoundsItsDepthLikeItsMix() {
+        XCTAssertEqual(runChorus(depth: 50), runChorus(depth: 1), """
+            `EchoelChorus.depth` is no longer bounded to its documented [0, 1] at the use site. \
+            An out-of-range depth from a preset file drives both taps onto the delay line's end \
+            stops and the stage becomes a hard two-tap switch (#1206).
+            """)
+    }
+
+    /// REGRESSION (#1206). Same defect, shorter line: the flanger's base is 3 ms in a 20 ms
+    /// buffer, so it reaches its end stops at a lower depth than the chorus does.
+    func testTheFlangerBoundsItsDepthLikeItsFeedback() {
+        XCTAssertEqual(runFlanger(depth: 50), runFlanger(depth: 1), """
+            `EchoelFlanger.depth` is no longer bounded at the use site, while `feedback` two \
+            lines above still is. The two came from the same preset record (#1206).
+            """)
+    }
+
+    /// REGRESSION (#1206), and the one that is about NaN rather than range.
+    ///
+    /// ⚠️ NOT a finiteness failure, and saying so precisely matters: `msToSamples` is
+    /// `Swift.max(1.0, …)` with the known-good value FIRST, so a NaN excursion already produced
+    /// a finite delay of 1.0. The defect is WHICH value it produced — both taps pinned to a
+    /// single sample, i.e. a 1-sample comb, silently, instead of the neutral 12 ms centre a
+    /// depth of zero gives. The old `clamp01` could not have caught it because it was itself
+    /// NaN-transparent.
+    func testANonFiniteDepthLandsOnZeroNotOnTheEndStop() {
+        XCTAssertEqual(runChorus(depth: .nan), runChorus(depth: 0), """
+            a non-finite `depth` no longer resolves to the neutral zero. It used to reach \
+            `msToSamples` unbounded, where `Swift.max(1.0, NaN)` pinned BOTH taps to one \
+            sample — finite, and completely wrong (#1206).
+            """)
+        XCTAssertEqual(runFlanger(depth: .nan), runFlanger(depth: 0), """
+            the flanger half of the same claim (#1206).
+            """)
+    }
+
+    /// REGRESSION (#1206), and the LATCHING one — the reason this slice touches `clampRate`
+    /// and not only `clamp01`.
+    ///
+    /// Every mod-FX stage funnels its `rate` setter through `clampRate`. Spelled
+    /// `Swift.min(Swift.max(x, 0.05), 8.0)` a NaN passed straight through into
+    /// `EchoelLFO.rate`, and `next()` does `phase += rate / sampleRate` with a reset on
+    /// `phase >= 1.0`: once the phase is NaN that comparison is false FOREVER. The LFO never
+    /// recovers, and nothing short of a new instance heals it. The tremolo is the stage where
+    /// that surfaces as NaN in the OUTPUT (its gain is computed straight from the LFO), which
+    /// is why the assertion lives here rather than on the chorus.
+    func testANonFiniteRateCannotLatchTheLFOPhase() {
+        let fx = EchoelTremolo(sampleRate: 48000)
+        fx.rate = .nan
+        fx.depth = 0.5
+        let out = (0..<3000).map { fx.processStereo(tone($0), tone($0)).0 }
+        XCTAssertTrue(out.allSatisfy { $0.isFinite }, """
+            a non-finite `rate` reaches `EchoelLFO.rate` again. Its phase accumulator then \
+            latches at NaN — `phase >= 1.0` is false for NaN, so the reset never fires — and \
+            every stage driven by that LFO is dead for the life of the instance (#1206).
+            """)
+    }
+
+    /// COUNTERWEIGHT (#343), and the one that keeps the three claims above honest. Each of them
+    /// is an EQUALITY between two configurations, so all three would also pass if the clamp
+    /// collapsed every depth to one value, or if the stage stopped producing sound at all.
+    func testDepthStillShapesTheSoundInsideItsRange() {
+        let half = runChorus(depth: 0.5)
+        XCTAssertNotEqual(half, runChorus(depth: 1.0), """
+            `depth` no longer changes the chorus anywhere inside [0, 1]. The three equalities \
+            above are satisfied by a clamp that pins every depth to one value; this is the \
+            assertion that says the parameter still does something (#1206).
+            """)
+        XCTAssertTrue(half.allSatisfy { $0.isFinite }, "ordinary chorus output is not finite")
+        XCTAssertTrue(half.contains { $0 != 0 }, "the chorus stopped producing output entirely")
+        XCTAssertNotEqual(runFlanger(depth: 0.5), runFlanger(depth: 1.0), """
+            the flanger half of the same counterweight (#1206).
+            """)
+    }
+
+    /// REGRESSION (#1206). SOURCE-TEXT SCAN (§1) — the half a behavioural test cannot state:
+    /// WHY the spelling is what it is. Both helpers are `private` and inlined, so nothing can
+    /// call them directly.
+    ///
+    /// ⚠️ The negative needles are the load-bearing half. A future edit that "tidies" the
+    /// argument order back is bit-identical for every finite input and would pass every
+    /// behavioural claim above except the two NaN ones — and those two are LATENT, so a
+    /// reviewer could reasonably read them as theoretical. The absence assertion is what makes
+    /// the order a rule rather than a preference.
+    func testTheModFXClampHelpersPutTheKnownGoodValueFirst() throws {
+        let code = try source("Sources/Echoelmusic/DSP/EchoelModFX.swift")
+        XCTAssertTrue(code.contains("Swift.min(1.0, Swift.max(0.0, x))"), """
+            `clamp01` in EchoelModFX no longer puts the known-good bound first. \
+            `Swift.max(x, 0)` returns x for NaN because every comparison against NaN is false, \
+            so the old order made the clamp a no-op for NaN (#1206).
+            """)
+        XCTAssertTrue(code.contains("Swift.min(8.0, Swift.max(0.05, x))"), """
+            `clampRate` in EchoelModFX no longer puts the known-good bound first. This one is \
+            the latching path: it feeds `EchoelLFO.rate` (#1206).
+            """)
+        XCTAssertFalse(code.contains("Swift.min(Swift.max(x, 0.0), 1.0)"), """
+            the NaN-transparent spelling of `clamp01` is back. It is bit-identical for finite \
+            inputs, which is exactly why only this scan can see it (#1206).
+            """)
+        XCTAssertFalse(code.contains("Swift.min(Swift.max(x, 0.05), 8.0)"), """
+            the NaN-transparent spelling of `clampRate` is back (#1206).
+            """)
+        XCTAssertTrue(code.contains("let exc = clamp01(depth) * spreadMs"), """
+            a mod-FX stage reads `depth` raw again. Both the chorus and the flanger must route \
+            it through the bounded helper, the way `mix` and `feedback` already are (#1206).
+            """)
+        XCTAssertEqual(code.components(separatedBy: "let exc = clamp01(depth) * spreadMs").count - 1, 2, """
+            COUNT PIN: exactly two stages compute an excursion from `depth` — chorus and \
+            flanger. A third would be a new delay-driving stage that this claim has not been \
+            checked against; a first would mean one of them lost its bound (#1206).
+            """)
     }
 
     // MARK: - source access (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)

@@ -45,7 +45,14 @@ public final class EchoelChorus: @unchecked Sendable {
     public func processStereo(_ inL: Float, _ inR: Float) -> (Float, Float) {
         let m = clamp01(mix)
         let v = lfo.next()                       // [-1, 1]
-        let exc = depth * spreadMs
+        // #1206 — `depth` is bounded HERE, the way `mix` one line up and `feedback` in the
+        // flanger already are. It is documented `[0, 1]` and its UI field carries `0...1`, but
+        // the stored property took anything: a preset JSON decodes an out-of-range Float
+        // cleanly (`FXPreset.init(from:)`'s `f(_:_:)` does no range check), and `depth = 50`
+        // drives `baseDelayMs ± 350 ms`, which slams BOTH taps onto the line's end stops —
+        // `msToSamples` floors at 1.0 and `readAllpass` ceilings at `maxDelaySamples`. Two
+        // exact integers, alternating with the LFO: a hard switch, not a chorus.
+        let exc = clamp01(depth) * spreadMs
         let dL = msToSamples(baseDelayMs + exc * v)
         let dR = msToSamples(baseDelayMs - exc * v)   // inverted → stereo width
         let yL = dlL.readAllpass(delaySamples: dL)
@@ -94,7 +101,9 @@ public final class EchoelFlanger: @unchecked Sendable {
         let m = clamp01(mix)
         let fb = Swift.min(Swift.max(feedback, -0.95), 0.95)
         let v = lfo.next()
-        let exc = depth * spreadMs
+        // #1206 — see the chorus. Same unbounded `depth`, shorter line (3 ms base, 20 ms
+        // capacity), so it reaches its end stops sooner.
+        let exc = clamp01(depth) * spreadMs
         let dL = msToSamples(baseDelayMs + exc * v)
         let dR = msToSamples(baseDelayMs - exc * v)
         let yL = dlL.readAllpass(delaySamples: dL)
@@ -217,9 +226,34 @@ public final class EchoelTremolo: @unchecked Sendable {
 
 // MARK: - Shared helpers
 
+/// ⚠️ ARGUMENT ORDER IS THE WHOLE POINT — do not "tidy" it back (#1206).
+///
+/// `Swift.min(x, y)` is `y < x ? y : x` and `Swift.max(x, y)` is `y >= x ? y : x`. Every
+/// comparison against NaN is false, so the operand that comes FIRST is what a NaN returns.
+/// Written `Swift.min(Swift.max(x, 0), 1)` — the spelling that stood here — a NaN passes
+/// straight through both calls and the "clamp" is a no-op. Written with the known-good bound
+/// first, a NaN lands on that bound. For every FINITE input the two spellings are bit-identical,
+/// which is why this repair has no audible surface and why nothing caught it.
+///
+/// ⭐ FOR `clampRate` THIS IS LATCHING, not merely wrong-for-one-sample. `EchoelLFO.next()`
+/// does `phase += rate / sampleRate` and resets on `phase >= 1.0`; with a NaN rate the phase
+/// becomes NaN, the reset comparison is false forever, and the LFO never recovers — the same
+/// shape as a poisoned filter state. Every mod-FX stage funnels its `rate` setter through here.
+///
+/// ⚠️ LATENT TODAY, and say so rather than claiming a save. No shipped producer emits NaN into
+/// these fields: `JSONDecoder`'s default `nonConformingFloatDecodingStrategy` is `.throw`, the
+/// UI fields carry finite ranges, `GenreFX` and `FXCuratedLibrary` are literals, and the one
+/// live 30 Hz writer (`FXBioModulator`) is already guarded by `FXModulation.clamp01`, which
+/// spells it `x.isFinite ? x : 0`. This is closed on engineering.md's boundary rule.
+///
+/// ⚠️ AND IT DOES NOT CLOSE THE CLASS. The same NaN-transparent spelling occurs ~74 times under
+/// `DSP/` and ~309 across `Sources/` (`grep -rnE '(Swift\.)?min\(\s*(Swift\.)?max\('`), many
+/// already guarded by an explicit `isFinite` ternary and many not. Fixing them in one commit is
+/// exactly what `ANonFiniteControlCannotReachTheRenderTests` warns against; this slice repairs
+/// the two helpers in THIS file and nothing else.
 @inline(__always) private func clamp01(_ x: Float) -> Float {
-    Swift.min(Swift.max(x, 0.0), 1.0)
+    Swift.min(1.0, Swift.max(0.0, x))
 }
 @inline(__always) private func clampRate(_ x: Float) -> Float {
-    Swift.min(Swift.max(x, 0.05), 8.0)
+    Swift.min(8.0, Swift.max(0.05, x))
 }
