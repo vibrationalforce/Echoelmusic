@@ -1,4 +1,4 @@
-build: v10.79.465 — Der Depth-Look zeigt sein Kaustik-Netz statt einer grauen Fläche
+build: v10.79.466 — Sieben Reparaturen gegen Knistern und Speicher, alle auf Deinen Befund
 branch: claude/echoelmusic-neustart-auv3-6ri2ek (tokenless deploy via .deploy/release bump)
 notes: |
   ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
@@ -49,7 +49,93 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
-  Der Vorgänger ist 10.79.464 (und davor 10.79.463).
+  Der Vorgänger ist 10.79.465 (und davor 10.79.464).
+
+  ── 0. WAS IN 10.79.466 NEU IST ──────────────────────────────────────────
+
+  **Dein Befund vom 09.09.: „Knisterfreier Sound bitte. Es scheint zwischendurch zu viel
+  Arbeitsspeicher zu verbrauchen. Vermeide Störungen im Sound."**
+
+  Sieben Reparaturen, alle gemessen. Ich sortiere sie danach, wie wahrscheinlich Du sie
+  HÖRST — die ersten zwei sind die eigentliche Antwort, der Rest ist Aufräumen.
+
+  **1. Der Bild-Baustein wurde bei JEDEM Auf- und Zumachen neu übersetzt.**
+  Der Rechenbauplan für das Visual ist rund 73.000 Zeichen lang. Er wurde in dem Moment
+  übersetzt, in dem das Visual-Fenster entsteht — und es entsteht jedes Mal neu, wenn Du
+  die Bild-Taste oder den Donut-Schalter drückst. Das dauert hunderte Millisekunden und
+  läuft auf demselben Faden wie die Bedienoberfläche. Der Ton hat in dieser Zeit **10,67
+  Millisekunden** pro Block Zeit. Das ist Dein „zwischendurch": nichts in Ruhe, ein großer
+  Sprung bei jedem Umschalten. Jetzt wird einmal pro Sitzung übersetzt.
+
+  **2. Der Ton-Faden hat Puffer Zahl für Zahl geleert, statt am Stück.**
+  2,5 Sekunden nachdem eine Stimme leise wird, werden ihre Hall- und Echo-Speicher
+  gelöscht. Das waren rund **1,8 Megabyte einzeln geschriebener Nullen**, mitten in der
+  Ton-Berechnung — und alle vier Stimmen tun es im selben Block, wenn Du stoppst. Jetzt
+  wird der Block am Stück gefüllt. Gleiche Nullen, nur schnell geschrieben.
+
+  **3. Der Video-Speicher wurde nie zurückgegeben.**
+  Der Aufnehmer legt einen Vorrat an Bildpuffern an. So ein Vorrat **recycelt**, er gibt
+  nicht frei — jeder Puffer bleibt liegen. Je nach Fenstergröße sind das 0,7 bis 12
+  Megabyte pro Puffer. Nach einer Aufnahme oder einem Standbild blieb das für den Rest der
+  Sitzung belegt. Jetzt wird es zurückgegeben, an jedem Ausgang, auch nach einem Fehler.
+  **Nebenbei nützlich zu wissen:** je größer Du das Bildfenster vor der Aufnahme machst,
+  desto besser die Videoqualität — und desto mehr Speicher. Das ist ein echter Handel.
+
+  **4. Der Pegelmesser hat 60-mal pro Sekunde Zahlen gemeldet, die sich nicht geändert
+  hatten.** Sieben von neun Werten sind eingefroren, solange kein Mastering-Fenster offen
+  ist — also fast immer. Jetzt wird nur noch gemeldet, was sich wirklich bewegt hat.
+
+  **5. Ein zweiter Timer lief nach dem Stoppen einfach weiter.** Die Auto-Lautstärke
+  startet einen 50-Hz-Timer beim Start der Engine — und es gab keine Stelle, die ihn je
+  wieder abschaltet. Jetzt schaltet das Stoppen ihn ab.
+
+  **6. Der Speicher-Wächter hat den Befund ERFUNDEN, wegen dem man ihn befragt.**
+  Er rechnete „RAM des Geräts minus verbleibender Spielraum dieser App" und nannte das
+  Ergebnis „belegt". Das sind zwei verschiedene Dinge; auf einem 8-GB-Telefon kam „6 GB
+  belegt" heraus für eine App, die ein paar hundert Megabyte benutzt. Und weil das über der
+  Warnschwelle liegt, schrieb die App **fünf Sekunden nach jedem Start** eine
+  Speicher-Warnung ins Log — genau in das Log, das Du schickst, wenn Du Speicherprobleme
+  meldest. Die falsche Rechnung ist weg; der echte Melder von iOS war die ganze Zeit
+  angeschlossen und bleibt.
+
+  **7. Werkzeug-Schuld beglichen** (siehst Du nicht, hält aber die Prüfer ehrlich).
+
+  ⚠️ **Was ich NICHT behaupte.** Punkt 4 hilft weniger, als ich beim Bauen geschrieben
+  hatte — der Pflicht-Reviewer hat mir drei Übertreibungen nachgewiesen und ich habe sie
+  im Code zurückgenommen statt still zu trimmen. Punkt 4 ist ein sauberer Aufräum-Commit,
+  nicht die Knister-Reparatur. Die Knister-Reparatur sind 1 und 2.
+
+  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+
+  Gedruckt mit `python3 scripts/founder-verify.py --since 53c64a35`, also nicht von Hand
+  zusammengesucht. Vier Bitten, und drei davon beantwortet ein Blick ins Log.
+
+  **VISUAL (2)**
+
+  · **Visual-Fenster mehrmals auf- und zumachen**, dann Diagnostics öffnen und das
+    `echoel_diag.log` teilen. Die Zeile `visual: compiling shader` darf pro **Sitzung**
+    nur EINMAL vorkommen — nicht einmal pro Umschalten. Daneben steht dann die neue Zeile
+    `visual: shader reused — no recompile`. Das ist der Beweis für Punkt 1.
+
+  · **Zwei bis drei Aufnahmen hintereinander** im Visual-Fenster machen und danach den
+    Speicher der App beobachten. Er soll auf den Stand von vor den Aufnahmen zurückfallen.
+    Das ist der Beweis für Punkt 3 — und der einzige, den ein Log nicht liefern kann.
+
+  **AUDIO (1)**
+
+  · **Eine Sequenz spielen, stoppen, rund fünf Sekunden warten**, dann im Master-Panel die
+    Zeile `N late` ablesen. Der Ausschlag, der ~2,5 Sekunden NACH dem Stoppen kam, soll
+    verschwunden sein. Das ist der Beweis für Punkt 2.
+
+  **SONSTIGES (1)**
+
+  · **Eine normale Sitzung fahren**, danach ins `echoel_diag.log` schauen: die Zeile
+    `Handling Warning pressure` darf NICHT mehr auftauchen, solange das Telefon nicht
+    wirklich unter Speicherdruck steht. Vorher kam sie fünf Sekunden nach jedem Start.
+
+  ⚠️ **Und die ehrliche Zusammenfassung, falls Du nur eine Zeile liest:** vier von sieben
+  Punkten kannst Du im Log nachprüfen. Ob es sich BESSER ANHÖRT, kann hier niemand
+  feststellen — dafür brauche ich Dein Ohr.
 
   ── 0. WAS IN 10.79.465 NEU IST ──────────────────────────────────────────
 
