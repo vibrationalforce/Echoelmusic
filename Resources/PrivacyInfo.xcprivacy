@@ -48,7 +48,8 @@
                 <string>CA92.1</string>  <!-- App preference storage -->
                 <string>1C8F.1</string>  <!-- App-Group suite shared with own
                                               extensions (BioFeedbackManager:
-                                              group.com.echoelmusic → widget/AUv3) -->
+                                              group.com.echoelmusic → widget; the AUv3
+                                              target went 2026-07-24, #1234) -->
             </array>
         </dict>
 
@@ -59,8 +60,12 @@
 
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
-                <string>C617.1</string>  <!-- Accessing files created by user -->
-                <string>0A2A.1</string>  <!-- Session data timestamps -->
+                <string>C617.1</string>  <!-- Accessing files created by user:
+                                              `.creationDateKey` in VideoLibraryPanel -->
+                <!-- 0A2A.1 stood here ("session data timestamps") and is REMOVED (#1234,
+                     audit 2026-09-10 `ship-path-6`): Apple defines it as "your third-party
+                     SDK provides a wrapper around file-timestamp APIs" — a first-party app
+                     manifest cannot claim it, and the one real caller is covered by C617.1. -->
             </array>
         </dict>
 
@@ -75,17 +80,11 @@
             </array>
         </dict>
 
-        <!-- Disk Space API -->
-        <dict>
-            <key>NSPrivacyAccessedAPIType</key>
-            <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
-
-            <key>NSPrivacyAccessedAPITypeReasons</key>
-            <array>
-                <string>E174.1</string>  <!-- Display storage UI -->
-                <string>85F4.1</string>  <!-- Write audio/video files -->
-            </array>
-        </dict>
+        <!-- Disk Space API: NOT declared. A DiskSpace dict (E174.1 "display storage to the
+             user" + 85F4.1) stood here and is REMOVED (#1234, audit 2026-09-10 `ship-path-6`):
+             `git grep -c 'volumeAvailableCapacity\|attributesOfFileSystem\|systemFreeSize\|volumeTotalCapacity' -- Sources`
+             → 0. A declaration without a call site is the mirror image of the #1222 risk.
+             If a recorder pre-flight ever checks free space, re-declare with 85F4.1 only. -->
     </array>
 </dict>
 </plist>
