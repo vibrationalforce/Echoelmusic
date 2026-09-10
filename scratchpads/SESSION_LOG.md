@@ -29797,3 +29797,17 @@ Scheiben bis dahin: #1233 (BioStripView), #1236 (CameraRPPGBioPublisher/CameraAn
 **Visual-Audit (read-only Explore-Agent, auf den Founder-Ask „resourcensparende Audio Visual Performance"):** sechs
 Befunde in `scratchpads/VISUAL_AUDIT_2026-09-10.md` (V1–V6, Reihenfolge V5→V3→V4→V2→V1→V6), plus die Liste dessen,
 was sauber ist. Kein Messwert im Repo — Code-Lesung.
+
+## #1242 Visual-Audit V5 — Donut-Takt 30 Hz (2026-09-10, ~17:28 UTC, `160334b`)
+
+`SpectralDonutView` (Canvas in `TimelineView(.animation(minimumInterval:))`) lief mit 1/60 — 1024-Punkt-FFT + neue
+Band-Arrays + Canvas-Pass sechzigmal pro Sekunde auf dem Main-Thread, ungoverned (die Ansicht liest absichtlich keinen
+Governor: Menü-Freeze-Gesetz, steht an `bandCount`). Gemessen vor dem Schnitt: jede Bewegung in `draw` ist ZEIT-basiert
+(`dt = date − lastDate`, `k = 1 − 0.0001^dt`, `t = date`, Zeilen 90–104) — der halbe Takt ändert die zeitliche
+Auflösung, nie Geschwindigkeit oder Form. `nonisolated static let frameInterval = 1/30` (die Ansicht ist `@MainActor`,
+der Wächter liest die Konstante off-actor — CLAUDE.md-Tabelle). NEEDS-FOUNDER-VERIFY an der Konstante (Ringe glatt?).
+`VideoRecorder.swift:234` behauptete ein AdaptiveQuality-Throttling auf 30/24, das nirgends läuft (`targetFPS` ohne
+Konsument) → ⛔-Korrektur im Kommentar. Wächter `TheDonutClocksAtHalfRateTests` (3 Claims): 1 (Wert + Verwendung, kein
+1/60-Literal) und 3 rot auf `7534646`, grün hier; 2 (Zeit-basiertes Easing als Gegengewicht — wer es per-Frame
+umschreibt, halbiert mit dem Takt die Bewegung) grün/grün. Prüfer exit 0. Push sofort: Compile-Lauf für `7534646` war
+`queued`, nicht `in_progress` — ein Push kostet dann keinen Lauf (nur eine Requeue).
