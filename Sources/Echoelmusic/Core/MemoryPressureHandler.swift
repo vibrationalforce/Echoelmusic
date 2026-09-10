@@ -96,13 +96,44 @@ public final class MemoryPressureHandler {
 
     // MARK: - Published State
 
+    /// The highest pressure this run has actually been told about. Since #1201 it has exactly
+    /// ONE writer — `handlePressure(level:)` — and every path into that function is a real
+    /// signal: the system's `DispatchSourceMemoryPressure`,
+    /// `UIApplication.didReceiveMemoryWarningNotification`, or an explicit
+    /// `releaseMemory(level:)` call. It is never derived from a ratio this type computes for
+    /// itself; see `updateMemoryStats` for what that ratio got wrong.
+    ///
+    /// ⚠️ It does not fall back to `.normal`. iOS raises pressure and does not announce relief,
+    /// so a recovery would be a guess of the same kind #1201 removed.
     public private(set) var currentLevel: MemoryPressureLevel = .normal
+
+    /// ⚠️ NOT this app's memory footprint. It is `physicalMemory − os_proc_available_memory()`,
+    /// i.e. system RAM minus THIS PROCESS's remaining headroom — two different quantities, so
+    /// their difference names nothing. Kept because it is public API (#1201 removed the
+    /// DECISION that rested on it, not the property). Do not build a reading, a threshold or a
+    /// user-facing number on this value; measure the real footprint with Instruments.
     public private(set) var usedMemoryBytes: Int = 0
+
+    /// This process's remaining headroom before jetsam, straight from
+    /// `os_proc_available_memory()`. The one figure here that means what its name says.
     public private(set) var availableMemoryBytes: Int = 0
 
     // MARK: - Configuration
 
-    /// Memory usage thresholds (percentage of total)
+    /// ⚠️ SINCE #1201 THESE DECIDE NOTHING. They describe a percentage of a total this type
+    /// cannot measure (see `updateMemoryStats`), and the poll that compared against them is
+    /// gone.
+    ///
+    /// ⛔ THE FIRST DRAFT OF THIS NOTE SAID "NOTHING READS THESE" AND THAT WAS FALSE — measured
+    /// after writing it, which is the wrong order. `handlePressure` still reads
+    /// `thresholds.warning` in its early-break test. That reader is inside a loop over the
+    /// registered components, and `MemoryReleasable` has ZERO conformers in `Sources/`, so the
+    /// loop body never runs — the read is unreachable, not absent. The difference matters: a
+    /// session told "nothing reads it" would delete the property and break a compile.
+    ///
+    /// Kept as public API and as the natural home for real thresholds if a future slice
+    /// measures a real footprint. Today no shipped behaviour turns on them, and a session
+    /// reading them should not conclude that a 70 % rule is in force.
     public struct Thresholds {
         public var warning: Double = 0.70    // 70%
         public var critical: Double = 0.85   // 85%
@@ -209,31 +240,38 @@ public final class MemoryPressureHandler {
 
     // MARK: - Memory Stats
 
+    /// ⛔ #1201 — THIS POLL NO LONGER DERIVES A PRESSURE LEVEL, because the ratio it used was a
+    /// CATEGORY ERROR and it fired on a healthy device, on every launch.
+    ///
+    /// The arithmetic that stood here was `used = physicalMemory − os_proc_available_memory()`
+    /// and then `used / physicalMemory`. Those two quantities describe DIFFERENT THINGS:
+    /// `physicalMemory` is the system's RAM, `os_proc_available_memory()` is THIS PROCESS's
+    /// remaining headroom before jetsam. Subtracting one from the other does not give this
+    /// app's footprint — it gives "system RAM minus my headroom", which on an 8 GB phone with
+    /// ~2 GB of headroom reads as 6 GB "used" by an app that is using a few hundred MB.
+    ///
+    /// The consequence was not academic. 6/8 = 0.75 is above the 0.70 warning threshold, so
+    /// `currentLevel` went to `.warning` within five seconds of every launch, on every device,
+    /// and `handlePressure` wrote "Handling Warning pressure" into the log. That is the log a
+    /// founder pastes when they report high memory use — an instrument that manufactures the
+    /// very finding it is being consulted about. (It logged ONCE, not repeatedly: the level is
+    /// only acted on when it CHANGES. One false line in the log is still one too many for a
+    /// line that reads as a measurement.)
+    ///
+    /// ⭐ WHAT REPLACES IT: nothing new. iOS's own `DispatchSourceMemoryPressure` is already
+    /// wired in `setupMonitoring` and is the authority on this question — it is the signal the
+    /// system actually raises, `handlePressure` is already its handler, and it needs no
+    /// denominator of ours. This poll keeps doing the one thing it could do honestly: publish
+    /// the headroom figure it can actually read.
+    ///
+    /// ⚠️ `usedMemoryBytes` KEEPS ITS SUBTRACTION and is deliberately NOT deleted — it is
+    /// `public private(set)` API, and removing a published property is a bigger change than
+    /// this slice. It is documented at its declaration as not being this app's footprint.
+    /// Do not build a reading on it.
     private func updateMemoryStats() {
         let stats = getMemoryStats()
         usedMemoryBytes = stats.used
         availableMemoryBytes = stats.available
-
-        guard stats.total > 0 else { return }
-        let usageRatio = Double(stats.used) / Double(stats.total)
-
-        let newLevel: MemoryPressureLevel
-        if usageRatio >= thresholds.terminal {
-            newLevel = .terminal
-        } else if usageRatio >= thresholds.critical {
-            newLevel = .critical
-        } else if usageRatio >= thresholds.warning {
-            newLevel = .warning
-        } else {
-            newLevel = .normal
-        }
-
-        if newLevel != currentLevel {
-            currentLevel = newLevel
-            if newLevel > .normal {
-                handlePressure(level: newLevel)
-            }
-        }
     }
 
     private func getMemoryStats() -> (used: Int, available: Int, total: Int) {
@@ -255,6 +293,19 @@ public final class MemoryPressureHandler {
     }
 
     private func handlePressure(level: MemoryPressureLevel) {
+        // #1201 — THE PUBLISHED LEVEL IS SET HERE NOW, and it has to be: removing the poll's
+        // ratio removed the ONLY writer of `currentLevel`, which would have left it pinned at
+        // `.normal` for the life of the process — a silently dead readout instead of a lying
+        // one, which is not an improvement. This is the right home for it anyway: every path
+        // that reaches this function is a real signal (the system's
+        // `DispatchSourceMemoryPressure`, `UIApplication.didReceiveMemoryWarning`, or an
+        // explicit `releaseMemory(level:)`), so the published level now says what iOS said.
+        //
+        // ⚠️ It is deliberately NOT lowered back to `.normal` anywhere. iOS raises pressure; it
+        // does not announce relief, so inventing a recovery here would be the same category of
+        // guess this slice just removed. A reader gets "the highest pressure seen so far",
+        // which is a true statement about the run.
+        currentLevel = level
         pressureEventCount += 1
         log.warning("MemoryPressureHandler: Handling \(level.description) pressure")
 
