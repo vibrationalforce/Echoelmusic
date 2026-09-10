@@ -14,6 +14,12 @@
 //
 // Wiring a MIDI-2.0 CoreMIDI source (MIDISourceCreateWithProtocol ._2_0) that emits
 // these is a later, iOS-gated slice; this core just guarantees the bytes are right.
+// ⚠️ STATUS (#1229, audit 2026-09-10 `output-sync-6`): the MIDI 2.0 builders below are
+// TEST-ONLY until that source exists: their one `Sources/` consumer is
+// `MPEExpression.midi2NoteOnMessages`, and `git grep -n "midi2NoteOnMessages(" -- Sources`
+// finds only its definition. `MIDIOutput` sends MIDI 1.0 protocol (MPE out is real, #548/#713).
+// Copy that says "MIDI 2.0" must say "MIDI 2.0-ready INPUT" (the parser handles both
+// packings) — the output half is a claim nothing ships yet.
 // Reference: MMA "Universal MIDI Packet (UMP) Format and MIDI 2.0 Protocol" (M2-104-UM).
 
 import Foundation

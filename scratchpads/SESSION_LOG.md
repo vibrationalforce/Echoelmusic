@@ -29612,3 +29612,14 @@ CI/CD-Run-Tests-Job; Erwartung GRÜN auf beiden Bäumen (präventiv). Ein Rot do
 unseeded Entropie oder Peak > 2), erst lesen, dann „reparieren". Unsicherheiten benannt: die Determinismus-Behauptung
 setzt voraus, dass `Float.random` nur im Reverb-IR (`generateReverbIR`, Pfad `useConvolutionReverb == false`) vorkommt —
 gemessen: `grep -n random EchoelDDSP.swift` → nur dort; Drift und Rauschen laufen über den per-Voice-xorshift.
+
+## #1229 — Ultraplan-Zyklus 16: „MIDI 2.0" heißt in der Positionierung jetzt, was es ist (2026-09-10)
+
+Audit `output-sync-6`, nachgemessen: die 2.0-Wortbauer in `UMPEncoder` haben in `Sources/` genau einen Verbraucher
+(`MPEExpression.midi2NoteOnMessages`), und der hat null Aufrufer; `MIDIOutput` sendet MIDI-1.0-Protokoll. Das nackte
+„MIDI 2.0" in CLAUDE.md:38 (Positionierungszeile, aus der Store- und Website-Text schöpfen) und in
+`docs/brainstorming.html` („MIDI 2.0/MPE") las sich als Ausgang. Jetzt „MIDI 2.0-ready input · MPE out" (die
+`faq.html`-Form), ⛔-Rücknahme in CLAUDE.md am Ort, Status-Vermerk im `UMPEncoder`-Kopf mit dem Messbefehl.
+`foreign-needles`/`dead-needles`/`moved-needles` exit 0; `TheMPEInputHasNoZonesTests` Anspruch 12 (docs-Sweep) verlangt
+nur bei „MPE in" eine Zitation — „MPE out" ist frei. CLAUDE.md steht bei 149 131 B (Decke 150 000, #702) — die nächste
+Register-Ergänzung muss BYTES mitbringen, nicht nur Wahrheit.
