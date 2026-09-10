@@ -47,9 +47,14 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// `EchoelChorus.baseDelayMs` is 12 and `EchoelFlanger.baseDelayMs` is 3, which at 48 kHz
     /// are 576.0 and 144.0 samples exactly — and both stages expose a `Depth` field with range
     /// `0...1`, so a user setting depth to 0 (a natural thing to try — "chorus without the
-    /// wobble") parks the read on that integer. Simulated: seed the state by dragging depth
-    /// 0.5 → 0 while a tone plays, and the wet output holds an undecayed alternating error
-    /// against the ideal delay, still there after three seconds.
+    /// wobble") parks the read on that integer. Simulated: seed the state, then set depth to 0
+    /// while a tone plays; the wet output holds an undecayed alternating error against the
+    /// ideal delay, still there after three seconds.
+    /// ⛔ THE FIRST VERSION OF THIS SENTENCE SAID "by DRAGGING depth 0.5 → 0", and the guard
+    /// file retracts exactly that recipe in the same commit: a slow drag barely excites the
+    /// mode, because the state travels with it. Leaving the word here would have sent a device
+    /// check down the one path that shows nothing. Set it in ONE step (type 0, or load a
+    /// preset — `GenreFX` writes `chorus.depth` directly).
     /// ⚠️ ITS SIZE IS PHASE-DEPENDENT — two runs differing only in WHEN the depth reaches the
     /// integer measured ±0.46 and +0.744 (wet peak 1.244), because the seed is whatever the
     /// filter happened to hold at that instant. Quote "does not decay", not a figure.
@@ -57,16 +62,23 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// rate we ship.
     ///
     /// WHY 0.99, and what it costs — all four numbers derived, none guessed:
-    ///  · pole radius 0.99 ⇒ half-life 69 samples ≈ 1.4 ms, so the ring is inaudible within
-    ///    ~10 ms instead of never.
+    ///  · pole radius 0.99 ⇒ half-life 69 samples ≈ 1.4 ms, so the residue is 60 dB down in
+    ///    ~14 ms instead of never. ⚠️ Say "gone", not "inaudible": the residue sits at exactly
+    ///    Nyquist and is barely audible AS A TONE even undecayed. What it actually costs is
+    ///    HEADROOM — the measured wet peak reached 1.244 — so the honest benefit is a limiter
+    ///    that stops working against a standing offset, not a hiss that goes away.
     ///  · the clamp engages only for `frac < 0.005025`, i.e. **0.75 %** of samples over a full
     ///    chorus LFO cycle at depth 0.5 — it is not in the signal path the rest of the time.
     ///  · where it does engage, the realised fractional delay is 0.005 samples instead of 0 —
     ///    **0.1 microseconds** at 48 kHz.
-    ///  · the stage stays an EXACT allpass. `(eta + z⁻¹)/(1 + eta·z⁻¹)` has magnitude 1 at
-    ///    every frequency for any real `|eta| < 1`; verified numerically across the band at
-    ///    eta = 1.0, 0.99 and 0.9. Clamping changes the fractional delay it realises, never
-    ///    its magnitude response — which is the whole reason to prefer this over detuning the
+    ///  · the stage stays an EXACT allpass, and the reason is stronger than first written.
+    ///    `|eta + e^-jω|² = |1 + eta·e^-jω|² = 1 + 2·eta·cos ω + eta²` — an identity for EVERY
+    ///    real `eta`, not only `|eta| < 1`. ⛔ The first version attributed unit magnitude to
+    ///    the `|eta| < 1` condition and said it was "verified numerically at eta = 1.0, 0.99
+    ///    and 0.9"; at eta = 1.0 the transfer is 0/0 at Nyquist and is not evaluable there.
+    ///    `|eta| < 1` buys STABILITY, which is the whole point of the clamp; unit magnitude
+    ///    was never the thing at risk. Clamping therefore changes the fractional delay this
+    ///    stage realises and nothing else — the reason to prefer it over detuning the
     ///    requested delay.
     ///
     /// ⚠️ NOT the textbook remedy, and the FIRST version of this paragraph gave a reason that
@@ -86,17 +98,30 @@ public final class EchoelDelayLine: @unchecked Sendable {
     ///
     /// ⚠️ IT OPENS A DENORMAL PATH, and that is stated rather than fixed. Before the clamp the
     /// zero-input residue did not decay at all; now it decays as 0.99^n, so it passes through
-    /// the denormal range (~1e-38) after roughly 8 700 samples — about 180 ms — and spends a
-    /// few thousand more there before it underflows to zero. On Apple silicon scalar FP that
+    /// the denormal range (~1e-38) after roughly 8 700 samples — about 180 ms — and spends
+    /// about 1 600 more there before it underflows to zero (`ln(1.4e-45 / 1.175e-38) / ln 0.99`;
+    /// "a few thousand" stood here and was ~2× high). On Apple silicon scalar FP that
     /// costs nothing measurable (this is an x86 problem, not an ARM one), and the alternative
     /// is a per-sample flush test on a path that runs for every voice. Recorded so the next
     /// reader does not have to re-derive it; revisit only if a profile actually shows it.
     ///
-    /// ⚠️ INSTANCE `let`, not `static let`, and that is deliberate — unlike `maxFrames` above,
-    /// this one is read ON THE AUDIO THREAD, once per sample. A `static let` is lazily
-    /// initialised through `swift_once`, so every read is formally a global access with an
-    /// acquire load. The optimiser very probably folds it to a constant; "very probably" is
-    /// not the standard on a render path, and a stored `let` costs four bytes and no doubt.
+    /// ⛔ INSTANCE `let`, not `static let` — AND THE REASON FIRST GIVEN HERE WAS FOLKLORE,
+    /// retracted rather than refreshed. It said a `static let` "is lazily initialised through
+    /// `swift_once`, so every read is formally a global access with an acquire load". That is
+    /// the UNOPTIMISED model. For a POD `static let` initialised from a LITERAL, SILGlobalOpt
+    /// statically initialises the global at `-O`: no `swift_once`, no acquire load, and the
+    /// value constant-folds — `maxFrames` one field up is the identical shape. The paragraph
+    /// also rejected an argument-by-optimiser and then rested on one, because an instance
+    /// `let` is a LOAD FROM `self` per call that only LICM hoists out of the caller's loop.
+    ///
+    /// ⚠️ THE HONEST STATE IS: UNMEASURED, and it cannot be measured in a web session (no Swift
+    /// toolchain). Both forms are correct and neither allocates or locks. The instance `let`
+    /// ships because it needs no claim about codegen at all — not because it is faster.
+    /// **Do NOT generalise this to other hot-path constants**; converting `EchoelReverb` or
+    /// filter-coefficient statics on the strength of the retracted mechanism would grow every
+    /// object and add a load per stage for nothing.
+    /// ⚠️ And the cost is not "four bytes": the FIELD is 4 B, but it lands at offset 64 after
+    /// the existing layout, so the instance goes 64 B → 68 B → **72 B stride**.
     private let maxAllpassCoefficient: Float = 0.99
 
     // MARK: - Init
@@ -197,6 +222,16 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// Assumes a single modulated read tap (keeps one filter state).
     @inline(__always)
     public func readAllpass(delaySamples: Float) -> Float {
+        // ⛔ "NaN-safe" BELOW IS ABOUT `d`, NOT ABOUT THIS FUNCTION. #1205 tripled the NaN
+        // prose here and named the wrong half; the one live NaN hazard in `readAllpass` is the
+        // RECURSIVE STATE, and nothing in this file closes it. `out = s1 + eta * (s0 - apPrev)`
+        // is NaN for every finite input once `apPrev` is NaN, and `write(_:)` takes its sample
+        // RAW — `EchoelFXChain.processStereo` sanitises the CONTROL boundary, not the SIGNAL
+        // one. `EchoelFlanger` then feeds its own output back in, so one NaN self-sustains
+        // through the ring AND the filter state. Only `reset()` clears it, and the drain that
+        // would call `reset()` is gated on the output being below 1e-5 — `NaN < 1e-5` is FALSE,
+        // so the poisoned chain never sleeps and never heals. Measured, open, tracked as its
+        // own slice; do NOT read the sanitised `d` below as covering it.
         // NaN-safe, and this comment used to say the OPPOSITE of what the code does (#1205).
         // It described `Swift.min(Swift.max(x, 1), max)` — the GENERIC `Comparable.clamped`,
         // which passes NaN straight through — and concluded that the next line, `Int(d)`,

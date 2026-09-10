@@ -27,8 +27,11 @@
 // ⛔ AND THE FIRST MEASUREMENT OF THIS SLICE REPORTED A SECOND, COLD-START ARTEFACT THAT DOES
 // NOT EXIST. It read "peak 0.0144, never decays, from rounding alone". That number was the
 // error in the MEASUREMENT, not in the code: the reference signal was delayed by 576 samples
-// while `readAllpass(delaySamples: d)` returns the sample `d - 1` back (verified against the
-// shipped indexing contract — `read(1.0)` returns the most recent write). One sample of a
+// while the line's own contract makes `delaySamples: 1.0` the MOST RECENT write — so a request
+// for d and a reference delayed by d are one sample apart. (⛔ The first wording said the call
+// "returns the sample `d - 1` back", which reads as contradicting the contract quoted in the
+// same breath; it is a statement about the reference alignment, not about the function.) One
+// sample of a
 // 220 Hz sine at amplitude 0.5 is 0.0144. The clamp left that figure untouched, which is what
 // exposed it — a fix that does not move a number it should have moved is a finding about the
 // number. Recorded because the retracted figure was already in a status report.
@@ -38,6 +41,12 @@
 // frequency for any real `|eta| < 1`, verified numerically at 1.0, 0.99 and 0.9 — so the clamp
 // changes only the fractional delay it realises (0.005 samples, 0.1 µs at 48 kHz), never the
 // magnitude response. It engages on 0.75 % of samples over a chorus LFO cycle at depth 0.5.
+//
+// ⭐ AN UNCLAIMED BENEFIT, recorded because the slice argues only the exactly-integer case. The
+// clamp also bounds the NEAR-integer one, which an ordinary sweep passes through every cycle:
+// at frac ≈ 0.0001 the raw coefficient is ≈ 0.9998, a half-life of ~144 ms on the parent tree.
+// After the clamp that is 1.4 ms. Nothing in this file asserts it — it is a consequence, not a
+// claim — but a future reader weighing whether 0.99 is worth it should have the whole figure.
 //
 // ⚠️ THE CLAMP OPENS A DENORMAL PATH — stated in the constant's own doc block rather than
 // fixed. The residue now decays as 0.99ⁿ instead of not at all, so it crosses ~1e-38 after
@@ -63,12 +72,16 @@
 //    is one finding): claim 1's decay assertion (|y| = 0.333 on the parent, 0.00219 here, a
 //    factor of 152), claim 3b's boundary probe (the one delay where the two trees differ), and
 //    claim 4's TWO needles, which are the single absence of the fix seen from two angles.
-//  · SIX COUNTERWEIGHTS, green on both trees and the point of the file (#343) — claim 1's own
-//    seed check (so the derived expectation stays derived), claim 2, claim 3's THREE
-//    bit-identical values plus its boundary probe on the safe side, and claim 4's call-site
-//    pin. Each names a way to satisfy the letter of the fix and lose it: return zero, stop
-//    interpolating, quietly move ordinary output, or guard a function nothing calls.
-//    (That is 7 assertions across 6 named counterweights: claim 3's loop runs four rows.)
+//  · SEVEN COUNTERWEIGHT ASSERTIONS, green on both trees and the point of the file (#343),
+//    across FIVE named items in FOUR test methods: claim 1's own seed check (so the derived
+//    expectation stays derived) · claim 2 · claim 3's THREE bit-identical values · claim 3's
+//    boundary probe on the safe side · claim 4's call-site pin. Each names a way to satisfy
+//    the letter of the fix and lose it: return zero, stop interpolating, quietly move
+//    ordinary output, or guard a function nothing calls.
+//    ⛔ THIS TALLY SAID "SIX" AND LISTED FIVE — in the very paragraph that retracts an earlier
+//    "FIVE that listed four". Second offence, same direction. The lesson is not "count again":
+//    it is that ITEMS, METHODS and ASSERTIONS are three different denominators, and a tally
+//    that does not say WHICH is unfalsifiable. All three are now written out.
 //  · ZERO anchor absences — every needle and every behavioural path resolves on BOTH trees.
 //
 // NEEDS-FOUNDER-VERIFY — und das REZEPT ist beim ersten Mal falsch gewesen, in beiden Haelften.
@@ -213,9 +226,15 @@ final class TheAllpassInterpolatorCannotRingForeverTests: XCTestCase {
         let line = try SourceText.codeOnly(Self.read("Sources/Echoelmusic/DSP/EchoelDelayLine.swift"))
         XCTAssertTrue(line.contains("private let maxAllpassCoefficient: Float = 0.99"), """
             the allpass coefficient bound is no longer a named constant at 0.99. If you \
-            retuned it, the four derived numbers in its doc block — half-life, engagement \
-            share, realised-delay error, and the 0.00219 expectation in claim 1 above — all \
-            move with it and must be re-derived in the SAME commit (#364).
+            retuned it, these move with it and must be re-derived in the SAME commit (#364): \
+            the four derived numbers in its own doc block (half-life, engagement share, \
+            realised-delay error, denormal residency), the 0.00219 expectation in claim 1 \
+            above, and claim 3b's 0.9925000071525574 below. \
+            ⚠️ ONE OF THEM IS IN ANOTHER FILE and was missing from this list: \
+            `SleepingChainDoesNotHoardAudioTests.testTheStorageGateIsNeutralInNormalOperation` \
+            reads back this coefficient from a whole-sample delay. Its band is deliberately \
+            `(0, 1]` so ANY cap in that range passes — but if you move the cap OUTSIDE it, \
+            that file goes red on correct code with a message that blames the gate.
             """)
         XCTAssertTrue(
             line.contains("Swift.min(maxAllpassCoefficient, (1.0 - frac) / (1.0 + frac))"), """
