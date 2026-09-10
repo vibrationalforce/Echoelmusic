@@ -199,6 +199,66 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
         public static let vibratoDepth: ClosedRange<Float> = 0...1
     }
 
+    /// Fold every bounded field back inside `Bounds`. THE ONE applier of that constant
+    /// (#416) — `SoundPrompt.clamp` and `init(from:)` both call this, so a bounded field
+    /// added later cannot be clamped in one place and forgotten in the other.
+    ///
+    /// ⭐ WHY THE DECODER NEEDS IT AT ALL, measured rather than assumed (#1207). The
+    /// custom decoder honours the `decodeIfPresent` law and applied NO range check, so a
+    /// hand-edited or third-party project JSON could carry any finite `Float` straight to
+    /// the render path. `filterLFORate` is the one that does not merely sound wrong, it
+    /// LATCHES: `apply(to:)` writes it raw to `EchoelLFO.rate`, whose `next()` does
+    /// `phase += rate / sampleRate` with the reset gated on `phase >= 1.0`. At 48 kHz a
+    /// stored `3.4e38` adds `7.08e33` per sample, the `-= 1.0` is a no-op at that
+    /// magnitude. Simulated in float32 rather than estimated, and the two milestones are
+    /// NOT the same number — which is worth writing down, because the obvious one is the
+    /// later one: the OUTPUT goes non-finite on sample **7 646** (0,159 s), when
+    /// `phase * 2 * .pi` overflows `Float` while `phase` itself is still finite; `phase`
+    /// only saturates to `+inf` on sample **48 064** (1,0013 s). From the first of those,
+    /// `sinf` sees `inf` and returns NaN on every sample, for the life of the voice, and
+    /// nothing short of a new patch can clear it.
+    /// No NaN is needed to get there and none could be: `JSONDecoder`'s
+    /// `nonConformingFloatDecodingStrategy` defaults to `.throw`, so JSON cannot deliver
+    /// one. A large FINITE number is the whole vector, and JSON delivers those happily.
+    ///
+    /// ⚠️ THE DOOR IS LIVE, which is what separates this from the FX-preset path #1206b
+    /// had to retract a reachability claim about. `EchoelStudioView`'s "Open project"
+    /// toolbar button sets `projectImportPresented`, its `.fileImporter` hands the URL to
+    /// `ProjectStore.importProject(fromDocument:)`, that decodes a `Project`, and a
+    /// `Project` carries a whole `SynthPatch`. A user really can pick that file.
+    ///
+    /// ⚠️ IT CANNOT CUT A SHIPPED OR USER-SET VALUE — the #430 `decay` invariant, and the
+    /// reason this is safe to run on EVERY decode rather than only on import. Measured
+    /// across `PatchLibrary` and this file: no factory patch sits outside its own bound,
+    /// and no decoder default does either. The Sound panel's rows read the SAME `Bounds`,
+    /// so a value a finger can set is a value this keeps. Only a file this app did not
+    /// write can be touched at all.
+    ///
+    /// ⚠️ NOT NaN-NEUTRAL, and that is deliberate rather than overlooked: `clamped(to:)`
+    /// maps NaN to the range's LOWER bound, so a non-finite would land on 0 Hz (LFO
+    /// stopped) / 20 Hz cutoff (dark) rather than on the value the patch meant. Silent and
+    /// safe beats NaN, and the decoder cannot produce one anyway (see above).
+    public mutating func clampToBounds() {
+        typealias B = Bounds
+        attack = attack.clamped(to: B.attack)
+        decay = decay.clamped(to: B.decay)
+        sustain = sustain.clamped(to: B.sustain)
+        release = release.clamped(to: B.release)
+        harmonicity = harmonicity.clamped(to: B.harmonicity)
+        harmonicLevel = harmonicLevel.clamped(to: B.harmonicLevel)
+        brightness = brightness.clamped(to: B.brightness)
+        noiseLevel = noiseLevel.clamped(to: B.noiseLevel)
+        filterCutoff = filterCutoff.clamped(to: B.filterCutoff)
+        filterResonance = filterResonance.clamped(to: B.filterResonance)
+        lfoToFilterDepth = lfoToFilterDepth.clamped(to: B.lfoToFilterDepth)
+        filterLFORate = filterLFORate.clamped(to: B.filterLFORate)
+        filterLFODepth = filterLFODepth.clamped(to: B.filterLFODepth)
+        reverbMix = reverbMix.clamped(to: B.reverbMix)
+        reverbDecay = reverbDecay.clamped(to: B.reverbDecay)
+        vibratoRate = vibratoRate.clamped(to: B.vibratoRate)
+        vibratoDepth = vibratoDepth.clamped(to: B.vibratoDepth)
+    }
+
     public init(
         id: UUID = UUID(),
         name: String,
@@ -308,6 +368,13 @@ public struct SynthPatch: Codable, Sendable, Equatable, Identifiable {
             voiceProfileLabel = nil
             voiceProfileBlend = nil
         }
+
+        // #1207 — LAST, so it folds the DECODED values and never the fallbacks-that-were-
+        // never-read: every `?? default` above is already inside its own bound (measured),
+        // so absence still yields exactly the memberwise default and the #95 `decodeIfPresent`
+        // law is untouched. See `clampToBounds()` for why a file-supplied `filterLFORate`
+        // is the one that latches the LFO into permanent NaN.
+        clampToBounds()
     }
 
     // MARK: - Loudness normalisation (founder 2026-07-11 "angleichen")
