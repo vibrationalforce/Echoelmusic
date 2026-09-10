@@ -354,7 +354,16 @@ public struct Project: Codable, Sendable, Identifiable, Equatable {
         name           = try c.decodeIfPresent(String.self,   forKey: .name)           ?? "Take"
         savedAt        = try c.decodeIfPresent(Date.self,     forKey: .savedAt)        ?? Date()
         styleRaw       = try c.decodeIfPresent(String.self,   forKey: .styleRaw)       ?? ""
-        keyRoot        = try c.decodeIfPresent(Int.self,      forKey: .keyRoot)        ?? 0
+        // #56 (BD, 2026-09-10) — FOLDED INTO A PITCH CLASS, never a raw `Int`. Every reader of
+        // this field adds or indexes with it: `EchoelStudioView` computes `60 + rootIndex` for the
+        // key label and the root frequency, and `TuningSystem.pitchClassCents(root:)` indexes with
+        // it. A hand-edited (or corrupted) take with `"keyRoot": 9223372036854775807` therefore
+        // TRAPPED on `60 + Int.max` — a crash behind the same "Open project" door as #1207, one
+        // step worse than #1207's silent NaN. The fold is `MusicalKey.init(root:)`'s own
+        // `((r % 12) + 12) % 12`, so a file and the key it names can never disagree (#416: one
+        // law); `%` cannot trap for a divisor of 12, so `Int.min` folds as well.
+        let rawKeyRoot = try c.decodeIfPresent(Int.self,      forKey: .keyRoot)        ?? 0
+        keyRoot        = ((rawKeyRoot % 12) + 12) % 12
         scaleRaw       = try c.decodeIfPresent(String.self,   forKey: .scaleRaw)       ?? ""
         bpm            = try c.decodeIfPresent(Double.self,   forKey: .bpm)            ?? 120
         modeRaw        = try c.decodeIfPresent(String.self,   forKey: .modeRaw)        ?? ""
