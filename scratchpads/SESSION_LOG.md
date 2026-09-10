@@ -29647,3 +29647,19 @@ und eine Einheit aus zwei Präzedenzen war die Form des Defekts). Wächter
 5 (Text: zwei Helfer-Aufrufe) ROT/GRÜN — transkribiert auf der Zweig-Logik, Formatierung ist `EchoelDecimalText`
 (generische `BinaryFloatingPoint`-Überladung, Zeile 144, also kein Double-Cast nötig). Prüfer exit 0.
 `BioMetricInfo` erklärt SDNN bereits (`.sdnn`-Fall) — kein Hinweis hinzugefügt.
+
+## Gate-Lesung für #1216–#1227 (2026-09-10, 16:54 UTC)
+
+**Xcode Compile Check #2531 auf `56db8f0` = success** (16:45→16:54) — deckt `Sources/` aller Scheiben #1216–#1227
+(Polar-Gate/Parser, Kamera-Kohärenz-Historie, MPE-Reihenfolge, PatternEngine-Ideal-Raster, CoherenceTrend, EchoelmusicApp
+ohne vierte Registrierung und ohne `shouldAutoPlay`, OnboardingView). Die Läufe #2524–#2530 dazwischen sind
+`cancelled` (eigene Folge-Pushes) und beweisen nichts. **CI/CD 5988 (`517d97a`, #1215):** `Test build Succeeded`
+16:17 → die Wächter kompilieren; `test-without-building` exit 65 nach 1154 s, das 200-Zeilen-Fenster zeigt nur `passed`
+und die `** TEST EXECUTE FAILED **`-Zeile ohne benannten Test = #396-Signatur, kein Befund. **CI/CD 5989 (`8b46c73`,
+#1216):** `Test build Succeeded` 16:38 (`TheStrapCannotPublishADeadBodyTests` kompiliert), exit 65 nach 807 s, Fenster
+ohne benannten Fehlschlag — dieselbe Signatur. Die Läufe 5990–5996 stehen in der macOS-Warteschlange (5990 läuft seit
+16:40). ⚠️ WINDOW-Gesetz (#807): `tail -200` — ein Fehlschlag früher im Lauf ließe im Fenster keine Spur; die Wächter
+#1216–#1233 sind darin nicht namentlich sichtbar, ihre AUSFÜHRUNG bleibt unbelegt, ihr KOMPILAT ist für 5988/5989
+belegt. **TestFlight 2587 (`18b5615`, v10.79.467) = success 16:31.** Pushes seit 467: #1216–#1233 (`09b76de`), davon
+`Sources/`-Änderungen in #1216–#1221, #1223–#1225, #1227, #1233 — der nächste Bump (468) wartet auf Compile-Grün für
+`09b76de` (BioStripView) und trägt `founder-verify.py --since 18b5615`.
