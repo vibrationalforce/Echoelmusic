@@ -29663,3 +29663,41 @@ ohne benannten Fehlschlag — dieselbe Signatur. Die Läufe 5990–5996 stehen i
 belegt. **TestFlight 2587 (`18b5615`, v10.79.467) = success 16:31.** Pushes seit 467: #1216–#1233 (`09b76de`), davon
 `Sources/`-Änderungen in #1216–#1221, #1223–#1225, #1227, #1233 — der nächste Bump (468) wartet auf Compile-Grün für
 `09b76de` (BioStripView) und trägt `founder-verify.py --since 18b5615`.
+
+## #1234 / #1234b / #1235 / #1236 (2026-09-10, 17:05–17:40 UTC)
+
+**#1234 `ship-path-6` (`b9c3b86`→ repariert `82cbbf6`):** `Resources/PrivacyInfo.xcprivacy` deklariert keine Disk-Space-API mehr
+(`git grep -c 'volumeAvailableCapacity\|attributesOfFileSystem\|systemFreeSize\|volumeTotalCapacity' Sources` → 0) und
+keinen SDK-Grund `0A2A.1` für Datei-Zeitstempel (der eine reale Aufrufer `.creationDateKey` ist mit `C617.1` gedeckt);
+„widget/AUv3" → „widget" (AUv3-Target ging 2026-07-24). **#1234b — DER FEHLER DIESES SLICES, und die Lehre gehört
+hierher:** das eingefügte XML-Kommentar zitierte den grep-Befehl mit dem Separator `-- Sources`, und XML verbietet `--`
+im Kommentar. `plistlib.load` meldete „not well-formed (invalid token): line 85, column 115" — **die drei Claims des
+#1222-Wächters blieben grün**, weil sie Substring-Scans sind, und `foreign-needles` ebenfalls. Nur ein echter Parse fand
+es, und den hatte ich nur aus Gewohnheit dazugestellt. Ein Manifest, das nicht parst, liefert NULL Deklarationen aus —
+ITMS-91053 beim Upload, ohne dass ein Gate hier rot wird. Reparatur: Separator raus (`… Sources` ist derselbe Befehl),
+**Claim 4** im Wächter liest die Datei über `PropertyListSerialization` und vergleicht die GEPARSTE Kategorienmenge mit
+den drei Nadeln. Transkription: Worktree grün · `b9c3b86` rot (Parse) · `956276a` rot (DiskSpace noch in der Menge) — der
+Wächter unterscheidet genau die beiden Defekte, die diese Scheibe hatte und behob. **GESETZ: ein Wächter auf eine Datei,
+die ein Parser liest, muss selbst parsen; ein Text-Scan ist auf einer plist die Form, die den Fehler nicht sehen kann.**
+Der Commit war noch nicht gepusht, `main` hat die Form nie gesehen.
+
+**#1235 `studio-ui-5` (`2a31515`):** `ADMStreamStatusLine` steht als türloses Kind von `ImmersiveStageView` im
+CLAUDE.md-Register (eine Klausel in der Stage-Zeile). CLAUDE.md 149 567 B — 433 B unter der Decke; der nächste
+Register-Eintrag geht nicht mehr ohne Verschiebung ins Ledger.
+
+**#1236 `bio-pipeline-6` (`f37e692`):** die Kamera hatte als einzige Quelle KEIN Ehrlichkeits-Gate auf der HRV. Gemessen:
+`git grep -n "canStateHRV" -- Sources` → Gurt (`PolarH10BioPublisher:211`) und sonst nur Kommentare; der eine Leser von
+`rrWindowMs`/`rawIntervalsMs` ist `AnalysisPoincareView` (türlos, Register). `detectPeaks` bandet (0,3–1,5 s) und
+IQR-reinigt, aber eine Folge abwechselnd ausgelassener/verdoppelter Schläge passiert die Band Schlag für Schlag — nur der
+Malik-Test sieht sie, und den fuhr auf dem erreichbaren Pfad niemand. Die Strip-Zelle klammert auf 3…300 ms
+(`plausibleHRVms`, #1233), also war der Wert auf dem Schirm versteckt und auf `/echoelmusic/bio/heart/rmssd` (nur
+`> 0`-gegated) und in `hrvForSound` unterwegs. Jetzt: EIN `trustworthy = RRIntervalHygiene.canStateHRV(rrMs:
+self.analyzer.rawIntervalsMs)` über alle VIER Felder (RMSSD, normalisiert, SDNN, pNN50; der Audit-Vorschlag nannte zwei —
+ein Frame mit „—" bei RMSSD und Zahl bei SDNN wäre genau die Inkonsistenz, die die Gurt-Parität verhindern soll; der
+Gurt gated alle vier mit demselben Bool). `acceptedSegments` bewusst NICHT übernommen (ob seine Lückenstruktur zu rPPG
+passt, ist die offene Messung, die der SDNN-Kommentar bei ~1700 nennt). `rawIntervalsMs` ist das frische 10-s-Fenster —
+für einen Bruchteil-Test ohne Mindestanzahl das Richtige. Analyzer-Kopf korrigiert: „Consumers" war einer, türlos.
+NEEDS-FOUNDER-VERIFY (schlechter Kontakt → „—", Erholung ~10 s). Wächter `TheCameraRefusesToStateAnUntrustedHRVTests`
+(5 Claims): 1/2/5 rot auf `82cbbf6`, grün hier; 3 (Verhalten: 600/900-ms-Wechselfolge, jedes Intervall in der Band,
+Bruchteil 0,5 → verweigert; regelmäßige Folge → angenommen) und 4 (Gurt-Parität) grün/grün. Prüfer exit 0. `Sources/`
+berührt → Compile-Check-Lesung für `f37e692` steht aus.

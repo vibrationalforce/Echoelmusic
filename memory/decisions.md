@@ -1544,3 +1544,9 @@ beschränken (#292, `afcf3aa`).
 - **Warum:** Audit `sequencer-core-2` — Handler-Latenz wurde pro Tick zu dauerhaftem Phasenverlust; Click (Audio-Akkumulator) und MIDI-Clock (repeating Timer) hielten absolute Kadenz, die Noten nicht.
 - **Re-Anker-Regel:** > 1 Schritt hinten (Suspend/Stall) → Neustart bei `now` ohne Burst; ≤ 1 Schritt → Raster halten (ein Sofort-Tick). Grenze = genau ein Schritt, im Wächter gepinnt. Alternative „immer aufholen" verworfen: nach einem Suspend würden Dutzende Schritte in Millisekunden feuern.
 - **Review:** 2026-10-10 nach Geräteprobe (16 Takte gegen den Click, NEEDS-FOUNDER-VERIFY am Helfer).
+
+### 2026-09-10 — Kamera-HRV läuft durch dasselbe Ehrlichkeits-Gate wie der Gurt, alle vier Felder auf einem Bool (#1236)
+- **Entscheidung:** `CameraRPPGBioPublisher` publiziert RMSSD, normalisierte HRV, SDNN und pNN50 nur, wenn `RRIntervalHygiene.canStateHRV(rrMs: analyzer.rawIntervalsMs)` (≥ 80 % Überlebensrate) — sonst Sentinel 0 (Strip „—", `hrvForSound` neutral). `acceptedSegments` wird NICHT auf rPPG übertragen.
+- **Warum:** Audit `bio-pipeline-6` — die Quelle mit dem geringsten Vertrauen war die einzige ohne Gate; eine Wechselfolge ausgelassener/verdoppelter Schläge passiert die Band, nicht den Malik-Test, und ging ungegated auf OSC und in den Klang. Der Audit-Vorschlag gated zwei Felder; vier, weil der Gurt vier gated und ein halb-gegateter Frame die Inkonsistenz wäre, die Parität verhindern soll.
+- **Alternative verworfen:** rollende Historie fürs Gate (wie #1220 für Kohärenz) — `canStateHRV` ist ein Bruchteil-Test ohne Mindestanzahl, das frische 10-s-Fenster ist dafür richtig; eine Historie hätte einen schlechten Kontakt ~60 s lang nachwirken lassen.
+- **Review:** 2026-10-10 nach Geräteprobe (schlechter Kontakt → „—", Erholung ~10 s; NEEDS-FOUNDER-VERIFY am Gate).
