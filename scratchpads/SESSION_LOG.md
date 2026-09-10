@@ -29350,3 +29350,61 @@ ein echtes Gate.
 **Nebenbei gemessen und im Werkzeug festgehalten:** `foreign-needles.py` scannt absichtlich nur
 `Tests/CISmoke/`. Die nicht-blockierende Suite bindet heute **null** Nicht-Swift-Dateien
 (Befehl steht im Dateikopf) — die Beschränkung ist also gemessen, nicht angenommen.
+
+## #1208–#1211 — Deep Audit · Grand Council · Ultraplan · Marketing, und die ersten drei Korrekturzyklen (2026-09-10)
+
+**Founder-Auftrag (wörtlich):** „Echoelmusic als gesamtes einmal überprüfen und optimieren ultraechoel
+ultracode im Apple Developer Korrekturschleifen Modus … Lässt sich der DMMW Pfad wieder öffnen? Deep
+Council. Wir wollen seamless AUv3 Integration in alle Richtungen. … Deep Audith, Council, Ultraplan und
+Marketing Strategie." Branch `claude/echoelmusic-review-optimize-u5jjpd`, Basis `ffd334e` (#1206b),
+später `origin/main` (#1207/#1207b) hineingemerged (`57dd7b7`, Konflikt nur in `decisions.csv`, beide
+Seiten behalten).
+
+**Vier Dokumente, drei Workflows (Ultracode), 61 Agenten:**
+- `scratchpads/GRAND_COUNCIL_DMMW_AUV3_2026-09-10.md` (`fa45698`) — 3 Rechercheure, 3 Council-Läufe, 1
+  Richter, alle fertig. **Urteil: DMMW als PRODUKT nein, als ECOSYSTEM-POSITION ja** — Richtung 3
+  (MIDI/IDAM/OSC) verpacken, OSC-in, Ableton Link (Loop-only, nach Multicast-Entitlement), dann Echoel
+  ALS AUv3 (`aumu`) als eigene Epic per #590-Revisit, NACH Ship-Gate 1+5. Hosting bleibt CUT. Fünf
+  Binärfragen (§9). Drei PROPOSED-Zeilen in `decisions.csv` (795–797), Review 2026-10-10.
+- `scratchpads/DEEP_AUDIT_2026-09-10.md` — 8 Prüfer + 2/1/0 Widerleger je Schwere; 47 gestartet, 45
+  fertig, **2 am Sitzungslimit gestorben** (ein Widerleger, die Synthese). 54 Befunde, 45 überlebend, 9
+  widerlegt. Report von der Sitzung aus den Befund-Objekten geschrieben.
+- `scratchpads/MARKETING_STRATEGY_2026-09-10.md` — 3 Lanes fertig, 1 von 3 Kritiken fertig, Synthese am
+  Limit gestorben → Synthese von der Sitzung, Lanes als Anhänge, Regex-Prüfung statt Kritik für B/C.
+- `scratchpads/ULTRAPLAN_2026-09-10.md` — EINE Schlange aus Audit-Schleife, Council-Roadmap und
+  Marketing-Aktionen (25 Zyklen, Founder-gated-Liste, die 5 Fragen).
+
+**Korrekturzyklen gefahren (je ein Commit, transkribiert, nicht kompiliert):**
+- **#1208** `4bba144` — `EchoelDelay.tone` und `timeSeconds` NaN-sicher (`clamped(to:)`); der dritte
+  Nachbar der #1206b-Klasse (`tone` sitzt IM Feedback-Rückschreibpfad; #588 hatte eine Zeile davor
+  aufgehört). Zwei neue Ansprüche in `ANonFiniteControlCannotReachTheRenderTests` (24 → 26 `func test`).
+- **#1209** `41c9648` — Privacy-Link in `LearnView` (5.1.1(i), HealthKit-App), Wächter
+  `ThePrivacyPolicyHasAnInAppDoorTests` (Anspruch 1 rot am Eltern, 2/3 Gegengewichte).
+- **#1210** `8180b27` — **ADM-OSC sendete seit seiner Entstehung eine Adressform, die es in der Spec nicht
+  gibt** (`/position/azimuth` statt `/azim`; Spec `docs/adm-osc.bs` Zeilen 116–122, von der Sitzung
+  selbst aus dem Upstream geladen). Drei Formatierer + vier Golden-Tests + vier Prosa-Heimaten, neuer
+  Wächter `TheADMOSCLeavesAreTheSpecsTests` (1+2 rot am Eltern, 3 End-to-End-Gegengewicht). Über 3
+  Dateien, begründet im Commit. NEEDS-FOUNDER-VERIFY am Renderer im Sender-Kopf.
+- **#1211** (dieser Commit) — `CLAUDE.md`: Watch-Headline („ausgeliefert" → „kompiliert, nicht
+  eingebettet"), PERFORMANCE-Zeilen (120 fps / 120 Hz → 60 fps gepinnt / ~1 Hz), Kohärenz-auf-Kamera-Satz
+  unter DDSP-Tabelle und TEMPO-INVARIANT. 147 021 → 148 528 B, Luft 1 472 B. Alle drei Nadel-Prüfer Exit 0.
+
+**Vier Lehren, die bleiben:**
+1. **Ein Golden-Test beweist Stabilität, nie Richtigkeit.** Vier Testdateien pinnten die falschen
+   ADM-Strings monatelang; ein Wächter gegen die SPEC-Tabelle war die fehlende Hälfte. (→ HARNESS_LEDGER)
+2. **Der Richter hat die Faktenbasis gerettet, nicht die Läufe.** Zwei von drei Council-Läufen hätten
+   Vorhandenes gebaut (Bluetooth-MIDI-Picker, `isFresh`) — beides von der Sitzung nachgemessen, bevor es
+   ins Dokument kam. Ein Ergebnis aus einem Workflow ist eine BEHAUPTUNG, bis die Sitzung es misst.
+3. **Sitzungslimit trifft die LETZTE Stufe zuerst.** Beide Synthese-Agenten starben; die strukturierten
+   Zwischenstände (JSON) waren vollständig. Ein Workflow, der seine Rohdaten als Schema zurückgibt, ist
+   auch dann verwertbar, wenn die Synthese fehlt — die freie Textstufe zuletzt planen, nie zuerst.
+4. **Widerlegte Befunde sind ein Deliverable.** Neun Messungen stimmten, die Schlüsse nicht; der Abschnitt
+   „Widerlegt" verhindert, dass die nächste Sitzung sie erneut findet (#806-Sackgasse, `swift test`-Frage,
+   Landscape-Frage, Doctor-CRITICALs sind founder-gated).
+
+**Mid-Turn-Nachricht des Founders:** die Übergabe einer PARALLEL-Sitzung (`claude/echoelmusic-neustart-auv3-6ri2ek`,
+`HANDOVER_2026-09-10.md`, Stopp-Befehl DORT, Cron `trig_01Mio4dc5T4KJPfRZKguy9mn` weiter offen) plus
+sechs „session limit"-Meldungen. Für diese Sitzung kein Stopp; die Übergabe ist in Ultraplan §2 Punkt 8
+und in der Basis (#1207/#1207b gemerged) berücksichtigt.
+
+**Gate-Lesung nach dem Push:** steht unten, sobald gelesen.

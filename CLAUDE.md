@@ -228,7 +228,7 @@ Zählweise: `git grep -ln "import <X>" -- Sources` — **und das zählt Kommenta
 
 **⭐ PLATTFORM-ZIEL (Founder 2026-07-31, wörtlich): „Das gesamte Apple Ökosystem soll langfristig unterstützt werden auch VR/XR und Waerables."** Das ist die Richtung, nicht eine Option — iPhone-first ist **Reihenfolge, kein Umfang**. Konsequenz für jede UI-Entscheidung ab hier: **jeder feste `frame(width:/height:)` und jedes Panel, das nicht reflowt, ist Ökosystem-Schuld**, kein Schönheitsfehler. Der Adaptivitäts-Durchgang (#292) ist damit Fundament, nicht Politur.
 
-**Heute ausgeliefert: iPhone (`"1"`) + Watch als Anzeige (`"4"`).** Die Reifeleiter — was jede Plattform BRAUCHT, bevor sie angeschaltet werden kann, damit die nächste Session nicht rät:
+**Heute ausgeliefert: iPhone (`"1"`). Die Watch (`"4"`) ist ein KOMPILIERTES, NICHT EINGEBETTETES Target — `project.yml` hält `# - target: EchoelmusicWatch` auskommentiert, kein Build liefert eine Watch-App aus (⛔ hier stand „+ Watch als Anzeige"; Audit 2026-09-10 `ship-path-3`).** Die Reifeleiter — was jede Plattform BRAUCHT, bevor sie angeschaltet werden kann, damit die nächste Session nicht rät:
 
 | Plattform | Stand | Was fehlt, bevor es angeht |
 |---|---|---|
@@ -351,6 +351,8 @@ Existing top-level directories under `Sources/Echoelmusic/`: `Audio/ Bio/ Core/ 
 
 **LIVE (4 — a producer derives each from the frame):** Coherence → **filter cutoff · brightness · harmonicity · noise level** | HRV → **brightness** | Heart rate → **vibrato depth AND rate · brightness** | Breath phase → **amplitude (the breath swell)**
 
+⚠️ **LIVE heißt „hat einen Erzeuger", nicht „ist auf jeder Quelle messbar": auf der KAMERA ist Kohärenz bei Ruhepuls strukturell abwesend.** `HRVCoherence.minIntervals` = 16, aber `detectPeaks` baut `rrIntervals` aus einem festen 10-s-Fenster ganz neu (≥17 Peaks in 10 s ≈ 102 bpm) — `CameraRPPGBioPublisher` ~2155, `OSCSender` und `EngineBus` sagen es selbst. Die vier Kohärenz-Kanäle und der Flow-Servo laufen dort auf dem Neutral 0,5; wahr ist die Zeile am Gurt. Chance: rollende RR-Historie im Publisher (Audit 2026-09-10 `bio-pipeline-3`).
+
 ⛔ **„HRV → brightness · **reverb mix**" ist am 2026-08-12 GESTRICHEN (#546), und der Grund ist eine Klasse, die diese Tabelle bisher nicht kannte.** `applyBioReactive` SCHREIBT `reverbMix` wirklich aus `hrvVariability` (`EchoelDDSP.swift:2195`) — die Zeile war also nicht erfunden, sondern an der Zuweisung korrekt abgelesen. Aber `reverbMix` wird an **genau einer** Stelle GELESEN, innerhalb von `if Self.useConvolutionReverb, reverbMix > 0, …` (`EchoelDDSP.swift:1503`), und `useConvolutionReverb` steht auf `false` **ohne jede Zuweisung** in `Sources/` (`git grep -n "useConvolutionReverb *=" -- Sources` liefert die Deklaration und sonst nichts). Die Stufe kann keinen Klang erzeugen. ⭐ **Der Unterschied zu #496 ist die Richtung, und deshalb steht er hier:** dort waren es drei Kanäle OHNE ERZEUGER — nichts schrieb sie. Hier schreibt ein Erzeuger sauber in einen **Verbraucher, der zur Laufzeit ausgeschaltet ist**. Dem Wert einen Sprung weit zu folgen sieht nach Sorgfalt aus und hört einen Sprung zu früh auf. **Eine Abbildung ist live, wenn der Schreibvorgang einen UNGATED Lesevorgang erreicht** — der billige Test ist ein `grep` auf die LESER des Ziels, nicht nur auf seine Schreiber. ⚠️ **Nicht mit dem Reverb der FX-Fläche verwechseln:** `EchoelReverb` in `EchoelFXChain` ist algorithmisch, wird von den Genre-Presets eingeschaltet, und eine Bio-ROUTE auf seine Parameter ist über die Modulationsmatrix erreichbar — der Hinweis „coherence → reverb" in `EchoelFXView` ist WAHR und darf aus diesem Absatz heraus nicht „korrigiert" werden. Tot ist allein die Convolution-Stufe in `EchoelDDSP`, die nur der Always-on-Pfad berührt. Wächter: `Tests/CISmoke/DisabledReverbIsNotClaimedLiveTests` (#335) deckt jetzt auch die In-App-Zeile ab; **diese Prosa bekommt bewusst KEINEN Text-Scan** (#491 — die Datei zitiert zurückgenommene Behauptungen absichtlich, ein negativer Scan träfe seine eigene Rücknahme).
 
 ⛔ **Diese Tabelle war einen Zyklus lang EINS-ZU-EINS, während die Engine es nicht ist** (#498): ein Ziel je Kanal, während Kohärenz allein VIER bewegt. **Lehre, verschieden von der Stale-Zahl-Lehre: eine Aufzählung wird gegen den CODE geprüft, nicht gegen ihre eigene Symmetrie** — #496 korrigierte die ÜBER-Behauptung derselben Zeile und ließ die UNTER-Behauptung stehen, weil nur eine sich als Zahl zählen ließ. Herleitung: `memory/LEDGER_COUNTS.md` §J (#867), wo sie mit dem zweiten Beleg #864 steht.
@@ -370,8 +372,10 @@ Existing top-level directories under `Sources/Echoelmusic/`: `Audio/ Bio/ Core/ 
 | Audio Latency | <10ms | >15ms |
 | CPU | <30% | >50% |
 | Memory | <200MB | >300MB |
-| Visual FPS | 120fps | <60fps |
-| Bio Loop | 120Hz | <60Hz |
+| Visual FPS | 60 fps, GEPINNT (`MetalBioView` `preferredFramesPerSecond = 60`, nie zur Laufzeit geändert) | Frame-Drops/Ruckler; Thermik über die Detail-Stufe, nie über die Rate |
+| Bio-Anwendung | ~1 Hz (dedupliziert auf `frame.timestamp`; der 10-Hz-Poll ist die Decke) | ein schnellerer Poll — das ist der #315/#332-Fehler |
+
+⛔ „Visual FPS 120fps / Bio Loop 120Hz" standen hier und bewerteten das ausgelieferte Design als FAIL — 120 Hz bräuchte zusätzlich `CADisableMinimumFrameDurationOnPhone` (founder-gated, 0 Treffer), und die ~1 Hz ist das Bus-Gesetz von oben (Audit 2026-09-10 `studio-ui-2`).
 
 **Audio thread: NO locks, NO malloc, NO ObjC messaging, NO file I/O, NO GCD.**
 
@@ -388,6 +392,7 @@ jede spätere Sitzung:** sie repariert entweder funktionierendes Audio oder lern
 zu ignorieren. Das Verbot war gegen „dein Herzschlag IST der Beat" gemeint — rohes Signal, 1:1,
 mit jedem Artefakt zitternd. Der gebaute Servo ist kohärenz-gegated, geglidet und geklammert.
 Deshalb wird die Regel PRÄZISIERT, nicht gelöscht.
+⚠️ Und der Servo konvergiert nur, wo Kohärenz GEMESSEN wird — auf der Kamera bei Ruhepuls nie (`bio-pipeline-3`, DDSP-Tabelle): dort ist Tempo ≡ 0,5·hr + 36.
 
 - **T1 — Tempo-Quellen sind aufzählbar und werden geloggt.** Das Tempo darf nur von (a) einer
   Nutzer-Geste (Lock, Feld-Edit, Tap, geladenes Projekt), (b) dem Flow-Servo, (c) einer
