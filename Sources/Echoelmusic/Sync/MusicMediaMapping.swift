@@ -74,9 +74,9 @@ public enum MusicMediaMap {
         let distance = clamp(1 - master, 0, 1)
         let gain = clamp(0.3 + master * 0.7, 0, 1)
         return [
-            ("\(prefix)/position/azimuth", azimuth),
-            ("\(prefix)/position/elevation", elevation),
-            ("\(prefix)/position/distance", distance),
+            ("\(prefix)/azim", azimuth),
+            ("\(prefix)/elev", elevation),
+            ("\(prefix)/dist", distance),
             ("\(prefix)/gain", gain)
         ]
     }

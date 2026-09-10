@@ -25,13 +25,13 @@ final class SpatialSceneOSCTests: XCTestCase {
     func testADMGoldenMessages() {
         let messages = SpatialSceneOSCFormatter.messages(for: goldenScene(), dialect: .admOSC)
         let expected: [(String, Float)] = [
-            ("/adm/obj/1/position/azimuth", -30),
-            ("/adm/obj/1/position/elevation", 10),
-            ("/adm/obj/1/position/distance", 0.8),
+            ("/adm/obj/1/azim", -30),
+            ("/adm/obj/1/elev", 10),
+            ("/adm/obj/1/dist", 0.8),
             ("/adm/obj/1/gain", 1.0),
-            ("/adm/obj/2/position/azimuth", 45),
-            ("/adm/obj/2/position/elevation", -15),
-            ("/adm/obj/2/position/distance", 0.25),
+            ("/adm/obj/2/azim", 45),
+            ("/adm/obj/2/elev", -15),
+            ("/adm/obj/2/dist", 0.25),
             ("/adm/obj/2/gain", 0.25),
         ]
         XCTAssertEqual(messages.count, expected.count)
@@ -48,13 +48,13 @@ final class SpatialSceneOSCTests: XCTestCase {
         // Cartesian derived from the SAME positions: x right, y front, z up, ×distance.
         // voice(az -30, el 10, d 0.8) · sub(az 45, el -15, d 0.25).
         let expected: [(String, Float)] = [
-            ("/adm/obj/1/position/x", 0.393923),
-            ("/adm/obj/1/position/y", 0.682295),
-            ("/adm/obj/1/position/z", 0.138919),
+            ("/adm/obj/1/x", 0.393923),
+            ("/adm/obj/1/y", 0.682295),
+            ("/adm/obj/1/z", 0.138919),
             ("/adm/obj/1/gain", 1.0),
-            ("/adm/obj/2/position/x", -0.170753),
-            ("/adm/obj/2/position/y", 0.170753),
-            ("/adm/obj/2/position/z", -0.064705),
+            ("/adm/obj/2/x", -0.170753),
+            ("/adm/obj/2/y", 0.170753),
+            ("/adm/obj/2/z", -0.064705),
             ("/adm/obj/2/gain", 0.25),
         ]
         XCTAssertEqual(messages.count, expected.count)
@@ -77,9 +77,9 @@ final class SpatialSceneOSCTests: XCTestCase {
                                    gain: 1.0))
         let m = SpatialSceneOSCFormatter.messages(for: scene, dialect: .admOSCCartesian)
         func value(_ suffix: String) -> Float? { m.first { $0.address.hasSuffix(suffix) }?.value }
-        XCTAssertEqual(value("/position/x") ?? .nan, 0, accuracy: 1e-5)
-        XCTAssertEqual(value("/position/y") ?? .nan, 1, accuracy: 1e-5)
-        XCTAssertEqual(value("/position/z") ?? .nan, 0, accuracy: 1e-5)
+        XCTAssertEqual(value("/x") ?? .nan, 0, accuracy: 1e-5)
+        XCTAssertEqual(value("/y") ?? .nan, 1, accuracy: 1e-5)
+        XCTAssertEqual(value("/z") ?? .nan, 0, accuracy: 1e-5)
     }
 
     func testADMCartesianEmptySceneProducesNoMessages() {

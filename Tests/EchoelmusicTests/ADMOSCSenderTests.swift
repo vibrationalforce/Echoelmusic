@@ -35,9 +35,9 @@ final class ADMOSCSenderTests: XCTestCase {
         // `/gain` rides the motion producer (#215) and is asserted separately below, so
         // this stays true whichever side of that gate the build is on.
         XCTAssertEqual(Array(addresses.prefix(3)), [
-            "/adm/obj/1/position/azimuth",
-            "/adm/obj/1/position/elevation",
-            "/adm/obj/1/position/distance"
+            "/adm/obj/1/azim",
+            "/adm/obj/1/elev",
+            "/adm/obj/1/dist"
         ])
         XCTAssertEqual(addresses.contains("/adm/obj/1/gain"),
                        ModSource.motion.hasProducer,
@@ -57,7 +57,7 @@ final class ADMOSCSenderTests: XCTestCase {
     func testAzimuth_breathPhaseSweepsFullLeftToRight() throws {
         func azimuth(_ phase: Float) throws -> Float {
             try XCTUnwrap(value(ADMOSCSender.admMessages(for: frame(breathPhase: phase),
-                                                         object: 1), "/position/azimuth"))
+                                                         object: 1), "/azim"))
         }
         XCTAssertEqual(try azimuth(0.0), -180, accuracy: 0.001)   // exhale start → hard left
         XCTAssertEqual(try azimuth(0.5),    0, accuracy: 0.001)   // center
@@ -70,7 +70,7 @@ final class ADMOSCSenderTests: XCTestCase {
     func testDistance_highCoherencePullsObjectClose() throws {
         func distance(_ coh: Float) throws -> Float {
             try XCTUnwrap(value(ADMOSCSender.admMessages(for: frame(coherence: coh),
-                                                         object: 1), "/position/distance"))
+                                                         object: 1), "/dist"))
         }
         XCTAssertEqual(try distance(0.01), 0.99, accuracy: 0.001)   // barely coherent → far
         XCTAssertEqual(try distance(1.0),  0,    accuracy: 0.001)   // coherent → close
@@ -79,7 +79,7 @@ final class ADMOSCSenderTests: XCTestCase {
     func testElevation_hrvLiftsObject() throws {
         func elevation(_ hrv: Float) throws -> Float {
             try XCTUnwrap(value(ADMOSCSender.admMessages(for: frame(hrv: hrv),
-                                                         object: 1), "/position/elevation"))
+                                                         object: 1), "/elev"))
         }
         XCTAssertEqual(try elevation(0.01), 0.6, accuracy: 0.001)
         XCTAssertEqual(try elevation(1.0), 60,   accuracy: 0.001)
@@ -122,9 +122,9 @@ final class ADMOSCSenderTests: XCTestCase {
         // remove the address, proving nothing about the clamp).
         let wild = frame(hrv: 5, breathPhase: 3, coherence: 4, motion: 9)
         let msgs = ADMOSCSender.admMessages(for: wild, object: 1)
-        let azimuth = try XCTUnwrap(value(msgs, "/position/azimuth"))
-        let elevation = try XCTUnwrap(value(msgs, "/position/elevation"))
-        let distance = try XCTUnwrap(value(msgs, "/position/distance"))
+        let azimuth = try XCTUnwrap(value(msgs, "/azim"))
+        let elevation = try XCTUnwrap(value(msgs, "/elev"))
+        let distance = try XCTUnwrap(value(msgs, "/dist"))
         XCTAssertGreaterThanOrEqual(azimuth, -180); XCTAssertLessThanOrEqual(azimuth, 180)
         XCTAssertGreaterThanOrEqual(elevation, -90); XCTAssertLessThanOrEqual(elevation, 90)
         XCTAssertGreaterThanOrEqual(distance, 0); XCTAssertLessThanOrEqual(distance, 1)
@@ -145,7 +145,7 @@ final class ADMOSCSenderTests: XCTestCase {
         // positional read here would silently encode a different parameter.
         // breathPhase 1.0 → azimuth +180 → big-endian 0x43340000.
         let msgs = ADMOSCSender.admMessages(for: frame(breathPhase: 1.0), object: 1)
-        let azimuth = try XCTUnwrap(msgs.first { $0.0 == "/adm/obj/1/position/azimuth" })
+        let azimuth = try XCTUnwrap(msgs.first { $0.0 == "/adm/obj/1/azim" })
         let data = OSCSender.encode(address: azimuth.0, floats: [azimuth.1])
         XCTAssertEqual(Array(data.suffix(4)), [0x43, 0x34, 0x00, 0x00])
     }

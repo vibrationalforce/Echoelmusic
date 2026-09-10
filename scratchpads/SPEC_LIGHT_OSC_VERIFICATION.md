@@ -14,9 +14,9 @@ Find the laptop's LAN IP (macOS: System Settings → Network, e.g. 192.168.1.50)
   - **Protokol** (Hexler, free OSC monitor) — listen on UDP 9000.
   - or `python-osc`: `python -m pythonosc.osc_server` style dump, or a 5-line dispatcher on 9000.
 - Expect (values move with the body):
-  - `/adm/obj/1/position/azimuth`  float −180…180  (breath)
-  - `/adm/obj/1/position/elevation` float 0…60     (HRV)
-  - `/adm/obj/1/position/distance` float 0…1       (1−coherence)
+  - `/adm/obj/1/azim`  float −180…180  (breath)
+  - `/adm/obj/1/elev` float 0…60     (HRV)
+  - `/adm/obj/1/dist` float 0…1       (1−coherence)
   - `/adm/obj/1/gain`              NOT sent by the bio arm (#215 — nothing measures
     motion). It appears only while notes SOUND, from the music arm
     (`MusicMediaMap.admMessages`, master level → 0.3…1). If the rig is silent and you

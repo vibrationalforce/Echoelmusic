@@ -6,20 +6,21 @@
 //  for external immersive renderers, in two open dialects:
 //
 //  · ADM-OSC (github.com/immersive-audio-live/ADM-OSC) — the namespace the
-//    shipping ADMOSCSender already speaks. Objects are 1-BASED, positions
+//    shipping ADMOSCSender already speaks (leaf names per the spec table since #1210 —
+//    `/position/…` was never a spec shape). Objects are 1-BASED, positions
 //    spherical, distance normalized:
-//      /adm/obj/{n}/position/azimuth    float  -180 … +180  degrees
-//      /adm/obj/{n}/position/elevation  float   -90 … +90   degrees
-//      /adm/obj/{n}/position/distance   float     0 … 1
-//      /adm/obj/{n}/gain                float     0 … 1     linear
+//      /adm/obj/{n}/azim   float  -180 … +180  degrees
+//      /adm/obj/{n}/elev   float   -90 … +90   degrees
+//      /adm/obj/{n}/dist   float     0 … 1
+//      /adm/obj/{n}/gain   float     0 … 1     linear
 //
 //  · ADM-OSC Cartesian — same standard, the Cartesian branch of the namespace
 //    for renderers/consoles that accept x/y/z object input instead of polar
 //    (ITU-R BS.2076 room coordinates, unit-scaled by distance):
-//      /adm/obj/{n}/position/x  float   +right   (−left)
-//      /adm/obj/{n}/position/y  float   +front   (−back)
-//      /adm/obj/{n}/position/z  float   +up      (−down)
-//      /adm/obj/{n}/gain        float    0 … 1   linear
+//      /adm/obj/{n}/x      float   +right   (−left)
+//      /adm/obj/{n}/y      float   +front   (−back)
+//      /adm/obj/{n}/z      float   +up      (−down)
+//      /adm/obj/{n}/gain   float    0 … 1   linear
 //    Derived from the exact SAME SpatialPosition (via `.cartesian`), so an object
 //    placed once reaches a polar OR a Cartesian rig without re-authoring.
 //
@@ -96,9 +97,9 @@ public enum SpatialSceneOSCFormatter {
         out.reserveCapacity(scene.objects.count * 4)
         for (i, obj) in scene.objects.enumerated() {
             let prefix = "/adm/obj/\(i + 1)"
-            out.append(("\(prefix)/position/azimuth", obj.position.azimuth))
-            out.append(("\(prefix)/position/elevation", obj.position.elevation))
-            out.append(("\(prefix)/position/distance", obj.position.distance))
+            out.append(("\(prefix)/azim", obj.position.azimuth))
+            out.append(("\(prefix)/elev", obj.position.elevation))
+            out.append(("\(prefix)/dist", obj.position.distance))
             out.append(("\(prefix)/gain", obj.gain))
         }
         return out
@@ -115,9 +116,9 @@ public enum SpatialSceneOSCFormatter {
             // z up, distance-scaled) — one source of truth, so polar and Cartesian
             // outputs can never disagree about where an object is.
             let c = obj.position.cartesian
-            out.append(("\(prefix)/position/x", c.x))
-            out.append(("\(prefix)/position/y", c.y))
-            out.append(("\(prefix)/position/z", c.z))
+            out.append(("\(prefix)/x", c.x))
+            out.append(("\(prefix)/y", c.y))
+            out.append(("\(prefix)/z", c.z))
             out.append(("\(prefix)/gain", obj.gain))
         }
         return out

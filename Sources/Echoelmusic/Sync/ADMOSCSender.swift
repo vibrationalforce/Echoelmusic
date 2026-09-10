@@ -13,11 +13,21 @@
 //  This is opt-in (not every user has an immersive renderer); started from the
 //  Sync tab, off by default. See scratchpads/SPEC_ADM_OSC_BRIDGE.md.
 //
-//  ADM-OSC v1.0 namespace (one 1-based object index `n`):
-//    /adm/obj/{n}/position/azimuth     float  -180 … +180  (degrees)
-//    /adm/obj/{n}/position/elevation   float   -90 … +90   (degrees)
-//    /adm/obj/{n}/position/distance    float     0 … 1     (normalized)
-//    /adm/obj/{n}/gain                 float     0 … 1     (linear, ≤ 1.0)
+//  ADM-OSC v1.0 namespace (one 1-based object index `n`), leaves exactly as the spec table
+//  names them (github.com/immersive-audio-live/ADM-OSC, docs/adm-osc.bs, "Object" rows):
+//    /adm/obj/{n}/azim   float  -180 … +180  (degrees, positive = left)
+//    /adm/obj/{n}/elev   float   -90 … +90   (degrees)
+//    /adm/obj/{n}/dist   float     0 … 1     (normalized)
+//    /adm/obj/{n}/gain   float     0 … 1     (linear, ≤ 1.0)
+//  ⛔ Until #1210 (2026-09-10) every formatter in this directory wrote `/position/azimuth`,
+//  `/position/elevation`, `/position/distance` (and `/position/x|y|z`) — a shape that exists in
+//  NO version of the spec; the leaf names were transcribed from the reference Python helper
+//  (`send_object_position_azimuth`) instead of the address table. A conforming renderer logs
+//  "unrecognized ADM address" and moves nothing, so the "bio-reactive object source" claim was
+//  false on the wire for as long as this file existed. Ranges, sign and the 1-based index were
+//  right all along. Guard: `Tests/CISmoke/TheADMOSCLeavesAreTheSpecsTests.swift`.
+//  NEEDS-FOUNDER-VERIFY: one object visibly moving in a real ADM-OSC renderer (FletcherMachine,
+//  L-ISA, SPAT, or the reference receiver `pip install adm-osc`) after #1210.
 //
 //  Default bio → object mapping (all four are existing BioSampleFrame fields). EVERY ONE
 //  of them is sent only while its own channel is actually measured (#260) — see
@@ -282,7 +292,7 @@ public final class ADMOSCSender {
     /// ⛔ AND BOTH OCCURRED ON SHIPPING HARDWARE, which is what makes this a defect rather
     /// than a hypothetical. `PolarH10BioPublisher` publishes `breathRate: 0, breathPhase: 0`
     /// on EVERY frame — the strap derives no respiration — and `.ble` is egress-allowed, so
-    /// a chest-strap session pinned `/position/azimuth` at exactly −180 for its whole
+    /// a chest-strap session pinned `/azim` at exactly −180 for its whole
     /// duration, every time. The camera is the same story one axis over: `coherence` stays 0
     /// until 16 accepted RR intervals, and `CameraAnalyzer`'s RR series comes from a fixed
     /// 10 s peak window (≈10 intervals at a resting rate), so `distance` sat at 1 for entire
@@ -320,18 +330,18 @@ public final class ADMOSCSender {
         // someone's rig", which the sentence above forbids in so many words. The rate gate was
         // never wrong about the rate; it was answering a different question.
         if f.hasMeasuredBreathWaveform, f.breathPhase.isFinite {
-            msgs.append(("\(prefix)/position/azimuth",
+            msgs.append(("\(prefix)/azim",
                          clamp((f.breathPhase * 2 - 1) * 180, -180, 180)))
         }
         // HRV [0..1] → elevation [-90..90]: calm lifts (upper hemisphere 0..60).
         // Both halves, as on the OSC path: an HRV beside a pulse of 0 is a publisher bug,
         // not a reading, and this arm must not put an invented number in someone's rig.
         if f.hasMeasuredHeartRate, f.hrvNormalized > 0 {
-            msgs.append(("\(prefix)/position/elevation", clamp(f.hrvNormalized * 60, -90, 90)))
+            msgs.append(("\(prefix)/elev", clamp(f.hrvNormalized * 60, -90, 90)))
         }
         // coherence [0..1] → distance [0..1]: coherent pulls close (small distance).
         if f.hasMeasuredHeartRate, f.coherence > 0 {
-            msgs.append(("\(prefix)/position/distance", clamp(1 - f.coherence, 0, 1)))
+            msgs.append(("\(prefix)/dist", clamp(1 - f.coherence, 0, 1)))
         }
         // motion [0..1] → gain [0..1]: movement brings the object forward — WHEN
         // something measures motion. Today nothing does, so this arm asserts no gain at

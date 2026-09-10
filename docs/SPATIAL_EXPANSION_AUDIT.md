@@ -22,7 +22,7 @@ bestätigt ist** (Guardrail 1).
 
 | Prompt-Baustein | Repo-Realität |
 |---|---|
-| ADM-OSC-Objekt-Out (Renderer B, Dialekt 1) | **LIVE**: `Sync/ADMOSCSender.swift` sendet `/adm/obj/{n}/position/azimuth·elevation·…` (Grad-Konvention wie im Prompt); Bio→Position-Mapping (Atemphase→Azimut, HRV→Elevation) läuft bereits |
+| ADM-OSC-Objekt-Out (Renderer B, Dialekt 1) | **LIVE**: `Sync/ADMOSCSender.swift` sendet `/adm/obj/{n}/azim·elev·…` (Grad-Konvention wie im Prompt); Bio→Position-Mapping (Atemphase→Azimut, HRV→Elevation) läuft bereits |
 | Binaural-Kern (Renderer A, Kopfhörer) | **PURE CORE FERTIG, ungewired**: `DSP/BinauralPanner.swift` — ILD (equal-power) + ITD (Woodworth-Kopfmodell) + Distanz-Gain/Air-Highcut, deterministisch, unit-getestet, dieselbe Azimut/Elevation/Distanz-Konvention wie ADM-OSC. Bewusst NICHT im Render-Pfad (Kommentar im File: Wiring = eigener, audio-thread-reviewter + device-verifizierter Slice) |
 | `AVAudioEnvironmentNode` / PHASE | **NICHT im Graph** (nur als Option im BinauralPanner-Kommentar genannt). ADR nötig (siehe §3) |
 | Head-Tracking (`CMHeadphoneMotionManager`) | **Fehlt** (kein Treffer im Source) |

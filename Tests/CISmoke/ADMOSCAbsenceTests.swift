@@ -62,7 +62,7 @@ final class ADMOSCAbsenceTests: XCTestCase {
     private func addresses(_ f: BioSampleFrame) -> [String] {
         ADMOSCSender.admMessages(for: f, object: 1)
             .map { $0.0 }
-            .filter { $0.contains("/position/") }
+            .filter { !$0.hasSuffix("/gain") }   // the three position leaves: /azim /elev /dist (#1210)
     }
 
     /// ⛔ THE ASSERTION THE SLICE EXISTS FOR. This is the `FaceExpressionBioPublisher`
@@ -81,13 +81,13 @@ final class ADMOSCAbsenceTests: XCTestCase {
     /// breath at all.
     func testEachChannelCarriesOnlyItsOwnAddress() {
         XCTAssertEqual(addresses(frame(bpm: 62, breath: 12, phase: 0.25)),
-                       ["/adm/obj/1/position/azimuth"],
+                       ["/adm/obj/1/azim"],
                        "breath alone must not also assert elevation or distance")
         XCTAssertEqual(addresses(frame(bpm: 62, hrv: 0.4)),
-                       ["/adm/obj/1/position/elevation"],
+                       ["/adm/obj/1/elev"],
                        "HRV alone must not also assert azimuth or distance")
         XCTAssertEqual(addresses(frame(bpm: 62, coherence: 0.7)),
-                       ["/adm/obj/1/position/distance"],
+                       ["/adm/obj/1/dist"],
                        "coherence alone must not also assert azimuth or elevation")
     }
 
@@ -106,7 +106,7 @@ final class ADMOSCAbsenceTests: XCTestCase {
     func testTheHardLeftPositionIsSentWhenItIsRealAndWithheldWhenItIsNot() throws {
         let real = ADMOSCSender.admMessages(for: frame(bpm: 62, breath: 12, phase: 0),
                                             object: 1)
-        let azimuth = try XCTUnwrap(real.first { $0.0.hasSuffix("/position/azimuth") }?.1)
+        let azimuth = try XCTUnwrap(real.first { $0.0.hasSuffix("/azim") }?.1)
         XCTAssertEqual(azimuth, -180, accuracy: 0.001,
                        "a measured exhale-start really is hard left — the gate must not "
                        + "swallow the reading it exists to distinguish")
@@ -149,7 +149,7 @@ final class ADMOSCAbsenceTests: XCTestCase {
         // …and the same rate with a REAL phase still positions, or the loop above would
         // pass for the wrong reason (a breath gate that stopped working entirely).
         XCTAssertEqual(addresses(frame(bpm: 62, breath: 12, phase: 0.75)),
-                       ["/adm/obj/1/position/azimuth"])
+                       ["/adm/obj/1/azim"])
     }
 
     /// ANTI-VACUITY. Every assertion above is about ABSENCE, so a mapping that returned
@@ -158,9 +158,9 @@ final class ADMOSCAbsenceTests: XCTestCase {
     func testAFullyMeasuredFrameStillPositionsTheObject() {
         let full = frame(bpm: 62, hrv: 0.5, breath: 12, phase: 0.5, coherence: 0.7)
         XCTAssertEqual(addresses(full), [
-            "/adm/obj/1/position/azimuth",
-            "/adm/obj/1/position/elevation",
-            "/adm/obj/1/position/distance"
+            "/adm/obj/1/azim",
+            "/adm/obj/1/elev",
+            "/adm/obj/1/dist"
         ], "a measured body must still drive all three axes")
     }
 }

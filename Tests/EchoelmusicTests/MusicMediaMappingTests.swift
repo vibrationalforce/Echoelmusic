@@ -44,7 +44,7 @@ final class MusicMediaMappingTests: XCTestCase {
     func testADM_messageShape_andRanges() {
         let msgs = MusicMediaMap.admMessages(forMusic: frame([(440, 1)]), object: 2)
         XCTAssertEqual(msgs.count, 4)
-        XCTAssertEqual(msgs[0].0, "/adm/obj/2/position/azimuth")
+        XCTAssertEqual(msgs[0].0, "/adm/obj/2/azim")
         XCTAssertEqual(msgs[3].0, "/adm/obj/2/gain")
         for (_, v) in msgs { XCTAssertTrue(v.isFinite) }
         let az = msgs[0].1, el = msgs[1].1, dist = msgs[2].1, gain = msgs[3].1

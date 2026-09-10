@@ -33,7 +33,7 @@ WebSocket. The protocol does not know or care which.
 | `distance` | normalized | 0 … 1 | room-relative (1 = room reference radius) |
 
 Cartesian (derived, never on the wire): x = right, y = front, z = up.
-Same convention as the shipping `ADMOSCSender` (`/adm/obj/{n}/position/*`).
+Same convention as the shipping `ADMOSCSender` (`/adm/obj/{n}/{azim|elev|dist}` + `/gain`).
 
 ## Roles (P2)
 
