@@ -29623,3 +29623,14 @@ Audit `output-sync-6`, nachgemessen: die 2.0-Wortbauer in `UMPEncoder` haben in 
 `foreign-needles`/`dead-needles`/`moved-needles` exit 0; `TheMPEInputHasNoZonesTests` Anspruch 12 (docs-Sweep) verlangt
 nur bei „MPE in" eine Zitation — „MPE out" ist frei. CLAUDE.md steht bei 149 131 B (Decke 150 000, #702) — die nächste
 Register-Ergänzung muss BYTES mitbringen, nicht nur Wahrheit.
+
+## #1230–#1232 — Ultraplan-Zyklen 17–19: drei Prosa-Wahrheiten (2026-09-10)
+
+**#1230 (`tests-guards-6`)** — `StretchMode.beats` nannte zwei Executoren (AudioClipPlayer, TimelineAudioSink); gemessen
+`git grep -n "EchoelWSOLA(" -- Sources` → 0. Behauptung bleibt wörtlich, trägt die Rücknahme; `isImplemented` bewusst
+`true` (persistierte Regionen). CLAUDE.md-Liste der unverdrahteten Kerne + `DSP/EchoelWSOLA` (149 319 B, Decke 150 000).
+**#1231 (`sequencer-core-5` a)** — `Humanizer` hat ZWEI Aufrufer in ZWEI Tick-Räumen (Export 96 PPQ, `TouchQuantizer`
+480 PPQ); Kopf und `timingTicks`-Doc sagen es jetzt; (b) Export bei 480 PPQ bleibt eigene Scheibe (Byte-Fixtures ×3).
+**#1232 (`tests-guards-7`)** — `swift-audio.md` Namensregel: Satzform fürs blockierende Bundle (#374), Unterstrich-Form
+nur `Tests/EchoelmusicTests`, beide Zählbefehle daneben. **`studio-ui-1`**: bereits durch #1105 erledigt — der Absatz
+in `EchoelStudioView` (jetzt ~6083) nennt die Field-Toggle-Tür; nichts zu tun, im Ultraplan vermerkt.
