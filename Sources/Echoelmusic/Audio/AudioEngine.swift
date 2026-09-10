@@ -2194,6 +2194,12 @@ public final class AudioEngine {
         wasInterrupted = false
         meterPollTimer?.invalidate()
         meterPollTimer = nil
+        // #1199 — the SECOND timer, which this line never stood down. `AutoMixChain`'s 50 Hz
+        // ease timer is installed once by `start()` and, until now, was only ever cancelled by
+        // a second `connectMeter`. So every stop left it running for the rest of the process.
+        // It sits beside the meter poll on purpose: the two are the engine's only timers, and
+        // a reader who finds one invalidated here will look for the other.
+        autoMixChain.disconnectMeter()
         microphoneManager.stopRecording()
         // #862: `stop` pauses the graph AND deactivates the session — two AVFAudio
         // calls that the exported log was never told about.

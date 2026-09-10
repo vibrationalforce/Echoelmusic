@@ -18,6 +18,25 @@
 //   · every application must be small enough not to click, and
 //   · the FEEL must be unchanged — the founder tuned "slow to boost, quicker to cut" by ear
 //     (#183/#295), and a fix that quietly retunes it trades a click for a complaint.
+//
+// ⭐ THREE CLAIMS ADDED BY #1199 (2026-09-10) — and their existence is the finding. Every
+// claim above this line describes how the 50 Hz ease timer BEHAVES WHILE IT RUNS. Not one of
+// them asked whether it ever STOPS, and it did not: `connectMeter` is called once from
+// `AudioEngine.start()`, and the only thing that ever invalidated the timer was a SECOND
+// `connectMeter`. A file this thorough about a timer's arithmetic had a blind spot about its
+// lifetime — worth naming, because the same shape will recur.
+//
+// GRADING, transcribed in Python and driven against `git show HEAD:<path>` and the worktree:
+//  · claim 1 (`disconnectMeter` exists) and claim 2 (the stop path calls it) — REGRESSION,
+//    and ONE finding with two witnesses (#486): the method did not exist on the parent.
+//  · claim 1's SECOND assertion (`lufsTimer?.invalidate()` appears at all) is green on both
+//    trees and is a COUNTERWEIGHT, not part of the catch — it pins that dropping the reference
+//    is never mistaken for stopping the timer. A run loop RETAINS a scheduled `Timer`, and
+//    `[weak self]` only makes each tick a no-op; the tick still happens.
+//  · claim 3 (`start()` still re-connects) — COUNTERWEIGHT, green on both trees, deliberately
+//    (#343/#433). It only becomes interesting AFTER #1199: with the stop path tearing the
+//    timer down, this call is what makes a second run possible, and its absence would freeze
+//    the auto-gain at its last value — silent, and it would read as a mix problem.
 // The second is why the sub-step coefficient is `1 − (1−c)^(1/n)` and not `c/n`: only the
 // former reproduces the one-pole EXACTLY over n applications. `c/n` looks equivalent and moves
 // 16.61 % of the distance per tick where the real coefficient moves 18.00 % — 7.7 % short on
@@ -302,6 +321,86 @@ final class TheMasterGainMovesInSmallStepsTests: XCTestCase {
             the boost COEFFICIENT (and 3.8× the boost step, which is a different ratio because \
             the root is non-linear).
             """)
+    }
+
+    // MARK: - #1199 — the timer this file describes must also STOP
+
+    /// REGRESSION (#1199). Every claim above is about how the 50 Hz ease timer BEHAVES while
+    /// it runs. Nothing asked whether it ever stops — and it did not. `connectMeter` is called
+    /// once, from `AudioEngine.start()`, and the only thing that ever invalidated the timer was
+    /// a SECOND `connectMeter`. After `AudioEngine.stop(reason:)` it kept waking the main actor
+    /// 50 times a second for the rest of the process, reading `UserDefaults` five times a
+    /// second through the computed `targetLUFS`.
+    ///
+    /// ⚠️ HONEST SCOPE. The GAIN WRITE is not unguarded after a stop — `updateAutoGain` returns
+    /// early once `lufsReading` falls under −59, which it does as the master meter decays. What
+    /// is real is the timer that never stops, the repeated defaults read, and the ~20 s window
+    /// after each stop in which the meter has NOT yet decayed and the auto-gain still writes
+    /// `outputVolume` on an engine that is not running.
+    func testTheEaseTimerHasAWayToStop() throws {
+        let source = try Self.chainSource()
+        XCTAssertTrue(source.contains("func disconnectMeter()"), """
+            `AutoMixChain` has no `disconnectMeter()`. Its 50 Hz ease timer is installed by \
+            `connectMeter` and, without a counterpart, is only ever cancelled by a SECOND \
+            `connectMeter` — so a stopped engine leaves it running for the whole process.
+
+            This does NOT prescribe the name (#364), but if it is renamed, rename it here and \
+            in `AudioEngine.stop(reason:)` in the same commit.
+            """)
+        XCTAssertTrue(source.contains("lufsTimer?.invalidate()"), """
+            nothing in `AutoMixChain` invalidates `lufsTimer` any more. A `Timer` scheduled on \
+            the run loop is retained BY the run loop: dropping the reference does not stop it, \
+            and `[weak self]` only makes each tick a no-op — the tick still happens.
+            """)
+    }
+
+    /// REGRESSION (#1199). The counterpart existing is worth nothing if the stop path does not
+    /// call it — the pure-core-with-no-caller defect this file already names once.
+    ///
+    /// ⚠️ THE LIMIT, BEFORE THE CLAIM (#408). This reads a 4,000-character WINDOW after the
+    /// `func stop(reason:)` line rather than the member's true extent, because this file has no
+    /// brace-matching helper and adding one for a single claim is not worth the surface. Today
+    /// the call sits about ten lines in, so the window is ~40× the distance it has to cover.
+    /// The failure direction if that ever stops being true is a false RED with a message that
+    /// says "does not stand down" when the truth is "moved further away" — annoying, but never
+    /// a false green (`.claude/rules/context.md` §2 forbids the other direction, not this one).
+    func testTheEngineStopStandsTheEaseTimerDown() throws {
+        let engine = try Self.engineSource()
+        guard let stop = engine.range(of: "func stop(reason: StopReason) {") else {
+            throw XCTSkip("`stop(reason:)` is gone from AudioEngine.swift — re-anchor this claim.")
+        }
+        let tail = String(engine[stop.upperBound...].prefix(4000))
+        XCTAssertTrue(tail.contains("autoMixChain.disconnectMeter()"), """
+            `AudioEngine.stop(reason:)` does not stand the auto-gain ease timer down.
+
+            It invalidates its OWN meter poll two lines earlier; these are the engine's only \
+            two timers, and until #1199 exactly one of them was stopped. A reader who finds one \
+            invalidated there will look for the other, so they belong side by side.
+            """)
+    }
+
+    /// COUNTERWEIGHT (#343). #1199 is only safe while `start()` RE-CONNECTS. If the install
+    /// ever moves somewhere a restart does not reach, a stop/start cycle would leave the
+    /// auto-gain permanently frozen at whatever gain it last applied — silent, and it would
+    /// look like a mix problem rather than a lifecycle one.
+    func testTheEngineStartStillReconnectsTheMeter() throws {
+        let engine = try Self.engineSource()
+        XCTAssertTrue(engine.contains("autoMixChain.connectMeter"), """
+            `AudioEngine` no longer calls `autoMixChain.connectMeter`. Since #1199 the stop path \
+            tears the timer down, so this call is what makes a SECOND run possible at all.
+            """)
+    }
+
+    private static func engineSource() throws -> String {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources/Echoelmusic/Audio/AudioEngine.swift")
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw XCTSkip("AudioEngine.swift not reachable from \(#filePath) — source tree not co-located.")
+        }
+        return try String(contentsOf: url, encoding: .utf8)
     }
 
     private static func chainSource() throws -> String {

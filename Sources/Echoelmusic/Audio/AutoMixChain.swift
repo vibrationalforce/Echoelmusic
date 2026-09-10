@@ -331,6 +331,41 @@ final class AutoMixChain {
         }
     }
 
+    /// Stop the ease timer. The counterpart to `connectMeter`, and until #1199 it did not
+    /// exist.
+    ///
+    /// WHAT WAS WRONG. `connectMeter` is called once, from `AudioEngine.start()`. The only
+    /// thing that ever invalidated the timer was a SECOND `connectMeter`, so after
+    /// `AudioEngine.stop(reason:)` this 50 Hz timer kept running for the rest of the
+    /// process — the engine silent, the graph paused, the timer still waking the main actor
+    /// fifty times a second and reading `UserDefaults.string(forKey:)` five times a second
+    /// through the computed `targetLUFS`. `AudioEngine.stop` invalidates its own meter poll
+    /// on the line above the new call; this one was simply never given the same treatment.
+    ///
+    /// ⚠️ HONEST SCOPE, because the first draft of this note overstated it. The GAIN WRITE is
+    /// NOT unguarded after a stop: `updateAutoGain` returns early on
+    /// `lufsReading > -59`, and once the master meter has decayed the reading falls under
+    /// that floor. What survives the correction is still real and still worth removing — a
+    /// timer that never stops, a `UserDefaults` hit 5x/s forever, and a window of roughly twenty
+    /// seconds after each stop during which the meter has not yet decayed and the auto-gain
+    /// does still write `outputVolume` on an engine that is not running.
+    ///
+    /// ⚠️ NOT called from `deinit`, deliberately. A `@MainActor` method cannot be called from
+    /// a nonisolated `deinit` (CLAUDE.md names this exact compile error), and the workaround
+    /// `AudioEngine` uses for its own timer — touching the stored property directly — would
+    /// mean making `lufsTimer` non-private. `stop(reason:)` is the reachable path and the one
+    /// that matters; a process that is tearing `AudioEngine` down is going away anyway.
+    func disconnectMeter() {
+        lufsTimer?.invalidate()
+        lufsTimer = nil
+        // The getter is a closure over `AudioEngine`. Dropping it with the timer keeps the
+        // two halves of "connected" as ONE state rather than two that can disagree — a
+        // stopped chain that still holds a live meter reference is the kind of half-state
+        // this repo keeps finding a month later.
+        masterLevelRef = nil
+        easeTick = 0
+    }
+
     /// The loudness target resolved ONCE per measurement tick, and eased toward for the ten
     /// applications that follow it.
     ///
