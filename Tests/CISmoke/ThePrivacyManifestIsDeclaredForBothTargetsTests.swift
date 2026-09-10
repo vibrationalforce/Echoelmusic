@@ -12,7 +12,10 @@
 // `project.yml` tidy would remove the manifest with every gate green, and the founder would
 // learn at upload time.
 //
-// WHAT THIS PINS. (1) DECLARATION: exactly two `- path: Resources/PrivacyInfo.xcprivacy`
+// WHAT THIS PINS. (4, #1234b) PARSE: Foundation's plist reader accepts the file and the parsed
+// category set equals the three below — a substring scan cannot see a comment that breaks the
+// XML (`--` inside `<!-- -->`), and #1234 shipped exactly that for one local commit.
+// (1) DECLARATION: exactly two `- path: Resources/PrivacyInfo.xcprivacy`
 // entries (app + widget), each followed within three lines by `type: file` and `buildPhase:
 // resources` — the shape the file itself documents as the only one XcodeGen honours. (2)
 // CONTENT: the manifest exists and declares the three required-reason categories with
@@ -79,6 +82,27 @@ final class ThePrivacyManifestIsDeclaredForBothTargetsTests: XCTestCase {
                 without a reason code just as it rejects a missing one (#1222).
                 """)
         }
+    }
+
+    /// Claim 4 (#1234b) — the manifest PARSES as a property list. Added after #1234 committed
+    /// an XML comment containing `--` (the grep separator `-- Sources`), which XML forbids inside
+    /// a comment: `plistlib` refused the file at line 85 while claims 1–3, being substring scans,
+    /// stayed green. Apple's uploader parses; a manifest that does not parse ships no
+    /// declarations at all. The nearest thing to the uploader that runs here is Foundation's
+    /// own plist reader.
+    func testTheManifestParsesAsAPropertyList() throws {
+        let manifest = try text("Resources/PrivacyInfo.xcprivacy")
+        let data = Data(manifest.utf8)
+        let parsed = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+        guard let root = parsed as? [String: Any],
+              let types = root["NSPrivacyAccessedAPITypes"] as? [[String: Any]] else {
+            return XCTFail("`Resources/PrivacyInfo.xcprivacy` parses, but not into a dictionary with an `NSPrivacyAccessedAPITypes` array (#1234b)")
+        }
+        let declared = Set(types.compactMap { $0["NSPrivacyAccessedAPIType"] as? String })
+        XCTAssertEqual(declared, Set(Self.requiredCategories), """
+            the PARSED category set differs from the three with measured callers — a text scan \
+            (claim 2) can see a category that a malformed comment hides from the parser (#1234b).
+            """)
     }
 
     /// Claim 3 — the widget is embedded, so the second declaration is load-bearing.

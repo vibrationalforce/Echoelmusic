@@ -82,7 +82,7 @@
 
         <!-- Disk Space API: NOT declared. A DiskSpace dict (E174.1 "display storage to the
              user" + 85F4.1) stood here and is REMOVED (#1234, audit 2026-09-10 `ship-path-6`):
-             `git grep -c 'volumeAvailableCapacity\|attributesOfFileSystem\|systemFreeSize\|volumeTotalCapacity' -- Sources`
+             `git grep -c 'volumeAvailableCapacity\|attributesOfFileSystem\|systemFreeSize\|volumeTotalCapacity' Sources`
              → 0. A declaration without a call site is the mirror image of the #1222 risk.
              If a recorder pre-flight ever checks free space, re-declare with 85F4.1 only. -->
     </array>
