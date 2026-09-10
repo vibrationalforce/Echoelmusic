@@ -179,6 +179,30 @@ final class TempoInvariantTests: XCTestCase {
             """)
     }
 
+    // MARK: - claim 3b (SOURCE SCAN, T1 (a)) — a locked generate() names the player, not the servo
+
+    /// #1217 (audit 2026-09-10 `sequencer-core-1`). `generate()` resolves `tempo` to `lockedBPM`
+    /// under the lock and then glided it with `source: .flowServo`, unconditionally — so the
+    /// one log line T1 exists for named the servo for a number a human typed. `generate()` is
+    /// a view method that cannot be driven here without the whole studio, so this is a scan:
+    /// the glide next to the `let tempo` switch must choose its source by the lock.
+    func testALockedGenerateNamesThePlayerAsTheTempoSource() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let url = root.appendingPathComponent("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        try XCTSkipUnless(FileManager.default.fileExists(atPath: url.path),
+                          "Sources/ not present in this checkout")
+        let studio = SourceText.codeOnly(try String(contentsOf: url, encoding: .utf8))
+        XCTAssertTrue(studio.contains("glideTempo(to: tempo, source: lockBPM ? .user : .flowServo)"), """
+            generate()'s tempo glide no longer chooses its source by the lock. Under `lockBPM` \
+            the number is the player's (T1 (a)); logging it as `.flowServo` puts a false word \
+            into the line T1 exists for (#1217).
+            """)
+        XCTAssertFalse(studio.contains("glideTempo(to: tempo, source: .flowServo)"), """
+            The unconditional `.flowServo` glide is back in generate() (#1217).
+            """)
+    }
+
     // MARK: - claim 4 (SOURCE SCAN, COUNTERWEIGHT) — the engine really is the only door
 
     /// Without this, claims 1–3 guard one door in a wall that may have others. If a second

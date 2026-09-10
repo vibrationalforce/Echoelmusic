@@ -10291,7 +10291,11 @@ struct EchoelStudioView: View {
         // longer snaps the transport number. The initial generate holds the current tempo
         // (unchanged value → arrives at once), so it never lags. lockBPM already resolved
         // `tempo` to the locked value above, so a locked take just glides to/holds it.
-        beatPlayer.pattern.glideTempo(to: tempo, source: .flowServo)
+        // #1217 (audit 2026-09-10 `sequencer-core-1`) — AND IT SAYS SO. Under the lock the
+        // number is the player's (T1 (a): a human named it), so the source the transport logs
+        // is `.user`; only the two body branches above are the servo. Before, a locked take
+        // wrote `tempoSource=flowServo` into the very log line T1 exists for.
+        beatPlayer.pattern.glideTempo(to: tempo, source: lockBPM ? .user : .flowServo)
         // GROOVE CYCLE 2: apply the genre's swing so odd 16ths land late for a
         // rolling, human feel (dance push, dragged vaporwave, straight genres stay 0).
         // The melody rides this clock, so the whole take swings instead of sitting
