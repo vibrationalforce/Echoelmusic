@@ -39,7 +39,8 @@
 //         grep -c '^    func test' <file>
 //         grep -E 'XCTAssert' <file> | grep -vE '^\s*//' | wc -l
 //     (several assertions run inside loops or over 2 000–4 000-sample arrays).
-//     Tests 1–3 are END-TO-END BEHAVIOUR on the
+//     Tests 1–3 (and, since #1208, the two `tone`/`timeSeconds` claims beside them) are
+//     END-TO-END BEHAVIOUR on the
 //     shipped `EchoelDelay` — real instance, real frames, NaN in the control fields. Tests 4–5
 //     are SOURCE-TEXT SCANS for `SamplerVoice`: driving its render block needs installed sample
 //     slabs and trigger plumbing, which a smoke test should not fake; the setter is the ONLY
@@ -271,6 +272,57 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
         d.mix = .nan
         let (l, r) = d.processStereo(0.25, 0.25)
         XCTAssertTrue(l.isFinite && r.isFinite)
+    }
+
+    /// Third field (#1208 — the #1206b class, one file over from the flanger it fixed). `tone`
+    /// is the one-pole INSIDE the feedback write-back: a NaN coefficient poisons `lpL/lpR`, and
+    /// from then on every sample the ring is fed. Same shape as test 1 — a short time target so
+    /// the tap wraps into samples written under the NaN control — and a non-zero dry input on
+    /// every frame, so a finite-but-silent output cannot pass this for the wrong reason.
+    func testNaNToneProducesFiniteOutput() {
+        let d = EchoelDelay(sampleRate: 48_000)
+        d.tone = .nan
+        d.feedback = 0.6
+        d.mix = 0.5
+        d.timeSeconds = 0.005
+        var peak: Float = 0
+        for i in 0..<20_000 {
+            let x: Float = i % 7 == 0 ? 0.5 : 0.1
+            let (l, r) = d.processStereo(x, x)
+            XCTAssertTrue(l.isFinite && r.isFinite,
+                          "Frame \(i): NaN in the tone CONTROL reached the output through the "
+                          + "feedback one-pole — the ring-buffer latch #1206b named.")
+            if !(l.isFinite && r.isFinite) { return }
+            peak = Swift.max(peak, abs(l))
+        }
+        XCTAssertGreaterThan(peak, 0.01, "silent output — the stage was bypassed, not sanitised")
+    }
+
+    /// Fourth field (#1208). `timeSeconds` is GLIDED into `timeSmoothed`; a NaN target froze the
+    /// smoothed time forever, and `Swift.max(1.0, NaN)` then collapsed the tap to one sample
+    /// until `reset()`. Finite output over the full glide, and the dry half of the mix still
+    /// audible, is the whole claim — WHERE the tap lands after the clamp is the finite-value
+    /// counterweight's business, not this test's.
+    func testNaNTimeProducesFiniteOutput() {
+        let d = EchoelDelay(sampleRate: 48_000)
+        d.timeSeconds = .nan
+        d.feedback = 0.4
+        d.mix = 0.5
+        var peak: Float = 0
+        for i in 0..<20_000 {
+            let x: Float = i % 7 == 0 ? 0.5 : 0.1
+            let (l, r) = d.processStereo(x, x)
+            XCTAssertTrue(l.isFinite && r.isFinite,
+                          "Frame \(i): NaN in the time CONTROL reached the output — the glide "
+                          + "latched a non-finite target.")
+            if !(l.isFinite && r.isFinite) { return }
+            peak = Swift.max(peak, abs(l))
+        }
+        XCTAssertGreaterThan(peak, 0.01, "silent output — the stage was bypassed, not sanitised")
+        // And `reset()` must not re-latch the NaN: the empty-line snap goes through the same clamp.
+        d.reset()
+        let (l, r) = d.processStereo(0.25, 0.25)
+        XCTAssertTrue(l.isFinite && r.isFinite, "reset() snapped the smoothed time to the NaN control")
     }
 
     /// COUNTERWEIGHT — the repair's whole claim is "bit-identical for finite inputs". An

@@ -61,6 +61,9 @@ public final class EchoelDelay: @unchecked Sendable {
     /// target on `reset()` (fresh/empty line has nothing to repitch).
     private var timeSmoothed: Float = 0.375
     private let timeGlide: Float
+    /// The declared top of `timeSeconds` (#1208): kept so the glide and `reset()` can hold
+    /// the control to its own [0.001, maxDelaySeconds] domain with the NaN-safe `clamped(to:)`.
+    private let timeTop: Float
 
     // one-pole feedback dampers (per channel)
     private var lpL: Float = 0
@@ -89,6 +92,7 @@ public final class EchoelDelay: @unchecked Sendable {
 
         // One-pole coefficient for a ~40 ms time-glide constant.
         self.timeGlide = 1.0 - expf(-1.0 / (0.040 * sampleRate))
+        self.timeTop = Swift.max(0.001, maxDelaySeconds.isFinite ? maxDelaySeconds : 2.0)
         self.timeSmoothed = timeSeconds
     }
 
@@ -111,7 +115,11 @@ public final class EchoelDelay: @unchecked Sendable {
         let m  = mix.clamped(to: 0...1)
 
         // Glide the audible time toward the control-plane target (declick).
-        timeSmoothed += timeGlide * (timeSeconds - timeSmoothed)
+        // #1208 — the #1206b class, third neighbour: `timeSeconds` is GLIDED into
+        // `timeSmoothed`, so one NaN target would freeze the smoothed time forever
+        // (`Swift.max(1.0, NaN)` below then collapses the tap to one sample until `reset()`).
+        // Held to its declared domain with the NaN-safe house clamp before it is glided.
+        timeSmoothed += timeGlide * (timeSeconds.clamped(to: 0.001...timeTop) - timeSmoothed)
 
         // Base delay in samples, with optional stereo spread on the right tap.
         //
@@ -203,7 +211,7 @@ public final class EchoelDelay: @unchecked Sendable {
         lpL = 0; lpR = 0
         wowLFO.reset()
         flutterLFO.reset()
-        timeSmoothed = timeSeconds   // empty line: snap, don't glide
+        timeSmoothed = timeSeconds.clamped(to: 0.001...timeTop)   // empty line: snap, don't glide
     }
 
     // MARK: - Helpers
@@ -212,7 +220,14 @@ public final class EchoelDelay: @unchecked Sendable {
     /// 1 → ~16 kHz (bright).
     @inline(__always)
     private func toneCoefficient() -> Float {
-        let fc = 800.0 * powf(20.0, Swift.min(Swift.max(tone, 0.0), 1.0))
+        // #1208 — `tone` feeds the one-pole INSIDE the feedback write-back (`lpL/lpR` → the
+        // ring). The old `Swift.min(Swift.max(tone, 0), 1)` is NaN-transparent (see
+        // `Core/FloatingPointClamp.swift`), so a single non-finite control value poisoned the
+        // delay line for the rest of the session — the permanent-silence class #1206b fixed on
+        // the flanger. `clamped(to:)` lands a NaN on 0 (dark), a neutral tone, and is
+        // bit-identical for every finite input. The `g` clamp below only ever sees a finite
+        // `fc` after this line, so its spelling is harmless and left alone.
+        let fc = 800.0 * powf(20.0, tone.clamped(to: 0...1))
         let g = 1.0 - expf(-2.0 * Float.pi * fc / sr)
         return Swift.min(Swift.max(g, 0.0), 1.0)
     }
