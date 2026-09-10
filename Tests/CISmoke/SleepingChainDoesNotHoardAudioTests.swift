@@ -404,4 +404,250 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
             """)
     }
 
+    // MARK: - #1203: the bulk fill cannot make a concurrent reader TRAP
+
+    /// #1196b's mandatory review left this open and named it exactly: the bulk fill did not
+    /// change the PROBABILITY of the drain race, it changed its CONSEQUENCE.
+    /// `withUnsafeMutableBufferPointer` swaps the array for the empty-storage singleton for
+    /// the duration of the closure, so a concurrent reader indexes a zero-count array —
+    /// `Index out of range`, a TRAP on the audio thread, where the element loop it replaced
+    /// had only left a half-cleared buffer (a click).
+    ///
+    /// ⛔ IT HAPPENED IN TWO FILES AND #1203's FIRST DRAFT GATED ONE. Both mandatory reviewers
+    /// found the same thing first and independently: `EchoelReverb.reset()` performs the
+    /// identical swap on 24 tanks, its `comb`/`allpass` index them unguarded, and its subscript
+    /// is a MUTATING one — so it runs the copy-on-write path on the audio thread before it
+    /// traps. The reachability runs the wrong way round too: `EchoelFXChain`'s own cost table
+    /// says `delayEnabled` defaults to FALSE while a typical sounding chain drains reverb.
+    /// The file that got the analysis was the one usually switched off. This claim now covers
+    /// BOTH, which is also why the four reverb bulk fills pinned by
+    /// `testTheAudioThreadDrainUsesABulkFill` above no longer sit in this file un-answered.
+    ///
+    /// ⚠️ STATE THE LIMIT BEFORE THE CLAIM (§1). This is a NARROWING, not a fix. The gates
+    /// remove the bulk of the window — a clear of up to 131 072 floats — but the count read
+    /// and the subscript are two source-level accesses, and how they LOWER decides whether a
+    /// seam survives at all. That is **UNMEASURED** and there is no toolchain here to measure
+    /// it; `EchoelDelayLine.reset()` carries both bounds. ⛔ An earlier draft of this header
+    /// asserted the gates "sit AT the index rather than at the top of its function" and called
+    /// that "the whole size of the effect". Both halves were wrong — the assertion below only
+    /// ever checked BEFORE, which a top-of-function gate also satisfies, and in `write` the
+    /// gate IS the top of the function. Prose and assertion now say the same thing.
+    ///
+    /// ⚠️ AND THE UNDERLYING HAZARD IS UNTOUCHED, so nobody reads a green here as "handled":
+    /// `fxEnabled` is still an unfenced `Bool`, and the thread disjointness still rests on
+    /// source order. This file's `testTheDrainIsGatedOnEachStagesOwnEnableFlag` is still the
+    /// load-bearing one.
+    ///
+    /// ⭐ #364 — THIS CLAIM MUST NOT OUTLIVE ITS STORAGE MODEL. It pins two spellings that are
+    /// only meaningful while these lines store their samples in Swift `Array`s. Moving either
+    /// to a manually managed `UnsafeMutablePointer` — which `EchoelDelayLine.reset()` names as
+    /// the structural repair — or fencing `fxEnabled` so the gates are no longer the right
+    /// shape is legitimate work; it must REWRITE this claim in the same commit, together with
+    /// the ⛔/⚠️ blocks in both `reset()`s. The failure messages say so, so a red does not read
+    /// as an order to revert.
+    ///
+    /// SOURCE-TEXT SCAN (§1). It proves where the gates sit, not that a race cannot fire.
+    ///
+    /// GRADING against `git show HEAD:<path>` (§3), transcribed in Python because there is no
+    /// local toolchain (§0), driven over both trees:
+    /// · TEN REGRESSIONS — the gate lookup and the ordering check in each of the five
+    ///   accessors (three in `EchoelDelayLine`, two in `EchoelReverb`). Each is its own site,
+    ///   not one absence counted ten times (#486): five different functions in two files.
+    /// · SIX COUNTERWEIGHTS, green on both trees and the point of the file (#343) — the
+    ///   `capacity` immutability, the `mask` derivation, the masked `writeIndex` store, the
+    ///   two index-site count pins and the reverb wrap. Every one of them names a way to keep
+    ///   the letter of a gate and lose its meaning.
+    /// · ZERO anchor absences: all five signatures and all five index expressions resolve on
+    ///   BOTH trees, so no assertion is red for a reason other than the one it gives (#367).
+    func testEveryDrainedBufferIndexIsGatedOnRealStorage() throws {
+        let delayFile = "Sources/Echoelmusic/DSP/EchoelDelayLine.swift"
+        let delay = try codeLines(delayFile).joined(separator: "\n")
+        let delayGate = "guard buffer.count == capacity else"
+
+        // COUNTERWEIGHT: the gate compares against something the audio thread cannot see
+        // change. If `capacity` ever became a `var`, the comparison would still read fine and
+        // would stop meaning anything.
+        XCTAssertTrue(delay.contains("private let capacity: Int"), """
+            `EchoelDelayLine.capacity` is no longer an immutable `let`. Every gate added by \
+            #1203 compares the live storage count against it, so a mutable `capacity` makes \
+            all three gates vacuous while still reading as protection.
+            """)
+
+        // COUNTERWEIGHT: the gate is sufficient for the two READERS only because `mask`
+        // already bounds their indices below `capacity`. Lose that and one comparison stops
+        // covering four sites.
+        XCTAssertTrue(delay.contains("self.mask = capacity - 1"), """
+            `mask` is no longer `capacity - 1`. #1203's single `buffer.count == capacity` \
+            gate per accessor is sufficient ONLY because the mask already guarantees \
+            `idx < capacity`; without it each index needs its own bound.
+            """)
+
+        // ⭐ THE INVARIANT `write` ACTUALLY DEPENDS ON, and the one the first draft of this
+        // claim left unpinned (mandatory review). `buffer[writeIndex]` is NOT masked at the
+        // use site; it is in range only because the field is STORED masked. A change to a bare
+        // `writeIndex &+ 1` would break `write` and no gate here would see it, because
+        // `buffer.count == capacity` says nothing about `writeIndex`.
+        XCTAssertTrue(delay.contains("writeIndex = (writeIndex &+ 1) & mask"), """
+            `EchoelDelayLine.write` no longer stores `writeIndex` masked. That store is the \
+            ONLY thing keeping its unmasked subscript in range — #1203's storage gate does \
+            not check it (#1203, found by the mandatory review).
+            """)
+
+        // The three indexing accessors, each with the index expression the gate must precede.
+        // Brace-matched bodies, not a line window (#408): this file carries 30-40 line comment
+        // blocks and any fixed window is unsound by construction.
+        // ⚠️ LIMIT: `codeLines` blanks only lines whose TRIMMED form starts with `//`, so a
+        // trailing `// {` comment inside one of these bodies would desync the matcher. None
+        // exists today; if one appears, this scan mis-scopes silently rather than failing.
+        let accessors: [(String, String)] = [
+            ("public func write(_ x: Float) {", "buffer[writeIndex] = x"),
+            ("public func read(delaySamples: Float) -> Float {", "return buffer[idx0] *"),
+            ("public func readAllpass(delaySamples: Float) -> Float {", "let s0 = buffer[idx0]"),
+        ]
+        for (signature, indexLine) in accessors {
+            try Self.assertGatePrecedesIndex(
+                gate: delayGate, signature: signature, indexLine: indexLine,
+                code: delay, file: delayFile)
+        }
+
+        // COUNT PIN — the method says EVERY index, so it has to be able to see a new one.
+        // Named accessors alone stay green when a fourth is added ungated (mandatory review).
+        // Comment-stripped occurrences today: the store in `write`, two in `read`'s return,
+        // and one each for `s0`/`s1` in `readAllpass`.
+        XCTAssertEqual(delay.components(separatedBy: "buffer[").count - 1, 5, """
+            the number of `buffer[` index sites in `EchoelDelayLine` changed. Every one of \
+            them must sit behind a `\(delayGate)` gate, or the drain race can trap the audio \
+            thread again (#1203). Add the gate, then update this number.
+            """)
+
+        // ---- the twin, gated in the same commit ----
+        let reverbFile = "Sources/Echoelmusic/DSP/EchoelReverb.swift"
+        let reverb = try codeLines(reverbFile).joined(separator: "\n")
+        let reverbGate = "guard idx < buf.count else"
+
+        let filters: [(String, String)] = [
+            ("private func comb(_ input: Float, buf: inout [Float], idx: inout Int, store: inout Float) -> Float {",
+             "let output = buf[idx]"),
+            ("private func allpass(_ input: Float, buf: inout [Float], idx: inout Int) -> Float {",
+             "let bufout = buf[idx]"),
+        ]
+        for (signature, indexLine) in filters {
+            try Self.assertGatePrecedesIndex(
+                gate: reverbGate, signature: signature, indexLine: indexLine,
+                code: reverb, file: reverbFile)
+        }
+
+        // COUNT PIN, same argument. Two reads and two MUTATING stores; the mutating pair is
+        // why this file is the worse shape — on the empty singleton the modify accessor runs
+        // the copy-on-write path on the audio thread before it traps.
+        XCTAssertEqual(reverb.components(separatedBy: "buf[").count - 1, 4, """
+            the number of `buf[` index sites in `EchoelReverb` changed. Each must sit behind \
+            a `\(reverbGate)` gate (#1203). Add the gate, then update this number.
+            """)
+
+        // COUNTERWEIGHT: the reverb gate is sufficient only because `idx` is never negative —
+        // it is 0 or a wrapped increment. This is the wrap.
+        XCTAssertEqual(reverb.components(separatedBy: "if idx >= buf.count { idx = 0 }").count - 1, 2, """
+            `EchoelReverb`'s index wrap changed shape. `guard idx < buf.count` is a \
+            sufficient bound ONLY because `idx` is 0 or a wrapped increment and so cannot be \
+            negative (#1203).
+            """)
+    }
+
+    /// One accessor, one gate: the gate must occur inside the brace-matched body and BEFORE
+    /// the index expression. Shared by both files so the two halves cannot drift (#416).
+    private static func assertGatePrecedesIndex(
+        gate: String, signature: String, indexLine: String, code: String, file: String
+    ) throws {
+        let body = try XCTUnwrap(Self.body(after: signature, in: code), """
+            `\(signature)` was not found in \(file), so this claim asserted nothing. \
+            Re-anchor it before trusting a green (#926: a missed anchor returns empty and \
+            every expectation over it passes).
+            """)
+        let gateAt = try XCTUnwrap(body.range(of: gate), """
+            `\(signature)` in \(file) indexes its buffer without first checking that the \
+            storage is the real one. `reset()` installs the empty-storage singleton for the \
+            duration of its bulk fill, and the audio thread can be inside this accessor at \
+            that moment — `Index out of range`, i.e. a TRAP on the audio thread (#1203). If \
+            you replaced the Array storage or fenced `fxEnabled` so this gate is no longer \
+            the right shape, rewrite this claim and the ⛔ blocks in BOTH `reset()`s in the \
+            SAME commit (#364).
+            """)
+        let indexAt = try XCTUnwrap(body.range(of: indexLine), """
+            the index expression `\(indexLine)` is gone from `\(signature)`, so this claim \
+            can no longer tell whether the gate precedes it. Re-anchor it (#367).
+            """)
+        XCTAssertTrue(gateAt.upperBound <= indexAt.lowerBound, """
+            the storage gate in `\(signature)` no longer precedes `\(indexLine)`. A check \
+            after the index is a check that never runs (#1203).
+            """)
+    }
+
+    /// END-TO-END BEHAVIOUR (§1) — the strong kind, and the half a scan cannot give: the
+    /// gates are NEUTRAL. `EchoelDelayLine` is `public` and Foundation-only, so this drives
+    /// the shipped type rather than its source text.
+    ///
+    /// It is a COUNTERWEIGHT by design (#343): green on both trees. That is the point — a
+    /// safety gate that changed a returned sample would be a regression wearing a fix's name.
+    ///
+    /// ⚠️ THE REVERB HALF OF #1203 GETS NO TEST OF ITS OWN, and that is a decision, not an
+    /// omission: `comb` and `allpass` are `private`, so nothing here can drive them directly,
+    /// and a single-tree behavioural test cannot demonstrate bit-neutrality without the other
+    /// tree to compare against. What already covers them is this file's own end-to-end
+    /// tests — `testRaisingTheMixAfterSleepCannotResurrectTheOldTake` and
+    /// `testTheChainStillPassesAudioAfterWaking` both push real buffers through the tank at
+    /// `reverb.mix = 0.9`. A gate that dropped a sample there would fail them.
+    func testTheStorageGateIsNeutralInNormalOperation() {
+        let line = EchoelDelayLine(maxDelaySeconds: 0.001, sampleRate: 48000)
+        let written: [Float] = [0.25, -0.5, 0.125, 1.0, -0.75]
+        for x in written { line.write(x) }
+
+        // The indexing contract from the file header: delay 1 is the most recent sample.
+        for (back, expected) in zip(1...written.count, written.reversed()) {
+            XCTAssertEqual(line.read(delaySamples: Float(back)), expected, """
+                `read(delaySamples: \(back))` no longer returns the sample written \(back) \
+                steps ago. #1203 added a storage gate in front of this index; it must be \
+                bit-neutral whenever the storage is the real buffer.
+                """)
+        }
+
+        // A whole-integer delay makes this exact, so it is an equality and not a tolerance
+        // (#442 — assert from the algebra, not from a printed value). With frac = 0 the
+        // coefficient eta is 1.0 and `apPrev` is still 0, so `s1 + eta * (s0 - apPrev)`
+        // collapses to s1 + s0: the second-most-recent sample plus the most recent one.
+        // `read` above does not touch `apPrev`, so the state is unchanged by those calls.
+        let s0 = written[written.count - 1]
+        let s1 = written[written.count - 2]
+        XCTAssertEqual(line.readAllpass(delaySamples: 1.0), s1 + s0, """
+            `readAllpass` no longer returns its documented output for a whole-sample delay. \
+            #1203 put a storage gate in front of its index and before it touches `apPrev`; \
+            it must be bit-neutral whenever the storage is the real buffer.
+            """)
+
+        line.reset()
+        XCTAssertEqual(line.read(delaySamples: 1.0), 0, """
+            `reset()` no longer empties the line. That is the whole subject of this file: a \
+            stage that keeps its buffer across a sleep bursts stale audio on resume.
+            """)
+    }
+
+    /// Brace-matched body of the declaration whose signature line is `signature`.
+    /// Returns nil if the signature does not occur, so a mis-anchor is a FAILURE and not a
+    /// vacuous green (#926).
+    private static func body(after signature: String, in code: String) -> String? {
+        guard let open = code.range(of: signature) else { return nil }
+        var depth = 1
+        var index = open.upperBound
+        while index < code.endIndex {
+            let character = code[index]
+            if character == "{" { depth += 1 }
+            if character == "}" {
+                depth -= 1
+                if depth == 0 { return String(code[open.upperBound..<index]) }
+            }
+            index = code.index(after: index)
+        }
+        return nil
+    }
+
 }

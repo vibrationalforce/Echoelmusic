@@ -127,6 +127,21 @@ public final class EchoelReverb: @unchecked Sendable {
     /// ⚠️ The caller's ownership rule (audio thread drains only ENABLED stages, control plane
     /// only DISABLED ones) is untouched — see `EchoelFXChain.noteRenderSleeping`. Making this
     /// faster is not a licence to call it from both sides.
+    ///
+    /// ⛔ #1196b INTRODUCED THE SAME HAZARD IN TWO FILES AND ONLY ONE OF THEM WROTE IT DOWN.
+    /// `withUnsafeMutableBufferPointer` swaps the array for the empty-storage singleton for
+    /// the duration of the closure, so a reader that indexes it in that window sees a
+    /// ZERO-COUNT array — `Index out of range`, a TRAP on the audio thread, where the nested
+    /// element loop this replaced left only a half-cleared tank (a click). The control plane
+    /// reaches this `reset()` on the rising edge of `EchoelFXChain.reverbEnabled`, and the
+    /// disjointness from the audio thread rests on SOURCE ORDER, not on a fence.
+    /// `EchoelDelayLine.reset()` carried that analysis alone for one cycle — the #937 shape
+    /// this repo keeps paying for: one form repaired, the twin left broken and unnamed.
+    ///
+    /// ⭐ #1203 GATES BOTH. `comb` and `allpass` now check `idx < buf.count` before they
+    /// index. Read `EchoelDelayLine.reset()` for the full argument, including the part that
+    /// matters most: this is a NARROWING, not a fix, and the residual window is UNMEASURED.
+    /// Eight comb tanks and four allpass tanks per channel bottom out here.
     public func reset() {
         for i in 0..<combCount {
             combBufL[i].withUnsafeMutableBufferPointer { $0.update(repeating: 0) }
@@ -146,6 +161,11 @@ public final class EchoelReverb: @unchecked Sendable {
     /// Lowpass-feedback comb filter (Freeverb's `comb`).
     @inline(__always)
     private func comb(_ input: Float, buf: inout [Float], idx: inout Int, store: inout Float) -> Float {
+        // #1203 — see `reset()`. `idx` is only ever 0 or a wrapped increment, so it cannot be
+        // negative; the ONLY reachable out-of-range state is storage that is not the real
+        // tank. This costs nothing new in kind: the wrap two lines down already reads
+        // `buf.count` on every sample.
+        guard idx < buf.count else { return 0 }
         let output = buf[idx]
         // + tiny DC keeps the decaying feedback state out of the denormal range
         // (< ~1e-38), where each sample would trigger a CPU stall → audible crackle
@@ -160,6 +180,8 @@ public final class EchoelReverb: @unchecked Sendable {
     /// Schroeder allpass diffuser (Freeverb's `allpass`).
     @inline(__always)
     private func allpass(_ input: Float, buf: inout [Float], idx: inout Int) -> Float {
+        // #1203 — see `reset()`, and the same reasoning as `comb` above.
+        guard idx < buf.count else { return 0 }
         let bufout = buf[idx]
         let output = -input + bufout
         buf[idx] = input + bufout * Self.allpassFeedback

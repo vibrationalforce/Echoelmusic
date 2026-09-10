@@ -89,6 +89,14 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// Push one sample into the line. Audio-thread safe.
     @inline(__always)
     public func write(_ x: Float) {
+        // #1203 — see `reset()`. NOTE THE ASYMMETRY WITH THE TWO READERS: this index is not
+        // masked at the use site. It is safe because `writeIndex` is STORED masked — the line
+        // below, plus 0 in `init` and in `reset()`. Drop the `& mask` there and this gate does
+        // NOT catch it: `buffer.count == capacity` says nothing about `writeIndex`.
+        // Returning also skips the advance, which is the right pairing (an advance without a
+        // store would leave a stale sample at the head) and is moot anyway: the `reset()` that
+        // opened the window re-zeroes `writeIndex` before it closes.
+        guard buffer.count == capacity else { return }
         buffer[writeIndex] = x
         writeIndex = (writeIndex &+ 1) & mask
     }
@@ -107,6 +115,11 @@ public final class EchoelDelayLine: @unchecked Sendable {
         let frac = d - Float(i0)
         let idx0 = (writeIndex &- i0) & mask
         let idx1 = (idx0 &- 1) & mask
+        // #1203 — see `reset()`. `x & mask` lands in [0, capacity - 1] for ANY x, negative
+        // wrap included, so for THESE two indices the only reachable out-of-range state is
+        // storage that is not the real buffer. Zero is the right answer for a line being
+        // cleared: it is what the clear is about to write anyway.
+        guard buffer.count == capacity else { return 0 }
         return buffer[idx0] * (1.0 - frac) + buffer[idx1] * frac
     }
 
@@ -127,6 +140,11 @@ public final class EchoelDelayLine: @unchecked Sendable {
         let idx1 = (idx0 &- 1) & mask
         // eta in [0,1); coefficient for the allpass interpolator
         let eta = (1.0 - frac) / (1.0 + frac)
+        // #1203 — see `reset()`. Returning before `apPrev` is written costs nothing and is
+        // the tidier order; do NOT read it as a benefit, though — the same `reset()` that
+        // opened the window zeroes `apPrev` a few instructions later, so the state this
+        // preserves is discarded either way. (`eta` above is then dead work on the drop path.)
+        guard buffer.count == capacity else { return 0 }
         let s0 = buffer[idx0]
         let s1 = buffer[idx1]
         let out = s1 + eta * (s0 - apPrev)
@@ -165,19 +183,78 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// CHANGE SHARPENS THE CONSEQUENCE IF THE RACE EVER FIRES, at unchanged probability, and
     /// that is the one thing a future session must not learn from a crash report instead:
     /// `fxEnabled` is a plain non-atomic `Bool` with no fence, and the control-plane drain is
-    /// reachable from a live user control (the FX sheet). Under the element loop this
+    /// reachable from a live user control (the FX sheet) — and, less obviously, from
+    /// `FXBioModulator`, which raises enable flags from the modulation loop, so that store
+    /// happens far more often than a finger does. A THIRD control-plane path resets stages
+    /// unconditionally and is NOT covered by the enable-flag rule at all:
+    /// `MonitorInsertAU.allocateRenderResources()`, safe by the AU contract that the node is
+    /// not rendering during (re)allocation, on a different chain instance. Under the element
+    /// loop this
     /// degraded to a HALF-CLEARED BUFFER — an audible click. `withUnsafeMutableBufferPointer`
     /// swaps the array for the empty-storage singleton for the duration of the closure, so a
     /// concurrent `read(delaySamples:)` would index a ZERO-COUNT array: `Index out of range`,
     /// i.e. a TRAP on the audio thread. Click → crash.
     ///
-    /// NOT REVERTED, and the reasoning is the trade, not a shrug: the crackle this repairs is
-    /// certain and reported from the device; the race is documented-but-unobserved. The
-    /// candidate remedy for a later slice is `vDSP_vclr`, whose implicit array-to-pointer
-    /// conversion is believed not to perform that swap — BELIEVED, not measured, and it would
-    /// give this file its first `import Accelerate`. Do not take it on the strength of this
-    /// sentence; the honest fix for the underlying hazard is to fence `fxEnabled`, which is a
-    /// different slice with a different owner.
+    /// ⭐ #1203 TOOK THAT SHARPENING BACK — AND IT IS A NARROWING, NOT A FIX. Say which one
+    /// this is, because the difference decides whether the fence below is still owed. All
+    /// three accessors now gate on `buffer.count == capacity` before they index, so inside
+    /// the window a concurrent read returns 0 and a concurrent write is dropped: the
+    /// pre-#1196b severity (a click), reached without touching the memory model, the
+    /// ownership rule, or this file's import list.
+    ///
+    /// ⚠️ ONE COMPARISON IS ENOUGH FOR THE TWO READERS AND ENOUGH-BY-ACCIDENT FOR THE WRITER.
+    /// `x & mask` lands in [0, capacity - 1] for any `x`, so in `read`/`readAllpass` the only
+    /// reachable out-of-range state really is foreign storage. `write` indexes `writeIndex`
+    /// UNMASKED at the use site and is safe only because that field is STORED masked — a
+    /// separate invariant this gate does not check. It is pinned in the guard instead.
+    ///
+    /// ⛔ THE SIZE OF THE REMAINING WINDOW IS **UNMEASURED**, and the first draft of this
+    /// block asserted it as a fact — "two adjacent instructions, which is why each gate is
+    /// placed at the index and not at the top of its function". BOTH halves were wrong.
+    /// `buffer.count` and `buffer[i]` are two source-level accesses, but the compiler decides
+    /// what they lower to, and it can go either way: CSE may fold them into ONE load of the
+    /// storage pointer (a race is UB, so nothing single-threaded may change `buffer` between
+    /// them), which CLOSES the seam and makes this a full fix; or LICM may hoist the count
+    /// load out of the caller's per-sample loop — `read`/`write` are `@inline(__always)` and
+    /// are called per sample from `EchoelDelay.processStereo` inside `processBuffer`'s
+    /// `for i in 0..<n` — which WIDENS it to a whole render block. Source placement does not
+    /// control machine placement, so the gates stay adjacent to their index because it is
+    /// tidier, NOT because it buys a bound. And the rule as first written was vacuous at one
+    /// of the three sites anyway: in `write` the gate IS the top of the function.
+    /// There is no toolchain in a web session, so this stays UNMEASURED rather than estimated;
+    /// what is certain is only the direction — the exposed window is no larger than before,
+    /// and the bulk clear of up to 131 072 floats is no longer inside it.
+    ///
+    /// ⚠️ TWO PREMISES THIS GATE LEANS ON, LABELLED because the paragraph below declines
+    /// `vDSP_vclr` on exactly this standard and it must not apply it in one direction only.
+    /// (1) Lifetimes: `withUnsafeMutableBufferPointer` MOVES the real storage into the
+    /// resetting frame and installs the immortal empty singleton, so a reader that loaded
+    /// either reference reads live memory — read out of stdlib SOURCE, not out of a documented
+    /// contract, and not measured here. (2) No torn reference: the property is one aligned
+    /// 64-bit slot and arm64 gives single-copy atomicity for such loads and stores — a
+    /// HARDWARE property, not a Swift-language guarantee. The race is UB either way.
+    ///
+    /// ⛔ AND THE ALTERNATIVE THIS BLOCK FIRST PRICED WAS THE WRONG ONE. It said the seam
+    /// could be closed by binding the array to a local, "which costs a retain/release per
+    /// sample". The real objection is worse and is the reason not to: a transient second
+    /// reference is exactly what makes `_makeMutableAndUnique()` inside this `reset()` FAIL
+    /// its uniqueness check — which allocates a new buffer and copies the old one, ON THE
+    /// AUDIO THREAD. Two alternatives it did not consider at all, and one of them is the
+    /// structural repair rather than a narrowing: the NON-mutating `withUnsafeBufferPointer`
+    /// does not swap, so count and subscript come from one access; and storing an
+    /// `UnsafeMutablePointer<Float>` allocated once in `init` removes the hazard CLASS — an
+    /// immutable pointer has nothing to swap, `reset()` loses its uniqueness check, and the
+    /// per-sample bounds checks go with it. `capacity` is fixed and the buffer never resizes,
+    /// so nothing blocks it; it is a different slice, not a different file.
+    ///
+    /// STILL OWED, unchanged by this slice: `fxEnabled` is a plain non-atomic `Bool` with no
+    /// fence, so the disjointness that keeps the two threads out of each other's way rests on
+    /// SOURCE ORDER. Fencing it is a different slice with a different owner. `vDSP_vclr` is
+    /// still NOT taken, on a corrected reason: its implicit conversion goes through
+    /// `_convertMutableArrayToPointerArgument`, which does NOT install the empty singleton —
+    /// readable in stdlib source, so "nothing here can measure it" was too strong. It is
+    /// declined because it would still leave the half-cleared click and would give this file
+    /// its first `import Accelerate`, for a hazard the pointer rewrite above removes outright.
     // NEEDS-FOUNDER-VERIFY: eine Sequenz spielen, stoppen, rund fuenf Sekunden warten, dann
     // im Master-Panel die Zeile `N late` ablesen. Der Ausschlag, der ~2,5 s NACH dem Stoppen
     // kam (alle Stimmen leeren ihre Puffer im selben Block), soll verschwunden sein (#1196b).
