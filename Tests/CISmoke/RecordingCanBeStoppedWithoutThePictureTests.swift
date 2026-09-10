@@ -37,6 +37,37 @@
 // in the one position that is safe, clears every field its creator set, and cannot leave the
 // next take without a pool. NEEDS-FOUNDER-VERIFY: record two or three takes in a row and watch
 // whether the app's memory returns to its pre-take level.
+//
+// ⛔ #1198b (same day) — THE MANDATORY REVIEW FOUND THAT #1198's CENTRAL ARGUMENT WAS WRONG,
+// and the wrong half had been written into TWO homes (the source comment and claim 5's failure
+// message). #1198 argued that PLACEMENT was sufficient: the `defer` sits below the re-entry
+// guard, therefore it cannot fire under a live take. The guard describes ENTRY. The `defer`
+// fires at EXIT — after `VideoMuxer.mux`, a full `AVAssetExportSession` re-encode lasting
+// SECONDS. In that window `recordState` is terminal, the floating window's button reads
+// "record" again, and `VideoRecorder.startRecording` accepts every terminal state by design.
+// So a tap arms a NEW take and the finishing mux then released ITS pool. Self-healing (the
+// next frame rebuilds) but a mid-take reallocation on a 60 Hz path at the start of a
+// performance.
+//
+// The repair is one condition asked at FIRE time — `if !video.recordState.isRecording` — and
+// claim 5 now asserts it. Claim 5 also gained the check its own doc implied and did not make:
+// the release must precede the first `return` after the guard, because a `defer` at the BOTTOM
+// of `stop()` satisfies "after the guard" and covers none of the early exits.
+//
+// CLAIM 8 is new and covers the edit site #1198 left completely unguarded: `capture` has five
+// returns too, THREE of them after `ensureResources` has allocated, and #1198 released on the
+// success path only with a trailing line — the same defect it exists to remove, one branch
+// deeper. Both halves are pinned: DEFERRED (covers the failure branches) and CONDITIONAL
+// (a running take keeps its pool instead of rebuilding it every frame).
+//
+// GRADING of the #1198b additions, transcribed against `git show HEAD:<path>` (= the #1198
+// tree) and the worktree: claim 5's condition assertion — REGRESSION · claim 8 — REGRESSION ·
+// claim 5's first-return assertion and claim 6's flush-order assertion — COUNTERWEIGHTS, green
+// on both trees, added because each names a way to satisfy the letter of a claim and lose it.
+//
+// ⭐ THE LESSON, and it is about REVIEW rather than about video: two commits in a row shipped a
+// defect that only the mandatory review caught, and both were the same shape — a change whose
+// argument was true of one scenario and asserted generally. Neither would have gone red.
 
 import Foundation
 import XCTest
@@ -181,12 +212,80 @@ final class RecordingCanBeStoppedWithoutThePictureTests: XCTestCase {
             return
         }
         XCTAssertGreaterThan(releaseIndex, guardIndex, """
-            `releaseResources()` is released ABOVE the re-entry guard in `stop()`.
+            `releaseResources()` is deferred ABOVE the re-entry guard in `stop()`.
 
             That is the double-tap hazard claim 4 documents, wearing a different hat: the \
-            SECOND caller returns at the guard while the FIRST is still writing frames, so a \
-            release above the guard frees the pool out from under a live take.
+            SECOND caller returns at the guard while the FIRST is still writing frames.
             """)
+        // ⭐ #1198b — POSITION IS NOT ENOUGH, AND THE FIRST VERSION OF THIS CLAIM STOPPED HERE.
+        // A `defer` written at the BOTTOM of `stop()` — below `guard let videoURL else` —
+        // satisfies "after the guard" and does NOT run for two of the five returns, i.e.
+        // exactly the failure this claim's own doc says it exists to prevent. One more line
+        // closes it: the release has to precede the first `return` after the guard.
+        if let firstReturn = statements[guardIndex...].dropFirst()
+            .firstIndex(where: { $0.hasPrefix("return ") || $0 == "return" }) {
+            XCTAssertLessThan(releaseIndex, firstReturn, """
+                the deferred release sits BELOW an early `return` in `stop()`. `defer` only \
+                covers exits that happen after it is REGISTERED, so every return above it is \
+                unguarded — and the two easiest to write above it are the failure returns, \
+                which are the runs a user retries immediately.
+                """)
+        }
+        // ⛔ AND THE CONDITION IS THE #1198b REPAIR ITSELF. The first version relied on
+        // placement alone and its comment argued that placement below the guard was
+        // sufficient. It is not: the guard proves `.recording` AT ENTRY, the `defer` fires at
+        // EXIT — after a `VideoMuxer.mux` that runs for seconds, by which time the button has
+        // flipped back to "record" and a tap can arm a NEW take. Found by the mandatory
+        // review. Asking the state at FIRE time is what makes the placement claim true.
+        XCTAssertTrue(statements[releaseIndex].contains("!video.recordState.isRecording"), """
+            the deferred release in `stop()` is unconditional. It fires at EXIT, after \
+            `VideoMuxer.mux` — a full `AVAssetExportSession` re-encode lasting seconds. In \
+            that window `recordState` is already terminal, the window's button reads "record" \
+            again, and `VideoRecorder.startRecording` accepts every terminal state. An \
+            unconditional release then tears down the pool of the take that is now running.
+
+            Placement below the re-entry guard does NOT cover this — that guard describes \
+            entry, this `defer` describes exit.
+            """)
+    }
+
+    // MARK: - 8. the capture path releases on its failure branches too
+
+    /// REGRESSION (#1198b). `capture(from:in:device:)` has five returns as well, and THREE of
+    /// them are after `ensureResources` has already built the pool and the cache. The first
+    /// version of #1198 released on the success path only, with a trailing line — reproducing
+    /// the very defect it was written to remove, one branch deeper and silently. Found by the
+    /// mandatory review, not by a guard, which is why this claim exists.
+    ///
+    /// Both halves are asserted: the release is DEFERRED (so the failure branches are covered)
+    /// and it is CONDITIONAL (so a running take keeps its pool instead of rebuilding it at
+    /// 60 Hz, which the source calls "the opposite trade").
+    func testTheCapturePathReleasesOnEveryExitButNotDuringATake() throws {
+        let capture = try memberBody(
+            startingWith: "func capture(from source: MTLTexture", in: Self.recorder)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        guard let releaseIndex = capture.firstIndex(where: {
+            $0.hasPrefix("defer") && $0.contains("releaseResources()")
+        }) else {
+            XCTFail("""
+                `capture(from:in:device:)` does not DEFER its release. A trailing line covers \
+                the success path only, and three of this function's five returns happen after \
+                `ensureResources` has already allocated.
+                """)
+            return
+        }
+        XCTAssertTrue(capture[releaseIndex].contains("!video.recordState.isRecording"), """
+            the release in `capture` is unconditional. During a take the next frame is 1/60 s \
+            away, so releasing here rebuilds the pool and the texture cache EVERY FRAME — the \
+            opposite of what #1198 is for, and it would leave claims 5, 6 and 7 green.
+            """)
+        if let build = capture.firstIndex(where: { $0.hasPrefix("ensureResources(width:") }) {
+            XCTAssertLessThan(releaseIndex, build, """
+                the deferred release is registered AFTER `ensureResources`. `defer` covers only \
+                exits below its registration, so the branches between the allocation and this \
+                line are exactly the ones left uncovered.
+                """)
+        }
     }
 
     // MARK: - 6. the release actually clears everything the creator set
@@ -197,8 +296,19 @@ final class RecordingCanBeStoppedWithoutThePictureTests: XCTestCase {
     /// dropping the reference: it makes the texture release happen at the end of the take
     /// rather than whenever the last reference dies.
     func testTheReleaseClearsEveryFieldTheCreatorSet() throws {
-        let release = try memberBody(startingWith: "private func releaseResources()",
-                                     in: Self.recorder).joined(separator: "\n")
+        let lines = try memberBody(startingWith: "private func releaseResources()",
+                                   in: Self.recorder)
+        let release = lines.joined(separator: "\n")
+        // ⭐ #1198b — ORDER, not just presence. `contains` on a joined string cannot see that
+        // the flush comes AFTER the nil, which would make it a no-op and stay green.
+        if let flush = lines.firstIndex(where: { $0.contains("CVMetalTextureCacheFlush") }),
+           let drop = lines.firstIndex(where: { $0.contains("textureCache = nil") }) {
+            XCTAssertLessThan(flush, drop, """
+                `releaseResources()` flushes the texture cache AFTER dropping the reference to \
+                it, which flushes nothing. The flush is what makes the texture release happen \
+                at the end of the take rather than whenever the last reference dies.
+                """)
+        }
         for needle in ["CVMetalTextureCacheFlush", "textureCache = nil", "pool = nil",
                        "poolWidth = 0", "poolHeight = 0"] {
             XCTAssertTrue(release.contains(needle), """

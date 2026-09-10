@@ -157,10 +157,23 @@ final class VisualRecorder {
         // the runs where a user is most likely to try again straight away and build a second
         // pool on top of the first.
         //
-        // It sits BELOW the re-entry guard on purpose. The second caller of a double-tap
-        // returns above this line while the first is still mid-flight; releasing there would
-        // pull the resources out from under a take that is still writing.
-        defer { releaseResources() }
+        // ⛔ THE CONDITION IS THE #1198b REPAIR, AND THE FIRST VERSION'S REASONING FOR LEAVING
+        // IT OUT WAS WRONG. That version argued placement was enough: "it sits BELOW the
+        // re-entry guard, so a second caller returns above this line while the first is still
+        // mid-flight." The guard proves the state was `.recording` AT ENTRY. The `defer` fires
+        // at EXIT — after `stopRecording()` and after `VideoMuxer.mux`, which is a full
+        // `AVAssetExportSession` re-encode and runs for SECONDS.
+        //
+        // In that window `video.recordState` is already terminal, so the floating window's
+        // button has flipped back to "record" and a tap arms a NEW take
+        // (`VideoRecorder.startRecording` accepts every terminal state, deliberately). The
+        // mux then finishes and this `defer` tears down the pool belonging to the take that is
+        // now running. Self-healing — `ensureResources` runs at the top of every frame — but
+        // it is a pool + cache reallocation mid-take on a 60 Hz path, at the start of a
+        // performance. Found by the mandatory review, not by a guard.
+        //
+        // Asking the state AT FIRE TIME answers the question the placement only appeared to.
+        defer { if !video.recordState.isRecording { releaseResources() } }
         let videoURL = await video.stopRecording()
         // Pull the last `duration` seconds of the mix NOW (ends ≈ the video's end →
         // best-effort alignment). Ring is ~30 s; longer videos get their last 30 s.
@@ -245,6 +258,22 @@ final class VisualRecorder {
         let h = source.height & ~1
         guard w > 0, h > 0 else { return }
 
+        // #1198b — SAME SHAPE AS `stop()`, and for the same reason the first version got wrong
+        // there. `capture` has five returns too, and THREE of them are after
+        // `ensureResources` has already built the pool and the cache: the pool/cache pair
+        // failing to appear, the buffer dequeue failing, and the texture-or-encoder creation
+        // failing. The first version released on the success path only, with a trailing line —
+        // i.e. it reproduced the exact defect it was written to remove, one branch deeper and
+        // silently. Found by the mandatory review.
+        //
+        // The condition is what keeps a running take's pool alive: during a take the next
+        // frame is 1/60 s away, so tearing down and rebuilding per frame would be the opposite
+        // trade. A still taken while NOT recording is a one-off and gives everything straight
+        // back.
+        //
+        // Safe with the blit in flight — see the note on `releaseResources`.
+        defer { if !video.recordState.isRecording { releaseResources() } }
+
         ensureResources(width: w, height: h, device: device)
         guard let cache = textureCache, let pool else { return }
 
@@ -293,15 +322,6 @@ final class VisualRecorder {
             // `ingest` would open a writer for a take nobody started.
             if recording { box.sink.ingest(box.pb, at: box.pts) }
         }
-        // #1198: a still taken while NOT recording is a one-off, so the pool and the texture
-        // cache go straight back. During a take they stay — the next frame is 1/60 s away and
-        // rebuilding per frame would be the opposite trade.
-        //
-        // Safe with the blit in flight, for two independent reasons: the command buffer
-        // retains the destination texture it was handed, and a `CVPixelBuffer` keeps its own
-        // pool alive as long as it lives, so `box.pb` cannot lose its backing when our
-        // reference to the pool goes away.
-        if !recording { releaseResources() }
     }
 
     // MARK: - Still image (#985)
@@ -360,14 +380,44 @@ final class VisualRecorder {
 
     // MARK: - Resources
 
-    /// Give back what `ensureResources` took. See the #1198 block in `stop()` for why this
-    /// exists; the short version is that a `CVPixelBufferPool` recycles instead of freeing, so
-    /// "not used any more" and "not resident any more" are different things here.
+    /// Give back what `ensureResources` took. A `CVPixelBufferPool` recycles instead of
+    /// freeing, so "not used any more" and "not resident any more" are different things here.
+    ///
+    /// ⚠️ HOW MUCH — corrected by the mandatory review, because the first version quoted
+    /// `1080p → 8.3 MB` and this app never captures at 1080p. The recorded texture is the
+    /// FLOATING WINDOW'S drawable, sized from its on-screen bounds (`MetalBioView` sets
+    /// `drawableSize` from `bounds × screen.scale`, `autoResizeDrawable = false`), and the
+    /// window offers four sizes. On a modern phone that spans roughly **0.7 MB per buffer at
+    /// the small size to ~12 MB at fullscreen** — the window's own tooltip says the same thing
+    /// from the user's side ("the video is rendered at the window's on-screen size"). The pool
+    /// settles at the high-water mark of simultaneously-live buffers (a handful) and never
+    /// ages them out: `CVPixelBufferPoolCreate` is called with nil pool attributes, so there is
+    /// no maximum-age key, and nothing in `Sources/` ever calls `CVPixelBufferPoolFlush`. So
+    /// "tens of megabytes" is honest for a fullscreen take and an order of magnitude too high
+    /// for a small one. Quote the range, not one number.
     ///
     /// The flush is not redundant with dropping the reference. `CVMetalTextureCacheFlush`
     /// releases the cache's textures for buffers that are no longer in use; releasing the
-    /// cache object alone leaves that to whenever the last texture reference dies. Flushing
-    /// first makes the release deterministic at the moment the take ends.
+    /// cache object alone leaves that to whenever the last texture reference dies.
+    ///
+    /// ⚠️ THE FLUSH IS DETERMINISTIC, THE POOL DEALLOCATION IS NOT — the first version said
+    /// both were, which contradicts this file's own safety argument. An outstanding
+    /// `CVPixelBuffer` keeps its pool alive, so `pool = nil` frees nothing until the last
+    /// in-flight buffer's completion handler retires. That is exactly why the release is safe;
+    /// it is also why it is not instant.
+    ///
+    /// ⚠️ WHY RELEASING IS SAFE WHILE A BLIT IS IN FLIGHT — two reasons for two DIFFERENT
+    /// hazards, not belt-and-braces (the first version presented them as interchangeable, and
+    /// a reader who invalidated one would have believed the other still covered them):
+    ///  · the TEXTURE-CACHE FLUSH is safe because the command buffer retains the destination
+    ///    texture it was handed at ENCODE time. ⚠️ That holds only because `MetalBioView`
+    ///    creates its command buffer with RETAINED references (`makeCommandBuffer()`, not
+    ///    `makeCommandBufferWithUnretainedReferences()`). That invariant lives in another
+    ///    file and no guard pins it; do not switch that call without reading this line.
+    ///  · the POOL RELEASE is safe because a `CVPixelBuffer` keeps its own pool alive, so
+    ///    `box.pb` cannot lose its backing when our reference goes away.
+    /// Do not reason from the local `cvTex` surviving to the end of `capture` — Swift ARC is
+    /// not scope-based and may release it at last use, well before the deferred release runs.
     ///
     /// The width/height reset is not cosmetic either: `ensureResources` decides on
     /// `pool == nil || poolWidth != width`, so a stale size beside a nil pool is a state that
