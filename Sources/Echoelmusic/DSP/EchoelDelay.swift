@@ -40,7 +40,16 @@ public final class EchoelDelay: @unchecked Sendable {
     public var spread: Float = 0.0
 
     /// Feedback tone [0 = dark, 1 = bright].
-    public var tone: Float = 0.6
+    ///
+    /// #1214 (audit 2026-09-10 `audio-dsp-2`) — the one-pole coefficient is CACHED here on
+    /// assignment, the `EchoelLoFiFX.tone` form. Before, `processStereo` called
+    /// `toneCoefficient()` PER SAMPLE — a `powf` and an `expf` on every frame of a stage the
+    /// genre presets switch on in most characters — for a control that only moves when a
+    /// finger or a preset moves it. The clamp (#1208) lives in the cached computation, so a
+    /// NaN control still lands on the dark, finite coefficient.
+    public var tone: Float = EchoelDelay.defaultTone { didSet { toneG = Self.toneCoefficient(tone, sr) } }
+    private static let defaultTone: Float = 0.6
+    private var toneG: Float
 
     /// Tape wow/flutter depth [0, 1] (only audible in `.tape`).
     public var wow: Float = 0.0
@@ -94,6 +103,8 @@ public final class EchoelDelay: @unchecked Sendable {
         self.timeGlide = 1.0 - expf(-1.0 / (0.040 * sampleRate))
         self.timeTop = Swift.max(0.001, maxDelaySeconds.isFinite ? maxDelaySeconds : 2.0)
         self.timeSmoothed = timeSeconds
+        // `didSet` does not fire for the declaration's default — seed the cache here (#1214).
+        self.toneG = Self.toneCoefficient(Self.defaultTone, sampleRate)
     }
 
     // MARK: - Process
@@ -171,7 +182,7 @@ public final class EchoelDelay: @unchecked Sendable {
         // One-pole low-pass damping in the feedback path ("tone").
         // + tiny DC keeps the decaying state out of the denormal range (crackle on
         // the delay tail when input goes silent); 1e-20 is inaudible.
-        let g = toneCoefficient()
+        let g = toneG   // cached on assignment (#1214); no transcendental per sample
         lpL += g * (rawFbL - lpL) + 1.0e-20
         lpR += g * (rawFbR - lpR) + 1.0e-20
 
@@ -218,8 +229,8 @@ public final class EchoelDelay: @unchecked Sendable {
 
     /// Map `tone` [0,1] → one-pole low-pass coefficient. 0 → ~800 Hz (dark),
     /// 1 → ~16 kHz (bright).
-    @inline(__always)
-    private func toneCoefficient() -> Float {
+    /// Static and pure — called from `tone`'s `didSet` and once from `init` (#1214).
+    private static func toneCoefficient(_ tone: Float, _ sr: Float) -> Float {
         // #1208 — `tone` feeds the one-pole INSIDE the feedback write-back (`lpL/lpR` → the
         // ring). The old `Swift.min(Swift.max(tone, 0), 1)` is NaN-transparent (see
         // `Core/FloatingPointClamp.swift`), so a single non-finite control value poisoned the
