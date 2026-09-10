@@ -65,6 +65,18 @@ public final class SACNSender {
     public private(set) var isActive = false
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
+    /// #1218 (audit 2026-09-10 `output-sync-3`) — KEEP-ALIVE. E1.31 §6.7.1 lets a receiver declare
+    /// a source LOST after 2.5 s without a packet, and the senders here emit only on change: a bio
+    /// stall, a paused transport or a held look meant the desk flipped to "source lost" mid-show
+    /// and either froze the last look or faded to black, per its own config — an unannounced state
+    /// change an operator cannot tell from a network fault. A packet at least every 0.8 s keeps the
+    /// universe claimed through any stall; Art-Net reads the same number (nodes hold for ~4 s).
+    public nonisolated static let keepAliveSeconds: TimeInterval = 0.8
+    /// E1.31 Options bit 6 — Stream_Terminated. `stop()` sends it three times (§6.7.1.2) so the
+    /// desk releases the universe NOW instead of waiting out its 2.5 s timeout with the merge
+    /// priority still claimed.
+    public nonisolated static let streamTerminatedOption: UInt8 = 0x40
+
     /// L1 Grand Master + Blackout — same law as Art-Net
     /// (`ArtNetSender.masteredDimmer`): blackout wins, master scales. Live
     /// state, not persisted; the PatchbayView "Licht" section drives both
@@ -138,11 +150,30 @@ public final class SACNSender {
 
     public func stop() {
         loop.stop()
-        connection?.cancel()
+        sayGoodbye()
         connection = nil
         isActive = false
         lastDimmer = -1
         lastColour = []
+    }
+
+    /// #1218 — three Stream_Terminated packets, then the socket closes in the LAST send's
+    /// completion: `NWConnection.cancel()` drops pending sends, so cancelling right after
+    /// enqueuing would lose the goodbye it exists to deliver. No connection ⇒ nothing to say.
+    private func sayGoodbye() {
+        guard let conn = connection else { return }
+        let fanned = DMXFixtureFan.fanned(lastChannels, count: fixtureCount, spacing: fixtureSpacing)
+        for i in 0..<3 {
+            let packet = Self.e131Packet(universe: universe, sequence: sequence, cid: cid,
+                                         channels: fanned, synthetic: lastKnownSynthetic,
+                                         options: Self.streamTerminatedOption)
+            sequence = sequence &+ 1
+            if i == 2 {
+                conn.send(content: packet, completion: .contentProcessed { _ in conn.cancel() })
+            } else {
+                conn.send(content: packet, completion: .contentProcessed { _ in })
+            }
+        }
     }
 
     // MARK: - Target persistence + live reconnect
@@ -229,7 +260,10 @@ public final class SACNSender {
         // mid-ramp, and a blackout is never blocked. (Mirrors ArtNetSender.)
         let masterMoved = grandMaster != lastSentGrandMaster || blackout != lastSentBlackout
         let slewSettling = lastDimmer >= 0 && abs(mastered - lastDimmer) > 0.001
-        guard sourceTimestamp != lastFrameTimestamp || masterMoved || slewSettling else { return }
+        // #1218 — or the universe is about to be declared lost: re-send the held look.
+        let keepAliveDue = lastSentTimestamp > 0
+            && CFAbsoluteTimeGetCurrent() - lastSentTimestamp >= Self.keepAliveSeconds
+        guard sourceTimestamp != lastFrameTimestamp || masterMoved || slewSettling || keepAliveDue else { return }
         lastFrameTimestamp = sourceTimestamp
         lastSentGrandMaster = grandMaster
         lastSentBlackout = blackout
@@ -298,8 +332,11 @@ public final class SACNSender {
         synthetic == true ? baseSourceName + " (DEMO)" : baseSourceName
     }
 
+    /// `options` is the framing-layer Options byte (#1218): 0 for a data packet,
+    /// `streamTerminatedOption` (bit 6, 0x40) for the three goodbye packets `stop()` sends.
     public nonisolated static func e131Packet(universe: Int, sequence: UInt8, cid: [UInt8],
-                                              channels: [UInt8], synthetic: Bool?) -> Data {
+                                              channels: [UInt8], synthetic: Bool?,
+                                              options: UInt8 = 0) -> Data {
         let slotCount = 512
         var slots = channels
         if slots.count < slotCount { slots += Array(repeating: 0, count: slotCount - slots.count) }
@@ -330,7 +367,7 @@ public final class SACNSender {
         d.append(100)                               // Priority
         d.append(contentsOf: [0x00, 0x00])          // Sync address
         d.append(sequence)                          // Sequence number
-        d.append(0x00)                              // Options
+        d.append(options)                           // Options (bit 6 = Stream_Terminated, #1218)
         d.append(contentsOf: [UInt8((uni >> 8) & 0xFF), UInt8(uni & 0xFF)]) // Universe (BE)
         // ---- DMP layer (10 + 513) ----
         d.append(contentsOf: flagsLen(total - 115)) // DMP flags+length

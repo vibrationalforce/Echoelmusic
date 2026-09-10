@@ -89,6 +89,12 @@ public final class ArtNetSender {
     public private(set) var isActive = false
     public private(set) var lastSentTimestamp: TimeInterval = 0
 
+    /// #1218 (audit 2026-09-10 `output-sync-3`) — KEEP-ALIVE, the same number as sACN so the
+    /// two light outputs are one decision: the sender emitted only on change, and an Art-Net
+    /// node that hears no ArtDmx for ~4 s treats the source as gone (holds or blacks out per
+    /// node config). Art-Net has no terminate opcode; the node simply stops hearing us.
+    public nonisolated static let keepAliveSeconds: TimeInterval = SACNSender.keepAliveSeconds
+
     /// L1 Grand Master (every lighting desk's first fader): scales the dimmer
     /// of everything Echoel sends, 0…1. Live state, not persisted — a fresh
     /// launch always starts at full (predictable for the operator).
@@ -246,7 +252,10 @@ public final class ArtNetSender {
         // a fade mid-ramp, and must never block a blackout).
         let masterMoved = grandMaster != lastSentGrandMaster || blackout != lastSentBlackout
         let slewSettling = lastDimmer >= 0 && abs(mastered - lastDimmer) > 0.001
-        guard sourceTimestamp != lastFrameTimestamp || masterMoved || slewSettling else { return }
+        // #1218 — or the node is about to forget us: re-send the held look.
+        let keepAliveDue = lastSentTimestamp > 0
+            && CFAbsoluteTimeGetCurrent() - lastSentTimestamp >= Self.keepAliveSeconds
+        guard sourceTimestamp != lastFrameTimestamp || masterMoved || slewSettling || keepAliveDue else { return }
         lastFrameTimestamp = sourceTimestamp
         lastSentGrandMaster = grandMaster
         lastSentBlackout = blackout
