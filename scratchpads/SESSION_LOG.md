@@ -29701,3 +29701,23 @@ NEEDS-FOUNDER-VERIFY (schlechter Kontakt → „—", Erholung ~10 s). Wächter 
 (5 Claims): 1/2/5 rot auf `82cbbf6`, grün hier; 3 (Verhalten: 600/900-ms-Wechselfolge, jedes Intervall in der Band,
 Bruchteil 0,5 → verweigert; regelmäßige Folge → angenommen) und 4 (Gurt-Parität) grün/grün. Prüfer exit 0. `Sources/`
 berührt → Compile-Check-Lesung für `f37e692` steht aus.
+
+## #1237 `sequencer-core-4` — SPSCQueue-Zähler auf eigenen Lines, ohne Fence; enqueue() in der tryEnqueue-Form (2026-09-10, ~17:55 UTC, `de190e0`)
+
+Gemessen vor dem Schnitt: `grep -c "allocate(capacity: 1)" Sources/Echoelmusic/Core/SPSCQueue.swift` → 3 (die Zähler),
+`grep -c OSAtomicIncrement64Barrier` → 3, `grep -c "OSAtomicAdd64Barrier(0"` → 2 (beide in `enqueue()`, davon eine ein
+RMW-STORE auf die Consumer-Line pro Enqueue). Render-Thread-Consumer: `PolySynthVoice` 1065/1083/1099/1242. Änderung nur
+in `SPSCQueue.swift`: fünf Wörter mit `paddedWordCapacity`-Stride · Zähler `&+= 1` (ein Schreiber je Zähler; wrapping
+wie das Atomic — `+=` würde bei `Int.max` trappen, das war die eine Note des Reviewers, die den Code änderte) ·
+`enqueue()` plain loads + control-dependenter Slot-Store + Release-Fence, identisch zu `tryEnqueue` · die fünf
+`OSMemoryBarrier()` unverändert · „Linux" aus dem Plattform-Kopf (libkern). **audio-thread-reviewer (read-only):
+safe-with-note** — Pairing intakt (Producer-Fence vor tail-Publish ↔ Consumer-Fence nach tail-Load; Wrap-Fall über
+Control-Dependency + Consumer-Fence vor head-Publish), kein neuer Hazard, kein Consumer liest die Zähler
+(`git grep droppedCount\|enqueueCount\|dequeueCount -- Sources` außerhalb der Datei → 0; Tests: `SPSCQueueOverflowTests`,
+`EngineBusTests:125`). **Offen, eigene Scheibe:** `head`/`tail`/Zähler sind `var`-Stored-Properties einer Klasse —
+jeder `self.head`-Read kann `swift_beginAccess` (TLS-Lookup, kein Lock) auf dem Render-Thread kosten; `let` nähme es
+weg. Nicht in dieser Scheibe (eine Sache pro Commit). Wächter `TheSPSCCountersLiveOnTheirOwnLinesTests` (4 Claims): 1/2
+Text, transkribiert rot auf `60bf1bf` / grün hier; 3/4 Verhalten (Overflow+Drain-Zähler; Zwei-Thread-FIFO über 200 000
+Elemente durch eine `@unchecked Sendable`-Box, weil `SPSCQueue` absichtlich nicht `Sendable` ist) — **hier nicht
+gelaufen**, erste Ausführung im CI/CD `Build for Testing` + `test-without-building`; ein Compile-Fehler dort wäre
+`TEST BUILD FAILED`, also die Gate-Lesung für `de190e0` nicht überspringen. Prüfer exit 0.
