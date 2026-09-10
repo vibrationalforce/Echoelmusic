@@ -29721,3 +29721,24 @@ Text, transkribiert rot auf `60bf1bf` / grün hier; 3/4 Verhalten (Overflow+Drai
 Elemente durch eine `@unchecked Sendable`-Box, weil `SPSCQueue` absichtlich nicht `Sendable` ist) — **hier nicht
 gelaufen**, erste Ausführung im CI/CD `Build for Testing` + `test-without-building`; ein Compile-Fehler dort wäre
 `TEST BUILD FAILED`, also die Gate-Lesung für `de190e0` nicht überspringen. Prüfer exit 0.
+
+## #1238 Ultraplan-Zeile 11 — Website-Stale-Copy auf den zwei Akquise-Seiten (2026-09-10, ~18:15 UTC, `d30f39b`)
+
+Vier Audit-Befunde in einem docs-only-Commit (`docs-claims-2/3/5/7`, Marketing „Stale-Copy"): (a) Hero `index.html:645`
+und Lead/Pillar in `overview.html` sagten „compose music to calm down and observe yourself" — ein WIRKUNGS-Versprechen,
+genau die Linie aus `ContentPipeline/CLAIMS.md` §2 („Erlaubt: ruhiger Puls → andere Musik. Nicht erlaubt: macht Dich
+ruhig"), auf der Seite, die ein Journalist zitiert → Mechanismus-Form („changes as your body settles — observe
+yourself"). (b) Das spielbare Bild (`TouchInstrumentView`, CLAIMS ✅) war nur auf `faq.html` verkauft
+(`grep -c -iE 'playable|fingers' docs/index.html docs/overview.html` → 0 0), die Bühne am angeschlossenen Bildschirm
+(`ExternalDisplayScene`, CLAIMS ✅) nie auf der Home → beide in die Living-visuals-Karte, CLAIMS-Wortlaut, FAQ:134 als
+Vorlage; EchoelVis-Zeile der Overview ebenso. (c) Specs-Kachel „OSC · ADM-OSC · Art-Net" → alle fünf (sACN 10× auf
+derselben Seite behauptet, `Sync/SACNSender` live). (d) Meta-Descriptions 497/200 Zeichen mit Abwesenheits-Auftakt
+(„live broadcast is not planned") → 145/147 (Python `len()`), Hero-Nachsatz gestrichen; die Video-Karte trägt jetzt den
+GRUND („editor built and removed July 2026; live streaming never built") statt eines nackten „not planned" — die Form,
+die `testNothingClaimsRTMPWasEverBuilt` als Marker verlangt (das Wort RTMP fällt dort nicht; die Karte ist kein
+Treffer des Wächters, die Form ist trotzdem die richtige). Wächter `TheHomePageLeadsWithTheMechanismTests` (6 Claims,
+Text): 1–5 rot auf `94c6109`, grün hier; 6 = Mount-Gegengewicht (`TouchInstrumentView(` in `FloatingVisualWindow`),
+grün/grün. ⚠️ Erste Transkription zeigte Claim 1 ROT auf dem Worktree — ein ZWEITES „Calm down" saß im
+„Create from Within"-Pillar der Overview, das der Audit nicht genannt hatte; der Wächter fand es, bevor der Commit
+stand. `fastlane/metadata` (docs-claims-3, Store-Text) bewusst nicht angefasst → Zeile 10 (Council, Founder-Lesung vor
+`deliver`). Prüfer exit 0.
