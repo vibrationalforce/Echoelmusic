@@ -29478,3 +29478,39 @@ Wächter `TheStrapCannotPublishADeadBodyTests` (Anspruch 1 Parser ROT/GRÜN, 2 S
 NEEDS-FOUNDER-VERIFY bleibt der Gurt-Eintreff-Posten aus CLAUDE.md; nichts Neues angehängt.
 
 **Gate-Lesung für #1216:** steht unten, sobald gelesen.
+
+## #1217–#1219 — Ultraplan-Zyklen 6a–6c: Tempo-Quelle, Licht-Keepalive, Art-Net unicast (2026-09-10)
+
+**#1217 (`43cbd01`)** — `EchoelStudioView.generate()` rief `glideTempo(to:source: .flowServo)` auch bei gesperrtem BPM;
+T1 verlangt die wahre Quelle: `lockBPM ? .user : .flowServo`. Wächter: `TempoInvariantTests` Anspruch 3b (Text-Pin).
+**#1218 (`f5f7fcb`)** — sACN-Nodes fallen nach 2,5 s Stille auf Source-Loss, Art-Net-Nodes vergessen nach ~4 s: beide
+Sender senden jetzt bei ≥ 0,8 s Stille das letzte Universum erneut (`keepAliveSeconds`, EIN Wert für beide), und sACN
+schickt beim `stop()` dreimal Stream_Terminated (Options-Byte 0x40, E1.31 §6.2.6) BEVOR die Verbindung fällt
+(`cancel()` verwirft sonst die anstehenden Sends). Wächter: `TheLightStreamsStayAliveAndSayGoodbyeTests`.
+**#1219 (`46e4f3c`)** — Art-Net-Default war `255.255.255.255`, die App hat kein Multicast-Entitlement: auf iOS erreichte
+der Default NICHTS, still. Default jetzt `192.168.1.100` (wie sACN), `lastError` aus dem `stateUpdateHandler`/Send-
+Completion erreicht die Patchbay-Zeile; `docs/artnet-sacn-from-a-phone.html` 5× „broadcast" → unicast. Wächter:
+`TheArtNetDefaultIsUnicastTests`. Alle drei: Transkription ROT/GRÜN, drei Nadel-Prüfer exit 0.
+
+## #1220 — Ultraplan-Zyklus 7: die Kamera sammelt RR-Intervalle für die Kohärenz (2026-09-10)
+
+Audit `bio-pipeline-3`, Chance-Hälfte. `HRVCoherence.compute` bekam `analyzer.rrIntervals` — von `detectPeaks` aus einem
+festen 10-s-Fenster jedes Mal GANZ NEU gebaut; `minIntervals` = 16 brauchte also ≥ 17 Peaks in 10 s (≳ 102 bpm). Bei
+Ruhepuls war die Kamera-Kohärenz den ganzen Take lang `valid == false`: vier LIVE-Kanäle, Flow-Servo, `/coherence` und
+ADM-`distance` liefen auf der Flaggschiff-Quelle auf dem Neutral. Jetzt: `coherenceRRHistory` (pro Take, Kappe
+`coherenceHistoryCapacity` = 64 = `PolarH10BioPublisher.maxRRIntervals`, `nonisolated`), gefüttert IM Beat-Cursor-Loop
+hinter dessen 250–2000-ms-Band (ein Cursor, ein Band, zwei Verbraucher: Atmung + Kohärenz), die Kohärenz-Zeile hinter
+den Loop gezogen und auf die Historie umgestellt, `removeAll(keepingCapacity:)` in `stop()` direkt neben
+`lastRespirationBeatTime = 0`. Der „VACUOUS"-Absatz im `stop()`-Block ist umgeschrieben: die #484-Löschung von
+`lastValidCoherence` ist damit wieder REAL (~16 s Fremd-Kohärenz auf frischen Zeitstempeln sonst), und die Historie
+selbst muss pro Take sein, sonst wäre die erste gültige Kohärenz ein Spektrum über den Vorgänger-Körper.
+**Prosa mitgezogen (sieben Heimaten):** `OSCSender` (Kopf + `bioMessages`-Kommentar), `EngineBus.hasPulse`-Doc,
+`ADMOSCSender.admMessages`-Doc, CLAUDE.md DDSP-Tabelle + TEMPO-Absatz, Köpfe von `OSCAbsenceTests` und
+`AFreshTakeStartsWithNoHeldFrameTests` (deren zwei Assertions unverändert; `moved-needles` meldet die verschobene
+Nadel `if coherence.valid { … }` — file-weites `contains`, erreicht sie weiterhin).
+**Wächter:** `TheCameraCoherenceAccumulatesTests` — Anspruch 1 (Tachogramm-Floor am reinen Kern) GRÜN/GRÜN als
+Gegengewicht, 2 (Feed-Reihenfolge Band → append → ingest, Compute liest Historie und NICHT `rrMs`, Compute NACH dem
+Feed), 3 (Kappe 64, ≥ 2·Floor, `removeFirst`), 4 (Clear neben dem Cursor) je ROT auf `46e4f3c` / GRÜN hier —
+transkribiert. `dead-needles`/`foreign-needles` exit 0. **NEEDS-FOUNDER-VERIFY** an der Kapazität: Ruhe-Take ~90 s,
+verlässt die Kohärenz nach ~16 Schlägen die 0 und folgt langsamer Atmung ohne Flackern? Die 64 ist Gurt-Parität, keine
+Messung. Ehrlich: kompilat-unbelegt bis zum Gate; keine Geräteprobe.

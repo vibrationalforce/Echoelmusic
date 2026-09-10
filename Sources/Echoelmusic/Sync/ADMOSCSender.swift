@@ -303,8 +303,8 @@ public final class ADMOSCSender {
     ///
     /// ⚠️ Consequence to know before mapping: on a bio-only rig an address that is never
     /// measured never arrives, so the object keeps its initial position rather than being
-    /// driven to a default. `distance` is the one most likely to stay absent for a whole
-    /// take — see `HRVCoherence.minIntervals` and the note in `OSCSender`.
+    /// driven to a default. `distance` is the one that arrives LAST — ~16 accepted beats on
+    /// either source since #1220 — see `HRVCoherence.minIntervals` and the note in `OSCSender`.
     public nonisolated static func admMessages(for f: BioSampleFrame,
                                                object n: Int) -> [(String, Float)] {
         let idx = max(1, n)

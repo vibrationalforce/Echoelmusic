@@ -1532,3 +1532,9 @@ beschränken (#292, `afcf3aa`).
 - **Entscheidung:** `trig_01Mio4dc5T4KJPfRZKguy9mn` `enabled=false` — nicht gelöscht (Historie), nicht umgehängt (Text veraltet, #885).
 - **Warum:** feuerte stündlich in die gestoppte wozlie-Sitzung; Founder: „Du optimierst alles und entscheidest alles."
 - **Rückweg:** `update_trigger enabled:true` oder `persistent_session_id` auf eine lebende Sitzung.
+
+### 2026-09-10 — Kamera-Kohärenz auf rollender RR-Historie, Kappe 64 = Gurt-Parität (#1220)
+- **Entscheidung:** `CameraRPPGBioPublisher` rechnet `HRVCoherence` auf einer pro-Take rollenden `coherenceRRHistory` (64 Intervalle, gefüttert am Atem-Cursor, in `stop()` geleert) statt auf dem 10-s-Fenster des Analyzers.
+- **Warum:** Audit `bio-pipeline-3`: `minIntervals` = 16 gegen ~10 Intervalle je Ruhe-Fenster — Kohärenz war auf der Flaggschiff-Quelle strukturell 0; vier LIVE-Kanäle, Flow-Servo und OSC/ADM-Ausgang liefen auf dem Neutral.
+- **Warum 64:** `PolarH10BioPublisher.maxRRIntervals` = 64 — eine Historienlänge für beide Quellen, ~64 s bei 60 bpm (0,04-Hz-Raster erreichbar, Atemwechsel binnen einer Minute sichtbar). Keine Messung, Parität; NEEDS-FOUNDER-VERIFY am Ort.
+- **Review:** 2026-10-10 — nach Geräteprobe: Flackern? dann Kappe/Hold prüfen, nicht die Historie abschaffen.

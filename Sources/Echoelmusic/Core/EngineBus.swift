@@ -147,8 +147,9 @@ public struct BioSampleFrame: Sendable, Equatable {
     /// to act on. And on its own it does not answer HRV or coherence: both are derived from
     /// the beat SERIES, so a locked pulse can sit next to a 0 for either of them — HRV for
     /// about three beats, coherence until `HRVCoherence.minIntervals` = 16 RR intervals have
-    /// accumulated (on a camera session, possibly never: its RR series comes from a fixed
-    /// 10 s peak window). Those two carry their own sentinels.
+    /// accumulated — ~16 accepted beats on the strap and, since #1220, on the camera too (a
+    /// per-take rolling history; before that the camera's rebuilt 10 s window could keep it
+    /// at 0 for a whole resting take). Those two carry their own sentinels.
     ///
     /// ⚠️ WHICH DOES NOT MEAN "use the sentinel INSTEAD of this" — the earlier wording said
     /// exactly that, and it would tell a reader to undo the egress gate deliberately built on

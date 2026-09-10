@@ -43,9 +43,13 @@
 //      and overstated how often it happens. `HRVCoherence.minIntervals` is 16 and the camera
 //      does not ACCUMULATE RR — `CameraAnalyzer` rebuilds the series whole from a fixed 10 s
 //      peak window, so 16 intervals needs ≥17 clean peaks in 10 s, i.e. a sustained ≳102 bpm.
-//      `OSCSender`'s header already records this ("on the CAMERA it may never be reached"). At
-//      any resting pulse `lastValidCoherence` stays 0 for the whole process and this half is
-//      VACUOUS — and when an exertion take does write it, the defect lasts the WHOLE next take.
+//      `OSCSender`'s header recorded this ("on the CAMERA it may never be reached"). At any
+//      resting pulse `lastValidCoherence` stayed 0 for the whole process and this half was
+//      VACUOUS — and when an exertion take did write it, the defect lasted the WHOLE next take.
+//      ⭐ #1220 (audit `bio-pipeline-3`) made the clear REAL again: coherence is now computed
+//      on a per-take rolling `coherenceRRHistory` that crosses the floor after ~16 accepted
+//      beats at any pulse, so without this clear ~16 s of every new take would publish the
+//      previous take's coherence on fresh timestamps. The two assertions below are unchanged.
 //
 // ⚠️ WHAT THIS FILE CANNOT DO, said first. Every assertion here is a SOURCE SCAN. The three
 // fields are `private`, the publisher lives behind `#if canImport(AVFoundation)`, and driving

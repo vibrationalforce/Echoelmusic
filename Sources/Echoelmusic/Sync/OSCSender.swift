@@ -26,10 +26,12 @@
 //        the phase has no unknown sentinel (0 = EXHALE start, 0.5 = inhale start), so a value
 //        gate would drop real data once per breath cycle
 //    /echoelmusic/bio/coherence     float [0..1]     — pulse AND its own sentinel, like hrv.
-//        ⚠️ This one is the most likely to stay SILENT for a whole session: coherence needs
-//        `HRVCoherence.minIntervals` = 16 accepted RR intervals, and the camera's RR series
-//        comes from a fixed 10 s peak window (`CameraAnalyzer.detectPeaks`) — about 10
-//        intervals at a resting heart rate. On the BLE strap it arrives after ~16 beats.
+//        ⚠️ This one is the LAST to arrive on any source: coherence needs
+//        `HRVCoherence.minIntervals` = 16 accepted RR intervals — ~16 beats on the BLE strap,
+//        and since #1220 ~16 accepted beats on the camera too (`CameraRPPGBioPublisher`
+//        accumulates a per-take `coherenceRRHistory`). ⛔ Before #1220 the camera handed
+//        `HRVCoherence` its 10 s peak window (~10 intervals at rest), so `/coherence` could
+//        stay silent for a WHOLE resting take; that is history, not the current contract.
 //    /echoelmusic/bio/synthetic     float 0|1        — 1 = the DEMO generator, 0 = a real body
 //        (#639). Gated on THE BATCH, not on itself: it is prepended to every frame that sends
 //        at least one measured value, and omitted entirely from a frame that sends nothing —
@@ -362,11 +364,13 @@ public final class OSCSender {
         //     `RRIntervalHygiene.canStateHRV` is a fraction test with no minimum count).
         //     COHERENCE is the one that sits at 0, and its real threshold is a COUNT:
         //     `HRVCoherence.minIntervals` = 16 accepted RR intervals. On the strap that is
-        //     ~16 beats; on the CAMERA it may never be reached, because the RR series comes
-        //     from a fixed 10 s peak window (`CameraAnalyzer.detectPeaks`) — about 10 intervals
-        //     at a resting heart rate. So on a camera session `/coherence` can stay silent for
-        //     the whole take, which makes the sentinel half load-bearing permanently, not for
-        //     a warm-up. That is a stronger argument than the one this comment used to make.
+        //     ~16 beats; on the CAMERA it is ~16 accepted beats as well since #1220 (a per-take
+        //     rolling `coherenceRRHistory` in `CameraRPPGBioPublisher`). ⛔ Before #1220 the
+        //     camera computed on its rebuilt 10 s peak window (~10 intervals at rest) and
+        //     `/coherence` could stay silent for a WHOLE resting take — which made the sentinel
+        //     half load-bearing permanently. It is a warm-up again now, but a ~16 s one on
+        //     every take, and every interruption that clears the history restarts it: the
+        //     sentinel half stays load-bearing, only for less of the take.
         //   · SENTINEL ONLY (33876a0) let a MALFORMED frame through: a frame with no pulse
         //     cannot carry HRV or coherence at all, so a non-zero value beside `bpm == 0` is
         //     not a reading to forward — it is a bug at the publisher, and forwarding it puts

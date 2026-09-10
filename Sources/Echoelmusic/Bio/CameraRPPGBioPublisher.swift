@@ -548,6 +548,25 @@ public final class CameraRPPGBioPublisher {
     @ObservationIgnored private var respiration = RespirationEstimator()
     /// Absolute time of the newest beat already considered for `respiration`. 0 = none yet.
     @ObservationIgnored private var lastRespirationBeatTime: Double = 0
+    /// Rolling RR history for COHERENCE — the intervals the cursor loop above accepts, newest
+    /// last, capped at `coherenceHistoryCapacity` (#1220, audit 2026-09-10 `bio-pipeline-3`).
+    /// ⛔ Until #1220 the coherence line handed `HRVCoherence.compute` the analyzer's
+    /// `rrIntervals`, which `CameraAnalyzer.detectPeaks` REBUILDS WHOLE from a fixed 10 s peak
+    /// window — so `HRVCoherence.minIntervals` (16) needed ≥17 clean peaks in 10 s, a sustained
+    /// ≳102 bpm, and at any resting pulse the camera's coherence was structurally absent for the
+    /// whole take: the four LIVE coherence mappings, the Flow servo and `/echoelmusic/bio/
+    /// coherence` all ran on the neutral on the flagship source. Accumulating the intervals the
+    /// cursor already walks exactly once reaches the floor after ~16 accepted beats (~16 s at
+    /// 60 bpm) — the same shape as the strap's 64-beat `rrIntervals` in `PolarH10BioPublisher`.
+    /// Per-take: cleared in `stop()` next to the cursor, or the next take's first coherence
+    /// would be computed over the previous take's beats.
+    @ObservationIgnored private var coherenceRRHistory: [Double] = []
+    /// Same length as the strap's history (`PolarH10BioPublisher.maxRRIntervals` = 64): ~64 s
+    /// at 60 bpm — long enough for the 0.04 Hz grid floor, short enough to follow a change of
+    /// breathing within a minute. `nonisolated` so a test can read it off the actor.
+    /// NEEDS-FOUNDER-VERIFY: camera take at rest for ~90 s — does the Bio panel's coherence
+    /// leave 0 after ~16 beats and move with slow breathing, without flicker (#1220)?
+    nonisolated static let coherenceHistoryCapacity = 64
     /// ~4 s at the 10 Hz tick. Deliberately non-private so a test can pin the
     /// invariant this hold depends on: a held frame carries its ORIGINAL timestamp,
     /// so the hold only works while it is SHORTER than every consumer's freshness
@@ -1550,20 +1569,6 @@ public final class CameraRPPGBioPublisher {
                 let hrv = Float(HRVNormalization.normalize(self.analyzer.rmssd))
                 // analyzer.rrIntervals are already in milliseconds.
                 let rrMs = self.analyzer.rrIntervals
-                // Real frequency-domain coherence from the camera RR series — the
-                // SAME metric as the BLE path (HRVCoherence), not the signal-quality
-                // value this used to mislabel as "coherence". rPPG RR is lower-trust
-                // than a chest strap (BioSource.providesTrustedHRV is false for
-                // .cameraPPG), so consumers still gate on the source; the field is now
-                // at least semantically correct. 0 until enough beats/power.
-                let coherence = HRVCoherence.compute(rrMs: rrMs, blend: 1.0)
-                // Hold coherence across TRANSIENT invalidity rather than publishing 0
-                // (line was `coherence.valid ? … : 0`): a single invalid window
-                // otherwise flapped coherence real↔0 at the publish rate, which the
-                // visual renders as a brightness shimmer while bio runs. A valid read
-                // refreshes the held value; an invalid one decays it gently.
-                let cohValue: Float = coherence.valid ? coherence.coherence : self.lastValidCoherence * 0.9
-                if coherence.valid { self.lastValidCoherence = coherence.coherence }
 
                 // Respiration from the RR series via RSA (breathing modulates HR).
                 // ONE estimator per take, fed each beat exactly once (#343 — see the
@@ -1591,9 +1596,37 @@ public final class CameraRPPGBioPublisher {
                         // this long-lived filter is willing to be fed, independent of an
                         // upstream band that is free to widen.
                         guard ms > 250, ms < 2000 else { continue }
+                        // #1220: the SAME accepted interval feeds the coherence history — one
+                        // cursor, one plausibility band, two consumers. Appended BEFORE the
+                        // coherence line below reads it, so a beat counts on the tick it arrives.
+                        self.coherenceRRHistory.append(ms)
+                        if self.coherenceRRHistory.count > Self.coherenceHistoryCapacity {
+                            self.coherenceRRHistory.removeFirst()
+                        }
                         self.respiration.ingest(heartRate: 60_000.0 / ms, at: t)
                     }
                 }
+                // Real frequency-domain coherence from the camera RR series — the
+                // SAME metric as the BLE path (HRVCoherence), not the signal-quality
+                // value this used to mislabel as "coherence". rPPG RR is lower-trust
+                // than a chest strap (BioSource.providesTrustedHRV is false for
+                // .cameraPPG), so consumers still gate on the source; the field is now
+                // at least semantically correct. 0 until enough beats/power.
+                //
+                // ⭐ Computed on the ROLLING history the cursor loop just fed (#1220), NOT on
+                // `rrMs`: that array is `analyzer.rrIntervals`, rebuilt whole from a fixed 10 s
+                // window, so this line could reach `HRVCoherence.minIntervals` only at ≳102 bpm
+                // and at rest yielded `valid == false` for the whole take (see the property's
+                // doc). The history crosses the floor after ~16 accepted beats and stays valid
+                // from there; until then the reading is 0, and the hold below keeps it honest.
+                let coherence = HRVCoherence.compute(rrMs: self.coherenceRRHistory, blend: 1.0)
+                // Hold coherence across TRANSIENT invalidity rather than publishing 0
+                // (line was `coherence.valid ? … : 0`): a single invalid window
+                // otherwise flapped coherence real↔0 at the publish rate, which the
+                // visual renders as a brightness shimmer while bio runs. A valid read
+                // refreshes the held value; an invalid one decays it gently.
+                let cohValue: Float = coherence.valid ? coherence.coherence : self.lastValidCoherence * 0.9
+                if coherence.valid { self.lastValidCoherence = coherence.coherence }
                 // Age BEFORE reading. The estimator's staleness terms only run inside
                 // `ingest`, so without this a take whose beat supply dries up — `CameraAnalyzer`
                 // returns early on fewer than three peaks while `fallbackBPM` keeps the pulse
@@ -2115,6 +2148,10 @@ public final class CameraRPPGBioPublisher {
         // one filter step and ages nothing.
         respiration.reset()
         lastRespirationBeatTime = 0
+        // #1220: the coherence history walks the same cursor, so it is per-take for the same
+        // reason — left standing, the next take's FIRST valid coherence (reached after ~16 of
+        // its own beats) would be a spectrum over up to 64 beats of the previous body.
+        coherenceRRHistory.removeAll(keepingCapacity: true)
         // THE HOLD ANCHORS ARE PER-TAKE TOO, and these three were missing here — the same
         // omission the re-lock block further down already records for four other fields
         // (device log 2465). `tick` is a LOCAL of `publishTask`, so a new take restarts it
@@ -2151,15 +2188,19 @@ public final class CameraRPPGBioPublisher {
         // that matters: once the hold stops firing nothing decays it further, so it is a
         // stale CONSTANT rather than a decay.
         //
-        // ⛔ AND IT IS FAR LESS REACHABLE THAN THE FIRST VERSION CLAIMED, which said "at the
-        // start of a take there is not yet enough RR". `HRVCoherence.minIntervals` is 16 and
-        // the camera does not ACCUMULATE its RR series — `CameraAnalyzer` rebuilds it whole
-        // from a fixed 10 s peak window, so 16 intervals needs ≥17 clean peaks in 10 s, i.e.
-        // a sustained ≳102 bpm. `OSCSender`'s header already records this ("on the CAMERA it
-        // may never be reached"). So: at any resting pulse `lastValidCoherence` stays 0 for
-        // the whole process and this half is VACUOUS — and when an exertion take does write
-        // it, the defect lasts the WHOLE next take rather than an acquisition window, because
-        // the field never becomes valid again at rest. Both directions were wrong at once.
+        // ⛔ AND ITS REACH HAS FLIPPED TWICE. The first version said "at the start of a take
+        // there is not yet enough RR". The second said that was far too generous: with
+        // `HRVCoherence.minIntervals` = 16 and the camera REBUILDING its RR series whole from a
+        // fixed 10 s peak window, 16 intervals needed ≥17 clean peaks in 10 s (≳102 bpm), so
+        // at any resting pulse `lastValidCoherence` stayed 0 for the whole process and this
+        // half was VACUOUS — and after an exertion take the stale value lasted the WHOLE next
+        // take, because the field never became valid again at rest. ⭐ #1220 made the first
+        // version true again, on purpose: coherence is now computed on the per-take
+        // `coherenceRRHistory`, which crosses the floor after ~16 accepted beats at ANY pulse.
+        // So the window this clear closes is real and bounded at both ends — ~16 s of a new
+        // take would otherwise publish the previous take's coherence on fresh timestamps —
+        // and the history itself is cleared beside the cursor above, or the first valid value
+        // of the new take would be a spectrum over the previous body's beats.
         //
         // ⚠️ THE TWO ANCHORS MUST BE CLEARED TOGETHER, and that is not tidiness. `Int.min`
         // is a sentinel inside a SUBTRACTION: `tick - Int.min` traps on overflow. The only

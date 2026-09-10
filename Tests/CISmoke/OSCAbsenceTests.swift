@@ -22,10 +22,11 @@
 // in a way that undersells the case. HRV is not 0 for 55 s — it clears in about three beats
 // (`CameraAnalyzer` computes RMSSD at `rrIntervals.count >= 3`). COHERENCE is the one that
 // sits at 0, and its threshold is a COUNT, not a duration: `HRVCoherence.minIntervals` = 16
-// accepted RR intervals. The strap reaches that in ~16 beats. The CAMERA may never reach it:
-// its RR series comes from a fixed 10 s peak window (`CameraAnalyzer.detectPeaks`), about 10
-// intervals at a resting heart rate — so on a camera session `/coherence` can stay silent for
-// the entire take. The sentinel half is therefore permanent, not a warm-up.
+// accepted RR intervals. The strap reaches that in ~16 beats, and since #1220 so does the
+// camera (a per-take rolling `coherenceRRHistory`). ⛔ Before #1220 the camera computed on its
+// rebuilt 10 s peak window (~10 intervals at rest) and `/coherence` could stay silent for the
+// entire take — the sentinel half was permanent then; it is a ~16 s warm-up now, restarted by
+// every interruption, so it stays load-bearing.
 //
 // ⛔ (b) AND (c) PULL IN OPPOSITE DIRECTIONS, and this file got it wrong in each direction once,
 // in consecutive commits. A pulse-only gate passes (c) and fails (b); a sentinel-only gate passes
@@ -174,7 +175,8 @@ final class OSCAbsenceTests: XCTestCase {
     /// `PolarH10BioPublisher` and `CameraRPPGBioPublisher` publish a real BPM alongside a 0 for
     /// them at the start of a take, and again whenever the RR record is untrustworthy. For
     /// COHERENCE that window is not short: `HRVCoherence.minIntervals` = 16 accepted RR
-    /// intervals, which the camera's fixed 10 s peak window may never supply at rest.
+    /// intervals — ~16 beats on either source since #1220 (before it, the camera's rebuilt
+    /// 10 s peak window could fail to supply them for a whole resting take).
     /// Putting those two on the PULSE gate — which is what the first version did —
     /// let the collapse-to-zero straight through on the two addresses a lighting desk is most
     /// likely bound to. Both fields carry their own sentinel and both of their docs say so.
