@@ -29634,3 +29634,16 @@ Register-Ergänzung muss BYTES mitbringen, nicht nur Wahrheit.
 **#1232 (`tests-guards-7`)** — `swift-audio.md` Namensregel: Satzform fürs blockierende Bundle (#374), Unterstrich-Form
 nur `Tests/EchoelmusicTests`, beide Zählbefehle daneben. **`studio-ui-1`**: bereits durch #1105 erledigt — der Absatz
 in `EchoelStudioView` (jetzt ~6083) nennt die Field-Toggle-Tür; nichts zu tun, im Ultraplan vermerkt.
+
+## #1233 — Ultraplan-Zyklus 20: die Watch-SDNN erscheint im Streifen in Millisekunden (2026-09-10)
+
+Audit `bio-pipeline-4`: HealthKit liefert nur SDNN, der Frame trägt `hrvSDNNms`, RMSSD bleibt 0 — die HRV-Zelle zeigte
+für eine gemessene 42-ms-SDNN das einheitslose `0.420`, obwohl die Millisekunden auf demselben Frame lagen. Jetzt reiner
+Helfer `BioStripView.hrvDisplay(rmssdMs:sdnnMs:normalized:)` (`nonisolated static`, `plausibleHRVms` dafür
+`nonisolated`): plausible RMSSD → ms · sonst plausible SDNN bei RMSSD 0 → ms · sonst normalisiert ohne Einheit · sonst
+„—" (implausible RMSSD bleibt „—", nie die Normalisierung); `hrvString`/`hrvUnit` lesen BEIDE den Helfer (ein Wert
+und eine Einheit aus zwei Präzedenzen war die Form des Defekts). Wächter
+`TheStripShowsTheWatchsSDNNInMillisecondsTests`: 1 ROT auf `60f6f98` / GRÜN hier, 2–4 GRÜN/GRÜN (Gegengewichte),
+5 (Text: zwei Helfer-Aufrufe) ROT/GRÜN — transkribiert auf der Zweig-Logik, Formatierung ist `EchoelDecimalText`
+(generische `BinaryFloatingPoint`-Überladung, Zeile 144, also kein Double-Cast nötig). Prüfer exit 0.
+`BioMetricInfo` erklärt SDNN bereits (`.sdnn`-Fall) — kein Hinweis hinzugefügt.

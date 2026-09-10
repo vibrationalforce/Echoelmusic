@@ -881,32 +881,45 @@ struct BioStripView: View {
     /// timing is noisy and can inflate RMSSD to impossible values (e.g. 500+ ms,
     /// above the mean RR interval) — science-first, we show a real number only
     /// inside this window and "—" otherwise, rather than print a wrong figure.
-    private static let plausibleHRVms: ClosedRange<Float> = 3...300
+    nonisolated private static let plausibleHRVms: ClosedRange<Float> = 3...300   // nonisolated: read by `hrvDisplay` off the actor (#1233)
 
-    /// True RMSSD in ms when the source provides a plausible reading; the
-    /// normalized [0..1] value for sources that only publish that (HealthKit);
-    /// "—" when the ms reading is physiologically impossible (noisy rPPG).
+    /// True RMSSD in ms when the source provides a plausible reading; the measured SDNN in
+    /// ms when a source publishes that but no RMSSD (HealthKit — the Watch gives SDNN only,
+    /// #1233); the normalized [0..1] value when neither is there; "—" when the ms reading is
+    /// physiologically impossible (noisy rPPG).
     private var hrvString: String {
         guard let bio = reading else { return "—" }
-        if Self.plausibleHRVms.contains(bio.hrvRMSSDms) {
-            // Whole ms from 10 up ("HRV 15 ms", not "15.2"): the strip cell is the
-            // narrowest surface in the app and the decimal was what pushed it into
-            // "HRV 15.." truncation on small phones (founder video v173). Sub-10
-            // readings keep one decimal — there the digit carries real information.
-            // The FORMAT is a ternary, not a literal — which is exactly why the #267 sweep
-            // missed this line while converting the one below it. A grep for
-            // `String(format: "%` structurally cannot see it, so the strip would have shown
-            // "HRV 8.4 ms" beside "coh 0,72". Use the same helper, choose the precision first.
-            return EchoelDecimalText.string(bio.hrvRMSSDms,
-                                            decimals: bio.hrvRMSSDms < 10 ? 1 : 0)
-        }
-        if bio.hrvRMSSDms == 0 && bio.hrvNormalized > 0 { return EchoelDecimalText.string(bio.hrvNormalized, decimals: 3) }
-        return "—"
+        return Self.hrvDisplay(rmssdMs: bio.hrvRMSSDms, sdnnMs: bio.hrvSDNNms,
+                               normalized: bio.hrvNormalized).value
     }
 
     private var hrvUnit: String? {
-        guard let bio = reading, Self.plausibleHRVms.contains(bio.hrvRMSSDms) else { return nil }
-        return "ms"
+        guard let bio = reading else { return nil }
+        return Self.hrvDisplay(rmssdMs: bio.hrvRMSSDms, sdnnMs: bio.hrvSDNNms,
+                               normalized: bio.hrvNormalized).unit
+    }
+
+    /// The HRV cell's value and unit, pure so the blocking bundle can drive it. Precedence:
+    /// plausible RMSSD (ms) → plausible SDNN when RMSSD is absent (ms — ⛔ until #1233 a
+    /// HealthKit frame carrying a measured SDNN of e.g. 42 ms showed the unit-less normalized
+    /// `0.420`, although `hrvSDNNms` was on the frame; audit 2026-09-10 `bio-pipeline-4`)
+    /// → normalized fallback (no unit) → "—". Whole ms from 10 up ("HRV 15 ms", not "15.2"):
+    /// the strip cell is the narrowest surface in the app and the decimal pushed it into
+    /// "HRV 15.." truncation on small phones (founder video v173); sub-10 readings keep one
+    /// decimal — there the digit carries real information. The FORMAT is a ternary, not a
+    /// literal — which is why the #267 sweep missed this line: use the same helper, choose
+    /// the precision first. An RMSSD outside the plausible band with SDNN absent stays "—"
+    /// (noisy rPPG), not the normalized number — that ordering is deliberate.
+    nonisolated static func hrvDisplay(rmssdMs: Float, sdnnMs: Float, normalized: Float)
+        -> (value: String, unit: String?) {
+        if plausibleHRVms.contains(rmssdMs) {
+            return (EchoelDecimalText.string(rmssdMs, decimals: rmssdMs < 10 ? 1 : 0), "ms")
+        }
+        if rmssdMs == 0, plausibleHRVms.contains(sdnnMs) {
+            return (EchoelDecimalText.string(sdnnMs, decimals: sdnnMs < 10 ? 1 : 0), "ms")
+        }
+        if rmssdMs == 0 && normalized > 0 { return (EchoelDecimalText.string(normalized, decimals: 3), nil) }
+        return ("—", nil)
     }
 
     /// Physiologically plausible breathing-rate window (breaths/min). A camera pulse read
