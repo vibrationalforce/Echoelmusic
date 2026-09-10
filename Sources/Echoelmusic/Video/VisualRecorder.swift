@@ -143,6 +143,24 @@ final class VisualRecorder {
         // double-tap, and the first one is mid-flight — writing an outcome here would overwrite
         // the real answer with "nothing happened" a moment before the true one arrives.
         guard video.recordState == .recording else { return nil }
+        // #1198 — HAND THE POOLED FRAME MEMORY BACK, ON EVERY EXIT OF THIS FUNCTION.
+        //
+        // `ensureResources` built `pool` and `textureCache` on the first captured frame and
+        // NOTHING ever released them. A `CVPixelBufferPool` RECYCLES rather than frees: every
+        // buffer it has handed out and taken back stays resident, and one 1080p BGRA buffer is
+        // 1920 × 1080 × 4 ≈ 8.3 MB of IOSurface. So a single finished take left tens of
+        // megabytes held for the rest of the process — and held OUTSIDE the heap, which is why
+        // it does not show up where a session would look for it.
+        //
+        // `defer`, not a line at the end: `stop()` has FIVE returns, and the two easiest to
+        // forget are the failure ones (the writer refused / no frame ever arrived) — exactly
+        // the runs where a user is most likely to try again straight away and build a second
+        // pool on top of the first.
+        //
+        // It sits BELOW the re-entry guard on purpose. The second caller of a double-tap
+        // returns above this line while the first is still mid-flight; releasing there would
+        // pull the resources out from under a take that is still writing.
+        defer { releaseResources() }
         let videoURL = await video.stopRecording()
         // Pull the last `duration` seconds of the mix NOW (ends ≈ the video's end →
         // best-effort alignment). Ring is ~30 s; longer videos get their last 30 s.
@@ -275,6 +293,15 @@ final class VisualRecorder {
             // `ingest` would open a writer for a take nobody started.
             if recording { box.sink.ingest(box.pb, at: box.pts) }
         }
+        // #1198: a still taken while NOT recording is a one-off, so the pool and the texture
+        // cache go straight back. During a take they stay — the next frame is 1/60 s away and
+        // rebuilding per frame would be the opposite trade.
+        //
+        // Safe with the blit in flight, for two independent reasons: the command buffer
+        // retains the destination texture it was handed, and a `CVPixelBuffer` keeps its own
+        // pool alive as long as it lives, so `box.pb` cannot lose its backing when our
+        // reference to the pool goes away.
+        if !recording { releaseResources() }
     }
 
     // MARK: - Still image (#985)
@@ -332,6 +359,26 @@ final class VisualRecorder {
     }
 
     // MARK: - Resources
+
+    /// Give back what `ensureResources` took. See the #1198 block in `stop()` for why this
+    /// exists; the short version is that a `CVPixelBufferPool` recycles instead of freeing, so
+    /// "not used any more" and "not resident any more" are different things here.
+    ///
+    /// The flush is not redundant with dropping the reference. `CVMetalTextureCacheFlush`
+    /// releases the cache's textures for buffers that are no longer in use; releasing the
+    /// cache object alone leaves that to whenever the last texture reference dies. Flushing
+    /// first makes the release deterministic at the moment the take ends.
+    ///
+    /// The width/height reset is not cosmetic either: `ensureResources` decides on
+    /// `pool == nil || poolWidth != width`, so a stale size beside a nil pool is a state that
+    /// reads as "wrong size" when it means "no pool". Both halves cleared together.
+    private func releaseResources() {
+        if let textureCache { CVMetalTextureCacheFlush(textureCache, 0) }
+        textureCache = nil
+        pool = nil
+        poolWidth = 0
+        poolHeight = 0
+    }
 
     private func ensureResources(width: Int, height: Int, device: MTLDevice) {
         if textureCache == nil {

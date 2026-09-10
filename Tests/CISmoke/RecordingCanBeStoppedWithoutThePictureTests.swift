@@ -25,6 +25,8 @@ final class RecordingCanBeStoppedWithoutThePictureTests: XCTestCase {
 
     private static let panel = "Sources/Echoelmusic/Studio/VideoLibraryPanel.swift"
     private static let header = "Sources/Echoelmusic/Studio/HeaderMonitors.swift"
+    /// Named once (#1198 added three claims that read it; claim 4 spelled the path inline).
+    private static let recorder = "Sources/Echoelmusic/Video/VisualRecorder.swift"
 
     /// ⭐ THE GUARD, and it is POSITIONAL rather than a pair of `contains`. "The file mentions
     /// `recorder.isRecording` somewhere" and "the file mentions `stopRow` somewhere" are both
@@ -100,7 +102,7 @@ final class RecordingCanBeStoppedWithoutThePictureTests: XCTestCase {
     /// be while remaining correct.
     func testStoppingTwiceCannotStripTheAudio() throws {
         let stop = try memberBody(startingWith: "func stop() async -> URL?",
-                                  in: "Sources/Echoelmusic/Video/VisualRecorder.swift")
+                                  in: Self.recorder)
         let statements = stop.dropFirst().map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
         XCTAssertEqual(statements.first, "guard video.recordState == .recording else { return nil }", """
@@ -111,6 +113,110 @@ final class RecordingCanBeStoppedWithoutThePictureTests: XCTestCase {
             funnel through this one function, and a second entry that gets past this line nils \
             `audioEngine` out from under the first, which then saves the clip without its \
             master mix. A guard placed lower down cannot prevent that; it has to be first.
+            """)
+    }
+
+    // MARK: - 5. the take hands its pooled frame memory back
+
+    /// REGRESSION (#1198). `ensureResources` built a `CVPixelBufferPool` and a
+    /// `CVMetalTextureCache` on the first captured frame and NOTHING released them. A pool
+    /// RECYCLES rather than frees, so every buffer it ever handed out stayed resident: at
+    /// 1080p BGRA that is 1920 × 1080 × 4 ≈ 8.3 MB each, held for the rest of the process, in
+    /// IOSurface memory rather than on the heap — which is why it is invisible where a session
+    /// would look for it. Measured against the founder's 2026-09-09 report of intermittent
+    /// memory growth; this is the half of it that is genuinely memory.
+    ///
+    /// ⚠️ POSITIONAL, for the same reason claim 4 is. The release must sit BELOW the re-entry
+    /// guard: the second caller of a double-tap returns above that line while the FIRST is
+    /// still writing, and releasing there would pull the pool out from under a live take. A
+    /// `contains` check would call both placements correct.
+    func testStoppingATakeReleasesThePooledFrameMemory() throws {
+        let stop = try memberBody(startingWith: "func stop() async -> URL?",
+                                  in: Self.recorder)
+        let statements = stop.dropFirst().map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard let guardIndex = statements.firstIndex(of:
+                "guard video.recordState == .recording else { return nil }") else {
+            XCTFail("""
+                the re-entry guard is gone from `stop()` — claim 4 says what that costs. \
+                Claim 5 is positional relative to it and cannot be graded without it.
+                """)
+            return
+        }
+        guard let releaseIndex = statements.firstIndex(where: {
+            $0.contains("defer") && $0.contains("releaseResources()")
+        }) else {
+            XCTFail("""
+                `VisualRecorder.stop()` no longer defers `releaseResources()`.
+
+                Without it the pixel-buffer pool and the Metal texture cache built for the take \
+                stay resident for the whole process — a pool recycles, it does not free, so \
+                ~8.3 MB per 1080p buffer never comes back. `defer` and not a trailing line \
+                because `stop()` has five returns and the two failure ones (writer refused / no \
+                frame arrived) are precisely the runs a user retries immediately.
+
+                This does NOT forbid moving the release elsewhere (#364) — but if it moves, the \
+                #1198 block in `stop()` and this claim move with it, in the same commit.
+                """)
+            return
+        }
+        XCTAssertGreaterThan(releaseIndex, guardIndex, """
+            `releaseResources()` is released ABOVE the re-entry guard in `stop()`.
+
+            That is the double-tap hazard claim 4 documents, wearing a different hat: the \
+            SECOND caller returns at the guard while the FIRST is still writing frames, so a \
+            release above the guard frees the pool out from under a live take.
+            """)
+    }
+
+    // MARK: - 6. the release actually clears everything the creator set
+
+    /// REGRESSION (#1198). Four fields are set by `ensureResources`; a release that clears
+    /// three of them leaves `ensureResources` reading a stale size next to a nil pool — a
+    /// state that says "wrong size" when it means "no pool". The flush is separate from
+    /// dropping the reference: it makes the texture release happen at the end of the take
+    /// rather than whenever the last reference dies.
+    func testTheReleaseClearsEveryFieldTheCreatorSet() throws {
+        let release = try memberBody(startingWith: "private func releaseResources()",
+                                     in: Self.recorder).joined(separator: "\n")
+        for needle in ["CVMetalTextureCacheFlush", "textureCache = nil", "pool = nil",
+                       "poolWidth = 0", "poolHeight = 0"] {
+            XCTAssertTrue(release.contains(needle), """
+                `releaseResources()` no longer does `\(needle)`.
+
+                `ensureResources` decides on `pool == nil || poolWidth != width`, so the size \
+                fields and the pool have to be cleared together or the next take reads a state \
+                that cannot occur.
+                """)
+        }
+    }
+
+    // MARK: - 7. counterweight — a released pool is rebuilt, not missed
+
+    /// COUNTERWEIGHT (#343). Claims 5 and 6 are only safe while the capture path still REBUILDS
+    /// what they tear down. If `ensureResources` ever stops being called before the pool is
+    /// read, #1198 turns from a memory fix into a recorder that works exactly once — the
+    /// failure would be silent, because `capture` returns early on a nil pool and a take with
+    /// no frames reports itself as "empty".
+    func testTheCapturePathStillRebuildsWhatTheStopReleased() throws {
+        let capture = try memberBody(
+            startingWith: "func capture(from source: MTLTexture", in: Self.recorder)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        guard let build = capture.firstIndex(where: { $0.hasPrefix("ensureResources(width:") }),
+              let read = capture.firstIndex(where: { $0.contains("let cache = textureCache") })
+        else {
+            XCTFail("""
+                `capture(from:in:device:)` no longer both builds (`ensureResources(width:`) and \
+                reads (`let cache = textureCache`) the pooled resources. #1198 releases them on \
+                stop, so this rebuild is what keeps a SECOND take possible. Re-anchor both \
+                needles rather than dropping this claim.
+                """)
+            return
+        }
+        XCTAssertLessThan(build, read, """
+            `capture` reads the pool before it ensures it. After #1198 the pool is nil at the \
+            start of every take, so this ordering is the difference between a recorder that \
+            works twice and one that works once.
             """)
     }
 
