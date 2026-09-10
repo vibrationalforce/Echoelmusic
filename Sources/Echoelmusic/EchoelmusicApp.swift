@@ -741,7 +741,12 @@ struct EchoelmusicApp: App {
                 // ⚠️ And that deadlock argument is now proven twice over: a flag that is
                 // registered too LATE is the same deadlock as one that is never registered,
                 // and it is worse, because it reads as working.
-                UserDefaults.standard.register(defaults: [FeatureFlags.Key.instrumentHome.rawValue: true])
+                // ⛔ A FOURTH `register(defaults:)` FOR `instrumentHome` STOOD HERE until #1225
+                // (audit 2026-09-10 `sequencer-core-3`) — the one copy #580's move above did
+                // not take with it. It was harmless (`register` is idempotent) and misleading
+                // in exactly the way the pointer above forbids: a second registration site,
+                // in the LATE phase the pointer says was emptied. `init()` is the only site;
+                // `EveryFlagSaysWhatItGatesTests` now pins the count of registration lines.
                 // Breadcrumbs at every STARTUP milestone: this is the most crash-prone
                 // window (the build-1363 hot-attach + audio-engine start). They land in
                 // the shared diagnostic log, so a launch that dies here names the phase

@@ -29576,3 +29576,12 @@ GRÜN hier; das bestehende Interleave-Claim bleibt in BEIDEN Semantiken grün. D
 `depth > 0`, `depth > 0.01` sind für NaN falsch), „do not repair those four". Nachgeprüft: `motionEnergy` ist 0, also
 q = 1, und ein NaN in `coherence` fällt als `depth = NaN` an `depth > 0` → inaktiv. Der Audit re-litigiert eine
 aufgeschriebene Entscheidung; Ergebnis wäre identisch (inaktiv). Kein Code.
+
+## #1225 — Ultraplan-Zyklus 12: die vierte `register(defaults:)`-Zeile ist weg (2026-09-10)
+
+Audit `sequencer-core-3`, nachgemessen: `git grep -n "register(defaults" Sources/Echoelmusic/EchoelmusicApp.swift` → drei
+in `init()` (#580) und eine VIERTE für `instrumentHome` im Startup-`.task`, direkt unter dem Zeiger, der sagt, die Stelle
+sei geleert. Harmlos (`register` ist idempotent), irreführend (zweite Registrierungsstelle in der SPÄTEN Phase, die der
+#580-Deadlock verbietet). Zeile gelöscht, ⛔-Vermerk am Ort. `EveryFlagSaysWhatItGatesTests` pinnt jetzt zusätzlich die
+ZAHL der Registrierungszeilen (`== expectedRegistered.count`) — das Set darüber absorbiert Duplikate; transkribiert
+(`codeOnly`-Zeilen mit `register(defaults:`): 4 auf `4dbcd80` → ROT, 3 hier → GRÜN. Prüfer exit 0.

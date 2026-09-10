@@ -184,6 +184,15 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
             .split(separator: "\n", omittingEmptySubsequences: false)
             .map(String.init)
             .filter { $0.contains("register(defaults:") }
+        // #1225: the SET below cannot see a duplicate line (a set absorbs it). #580 moved the
+        // three calls into `init()` and left a fourth copy of `instrumentHome` in the startup
+        // `.task`; this count went RED on that tree (4) and is GREEN at three.
+        XCTAssertEqual(registrationLines.count, Self.expectedRegistered.count, """
+            \(registrationLines.count) `register(defaults:` lines in `EchoelmusicApp.swift` for \
+            \(Self.expectedRegistered.count) registered flags — a duplicate registration site \
+            (or a missing one). `init()` is the only place a default may be registered: a \
+            LATE copy reads as working and is the #580 deadlock (#1225).
+            """)
         var registered: Set<String> = []
         for line in registrationLines {
             for flag in keys where line.contains("Key.\(flag).rawValue") {
