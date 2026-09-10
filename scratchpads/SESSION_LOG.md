@@ -29878,3 +29878,17 @@ Guard → Record (rot auf `6dea1eb`, grün hier); `TheDrawableFollowsTheTierTest
 rot/grün, Claim 1 umgehängt. `moved-needles` meldet die zwei verschobenen Record-Zeilen als Fragen — beantwortet: das
 1200-Zeichen-Fenster des Wächters erreicht sie (transkribiert). Lehre: **der Reviewer war die Investition wert** — F1 war
 ein echter Defekt in der flimmer-sensibelsten Datei, den keine Transkription sieht.
+
+
+## Gate-Lesung CI/CD 5990–5993 (2026-09-10, ~17:50 UTC)
+
+**`Echoelmusic CI/CD Pipeline` 5990 (`43cbd01`, #1217) · 5991 (`f5f7fcb`, #1218) · 5992 (`46e4f3c`, #1219) · 5993
+(`b38a497`, #1220): alle vier Conclusion `failure`, alle vier mit der #396-Signatur** — `Build for Testing` ist
+durchgelaufen (die Suite LÄUFT, also hat das Test-Bundle samt der neuen Wächter kompiliert: kein `TEST BUILD FAILED`),
+`** TEST EXECUTE FAILED **` am Ende, und im tail-200-Fenster jeder Job-Log nur `passed`-Zeilen. Kein Testname mit
+`failed` im Fenster; die vier neuen Wächter dieser Commits (`TempoInvariantTests` 3b, `TheLightStreamsStayAliveAndSayGoodbyeTests`,
+`TheArtNetDefaultIsUnicastTests`, `TheCameraCoherenceAccumulatesTests`) erscheinen im Fenster NICHT — per #445/#807 beweist
+das weder Pass noch Fail, nur „nicht im tail-200". Was das Fenster BEWEIST: das Test-Bundle baut mit den vier Wächtern.
+5994–6005 (bis `5cf53a2`) sind `queued`/`in_progress` — macOS-Runner-Warteschlange, ~50–80 min je Lauf. Gelesen über
+`get_job_logs failed_only` (tail 200), nicht über den Verdict-Parser, weil die Ausgabe hier inline kam und nicht in eine
+Datei geschrieben wurde.
