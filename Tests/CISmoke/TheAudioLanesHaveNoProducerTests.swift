@@ -240,6 +240,10 @@ final class TheAudioLanesHaveNoProducerTests: XCTestCase {
 
     // MARK: - Reading the source
 
+    /// #1240 — thrown after `XCTFail` when a creator's anchor is missing, so the calling claim
+    /// stops (it has nothing to scan) AND the run is red (it asserted the anchor and lost).
+    private struct AnchorMissing: Error { let name: String }
+
     /// The brace-matched body of `name` inside `code`, so a needle cannot be satisfied by a
     /// neighbouring declaration. Throws rather than returning "" when the anchor is missing
     /// (#454) — a vanished creator must not read as a pass.
@@ -247,10 +251,12 @@ final class TheAudioLanesHaveNoProducerTests: XCTestCase {
         guard let start = code.range(of: "func \(name)"),
               let open = code.range(of: "{", range: start.upperBound..<code.endIndex)
         else {
-            throw XCTSkip("""
-                `func \(name)` is not in TimelineStore.swift — the anchor moved, so this \
-                guard SKIPS rather than reporting a green it did not earn
-                """)
+            // #1240: the file is present and the anchor is not — that is a red, not a skip. A
+            // skip is the honest answer only when the TREE is missing (the `fileExists` form);
+            // here it would let a rename of the creator read as green. The throw keeps the
+            // caller's `try` contract; XCTFail is what makes it red.
+            XCTFail("`func \(name)` is not in TimelineStore.swift — the anchor moved; re-anchor this guard (#1240: XCTFail for a missed anchor, XCTSkip only for a missing tree)")
+            throw AnchorMissing(name: name)
         }
         var depth = 0
         var index = open.lowerBound

@@ -101,8 +101,11 @@ PASS_LINE = re.compile(r"Test [Cc]ase '([^']+)' passed", re.MULTILINE)
 FAIL_LINE = re.compile(r"Test [Cc]ase '([^']+)' (?:failed on |failed \()", re.MULTILINE)
 FAILED_OR_PASSED_PASS = PASS_LINE
 
-# ⛔ #806 — THE TOOL REPORTED PASSES AND FAILURES AND WAS SILENT ABOUT SKIPS, while 268 of the
-# 358 files in `Tests/CISmoke` can throw `XCTSkip`. A skipped guard is not a passing guard: it
+# ⛔ #806 — THE TOOL REPORTED PASSES AND FAILURES AND WAS SILENT ABOUT SKIPS, while most files in
+# `Tests/CISmoke` can throw `XCTSkip` (measure, do not quote — the pair that stood here was
+# stale by 31 files within weeks, #1240:
+#   git grep -l XCTSkip -- 'Tests/CISmoke/*.swift' | wc -l ; git ls-files 'Tests/CISmoke/*.swift' | wc -l
+# ). A skipped guard is not a passing guard: it
 # asserted nothing. The tool never MIS-read one (the verb differs, so a skip was never counted
 # as a pass) — it simply did not mention them, and `Tests/CISmoke/CLAUDE.md` §5 tells every
 # session to read this script's verdict instead of hand-rolling needles. "TEST FAILURES: 0" was

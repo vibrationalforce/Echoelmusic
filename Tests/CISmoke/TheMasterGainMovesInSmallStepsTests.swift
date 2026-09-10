@@ -367,7 +367,9 @@ final class TheMasterGainMovesInSmallStepsTests: XCTestCase {
     func testTheEngineStopStandsTheEaseTimerDown() throws {
         let engine = try Self.engineSource()
         guard let stop = engine.range(of: "func stop(reason: StopReason) {") else {
-            throw XCTSkip("`stop(reason:)` is gone from AudioEngine.swift — re-anchor this claim.")
+            // #1240: a missed ANCHOR is a red, not a skip — the file is present, so "the tree is
+            // missing" is not the situation; a skip here would turn a rename into a silent green.
+            return XCTFail("`stop(reason:)` is gone from AudioEngine.swift — re-anchor this claim (#1240: XCTFail for a missed anchor, XCTSkip only for a missing tree).")
         }
         let tail = String(engine[stop.upperBound...].prefix(4000))
         XCTAssertTrue(tail.contains("autoMixChain.disconnectMeter()"), """
