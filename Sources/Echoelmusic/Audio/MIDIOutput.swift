@@ -280,15 +280,22 @@ public final class MIDIOutput {
         guard enabled, isReady, (0...127).contains(pitch) else { return }
         let ch = allocateChannel(for: pitch)
         let vel = UInt8(max(1, min(127, Int(velocity * 127))))   // 1…127 (0 = note off)
-        send([0x90 | UInt8(ch), UInt8(pitch), vel])
         // While 5D is armed, EVERY note-on states its dimensions — an expression-
         // less note resets its member channel to neutral instead of inheriting
         // whatever bend/CC74/pressure the previous note left there (audible as a
         // detuned neighbour on external MPE rigs once per-note overrides exist;
         // MPE-spec practice is to initialise per-note dimensions at note-on).
+        //
+        // ⭐ BEFORE the 0x90, not after it (#1221, audit 2026-09-10 `output-sync-5`). The
+        // MPE spec's practice is to state Bend/CC74/Pressure immediately PRECEDING the
+        // note-on, so the voice starts on the body's values. Sent after it, the first
+        // buffer of every note played with the member channel's PREVIOUS bend, brightness
+        // and pressure and then jumped — a per-note zip on a Seaboard-class synth or an
+        // Ableton MPE track. The bytes are identical; only their order moved.
         if mpeEnabled, expressionEnabled {
             sendExpression(expression ?? .neutral, channel: ch)
         }
+        send([0x90 | UInt8(ch), UInt8(pitch), vel])
     }
 
     /// Emit the three continuous MPE per-note dimensions on member channel `ch`:

@@ -29514,3 +29514,15 @@ Feed), 3 (Kappe 64, ≥ 2·Floor, `removeFirst`), 4 (Clear neben dem Cursor) je 
 transkribiert. `dead-needles`/`foreign-needles` exit 0. **NEEDS-FOUNDER-VERIFY** an der Kapazität: Ruhe-Take ~90 s,
 verlässt die Kohärenz nach ~16 Schlägen die 0 und folgt langsamer Atmung ohne Flackern? Die 64 ist Gurt-Parität, keine
 Messung. Ehrlich: kompilat-unbelegt bis zum Gate; keine Geräteprobe.
+
+## #1221 — Ultraplan-Zyklus 8: die MPE-Ausdrucks-Trias geht VOR dem Note-on raus (2026-09-10)
+
+Audit `output-sync-5`, nachgemessen: `MIDIOutput.noteOn(pitch:velocity:expression:)` sendete `0x90` und DANACH
+`sendExpression` (0xE0 · CC74 · 0xD0) auf dem Member-Kanal — der erste Puffer jeder körper-ausgedrückten Note lief auf
+den VORHERIGEN Werten des Kanals und sprang dann (Per-Note-Zip auf Seaboard-Klasse / Ableton-MPE-Spur). MPE-Praxis:
+Dimensionen unmittelbar VOR dem Note-on. Jetzt Trias zuerst, dann `0x90`; Bytes identisch, nur die Reihenfolge.
+Wächter: `TheMPEInputHasNoZonesTests` Anspruch 12 — Textordnung INNERHALB der Funktion (Rumpf = bis zum folgenden
+`private func sendExpression(`), transkribiert ROT auf `b38a497` / GRÜN hier. `moved-needles` meldet die verschobene
+`0x90`-Zeile — genannt nur vom neuen Anspruch selbst, erreicht. Ehrlich: Textordnung ist die Grenze, kein Byte-Spion ohne
+virtuelle Destination; hörbar nur am MPE-Rig (kein eigener Marker — #548-Gurt-/Rig-Posten deckt es).
+Ultraplan-Zeilen 3/4/5/8/14 als ✅ nachgetragen (waren leer, obwohl #1216–#1219 gelandet sind).

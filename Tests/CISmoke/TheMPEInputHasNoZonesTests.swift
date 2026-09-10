@@ -1137,6 +1137,43 @@ final class TheMPEInputHasNoZonesTests: XCTestCase {
         return root
     }
 
+    // MARK: - claim 12 — the expression trio goes out BEFORE the note-on, not after it
+
+    /// #1221 (audit 2026-09-10 `output-sync-5`). Claim 10's counterweight pins that all THREE
+    /// per-note dimensions are sent; it says nothing about WHEN. `noteOn(pitch:velocity:
+    /// expression:)` sent the 0x90 first and the Bend/CC74/Pressure trio after it, so the
+    /// first buffer of every body-expressed note played on the member channel's PREVIOUS
+    /// values and then jumped — a per-note zip on any MPE synth. MPE practice states the
+    /// dimensions immediately PRECEDING the note-on. This pins the ORDER inside that one
+    /// function: the `sendExpression(` call textually precedes the `0x90 |` send.
+    ///
+    /// ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (`b38a497`) and this tree:
+    /// RED on the parent (0x90 first), GREEN here. Text order is the limit: the sender is a
+    /// CoreMIDI port, so no byte-capturing spy exists without a virtual destination.
+    func testTheExpressionTrioPrecedesTheNoteOn() throws {
+        let code = try source(Self.out)
+        let head = "public func noteOn(pitch: Int, velocity: Float, expression: MPEExpression?) {"
+        guard let fnStart = code.range(of: head) else {
+            return XCTFail("`noteOn(pitch:velocity:expression:)` is gone from `MIDIOutput` (#1221)")
+        }
+        // The function body ends at the next `private func sendExpression(` — the very sender
+        // it calls; everything in between is the one function this claim is about.
+        let tail = code[fnStart.upperBound...]
+        guard let fnEnd = tail.range(of: "private func sendExpression(") else {
+            return XCTFail("`sendExpression(` no longer follows `noteOn` in `MIDIOutput` (#1221)")
+        }
+        let body = String(tail[..<fnEnd.lowerBound])
+        guard let expr = body.range(of: "sendExpression(expression ?? .neutral, channel: ch)"),
+              let on = body.range(of: "send([0x90 | UInt8(ch), UInt8(pitch), vel])") else {
+            return XCTFail("`noteOn` no longer sends both the expression trio and the 0x90 (#1221)")
+        }
+        XCTAssertTrue(expr.upperBound <= on.lowerBound, """
+            `noteOn` sends the 0x90 BEFORE the per-note Bend/CC74/Pressure again — the first \
+            buffer of every note plays on the member channel's previous values and then jumps \
+            (#1221). MPE practice states the dimensions immediately preceding the note-on.
+            """)
+    }
+
     /// Comment-stripped source (#453 — one stripper for the whole bundle). A SKIP without a
     /// checkout, a FAILURE when a named file moved (#454: a skip passes CI).
     private func source(_ relativePath: String) throws -> String {
