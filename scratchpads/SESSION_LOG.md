@@ -29829,3 +29829,21 @@ auf `0d004d1`, grün hier; 3 (Stufenwerte, Verhalten auf dem reinen Kern) und 4 
 **V3 verworfen** (Drawable früh anfordern blockiert auf den Pool — Apple: so spät wie möglich; die Verdeckungs-Hälfte gehört
 zu V2). **V4 zurückgestellt** (vier 5-Element-Arrays pro Frame auf dem Main-Thread ≈ Mikrosekunden; Regressionsfläche in
 der Anti-Strobe-Slot-Logik). Stand in `scratchpads/VISUAL_AUDIT_2026-09-10.md`.
+
+## #1244 Visual-Audit V2 — Skip des GPU-Passes bei unverändertem Frame (2026-09-10, ~17:40 UTC, `e11d36f`, Push nach Compile-Status)
+
+Der Audit-Vorschlag war `isPaused = true` unter Reduce Motion — in der ART falsch: `BioVisualParams.from(bio, reduceMotion:)`
+und die Cloud-Slots easen weiter (das Bild folgt Körper und Fingern, nur ohne Eigenbewegung), und
+`preferredFramesPerSecond`/`isPaused` sind per Flicker-Gesetz gepinnt (`makeUIView`, Founder-Vorfälle 2026-07-08/09).
+Richtig ist der Skip: nach der letzten Uniform-Zuweisung (`uniforms.time`) vergleicht `draw(in:)` die Uniforms byteweise mit
+dem zuletzt KODIERTEN Satz und kehrt vor dem Drawable zurück, wenn identisch — der Layer behält das letzte Bild; unter
+Reduce Motion konvergiert das Float-Easing in Sekunden auf exakte Gleichheit, danach null GPU-Arbeit bis zur nächsten
+Änderung; ohne Reduce Motion läuft `time` jeden Frame, also nie ein Skip. Dafür ist der Drawable-Guard von Zeile 1355
+hinter Zeile 1672 gewandert (Apple: so spät wie möglich; gemessen: kein `drawable`/`pass`/`buffer`-Zugriff dazwischen).
+Gates: `hasEncodedOnce` (erster Frame kodiert immer), `!wantsCapture` (der Recorder braucht eine Textur), Byte-Gleichheit
+(`MetalBioRenderer.bytesEqual`, `nonisolated static`, NaN-tolerant). `lastFrameTime` ist vor dem Skip fortgeschrieben, `dt`
+bleibt ehrlich; `governor?.recordFrame` läuft weiter (Cadence unverändert). NEEDS-FOUNDER-VERIFY am Skip. Wächter
+`TheRendererSkipsAnUnchangedFrameTests` (4 Claims): 1/2 rot auf `c3227d0`, grün hier; 3 grün/grün; 4 Verhalten (Stand-in-
+Struct, NaN) hier nicht gelaufen. Prüfer exit 0. ⚠️ Zwei Dinge, die die Transkription nicht sieht: `withUnsafeBytes(of:)`
+mit Wert (nicht `inout`) — existiert seit Swift 4.2; `MTKViewDelegate`-Isolation der Klasse — der Helfer ist
+`nonisolated static`, also in beiden Fällen aufrufbar. Ein Compile-Fehler wäre im `Xcode Compile Check` sichtbar.
