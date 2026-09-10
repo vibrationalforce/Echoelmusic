@@ -611,17 +611,35 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
                 """)
         }
 
-        // A whole-integer delay makes this exact, so it is an equality and not a tolerance
-        // (#442 — assert from the algebra, not from a printed value). With frac = 0 the
-        // coefficient eta is 1.0 and `apPrev` is still 0, so `s1 + eta * (s0 - apPrev)`
-        // collapses to s1 + s0: the second-most-recent sample plus the most recent one.
-        // `read` above does not touch `apPrev`, so the state is unchanged by those calls.
+        // A whole-integer delay leaves `apPrev` at 0 (the `read` calls above do not touch
+        // it), so `s1 + eta * (s0 - apPrev)` collapses to `s1 + eta * s0` — one multiply, and
+        // the coefficient is the only unknown. Recovering it is exact algebra (#442), and it
+        // deliberately does NOT restate eta's VALUE: that is #1205's business and it has ONE
+        // home, `EchoelDelayLine.maxAllpassCoefficient` (#416).
+        //
+        // ⛔ THIS ASSERTION USED TO BE `XCTAssertEqual(readAllpass(1.0), s1 + s0)` AND #1205
+        // TURNED IT RED — a zero-tolerance equality on exactly the `frac == 0` case that slice
+        // changes. It is retracted here rather than re-fitted to 0.99, because a number fitted
+        // to today's coefficient would go red again the day the coefficient is retuned, on a
+        // correct tree (#364). The BAND is the durable fact: at an integer delay the
+        // coefficient is at or just below 1, whatever it is tuned to.
+        //
+        // What THIS file asserts is only the #1203 storage gate, and the band still catches
+        // its failure mode: a dropped gate returns 0, which recovers eta = 1.333…, outside
+        // the upper bound. (Only the upper assertion fires on that tree; that is enough.)
         let s0 = written[written.count - 1]
         let s1 = written[written.count - 2]
-        XCTAssertEqual(line.readAllpass(delaySamples: 1.0), s1 + s0, """
+        let recoveredEta = (line.readAllpass(delaySamples: 1.0) - s1) / s0
+        XCTAssertGreaterThan(recoveredEta, 0.9, """
+            `readAllpass` returned an implausible value for a whole-sample delay. With \
+            `apPrev` at 0 the output is `s1 + eta * s0`, so the recovered coefficient must \
+            sit just below 1 — a value this far off means the interpolator, not the gate.
+            """)
+        XCTAssertLessThanOrEqual(recoveredEta, 1.0, """
             `readAllpass` no longer returns its documented output for a whole-sample delay. \
             #1203 put a storage gate in front of its index and before it touches `apPrev`; \
-            it must be bit-neutral whenever the storage is the real buffer.
+            it must be bit-neutral whenever the storage is the real buffer. A gate that \
+            returned 0 here recovers a coefficient of 1.333…, which is what this bound reads.
             """)
 
         line.reset()

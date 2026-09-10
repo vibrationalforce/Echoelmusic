@@ -38,6 +38,67 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// already nonsense. A defensive bound that is itself expensive is a poor bound.
     private static let maxFrames: Float = 1_048_576
 
+    /// Upper bound on the first-order allpass coefficient in `readAllpass` (#1205).
+    ///
+    /// THE DEFECT IT REMOVES, measured rather than reasoned. The interpolator is
+    /// `y[n] = s1 + eta * (s0 - y[n-1])`, whose pole sits at `-eta`. At an EXACTLY integer
+    /// delay `frac` is 0, so `eta` is 1.0, the pole lands ON the unit circle, and any state
+    /// already in `y[n-1]` alternates at ±the same value FOREVER. It is not theoretical:
+    /// `EchoelChorus.baseDelayMs` is 12 and `EchoelFlanger.baseDelayMs` is 3, which at 48 kHz
+    /// are 576.0 and 144.0 samples exactly — and both stages expose a `Depth` field with range
+    /// `0...1`, so a user setting depth to 0 (a natural thing to try — "chorus without the
+    /// wobble") parks the read on that integer. Simulated: seed the state by dragging depth
+    /// 0.5 → 0 while a tone plays, and the wet output holds an undecayed alternating error
+    /// against the ideal delay, still there after three seconds.
+    /// ⚠️ ITS SIZE IS PHASE-DEPENDENT — two runs differing only in WHEN the depth reaches the
+    /// integer measured ±0.46 and +0.744 (wet peak 1.244), because the seed is whatever the
+    /// filter happened to hold at that instant. Quote "does not decay", not a figure.
+    /// At 44.1 kHz neither delay lands on an integer, so this is a 48 kHz property — i.e. the
+    /// rate we ship.
+    ///
+    /// WHY 0.99, and what it costs — all four numbers derived, none guessed:
+    ///  · pole radius 0.99 ⇒ half-life 69 samples ≈ 1.4 ms, so the ring is inaudible within
+    ///    ~10 ms instead of never.
+    ///  · the clamp engages only for `frac < 0.005025`, i.e. **0.75 %** of samples over a full
+    ///    chorus LFO cycle at depth 0.5 — it is not in the signal path the rest of the time.
+    ///  · where it does engage, the realised fractional delay is 0.005 samples instead of 0 —
+    ///    **0.1 microseconds** at 48 kHz.
+    ///  · the stage stays an EXACT allpass. `(eta + z⁻¹)/(1 + eta·z⁻¹)` has magnitude 1 at
+    ///    every frequency for any real `|eta| < 1`; verified numerically across the band at
+    ///    eta = 1.0, 0.99 and 0.9. Clamping changes the fractional delay it realises, never
+    ///    its magnitude response — which is the whole reason to prefer this over detuning the
+    ///    requested delay.
+    ///
+    /// ⚠️ NOT the textbook remedy, and the FIRST version of this paragraph gave a reason that
+    /// is simply false. It said Jaffe & Smith "changes the delay by up to half a sample". It
+    /// does not: keeping `frac` in [0.5, 1.5) is `i0' = i0 - 1`, `frac' = frac + 1`, which is
+    /// EXACTLY delay-preserving — the same total delay, redistributed between the integer tap
+    /// and the filter. Nor is the guarantee "the same": JS holds `|eta| <= 1/3`, a half-life of
+    /// 0.63 samples, against 69 samples here. On both counts the textbook is better.
+    ///
+    /// The real obstacle is local and specific: `delaySamples` is clamped to `[1, ...]`, so the
+    /// smallest request this line accepts is d = 1.0, and the JS shift then gives
+    /// `idx0 = writeIndex` — the slot the NEXT write is about to overwrite, i.e. the oldest
+    /// sample in the ring rather than the newest. Adopting JS therefore means raising the lower
+    /// clamp to 2 and re-deriving every caller's delay, which is a different, larger slice.
+    /// This clamp is the smaller move that removes the pole from the unit circle TODAY; it is
+    /// not a claim that it is the better interpolator.
+    ///
+    /// ⚠️ IT OPENS A DENORMAL PATH, and that is stated rather than fixed. Before the clamp the
+    /// zero-input residue did not decay at all; now it decays as 0.99^n, so it passes through
+    /// the denormal range (~1e-38) after roughly 8 700 samples — about 180 ms — and spends a
+    /// few thousand more there before it underflows to zero. On Apple silicon scalar FP that
+    /// costs nothing measurable (this is an x86 problem, not an ARM one), and the alternative
+    /// is a per-sample flush test on a path that runs for every voice. Recorded so the next
+    /// reader does not have to re-derive it; revisit only if a profile actually shows it.
+    ///
+    /// ⚠️ INSTANCE `let`, not `static let`, and that is deliberate — unlike `maxFrames` above,
+    /// this one is read ON THE AUDIO THREAD, once per sample. A `static let` is lazily
+    /// initialised through `swift_once`, so every read is formally a global access with an
+    /// acquire load. The optimiser very probably folds it to a constant; "very probably" is
+    /// not the standard on a render path, and a stored `let` costs four bytes and no doubt.
+    private let maxAllpassCoefficient: Float = 0.99
+
     // MARK: - Init
 
     /// #1171 — THE TRAP IS HERE, AND IT WAS GUARDED AT ONE CALLER OUT OF FIVE.
@@ -107,9 +168,15 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// `delaySamples` is clamped to `[1, maxDelaySamples]`. Audio-thread safe.
     @inline(__always)
     public func read(delaySamples: Float) -> Float {
-        // NaN-safe. `Swift.min(Swift.max(x, 1), max)` is a no-op for NaN (every
-        // comparison against NaN is false), and the very next line is `Int(d)`, which
-        // TRAPS on NaN — a crash on the audio thread, not a degradation.
+        // NaN-safe, and this comment used to say the OPPOSITE of what the code does (#1205).
+        // It described `Swift.min(Swift.max(x, 1), max)` — the GENERIC `Comparable.clamped`,
+        // which passes NaN straight through — and concluded that the next line, `Int(d)`,
+        // therefore TRAPS. Overload resolution does not pick that one: for a concrete Float
+        // the `FloatingPoint` member in `Core/FloatingPointClamp.swift` is more specialised,
+        // and it maps NaN to `range.lowerBound` FIRST. So `d` is finite and in `[1, max]` for
+        // every input including NaN and infinity, and `Int(d)` cannot trap here. The old
+        // wording read as a live hazard notice on a hazard that was already closed — which
+        // invites the next session to "fix" it by adding a second check.
         let d = delaySamples.clamped(to: 1.0...Float(maxDelaySamples))
         let i0 = Int(d)
         let frac = d - Float(i0)
@@ -130,16 +197,28 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// Assumes a single modulated read tap (keeps one filter state).
     @inline(__always)
     public func readAllpass(delaySamples: Float) -> Float {
-        // NaN-safe. `Swift.min(Swift.max(x, 1), max)` is a no-op for NaN (every
-        // comparison against NaN is false), and the very next line is `Int(d)`, which
-        // TRAPS on NaN — a crash on the audio thread, not a degradation.
+        // NaN-safe, and this comment used to say the OPPOSITE of what the code does (#1205).
+        // It described `Swift.min(Swift.max(x, 1), max)` — the GENERIC `Comparable.clamped`,
+        // which passes NaN straight through — and concluded that the next line, `Int(d)`,
+        // therefore TRAPS. Overload resolution does not pick that one: for a concrete Float
+        // the `FloatingPoint` member in `Core/FloatingPointClamp.swift` is more specialised,
+        // and it maps NaN to `range.lowerBound` FIRST. So `d` is finite and in `[1, max]` for
+        // every input including NaN and infinity, and `Int(d)` cannot trap here. The old
+        // wording read as a live hazard notice on a hazard that was already closed — which
+        // invites the next session to "fix" it by adding a second check.
         let d = delaySamples.clamped(to: 1.0...Float(maxDelaySamples))
         let i0 = Int(d)
         let frac = d - Float(i0)
         let idx0 = (writeIndex &- i0) & mask
         let idx1 = (idx0 &- 1) & mask
-        // eta in [0,1); coefficient for the allpass interpolator
-        let eta = (1.0 - frac) / (1.0 + frac)
+        // Coefficient for the allpass interpolator. The raw value is in (0, 1] — it reaches
+        // 1 at an exactly integer delay, which puts the pole ON the unit circle and makes the
+        // filter ring forever; see `maxAllpassCoefficient` for the measurement (#1205).
+        // ⚠️ ARGUMENT ORDER IS THE NaN RULE, not style. `Swift.min(a, b)` is `b < a ? b : a`,
+        // so the KNOWN-GOOD value must come first: `min(0.99, NaN)` is 0.99, `min(NaN, 0.99)`
+        // is NaN. `frac` cannot be NaN here (`d` is `clamped(to:)`), so this is prophylactic —
+        // and free.
+        let eta = Swift.min(maxAllpassCoefficient, (1.0 - frac) / (1.0 + frac))
         // #1203 — see `reset()`. Returning before `apPrev` is written costs nothing and is
         // the tidier order; do NOT read it as a benefit, though — the same `reset()` that
         // opened the window zeroes `apPrev` a few instructions later, so the state this
