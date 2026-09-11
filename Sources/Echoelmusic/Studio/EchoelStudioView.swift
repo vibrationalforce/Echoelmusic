@@ -6849,6 +6849,25 @@ struct EchoelStudioView: View {
     // re-evaluate at that rate (Ruckeln while dragging the look slider mid-take).
     // THE freeze rule: high-frequency @Observable reads only in leaf bodies.
 
+    /// #354 / G0 — THE CAPTION COUNTS ITSELF. Romance's qualifier used to end in the literal
+    /// "(9 of the 19 offered)", and a literal in user-facing copy about a roster that a founder
+    /// decision widens is a date, not a fact: the Genre-Welt plan adds genres in batches, and
+    /// every batch would have had to remember to retype two numbers in a sentence nobody is
+    /// looking at. Derived here instead, from the same two facts the composer reads — the offered
+    /// roster and whether a genre's chord already carries the 7th (`chordTones.contains(6)`, the
+    /// literal guard in `BioComposer`). `nonisolated` because the view is `@MainActor` and Xcode's
+    /// toolchain isolates even an immutable `static let` on such a type (CLAUDE.md's error table).
+    ///
+    /// ⚠️ This removes a MAINTENANCE burden, not a guard: `MoodKnobsSayWhatTheyDoTests` still pins
+    /// that the clause is DERIVED and that the set it describes is a proper, non-empty subset —
+    /// if every offered genre gained the 7th, the qualifier would be vacuous and the sentence
+    /// would need rewriting, which a self-counting number cannot tell you on its own.
+    nonisolated private static let romanceSeventhClause: String = {
+        let offered = MusicStyle.offered
+        let plain = offered.filter { !$0.harmonicProfile.chordTones.contains(6) }.count
+        return "(\(plain) of the \(offered.count) offered)"
+    }()
+
     // MARK: Panel — Mood (character of the composition)
 
     private var moodPanel: some View {
@@ -6919,7 +6938,7 @@ struct EchoelStudioView: View {
             // it costs one clause; the alternative was leaving a control that reads continuous
             // and is not. `MoodKnobsSayWhatTheyDoTests` measures both cliffs and fails if either
             // moves, so this sentence cannot go stale silently.
-            Text("Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one (9 of the 19 offered).")
+            Text("Friendly ↔ scary (tension) · sparse ↔ busy (liveliness) · odd leaps (weird). Blends with your live signal. Darkness and Romance switch rather than fade: above 0.60 Darkness drops the voicing an octave, and above 0.50 Romance adds the 7th to genres whose chord does not already have one \(Self.romanceSeventhClause).")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -7131,11 +7150,19 @@ struct EchoelStudioView: View {
     ///
     /// ⚠️ AND ROMANCE IS WEAKER STILL THAN "a switch": its one read is `if mood.romance > 0.5,
     /// !tones.contains(6)`, so on a genre whose chord ALREADY carries the 7th it does nothing at
-    /// any setting. That is 10 of the 19 offered genres — `.selfObservation`, THE SHIPPED DEFAULT,
-    /// among them. The caption therefore says "to genres whose chord does not already have one
-    /// (9 of the 19 offered)" rather than promising the 7th outright; an unqualified promise would
-    /// have been false for the genre a first-time user hears. `MoodKnobsSayWhatTheyDoTests` pins
-    /// the 7/16 split against `harmonicProfile` itself, so the number in the caption cannot rot.
+    /// any setting. That is the MAJORITY of the offered roster — `.selfObservation`, THE SHIPPED
+    /// DEFAULT, among them. The caption therefore says "to genres whose chord does not already
+    /// have one (N of the M offered)" rather than promising the 7th outright; an unqualified
+    /// promise would have been false for the genre a first-time user hears.
+    ///
+    /// ⛔ THIS PARAGRAPH CARRIED THREE NUMBERS AND ONE OF THEM HAD ALREADY ROTTED — it claimed
+    /// the guard "pins the 7/16 split", from a roster two widenings ago, while the caption two
+    /// screens away said 9 of 19. Nothing could go red on that: a comment describing a guard is
+    /// not read by the guard. Since G0 the caption DERIVES both counts
+    /// (`romanceSeventhClause`), so no number here needs maintaining — and none is written.
+    /// `MoodKnobsSayWhatTheyDoTests` pins that the sentence COMPUTES and that the split it
+    /// describes is still a proper, non-empty subset; that second half is the part a
+    /// self-counting number cannot check.
     ///
     /// `darkness` cannot be made continuous: it moves the register, and
     /// register is quantised by construction (`key.degree(_:octave:)` moves in octaves, and

@@ -153,18 +153,60 @@ final class MoodKnobsSayWhatTheyDoTests: XCTestCase {
         }
     }
 
-    /// The caption prints "9 of the 19 offered". This pins that number against the profiles
-    /// themselves, so adding a genre — or giving an existing one a 7th — makes the caption's
-    /// arithmetic fail here rather than on a user's screen.
-    func testTheCaptionsGenreCountIsTheRealOne() {
-        XCTAssertEqual(MusicStyle.offered.count, 19, """
-            The offered roster changed size. The `moodPanel` caption names it ("… of the 19 \
-            offered") — update both in the same commit.
+    /// ⭐ G0 — THE CAPTION COUNTS ITSELF; THIS PINS THAT IT DOES, NOT WHAT IT COUNTS TO.
+    ///
+    /// Until G0 this file asserted two literals — `offered.count == 19` and "9 genres lack the
+    /// 7th" — because the caption stated both as text. That was the right guard for a stated
+    /// number and the wrong shape for the work ahead: the Genre-Welt plan adds genres in batches,
+    /// and every batch would have had to retype two numbers in a sentence nobody re-reads, in a
+    /// file nobody opens for that reason. The caption now derives both from
+    /// `EchoelStudioView.romanceSeventhClause`, so the arithmetic cannot go stale at all.
+    ///
+    /// ⛔ AND THERE IS DELIBERATELY NO FLOOR HERE — no `XCTAssertGreaterThanOrEqual(offered.count,
+    /// 19)`. A floor would permit a caption that lies DOWNWARD (a roster silently shrinking while
+    /// the sentence still reads plausibly), which is the failure direction this repo actually
+    /// keeps hitting. What survives from the old test is its PURPOSE, split in two: this method
+    /// pins that the sentence computes, and `testTheSeventhSplitIsAProperSubset` pins the one
+    /// thing a self-counting number cannot tell you — that the qualifier still means something.
+    func testTheCaptionCountsItselfRatherThanStatingANumber() throws {
+        let code = try Self.studioSource()
+        XCTAssertTrue(code.contains("nonisolated private static let romanceSeventhClause"), """
+            `EchoelStudioView.romanceSeventhClause` is gone or renamed. It is the derivation \
+            behind the mood caption's "(N of the M offered)"; without it the sentence is either \
+            missing or back to a literal that ages silently.
             """)
-        XCTAssertEqual(Self.genresWithoutTheSeventh.count, 9, """
-            \(Self.genresWithoutTheSeventh.count) offered genres lack the 7th, not 9. The \
-            `moodPanel` caption names that number too; a caption that counts wrong is the same \
-            defect as a caption that promises a switch it does not have.
+        XCTAssertTrue(code.contains("!$0.harmonicProfile.chordTones.contains(6)"), """
+            The clause no longer derives its count from `chordTones.contains(6)` — the same \
+            literal test `BioComposer` applies before adding the 7th. If the composer's rule \
+            moved, move both, and say so in the caption.
+            """)
+        XCTAssertTrue(code.contains("does not already have one \\(Self.romanceSeventhClause)"), """
+            The caption stopped interpolating the derived clause. Either the qualifier is gone \
+            (then the sentence promises the 7th on every genre, the #354 overclaim) or a literal \
+            count came back.
+            """)
+        XCTAssertNil(code.range(of: "of the [0-9]+ offered", options: .regularExpression), """
+            A hard-coded roster size is back in `EchoelStudioView` ("… of the N offered"). That \
+            number changes whenever the founder widens `MusicStyle.offered`, and nothing else \
+            would make it red. Interpolate `Self.romanceSeventhClause` instead.
+            """)
+    }
+
+    /// The half a self-counting caption CANNOT check: that its qualifier still describes a real
+    /// split. If every offered genre carried the 7th, the clause would read "(0 of the N offered)"
+    /// — arithmetically perfect and a sentence about nothing. If none did, "does not already have
+    /// one" would be noise. Either way the copy needs rewriting, not recounting.
+    func testTheSeventhSplitIsAProperSubset() {
+        let offered = MusicStyle.offered
+        let plain = offered.filter { !$0.harmonicProfile.chordTones.contains(6) }
+        XCTAssertFalse(plain.isEmpty, """
+            Every offered genre now carries the 7th, so romance's only read \
+            (`!tones.contains(6)`) can never fire and the caption describes a switch that does \
+            nothing. Rewrite the sentence — the count is not the problem.
+            """)
+        XCTAssertNotEqual(plain.count, offered.count, """
+            No offered genre carries the 7th any more, so the qualifier "whose chord does not \
+            already have one" excludes nothing and should be dropped from the caption.
             """)
     }
 
@@ -200,10 +242,12 @@ final class MoodKnobsSayWhatTheyDoTests: XCTestCase {
         XCTAssertTrue(code.contains("above 0.50 Romance adds the 7th"), """
             The caption no longer names romance's threshold — same two cases as darkness.
             """)
-        XCTAssertTrue(code.contains("does not already have one (9 of the 19 offered)"), """
-            The caption dropped romance's QUALIFIER. Without it the sentence promises the 7th on \
-            every genre, which is false for 10 of the 19 — including `.selfObservation`, the \
-            shipped default. That is the exact overclaim this slice's review found.
+        XCTAssertTrue(code.contains("does not already have one \\(Self.romanceSeventhClause)"), """
+            The caption dropped romance's QUALIFIER. Without it the sentence promises the 7th \
+            on every genre, which is false for most of the offered roster — including \
+            `.selfObservation`, the shipped default. That is the exact overclaim this slice's \
+            review found. (G0: the count is DERIVED now, so this needle is the interpolation, \
+            not a number — see `testTheCaptionCountsItselfRatherThanStatingANumber`.)
             """)
     }
 
