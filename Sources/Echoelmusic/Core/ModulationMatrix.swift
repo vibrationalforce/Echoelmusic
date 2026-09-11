@@ -55,6 +55,12 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     case headPitch
     case headRoll
     case headDistance
+    // #1264 (K6a) — five BODY channels (Vision hands/shoulders on the same session), at the END.
+    case handHeightL
+    case handHeightR
+    case handDistance
+    case shoulderTilt
+    case bodyPresence
 
     /// Human label for the "bind this parameter to the body" UI (the one shared
     /// source vocabulary — see BoundParameter / the modulation matrix).
@@ -78,6 +84,11 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .headPitch:       return "Head nod"
         case .headRoll:        return "Head tilt"
         case .headDistance:    return "Head distance"
+        case .handHeightL:     return "Left hand height"
+        case .handHeightR:     return "Right hand height"
+        case .handDistance:    return "Hands apart"
+        case .shoulderTilt:    return "Shoulder tilt"
+        case .bodyPresence:    return "Body in view"
         }
     }
 
@@ -86,6 +97,14 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         .faceSmile, .faceBrow, .faceJaw, .faceBrowDown, .faceEyeBlink, .faceEyeSquint,
         .faceMouthPucker, .faceCheekPuff, .headYaw, .headPitch, .headRoll, .headDistance
     ]
+    /// K6a (#1264) — the BODY channels the same take carries (`BodyPoseAnalyzer` on the face
+    /// session's frames). Separate list on purpose: the face presets route face channels
+    /// only, and a guard counts each list.
+    public static let bodyChannels: [ModSource] = [
+        .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence
+    ]
+    /// Everything a `.faceCam` frame carries and the wire sends under `/echoelmusic/gesture/`.
+    public static var gestureChannels: [ModSource] { faceChannels + bodyChannels }
 
     /// Natural input range of the raw field, used for [0..1] normalization.
     ///
@@ -160,7 +179,8 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .hrv, .breathPhase, .coherence, .motion,
              .faceSmile, .faceBrow, .faceJaw,
              .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-             .headYaw, .headPitch, .headRoll, .headDistance: return 0...1
+             .headYaw, .headPitch, .headRoll, .headDistance,
+             .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return 0...1
         }
     }
 
@@ -185,6 +205,11 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .headPitch:       return frame.headPitch
         case .headRoll:        return frame.headRoll
         case .headDistance:    return frame.headDistance
+        case .handHeightL:     return frame.handHeightL
+        case .handHeightR:     return frame.handHeightR
+        case .handDistance:    return frame.handDistance
+        case .shoulderTilt:    return frame.shoulderTilt
+        case .bodyPresence:    return frame.bodyPresence
         }
     }
 
@@ -250,7 +275,8 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .breathRate, .breathPhase: return frame.hasMeasuredBreath
         case .faceSmile, .faceBrow, .faceJaw,
              .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-             .headYaw, .headPitch, .headRoll, .headDistance: return frame.source == .faceCam
+             .headYaw, .headPitch, .headRoll, .headDistance,
+             .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return frame.source == .faceCam
         // Motion has NO producer: all six `BioSampleFrame` construction sites in
         // `Sources/` hardcode `motionEnergy: 0`, and the last CoreMotion provider was
         // removed in the 2026-06-19 cleanup. So nothing measures it, and `false` is the
@@ -276,7 +302,7 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// control that lies, and the user has no way to tell it apart from a body that has
     /// not settled yet.
     ///
-    /// Keep it in step with the two producers:
+    /// Keep it in step with the producers (the body five ride the face session, #1264):
     /// - `.motion` — every `BioSampleFrame` construction site in `Sources/` hardcodes
     ///   `motionEnergy: 0`; the last CoreMotion provider went in the 2026-06-19 cleanup.
     /// - the three face channels — TRUE since #1257: `FaceExpressionBioPublisher` is
@@ -288,7 +314,8 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .heartRate, .hrv, .coherence, .breathRate, .breathPhase: return true
         case .faceSmile, .faceBrow, .faceJaw,
              .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-             .headYaw, .headPitch, .headRoll, .headDistance: return true
+             .headYaw, .headPitch, .headRoll, .headDistance,
+             .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return true
         case .motion: return false
         }
     }

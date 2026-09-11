@@ -463,6 +463,15 @@ public struct BioSampleFrame: Sendable, Equatable {
     public let headPitch: Float
     public let headRoll: Float
     public let headDistance: Float
+    // K6a (#1264) — five BODY control channels from the same front-camera session (Vision on
+    // `capturedImage`), written only by `FaceExpressionBioPublisher` (`.faceCam`). Hand heights
+    // 0 = bottom of the picture … 1 = top; `handDistance` 0 = together … 1 = wide apart;
+    // `shoulderTilt` CENTRED (0.5 = level); `bodyPresence` 1 while a torso is seen.
+    public let handHeightL: Float
+    public let handHeightR: Float
+    public let handDistance: Float
+    public let shoulderTilt: Float
+    public let bodyPresence: Float
 
     /// Where the frame originated.
     public let source: BioSource
@@ -490,7 +499,12 @@ public struct BioSampleFrame: Sendable, Equatable {
         headYaw: Float = 0.5,
         headPitch: Float = 0.5,
         headRoll: Float = 0.5,
-        headDistance: Float = 0.5
+        headDistance: Float = 0.5,
+        handHeightL: Float = 0,
+        handHeightR: Float = 0,
+        handDistance: Float = 0,
+        shoulderTilt: Float = 0.5,
+        bodyPresence: Float = 0
     ) {
         self.timestamp = timestamp
         self.heartRateBPM = heartRateBPM
@@ -515,6 +529,11 @@ public struct BioSampleFrame: Sendable, Equatable {
         self.headPitch = headPitch
         self.headRoll = headRoll
         self.headDistance = headDistance
+        self.handHeightL = handHeightL
+        self.handHeightR = handHeightR
+        self.handDistance = handDistance
+        self.shoulderTilt = shoulderTilt
+        self.bodyPresence = bodyPresence
     }
 }
 

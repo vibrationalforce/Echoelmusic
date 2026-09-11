@@ -268,7 +268,9 @@ public struct FaceCalibration: Sendable, Equatable, Codable {
     public func applyGestures(_ raw: [Float]) -> [Float] {
         FaceGestureChannel.allCases.enumerated().map { i, ch in
             let v = i < raw.count ? raw[i] : ch.neutral
-            guard let b = gestureBaselines[ch.rawValue] else { return FaceExpressionMapping.clamp01(v) }
+            // K6a — the body is ABSOLUTE (`isBody`): no baseline is collected for it, and one
+            // that reached a persisted record anyway (a future key clash) is not applied.
+            guard !ch.isBody, let b = gestureBaselines[ch.rawValue] else { return FaceExpressionMapping.clamp01(v) }
             return ch.isCentered
                 ? FaceExpressionMapping.clamp01(v - b + 0.5)
                 : Self.rescale(v, baseline: b)
@@ -297,11 +299,16 @@ public struct FaceCalibration: Sendable, Equatable, Codable {
 public enum FaceGestureChannel: String, CaseIterable, Sendable {
     case browDown, eyeBlink, eyeSquint, mouthPucker, cheekPuff
     case headYaw, headPitch, headRoll, headDistance
+    // K6a (#1264) — the BODY, appended at the END (the bank indexes by `allCases` order, a
+    // persisted calibration is keyed by rawValue): wrists' heights, wrist separation, the
+    // shoulder line's tilt (CENTRED), and whether a body is in view at all. Written by
+    // `BodyPoseAnalyzer` through `BodyPoseMath`'s keys; NEVER calibrated (see `isBody`).
+    case handHeightL, handHeightR, handDistance, shoulderTilt, bodyPresence
 
     /// Head angles are CENTRED: 0.5 is the neutral pose, 0 / 1 the full excursion.
     public var isCentered: Bool {
         switch self {
-        case .headYaw, .headPitch, .headRoll: return true
+        case .headYaw, .headPitch, .headRoll, .shoulderTilt: return true
         default: return false
         }
     }
@@ -324,6 +331,18 @@ public enum FaceGestureChannel: String, CaseIterable, Sendable {
     public static let headRollKey = "head.roll"
     public static let headDistanceKey = "head.distance"
 
+    /// K6a — the body channels have an ABSOLUTE frame (a hand at the bottom of the picture is
+    /// low, whatever the performer did during the neutral hold), so the calibration skips
+    /// them: no baseline is collected or applied. The face channels stay calibrated.
+    public var isBody: Bool {
+        switch self {
+        case .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return true
+        default: return false
+        }
+    }
+    /// Shoulder line tilt that reads as 0 / 1 — a clear lean, not a contortion.
+    public static let shoulderTiltFullScaleRadians: Float = 30 * .pi / 180
+
     /// Bag → raw [0..1] for this channel. Missing keys read as the channel's neutral.
     public func rawValue(from bag: [String: Float]) -> Float {
         func v(_ k: String) -> Float { FaceExpressionMapping.clamp01(bag[k] ?? 0) }
@@ -343,6 +362,11 @@ public enum FaceGestureChannel: String, CaseIterable, Sendable {
         case .headDistance:
             guard let d = bag[Self.headDistanceKey], d.isFinite else { return 0.5 }
             return FaceExpressionMapping.clamp01((d - Self.nearMetres) / (Self.farMetres - Self.nearMetres))
+        case .handHeightL:  return v(BodyPoseMath.handHeightLKey)
+        case .handHeightR:  return v(BodyPoseMath.handHeightRKey)
+        case .handDistance: return v(BodyPoseMath.handDistanceKey)
+        case .shoulderTilt: return centred(BodyPoseMath.shoulderTiltKey, fullScale: Self.shoulderTiltFullScaleRadians)
+        case .bodyPresence: return v(BodyPoseMath.bodyPresenceKey)
         }
     }
 
@@ -351,7 +375,8 @@ public enum FaceGestureChannel: String, CaseIterable, Sendable {
     }
 }
 
-/// The nine gesture channels with the SAME three stages as `FaceExpressionMapping`
+/// The gesture channels (nine face/head since #1260, five body since #1264) with the SAME
+/// three stages as `FaceExpressionMapping`
 /// (deadzone-with-hysteresis, one-pole EMA, release on loss), generalised: centred
 /// channels gate on their distance from 0.5 and keep 0.5 as rest. Pure value type.
 public struct FaceGestureBank: Sendable, Equatable {

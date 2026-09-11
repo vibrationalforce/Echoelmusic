@@ -19,6 +19,12 @@
 // `FaceGestureChannel`, no `gestureAddress`) — per §3 ONE finding; claim 5 is RED on the
 // parent (no gesture line in `CLAUDE.md`, no `head.yaw` key). The pulse-frame half of
 // claim 2 is a COUNTERWEIGHT: green on both trees.
+//
+// K6a (#1264) — the body's five channels (hand heights, hands apart, shoulder tilt, presence)
+// ride the same face session, so the WIRE set is `ModSource.gestureChannels` (face + body,
+// 17) and the producing total is 5 + 12 + 5; `FaceGestureChannel` has 14 cases and the
+// shoulder tilt joins the centred three. `faceChannels` itself stays 12 — the face presets
+// (#1261) are written against it. The body's own claims: `TheBodyChannelsRideTheFaceSessionTests`.
 
 import Foundation
 import XCTest
@@ -67,8 +73,8 @@ final class TheGestureChannelsReachTheWireTests: XCTestCase {
             XCTAssertFalse(source.displayName.lowercased().contains("emotion"), "movement, never a feeling")
         }
         XCTAssertEqual(ModSource.headYaw.rawValue(from: frame(.faceCam, yaw: 0.8)), 0.8, accuracy: 1e-6)
-        XCTAssertEqual(ModSource.allCases.filter(\.hasProducer).count, 5 + 12,
-                       "the pickers offer the five pulse/breath channels plus the twelve face channels — motion stays out (#215)")
+        XCTAssertEqual(ModSource.allCases.filter(\.hasProducer).count, 5 + 12 + 5,
+                       "the pickers offer the five pulse/breath channels plus the twelve face and five body channels (#1264) — motion stays out (#215)")
     }
 
     // MARK: - claim 2 (BEHAVIOUR) — on the wire, face frames only
@@ -78,8 +84,8 @@ final class TheGestureChannelsReachTheWireTests: XCTestCase {
         XCTAssertEqual(face.first?.address, "/echoelmusic/bio/synthetic", "provenance first, as on every non-empty batch (#639)")
         XCTAssertEqual(face.first?.floats, [0], "a face is a real body")
         let gesture = face.filter { $0.address.hasPrefix("/echoelmusic/gesture/") }
-        XCTAssertEqual(gesture.count, 12, "all twelve channels go out on a face frame")
-        XCTAssertEqual(Set(gesture.map(\.address)), Set(ModSource.faceChannels.map(OSCSender.gestureAddress)))
+        XCTAssertEqual(gesture.count, 17, "all twelve face and five body channels go out on a face frame (#1264)")
+        XCTAssertEqual(Set(gesture.map(\.address)), Set(ModSource.gestureChannels.map(OSCSender.gestureAddress)))
         XCTAssertEqual(gesture.first(where: { $0.address == "/echoelmusic/gesture/faceSmile" })?.floats, [0.4])
         XCTAssertEqual(gesture.first(where: { $0.address == "/echoelmusic/gesture/headYaw" })?.floats, [0.8])
         XCTAssertFalse(face.contains { $0.address == "/echoelmusic/bio/heart/bpm" }, "a face frame carries no pulse, so no BPM goes out")
@@ -101,8 +107,8 @@ final class TheGestureChannelsReachTheWireTests: XCTestCase {
         XCTAssertEqual(FaceGestureChannel.headDistance.rawValue(from: [FaceGestureChannel.headDistanceKey: FaceGestureChannel.nearMetres]), 0)
         XCTAssertEqual(FaceGestureChannel.headDistance.rawValue(from: [FaceGestureChannel.headDistanceKey: FaceGestureChannel.farMetres]), 1)
         XCTAssertEqual(FaceGestureChannel.eyeBlink.rawValue(from: ["eyeBlinkLeft": 1, "eyeBlinkRight": 0]), 0.5, "both eyes averaged")
-        XCTAssertEqual(FaceGestureChannel.allCases.count, 9)
-        XCTAssertEqual(FaceGestureChannel.allCases.filter(\.isCentered).map(\.rawValue), ["headYaw", "headPitch", "headRoll"])
+        XCTAssertEqual(FaceGestureChannel.allCases.count, 14, "nine face gestures + five body channels (#1264)")
+        XCTAssertEqual(FaceGestureChannel.allCases.filter(\.isCentered).map(\.rawValue), ["headYaw", "headPitch", "headRoll", "shoulderTilt"])
         // The bank: a tiny off-centre wobble stays at rest (0.5); a real turn moves; loss returns to 0.5.
         var bank = FaceGestureBank(deadzone: 0.06)
         for _ in 0..<50 { bank = bank.updated(raw: FaceGestureChannel.allCases.map { $0 == .headYaw ? 0.52 : $0.neutral }, dt: 0.1) }

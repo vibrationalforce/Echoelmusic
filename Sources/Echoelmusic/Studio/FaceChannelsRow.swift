@@ -4,6 +4,8 @@
 //
 //  #1258 — the three face channels as NUMBERS (science-first: the number, not a knob), with
 //  the neutral-hold calibration beside them. Mounted in `bioPanel` under the source chooser.
+//  K6a (#1264) — a second line with the body: both hands' heights, their separation, the
+//  shoulder tilt (0.5 = level), and whether a body is in view. Same leaf, same 10 Hz write.
 //
 //  A LEAF ON PURPOSE (10.76.41/50): `FaceExpressionBioPublisher` writes `smile/browRaise/
 //  jawOpen` at 10 Hz. Reading them here, in a `View` of its own, rebuilds this row and
@@ -30,12 +32,22 @@ struct FaceChannelsRow: View {
                     Spacer(minLength: 8)
                     calibrateControl
                 }
+                HStack(spacing: 12) {
+                    channel("Hand L", face.handHeightL)
+                    channel("Hand R", face.handHeightR)
+                    channel("Apart", face.handDistance)
+                    channel("Tilt", face.shoulderTilt)
+                    Spacer(minLength: 8)
+                    Text(face.bodyPresence > 0.5 ? "Body in view" : "No body in view")
+                        .font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim)
+                        .accessibilityLabel(face.bodyPresence > 0.5 ? "Body in view" : "No body in view")
+                }
                 if face.isCalibrating {
                     Text("Hold a still face — three seconds.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 } else if face.isPublishing, !face.isFaceTracked {
                     // #1259 — loss is a STATE, shown as one: the numbers fade to 0.
-                    Text("No face in view — channels fading to 0.")
+                    Text("No face in view — face channels fading to 0.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 } else if let error = face.lastError {
                     Text("Face input stopped: \(error)")

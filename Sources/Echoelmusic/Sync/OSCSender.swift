@@ -513,12 +513,13 @@ public final class OSCSender {
         // not promise order. The header tells the receiver to latch it as state; at ~1 Hz and
         // changing only when the player switches source, a one-tick inversion self-corrects.
         // #1260 (K4) — the face take's twelve gesture channels, ONLY on a `.faceCam` frame
+        // (#1264 K6a: plus the five body channels — `ModSource.gestureChannels` is the list)
         // (provenance is the measurement gate for these channels — `ModSource.isMeasured`).
         // Expression and head pose as CONTROL values, one float each, under their own
         // namespace so a `/bio/*` integrator never sees a channel it did not ask for.
         // `/bio/synthetic` rides along as usual (the batch is non-empty).
         if frame.source == .faceCam {
-            for source in ModSource.faceChannels {
+            for source in ModSource.gestureChannels {
                 msgs.append((Self.gestureAddress(source), [source.rawValue(from: frame)]))
             }
         }

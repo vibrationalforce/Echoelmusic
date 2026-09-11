@@ -85,8 +85,9 @@ public enum FXModCarrier: Codable, Sendable, Equatable, Hashable {
             case .faceBrow:    return "Brow"
             case .faceJaw:     return "Jaw"
             case .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-                 .headYaw, .headPitch, .headRoll, .headDistance:
-                return s.displayName   // #1260 — ONE label per channel, in `ModSource`
+                 .headYaw, .headPitch, .headRoll, .headDistance,
+                 .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence:
+                return s.displayName   // #1260/#1264 — ONE label per channel, in `ModSource`
             }
         }
     }

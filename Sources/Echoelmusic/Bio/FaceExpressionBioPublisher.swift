@@ -39,6 +39,15 @@
 //  camera layer — one owner of the front camera, no second capture session; nothing is
 //  stored unless a renderer wants a frame, and a recorded take never contains one.
 //
+//  K6a (#1264) — the BODY rides the same session: `BodyPoseAnalyzer` (Vision, own serial
+//  queue, drop policy, thermal gate) reads `capturedImage` in the frame delegate and stores
+//  a bag of hand/shoulder values in a second slot; the 10 Hz drain MERGES it with the face
+//  bag, so the five body channels get the bank's three stages (deadzone, EMA, release) from
+//  the same code. Still ONE owner of the front camera. The body is never calibrated
+//  (absolute frame — `FaceGestureChannel.isBody`), and a body bag older than
+//  `bodyStaleSeconds` reads as "no body" so a thermal stop eases the channels to rest.
+//  NEEDS-FOUNDER-VERIFY (#1264): the four device asks are at `BodyPoseAnalyzer`'s header.
+//
 
 import Foundation
 import Observation
@@ -55,14 +64,24 @@ private final class LatestFaceSample: @unchecked Sendable {
     private var coefficients: [String: Float] = [:]
     private var hasFace = false
     private var failure: String?
+    private var storedAt: CFAbsoluteTime = 0
 
     func store(_ c: [String: Float]) {
-        lock.lock(); coefficients = c; hasFace = true; lock.unlock()
+        lock.lock(); coefficients = c; hasFace = true; storedAt = CFAbsoluteTimeGetCurrent(); lock.unlock()
     }
     /// The latest bag, or `nil` while no face has been seen yet.
     func read() -> [String: Float]? {
         lock.lock(); defer { lock.unlock() }
         return hasFace ? coefficients : nil
+    }
+    /// K6a — the latest bag only if it was stored within `maxAge` seconds. The BODY slot is
+    /// filled by Vision passes that STOP under the thermal gate or when nothing is analysed;
+    /// a bag older than the window reads as "no body", so the body channels ease to rest
+    /// instead of freezing on the last pose (prompt: loss is a state, never a freeze).
+    func read(maxAge: Double) -> [String: Float]? {
+        lock.lock(); defer { lock.unlock() }
+        guard hasFace, CFAbsoluteTimeGetCurrent() - storedAt <= maxAge else { return nil }
+        return coefficients
     }
     func clear() {
         lock.lock(); coefficients = [:]; hasFace = false; lock.unlock()
@@ -99,6 +118,13 @@ public final class FaceExpressionBioPublisher {
     /// #1259 — true while ARKit is delivering a face; false once it is gone (the channels
     /// then fade to 0 over ~0.3 s and the publisher falls silent). For the numbers row.
     public private(set) var isFaceTracked = false
+    /// K6a (#1264) — the five body channels for the numbers row (same leaf, same 10 Hz
+    /// drain): wrists' heights, wrist separation, shoulder tilt (0.5 = level), presence.
+    public private(set) var handHeightL: Float = 0
+    public private(set) var handHeightR: Float = 0
+    public private(set) var handDistance: Float = 0
+    public private(set) var shoulderTilt: Float = 0.5
+    public private(set) var bodyPresence: Float = 0
     /// True while a neutral hold is being collected (`calibrate(seconds:)`).
     public private(set) var isCalibrating = false
     /// True when a non-identity calibration is applied (persisted across launches).
@@ -123,6 +149,15 @@ public final class FaceExpressionBioPublisher {
     @ObservationIgnored private var gestures = FaceGestureBank(deadzone: FaceExpressionMapping.defaultDeadzone)
     @ObservationIgnored private var gestureNeutral: [[Float]] = []
     @ObservationIgnored private let latest = LatestFaceSample()
+    /// K6a — the body bag from `BodyPoseAnalyzer` (Vision on the SAME frames), one slot,
+    /// read with an age window so a stalled analysis does not freeze a pose.
+    @ObservationIgnored private let latestBody = LatestFaceSample()
+    #if canImport(ARKit)
+    @ObservationIgnored private var bodyAnalyzer: BodyPoseAnalyzer?
+    #endif
+    /// True once a face OR a body has been seen since the last loss — the loss fade starts
+    /// at the first drain that finds neither (before K6a the face alone decided).
+    @ObservationIgnored private var hadInput = false
     @ObservationIgnored private var lastPublish: CFAbsoluteTime = 0
     @ObservationIgnored private var calibration = FaceExpressionBioPublisher.loadCalibration()
     @ObservationIgnored private var neutralSamples: (smile: [Float], brow: [Float], jaw: [Float]) = ([], [], [])
@@ -133,6 +168,10 @@ public final class FaceExpressionBioPublisher {
     /// Hard cap on the loss fade so a never-settling channel cannot keep a dead source
     /// publishing: 3 × the loss time constant is >95 % gone by the 0.1 s constant.
     nonisolated static let lossFadeCapSeconds: Double = 0.6   // read by a guard off-actor (#1255b)
+    /// K6a — a body bag older than this is "no body" (see `LatestFaceSample.read(maxAge:)`).
+    /// Vision runs at ~15 passes/s; one second is ~15 missed passes, i.e. the analysis has
+    /// stopped (thermal gate, backgrounding), not a dropped frame.
+    nonisolated static let bodyStaleSeconds: Double = 1.0
 
     /// The production mapping: deadzone ON. `stop()` resets to this, never to a bare `init`.
     private static func freshMapping() -> FaceExpressionMapping {
@@ -186,7 +225,10 @@ public final class FaceExpressionBioPublisher {
         guard !isPublishing, Self.isSupported else { return }
         lastError = nil
         #if canImport(ARKit)
-        let proxy = FaceDelegateProxy(latest: latest)
+        let bodySlot = latestBody
+        let body = BodyPoseAnalyzer(sink: { bag in bodySlot.store(bag) })
+        bodyAnalyzer = body
+        let proxy = FaceDelegateProxy(latest: latest, body: body)
         delegateProxy = proxy
         arSession.delegate = proxy
         let config = ARFaceTrackingConfiguration()
@@ -206,16 +248,29 @@ public final class FaceExpressionBioPublisher {
         arSession.pause()
         arSession.delegate = nil
         delegateProxy = nil
+        bodyAnalyzer = nil
         #endif
         latest.clear()
+        latestBody.clear()
         CameraFrameSlot.shared.clear()   // K5 — no stale camera frame survives a stop
         mapping = Self.freshMapping()
         gestures = FaceGestureBank(deadzone: FaceExpressionMapping.defaultDeadzone)
         isCalibrating = false
         isFaceTracked = false
         faceLostAt = nil
+        hadInput = false
         smile = 0; browRaise = 0; jawOpen = 0
+        syncBodyNumbers()
         isPublishing = false
+    }
+
+    /// The five body observables from the bank — one place, called wherever the bank moves.
+    private func syncBodyNumbers() {
+        handHeightL = gestures[.handHeightL]
+        handHeightR = gestures[.handHeightR]
+        handDistance = gestures[.handDistance]
+        shoulderTilt = gestures[.shoulderTilt]
+        bodyPresence = gestures[.bodyPresence]
     }
 
     #if canImport(ARKit)
@@ -240,33 +295,47 @@ public final class FaceExpressionBioPublisher {
         }
         let now = CFAbsoluteTimeGetCurrent()
         let dt = Swift.max(0, now - lastPublish)
-        guard let bag = latest.read() else {
+        // K6a — two slots feed one drain: the face bag (ARKit anchors) and the body bag
+        // (Vision on the same frames, aged out after `bodyStaleSeconds`). Either alone keeps
+        // the take alive; the channels of the absent half ease to rest through the ordinary
+        // update, because their keys are simply missing from the merged bag.
+        let faceBag = latest.read()
+        let bodyBag = latestBody.read(maxAge: Self.bodyStaleSeconds)
+        guard faceBag != nil || bodyBag != nil else {
             // #1259 — face gone: fade, do not snap, do not freeze. Publish the fading
             // channels for up to `lossFadeCapSeconds`, then stop publishing (a source that
             // measures nothing says nothing — the consumers hold or read neutral by their
             // own law, and `usableBio()` ages the last frame out after the freshness window).
-            if isFaceTracked { isFaceTracked = false; faceLostAt = now }
+            isFaceTracked = false
+            if hadInput { hadInput = false; faceLostAt = now }
             guard let lostAt = faceLostAt else { return }
             if (mapping.isSettled && gestures.isSettled) || now - lostAt > Self.lossFadeCapSeconds {
                 faceLostAt = nil
                 mapping = mapping.released(dt: 10)   // exact 0, hysteresis released
                 gestures = gestures.released(dt: 10)
                 smile = 0; browRaise = 0; jawOpen = 0
+                syncBodyNumbers()
                 return
             }
             mapping = mapping.released(dt: dt)
             gestures = gestures.released(dt: dt)
             lastPublish = now
             smile = mapping.smile; browRaise = mapping.browRaise; jawOpen = mapping.jawOpen
+            syncBodyNumbers()
             publishFrame(bus: bus, at: now)
             return
         }
         faceLostAt = nil
-        isFaceTracked = true
+        hadInput = true
+        isFaceTracked = faceBag != nil
         lastPublish = now
+        var bag = faceBag ?? [:]
+        if let body = bodyBag { bag.merge(body) { _, new in new } }
         let raw = FaceExpressionMapping.rawChannels(from: bag)
         let rawGestures = FaceGestureChannel.rawValues(from: bag)
-        if isCalibrating {
+        // The neutral hold collects FACE samples only: without a face there is nothing to
+        // centre, and the body channels are never calibrated (`FaceGestureChannel.isBody`).
+        if isCalibrating, faceBag != nil {
             neutralSamples.smile.append(raw.smile)
             neutralSamples.brow.append(raw.browRaise)
             neutralSamples.jaw.append(raw.jawOpen)
@@ -277,7 +346,7 @@ public final class FaceExpressionBioPublisher {
                                                           jawOpen: neutralSamples.jaw)
                 // #1260 — the bank's baselines from the same hold (mean per channel).
                 var baselines: [String: Float] = [:]
-                for (i, ch) in FaceGestureChannel.allCases.enumerated() {
+                for (i, ch) in FaceGestureChannel.allCases.enumerated() where !ch.isBody {
                     let xs = gestureNeutral.compactMap { i < $0.count && $0[i].isFinite ? $0[i] : nil }
                     if !xs.isEmpty { baselines[ch.rawValue] = xs.reduce(0, +) / Float(xs.count) }
                 }
@@ -300,6 +369,7 @@ public final class FaceExpressionBioPublisher {
         smile = mapping.smile
         browRaise = mapping.browRaise
         jawOpen = mapping.jawOpen
+        syncBodyNumbers()
         publishFrame(bus: bus, at: now)
     }
 
@@ -325,7 +395,12 @@ public final class FaceExpressionBioPublisher {
             headYaw: gestures[.headYaw],
             headPitch: gestures[.headPitch],
             headRoll: gestures[.headRoll],
-            headDistance: gestures[.headDistance]
+            headDistance: gestures[.headDistance],
+            handHeightL: gestures[.handHeightL],
+            handHeightR: gestures[.handHeightR],
+            handDistance: gestures[.handDistance],
+            shoulderTilt: gestures[.shoulderTilt],
+            bodyPresence: gestures[.bodyPresence]
         ))
     }
     #endif
@@ -337,7 +412,13 @@ public final class FaceExpressionBioPublisher {
 /// delegate queue is irrelevant — no per-frame actor hop (the rPPG lesson).
 private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
     private let latest: LatestFaceSample
-    init(latest: LatestFaceSample) { self.latest = latest }
+    /// K6a — hands and shoulders from the SAME frames (Vision on `capturedImage`, own queue,
+    /// drop policy inside). `nil` only in a build without Vision.
+    private let body: BodyPoseAnalyzer?
+    init(latest: LatestFaceSample, body: BodyPoseAnalyzer?) {
+        self.latest = latest
+        self.body = body
+    }
 
     func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
         for anchor in anchors {
@@ -374,6 +455,9 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
     /// frame. The `ARFrame` itself is NOT retained (ARKit stalls its pool on that); only the
     /// pixel buffer is, one slot deep, latest wins — that IS the drop strategy.
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        // K6a — the body pass FIRST, unconditionally: it is the instrument input, the texture
+        // layer below is the picture. `analyze` returns at once (stride, drop, thermal gate).
+        body?.analyze(frame.capturedImage)
         let wanted = CameraFrameSlot.shared.wantedViewports()
         guard !wanted.isEmpty else { return }
         var transforms: [UUID: CGAffineTransform] = [:]
@@ -403,6 +487,8 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
     /// A phone call or a backgrounding: the frames stop, and so must the stale bag.
     func sessionWasInterrupted(_ session: ARSession) {
         latest.clear()
+        // The body slot ages out by itself (`bodyStaleSeconds`) — no clear needed here, and
+        // the analyzer holds no frame between passes.
         CameraFrameSlot.shared.clear()   // K5 — the last image must not stay on the field
     }
 }
