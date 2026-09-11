@@ -222,6 +222,20 @@ struct EchoelStudioView: View {
     // The single live-state flag: biofeedback running or not.
     @State private var running = false
 
+    /// #1246 — "Body without sound" (founder 2026-09-11: *"Es wäre toll, wenn sich das
+    /// Biofeedback auch mit den visuals verbinden lässt ohne das man Sound anhaben muss"*).
+    /// The renderer never needed sound: `MetalBioView` reads no transport, `BioVisualParams`
+    /// is Foundation-pure, and no bio publisher touches `AudioEngine`. What was missing was a
+    /// START PATH — `startBioSource()` was reachable only through `startBiofeedback()`, which
+    /// composes and starts the transport first. This flag arms the SENSOR alone.
+    ///
+    /// Session-local, like `isInputMonitoring`: a camera or strap comes up by a gesture, never
+    /// at launch from a persisted flag. `running` (the instrument) and `bodyOnly` are never
+    /// both true — Play while body-only is on re-uses the already-running source (every
+    /// publisher's `start` is idempotent) and Stop tears both down (`stopEverything`).
+    @State private var bodyOnly = false
+    @State private var bodyOnlyTask: Task<Void, Never>?
+
     /// Which bio input the chooser selected (founder 2026-07-15; pill long-press or,
     /// since #616, the bioPanel "Bio source" row). Camera by default; `startBioSource`
     /// brings up whichever is set, `selectBioSource` switches it live. Persisted so the
@@ -3360,6 +3374,12 @@ struct EchoelStudioView: View {
             // switch. A LEAF struct for the same 10.76.41/50 reason as the two rows
             // above it: it reads `bus.usableBio()` (~1 Hz) for its disabled state.
             AutoModeRow()
+
+            // #1246 — the body-only door, beside the other body-driven switches. Reads only
+            // `running`/`bodyOnly` (cold `@State`, flipped by a tap) — no bus read, so the
+            // panel's `.menu` Pickers stay still (10.76.41/50).
+            BodyOnlyRow(isOn: Binding(get: { bodyOnly }, set: { setBodyOnly($0) }),
+                        instrumentRunning: running)
 
             Button {
                 showRouting = true
@@ -9446,6 +9466,8 @@ struct EchoelStudioView: View {
         lastGenBody = nil                // next Start re-captures a fresh body baseline (evolve hold)
         startTask?.cancel(); startTask = nil
         sourceSwitchTask?.cancel(); sourceSwitchTask = nil   // no source hot-swap after Stop
+        bodyOnlyTask?.cancel(); bodyOnlyTask = nil
+        bodyOnly = false                 // #1246: Stop ends the silent body take too (the toggle must not lie)
         evolveTask?.cancel(); evolveTask = nil
         regenTask?.cancel(); regenTask = nil
         lockSnapTask?.cancel(); lockSnapTask = nil
@@ -9598,6 +9620,38 @@ struct EchoelStudioView: View {
         demoSource.stop()
     }
 
+    /// #1246 — arm or release the bio SENSOR without the instrument: no `generate`, no
+    /// transport, no `startEvolving`. The picture (floating window / external stage) follows
+    /// the body from the first frame; the HealthKit ask fires on the same notification the
+    /// sounding Start posts, so the deferred permission sequence stays one path.
+    ///
+    /// Refused while the instrument runs — the body is already in, and a second owner of the
+    /// same publisher is the BLE-3 class of bug (two lifecycles on one strap).
+    /// NEEDS-FOUNDER-VERIFY: Bio-Panel → „Body without sound" AN, Finger auf die Kamera, Visual-
+    /// Fenster öffnen — das Bild muss mit dem Puls atmen, ohne dass ein Ton erklingt; danach
+    /// Play drücken → Musik startet, die Kamera läuft weiter (kein Neustart der Taschenlampe);
+    /// Stop → Kamera aus UND Schalter aus.
+    private func setBodyOnly(_ on: Bool) {
+        if on {
+            guard !running, !bodyOnly else { return }
+            bodyOnly = true
+            instrumentHintSeen = true
+            EchoelCrashLog.breadcrumb("body-only: starting bio source without sound")
+            bodyOnlyTask?.cancel()
+            bodyOnlyTask = Task { @MainActor in
+                await startBioSource()
+                guard bodyOnly, !Task.isCancelled else { return }
+                NotificationCenter.default.post(name: .echoelBioSourceStarted, object: nil)
+            }
+        } else {
+            guard bodyOnly else { return }
+            bodyOnlyTask?.cancel(); bodyOnlyTask = nil
+            bodyOnly = false
+            if !running { stopBioSource() }
+            EchoelCrashLog.breadcrumb("body-only: bio source released")
+        }
+    }
+
     /// Switch the live BIO INPUT source from either chooser surface (founder 2026-07-15:
     /// "camera light · Search for Bluetooth Device · Simulation"): the pill's long-press
     /// menu posts `.echoelSelectBioSource` into the receiver on `menuBar`; `bioPanel`'s
@@ -9636,6 +9690,16 @@ struct EchoelStudioView: View {
                 guard running, !Task.isCancelled else { return }
                 stopBioSource()                   // now safe — nothing is mid-start
                 await startBioSource()            // bring up the newly-selected one
+            }
+        } else if bodyOnly {
+            // #1246: a silent body take swaps its sensor the way the sounding one does —
+            // drain the in-flight start first, then stop-all and bring up the new source.
+            let priorStart = bodyOnlyTask
+            bodyOnlyTask = Task { @MainActor in
+                _ = await priorStart?.value
+                guard bodyOnly, !Task.isCancelled else { return }
+                stopBioSource()
+                await startBioSource()
             }
         } else {
             startBiofeedback()                    // idle → activate with the chosen source
@@ -11943,6 +12007,40 @@ private struct AutoModeRow: View {
             // Auto mode deliberately steers nothing, and a caption promising
             // unconditional steering would be the Weather-"nicht bemerkbar" class.
             Text(BioPanelRowCopy.autoModeCaption(for: frame))
+                .font(EchoelTheme.font(10))
+                .foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// #1246 — "Body without sound": the picture follows the body while the instrument is silent.
+/// A leaf like its siblings, but a COLD one: it reads two `Bool`s the host passes (both flip
+/// on a tap, never on a frame), so it observes nothing hot and needs no bus.
+///
+/// Disabled while the instrument runs: then the body is already in the picture, and a second
+/// switch for the same sensor would be a control that lies (#485 class).
+private struct BodyOnlyRow: View {
+    @Binding var isOn: Bool
+    let instrumentRunning: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(isOn: $isOn) {
+                Text("Body without sound")
+                    .font(EchoelTheme.font(12, .semibold))
+                    .foregroundStyle(EchoelTheme.text)
+            }
+            .toggleStyle(.switch)
+            .tint(EchoelTheme.accent)
+            .frame(minHeight: 44)
+            .disabled(instrumentRunning)
+            .accessibilityHint(instrumentRunning
+                ? "The instrument is running — your body already drives the picture."
+                : "Start your chosen bio source alone: the picture follows your pulse and breath, nothing sounds.")
+            Text(instrumentRunning
+                 ? "Running — the picture already follows your body."
+                 : "Pulse and breath drive the picture without any sound. Open the visual window to watch; Play adds the music on top.")
                 .font(EchoelTheme.font(10))
                 .foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)

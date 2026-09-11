@@ -1268,7 +1268,21 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // does for `intensity` below. `FaradayDish` turns it into a cone acceleration and
             // compares it with the pitch's own threshold — so a quiet bar is a mirror and a
             // loud bass note a lattice, without any per-look tuning here.
-            dishDriveTarget = min(max(musicLevel + 0.5 * touchE, 0), 1)
+            // #1246 — BODY DRIVE, the silent take's substitute: with no music and no finger the
+            // dish had no drive at all (a mirror, Depth Caustics flat), which is exactly the
+            // picture a "body without sound" session would open on. The breath swell
+            // (0.1–0.3 Hz, an AMPLITUDE that already feeds `breath` below — no new rate, far
+            // under the 3 Hz law) shakes the dish gently instead; it yields the moment music or
+            // a touch supplies more. Gated on the WAVEFORM (`hasMeasuredBreathWaveform`, #1140):
+            // `breathPhaseForSound` returns a frozen 0.5 on HealthKit, which would be a still
+            // drive dressed as a breath. A body with a pulse but no waveform gets a small
+            // constant floor (a surface that is not a mirror); an unmeasured body gets 0, so
+            // nothing moves that the body did not move.
+            let bodyDrive: Float = bio.map {
+                $0.hasMeasuredBreathWaveform ? 0.4 * $0.breathPhaseForSound
+                    : ($0.hasMeasuredHeartRate ? 0.15 : 0)
+            } ?? 0
+            dishDriveTarget = min(max(musicLevel + 0.5 * touchE, bodyDrive), 1)
             update(hr: bio?.heartRateBPM ?? 60,
                    // `coherenceForSound`: the `??` only covers a MISSING frame, so a
                    // present frame that has measured no coherence (HealthKit never
