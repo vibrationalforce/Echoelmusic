@@ -31,6 +31,18 @@
   Tauchfliegen sind die eigentliche Hardware die ich entwickeln will"). Erklärte
   Hardware-Richtung, eigenes Projekt — für die APP weiterhin North Star: kein Code,
   keine Produkt-Copy, kein Roadmap-Platz.
+- **VAPORWAVE PALACE** — der NAME der Vibrations-Installations-Linie (Founder 2026-09-11) und der
+  Dachbegriff, unter dem Liege und Tauchflieger stehen. **Mission, wörtlich: „Ein inklusiver Ansatz
+  um Musik für Menschen mit Einschränkungen erfahrbarer zu machen."** ⚠️ Das ist ZUGÄNGLICHKEIT,
+  nicht Wellness/Therapie — die Unterscheidung ist die rote Linie: Musik über Vibration ERFAHRBAR
+  machen ist erlaubt und stark; „hilft gegen X" ist die FDA-Linie und bleibt verboten.
+  Bestandsaufnahme (Founder-Video 2026-09-11, Frames gelesen): eine gebaute, öffentlich gezeigte
+  Arbeit existiert bereits — flaches Wasserbecken im goldenen Bilderrahmen neben der PA eines
+  Festivals, der Schall zeichnet stehende Wellen in die Oberfläche (gepostet auf @loewe.immerlieb,
+  „Vibrations Installation"). Also: die Installations-Linie ist NICHT hypothetisch, sie läuft —
+  Echoel wäre ihr bio-reaktives Gehirn, nicht ihr Ersatz.
+  In-App-Keim derselben Idee, schon gebaut: `HapticEngine` + die Zeile „Haptic beat (feel)"
+  hinter dem Tempo-Chip — Musik als Berührung, heute ein Schalter, morgen ein Wandler.
 - **Klingende Liege ("Memoryfoam-Wolke")** — die VORGELAGERTE Hardware-Stufe (Founder
   2026-09-11): ergonomische Liege aus Memoryfoam, mit Bass-Shakern bestückt, Wasser als
   schwingendes Element. Direkt anschlussfähig an seine bestehende Praxis (interaktive
