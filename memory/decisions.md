@@ -1550,3 +1550,27 @@ beschränken (#292, `afcf3aa`).
 - **Warum:** Audit `bio-pipeline-6` — die Quelle mit dem geringsten Vertrauen war die einzige ohne Gate; eine Wechselfolge ausgelassener/verdoppelter Schläge passiert die Band, nicht den Malik-Test, und ging ungegated auf OSC und in den Klang. Der Audit-Vorschlag gated zwei Felder; vier, weil der Gurt vier gated und ein halb-gegateter Frame die Inkonsistenz wäre, die Parität verhindern soll.
 - **Alternative verworfen:** rollende Historie fürs Gate (wie #1220 für Kohärenz) — `canStateHRV` ist ein Bruchteil-Test ohne Mindestanzahl, das frische 10-s-Fenster ist dafür richtig; eine Historie hätte einen schlechten Kontakt ~60 s lang nachwirken lassen.
 - **Review:** 2026-10-10 nach Geräteprobe (schlechter Kontakt → „—", Erholung ~10 s; NEEDS-FOUNDER-VERIFY am Gate).
+
+### 2026-09-11 — Audio-Input als SIEBEN türgebundene Scheiben, nicht als Umbau der Monitor-Stufe (#1246–#1252)
+- **Entscheidung:** Der Founder-Ask („Audio Input sauber aufsetzen") wird als Plan S1–S7 gebaut: Body-only-Start (S1), EINE Tür zurück (S2), Eingang → Bild über die vorhandene FFT (S3), Stimm-Ziele in der Modulations-Matrix (S4), Matrix-Fläche in der Routing-Karte (S5), `prepare()`-Hypothese #5 (S6), Harmony in key (S7). Jede Scheibe ein Commit, ein Wächter, ein NEEDS-FOUNDER-VERIFY.
+- **Warum:** Der Monitorpfad selbst ist die SACKGASSE (#858, fünf Geräte-Logs) und bleibt unangetastet; die Tür ist da, damit der Founder den Pfad prüft — bestätigt ist er nicht (`TheMicrophoneHasOneDoorTests` Anspruch 5 hält die CLAIMS-Zeilen gestrichen bis zu einem VERIFIED-Datum).
+- **Alternative verworfen:** zweite Anbindung der Bio-Werte direkt an die private Mic-Kette — die Matrix persistiert, sendet `/echoelmusic/mod/<key>` und hat seit #1250 eine Fläche; eine Parallel-Kopplung wäre #416.
+- **Review:** 2026-10-11 nach Geräteprobe (founder-verify.py-Liste seit `3eef86b`).
+
+### 2026-09-11 — OSC-Steuereingang als Whitelist, Opt-in AUS, OHNE play/stop (#1255)
+- **Entscheidung:** `OSCReceiver` nimmt genau sechs Adressen an (`/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,blackout}`), Sender-Allowlist per IP vor dem ersten Byte, `net.osc.in.enabled` default AUS; `bpm` nur unter BPM-Lock über `TempoSource.remoteControl` (T1/T2). Play/Stop ist NICHT in der Whitelist.
+- **Warum:** Council Schritt 4 wollte den Cue-Rückkanal; `OneStartControlTests` pinnt drei Sitzungs-Start-Pfade per Founder-Entscheidung — ein vierter aus dem Netz ist seine Frage, nicht meine. Abweichung vom Council-Text in LEDGER §U festgehalten.
+- **Alternative verworfen:** generischer OSC-Parameter-Eingang („alles, was OSCSender sendet, auch annehmen") — ein Netz-Sender dürfte damit Bio-Werte fälschen; die Whitelist ist eine STEUER-, keine Daten-Buchse.
+- **Review:** 2026-10-11 (Founder-Antwort zu play/stop; Geräteprobe mit TouchOSC/TouchDesigner).
+
+### 2026-09-11 — MIDI-2.0-Quelle als ZWEITE virtuelle Quelle, default AUS (#1253)
+- **Entscheidung:** `MIDIOutput` baut bei `midi.out.ump2` eine zweite Quelle „Echoelmusic (MIDI 2.0)" (`._2_0`) und spiegelt jede 1.0-Channel-Voice-Nachricht per `UMPEncoder` (MMA-Skalierung) NUR dorthin. Hardware bekommt weiter 1.0.
+- **Warum:** Ultraplan-Zeile 12 / Audit `output-sync-6`: die 2.0-Wortbauer hatten null Aufrufer, jede „MIDI 2.0"-Behauptung musste „INPUT only" sagen. Default AUS, weil eine zweite Quelle in JEDER Host-Geräteliste steht und ein DAW, das beide aufnimmt, jede Note doppelt bekäme.
+- **Alternative verworfen:** die eine Quelle auf `._2_0` umstellen — bricht jeden 1.0-Host, der die Quelle heute liest.
+- **Review:** 2026-10-11 nach Mac-Probe (Logic / MIDI Monitor).
+
+### 2026-09-11 — Store-Kopie verkauft das Rig über dem Fold; Descriptions unter 4000 Zeichen gepinnt (#1256)
+- **Entscheidung:** Keywords auf Kundenwörter, Promo mit den fünf Protokollen, drei Fold-Zeilen (Kamera-Lock · spielbares Bild · Outputs mit MPE-Richtungswort), `colour`→`color`, „Meditativ" raus, Externer-Bildschirm-Bullet. NICHT: en-GB, Titel/Untertitel, Voll-Rewrite (Founder). `deliver` = Founder-Hand.
+- **Warum:** Marketing-Aktion 3 + Audit `docs-claims-4`, Council 2026-09-11; die alten Keywords (`coherence`, `rPPG`, `immersive`) tippt niemand in eine Store-Suche. Apples 4000-Zeichen-Deckel hatte kein Wächter je gezählt (Parent 3998 auf Deutsch) — jetzt Anspruch 8 von `TheStoreFrontLinesSellTheRigTests`.
+- **Alternative verworfen:** en-GB als dritte Lokalisierung — die ASC-Lokalisierung legt der Founder an, und der Critic strich drei der vorgeschlagenen Terme.
+- **Review:** 2026-10-11 (Founder liest die Kopie vor `deliver`).

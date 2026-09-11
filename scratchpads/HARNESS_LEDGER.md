@@ -3683,3 +3683,18 @@ flash-sicherheitskritischen Block, also mit eigener Herleitung und eigenem Wäch
 klären: `hasMeasuredBreath` ist bei der Kamera an `resp.ratePerMinute` gekoppelt und bei
 HealthKit fraglich — ohne gemessenen Atem gibt es keine RSA, und der Term MUSS dann exakt 1,0
 sein (Golden Law: ein Körper ohne Messung bleibt bit-identisch).
+
+## PLAYBOOK #1256 (2026-09-11) — ein Kürz-Skript misst VOR seinen Edits und hat kein `assert` hinter halb geschriebenen Wächtern
+
+PLAYBOOK #1084 exakt wieder getroffen: Fold + ein Bullet trieben de-DE von 3998 auf 4324 Zeichen (en-US 3977 → 4266). Der
+Unterschied zu #1084: das Skript, das kürzte, prüfte am Ende `assert len(en) <= 4000 and len(de) <= 4000` und brach ab —
+NACH den Metadaten-Edits, VOR der Wächter-Kopfkorrektur und dem neuen Anspruch. Ergebnis: ein Wächter auf Platte, dessen
+Kopf „Anspruch 6 grün auf beiden Bäumen" sagte, während Anspruch 6 rot auf dem Parent war; die Transkription fand es, ein
+Commit ohne Transkription hätte es nicht gefunden.
+
+**Regel:** (1) `len()` nach JEDER Ergänzung (wie #1084), und der Deckel ist seit #1256 gepinnt
+(`TheStoreFrontLinesSellTheRigTests` Anspruch 8, 3000 < n ≤ 4000) — der Wächter ersetzt das Playbook nicht, er macht den
+Verstoß rot statt still; (2) ein Skript, das Dateien editiert, endet NIE mit einem `assert` über Bedingungen, die erst
+weitere Edits erfüllen — messen, drucken, dann in einem ZWEITEN Schritt editieren; (3) die Reihenfolge ist Wächter-Kopf
+ZULETZT, nachdem beide Bäume gemessen sind — ein Kopf, der vor der Messung geschrieben wird, ist eine Vorhersage, keine
+Gradierung (§0 nennt genau das Transkription).

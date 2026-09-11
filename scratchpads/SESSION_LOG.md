@@ -29934,3 +29934,58 @@ Conclusion + Artefakt-Zeile gelesen; per #807 keine Aussage über einzelne Tests
 **Sitzungsende.** Founder-Bericht ist im Chat abgeschickt (Kopie `scratchpad/founder_report_2026-09-10.md`, außerhalb des
 Repos). Offene Reminder: keine (der 19:05-Reminder hat gefeuert und ist damit deaktiviert). Offener Rückstand: Ultraplan
 Zeile 12 (Feature), 10/13/15 (Council), 22–25 HOLD, V6 (Founder-Frage Recorder-fps), Council §9 fünf Fragen.
+
+## #1246–#1256b — Audio-Input-Plan S1–S7 und Ultraplan-Rest 12/21b/15/10 (2026-09-11, 06:29–07:45 UTC)
+
+**Founder-Ask 2026-09-11 (wörtlich im Plan `scratchpads/PLAN_AUDIO_INPUT_2026-09-11.md`):** „Bearbeite alles was noch
+offen ist und mache es wirklich fertig vermeide Lücken. … Vorhaben mit dem Audio Input sauber aufzusetzen … per
+microphon … die physikalisch assoziierten visuals … Harmonizer, Granulate Efx, Synthese die Stimme Autotune artig an die
+Stimmung anzupassen … Biofeedback moduliert die Stimmeffekte … Verknüpfung mit der Routing Matrix … Biofeedback mit den
+visuals ohne Sound." Sieben Scheiben, eine pro Commit, jede mit transkribiertem Wächter (§0), jede türgebunden:
+
+- **#1246 `4bdee8d` S1 „Body without sound"** — `setBodyOnly` startet den Sensor ohne generate/Transport; `BodyOnlyRow`
+  im `bioPanel`; `MetalBioView.bodyDrive` (Atem-Amplitude, < 3 Hz) als Floor. Wächter `TheBodyPlaysThePictureWithoutSoundTests`.
+- **#1247 `cfe8364` S2 Master-Tür „Audio input"** — genau EIN Setter für `showInput` (Slot-Reuse, Kette 14/13); Streifen und
+  Banner bleiben türlos; `TheMicrophoneHasNoDoorTests` → `TheMicrophoneHasOneDoorTests`. Sieben BLOCKED-Marken wieder offen
+  (founder-verify 130 → 142).
+- **#1248 `3d86123` S3 Eingang → Bild** — `AudioFeatureExtractor` (Pegel, Bänder, Centroid, Onset) auf DERSELBEN FFT wie der
+  Howl-Detektor; `AudioFeatureChannel` als Lock-Blatt; `MetalBioView` liest einmal pro Frame. Kein neues Uniform (#1119).
+- **#1249 `8a4d64a` S4 vier Stimm-Ziele in der Matrix** — `voice.harmony.mix · granular.mix · granular.pitch · tune.strength`;
+  Harmonizer-Mix pro Sample geglättet (~42 ms). Enable-Flags bewusst keine Ziele.
+- **#1250 `77d41a7` S5 „Body → parameter"** — die Matrix-Fläche in der Routing-Karte (kein neues Sheet); `ModRoute(` hat
+  jetzt zwei Konstruktionsstellen (Decoder + Editor); CLAUDE.md #541-Zeilen nachgeführt.
+- **#1251 `b54d29f` S6 Hypothese #5** — `masterEngine.prepare()` zwischen `.playAndRecord`-Claim und Format-Read, eigene
+  Sprosse. #6 bleibt notiert.
+- **#1252 `9c926a8` S7 „Harmony in key"** — `DiatonicHarmony` (Terz + Quinte als Skalengrade über der gesungenen Note);
+  `voiceHarmonyFollowsKey` default AUS; Intervall-Picker derweil disabled.
+
+**Ultraplan-Rest, danach:**
+- **#1253 `a8d17dc` Zeile 12** — zweite virtuelle Quelle „Echoelmusic (MIDI 2.0)" (`._2_0`), `midi.out.ump2` default AUS,
+  Spiegel per `UMPEncoder` nur an die virtuelle Quelle. Wächter `TheMIDI2SourceIsSwitchableTests` (Stripper TRAGEND 2/16).
+- **#1254 `d9f48b1` Zeile 21b** — Export bei 480 PPQ (`ticksPerQuarter = UInt16(Note.ticksPerQuarter)`), `exportTicks` weg,
+  Humanizer EIN Tick-Raum (`.humanized` ±20). Drei Fixtures nachgezogen. Wächter `TheExportKeepsTheNoteResolutionTests`.
+- **#1255 `8d31354` Zeile 15** — `OSCReceiver` (NWListener, Whitelist `/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,
+  blackout}`, Sender-Allowlist, `net.osc.in.enabled` default AUS, `.remoteControl` als fünfter `TempoSource`-Fall). **KEIN
+  play/stop** — Abweichung vom Council-Text, weil `OneStartControlTests` drei Start-Pfade per Founder-Entscheidung pinnt; die
+  Frage geht an den Founder (LEDGER §U). Vier Wächter mitgezogen, `TheOSCControlInputIsAWhitelistTests` neu (Loopback-Claim
+  erst im Job-Log belegbar).
+- **#1256 `c5f89a7` Zeile 10 (Council)** — `fastlane/metadata`: Keywords (Kundenwörter, 93/99 B), Promo (164/170), drei
+  Fold-Zeilen mit Rig-Satz, `colour`→`color`, „Meditativ" raus, Externer-Bildschirm-Bullet (CLAIMS ✅ #206). ⚠️ **Der Fold
+  plus das Bullet trieb die Descriptions auf 4266/4324 Zeichen** — Apples Deckel ist 4000 und der Parent stand bei 3977/3998
+  (ZWEI Zeichen Luft auf Deutsch, PLAYBOOK #1084 exakt wieder getroffen). Satzweise gekürzt (kein Claim gestrichen; jede
+  gestrichene Phrase vorher auf Pins gegrept — „none stored" pinnt nur die Website) auf 3979/3996. Wächter
+  `TheStoreFrontLinesSellTheRigTests`, 8 Ansprüche; Anspruch 8 = 3000 < Zeichen ≤ 4000 (PROPHYLAKTISCH, grün auf beiden
+  Bäumen — er hätte den eigenen Erstentwurf gefangen). Die sieben bestehenden Store-Regeln in Python nachgefahren: 0.
+  ⛔ Erster Lauf des Kürz-Skripts brach mit `assert` ab, BEVOR die Wächter-Kopfkorrektur geschrieben war — der Kopf sagte
+  einen Zyklus lang „Anspruch 6 grün auf beiden", während Anspruch 6 rot auf dem Parent war. Repariert vor dem Commit, aber
+  die Reihenfolge war falsch: erst messen, dann editieren, nie ein `assert` hinter Edits, die noch nicht alle geschrieben sind.
+  NICHT bewegt: en-GB (ASC-Lokalisierung = Founder; Critic strich sequencer/MPE/visualizer), Titel/Untertitel, Voll-Rewrite.
+  `deliver` läuft in keinem Workflow — Metadaten-Upload ist die Hand des Founders.
+- **#1256b `a35bcd2`** — der Wächter-Kopf nannte den Marker in Prosa und erschien als 26. Bitte in
+  `founder-verify.py --since 3eef86b`; umformuliert (NOT-ASKS-Regel).
+
+**Gate-Lesung (Stand 07:45 UTC):** Compile Check #2546–#2548 cancelled (cancel-in-progress, je durch den nächsten Push),
+**#2549 (`d9f48b1`) success, #2550 (`8d31354`) success**, #2551 (`c5f89a7`) queued — Sources identisch mit `8d31354`.
+CI/CD 6013–6016 alle `queued` (macOS-Warteschlange) — die Build-for-Testing-Lesung für die neuen Wächter
+(`TheMIDI2SourceIsSwitchableTests`, `TheExportKeepsTheNoteResolutionTests`, `TheOSCControlInputIsAWhitelistTests`,
+`TheStoreFrontLinesSellTheRigTests`) steht aus.
