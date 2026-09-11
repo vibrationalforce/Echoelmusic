@@ -30115,3 +30115,36 @@ Compile-Zeile; die neuen Wächter-Namen stehen nicht im Fenster — per #445/#80
 der Warteschlange. ⛔ Beide Logs kamen INLINE in den Transkript (das Werkzeug schreibt unter ~4 300 Zeilen keine Datei) —
 §4-Weg nicht möglich, Lesung trotzdem nach dem Verdict-Schema.
 Nicht bewiesen: das Bild am Gerät (Orientierung, Spiegelsinn, Farbe, Füllung, Blend ohne Sprung, Aufnahme ohne Kamera).
+
+## Kamera-Eingang K6a = #1264 `b8b8d0c` (2026-09-11, 10:20–10:40 UTC)
+
+**Scheibe 6 des Prompts („Körper/Hände über Vision") als K6a:** fünf Kanäle (Hand L/R Höhe,
+Hände-Abstand, Schulter-Neigung zentriert, Körper im Bild) aus `VNDetectHumanHandPoseRequest`
+(2 Hände, Chiralität) + `VNDetectHumanBodyPoseRequest` (Schultern, Nacken) auf
+`ARFrame.capturedImage` — DERSELBE Kamera-Besitzer, eigene serielle Queue, Drop-Flag, Stride 4,
+Thermik-Gate ab `.serious`. `Core/BodyPoseMath` (rein) macht aus Gelenken Bag-Keys; ein fehlendes
+Gelenk schreibt KEINEN Key, die Bank lässt den Kanal zur Ruhe. Publisher: zweiter Slot mit ALTER
+(`read(maxAge:)`, `bodyStaleSeconds` = 1 s), Drain merged Face + Body, `hadInput` entscheidet den
+Verlust-Fade, Neutral-Hold sammelt nur mit Gesicht, Body-Kanäle NIE kalibriert (auch nicht aus
+einem persistierten Datensatz — `applyGestures` überspringt `isBody`). `BioSampleFrame` +5,
+`ModSource` +5 (`bodyChannels`, `gestureChannels` = 17; `faceChannels` bleibt 12 für die Presets),
+OSC `/echoelmusic/gesture/<name>` für alle 17. `FaceChannelsRow` zweite Zeile.
+
+Wächter: `TheBodyChannelsRideTheFaceSessionTests` (5 Ansprüche); `TheGestureChannelsReachTheWireTests`
+nachgeführt (22 Produzenten, 17 Draht, 14 Cases, `shoulderTilt` zentriert). Transkription
+`$SP/t1264.py`: Parent `e26c116` 0/5 rot, Baum 9/9 grün. ⛔ Der erste Lauf meldete 32 ModSource-Cases:
+der Enum-Parser las Fortsetzungszeilen eines `switch` (`case .a, .b,` ohne `:`) als Deklarationen —
+auf Einrück-Tiefe 4 begrenzt (PLAYBOOK #1260, zweiter Beleg). ⛔ `syncBodyNumbers()` stand zuerst
+innerhalb `#if canImport(ARKit)` und wird aus `stop()` außerhalb gerufen — vor dem Commit verschoben.
+
+**Scope-Korrektur:** „motionEnergy-Produzent" stand im Task-Titel K6 und steht NICHT im Prompt
+(`grep -i motion` auf dem Prompt: 0 Treffer). Gestrichen — es wäre ein Ripple über drei Wächter,
+die Website-Tabelle und die CLAUDE.md-Identitätszeile („motion" gestrichen, 114 B Kopfraum) für
+eine Fähigkeit, die niemand verlangt hat. Founder-Frage, keine Scheibe.
+
+**Gates (gelesen 10:33 UTC):** Compile #2560 (`a507c72`, K5b) SUCCESS — deckt K5a mit ab (#2559
+cancelled durch K5b-Push); #2561 (`b8b8d0c`, K6a) queued. CI/CD 6022 (`4f87ba3`, K4a): Build for
+Testing SUCCESS 10:09:29–10:12:50, Run Tests `TEST EXECUTE FAILED` — im WINDOW (tail-200) nur
+`passed`, kein Testname rot, #396-Klasse; 6021/6023/6024 in_progress, 6025/6026 queued. Build for
+Testing für K3/K4b/K5a/K5b/K6a: UNGELESEN (PLAYBOOK #1255b gilt vor jedem Deploy).
+

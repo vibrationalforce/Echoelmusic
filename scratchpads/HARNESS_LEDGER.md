@@ -3733,3 +3733,11 @@ den `enum ModSource { … }`-Block (Klammerzählung), dann 18 Fälle = 17 Produz
 zuerst eine Frage an das SKRIPT, dann an den Code — aber es wird nie „grün geglaubt": das Skript wird repariert und neu
 gefahren, beide Bäume. Verwandt: PLAYBOOK #897/#898 (ein `prefix(N)`-Fenster ist ein latentes Rot) — dieselbe Klasse,
 Fenster statt Menge.
+
+**Zweiter Beleg (#1264, 2026-09-11):** „im ENUM" reicht nicht — innerhalb des Enum-Rumpfs liegen
+`switch`-Blöcke, und eine Fortsetzungszeile `case .a, .b,` (ohne `:`/`return`) sieht wie eine
+Deklaration aus: 32 statt 23 `ModSource`-Cases. Deklarationen stehen auf EINER Einrück-Tiefe
+(4 Leerzeichen); alles Tiefere ist ein `switch`. Regel: `line.startswith('    case ') and not
+line.startswith('     ')`. Die Über-Zählung fiel nur auf, weil ein Wächter die Zahl 22 pinnt —
+ohne Pin wäre „32 Produzenten" als Messung durchgegangen.
+
