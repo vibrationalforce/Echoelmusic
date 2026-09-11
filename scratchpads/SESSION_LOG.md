@@ -30213,3 +30213,12 @@ eine MEDIUM-Wächterlücke — alle drei in EINER Scheibe (#1245-Form):
 diesen Push ersetzt — der Compile-Nachweis für K6a–K7b+#1268 ist der Lauf auf `7dcf618`.
 **Gates (gelesen 10:58 UTC):** 6024 (`5bbec8d`, K5a) Build for Testing SUCCESS 10:25:30–10:31:09 ·
 6025 (`a507c72`, K5b) SUCCESS 10:35:17–10:39:50 — Run Tests beide noch in_progress. 6026–6029 queued.
+
+**Gates (gelesen 11:10 UTC):** **Xcode Compile Check #2565 auf `7dcf618` = SUCCESS** (10:54–11:03) — der eine
+Compile-Nachweis für K6a `b8b8d0c` · K7 `e8d003c` · K6c `7c8c0e8` · K7b `f7b594f` · #1268 `7dcf618` (Sources-Diff
+zusammen; #2561–#2564 wurden je vom Folge-Push abgebrochen, #2564 stand 10 min nur `pending`). CI/CD 6026
+(`b8b8d0c`, K6a) Build for Testing SUCCESS 10:50:24–10:55:05 · 6027 (`e8d003c`, K7) SUCCESS 10:54:23–10:59:04 —
+Run Tests beide in_progress. 6028/6029/6030 (K6c/K7b/#1268) um 11:10 noch `queued` (macOS-Runner-Stau) —
+Wecker 11:31 UTC liest sie. Damit: JEDE Sources-Scheibe des Kamera-Prompts hat Compile-Nachweis, K1–K7 haben
+Build-for-Testing-Nachweis (die Wächter-Dateien kompilieren); ungelesen sind nur die drei Testläufe der letzten
+drei Scheiben. Gerät: nichts — 14 neue NEEDS-FOUNDER-VERIFY (`python3 scripts/founder-verify.py --since 1438077`).
