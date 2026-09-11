@@ -30184,3 +30184,32 @@ WINDOW nur `passed`, kein Testname rot (#396-Klasse). Compile #2561 (K6a) cancel
 VNDetectFaceLandmarks) — bewusst NICHT gebaut, der Prompt verlangt erst die Gerätesondierung;
 motionEnergy — nicht im Prompt, gestrichen; FEATURE_MATRIX-Zeile — erst wenn ein Build läuft.
 
+
+## Kamera-Eingang Review-Fixes = #1268 `7dcf618` (2026-09-11, 10:48–11:00 UTC)
+
+Zwei Review-Agenten über `git diff e26c116..f7b594f -- Sources/` (Swift-6-Audit, UI-State-Review),
+beide mit der Read-only-Klausel. Befund: **null Compile-Risiken**, ein LOW-Hedge, ein LOW-Kostenpunkt,
+eine MEDIUM-Wächterlücke — alle drei in EINER Scheibe (#1245-Form):
+
+- **Freeze-Wächter kannte drei Erzeuger, der vierte war seit K5b im Host.** `FaceExpressionBioPublisher`
+  schreibt am 10-Hz-Drain neun Readouts (gemessen per Derivation: `bodyPresence browRaise handDistance
+  handHeightL handHeightR isFaceTracked jawOpen shoulderTilt smile`), und `cameraLayerRow` liest
+  `faceExpression.isPublishing`/`.thermalRelief` (kalt, korrekt) — ein `.smile` daneben wäre GRÜN gewesen.
+  Abschnitt 7 in `TheMenuHostReadsNoHotStateTests`: Hot-Set aus `tick(bus:)` + `syncBodyNumbers()`
+  abgeleitet, minus drei benannte Ereignis-Schreiber (`lastError`, `isCalibrating`, `hasCalibration`);
+  `thermalRelief` bleibt kalt, weil sein Write change-gated ist (`if relief != thermalRelief { … }` —
+  für den Parser unsichtbar; wird er unbedingt, geht der Host-Scan zu Recht rot). Scans: Host
+  (Receiver abgeleitet), `EchoelmusicApp` (Anker `var faceExpression = FaceExpressionBioPublisher`);
+  Gegengewichte Host-`isPublishing`, Leaf liest ≥4; Premise-Tabelle der mittleren Vorfahren +1.
+  ⛔ Der Wächter darf `faceExpression.` im Host NICHT pauschal verbieten — `TheCutoutIsAMatteNotAGuessTests`
+  verlangt `thermalRelief` dort POSITIV (#364).
+- `availableTrackingRates`: `static var` → `static let` (das Leaf fragte ARKit ~20×/s nach einer Gerätetatsache).
+- `BodyPoseAnalyzer`: `import ImageIO` (`CGImagePropertyOrientation`; Vision re-exportiert es, der Code
+  hängt nicht mehr daran).
+- CLAUDE.md: „VIER heiße Erzeuger" → „FÜNF (#1268)", „DREI Mengen" → „VIER" — 149 912 B.
+
+`$SP/t1268.py`: 9/9 grün auf 09ecd38 UND Baum (eine LÜCKE auf sauberem Baum geschlossen); Mutant
+`isPublishing`→`smile` im Host: rot. Compile #2564 (`f7b594f`) stand 15 min in `pending` und ist durch
+diesen Push ersetzt — der Compile-Nachweis für K6a–K7b+#1268 ist der Lauf auf `7dcf618`.
+**Gates (gelesen 10:58 UTC):** 6024 (`5bbec8d`, K5a) Build for Testing SUCCESS 10:25:30–10:31:09 ·
+6025 (`a507c72`, K5b) SUCCESS 10:35:17–10:39:50 — Run Tests beide noch in_progress. 6026–6029 queued.
