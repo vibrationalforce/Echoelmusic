@@ -12,14 +12,15 @@
 //     expression (see MPEExpression): each voice gets its own continuous
 //     Slide/Press/Glide without the 15-channel MPE workaround.
 //
-// Wiring a MIDI-2.0 CoreMIDI source (MIDISourceCreateWithProtocol ._2_0) that emits
-// these is a later, iOS-gated slice; this core just guarantees the bytes are right.
-// ⚠️ STATUS (#1229, audit 2026-09-10 `output-sync-6`): the MIDI 2.0 builders below are
-// TEST-ONLY until that source exists: their one `Sources/` consumer is
-// `MPEExpression.midi2NoteOnMessages`, and `git grep -n "midi2NoteOnMessages(" -- Sources`
-// finds only its definition. `MIDIOutput` sends MIDI 1.0 protocol (MPE out is real, #548/#713).
-// Copy that says "MIDI 2.0" must say "MIDI 2.0-ready INPUT" (the parser handles both
-// packings) — the output half is a claim nothing ships yet.
+// ⭐ THAT SOURCE EXISTS SINCE #1253 (ultraplan row 12): `MIDIOutput.createUMP2Source` builds
+// "Echoelmusic (MIDI 2.0)" with `MIDISourceCreateWithProtocol(… ._2_0 …)` behind the Routing
+// switch "MIDI 2.0 source" (default OFF), and `sendMIDI2Mirror` widens every 1.0 channel-voice
+// message through the builders below (`note2On/Off`, `controlChange2`, `channelPressure2`,
+// `pitchBend2`, the `scaleUp` conveniences). ⛔ #1229's status line ("TEST-ONLY until that
+// source exists") is therefore retired here, in the file that carried it. Still test-only:
+// `MPEExpression.midi2NoteOnMessages` (per-note bend/controller — a 2.0-native MPE would use
+// it; the mirror sends the member-channel form the 1.0 path already produces). Copy may say
+// "MIDI 2.0 source out, behind a switch, device-unverified" — never "native MIDI 2.0 MPE".
 // Reference: MMA "Universal MIDI Packet (UMP) Format and MIDI 2.0 Protocol" (M2-104-UM).
 
 import Foundation

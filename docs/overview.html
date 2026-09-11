@@ -160,7 +160,7 @@
                     <div class="engine-item"><h4>EchoelSynth</h4><p>Bio-reactive synthesis — a DDSP harmonic-plus-noise voice, a polyphonic pad/lead and a dedicated sub-bass, driven by your heartbeat, breath and coherence.</p></div>
                     <div class="engine-item"><h4>EchoelFX</h4><p>EQ, dynamics, reverb, delay, modulation, drive, mastering. Modelled analog emulations are on the roadmap.</p></div>
                     <div class="engine-item"><h4>EchoelGen</h4><p>Generative composition — harmonic, melodic &amp; rhythmic loops in any key and BPM, exported to .wav or as a MIDI file (.mid).</p></div>
-                    <div class="engine-item"><h4>EchoelMIDI</h4><p>MIDI 2.0-ready input (UMP) — notes, pitch bend, CC&nbsp;74; virtual MIDI 1.0 out behind a routing switch, with MPE out over it behind two more. Planned: MPE input zones, audio-to-MIDI.</p></div>
+                    <div class="engine-item"><h4>EchoelMIDI</h4><p>MIDI 2.0-ready input (UMP) — notes, pitch bend, CC&nbsp;74; virtual MIDI 1.0 out behind a routing switch, with MPE out over it behind two more, and a second MIDI 2.0 source behind a third. Planned: MPE input zones, audio-to-MIDI.</p></div>
                     <div class="engine-item"><h4>EchoelBio</h4><p>HRV, heart rate, breath, coherence — HealthKit, Bluetooth straps (Polar H10) &amp; camera rPPG with a live control display.</p></div>
                     <div class="engine-item"><h4>EchoelNet</h4><p>OSC (EchoelSync) and ADM-OSC immersive object output, live today.</p></div>
                     <div class="engine-item"><h4>EchoelMix <span class="tag">Cut</span></h4><p>A console and multi-track recorder would make this a workstation. LUFS-aware mastering on export stays; the rest belongs in your DAW.</p></div>
@@ -225,7 +225,7 @@
                 <h2>Technical Specs</h2>
                 <div class="data-row"><div class="k">Audio latency</div><div class="v">Real-time, low-latency engine (target &lt;10ms).</div></div>
                 <div class="data-row"><div class="k">Bio loop</div><div class="v">The engine polls the bio snapshot at 10&nbsp;Hz. What the sensors deliver is slower and sets the real pace: about one new frame per second (a wrist heart-rate reading is 4–5&nbsp;s behind by nature). Between frames the audio path glides, so the sound moves smoothly rather than in steps.</div></div>
-                <div class="data-row"><div class="k">MIDI</div><div class="v">MIDI 2.0-ready input (UMP) — notes, pitch bend, CC&nbsp;74; MIDI&nbsp;1.0 out via virtual source once a MIDI route is enabled.</div></div>
+                <div class="data-row"><div class="k">MIDI</div><div class="v">MIDI 2.0-ready input (UMP) — notes, pitch bend, CC&nbsp;74; MIDI&nbsp;1.0 out via virtual source once a MIDI route is enabled; a second MIDI&nbsp;2.0 source (16-bit velocity, 32-bit bend/CC) behind its own switch.</div></div>
                 <div class="data-row"><div class="k">Networking</div><div class="v">OSC, ADM-OSC, Art-Net &amp; sACN, live today. Ableton Link planned (target &lt;5ms on LAN).</div></div>
                 <div class="data-row"><div class="k">Visuals</div><div class="v">Metal GPU bio-renderer (heart rate to pulse, sounding tone to hue, breath to spread, coherence to sharpness); flash rate held under 3&nbsp;Hz.</div></div>
                 <div class="data-row"><div class="k">AI <span class="tag">Planned</span></div><div class="v">On-device CoreML, Neural Engine accelerated.</div></div>

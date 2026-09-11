@@ -459,6 +459,18 @@ public enum StudioDefaultKeys {
     /// dependency is visible instead of mysterious.
     public static let midiOutExpression = StudioDefault(key: "midi.out.expression", value: false)
 
+    /// **A second virtual source in the MIDI 2.0 protocol (#1253, ultraplan row 12).** Off by
+    /// default because it is USER-VISIBLE in every host's device list: "Echoelmusic (MIDI 2.0)"
+    /// appears beside the MIDI 1.0 "Echoelmusic" source, and a DAW that records both gets every
+    /// note twice. On, the same notes/CC/bend/pressure the 1.0 source carries are mirrored as
+    /// two-word MIDI 2.0 messages (16-bit velocity, 32-bit bend/CC) — the `UMPEncoder` builders
+    /// that were test-only until this switch existed. Hardware destinations still receive the
+    /// 1.0 stream only; the 2.0 source is for hosts that speak it.
+    /// NEEDS-FOUNDER-VERIFY: Routing → MIDI out on → "MIDI 2.0 source" on; on a Mac (Logic /
+    /// MIDI Monitor) the device list shows "Echoelmusic (MIDI 2.0)" beside "Echoelmusic", a
+    /// recorded note carries velocity 0…65535 not 0…127, and switching OFF removes the entry.
+    public static let midiOutUMP2 = StudioDefault(key: "midi.out.ump2", value: false)
+
     // MARK: music.*
 
     /// How pitch classes are SPELLED — `NoteNaming`'s raw value (#232 E, founder 2026-07-29

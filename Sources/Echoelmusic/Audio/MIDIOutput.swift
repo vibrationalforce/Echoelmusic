@@ -62,6 +62,19 @@ public final class MIDIOutput {
     /// off, output is byte-for-byte the previous note-on/off stream.
     public var expressionEnabled = false
 
+    /// #1253 — mirror every channel-voice message to a SECOND virtual source created with the
+    /// MIDI 2.0 protocol (`MIDISourceCreateWithProtocol(… ._2_0 …)`). Created when the switch
+    /// turns on while the port is open, disposed when it turns off; built at port-open when
+    /// the persisted key is on. Off by default (`StudioDefaultKeys.midiOutUMP2` says why).
+    public var ump2Enabled = false {
+        didSet {
+            guard ump2Enabled != oldValue, isReady else { return }
+            #if canImport(CoreMIDI)
+            if ump2Enabled { createUMP2Source() } else { disposeUMP2Source() }
+            #endif
+        }
+    }
+
     /// Number of MPE member channels (lower zone): MIDI channels 2…16.
     public static let mpeMemberChannels = 15
 
@@ -117,11 +130,14 @@ public final class MIDIOutput {
             ?? StudioDefaultKeys.midiOutMPE.value
         let expression = store.object(forKey: StudioDefaultKeys.midiOutExpression.key) as? Bool
             ?? StudioDefaultKeys.midiOutExpression.value
-        let moved = (mpeEnabled != mpe) || (expressionEnabled != expression)
+        let ump2 = store.object(forKey: StudioDefaultKeys.midiOutUMP2.key) as? Bool
+            ?? StudioDefaultKeys.midiOutUMP2.value
+        let moved = (mpeEnabled != mpe) || (expressionEnabled != expression) || (ump2Enabled != ump2)
         if mpeEnabled != mpe { mpeEnabled = mpe }
         if expressionEnabled != expression { expressionEnabled = expression }
+        if ump2Enabled != ump2 { ump2Enabled = ump2 }
         // Only an actual edge, so a no-op re-apply on every enable leaves no line.
-        if moved { logOutcome("prefs mpe=\(mpe) expression=\(expression)") }
+        if moved { logOutcome("prefs mpe=\(mpe) expression=\(expression) midi2=\(ump2)") }
     }
 
     public private(set) var isReady = false
@@ -144,6 +160,8 @@ public final class MIDIOutput {
     @ObservationIgnored private var client: MIDIClientRef = 0
     @ObservationIgnored private var outputPort: MIDIPortRef = 0
     @ObservationIgnored private var virtualSource: MIDIEndpointRef = 0
+    /// #1253 — the MIDI 2.0-protocol twin of `virtualSource`; 0 while the switch is off.
+    @ObservationIgnored private var virtualSource2: MIDIEndpointRef = 0
     #endif
 
     /// Active pitch → MIDI channel (0-based), so each note's off goes out on the
@@ -222,7 +240,10 @@ public final class MIDIOutput {
         }
         outputPort = newPort
         // The virtual source: this is what hosts see as "Echoelmusic" to record from.
-        // MIDI 1.0 protocol → we send classic MIDIPacketList bytes via MIDIReceived.
+        // MIDI 1.0 protocol; the words go out as a `._1_0` MIDIEventList via
+        // MIDIReceivedEventList (⛔ "classic MIDIPacketList bytes via MIDIReceived" stood
+        // here and described a call this file does not make — #1253). A second source in
+        // the MIDI 2.0 protocol is built below when `ump2Enabled` is on.
         // (MIDISourceCreate is deprecated since iOS 14; the protocol variant is the
         // supported call and avoids a -warnings-as-errors build failure.)
         var newSource: MIDIEndpointRef = 0
@@ -237,13 +258,15 @@ public final class MIDIOutput {
         // launches instead of treating each run as a new device.
         _ = MIDIObjectSetIntegerProperty(virtualSource, kMIDIPropertyUniqueID, 0x4543_484F) // "ECHO"
         isReady = true
+        if ump2Enabled { createUMP2Source() }
         if mpeEnabled { sendMPEConfiguration() }
         // The expression clause is gated on BOTH flags because the SENDER is
         // (`if mpeEnabled, expressionEnabled`). On the flag alone the line could read
         // "channel 1 · expression", which is self-contradictory (#716).
         logOutcome("ready (virtual source 'Echoelmusic'"
                    + (mpeEnabled ? " · MPE zone announced" : " · channel 1")
-                   + (mpeEnabled && expressionEnabled ? " · expression" : "") + ")")
+                   + (mpeEnabled && expressionEnabled ? " · expression" : "")
+                   + (virtualSource2 != 0 ? " · MIDI 2.0 source" : "") + ")")
         #else
         logOutcome("CoreMIDI unavailable on this platform — no-op")
         #endif
@@ -261,6 +284,7 @@ public final class MIDIOutput {
         client = 0
         outputPort = 0
         virtualSource = 0
+        virtualSource2 = 0   // the client dispose took it down with the rest (#1253)
     }
     #endif
 
@@ -620,8 +644,78 @@ public final class MIDIOutput {
         for i in 0..<destCount {
             _ = MIDISendEventList(outputPort, MIDIGetDestination(i), &eventList)
         }
+        // #1253: a System Real Time word is the SAME UMP in both protocols (mt 0x1), but the
+        // list must carry the source's protocol — a `._1_0` list is never pushed into the
+        // `._2_0` source.
+        if virtualSource2 != 0 {
+            var list2 = MIDIEventList()
+            let packet2 = MIDIEventListInit(&list2, ._2_0)
+            _ = MIDIEventListAdd(&list2, MemoryLayout<MIDIEventList>.size, packet2, 0, 1, &word)
+            _ = MIDIReceivedEventList(virtualSource2, &list2)
+        }
         #endif
     }
+
+    // MARK: - MIDI 2.0 source (#1253)
+
+    #if canImport(CoreMIDI)
+    /// Builds the MIDI 2.0-protocol twin source. Failure leaves `virtualSource2` at 0 — the
+    /// 1.0 path is unaffected and the ready line simply omits the arm.
+    private func createUMP2Source() {
+        guard client != 0, virtualSource2 == 0 else { return }
+        var newSource: MIDIEndpointRef = 0
+        let status = MIDISourceCreateWithProtocol(client, "Echoelmusic (MIDI 2.0)" as CFString, ._2_0, &newSource)
+        guard status == noErr else {
+            logOutcome("MIDI 2.0 source create failed (\(status))", level: .warning)
+            return
+        }
+        virtualSource2 = newSource
+        _ = MIDIObjectSetIntegerProperty(virtualSource2, kMIDIPropertyUniqueID, 0x4543_4832) // "ECH2"
+        logOutcome("MIDI 2.0 source on ('Echoelmusic (MIDI 2.0)')")
+    }
+
+    private func disposeUMP2Source() {
+        guard virtualSource2 != 0 else { return }
+        MIDIEndpointDispose(virtualSource2)
+        virtualSource2 = 0
+        logOutcome("MIDI 2.0 source off")
+    }
+
+    /// The MIDI 2.0 mirror of one 1.0 channel-voice message: the same event, widened per the
+    /// MMA scaling rules (`UMPEncoder.scaleUp`). Note-on with velocity 0 is a note-off in
+    /// 1.0 and is sent as one here, so a 2.0 host never sees a "silent note-on". Messages
+    /// this file never sends (program change, poly pressure) are dropped rather than guessed.
+    /// Only to the VIRTUAL source: a hardware destination has one protocol and already
+    /// received the 1.0 words above.
+    private func sendMIDI2Mirror(_ bytes: [UInt8]) {
+        guard virtualSource2 != 0, bytes.count >= 2 else { return }
+        let status = bytes[0] & 0xF0
+        let channel = bytes[0] & 0x0F
+        let d1 = bytes[1]
+        let d2: UInt8 = bytes.count > 2 ? bytes[2] : 0
+        let words: (UInt32, UInt32)
+        switch status {
+        case 0x90 where d2 > 0:
+            words = UMPEncoder.note2On(channel: channel, note: d1, velocity16: UMPEncoder.velocity7to16(d2))
+        case 0x90, 0x80:
+            words = UMPEncoder.note2Off(channel: channel, note: d1, velocity16: UMPEncoder.velocity7to16(d2))
+        case 0xB0:
+            words = UMPEncoder.controlChange2(channel: channel, index: d1, value32: UMPEncoder.cc7to32(d2))
+        case 0xD0:
+            words = UMPEncoder.channelPressure2(channel: channel, value32: UMPEncoder.cc7to32(d1))
+        case 0xE0:
+            let value14 = UInt16(d1 & 0x7F) | (UInt16(d2 & 0x7F) << 7)
+            words = UMPEncoder.pitchBend2(channel: channel, value32: UMPEncoder.bend14to32(value14))
+        default:
+            return
+        }
+        var pair = [words.0, words.1]
+        var list2 = MIDIEventList()
+        let packet2 = MIDIEventListInit(&list2, ._2_0)
+        _ = MIDIEventListAdd(&list2, MemoryLayout<MIDIEventList>.size, packet2, 0, 2, &pair)
+        _ = MIDIReceivedEventList(virtualSource2, &list2)
+    }
+    #endif
 
     // MARK: - CoreMIDI send
 
@@ -647,6 +741,8 @@ public final class MIDIOutput {
         for i in 0..<destCount {
             _ = MIDISendEventList(outputPort, MIDIGetDestination(i), &eventList)
         }
+        // …and, widened, to the MIDI 2.0 source while its switch is on (#1253).
+        sendMIDI2Mirror(bytes)
         #endif
     }
 }

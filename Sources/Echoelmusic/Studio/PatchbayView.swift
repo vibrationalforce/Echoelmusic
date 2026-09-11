@@ -36,6 +36,8 @@ struct PatchbayView: View {
 
     @AppStorage(StudioDefaultKeys.midiOutExpression.key)
     private var midiOutExpression = StudioDefaultKeys.midiOutExpression.value
+    @AppStorage(StudioDefaultKeys.midiOutUMP2.key)
+    private var midiOutUMP2 = StudioDefaultKeys.midiOutUMP2.value
 
     /// The live MIDI-out engine, injected at the app root (`EchoelmusicApp`, `.environment`).
     /// Read only to APPLY the two switches above; the flags themselves are never assigned
@@ -267,6 +269,22 @@ struct PatchbayView: View {
                 Text("Both need the MIDI out route switched on below — without it nothing is sent, whatever these say.")
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
+
+                // #1253 — the MIDI 2.0 source. A named binary → Toggle. Independent of MPE:
+                // it mirrors whatever the 1.0 source carries, member channels included.
+                Toggle(isOn: $midiOutUMP2) {
+                    Text("MIDI 2.0 source")
+                        .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
+                }
+                .tint(EchoelTheme.accent)
+                .accessibilityHint(midiOutUMP2
+                    ? "On. A second source, Echoelmusic (MIDI 2.0), carries the same notes with 16-bit velocity and 32-bit bend and controllers."
+                    : "Off. Only the MIDI 1.0 source is offered to hosts.")
+                Text(midiOutUMP2
+                     ? "Hosts now also see “Echoelmusic (MIDI 2.0)” — the same notes, widened to MIDI 2.0. Record from ONE of the two sources, or you get every note twice."
+                     : "Turn on to offer hosts a second, MIDI 2.0 source (16-bit velocity, 32-bit bend and controllers) beside the MIDI 1.0 one. Hardware keeps receiving MIDI 1.0.")
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -277,6 +295,7 @@ struct PatchbayView: View {
             // written the key by the time this fires.
             .onChange(of: midiOutMPE) { _, _ in midiOut.applyOutputPreferences() }
             .onChange(of: midiOutExpression) { _, _ in midiOut.applyOutputPreferences() }
+            .onChange(of: midiOutUMP2) { _, _ in midiOut.applyOutputPreferences() }
         }
     }
 
