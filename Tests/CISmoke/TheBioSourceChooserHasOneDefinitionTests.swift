@@ -46,6 +46,13 @@
 // GUESSED the two flips as `enum BioSourceOption` and `.contextMenu` — both
 // measured 0. A stripper claim without the measurement is the exact retraction
 // class §2 documents three of; the numbers above are from the run.
+//
+// #1257 — A FOURTH SOURCE. `face` joined both enums (the parser's literal set is now
+// {"camera","ble","sim","face"}), and the two surfaces iterate `BioSourceOption.offered`
+// — `allCases` minus `face` on a device without face tracking — instead of `allCases`
+// (a menu entry for a sensor the device lacks is the #135 class). Claims 1 and 3 moved
+// with it in the same commit; on the parent (1438077) claim 1's set/count and claim 3's
+// `offered` needle and the face label are RED, everything else green on both trees.
 
 import Foundation
 import XCTest
@@ -61,16 +68,16 @@ final class TheBioSourceChooserHasOneDefinitionTests: XCTestCase {
 
     func testTheIdsMatchTheParsersLiterals() {
         XCTAssertEqual(Set(BioSourceOption.allCases.map(\.rawValue)),
-                       ["camera", "ble", "sim"], """
+                       ["camera", "ble", "sim", "face"], """
             `BioSourceOption`'s raw values no longer match the literal set \
             `selectBioSource` parses (its private `BioSourceKind(rawValue:)` guard \
             drops unknown ids SILENTLY). A mismatched id is a menu entry that does \
             nothing — the #135 lying-control class. If a fourth source ships, add \
             its case to BOTH enums, this set, and the chooser surfaces together.
             """)
-        XCTAssertEqual(BioSourceOption.allCases.count, 3, """
+        XCTAssertEqual(BioSourceOption.allCases.count, 4, """
             The chooser offers \(BioSourceOption.allCases.count) entries instead of \
-            three. A new source is a product decision (sensor + publisher + \
+            four. A new source is a product decision (sensor + publisher + \
             lifecycle owner), not a menu edit — wire the publisher first, then \
             widen this count in the same commit.
             """)
@@ -104,8 +111,10 @@ final class TheBioSourceChooserHasOneDefinitionTests: XCTestCase {
         let studio = try source(Self.studio)
         let header = try source(Self.header)
         for (name, code) in [("EchoelStudioView", studio), ("HeaderMonitors", header)] {
-            XCTAssertEqual(code.components(separatedBy: "ForEach(BioSourceOption.allCases)").count - 1, 1, """
-                \(name) no longer iterates `BioSourceOption.allCases` exactly once. \
+            XCTAssertEqual(code.components(separatedBy: "ForEach(BioSourceOption.offered)").count - 1, 1, """
+                \(name) no longer iterates `BioSourceOption.offered` exactly once \
+                (#1257: `offered`, not `allCases` — the face entry is withheld where the \
+                device cannot track a face). \
                 Zero means the surface grew its own inline entry list again (the \
                 drift #616 removed); two means a second chooser appeared — widen \
                 this guard deliberately with it.
@@ -115,7 +124,8 @@ final class TheBioSourceChooserHasOneDefinitionTests: XCTestCase {
         // else is the drift this file exists to prevent.
         for label in ["Play with camera light",
                       "Play with a Bluetooth strap — scans for one",
-                      "Play with the simulation"] {
+                      "Play with the simulation",
+                      "Play with your face — front camera, no pulse"] {
             var hits = optionFile.components(separatedBy: label).count - 1
             hits += studio.components(separatedBy: label).count - 1
             hits += header.components(separatedBy: label).count - 1

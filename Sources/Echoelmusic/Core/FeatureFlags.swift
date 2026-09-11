@@ -102,11 +102,12 @@ public enum FeatureFlags {
         case voiceKindRouting  = "feature.voiceKindRouting"
         /// A5 BodyVibe camera modulator: front-camera facial-EXPRESSION tracking
         /// (ARKit blendShapes → smile/brow/jaw control channels) as an opt-in bio
-        /// source. DEFAULT-OFF until the selection wiring + device verify land — the
-        /// publisher file compiles but nothing instantiates it while this is off, so
-        /// the app is bit-identical. Expression/movement as a control signal, never
-        /// an inferred emotion. `FeatureFlags.set(.cameraExpression, true)` is the
-        /// one-line enable lever once wired.
+        /// source. ⛔ #1257 — THIS FLAG NEVER BECAME THE LEVER. The source got its door
+        /// without it: `BioSourceOption.face` is offered wherever
+        /// `FaceExpressionBioPublisher.isSupported` (a device fact), and the player's
+        /// pick is the switch. Still UNREAD in code (the census above stays true); kept
+        /// as a reserved key, not deleted, because a persisted key with no reader costs
+        /// nothing and a deleted one invites a second `feature.camera…` spelling.
         case cameraExpression  = "feature.cameraExpression"
         /// Task #13 (PLAN_AUDIO_LANE_RECORDING_2026-07-21.md): real mic capture
         /// onto an armed audio-input lane via `MultiTrackRecorder`. OFF = the app

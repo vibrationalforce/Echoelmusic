@@ -165,9 +165,9 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// channel. The live case is `coherence`, which every source without beat-to-beat RR
     /// publishes as 0 — `HealthKitBioPublisher` does so explicitly — and `hrvNormalized`,
     /// 0 until a source produces real HRV. `FaceExpressionBioPublisher` is the mirror
-    /// image (a `.faceCam` frame carries no pulse at all), but it is not yet reachable:
-    /// the class compiles and nothing starts it, so that half is a guard for when it is
-    /// wired, not a defect anyone has heard.
+    /// image (a `.faceCam` frame carries no pulse at all), reachable since #1257 through
+    /// the source picker — so that half is live: on a face take every pulse channel is
+    /// unmeasured and every consumer holds or reads neutral.
     ///
     /// It matters most for BIPOLAR routes, which map signal 0 to a FULL NEGATIVE
     /// excursion (`(0·2−1)·depth·span·0.5`): without this gate, a bipolar route on a
@@ -241,14 +241,15 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// Keep it in step with the two producers:
     /// - `.motion` — every `BioSampleFrame` construction site in `Sources/` hardcodes
     ///   `motionEnergy: 0`; the last CoreMotion provider went in the 2026-06-19 cleanup.
-    /// - the three face channels — `FaceExpressionBioPublisher` exists and is complete,
-    ///   but has ZERO instantiations in `Sources/` (it is behind `FeatureFlags
-    ///   .cameraExpression`, and its front-camera permission string is founder-gated,
-    ///   #67/#68). The day it is constructed, flip these to `true` in the same commit.
+    /// - the three face channels — TRUE since #1257: `FaceExpressionBioPublisher` is
+    ///   constructed in `EchoelmusicApp` and started by the source picker's "Play with your
+    ///   face" entry (device-gated on `isSupported`). Until then this said `false` with the
+    ///   instruction to flip it in the wiring commit — which is this one.
     public var hasProducer: Bool {
         switch self {
         case .heartRate, .hrv, .coherence, .breathRate, .breathPhase: return true
-        case .motion, .faceSmile, .faceBrow, .faceJaw: return false
+        case .faceSmile, .faceBrow, .faceJaw: return true
+        case .motion: return false
         }
     }
 }

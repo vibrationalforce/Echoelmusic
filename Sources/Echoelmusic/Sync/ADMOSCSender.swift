@@ -298,9 +298,9 @@ public final class ADMOSCSender {
     /// until 16 accepted RR intervals, and `CameraAnalyzer`'s RR series comes from a fixed
     /// 10 s peak window (≈10 intervals at a resting rate), so `distance` sat at 1 for entire
     /// takes. (An earlier draft of this comment blamed `FaceExpressionBioPublisher`'s
-    /// all-zero frame instead. That was WRONG and worth recording: the type has zero
-    /// instantiations in `Sources/` and sits behind `FeatureFlags.cameraExpression`, so no
-    /// `.faceCam` frame exists in a shipped build. The real path is stronger, not weaker.)
+    /// all-zero frame instead. That was WRONG at the time — the type then had zero
+    /// instantiations. Since #1257 `.faceCam` frames DO reach this arm (pulse 0 by design),
+    /// and the arm says nothing for them, which is the tested behaviour below.)
     ///
     /// ⚠️ Consequence to know before mapping: on a bio-only rig an address that is never
     /// measured never arrives, so the object keeps its initial position rather than being

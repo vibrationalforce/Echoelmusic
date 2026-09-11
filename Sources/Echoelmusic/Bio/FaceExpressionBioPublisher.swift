@@ -19,11 +19,16 @@
 //  product decision deferred to the selection-wiring slice — this file just
 //  honestly publishes face channels + neutral bio under `.faceCam`.
 //
-//  WIRING STATE: this cycle the type compiles but NOTHING instantiates it (behind
-//  `FeatureFlags.cameraExpression`, default OFF). Runtime is bit-identical until the
-//  selection wiring lands. Concurrency follows the rPPG discipline: the ARKit
+//  WIRING STATE (#1257, 2026-09-11): constructed ONCE in `EchoelmusicApp`, started and
+//  stopped ONLY by the studio's source picker ("Play with your face", `BioSourceOption
+//  .face`, offered where `isSupported`). From 2026-07-18 to #1257 nothing instantiated it
+//  (`FeatureFlags.cameraExpression` was meant as the lever and never became one — the
+//  device capability is the gate). Concurrency follows the rPPG discipline: the ARKit
 //  delegate (which may fire off the main actor) never hops to @MainActor per frame —
 //  it stores the latest blendShapes under a lock; the 10 Hz @MainActor loop drains.
+//  NEEDS-FOUNDER-VERIFY: Bio source → "Play with your face" on a TrueDepth iPhone — the
+//  camera dialog names both lenses, Smile/Brow/Jaw appear as FX bio-mod carriers, a
+//  smile moves the routed parameter; switch Pulse ↔ Face ten times without a crash.
 //
 
 import Foundation
@@ -39,6 +44,7 @@ private final class LatestFaceSample: @unchecked Sendable {
     private let lock = NSLock()
     private var coefficients: [String: Float] = [:]
     private var hasFace = false
+    private var failure: String?
 
     func store(_ c: [String: Float]) {
         lock.lock(); coefficients = c; hasFace = true; lock.unlock()
@@ -51,6 +57,15 @@ private final class LatestFaceSample: @unchecked Sendable {
     func clear() {
         lock.lock(); coefficients = [:]; hasFace = false; lock.unlock()
     }
+    /// #1257 — a session failure (camera denied or revoked, hardware lost) recorded by the
+    /// nonisolated delegate; the main-actor drain takes it ONCE and stops the publisher.
+    func fail(_ message: String) {
+        lock.lock(); failure = message; coefficients = [:]; hasFace = false; lock.unlock()
+    }
+    func takeFailure() -> String? {
+        lock.lock(); defer { lock.unlock() }
+        let f = failure; failure = nil; return f
+    }
 }
 
 @MainActor
@@ -60,10 +75,17 @@ public final class FaceExpressionBioPublisher {
     /// True while the ARKit session is running and the publish loop is live.
     public private(set) var isPublishing = false
 
+    /// #1257 — why the last session ended on its own: the camera permission denied or
+    /// revoked in Settings, or the tracking hardware failing. `nil` while running or after
+    /// a clean `stop()`. Read by the bio panel's source row; never a crash.
+    public private(set) var lastError: String?
+
     /// Whether this device can track the face at all (front TrueDepth / ARKit).
     /// `false` on any platform without ARKit or without face-tracking hardware —
-    /// callers gate the "Face" bio source on this.
-    public static var isSupported: Bool {
+    /// callers gate the "Face" bio source on this. `nonisolated`: it is a device fact
+    /// read by `BioSourceOption.offered` off the actor (#1255b lesson — Xcode isolates a
+    /// `static` member of a `@MainActor` class, SwiftPM does not).
+    nonisolated public static var isSupported: Bool {
         #if canImport(ARKit)
         return ARFaceTrackingConfiguration.isSupported
         #else
@@ -85,17 +107,14 @@ public final class FaceExpressionBioPublisher {
 
     /// Start front-camera expression tracking and publish `.faceCam` frames to `bus`.
     /// No-op when unsupported or already running. `arSession.run` raises the camera
-    /// dialog using the app-wide `NSCameraUsageDescription`.
-    ///
-    /// ⚠️ MUST-FIX BEFORE ENABLING (`FeatureFlags.cameraExpression` → on): the
-    /// shipped `NSCameraUsageDescription` describes ONLY the rear-lens fingertip
-    /// pulse. ARKit here uses the FRONT camera to follow facial MOVEMENT — iOS has
-    /// one app-wide string, so it must be BROADENED to truthfully cover both uses
-    /// (carrying the "movement as control, never emotion" framing) or the front-
-    /// camera prompt lies (App Store 5.1.1 / GDPR transparency). Info.plist edit
-    /// needs founder approval; it lands with the selection-wiring slice, never after.
+    /// dialog using the app-wide `NSCameraUsageDescription` — which since #1257 names
+    /// BOTH uses (rear-lens pulse, front-camera facial movement as a control signal),
+    /// because iOS has one string per app and the old one described only the pulse.
+    /// A denial does not crash: ARKit reports it through the delegate, the drain records
+    /// `lastError` and stops.
     public func start(publishing bus: EngineBus) {
         guard !isPublishing, Self.isSupported else { return }
+        lastError = nil
         #if canImport(ARKit)
         let proxy = FaceDelegateProxy(latest: latest)
         delegateProxy = proxy
@@ -138,6 +157,11 @@ public final class FaceExpressionBioPublisher {
     /// One 10 Hz drain: latest bag → channels → rate-based EMA → `.faceCam` frame.
     /// Skips while no face is present (never publishes a stale/spiked value).
     private func tick(bus: EngineBus) {
+        if let failure = latest.takeFailure() {
+            stop()
+            lastError = failure
+            return
+        }
         guard let bag = latest.read() else { return }
         let now = CFAbsoluteTimeGetCurrent()
         let dt = Swift.max(0, now - lastPublish)
@@ -183,5 +207,22 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
             latest.store(bag)
         }
     }
+
+    /// #1257 — the face left the frame's certainty (ARKit stops updating an anchor it
+    /// cannot see): drop the bag so the drain publishes nothing stale. The consumers hold
+    /// their last value by their own law; the ~300 ms fade to neutral is K3's slice.
+    func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
+        if anchors.contains(where: { $0 is ARFaceAnchor }) { latest.clear() }
+    }
+
+    /// Camera denied/revoked, hardware unavailable, or the session otherwise unable to
+    /// run: recorded for the main-actor drain, which stops the publisher and exposes
+    /// `lastError`. Never a crash, never a silent "face never arrives".
+    func session(_ session: ARSession, didFailWithError error: Error) {
+        latest.fail(error.localizedDescription)
+    }
+
+    /// A phone call or a backgrounding: the frames stop, and so must the stale bag.
+    func sessionWasInterrupted(_ session: ARSession) { latest.clear() }
 }
 #endif

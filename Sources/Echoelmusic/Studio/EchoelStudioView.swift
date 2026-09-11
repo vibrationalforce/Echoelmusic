@@ -215,6 +215,10 @@ struct EchoelStudioView: View {
     @Environment(PolarH10BioPublisher.self) private var polarH10
     #endif
     @Environment(BioSimulator.self) private var demoSource
+    /// #1257 — the fourth source: front-camera expression (no pulse). Same owner, same
+    /// lifecycle as the three above; ARKit holds the front camera exclusively, so the
+    /// picker's single-active-source rule IS the rPPG↔face arbitration.
+    @Environment(FaceExpressionBioPublisher.self) private var faceExpression
     #if canImport(AVFoundation) && canImport(Metal)
     @Environment(VisualRecorder.self) private var visualRecorder
     #endif
@@ -244,10 +248,10 @@ struct EchoelStudioView: View {
     /// Guards the async live source-switch so a rapid re-pick can't overlap.
     @State private var sourceSwitchTask: Task<Void, Never>?
 
-    /// The three bio inputs the chooser offers. The implicit raw values are the
-    /// on-the-wire ids `BioSourceOption` mirrors (#616) — a case added here needs its
+    /// The bio inputs the chooser offers (four since #1257). The implicit raw values are
+    /// the on-the-wire ids `BioSourceOption` mirrors (#616) — a case added here needs its
     /// twin there, or the new source has no menu entry.
-    private enum BioSourceKind: String { case camera, ble, sim }
+    private enum BioSourceKind: String { case camera, ble, sim, face }
 
     /// Drives Siri/Shortcuts intent consumption (start/stop/keep loop) when the
     /// app becomes active after an intent opens it.
@@ -3208,7 +3212,7 @@ struct EchoelStudioView: View {
                 .accessibilityHidden(true)
             Spacer(minLength: 8)
             Menu {
-                ForEach(BioSourceOption.allCases) { option in
+                ForEach(BioSourceOption.offered) { option in
                     Button {
                         selectBioSource(option.rawValue)
                     } label: { Label(option.menuLabel, systemImage: option.systemImage) }
@@ -9597,6 +9601,15 @@ struct EchoelStudioView: View {
         case .sim:
             EchoelCrashLog.breadcrumb("bio simulation starting")
             demoSource.start(publishing: bus) // deterministic demo frames; source == .fallback
+        case .face:
+            // #1257 — front-camera expression. Publishes `.faceCam` frames with NO pulse:
+            // every timbre/tempo consumer already holds the last measured body or its
+            // neutral (`measured(...) ?? heldBody ?? 70`, `coherenceForSound`), so the
+            // clock never sees the 0. The camera dialog rises from `arSession.run` on the
+            // app-wide purpose string, which names both lenses since this slice.
+            EchoelCrashLog.breadcrumb("face expression starting")
+            faceExpression.start(publishing: bus)
+            EchoelCrashLog.breadcrumb("face expression started (publishing=\(faceExpression.isPublishing))")
         }
     }
 
@@ -9630,6 +9643,7 @@ struct EchoelStudioView: View {
         polarH10.stop()
         #endif
         demoSource.stop()
+        faceExpression.stop()
     }
 
     /// #1246 — arm or release the bio SENSOR without the instrument: no `generate`, no

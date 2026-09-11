@@ -20,10 +20,10 @@
 //     `CameraAnalyzer`'s RR series is a fixed 10 s window (≈10 intervals at a resting rate),
 //     so on a camera take the distance sat at 1 for the whole session.
 // (The first draft of this file blamed `FaceExpressionBioPublisher`'s all-zero frame. That
-// was wrong — the type has ZERO instantiations in `Sources/` and sits behind
-// `FeatureFlags.cameraExpression`, so no `.faceCam` frame reaches this arm in a shipped
-// build. Recorded rather than quietly swapped, because the corrected path is the stronger
-// one and the wrong one had already been copied from `OSCSender`.)
+// was wrong THEN — the type had ZERO instantiations. Since #1257 the source picker starts
+// it and `.faceCam` frames (pulse 0 by design) DO reach this arm; the assertion below is
+// what keeps them silent. Recorded rather than quietly swapped, because the corrected path
+// is the stronger one and the wrong one had already been copied from `OSCSender`.)
 //
 // THE RULE, identical to the OSC side: every address rides its OWN channel's measurement,
 // and silence means "not measured", never "measured as zero". ADM-OSC renderers hold their

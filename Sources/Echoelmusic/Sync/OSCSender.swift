@@ -341,11 +341,10 @@ public final class OSCSender {
         // `CameraRPPGBioPublisher.shouldPublish` requires `bpm > 0`, and `PolarH10BioPublisher`
         // requires a plausible BPM. Nor is the "log 2476: ONE frame in 110 s" figure reproducible
         // from anything in this repo. And the third attempt — `FaceExpressionBioPublisher`, "the
-        // REAL zero-pulse producer" — is wrong too: that type has ZERO instantiations in
-        // `Sources/` and sits behind `FeatureFlags.cameraExpression` (default off, its front-
-        // camera permission string founder-gated), so no `.faceCam` frame exists in a shipped
-        // build. This gate is therefore DEFENSIVE, with no producer today; keep it, because a
-        // zero-pulse frame from a future publisher must not put an invented BPM on a lighting
+        // REAL zero-pulse producer" — was wrong UNTIL #1257: the type had zero instantiations.
+        // Since #1257 the source picker starts it ("Play with your face"), and every `.faceCam`
+        // frame carries `heartRateBPM: 0` by design — so this gate now has a live producer and
+        // is exactly what keeps a face take from putting an invented BPM on a lighting
         // desk, and stop trying to name a trigger for it until one actually exists. What IS
         // reachable on shipping hardware is the sentinel half below: a strap publishes no
         // respiration at all, and coherence stays 0 for most of a camera take.

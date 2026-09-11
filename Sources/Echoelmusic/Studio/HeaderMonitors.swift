@@ -395,7 +395,7 @@ struct PulseMonitorMiniLive: View {
             // notification-decoupled (`.echoelSelectBioSource`): the studio owns the
             // publishers; this chrome leaf only names the choice.
             .contextMenu {
-                ForEach(BioSourceOption.allCases) { option in
+                ForEach(BioSourceOption.offered) { option in
                     Button {
                         NotificationCenter.default.post(name: .echoelSelectBioSource,
                                                         object: option.rawValue)
