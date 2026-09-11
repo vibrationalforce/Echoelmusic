@@ -41,6 +41,20 @@
   Festivals, der Schall zeichnet stehende Wellen in die Oberfläche (gepostet auf @loewe.immerlieb,
   „Vibrations Installation"). Also: die Installations-Linie ist NICHT hypothetisch, sie läuft —
   Echoel wäre ihr bio-reaktives Gehirn, nicht ihr Ersatz.
+  **Bauweise, aus Founder-Fotos 2026-09-11 GESEHEN (nicht erzählt):** Wasserschicht auf einer
+  starren transparenten Platte; **Körperschall-Exciter direkt gegen die Platte verschraubt**
+  (Spiralspule sichtbar, je fünf Schrauben, verdrillte Kupferlitze als Zuleitung); ein Mensch
+  liegt dahinter und wird durch die schwingende Oberfläche gesehen. ⭐ Das entscheidet die
+  Memoryfoam-Frage der Liege VORWEG: gekoppelt wird an die STRUKTUR, das Medium sitzt darauf,
+  der Schaum darf nur dort liegen, wo nichts übertragen werden muss — viskoelastischer Schaum
+  ist ein Dämpfer und frisst einen darunter montierten Shaker auf. Das Prinzip ist im Atelier
+  schon gelöst, nicht erst zu lernen.
+  ⭐ Und das Wasser ist der RENDERER: es macht die Schwingung SICHTBAR. Das ist physisch
+  dasselbe, was `MetalBioView` auf dem Bildschirm tut — ein Bus, ein Abonnent mehr.
+  ⚠️ Offene Elektro-Frage, einmal notiert und nicht wiederholt: offene Litze neben stehendem
+  Wasser ist für eine eigene Arbeit die Entscheidung des Künstlers; für ein Produkt, in dem
+  fremde Menschen liegen, entscheidet die Elektro-Seite den Zeitplan (Schutzkleinspannung auf
+  der Wasserseite, gekapselte Wandler/Zuleitung, FI) — billig beim Erstbau, teuer als Nachrüstung.
   In-App-Keim derselben Idee, schon gebaut: `HapticEngine` + die Zeile „Haptic beat (feel)"
   hinter dem Tempo-Chip — Musik als Berührung, heute ein Schalter, morgen ein Wandler.
 - **Klingende Liege ("Memoryfoam-Wolke")** — die VORGELAGERTE Hardware-Stufe (Founder
