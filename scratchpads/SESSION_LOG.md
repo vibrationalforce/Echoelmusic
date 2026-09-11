@@ -30222,3 +30222,12 @@ Run Tests beide in_progress. 6028/6029/6030 (K6c/K7b/#1268) um 11:10 noch `queue
 Wecker 11:31 UTC liest sie. Damit: JEDE Sources-Scheibe des Kamera-Prompts hat Compile-Nachweis, K1–K7 haben
 Build-for-Testing-Nachweis (die Wächter-Dateien kompilieren); ungelesen sind nur die drei Testläufe der letzten
 drei Scheiben. Gerät: nichts — 14 neue NEEDS-FOUNDER-VERIFY (`python3 scripts/founder-verify.py --since 1438077`).
+
+**Gates (gelesen 11:33 UTC, Wecker):** CI/CD 6028 (`7c8c0e8`, K6c) Build for Testing SUCCESS 11:13:38–11:17:34 ·
+6029 (`f7b594f`, K7b) SUCCESS 11:16:02–11:20:32 · 6030 (`7dcf618`, #1268) SUCCESS 11:15:42–11:19:27 — damit hat
+JEDE Scheibe des Kamera-Prompts inkl. der Review-Fixes einen Build-for-Testing-Nachweis (die neuen Wächter-Dateien
+kompilieren). Run Tests 6028–6030 in_progress. 6024 (K5a) Run Tests gelesen: `TEST EXECUTE FAILED`, im WINDOW
+(tail-200) nur `passed`, kein Testname rot — #396-Klasse wie alle Läufe des Tages; die MSL-Änderung von K5a wird
+durch `TheShippedShaderActuallyCompilesTests` geprüft, dessen Name steht NICHT im Fenster (#445: nicht belegbar,
+weder rot noch grün). Der Kamera-Epic ist damit auf dem Branch abgeschlossen; offen bleibt nur das Gerät
+(`python3 scripts/founder-verify.py --since 1438077`, 14 Bitten) und der 6b-Fallback nach Gerätesondierung.
