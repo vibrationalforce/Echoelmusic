@@ -1,1 +1,1 @@
-biofeedback,HRV,coherence,generative,synth,MIDI,OSC,artnet,sACN,DMX,immersive,visuals,rPPG,pulse
+synthesizer,generative,ambient,techno,heart,rate,HRV,breath,MIDI,OSC,DMX,artnet,sACN,light,VJ

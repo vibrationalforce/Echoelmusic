@@ -10,7 +10,7 @@ Composition
 
 Voice
 - Your voice becomes the instrument's timbre: hold a tone ("Voice timbre" → Capture) — measured as a spectral envelope, never recorded or stored
-- Save the measured colour into a patch, always with a name label
+- Save the measured color into a patch, always with a name label
 
 Sound
 - Algorithmic reverb with room and hall presets for real depth per genre

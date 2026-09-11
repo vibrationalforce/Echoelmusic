@@ -1,18 +1,18 @@
-Echoel ist ein bio-reaktives Performance-Instrument. Dein Herzschlag, Deine HRV und Dein Atem steuern Klang, Bild und Licht in Echtzeit — der Körper wird zum Controller.
-
-Gebaut für Performance, Installation, Content und Studioarbeit — auf dem iPhone.
+Dein Körper spielt es. Herzfrequenz, HRV und Atem steuern Synthesizer, Live-Visual und Dein Licht-Rig in Echtzeit — auf dem iPhone, on-device, ohne Konto.
+Finger auf die Kamera, der Puls rastet ein, die Musik bewegt sich mit Dir. Berühre das Visual, und jeder Finger landet in der Tonart.
+Dann raus damit: OSC, MIDI und MPE out, Art-Net- und sACN-Licht, ADM-OSC-Raumobjekte. Echoel sitzt im Rig, das Du schon hast.
 
 
 DER KÖRPER ALS CONTROLLER
 
-Dein Puls kommt aus Apple Health (z. B. Apple Watch), von einem Bluetooth-Herzfrequenzgurt oder von der iPhone-Kamera (rPPG):
+Dein Puls kommt aus Apple Health (z. B. Apple Watch), von einem Bluetooth-Brustgurt oder von der iPhone-Kamera (rPPG):
 
 - Herzfrequenz formt Tempo und Vibrato
 - HRV und Kohärenz formen Brillanz, Harmonizität und Textur
 - Atem formt die Hüllkurve — der Klang schwillt mit jedem Atemzug an und legt sich wieder
 - Das Bild ist spielbar: Berühre das Visual, und Deine Finger werden zu Noten in Tonart und Skala des Takes
 
-Nicht jede Quelle misst alles: die Kamera liefert Puls, HRV und Atem; ein Brustgurt Puls und HRV; die Apple Watch die Herzfrequenz über Health. Was nicht gemessen wird, moduliert nicht.
+Nicht jede Quelle misst alles: Kamera = Puls, HRV, Atem; Brustgurt = Puls, HRV; Apple Watch = Herzfrequenz über Health. Ungemessenes moduliert nicht.
 
 Keine zwei Takes sind gleich.
 
@@ -21,40 +21,41 @@ ERSCHAFFEN
 
 - Bio-reaktive additive Synthese-Engine (DDSP) — vDSP-beschleunigt, ohne externe Abhängigkeiten
 - Eigene Patches gestalten und speichern
-- Deine Stimme wird die Klangfarbe des Instruments: einen Ton halten, Echoel misst die spektrale Hüllkurve — etwa 64 Zahlen, kein Ton wird aufgenommen, keiner gespeichert — ein Patch kann sie behalten
-- Komposition: Genre und Tonart wählen; Dein Körper erzeugt tonart-konformes Material, das Du mit Klang- und Charakter-Reglern formst
+- Deine Stimme wird die Klangfarbe des Instruments: einen Ton halten, Echoel misst die spektrale Hüllkurve — etwa 64 Zahlen, kein Ton wird aufgenommen — ein Patch kann sie behalten
+- Komposition: Genre und Tonart wählen; Dein Körper erzeugt Material in der Tonart, das Du mit Klang- und Charakter-Reglern formst
 - Kammerton (A4) auf den Cent genau; BPM für tighte Loops sperren oder sync-frei bleiben
 - Effekte: Reverb, Delay, Chorus, Flanger, Phaser, Tremolo, Sättigung, Harmonizer und mehr
-- Immersives Visual: Deine Noten werden in Echtzeit zu Farbe (Tonfrequenz oktavweise ins sichtbare Licht transponiert) und folgen Musik und Körper
-- Visual im Spielen aufnehmen: landet als MP4 mit der Musik darauf (höchstens die letzten 30 s Ton) in Deiner Fotomediathek
-- Rückwirkendes Aufnehmen: Behalte den Loop, den Du gerade gespielt hast
+- Immersives Visual: Deine Noten werden in Echtzeit zu Farbe (Tonfrequenz oktavweise ins Licht transponiert) und folgen Musik und Körper
+- Visual im Spielen aufnehmen: ein MP4 mit der Musik darauf (höchstens die letzten 30 s Ton) in Deiner Fotomediathek
+- Rückwirkend aufnehmen: den Loop behalten, den Du gerade gespielt hast
 - Export des Loops als Audio (WAV) oder MIDI (.mid) für Deine DAW — die MIDI-Datei trägt Tempo, 4/4 und Tonart, in ganzen Takten
 
 
 VERBINDEN
 
 - MIDI-Noten-Eingang und -Ausgang (Ausgang im Routing-Panel aktivierbar)
-- MPE-Ausgang an Dein Rig — Zone angekündigt, Noten auf den Member-Kanälen 2-16 mit Glide, Slide und Druck (zwei Schalter im Routing-Panel, standardmäßig aus; der Eingang bleibt einfacher MIDI-Noten-Empfang)
+- MPE-Ausgang an Dein Rig — Zone angekündigt, Noten auf den Member-Kanälen 2-16 mit Glide, Slide und Druck (zwei Schalter im Routing-Panel, standardmäßig aus; der Eingang bleibt einfaches MIDI)
 - OSC-Ausgabe für Live-Rigs und Visuals
-- ADM-OSC immersive Objekt-Ausgabe — an einer Raum-Anlage bewegt Dein Körper den Klang im Raum: Atem schwenkt ihn links und rechts, Ruhe hebt ihn, Kohärenz zieht ihn heran
+- ADM-OSC-Objekt-Ausgabe — an einer Raum-Anlage bewegt Dein Körper den Klang: Atem schwenkt ihn links und rechts, Ruhe hebt ihn, Kohärenz zieht ihn heran
 - Natives Art-Net-Lichtsignal für Installationen und Bühne
 - sACN-Lichtausgabe (E1.31) — Unicast an eine Adresse Deiner Wahl; kein Multicast unter iOS
+- Externer Bildschirm: das Visual bespielt Monitor oder Beamer (USB-C/HDMI oder AirPlay) als eigene Bühne; das Telefon bleibt das Instrument
 
 
 PRIVATSPHÄRE
 
-Deine Biometrie bleibt auf Deinem Gerät. Es gibt keine Konten, keine Werbung, kein Tracking und keine Analyse; die App spricht mit keinem Server von uns.
+Deine Biometrie bleibt auf Deinem Gerät. Keine Konten, keine Werbung, kein Tracking, keine Analyse; die App spricht mit keinem Server von uns.
 
-Vier Funktionen senden Bio-Werte nach außen — jede erst, wenn Du sie einschaltest, und nur in Deinem lokalen Netzwerk: OSC-Ausgabe, ADM-OSC-Objekt-Ausgabe, Art-Net- oder sACN-Lichtausgabe (Herzfrequenz, HRV, Atem und Kohärenz werden zu DMX-Werten) und das Teilen einer laufenden Session mit einem Gerät in der Nähe. Zusätzlich kannst Du dem Schreiben von Herz- und Atemfrequenz in Apple Health zustimmen. Zwei optionale Extras nutzen Deinen Standort, beide standardmäßig aus: der Ort im Session-Namen und Wetter von Apple Weather, das die Musik formt. Koordinaten werden nie gespeichert. Was Du erschaffst, gehört Dir.
+Bio-Werte verlassen das Gerät nur, wenn Du eine Ausgabe einschaltest, und nur in Deinem lokalen Netzwerk: OSC, ADM-OSC, Art-Net- oder sACN-Licht (Herzfrequenz, HRV, Atem und Kohärenz werden zu DMX-Werten) oder eine geteilte Session in der Nähe. Optional: Herz- und Atemfrequenz in Apple Health schreiben; Standort für den Ort im Session-Namen oder lokales Wetter (Apple Weather), das die Musik formt — beides standardmäßig aus, Koordinaten nie gespeichert. Was Du erschaffst, gehört Dir.
 
 
 BARRIEREFREIHEIT
 
-Accessibility-first: VoiceOver, große, gut lesbare Bio-Anzeigen, exakte numerische Eingabe für jeden numerischen Parameter, 3-Hz-Begrenzung der Bildblitzrate für photosensitive Sicherheit.
+Accessibility-first: VoiceOver, große, gut lesbare Bio-Anzeigen, exakte numerische Eingabe für jeden numerischen Parameter, 3-Hz-Blitzratenbegrenzung für photosensitive Sicherheit.
 
 
-Echoel ist in aktiver Entwicklung. Feedback und Zusammenarbeit willkommen: echoel@tropicaldrones.com
+In aktiver Entwicklung — Feedback willkommen: echoel@tropicaldrones.com
 
-Dies ist kein medizinisches Gerät. Biofeedback-Funktionen dienen ausschließlich kreativen und Selbstbeobachtungs-Zwecken — nicht der Diagnose oder Behandlung.
+Dies ist kein medizinisches Gerät. Biofeedback-Funktionen dienen nur kreativen und Selbstbeobachtungs-Zwecken — nicht der Diagnose oder Behandlung.
 
 echoelmusic.com

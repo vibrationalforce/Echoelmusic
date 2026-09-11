@@ -1,1 +1,1 @@
-Your body plays the music — and colour, light and space. Heart rate, HRV and breath shape synthesis, colour and light live. On-device, private.
+Your body plays the synth. Finger on the camera, pulse locks, the music moves with you — then out to your rig over OSC, MIDI, Art-Net, sACN and ADM-OSC. No account.
