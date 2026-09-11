@@ -218,7 +218,10 @@ public final class OSCReceiver {
 
     private static let portKey = "net.osc.in.port"
     private static let allowKey = "net.osc.in.allow"
-    public static let defaultPort: UInt16 = 8001
+    /// `nonisolated` on purpose (#1255b): Xcode's toolchain isolates an immutable `static let`
+    /// of a `@MainActor` class, so a nonisolated reader — the guard's `XCTAssertEqual`
+    /// autoclosure — broke `Build for Testing` (CLAUDE.md error table, SE-0434 row).
+    nonisolated public static let defaultPort: UInt16 = 8001
 
     public init(port: UInt16 = OSCReceiver.defaultPort) {
         let d = UserDefaults.standard
