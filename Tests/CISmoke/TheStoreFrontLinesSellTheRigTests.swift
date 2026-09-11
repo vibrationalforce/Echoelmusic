@@ -14,7 +14,9 @@
 // NOT MOVED, and why: `en-GB` (a new ASC localisation is the founder's to create, and the
 // critic struck three of its proposed terms — `sequencer`, `MPE`, `visualizer`), the title and
 // subtitle (ASC, review-costing), and the full description rewrite (its coherence-trend line
-// waits on the founder's ear, `CoherenceTrend` NEEDS-FOUNDER-VERIFY).
+// waits on the founder's ear — the open device ask sits in `Core/CoherenceTrend.swift`, and
+// this header deliberately does not repeat its marker: `scripts/founder-verify.py` collects
+// every line carrying it, and a mention here printed as a 26th ask that nobody can answer).
 //
 // SOURCE-TEXT SCAN throughout (`fastlane/metadata/**` is prose, read raw — no stripper).
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (`8d31354`) and this tree: claims
