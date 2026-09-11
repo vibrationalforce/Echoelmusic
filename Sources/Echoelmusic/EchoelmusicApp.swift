@@ -1229,6 +1229,26 @@ struct EchoelmusicApp: App {
                     beatPlayer?.pattern.glideTempo(to: StudioCalculator.seedTempo(raw),
                                                    source: .modulationRoute)
                 }
+                // #1249 — the four VOICE destinations (founder 2026-09-11: the body modulates
+                // the voice effects). Plain control-plane stores on `AudioEngine`; every one
+                // funnels through `pushVoicePreset()` / the tune tick, never the render thread.
+                // The engine applies at ~1 Hz (deduped bus frames); the harmonizer smooths its
+                // own mix per sample (#1249) so a step lands as a 40 ms fade, not a click.
+                // ⚠️ THE HANDLERS DO NOT ENABLE A STAGE. A route to a stage the singer has not
+                // switched on writes a value the insert holds for the day it is — the enable
+                // stays the singer's, in the input sheet (`ModDestinationKey` says why).
+                modulationEngine.register(ModDestinationKey.voiceHarmonyMix) { [weak audioEngine] value in
+                    audioEngine?.voiceHarmonyMix = value.clamped(to: 0...1)
+                }
+                modulationEngine.register(ModDestinationKey.voiceGranularMix) { [weak audioEngine] value in
+                    audioEngine?.voiceGranularMix = value.clamped(to: 0...1)
+                }
+                modulationEngine.register(ModDestinationKey.voiceGranularPitch) { [weak audioEngine] value in
+                    audioEngine?.voiceGranularPitch = (value.clamped(to: 0...1) * 24 - 12)
+                }
+                modulationEngine.register(ModDestinationKey.voiceTuneStrength) { [weak audioEngine] value in
+                    audioEngine?.voiceTuneStrength = value.clamped(to: 0...1)
+                }
                 // B26: every applied modulation ALSO streams over OSC as
                 // /echoelmusic/mod/<key> (the documented mod-out address) for external
                 // tools (TouchDesigner / Resolume / Max). The tap fires per applied

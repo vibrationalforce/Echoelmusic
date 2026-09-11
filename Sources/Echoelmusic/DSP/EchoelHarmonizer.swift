@@ -28,7 +28,19 @@ public final class EchoelHarmonizer: @unchecked Sendable {
     public var voice2Enabled: Bool = true
     /// Wet blend of the harmony voices into the output [0…1]. The dry signal is
     /// always passed at full level; this scales the *added* harmonies.
+    ///
+    /// #1249: the RENDER reads `mixState`, a per-sample one-pole toward this value
+    /// (`mixSmoothing`, ~40 ms at 48 k). A control-plane write — the sheet's field, or a
+    /// modulation route stepping at ~1 Hz — lands as a short fade, never as a gain step
+    /// at the sample it arrived on. Plain `Float` stores, no lock, no allocation.
     public var mix: Float = 0.5
+    private var mixState: Float = 0.5
+    /// False until the first sample after init/`reset()`: that sample ADOPTS `mix` instead
+    /// of fading toward it, so a stage configured before audio runs (mix 0 = dry) is dry
+    /// from its first sample, and only LIVE changes fade.
+    private var mixPrimed = false
+    /// One-pole coefficient per sample; 0.0005 ≈ 2000 samples ≈ 42 ms at 48 kHz.
+    private let mixSmoothing: Float = 0.0005
 
     // MARK: - State
 
@@ -66,7 +78,14 @@ public final class EchoelHarmonizer: @unchecked Sendable {
         dl1L.write(inL); dl1R.write(inR)
         dl2L.write(inL); dl2R.write(inR)
 
-        let m = Swift.min(Swift.max(mix, 0.0), 1.0)
+        let target = Swift.min(Swift.max(mix, 0.0), 1.0)
+        if mixPrimed {
+            mixState += (target - mixState) * mixSmoothing
+        } else {
+            mixState = target
+            mixPrimed = true
+        }
+        let m = mixState
         let (v1L, v1R) = shiftVoice(ratio1, phase: &phase1, lL: dl1L, lR: dl1R)
         var harmL = v1L
         var harmR = v1R
@@ -84,6 +103,7 @@ public final class EchoelHarmonizer: @unchecked Sendable {
     public func reset() {
         dl1L.reset(); dl1R.reset(); dl2L.reset(); dl2R.reset()
         phase1 = 0; phase2 = 0
+        mixPrimed = false   // a reset starts AT the mix, not from a fade
     }
 
     // MARK: - Helpers

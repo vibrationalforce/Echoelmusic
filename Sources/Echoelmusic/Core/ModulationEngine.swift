@@ -319,4 +319,39 @@ public final class ModulationEngine {
 public enum ModDestinationKey {
     /// Sequencer tempo. Closure scales [0..1] → [30..300] BPM.
     public static let tempo = "seq.tempo"
+
+    // #1249 — THE VOICE STAGES (founder 2026-09-11: *"Das Biofeedback die Stimmeffekte
+    // moduliert sollte klar sein"*). Four destinations on the singer's monitor insert,
+    // registered at launch beside `tempo`; each closure writes ONE `AudioEngine` parameter
+    // whose `didSet` funnels through `pushVoicePreset()` (#416) — so a route here can never
+    // clobber the sheet's own setting of the OTHER stage, and the #840 rate rebuild keeps it.
+    // Session-local like the parameters themselves (a route is persisted; the value it
+    // pushes is not). The stages' ENABLE flags are deliberately not destinations: a body
+    // switching a stage on/off at ~1 Hz is a click machine, and the enable is the singer's.
+    /// Harmony-voice wet mix on the monitor insert, [0..1] direct.
+    public static let voiceHarmonyMix = "voice.harmony.mix"
+    /// Grain-cloud wet mix on the monitor insert, [0..1] direct.
+    public static let voiceGranularMix = "voice.granular.mix"
+    /// Grain pitch shift, [0..1] → −12…+12 semitones (0.5 = unshifted).
+    public static let voiceGranularPitch = "voice.granular.pitch"
+    /// Tune-to-key correction amount, [0..1] direct (0 = the voice as sung).
+    public static let voiceTuneStrength = "voice.tune.strength"
+
+    /// Every key this build registers, in picker order (the matrix section reads this,
+    /// not `registeredDestinations`, so a key that failed to register still shows and a
+    /// persisted route to it renders rather than vanishing).
+    public static let all: [String] = [tempo, voiceHarmonyMix, voiceGranularMix,
+                                       voiceGranularPitch, voiceTuneStrength]
+
+    /// Human name for a picker row. Unknown keys (an older or newer build's) show as-is.
+    public static func displayName(_ key: String) -> String {
+        switch key {
+        case tempo: return "Tempo"
+        case voiceHarmonyMix: return "Voice · harmony mix"
+        case voiceGranularMix: return "Voice · granular mix"
+        case voiceGranularPitch: return "Voice · granular pitch"
+        case voiceTuneStrength: return "Voice · tune amount"
+        default: return key
+        }
+    }
 }
