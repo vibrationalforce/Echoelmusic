@@ -571,3 +571,45 @@ public struct FXRouteFade: Sendable, Equatable {
     /// fading out, so the driver keeps its FX stage enabled for the whole tail.
     public var isEngaged: Bool { presence > FXModulation.presenceEpsilon }
 }
+
+// MARK: - Face presets (#1261, K4b)
+
+/// A named set of starter routes for the face take — the prompt's "2–3 mitgelieferte
+/// Presets als Startpunkt". Nothing here is hard-wired: a preset only APPENDS ordinary
+/// `FXModRoute`s that the row editor then owns (depth, curve, target, delete). `routes` is
+/// built on every access so each application gets fresh route ids — a `static let` would
+/// hand the same `UUID`s to `ForEach` twice and collide.
+public struct FXModPreset: Identifiable, Sendable {
+    public let name: String
+    public let summary: String
+    public let routes: [FXModRoute]
+    public var id: String { name }
+
+    /// Unipolar face channels move the parameter UP from the base (`bipolar: false`) —
+    /// a smile that could only darken a sound reads backwards; the CENTRED head channels
+    /// swing both ways around the base (`bipolar: true`, 0.5 = rest = no offset).
+    public static var facePresets: [FXModPreset] {
+        [
+            FXModPreset(name: "Smile → brightness",
+                        summary: "Smile opens the filter; the jaw adds room.",
+                        routes: [
+                            FXModRoute(carrier: .bio(.faceSmile), target: .filterCutoff, depth: 0.6, bipolar: false),
+                            FXModRoute(carrier: .bio(.faceJaw), target: .reverbMix, depth: 0.4, bipolar: false)
+                        ]),
+            FXModPreset(name: "Head → space",
+                        summary: "Turn for width, lean in for a smaller room, nod for echo.",
+                        routes: [
+                            FXModRoute(carrier: .bio(.headYaw), target: .stereoWidth, depth: 0.5, bipolar: true),
+                            FXModRoute(carrier: .bio(.headDistance), target: .reverbSize, depth: 0.5, bipolar: false),
+                            FXModRoute(carrier: .bio(.headPitch), target: .delayMix, depth: 0.3, bipolar: true)
+                        ]),
+            FXModPreset(name: "Eyes → texture",
+                        summary: "Squint to crush, raise the brows to ring, puff the cheeks to tremble.",
+                        routes: [
+                            FXModRoute(carrier: .bio(.faceEyeSquint), target: .bitcrushMix, depth: 0.4, bipolar: false),
+                            FXModRoute(carrier: .bio(.faceBrow), target: .filterResonance, depth: 0.3, bipolar: false),
+                            FXModRoute(carrier: .bio(.faceCheekPuff), target: .tremoloDepth, depth: 0.4, bipolar: false)
+                        ])
+        ]
+    }
+}
