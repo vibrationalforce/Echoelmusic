@@ -707,3 +707,39 @@ das Produkt (der Clip handelt vom ENTWICKELN, nicht von Bio/Sound/Space).
 - Nr. 5 („rebuild messy code into clean architecture") widerspricht sogar `engineering.md`
   (kein unbeauftragtes Refactoring) — als Arbeitsanweisung hier verboten, nicht nur unnötig.
 **Kein App-Code-Impact. Kein neuer Task.**
+
+## 2026-09-11 — Founder-Paste: „Tropical Drones als Referenz-Modul" (Vorschlag einer ANDEREN KI)
+Der Founder hat den Vorschlag einer anderen KI eingefügt (Drone-Bewegungsprofile als virtuelle
+Kamera, audio-reaktives Fliegen via OSC an Resolume/Grapes, Aufnahme→Edit→Multi-Platform-Post +
+Live-Streaming; dazu ein angebotenes „Grundgerüst": CMakeLists.txt + JUCE für Windows/Mac/Linux +
+VST3/AU, ZeroMQ-Event-Bus, `/code/audio_engine.cpp`, `/inspiration/`-Ordner, `/docs/master_plan.md`).
+Acht Teile EINZELN gescort — **nichts davon wurde gebaut**; acht Zeilen in `inspiration.csv`.
+- **5× REJECT, und zwar nicht wegen Geschmack, sondern weil jeder Teil eine ausgesprochene harte
+  Regel bricht, die das Repo schon einmal BEZAHLT hat:** JUCE/CMake/VST3-AU (JUCE ist PAID — genau
+  dieses Gerüst wurde am 2026-06-19 entfernt, AUv3 am 2026-07-24 gelöscht: „neither a plugin nor a
+  host") · ZeroMQ (zweiter Bus neben `EngineBus`, erste externe Abhängigkeit überhaupt, auf dem
+  Audio-Thread unbenutzbar) · `audio_engine.cpp` (C++ ist erlaubt NUR gekapselt AUSSERHALB des
+  Swift-Audio-Kerns; ein handgeschriebener Engine-Kern IST der Kern) · audio-reaktives VJ-Steuern
+  (das ZIEL ist gebaut — Body→OSC→Resolume, `docs/dev/VJ_BRIDGE.md`; die QUELLE ist off-vision:
+  Echoels Differenzierer ist „dein Körper spielt es", nicht „die Musik triggert das Bild", und
+  `/audio/rms` + `/audio/pitch` wurden am 2026-07-04 als NIE-gesendet aus der Adressliste gestrichen)
+  · Live-Streaming (am 2026-07-25 als Editor≠Workstation CUT, nicht Roadmap — Wiedereintritt braucht
+  eine Founder-Bitte, keinen Plan).
+- **1× REJECT-DUPLIKAT:** `/inspiration/` + `/docs/master_plan.md`. Das KONZEPT läuft hier seit
+  Monaten und stärker (diese Datei + `inspiration.csv` + das `vision-gate`-Skill, mit Tier,
+  Begründung und Review-Datum; Master-Plan = `docs/dev/PRODUCT_DEFINITION.md`). Eine ZWEITE Heimat
+  für dasselbe Gesetz ist der #416-Fehler, den dieses Repo mehrfach bezahlt hat: die ältere Kopie
+  gewinnt still.
+- **1× ALREADY-ADOPTED:** Aufnehmen→Edit→Multi-Platform-Post. `ContentPipeline/` existiert seit
+  2026-07-30 mit genau dieser Aufgabe, der PIPELINE-only-Regel und `CLAIMS.md` als Wahrheitsliste.
+- **1× WATCH (review 2026-10-11) — das EINZIGE Stück mit echtem Wert, und es ist kein Code:** die
+  BEWEGUNGSSPRACHE von Tropical Drones (langsam, weich geeast, durchgehend, nie ruckartig) als
+  Qualitätslatte fürs kontemplative Visual — also Ship-Gate 4 („wow", kontemplativ). Umsetzbar OHNE
+  3D-Kamera: `MetalBioView` ist ein Fragment-Feld, kein Szenengraph; die Entsprechung sind
+  Easing-Zeitkonstanten und Drift-Raten. „Orbit" existiert bereits als Begriff im RAUM
+  (`BioSpacePreset.breathOrbit`, ADM-OSC) — aber dieser Kern hat null Produktions-Aufrufer, ein
+  Helix-Preset dort wäre türlos. Reihenfolge: erst Founder-Auge an einem Take, dann EINE Scheibe.
+**Kein App-Code-Impact. Kein neuer Task.** Lehre für die nächste eingefügte Fremd-Empfehlung: ein
+Vorschlag, der ein „Grundgerüst" ANBIETET, ist die teuerste Sorte — er klingt nach Fundament und ist
+in diesem Repo dreimal ein Abriss (CMake/JUCE 06-19, AUv3 07-24, DAW-Hälfte 07-25). Gegen die
+GESCHICHTE prüfen, nicht nur gegen die Regel.
