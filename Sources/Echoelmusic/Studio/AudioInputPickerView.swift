@@ -255,6 +255,13 @@ struct AudioInputPickerView: View {
                     value: Binding(get: { audioEngine.inputMonitorGain },
                                    set: { audioEngine.inputMonitorGain = $0 }),
                     range: 0...1, decimals: 2)
+                // #1248 — the listen-only mode has no switch of its own on purpose: level 0
+                // IS it. Said here because a performer at a club must know that the picture
+                // follows the input even while nothing reaches the PA.
+                Text("0 = listen only: nothing reaches the speakers, the picture still follows the input.")
+                    .font(EchoelTheme.font(10))
+                    .foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
                 // #829 — Megaphone Mode: a named binary → Toggle (law; like monitoring
                 // and "Tune to key"). The boost value in the copy is DERIVED from the
                 // one constant, never re-typed (#416). Distinct from the "Megaphone"

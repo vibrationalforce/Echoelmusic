@@ -746,6 +746,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     private var lastVoiceTaps: [Float]?
     private var voiceHueBias: Float = 0
     private var voiceSatFactor: Float = 1
+    /// #1248 — hue bias from the live INPUT's spectral centroid (dark … bright), 0 in silence.
+    private var audioHueBias: Float = 0
     var capturesVideo = false
 
     // Static, user-set look params forwarded from `updateUIView` (change on user action,
@@ -1263,6 +1265,22 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // back out over ~a second when they rest. Rides the eased targets below,
             // so it glides. Flash rate stays capped inside update() regardless.
             let touchE = TouchVisualEnergy.shared.value(now: nowGov)
+            // #1248 — THE INPUT, physically associated (founder 2026-09-11: concerts, clubs,
+            // festivals, "andere Audio Inputs"). One lock-read per frame, off the SwiftUI
+            // graph, like the three touch channels above it. The features arrive at the
+            // guard tick (~15 Hz) and are EXACT ZERO in silence, so the #1244 skip survives:
+            //   · `level`  joins `musicLevel` (max, not sum — the louder of room and music
+            //     drives intensity and the water dish, no double counting when both play);
+            //   · `onsetEnergy` joins the finger energy: a kick drum jolts the picture the
+            //     way a touch does, and breathes back out over ~0.6 s;
+            //   · `low` band share widens the spread with the bass, scaled by level;
+            //   · `centroid` biases the hue (dark → cooler, bright → warmer), a small ±0.03
+            //     like the captured-voice tint — never a flash, never a rate.
+            let input = AudioFeatureChannel.shared.snapshot(now: nowGov)
+            musicLevel = max(musicLevel, input.frame.level)
+            let liveE = min(1, touchE + input.onsetEnergy)
+            let bassSwing = input.frame.low * input.frame.level
+            audioHueBias = input.frame.isSilent ? 0 : (input.frame.centroid - 0.5) * 0.06
             // WATER DISH drive (#1101): how hard the "speaker" shakes the dish, 0…1. The live
             // master level of the sounding music, with finger play adding energy exactly as it
             // does for `intensity` below. `FaradayDish` turns it into a cone acceleration and
@@ -1282,7 +1300,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                 $0.hasMeasuredBreathWaveform ? 0.4 * $0.breathPhaseForSound
                     : ($0.hasMeasuredHeartRate ? 0.15 : 0)
             } ?? 0
-            dishDriveTarget = min(max(musicLevel + 0.5 * touchE, bodyDrive), 1)
+            dishDriveTarget = min(max(musicLevel + 0.5 * liveE, bodyDrive), 1)
             update(hr: bio?.heartRateBPM ?? 60,
                    // `coherenceForSound`: the `??` only covers a MISSING frame, so a
                    // present frame that has measured no coherence (HealthKit never
@@ -1377,16 +1395,16 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                    // comment below documents, which the first #609 hit). A settled
                    // body (autoTerm +0.15) fills the picture ×1.075 and calms the
                    // figure ×0.925; an unmeasured body multiplies by exactly 1.
-                   intensity: lookIntensity * (1 + 0.45 * touchE + 0.30 * musicLevel)
+                   intensity: lookIntensity * (1 + 0.45 * liveE + 0.30 * musicLevel)
                               * (1 + 0.5 * autoTerm),
                    ringDensity: lookRingDensity * detailScale * (1 - 0.5 * autoTerm),
-                   motion: lookMotion * (1 + 0.30 * touchE),
-                   spread: lookSpread * (1 + 0.20 * touchE),
+                   motion: lookMotion * (1 + 0.30 * liveE),
+                   spread: lookSpread * (1 + 0.20 * liveE + 0.25 * bassSwing),
                    // Armed entrainment overrides the HR-derived pulse so the visual
                    // breathes at the brainwave band's flash-safe sub-harmonic (still
                    // re-capped ≤3 Hz inside update()).
                    pulseHz: Float(lookEntrainmentPulseHz > 0 ? lookEntrainmentPulseHz : vp.pulseHz),
-                   hueShift: lookHue + voiceHueBias, saturation: lookSaturation * voiceSatFactor,
+                   hueShift: lookHue + voiceHueBias + audioHueBias, saturation: lookSaturation * voiceSatFactor,
                    textureAmt: lookTexture, glitterAmt: lookGlitter,
                    structureAmt: lookStructure,
                    style: lookStyle, styleB: lookStyleB, blend: lookBlend,

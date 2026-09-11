@@ -537,6 +537,15 @@ public final class AudioEngine {
     /// (the duck still defends; a wrong-size FFT would misread every bin).
     @ObservationIgnored private lazy var monitorSpectrumFFT = EchoelRealFFT(size: 2048)
     @ObservationIgnored private var monitorSpectrumBuffer = [Float](repeating: 0, count: 2048)
+    /// #1248 — the input→picture feature stage. Fed from the SAME window and spectrum the
+    /// howl detector reads (one FFT per tick, not two); publishes into
+    /// `AudioFeatureChannel.shared`, which `MetalBioView.draw` polls once per frame.
+    /// Runs only while monitoring runs — "Monitor level 0" is the listen-only mode: the
+    /// record route and the tap are up, nothing reaches the speakers, the picture follows.
+    /// NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Live monitoring AN, Monitor level 0,
+    /// Musik aus dem Raum / vom Interface — das Visual muss mit Pegel und Transienten
+    /// mitgehen (Dish/Intensität mit der Lautstärke, Stöße auf Schläge), Stille = Ruhe.
+    @ObservationIgnored private var inputFeatures = AudioFeatureExtractor()
     /// #848: per-band notch state, index-aligned with `notchEQ.bands`. `gainDB` (≤ 0;
     /// 0 = released) is written ONLY through `FeedbackGuard.slewedNotchGainDB` — never
     /// stepped. `holdTicks` keeps a band engaged past the LAST detection: once the
@@ -3383,6 +3392,7 @@ public final class AudioEngine {
             isInputMonitoring = false
             feedbackGuardActive = false
             resetNotchDefence()
+            AudioFeatureChannel.shared.reset()   // #1248: the picture stops following a mic that is off
             notchEQ.globalGain = 0   // #829: the boost never survives monitoring OFF
             // #599 sweep M1: monitoring OFF also DISARMS the tune. The flag was a
             // pure latch, but the ONLY surface that can show or clear it renders
@@ -3576,8 +3586,13 @@ public final class AudioEngine {
            monitorTapSampleRate > 0,
            monitorTapWindow.copyLatest(into: &monitorSpectrumBuffer) {
             lastSpectrumStamp = stamp
-            candidates = howlDetector.observe(
-                magnitudes: monitorSpectrumFFT.forward(monitorSpectrumBuffer).magnitudes)
+            let magnitudes = monitorSpectrumFFT.forward(monitorSpectrumBuffer).magnitudes
+            candidates = howlDetector.observe(magnitudes: magnitudes)
+            // #1248: the same spectrum, a second reader — the picture.
+            AudioFeatureChannel.shared.publish(
+                inputFeatures.analyze(samples: monitorSpectrumBuffer, magnitudes: magnitudes,
+                                      sampleRate: monitorTapSampleRate,
+                                      timestamp: CFAbsoluteTimeGetCurrent()))
         }
         applyNotchDefence(candidates: candidates)
     }
