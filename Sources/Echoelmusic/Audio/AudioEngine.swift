@@ -2634,6 +2634,20 @@ public final class AudioEngine {
             // ⚠️ COST, named because #654 already retracted an over-estimate of it: each
             // `rearmInputMonitoring` adds ONE line to the reconnect burst that #654 measured at
             // 3–6 lines per physical connect. Bounded, and it converges.
+            // ⭐ #1251 — HYPOTHESIS #5, BUILT (founder 2026-09-11 asked for the input path to be
+            // set up cleanly; the plan builds ONE hypothesis per slice so the next device log
+            // stays decidable). The engine is stopped (rung 1/5) and the `.playAndRecord`
+            // route is claimed; `prepare()` allocates render resources and rebuilds the I/O
+            // unit against THAT session without starting it — so the format read below is
+            // the post-rebuild one, not a guess a later `start()` rebuilds under us
+            // (`isInputConnToConverter`, the v421–v435 crash family). No stop/start cycle,
+            // no throw. The rung is positional (unnumbered, like the one below it): its
+            // ABSENCE in a log means control died inside `prepare()`.
+            // NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Live monitoring AN — das Log muss
+            // „on: prepared before format read" VOR „touching the input node" zeigen, danach
+            // `on 3/5` mit edge == session == out (Hz/ch) und KEIN Absturz bei `on 4/5`.
+            logMonitorOutcome("on: prepared before format read (#1251)", level: .info)
+            masterEngine.prepare()
             logMonitorOutcome("on: touching the input node + reading its format", level: .info)
             let input = masterEngine.inputNode
             var inFmt = input.inputFormat(forBus: 0)
@@ -2682,9 +2696,11 @@ public final class AudioEngine {
             // belongs to the founder, not to a fix cycle.
             //
             // ⭐ BUT "BLOCKED" WAS THE WRONG LAST WORD, and #954b's reviewer supplied two more
-            // candidates that cost nothing in route or battery terms. Recorded here rather
-            // than built, because this cycle already ships one unverified hypothesis and
-            // stacking a second would make the next device log undecidable:
+            // candidates that cost nothing in route or battery terms. Recorded here first,
+            // because that cycle already shipped one unverified hypothesis and stacking a
+            // second would have made the next device log undecidable. ⭐ #5 IS BUILT SINCE
+            // #1251 (the rung above the format read); #6 stays recorded, to be tried ONLY if
+            // a device log shows #5 did not close the family:
             //   · HYPOTHESIS #5 — `masterEngine.prepare()` between the claim and the format
             //     read. It allocates render resources and builds the I/O unit against the
             //     now-active `.playAndRecord` session WITHOUT starting it, so the format read
