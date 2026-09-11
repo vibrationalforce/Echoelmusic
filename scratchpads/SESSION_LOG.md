@@ -30084,3 +30084,34 @@ Schätzung) · das Ohr beim Verlust · Vorzeichen/Skala der Kopfwinkel · ob ein
 `NEEDS-FOUNDER-VERIFY` im Publisher-Kopf bzw. an `FaceGestureChannel.yawFullScaleRadians` — `founder-verify.py --since 1438077`.
 Offen: K5 (Kamerabild als Metal-Layer, #1244-Skip erweitern, beide Uniform-Deklarationen in EINEM Commit), K6 (Vision
 Körper/Hände, `motionEnergy` bekommt seinen Produzenten; 6b Fallback ohne TrueDepth nach Gerätprobe), K7 (Segmentierung).
+
+## Kamera-Eingang K5a/K5b = #1262 `5bbec8d` / #1263 `a507c72` (2026-09-11, 10:00–10:20 UTC)
+
+**K5a — das Kamerabild als Textur-Layer im Metal-Feld.** `Video/CameraFrameSlot.swift` (neu): EIN Slot, latest wins = die
+Drop-Strategie; speichert nur, solange ein Renderer eine Viewport-Geometrie registriert hat; je Renderer ein Key (Telefonfenster
++ externe Bühne = zwei Viewports/Orientierungen), der Producer rechnet ARKits `displayTransform` je Key und speichert die
+INVERSE. `FaceExpressionBioPublisher`: derselbe ARSession-Delegate liefert `capturedImage` (EIN Owner der Frontkamera);
+`stop()`/Interruption leeren. `MetalBioView`: `CVMetalTextureCache`, Y+CbCr als IOSurface-Views, 1×1-Platzhalter IMMER an
+texture(0)/(1), Fragment sampelt nur hinter `camPresent`; zwölf Uniforms am Ende BEIDER Zwillinge (99 → 111); Shader mit
+Flip/Spiegel/inverser Transform/Video-Range/BT.601/sRGB→linear/drei Blends, unter den Ripples. #1244-Skip um die Slot-Sequenz
+erweitert (Wächter-Nadel an BEIDEN Stellen mitgezogen — die zweite war ein `guard let … else { return }`, also ein stiller
+Pass). Aufnahme enthält die Kamera NIE (Snap auf 0 bei `wantsCapture`). Tier ≤ `.low` legt den Layer ab. Drei Keys
+`visual.camera.{opacity,mirror,blend}` an beiden Mounts.
+**K5b — die Tür:** `cameraLayerRow` in `visualPanel` (Camera layer · Blend-Picker · Mirror-Toggle · Caption), gegated auf
+`isSupported` und `!donutIsThePicture`, AUSSERHALB von `visualAdjustFields` (dessen Wächter zählen 10 Zeilen / 2 Gitter —
+nachgemessen unverändert).
+Wächter `TheCameraLayerIsATextureTests` (8 Ansprüche; Transkription `t1262.py`: Parent 2/3/4/5/8 rot, 1/7 grün als
+Gegengewicht, 6 Verhalten nicht gelaufen). ⛔ Die eigene Twin-Transkription traf zuerst den DOC-Kommentar `struct Uniforms {`
+statt des MSL-Structs (2 Felder) — exakt der Anker-Fehler, gegen den `TheUniformMirrorHasNoCompilerTests` seine Nadel auf das
+DRITTE Feld setzt; korrigiert. **Die MSL-Änderung kann kein Compile-Gate sehen** — `TheShippedShaderActuallyCompilesTests`
+im CI-Testlauf ist der einzige Beleg vor dem Gerät.
+
+**Gate-Lesung (10:15 UTC):** Compile #2558 (`8e335f9`, K4a+K4b Sources) success; #2557 cancelled (überholt); #2559 (K5a)
+läuft, wird von K5b überholt. CI/CD 6019 (K1) **Build for Testing SUCCESS** (09:39–09:44), 6020 (K2) **Build for Testing
+SUCCESS** (09:45–09:48), Run Tests je `failure`. Verdict (200-Zeilen-Fenster, gelesen 10:20): 6019 nur `passed`, Signatur
+„testFormatThenParseIsIdentityAcrossLocales() … The test runner hung before establishing connection" (Clone 2, #396-Klasse);
+6020 nur `passed`, Signatur „Clone 2 … Failed to launch app … RequestDenied" (dieselbe Klasse). Kein Testname `failed`, keine
+Compile-Zeile; die neuen Wächter-Namen stehen nicht im Fenster — per #445/#807 kein Freispruch, kein Befund. 6021–6023 in
+der Warteschlange. ⛔ Beide Logs kamen INLINE in den Transkript (das Werkzeug schreibt unter ~4 300 Zeilen keine Datei) —
+§4-Weg nicht möglich, Lesung trotzdem nach dem Verdict-Schema.
+Nicht bewiesen: das Bild am Gerät (Orientierung, Spiegelsinn, Farbe, Füllung, Blend ohne Sprung, Aufnahme ohne Kamera).
