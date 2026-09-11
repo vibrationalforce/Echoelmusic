@@ -147,16 +147,20 @@ final class TheTempoDestinationHasNoRouteTests: XCTestCase {
     /// ⚠️ Deliberately NOT `XCTAssertEqual(sites, 1)` on a path. It asserts that the only file
     /// constructing a route is the matrix's own decoder — so MOVING that decoder stays green,
     /// while ADDING a producer anywhere goes red and gets told what to do.
-    func testNothingInTheAppConstructsAModulationRoute() throws {
+    /// ⭐ RELAXED BY #1250 (2026-09-11): the matrix editor exists — `PatchbayView`'s
+    /// "Body → parameter" card constructs routes. The set is now exactly the decoder AND the
+    /// editor; the test stays because its four counterweights still guard the lock, the glide
+    /// and the OSC tap, and because a THIRD producer (a default route, a preset) is again a
+    /// decision with prose to move.
+    func testOnlyTheDecoderAndTheEditorConstructAModulationRoute() throws {
         let sites = try routeConstructionSites()
-        XCTAssertEqual(sites, ["Core/ModulationMatrix.swift"], """
-            `ModRoute(` is now constructed in \(sites.joined(separator: ", ")). If that is a real \
-            producer — a matrix editor, a default route, a preset — then the body CAN drive the \
-            tempo now and this is good news. Two prose sites must move in the SAME commit: \
-            CLAUDE.md's CURRENT STATE line (the ⛔ block that says "verdrahtet, türlos, ohne \
-            Route wirkungslos") and the modulation entry in the doorless register. Then relax \
-            this expectation to the new set; do NOT delete the test — its four counterweights \
-            above still guard the lock, the glide and the OSC tap.
+        XCTAssertEqual(sites, ["Core/ModulationMatrix.swift", "Studio/PatchbayView.swift"], """
+            `ModRoute(` is constructed in \(sites.joined(separator: ", ")). Expected exactly the \
+            matrix's own decoder and the Patchbay editor (#1250). A NEW producer — a default \
+            route, a preset — means CLAUDE.md's CURRENT STATE modulation line and the doorless \
+            register's modulation entry move in the SAME commit (they say routes are authored \
+            in the Routing sheet and nowhere else); a MISSING one means the editor lost its \
+            "Add route" menu — `TheMatrixHasADoorTests` says which.
             """)
     }
 

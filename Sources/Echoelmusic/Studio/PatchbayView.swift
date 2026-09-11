@@ -46,6 +46,10 @@ struct PatchbayView: View {
     /// declaration and the reads under one condition means there is no platform on which this
     /// view can compile with a lookup it cannot satisfy.
     @Environment(MIDIOutput.self) private var midiOut
+    /// #1250 — the modulation MATRIX's first surface. Injected app-wide (`EchoelmusicApp`),
+    /// read ONLY for `matrix` (written on edits) — never `lastOutputs` (~1 Hz), which would
+    /// enrol this whole sheet as an observer of the modulation tick (10.76.41/50 class).
+    @Environment(ModulationEngine.self) private var modulationEngine
     #endif
 
     /// `true` when hosted as a workspace surface rather than a sheet.
@@ -91,6 +95,10 @@ struct PatchbayView: View {
                 networkMIDISection
                 midiOutSection
                 #endif
+                // #1250 — Body → parameter. The founder's "Verknüpfung mit der Routing Matrix":
+                // the ONE place a modulation route is authored. Mounted unconditionally (a
+                // Toggle/Picker card, no NavigationLink), before the transport source cards.
+                modulationSection
                 ForEach(router.graph.sources) { src in
                     sourceCard(src)
                 }
@@ -274,6 +282,73 @@ struct PatchbayView: View {
 
     #endif
 
+
+    // MARK: - Body → parameter (#1250: the modulation matrix's surface)
+
+    /// Founder 2026-09-11: *"Eine Verknüpfung mit der Routing Matrix ist auch klar."*
+    /// Before this the matrix ran at launch, persisted, streamed `/echoelmusic/mod/<key>`
+    /// — and had ZERO production constructions of `ModRoute(` (#541): a route could only
+    /// come from an older build's document. This card authors them.
+    ///
+    /// Shape borrowed from `FXModRouteRow` (the FX panel's bio→FX rows): Toggle · source
+    /// Picker (filtered on `hasProducer` — a channel whose answer is permanently "no" is a
+    /// control that lies — unioned with the route's own so a persisted dropped channel still
+    /// renders) · destination Picker over `ModDestinationKey.all` (unioned the same way) ·
+    /// `EchoelValueField` for the NUMERIC depth and smoothing · curve Picker · Invert.
+    /// Every edit persists via `save()`; the engine reads `matrix.routes` on its next
+    /// applied frame, so a new route is live within ~1 s with no restart.
+    /// Tempo routes stay under the BPM lock and glide (`EchoelmusicApp`'s handler, T1).
+    /// NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Coherence →
+    /// „Voice · harmony mix", Depth 1, Harmony im Input-Sheet AN: der Harmony-Mix muss dem
+    /// Körper folgen (Log: `/echoelmusic/mod/voice.harmony.mix` bei OSC an); App neu
+    /// starten — die Route ist noch da.
+    @ViewBuilder
+    private var modulationSection: some View {
+        @Bindable var engine = modulationEngine
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Body → parameter").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
+            VStack(alignment: .leading, spacing: 10) {
+                if engine.matrix.routes.isEmpty {
+                    Text("No routes yet. A route lets one measured channel of your body move one parameter — the tempo, or a stage on your voice.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                ForEach($engine.matrix.routes) { $route in
+                    ModulationRouteRow(route: $route) {
+                        engine.matrix.routes.removeAll { $0.id == route.id }
+                        engine.save()
+                    }
+                }
+                Menu {
+                    ForEach(ModDestinationKey.all, id: \.self) { key in
+                        Button(ModDestinationKey.displayName(key)) {
+                            engine.matrix.routes.append(ModRoute(source: .coherence,
+                                                                 destination: ModDestination(key)))
+                            engine.save()
+                        }
+                    }
+                } label: {
+                    Label("Add route", systemImage: "plus")
+                        .font(EchoelTheme.font(12, .semibold)).foregroundStyle(EchoelTheme.text)
+                        .padding(.horizontal, 12).frame(minHeight: 34)
+                        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius)
+                            .strokeBorder(EchoelTheme.border, lineWidth: 1))
+                }
+                .accessibilityHint("Adds a route from your coherence to the chosen parameter; change the source in the row.")
+                Text("Routes apply about once a second from the measured body and are kept across launches. Tempo obeys the BPM lock and glides; voice stages need their switch on in Audio input. Every applied value also leaves as /echoelmusic/mod/<key> when OSC out is routed.")
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
+            .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
+            // Field/Picker edits write through the bindings; persist on ANY change so the
+            // route survives a relaunch — the engine's `save()` doc names the routing UI as
+            // its caller.
+            .onChange(of: engine.matrix.routes) { _, _ in engine.save() }
+        }
+    }
 
     #if canImport(Network)
     // MARK: - Netzwerk-Ausgabe (rank #1: OSC / ADM-OSC / sACN / Art-Net target config)
@@ -652,3 +727,69 @@ struct PatchbayView: View {
     }
 }
 #endif
+
+// MARK: - #1250 route row
+
+/// One authored modulation route. The `FXModRouteRow` shape: named choices are Pickers,
+/// numeric amounts are `EchoelValueField`s (the app-wide law), swipe to delete.
+/// Reads only its own binding — no engine, no bus — so it observes nothing hot.
+private struct ModulationRouteRow: View {
+    @Binding var route: ModRoute
+    let onDelete: () -> Void
+
+    /// Producing channels plus this route's own (a persisted route to a channel that lost
+    /// its producer must still render, not show a blank menu).
+    private var sourceChoices: [ModSource] {
+        var list = ModSource.allCases.filter(\.hasProducer)
+        if !list.contains(route.source) { list.append(route.source) }
+        return list
+    }
+
+    private var destinationChoices: [ModDestination] {
+        var list = ModDestinationKey.all.map(ModDestination.init)
+        if !list.contains(route.destination) { list.append(route.destination) }
+        return list
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Toggle("", isOn: $route.enabled).labelsHidden().tint(EchoelTheme.accent)
+                    .accessibilityLabel("Route enabled")
+                Picker("Source", selection: $route.source) {
+                    ForEach(sourceChoices, id: \.self) { s in Text(s.displayName).tag(s) }
+                }
+                .pickerStyle(.menu).tint(EchoelTheme.text)
+                Image(systemName: "arrow.right").font(.system(size: 10)).foregroundStyle(EchoelTheme.dim)
+                Picker("Destination", selection: $route.destination) {
+                    ForEach(destinationChoices, id: \.self) { d in
+                        Text(ModDestinationKey.displayName(d.key)).tag(d)
+                    }
+                }
+                .pickerStyle(.menu).tint(EchoelTheme.text)
+                Spacer(minLength: 0)
+            }
+            EchoelValueField(label: "Depth", value: $route.depth, range: 0...1, decimals: 2)
+            HStack(spacing: 12) {
+                Toggle("Invert", isOn: $route.invert).tint(EchoelTheme.accent)
+                    .font(EchoelTheme.font(12))
+                Picker("Curve", selection: $route.curve) {
+                    ForEach(ResponseCurve.allCases, id: \.self) { c in
+                        Text(c.rawValue.capitalized).tag(c)
+                    }
+                }
+                .pickerStyle(.menu).tint(EchoelTheme.text)
+                .accessibilityLabel("Response curve")
+            }
+            // Smoothing is a TIME the engine applies between applied frames (`smoothingTau`);
+            // one decimal is the grid — a tenth of a second is the finest step a ~1 Hz apply
+            // can express (#430).
+            EchoelValueField(label: "Smooth", value: $route.smoothingTau,
+                             range: 0...10, unit: "s", decimals: 1)
+        }
+        .padding(.vertical, 2)
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive, action: onDelete) { Label("Delete", systemImage: "trash") }
+        }
+    }
+}
