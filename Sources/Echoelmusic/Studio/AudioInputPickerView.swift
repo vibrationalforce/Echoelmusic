@@ -405,6 +405,21 @@ struct AudioInputPickerView: View {
                         .accessibilityLabel("Harmony voices")
                     }
                     if audioEngine.voiceHarmonyEnabled {
+                        // #1252 — a named binary → Toggle. While ON, the two interval pickers
+                        // below are inert (the key decides), so they are disabled rather than
+                        // left as controls that lie (#485 class).
+                        Toggle(isOn: Binding(get: { audioEngine.voiceHarmonyFollowsKey },
+                                             set: { audioEngine.voiceHarmonyFollowsKey = $0 })) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Harmony in key").font(EchoelTheme.font(13, .semibold))
+                                    .foregroundStyle(EchoelTheme.text)
+                                Text("The voices follow the third and fifth of the session key above what you sing, instead of fixed intervals.")
+                                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .tint(EchoelTheme.accent)
+                        .accessibilityHint("On: the harmony intervals are chosen from the key for each sung note. Off: the two pickers below choose them.")
                         Picker("First voice", selection: Binding(
                             get: { HarmonyInterval(rawValue: Int(audioEngine.voiceHarmonyInterval1)) ?? .majorThirdUp },
                             set: { audioEngine.voiceHarmonyInterval1 = $0.semitones }
@@ -414,6 +429,7 @@ struct AudioInputPickerView: View {
                             }
                         }
                         .pickerStyle(.menu)
+                        .disabled(audioEngine.voiceHarmonyFollowsKey)
                         .accessibilityLabel("First harmony voice")
                         Picker("Second voice", selection: Binding(
                             get: { HarmonyInterval(rawValue: Int(audioEngine.voiceHarmonyInterval2)) ?? .fifthUp },
@@ -424,6 +440,7 @@ struct AudioInputPickerView: View {
                             }
                         }
                         .pickerStyle(.menu)
+                        .disabled(audioEngine.voiceHarmonyFollowsKey)
                         .accessibilityLabel("Second harmony voice")
                         EchoelValueField(
                             label: "Mix",

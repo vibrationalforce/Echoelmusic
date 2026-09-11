@@ -685,6 +685,17 @@ public final class AudioEngine {
     var voiceHarmonyInterval2: Float = 7 { didSet { pushVoicePreset() } }
     /// 0…1 wet mix of the harmony voices under the dry monitor.
     var voiceHarmonyMix: Float = 0.5 { didSet { pushVoicePreset() } }
+    /// #1252 — "Harmony in key": the two intervals follow the sung note's diatonic third and
+    /// fifth in the session key (`DiatonicHarmony`), re-derived at the ~15 Hz tune tick from
+    /// the same YIN pitch the tune stage uses. While ON the interval pickers are inert (the
+    /// key decides); OFF restores the picker-chosen intervals. Session-local, default OFF,
+    /// like every other voice setting here.
+    /// NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Harmony voices AN → „Harmony in key" AN,
+    /// Tonart C-Dur, E singen: die Stimmen müssen G und H sein (nicht G♯/H); Tonart wechseln
+    /// (Mood-Chip) — die Harmonie folgt beim nächsten Ton.
+    var voiceHarmonyFollowsKey = false {
+        didSet { if !voiceHarmonyFollowsKey { pushVoicePreset() } }
+    }
 
     // MARK: Voice granular (#849, V1b-3) — the SECOND audible stage, same shape as
     // #841 in every discipline: session-local, default OFF, one shared push.
@@ -3514,7 +3525,10 @@ public final class AudioEngine {
     /// and since #851 it runs only on FRESH audio (unmoved stamp → cached pitch;
     /// the corrector still ticks every call, see `lastVoiceTuneStamp`).
     private func updateVoiceTune() {
-        guard voiceTuneEnabled else { return }
+        // #1252: the key refresh and the pitch detection below serve TWO consumers now — the
+        // tune stage and the key-following harmony. Either wants them; neither alone gates.
+        let harmonyFollows = voiceHarmonyEnabled && voiceHarmonyFollowsKey
+        guard voiceTuneEnabled || harmonyFollows else { return }
         // ~1 Hz: re-read key + Kammerton from the ONE stored definition the studio
         // writes (#416) — never a second copy of the key that can drift.
         if voiceTuneKeyRefreshTick % 15 == 0 {
@@ -3545,11 +3559,25 @@ public final class AudioEngine {
                 voiceTuneLastDetectedHz = nil
             }
         }
+        if harmonyFollows { updateHarmonyInKey(detectedHz: voiceTuneLastDetectedHz) }
+        guard voiceTuneEnabled else { return }
         // dt = the guard cadence (60 Hz poll gated %4); unvoiced frames relax the
         // correction toward zero inside the corrector — no stale bend on the next onset.
         let correction = voiceTuneCorrector.process(detectedHz: voiceTuneLastDetectedHz,
                                                     dt: 4.0 / 60.0)
         voiceTunePitch.pitch = Float(correction.appliedCents)
+    }
+
+    /// #1252 — derive the harmonizer's two intervals from the sung note's nearest scale degree
+    /// in the session key. Unvoiced frames keep the last intervals (a rest is not a key change).
+    /// Writes only on CHANGE: each assignment is a `pushVoicePreset()`, and a 15 Hz push of an
+    /// unchanged preset is work for nothing.
+    private func updateHarmonyInKey(detectedHz: Double?) {
+        guard let hz = detectedHz,
+              let midi = DiatonicHarmony.midi(forHz: hz, a4Hz: voiceTuneCorrector.a4Hz) else { return }
+        let (first, second) = DiatonicHarmony.intervals(aboveMidi: midi, in: voiceTuneCorrector.key)
+        if voiceHarmonyInterval1 != Float(first) { voiceHarmonyInterval1 = Float(first) }
+        if voiceHarmonyInterval2 != Float(second) { voiceHarmonyInterval2 = Float(second) }
     }
 
     /// MainActor FeedbackGuard step (called from the meter poll while monitoring):
