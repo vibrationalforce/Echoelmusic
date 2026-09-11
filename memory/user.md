@@ -27,7 +27,16 @@
 
 ## Future Ideas (Parking Lot)
 - **Multikopfkugelige Vibrations-Interdentalbuerstchen** — Zahnpflege-Hardware mit Sonic-Feedback. Vibrations-Expertise aus Installationen uebertragen. Den Schweden (TePe) einen draufsetzen.
-- **Tauchfliegen** — Details TBD
+- **Tauchfliegen (Tauchflieger)** — NICHT mehr TBD (Founder 2026-09-11, wörtlich: „Die
+  Tauchfliegen sind die eigentliche Hardware die ich entwickeln will"). Erklärte
+  Hardware-Richtung, eigenes Projekt — für die APP weiterhin North Star: kein Code,
+  keine Produkt-Copy, kein Roadmap-Platz.
+- **Klingende Liege ("Memoryfoam-Wolke")** — die VORGELAGERTE Hardware-Stufe (Founder
+  2026-09-11): ergonomische Liege aus Memoryfoam, mit Bass-Shakern bestückt, Wasser als
+  schwingendes Element. Direkt anschlussfähig an seine bestehende Praxis (interaktive
+  Wasser-Licht-Klang-Installationen) und an Echoels Ausgabestufe — ein weiterer Abonnent
+  über offene Standards, KEINE zweite Codebasis. Ungeklärt: ob das Wasser drin bleibt
+  (geschlossen) oder als eigene Fläche danebensteht.
 - **Ernaehrungsberatung** — Details TBD
 
 ## Key Dates

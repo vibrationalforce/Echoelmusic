@@ -82,7 +82,20 @@ no zone parser — naming either in the spine re-sold two struck capabilities.)
   line; Cinema/Theater/Performance are served by the OUTPUT stage (light/space/visual),
   not by streaming. Kept only so the strike is findable here too.
 - **Auto-driving assistant** — parking lot, speculative (`user.md`). No code, no copy.
-- **Dive-flying (Tauchfliegen)** — parking lot, North Star (`user.md`). Unrelated to app.
+- **Hardware line (founder 2026-09-11, corrects this entry):** the founder stated plainly
+  that **dive-flying is the hardware he actually wants to develop**, with a nearer first
+  step: an **ergonomic memory-foam lounger ("cloud") fitted with bass shakers**, water as a
+  vibrating element. ⛔ This line previously read *"Dive-flying (Tauchfliegen) — parking lot,
+  North Star. **Unrelated to app**"* and `user.md` said only "Details TBD" — both were wrong
+  as a record of INTENT, not merely stale. Still NORTH STAR for the APP (no code, no product
+  copy, no roadmap slot) and still never a health/therapy claim — but it is a declared
+  direction of the founder's own practice, not a whim to be parked and forgotten.
+  **The architectural consequence is the opposite of what it looks like:** hardware needs NO
+  app rebuild. `PRODUCT_DEFINITION.md` already rules *"adding a medium = adding a subscriber,
+  never a new surface"*, and the output stage already speaks open standards (OSC, ADM-OSC,
+  Art-Net, sACN, MIDI/UMP). A sounding lounger attaches as ONE MORE SUBSCRIBER. Any proposal
+  that rebuilds the engine "for the hardware" (C++ core, second bus, CMake) has it backwards —
+  see the 2026-09-11 entries in `inspiration_intake.md`.
 - **Biofeedback + self-observation "revolutionizing humanity"** — emotional north star
   behind *Create From Within*. Expressed ONLY as self-observation, NEVER as a
   health/medical/therapy claim (FDA general-wellness red line).
@@ -121,8 +134,14 @@ if the website disagrees, the code wins.**
    sACN unicast live, new vocoder/biomod cores flagged not-yet-wired).
 4. **Bus topic `bioFrames` is reserved but undrained** (`bioEvents` IS drained — sole consumer `OSCSender.drainAndSendEvents`, OSC egress only; ⛔ both stood here as undrained, audit 2026-08-28); bio flows over the
    snapshot (per-RR heartbeat events have no synth sink). Lock-free design partly aspirational.
-5. **North-Star concepts (auto-driving, dive-flying) have no written bridge** to the
-   roadmap — intentionally, but keep them parked, not leaking into copy.
+5. **North-Star concepts have no written bridge** to the roadmap — auto-driving stays
+   parked. ⚠️ For the HARDWARE line this gap is now a real cost, not a deliberate
+   silence (founder 2026-09-11): with no written statement of what Echoel contributes
+   to a physical device and what it does not, every outside proposal defaults to
+   rebuilding the app around the hardware. Naming the boundary is the repair —
+   Echoel = the bio + sound layer speaking open standards; transducers, water,
+   structure and certification are a SEPARATE project that talks to it over OSC/DMX.
+   Neither half leaks into product copy.
 
 _Last synthesized: 2026-06-18. Re-audit when the brand promise and the
 shipping reality drift further than one cycle apart._
