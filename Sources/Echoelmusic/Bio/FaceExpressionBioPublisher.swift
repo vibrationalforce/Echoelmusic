@@ -29,6 +29,9 @@
 //  NEEDS-FOUNDER-VERIFY: Bio source → "Play with your face" on a TrueDepth iPhone — the
 //  camera dialog names both lenses, Smile/Brow/Jaw appear as FX bio-mod carriers, a
 //  smile moves the routed parameter; switch Pulse ↔ Face ten times without a crash.
+//  NEEDS-FOUNDER-VERIFY (#1258): Bio panel → "Calibrate", hold still 3 s — afterwards a
+//  still face shows Smile/Brow/Jaw at 0.00 (no flicker; the 0.06 deadzone is a guess),
+//  a deliberate smile rises smoothly, and the numbers survive a relaunch.
 //
 
 import Foundation
@@ -80,6 +83,17 @@ public final class FaceExpressionBioPublisher {
     /// a clean `stop()`. Read by the bio panel's source row; never a crash.
     public private(set) var lastError: String?
 
+    /// #1258 — the three channels as the instrument sees them (calibrated, gated, smoothed),
+    /// written at the 10 Hz drain for the bio panel's numbers row (`FaceChannelsRow`, a
+    /// leaf — the freeze law: a 10 Hz `@Observable` read belongs in its own `View`).
+    public private(set) var smile: Float = 0
+    public private(set) var browRaise: Float = 0
+    public private(set) var jawOpen: Float = 0
+    /// True while a neutral hold is being collected (`calibrate(seconds:)`).
+    public private(set) var isCalibrating = false
+    /// True when a non-identity calibration is applied (persisted across launches).
+    public private(set) var hasCalibration = false
+
     /// Whether this device can track the face at all (front TrueDepth / ARKit).
     /// `false` on any platform without ARKit or without face-tracking hardware —
     /// callers gate the "Face" bio source on this. `nonisolated`: it is a device fact
@@ -93,9 +107,23 @@ public final class FaceExpressionBioPublisher {
         #endif
     }
 
-    @ObservationIgnored private var mapping = FaceExpressionMapping()
+    @ObservationIgnored private var mapping = FaceExpressionBioPublisher.freshMapping()
     @ObservationIgnored private let latest = LatestFaceSample()
     @ObservationIgnored private var lastPublish: CFAbsoluteTime = 0
+    @ObservationIgnored private var calibration = FaceExpressionBioPublisher.loadCalibration()
+    @ObservationIgnored private var neutralSamples: (smile: [Float], brow: [Float], jaw: [Float]) = ([], [], [])
+    @ObservationIgnored private var calibrationEndsAt: CFAbsoluteTime = 0
+
+    /// The production mapping: deadzone ON. `stop()` resets to this, never to a bare `init`.
+    private static func freshMapping() -> FaceExpressionMapping {
+        FaceExpressionMapping(deadzone: FaceExpressionMapping.defaultDeadzone)
+    }
+
+    private static func loadCalibration() -> FaceCalibration {
+        guard let data = UserDefaults.standard.data(forKey: FaceCalibration.defaultsKey),
+              let c = try? JSONDecoder().decode(FaceCalibration.self, from: data) else { return .identity }
+        return c
+    }
 
     #if canImport(ARKit)
     @ObservationIgnored private let arSession = ARSession()
@@ -103,7 +131,28 @@ public final class FaceExpressionBioPublisher {
     @ObservationIgnored private var publishTask: Task<Void, Never>?
     #endif
 
-    public init() {}
+    public init() {
+        hasCalibration = !calibration.isIdentity
+    }
+
+    /// #1258 — collect a NEUTRAL hold for `seconds` (default 3) and derive per-channel
+    /// baselines from it. Only while publishing (there is nothing to sample otherwise). The
+    /// result is persisted under `FaceCalibration.defaultsKey` and applied from the next
+    /// tick on; the numbers row shows the hold while it runs.
+    public func calibrate(seconds: Double = 3) {
+        guard isPublishing, !isCalibrating else { return }
+        neutralSamples = ([], [], [])
+        calibrationEndsAt = CFAbsoluteTimeGetCurrent() + Swift.max(0.5, seconds)
+        isCalibrating = true
+    }
+
+    /// Back to identity (raw = calibrated), and the persisted one is removed.
+    public func clearCalibration() {
+        calibration = .identity
+        hasCalibration = false
+        isCalibrating = false
+        UserDefaults.standard.removeObject(forKey: FaceCalibration.defaultsKey)
+    }
 
     /// Start front-camera expression tracking and publish `.faceCam` frames to `bus`.
     /// No-op when unsupported or already running. `arSession.run` raises the camera
@@ -138,7 +187,9 @@ public final class FaceExpressionBioPublisher {
         delegateProxy = nil
         #endif
         latest.clear()
-        mapping = FaceExpressionMapping()
+        mapping = Self.freshMapping()
+        isCalibrating = false
+        smile = 0; browRaise = 0; jawOpen = 0
         isPublishing = false
     }
 
@@ -167,10 +218,30 @@ public final class FaceExpressionBioPublisher {
         let dt = Swift.max(0, now - lastPublish)
         lastPublish = now
         let raw = FaceExpressionMapping.rawChannels(from: bag)
-        mapping = mapping.updated(rawSmile: raw.smile,
-                                  rawBrowRaise: raw.browRaise,
-                                  rawJawOpen: raw.jawOpen,
+        if isCalibrating {
+            neutralSamples.smile.append(raw.smile)
+            neutralSamples.brow.append(raw.browRaise)
+            neutralSamples.jaw.append(raw.jawOpen)
+            if now >= calibrationEndsAt {
+                calibration = FaceCalibration.fromNeutral(smile: neutralSamples.smile,
+                                                          browRaise: neutralSamples.brow,
+                                                          jawOpen: neutralSamples.jaw)
+                if let data = try? JSONEncoder().encode(calibration) {
+                    UserDefaults.standard.set(data, forKey: FaceCalibration.defaultsKey)
+                }
+                hasCalibration = !calibration.isIdentity
+                isCalibrating = false
+                neutralSamples = ([], [], [])
+            }
+        }
+        let scaled = calibration.apply(smile: raw.smile, browRaise: raw.browRaise, jawOpen: raw.jawOpen)
+        mapping = mapping.updated(rawSmile: scaled.smile,
+                                  rawBrowRaise: scaled.browRaise,
+                                  rawJawOpen: scaled.jawOpen,
                                   dt: dt)
+        smile = mapping.smile
+        browRaise = mapping.browRaise
+        jawOpen = mapping.jawOpen
         bus.publish(bio: BioSampleFrame(
             timestamp: now,
             heartRateBPM: 0,          // faceCam carries NO pulse (coexistence deferred)

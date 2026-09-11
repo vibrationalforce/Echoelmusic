@@ -3267,6 +3267,11 @@ struct EchoelStudioView: View {
 
             bioSourceRow
 
+            // #1258 — the face channels as numbers, directly under the chooser that picks
+            // them. A LEAF: it reads the 10 Hz publisher in its own body (10.76.41/50), this
+            // panel body reads nothing of it. Renders nothing unless the face source runs.
+            FaceChannelsRow()
+
             // #486 — the ACTIVE half of the loop, directly under the measured half.
             // `BioStripView` above says what the body is doing; this paces the breathing
             // that moves those numbers. Founder 2026-08-07 asked for "Training für
