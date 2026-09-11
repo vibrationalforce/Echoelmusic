@@ -3698,3 +3698,21 @@ Verstoß rot statt still; (2) ein Skript, das Dateien editiert, endet NIE mit ei
 weitere Edits erfüllen — messen, drucken, dann in einem ZWEITEN Schritt editieren; (3) die Reihenfolge ist Wächter-Kopf
 ZULETZT, nachdem beide Bäume gemessen sind — ein Kopf, der vor der Messung geschrieben wird, ist eine Vorhersage, keine
 Gradierung (§0 nennt genau das Transkription).
+
+## PLAYBOOK #1255b (2026-09-11) — ein transkribierter Wächter ist nicht kompiliert: vor einem Deploy das `Build for Testing` des JÜNGSTEN Test-Commits lesen
+
+#1255 legte `TheOSCControlInputIsAWhitelistTests` an, transkribiert 8/8 grün. Der Deploy v10.79.469 (`eecf800`) ging drei
+Commits später raus, mit Build-for-Testing-Beleg nur für 6006–6008 (#1246–#1248) — 6015/6017 standen in der macOS-Warteschlange.
+Beide scheiterten: `TheOSCControlInputIsAWhitelistTests.swift:97:36: main actor-isolated class property 'defaultPort' can not
+be referenced from a nonisolated autoclosure`. Ein Diagnostic, eine Zeile, in der CLAUDE.md-Fehlertabelle seit langem
+beschrieben (SE-0434-Zeile: Xcode isoliert ein unveränderliches `static let` einer `@MainActor`-Klasse; SwiftPM nicht) —
+und die Transkription KANN es nicht sehen, weil sie Ansprüche in Python nachrechnet, nicht Swift-Isolation prüft.
+
+**Regel:** (1) Ein Wächter, der ein `static`-Mitglied einer `@MainActor`-Klasse aus einer nicht-`@MainActor`-Testmethode
+liest, braucht das Mitglied `nonisolated` (oder die Methode `@MainActor`) — beim Schreiben grep: `git grep -n "^@MainActor"
+-B0 -A2 Sources/…/<Typ>.swift`, dann jeden `<Typ>.` im Test gegen `nonisolated` prüfen; (2) `Xcode Compile Check` grün
+sagt über eine Testdatei NICHTS (§5) — vor einem Deploy-Commit gehört die Build-for-Testing-Zeile des JÜNGSTEN Commits, der
+`Tests/` anfasst, in die Notiz, oder die Notiz sagt „ungelesen"; (3) die Overflow-Datei eines Job-Logs ist EINE Zeile
+mit `\n`-Literalen — `re.finditer(r'❌[^\\]*', s)` findet die xcodebuild-Diagnostics, `grep error:` findet nichts (0 Treffer
+bei 1 Fehler, #1255b gemessen). Schaden: keiner (TestFlight baut Sources), Kosten: ein Zyklus + der falsche Eindruck
+„Wächter grün" in der Deploy-Notiz.

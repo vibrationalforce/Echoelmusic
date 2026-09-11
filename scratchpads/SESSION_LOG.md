@@ -30005,3 +30005,30 @@ Founder-Frage in der Notiz: play/stop per OSC.
 Aussage über Tests außerhalb des Fensters. 6009–6016 zum Zeitpunkt der Lesung `queued`.
 ⛔ Die drei Logs kamen ungekürzt in den Transkript (je ~260 Zeilen) statt in eine Datei + `gh-test-verdict.py` — Regel
 §4 von `context.md` verletzt; die Lesung ist richtig, der Weg war teuer.
+
+## Gate-Lesung v10.79.469 · Build for Testing ROT seit #1255 · #1255b `dbbd7e0` (2026-09-11, 08:12–09:05 UTC)
+
+**TestFlight #2589 (`eecf800`) = success** (Preflight · iOS Archive/Export · Upload · Verify build landed · Compile Check ·
+Summary, 07:35–08:12 UTC) — v10.79.469 liegt in TestFlight. Compile Check #2552 (`a35bcd2`) success.
+
+⛔ **CI/CD 6015 (`8d31354`) und 6017 (`a35bcd2`): `Build for Testing` FAILURE — `** TEST BUILD FAILED **`,** drei
+gescheiterte Build-Kommandos, alle in `TheOSCControlInputIsAWhitelistTests.swift`; 6014 (`d9f48b1`, vor #1255) baute.
+Das Job-Log (81 327 Zeichen) lag in der Overflow-Datei und wurde per Python auf `❌` gesucht — GENAU EIN Diagnostic:
+`TheOSCControlInputIsAWhitelistTests.swift:97:36: main actor-isolated class property 'defaultPort' can not be referenced
+from a nonisolated autoclosure`. Die CLAUDE.md-Fehlertabelle hat die Zeile („`static let` on a `@MainActor` class read from
+… — Xcode's toolchain isolates it even when immutable"); `Xcode Compile Check` blieb grün, weil er nur `Sources/` baut und
+der Wächter der einzige nonisolierte Leser war. `isAllowed`, `decode`, `parse` waren schon nonisolated.
+
+- **#1255b `dbbd7e0`** — `nonisolated public static let defaultPort` mit Begründung am Feld (ein Wert, kein Actor-Zustand;
+  ein `@MainActor` auf Claim 4 hätte nur diesen Leser repariert). Eine Datei, vier Zeilen.
+- **Gate:** Compile Check #2553 (`dbbd7e0`) success (08:20–08:25). **CI/CD 6018: `Build for Testing` SUCCESS** (08:21:58–08:27:04),
+  Run Tests `failure` mit #396-Signatur; `gh-test-verdict.py` auf der Overflow-Datei (247 904 Zeichen): TEST BUILD FAILED
+  False, 167 im Fenster `passed`, 0 failed, 0 skipped, 0 compile-error lines, GAP 1005 s (08:27→08:43). Die vier neuen
+  Wächter-Namen (#1253/#1254/#1255/#1256) stehen NICHT im 200-Zeilen-Fenster — per #445 keine Aussage, per #807 kein
+  Freispruch; der Loopback-Claim 8 bleibt am Gerät/Mac zu hören. Log diesmal in die Datei, nicht in den Transkript (§4).
+
+⚠️ **Was der Deploy davon wusste:** der 469-Commit zitierte Build for Testing nur für 6006–6008 (#1246–#1248) und nannte
+6013–6016 `queued` — ehrlich, aber ein Deploy ging raus, während der jüngste Wächter noch NIE durch den Test-Build gelaufen
+war. TestFlight baut `Sources/`, der Build ist davon unberührt; die LÜCKE war, dass die Notiz „Wächter transkribiert" sagen
+konnte, während Compile-Fähigkeit eines Wächters keine Transkription beweist (§0: Transkription benotet Ansprüche, nicht
+Swift-Syntax). PLAYBOOK #1255b im HARNESS_LEDGER.
