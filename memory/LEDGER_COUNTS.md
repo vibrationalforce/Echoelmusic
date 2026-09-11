@@ -6587,3 +6587,21 @@ Der Register-Absatz stand bis #1247 so in `CLAUDE.md` und ist dort auf das Geset
 > **FeedbackGuard/AudioInputPicker** — ⛔ **WIEDER TÜRLOS SEIT #1024 (2026-09-06), auf Founder-Befehl.** „das mit dem Audio Input Monitoren klappt immer noch nicht also fliegt das raus", zweimal gesagt, beim zweiten Mal über einem Screenshot von Build 448/2567. ALLE DREI Mikrofon-Türen sind entfernt — der Mix-Streifen `micMixStrip`, der `masterDoorButton` „Audio input" und das Einlade-Banner `PlugInInviteRow`. **Nur die TÜREN**: `AudioInputPickerView` (Picker · Tune-Presets · Harmony · Granular), der `showInput`-Slot (jetzt setzerloser Kopfraum, wie `showMeditation`) und der ganze `AudioEngine`-Monitorpfad samt FeedbackGuard sind unangetastet — Wieder-Betüren sind DREI Aufrufstellen, kein Neubau. Nichts bleibt hängen: `isInputMonitoring` wird nicht persistiert, jeder Start beginnt mit stummem Mikro (vor dem Schnitt geprüft, nicht danach). `RoutePlugInWatcher`/`PlugInInviteRow` sind damit ebenfalls türlos, bleiben aber. Wächter: `Tests/CISmoke/TheMicrophoneHasNoDoorTests.swift` — er verbietet das Wieder-Aufmachen NICHT (#364) und nennt die vier Prosa-Heimaten, die dann mitzuziehen sind. SECHS Wächter wurden im selben Commit repariert (#456), jede gestrichene Nadel wörtlich am Ort zitiert.
 
 **#1247 (2026-09-11):** Founder-Ask „Audio Input sauber aufsetzen" → genau EINE der drei Türen kommt zurück (Master-Panel), der Wächter heißt seither `TheMicrophoneHasOneDoorTests` und pinnt „genau ein Setter"; die sieben `BLOCKED-BY-#1024`-Marken in `Sources/` (und drei in Wächter-Köpfen) sind wieder offene `NEEDS-FOUNDER-VERIFY`-Bitten, weil die Tür sie wieder erreichbar macht. Die Vier-Prosa-Heimaten-Liste galt: CLAUDE.md ×3 (Vokal-Kette, Register, „NOW WIRED"-Zeile), `ContentPipeline/CLAIMS.md` (vier Zeilen, bleiben gestrichen bis VERIFIED), der Wächter-Kopf, dazu die zwei Grabsteine in `EchoelStudioView` und der `RoutePlugInWatcher`-Kopf.
+
+## U — OSC-Eingang (#1255) und die zweite DMX-Rücknahme der OSC-Zeile
+
+Die Zeile im OSC-Block von `CLAUDE.md` (Herkunfts-Flagge je Ausgang) trug zwei Rücknahmen; die
+zweite ist mit #1255 hierher gezogen, damit die Zeile Platz für den EINGANG hat:
+
+> ⛔ Und die Vorgänger-Fassung sagte für DMX „hat gar keinen Platz für Metadaten" — auch das
+> war falsch: ein Universum hat 512 Slots, `ArtNetSender.dmxChannels` belegt VIER (acht bei
+> 16 Bit). Zwei Rücknahmen an derselben Zeile, beide in Richtung „es geht mehr als behauptet".
+
+Zähl-Kette des Eingangs-Sockets: `git grep -ln NWListener -- Sources | wc -l` → **0** bis #1254
+(#821, gepinnt in `TheWireSaysWhoseBodyTests` als „die App hat gar keinen Eingangs-Socket") →
+**1** seit #1255 (`Sync/OSCReceiver.swift`; der Wächter pinnt jetzt GENAU diese eine Datei,
+`TheIntegrationHubIsPublishedTests` Anspruch 5 ebenso, und `docs/integrations.html` sagt statt
+„no inbound socket" die Whitelist). Der Grand Council 2026-09-10 (Schritt 4, Gate „mitigate")
+hatte `play`/`stop` in der Whitelist; #1255 lässt beide weg, weil `OneStartControlTests` die
+Zahl der Sitzungs-Start-Pfade auf drei pinnt (dreimal Founder: EIN Start-Knopf) — ob ein Cue
+die Sitzung starten darf, ist seine Frage.

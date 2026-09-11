@@ -16,6 +16,12 @@ struct PatchbayView: View {
     @Environment(\.dismiss) private var dismiss
     #if canImport(Network)
     @Environment(OSCSender.self) private var osc
+    /// #1255 — the OSC control INPUT; its switch below is the ONE door to the socket.
+    @Environment(OSCReceiver.self) private var oscIn
+    /// Declared via `StudioDefaultKeys` (one key string, one default); the socket reads the
+    /// SAME key in `OSCReceiver.applyPreference()`, the `networkMIDI` shape.
+    @AppStorage(StudioDefaultKeys.oscInEnabled.key)
+    private var oscInEnabled = StudioDefaultKeys.oscInEnabled.value
     @Environment(ADMOSCSender.self) private var admOSC
     @Environment(ArtNetSender.self) private var artNet
     @Environment(SACNSender.self) private var sacn
@@ -81,6 +87,8 @@ struct PatchbayView: View {
                 #if canImport(Network)
                 networkOutSection
                 lichtSection
+                // #1255 — the one inbound socket, beside the outputs it answers.
+                oscInSection
                 #endif
                 #if os(iOS) && canImport(CoreAudioKit)
                 // The NavigationLink push needs the enclosing NavigationStack, which only
@@ -370,6 +378,57 @@ struct PatchbayView: View {
     }
 
     #if canImport(Network)
+    // MARK: - OSC control input (#1255)
+
+    /// The opt-in for the app's ONE inbound socket. A Toggle (named binary), the port and the
+    /// sender allowlist as the same fields the outputs use, a status leaf, and the whitelist
+    /// spelled out — an operator must be able to read from this card what a cue can and cannot
+    /// do. The status line is a LEAF (`OSCInputStatusLine`): `lastReceivedTimestamp` moves per
+    /// cue, and this body hosts the port `TextField`s (the 10.76.50 law).
+    private var oscInSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("OSC input · control").font(EchoelTheme.font(11, .bold)).foregroundStyle(EchoelTheme.dim)
+            Toggle(isOn: $oscInEnabled) {
+                Text("Accept OSC control")
+                    .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            .accessibilityHint(oscInEnabled
+                ? "On. One UDP port is open for the control cues listed below, from the senders you allow."
+                : "Off. No socket is open; Echoel sends only.")
+            OSCInputStatusLine(receiver: oscIn)
+            TextField("Allowed sender IPs, comma-separated (empty = any)", text: oscInAllowedHosts)
+                .textFieldStyle(.plain)
+                .font(EchoelTheme.font(13).monospacedDigit())
+                .padding(.horizontal, 10).frame(minHeight: 34)
+                .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.bg))
+                .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
+                #if os(iOS)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .keyboardType(.URL)
+                #endif
+            EchoelValueField(label: "Port", value: oscInPort, range: 1...65_535, unit: "", decimals: 0)
+            Text(oscInEnabled
+                 ? "Listening for /echoelmusic/ctrl/bpm (only while the BPM is locked) · key 0–11 · scale · genre · visualStyle 0–9 · blackout 0/1. No bio value and no play/stop is accepted from the network. Turn it off on a network you do not control."
+                 : "Turn on to let TouchDesigner, Resolume, QLab or a console send cues: /echoelmusic/ctrl/bpm (locked only) · key · scale · genre · visualStyle · blackout. Nothing else is accepted, and no socket is open while this is off.")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.surface))
+        .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
+        .onChange(of: oscInEnabled) { _, _ in oscIn.applyPreference() }
+    }
+
+    private var oscInAllowedHosts: Binding<String> {
+        Binding(get: { oscIn.allowedHosts }, set: { oscIn.allowedHosts = $0 })
+    }
+    private var oscInPort: Binding<Float> {
+        Binding(get: { Float(oscIn.port) }, set: { oscIn.port = Self.clampPort($0) })
+    }
+
     // MARK: - Netzwerk-Ausgabe (rank #1: OSC / ADM-OSC / sACN / Art-Net target config)
 
     /// Host + port (+ universe) per network output, so the founder can point OSC/ADM at

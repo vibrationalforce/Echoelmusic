@@ -44,6 +44,9 @@ extension Notification.Name {
     /// binding set / field commit), never from programmatic writes, so a
     /// project open can update the shared keys without triggering strip
     /// side effects that would clobber the loaded patch.
+    /// ⭐ #1255: an OSC control cue (`OSCReceiver` → the dispatch in `EchoelmusicApp`)
+    /// posts "key" · "scale" · "genre" too — a console operator's edit is a user edit,
+    /// and this hook is the ONE funnel, so the cue retunes and recomposes like a tap.
     ///
     /// ⚠️ ONE POSTER IS NOT IN THE CHROME, and this doc is widened rather than
     /// quietly broken (#356): `EchoelStudioView.tapTempoRow` posts "tempoLock"

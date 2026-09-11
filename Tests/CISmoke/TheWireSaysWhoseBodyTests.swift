@@ -690,10 +690,12 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
     ///    where E1.31 already had a source-name field that `SACNSender` was already filling —
     ///    #789 changed what went INTO an existing slot and could be proved by reading the code.
     ///
-    /// 2. `Sources/` contains **zero** `NWListener` — the app has no inbound socket of any kind.
-    ///    That does not by itself block an announcement (a node may broadcast an unsolicited
-    ///    reply), but it does mean the Art-Net half is the app's first inbound-protocol surface
-    ///    if it is ever answered properly, which is a Council-sized decision and not a slice.
+    /// 2. `Sources/` contains **exactly one** `NWListener` — `Sync/OSCReceiver.swift`, the OSC
+    ///    control whitelist (#1255, Council 2026-09-10 step 4; ⛔ "zero … no inbound socket of
+    ///    any kind" stood here until then, #821). That socket accepts six `/echoelmusic/ctrl/`
+    ///    cues and nothing else; it is NOT an Art-Net discovery answer, so the Art-Net half is
+    ///    still unbuilt — and an inbound PROTOCOL surface beyond the whitelist remains a
+    ///    Council-sized decision, not a slice.
     ///
     /// ⚠️ DELIBERATELY NOT ASSERTED HERE: the `ArtPollReply` field layout, and whether an
     /// unsolicited reply is conformant. Both are exactly the kind of claim this repo keeps
@@ -701,7 +703,7 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
     /// the file a future session plans from.
     ///
     /// #364 — this forbids nothing. Building `ArtPollReply` is legitimate; the day a second
-    /// opcode or an inbound socket appears, this claim goes red and names the prose to pull
+    /// opcode or a SECOND inbound socket appears, this claim goes red and names the prose to pull
     /// along: the OSC block in `CLAUDE.md` and the Art-Net bullet in this file's header.
     func testTheArtNetHalfIsAnUnverifiableBuildAndNotJustAnUnwrittenOne() throws {
         let senderURL = try repoRoot()
@@ -739,10 +741,11 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
             Walked only \(swiftFiles) Swift files — the walk is broken, so the absence it \
             reports means nothing.
             """)
-        XCTAssertTrue(listeners.isEmpty, """
-            The app now has an inbound socket (\(listeners.joined(separator: ", "))). That is \
-            the first one, and the Art-Net paragraph above calls it a Council-sized step — \
-            re-read it rather than letting this guard just go green again.
+        XCTAssertEqual(listeners.sorted(), ["Echoelmusic/Sync/OSCReceiver.swift"], """
+            The inbound-socket census moved: \(listeners.sorted()). The ONE listener is the OSC \
+            control whitelist (#1255). A second one — or this one gone — is a Council-sized \
+            step: re-read the paragraph above and move the OSC block in CLAUDE.md, \
+            `docs/integrations.html` and `TheIntegrationHubIsPublishedTests` claim 5 with it.
             """)
     }
 

@@ -108,6 +108,9 @@ struct EchoelmusicApp: App {
     /// the Sync tab. Not auto-run — most users have no lighting rig.
     @State private var artNet = ArtNetSender()
     @State private var sacn = SACNSender()
+    /// #1255 — OSC control INPUT (whitelist, off by default). Opened by `applyRouting` from the
+    /// persisted `StudioDefaultKeys.oscInEnabled`; its one dispatch is installed below.
+    @State private var oscIn = OSCReceiver()
     #endif
     @State private var modulationEngine: ModulationEngine
     /// Library of user + factory synth sounds for the patch editor.
@@ -525,6 +528,9 @@ struct EchoelmusicApp: App {
         if g.hasEnabledRoute(toSink: "adm.out") { admOSC.start(subscribing: bus) } else { admOSC.stop() }
         if g.hasEnabledRoute(toSink: "artnet.out") { artNet.start(subscribing: bus) } else { artNet.stop() }
         if g.hasEnabledRoute(toSink: "sacn.out") { sacn.start(subscribing: bus) } else { sacn.stop() }
+        // #1255 — not a graph route: an opt-in switch in the routing card, applied here so the
+        // persisted choice is honoured at launch and on every routing change (one reader).
+        oscIn.applyPreference()
         #endif
         midiOut.enabled = g.hasEnabledRoute(toSink: "midi.out")
         // MIDI Clock rides the SAME `midi.out` route as the notes (#300) — one route, one
@@ -597,6 +603,7 @@ struct EchoelmusicApp: App {
             #endif
             #if canImport(Network)
             .environment(osc)
+            .environment(oscIn)
             .environment(admOSC)
             .environment(artNet)
             .environment(sacn)
@@ -1258,6 +1265,41 @@ struct EchoelmusicApp: App {
                 modulationEngine.outputTap = { [weak osc] destination, value in
                     osc?.sendModulation(key: destination.key, value: value)
                 }
+                #if canImport(Network)
+                // #1255 — THE ONE DISPATCH for OSC control cues. Every case takes the path the
+                // matching on-screen control takes: key/scale/genre write the shared keys and
+                // post `.echoelCompositionEdited` (the header strip's own funnel, so the studio
+                // retunes and recomposes exactly as after a picker tap); the visual look writes
+                // its key (three `@AppStorage` readers follow); blackout sets both light senders
+                // like the routing card's button. `bpm` is T1/T2: applied ONLY under the BPM lock,
+                // written where `BodyTempoField`'s locked binding writes, and named
+                // `.remoteControl` in the transport log. There is deliberately no play/stop —
+                // `OneStartControlTests` pins three session-start paths by founder decision.
+                oscIn.onCommand = { [weak beatPlayer, weak artNet, weak sacn] command in
+                    let d = UserDefaults.standard
+                    switch command {
+                    case .tempo(let bpm):
+                        guard d.bool(forKey: StudioDefaultKeys.lockBPM.key) else { return }
+                        let v = bpm.clamped(to: Transport.minTempo...Transport.maxTempo)
+                        d.set(v, forKey: StudioDefaultKeys.lockedBPM.key)
+                        beatPlayer?.pattern.setTempo(v, source: .remoteControl)
+                    case .key(let root):
+                        d.set(root, forKey: StudioDefaultKeys.rootIndex.key)
+                        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "key")
+                    case .scale(let raw):
+                        d.set(raw, forKey: StudioDefaultKeys.scale.key)
+                        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "scale")
+                    case .genre(let raw):
+                        d.set(raw, forKey: StudioDefaultKeys.genre.key)
+                        NotificationCenter.default.post(name: .echoelCompositionEdited, object: "genre")
+                    case .visualStyle(let look):
+                        d.set(look, forKey: StudioDefaultKeys.visualStyle.key)
+                    case .blackout(let on):
+                        artNet?.blackout = on
+                        sacn?.blackout = on
+                    }
+                }
+                #endif
                 modulationEngine.start(subscribing: bus)
                 // Non-essential I/O (BLE straps, external MIDI, OSC/ADM/Art-Net/sACN
                 // out) is NOT auto-started. It now comes online ON DEMAND from the

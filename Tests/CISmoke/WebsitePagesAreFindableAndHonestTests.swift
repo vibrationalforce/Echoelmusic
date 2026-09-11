@@ -1318,11 +1318,11 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     ///
     /// ⭐ THE PREMISE IS ALREADY PINNED ELSEWHERE AND IS NOT RESTATED HERE (#416).
     /// `TheWireSaysWhoseBodyTests.testTheArtNetHalfIsAnUnverifiableBuildAndNotJustAnUnwrittenOne`
-    /// walks `Sources/` and asserts **zero** `NWListener` — the app
-    /// has no inbound socket of any kind, so it cannot receive an OSC message. The day someone
-    /// builds one, THAT guard reds first and its message calls the step Council-sized; this one
-    /// then becomes a sentence that may be written again. Duplicating the walk here would be
-    /// two spellings of one fact.
+    /// walks `Sources/` and pins the `NWListener` census — ONE since #1255, the OSC control
+    /// whitelist (⛔ "zero … cannot receive an OSC message" until then). That socket accepts six
+    /// control cues and answers nothing, so "bidirectional OSC" is STILL a claim the code cannot
+    /// perform; the day a session socket is built, THAT guard reds first. Duplicating the walk
+    /// here would be two spellings of one fact.
     /// ⚠️ THE METHOD IS NAMED ON PURPOSE, not just the class: that method's NAME advertises
     /// Art-Net, so a future slice trimming its Art-Net claim could take the `NWListener` pin
     /// with it and leave this guard citing a premise nothing pins — the #472 shape, a pointer
@@ -1432,8 +1432,9 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
             without a roadmap marker:
             \(offenders.joined(separator: "\n"))
 
-            The app has no inbound socket at all — `TheWireSaysWhoseBodyTests` walks `Sources/` and pins \
-            zero `NWListener`. This is the copy a search engine quotes, so a false capability here \
+            The app's only inbound socket is the control whitelist (#1255) — `TheWireSaysWhoseBodyTests` \
+            walks `Sources/` and pins that ONE `NWListener`; it answers nothing, so there is no \
+            bidirectional OSC. This is the copy a search engine quotes, so a false capability here \
             reaches more people than the page itself. The visible answer on the same page already has \
             the honest wording: one-way output today, bidirectional on the roadmap. If OSC INPUT was \
             actually built, the other guard is red too — read that failure first, then this sentence is \

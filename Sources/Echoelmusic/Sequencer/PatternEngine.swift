@@ -476,6 +476,9 @@ public final class PatternEngine {
     /// It is dormant today: the default matrix is empty and `git grep -n "\bModRoute(" --
     /// Sources` finds no production construction site (#541), so a persisted document from an
     /// older build is the only thing that can currently drive it.
+    /// ⭐ FIVE since #1255: `.remoteControl` — an OSC `/echoelmusic/ctrl/bpm` cue, applied by
+    /// `EchoelmusicApp` ONLY while the BPM is locked. Neither a human at the field nor the body;
+    /// a console operator. It writes the locked BPM like the field does, under its own name.
     public enum TempoSource: String, Sendable, CaseIterable {
         /// A lock toggle, a locked-field edit, a tap, or a loaded project's stored BPM —
         /// every path where a human named the number.
@@ -487,6 +490,8 @@ public final class PatternEngine {
         case automation
         /// The modulation matrix's tempo destination — see the ⚠️ note above.
         case modulationRoute
+        /// An OSC control cue (`OSCReceiver`, #1255) — locked mode only, see the ⭐ note above.
+        case remoteControl
         /// A caller that has not been given a source yet. Both methods below take `source:`
         /// WITHOUT a default, so this cannot appear from a forgetful call site — it is the
         /// value the engine carries before anything has moved the clock at all.

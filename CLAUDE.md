@@ -405,6 +405,7 @@ Deshalb wird die Regel PRÄZISIERT, nicht gelöscht.
   andere Klammer) noch gespeicherte Kurve. Sie heißt `.modulationRoute` und ist heute schlafend
   (leere Default-Matrix, null `ModRoute(`-Konstruktionsstellen, #541). Sie in eine der drei zu
   falten hieße, ein falsches Wort in genau die Log-Zeile zu schreiben, für die T1 existiert.
+  ⭐ FÜNF seit #1255: `.remoteControl` — der OSC-Steuereingang, NUR unter `.studioLocked`.
 - **T2 — Rohe Herzfrequenz erreicht die Uhr nie direkt.** Kein Pfad darf eine BPM-Schätzung
   (rPPG, BLE, HealthKit) ohne Servo (Kohärenz-Blend + Klammer + Glide) oder ohne ausdrückliche
   Nutzer-Geste an den Takt geben. `.studioLocked` ist beweisbar unabhängig von `heartRateBPM`.
@@ -691,7 +692,8 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
                                  kann: 239 Byte fremder Spec, kein Gerät, kein Pult. Das ist eine
                                  andere Klasse als sACN, wo das Feld schon existierte und schon
                                  gefüllt wurde. Dazu: `git grep -ln NWListener -- Sources | wc -l`
-                                 → **0** — die App hat gar keinen Eingangs-Socket (#821, gepinnt in
+                                 → **1** seit #1255 (`OSCReceiver`, nur die Steuer-Whitelist unten,
+                                 Opt-in AUS; bis dahin 0, #821; gepinnt in
                                  `TheWireSaysWhoseBodyTests`). **ADM-OSC: OFFEN** — `/adm/obj/{n}/*`
                                  ist ein FREMDER Standard-Adressraum, dort etwas zu erfinden wäre
                                  das Gegenteil der Offene-Standards-Haltung, und ob er einen
@@ -701,12 +703,8 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
                                  Eintrag nannte, was Art-Net und sACN GEMEINSAM haben („tragen
                                  DMX"), und verbarg damit den Unterschied, der die Frage
                                  entscheidet — sACN ist DMX ÜBER E1.31, und der Träger hat einen
-                                 Kopf, den die Nutzlast nicht hat. ⛔ Und die Vorgänger-Fassung
-                                 sagte für DMX „hat gar keinen Platz für Metadaten" — auch das
-                                 war falsch: ein Universum hat 512 Slots,
-                                 `ArtNetSender.dmxChannels` belegt VIER (acht bei 16 Bit). Zwei
-                                 Rücknahmen an derselben Zeile, beide in Richtung „es geht mehr
-                                 als behauptet".
+                                 Kopf, den die Nutzlast nicht hat. (Zweite Rücknahme derselben Zeile — DMX-Slots — in
+                                 `memory/LEDGER_COUNTS.md` §U.)
                                  ⭐ **Die Event-Adressen unten tragen sie SEIT #785 auch** —
                                  anderer Codepfad (`drainAndSendEvents` → `eventMessages`) und
                                  bewusst andere Kadenz: die Flagge steht unmittelbar VOR dem
@@ -729,6 +727,8 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
 /echoelmusic/bio/event/eeg       — Adresse existiert, wird nie gesendet. `.eegBurst` hat NULL
                                    Produzenten in `Sources/`; die Zuordnung in OSCSender ist
                                    Vorbereitung, kein Ausgang. Kein Integrator darf darauf warten.
+/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,blackout}  ← EINGANG (#1255, `OSCReceiver`,
+                                   UDP 8001, Opt-in AUS, Sender-Allowlist; bpm nur bei Lock).
 ```
 
 Plus ADM-OSC immersive object out via `ADMOSCSender`: `/adm/obj/{n}/*`.

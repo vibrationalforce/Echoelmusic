@@ -436,6 +436,20 @@ public enum StudioDefaultKeys {
     /// this is a thing that accepts. Those are not the same consent.
     public static let networkMIDI = StudioDefault(key: "midi.networkSession", value: false)
 
+    // MARK: net.*
+
+    /// **OSC control input — OFF by default (#1255, Grand Council 2026-09-10 step 4).** When on,
+    /// `OSCReceiver` opens ONE UDP port (its own persisted `net.osc.in.port`, default 8001) and
+    /// accepts the whitelist `/echoelmusic/ctrl/{bpm,key,scale,genre,visualStyle,blackout}` from
+    /// senders the operator may restrict by IP. Same consent class as `networkMIDI` above: a thing
+    /// that ACCEPTS, not a thing you point somewhere. No bio value, no play/stop, no bundle is
+    /// accepted; `bpm` only while the BPM is locked. ONE reader: `OSCReceiver.applyPreference()`.
+    /// NEEDS-FOUNDER-VERIFY: Routing → "Accept OSC control" on; from TouchOSC/TouchDesigner send
+    /// `/echoelmusic/ctrl/key 7` — the header key reads G and the take recomposes; with the BPM
+    /// locked send `/echoelmusic/ctrl/bpm 96` — the field shows 96 and the log says
+    /// `tempoSource=remoteControl`; switch off — the port closes.
+    public static let oscInEnabled = StudioDefault(key: "net.osc.in.enabled", value: false)
+
     /// **MPE note layout on the MIDI OUT stream (#713).** Off = every note on channel 1,
     /// which is what shipped. On = notes spread across the 15 member channels of the MPE
     /// lower zone, and the zone RPN is sent when the port opens.

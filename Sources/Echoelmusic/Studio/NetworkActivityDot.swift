@@ -116,6 +116,48 @@ struct NetworkOutputHeader: View {
     }
 }
 
+/// #1255 — the OSC control input's status, as its own LEAF for the same reason as the header
+/// above: `lastReceivedTimestamp` and the counters move per cue on an `@Observable`, and the
+/// routing card's body hosts text fields. Words, not "sending": this is the direction Echoel
+/// LISTENS in, and the honest states are off · open, nothing received · a cue just arrived.
+@MainActor
+struct OSCInputStatusLine: View {
+    let receiver: OSCReceiver
+    private static let tick: TimeInterval = 0.5
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: Self.tick)) { _ in
+            let now = CFAbsoluteTimeGetCurrent()
+            let fresh = receiver.lastReceivedTimestamp > 0
+                && now - receiver.lastReceivedTimestamp < NetworkSendState.freshnessWindow
+            let line: String = {
+                if let error = receiver.lastError { return error }
+                guard receiver.isActive else { return "off" }
+                if fresh { return "cue: \(receiver.lastCommandSummary)" }
+                return receiver.lastReceivedTimestamp > 0
+                    ? "open on \(receiver.boundPort) · last: \(receiver.lastCommandSummary)"
+                    : "open on \(receiver.boundPort) · nothing received"
+                        + (receiver.ignoredCount > 0 ? " · \(receiver.ignoredCount) ignored" : "")
+                        + (receiver.refusedCount > 0 ? " · \(receiver.refusedCount) refused" : "")
+            }()
+            HStack(spacing: 7) {
+                Group {
+                    if fresh { Circle().fill(EchoelTheme.accent) }
+                    else if receiver.isActive { Circle().strokeBorder(EchoelTheme.accent, lineWidth: 2.5) }
+                    else { Circle().strokeBorder(EchoelTheme.border, lineWidth: 1.5) }
+                }
+                .frame(width: 7, height: 7)
+                .accessibilityHidden(true)
+                Text(line).font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("OSC input")
+            .accessibilityValue(line)
+        }
+    }
+}
+
 /// The live half of the Immersive Stage's status line.
 ///
 /// Its own view for the same reason as `NetworkOutputHeader`: `lastSentTimestamp` moves at up to

@@ -44,7 +44,7 @@
     
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://echoelmusic.com/"},{"@type":"ListItem","position":2,"name":"Integrations","item":"https://echoelmusic.com/integrations.html"}]}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Echoel integrations — OSC, ADM-OSC, MIDI, Art-Net and sACN address book","description":"Every address, port and channel Echoel sends: OSC bio feed on UDP 8000, ADM-OSC objects on 9000, a virtual MIDI source, Art-Net on 6454 and sACN on 5568.","author":{"@type":"Organization","name":"Echoelmusic"},"publisher":{"@type":"Organization","name":"Echoelmusic"},"mainEntityOfPage":"https://echoelmusic.com/integrations.html"}</script>
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does an OSC address not appear in my receiver?","acceptedAnswer":{"@type":"Answer","text":"Echoel sends a bio address only while that channel is measured. Silence means not measured, never measured as zero. Coherence needs sixteen accepted beats and is the last address to appear on a take."}},{"@type":"Question","name":"Which ports does Echoel use?","acceptedAnswer":{"@type":"Answer","text":"OSC on UDP 8000 by default, ADM-OSC on UDP 9000 by default (both configurable in Routing), Art-Net on UDP 6454 and sACN on UDP 5568, all unicast to the IP you enter."}},{"@type":"Question","name":"Does Echoel receive OSC?","acceptedAnswer":{"@type":"Answer","text":"No. Echoel has no inbound socket in this build; it is a source only."}}]}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Why does an OSC address not appear in my receiver?","acceptedAnswer":{"@type":"Answer","text":"Echoel sends a bio address only while that channel is measured. Silence means not measured, never measured as zero. Coherence needs sixteen accepted beats and is the last address to appear on a take."}},{"@type":"Question","name":"Which ports does Echoel use?","acceptedAnswer":{"@type":"Answer","text":"OSC on UDP 8000 by default, ADM-OSC on UDP 9000 by default (both configurable in Routing), Art-Net on UDP 6454 and sACN on UDP 5568, all unicast to the IP you enter."}},{"@type":"Question","name":"Does Echoel receive OSC?","acceptedAnswer":{"@type":"Answer","text":"Only control cues, and only when you switch OSC input on in Routing (off by default): a whitelist of /echoelmusic/ctrl/ addresses — bpm while the BPM is locked, key, scale, genre, visualStyle, blackout — on UDP 8001, from senders you can restrict by IP. No bio value, no play/stop and no bidirectional session: the body still goes out one way."}}]}</script>
     <link rel="stylesheet" href="shared.css?v=10.22.0">
     <link rel="preload" href="fonts/atkinson-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/atkinson-bold.woff2" as="font" type="font/woff2" crossorigin>
@@ -155,7 +155,20 @@
         </ul>
 
         <h2>What is not here</h2>
-        <p>Echoel has no inbound socket: it does not receive OSC, and there is no bidirectional session. Motion and EEG addresses exist in the sender and are never sent. Live streaming was never built. Everything above is in the shipping app; nothing on this page is a roadmap item.</p>
+        <h2 id="osc-in">OSC control input — the one thing Echoel accepts</h2>
+        <p>Switch on <strong>Routing ▸ OSC input ▸ Accept OSC control</strong> (off by default) and Echoel opens one UDP port (8001 by default, sender IPs restrictable) for a short whitelist of cues. Anything else is dropped before it reaches the instrument — no bio value comes in over the network, there is no play/stop cue, and there is no bidirectional session: the body goes out one way as above.</p>
+        <table>
+            <thead><tr><th>Address</th><th>Argument</th><th>Effect</th></tr></thead>
+            <tbody>
+                <tr><td><code>/echoelmusic/ctrl/bpm</code></td><td>float or int</td><td>Sets the locked tempo — <strong>only while the BPM is locked</strong>; in Flow the body owns the tempo and the cue is ignored. Logged as <code>tempoSource=remoteControl</code>.</td></tr>
+                <tr><td><code>/echoelmusic/ctrl/key</code></td><td>int 0–11</td><td>Root pitch class (0&nbsp;=&nbsp;C); the take retunes and recomposes like a header tap.</td></tr>
+                <tr><td><code>/echoelmusic/ctrl/scale</code></td><td>string</td><td>A scale name (<code>major</code>, <code>minor</code>, <code>dorian</code>, …).</td></tr>
+                <tr><td><code>/echoelmusic/ctrl/genre</code></td><td>string</td><td>A genre name as the app spells it (<code>techHouse</code>, <code>jazz</code>, …).</td></tr>
+                <tr><td><code>/echoelmusic/ctrl/visualStyle</code></td><td>int 0–9</td><td>The visual look.</td></tr>
+                <tr><td><code>/echoelmusic/ctrl/blackout</code></td><td>0/1 or T/F</td><td>Art-Net and sACN blackout together.</td></tr>
+            </tbody>
+        </table>
+        <p>Motion and EEG addresses exist in the sender and are never sent. Live streaming was never built. Everything above is in the shipping app; nothing on this page is a roadmap item.</p>
 
         <div class="contact-box">
             <h3>Integrating Echoel into a rig?</h3>

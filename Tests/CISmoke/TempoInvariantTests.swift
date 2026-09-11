@@ -171,12 +171,14 @@ final class TempoInvariantTests: XCTestCase {
         // Hoisted out of the message: a key-path closure inside a `\(…)` inside a multi-line
         // literal is the shape that made the blocking gate red on #287.
         let names = PatternEngine.TempoSource.allCases.map { $0.rawValue }.joined(separator: ", ")
-        XCTAssertEqual(PatternEngine.TempoSource.allCases.count, 5, """
+        XCTAssertEqual(PatternEngine.TempoSource.allCases.count, 6, """
             The source list changed size. That is legitimate work — the ruling enumerated \
-            three and the code needed a fourth for the modulation route — but it must be a \
-            DECISION: add the case, say what path writes it, and move this number with it. \
-            Sources today: \(names).
+            three, the code needed a fourth for the modulation route and a fifth for the OSC \
+            control cue (#1255, locked mode only) — but it must be a DECISION: add the case, say \
+            what path writes it, and move this number with it. Sources today: \(names).
             """)
+        XCTAssertTrue(PatternEngine.TempoSource.allCases.contains(.remoteControl),
+                      "the OSC control cue lost its own name in the transport log (#1255)")
     }
 
     // MARK: - claim 3b (SOURCE SCAN, T1 (a)) — a locked generate() names the player, not the servo

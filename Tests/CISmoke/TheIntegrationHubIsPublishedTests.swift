@@ -13,14 +13,17 @@
 // from the home page, the FAQ and tools; spokes from the hub. (2) Every address `OSCSender`
 // SENDS appears on the hub, and the two it never sends are named as never sent. (3) The ADM-OSC
 // rows use the v1.0 shape (`/azim /elev /dist /gain`) and no `/position/` remains. (4) The four
-// ports are on the page. (5) COUNTERWEIGHT on the page's own claim "no inbound socket": no
-// `NWListener` in `Sources/` — the day one appears, the page must change in the same commit.
+// ports are on the page. (5) The page's inbound claim matches the tree: since #1255 the ONE
+// `NWListener` in `Sources/` is `OSCReceiver` and the hub documents its whitelist (⛔ "no
+// inbound socket … no `NWListener`" until then). A second listener, or a hub that stops naming
+// the whitelist, must change the page in the same commit.
 //
 // ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (`48d0be7`) and this tree: claims 1–4
 // RED on the parent (the pages do not exist there), GREEN here; claim 5 GREEN on both.
 
 import Foundation
 import XCTest
+@testable import Echoelmusic
 
 final class TheIntegrationHubIsPublishedTests: XCTestCase {
 
@@ -73,10 +76,15 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
         }
     }
 
-    /// Claim 5 — counterweight: the page says Echoel has no inbound socket; the tree agrees.
-    func testTheNoInboundSocketClaimStillHolds() throws {
+    /// Claim 5 — the page's inbound claim matches the tree: ONE listener, the control whitelist,
+    /// documented on the hub with every address it honours (#1255).
+    func testTheInboundSocketClaimMatchesTheTree() throws {
         let hub = try text("docs/integrations.html")
-        XCTAssertTrue(hub.contains("no inbound socket"), "the hub no longer states the inbound limit (#1241)")
+        XCTAssertTrue(hub.contains("OSC control input"), "the hub no longer documents the control input (#1255)")
+        XCTAssertFalse(hub.contains("no inbound socket"), "the hub still says there is no inbound socket (#1255)")
+        for address in OSCControlCommand.addresses {
+            XCTAssertTrue(hub.contains(address), "\(address) is missing from the hub's control table (#1255)")
+        }
         let root = try repoRoot().appendingPathComponent("Sources")
         guard let walker = FileManager.default.enumerator(atPath: root.path) else {
             throw XCTSkip("cannot enumerate Sources — refusing to report a green it did not earn")
@@ -86,7 +94,7 @@ final class TheIntegrationHubIsPublishedTests: XCTestCase {
             if let code = try? String(contentsOf: root.appendingPathComponent(relative), encoding: .utf8),
                code.contains("NWListener") { listeners.append(relative) }
         }
-        XCTAssertTrue(listeners.isEmpty, "Sources/ now holds an NWListener (\(listeners)) — the hub's \"no inbound socket\" sentence and the FAQ's OSC-in answer must change in the same commit (#1241)")
+        XCTAssertEqual(listeners.sorted(), ["Echoelmusic/Sync/OSCReceiver.swift"], "the inbound-socket census moved (\(listeners.sorted())) — the hub's control-input section and the FAQ's OSC-in answer must change in the same commit (#1241/#1255)")
     }
 
     private static func addresses(in sender: String) -> Set<String> {
