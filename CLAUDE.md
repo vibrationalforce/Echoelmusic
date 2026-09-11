@@ -385,16 +385,16 @@ Existing top-level directories under `Sources/Echoelmusic/`: `Audio/ Bio/ Core/ 
 
 ## TEMPO INVARIANT — T1·T2·T3 (ratified 2026-08-13, founder handover)
 
-⭐ **Der Flow-Servo BLEIBT.** `BioComposer.tempo(for:)` rechnet unter `.flowFree`
-`hr·(1−Kohärenz) + 72·Kohärenz`: die Uhr folgt dem Puls und konvergiert von ihm WEG, je
-ruhiger der Körper wird. Das ist ausgeliefert und am Gerät abgenommen (2026-06-22, verfeinert
-07-03/07-04) — und es widersprach einer Doktrin-Zeile, die HR→Tempo pauschal verbot. **Ein
-Invariant, das das ausgelieferte Produkt verletzt, ist kein Invariant, sondern eine Falle für
-jede spätere Sitzung:** sie repariert entweder funktionierendes Audio oder lernt, die Doktrin
-zu ignorieren. Das Verbot war gegen „dein Herzschlag IST der Beat" gemeint — rohes Signal, 1:1,
-mit jedem Artefakt zitternd. Der gebaute Servo ist kohärenz-gegated, geglidet und geklammert.
-Deshalb wird die Regel PRÄZISIERT, nicht gelöscht.
-⚠️ Und der Servo konvergiert nur, wo Kohärenz GEMESSEN wird — auf jeder Quelle erst nach ~16 akzeptierten Schlägen; bis dahin ist Tempo ≡ 0,5·hr + 36. ⛔ Bis #1220 galt auf der Kamera bei Ruhepuls „nie" (`bio-pipeline-3`, DDSP-Tabelle).
+⭐ **FLOW FOLGT DEM PULS, LOOP STELLT MAN SELBST EIN — zwei Modi, nichts dazwischen** (Founder
+2026-09-11: „entweder direkt an die Herzrate gekoppelt oder man stellt sie selbst ein").
+`BioComposer.tempo(for:)` gibt unter `.flowFree` `min(max(hr, 40), 160)`, sonst den
+Resonanz-Default. ⛔ **Der Kohärenz-Blend `hr·(1−Kohärenz) + 72·Kohärenz` ist mit #1271
+GESTRICHEN**, und das war das „Hakeln": Kohärenz ist eine driftende Messung, also driftete das
+ZIEL — und das Ziel erreicht die Uhr nicht direkt, sondern über die Oktav-Faltung ins
+Genre-Fenster, die eine kleine Eingangs- in eine große Ausgangsänderung verstärkt, sobald sie
+eine Grenze kreuzt. **Das Verbot „dein Herzschlag IST der Beat" bleibt erfüllt** — vier Stufen
+sitzen weiter dazwischen: `bodyTempoTrustworthy`, die Faltung, die ±`tempoConvergeStep`-Kappe
+je Evolve und `glideTempo`s ~2 s. Kohärenz formt weiter Dichte, Harmonie und Klangfarbe.
 
 - **T1 — Tempo-Quellen sind aufzählbar und werden geloggt.** Das Tempo darf nur von (a) einer
   Nutzer-Geste (Lock, Feld-Edit, Tap, geladenes Projekt), (b) dem Flow-Servo, (c) einer
@@ -407,10 +407,10 @@ Deshalb wird die Regel PRÄZISIERT, nicht gelöscht.
   falten hieße, ein falsches Wort in genau die Log-Zeile zu schreiben, für die T1 existiert.
   ⭐ FÜNF seit #1255: `.remoteControl` — der OSC-Steuereingang, NUR unter `.studioLocked`.
 - **T2 — Rohe Herzfrequenz erreicht die Uhr nie direkt.** Kein Pfad darf eine BPM-Schätzung
-  (rPPG, BLE, HealthKit) ohne Servo (Kohärenz-Blend + Klammer + Glide) oder ohne ausdrückliche
+  (rPPG, BLE, HealthKit) ohne die vier Stufen oben oder ohne ausdrückliche
   Nutzer-Geste an den Takt geben. `.studioLocked` ist beweisbar unabhängig von `heartRateBPM`.
   ⚠️ **Die Zahlen stehen im CODE, nicht hier.** Der Beschluss nennt „Klammer 40–160" und das
-  ist zum Zeitpunkt der Ratifizierung exakt richtig (`min(max(pulled, 40), 160)`) — sie hier
+  ist weiterhin exakt richtig (`min(max(hr, 40), 160)`, #1271) — sie hier
   ein drittes Mal auszuschreiben wäre die #416-Falle in dem Dokument, das Tempo-Mehrdeutigkeit
   gerade beendet. Wer die Klammer prüft, liest `BioComposer.tempo(for:)`.
 - **T3 — CI-erzwungen, nicht dokument-erzwungen.** `Tests/CISmoke/TempoInvariantTests.swift`

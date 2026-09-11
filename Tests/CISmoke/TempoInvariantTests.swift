@@ -2,7 +2,8 @@
 // Echoel — #565. The T1–T3 tempo invariant, ratified 2026-08-13, made executable.
 //
 // WHY THE RULING EXISTED. `BioComposer.tempo(for:)` under `.flowFree` computes
-// `hr·(1−coherence) + 72·coherence` — the clock follows the pulse and converges AWAY from it
+// `min(max(hr, 40), 160)` — the clock follows the pulse, clamped (#1271; the coherence
+// blend it used to carry was removed by founder decision 2026-09-11)
 // as self-regulation rises. That is shipped, device-approved (decisions 2026-06-22, refined
 // 07-03/07-04), and it flatly contradicted a doctrine line banning HR→tempo outright. An
 // invariant the shipped product violates is not an invariant; it is a trap for every later
@@ -40,7 +41,7 @@
 // grading is by hand-transcription of the LOGIC, stated as such rather than implied green:
 //   · claims 1 and 2 are COUNTERWEIGHTS and would be green on both trees. They are the point
 //     of the file, not padding (#343): the ruling KEPT the servo, so the guard's first job is
-//     to pin what the servo does — clamp 40…160, converge to 72, and never let `.studioLocked`
+//     to pin what the servo does — clamp 40…160, ignore coherence, and never let `.studioLocked`
 //     read the heart. A future "simplification" that made Flow follow raw HR passes every T1
 //     scan below and fails claim 2.
 //   · claims 3–5 are FORWARD guards over shape this same commit creates. Booking them as
@@ -60,7 +61,7 @@
 //     and go red on a correct tree — #367 in its exact prototype form.
 //   · claims 1 and 2 driven numerically against the shipped formula: locked 124 is identical
 //     across {40, 55, 71, 100, 121, 190} bpm × {0, 0.5, 1} coherence; flow gives exactly 40 at
-//     20 bpm, exactly 160 at 200 bpm, and 72,0 for BOTH 55 and 130 bpm at full coherence.
+//     20 bpm, exactly 160 at 200 bpm, and the pulse itself in between, at EVERY coherence.
 
 import Foundation
 import XCTest
@@ -108,42 +109,83 @@ final class TempoInvariantTests: XCTestCase {
         }
     }
 
-    // MARK: - claim 2 (END-TO-END, T2) — the servo is clamped and it converges
+    // MARK: - claim 2 (END-TO-END, T2) — Flow follows the pulse, clamped, and nothing else
 
-    /// The other half of the ruling: Flow may follow the pulse, but only inside a musical
-    /// window and only while the body is unsettled. Both numbers are read from the shipped
-    /// branch (`min(max(pulled, 40), 160)`) rather than restated from doctrine prose — the
-    /// #416 rule applied to a threshold that now lives in two documents.
-    func testFlowIsClampedAndConvergesOnTheResonanceBand() {
+    /// ⭐ #1271 REPLACES THIS CLAIM'S OTHER HALF, by founder decision 2026-09-11: "Es soll
+    /// ganz einfach entweder direkt an die Herzrate gekoppelt sein oder man stellt sie selbst
+    /// ein." What stood here asserted the OPPOSITE of what ships now — that at full coherence
+    /// the tempo forgets the heart entirely and converges on 72. A guard that forbids the
+    /// shipped, founder-chosen behaviour is itself the defect (#364), so it is rewritten
+    /// rather than deleted, and the replacement is STRICTLY STRONGER: the old form pinned two
+    /// sample points of a blend, this one pins that coherence cannot move the clock at all.
+    ///
+    /// ⛔ AND T2 IS NOT WEAKENED BY IT. The ban was on "dein Herzschlag IST der Beat" — the
+    /// raw signal, 1:1, trembling with every artefact. Four mechanisms downstream of this
+    /// function still prevent exactly that, none of them changed: `bodyTempoTrustworthy` (a
+    /// unsettled reading moves nothing), the octave fold into the genre window, the
+    /// ±`tempoConvergeStep` cap per evolve tick, and `glideTempo`'s ~2 s ease.
+    func testFlowFollowsThePulseAndIsClamped() {
         let slow = BioComposer.tempo(for: input(mode: .flowFree, hr: 20, coherence: 0,
                                                 locked: 0))
         XCTAssertEqual(slow, 40, accuracy: 1e-9, """
-            An implausibly slow pulse produced \(slow) bpm. The servo's floor is what stops a \
-            failing rPPG estimate from dragging the take to a halt; without it the WORST bio \
-            signal has the LARGEST effect on the music.
+            An implausibly slow pulse produced \(slow) bpm. The floor is what stops a failing \
+            rPPG estimate from dragging the take to a halt; without it the WORST bio signal \
+            has the LARGEST effect on the music.
             """)
         let fast = BioComposer.tempo(for: input(mode: .flowFree, hr: 200, coherence: 0,
                                                 locked: 0))
         XCTAssertEqual(fast, 160, accuracy: 1e-9,
-                       "an implausibly fast pulse produced \(fast) bpm — the servo's ceiling is gone")
+                       "an implausibly fast pulse produced \(fast) bpm — the ceiling is gone")
 
-        // Convergence: at full coherence the tempo must forget the heart entirely. This is the
-        // sentence that makes the servo defensible under the science-only doctrine — the
-        // music moves AWAY from the pulse as self-regulation rises, rather than mirroring it.
-        let calmSlow = BioComposer.tempo(for: input(mode: .flowFree, hr: 55, coherence: 1,
-                                                    locked: 0))
-        let calmFast = BioComposer.tempo(for: input(mode: .flowFree, hr: 130, coherence: 1,
-                                                    locked: 0))
-        XCTAssertEqual(calmSlow, calmFast, accuracy: 1e-9, """
-            At full coherence a 55 bpm body gave \(calmSlow) and a 130 bpm body \(calmFast). \
-            They must agree: the whole ruling rests on the servo CONVERGING to the resonance \
-            band instead of tracking the pulse. If these diverge, "your heartbeat is the beat" \
-            is back and the doctrine's original ban was right after all.
-            """)
-        XCTAssertEqual(calmSlow, BioComposer.resonancePulseBPM, accuracy: 1e-9, """
-            The convergence target is \(calmSlow), not `resonancePulseBPM` \
-            (\(BioComposer.resonancePulseBPM)). The band is 6 breaths/min × 12 — a derived \
-            number, not a preference — so a drift here is a change to the science claim.
+        // Inside the window the tempo IS the pulse. This is the founder's "direkt an die
+        // Herzrate gekoppelt", stated as the equality it is.
+        for hr: Float in [41, 55, 72, 100, 159] {
+            let t = BioComposer.tempo(for: input(mode: .flowFree, hr: hr, coherence: 0,
+                                                 locked: 0))
+            XCTAssertEqual(t, Double(hr), accuracy: 1e-9, """
+                A \(hr) bpm body inside the window produced \(t). In Flow the suggested tempo \
+                IS the pulse; anything else is a second mapping nobody asked for.
+                """)
+        }
+    }
+
+    /// claim 2b (THE COMPLAINT, as an invariant) — coherence must not move the Flow clock.
+    ///
+    /// ⭐ THIS IS THE ONE THAT WOULD HAVE CAUGHT THE SYMPTOM. Coherence is a live measurement
+    /// that drifts, so while it was a term in the tempo the TARGET drifted with it — and the
+    /// target does not reach the clock directly: `EchoelStudioView` folds it octave-wise into
+    /// the genre's window, and a fold amplifies a small input change into a large output one
+    /// whenever it crosses a boundary. Founder 2026-09-11: "Mich irritiert die BPM die
+    /// manchmal hakelt." A wandering coherence was a wandering beat.
+    func testCoherenceDoesNotMoveTheFlowTempo() {
+        for hr: Float in [48, 66, 88, 132] {
+            let at0 = BioComposer.tempo(for: input(mode: .flowFree, hr: hr, coherence: 0,
+                                                   locked: 0))
+            for coherence: Float in [0.25, 0.5, 0.75, 1] {
+                let t = BioComposer.tempo(for: input(mode: .flowFree, hr: hr,
+                                                     coherence: coherence, locked: 0))
+                XCTAssertEqual(t, at0, accuracy: 1e-9, """
+                    At \(hr) bpm the tempo moved from \(at0) to \(t) when coherence went to \
+                    \(coherence). Coherence is a drifting live measurement; a term of it in \
+                    the tempo makes the beat wander on its own. It still shapes density, \
+                    harmony and timbre — it must not shape the clock.
+                    """)
+            }
+        }
+    }
+
+    /// claim 2c (THE FALLBACK) — no reading at all is a musical default, not the clamp floor.
+    /// Before #1271 an absent pulse blended 0 bpm with the resonance band and clamped, which
+    /// at neutral coherence produced 40 — the slowest tempo the instrument can run, chosen by
+    /// the ABSENCE of information.
+    func testAnAbsentPulseFallsBackToTheResonanceBand() {
+        let t = BioComposer.tempo(for: input(mode: .flowFree, hr: 0, coherence: 0.5,
+                                             locked: 0))
+        XCTAssertEqual(t, BioComposer.resonancePulseBPM, accuracy: 1e-9, """
+            With no pulse the tempo was \(t), not `resonancePulseBPM` \
+            (\(BioComposer.resonancePulseBPM)). An absent reading must not pick the extreme \
+            end of the range — the callers hold the previous tempo anyway, and this value is \
+            what a first take gets before anything is measured.
             """)
     }
 

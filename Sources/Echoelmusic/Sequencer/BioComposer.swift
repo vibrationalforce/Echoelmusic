@@ -438,10 +438,35 @@ public enum BioComposer {
     static let resonancePulseBPM = 72.0
 
     /// Tempo a take should run at: clamped into the style's window in Studio mode;
-    /// in Flow it follows the heart but is pulled toward the resonance band as
-    /// coherence rises (two-clock entrainment — the groove settles WITH the body
-    /// instead of merely mirroring it). At zero coherence Flow follows the heart
-    /// exactly; at full coherence it converges to ~72 BPM. Pure + testable.
+    /// in Flow it FOLLOWS THE PULSE, clamped to a musical window. Pure + testable.
+    ///
+    /// ⭐ #1271 — THE COHERENCE BLEND IS REMOVED, by founder decision 2026-09-11: "Mich
+    /// irritiert die BPM die manchmal hakelt. Es soll ganz einfach entweder direkt an die
+    /// Herzrate gekoppelt sein oder man stellt sie selbst ein." Two modes, nothing between.
+    ///
+    /// WHAT IT USED TO DO AND WHY THAT HAKELTE: `hr·(1−coherence) + 72·coherence`. Coherence
+    /// is itself a live measurement that drifts, so the TARGET drifted with it — and the
+    /// target does not reach the clock directly: `EchoelStudioView` folds it octave-wise into
+    /// the genre's window (`StudioCalculator.genreTempo`), and a fold AMPLIFIES a small input
+    /// change into a large output one when it crosses a boundary. A wandering coherence
+    /// therefore produced a wandering beat, re-aimed on every evolve tick. Removing the blend
+    /// makes the target a function of the pulse alone: once the pulse is steady, so is it.
+    ///
+    /// ⚠️ THIS IS NOT "raw heart rate reaches the clock" AND T2 IS NOT WEAKENED. FOUR
+    /// mechanisms still sit between this number and the beat, none of them touched here:
+    /// `bodyTempoTrustworthy(frame)` (nothing moves while the reading is unsettled), the
+    /// octave fold, the ±`tempoConvergeStep` cap per evolve tick, and `glideTempo`'s ~2 s
+    /// ease. What T2 banned was "dein Herzschlag IST der Beat" — the raw signal, 1:1,
+    /// trembling with every artefact. That remains prevented, four times over.
+    ///
+    /// ⛔ AND ONE ARGUMENT FOR THE BLEND DIED WITH IT, written down so it is not re-proposed
+    /// from the other file: `StudioCalculator.tilted`'s reason 1 ("coherence erases the body
+    /// completely… a calm room full of people gets one tempo") described this blend as the
+    /// TOTAL COLLAPSE it was defending against. That collapse is gone, so that reason is gone
+    /// with it; the tilt keeps reasons 2 and 3 and is untouched.
+    ///
+    /// `resonancePulseBPM` survives as the no-reading fallback — a musical default is better
+    /// than the clamp floor of 40, which is what an absent pulse used to produce.
     public static func tempo(for input: Input) -> Double {
         switch input.mode {
         case .studioLocked:
@@ -449,9 +474,9 @@ public enum BioComposer {
             return min(max(input.lockedTempo, r.lowerBound), r.upperBound)
         case .flowFree:
             let hr = Double(input.heartRateBPM)
-            let calm = Double(clamp01(input.coherence))
-            let pulled = hr * (1 - calm) + Self.resonancePulseBPM * calm
-            return min(max(pulled, 40), 160)
+            // No reading at all → a musical default, not the clamp floor.
+            guard hr.isFinite, hr > 0 else { return Self.resonancePulseBPM }
+            return min(max(hr, 40), 160)
         }
     }
 

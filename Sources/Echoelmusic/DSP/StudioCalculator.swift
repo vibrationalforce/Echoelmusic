@@ -231,12 +231,18 @@ public struct StudioCalculator: Sendable, Equatable {
     /// versions of this paragraph led with the weakest one and measured it on a flattering
     /// genre.
     ///
-    /// **1. Coherence erases the body completely, and that is not genre-dependent.**
-    /// `BioComposer.tempo(for:)` pulls the suggested tempo toward `resonancePulseBPM` (72) as
-    /// coherence rises; at full coherence EVERY performer's suggested tempo is exactly 72,
-    /// whatever their heart is doing. `genreTempo(72, into: 46…78)` is 72 for all of them. A
-    /// calm room full of people gets one tempo. That is the total collapse, it happens before
-    /// any fold, and the tilt is the only thing downstream that still knows who is playing.
+    /// ⛔ **1. IS RETRACTED (#1271) — the collapse it described no longer exists.** It read:
+    /// "coherence erases the body completely … at full coherence EVERY performer's suggested
+    /// tempo is exactly 72 … a calm room full of people gets one tempo." That was an accurate
+    /// description of `BioComposer.tempo(for:)`'s coherence blend, and the founder removed the
+    /// blend on 2026-09-11 ("entweder direkt an die Herzrate gekoppelt oder man stellt sie
+    /// selbst ein"). Flow now returns the pulse itself, clamped, so two different hearts give
+    /// two different suggested tempos at every coherence.
+    ///
+    /// ⚠️ IT IS RETRACTED, NOT DELETED, because it was this paragraph's STRONGEST reason and
+    /// a reader who remembers it needs to know it is gone rather than wonder why it vanished.
+    /// Reasons 2 and 3 below stand unchanged and are enough on their own; the tilt is NOT
+    /// re-litigated by this — it was never the blend's dependant, only its loudest witness.
     ///
     /// **2. The tilt is the HABITUAL rate; the live mapping is THIS MOMENT's.** They are two
     /// different measurements of the same person, which is exactly why stacking them is not
