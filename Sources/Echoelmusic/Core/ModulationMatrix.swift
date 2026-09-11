@@ -45,6 +45,16 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     case faceSmile
     case faceBrow
     case faceJaw
+    // #1260 (K4) — nine more, appended at the END for the same persistence reason.
+    case faceBrowDown
+    case faceEyeBlink
+    case faceEyeSquint
+    case faceMouthPucker
+    case faceCheekPuff
+    case headYaw
+    case headPitch
+    case headRoll
+    case headDistance
 
     /// Human label for the "bind this parameter to the body" UI (the one shared
     /// source vocabulary — see BoundParameter / the modulation matrix).
@@ -59,8 +69,23 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .faceSmile:   return "Smile"
         case .faceBrow:    return "Brow"
         case .faceJaw:     return "Jaw"
+        case .faceBrowDown:    return "Brow down"
+        case .faceEyeBlink:    return "Blink"
+        case .faceEyeSquint:   return "Squint"
+        case .faceMouthPucker: return "Pucker"
+        case .faceCheekPuff:   return "Cheeks"
+        case .headYaw:         return "Head turn"
+        case .headPitch:       return "Head nod"
+        case .headRoll:        return "Head tilt"
+        case .headDistance:    return "Head distance"
         }
     }
+
+    /// The channels a face take can carry (`FaceExpressionBioPublisher`, #1257/#1260).
+    public static let faceChannels: [ModSource] = [
+        .faceSmile, .faceBrow, .faceJaw, .faceBrowDown, .faceEyeBlink, .faceEyeSquint,
+        .faceMouthPucker, .faceCheekPuff, .headYaw, .headPitch, .headRoll, .headDistance
+    ]
 
     /// Natural input range of the raw field, used for [0..1] normalization.
     ///
@@ -133,7 +158,9 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .heartRate:   return 40...200
         case .breathRate:  return 3...30
         case .hrv, .breathPhase, .coherence, .motion,
-             .faceSmile, .faceBrow, .faceJaw: return 0...1
+             .faceSmile, .faceBrow, .faceJaw,
+             .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
+             .headYaw, .headPitch, .headRoll, .headDistance: return 0...1
         }
     }
 
@@ -149,6 +176,15 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .faceSmile:   return frame.faceSmile
         case .faceBrow:    return frame.faceBrowRaise
         case .faceJaw:     return frame.faceJawOpen
+        case .faceBrowDown:    return frame.faceBrowDown
+        case .faceEyeBlink:    return frame.faceEyeBlink
+        case .faceEyeSquint:   return frame.faceEyeSquint
+        case .faceMouthPucker: return frame.faceMouthPucker
+        case .faceCheekPuff:   return frame.faceCheekPuff
+        case .headYaw:         return frame.headYaw
+        case .headPitch:       return frame.headPitch
+        case .headRoll:        return frame.headRoll
+        case .headDistance:    return frame.headDistance
         }
     }
 
@@ -212,7 +248,9 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .hrv:         return frame.hrvNormalized > 0
         case .coherence:   return frame.coherence > 0
         case .breathRate, .breathPhase: return frame.hasMeasuredBreath
-        case .faceSmile, .faceBrow, .faceJaw: return frame.source == .faceCam
+        case .faceSmile, .faceBrow, .faceJaw,
+             .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
+             .headYaw, .headPitch, .headRoll, .headDistance: return frame.source == .faceCam
         // Motion has NO producer: all six `BioSampleFrame` construction sites in
         // `Sources/` hardcode `motionEnergy: 0`, and the last CoreMotion provider was
         // removed in the 2026-06-19 cleanup. So nothing measures it, and `false` is the
@@ -248,7 +286,9 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     public var hasProducer: Bool {
         switch self {
         case .heartRate, .hrv, .coherence, .breathRate, .breathPhase: return true
-        case .faceSmile, .faceBrow, .faceJaw: return true
+        case .faceSmile, .faceBrow, .faceJaw,
+             .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
+             .headYaw, .headPitch, .headRoll, .headDistance: return true
         case .motion: return false
         }
     }

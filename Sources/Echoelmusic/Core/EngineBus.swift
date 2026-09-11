@@ -449,6 +449,21 @@ public struct BioSampleFrame: Sendable, Equatable {
     /// Jaw-open expression as a control value, [0..1]. `0` = not tracked / neutral.
     public let faceJawOpen: Float
 
+    // #1260 (K4) — nine more EXPRESSION / HEAD-POSE control channels, [0..1], written only
+    // by `FaceExpressionBioPublisher` (`.faceCam`); every other publisher leaves the defaults.
+    // The five blendShape channels are unipolar (0 = at rest); the three head angles are
+    // CENTRED (0.5 = the calibrated neutral, 0/1 = the full turn either way); distance is
+    // 0 = near, 1 = far. Movement as a control signal, never an inferred state.
+    public let faceBrowDown: Float
+    public let faceEyeBlink: Float
+    public let faceEyeSquint: Float
+    public let faceMouthPucker: Float
+    public let faceCheekPuff: Float
+    public let headYaw: Float
+    public let headPitch: Float
+    public let headRoll: Float
+    public let headDistance: Float
+
     /// Where the frame originated.
     public let source: BioSource
 
@@ -466,7 +481,16 @@ public struct BioSampleFrame: Sendable, Equatable {
         hrvPNN50: Float = 0,
         faceSmile: Float = 0,
         faceBrowRaise: Float = 0,
-        faceJawOpen: Float = 0
+        faceJawOpen: Float = 0,
+        faceBrowDown: Float = 0,
+        faceEyeBlink: Float = 0,
+        faceEyeSquint: Float = 0,
+        faceMouthPucker: Float = 0,
+        faceCheekPuff: Float = 0,
+        headYaw: Float = 0.5,
+        headPitch: Float = 0.5,
+        headRoll: Float = 0.5,
+        headDistance: Float = 0.5
     ) {
         self.timestamp = timestamp
         self.heartRateBPM = heartRateBPM
@@ -482,6 +506,15 @@ public struct BioSampleFrame: Sendable, Equatable {
         self.faceSmile = faceSmile
         self.faceBrowRaise = faceBrowRaise
         self.faceJawOpen = faceJawOpen
+        self.faceBrowDown = faceBrowDown
+        self.faceEyeBlink = faceEyeBlink
+        self.faceEyeSquint = faceEyeSquint
+        self.faceMouthPucker = faceMouthPucker
+        self.faceCheekPuff = faceCheekPuff
+        self.headYaw = headYaw
+        self.headPitch = headPitch
+        self.headRoll = headRoll
+        self.headDistance = headDistance
     }
 }
 

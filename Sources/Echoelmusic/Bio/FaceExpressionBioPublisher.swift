@@ -114,6 +114,10 @@ public final class FaceExpressionBioPublisher {
     }
 
     @ObservationIgnored private var mapping = FaceExpressionBioPublisher.freshMapping()
+    /// #1260 — the nine further channels (brow down, blink, squint, pucker, cheeks, head
+    /// turn/nod/tilt/distance), same three stages, one bank.
+    @ObservationIgnored private var gestures = FaceGestureBank(deadzone: FaceExpressionMapping.defaultDeadzone)
+    @ObservationIgnored private var gestureNeutral: [[Float]] = []
     @ObservationIgnored private let latest = LatestFaceSample()
     @ObservationIgnored private var lastPublish: CFAbsoluteTime = 0
     @ObservationIgnored private var calibration = FaceExpressionBioPublisher.loadCalibration()
@@ -154,6 +158,7 @@ public final class FaceExpressionBioPublisher {
     public func calibrate(seconds: Double = 3) {
         guard isPublishing, !isCalibrating else { return }
         neutralSamples = ([], [], [])
+        gestureNeutral = []
         calibrationEndsAt = CFAbsoluteTimeGetCurrent() + Swift.max(0.5, seconds)
         isCalibrating = true
     }
@@ -200,6 +205,7 @@ public final class FaceExpressionBioPublisher {
         #endif
         latest.clear()
         mapping = Self.freshMapping()
+        gestures = FaceGestureBank(deadzone: FaceExpressionMapping.defaultDeadzone)
         isCalibrating = false
         isFaceTracked = false
         faceLostAt = nil
@@ -236,13 +242,15 @@ public final class FaceExpressionBioPublisher {
             // own law, and `usableBio()` ages the last frame out after the freshness window).
             if isFaceTracked { isFaceTracked = false; faceLostAt = now }
             guard let lostAt = faceLostAt else { return }
-            if mapping.isSettled || now - lostAt > Self.lossFadeCapSeconds {
+            if (mapping.isSettled && gestures.isSettled) || now - lostAt > Self.lossFadeCapSeconds {
                 faceLostAt = nil
                 mapping = mapping.released(dt: 10)   // exact 0, hysteresis released
+                gestures = gestures.released(dt: 10)
                 smile = 0; browRaise = 0; jawOpen = 0
                 return
             }
             mapping = mapping.released(dt: dt)
+            gestures = gestures.released(dt: dt)
             lastPublish = now
             smile = mapping.smile; browRaise = mapping.browRaise; jawOpen = mapping.jawOpen
             publishFrame(bus: bus, at: now)
@@ -252,14 +260,24 @@ public final class FaceExpressionBioPublisher {
         isFaceTracked = true
         lastPublish = now
         let raw = FaceExpressionMapping.rawChannels(from: bag)
+        let rawGestures = FaceGestureChannel.rawValues(from: bag)
         if isCalibrating {
             neutralSamples.smile.append(raw.smile)
             neutralSamples.brow.append(raw.browRaise)
             neutralSamples.jaw.append(raw.jawOpen)
+            gestureNeutral.append(rawGestures)
             if now >= calibrationEndsAt {
                 calibration = FaceCalibration.fromNeutral(smile: neutralSamples.smile,
                                                           browRaise: neutralSamples.brow,
                                                           jawOpen: neutralSamples.jaw)
+                // #1260 — the bank's baselines from the same hold (mean per channel).
+                var baselines: [String: Float] = [:]
+                for (i, ch) in FaceGestureChannel.allCases.enumerated() {
+                    let xs = gestureNeutral.compactMap { i < $0.count && $0[i].isFinite ? $0[i] : nil }
+                    if !xs.isEmpty { baselines[ch.rawValue] = xs.reduce(0, +) / Float(xs.count) }
+                }
+                calibration.gestureBaselines = baselines
+                gestureNeutral = []
                 if let data = try? JSONEncoder().encode(calibration) {
                     UserDefaults.standard.set(data, forKey: FaceCalibration.defaultsKey)
                 }
@@ -273,6 +291,7 @@ public final class FaceExpressionBioPublisher {
                                   rawBrowRaise: scaled.browRaise,
                                   rawJawOpen: scaled.jawOpen,
                                   dt: dt)
+        gestures = gestures.updated(raw: calibration.applyGestures(rawGestures), dt: dt)
         smile = mapping.smile
         browRaise = mapping.browRaise
         jawOpen = mapping.jawOpen
@@ -292,7 +311,16 @@ public final class FaceExpressionBioPublisher {
             source: .faceCam,
             faceSmile: mapping.smile,
             faceBrowRaise: mapping.browRaise,
-            faceJawOpen: mapping.jawOpen
+            faceJawOpen: mapping.jawOpen,
+            faceBrowDown: gestures[.browDown],
+            faceEyeBlink: gestures[.eyeBlink],
+            faceEyeSquint: gestures[.eyeSquint],
+            faceMouthPucker: gestures[.mouthPucker],
+            faceCheekPuff: gestures[.cheekPuff],
+            headYaw: gestures[.headYaw],
+            headPitch: gestures[.headPitch],
+            headRoll: gestures[.headRoll],
+            headDistance: gestures[.headDistance]
         ))
     }
     #endif
@@ -310,9 +338,23 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
         for anchor in anchors {
             guard let face = anchor as? ARFaceAnchor else { continue }
             var bag: [String: Float] = [:]
-            bag.reserveCapacity(face.blendShapes.count)
+            bag.reserveCapacity(face.blendShapes.count + 4)
             for (key, value) in face.blendShapes {
                 bag[key.rawValue] = value.floatValue
+            }
+            // #1260 — head pose RELATIVE TO THE CAMERA (world-space anchor × inverse camera),
+            // so holding the phone off-axis is not a head turn. Radians / metres go into the
+            // same bag; `FaceGestureChannel` normalises them. Sign convention is a device
+            // ask (see `FaceGestureChannel.yawFullScaleRadians`).
+            if let camera = session.currentFrame?.camera.transform {
+                let rel = simd_inverse(camera) * face.transform
+                let fwd = simd_normalize(SIMD3(rel.columns.2.x, rel.columns.2.y, rel.columns.2.z))
+                let right = simd_normalize(SIMD3(rel.columns.0.x, rel.columns.0.y, rel.columns.0.z))
+                let t = SIMD3(rel.columns.3.x, rel.columns.3.y, rel.columns.3.z)
+                bag[FaceGestureChannel.headYawKey] = atan2f(fwd.x, fwd.z)
+                bag[FaceGestureChannel.headPitchKey] = asinf(Swift.max(-1, Swift.min(1, fwd.y)))
+                bag[FaceGestureChannel.headRollKey] = atan2f(right.y, right.x)
+                bag[FaceGestureChannel.headDistanceKey] = simd_length(t)
             }
             latest.store(bag)
         }

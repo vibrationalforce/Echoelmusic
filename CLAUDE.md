@@ -720,6 +720,8 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
                                               indistinguishable from a still performer.
                                               Gated on `ModSource.motion.hasProducer`
 /echoelmusic/mod/<key>           float      (modulation-matrix outs, e.g. seq.tempo)
+/echoelmusic/gesture/<ModSource>  float [0-1] — NUR auf `.faceCam`-Frames (#1260): die zwölf
+                                 Face-/Kopf-Kanäle (`ModSource.faceChannels`), Kopfwinkel zentriert (0,5 = neutral)
 /echoelmusic/bio/event/heartbeat | breath/inhale | breath/exhale | coherence
                                                      (discrete events, ADRESSEN MIT PRODUZENT)
 /echoelmusic/bio/event/motion    — Adresse existiert, wird nie gesendet (dieselbe #215-Begründung

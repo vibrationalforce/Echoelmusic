@@ -217,6 +217,23 @@ public struct FaceCalibration: Sendable, Equatable, Codable {
     public var smileBaseline: Float
     public var browBaseline: Float
     public var jawBaseline: Float
+    /// #1260 — neutral baselines of the nine gesture-bank channels, keyed by
+    /// `FaceGestureChannel.rawValue`; a missing key is identity for that channel. Decoded
+    /// with `decodeIfPresent` so a calibration persisted before #1260 still loads.
+    public var gestureBaselines: [String: Float] = [:]
+
+    private enum CodingKeys: String, CodingKey {
+        case smileBaseline, browBaseline, jawBaseline, gestureBaselines
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let s = try c.decode(Float.self, forKey: .smileBaseline)
+        let b = try c.decode(Float.self, forKey: .browBaseline)
+        let j = try c.decode(Float.self, forKey: .jawBaseline)
+        self.init(smileBaseline: s, browBaseline: b, jawBaseline: j)
+        gestureBaselines = (try c.decodeIfPresent([String: Float].self, forKey: .gestureBaselines)) ?? [:]
+    }
 
     public static let identity = FaceCalibration(smileBaseline: 0, browBaseline: 0, jawBaseline: 0)
     public static let minimumSpan: Float = 0.2
@@ -245,6 +262,19 @@ public struct FaceCalibration: Sendable, Equatable, Codable {
         return FaceExpressionMapping.clamp01((FaceExpressionMapping.clamp01(raw) - b) / span)
     }
 
+    /// #1260 — the gesture bank's raw values → calibrated, per channel: unipolar channels
+    /// rescale from their neutral (as the three above), CENTRED channels are re-centred so
+    /// the calibrated neutral reads exactly 0.5 (a phone held off-axis is not a head turn).
+    public func applyGestures(_ raw: [Float]) -> [Float] {
+        FaceGestureChannel.allCases.enumerated().map { i, ch in
+            let v = i < raw.count ? raw[i] : ch.neutral
+            guard let b = gestureBaselines[ch.rawValue] else { return FaceExpressionMapping.clamp01(v) }
+            return ch.isCentered
+                ? FaceExpressionMapping.clamp01(v - b + 0.5)
+                : Self.rescale(v, baseline: b)
+        }
+    }
+
     /// Baselines = the MEAN of the samples collected while the face was held still. An
     /// empty channel keeps baseline 0 (identity on that channel), so a hold that produced
     /// no frames — face left the picture — cannot write a calibration from nothing.
@@ -255,5 +285,127 @@ public struct FaceCalibration: Sendable, Equatable, Codable {
             return finite.reduce(0, +) / Float(finite.count)
         }
         return FaceCalibration(smileBaseline: mean(smile), browBaseline: mean(browRaise), jawBaseline: mean(jawOpen))
+    }
+}
+
+// MARK: - The gesture bank (#1260, K4)
+
+/// The nine channels beyond smile/brow/jaw, in the order the bank stores them. Raw values
+/// come from the blendShape bag (unipolar, ARKit 0…1) or from the head pose the publisher
+/// derives from `ARFaceAnchor.transform` (angles in radians, distance in metres, under the
+/// `head.*` keys of the same bag) — this type turns both into [0..1] control values.
+public enum FaceGestureChannel: String, CaseIterable, Sendable {
+    case browDown, eyeBlink, eyeSquint, mouthPucker, cheekPuff
+    case headYaw, headPitch, headRoll, headDistance
+
+    /// Head angles are CENTRED: 0.5 is the neutral pose, 0 / 1 the full excursion.
+    public var isCentered: Bool {
+        switch self {
+        case .headYaw, .headPitch, .headRoll: return true
+        default: return false
+        }
+    }
+    public var neutral: Float { isCentered ? 0.5 : 0 }
+
+    /// Full-scale head excursions — a comfortable turn, not the anatomical limit, so the
+    /// channel reaches 1 before the tracker loses the face. NEEDS-FOUNDER-VERIFY (#1260):
+    /// turn/nod/tilt to a natural extreme — does the number reach ~0/1 without saturating
+    /// early, and does a turn to the LEFT read below 0.5 (sign convention)?
+    public static let yawFullScaleRadians: Float = 35 * .pi / 180
+    public static let pitchFullScaleRadians: Float = 25 * .pi / 180
+    public static let rollFullScaleRadians: Float = 35 * .pi / 180
+    /// Distance window in metres: 0 at `nearMetres`, 1 at `farMetres`.
+    public static let nearMetres: Float = 0.15
+    public static let farMetres: Float = 0.75
+
+    /// The bag keys the publisher writes the head pose under (radians / metres).
+    public static let headYawKey = "head.yaw"
+    public static let headPitchKey = "head.pitch"
+    public static let headRollKey = "head.roll"
+    public static let headDistanceKey = "head.distance"
+
+    /// Bag → raw [0..1] for this channel. Missing keys read as the channel's neutral.
+    public func rawValue(from bag: [String: Float]) -> Float {
+        func v(_ k: String) -> Float { FaceExpressionMapping.clamp01(bag[k] ?? 0) }
+        func centred(_ k: String, fullScale: Float) -> Float {
+            guard let r = bag[k], r.isFinite else { return 0.5 }
+            return FaceExpressionMapping.clamp01(0.5 + r / (2 * fullScale))
+        }
+        switch self {
+        case .browDown:    return (v("browDownLeft") + v("browDownRight")) / 2
+        case .eyeBlink:    return (v("eyeBlinkLeft") + v("eyeBlinkRight")) / 2
+        case .eyeSquint:   return (v("eyeSquintLeft") + v("eyeSquintRight")) / 2
+        case .mouthPucker: return v("mouthPucker")
+        case .cheekPuff:   return v("cheekPuff")
+        case .headYaw:     return centred(Self.headYawKey, fullScale: Self.yawFullScaleRadians)
+        case .headPitch:   return centred(Self.headPitchKey, fullScale: Self.pitchFullScaleRadians)
+        case .headRoll:    return centred(Self.headRollKey, fullScale: Self.rollFullScaleRadians)
+        case .headDistance:
+            guard let d = bag[Self.headDistanceKey], d.isFinite else { return 0.5 }
+            return FaceExpressionMapping.clamp01((d - Self.nearMetres) / (Self.farMetres - Self.nearMetres))
+        }
+    }
+
+    public static func rawValues(from bag: [String: Float]) -> [Float] {
+        allCases.map { $0.rawValue(from: bag) }
+    }
+}
+
+/// The nine gesture channels with the SAME three stages as `FaceExpressionMapping`
+/// (deadzone-with-hysteresis, one-pole EMA, release on loss), generalised: centred
+/// channels gate on their distance from 0.5 and keep 0.5 as rest. Pure value type.
+public struct FaceGestureBank: Sendable, Equatable {
+    public private(set) var values: [Float]
+    private var active: [Bool]
+    public let timeConstant: Double
+    public let deadzone: Float
+
+    public init(timeConstant: Double = FaceExpressionMapping.defaultTimeConstant,
+                deadzone: Float = 0) {
+        values = FaceGestureChannel.allCases.map(\.neutral)
+        active = Array(repeating: false, count: FaceGestureChannel.allCases.count)
+        self.timeConstant = Swift.max(0, timeConstant)
+        self.deadzone = Swift.min(0.5, FaceExpressionMapping.clamp01(deadzone))
+    }
+
+    public subscript(_ ch: FaceGestureChannel) -> Float {
+        values[FaceGestureChannel.allCases.firstIndex(of: ch) ?? 0]
+    }
+
+    /// Advance `dt` seconds toward the (calibrated) raw values, one per channel in
+    /// `FaceGestureChannel.allCases` order; a short array leaves the rest at neutral.
+    public func updated(raw: [Float], dt: Double) -> FaceGestureBank {
+        let alpha = FaceExpressionMapping.alpha(dt: dt, tau: timeConstant)
+        var copy = self
+        for (i, ch) in FaceGestureChannel.allCases.enumerated() {
+            let r = FaceExpressionMapping.clamp01(i < raw.count ? raw[i] : ch.neutral)
+            let target: Float
+            if ch.isCentered {
+                let d = r - 0.5
+                let g = FaceExpressionMapping.gate(Swift.min(1, abs(d) * 2), active: &copy.active[i], deadzone: deadzone)
+                target = 0.5 + (d < 0 ? -g : g) * 0.5
+            } else {
+                target = FaceExpressionMapping.gate(r, active: &copy.active[i], deadzone: deadzone)
+            }
+            copy.values[i] = FaceExpressionMapping.ema(current: values[i], target: target, alpha: alpha)
+        }
+        return copy
+    }
+
+    /// Loss: every channel eases to its NEUTRAL (0, or 0.5 for the head angles) and the
+    /// hysteresis releases — the same contract as `FaceExpressionMapping.released`.
+    public func released(dt: Double, timeConstant: Double = FaceExpressionMapping.lossTimeConstant)
+        -> FaceGestureBank {
+        let alpha = FaceExpressionMapping.alpha(dt: dt, tau: timeConstant)
+        var copy = self
+        for (i, ch) in FaceGestureChannel.allCases.enumerated() {
+            copy.values[i] = FaceExpressionMapping.ema(current: values[i], target: ch.neutral, alpha: alpha)
+            copy.active[i] = false
+        }
+        return copy
+    }
+
+    public var isSettled: Bool {
+        zip(values, FaceGestureChannel.allCases).allSatisfy { abs($0 - $1.neutral) < 0.005 }
     }
 }

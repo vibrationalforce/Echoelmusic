@@ -512,10 +512,26 @@ public final class OSCSender {
         // ⚠️ FIRST in the list is a courtesy, not a guarantee: separate datagrams, and UDP does
         // not promise order. The header tells the receiver to latch it as state; at ~1 Hz and
         // changing only when the player switches source, a one-tick inversion self-corrects.
+        // #1260 (K4) — the face take's twelve gesture channels, ONLY on a `.faceCam` frame
+        // (provenance is the measurement gate for these channels — `ModSource.isMeasured`).
+        // Expression and head pose as CONTROL values, one float each, under their own
+        // namespace so a `/bio/*` integrator never sees a channel it did not ask for.
+        // `/bio/synthetic` rides along as usual (the batch is non-empty).
+        if frame.source == .faceCam {
+            for source in ModSource.faceChannels {
+                msgs.append((Self.gestureAddress(source), [source.rawValue(from: frame)]))
+            }
+        }
         if !msgs.isEmpty {
             msgs.insert(("/echoelmusic/bio/synthetic", [frame.source.isSynthetic ? 1 : 0]), at: 0)
         }
         return msgs
+    }
+
+    /// `/echoelmusic/gesture/<channel>`, the channel spelled as its `ModSource` raw value
+    /// (`faceSmile`, `headYaw`, …) — the same identifier a persisted route carries.
+    nonisolated static func gestureAddress(_ source: ModSource) -> String {
+        "/echoelmusic/gesture/" + source.rawValue
     }
 
     private func send(address: String, floats: [Float]) {
