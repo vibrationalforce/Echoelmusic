@@ -2770,27 +2770,57 @@ public final class AudioEngine {
             // and there is no device here to tell the two apart.
             let nodeDisagreesWithHardware = !nodeFormatUnusable && hwRate > 0
                 && abs(inFmt.sampleRate - hwRate) > 1
-            if nodeFormatUnusable || nodeDisagreesWithHardware {
-                // #823: the node can still hand back its placeholder right after the
-                // claim (the I/O unit rebuilds lazily on `start()`). The SESSION knows
-                // the real hardware format by now — build the connect format from ITS
-                // values, never from an invented constant: a connect format that
-                // disagrees with hardware raises an ObjC exception no Swift `catch`
-                // sees. Guarded on the session's own numbers, so this can only
-                // substitute a format the hardware itself just reported.
+            // ⛔ #1269 — #823's SUBSTITUTION IS WITHDRAWN FOR THE **UNUSABLE** CASE, and the
+            // founder's v10.79.469 (2589) device log is what withdrew it. Ladder, verbatim:
+            //     monitor: on: prepared before format read (#1251)
+            //     monitor: input format from session fallback (node unusable — #823:
+            //                                  node 0.0 Hz/2 ch, session 48000.0 Hz/1 ch)
+            //     monitor: on 2/5: attaching monitor nodes
+            //     monitor: on 3/5: connecting input → notch (edge 48000.0 Hz/1 ch,
+            //                                  session 48000.0 Hz/1 ch, out 48000.0 Hz/2 ch)
+            //     CRASH exception: com.apple.coreaudio.avfaudio: Input HW format is invalid
+            //
+            // THE SUBSTITUTION CANNOT SAVE THIS CASE, AND THAT IS NOT AN OPINION: the edge and
+            // the session were IDENTICAL (48000/1 both) and it aborted anyway. `connect(…)`
+            // from an input node validates THE NODE'S OWN hardware format, not the format
+            // argument — with the input scope unestablished (0 Hz) any connect from it throws,
+            // whatever you pass. So substituting here does not avoid a mismatch; it converts a
+            // clean, recoverable bail-out into a guaranteed uncatchable ObjC abort. #823 built
+            // the guard below AND then routed around it.
+            //
+            // ⭐ THE SAME LOG SETTLES TWO STANDING HYPOTHESES, both written above:
+            //   · #4 ("if edge and session are IDENTICAL and it still aborts, the mismatch is
+            //     not in this format") — its own discriminator fired. REFUTED.
+            //   · #5 (`prepare()` rebuilds the input scope) — the `#1251` rung is IN this build
+            //     and printed; the node still read 0.0 Hz two lines later. REFUTED. Its comment
+            //     names the condition for what comes next: try #6 (connect on the RUNNING
+            //     engine) only once a device log shows #5 did not close the family. It has.
+            //
+            // ⚠️ WHAT THIS SLICE DOES AND DOES NOT DO. It stops the crash; it does NOT make
+            // monitoring start on this route. The node reporting 0.0 Hz/2 ch against a session
+            // of 48000/1 is a PLACEHOLDER — the read happens 2 ms after `setActive`, and a
+            // route change is asynchronous (`latency:` one screen up logged `in=n/a`,
+            // `route=none→Lautsprecher`: there was no input route at all). Waiting for it
+            // cannot happen here — `setInputMonitoring` is SYNCHRONOUS and a busy-wait would
+            // block the main actor. That is #6's slice, not this one. A feature that declines
+            // to start and says so beats a feature that aborts the app.
+            //
+            // The DISAGREEMENT path keeps its substitution untouched (#954): there the node HAS
+            // a valid format and only its rate is stale, so the session's rate is a real
+            // hardware fact and the node's own channel count is still the better number.
+            // `TheInputTapAsksTheNodeForItsFormatTests` claim 3 pins both halves that survive.
+            if nodeDisagreesWithHardware {
                 let session = AVAudioSession.sharedInstance()
                 let sessionRate = session.sampleRate
-                let sessionChannels = AVAudioChannelCount(min(max(session.inputNumberOfChannels, 1), 2))
-                // #954: on the RATE path the node's own channel count is kept — it is the
-                // only party that has actually looked at the input scope, and the session's
-                // number is clamped. Only the unusable path has no node value to keep.
-                let substituteChannels = nodeFormatUnusable ? sessionChannels : inFmt.channelCount
+                // #954: the node's own channel count is KEPT — it is the only party that has
+                // actually looked at the input scope, and the session's number is clamped to
+                // 1...2. Only the unusable path had no node value to keep, and that path no
+                // longer substitutes at all.
                 if sessionRate > 0, session.isInputAvailable,
                    let fallback = AVAudioFormat(standardFormatWithSampleRate: sessionRate,
-                                                channels: substituteChannels) {
+                                                channels: inFmt.channelCount) {
                     logMonitorOutcome("""
-                        input format from session fallback \
-                        (\(nodeFormatUnusable ? "node unusable — #823" : "node disagrees with hardware — #954"): \
+                        input format from session fallback (node disagrees with hardware — #954: \
                         node \(inFmt.sampleRate) Hz/\(inFmt.channelCount) ch, \
                         session \(sessionRate) Hz/\(session.inputNumberOfChannels) ch)
                         """, level: .info)
@@ -2808,12 +2838,24 @@ public final class AudioEngine {
                 // or input unavailable) from "input exists but the node won't say so"
                 // (live session rate beside a 0 Hz node) without a second probe.
                 let session = AVAudioSession.sharedInstance()
+                // NEEDS-FOUNDER-VERIFY: v10.79.469 (2589) stürzte hier ab. Master →
+                // „Audio input" → Live monitoring AN, auf demselben Gerät und derselben
+                // Route (Lautsprecher, kein Headset) — die App darf NICHT mehr abstürzen,
+                // und das Log muss genau diese Zeile zeigen („input format unusable …
+                // NOT connecting") statt `on 2/5`. Monitoring startet dabei ABSICHTLICH
+                // nicht; das ist #1270 (Hypothese #6), nicht dieser Fix.
+                // #1269: this is now the ONLY exit for an unusable node format — the #823
+                // substitution that used to walk past it is withdrawn (see the block above).
+                // `nodeFormatUnusable` is carried in the line so a reader can tell THIS exit
+                // (the node never gave a format) from the older shape where a substitution
+                // had already run and something else went wrong afterwards.
                 logMonitorOutcome("""
-                    input format unusable after the session claim \
+                    input format unusable after the session claim — NOT connecting \
                     (sampleRate \(inFmt.sampleRate), channels \(inFmt.channelCount), \
+                    nodeFormatUnusable \(nodeFormatUnusable), \
                     engine \(masterEngine.isRunning ? "running" : "stopped"), \
                     session \(session.sampleRate) Hz/\(session.inputNumberOfChannels) in, \
-                    inputAvailable \(session.isInputAvailable)) — #628/#823
+                    inputAvailable \(session.isInputAvailable)) — #628/#823/#1269
                     """)
                 // The claim is already registered — hand it back on the way out, or a denied
                 // mic permission leaves the route raised for the rest of the session. This is
