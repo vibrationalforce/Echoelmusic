@@ -43,7 +43,7 @@
 //
 // ⚠️ AND THE FILE'S NAME NOW OVER-PROMISES BY ONE DOOR (#374). It is deliberately NOT
 // renamed: the surviving claim is exactly the one the name describes, a rename in this same
-// commit would bury the retraction in a file move, and `TheMicrophoneHasNoDoorTests` — the
+// commit would bury the retraction in a file move, and `TheMicrophoneHasOneDoorTests` — the
 // guard that owns the removal — names this file as one of the four it repaired.
 //
 // ORDERING SOUNDNESS (#408): the two "inside the refusal block" claims use ordering between
@@ -94,7 +94,7 @@ final class TheRefusalLineHasASettingsDoorTests: XCTestCase {
             is HIS decision, and re-dooring means restoring this method to its pre-#1024 \
             form (all four needles are quoted in the comment above), restoring the studio \
             halves of claims 3 and 5, and pulling the prose homes listed in \
-            `TheMicrophoneHasNoDoorTests` along in the SAME commit.
+            `TheMicrophoneHasOneDoorTests` along in the SAME commit.
 
             ⚠️ If instead this is the CAMERA door or some other unrelated Settings button \
             that happens to share the spelling, do not simply raise the count: give it its \

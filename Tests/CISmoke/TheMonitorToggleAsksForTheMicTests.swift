@@ -120,7 +120,7 @@ final class TheMonitorToggleAsksForTheMicTests: XCTestCase {
             AUTOMATICALLY A BUG — the founder may have asked for the microphone doors back \
             (#1024). But it is HIS decision, and re-dooring means restoring this method to \
             its pre-#1024 form (all three needles are in the comment above) and pulling the \
-            prose homes listed in `TheMicrophoneHasNoDoorTests` along in the SAME commit.
+            prose homes listed in `TheMicrophoneHasOneDoorTests` along in the SAME commit.
             """)
     }
 

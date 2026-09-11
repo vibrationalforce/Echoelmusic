@@ -189,7 +189,7 @@ final class ThePlugInInvitesButNeverArmsTests: XCTestCase {
                 the founder may have asked for the microphone doors back. But it IS his \
                 decision (#1024), and restoring it means restoring this method to its \
                 pre-#1024 form (the three needles are quoted in the doc comment above) and \
-                pulling the prose homes named in `TheMicrophoneHasNoDoorTests` along in the \
+                pulling the prose homes named in `TheMicrophoneHasOneDoorTests` along in the \
                 SAME commit.
                 """)
         }

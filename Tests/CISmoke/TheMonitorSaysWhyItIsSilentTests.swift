@@ -87,7 +87,7 @@ final class TheMonitorSaysWhyItIsSilentTests: XCTestCase {
                 the founder may have asked for the microphone doors back (#1024). But it is \
                 HIS decision, and re-dooring means restoring this method and claim 3's studio \
                 half to their pre-#1024 form (both needles are quoted in the comment above) \
-                and pulling the prose homes listed in `TheMicrophoneHasNoDoorTests` along in \
+                and pulling the prose homes listed in `TheMicrophoneHasOneDoorTests` along in \
                 the SAME commit.
                 """)
         }

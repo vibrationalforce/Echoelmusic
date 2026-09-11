@@ -13,7 +13,8 @@
 // "das mit dem Audio Input Monitoren klappt immer noch nicht also fliegt das raus").
 // This block used to end "…the leaf row below renders the invitation whose TAP opens
 // the EXISTING input sheet (`showInput` — slot reuse, no new modal)". Measured today:
-// zero construction sites for `PlugInInviteRow` and zero setters for `showInput`:
+// zero construction sites for `PlugInInviteRow` — and, since #1247, ONE setter for
+// `showInput` (the Master panel's "Audio input" door), which is NOT this row's:
 //     git grep -n 'PlugInInviteRow(' -- Sources | grep -v ': *//'
 //     git grep -n 'showInput = true'  -- Sources | grep -v ': *//'
 // (only the declaration at the bottom of this file remains, and it is never called). The

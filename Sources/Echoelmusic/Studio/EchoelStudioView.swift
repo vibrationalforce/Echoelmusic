@@ -3726,6 +3726,9 @@ struct EchoelStudioView: View {
             .strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
 
+    // ⭐ #1247 (2026-09-11): ONE door is back — the Master panel's "Audio input" button
+    // (`masterDoorButton`, below in `masterPanel`). The STRIP stays removed; the three laws
+    // at the end of this block bound that re-door and bind any further one.
     // ⛔ #1024 — THE MICROPHONE STRIP STOOD HERE AND IS REMOVED ON FOUNDER ORDER
     // (2026-09-06, twice: "das mit dem Audio Input Monitoren klappt immer noch nicht also
     // fliegt das raus", then again with a screenshot of build 448/2567 circling this very
@@ -4972,12 +4975,21 @@ struct EchoelStudioView: View {
             // (2026-07-02). SLOT-REUSE: this sets the EXISTING dead `showRouting` sheet slot
             // — no new modal in the chain. No close-first needed: the plate is not an
             // overlay, so only the sheet is ever a presented layer.
-            // ⛔ #1024 — the second button here was "Audio input" and is removed with the
-            // other two microphone doors. `showInput` is now a setter-less slot again.
+            // ⛔ #1024 removed the second button here ("Audio input") with the other two
+            // microphone doors. ⭐ #1247 (founder 2026-09-11, "Audio Input sauber aufsetzen")
+            // brings THIS ONE back — the Master door only; the Mix-board strip and the plug-in
+            // banner stay doorless. SLOT-REUSE again: it sets the existing `showInput` sheet.
+            // Permission is asked INSIDE the sheet's toggle (`engageInputMonitoring`, #601), so
+            // opening the door engages nothing. The monitor path is still device-UNVERIFIED
+            // (`PLAN_AUDIO_INPUT_2026-09-11.md`); the door exists so the founder can verify it.
             HStack(spacing: 8) {
                 masterDoorButton("Routing", icon: "app.connected.to.app.below.fill",
                                  hint: "OSC, immersive object, and lighting outputs") {
                     showRouting = true
+                }
+                masterDoorButton("Audio input", icon: "mic",
+                                 hint: "Microphone or interface: listen, tune to key, harmony, granular — and the input drives the picture") {
+                    showInput = true
                 }
             }
         }
