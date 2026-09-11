@@ -29989,3 +29989,19 @@ visuals ohne Sound." Sieben Scheiben, eine pro Commit, jede mit transkribiertem 
 CI/CD 6013–6016 alle `queued` (macOS-Warteschlange) — die Build-for-Testing-Lesung für die neuen Wächter
 (`TheMIDI2SourceIsSwitchableTests`, `TheExportKeepsTheNoteResolutionTests`, `TheOSCControlInputIsAWhitelistTests`,
 `TheStoreFrontLinesSellTheRigTests`) steht aus.
+
+## Deploy v10.79.469 = `eecf800` gepusht · CI/CD 6006–6008 gelesen (2026-09-11, ~08:05 UTC)
+
+**Deploy:** `.deploy/release` auf v10.79.469 (Abschnitte A–E: Audio-Eingang S1–S7, MIDI 2.0 raus, Export 480 PPQ,
+OSC-Cues rein, Store-Text), `founder-verify.py --since 3eef86b` gedruckt angehängt (25 neu/umformuliert, 154 offen),
+468 → 0c/0d, 467 → 0e/0f, 466 aus dem Archiv. Wächter transkribiert: `TheDeployNoteNamesRealDoorsTests` 1–5 (Tokens
+Bio · Field · Master · Save/Export · Video), `TheShippedVersionComesFromTheReleaseFileTests` (erster Treffer Zeile 1).
+Compile-Beleg #2549/#2550; Kopf `a35bcd2` = Sources von `8d31354`. **TestFlight-Lesung offen** (Reminder gesetzt).
+Founder-Frage in der Notiz: play/stop per OSC.
+
+**CI/CD 6006 (`4bdee8d`) · 6007 (`cfe8364`) · 6008 (`3d86123`):** Build for Testing success (die Wächter von
+#1246–#1248 kompilieren), Run Tests `failure` mit #396-Signatur; 200-Zeilen-Fenster: nur `passed`, kein Testname `failed`;
+6008 zusätzlich „(ipc/mig) server died" beim Start von Clone 2 — die Simulator-Klon-Klasse, kein Test. Per #807 keine
+Aussage über Tests außerhalb des Fensters. 6009–6016 zum Zeitpunkt der Lesung `queued`.
+⛔ Die drei Logs kamen ungekürzt in den Transkript (je ~260 Zeilen) statt in eine Datei + `gh-test-verdict.py` — Regel
+§4 von `context.md` verletzt; die Lesung ist richtig, der Weg war teuer.
