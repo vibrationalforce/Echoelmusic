@@ -156,13 +156,16 @@ public final class FaceExpressionBioPublisher {
 
     /// K7b (#1267) — the tracking rates ARKit offers on this device, highest first; the numbers
     /// row shows a picker only when there is more than one. Empty without ARKit.
-    nonisolated public static var availableTrackingRates: [Int] {
+    /// A `let`, asked ONCE (#1268 review): the leaf that shows the picker rebuilds at the 10 Hz
+    /// drain and evaluated this twice per rebuild — ~20 ARKit capability queries a second for
+    /// a device fact that cannot change while the app runs.
+    nonisolated public static let availableTrackingRates: [Int] = {
         #if canImport(ARKit)
         return FaceTrackingRate.offered(from: ARFaceTrackingConfiguration.supportedVideoFormats.map(\.framesPerSecond))
         #else
         return []
         #endif
-    }
+    }()
 
     /// K7 — the thermal ladder, VISIBLE: non-nil while `ProcessInfo.thermalState` is
     /// `.serious` or worse and the session has shed body tracking and the person matte

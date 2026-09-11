@@ -32,6 +32,7 @@
 import Foundation
 import Vision
 import CoreVideo
+import ImageIO   // `CGImagePropertyOrientation` is ImageIO's; Vision re-exports it, this does not rely on that (#1268)
 
 /// `CVPixelBuffer` is not `Sendable`; one buffer crosses to the analysis queue at a time and
 /// nothing else holds it — the wrapper states that contract where the compiler asks for it.
