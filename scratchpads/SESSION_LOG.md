@@ -30148,3 +30148,39 @@ Testing SUCCESS 10:09:29–10:12:50, Run Tests `TEST EXECUTE FAILED` — im WIND
 `passed`, kein Testname rot, #396-Klasse; 6021/6023/6024 in_progress, 6025/6026 queued. Build for
 Testing für K3/K4b/K5a/K5b/K6a: UNGELESEN (PLAYBOOK #1255b gilt vor jedem Deploy).
 
+## Kamera-Eingang K7 / K6c / K7b = #1265 `e8d003c` · #1266 `7c8c0e8` · #1267 `f7b594f` (2026-09-11, 10:40–11:05 UTC)
+
+**K7 (#1265) — Freistellung:** ARKit-Matte (`.personSegmentation`, NICHT `…WithDepth`: die Tiefe
+liest niemand) auf DERSELBEN Session; `CameraFrameSlot` trägt Matte-Wunsch je Konsument und die
+Matte MIT ihrem Frame (nil ohne Segmentierung — nie eine alte Matte über einem neuen Bild);
+`syncSegmentation()` folgt Wunsch + Thermik-Leiter per `arSession.run(config)` OHNE Reset;
+Renderer: dritter Slot texture(2), 1×1-Weiß-Platzhalter, `camMatte` am Ende beider Zwillinge
+(112 = 112, mit besserem Swift-Parser nachgemessen — der erste Zähler fand 62, weil er nur
+`var x: Float`-Zeilen ohne Kommentarfilter las), Shader skaliert Deckkraft pro Pixel hinter
+`camMatte`. Toggle „Cut out the person" DISABLED ohne `supportsSegmentation` (Prompt: ausgrauen,
+nicht simulieren). `thermalRelief` sichtbar in beiden Zeilen. Wächter
+`TheCutoutIsAMatteNotAGuessTests` (6), K5-Wächter auf drei Slots nachgeführt; `$SP/t1265.py`
+Parent 2/8 (zwei Gegengewichte), Baum 8/8.
+
+**K6c (#1266) — Orientierung:** `BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw:)`
+(Hochformat → .right wie K6a, kopfüber .left, Querformat .down/.up), Publisher liest die
+`UIWindowScene` im Drain und pusht bei Wechsel; Anspruch 6 im K6a-Wächter. ⛔ `syncBodyOrientation`
+stand zuerst unter `#if canImport(UIKit)` allein und griff auf `bodyAnalyzer` (ARKit-Block) zu —
+vor dem Commit auf `ARKit && UIKit` gestellt.
+
+**K7b (#1267) — Tracking-Rate:** `Core/FaceTrackingRate` (rein): Default 30, `pick` = gewünschte
+Rate mit den wenigsten Pixeln, nil ohne Format; `stride(forCaptureHz:)` hält ~15 Body-Pässe/s;
+Key `face.trackingHz`; Publisher setzt `config.videoFormat` beim Start, folgt Änderungen im Drain,
+Fallback auf 30 bei nicht angebotener Rate; `FaceChannelsRow` segmentierter Picker nur bei >1
+Rate. Wächter `TheTrackingRateIsAChoiceNotAConstantTests` (4); `$SP/t1267.py` Parent 0/4, Baum 4/4.
+
+**Gates (gelesen 10:45 UTC):** CI/CD 6021 (`d2fe686`, K3) Build for Testing SUCCESS 10:08:42–10:14:44
+· 6023 (`8e335f9`, K4b) SUCCESS 10:15:03–10:20:05 — beide Run Tests `TEST EXECUTE FAILED`, im
+WINDOW nur `passed`, kein Testname rot (#396-Klasse). Compile #2561 (K6a) cancelled durch K7-Push,
+#2562 (K7) läuft/wird durch K6c/K7b ersetzt — der Compile-Nachweis für K6a–K7b ist der Lauf auf
+`f7b594f`. Build for Testing für K5a/K5b/K6a/K7/K6c/K7b: UNGELESEN.
+
+**Prompt-Abgleich (was bleibt):** 6b-Fallback ohne TrueDepth (AVCaptureSession +
+VNDetectFaceLandmarks) — bewusst NICHT gebaut, der Prompt verlangt erst die Gerätesondierung;
+motionEnergy — nicht im Prompt, gestrichen; FEATURE_MATRIX-Zeile — erst wenn ein Build läuft.
+
