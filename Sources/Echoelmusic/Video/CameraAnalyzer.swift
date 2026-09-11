@@ -219,16 +219,68 @@ final class CameraAnalyzer {
     /// 0 = none yet (first commit, or after a reset) → slew skipped so the lock seeds.
     private var lastEstimateTimestamp: TimeInterval = 0
 
+    /// How many samples the drawn trace spans (~6 s at 15 Hz). The SHAPE window.
+    nonisolated static let waveformDisplaySamples = 90
+
+    /// How many samples the trace's GAIN is measured over (~20 s at 15 Hz). Deliberately
+    /// longer than the display window, and that difference is the whole fix (#1270).
+    ///
+    /// ⛔ THE BUG IT REMOVES, founder 2026-09-11: "die Wellenform EKG wird mal größer mal
+    /// kleiner". The divisor used to be the maximum of the DISPLAYED 6 s, recomputed on every
+    /// ~10 Hz read. Two consequences, both visible and neither intended:
+    ///   · The gain JUMPED. As the 6-s window slid past a strong beat the maximum dropped
+    ///     abruptly, and the same shape was redrawn at a different height — the "mal größer
+    ///     mal kleiner". Nothing smoothed it, because the divisor was recomputed from scratch.
+    ///   · It always reached full scale. A stretch with almost no pulse was amplified until it
+    ///     filled the box, so NOISE looked exactly like a strong signal — and the waveform is
+    ///     the thing that is supposed to tell the player the finger is placed right.
+    /// Measuring the gain over a longer window fixes both at once and stays a PURE function:
+    /// the divisor changes only as slowly as 20 s of signal slides, and a quiet stretch is
+    /// drawn SMALL because it is small relative to the recent past. No absolute threshold is
+    /// invented — the signal's own units never have to be guessed at.
+    ///
+    /// ⚠️ Bounded by the buffer: `maxSignalLength` holds 600 samples (~40 s), so this window
+    /// is always available once the take has run that long, and before then the gain window is
+    /// simply whatever exists — which is the OLD behaviour, i.e. full-scale while the finger is
+    /// still being placed. That is the right way round: strong feedback during placement, an
+    /// honest height afterwards.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: Puls-Pille → Bio-Panel, Finger auflegen und eine Minute laufen
+    /// lassen. Die Kurve darf nicht mehr sprunghaft die Höhe wechseln; ein schwaches Signal
+    /// muss KLEIN bleiben statt sich auf volle Höhe zu strecken. Wenn sie nach einer
+    /// Verbesserung zu lange klein bleibt, ist dieses Fenster zu lang — es ist die eine Zahl,
+    /// die hier zu drehen ist.
+    nonisolated static let waveformGainSamples = 300
+
     /// Recent bandpass-filtered pulse signal, normalized to ~[-1,1], for a live
     /// waveform ("Stimmungsbild"). Empty until samples exist; flat = no signal.
     var recentWaveform: [Float] {
-        let n = Swift.min(filteredRedSignal.count, 90)   // ~6 s at 15 Hz
+        Self.normalizedTrace(filteredRedSignal,
+                             display: Self.waveformDisplaySamples,
+                             gainWindow: Self.waveformGainSamples)
+    }
+
+    /// The trace law, pure and `nonisolated` so it can be tested without a camera: take the
+    /// last `display` samples for the SHAPE, divide them by the largest magnitude over the
+    /// last `gainWindow` samples for the HEIGHT.
+    ///
+    /// The result is not clamped here — `PulseTrace` already clamps to [-1,1], so a beat that
+    /// exceeds the recent maximum is clipped at the edge of the box rather than rescaling
+    /// everything around it. Clamping twice would hide that a transient happened at all.
+    nonisolated static func normalizedTrace(_ signal: [Float],
+                                            display: Int,
+                                            gainWindow: Int) -> [Float] {
+        let n = Swift.min(signal.count, Swift.max(display, 0))
         guard n > 1 else { return [] }
-        let slice = Array(filteredRedSignal.suffix(n))
+        let slice = Array(signal.suffix(n))
+        // The gain window is at least the display window: asking for a SHORTER one would
+        // re-create the per-read jump this function exists to remove.
+        let g = Swift.min(signal.count, Swift.max(gainWindow, n))
+        let gainSlice = Array(signal.suffix(g))
         // vDSP max-magnitude avoids the intermediate `map { abs }` array on this
         // ~10 Hz read (the waveform array itself is the only allocation kept).
         var maxAbs: Float = 0
-        vDSP_maxmgv(slice, 1, &maxAbs, vDSP_Length(n))
+        vDSP_maxmgv(gainSlice, 1, &maxAbs, vDSP_Length(g))
         let norm = Swift.max(maxAbs, 0.0001)
         return slice.map { $0 / norm }
     }
