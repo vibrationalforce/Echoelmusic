@@ -243,6 +243,9 @@ private struct BioUniforms {
     var camD: Float = 1
     var camTx: Float = 0
     var camTy: Float = 0
+    /// K7 (#1265) — 1 while a person matte is bound at texture(2) and the cut-out is on; the
+    /// shader multiplies the layer's opacity by the matte only then (placeholder = 1 otherwise).
+    var camMatte: Float = 0
 }
 
 /// The touch surface's water-drop events for the Metal renderer (structural rebuild
@@ -529,6 +532,9 @@ struct MetalBioView: UIViewRepresentable {
     var cameraOpacity: Float = 0
     var cameraMirror: Bool = true
     var cameraBlend: Int = 0
+    /// K7 — cut the person out of the camera layer with ARKit's segmentation matte (only
+    /// where `FaceExpressionBioPublisher.supportsSegmentation`; otherwise the flag is inert).
+    var cameraCutout: Bool = false
 
     func makeCoordinator() -> MetalBioRenderer { MetalBioRenderer() }
 
@@ -611,7 +617,8 @@ struct MetalBioView: UIViewRepresentable {
                   structureAmount: structureAmount,
                   style: style, styleB: styleB, blend: blend, reduceMotionAccessibility: reduceMotion,
                   autoAttuned: autoAttuned, entrainmentPulseHz: entrainmentPulseHz,
-                  cameraOpacity: cameraOpacity, cameraMirror: cameraMirror, cameraBlend: cameraBlend)
+                  cameraOpacity: cameraOpacity, cameraMirror: cameraMirror, cameraBlend: cameraBlend,
+                  cameraCutout: cameraCutout)
     }
 }
 
@@ -660,6 +667,13 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
               let y = plane(0, of: buffer, format: .r8Unorm, cache: cache),
               let cbcr = plane(1, of: buffer, format: .rg8Unorm, cache: cache) else { return nil }
         return ((y, cbcr), videoRange)
+    }
+
+    /// K7 — ARKit's `segmentationBuffer` (`OneComponent8`, one plane) as an `r8Unorm` view. Any
+    /// other format → nil: the layer then draws uncut rather than with a guessed mask.
+    private static func makeMatteTexture(from buffer: CVPixelBuffer, cache: CVMetalTextureCache) -> CVMetalTexture? {
+        guard CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_OneComponent8 else { return nil }
+        return plane(0, of: buffer, format: .r8Unorm, cache: cache)
     }
 
     private static func plane(_ index: Int, of buffer: CVPixelBuffer, format: MTLPixelFormat,
@@ -853,6 +867,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     private var lookCameraOpacity: Float = 0
     private var lookCameraMirror = true
     private var lookCameraBlend = 0
+    private var lookCameraCutout = false
     /// True while the governor's tier is `.low` or below (thermal `.serious`, Low Power Mode,
     /// battery < 20 %): the layer stands down — two full-drawable plane samples per pixel are
     /// its whole cost, and that is the cost the tier exists to shed. Written in the governor
@@ -864,6 +879,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     private var cameraTextureCache: CVMetalTextureCache?
     private var placeholderY: MTLTexture?
     private var placeholderCbCr: MTLTexture?
+    /// K7 — 1×1 white: with no matte bound the layer is fully opaque where the shader
+    /// would multiply (it does so only behind `camMatte` anyway).
+    private var placeholderMatte: MTLTexture?
+    private var cameraMatteCurrent: CVMetalTexture?
     /// The bound pair and the one before it. A `CVMetalTexture` must outlive the GPU's read
     /// of its `MTLTexture`, and `waitUntilScheduled` is not "completed" — so the previous
     /// frame's pair is held one frame longer (two deep, the shape Apple's ARKit renderer uses).
@@ -944,7 +963,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                  style: Int, styleB: Int,
                  blend: Float, reduceMotionAccessibility: Bool, autoAttuned: Bool,
                  entrainmentPulseHz: Double = 0,
-                 cameraOpacity: Float, cameraMirror: Bool, cameraBlend: Int) {
+                 cameraOpacity: Float, cameraMirror: Bool, cameraBlend: Int, cameraCutout: Bool) {
         lookToneFallbackHz = toneFallbackHz
         lookIntensity = intensity
         lookRingDensity = ringDensity
@@ -964,6 +983,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         lookCameraOpacity = cameraOpacity
         lookCameraMirror = cameraMirror
         lookCameraBlend = cameraBlend
+        lookCameraCutout = cameraCutout
     }
 
     func configure(device: MTLDevice) {
@@ -977,6 +997,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         }
         placeholderY = Self.makePlaceholder(device: device, format: .r8Unorm, bytes: [0])
         placeholderCbCr = Self.makePlaceholder(device: device, format: .rg8Unorm, bytes: [128, 128])
+        placeholderMatte = Self.makePlaceholder(device: device, format: .r8Unorm, bytes: [255])
 
         // #1196: reuse the already-compiled pipeline when one exists for THIS device.
         // The identity test is `===` on the device, not a bool: `MTLCreateSystemDefaultDevice()`
@@ -1864,7 +1885,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             CameraViewport(size: view.bounds.size,
                            orientationRaw: view.window?.windowScene?.interfaceOrientation.rawValue ?? 1)
         }
-        CameraFrameSlot.shared.setWanted(cameraWanted, for: cameraKey, viewport: cameraViewport)
+        CameraFrameSlot.shared.setWanted(cameraWanted, for: cameraKey, viewport: cameraViewport,
+                                         matte: lookCameraCutout)
         if cameraWanted, let cache = cameraTextureCache,
            let latest = CameraFrameSlot.shared.latest(for: cameraKey),
            latest.sequence != lastCameraSequence {
@@ -1872,6 +1894,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             if let made = Self.makeCameraTextures(from: latest.buffer, cache: cache) {
                 cameraTexturesPrevious = cameraTexturesCurrent
                 cameraTexturesCurrent = made.textures
+                // K7 — the matte of the SAME frame, or nothing: a stale matte over a new frame
+                // would cut the person where they were, so the pair is replaced together.
+                cameraMatteCurrent = lookCameraCutout
+                    ? latest.matte.flatMap { Self.makeMatteTexture(from: $0, cache: cache) } : nil
                 uniforms.camYOffset = made.videoRange ? 16.0 / 255.0 : 0
                 uniforms.camYScale = made.videoRange ? 255.0 / 219.0 : 1
                 let t = latest.viewportToImage
@@ -1884,6 +1910,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // The snap, see above. Both pairs go, so a stale face cannot be re-bound later.
             cameraTexturesPrevious = nil
             cameraTexturesCurrent = nil
+            cameraMatteCurrent = nil
             uniforms.camOpacity = 0
         } else {
             let opacityTarget: Float = (cameraWanted && cameraTexturesCurrent != nil)
@@ -1894,12 +1921,17 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             if !cameraWanted, uniforms.camOpacity < 0.002 {
                 cameraTexturesPrevious = nil
                 cameraTexturesCurrent = nil
+                cameraMatteCurrent = nil
                 uniforms.camOpacity = 0
             }
         }
         uniforms.camPresent = cameraTexturesCurrent == nil ? 0 : 1
         uniforms.camMirror = lookCameraMirror ? 1 : 0
         uniforms.camBlend = Float(min(max(lookCameraBlend, 0), 2))
+        // K7 — a matte only counts while the cut-out is on AND this frame brought one (a frame
+        // without a matte — segmentation just switched on, or unsupported — draws uncut).
+        if !lookCameraCutout { cameraMatteCurrent = nil }
+        uniforms.camMatte = (lookCameraCutout && cameraMatteCurrent != nil && cameraTexturesCurrent != nil) ? 1 : 0
         let cameraSequenceThisFrame: UInt64 = cameraTexturesCurrent == nil ? 0 : lastCameraSequence
 
         // Keep `time` as a free-running clock for the secondary motion in the shader.
@@ -1957,6 +1989,9 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                                        ?? placeholderY, index: 0)
             encoder.setFragmentTexture(cameraTexturesCurrent.flatMap { CVMetalTextureGetTexture($0.cbcr) }
                                        ?? placeholderCbCr, index: 1)
+            // K7 — the matte slot: the person matte behind `camMatte`, a 1×1 white otherwise.
+            encoder.setFragmentTexture(cameraMatteCurrent.flatMap { CVMetalTextureGetTexture($0) }
+                                       ?? placeholderMatte, index: 2)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             encoder.endEncoding()
         } else {
@@ -2019,7 +2054,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                       float fieldPhase;
                       float camOpacity; float camPresent; float camMirror; float camBlend;
                       float camYOffset; float camYScale;
-                      float camA; float camB; float camC; float camD; float camTx; float camTy; };
+                      float camA; float camB; float camC; float camD; float camTx; float camTy;
+                      float camMatte; };
 
     // TOUCH RIPPLES — the water feedback drawn IN the field's own pipeline
     // (structural rebuild 2026-07-09; the old CAShapeLayer sandwich over the Metal
@@ -2752,7 +2788,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     fragment float4 echoel_bio_fragment(VOut in [[stage_in]],
                                         constant Uniforms& u [[buffer(0)]],
                                         texture2d<float> camY [[texture(0)]],
-                                        texture2d<float> camCbCr [[texture(1)]]) {
+                                        texture2d<float> camCbCr [[texture(1)]],
+                                        texture2d<float> camMatte [[texture(2)]]) {
         // Aspect-correct radial distance (for the rings + every style's framing).
         float2 uv = in.uv;
         uv.x *= u.aspect;
@@ -3055,7 +3092,11 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             } else {
                 layered = cam;                             // Cross: a plain fade to the camera
             }
-            outCol = mix(outCol, layered, clamp(u.camOpacity, 0.0, 1.0));
+            // K7 — the person matte (ARKit segmentation, same normalised coordinates as the
+            // image) scales the layer's opacity per pixel: 1 on the person, 0 on the room.
+            // Sampled ONLY behind camMatte; texture(2) holds a 1x1 white otherwise.
+            float cut = (u.camMatte > 0.5) ? camMatte.sample(camS, iuv).r : 1.0;
+            outCol = mix(outCol, layered, clamp(u.camOpacity, 0.0, 1.0) * cut);
         }
         // Touch-ripple light over the graded field (played water = light ON the
         // water, frame-locked to it — no second compositor). SCREEN blend, not raw

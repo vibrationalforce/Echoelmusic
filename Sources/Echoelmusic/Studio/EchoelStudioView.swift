@@ -1016,6 +1016,7 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.visualCameraOpacity.key) private var visualCameraOpacity = StudioDefaultKeys.visualCameraOpacity.value
     @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
     @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
+    @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var visualCameraCutout = StudioDefaultKeys.visualCameraCutout.value
     /// The floating visual window's show/hide state — SHARED with WorkspaceView's header
     /// monitor button and the window's own close button, so the Visual panel can toggle it
     /// directly (founder: everything user-optimized; don't make the header the only way in).
@@ -6814,6 +6815,26 @@ struct EchoelStudioView: View {
             }
             .tint(EchoelTheme.accent)
             .accessibilityHint("Flips the camera image left to right, like a mirror")
+            // K7 (#1265) — the cut-out: ARKit's person matte. DISABLED where the device cannot
+            // segment (prompt: grey out, never simulate). `supportsSegmentation` is a device
+            // fact, `thermalRelief` a rare write — both cold reads for this host.
+            Toggle(isOn: $visualCameraCutout) {
+                Text("Cut out the person")
+                    .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            .disabled(!FaceExpressionBioPublisher.supportsSegmentation)
+            .accessibilityHint(FaceExpressionBioPublisher.supportsSegmentation
+                               ? "Keeps only the person from the camera; the room around them shows the field"
+                               : "Not available on this device")
+            if !FaceExpressionBioPublisher.supportsSegmentation {
+                Text("Cut-out is not available on this device.")
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            } else if let relief = faceExpression.thermalRelief {
+                Text(relief)
+                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Text(faceExpression.isPublishing
                  ? "The front camera is layered into the field at this opacity. It never appears in a recorded take."
                  : "Draws while the Face source runs — choose \"Play with your face\" under the pulse pill. It never appears in a recorded take.")

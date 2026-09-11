@@ -56,6 +56,9 @@ public struct CameraViewport: Equatable, Sendable {
 /// viewport → image transform computed for THAT renderer's registered geometry.
 public struct CameraFrame {
     public let buffer: CVPixelBuffer
+    /// K7 (#1265) — ARKit's person-segmentation matte for this frame (`OneComponent8`, same
+    /// normalised coordinates as `buffer`), or nil when segmentation is off or unsupported.
+    public let matte: CVPixelBuffer?
     public let sequence: UInt64
     public let viewportToImage: CGAffineTransform
 }
@@ -68,10 +71,13 @@ public final class CameraFrameSlot: @unchecked Sendable {
     private let lock = NSLock()
     #if canImport(CoreVideo)
     private var buffer: CVPixelBuffer?
+    private var matte: CVPixelBuffer?
     #endif
     private var sequence: UInt64 = 0
     /// Registered consumers that currently want frames, by their own key.
     private var viewports: [UUID: CameraViewport] = [:]
+    /// K7 — which of those consumers also want the person matte (the cut-out toggle).
+    private var matteWishes: [UUID: Bool] = [:]
     /// The transforms the producer computed for the frame in `buffer`, by consumer key.
     private var transforms: [UUID: CGAffineTransform] = [:]
 
@@ -81,15 +87,25 @@ public final class CameraFrameSlot: @unchecked Sendable {
 
     /// Register / update this consumer's wish. `wanted == false` removes its geometry, and
     /// when the last consumer leaves the buffer is dropped — no wish, no retained frame.
-    public func setWanted(_ wanted: Bool, for key: UUID, viewport: CameraViewport) {
+    public func setWanted(_ wanted: Bool, for key: UUID, viewport: CameraViewport, matte: Bool = false) {
         lock.lock(); defer { lock.unlock() }
         if wanted {
             viewports[key] = viewport
+            matteWishes[key] = matte
         } else {
             viewports[key] = nil
             transforms[key] = nil
+            matteWishes[key] = nil
             if viewports.isEmpty { dropLocked() }
         }
+    }
+
+    /// K7 — true while at least one registered consumer wants the person matte. The producer
+    /// polls it at its 10 Hz drain and switches ARKit's frame semantics accordingly; nobody
+    /// pays for segmentation while no picture would use it.
+    public func wantsMatte() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return matteWishes.values.contains(true)
     }
 
     /// A consumer going away entirely (renderer deinit). Same as an unwanted wish.
@@ -103,7 +119,7 @@ public final class CameraFrameSlot: @unchecked Sendable {
     public func latest(for key: UUID) -> CameraFrame? {
         lock.lock(); defer { lock.unlock() }
         guard let buffer, let transform = transforms[key] else { return nil }
-        return CameraFrame(buffer: buffer, sequence: sequence, viewportToImage: transform)
+        return CameraFrame(buffer: buffer, matte: matte, sequence: sequence, viewportToImage: transform)
     }
     #endif
 
@@ -120,10 +136,12 @@ public final class CameraFrameSlot: @unchecked Sendable {
     /// `wantedViewports()` a moment ago. Latest wins; a consumer that registered in between
     /// simply waits one frame for its transform. Stores nothing if nobody wants a frame any
     /// more — the wish can have been withdrawn between the two calls.
-    public func store(_ newBuffer: CVPixelBuffer, transforms newTransforms: [UUID: CGAffineTransform]) {
+    public func store(_ newBuffer: CVPixelBuffer, matte newMatte: CVPixelBuffer? = nil,
+                      transforms newTransforms: [UUID: CGAffineTransform]) {
         lock.lock(); defer { lock.unlock() }
         guard !viewports.isEmpty else { return }
         buffer = newBuffer
+        matte = newMatte
         transforms = newTransforms
         sequence &+= 1
     }
@@ -145,6 +163,7 @@ public final class CameraFrameSlot: @unchecked Sendable {
     private func dropLocked() {
         #if canImport(CoreVideo)
         buffer = nil
+        matte = nil
         #endif
         transforms = [:]
         sequence &+= 1

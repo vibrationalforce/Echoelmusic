@@ -143,6 +143,22 @@ public final class FaceExpressionBioPublisher {
         #endif
     }
 
+    /// K7 (#1265) — whether this device can segment the person out of the front-camera frame
+    /// (A12 and later). The cut-out toggle is DISABLED, never simulated, where this is false
+    /// (prompt: "Option ausgrauen, nicht simulieren").
+    nonisolated public static var supportsSegmentation: Bool {
+        #if canImport(ARKit)
+        return ARFaceTrackingConfiguration.supportsFrameSemantics(.personSegmentation)
+        #else
+        return false
+        #endif
+    }
+
+    /// K7 — the thermal ladder, VISIBLE: non-nil while `ProcessInfo.thermalState` is
+    /// `.serious` or worse and the session has shed body tracking and the person matte
+    /// (prompt: "der Nutzer sieht, dass es passiert"). Written at the drain on CHANGE only.
+    public private(set) var thermalRelief: String?
+
     @ObservationIgnored private var mapping = FaceExpressionBioPublisher.freshMapping()
     /// #1260 — the nine further channels (brow down, blink, squint, pucker, cheeks, head
     /// turn/nod/tilt/distance), same three stages, one bank.
@@ -154,6 +170,10 @@ public final class FaceExpressionBioPublisher {
     @ObservationIgnored private let latestBody = LatestFaceSample()
     #if canImport(ARKit)
     @ObservationIgnored private var bodyAnalyzer: BodyPoseAnalyzer?
+    /// K7 — the running configuration, kept so the person-segmentation semantics can be
+    /// toggled with a plain `run(config)` (no reset options → tracking continues).
+    @ObservationIgnored private var arConfig: ARFaceTrackingConfiguration?
+    @ObservationIgnored private var segmentationOn = false
     #endif
     /// True once a face OR a body has been seen since the last loss — the loss fade starts
     /// at the first drain that finds neither (before K6a the face alone decided).
@@ -233,6 +253,11 @@ public final class FaceExpressionBioPublisher {
         arSession.delegate = proxy
         let config = ARFaceTrackingConfiguration()
         config.isLightEstimationEnabled = false
+        // K7 — segmentation only if a picture wants the matte right now; `syncSegmentation`
+        // follows the wish (and the thermal ladder) from the drain on.
+        segmentationOn = Self.supportsSegmentation && CameraFrameSlot.shared.wantsMatte() && !Self.thermalIsSerious
+        config.frameSemantics = segmentationOn ? [.personSegmentation] : []
+        arConfig = config
         arSession.run(config, options: [.resetTracking, .removeExistingAnchors])
         isPublishing = true
         startPublishLoop(bus: bus)
@@ -249,7 +274,10 @@ public final class FaceExpressionBioPublisher {
         arSession.delegate = nil
         delegateProxy = nil
         bodyAnalyzer = nil
+        arConfig = nil
+        segmentationOn = false
         #endif
+        thermalRelief = nil
         latest.clear()
         latestBody.clear()
         CameraFrameSlot.shared.clear()   // K5 — no stale camera frame survives a stop
@@ -293,6 +321,7 @@ public final class FaceExpressionBioPublisher {
             lastError = failure
             return
         }
+        syncSegmentation()
         let now = CFAbsoluteTimeGetCurrent()
         let dt = Swift.max(0, now - lastPublish)
         // K6a — two slots feed one drain: the face bag (ARKit anchors) and the body bag
@@ -371,6 +400,28 @@ public final class FaceExpressionBioPublisher {
         jawOpen = mapping.jawOpen
         syncBodyNumbers()
         publishFrame(bus: bus, at: now)
+    }
+
+    /// K7 — the person matte follows the renderer's wish AND the thermal ladder: at
+    /// `.serious` the matte is the rung after body tracking (`BodyPoseAnalyzer` gates itself);
+    /// the camera image itself keeps flowing. Re-running the SAME configuration with changed
+    /// `frameSemantics` and no reset options keeps the face tracking — no flicker on the field.
+    /// The relief text is written on change only (cold for the leaves that read it).
+    private func syncSegmentation() {
+        let serious = Self.thermalIsSerious
+        let relief: String? = serious ? "Heat: body tracking and cut-out paused until the device cools." : nil
+        if relief != thermalRelief { thermalRelief = relief }
+        guard let config = arConfig, Self.supportsSegmentation else { return }
+        let want = CameraFrameSlot.shared.wantsMatte() && !serious
+        guard want != segmentationOn else { return }
+        segmentationOn = want
+        config.frameSemantics = want ? [.personSegmentation] : []
+        arSession.run(config)
+    }
+
+    /// `ProcessInfo.thermalState` at `.serious` or worse — the prompt's degradation threshold.
+    nonisolated static var thermalIsSerious: Bool {
+        ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue
     }
 
     /// The ONE `.faceCam` frame shape — tracked and fading takes share it.
@@ -467,7 +518,8 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
             let orientation = UIInterfaceOrientation(rawValue: viewport.orientationRaw) ?? .portrait
             transforms[key] = frame.displayTransform(for: orientation, viewportSize: viewport.size).inverted()
         }
-        CameraFrameSlot.shared.store(frame.capturedImage, transforms: transforms)
+        // K7 — the matte rides along when ARKit produced one (segmentation on); nil otherwise.
+        CameraFrameSlot.shared.store(frame.capturedImage, matte: frame.segmentationBuffer, transforms: transforms)
     }
 
     /// #1257 — the face left the frame's certainty (ARKit stops updating an anchor it

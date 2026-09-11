@@ -10,7 +10,7 @@
 //     production file, and `AVCaptureSession(` in exactly one — the rear-lens rPPG capture.
 //     No `AVCaptureMultiCamSession` anywhere in `Sources/`.
 //  2. THE SHADER SAMPLES ONLY BEHIND `camPresent`, and both texture slots are ALWAYS bound
-//     (two `setFragmentTexture` calls with placeholder fallbacks) — Metal's validation never
+//     (three `setFragmentTexture` calls with placeholder fallbacks — Y, CbCr, K7 matte) — Metal's validation never
 //     meets an empty declared slot, and an absent camera costs no sample.
 //  3. A RECORDED TAKE NEVER CONTAINS THE CAMERA: the `wantsCapture` branch snaps `camOpacity`
 //     to 0 and drops the texture pair — the camera-usage sentence ("No images are stored")
@@ -77,9 +77,10 @@ final class TheCameraLayerIsATextureTests: XCTestCase {
                       "the fragment no longer declares the two camera planes at texture(0)/texture(1) (K5)")
         XCTAssertTrue(src.contains("if (u.camPresent > 0.5 && u.camOpacity > 0.001) {"),
                       "the camera sample is not gated on `camPresent` — with a placeholder bound that is a black layer, not a missing one (K5)")
-        XCTAssertEqual(occurrences("encoder.setFragmentTexture(", in: src), 2,
-                       "expected exactly two `setFragmentTexture(` calls (Y and CbCr), always executed on the encode path (K5)")
-        XCTAssertTrue(src.contains("?? placeholderY, index: 0)") && src.contains("?? placeholderCbCr, index: 1)"),
+        XCTAssertEqual(occurrences("encoder.setFragmentTexture(", in: src), 3,
+                       "expected exactly three `setFragmentTexture(` calls (Y, CbCr, and the K7 matte), always executed on the encode path (K5/K7)")
+        XCTAssertTrue(src.contains("?? placeholderY, index: 0)") && src.contains("?? placeholderCbCr, index: 1)")
+                      && src.contains("?? placeholderMatte, index: 2)"),
                       "a camera slot can be left unbound — the placeholder fallback is gone (K5)")
     }
 

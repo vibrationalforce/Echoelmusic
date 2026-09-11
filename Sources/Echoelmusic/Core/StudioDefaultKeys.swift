@@ -269,6 +269,9 @@ public enum StudioDefaultKeys {
     public static let visualCameraOpacity = StudioDefault(key: "visual.camera.opacity", value: 0.0)
     public static let visualCameraMirror = StudioDefault(key: "visual.camera.mirror", value: true)
     public static let visualCameraBlend = StudioDefault(key: "visual.camera.blend", value: 0)
+    /// K7 (#1265) — cut the person out of the camera layer (ARKit person segmentation; inert
+    /// where the device cannot segment — the row disables the toggle there, never simulates).
+    public static let visualCameraCutout = StudioDefault(key: "visual.camera.cutout", value: false)
     /// TRUE — the living visual greets a fresh install ("wow von Sekunde 1",
     /// WorkspaceView header monitor). The studio panel's old `false` copy made
     /// its toggle button lie until the key was first written.

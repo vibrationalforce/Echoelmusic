@@ -42,6 +42,12 @@ struct FaceChannelsRow: View {
                         .font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim)
                         .accessibilityLabel(face.bodyPresence > 0.5 ? "Body in view" : "No body in view")
                 }
+                if let relief = face.thermalRelief {
+                    // K7 — the thermal ladder is a STATE the performer sees, not a mystery.
+                    Text(relief)
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if face.isCalibrating {
                     Text("Hold a still face — three seconds.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)

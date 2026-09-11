@@ -204,6 +204,7 @@ struct FloatingVisualWindow: View {
     @AppStorage(StudioDefaultKeys.visualCameraOpacity.key) private var visualCameraOpacity = StudioDefaultKeys.visualCameraOpacity.value
     @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
     @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
+    @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var visualCameraCutout = StudioDefaultKeys.visualCameraCutout.value
 
     // P5: the sky mixed into the IMAGE, per parameter (founder: "Klang und Bild
     // aber getrennte und mehrere Parameter"). Each visual influence crossfades the
@@ -880,7 +881,8 @@ struct FloatingVisualWindow: View {
                      // K5 (#1262) — the camera layer, from the shared keys (three-surface rule).
                      cameraOpacity: Float(visualCameraOpacity),
                      cameraMirror: visualCameraMirror,
-                     cameraBlend: visualCameraBlend)
+                     cameraBlend: visualCameraBlend,
+                     cameraCutout: visualCameraCutout)
     }
 
     @ViewBuilder
