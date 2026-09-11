@@ -7,7 +7,13 @@
 //  so it is unit-testable in CI. Completes the EchoelSeq roadmap item
 //  "take your beat to any DAW": PatternEngine grid → .mid.
 //
-//  Format: SMF Type 0 (single track), 96 ticks/quarter (24 ticks per 16th).
+//  Format: SMF Type 0 (single track) / Type 1 (combined), `Note.ticksPerQuarter` = 480
+//  ticks per quarter (120 per 16th) — the SAME tick space the notes are recorded and
+//  microtimed in (#1254, audit 2026-09-10 `sequencer-core-5`). ⛔ Until #1254 this file
+//  wrote 96 PPQ and floored every note tick through `noteTicks * 96 / 480`: a played-in
+//  or microtimed note lost up to 4 ticks (~4 ms at 120 BPM) on the way to the DAW, and
+//  every length floored. On-grid content was byte-exact either way; the loss was exactly
+//  the sub-step detail the recorder and `TouchQuantizer` exist to keep.
 //  The 8 sequencer tracks map to General MIDI percussion notes on channel 10.
 //
 
@@ -19,15 +25,11 @@ public enum MIDIFileExporter {
     /// kick · snare · closed-hat · open-hat · clap · tom · rim · crash.
     public static let drumNotes: [UInt8] = [36, 38, 42, 46, 39, 45, 37, 49]
 
-    /// Pulses Per Quarter note. 96 / 4 = 24 ticks per 16th-note step.
-    public static let ticksPerQuarter: UInt16 = 96
+    /// Pulses Per Quarter note — `Note.ticksPerQuarter` (480), the ONE definition (#416), so a
+    /// note's tick IS its file tick and nothing is rescaled or floored on export (#1254).
+    public static let ticksPerQuarter: UInt16 = UInt16(Note.ticksPerQuarter)
+    /// 480 / 4 = 120 ticks per 16th-note step (= `Note.ticksPerStep`).
     private static var ticksPerStep: Int { Int(ticksPerQuarter) / 4 }
-
-    /// Convert a `Note` PPQ tick (480 PPQ) into this exporter's PPQ. On-grid notes
-    /// map identically; sub-step (unquantized) positions survive the export.
-    private static func exportTicks(noteTicks: Int) -> Int {
-        noteTicks * Int(ticksPerQuarter) / Note.ticksPerQuarter
-    }
 
     /// Build a Type-0 Standard MIDI File for the grid + tempo.
     /// - Parameters:
@@ -98,9 +100,9 @@ public enum MIDIFileExporter {
         var events: [Ev] = []
         for (i, n) in notes.enumerated() {
             let (tickDelta, velScale) = humanize.jitter(index: i, seed: seed)
-            let onTick = Swift.max(0, exportTicks(noteTicks: n.startTick) + tickDelta)
+            let onTick = Swift.max(0, n.startTick + tickDelta)
             // Preserve duration: shift the note-off with the note-on.
-            let offTick = onTick + Swift.max(1, exportTicks(noteTicks: n.lengthTicks))
+            let offTick = onTick + Swift.max(1, n.lengthTicks)
             let note = UInt8(Swift.min(127, Swift.max(0, n.pitch)))
             let vel = UInt8(Swift.min(127, Swift.max(1, Int(n.velocity * 127 * velScale))))
             events.append(Ev(tick: onTick, on: true, note: note, vel: vel))
@@ -280,8 +282,8 @@ public enum MIDIFileExporter {
         var events: [MIDIEvent] = []
         for (i, n) in notes.enumerated() {
             let (tickDelta, velScale) = humanize.jitter(index: i, seed: seed)
-            let onTick = Swift.max(0, exportTicks(noteTicks: n.startTick) + tickDelta)
-            let offTick = onTick + Swift.max(1, exportTicks(noteTicks: n.lengthTicks))
+            let onTick = Swift.max(0, n.startTick + tickDelta)
+            let offTick = onTick + Swift.max(1, n.lengthTicks)
             let note = UInt8(Swift.min(127, Swift.max(0, n.pitch)))
             let vel = UInt8(Swift.min(127, Swift.max(1, Int(n.velocity * 127 * velScale))))
             events.append(MIDIEvent(tick: onTick, on: true, status: 0x90, note: note, vel: vel))

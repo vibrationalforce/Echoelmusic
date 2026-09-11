@@ -6,18 +6,18 @@
 // Pure value type (Foundation only). The jitter is SEEDED and per-index, so a
 // humanized take is fully reproducible and unit-tested — same seed, same feel.
 // Applied where real ticks exist, not baked into the grid, so a user can switch
-// between Tight and Humanized non-destructively. ⚠️ TWO callers, TWO tick spaces
-// (#1231, audit 2026-09-10 `sequencer-core-5`): `MIDIFileExporter` applies it at 96 PPQ,
-// `TouchQuantizer.microtiming` (built in `FloatingVisualWindow` from touch life) at
-// `Note.ticksPerQuarter` = 480. `timingTicks` is therefore in the CALLER's tick space;
-// "applied at MIDI export" alone, which stood here, named one of the two.
+// between Tight and Humanized non-destructively. TWO callers, ONE tick space since #1254:
+// `MIDIFileExporter` (480 PPQ since #1254) and `TouchQuantizer.microtiming` (built in
+// `FloatingVisualWindow` from touch life) both apply `timingTicks` at `Note.ticksPerQuarter`.
+// ⛔ #1231 recorded them as TWO spaces (export 96, quantizer 480) — true then, and the reason
+// `.humanized` is now ±20 rather than the ±4 that meant ~21 ms only at 96 PPQ.
 
 import Foundation
 
 /// Per-note timing + velocity variation. `tight` = no change (perfect grid).
 public struct Humanizer: Sendable, Equatable {
-    /// Maximum ± timing jitter in the CALLER's ticks (MIDI export: 96 PPQ → 24 ticks per
-    /// 16th; TouchQuantizer: 480 PPQ → 120 per 16th — the same number is 5× finer there).
+    /// Maximum ± timing jitter in `Note.ticksPerQuarter` ticks (480 PPQ → 120 per 16th;
+    /// one tick ≈ 1.04 ms at 120 BPM). Both callers apply it in this space (#1254).
     public var timingTicks: Int
     /// Maximum ± velocity variation as a fraction (0.12 = ±12%).
     public var velocityJitter: Float
@@ -30,8 +30,9 @@ public struct Humanizer: Sendable, Equatable {
     /// Dead on the grid — no humanization.
     public static let tight = Humanizer(timingTicks: 0, velocityJitter: 0)
 
-    /// A natural, played feel: ±4 ticks (~21 ms at 120 BPM) and ±12% velocity.
-    public static let humanized = Humanizer(timingTicks: 4, velocityJitter: 0.12)
+    /// A natural, played feel: ±20 ticks at 480 PPQ (~21 ms at 120 BPM) and ±12% velocity.
+    /// (±4 until #1254 — the same ~21 ms, stated in the exporter's former 96-PPQ ticks.)
+    public static let humanized = Humanizer(timingTicks: 20, velocityJitter: 0.12)
 
     /// Whether any humanization is applied.
     public var isActive: Bool { timingTicks > 0 || velocityJitter > 0 }

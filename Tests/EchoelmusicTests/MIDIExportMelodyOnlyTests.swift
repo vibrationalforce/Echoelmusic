@@ -62,11 +62,14 @@ final class MIDIExportMelodyOnlyTests: XCTestCase {
     /// obvious. It scanned every byte for high nibble 9, and its comment claimed the empty
     /// drum payload was `[0x00,0xFF,0x03,5] + "Drums" + [0x00,0xFF,0x2F,0x00]`. That was
     /// WRONG: `serializeTrack` writes `vlq(endTick - lastTick)` before End-of-Track, and
-    /// `lastTick` is 0 on an empty track, so the payload carries `vlq(bars × 384)`. At
-    /// `bars: 8` that is `0x98 0x00` — high nibble 9, followed by `0xFF` — and the scanner
-    /// reported a note-on in a track with no notes. The test passed only because the fixture
-    /// happened to use `bars: 2` (`0x86`). Anyone "making the fixture realistic" by using
-    /// the app's default 8 bars would have hit a red test with no visible cause.
+    /// `lastTick` is 0 on an empty track, so the payload carries `vlq(bars × ticksPerBar)`.
+    /// At the 96 PPQ of the time that was `vlq(bars × 384)`: `bars: 8` = `0x98 0x00` — high
+    /// nibble 9, followed by `0xFF` — and the scanner reported a note-on in a track with no
+    /// notes. The test passed only because the fixture happened to use `bars: 2` (`0x86`).
+    /// Anyone "making the fixture realistic" by using the app's default 8 bars would have hit
+    /// a red test with no visible cause. (Since #1254 the exporter writes 480 PPQ, so the
+    /// same payload is `vlq(bars × 1920)` and `bars: 2` is `0x9E 0x00` — the nibble-9 trap
+    /// now sits on THIS fixture; the proper parser below is what keeps it green.)
     ///
     /// So it parses properly now: walk delta-VLQ → event, skipping meta/sysex by their
     /// declared length, and honour running status. `bars` is then just a number again.

@@ -57,7 +57,7 @@ final class MIDIFileExporterTests: XCTestCase {
         XCTAssertEqual(Array(data[4..<8]),  [0x00, 0x00, 0x00, 0x06])      // header length = 6
         XCTAssertEqual(Array(data[8..<10]), [0x00, 0x00])                  // format 0
         XCTAssertEqual(Array(data[10..<12]),[0x00, 0x01])                  // 1 track
-        XCTAssertEqual(Array(data[12..<14]),[0x00, 0x60])                  // division = 96
+        XCTAssertEqual(Array(data[12..<14]),[0x01, 0xE0])                  // division = 480 (#1254)
         XCTAssertTrue(contains(data, Array("MTrk".utf8)))                  // track chunk present
         XCTAssertTrue(contains(data, [0xFF, 0x2F, 0x00]))                  // end-of-track meta
     }
@@ -105,7 +105,7 @@ final class MIDIFileExporterTests: XCTestCase {
         XCTAssertEqual(Array(data[4..<8]),  [0x00, 0x00, 0x00, 0x06])      // header length = 6
         XCTAssertEqual(Array(data[8..<10]), [0x00, 0x01])                  // format 1
         XCTAssertEqual(Array(data[10..<12]),[0x00, 0x03])                  // 3 tracks
-        XCTAssertEqual(Array(data[12..<14]),[0x00, 0x60])                  // division = 96
+        XCTAssertEqual(Array(data[12..<14]),[0x01, 0xE0])                  // division = 480 (#1254)
         // Three MTrk chunks (conductor + melody + drums).
         var count = 0, idx = data.startIndex
         while let r = data.range(of: Data("MTrk".utf8), in: idx..<data.endIndex) {
@@ -154,7 +154,7 @@ final class MIDIFileExporterTests: XCTestCase {
         XCTAssertEqual(Array(data.prefix(4)), Array("MThd".utf8))
         XCTAssertEqual(Array(data[8..<10]), [0x00, 0x01])                  // format 1
         XCTAssertEqual(Array(data[10..<12]),[0x00, 0x03])                  // 3 tracks
-        XCTAssertEqual(Array(data[12..<14]),[0x00, 0x60])                  // division = 96
+        XCTAssertEqual(Array(data[12..<14]),[0x01, 0xE0])                  // division = 480 (#1254)
     }
 
     func test_clip_melodyOnly_emitsChannel1_notChannel10() {

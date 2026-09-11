@@ -22,7 +22,9 @@ final class MIDIFileImporterTests: XCTestCase {
 
         XCTAssertEqual(back.count, 3)
         XCTAssertEqual(back.map(\.pitch), [60, 64, 67], "pitches preserved, sorted by start")
-        // Start steps survive the PPQ round-trip (exporter 96 PPQ → importer maps to 480).
+        // Start steps survive the round-trip (exporter and importer both at 480 PPQ since #1254;
+        // before, the exporter wrote 96 and the importer rescaled — on-grid steps were exact
+        // either way, sub-step ticks were not).
         XCTAssertEqual(back.map(\.startStep), [0, 4, 8])
         // Durations are preserved (within a step of rounding).
         XCTAssertEqual(back[0].lengthSteps, 4)
