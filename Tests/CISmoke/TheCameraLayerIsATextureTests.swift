@@ -24,9 +24,12 @@
 //     (`CameraFrame` needs CoreVideo; the claim is compiled where it is available.)
 //  7. `Package.swift` still declares no dependency — the layer is AVFoundation/ARKit/CoreVideo/
 //     Metal only, as the prompt requires.
+//  8. THE DOOR (K5b, #1263): one `Camera layer` row, blend as a Picker, mirror as a Toggle,
+//     mounted once in `visualPanel` behind `isSupported` and the Metal-field condition.
 //
 //  ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (`87d09bc`) and this tree: claims
-//  2, 3, 4 and 5 RED on the parent, GREEN here; claims 1 and 7 GREEN on both (counterweights,
+//  2, 3, 4 and 5 RED on the parent, GREEN here (claim 8 RED on `5bbec8d`, GREEN with K5b);
+//  claims 1 and 7 GREEN on both (counterweights,
 //  they fail the day a second session or a dependency appears); claim 6 is behavioural on a
 //  pure lock-protected class and was NOT run here (no toolchain). Whether the image stands the
 //  right way up, mirrored, and fills the field is a device question (NEEDS-FOUNDER-VERIFY at
@@ -138,6 +141,26 @@ final class TheCameraLayerIsATextureTests: XCTestCase {
         XCTAssertGreaterThan(slot.currentSequence, frame.sequence, "clear() did not advance the sequence — a renderer holding the old one would not notice the loss (K5)")
     }
     #endif
+
+    /// Claim 8 (K5b, #1263) — the door: one `Camera layer` number row, a NAMED blend choice as a
+    /// Picker (never a number field), the mirror switch, mounted ONCE in `visualPanel` behind
+    /// `isSupported`, binding the same three keys the mounts read.
+    func testTheFieldPanelHasTheCameraLayerDoor() throws {
+        let src = try text("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
+        XCTAssertEqual(occurrences("label: \"Camera layer\"", in: src), 1,
+                       "expected exactly one `Camera layer` row in EchoelStudioView (K5b)")
+        XCTAssertTrue(src.contains("Picker(\"Blend\", selection: $visualCameraBlend)"),
+                      "the blend is no longer a Picker — it is a named choice (Screen · Multiply · Cross), never a number field (K5b)")
+        XCTAssertTrue(src.contains("Toggle(isOn: $visualCameraMirror)"), "the mirror switch is gone (K5b)")
+        XCTAssertTrue(src.contains("StudioDefaultKeys.visualCameraOpacity.key")
+                      && src.contains("StudioDefaultKeys.visualCameraMirror.key")
+                      && src.contains("StudioDefaultKeys.visualCameraBlend.key"),
+                      "the panel no longer binds the three `visual.camera.*` keys the mounts read (K5b)")
+        XCTAssertEqual(occurrences("                cameraLayerRow\n", in: src), 1,
+                       "`cameraLayerRow` must be mounted exactly once (in `visualPanel`) (K5b)")
+        XCTAssertTrue(src.contains("if FaceExpressionBioPublisher.isSupported, !donutIsThePicture {\n                cameraLayerRow"),
+                      "the door is not gated on the device capability and the Metal field being the picture — a dead row on a phone without TrueDepth, or under the donuts (K5b)")
+    }
 
     /// Claim 7 — still zero dependencies.
     func testThePackageStillDeclaresNoDependency() throws {

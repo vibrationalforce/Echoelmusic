@@ -1012,6 +1012,10 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.visualGlitter.key) private var visualGlitter = StudioDefaultKeys.visualGlitter.value
     /// Structure (#853B): static domain-warp depth, 0 = off (the pre-dial picture).
     @AppStorage(StudioDefaultKeys.visualStructure.key) private var visualStructure = StudioDefaultKeys.visualStructure.value
+    // K5b (#1263) — the camera layer's three keys; the same three the two mounts bind.
+    @AppStorage(StudioDefaultKeys.visualCameraOpacity.key) private var visualCameraOpacity = StudioDefaultKeys.visualCameraOpacity.value
+    @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
+    @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
     /// The floating visual window's show/hide state — SHARED with WorkspaceView's header
     /// monitor button and the window's own close button, so the Visual panel can toggle it
     /// directly (founder: everything user-optimized; don't make the header the only way in).
@@ -5386,6 +5390,12 @@ struct EchoelStudioView: View {
             // one-column (portrait) rendering of the grids inside is bit-identical to the
             // stack it replaced — see the ⭐ block on `visualAdjustFields(spacing:)`.
             visualAdjustFields(spacing: 14)
+            // K5b (#1263) — the camera layer's door, OUTSIDE `visualAdjustFields` (see the member).
+            // Two gates, both cold: the Face source must be possible on this device, and the Metal
+            // field must be the picture — the donuts are a Canvas no texture can reach (#1057).
+            if FaceExpressionBioPublisher.isSupported, !donutIsThePicture {
+                cameraLayerRow
+            }
             MusicColourRowView()
             Text("Colour defaults to the heard tone octave-transposed into visible light — its frequency doubled until it reaches the visible band, rendered through CIE 1931 and closed over the CIE purple line where deep red meets deep violet, so every tone has a colour. Hue/Saturation rotate the palette for VJ/performance use. Motion is capped so the flash rate always stays under the 3 Hz safety limit.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -6773,6 +6783,42 @@ struct EchoelStudioView: View {
                 EchoelValueField(label: "Structure", value: $visualStructure, range: 0...2, decimals: 2)
             }
             }
+        }
+    }
+
+    /// K5b (#1263) — THE CAMERA LAYER'S DOOR: opacity (a number, `EchoelValueField`), blend (a
+    /// NAMED choice — Screen · Multiply · Cross — so a `Picker`, per the "read the word NUMERIC"
+    /// rule) and mirror (a switch). All three write `StudioDefaultKeys.visualCamera*`, the keys
+    /// `FloatingVisualWindow` and `ExternalDisplayScene` bind, so the phone and the beamer show
+    /// the same layer. OUTSIDE `visualAdjustFields` on purpose: two guards count that member's
+    /// grids (2) and rows (10), and a camera SOURCE is not a look dial. All three controls are
+    /// always shown once the row is — a control that appears under the finger mid-drag is the
+    /// #269 class this file avoids. `faceExpression.isPublishing` is a COLD read (it flips on the
+    /// source picker, never at bio rate), so the caption does not touch the 10.76.41/50 law.
+    /// NEEDS-FOUNDER-VERIFY: Field → "Camera layer" auf 0,5, Face-Quelle an — erscheint das
+    /// Gesicht im Feld, folgt der Blend-Wechsel ohne Sprung, und bleibt eine Aufnahme ohne Kamera?
+    private var cameraLayerRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            EchoelValueField(label: "Camera layer", value: $visualCameraOpacity, range: 0...1, decimals: 2)
+            labeledRow("Blend") {
+                Picker("Blend", selection: $visualCameraBlend) {
+                    Text("Screen").tag(0)
+                    Text("Multiply").tag(1)
+                    Text("Cross").tag(2)
+                }
+                .pickerStyle(.segmented)
+            }
+            Toggle(isOn: $visualCameraMirror) {
+                Text("Mirror the camera")
+                    .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            .accessibilityHint("Flips the camera image left to right, like a mirror")
+            Text(faceExpression.isPublishing
+                 ? "The front camera is layered into the field at this opacity. It never appears in a recorded take."
+                 : "Draws while the Face source runs — choose \"Play with your face\" under the pulse pill. It never appears in a recorded take.")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
