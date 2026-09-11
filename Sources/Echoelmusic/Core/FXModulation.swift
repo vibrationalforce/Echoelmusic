@@ -409,6 +409,17 @@ public enum FXModulation {
     /// slow enough that a sensor dropout is a fade rather than a click.
     public static let presenceTau: Float = 0.08
 
+    /// #1259 — THE BRIDGE ACROSS A FOREIGN FRAME. `EngineBus.latestBio` is ONE slot, and
+    /// two publishers can write it in turn (#1015: HealthKit's wrist frame every 4–5 s
+    /// beside the picked source). A frame from the OTHER publisher measures nothing on this
+    /// route's channel, so the driver saw `signal == nil` for the ≤100 ms until the picked
+    /// source wrote again — and `FXRouteFade` began a 0.25 s release every 4–5 s: a
+    /// periodic dip on every face route (and on every pulse route during a face take's
+    /// wrist frames the other way round). A channel measured within this many seconds is
+    /// HELD at its last value instead. Shorter than any source's `freshnessWindow` (the
+    /// tightest is 5 s), so a source that truly stopped still releases — one bridge later.
+    public static let channelBridgeSeconds: TimeInterval = 0.5
+
     /// Rate-based [0..1] engagement for ONE route, stepped by `dt` seconds toward 1
     /// while its carrier is measured and toward 0 while it is not.
     ///

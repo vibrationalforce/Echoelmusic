@@ -132,6 +132,9 @@ public final class FXBioModulator {
     /// progress; the fade invalidates its own held offset when the route it belongs to
     /// is retargeted or retuned.
     @ObservationIgnored private var routeFades: [UUID: FXRouteFade] = [:]
+    /// #1259 — last measured value per channel, with the uptime it was read at; bridges a
+    /// foreign frame in the shared slot (`FXModulation.channelBridgeSeconds`).
+    @ObservationIgnored private var lastMeasured: [ModSource: (value: Float, uptime: TimeInterval)] = [:]
     /// MONOTONIC, deliberately. `CFAbsoluteTimeGetCurrent` is wall clock: an NTP or
     /// timezone step backwards yields a negative delta, which the envelope reads as a
     /// bad clock — and the app already carries the wall clock for LFO phase, where a
@@ -339,7 +342,15 @@ public final class FXBioModulator {
                     // full-negative offset (see `ModSource.isMeasured`, which also
                     // documents the one unipolar channel this changes: breath).
                     if let frame, source.isMeasured(in: frame) {
-                        signal = source.normalizedValue(from: frame)
+                        let v = source.normalizedValue(from: frame)
+                        lastMeasured[source] = (v, uptime)
+                        signal = v
+                    } else if let held = lastMeasured[source],
+                              uptime - held.uptime <= FXModulation.channelBridgeSeconds {
+                        // #1259 — a FOREIGN frame in the shared slot (the wrist's, every
+                        // 4–5 s, beside a face take — or the face's beside a wrist route),
+                        // not a loss: hold the last reading for the bridge, then release.
+                        signal = held.value
                     } else {
                         signal = nil
                     }

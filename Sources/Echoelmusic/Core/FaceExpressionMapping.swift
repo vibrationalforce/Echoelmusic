@@ -103,6 +103,27 @@ public struct FaceExpressionMapping: Sendable, Equatable {
         return copy
     }
 
+    /// #1259 — SIGNAL LOSS IS ITS OWN STATE. When the face leaves the picture (or the
+    /// session is interrupted) the channels must neither freeze at their last value nor
+    /// snap to 0 — a snap is an audible click on any routed parameter. This eases every
+    /// channel toward 0 with `timeConstant` (the loss constant below: ~95 % gone in 0.3 s)
+    /// and releases the hysteresis so a returning face starts from the gate, not from
+    /// wherever the flicker left it.
+    public static let lossTimeConstant: Double = 0.1
+    public func released(dt: Double, timeConstant: Double = FaceExpressionMapping.lossTimeConstant)
+        -> FaceExpressionMapping {
+        let alpha = Self.alpha(dt: dt, tau: timeConstant)
+        var copy = self
+        copy.smile = Self.ema(current: smile, target: 0, alpha: alpha)
+        copy.browRaise = Self.ema(current: browRaise, target: 0, alpha: alpha)
+        copy.jawOpen = Self.ema(current: jawOpen, target: 0, alpha: alpha)
+        copy.smileActive = false; copy.browActive = false; copy.jawActive = false
+        return copy
+    }
+    /// True once every channel is under the settle floor — the fade is finished and the
+    /// publisher may fall silent.
+    public var isSettled: Bool { smile < 0.005 && browRaise < 0.005 && jawOpen < 0.005 }
+
     /// The deadzone-with-hysteresis gate (see `deadzone`). Pure apart from the `active`
     /// flag it carries between calls. `deadzone <= 0` passes the value through.
     static func gate(_ raw: Float, active: inout Bool, deadzone: Float) -> Float {

@@ -32,6 +32,9 @@
 //  NEEDS-FOUNDER-VERIFY (#1258): Bio panel → "Calibrate", hold still 3 s — afterwards a
 //  still face shows Smile/Brow/Jaw at 0.00 (no flicker; the 0.06 deadzone is a guess),
 //  a deliberate smile rises smoothly, and the numbers survive a relaunch.
+//  NEEDS-FOUNDER-VERIFY (#1259): with a Smile → FX route sounding, turn the face away — the
+//  parameter eases back over ~0.3 s (no click, no 6-s freeze); with Health authorised on
+//  the same phone, hold a smile for 20 s — no periodic dip every 4–5 s.
 //
 
 import Foundation
@@ -89,6 +92,9 @@ public final class FaceExpressionBioPublisher {
     public private(set) var smile: Float = 0
     public private(set) var browRaise: Float = 0
     public private(set) var jawOpen: Float = 0
+    /// #1259 — true while ARKit is delivering a face; false once it is gone (the channels
+    /// then fade to 0 over ~0.3 s and the publisher falls silent). For the numbers row.
+    public private(set) var isFaceTracked = false
     /// True while a neutral hold is being collected (`calibrate(seconds:)`).
     public private(set) var isCalibrating = false
     /// True when a non-identity calibration is applied (persisted across launches).
@@ -113,6 +119,12 @@ public final class FaceExpressionBioPublisher {
     @ObservationIgnored private var calibration = FaceExpressionBioPublisher.loadCalibration()
     @ObservationIgnored private var neutralSamples: (smile: [Float], brow: [Float], jaw: [Float]) = ([], [], [])
     @ObservationIgnored private var calibrationEndsAt: CFAbsoluteTime = 0
+    /// #1259 — set at the first drain without a face; the fade runs from it until settled
+    /// or `lossFadeCapSeconds`, whichever first. `nil` = no loss in progress.
+    @ObservationIgnored private var faceLostAt: CFAbsoluteTime?
+    /// Hard cap on the loss fade so a never-settling channel cannot keep a dead source
+    /// publishing: 3 × the loss time constant is >95 % gone by the 0.1 s constant.
+    nonisolated static let lossFadeCapSeconds: Double = 0.6   // read by a guard off-actor (#1255b)
 
     /// The production mapping: deadzone ON. `stop()` resets to this, never to a bare `init`.
     private static func freshMapping() -> FaceExpressionMapping {
@@ -189,6 +201,8 @@ public final class FaceExpressionBioPublisher {
         latest.clear()
         mapping = Self.freshMapping()
         isCalibrating = false
+        isFaceTracked = false
+        faceLostAt = nil
         smile = 0; browRaise = 0; jawOpen = 0
         isPublishing = false
     }
@@ -213,9 +227,29 @@ public final class FaceExpressionBioPublisher {
             lastError = failure
             return
         }
-        guard let bag = latest.read() else { return }
         let now = CFAbsoluteTimeGetCurrent()
         let dt = Swift.max(0, now - lastPublish)
+        guard let bag = latest.read() else {
+            // #1259 — face gone: fade, do not snap, do not freeze. Publish the fading
+            // channels for up to `lossFadeCapSeconds`, then stop publishing (a source that
+            // measures nothing says nothing — the consumers hold or read neutral by their
+            // own law, and `usableBio()` ages the last frame out after the freshness window).
+            if isFaceTracked { isFaceTracked = false; faceLostAt = now }
+            guard let lostAt = faceLostAt else { return }
+            if mapping.isSettled || now - lostAt > Self.lossFadeCapSeconds {
+                faceLostAt = nil
+                mapping = mapping.released(dt: 10)   // exact 0, hysteresis released
+                smile = 0; browRaise = 0; jawOpen = 0
+                return
+            }
+            mapping = mapping.released(dt: dt)
+            lastPublish = now
+            smile = mapping.smile; browRaise = mapping.browRaise; jawOpen = mapping.jawOpen
+            publishFrame(bus: bus, at: now)
+            return
+        }
+        faceLostAt = nil
+        isFaceTracked = true
         lastPublish = now
         let raw = FaceExpressionMapping.rawChannels(from: bag)
         if isCalibrating {
@@ -242,6 +276,11 @@ public final class FaceExpressionBioPublisher {
         smile = mapping.smile
         browRaise = mapping.browRaise
         jawOpen = mapping.jawOpen
+        publishFrame(bus: bus, at: now)
+    }
+
+    /// The ONE `.faceCam` frame shape — tracked and fading takes share it.
+    private func publishFrame(bus: EngineBus, at now: CFAbsoluteTime) {
         bus.publish(bio: BioSampleFrame(
             timestamp: now,
             heartRateBPM: 0,          // faceCam carries NO pulse (coexistence deferred)

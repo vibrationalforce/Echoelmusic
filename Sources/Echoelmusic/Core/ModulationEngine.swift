@@ -89,6 +89,14 @@ public final class ModulationEngine {
     /// or disabled, cleared on `stop()`.
     @ObservationIgnored
     private var routeSmoothing: [UUID: Float] = [:]
+    /// #1259 — per channel, the timestamp of the last frame that MEASURED it. A route
+    /// whose channel the current frame does not carry (a foreign publisher's frame in the
+    /// shared slot, #1015) keeps its last smoothed value for `FXModulation
+    /// .channelBridgeSeconds` instead of reading the frame's 0 — the same bridge the FX
+    /// driver has, on the matrix side (tempo and the voice stages).
+    private var lastMeasuredAt: [ModSource: TimeInterval] = [:]
+    /// The value each route last contributed (smoothed or not) — what the bridge holds.
+    private var lastRouteValue: [UUID: Float] = [:]
 
     /// Timestamp of the frame the smoothing state was last advanced with. Separate from
     /// `lastFrameTimestamp` on purpose: that one belongs to `tick`'s dedup and is not set
@@ -271,7 +279,17 @@ public final class ModulationEngine {
 
         for route in matrix.routes where route.enabled {
             active.insert(route.id)
-            let raw = ModulationMatrix.output(for: route, frame: frame)
+            let raw: Float
+            if route.source.isMeasured(in: frame) {
+                lastMeasuredAt[route.source] = frame.timestamp
+                raw = ModulationMatrix.output(for: route, frame: frame)
+            } else if let at = lastMeasuredAt[route.source],
+                      frame.timestamp - at <= FXModulation.channelBridgeSeconds,
+                      let held = lastRouteValue[route.id] {
+                raw = held                       // #1259 — bridge a foreign frame
+            } else {
+                raw = ModulationMatrix.output(for: route, frame: frame)
+            }
 
             var value = raw
             if route.smoothingTau > 0 {
@@ -280,6 +298,7 @@ public final class ModulationEngine {
                 value = alpha * raw + (1 - alpha) * prev
                 routeSmoothing[route.id] = value
             }
+            lastRouteValue[route.id] = value
 
             guard value > 0 else { continue } // matches evaluate(): skip zero
             result[route.destination, default: 0] =

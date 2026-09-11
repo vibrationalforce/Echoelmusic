@@ -33,6 +33,10 @@ struct FaceChannelsRow: View {
                 if face.isCalibrating {
                     Text("Hold a still face — three seconds.")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                } else if face.isPublishing, !face.isFaceTracked {
+                    // #1259 — loss is a STATE, shown as one: the numbers fade to 0.
+                    Text("No face in view — channels fading to 0.")
+                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 } else if let error = face.lastError {
                     Text("Face input stopped: \(error)")
                         .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
