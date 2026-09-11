@@ -10,7 +10,8 @@
 //  the pass. Output is a bag of control values under `BodyPoseMath`'s keys — MOVEMENT as a
 //  control signal, never an inferred state (the face file's EU-AI-Act framing, unchanged).
 //
-//  RATE + THERMAL: every `frameStride`-th delivered frame (~15 Hz at ARKit's 60), and nothing
+//  RATE + THERMAL: every `frameStride`-th delivered frame (~15 passes/s at any capture rate —
+//  K7b derives the stride from the rate, `FaceTrackingRate.stride(forCaptureHz:)`), and nothing
 //  at all once `ProcessInfo.thermalState` reaches `.serious` (the prompt asks for automatic
 //  degradation from exactly there). Both are cheap reads on the delegate's queue.
 //
@@ -40,8 +41,9 @@ private struct AnalysisFrame: @unchecked Sendable {
 
 final class BodyPoseAnalyzer: @unchecked Sendable {
 
-    /// Analyse every N-th delivered frame (ARKit: 60/s → ~15 passes/s).
-    static let frameStride = 4
+    /// Analyse every N-th delivered frame (~`FaceTrackingRate.analysisHz` passes/s); set from
+    /// the running capture rate by `setCaptureHz(_:)`, 60 Hz assumed until told.
+    private var frameStride = FaceTrackingRate.stride(forCaptureHz: 60)
     /// Vision's per-joint confidence below which a joint is "not seen".
     static let minimumJointConfidence: Float = 0.3
 
@@ -57,6 +59,12 @@ final class BodyPoseAnalyzer: @unchecked Sendable {
         self.sink = sink
     }
 
+    /// K7b — the capture rate changed (main actor, on change only): keep ~15 passes/s.
+    func setCaptureHz(_ hz: Int) {
+        let stride = FaceTrackingRate.stride(forCaptureHz: hz)
+        lock.lock(); frameStride = stride; lock.unlock()
+    }
+
     /// K6c — the interface orientation changed (main actor, on change only): the next pass
     /// reads the buffer accordingly. A `UIInterfaceOrientation` raw value goes in.
     func setInterfaceOrientation(raw: Int) {
@@ -69,7 +77,7 @@ final class BodyPoseAnalyzer: @unchecked Sendable {
     func analyze(_ pixelBuffer: CVPixelBuffer) {
         lock.lock()
         frameCounter &+= 1
-        let take = !busy && frameCounter % Self.frameStride == 0
+        let take = !busy && frameCounter % frameStride == 0
         if take { busy = true }
         let orientation = orientationRaw
         lock.unlock()

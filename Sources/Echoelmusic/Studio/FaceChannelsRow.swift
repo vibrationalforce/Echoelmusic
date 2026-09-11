@@ -21,6 +21,9 @@ import SwiftUI
 
 struct FaceChannelsRow: View {
     @Environment(FaceExpressionBioPublisher.self) private var face
+    /// K7b — the tracking rate, a NAMED choice among what ARKit offers (a `Picker`, not a
+    /// number field: the values are the device's, not a continuum).
+    @AppStorage(StudioDefaultKeys.faceTrackingHz.key) private var trackingHz = StudioDefaultKeys.faceTrackingHz.value
 
     var body: some View {
         if face.isPublishing || face.isCalibrating || face.lastError != nil {
@@ -41,6 +44,18 @@ struct FaceChannelsRow: View {
                     Text(face.bodyPresence > 0.5 ? "Body in view" : "No body in view")
                         .font(EchoelTheme.font(10)).foregroundStyle(EchoelTheme.dim)
                         .accessibilityLabel(face.bodyPresence > 0.5 ? "Body in view" : "No body in view")
+                }
+                if FaceExpressionBioPublisher.availableTrackingRates.count > 1 {
+                    HStack(spacing: 8) {
+                        Text("Tracking").font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                        Picker("Tracking rate", selection: $trackingHz) {
+                            ForEach(FaceExpressionBioPublisher.availableTrackingRates, id: \.self) { hz in
+                                Text("\(hz) Hz").tag(hz)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .accessibilityHint("Frames per second the front camera tracks at; lower runs cooler")
+                    }
                 }
                 if let relief = face.thermalRelief {
                     // K7 — the thermal ladder is a STATE the performer sees, not a mystery.

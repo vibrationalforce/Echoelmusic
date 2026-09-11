@@ -154,6 +154,16 @@ public final class FaceExpressionBioPublisher {
         #endif
     }
 
+    /// K7b (#1267) — the tracking rates ARKit offers on this device, highest first; the numbers
+    /// row shows a picker only when there is more than one. Empty without ARKit.
+    nonisolated public static var availableTrackingRates: [Int] {
+        #if canImport(ARKit)
+        return FaceTrackingRate.offered(from: ARFaceTrackingConfiguration.supportedVideoFormats.map(\.framesPerSecond))
+        #else
+        return []
+        #endif
+    }
+
     /// K7 — the thermal ladder, VISIBLE: non-nil while `ProcessInfo.thermalState` is
     /// `.serious` or worse and the session has shed body tracking and the person matte
     /// (prompt: "der Nutzer sieht, dass es passiert"). Written at the drain on CHANGE only.
@@ -176,6 +186,8 @@ public final class FaceExpressionBioPublisher {
     @ObservationIgnored private var segmentationOn = false
     /// K6c — the interface orientation last pushed to the body analyzer (-1 = never).
     @ObservationIgnored private var pushedOrientationRaw = -1
+    /// K7b — the tracking rate the running configuration was built for (0 = none yet).
+    @ObservationIgnored private var appliedTrackingHz = 0
     #endif
     /// True once a face OR a body has been seen since the last loss — the loss fade starts
     /// at the first drain that finds neither (before K6a the face alone decided).
@@ -255,6 +267,11 @@ public final class FaceExpressionBioPublisher {
         arSession.delegate = proxy
         let config = ARFaceTrackingConfiguration()
         config.isLightEstimationEnabled = false
+        // K7b — the wanted rate at the fewest pixels (`FaceTrackingRate`), ARKit's default
+        // when no format has it; the body stride follows the rate that actually runs.
+        appliedTrackingHz = Self.wantedTrackingHz
+        if let format = Self.videoFormat(forHz: appliedTrackingHz) { config.videoFormat = format }
+        body.setCaptureHz(config.videoFormat.framesPerSecond)
         // K7 — segmentation only if a picture wants the matte right now; `syncSegmentation`
         // follows the wish (and the thermal ladder) from the drain on.
         segmentationOn = Self.supportsSegmentation && CameraFrameSlot.shared.wantsMatte() && !Self.thermalIsSerious
@@ -277,6 +294,7 @@ public final class FaceExpressionBioPublisher {
         delegateProxy = nil
         bodyAnalyzer = nil
         pushedOrientationRaw = -1
+        appliedTrackingHz = 0
         arConfig = nil
         segmentationOn = false
         #endif
@@ -326,6 +344,7 @@ public final class FaceExpressionBioPublisher {
         }
         syncSegmentation()
         syncBodyOrientation()
+        syncTrackingRate()
         let now = CFAbsoluteTimeGetCurrent()
         let dt = Swift.max(0, now - lastPublish)
         // K6a — two slots feed one drain: the face bag (ARKit anchors) and the body bag
@@ -435,6 +454,33 @@ public final class FaceExpressionBioPublisher {
         pushedOrientationRaw = raw
         bodyAnalyzer?.setInterfaceOrientation(raw: raw)
         #endif
+    }
+
+    /// K7b — the persisted rate choice; a value ARKit does not offer falls back to the default.
+    nonisolated private static var wantedTrackingHz: Int {
+        let stored = UserDefaults.standard.object(forKey: StudioDefaultKeys.faceTrackingHz.key) as? Int
+        let hz = stored ?? StudioDefaultKeys.faceTrackingHz.value
+        return availableTrackingRates.contains(hz) ? hz : StudioDefaultKeys.faceTrackingHz.value
+    }
+
+    nonisolated private static func videoFormat(forHz hz: Int) -> ARConfiguration.VideoFormat? {
+        let formats = ARFaceTrackingConfiguration.supportedVideoFormats
+        let shapes = formats.map { (hz: $0.framesPerSecond, pixels: Int($0.imageResolution.width * $0.imageResolution.height)) }
+        guard let i = FaceTrackingRate.pick(from: shapes, wantHz: hz) else { return nil }
+        return formats[i]
+    }
+
+    /// K7b — the performer changed the rate while the source runs: re-run the SAME
+    /// configuration with the new format (ARKit restarts capture; tracking state survives
+    /// without reset options) and re-derive the body stride.
+    private func syncTrackingRate() {
+        guard let config = arConfig else { return }
+        let want = Self.wantedTrackingHz
+        guard want != appliedTrackingHz, let format = Self.videoFormat(forHz: want) else { return }
+        appliedTrackingHz = want
+        config.videoFormat = format
+        arSession.run(config)
+        bodyAnalyzer?.setCaptureHz(format.framesPerSecond)
     }
 
     /// `ProcessInfo.thermalState` at `.serious` or worse — the prompt's degradation threshold.

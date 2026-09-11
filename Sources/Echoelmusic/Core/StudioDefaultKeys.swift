@@ -272,6 +272,9 @@ public enum StudioDefaultKeys {
     /// K7 (#1265) — cut the person out of the camera layer (ARKit person segmentation; inert
     /// where the device cannot segment — the row disables the toggle there, never simulates).
     public static let visualCameraCutout = StudioDefault(key: "visual.camera.cutout", value: false)
+    /// K7b (#1267) — the front-camera tracking rate in Hz (a NAMED choice among what ARKit
+    /// offers, `FaceTrackingRate`); 30 by default, 60 where the device has it.
+    public static let faceTrackingHz = StudioDefault(key: "face.trackingHz", value: FaceTrackingRate.defaultHz)
     /// TRUE — the living visual greets a fresh install ("wow von Sekunde 1",
     /// WorkspaceView header monitor). The studio panel's old `false` copy made
     /// its toggle button lie until the key was first written.
