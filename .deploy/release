@@ -1,4 +1,4 @@
-build: v10.79.468 — Das Bild kostet weniger, wo das Gerät es braucht; Bio ehrlicher auf Kamera und Gurt; Takt und Licht halten (#1216–#1245)
+build: v10.79.469 — Der Audio-Eingang, sauber aufgesetzt: Mikrofon-Tür, Eingang→Bild, Stimme in der Matrix, Harmony in key; MIDI 2.0 raus, OSC-Cues rein (#1246–#1256)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
   ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
@@ -49,9 +49,181 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
-  Der Vorgänger ist 10.79.466 (und davor 10.79.465).
+  Der Vorgänger ist 10.79.468 (und davor 10.79.467).
 
-  ── 0. WAS IN 10.79.468 NEU IST ─────────────────────────────────────────
+  ── 0. WAS IN 10.79.469 NEU IST ─────────────────────────────────────────
+
+  **Deine Ansage vom 11.09.: „Bearbeite alles was noch offen ist … Audio Input sauber
+  aufsetzen … Biofeedback mit den Visuals ohne Sound."** Dieser Build trägt alles seit 468 —
+  die Scheiben #1246 bis #1256, keine davon je auf einem Gerät gelaufen. Ich sortiere nach
+  Deinem Ask; der Audio-Eingang steht zuerst, weil Du ihn zuerst genannt hast.
+
+  **A. Der Audio-Eingang, in sieben Scheiben (#1246–#1252).**
+  · **Bio**-Panel → „Body without sound" (#1246): der Sensor allein treibt das Bild — Finger
+    auf die Kamera, Visual-Fenster auf, kein Instrument, kein Transport. Solange das
+    Instrument läuft, weigert sich der Schalter (ein Gurt hat EINEN Besitzer).
+  · **Master**-Chip → „Audio input" (#1247): die EINE Mikrofon-Tür ist zurück. Mix-Streifen
+    und Einlade-Banner bleiben weg. Der Monitorpfad selbst ist unangetastet — die Tür ist da,
+    damit DU ihn prüfst; bestätigt ist er nicht, und der Store sagt weiter nichts davon.
+  · Eingang → Bild (#1248): Pegel, Bass-Anteil, Transienten und Helligkeit des Mikrofons
+    bewegen das Visual (Dish, Stoß, Ausbreitung, leichter Farbton). „Monitor level 0" ist der
+    Nur-Hören-Modus für Club und Festival — Signal rein, nichts auf die PA.
+  · Vier Stimm-Ziele in der Modulations-Matrix (#1249): Harmony-Mix, Granular-Mix,
+    Granular-Pitch, Tune-Stärke — Kohärenz/HRV/Atem können sie ziehen, ~1 Hz, mit Fade.
+  · **Master**-Chip → Routing → „Body → parameter" (#1250): die Matrix hat zum ersten Mal
+    eine Fläche (Quelle · Ziel · Tiefe · Invert · Kurve · Glättung, „Add route" je Ziel).
+  · Absturz-Hypothese #5 gebaut (#1251): `prepare()` zwischen Session-Claim und Format-Read.
+    Ob die isInputConnToConverter-Familie damit weg ist, sagt nur Dein Gerät — das Log muss
+    die Sprosse „on: prepared before format read" VOR dem Format-Read zeigen.
+  · **Master**-Chip → „Audio input" → „Harmony in key" (#1252): die Harmoniestimmen liegen
+    auf Terz und Quinte der Session-Tonart statt auf festen Halbtönen — ein gesungenes E in
+    C-Dur bekommt G und B, kein Gis. Default aus.
+
+  **B. MIDI 2.0 raus (#1253).** **Master**-Chip → Routing → MIDI out → „MIDI 2.0 source":
+  eine zweite virtuelle Quelle „Echoelmusic (MIDI 2.0)" mit 16-Bit-Velocity und 32-Bit-
+  Controllern. Default aus, weil ein DAW, das beide Quellen aufnimmt, jede Note doppelt
+  bekäme. Hardware bekommt weiter MIDI 1.0.
+
+  **C. MIDI-Export mit 480 PPQ (#1254).** **Save/Export**-Chip → MIDI: die Datei trägt jetzt
+  die Noten-Auflösung des Instruments statt 96 — Eingespieltes und das Mikro-Timing der
+  Touch-Noten kommen unverändert in der DAW an (bisher bis 4 ms gefloort).
+
+  **D. OSC-Steuereingang (#1255).** **Master**-Chip → Routing → „Accept OSC control" (default
+  aus): TouchOSC, TouchDesigner, QLab dürfen genau sechs Adressen schicken —
+  `/echoelmusic/ctrl/bpm` (nur bei BPM-Lock), `key`, `scale`, `genre`, `visualStyle`,
+  `blackout`. Absender-Allowlist per IP, Port 8001. KEIN play/stop über das Netz — das ist
+  Deine Entscheidung (Frage unten).
+
+  **E. Store-Text (#1256, nicht in der App).** Keywords auf Kundenwörter, der Rig-Satz über
+  dem Fold, `colour`→`color`, „Meditativ" raus, Externer-Bildschirm-Zeile. Liegt in
+  `fastlane/metadata`; hochgeladen wird es erst von Deiner Hand (`fastlane deliver`), kein
+  Workflow tut das. en-GB, Titel und Untertitel habe ich absichtlich nicht angefasst.
+
+  **Was ich NICHT beweisen kann:** alles oben ist compile-verifiziert (Xcode Compile Check
+  #2549 grün auf `d9f48b1` für #1246–#1254, #2550 grün auf `8d31354` für #1255; der Kopf
+  dieses Builds hat dieselben Sources wie `8d31354`), die Wächter sind transkribiert, nicht
+  ausgeführt. Ob das Mikrofon-Monitoring diesmal überlebt (A, #1247/#1251), ob der Eingang
+  das Bild spürbar bewegt (A, #1248) und ob die Harmonie in der Tonart sauber klingt (A,
+  #1252), sieht und hört nur Dein Gerät — die Bitten dazu stehen unten, gedruckt.
+
+  **Eine Frage an Dich:** soll ein OSC-Cue die Sitzung STARTEN dürfen (play/stop von außen)?
+  Heute pinnt ein Wächter drei Start-Pfade als Deine Entscheidung; ich habe keinen vierten
+  gebaut, ohne Dich zu fragen.
+
+  Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
+  hat seit #859 die Lebenszyklus-Leiter, und seit #1251 die neue Sprosse; Stille zwischen
+  zwei Sprossen ist ein Befund.
+
+  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+
+  Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since 3eef86b`
+  (3eef86b = der 468-Bump). Die fünfzehn AUDIO-Bitten sind die aus A (sieben davon waren seit
+  #1024 blockiert und sind mit der Tür wieder offen), die zwei SYNC-Bitten aus B und D, die
+  UI-Bitte aus A (Body without sound).
+
+  Founder device-session checklist — 24 NEW or REWORDED since `3eef86b`, of 153 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
+
+  ── AUDIO  (15)
+     Audio/AudioConfiguration.swift:343
+        NEEDS-FOUNDER-VERIFY: Bluetooth-Kopfhörer verbinden, spielen, Monitoring EINschalten — die Musik muss Stereo/v…
+     Audio/AudioEngine.swift:446
+        NEEDS-FOUNDER-VERIFY: Megaphone am Gerät — Monitoring auf dem Lautsprecher, Schalter an: Stimme deutlich laute…
+     Audio/AudioEngine.swift:545
+        NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Live monitoring AN, Monitor level 0, Musik aus dem Raum / vom I…
+     Audio/AudioEngine.swift:693
+        NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Harmony voices AN → „Harmony in key" AN, Tonart C-Dur, E singen…
+     Audio/AudioEngine.swift:726
+        NEEDS-FOUNDER-VERIFY: Master-Chip → „Audio input" → „Harmony voices" AN — zwei Harmoniestimmen (Terz + Quinte)…
+     Audio/AudioEngine.swift:740
+        NEEDS-FOUNDER-VERIFY: Master-Chip → „Audio input" → „Granular texture" AN — eine schimmernde Grain-Wolke unter…
+     Audio/AudioEngine.swift:2657
+        NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Live monitoring AN — das Log muss „on: prepared before format r…
+     Audio/AudioEngine.swift:2952
+        a device run can say. NEEDS-FOUNDER-VERIFY: mic monitor ON while the master graph runs at 44.1 kHz on 48 kHz h…
+     Audio/AudioEngine.swift:3652
+        NEEDS-FOUNDER-VERIFY: Lautsprecher-Monitoring, Howl provozieren (Mic Richtung Lautsprecher) — es darf GAR NICH…
+     Audio/MonitorInsertAU.swift:174
+        NEEDS-FOUNDER-VERIFY: Monitoring an (Log zeigt „insert in") und normal sprechen/singen — klingt der Monitor UN…
+     Studio/PatchbayView.swift:328
+        NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Coherence → „Voice · harmony mix", D…
+     CISmoke/TheAutotuneCharacterIsDerivedNotStoredTests.swift:35
+        performer mid-take. That is a device probe (NEEDS-FOUNDER-VERIFY: monitoring on, Tune to key on, step through …
+     CISmoke/TheBodyPlaysThePictureWithoutSoundTests.swift:18
+        NEEDS-FOUNDER-VERIFY sits at `setBodyOnly`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (`65b89bc`…
+     CISmoke/TheNotchIsSlewedAndMonitorOnlyTests.swift:38
+        (NEEDS-FOUNDER-VERIFY: speaker monitoring, provoke a howl, hear it die as a ramp). ⚠️ KNOWN BLIND SPOT (#595 r…
+     CISmoke/TheVoiceTuneSnapsToTheSessionKeyTests.swift:27
+        (NEEDS-FOUNDER-VERIFY: monitoring on, Tune to key on, sing off-pitch — the monitor must pull you to the Tonart…
+
+  ── OTHER  (5)
+     Core/StudioDefaultKeys.swift:447
+        NEEDS-FOUNDER-VERIFY: Routing → "Accept OSC control" on; from TouchOSC/TouchDesigner send `/echoelmusic/ctrl/k…
+     Core/StudioDefaultKeys.swift:483
+        NEEDS-FOUNDER-VERIFY: Routing → MIDI out on → "MIDI 2.0 source" on; on a Mac (Logic / MIDI Monitor) the device…
+     CISmoke/TheHarmonyKnowsTheKeyTests.swift:12
+        — NEEDS-FOUNDER-VERIFY at `AudioEngine.voiceHarmonyFollowsKey`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against t…
+     CISmoke/TheInputFeedsThePictureTests.swift:20
+        follows a room is a DEVICE PROBE — NEEDS-FOUNDER-VERIFY at `AudioEngine.inputFeatures`. ⚠️ HONEST GRADING — TR…
+     CLAUDE.md:40
+        - Live pipeline: HealthKit + camera rPPG (live, locks on device) + Demo → bio snapshot. ( Universal BLE HR (0x…
+
+  ── UI  (2)
+     Studio/EchoelStudioView.swift:9642
+        NEEDS-FOUNDER-VERIFY: Bio-Panel → „Body without sound" AN, Finger auf die Kamera, Visual- Fenster öffnen — das…
+     CISmoke/TheMatrixHasADoorTests.swift:14
+        route authored here audibly moves the harmony mix is a DEVICE PROBE — NEEDS-FOUNDER-VERIFY at `modulationSecti…
+
+  ── SYNC  (2)
+     CISmoke/TheMIDI2SourceIsSwitchableTests.swift:15
+        NEEDS-FOUNDER-VERIFY at `StudioDefaultKeys.midiOutUMP2`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the pare…
+     CISmoke/TheOSCControlInputIsAWhitelistTests.swift:13
+        PROBE — NEEDS-FOUNDER-VERIFY at `StudioDefaultKeys.oscInEnabled`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against…
+
+  ── NOT ASKS (16) — the marker used as a noun, nobody can perform these
+     CISmoke/GenreBassGrammarTests.swift:12   ("the" in front of it — prose about the backlog)
+     CISmoke/GenreDeepTechTests.swift:26   ("the" in front of it — prose about the backlog)
+     CISmoke/OnboardingPagesScrollTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/SoundRowsCanReachTheShippedPatchesTests.swift:74   ("the" in front of it — prose about the backlog)
+     CISmoke/TheADMOSCLeavesAreTheSpecsTests.swift:29   ("the" in front of it — prose about the backlog)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:40   ("the" in front of it — prose about the backlog)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:166   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:185   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:198   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:247   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheExportFailureSpeaksAtTheButtonTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheLockNeedsFramesTests.swift:19   ("the" in front of it — prose about the backlog)
+     CISmoke/TheStillSaysWhetherItWasSavedTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheTakeSaysWhetherItWasWrittenTests.swift:14   ("the" in front of it — prose about the backlog)
+     CISmoke/VisualFineTuneReflowsTests.swift:109   ("the" in front of it — prose about the backlog)
+     CLAUDE.md:35   ("jeden" in front of it — prose about the backlog)
+
+  ── HOW TO RETIRE AN ASK once you have done it on a device
+     Put the date on the SAME line as the marker, then commit:
+       // NEEDS-FOUNDER-VERIFY VERIFIED-YYYY-MM-DD: <the original instruction>
+     Keep the instruction. The line stays as the record of WHAT was confirmed and
+       WHEN — deleting it also deletes the date, which is the first thing you want
+       back when the behaviour regresses.
+
+  ── LIMITS (read before treating this as a work queue)
+     ANSWERED depends on somebody writing the mark. An ask you did on a device but
+       never marked stays in the open list — the tool reads the tree, not your
+       memory. It fails toward noise on purpose: a half-typed mark leaves the ask
+       OPEN, because showing a settled ask costs a glance and hiding an open one
+       costs a device session.
+     The AREA is derived from the file path, never from the words. A layout ask living in a
+       bio file lands under 'bio'. Order the walk yourself; this only makes the queue visible.
+     It reads RAW text on purpose — every marker is a comment.
+     The NOT-ASKS split keys on a determiner in front of the marker, and can only
+       REMOVE from the list above. A sentence about the backlog phrased without one
+       stays counted as an ask — noise, never a hidden job.
+     BLOCKED is a HAND-WRITTEN mark, not a derivation. Nothing here can tell that a
+       door was removed; somebody has to notice and write BLOCKED-BY-#<slice> on the
+       marker line. So this list under-reports: an ask whose door died unnoticed is
+       still shown as open, which is the safe direction and not a clean bill.
+
+  ── 0c. WAS IN 10.79.468 NEU WAR (Vorgänger) ─────────────────────────────
 
   **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt alles
   seit 467 — die Scheiben #1216 bis #1244, keine davon je auf einem Gerät gelaufen. Ich
@@ -112,7 +284,7 @@ notes: |
   Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
   hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
 
-  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+  ── 0d. NEU BEANTWORTBAR IN 10.79.468 (dem VORGÄNGER, nicht diesem Build) ─────────
 
   Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since 18b5615`
   (18b5615 = der 467-Bump). Die drei VISUAL-Bitten sind die aus A, die zwei BIO-Bitten aus C,
@@ -156,7 +328,7 @@ notes: |
      CISmoke/TheArtNetDefaultIsUnicastTests.swift:23
         sACN half green on both. NEEDS-FOUNDER-VERIFY (Wireshark on the LAN, route on, default host): packets to 192.1…
 
-  ── 0c. WAS IN 10.79.467 NEU WAR (Vorgänger) ─────────────────────────────
+  ── 0e. WAS IN 10.79.467 NEU WAR (Vor-Vorgänger) ─────────────────────────────
 
   **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt
   alles seit 466 — dreizehn Scheiben (#1203–#1215), keine davon je auf einem Gerät gelaufen.
@@ -196,7 +368,7 @@ notes: |
   Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
   hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
 
-  ── 0d. NEU BEANTWORTBAR IN 10.79.467 (dem VORGÄNGER, nicht diesem Build) ─────────
+  ── 0f. NEU BEANTWORTBAR IN 10.79.467 (dem VOR-VORGÄNGER, nicht diesem Build) ─────────
 
   Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since e066acb`
   (e066acb = der 466-Bump). Drei Bitten sind neu; die Watch-Bitte ist die aus C.
@@ -217,92 +389,6 @@ notes: |
      CISmoke/TheAllpassInterpolatorCannotRingForeverTests.swift:87
         NEEDS-FOUNDER-VERIFY — und das REZEPT ist beim ersten Mal falsch gewesen, in beiden Haelften. Es sagte "Tiefe …
 
-
-  ── 0e. WAS IN 10.79.466 NEU WAR (Vor-Vorgänger) ──────────────────────────────────────────
-
-  **Dein Befund vom 09.09.: „Knisterfreier Sound bitte. Es scheint zwischendurch zu viel
-  Arbeitsspeicher zu verbrauchen. Vermeide Störungen im Sound."**
-
-  Sieben Reparaturen, alle gemessen. Ich sortiere sie danach, wie wahrscheinlich Du sie
-  HÖRST — die ersten zwei sind die eigentliche Antwort, der Rest ist Aufräumen.
-
-  **1. Der Bild-Baustein wurde bei JEDEM Auf- und Zumachen neu übersetzt.**
-  Der Rechenbauplan für das Visual ist rund 73.000 Zeichen lang. Er wurde in dem Moment
-  übersetzt, in dem das Visual-Fenster entsteht — und es entsteht jedes Mal neu, wenn Du
-  die Bild-Taste oder den Donut-Schalter drückst. Das dauert hunderte Millisekunden und
-  läuft auf demselben Faden wie die Bedienoberfläche. Der Ton hat in dieser Zeit **10,67
-  Millisekunden** pro Block Zeit. Das ist Dein „zwischendurch": nichts in Ruhe, ein großer
-  Sprung bei jedem Umschalten. Jetzt wird einmal pro Sitzung übersetzt.
-
-  **2. Der Ton-Faden hat Puffer Zahl für Zahl geleert, statt am Stück.**
-  2,5 Sekunden nachdem eine Stimme leise wird, werden ihre Hall- und Echo-Speicher
-  gelöscht. Das waren rund **1,8 Megabyte einzeln geschriebener Nullen**, mitten in der
-  Ton-Berechnung — und alle vier Stimmen tun es im selben Block, wenn Du stoppst. Jetzt
-  wird der Block am Stück gefüllt. Gleiche Nullen, nur schnell geschrieben.
-
-  **3. Der Video-Speicher wurde nie zurückgegeben.**
-  Der Aufnehmer legt einen Vorrat an Bildpuffern an. So ein Vorrat **recycelt**, er gibt
-  nicht frei — jeder Puffer bleibt liegen. Je nach Fenstergröße sind das 0,7 bis 12
-  Megabyte pro Puffer. Nach einer Aufnahme oder einem Standbild blieb das für den Rest der
-  Sitzung belegt. Jetzt wird es zurückgegeben, an jedem Ausgang, auch nach einem Fehler.
-  **Nebenbei nützlich zu wissen:** je größer Du das Bildfenster vor der Aufnahme machst,
-  desto besser die Videoqualität — und desto mehr Speicher. Das ist ein echter Handel.
-
-  **4. Der Pegelmesser hat 60-mal pro Sekunde Zahlen gemeldet, die sich nicht geändert
-  hatten.** Sieben von neun Werten sind eingefroren, solange kein Mastering-Fenster offen
-  ist — also fast immer. Jetzt wird nur noch gemeldet, was sich wirklich bewegt hat.
-
-  **5. Ein zweiter Timer lief nach dem Stoppen einfach weiter.** Die Auto-Lautstärke
-  startet einen 50-Hz-Timer beim Start der Engine — und es gab keine Stelle, die ihn je
-  wieder abschaltet. Jetzt schaltet das Stoppen ihn ab.
-
-  **6. Der Speicher-Wächter hat den Befund ERFUNDEN, wegen dem man ihn befragt.**
-  Er rechnete „RAM des Geräts minus verbleibender Spielraum dieser App" und nannte das
-  Ergebnis „belegt". Das sind zwei verschiedene Dinge; auf einem 8-GB-Telefon kam „6 GB
-  belegt" heraus für eine App, die ein paar hundert Megabyte benutzt. Und weil das über der
-  Warnschwelle liegt, schrieb die App **fünf Sekunden nach jedem Start** eine
-  Speicher-Warnung ins Log — genau in das Log, das Du schickst, wenn Du Speicherprobleme
-  meldest. Die falsche Rechnung ist weg; der echte Melder von iOS war die ganze Zeit
-  angeschlossen und bleibt.
-
-  **7. Werkzeug-Schuld beglichen** (siehst Du nicht, hält aber die Prüfer ehrlich).
-
-  ⚠️ **Was ich NICHT behaupte.** Punkt 4 hilft weniger, als ich beim Bauen geschrieben
-  hatte — der Pflicht-Reviewer hat mir drei Übertreibungen nachgewiesen und ich habe sie
-  im Code zurückgenommen statt still zu trimmen. Punkt 4 ist ein sauberer Aufräum-Commit,
-  nicht die Knister-Reparatur. Die Knister-Reparatur sind 1 und 2.
-
-  ── 0f. NEU BEANTWORTBAR IN 10.79.466 (dem VOR-VORGÄNGER, nicht diesem Build) ─────────────────────────────────
-
-  Gedruckt mit `python3 scripts/founder-verify.py --since 53c64a35`, also nicht von Hand
-  zusammengesucht. Vier Bitten, und drei davon beantwortet ein Blick ins Log.
-
-  **VISUAL (2)**
-
-  · **Visual-Fenster mehrmals auf- und zumachen**, dann Diagnostics öffnen und das
-    `echoel_diag.log` teilen. Die Zeile `visual: compiling shader` darf pro **Sitzung**
-    nur EINMAL vorkommen — nicht einmal pro Umschalten. Daneben steht dann die neue Zeile
-    `visual: shader reused — no recompile`. Das ist der Beweis für Punkt 1.
-
-  · **Zwei bis drei Aufnahmen hintereinander** im Visual-Fenster machen und danach den
-    Speicher der App beobachten. Er soll auf den Stand von vor den Aufnahmen zurückfallen.
-    Das ist der Beweis für Punkt 3 — und der einzige, den ein Log nicht liefern kann.
-
-  **AUDIO (1)**
-
-  · **Eine Sequenz spielen, stoppen, rund fünf Sekunden warten**, dann im Master-Panel die
-    Zeile `N late` ablesen. Der Ausschlag, der ~2,5 Sekunden NACH dem Stoppen kam, soll
-    verschwunden sein. Das ist der Beweis für Punkt 2.
-
-  **SONSTIGES (1)**
-
-  · **Eine normale Sitzung fahren**, danach ins `echoel_diag.log` schauen: die Zeile
-    `Handling Warning pressure` darf NICHT mehr auftauchen, solange das Telefon nicht
-    wirklich unter Speicherdruck steht. Vorher kam sie fünf Sekunden nach jedem Start.
-
-  ⚠️ **Und die ehrliche Zusammenfassung, falls Du nur eine Zeile liest:** vier von sieben
-  Punkten kannst Du im Log nachprüfen. Ob es sich BESSER ANHÖRT, kann hier niemand
-  feststellen — dafür brauche ich Dein Ohr.
 
   ── 0. WAS IN 10.79.465 NEU IST ──────────────────────────────────────────
 
