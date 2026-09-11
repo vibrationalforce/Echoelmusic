@@ -22,6 +22,8 @@
 // and 2 RED on the parent, GREEN here; claim 3 GREEN on both; claim 4 is behavioural on a pure
 // static helper and was NOT run here (no toolchain). Whether the last frame stays on the layer
 // with no flicker is a device question (NEEDS-FOUNDER-VERIFY at the skip).
+// K5 (#1262): claim 2's needle carries the camera-sequence term since the camera layer — the
+// premise "the shader reads nothing but uniforms" ended there, and the skip grew a term for it.
 
 import Foundation
 import XCTest
@@ -45,9 +47,11 @@ final class TheRendererSkipsAnUnchangedFrameTests: XCTestCase {
     /// Claim 2 — the skip and its three gates.
     func testTheSkipIsGatedOnCaptureAndByteEquality() throws {
         let src = try text("Sources/Echoelmusic/Views/MetalBioView.swift")
-        XCTAssertTrue(src.contains("if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {"),
+        // K5 (#1262) widened the skip by ONE term: the camera layer's slot sequence. A new camera
+        // frame is a changed picture even with byte-identical uniforms, so the skip must see it.
+        XCTAssertTrue(src.contains("if hasEncodedOnce, !wantsCapture, cameraSequenceThisFrame == lastEncodedCameraSequence, Self.bytesEqual(uniforms, lastEncodedUniforms) {"),
                       "the unchanged-frame skip lost a gate: it must yield to a take/still and must never skip the first frame (#1244)")
-        guard let skip = src.range(of: "if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {") else { return }
+        guard let skip = src.range(of: "if hasEncodedOnce, !wantsCapture, cameraSequenceThisFrame == lastEncodedCameraSequence, Self.bytesEqual(uniforms, lastEncodedUniforms) {") else { return }
         let after = String(src[skip.upperBound...].prefix(1200))
         XCTAssertTrue(after.contains("lastEncodedUniforms = uniforms") && after.contains("hasEncodedOnce = true"),
                       "the encoded-uniforms record is not updated after the skip decision (#1244)")

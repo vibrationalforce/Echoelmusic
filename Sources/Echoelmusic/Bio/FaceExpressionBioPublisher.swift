@@ -35,12 +35,16 @@
 //  NEEDS-FOUNDER-VERIFY (#1259): with a Smile → FX route sounding, turn the face away — the
 //  parameter eases back over ~0.3 s (no click, no 6-s freeze); with Health authorised on
 //  the same phone, hold a smile for 20 s — no periodic dip every 4–5 s.
+//  K5 (#1262): the SAME session's `capturedImage` feeds `CameraFrameSlot` for the visual's
+//  camera layer — one owner of the front camera, no second capture session; nothing is
+//  stored unless a renderer wants a frame, and a recorded take never contains one.
 //
 
 import Foundation
 import Observation
 #if canImport(ARKit)
 import ARKit
+import UIKit   // `UIInterfaceOrientation` for `ARFrame.displayTransform` (K5)
 #endif
 
 /// Thread-safe holder for the latest blendShape bag. Mirrors the rPPG
@@ -204,6 +208,7 @@ public final class FaceExpressionBioPublisher {
         delegateProxy = nil
         #endif
         latest.clear()
+        CameraFrameSlot.shared.clear()   // K5 — no stale camera frame survives a stop
         mapping = Self.freshMapping()
         gestures = FaceGestureBank(deadzone: FaceExpressionMapping.defaultDeadzone)
         isCalibrating = false
@@ -360,6 +365,27 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
         }
     }
 
+    /// K5 (#1262) — the camera image itself, for the visual's texture layer. Stored only while
+    /// a renderer has said it wants one (`wantedViewports()` non-empty), so a Face source with
+    /// the layer at 0 retains no buffer. ONE owner of the front camera: this is the session
+    /// that tracks the face — no second capture session (prompt rule 1). The transform is
+    /// ARKit's own `displayTransform`, inverted (viewport → image), computed per registered
+    /// viewport at frame rate because it is a 3×2 affine and the delegate already holds the
+    /// frame. The `ARFrame` itself is NOT retained (ARKit stalls its pool on that); only the
+    /// pixel buffer is, one slot deep, latest wins — that IS the drop strategy.
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        let wanted = CameraFrameSlot.shared.wantedViewports()
+        guard !wanted.isEmpty else { return }
+        var transforms: [UUID: CGAffineTransform] = [:]
+        transforms.reserveCapacity(wanted.count)
+        for (key, viewport) in wanted {
+            guard viewport.size.width > 0, viewport.size.height > 0 else { continue }
+            let orientation = UIInterfaceOrientation(rawValue: viewport.orientationRaw) ?? .portrait
+            transforms[key] = frame.displayTransform(for: orientation, viewportSize: viewport.size).inverted()
+        }
+        CameraFrameSlot.shared.store(frame.capturedImage, transforms: transforms)
+    }
+
     /// #1257 — the face left the frame's certainty (ARKit stops updating an anchor it
     /// cannot see): drop the bag so the drain publishes nothing stale. The consumers hold
     /// their last value by their own law; the ~300 ms fade to neutral is K3's slice.
@@ -375,6 +401,9 @@ private final class FaceDelegateProxy: NSObject, ARSessionDelegate {
     }
 
     /// A phone call or a backgrounding: the frames stop, and so must the stale bag.
-    func sessionWasInterrupted(_ session: ARSession) { latest.clear() }
+    func sessionWasInterrupted(_ session: ARSession) {
+        latest.clear()
+        CameraFrameSlot.shared.clear()   // K5 — the last image must not stay on the field
+    }
 }
 #endif

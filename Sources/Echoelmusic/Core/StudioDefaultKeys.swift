@@ -257,6 +257,18 @@ public enum StudioDefaultKeys {
     /// #853B "Structure" — static domain-warp depth. Neutral is 0 (the stage is NEW;
     /// 0 = the exact pre-dial picture), unlike the two multipliers above whose neutral is 1.
     public static let visualStructure = StudioDefault(key: "visual.structure", value: 0.0)
+    /// K5 (#1262) — the front camera as a TEXTURE LAYER in the visual. Opacity 0 = no layer,
+    /// no texture, no retained frame (the default — the Face source alone never shows a
+    /// picture). Mirror TRUE — a performer facing the phone expects a mirror. Blend 0 = Screen
+    /// (the field's light over the face) · 1 = Multiply (the field through the face) · 2 =
+    /// Cross (a plain fade); a NAMED choice, so the panel renders it as a Picker (the "read the
+    /// word NUMERIC" rule), never as a number field. Same three-surface pass-through as
+    /// `visualSaturation`: the phone's window and the external stage both bind these, so the
+    /// beamer shows what the phone shows. The layer draws only while the Face source runs
+    /// (`CameraFrameSlot` is fed by that session alone) and never inside a recorded take.
+    public static let visualCameraOpacity = StudioDefault(key: "visual.camera.opacity", value: 0.0)
+    public static let visualCameraMirror = StudioDefault(key: "visual.camera.mirror", value: true)
+    public static let visualCameraBlend = StudioDefault(key: "visual.camera.blend", value: 0)
     /// TRUE — the living visual greets a fresh install ("wow von Sekunde 1",
     /// WorkspaceView header monitor). The studio panel's old `false` copy made
     /// its toggle button lie until the key was first written.
