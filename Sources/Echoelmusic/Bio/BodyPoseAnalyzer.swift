@@ -14,9 +14,10 @@
 //  at all once `ProcessInfo.thermalState` reaches `.serious` (the prompt asks for automatic
 //  degradation from exactly there). Both are cheap reads on the delegate's queue.
 //
-//  ORIENTATION: the handler is told `.right` — the front camera's landscape sensor buffer as
-//  seen in a PORTRAIT interface, the instrument's primary posture. In landscape the heights
-//  would read along the wrong axis; that is a follow-up, not a silent guess.
+//  ORIENTATION (K6c, #1266): the handler is told the Vision orientation that matches the
+//  INTERFACE orientation (`BodyPoseMath.visionOrientationRaw`, a pure table), pushed by the
+//  publisher's drain on change — so a landscape performance reads heights along the right
+//  axis instead of the portrait default `.right`.
 //  NEEDS-FOUNDER-VERIFY (#1264): Face source on, Bio panel — raise the LEFT hand: does
 //  "Hand L" rise (chirality, not screen side)? Spread the arms: does "Apart" reach ~1 without
 //  saturating early? Tilt the shoulders: does "Tilt" leave 0.5 in the expected direction?
@@ -48,10 +49,19 @@ final class BodyPoseAnalyzer: @unchecked Sendable {
     private let lock = NSLock()
     private var busy = false
     private var frameCounter = 0
+    /// `CGImagePropertyOrientation` raw value for the next pass; portrait by default.
+    private var orientationRaw: UInt32 = BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: 1)
     private let sink: @Sendable ([String: Float]) -> Void
 
     init(sink: @escaping @Sendable ([String: Float]) -> Void) {
         self.sink = sink
+    }
+
+    /// K6c — the interface orientation changed (main actor, on change only): the next pass
+    /// reads the buffer accordingly. A `UIInterfaceOrientation` raw value goes in.
+    func setInterfaceOrientation(raw: Int) {
+        let vision = BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: raw)
+        lock.lock(); orientationRaw = vision; lock.unlock()
     }
 
     /// Called on the ARKit delegate queue for every frame. Returns at once; the pass runs on
@@ -61,6 +71,7 @@ final class BodyPoseAnalyzer: @unchecked Sendable {
         frameCounter &+= 1
         let take = !busy && frameCounter % Self.frameStride == 0
         if take { busy = true }
+        let orientation = orientationRaw
         lock.unlock()
         guard take else { return }
         // Thermal: `.serious` and `.critical` skip the pass entirely — the body channels ease
@@ -71,18 +82,19 @@ final class BodyPoseAnalyzer: @unchecked Sendable {
         }
         let frame = AnalysisFrame(buffer: pixelBuffer)
         queue.async { [self] in
-            let bag = BodyPoseMath.bag(from: Self.sample(from: frame.buffer))
+            let bag = BodyPoseMath.bag(from: Self.sample(from: frame.buffer, orientationRaw: orientation))
             lock.lock(); busy = false; lock.unlock()
             sink(bag)
         }
     }
 
     /// One Vision pass: up to two hands (wrists, with chirality) and the body's shoulders.
-    private static func sample(from pixelBuffer: CVPixelBuffer) -> BodyPoseSample {
+    private static func sample(from pixelBuffer: CVPixelBuffer, orientationRaw: UInt32) -> BodyPoseSample {
         let hands = VNDetectHumanHandPoseRequest()
         hands.maximumHandCount = 2
         let body = VNDetectHumanBodyPoseRequest()
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+        let orientation = CGImagePropertyOrientation(rawValue: orientationRaw) ?? .right
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
         var sample = BodyPoseSample()
         do {
             try handler.perform([hands, body])

@@ -174,6 +174,8 @@ public final class FaceExpressionBioPublisher {
     /// toggled with a plain `run(config)` (no reset options → tracking continues).
     @ObservationIgnored private var arConfig: ARFaceTrackingConfiguration?
     @ObservationIgnored private var segmentationOn = false
+    /// K6c — the interface orientation last pushed to the body analyzer (-1 = never).
+    @ObservationIgnored private var pushedOrientationRaw = -1
     #endif
     /// True once a face OR a body has been seen since the last loss — the loss fade starts
     /// at the first drain that finds neither (before K6a the face alone decided).
@@ -274,6 +276,7 @@ public final class FaceExpressionBioPublisher {
         arSession.delegate = nil
         delegateProxy = nil
         bodyAnalyzer = nil
+        pushedOrientationRaw = -1
         arConfig = nil
         segmentationOn = false
         #endif
@@ -322,6 +325,7 @@ public final class FaceExpressionBioPublisher {
             return
         }
         syncSegmentation()
+        syncBodyOrientation()
         let now = CFAbsoluteTimeGetCurrent()
         let dt = Swift.max(0, now - lastPublish)
         // K6a — two slots feed one drain: the face bag (ARKit anchors) and the body bag
@@ -417,6 +421,20 @@ public final class FaceExpressionBioPublisher {
         segmentationOn = want
         config.frameSemantics = want ? [.personSegmentation] : []
         arSession.run(config)
+    }
+
+    /// K6c — the body pass reads the sensor buffer in the INTERFACE's orientation. Read here on
+    /// the main actor (the draw loop's `MainActor.assumeIsolated` read in the renderer is the
+    /// same fact), pushed to the analyzer on change only.
+    private func syncBodyOrientation() {
+        #if canImport(ARKit) && canImport(UIKit)
+        let raw = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.interfaceOrientation.rawValue ?? 1
+        guard raw != pushedOrientationRaw else { return }
+        pushedOrientationRaw = raw
+        bodyAnalyzer?.setInterfaceOrientation(raw: raw)
+        #endif
     }
 
     /// `ProcessInfo.thermalState` at `.serious` or worse — the prompt's degradation threshold.

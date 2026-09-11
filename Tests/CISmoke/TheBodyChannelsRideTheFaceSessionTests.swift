@@ -20,6 +20,9 @@
 //     with an AGE (`read(maxAge:`), skips the body in the neutral hold (`where !ch.isBody`),
 //     and the analyzer carries the drop flag, the stride and the thermal gate;
 // (5) SOURCE-TEXT — the numbers row shows the body line (`"Hand L"`, `bodyPresence`).
+// (6) K6c (#1266) — BEHAVIOUR + SOURCE-TEXT: the Vision orientation follows the INTERFACE
+//     orientation through one pure table (`BodyPoseMath.visionOrientationRaw`), portrait =
+//     `.right` (6) as K6a hard-wired, and the publisher pushes it to the analyzer on change.
 // None of it proves chirality, scale or sign on a device — those are the four asks at
 // `BodyPoseAnalyzer`'s header (NEEDS-FOUNDER-VERIFY #1264).
 //
@@ -156,7 +159,7 @@ final class TheBodyChannelsRideTheFaceSessionTests: XCTestCase {
                 session steals the lens from ARKit and both go dark.
                 """)
         }
-        for needle in ["thermalState", "busy", "frameStride", "orientation: .right", "VNDetectHumanHandPoseRequest", "VNDetectHumanBodyPoseRequest"] {
+        for needle in ["thermalState", "busy", "frameStride", "orientation: orientation", "VNDetectHumanHandPoseRequest", "VNDetectHumanBodyPoseRequest"] {
             XCTAssertTrue(analyzer.contains(needle), """
                 `BodyPoseAnalyzer` lost `\(needle)`. The pass must keep its drop flag, its \
                 stride, its thermal gate at `.serious`, the portrait orientation and both \
@@ -172,6 +175,23 @@ final class TheBodyChannelsRideTheFaceSessionTests: XCTestCase {
                 reach the `.faceCam` frame through the bank.
                 """)
         }
+    }
+
+    // MARK: - claim 6 (BEHAVIOUR + SOURCE-TEXT) — the orientation follows the interface
+
+    func testTheVisionOrientationFollowsTheInterface() throws {
+        XCTAssertEqual(BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: 1), 6, "portrait reads the sensor buffer `.right` — K6a's constant, now the table's default")
+        XCTAssertEqual(BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: 0), 6, "unknown is portrait, the instrument's posture")
+        XCTAssertEqual(BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: 2), 8, "upside-down portrait reads `.left`")
+        XCTAssertEqual(BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: 3), 3, "landscape left reads `.down`")
+        XCTAssertEqual(BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw: 4), 1, "landscape right reads `.up`")
+        XCTAssertEqual(Set([0, 1, 2, 3, 4].map(BodyPoseMath.visionOrientationRaw(forInterfaceOrientationRaw:))), [1, 3, 6, 8], "four distinct readings — no two postures share one")
+        let analyzer = SourceText.codeOnly(try file(Self.analyzer))
+        XCTAssertTrue(analyzer.contains("func setInterfaceOrientation(raw: Int)") && analyzer.contains("CGImagePropertyOrientation(rawValue: orientationRaw) ?? .right"),
+                      "the analyzer no longer takes the interface orientation, or falls back to something other than portrait (K6c)")
+        let pub = SourceText.codeOnly(try file(Self.publisher))
+        XCTAssertTrue(pub.contains("bodyAnalyzer?.setInterfaceOrientation(raw: raw)") && pub.contains("guard raw != pushedOrientationRaw else { return }"),
+                      "the publisher does not push the interface orientation on change (K6c)")
     }
 
     // MARK: - claim 5 (SOURCE-TEXT) — the numbers row shows the body line

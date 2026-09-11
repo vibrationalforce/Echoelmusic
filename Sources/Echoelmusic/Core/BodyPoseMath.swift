@@ -60,6 +60,24 @@ public enum BodyPoseMath {
     /// Below this the body pose is "not seen" — Vision's per-joint confidence scale.
     public static let presenceConfidence: Float = 0.3
 
+    /// K6c (#1266) — the Vision orientation (`CGImagePropertyOrientation` raw value) for the
+    /// front camera's sensor buffer as seen in a given interface orientation
+    /// (`UIInterfaceOrientation` raw value). ARKit delivers the sensor's landscape buffer
+    /// unrotated; a portrait interface therefore reads it rotated 90° — `.right` (6), the
+    /// value K6a hard-wired. Landscape interfaces read it `.up` (1) or `.down` (3), upside-down
+    /// portrait `.left` (8). Unknown (0) is treated as portrait, the instrument's posture.
+    /// Pure so a host test can pin the table; the SIGN of the whole table (does a raised
+    /// LEFT hand read as "Hand L" in every posture?) is the device ask at
+    /// `BodyPoseAnalyzer`'s header — one table, one verify.
+    public static func visionOrientationRaw(forInterfaceOrientationRaw raw: Int) -> UInt32 {
+        switch raw {
+        case 2: return 8   // portraitUpsideDown → .left
+        case 3: return 3   // landscapeLeft      → .down
+        case 4: return 1   // landscapeRight     → .up
+        default: return 6  // portrait / unknown → .right
+        }
+    }
+
     /// The bag for one sample. Only joints that were seen write a key (see the header).
     public static func bag(from s: BodyPoseSample) -> [String: Float] {
         var bag: [String: Float] = [:]
