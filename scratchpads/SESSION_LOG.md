@@ -30032,3 +30032,55 @@ der Wächter der einzige nonisolierte Leser war. `isAllowed`, `decode`, `parse` 
 war. TestFlight baut `Sources/`, der Build ist davon unberührt; die LÜCKE war, dass die Notiz „Wächter transkribiert" sagen
 konnte, während Compile-Fähigkeit eines Wächters keine Transkription beweist (§0: Transkription benotet Ansprüche, nicht
 Swift-Syntax). PLAYBOOK #1255b im HARNESS_LEDGER.
+
+## Kamera-Eingang K1–K4b = #1257–#1261 (2026-09-11, 09:05–10:00 UTC)
+
+**Founder-Prompt „Kamera als Instrument-Eingang (Gesicht · Körper · Video-Layer)"** — Befund VOR dem Entwurf in
+`scratchpads/PLAN_KAMERA_EINGANG_2026-09-11.md` §0 (Prompt-Annahme gegen Repo-Wirklichkeit: der ARKit-Publisher existiert
+seit 2026-07-18 mit null Konstruktionsstellen, #1002), Council §1 = proceed, sieben Scheiben §2. Vier davon sind heute gepusht:
+
+- **K1 `0f5212f` (#1257) — die Tür.** `BioSourceOption.face` als VIERTER Eintrag des EINEN Quellen-Dropdowns, beide Flächen
+  iterieren `offered` (= allCases minus `face`, wo `FaceExpressionBioPublisher.isSupported` falsch ist — kein toter Eintrag
+  ohne TrueDepth). `BioSourceKind.face` → `startBioSource`/`stopBioSource`: derselbe Besitzer, derselbe Hot-Swap; die
+  Ein-Quelle-Regel des Pickers IST die rPPG↔Face-Arbitrierung (ARKit hält die Frontkamera exklusiv). Publisher in
+  `EchoelmusicApp` konstruiert, `.environment`; Fehler/Interruption → `lastError` + Stop. `ModSource.faceSmile/Brow/Jaw
+  .hasProducer` = true. **Info.plist:** `NSCameraUsageDescription` nennt beide Linsen und beide Zwecke — founder-gated,
+  der Prompt verlangt den Satz selbst („in einem Satz und ehrlich"), als Autorisierung gewertet und im Bericht benannt.
+  Wächter `TheFaceSourceHasNoDoorTests` → `TheFaceSourceHasADoorTests` (6), `TheBioSourceChooserHasOneDefinitionTests`
+  (Set 4). CLAUDE.md-Register #1002 → erledigt.
+- **K2 `ebc1f98` (#1258) — Zahlen.** `FaceCalibration` (3-s-Neutral → Baseline/Spannweite, Boden 0,2, Codable unter
+  `face.calibration`), Deadzone mit Hysterese in `FaceExpressionMapping` (Eintritt 0,06 / Austritt 0,03, Rest-Bereich
+  gestreckt), `FaceChannelsRow` als eigenes Blatt unter dem Quellen-Dropdown (liest den 10-Hz-Publisher in der EIGENEN body).
+  Wächter `TheFaceChannelsAreCalibratedTests` (6).
+- **K3 `d2fe686` (#1259) — Verlust als Zustand.** Gesicht weg → `released(dt:)` (τ 0,1 s, ≥94 % in 0,3 s), Kanäle werden
+  WEITER veröffentlicht, während sie ausblenden, Kappe 0,6 s, dann Stille. Zweiter, gemessener Grund für Bewegung ohne
+  Gesicht: `EngineBus.latestBio` ist EIN Slot und HealthKit schreibt alle 4–5 s ein Wrist-Frame ohne Face-Kanal (#1015) —
+  `FXModulation.channelBridgeSeconds` (0,5 s) hält den zuletzt gemessenen Wert je Kanal in `FXBioModulator` UND
+  `ModulationEngine`. Wächter `TheFaceLossFadesNotSnapsTests` (4).
+- **K4a `4f87ba3` (#1260) — neun weitere Kanäle + OSC.** `BioSampleFrame` +9 Felder mit Default (sechs Konstruktionsstellen
+  unverändert), `ModSource` +9 Fälle am ENDE, `ModSource.faceChannels` (12), `FaceGestureChannel`/`FaceGestureBank` (Core, pur;
+  zentrierte Kanäle gaten auf den Abstand von 0,5), Kopfpose RELATIV zur Kamera (`simd_inverse(camera) * face.transform`),
+  `gestureBaselines` mit `decodeIfPresent`. `/echoelmusic/gesture/<ModSource>` NUR auf `.faceCam`-Frames, `/bio/synthetic`
+  voran. ⚠️ **Abweichung vom Prompt:** `/echoel/gesture/` → `/echoelmusic/gesture/` — ein Namensraum im Repo. CLAUDE.md-OSC-Liste
+  nachgeführt, **149 886 B — 114 B unter dem Deckel**; die nächste CLAUDE.md-Zeile muss anderswo Text nehmen. Wächter
+  `TheGestureChannelsReachTheWireTests` (5).
+- **K4b `8e335f9` (#1261) — drei Presets.** `FXModPreset.facePresets` („Smile → brightness", „Head → space", „Eyes →
+  texture") als Untermenü im EINEN Add-Route-Menü von `FXBioModSection`, `isSupported`-gegated, hängt gewöhnliche Routen an.
+  Wächter `TheFacePresetsAreStarterRoutesTests` (4).
+
+Alle fünf Wächter in Python transkribiert gegen Parent und Baum (`$SP/t1257.py`…`t1261.py`): Parent 9/6/4/5/4 rot, Baum
+12/7/4/6/4 grün. ⛔ Zwei Skript-Fehler, beide VOR dem Commit gefangen: (a) K1 Anspruch 5 Nadel „not stored or transmitted"
+gegen den echten Satz „No images are stored or transmitted"; (b) t1260 zählte `case`-Zeilen DATEIWEIT statt im Enum und
+meldete Anspruch 1 rot auf dem Baum (im Enum 18 Fälle = 17 Produzenten). ⛔ Zwei Python-Edit-Skripte, die einen exakten
+Block asserten, schrieben NICHTS, weil Doc- und Inline-Kommentare zwischen den Codezeilen lagen (FXBioModulator-Tick,
+`BioSampleFrame`-Init) — auf eine eindeutige CODE-Zeile neu verankert. PLAYBOOK im HARNESS_LEDGER.
+
+**Gate-Lesung (Stand 10:00 UTC):** Compile Check #2554 (K1) · #2555 (K2) · #2556 (K3) success; #2557 (K4a) in progress,
+#2558 (K4b) pending. CI/CD 6019 (K1) und 6020 (K2) `in_progress`, 6021–6023 `queued` — **die Build-for-Testing-Zeile für
+die fünf neuen Wächter ist UNGELESEN** (PLAYBOOK #1255b; Reminder 10:29 UTC). Kein Deploy in diesem Zustand.
+
+**Nicht bewiesen (Gerät):** Moduswechsel Puls↔Face ohne Absturz · ruhiges Gesicht ⇒ ruhige Zahlen (Deadzone 0,06 ist
+Schätzung) · das Ohr beim Verlust · Vorzeichen/Skala der Kopfwinkel · ob ein Face-Preset klingt. Alle als
+`NEEDS-FOUNDER-VERIFY` im Publisher-Kopf bzw. an `FaceGestureChannel.yawFullScaleRadians` — `founder-verify.py --since 1438077`.
+Offen: K5 (Kamerabild als Metal-Layer, #1244-Skip erweitern, beide Uniform-Deklarationen in EINEM Commit), K6 (Vision
+Körper/Hände, `motionEnergy` bekommt seinen Produzenten; 6b Fallback ohne TrueDepth nach Gerätprobe), K7 (Segmentierung).

@@ -3716,3 +3716,20 @@ sagt über eine Testdatei NICHTS (§5) — vor einem Deploy-Commit gehört die B
 mit `\n`-Literalen — `re.finditer(r'❌[^\\]*', s)` findet die xcodebuild-Diagnostics, `grep error:` findet nichts (0 Treffer
 bei 1 Fehler, #1255b gemessen). Schaden: keiner (TestFlight baut Sources), Kosten: ein Zyklus + der falsche Eindruck
 „Wächter grün" in der Deploy-Notiz.
+
+## PLAYBOOK #1260 (2026-09-11) — ein Edit-Skript verankert auf einer CODE-Zeile, nie auf einem Block mit Kommentaren; eine Zähl-Transkription zählt im ENUM, nicht in der Datei
+
+Zwei Fehlklassen aus K3/K4a, beide vor dem Commit gefangen, beide teuer genug für eine Zeile:
+
+**(a) Block-Assert schreibt nichts.** Zwei Python-Edit-Skripte (FXBioModulator-Tick, `BioSampleFrame`-Init) trugen den zu
+ersetzenden Block als exaktes Literal aus dem Gedächtnis der Datei; zwischen den Codezeilen standen `///`- und `//`-Kommentare,
+die das Literal nicht hatte → `assert old in src` fiel, das Skript schrieb NICHTS, und der zweite Teil desselben Skripts (der
+schon lief) hinterließ einen HALBEN Edit. Regel: der Anker ist EINE eindeutige Code-Zeile (`grep -c` = 1 vorher prüfen), der
+Einschub wird relativ dazu gesetzt; mehrere Dateien = mehrere Skripte, damit ein Assert nicht den Nachbarn halb lässt.
+
+**(b) Zähl-Scope.** `t1260.py` zählte `^\s*case ` dateiweit in `ModulationMatrix.swift` und meldete Anspruch 1 („jeder Fall
+außer motion hat einen Produzenten") ROT auf dem korrekten Baum — die Datei hat `switch`-Cases außerhalb des Enums. Scope auf
+den `enum ModSource { … }`-Block (Klammerzählung), dann 18 Fälle = 17 Produzenten. Ein rotes Transkript auf dem Baum ist
+zuerst eine Frage an das SKRIPT, dann an den Code — aber es wird nie „grün geglaubt": das Skript wird repariert und neu
+gefahren, beide Bäume. Verwandt: PLAYBOOK #897/#898 (ein `prefix(N)`-Fenster ist ein latentes Rot) — dieselbe Klasse,
+Fenster statt Menge.
