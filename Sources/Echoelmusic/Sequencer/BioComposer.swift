@@ -924,6 +924,7 @@ public enum BioComposer {
                                     bassRhythm: input.bassRhythm,
                                     padRhythm: input.padRhythm,
                                     bassGrammar: input.style.bassGrammar,
+                                    padGrammar: input.style.padGrammar,
                                     padGate: input.padGate, padAccent: input.padAccent,
                                     padEvolve: input.padEvolve,
                                     rng: &rng, structureRNG: &structureRNG)
@@ -959,6 +960,7 @@ public enum BioComposer {
                                     bassRhythm: input.bassRhythm,
                                     padRhythm: input.padRhythm,
                                     bassGrammar: input.style.bassGrammar,
+                                    padGrammar: input.style.padGrammar,
                                     padGate: input.padGate, padAccent: input.padAccent,
                                     padEvolve: input.padEvolve,
                                     rng: &rng, structureRNG: &structureRNG)
@@ -2159,6 +2161,12 @@ public enum BioComposer {
                                         // writes would let a future caller silently lose every
                                         // house/tech/minimal bassline, with nothing in the diff.
                                         bassGrammar: BassGrammar?,
+                                        // G2 — the genre's own pad figure (`MusicStyle.padGrammar`).
+                                        // NO DEFAULT, for the reason stated one parameter up: every
+                                        // genre resolves to `nil` today, so a defaulted `nil` would
+                                        // be indistinguishable from a caller that forgot, and the
+                                        // day a genre claims a figure the forgetting is silent.
+                                        padGrammar: PadGrammar?,
                                         // #581 — the pad's chord shape, threaded through to
                                         // `roleRhythmOnsets`. NO DEFAULTS, same reason as there
                                         // (#431/#440/#443): both call sites below must be forced
@@ -2559,6 +2567,36 @@ public enum BioComposer {
                                       startStep: s, lengthSteps: length, velocity: hVel(padVelocity, &rng)))
                     s += arpStep
                     t += 1
+                }
+            } else if let figure = padGrammar?.onsets(secStart: secStart, secLen: len),
+                      !figure.isEmpty {
+                // G2 GENRE PAD GRAMMAR — the genre's OWN figure, and like `appendBass`'s it comes
+                // before every body gate below on purpose: the anticipation, the tresillo, the
+                // Charleston ARE the genre at a resting body too. The body keeps the LEVEL (the
+                // section `padVelocity` already carries breath depth and the mood tilt; `hVel`
+                // humanises), the genre keeps the PLACE.
+                //
+                // WHERE IT SITS IS THE PRECEDENCE, and it is structural rather than a flag:
+                // ABOVE it, `!padBeats.isEmpty` is the user's Pad-rhythm Picker (non-nil
+                // `padRhythm`) and wins, and `profile.arpeggiated` wins because an arp genre's
+                // pitch figure IS its identity. BELOW it, both `chordOnsets` branches are the
+                // derived four-case grid a figure was authored to replace. `PadGrammar.swift`
+                // states the full order once; this is the only place it is enforced.
+                //
+                // ⚠️ NO `metricAccent` HERE, unlike the rhythmic branch below, and that is not an
+                // omission: an authored figure carries its own accents in `hit.level`, and
+                // `.pushedOffbeats` leans on the anticipation while leaving the downbeat empty —
+                // a metric accent on top would flatten exactly what makes it recognisable.
+                //
+                // Every genre resolves to `nil` today, so this branch is unreachable in
+                // production and the take is byte-identical: the optional chain touches no RNG,
+                // so every later note keeps its identity and `#253 A4` holds by construction.
+                for pitch in voiced {
+                    for onset in figure {
+                        notes.append(Note(id: nextUUID(&rng), pitch: pitch,
+                                          startStep: onset.start, lengthSteps: onset.len,
+                                          velocity: hVel(clamp01(padVelocity * onset.level), &rng)))
+                    }
                 }
             } else if profile.sustained {
                 // GENRE-ARTICULATED CHORDS (2026-07-22 fix for "going through the genres,
