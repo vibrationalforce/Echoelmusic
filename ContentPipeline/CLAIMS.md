@@ -71,7 +71,7 @@ arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
 | ~~**Harmoniestimmen auf deiner Stimme** (zwei benannte Intervalle + Mix, nur im Monitor)~~ | #841. ⛔ **GESTRICHEN 2026-09-06 (#1038) — DARF NICHT MEHR BEHAUPTET WERDEN, gleicher Grund wie »Tune to key« eine Zeile höher.** #1024 hat alle DREI Mikrofon-Türen entfernt (Mix-Streifen · »Audio input«-Knopf · Einlade-Banner), also setzt nichts mehr `showInput` — gemessen: `git grep -n "showInput = true" -- Sources` → **0**, während `AudioInputPickerView()` weiterhin in einem `.sheet` konstruiert wird, das niemand öffnen kann. Diese Stufe sitzt AUSSCHLIESSLICH im Monitorpfad, und der Monitorpfad hat keine Tür. Der Code lebt und ist unangetastet; Wieder-Betüren sind drei Aufrufstellen. **Bis dahin ist jede Werbe-Behauptung darüber die 2.3-Klasse.** ⚠️ **Nicht mit dem MUSIK-Harmonizer verwechseln**, der über das FX-Panel erreichbar ist und weiter behauptet werden darf — genau die Unterscheidung, die die »Tune to key«-Zeile schon trifft. Die App-Store-Notiz »third and fifth harmony voices above the melody« meint DIESEN und bleibt korrekt (geprüft: es ist der einzige Treffer dieser drei Behauptungen in `fastlane/metadata/` und `docs/`). ⭐ **#1247 (2026-09-11): die Master-Panel-Tür „Audio input" ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht.** |
 | ~~**Granular-Textur auf deiner Stimme** (Grain-Wolke unter dem trockenen Signal, nur im Monitor)~~ | #849. ⛔ **GESTRICHEN 2026-09-06 (#1038) — DARF NICHT MEHR BEHAUPTET WERDEN, gleicher Grund wie »Tune to key« eine Zeile höher.** #1024 hat alle DREI Mikrofon-Türen entfernt (Mix-Streifen · »Audio input«-Knopf · Einlade-Banner), also setzt nichts mehr `showInput` — gemessen: `git grep -n "showInput = true" -- Sources` → **0**, während `AudioInputPickerView()` weiterhin in einem `.sheet` konstruiert wird, das niemand öffnen kann. Diese Stufe sitzt AUSSCHLIESSLICH im Monitorpfad, und der Monitorpfad hat keine Tür. Der Code lebt und ist unangetastet; Wieder-Betüren sind drei Aufrufstellen. **Bis dahin ist jede Werbe-Behauptung darüber die 2.3-Klasse.** ⭐ **#1247 (2026-09-11): die Master-Panel-Tür „Audio input" ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht.** |
 | ~~**Feedback-Schutz, der Pfeifen VERHINDERT statt es wegzuducken**~~ | #847/#848 (`HowlDetector` + Notch-Kette im Monitorpfad). ⛔ **GESTRICHEN 2026-09-06 (#1038) — DARF NICHT MEHR BEHAUPTET WERDEN, gleicher Grund wie »Tune to key« eine Zeile höher.** #1024 hat alle DREI Mikrofon-Türen entfernt (Mix-Streifen · »Audio input«-Knopf · Einlade-Banner), also setzt nichts mehr `showInput` — gemessen: `git grep -n "showInput = true" -- Sources` → **0**, während `AudioInputPickerView()` weiterhin in einem `.sheet` konstruiert wird, das niemand öffnen kann. Diese Stufe sitzt AUSSCHLIESSLICH im Monitorpfad, und der Monitorpfad hat keine Tür. Der Code lebt und ist unangetastet; Wieder-Betüren sind drei Aufrufstellen. **Bis dahin ist jede Werbe-Behauptung darüber die 2.3-Klasse.** ⚠️ Diese Zeile ist die HEIKELSTE der drei: ein Schutz-Versprechen für ein Problem, das ohne Mikrofon-Tür gar nicht entstehen kann, klingt nach Sicherheit und beschreibt nichts, was ein Nutzer erleben könnte. ⭐ **#1247 (2026-09-11): die Master-Panel-Tür „Audio input" ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht.** |
-| **Visual-Aufnahme + mp4-Export**: das laufende Visual wird auf dem Gerät aufgezeichnet und aus der Video-Bibliothek geteilt | `VisualRecorder` + `videoPanel` → `VideoLibraryPanelContent` |
+| ~~**Visual-Aufnahme + mp4-Export**~~ | ⛔ **GESTRICHEN 2026-09-12 (#1304) — DARF NICHT MEHR BEHAUPTET WERDEN.** Founder wörtlich: „Kein Video Capture“. `VisualRecorder`, `VideoRecorder`, `VideoMuxer` und die Video-Bibliothek sind als DATEIEN gelöscht; es gibt keine Aufnahme und kein mp4. Im selben Commit aus `fastlane/metadata/{de-DE,en-US}/description.txt`, `docs/architecture.html`, `docs/faq.html`, `docs/overview.html`, `docs/press.html` und `docs/privacy.html` entfernt. ⚠️ **Nicht mit der WAV-Aufnahme verwechseln** — die schneidet den eigenen Ausgang mit, nie eine Kamera, und bleibt erlaubt. |
 | **Beamer/Externer Bildschirm**: das Visual bespielt ein angeschlossenes Display als eigene Bühne, das Telefon bleibt Spielfläche | `ExternalDisplayScene` (#206) |
 | **Texture- und Glitter-Regler im Visual** (Korn-Tiefe + Glitzer-Menge, 0–2, Default = bisheriger Look) | #853, Fine-tune-Fläche; **Geräte-Verify offen — so kennzeichnen** |
 
@@ -243,9 +243,10 @@ die Ecke stellt, aus der die Marke ausdrücklich heraus ist: Optimierungs-Szene 
 Instrument. **Nie in Skript, Caption, Hashtag oder Titel.**
 
 ### 10. „Postet automatisch auf TikTok/YouTube/Instagram", „MCP in der App"
-Die App **veröffentlicht nichts**. Sie NIMMT auf und EXPORTIERT (`VisualRecorder`,
-Video-Panel mit mp4-Teilen, MIDI-Export) — die Verteilung passiert danach von Hand
-oder über diese Pipeline auf einem Rechner.
+Die App **veröffentlicht nichts**. Sie NIMMT auf und EXPORTIERT (WAV-Aufnahme des
+eigenen Ausgangs, MIDI-Export) — die Verteilung passiert danach von Hand oder über
+diese Pipeline auf einem Rechner. (⛔ Das Video-Panel mit mp4-Teilen stand hier und
+ist mit #1304 gelöscht.)
 Drei unabhängige Gründe, damit die Behauptung nicht in anderer Form wiederkommt
 (die beiden letzten sind Aussagen über FREMDE Plattformen, Stand 2026-07-31 — sie
 altern, ohne dass es hier jemand merkt; vor einer Kampagne kurz nachsehen):
@@ -254,7 +255,8 @@ mit Werkzeugen — eine iOS-App „macht" kein MCP); die **Posting-APIs der Plat
 sind gated** (eigener Review je Plattform, OAuth, Business-/Creator-Konten, bei TikTok
 ein bestandenes Audit — Privatkonten weitgehend gar nicht); und ein Multi-Plattform-
 Publisher wäre ein **zweites Produkt** neben dem Instrument.
-*Erlaubt: „das fertige Video teilen". Nicht erlaubt: „postet für Dich".*
+*Erlaubt: „den fertigen Loop teilen“. Nicht erlaubt: „postet für Dich“. ⛔ „das fertige
+Video teilen“ stand hier und ist mit #1304 gegenstandslos — die App erzeugt kein Video.*
 
 ### 11. Stimme: „nimmt Deine Stimme auf", „Voice Cloning", „AI-Voice", „Text-to-Speech", „Autotune auf der Musik"
 

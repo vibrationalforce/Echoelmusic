@@ -237,18 +237,14 @@ private struct ExternalStageView: View {
             EchoelTheme.bg.ignoresSafeArea()
             // The `if let` IS the guard — it binds what it checks. There is deliberately
             // no separate "is it wired?" boolean to drift out of sync with it.
-            if let bus = bridge.bus, let governor = bridge.governor, let recorder = bridge.recorder {
+            if let bus = bridge.bus, let governor = bridge.governor {
                 // #1073: the weather-mixed values, from the one shared definition.
                 let wx = weathered(sky: bridge.sky)
-                // `capturesVideo: false` — deliberately, and the cost is GUARDED, not just
-                // noted: while the beamer has the picture the phone's capturing instance
-                // has yielded, so `FloatingVisualWindow` DISABLES its video-record button
-                // rather than let a red REC pill count up over an empty file. Handing
-                // capture over here is not a one-liner — `AVAssetWriter` takes its
-                // dimensions from the first frame, so a projector plugged in mid-recording
-                // would push landscape frames into a portrait file. Own slice.
-                // #1118 — `reduceMotion` sits SECOND because `MetalBioView` declares it
-                // second and Swift's memberwise init follows declaration order (the same law
+                // ⛔ `capturesVideo: false` stood here with a paragraph about yielding video
+                // capture to the beamer. Video capture is gone (#1304, founder 2026-09-12),
+                // so the parameter is gone and the stage simply renders.
+                // #1118 — `reduceMotion` sits FIRST because `MetalBioView` declares it first
+                // and Swift's memberwise init follows declaration order (the same law
                 // that struct's own "DECLARED LAST ON PURPOSE" note is about). The projector
                 // now obeys the accessibility setting the phone has always obeyed;
                 // `MetalBioView` turns it into a STILL frame (pulseHz 0), which on a stage is
@@ -256,8 +252,7 @@ private struct ExternalStageView: View {
                 // the person driving the show. NEEDS-FOUNDER-VERIFY: if a performance must
                 // keep moving with the switch on, that is a per-surface OVERRIDE to design,
                 // not a reason to go back to ignoring the setting.
-                MetalBioView(capturesVideo: false,
-                             reduceMotion: reduceMotion,
+                MetalBioView(reduceMotion: reduceMotion,
                              autoAttuned: autoMode,
                              intensity: Float(wx.intensity),
                              ringDensity: Float(detail),
@@ -271,7 +266,6 @@ private struct ExternalStageView: View {
                              style: style, styleB: styleB, blend: Float(blend))
                     .environment(bus)
                     .environment(governor)
-                    .environment(recorder)
                     // #594 slice 2: OPTIONAL on purpose, outside the if-let gate —
                     // the optional .environment overload hands a pre-wire nil
                     // through, and MetalBioView's optional read renders untinted

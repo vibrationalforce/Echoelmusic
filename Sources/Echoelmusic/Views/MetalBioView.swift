@@ -419,7 +419,6 @@ struct MetalBioView: UIViewRepresentable {
 
     @Environment(EngineBus.self) private var bus
     @Environment(ResourceGovernor.self) private var governor
-    @Environment(VisualRecorder.self) private var visualRecorder
     /// #594 Voice→Color: reference forwarded like bus/governor; the profile itself
     /// is read in draw's MainActor block, never here (`appliedVoiceProfile` is
     /// @ObservationIgnored, so no SwiftUI subscription either way). OPTIONAL on
@@ -430,9 +429,6 @@ struct MetalBioView: UIViewRepresentable {
     /// traps the beamer scene in exactly that window; nil renders untinted.
     @Environment(PolySynthVoice.self) private var synth: PolySynthVoice?
 
-    /// Only the instance that owns the record affordance (the fullscreen VJ cover)
-    /// feeds the recorder — keeps a second mounted MetalBioView from double-capturing.
-    var capturesVideo: Bool = false
     var reduceMotion: Bool = false
     /// #609 — Auto mode's visual half. Threaded like `reduceMotion` (an init flag,
     /// never an observation): the hosting window reads the H15 `studio.autoMode`
@@ -526,13 +522,13 @@ struct MetalBioView: UIViewRepresentable {
         // unaffected structurally: the blit copies raw (now correctly encoded) bytes
         // into the 32BGRA pixel buffer — sRGB/non-sRGB variants are copy-compatible.
         view.colorPixelFormat = .bgra8Unorm_srgb
-        // START on the FAST path (framebufferOnly = true). A blit-readable drawable
-        // (framebufferOnly = false) is EXPENSIVE and is only needed WHILE actually recording,
-        // so `draw(in:)` flips it false just for the recording frames and back to true after.
-        // Keeping it false permanently — which the always-mounted floating capture instance
-        // did — disabled Metal's fast path every frame and STUTTERED ("hakelt"). draw(in:)
-        // only reads `drawable.texture` on a frame whose drawable was ALREADY readable, so the
-        // flip never triggers the mid-frame validation failure that made this permanent before.
+        // THE FAST PATH, PERMANENTLY (framebufferOnly = true). A blit-readable drawable
+        // (framebufferOnly = false) is EXPENSIVE; keeping it false every frame disabled
+        // Metal's fast path and STUTTERED ("hakelt"). Until #1304 `draw(in:)` flipped it
+        // false for the frames a video take or a still needed to read the texture, and back
+        // to true after. There is no such reader any more (the founder removed video capture
+        // 2026-09-12), so nothing writes this property after this line — which is strictly
+        // the cheaper of the two states, not a regression.
         view.framebufferOnly = true
         view.preferredFramesPerSecond = 60
         view.isPaused = false
@@ -578,8 +574,6 @@ struct MetalBioView: UIViewRepresentable {
         c.bus = bus
         c.governor = governor
         c.synth = synth
-        c.visualRecorder = capturesVideo ? visualRecorder : nil
-        c.capturesVideo = capturesVideo
         c.noteFieldKey = noteFieldKey
         c.setLook(toneFallbackHz: toneHz, intensity: intensity, ringDensity: ringDensity,
                   motion: motion, spread: spread, hueShift: hueShift, saturation: saturation,
@@ -712,12 +706,13 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// reasoned about is gone. Guard: `TheVisualBreathIsGatedTests`.
     private static let neutralVisualBreath: Float = 0.5
     private var reduceMotion = false
-    /// Last `framebufferOnly` value written to the MTKView. Writing the property EVERY frame
-    /// (even to the same value) reconfigures the drawable/CAMetalLayer and made the picture
-    /// shimmer ("Visualfenster zittert") — worse at fullscreen resolution and on a style switch
-    /// (the palette "Bild Fehler"). We only assign it when the desired state actually flips
-    /// (record start / stop), so the steady state never touches the layer config.
-    private var lastFramebufferOnly: Bool = true
+    /// ⚠️ `lastFramebufferOnly` STOOD HERE and is gone with video capture (#1304). Its law
+    /// is NOT gone and the next person to write `view.framebufferOnly` in `draw(in:)` needs
+    /// it: writing that property EVERY frame — even to the same value — reconfigures the
+    /// drawable/CAMetalLayer and made the picture shimmer ("Visualfenster zittert"), worse
+    /// at fullscreen resolution and on a style switch (the palette "Bild Fehler"). Assign it
+    /// only when the desired state actually FLIPS. Today nothing flips it: `makeUIView` sets
+    /// it true once and no frame reads the texture back.
     /// Settled-size drawable management (autoResizeDrawable = false): the size the
     /// layout is currently asking for, and how many consecutive frames it has held
     /// steady. Only a SETTLED size (≥2 stable frames, or the very first nonzero one)
@@ -738,9 +733,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// The live bio/music source — read HERE in `draw(in:)` (the CADisplayLink loop), not
     /// in `updateUIView`, so the ~10 Hz snapshots never churn the SwiftUI graph / overlay.
     weak var bus: EngineBus?
-    /// Optional video-capture sink (set only for the fullscreen VJ instance). When it is
-    /// recording, each rendered frame is blitted into it (see the tap in `draw(in:)`).
-    weak var visualRecorder: VisualRecorder?
     /// #594 Voice→Color — forwarded like bus/governor; read only in draw's
     /// MainActor block.
     weak var synth: PolySynthVoice?
@@ -754,7 +746,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     private var voiceSatFactor: Float = 1
     /// #1248 — hue bias from the live INPUT's spectral centroid (dark … bright), 0 in silence.
     private var audioHueBias: Float = 0
-    var capturesVideo = false
 
     // Static, user-set look params forwarded from `updateUIView` (change on user action,
     // not per-frame). The per-frame bio/governor values are pulled in `draw(in:)` and
@@ -1004,33 +995,19 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     }
 
     func draw(in view: MTKView) {
-        // STUTTER FIX ("hakelt"): keep the FAST path (framebufferOnly=true) unless actually
-        // recording. Only capture on a frame whose drawable was ALREADY blit-readable coming in
-        // (readyToCapture) — so the flip never leaves the texture we read framebuffer-only (the
-        // validation failure that once forced this to be permanently false). The single first
-        // frame after record-start is skipped (~16 ms, imperceptible). Runs on the main-thread
-        // draw loop, so the MTKView property write is main-actor-safe.
-        // #1243: the closure also hands out `wantsCapture` — the SAME question, asked once —
-        // because the drawable-resolution lever below must stand down while a take or a
-        // still needs the drawable at full size (the recorder pools pixel buffers at the
-        // drawable's size; a resolution step mid-take would re-pool against a writer that
-        // was configured for the size the take started at).
-        let (readyToCapture, wantsCapture): (Bool, Bool) = MainActor.assumeIsolated {
-            // #985: `wantsFrameCapture` is `isRecording || stillRequested` — this line must ask
-            // the ONE question, not two, so a still and a take can never disagree about whether
-            // the drawable has to be readable this frame.
-            let wantCapture = capturesVideo && (visualRecorder?.wantsFrameCapture ?? false)
-            let ready = wantCapture && !view.framebufferOnly
-            // Only touch the property when the desired state actually flips — writing it every
-            // frame reconfigures the drawable and made the picture shimmer / glitch (zittert,
-            // Bild-Fehler beim Look-Wechsel). Steady state (not recording) never writes it.
-            let desired = !wantCapture
-            if desired != lastFramebufferOnly {
-                view.framebufferOnly = desired
-                lastFramebufferOnly = desired
-            }
-            return (ready, wantCapture)
-        }
+        // ⛔ THE CAPTURE QUESTION STOOD HERE AND IS GONE WITH VIDEO CAPTURE (#1304, founder
+        // 2026-09-12 "Kein Video Capture"). It asked ONE thing — does a take or a still need
+        // this frame's drawable to be blit-readable — and three places downstream stood down
+        // on the answer: the `framebufferOnly` flip, the drawable-resolution lever, and the
+        // unchanged-frame skip. With no reader of the rendered texture, all three now run
+        // unconditionally, which is the cheaper branch each of them already had.
+        //
+        // ⚠️ WHAT DOES NOT COME BACK FOR FREE. `framebufferOnly` is set true ONCE in
+        // `makeUIView` and never written again; a future reader of `drawable.texture` must
+        // re-introduce the flip WITH its two laws, both paid for here: only read a texture on
+        // a frame whose drawable was ALREADY readable coming in (a mid-frame flip is a Metal
+        // validation failure), and only WRITE the property when the state actually flips
+        // (writing it per frame reconfigures the layer and makes the picture shimmer).
         // Pull the live governor + bio HERE — the CADisplayLink draw loop runs on the main
         // thread (so `assumeIsolated` is a safe no-op assertion) and is OFF the SwiftUI
         // dependency graph, so these ~10 Hz `@Observable` reads no longer re-run
@@ -1081,26 +1058,26 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // `.minimal` — see `AdaptiveQuality.settings(for:)`), so pixel work falls to ~49 %
             // / ~25 % exactly when the governor says the device cannot afford it; the layer
             // scales the smaller image up, the settled-size machinery below carries the
-            // re-allocation as it does for every other resize. Held at 1 while a take or a
-            // still wants the drawable (`wantsCapture`): the recorder's pool is sized from
-            // the drawable, and a take keeps the size it started with.
+            // re-allocation as it does for every other resize. Until #1304 this was held at 1
+            // while a take or a still wanted the drawable at full size; there is no such
+            // reader any more, so the lever applies on every frame.
             // The external stage's renderer shares this governor (`ExternalDisplayScene`), so a
             // beamer output drops with the tier too — intended (the same device is hot), and part
             // of the ask below. NEEDS-FOUNDER-VERIFY: force `.low` (Low Power Mode on) — is the
             // picture acceptably soft at 0.7, on the phone and on a connected screen, and does a
             // recording STARTED in that state come out at full size?
             let renderScale: CGFloat = {
-                guard !wantsCapture, let tierScale = governor?.settings.visualDetailScale else { return 1 }
+                guard let tierScale = governor?.settings.visualDetailScale else { return 1 }
                 return CGFloat(max(0.5, min(1, tierScale)))
             }()
             // #1245 (review of #1243): a LEVER change is a deliberate step, not a layout
             // animation — it re-allocates on the frame it happens, bypassing the two-frame
-            // settle wait. Without this, record-start on a demoted tier flipped `wantsCapture`
-            // (and so `renderScale` → 1) at frame N while the drawable only grew at N+3;
-            // `readyToCapture` is true at N+1, `VideoRecorder.ingest` sizes the writer from the
-            // FIRST buffer, so the whole take would have been locked to the reduced size —
-            // the inverse of what the lever promises. Rounded to whole pixels (F3): a
-            // fractional `want` against a layer-rounded `have` could re-fire every other frame.
+            // settle wait. The case that bought this was a record-start on a demoted tier
+            // (the lever jumped to 1 at frame N while the drawable only grew at N+3, locking
+            // a take to the reduced size); that case is gone with video capture, but a TIER
+            // change moves the lever the same way and still needs the immediate re-allocation.
+            // Rounded to whole pixels (F3): a fractional `want` against a layer-rounded `have`
+            // could re-fire every other frame.
             let leverMoved = renderScale != lastRenderScale
             lastRenderScale = renderScale
             let want = CGSize(width: max(1, (view.bounds.width * scale * renderScale).rounded()),
@@ -1743,12 +1720,13 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // `makeUIView` set them — the display link keeps its 60 Hz cadence (reconfiguring it is
         // the flicker class the pin exists for), `lastFrameTime` was already advanced above so
         // `dt` stays honest, and the first change to any uniform encodes on the very next tick.
-        // Held off while a take or a still wants the drawable (`wantsCapture`): the recorder
-        // needs a rendered texture on its frame, identical or not. The comparison is over the
-        // struct's bytes (NaN-tolerant; the uniforms are sanitized upstream anyway).
+        // Until #1304 this was held off while a take or a still wanted the drawable — a
+        // recorder needs a rendered texture on its frame, identical or not. No reader of the
+        // texture survives, so the skip is unconditional. The comparison is over the struct's
+        // bytes (NaN-tolerant; the uniforms are sanitized upstream anyway).
         // NEEDS-FOUNDER-VERIFY: Reduce Motion on, hold still — does the picture stay (no
         // black, no flicker) and resume the moment a finger touches the visual?
-        if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {
+        if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncodedUniforms) {
             return
         }
 
@@ -1781,16 +1759,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             pass.colorAttachments[0].clearColor =
                 MTLClearColor(red: beat * 0.4, green: beat * 0.2, blue: beat, alpha: 1)
             buffer.makeRenderCommandEncoder(descriptor: pass)?.endEncoding()
-        }
-
-        // Video tap: blit this exact rendered frame into the recorder (same command
-        // buffer, before present). Only when recording AND the drawable was already
-        // blit-readable coming into this frame (readyToCapture) — otherwise the fast-path
-        // (framebufferOnly) drawable can't be read. Runs on main (CADisplayLink loop).
-        if readyToCapture, let vr = visualRecorder {
-            MainActor.assumeIsolated {
-                vr.capture(from: drawable.texture, in: buffer, device: drawable.texture.device)
-            }
         }
 
         // SYNCHRONOUS present in the current CATransaction (presentsWithTransaction = true,

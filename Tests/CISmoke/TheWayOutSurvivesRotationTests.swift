@@ -175,7 +175,7 @@ final class TheWayOutSurvivesRotationTests: XCTestCase {
             .children.compactMap(\.label).sorted()
         XCTAssertEqual(fields,
                        ["gridToggle", "lookSlider", "miniTransport",
-                        "studioChip", "videoRecord", "wavRecord"],
+                        "studioChip", "wavRecord"],
                        "ChromeFit's fields changed. That is allowed — but if the new one is an "
                        + "exit, a narrow card can now shed the way out on its own, which is the "
                        + "same loss #583 fixed by a different route.")

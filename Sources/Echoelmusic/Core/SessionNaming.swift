@@ -106,9 +106,11 @@ public enum SessionNaming {
     ///
     /// `Calendar(identifier:)` keeps `TimeZone.current`, so the stamped day is still the
     /// performer's LOCAL day — a take at 23:00 in Hamburg is not filed as tomorrow. Localised
-    /// dates belong in the UI, where `DateFormatter` already handles them
-    /// (`VideoLibraryPanel.title(for:)`); a filename is an interchange token, and interchange
-    /// tokens are Gregorian.
+    /// dates belong in the UI, where `DateFormatter` already handles them; a filename is an
+    /// interchange token, and interchange tokens are Gregorian. (⛔ The example named here was
+    /// `VideoLibraryPanel.title(for:)`, deleted with video capture in #1304. The RULE is
+    /// unchanged — it never depended on that panel — but a doc that cites a type which no
+    /// longer exists sends the next reader hunting.)
     /// ⚠️ `public`, and not by preference: it is the default argument of the PUBLIC `stem` and
     /// `fileName`, and Swift will not let a public signature name an internal declaration
     /// ("static property 'fileCalendar' is internal and cannot be referenced from a default

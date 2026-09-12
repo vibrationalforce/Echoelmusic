@@ -10,8 +10,13 @@
 // `.critical` too. The governor demoted, the GPU did not notice.
 //
 // WHAT THIS PINS. (1) The drawable's wanted size is multiplied by a `renderScale` derived from
-// `governor?.settings.visualDetailScale`, clamped 0.5…1. (2) The lever is 1 while a take or a
-// still wants the drawable (`wantsCapture`), because the recorder pools at the drawable's size.
+// `governor?.settings.visualDetailScale`, clamped 0.5…1. (2) ⛔ RETRACTED (#1304): the lever
+// used to be held at 1 while a take or a still wanted the drawable, because the recorder pooled
+// pixel buffers at the drawable's size and a mid-take step would have re-pooled against a writer
+// sized for the start. Video capture is gone (founder 2026-09-12), so the lever applies on every
+// frame and there is nothing left to stand down for. The claim is rewritten to pin the ABSENCE
+// of that condition, which is the direction that can still fail for a named reason: a future
+// consumer of the rendered texture must bring the yield back WITH it.
 // (3) COUNTERWEIGHT, by behaviour on the pure core: the factor is 1 at `.balanced` and `.high`
 // and below 1 at `.low` and `.minimal` — the lever engages only when the governor says so, so
 // the shipped picture at the default tier is byte-identical. (4) COUNTERWEIGHT, by text: the
@@ -37,18 +42,19 @@ final class TheDrawableFollowsTheTierTests: XCTestCase {
                       "`renderScale` is no longer the clamped tier detail scale (#1243)")
     }
 
-    /// Claim 2 — the lever stands down while capture is wanted.
-    func testTheLeverStandsDownWhileRecording() throws {
+    /// Claim 2 — nothing reads the rendered texture, so the lever has nothing to yield to.
+    func testTheLeverHasNothingToStandDownFor() throws {
         let src = try text("Sources/Echoelmusic/Views/MetalBioView.swift")
-        XCTAssertTrue(src.contains("guard !wantsCapture, let tierScale = governor?.settings.visualDetailScale else { return 1 }"),
-                      "the resolution lever no longer yields to a take/still — the recorder pools at the drawable's size, and a mid-take step would re-pool against a writer sized for the start (#1243)")
-        XCTAssertTrue(src.contains("let (readyToCapture, wantsCapture): (Bool, Bool) = MainActor.assumeIsolated {"),
-                      "`wantsCapture` no longer comes from the ONE capture question at the top of draw(in:) (#985/#1243)")
+        XCTAssertTrue(src.contains("guard let tierScale = governor?.settings.visualDetailScale else { return 1 }"),
+                      "`renderScale` no longer derives from the tier alone — re-anchor this claim (#454) rather than letting it drift green")
+        XCTAssertFalse(src.contains("wantsCapture"),
+                      "`wantsCapture` is back in MetalBioView. Something reads the rendered texture again, and the resolution lever MUST yield to it: a consumer pools buffers at the drawable's size, so a mid-read step re-pools against a writer sized for the start (#1243/#1245). Bring back the yield in the same commit, and re-open claim 2 here and the retraction in this file's header.")
     }
 
     /// Claim 5 (#1245, review) — a lever change re-allocates on its own frame, and the wanted
-    /// size is whole pixels. Record-start on a demoted tier otherwise captured two frames at the
-    /// reduced size and the writer locked the whole take to it.
+    /// size is whole pixels. The case that bought it was a record-start on a demoted tier (the
+    /// writer locked the whole take to the reduced size); that case went with video capture, but
+    /// a TIER change moves the lever the same way and still needs the immediate re-allocation.
     func testALeverChangeBypassesTheSettleWaitAndWantsWholePixels() throws {
         let src = try text("Sources/Echoelmusic/Views/MetalBioView.swift")
         XCTAssertTrue(src.contains("let leverMoved = renderScale != lastRenderScale") && src.contains("|| leverMoved {"),

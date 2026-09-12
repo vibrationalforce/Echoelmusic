@@ -44,12 +44,14 @@ enum EchoelTheme {
     /// ornament. Do not use it on anything tappable.
     ///
     /// ⚠️ READ THAT LAST SENTENCE AS A RULE, NOT AS A DESCRIPTION OF TODAY. #367 converted the
-    /// ALWAYS-ON CHROME and nothing else — three strokes. The token still has **105** argument
-    /// sites across `Sources/` (`git grep -c 'EchoelTheme\.border[,)]' -- Sources`), and a
-    /// backward-window scan puts **60** of them inside a `Button`/`Menu`/gesture. Some of those
-    /// sit in doorless files and cost nothing; many do not — the Field patch chip, Randomize,
-    /// tap-tempo, Export MIDI, `PatchbayView`, `VideoLibraryPanel`, `LearnView` are all reachable
-    /// in-panel controls still wearing the divider outline.
+    /// ALWAYS-ON CHROME and nothing else — three strokes. **Do not quote a site count from this
+    /// paragraph; run the command** (`git grep -c 'EchoelTheme\.border[,)]' -- Sources`, summed).
+    /// ⛔ It read **105** until #1304 deleted seven files and made it 92 without anything going
+    /// red — a count in prose is a date (#818). The companion figure, "**60** of them inside a
+    /// `Button`/`Menu`/gesture", came from a backward-window scan that was never scripted, so it
+    /// is UNMEASURED today rather than merely stale. Reachable in-panel controls still wearing
+    /// the divider outline include the Field patch chip, Randomize, tap-tempo, Export MIDI,
+    /// `PatchbayView` and `LearnView`.
     ///
     /// That rollout is UNFINISHED, not sanctioned. The reason it is not a sweep is #364: a
     /// finding built from a raw call-site count concluded the app was misusing a colour, and the

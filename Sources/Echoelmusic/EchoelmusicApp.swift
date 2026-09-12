@@ -223,11 +223,6 @@ struct EchoelmusicApp: App {
     // OSC rate has no consumer — see the knob table in ResourceGovernor before
     // assuming a knob does something.
     @State private var resourceGovernor = ResourceGovernor()
-    #if canImport(AVFoundation) && canImport(Metal)
-    // Records the bio-reactive Metal visual to an .mp4 (the on-brand video source —
-    // does NOT touch the rPPG camera). Fed by the fullscreen VJ MetalBioView.
-    @State private var visualRecorder = VisualRecorder()
-    #endif
     // Bio-reactive FX: the body (and LFOs) sculpt EVERY sounding voice's EchoelFX chain
     // live (coherence→reverb, breath→filter, HR→tremolo). Control-rate, off the
     // audio thread; idle until the user adds routes in the FX tool.
@@ -587,9 +582,6 @@ struct EchoelmusicApp: App {
             #if canImport(AVFoundation)
             .environment(cameraRPPG)
             #endif
-            #if canImport(AVFoundation) && canImport(Metal)
-            .environment(visualRecorder)
-            #endif
             #if canImport(HealthKit)
             .environment(healthWriter)
             #endif
@@ -692,11 +684,10 @@ struct EchoelmusicApp: App {
                 // launched, so the external scene can connect while this task is still
                 // running. Publishing the three engine objects here is the whole reason
                 // `ExternalStageBridge` exists — the scene is built by UIKit and inherits
-                // none of this view's `@Environment`. Four reference assignments; it
+                // none of this view's `@Environment`. Three reference assignments; it
                 // cannot fail, block, or touch audio.
                 ExternalStageBridge.shared.wire(bus: bus,
                                                 governor: resourceGovernor,
-                                                recorder: visualRecorder,
                                                 synth: polyVoice)
                 #endif
                 // ── ESSENTIALS FIRST ─────────────────────────────────────────

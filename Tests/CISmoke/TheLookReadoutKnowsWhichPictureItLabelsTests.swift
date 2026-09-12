@@ -59,7 +59,7 @@ final class TheLookReadoutKnowsWhichPictureItLabelsTests: XCTestCase {
     /// donut. Everything below is only true because this is.
     func testTheFloatingWindowCanRenderTheDonut() throws {
         let window = try code(Self.windowFile)
-        XCTAssertTrue(window.contains("spectralDonuts, !mustKeepRenderingForRecording"), """
+        XCTAssertTrue(window.contains("} else if spectralDonuts {"), """
             `FloatingVisualWindow` no longer branches its picture on `spectralDonuts`. That \
             branch is the PREMISE of claim 2 below — if it genuinely went away, the Field \
             panel's `visualLookStrip(showsDonutState:)` argument must go back to `false` in \

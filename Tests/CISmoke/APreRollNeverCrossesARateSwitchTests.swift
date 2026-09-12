@@ -212,11 +212,14 @@ final class APreRollNeverCrossesARateSwitchTests: XCTestCase {
     /// 6 — REGRESSION (#630b): `captureRecent` keeps its LENGTH. This is the claim that would
     /// have caught #630's own worst defect, and it did not exist then.
     ///
-    /// Its two consumers both do duration arithmetic on the result: `VideoMuxer` end-aligns
-    /// to `CMTimeMinimum(video, audio)` — so a short audio file CUTS THE VIDEO, and
-    /// `VisualRecorder` then deletes the full-length original — and `SingleExport`'s trim
-    /// resolver treats a too-short file as "export it all", reported as success. Truncating
-    /// here traded a partly pitch-shifted clip for destroyed footage and a silently wrong loop.
+    /// Its consumer does duration arithmetic on the result: `SingleExport`'s trim resolver
+    /// treats a too-short file as "export it all", reported as success — a silently wrong loop.
+    /// ⛔ A SECOND, WORSE consumer stood here until #1304: `VideoMuxer` end-aligned to
+    /// `CMTimeMinimum(video, audio)`, so a short audio file CUT THE VIDEO and `VisualRecorder`
+    /// then deleted the full-length original — truncation destroyed footage. Video capture is
+    /// gone (founder 2026-09-12), so the DESTRUCTIVE half of the stake is gone with it. The
+    /// claim stands on the surviving half; it is weaker, and that is said rather than glossed
+    /// (#367). `captureRecent` still has two live callers (`AudioEngine`, `LoopExporter`).
     func testTheRetroactiveCaptureKeepsItsRequestedLength() throws {
         let lines = try codeLines("Sources/Echoelmusic/Audio/RetroCapture.swift")
         let start = lines.firstIndex { $0.contains("func captureRecent(seconds: Double) -> URL?") }
@@ -232,11 +235,11 @@ final class APreRollNeverCrossesARateSwitchTests: XCTestCase {
         let body = Array(lines[s...e])
 
         XCTAssertFalse(body.contains { $0.contains("preRollWindow(") }, """
-            `captureRecent` takes the TRUNCATING window again. Its callers mux and trim by \
-            duration: `VideoMuxer` cuts the video down to the audio's length and \
-            `VisualRecorder` then deletes the original, so a route switch shortly before Stop \
-            destroys the take. Truncation is only correct where the caller has no length \
-            expectation — here it has two (#630b).
+            `captureRecent` takes the TRUNCATING window again. Its caller trims by duration: \
+            `SingleExport`'s resolver reads a too-short file as "export it all" and reports \
+            success, so a route switch shortly before Stop silently shortens the loop. \
+            Truncation is only correct where the caller has no length expectation — here it \
+            has one (#630b; the second, video-destroying one went with #1304).
             """)
         XCTAssertEqual(body.filter {
             $0.contains("let frames = min(max(Int(seconds * captureSampleRate), 0), ringCapacity)")

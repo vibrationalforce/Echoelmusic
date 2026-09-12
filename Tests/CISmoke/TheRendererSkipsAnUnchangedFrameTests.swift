@@ -11,9 +11,12 @@
 //
 // WHAT THIS PINS. (1) ORDER: the drawable is acquired AFTER `uniforms.time` is set — after every
 // uniform is final — so the skip can sit in front of it, and the drawable is requested as late
-// as Apple advises. (2) THE SKIP: gated on `hasEncodedOnce`, `!wantsCapture` (a take needs a
-// texture, identical or not) and byte equality with `lastEncodedUniforms`; the record is
-// updated right after. (3) COUNTERWEIGHT, by text: `isPaused = false` and
+// as Apple advises. (2) THE SKIP: gated on `hasEncodedOnce` and byte equality with
+// `lastEncodedUniforms`; the record is updated right after. ⛔ It carried a third term,
+// `!wantsCapture`, because a video take needed a rendered texture on every frame, identical or
+// not. Video capture is gone (#1304, founder 2026-09-12), so the skip is unconditional — and
+// anything that reads the rendered texture again has to put that term back, or it silently
+// receives nothing while the picture is still. (3) COUNTERWEIGHT, by text: `isPaused = false` and
 // `preferredFramesPerSecond = 60` are exactly as before — this is a skip, not a pause.
 // (4) THE HELPER, by behaviour: `bytesEqual` is true for identical structs, false for a
 // one-field difference, and true for an identical NaN (the reason it is bytes, not `==`).
@@ -53,9 +56,9 @@ final class TheRendererSkipsAnUnchangedFrameTests: XCTestCase {
         let src = try text("Sources/Echoelmusic/Views/MetalBioView.swift")
         // ⛔ #1301 narrowed the skip back to two gates plus byte equality: the camera-sequence
         // term left with the layer it existed for. See the header for what must re-widen it.
-        XCTAssertTrue(src.contains("if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {"),
+        XCTAssertTrue(src.contains("if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncodedUniforms) {"),
                       "the unchanged-frame skip lost a gate: it must yield to a take/still and must never skip the first frame (#1244)")
-        guard let skip = src.range(of: "if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {") else { return }
+        guard let skip = src.range(of: "if hasEncodedOnce, Self.bytesEqual(uniforms, lastEncodedUniforms) {") else { return }
         let after = String(src[skip.upperBound...].prefix(1200))
         XCTAssertTrue(after.contains("lastEncodedUniforms = uniforms") && after.contains("hasEncodedOnce = true"),
                       "the encoded-uniforms record is not updated after the skip decision (#1244)")

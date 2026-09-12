@@ -446,88 +446,20 @@ final class TapTargetFloorTests: XCTestCase {
 
     // MARK: - the video-library row trio (#617, audit case A11y#3)
 
-    /// GRADING (#433): all three sub-checks are FORWARD guards — #617 creates the fixes they
-    /// pin, so none could have been red before it. On the parent tree each is red for its
-    /// named reason (the fix is absent at an anchor that exists there); the counterweights
-    /// (spacing 10, the play chip's 32×32, the card padding) are green on both trees.
-    /// Stripper: MEASURED PROPHYLAKTISCH (0 verdicts flip raw vs stripped on either tree).
-    /// One needle COUNT differs since #617b — the source comment above Share/Delete quotes
-    /// `contentShape(Rectangle())` verbatim (raw 3 vs stripped 2 in that file) — but the
-    /// quoting comment sits ABOVE the Share anchor, outside every window this case scans,
-    /// so no verdict depends on the stripping. Measured, not assumed (the §2 discipline).
-    ///
-    /// Two DIFFERENT fixes in one row, on purpose, and the reasons are the row's geometry:
-    /// the play button keeps its bordered 32-chip look and gets the outset (its neighbours
-    /// are the card's own padding and non-interactive text), while Share and Delete are
-    /// ADJACENT at 10 pt — two −6 outsets across that gap overlap by 2 pt with Delete in
-    /// the overlapping strip (the Sound-row lesson above), so they get 44 pt frames instead:
-    /// bare glyphs, the frame grows only whitespace.
-    func testTheVideoLibraryRowButtonsClearTheFloor() throws {
-        let path = "Sources/Echoelmusic/Studio/VideoLibraryPanel.swift"
-        let lines = try codeLines(path)
-
-        /// Window from a unique action anchor to that control's accessibility label.
-        func window(_ anchor: String, _ end: String) throws -> ArraySlice<String> {
-            let hits = lines.indices.filter { lines[$0].contains(anchor) }
-            XCTAssertEqual(hits.count, 1, """
-                `\(anchor)` is no longer unique in VideoLibraryPanel, so the window below \
-                may describe a different control. Re-anchor before trusting what follows.
-                """)
-            guard let start = hits.first,
-                  let stop = lines[start...].firstIndex(where: { $0.contains(end) })
-            else { throw XCTSkip("the \(anchor) control is gone — remove this case with it") }
-            return lines[start...stop]
-        }
-
-        let play = try window("togglePlay(clip)", "accessibilityLabel(playingURL")
-        XCTAssertTrue(play.contains { $0.contains(Self.outset6) }, """
-            the video-library play/stop button lost its `\(Self.outset6)` (#617). Its \
-            bordered chip is 32×32 — 53 % of the HIG 44×44 floor by area — and without \
-            the outset a missed tap on "Stop" lands on nothing while a take is sounding.
-            """)
-        XCTAssertTrue(play.contains { $0.contains("frame(width: 32, height: 32)") }, """
-            the play button's 32×32 chip frame changed. The −6 outset was sized as \
-            32 + 6 + 6 = 44 — re-measure the outset in the same commit, or restore the chip.
-            """)
-
-        for (anchor, end, name) in
-            [("Button { onShare(clip.url) } label: {", "accessibilityLabel(\"Share", "Share"),
-             ("Button(role: .destructive) { delete(clip) } label: {", "accessibilityLabel(\"Delete", "Delete")] {
-            let control = try window(anchor, end)
-            XCTAssertTrue(control.contains { $0.contains("frame(width: 44, height: 44)") }, """
-                the video-library \(name) button lost its 44×44 frame (#617) — a bare \
-                13 pt glyph again, roughly an eighth of the HIG floor by area, in a list \
-                where \(name == "Delete" ? "it destroys a recording" : "it is the only export door").
-                """)
-            // ⛔ #617b — THE FIRST VERSION OF THIS CASE DID NOT ASK FOR THIS LINE, and the
-            // fix it certified was decoration: under `.buttonStyle(.plain)` the hit test
-            // follows the label's glyph run (#485, measured on device), so the 44-frame
-            // alone grew layout and not the target. The review caught it; the exact
-            // omission #486 documents re-committing one commit after #485 fixed it.
-            XCTAssertTrue(control.contains { $0.contains("contentShape(Rectangle())") }, """
-                the \(name) button's `contentShape(Rectangle())` is gone (#617b). Without \
-                it the 44×44 frame grows layout while the hit target stays the ~13 pt \
-                glyph run — the loudness-Reset lesson in this file, third occurrence.
-                """)
-            XCTAssertFalse(control.contains { $0.contains("inset(by:") }, """
-                the \(name) button acquired an outset. Share and Delete are adjacent at \
-                the row's 10 pt spacing: two −6 outsets overlap by 2 pt and the strip \
-                contains Delete — that is the exact defect the Sound-row case in this \
-                file documents. Grow the frame (with `contentShape(Rectangle())`), never \
-                outset this pair.
-                """)
-        }
-
-        // The geometry both fixes were measured against — WINDOWED into `clipRow` (#617b:
-        // the first version scanned file-wide, which stays green if the row's spacing
-        // changes while another spacing-10 stack appears elsewhere in the file).
-        let row = try window("private func clipRow(", "accessibilityLabel(playingURL")
-        XCTAssertTrue(row.contains { $0.contains("HStack(spacing: 10)") }, """
-            the video-library row's `HStack(spacing: 10)` is gone from `clipRow`. The play \
-            outset and the 44-frame adjacency argument were both sized against a 10 pt \
-            gap — re-measure both in the same commit.
-            """)
-    }
+    // ⛔ `testTheVideoLibraryRowButtonsClearTheFloor` STOOD HERE AND WENT WITH ITS SURFACE
+    // (#1304, founder 2026-09-12 "Kein Video Capture" — `Studio/VideoLibraryPanel.swift` is
+    // deleted). It pinned three 44-pt fixes on the recorded-clip row's play / share / delete
+    // buttons.
+    //
+    // ⭐ TWO MEASURED LAWS FROM IT SURVIVE AND ARE THE REASON THIS TOMBSTONE EXISTS RATHER
+    // THAN A CLEAN CUT — both are about the OTHER rows this file still guards:
+    //  · A 44×44 frame under `.buttonStyle(.plain)` is DECORATION without
+    //    `contentShape(Rectangle())`: the hit test follows the label's glyph run (#485,
+    //    measured on device), so the frame grows layout and not the target.
+    //  · TWO ADJACENT controls may not both take a negative `inset(by:)` outset. At the row's
+    //    10 pt spacing two −6 outsets overlap by 2 pt, and the overlapping strip belongs to
+    //    whichever is later — the Sound-row case in this file is the same defect. Grow the
+    //    FRAME for an adjacent pair; outset only a control whose neighbours are padding.
 
     // MARK: - the live-narration disclosure (#617, audit case A11y#6)
 

@@ -278,17 +278,12 @@ struct WorkspaceView: View {
             // false. Keeping a 60 fps Metal layer alive behind an `.opacity(0)` would trade
             // the founder's bug for a battery one.
             //
-            // ⚠️ EXACTLY ONE STATE BREAKS THAT, AND IT IS WRITTEN HERE BECAUSE THIS IS THE
-            // MOUNT SITE — the first place a session reads when it asks what a hidden window
-            // costs. While a video take is RUNNING and no external stage is connected, the
-            // hidden window KEEPS its renderer (#319): `MetalBioView`'s draw loop is
-            // `VisualRecorder`'s only frame source, so dropping it made the take silently
-            // record nothing (`AVAssetWriter` is built from the FIRST frame; none arrived,
-            // `stop()` returned nil, the REC badge counted wall-clock seconds it never
-            // wrote). The condition lives in `FloatingVisualWindow`'s
-            // `mustKeepRenderingForRecording`; this sentence exists so the paragraph above
-            // cannot be read as "a hidden window can never be rendering" — it can, and it is
-            // deliberate. Do not "restore" the unconditional claim here or the drop there.
+            // ⛔ ONE STATE USED TO BREAK THAT AND NO LONGER DOES (#1304). While a video take
+            // was running, the hidden window KEPT its renderer, because `MetalBioView`'s draw
+            // loop was `VisualRecorder`'s only frame source (#319). Video capture is gone, so
+            // the claim above is unconditional again — every hidden state drops the renderer.
+            // Kept as a ⛔ because the shape recurs: if anything ever reads the rendered
+            // texture again, hiding the window takes its only frame source with it, silently.
             #if canImport(MetalKit) && canImport(UIKit)
             FloatingVisualWindow(isPresented: $floatingVisualVisible)
                 .opacity(floatingVisualVisible ? 1 : 0)
@@ -672,9 +667,6 @@ struct WorkspaceView: View {
             // and since 2026-08-08 it belongs to the BRAND, not the readout. Still no `Spacer`
             // (see the property's doc).
             HStack(spacing: 8) {
-                #if canImport(AVFoundation) && canImport(Metal)
-                EchoelClipsMonitorMini()
-                #endif
                 EchoelLuxMonitorMini()
                 // The immersive-visual monitor. (No purchase chip in v1.0 —
                 // everything is free; "Echoel Live" arrives as the v1.1 subscription.)

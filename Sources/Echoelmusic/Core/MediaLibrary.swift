@@ -80,7 +80,9 @@ public enum MediaLibrary {
     ///    assume global filename uniqueness here.) Without this re-root, every
     ///    imported clip silently lost its audio/video on the first app update
     ///    (audit CRITICAL H6).
-    /// 3. a bare file name against Documents/Videos (VisualRecorder captures).
+    /// 3. a bare file name against Documents/Videos. (Its writer was the visual recorder,
+    ///    removed with video capture in #1304; the probe stays because a document persisted
+    ///    by an older build can still carry such a ref — #95/#527.)
     /// Side effect: probing creates the media home directories if missing (the
     /// same dirs import would create) — not a pure function by design.
     public static func resolveRef(_ ref: String?) -> URL? {

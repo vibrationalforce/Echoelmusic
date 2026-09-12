@@ -92,7 +92,7 @@ import Foundation
 //  As of #267 no user-visible readout formats its own decimals. What deliberately still
 //  uses `printf` and must keep an ASCII point:
 //  · logs / diagnostics / breadcrumbs — `EchoelCrashLog`, `CameraCapture`, `CameraAnalyzer`,
-//    `VideoRecorder`, `AudioConfiguration`, `SingleExport`, `RenderGapDetector`,
+//    `AudioConfiguration`, `SingleExport`, `RenderGapDetector`,
 //    `ExternalDisplayScene`, the `EchoelStudioView` generate-breadcrumb.
 //  · FILENAMES — `SessionNaming`. A comma there is corruption, not a nicer number, and
 //    `Tests/CISmoke/FilenameNumbersStayASCIITests` pins it against this file.

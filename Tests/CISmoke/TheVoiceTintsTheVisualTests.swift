@@ -150,10 +150,10 @@ final class TheVoiceTintsTheVisualTests: XCTestCase {
         let bridge = try source("Sources/Echoelmusic/Studio/ExternalStageBridge.swift")
         XCTAssertEqual(codeOccurrences(
             of: "private(set) var synth: PolySynthVoice?", in: bridge), 1,
-            "the bridge carries the synth like its three siblings — OBSERVED, not "
+            "the bridge carries the synth like its two siblings — OBSERVED, not "
             + "ignored, for the projector-plugged-in-before-launch order")
         XCTAssertEqual(codeOccurrences(
-            of: "func wire(bus: EngineBus, governor: ResourceGovernor, recorder: VisualRecorder, synth: PolySynthVoice)",
+            of: "func wire(bus: EngineBus, governor: ResourceGovernor, synth: PolySynthVoice)",
             in: bridge), 1,
             "wire() takes the synth as a REQUIRED argument (#431 — a defaulted "
             + "argument no call site writes appears in no diff)")

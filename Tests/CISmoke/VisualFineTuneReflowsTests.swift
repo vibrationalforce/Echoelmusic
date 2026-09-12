@@ -331,7 +331,8 @@ final class VisualFineTuneReflowsTests: XCTestCase {
     /// the button now writes the floating window's size — this assertion has done its job and
     /// SHOULD be deleted in that same commit". The second half of that condition is met exactly;
     /// the first is met in substance, which is what the hazard cared about — the button can no
-    /// longer mount a second `capturesVideo: true` renderer, because it no longer mounts anything.
+    /// longer mount a second capturing renderer, because it no longer mounts anything. (#1304
+    /// then removed video capture entirely, so there is nothing left to double-capture.)
     /// Keeping it would forbid the fix that makes it unnecessary (#364), which its own paragraph
     /// says in as many words.
     ///

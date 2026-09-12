@@ -14,13 +14,20 @@
 // founder to look at the picture, the picture was closed, and **nothing in the log said so**.
 // The founder did everything right; the instrument could not report its own state.
 //
-// ⚠️ WHY IT REPORTS THE RENDERER AND NOT ONLY THE VISIBILITY — the distinction is the whole
-// reason a naive `isPresented` line would have been the weaker fix, and claim 1 is what
-// forbids that weaker fix from replacing this one. `visualLayer` drops `MetalBioView` on
-// `!isPresented && !mustKeepRenderingForRecording`, so a HIDDEN window that is recording keeps
-// drawing (#319, and that exception is deliberate — dropping it made a video take silently
-// record nothing). A reader chasing "why are there no `visual:` lines" needs the term that
-// actually gates them, not the one that usually correlates with it.
+// ⚠️ WHY IT REPORTS THE RENDERER AND NOT ONLY THE VISIBILITY. Until #1304 the two were
+// genuinely different questions: `visualLayer` dropped `MetalBioView` on
+// `!isPresented && !mustKeepRenderingForRecording`, so a HIDDEN window that was recording kept
+// drawing (#319 — dropping it made a video take silently record nothing). Video capture is gone
+// (founder 2026-09-12, "Kein Video Capture"), so today the renderer follows `isPresented`
+// exactly and claim 1 can only ask for the `renderer=` TERM, not for a second condition.
+//
+// ⚠️ THAT IS A REAL WEAKENING AND IT IS NAMED RATHER THAN GLOSSED. The old claim 1b pinned the
+// derivation (`mustKeepRenderingForRecording ? "on" : "off"`) precisely so nobody could replace
+// the report with a restatement of visibility. With one term left, a scan cannot tell the
+// honest line from the restatement — they are the same text. What claim 1 still buys is that
+// the line says `renderer=` at BOTH sites, so the day anything else consumes the rendered
+// picture the reader is looking at the right word. Retracted, not deleted: an assertion that
+// can no longer fail for its named reason is the #367 defect.
 //
 // ⚠️ THE LIMIT, PER ASSERTION (§1): all SOURCE-TEXT SCANS. `FloatingVisualWindow` is a
 // `View` with `@AppStorage` and `@Environment` members that no test bundle can instantiate,
@@ -28,9 +35,11 @@
 // DEVICE PROBE, open and NOT covered: whether the next pasted log actually carries the line.
 // That is the founder's next paste, and it is the only thing that closes this.
 //
-// ⚠️ HONEST GRADING (§3), hand-transcribed in Python against the parent (`75b4919`) and this
-// tree — no local toolchain (§0). **9 assertions.** The file names no symbol this commit
-// creates, so it compiles against the parent and every assertion has a verdict there:
+// ⚠️ HONEST GRADING (§3) — THIS BLOCK GRADES #579 AGAINST ITS OWN PARENT (`75b4919`) AND IS
+// KEPT AS HISTORY. It says nine assertions; #1304 retracted one (claim 1b, above), so the file
+// carries eight today. The block is not re-graded because a grading is a statement about ONE
+// commit's delta, and rewriting it to match a later tree would make it claim something #579
+// never measured. Count the assertions, do not read the number here.
 //   · **4 red by ANCHOR ABSENCE, reported as ONE finding (#486):** claims 1 and 2 scan for the
 //     two breadcrumbs, which the parent does not have. Not booked as four regressions (#433).
 //   · **5 COUNTERWEIGHTS**, green on both trees — and the point of the file. Every positive
@@ -71,17 +80,11 @@ final class AClosedPictureSaysSoTests: XCTestCase {
         XCTAssertEqual(hits, 2, """
             The window's state report no longer names `renderer=` at both sites (found \
             \(hits), expected 2). Visibility alone is the WEAKER fix and this assertion exists \
-            to stop it replacing this one: `visualLayer` drops the renderer on \
-            `!isPresented && !mustKeepRenderingForRecording`, so a hidden-but-recording window \
-            keeps drawing (#319). A log line that says only "hidden" would then contradict a \
-            stream of `visual:` lines and send the next reader looking for a bug that is a \
-            documented feature.
-            """)
-        XCTAssertTrue(src.contains("mustKeepRenderingForRecording ? \"on\" : \"off\""), """
-            The renderer term is no longer derived from `mustKeepRenderingForRecording`. If it \
-            were hard-coded to follow `isPresented`, the line would be a restatement of the \
-            visibility it already prints — green on the assertion above and wrong in the one \
-            state that matters.
+            to stop it replacing this one. Until #1304 the renderer had a SECOND gate (a \
+            running video take kept a hidden window drawing, #319) and a log line saying only \
+            "hidden" would have contradicted a stream of `visual:` lines. That gate is gone \
+            with video capture, so the word `renderer=` is what remains: it is the term a \
+            reader chases, and it must survive the day something consumes the picture again.
             """)
     }
 
@@ -113,17 +116,22 @@ final class AClosedPictureSaysSoTests: XCTestCase {
     /// that branch deliberately; #579 explains the silence, it does not remove it.
     func testTheHiddenWindowStillDropsItsRenderer() throws {
         let src = try source(Self.window)
-        XCTAssertTrue(src.contains("if !isPresented && !mustKeepRenderingForRecording {"), """
+        XCTAssertTrue(src.contains("if !isPresented {"), """
             The renderer-drop condition is gone from `visualLayer`. Either the hidden window is \
             now rendering at 60 fps for nobody (the battery cost #311 explicitly refused), or \
             the condition was rewritten and the report added by this slice no longer describes \
             what the code does. Both are worse than the silence being fixed.
             """)
-        XCTAssertTrue(src.contains("recorderIsRecording && !ExternalStageBridge.shared.isConnected"), """
-            `mustKeepRenderingForRecording` no longer excludes the external-stage case. That \
-            exclusion is the "ONE MetalBioView app-wide" law: forcing the local renderer back \
-            while an external stage holds one runs two renderers, a worse defect than the \
-            silent-recording bug #319 fixed.
+        XCTAssertFalse(src.contains("mustKeepRenderingForRecording"), """
+            `mustKeepRenderingForRecording` is back in the WINDOW'S CODE. It was the #319 \
+            exception that kept a hidden window rendering so a running video take did not lose \
+            its only frame source, and it went with video capture (#1304). If something \
+            consumes the rendered picture again it needs that exception — and then it also \
+            needs the external-stage exclusion the old term carried, because forcing the local \
+            renderer back while an external stage holds one runs TWO renderers ("ONE \
+            MetalBioView app-wide"), which is a worse defect than the one being fixed. Bring \
+            the term back with BOTH halves, and update this guard and the header of this file \
+            in the same commit.
             """)
     }
 

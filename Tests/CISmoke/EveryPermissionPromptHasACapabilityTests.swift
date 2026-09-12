@@ -13,8 +13,17 @@
 // is a fourth medium and was in nobody's enumeration — the #768 detection sign again: when all
 // the checked surfaces share one GATTUNG, the ENUMERATION is what was incomplete.
 //
-// ⚠️ MEASURED BEFORE IT WAS WRITTEN, and the result was that the copy is HONEST. All nine keys
-// have live production code behind them today: `PHPhotoLibrary` in `VisualRecorder`,
+// ⭐ ITS PREDICTION CAME TRUE, AND THAT IS WHY THE FILE LOOKS DIFFERENT NOW. The paragraph
+// below ends with "the day a slice deletes `VisualRecorder`, the photo-library sentence becomes
+// a promise with no code AND an unused permission string in the binary — and no gate would have
+// said a word." #1304 is that day (founder 2026-09-12, "Kein Video Capture"). The plist is
+// FOUNDER-GATED, so the repair is a REPORT and not an edit; the key therefore moves into
+// `founderGatedOrphans` below, which claim 2 skips and claim 4 pins as genuinely code-less.
+// The guard did not go red on a tree nobody is allowed to fix — it NAMED the debt, which is
+// the whole point, and #1304's commit message and CLAUDE.md carry the report.
+//
+// ⚠️ MEASURED BEFORE IT WAS WRITTEN, and the result was that the copy was HONEST. All nine keys
+// had live production code behind them then: `PHPhotoLibrary` in `VisualRecorder`,
 // `CBCentralManager` in `PolarH10BioPublisher`, `CLLocationManager` in `LocationNamer`,
 // `MCNearbyServiceAdvertiser` in `MultipeerSession` (and `LiveColaboView`, its door, IS mounted
 // in `EchoelStudioView` — checked, because a doorless collaboration surface would have made
@@ -89,8 +98,6 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
             (["HKQuantitySample"], "Bio/HealthKitWriter.swift"),
         "NSCameraUsageDescription":
             (["AVCaptureSession", "AVCaptureDevice"], "Video/CameraCapture.swift"),
-        "NSPhotoLibraryAddUsageDescription":
-            (["PHPhotoLibrary"], "Video/VisualRecorder.swift"),
         "NSBluetoothAlwaysUsageDescription":
             (["CBCentralManager"], "Bio/PolarH10BioPublisher.swift"),
         "NSBluetoothPeripheralUsageDescription":
@@ -102,6 +109,23 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
              "Sync/OSCSender.swift, Sync/MultipeerSession.swift")
     ]
 
+    /// Keys whose capability has been REMOVED by a founder decision while the plist — which is
+    /// report-do-not-edit — still carries the sentence iOS prints. Claim 2 skips these; claim 4
+    /// makes sure the list stays honest in the one direction that can rot silently.
+    ///
+    /// ⚠️ IT IS NOT AN EXEMPTION HATCH. A key belongs here only when the capability is gone ON
+    /// PURPOSE and the repair is outside what a session may edit. Everything else is claim 2's
+    /// red, and claim 2's message says what to do with it.
+    ///
+    /// ⛔ AND THE NEEDLE IS PART OF THE ENTRY, because "it has no code" is a claim about a
+    /// specific symbol: `NSPhotoLibraryAddUsageDescription` promised that finished visual
+    /// recordings are saved to the photo library, and the thing that saved them called
+    /// `PHPhotoLibrary`. Claim 4 asserts that symbol is absent from `Sources/`, so re-adding
+    /// video capture reds this file and forces the row back into `table` in the same commit.
+    private static let founderGatedOrphans: [String: [String]] = [
+        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary"]
+    ]
+
     // MARK: - claim 1 — the roster comes from the plist, not from this file
 
     func testEveryUsageKeyInThePlistHasARow() throws {
@@ -111,7 +135,7 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
             than nothing wrong (#454). If the permission strings moved to another plist or to \
             `project.yml`, re-anchor this file in the same commit — do not let it skip.
             """)
-        let unknown = keys.filter { Self.table[$0] == nil }.sorted()
+        let unknown = keys.filter { Self.table[$0] == nil && Self.founderGatedOrphans[$0] == nil }.sorted()
         XCTAssertTrue(unknown.isEmpty, """
             \(Self.plist) asks the user for something this guard cannot check: \
             \(unknown.joined(separator: ", ")).
@@ -142,6 +166,33 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
                 replaced and this row needs its new needle. `Resources/iOS/Info.plist` is \
                 FOUNDER-GATED: report the finding, do not delete the string yourself.
                 """)
+        }
+    }
+
+    // MARK: - claim 4 — an orphaned prompt is orphaned for real, and only while it is
+
+    /// The counterweight that keeps `founderGatedOrphans` from becoming a quiet exemption list.
+    /// Two directions, both of which fail for their named reason:
+    ///  · the capability came BACK (the needle occurs in code again) ⇒ the row belongs in
+    ///    `table`, and leaving it here would silence claim 2 for a live capability;
+    ///  · the plist no longer carries the key (the founder did the reported repair) ⇒ the row
+    ///    is finished and should go, so the next reader does not read a settled debt as open.
+    func testTheOrphanedPromptsAreStillOrphanedAndStillAsked() throws {
+        let sources = try swiftSources()
+        let keys = try usageKeys()
+        for (key, needles) in Self.founderGatedOrphans.sorted(by: { $0.key < $1.key }) {
+            XCTAssertTrue(keys.contains(key), """
+                "\(key)" is listed as a founder-gated orphan but \(Self.plist) no longer asks \
+                for it. The reported repair has landed — delete this row (and its mention in \
+                this file's header) so an open debt is not read into a closed one.
+                """)
+            for needle in needles {
+                XCTAssertFalse(sources.values.contains { $0.contains(needle) }, """
+                    "\(needle)" is back in `Sources/`, so "\(key)" is a LIVE capability again \
+                    and must not sit in `founderGatedOrphans` — claim 2 would stop checking it. \
+                    Move the row back into `table` in this same commit.
+                    """)
+            }
         }
     }
 

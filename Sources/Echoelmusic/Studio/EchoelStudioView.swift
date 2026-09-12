@@ -216,7 +216,6 @@ struct EchoelStudioView: View {
     #endif
     @Environment(BioSimulator.self) private var demoSource
     #if canImport(AVFoundation) && canImport(Metal)
-    @Environment(VisualRecorder.self) private var visualRecorder
     #endif
 
     // The single live-state flag: biofeedback running or not.
@@ -318,7 +317,6 @@ struct EchoelStudioView: View {
     @State private var showMaster = false
     /// Video window (DMMW menu, 2026-07-12) — only read by the panel's
     /// disclosure fallback; in the dropdown it renders force-open anyway.
-    @State private var showVideoLibrary = false
     /// Delivery loudness target (shared key with MasterLoudnessGrid's colour-coding).
     @AppStorage(StudioDefaultKeys.loudnessTarget.key) private var loudnessTargetRaw = StudioDefaultKeys.loudnessTarget.value
     /// #736 — the master-bus tonal character. Labelled "Tone", NOT "Character": this file
@@ -667,9 +665,9 @@ struct EchoelStudioView: View {
     // ⛔ `visualShare` STOOD HERE AND IS DELETED (#1069). Its `.sheet(item:)` lived INSIDE the
     // cover's content, never on the body chain, so removing it costs the chain nothing and
     // gains no headroom either — worth saying, because the opposite is the easy assumption.
-    // The recording it shared is still shareable: `videoPanel` → `VideoLibraryPanelContent`,
-    // mp4 out. What is gone is IMMEDIACY (share straight after the take), a real, small,
-    // nameable loss rather than a capability.
+    // (It shared a finished visual recording. #1304 removed video capture entirely, so there
+    // is nothing left to share from here — the loss stopped being "immediacy" and became the
+    // capability itself, by founder decision.)
     @State private var diagnostics: DiagReport?
 
     /// #400 — the sound reset is armed by a first tap and performed by a second, INSTEAD of an
@@ -869,7 +867,10 @@ struct EchoelStudioView: View {
         // weather out, and that control (`placeRow`) now sits in "Save & Export", directly
         // above the Save button whose file name it shapes. This also closes filed task #284:
         // a chip called "Session" that saved no session, one chip from a panel that does.
-        case bio, composition, sound, mix, effects, master, mood, export, field, video
+        // ⛔ `video` WAS REMOVED (#1304, founder 2026-09-12 "Kein Video Capture"), and the same
+        // paragraph above licenses it: the raw value reaches no persisted store and no door
+        // string survives it. Its panel was the recorded-clips library; there are no clips.
+        case bio, composition, sound, mix, effects, master, mood, export, field
         var id: String { rawValue }
         /// Short chip label (DAW-style small buttons — Uncodixfy 12 pt chips).
         var label: String {
@@ -901,7 +902,6 @@ struct EchoelStudioView: View {
             // sees this most of the time" would have licensed shortening it back to "Save".
             case .export:      return "Save/Export"
             case .field:       return "Field"
-            case .video:       return "Video"
             }
         }
         /// Full name for VoiceOver (the chip text is abbreviated).
@@ -946,7 +946,6 @@ struct EchoelStudioView: View {
             // from two sides: the field's look, and the field's voice under your fingers.
             // Nobody could guess from the old string that the picture is playable.
             case .field:       return "Field — the visual surface you play with your fingers"
-            case .video:       return "Video — recorded clips library"
             }
         }
     }
@@ -1178,8 +1177,9 @@ struct EchoelStudioView: View {
                 // makes `EchoelPanel`'s `isExpanded` binding unreachable for EVERY panel in
                 // this dropdown — so the panel already opens expanded and writing the key
                 // would only stamp `true` into a persisted value nothing honours. That is
-                // still true and still the reason the Video door below is not the precedent
-                // it looks like (`showVideoLibrary` is `@State`, not `@AppStorage`).
+                // still true. (The Video door was cited here as the non-precedent, because
+                // `showVideoLibrary` was `@State` rather than `@AppStorage`; both went with
+                // video capture in #1304. The rule about `showExport` is unchanged.)
                 .onReceive(NotificationCenter.default.publisher(for: .echoelChromeDoor)) { note in
                     switch note.object as? String {
                     // ⛔ `"learn"` AND `"live"` WERE DELETED HERE (#492), for the same reason
@@ -1191,11 +1191,12 @@ struct EchoelStudioView: View {
                     // live hook; that is the shape this file has been burned by more than
                     // once. The notification keeps its REAL producers below (the header
                     // monitor tiles), which is why it is not deleted outright.
-                    // Header output monitors (founder 2026-07-12): the
-                    // EchoelVideo tile opens the clips library panel, the
-                    // EchoelLux tile the routing sheet (existing slot —
-                    // slot reuse, no new modal).
-                    case "video":   activeMenu = .video; showVideoLibrary = true
+                    // Header output monitors (founder 2026-07-12): the EchoelLux tile opens
+                    // the routing sheet (existing slot — slot reuse, no new modal).
+                    // ⛔ `"video"` WENT WITH ITS PRODUCER AND ITS PANEL (#1304): the header
+                    // clips tile and the recorded-clips library are both deleted. Removing the
+                    // case here in the SAME commit is the #492 rule — a `case` with no poster
+                    // compiles silently and reads like a live hook.
                     case "routing": showRouting = true
                     // The pulse monitor opens the Bio dropdown (B3). Since #289 that monitor
                     // sits beside "Create from Within" rather than in the header.
@@ -1656,8 +1657,7 @@ struct EchoelStudioView: View {
         // THE PRESENTATION CHAIN IS ONE SHORTER, which is the safe direction at the 10.76.34
         // metadata ceiling — the black-screen law this file states three times. `visualShare`'s
         // `.sheet(item:)` went with it: it lived INSIDE this cover's content, so it never sat
-        // on the body chain, and the recording it shared is still shareable through
-        // `videoPanel` → `VideoLibraryPanelContent`. Immediacy is the honest, nameable loss.
+        // on the body chain. (What it shared was a video take; #1304 removed video capture.)
         //
         // `.statusBarHidden(true)` is NOT ported. Whether the one window should hide the status
         // bar at fullscreen is a founder look, and porting it silently would decide it here.
@@ -2710,20 +2710,19 @@ struct EchoelStudioView: View {
     //               (step 2). Nothing here opens via the transport "•••" any more.
     // Master/Export were already chrome-door-only.
     // Dissolving the bottom chip bar (founder 2026-07-20: "die untere Leiste komplett
-    // auflösen … Video kann gelöscht werden"). S1: drop `.video` — the recordings library
-    // is founder-deleted from THIS BAR; the immersive visual window stays reachable via
-    // the header monitor button.
+    // auflösen … Video kann gelöscht werden"). S1 dropped `.video` from THIS BAR; the
+    // immersive visual window stays reachable via the header monitor button.
     //
-    // ⛔ AND THE REST OF THIS SENTENCE WENT STALE: it said the `.video` case + videoPanel
-    // are "unreferenced now" and that "a later slice deletes the dead panel". Both are
-    // false today — `EchoelClipsMonitorMini` (`HeaderMonitors.swift`) posts the
-    // `.echoelChromeDoor` "video" notification, this file's observer sets
-    // `activeMenu = .video` + `showVideoLibrary = true`, and `videoPanel` renders
-    // `VideoLibraryPanelContent` with mp4 share. **The library is LIVE; do not delete it as
-    // dead.** Filtering a case out of `studioChips` removes it from the BAR, never from the
-    // app — that is the whole point of the chrome doors, and it is exactly the
-    // "unreachable because I cannot see a caller" mistake CLAUDE.md warns about, made in
-    // reverse. Following
+    // ⭐ THE LAW THIS ENTRY BOUGHT, AND IT OUTLIVES ITS EXAMPLE. For a year the note said the
+    // `.video` case was "unreferenced now" and a later slice would delete the dead panel —
+    // and that was FALSE the whole time: a header tile posted the `.echoelChromeDoor` "video"
+    // notification, this file's observer opened the panel, and the library worked.
+    // **Filtering a case out of `studioChips` removes it from the BAR, never from the app** —
+    // that is the point of the chrome doors, and reading a filtered case as dead is the
+    // "unreachable because I cannot see a caller" mistake CLAUDE.md warns about, in reverse.
+    // (The case is gone NOW, but by founder decision — #1304, "Kein Video Capture" — after
+    // its producer, its panel and its recorder were all removed in the same commit. That is
+    // the only kind of deletion this paragraph ever permitted.) Following
     // slices retire mix/effects/synth/sound as each function is verified reachable per-track,
     // then the bar goes entirely (PLAN_LEISTE_DISSOLVE_2026-07-20).
     /// #290 — THE STRIP IS NOW AN EXPLICIT, ORDERED LIST, and both halves of that sentence
@@ -2759,8 +2758,6 @@ struct EchoelStudioView: View {
     ///   · `.bio` reaches the plate from the pulse pill, which since #289 sits directly left
     ///     of "Create from Within". A chip would be a second door to the same panel, one row
     ///     under a door the user already found.
-    ///   · `.video` reaches it from the header clips tile, which also shows REC state — the
-    ///     tile carries information a chip cannot.
     ///   · Live Colabo and Learn are NOT panels: they present full sheets (`showLiveColabo`,
     ///     `showLearn`). A chip that opens a modal would be a lying tab in a strip whose
     ///     grammar is "this chip selects what the plate shows", and it would put two more
@@ -2771,8 +2768,9 @@ struct EchoelStudioView: View {
         [.sound, .effects, .mix, .master, .mood, .composition, .field, .export]
 
     /// The tab strip: the eight chips above, PLUS whatever the plate currently shows if a
-    /// chrome door selected one of the two menus the strip does NOT carry — `.bio` (pulse
-    /// pill) and `.video` (header clips tile).
+    /// chrome door selected the one menu the strip does NOT carry — `.bio` (pulse pill).
+    /// (`.video` was the second until #1304 removed video capture, its header tile and its
+    /// panel together.)
     ///
     /// ⛔ THIS SENTENCE WAS STALE THE MOMENT #290 LANDED and is corrected rather than
     /// dropped: it read "the five instrument tabs … (Master · Export · Bio · Tempo ·
@@ -2922,7 +2920,7 @@ struct EchoelStudioView: View {
         // ⛔ AND THE SCROLL IS DEFERRED BY ONE MAIN-ACTOR TURN, which the first version of
         // this slice was not — the reviewer caught that the ONE path the whole fix is
         // justified by is the one it would most likely miss. `visibleChips` appends `.bio`
-        // and `.video` in the SAME update in which `displayedMenu` becomes them, so a
+        // in the SAME update in which `displayedMenu` becomes it, so a
         // synchronous `scrollTo` inside `onChange` targets a row SwiftUI has not inserted
         // yet. For the eight permanent chips it worked either way; for the pulse-pill path —
         // rationale 1 above, the reason this exists — it was a coin flip. `Task { @MainActor }`
@@ -3156,7 +3154,6 @@ struct EchoelStudioView: View {
         case .mood:        return AnyView(moodPanel)
         case .export:      return AnyView(utilityRow)
         case .field:       return AnyView(visualPanel)
-        case .video:       return AnyView(videoPanel)
         }
     }
 
@@ -3426,24 +3423,6 @@ struct EchoelStudioView: View {
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 8)
-    }
-
-    /// The Video window (founder 2026-07-12): the durable recordings library —
-    /// clips recorded in the visual window (visual + master mix), inline
-    /// playback, share via the studio's ONE existing share slot, delete.
-    private var videoPanel: some View {
-        panel("Video", "Recorded clips — visual + master mix", isExpanded: $showVideoLibrary) {
-            #if canImport(AVKit) && canImport(AVFoundation)
-            VideoLibraryPanelContent(
-                onShare: { url in share = ExportedFile(url: url) },
-                onOpenVisual: {
-                    floatingVisualVisible = true
-                })
-            #else
-            Text("Video recording is available on iPhone.")
-                .font(EchoelTheme.font(12)).foregroundStyle(EchoelTheme.dim)
-            #endif
-        }
     }
 
     // ⛔ `soundControls` IS GONE (#322). It stacked all seven panels
@@ -5171,22 +5150,12 @@ struct EchoelStudioView: View {
             // The black-screen metadata law (10.76.34) is untouched and now has one slot of real
             // headroom, which is meant to be spent once and deliberately.
             //
-            // ⛔ #1031's `.disabled(visualRecorder.isRecording)` STOOD HERE AND IS REMOVED, on
-            // that comment's own instruction. It read: "DISABLED WHILE A TAKE IS RUNNING, and
-            // this is a STOPGAP with a known end date, not a design. Opening the cover
-            // mid-recording mounts a second `capturesVideo: true` MetalBioView while the hidden
-            // floating window keeps capturing — two renderers, one shared recorder, and the
-            // artefact is an unrepeatable performance take. … the real fix is that there stops
-            // being a second fullscreen at all, and this whole button becomes a write of the
-            // window's size. **Delete this `.disabled` with the cover** — leaving it would
-            // forbid a door that can no longer double-capture."
-            //
-            // That is now literally what the button does. There is no second renderer to mount:
-            // the tap resizes the ONE window, and `FloatingVisualWindow`'s shadow block records
-            // that toggling fullscreen deliberately keeps view identity, so no MTKView is torn
-            // down and a running take is not interrupted. The `visualRecorder.isRecording` read
-            // goes with it (one fewer observed property in this menu-hosting body — the safe
-            // direction under 10.76.41/50, even though that read was cold).
+            // ⛔ #1031's `.disabled(visualRecorder.isRecording)` STOOD HERE AND WAS REMOVED by
+            // #1069, on that comment's own instruction — it guarded against opening a second
+            // fullscreen renderer while a video take ran. The tap now resizes the ONE window,
+            // and `FloatingVisualWindow`'s shadow block records that toggling fullscreen
+            // deliberately keeps view identity, so no MTKView is torn down. With #1304 the
+            // recorder it read is gone too.
             //
             // ⚠️ THE WIDEN RULE IS NOT BYPASSED, AND IT IS WORTH SAYING BECAUSE IT LOOKS LIKE IT
             // IS. `ChromeBudgetFitsTests.testBothSizeDoorsGoThroughTheOneWidenRule` scans
@@ -5194,7 +5163,7 @@ struct EchoelStudioView: View {
             // `sizeWideEnoughForARunningTake(`; this write is in ANOTHER file and that scan
             // cannot see it — the #366 shape exactly ("the rule was correct and had a second
             // door around it"). It is safe for a reason, not by luck: the rule exists to stop a
-            // card too NARROW to hold a running recorder's stop button, and this writes
+            // card too NARROW to hold the running WAV recorder's stop button, and this writes
             // `.fullscreen`, the widest size there is. A claim in that file now pins the
             // out-of-file writer to fullscreen, so a future edit to some other size goes red.
             Button {

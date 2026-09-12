@@ -21,33 +21,6 @@ private struct RecordedClip: Identifiable {
     let url: URL
 }
 
-/// On-screen recording feedback: a red dot + "REC m:ss" elapsed, ticking once a second.
-/// Small rounded chip (not a pill) per Uncodixfy; drawn over the visual while recording.
-private struct RecordingBadge: View {
-    let start: Date?
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            let elapsed = max(0, start.map { context.date.timeIntervalSince($0) } ?? 0)
-            HStack(spacing: 5) {
-                Circle().fill(EchoelTheme.recording).frame(width: 7, height: 7)
-                Text("REC \(timeString(elapsed))")
-                    .font(EchoelTheme.font(10, .semibold).monospacedDigit())
-                    .foregroundStyle(.white)
-            }
-            .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Color.black.opacity(0.55)))
-            .padding(8)
-        }
-        .accessibilityLabel("Recording")
-    }
-
-    private func timeString(_ s: TimeInterval) -> String {
-        let t = Int(s)
-        return String(format: "%d:%02d", t / 60, t % 60)
-    }
-}
-
 /// A COMPACT position/loop readout for the Visual Instrument's TOP BAR (founder 2026-07-07:
 /// "sowas in klein" + "Das muss mit nach oben in die Leiste"). Mirrors `TransportPositionView`
 /// (bar.beat.step + a slim loop-progress capsule) at a smaller size. Its OWN leaf so the ~10 Hz
@@ -114,11 +87,10 @@ struct FloatingVisualWindow: View {
             : [.bottom]
     }
 
-    // MP4 capture (founder 2026-07-02: "WAV und MP4 sind die Formate der Wahl"). The
-    // window's MetalBioView is the single Metal path, so it is the one capture instance;
-    // tapping record writes the bio-reactive visual (+ the live audio) to an .mp4 to share.
+    // ⛔ MP4 CAPTURE STOOD HERE AND IS GONE (#1304, founder 2026-09-12 "Kein Video
+    // Capture"). What survives on this window is the LOSSLESS WAV of the same performance —
+    // it comes off the audio engine's own output, never off a camera or the Metal layer.
     #if canImport(AVFoundation)
-    @Environment(VisualRecorder.self) private var recorder
     @Environment(AudioEngine.self) private var audioEngine
     /// For idle-tone colour + entrainment pulse parity with the fullscreen visual (audit #5:
     /// the floating window fell back to C4 and ignored an ARMED entrainment). Both reads are
@@ -140,8 +112,8 @@ struct FloatingVisualWindow: View {
     /// low-frequency read — but it is read HERE and passed down rather than read inside the
     /// UIKit surface, because a draw-time `UserDefaults` read would not know when to redraw.
     @AppStorage(StudioDefaultKeys.noteNaming.key) private var noteNamingRaw = StudioDefaultKeys.noteNaming.value
-    // For a fitting MP4 name (founder: "Session Recording für video und auch passender
-    // Name") — same convention as the WAV: Echoel_<date>_<Key>_<bpm>_A440_<Genre>.mp4.
+    // For a fitting export name (founder: "Session Recording … auch passender Name"):
+    // Echoel_<date>_<Key>_<bpm>_A440_<Genre>.wav.
     @Environment(SessionContext.self) private var session
     @Environment(Transport.self) private var transport
     @AppStorage(StudioDefaultKeys.genre.key) private var genre: MusicStyle = StudioDefaultKeys.genre.value
@@ -149,16 +121,11 @@ struct FloatingVisualWindow: View {
     /// window's WAV export obeys the same setting as the Studio export buttons.
     @AppStorage(StudioDefaultKeys.loudnessTarget.key)
     private var loudnessTargetRaw = StudioDefaultKeys.loudnessTarget.value
-    @State private var recordedClip: RecordedClip?
-    /// When recording started — drives the on-screen REC elapsed time.
-    @State private var recordStart: Date?
-
     // WAV audio capture (founder 2026-07-07: "ein wav Aufnahme Knopf wäre auch im Visual
-    // Instrument gut" + "Video und wav Aufnahme muss Natürlichkeit erkennbar sein"). The MP4
-    // above muxes lossy AAC audio; this writes a LOSSLESS WAV of the same performance so the
-    // organic, natural character of the bio-generative take survives (WAV = PCM; only a LUFS
-    // gain is applied, never a lossy codec). Independent of the MP4 path — the MP4 grabs the
-    // ring at stop, this uses RetroCapture's live-file write — so you can arm BOTH for one take.
+    // Instrument gut" + "… muss Natürlichkeit erkennbar sein"). Writes a LOSSLESS WAV of the
+    // performance so the organic, natural character of the bio-generative take survives
+    // (WAV = PCM; only a LUFS gain is applied, never a lossy codec). It is the window's ONE
+    // recorder since #1304 took the MP4 path.
     @State private var wavRecording = false
     @State private var wavRecordStart: Date?
     @State private var wavClip: RecordedClip?
@@ -452,8 +419,9 @@ struct FloatingVisualWindow: View {
     /// `.opacity(0)` and `.allowsHitTesting(false)` do NOT suppress sheet presentation: a sheet
     /// presents in its own UIKit context and does not care that its host is invisible. Before
     /// #311, hiding the visual UNMOUNTED this window and took both share-sheet slots with it.
-    /// Now they are permanently armed — and both are driven by ASYNC completions that outlive the
-    /// hide (`recorder.stop()`, and the WAV export's `AVAssetExportSession`, seconds long).
+    /// The one that remains (#1304 took the MP4's) is permanently armed, and it is driven by an
+    /// ASYNC completion that outlives the hide — the WAV export's `AVAssetExportSession`,
+    /// seconds long.
     ///
     /// So this sequence became reachable, and was structurally impossible the day before: stop a
     /// take → hide the visual → open any panel/modal on the instrument → the export finishes → an
@@ -490,7 +458,7 @@ struct FloatingVisualWindow: View {
                 .opacity(resizeDip ? 0.2 : 1)
         }
         // Fullscreen bleeds under the home indicator, and to the SIDES only in portrait, so the
-        // toolbar (change-look / record / exit) never hides under the sensor housing — you must
+        // toolbar (change-look / WAV / exit) never hides under the sensor housing — you must
         // still be able to manipulate the visual (founder). Floating sizes: no bleed.
         //
         // ⛔ #583 — the sides used to bleed in EVERY orientation, and the sentence above was
@@ -511,7 +479,7 @@ struct FloatingVisualWindow: View {
         // removed" when the fade is exactly where it was.
         .transition(.opacity)
         #if canImport(AVFoundation)
-        .sheet(item: heldWhileHidden($recordedClip)) { clip in ShareSheet(url: clip.url) }
+        // ⛔ THE SECOND SHARE SLOT (the MP4's) went with video capture, #1304. ONE remains.
         .sheet(item: heldWhileHidden($wavClip)) { clip in ShareSheet(url: clip.url) }
         #endif
         // ⭐ #579 — THE WINDOW SAYS WHETHER IT IS THERE, BECAUSE THE LOG COULD ONLY SAY IT BY
@@ -524,12 +492,13 @@ struct FloatingVisualWindow: View {
         // it cost a whole verification round here: the founder was asked to judge #578's
         // colour work while the picture was closed, and nothing in the log said so.
         //
-        // ⚠️ IT REPORTS THE RENDERER, NOT ONLY THE VISIBILITY, and the two are not the same
-        // question — that is the whole reason a naive `isPresented` line would have been the
-        // weaker fix. `visualLayer` drops `MetalBioView` on `!isPresented &&
-        // !mustKeepRenderingForRecording`, so a HIDDEN window that is recording keeps drawing
-        // (#319). A reader chasing "why no `visual:` lines" needs the term that actually
-        // gates them.
+        // ⚠️ IT REPORTS THE RENDERER, NOT ONLY THE VISIBILITY, and the two were not always the
+        // same question — that is why a naive `isPresented` line would have been the weaker fix.
+        // Until #1304 a HIDDEN window that was recording kept drawing (#319), so `visualLayer`
+        // gated on a second term. Video capture is gone and the two questions coincide again;
+        // the line keeps saying `renderer=` because that is what a reader chasing "why no
+        // `visual:` lines" actually needs, and because the terms can diverge again the moment
+        // anything else consumes the rendered picture.
         //
         // Cost: two breadcrumbs per session-ish. `isPresented` changes only on a user gesture
         // (header monitor button, this window's close button, the Visual panel row), so this
@@ -537,12 +506,12 @@ struct FloatingVisualWindow: View {
         .onAppear {
             EchoelCrashLog.breadcrumb(
                 "visual window: \(isPresented ? "visible" : "hidden") at launch (persisted) · "
-                + "renderer=\(isPresented || mustKeepRenderingForRecording ? "on" : "off")")
+                + "renderer=\(isPresented ? "on" : "off")")
         }
         .onChange(of: isPresented) { _, now in
             EchoelCrashLog.breadcrumb(
                 "visual window: \(now ? "shown" : "hidden") · "
-                + "renderer=\(now || mustKeepRenderingForRecording ? "on" : "off")")
+                + "renderer=\(now ? "on" : "off")")
         }
         // #1073 — PUBLISH THE SKY SO THE BEAMER CAN DRAW THE SAME PICTURE. Until now the
         // external scene rendered the four design keys RAW while this window mixed the
@@ -572,9 +541,9 @@ struct FloatingVisualWindow: View {
     // MARK: - Toolbar controls (position readout + WAV record)
 
     #if canImport(AVFoundation)
-    /// Lossless-WAV record button + live elapsed time, sized to sit in the top bar next to the
-    /// video button. Distinct waveform glyph so it reads as AUDIO vs. the video glyph (founder:
-    /// both recorders must be recognizable).
+    /// Lossless-WAV record button + live elapsed time, sized to sit in the top bar. The
+    /// waveform glyph reads as AUDIO; it stood next to a video glyph until #1304 and is now
+    /// the window's only recorder.
     @ViewBuilder private var wavRecordControl: some View {
         HStack(spacing: 5) {
             if wavRecording && audioEngine.retroCapture.writeFailed {
@@ -693,94 +662,49 @@ struct FloatingVisualWindow: View {
     /// GPU LAW (decisions.csv 2026-07-03): ONE `MetalBioView` app-wide — two live
     /// renderers starve the GPU and produced the documented black immersive.
     ///
-    /// ⚠️ KNOWN GAP — and it is GUARDED, not merely documented. The capturing instance is
-    /// THIS one (`capturesVideo: true`), so while the beamer has the picture, video
-    /// capture has no source. A comment alone would have left a red REC pill counting up
-    /// over a file whose writer session never started — a lost take, mid-show, from a
-    /// control that claimed to be recording (the lying-control class, #164). The video
-    /// button is therefore DISABLED while yielded (`videoCaptureYielded`). WAV audio
-    /// capture is unaffected — it comes off the audio engine, not off this layer.
-    /// Handing capture to the external instance is NOT a one-line change —
-    /// `AVAssetWriter` is configured from the first frame's size, and plugging a projector
-    /// in mid-recording would switch portrait phone frames to landscape beamer frames
-    /// inside one file. That is its own slice.
+    /// ⛔ A KNOWN GAP STOOD HERE AND IS GONE WITH ITS SUBJECT (#1304). It said: the capturing
+    /// instance is THIS one, so while the beamer has the picture, video capture has no source,
+    /// and the video button is therefore DISABLED while yielded. There is no video button and
+    /// no capture. WAV audio capture was never affected either way — it comes off the audio
+    /// engine, not off this layer — and that is still true.
+    ///
+    /// ⚠️ THE LAW THAT SURVIVES, because it is not about video: a control that SAYS it is
+    /// doing something while nothing happens is the lying-control class (#164). Anything
+    /// mounted here that depends on this renderer must be disabled while the renderer is
+    /// yielded, not merely commented.
     ///
     /// HONEST LIMIT: the hand-over is not instantaneous. `isConnected` flips before the
     /// external window is built and after it is torn down, so the ordering can only ever
     /// leave a GAP (a black beamer or a dark card for one layout pass), never a sustained
     /// overlap. A single frame of overlap during the SwiftUI update that reacts to the
     /// flag is possible and is not what the GPU law is about.
-    #if canImport(AVFoundation)
-    /// True when the phone has handed its renderer to an external screen and NO capture is
-    /// already in flight — i.e. when starting a video recording would silently produce an
-    /// empty file. Blocks the START only; a recording already running when the cable goes
-    /// in stays stoppable. All reads are event-rate (a cable connect, a hide, a record tap), so
-    /// this is not a freeze-law read.
+    /// ⛔ `videoCaptureYielded` AND `mustKeepRenderingForRecording` STOOD HERE AND BOTH WENT
+    /// WITH VIDEO CAPTURE (#1304). Between them they encoded three hard-won facts, and the
+    /// ones that are NOT about video are written down because the shape recurs:
     ///
-    /// ⭐ `|| !isPresented` ADDED IN THE #311 NACHLESE, and the reason is that #311 created a
-    /// SECOND — and far more common — way for `visualLayer` to drop the capturing renderer: the
-    /// hidden branch. The rule this property encodes ("no renderer ⇒ no start, or you get a red
-    /// REC pill counting up over a writer session that never began", the lying-control class
-    /// #164) applied to that branch from the moment it existed, and the slice that added it did
-    /// not extend the guard. It was blocked in practice only BY ACCIDENT — `allowsHitTesting`
-    /// makes the button untappable while hidden — and a guard that holds by accident is exactly
-    /// the kind this repo has had to re-learn.
+    ///  · A control must be DISABLED — not merely commented — when the thing it drives has no
+    ///    source. The disabled state, its VoiceOver sentence and the `.disabled` call belong
+    ///    in ONE definition (#416); the fullscreen cover once spelled the same rule a fourth
+    ///    way by HIDING its button, which reads to a screen reader as a control that vanished
+    ///    for no stated reason.
+    ///  · A guard that holds BY ACCIDENT is not a guard. `!isPresented` was blocked in practice
+    ///    only because `allowsHitTesting` makes a hidden button untappable, and the slice that
+    ///    created the hidden branch did not extend the condition.
+    ///  · Hiding this window DROPS the renderer, and any future consumer of the rendered
+    ///    picture inherits that. #319 answered it by keeping the picture rendering rather than
+    ///    stopping the consumer — ending a capture because a window was hidden is the wrong
+    ///    answer to a real defect — and the external-screen half was never closed, because it
+    ///    needs a decision about WHICH renderer feeds the consumer, not another boolean.
     ///
-    /// ⛔ WHAT THIS DID NOT COVER — HALF CLOSED BY #319, and the half that remains is named
-    /// precisely because the first version of this note treated both as one problem. It said:
-    /// "start a video recording, THEN hide the picture … the renderer is gone. Filed as its own
-    /// slice; it needs a stop-or-pause decision, not another boolean here."
-    ///  · The HIDE route is fixed, and it needed neither a stop nor a pause: the picture simply
-    ///    keeps rendering while a take runs (`mustKeepRenderingForRecording`). Ending a capture
-    ///    because a window was hidden would have been the wrong answer to a real defect.
-    ///  · The EXTERNAL-SCREEN route is still open, and it is genuinely the harder one: the
-    ///    phone yields its renderer because the external stage has one, so recording through it
-    ///    means deciding which renderer feeds the writer — not adding a condition.
-    /// ⭐ #1043 (S4a) adds the THIRD reason, and deliberately here rather than at the button:
-    /// the donut look is a SwiftUI `Canvas`, so there is no Metal layer for the writer to read.
-    /// Putting it in this one property keeps the disabled state, its VoiceOver sentence and the
-    /// `.disabled` call in a single definition (#416) — the cover instead HID its record button
-    /// under donuts, which is a fourth spelling of the same rule and reads to a screen reader as
-    /// a control that vanished for no stated reason.
-    private var videoCaptureYielded: Bool {
-        (ExternalStageBridge.shared.isConnected || !isPresented || spectralDonuts)
-            && !recorder.isRecording
-    }
-    #endif
-
-    /// ⭐ #319 — THE ONE STATE IN WHICH HIDING THE PICTURE MAY NOT DROP THE RENDERER.
-    ///
-    /// `VisualRecorder` has exactly one frame source: `MetalBioView`'s draw loop calling
-    /// `capture(from:in:device:)`. No renderer ⇒ no frames ⇒ the writer is never even built.
-    /// Start a video take and then tap the header's monitor button and, before this property
-    /// existed, the take silently became nothing: `recorder.isRecording` stayed true, the REC
-    /// badge kept counting wall-clock seconds (it counts from a `Date`, not from what was
-    /// written), the window went to `opacity(0)`, and `stop()` returned `nil` — a recording
-    /// that recorded nothing, reported by no control anywhere, because the badge is invisible
-    /// in that state too. `videoCaptureYielded` already forbids STARTING a take while the
-    /// picture is yielded; it had no counterpart for yielding while one runs, and the
-    /// `!isPresented` block below said so out loud without closing it.
-    ///
-    /// The fix is to keep rendering, not to stop or pause the take: the user asked to record
-    /// the picture, so the GPU cost of rendering it is the cost they asked for, and hiding a
-    /// window is far too casual a gesture to end a performance capture.
-    ///
-    /// ⛔ IT IS DELIBERATELY NOT `recorderIsRecording` ALONE. The external-stage branch below
-    /// yields the phone's renderer BECAUSE the external screen has one — the "ONE MetalBioView
-    /// app-wide" law. Forcing the local renderer back while an external stage is connected
-    /// would run two, which is a worse defect than the one being fixed. So an externally-held
-    /// picture still wins, and recording into it stays the open half of #319: it needs a
-    /// decision about WHICH renderer feeds the writer, not another condition here.
-    private var mustKeepRenderingForRecording: Bool {
-        recorderIsRecording && !ExternalStageBridge.shared.isConnected
-    }
+    /// The GPU law is untouched and is the reason the yield exists at all: ONE `MetalBioView`
+    /// app-wide, so an externally-held picture always wins over a local one.
 
     /// (No `#if canImport(UIKit)` inside: the WHOLE file is already gated on
     /// `canImport(UIKit)` at line 1, so an inner guard would imply a portability story
     /// this file does not have.)
     @ViewBuilder
     private func visualLayer(_ wv: (hue: Double, saturation: Double, intensity: Double, motion: Double)) -> some View {
-        if !isPresented && !mustKeepRenderingForRecording {
+        if !isPresented {
             // ⭐ #311 — THE PICTURE IS OFF, THE WINDOW IS NOT. Since the founder's
             // *"die arps soll immer hörbar sein und nicht nur, wenn das Visual Fenster auf
             // ist"*, `WorkspaceView` no longer unmounts this window when the monitor button
@@ -809,8 +733,9 @@ struct FloatingVisualWindow: View {
             //
             // The GPU law (ONE `MetalBioView` app-wide) is upheld more strictly than before,
             // not less: hidden now costs zero renderers where it used to cost zero by
-            // teardown. (Since #319 there is ONE exception, and it is still one renderer:
-            // a running video take keeps this branch out — see `mustKeepRenderingForRecording`.)
+            // teardown. (#319 carved ONE exception — a running video take kept this branch out
+            // so the take did not lose its only frame source. It went with video capture in
+            // #1304, so the branch is unconditional again.)
             Color.clear
         } else if ExternalStageBridge.shared.isConnected {
             // Not a placeholder for a missing feature — a deliberate statement of where
@@ -830,22 +755,16 @@ struct FloatingVisualWindow: View {
             .allowsHitTesting(false)   // the play surface above must get every touch
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Visual is showing on the external screen")
-        } else if spectralDonuts, !mustKeepRenderingForRecording {
-            // ⭐ #1043 (S4a) — THE DONUTS, AS A NON-RECORDING LEAF. The spectrum→visible-light
-            // rings are a SwiftUI `Canvas`, not Metal, so `VisualRecorder` cannot capture them:
-            // the cover stated that in a comment and enforced it by hiding its record button.
-            // Here the same fact is enforced in the ONE place that already answers "can this
-            // window record right now" — `videoCaptureYielded` — so the disabled state and its
-            // VoiceOver sentence stay a single definition (#416) instead of a second rule.
+        } else if spectralDonuts {
+            // ⭐ #1043 (S4a) — THE DONUTS. The spectrum→visible-light rings are a SwiftUI
+            // `Canvas`, not Metal.
             //
-            // ⚠️ AND IT YIELDS TO A RUNNING TAKE, which the cover never had to decide. Flipping
-            // to donuts mid-recording would take the Metal layer out from under a live
-            // `AVAssetWriter` — a red REC pill counting up over a file receiving no frames, the
-            // lying-control class (#164) that the external-screen branch above exists to avoid.
-            // `mustKeepRenderingForRecording` is the term that already means exactly this, so
-            // the picture stays on the field until the take ends. You cannot START a take under
-            // donuts (the button is unavailable), so this branch is only ever reached by the
-            // player switching looks while one runs.
+            // ⛔ THIS BRANCH USED TO YIELD TO A RUNNING VIDEO TAKE, because flipping to donuts
+            // mid-recording would have taken the Metal layer out from under a live
+            // `AVAssetWriter` — a red REC pill counting up over a file receiving no frames,
+            // the lying-control class (#164). Video capture is gone (#1304), so the look
+            // switches freely. The law it encoded is written once, at the ⛔ block where the
+            // two yield properties used to live.
             SpectralDonutView(reduceMotion: reduceMotion,
                               bandCount: max(8, Int(visualDetail)))
         } else {
@@ -853,12 +772,11 @@ struct FloatingVisualWindow: View {
         }
     }
 
-    /// The real renderer. `capturesVideo: true` → this instance feeds the shared
-    /// VisualRecorder when recording (on the phone it is the only Metal path, so no
-    /// double-capture). The look params are the SHARED design keys (style/blend + the nine
-    /// energy/palette params), so every tweak in the Visual panel shows here live.
+    /// The real renderer — on the phone the only Metal path. The look params are the SHARED
+    /// design keys (style/blend + the nine energy/palette params), so every tweak in the
+    /// Visual panel shows here live.
     private func liveVisual(_ wv: (hue: Double, saturation: Double, intensity: Double, motion: Double)) -> some View {
-        MetalBioView(capturesVideo: true, reduceMotion: reduceMotion,
+        MetalBioView(reduceMotion: reduceMotion,
                      autoAttuned: autoMode, toneHz: idleToneHz,
                      intensity: Float(wv.intensity), ringDensity: Float(visualDetail),
                      motion: Float(wv.motion), spread: Float(visualSpread),
@@ -930,20 +848,12 @@ struct FloatingVisualWindow: View {
                                         noteNaming: NoteNaming(stored: noteNamingRaw))
                 }
                 #endif
-                #if canImport(AVFoundation)
-                // Recording feedback — a red REC pill with elapsed time, top-leading over
-                // the visual so it's clear a clip is being captured.
-                .overlay(alignment: .topLeading) {
-                    if recorder.isRecording { RecordingBadge(start: recordStart) }
-                    // #991 — and what became of it. Deliberately HERE and not in the toolbar
-                    // below: that bar is width-budgeted (`FloatingVisualLayout.chromeFit`, a
-                    // never-shed floor of 140 pt against a ~147 pt small card), so a sentence
-                    // there would need a new shed rank. This overlay already carries the REC
-                    // badge — the same corner that said "recording" now says how it ended, and
-                    // the two never show at once because the badge is gated on `isRecording`.
-                    else { TakeOutcomeLine(recorder: recorder).padding(8) }
-                }
-                #endif
+                // ⛔ THE VIDEO REC BADGE AND ITS OUTCOME SENTENCE STOOD HERE (#991) AND WENT
+                // WITH VIDEO CAPTURE (#1304). The placement argument is kept because the next
+                // status sentence on this window needs it: it belongs in THIS overlay corner
+                // and not in the toolbar, because that bar is width-budgeted
+                // (`FloatingVisualLayout.chromeFit`, a never-shed floor against a ≈147 pt small
+                // card) and a sentence there would need its own shed rank.
                 // FIRST-RUN INVITATION (vision Step 2b, founder law #1: "app open, finger
                 // on camera, in 3 seconds it lives"). The one gesture a new user can't
                 // discover by feel — the camera is on the BACK, nothing on screen implies
@@ -1012,8 +922,7 @@ struct FloatingVisualWindow: View {
             cardWidth: card.width,
             isFullscreen: windowSize.isFullscreen,
             showsTransport: windowSize != .small && isPresented,
-            wavBusy: wavRecording || wavExporting,
-            videoBusy: recorderIsRecording)
+            wavBusy: wavRecording || wavExporting)
         return HStack(spacing: 8) {
             // Drag ONLY by this handle — NOT the whole bar. A DragGesture spanning the whole
             // bar competed with the buttons: a tap with the slightest finger move started a
@@ -1192,64 +1101,12 @@ struct FloatingVisualWindow: View {
             }
             #if canImport(AVFoundation)
             if fit.wavRecord { wavRecordControl }
-            // MP4 VIDEO capture. Distinct "video" glyph (vs. the WAV button's waveform)
-            // so the two recorders are recognizable at a glance (founder: "Video
-            // und wav Aufnahme muss … erkennbar sein").
-            //
-            // ⚠️ DISABLED WHILE THE BEAMER HAS THE PICTURE (#206). The capturing renderer
-            // is THIS window's `MetalBioView`, and `visualLayer` unmounts it while an
-            // external screen is connected — so a "recording" started now would show a
-            // red pill counting up and produce a file whose writer session never started.
-            // A control that says it is recording while nothing is captured is the
-            // lying-control class (#164), and losing a take mid-show is the worst place
-            // to meet it. Blocking the START is one line; handing capture over to the
-            // external instance is its own slice (`AVAssetWriter` fixes its dimensions on
-            // the first frame). The guard deliberately does NOT block a STOP: a recording
-            // already running when the cable goes in must stay stoppable.
-            if fit.videoRecord {
-                Button { toggleRecording() } label: {
-                    Image(systemName: recorder.isRecording ? "stop.circle.fill" : "video.circle")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(recorder.isRecording
-                                         ? EchoelTheme.recording
-                                         : (videoCaptureYielded ? EchoelTheme.dim : EchoelTheme.text))
-                        .frame(width: 28, height: 44).contentShape(Rectangle().inset(by: -5))
-                }
-                .buttonStyle(.plain)
-                .disabled(videoCaptureYielded)
-                .accessibilityLabel(recorder.isRecording
-                                    ? "Stop video recording"
-                                    : (videoCaptureYielded
-                                       ? (spectralDonuts
-                                          ? "Video recording unavailable in the donut look — switch to the field to record"
-                                          : "Video recording unavailable while the visual is on the external screen")
-                                       : "Record MP4 video"))
-            }
-            // #1063 — THE STILL SHUTTER, WHERE THE PICTURE IS. D1's ask is *"aktuell gibt es
-            // fullscreen Mode das soll aber alles zu einem Ding zusammen gefasst werden"*: the
-            // fullscreen cover and this window are two chromes over ONE renderer, and every
-            // control that lives on only one of them is a reason the merge cannot happen. The
-            // shutter was the cover's alone (`EchoelStudioView.swift`, one site).
-            //
-            // ⛔ THE COMMENT AT THAT SITE ARGUED THE OPPOSITE, and it argued it correctly for
-            // its own day: the bar is width-budgeted (never-shed floor 140 pt against a ≈147 pt
-            // small card), so "a seventh button there would mean a new shed rank and a change to
-            // `ChromeBudgetFitsTests`". That is not a reason not to do it — it is the PRICE, and
-            // this slice pays it: `ChromeFit.stillShutter` is fullscreen-only, so the small card
-            // is untouched, and the new rank is argued in `chromeFit`'s own ranking doc.
-            //
-            // Both surfaces mount it while the cover still exists. That is ONE still with two
-            // places to press — the same shape as the record button after #747 — not a second
-            // recorder: `recorder` is the one `@Environment(VisualRecorder.self)` instance. The
-            // cover's copy goes when the cover does.
-            //
-            // The outcome sentence is READ inside `StillShutterButton`, never here. This body is
-            // not a menu host, but the 10.76.41/50 rule is about where the read LIVES, and the
-            // leaf costs nothing (see the leaf's own header).
-            if windowSize.isFullscreen, fit.stillShutter {
-                StillShutterButton(recorder: recorder, answer: .below)
-            }
-            #endif
+            // ⛔ THE MP4 BUTTON AND THE STILL SHUTTER SAT HERE AND WENT WITH VIDEO CAPTURE
+            // (#1304). Two laws they encoded survive them and are written where they belong:
+            // a control whose source is gone must be DISABLED with one owner for the state,
+            // the glyph and the VoiceOver sentence (the ⛔ block above `visualLayer`), and a
+            // new item in this bar costs a shed rank that has to be argued in `chromeFit`.
+                        #endif
             Button { cycleSize() } label: {
                 // Cycles Small → Medium → Large → Fullscreen → Small. Shows a "contract"
                 // glyph in fullscreen so it's obvious the next tap leaves fullscreen.
@@ -1297,8 +1154,10 @@ struct FloatingVisualWindow: View {
     /// per-frame-changing aspect — the resize glitches. One snap = ONE drawable
     /// re-allocation; a brief content dip (see `resizeDip`) covers that single
     /// reconfiguration frame so the change reads soft, not raw.
-    /// Sizes too narrow to hold a RUNNING recorder's stop button, widened to the first one
-    /// that fits. ONE owner for the #365 geometry rule, because it has two doors (#366).
+    /// Sizes too narrow to hold the RUNNING WAV recorder's stop button, widened to the first
+    /// one that fits. ONE owner for the #365 geometry rule, because it has two doors (#366).
+    /// (It weighed a video take too until #1304 removed video capture; the rule is unchanged,
+    /// it now has one recorder to weigh instead of two.)
     ///
     /// ⛔ IT HAD ONE OWNER AND TWO DOORS, WHICH IS THE SAME AS HAVING NONE. #365 taught
     /// `cycleSize` to skip `.small` and `.medium` while a take runs — a running recorder
@@ -1316,7 +1175,7 @@ struct FloatingVisualWindow: View {
     /// writer appears — the assertions were still right, the sentence justifying their
     /// absence was not.
     private func sizeWideEnoughForARunningTake(_ size: WindowSize) -> WindowSize {
-        let busy = wavRecording || wavExporting || recorderIsRecording
+        let busy = wavRecording || wavExporting
         guard busy, size == .small || size == .medium else { return size }
         return .large
     }
@@ -1377,38 +1236,9 @@ struct FloatingVisualWindow: View {
         }
     }
 
-    /// `recorder` only exists behind `canImport(AVFoundation)`; reading it through this
-    /// one accessor keeps `cycleSize` free of a second `#if` in the middle of a
-    /// transaction, where a mismatched branch is easy to introduce and hard to see.
-    private var recorderIsRecording: Bool {
-        #if canImport(AVFoundation)
-        return recorder.isRecording
-        #else
-        return false
-        #endif
-    }
-
     #if canImport(AVFoundation)
-    /// Start/stop MP4 capture of the visual (with live audio). On stop, present the share
-    /// sheet. Tip: size the window up (L) before recording for a higher-resolution clip —
-    /// the video is rendered at the window's on-screen size.
-    private func toggleRecording() {
-        if recorder.isRecording {
-            recordStart = nil
-            Task { @MainActor in
-                if let url = await recorder.stop() {
-                    recordedClip = RecordedClip(url: renamedForShare(url))
-                }
-            }
-        } else {
-            recordStart = Date()
-            recorder.start(audio: audioEngine)
-        }
-    }
-
     /// Start/stop a LOSSLESS WAV recording of the live performance. Uses RetroCapture's
-    /// live-file write (independent of the MP4 path, which snapshots the ring at stop — so
-    /// both can be armed for one take), then converts the float32 CAF to a .wav via
+    /// live-file write, then converts the float32 CAF to a .wav via
     /// SingleExport (PCM out, LUFS gain only — the natural character is preserved, founder:
     /// "Natürlichkeit … erkennbar"). On stop, present the share sheet.
     private func toggleWavRecording() {

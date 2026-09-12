@@ -25,7 +25,6 @@ ERSCHAFFEN
 - Kammerton (A4) auf den Cent genau; BPM für tighte Loops sperren oder sync-frei bleiben
 - Effekte: Reverb, Delay, Chorus, Flanger, Phaser, Tremolo, Sättigung, Harmonizer und mehr
 - Immersives Visual: Deine Noten werden in Echtzeit zu Farbe (Tonfrequenz oktavweise ins Licht transponiert) und folgen Musik und Körper
-- Visual im Spielen aufnehmen: ein MP4 mit der Musik darauf (höchstens die letzten 30 s Ton) in Deiner Fotomediathek
 - Rückwirkend aufnehmen: den Loop behalten, den Du gerade gespielt hast
 - Export des Loops als Audio (WAV) oder MIDI (.mid) für Deine DAW — die MIDI-Datei trägt Tempo, 4/4 und Tonart, in ganzen Takten
 

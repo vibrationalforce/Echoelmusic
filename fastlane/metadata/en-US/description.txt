@@ -25,7 +25,6 @@ CREATE
 - Concert pitch (A4 / Kammerton) set exactly to the cent; lock a BPM for tight loops or stay sync-free
 - Effects: reverb, delay, chorus, flanger, phaser, tremolo, saturation, harmonizer and more
 - Immersive visual: the notes you play become color in real time — each tone's frequency transposed by whole octaves into visible light — reacting to the music and your body
-- Record the visual as it plays: an MP4 in your photo library with the music on it (at most the last 30 s of sound)
 - Retroactive capture: keep the loop you just played
 - Export the loop as audio (WAV) or MIDI (.mid) for your DAW — the MIDI file carries tempo, 4/4 and the key signature, in whole bars
 

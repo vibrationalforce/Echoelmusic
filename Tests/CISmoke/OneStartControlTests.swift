@@ -202,12 +202,12 @@ final class OneStartControlTests: XCTestCase {
     /// and one anchor assertion says where the struct lives. A move now produces ONE unambiguous
     /// failure — "it moved, re-point the absence check" — instead of two lying ones.
     ///
-    /// The ABSENCE check keeps its file scope, because `stop.fill` is CORRECT in all FOUR other
-    /// places it appears: `VideoLibraryPanel` TWICE (the clip-preview stop, and — since #387 —
-    /// the panel's own "stop this recording" row), `LiveColaboView` (end the live session) and
-    /// — since #307 — `EchoelStudioView.startButton`, which really does end the bio session.
-    /// Count them when you edit this list; the first version said "elsewhere" and named two of
-    /// three, and the second said THREE the day #387 made it four. ⛔ The count went stale
+    /// The ABSENCE check keeps its file scope, because `stop.fill` is CORRECT in the TWO other
+    /// places it appears: `LiveColaboView` (end the live session) and — since #307 —
+    /// `EchoelStudioView.startButton`, which really does end the bio session. Count them when
+    /// you edit this list; the first version said "elsewhere" and named two of three, the
+    /// second said THREE the day #387 made it four, and #1304 took the two `VideoLibraryPanel`
+    /// sites away with video capture — so this list has now been wrong in BOTH directions. ⛔ The count went stale
     /// WITHOUT the gate going red, because this assertion is scoped to `WorkspaceView.swift` and
     /// none of the four live there — so nothing mechanical was ever going to catch it. A prose
     /// count that no assertion can falsify is maintained by reading, or not at all. ⚠️ Note what that means: this is a FILE-scoped proxy for a ROW-scoped
@@ -282,9 +282,12 @@ final class OneStartControlTests: XCTestCase {
     /// cannot be found by one of the two ways people find controls.
     func testTheOneStartStillPresentsItselfAsATransport() throws {
         // Same anchor discipline the sibling guard above just learned: `play.fill` is NOT
-        // unique repo-wide (`PlaybackToggleButton`'s idle branch and `VideoLibraryPanel` both
-        // use it truthfully), so this one genuinely needs its file scope — and therefore needs
-        // to say out loud where the control lives, or a move makes it pass on the wrong file.
+        // unique repo-wide (`PlaybackToggleButton`'s idle branch and `OnboardingView` both use
+        // it truthfully), so this one genuinely needs its file scope — and therefore needs to
+        // say out loud where the control lives, or a move makes it pass on the wrong file.
+        // ⛔ The example named here was `VideoLibraryPanel`, deleted with video capture (#1304)
+        // — and `OnboardingView` was a THIRD truthful site this note had never named, so the
+        // conclusion ("not unique") was right for a reason wider than the one written down.
         let plate = try sourceLines().filter { $0.file == "EchoelStudioView.swift" }
         XCTAssertTrue(plate.contains { $0.text.contains("private var startButton") }, """
         `startButton` is no longer declared in EchoelStudioView.swift — renamed, moved, or the \

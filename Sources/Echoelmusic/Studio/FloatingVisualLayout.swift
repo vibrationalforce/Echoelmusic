@@ -247,13 +247,11 @@ public enum FloatingVisualLayout {
         public var studioChip = false
         public var miniTransport = false
         public var gridToggle = false
-        public var videoRecord = false
         public var wavRecord = false
-        /// The still shutter (#1063). FULLSCREEN-ONLY, like `lookSlider` and `studioChip`:
-        /// it is the picture's own control and the small card's never-shed floor (140 pt
-        /// against a ≈147 pt card) has no room for a seventh item. Costs one
-        /// `iconButton` + one gap, the same as `gridToggle` and `videoRecord`.
-        public var stillShutter = false
+        /// ⛔ `videoRecord` and `stillShutter` STOOD HERE and went with video capture
+        /// (#1304, founder 2026-09-12 "Kein Video Capture"). The budget is two
+        /// `iconButton`s + two gaps LIGHTER, so every "it fits" verdict this type ever
+        /// gave still holds; only the shed ORDER lost two entries.
         public init() {}
     }
 
@@ -290,21 +288,14 @@ public enum FloatingVisualLayout {
     /// The shed ORDER, first to go. It is a product ranking, not an arbitrary list, and it
     /// is stated here so a future change argues with it instead of quietly reordering:
     /// a look slider and a "Studio" door are convenience; the transport readout is
-    /// information; the grid toggle is a display aid; the two RECORDERS are the only
-    /// items whose loss can cost a performer a take, so they shed last.
+    /// information; the grid toggle is a display aid; the RECORDER is the only item whose
+    /// loss can cost a performer a take, so it sheds last.
     ///
-    /// ⭐ #1063 PUT THE STILL SHUTTER BETWEEN THE DISPLAY AID AND THE IDLE VIDEO BUTTON,
-    /// and the reason is the ranking's own principle rather than a free slot. A still and
-    /// an idle video button are both "start a capture" doors, so neither is a display aid
-    /// and neither is a stop button — the tie-breaker is what a lost door COSTS. A still is
-    /// one frame of a picture that is still on screen: the same frame class is there a
-    /// second later, so losing the shutter costs a convenience. A video take is a DURATION,
-    /// and the seconds you did not start are gone — so the idle video button outranks it.
-    /// Below both sits the grid toggle, which changes only what you SEE.
-    ///
-    /// It is FULLSCREEN-ONLY (`fit.stillShutter = isFullscreen`), so the small card's
-    /// never-shed floor — the 140 pt against a ≈147 pt card that `ChromeCost.iconButton`
-    /// spells out — is byte-identical to before this item existed.
+    /// ⛔ IT USED TO RANK FOUR ITEMS MORE THAN IT DOES, and the PRINCIPLE that ordered them
+    /// is kept because the next item added here needs it: a still shutter and an idle video
+    /// button are both "start a capture" doors, so the tie-breaker was what a lost door
+    /// COSTS — a still is one frame of a picture still on screen (a convenience), a take is
+    /// a DURATION whose unstarted seconds are gone. Both went with video capture (#1304).
     ///
     /// - Parameters:
     ///   - cardWidth: the card the bar must fit inside — `cardSize(...).width`, or the
@@ -315,7 +306,6 @@ public enum FloatingVisualLayout {
     ///     and while nothing is presented. Pass that condition through rather than
     ///     duplicating it here, so there is one owner of "may it appear at all".
     ///   - wavBusy: the WAV control carries a running time, which roughly quadruples it.
-    ///   - videoBusy: a video capture is running.
     ///
     /// ⛔ A BUSY RECORDER IS PINNED, and finding that out is why the shed order alone was
     /// not enough. The first version of this function shed by rank only, and the
@@ -328,16 +318,13 @@ public enum FloatingVisualLayout {
     public static func chromeFit(cardWidth: CGFloat,
                                  isFullscreen: Bool,
                                  showsTransport: Bool,
-                                 wavBusy: Bool,
-                                 videoBusy: Bool) -> ChromeFit {
+                                 wavBusy: Bool) -> ChromeFit {
         var fit = ChromeFit()
         fit.lookSlider = isFullscreen
         fit.studioChip = isFullscreen
         fit.miniTransport = showsTransport
         fit.gridToggle = true
-        fit.videoRecord = true
         fit.wavRecord = true
-        fit.stillShutter = isFullscreen
 
         // A degenerate width must not silently return "everything fits" — that is the
         // failure this whole type exists to stop. Shed to the floor instead, but keep a
@@ -345,7 +332,6 @@ public enum FloatingVisualLayout {
         guard cardWidth.isFinite, cardWidth > 0 else {
             var floor = ChromeFit()
             floor.wavRecord = wavBusy
-            floor.videoRecord = videoBusy
             return floor
         }
 
@@ -357,8 +343,6 @@ public enum FloatingVisualLayout {
             if f.studioChip    { total += ChromeCost.studioChip;    items += 1 }
             if f.miniTransport { total += ChromeCost.miniTransport; items += 1 }
             if f.gridToggle    { total += ChromeCost.iconButton;    items += 1 }
-            if f.videoRecord   { total += ChromeCost.iconButton;    items += 1 }
-            if f.stillShutter  { total += ChromeCost.iconButton;    items += 1 }
             if f.wavRecord {
                 total += wavBusy ? ChromeCost.wavRecording : ChromeCost.iconButton
                 items += 1
@@ -389,31 +373,21 @@ public enum FloatingVisualLayout {
         // WHAT IT COSTS, named rather than glossed: `miniTransport` and `gridToggle` now shed
         // earlier. Both are INFORMATION or a display aid; neither is a way out of anything.
         //
-        // MEASURED across the guard's three widths (375 / 393 / 440) × wavBusy × videoBusy —
-        // 12 states: the chip shed in 10 of them BEFORE this change and sheds in 1 after. The
-        // one exception is 375 pt with BOTH a WAV take and a video capture running, where the
-        // two pinned stop buttons leave no room and a running take's only stop button outranks
-        // even the exit. That is the existing law applied consistently, not a hole in it; the
-        // resize glyph still leaves fullscreen. Claim
-        // `testTheLabelledExitSurvivesEveryShippedWidth` pins both halves.
-        //
-        // ⛔ THIS PARAGRAPH FIRST SAID "six shipped widths … 24 states … survives in 23" and
-        // every one of those three numbers was invented. `ChromeBudgetFitsTests.devices` holds
-        // THREE widths, so the sweep is 12 states and the survival is 11 of 12. The shape of
-        // the finding was right and the arithmetic around it was decoration — which is the
-        // failure this repo keeps paying for, and the reason the numbers here now name the
-        // array they come from instead of a remembered device list.
+        // ⛔ THE MEASUREMENT THAT STOOD HERE COUNTED A SWEEP THAT NO LONGER EXISTS
+        // (three widths × wavBusy × videoBusy = 12 states, the chip surviving 11). The
+        // video axis is gone with #1304, so the sweep is six states; the number is deleted
+        // rather than re-derived here, because `ChromeBudgetFitsTests` is what measures it
+        // and a figure in prose beside a guard is a date, not a fact (#818). What SURVIVES
+        // as law: the chip is the only LABELLED way out of a surface the app cold-launches
+        // into, WCAG 2.2 argues against gating a control behind a wordless glyph, and a
+        // running take's only stop button still outranks even the exit.
         var shed: [(inout ChromeFit) -> Void] = [
             { $0.lookSlider = false },
             { $0.miniTransport = false },
-            { $0.gridToggle = false },
-            { $0.stillShutter = false }
+            { $0.gridToggle = false }
         ]
-        // The recorders shed only when they are IDLE. Busy, each one is its own take's
-        // stop button (`stop.circle.fill`) and is pinned — see the ⛔ note on the
-        // signature. Video sheds before WAV because a lost video take is a lost file,
-        // while a lost WAV take is a lost performance.
-        if !videoBusy { shed.append { $0.videoRecord = false } }
+        // The recorder sheds only when it is IDLE. Busy, it is its own take's stop button
+        // (`stop.circle.fill`) and is pinned — see the ⛔ note on the signature.
         shed.append { $0.studioChip = false }
         if !wavBusy   { shed.append { $0.wavRecord = false } }
 

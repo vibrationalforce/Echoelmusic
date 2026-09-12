@@ -5,8 +5,9 @@
 //  THE ONE HAND-OFF between the App's `@State` engine objects and a scene that UIKit
 //  creates (#206 slice 2).
 //
-//  WHY IT HAS TO EXIST. `MetalBioView` reads three `@Environment` objects — `EngineBus`,
-//  `ResourceGovernor`, `VisualRecorder`. Those live as `@State` on the `App` struct and
+//  WHY IT HAS TO EXIST. `MetalBioView` reads two `@Environment` objects — `EngineBus` and
+//  `ResourceGovernor` (a third, `VisualRecorder`, went with video capture in #1304). Those
+//  live as `@State` on the `App` struct and
 //  reach the phone's views through `.environment(...)` on the `WindowGroup`'s content.
 //  The external window is built by `ExternalDisplaySceneDelegate` with its own
 //  `UIHostingController`, which is NOT inside that hierarchy and inherits nothing — a
@@ -18,7 +19,7 @@
 //  NARROWEST possible one, and the test for "narrow" is NOT the member count — it is
 //  whether a member is something the external scene genuinely cannot reach any other way.
 //  Every phone-side view keeps using `@Environment`: no phone-side view reads
-//  `bus`/`governor`/`recorder`, the phone reads ONLY `isConnected` — `FloatingVisualWindow`
+//  `bus`/`governor`, the phone reads ONLY `isConnected` — `FloatingVisualWindow`
 //  to yield the GPU, and since #1044 `EchoelStudioView` to hold the screen awake while the
 //  beamer has the picture. An earlier version of this line claimed "nothing on the phone
 //  path reads this type at all" — false, and it was the dangerous kind of false: it is the
@@ -66,10 +67,12 @@ import Observation
 /// Publishes the shared engine objects to the external-display scene, and the fact that
 /// such a scene exists back to the phone UI.
 ///
-/// INTERNAL, not `public` — and that is a compile requirement, not taste: `VisualRecorder`
-/// is internal, so a `public` property or method carrying it is the hard error CLAUDE.md's
-/// table already names ("`public let foo: InternalType` — match access levels"). All four
-/// reference sites are in-module.
+/// INTERNAL, not `public` — and that is a compile requirement, not taste: every type it
+/// carries (`EngineBus`, `ResourceGovernor`, `PolySynthVoice`) is internal, so a `public`
+/// property or method carrying one is the hard error CLAUDE.md's table already names
+/// ("`public let foo: InternalType` — match access levels"). All reference sites are
+/// in-module. (`VisualRecorder` was the original example and is gone with #1304; the rule
+/// is unchanged because it was never about that one type.)
 @MainActor
 @Observable
 final class ExternalStageBridge {
@@ -92,9 +95,8 @@ final class ExternalStageBridge {
     /// exactly once per launch — this is not a churn source.
     private(set) var bus: EngineBus?
     private(set) var governor: ResourceGovernor?
-    private(set) var recorder: VisualRecorder?
     /// #594 slice 2 (beamer tint parity): the voice the phone tints its palette
-    /// from. Same observed-not-ignored rationale as its three siblings; unlike
+    /// from. Same observed-not-ignored rationale as its two siblings; unlike
     /// them it is handed to the scene OUTSIDE the `if let` render gate (via the
     /// optional `.environment` overload) — a missing synth dims the tint, it must
     /// never black out the stage.
@@ -127,10 +129,9 @@ final class ExternalStageBridge {
     /// Called once from the app's startup task, before any screen can connect.
     /// Idempotent — a second call (a second scene re-running startup would be a bug the
     /// `startupDone` latch already prevents) simply rewrites the same references.
-    func wire(bus: EngineBus, governor: ResourceGovernor, recorder: VisualRecorder, synth: PolySynthVoice) {
+    func wire(bus: EngineBus, governor: ResourceGovernor, synth: PolySynthVoice) {
         self.bus = bus
         self.governor = governor
-        self.recorder = recorder
         self.synth = synth
     }
 

@@ -73,8 +73,8 @@ final class EveryVisualSurfaceObeysReduceMotionTests: XCTestCase {
                     The parameter has a default of `false`, so this compiles and silently \
                     renders FULL MOTION for a user who asked the system for less — the exact \
                     defect #1118 fixed on the external display, where the surface is a \
-                    projector. Pass it (it is declared SECOND in `MetalBioView`, so it goes \
-                    right after `capturesVideo:` — Swift's memberwise init follows declaration \
+                    projector. Pass it (since #1304 removed `capturesVideo:` it is declared \
+                    FIRST in `MetalBioView`, and Swift's memberwise init follows declaration \
                     order). If this surface genuinely must keep moving, pass an explicit \
                     value and say why at the call site; do not omit the argument.
                     """)

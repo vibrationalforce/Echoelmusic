@@ -333,12 +333,15 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
     /// ⚠️ WHY THESE WORDS AND NOT MORE (#364). Every needle names a capability that provably does
     /// not exist: the AUv3 target was deleted (#121 Slice 2), RTMP was never linked
     /// (`Package.swift` has no dependencies), the drum engine and step grid went with #166/#167,
-    /// the note editor with #475, video EDIT with #121 Slice 3, and multitrack is built but
-    /// flag-gated off and doorless. Deliberately NOT banned, and each for a measured reason:
+    /// the note editor with #475, video EDIT with #121 Slice 3, video RECORDING with #1304, and
+    /// multitrack is built but flag-gated off and doorless. Deliberately NOT banned, and each
+    /// for a measured reason:
     ///   · "trim" — `SingleExport.trimLengthSeconds` is real, so a loop-trim claim could be
     ///     honest; only VIDEO trim is gone, and the word alone cannot tell them apart.
-    ///   · "timeline", "arrangement", "clips", "video" — ordinary words with honest uses
-    ///     ("video capture" ships: `VisualRecorder` plus an mp4 share sheet).
+    ///   · "timeline", "arrangement", "clips", "video" — ordinary words with honest uses. ⛔ The
+    ///     exemption for "video" USED to rest on "video capture ships: `VisualRecorder` plus an
+    ///     mp4 share sheet"; #1304 deleted both, so the CAPTURE spellings are banned below while
+    ///     the bare word stays free (the copy legitimately says video is not part of Echoelmusic).
     ///   · "sampler" — `SamplerVoice` exists and sounds.
     ///   · "MPE" — MPE **out** is real and switchable (#713); only the input half is absent.
     ///     ⛔ This note ended "and the store text already says 'MIDI note input and output'
@@ -353,7 +356,14 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
             "beat maker", "beatmaker", "drum machine", "drumcomputer",
             "step sequencer", "step-sequencer", "schrittsequenzer",  // #166/#167
             "piano roll", "pianoroll", "note editor", "noten-editor", // #475
-            "video edit", "videoschnitt"                             // #121 Slice 3
+            "video edit", "videoschnitt",                            // #121 Slice 3
+            // #1304 — video CAPTURE, founder 2026-09-12 "Kein Video Capture". The bare word
+            // "video" stays legal (the copy says video is NOT part of Echoelmusic); what is
+            // banned is any spelling that SELLS a recording. ".mp4" is deliberately not here:
+            // the store text never wrote it, and a bare "mp4" could honestly name a format in
+            // a sentence about what the app does not do.
+            "video capture", "video recording", "record the visual", "share-ready mp4",
+            "videoaufnahme", "visual aufnehmen", "visual im spielen aufnehmen"
         ]
         var offenders: [String] = []
         for file in try storeCopy() {

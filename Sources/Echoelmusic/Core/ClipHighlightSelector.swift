@@ -12,8 +12,9 @@
 //  main thread) — NOT on the audio render thread — so an allocation (the defensive sort)
 //  is fine here. The caller supplies whatever liveliness signal it has (audio RMS and/or
 //  bio intensity, already normalized); this file is signal-agnostic. WIRING — what feeds
-//  the samples, and how the returned window drives the recorder/export — is a separate
-//  slice (named target: VisualRecorder's window choice) and is intentionally NOT done here.
+//  the samples, and how the returned window drives the export — is a separate slice and is
+//  intentionally NOT done here. (Its named target used to be the video recorder's window
+//  choice; video capture went with #1304, so the remaining candidate is the WAV export.)
 //
 //  No Core/Sequencer coupling, no external dependency, no health claim.
 //

@@ -65,8 +65,6 @@ final class ChromeBudgetFitsTests: XCTestCase {
         if f.studioChip    { total += C.studioChip;    items += 1 }
         if f.miniTransport { total += C.miniTransport; items += 1 }
         if f.gridToggle    { total += C.iconButton;    items += 1 }
-        if f.videoRecord   { total += C.iconButton;    items += 1 }
-        if f.stillShutter  { total += C.iconButton;    items += 1 }
         if f.wavRecord     { total += wavBusy ? C.wavRecording : C.iconButton; items += 1 }
         return total + C.gap * CGFloat(items) + C.horizontalPadding
     }
@@ -93,19 +91,12 @@ final class ChromeBudgetFitsTests: XCTestCase {
         for w in stride(from: CGFloat(40), through: 1200, by: 37) {
             let wav = FloatingVisualLayout.chromeFit(cardWidth: w, isFullscreen: false,
                                                      showsTransport: true,
-                                                     wavBusy: true, videoBusy: false)
+                                                     wavBusy: true)
             XCTAssertTrue(wav.wavRecord, """
                 At a card width of \(w) pt the budget shed the WAV control while a take was \
                 RECORDING. That control is the take's only stop button — shedding it does \
                 not tidy the bar, it strands a running recording with no way to end it. \
                 Rank decides what goes; being the exit decides that it stays.
-                """)
-            let vid = FloatingVisualLayout.chromeFit(cardWidth: w, isFullscreen: false,
-                                                    showsTransport: true,
-                                                    wavBusy: false, videoBusy: true)
-            XCTAssertTrue(vid.videoRecord, """
-                At a card width of \(w) pt the budget shed the video control while a capture \
-                was RUNNING — same defect as the WAV case, same consequence.
                 """)
         }
     }
@@ -114,8 +105,8 @@ final class ChromeBudgetFitsTests: XCTestCase {
         for bad in [CGFloat(0), -1, .nan, .infinity] {
             let fit = FloatingVisualLayout.chromeFit(cardWidth: bad, isFullscreen: true,
                                                      showsTransport: true,
-                                                     wavBusy: true, videoBusy: true)
-            XCTAssertTrue(fit.wavRecord && fit.videoRecord, """
+                                                     wavBusy: true)
+            XCTAssertTrue(fit.wavRecord, """
                 A degenerate card width (\(bad)) dropped a running recorder. The guard for \
                 non-finite input must shed to the FLOOR, not below it — the floor includes \
                 whatever is currently recording.
@@ -155,19 +146,17 @@ final class ChromeBudgetFitsTests: XCTestCase {
             for step in steps {
                 let cw = cardWidth(bounds, fraction: step.fraction)
                 for wavBusy in [false, true] {
-                    for videoBusy in [false, true] {
-                        let fit = FloatingVisualLayout.chromeFit(
-                            cardWidth: cw, isFullscreen: false,
-                            showsTransport: step.transport,
-                            wavBusy: wavBusy, videoBusy: videoBusy)
-                        XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), cw, """
-                            \(Int(bounds.width))pt phone, \(step.name) step, \
-                            wavBusy=\(wavBusy) videoBusy=\(videoBusy): the retained chrome \
-                            is wider than the card. This is the founder's original report \
-                            ("geht über den Rand hinaus") reappearing — the bar draws past \
-                            the card and off the screen, and the logo goes first.
-                            """)
-                    }
+                    let fit = FloatingVisualLayout.chromeFit(
+                        cardWidth: cw, isFullscreen: false,
+                        showsTransport: step.transport,
+                        wavBusy: wavBusy)
+                    XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), cw, """
+                        \(Int(bounds.width))pt phone, \(step.name) step, \
+                        wavBusy=\(wavBusy): the retained chrome is wider than the card. \
+                        This is the founder's original report ("geht über den Rand hinaus") \
+                        reappearing — the bar draws past the card and off the screen, and \
+                        the logo goes first.
+                        """)
                 }
             }
         }
@@ -180,7 +169,7 @@ final class ChromeBudgetFitsTests: XCTestCase {
                 let cw = cardWidth(bounds, fraction: fraction)
                 let fit = FloatingVisualLayout.chromeFit(cardWidth: cw, isFullscreen: false,
                                                          showsTransport: transport,
-                                                         wavBusy: false, videoBusy: false)
+                                                         wavBusy: false)
                 XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: false), cw, """
                     \(Int(bounds.width))pt phone, \(name) step, nothing recording: the \
                     retained chrome still overflows the card. These two steps are the \
@@ -220,16 +209,18 @@ final class ChromeBudgetFitsTests: XCTestCase {
     /// answer was the option this block did not list: neither a re-rank ABOVE the transport
     /// nor a cheaper chip, but a re-rank to LAST among the non-recorder items. Measured over
     /// `devices` × wavBusy × videoBusy — 12 states — the chip shed in 10 before the re-rank
-    /// and sheds in 1 after; see `testTheLabelledExitSurvivesEveryShippedWidth`, which pins
-    /// that and names the one exception. THIS claim keeps its own job unchanged: the bar
-    /// must still fit.
+    /// and sheds in 1 after. ⛔ That sweep no longer exists: #1304 removed the video axis and
+    /// two toolbar items with it, so the chip now survives everywhere and
+    /// `testTheLabelledExitSurvivesEveryShippedWidth` pins the EMPTY set. The 12/10/1 figures
+    /// are kept as the #1036 measurement they were, not as a description of today. THIS claim
+    /// keeps its own job unchanged: the bar must still fit.
     func testFullscreenFitsAtEveryShippedWidth() {
         for bounds in Self.devices {
             for wavBusy in [false, true] {
                 let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
                                                          isFullscreen: true,
                                                          showsTransport: true,
-                                                         wavBusy: wavBusy, videoBusy: false)
+                                                         wavBusy: wavBusy)
                 XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), bounds.width, """
                     Fullscreen on a \(Int(bounds.width))pt phone, wavBusy=\(wavBusy): the \
                     chrome overflows. This is the widest state the bar ever has and the one \
@@ -277,21 +268,18 @@ final class ChromeBudgetFitsTests: XCTestCase {
         var landscapeShed: [String] = []
         for bounds in Self.landscapeDevices {
             for wavBusy in [false, true] {
-                for videoBusy in [false, true] {
-                    let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
-                                                             isFullscreen: true,
-                                                             showsTransport: true,
-                                                             wavBusy: wavBusy, videoBusy: videoBusy)
-                    if !fit.lookSlider {
-                        landscapeShed.append("\(Int(bounds.width))pt wav=\(wavBusy) video=\(videoBusy)")
-                    }
-                    XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), bounds.width, """
-                        Landscape fullscreen at \(Int(bounds.width))pt, wav=\(wavBusy) \
-                        video=\(videoBusy): the chrome overflows. Wider than portrait and \
-                        still too narrow means the budget stopped shedding, not that the bar \
-                        got bigger.
-                        """)
+                let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
+                                                         isFullscreen: true,
+                                                         showsTransport: true,
+                                                         wavBusy: wavBusy)
+                if !fit.lookSlider {
+                    landscapeShed.append("\(Int(bounds.width))pt wav=\(wavBusy)")
                 }
+                XCTAssertLessThanOrEqual(barWidth(fit, wavBusy: wavBusy), bounds.width, """
+                    Landscape fullscreen at \(Int(bounds.width))pt, wav=\(wavBusy): the \
+                    chrome overflows. Wider than portrait and still too narrow means the \
+                    budget stopped shedding, not that the bar got bigger.
+                    """)
             }
         }
         XCTAssertEqual(landscapeShed, [], """
@@ -313,7 +301,7 @@ final class ChromeBudgetFitsTests: XCTestCase {
                 let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
                                                          isFullscreen: true,
                                                          showsTransport: true,
-                                                         wavBusy: wavBusy, videoBusy: false)
+                                                         wavBusy: wavBusy)
                 if fit.lookSlider { portraitKept.append("\(Int(bounds.width))pt wav=\(wavBusy)") }
             }
         }
@@ -332,29 +320,27 @@ final class ChromeBudgetFitsTests: XCTestCase {
     /// CAPABILITY the founder asked for, not today's arrangement. A future re-rank, a cheaper
     /// chip, a wrapping bar — any of them may satisfy it; only losing the labelled exit fails.
     ///
-    /// THE ONE EXCEPTION IS ASSERTED, NOT EXCUSED. On the narrowest width in `devices` with
-    /// BOTH a WAV take and a video capture running, the two pinned stop buttons leave no room
-    /// and the chip sheds. That is the type's own law applied consistently — "being the exit decides
-    /// that it stays" was written for a running take's only stop button, and a stranded
-    /// recording is worse than a longer way out (the resize glyph still leaves fullscreen).
-    /// It is spelled as an EXPECTATION rather than skipped, so if a future change happens to
-    /// rescue that state this claim goes red and gets tightened instead of silently passing.
+    /// ⭐ THE ONE EXCEPTION IS GONE, AND THE CLAIM WAS TIGHTENED ON ITS OWN INSTRUCTION
+    /// (#1304). It expected exactly one shed state — 375 pt with BOTH a WAV take and a video
+    /// capture running, where two pinned stop buttons left no room. Video capture went with the
+    /// founder's 2026-09-12 removal, so the bar is two icon buttons and two gaps lighter and
+    /// the chip now survives in every state. The failure message below already said an empty
+    /// list is "GOOD NEWS and still a red, on purpose: tighten this claim to the empty list and
+    /// delete the exception paragraph above it" — this is that, done.
     func testTheLabelledExitSurvivesEveryShippedWidth() {
         var shedStates: [String] = []
         for bounds in Self.devices {
             for wavBusy in [false, true] {
-                for videoBusy in [false, true] {
-                    let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
-                                                             isFullscreen: true,
-                                                             showsTransport: true,
-                                                             wavBusy: wavBusy, videoBusy: videoBusy)
-                    if !fit.studioChip {
-                        shedStates.append("\(Int(bounds.width))pt wav=\(wavBusy) video=\(videoBusy)")
-                    }
+                let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
+                                                         isFullscreen: true,
+                                                         showsTransport: true,
+                                                         wavBusy: wavBusy)
+                if !fit.studioChip {
+                    shedStates.append("\(Int(bounds.width))pt wav=\(wavBusy)")
                 }
             }
         }
-        XCTAssertEqual(shedStates, ["375pt wav=true video=true"], """
+        XCTAssertEqual(shedStates, [], """
             The set of states that shed the labelled "Studio" chip changed. Measured: \
             \(shedStates.isEmpty ? "none" : shedStates.joined(separator: " · ")).
 
@@ -366,55 +352,23 @@ final class ChromeBudgetFitsTests: XCTestCase {
             may not. Restore the ranking, or make the exit survive another way — a cheaper \
             chip and a wrapping bar both satisfy this claim.
 
-            FEWER states — an empty list — is GOOD NEWS and still a red, on purpose: it means \
-            375 pt with both recorders running now keeps the chip too. Tighten this claim to \
-            the empty list and delete the exception paragraph above it; do not widen the \
-            assertion to accept both answers, or it stops measuring anything.
+            ANY state at all is now a regression: since #1304 removed video capture the chip \
+            survives everywhere, and this claim is tightened to the empty list. If a new \
+            toolbar item makes it shed again, that item — not the exit — is what has to go or \
+            get cheaper.
             """)
     }
 
-    /// ⭐ #1063 — WHERE THE STILL SHUTTER SURVIVES, measured rather than hoped. The button was
-    /// the fullscreen COVER's alone; D1 merges the two chromes over one renderer, so it had to
-    /// reach the window's width-budgeted bar. This claim records the price in the same shape as
-    /// `testTheLabelledExitSurvivesEveryShippedWidth`: the exact set of states that shed it.
-    ///
-    /// The four are all `wavBusy` on the two narrower phones. A running WAV take reserves 104 pt
-    /// for its own stop button (`ChromeCost.wavRecording`) and that button is PINNED, so on a
-    /// 375 or 393 pt phone there is no room left for a capture door that starts something new.
-    /// That is the type's law applied, not a hole in it — and the shutter is deliberately
-    /// ranked BELOW the idle video button, so it is the first capture door to go.
-    ///
-    /// FEWER states is good news and still a red: tighten the list. MORE means the shutter is
-    /// gone where a still is actually taken — re-rank, make it cheaper, or wrap the bar (S4);
-    /// any of those satisfies this claim, which is the #364 shape.
-    func testTheStillShutterSurvivesWhereTheStillIsTaken() {
-        var shedStates: [String] = []
-        for bounds in Self.devices {
-            for wavBusy in [false, true] {
-                for videoBusy in [false, true] {
-                    let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width,
-                                                             isFullscreen: true,
-                                                             showsTransport: true,
-                                                             wavBusy: wavBusy, videoBusy: videoBusy)
-                    if !fit.stillShutter {
-                        shedStates.append("\(Int(bounds.width))pt wav=\(wavBusy) video=\(videoBusy)")
-                    }
-                }
-            }
-        }
-        XCTAssertEqual(shedStates, ["375pt wav=true video=false",
-                                    "375pt wav=true video=true",
-                                    "393pt wav=true video=false",
-                                    "393pt wav=true video=true"], """
-            The set of fullscreen states that shed the still shutter changed. Measured: \
-            \(shedStates.isEmpty ? "none" : shedStates.joined(separator: " · ")).
-
-            The shutter is the only door to the still on the surface the app cold-launches \
-            into once the cover is gone (S3 of PLAN_ONE_VISUAL_SURFACE_2026-09-07). Widen the \
-            bar, re-rank, or make it cheaper — but say in the same commit which of those you \
-            did, and correct the ranking doc in `chromeFit` with it (#456).
-            """)
-    }
+    // ⛔ `testTheStillShutterSurvivesWhereTheStillIsTaken` (#1063) STOOD HERE AND WENT WITH
+    // VIDEO CAPTURE (#1304). It recorded the exact set of states that shed the still shutter —
+    // four, all `wavBusy` on the two narrower phones, because a running WAV take reserves
+    // 104 pt for its own PINNED stop button and leaves no room for a door that starts
+    // something new.
+    //
+    // ⭐ THAT REASONING IS THE LAW AND IT OUTLIVES THE BUTTON: a running take's stop button is
+    // pinned, so on a narrow phone it is always a START door that sheds, never the stop. Any
+    // future capture door added to this bar inherits that and needs its own expectation SET
+    // here, in the shape `testTheLabelledExitSurvivesEveryShippedWidth` still uses.
 
     // MARK: - The shed order is the documented ranking, not an emergent one
 
@@ -446,18 +400,15 @@ final class ChromeBudgetFitsTests: XCTestCase {
         // into. What now sheds earlier is a readout and a display aid, neither of which is a
         // way out of anything.
         //
-        // ⭐ #1063 INSERTED `stillShutter` BETWEEN THE DISPLAY AID AND THE IDLE VIDEO BUTTON,
-        // and this list moves with the array in the same commit — which is what this claim's
-        // failure message asks for. The argument is the ranking's own: a still and an idle
-        // video button are both capture DOORS, and the tie-breaker is what losing one costs. A
-        // still is one frame of a picture that is still on screen; a video take is a duration
-        // whose missed seconds do not come back.
+        // ⛔ `stillShutter` AND `videoRecord` SAT BETWEEN THE DISPLAY AID AND THE EXIT and went
+        // with video capture (#1304). The tie-breaker that ordered them is kept because the next
+        // capture door added here needs it: two "start a capture" doors are ranked by what
+        // losing one COSTS — a still is one frame of a picture still on screen, a take is a
+        // duration whose missed seconds do not come back.
         let ranking: [(name: String, keep: (FloatingVisualLayout.ChromeFit) -> Bool)] = [
             ("lookSlider",    { $0.lookSlider }),
             ("miniTransport", { $0.miniTransport }),
             ("gridToggle",    { $0.gridToggle }),
-            ("stillShutter",  { $0.stillShutter }),
-            ("videoRecord",   { $0.videoRecord }),
             ("studioChip",    { $0.studioChip }),
             ("wavRecord",     { $0.wavRecord })
         ]
@@ -465,15 +416,13 @@ final class ChromeBudgetFitsTests: XCTestCase {
         for isFullscreen in [false, true] {
             for showsTransport in [false, true] {
                 for wavBusy in [false, true] {
-                    for videoBusy in [false, true] {
                         // An item that cannot appear at all in this state, and a BUSY recorder
                         // (pinned as its take's stop button), are outside the ranking — they
                         // are not "kept because the budget could afford them".
                         let offered = ranking.filter { item in
                             switch item.name {
-                            case "lookSlider", "studioChip", "stillShutter": return isFullscreen
+                            case "lookSlider", "studioChip": return isFullscreen
                             case "miniTransport":            return showsTransport
-                            case "videoRecord":              return !videoBusy
                             case "wavRecord":                return !wavBusy
                             default:                         return true
                             }
@@ -484,7 +433,7 @@ final class ChromeBudgetFitsTests: XCTestCase {
                             let fit = FloatingVisualLayout.chromeFit(
                                 cardWidth: w, isFullscreen: isFullscreen,
                                 showsTransport: showsTransport,
-                                wavBusy: wavBusy, videoBusy: videoBusy)
+                                wavBusy: wavBusy)
                             let survivors = offered.map { $0.keep(fit) }
                             // ⛔ #1033 — THIS CHECK WAS INVERTED, AND IT HAD BEEN RED SINCE IT
                             // WAS WRITTEN. It read: "once an item is gone, nothing cheaper to
@@ -510,15 +459,14 @@ final class ChromeBudgetFitsTests: XCTestCase {
                             // catches the thing the prose asks to be protected from (an
                             // accidental reorder of the shed array, which produces exactly such
                             // a true-before-false), and it is now satisfied by the shipped
-                            // ranking across all 16 state combinations × 20…1200 pt.
+                            // ranking across every state combination × 20…1200 pt.
                             guard let firstKept = survivors.firstIndex(of: true) else { continue }
                             let goneAfter = offered.indices
                                 .filter { $0 > firstKept && !survivors[$0] }
                                 .map { offered[$0].name }
                             XCTAssertTrue(goneAfter.isEmpty, """
                                 At \(Int(w))pt (fullscreen=\(isFullscreen), \
-                                transport=\(showsTransport), wavBusy=\(wavBusy), \
-                                videoBusy=\(videoBusy)) the budget KEPT \
+                                transport=\(showsTransport), wavBusy=\(wavBusy)) the budget KEPT \
                                 "\(offered[firstKept].name)" while having already dropped \
                                 \(goneAfter.joined(separator: ", ")) — items the documented \
                                 ranking says are MORE expensive to lose. Either the shed array \
@@ -527,7 +475,6 @@ final class ChromeBudgetFitsTests: XCTestCase {
                                 in the same commit.
                                 """)
                         }
-                    }
                 }
             }
         }
@@ -535,8 +482,9 @@ final class ChromeBudgetFitsTests: XCTestCase {
 
     // MARK: - Floating chrome cannot acquire fullscreen-only items
 
-    /// ⚠️ RENAMED (#1063, the #374 rule): the check now covers THREE fullscreen-only items,
-    /// and a name that lists two of them would read as coverage of two while asserting three.
+    /// ⚠️ RENAMED (#1063, the #374 rule) when it covered three fullscreen-only items. Since
+    /// #1304 removed the still shutter there are TWO again; the generic name still holds,
+    /// which is the point of not listing them in it.
     func testFullscreenOnlyChromeNeverAppearsOnAFloatingCard() {
         for bounds in Self.devices {
             // A deliberately generous width: if the budget could ever ADD these it would
@@ -544,8 +492,8 @@ final class ChromeBudgetFitsTests: XCTestCase {
             let fit = FloatingVisualLayout.chromeFit(cardWidth: bounds.width * 4,
                                                      isFullscreen: false,
                                                      showsTransport: true,
-                                                     wavBusy: false, videoBusy: false)
-            XCTAssertFalse(fit.lookSlider || fit.studioChip || fit.stillShutter, """
+                                                     wavBusy: false)
+            XCTAssertFalse(fit.lookSlider || fit.studioChip, """
                 The budget offered the look slider, the "Studio" chip or the still shutter on \
                 a FLOATING card. It may only ever take items away — all three are \
                 fullscreen-only in the view, and a budget that can add them would put a \
@@ -655,10 +603,9 @@ final class ChromeBudgetFitsTests: XCTestCase {
         func kept(_ w: CGFloat) -> Int {
             let f = FloatingVisualLayout.chromeFit(cardWidth: w, isFullscreen: true,
                                                    showsTransport: true,
-                                                   wavBusy: false, videoBusy: false)
+                                                   wavBusy: false)
             return [f.lookSlider, f.studioChip, f.miniTransport,
-                    f.gridToggle, f.videoRecord, f.wavRecord,
-                    f.stillShutter].filter { $0 }.count
+                    f.gridToggle, f.wavRecord].filter { $0 }.count
         }
         var previous = kept(60)
         for w in stride(from: CGFloat(60), through: 900, by: 13) {

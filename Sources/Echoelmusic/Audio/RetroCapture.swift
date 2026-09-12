@@ -488,13 +488,14 @@ final class RetroCapture {
     /// heard (already including reverb/delay tails). Returns the file URL, or nil.
     func captureRecent(seconds: Double) -> URL? {
         // ⛔ #630b — THIS KEEPS ITS LENGTH AND BLANKS. #630 truncated it here, and that was a
-        // defect far worse than the one it fixed, in BOTH consumers of this method:
-        //   · `VisualRecorder.stopAndSave` muxes this audio with the take's video, and
-        //     `VideoMuxer` end-aligns to `CMTimeMinimum(videoDuration, audioDuration)` — so a
-        //     3-second audio file CUTS A 60-SECOND VIDEO TO THREE SECONDS. `VisualRecorder`
-        //     then deletes the full-length original on a successful mux. A route switch three
-        //     seconds before Stop destroyed 57 seconds of footage with no recovery path.
-        //   · `LoopExporter.exportRecentLoop` passes the file to `SingleExport`, whose
+        // defect far worse than the one it fixed. It had TWO consumers then; the video one is
+        // gone with #1304 and is kept named because it is the sharper illustration:
+        //   · `VisualRecorder.stopAndSave` muxed this audio with the take's video, and the
+        //     muxer end-aligned to `min(videoDuration, audioDuration)` — so a 3-second audio
+        //     file CUT A 60-SECOND VIDEO TO THREE SECONDS, after which the full-length
+        //     original was deleted. A route switch three seconds before Stop destroyed 57
+        //     seconds of footage with no recovery path.
+        //   · THE LIVE ONE: `LoopExporter.exportRecentLoop` passes the file to `SingleExport`, whose
         //     `resolveTrimRange` returns nil for a too-short file — and nil there means
         //     "export the whole file untrimmed", reported as SUCCESS. A 2-second WAV would be
         //     handed over as a 4-bar loop, silently.
