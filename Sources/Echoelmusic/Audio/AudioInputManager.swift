@@ -122,6 +122,18 @@ public final class AudioInputManager {
     /// True when the output route is high-latency (Bluetooth / AirPlay / CarPlay):
     /// monitoring your own voice through it is delayed even with a low-latency input.
     public private(set) var outputIsHighLatency: Bool = false
+    /// #1296 — the KIND of the current output route, classified by the same pure
+    /// mapper as an input. It exists because of a device finding the founder reported
+    /// on v10.79.470: an Apogee HypeMiC was plugged in over USB with headphones in its
+    /// jack, and the picker still said no input was available — so he read "device not
+    /// recognised". iOS publishes `availableInputs` only while the session is
+    /// `.playAndRecord` (see `refresh()`), and the door opens against `.playback`, so
+    /// the list IS empty at that moment and is not a hardware fault. But the OUTPUT
+    /// route of that same USB device is visible right there — the session routes
+    /// playback through it. Naming it turns an anonymous empty list into "Echoel can
+    /// see <device>", which is the difference between a trade-off and a defect.
+    /// `.other` when nothing is routed or on macOS.
+    public private(set) var outputKind: AudioInputKind = .other
 
     public init() {}
 
@@ -143,6 +155,9 @@ public final class AudioInputManager {
         // the OUTPUT side. Surface it so the monitoring hint is honest.
         let outputs = session.currentRoute.outputs
         outputRouteName = outputs.first?.portName ?? ""
+        outputKind = outputs.first.map {
+            AudioInputClassifier.classify(portTypeRaw: $0.portType.rawValue).kind
+        } ?? .other
         outputIsHighLatency = outputs.contains { out in
             AudioInputClassifier.classify(portTypeRaw: out.portType.rawValue).latency == .high
         }
@@ -151,6 +166,7 @@ public final class AudioInputManager {
         selectedID = nil
         outputRouteName = ""
         outputIsHighLatency = false
+        outputKind = .other
         #endif
     }
 

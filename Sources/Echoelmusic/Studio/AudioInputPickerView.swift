@@ -518,6 +518,25 @@ struct AudioInputPickerView: View {
         .padding(.horizontal, 12)
     }
 
+    /// NEEDS-FOUNDER-VERIFY: HypeMiC per USB einstecken, Kopfhörer in die Buchse der HypeMiC,
+    /// Master → „Audio input" öffnen OHNE Monitoring anzuschalten. Erwartet: die leere Liste
+    /// nennt jetzt den Gerätenamen („Echoel can see …"), statt anonym leer zu sein. Danach
+    /// Live monitoring AN: erwartet, dass die HypeMiC als Zeile erscheint. Tut sie das NICHT,
+    /// ist der Befund erst dann ein echter Enumerationsfehler — und die zweite Zeile
+    /// („Echoel plays through … Unplug and replug") ist die, die dann auf dem Schirm steht.
+    ///
+    /// #1296 — the name of an EXTERNAL device Echoel can already see on the output route,
+    /// or "" when there is none. Empty for the built-in speaker and for Bluetooth: a USB or
+    /// wired device is the class that physically carries an input, so it is the only class
+    /// worth naming as a candidate. The founder plugged an Apogee HypeMiC in over USB, opened
+    /// this door against the `.playback` session that publishes no `availableInputs`, saw an
+    /// anonymous empty list and concluded the device was "nicht erkannt". The manager knew its
+    /// name the whole time — see `AudioInputManager.outputKind`.
+    private var externalRouteName: String {
+        guard inputs.outputKind == .usb || inputs.outputKind == .wired else { return "" }
+        return inputs.outputRouteName
+    }
+
     /// ⛔ THIS STRING USED TO BE THE macOS SENTENCE ON EVERY PLATFORM: "Input is managed by the
     /// system here." On iOS that is simply false — the app manages the input, via
     /// `setPreferredInput`. It read as a dead end ("nothing to do here") in the one situation
@@ -530,7 +549,14 @@ struct AudioInputPickerView: View {
     private var emptyStateText: String {
         #if os(iOS)
         if audioEngine.isInputMonitoring {
-            return "No input is available on the current route."
+            // Monitoring is ON, so the session IS `.playAndRecord` and iOS should be
+            // publishing inputs (this view re-reads after the toggle and on every route
+            // change). An empty list here is a genuine anomaly, not the `.playback` trade —
+            // so name the device and give hardware advice, not "switch monitoring on".
+            if externalRouteName.isEmpty {
+                return "No input is available on the current route."
+            }
+            return "Echoel plays through \(externalRouteName) but iOS is not offering it as an input. Unplug and replug the device, then switch monitoring off and on again."
         }
         // #601b: with the mic refused, "turn on monitoring above" is an unfulfillable loop —
         // the switch just snapped back. Send the user to the actual fix instead.
@@ -539,6 +565,11 @@ struct AudioInputPickerView: View {
         // so the non-denied case deliberately falls through to the default line below.
         if monitorRefused && audioEngine.micPermissionDenied {
             return "The microphone is not available to Echoel. Allow microphone access in Settings, then switch monitoring on."
+        }
+        // #1296: the device IS seen — say its name before asking for another tap, so an
+        // empty list stops reading as "hardware not recognised".
+        if !externalRouteName.isEmpty {
+            return "Echoel can see \(externalRouteName). Turn on live monitoring above to use it as an input — iOS only publishes inputs while the mic is in use."
         }
         return "Turn on live monitoring above to list the available inputs. iOS only publishes them while the mic is in use."
         #else
