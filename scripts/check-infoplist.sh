@@ -36,22 +36,38 @@ fi
 # a new place — "all of them" only ever means "all of them I enumerated". The cheap check is
 # the grep above, not a re-read of the list.
 #
-# Why each of the three is genuinely required, i.e. why this is not just tidying:
-#   · NSPhotoLibraryAdd — the still shutter and the finished visual take both write to
-#     Photos. Missing string = the write throws and the take vanishes with no message.
+# Why the bluetooth pair is genuinely required, i.e. why this is not just tidying:
 #   · NSBluetoothAlways / NSBluetoothPeripheral — the universal BLE heart-rate belt (0x180D)
 #     is built AND wired; its door is the pulse pill's source dropdown. Missing string = iOS
 #     kills the app on the first scan.
+#
+# ⛔ NSPhotoLibraryAdd WAS JUSTIFIED HERE WITH "the still shutter and the finished visual take
+#    both write to Photos", AND BOTH WERE DELETED on 2026-09-12 (#1304, founder: "Kein Video
+#    Capture"). `git grep -n "PHPhotoLibrary\|import Photos" -- Sources` → 0. The microphone
+#    string lost its capability the same way one commit earlier (#1302).
+#
+# ⭐ AND LEAVING THEM IN `required_keys` WAS A TRAP, WHICH IS THE REAL REASON THIS MOVED
+#    (#1308). This script runs INSIDE the compile gate (`xcode-compile-check.yml`), and
+#    `Resources/iOS/Info.plist` is founder-gated — so the moment the founder did the repair
+#    this file has been REPORTING to him, the gate would have gone red on a correct tree
+#    (#364). A guard must not punish the fix it asks for. They are `orphan_keys` now: reported
+#    in BOTH directions, FAIL in neither.
 required_keys=(
   NSLocationWhenInUseUsageDescription
   NSCameraUsageDescription
-  NSMicrophoneUsageDescription
   NSHealthShareUsageDescription
   NSHealthUpdateUsageDescription
   NSLocalNetworkUsageDescription
-  NSPhotoLibraryAddUsageDescription
   NSBluetoothAlwaysUsageDescription
   NSBluetoothPeripheralUsageDescription
+)
+# Present in the plist, no capability left in Sources/. The DECISION lives in
+# `Tests/CISmoke/EveryPermissionPromptHasACapabilityTests.swift` (`founderGatedOrphans`,
+# claim 4), which also pins the symbols that prove each is really gone; this list only keeps
+# the reverse check below from calling them unguarded (#416 — one home for the decision).
+orphan_keys=(
+  NSMicrophoneUsageDescription
+  NSPhotoLibraryAddUsageDescription
 )
 for key in "${required_keys[@]}"; do
   if grep -q "$key" "$PLIST"; then
@@ -61,11 +77,19 @@ for key in "${required_keys[@]}"; do
     fail=1
   fi
 done
+for key in "${orphan_keys[@]}"; do
+  if grep -q "$key" "$PLIST"; then
+    echo "  note: $key present, capability REMOVED (#1302/#1304) — founder-gated, report only"
+  else
+    echo "  ok: $key gone — the reported repair landed; drop it from orphan_keys"
+  fi
+done
 
 # 1b) The PAIRED check, and it goes the OTHER way (#1013). The loop above catches a key being
 #      DELETED from the plist; it cannot catch one being ADDED without being guarded — which is
 #      exactly how the list came to hold six of nine. So: every usage string the plist ships must
-#      also appear in required_keys.
+#      also appear in required_keys (or, for a string whose capability the founder removed,
+#      in orphan_keys).
 #
 #      ⚠️ THE LIST STAYS HAND-WRITTEN ON PURPOSE. Deriving required_keys FROM the plist would
 #      make this file agree with itself and never fail: deleting a key would delete it from the
@@ -73,7 +97,7 @@ done
 #      opinion notice when the first one grows.
 plist_keys=$(grep -o 'NS[A-Za-z]*UsageDescription' "$PLIST" | sort -u)
 for key in $plist_keys; do
-  case " ${required_keys[*]} " in
+  case " ${required_keys[*]} ${orphan_keys[*]} " in
     *" $key "*) ;;
     *)
       echo "  FAIL: $PLIST ships $key but check-infoplist.sh does not guard it."

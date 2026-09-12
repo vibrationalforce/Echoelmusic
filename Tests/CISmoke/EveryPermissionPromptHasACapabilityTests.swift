@@ -90,12 +90,18 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
     /// capability is still written. Measured 2026-08-23; the file each was found in is named so a
     /// red can be diagnosed without a second search.
     private static let table: [String: (needles: [String], seenIn: String)] = [
-        "NSMicrophoneUsageDescription":
-            (["AVAudioSession.sharedInstance()"], "Audio/AudioConfiguration.swift + 7 more"),
         "NSHealthShareUsageDescription":
             (["HKHealthStore"], "Bio/EchoelBioEngine.swift, Bio/HealthKitWriter.swift"),
         "NSHealthUpdateUsageDescription":
             (["HKQuantitySample"], "Bio/HealthKitWriter.swift"),
+        // ⚠️ HALF OF THIS STRING IS DEAD AND NO NEEDLE SET CAN SAY SO. The sentence names
+        // BOTH lenses; the front-facing half went with the face source (#1301), and
+        // `Video/CameraCapture.swift` acquires exactly one device, hard-coded
+        // `position: .back` — `git grep -n "position: *\.front" -- Sources` → 0. These needles
+        // are satisfied by the rPPG path, so claim 2 stays green over a promise that is half
+        // withdrawn. Written down rather than asserted: a NEW claim here would be red on a
+        // correct tree (#364), because `Resources/iOS/Info.plist` is founder-gated and the
+        // repair is his. It is on the reported list; do not read this green as full coverage.
         "NSCameraUsageDescription":
             (["AVCaptureSession", "AVCaptureDevice"], "Video/CameraCapture.swift"),
         "NSBluetoothAlwaysUsageDescription":
@@ -122,8 +128,30 @@ final class EveryPermissionPromptHasACapabilityTests: XCTestCase {
     /// recordings are saved to the photo library, and the thing that saved them called
     /// `PHPhotoLibrary`. Claim 4 asserts that symbol is absent from `Sources/`, so re-adding
     /// video capture reds this file and forces the row back into `table` in the same commit.
+    ///
+    /// ⛔ NSMicrophoneUsageDescription MOVED HERE FROM `table` IN #1308, AND THE OLD ROW IS
+    /// WHY IT TOOK SO LONG. Its needle was `AVAudioSession.sharedInstance()` — which every
+    /// PLAYBACK path calls (16 occurrences across 5 files, all output-side), so claim 2 went
+    /// on proving the microphone from code that has nothing to do with a microphone. The
+    /// capability itself went with the audio input (#1302, founder 2026-09-12).
+    ///
+    /// ⭐ A NEEDLE THAT A NEIGHBOURING CAPABILITY ALSO SATISFIES IS NOT EVIDENCE. That is the
+    /// general law worth carrying out of this row: pick the symbol that ONLY the promised
+    /// capability can reach. For the microphone that is the prompt itself
+    /// (`requestRecordPermission`), AVAudioEngine's only input path (`.inputNode`), the route
+    /// enumeration (`availableInputs`) and the file recorder — all four measured at zero in
+    /// comment-stripped `Sources/`. `installTap(onBus:` is deliberately NOT among them: it has
+    /// three live call sites, and all three tap the app's OWN output (`RetroCapture`).
+    ///
+    /// ⚠️ AND THE MACHINERY IS STILL THERE, WHICH IS WHY THE NEEDLES ARE SYMBOLS AND NOT
+    /// `.playAndRecord`. `AudioConfiguration.upgradeToPlayAndRecord()` and `claimRecordRoute`
+    /// survive on purpose (#299), but `RecordRouteOwner` is an EMPTY enum, so `claimRecordRoute`
+    /// cannot even be called, and neither has a production caller. The session can never be
+    /// raised to `.playAndRecord`: the prompt this string carries can never appear.
     private static let founderGatedOrphans: [String: [String]] = [
-        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary"]
+        "NSPhotoLibraryAddUsageDescription": ["PHPhotoLibrary"],
+        "NSMicrophoneUsageDescription":
+            ["requestRecordPermission", ".inputNode", "availableInputs", "AVAudioRecorder"]
     ]
 
     // MARK: - claim 1 — the roster comes from the plist, not from this file
