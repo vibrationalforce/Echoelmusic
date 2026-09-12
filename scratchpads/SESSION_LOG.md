@@ -31295,3 +31295,25 @@ stillschweigend mit und lässt sie beim nächsten Mal wieder auseinanderlaufen.*
 gegangen ist. `EveryPermissionPromptHasACapabilityTests` führt die Waisen seit #1304 in einer
 eigenen Tabelle mit eigenem Anspruch: rot, wenn ein Schlüssel die plist verlässt ODER seine Nadel
 nach `Sources/` zurückkehrt.
+
+### Gate-Lesung der Rücknahme (2026-09-12, 18:30 UTC)
+
+| Commit | `Xcode Compile Check` | CI/CD `Build for Testing` |
+|---|---|---|
+| `122724d` #1304 | **#2600 success** | — |
+| `0127665` #1305 | #2601 **failure** (4 Zeilen, EINE Ursache) | — |
+| `fac68ff` #1305b | **#2602 success** | **#6067 success** |
+
+`Sources/` kompiliert, und das BLOCKIERENDE Bundle `Tests/CISmoke` kompiliert — das ist die
+stärkste Aussage, die diese Gates tragen. `Run Tests` meldet wie auf jedem Push `failure` (#396);
+die Conclusion sagt nichts, und die Ausführung einzelner Wächter bleibt unbelegt (#445/#807).
+
+⛔ **Der rote Lauf #2601 ist der Beleg für die Sweep-Lücke oben** und gehört hierher, weil er
+zeigt, dass sie ein CI-Umlauf kostet und nicht nur eine Theorie ist: vier Fehlerzeilen, per #689
+auf EINE Ursache zurückgeführt (drei Aufrufer einer Methode, die mit ihrem Umfeld gelöscht wurde;
+die vierte Zeile ist die Typprüfer-Kaskade desselben Menü-Blocks).
+
+**KEINE Geräte-Verifikation.** Was eine Sitzung hier nicht beweisen kann: dass die FX-Fläche ohne
+ihre zwei Abschnitte noch stimmig aussieht, dass die Chrome-Leiste ohne die zwei Icon-Tasten
+richtig sitzt, und dass ein Projekt aus einem älteren Build sauber auf `.auto` öffnet. Das sind
+drei Blicke, keine Tests.
