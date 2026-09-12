@@ -51,6 +51,42 @@ public extension MusicStyle {
         // genre keeps its character, cleaner. SOUND CYCLE 1 layers real instrument
         // spectra + unison width + a breath/air noise floor on top (see header).
         switch self {
+        case .boomBapHipHop:
+            // #1289 G6b — DUST KEYS. The "dusty top" the lineage names comes from the PATCH, not
+            // from a chain filter: cutoff 1500 is the lowest of any synth patch this batch or the
+            // last one added, brightness 0.22 and a Dark spectral shape. Doing it here rather than
+            // with `filterEnabled` keeps `acidTechno` the only genre arm that enables the chain
+            // filter — a claim three blocking guards now assert roster-wide.
+            return patch("54", "Dust Keys",
+                a: 0.010, d: 0.55, s: 0.34, r: 0.40,
+                harm: 0.86, hl: 0.26, bright: 0.22, noise: 0.02, color: "Pink", shape: "Dark",
+                cutoff: 1500, res: 0.10, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.14, revDecay: 1.10, vibRate: 0, vibDepth: 0,
+                uni: 2, det: 6)
+        case .electroFunk:
+            // #1289 G6b — SNAP KEYS. The opposite envelope to the patch above it, deliberately:
+            // a hard attack (0.002) and a SHORT decay into a low sustain, so each comp is a snap
+            // that has finished before the next sixteenth. Brighter and higher-cut than Dust
+            // Keys by a wide margin — the two share a scale and a voicing, so the timbre is
+            // where a listener tells them apart.
+            return patch("55", "Snap Keys",
+                a: 0.002, d: 0.18, s: 0.14, r: 0.16,
+                harm: 0.72, hl: 0.70, bright: 0.44, noise: 0.0, color: "White", shape: "Bright",
+                cutoff: 3400, res: 0.26, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.10, revDecay: 0.90, vibRate: 0, vibDepth: 0,
+                uni: 2, det: 5)
+        case .rootsReggae:
+            // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
+            // that name, and the pre-batch check caught it — the third name collision in three
+            // batches, which is why that check now runs before the arm is written.
+            // A fast attack and a medium decay so the offbeat chop is a CHOP, plus the ensemble
+            // unison an organ needs; the long tail is the delay's job, not the patch's.
+            return patch("56", "Roots Organ",
+                a: 0.008, d: 0.30, s: 0.42, r: 0.30,
+                harm: 0.90, hl: 0.72, bright: 0.34, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 2700, res: 0.14, lfoAmt: 0.05, lfoRate: 5.2, lfoDepth: 0.06,
+                revMix: 0.18, revDecay: 1.30, vibRate: 5.2, vibDepth: 0.04,
+                uni: 3, det: 10)
         case .blackMetal:
             // #1288 G6a — COLD STACK. A power chord wants to be a WALL, so this is the opposite
             // of the iron stab it stands beside: a slower attack (0.05) and a long release (1.6)
@@ -498,6 +534,45 @@ public extension MusicStyle {
     /// (`SoundRowsCanReachTheShippedPatchesTests`) so a founder edit never rounds them.
     var bassPatch: SynthPatch? {
         switch self {
+        case .boomBapHipHop:
+            // #1289 G6b — the FOURTH owner of `sparseSub`. Long and soft where the techno subs on
+            // that figure are short and hard: a boom-bap sub is felt for the whole bar. Cutoff
+            // 580, deliberately ABOVE "Minimal Sub"'s 520 so that patch keeps its "lowest cutoff,
+            // darkest in the file" claim — third of the four subs on this figure by cutoff, and
+            // the darkest of them by brightness (0.12 against 0.14/0.15/0.18) and by harmonic
+            // level (0.24 against 0.36/0.40/0.44).
+            // ⛔ This line first said "darker than every other patch on this figure" without
+            // naming an axis, which is false on the axis a reader assumes: Minimal Sub (520) and
+            // Dark Sub (560) both cut lower. A darkness claim needs its axis, or it is the
+            // roster-wide superlative #1287 keeps retracting.
+            return patch("57", "Dust Sub",
+                a: 0.008, d: 0.45, s: 0.64, r: 0.18,
+                harm: 0.92, hl: 0.24, bright: 0.12, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 580, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .electroFunk:
+            // #1289 G6b — the FIFTH `drivingEighths` owner. At 118 BPM an eighth is 0.254 s and
+            // the envelope finishes well inside it, but every stage still sits ABOVE "Psy Bass"
+            // (0.004/0.17/0.10 against 0.002/0.14/0.08) so that patch keeps the shortest-envelope
+            // claim its own arm makes — measured before writing, because #1288's first draft of
+            // "Cold Sub" broke exactly this and nothing would have gone red.
+            return patch("58", "Snap Sub",
+                a: 0.004, d: 0.17, s: 0.22, r: 0.10,
+                harm: 0.80, hl: 0.52, bright: 0.26, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 940, res: 0.24, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .rootsReggae:
+            // #1289 G6b — the FOURTH `offbeatEighths` owner, and the roundest of them: at 76 BPM
+            // there is time for a slow attack and a long decay, which is what makes a reggae bass
+            // read as PLAYED rather than programmed. No resonance at all.
+            return patch("59", "Roll Sub",
+                a: 0.012, d: 0.50, s: 0.72, r: 0.22,
+                harm: 0.94, hl: 0.22, bright: 0.10, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 700, res: 0.06, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
         case .blackMetal:
             // #1288 G6a — the THIRD owner of `drivingEighths` (after `techHouse` and `deepTech`),
             // on its own voice: figure shared, voice never. At 180 BPM an eighth is 0.167 s, and

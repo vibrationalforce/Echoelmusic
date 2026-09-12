@@ -77,7 +77,7 @@ PLAY WITH YOUR PULSE
 • No sensor around? Demo mode plays instantly.
 
 COMPOSE FROM YOUR BODY
-• One tap generates music in your key: twenty-seven curated genres, from deep
+• One tap generates music in your key: thirty curated genres, from deep
   ambient and drift to classical and dub techno.
 • Choose key and scale (57 scales), concert pitch A4 from 432 to 444 Hz,
   tempo locked in the studio or flowing with your heart.

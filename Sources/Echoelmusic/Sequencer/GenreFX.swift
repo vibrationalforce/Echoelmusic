@@ -303,6 +303,63 @@ public extension MusicStyle {
 
     private var rawFXPreset: GenreFXPreset {
         switch self {
+        case .boomBapHipHop:
+            // #1289 G6b — SMALL DARK ROOM, TAPE WOW. The "dust" is the WOW, not a filter: a
+            // dotted-eighth tape slap at a low mix with a dark tone and a generous 0.30 wow, so
+            // the repeat arrives already degraded. `filterEnabled` stays false — `acidTechno` is
+            // the only genre arm that enables the chain filter, and the patch's own cutoff (1500,
+            // the darkest synth patch of the last two batches) does the job it was going to do.
+            //
+            // Neighbour checks, measured: feedback 0.24 under `minimalTechno`'s 0.44 ("longest
+            // tail of the four-on-floor offered genres" — this genre is `.backbeat`, so it could
+            // not break that claim anyway, checked rather than assumed) · saturation 0.28 above
+            // minimal's 0.14 ("cleanest beat-driven chain") and under `dubTechno`'s 0.30 · tone
+            // 0.26 above `deepDrone`'s 0.14 ("darkest tone in the roster") · damping 0.54 under
+            // `techHouse`'s 0.58 · spread 0.26 well under `detroitTechno`'s 0.60.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.eighth, .dotted),
+                delayMix: 0.16, delayFeedback: 0.24, delayTone: 0.26, delaySpread: 0.26,
+                delayWow: 0.30, delayDrive: 0.14,
+                saturation: 0.28,
+                reverbEnabled: true, reverbMix: 0.16, reverbRoom: 0.40, reverbDamping: 0.54)
+        case .electroFunk:
+            // #1289 G6b — TIGHT ROOM, SIXTEENTH SLAP. The shortest division in the roster, TIED
+            // with `psyProgHouse`'s plain sixteenth — stated because the tie is the thing that
+            // ages: #1286 had to retract `techHouse`'s "shortest of any offered genre" when
+            // psy-prog broke it, and a second holder now shares that floor rather than taking it.
+            // At 124 BPM a sixteenth is 0.121 s, so the slap sits inside the snap it doubles.
+            //
+            // Neighbour checks: feedback 0.20 under minimal's 0.44 · saturation 0.38 above
+            // minimal's 0.14 and above `deepTech`'s 0.36, under `techHouse`'s 0.42 · tone 0.60
+            // well above deepDrone's 0.14 · room 0.39 between `darkMinimal`'s 0.38 and
+            // `deepTech`'s 0.40, taking neither arm's between-claim · damping 0.50 under
+            // techHouse's 0.58 · spread 0.34 under detroitTechno's 0.60.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .digital,
+                delaySync: TempoSyncOption(.sixteenth),
+                delayMix: 0.14, delayFeedback: 0.20, delayTone: 0.60, delaySpread: 0.34,
+                saturation: 0.38,
+                reverbEnabled: true, reverbMix: 0.12, reverbRoom: 0.39, reverbDamping: 0.50)
+        case .rootsReggae:
+            // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
+            // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is
+            // 0.714 s, comfortably under the 2.0 s ceiling `GenreDelaySyncResolvabilityTests`
+            // sweeps at exactly that tempo (its own comment explains why the fastest is the test).
+            //
+            // ⚠️ Feedback 0.46 is above `minimalTechno`'s 0.44, and that is legal because that
+            // arm's claim is scoped to the FOUR-ON-FLOOR offered genres and this one is
+            // `.offbeat` — the #1286 lesson about quoting a neighbour's SCOPE, applied while
+            // writing rather than after. `dubTechno`'s 0.58 remains the roster maximum.
+            // Rest: saturation 0.24 above minimal's 0.14 · tone 0.40 above deepDrone's 0.14 ·
+            // room 0.52 under every big hall · damping 0.50 under techHouse's 0.58.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.quarter),
+                delayMix: 0.32, delayFeedback: 0.46, delayTone: 0.40, delaySpread: 0.38,
+                delayWow: 0.22, delayDrive: 0.16,
+                saturation: 0.24,
+                reverbEnabled: true, reverbMix: 0.22, reverbRoom: 0.52, reverbDamping: 0.50)
         case .blackMetal:
             // #1288 G6a — LONG THIN HALL, NO DELAY. The delay is absent for a reason, not by
             // omission: an echo repeats an EVENT, and a tremolo wall is continuous — echoing a
@@ -360,8 +417,9 @@ public extension MusicStyle {
             // so ITS damping rank survives · tone 0.34 above `deepDrone`'s 0.14 ("darkest tone in
             // the roster" holds) · `.digital` and NOT `.pingPong`, which `psyProgHouse` owns
             // alone among offered four-on-floor genres · division an EIGHTH (0.5 quarters), so
-            // it takes no division claim from anyone — `psyProgHouse` at a plain 16th is the
-            // shortest offered division and `techHouse`'s dotted 16th the second.
+            // it takes no division claim from anyone — the shortest offered division is a plain
+            // 16th, held JOINTLY by `psyProgHouse` and (since #1289) `electroFunk`, with
+            // `techHouse`'s dotted 16th next.
             // `filterEnabled: false` — `acidTechno` is the only genre that enables the chain
             // filter, and that is a roster-wide claim.
             return GenreFXPreset(

@@ -30586,3 +30586,62 @@ NEEDS-FOUNDER-VERIFY-Ohrfragen im Wächter-Kopf.
 
 **Offen, Founder (unverändert):** §5-2 (blockiert G7) · §5-4 · §5-5 · `varyFloor`-Hörprobe.
 Dazu der angebotene TestFlight-Deploy — #1269–#1288 sind auf keinem Gerät.
+
+## 2026-09-12 — Genre-Welt G6b (#1289): drei Genres, und die Falschbehauptung saß im Wächter
+
+**Was:** `boomBapHipHop` · `electroFunk` · `rootsReggae`, die `.popular`-Rubrik. Hip-Hop hatte
+`trap` und keine Tür, R&B hatte gar kein Regal, Caribbean hatte `ska` und `rocksteady`, beide
+dunkel. Roster 27→**30** angeboten, Taxonomie 44→**47**, Lead-Decke 6→**7** bei 37
+lead-tragenden Genres. Patch-Suffixe 54–59 („Dust Keys", „Snap Keys", „Roots Organ", „Dust Sub",
+„Roll Sub", „Snap Sub"), Bass-Cutoffs weiter unentschieden (580 · 700 · 940).
+
+**`prebatch.py` fing einen Blocker:** der Entwurf gab BEIDEN `.popular`-Comps „Soft Keys" — 8
+gegen eine Decke von 7. `electroFunk` nimmt stattdessen **Pluck**; ein schnappender Comp IST die
+Klangfarbe eines Plucks. `electroFunk` bleibt außerdem `.popular` und wird NICHT `.electronic`:
+unter `.electronic` hätte es `detroitTechno`s gepinntes „einziges elektronisches Genre, das
+compt" gebrochen, und die Reparatur wäre dann der Wächter gewesen statt der Einordnung.
+
+⛔ **DIE FALSCHBEHAUPTUNG DIESER SCHEIBE STAND IM WÄCHTER, NICHT IN DER PROSA — und sie war
+doppelt falsch.** Der Kopf von `GenreBatchSixBTests` schrieb *„after this commit EVERY rubric in
+the picker has at least one offered genre"*, und die Zusicherung darunter fuhr
+`Category.allCases` durch. `.folk` (`europeanFolk` = `klezmer`, `nearEastCentralAsia` =
+`oriental`) hat keine und bekommt keine bis G11/G12 — **rot auf korrektem Baum**, die #364-Form,
+die diese Reihe schon dreimal bezahlt hat, diesmal von mir selbst eingebaut.
+
+⚠️ **Die zweite Hälfte ist die teurere: die FEHLERMELDUNG beschrieb einen Picker, den es nicht
+gibt.** Sie sagte, die Kopfzeile der Rubrik rendere weiter und jede Zeile darunter sei dunkel.
+`WorkspaceView`s Genre-Menü iteriert seit #1275 über `Subcategory.allCases` und rendert eine
+Sektion nur `if !shelf.offeredGenres.isEmpty` — eine türlose Rubrik rendert **gar nichts**. Ein
+Anspruch, der für den Grund, den seine Meldung nennt, nicht scheitern KANN, ist #367; meiner
+konnte es nicht einmal in dem Moment, in dem er scheiterte. **Lehre: bevor eine UI-Konsequenz in
+eine Fehlermeldung geht, liest man die Schleife, die sie rendert** — die Meldung ist das, was die
+nächste Sitzung für bare Münze nimmt.
+
+⭐ **Zugesichert wird jetzt eine RICHTUNG statt einer Liste:** die Menge der türlosen Rubriken
+darf schrumpfen (G11/G12) und nie wachsen — `count <= 1` plus `allSatisfy { $0 == .folk }`, dazu
+`popular.offeredGenres.count == 3`. Die Regal-Hälfte bleibt wie sie war und ist wahr: sie fragt
+nach GENRES, nicht nach angebotenen (fünf Regale sind heute angebots-leer, und der Picker
+überspringt sie korrekt).
+
+**Wächter:** `Tests/CISmoke/GenreBatchSixBTests.swift`, 7 Ansprüche. Anspruch 5 pinnt den
+Divisions-**BODEN** und seine zwei Halter (`electroFunk` + `psyProgHouse`) statt eines Besitzers —
+genau die #1286-Rücknahme, angewandt bevor sie nötig wird — und trägt als Gegengewicht, dass
+`rootsReggae` nicht four-on-floor werden darf, weil sein Feedback 0,46 nur deshalb über
+`minimalTechno`s 0,44 liegen darf, dass dessen Anspruch auf four-on-floor GESKOPT ist.
+
+**Grading (§0/§3):** die Datei nennt drei neue Symbole, kompiliert also gegen den Elternteil
+nicht — **kein Anspruch hat dort ein Verdikt** (#486). Transkribiert (`$SP/t1289.py`) gegen den
+Arbeitsbaum: nach der Wächter-Reparatur **0 Zusicherungen rot**. Drei Mutationen auf die neue
+Richtungs-Zusicherung, jede getrieben: `.popular` die Türen nehmen → beide rot · nur
+`electroFunk` entfernen → die Zähl-Zusicherung rot · `klezmer` anbieten (korrekte Zukunftsarbeit)
+→ **grün**. `t1286`/`t1288`/`poststate` roster-weit nachgefahren, alle 0. Fünf Nadel-Prüfer
+sauber. **Gerät: nichts** — drei NEEDS-FOUNDER-VERIFY-Ohrfragen im Wächter-Kopf.
+
+**Kopie (acht Stellen, alle gemessen mit `$SP/copycount.py 30 47`, 0 mismatches):** tools ·
+brainstorming · press (×2) · beide release_notes · `APP_STORE_LISTING_v1.md` auf „Thirty"/
+„Dreißig", `architecture.html` auf „36 of 47" (nachgemessen: 36 Arme setzen `reverbEnabled: true`,
+11 fallen auf den geteilten Raum-Boden). Alle 30 angebotenen displayNames stehen in jeder
+aufzählenden Kopie-Stelle.
+
+**Offen, Founder (unverändert):** §5-2 (blockiert G7) · §5-4 · §5-5 · `varyFloor`-Hörprobe.
+Dazu der angebotene TestFlight-Deploy — #1269–#1289 sind auf keinem Gerät.

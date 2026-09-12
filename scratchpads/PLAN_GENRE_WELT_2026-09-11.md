@@ -641,7 +641,7 @@ enthält die 7 · `swing` 0 oder ≥0.06 · `padOctave` ≥3.
 | G5a ⭐ #1285 | Still Pads · Moving Ambient | glacialField, slowBloom | 1 lead-tragend ⇒ 27→28, Decke BLEIBT 5 — Deep Sub/Pluck/Soft Keys standen schon auf 5, Hollow Reed und Warm Strings auf 4 |
 | G5b ⭐ #1286 | Techno · House · Trance | industrialTechno, afroHouse, darkPsyTrance | 3 lead-tragend ⇒ 28→31, Decke 5→**6** (gemessen, nicht geschätzt). Vier Abweichungen vom Entwurf, alle gemessen: (1) `darkPsyTrance` nimmt **Pluck** statt Deep Sub — zwei Deep Subs wären 7 gegen eine Decke von 6 gewesen; (2) sein Bass-Patch heißt **„Void Sub"**, weil `darkMinimal` schon ein „Dark Sub" ausliefert; (3) sein Delay ist `.digital`, NICHT das Familien-Ping-Pong — `GenrePsyProgHouseTests` pinnt, dass kein anderes angebotenes Four-on-Floor-Genre Ping-Pong nimmt, und diese Pinnung ist mehr wert als die Familienähnlichkeit; (4) der `rollingSixteenths`-Sweep IST amendiert worden, genau wie diese Zeile vorgeschlagen hat — er verbot einen zweiten Besitzer, während das Doc nur „ERSTER Besitzer" behauptet, also hätte er auf korrektem Baum rot gestanden (#364) |
 | G6a ⭐ #1288 | Metal · Jazz · Soul | blackMetal, modalJazz, soulBallad | **Aufgeteilt**, weil sechs Genres die #1286-Fehlerfläche verdoppelt hätten. Drei RUBRIKEN hatten einen Arm und keine Tür (`.rock`, `.jazz`, und das Soul-Regal existierte nicht) — das ist der eigentliche Inhalt. Decke 6 bei 34 lead-tragend ⇒ Entwurf „Deep Sub" für `blackMetal` war rot (Deep Sub und Pluck standen schon auf 6) → **Warm Strings**. Vier weitere Entwurfsfehler vom neuen `$SP/prebatch.py` gefangen: Bass „Round Sub" schon vergeben (→ **Velvet Sub**), „Walk Sub" cutoff 420 hätte `Minimal Sub` die „niedrigste/dunkelste"-Behauptung genommen (→ 540), „Cold Sub" 1100 hätte `Psy Bass` GLEICHGEZOGEN (→ 1180) und seine Hüllkurve wäre KÜRZER gewesen als `Psy Bass` (→ 0.003/0.15/0.085) |
-| G6b OFFEN | Hip-Hop · R&B · Caribbean | boomBapHipHop, electroFunk, rootsReggae | Decke wird 7 bei 37 lead-tragend; danach frei: Soft Keys 6, Pluck 6, Hollow Reed 5, Choir Vox 6, Deep Sub 6, Warm Strings 5. `electroFunk` → `.popular`, NICHT `.electronic` (§2b-7). Patch-Suffixe ab 54. **Vor dem Schreiben `python3 $SP/prebatch.py` fahren** — es hat in G6a fünf Blocker gefunden, von denen vier kein Wächter gesehen hätte |
+| G6b ⭐ #1289 | Hip-Hop · R&B · Caribbean | boomBapHipHop, electroFunk, rootsReggae | Decke 6→**7** bei 37 lead-tragend. `electroFunk` → `.popular`, NICHT `.electronic` (§2b-7) — unter `.electronic` hätte es `detroitTechno`s gepinntes „einziges elektronisches Genre, das compt" gebrochen; die Reparatur wäre dann der Wächter statt der Einordnung gewesen, und das ist die teurere der beiden. `prebatch.py` fing einen Blocker: der Entwurf gab **beiden** `.popular`-Comps „Soft Keys" (8 gegen eine Decke von 7) → `electroFunk` nimmt **Pluck**. Patch-Suffixe 54–59; Bass-Cutoffs bleiben unentschieden (580 Dust · 700 Roll · 940 Snap). **Und die eine Falschbehauptung dieser Scheibe stand im WÄCHTER, nicht in der Prosa** — siehe die G6b-Zeile in §4 darunter |
 | G7 | Baroque · Classical & Romantic · Impressionist | baroqueCounterpoint, romanticNocturne, impressionistColour, contemporaryClassical | 3× `.flowFree`; `meantone-quarter` = erster Tonsystem-Vorschlag ⇒ §5-2 muss beantwortet sein |
 | G8 | Chant & Polyphony | plainchant, byzantineChant, choralPolyphony | AnchorFloor +plainchant; `pythagorean`/`edo24`/`just-major` |
 | G9 | Devotional Modal · Court Ensembles | sufiDevotional, qawwaliModal, malkaunsDrone, gamelanPelog, gagakuCourt | AnchorFloor +malkaunsDrone; Kollaps-Wächter wird TRAGEND (5↔5-Kardinalität) |
@@ -674,6 +674,28 @@ Vorgefunden, beide in `techHouse`s FX-Arm, beide seit Monaten:
    nichts rot.
 5. **„0,58 ist SECHSTER"** — die Liste, die den Rang begründen sollte, ließ `minimalTechno`s 0,66 aus; es ist der
    siebte. Derselbe Arm trägt bereits zwei ⛔-Rücknahmen über genau diese Art Rang.
+
+⛔ **G6b — DIE FALSCHBEHAUPTUNG DIESER SCHEIBE SASS IM WÄCHTER, und sie war doppelt falsch.**
+Der Kopf von `GenreBatchSixBTests` schrieb: *„after this commit EVERY rubric in the picker has at
+least one offered genre"*, und die Zusicherung darunter fuhr `Category.allCases` durch.
+`.folk` (`europeanFolk` = `klezmer`, `nearEastCentralAsia` = `oriental`) hat keine und bekommt
+keine bis G11/G12 — der Wächter war also **rot auf korrektem Baum**, die #364-Form, die diese
+Reihe schon dreimal bezahlt hat, diesmal von mir selbst eingebaut.
+
+⚠️ **Die zweite Hälfte ist die teurere: seine FEHLERMELDUNG beschrieb einen Picker, den es nicht
+gibt.** Sie sagte, die Kopfzeile der Rubrik rendere weiter und jede Zeile darunter sei dunkel.
+`WorkspaceView`s Genre-Menü iteriert seit #1275 aber über `Subcategory.allCases` und rendert eine
+Sektion nur `if !shelf.offeredGenres.isEmpty` — eine türlose Rubrik rendert **gar nichts**.
+Ein Anspruch, der für den Grund, den seine Meldung nennt, nicht scheitern KANN, ist #367; meiner
+konnte es nicht einmal in dem Moment, in dem er scheiterte. **Lehre, verschieden von der
+#364-Lehre: bevor man eine UI-Konsequenz in eine Fehlermeldung schreibt, liest man die Schleife,
+die sie rendert** — die Meldung ist das, was die nächste Sitzung für bare Münze nimmt.
+
+⭐ **Was stattdessen zugesichert wird, ist eine RICHTUNG statt einer Liste:** die Menge der
+türlosen Rubriken darf SCHRUMPFEN (G11/G12) und nie WACHSEN — `count <= 1` plus
+`allSatisfy { $0 == .folk }`. Drei Mutationen getrieben: `.popular` die Türen nehmen → beide rot;
+nur `electroFunk` entfernen → die Zähl-Zusicherung rot; `klezmer` anbieten (also `.folk` füllen,
+korrekte Zukunftsarbeit) → **grün**, was die #364-Eigenschaft ist, um die es geht.
 
 ⭐ **UND SEIT G6a GIBT ES DAFÜR EIN WERKZEUG STATT EINER REGEL: `$SP/prebatch.py <kandidaten.json>`.**
 Es rechnet aus dem AUSGELIEFERTEN Baum plus einer Kandidaten-Datei: Lead-Decke (`ceil(bearing/6)` über die

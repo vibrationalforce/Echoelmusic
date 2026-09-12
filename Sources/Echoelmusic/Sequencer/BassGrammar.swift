@@ -127,6 +127,10 @@ public extension MusicStyle {
         // #1288 G6a — three more co-owners. `drivingEighths` goes to three and four owners;
         // `offbeatEighths` to three. Each brings its OWN bass patch, which is the licence's whole
         // shape (#1286): share the figure, never the voice.
+        // #1289 G6b — three more co-owners; each brings its own bass patch.
+        case .boomBapHipHop:    return .sparseSub
+        case .electroFunk:      return .drivingEighths
+        case .rootsReggae:      return .offbeatEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths
         case .soulBallad:       return .offbeatEighths

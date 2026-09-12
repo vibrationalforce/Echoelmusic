@@ -148,6 +148,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1288 G6a — the first OFFERED metal, jazz and soul genres. `heavyMetal`, `doom` and
         // `jazz` have arms and are dark in the picker; these three are the reachable ones.
         .blackMetal, .modalJazz, .soulBallad,
+        // #1289 G6b — and the Hip-Hop, R&B and Caribbean shelves get their first doors with them.
+        .boomBapHipHop, .electroFunk, .rootsReggae,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -322,6 +324,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case soul
         // 5 · Popular & Contemporary
         case hipHop
+        /// #1289 G6b. Added together with `electroFunk`, its only resident — same law as `.soul`
+        /// one batch earlier: a shelf with nothing on it is skipped by the picker, so nothing
+        /// LOOKS wrong and the next session plans from an empty drawer.
+        case rnbPop
         case caribbean
         // 6 · Classical & Orchestral
         case classicalRomantic
@@ -342,7 +348,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .techno, .house, .trance, .synthElectro:           return .electronic
             case .rockCore, .punkCore, .metal:                      return .rock
             case .jazzCore, .soul:                                  return .jazz
-            case .hipHop, .caribbean:                               return .popular
+            case .hipHop, .rnbPop, .caribbean:                      return .popular
             case .classicalRomantic:                                return .classical
             case .europeanFolk, .nearEastCentralAsia:               return .folk
             case .loFiHazy:                                         return .underground
@@ -368,6 +374,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .jazzCore:             return "Jazz"
             case .soul:                 return "Soul"
             case .hipHop:               return "Hip-Hop"
+            case .rnbPop:               return "R&B & Pop"
             case .caribbean:            return "Caribbean"
             case .classicalRomantic:    return "Classical & Romantic"
             case .europeanFolk:         return "European Folk"
@@ -415,6 +422,13 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return .jazzCore
         case .soulBallad:
             return .soul
+        // #1289 G6b — the last three rubrics that had an arm and no door.
+        case .boomBapHipHop:
+            return .hipHop
+        case .electroFunk:
+            return .rnbPop
+        case .rootsReggae:
+            return .caribbean
         case .sciFi:
             return .cinematicAtmospheres
         case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
@@ -723,6 +737,44 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// is a Fläche; this is `.backbeat` → `.comp`, a chord played in time. `classical` is the
     /// other offered major genre and differs on both voicing and progression.
     case soulBallad
+    /// #1289 G6b — HIP-HOP, and the first OFFERED one: `trap` has an arm and is dark. The two are
+    /// separated on every axis a listener hears — `trap` is `.signature` (so `.sustained`), plain
+    /// triads at padOctave 2 with a booming sub; this is `.backbeat` → `.comp`, minor SEVENTHS at
+    /// padOctave 3, and the sub is sparse rather than booming.
+    ///
+    /// ⚠️ `progression: [0, 5]` — two roots, i → ♭VII — is shared with `deepTech` and `trap`, and
+    /// the minor-seventh array with ten arms. Neither is claimed. What this genre owns is the
+    /// COMBINATION at its tempo: a dusty two-chord loop at 90 with a 0.16 shuffle, which no other
+    /// arm carries. The "dust" is in the PATCH (low cutoff, low brightness, tape wow on the
+    /// delay), never in the chain filter — `acidTechno` is the only genre arm that enables that,
+    /// and three blocking guards now assert it roster-wide.
+    case boomBapHipHop
+    /// #1289 G6b — R&B, and the shelf is new with it. A snapping minor-seventh comp: the same
+    /// `[0, 2, 4, 6]` of minor as `boomBapHipHop` one shelf over, at a higher register and twice
+    /// the tempo, with `[0, 3, 4]` — i → IV → V, the only three-root minor turn in this batch.
+    ///
+    /// ⛔ FILED UNDER `.popular`, NOT `.electronic`, and that is a guard decision rather than a
+    /// taste one (§2b-7): `.backbeat` derives `.comp`, and `GenreBatchFourVoicingTests` pins
+    /// "`detroitTechno` is the only ELECTRONIC genre that comps". Filing an electro genre under
+    /// `.electronic` would have reddened that on correct code, and the repair would then have
+    /// been the guard's doc rather than this arm — the more expensive of the two.
+    case electroFunk
+    /// #1289 G6b — CARIBBEAN, and the first OFFERED one: `ska` and `rocksteady` have arms and are
+    /// both dark, so that shelf's header named a room nobody could enter. The skank is the genre:
+    /// `.offbeat` derives `.skank`, the chord lands between the beats, and at 76 BPM each offbeat
+    /// has a whole half-beat to itself.
+    ///
+    /// ⚠️ It shares `minor` with eight arms, the plain triad `[0, 2, 4]` with eighteen, and the
+    /// two-root `[0, 3]` with `modalJazz`, `dubTechno`, `techHouse`, `ambientPulse` and
+    /// `vaporwave` — none of it claimed. The separation from the other two offered `.skank`
+    /// genres is the scale and the voicing: `deepHouse` is minor SEVENTHS at padOctave 4,
+    /// `afroHouse` is dorian with a four-step vamp. The separation from `modalJazz`, with which
+    /// it shares the progression exactly, is the articulation and the scale.
+    ///
+    /// Its delay is the one long echo in this batch — a quarter at 68…84 is 0.71…0.88 s, well
+    /// under the 2.0 s ceiling, with the highest feedback of any offered genre after `dubTechno`.
+    /// That echo IS roots reggae; without it the skank is just a chord on the offbeat.
+    case rootsReggae
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -916,6 +968,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     public var displayName: String {
         switch self {
         // #1286 G5b — Techno / House / Trance.
+        case .boomBapHipHop:      return "Boom Bap"
+        case .electroFunk:        return "Electro Funk"
+        case .rootsReggae:        return "Roots Reggae"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -975,6 +1030,14 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         switch self {
         // #1288 G6a. None of the three names percussion (silent since #166/#167) or a
         // melody/solo (`leadDensity ≡ 0` everywhere) — the §2b-9 rule.
+        // #1289 G6b — same §2b-9 rule: no percussion (silent since #166/#167), no melody or solo
+        // (`leadDensity ≡ 0`), nothing the engine cannot do.
+        case .boomBapHipHop:
+            return "Dusty minor-seventh loop"
+        case .electroFunk:
+            return "Snapping minor-seventh comp"
+        case .rootsReggae:
+            return "Minor skank · long quarter echo"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1073,6 +1136,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // a `.backbeat` genre into `.electronic` would redden that claim on correct code, and the
         // repair then is that guard's doc, not this arm.
         case .blackMetal, .modalJazz, .soulBallad:  return .backbeat
+        // #1289 G6b. `rootsReggae` is `.offbeat` → `.skank`: the chord between the beats IS the
+        // genre. The other two comp, and BOTH are `.popular` — see `electroFunk`'s case doc for
+        // why that filing is what keeps detroitTechno's "only electronic genre that comps" true.
+        case .boomBapHipHop, .electroFunk:          return .backbeat
+        case .rootsReggae:                          return .offbeat
         case .industrialTechno, .darkPsyTrance:   return .fourOnFloor
         case .afroHouse:                          return .offbeat
         // #1285 G5 — both are drum-free by design; `.none` also derives `.sustained`
@@ -1310,6 +1378,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The BPM window a take locks within (Studio mode clamps into this).
     public var tempoRange: ClosedRange<Double> {
         switch self {
+        case .boomBapHipHop:      return 84...96
+        case .electroFunk:        return 112...124
+        case .rootsReggae:        return 68...84
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -1440,6 +1511,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The BPM a fresh take starts at, inside `tempoRange`.
     public var defaultTempo: Double {
         switch self {
+        case .boomBapHipHop:      return 90
+        case .electroFunk:        return 118
+        case .rootsReggae:        return 76
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -1504,6 +1578,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1288 G6a. 0.30 on `modalJazz` is the largest swing of any OFFERED genre (next is
         // `deepHouse` 0.16) and is the genre's identity, not a decoration. The un-offered `jazz`
         // keeps 0.34. `blackMetal` is machine-straight: a tremolo wall has nothing to shuffle.
+        // #1289 G6b. All three stay UNDER `modalJazz`'s 0.30, which its own doc and a blocking
+        // guard call the largest of any offered genre — measured, not assumed.
+        case .rootsReggae:                        return 0.20
+        case .boomBapHipHop:                      return 0.16
+        case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
         case .soulBallad:                         return 0.18
         case .blackMetal:                         return 0
@@ -1618,6 +1697,14 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // is 6, and Deep Sub and Pluck were ALREADY at 6 — so the draft's "Deep Sub" for
         // `blackMetal` would have reddened that guard on a correct batch. Warm Strings sat at 4,
         // Soft Keys and Choir Vox at 5.
+        // #1289 G6b — COMPUTED again. At 37 lead-bearing genres the ceiling rises to 7, which is
+        // what makes this batch possible at all: Deep Sub, Soft Keys and Pluck all sat at 6.
+        // ⛔ The design sheet gave BOTH `boomBapHipHop` and `electroFunk` "Soft Keys", which would
+        // have been 8 against a ceiling of 7. Electro funk takes Pluck — a snapping comp is a
+        // pluck's own timbre anyway, so the arithmetic and the ear agree here.
+        case .boomBapHipHop:      return "Soft Keys"
+        case .electroFunk:        return "Pluck"
+        case .rootsReggae:        return "Deep Sub"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -1721,6 +1808,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         switch self {
         // #1286 G5b — the beat family sketches: bass-led for the two four-on-floor genres,
         // chord-led for the house one whose identity IS the offbeat chord.
+        case .boomBapHipHop:                      return (1.14, 1.00, 0.88)
+        case .electroFunk:                        return (1.08, 1.06, 0.88)
+        case .rootsReggae:                        return (1.16, 1.02, 0.88)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -1758,6 +1848,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     public var scale: Scale {
         switch self {
         // #1286 G5b — all three modes are new to the OFFERED roster.
+        case .boomBapHipHop, .electroFunk, .rootsReggae:  return .minor
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -1869,6 +1960,27 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// switch stays total.
     public var harmonicProfile: HarmonicProfile {
         switch self {
+        case .boomBapHipHop:
+            // `[0, 2, 4, 6]` of minor = 0, 3, 7, 10 — the minor seventh, ten arms carry it. Two
+            // roots (i → ♭VII) at the LOWEST register of this batch: a boom-bap loop sits under
+            // the voice that is not there, so the chord stays out of the way.
+            return HarmonicProfile(progression: [0, 5], chordTones: [0, 2, 4, 6],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .electroFunk:
+            // The same array an octave up, with THREE roots: i → IV → V, the only minor turn in
+            // this batch that actually cadences. That is the separation from boomBapHipHop, which
+            // shares its scale, its voicing and its articulation and differs in everything else.
+            return HarmonicProfile(progression: [0, 3, 4], chordTones: [0, 2, 4, 6],
+                                   padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .rootsReggae:
+            // A plain minor triad `[0, 2, 4]` = 0, 3, 7 — eighteen arms carry it, and that is
+            // correct here: the skank is about WHEN the chord lands, never about what it is. Two
+            // roots, low register, so the echo has room above it.
+            return HarmonicProfile(progression: [0, 3], chordTones: [0, 2, 4],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
         case .blackMetal:
             // DEGREES resolved: `[0, 4, 7]` of hungarianMinor `[0,2,3,6,7,8,11]` = 0, 7, 12 —
             // root, fifth, octave. A POWER CHORD, shared on purpose with `punk`/`rock`/
