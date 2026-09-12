@@ -30720,3 +30720,35 @@ liefen zum Zeitpunkt des Schreibens noch.
 
 **Offen, Founder (unverändert):** §5-2 (blockiert G7 UND `rebetikoModal`) · §5-4 · §5-5 ·
 `varyFloor`-Hörprobe. Dazu der angebotene TestFlight-Deploy — #1269–#1290 sind auf keinem Gerät.
+
+## 2026-09-12 — #1291: der DRITTE Ablauf derselben harten Liste, plus Gate-Lesung 6046–6049
+
+**Befund:** `MusicStyleTests.testDrumFreeStylesAreExactlyTheContemplativeSet` (nicht-blockierendes
+Bündel) sicherte eine harte Liste von SIEBEN trommelfreien Genres zu. Heute sind es **zehn** —
+`glacialField`/`slowBloom` kamen mit #1285, `celticAir` mit #1290. **Die Liste ist damit zum
+DRITTEN Mal abgelaufen**, und der Vermerk, der darüber stand, protokollierte den ersten
+(„#254 batch 2") und zitierte sogar den Kommentar daneben, der Wachstum vorhersagte
+(*„this set grows as they're added"*) — während die Zusicherung ein Literal blieb. **Die damalige
+Reparatur war, das Literal zu ERWEITERN, und genau das hat die nächsten zwei garantiert.**
+
+⭐ **Ersetzt durch die Eigenschaft, für die die Liste stellvertretend stand, in drei Teilen, von
+denen keiner altert:** (1) die benannten ruhigen Genres sind WEITERHIN trommelfrei — ein
+TEILMENGEN-Test, also kostet eine neue Fläche nichts, und er fängt die eine Hälfte, für die eine
+Liste gut ist (`contemplation` bekommt still einen Beat) · (2) **kein trommelfreies Genre trägt
+eine `BassGrammar`-Figur** — jede Figur IST ein Groove, also fängt das die eigentliche Sorge des
+alten Kommentars („ein Tanz-Genre schleicht sich nach `.none`"), die eine Liste nur zufällig fing ·
+(3) trommelfrei bleibt eine MINDERHEIT des Rosters. Zwei Mutationen getrieben: `celticAir` bekommt
+eine Figur → Teil 2 rot; `contemplation` bekommt `.backbeat` → Teil 1 rot.
+
+⚠️ **Warum es nie auffiel: `Tests/EchoelmusicTests` wird von KEINEM Gate kompiliert (#208).** Der
+Vermerk sagte das selbst („in a suite that cannot fail a merge") und die Liste lief trotzdem
+zweimal weiter ab. Das ist die #818-Lehre in einem Bündel ohne Gate: eine Zahl (oder eine Liste)
+ist ein Datum, und ohne Gate sagt es niemand.
+
+**Gate-Lesung, alle vier Genre-Batches:** `Build for Testing` = **success** auf 6046 (`735f21f`,
+#1286) · 6047 (`d53141b`, #1287) · 6048 (`07119f2`, #1288) · 6049 (`862b2d1`, #1289). Alle vier
+neuen Wächter-Dateien kompilieren also im blockierenden Bündel. `Run Tests` = failure auf allen,
+Clone 2 stirbt (`NSMachErrorDomain Code=-308` bzw. Launch-Fehler), die chronische #396-Form;
+`gh-test-verdict.py` auf 6048: **0 compile-error lines, 0 TEST FAILURES, 0 TESTS SKIPPED, 133
+Tests beobachtet bestanden** — im `tail -200`-Fenster, also **„kompiliert nachweislich, Ausführung
+unbelegt"** (#445/#807), nicht „grün".

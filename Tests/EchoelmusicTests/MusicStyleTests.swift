@@ -136,25 +136,43 @@ final class MusicStyleTests: XCTestCase {
         }
     }
 
-    func testDrumFreeStylesAreExactlyTheContemplativeSet() {
-        // Audit B5: every beat-driven genre carries its groove; only the
-        // contemplative genres stay drum-free by design. Widened by G2 (founder
-        // 2026-07-24 "erfinde noch passende dazu. Ambient-Meditation-drift-
-        // contemplation") — new ambient-family genres are `.none`-beat Flächen, so
-        // this set grows as they're added (see the offered-palette test comment).
-        // ⚠️ THIS LITERAL WENT STALE THE MOMENT #254 batch 2 ADDED TWO AMBIENT GENRES, and the
-        // comment above already anticipated growth ("this set grows as they're added") while the
-        // assertion was a hard list — so it reddened, in a suite that cannot fail a merge (#208).
-        // Extended rather than loosened: the invariant that matters is "drum-free == the
-        // contemplative family plus classical", and naming the members is what makes a new
-        // beat-driven genre sneaking into `.none` visible.
+    func testNoGrooveGenreHidesInTheDrumFreeSet() {
+        // Audit B5: every beat-driven genre carries its groove; the drum-free ones are the calm
+        // Flächen plus `classical`.
+        //
+        // ⛔ THIS ASSERTION WAS A HARD LIST OF SEVEN AND IT HAS NOW GONE STALE THREE TIMES —
+        // #254 batch 2 (recorded in the note that stood here), then #1285 (`glacialField`,
+        // `slowBloom`) and #1290 (`celticAir`). The note even quoted the surrounding comment
+        // predicting growth *"this set grows as they're added"* while the assertion stayed a
+        // literal, and the repair then was to EXTEND the literal — which is what guaranteed the
+        // next two. A list of members that the roster is designed to grow is a date, not a fact
+        // (#818), and this suite is compiled by NO gate (#208), so nothing ever said so.
+        //
+        // ⭐ REPLACED BY THE PROPERTY THE LIST WAS STANDING IN FOR, in three parts, none of
+        // which goes stale when a calm genre is added:
+        //   1. The named calm genres are STILL drum-free. That is the half a list protects —
+        //      `contemplation` silently acquiring a beat — and it is a SUBSET check, so a new
+        //      Fläche costs nothing.
+        //   2. No drum-free genre carries a `BassGrammar` figure. Every figure IS a groove, so
+        //      this is what actually catches a dance genre mis-filed as `.none` — the fear the
+        //      old comment names, and the one a list only caught by accident.
+        //   3. Drum-free stays a MINORITY of the roster, so a wholesale drift to `.none` is
+        //      still visible.
         let drumFree = MusicStyle.allCases.filter { !$0.isBeatDriven }
-        XCTAssertEqual(Set(drumFree),
-                       [.classical, .stillMeditation, .selfObservation, .drift, .contemplation,
-                        .deepDrone, .ambientPulse],
-                       "drum-free = classical + the contemplative family (meditation, "
-                       + "self-observation, drift, contemplation, deep drone, ambient pulse), "
-                       + "nothing else")
+        for calm in [MusicStyle.classical, .stillMeditation, .selfObservation, .drift,
+                     .contemplation, .deepDrone, .ambientPulse] {
+            XCTAssertTrue(drumFree.contains(calm),
+                          "\(calm) acquired a beat archetype; it is a Fläche by design")
+        }
+        let withAFigure = drumFree.filter { $0.bassGrammar != nil }
+        XCTAssertTrue(withAFigure.isEmpty, """
+            \(withAFigure.map(\.rawValue)) are filed `.none` (drum-free) and still own a bass \
+            FIGURE. Every figure is a groove, so this is a groove genre hiding in the calm set — \
+            the exact mis-filing the retired hard list was meant to catch.
+            """)
+        XCTAssertLessThan(drumFree.count, MusicStyle.allCases.count / 2,
+                          "more than half the roster is drum-free (\(drumFree.count) of "
+                          + "\(MusicStyle.allCases.count)) — the beat archetypes are draining away")
         // The two signature beats keep their hand-built builders.
         XCTAssertEqual(MusicStyle.dubTechno.beatArchetype, .signature)
         XCTAssertEqual(MusicStyle.trap.beatArchetype, .signature)
