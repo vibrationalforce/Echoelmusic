@@ -258,6 +258,28 @@ any edit to `CLAUDE.md`, the website, the store text or this file** — the guar
 is one nothing else watches, and the CI ceiling guard does not even run on a `CLAUDE.md`-only
 commit (#1176).
 
+**THE FIFTH SHAPE IS NOT A ROTTEN NEEDLE AT ALL — IT IS A NEEDLE THAT DOES NOT COMPILE (#1280),
+and every checker above is blind to it because they all read needles as DATA.** #1275 wrote a
+Swift key path, `flatMap(\.genres)`, inside a plain `"…"` literal. `\.` is not a valid escape.
+The Python transcription verified that all four needles occur in `Sources/` — they did —
+dead-needles, count-pins and foreign-needles were clean, and a mutant run passed. `Build for
+Testing` then failed and **`Tests/CISmoke` did not compile for three commits**, so none of those
+guards ran. §0 grades a needle's CONTENT; nothing graded the Swift carrying it.
+
+```
+python3 scripts/swift-escapes.py            # 0 = clean · 1 = a literal will not compile
+python3 scripts/swift-escapes.py --selftest # after touching it
+```
+
+**Run it in the same breath as `dead-needles.py`** — it is one `grep`-speed pass over `Sources/`
+and `Tests/`, and it is the cheapest thing in this file that can save a five-minute CI round
+trip. ⚠️ Its two false-alarm classes are LEGAL Swift that looks exactly like the defect, and both
+shipped in a draft: `\` before a newline is the line continuation of a `"""` message (1.3 MB of
+hits), and `\.` inside a `\( … )` interpolation is a key path in code (28 hits, every one
+correct). Validated against the tree that carried the defect — exactly 1 finding there, 0 after
+the repair. ⚠️ **A clean run is NOT evidence that the bundle compiles**; it checks one error
+class, and only `Build for Testing` answers the other question (§5).
+
 **A count pin is the other shape that rots silently, and it rots the same way (#903/#904).**
 `XCTAssertEqual(occurrences(of: "…", in: code), N)` goes stale when the CODE changes
 CORRECTLY and the number does not follow. Three measured cases, none of them noticed by CI:
