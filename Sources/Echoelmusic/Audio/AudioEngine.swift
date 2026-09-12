@@ -2659,6 +2659,58 @@ public final class AudioEngine {
             // `on 3/5` mit edge == session == out (Hz/ch) und KEIN Absturz bei `on 4/5`.
             logMonitorOutcome("on: prepared before format read (#1251)", level: .info)
             masterEngine.prepare()
+            // ⭐ #1272 — HYPOTHESIS #5 IS REFUTED BY A DEVICE LOG, SO #6 IS BUILT. The
+            // founder's v10.79.469 (2589) ladder ran `prepare()` and the VERY NEXT line was
+            // `input format from session fallback (node unusable — #823: node 0.0 Hz/2 ch,
+            // session 48000.0 Hz/1 ch)`. So `prepare()` does NOT give the I/O unit its input
+            // scope — the node still hands back the 0 Hz placeholder, exactly as it did before
+            // #1251. That is a MEASUREMENT, not a reading: the two lines are adjacent in the
+            // log, with nothing between them that could have re-staled the node.
+            //
+            // `prepare()` STAYS (it costs nothing, and its rung still says whether control
+            // died inside it). What changes is that the engine is STARTED here, under the
+            // already-claimed `.playAndRecord` route, BEFORE anything touches the input node
+            // — the one state in which `inputNode`'s format is the hardware's and not a guess
+            // (#954b reviewer, HYPOTHESIS #6). #823's own reasoning predicts it: an engine
+            // started from the playback-only launch graph has no input scope on its I/O unit,
+            // so an engine started under the RECORD route is what builds one.
+            //
+            // ⚠️ THE SURGERY BELOW THEN RUNS ON A RUNNING ENGINE, which is the opposite of what
+            // #831/#835 concluded — written plainly so the NEXT device log discriminates rather
+            // than a later session re-deriving it. What #858 indicted is the stop-REWIRE-start
+            // cycle, whose `start()` rebuilds the I/O unit under a graph that changed while it
+            // was down; attaching and connecting on an engine that is ALREADY running is a
+            // different, documented-legal operation, and the reviewer who proposed #6 said so
+            // knowing #858. Read the next log this way: an abort at `on 2/5` or `on 3/5`
+            // instead of `on 4/5` means THIS line moved it and #831/#835 were right after all.
+            //
+            // ⚠️ A FAILED START DOES NOT ABORT THE TOGGLE — it falls through to the
+            // stopped-engine path this method has always taken. Two reasons, and the second is
+            // not cosmetic: (a) that path is still complete and guarded, so refusing buys
+            // nothing; (b) `on 4/5 SKIPPED: engine was not running` must stay REACHABLE —
+            // `TheEngineLifecycleSpeaksInTheDiagLogTests` claim 16 requires a numbered step to
+            // carry BOTH a taken and a skipped emitter, and a pre-start that either always
+            // succeeds or always returns would redden that guard on a correct tree (#364).
+            //
+            // ⚠️ IF THE ENGINE WAS DOWN BEFORE THE TOGGLE AND THIS START SUCCEEDS, a later
+            // bail-out leaves it RUNNING under the released playback route. Deliberate: that is
+            // the state the app wants anyway (`audioEngine.start()` at launch), and
+            // `restoreEngineIfStranded` has never stopped an engine — only started one. The
+            // alternative (teaching four exits to stop it) would be a second decision in one
+            // slice, on the most crash-prone path in the app.
+            //
+            // NEEDS-FOUNDER-VERIFY: Master → „Audio input“ → Live monitoring AN — das Log muss
+            // „on: starting engine before the input read“ zeigen, danach `on 3/5` mit
+            // edge == session == out (Hz/ch) und KEIN „node unusable“.
+            logMonitorOutcome("on: starting engine before the input read (#1272)", level: .info)
+            var monitorPreStarted = false
+            do {
+                try masterEngine.start()
+                monitorPreStarted = true
+            } catch {
+                logMonitorOutcome("on: the pre-read start did not take (\(error)) — "
+                                  + "continuing on the stopped-engine path (#1272)", level: .warning)
+            }
             logMonitorOutcome("on: touching the input node + reading its format", level: .info)
             let input = masterEngine.inputNode
             var inFmt = input.inputFormat(forBus: 0)
@@ -2710,8 +2762,12 @@ public final class AudioEngine {
             // candidates that cost nothing in route or battery terms. Recorded here first,
             // because that cycle already shipped one unverified hypothesis and stacking a
             // second would have made the next device log undecidable. ⭐ #5 IS BUILT SINCE
-            // #1251 (the rung above the format read); #6 stays recorded, to be tried ONLY if
-            // a device log shows #5 did not close the family:
+            // #1251 (the rung above the format read). ⛔ AND A DEVICE LOG THEN SHOWED #5 DID
+            // NOT CLOSE THE FAMILY — v10.79.469 logs the prepare rung and, on the next line,
+            // the node still at 0.0 Hz — so its own stated condition fired and **#6 IS BUILT
+            // SINCE #1272**, at the same site. Both stay written out below: #5's call is still
+            // in the code, and a hypothesis that was tried and failed is worth more to the
+            // next triager than one that was silently deleted.
             //   · HYPOTHESIS #5 — `masterEngine.prepare()` between the claim and the format
             //     read. It allocates render resources and builds the I/O unit against the
             //     now-active `.playAndRecord` session WITHOUT starting it, so the format read
@@ -2723,7 +2779,9 @@ public final class AudioEngine {
             //     first, then attach/connect), where `inputNode.outputFormat(forBus: 0)` is
             //     definitively authoritative. Connecting nodes on a running engine is legal
             //     API and is a DIFFERENT operation from the stop-rewire-start that #858
-            //     indicted, so #858 does not rule it out.
+            //     indicted, so #858 does not rule it out. ⭐ BUILT (#1272) — the start sits
+            //     between `prepare()` and the format read; the long reasoning, including how
+            //     to read the next log against #831/#835, is at that site.
             //
             // ⭐ THE SECOND UNCATCHABLE ABORT THIS BLOCK REGISTERED (#954b, reviewer S4) IS
             // CLOSED — #956. It read: "the tap at rung 5/5 is installed with `format: inFmt`",
@@ -3101,7 +3159,14 @@ public final class AudioEngine {
             monitorLevelHistory.removeAll(keepingCapacity: true)
             feedbackGuardActive = false
             resetNotchDefence()
-            if wasRunning {
+            // #1272: `|| monitorPreStarted` — the pre-read start makes the engine RUN even
+            // where `wasRunning` is false, and rung 4/5 is the line that prints the
+            // connected-vs-node-vs-session comparison the whole crash family is triaged from.
+            // Without this the healthy new path would log `4/5 SKIPPED: engine was not
+            // running` while the engine was demonstrably running — the ladder lying about its
+            // own state, which is the #878/#882 defect. `start()` on an already-running engine
+            // is a documented no-op, so the taken branch stays correct in both cases.
+            if wasRunning || monitorPreStarted {
                 armTimingInstrument()
                 // ⛔ #862b (reviewer E1) — THE SECOND RUNGLESS `masterEngine.start()`, and
                 // #862 CLAIMED IN THREE PLACES THAT `restartOrDegrade` WAS THE ONLY ONE.
