@@ -31519,3 +31519,16 @@ Founder-gated, unverändert BERICHTET (`Resources/iOS/Info.plist`):
 („external audio interfaces" ohne Code), `NSBonjourServices` (sieben von neun Einträgen ohne
 Backing). Keiner ist eine Ablehnung. Das Compile-Gate geht seit #1308 nicht mehr rot, wenn
 der Founder sie entfernt.
+
+### Gate-Lesung: v10.79.472 ist HOCHGELADEN
+
+`TestFlight` Lauf **#2592** auf `3547ba2`: **completed success**, und die Schritte einzeln
+gelesen statt nur die Conclusion — `Preflight` success · `iOS` success mit `Archive` success und
+**`Export & Upload to TestFlight` success** · `Compile Check` success · `Summary` success. Der
+`Error Summary`-Schritt ist übersprungen (er läuft nur bei Fehler), `Upload Build Logs` success.
+
+Damit ist der Aufräum-Mandat-Bogen geschlossen: die vier Founder-Rücknahmen (#1301–#1305b), die
+sechs Wächter-Reparaturen dahinter (#1306–#1311) und der Deploy sind in EINEM Build auf dem
+Gerät des Founders angekommen. Offen bleibt allein die Geräte-Sitzung — die 8-Punkte-Checkliste
+in der Notiz und die 132 `NEEDS-FOUNDER-VERIFY`-Bitten, die `python3 scripts/founder-verify.py`
+druckt.
