@@ -50,6 +50,27 @@ public enum BassGrammar: String, CaseIterable, Sendable, Codable {
     /// Dark minimal: ONE root held half the bar, then the fifth short on "3&" (phase 10) and
     /// nothing else. Weight, not a line.
     case sparseSub
+    /// The BORDUN: the root held three quarters, then the fifth for the last one — and no
+    /// silence anywhere. It is the only figure here whose hits cover all sixteen steps, and
+    /// that is its identity rather than a detail: a bowed drone does not stop between notes.
+    ///
+    /// ⚠️ AUTHORED AHEAD (#1294) for `nordicFiddle`, exactly as `rollingSixteenths` waited for
+    /// `psyProgHouse` through S1…S5. `GenreBassGrammarTests.testEveryGrammarIsOwnedOrAuthoredAhead`
+    /// lists it, so the day a genre claims it that list goes red on the right line.
+    ///
+    /// ⛔ NOT NAMED `pedalDrone`, though the design catalogue writes that in the bass column for
+    /// this genre. `pedalDrone` is the name the same catalogue gives a planned `PadGrammar` case,
+    /// in the PAD column of a dozen drone genres — one spelling for two enums is the #416 shape
+    /// waiting to happen, and whoever wrote the second one would have inherited the confusion.
+    /// The bass figure is a bordun; the pad figure is a pedal. Two facts, two names.
+    ///
+    /// ⚠️ AND IT IS NOT A DOUBLE STOP, which is what the catalogue line describes ("droning
+    /// double-stop fifths"). The bass role plays ONE pitch at a time — `Hit.fifth` chooses the
+    /// fifth INSTEAD of the root, never beside it — so root-then-fifth without a gap is the
+    /// honest approximation of a bowed drone pair, and the doc says so rather than claiming the
+    /// interval. A real double stop needs two simultaneous bass notes, which is a different
+    /// change to a different type.
+    case heldRoot
 
     /// One hit of a figure. `phase` is the 16-step bar position; `length` in steps (≥ 1, the
     /// #205/#176 no-zero-length law); `level` scales the section velocity (1 = the section's own);
@@ -98,6 +119,12 @@ public enum BassGrammar: String, CaseIterable, Sendable, Codable {
         case .sparseSub:
             return [Hit(phase: 0, length: 8, level: 1.0),
                     Hit(phase: 10, length: 2, level: 0.8, fifth: true)]
+        case .heldRoot:
+            // The fifth on the LAST quarter, the same turnaround idea `drivingEighths` uses on
+            // the last "&": the bar leads back instead of treadmilling on one note. Softer than
+            // the root so the drone stays the ground and the fifth reads as its answer.
+            return [Hit(phase: 0, length: 12, level: 1.0),
+                    Hit(phase: 12, length: 4, level: 0.8, fifth: true)]
         }
     }
 }

@@ -88,15 +88,56 @@ final class GenreBassGrammarTests: XCTestCase {
     }
 
     /// Every figure is either owned by an OFFERED genre or authored ahead for a planned one.
-    /// `rollingSixteenths` waited for S5 (`psyProgHouse`) and is owned since that landed; the
-    /// authored-ahead set is EMPTY today. A figure nobody will ever own is dead code with a name.
+    /// `rollingSixteenths` waited for S5 (`psyProgHouse`) and is owned since that landed.
+    /// `heldRoot` is the one waiting today (#1294, for `nordicFiddle` in G11b of the Genre-Welt
+    /// plan). A figure nobody will ever own is dead code with a name.
+    ///
+    /// ⚠️ The second assertion is the one that fires when the wait ENDS: the day `nordicFiddle`
+    /// ships with `bassGrammar: .heldRoot`, this list is stale and goes red HERE rather than
+    /// somewhere confusing. That is the point of naming the waiting figure instead of widening
+    /// the first assertion to `allCases`.
     func testEveryGrammarIsOwnedOrAuthoredAhead() {
         let owned = Set(MusicStyle.offered.compactMap(\.bassGrammar))
-        let authoredAhead: Set<BassGrammar> = []
+        let authoredAhead: Set<BassGrammar> = [.heldRoot]
         XCTAssertEqual(owned.union(authoredAhead), Set(BassGrammar.allCases),
                        "a figure is neither owned by an offered genre nor listed as authored ahead")
         XCTAssertTrue(owned.isDisjoint(with: authoredAhead),
                       "a figure listed as authored ahead is already owned — update this test")
+    }
+
+    /// ⭐ #1294 — the BORDUN's identity is CONTINUITY, so that is what is pinned, not its two
+    /// lengths. `heldRoot` must cover all sixteen steps with no gap, and it must be the ONLY
+    /// figure that does: a bowed drone that stops between notes is not a drone, and a second
+    /// gapless figure would mean the property no longer identifies this one.
+    ///
+    /// ⛔ The 12/4 split itself is deliberately NOT pinned (#364): a designer may re-balance
+    /// where the fifth answers, exactly as this file's header already refuses to pin the level
+    /// numbers inside a figure. What may not change is the gaplessness and the fifth.
+    func testTheBordunIsTheOnlyGaplessFigure() {
+        for grammar in BassGrammar.allCases {
+            let covered = grammar.hits.reduce(0) { $0 + $1.length }
+            if grammar == .heldRoot {
+                XCTAssertEqual(covered, 16, """
+                    `heldRoot` leaves \(16 - covered) step(s) silent. It is the bordun \
+                    — the one figure whose whole identity is that the low end never \
+                    stops. If the figure genuinely wants a gap it is no longer this \
+                    case; author another one.
+                    """)
+                XCTAssertEqual(grammar.hits.first?.phase, 0, "a drone starts on the downbeat")
+                XCTAssertTrue(grammar.hits.contains { $0.fifth }, """
+                    The bordun answers the root with its fifth. Without one this is a \
+                    single held note for sixteen steps, which the pre-grammar walk \
+                    already plays at a resting body — the figure would buy nothing.
+                    """)
+            } else {
+                XCTAssertLessThan(covered, 16, """
+                    `\(grammar.rawValue)` now covers the whole bar too, so the "only \
+                    gapless figure" property no longer identifies `heldRoot` — pick \
+                    the property that does, or give the two figures different \
+                    ground (#1294).
+                    """)
+            }
+        }
     }
 
     // MARK: - The figure reaches the take
