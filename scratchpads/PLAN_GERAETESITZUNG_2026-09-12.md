@@ -91,3 +91,35 @@ Was HEUTE gekoppelt ist, gemessen, damit die nächste Sitzung nicht neu rät:
     G1 (Eingangs-Aufzählung)  →  G4 (Kamera sichtbar)  →  Deploy  →  Log lesen  →  G3 schließen
 
 G2 braucht keinen Bau. G5 ist Bestandsaufnahme, kein Bau.
+
+---
+
+## NACHTRAG 2026-09-12, nach dem Bauen — was aus G1 und G4 geworden ist
+
+**G1 = #1296 (`6403f1c`).** Nicht die Route repariert, sondern die AUSSAGE. Der Manager
+kannte den Gerätenamen die ganze Zeit (`outputRouteName`, weil die Kopfhörer an der HypeMiC
+hängen und die USB-Box damit die AUSGABE-Route ist); neu ist `outputKind`, klassifiziert vom
+SELBEN reinen Mapper wie ein Eingang. Der Leerzustand nennt den Namen jetzt in beiden Lagen.
+**Keine Audioroute geändert, kein vierter `RecordRouteOwner`** — die Option, beim Öffnen des
+Blatts `.playAndRecord` zu beanspruchen, ist bewusst VERWORFEN: `recordOptions` trägt
+`.defaultToSpeaker`, das kann die Ausgabe mitten in einer Performance hörbar umschalten,
+bloß weil jemand ein Blatt aufmacht. Wächter `TheEmptyInputStateNamesTheDeviceTests`.
+
+**G4 = #1297 (`b5a533e`).** Einmal-Riegel `visualCameraIntroduced`: der erste Face-Start hebt
+`visualCameraOpacity` auf 0,6 und setzt den Riegel. Der GESPEICHERTE Default bleibt 0,0 —
+sonst läge die Frontkamera über einer Kameralicht-Aufnahme (Finger auf der RÜCK-Linse), einer
+Gurt-Aufnahme und der Simulation. Und die Hebung passiert NICHT bei jedem Start, sonst wäre
+sie ein Override der Wahl eines Performers, der die Ebene auf 0 gedreht hat. Die Hebung steht
+VOR `faceExpression.start`, weil der Publisher ein Bild nur ablegt, solange ein Renderer
+eines will. Wächter `TheFaceSourceShowsTheCameraOnceTests`.
+
+**G2 (Granular + Harmonizer auf dem Eingang) bleibt unverändert GEBAUT und hängt an G1.**
+Beide Stufen sitzen im selben Input-Sheet, beide default AUS, ein gemeinsamer
+`pushVoicePreset()` trägt beide. Nichts neu zu bauen — was fehlte, war der Weg dorthin.
+
+**G3 (Monitoring) braucht ein Gerät, nicht Code.** Die Lebenszyklus-Leiter schreibt `on 1/5`
+… `on 5/5` ins `echoel_diag.log`; Stille zwischen zwei Sprossen ist der Befund. Ohne dieses
+Log ist jede weitere Monitoring-Arbeit geraten.
+
+**Zwei Geräte-Fragen stehen jetzt in `founder-verify.py`** (beide unter UI): die Leerzustands-
+Zeile mit Gerätenamen, und ob 0,6 die richtige Kamera-Mischung ist.

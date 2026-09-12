@@ -31000,3 +31000,63 @@ schlucken Build-Fehler (`|| true`, fehlendes `set -o pipefail`); `ci.yml:290-291
 **Geräteverifiziert: nichts.** Der Monitoring-Pfad ist code-verifiziert; die
 `isInputConnToConverter`-Familie ist nicht geschlossen, sie ist an dieser einen Stelle
 entschärft. „Kein Absturz" ist der Fix; „Monitoring läuft" ist die nächste Frage.
+
+## 2026-09-12 — Geräte-Befunde auf v10.79.470: #1296 (Eingangsliste) + #1297 (Frontkamera)
+
+**Auslöser.** Founder-Bericht nach der ersten Sitzung auf Build 2590 mit Apogee HypeMiC über
+USB und Kopfhörern in deren Buchse, mit Video. ⚠️ **Das Video konnte in dieser Web-Session
+nicht dekodiert werden** — kein ffmpeg, kein cv2/imageio/PyAV, Playwright-Chrome fehlt. Alles
+hier stammt aus dem TEXT plus eigener Messung am Quelltext; was das Video zusätzlich zeigt,
+fehlt hier. Sechs Punkte, wörtlich gesichert in
+`scratchpads/PLAN_GERAETESITZUNG_2026-09-12.md` (`8008bba`) — das war Punkt 6 („Vermeide das
+die besprochenen Dinge verloren gehen") und stand ZUERST, vor jedem Code.
+
+**#1296 (`6403f1c`) — die leere Eingangsliste nennt das Gerät.** Gemessen: die Hardware war in
+Ordnung und der Code verhielt sich wie entworfen. `AVAudioSession.availableInputs` ist `nil`,
+solange die Kategorie kein Recording erlaubt; die Session steht per Default auf `.playback`
+(#298, bewusst), und die Tür geht gegen genau diesen Default auf. **Die Liste war für JEDEN
+Eingang leer, nicht für diesen.** Der Dateikopf von `AudioInputPickerView` beschreibt das seit
+#298 — und der Founder hat trotzdem „nicht erkannt" gelesen. **Die Lücke war die AUSSAGE, nicht
+die Route.** Neu ist `outputKind` (vom SELBEN reinen Mapper wie ein Eingang klassifiziert) plus
+zwei Leerzustands-Zweige, die den Namen nennen: bei Monitoring AUS als Einladung, bei
+Monitoring AN als Hardware-Rat (dort ist die Session bereits `.playAndRecord`, eine leere Liste
+also eine echte Anomalie). Kind-Gate `.usb || .wired` — den eingebauten Lautsprecher zu nennen
+wäre Rauschen, Bluetooth einzuladen widerspräche der Fußzeile desselben Blatts.
+**VERWORFEN und protokolliert:** einen vierten `RecordRouteOwner` beim Sheet-Öffnen zu
+beanspruchen. `recordOptions` trägt `.defaultToSpeaker` — das kann die AUSGABE-Route mitten in
+einer Performance hörbar umschalten, bloß weil jemand ein Blatt aufmacht.
+
+**#1297 (`b5a533e`) — die Face-Quelle blendet die Frontkamera EINMAL ein.** Gemessen: kein
+Glied der Kette war kaputt. K5 (#1262) hat sie durchgebaut (ARKit → `CameraFrameSlot` →
+Kamera-Durchgang im Renderer, beide Montagen binden die drei Schlüssel), und
+`visualCameraOpacity` liegt bei 0,0, mit einem Zahlenfeld tief im `visualPanel` als einziger
+Tür. Das Bild war auf jedem Frame da und vollständig durchsichtig. Einmal-Riegel
+`visualCameraIntroduced` hebt beim ERSTEN Face-Start auf 0,6. **Die zwei verworfenen Formen
+sind der Inhalt der Entscheidung:** den gespeicherten Default zu heben legte die Frontkamera
+über Kameralicht-, Gurt- und Simulations-Aufnahmen; bei jedem Start zu heben überschriebe einen
+Performer, der die Ebene bewusst auf 0 gedreht hat. Die Hebung steht VOR
+`faceExpression.start`, weil der Publisher ein Bild nur ablegt, solange ein Renderer eines
+will.
+
+**Zwei Wächter, beide transkribiert (§0, keine Swift-Toolchain hier).**
+`TheEmptyInputStateNamesTheDeviceTests` — 9 Ansprüche, 6 rot am Elternteil als EIN Befund
+(#486), 3 Gegengewichte grün auf beiden Bäumen, 7 Mutationen je auf ihren eigenen Anspruch.
+`TheFaceSourceShowsTheCameraOnceTests` — 9 Ansprüche, 7 rot am Elternteil, 2 Gegengewichte
+(der gespeicherte 0,0-Default und die eine „Camera layer"-Tür — genau die zwei Tatsachen, die
+den Riegel ehrlich statt zu einem versteckten Default machen), 7 Mutationen.
+
+**⛔ ZWEI EIGENE FEHLER, beide von der Transkription gefangen und beide im Wächter-Kopf
+protokolliert statt still repariert.** (1) Der #1296-Kopf behauptete in seiner ersten Fassung,
+`SourceText.codeOnly` sei dort tragend — gemessen kippen **0 von 18** Urteilen
+roh-gegen-gestrippt; es ist prophylaktisch. Der falsche Satz ist die Sorte, die in den nächsten
+Kopie-Wächter abgeschrieben würde, und er versagt in der beruhigenden Richtung. (2) Ein achter
+Anspruch des #1297-Wächters war ein Negativ-Scan auf die zurückgenommene Doc-Zeile — die
+**#491-Falle in Reinform**: die Zeile ist ein Kommentar, `codeOnly` streift sie (die Nadel
+konnte auf KEINEM Baum treffen), und roh gemessen war sie auf dem KORREKTEN Baum rot, weil die
+Reparatur den zurückgenommenen Satz innerhalb ihrer eigenen Rücknahme zitiert. Gelöscht vor
+dem ersten Lauf.
+
+**Was NICHT gebaut wurde und warum.** G2 (Granular + Harmonizer auf seiner Stimme) ist seit
+#841/#849 GEBAUT und hing nur an G1 — nichts neu zu bauen, was fehlte, war der Weg dorthin.
+G3 (Monitoring) braucht ein `echoel_diag.log` mit der `on 1/5`…`on 5/5`-Leiter, nicht Code;
+ohne dieses Log ist jede weitere Monitoring-Arbeit geraten.

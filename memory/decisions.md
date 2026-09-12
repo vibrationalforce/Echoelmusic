@@ -1648,3 +1648,65 @@ auf `main`. `Xcode Compile Check` blieb die ganze Zeit grün, weil er nur `Sourc
 Aufgerufenen nicht sehen.** Muster: `$SP/t1295.py`.
 
 **Review:** 2026-10-12.
+
+### 2026-09-12 — Ein Gerätebefund „X wird nicht erkannt" wird zuerst als AUSSAGE-Defekt geprüft
+
+**Kontext.** Der Founder testete v10.79.470 (Build 2590) mit einer Apogee HypeMiC über USB und
+Kopfhörern in deren eigener Buchse und berichtete: „Apogee hypemic wird in dieser Version nicht
+erkannt". Die naheliegende Lesart ist ein Enumerationsfehler im Audio-Stack.
+
+**Messung.** Die Hardware war in Ordnung und der Code verhielt sich wie entworfen.
+`AVAudioSession.availableInputs` ist `nil`, solange die Kategorie kein Recording erlaubt; die
+Session steht per Default auf `.playback` (#298, bewusst — `.playAndRecord` erzwingt bei
+Bluetooth die HFP-Abwertung), und die Tür geht gegen genau diesen Default auf. **Die Liste war
+für JEDEN Eingang leer, nicht für diesen.** Der Dateikopf von `AudioInputPickerView` beschreibt
+das seit #298 im Detail — und der Founder hat trotzdem „nicht erkannt" gelesen, weil der
+Leerzustand selbst nichts über das Gerät sagte.
+
+**Entscheidung.** Die AUSSAGE reparieren, nicht die Route. Die naheliegende Reparatur — beim
+Öffnen des Blatts die Record-Route beanspruchen — hätte einen vierten `RecordRouteOwner`
+gebraucht und `.playAndRecord` mit `.defaultToSpeaker` gehoben, also die AUSGABE-Route mitten
+in einer Performance hörbar umschalten können, bloß weil jemand ein Blatt aufmacht. Der Manager
+kannte den Gerätenamen die ganze Zeit (`outputRouteName` — die Kopfhörer hängen an der HypeMiC,
+also IST die USB-Box die Ausgabe-Route); neu ist nur `outputKind`, klassifiziert vom SELBEN
+reinen Mapper wie ein Eingang.
+
+**Erwartetes Ergebnis.** #1296: keine Audioroute geändert, kein Besitzer-Case, die elf Wächter
+am #299-Set unberührt — und „nicht gelistet" liest sich nicht mehr als „nicht erkannt".
+**Review:** 2026-10-12.
+
+### 2026-09-12 — Eine unsichtbare Fähigkeit wird mit einem EINMAL-Riegel eingeführt
+
+**Kontext.** „Die frontkamera wird nicht eingeblendet für die Mimik und gestig Steuerung."
+Gemessen war kein Glied der Kette kaputt: K5 (#1262) hat sie durchgebaut, und
+`visualCameraOpacity` liegt bei 0,0 gespeichert, mit einem Zahlenfeld tief im `visualPanel` als
+einziger Tür. Das Bild war auf jedem Frame da und vollständig durchsichtig.
+
+**Die zwei verworfenen Formen sind der Inhalt der Entscheidung.** Den GESPEICHERTEN Default zu
+heben hätte die Frontkamera über eine Kameralicht-Aufnahme gelegt (Finger auf der RÜCK-Linse),
+über eine Gurt-Aufnahme und über die Simulation — drei Quellen, vor denen kein Gesicht sitzt.
+Bei JEDEM Face-Start zu heben hätte die Wahl eines Performers überschrieben, der die Ebene
+bewusst auf 0 gedreht hat; das wäre ein Override, keine Einführung.
+
+**Entscheidung.** `visualCameraIntroduced` feuert genau einmal, beim ersten Face-Start, und hebt
+auf 0,6 (nicht 1,0 — bei voller Deckkraft verdeckt die Kamera das generative Feld, das das
+Instrument zeigen soll). Danach gehört der Wert dem Zahlenfeld, in beide Richtungen. Die Hebung
+steht VOR `faceExpression.start`, weil der Publisher ein Bild nur ablegt, solange ein Renderer
+eines will.
+
+**Erwartetes Ergebnis.** #1297. Ob 0,6 die richtige Mischung ist, ist die eine Zahl, die kein
+Test entscheiden kann — Marker in `founder-verify.py`. **Review:** 2026-10-12.
+
+### 2026-09-12 — Ein Negativ-Scan auf eine zurückgenommene Prosa-Zeile ist die #491-Falle
+
+**Kontext.** Ein achter Anspruch in `TheFaceSourceShowsTheCameraOnceTests` sollte verhindern,
+dass die falsche Doc-Zeile „the Face source alone never shows a picture" zurückkommt.
+
+**Messung.** Er scheiterte doppelt. Die Zeile ist ein KOMMENTAR, `SourceText.codeOnly` streift
+sie — die Nadel konnte auf KEINEM Baum treffen, und ein Parser, der nichts trifft, ist ein
+Befund, kein Bestehen. Roh gemessen war er auf dem KORREKTEN Baum rot, weil die Reparatur den
+zurückgenommenen Satz innerhalb ihrer eigenen ⛔-Rücknahme zitiert.
+
+**Entscheidung.** Gelöscht vor dem ersten Lauf, mit der vollständigen Begründung im
+Wächter-Kopf statt als stille Streichung — der gelöschte Anspruch ist die Sorte, die eine
+nächste Sitzung sonst neu erfindet. **Review:** 2026-10-12.
