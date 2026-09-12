@@ -3741,3 +3741,63 @@ Deklaration aus: 32 statt 23 `ModSource`-Cases. Deklarationen stehen auf EINER E
 line.startswith('     ')`. Die Über-Zählung fiel nur auf, weil ein Wächter die Zahl 22 pinnt —
 ohne Pin wäre „32 Produzenten" als Messung durchgegangen.
 
+
+## PLAYBOOK #1300b (2026-09-12) — eine „keine Allokation im Audio-Pfad"-Messung zählt TYPEN, nie Dateinamen
+
+**Anlass.** Founder-Direktive „Alles knisterfrei, vermeide Performance Fehler". Der billige
+statische Beweis dafür ist: findet ein Sweep über alle `render`/`process`-Rümpfe eine
+Allokation, und ist deren Datei erreichbar?
+
+**Das Rezept, in dieser Reihenfolge:**
+
+1. Sweep über `Sources/Echoelmusic/{DSP,Tools,Audio}/*.swift` plus `Sequencer/SamplerVoice.swift`
+   nach `[Float](` · `.append(` · `Array(` · `String(` · `NSLock` · `DispatchQueue` · `os_log` ·
+   `print(` INNERHALB eines `func render|process|processBlock|processStereo`-Rumpfs.
+2. **Die Anker-Zahl mitdrucken.** Am 2026-09-12 waren es 35 Signaturen über 47 Dateien. Ein
+   Sweep, der 0 Anker findet und 0 Treffer meldet, ist ein Befund, kein Bestehen — genau die
+   `.claude/rules/context.md` §2-Falle.
+3. Für jeden Treffer die KONSTRUKTIONSSTELLEN messen: `git grep -n "<Typ>(" -- Sources`,
+   die eigene Datei abgezogen.
+
+**⛔ DER FEHLER, DER FAST PASSIERT WÄRE, und er ist die #1293-Form wieder.**
+`EchoelVDSPKit` ist ein **DATEINAME, kein Typ**. `git grep "EchoelVDSPKit(" -- Sources` liefert
+**0** und liest sich wie „unbenutzt, also harmlos". Die Typen darin heissen
+`EchoelComplexDFT` · `EchoelRealFFT` · `EchoelConvolution` · `EchoelBiquadCascade` ·
+`EchoelDecimator` · `EchoelSpectralAnalyzer` — und `EchoelConvolution` hat **4**
+Konstruktionsstellen, zwei davon in `EchoelDDSP` auf dem Synth-Pfad. Die Null hätte eine echte
+Allokation auf dem Audio-Pfad als „unerreichbar" abgehakt.
+**Regel: vor jedem `git grep "<Name>("` prüfen, ob `<Name>` ein Typ IST** —
+`grep -n "^public \(final \)\?class\|^public struct\|^public enum" <datei>` listet, was wirklich
+darin wohnt. Dieselbe Lehre wie #1293 (`ColabPayload.swift` ≠ `ColabPayload`), zweite Gattung.
+
+**Das Ergebnis vom 2026-09-12, als Momentaufnahme (die MESSUNG wiederholen, nicht dies zitieren):**
+9 allokations-förmige Zeilen in 4 Dateien, alle unerreichbar —
+`EchoelFDNReverb` · `EchoelSpaceReverb` · `EchoelWSOLA` mit **null** Konstruktionsstellen,
+und `EchoelConvolution` konstruiert, aber hinter `EchoelDDSP.useConvolutionReverb`, das `false`
+ist und in `Sources/` **keinen Schreiber** hat (das ist die #546-Messung, unabhängig bestätigt).
+
+**⚠️ WAS DAS NICHT BEWEIST, und der Satz gehört in jede Antwort an den Founder:** dass es nicht
+knistert. Keine verbotene Operation im Render-Block zu haben ist eine andere Aussage als „die
+USB-Kette hält die Puffergrösse durch". Das entscheidet ein Gerät, und der Zeuge dafür ist die
+Lebenszyklus-Leiter im `echoel_diag.log` (STILLE zwischen zwei Sprossen ist der Befund).
+
+## PLAYBOOK #1300 (2026-09-12) — ein Wächter auf die AUFRUFSTELLE pinnt nicht das Verhalten des AUFGERUFENEN
+
+**Anlass.** #1298 gab dem Face-Publisher eine zweite Tür im Field-Panel und führte sie
+ausdrücklich durch den EINEN Besitzer (`selectBioSource`), um den BLE-3-Zweitbesitzer-Fehler zu
+vermeiden. Fünf Wächter pinnten genau das — und ALLE FÜNF waren grün, während der Schalter einen
+echten Routing-Defekt hatte: `selectBioSource`s dritter Zweig ist `else { startBiofeedback() }`,
+also startete „Face AUS" bei stehendem Instrument die Musik.
+
+**Die Lehre, und sie ist allgemeiner als dieser Fall:** die fünf Ansprüche fragten alle dieselbe
+Frage — *erreicht der Aufruf den richtigen Empfänger?* Keiner fragte *welchen ZWEIG dieses
+Empfängers mein Zustand nimmt?* Ein neuer Aufrufer eines bestehenden Besitzers erbt ALLE seine
+Zweige, auch die, die für den alten Aufrufer richtig und für den neuen falsch sind.
+
+**Rezept, wenn eine Scheibe einen ZWEITEN Aufrufer an eine bestehende Methode hängt:**
+1. Den Rumpf des Aufgerufenen VOLLSTÄNDIG lesen, nicht nur die Signatur — jede Verzweigung
+   einmal gegen den neuen Aufrufer durchspielen.
+2. Für jeden Zweig fragen: *ist das aus der neuen Fläche heraus noch das gewollte Verhalten?*
+   Besonders bei Zuständen, die die alte Fläche nie erreichen konnte (hier: „Instrument steht").
+3. Was nicht passt, wird am AUFRUFER abgefangen, nicht am Besitzer — sonst ändert man das
+   Verhalten der alten Tür mit.

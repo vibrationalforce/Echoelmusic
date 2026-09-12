@@ -31060,3 +31060,59 @@ dem ersten Lauf.
 #841/#849 GEBAUT und hing nur an G1 — nichts neu zu bauen, was fehlte, war der Weg dorthin.
 G3 (Monitoring) braucht ein `echoel_diag.log` mit der `on 1/5`…`on 5/5`-Leiter, nicht Code;
 ohne dieses Log ist jede weitere Monitoring-Arbeit geraten.
+
+## 2026-09-12 (Forts.) — Founder-Korrektur: Face ins Field, Größe, und ein selbst eingebauter Routing-Defekt
+
+**Auslöser.** Screenshot des Quellen-Menüs der Puls-Pille mit rot eingekreistem „Play with your
+face", dazu: „es soll nicht dort angeschaltet werden sondern im Field und den Field Sound
+modulieren das Gesicht kann in der Größe angepasst werden. Smile detection sollte reichen um den
+arpeggio etc zusätzlich zu beeinflussen wobei Filter wie bei Logic aber mit shimmer reverb wenn
+smile detected wird. Die stimme soll unabhängig davon eine eigene Rubrik bekommen …" — plus,
+eine Runde später: „Alles knisterfrei fermeide Performance Fehler, issues im routing".
+
+**#1298 (`c8bf48c`) — die Face-Tür ins Field.** Der Schalter sitzt jetzt über den
+Kamera-Reglern, wo die Wirkung sitzt. EIN Besitzer, ZWEI Aufrufer: er ruft `selectBioSource`,
+nicht `faceExpression.start` — zwei TÜREN auf einen Besitzer sind harmlos, zwei BESITZER wären
+der BLE-3-Fehler. Er SCHALTET die Quelle um statt eine Ebene dazuzulegen, und das ist gemessen:
+`heartRateBPM: 0` unter „coexistence deferred" — nebeneinander schriebe die Null mit 10 Hz in
+den einen `latestBio`-Slot.
+
+**#1299 (`8f7356c`) — „Camera size".** CPU-Komposition in die Viewport-Affine, Shader
+unangetastet, JEDEN Frame neu (nicht nur bei neuem Kamerabild — sonst wäre eine Reglerdrehung
+bei thermischer Drosselung erst beim nächsten Bild sichtbar). Anspruch 3 des Wächters ist ECHTE
+Arithmetik: bei s=2 muss genau 0,25…0,75 abgetastet werden, sonst rutscht das Gesicht beim
+Wachsen in eine Ecke — das fängt kein Textscan.
+
+**⛔ #1300 (`b07ac1e`) — EIN ROUTING-DEFEKT, DEN #1298 EINEN COMMIT ZUVOR SELBST EINGEBAUT HAT,
+und den seine eigenen fünf Wächter nicht sehen konnten.** `selectBioSource`s dritter Zweig ist
+`else { startBiofeedback() }`. Richtig für die Puls-Pille, falsch für eine visuelle Fläche: „Face
+AUS" hätte bei STEHENDEM Instrument die Musik gestartet. Alle fünf Ansprüche fragten *erreicht
+der Schalter den einen Besitzer* — der Defekt lag darin, *welchen Zweig dieses Besitzers ein
+stehendes Instrument nimmt*. **Ein Wächter auf die AUFRUFSTELLE pinnt nicht das Verhalten des
+AUFGERUFENEN** (Playbook im HARNESS_LEDGER). Reparatur asymmetrisch: AN aktiviert weiter (die
+Einladung zum Spielen), AUS stellt nur die vorherige Auswahl zurück.
+
+**Knisterfrei-Audit, statisch, ohne Gerät.** Sweep über 35 `render`/`process`-Signaturen in 47
+Dateien: 9 allokations-förmige Zeilen in 4 Dateien, ALLE unerreichbar — `EchoelFDNReverb`,
+`EchoelSpaceReverb`, `EchoelWSOLA` mit null Konstruktionsstellen, `EchoelConvolution` hinter
+`useConvolutionReverb = false` ohne Schreiber. Dazu geprüft: die Kamera-Kette hüpft nicht pro
+Bild auf den MainActor (`NSLock` + 10-Hz-Drain), die ARKit-Sitzung fasst die Audio-Session gar
+nicht an (kein `providesAudioData`, kein `AVAudioSession` in der Datei), Default-Puffer bleibt
+512 Frames.
+**⛔ Dabei wäre mir die #1293-Form ein zweites Mal passiert:** `EchoelVDSPKit` ist ein DATEINAME.
+`git grep "EchoelVDSPKit(" -- Sources` → 0, liest sich wie „unbenutzt" — und `EchoelConvolution`
+darin hat VIER Konstruktionsstellen, zwei auf dem Synth-Pfad. Eine Null, die wie ein sauberes
+Zeugnis aussieht, ist hier der gefährlichste Messfehler. Playbook #1300b.
+
+**Gemessen und NICHT gebaut, weil schon da:** Autotune folgt Tonart UND Kammerton bereits
+(`updateVoiceTune` liest `rootIndex`, `scale`, `a4Hz` ~1 Hz aus der EINEN gespeicherten
+Definition), der Harmonizer folgt der Tonart („Harmony in key"). Von den vier neuen
+Founder-Punkten sind zwei zur Hälfte erfüllt; offen sind die RUBRIK, das TONSYSTEM als dritte
+Achse und der Shimmer-Reverb — den gibt es nicht (`grep shimmer` findet nur `partialShimmer`,
+eine Oszillator-Eigenschaft, und Genre-Prosa). Plan:
+`scratchpads/PLAN_FIELD_FACE_VOICE_2026-09-12.md`.
+
+**Gate-Mechanik, die diese Runde dreimal Zeit gekostet hat:** jeder Push cancelt den laufenden
+`Xcode Compile Check` (Concurrency-Group) — 2591, 2593, 2594 sind so gestorben, nicht an
+Fehlern. Ein Push, der NUR `scratchpads/`, `memory/` oder `decisions.csv` anfasst, löst dagegen
+gar keinen Lauf aus (gemessen an `7390b9e`), ist also während eines laufenden Gates sicher.
