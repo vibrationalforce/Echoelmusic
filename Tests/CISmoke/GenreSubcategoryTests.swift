@@ -194,7 +194,12 @@ final class GenreSubcategoryTests: XCTestCase {
         // anywhere here is the pre-#1275 shape coming back (#416).
         for derivation in ["public var category: Category { subcategory.parent }",
                            "MusicStyle.allCases.filter { $0.subcategory == self }",
-                           "subcategories.flatMap(\.genres)",
+                           // ⚠️ RAW STRING, and it must stay one: `\.` is not a valid Swift
+                           // escape, so the plain form does not COMPILE — which is what #1275
+                           // shipped, taking the whole blocking bundle down with it. A Python
+                           // transcription cannot see this: it verifies the needle's CONTENT
+                           // against `Sources/`, never the Swift syntax carrying it (#808).
+                           #"subcategories.flatMap(\.genres)"#,
                            "Subcategory.allCases.filter { $0.parent == self }"] {
             XCTAssertTrue(code.contains(derivation), """
                 the derivation `\(derivation)` is gone from `MusicStyle.swift`. A genre is filed \
