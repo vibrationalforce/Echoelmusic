@@ -215,10 +215,6 @@ struct EchoelStudioView: View {
     @Environment(PolarH10BioPublisher.self) private var polarH10
     #endif
     @Environment(BioSimulator.self) private var demoSource
-    /// #1257 — the fourth source: front-camera expression (no pulse). Same owner, same
-    /// lifecycle as the three above; ARKit holds the front camera exclusively, so the
-    /// picker's single-active-source rule IS the rPPG↔face arbitration.
-    @Environment(FaceExpressionBioPublisher.self) private var faceExpression
     #if canImport(AVFoundation) && canImport(Metal)
     @Environment(VisualRecorder.self) private var visualRecorder
     #endif
@@ -245,17 +241,14 @@ struct EchoelStudioView: View {
     /// brings up whichever is set, `selectBioSource` switches it live. Persisted so the
     /// choice survives relaunch.
     @AppStorage("bio.sourceKind") private var bioSourceRaw = BioSourceKind.camera.rawValue
-    /// #1298 — the source the Field's Face switch returns to when it is turned OFF.
-    /// Written only when Face is switched ON from there, and only from a non-face source,
-    /// so a second ON never overwrites the real answer with "face".
-    @AppStorage("bio.sourceBeforeFace") private var bioSourceBeforeFace = BioSourceKind.camera.rawValue
     /// Guards the async live source-switch so a rapid re-pick can't overlap.
     @State private var sourceSwitchTask: Task<Void, Never>?
 
-    /// The bio inputs the chooser offers (four since #1257). The implicit raw values are
-    /// the on-the-wire ids `BioSourceOption` mirrors (#616) — a case added here needs its
-    /// twin there, or the new source has no menu entry.
-    private enum BioSourceKind: String { case camera, ble, sim, face }
+    /// The bio inputs the chooser offers. The implicit raw values are the on-the-wire ids
+    /// `BioSourceOption` mirrors (#616) — a case added here needs its twin there, or the new
+    /// source has no menu entry. (⛔ #1301 — `case face` stood here and is gone by founder
+    /// order, 2026-09-12, together with the front-camera publisher behind it.)
+    private enum BioSourceKind: String { case camera, ble, sim }
 
     /// Drives Siri/Shortcuts intent consumption (start/stop/keep loop) when the
     /// app becomes active after an intent opens it.
@@ -1016,14 +1009,11 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.visualGlitter.key) private var visualGlitter = StudioDefaultKeys.visualGlitter.value
     /// Structure (#853B): static domain-warp depth, 0 = off (the pre-dial picture).
     @AppStorage(StudioDefaultKeys.visualStructure.key) private var visualStructure = StudioDefaultKeys.visualStructure.value
-    // K5b (#1263) — the camera layer's three keys; the same three the two mounts bind.
-    @AppStorage(StudioDefaultKeys.visualCameraOpacity.key) private var visualCameraOpacity = StudioDefaultKeys.visualCameraOpacity.value
-    @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
-    @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
-    @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var visualCameraCutout = StudioDefaultKeys.visualCameraCutout.value
-    @AppStorage(StudioDefaultKeys.visualCameraSize.key) private var visualCameraSize = StudioDefaultKeys.visualCameraSize.value
-    /// #1297 — the one-shot latch that lets the FIRST Face start show the camera layer.
-    @AppStorage(StudioDefaultKeys.visualCameraIntroduced.key) private var visualCameraIntroduced = StudioDefaultKeys.visualCameraIntroduced.value
+    // ⛔ #1301 — THE CAMERA LAYER'S SIX `@AppStorage` BINDINGS STOOD HERE AND ARE GONE BY
+    // FOUNDER ORDER (2026-09-12). They drove the front-camera texture in the Metal field;
+    // the only session that ever filled that texture was the face publisher, which is
+    // removed, so the keys, the row and the renderer pass all go together rather than
+    // leaving a dial over an image nothing can produce.
     /// The floating visual window's show/hide state — SHARED with WorkspaceView's header
     /// monitor button and the window's own close button, so the Visual panel can toggle it
     /// directly (founder: everything user-optimized; don't make the header the only way in).
@@ -3279,11 +3269,6 @@ struct EchoelStudioView: View {
 
             bioSourceRow
 
-            // #1258 — the face channels as numbers, directly under the chooser that picks
-            // them. A LEAF: it reads the 10 Hz publisher in its own body (10.76.41/50), this
-            // panel body reads nothing of it. Renders nothing unless the face source runs.
-            FaceChannelsRow()
-
             // #486 — the ACTIVE half of the loop, directly under the measured half.
             // `BioStripView` above says what the body is doing; this paces the breathing
             // that moves those numbers. Founder 2026-08-07 asked for "Training für
@@ -5417,12 +5402,6 @@ struct EchoelStudioView: View {
             // one-column (portrait) rendering of the grids inside is bit-identical to the
             // stack it replaced — see the ⭐ block on `visualAdjustFields(spacing:)`.
             visualAdjustFields(spacing: 14)
-            // K5b (#1263) — the camera layer's door, OUTSIDE `visualAdjustFields` (see the member).
-            // Two gates, both cold: the Face source must be possible on this device, and the Metal
-            // field must be the picture — the donuts are a Canvas no texture can reach (#1057).
-            if FaceExpressionBioPublisher.isSupported, !donutIsThePicture {
-                cameraLayerRow
-            }
             MusicColourRowView()
             Text("Colour defaults to the heard tone octave-transposed into visible light — its frequency doubled until it reaches the visible band, rendered through CIE 1931 and closed over the CIE purple line where deep red meets deep violet, so every tone has a colour. Hue/Saturation rotate the palette for VJ/performance use. Motion is capped so the flash rate always stays under the 3 Hz safety limit.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
@@ -6813,129 +6792,18 @@ struct EchoelStudioView: View {
         }
     }
 
-    /// K5b (#1263) — THE CAMERA LAYER'S DOOR: opacity (a number, `EchoelValueField`), blend (a
-    /// NAMED choice — Screen · Multiply · Cross — so a `Picker`, per the "read the word NUMERIC"
-    /// rule) and mirror (a switch). All three write `StudioDefaultKeys.visualCamera*`, the keys
-    /// `FloatingVisualWindow` and `ExternalDisplayScene` bind, so the phone and the beamer show
-    /// the same layer. OUTSIDE `visualAdjustFields` on purpose: two guards count that member's
-    /// grids (2) and rows (10), and a camera SOURCE is not a look dial. All three controls are
-    /// always shown once the row is — a control that appears under the finger mid-drag is the
-    /// #269 class this file avoids. `faceExpression.isPublishing` is a COLD read (it flips on the
-    /// source picker, never at bio rate), so the caption does not touch the 10.76.41/50 law.
-    /// NEEDS-FOUNDER-VERIFY: Field → "Camera layer" auf 0,5, Face-Quelle an — erscheint das
-    /// Gesicht im Feld, folgt der Blend-Wechsel ohne Sprung, und bleibt eine Aufnahme ohne Kamera?
-    private var cameraLayerRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // NEEDS-FOUNDER-VERIFY: Field → „Play with your face" anschalten. Erwartet: das
-            // Gesicht erscheint, die Puls-Pille zeigt „Face", und AUS gibt die Quelle an die
-            // zurück, die vorher lief (bei dir: Kameralicht). Sagen, ob der Rückweg stimmt —
-            // das ist die Hälfte, die kein Test entscheiden kann.
-            //
-            // #1298 — THE ON-SWITCH BELONGS HERE, founder 2026-09-12 over a screenshot of the
-            // pulse pill's source menu: "es soll nicht dort angeschaltet werden sondern im
-            // Field und den Field Sound modulieren". The caption under this row had been
-            // sending the reader back to that menu ever since K5b, which is the same
-            // wrong-door shape as #1296 and #1297 — the capability was built and the way in
-            // was somewhere else.
-            //
-            // ⭐ ONE OWNER, TWO CALLERS. This routes through `selectBioSource(_:)`, the single
-            // owner of every bio-source lifecycle, exactly as the pill's menu does. It is the
-            // `MIDIOutput.applyOutputPreferences()` form, NOT the BLE-3 mistake of a second
-            // lifecycle owner that killed a running strap on an unrelated edit — nothing here
-            // calls `faceExpression.start`/`stop` directly.
-            //
-            // ⚠️ ASYMMETRIC ON PURPOSE (#1300). ON goes through the full owner, so on an idle
-            // instrument it ACTIVATES — "Play with your face" is an invitation to play, the
-            // same contract the pulse pill's menu has. OFF does not: see the branch below.
-            //
-            // ⚠️ IT IS A SWITCH BETWEEN SOURCES, NOT AN ADDITIONAL LAYER, and that is measured
-            // rather than chosen: `FaceExpressionBioPublisher` publishes `heartRateBPM: 0`
-            // under `// faceCam carries NO pulse (coexistence deferred)`. Running it BESIDE a
-            // pulse source would write that 0 into the one `latestBio` slot at 10 Hz — the
-            // #1015 interleave, deliberately deferred. So Face takes the source, and OFF hands
-            // it back to whatever was playing before.
-            Toggle(isOn: Binding(
-                get: { bioSourceRaw == BioSourceKind.face.rawValue },
-                set: { on in
-                    if on {
-                        if bioSourceRaw != BioSourceKind.face.rawValue {
-                            bioSourceBeforeFace = bioSourceRaw
-                        }
-                        selectBioSource(BioSourceKind.face.rawValue)
-                    } else if running || bodyOnly {
-                        selectBioSource(bioSourceBeforeFace)
-                    } else {
-                        // #1300 — OFF MUST NOT START ANYTHING, and #1298 shipped it doing
-                        // exactly that. `selectBioSource`'s third branch is
-                        // `else { startBiofeedback() }` — correct for the pulse pill, where
-                        // picking a source IS the invitation to play, and wrong for a switch
-                        // in a VISUAL panel: turning the face layer OFF on an idle instrument
-                        // would have started the music. Idle means nothing is publishing, so
-                        // there is nothing to hand back; restoring the SELECTION is the whole
-                        // job, and it is the one line `selectBioSource` itself runs before it
-                        // branches — not a second owner, the same write without the activation.
-                        bioSourceRaw = bioSourceBeforeFace
-                    }
-                })) {
-                Text("Play with your face")
-                    .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
-            }
-            .tint(EchoelTheme.accent)
-            .accessibilityHint("Tracks your face with the front camera and drives the field. Off hands the pulse back to the source that was playing before.")
-            EchoelValueField(label: "Camera layer", value: $visualCameraOpacity, range: 0...1, decimals: 2)
-            // NEEDS-FOUNDER-VERIFY: Field → „Camera size" von 0,5 bis 2,5 durchfahren, während
-            // die Face-Quelle läuft. Erwartet: das Gesicht wächst UM DIE MITTE, rutscht nicht
-            // in eine Ecke, und die Größenänderung ist SOFORT sichtbar (nicht erst beim
-            // nächsten Kamerabild). Sagen, ob 2,5 gross genug und 0,5 klein genug ist.
-            //
-            // #1299 — "das Gesicht kann in der Größe angepasst werden". A NUMBER, so an
-            // `EchoelValueField` and never a `Slider` (the one-control law). The range stops
-            // short of the renderer's own 0.25…4 clamp on purpose: the clamp is the safety net
-            // for a corrupted default, this is the musical range.
-            EchoelValueField(label: "Camera size", value: $visualCameraSize, range: 0.5...2.5, decimals: 2)
-            labeledRow("Blend") {
-                Picker("Blend", selection: $visualCameraBlend) {
-                    Text("Screen").tag(0)
-                    Text("Multiply").tag(1)
-                    Text("Cross").tag(2)
-                }
-                .pickerStyle(.segmented)
-            }
-            Toggle(isOn: $visualCameraMirror) {
-                Text("Mirror the camera")
-                    .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
-            }
-            .tint(EchoelTheme.accent)
-            .accessibilityHint("Flips the camera image left to right, like a mirror")
-            // K7 (#1265) — the cut-out: ARKit's person matte. DISABLED where the device cannot
-            // segment (prompt: grey out, never simulate). `supportsSegmentation` is a device
-            // fact, `thermalRelief` a rare write — both cold reads for this host.
-            Toggle(isOn: $visualCameraCutout) {
-                Text("Cut out the person")
-                    .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
-            }
-            .tint(EchoelTheme.accent)
-            .disabled(!FaceExpressionBioPublisher.supportsSegmentation)
-            .accessibilityHint(FaceExpressionBioPublisher.supportsSegmentation
-                               ? "Keeps only the person from the camera; the room around them shows the field"
-                               : "Not available on this device")
-            if !FaceExpressionBioPublisher.supportsSegmentation {
-                Text("Cut-out is not available on this device.")
-                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-            } else if let relief = faceExpression.thermalRelief {
-                Text(relief)
-                    .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            // #1298 — the OFF sentence pointed at the pulse pill's menu, which is exactly the
-            // trip this row now spares the reader. It names the switch directly above instead.
-            Text(faceExpression.isPublishing
-                 ? "The front camera is layered into the field at this opacity. It never appears in a recorded take."
-                 : "Draws while \"Play with your face\" above is on. It never appears in a recorded take.")
-                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
+    // ⛔ #1301 — `cameraLayerRow` STOOD HERE AND IS GONE BY FOUNDER ORDER (2026-09-12,
+    // "Face und Audio Input komplett entfernen"). It carried the Field's "Play with your
+    // face" switch (#1298/#1300), the camera opacity, size, blend, mirror and cut-out
+    // controls (#1263/#1265/#1299) and their captions.
+    //
+    // ⭐ THE ONE LAW WORTH KEEPING OUT OF IT, because it was learned expensively and is not
+    // about faces: a toggle in a VISUAL panel must not activate the instrument. #1298 routed
+    // its OFF branch through `selectBioSource(_:)`, whose third branch is
+    // `else { startBiofeedback() }` — correct for the pulse pill, where picking a source IS
+    // the invitation to play, and wrong for a switch that only changes what is drawn. #1300
+    // had to make it asymmetric. Any future visual switch that touches a source lifecycle
+    // owes the same asymmetry.
 
     // musicColourRow now lives in its OWN leaf (`MusicColourRowView`, end of file):
     // it reads the bus's MusicalFrame, which republishes on EVERY sequencer step
@@ -9794,35 +9662,6 @@ struct EchoelStudioView: View {
         case .sim:
             EchoelCrashLog.breadcrumb("bio simulation starting")
             demoSource.start(publishing: bus) // deterministic demo frames; source == .fallback
-        case .face:
-            // #1257 — front-camera expression. Publishes `.faceCam` frames with NO pulse:
-            // every timbre/tempo consumer already holds the last measured body or its
-            // neutral (`measured(...) ?? heldBody ?? 70`, `coherenceForSound`), so the
-            // clock never sees the 0. The camera dialog rises from `arSession.run` on the
-            // app-wide purpose string, which names both lenses since this slice.
-            // NEEDS-FOUNDER-VERIFY: Quelle „Face" wählen. Erwartet: das eigene Gesicht ist im
-            // Visual zu sehen (Deckkraft 0,6, Screen-Blend, gespiegelt) UND das generative Feld
-            // bleibt darunter erkennbar. Sagen, ob 0,6 die richtige Mischung ist oder ob das
-            // Bild zu schwach / zu dominant ist — das ist die eine Zahl, die kein Test
-            // entscheiden kann. Danach im Field-Blatt „Camera layer" auf 0 stellen, Quelle
-            // wechseln und zurück auf Face: die 0 MUSS bleiben (einmalig heisst einmalig).
-            //
-            // #1297 — SHOW THE FACE THE FIRST TIME. The founder chose this source on
-            // v10.79.470 and reported "Die frontkamera wird nicht eingeblendet für die Mimik
-            // und gestig Steuerung". Nothing was broken: the ARKit session feeds
-            // `CameraFrameSlot` and the renderer has a camera pass, but `visualCameraOpacity`
-            // is stored at 0 and its only door is a number field inside `visualPanel`, so the
-            // picture existed and was transparent. The raise happens ONCE (the latch), before
-            // `start`, so the renderer's `cameraWanted` is already true when the first frame
-            // arrives — the publisher only stores a frame while a renderer asks for one.
-            // After this the number field owns the value: dial it to 0 and it STAYS 0.
-            if !visualCameraIntroduced {
-                visualCameraIntroduced = true
-                visualCameraOpacity = StudioDefaultKeys.visualCameraIntroOpacity
-            }
-            EchoelCrashLog.breadcrumb("face expression starting (cameraLayer=\(visualCameraOpacity))")
-            faceExpression.start(publishing: bus)
-            EchoelCrashLog.breadcrumb("face expression started (publishing=\(faceExpression.isPublishing))")
         }
     }
 
@@ -9856,7 +9695,6 @@ struct EchoelStudioView: View {
         polarH10.stop()
         #endif
         demoSource.stop()
-        faceExpression.stop()
     }
 
     /// #1246 — arm or release the bio SENSOR without the instrument: no `generate`, no
@@ -12131,9 +11969,9 @@ private struct HealthWriteOptInRow: View {
 /// ⛔ SO THE OBVIOUS LABEL WOULD HAVE BEEN A LYING CONTROL, and this is the whole reason the
 /// row has two sentences instead of one. Naming it "Breath plays the synth" promises that the
 /// breath opens and closes it — and on this app's measured reality that is usually false:
-/// `PolarH10BioPublisher` and `FaceExpressionBioPublisher` write the literal `breathRate: 0`
-/// ALWAYS (neither derives respiration), and `CameraRPPGBioPublisher` withholds breath below
-/// its confidence floor (#497 measured all three). With no onsets, nothing ever closes the
+/// `PolarH10BioPublisher` writes the literal `breathRate: 0`
+/// ALWAYS (it derives no respiration), and `CameraRPPGBioPublisher` withholds breath below
+/// its confidence floor (#497 measured this). With no onsets, nothing ever closes the
 /// envelope: the "breath" control would be a permanent drone. That is the class this repo
 /// keeps paying for — #435's caption promised silence, #480's hint promised sliders, #491's
 /// box promised a pulse. The row therefore states the HELD tone first and the breath gating

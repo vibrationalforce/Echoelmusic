@@ -11,11 +11,11 @@
 //
 // ⭐ AND THE SECOND HALF IS BIGGER THAN THE FIRST. The file header promises that "every new
 // spatial/collab capability ships behind a flag". Measured over `Sources/` with comments
-// stripped: **ELEVEN of the sixteen flags have ZERO deciding readers** — nothing branches on
-// them at all. A flag with no reader gates nothing, so whatever sits behind those eleven is
+// stripped: **TEN of the fifteen flags have ZERO deciding readers** — nothing branches on
+// them at all. A flag with no reader gates nothing, so whatever sits behind those ten is
 // inert because nothing CALLS it, never because a flag holds it back. CLAUDE.md already
 // carries that exact correction — for `echoelAI` alone, written as if it were the singular
-// case. It is one of eleven, and the other ten were never counted.
+// case. It is one of ten, and the other nine were never counted.
 //
 // ⭐ THIRD, AND IT IS THE ONE NOBODY HAD WRITTEN DOWN ANYWHERE: `FeatureFlags.set` has ZERO
 // production call sites. No shipped surface can flip any flag. So the thirteen default-OFF
@@ -25,9 +25,9 @@
 // the three keystone flags were registered ON instead: a default-OFF flag with no UI can
 // never be device-verified, so its gate can never be lifted.
 //
-// ⚠️ THIS GUARD DOES NOT FORBID WIRING A FLAG UP (#364). Giving one of the eleven a reader is
+// ⚠️ THIS GUARD DOES NOT FORBID WIRING A FLAG UP (#364). Giving one of the ten a reader is
 // exactly the work this finding argues for; adding a door is too. What it forbids is doing
-// either while the header keeps counting eleven. When `testEveryUnreadFlagIsNamedInTheCensus`
+// either while the header keeps counting ten. When `testEveryUnreadFlagIsNamedInTheCensus`
 // goes red for that reason, the fix is to move the name out of the census IN THE SAME COMMIT,
 // not to relax the assertion — the failure message says so.
 //
@@ -35,7 +35,7 @@
 // symbol this commit adds — so every assertion really has a verdict there. Transcribed by hand
 // (a Python rebuild of `SourceText.codeOnly` run against `git show HEAD:` and the worktree):
 //   · **TWO needles are red on the parent, and they are ONE finding**: the header paragraph is
-//     both wrong ("All OFF", unretracted) and missing (no census names the eleven). One
+//     both wrong ("All OFF", unretracted) and missing (no census names the ten). One
 //     paragraph, two properties — reporting it twice is not two defects (#486).
 //   · **THREE are counterweights**, green on both trees, and they are the value. A tree that
 //     rewrites the prose and then quietly deletes `guard FeatureFlags.storeKit`, or registers
@@ -49,10 +49,11 @@
 // appears in EIGHT comment lines across three files — `FeatureFlags` itself (4), `EchoelmusicApp`
 // (2), `WorkspaceView` (2) — each one a rollback lever written out for a reader, and in CODE
 // nowhere. So `testNothingInTheAppCanFlipAFlag` is **RED ON CORRECT CODE** without the stripper.
-// The census flips too, and by exactly the flags this slice is about: measured on both trees,
-// raw reports 8 of 16 as read and stripped reports 5. The three that flip — `spatialEngine`,
-// `echoelAI`, `cameraExpression` — are named in prose ONLY, which is precisely the illusion the
-// header census exists to dispel. A raw scan would have "found" three gates that do not exist.
+// The census flips too, and by exactly the flags this slice is about: measured on both trees
+// in 2026-08, raw reported 8 of 16 as read and stripped 5. The ones that flip — `spatialEngine`
+// and `echoelAI` (plus `cameraExpression`, removed with the face source, #1301) — are named in
+// prose ONLY, which is precisely the illusion the header census exists to dispel. A raw scan
+// would have "found" gates that do not exist.
 //
 // ⚠️ AND THE LIMIT FIRST. Every assertion here is a SOURCE SCAN. It proves where text is, not
 // what the app runs — it cannot show that a flag is really off on a device, only that no line
@@ -67,11 +68,11 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
     private static let sourcesRoot = "Sources/Echoelmusic"
     private static let flagsFile = "Sources/Echoelmusic/Core/FeatureFlags.swift"
 
-    /// The eleven with no deciding reader, as measured 2026-08-12.
+    /// The ten with no deciding reader (measured 2026-08-12; `cameraExpression` left the set
+    /// with the face source it never actually gated, #1301).
     private static let expectedUnread: Set<String> = [
         "spatialEngine", "bioSpace", "echoelRender", "motionEngine", "showControl",
-        "avObjects", "performerTracking", "liveCollab", "headTracking", "echoelAI",
-        "cameraExpression"
+        "avObjects", "performerTracking", "liveCollab", "headTracking", "echoelAI"
     ]
 
     /// The three `register(defaults:)` keys — the only way a flag is ON in a shipped build.
@@ -128,7 +129,7 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
                 `\(flag)` has no deciding reader and is not named in `FeatureFlags.swift`'s \
                 header census. A flag with no reader gates nothing — leaving it unnamed is how \
                 the file went on promising that "every new spatial/collab capability ships \
-                behind a flag" while eleven of sixteen gated nothing at all.
+                behind a flag" while ten of fifteen gated nothing at all.
                 """)
         }
     }
@@ -157,7 +158,7 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
             let code = SourceText.codeOnly(try rawText("\(Self.sourcesRoot)/\(branch.file)"))
             XCTAssertTrue(code.contains(branch.needle), """
                 `\(branch.file)` no longer branches on `\(branch.needle)`. \(branch.what). \
-                Five of sixteen flags actually decide something in this build; removing one \
+                Five of fifteen flags actually decide something in this build; removing one \
                 makes the header's census wrong in the direction that reads as harmless.
                 """)
         }
@@ -230,9 +231,9 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
     /// other than the declaration itself.
     ///
     /// ⛔ Comments are stripped, and that is load-bearing rather than hygienic: doc comments
-    /// quote flag names as rollback levers all over this repo. Raw, this reports 8 of 16 flags
-    /// as read; stripped, 5 — and the three that flip (`spatialEngine`, `echoelAI`,
-    /// `cameraExpression`) are named in prose only, which is the very illusion being measured.
+    /// quote flag names as rollback levers all over this repo. In 2026-08 raw reported 8 of 16
+    /// flags as read and stripped 5 — and the ones that flip (`spatialEngine`, `echoelAI`) are
+    /// named in prose only, which is the very illusion being measured.
     private func flagsWithoutDecidingReaders() throws -> Set<String> {
         let keys = try flagKeys()
         var read: Set<String> = []

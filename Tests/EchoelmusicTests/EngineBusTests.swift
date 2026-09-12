@@ -284,39 +284,11 @@ final class EngineBusTests: XCTestCase {
         XCTAssertNotNil(bus.latestBio, "raw snapshot still held, only the usable view expires")
     }
 
-    // MARK: - BioSource.faceCam (A5 additive source)
-
-    func testFaceCam_rawValueAppendedStable() {
-        // Appended at the end so persisted raw values of existing sources are unmoved.
-        XCTAssertEqual(BioSource.faceCam.rawValue, 6)
-        XCTAssertEqual(BioSource.cameraPPG.rawValue, 5)
-        XCTAssertEqual(BioSource.fallback.rawValue, 0)
-    }
-
-    func testFaceCam_isLiveSourceWindow() {
-        // Live front-camera expression expires fast, like rPPG/BLE.
-        XCTAssertEqual(BioSource.faceCam.freshnessWindow, 6)
-    }
-
-    func testFaceCam_carriesNoTrustedHRV() {
-        // Only a BLE chest strap gives beat-to-beat RR; face tracking has no pulse.
-        XCTAssertFalse(BioSource.faceCam.providesTrustedHRV)
-    }
-
-    @MainActor
-    func testFaceExpressionPublisher_inertUntilSupported() {
-        // No CI environment supports ARKit face tracking, so start() is a guarded
-        // no-op and the publisher never claims to publish. This also proves the
-        // non-ARKit stub compiles and behaves.
-        let bus = EngineBus()
-        let pub = FaceExpressionBioPublisher()
-        XCTAssertFalse(pub.isPublishing)
-        pub.start(publishing: bus)
-        XCTAssertEqual(pub.isPublishing, FaceExpressionBioPublisher.isSupported,
-                       "publishing only when the device supports face tracking")
-        pub.stop()
-        XCTAssertFalse(pub.isPublishing, "stop() is idempotent and resets state")
-    }
+    // ⛔ #1301 — FOUR `BioSource.faceCam` / `FaceExpressionBioPublisher` TESTS STOOD HERE AND
+    // ARE GONE WITH THE SOURCE (founder 2026-09-12). One of them pinned that `.faceCam` was
+    // appended at rawValue 6 so no existing source moved; removing the CASE is safe for the
+    // opposite reason, measured rather than assumed — `BioSampleFrame` is not `Codable` and
+    // `BioSource` is a plain `UInt8` enum nothing decodes, so no stored document names it.
 
     // MARK: - Helpers
 

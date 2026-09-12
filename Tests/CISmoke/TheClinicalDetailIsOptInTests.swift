@@ -110,7 +110,7 @@ final class TheClinicalDetailIsOptInTests: XCTestCase {
     /// `send(frame:)`, so an unclassified new address would go silent. This names it.
     func testEveryEmittableAddressIsClassified() {
         var addresses = Set<String>()
-        for source in [BioSource.cameraPPG, .ble, .faceCam, .fallback] {
+        for source in [BioSource.cameraPPG, .ble, .fallback] {
             for a in OSCSender.bioMessages(for: clinicalFrame(source)).map(\.address) {
                 addresses.insert(a)
             }
@@ -155,7 +155,6 @@ final class TheClinicalDetailIsOptInTests: XCTestCase {
                 thing Echoel is for.
                 """)
         }
-        XCTAssertEqual(BioEgressPolicy.fieldClass(ofOSCAddress: "/echoelmusic/gesture/faceSmile"), .derived)
         XCTAssertEqual(BioEgressPolicy.fieldClass(ofOSCAddress: "/echoelmusic/mod/seq.tempo"), .derived)
         XCTAssertEqual(BioEgressPolicy.fieldClass(ofOSCAddress: "/echoelmusic/bio/event/heartbeat"), .derived)
         XCTAssertNil(BioEgressPolicy.fieldClass(ofOSCAddress: "/echoelmusic/bio/heart/rrSeries"),
@@ -279,7 +278,7 @@ final class TheClinicalDetailIsOptInTests: XCTestCase {
     /// Claim 9 — COUNTERWEIGHT. This slice narrowed WHICH fields leave; it must not have
     /// loosened WHOSE. The 5.1.3 source gate is unchanged in both directions.
     func testTheSourceGateIsUnchanged() {
-        for s in [BioSource.ble, .cameraPPG, .faceCam, .fallback] {
+        for s in [BioSource.ble, .cameraPPG, .fallback] {
             XCTAssertTrue(BioEgressPolicy.allowsEgress(s), "\(s) is one of Echoel's own measurements")
         }
         for s in [BioSource.healthKit, .watch, .oura] {

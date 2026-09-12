@@ -7,9 +7,9 @@
 // Three SOUND consumers do it through `breathPhaseForSound`. The renderer, the one live
 // VISUAL consumer, read the raw value and shaped it with `sin(π·x)`.
 //
-// ⭐ WHAT THAT COST ON A SHIPPED PATH. `PolarH10BioPublisher` and
-// `FaceExpressionBioPublisher` write the literal `breathPhase: 0` on every frame — neither
-// derives respiration at all — and the camera's pulse-hold republish forwards a held phase
+// ⭐ WHAT THAT COST ON A SHIPPED PATH. `PolarH10BioPublisher` writes the literal
+// `breathPhase: 0` on every frame — it derives no respiration at all —
+// and the camera's pulse-hold republish forwards a held phase
 // with `breathRate: 0`. Through the hump, 0 maps to 0: the shader's `spread` pinned at its
 // narrowest 0.85 and Aurora's swell at its floor 0.80, permanently, for a fully wired real
 // source. The picture froze at full exhale and nothing on screen could say so. This is the
@@ -175,8 +175,7 @@ final class TheVisualBreathIsGatedTests: XCTestCase {
                 different things on each side. Unifying them silently moves one.
                 """)
         }
-        for file in ["Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift",
-                     "Sources/Echoelmusic/Bio/FaceExpressionBioPublisher.swift"] {
+        for file in ["Sources/Echoelmusic/Bio/PolarH10BioPublisher.swift"] {
             XCTAssertEqual(count("breathPhase: 0", in: try code(file)), 1, """
                 \(file) no longer writes `breathPhase: 0`. If it started deriving respiration, \
                 that is good news and this claim should go — but the #1133 note at the \

@@ -87,10 +87,6 @@ struct EchoelmusicApp: App {
     // Opt-in camera rPPG bio source — started explicitly from WellView, never auto-run.
     @State private var cameraRPPG = CameraRPPGBioPublisher()
     #endif
-    /// #1257 — front-camera expression source (ARKit blendShapes → smile/brow/jaw). Constructed
-    /// here like the other three publishers and started ONLY by the studio's source picker;
-    /// its `init` opens nothing (no session, no permission) until `start(publishing:)`.
-    @State private var faceExpression = FaceExpressionBioPublisher()
     #if canImport(CoreMIDI)
     @State private var midiInput: MIDIInput
     @State private var midiPub: MIDIBusPublisher
@@ -596,7 +592,6 @@ struct EchoelmusicApp: App {
             #if canImport(AVFoundation)
             .environment(cameraRPPG)
             #endif
-            .environment(faceExpression)
             #if canImport(AVFoundation) && canImport(Metal)
             .environment(visualRecorder)
             #endif

@@ -165,12 +165,6 @@ private struct ExternalStageView: View {
     @AppStorage(StudioDefaultKeys.visualGlitter.key) private var glitter = StudioDefaultKeys.visualGlitter.value
     @AppStorage(StudioDefaultKeys.visualStructure.key) private var structure = StudioDefaultKeys.visualStructure.value
     // K5 (#1262) — the camera layer follows the phone onto the stage: same keys, same picture.
-    // The performer set the opacity; a projector showing the field shows the face in it too.
-    @AppStorage(StudioDefaultKeys.visualCameraOpacity.key) private var cameraOpacity = StudioDefaultKeys.visualCameraOpacity.value
-    @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var cameraMirror = StudioDefaultKeys.visualCameraMirror.value
-    @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var cameraBlend = StudioDefaultKeys.visualCameraBlend.value
-    @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var cameraCutout = StudioDefaultKeys.visualCameraCutout.value
-    @AppStorage(StudioDefaultKeys.visualCameraSize.key) private var cameraSize = StudioDefaultKeys.visualCameraSize.value
 
     // MARK: - Accessibility (#1118)
 
@@ -274,12 +268,7 @@ private struct ExternalStageView: View {
                              textureAmount: Float(texture),
                              glitterAmount: Float(glitter),
                              structureAmount: Float(structure),
-                             style: style, styleB: styleB, blend: Float(blend),
-                             cameraOpacity: Float(cameraOpacity),
-                             cameraMirror: cameraMirror,
-                             cameraBlend: cameraBlend,
-                             cameraCutout: cameraCutout,
-                             cameraSize: Float(cameraSize))
+                             style: style, styleB: styleB, blend: Float(blend))
                     .environment(bus)
                     .environment(governor)
                     .environment(recorder)

@@ -110,7 +110,7 @@
 //   attained; a denser sweep simply reports a smaller number, for ever. The theorem is the
 //   load-bearing statement here. The sweeps only show it did not miss a case.
 //   ⚠️ Coverage, stated rather than implied: `BioSource.freshnessWindow` declares FOUR distinct
-//   values across six cases — 6 s (ble · cameraPPG · faceCam), 90 s (watch · healthKit), 600 s
+//   values — 6 s (ble · cameraPPG), 90 s (watch · healthKit), 600 s
 //   (oura), 5 s (fallback). The sweeps drove 5 / 6 / 90, i.e. every value that has a producer in
 //   `Sources/` today; `.oura`'s 600 has none. The proof does not depend on the window at all
 //   (`half` cancels out of the comparison), so the untested value is a coverage note, not a hole.

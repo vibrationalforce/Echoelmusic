@@ -20,8 +20,8 @@
 // ⭐ WHY THE COPY NAMES THE HELD TONE FIRST, and why claim 4 defends that ordering. The
 // obvious label — "Breath plays the synth" — would be a LYING CONTROL on most takes. `arm()` is
 // `isArmed = true; playNote()`: it sounds a held tone immediately, and only a
-// `.breathExhaleOnset` closes it. Measured at #497: `PolarH10BioPublisher` and
-// `FaceExpressionBioPublisher` write the literal `breathRate: 0` ALWAYS (neither derives
+// `.breathExhaleOnset` closes it. Measured at #497: `PolarH10BioPublisher` writes the literal
+// `breathRate: 0` ALWAYS (it derives no
 // respiration), and `CameraRPPGBioPublisher` withholds breath below its confidence floor. So on
 // the shipped strap, and on the camera before it trusts itself, there are no onsets at all and
 // the "breath" control is a permanent drone. Same class as #435's caption that promised

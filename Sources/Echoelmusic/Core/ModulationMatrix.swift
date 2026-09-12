@@ -38,29 +38,20 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     case breathPhase
     case coherence
     case motion
-    // Additive facial-EXPRESSION sources (2026-07-18). Movement/expression used
-    // as a CONTROL signal, NEVER an inferred emotion (see FaceExpressionMapping).
-    // Appended at the END so existing rawValue/CaseIterable ordering and any
-    // persisted routes decode unchanged.
-    case faceSmile
-    case faceBrow
-    case faceJaw
-    // #1260 (K4) — nine more, appended at the END for the same persistence reason.
-    case faceBrowDown
-    case faceEyeBlink
-    case faceEyeSquint
-    case faceMouthPucker
-    case faceCheekPuff
-    case headYaw
-    case headPitch
-    case headRoll
-    case headDistance
-    // #1264 (K6a) — five BODY channels (Vision hands/shoulders on the same session), at the END.
-    case handHeightL
-    case handHeightR
-    case handDistance
-    case shoulderTilt
-    case bodyPresence
+    // ⛔ #1301 — SEVENTEEN FACE / HEAD-POSE / BODY CASES STOOD HERE AND ARE GONE BY FOUNDER
+    // ORDER (2026-09-12, "Face und Audio Input komplett entfernen"). They were `faceSmile`,
+    // `faceBrow`, `faceJaw`, `faceBrowDown`, `faceEyeBlink`, `faceEyeSquint`,
+    // `faceMouthPucker`, `faceCheekPuff`, `headYaw`/`headPitch`/`headRoll`/`headDistance`,
+    // `handHeightL`/`handHeightR`/`handDistance`, `shoulderTilt`, `bodyPresence`, together
+    // with `faceChannels`, `bodyChannels` and `gestureChannels`.
+    //
+    // ⭐ WHY DROPPING RAWVALUES FROM A `Codable` ENUM IS SAFE HERE, and it is a MEASUREMENT,
+    // not a hope: a persisted route naming one of them fails `ModRoute.init(from:)`, and the
+    // matrix decodes its routes through `LossyRoute` (`route = try? ModRoute(from: decoder)`,
+    // this file), which turns exactly that failure into ONE dropped route rather than a lost
+    // document. Contrast `TrackInstrument.drums` (#167), which had to STAY because its
+    // container had no such wrapper. The persistence question is what separates them — check
+    // the DECODER, never the `Codable` conformance alone.
 
     /// Human label for the "bind this parameter to the body" UI (the one shared
     /// source vocabulary — see BoundParameter / the modulation matrix).
@@ -72,39 +63,8 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .breathPhase: return "Breath"
         case .coherence:   return "Coherence"
         case .motion:      return "Motion"
-        case .faceSmile:   return "Smile"
-        case .faceBrow:    return "Brow"
-        case .faceJaw:     return "Jaw"
-        case .faceBrowDown:    return "Brow down"
-        case .faceEyeBlink:    return "Blink"
-        case .faceEyeSquint:   return "Squint"
-        case .faceMouthPucker: return "Pucker"
-        case .faceCheekPuff:   return "Cheeks"
-        case .headYaw:         return "Head turn"
-        case .headPitch:       return "Head nod"
-        case .headRoll:        return "Head tilt"
-        case .headDistance:    return "Head distance"
-        case .handHeightL:     return "Left hand height"
-        case .handHeightR:     return "Right hand height"
-        case .handDistance:    return "Hands apart"
-        case .shoulderTilt:    return "Shoulder tilt"
-        case .bodyPresence:    return "Body in view"
         }
     }
-
-    /// The channels a face take can carry (`FaceExpressionBioPublisher`, #1257/#1260).
-    public static let faceChannels: [ModSource] = [
-        .faceSmile, .faceBrow, .faceJaw, .faceBrowDown, .faceEyeBlink, .faceEyeSquint,
-        .faceMouthPucker, .faceCheekPuff, .headYaw, .headPitch, .headRoll, .headDistance
-    ]
-    /// K6a (#1264) — the BODY channels the same take carries (`BodyPoseAnalyzer` on the face
-    /// session's frames). Separate list on purpose: the face presets route face channels
-    /// only, and a guard counts each list.
-    public static let bodyChannels: [ModSource] = [
-        .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence
-    ]
-    /// Everything a `.faceCam` frame carries and the wire sends under `/echoelmusic/gesture/`.
-    public static var gestureChannels: [ModSource] { faceChannels + bodyChannels }
 
     /// Natural input range of the raw field, used for [0..1] normalization.
     ///
@@ -176,11 +136,7 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         switch self {
         case .heartRate:   return 40...200
         case .breathRate:  return 3...30
-        case .hrv, .breathPhase, .coherence, .motion,
-             .faceSmile, .faceBrow, .faceJaw,
-             .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-             .headYaw, .headPitch, .headRoll, .headDistance,
-             .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return 0...1
+        case .hrv, .breathPhase, .coherence, .motion: return 0...1
         }
     }
 
@@ -193,23 +149,6 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
         case .breathPhase: return frame.breathPhase
         case .coherence:   return frame.coherence
         case .motion:      return frame.motionEnergy
-        case .faceSmile:   return frame.faceSmile
-        case .faceBrow:    return frame.faceBrowRaise
-        case .faceJaw:     return frame.faceJawOpen
-        case .faceBrowDown:    return frame.faceBrowDown
-        case .faceEyeBlink:    return frame.faceEyeBlink
-        case .faceEyeSquint:   return frame.faceEyeSquint
-        case .faceMouthPucker: return frame.faceMouthPucker
-        case .faceCheekPuff:   return frame.faceCheekPuff
-        case .headYaw:         return frame.headYaw
-        case .headPitch:       return frame.headPitch
-        case .headRoll:        return frame.headRoll
-        case .headDistance:    return frame.headDistance
-        case .handHeightL:     return frame.handHeightL
-        case .handHeightR:     return frame.handHeightR
-        case .handDistance:    return frame.handDistance
-        case .shoulderTilt:    return frame.shoulderTilt
-        case .bodyPresence:    return frame.bodyPresence
         }
     }
 
@@ -225,10 +164,7 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// can be present, fresh and perfectly usable and still carry nothing on a given
     /// channel. The live case is `coherence`, which every source without beat-to-beat RR
     /// publishes as 0 — `HealthKitBioPublisher` does so explicitly — and `hrvNormalized`,
-    /// 0 until a source produces real HRV. `FaceExpressionBioPublisher` is the mirror
-    /// image (a `.faceCam` frame carries no pulse at all), reachable since #1257 through
-    /// the source picker — so that half is live: on a face take every pulse channel is
-    /// unmeasured and every consumer holds or reads neutral.
+    /// 0 until a source produces real HRV.
     ///
     /// It matters most for BIPOLAR routes, which map signal 0 to a FULL NEGATIVE
     /// excursion (`(0·2−1)·depth·span·0.5`): without this gate, a bipolar route on a
@@ -237,7 +173,7 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// session, off nothing.
     ///
     /// UNIPOLAR routes are unaffected on every channel whose sentinel normalizes to 0
-    /// (heart rate, HRV, coherence, motion, face) — there `signal·depth·span` is already
+    /// (heart rate, HRV, coherence, motion) — there `signal·depth·span` is already
     /// 0, so skipping is identical. BREATH is the exception, because its gate reads a
     /// different field than its value: HealthKit with no respiration publishes
     /// `breathRate: 0` but `breathPhase: 0.5` (the engine placeholder), so a unipolar
@@ -251,7 +187,7 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// done for the two channels that have one — `hasMeasuredHeartRate` and
     /// `hasMeasuredBreath` on `BioSampleFrame` — and deliberately NOT for `hrv`/`coherence`:
     /// their gate is a bare sentinel on the field itself, and a named property would only
-    /// restate the field name. Motion and the three face channels exist only here.
+    /// restate the field name. Motion exists only here.
     ///
     /// Breath is the channel whose gate reads a DIFFERENT field than its value:
     /// `breathPhase` has no unknown sentinel (0 is a real position, exhale start), so
@@ -263,27 +199,25 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// the reason is written at `range`. Saturating above 30 is a bounded answer, spending
     /// zero depth below 4 was not.
     ///
-    /// The face channels gate on PROVENANCE rather than a sentinel, because a tracked,
-    /// genuinely neutral face reads 0 and must stay a reading — widen this if a future
-    /// publisher ever carries pulse and expression in one frame (coexistence is
-    /// deferred today).
+    /// ⛔ #1301 — a paragraph here explained why the face channels gated on PROVENANCE
+    /// (`frame.source == .faceCam`) rather than on a sentinel. Those channels are gone by
+    /// founder order; the LAW it carried is not, and is written down here because it is the
+    /// non-obvious half: a channel whose neutral reading is a real 0 cannot be gated by its
+    /// own value — it needs the frame's provenance. Any future channel of that shape (a
+    /// tracked pose, a contact sensor at rest) must gate the same way.
     public func isMeasured(in frame: BioSampleFrame) -> Bool {
         switch self {
         case .heartRate:   return frame.hasMeasuredHeartRate
         case .hrv:         return frame.hrvNormalized > 0
         case .coherence:   return frame.coherence > 0
         case .breathRate, .breathPhase: return frame.hasMeasuredBreath
-        case .faceSmile, .faceBrow, .faceJaw,
-             .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-             .headYaw, .headPitch, .headRoll, .headDistance,
-             .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return frame.source == .faceCam
         // Motion has NO producer: all six `BioSampleFrame` construction sites in
         // `Sources/` hardcode `motionEnergy: 0`, and the last CoreMotion provider was
         // removed in the 2026-06-19 cleanup. So nothing measures it, and `false` is the
         // literal truth rather than a policy.
         //
-        // When a CoreMotion source returns, gate this on THAT source's provenance (as
-        // the face channels do) — do NOT write `motionEnergy > 0`. Unlike HRV and
+        // When a CoreMotion source returns, gate this on THAT source's provenance — do
+        // NOT write `motionEnergy > 0`. Unlike HRV and
         // coherence, motion has no documented sentinel: 0 is a real reading ("perfectly
         // still"). A value gate would drop a motionless performer's routes and make a
         // bipolar route discontinuous at the origin — 1e-7 gives −½·depth·span while
@@ -302,20 +236,12 @@ public enum ModSource: String, Codable, Sendable, CaseIterable {
     /// control that lies, and the user has no way to tell it apart from a body that has
     /// not settled yet.
     ///
-    /// Keep it in step with the producers (the body five ride the face session, #1264):
+    /// Keep it in step with the producers:
     /// - `.motion` — every `BioSampleFrame` construction site in `Sources/` hardcodes
     ///   `motionEnergy: 0`; the last CoreMotion provider went in the 2026-06-19 cleanup.
-    /// - the three face channels — TRUE since #1257: `FaceExpressionBioPublisher` is
-    ///   constructed in `EchoelmusicApp` and started by the source picker's "Play with your
-    ///   face" entry (device-gated on `isSupported`). Until then this said `false` with the
-    ///   instruction to flip it in the wiring commit — which is this one.
     public var hasProducer: Bool {
         switch self {
         case .heartRate, .hrv, .coherence, .breathRate, .breathPhase: return true
-        case .faceSmile, .faceBrow, .faceJaw,
-             .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-             .headYaw, .headPitch, .headRoll, .headDistance,
-             .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence: return true
         case .motion: return false
         }
     }

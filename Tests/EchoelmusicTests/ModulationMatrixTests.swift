@@ -72,27 +72,12 @@ final class ModulationMatrixTests: XCTestCase {
         XCTAssertTrue(ModSource.breathPhase.isMeasured(in: frame(br: 12, phase: 0)))
     }
 
-    func testSource_isMeasured_pulseChannelsAreZeroOnAFaceCamFrame() {
-        // FaceExpressionBioPublisher builds a .faceCam frame with heartRateBPM /
-        // hrvNormalized / breathRate / coherence all literally 0 ("faceCam carries NO
-        // pulse"). Nothing STARTS that publisher yet, so this half is a guard for when
-        // it is wired, not a defect on a device today — the live case is coherence.
-        let faceOnly = frame(hr: 0, hrv: 0, br: 0, phase: 0, coh: 0, motion: 0, src: .faceCam)
-        XCTAssertFalse(ModSource.heartRate.isMeasured(in: faceOnly))
-        XCTAssertFalse(ModSource.hrv.isMeasured(in: faceOnly))
-        XCTAssertFalse(ModSource.coherence.isMeasured(in: faceOnly))
-        XCTAssertFalse(ModSource.breathPhase.isMeasured(in: faceOnly))
-        XCTAssertTrue(ModSource.heartRate.isMeasured(in: frame(hr: 60)))
-    }
-
-    func testSource_isMeasured_faceChannelsGateOnProvenanceNotOnZero() {
-        // The mirror image: every PULSE publisher writes the three face channels as 0,
-        // so a face route on a camera-rPPG frame is reading nothing. But a tracked and
-        // genuinely neutral face also reads 0 — no sentinel can separate those, so the
-        // gate is the source, not the value.
-        XCTAssertFalse(ModSource.faceSmile.isMeasured(in: frame(src: .cameraPPG)))
-        XCTAssertTrue(ModSource.faceSmile.isMeasured(in: frame(src: .faceCam)))
-    }
+    // ⛔ #1301 — TWO TESTS STOOD HERE (`…pulseChannelsAreZeroOnAFaceCamFrame`,
+    // `…faceChannelsGateOnProvenanceNotOnZero`) AND ARE GONE WITH THE `.faceCam` SOURCE AND
+    // ITS SEVENTEEN CHANNELS (founder 2026-09-12). The second one pinned the law that a
+    // channel whose neutral reading is a REAL 0 must gate on the frame's provenance rather
+    // than on its own value — the law survives in `ModSource.isMeasured`'s doc, where the
+    // next channel of that shape will need it.
 
     func testSource_isMeasured_motionHasNoProducerAtAll() {
         // Every BioSampleFrame construction site in Sources/ hardcodes motionEnergy: 0

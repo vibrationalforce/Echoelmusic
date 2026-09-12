@@ -377,11 +377,10 @@ public final class OSCSender {
         // `CameraRPPGBioPublisher.shouldPublish` requires `bpm > 0`, and `PolarH10BioPublisher`
         // requires a plausible BPM. Nor is the "log 2476: ONE frame in 110 s" figure reproducible
         // from anything in this repo. And the third attempt — `FaceExpressionBioPublisher`, "the
-        // REAL zero-pulse producer" — was wrong UNTIL #1257: the type had zero instantiations.
-        // Since #1257 the source picker starts it ("Play with your face"), and every `.faceCam`
-        // frame carries `heartRateBPM: 0` by design — so this gate now has a live producer and
-        // is exactly what keeps a face take from putting an invented BPM on a lighting
-        // desk, and stop trying to name a trigger for it until one actually exists. What IS
+        // REAL zero-pulse producer" — was wrong twice over: the type had zero instantiations
+        // when it was named, then briefly had one (#1257), and is REMOVED (#1301). So the gate
+        // is back to having no zero-pulse producer at all; stop trying to name a trigger for it
+        // until one actually exists. What IS
         // reachable on shipping hardware is the sentinel half below: a strap publishes no
         // respiration at all, and coherence stays 0 for most of a camera take.
         if frame.hasMeasuredHeartRate {
@@ -548,27 +547,16 @@ public final class OSCSender {
         // ⚠️ FIRST in the list is a courtesy, not a guarantee: separate datagrams, and UDP does
         // not promise order. The header tells the receiver to latch it as state; at ~1 Hz and
         // changing only when the player switches source, a one-tick inversion self-corrects.
-        // #1260 (K4) — the face take's twelve gesture channels, ONLY on a `.faceCam` frame
-        // (#1264 K6a: plus the five body channels — `ModSource.gestureChannels` is the list)
-        // (provenance is the measurement gate for these channels — `ModSource.isMeasured`).
-        // Expression and head pose as CONTROL values, one float each, under their own
-        // namespace so a `/bio/*` integrator never sees a channel it did not ask for.
-        // `/bio/synthetic` rides along as usual (the batch is non-empty).
-        if frame.source == .faceCam {
-            for source in ModSource.gestureChannels {
-                msgs.append((Self.gestureAddress(source), [source.rawValue(from: frame)]))
-            }
-        }
+        // ⛔ #1301 — THE `/echoelmusic/gesture/<channel>` BLOCK STOOD HERE AND IS GONE BY
+        // FOUNDER ORDER (2026-09-12, "Face und Audio Input komplett entfernen"). It sent the
+        // face take's seventeen expression / head-pose / body channels, one float each, on
+        // `.faceCam` frames only. Source, channels and address namespace are all removed —
+        // an integrator subscribed to `/echoelmusic/gesture/*` now receives nothing, which is
+        // the honest state rather than a silent zero stream.
         if !msgs.isEmpty {
             msgs.insert(("/echoelmusic/bio/synthetic", [frame.source.isSynthetic ? 1 : 0]), at: 0)
         }
         return msgs
-    }
-
-    /// `/echoelmusic/gesture/<channel>`, the channel spelled as its `ModSource` raw value
-    /// (`faceSmile`, `headYaw`, …) — the same identifier a persisted route carries.
-    nonisolated static func gestureAddress(_ source: ModSource) -> String {
-        "/echoelmusic/gesture/" + source.rawValue
     }
 
     private func send(address: String, floats: [Float]) {

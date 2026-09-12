@@ -227,8 +227,8 @@ public struct BioSampleFrame: Sendable, Equatable {
     /// The gate is `breathRate`, deliberately, even for consumers that read `breathPhase`:
     /// `breathPhase` has NO unknown sentinel — 0 is a meaningful position (exhale start)
     /// — so it cannot answer this question about itself. Publishers encode "no breath" by
-    /// leaving `breathRate` at 0 (`PolarH10BioPublisher`, `FaceExpressionBioPublisher`,
-    /// and `CameraRPPGBioPublisher` below its confidence threshold), and the HealthKit
+    /// leaving `breathRate` at 0 (`PolarH10BioPublisher`, and `CameraRPPGBioPublisher`
+    /// below its confidence threshold), and the HealthKit
     /// path leaves `breathPhase` at the engine's 0.5 placeholder. Anything DISPLAYING a
     /// breath value must gate on this; a 0.50 rendered next to honest "—" neighbours
     /// reads as the most confident number on the panel.
@@ -358,10 +358,10 @@ public struct BioSampleFrame: Sendable, Equatable {
     /// `amplitude *= (1 - swellDepth + swellDepth * breathSwell)`. At the declared
     /// neutral 0.5 that multiplier is exactly 1.0 — the patch's own amplitude. At the
     /// raw `0` it is `1 - swellDepth`, i.e. **0.90 (−0.92 dB)** on the `.natural`
-    /// profile and 0.82 on `.harmonicSeries`. And `0` is what THREE of the four
-    /// publishers write when they have no respiration: `PolarH10BioPublisher` and
-    /// `FaceExpressionBioPublisher` write the literal `breathPhase: 0` always (neither
-    /// derives breathing at all), and `CameraRPPGBioPublisher` writes
+    /// profile and 0.82 on `.harmonicSeries`. And `0` is what TWO of the three
+    /// publishers write when they have no respiration: `PolarH10BioPublisher` writes
+    /// the literal `breathPhase: 0` always (it derives no breathing at all), and
+    /// `CameraRPPGBioPublisher` writes
     /// `measuredBreath ? Float(resp.amplitude) : 0`. So the shipped BLE strap — a fully
     /// wired, real source — ran the whole instrument permanently a decibel under its
     /// patch, indistinguishable from a performer frozen at full exhale.
@@ -435,43 +435,24 @@ public struct BioSampleFrame: Sendable, Equatable {
     /// Motion energy, [0..1]. Aggregate from CoreMotion.
     public let motionEnergy: Float
 
-    /// Facial-EXPRESSION control channels, all [0..1], all default `0` when the
-    /// source does not track the face (every current publisher writes `0`, like
-    /// `motionEnergy`). These are movement/expression used as a CONTROL signal —
-    /// NEVER an inferred emotion (EU AI Act framing; see `FaceExpressionMapping`).
-
-    /// Smile expression as a control value, [0..1]. `0` = not tracked / neutral.
-    public let faceSmile: Float
-
-    /// Brow-raise expression as a control value, [0..1]. `0` = not tracked / neutral.
-    public let faceBrowRaise: Float
-
-    /// Jaw-open expression as a control value, [0..1]. `0` = not tracked / neutral.
-    public let faceJawOpen: Float
-
-    // #1260 (K4) — nine more EXPRESSION / HEAD-POSE control channels, [0..1], written only
-    // by `FaceExpressionBioPublisher` (`.faceCam`); every other publisher leaves the defaults.
-    // The five blendShape channels are unipolar (0 = at rest); the three head angles are
-    // CENTRED (0.5 = the calibrated neutral, 0/1 = the full turn either way); distance is
-    // 0 = near, 1 = far. Movement as a control signal, never an inferred state.
-    public let faceBrowDown: Float
-    public let faceEyeBlink: Float
-    public let faceEyeSquint: Float
-    public let faceMouthPucker: Float
-    public let faceCheekPuff: Float
-    public let headYaw: Float
-    public let headPitch: Float
-    public let headRoll: Float
-    public let headDistance: Float
-    // K6a (#1264) — five BODY control channels from the same front-camera session (Vision on
-    // `capturedImage`), written only by `FaceExpressionBioPublisher` (`.faceCam`). Hand heights
-    // 0 = bottom of the picture … 1 = top; `handDistance` 0 = together … 1 = wide apart;
-    // `shoulderTilt` CENTRED (0.5 = level); `bodyPresence` 1 while a torso is seen.
-    public let handHeightL: Float
-    public let handHeightR: Float
-    public let handDistance: Float
-    public let shoulderTilt: Float
-    public let bodyPresence: Float
+    // ⛔ #1301 — SEVENTEEN FACE / HEAD-POSE / BODY CONTROL CHANNELS STOOD HERE AND ARE GONE
+    // BY FOUNDER ORDER (2026-09-12, "Face und Audio Input komplett entfernen"). They were
+    // `faceSmile`, `faceBrowRaise`, `faceJawOpen`, `faceBrowDown`, `faceEyeBlink`,
+    // `faceEyeSquint`, `faceMouthPucker`, `faceCheekPuff`, `headYaw`/`headPitch`/`headRoll`/
+    // `headDistance`, `handHeightL`/`handHeightR`/`handDistance`, `shoulderTilt` and
+    // `bodyPresence` — all written by exactly ONE publisher, the front-camera session that
+    // went with them.
+    //
+    // ⭐ WHY REMOVING THEM IS SAFE AND WHY THAT IS A MEASUREMENT, not a hope: `BioSampleFrame`
+    // is NOT `Codable` and `BioSource` is a plain `UInt8` enum, so no stored document carries
+    // these names and no decoder can trip over their absence. Compare `TrackInstrument.drums`
+    // (#167), which had to STAY precisely because it is a persisted rawValue. The two look
+    // identical from a distance and the persistence question is what separates them.
+    //
+    // ⚠️ If a gesture input ever returns, do NOT re-add scalar channels to this frame first.
+    // The frame is the pulse contract; seventeen control values rode on it because the face
+    // was modelled as a bio SOURCE, and that modelling is exactly what the founder rejected
+    // when he asked for the face to modulate the field instead of replacing the pulse.
 
     /// Where the frame originated.
     public let source: BioSource
@@ -487,24 +468,7 @@ public struct BioSampleFrame: Sendable, Equatable {
         source: BioSource,
         hrvRMSSDms: Float = 0,
         hrvSDNNms: Float = 0,
-        hrvPNN50: Float = 0,
-        faceSmile: Float = 0,
-        faceBrowRaise: Float = 0,
-        faceJawOpen: Float = 0,
-        faceBrowDown: Float = 0,
-        faceEyeBlink: Float = 0,
-        faceEyeSquint: Float = 0,
-        faceMouthPucker: Float = 0,
-        faceCheekPuff: Float = 0,
-        headYaw: Float = 0.5,
-        headPitch: Float = 0.5,
-        headRoll: Float = 0.5,
-        headDistance: Float = 0.5,
-        handHeightL: Float = 0,
-        handHeightR: Float = 0,
-        handDistance: Float = 0,
-        shoulderTilt: Float = 0.5,
-        bodyPresence: Float = 0
+        hrvPNN50: Float = 0
     ) {
         self.timestamp = timestamp
         self.heartRateBPM = heartRateBPM
@@ -517,23 +481,6 @@ public struct BioSampleFrame: Sendable, Equatable {
         self.hrvRMSSDms = hrvRMSSDms
         self.hrvSDNNms = hrvSDNNms
         self.hrvPNN50 = hrvPNN50
-        self.faceSmile = faceSmile
-        self.faceBrowRaise = faceBrowRaise
-        self.faceJawOpen = faceJawOpen
-        self.faceBrowDown = faceBrowDown
-        self.faceEyeBlink = faceEyeBlink
-        self.faceEyeSquint = faceEyeSquint
-        self.faceMouthPucker = faceMouthPucker
-        self.faceCheekPuff = faceCheekPuff
-        self.headYaw = headYaw
-        self.headPitch = headPitch
-        self.headRoll = headRoll
-        self.headDistance = headDistance
-        self.handHeightL = handHeightL
-        self.handHeightR = handHeightR
-        self.handDistance = handDistance
-        self.shoulderTilt = shoulderTilt
-        self.bodyPresence = bodyPresence
     }
 }
 
@@ -545,11 +492,10 @@ public enum BioSource: UInt8, Sendable, Equatable {
     case ble = 3
     case watch = 4
     case cameraPPG = 5
-    /// Front-camera facial-EXPRESSION tracking (ARKit blendShapes → smile/brow/jaw
-    /// control channels). Appended at the END so persisted raw values stay stable.
-    /// It carries NO pulse — expression/movement used as a control signal, never an
-    /// inferred emotion or a heart measurement.
-    case faceCam = 6
+    // ⛔ #1301 — `case faceCam = 6` STOOD HERE AND IS GONE BY FOUNDER ORDER (2026-09-12).
+    // The enum is `UInt8`-backed but NOT `Codable` and nothing persists it, so the value 6 is
+    // simply free again. If a future source takes it, nothing decodes wrong; the number is
+    // not a contract the way a `Codable` rawValue would be.
 
     /// Whether this source delivers beat-to-beat RR intervals accurate enough
     /// for time-domain HRV (RMSSD). Only a BLE Heart-Rate-Service chest strap
@@ -619,7 +565,6 @@ public enum BioSource: UInt8, Sendable, Equatable {
     public var freshnessWindow: TimeInterval {
         switch self {
         case .ble, .cameraPPG: return 6      // live, near beat-to-beat
-        case .faceCam: return 6              // live front-camera expression, same cadence
         case .watch, .healthKit: return 90   // latent + sporadic, valid at rest
         case .oura: return 600               // periodic readiness/HRV
         case .fallback: return 5

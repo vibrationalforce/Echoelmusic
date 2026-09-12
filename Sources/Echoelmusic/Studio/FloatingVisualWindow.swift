@@ -201,11 +201,6 @@ struct FloatingVisualWindow: View {
     // K5 (#1262) — the camera layer's three keys, bound here like every other look key so this
     // window and the external stage render the same picture (`TheFinishDialsReachTheShaderTests`
     // claim 4 is the precedent: a surface that stops binding a key renders a fallback).
-    @AppStorage(StudioDefaultKeys.visualCameraOpacity.key) private var visualCameraOpacity = StudioDefaultKeys.visualCameraOpacity.value
-    @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
-    @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
-    @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var visualCameraCutout = StudioDefaultKeys.visualCameraCutout.value
-    @AppStorage(StudioDefaultKeys.visualCameraSize.key) private var visualCameraSize = StudioDefaultKeys.visualCameraSize.value
 
     // P5: the sky mixed into the IMAGE, per parameter (founder: "Klang und Bild
     // aber getrennte und mehrere Parameter"). Each visual influence crossfades the
@@ -878,13 +873,7 @@ struct FloatingVisualWindow: View {
                      // on the cell that was touched instead of at its chromatic fraction above
                      // C. Passed as the KEY rather than a position table so both sides call
                      // one piece of arithmetic (#416). Both values are cold user settings.
-                     noteFieldKey: MusicalKey(root: rootIndex, scale: touchScale),
-                     // K5 (#1262) — the camera layer, from the shared keys (three-surface rule).
-                     cameraOpacity: Float(visualCameraOpacity),
-                     cameraMirror: visualCameraMirror,
-                     cameraBlend: visualCameraBlend,
-                     cameraCutout: visualCameraCutout,
-                     cameraSize: Float(visualCameraSize))
+                     noteFieldKey: MusicalKey(root: rootIndex, scale: touchScale))
     }
 
     @ViewBuilder

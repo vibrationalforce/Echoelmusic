@@ -267,7 +267,7 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
     /// or the sender predates #639. Making a real body send 0 is what keeps those two the only
     /// readings; letting it stay silent would add a third and make the address useless.
     func testARealBodyAlsoSaysSoRatherThanStayingSilent() {
-        for source in [BioSource.cameraPPG, .ble, .faceCam] {
+        for source in [BioSource.cameraPPG, .ble] {
             let msgs = messages(liveFrame(source))
             guard let flag = msgs.first(where: { $0.address == Self.provenance }) else {
                 XCTFail("""
@@ -468,7 +468,7 @@ final class TheWireSaysWhoseBodyTests: XCTestCase {
     /// 10 — REGRESSION. A real body says 0 rather than staying silent, for the reason claim 2
     /// spells out one screen up: absence must keep meaning exactly one thing.
     func testARealBodysEventsAlsoSaySo() {
-        for source in [BioSource.cameraPPG, .ble, .faceCam] {
+        for source in [BioSource.cameraPPG, .ble] {
             let out = built([beat(source)])
             XCTAssertEqual(out.messages.map(\.address),
                            [Self.provenance, Self.beatAddress], """

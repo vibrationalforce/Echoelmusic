@@ -128,14 +128,12 @@ final class TheSpokenTempoSaysWhoseBodyTests: XCTestCase {
 
     /// 1 — FORWARD. A real body keeps the founder's phrase, word for word.
     func testARealBodyKeepsTheShippedSentence() {
-        for source in [BioSource.cameraPPG, .healthKit, .ble, .watch, .oura, .faceCam] {
+        for source in [BioSource.cameraPPG, .healthKit, .ble, .watch, .oura] {
             XCTAssertEqual(TempoFollowLabel.spoken(for: Self.frame(source)),
                            "Tempo, following your body", """
                 \(source) no longer speaks the shipped sentence. It is TRUE when a real body is \
                 driving the clock and the phrasing is the founder's; #647 moves the SUBJECT for \
-                the other two states and rewrites nothing here. `.faceCam` is included \
-                deliberately — it carries no pulse, but it is a real body, and the question this \
-                label answers is whose reading drives the clock, not which channel it is.
+                the other two states and rewrites nothing here.
                 """)
         }
     }

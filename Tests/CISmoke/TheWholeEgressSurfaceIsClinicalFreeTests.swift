@@ -188,7 +188,7 @@ final class TheWholeEgressSurfaceIsClinicalFreeTests: XCTestCase {
         for s in [BioSource.healthKit, .watch, .oura] {
             XCTAssertFalse(BioEgressPolicy.allowsEgress(s), "\(s) is Health-store data")
         }
-        for s in [BioSource.ble, .cameraPPG, .faceCam, .fallback] {
+        for s in [BioSource.ble, .cameraPPG, .fallback] {
             XCTAssertTrue(BioEgressPolicy.allowsEgress(s), "\(s) is Echoel's own measurement")
         }
     }

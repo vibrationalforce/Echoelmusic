@@ -81,13 +81,6 @@ public enum FXModCarrier: Codable, Sendable, Equatable, Hashable {
             case .breathPhase: return "Breath"
             case .coherence:   return "Coherence"
             case .motion:      return "Motion"
-            case .faceSmile:   return "Smile"
-            case .faceBrow:    return "Brow"
-            case .faceJaw:     return "Jaw"
-            case .faceBrowDown, .faceEyeBlink, .faceEyeSquint, .faceMouthPucker, .faceCheekPuff,
-                 .headYaw, .headPitch, .headRoll, .headDistance,
-                 .handHeightL, .handHeightR, .handDistance, .shoulderTilt, .bodyPresence:
-                return s.displayName   // #1260/#1264 — ONE label per channel, in `ModSource`
             }
         }
     }
@@ -95,8 +88,8 @@ public enum FXModCarrier: Codable, Sendable, Equatable, Hashable {
     /// Carrier choices offered in the picker: every body channel that HAS a producer,
     /// plus the LFO.
     ///
-    /// It used to be `ModSource.allCases` unfiltered, which offered four channels
-    /// nothing in this build can write — motion and the three face channels (#135).
+    /// It used to be `ModSource.allCases` unfiltered, which offered channels nothing in
+    /// this build can write — `.motion` is the one that survives today (#135).
     /// Picking one produced a route that renders "—" forever, and a user cannot
     /// distinguish that from a body that has not settled yet. A control that cannot
     /// do anything is worse than an absent one.
@@ -359,8 +352,8 @@ public enum FXModulation {
     /// stateful and no longer a pure function of the routes and the frame.
     ///
     /// "Not reporting" is two cases, and both must be caught: no frame at all, and a
-    /// frame that carries nothing ON THIS CHANNEL (`ModSource.isMeasured` — a `.faceCam`
-    /// frame has no pulse, a source without beat-to-beat RR has no coherence). The offset
+    /// frame that carries nothing ON THIS CHANNEL (`ModSource.isMeasured` — a source
+    /// without beat-to-beat RR has no coherence). The offset
     /// is forced to 0 in both rather than computed from signal 0, and that is not
     /// cosmetic: this readout exists to answer "what is my body moving right now", so it
     /// must agree with where the driver ENDS UP — and `FXBioModulator` disengages exactly
@@ -418,8 +411,8 @@ public enum FXModulation {
     /// beside the picked source). A frame from the OTHER publisher measures nothing on this
     /// route's channel, so the driver saw `signal == nil` for the ≤100 ms until the picked
     /// source wrote again — and `FXRouteFade` began a 0.25 s release every 4–5 s: a
-    /// periodic dip on every face route (and on every pulse route during a face take's
-    /// wrist frames the other way round). A channel measured within this many seconds is
+    /// periodic dip on every route whose channel the interleaved publisher does not carry
+    /// (coherence, on every wrist frame). A channel measured within this many seconds is
     /// HELD at its last value instead. Shorter than any source's `freshnessWindow` (the
     /// tightest is 5 s), so a source that truly stopped still releases — one bridge later.
     public static let channelBridgeSeconds: TimeInterval = 0.5
@@ -573,44 +566,12 @@ public struct FXRouteFade: Sendable, Equatable {
     public var isEngaged: Bool { presence > FXModulation.presenceEpsilon }
 }
 
-// MARK: - Face presets (#1261, K4b)
+// ⛔ #1301 — `FXModPreset` AND ITS THREE FACE STARTER SETS STOOD HERE AND ARE GONE BY FOUNDER
+// ORDER (2026-09-12, "Face und Audio Input komplett entfernen"). They were "Smile → brightness",
+// "Head → space" and "Eyes → texture", offered from `EchoelFXView` behind
+// `FaceExpressionBioPublisher.isSupported`.
+//
+// The type is removed rather than emptied because a preset LIST with no presets is a menu that
+// opens onto nothing — the lying-surface trap this repo keeps re-learning (#131a's undoored
+// enum). If a preset mechanism returns for the channels that remain, it returns WITH its door.
 
-/// A named set of starter routes for the face take — the prompt's "2–3 mitgelieferte
-/// Presets als Startpunkt". Nothing here is hard-wired: a preset only APPENDS ordinary
-/// `FXModRoute`s that the row editor then owns (depth, curve, target, delete). `routes` is
-/// built on every access so each application gets fresh route ids — a `static let` would
-/// hand the same `UUID`s to `ForEach` twice and collide.
-public struct FXModPreset: Identifiable, Sendable {
-    public let name: String
-    public let summary: String
-    public let routes: [FXModRoute]
-    public var id: String { name }
-
-    /// Unipolar face channels move the parameter UP from the base (`bipolar: false`) —
-    /// a smile that could only darken a sound reads backwards; the CENTRED head channels
-    /// swing both ways around the base (`bipolar: true`, 0.5 = rest = no offset).
-    public static var facePresets: [FXModPreset] {
-        [
-            FXModPreset(name: "Smile → brightness",
-                        summary: "Smile opens the filter; the jaw adds room.",
-                        routes: [
-                            FXModRoute(carrier: .bio(.faceSmile), target: .filterCutoff, depth: 0.6, bipolar: false),
-                            FXModRoute(carrier: .bio(.faceJaw), target: .reverbMix, depth: 0.4, bipolar: false)
-                        ]),
-            FXModPreset(name: "Head → space",
-                        summary: "Turn for width, lean in for a smaller room, nod for echo.",
-                        routes: [
-                            FXModRoute(carrier: .bio(.headYaw), target: .stereoWidth, depth: 0.5, bipolar: true),
-                            FXModRoute(carrier: .bio(.headDistance), target: .reverbSize, depth: 0.5, bipolar: false),
-                            FXModRoute(carrier: .bio(.headPitch), target: .delayMix, depth: 0.3, bipolar: true)
-                        ]),
-            FXModPreset(name: "Eyes → texture",
-                        summary: "Squint to crush, raise the brows to ring, puff the cheeks to tremble.",
-                        routes: [
-                            FXModRoute(carrier: .bio(.faceEyeSquint), target: .bitcrushMix, depth: 0.4, bipolar: false),
-                            FXModRoute(carrier: .bio(.faceBrow), target: .filterResonance, depth: 0.3, bipolar: false),
-                            FXModRoute(carrier: .bio(.faceCheekPuff), target: .tremoloDepth, depth: 0.4, bipolar: false)
-                        ])
-        ]
-    }
-}

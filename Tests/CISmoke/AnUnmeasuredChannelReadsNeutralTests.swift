@@ -20,8 +20,8 @@
 //     `breathSwell = 0.5 - 0.5*cos(phase*2π)`, then
 //     `amplitude *= (1 - swellDepth + swellDepth*breathSwell)`: neutral 0.5 → ×1.0, raw 0 →
 //     **×0.90 (−0.92 dB)** on `.natural` and ×0.82 on `.harmonicSeries`. And `0` is what
-//     THREE of the four publishers write with no respiration — `PolarH10BioPublisher` and
-//     `FaceExpressionBioPublisher` write the literal always (neither derives breathing),
+//     TWO of the three publishers write with no respiration — `PolarH10BioPublisher`
+//     writes the literal always (it derives no breathing),
 //     `CameraRPPGBioPublisher` writes it below its confidence threshold. So the shipped BLE
 //     strap ran the WHOLE instrument a decibel under its own patch, forever.
 //

@@ -223,8 +223,7 @@ final class TheBreathScaleSpansWhatTheGateAdmitsTests: XCTestCase {
     func testTheHeartRateScaleIsUntouched() {
         XCTAssertEqual(ModSource.heartRate.range.lowerBound, 40, accuracy: 1e-6)
         XCTAssertEqual(ModSource.heartRate.range.upperBound, 200, accuracy: 1e-6)
-        for source in [ModSource.hrv, .breathPhase, .coherence, .motion,
-                       .faceSmile, .faceBrow, .faceJaw] {
+        for source in [ModSource.hrv, .breathPhase, .coherence, .motion] {
             XCTAssertEqual(source.range.lowerBound, 0, accuracy: 1e-6,
                            "\(source) is a unit channel")
             XCTAssertEqual(source.range.upperBound, 1, accuracy: 1e-6,

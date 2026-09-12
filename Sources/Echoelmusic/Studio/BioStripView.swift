@@ -949,8 +949,8 @@ struct BioStripView: View {
     /// fixed 5 s (`freshBio()`'s default) rather than the source's own window. Measured, the
     /// change is small and one-directional: the only publishers that ever emit a non-zero
     /// coherence are the camera (`.cameraPPG`), the strap (`.ble`) and the demo
-    /// (`.fallback`) — `HealthKitBioPublisher` and `FaceExpressionBioPublisher` both write
-    /// the literal `coherence: 0`, so their 90 s / 6 s windows can never show anything here.
+    /// (`.fallback`) — `HealthKitBioPublisher` writes the literal `coherence: 0`, so its
+    /// 90 s window can never show anything here.
     /// Camera and strap therefore gain exactly 1 s (5 → 6) and the demo is unchanged
     /// (5 → 5). What it buys is that the cell now vanishes at the same instant as the tag
     /// beside it instead of a second earlier.
@@ -966,7 +966,6 @@ struct BioStripView: View {
         case .ble:        return "BLE"
         case .watch:      return "Watch"
         case .cameraPPG:  return "PPG"
-        case .faceCam:    return "Face"
         case .fallback:   return "—"
         }
     }

@@ -11,20 +11,20 @@
 //  BUILD IT IS WRONG. Counted 2026-08-12 over `Sources/` with comments stripped, so a flag
 //  merely NAMED in prose does not count as consulted:
 //
-//  · ELEVEN of the sixteen have ZERO deciding readers — `spatialEngine`, `bioSpace`,
+//  · TEN of the fifteen have ZERO deciding readers — `spatialEngine`, `bioSpace`,
 //    `echoelRender`, `motionEngine`, `showControl`, `avObjects`, `performerTracking`,
-//    `liveCollab`, `headTracking`, `echoelAI`, `cameraExpression`. Nothing branches on any
-//    of them. **A flag with no reader gates nothing**, so for these eleven the sentence
+//    `liveCollab`, `headTracking`, `echoelAI`. Nothing branches on any
+//    of them. **A flag with no reader gates nothing**, so for these ten the sentence
 //    above describes an intention: whatever sits behind them is inert because nothing
 //    CALLS it, never because a flag holds it back. CLAUDE.md already carries exactly this
-//    correction — for `echoelAI` alone, as if it were the singular case. It is one of eleven.
+//    correction — for `echoelAI` alone, as if it were the singular case. It is one of ten.
 //  · FIVE are really consulted: `storeKit` (EchoelStore + EchoelmusicApp), `multiRoll`
 //    (EchoelmusicApp, 3 sites), `voiceKindRouting` (LaneVoiceRack), `audioLaneRecording`
 //    (EchoelmusicApp), `instrumentHome` (WorkspaceView). Only for these five is "ships
 //    behind a flag" a property of the build rather than a plan.
 //
 //  ⭐ AND THE OFF-BY-DEFAULT HALF HAS A SECOND LIMIT THIS FILE NEVER STATED: `FeatureFlags.set`
-//  has **zero** production call sites. No shipped surface can flip any flag. The thirteen
+//  has **zero** production call sites. No shipped surface can flip any flag. The twelve
 //  default-OFF flags are therefore not "off until deliberately turned on" — they are off with
 //  no door, and for the two of them that a branch really consults (`storeKit`,
 //  `audioLaneRecording`) that means built, compiling code no user or tester can reach. This is
@@ -100,15 +100,13 @@ public enum FeatureFlags {
         /// voice was deleted. `FeatureFlags.set(.voiceKindRouting, false)` is the one-line
         /// rollback lever. NEVER delete the OFF branches.
         case voiceKindRouting  = "feature.voiceKindRouting"
-        /// A5 BodyVibe camera modulator: front-camera facial-EXPRESSION tracking
-        /// (ARKit blendShapes → smile/brow/jaw control channels) as an opt-in bio
-        /// source. ⛔ #1257 — THIS FLAG NEVER BECAME THE LEVER. The source got its door
-        /// without it: `BioSourceOption.face` is offered wherever
-        /// `FaceExpressionBioPublisher.isSupported` (a device fact), and the player's
-        /// pick is the switch. Still UNREAD in code (the census above stays true); kept
-        /// as a reserved key, not deleted, because a persisted key with no reader costs
-        /// nothing and a deleted one invites a second `feature.camera…` spelling.
-        case cameraExpression  = "feature.cameraExpression"
+        /// ⛔ #1301 — `case cameraExpression = "feature.cameraExpression"` STOOD HERE AND
+        /// IS GONE (founder 2026-09-12, "Face und Audio Input komplett entfernen"). It
+        /// gated the front-camera expression source, which never read it and is itself
+        /// removed. Unlike the reserved keys kept elsewhere in this enum, there is nothing
+        /// left for a future reader to gate, so the key goes with the feature. A persisted
+        /// `"feature.cameraExpression"` in `UserDefaults` is inert: `FeatureFlags` reads
+        /// through this enum, so an orphan key is never looked up.
         /// Task #13 (PLAN_AUDIO_LANE_RECORDING_2026-07-21.md): real mic capture
         /// onto an armed audio-input lane via `MultiTrackRecorder`. OFF = the app
         /// wires `RecordController` with no audio recorder at all, so its new
@@ -149,7 +147,6 @@ public enum FeatureFlags {
     public static var storeKit: Bool { isOn(.storeKit) }
     public static var multiRoll: Bool { isOn(.multiRoll) }
     public static var voiceKindRouting: Bool { isOn(.voiceKindRouting) }
-    public static var cameraExpression: Bool { isOn(.cameraExpression) }
     public static var audioLaneRecording: Bool { isOn(.audioLaneRecording) }
     public static var instrumentHome: Bool { isOn(.instrumentHome) }
 

@@ -13,8 +13,7 @@
 // header named a mechanism that does not exist. It said "the frames a publisher emits before it
 // locks and after a finger lifts". Neither live pulse sensor emits those: `CameraRPPGBioPublisher`
 // requires `bpm > 0` to publish at all, and `PolarH10BioPublisher` requires a plausible BPM. The
-// THREE REAL cases are (a) `FaceExpressionBioPublisher`, which publishes an all-zero bio frame
-// and IS egress-allowed; (b) a LOCKED pulse sitting next to `coherence == 0`, because coherence
+// TWO REAL cases are (b) a LOCKED pulse sitting next to `coherence == 0`, because coherence
 // is derived from the beat SERIES; and (c) a MALFORMED frame — non-zero HRV or coherence beside
 // `bpm == 0`, which is physically impossible and means a publisher bug, not a reading to forward.
 //

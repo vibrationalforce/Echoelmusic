@@ -77,8 +77,7 @@
 //
 // ⚠️ THE INVARIANT IS SOURCE-DEPENDENT AND THAT IS WHY THE ANCHOR IS RMSSD. On camera and Polar
 // the knob is `normalize(rmssd)`; on HealthKit it is `normalize(sdnn)`, because HealthKit has no
-// beat-to-beat RR. (A fourth producer, `FaceExpressionBioPublisher`, satisfies it vacuously — it
-// publishes `hrvNormalized: 0` and no ms metric at all.) The demo publishes RMSSD *and* pNN50 —
+// beat-to-beat RR. The demo publishes RMSSD *and* pNN50 —
 // quantities only an RR source has — so it belongs to the RR convention. Anchoring it on SDNN
 // would have been a third rule.
 //

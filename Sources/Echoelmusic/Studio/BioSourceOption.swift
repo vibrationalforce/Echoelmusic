@@ -37,19 +37,20 @@ import Foundation
 /// The bio inputs a player can choose. See the file header for why the
 /// labels start with "Play with" and why the raw values are load-bearing.
 ///
-/// #1257 — `face` is the FOURTH: the front camera as an expression input (ARKit
-/// blendShapes → smile/brow/jaw, `FaceExpressionBioPublisher`). It carries NO pulse — the
-/// label says so — and it is offered only where the hardware can track a face
-/// (`offered`); a menu entry for a sensor the device lacks is the #135 lying-control class.
+/// ⛔ #1301 — A FOURTH CASE `face` STOOD HERE AND IS GONE BY FOUNDER ORDER (2026-09-12,
+/// "Face und Audio Input komplett entfernen"). It was the front camera as an expression
+/// input, shipped by #1257 and doored into the Field panel by #1298 one day before the
+/// removal. `offered` survives it: it used to exist ONLY to withhold `face` on a device
+/// without TrueDepth, so it is now `allCases` — but it is KEPT as the member both chooser
+/// surfaces iterate, because the day a source needs withholding again there must be exactly
+/// ONE place that decides it, not two surfaces guessing.
 enum BioSourceOption: String, CaseIterable, Identifiable {
-    case camera, ble, sim, face
+    case camera, ble, sim
 
-    /// The entries the two chooser surfaces iterate: every case, minus `face` on a device
-    /// without face tracking. ⚠️ Both surfaces MUST iterate THIS, not `allCases`
-    /// (`TheBioSourceChooserHasOneDefinitionTests` pins the needle).
-    static var offered: [BioSourceOption] {
-        allCases.filter { $0 != .face || FaceExpressionBioPublisher.isSupported }
-    }
+    /// The entries the two chooser surfaces iterate. ⚠️ Both surfaces MUST iterate THIS, not
+    /// `allCases` (`TheBioSourceChooserHasOneDefinitionTests` pins the needle) — see the ⛔
+    /// note above for why the indirection outlived the case that motivated it.
+    static var offered: [BioSourceOption] { allCases }
 
     var id: String { rawValue }
 
@@ -60,7 +61,6 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         case .camera: return "Play with camera light"
         case .ble:    return "Play with a Bluetooth strap — scans for one"
         case .sim:    return "Play with the simulation"
-        case .face:   return "Play with your face — front camera, no pulse"
         }
     }
 
@@ -69,7 +69,6 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         case .camera: return "camera.fill"
         case .ble:    return "dot.radiowaves.left.and.right"
         case .sim:    return "waveform.path"
-        case .face:   return "face.smiling"
         }
     }
 
@@ -79,7 +78,6 @@ enum BioSourceOption: String, CaseIterable, Identifiable {
         case .camera: return "Camera light"
         case .ble:    return "Bluetooth strap"
         case .sim:    return "Simulation"
-        case .face:   return "Face"
         }
     }
 }

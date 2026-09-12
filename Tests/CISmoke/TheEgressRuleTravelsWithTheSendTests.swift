@@ -194,7 +194,7 @@ final class TheEgressRuleTravelsWithTheSendTests: XCTestCase {
     /// Hand-written because `BioSource` is deliberately not `CaseIterable` (its raw values
     /// are persisted). `testANewBioSourceForcesAnEgressDecision` keeps this honest.
     private let allBioSources: [BioSource] = [
-        .fallback, .healthKit, .oura, .ble, .watch, .cameraPPG, .faceCam
+        .fallback, .healthKit, .oura, .ble, .watch, .cameraPPG
     ]
 
     private func frame(source: BioSource,

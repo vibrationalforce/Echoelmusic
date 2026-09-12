@@ -99,12 +99,11 @@ final class TheGuideSheetTitleSaysWhoseBodyTests: XCTestCase {
         // ⛔ `.bleHeartRate` STOOD HERE AND IS NOT A CASE — the enum spells it `.ble`. A
         // compile error in the blocking bundle, caught by opening `BioSource` rather than
         // trusting a plausible name; the same class of mistake that took #643 red.
-        // `.faceCam` is deliberately out: it carries no pulse, so whether the sheet's
-        // title is true for it is a separate question this slice does not answer.
-        // ⛔ AND `.oura` WAS SILENTLY ABSENT — five of seven cases named, one excluded with a
+        // ⛔ `.oura` WAS SILENTLY ABSENT — cases named, one excluded with a
         // reason, one just missing, which reads as "everything else is covered". Same shape as
         // the DDSP-mapping retraction: an enumeration checked against its own tidiness instead
-        // of against the enum. Six of seven are now named, `.faceCam` by exception.
+        // of against the enum. All five real sources are now named. (⛔ #1301 — a sixth,
+        // `.faceCam`, was named here as a deliberate exception; it no longer exists.)
         for source in [BioSource.cameraPPG, .healthKit, .ble, .watch, .oura] {
             XCTAssertNil(BioMetric.originNote(for: Self.frame(source: source)), """
                 \(source) is being marked as if it were not a body. Marking a measured body is \

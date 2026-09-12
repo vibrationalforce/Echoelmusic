@@ -47,7 +47,7 @@ final class BioModulationMapTests: XCTestCase {
     func testMeasuredAmount_breathIsGatedOnTheRATE_notOnThePhase() {
         // The breath row is the trap in this whole rule. Its VALUE is `breathPhase`,
         // where 0 is a genuine position (exhale start) — so the phase cannot say whether
-        // anything was measured. Only `breathRate` can: the strap and the face-cam
+        // anything was measured. Only `breathRate` can: the strap
         // publish 0, and the HealthKit path leaves the phase at a 0.5 PLACEHOLDER that
         // would otherwise render as the most confident number on a panel of honest "—"s.
 

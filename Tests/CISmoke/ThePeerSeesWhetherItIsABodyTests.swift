@@ -90,7 +90,7 @@ final class ThePeerSeesWhetherItIsABodyTests: XCTestCase {
     /// 2 — REGRESSION: a measured body says so POSITIVELY, so the marker's absence is a
     /// statement and not merely a silence.
     func testAMeasuredFrameTravelsMarkedAsMeasured() {
-        for source in [BioSource.cameraPPG, .ble, .faceCam] {
+        for source in [BioSource.cameraPPG, .ble] {
             // #629b: unwrap FIRST. Without it, a source that stopped egressing at all fails
             // here with a message about marking, i.e. names the wrong defect; claim 6 would
             // catch the real cause but only after this one has misdirected the reader.
@@ -157,7 +157,7 @@ final class ThePeerSeesWhetherItIsABodyTests: XCTestCase {
                 and no amount of labelling makes it allowed (#629).
                 """)
         }
-        for source in [BioSource.cameraPPG, .ble, .faceCam, .fallback] {
+        for source in [BioSource.cameraPPG, .ble, .fallback] {
             XCTAssertNotNil(BioPeek.egressible(from: frame(source)), """
                 \(source) stopped egressing. #629 adds a LABEL; it must not narrow who may \
                 share. Blocking the demo in particular trades a marked row for a blank one.

@@ -39,7 +39,6 @@
 import SwiftUI
 import MetalKit
 import simd
-import CoreVideo   // K5 (#1262) — `CVMetalTextureCache` for the camera layer
 
 /// Bio uniforms handed to the fragment shader. Layout must match `Uniforms` in the
 /// MSL source below (6 contiguous floats).
@@ -224,28 +223,12 @@ private struct BioUniforms {
     /// end shifts every uniform after it. Appending is the only edit that cannot corrupt the
     /// block. `TheUniformMirrorHasNoCompilerTests` (#1119) is what checks it.
     var fieldPhase: Float = 0
-    /// K5 (#1262) — CAMERA LAYER, appended at the TAIL (the raw-bytes law at `hr`). `camPresent`
-    /// is 1 while two camera textures are bound at fragment indices 0/1, else 0 — the shader
-    /// samples ONLY behind it (1×1 placeholders are bound otherwise, so Metal's validation never
-    /// meets an empty slot). `camOpacity` is eased (tau 0.2 s); `camMirror`/`camBlend` are
-    /// snapped (discrete choices); `camYOffset`/`camYScale` undo video-range luma; `camA…camTy`
-    /// are the INVERSE of `ARFrame.displayTransform` (viewport → image, both top-left origin),
-    /// so rotation and aspect-fill are ARKit's arithmetic, not a guess made here.
-    var camOpacity: Float = 0
-    var camPresent: Float = 0
-    var camMirror: Float = 1
-    var camBlend: Float = 0
-    var camYOffset: Float = 0
-    var camYScale: Float = 1
-    var camA: Float = 1
-    var camB: Float = 0
-    var camC: Float = 0
-    var camD: Float = 1
-    var camTx: Float = 0
-    var camTy: Float = 0
-    /// K7 (#1265) — 1 while a person matte is bound at texture(2) and the cut-out is on; the
-    /// shader multiplies the layer's opacity by the matte only then (placeholder = 1 otherwise).
-    var camMatte: Float = 0
+    // ⛔ #1301 — THIRTEEN CAMERA-LAYER UNIFORMS STOOD HERE (`camOpacity`, `camPresent`,
+    // `camMirror`, `camBlend`, `camYOffset`, `camYScale`, `camA…camTy`, `camMatte`) AND ARE
+    // GONE with the front-camera source (founder 2026-09-12). Removing them is legal under
+    // the byte-layout law above BECAUSE they were the TAIL: nothing sits after them to shift.
+    // The Metal mirror in this file lost the same fields in the same commit, and
+    // `TheUniformMirrorHasNoCompilerTests` (#1119) is what proves the two still match.
 }
 
 /// The touch surface's water-drop events for the Metal renderer (structural rebuild
@@ -498,8 +481,6 @@ struct MetalBioView: UIViewRepresentable {
     // DECLARATION order, so a new property inserted near the top would force every existing
     // call site to move its arguments — and the one site that passes this must be able to
     // pass it at the END. Placed here, the ONE mount that omits it is untouched.
-    // K5 (#1262) appended the camera trio AFTER it for the same reason: the stage still omits
-    // the key and passes the trio, so the order stays legal at both mounts.
     /// The key whose PLAY GRID this field sits under, when there is one (#1061). Given, the
     /// sounding note's colour blooms on the cell the finger touched instead of at its
     /// chromatic fraction above C; nil keeps the old pitch-space position.
@@ -524,22 +505,6 @@ struct MetalBioView: UIViewRepresentable {
     /// Cold by construction — `rootIndex` and `scale` are `@AppStorage` user settings, so
     /// reading this in a body cannot churn (the 10.76.41/50 freeze law bans a RATE).
     var noteFieldKey: MusicalKey? = nil
-    /// K5 (#1262) — the front camera as a texture layer in the field. Opacity 0 (the shared
-    /// default) draws nothing, creates no texture and retains no frame; the layer exists only
-    /// while the Face source runs (`CameraFrameSlot` is fed by that session's delegate alone).
-    /// Both mounts pass all three explicitly from `StudioDefaultKeys.visualCamera*` (#431 —
-    /// these literals render for no caller). `cameraBlend`: 0 Screen · 1 Multiply · 2 Cross.
-    var cameraOpacity: Float = 0
-    var cameraMirror: Bool = true
-    var cameraBlend: Int = 0
-    /// K7 — cut the person out of the camera layer with ARKit's segmentation matte (only
-    /// where `FaceExpressionBioPublisher.supportsSegmentation`; otherwise the flag is inert).
-    var cameraCutout: Bool = false
-    /// #1299 — how BIG the face is in the field (founder 2026-09-12: "das Gesicht kann in der
-    /// Größe angepasst werden"). 1 = the frame as the camera delivers it; >1 magnifies about
-    /// the centre, <1 pulls back. Applied as a scale composed into the viewport→image affine
-    /// on the CPU, so the shader is untouched and a size change costs nothing per pixel.
-    var cameraSize: Float = 1
 
     func makeCoordinator() -> MetalBioRenderer { MetalBioRenderer() }
 
@@ -621,9 +586,7 @@ struct MetalBioView: UIViewRepresentable {
                   textureAmount: textureAmount, glitterAmount: glitterAmount,
                   structureAmount: structureAmount,
                   style: style, styleB: styleB, blend: blend, reduceMotionAccessibility: reduceMotion,
-                  autoAttuned: autoAttuned, entrainmentPulseHz: entrainmentPulseHz,
-                  cameraOpacity: cameraOpacity, cameraMirror: cameraMirror, cameraBlend: cameraBlend,
-                  cameraCutout: cameraCutout, cameraSize: cameraSize)
+                  autoAttuned: autoAttuned, entrainmentPulseHz: entrainmentPulseHz)
     }
 }
 
@@ -638,59 +601,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// question — a `Float ==` would report NaN ≠ NaN and encode a frame that changes nothing.
     nonisolated static func bytesEqual<T>(_ a: T, _ b: T) -> Bool {
         withUnsafeBytes(of: a) { ab in withUnsafeBytes(of: b) { bb in ab.elementsEqual(bb) } }
-    }
-
-    /// K5 (#1262) — a 1×1 texture bound at a camera slot while no camera frame is: the fragment
-    /// declares two textures, and Metal's validation wants every declared slot bound whether or
-    /// not the branch that samples it runs. Y 0 / CbCr 128 = black with neutral chroma.
-    private static func makePlaceholder(device: MTLDevice, format: MTLPixelFormat,
-                                        bytes: [UInt8]) -> MTLTexture? {
-        let desc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: 1, height: 1,
-                                                            mipmapped: false)
-        desc.usage = .shaderRead
-        guard let texture = device.makeTexture(descriptor: desc) else { return nil }
-        bytes.withUnsafeBytes { raw in
-            guard let base = raw.baseAddress else { return }
-            texture.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0,
-                            withBytes: base, bytesPerRow: bytes.count)
-        }
-        return texture
-    }
-
-    /// K5 — Y (plane 0, `r8Unorm`) and CbCr (plane 1, `rg8Unorm`) views of a bi-planar 4:2:0
-    /// buffer, the format ARKit's `capturedImage` uses. Any other format → nil: no layer, no
-    /// guess. `videoRange` tells the shader whether luma sits on 16…235 instead of 0…255.
-    private static func makeCameraTextures(from buffer: CVPixelBuffer, cache: CVMetalTextureCache)
-        -> (textures: (y: CVMetalTexture, cbcr: CVMetalTexture), videoRange: Bool)? {
-        let videoRange: Bool
-        switch CVPixelBufferGetPixelFormatType(buffer) {
-        case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange: videoRange = false
-        case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange: videoRange = true
-        default: return nil
-        }
-        guard CVPixelBufferGetPlaneCount(buffer) == 2,
-              let y = plane(0, of: buffer, format: .r8Unorm, cache: cache),
-              let cbcr = plane(1, of: buffer, format: .rg8Unorm, cache: cache) else { return nil }
-        return ((y, cbcr), videoRange)
-    }
-
-    /// K7 — ARKit's `segmentationBuffer` (`OneComponent8`, one plane) as an `r8Unorm` view. Any
-    /// other format → nil: the layer then draws uncut rather than with a guessed mask.
-    private static func makeMatteTexture(from buffer: CVPixelBuffer, cache: CVMetalTextureCache) -> CVMetalTexture? {
-        guard CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_OneComponent8 else { return nil }
-        return plane(0, of: buffer, format: .r8Unorm, cache: cache)
-    }
-
-    private static func plane(_ index: Int, of buffer: CVPixelBuffer, format: MTLPixelFormat,
-                              cache: CVMetalTextureCache) -> CVMetalTexture? {
-        let width = CVPixelBufferGetWidthOfPlane(buffer, index)
-        let height = CVPixelBufferGetHeightOfPlane(buffer, index)
-        guard width > 0, height > 0 else { return nil }
-        var texture: CVMetalTexture?
-        let status = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, cache, buffer, nil,
-                                                               format, width, height, index, &texture)
-        guard status == kCVReturnSuccess else { return nil }
-        return texture
     }
 
     private var commandQueue: MTLCommandQueue?
@@ -868,49 +778,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     /// on-screen pulse follows the armed brainwave band's flash-safe sub-harmonic. Always
     /// already ≤3 Hz from `BioEntrainmentDirector.visualHz`; the draw loop re-caps anyway.
     private var lookEntrainmentPulseHz: Double = 0
-    // K5 (#1262) — camera layer: the user's three dials as forwarded by `setLook`.
-    private var lookCameraOpacity: Float = 0
-    private var lookCameraMirror = true
-    private var lookCameraBlend = 0
-    private var lookCameraCutout = false
-    /// #1299 — the size dial, already clamped by `setLook`. 1 = untouched.
-    private var lookCameraSize: Float = 1
-    /// #1299 — the RAW viewport→image affine of the bound frame, before the size scale.
-    /// Stored rather than consumed on arrival because the scale must be re-applied on EVERY
-    /// frame: the transform is only refreshed when a NEW camera frame lands, so composing the
-    /// scale in there would leave a size change invisible until the next frame — and at the
-    /// `.low` tier, or with the session momentarily stalled, that is not "immediately".
-    private var cameraRawTransform: CGAffineTransform = .identity
-    /// True while the governor's tier is `.low` or below (thermal `.serious`, Low Power Mode,
-    /// battery < 20 %): the layer stands down — two full-drawable plane samples per pixel are
-    /// its whole cost, and that is the cost the tier exists to shed. Written in the governor
-    /// block of `draw`, read where the camera decides.
-    private var cameraTierBlocked = false
-    /// This renderer's registration in `CameraFrameSlot` — its own key, because the phone's
-    /// window and the external stage are two renderers with two viewports and orientations.
-    private let cameraKey = UUID()
-    private var cameraTextureCache: CVMetalTextureCache?
-    private var placeholderY: MTLTexture?
-    private var placeholderCbCr: MTLTexture?
-    /// K7 — 1×1 white: with no matte bound the layer is fully opaque where the shader
-    /// would multiply (it does so only behind `camMatte` anyway).
-    private var placeholderMatte: MTLTexture?
-    private var cameraMatteCurrent: CVMetalTexture?
-    /// The bound pair and the one before it. A `CVMetalTexture` must outlive the GPU's read
-    /// of its `MTLTexture`, and `waitUntilScheduled` is not "completed" — so the previous
-    /// frame's pair is held one frame longer (two deep, the shape Apple's ARKit renderer uses).
-    private var cameraTexturesCurrent: (y: CVMetalTexture, cbcr: CVMetalTexture)?
-    private var cameraTexturesPrevious: (y: CVMetalTexture, cbcr: CVMetalTexture)?
-    /// The slot sequence the bound pair was made from, and the one the last ENCODED frame
-    /// carried — the #1244 skip's second term (a new camera frame is a changed picture).
-    private var lastCameraSequence: UInt64 = 0
-    private var lastEncodedCameraSequence: UInt64 = 0
 
-    deinit {
-        // Withdraw the wish, or the slot would keep computing a transform for a viewport that
-        // no longer exists — and keep a frame alive for nobody.
-        CameraFrameSlot.shared.unregister(cameraKey)
-    }
     /// Slew-limited pulse target — the visual pulse is the most bio-jitter-sensitive value
     /// (a weak-signal rPPG reading can bounce HR, and thus the raw pulse target, hard). We
     /// rate-limit the TARGET here (then glide slowly), so the picture breathes steadily
@@ -975,9 +843,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                  textureAmount: Float, glitterAmount: Float, structureAmount: Float,
                  style: Int, styleB: Int,
                  blend: Float, reduceMotionAccessibility: Bool, autoAttuned: Bool,
-                 entrainmentPulseHz: Double = 0,
-                 cameraOpacity: Float, cameraMirror: Bool, cameraBlend: Int, cameraCutout: Bool,
-                 cameraSize: Float) {
+                 entrainmentPulseHz: Double = 0) {
         lookToneFallbackHz = toneFallbackHz
         lookIntensity = intensity
         lookRingDensity = ringDensity
@@ -994,28 +860,10 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         lookReduceMotionAccessibility = reduceMotionAccessibility
         lookAutoAttuned = autoAttuned
         lookEntrainmentPulseHz = entrainmentPulseHz
-        lookCameraOpacity = cameraOpacity
-        lookCameraMirror = cameraMirror
-        lookCameraBlend = cameraBlend
-        lookCameraCutout = cameraCutout
-        // #1299 — clamped here, at the ONE boundary the value crosses into the renderer, so a
-        // NaN or a zero from a corrupted default can never divide the affine below.
-        lookCameraSize = (cameraSize.isFinite && cameraSize > 0) ? min(max(cameraSize, 0.25), 4) : 1
     }
 
     func configure(device: MTLDevice) {
         commandQueue = device.makeCommandQueue()
-        // K5 (#1262) — camera-layer plumbing, built once per renderer and BEFORE the #1196
-        // early return below: the cache and the placeholders are per renderer (they belong to
-        // the device and this queue), the pipeline is what is shared. No compile happens here.
-        var cache: CVMetalTextureCache?
-        if CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &cache) == kCVReturnSuccess {
-            cameraTextureCache = cache
-        }
-        placeholderY = Self.makePlaceholder(device: device, format: .r8Unorm, bytes: [0])
-        placeholderCbCr = Self.makePlaceholder(device: device, format: .rg8Unorm, bytes: [128, 128])
-        placeholderMatte = Self.makePlaceholder(device: device, format: .r8Unorm, bytes: [255])
-
         // #1196: reuse the already-compiled pipeline when one exists for THIS device.
         // The identity test is `===` on the device, not a bool: `MTLCreateSystemDefaultDevice()`
         // returns the same object today, and a cached pipeline is only valid for the device
@@ -1253,9 +1101,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             // FIRST buffer, so the whole take would have been locked to the reduced size —
             // the inverse of what the lever promises. Rounded to whole pixels (F3): a
             // fractional `want` against a layer-rounded `have` could re-fire every other frame.
-            // K5 (#1262): the camera layer sheds with the tier — `.low` is thermal `.serious`
-            // (`AdaptiveQuality.tier`), which is where the prompt asks for degradation to begin.
-            cameraTierBlocked = (governor?.settings.tier ?? .balanced) <= .low
             let leverMoved = renderScale != lastRenderScale
             lastRenderScale = renderScale
             let want = CGSize(width: max(1, (view.bounds.width * scale * renderScale).rounded()),
@@ -1487,9 +1332,9 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                    // (`BioReactiveSynthVoice`, `PolySynthVoice`, `AlwaysOnBioChannel`);
                    // this was the one live VISUAL consumer and it read raw.
                    //
-                   // WHAT IT COST, measured at the publishers: `PolarH10BioPublisher` and
-                   // `FaceExpressionBioPublisher` write the literal `breathPhase: 0`
-                   // always — neither derives respiration at all — and the camera's
+                   // WHAT IT COST, measured at the publishers: `PolarH10BioPublisher`
+                   // writes the literal `breathPhase: 0`
+                   // always — it derives no respiration at all — and the camera's
                    // pulse-hold republish forwards a held phase with `breathRate: 0`.
                    // Through `sin(π·0) = 0` the shader then sat at `spread` 0.85 and
                    // Aurora's swell at its floor 0.80, PERMANENTLY, for a fully wired
@@ -1877,97 +1722,15 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             uniforms.fieldPhase += dt * flashHz * blendDamping
             if uniforms.fieldPhase > 1e6 { uniforms.fieldPhase -= 1e6 }
         }
-        // K5 (#1262) — THE CAMERA LAYER. Producer: `FaceExpressionBioPublisher`'s ARKit delegate
-        // stores each `capturedImage` in `CameraFrameSlot.shared` WHILE a renderer says it wants
-        // one (opacity > 0, no take in flight, tier above `.low`); the slot is the only handshake,
-        // so a stopped Face source simply stops feeding it and the layer eases out. Textures are
-        // IOSurface views of the two planes (`CVMetalTextureCache`, no copy); the shader converts.
-        //
-        // ⚠️ A RECORDED TAKE NEVER CONTAINS THE CAMERA. `wantsCapture` drops the layer on the
-        // frame the take first asks for the drawable — a SNAP, not an ease, on purpose: the
-        // app's camera sentence says no image is stored, and one eased frame of a face in an
-        // mp4 would make that false. (The prompt's own NOT-list: no selfie, no recorder.)
-        // ⚠️ THERMAL: `cameraTierBlocked` (set in the governor block above) drops the layer at
-        // `.low` and below; the drawable's own `renderScale` already shrinks the sample count.
-        // ⚠️ REDUCE MOTION does NOT freeze the camera — it is a live image of a person, not an
-        // animation of ours; the #1244 skip still fires whenever no new frame arrived.
-        // NEEDS-FOUNDER-VERIFY: Face-Quelle an, Field → Camera layer > 0 — steht das Bild
-        // richtig herum, spiegelverkehrt wie ein Spiegel, und füllt es die Fläche ohne Verzerrung?
-        // (Orientierung und Aspect-Fill kommen aus `ARFrame.displayTransform`; das Vorzeichen
-        // der Spiegelung und die Farbe (BT.601, sRGB→linear) zeigt nur das Gerät.)
-        let cameraWanted = lookCameraOpacity > 0.001 && !wantsCapture && !cameraTierBlocked
-        // UIKit reads (window scene, bounds) belong to the main actor; the draw loop IS the
-        // main thread, so this is the same no-op assertion the blocks above use.
-        let cameraViewport: CameraViewport = MainActor.assumeIsolated {
-            CameraViewport(size: view.bounds.size,
-                           orientationRaw: view.window?.windowScene?.interfaceOrientation.rawValue ?? 1)
-        }
-        CameraFrameSlot.shared.setWanted(cameraWanted, for: cameraKey, viewport: cameraViewport,
-                                         matte: lookCameraCutout)
-        if cameraWanted, let cache = cameraTextureCache,
-           let latest = CameraFrameSlot.shared.latest(for: cameraKey),
-           latest.sequence != lastCameraSequence {
-            lastCameraSequence = latest.sequence
-            if let made = Self.makeCameraTextures(from: latest.buffer, cache: cache) {
-                cameraTexturesPrevious = cameraTexturesCurrent
-                cameraTexturesCurrent = made.textures
-                // K7 — the matte of the SAME frame, or nothing: a stale matte over a new frame
-                // would cut the person where they were, so the pair is replaced together.
-                cameraMatteCurrent = lookCameraCutout
-                    ? latest.matte.flatMap { Self.makeMatteTexture(from: $0, cache: cache) } : nil
-                uniforms.camYOffset = made.videoRange ? 16.0 / 255.0 : 0
-                uniforms.camYScale = made.videoRange ? 255.0 / 219.0 : 1
-                cameraRawTransform = latest.viewportToImage
-            }
-        }
-        if wantsCapture {
-            // The snap, see above. Both pairs go, so a stale face cannot be re-bound later.
-            cameraTexturesPrevious = nil
-            cameraTexturesCurrent = nil
-            cameraMatteCurrent = nil
-            uniforms.camOpacity = 0
-        } else {
-            let opacityTarget: Float = (cameraWanted && cameraTexturesCurrent != nil)
-                ? min(max(lookCameraOpacity, 0), 1) : 0
-            uniforms.camOpacity = Self.ease(uniforms.camOpacity, opacityTarget, tau: 0.2, dt: dt)
-            // Faded out and no longer wanted: release the last frame (the picture is already
-            // the field alone at this opacity, so nothing on screen steps).
-            if !cameraWanted, uniforms.camOpacity < 0.002 {
-                cameraTexturesPrevious = nil
-                cameraTexturesCurrent = nil
-                cameraMatteCurrent = nil
-                uniforms.camOpacity = 0
-            }
-        }
-        // #1299 — the size dial, composed into the viewport→image affine EVERY frame (see
-        // `cameraRawTransform`). The transform lands in normalised image space, so magnifying
-        // the picture by `s` means sampling a smaller box about the centre: uv' = (uv−½)/s + ½.
-        // Scaling the affine's linear part and re-centring its translation is exactly that,
-        // and it costs six multiplies on the CPU instead of a shader branch per pixel.
-        let camScale = Double(lookCameraSize)
-        let t = cameraRawTransform
-        uniforms.camA = Float(t.a / camScale); uniforms.camB = Float(t.b / camScale)
-        uniforms.camC = Float(t.c / camScale); uniforms.camD = Float(t.d / camScale)
-        uniforms.camTx = Float((t.tx - 0.5) / camScale + 0.5)
-        uniforms.camTy = Float((t.ty - 0.5) / camScale + 0.5)
-        uniforms.camPresent = cameraTexturesCurrent == nil ? 0 : 1
-        uniforms.camMirror = lookCameraMirror ? 1 : 0
-        uniforms.camBlend = Float(min(max(lookCameraBlend, 0), 2))
-        // K7 — a matte only counts while the cut-out is on AND this frame brought one (a frame
-        // without a matte — segmentation just switched on, or unsupported — draws uncut).
-        if !lookCameraCutout { cameraMatteCurrent = nil }
-        uniforms.camMatte = (lookCameraCutout && cameraMatteCurrent != nil && cameraTexturesCurrent != nil) ? 1 : 0
-        let cameraSequenceThisFrame: UInt64 = cameraTexturesCurrent == nil ? 0 : lastCameraSequence
 
         // Keep `time` as a free-running clock for the secondary motion in the shader.
         uniforms.time = reduceMotion ? 0 : Float(nowT - startTime)
 
         // #1244 (visual audit V2) — SKIP THE GPU PASS WHEN THE PICTURE CANNOT HAVE CHANGED.
-        // The shader reads `uniforms` and — since K5 (#1262) — the two camera textures, whose
-        // identity is the `CameraFrameSlot` sequence the bound pair was made from. So
-        // byte-identical uniforms AND the same camera sequence mean a byte-identical image
-        // (`setVertexBytes`/`setFragmentBytes`/the two `setFragmentTexture`s below are the
-        // whole input), and returning before the drawable is acquired
+        // The shader reads `uniforms` and nothing else (`setVertexBytes`/`setFragmentBytes`
+        // are the whole input — ⛔ #1301 removed the two camera textures that were the second
+        // term of this test), so byte-identical uniforms mean a byte-identical image, and
+        // returning before the drawable is acquired
         // leaves the last presented frame on the layer. When does that happen? Never while
         // motion runs (`time` advances every frame). Under Reduce Motion — the accessibility
         // switch, AND the `.minimal` tier that thermal `.critical` / battery < 10 % forces —
@@ -1985,7 +1748,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // struct's bytes (NaN-tolerant; the uniforms are sanitized upstream anyway).
         // NEEDS-FOUNDER-VERIFY: Reduce Motion on, hold still — does the picture stay (no
         // black, no flicker) and resume the moment a finger touches the visual?
-        if hasEncodedOnce, !wantsCapture, cameraSequenceThisFrame == lastEncodedCameraSequence, Self.bytesEqual(uniforms, lastEncodedUniforms) {
+        if hasEncodedOnce, !wantsCapture, Self.bytesEqual(uniforms, lastEncodedUniforms) {
             return
         }
 
@@ -2000,7 +1763,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // held until a uniform moved. "Encoded" means a command buffer exists for it.
         lastEncodedUniforms = uniforms
         hasEncodedOnce = true
-        lastEncodedCameraSequence = cameraSequenceThisFrame
 
         if let pipeline,
            let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) {
@@ -2008,15 +1770,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
             var u = uniforms
             encoder.setVertexBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
             encoder.setFragmentBytes(&u, length: MemoryLayout<BioUniforms>.stride, index: 0)
-            // K5 — both camera slots are ALWAYS bound: the pair while one exists, 1×1
-            // placeholders otherwise (`camPresent` tells the shader which). Never an empty slot.
-            encoder.setFragmentTexture(cameraTexturesCurrent.flatMap { CVMetalTextureGetTexture($0.y) }
-                                       ?? placeholderY, index: 0)
-            encoder.setFragmentTexture(cameraTexturesCurrent.flatMap { CVMetalTextureGetTexture($0.cbcr) }
-                                       ?? placeholderCbCr, index: 1)
-            // K7 — the matte slot: the person matte behind `camMatte`, a 1×1 white otherwise.
-            encoder.setFragmentTexture(cameraMatteCurrent.flatMap { CVMetalTextureGetTexture($0) }
-                                       ?? placeholderMatte, index: 2)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             encoder.endEncoding()
         } else {
@@ -2076,11 +1829,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                       float rp5x; float rp5y; float rp5p; float rp5a; float rp5r; float rp5g; float rp5b;
                       float textureAmt; float glitterAmt; float structureAmt;
                       float dishK; float dishStrength; float dishHex;
-                      float fieldPhase;
-                      float camOpacity; float camPresent; float camMirror; float camBlend;
-                      float camYOffset; float camYScale;
-                      float camA; float camB; float camC; float camD; float camTx; float camTy;
-                      float camMatte; };
+                      float fieldPhase; };
 
     // TOUCH RIPPLES — the water feedback drawn IN the field's own pipeline
     // (structural rebuild 2026-07-09; the old CAShapeLayer sandwich over the Metal
@@ -2811,10 +2560,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     }
 
     fragment float4 echoel_bio_fragment(VOut in [[stage_in]],
-                                        constant Uniforms& u [[buffer(0)]],
-                                        texture2d<float> camY [[texture(0)]],
-                                        texture2d<float> camCbCr [[texture(1)]],
-                                        texture2d<float> camMatte [[texture(2)]]) {
+                                        constant Uniforms& u [[buffer(0)]]) {
         // Aspect-correct radial distance (for the rings + every style's framing).
         float2 uv = in.uv;
         uv.x *= u.aspect;
@@ -3086,43 +2832,6 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         // it silently. An additive term inserted before a screen blend must restore the
         // bound it consumed.
         outCol = clamp(outCol, 0.0, 1.0);
-        // K5 (#1262) — CAMERA LAYER, composited on the graded field and UNDER the ripples (the
-        // fingers stay light ON the water, whatever is under it). Sampled ONLY behind
-        // camPresent: the two slots hold 1x1 placeholders otherwise. Coordinates: this
-        // vertex stage's uv is +y UP; ARKit's normalized image and view spaces are top-left,
-        // so flip once, mirror on request (a selfie reads as a mirror), then the INVERSE display
-        // transform (viewport -> image; rotation and aspect-fill are ARKit's). Luma is de-ranged
-        // (camYOffset/camYScale), chroma is BT.601 about 0.5, and the result is decoded
-        // sRGB -> linear because everything above is linear and the drawable encodes on write
-        // (B9b) - without the pow the face would read washed-out and grey.
-        // Flash law: nothing here carries a phase or a rate of ours; what moves is the room
-        // and the person, and the opacity itself is eased on the CPU (tau 0.2 s).
-        if (u.camPresent > 0.5 && u.camOpacity > 0.001) {
-            constexpr sampler camS(address::clamp_to_edge, filter::linear);
-            float2 v = float2(in.uv.x, 1.0 - in.uv.y);
-            if (u.camMirror > 0.5) { v.x = 1.0 - v.x; }
-            float2 iuv = float2(u.camA * v.x + u.camC * v.y + u.camTx,
-                                u.camB * v.x + u.camD * v.y + u.camTy);
-            float luma = clamp((camY.sample(camS, iuv).r - u.camYOffset) * u.camYScale, 0.0, 1.0);
-            float2 chroma = camCbCr.sample(camS, iuv).rg - 0.5;
-            float3 cam = float3(luma + 1.402 * chroma.y,
-                                luma - 0.3441 * chroma.x - 0.7141 * chroma.y,
-                                luma + 1.772 * chroma.x);
-            cam = pow(clamp(cam, 0.0, 1.0), float3(2.2));
-            float3 layered;
-            if (u.camBlend < 0.5) {
-                layered = cam + outCol * (1.0 - cam);      // Screen: the field's light over the face
-            } else if (u.camBlend < 1.5) {
-                layered = outCol * cam;                    // Multiply: the field shows through the face
-            } else {
-                layered = cam;                             // Cross: a plain fade to the camera
-            }
-            // K7 — the person matte (ARKit segmentation, same normalised coordinates as the
-            // image) scales the layer's opacity per pixel: 1 on the person, 0 on the room.
-            // Sampled ONLY behind camMatte; texture(2) holds a 1x1 white otherwise.
-            float cut = (u.camMatte > 0.5) ? camMatte.sample(camS, iuv).r : 1.0;
-            outCol = mix(outCol, layered, clamp(u.camOpacity, 0.0, 1.0) * cut);
-        }
         // Touch-ripple light over the graded field (played water = light ON the
         // water, frame-locked to it — no second compositor). SCREEN blend, not raw
         // add: over an already-bright field a raw add clipped to pure white patches

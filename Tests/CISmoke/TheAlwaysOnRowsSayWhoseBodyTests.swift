@@ -256,7 +256,7 @@ final class TheAlwaysOnRowsSayWhoseBodyTests: XCTestCase {
         for channel in AlwaysOnBioChannel.allCases {
             XCTAssertTrue(channel.reading(in: frame(.fallback), now: 1000).isSynthetic,
                           "\(channel.name): a .fallback frame is the demo generator's")
-            for real in [BioSource.healthKit, .oura, .ble, .watch, .cameraPPG, .faceCam] {
+            for real in [BioSource.healthKit, .oura, .ble, .watch, .cameraPPG] {
                 XCTAssertFalse(channel.reading(in: frame(real), now: 1000).isSynthetic, """
                     \(channel.name) marked a \(real) frame as the demo. Every one of these is a \
                     real signal off a real body; branding one fake is the mirror of the bug \

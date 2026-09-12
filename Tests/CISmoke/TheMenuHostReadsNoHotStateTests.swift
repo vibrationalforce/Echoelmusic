@@ -1,6 +1,11 @@
 // TheMenuHostReadsNoHotStateTests.swift
-// Echoel — #918 (bio producer) · #919 (meter + automation producer) · #928 (click relay)
-//          · #1268 (face publisher — the FOURTH producer, found by a review, not a freeze).
+// Echoel — #918 (bio producer) · #919 (meter + automation producer) · #928 (click relay).
+// ⛔ #1301 — A FOURTH PRODUCER SECTION STOOD HERE (#1268, the front-camera publisher's 10 Hz
+// drain — the only one found by a REVIEW rather than by a device freeze). The publisher is
+// removed by founder order (2026-09-12) and its four claims, its derivation and its leaf
+// counterweight went with it. The LAW it proved is unchanged and is the reason the note stays:
+// a producer can enter this file without anyone feeling a freeze, so a new `@Observable` whose
+// writes are driven by a timer needs a section here in ITS OWN commit, not after a report.
 // The freeze that cost five device builds, and the SECOND producer that can cause it.
 //
 // THE DEFECT CLASS, in the founder's words each time: "Sobald Biofeedback läuft kann ich nicht
@@ -305,18 +310,6 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
     // very body that must not read the hot one, and the two spellings differ by one word.
     private static let metronomeVoice = "Sources/Echoelmusic/Audio/MetronomeVoice.swift"
     private static let metronomeReceiver = "metronome"
-    // ⭐ #1268 — THE FOURTH PRODUCER, and the first found by a REVIEW instead of by a device
-    // freeze. `FaceExpressionBioPublisher` writes eight readouts at its 10 Hz drain (three face,
-    // five body, plus `isFaceTracked` on EVERY tick, same value or not — `withMutation` does not
-    // compare). K5b put a `faceExpression.` read into `EchoelStudioView.body` for the first time
-    // (`cameraLayerRow`: `isPublishing`, `thermalRelief` — both cold, both correct), and until
-    // this section nothing distinguished those two from `faceExpression.smile` one line below.
-    // ⚠️ THE COUNTERWEIGHT IS LOAD-BEARING: `TheCutoutIsAMatteNotAGuessTests` POSITIVELY
-    // requires `faceExpression.thermalRelief` in the host, so a blanket "no `faceExpression.`
-    // in the host" scan is a #364 false red. The set is property-specific and DERIVED from the
-    // drain's own writes (`faceHotProperties`), never a hand list.
-    private static let facePublisher = "Sources/Echoelmusic/Bio/FaceExpressionBioPublisher.swift"
-    private static let faceLeaf = "Sources/Echoelmusic/Studio/FaceChannelsRow.swift"
     private static let leaves = [
         "Sources/Echoelmusic/Studio/HeaderMonitors.swift",
         "Sources/Echoelmusic/Studio/PulseMeasurementView.swift",
@@ -718,7 +711,6 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             ("MetronomeVoice", "the ~20 Hz `bpm` write", "TheClicksTempo"),
             ("AudioEngine", "the 60 Hz meter poll and the per-step `masterVolume` write",
              "AHotEngineReadout"),
-            ("FaceExpressionBioPublisher", "the 10 Hz face/body drain (#1268)", "TheFaceDrain"),
         ]
         for path in [Self.root, Self.wrapper] {
             let text = SourceText.codeOnly(try read(path))
@@ -734,96 +726,6 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
                     """)
             }
         }
-    }
-
-    // MARK: - 7. The fourth producer (#1268) — the face publisher's 10 Hz drain
-
-    func testTheFaceHotSetIsDerivedFromTheDrain() throws {
-        let hot = try faceHotProperties()
-        for name in ["smile", "isFaceTracked", "handHeightL", "bodyPresence"] {
-            XCTAssertTrue(hot.contains(name), """
-                DERIVATION CLAIM (#367): `\(name)` is written by the drain today and the \
-                derivation did not find it, so every negative claim below is green over an \
-                incomplete needle set. Either the write moved out of `tick(bus:)` / \
-                `syncBodyNumbers()` — then move the anchor — or the parser broke. \
-                Selected: \(hot.sorted()).
-                """)
-        }
-        // ⚠️ THE ONE PROPERTY THE DRAIN WRITES ON CHANGE ONLY, and the host reads it. The
-        // write is `if relief != thermalRelief { thermalRelief = relief }` — an event, not a
-        // rate — and the parser sees no bare assignment there. If it ever becomes an
-        // unconditional write, it ENTERS this set and the host scan below goes red on
-        // `cameraLayerRow`: that red is correct, the repair is the leaf, not this line.
-        XCTAssertFalse(hot.contains("thermalRelief"), """
-            `thermalRelief` is now written unconditionally at the drain (10 Hz) and \
-            `EchoelStudioView.cameraLayerRow` reads it in body. Move that caption into a leaf \
-            `View` (the `FaceChannelsRow` shape) or restore the change-gated write.
-            """)
-    }
-
-    func testTheFaceEventWritesAreNotTreatedAsHot() throws {
-        // #364 half. These three are assigned inside the drain span too, but once per EVENT
-        // (a failure, the end of a three-second neutral hold), never per tick — so the bio
-        // panel's source row and the numbers leaf may read them from any body. RATE IS NOT
-        // CHECKED by the derivation (the same stated limit as the click's), which is why they
-        // are subtracted by name with the reason next to each; a fourth event-rate write added
-        // to the drain lands in the hot set and must be added HERE with its reason, or moved.
-        let hot = try faceHotProperties()
-        for cold in Self.faceEventWrites {
-            XCTAssertFalse(hot.contains(cold), "`\(cold)` is subtracted by `faceHotProperties` — the subtraction is broken")
-        }
-    }
-
-    func testTheMenuHostBuildsNoViewFromTheFaceDrain() throws {
-        let receiver = try XCTUnwrap(
-            environmentReceiver(for: "FaceExpressionBioPublisher", of: "EchoelStudioView", in: Self.host), """
-            `EchoelStudioView` no longer declares `@Environment(FaceExpressionBioPublisher.self)`. \
-            The scan anchors on that binding's NAME; without it the claim passes by having \
-            nothing to look for. Either the binding moved and this guard follows it, or the \
-            host stopped holding the face publisher — say which in the commit.
-            """)
-        let members = try assertNoHotRead(in: Self.host, of: "EchoelStudioView",
-                                          receiver: receiver, hot: try faceHotProperties(), why: """
-            The menu host already reads two COLD `\(receiver).` properties in `cameraLayerRow` \
-            (`isPublishing`, `thermalRelief`) and that is correct. A read of a drain-written \
-            one — `smile`, a hand height, `isFaceTracked` — rebuilds the whole studio body at \
-            10 Hz while the face source runs and tears down any open Tonart/Genre Picker: the \
-            10.76.41 freeze from a FOURTH producer. Those reads belong in `FaceChannelsRow`.
-            """)
-        XCTAssertFalse(members.isEmpty, "no `some View` member was scanned in `EchoelStudioView` — the negative claim proved nothing")
-        let host = SourceText.codeOnly(try read(Self.host))
-        XCTAssertTrue(host.contains("\(receiver).isPublishing"), """
-            COUNTERWEIGHT: the host must still read a cold `\(receiver).` property, or the \
-            spelling the scan needs has drifted and the negative claim above is worthless.
-            """)
-    }
-
-    func testTheTopmostAncestorBuildsNoViewFromTheFaceDrain() throws {
-        let app = SourceText.codeOnly(try read(Self.app))
-        XCTAssertTrue(app.contains("var faceExpression = FaceExpressionBioPublisher"), """
-            ANCHOR FIRST: `EchoelmusicApp` OWNS the face publisher as `@State` (#1257). If it \
-            stops owning it, this fails by name rather than scanning for a binding that is gone.
-            """)
-        _ = try assertNoHotRead(in: Self.app, of: "EchoelmusicApp",
-                                receiver: "faceExpression", hot: try faceHotProperties(), why: """
-            The topmost ancestor, same law as the other three producers: a drain-written \
-            `faceExpression.` read here churns EVERY surface in the app at 10 Hz.
-            """)
-    }
-
-    func testTheFaceLeafStillReadsTheDrain() throws {
-        let receiver = try XCTUnwrap(
-            environmentReceiver(for: "FaceExpressionBioPublisher", of: "FaceChannelsRow", in: Self.faceLeaf),
-            "`FaceChannelsRow` no longer binds the publisher via `@Environment` — the leaf moved")
-        let leaf = SourceText.codeOnly(try read(Self.faceLeaf))
-        let hot = try faceHotProperties()
-        let found = hot.filter { leaf.contains("\(receiver).\($0)") }
-        XCTAssertGreaterThanOrEqual(found.count, 4, """
-            COUNTERWEIGHT AND SELF-TEST IN ONE: the leaf is where the drain's readouts BELONG \
-            (face row, body row). If fewer than four of them are read there, either the leaf \
-            was emptied or the spelling changed, and the two scans above prove nothing. \
-            Found: \(found.sorted()) of \(hot.sorted()).
-            """)
     }
 
     // MARK: - Derivation
@@ -1164,51 +1066,6 @@ final class TheMenuHostReadsNoHotStateTests: XCTestCase {
             an anchor that matches nothing makes three negative claims green for free.
             """)
         return names
-    }
-
-    // MARK: - Derivation, fourth producer (#1268)
-
-    /// Written inside the drain span, but once per EVENT — subtracted by name, reason beside.
-    private static let faceEventWrites: Set<String> = [
-        "lastError",        // written when `takeFailure()` returns one, then `stop()`
-        "isCalibrating",    // written once, at the end of the neutral hold
-        "hasCalibration",   // written once, at the end of the neutral hold
-    ]
-
-    /// `FaceExpressionBioPublisher` properties its 10 Hz drain assigns: every bare assignment
-    /// `name = …` (several per line allowed, split on `;`) inside `tick(bus:)` and
-    /// `syncBodyNumbers()`, kept only if the declaration is observation-tracked, minus the
-    /// event-rate writes above. ⚠️ Limits, stated first: (1) both spans are anchored on their
-    /// declaration lines in ONE file — a drain moved into an extension elsewhere empties the
-    /// set (the FLOOR claim catches that); (2) a write behind `if`/`guard` on the SAME line
-    /// (`if a != b { b = a }`) is invisible by design — see the `thermalRelief` claim;
-    /// (3) `self.name =` is not matched; the file does not spell it that way today.
-    private func faceHotProperties() throws -> Set<String> {
-        let lines = SourceText.codeOnly(try read(Self.facePublisher))
-            .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        var names: Set<String> = []
-        var found = 0
-        for opener in ["private func tick(bus: EngineBus) {", "private func syncBodyNumbers() {"] {
-            guard let (lo, hi) = span(of: opener, in: lines) else { continue }
-            found += 1
-            for line in lines[(lo + 1)..<hi] {
-                for segment in line.split(separator: ";") {
-                    let t = segment.trimmingCharacters(in: .whitespaces)
-                    let name = String(t.prefix { isWordChar($0) })
-                    guard let first = name.first, !first.isNumber else { continue }
-                    let after = t.dropFirst(name.count).drop { $0 == " " }
-                    guard after.first == "=", after.dropFirst().first != "=" else { continue }
-                    guard isObservationTracked(name, in: lines) else { continue }
-                    names.insert(name)
-                }
-            }
-        }
-        XCTAssertEqual(found, 2, """
-            FLOOR: `tick(bus:)` and/or `syncBodyNumbers()` are gone from \(Self.facePublisher) \
-            (found \(found) of 2). Move the anchors with them — an anchor that matches nothing \
-            makes four negative claims green for free.
-            """)
-        return names.subtracting(Self.faceEventWrites)
     }
 
     // MARK: - The scan

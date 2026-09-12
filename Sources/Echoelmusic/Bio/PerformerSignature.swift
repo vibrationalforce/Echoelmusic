@@ -263,7 +263,7 @@ public struct PerformerSignature: Codable, Equatable, Sendable {
     private static func mayTeach(_ source: BioSource) -> Bool {
         switch source {
         case .fallback: return false
-        case .healthKit, .oura, .ble, .watch, .cameraPPG, .faceCam: return true
+        case .healthKit, .oura, .ble, .watch, .cameraPPG: return true
         }
     }
 

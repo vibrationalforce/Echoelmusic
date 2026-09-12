@@ -1907,14 +1907,12 @@ public final class EchoelDDSP: @unchecked Sendable {
         // so the enqueue rate IS the new-frame rate — its own comment saying "bio updates at
         // ~10 Hz" is the same stale assumption, one order of magnitude out.
         //
-        // "WIRED", not "in the repo", and the word is load-bearing: `FaceExpressionBioPublisher`
-        // sleeps 100 ms and publishes a frame every tick — 10 Hz. Until #1257 it had ZERO
-        // instantiations; since #1257 the source picker can start it, so on a FACE take the
-        // premise below (~1 Hz) is exceeded tenfold for frames whose pulse channels are all
-        // unmeasured — see the #1257 note at the end of this block.
-        // But wiring it later would change this block's premise, and the first version of this
-        // sentence said "every publisher in the repo", which would have made that change look
-        // like it needed no thought here.
+        // "WIRED", not "in the repo", and the word is load-bearing: a 10 Hz publisher existed
+        // in the repo (the front-camera expression source, removed #1301) whose wiring would
+        // have broken this block's ~1 Hz premise tenfold. The first version of this sentence
+        // said "every publisher in the repo", which would have made that change look like it
+        // needed no thought here. Any NEW publisher must be checked against this premise
+        // before it is wired, not after.
         //
         // At 1 Hz, α = 0.92 means τ = −1/ln(0.92) = 11.99 s. Step response, re-derived:
         //
@@ -1936,15 +1934,9 @@ public final class EchoelDDSP: @unchecked Sendable {
         // revert. Do NOT go back to 0.92 without re-reading this block: that value is not
         // "slower", it is a 60× unit error.
         //
-        // #1257 — THE FACE TAKE IS THE EXCEPTION THE PARAGRAPH ABOVE PREDICTED. `.faceCam`
-        // frames arrive at 10 Hz, so on that source this pole runs at τ = 0.2 s. It moves
-        // nothing audible on its own: every pulse-derived input on such a frame is unmeasured
-        // and therefore the NEUTRAL constant (`heartRateForSound` 0.5, `coherenceForSound`
-        // 0.5), and a faster pole on a constant target is still a constant. The one thing it
-        // does change: a wrist frame from HealthKit (#1015 interleave, every 4–5 s) pulls the
-        // pole toward the real pulse for ~100 ms and the neutral frames pull it back within
-        // ~0.5 s — a small periodic wobble that K3 of `PLAN_KAMERA_EINGANG` closes with a
-        // consumer-side hold. Do not re-tune the coefficient for it.
+        // ⛔ #1301 — A PARAGRAPH HERE DESCRIBED THE 10 Hz FACE TAKE AS "the exception the
+        // paragraph above predicted". That source is removed by founder order, so the
+        // exception is gone and every wired publisher is back inside the ~1 Hz premise.
         let smoothCoeff: Float = 0.6065
 
         // 1. Heart rate → filter/brightness range.

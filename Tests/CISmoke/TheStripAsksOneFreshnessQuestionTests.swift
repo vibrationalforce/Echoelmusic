@@ -174,8 +174,7 @@ final class TheStripAsksOneFreshnessQuestionTests: XCTestCase {
         // demo nothing — because the two publishers with other windows write a literal zero and
         // can therefore never show anything in that cell. Give a future real coherence from either
         // of them a red test, so the 90 s question gets asked on purpose.
-        for file in ["Sources/Echoelmusic/Bio/HealthKitBioPublisher.swift",
-                     "Sources/Echoelmusic/Bio/FaceExpressionBioPublisher.swift"] {
+        for file in ["Sources/Echoelmusic/Bio/HealthKitBioPublisher.swift"] {
             let src = try code(at: file)
             XCTAssertTrue(
                 src.contains("coherence: 0,"),

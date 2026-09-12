@@ -1160,19 +1160,6 @@ private struct FXBioModSection: View {
                         modulator.routes.append(FXModRoute(carrier: .bio(.coherence), target: target))
                     }
                 }
-                // #1261 — starter sets for the face take (K4b). Each appends ordinary routes
-                // the rows above then own; offered only where a face can be tracked, because a
-                // preset on a channel this device can never measure is a control that lies.
-                if FaceExpressionBioPublisher.isSupported {
-                    Divider()
-                    Menu("Face presets…") {
-                        ForEach(FXModPreset.facePresets) { preset in
-                            Button(preset.name) {
-                                modulator.routes.append(contentsOf: preset.routes)
-                            }
-                        }
-                    }
-                }
             } label: {
                 Label("Add bio modulation…", systemImage: "waveform.path.ecg")
                     .font(EchoelTheme.font(13, .semibold))

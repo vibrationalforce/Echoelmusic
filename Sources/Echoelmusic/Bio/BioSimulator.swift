@@ -266,16 +266,14 @@ public final class BioSimulator {
             // of a `BioSampleFrame` satisfies `hrvNormalized == HRVNormalization.normalize(
             // <that source's ms metric>)` to representation — camera (`hrvNormalized =
             // normalize(analyzer.rmssd)`, `hrvRMSSDms = analyzer.rmssd`), Polar (same two
-            // lines), HealthKit (against SDNN, since it has no beat-to-beat RR), and
-            // `FaceExpressionBioPublisher`, which satisfies it VACUOUSLY (it publishes
-            // `hrvNormalized: 0` and no ms metric at all — `normalize(0) == 0`). ⛔ The first
-            // version of this block said "the three LIVE sources" and "EVERY real source";
-            // the second said "there are FOUR producers" and was off by one in the sentence
-            // fixing an enumeration. `git grep -n "BioSampleFrame(" -- Sources` finds SIX
-            // construction sites across FIVE producer types — the four named above plus THIS
-            // file, and the camera builds one twice (the dropout hold-repeat copies the held
-            // frame's fields, so it preserves the invariant rather than deriving it). One of
-            // the four passes only trivially. The conclusion survived both miscounts; the
+            // lines), and HealthKit (against SDNN, since it has no beat-to-beat RR).
+            // ⛔ The first version of this block said "the three LIVE sources" and "EVERY
+            // real source"; the second said "there are FOUR producers" and was off by one in
+            // the sentence fixing an enumeration. MEASURE, do not quote — the count moved
+            // again when #1301 removed the front-camera publisher:
+            // `git grep -n "BioSampleFrame(" -- Sources`. The camera builds one twice (the
+            // dropout hold-repeat copies the held frame's fields, so it preserves the
+            // invariant rather than deriving it). The conclusion survived every miscount; the
             // enumeration did not, twice — and an enumeration is exactly what a later session
             // greps, which is why the command is written next to it now.
             //
