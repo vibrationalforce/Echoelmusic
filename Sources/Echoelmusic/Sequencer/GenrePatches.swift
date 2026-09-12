@@ -51,6 +51,42 @@ public extension MusicStyle {
         // genre keeps its character, cleaner. SOUND CYCLE 1 layers real instrument
         // spectra + unison width + a breath/air noise floor on top (see header).
         switch self {
+        case .industrialTechno:
+            // #1286 G5b — IRON. A hard, near-instant attack and a short decay so the cluster
+            // reads as a HIT, not a pad; low sustain, short release, so nothing rings into the
+            // next one. Brightness 0.38 with a hard spectral shape and a whisper of white noise
+            // is where the metal comes from — the harmony is already harsh, so the timbre does
+            // not need to distort on top of it. Mono-ish unison: width would blur a cluster.
+            return patch("42", "Iron Stab",
+                a: 0.002, d: 0.30, s: 0.18, r: 0.24,
+                harm: 0.64, hl: 0.62, bright: 0.38, noise: 0.06, color: "White", shape: "Bright",
+                cutoff: 2600, res: 0.30, lfoAmt: 0.08, lfoRate: 0.8, lfoDepth: 0.10,
+                revMix: 0.10, revDecay: 1.20, vibRate: 0, vibDepth: 0,
+                uni: 2, det: 7)
+        case .afroHouse:
+            // #1286 G5b — the WARM offbeat chord. Fast but not hard (0.006 against the iron
+            // patch's 0.002), a middling sustain and a release long enough that consecutive
+            // offbeats overlap into the roll — that overlap IS the groove, and shortening it
+            // would turn the vamp back into stabs. Round harmonics, dark-ish shape, wide-ish
+            // unison for the body a house chord needs.
+            return patch("43", "Warm Skank",
+                a: 0.006, d: 0.45, s: 0.42, r: 0.38,
+                harm: 0.90, hl: 0.58, bright: 0.28, noise: 0.01, color: "Pink", shape: "Natural",
+                cutoff: 1800, res: 0.16, lfoAmt: 0.06, lfoRate: 0.30, lfoDepth: 0.12,
+                revMix: 0.14, revDecay: 1.80, vibRate: 0, vibDepth: 0,
+                uni: 3, det: 11)
+        case .darkPsyTrance:
+            // #1286 G5b — the ARP's own voice, and the one field that matters is the release:
+            // short enough that consecutive steps are separate events at 148 BPM, long enough
+            // that the figure reads as a line. Brighter than the iron stab and than every bass
+            // patch, because an arp must be HEARD rather than felt; a shallow fast filter LFO
+            // gives the repeated figure the movement a fixed timbre would not have.
+            return patch("44", "Dark Arp",
+                a: 0.002, d: 0.22, s: 0.16, r: 0.16,
+                harm: 0.78, hl: 0.54, bright: 0.42, noise: 0.01, color: "Pink", shape: "Bright",
+                cutoff: 3000, res: 0.34, lfoAmt: 0.18, lfoRate: 1.60, lfoDepth: 0.22,
+                revMix: 0.12, revDecay: 1.40, vibRate: 0, vibDepth: 0,
+                uni: 2, det: 9)
         case .glacialField:
             // #1285 G5 — AIR, not a note. A very slow swell (under `deepDrone`'s 1.8 s, which
             // keeps that patch's "slowest attack of any genre patch" true) into a long, high,
@@ -423,6 +459,45 @@ public extension MusicStyle {
     /// (`SoundRowsCanReachTheShippedPatchesTests`) so a founder edit never rounds them.
     var bassPatch: SynthPatch? {
         switch self {
+        case .industrialTechno:
+            // #1286 G5b — shares `minimalTechno`'s `sparseSub` FIGURE, so the patch is where the
+            // two differ: a higher cutoff than "Minimal Sub" (600 vs 520, which keeps that
+            // patch's "lowest cutoff, darkest in the file" claim true) and more harmonic content,
+            // so the held root has iron in it rather than only weight. Dry and mono like every
+            // bass patch here.
+            return patch("45", "Iron Sub",
+                a: 0.004, d: 0.40, s: 0.55, r: 0.12,
+                harm: 0.94, hl: 0.44, bright: 0.18, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 600, res: 0.22, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .afroHouse:
+            // #1286 G5b — shares `deepHouse`'s `offbeatEighths` figure. Rounder and longer than
+            // the four-on-floor subs because the bass answers the chord here instead of anchoring
+            // under it: more decay and sustain, a softer cutoff, no resonance to bite with.
+            return patch("46", "Round Sub",
+                a: 0.006, d: 0.52, s: 0.62, r: 0.16,
+                harm: 0.90, hl: 0.48, bright: 0.16, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 680, res: 0.14, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .darkPsyTrance:
+            // #1286 G5b — the SECOND owner of `rollingSixteenths`, on its own patch, which is the
+            // whole shape of that figure's licence: share the figure, never the voice. Every
+            // envelope stage sits a hair ABOVE "Psy Bass" (0.003/0.16/0.12/0.09 against
+            // 0.002/0.14/0.10/0.08) so that patch keeps its "shortest envelope of every bass
+            // patch here" claim, and darker and lower-cut than it so the two rolls are told apart
+            // by weight: psy-prog's roll is a LINE, this one is the floor.
+            //
+            // ⚠️ NOT named "Dark Sub" as the design sheet drafted — `darkMinimal` already ships a
+            // patch under that name, and two patches with one name is the kind of collision that
+            // reads as a duplicate rather than as a choice.
+            return patch("47", "Void Sub",
+                a: 0.003, d: 0.16, s: 0.12, r: 0.09,
+                harm: 0.88, hl: 0.42, bright: 0.22, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 880, res: 0.28, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
         case .deepHouse:
             // A round, short sub-pluck under the offbeat chord: fast-but-not-clicky attack, a
             // decay that lets the "&" bloom for an 8th, a low cutoff so it reads as weight not

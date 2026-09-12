@@ -639,7 +639,7 @@ enthält die 7 · `swing` 0 oder ≥0.06 · `padOctave` ≥3.
 | Scheibe | Unterrubrik(en) | Genres | zusätzlich |
 |---|---|---|---|
 | G5a ⭐ #1285 | Still Pads · Moving Ambient | glacialField, slowBloom | 1 lead-tragend ⇒ 27→28, Decke BLEIBT 5 — Deep Sub/Pluck/Soft Keys standen schon auf 5, Hollow Reed und Warm Strings auf 4 |
-| G5b OFFEN | Techno · House · Trance | industrialTechno, afroHouse, darkPsyTrance | 3 lead-tragend ⇒ 28→31, Decke 5→6. ⛔ `rollingSixteenths` ist EXKLUSIV an `psyProgHouse` gepinnt (`GenrePsyProgHouseTests`, Sweep über `allCases`) — der Entwurf für `darkPsyTrance` verletzt das. Entweder ein anderer Grammatik-Fall, oder der Wächter wird auf das amendiert, was sein Doc wirklich sagt: psy-prog ist der ERSTE Besitzer, und jeder weitere hat seinen EIGENEN Bass-Patch |
+| G5b ⭐ #1286 | Techno · House · Trance | industrialTechno, afroHouse, darkPsyTrance | 3 lead-tragend ⇒ 28→31, Decke 5→**6** (gemessen, nicht geschätzt). Vier Abweichungen vom Entwurf, alle gemessen: (1) `darkPsyTrance` nimmt **Pluck** statt Deep Sub — zwei Deep Subs wären 7 gegen eine Decke von 6 gewesen; (2) sein Bass-Patch heißt **„Void Sub"**, weil `darkMinimal` schon ein „Dark Sub" ausliefert; (3) sein Delay ist `.digital`, NICHT das Familien-Ping-Pong — `GenrePsyProgHouseTests` pinnt, dass kein anderes angebotenes Four-on-Floor-Genre Ping-Pong nimmt, und diese Pinnung ist mehr wert als die Familienähnlichkeit; (4) der `rollingSixteenths`-Sweep IST amendiert worden, genau wie diese Zeile vorgeschlagen hat — er verbot einen zweiten Besitzer, während das Doc nur „ERSTER Besitzer" behauptet, also hätte er auf korrektem Baum rot gestanden (#364) |
 | G6 | Metal · Jazz · Soul · Hip-Hop · R&B · Caribbean | blackMetal, modalJazz, soulBallad, boomBapHipHop, electroFunk, rootsReggae | Detroit-Kommentar (§2b-7) an `GenreBatchFour:192`; `MusicStyleTests:130` mitlesen |
 | G7 | Baroque · Classical & Romantic · Impressionist | baroqueCounterpoint, romanticNocturne, impressionistColour, contemporaryClassical | 3× `.flowFree`; `meantone-quarter` = erster Tonsystem-Vorschlag ⇒ §5-2 muss beantwortet sein |
 | G8 | Chant & Polyphony | plainchant, byzantineChant, choralPolyphony | AnchorFloor +plainchant; `pythagorean`/`edo24`/`just-major` |
@@ -650,6 +650,39 @@ enthält die 7 · `swing` 0 oder ≥0.06 · `padOctave` ≥3.
 | G13 | East & Southeast Asia | zhiMode, japaneseKoto, koreanModal, slendroModal | Pentatonik-Anspruch (siehe unten) |
 | G14 | Africa · Latin America | koraOstinato, gnawaGuembri, andeanHighland, cumbia, tangoMarcato | — |
 | G15 | Dub & Drone · Lo-Fi & Hazy · Dark Synth | dubEcho, droneMetal, loFiHipHop, slowedGothPop | AnchorFloor +droneMetal; `dubEcho`-Delay zuerst rechnen |
+
+⛔ **G5b HAT FÜNF FALSCHE PROSA-BEHAUPTUNGEN ERZEUGT ODER GEFUNDEN — DREI EIGENE, ZWEI VORGEFUNDENE — und keine
+davon hätte irgendein Wächter rot gemacht. Das ist der teuerste Befund dieses Batches und gilt für G6–G15 unverändert.**
+
+Eigene, alle beim Gegenmessen gefunden, nicht beim Schreiben:
+1. **`industrialTechno`s Voicing.** Der Doc-Text las `[0, 1, 5]` als HALBTÖNE („root, ♭2 und die ♭5 einen Tritonus
+   höher"). Es sind **Stufen**: auf locrian `[0,1,3,5,6,8,10]` ergibt Stufe 5 acht Halbtöne, also eine kleine SEXTE.
+   Der Akkord hat gar keine Quinte. Wer die ♭5 wirklich wollte, bräuchte `[0, 1, 4]` — und das ist
+   `glacialField`s Array, dessen Eindeutigkeit `GenreBatchFiveTests` sweept. **Eine Stufenliste ohne ihre Tonleiter
+   ist keine Aussage über einen Akkord.**
+2. **„locrian ist die einzige Tonart im Roster mit einer verminderten Quinte."** Drei weitere genutzte Skalen
+   enthalten einen Tritonus (`lydian`, `lydianAugmented`, `prometheus`). Wahr ist nur die DEGREE-Fassung: locrian ist
+   die einzige, deren FÜNFTE STUFE ein Tritonus ist.
+3. **`afroHouse` „das erste Genre mit einem VIER-Schritt-Vamp, der mitten im Takt zur Wurzel zurückkehrt."** Der
+   Relativsatz machte den Satz wahr (acht Arme haben Vier-Schritt-Vamps, nur `classical` kehrt zurück, und zwar am
+   ENDE). **Eine Behauptung, die ihr Nebensatz trägt, wird ohne ihn zitiert.**
+
+Vorgefunden, beide in `techHouse`s FX-Arm, beide seit Monaten:
+4. **„Die KÜRZESTE Delay-Division jedes angebotenen Genres"** — `psyProgHouse` (#983 S5) nimmt eine PLAINE 16tel
+   (0,25 Viertel) gegen techHouses punktierte (0,375). Der Arm, der die Behauptung brach, trug sie nicht, also wurde
+   nichts rot.
+5. **„0,58 ist SECHSTER"** — die Liste, die den Rang begründen sollte, ließ `minimalTechno`s 0,66 aus; es ist der
+   siebte. Derselbe Arm trägt bereits zwei ⛔-Rücknahmen über genau diese Art Rang.
+
+⭐ **REGEL FÜR JEDEN WEITEREN BATCH, in dieser Reihenfolge auszuführen:**
+· **Stufen immer durch `MusicalKey.degree` auflösen**, bevor man sie im Doc beschreibt (`$SP/t1286.py` kann das).
+· **Jede zitierte Nachbar-Superlative wird VOR dem Zitieren nachgemessen** — und mit ihrem SCOPE zitiert. `drift`
+  sagt „the widest spread" über die AMBIENT-Presets; roster-weit ist `detroitTechno` (0,60) breiter, und mein
+  Kommentar hat die Aussage roster-weit gelesen.
+· **Nachbar-Behauptungen im eigenen Doc sind die Hälfte, die kein Wächter prüfen kann** — also die, die gemessen
+  werden muss. Die Arme nebeneinander dumpen, nie erinnern.
+· Was messbar ist, wandert als ORDNUNG (nicht als Literal) in den Batch-Wächter: `GenreBatchFiveBTests` Anspruch 5
+  pinnt jede zitierte Superlative als Ungleichung, damit der nächste Batch sie nicht still bricht.
 
 **Die EINE Wächter-Frage mit Text (G13, `GenreFamilyDistinctnessTests:220-261`):** die zwei Ansprüche
 („Pentatonik nur `deepDrone`/`ambientPulse`", „`deepDrone` hält die niedrigste `padOctave`") bleiben WÖRTLICH wahr

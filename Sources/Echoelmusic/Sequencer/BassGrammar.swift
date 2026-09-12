@@ -109,7 +109,9 @@ public extension MusicStyle {
     /// dodge the rest of `MusicStyle` avoids: a genre that has not been given a figure keeps the
     /// walk it always had. S3–S5 of the plan add `deepTech` / `darkMinimal` / `psyProgHouse` with
     /// their own arms (`drivingEighths` / `sparseSub` / `rollingSixteenths`). ⚠️ `rollingSixteenths`
-    /// has NO genre yet — it is authored ahead of S5 and pinned as a figure, not as a sound.
+    /// was authored ahead of S5 and has been owned since; #1286 G5b gave it a SECOND owner
+    /// (`darkPsyTrance`), which is the licence a shared figure was always meant to have — the
+    /// two genres differ in their `bassPatch`, their tempo and their mode, never in the figure.
     var bassGrammar: BassGrammar? {
         switch self {
         case .deepHouse:     return .offbeatEighths
@@ -117,6 +119,14 @@ public extension MusicStyle {
         case .deepTech:      return .drivingEighths   // #983 S3: shares the figure, not the patch
         case .darkMinimal:   return .sparseSub         // #983 S4: same — minimal's figure, its own sub
         case .psyProgHouse:  return .rollingSixteenths // #983 S5: the figure authored ahead in S1, owned
+        // #1286 G5b — the same "share the figure, never the voice" licence the two lines above
+        // already take: `industrialTechno` rolls minimal's sparse sub at a faster tempo on its
+        // own patch, and `darkPsyTrance` is the SECOND owner of `rollingSixteenths`. Psy-prog
+        // remains its FIRST owner, which is what its doc claims — and every owner has its own
+        // `bassPatch`, which is the part that actually keeps two genres apart.
+        case .industrialTechno: return .sparseSub
+        case .afroHouse:        return .offbeatEighths
+        case .darkPsyTrance:    return .rollingSixteenths
         case .minimalTechno: return .sparseSub
         default:             return nil
         }

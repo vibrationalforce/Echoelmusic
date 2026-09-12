@@ -303,6 +303,77 @@ public extension MusicStyle {
 
     private var rawFXPreset: GenreFXPreset {
         switch self {
+        case .industrialTechno:
+            // #1286 G5b — SHORT METAL PLATE. A dry, tight digital echo (mix 0.14) into a small,
+            // bright-ish room: the harmony is already harsh, so the space is what keeps it
+            // legible rather than what makes it hard.
+            //
+            // ⚠️ EVERY NUMBER PLACED AGAINST A NAMED NEIGHBOUR, the batch rule: feedback 0.26
+            // under `minimalTechno`'s 0.44 ("longest tail of the four-on-floor offered genres"
+            // holds) · saturation 0.46 above minimal's 0.14 ("cleanest beat-driven chain" holds)
+            // and under the roster's most-driven preset · damping 0.50 under `techHouse`'s 0.58
+            // so ITS damping rank survives · tone 0.34 above `deepDrone`'s 0.14 ("darkest tone in
+            // the roster" holds) · `.digital` and NOT `.pingPong`, which `psyProgHouse` owns
+            // alone among offered four-on-floor genres · division an EIGHTH (0.5 quarters), so
+            // it takes no division claim from anyone — `psyProgHouse` at a plain 16th is the
+            // shortest offered division and `techHouse`'s dotted 16th the second.
+            // `filterEnabled: false` — `acidTechno` is the only genre that enables the chain
+            // filter, and that is a roster-wide claim.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .digital,
+                delaySync: TempoSyncOption(.eighth),
+                delayMix: 0.14, delayFeedback: 0.26, delayTone: 0.34, delaySpread: 0.30,
+                saturation: 0.46,
+                reverbEnabled: true, reverbMix: 0.12, reverbRoom: 0.44, reverbDamping: 0.50)
+        case .afroHouse:
+            // #1286 G5b — MID ROOM, TAPE WARMTH. A dotted-8th slap (the house division, shared
+            // with `dubTechno`/`minimalTechno`/`deepTech` and claimed unique by none of them) at
+            // a brighter tone so the offbeat chord keeps its edge under the roll, into a mid
+            // room. Tape mode for the warmth the lineage line promises — the wow is what a slap
+            // off tape has and a digital line does not.
+            //
+            // Neighbour checks as above: feedback 0.30 under minimal's 0.44 ("longest tail of
+            // the four-on-floor offered genres" — safe, and `dubTechno`'s 0.58 does not break it
+            // either, that arm is `.signature`, not four-on-floor) · saturation 0.34 above
+            // minimal's 0.14 ("cleanest beat-driven chain" holds) · damping 0.46 under
+            // techHouse's 0.58 · spread 0.44 under `detroitTechno`'s 0.60, which is the widest
+            // spread in the offered roster.
+            // ⛔ This line first read: spread 0.44 under `drift`'s 0.55, "the widest spread" —
+            // drift's own arm does say that, and read roster-wide it is false: detroitTechno is 0.60. The
+            // sentence in `drift` is scoped to the ambient presets it is comparing itself with;
+            // quoting a neighbour's superlative means quoting its SCOPE too (#1286).
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .tape,
+                delaySync: TempoSyncOption(.eighth, .dotted),
+                delayMix: 0.20, delayFeedback: 0.30, delayTone: 0.56, delaySpread: 0.44,
+                delayWow: 0.12, delayDrive: 0.18,
+                saturation: 0.34,
+                reverbEnabled: true, reverbMix: 0.22, reverbRoom: 0.56, reverbDamping: 0.46)
+        case .darkPsyTrance:
+            // #1286 G5b — SHORT DARK ROOM, HEAVY DRIVE. The arp is the identity, so the echo is
+            // fast and WIDE rather than long: a straight 8th at a dark tone with a big spread,
+            // into the smallest room of the three additions.
+            //
+            // ⛔ NOT `.pingPong`, although that IS the psy family echo and the design sheet
+            // drafted it. `GenrePsyProgHouseTests` asserts that no OTHER offered four-on-floor
+            // genre uses ping-pong, and that claim is worth more than the family resemblance:
+            // spread 0.50 buys the stereo motion without taking a pinned uniqueness away. The
+            // un-offered `psytrance` keeps its ping-pong untouched.
+            //
+            // Neighbour checks: feedback 0.38 under minimal's 0.44 · saturation 0.48 TIES
+            // `acidTechno` for the most-driven OFFERED preset, and neither arm claims that as a
+            // superlative — checked rather than assumed, because a tie is the shape a "the most"
+            // sentence breaks on silently · damping 0.56 under techHouse's 0.58 · tone 0.30 above
+            // deepDrone's 0.14 ("darkest tone in the roster" holds) · spread 0.50 under
+            // detroitTechno's 0.60 · division a plain EIGHTH, longer than `psyProgHouse`'s plain
+            // 16th and `techHouse`'s dotted 16th · no chain filter (acidTechno is still the only
+            // genre arm that enables one, measured roster-wide).
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .digital,
+                delaySync: TempoSyncOption(.eighth),
+                delayMix: 0.24, delayFeedback: 0.38, delayTone: 0.30, delaySpread: 0.50,
+                saturation: 0.48,
+                reverbEnabled: true, reverbMix: 0.16, reverbRoom: 0.32, reverbDamping: 0.56)
         case .glacialField:
             // #1285 G5 — WIDE AIR. NO delay at all, and that is the design rather than an
             // omission: an echo repeats an event, and this genre's whole claim is that nothing
@@ -399,20 +470,28 @@ public extension MusicStyle {
                 reverbEnabled: true, reverbMix: 0.32, reverbRoom: 0.90, reverbDamping: 0.30)
         case .techHouse:
             // #254 batch 3 — DRY AND TIGHT, which is the whole contrast to `deepHouse`'s wash and
-            // to trance above. The shortest delay DIVISION of any offered genre (dotted 16th =
-            // 0.375 quarters, 0.177 s at 127 BPM) at a LOW mix, so it reads as slap rather than
-            // space — with the same ⚠️ as trance above: per `apply(to:bpm:)` the delay TIME never
-            // reaches the audio, so that is a source-level contract, not a sound.
+            // to trance above. A very short delay DIVISION (dotted 16th = 0.375 quarters, 0.177 s
+            // at 127 BPM) at a LOW mix, so it reads as slap rather than space — with the same ⚠️
+            // as trance above: per `apply(to:bpm:)` the delay TIME never reaches the audio, so
+            // that is a source-level contract, not a sound.
+            // ⛔ "The SHORTEST delay division of any offered genre" stood here and was measured
+            // false in #1286: `psyProgHouse` (#983 S5) takes a PLAIN sixteenth, 0.25 quarters —
+            // shorter than this dotted one, and offered since the same batch that wrote it. The
+            // arm that broke the claim did not carry it, so nothing went red; superlatives in
+            // this file are only ever as good as the last sweep. Re-derive from the arms.
             // The ROOM is a dry 0.42. ⛔ "second smallest of the offered roster … every other
             // offered genre sits at 0.78 and up" stood here and went stale twice: `minimalTechno`
             // (0.36, #254 batch 4) and #983's `deepTech` (0.40) / `darkMinimal` (0.38) all sit
             // under it now. ⛔ "FOURTH smallest" stood here for one commit and went stale the next
             // — no rank is quoted any more; re-derive from the arms. Its DAMPING is
-            // merely high, not extreme: 0.58 is SIXTH, behind deepDrone 0.68, acidTechno 0.64,
-            // darkMinimal 0.62 (#983 S4 — it was fifth before that genre) and
-            // stillMeditation/dubTechno 0.60. ⚠️ The first version of this line called it
-            // "second-most damped … only acidTechno is deader" — wrong on both halves, and room
-            // size and damping are separate axes that must be claimed separately.
+            // merely high, not extreme: 0.58 sits below deepDrone 0.68, minimalTechno 0.66,
+            // acidTechno 0.64, darkMinimal 0.62 and stillMeditation/dubTechno 0.60. ⚠️ The first
+            // version of this line called it "second-most damped … only acidTechno is deader" —
+            // wrong on both halves, and room size and damping are separate axes that must be
+            // claimed separately. ⛔ Its replacement said "0.58 is SIXTH" and OMITTED
+            // minimalTechno's 0.66 from the very list meant to justify the rank, which makes it
+            // seventh — measured in #1286. A rank is a date (#818); the neighbours below it are
+            // the durable half, so no ordinal is quoted here any more either.
             // No chorus at all, because width would blur the groove. Saturation 0.42 is where the
             // punch comes from: above deepHouse's 0.22 and dubTechno's 0.30 (which is the
             // initializer DEFAULT, not "none" — an omitted `saturation:` still saturates), still

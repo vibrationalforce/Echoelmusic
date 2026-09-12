@@ -30438,3 +30438,79 @@ Richtung. Fünf Nadel-Prüfer sauber. Gerät: nichts.
 
 **Offen, Founder (unverändert):** §5-1 (blockiert G5) · §5-2 (blockiert G7) · §5-4 · §5-5. Dazu
 der angebotene TestFlight-Deploy — #1269–#1283 sind auf keinem Gerät.
+
+---
+
+## 2026-09-12 — Genre-Welt G4 (#1284), G5a (#1285), G5b (#1286)
+
+**G4 = `db5bca0` — ein Genre darf sein eigenes Tonsystem nennen, und die Tabelle ist leer.**
+`MusicStyle.suggestedToneSystemID` (`String?`, `default: nil` für alle 38) plus die eine
+Anwendungsstelle in `EchoelStudioView.handleCompositionEdit`s `case "genre":`: ist ein
+Vorschlag da, setzt der Genrewechsel `tuningID` und ruft `applyTuning()`. **Bewusst OHNE
+`?? "edo12"`** — ein Genre ohne Vorschlag lässt das Instrument, wie der Spieler es gestimmt
+hat. Die Fläche wird erst ab G7 gefüllt; §5-2 (Tonsystem-BESITZ) bleibt Founder-Frage und
+blockiert den ersten nicht-nil-Vorschlag, nicht diesen Mechanismus.
+⛔ **Die Kollaps-Prüfung des Plans war falsch und hätte G12 unbaubar gemacht:** „alle zwölf
+umgestimmten Tonklassen paarweise verschieden" verwirft maqam-hijaz (5 gefaltete Paare),
+gamelan-pelog (7) und hirajoshi (11) — aus einem NICHT-musikalischen Grund. Verengt auf die
+Stufen, die das Genre selbst benutzt; die daraus fallende Verträglichkeitstabelle steht als
+Design-Zwang im Plan.
+
+**G5a = `f184b3d` — Glacial Field · Slow Bloom**, die zwei, die aus „Moving Ambient" ein Regal
+statt eines Etiketts machen. Deliberate Gegenpole zu ihren Nachbarn: `glacialField` gegen
+`deepDrone` (gleiche Stille, höchstes statt tiefstes Register), `slowBloom` gegen
+`ambientPulse` (gleiches Regal, öffnend statt wiederholend). Der Lead-Name wurde GERECHNET,
+nicht gewählt — Deep Sub, Pluck und Soft Keys standen schon auf der Decke.
+
+**G5b = dieser Commit — Industrial Techno · Afro House · Dark Psy**, die drei Pole, die
+Techno, House und Trance fehlten. Vier Abweichungen vom Entwurf, jede gemessen: `darkPsyTrance`
+nimmt **Pluck** statt Deep Sub (zwei Deep Subs wären 7 gegen eine Decke von 6), sein Bass heißt
+**„Void Sub"** (`darkMinimal` liefert schon ein „Dark Sub"), sein Delay ist **`.digital`** statt
+des Familien-Ping-Pongs (die Pinnung in `GenrePsyProgHouseTests` ist mehr wert als die
+Familienähnlichkeit), und der `rollingSixteenths`-Exklusivitäts-Sweep **ist amendiert** — er
+verbot einen zweiten Besitzer, während das Doc nur „ERSTER Besitzer" sagt, also wäre er auf
+korrektem Baum rot gewesen (#364). Was jetzt gepinnt ist, ist die Eigenschaft, die zwei Genres
+wirklich trennt: **die Figur darf geteilt werden, die STIMME nie.**
+
+⛔ **FÜNF FALSCHE PROSA-BEHAUPTUNGEN, drei eigene und zwei vorgefundene, keine davon von einem
+Wächter erreichbar — der teuerste Befund des Batches.** (1) `[0, 1, 5]` wurde im Doc als
+HALBTÖNE gelesen; es sind STUFEN, und auf locrian ergibt Stufe 5 acht Halbtöne — der Akkord hat
+gar keine Quinte, die ♭5 steckt im MODUS. (2) „locrian ist die einzige Tonart im Roster mit
+verminderter Quinte" — drei weitere genutzte Skalen tragen einen Tritonus; wahr ist nur die
+STUFEN-Fassung. (3) `afroHouse` „das erste Genre mit einem Vier-Schritt-Vamp, der …" — acht Arme
+haben Vier-Schritt-Vamps; der Relativsatz trug den Satz, und ein so gebauter Satz wird ohne ihn
+zitiert. (4)+(5) beide in `techHouse`s FX-Arm und seit Monaten falsch: „die KÜRZESTE
+Delay-Division jedes angebotenen Genres" (`psyProgHouse` nimmt eine plaine 16tel gegen die
+punktierte) und „0,58 ist SECHSTER" (die begründende Liste ließ `minimalTechno`s 0,66 aus — es
+ist der siebte). **Der Arm, der eine Superlative bricht, trägt sie nicht, also wird nichts rot.**
+Regel im Plan §4 festgeschrieben: Stufen immer durch `MusicalKey.degree` auflösen; jede zitierte
+Nachbar-Superlative vor dem Zitieren nachmessen UND mit ihrem SCOPE zitieren (`drift`s „widest
+spread" gilt den Ambient-Presets, roster-weit ist `detroitTechno` breiter).
+
+**Roster jetzt: 41 Genres, 24 angeboten.** Sieben Kopie-Stellen nachgezogen (tools · brainstorming
+· press ×2 · architecture „30 of 41" · beide release_notes) plus `docs/dev/APP_STORE_LISTING_v1.md`,
+das noch auf „nineteen" stand — zwei Batches alt und von keinem Prüfer erfasst.
+
+**Wächter:** `Tests/CISmoke/GenreBatchFiveBTests.swift`, 7 Ansprüche. Anspruch 5 pinnt JEDE
+zitierte Nachbar-Superlative als Ungleichung, damit der nächste Batch sie nicht still bricht.
+⚠️ **Die Voicing-Eindeutigkeits-Sweeps aus `GenreBatchFiveTests` sind bewusst NICHT kopiert** —
+`afroHouse` und `darkPsyTrance` tragen beide `[0, 2, 4]`, das achtzehn Arme tragen, und `sciFi`
+(angeboten) teilt mit darkPsyTrance sogar das ganze `(chordTones, progression)`-PAAR. Ein
+kopierter Sweep wäre auf korrektem Baum rot gewesen. Gepinnt ist stattdessen, was jedes Doc
+wirklich behauptet: ein eigener MODUS, eine eigene VAMP-FORM — und als Gegengewicht, dass der
+sciFi-Sharer EXISTIERT, damit niemand später eine Eindeutigkeit hineinschreibt.
+
+**Grading (§0/§3):** die Datei nennt drei Symbole, die dieser Commit anlegt, also **kompiliert
+sie gegen den Elternteil nicht — kein Anspruch hat dort ein Verdikt**; hand-transkribiert
+(`$SP/t1286.py`) gegen den Arbeitsbaum: **0 von ~60 Zusicherungen rot**. Ausführbarkeit bewiesen
+durch sechs Mutationen, jede trifft die benannte Zusicherung: Skala→phrygian (locrian-Anspruch),
+Lead→„Deep Sub" (Decke 7>6, zwei Treffer), Vamp→`[0,3,4,0]` (drei Treffer), Sättigung→0,10
+(minimalTechnos „cleanest chain"), Bass-ID→`F4` (geteilte Stimme), Bass-Name→„Dark Sub"
+(Namenskollision). ⚠️ Eine siebte Mutation (`"26"` als Bass-ID) biss NICHT — die ID gehört
+keinem, also war es gar keine Kollision; erst der Gegenbeleg mit `F4` bewies den Anspruch.
+Eine echte Rotstelle beim Transkribieren: `tempoRange.upperBound < lowerBound` war STRIKT und
+die Fenster berühren sich bei 145 absichtlich — auf `<=` gelockert (#364).
+Fünf Nadel-Prüfer sauber. **Gerät: nichts** — zwei NEEDS-FOUNDER-VERIFY im Wächter-Kopf.
+
+**Offen, Founder (unverändert):** §5-2 (blockiert G7) · §5-4 · §5-5 · `varyFloor`-Hörprobe.
+Dazu der angebotene TestFlight-Deploy — #1269–#1286 sind auf keinem Gerät.

@@ -58,10 +58,26 @@ final class GenrePsyProgHouseTests: XCTestCase {
         let bass = try XCTUnwrap(MusicStyle.psyProgHouse.bassPatch)
         XCTAssertEqual(bass.name, "Psy Bass")
         XCTAssertEqual(MusicStyle.psyProgHouse.synthPatch.name, "Prog Pluck")
-        for other in MusicStyle.allCases where other != .psyProgHouse {
-            XCTAssertNotEqual(other.bassGrammar, .rollingSixteenths,
-                              "\(other.rawValue) also rolls — the doc says psy-prog is the FIRST owner; update it")
-        }
+        // ⛔ THIS SWEEP USED TO FORBID A SECOND OWNER, and it over-asserted what the doc says.
+        // `BassGrammar`'s table claims psy-prog is the FIRST owner of `rollingSixteenths` — a
+        // second owner does not falsify that, and forbidding one turned a SHAREABLE figure into
+        // an exclusive one by accident. `deepTech` and `darkMinimal` already share their figures
+        // with `techHouse` and `minimalTechno`; the property that actually keeps two genres apart
+        // is the one asserted now: every owner has its OWN bass patch. (#1286 G5b, which added
+        // `darkPsyTrance` as the second owner and would otherwise have been red on a correct
+        // tree — the #364 shape.)
+        let rollers = MusicStyle.allCases.filter { $0.bassGrammar == .rollingSixteenths }
+        XCTAssertTrue(rollers.contains(.psyProgHouse), "psy-prog no longer owns the figure at all")
+        let ids = rollers.compactMap { $0.bassPatch?.id }
+        XCTAssertEqual(ids.count, rollers.count, """
+            A genre rolls sixteenths without a bass patch of its own: \
+            \(rollers.filter { $0.bassPatch == nil }.map(\.rawValue)). The figure may be shared; \
+            the voice may not, or the two genres become one bassline at two tempos.
+            """)
+        XCTAssertEqual(Set(ids).count, ids.count, """
+            Two genres roll sixteenths on the SAME bass patch. Share the figure, never the \
+            voice — that is the licence `deepTech` and `darkMinimal` take one line above it.
+            """)
         XCTAssertLessThan(bass.release, 0.1, "three hits per beat at 132 must each be their own event")
     }
 

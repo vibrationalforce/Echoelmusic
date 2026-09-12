@@ -143,6 +143,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // by ear later is one array line; building it and hiding it is not reversible in the
         // same cheap way.
         .glacialField, .slowBloom,
+        // #1286 G5b — same rule, same commit as the genres themselves.
+        .industrialTechno, .afroHouse, .darkPsyTrance,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -390,6 +392,13 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return .stillPads
         case .ambientPulse, .slowBloom:
             return .movingAmbient
+        // #1286 G5b — one new resident on each of the three electronic shelves.
+        case .industrialTechno:
+            return .techno
+        case .afroHouse:
+            return .house
+        case .darkPsyTrance:
+            return .trance
         case .sciFi:
             return .cinematicAtmospheres
         case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
@@ -612,6 +621,35 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     ///     fifth); the bass PATCH is its own ("Dark Sub"). Sharing a figure is honest here: the
     ///     genre differs in what sits above the sub, not in how the sub moves.
     case darkMinimal
+    /// #1286 G5b — TECHNO, the metallic pole. `locrian` is the only scale any genre uses whose
+    /// FIFTH DEGREE is a tritone, and the pad above it is `[0, 1, 5]` — degrees, not semitones,
+    /// so on locrian `[0, 1, 3, 5, 6, 8, 10]` that resolves to **root, ♭2 and ♭6** (0, 1, 8): a
+    /// semitone cluster with a minor sixth on top and NO FIFTH AT ALL. Nothing else in the roster
+    /// is that unstable on purpose, and it is why this genre needs no distortion to read as harsh
+    /// — the HARMONY is the metal. The diminished fifth is in the MODE, carried by the bass and
+    /// the generated line; the pad deliberately leaves the fifth out rather than voicing it.
+    ///
+    /// ⛔ THE FIRST DRAFT OF THE LINE ABOVE SAID `[0, 1, 5]` IS "root, ♭2 and the ♭5 sitting a
+    /// tritone up", and that is arithmetic, not taste — degree 5 of locrian is 8 semitones, a
+    /// minor sixth. Voicing the ♭5 would need `[0, 1, 4]`, which is `glacialField`'s array and
+    /// would have turned `GenreBatchFiveTests`' voicing-uniqueness sweep red. It also claimed
+    /// locrian is "the one mode in the roster with a diminished fifth" — three other genre-used
+    /// scales contain a tritone somewhere (`lydian`, `lydianAugmented`, `prometheus`); only the
+    /// DEGREE claim survives. Both found by resolving the degrees against `MusicalKey` rather
+    /// than reading the array as semitones (#1286).
+    ///
+    /// ⚠️ Its neighbour is `darkMinimal`, and the separation is not "darker": darkMinimal is
+    /// phrygian with a WIDE open-fifth stack `[0, 4, 11]` — hollow, no third, spanning an octave
+    /// and a half — over a sparse sub; this is locrian with a semitone CLUSTER `[0, 1, 5]` over
+    /// the SAME `sparseSub` figure at a faster tempo. Figure shared, harmony opposite — the
+    /// `deepTech`/`techHouse` pattern one shelf over.
+    ///
+    /// ⛔ The first draft of the line above read "darkMinimal is minor with a major seventh", and
+    /// BOTH halves were wrong: its arm returns `.phrygian`, and `[0, 4, 11]` is a fifth doubled
+    /// an octave up, not a seventh. Caught by dumping the two arms side by side rather than
+    /// recalling them — the neighbour claim is the half of a genre doc that no guard can check,
+    /// so it is the half that must be measured (#1286).
+    case industrialTechno
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -637,6 +675,23 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     ///     that echo IS the family — at a lower mix, in a medium room (0.60) with chorus on;
     ///     psytrance's preset is dry and unchorused, so the two presets are not the same preset.
     case psyProgHouse
+    /// #1286 G5b — HOUSE, the warm pole. Eight arms already carry a FOUR-step vamp, so that is
+    /// not the new thing; what is new is WHERE the root returns. `[0, 3, 0, 4]` comes home on
+    /// step THREE and leaves again — `classical`'s `[0, 3, 4, 0]` returns on the last step, which
+    /// closes a phrase; every other four-step arm never returns at all. A mid-cycle return is
+    /// what makes a rolling offbeat chord sound like a groove rather than a stab pattern.
+    ///
+    /// ⛔ "the roster's FIRST genre whose chord moves in a four-step vamp that returns to its
+    /// root mid-bar" stood here for one draft. The restrictive clause made it true and the
+    /// sentence still read as "four-step vamps are new", which they are not (measured: eight).
+    /// A claim carried by its subordinate clause is a claim the next reader will quote without
+    /// it (#1286).
+    ///
+    /// ⚠️ `dorian` is shared with `dubTechno`, `drift` and `detroitTechno` — stated here so
+    /// nobody writes the uniqueness claim this file has had to retract before. What separates it
+    /// is the articulation (`.skank`, the offbeat chord), the four-step vamp, and a swing of
+    /// 0.10 that none of those three carries at this tempo.
+    case afroHouse
     /// #254 batch 2 (founder 2026-07-30 "aber auch Ambient und meditations Musik"): stillness
     /// taken FURTHER than any Fläche already offered, and separated from all six of them on four
     /// axes at once rather than on a different chord.
@@ -714,6 +769,25 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     case futuristic
     case sciFi
     case psytrance
+    /// #1286 G5b — TRANCE, the dark pole. `phrygianDominant` is the flattened second over a
+    /// RAISED third — the interval pair that is neither major nor minor and cannot be mistaken
+    /// for either. Arpeggiated, because the psy identity is a pitch figure walking the voicing,
+    /// not a chord.
+    ///
+    /// ⚠️ Its real neighbour is `psytrance`, which is NOT offered, and the two are separated on
+    /// mode (phrygianDominant vs phrygian), register (padOctave 3 vs 2) and tempo (145…155 vs
+    /// 140…150 — the windows touch, deliberately: these are the same tempo family). Against the
+    /// OFFERED `psyProgHouse` the separation is total — that one is minor, not arpeggiated, and
+    /// a house tempo.
+    ///
+    /// ⚠️ AND THE VOICING IS NOT ITS OWN, stated here rather than left for a sweep to find:
+    /// `[0, 2, 4]` over `[0, 1]` is the SAME pair as the offered `sciFi` (and the un-offered
+    /// `futuristic`/`oriental`). No uniqueness is claimed for it, and none is needed — the mode
+    /// is (`phrygianDominant` is this genre's alone), and against sciFi the beat archetype
+    /// (fourOnFloor vs halfTime), the arpeggio and the tempo separate them three more ways. A
+    /// genre doc that stays silent about a shared array is how the retracted claims in the two
+    /// arms above got written.
+    case darkPsyTrance
     /// ⭐ RENAMED FROM `esotericMeditation` (#570, C5 language hygiene). Nothing user-facing
     /// ever carried the old word — the label is "Deep Ambient" and the description is
     /// "Drone · ethereal pads · deep ambient" — but the IDENTIFIER did, in a repo whose brand
@@ -768,6 +842,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// UI title.
     public var displayName: String {
         switch self {
+        // #1286 G5b — Techno / House / Trance.
+        case .industrialTechno:   return "Industrial Techno"
+        case .afroHouse:          return "Afro House"
+        case .darkPsyTrance:      return "Dark Psy"
         // #1285 G5 — Still Pads / Moving Ambient.
         case .glacialField:       return "Glacial Field"
         case .slowBloom:          return "Slow Bloom"
@@ -819,6 +897,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// or film names (App Store-safe, no implied endorsement).
     public var lineage: String {
         switch self {
+        case .industrialTechno:
+            return "Metallic semitone cluster"
+        case .afroHouse:
+            return "Warm dorian vamp · rolling offbeat chord"
+        case .darkPsyTrance:
+            return "Flattened second over a raised third"
         case .glacialField:
             return "Motionless high cluster · wide air"
         case .slowBloom:
@@ -896,6 +980,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// builders in `BioComposer`; tempo feel comes from `tempoRange` (B4).
     public var beatArchetype: BeatArchetype {
         switch self {
+        // #1286 G5b. `.offbeat` for afroHouse is the whole point — it derives `.skank`, the
+        // chord ON the "&", which is what a rolling house chord IS; `.fourOnFloor` would give it
+        // techHouse's on-beat stab and erase the one axis separating it from four siblings.
+        case .industrialTechno, .darkPsyTrance:   return .fourOnFloor
+        case .afroHouse:                          return .offbeat
         // #1285 G5 — both are drum-free by design; `.none` also derives `.sustained`
         // articulation, which is what a Fläche's chord grid must be.
         case .glacialField, .slowBloom:   return .none
@@ -1131,6 +1220,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The BPM window a take locks within (Studio mode clamps into this).
     public var tempoRange: ClosedRange<Double> {
         switch self {
+        case .industrialTechno:   return 132...145
+        case .afroHouse:          return 118...124
+        case .darkPsyTrance:      return 145...155
         // #1285 G5 — breath-paced windows, both under every beat-driven genre's floor.
         case .glacialField:       return 42...60
         case .slowBloom:          return 56...72
@@ -1255,6 +1347,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The BPM a fresh take starts at, inside `tempoRange`.
     public var defaultTempo: Double {
         switch self {
+        case .industrialTechno:   return 138
+        case .afroHouse:          return 120
+        case .darkPsyTrance:      return 148
         case .glacialField:       return 50
         case .slowBloom:          return 62
         case .dubTechno:          return 124
@@ -1305,6 +1400,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// (psytrance, rock, metal, classical rubato, ambient) stay straight at 0.
     public var swing: Double {
         switch self {
+        // #1286 G5b. 0.10 on afroHouse is the rolling lilt; it equals `detroitTechno`'s and sits
+        // above `minimalTechno`'s 0.04 floor, which is the only constraint the roster carries.
+        // The two four-on-floor additions are exactly straight — a psy or industrial grid that
+        // shuffled would stop being one.
+        case .afroHouse:                          return 0.10
+        case .industrialTechno, .darkPsyTrance:   return 0
         // #1285 G5 — a Fläche has no shuffle to swing; both are exactly straight.
         case .glacialField, .slowBloom:   return 0
         case .jazz:               return 0.34   // the defining swung-8th feel (~2:1)
@@ -1404,6 +1505,15 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // jazz) without any bright/harsh reintroduction. Exact per-genre timbre is
         // device-tunable; the INVARIANT is: warm-set only + spread.
         switch self {
+        // #1286 G5b — COMPUTED (the batch rule), not chosen by ear. All three are lead-bearing,
+        // taking the count 28 → 31, so the ceiling ceil(31/6) rises 5 → 6. Before this batch
+        // Deep Sub, Pluck, Soft Keys and Hollow Reed stood at 5 and Choir Vox and Warm Strings
+        // at 4. Deep Sub therefore has room for exactly ONE more — which is why `darkPsyTrance`
+        // takes Pluck (an arp's own timbre anyway) rather than the Deep Sub the design sheet
+        // drafted: two Deep Subs would have been 7 against a ceiling of 6.
+        case .industrialTechno:   return "Deep Sub"
+        case .afroHouse:          return "Choir Vox"
+        case .darkPsyTrance:      return "Pluck"
         // #1285 G5. `glacialField` is `sustained`, so it is NOT lead-bearing and its name does
         // not count toward the pigeonhole ceiling; `slowBloom` IS, and "Hollow Reed" was chosen
         // by MEASUREMENT rather than by ear — at 28 lead-bearing genres the ceiling is
@@ -1499,6 +1609,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// harmony 0.86…1.08 · lead 0.85…0.90. Re-derive when a genre is added; do not quote it.
     public var mixLevels: (bass: Float, harmony: Float, lead: Float) {
         switch self {
+        // #1286 G5b — the beat family sketches: bass-led for the two four-on-floor genres,
+        // chord-led for the house one whose identity IS the offbeat chord.
+        case .industrialTechno, .darkPsyTrance:   return (1.15, 0.92, 0.88)
+        case .afroHouse:                          return (1.06, 1.04, 0.88)
         // #1285 G5 — the Flächen/drone family sketch: the harmony carries the piece, the bass
         // sits under it rather than driving, the (silent) lead is trimmed like every sibling.
         case .glacialField, .slowBloom:   return (0.96, 1.06, 0.85)
@@ -1530,6 +1644,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The dark/bright, genre-appropriate scale a take defaults to.
     public var scale: Scale {
         switch self {
+        // #1286 G5b — all three modes are new to the OFFERED roster.
+        case .industrialTechno:   return .locrian
+        case .afroHouse:          return .dorian
+        case .darkPsyTrance:      return .phrygianDominant
         // #1285 G5 — both modes are NEW to the offered roster: no offered genre was
         // `lydianAugmented` or `prometheus` before this batch.
         case .glacialField:       return .lydianAugmented
@@ -1635,6 +1753,28 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// switch stays total.
     public var harmonicProfile: HarmonicProfile {
         switch self {
+        case .industrialTechno:
+            // [0, 1, 5] of locrian: root, flat second, diminished fifth. The semitone and the
+            // tritone in one chord — the harshness is the HARMONY, which is why this preset does
+            // not need to out-distort anything to read as metallic. Two roots, low register.
+            return HarmonicProfile(progression: [0, 1], chordTones: [0, 1, 5],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .afroHouse:
+            // FOUR steps that RETURN: i → IV → i → V. The mid-bar return to the root is what
+            // makes a rolling offbeat chord read as a cycle rather than a change; three distinct
+            // roots, deliberately not four (`upliftingTrance`'s four-distinct-root claim is
+            // pinned in the blocking bundle and this batch leaves it alone).
+            return HarmonicProfile(progression: [0, 3, 0, 4], chordTones: [0, 2, 4],
+                                   padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
+        case .darkPsyTrance:
+            // Arpeggiated, because the psy identity is a pitch figure walking the voicing. A
+            // plain triad on purpose: over phrygianDominant the mode does the work, and a
+            // seventh would soften exactly the ♭2-over-major-3 interval the genre is named for.
+            return HarmonicProfile(progression: [0, 1], chordTones: [0, 2, 4],
+                                   padOctave: 3, leadOctave: 5, arpeggiated: true,
+                                   leadDensity: 0.0)
         case .glacialField:
             // The CLUSTER is the genre: [0, 1, 4] of lydianAugmented = root, major second,
             // raised fifth. Two adjacent degrees beat against each other, and that beating is
