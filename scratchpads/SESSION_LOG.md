@@ -31317,3 +31317,124 @@ die vierte Zeile ist die Typprüfer-Kaskade desselben Menü-Blocks).
 ihre zwei Abschnitte noch stimmig aussieht, dass die Chrome-Leiste ohne die zwei Icon-Tasten
 richtig sitzt, und dass ein Projekt aus einem älteren Build sauber auf `.auto` öffnet. Das sind
 drei Blicke, keine Tests.
+
+---
+
+## 2026-09-12 (Abend) — Aufräumrunde vor dem Deploy: #1306–#1310
+
+Founder wörtlich: *„Alles aufräumen und ready machen für TestFlight deploy"*. Fünf Scheiben,
+alle aus derselben Wurzel — die vier Rücknahmen (#1301–#1305) haben Zitate, Listen und
+Behauptungen hinterlassen, die niemand mitgezogen hat.
+
+### ⭐ ZWEI WÄCHTER IM BLOCKIERENDEN BUNDLE WAREN ROT, AUF KORREKTEM BAUM
+
+Das ist der wichtigste Befund dieser Runde, und er ist ein Befund über das VERFAHREN, nicht
+über die zwei Dateien.
+
+**#1306 — `TheAgentRecipesPointAtThisRepoTests` konnte auf KEINEM Baum grün sein.**
+Sein `deliberatelyDead` nennt Typnamen genau deshalb, weil sie FEHLEN. Die Liste liegt in einer
+`.swift`-Datei unter `Tests/` — und Anspruch 1 konkateniert `Sources/` UND `Tests/` zu dem
+Korpus, in dem er nach genau diesen Namen sucht. Also „existierte" jeder Name der Liste, die
+`revived`-Zusicherung feuerte auf alle drei. Gemessen:
+`grep -rl EchoelBeat Sources Tests --include="*.swift"` → **genau ein Pfad, diese Datei**.
+Der Korpus überspringt sich jetzt selbst (`#filePath`-Basename).
+Zweite Ordnung, jede allein hätte den ersten Befund verdeckt: dieselbe Selbstreferenz machte die
+`absent`-Hälfte für gelistete Namen VAKUUM; und `tdd-agent.md` zitiert `EchoelVoiceAudioUnit` in
+einer Rücknahme, ohne dass der Name je auf der Liste stand — ein echtes zweites Rot, vom ersten
+maskiert.
+
+**#1309 — `TheDeployNoteNamesRealDoorsTests` pinnt die Chip-Beschriftungen per ARRAY-Gleichheit.**
+#1304 hat den Video-Chip gelöscht, die Liste blieb bei zehn, der Streifen liefert neun. Rot seit
+vier Commits. Die Fehlermeldung des Wächters trug die Anweisung die ganze Zeit mit sich („diese
+Liste im SELBEN Commit").
+
+⭐ **DAS GESETZ AUS BEIDEN: eine LISTEN-Bindung ist eine Bindung.** Die fünf Nadel-Prüfer lesen
+String-Literale, deren Anwesenheit in einer Datei behauptet wird, und `count-pins.py` liest
+ZAHLEN. Eine hand-geschriebene Swift-Liste, die per Gleichheit gegen etwas aus dem Baum
+GEPARSTES gehalten wird, ist für alle sechs unsichtbar. **Nach einer Löschung gehört jede
+hand-geschriebene Erwartung neu abgeleitet, deren Gegenseite aus dem Baum geparst wird.**
+
+⚠️ **Und warum es vier Commits lang niemand sah, ist strukturell:** `Run Tests` meldet wegen
+#396 auf JEDEM Push `failure`, und das Job-Log ist `tail -200 test.log` (#807). **Ein rotes
+Assert in diesem Bundle ist unsichtbar, bis ein Mensch es transkribiert.** Das ist kein Zufall
+dieser Runde — es ist der Normalzustand, und es heißt: nach jeder größeren Löschung muss jemand
+die Wächter von Hand nachrechnen, die der Diff berührt hat.
+
+### #1306 — fünf Anweisungsdateien schickten eine Sitzung zu gelöschten Dateien
+
+`planning-agent.md`, `tdd-agent.md`, `security-agent.md`, `commands/tdd.md`, `commands/multi-plan.md`
+nannten `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) als „den einen AUAudioUnit im
+Baum" und verwiesen auf `TheMonitorInsertCarriesTheNeutralChainTests.swift` — beides mit #1302
+gelöscht. Heute: `git grep -nE ": *AUAudioUnit\b" -- Sources` → **0**.
+⭐ Beide Male war schon die VORHERIGE Fassung eine Rücknahme (AUv3, #1112). **Zwei Generationen
+derselben Zeile abgelaufen** — deshalb steht jetzt neben jeder Ersatz-Nennung der Befehl, der
+sie nachmisst.
+Neuer Anspruch 3: der blockierende Zwilling von `doctor.py` Abschnitt B (gleicher Korpus,
+gleiche Pfadform, gleiche PRO-ZEILE-Nachruf-Ausnahme). Der Doctor fand drei der fünf und ist nur
+advisory; auf einem Push liest ihn niemand — dasselbe Argument, mit dem #702 die Decke in den
+Wächter holte. `.claude/commands` ist jetzt im Korpus (zwei der fünf lagen dort).
+
+### #1307 — die Privacy-Manifest-Kategorie ohne Aufrufer
+
+`NSPrivacyAccessedAPICategoryFileTimestamp` mit Grund C617.1, Aufrufer laut Kommentar
+`.creationDateKey` in `VideoLibraryPanel` — mit #1304 gelöscht. Über ALLE Symbole gemessen, die
+Apple für die Kategorie listet: null. Der einzige Überlebende
+(`CrashSafeStatePersistence:430`, `attributesOfItem(atPath:)[.size]`) liest eine GRÖSSE, und
+`attributesOfItem` steht gar nicht auf Apples Liste. Entfernt nach dem #1234-Präzedenzfall.
+Der Wächter musste im selben Commit mit, weil sein Anspruch 4 SET-GLEICHHEIT prüft — genau diese
+Kopplung existiert dafür.
+
+### #1308 — eine Nadel, die eine BENACHBARTE Fähigkeit ebenfalls erfüllt, ist kein Beleg
+
+`EveryPermissionPromptHasACapabilityTests` belegte `NSMicrophoneUsageDescription` mit
+`AVAudioSession.sharedInstance()` — das ruft JEDER Wiedergabepfad (16 Vorkommen in 5 Dateien,
+alle Ausgangsseite). Seit #1302 bewies der Anspruch also das Mikrofon aus Code ohne Mikrofon.
+Jetzt in `founderGatedOrphans` mit vier unterscheidenden Symbolen (`requestRecordPermission`,
+`.inputNode`, `availableInputs`, `AVAudioRecorder`), alle bei null; Mutationsprobe gefahren.
+⚠️ Und die Maschinerie steht weiter da (`upgradeToPlayAndRecord`, `claimRecordRoute` — #299),
+aber `RecordRouteOwner` ist ein LEERES Enum: `claimRecordRoute` ist nicht aufrufbar, keiner der
+beiden hat einen Produktions-Aufrufer. **Die Sitzung kann nie auf `.playAndRecord` gehoben
+werden — die Abfrage kann nie erscheinen.**
+
+⭐ **Zweiter Teil, und der ist eine #364-Reparatur:** `scripts/check-infoplist.sh` läuft IM
+Compile-Gate und hielt beide Waisen-Schlüssel in `required_keys` mit harter FAIL-Zeile. Der
+Founder hätte also genau dann ein rotes Gate bekommen, wenn er die an ihn BERICHTETE Bereinigung
+ausführt. Gemessen an einer Kopie der plist ohne die zwei Schlüssel: altes Skript zweimal FAIL
+und „guard FAILED", neues „gone — the reported repair landed" und PASSED.
+**Ein Wächter darf die Reparatur nicht bestrafen, um die er selbst bittet.**
+
+### #1310 — die Website verkaufte eine Aufnahme, die es nicht gibt
+
+`index.html`: „recordable as a share-ready clip". `overview.html`: „records to H.264 MP4 with
+the live audio muxed in". Seit #1304 falsch, auf den zwei meistgelesenen Seiten.
+
+⭐ **Warum die vorhandene Prüfform das nicht sehen konnte:** die `mentionsWithoutMarker`-Wächter
+lassen eine Nennung durch, wenn im Fenster ein Rücknahme-Wort steht. Die overview-Zeile ENDETE
+mit „it was built and removed in July 2026" — wahr, aber über den Video-EDITOR, der seit Monaten
+in derselben Zeile neben dem Recorder stand. **Ein Rücknahme-Marker beweist, dass EINE Rücknahme
+erwähnt wurde, nie dass es die ist, die die Nadel benennt.** Wo zwei benachbarte Fähigkeiten ein
+Jahr auseinander sterben, ist das Fenster entwaffnet; dann bleibt nur ein absolutes Verbot der
+PRÄSENS-Verkaufsschreibweisen, gegated auf null Konstruktionsstellen (#926: invertieren statt
+löschen, #364: die Geschichts-Fassung bleibt ausdrücklich erlaubt).
+Mitgezogen: `docs/dev/APP_STORE_LISTING_v1.md` (eine EINFÜGE-VORLAGE für App Store Connect — ein
+veraltetes „(LIVE)" wird dort zur 2.3-Behauptung) und fünf Zeilen in
+`docs/dev/FEATURE_MATRIX.md`, darunter „Roadmap: face tracking (ARKit)": das ist KEINE Roadmap,
+es wurde gebaut (#1257–#1268) und auf Founder-Ansage entfernt (#1301) — **eine zurückgenommene
+Fähigkeit als Roadmap zu führen lädt zum Neubau ein.**
+
+### Ship-Path-Audit (unabhängig gefahren, read-only)
+
+Kein BLOCKER. Fünf Targets in `project.yml`, alle Quellpfade vorhanden; kein `Sources/`-Code
+nennt einen gelöschten Typ außerhalb eines Grabsteins; Entitlements und App-Group
+(`group.com.echoelmusic`) über App/Widget/Watch stimmig; `ExternalDisplaySceneDelegate` aus der
+plist auflösbar; `fastlane/metadata` frei von zurückgenommenen Behauptungen (drei Treffer, alle
+Falsch-Positive: „Harmonizität", zweimal „VoiceOver").
+
+### Founder-gated — berichten, nicht editieren
+
+`Resources/iOS/Info.plist`, über die drei bekannten hinaus gemessen:
+`NSLocalNetworkUsageDescription` nennt „…and external audio interfaces" ohne Netzwerk-Audio-Code;
+`NSBonjourServices` führt sieben von neun Einträgen ohne Backing (`_rtsp._tcp` ist der
+RTMP-Rest, `_echoelmusic._tcp` tote Markenschreibweise — Multipeers echter Typ ist
+`echoel-colab`, und dessen zwei Einträge SIND korrekt da). Beides kosmetische Ehrlichkeit, keine
+Ablehnung: der Schlüssel ist eine Beschränkungsliste, Extra-Einträge sind erlaubt.

@@ -1773,3 +1773,54 @@ unerreichbare Teilsysteme werden entfernt, nicht mitgeschleppt.
 **Review:** 2026-10-12. Die offene Frage ist nicht technisch: nach drei Rücknahmen an einem Tag
 ist zu klären, ob der nächste Bau-Zyklus wieder eine Eingangs-Fähigkeit angeht oder die
 verbliebene Kette (Körper → Klang → Bild → Licht → Raum) vertieft.
+
+### 2026-09-12 — Aufräumrunde vor dem Deploy (#1306–#1310): was grün AUSSAH und es nicht war
+
+Founder: *„Alles aufräumen und ready machen für TestFlight deploy"*. Der Ertrag ist nicht die
+Aufräumarbeit, sondern **vier Befunde derselben Familie — Instrumente, die Grün meldeten, ohne
+etwas zu messen.** Sie gehören zusammen aufgeschrieben, weil die nächste große Löschung sie
+wieder erzeugt.
+
+1. **Eine LISTEN-Bindung ist eine Bindung — und die einzige, die kein Prüfer sieht.**
+   `TheDeployNoteNamesRealDoorsTests` hielt die Chip-Beschriftungen als hand-geschriebenes
+   Swift-Array und verglich per Gleichheit mit dem, was aus `EchoelStudioView` GEPARST wird.
+   #1304 löschte den Video-Chip; der Wächter war vier Commits rot. Die fünf Nadel-Prüfer lesen
+   String-Literale, `count-pins.py` liest ZAHLEN — **Mitgliedschaft liest keiner.** Konsequenz:
+   nach einer Löschung wird jede hand-geschriebene Erwartung per Transkription nachgerechnet,
+   deren Gegenseite aus dem Baum geparst wird.
+
+2. **Ein Wächter, der ein Verzeichnis liest, in dem er selbst liegt, liest sich selbst.**
+   `TheAgentRecipesPointAtThisRepoTests` konkateniert `Sources/` und `Tests/` zu seinem
+   Suchkorpus, und seine Liste ABWESENDER Typnamen steht in einer `Tests/`-Datei. Jeder Name
+   „existierte" also; die `revived`-Zusicherung feuerte auf alle drei. **Der Wächter konnte auf
+   keinem Baum grün sein** — #364 spiegelverkehrt. Bei einer Nutzlast aus Namen ist das tödlich,
+   bei jeder anderen nur Rauschen; der Selbstausschluss kostet eine Zeile.
+
+3. **Ein Rücknahme-Marker beweist, dass EINE Rücknahme erwähnt wurde, nie dass es die ist, die
+   die Nadel benennt.** `docs/overview.html` verkaufte „records to H.264 MP4" und endete mit
+   „built and removed in July 2026" — wahr, aber über den Video-EDITOR, der monatelang in
+   derselben Zeile neben dem Recorder stand. Das Marker-Fenster entschuldigte den falschen Satz
+   zwei Klauseln früher. **Wo zwei benachbarte Fähigkeiten zeitversetzt sterben, ist das Fenster
+   entwaffnet**; dann bleibt nur ein absolutes Verbot der Präsens-Verkaufsformen, gegated auf
+   null Konstruktionsstellen (#926: invertieren, #364: Geschichte bleibt erlaubt).
+
+4. **Eine Nadel, die eine BENACHBARTE Fähigkeit ebenfalls erfüllt, ist kein Beleg.**
+   `NSMicrophoneUsageDescription` war mit `AVAudioSession.sharedInstance()` belegt — das ruft
+   jeder Wiedergabepfad. Seit #1302 wurde das Mikrofon aus Code ohne Mikrofon bewiesen. Die
+   Nadel muss ein Symbol nennen, das NUR die versprochene Fähigkeit erreichen kann.
+
+**Dazu eine #364-Reparatur, die keine Prosa ist:** `scripts/check-infoplist.sh` läuft IM
+Compile-Gate und hätte den Founder rot gemacht, sobald er die seit #1302/#1304 an ihn
+BERICHTETE Info.plist-Bereinigung ausführt. **Ein Wächter darf die Reparatur nicht bestrafen, um
+die er selbst bittet.** Gemessen an einer Kopie der plist, nicht behauptet.
+
+⚠️ **Der strukturelle Grund, warum 1 und 2 so lange lebten, ist wichtiger als beide Befunde:**
+`Run Tests` meldet wegen #396 auf JEDEM Push `failure`, und das Job-Log ist `tail -200 test.log`
+(#807). **Ein rotes Assert im blockierenden Bundle ist unsichtbar, bis ein Mensch es
+transkribiert.** Das ist der Normalzustand dieses Repos, nicht ein Unfall dieser Runde — also
+gehört nach jeder größeren Löschung eine Hand-Nachrechnung der Wächter, die der Diff berührt hat,
+zum Löschen dazu.
+
+**Review:** 2026-10-12. Offene Frage an den Founder: #396 zu reparieren wäre
+`.github/workflows/**` und damit seine Entscheidung — solange es steht, kostet jede Löschung
+diese Hand-Nachrechnung.
