@@ -1017,6 +1017,8 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
     @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
     @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var visualCameraCutout = StudioDefaultKeys.visualCameraCutout.value
+    /// #1297 — the one-shot latch that lets the FIRST Face start show the camera layer.
+    @AppStorage(StudioDefaultKeys.visualCameraIntroduced.key) private var visualCameraIntroduced = StudioDefaultKeys.visualCameraIntroduced.value
     /// The floating visual window's show/hide state — SHARED with WorkspaceView's header
     /// monitor button and the window's own close button, so the Visual panel can toggle it
     /// directly (founder: everything user-optimized; don't make the header the only way in).
@@ -9725,7 +9727,27 @@ struct EchoelStudioView: View {
             // neutral (`measured(...) ?? heldBody ?? 70`, `coherenceForSound`), so the
             // clock never sees the 0. The camera dialog rises from `arSession.run` on the
             // app-wide purpose string, which names both lenses since this slice.
-            EchoelCrashLog.breadcrumb("face expression starting")
+            // NEEDS-FOUNDER-VERIFY: Quelle „Face" wählen. Erwartet: das eigene Gesicht ist im
+            // Visual zu sehen (Deckkraft 0,6, Screen-Blend, gespiegelt) UND das generative Feld
+            // bleibt darunter erkennbar. Sagen, ob 0,6 die richtige Mischung ist oder ob das
+            // Bild zu schwach / zu dominant ist — das ist die eine Zahl, die kein Test
+            // entscheiden kann. Danach im Field-Blatt „Camera layer" auf 0 stellen, Quelle
+            // wechseln und zurück auf Face: die 0 MUSS bleiben (einmalig heisst einmalig).
+            //
+            // #1297 — SHOW THE FACE THE FIRST TIME. The founder chose this source on
+            // v10.79.470 and reported "Die frontkamera wird nicht eingeblendet für die Mimik
+            // und gestig Steuerung". Nothing was broken: the ARKit session feeds
+            // `CameraFrameSlot` and the renderer has a camera pass, but `visualCameraOpacity`
+            // is stored at 0 and its only door is a number field inside `visualPanel`, so the
+            // picture existed and was transparent. The raise happens ONCE (the latch), before
+            // `start`, so the renderer's `cameraWanted` is already true when the first frame
+            // arrives — the publisher only stores a frame while a renderer asks for one.
+            // After this the number field owns the value: dial it to 0 and it STAYS 0.
+            if !visualCameraIntroduced {
+                visualCameraIntroduced = true
+                visualCameraOpacity = StudioDefaultKeys.visualCameraIntroOpacity
+            }
+            EchoelCrashLog.breadcrumb("face expression starting (cameraLayer=\(visualCameraOpacity))")
             faceExpression.start(publishing: bus)
             EchoelCrashLog.breadcrumb("face expression started (publishing=\(faceExpression.isPublishing))")
         }

@@ -258,8 +258,15 @@ public enum StudioDefaultKeys {
     /// 0 = the exact pre-dial picture), unlike the two multipliers above whose neutral is 1.
     public static let visualStructure = StudioDefault(key: "visual.structure", value: 0.0)
     /// K5 (#1262) — the front camera as a TEXTURE LAYER in the visual. Opacity 0 = no layer,
-    /// no texture, no retained frame (the default — the Face source alone never shows a
-    /// picture). Mirror TRUE — a performer facing the phone expects a mirror. Blend 0 = Screen
+    /// no texture, no retained frame. ⛔ THE PARENTHETICAL THAT STOOD HERE — "the default —
+    /// the Face source alone never shows a picture" — WAS TRUE AS BUILT AND WAS THE #1297
+    /// DEFECT. The founder chose the Face source on v10.79.470 and reported "Die frontkamera
+    /// wird nicht eingeblendet für die Mimik und gestig Steuerung": every link of the chain
+    /// worked (ARKit session → `CameraFrameSlot` → the renderer's camera pass) and the layer
+    /// was transparent, with its only door a number field inside `visualPanel`. The 0 STAYS
+    /// the stored default — a camera-light, strap or simulation take must not paint a face —
+    /// but `visualCameraIntroduced` now raises it ONCE, the first time the Face source starts.
+    /// Mirror TRUE — a performer facing the phone expects a mirror. Blend 0 = Screen
     /// (the field's light over the face) · 1 = Multiply (the field through the face) · 2 =
     /// Cross (a plain fade); a NAMED choice, so the panel renders it as a Picker (the "read the
     /// word NUMERIC" rule), never as a number field. Same three-surface pass-through as
@@ -272,6 +279,21 @@ public enum StudioDefaultKeys {
     /// K7 (#1265) — cut the person out of the camera layer (ARKit person segmentation; inert
     /// where the device cannot segment — the row disables the toggle there, never simulates).
     public static let visualCameraCutout = StudioDefault(key: "visual.camera.cutout", value: false)
+    /// #1297 — has the Face source ever introduced the camera layer? FALSE until the first
+    /// `.face` start, which then raises `visualCameraOpacity` to `visualCameraIntroOpacity`
+    /// and sets this, once and for all.
+    ///
+    /// ⚠️ WHY A SECOND KEY INSTEAD OF A HIGHER DEFAULT. Raising `visualCameraOpacity` itself
+    /// would paint the front camera over a camera-LIGHT take (finger on the back lens), a
+    /// strap take and the simulation — three sources that have no face in front of them and
+    /// never asked for one. And a raise on EVERY `.face` start would overwrite the choice of
+    /// a performer who deliberately dialled the layer back to 0: the introduction would then
+    /// be an override, not an introduction. One shot, then the number field owns the value.
+    public static let visualCameraIntroduced = StudioDefault(key: "visual.camera.introduced", value: false)
+    /// #1297 — what the one-time introduction raises the layer to. Not 1.0: at full opacity
+    /// the camera covers the generative field the instrument exists to show, and the founder
+    /// asked to SEE the face for expression control, not to replace the visual with it.
+    public static let visualCameraIntroOpacity = 0.6
     /// K7b (#1267) — the front-camera tracking rate in Hz (a NAMED choice among what ARKit
     /// offers, `FaceTrackingRate`); 30 by default, 60 where the device has it.
     public static let faceTrackingHz = StudioDefault(key: "face.trackingHz", value: FaceTrackingRate.defaultHz)
