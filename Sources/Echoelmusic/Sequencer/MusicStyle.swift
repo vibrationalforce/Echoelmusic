@@ -178,24 +178,47 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// category, and ships a genre no picker can reach. `Category` is the SORTING; the
     /// ROSTER is `offered` — the picker builds from that array and from nothing else.
     ///
-    /// Measured 2026-09-05, and the gap is not a rounding error: **36 cases, 19 offered.**
-    /// Per category — meditative 8 of 8, electronic 10 of 17, **rock 0 of 5** (the family
-    /// disappears from the picker entirely, header and all), acoustic 1 of 6 (only
-    /// `.classical` surfaces). Re-derive rather than trust this line:
+    /// ⛔ THE PER-CATEGORY CENSUS THAT STOOD HERE IS DELETED, NOT REFRESHED (#818, and #1275
+    /// made it necessary rather than merely stale): it read "36 cases, 19 offered — meditative
+    /// 8 of 8, electronic 10 of 17, rock 0 of 5, acoustic 1 of 6". FOUR of those six figures
+    /// are now wrong by construction — `acoustic` no longer exists, `trap` moved to `.popular`
+    /// and `vaporwave` to `.underground` — and nothing would have gone red. A census in a doc
+    /// comment is a date, not a fact. Derive it instead, and note the ROOT changed with #1275:
     ///
-    ///     grep -c '^        case \.' <this file>        # sorting, per category branch
-    ///     # …and read `offered` directly: it is one literal array, twenty lines up
+    ///     # the shelves, in picker order, with their sizes
+    ///     grep -n 'case \.' <this file> | sed -n '/var genres/,/^$/p'
+    ///     # …and read `offered` directly: it is one literal array, above this block
     ///
     /// ⚠️ THE CURATION ITSELF IS NOT A DEFECT and must not be "fixed" from this note. It is
     /// a founder ear-call: seventeen genres are finished, patched and distinct, and are dark
     /// on purpose. Widening the roster is a founder decision, one array line — never a
     /// side effect of somebody reading this comment and tidying it up.
     public enum Category: String, CaseIterable, Identifiable, Sendable {
-        case meditative   // ambient Flächen — the relaxation core, listed first
-        case electronic   // beats & synth grooves
-        case rock         // driven power-chord energy
-        case acoustic     // acoustic / world / modal
+        case meditative    // ambient Flächen — the relaxation core, listed first
+        case electronic    // beats & synth grooves
+        case rock          // driven power-chord energy
+        case jazz          // jazz, blues & soul
+        case popular       // hip-hop, R&B, pop, Caribbean
+        case classical     // written art music
+        case folk          // regional & traditional repertoires
+        case underground   // dub, lo-fi, fringe scenes
 
+        /// ⛔ `.acoustic` IS GONE (#1275), and it is the one removal here that was not a
+        /// re-shelving: it meant "acoustic / world / modal", i.e. four unrelated traditions in
+        /// one drawer because none of them had a drawer. Its six genres are re-parented —
+        /// `classical` → `.classical`, `jazz` → `.jazz`, `ska`/`rocksteady` → `.popular`,
+        /// `klezmer`/`oriental` → `.folk`. No genre, no `offered` entry and no stored value
+        /// changes: `Category` is a computed grouping, is not `Codable`, and reaches no disk.
+        ///
+        /// ⛔ AND THE NINTH RUBRIC THE PLAN NAMES — `.chant` ("Chant, Choir & Drone") — IS
+        /// DELIBERATELY NOT HERE. It has zero existing members: every genre the plan files
+        /// under it is still unwritten. An enum case with an empty shelf is the lying-`toolItems`
+        /// shape this repo has paid for repeatedly — the picker would skip it, so nothing would
+        /// look wrong, and the next session would read nine rubrics and plan from a drawer that
+        /// holds nothing. The law the file already states is the answer: **a case is added ONLY
+        /// together with its door.** `.chant` arrives in the batch that writes its first genre.
+        /// `GenreSubcategoryTests` pins the general rule (no empty rubric, no empty shelf), so
+        /// this is not a promise in prose — the day someone adds an empty one, it is red.
         public var id: String { rawValue }
 
         /// Picker section header.
@@ -210,27 +233,34 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         /// as an accident.
         public var title: String {
             switch self {
-            case .meditative: return "Meditative & Ambient"
-            case .electronic: return "Electronic & Beats"
-            case .rock:       return "Rock & Energy"
-            case .acoustic:   return "Acoustic & Global"
+            case .meditative:  return "Contemplative & Ambient"
+            case .electronic:  return "Electronic"
+            case .rock:        return "Rock, Punk & Metal"
+            case .jazz:        return "Jazz, Blues & Soul"
+            case .popular:     return "Popular & Contemporary"
+            case .classical:   return "Classical & Orchestral"
+            case .folk:        return "Folk & Regional"
+            case .underground: return "Underground & Fringe"
             }
+        }
+
+        /// The shelves inside this rubric, in display order. Derived from `Subcategory`'s own
+        /// `parent`, never listed twice (#416) — a second spelling of the same partition is the
+        /// defect whether or not the two agree today.
+        public var subcategories: [Subcategory] {
+            Subcategory.allCases.filter { $0.parent == self }
         }
 
         /// The genres in this group, in display order. This is the FULL taxonomy
         /// (every genre categorised) — the picker shows `offeredGenres`, not this.
+        ///
+        /// ⭐ #1275: DERIVED from the shelves, where it used to be a second hand-written list.
+        /// That list and `MusicStyle.category`'s switch were two spellings of one partition,
+        /// and `MusicStyleTests` existed to catch them disagreeing — a guard that is only
+        /// needed because the same fact is written twice. There is now ONE place a genre is
+        /// filed (`MusicStyle.subcategory`) and everything else reads it.
         public var genres: [MusicStyle] {
-            switch self {
-            case .meditative: return [.selfObservation, .stillMeditation, .drift, .contemplation,
-                                      .deepDrone, .ambientPulse, .vaporwave, .sciFi]
-            case .electronic: return [.dubTechno, .acidTechno, .deepHouse, .upliftingTrance,
-                                      .techHouse, .minimalTechno, .detroitTechno, .deepTech,
-                                      .darkMinimal, .psyProgHouse,
-                                      .trap, .psytrance,
-                                      .synthwave, .earlySynth, .eighties, .disco, .futuristic]
-            case .rock:       return [.rock, .punk, .rocknroll, .heavyMetal, .doom]
-            case .acoustic:   return [.classical, .jazz, .klezmer, .oriental, .ska, .rocksteady]
-            }
+            subcategories.flatMap(\.genres)
         }
 
         /// The subset of this group's genres that are actually OFFERED in the picker
@@ -241,24 +271,151 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         }
     }
 
-    /// Which logical group this genre belongs to (total — every case mapped exactly
-    /// once; guarded in MusicStyleTests).
-    public var category: Category {
-        switch self {
-        case .selfObservation, .stillMeditation, .drift, .contemplation, .vaporwave, .sciFi,
-             .deepDrone, .ambientPulse:
-            return .meditative
-        case .dubTechno, .acidTechno, .deepHouse, .upliftingTrance, .techHouse,
-             .minimalTechno, .detroitTechno, .deepTech, .darkMinimal, .psyProgHouse,
-             .trap, .psytrance, .synthwave, .earlySynth,
-             .eighties, .disco, .futuristic:
-            return .electronic
-        case .rock, .punk, .rocknroll, .heavyMetal, .doom:
-            return .rock
-        case .classical, .jazz, .klezmer, .oriental, .ska, .rocksteady:
-            return .acoustic
+    /// ⭐ #1275 — THE SHELF. One rubric held seventeen genres and another held six unrelated
+    /// traditions, so "logisch sortiert" (founder 2026-07-11) had stopped being true at the
+    /// only level a player reads: the picker's section headers. A shelf is the level where a
+    /// name means something — "Techno" and "House" rather than "Electronic & Beats".
+    ///
+    /// ⚠️ THIS IS THE FILING CABINET, AND IT IS THE ONLY ONE. `Category.genres`,
+    /// `Category.subcategories` and `MusicStyle.category` all read it. A genre is filed exactly
+    /// once, here; anything else derives. The switch below has NO `default:` on purpose — that
+    /// is what makes the compiler refuse a new genre until someone files it, and it is the
+    /// cheapest guard in this file. A `[MusicStyle: Subcategory]` dictionary would compile with
+    /// a genre missing and fall back at runtime, which is the doorless trap one level deeper;
+    /// `GenreSubcategoryTests` scans this source text for exactly that regression.
+    public enum Subcategory: String, CaseIterable, Identifiable, Sendable {
+        // 1 · Contemplative & Ambient
+        case stillPads
+        case movingAmbient
+        case cinematicAtmospheres
+        // 2 · Electronic
+        case techno
+        case house
+        case trance
+        case synthElectro
+        // 3 · Rock, Punk & Metal
+        case rockCore
+        case punkCore
+        case metal
+        // 4 · Jazz, Blues & Soul
+        case jazzCore
+        // 5 · Popular & Contemporary
+        case hipHop
+        case caribbean
+        // 6 · Classical & Orchestral
+        case classicalRomantic
+        // 7 · Folk & Regional
+        case europeanFolk
+        case nearEastCentralAsia
+        // 8 · Underground & Fringe
+        case loFiHazy
+
+        public var id: String { rawValue }
+
+        /// Which rubric this shelf stands in. The ORDER of `allCases` above is the picker's
+        /// order, and it is grouped by parent — `Category.subcategories` filters on this, so a
+        /// shelf inserted in the wrong place would split its own rubric in the menu.
+        public var parent: Category {
+            switch self {
+            case .stillPads, .movingAmbient, .cinematicAtmospheres: return .meditative
+            case .techno, .house, .trance, .synthElectro:           return .electronic
+            case .rockCore, .punkCore, .metal:                      return .rock
+            case .jazzCore:                                         return .jazz
+            case .hipHop, .caribbean:                               return .popular
+            case .classicalRomantic:                                return .classical
+            case .europeanFolk, .nearEastCentralAsia:               return .folk
+            case .loFiHazy:                                         return .underground
+            }
+        }
+
+        /// The picker's section header. Kept SHORT (a menu section header truncates long before
+        /// a row does) and ASCII — the String Catalog does not exist yet, and whatever stands
+        /// here on the day it is generated becomes the key every other language translates from
+        /// (the same argument that moved `Category.title` to English in 2026-07-29).
+        public var title: String {
+            switch self {
+            case .stillPads:            return "Still Pads"
+            case .movingAmbient:        return "Moving Ambient"
+            case .cinematicAtmospheres: return "Cinematic Atmospheres"
+            case .techno:               return "Techno"
+            case .house:                return "House"
+            case .trance:               return "Trance"
+            case .synthElectro:         return "Synth & Electro"
+            case .rockCore:             return "Rock"
+            case .punkCore:             return "Punk"
+            case .metal:                return "Metal"
+            case .jazzCore:             return "Jazz"
+            case .hipHop:               return "Hip-Hop"
+            case .caribbean:            return "Caribbean"
+            case .classicalRomantic:    return "Classical & Romantic"
+            case .europeanFolk:         return "European Folk"
+            case .nearEastCentralAsia:  return "Near East & C. Asia"
+            case .loFiHazy:             return "Lo-Fi & Hazy"
+            }
+        }
+
+        /// The genres on this shelf, in display order — derived from `MusicStyle.subcategory`,
+        /// so there is no second list to drift.
+        public var genres: [MusicStyle] {
+            MusicStyle.allCases.filter { $0.subcategory == self }
+        }
+
+        /// The subset actually OFFERED in the picker. A shelf with none is skipped (no empty
+        /// section header) — which is a display rule, NOT permission for an empty shelf: a
+        /// `Subcategory` with zero genres at all is forbidden by `GenreSubcategoryTests`.
+        public var offeredGenres: [MusicStyle] {
+            genres.filter(MusicStyle.offered.contains)
         }
     }
+
+    /// Which SHELF this genre stands on — the one place a genre is filed (#1275).
+    ///
+    /// ⚠️ NO `default:` ARM, EVER. The exhaustiveness is the guard: a new case in this enum
+    /// does not compile until it is filed, which is what kept `category` total for a year.
+    public var subcategory: Subcategory {
+        switch self {
+        case .selfObservation, .stillMeditation, .drift, .contemplation, .deepDrone:
+            return .stillPads
+        case .ambientPulse:
+            return .movingAmbient
+        case .sciFi:
+            return .cinematicAtmospheres
+        case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
+            return .techno
+        case .deepHouse, .techHouse, .psyProgHouse, .disco:
+            return .house
+        case .upliftingTrance, .psytrance:
+            return .trance
+        case .eighties, .synthwave, .earlySynth, .futuristic:
+            return .synthElectro
+        case .rock, .rocknroll:
+            return .rockCore
+        case .punk:
+            return .punkCore
+        case .heavyMetal, .doom:
+            return .metal
+        case .jazz:
+            return .jazzCore
+        case .trap:
+            return .hipHop
+        case .ska, .rocksteady:
+            return .caribbean
+        case .classical:
+            return .classicalRomantic
+        case .klezmer:
+            return .europeanFolk
+        case .oriental:
+            return .nearEastCentralAsia
+        case .vaporwave:
+            return .loFiHazy
+        }
+    }
+
+    /// Which logical group this genre belongs to (total — every case mapped exactly once).
+    /// ⭐ #1275: DERIVED from the shelf. It used to be its own switch, i.e. a second spelling of
+    /// the same partition sitting beside `Category.genres`'s third; `MusicStyleTests` still
+    /// asserts they agree, and that assertion is now true by construction rather than by care.
+    public var category: Category { subcategory.parent }
 
     case dubTechno
     /// #254 batch 1 (founder 2026-07-30 "verschiedenste Techno und House Stile … acid"): the

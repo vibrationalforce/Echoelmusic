@@ -1184,13 +1184,27 @@ struct CompositionHeaderStrip: View {
                         // decide and curate something that really fits the brand …
                         // Die 6 ruhigen Genres"): the picker offers only
                         // `MusicStyle.offered`, still grouped by sound-world. The full
-                        // taxonomy stays intact (`cat.genres`) — only what's OFFERED is
-                        // curated. Categories with no offered genre are skipped so no
-                        // empty section header shows.
-                        ForEach(MusicStyle.Category.allCases) { cat in
-                            if !cat.offeredGenres.isEmpty {
-                                Section(cat.title) {
-                                    ForEach(cat.offeredGenres) { s in Text(s.displayName).tag(s) }
+                        // taxonomy stays intact — only what's OFFERED is curated, and a
+                        // shelf with no offered genre is skipped so no empty section
+                        // header shows.
+                        //
+                        // ⭐ #1275: the iteration root is the SHELF, not the rubric. Four
+                        // rubrics for thirty-six genres meant one section header covered
+                        // seventeen of them and another covered six unrelated traditions —
+                        // at the only level the player reads, the sorting had stopped
+                        // sorting. Seventeen shelves name what is on them ("Techno",
+                        // "House") instead of the drawer they share.
+                        //
+                        // ⚠️ The DOORLESS TRAP MOVED WITH THE ROOT and that is the whole
+                        // risk of this change: a genre in `offered` whose shelf this loop
+                        // never reaches is invisible, exactly as a genre outside `offered`
+                        // is. `GenreSubcategoryTests` pins the set equality
+                        // (`Set(offered) == Set(allCases.flatMap(\.offeredGenres))`)
+                        // against THIS root, so the trap cannot reopen silently.
+                        ForEach(MusicStyle.Subcategory.allCases) { shelf in
+                            if !shelf.offeredGenres.isEmpty {
+                                Section(shelf.title) {
+                                    ForEach(shelf.offeredGenres) { s in Text(s.displayName).tag(s) }
                                 }
                             }
                         }
