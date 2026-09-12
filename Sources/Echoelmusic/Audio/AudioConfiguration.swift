@@ -377,11 +377,19 @@ enum AudioConfiguration {
     /// release. It leaks exactly like the refcount this argument rejects. The Set removes ONE
     /// failure mode (double-release / double-claim); every claim still needs a release on
     /// every exit, and that is what `RecordRouteOwnershipTests` counts per file.
-    enum RecordRouteOwner: String, CaseIterable, Sendable {
-        case inputMonitoring
-        case microphoneManager
-        case multiTrackRecorder
-    }
+    /// ⛔ #1302 — ALL THREE CASES WENT WITH THE AUDIO INPUT (founder 2026-09-12):
+    /// `inputMonitoring`, `microphoneManager`, `multiTrackRecorder`. Nothing in this build
+    /// claims the record route, so the set is permanently empty and `claim`/`release` are
+    /// reachable-but-unused.
+    ///
+    /// ⚠️ KEPT ON PURPOSE, not overlooked. The route MACHINERY is the answer to a real defect
+    /// (#299): a refcount that two owners could leave unbalanced held the phone in
+    /// `.playAndRecord` for the rest of the session — quieter output, the wrong speaker, and no
+    /// way to notice. A Set of NAMED owners makes a double claim and a double release both
+    /// harmless. The day anything records again it gets a case here rather than a counter, and
+    /// the empty enum is what makes that the obvious move. An empty `CaseIterable` enum is
+    /// legal Swift and `allCases` is simply `[]`.
+    enum RecordRouteOwner: String, CaseIterable, Sendable {}
 
     /// `nonisolated(unsafe)`, matching `isSessionConfigured` and `recordingRouteNeeded` above.
     ///

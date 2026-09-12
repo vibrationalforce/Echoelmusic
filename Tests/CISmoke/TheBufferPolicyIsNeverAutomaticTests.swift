@@ -1,4 +1,4 @@
-// TheBufferPolicyHasADoorTests.swift
+// TheBufferPolicyIsNeverAutomaticTests.swift
 // Echoel — the latency policy had no producer, and the obvious way to give it one would have
 // re-shipped a device-diagnosed defect. #674.
 //
@@ -17,7 +17,13 @@
 // optimise. So the DEFAULT IS UNCHANGED and the choice is the player's, with the cost written
 // beside it. Claim 1 is what stops a later session from "finishing the job".
 //
-// ⚠️ HONEST LIMITS. 6 test methods, 28 `XCTAssert*` — re-derive both, do not re-type:
+// ⛔ #1302 — THE FILE IS RENAMED (was `TheBufferPolicyHasADoorTests`) BECAUSE ITS OLD NAME
+// DESCRIBED A PROCEDURE THE CODE NO LONGER TAKES (#374). The founder removed the audio input
+// on 2026-09-12 and the tier control went with the sheet, so there is no door; what survives,
+// and what this file is now named for, is the NEGATIVE law above — the buffer must never
+// follow the engine, the thermal tier or a route. See the ⛔ block where claims 5 and 6 stood.
+//
+// ⚠️ HONEST LIMITS. Re-derive both, do not re-type:
 //   grep -c "^    func test" <this file>
 //   grep -n "XCTAssert" <this file> | grep -vc ':[[:space:]]*//'
 // Claim 2 mixes EXECUTED BEHAVIOUR on the enum with source scans; claims 1 and 3–6 are
@@ -33,10 +39,9 @@
 import XCTest
 @testable import Echoelmusic
 
-final class TheBufferPolicyHasADoorTests: XCTestCase {
+final class TheBufferPolicyIsNeverAutomaticTests: XCTestCase {
 
     private static let config = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
-    private static let picker = "Sources/Echoelmusic/Studio/AudioInputPickerView.swift"
 
     // MARK: - 1. The shipped default did not move
 
@@ -53,7 +58,7 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
             The shipped default buffer is no longer `normalBufferSize`. 256 frames WAS the \
             default until dense polyphonic chords missed the render deadline and it was heard \
             on the device as crackle (10.76.49). Changing it back is a founder decision and a \
-            device probe, not a one-line edit — the tier picker exists so nobody has to make it \
+            device probe, not a one-line edit — the stored tier exists so nobody has to make it \
             for everyone.
             """)
         XCTAssertEqual(AudioConfiguration.LatencyMode.normal.bufferSize,
@@ -119,20 +124,15 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
         for (path, code) in sources where Self.occurrences(of: "setLatencyMode", in: code) > 0 {
             callers.append(path)
         }
-        XCTAssertEqual(Set(callers), [Self.config, Self.picker], """
+        XCTAssertEqual(Set(callers), [Self.config], """
             `setLatencyMode` is mentioned in \(callers.sorted()) — expected exactly its own \
-            declaration and the ONE control a person operates. The buffer must not follow the \
-            engine's state, the thermal tier or a route change: 256 frames was the shipped \
-            default until dense chords missed the render deadline and it was heard as crackle \
-            on the device (10.76.49). Automating it aims that regression at the session it \
-            claims to optimise, and the player changed nothing. If this is deliberate it needs \
-            the founder and a device probe, not a green test.
-            """)
-        let picker = try Self.codeText(Self.picker)
-        XCTAssertEqual(Self.occurrences(of: "setLatencyMode", in: picker), 1, """
-            The picker mentions `setLatencyMode` \(Self.occurrences(of: "setLatencyMode", in: picker)) \
-            times, expected exactly once — from the control's own setter. A second call site in \
-            a view is a call that is not a person pressing something.
+            declaration. The buffer must not follow the engine's state, the thermal tier or a \
+            route change: 256 frames was the shipped default until dense chords missed the \
+            render deadline and it was heard as crackle on the device (10.76.49). Automating it \
+            aims that regression at the session it claims to optimise, and the player changed \
+            nothing. If this is deliberate it needs the founder and a device probe, not a green \
+            test. A new DOOR is welcome and is a different edit: it adds a path here, and this \
+            message is where you say so (#364 — this guard forbids automation, not a control).
             """)
     }
 
@@ -174,7 +174,8 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
                                                 range: request.upperBound..<setter.endIndex), """
             `currentBufferSize` is written BEFORE the session is asked, or not written after it \
             at all. Writing first means a refused request still moves the number the floor, the \
-            log line and the picker all read — describing a size the session never granted. \
+            log line and the on-screen floor all read — describing a size the session never \
+            granted. \
             #674 did exactly that and swallowed the throw with `try?`.
             """)
         XCTAssertGreaterThan(commit.lowerBound, request.upperBound,
@@ -187,89 +188,32 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
             is precisely the wrong `reason:` #654 retracted.
             """)
 
-        let picker = try Self.codeText(Self.picker)
-        XCTAssertFalse(picker.contains("try? AudioConfiguration.setLatencyMode"), """
-            The control swallows the throw again. On a refusal the buffer is unchanged, so a \
-            lit segment over an unchanged floor is the app claiming something it did not do — \
-            the over-claim this whole family (#653–#674) exists to remove.
-            """)
+        // ⛔ #1302 — a sixth assertion stood here and read the deleted input sheet: the
+        // control must not swallow the throw with `try?`, because on a refusal the buffer is
+        // unchanged and a lit segment over an unchanged floor is the app claiming something it
+        // did not do. There is no control left to swallow anything. The law survives in the
+        // ORDER pinned above — request first, commit after — which is what makes a refusal
+        // visible to whatever door comes next.
     }
 
-    // MARK: - 5. The cost is on screen, next to the switch
-
-    func testTheSmallerBufferIsOfferedWithItsPrice() throws {
-        let picker = try Self.codeText(Self.picker)
-
-        XCTAssertTrue(picker.contains(".pickerStyle(.segmented)"), """
-            The buffer control is no longer a segmented `Picker`. This is a NAMED choice of \
-            three tiers, which the UI law routes to a `Picker` — the `EchoelValueField` rule is \
-            for NUMERIC parameters, and offering 128–512 as a typed number would invite sizes \
-            the audio graph never agreed to.
-            """)
-        // Source text, not the constant: `MonitorLatencyRow` is `private`, so `@testable` does
-        // not reach it. The sibling guard pins its neighbour caveat the same way.
-        XCTAssertTrue(picker.contains("crackled at Low before"), """
-            The buffer caveat stopped naming the failure. 256 frames crackled on a real device \
-            under dense chords (10.76.49); a switch whose failure mode is unstated hands the \
-            player a mystery instead of a choice.
-            """)
-        XCTAssertTrue(picker.contains("Normal is the safe default"), """
-            The caveat stopped naming the safe position, so a player who hears crackle has no \
-            sentence telling them where to go back to.
-            """)
-        XCTAssertTrue(picker.contains("This is a request"), """
-            The caveat stopped saying the tier is a REQUEST. iOS clamps it, hardest on \
-            Bluetooth HFP — which `recordOptions` enables by necessity — while the floor above \
-            reports what was GRANTED. Without this sentence a lit segment over an unmoved \
-            number reads as a broken app instead of an honest one.
-            """)
-        XCTAssertTrue(picker.contains("resets on relaunch"), """
-            The caveat stopped saying the choice does not persist. `currentBufferSize` is a \
-            plain `static var` re-initialised every launch; losing a setting the caveat just \
-            explained, without a word, is worse than not offering it.
-            """)
-    }
-
-    // MARK: - 6. The freeze law: the control lives in the leaf it affects
-
-    func testTheControlAndTheNumberItMovesShareOneLeaf() throws {
-        let code = try Self.codeText(Self.picker)
-        let leaf = try XCTUnwrap(code.range(of: "private struct MonitorLatencyRow: View"),
-                                 "cannot anchor the leaf; re-anchor before trusting claim 6.")
-        let above = String(code[code.startIndex..<leaf.lowerBound])
-        let body = String(code[leaf.lowerBound...])
-        XCTAssertTrue(above.contains("struct AudioInputPickerView"), """
-            The leaf is declared BEFORE `AudioInputPickerView`, so the slice below is empty or \
-            partial. Re-anchor on the parent's own body before trusting this claim (#454).
-            """)
-        XCTAssertEqual(Self.occurrences(of: "currentLatencyMode", in: above), 0, """
-            The buffer mode is read ABOVE the leaf — inside `AudioInputPickerView` itself. That \
-            body hosts Pickers, and a value read there registers the whole body as an observer: \
-            every write tears down an open popover (10.76.41/50).
-            """)
-        XCTAssertEqual(Self.occurrences(of: "setLatencyMode", in: above), 0,
-                       "the buffer is written from the parent body, not from the leaf's control.")
-        // ⛔ Both counts above are ONE-SIDED: deleting the control entirely leaves them green.
-        // Presence is asserted here so the section title ("share one leaf") is true of both
-        // halves and not only of the absence half (#454).
-        XCTAssertTrue(body.contains("bufferPicker"), """
-            The buffer control is gone from the leaf. The zero-counts above still pass — \
-            nothing is above the leaf because nothing exists — which is why they cannot stand \
-            alone.
-            """)
-        XCTAssertTrue(body.contains("readout.floorText"), """
-            The number the control moves is no longer rendered beside it, so the loop this \
-            slice's whole argument rests on ("nobody has to believe a label") is broken.
-            """)
-        // ⛔ Scoped to the LEAF. The first version scanned the whole file while its message
-        // said "the latency row acquired a POLL" — a timer in the parent, a different and
-        // separately-argued concern, would have failed this test with the wrong cause named.
-        XCTAssertFalse(body.contains("Timer.publish") || body.contains("TimelineView"), """
-            The latency row acquired a POLL. The buffer changes only when someone presses the \
-            control; a timer here rebuilds a view inside a Picker-hosting sheet on a schedule, \
-            which is precisely the 10.76.41 freeze.
-            """)
-    }
+    // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — CLAIMS 5 AND
+    // 6 STOOD HERE AND ARE GONE WITH THEIR SUBJECT. Both read
+    // `Sources/Echoelmusic/Studio/AudioInputPickerView.swift`, which no longer exists: claim 5
+    // pinned the four sentences of the caveat beside the segmented control ("crackled at Low
+    // before", "Normal is the safe default", "This is a request", "resets on relaunch"), claim
+    // 6 pinned the 10.76.41/50 freeze law on `MonitorLatencyRow` (the value is read INSIDE the
+    // leaf, never in the Picker-hosting parent body). Kept as text, not as assertions, because
+    // an assertion against a deleted file is red on a CORRECT tree (#364).
+    //
+    // ⚠️ AND THE FILE NAME IS NOW A CLAIM THIS TREE CANNOT MAKE: there is no door. The policy
+    // still RUNS — `AudioEngine` calls `AudioConfiguration.applyStoredLatencyMode()` on start,
+    // which reads `StudioDefaultKeys.audioLatencyMode` — but nothing shipped can WRITE that
+    // preference any more, so the tier is whatever a previous build persisted, else `normal`.
+    // That is the Doctor §C shape this file's own header names, one level up: a mechanism that
+    // exists, reads as live, and nothing can select. It is left WIRED on purpose for the #527
+    // reason — a preference an older build stored still applies, and cutting the applier would
+    // turn "obviously absent" into "silently ignored". Whoever re-doors an input surface
+    // re-adds claims 5 and 6 in the SAME commit and renames the file back.
 
     // MARK: - Helpers
 
@@ -300,7 +244,7 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
             guard !out.isEmpty else { break }
             return out
         }
-        throw NSError(domain: "TheBufferPolicyHasADoorTests", code: 2, userInfo:
+        throw NSError(domain: "TheBufferPolicyIsNeverAutomaticTests", code: 2, userInfo:
                         [NSLocalizedDescriptionKey:
                           "cannot walk Sources/ from #filePath — re-anchor (#454)."])
     }
@@ -314,13 +258,13 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
             XCTFail("`\(anchor)` occurs \(count) times, not once, so the extracted body is "
                     + "ambiguous and every negative below it is vacuous. Re-anchor (#408).",
                     file: file, line: line)
-            throw NSError(domain: "TheBufferPolicyHasADoorTests", code: 3, userInfo: nil)
+            throw NSError(domain: "TheBufferPolicyIsNeverAutomaticTests", code: 3, userInfo: nil)
         }
         let start = try XCTUnwrap(text.range(of: anchor), "unreachable: counted 1, found 0.",
                                   file: file, line: line)
         guard let open = text[start.upperBound...].firstIndex(of: "{") else {
             XCTFail("no `{` follows `\(anchor)`.", file: file, line: line)
-            throw NSError(domain: "TheBufferPolicyHasADoorTests", code: 4, userInfo: nil)
+            throw NSError(domain: "TheBufferPolicyIsNeverAutomaticTests", code: 4, userInfo: nil)
         }
         var depth = 0
         var i = open
@@ -333,7 +277,7 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
             i = text.index(after: i)
         }
         XCTFail("braces never balance after `\(anchor)`.", file: file, line: line)
-        throw NSError(domain: "TheBufferPolicyHasADoorTests", code: 5, userInfo: nil)
+        throw NSError(domain: "TheBufferPolicyIsNeverAutomaticTests", code: 5, userInfo: nil)
     }
 
 
@@ -354,7 +298,7 @@ final class TheBufferPolicyHasADoorTests: XCTestCase {
                 return try String(contentsOf: candidate, encoding: .utf8)
             }
         }
-        throw NSError(domain: "TheBufferPolicyHasADoorTests", code: 1, userInfo:
+        throw NSError(domain: "TheBufferPolicyIsNeverAutomaticTests", code: 1, userInfo:
                         [NSLocalizedDescriptionKey:
                           "cannot find \(path) walking up from #filePath — re-anchor (#454)."])
     }

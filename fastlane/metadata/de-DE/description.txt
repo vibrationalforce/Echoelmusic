@@ -21,7 +21,6 @@ ERSCHAFFEN
 
 - Bio-reaktive additive Synthese-Engine (DDSP) — vDSP-beschleunigt, ohne externe Abhängigkeiten
 - Eigene Patches gestalten und speichern
-- Deine Stimme wird die Klangfarbe des Instruments: einen Ton halten, Echoel misst die spektrale Hüllkurve — etwa 64 Zahlen, kein Ton wird aufgenommen — ein Patch kann sie behalten
 - Komposition: Genre und Tonart wählen; Dein Körper erzeugt Material in der Tonart, das Du mit Klang- und Charakter-Reglern formst
 - Kammerton (A4) auf den Cent genau; BPM für tighte Loops sperren oder sync-frei bleiben
 - Effekte: Reverb, Delay, Chorus, Flanger, Phaser, Tremolo, Sättigung, Harmonizer und mehr

@@ -1,7 +1,8 @@
 // TheLifecycleCatchesSpeakInTheExportedLogTests.swift
 // Echoel — #968. Blocking bundle. **SOURCE-TEXT SCAN** (`Tests/CISmoke/CLAUDE.md` §1) over the
-// three files that own the audio graph's lifecycle: `AudioConfiguration.swift`,
-// `AudioEngine.swift`, `MicrophoneManager.swift`, each through `SourceText.codeOnly`. Nothing
+// two files that own the audio graph's lifecycle: `AudioConfiguration.swift` and
+// `AudioEngine.swift`, each through `SourceText.codeOnly` (`MicrophoneManager.swift` was the
+// third and went with the audio input, #1302 — see the ⛔ block where claim 6 stood). Nothing
 // here starts an engine — every failure covered below is an AVFAudio throw, which a bundle test
 // cannot stage honestly.
 //
@@ -122,7 +123,6 @@ final class TheLifecycleCatchesSpeakInTheExportedLogTests: XCTestCase {
 
     private static let config = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
     private static let engine = "Sources/Echoelmusic/Audio/AudioEngine.swift"
-    private static let mic = "Sources/Echoelmusic/MicrophoneManager.swift"
 
     private func source(_ relative: String) throws -> String {
         let here = URL(fileURLWithPath: #filePath)
@@ -265,41 +265,18 @@ final class TheLifecycleCatchesSpeakInTheExportedLogTests: XCTestCase {
                 """)
     }
 
-    // MARK: - 6. The mic stop says when the record route stayed held
-
-    func testTheMicStopSaysWhenTheRecordRouteWasHeld() throws {
-        let code = try source(Self.mic)
-        let crumb = "EchoelCrashLog.breadcrumb(\"mic: stop FAILED — the record route was not released"
-        assertCrumbLeadsItsOSLog(
-            code,
-            crumb: crumb,
-            osLog: "log.audio(\"Failed to downgrade audio session after recording:",
-            why: """
-                `mic: stop` reaches 3/3 and then this fails: the mic stopped while the RECORD \
-                ROUTE is still held. Before #967 a non-benign terminator after a COMPLETE \
-                ladder still read `✅ done`, so even once written this line would have landed in \
-                a log the tool called clean. It is a finding now; it has to exist to be one.
-                """)
-        // ⚠️ POSITIVE, not `XCTAssertFalse(contains("mic: stop 3/3 FAILED"))`. A negative
-        // assertion is true whenever its needle cannot match, so it grades nothing the day the
-        // wording drifts (#926). What actually has to hold is that the terminator follows a
-        // COMPLETE ladder — three numbered rungs, one each — because that is the case #967 had
-        // to teach the tool to call a finding at all.
-        for rung in ["mic: stop 1/3", "mic: stop 2/3", "mic: stop 3/3"] {
-            XCTAssertEqual(occurrences(of: rung, in: code), 1, """
-                `\(rung)` no longer occurs exactly once. The terminator above is only legible \
-                as the end of a COMPLETE ladder; if the rungs are renamed or duplicated, \
-                `diag-ladder.py` reads a different ladder than the one this claim describes \
-                (#408 — re-anchor before trusting the verdict).
-                """)
-        }
-        XCTAssertEqual(occurrences(of: "mic: stop ", in: code), 4, """
-            The `mic: stop` family is no longer three rungs plus one terminator. A NUMBERED \
-            terminator is the specific regression to avoid: once a number is present, the form \
-            that walks on and the form that returns are the same string in a log, so a numbered \
-            failure is indistinguishable from a rung (c3 of the `diag-ladder` grammar).
-            """)
-    }
+    // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — CLAIM 6 STOOD
+    // HERE AND IS GONE WITH ITS SUBJECT. It read `Sources/Echoelmusic/MicrophoneManager.swift`,
+    // which no longer exists, and pinned the `mic: stop` ladder: three numbered rungs plus ONE
+    // UNNUMBERED terminator ("the record route was not released"), the crumb leading its
+    // `os_log`.
+    //
+    // ⭐ TWO LAWS FROM IT SURVIVE THIS REMOVAL AND ARE WRITTEN HERE BECAUSE THE NEXT LADDER
+    // NEEDS THEM: (1) a terminator after a COMPLETE ladder is still a FINDING — `diag-ladder.py`
+    // read it as `✅ done` until #967, so the line has to exist before it can be one. (2) A
+    // terminator must be UNNUMBERED: once a number is present, the form that walks on and the
+    // form that returns are the same string in a log (c3 of the `diag-ladder` grammar). Both
+    // are enforced for the surviving ladders by `TheEngineLifecycleSpeaksInTheDiagLogTests`.
 
     // MARK: - 7. COUNTERWEIGHT: not one AVFAudio call moved
 
@@ -308,13 +285,16 @@ final class TheLifecycleCatchesSpeakInTheExportedLogTests: XCTestCase {
     func testTheGuardedCallsAreUnchanged() throws {
         let config = try source(Self.config)
         let engine = try source(Self.engine)
-        let mic = try source(Self.mic)
+        // ⛔ #1302 — `("releaseRecordRoute(.microphoneManager)", 5, mic, "MicrophoneManager")`
+        // was the fifth row and is struck with its file. The record-route REFCOUNT machinery in
+        // `AudioConfiguration` is deliberately kept (#299: two owners that could unbalance it
+        // are what held the phone in `.playAndRecord`), but no owner claims the route today, so
+        // `RecordRouteOwner` has no cases and this row has nothing to count.
         for (needle, count, code, name) in [
             ("setPreferredIOBufferDuration(", 5, config, "AudioConfiguration"),
             ("onInterruptionResume?()", 1, config, "AudioConfiguration"),
             ("onMediaServicesReset?()", 2, config, "AudioConfiguration"),
             ("setActive(false, options: .notifyOthersOnDeactivation)", 1, engine, "AudioEngine"),
-            ("releaseRecordRoute(.microphoneManager)", 5, mic, "MicrophoneManager"),
         ] as [(String, Int, String, String)] {
             XCTAssertEqual(occurrences(of: needle, in: code), count, """
                 `\(needle)` no longer occurs \(count)× in \(name). #968 adds lines to the \

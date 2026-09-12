@@ -11,18 +11,17 @@
 // can silently break a link while the caption keeps promising it. Every assertion is
 // the class of defect where re-pointing one side leaves a sentence lying (#351).
 //
-// ⚠️ HONEST LIMITS. 4 tests, 9 `XCTAssert*` statements (hand-counted per test,
-// 2+2+3+2; the two `XCTUnwrap`s in test 4 also fail their test and sit outside this
-// count — assertions, not failure points). ALL are SOURCE-TEXT JOINS: the chain sits on `@MainActor` voices and the
-// render path is an audio-thread closure no test host can drive honestly; the
-// harmonizer's SOUND on a captured timbre is a device probe (NEEDS-FOUNDER-VERIFY:
-// capture a tone in Sound → Voice timbre, enable FX → Harmonizer, play — the
-// stacked voices must carry YOUR colour, not the patch's). END-TO-END coverage of
-// the profile pathway itself lives in TheVoiceProfileSurvivesThePatchDrainTests and
-// TheCaptureTurnsAToneIntoAProfileTests (#416 — not repeated here).
+// ⚠️ HONEST LIMITS — re-derive, do not re-type (#818; the counts fell with claim 4 at #1302):
+//   grep -c "^    func test" <this file>   ·   grep -c "XCTAssert" <this file>
+// ALL are SOURCE-TEXT JOINS: the chain sits on `@MainActor` voices and the render path is an
+// audio-thread closure no test host can drive honestly. ⛔ The device probe that stood here
+// ("capture a tone in Sound → Voice timbre, enable FX → Harmonizer") is UNPERFORMABLE since
+// #1302 — there is no capture. What a founder CAN still probe is the recall half: open a patch
+// saved by an older build that carries a voice profile, enable FX → Harmonizer, and hear whether
+// the stacked voices carry THAT colour.
 //
-// ⭐ GRADING (§3). The caption assertion (test 4) is the only FORWARD guard (this
-// commit writes that sentence); tests 1–3 are COUNTERWEIGHTS — green on the parent
+// ⭐ GRADING (§3). The caption assertion (test 4) was the only FORWARD guard and is deleted with
+// its subject (#1302); the three surviving tests are COUNTERWEIGHTS — green on the parent
 // tree too, because the wiring predates this slice. That distribution is the point:
 // this file mostly pins premises that already hold (#343). Stripper: all 8 needles
 // measured raw vs stripped on BOTH trees → **TRAGEND (1 of 8 verdicts flips)**:
@@ -90,35 +89,19 @@ final class TheVoiceTimbreReachesTheHarmonizerTests: XCTestCase {
                        + "sound the FX door claims to control")
     }
 
-    /// The caption: promised only while a profile is APPLIED, and it names the door.
-    /// ⚠️ HONEST LIMIT (review #597a): the ordering assertion proves textual
-    /// PRECEDENCE, not brace-matched CONTAINMENT — an edit moving the return below
-    /// the branch's closing brace would stay green because the comment anchor
-    /// travels with the statement. Tighten to brace-matched extraction (#408) the
-    /// next time this file is touched for another reason.
-    func testTheCaptionNamesTheDoorOnlyWhenAProfileIsApplied() throws {
-        // RAW read on purpose — the `// #597a` gate anchor is a COMMENT, which
-        // `codeOnly` blanks; the skip-on-no-tree convention still applies.
-        let root = repoRoot()
-        guard FileManager.default.fileExists(atPath: root.appendingPathComponent("Sources").path)
-        else { throw XCTSkip("source tree not present under \(root.path)") }
-        let studio = try String(
-            contentsOf: root.appendingPathComponent(
-                "Sources/Echoelmusic/Studio/EchoelStudioView.swift"),
-            encoding: .utf8)
-        XCTAssertEqual(occurrences(
-            of: "FX → Harmonizer stacks it into harmonies", in: studio), 1,
-            "the discoverability sentence left the applied-profile caption — "
-            + "the #597a slice IS this sentence")
-        let captionAt = try XCTUnwrap(studio.range(
-            of: "FX → Harmonizer stacks it into harmonies"))
-        let gateAt = try XCTUnwrap(studio.range(
-            of: "if synth.appliedVoiceProfile != nil {\n                // #597a"))
-        XCTAssertTrue(gateAt.lowerBound < captionAt.lowerBound,
-                      "the sentence must sit INSIDE the applied-profile branch — "
-                      + "promising a harmonized voice colour while no profile is "
-                      + "applied would be the lying-caption class")
-    }
+    // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — CLAIM 4 STOOD
+    // HERE AND IS GONE WITH ITS SUBJECT. It pinned a discoverability sentence ("FX → Harmonizer
+    // stacks it into harmonies") INSIDE the `if synth.appliedVoiceProfile != nil` branch of the
+    // capture row, so the app could not promise a harmonized voice colour while no profile was
+    // applied — the lying-caption class (#351). The row went with the microphone; there is no
+    // caption left to place. Its own header already warned the anchor was PRECEDENCE, not
+    // brace-matched containment, and that warning is now moot rather than owed.
+    //
+    // ⚠️ CLAIMS 1–3 ARE UNTOUCHED AND ARE NOT ABOUT THE MICROPHONE: they pin that the FX sheet's
+    // door drives `synth.fxChain`, that the harmonizer is a stage of THAT chain, and that the
+    // poly voice renders through it. A patch carrying a voice profile from an older build still
+    // shapes those voices (#95/#527), so the join this file is named for still exists — only the
+    // way to MEASURE a new profile is gone.
 
     // MARK: - helpers (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)
 

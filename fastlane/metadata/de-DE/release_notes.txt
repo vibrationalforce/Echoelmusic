@@ -8,10 +8,6 @@ Komposition
 - Acht Charakter-Regler: Liveliness, Darkness, Tension, Romance, Weird, Virtuosity, Syncopation, Humanize
 - Kammerton (A4) exakt auf den Cent einstellbar; Tonart und optionaler BPM-Lock
 
-Stimme
-- Deine Stimme wird die Klangfarbe des Instruments: einen Ton halten („Voice timbre" → Capture) — gemessen als Spektral-Hüllkurve, nie aufgenommen oder gespeichert
-- Die gemessene Farbe lässt sich im Patch sichern, immer mit Namens-Label
-
 Klang
 - Algorithmischer Reverb mit Raum- und Hallen-Presets für echte Tiefe pro Genre
 - Harmonizer-Effekt: Terz- und Quint-Stimmen über der Melodie — optional „Follow the key": die Terz atmet diatonisch mit der Tonart

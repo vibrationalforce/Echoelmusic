@@ -279,15 +279,9 @@ struct EchoelStudioView: View {
     /// Tap-tempo estimator (performance staple) + the last value it produced for display.
     @State private var tapTempo = TapTempo()
     @State private var lastTappedBPM: Double? = nil
-    /// EchoelVoice #592b — owned HERE (not in the row) so a capture survives the
-    /// sound panel closing and reopening mid-take; the leaf row reads it, this body
-    /// only passes the reference (no observable property is read at panel level).
-    @State private var voiceCapture = VoiceCaptureController()
-
-    // ⛔ #1024 — the `RoutePlugInWatcher` state and its `.start()` stood here and went with
-    // the microphone doors. `PlugInInviteRow` and `RoutePlugInWatcher` still exist as files
-    // and still compile; they simply have no caller, and a watcher observing route changes
-    // for a door that no longer exists is the kind of leftover this removal is about.
+    // ⛔ #1302 — `voiceCapture` (the `VoiceCaptureController`) STOOD HERE and went with the
+    // audio input. So did the `RoutePlugInWatcher` state #1024 had already unwired; both its
+    // type and `PlugInInviteRow` are deleted files now rather than callerless ones.
 
     // Collapsible control-panel state ("aufklappen"). Feinschliff 3/4 (founder: "eine
     // adaptive Ansicht ohne weitere Untermenüs … nur das Wesentliche sichtbar"): the view
@@ -700,16 +694,11 @@ struct EchoelStudioView: View {
     // readers, zero writers. Its persisted UserDefaults key is deliberately NOT migrated
     // or cleared: a stale bool costs nothing, a delete-on-launch is a destructive write
     // for no gain.
-    @State private var showInput = false
-    // ⛔ #1024 — `@State private var micMonitorRefused` stood here and went with the
-    // microphone doors (founder 2026-09-06: "Microphone funktioniert nach mehreren
-    // Anläufen immer noch nicht … also fliegt das raus"). It was the #485 anti-lying-
-    // control write: `isInputMonitoring` is `private(set)` and stays false on refusal, so
-    // without a `@State` write nothing invalidated the body and the Mix board's `Toggle`
-    // kept SHOWING "on" while nothing listened. THE LESSON SURVIVES ITS CONTROL and is
-    // the one thing to carry into any future re-door: a toggle bound to a `private(set)`
-    // engine flag needs its OWN observable write on the refusal path, or it lies.
-    // `AudioInputPickerView`'s twin (`monitorRefused`) is untouched and still shows it.
+    // ⛔ #1302 — `showInput` (the mic sheet's slot) and, before it, `micMonitorRefused` both
+    // stood here and are gone with the audio input. THE #485 LESSON SURVIVES ITS CONTROL and
+    // is worth more than either: a toggle bound to a `private(set)` engine flag needs its OWN
+    // observable write on the refusal path, or the control keeps SHOWING "on" while nothing
+    // listened — nothing invalidates the body when the engine silently stays false.
     @State private var showRouting = false
     @State private var showLearn = false
     // Dead-duplicate sheets removed (v10.79.207): PianoRoll / PatchEditor / Automation
@@ -841,7 +830,8 @@ struct EchoelStudioView: View {
     // (the field, the donut renderer and the still shutter all live in the ONE window now).
     // ⛔ "TWO un-settable flags remain (`showMeditation`, `midiImportPresented`) … the
     // un-settable pair is unchanged" stood here until #1110 — and #1024 had already made it
-    // THREE (`showInput`, the mic door's slot) BEFORE #1069 rewrote this sentence. The sentence
+    // THREE (`showInput`) BEFORE #1069 rewrote this sentence; #1302 then deleted `showInput`
+    // AND its `.sheet`, so the chain moved again in the other direction. The sentence
     // that calls its own history the warning aged a third time; hence the command, not a count.
     // The moral is not the number — it is that a slot can go from headroom to product and back
     // inside six weeks, so COUNT before you reuse one, never quote this line.
@@ -1646,7 +1636,6 @@ struct EchoelStudioView: View {
                          setFXEnabled: { synth.setFXEnabled($0); touchSynth?.setFXEnabled($0) })
                 .echoelSheetPanel())
         }
-        .sheet(isPresented: $showInput) { AnyView(AudioInputPickerView().echoelSheetPanel()) }
         .sheet(isPresented: $showRouting) { AnyView(PatchbayView().echoelSheetPanel()) }
         .sheet(isPresented: $showLearn) { AnyView(LearnView()) }   // self-manages its detents
         #if canImport(UniformTypeIdentifiers)
@@ -3732,44 +3721,22 @@ struct EchoelStudioView: View {
             .strokeBorder(EchoelTheme.border, lineWidth: 1))
     }
 
-    // ⭐ #1247 (2026-09-11): ONE door is back — the Master panel's "Audio input" button
-    // (`masterDoorButton`, below in `masterPanel`). The STRIP stays removed; the three laws
-    // at the end of this block bound that re-door and bind any further one.
-    // ⛔ #1024 — THE MICROPHONE STRIP STOOD HERE AND IS REMOVED ON FOUNDER ORDER
-    // (2026-09-06, twice: "das mit dem Audio Input Monitoren klappt immer noch nicht also
-    // fliegt das raus", then again with a screenshot of build 448/2567 circling this very
-    // card). It was never once confirmed working on a device across several builds.
+    // ⛔ #1302 — THE WHOLE MICROPHONE SURFACE IS GONE (founder 2026-09-12, "OK Face und
+    // Audio Input komplett entfernen"). The mix-board strip went with #1024 and the Master
+    // panel's re-doored "Audio input" button (#1247) lasted one day; this time the ENGINE went
+    // too, so there is nothing left to re-door and no `showInput` slot to reuse.
     //
-    // WHAT WENT AND WHAT DID NOT. Only the DOORS went — this strip, the Master panel's
-    // "Audio input" button and the plug-in invitation banner. The engine
-    // (`setInputMonitoring`, the monitor insert, FeedbackGuard) and `AudioInputPickerView`
-    // are untouched and still compile, so re-dooring is three call sites, not a rebuild.
-    // The `showInput` sheet slot survives WITHOUT a setter and is now headroom under the
-    // 10.76.34 presentation ceiling, like `showMeditation`.
-    //
-    // ⚠️ NOTHING IS LEFT STUCK: `isInputMonitoring` is not persisted (`AudioEngine`
-    // declares it `= false`), so every launch starts with the mic off. Removing the
-    // switch cannot strand a user with monitoring on and no way out — the trap CLAUDE.md
-    // names for persisted flags does not apply here, and it was checked before cutting.
-    //
-    // ⚠️ THREE PIECES OF LAW WORTH KEEPING out of the 206 deleted lines. Whoever re-doors
-    // this starts here, because each one cost a build to learn:
-    //   1. #601 — ask for the mic permission FIRST and only then engage. A direct engage on
-    //      an UNDETERMINED permission can never show the system dialog; it just reads a 0 Hz
-    //      input format, bails, and looks broken forever on a fresh install.
-    //   2. #485 — do NOT read `audioEngine.feedbackGuardActive` in a mix-strip builder. It
-    //      is written from the ~15 Hz meter poll while monitoring runs, so the read enrols
-    //      `AdaptiveCardGrid`'s body — five strips, eight draggable `EchoelValueField`s — as
-    //      a 15 Hz observer, a live scrub-anchoring hazard (#375/#376). It is NOT the
-    //      10.76.41/50 freeze (this panel hosts no `.menu` Picker and sits behind two
-    //      escaping builders) — it is the same mechanism one panel away. A live readout
-    //      belongs in its OWN leaf `View`.
-    //   3. #485 — the strip must reuse the `showInput` slot, never declare its own `.sheet`.
-    //      The body chain is at 14 presentation modifiers and 10.76.34 proved what the
-    //      fifteenth costs (SIGSEGV before first render, seen as a black screen).
-    // These three stood in `TheVoiceIsOnTheBoardTests`, whose whole subject was this strip;
-    // that guard is retired with the strip (#1024) rather than left red on a correct tree,
-    // and this is where its forward-facing half now lives.
+    // ⚠️ TWO PIECES OF LAW WORTH KEEPING out of what was cut, because each cost a build and
+    // NEITHER is about microphones:
+    //   1. #485 — do NOT read a ~15 Hz engine property in a mix-strip builder. The read
+    //      enrols `AdaptiveCardGrid`'s whole body — five strips, eight draggable
+    //      `EchoelValueField`s — as a 15 Hz observer, a live scrub-anchoring hazard
+    //      (#375/#376). It is NOT the 10.76.41/50 Picker freeze (this panel hosts no `.menu`
+    //      and sits behind two escaping builders) — it is the same mechanism one panel away.
+    //      A live readout belongs in its OWN leaf `View`.
+    //   2. #485 — a new surface REUSES an existing `.sheet` slot, never declares its own.
+    //      10.76.34 proved what the fifteenth presentation modifier costs: SIGSEGV before
+    //      first render, seen as a black screen.
 
     /// Bass-bus filter cutoff. Full-open (max) disengages the filter; lower engages a
     /// low-pass. Applied LIVE to the sub voice via the lock-free insert path.
@@ -5000,22 +4967,12 @@ struct EchoelStudioView: View {
             // (2026-07-02). SLOT-REUSE: this sets the EXISTING dead `showRouting` sheet slot
             // — no new modal in the chain. No close-first needed: the plate is not an
             // overlay, so only the sheet is ever a presented layer.
-            // ⛔ #1024 removed the second button here ("Audio input") with the other two
-            // microphone doors. ⭐ #1247 (founder 2026-09-11, "Audio Input sauber aufsetzen")
-            // brings THIS ONE back — the Master door only; the Mix-board strip and the plug-in
-            // banner stay doorless. SLOT-REUSE again: it sets the existing `showInput` sheet.
-            // Permission is asked INSIDE the sheet's toggle (`engageInputMonitoring`, #601), so
-            // opening the door engages nothing. The monitor path is still device-UNVERIFIED
-            // (`PLAN_AUDIO_INPUT_2026-09-11.md`); the door exists so the founder can verify it.
-            HStack(spacing: 8) {
-                masterDoorButton("Routing", icon: "app.connected.to.app.below.fill",
-                                 hint: "OSC, immersive object, and lighting outputs") {
-                    showRouting = true
-                }
-                masterDoorButton("Audio input", icon: "mic",
-                                 hint: "Microphone or interface: listen, tune to key, harmony, granular — and the input drives the picture") {
-                    showInput = true
-                }
+            // ⛔ #1302 — an "Audio input" button sat beside Routing (#1247, one day old) and
+            // is gone with the feature. Routing is now the panel's only door, so the `HStack`
+            // that paired them is gone too rather than left holding one child.
+            masterDoorButton("Routing", icon: "app.connected.to.app.below.fill",
+                             hint: "OSC, immersive object, and lighting outputs") {
+                showRouting = true
             }
         }
     }
@@ -7317,18 +7274,11 @@ struct EchoelStudioView: View {
     // MARK: Panel 2 — Sound & texture (preset · scrubbable values · randomize)
 
     private var soundPanel: some View {
-        // #620 (GUI-Board Zeile 10 / UX#13): the subtitle NAMES "Voice timbre". ⛔ #620b
-        // (review W2): the first version of this comment said the name reaches "a player
-        // scanning the collapsed chips" — WRONG MECHANISM: this panel mounts only through
-        // `dropdownContent` under `echoelPanelForceOpen`, so there IS no collapsed state.
-        // The honest gain is one level, not two: the subtitle is the FIRST line of the
-        // opened panel, so the feature is named at the top instead of being visible only
-        // at the row itself, further down. The words are the ROW's words
-        // (`VoiceCaptureRow`'s `Text("Voice timbre")`, #616's vocabulary law: the pointer
-        // and the control share one spelling, or the pointer teaches a search that
-        // fails). Rename the row → rename this token in the same commit; the guard
-        // (`ThePanelSubtitlesNameTheirDeepFeaturesTests`) couples both sites.
-        panel("Sound & texture", "Shape the timbre — exact to 0.0001 · Voice timbre",
+        // ⛔ #1302 — the subtitle carried "· Voice timbre" (#620/#620b) and the token is gone
+        // with the capture row it pointed at. The #616 vocabulary law it served is unchanged:
+        // a pointer and its control share ONE spelling, or the pointer teaches a search that
+        // fails. `ThePanelSubtitlesNameTheirDeepFeaturesTests` couples both sites.
+        panel("Sound & texture", "Shape the timbre — exact to 0.0001",
               isExpanded: $showSound) {
             // #325 — THE TUNING BANNER'S DOOR, and Sound is chosen over the panel the tuning
             // controls live in on purpose. `displayedMenu` falls back to `.sound`, so this is
@@ -7347,19 +7297,6 @@ struct EchoelStudioView: View {
             presetRow
             promptRow
             randomizeButton
-            // EchoelVoice #592b — the capture door. A child of the existing panel
-            // builder: no presentation modifier, no metadata cost (black-screen law
-            // untouched). The row is a LEAF because its progress moves ~12 Hz mid-take.
-            VoiceCaptureRow(controller: voiceCapture, patch: $currentPatch) {
-                // #593c review F3 — the THIRD copy: the prompt/randomize undo snapshot
-                // is taken WITH the voice half, so Clear → Undo-arrow would restore
-                // the profile Clear just removed. Strip the snapshot's voice half;
-                // its SOUND stays undoable.
-                patchBeforeSoundChange?.voiceProfileTaps = nil
-                patchBeforeSoundChange?.voiceProfileLabel = nil
-                patchBeforeSoundChange?.voiceProfileBlend = nil
-            }
-
             // #560 — the OTHER reason a number on this panel moves by itself, and the one that
             // is live on every install: the body. `applyBioReactive` recomputes brightness,
             // harmonics, noise, cutoff and vibrato per render block from their `bioBase*`
@@ -12125,183 +12062,16 @@ private struct BodyOnlyRow: View {
     }
 }
 
-/// EchoelVoice #592b — the capture door ("Voice timbre"). A LEAF on purpose:
-/// `controller.progress`/`hearingYou` move at up to ~12 Hz during a take, so only this
-/// row may observe them (10.76.41/50 — the panel passes the reference and reads no
-/// observable property). Buttons, not a numeric field — the `EchoelValueField` law
-/// governs NUMERIC parameters; a capture has none.
-///
-/// ⚠️ THE CAPTURE STATE IS NOT PERSISTED, same law as `BreathVoiceRow` above: arming a
-/// capture is a performance act. The applied PROFILE persists exactly two ways — the
-/// player saves it into a patch (#593a/b) or into a take (#600, the project door),
-/// both through the ONE definition `patchCarryingLiveVoice`. ⛔ The sentence that
-/// stood here ("does not persist yet — that is #593, Council-gated") became false the
-/// day #593a shipped and was this file's own refutation for two commits (#425); its
-/// successor ("persists exactly one way") aged the same way the day #600 routed the
-/// project door — this line changes WITH the door inventory, or it lies.
-///
-/// `patch` is the panel's `currentPatch` binding, written on ONE event only (Clear —
-/// F5a below); the body never reads it, so no parent-state read leaks into this leaf.
-@MainActor
-private struct VoiceCaptureRow: View {
-    @Environment(AudioEngine.self) private var audioEngine
-    @Environment(PolySynthVoice.self) private var synth
-    let controller: VoiceCaptureController
-    @Binding var patch: SynthPatch
-    /// #593c review F3: the panel strips its OTHER patch copies (the undo snapshot)
-    /// here — the row cannot see them, and Clear must clear EVERY copy or it does
-    /// not stick. Called once, inside the Clear action.
-    let onClear: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Text("Voice timbre")
-                    .font(EchoelTheme.font(12, .semibold))
-                    .foregroundStyle(EchoelTheme.text)
-                Spacer(minLength: 8)
-                switch controller.phase {
-                case .capturing:
-                    Circle()
-                        .fill(controller.hearingYou ? EchoelTheme.accent : EchoelTheme.dim)
-                        .frame(width: 8, height: 8)
-                        .accessibilityHidden(true)
-                    Text("\(Int(controller.progress * 100)) %")
-                        .font(EchoelTheme.font(11).monospacedDigit())
-                        .foregroundStyle(EchoelTheme.dim)
-                        .accessibilityLabel("Capture progress \(Int(controller.progress * 100)) percent")
-                    Button("Cancel") { controller.cancel() }
-                        .font(EchoelTheme.font(11))
-                        .frame(minHeight: 44)
-                default:
-                    if synth.appliedVoiceProfile != nil {
-                        Button("Clear") {
-                            controller.clearApplied(synth: synth)
-                            // ⛔ F5a (#593c): strip the VIEW copy too. `clearVoiceProfile`
-                            // strips the synth's own patch memory, but the panel's
-                            // `currentPatch` is a separate value copy — with taps still
-                            // in it, the very next knob tweak re-applies the patch and
-                            // silently reinstalls the profile Clear just removed. Clear
-                            // must clear BOTH copies or it does not stick.
-                            patch.voiceProfileTaps = nil
-                            patch.voiceProfileLabel = nil
-                            patch.voiceProfileBlend = nil
-                            onClear()
-                        }
-                            .font(EchoelTheme.font(11))
-                            .frame(minHeight: 44)
-                            .accessibilityHint("Returns the patch's own sound")
-                    } else {
-                        Button("Capture") {
-                            controller.begin(mic: audioEngine.microphoneManager,
-                                             synth: synth)
-                            // ⛔ #897 — FIVE SLICES MADE THIS FAILURE VISIBLE AND NONE OF THEM
-                            // MADE IT PERCEIVABLE. On every abort the take returns to `.idle`,
-                            // so this button keeps its label, its hint and its value: for a
-                            // VoiceOver user the tap changes NOTHING on the focused control and
-                            // the new sentence is an unfocused sibling `Text` that focus never
-                            // visits. They were left with exactly the dead button the whole arc
-                            // set out to remove — the one class of user for whom it was never
-                            // fixed.
-                            //
-                            // ⭐ THE ANNOUNCED TEXT IS `caption` ITSELF, not a second string.
-                            // A hand-written copy would drift from the visible one the first
-                            // time either is reworded, and the two would then disagree about
-                            // what just happened. Same mechanism as the library's undo offer
-                            // (`VideoLibraryPanel`), which exists for the same reason: the
-                            // thing worth saying is not where focus is.
-                            //
-                            // ⚠️ `begin()` is synchronous, so the outcome is already decided on
-                            // this line. `.idle` here means it aborted — a take that started
-                            // sits on `.capturing`, and there the button is REPLACED by Cancel,
-                            // which moves focus and speaks for itself.
-                            //
-                            // NEEDS-FOUNDER-VERIFY: VoiceOver on, Sound panel → Voice timbre →
-                            // Capture with the microphone permission still unanswered or
-                            // switched off. Does the reason get SPOKEN? A green test bundle
-                            // proves the call is written, never that the system speaks it —
-                            // an announcement posted while focus is moving can be dropped.
-                            if controller.phase == .idle {
-                                AccessibilityNotification.Announcement(caption).post()
-                            }
-                        }
-                        .font(EchoelTheme.font(11, .semibold))
-                        .frame(minHeight: 44)
-                        .accessibilityHint("Hold a tone; its colour becomes the instrument's timbre")
-                    }
-                }
-            }
-            Text(caption)
-                .font(EchoelTheme.font(10))
-                .foregroundStyle(EchoelTheme.dim)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var caption: String {
-        switch controller.phase {
-        case .capturing:
-            return controller.hearingYou
-                ? "Keep the tone going — vowels and hums both work."
-                : "Hold a steady tone near the microphone. Analyzed live — no audio is recorded."
-        default:
-            // ⛔ #892 — #891 PUT THE REFUSAL BRANCH FIRST ON A FALSE PREMISE, and two
-            // independent reviewers found it the same hour. The premise was: "it can only
-            // be true with no profile applied, because Capture is the only button that
-            // reaches `begin()`". That argues about the moment the flag is SET and says
-            // nothing about the moment it is READ. `begin()` is not the only producer of
-            // `appliedVoiceProfile` — `PolySynthVoice.apply(_:)` installs one from any
-            // recalled patch that carries `voiceProfileTaps`, which is the #593c pathway,
-            // and the preset bar that does it sits directly ABOVE this row. So: capture
-            // refuses → load a sound that carries a voice profile → the button is now
-            // "Clear" and the caption said "Tap Capture again", naming a control that is
-            // not on screen. A row that displays one state and holds another.
-            //
-            // ⭐ THE ORDER IS THE FIX: what the instrument is DOING NOW outranks a report
-            // about a take that did not happen. The flag is additionally cleared by
-            // `cancel()` and `clearApplied(synth:)` so it cannot outlive the situation it
-            // describes — the branch order alone would still have shown the stale sentence
-            // after a Clear.
-            if synth.appliedVoiceProfile != nil {
-                // #597a — measured before written: the FX door drives `synth.fxChain`,
-                // the SAME voice this profile shapes, and the harmonizer is a stage of
-                // that chain (in → … → harmonizer → …). "Your tone, harmonized" needs
-                // no wiring — only this sentence, so a player can FIND it. The join is
-                // pinned by TheVoiceTimbreReachesTheHarmonizerTests.
-                return "The instrument plays with your voice's colour — FX → Harmonizer stacks it into harmonies. Clear returns the patch's own sound."
-            }
-            // ⚠️ NO REMEDY IS PROMISED beyond the one action the user actually has. The
-            // #890 cause is a placeholder input format in the window right after the record
-            // route is claimed, and whether a second tap lands outside that window is
-            // device behaviour nobody here has measured. "Tap Capture again" is true;
-            // "wait a moment and it will work" would not be.
-            // #895 FIRST among the two failure reports, because it is the only one whose
-            // remedy is NOT "tap again": no number of taps changes a denied permission. It
-            // is a current-state fact re-derived on every tap, so it cannot go stale behind
-            // a refusal count. No Settings PATH is spelled out — it moves between iOS
-            // versions, and naming a wrong one is worse than naming none.
-            // #896: the system alert is up. Answering it does NOT restart this take —
-            // nothing observes the grant — so the honest instruction is the extra tap, not
-            // "wait". First of the three because it is the most transient.
-            if controller.micAwaitingPermission {
-                return "Allow microphone access in the dialog, then tap Capture."
-            }
-            if controller.micAccessDenied {
-                return "Microphone access is off for Echoel — turn it on in Settings, then tap Capture."
-            }
-            if controller.micRefusals > 0 {
-                // #893: the COUNT is the only thing that changes on a repeat, so it carries
-                // the whole answer to the probe's "twice in a row". Suppressed at 1 so the
-                // ordinary single failure does not read like a tally. The advice does not
-                // escalate with the count — after two refusals "tap again" is still the only
-                // action the player has, and any stronger suggestion would be invented.
-                let streak = controller.micRefusals == 1 ? "" : " (\(controller.micRefusals)× in a row)"
-                return "The microphone did not start\(streak) — nothing was captured. Tap Capture again."
-            }
-            return "Hold a tone for a few seconds; its colour becomes the instrument's. Analyzed live — no audio is recorded."
-        }
-    }
-}
+// ⛔ #1302 — `VoiceCaptureRow` STOOD HERE AND IS GONE WITH THE AUDIO INPUT (founder
+// 2026-09-12). It was the Sound panel's voice-timbre capture door: hold a tone, the mic
+// profiles it, the profile rides the patch.
+//
+// ⚠️ WHAT DELIBERATELY STAYS, and it is not an oversight: `SynthPatch.voiceProfileTaps` /
+// `voiceProfileLabel` / `voiceProfileBlend`, `PolySynthVoice.appliedVoiceProfile` and
+// `VoiceTimbreProfiler` itself. Those are PERSISTED in saved patches under the #95-hardened
+// `decodeIfPresent` law — deleting them would make one old patch nuke the library, which is
+// the exact defect that law exists to prevent. A profile captured by an earlier build still
+// applies; only the way to capture a NEW one is gone.
 
 /// #522 — the door that had never existed: a place to say who you are.
 ///

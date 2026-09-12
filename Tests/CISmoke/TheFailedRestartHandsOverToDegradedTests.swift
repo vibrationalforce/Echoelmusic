@@ -73,44 +73,17 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         }
     }
 
-    // MARK: - claim 2 — the monitor rollback goes through the helper
-
-    func testTheMonitorRollbackRestartsOrDegrades() throws {
-        let code = try source(Self.engine)
-        // ⛔ #937 — THIS ANCHOR WAS DEAD FOR ELEVEN DAYS AND THIS TEST WAS RED ON A CORRECT
-        // TREE THE WHOLE TIME. It read `"Input monitoring: engine restart failed"`. #650
-        // (`3a54a08`, 2026-08-20) routed every monitoring outcome through `logMonitorOutcome`,
-        // which OWNS the `"Input monitoring: "` prefix and prepends it, so the call site now
-        // reads `logMonitorOutcome("engine restart failed (\(error))")` and the old literal
-        // matches nothing. The BEHAVIOUR was never touched: `restartOrDegrade(after: "input
-        // monitoring rollback")` still sits after the disconnects and before `return false`,
-        // and claim 3's count of five call sites still holds.
-        //
-        // ⛔ AND THIS IS THE SECOND INSTANCE OF ONE EVENT. #655/#656 found the identical break
-        // in `TheNotchIsSlewedAndMonitorOnlyTests`, re-anchored it, wrote the lesson into
-        // `Tests/CISmoke/CLAUDE.md` and built `scripts/dead-needles.py` to catch the next one.
-        // The fix went into ONE home; the same #650 broke TWO guards, and nobody grepped for
-        // the second (#456 — prose and repairs move in EVERY home, not the one you are looking
-        // at). ⚠️ `dead-needles.py` could not see this one either: its `XCTUnwrap` shape wants
-        // an INLINE literal, and this needle was bound to a local `let` first. #937 taught it
-        // to follow that binding — the instrument's blind spot is why eleven days passed.
-        //
-        // Anchored on the part that survived BOTH wordings, with uniqueness asserted rather
-        // than assumed (#408): `grep -c "engine restart failed" AudioEngine.swift` = 1.
-        let anchor = "engine restart failed"
-        let start = try XCTUnwrap(code.range(of: anchor), "the monitor rollback catch lost its log anchor — re-anchor this scan").lowerBound
-        let rest = String(code[start...])
-        let ret = try XCTUnwrap(rest.range(of: "return false"), "the monitor rollback no longer returns false — re-judge this scan")
-        let block = String(rest[..<ret.lowerBound])
-        XCTAssertTrue(block.contains("restartOrDegrade(after:"), """
-            The monitor-engage rollback no longer restarts the paused engine before \
-            returning false. That was the sweep's worst CRITICAL: the toggle's failure \
-            path stranded the WHOLE app silent (music included) while the refusal line \
-            and the #610 Settings button blamed microphone permission. The rollback must \
-            call `restartOrDegrade` AFTER disconnecting the monitor nodes and BEFORE \
-            `return false`.
-            """)
-    }
+    // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — CLAIM 2 STOOD
+    // HERE AND IS GONE WITH ITS SUBJECT. It proved that the MONITOR-ENGAGE ROLLBACK called
+    // `restartOrDegrade` after disconnecting the monitor nodes and before `return false`;
+    // there is no monitor path left to roll back. Its own ⛔ block carried the #650/#937
+    // rename lesson (one event, two guards, the sibling stayed red eleven days) — that lesson
+    // lives in `Tests/CISmoke/CLAUDE.md` §4, which is its home, so nothing is lost here.
+    //
+    // ⭐ THE LAW SURVIVES IN CLAIMS 3 AND 4 AND IS THE POINT OF THE FILE: a graph mutation on
+    // a live engine pauses, mutates and restarts THROUGH THE ONE HELPER. A site that restarts
+    // on its own re-opens #611 — the engine left paused with `isRunning` stale-true and no
+    // visible explanation.
 
     // MARK: - claim 3 — every call site, and the log-only catch is extinct
 
@@ -126,16 +99,20 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         // after #903 hit the identical shape in `AudioConfiguration.swift` — and NOT by CI,
         // because the pipeline reports `failure` on every push (#396), so a genuinely red
         // guard is indistinguishable from the host dying (§5).
-        XCTAssertEqual(occurrences(of: "restartOrDegrade(after:", in: code), 5, """
-            The helper's call-site count changed (expected 5: monitor rollback, source-\
-            node attach, clip-player attach, warpable-player attach, and the stranded-\
-            engine restore). If you ADDED a pause/mutate/restart site, route it through \
+        // ⛔ #1302 — LOWERED 5 → 4. The monitor rollback is deleted with the audio input, so
+        // the expected set is the three pause-before-mutate attaches plus the stranded-engine
+        // restore. This is the REMOVED half of the message's own instruction, and it moved in
+        // the same commit as the code — which is the whole point of a count pin.
+        XCTAssertEqual(occurrences(of: "restartOrDegrade(after:", in: code), 4, """
+            The helper's call-site count changed (expected 4: source-node attach, clip-player \
+            attach, warpable-player attach, and the stranded-engine restore). If you ADDED a \
+            pause/mutate/restart site, route it through \
             `restartOrDegrade` and raise this count in the same commit. If you REMOVED one, \
             lower it. A site that restarts on its own re-opens the #611 silence.
 
-            ⚠️ Claim 4's pause count is NOT this number: they differ by TWO. A new pause-\
-            before-mutate site raises BOTH; a caller that does not pause raises only this \
-            one. See claim 4's note.
+            ⚠️ Claim 4's pause count is NOT this number: they differ by ONE (it was TWO until \
+            #1302 removed the monitor rollback). A new pause-before-mutate site raises BOTH; a \
+            caller that does not pause raises only this one. See claim 4's note.
             """)
         XCTAssertEqual(occurrences(of: "Failed to restart engine after", in: code), 0, """
             A log-only restart catch is back. That pattern IS the #611 defect: it leaves \
@@ -153,11 +130,12 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
         // when #823 turned its pause into a STOP — the source says so itself, at the rollback
         // call: "the pause (a stop since #823) above was OURS".
         //
-        // ⚠️ THE TWO NUMBERS ARE NOT THE SAME NUMBER — they are OFFSET BY TWO, and #904's
+        // ⚠️ THE TWO NUMBERS ARE NOT THE SAME NUMBER — they are OFFSET BY ONE (by TWO until
+        // #1302 deleted the monitor rollback with the audio input), and #904's
         // first wording over-corrected that into "do NOT assume claim 3's count moves with
         // it". Measured: the three pause sites are a strict SUBSET of the five helper
-        // callers; the two extras are the monitor rollback (stops, never paused) and
-        // `restoreEngineIfStranded` (never paused). So for the likeliest future edit — the
+        // callers; the one extra is `restoreEngineIfStranded`, which never paused. So for the
+        // likeliest future edit — the
         // one this message itself describes, a new pause-before-mutate site — claim 3 MUST
         // move too, and a reader obeying the old wording literally raises this to 4, leaves
         // claim 3 at 5 and ships a red. Decoupling them was as wrong as equating them.
@@ -166,9 +144,8 @@ final class TheFailedRestartHandsOverToDegradedTests: XCTestCase {
             clip-player attach, warpable-player attach). This is the premise that makes \
             `restartOrDegrade` load-bearing. If a site was added or removed, update this \
             count and make sure any NEW site's restart goes through the helper. These two \
-            counts differ by TWO: a new pause-before-mutate site raises BOTH; a helper \
-            caller that does not pause (the monitor rollback, the stranded-engine restore) \
-            raises only claim 3's.
+            counts differ by ONE: a new pause-before-mutate site raises BOTH; a helper \
+            caller that does not pause (`restoreEngineIfStranded`) raises only claim 3's.
             """)
     }
 

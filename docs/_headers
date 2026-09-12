@@ -7,7 +7,9 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=(), bluetooth=(), serial=()
+  # microphone=() since #1302: the marketing site never used it, and the app it describes
+  # has no microphone feature at all. camera=() was already closed for the same reason.
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-DNS-Prefetch-Control: on
   Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests

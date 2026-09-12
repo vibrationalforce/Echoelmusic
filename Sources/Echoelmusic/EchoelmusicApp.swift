@@ -41,7 +41,6 @@ private func scenePhaseName(_ phase: ScenePhase) -> String {
 struct EchoelmusicApp: App {
 
     @State private var audioEngine: AudioEngine
-    @State private var microphoneManager: MicrophoneManager
     @State private var store: EchoelStore
     @State private var beatPlayer: BeatPlayer
     @State private var bus: EngineBus
@@ -145,7 +144,6 @@ struct EchoelmusicApp: App {
     /// Parameter automation (master level / tempo) played over the shared transport.
     @State private var automationPlayer = AutomationPlayer()
     /// Selectable recording inputs (mic / interface / Bluetooth) with latency notes.
-    @State private var audioInputs = AudioInputManager()
     /// Universal signal router (patchbay): typed routes across all channels, persisted.
     @State private var signalRouter = SignalRouter()
     /// The parameter-apply spine (U2c): a router (keyPath → live setter) the
@@ -362,10 +360,7 @@ struct EchoelmusicApp: App {
         // this ~20-constructor chain. These pins name the dying constructor in the
         // NEXT log instead of leaving a 50-line suspect list.)
         EchoelCrashLog.breadcrumb("init a: audio core")
-        let mic = MicrophoneManager()
-        let audio = AudioEngine(microphoneManager: mic)
-
-        _microphoneManager = State(wrappedValue: mic)
+        let audio = AudioEngine()
         _audioEngine = State(wrappedValue: audio)
         EchoelCrashLog.breadcrumb("init b: store + beat + bus")
         _store = State(wrappedValue: EchoelStore())
@@ -625,7 +620,6 @@ struct EchoelmusicApp: App {
             .environment(recordController)
             .environment(spatialScene)
             .environment(automationPlayer)
-            .environment(audioInputs)
             .environment(signalRouter)
             .environment(broadcast)
             .environment(midiOut)
@@ -942,13 +936,13 @@ struct EchoelmusicApp: App {
                 // intentionallyStopped flag, which also stands down the route-loss
                 // recovery task, so this closes both reported paths.
                 transport.addStopSubscriber("background-idle") {
-                    [weak audioEngine, weak microphoneManager, weak polyVoice, weak bioVoice] in
+                    [weak audioEngine, weak polyVoice, weak bioVoice] in
                     guard UIApplication.shared.applicationState == .background,
                           let audioEngine else { return }
-                    let audioNeeded = audioEngine.multiTrackRecorder.isRecording
-                        || microphoneManager?.isRecording == true
-                        || audioEngine.isInputMonitoring
-                        || (polyVoice?.activeVoiceCount ?? 0) > 0
+                    // ⛔ #1302 — three disjuncts left this gate with the audio input: the
+                    // multitrack recorder, the mic manager and `isInputMonitoring`. Nothing
+                    // captures any more, so only what SOUNDS can hold the session open.
+                    let audioNeeded = (polyVoice?.activeVoiceCount ?? 0) > 0
                         || bioVoice?.isArmed == true   // #586 — see the twin chain below
                     guard !audioNeeded else { return }
                     // `.idleBackground`, and the label is load-bearing: this is the SYSTEM's
@@ -1236,26 +1230,10 @@ struct EchoelmusicApp: App {
                     beatPlayer?.pattern.glideTempo(to: StudioCalculator.seedTempo(raw),
                                                    source: .modulationRoute)
                 }
-                // #1249 — the four VOICE destinations (founder 2026-09-11: the body modulates
-                // the voice effects). Plain control-plane stores on `AudioEngine`; every one
-                // funnels through `pushVoicePreset()` / the tune tick, never the render thread.
-                // The engine applies at ~1 Hz (deduped bus frames); the harmonizer smooths its
-                // own mix per sample (#1249) so a step lands as a 40 ms fade, not a click.
-                // ⚠️ THE HANDLERS DO NOT ENABLE A STAGE. A route to a stage the singer has not
-                // switched on writes a value the insert holds for the day it is — the enable
-                // stays the singer's, in the input sheet (`ModDestinationKey` says why).
-                modulationEngine.register(ModDestinationKey.voiceHarmonyMix) { [weak audioEngine] value in
-                    audioEngine?.voiceHarmonyMix = value.clamped(to: 0...1)
-                }
-                modulationEngine.register(ModDestinationKey.voiceGranularMix) { [weak audioEngine] value in
-                    audioEngine?.voiceGranularMix = value.clamped(to: 0...1)
-                }
-                modulationEngine.register(ModDestinationKey.voiceGranularPitch) { [weak audioEngine] value in
-                    audioEngine?.voiceGranularPitch = (value.clamped(to: 0...1) * 24 - 12)
-                }
-                modulationEngine.register(ModDestinationKey.voiceTuneStrength) { [weak audioEngine] value in
-                    audioEngine?.voiceTuneStrength = value.clamped(to: 0...1)
-                }
+                // ⛔ #1302 — FOUR VOICE-STAGE REGISTRATIONS STOOD HERE (#1249) AND ARE GONE
+                // WITH THE MONITOR INSERT. `tempo` above is now this build's only registered
+                // modulation destination; `ModDestinationKey.all` says so and the matrix
+                // picker reads that list.
                 // B26: every applied modulation ALSO streams over OSC as
                 // /echoelmusic/mod/<key> (the documented mod-out address) for external
                 // tools (TouchDesigner / Resolume / Max). The tap fires per applied
@@ -1350,14 +1328,15 @@ struct EchoelmusicApp: App {
                 // and tee external MIDI notes into it. Arming a track's Record button +
                 // playing captures its input into a Clip + region on that lane. The tee
                 // closures are no-ops unless a take is running (RecordController gates).
-                // Task #13 (PLAN_AUDIO_LANE_RECORDING_2026-07-21.md, S1): the real
-                // mic-capture hook, gated OFF by default — FeatureFlags.audioLaneRecording
-                // stays false until S2 (duration/latency) + a device verify land, so
-                // this passes nil today and the app is behavior-identical.
+                // ⛔ #1302 — `audioRecorder:` took `FeatureFlags.audioLaneRecording ?
+                // audioEngine.multiTrackRecorder : nil`. The recorder captured the MIC
+                // (`engine.inputNode`) and went with the audio input by founder order; the
+                // flag never resolved to true anyway (it is not registered), so this argument
+                // was already nil in every shipped build. The parameter STAYS: `RecordController`
+                // takes a narrow protocol, and MIDI-lane recording still uses this call.
                 recordController.wire(transport: transport, timeline: timelineStore,
                                       clips: clipStore, bus: bus,
-                                      audioRecorder: FeatureFlags.audioLaneRecording
-                                          ? audioEngine.multiTrackRecorder : nil)
+                                      audioRecorder: nil)
                 midiPub.onRecordNoteOn = { [weak recordController] note, velocity in
                     recordController?.recordNoteOn(pitch: note, velocity: velocity)
                 }
@@ -1525,9 +1504,6 @@ struct EchoelmusicApp: App {
                         || beatPlayer.pattern.isPlaying
                         || timelinePlayer.isPlaying
                         || arrangementPlayer.isPlaying
-                        || audioEngine.multiTrackRecorder.isRecording
-                        || microphoneManager.isRecording
-                        || audioEngine.isInputMonitoring
                         || polyVoice.activeVoiceCount > 0   // held MPE/performer notes
                         // #586 — THE ARMED BODY VOICE, and its absence here was a live defect,
                         // not a theoretical one. `BioReactiveSynthVoice` sounds a held tone that

@@ -91,11 +91,17 @@ final class TheBodyVoiceCountsAsAudibleTests: XCTestCase {
     /// ("plays silent audio to stay alive"), and nothing in this repo would notice.
     func testTheSceneChainStillNamesEveryOtherSourceOfSound() throws {
         let src = try source(Self.app)
+        // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — THREE
+        // disjuncts are struck from this list because their SUBJECTS are deleted, not because
+        // the chain was tidied: `|| audioEngine.multiTrackRecorder.isRecording`,
+        // `|| microphoneManager.isRecording` and `|| audioEngine.isInputMonitoring`. Nothing
+        // captures audio any more, so no capture can hold the session open. Leaving them here
+        // would have reddened a CORRECT tree (#364); the NARROWING half of the law below still
+        // covers every disjunct that names something which can still sound.
         for disjunct in ["let audioNeeded = transport.isPlaying",
                          "|| beatPlayer.pattern.isPlaying",
-                         "|| audioEngine.multiTrackRecorder.isRecording",
-                         "|| microphoneManager.isRecording",
-                         "|| audioEngine.isInputMonitoring",
+                         "|| timelinePlayer.isPlaying",
+                         "|| arrangementPlayer.isPlaying",
                          "|| polyVoice.activeVoiceCount > 0"] {
             XCTAssertTrue(src.contains(disjunct), """
             The background gate lost `\(disjunct)`. Widening this chain is the 2.5.4 rejection \
@@ -111,15 +117,14 @@ final class TheBodyVoiceCountsAsAudibleTests: XCTestCase {
     /// protects a 2.5.4 gate.
     func testTheStopSubscriberStillNamesItsOwnSources() throws {
         let src = try source(Self.app)
-        for disjunct in ["|| microphoneManager?.isRecording == true",
-                         "|| (polyVoice?.activeVoiceCount ?? 0) > 0"] {
+        // ⛔ #1302 — `|| microphoneManager?.isRecording == true` stood first in this list and
+        // is struck with its owner. The poly disjunct is now the chain's HEAD, so its spelling
+        // lost the leading `||` — the needle follows the code, not the memory of it.
+        for disjunct in ["let audioNeeded = (polyVoice?.activeVoiceCount ?? 0) > 0"] {
             XCTAssertTrue(src.contains(disjunct), """
             The transport-stop subscriber's background gate lost `\(disjunct)`. Widening this \
             chain is the 2.5.4 rejection signature; NARROWING it strands whatever the lost \
-            disjunct represented. The mic one in particular is what keeps the engine alive \
-            through a voice-timbre take — `VoiceCaptureController` names this test as the \
-            reason its own cross-owner hazard is unreachable, so its header comment goes \
-            stale in the same commit that removes this.
+            disjunct represented.
             """)
         }
     }

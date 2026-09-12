@@ -243,44 +243,36 @@ final class TheVoiceTravelsWithThePatchTests: XCTestCase {
                       "the enrichment must run BEFORE the store call — swapped, every "
                       + "needle stays green while the store receives the un-enriched "
                       + "copy (#593c review F4: the silent-green gap)")
-        XCTAssertEqual(codeOccurrences(of: "patch.voiceProfileTaps = nil", in: studio), 2,
-                       "TWO strips, both load-bearing: the helper's else-branch (F2 — "
-                       + "no live profile means the saved copy carries none, or a save "
-                       + "right after Clear re-saves the just-cleared voice) and the "
-                       + "Clear button's view-copy strip (F5a — with taps still in "
-                       + "currentPatch, the next knob tweak re-applies the patch and "
-                       + "reinstalls the cleared profile). Count 1 = one of them is "
-                       + "gone; this scan cannot say which — read the two sites")
+        // ⛔ #1302 — LOWERED 2 → 1. The second strip was the Clear button's view-copy strip
+        // (F5a), and the Clear button went with the capture row. The SURVIVOR is the one that
+        // still matters and is the reason the pin stays: the helper's else-branch (F2) — no
+        // live profile means the saved copy carries none, so a save cannot re-embed a profile
+        // the player does not have.
+        XCTAssertEqual(codeOccurrences(of: "patch.voiceProfileTaps = nil", in: studio), 1,
+                       "the helper's else-branch strip is gone: a patch saved with no live "
+                       + "profile would keep whatever half was decoded into it, which is how "
+                       + "a cleared voice comes back on the next save")
         XCTAssertEqual(codeOccurrences(of: "patchStore.save(d.patch)", in: studio), 1,
                        "COUNTERWEIGHT: undo-delete restores a SNAPSHOT verbatim — "
                        + "routing it through the helper would rewrite history with "
                        + "whatever profile happens to be live at undo time")
     }
 
-    /// The F5b join: Clear reaches the synth through a required parameter, not the
-    /// controller's weak reference (set only by `begin()` — nil on the recall-only
-    /// path, where the old optional-chained call was a silent no-op).
-    func testClearWorksOnTheRecallOnlyPath() throws {
-        let controller = try source("Sources/Echoelmusic/Studio/VoiceCaptureController.swift")
-        XCTAssertEqual(codeOccurrences(of: "func clearApplied(synth: PolySynthVoice)", in: controller), 1,
-                       "the synth is a required parameter — no default, so no call "
-                       + "site can forget it (#431)")
-        XCTAssertEqual(codeOccurrences(of: "synth?.clearVoiceProfile()", in: controller), 0,
-                       "the optional-chained form is the F5b no-op — a Clear button "
-                       + "that does nothing exactly when the profile came embedded in "
-                       + "a shared patch")
-        XCTAssertEqual(codeOccurrences(of: "synth.clearVoiceProfile()", in: controller), 1,
-                       "the non-optional call on the parameter — the clear cannot "
-                       + "silently skip")
-        let studio = try source("Sources/Echoelmusic/Studio/EchoelStudioView.swift")
-        XCTAssertEqual(codeOccurrences(of: "controller.clearApplied(synth: synth)", in: studio), 1,
-                       "the row passes its own @Environment synth — the reference "
-                       + "that exists whether or not a capture ever ran this launch")
-        XCTAssertEqual(codeOccurrences(
-            of: "VoiceCaptureRow(controller: voiceCapture, patch: $currentPatch)", in: studio), 1,
-            "the row holds the currentPatch binding — without it the F5a strip has "
-            + "nothing to write and Clear cannot stick")
-    }
+    // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") —
+    // `testClearWorksOnTheRecallOnlyPath` STOOD HERE AND IS GONE WITH ITS SUBJECT. It read
+    // `Studio/VoiceCaptureController.swift` and the `VoiceCaptureRow(…)` mount in
+    // `EchoelStudioView`; both are deleted with the microphone. Its law was #431's: the synth
+    // reached `clearApplied` as a REQUIRED parameter, never through the controller's weak
+    // reference, because the optional-chained form was a silent no-op on exactly the
+    // recall-only path — a Clear button that did nothing when the profile came embedded in a
+    // shared patch.
+    //
+    // ⚠️ WHAT SURVIVES AND WHY THIS FILE STILL EARNS ITS NAME: the voice half of `SynthPatch`
+    // is UNTOUCHED — `voiceProfileTaps`, `voiceProfileLabel`, `voiceProfileBlend`, the
+    // `decodeIfPresent` #95 hardening and `PolySynthVoice.applyVoiceProfile`. A patch saved by
+    // an older build still carries a profile and still applies it. `clearVoiceProfile()` is
+    // kept for the same #527 reason and now has no caller; whoever re-doors a capture surface
+    // re-adds this method in the SAME commit.
 
     /// The provenance memory (#593c review F1/F2): the synth remembers what the live
     /// profile ARRIVED as — label set only on an ACCEPTED embed, nil'd on capture and
@@ -312,12 +304,11 @@ final class TheVoiceTravelsWithThePatchTests: XCTestCase {
             "the strip is gated on the floor — live-nil means 'player cleared' only "
             + "for a half the engine would have ACCEPTED; stripping a refused short "
             + "half destroys a shared voice the player never heard (review F2)")
-        XCTAssertEqual(codeOccurrences(
-            of: "patchBeforeSoundChange?.voiceProfileTaps = nil", in: studio), 1,
-            "F3: Clear strips the prompt-undo snapshot's voice half — without this, "
-            + "Clear → Undo-arrow restores the profile Clear just removed")
-        XCTAssertEqual(codeOccurrences(of: "onClear()", in: studio), 1,
-                       "the row calls the panel's strip exactly once, in Clear")
+        // ⛔ #1302 — two assertions stood here and read the deleted Clear control: the
+        // prompt-undo snapshot's voice half being stripped (`patchBeforeSoundChange?
+        // .voiceProfileTaps = nil`) and the row calling `onClear()` exactly once. Their law —
+        // a Clear must strip the THIRD copy too, or Clear → Undo-arrow restores what Clear
+        // just removed — belongs with whatever control clears a profile next.
     }
 
     // MARK: - helpers (§0/§2 — one stripper, skip on no tree, FAIL on a moved anchor)

@@ -412,17 +412,17 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
         """)
 
         // ⚠️ FILE-WIDE, DELIBERATELY, and the decomposition is what makes the number meaningful:
-        // 13 sit on the root body's chain; ONE sits INSIDE another modifier's content —
+        // 12 sit on the root body's chain; ONE sits INSIDE another modifier's content —
         // `.fileImporter(isPresented: $projectImportPresented)` inside `openSheet`. Only the FIRST
         // group counts against the metadata limit — but a file-wide count is the one a source scan
         // can take honestly, and any new modal lands in it whichever group it joins.
         //
-        // ⛔ 16 → 14, AND THE NESTED PAIR IS NOW A SINGLE (#1069). The other nested one was
-        // `.sheet(item: $visualShare)` inside the `showVisual` fullScreenCover; the cover was
-        // deleted on the founder's "alles zu einem Ding zusammen gefasst" and took both with it.
-        // Both numbers moved in the SAFE direction, and both were re-measured with this method's
-        // own predicate rather than reasoned about — the arithmetic 13 chain + 1 nested = 14 is
-        // the check that the two assertions still describe one file.
+        // ⛔ 16 → 14 (#1069) → 13 (#1302). The nested pair became a single when #1069 deleted
+        // the `showVisual` fullScreenCover ("alles zu einem Ding zusammen gefasst"), and #1302
+        // took `.sheet(isPresented: $showInput)` with the audio input. Every move was in the
+        // SAFE direction, and every number was re-measured with this method's own predicate
+        // rather than reasoned about — the arithmetic 12 chain + 1 nested = 13 is the check that
+        // the two assertions still describe one file.
         //
         // ⛔ AND FILE-WIDE ALONE HAS A HOLE THAT IS EXACTLY THE SHAPE OF THE SHIP-BLOCKER. Moving
         // the nested modifier OUT onto the body chain keeps this number at 14 and
@@ -434,8 +434,8 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
                 || $0.contains(".alert(") || $0.contains(".confirmationDialog(")
                 || $0.contains(".fileImporter(") || $0.contains(".popover(")
         }
-        XCTAssertEqual(modals.count, 14, """
-        `EchoelStudioView` now has \(modals.count) presentation-modifier call sites, not 14.
+        XCTAssertEqual(modals.count, 13, """
+        `EchoelStudioView` now has \(modals.count) presentation-modifier call sites, not 13.
 
         If this GREW, read the black-screen law before doing anything else: the aggregate generic \
         type of the root body is at the SwiftUI metadata-decoder limit, and the 10.76.34 crash was \
@@ -537,16 +537,17 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
         // modifier is also a file-wide match — so any shrink of `chain` is also a shrink of
         // `modals`, and the `== 14` assertion above goes red and forces the bookkeeping update
         // anyway. A second `==` here would be the #416 double-definition defect, not extra safety.
-        // All five transitions resolve (re-derived against 13 chain / 14 file-wide after #1069;
+        // All five transitions resolve (re-derived against 12 chain / 13 file-wide after #1302;
         // the SHAPE never depended on the numbers, only the arithmetic did): add-to-chain both
         // red · add-nested file-wide red · MOVE nested→chain only this one red (the hole) ·
         // move chain→nested both green and correctly so (the metadata cost really did shrink) ·
         // consolidate file-wide red as bookkeeping, not as a ceiling breach.
         //
-        // ⚠️ THE CEILING STAYS 14 THOUGH THE CHAIN IS NOW 13, deliberately. It is a BUDGET, not a
-        // census: lowering it to 13 would forbid the next legitimate modal outright and make the
-        // guard something to delete rather than obey (#364). The headroom #1069 bought is real
-        // and is meant to be spendable — once.
+        // ⚠️ THE CEILING STAYS 14 THOUGH THE CHAIN IS NOW 12, deliberately, and #1302 widened
+        // the gap rather than closing it. It is a BUDGET, not a census: lowering it to the
+        // current chain length would forbid the next legitimate modal outright and make the
+        // guard something to delete rather than obey (#364). The headroom #1069 and #1302 bought
+        // is real and is meant to be spendable.
         XCTAssertLessThanOrEqual(chain.count, 14, """
         `EchoelStudioView.body` now carries \(chain.count) presentation modifiers, over the \
         ceiling of 14.
@@ -557,7 +558,8 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
         does NOT save it (10.76.35 still crashed); only reverting the count did.
 
         Note the file-wide assertion above can be GREEN while this one is red: moving the nested \
-        `$projectImportPresented` fileImporter out onto the chain keeps the file-wide total at 14 \
+        `$projectImportPresented` fileImporter out onto the chain keeps the file-wide total at 13 \
+        while the chain goes 12 → 13 \
         and still grows the generic type. That is exactly why both numbers are checked.
 
         Reuse an existing slot — `showMeditation` and `midiImportPresented` have no setter that \
@@ -565,7 +567,8 @@ final class ResetSoundClearsWhatTheLaunchLineReportsTests: XCTestCase {
         exists; what is missing is any writer of `true`) — or consolidate the chain into one \
         `.sheet(item:)` enum FIRST. ⭐ `showVisual` was briefly a third and is now NEITHER: #747 \
         gave it a door, #1069 deleted the cover behind it. The slot is not spare headroom to \
-        reuse — it does not exist. The chain fell 14 → 13, which is where the headroom went.
+        reuse — it does not exist. The chain fell 14 → 13 (#1069) → 12 (#1302, the audio-input \
+        sheet), which is where the headroom went.
 
         On the chain: \(chain.map { $0.trimmingCharacters(in: .whitespaces).prefix(44) })
         """)

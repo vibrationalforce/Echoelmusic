@@ -173,20 +173,15 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
     /// and must not trip (#486 — one finding per real defect, not one per nearby word).
     private static let mpeInputClaims = ["mpe input", "mpe-eingang", "mpe eingang", "mpe in from"]
 
-    /// Phrasings that SELL the voice capture (#592a/#593). Both locales, both the long-form
-    /// description and the release notes — the door is the Sound panel's "Voice timbre" row.
+    /// Phrasings that SELL a voice capture. ⛔ #1302 (founder 2026-09-12, "Face und Audio Input
+    /// komplett entfernen") TURNED THIS LIST INSIDE OUT: until then it selected the files that
+    /// had to carry a "measured, never recorded" qualifier; now not one of them may appear at
+    /// all, in any locale. There is no microphone — `MicrophoneManager`, `VoiceAnalyzer` and
+    /// `VoiceCaptureEngine` are deleted files — so any of these phrases describes a feature the
+    /// reviewer cannot find, which is the 2.3 class rather than a privacy-wording question.
     private static let voiceCaptureClaims = ["voice timbre", "voice becomes the instrument",
-                                             "stimmfarbe", "stimme wird die klangfarbe"]
-
-    /// The qualifier that must travel with it. Measured at the source, not assumed:
-    /// `SynthPatch` embeds `voiceProfileTaps` — about 64 floats of max-normalized spectral
-    /// envelope — and its own comment states "NO AUDIO is persisted here". Neither
-    /// `VoiceAnalyzer` nor `VoiceCaptureEngine` touches `AVAudioFile`, `FileManager` or
-    /// `write(to:)`. So the honest sentence is "measured, not recorded", and the envelope
-    /// itself IS stored inside a saved patch — which is why the store line says both halves.
-    private static let voiceNoAudioQualifiers = ["no audio recorded", "no audio is recorded",
-                                                  "never recorded", "nie aufgenommen",
-                                                  "kein ton wird aufgenommen", "nicht aufgenommen"]
+                                             "stimmfarbe", "stimme wird die klangfarbe",
+                                             "deine stimme", "your voice"]
 
     func testEveryOutputThePrivacyBlockNamesIsAlsoSold() throws {
         let outputs = ["osc", "adm-osc", "art-net", "sacn"]
@@ -505,24 +500,40 @@ final class TheStoreTextClaimsOnlyWhatShipsTests: XCTestCase {
     /// for "generativ" and "pitch" reported both missing; the German copy says "erzeugt" and
     /// "Kammerton" and is complete. A probe measures the WORD, not the capability (#679/#738) —
     /// the two hits were read against the source before either was called a gap.
-    func testTheVoiceCaptureAlwaysCarriesItsNoAudioQualifier() throws {
-        var unqualified: [String] = []
+    ///
+    /// ⛔ #1302 — THE CLAIM IS INVERTED, NOT DELETED, and that choice is the point. Once the
+    /// microphone went, the old form ("a voice claim must carry its no-audio qualifier")
+    /// selected nothing and was a VACUOUS green (#926) — it would have stayed green through a
+    /// campaign that re-sold the capture. The question the store text now has to answer is the
+    /// opposite one, and it is answerable: does any locale still sell a voice feature?
+    ///
+    /// ⚠️ A BUNDLE THAT SELECTS NOTHING IS THE FAILURE MODE THIS ASSERTION GUARDS AGAINST, so
+    /// the corpus is checked for being non-empty first — `localeDirectories()` already fails on
+    /// an empty walk, and this adds the file-count half.
+    func testTheStoreTextSellsNoVoiceFeature() throws {
+        var offenders: [String] = []
+        var scanned = 0
         for file in try storeCopy() {
+            scanned += 1
             let flat = file.text.lowercased()
-            guard Self.voiceCaptureClaims.contains(where: { flat.contains($0) }) else { continue }
-            if !Self.voiceNoAudioQualifiers.contains(where: { flat.contains($0) }) {
-                unqualified.append(file.path)
+            if let hit = Self.voiceCaptureClaims.first(where: { flat.contains($0) }) {
+                offenders.append("\(file.path) — “\(hit)”")
             }
         }
-        XCTAssertTrue(unqualified.isEmpty, """
-            The store text sells the voice capture without saying that no audio is kept: \
-            \(unqualified.joined(separator: ", ")).
+        XCTAssertGreaterThan(scanned, 0, """
+            the store-copy walk read no file, so the assertion below passed over nothing \
+            (#926). Re-anchor the corpus before trusting this claim.
+            """)
+        XCTAssertTrue(offenders.isEmpty, """
+            The store text still sells a voice feature: \(offenders.joined(separator: ", ")).
 
-            `SynthPatch` says it in its own comment — "NO AUDIO is persisted here": what is \
-            stored is about 64 floats of spectral envelope, and neither `VoiceAnalyzer` nor \
-            `VoiceCaptureEngine` writes a file. A microphone claim without that sentence \
-            drives the privacy nutrition label and the 2.3 review on the reader's worst \
-            assumption. Keep the qualifier in the SAME file as the claim, in every locale.
+            There is no microphone in this build — the founder removed the whole audio-input \
+            path on 2026-09-12 (#1302) and `MicrophoneManager`, `VoiceAnalyzer` and \
+            `VoiceCaptureEngine` are deleted files. A reviewer looking for the advertised \
+            feature finds no way to reach it, which is the 2.3 rejection this file exists to \
+            prevent. If a capture surface ships again, this claim flips back to its original \
+            form — the phrase must then travel with "measured, never recorded", because the \
+            envelope IS stored in a saved patch while the audio never is.
             """)
     }
 

@@ -10,9 +10,9 @@ entfernte zwölf falsche Behauptungen aus dem App-Store-Text — dort ist eine f
 Behauptung ein 2.3-Ablehnungsgrund („Accurate Metadata"). Ein Skript, das eine
 gestrichene Behauptung wieder einführt, macht diese Arbeit rückgängig.
 
-Stand: 2026-08-28 (Brand-Audit: §12 korrigiert — Kohärenz-Trend ist seit #813 WAHR;
-✅-Zeilen für Harmonizer/Granular/Feedback-Schutz/Visual-Aufnahme/Beamer/Texture+Glitter
-ergänzt). **Vor jeder neuen Kampagne
+Stand: 2026-09-12 (#1302 — Face UND Audio Input sind auf Founder-Ansage komplett entfernt;
+JEDE Stimm-, Mikrofon- und Gesichts-Zeile ist gestrichen, §11 als ganzer Abschnitt ausgesetzt.
+Davor 2026-08-28, Brand-Audit: §12 korrigiert — Kohärenz-Trend ist seit #813 WAHR). **Vor jeder neuen Kampagne
 gegen `CLAUDE.md` „CURRENT STATE" und `docs/dev/FEATURE_MATRIX.md` gegenprüfen.** (Die Versionsnummer stand hier früher
 daneben und veraltete schneller als der Inhalt — sie belegte nichts, was das Datum
 nicht besser belegt.)
@@ -66,7 +66,7 @@ arbeitet, fasst `Tests/` nicht an und bleibt wie vorgesehen isoliert.
 | **Offene Standards, kein SDK-Lock-in** | OSC · ADM-OSC · MIDI · Art-Net/sACN · BLE HRS |
 | **Null externe Abhängigkeiten**, alles on-device | `Package.swift: dependencies: []` UND `project.yml` ohne `packages:`-Block — beide, siehe Zaun-Absatz oben |
 | **Barrierefrei spielbar**: Notennamen International/Deutsch/Solfège, VoiceOver auf der Spielfläche, Atkinson Hyperlegible | #232 C/E, `EchoelValueField` |
-| **Deine Stimme wird die Klangfarbe des Instruments**: Ton halten („Voice timbre" → Capture), die gemessene Farbe spielt in den Synth-Stimmen; speicherbar im Patch UND im Take (Projekt-Save/Autosave/Live Colabo), immer MIT Namens-Label | EchoelVoice #591–#593 (ausgeliefert 10.79.391) + #600 Take-Hälfte (ausgeliefert 10.79.393, Build 2510, TestFlight-Lauf 31822323904 mit ASC-Verify), gebaut + verdrahtet + wächter-gepinnt, **Geräte-Verify offen — so kennzeichnen**. Formulierung siehe §11: MESSUNG, nie „Aufnahme" |
+| ~~**Deine Stimme wird die Klangfarbe des Instruments**~~ | EchoelVoice #591–#593, #600 Take-Hälfte. ⛔ **GESTRICHEN 2026-09-12 (#1302) — DARF NICHT MEHR BEHAUPTET WERDEN.** Der Founder hat Audio-Input und Face komplett entfernt ("Face und Audio Input komplett entfernen"); `VoiceCaptureEngine`, `VoiceAnalyzer` und `VoiceTimbreProfiler`s Aufnahme-Weg sind als Dateien weg, es gibt keine Capture-Tür und kein Mikrofon mehr. **Was BLEIBT und NICHT behauptet werden darf, bis es wieder eine Tür hat:** die Patch-Hälfte (`SynthPatch.voiceProfileTaps/-Label/-Blend` und `PolySynthVoice.applyVoiceProfile`) ist absichtlich im Code — ein Patch, den ein älterer Build gespeichert hat, trägt weiter ein Profil und wendet es an (#95/#527). Gebaut ≠ erreichbar; eine Werbe-Behauptung darüber wäre die 2.3-Klasse. |
 | ⛔ **GESTRICHEN 2026-09-06 (#1024) — „Tune to key" DARF NICHT MEHR BEHAUPTET WERDEN.** Der Code lebt (`VoicePitchCorrector`, fest im Monitorpfad, bei AUS bypassed), aber seine einzige Tür war das Input-Sheet, und der Founder hat alle drei Mikrofon-Türen entfernt ("das mit dem Audio Input Monitoren klappt immer noch nicht also fliegt das raus"). Kein Nutzer kann die Stufe heute erreichen — eine Werbe-Behauptung darüber wäre die 2.3-Klasse. Im selben Commit aus `fastlane/metadata/{de-DE,en-US}/release_notes.txt` entfernt. **Was BLEIBT und weiter behauptet werden darf: „Follow the key"** — die Harmonizer-Stimmen des MUSIK-Pfads sind über das FX-Panel erreichbar und von #1024 nicht berührt. ⭐ **#1247 (2026-09-11): die Master-Panel-Tür „Audio input" ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht.** |
 | ~~**Harmoniestimmen auf deiner Stimme** (zwei benannte Intervalle + Mix, nur im Monitor)~~ | #841. ⛔ **GESTRICHEN 2026-09-06 (#1038) — DARF NICHT MEHR BEHAUPTET WERDEN, gleicher Grund wie »Tune to key« eine Zeile höher.** #1024 hat alle DREI Mikrofon-Türen entfernt (Mix-Streifen · »Audio input«-Knopf · Einlade-Banner), also setzt nichts mehr `showInput` — gemessen: `git grep -n "showInput = true" -- Sources` → **0**, während `AudioInputPickerView()` weiterhin in einem `.sheet` konstruiert wird, das niemand öffnen kann. Diese Stufe sitzt AUSSCHLIESSLICH im Monitorpfad, und der Monitorpfad hat keine Tür. Der Code lebt und ist unangetastet; Wieder-Betüren sind drei Aufrufstellen. **Bis dahin ist jede Werbe-Behauptung darüber die 2.3-Klasse.** ⚠️ **Nicht mit dem MUSIK-Harmonizer verwechseln**, der über das FX-Panel erreichbar ist und weiter behauptet werden darf — genau die Unterscheidung, die die »Tune to key«-Zeile schon trifft. Die App-Store-Notiz »third and fifth harmony voices above the melody« meint DIESEN und bleibt korrekt (geprüft: es ist der einzige Treffer dieser drei Behauptungen in `fastlane/metadata/` und `docs/`). ⭐ **#1247 (2026-09-11): die Master-Panel-Tür „Audio input" ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht.** |
 | ~~**Granular-Textur auf deiner Stimme** (Grain-Wolke unter dem trockenen Signal, nur im Monitor)~~ | #849. ⛔ **GESTRICHEN 2026-09-06 (#1038) — DARF NICHT MEHR BEHAUPTET WERDEN, gleicher Grund wie »Tune to key« eine Zeile höher.** #1024 hat alle DREI Mikrofon-Türen entfernt (Mix-Streifen · »Audio input«-Knopf · Einlade-Banner), also setzt nichts mehr `showInput` — gemessen: `git grep -n "showInput = true" -- Sources` → **0**, während `AudioInputPickerView()` weiterhin in einem `.sheet` konstruiert wird, das niemand öffnen kann. Diese Stufe sitzt AUSSCHLIESSLICH im Monitorpfad, und der Monitorpfad hat keine Tür. Der Code lebt und ist unangetastet; Wieder-Betüren sind drei Aufrufstellen. **Bis dahin ist jede Werbe-Behauptung darüber die 2.3-Klasse.** ⭐ **#1247 (2026-09-11): die Master-Panel-Tür „Audio input" ist ZURÜCK (Founder-Ask), aber der Monitorpfad ist am Gerät weiter UNBESTÄTIGT — die Zeile bleibt gestrichen, bis ein `VERIFIED-`Datum an `setInputMonitoring` steht.** |
@@ -257,7 +257,17 @@ Publisher wäre ein **zweites Produkt** neben dem Instrument.
 *Erlaubt: „das fertige Video teilen". Nicht erlaubt: „postet für Dich".*
 
 ### 11. Stimme: „nimmt Deine Stimme auf", „Voice Cloning", „AI-Voice", „Text-to-Speech", „Autotune auf der Musik"
-Die Stimm-Fähigkeit ist eine **MESSUNG, keine Aufnahme** — das ist die eine
+
+⛔ **SEIT #1302 (Founder 2026-09-12, „Face und Audio Input komplett entfernen") IST DIE GANZE
+STIMM-FÄHIGKEIT UNBEHAUPTBAR — nicht nur die vier Formulierungen in der Überschrift.** Es gibt
+kein Mikrofon mehr: `MicrophoneManager`, `AudioInputManager`, `VoiceCaptureEngine`,
+`VoiceAnalyzer`, `VoicePitchCorrector`, `FeedbackGuard` und das Input-Sheet sind als Dateien
+gelöscht. Ein Reel, das irgendetwas über die Stimme des Spielers sagt, beschreibt eine App, die
+nicht existiert. **Die Unterscheidung darunter bleibt trotzdem stehen, weil sie das GESETZ ist,
+nach dem eine künftige Stimm-Fähigkeit beschrieben werden müsste** — und weil §11 sonst als
+gelöst gelesen würde statt als ausgesetzt.
+
+Die Stimm-Fähigkeit war eine **MESSUNG, keine Aufnahme** — das ist die eine
 Formulierung, an der hier alles hängt. `VoiceTimbreProfiler` misst eine
 Spektral-Hüllkurve (**64 Zahlen**), das Audio selbst wird **nie gespeichert**;
 das Mikrofon-Versprechen der App bleibt wörtlich wahr, und ein Reel, das „records
@@ -271,9 +281,10 @@ seit #1024 **gar nicht mehr behauptbar** — nicht weil es falsch wäre (es war 
 bleibt Monitor-only, die komponierte Musik läuft nie durch einen Autotune),
 sondern weil der Founder alle drei Mikrofon-Türen entfernt hat und die Stufe
 damit unerreichbar ist. Siehe die gestrichene Zeile in der Tabelle oben.
-*Erlaubt: „das Instrument klingt nach
-Dir", „gemessen, nie aufgenommen". Nicht erlaubt: „AI voice", „clones your
-voice", „records you", „Autotune auf dem Track".*
+*Erlaubt: NICHTS über die Stimme, solange kein Mikrofon existiert. Die früher erlaubten
+Formulierungen — „das Instrument klingt nach Dir", „gemessen, nie aufgenommen" — stehen hier
+als Muster für den Tag, an dem eine Tür zurückkommt. Nicht erlaubt: „AI voice", „clones your
+voice", „records you", „Autotune auf dem Track" — und seit #1302 auch nicht die erlaubten.*
 
 
 ### 12. Atemtiefe und LF/HF als Klang-Abbildung — der Kohärenz-TREND ist seit #813 WAHR

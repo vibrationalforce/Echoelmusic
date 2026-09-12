@@ -3,7 +3,7 @@
 //
 // WHAT THIS GUARDS. VL2 wired: `DiatonicHarmonyFollower` bridges
 // `EngineBus.latestMusical` (loudest sounding note + the published key) through
-// `VoiceHarmony` onto every attached chain's `EchoelHarmonizer.interval1/2` at
+// `KeyHarmony` (called `VoiceHarmony` until #1302) onto every attached chain's `EchoelHarmonizer.interval1/2` at
 // ~10 Hz — a third above E in C major is G (+3), not G# (+4). The toggle lives
 // in the FX panel's Harmonizer section; while ON the interval rows are HIDDEN
 // (the follower rewrites them every tick — a control that lies is worse than
@@ -26,7 +26,7 @@
 // vs stripped both trees). Worktree: all reproduce. Against the parent every
 // join is FORWARD (this commit creates the type and every anchor) — red by ONE
 // absence, reported once (#486); tests 1–3 drive a type the same commit adds,
-// so no verdict exists there either (hand-driven against `VoiceHarmony`'s
+// so no verdict exists there either (hand-driven against `KeyHarmony`'s
 // algebra instead, which IS on the parent and pinned by
 // TheVoiceTuneSnapsToTheSessionKeyTests test 4). Stripper: PROPHYLAKTISCH
 // (0 of 14 join verdicts flip — re-measured after the review round grew the

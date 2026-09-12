@@ -8,10 +8,6 @@ Composition
 - Eight character controls: Liveliness, Darkness, Tension, Romance, Weird, Virtuosity, Syncopation, Humanize
 - Concert pitch (A4) set exactly to the cent; key selection and optional BPM lock
 
-Voice
-- Your voice becomes the instrument's timbre: hold a tone ("Voice timbre" → Capture) — measured as a spectral envelope, never recorded or stored
-- Save the measured color into a patch, always with a name label
-
 Sound
 - Algorithmic reverb with room and hall presets for real depth per genre
 - Harmonizer effect: third and fifth harmony voices above the melody — optional "Follow the key": the third breathes diatonically with the key

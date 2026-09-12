@@ -80,36 +80,18 @@ final class ThePanelSubtitlesNameTheirDeepFeaturesTests: XCTestCase {
         return lines[start ..< min(start + 3, lines.count)].joined(separator: " ")
     }
 
-    /// The Sound panel's subtitle names "Voice timbre" — with the row's own words.
-    func testTheSoundSubtitleNamesTheVoiceTimbre() throws {
-        let lines = try codeLines(of: "Sources/Echoelmusic/Studio/EchoelStudioView.swift")
-        let decl = try declSlice(lines, anchor: "panel(\"Sound & texture\",")
-        // #620b (review W2): the first message said "the collapsed panel line" — these
-        // panels have NO collapsed state (they mount only through `dropdownContent`
-        // under `echoelPanelForceOpen`, always-open header). The honest gain: the
-        // subtitle is the FIRST line of the opened panel, so the feature is named one
-        // level up instead of being visible only at the row itself.
-        XCTAssertTrue(decl.contains("Voice timbre"), """
-            the Sound panel's subtitle no longer names "Voice timbre" (UX#13, #620): it \
-            is the first line a player reads when the Sound dropdown opens, and the one \
-            surface above the capture row that names the feature. If the ROW was \
-            renamed, rename the subtitle token and this needle in the same commit — the \
-            words must match the control (#616).
-            """)
-    }
-
-    /// COUNTERWEIGHT — the pointer's target: the capture row still declares itself with
-    /// the same words. Green on both trees; red the day the row is renamed or removed
-    /// while the subtitle still points at it.
-    func testTheVoiceTimbreRowStillExists() throws {
-        let lines = try codeLines(of: "Sources/Echoelmusic/Studio/EchoelStudioView.swift")
-        XCTAssertEqual(lines.filter { $0.contains("Text(\"Voice timbre\")") }.count, 1, """
-            `Text("Voice timbre")` is gone or duplicated in EchoelStudioView — the Sound \
-            panel's subtitle points at this row by name. Removing or renaming the row \
-            without moving the subtitle leaves a pointer to a control that does not \
-            exist; move both in one commit.
-            """)
-    }
+    // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — TWO CASES
+    // STOOD HERE AND ARE GONE WITH THEIR SUBJECT: `testTheSoundSubtitleNamesTheVoiceTimbre`
+    // (the Sound panel's subtitle had to carry the token "Voice timbre") and its counterweight
+    // `testTheVoiceTimbreRowStillExists` (the row it pointed at had to still declare itself
+    // with those words). The capture row went with the microphone and the subtitle token went
+    // with it in the SAME commit — which is exactly what the pair existed to enforce, so the
+    // pair did its job and is retired rather than re-anchored.
+    //
+    // ⭐ THE LAW IS UNCHANGED AND IS PROVEN BY EVERY SURVIVING CASE IN THIS FILE (#616/#620):
+    // a panel subtitle names a deep feature IN THE CONTROL'S OWN WORDS, so a rename or a
+    // removal moves both halves together. A subtitle pointing at a control that does not
+    // exist is worse than no subtitle.
 
     /// The Effects panel's subtitle names "Follow the key" — with the toggle's own words.
     func testTheEffectsSubtitleNamesFollowTheKey() throws {

@@ -98,8 +98,8 @@ public final class DiatonicHarmonyFollower {
         guard fracMidi.isFinite, fracMidi > 0, fracMidi < 128 else { return nil }
         let midi = Int(fracMidi.rounded())
         let key = MusicalKey(root: rootPitchClass, scale: scale)
-        return (VoiceHarmony.interval(from: midi, degreesUp: 2, key: key),
-                VoiceHarmony.interval(from: midi, degreesUp: 4, key: key))
+        return (KeyHarmony.interval(from: midi, degreesUp: 2, key: key),
+                KeyHarmony.interval(from: midi, degreesUp: 4, key: key))
     }
 
     private func startTicking() {
@@ -142,5 +142,39 @@ public final class DiatonicHarmonyFollower {
             if c.harmonizer.interval1 != t1 { c.harmonizer.interval1 = t1 }
             if c.harmonizer.interval2 != t2 { c.harmonizer.interval2 = t2 }
         }
+    }
+}
+
+
+/// Scale-degree arithmetic over a `MusicalKey` — pure value logic, Foundation-only.
+///
+/// ⛔ #1302 — THIS TYPE WAS CALLED `VoiceHarmony` AND LIVED IN
+/// `Sequencer/VoicePitchCorrector.swift`, which the founder's "Face und Audio Input komplett
+/// entfernen" deleted on 2026-09-12. It is moved here and RENAMED because the old name was the
+/// #1293 trap in its most expensive form: nothing about it is a voice, the microphone is gone,
+/// and the only caller is `DiatonicHarmonyFollower` above — the MUSIC harmonizer, reached from
+/// the FX sheet. A sweep for "Voice*" during the removal would have taken it, and the build
+/// would have failed on a type whose name lied about what it does. Name it for the thing.
+public enum KeyHarmony {
+
+    /// Semitone offset to the note `degreesUp` scale degrees above `midi`, in `key`.
+    /// `midi` is quantized into the key first and the offset is measured FROM THE QUANTIZED
+    /// note. `degreesUp` may be negative (harmony below).
+    public static func interval(from midi: Int, degreesUp: Int, key: MusicalKey) -> Int {
+        let snapped = key.quantize(midi)
+        guard let index = degreeIndex(of: snapped, key: key) else { return 0 }
+        // Recover the octave so that key.degree(index, octave:) == snapped, then step the
+        // degree ladder. (snapped − root − interval) is an exact multiple of 12 by construction.
+        let rel = key.scale.intervals[index]
+        let octave = (snapped - key.root - rel) / 12 - 1
+        return key.degree(index + degreesUp, octave: octave) - snapped
+    }
+
+    /// Degree index (0-based, octave-relative) of an in-key MIDI note, or nil when the note's
+    /// pitch class is outside the key.
+    static func degreeIndex(of midi: Int, key: MusicalKey) -> Int? {
+        let pc = ((midi % 12) + 12) % 12
+        let relative = ((pc - key.root) % 12 + 12) % 12
+        return key.scale.intervals.firstIndex(of: relative)
     }
 }

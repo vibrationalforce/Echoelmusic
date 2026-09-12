@@ -795,7 +795,7 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// `VoiceCaptureEngine` touches `AVAudioFile`, `FileManager` or `write(to:)`. The same rule
     /// guards the store copy as claim 7 of `TheStoreTextClaimsOnlyWhatShipsTests`; this is the
     /// website's copy of it, because the two corpora are read by different people.
-    func testTheVoiceCaptureIsPublishedAndAlwaysQualified() throws {
+    func testTheVoiceCaptureIsPublishedOnlyWhileItExists() throws {
         let sources = try repoRoot().appendingPathComponent("Sources")
         guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
             throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
@@ -808,9 +808,31 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
         let constructed = code.components(separatedBy: "VoiceAnalyzer(").count - 1
             + (code.components(separatedBy: "VoiceCaptureEngine(").count - 1)
         guard constructed > 0 else {
-            // The chain is gone. Nothing to publish and nothing to qualify — say so loudly
-            // enough that the next reader knows the silence is measured, not overlooked.
-            print("#797: no VoiceAnalyzer/VoiceCaptureEngine construction in Sources — premise off")
+            // ⛔ #1302 (founder 2026-09-12, "Face und Audio Input komplett entfernen") — THE
+            // CHAIN IS GONE, AND THIS BRANCH USED TO `print` AND `return`. A test that returns
+            // here asserts nothing, so a later campaign could re-sell the capture on every page
+            // and stay green. The question simply INVERTS, and it is still answerable: with no
+            // constructor left, a page may name the feature only as HISTORY.
+            //
+            // ⚠️ The marker window is why this is not just `XCTAssertTrue(naming.isEmpty)`:
+            // `architecture.html` legitimately names "Voice timbre" to record the removal, and
+            // an absence scan would redden that honest sentence (#364/#491).
+            for needle in ["voice timbre", "your voice becomes"] {
+                let offenders = try mentionsWithoutMarker(
+                    needle, markers: ["removed", "entfernt", "no longer", "was deleted"],
+                    back: 200, forward: 420)
+                XCTAssertTrue(offenders.isEmpty, """
+                    A published page names the voice capture without saying it is GONE:
+                    \(offenders.joined(separator: "\n"))
+
+                    Nothing in `Sources/**` constructs `VoiceAnalyzer` or `VoiceCaptureEngine` \
+                    any more and the app asks for no microphone, so a page that still sells the \
+                    feature sends a reader looking for a door that does not exist. Say it is \
+                    removed on the SAME page, near the words — or take the sentence out. When a \
+                    capture surface ships again this branch stops running and the ORIGINAL law \
+                    below takes over: publish it, and qualify it with "never recorded".
+                    """)
+            }
             return
         }
 
