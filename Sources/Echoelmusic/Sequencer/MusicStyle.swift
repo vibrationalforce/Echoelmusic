@@ -87,7 +87,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #254 batch 2: `deepDrone` is the stillest of them all. `ambientPulse` is deliberately
         // NOT here — it is the ambient genre that MOVES, and `sustained: true` would suppress
         // exactly the slow sequence that is its whole identity (see `HarmonicProfile.sustained`).
-        .deepDrone
+        .deepDrone,
+        // #1285 G5: `glacialField` holds one high cluster per bar — the stillest END of the
+        // spectrum deepDrone anchors at the bottom. `slowBloom` is deliberately NOT here, the
+        // `ambientPulse` reason: it is the ambient genre that OPENS, and `sustained: true`
+        // would suppress the very onsets that are its identity.
+        .glacialField
     ]
 
     /// The genres OFFERED in the picker — a curated, brand-fitting palette (founder
@@ -132,6 +137,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// that write is destructive. Widening this list again restores the choice for everyone
     /// going forward, but cannot give an already-migrated user their old genre back.
     public static let offered: [MusicStyle] = [
+        // #1285 G5 (founder 2026-09-11, "mehr Genre Rubriken und unterrubriken"): offered from
+        // the first commit, per the #254 precedent — a genre that exists in the taxonomy and not
+        // in the picker is a doorless genre, and this repo keeps paying for those. Striking one
+        // by ear later is one array line; building it and hiding it is not reversible in the
+        // same cheap way.
+        .glacialField, .slowBloom,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -374,9 +385,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// does not compile until it is filed, which is what kept `category` total for a year.
     public var subcategory: Subcategory {
         switch self {
-        case .selfObservation, .stillMeditation, .drift, .contemplation, .deepDrone:
+        case .selfObservation, .stillMeditation, .drift, .contemplation, .deepDrone,
+             .glacialField:
             return .stillPads
-        case .ambientPulse:
+        case .ambientPulse, .slowBloom:
             return .movingAmbient
         case .sciFi:
             return .cinematicAtmospheres
@@ -653,6 +665,16 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     ///     stillness that genuinely does not move is a different experience, not a lesser one.
     ///     Movement here comes only from the body, the slow evolve and the long tape space.
     case deepDrone
+    /// #1285 G5 — STILL PADS, and the one genre in the roster whose subject is AIR rather than
+    /// a chord. A motionless high cluster in `lydianAugmented`: degrees [0, 1, 4] are a major
+    /// second stacked under the raised fifth, so the voicing is a CLUSTER, not a triad — the
+    /// beating between the two close partials IS the movement, and there is no other.
+    ///
+    /// ⚠️ Its neighbour on this shelf is `deepDrone`, and they are opposites rather than
+    /// variants: deepDrone is the darkest, lowest bed in the product (padOctave 2, brightness
+    /// 0.10); this sits at padOctave 5 — the HIGHEST of any sustained genre — with a bright,
+    /// lightly damped hall. Same stillness, opposite end of the spectrum.
+    case glacialField
     /// #254 batch 2 (same ask): the ambient genre that MOVES — and the only calm genre that does.
     /// A slow hypnotic pentatonic-major sequence, not a held pad.
     ///
@@ -673,6 +695,16 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// NOT `sustained`: that flag suppresses the inner pulse and the walking bass, which would
     /// delete the sequence. So it is the one calm genre that is lead-BEARING (see `leadPatchName`).
     case ambientPulse
+    /// #1285 G5 — MOVING AMBIENT, the shelf's second resident, and the one that answers a
+    /// question `ambientPulse` does not: what a slowly OPENING sound is, as opposed to a pulsing
+    /// one. Five degrees of `prometheus` ([0, 2, 4, 6, 8] over a six-note scale, so the top two
+    /// fold into the next octave) widen from the root outward; the mystic-chord intervals give
+    /// the stack a colour no triadic genre can reach.
+    ///
+    /// ⚠️ `sustained: false` ON PURPOSE, and it is the same call `ambientPulse` documents: a
+    /// sustained profile holds ONE chord and suppresses the onset generator, and "slow bloom"
+    /// IS the onset. The stillness here comes from a 42-second-long envelope, not from a flag.
+    case slowBloom
     case trap
     case vaporwave
     case eighties
@@ -736,6 +768,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// UI title.
     public var displayName: String {
         switch self {
+        // #1285 G5 — Still Pads / Moving Ambient.
+        case .glacialField:       return "Glacial Field"
+        case .slowBloom:          return "Slow Bloom"
         case .dubTechno:          return "Dub Techno"
         case .acidTechno:         return "Acid Techno"
         case .deepHouse:          return "Deep House"
@@ -784,6 +819,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// or film names (App Store-safe, no implied endorsement).
     public var lineage: String {
         switch self {
+        case .glacialField:
+            return "Motionless high cluster · wide air"
+        case .slowBloom:
+            return "Widening five-note stack · slow opening"
         case .dubTechno:          return "Deep dub chords · tape echo · sub-bass"
         // "303" removed: it is a hardware model designation, and this file's own rule (top of
         // file) bans product/artist names in user-facing subtitles. "Squelch" carries the sound.
@@ -857,6 +896,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// builders in `BioComposer`; tempo feel comes from `tempoRange` (B4).
     public var beatArchetype: BeatArchetype {
         switch self {
+        // #1285 G5 — both are drum-free by design; `.none` also derives `.sustained`
+        // articulation, which is what a Fläche's chord grid must be.
+        case .glacialField, .slowBloom:   return .none
         case .dubTechno, .trap:                                 return .signature
         // #254 note on .acidTechno: it is here for taxonomy, but the `.stab` articulation
         // this maps to is INERT for it — arpeggiated profiles bypass `chordArticulation`
@@ -1089,6 +1131,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The BPM window a take locks within (Studio mode clamps into this).
     public var tempoRange: ClosedRange<Double> {
         switch self {
+        // #1285 G5 — breath-paced windows, both under every beat-driven genre's floor.
+        case .glacialField:       return 42...60
+        case .slowBloom:          return 56...72
         case .dubTechno:          return 118...128
         // 130…139 keeps acid ENTIRELY below psytrance's 140…150. The two are close relatives
         // (both phrygian, both arpeggiated, both four-on-the-floor) so every axis that can
@@ -1210,6 +1255,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The BPM a fresh take starts at, inside `tempoRange`.
     public var defaultTempo: Double {
         switch self {
+        case .glacialField:       return 50
+        case .slowBloom:          return 62
         case .dubTechno:          return 124
         case .acidTechno:         return 134
         case .deepHouse:          return 122
@@ -1258,6 +1305,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// (psytrance, rock, metal, classical rubato, ambient) stay straight at 0.
     public var swing: Double {
         switch self {
+        // #1285 G5 — a Fläche has no shuffle to swing; both are exactly straight.
+        case .glacialField, .slowBloom:   return 0
         case .jazz:               return 0.34   // the defining swung-8th feel (~2:1)
         case .rocknroll:          return 0.28   // heavy shuffle
         case .rocksteady:         return 0.22   // laid-back reggae bounce
@@ -1355,6 +1404,13 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // jazz) without any bright/harsh reintroduction. Exact per-genre timbre is
         // device-tunable; the INVARIANT is: warm-set only + spread.
         switch self {
+        // #1285 G5. `glacialField` is `sustained`, so it is NOT lead-bearing and its name does
+        // not count toward the pigeonhole ceiling; `slowBloom` IS, and "Hollow Reed" was chosen
+        // by MEASUREMENT rather than by ear — at 28 lead-bearing genres the ceiling is
+        // ceil(28/6) = 5, and Deep Sub, Pluck and Soft Keys were already AT 5. Hollow Reed and
+        // Warm Strings sat at 4. This is the field the batch template says to compute, not pick.
+        case .glacialField:       return "Warm Strings"
+        case .slowBloom:          return "Hollow Reed"
         case .dubTechno:          return "Pluck"         // sustained — unused
         // #254: both are lead-BEARING (not sustained), so both count against the spread
         // ceiling above even though no lead sounds today (#255). "Deep Sub" for acid is
@@ -1443,6 +1499,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// harmony 0.86…1.08 · lead 0.85…0.90. Re-derive when a genre is added; do not quote it.
     public var mixLevels: (bass: Float, harmony: Float, lead: Float) {
         switch self {
+        // #1285 G5 — the Flächen/drone family sketch: the harmony carries the piece, the bass
+        // sits under it rather than driving, the (silent) lead is trimmed like every sibling.
+        case .glacialField, .slowBloom:   return (0.96, 1.06, 0.85)
         case .dubTechno, .trap:                       return (1.18, 0.94, 0.88)
         case .acidTechno:                             return (1.15, 0.90, 0.88)  // bass-led
         case .deepHouse:                              return (1.06, 1.02, 0.90)  // chord-led
@@ -1471,6 +1530,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// The dark/bright, genre-appropriate scale a take defaults to.
     public var scale: Scale {
         switch self {
+        // #1285 G5 — both modes are NEW to the offered roster: no offered genre was
+        // `lydianAugmented` or `prometheus` before this batch.
+        case .glacialField:       return .lydianAugmented
+        case .slowBloom:          return .prometheus
         case .dubTechno:          return .dorian
         case .acidTechno:         return .phrygian   // the ♭2 is the acid bite
         case .deepHouse:          return .minor
@@ -1572,6 +1635,23 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// switch stays total.
     public var harmonicProfile: HarmonicProfile {
         switch self {
+        case .glacialField:
+            // The CLUSTER is the genre: [0, 1, 4] of lydianAugmented = root, major second,
+            // raised fifth. Two adjacent degrees beat against each other, and that beating is
+            // the only motion a motionless pad has. padOctave 5 is the highest in the roster —
+            // deliberately the opposite end from `deepDrone`'s 2, so the two stillest genres
+            // cannot be confused. Two roots, so it travels one step per bar and no further.
+            return HarmonicProfile(progression: [0, 2], chordTones: [0, 1, 4],
+                                   padOctave: 5, leadOctave: 6, arpeggiated: false,
+                                   leadDensity: 0.0, sustained: true)
+        case .slowBloom:
+            // FIVE degrees over a SIX-note scale, so [0, 2, 4, 6, 8] folds the top two into the
+            // next octave — the stack literally widens past the octave as it opens. Not
+            // `sustained`: the opening is made of onsets (see the case doc), and a sustained
+            // profile would suppress them.
+            return HarmonicProfile(progression: [0, 2], chordTones: [0, 2, 4, 6, 8],
+                                   padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
         case .vaporwave:
             // PURE FLÄCHE (founder 2026-07-09): NO lead, sustained. Character =
             // the dreamy maj7 I→IV swell one register above the darker genres.
@@ -1893,8 +1973,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #254 batch 2: both ambient additions MUST be listed here. This switch ends in
         // `default: .studioLocked`, so omitting them would have silently given two breath-paced
         // genres a locked grid tempo — the kind of wrong default a compiler cannot catch.
+        // #1285 G5: both additions are breath-paced and MUST be listed — the switch ends in
+        // `default: .studioLocked`, so an omission is silent and gives a 50-BPM glacial pad a
+        // locked grid tempo.
         case .selfObservation, .stillMeditation, .drift, .contemplation,
-             .deepDrone, .ambientPulse:              return .flowFree
+             .deepDrone, .ambientPulse, .glacialField, .slowBloom:
+                                                     return .flowFree
         default:                                     return .studioLocked
         }
     }

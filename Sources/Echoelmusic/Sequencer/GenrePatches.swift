@@ -51,6 +51,32 @@ public extension MusicStyle {
         // genre keeps its character, cleaner. SOUND CYCLE 1 layers real instrument
         // spectra + unison width + a breath/air noise floor on top (see header).
         switch self {
+        case .glacialField:
+            // #1285 G5 — AIR, not a note. A very slow swell (under `deepDrone`'s 1.8 s, which
+            // keeps that patch's "slowest attack of any genre patch" true) into a long, high,
+            // barely-moving bed. Bright where the drone is dark — 0.46 against 0.10 — because
+            // the two stillest genres must not read as one patch at two registers. Wide unison
+            // with a heavy detune so the cluster's beating is stereo as well as spectral; the
+            // vibrato is OFF, since anything periodic would be the movement this genre refuses.
+            return patch("40", "Glacier Pad",
+                a: 1.600, d: 7.00, s: 0.90, r: 7.00,
+                harm: 0.72, hl: 0.55, bright: 0.46, noise: 0.04, color: "White", shape: "Bright",
+                cutoff: 4200, res: 0.08, lfoAmt: 0.10, lfoRate: 0.04, lfoDepth: 0.18,
+                revMix: 0.58, revDecay: 9.00, vibRate: 0, vibDepth: 0,
+                uni: 3, det: 12)
+        case .slowBloom:
+            // #1285 G5 — the OPENING. A slow attack with a LONG decay to a middling sustain, so
+            // each onset keeps arriving after it has landed rather than sitting flat; the long
+            // release overlaps consecutive onsets into the widening stack the profile writes.
+            // Softer and rounder than `Glacier Pad` (harmonics 0.84 against 0.72, brightness
+            // 0.34 against 0.46) so the shelf's two residents are told apart by timbre as well
+            // as by motion. No vibrato: the movement is the envelope.
+            return patch("41", "Bloom Pad",
+                a: 1.400, d: 5.00, s: 0.62, r: 6.50,
+                harm: 0.84, hl: 0.68, bright: 0.34, noise: 0.02, color: "Pink", shape: "Natural",
+                cutoff: 3100, res: 0.12, lfoAmt: 0.16, lfoRate: 0.06, lfoDepth: 0.24,
+                revMix: 0.52, revDecay: 8.00, vibRate: 0, vibDepth: 0,
+                uni: 2, det: 8)
         case .dubTechno:
             return patch("D1", "Dub Chord",
                 a: 0.06, d: 0.9, s: 0.45, r: 3.8,

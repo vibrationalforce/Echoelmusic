@@ -638,7 +638,8 @@ enthält die 7 · `swing` 0 oder ≥0.06 · `padOctave` ≥3.
 
 | Scheibe | Unterrubrik(en) | Genres | zusätzlich |
 |---|---|---|---|
-| G5 | Still Pads · Moving Ambient · Techno · House · Trance | glacialField, slowBloom, industrialTechno, afroHouse, darkPsyTrance | 4 lead-tragend ⇒ 27→31, Decke 5→6, Neuberechnung zwingend |
+| G5a ⭐ #1285 | Still Pads · Moving Ambient | glacialField, slowBloom | 1 lead-tragend ⇒ 27→28, Decke BLEIBT 5 — Deep Sub/Pluck/Soft Keys standen schon auf 5, Hollow Reed und Warm Strings auf 4 |
+| G5b OFFEN | Techno · House · Trance | industrialTechno, afroHouse, darkPsyTrance | 3 lead-tragend ⇒ 28→31, Decke 5→6. ⛔ `rollingSixteenths` ist EXKLUSIV an `psyProgHouse` gepinnt (`GenrePsyProgHouseTests`, Sweep über `allCases`) — der Entwurf für `darkPsyTrance` verletzt das. Entweder ein anderer Grammatik-Fall, oder der Wächter wird auf das amendiert, was sein Doc wirklich sagt: psy-prog ist der ERSTE Besitzer, und jeder weitere hat seinen EIGENEN Bass-Patch |
 | G6 | Metal · Jazz · Soul · Hip-Hop · R&B · Caribbean | blackMetal, modalJazz, soulBallad, boomBapHipHop, electroFunk, rootsReggae | Detroit-Kommentar (§2b-7) an `GenreBatchFour:192`; `MusicStyleTests:130` mitlesen |
 | G7 | Baroque · Classical & Romantic · Impressionist | baroqueCounterpoint, romanticNocturne, impressionistColour, contemporaryClassical | 3× `.flowFree`; `meantone-quarter` = erster Tonsystem-Vorschlag ⇒ §5-2 muss beantwortet sein |
 | G8 | Chant & Polyphony | plainchant, byzantineChant, choralPolyphony | AnchorFloor +plainchant; `pythagorean`/`edo24`/`just-major` |

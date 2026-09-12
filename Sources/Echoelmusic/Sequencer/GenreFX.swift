@@ -303,6 +303,38 @@ public extension MusicStyle {
 
     private var rawFXPreset: GenreFXPreset {
         switch self {
+        case .glacialField:
+            // #1285 G5 — WIDE AIR. NO delay at all, and that is the design rather than an
+            // omission: an echo repeats an event, and this genre's whole claim is that nothing
+            // happens twice. What remains is a very large, bright, barely damped hall.
+            //
+            // ⚠️ EVERY NUMBER HERE WAS PLACED AGAINST A NAMED NEIGHBOUR'S CLAIM, which is the
+            // batch rule: room 0.93 stays UNDER `contemplation`'s 0.96 ("the BIGGEST hall in the
+            // roster"), under `drift`'s 0.95 and under the 0.94 that `deepDrone` and
+            // `selfObservation` share; damping 0.38 stays ABOVE `drift`'s 0.35, so its
+            // "brightest, least-damped big hall" holds too. A very slow, wide chorus does the
+            // widening a stereo widener would — the preset type has no widener field, so this
+            // is the honest substitute and not a silent drop of the design.
+            return GenreFXPreset(
+                delayEnabled: false,
+                chorusEnabled: true, chorusRate: 0.06, chorusDepth: 0.50, chorusMix: 0.34,
+                saturation: 0.12,
+                reverbEnabled: true, reverbMix: 0.48, reverbRoom: 0.93, reverbDamping: 0.38)
+        case .slowBloom:
+            // #1285 G5 — the same family, one step warmer and one step smaller, so the two
+            // Contemplative shelves do not share a space: room 0.90 (under this batch's own
+            // 0.93 and every claim named above), damping 0.44 (warmer than the glacial 0.38).
+            // Also no delay — a bloom that echoed would be a sequence.
+            //
+            // A slower, deeper chorus than the glacial preset (0.04 / 0.60) is what widens the
+            // five-note stack as it opens; saturation 0.18 gives the sine stack a little body
+            // without the edge the founder's "einige Sounds stechen kalt aus dem Mix raus" law
+            // rules out on a soft genre.
+            return GenreFXPreset(
+                delayEnabled: false,
+                chorusEnabled: true, chorusRate: 0.04, chorusDepth: 0.60, chorusMix: 0.30,
+                saturation: 0.18,
+                reverbEnabled: true, reverbMix: 0.44, reverbRoom: 0.90, reverbDamping: 0.44)
         case .dubTechno:
             // The signature: a long, dark, swung dub delay with high feedback,
             // plus a slow chorus wobble on the chord.
