@@ -245,6 +245,10 @@ struct EchoelStudioView: View {
     /// brings up whichever is set, `selectBioSource` switches it live. Persisted so the
     /// choice survives relaunch.
     @AppStorage("bio.sourceKind") private var bioSourceRaw = BioSourceKind.camera.rawValue
+    /// #1298 — the source the Field's Face switch returns to when it is turned OFF.
+    /// Written only when Face is switched ON from there, and only from a non-face source,
+    /// so a second ON never overwrites the real answer with "face".
+    @AppStorage("bio.sourceBeforeFace") private var bioSourceBeforeFace = BioSourceKind.camera.rawValue
     /// Guards the async live source-switch so a rapid re-pick can't overlap.
     @State private var sourceSwitchTask: Task<Void, Never>?
 
@@ -6821,6 +6825,47 @@ struct EchoelStudioView: View {
     /// Gesicht im Feld, folgt der Blend-Wechsel ohne Sprung, und bleibt eine Aufnahme ohne Kamera?
     private var cameraLayerRow: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // NEEDS-FOUNDER-VERIFY: Field → „Play with your face" anschalten. Erwartet: das
+            // Gesicht erscheint, die Puls-Pille zeigt „Face", und AUS gibt die Quelle an die
+            // zurück, die vorher lief (bei dir: Kameralicht). Sagen, ob der Rückweg stimmt —
+            // das ist die Hälfte, die kein Test entscheiden kann.
+            //
+            // #1298 — THE ON-SWITCH BELONGS HERE, founder 2026-09-12 over a screenshot of the
+            // pulse pill's source menu: "es soll nicht dort angeschaltet werden sondern im
+            // Field und den Field Sound modulieren". The caption under this row had been
+            // sending the reader back to that menu ever since K5b, which is the same
+            // wrong-door shape as #1296 and #1297 — the capability was built and the way in
+            // was somewhere else.
+            //
+            // ⭐ ONE OWNER, TWO CALLERS. This routes through `selectBioSource(_:)`, the single
+            // owner of every bio-source lifecycle, exactly as the pill's menu does. It is the
+            // `MIDIOutput.applyOutputPreferences()` form, NOT the BLE-3 mistake of a second
+            // lifecycle owner that killed a running strap on an unrelated edit — nothing here
+            // calls `faceExpression.start`/`stop` directly.
+            //
+            // ⚠️ IT IS A SWITCH BETWEEN SOURCES, NOT AN ADDITIONAL LAYER, and that is measured
+            // rather than chosen: `FaceExpressionBioPublisher` publishes `heartRateBPM: 0`
+            // under `// faceCam carries NO pulse (coexistence deferred)`. Running it BESIDE a
+            // pulse source would write that 0 into the one `latestBio` slot at 10 Hz — the
+            // #1015 interleave, deliberately deferred. So Face takes the source, and OFF hands
+            // it back to whatever was playing before.
+            Toggle(isOn: Binding(
+                get: { bioSourceRaw == BioSourceKind.face.rawValue },
+                set: { on in
+                    if on {
+                        if bioSourceRaw != BioSourceKind.face.rawValue {
+                            bioSourceBeforeFace = bioSourceRaw
+                        }
+                        selectBioSource(BioSourceKind.face.rawValue)
+                    } else {
+                        selectBioSource(bioSourceBeforeFace)
+                    }
+                })) {
+                Text("Play with your face")
+                    .font(EchoelTheme.font(13, .semibold)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            .accessibilityHint("Tracks your face with the front camera and drives the field. Off hands the pulse back to the source that was playing before.")
             EchoelValueField(label: "Camera layer", value: $visualCameraOpacity, range: 0...1, decimals: 2)
             labeledRow("Blend") {
                 Picker("Blend", selection: $visualCameraBlend) {
@@ -6856,9 +6901,11 @@ struct EchoelStudioView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            // #1298 — the OFF sentence pointed at the pulse pill's menu, which is exactly the
+            // trip this row now spares the reader. It names the switch directly above instead.
             Text(faceExpression.isPublishing
                  ? "The front camera is layered into the field at this opacity. It never appears in a recorded take."
-                 : "Draws while the Face source runs — choose \"Play with your face\" under the pulse pill. It never appears in a recorded take.")
+                 : "Draws while \"Play with your face\" above is on. It never appears in a recorded take.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
         }
