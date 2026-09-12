@@ -275,7 +275,10 @@ Lomb-Scargle+Welch (LIVE) · 19 offered genres, 57 scales, A4 432–444 (LIVE) �
 poly synth + patch editor + presets, sub-bass voice, loop cutter,
 FX chain (LIVE) · MIDI input (notes/bend/CC 74) (LIVE) · virtual MIDI 1.0 out,
 route-gated (LIVE) · OSC + ADM-OSC +
-Art-Net + sACN unicast (LIVE) · Metal visual + MP4 clip recording (LIVE) ·
+Art-Net + sACN unicast (LIVE) · Metal visual (LIVE; ⛔ "+ MP4 clip recording"
+stood here and was removed with the capability — #1304, founder 2026-09-12,
+"Kein Video Capture". This file is a PASTE TEMPLATE for App Store Connect, so a
+stale LIVE here becomes a 2.3 claim in the listing itself) ·
 nearby session share (`Sync/MultipeerSession` + `Studio/LiveColaboView`,
 wired). **One claim is DEVICE-verify-pending before submission (founder):**
 BLE strap end-to-end (strap on order — NEEDS-FOUNDER-VERIFY since B4). If it

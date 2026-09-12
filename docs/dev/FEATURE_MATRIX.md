@@ -179,7 +179,7 @@ acceptance line.
 - **TestFlight acceptance:** FX panel toggles the insert chain audibly; filter/delay/chorus/flanger/phaser/tremolo/comp/limiter each change the sound; stamping **Underwater** muffles + adds watery movement, **Clean** resets to dry; export path applies AutoMix to the SELECTED loudness target without clipping.
 
 ### 3. EchoelMix — `PARTIAL`
-- **Code:** `Audio/AudioEngine.swift`, `Audio/AutoMixChain.swift`, `Audio/SingleExport.swift`, `Audio/RetroCapture.swift`, `MicrophoneManager.swift`
+- **Code:** `Audio/AudioEngine.swift`, `Audio/AutoMixChain.swift`, `Audio/SingleExport.swift`, `Audio/RetroCapture.swift` (⛔ `MicrophoneManager.swift` stood here and was deleted with the audio input — #1302, founder 2026-09-12)
 - **Live:** master bus, mic FFT (1024-pt), 30 s stereo pre-roll ring (`.caf`), LUFS-normalized WAV/AAC export.
 - **Roadmap:** `Audio/MultiTrackRecorder.swift` (skeleton), console UI, FLAC/ALAC, stem export.
 - **TestFlight acceptance:** SingleExport writes a valid WAV/AAC normalised to the SELECTED loudness target (−14 only when the picker is on Streaming; "No target" writes at unity).
@@ -247,18 +247,18 @@ acceptance line.
 - **Protected DSP triad (read-only, do not simplify):** `Bio/BioEventGraph.swift`, `Bio/HilbertSensorMapper.swift`, `Bio/BioSignalDeconvolver.swift`
 - **Live:** **Universal BLE Heart Rate** (`PolarH10BioPublisher` connects to ANY standard 0x180D/0x2A37 device — Polar/Wahoo/Garmin/CooSpo straps, watches in broadcast; RR→RMSSD; shows device name) + HealthKit (Apple Watch + **Oura via Apple Health**) + **camera rPPG (`Bio/CameraRPPGBioPublisher.swift` → `Video/CameraAnalyzer.swift`, finger-on-lens + torch, locks on device, live waveform)** + Demo → bus snapshot; breath/motion onset events via BioEventGraph. **CX:** `Core/BioFeedbackPublisher.swift` mirrors vitals to App Group (~1 Hz) → Widget/Watch glance.
 - **Honest limits:** Oura exposes no real-time third-party BLE (only via Apple Health, delayed). Camera rPPG is motion-sensitive (use a BLE strap for loud/active performance). PolarH10 per-RR `.heartbeat` events are published but currently have no working sink (snapshot loses sub-100 ms beats) — beat-sync cycle will drain `bioEvents`.
-- **Roadmap:** face tracking (ARKit); raw PPG/ECG waveform; EEG band-power (LSL).
+- **Roadmap:** raw PPG/ECG waveform; EEG band-power (LSL). (⛔ "face tracking (ARKit)" stood here and is NOT a roadmap item: it was built (#1257–#1268) and then removed on founder order — #1301, 2026-09-12, "Face und Audio Input komplett entfernen. Keine Tests davon sollen im Repo bleiben". Listing a withdrawn feature as roadmap invites rebuilding it.)
 - **TestFlight acceptance:** `BioStripView` shows live HR/HRV/Br/Coh; camera pulse locks (PPG); BLE strap shows its name; Demo works on Simulator; Widget mirrors vitals.
 
 ### 7. EchoelVis — `LIVE` (corrected 2026-07-04; the old PARTIAL entry named deleted files)
 - **Code (live):** `Views/MetalBioView.swift` (Metal bio visual, inline-compiled shader, AdaptiveQuality FPS/detail tiers, flash-safe ≤3 Hz, Reduce Motion) inside `Studio/FloatingVisualWindow.swift` — the floating/fullscreen window toggled from the WorkspaceView header, with in-fullscreen VJ controls + palette.
-- **Code (live, capture):** `Video/VisualRecorder.swift` + `Video/VideoMuxer.swift` — records the visual to stamped **MP4 clips** (share-ready) from the floating window.
+- ⛔ **A "Code (live, capture)" line stood here naming `Video/VisualRecorder.swift` + `Video/VideoMuxer.swift` and is removed with them** (#1304, founder 2026-09-12, "Kein Video Capture"). Both files are deleted; there is no recording and no MP4. The visual is live-only: floating window, external screen, Art-Net/sACN, OSC.
 - **Gone:** `BioVisualView` / `BioVisualRenderer` / `MomentCaptureView` were deleted in cleanup — do not reference them.
 - **Roadmap:** external-display output window; more looks; AR worlds.
 - **TestFlight acceptance:** header monitor toggles the floating visual; it reacts to bio; fullscreen + record work.
 
 ### 8. EchoelVid — `ROADMAP`
-- **Code:** `Video/CameraCapture.swift` (used ONLY by camera rPPG), `Video/CameraAnalyzer.swift` (rPPG). **Audit:** `CameraSession` / `VideoRecorder` / `ClipTrimmer` = 0 instantiations; `ShortContentRenderer` not wired. **No video recording/editing is shipping.**
+- **Code:** `Video/CameraCapture.swift` (used ONLY by camera rPPG), `Video/CameraAnalyzer.swift` (rPPG). **Audit:** `CameraSession` and `ClipTrimmer` never existed; `VideoRecorder` was deleted by #1304; `ShortContentRenderer` not wired. **No video recording/editing is shipping.** ⚠️ `Video/` now holds ONLY the rPPG pulse path — deleting by directory deletes the flagship bio source.
 - **Roadmap:** the CameraHub fan-out (`SPEC_CAMERA_PIPELINE.md`) so one capture serves rPPG + video + visuals; H.264/HEVC short-form record, NLE, ProRes.
 - **TestFlight:** out of scope — video capture/edit is not wired today.
 
@@ -324,7 +324,7 @@ Ship only what is `LIVE` or the `LIVE` part of `PARTIAL`. Build #1 = a working
 6. Modulation matrix routes bio→tempo (Sync tab).
 7. Well immersive visual reacts to bio (EchoelVis, BioVisualView).
 
-**Not wired / not shipping** (re-corrected 2026-07-04): multitrack audio export, CAMERA video recording/editing (EchoelVid), RTMP streaming. **Now LIVE (the 2026-06-09 list was stale on these):** MP4 clips of the VISUAL (`VisualRecorder`), the Metal visual itself (MetalBioView, floating window), and lighting (`EchoelLux` Art-Net + sACN unicast). `EchoelStage`, `EchoelAI`, and all `Roadmap` rows remain out.
+**Not wired / not shipping** (re-corrected 2026-09-12): multitrack audio export, ALL video recording and editing (EchoelVid), RTMP streaming, microphone input and face tracking. **LIVE:** the Metal visual itself (MetalBioView, floating window, external display) and lighting (`EchoelLux` Art-Net + sACN unicast). ⛔ "MP4 clips of the VISUAL (`VisualRecorder`)" stood in the LIVE half and was removed with the file (#1304). `EchoelStage` is live; `EchoelAI` and all `Roadmap` rows remain out.
 
 ### Build/signing config of record (verify before each TestFlight run)
 - **Target:** iOS 18, iPhone. `project.yml` + `Resources/iOS/Info.plist` + `Package.swift` all iOS 18. `MARKETING_VERSION 10.0.0`.

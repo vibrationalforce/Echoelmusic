@@ -945,6 +945,87 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
     /// "streaming −14 LUFS" target and a "Lighting / streaming" row), `artnet-sacn-from-a-phone`
     /// ("Streaming ACN", "keeps streaming underneath") and `brainstorming.html` ("HR/HRV
     /// streaming"). Narrow and honest beats broad and disarmed.
+    /// #1310 — THE SITE SOLD A RECORDING THE APP CANNOT MAKE, ON ITS TWO MOST-READ PAGES.
+    /// `index.html` said the visual is "recordable as a share-ready clip" and `overview.html`
+    /// that it "records to H.264 MP4 with the live audio muxed in". #1304 deleted
+    /// `VisualRecorder`, `VideoRecorder` and `VideoMuxer` on founder order ("Kein Video
+    /// Capture"), so both sentences were false from that commit on.
+    ///
+    /// ⭐ WHY THE EXISTING MARKER-WINDOW SHAPE COULD NOT CATCH IT, which is the transferable
+    /// part. `overview.html`'s sentence ENDED with "it was built and removed in July 2026" —
+    /// true, but about the video EDITOR, which had sat next to the recorder in that row for
+    /// months. A `mentionsWithoutMarker` scan reads a removal word inside its window and
+    /// excuses the whole row. **A removal marker proves a removal was mentioned, never that it
+    /// was the one the needle names.** Where two neighbouring features died a year apart, the
+    /// window is disarmed, and the only honest form left is an absolute ban on the PRESENT-TENSE
+    /// selling spellings.
+    ///
+    /// ⚠️ NOT AN ABSOLUTE BAN ON THE SUBJECT (#364/#491). History is exactly what the corrected
+    /// pages now carry — "recording … was built and removed in September 2026" is not on this
+    /// list and must never be. Only a sentence in which the app DOES it is. And the whole claim
+    /// lifts itself the moment a recorder is constructed again: then the site SHOULD say so, and
+    /// the counter-assertion below is the one that runs (#926 — invert, do not delete).
+    func testTheSiteSellsNoVisualRecordingWhileNoneExists() throws {
+        let sources = try repoRoot().appendingPathComponent("Sources")
+        guard let walk = FileManager.default.enumerator(atPath: sources.path) else {
+            throw XCTSkip("`Sources/` is not present — a docs-only checkout cannot judge the premise")
+        }
+        var code = ""
+        for case let rel as String in walk where rel.hasSuffix(".swift") {
+            let text = try String(contentsOf: sources.appendingPathComponent(rel), encoding: .utf8)
+            code += SourceText.codeOnly(text)
+        }
+        let constructed = ["VisualRecorder(", "VideoRecorder(", "VideoMuxer("]
+            .reduce(0) { $0 + code.components(separatedBy: $1).count - 1 }
+
+        let all = try pages()
+        XCTAssertFalse(all.isEmpty, """
+            No published page loaded, so this claim measured nothing — a scan that matches \
+            nothing is a finding, never a pass (`.claude/rules/context.md` §2).
+            """)
+
+        guard constructed == 0 else {
+            // A recorder is back. The ban is wrong now; the UNDER-claim is the risk instead.
+            let names = all.filter { $0.html.lowercased().contains("record") }.map(\.name)
+            XCTAssertFalse(names.isEmpty, """
+                `Sources/**` constructs a visual recorder \(constructed) time(s) again and not \
+                one published page mentions recording at all. The ban above lifted itself; say \
+                what ships, and re-word the "built and removed" sentences on `index.html`, \
+                `overview.html` and `faq.html` in the SAME commit (#456).
+                """)
+            return
+        }
+
+        // PRESENT-TENSE selling spellings only. Each is a sentence in which the app DOES it.
+        let selling = ["records to h.264", "recordable as a share-ready clip",
+                       "the immersive visual records", "visual records to",
+                       "record the visual to", "records the visual to"]
+        var offenders: [String] = []
+        for page in all {
+            let flat = page.html.lowercased()
+            for needle in selling where flat.contains(needle) {
+                offenders.append("\(page.name): \"\(needle)\"")
+            }
+        }
+        XCTAssertTrue(offenders.isEmpty, """
+            \(offenders.count) published sentence(s) sell a visual recording that no longer \
+            exists:
+
+            \(offenders.joined(separator: "\n            "))
+
+            Nothing in `Sources/**` constructs `VisualRecorder`, `VideoRecorder` or \
+            `VideoMuxer` — the founder withdrew video capture on 2026-09-12 (#1304, "Kein Video \
+            Capture"). A reader who comes for the clip finds no button, and on the App Store a \
+            claim the binary cannot perform is the 2.3 class.
+
+            Write the HISTORY instead ("recording the immersive visual to MP4 was built and \
+            removed in September 2026") — that wording is deliberately not on the ban list. Do \
+            NOT satisfy this by adding a removal sentence somewhere in the row: #1310 exists \
+            because a true removal sentence about the video EDITOR excused a false one about \
+            the RECORDER two clauses earlier.
+            """)
+    }
+
     func testNothingClaimsRTMPWasEverBuilt() throws {
         let manifest = try String(
             contentsOf: try repoRoot().appendingPathComponent("Package.swift"), encoding: .utf8)
