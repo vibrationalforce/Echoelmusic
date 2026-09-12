@@ -1,6 +1,7 @@
-build: v10.79.469 — Der Audio-Eingang, sauber aufgesetzt: Mikrofon-Tür, Eingang→Bild, Stimme in der Matrix, Harmony in key; MIDI 2.0 raus, OSC-Cues rein (#1246–#1256)
+build: v10.79.470 — Der Absturz beim Monitoring ist raus; das blockierende Bundle kompiliert wieder (#1269, #1272, #1273, #1295)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
+
   ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
   sein. CI greift mit `grep -m1 -oE 'v[0-9]+\.[0-9]+\.[0-9]+'` über die GESAMTE Datei und
   nimmt den ersten Treffer. Deshalb stehen die Vorgänger unten ohne `v`.
@@ -51,137 +52,150 @@ notes: |
 
   Der Vorgänger ist 10.79.468 (und davor 10.79.467).
 
-  ── 0. WAS IN 10.79.469 NEU IST ─────────────────────────────────────────
+  ── WARUM DIESER BUILD ÜBERHAUPT NÖTIG IST ────────────────────────────────
 
-  **Deine Ansage vom 11.09.: „Bearbeite alles was noch offen ist … Audio Input sauber
-  aufsetzen … Biofeedback mit den Visuals ohne Sound."** Dieser Build trägt alles seit 468 —
-  die Scheiben #1246 bis #1256, keine davon je auf einem Gerät gelaufen. Ich sortiere nach
-  Deinem Ask; der Audio-Eingang steht zuerst, weil Du ihn zuerst genannt hast.
+  Der Absturz, den Du gemeldet hast — Master → „Audio input" → Live monitoring AN, und
+  die App ist weg — ist repariert, aber die Reparatur war in KEINEM Build, den Du hast.
+  Gemessen: `git merge-base --is-ancestor eecf800 101055f` sagt ja, also kamen alle drei
+  Audio-Fixes NACH dem 469er-Deploy. Sie waren im Baum und nirgends sonst.
 
-  **A. Der Audio-Eingang, in sieben Scheiben (#1246–#1252).**
-  · **Bio**-Panel → „Body without sound" (#1246): der Sensor allein treibt das Bild — Finger
-    auf die Kamera, Visual-Fenster auf, kein Instrument, kein Transport. Solange das
-    Instrument läuft, weigert sich der Schalter (ein Gurt hat EINEN Besitzer).
-  · **Master**-Chip → „Audio input" (#1247): die EINE Mikrofon-Tür ist zurück. Mix-Streifen
-    und Einlade-Banner bleiben weg. Der Monitorpfad selbst ist unangetastet — die Tür ist da,
-    damit DU ihn prüfst; bestätigt ist er nicht, und der Store sagt weiter nichts davon.
-  · Eingang → Bild (#1248): Pegel, Bass-Anteil, Transienten und Helligkeit des Mikrofons
-    bewegen das Visual (Dish, Stoß, Ausbreitung, leichter Farbton). „Monitor level 0" ist der
-    Nur-Hören-Modus für Club und Festival — Signal rein, nichts auf die PA.
-  · Vier Stimm-Ziele in der Modulations-Matrix (#1249): Harmony-Mix, Granular-Mix,
-    Granular-Pitch, Tune-Stärke — Kohärenz/HRV/Atem können sie ziehen, ~1 Hz, mit Fade.
-  · **Master**-Chip → Routing → „Body → parameter" (#1250): die Matrix hat zum ersten Mal
-    eine Fläche (Quelle · Ziel · Tiefe · Invert · Kurve · Glättung, „Add route" je Ziel).
-  · Absturz-Hypothese #5 gebaut (#1251): `prepare()` zwischen Session-Claim und Format-Read.
-    Ob die isInputConnToConverter-Familie damit weg ist, sagt nur Dein Gerät — das Log muss
-    die Sprosse „on: prepared before format read" VOR dem Format-Read zeigen.
-  · **Master**-Chip → „Audio input" → „Harmony in key" (#1252): die Harmoniestimmen liegen
-    auf Terz und Quinte der Session-Tonart statt auf festen Halbtönen — ein gesungenes E in
-    C-Dur bekommt G und B, kein Gis. Default aus.
+    101055f  #1269  never connect an input node that has no hardware format
+    fea1adc  #1272  read the input node on a RUNNING engine (Hypothese #6)
+    bd168cc  #1273  the monitor earns its level instead of being ducked back down
 
-  **B. MIDI 2.0 raus (#1253).** **Master**-Chip → Routing → MIDI out → „MIDI 2.0 source":
-  eine zweite virtuelle Quelle „Echoelmusic (MIDI 2.0)" mit 16-Bit-Velocity und 32-Bit-
-  Controllern. Default aus, weil ein DAW, das beide Quellen aufnimmt, jede Note doppelt
-  bekäme. Hardware bekommt weiter MIDI 1.0.
+  #1269 ist Dein Absturz. Der Pfad bricht jetzt sauber ab und schreibt
+  `input format unusable after the session claim — NOT connecting` ins Log, statt den
+  `isInputConnToConverter`-SIGABRT zu werfen. Der Marker dazu steht auf
+  `AudioEngine.swift:2938` und trägt Deinen eigenen Satz.
+  ⚠️ Das heißt AUSDRÜCKLICH: die App überlebt, aber das Monitoring startet in dem Fall
+  NICHT. „Kein Absturz" ist der Fix; „Monitoring läuft" ist die nächste Frage, und die
+  entscheidet Dein Log.
 
-  **C. MIDI-Export mit 480 PPQ (#1254).** **Save/Export**-Chip → MIDI: die Datei trägt jetzt
-  die Noten-Auflösung des Instruments statt 96 — Eingespieltes und das Mikro-Timing der
-  Touch-Noten kommen unverändert in der DAW an (bisher bis 4 ms gefloort).
+  #1273 ist gegen das Pfeifen: das Monitoring geht mit GESCHLOSSENEM Gate an
+  (`monitorMixer.outputVolume = 0`) und öffnet über ~1,5 s, und nur solange der Raum
+  ruhig bleibt. Beim Einschalten mitten in der Musik ist der schlimmste Fall jetzt ein
+  Anschwellen, das dort stoppt, wo der Raum es stoppt — kein Quietschen, das erst
+  hinterher weggeduckt wird.
 
-  **D. OSC-Steuereingang (#1255).** **Master**-Chip → Routing → „Accept OSC control" (default
-  aus): TouchOSC, TouchDesigner, QLab dürfen genau sechs Adressen schicken —
-  `/echoelmusic/ctrl/bpm` (nur bei BPM-Lock), `key`, `scale`, `genre`, `visualStyle`,
-  `blackout`. Absender-Allowlist per IP, Port 8001. KEIN play/stop über das Netz — das ist
-  Deine Entscheidung (Frage unten).
+  #1295 ist die Reparatur meines eigenen Fehlers: seit gestern hat das blockierende
+  Test-Bundle (548 Dateien) GAR NICHT kompiliert — auf dem Branch und auf `main` —,
+  weil ich in einem Wächter `ColabPayload.egressible` statt `BioPeek.egressible`
+  geschrieben hatte. `Xcode Compile Check` blieb grün, weil er nur `Sources/` baut.
+  Für diesen Build heißt das: die 548 Wächter laufen zum ersten Mal seit zwei Tagen
+  wieder mit.
 
-  **E. Store-Text (#1256, nicht in der App).** Keywords auf Kundenwörter, der Rig-Satz über
-  dem Fold, `colour`→`color`, „Meditativ" raus, Externer-Bildschirm-Zeile. Liegt in
-  `fastlane/metadata`; hochgeladen wird es erst von Deiner Hand (`fastlane deliver`), kein
-  Workflow tut das. en-GB, Titel und Untertitel habe ich absichtlich nicht angefasst.
+  ── WAS ICH VON DIR BRAUCHE, mit HypeMiC und Kopfhörer ────────────────────
 
-  **Was ich NICHT beweisen kann:** alles oben ist compile-verifiziert (Xcode Compile Check
-  #2549 grün auf `d9f48b1` für #1246–#1254, #2550 grün auf `8d31354` für #1255; der Kopf
-  dieses Builds hat dieselben Sources wie `8d31354`), die Wächter sind transkribiert, nicht
-  ausgeführt. Ob das Mikrofon-Monitoring diesmal überlebt (A, #1247/#1251), ob der Eingang
-  das Bild spürbar bewegt (A, #1248) und ob die Harmonie in der Tonart sauber klingt (A,
-  #1252), sieht und hört nur Dein Gerät — die Bitten dazu stehen unten, gedruckt.
+  1. HypeMiC per USB dran, Kopfhörer in die HypeMiC. App starten.
+  2. Musik starten (Generate + Play), laufen lassen.
+  3. ERST DANN: Master-Panel → „Audio input" → Live monitoring AN.
+       · Die App darf nicht abstürzen. Das ist der Punkt.
+       · Kein Pfeifen im ersten Moment; wenn Pegel kommt, dann anschwellend.
+  4. Monitoring wieder AUS, Musik läuft weiter.
+  5. HypeMiC im laufenden Betrieb ABZIEHEN und wieder anstecken.
+  6. Danach: Save/Export-Chip → „Diagnostics" → Teilen. Das Log ist die Antwort.
 
-  **Eine Frage an Dich:** soll ein OSC-Cue die Sitzung STARTEN dürfen (play/stop von außen)?
-  Heute pinnt ein Wächter drei Start-Pfade als Deine Entscheidung; ich habe keinen vierten
-  gebaut, ohne Dich zu fragen.
+  Im Log will ich die Leiter sehen: `on 1/5` … `on 5/5`. Stille zwischen zwei Sprossen
+  ist ein Befund — jede Sprosse steht VOR ihrem Schritt, ein Schritt der stirbt schweigt
+  also. Wenn `on 2/5` fehlt und stattdessen `input format unusable …` steht, hat #1269
+  gegriffen und wir wissen, wo es weitergeht.
 
-  Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
-  hat seit #859 die Lebenszyklus-Leiter, und seit #1251 die neue Sprosse; Stille zwischen
-  zwei Sprossen ist ein Befund.
+  ── STAND DER GATES, ehrlich ──────────────────────────────────────────────
 
-  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
+  `Build for Testing` = SUCCESS auf `cea3b4f` (CI/CD 6055, Job 103569351723, Schritt 9).
+  Das ist die einzige Aussage, die beweist, dass das blockierende Bundle kompiliert.
+  `Run Tests` meldet bei JEDEM Push „failure" (#396, Clone 2 stirbt) — die Conclusion
+  der Pipeline sagt deshalb nichts, die Job-Schritte sagen alles.
+  SwiftLint, Swift-Format, Security-Scan: grün.
 
-  Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since 3eef86b`
-  (3eef86b = der 468-Bump). Die fünfzehn AUDIO-Bitten sind die aus A (sieben davon waren seit
-  #1024 blockiert und sind mit der Tür wieder offen), die zwei SYNC-Bitten aus B und D, die
-  UI-Bitte aus A (Body without sound).
+  In dieser Web-Session gibt es KEINE Swift-Toolchain (`command -v swift` → nichts).
+  Ich habe hier nichts kompiliert und keinen Test ausgeführt; benotet wird durch
+  Transkription gegen beide Bäume, und die fünf Nadel-Checker beenden mit 0.
 
-  Founder device-session checklist — 24 NEW or REWORDED since `3eef86b`, of 153 open, none answered yet
+  ⚠️ ZWEI BEFUNDE IN DER CI, die ich nicht anfassen darf (`.github/workflows/**` ist
+  founder-gated — melden statt editieren), beide älter als diese Runde:
+    · neun Build-Schritte in `ci.yml`, `benchmark.yml` und `full-tests.yml` schlucken
+      Build-Fehler (`|| true`, fehlendes `set -o pipefail`) — dort kann ein Bruch nie
+      rot werden;
+    · `ci.yml:290-291` filtert auf die Klasse `ComprehensiveTestSuite`, die es nicht
+      gibt — dieser Schritt testet nichts.
+
+  GERÄTEVERIFIZIERT IST NICHTS DAVON. Der ganze Monitoring-Pfad ist code-verifiziert
+  und geräteoffen; die `isInputConnToConverter`-Familie ist nicht geschlossen, sie ist
+  an dieser einen Stelle entschärft.
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ──────────────────
+  (gedruckt mit `python3 scripts/founder-verify.py --since eecf800`, nicht von Hand)
+
+  Founder device-session checklist — 27 NEW or REWORDED since `eecf800`, of 180 open, none answered yet
      'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
      ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
-
-  ── AUDIO  (15)
-     Audio/AudioConfiguration.swift:343
-        NEEDS-FOUNDER-VERIFY: Bluetooth-Kopfhörer verbinden, spielen, Monitoring EINschalten — die Musik muss Stereo/v…
-     Audio/AudioEngine.swift:446
-        NEEDS-FOUNDER-VERIFY: Megaphone am Gerät — Monitoring auf dem Lautsprecher, Schalter an: Stimme deutlich laute…
-     Audio/AudioEngine.swift:545
-        NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Live monitoring AN, Monitor level 0, Musik aus dem Raum / vom I…
-     Audio/AudioEngine.swift:693
-        NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Harmony voices AN → „Harmony in key" AN, Tonart C-Dur, E singen…
-     Audio/AudioEngine.swift:726
-        NEEDS-FOUNDER-VERIFY: Master-Chip → „Audio input" → „Harmony voices" AN — zwei Harmoniestimmen (Terz + Quinte)…
-     Audio/AudioEngine.swift:740
-        NEEDS-FOUNDER-VERIFY: Master-Chip → „Audio input" → „Granular texture" AN — eine schimmernde Grain-Wolke unter…
-     Audio/AudioEngine.swift:2657
-        NEEDS-FOUNDER-VERIFY: Master → „Audio input" → Live monitoring AN — das Log muss „on: prepared before format r…
-     Audio/AudioEngine.swift:2952
-        a device run can say. NEEDS-FOUNDER-VERIFY: mic monitor ON while the master graph runs at 44.1 kHz on 48 kHz h…
-     Audio/AudioEngine.swift:3652
-        NEEDS-FOUNDER-VERIFY: Lautsprecher-Monitoring, Howl provozieren (Mic Richtung Lautsprecher) — es darf GAR NICH…
-     Audio/MonitorInsertAU.swift:174
-        NEEDS-FOUNDER-VERIFY: Monitoring an (Log zeigt „insert in") und normal sprechen/singen — klingt der Monitor UN…
-     Studio/PatchbayView.swift:328
-        NEEDS-FOUNDER-VERIFY: Master → Routing → „Body → parameter" → Add route → Coherence → „Voice · harmony mix", D…
-     CISmoke/TheAutotuneCharacterIsDerivedNotStoredTests.swift:35
-        performer mid-take. That is a device probe (NEEDS-FOUNDER-VERIFY: monitoring on, Tune to key on, step through …
-     CISmoke/TheBodyPlaysThePictureWithoutSoundTests.swift:18
-        NEEDS-FOUNDER-VERIFY sits at `setBodyOnly`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (`65b89bc`…
-     CISmoke/TheNotchIsSlewedAndMonitorOnlyTests.swift:38
-        (NEEDS-FOUNDER-VERIFY: speaker monitoring, provoke a howl, hear it die as a ramp). ⚠️ KNOWN BLIND SPOT (#595 r…
-     CISmoke/TheVoiceTuneSnapsToTheSessionKeyTests.swift:27
-        (NEEDS-FOUNDER-VERIFY: monitoring on, Tune to key on, sing off-pitch — the monitor must pull you to the Tonart…
-
-  ── OTHER  (5)
-     Core/StudioDefaultKeys.swift:447
-        NEEDS-FOUNDER-VERIFY: Routing → "Accept OSC control" on; from TouchOSC/TouchDesigner send `/echoelmusic/ctrl/k…
-     Core/StudioDefaultKeys.swift:483
-        NEEDS-FOUNDER-VERIFY: Routing → MIDI out on → "MIDI 2.0 source" on; on a Mac (Logic / MIDI Monitor) the device…
-     CISmoke/TheHarmonyKnowsTheKeyTests.swift:12
-        — NEEDS-FOUNDER-VERIFY at `AudioEngine.voiceHarmonyFollowsKey`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against t…
-     CISmoke/TheInputFeedsThePictureTests.swift:20
-        follows a room is a DEVICE PROBE — NEEDS-FOUNDER-VERIFY at `AudioEngine.inputFeatures`. ⚠️ HONEST GRADING — TR…
-     CLAUDE.md:40
-        - Live pipeline: HealthKit + camera rPPG (live, locks on device) + Demo → bio snapshot. ( Universal BLE HR (0x…
-
+  
+  ── AUDIO  (8)
+     Audio/AudioEngine.swift:2741
+        NEEDS-FOUNDER-VERIFY: Master → „Audio input“ → Live monitoring AN — das Log muss „on: starting engine before t…
+     Audio/AudioEngine.swift:2938
+        NEEDS-FOUNDER-VERIFY: v10.79.469 (2589) stürzte hier ab. Master → „Audio input" → Live monitoring AN, auf dems…
+     CISmoke/GenreBatchElevenATests.swift:29
+        NEEDS-FOUNDER-VERIFY: Celtic Air in Flow mode — does the body-followed tempo read as an unhurried air, or as a…
+     CISmoke/GenreBatchFiveBTests.swift:33
+        NEEDS-FOUNDER-VERIFY: play Industrial Techno for a minute — does the fifth-less cluster read as METAL, or mere…
+     CISmoke/GenreBatchFiveTests.swift:35
+        NEEDS-FOUNDER-VERIFY: pick Glacial Field with a calm body and listen for a minute — is the high cluster BEATIN…
+     CISmoke/GenreBatchSixATests.swift:25
+        NEEDS-FOUNDER-VERIFY: Black Metal at 180 — does the long thin hall read as COLD, or just as far away? Modal Ja…
+     CISmoke/GenreBatchSixBTests.swift:32
+        NEEDS-FOUNDER-VERIFY: Boom Bap at 90 — does the tape wow read as dust or as wobble? Electro Funk — is the sixt…
+     CISmoke/TheMonitorEarnsItsLevelTests.swift:16
+        is a device probe — NEEDS-FOUNDER-VERIFY at the engage site. What is pinned here is the SHAPE: closed on engag…
+  
+  ── BIO  (7)
+     Bio/BodyPoseAnalyzer.swift:22
+        NEEDS-FOUNDER-VERIFY (#1264): Face source on, Bio panel — raise the LEFT hand: does "Hand L" rise (chirality, …
+     Bio/FaceExpressionBioPublisher.swift:29
+        NEEDS-FOUNDER-VERIFY: Bio source → "Play with your face" on a TrueDepth iPhone — the camera dialog names both …
+     Bio/FaceExpressionBioPublisher.swift:32
+        NEEDS-FOUNDER-VERIFY (#1258): Bio panel → "Calibrate", hold still 3 s — afterwards a still face shows Smile/Br…
+     Bio/FaceExpressionBioPublisher.swift:35
+        NEEDS-FOUNDER-VERIFY (#1259): with a Smile → FX route sounding, turn the face away — the parameter eases back …
+     Bio/FaceExpressionBioPublisher.swift:49
+        NEEDS-FOUNDER-VERIFY (#1264): the four device asks are at `BodyPoseAnalyzer`'s header.
+     Sequencer/BioComposer.swift:403
+        NEEDS-FOUNDER-VERIFY: generate the same genre twice with a calm body — is it the SAME piece in a new take (rig…
+     CISmoke/TheCameraLayerIsATextureTests.swift:35
+        right way up, mirrored, and fills the field is a device question (NEEDS-FOUNDER-VERIFY at the renderer's camer…
+  
+  ── OTHER  (7)
+     Core/BodyPoseMath.swift:58
+        (NEEDS-FOUNDER-VERIFY at `BodyPoseAnalyzer`'s header, with the rest of the body asks).
+     Core/FaceExpressionMapping.swift:318
+        channel reaches 1 before the tracker loses the face. NEEDS-FOUNDER-VERIFY (#1260): turn/nod/tilt to a natural …
+     Core/StudioDefaultKeys.swift:485
+        NEEDS-FOUNDER-VERIFY: with an OSC monitor on the target, confirm `/heart/rmssd`, `/heart/sdnn` and `/heart/pnn…
+     CISmoke/TheBodyChannelsRideTheFaceSessionTests.swift:27
+        `BodyPoseAnalyzer`'s header (NEEDS-FOUNDER-VERIFY #1264). ⚠️ HONEST GRADING (#433/#464), transcribed in Python…
+     CISmoke/TheClinicalDetailIsOptInTests.swift:19
+        DEVICE PROBE — NEEDS-FOUNDER-VERIFY at `StudioDefaultKeys.oscClinicalDetail`. ⚠️ HONEST GRADING (§3) — TRANSCR…
+     CISmoke/TheCutoutIsAMatteNotAGuessTests.swift:20
+        None of it proves the matte's edge or its alignment on a device — NEEDS-FOUNDER-VERIFY at the renderer's camer…
+     CISmoke/TheInputIsReadOnARunningEngineTests.swift:23
+        DEVICE PROBE, NEEDS-FOUNDER-VERIFY at the call site. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the parent (…
+  
+  ── VISUAL  (3)
+     Video/CameraAnalyzer.swift:248
+        NEEDS-FOUNDER-VERIFY: Puls-Pille → Bio-Panel, Finger auflegen und eine Minute laufen lassen. Die Kurve darf ni…
+     Video/CameraFrameSlot.swift:27
+        (NEEDS-FOUNDER-VERIFY sits at the renderer's camera block, not here). PRIVACY. Frames never leave this process…
+     Views/MetalBioView.swift:1877
+        NEEDS-FOUNDER-VERIFY: Face-Quelle an, Field → Camera layer > 0 — steht das Bild richtig herum, spiegelverkehrt…
+  
   ── UI  (2)
-     Studio/EchoelStudioView.swift:9642
-        NEEDS-FOUNDER-VERIFY: Bio-Panel → „Body without sound" AN, Finger auf die Kamera, Visual- Fenster öffnen — das…
-     CISmoke/TheMatrixHasADoorTests.swift:14
-        route authored here audibly moves the harmony mix is a DEVICE PROBE — NEEDS-FOUNDER-VERIFY at `modulationSecti…
-
-  ── SYNC  (2)
-     CISmoke/TheMIDI2SourceIsSwitchableTests.swift:15
-        NEEDS-FOUNDER-VERIFY at `StudioDefaultKeys.midiOutUMP2`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against the pare…
-     CISmoke/TheOSCControlInputIsAWhitelistTests.swift:13
-        PROBE — NEEDS-FOUNDER-VERIFY at `StudioDefaultKeys.oscInEnabled`. ⚠️ HONEST GRADING — TRANSCRIBED (§0) against…
-
-  ── NOT ASKS (16) — the marker used as a noun, nobody can perform these
+     Studio/EchoelStudioView.swift:6818
+        NEEDS-FOUNDER-VERIFY: Field → "Camera layer" auf 0,5, Face-Quelle an — erscheint das Gesicht im Feld, folgt de…
+     CISmoke/TheFaceSourceHasADoorTests.swift:16
+        (NEEDS-FOUNDER-VERIFY in the publisher's header), not a claim here. ⚠️ HONEST GRADING (#433/#464), transcribed…
+  
+  ── NOT ASKS (18) — the marker used as a noun, nobody can perform these
      CISmoke/GenreBassGrammarTests.swift:12   ("the" in front of it — prose about the backlog)
      CISmoke/GenreDeepTechTests.swift:26   ("the" in front of it — prose about the backlog)
      CISmoke/OnboardingPagesScrollTests.swift:15   ("the" in front of it — prose about the backlog)
@@ -193,19 +207,21 @@ notes: |
      CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:198   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:247   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/TheExportFailureSpeaksAtTheButtonTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheFaceSourceHasADoorTests.swift:142   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/TheLockNeedsFramesTests.swift:19   ("the" in front of it — prose about the backlog)
      CISmoke/TheStillSaysWhetherItWasSavedTests.swift:15   ("the" in front of it — prose about the backlog)
      CISmoke/TheTakeSaysWhetherItWasWrittenTests.swift:14   ("the" in front of it — prose about the backlog)
+     CISmoke/TheVariationNarrowsAsTheBodySettlesTests.swift:110   (the marker IS the whole string literal — a guard asserting the convention)
      CISmoke/VisualFineTuneReflowsTests.swift:109   ("the" in front of it — prose about the backlog)
      CLAUDE.md:35   ("jeden" in front of it — prose about the backlog)
-
+  
   ── HOW TO RETIRE AN ASK once you have done it on a device
      Put the date on the SAME line as the marker, then commit:
        // NEEDS-FOUNDER-VERIFY VERIFIED-YYYY-MM-DD: <the original instruction>
      Keep the instruction. The line stays as the record of WHAT was confirmed and
        WHEN — deleting it also deletes the date, which is the first thing you want
        back when the behaviour regresses.
-
+  
   ── LIMITS (read before treating this as a work queue)
      ANSWERED depends on somebody writing the mark. An ask you did on a device but
        never marked stays in the open list — the tool reads the tree, not your
@@ -223,884 +239,7 @@ notes: |
        marker line. So this list under-reports: an ask whose door died unnoticed is
        still shown as open, which is the safe direction and not a clean bill.
 
-  ── 0c. WAS IN 10.79.468 NEU WAR (Vorgänger) ─────────────────────────────
-
-  **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt alles
-  seit 467 — die Scheiben #1216 bis #1244, keine davon je auf einem Gerät gelaufen. Ich
-  sortiere nach dem, was Du MERKEN kannst; die Ressourcen-Hälfte steht zuerst, weil Du
-  danach gefragt hast.
-
-  **A. Das Bild kostet weniger, wo das Gerät es braucht (#1243, #1244, #1242).** Bisher hat
-  die Qualitätsstufe (Thermik, Akku) nur die RING-DICHTE gesenkt — die GPU hat weiter ein
-  Vollbild in voller Auflösung gerechnet, auch bei „kritisch". Jetzt sinkt bei der Stufe
-  „low" (Stromsparmodus) und „minimal" auch die Render-AUFLÖSUNG (0,7 bzw. 0,5 linear, also
-  ~49 % / ~25 % der Pixel); in der Normalstufe ist das Bild byte-identisch zu vorher. Läuft
-  eine Aufnahme, bleibt die Auflösung voll. Zweitens: steht das Bild still (Reduce Motion, oder
-  die Stufe „minimal" erzwingt es), zeichnet der Renderer nicht mehr 60 identische Frames pro
-  Sekunde, sondern gar keinen, bis sich etwas ändert — das letzte Bild bleibt stehen, kein
-  Pausieren, keine Cadence-Änderung. Drittens: der Spektral-Donut rechnet seine FFT mit 30
-  statt 60 Hz; seine Bewegung ist zeitbasiert, also gleich schnell, nur halb so oft gerechnet.
-
-  **B. Die eine lock-freie Warteschlange, weniger Reibung (#1237, #1239).** Die drei
-  Diagnose-Zähler der SPSC-Queue lagen auf EINER Cache-Line, die Audio-Thread und Main-Thread
-  bei jeder Operation mit Voll-Fence beschrieben haben; und `enqueue()` hat mit einem Atomic
-  auf die Zeile des Consumers GESCHRIEBEN. Jetzt liegen alle Wörter auf eigenen Lines, die
-  Zähler zählen ohne Fence, die Zeiger sind `let`. Klang unverändert; messbar nur Thermik.
-
-  **C. Bio ehrlicher, auf beiden Quellen (#1216, #1220, #1233, #1236).** Der Gurt publiziert
-  keinen toten Körper mehr (Meldung älter als 3 s oder Kontakt-Bits „kein Kontakt" → nichts).
-  Die Kamera rechnet Kohärenz auf einer rollenden Schlag-Historie — bisher brauchte sie
-  ≥ 17 Schläge in 10 s, also ≥ 102 bpm, sonst blieb Kohärenz auf der Kamera für die ganze
-  Sitzung bei 0 und alle vier Kohärenz-Mappings, der Flow-Servo, `/coherence` und ADM-OSC-
-  Distanz liefen auf Neutral; jetzt kommt sie bei Ruhepuls nach ~16 s. Die Kamera weigert
-  sich wie der Gurt, eine HRV zu nennen, wenn weniger als 80 % der Schläge die Hygiene
-  überleben (schlechter Fingerkontakt → „—" statt einer kleinen Zahl, auch auf OSC). Und die
-  HRV-Zelle im **Bio**-Panel zeigt eine gemessene SDNN der Watch in Millisekunden statt einer
-  einheitslosen Normalisierung.
-
-  **D. Takt und Licht (#1223, #1218, #1219, #1221).** Die Step-Clock armt vom Ideal-Raster,
-  nicht von „jetzt + Intervall" — Handler-Latenz wurde bisher zu dauerhaftem Phasenverlust
-  gegen Click und MIDI-Clock (~3 % zu langsam bei 120 BPM Sechzehnteln). Nach einem Suspend
-  Neustart am Raster statt Burst. Art-Net und sACN senden Keep-alive alle 0,8 s (ein Node, der
-  4 s nichts hört, hält oder geht schwarz) und sACN sagt beim Stop Stream_Terminated; Art-Net
-  sendet unicast an die eingetragene Adresse (Broadcast erreicht auf iOS nichts). MPE OUT stellt
-  Bend/Slide/Press VOR dem Note-on statt danach — der erste Puffer jeder Note spielte bisher
-  auf den alten Werten des Kanals.
-
-  **E. Kleines, Ehrliches (#1224–#1232, #1234, #1235, #1240, #1241).** Kohärenz-Trend fällt auf
-  0, wenn die Quelle nicht mehr misst · vierte `register(defaults:)` und tote `shouldAutoPlay`-
-  Leitung entfernt · das Datenschutz-Manifest deklariert keine Disk-Space-API mehr und wird
-  jetzt geparst statt nur gescannt (der erste Versuch war ein unparsebares plist — der Wächter
-  hat es gefunden) · Website: Hero verkauft den Mechanismus statt „calm down", das spielbare
-  Bild und die Beamer-Bühne stehen auf der Startseite, und es gibt `integrations.html` mit
-  jeder Adresse, jedem Port und der DMX-Karte plus Reaper- und TouchDesigner-Anleitung.
-
-  **Was ich NICHT beweisen kann:** alles oben ist compile-verifiziert (Xcode Compile Check
-  #2536 grün auf `d30f39b` für #1216–#1237; #2539 auf `c3227d0` für #1239/#1242/#1243;
-  #2540 auf `5cf53a2` für #1244/#1245), die Wächter sind transkribiert, nicht ausgeführt. Ob A
-  auf dem Gerät kühler läuft und ob das stehende Bild unter Reduce Motion flackerfrei bleibt,
-  sieht nur Dein Gerät — die Bitten dazu stehen unten, gedruckt.
-
-  Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
-  hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
-
-  ── 0d. NEU BEANTWORTBAR IN 10.79.468 (dem VORGÄNGER, nicht diesem Build) ─────────
-
-  Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since 18b5615`
-  (18b5615 = der 467-Bump). Die drei VISUAL-Bitten sind die aus A, die zwei BIO-Bitten aus C,
-  die AUDIO-Bitte aus D.
-
-  Founder device-session checklist — 12 NEW or REWORDED since `18b5615`, of 130 open, none answered yet
-     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
-     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
-
-  ── VISUAL  (4)
-     Studio/SpectralDonutView.swift:49
-        the Canvas, for the same picture. NEEDS-FOUNDER-VERIFY: open the donut look, play a loop — do the rings still …
-     Views/MetalBioView.swift:1081
-        of the ask below. NEEDS-FOUNDER-VERIFY: force `.low` (Low Power Mode on) — is the picture acceptably soft at 0…
-     Views/MetalBioView.swift:1709
-        NEEDS-FOUNDER-VERIFY: Reduce Motion on, hold still — does the picture stay (no black, no flicker) and resume t…
-     CISmoke/TheDonutClocksAtHalfRateTests.swift:23
-        smooth is a device question (NEEDS-FOUNDER-VERIFY at the constant).
-
-  ── OTHER  (4)
-     CISmoke/TheDrawableFollowsTheTierTests.swift:23
-        recording's size are device questions (NEEDS-FOUNDER-VERIFY at the lever).
-     CISmoke/TheLightStreamsStayAliveAndSayGoodbyeTests.swift:22
-        green on both. NEEDS-FOUNDER-VERIFY: a console (sACNView is free) showing the source stay present through a 10…
-     CISmoke/TheRendererSkipsAnUnchangedFrameTests.swift:24
-        with no flicker is a device question (NEEDS-FOUNDER-VERIFY at the skip).
-     CISmoke/TheStepClockKeepsItsGridTests.swift:23
-        seamed over 16 bars is a device listen — NEEDS-FOUNDER-VERIFY at the helper.
-
-  ── BIO  (2)
-     Bio/CameraRPPGBioPublisher.swift:567
-        NEEDS-FOUNDER-VERIFY: camera take at rest for ~90 s — does the Bio panel's coherence leave 0 after ~16 beats a…
-     Bio/CameraRPPGBioPublisher.swift:1582
-        NEEDS-FOUNDER-VERIFY: camera take with a deliberately poor finger contact — does the Bio panel's HRV cell read…
-
-  ── AUDIO  (1)
-     Sequencer/PatternEngine.swift:666
-        NEEDS-FOUNDER-VERIFY: 16 bars at 120 BPM with the click on and the Bio panel open — do notes and click stay se…
-
-  ── SYNC  (1)
-     CISmoke/TheArtNetDefaultIsUnicastTests.swift:23
-        sACN half green on both. NEEDS-FOUNDER-VERIFY (Wireshark on the LAN, route on, default host): packets to 192.1…
-
-  ── 0e. WAS IN 10.79.467 NEU WAR (Vor-Vorgänger) ─────────────────────────────
-
-  **Deine Ansage: „Du optimierst alles und entscheidest alles."** Dieser Build trägt
-  alles seit 466 — dreizehn Scheiben (#1203–#1215), keine davon je auf einem Gerät gelaufen.
-  Ich sortiere nach dem, was Du MERKEN kannst.
-
-  **A. Ein Absturz weniger (#1212).** Eine Projektdatei („Open project") mit einem kaputten
-  Grundton konnte die App beim Öffnen hart abstürzen lassen. Jetzt wird der Grundton beim
-  Laden auf C…H gefaltet — dieselbe Regel, die die Tonart selbst benutzt.
-
-  **B. Weniger Rechenlast im Klang, ohne Klangänderung (#1213, #1214).** Der Vorschau-Sampler
-  lief mit 44,1 kHz in einem 48-kHz-Graphen; die Engine hat deshalb auf JEDEM Audio-Block
-  einen Sample-Rate-Wandler mitlaufen lassen, der Stille umgerechnet hat. Jetzt Graph-Rate.
-  Und das Delay hat für den Tone-Regler zwei Transzendente PRO SAMPLE gerechnet; jetzt einmal
-  beim Setzen. Beides bit-identisch im Klang — hörbar ist nichts, messbar nur CPU/Thermik.
-
-  **C. Bio ehrlicher (#1215).** Beim Start mit der Watch als einziger Quelle konnte eine bis zu
-  59 Minuten alte Puls-Probe als lebender Körper erscheinen. Jetzt gilt ein Höchstalter von
-  10 Minuten — ältere Proben werden verworfen, die Anzeige bleibt lieber leer als alt.
-  Das ist ein Urteilswert; ob 10 Minuten passen, steht unten als Bitte.
-
-  **D. Aus der Neustart-Sitzung, jetzt erstmals im Build (#1203–#1207b, #1208).** Das Leeren
-  des Delays kann keinen gleichzeitigen Leser mehr abstürzen lassen · das aufgenommene Bild
-  besitzt seine Ziel-Textur · der Allpass-Interpolator klingelt bei ganzzahliger Verzögerung
-  nicht mehr ewig · jeder Steuerwert der Modulations-Effekte, des Delays und einer
-  Projektdatei wird geklammert, bevor er rechnet (ein NaN konnte den Klang DAUERHAFT
-  stumm schalten — die Klasse, die #1206b/#1207/#1208 geschlossen haben).
-
-  **E. Nach außen (#1209, #1210).** Die Datenschutzerklärung ist jetzt IN der App verlinkt
-  (Learn-Ansicht) — App Review 5.1.1(i) für eine HealthKit-App. Und ADM-OSC sendet die
-  Adressnamen der Spec (`/azim /elev /dist`), nicht mehr erfundene `/position/…`-Namen;
-  ein FletcherMachine/L-ISA/SPAT liest die Objekte damit erstmals.
-
-  **Was ich NICHT beweisen kann:** alles oben ist compile-verifiziert (Xcode Compile Check
-  #2523 grün auf `517d97a`), die Wächter sind transkribiert, nicht ausgeführt. Ob der
-  Wandler-Wegfall (B) auf dem Gerät kühler läuft, sieht nur Dein Gerät.
-
-  Falls etwas knistert oder stumm bleibt: Save/Export → „Diagnostics" → Teilen — das Log
-  hat seit #859 die Lebenszyklus-Leiter, Stille zwischen zwei Sprossen ist ein Befund.
-
-  ── 0f. NEU BEANTWORTBAR IN 10.79.467 (dem VOR-VORGÄNGER, nicht diesem Build) ─────────
-
-  Gedruckt, nicht abgeschrieben: `python3 scripts/founder-verify.py --since e066acb`
-  (e066acb = der 466-Bump). Drei Bitten sind neu; die Watch-Bitte ist die aus C.
-
-  Founder device-session checklist — 3 NEW or REWORDED since `e066acb`, of 118 open, none answered yet
-     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
-     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
-
-  ── BIO  (1)
-     Bio/HealthKitBioPublisher.swift:48
-        NEEDS-FOUNDER-VERIFY: start the app with the Watch as the only source after >10 min without a Watch reading — …
-
-  ── SYNC  (1)
-     Sync/ADMOSCSender.swift:29
-        NEEDS-FOUNDER-VERIFY: one object visibly moving in a real ADM-OSC renderer (FletcherMachine, L-ISA, SPAT, or t…
-
-  ── OTHER  (1)
-     CISmoke/TheAllpassInterpolatorCannotRingForeverTests.swift:87
-        NEEDS-FOUNDER-VERIFY — und das REZEPT ist beim ersten Mal falsch gewesen, in beiden Haelften. Es sagte "Tiefe …
-
-
-  ── 0. WAS IN 10.79.465 NEU IST ──────────────────────────────────────────
-
-  **Genau eine Sache — aber diesmal siehst Du sie sofort.**
-
-  Der Look **„Depth"** hat bisher eine **flache graue Fläche** gezeigt. Nicht dunkler,
-  nicht detailärmer: rechnerisch der GLEICHE Wert an jedem Bildpunkt. Kein Muster, egal
-  was klang, egal wie Du geatmet hast.
-
-  Warum: Depth zeichnet das Licht, das durch eine schwingende Wasseroberfläche auf den
-  Boden fällt. Dafür braucht er zwei Zahlen aus der Wasser-Physik — wie eng die Wellen
-  stehen und wie stark sie sind. Diese Physik wurde nur gerechnet, wenn der Look **„Dish"**
-  gerade lief. Dish steht aber nicht in der Standard-Reihe, Depth schon. Also blieb die
-  Stärke auf null — und null heißt in dieser Formel „spiegelglatt".
-
-  **Jetzt:**
-
-  · engeres Netz bei höherem Ton, weiteres bei tiefem
-  · kräftiger bei lautem Ton, ruhiger bei leisem
-  · beim Atmen hebt und senkt sich die Tiefe des Bodens
-  · **Stille bleibt ein ruhiger, gleichmäßiger Grund — nicht schwarz.** Das ist die
-    physikalisch richtige Antwort, kein Notbehelf.
-
-  Die Blitz-Bremse ändert sich NICHT (1,50 Hz, nachgerechnet): weder die Stärke noch die
-  Tonhöhe tragen den Takt, an dem das Blitz-Budget hängt.
-
-  Alles andere aus dieser Runde ist Wahrheitsarbeit im Repo, die Du nicht siehst: ein
-  Kommentar behauptete „es gibt nur eine Umrechnung Ton→Farbe" — es gibt zwei, und die
-  zweite ist absichtlich da. Kein Klang, kein Bild betroffen.
-
-  ── 0b. NEU BEANTWORTBAR IN DIESEM BUILD ─────────────────────────────────
-
-  Gedruckt mit `python3 scripts/founder-verify.py --since 8540ad3e`, also nicht von Hand
-  zusammengesucht:
-
-  **VISUAL (1)**
-
-  · Visual-Fenster öffnen, den Look-Regler ganz nach rechts auf **„Depth"**, eine Sequenz
-    laufen lassen. Erwartet ist ein **Netz** wie auf einem Schwimmbadboden: helle Linien,
-    dunkle Zellen. Zwei Fragen, die nur Dein Auge beantwortet:
-    **(1)** Ist das Netz zu unruhig, oder gerade richtig?
-    **(2)** Bleibt es bei Stille ein ruhiger gleichmäßiger Grund — und nicht schwarz?
-
-  ⚠️ **Weiterhin offen und von mir NICHT erneut gefragt** (steht seit 463 hier): ist das
-  Bild am weitesten, wenn die Lungen VOLL sind, oder wenn sie leer sind? Wenn es umgekehrt
-  ist, kippt jede Atem-Abbildung — Bild, Licht, Raum, Klang — um einen halben Zyklus.
-
-  ── 0c. WARUM DU 10.79.463 ZWEIMAL IN TESTFLIGHT SIEHST ──────────────────
-
-  **Mein Fehler, und er ist harmlos — aber Du sollst nicht rätseln.**
-
-  Builds **2582** und **2583** tragen BEIDE die Version 10.79.463 und enthalten
-  **denselben App-Code**. Grund: der TestFlight-Lauf startet bei JEDER Änderung an der
-  Datei `.deploy/release`, nicht erst bei einer neuen Versionsnummer. Ich habe diese Datei
-  angefasst, um eine Anleitung für die nächste Sitzung hineinzuschreiben — und damit
-  versehentlich einen zweiten, identischen Build losgeschickt.
-
-  **Nimm 2583** (den neueren). Beide verhalten sich gleich.
-
-  Die Warnung steht jetzt im Kopf dieser Datei, damit es nicht wieder passiert. Die
-  eigentliche Reparatur säße im Workflow und gehört Dir — dort steht sogar der Satz
-  „only an explicit bump", der genau das behauptet, was der Filter nicht kann.
-
-  ── 0d. WAS IN 10.79.464 NEU WAR (Vorgänger) ─────────────────────────────
-
-  **Ehrlich: sehr wenig, und das ist Absicht.**
-
-  Am Verhalten der App hat sich seit 463 **eine einzige Sache** geändert: die Leiste mit
-  den Klang-Presets ist **2 Punkt höher** (32 → 34) und trifft damit die Hausmarke, die
-  ihre beiden Nachbarleisten schon einhalten. Sie war die einzige Pille, deren Höhe
-  gleichzeitig ihre TIPPFLÄCHE war — die anderen kleinen sitzen in unsichtbaren 44er
-  Feldern und dürfen kleiner aussehen.
-
-  Alles andere aus dieser Runde ist **Wahrheitsarbeit im Repo**, die Du nicht siehst:
-  zwei Deiner Prüf-Bitten schickten Dich zu einer Taste, die es nicht mehr gibt; ein
-  Beweis in der Blitz-Sicherheit zeigte auf eine Zeile, die vor sechs Runden geändert
-  wurde; eine Datei versprach „Cymatics als Nächstes", obwohl Cymatics längst als
-  „Dish"-Look läuft. Nichts davon ändert einen Klang oder ein Bild.
-
-  ── 0e. NEU BEANTWORTBAR IN 10.79.464 (dem VORGÄNGER, nicht diesem Build) ─
-
-  Gedruckt mit `python3 scripts/founder-verify.py --since 7f7d8ce7` (das neue Gesetz im
-  Kopf dieser Datei), also nicht von Hand zusammengesucht:
-
-  **VISUAL (2)** — beide sind BITTEN, die ich umgeschrieben habe, weil sie Dich zu einer
-  entfernten Taste schickten. Der Weg heißt jetzt richtig:
-
-  · Field-Panel öffnen → Schalter **„Spectrum donuts instead of the field"** einschalten →
-    im selben Panel auf **„Fine tune"**. Es dürfen nur noch die Erklärzeile und „Detail"
-    dastehen, und Detail muss die Ringzahl sichtbar ändern. Gegenprobe mit Beamer/AirPlay
-    VERBUNDEN: dann müssen ALLE Regler wieder da sein.
-  · Derselbe Schalter — steht in der Look-Zeile darunter jetzt **„Donuts"** statt eines
-    Metall-Look-Namens? Schalter wieder aus → wieder der Look-Name.
-
-  ⚠️ Der Filter sieht TEXT, nicht Fähigkeit: das sind ALTE Bitten mit neuem Satz, keine
-  neuen Fähigkeiten.
-
-  ⚠️ **Weiterhin offen und von mir NICHT erneut gefragt** (steht seit 463 hier): ist das
-  Bild am weitesten, wenn die Lungen VOLL sind, oder wenn sie leer sind? Wenn es
-  umgekehrt ist, kippt jede Atem-Abbildung — Bild, Licht, Raum, Klang — um einen halben
-  Zyklus.
-
-
-  ── 1. DER BEAMER KONNTE EIN BILD ZEIGEN, DAS ZU SCHNELL BLINKT ──────────
-
-  **Das ist eine Sicherheits-Korrektur, und sie betrifft die größte Fläche im Raum.**
-
-  Beim Start räumt die App eine alte Einstellung auf: wenn Dein gespeicherter Look
-  inzwischen abgeschaltet ist, springt sie auf einen gültigen. Dieses Aufräumen war
-  versehentlich übersprungen, sobald Du im **Donut-Modus** warst.
-
-  Warum das gefährlich ist: der **Beamer liest die gespeicherte Zahl roh** — er weiß vom
-  Donut-Modus nichts. Also sah das Telefon Ringe, während der Projektor darunter den
-  abgeschalteten Look zeichnete. Und die Blitz-Bremse konnte ihn nicht bremsen: für einen
-  Look ohne Eintrag kennt sie keine Rate, rechnet mit dem Höchstwert und dämpft dann
-  **exakt gar nicht**. Der Look „Scope" läuft real mit **3,90 Hz** — über der
-  3-Hz-Grenze der Epilepsie-Norm.
-
-  **Für Dich ändert sich sichtbar nichts.** Der Donut-Schalter bleibt unangetastet, das
-  Telefon zeichnet weiter Ringe. Es kann nur keine Zahl mehr auf den Projektor kommen,
-  die Du gar nicht auswählen kannst.
-
-  ── 2. DIE UHR HAT EINE POSITION IN DEN RAUM GEMELDET, DIE SIE NICHT MISST ──
-
-  Die Raum-Ausgabe (ADM-OSC) schickt eine Objektposition aus Deinem Atem. Eine Quelle
-  ohne Atem-Wellenform — Apple Watch, HealthKit — lieferte dort trotzdem dauerhaft
-  **0°**, also „ganz links", als wäre es gemessen. Ein Lichtpult oder ein Raum-Renderer
-  kann eine erfundene Zahl nicht von einer echten unterscheiden.
-
-  Jetzt sind es **zwei getrennte Fragen**: „gibt es eine Atem-RATE?" (Watch: ja) und
-  „gibt es eine Atem-WELLE?" (Watch: nein). Rate wird gesendet, Phase und Azimut
-  schweigen. Art-Net bleibt bewusst wie es war — dort ist die Begründung eine andere.
-
-  ── 3. DREI SÄTZE IM TEXT HABEN ZU VIEL VERSPROCHEN ──────────────────────
-
-  Die Farbunterschrift im Field und zwei Learn-Texte sagten, die gezeigte Farbe sei die
-  CIE-1931-Darstellung Deines Tons. Nachgemessen gilt das für **60,8 %** des Oktavkreises.
-  Die übrigen **39,2 %** liegen auf der **CIE-Purpurlinie**, wo Tiefrot auf Tiefviolett
-  trifft — dort ist die Farbe eine echte Rot-Violett-Mischung, nur keine Einzelwellenlänge.
-  Bei A4 = 440 Hz betrifft das fünf der zwölf Tonklassen: **E · F · F♯ · G · G♯**.
-
-  Das ist **kein Trick und kein Mangel** — genau dieses Schließen des Kreises gibt jedem
-  Ton überhaupt eine Farbe statt einer Lücke. Ein Satz war schlimmer als eine
-  Übertreibung und ist zurückgenommen: „ein Ton jenseits ~700 nm verliert die sichtbare
-  Farbe". Kein Ton wird je unsichtbar.
-
-  ── OFFEN, UND ICH BRAUCHE DEIN AUGE ─────────────────────────────────────
-
-  **Ist das Bild bei VOLLER Lunge am weitesten — oder bei leerer?** Seit 462 ist es so
-  herum verdrahtet: voll = weit. Wenn Du beim tiefen Einatmen siehst, dass es sich
-  zusammenzieht, ist die ganze Atem-Zuordnung um einen halben Zyklus gedreht — Bild,
-  Licht, Raum und Klang zugleich. Eine Antwort, ein Satz.
-
-  Ebenfalls weiter offen: die sechs Punkte aus 460 (Aurora, Ringe, Kaustik, Blend-Dämpfung,
-  „Reduce Motion" am externen Schirm, der Dish-Look aus 459). Die Website sagt weiter
-  „vier generative Looks", bis Du den Dish abnimmst.
-
-  ⚠️ **Geräteverifiziert ist nichts davon.** Beide Gates sind grün (Compile-Check und
-  Testbau auf 402a6f5c); ob es sich richtig ANFÜHLT, weiß nur Dein Gerät.
-
-  ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
-  sein. CI greift mit `grep -m1 -oE 'v[0-9]+\.[0-9]+\.[0-9]+'` über die GESAMTE Datei und
-  nimmt den ersten Treffer. Deshalb stehen die Vorgänger unten ohne `v`.
-  Wächter im blockierenden Bundle: `TheShippedVersionComesFromTheReleaseFileTests` (#635).
-
-  Der Vorgänger ist 10.79.461.
-
-  ── DER ATEM WAR AM BILD VERKEHRT HERUM ANGESCHLOSSEN ────────────────────
-
-  **Das ist die eine echte Änderung in diesem Build, und sie ist groß.**
-
-  Der Bildrechner schickte Deinen Atemwert durch eine Bergkurve. Die passt zu einem
-  Signal, das von 0 auf 1 hochläuft und dann springt. Deine Fingerkamera liefert aber
-  etwas anderes: einen weichen Verlauf, bei dem **1 = Lunge voll** und **0 = Lunge leer**
-  bedeutet. Das ist schon genau die Größe, die das Bild will.
-
-  Durch die Bergkurve kam heraus:
-
-  | Lunge | Kamera | **vorher** | **jetzt** |
-  |---|---|---|---|
-  | leer | 0,0 | 0,850 am schmalsten | 0,850 am schmalsten ✓ |
-  | halb | 0,5 | **1,200 am WEITESTEN** | 1,025 Mitte |
-  | **voll** | 1,0 | **0,850 am SCHMALSTEN** | **1,200 am weitesten** |
-
-  Nur das leere Ende stimmte — und das war Zufall. **Genau beim tiefsten Einatmen zog
-  sich das Bild zusammen.** Deine Ansage für Aurora war „der Vorhang soll mit Deinem Atem
-  kommen und gehen"; bekommen hast Du zwei halbe Wellen pro Atemzug, am Höhepunkt
-  gegenläufig.
-
-  Jetzt folgt das Bild Deinem Lungenvolumen: **voll = weit und hell, leer = schmal und
-  dunkel, einmal pro Atemzug.**
-
-  ⭐ **Blitz-Sicherheit wird dabei BESSER, nicht schlechter.** Die Bergkurve durchlief
-  ihren Gipfel zweimal pro Atemzug, der rohe Wert einmal — halbiert. Auroras Zeile bleibt
-  bei 1,75 Hz, Rings bleibt der engste Look mit 2,50 Hz.
-
-  ⚠️ **Was Du prüfen kannst:** Fingerkamera auf, ruhig und tief atmen. Das Bild soll
-  **mit dem Einatmen aufgehen** und beim Ausatmen zurückgehen — einmal pro Atemzug, nicht
-  zweimal. Fühlt es sich zu stark oder zu schwach an, sag „mehr" oder „weniger".
-
-  ── ICH NEHME ETWAS ZURÜCK, DAS ICH DIR ZU 461 GESCHRIEBEN HABE ──────────
-
-  In der 461er-Notiz steht, die Kamera liefere eine Atem-**Hüllkurve**. **Das war falsch.**
-  Ich hatte es aus dem Quelltext übernommen, wo es seit Langem so stand, ohne es
-  nachzurechnen.
-
-  Nachgerechnet ist es ein **Sinus** — die echte Hüllkurve steht im *Nenner* der Formel.
-  Gemessen: Spanne genau 0…1, Mittel 0,5000, einmal pro Atemzug rauf und runter; die
-  echte Hüllkurve bewegt sich derweil kaum.
-
-  **Warum das kein Wortstreit ist:** Wäre es eine Hüllkurve, wäre gar keine Atem-Position
-  enthalten, und die Reparatur oben wäre unmöglich gewesen. Weil es ein Sinus ist, war die
-  Position die ganze Zeit da — nur in der falschen Form verarbeitet. Die eine falsche
-  Vokabel hat also den Fehler oben ein Vierteljahr lang unsichtbar gemacht.
-
-  Was ich Dir zu 461 über das SEHEN geschrieben habe, stimmte trotzdem (hell in der Mitte,
-  dunkel an beiden Enden, doppelt so schnell). Richtige Beobachtung, falsche Begründung.
-
-  ── WAS AUS 461 UNVERÄNDERT GILT ─────────────────────────────────────────
-
-  Mit **Brustgurt** oder **Gesichtskamera** stand Dein Bild vorher dauerhaft auf „voll
-  ausgeatmet". Das ist seit 461 behoben und in diesem Build gleich geblieben: ohne
-  gemessenen Atem ruht das Bild in der Mitte. Wer mit Fingerkamera und gemessenem Atem
-  arbeitet, sieht dagegen JETZT die Änderung von oben.
-
-  ── ZWEI SACHEN, DIE ICH ABSICHTLICH NICHT MITREPARIERT HABE ─────────────
-
-  · **Der Datenvertrag stimmt weiter nicht.** Die Kamera schreibt einen Sinus, wo ein
-    Sägezahn versprochen ist. Das betrifft fünf Abnehmer — auch die Licht- und
-    Raumausgänge (OSC · ADM-OSC · Art-Net) — und ist eine eigene Runde. Das Bild ist
-    davon ab jetzt unabhängig richtig; Licht und Raum noch nicht.
-  · **Neuer Fund, Apple Watch:** dort kann die Atem-RATE echt sein, während die
-    Atem-POSITION nie von der Mitte weggeht — nichts schreibt sie außerhalb des
-    Demo-Timers. Das Tor öffnet also auf einem eingefrorenen Wert. Neutral, nicht
-    verkehrt — aber kein Atem. Steht als eigene Aufgabe.
-
-  ── EINE LEHRE ÜBER MEINE EIGENEN PRÜFUNGEN ──────────────────────────────
-
-  Der Wächter, den ich 40 Minuten vorher geschrieben hatte, **verlangte die Bergkurve**.
-  Hätte ich ihn stehen lassen, wäre er beim richtigen Fix rot geworden und hätte gelesen
-  wie „dieser Fix ist verboten". Ein Wächter, der seine eigene Voraussetzung überlebt,
-  muss mit ihr umziehen — sonst schützt er einen Fehler statt eines Gesetzes.
-
-  ── OFFEN FÜR DEIN AUGE ──────────────────────────────────────────────────
-
-  Die sechs Bild-Punkte aus 460 warten unverändert: Aurora (Atem + Strahlen), Rings
-  (Ringabstand bei steigendem Ton), Tiefen-Licht (Schwimmbadboden), Look-Regler-Mischung,
-  „Reduzierte Bewegung" auf dem Beamer und der Dish aus 459. Die Prüfschritte stehen in
-  der 460er-Notiz weiter unten. Die Website sagt weiter „four generative looks" — das wird
-  erst „five", wenn Du den Dish gesehen und angenommen hast.
-
-  ⚠️ **Geräteverifiziert ist nichts davon.** Beide Gates sind grün (Compile-Check und
-  Testbau), die Rechnung ist von Hand gegengeprüft — ob es sich RICHTIG anfühlt, weiß nur
-  Dein Gerät.
-
-  ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
-  sein. CI greift mit `grep -m1 -oE 'v[0-9]+\.[0-9]+\.[0-9]+'` über die GESAMTE Datei und
-  nimmt den ersten Treffer. Deshalb steht der Vorgänger unten ohne `v`.
-  Wächter im blockierenden Bundle: `TheShippedVersionComesFromTheReleaseFileTests` (#635).
-
-  Der Vorgänger ist 10.79.460.
-
-  ── EIN EINZIGER ECHTER FEHLER, UND ER IST GRÖSSER ALS ER KLINGT ─────────
-
-  **Das Bild liest Deinen Atem — hat aber nie geprüft, ob überhaupt einer gemessen wurde.**
-
-  Im Code heißt der Wert „0" nicht *unbekannt*, sondern **„voll ausgeatmet"**. Und drei
-  Wege liefern genau diese 0:
-
-  · **Der Brustgurt** misst gar keinen Atem (er misst den Puls) → schreibt 0.
-  · **Die Gesichtskamera** ebenso → schreibt 0.
-  · **Die Fingerkamera**, während sie den Puls hält, ebenfalls.
-
-  Folge: mit Gurt lief das Bild **dauerhaft so schmal und so dunkel wie es überhaupt sein
-  kann** — als würdest Du nie einatmen. Auf dem Schirm war das nicht zu erkennen, weil ein
-  ruhiger Ausatem-Zustand genauso aussieht.
-
-  Jetzt fragt das Bild zuerst: *ist ein Atem gemessen?* Wenn nein, ruht es in der **Mitte**
-  statt am Rand.
-
-  ⚠️ **Was ich dabei fast falsch gemacht hätte, weil es so naheliegend aussah:** es gibt
-  schon einen fertigen „geprüften Atemwert" für den KLANG. Den hier einzusetzen hätte ein
-  Extrem gegen das andere getauscht — durch die Formkurve des Bildes wird sein Neutralwert
-  zum *weitesten und hellsten* Zustand. Gerechnet:
-
-  | | Bildbreite |
-  |---|---|
-  | vorher (kaputt) | 0,85 — das schmalste |
-  | „naheliegende Lösung" | 1,20 — das weiteste |
-  | **jetzt** | **1,025** — Dein Regler-Neutralwert ist 1,0 |
-
-  **Zu prüfen (nur mit Gurt, 20 Sekunden):** Gurt verbinden, Bild ansehen. Wirkt es weiter
-  und ruhiger als vorher — und nicht mehr eingeschnürt? Mit der Fingerkamera und erkanntem
-  Atem darf sich **nichts** geändert haben.
-
-  ── EINE PRÄZISIERUNG ZU DEM, WAS ICH DIR ZU 460 GESCHRIEBEN HABE ────────
-
-  Ich hatte über Aurora gesagt: *„der Vorhang soll mit Deinem Atem kommen und gehen."*
-  **Das stimmt. Aber er schwillt NICHT beim Einatmen** — und das hätte man aus meinem Satz
-  lesen können.
-
-  Der Grund: die Fingerkamera liefert keine Atem-*Phase* (wo im Atemzug Du bist), sondern
-  eine Atem-*Hüllkurve* (wie tief die Schwingung gerade ist). Durch die Formkurve heißt das:
-
-  · am hellsten **in der Mitte** des Atemzugs
-  · am dunkelsten, **wenn die Lunge voll ist** — und ebenso, wenn sie leer ist
-  · also **doppelt so schnell** wie Du atmest
-
-  ⛔ **Das habe ich bewusst NICHT mitrepariert.** Es ist kein Versehen im Code, sondern ein
-  Widerspruch im Vertrag zwischen Kamera und Bild, den der Quelltext seit Längerem selbst
-  benennt. Ihn aufzulösen heißt entweder, die Kamera eine echte Phase liefern zu lassen
-  (sauberer, aber sie berührt vier Verbraucher), oder den Vertrag umzuschreiben (kleiner,
-  aber alle vier müssen mit). Halb geht nicht. Steht als eigene Aufgabe.
-
-  ⚠️ **Blitz-Sicherheit unberührt.** Der Atem sitzt auf der HELLIGKEIT, nicht auf dem Takt —
-  Auroras Zeile bleibt bei 1,75 Hz, Rings bleibt der engste Look mit 2,50 Hz.
-
-  ── WAS ICH IN DIESER RUNDE SONST NOCH GEFUNDEN HABE (kein Bildeffekt) ───
-
-  · **Von fünf stillgelegten Looks ist einer über der Epilepsie-Grenze.** Nachgerechnet:
-    Cymatics 1,25 · Prism 2,50 · Lissajous 2,50 sind harmlos, **Scope läge bei 3,90 Hz**
-    (Grenze 3,0). Keiner ist heute wählbar — aber im Code stand, ein Look sei „durch
-    Wiedereinfügen einer Zeile" zurückzuholen, und für Scope ist das falsch: der Shader muss
-    vorher beruhigt werden. Jetzt steht die Bedingung dort.
-  · **Vier Kanäle rechneten jede Sekunde etwas aus, das niemand liest.** Darunter der
-    EINZIGE Weg, auf dem Deine HRV das Bild erreichen könnte. Drei davon behaupteten in
-    ihrer Beschreibung weiter, sie seien lebendig. Jetzt sagen sie die Wahrheit.
-  · **Eine geplante Neuerung habe ich beim Nachmessen verworfen:** der Bild-Herzschlag
-    sollte mit Deinem Atem schwingen (das ist echte Physiologie). Der Weg dorthin glättet
-    aber über 3 Sekunden — der Effekt käme **halbiert und 1,7 s zu spät**, also sichtbar als
-    „schneller beim Ausatmen". Nicht gebaut, mit Messung und dem tragfähigen Weg daneben
-    aufgeschrieben.
-
-  ── OFFEN AUS 460, FALLS DU GERADE DABEI BIST ────────────────────────────
-
-  Sechs Bild-Punkte warten noch auf Dein Auge — Aurora (Atem + Strahlen), Rings
-  (Ringabstand bei steigendem Ton), Tiefen-Licht (Schwimmbadboden), Look-Regler-Mischung,
-  „Reduzierte Bewegung" auf dem Beamer und der Dish aus 459. Die Prüfschritte stehen
-  unverändert in der 460er-Notiz weiter unten.
-
-  ⚠️ **Geräteverifiziert ist auch hier nichts.** Beide Gates sind grün (der Compile-Check und
-  die Testbau-Stufe), die Rechnung ist von Hand gegengeprüft — ob es sich RICHTIG anfühlt,
-  weiß nur Dein Gerät.
-
-  ── WAS DU IN DIESEM BUILD SIEHST ────────────────────────────────────────
-
-  Kurz: **jeder der fünf wählbaren Looks folgt jetzt dem klingenden Ton.** Vorher taten das
-  nur zwei. Dazu atmet einer wirklich mit Dir, und eines der Bilder ist von einer
-  Helligkeitskurve zu echter Strahlenoptik geworden.
-
-  **1 · AURORA — atmet mit Dir, und die Unterkante ist scharf**
-
-  Zwei Dinge waren falsch, beide unsichtbar:
-  · Der Ton erreichte diesen Look **überhaupt nicht**. Jetzt tragen die senkrechten Strahlen
-    die Tonhöhe: **eine Oktave höher = doppelt so viele Strahlen.**
-  · Das „Atmen" kam von einer **Uhr**, nicht von Dir. Dein Atemwert wurde übergeben und nie
-    gelesen. Jetzt schwillt der Vorhang mit Deinem echten Atem an und ab.
-
-  Und die Form stimmt jetzt: ein echtes Polarlicht hat eine **messerscharfe Unterkante** und
-  einen **weichen Kopf**, weil der Elektronenstrahl nach unten schlagartig aufgebraucht ist.
-  Vorher war der Vorhang oben und unten gleich weich — das ist das Einzige, was ein echtes
-  Polarlicht nie ist.
-
-  **Zu prüfen (30 Sekunden):** Aurora wählen. Ruhig atmen → der Vorhang soll mit *Deinem*
-  Atem kommen und gehen, nicht in eigenem Takt. Eine steigende Linie spielen → die
-  senkrechten Strahlen sollen sich sichtbar vermehren. Unterkante deutlich schärfer als oben?
-
-  **2 · RINGS — der Streifenabstand ist die Wellenlänge**
-
-  Rings war der **letzte** Look, den der Ton nicht erreichte. Ausgerechnet dort ist es am
-  zwingendsten: Rings ist Zweistrahl-Interferenz, und bei Interferenz **ist** der
-  Streifenabstand die Wellenlänge. Höherer Ton → engere Ringe.
-
-  ⚠️ **Dein Density-Regler bleibt Dein Regler.** Bei mittlerem C ist der Ton-Faktor exakt
-  1,0 — das Bild sieht dort aus wie immer. Zwei Oktaven nach oben und unten wirken, danach
-  sättigt es; das Ergebnis bleibt in dem Abstands-Bereich, den der Regler schon immer hatte.
-  Kein Ton kann daraus eine Fläche oder Flimmern machen.
-
-  **Zu prüfen:** Rings wählen, steigende Linie → Ringe werden enger. Bei mittlerem C: sieht
-  der Regler aus wie gewohnt?
-
-  **3 · TIEFEN-LICHT (Depth) — jetzt echte Strahlenoptik**
-
-  Das war eine steile Helligkeitskurve auf einer Sinus-Summe. Jetzt ist es das, was der Name
-  sagt: **das Licht, das eine gekräuselte Wasseroberfläche auf den Boden darunter wirft**,
-  in drei Tiefen gleichzeitig. Jede Wellenmulde ist eine Linse; hell ist dort, wo die
-  Strahlen sich kreuzen. Und dieselbe Schale wie beim „Dish"-Look treibt es — der Ton macht
-  das Netz feiner.
-
-  **Stille = gleichmäßig ausgeleuchteter Boden**, kein schwarzes Bild. Das ist die
-  physikalische Antwort, nicht eine Notlösung.
-
-  **Zu prüfen:** liest sich das wie Licht auf einem Schwimmbadboden? Und macht eine Oktave
-  höher das Netz sichtbar enger?
-
-  **4 · BEIM MISCHEN ZWEIER LOOKS BREMST DIE BEWEGUNG LEICHT**
-
-  Ein echter Sicherheitsfund: zieht man den Look-Regler zwischen zwei Bilder, sieht ein
-  Bildpunkt **beide** Muster gleichzeitig — die Blitzzahlen addieren sich. Water↔Aurora in
-  der Mitte lag bei 4,7 Hz, über der Epilepsie-Grenze von 3 Hz. **Ein ganz normaler Zug am
-  ausgelieferten Regler.**
-
-  Jetzt wird nur die Feld-Bewegung gebremst, und nur solange zwei Looks wirklich
-  nebeneinander stehen. **Der Herzschlag wird NIE gebremst** — er muss auf Deinem Puls
-  bleiben, sonst schlägt das Bild langsamer als Du.
-
-  **Zu prüfen:** Look-Regler von Water nach Aurora ziehen — in der Mitte soll die Bewegung
-  ein wenig ruhiger werden, an beiden Enden exakt wie vorher.
-
-  **5 · „REDUZIERTE BEWEGUNG" GILT JETZT AUCH AUF DEM BEAMER**
-
-  Auf dem Telefon wurde die Systemeinstellung respektiert, auf dem angeschlossenen Bildschirm
-  nicht. Wer sie wegen Schwindel oder Migräne einschaltet, bekam sie ausgerechnet auf der
-  großen Fläche nicht. Jetzt lesen beide dieselbe Einstellung.
-
-  ⚠️ **Eine Frage an Dich:** darf eine Performance mit „Reduzierte Bewegung" trotzdem
-  weiterlaufen? Heute steht das Bild still, wenn die Einstellung an ist. Sag „stehen" oder
-  „langsam", mehr brauche ich nicht.
-
-  ── SICHERHEIT: DIE APP HAT KEINEN LOOK MEHR AUF DER GRENZE ──────────────
-
-  Aurora saß auf **exakt 3,00 Hz** — der Epilepsie-Grenze, null Reserve. Weil das Atmen jetzt
-  von Dir kommt statt von einer Uhr, fällt ein ganzer Takt-Bestandteil weg: Aurora liegt bei
-  **1,75 Hz**. Engster Look ist jetzt Rings mit 2,50 Hz und 0,50 Hz Reserve.
-
-  ⚠️ Das heißt NICHT, dass die Grenze angehoben werden darf — bei 3,0 säße Rings genau auf
-  der Kante. Ich habe die Begründung im Code auf die schwächere, ehrliche Fassung korrigiert.
-
-  ── WAS ICH NICHT BEWEISEN KANN, UND DAS SAGE ICH LIEBER ─────────────────
-
-  Ich habe in dieser Runde entdeckt, dass der Wächter, der den Metal-Shader WIRKLICH
-  übersetzt, seit einer Weile rot war — und zwar aus einem Grund, der **nur den Test
-  betraf, nie die App**: der Test baut den Shader-Text von Hand nach und hatte zehn
-  Platzhalter nicht auf seiner Liste. Die App setzt dieselben Platzhalter automatisch ein.
-  Das ist repariert.
-
-  ⚠️ **Ob der Test seither wirklich gelaufen ist, sehe ich nicht.** Das CI-Log wird auf die
-  letzten 200 Zeilen gekürzt, und ein bekannter Infrastruktur-Fehler tötet pro Lauf einen
-  Simulator — der Test landet mal darauf, mal nicht. Zwei Läufe hintereinander melden null
-  Fehler, aber sein Name taucht nicht auf. **Ich behaupte ihn deshalb nicht als Absicherung.**
-
-  Was ich stattdessen von Hand gegen den Quelltext geprüft habe: Klammern und Blöcke
-  ausgeglichen (438/438, 38/38), 22 Funktionen und keine vor ihrer Definition gerufen, keine
-  Zahlen-Typen, die Metal nicht kennt, und **alle zehn Look-Aufrufe passen zu ihren
-  Deklarationen** (das ist der Fehler, den meine zwei Änderungen am ehesten hätten machen
-  können). Falls das Bild trotzdem leer bleibt: das ist die eine Stelle, an der ich falsch
-  liegen kann — sag es sofort, der Rückbau ist klein.
-
-  **Geräteverifiziert ist nichts davon.**
-
-  ── OFFEN VON FRÜHEREN BUILDS, FALLS DU GERADE DABEI BIST ────────────────
-
-  · **Dish (aus 459):** lauter Bass → grobes Gitter, zwei Oktaven höher → feiner, über
-    ~1,3 kHz glatter Spiegel; Stille → Spiegel. Kommt das Gitter zu selten oder zu leicht,
-    sag „öfter" oder „seltener".
-  · Die Website sagt weiter „four generative looks" — das wird erst „five", wenn Du den
-    Dish gesehen und angenommen hast.
-
-  Alles andere unten gilt unverändert für 459.
-
-  ⚠ AN DIE NÄCHSTE SESSION: die Versionsnummer in Zeile 1 MUSS die erste im ganzen File
-  sein. CI greift mit `grep -m1 -oE 'v[0-9]+\.[0-9]+\.[0-9]+'` über die GESAMTE Datei und
-  nimmt den ersten Treffer. Deshalb steht der Vorgänger unten ohne `v`.
-  Wächter im blockierenden Bundle: `TheShippedVersionComesFromTheReleaseFileTests` (#635).
-
-  Der Vorgänger ist 10.79.458.
-
-  ── DEINE BITTE: „ICH WILL AUCH WIRKLICH REALE WASSER KLANG BILDER HABEN,
-     WIE ALS WENN EIN LAUTSPRECHER MIT WASSER FÜLLT" ────────────────────────
-
-  **Es gibt jetzt einen neuen Look: „Dish".** Das ist genau das Experiment: eine flache
-  Wasserschale auf einer Lautsprechermembran, eine Lampe darüber. Kein Bild aus dem Gefühl,
-  sondern die Physik der Schale, einmal pro Bild gerechnet:
-
-  · **Der Ton setzt den Abstand der Wellen.** Die Schale antwortet auf HALBER Frequenz
-    (Faraday-Wellen) — bei einem C4 liegen die Wellenberge 3 mm auseinander, eine Oktave
-    höher werden sie etwa 1,6× enger.
-  · **Die Lautstärke entscheidet, ob überhaupt ein Muster entsteht.** Unter einer Schwelle
-    bleibt das Wasser ein glatter Spiegel, in dem man nur die Lampe sieht. **Stille = Spiegel.**
-    Die Schwelle steigt mit der Tonhöhe — genau wie bei einer echten Schale: der Bass
-    zeichnet, die Höhen (ab etwa 1,3 kHz bei voller Fahrt) bleiben glatt.
-  · **Im Bass Quadrate, ab der Mitte Sechsecke** — die Richtung ist gemessen (Binks &
-    van de Water 1997), wo genau der Übergang liegt, ist meine Wahl.
-  · **Das Licht sind die Kaustiken auf dem Schalenboden** — jede Wellenmulde ist eine Linse,
-    die die Lampe zu einem hellen Faden bündelt. Kohärenz schärft die Fäden.
-
-  ⛔ **Eine Korrektur zu dem, was ich Dir geschrieben hatte:** ich hatte versprochen, die
-  Schale aus „bis zu fünf klingenden Noten" zu speisen. Das lässt die Physik nicht zu — die
-  Schale reagiert auf EINEN Ton, und aus zwei Tönen lässt sich das Muster nicht zusammensetzen.
-  Also treibt sie der klingende Hauptton. Die anderen Noten dürfen als FARBE ins Bild, nie als
-  Gitter. Lieber jetzt ehrlich als später ein erfundenes Bild.
-
-  **So findest Du ihn (bewusst nicht automatisch im Regler, damit sich Dein Regler nicht
-  ungefragt verlängert):** Field → Look-Reihe → Chip **„Dish"** antippen. Dann liegt er im
-  langen Look-Regler neben Water.
-
-  **Zu prüfen — drei Dinge in einer Minute:**
-  1. **Tiefen Bass spielen, laut** → ein Gitter aus hellen Fäden, grob. Dann eine Lead zwei
-     Oktaven höher → deutlich feiner, und irgendwo oberhalb ~1,3 kHz wird die Schale glatt.
-  2. **Stoppen / leise werden** → das Gitter verblasst zu einem stillen Spiegel mit der Lampe
-     in der Mitte. Kein Muster ohne Klang.
-  3. **Sieht es aus wie Dein Foto?** Das kann kein Test — nur Dein Auge.
-
-  ⚠️ **Wenn die Schale zu oft glatt bleibt** (weil Dir das Gitter erst bei zu lauten Tönen
-  kommt) oder **zu leicht** (immer Gitter, nie Spiegel): das ist EINE Zahl, wie hart „voll
-  aufgedreht" den Lautsprecher schüttelt (20 g, hergeleitet aus 100 dB in 1 m auf einer
-  12-Zoll-Membran). Sag „öfter" oder „seltener", mehr brauche ich nicht.
-
-  ⚠️ **Was ich NICHT nachgezogen habe:** die Website sagt weiter „four generative looks".
-  Erst wenn Du das Bild gesehen und angenommen hast, wird daraus „five" — kein Anspruch vor
-  Deinem Auge.
-
-  **Geräteverifiziert ist nichts davon.** Der Shader kompiliert (Xcode-Gate), die Physik ist
-  mit sechs absichtlichen Fehlern gegengetestet, das Blitz-Budget (1,0 Hz, weit unter 3 Hz)
-  hergeleitet. Ob es SCHÖN ist, weiß nur Dein Gerät.
-
-  Alles andere unten gilt unverändert für 459.
-
-  ── DEINE ANSAGE: „ENTSCHEIDE ALLES … TESTFLIGHT DEPLOY READY UND MARKTSTARK" ──
-
-  **Im Build selbst ist genau EINE Sache anders als in 457**, und sie ist Text: die
-  Wissenschafts-Karte „Resonance breathing" (Buch-Symbol rechts neben den Chips → Body
-  science) behauptete, Echoel könne „mehrere Atem-Tempi durchfahren und zeigen, welches
-  Deine HRV am stärksten hebt" (das Lehrer-&-Vaschillo-Verfahren). Das tut die App nicht —
-  der Atem-Coach im Bio-Panel hält EIN Tempo (~6/min). Die Karte sagt jetzt, was passiert
-  (ein Tempo, HRV und Kohärenz live daneben) und ausdrücklich, was nicht (der klinische
-  Sweep). Ein zitiertes Verfahren als Funktion zu verkaufen ist die Sorte Satz, die Apple
-  unter 2.3 ablehnt — deshalb ein eigener Build, obwohl es nur eine Karte ist.
-  **Zu prüfen:** Karte öffnen, den neuen Text lesen — stimmt er mit dem, was Du beim
-  Atem-Coach siehst?
-
-  **Alles andere aus dieser Runde liegt AUSSERHALB des Builds** — im Store-Text, auf der
-  Website, in der Einreich-Checkliste — und braucht Dich an drei Stellen:
-
-  1. **Die Review-Notiz für Apple war falsch** und ist korrigiert
-     (`docs/dev/APP_STORE_SUBMISSION_CHECKLIST.md`, Abschnitt 6). Sie versprach, ein Prüfer
-     ohne Sensor sehe „nach ~4 s automatisch eine Demo-Quelle". Es gibt keinen Timer; die
-     App startet mit der Kamera. Der wahre Weg: Puls-Pille antippen → Bio-Panel →
-     „Bio source" → „Play with the simulation" — das startet die Session sofort.
-     ⚠️ **Bitte diese drei Schritte auf 2576/458 einmal wörtlich nachspielen**, bevor Du
-     sie in App Store Connect einträgst. Das ist der eine Text, bei dem ein Fehler eine
-     Woche Rückfrage kostet, und ich kann ihn nur lesen, nicht anfassen.
-  2. **Store-Text (beide Sprachen) ist ergänzt, nicht neu geschrieben:** Visual-Aufnahme
-     als MP4 (mit ≤30 s Ton), die zwei Standort-Extras (Ort im Session-Namen, Apple Weather)
-     stehen jetzt im Privacy-Absatz, die deutsche Beschreibung hat endlich die Visual-Zeile.
-     ⚠️ Das erreicht Apple NICHT von selbst: `fastlane/metadata` pusht kein Workflow. Wenn
-     Du es hochlädst: nie ein nacktes `fastlane deliver` (das lädt auch das Binary hoch) —
-     `--skip_binary_upload true --force`, nach einem Blick auf den Live-Text.
-  3. **Zum App Store fehlt nach dieser Runde KEIN Code mehr, sondern ein Abend von Dir:**
-     Screenshots auf dem echten iPhone mit gelocktem Puls (der Simulator hat keine
-     Taschenlampe, kein Health, keinen Gurt — jedes Simulator-Bild wäre eine Lüge; und
-     bitte ERST, wenn die Visual-Sektion fertig umgebaut ist, sonst fotografierst Du eine
-     Baustelle) · Privacy-Label „Data Not Collected" · Altersfreigabe 4+ · und die zwei
-     Ship-Gate-Punkte, die nur Ohr und Hand schließen: klingt jedes Genre nach etwas, und
-     läuft der Build sauber (Start, jeder Chip, Tonart-Picker während Bio läuft).
-
-  ⚠️ **Drei Dinge, die ich NICHT anfassen darf und nur melde:** (a) die öffentliche
-  `apple-app-site-association` auf der Website trägt das Präfix `VFFORCE` — das buchstabiert
-  die gestrichene Alt-Marke; (b) der Mikrofon-Text in `Info.plist` beschreibt noch das
-  Monitoring, das Du mit 448 rausgeworfen hast; (c) seit demselben Schnitt hat niemand mehr
-  eine Tür zum Latenz-Picker — jeder läuft mit 512 Samples (~10,7 ms) statt Ultra 128.
-  Für (c) schlage ich vor, die drei Optionen als eigene Zeile ins Master-Panel zu legen —
-  sag ja oder nein.
-
-  Alles andere unten gilt unverändert für 458.
-
-
-  ── DEINE FRAGE NACH ECHTEN WASSERKLANGBILDERN ───────────────────────────
-
-      „Können wir die Visuals noch um mehrere physikalisch assoziierte
-       Visuals ergänzen? Echte Wasserklangbilder etc."
-
-  **Der Wasser-Look reagiert ab jetzt auf die Tonhöhe.** Bisher tat er das nicht — und
-  das ist der ganze Punkt dieses Builds.
-
-  Was falsch war, in einem Satz: die **Wellenlänge** des Wasserbildes kam aus Deinem
-  **Atem**, und der klingende Ton erreichte das Bild überhaupt nicht. Ein Wasserklangbild,
-  dem als einziges der Klang fehlte.
-
-  Was jetzt gilt: eine flache Wasserschale auf einem Lautsprecher folgt einem echten
-  Gesetz — je höher der Ton, desto feiner das Netz, und zwar mit einem bestimmten
-  Verhältnis. **Eine Oktave höher = Netz etwa 1,6× feiner.** Das ist keine Näherung nach
-  Gefühl, das ist die Kapillarwellen-Beziehung.
-
-  Der **Atem** ist nicht weg — er sitzt jetzt dort, wo die Physik ihn hat: auf der
-  **Stärke** des Musters, nicht auf seiner Feinheit. In einer echten Schale bestimmt die
-  Frequenz die Wellenlänge und die Lautstärke, ob überhaupt ein Muster entsteht.
-
-  **Zu prüfen (Punkt 6 zu den fünf unten), und es geht in zehn Sekunden:** einen tiefen
-  Bass spielen, dann eine Lead zwei Oktaven höher. Das Wassernetz muss **sichtbar gröber
-  und feiner** werden.
-  ⚠️ Zwei Rückschritte, nach denen ich ausdrücklich frage: wird der Bass-Bereich **flach**
-  (kaum noch Struktur), oder flimmert die Höhe in ein **Moiré**? Beides ist ein
-  Zwei-Zeilen-Rückbau, sag einfach welches.
-
-  ⚠️ **Was ich NICHT gebaut habe, und warum.** Der naheliegende Weg wären Chladni-Figuren
-  gewesen. Zwei Gründe dagegen: dieser Look ist seit Juli **aus dem Menü**, weil Du ihn
-  selbst rausgenommen hast („passt nicht zum Vibe") — und selbst repariert hätte er
-  **null Bildpunkte** für Dich verändert, weil er über drei Wege gar nicht erreichbar ist.
-  Ich habe stattdessen das Bild wahr gemacht, das Du beim Öffnen der App ohnehin siehst.
-
-  ⚠️ **Der Weißabgleich-Fix aus 456 ist unverändert drin** (Kamera hält jetzt Helligkeit
-  UND Farbe fest, sobald der Finger auf der Linse liegt). Falls Du 456 noch nicht in der
-  Hand hattest: dessen Prüfpunkt gilt hier weiter — lockt der Puls so schnell wie vorher,
-  und hält er länger ohne wegzudriften?
-
-  Alles andere unten gilt unverändert für 457.
-
-  ── ──────────────────────────────────────────────────────────────────────
-
-  ── DEINE ANSAGE, UND WAS DARAUS GEWORDEN IST ────────────────────────────
-
-      „aktuell gibt es fullscreen Mode das soll aber alles zu einem Ding
-       zusammengefasst werden"
-
-  **Es gibt jetzt genau EINE Visual-Fläche.** Der zweite Vollbild-Modus ist gelöscht — er
-  war eine zweite Bedienleiste über demselben Bild. „Full screen" vergrößert jetzt das
-  Fenster, das ohnehin da ist, statt ein zweites darüber zu legen.
-
-  Gelöscht wurde erst, als **nichts mehr daran hing**: Standbild-Auslöser, Ton-Gitter,
-  Donut-Ansicht und die Tür selbst sind vorher einzeln umgezogen, jede für sich
-  rückholbar. Die eine Zeile, die es nur dort gab — der Hinweis auf AirPlay — sitzt jetzt
-  im Field-Panel unter „Look".
-
-  **Ehrlicher Verlust, damit Du ihn nicht suchst:** eine Aufnahme direkt nach dem Stoppen
-  teilen. Der Film ist unverändert da, über das Video-Panel.
-
-  ── FARBEN: PHYSIKALISCH KORREKT ─────────────────────────────────────────
-
-  Drei echte Fehler, alle in der Rechnung, nicht im Geschmack:
-  · Die **Aufhellung am Ende** war pro Farbkanal gerechnet und hat dabei den FARBTON
-    verbogen — Rot wurde beim Aufhellen orange. Jetzt bleibt der Ton stehen.
-  · Der **Helligkeits-Boden** hat Licht gekauft, indem er Farbe wegnahm.
-  · Der **Start** hat Deine eingestellte Farbe überschrieben.
-
-  ── TON-GITTER ───────────────────────────────────────────────────────────
-
-  · Die **Beschriftungen waren abgeschnitten**, nicht eingepasst.
-  · Die gespielte Note **leuchtete in der falschen Spalte**.
-  · Neun von zehn Feinregler taten **im Donut-Modus gar nichts** — sichtbar war der Name
-    eines Metal-Looks über einem Donut-Feld, also stand da schlicht das Falsche.
-
-  ── FIELD: KOMPAKTER, OHNE ETWAS WEGZUNEHMEN ─────────────────────────────
-
-      „Es geht vorallem darum das alle Funktionen von Field kompakt
-       und übersichtlich bleiben"
-
-  Field hatte 27 Zahlenfelder in EINER Rolle. Jetzt sind es drei aufklappbare Gruppen —
-  **Look** offen, **Voice** und **Self-play** zu. **Nichts ist gelöscht.** Ein Wächter
-  verbietet ausdrücklich, dass ein späteres „Aufräumen" daraus eine Löschung macht.
-
-  ── BEAMER: ER ZEICHNET JETZT DEIN BILD ──────────────────────────────────
-
-  Gemessen, nicht vermutet: das Telefon mischt das Wetter in Farbton, Sättigung, Leuchten
-  und Bewegung — der angeschlossene Bildschirm hat **dieselben Regler roh** genommen. Ein
-  Beamer hat die Wetter-Tönung also mitten in der Show still verschluckt, und niemand
-  konnte das ohne Beamer sehen.
-
-  Jetzt rechnen beide mit **derselben** Funktion. Auseinanderlaufen können sie nicht mehr.
-
-  ── WAS NUR DU SEHEN KANNST ──────────────────────────────────────────────
-
-  1. Field → „Full screen": füllt das EINE Fenster den Schirm, und legt sich nichts darüber?
-  2. Puls läuft im Vollbild → bleibt der Schirm wach? Puls gestoppt → schläft er normal?
-  3. Field öffnen: liest sich das jetzt als Karte statt als Wand?
-  4. Die Farben: bleibt beim Aufhellen der Ton stehen?
-  5. **Mit Beamer** (USB-C/HDMI/AirPlay), Wetter an, ein Mixer über null: zeigt der große
-     Schirm dieselbe Tönung wie das Telefon?
-
-  ── FRAGEN AN DICH, DIE ICH NICHT ALLEIN ENTSCHEIDE ──────────────────────
-
-  · **Der Platten-Look (Chladni) überhaupt?** Die physikalisch KORREKTE Fassung zeichnet
-    weiterhin harte schwarz-weiße Knotenlinien — das ist, was diese Physik nun mal ist.
-    Die Wasserschale dagegen ist eine weiche, durchgehende Oberfläche, also genau das
-    Register, das bei Dir überlebt hat. Willst Du die Platte als eigenen Look, oder bleibt
-    Wasser die einzige Form, in der Du das haben willst? Gemessene Kosten falls ja: EIN
-    zusätzlicher Chip in der vorhandenen Look-Reihe, der Regler wird NICHT länger.
-  · **Ehrlich oder dramatisch?** Eine echte Metallplatte zeigt über 99 % eines
-    Tonhöhen-Glissandos GAR NICHTS — Figuren rasten nur bei Resonanzen ein. Dauerhaft
-    etwas zu zeigen heißt, die Materialgüte zu erfinden. Beides ist baubar; das ist eine
-    Geschmacksfrage, keine technische.
-  · **Beamer wettergemischt oder roh?** Technisch geht jetzt beides — das ist Dein
-    vorhandener Wetter-Schalter, keine Codeänderung. Vorher war „roh" ein Defekt, jetzt
-    ist es eine Wahl.
-  · **Statusleiste im Vollbild** — der alte Modus hat sie versteckt, der neue nicht.
-    Stört sie?
-  · **Erststart-Farbe** und **Sättigung** („Bunter") — reiner Geschmack, Dein Ohr/Auge.
-  · **Eine zweite Bedienzeile im Vollbild?** Auf schmalen Telefonen fallen im Vollbild zwei
-    Elemente weg (Look-Regler, Positionsanzeige). Beide sind erreichbar — der Look über die
-    „Studio"-Taste im Bildfenster zurück zur Bedienleiste und dann Field, die Anzeige ist
-    nur Anzeige. Eine zweite Zeile brächte einen Tap zurück und
-    kostet „kompakter". Drei gemessene Optionen liegen bereit; ich habe bewusst nichts gebaut.
-
-  ── STAND DER GATES ──────────────────────────────────────────────────────
-
-  Compile Check grün auf allen Scheiben dieser Runde, für die Wasser-Änderung ausdrücklich
-  (sie fasst `Sources/` an, da zählt er wirklich). Die Test-Pipeline meldet bei JEDEM Push
-  „failure" (bekannt, #396) — deshalb zählen die Job-Schritte, nicht die Conclusion. Alle
-  neuen Wächter-Behauptungen habe ich von Hand gegen den Quelltext nachgerechnet, für die
-  Wasser-Änderung zusätzlich mit sechs absichtlich eingebauten Fehlern, die alle gefangen
-  wurden.
-
-  ⚠️ **Eine Messlücke, die ich offen nennen muss.** Ich habe in derselben Runde einen
-  Wächter gebaut, der den Metal-Shader zum ersten Mal WIRKLICH übersetzt — bisher haben
-  beide Gates ihn nur als Text gesehen, ein Tippfehler darin wäre also durch beide grünen
-  Häkchen bis auf Dein Gerät durchgelaufen und hätte das Bild einfach nicht mehr gezeichnet.
-  Der Wächter ist drin und kompiliert. **Ob er im letzten Lauf durchlief, übersprungen wurde
-  oder etwas fand, kann ich nicht sehen** — das CI-Log wird auf die letzten 200 Zeilen
-  gekürzt, und er lag nicht darin. Ich behaupte ihn deshalb NICHT als Absicherung für
-  diesen Build.
-
-  **Geräteverifiziert ist nichts davon** — und Punkt 5 kann ich prinzipiell nicht prüfen,
-  ohne Beamer ist dieser Pfad unsichtbar.
-
-  Falls Du mir ein Log schicken magst: Save/Export-Chip → „Diagnostics" → Teilen.
+  ── VORGÄNGER ─────────────────────────────────────────────────────────────
+  10.79.469 — Der Audio-Eingang, sauber aufgesetzt (#1246–#1256)
+  10.79.468 — Das Bild kostet weniger, wo das Gerät es braucht (#1216–#1245)
+  10.79.467 — dreizehn Reparaturen seit 466 (#1203–#1215)
