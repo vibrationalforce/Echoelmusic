@@ -4603,6 +4603,25 @@ struct EchoelStudioView: View {
         switch field {
         case "genre":
             scale = style.scale
+            // G4 — the genre's own intonation, when it names one. Placed HERE and nowhere else:
+            // this method runs on USER interaction only (see the contract above), so a project
+            // restore through `open(_:)` keeps the tuning it was saved with and never has it
+            // overwritten by the genre it happens to carry. That is the same reason `scale` and
+            // `currentPatch` are overwritten here rather than in a genre observer.
+            //
+            // ⚠️ NO `?? "edo12"`. A genre that names no system must leave the player's tuning
+            // ALONE — resetting it to 12-TET would make the genre Picker silently undo a
+            // deliberate choice from the tuning Picker, which is a worse failure than never
+            // suggesting anything. Every genre is `nil` today, so this is inert.
+            //
+            // ⚠️ §5-2 IS OPEN and this is the shape it may replace: retuning on genre change is
+            // consistent with the two overwrites already in this arm, but a non-destructive
+            // "Suggested: … [Apply]" row is the safer form. One `if let` either way, and free to
+            // change while the table is empty.
+            if let suggested = style.suggestedToneSystemID {
+                tuningID = suggested
+                applyTuning()
+            }
             presetIndex = -1
             currentPatch = style.synthPatch   // load the genre's timbre as a starting point
             patchBeforeSoundChange = nil      // wholesale replace — see the property's doc

@@ -587,7 +587,7 @@ vier GENERISCHE Figuren, die auf die heutigen 36 anwendbar sind: `pushedOffbeats
 die Kulturkreis-Batches; sie treten als weitere Fälle hinzu, sie ersetzen nichts.
 `GenrePadGrammarTests`' `authoredAhead` startet deshalb VOLL und leert sich über G5…G15."
 
-**G4 — TONSYSTEM-VORSCHLAG, TABELLE LEER** (`MusicStyle.swift` nil-Default-Tabelle; `EchoelStudioView.swift` das
+**G4 — TONSYSTEM-VORSCHLAG, TABELLE LEER** ⭐ **AUSGELIEFERT #1284** (`MusicStyle.swift` nil-Default-Tabelle; `EchoelStudioView.swift` das
 EINE `if let` bei `:4604`). Null Verhaltensänderung. NEU `TheGenreSuggestsTheToneSystemTests`: (1) jeder
 Nicht-nil-Vorschlag löst in `TuningSystem.library` auf (eine erfundene Id degradiert über `named()` STILL zu
 12-TET) · (2) der Genre-Arm enthält das `if let` und KEIN `?? "edo12"` · (3) `open(_:)` nennt
@@ -597,6 +597,22 @@ Sicherheit der Regel hängt daran) · (5) mindestens ein angebotenes Genre schl�
 (Sléndros 5-Grad-Raster kollabiert sonst Tonklassen bis −300 Cent). ⚠️ **(5) und der Kollaps-Wächter sind
 VAKUUM-grün, solange die Tabelle leer ist** (#806: ein Skip ist kein Pass); tragend ab G7/G9.
 **Founder-Gate:** §5-2 VOR dem ersten Nicht-nil-Wert.
+
+⛔ **EINE KORREKTUR AN DIESER ZEILE, GEMESSEN BEIM BAUEN (#1284).** Der Kollaps-Wächter sollte
+laut Entwurf „umgestimmte Cent-Werte einer Oktave PAARWEISE VERSCHIEDEN" prüfen, mit Sléndro als
+Fall. **Diese Prüfung verwirft fast die ganze Welt-Hälfte der Bibliothek:** `maqam-hijaz` faltet
+5 der zwölf Tonklassen-Paare, `gamelan-pelog` 7, `hirajoshi` 11 — ein Siebengrad-System MUSS
+einige der fünf chromatischen Stufen falten, die eine Siebenton-Skala nie spielt. G12s
+Maqām-Batch wäre damit aus einem Grund unbaubar gewesen, der musikalisch keiner ist.
+**Die tragende Eigenschaft ist enger: die Grade, die die EIGENE SKALA des Genres benutzt, müssen
+verschieden bleiben.** So ist der Wächter gebaut.
+⭐ **Und eng ist nicht zahnlos — die Messung liefert den Zwang für G7–G13 gleich mit** (Bibliothek
+gegen fünf ausgelieferte Skalen): `pythagorean` (der Plainchant-Kandidat, G8) kollabiert unter
+dorian/phrygian/minor und ist unter major sauber — es IST ein diatonisch-DUR-System ·
+`maqam-rast` kollabiert unter phrygian/minor · `gamelan-pelog` unter dorian/minor/major ·
+`hirajoshi` unter fast allem, pentatonicMinor eingeschlossen · sauber unter allen fünf sind
+`maqam-bayati`, `maqam-hijaz` und jede gleichstufige Stimmung.
+**Regel für jeden Batch: ein Tonsystem wird ZUSAMMEN MIT DER SKALA gewählt, nie unabhängig.**
 
 ### Batch-Vorlage G5…G15 (je 3 Quelldateien: `MusicStyle.swift`, `GenrePatches.swift`, `GenreFX.swift`)
 IM SELBEN COMMIT: Enum-Fälle + alle 13 Arme + `offered` + `sustainedFlächen` (aus den Zeilen ABGELEITET, nie

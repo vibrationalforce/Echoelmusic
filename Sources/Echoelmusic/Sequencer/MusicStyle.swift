@@ -1532,6 +1532,41 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         beatArchetype != .none
     }
 
+    /// G4 — THE TONE SYSTEM THIS GENRE WOULD LIKE TO BE PLAYED IN, or `nil` = 12-TET, which is
+    /// every genre today.
+    ///
+    /// ⭐ WHY THIS EXISTS AT ALL, and it is the difference between a world genre and a costume:
+    /// a maqām genre played in 12-TET is a Western scale with an exotic name. The intonation IS
+    /// the tradition — `TuningSystem.library` already carries Rāst, Bayātī, Ḥijāz, Sléndro,
+    /// Pélog, Hirajōshi, Pythagorean and 1/4-comma meantone, fully implemented and reachable
+    /// from the tuning Picker. What has been missing is any connection between choosing a genre
+    /// and reaching the intonation it was written in; a player had to know to go and find it.
+    ///
+    /// ⚠️ THE ID IS A STRING AND THAT IS A REAL HAZARD, stated here because the failure is
+    /// SILENT: `TuningSystem.named(_:)` falls back to `library[0]` (12-TET) for an unknown id.
+    /// A typo in an arm below therefore does not crash, does not warn and does not sound wrong —
+    /// it sounds like the genre was never given a tone system at all, which is exactly what this
+    /// property exists to fix. `TheGenreSuggestsTheToneSystemTests` resolves every non-nil value
+    /// against the library for that reason.
+    ///
+    /// ⚠️ A SYSTEM WITH FEWER THAN 12 DEGREES COLLAPSES PITCH CLASSES. `centsDeviation` snaps
+    /// each of the twelve semitones to its NEAREST degree, so Sléndro's five-degree grid maps
+    /// several semitones onto one pitch — chords lose notes rather than gaining colour. That is
+    /// not a reason to keep such a system out of the library (a player may want exactly that);
+    /// it is a reason not to hand it to a genre without hearing it first.
+    /// `TheSuggestedToneSystemsDoNotCollapseTheScaleTests` measures it.
+    ///
+    /// ⛔ THE TABLE IS EMPTY IN THIS SLICE, ON PURPOSE (G4), and the empty table is also what
+    /// keeps §5-2 genuinely open: whether a genre change should RETUNE the instrument (the shape
+    /// wired today, consistent with the two overwrites `handleCompositionEdit` already performs)
+    /// or offer a non-destructive "Suggested: … [Apply]" row is the founder's call, and it costs
+    /// one `if let` to change while no genre names a system.
+    public var suggestedToneSystemID: String? {
+        switch self {
+        default: return nil
+        }
+    }
+
     /// How a non-beat style voices its harmony. Beat genres + self-observation
     /// don't use this (their melody is bespoke) but return a sane default so the
     /// switch stays total.
