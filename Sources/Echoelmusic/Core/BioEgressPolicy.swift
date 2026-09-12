@@ -75,4 +75,113 @@ public enum BioEgressPolicy {
         guard let source = event.source else { return false }
         return allowsEgress(source)
     }
+
+    // MARK: - WHICH VALUES may leave (#1292)
+
+    /// What CLASS of value an egress address carries.
+    ///
+    /// ⭐ THE RULE IN ONE SENTENCE: **what the instrument PLAYS may leave; what a
+    /// CLINICIAN would read off may not, unless the player asks for it.**
+    ///
+    /// The source gate above answers "may THIS BODY's numbers leave" (5.1.3). It has
+    /// never been able to answer "may THIS NUMBER leave", and that gap is why the
+    /// millisecond HRV statistics sat on the default wire beside the musical controls:
+    /// nothing in the policy had the vocabulary to tell them apart. One gate answering
+    /// two different questions is how the second one goes unasked.
+    public enum FieldClass: String, Sendable, CaseIterable {
+
+        /// Bounded or summary control values — the instrument's musical output.
+        /// A BPM, a [0..1] coherence, a breath rate, a gesture channel. These ARE the
+        /// product: an integrator's lighting desk, Resolume patch or ADM renderer is
+        /// driven by them, and withholding them would not protect a body, it would
+        /// break the thing Echoel is for.
+        case derived
+
+        /// Un-normalized time-domain HRV statistics in medical units — rMSSD and SDNN
+        /// in milliseconds, pNN50 as a proportion of successive NN intervals. They are
+        /// derived, not raw, so they are not forbidden — but they are the numbers a
+        /// cardiology paper reports, they drive no light and no object position, and a
+        /// default that streams them to a user-typed UDP host claims more of a body
+        /// than the instrument needs. OPT-IN, never on by default.
+        case clinical
+
+        /// The un-derived signal itself, or anything it can be reconstructed from: a
+        /// PPG waveform, an RR-interval series, camera frames, EEG samples.
+        ///
+        /// ⭐ **THIS CASE IS AN ASSERTION, NOT A SWITCH.** Nothing may set it to
+        /// permitted, and today nothing could produce it either: `BioSampleFrame` is
+        /// scalar-only — it declares no array, no buffer, no collection — so the
+        /// transport type is STRUCTURALLY incapable of carrying a reconstructible
+        /// signal off this device. The case exists so that a future field which COULD
+        /// has somewhere to be classified, and so the guard has something to pin.
+        case raw
+    }
+
+    /// The three millisecond/proportion HRV statistics. ONE definition (#416) — the
+    /// sender filters on it and the guard reads it, so neither can drift from the other.
+    public static let clinicalAddresses: Set<String> = [
+        "/echoelmusic/bio/heart/rmssd",
+        "/echoelmusic/bio/heart/pnn50",
+        "/echoelmusic/bio/heart/sdnn",
+    ]
+
+    /// Every fixed address that carries a musical control value.
+    public static let derivedAddresses: Set<String> = [
+        "/echoelmusic/bio/synthetic",
+        "/echoelmusic/bio/heart/bpm",
+        "/echoelmusic/bio/heart/hrv",
+        "/echoelmusic/bio/breath/rate",
+        "/echoelmusic/bio/breath/phase",
+        "/echoelmusic/bio/coherence",
+        "/echoelmusic/bio/motion",
+    ]
+
+    /// Namespaces whose every member is a derived control value: the gesture channels
+    /// (`ModSource.rawValue(from:)` is bounded per channel), the discrete bio events
+    /// (`[confidence, aux]`) and the modulation tap (already-applied, scaled values).
+    public static let derivedPrefixes: [String] = [
+        "/echoelmusic/gesture/",
+        "/echoelmusic/bio/event/",
+        "/echoelmusic/mod/",
+    ]
+
+    /// Classify an egress address, or `nil` if nothing here knows it.
+    ///
+    /// ⚠️ `nil` IS A FINDING, NOT A SHRUG. The caller fails CLOSED on it, so a new
+    /// address added without a class goes silent rather than streaming unclassified —
+    /// and `TheClinicalDetailIsOptInTests` reddens with the name of the address, so the
+    /// silence lasts one CI round rather than until someone notices. Fail-open here
+    /// would mean every future address ships permitted by forgetfulness, which is the
+    /// exact shape of the gap this enum was written to close.
+    public static func fieldClass(ofOSCAddress address: String) -> FieldClass? {
+        if clinicalAddresses.contains(address) { return .clinical }
+        if derivedAddresses.contains(address) { return .derived }
+        if derivedPrefixes.contains(where: { address.hasPrefix($0) }) { return .derived }
+        return nil
+    }
+
+    /// May a value of this class leave, given the player's clinical-detail setting?
+    ///
+    /// `.raw` ignores the setting entirely — there is no configuration under which it
+    /// returns `true`, and that is the whole point of it being a separate case rather
+    /// than a stricter default.
+    public static func allowsEgress(fieldClass: FieldClass, clinicalDetailEnabled: Bool) -> Bool {
+        switch fieldClass {
+        case .derived:  return true
+        case .clinical: return clinicalDetailEnabled
+        case .raw:      return false
+        }
+    }
+
+    /// The whole decision for one outgoing message: source gate AND field gate.
+    /// Callers ask THIS rather than composing the two themselves — the #186 lesson in
+    /// this file's own header is that a rule re-stated at the call site is a rule whose
+    /// test passes with the production guard deleted.
+    public static func allowsEgress(address: String,
+                                    source: BioSource,
+                                    clinicalDetailEnabled: Bool) -> Bool {
+        guard allowsEgress(source) else { return false }
+        guard let cls = fieldClass(ofOSCAddress: address) else { return false }
+        return allowsEgress(fieldClass: cls, clinicalDetailEnabled: clinicalDetailEnabled)
+    }
 }

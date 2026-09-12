@@ -108,6 +108,19 @@ public final class OSCSender {
     @ObservationIgnored
     private var lastFrameTimestamp: TimeInterval = -1
 
+    /// Whether the three clinical HRV statistics ride the wire (#1292). Default OFF —
+    /// `StudioDefaultKeys.oscClinicalDetail` owns the key and the default; this is a
+    /// cached read of it, not a second definition (#416).
+    ///
+    /// ⚠️ CACHED ON PURPOSE, not read per message: `send(frame:)` runs inside the 100 ms
+    /// poll, and a `UserDefaults` lookup per address would put a lookup on the one path
+    /// this repo keeps deliberately thin. The cache has ONE owner —
+    /// `applyEgressPreferences()` — called on `start()` and by the toggle's `onChange`,
+    /// the `MIDIOutput.applyOutputPreferences()` / `OSCReceiver.applyPreference()` shape.
+    /// A second writer here is how a live edit and a restart come to disagree.
+    @ObservationIgnored
+    private var sendsClinicalDetail = false
+
     public init(host: String = "localhost", port: UInt16 = 8000) {
         let d = UserDefaults.standard
         self.host = d.string(forKey: Self.hostKey) ?? host
@@ -118,6 +131,7 @@ public final class OSCSender {
     public func start(subscribing bus: EngineBus) {
         guard !isActive else { return }
         self.bus = bus
+        applyEgressPreferences()
         connect()
         isActive = true
         // Discard the backlog accrued while this route was OFF (#155 review). The
@@ -148,6 +162,13 @@ public final class OSCSender {
         connection?.cancel()
         connection = nil
         isActive = false
+    }
+
+    /// Re-read the egress preferences from `UserDefaults`. Called on `start()` and by the
+    /// Routing toggle, so a live change takes effect on the next tick without a restart —
+    /// the same contract the host/port edit gets from `reconnectIfActive()`.
+    public func applyEgressPreferences() {
+        sendsClinicalDetail = UserDefaults.standard.bool(forKey: StudioDefaultKeys.oscClinicalDetail.key)
     }
 
     // MARK: - Target persistence + live reconnect
@@ -312,8 +333,23 @@ public final class OSCSender {
         }
     }
 
+    /// ⭐ THE FIELD GATE (#1292) — the source gate in `sendIfFresh` has already decided that
+    /// THIS BODY's numbers may leave; this decides WHICH of them do. `bioMessages(for:)` stays
+    /// complete and its signature untouched: it is called by seven guards, and a required
+    /// argument there would have broken every one of them in the same commit (#666). The
+    /// filter belongs here, at the one place a message becomes a datagram.
+    ///
+    /// ⚠️ FAILS CLOSED on an address `BioEgressPolicy` cannot classify — a new address ships
+    /// silent rather than unclassified, and `TheClinicalDetailIsOptInTests` names it.
+    ///
+    /// ⚠️ Filtering can never empty a non-empty batch, which is why `/bio/synthetic` needs no
+    /// special case: all three clinical addresses are gated on `hasMeasuredHeartRate`, so any
+    /// batch that carries one also carries `/heart/bpm`, which is `.derived`.
     private func send(frame: BioSampleFrame) {
-        for m in Self.bioMessages(for: frame) {
+        for m in Self.bioMessages(for: frame)
+        where BioEgressPolicy.allowsEgress(address: m.address,
+                                           source: frame.source,
+                                           clinicalDetailEnabled: sendsClinicalDetail) {
             send(address: m.address, floats: m.floats)
         }
     }

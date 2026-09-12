@@ -22,6 +22,11 @@ struct PatchbayView: View {
     /// SAME key in `OSCReceiver.applyPreference()`, the `networkMIDI` shape.
     @AppStorage(StudioDefaultKeys.oscInEnabled.key)
     private var oscInEnabled = StudioDefaultKeys.oscInEnabled.value
+
+    /// #1292 — the clinical HRV statistics on the OSC bio stream. OFF on a fresh install;
+    /// `StudioDefaultKeys` owns the key and the default (H15-KEYSTORE, two readers).
+    @AppStorage(StudioDefaultKeys.oscClinicalDetail.key)
+    private var oscClinicalDetail = StudioDefaultKeys.oscClinicalDetail.value
     @Environment(ADMOSCSender.self) private var admOSC
     @Environment(ArtNetSender.self) private var artNet
     @Environment(SACNSender.self) private var sacn
@@ -459,6 +464,20 @@ struct PatchbayView: View {
                     .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            Divider().overlay(EchoelTheme.border)
+            Toggle(isOn: $oscClinicalDetail) {
+                Text("Send clinical HRV detail")
+                    .font(EchoelTheme.font(14, .semibold)).foregroundStyle(EchoelTheme.text)
+            }
+            .tint(EchoelTheme.accent)
+            .accessibilityHint(oscClinicalDetail
+                ? "On. rMSSD and SDNN in milliseconds and pNN50 ride the OSC stream alongside the musical controls."
+                : "Off. The OSC stream carries the musical controls only — heart rate, normalized HRV, coherence, breath and gesture.")
+            Text(oscClinicalDetail
+                 ? "On: /echoelmusic/bio/heart/rmssd and /sdnn (milliseconds) and /pnn50 are sent as well. Use this for analysis in TouchDesigner, Max or a research patch — turn it off on a network you do not control."
+                 : "Off: the stream carries what the instrument plays — /heart/bpm, /heart/hrv (0–1), /coherence, /breath/*, /gesture/*. The three time-domain HRV statistics in medical units stay on this device until you ask for them.")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
             Text("Target IP + port per output — changes take effect immediately while the output is running. OSC/ADM default to 'localhost' (this device); for Resolume · TouchDesigner · MadMapper enter the target computer's IP. Art-Net and sACN send unicast to the node IP you enter (default 192.168.1.100) — the app holds no broadcast entitlement, so 255.255.255.255 reaches nothing on iOS.")
                 .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
                 .fixedSize(horizontal: false, vertical: true)
@@ -466,6 +485,7 @@ struct PatchbayView: View {
         .padding(12)
         .background(RoundedRectangle(cornerRadius: EchoelTheme.radius).fill(EchoelTheme.fill))
         .overlay(RoundedRectangle(cornerRadius: EchoelTheme.radius).strokeBorder(EchoelTheme.border, lineWidth: 1))
+        .onChange(of: oscClinicalDetail) { _, _ in osc.applyEgressPreferences() }
     }
 
     private func outputRow(_ name: String, sender: any NetworkSendActivity,

@@ -468,6 +468,25 @@ public enum StudioDefaultKeys {
     /// `tempoSource=remoteControl`; switch off — the port closes.
     public static let oscInEnabled = StudioDefault(key: "net.osc.in.enabled", value: false)
 
+    /// **Clinical HRV detail on the OSC bio stream — OFF by default (#1292).** Off = the wire
+    /// carries the musical controls only (`bpm`, normalized `hrv`, `coherence`, breath, gesture).
+    /// On = the three time-domain statistics in medical units ride along as well —
+    /// `/heart/rmssd` and `/heart/sdnn` in milliseconds, `/heart/pnn50` as a proportion.
+    ///
+    /// ⭐ THE DEFAULT IS THE DECISION, and it is a RETRACTION: those three shipped on the
+    /// default wire. They drive no light, no object position and no sound; their stated purpose
+    /// is instrument-grade analysis in TouchDesigner/Resolume/Max, which is a real use and the
+    /// reason this is a switch rather than a deletion. But a default that streams a clinically
+    /// shaped reading of a body to a user-typed UDP host claims more of that body than the
+    /// instrument needs, and the player never asked. Opt-in restores it in one tap.
+    ///
+    /// TWO readers, hence H15-KEYSTORE: `PatchbayView`'s toggle (the door) and
+    /// `OSCSender.applyEgressPreferences()` (the one owner that carries it to the wire).
+    /// NEEDS-FOUNDER-VERIFY: with an OSC monitor on the target, confirm `/heart/rmssd`,
+    /// `/heart/sdnn` and `/heart/pnn50` are ABSENT with the switch off and present with it on,
+    /// while `/heart/bpm` and `/coherence` keep flowing in both states.
+    public static let oscClinicalDetail = StudioDefault(key: "net.osc.clinicalDetail", value: false)
+
     /// **MPE note layout on the MIDI OUT stream (#713).** Off = every note on channel 1,
     /// which is what shipped. On = notes spread across the 15 member channels of the MPE
     /// lower zone, and the zone RPN is sent when the port opens.

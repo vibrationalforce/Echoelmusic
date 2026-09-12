@@ -6605,3 +6605,24 @@ Zähl-Kette des Eingangs-Sockets: `git grep -ln NWListener -- Sources | wc -l` �
 hatte `play`/`stop` in der Whitelist; #1255 lässt beide weg, weil `OneStartControlTests` die
 Zahl der Sitzungs-Start-Pfade auf drei pinnt (dreimal Founder: EIN Start-Knopf) — ob ein Cue
 die Sitzung starten darf, ist seine Frage.
+
+## V — Der BRAND-Verweis, der eine Zeilennummer nannte (#1292, verschoben aus `CLAUDE.md`)
+
+Wörtlich, wie er dort stand, in Klammern hinter dem Satz „Die wahre Fassung ist die Zeile,
+die mit ‚Capabilities (all routed through one typed bus)' beginnt":
+
+> ⛔ Hier stand „Zeile 18" — falsch, weil derselbe Commit zwei Zeilen darüber eingefügt und
+> den Verweis mitverschoben hat. In dieser Datei ist eine zitierte Phrase belastbar und eine
+> Zeilennummer nicht; der Absatz zu den Modal-Slots sagt dasselbe über sich.
+
+**Verschoben, nicht gelöscht, und der Grund ist #416:** sein GESETZ — eine zitierte Phrase
+überlebt eine Einfügung, eine Zeilennummer nicht — steht in `CLAUDE.md` bereits zweimal
+(im Absatz „Studio shell internals" und im Modal-Slot-Absatz, der es über sich selbst sagt).
+Die dritte Abschrift war reine Provenienz und kostete 291 B in der immer geladenen Datei.
+Der Satz, auf den sie sich bezog (die Phrasen-Zitierung statt der Nummer), steht unverändert.
+
+**Anlass:** #1292 musste den OSC-Block korrigieren (die drei klinischen HRV-Adressen sind
+opt-in geworden) und stieß dabei an die 150 000-B-Decke — `CLAUDE.md` stand bei 149 753 B,
+also 247 B Luft, und die ehrliche Korrektur brauchte mehr. Genau der Handel, für den die
+Decke existiert: Gesetz bleibt, Provenienz zieht um.
+

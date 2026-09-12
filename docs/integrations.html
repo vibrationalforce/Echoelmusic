@@ -100,9 +100,10 @@
             <tr><td><code>/echoelmusic/bio/synthetic</code></td><td>0 or 1</td><td>Whose body this is: 1 = the built-in demo generator, 0 = a measured source. Sent first in every tick that carries a value; latch it as state.</td></tr>
             <tr><td><code>/echoelmusic/bio/heart/bpm</code></td><td>40–200</td><td>Heart rate — only while a pulse is measured.</td></tr>
             <tr><td><code>/echoelmusic/bio/heart/hrv</code></td><td>0–1</td><td>Normalised HRV — needs a pulse and a non-zero HRV.</td></tr>
-            <tr><td><code>/echoelmusic/bio/heart/rmssd</code></td><td>ms</td><td>RMSSD — only when the source can state it: strap and camera both refuse to state an HRV when fewer than 80 % of the raw beats survive hygiene.</td></tr>
-            <tr><td><code>/echoelmusic/bio/heart/sdnn</code></td><td>ms</td><td>SDNN — same rule.</td></tr>
-            <tr><td><code>/echoelmusic/bio/heart/pnn50</code></td><td>0–1</td><td>pNN50 — same rule.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/rmssd</code></td><td>ms</td><td><strong>Off by default.</strong> RMSSD. Switch on under Routing → &ldquo;Send clinical HRV detail&rdquo;. Then, as before, only when the source can state it: strap and camera both refuse to state an HRV when fewer than 80&nbsp;% of the raw beats survive hygiene.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/sdnn</code></td><td>ms</td><td><strong>Off by default.</strong> SDNN — same switch, same rule.</td></tr>
+            <tr><td><code>/echoelmusic/bio/heart/pnn50</code></td><td>0–1</td><td><strong>Off by default.</strong> pNN50 — same switch, same rule.</td></tr>
+            <tr><td colspan="3">These three are the only addresses behind a switch. They are time-domain statistics in medical units; they drive no light, no object position and no sound, so the default stream carries what the instrument plays &mdash; heart rate, normalized HRV, coherence, breath, gesture &mdash; and not what a clinician would read off. Turn them on for analysis in TouchDesigner, Max or a research patch.</td></tr>
             <tr><td><code>/echoelmusic/bio/breath/rate</code></td><td>3–40</td><td>Breaths per minute — sent only inside that plausibility band.</td></tr>
             <tr><td><code>/echoelmusic/bio/breath/phase</code></td><td>0–1</td><td>Inhale→exhale phase, smooth — rides the rate's gate because 0 is a real position.</td></tr>
             <tr><td><code>/echoelmusic/bio/coherence</code></td><td>0–1</td><td>HRV coherence — needs 16 accepted beats; on the camera about 16 seconds at rest, on a strap about 16 beats.</td></tr>

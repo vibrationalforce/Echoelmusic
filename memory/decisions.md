@@ -1581,3 +1581,41 @@ beschränken (#292, `afcf3aa`).
 - **Alternative verworfen:** zweiter AVCaptureSession-Besitzer für die Frontkamera (ARKit hält sie exklusiv; die Ein-Quelle-Regel des Pickers ist die Arbitrierung) · Face-Kanäle als eigene Bus-Topic (ein Slot, ein Frame — #1015-Brücke statt zweitem Kanal).
 - **Review:** 2026-10-11 nach Geräteprobe (`founder-verify.py --since 1438077`).
 - **Nachtrag #1268 (2026-09-11, 11:10 UTC):** Review-Fixes — der Freeze-Wächter kennt die Face-Quelle als vierten heißen Erzeuger (derivierter Hot-Set, Mutant rot), `availableTrackingRates` ist ein `static let`, `import ImageIO` explizit. Compile Check #2565 auf `7dcf618` GRÜN = Compile-Nachweis für K6a–K7b+#1268; Build for Testing grün für K1–K7 (6019–6027); K6c/K7b/#1268 (6028–6030) standen um 11:10 noch in der Runner-Warteschlange.
+
+### 2026-09-12 — Egress: die Regel gilt dem ROHSIGNAL, nicht jeder Körperzahl (#1292)
+
+**Entscheidung (Founder: „Du entscheidest alles", 2026-09-12).** HARD RULE 5 — „kein rohes
+Biosignal verlässt je das Gerät" — wird so gelesen: **roh = das un-abgeleitete Signal und
+alles, woraus es rekonstruierbar ist** (RR-Serie, PPG-Wellenform, Kamerabild, EEG-Samples).
+Abgeleitete, begrenzte Steuerwerte sind die AUSGABE des Instruments und dürfen über eine
+ausdrücklich eingeschaltete, selbst konfigurierte Route gehen.
+
+**Warum das keine Aufweichung ist, sondern eine Verschärfung.** Vorher konnte
+`BioEgressPolicy` nur sagen, WESSEN Zahlen gehen dürfen (5.1.3: keine HealthKit-Quelle). Es
+hatte kein Wort für WELCHE. Deshalb lagen `/heart/rmssd` und `/sdnn` in Millisekunden und
+`/pnn50` unbedingt auf der Default-Leitung — neben den musikalischen Werten, ununterscheidbar.
+Ein Gate, das zwei Fragen beantworten soll, beantwortet die zweite nie.
+
+**Der Befund, der die Sache entschied:** `BioSampleFrame` ist **skalar-only** — kein Array,
+kein Puffer, kein `Data`. Rohsignal kann `OSCSender.encode` also gar nicht erreichen; das ist
+eine Eigenschaft des TYPS, keine Policy, und damit stärker als jede Regel. Regel 5 war in
+ihrem Kern bereits erfüllt. Offen war nur die abgeleitete Hälfte.
+
+**Dort verläuft die Linie so:** BPM, normalisierte HRV, Kohärenz, Atem und Gesten SIND das
+Produkt — ein Lichtpult, ein Resolume-Patch, ein ADM-Renderer wird davon getrieben; sie zu
+streichen schützt keinen Körper, es bricht das, wofür Echoel da ist. Die drei
+Millisekunden-Statistiken treiben nichts davon; ihr Zweck ist Analyse (TouchDesigner, Max,
+Forschung) — eine echte Nutzung, und genau deshalb ein SCHALTER statt einer Löschung.
+
+**Ausgeführt:** `BioEgressPolicy.FieldClass` (`.derived` / `.clinical` / `.raw`), `.raw` ohne
+erlaubende Einstellung, unbekannte Adresse fällt GESCHLOSSEN aus, die drei klinischen Adressen
+default AUS hinter der Routing-Tür „Send clinical HRV detail". Wächter
+`TheClinicalDetailIsOptInTests` (10 Ansprüche, 7 Mutationen getrieben) wird rot in dem Moment,
+in dem jemand ein Sammlungsfeld in `BioSampleFrame` deklariert.
+
+**Nicht angefasst und ausdrücklich offen:** die Multipeer-Hälfte. `ColabPayload.egressible`
+schickt `BioPeek(bpm, coherence, hrvNormalized, breathRate, synthetic)` an FREMDE Telefone —
+eine andere Risikoklasse als die eigene Regie-Leitung, und eine eigene Scheibe.
+
+**Review 2026-10-12:** hat jemand den Schalter je gebraucht? Wenn nein, ist die ehrliche
+Fortsetzung, die drei Adressen ganz zu streichen statt einen ungenutzten Schalter zu pflegen.

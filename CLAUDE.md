@@ -85,7 +85,7 @@ Capabilities (all routed through one typed bus): **bio-reactive synthesis** · *
 
 An immersive multimedia instrument and production platform for **Installation · Event · Content · Cinema · Theater · Performance.** The body is the controller: heart and breath drive sound, image, light and immersive space in real time.
 
-⛔ **Der Absatz, der hier stand, war die dichteste Falschstelle der ganzen Datei** — und er stand unter der Überschrift BRAND, also genau dort, wo eine Session Formulierungen für Store-Text, Website und Presse HOLT. Er lautete: *„Concrete capabilities span beat-making, multi-track recording, video capture/edit, RTMP live streaming, bio-reactive synthesis, generative visuals, and OSC/MIDI/MPE integration"*. Davon existieren heute: bio-reaktive Synthese, generative Visuals, OSC/MIDI. **Beat-making ist mit #166/#167 gelöscht · Video-EDIT mit #121 Slice 3 · RTMP war nie verlinkt · MPE hat keinen Schreiber · Multi-Track-Recording ist gebaut, aber flag-gated aus und türlos.** Fünf falsche Behauptungen in einem Satz, aus dem Marketing-Text entsteht — #184 hat genau solche zwölf aus dem App-Store-Text entfernt, wo eine falsche Behauptung eine 2.3-Ablehnung ist. **Die wahre Fassung ist die Zeile, die mit „Capabilities (all routed through one typed bus)" beginnt**; von dort zitieren, nicht von hier. (⛔ Hier stand „Zeile 18" — falsch, weil derselbe Commit zwei Zeilen darüber eingefügt und den Verweis mitverschoben hat. In dieser Datei ist eine zitierte Phrase belastbar und eine Zeilennummer nicht; der Absatz zu den Modal-Slots sagt dasselbe über sich.) Die Identität ist **das Instrument**, nicht ein Konkurrent, den es ersetzt.
+⛔ **Der Absatz, der hier stand, war die dichteste Falschstelle der ganzen Datei** — und er stand unter der Überschrift BRAND, also genau dort, wo eine Session Formulierungen für Store-Text, Website und Presse HOLT. Er lautete: *„Concrete capabilities span beat-making, multi-track recording, video capture/edit, RTMP live streaming, bio-reactive synthesis, generative visuals, and OSC/MIDI/MPE integration"*. Davon existieren heute: bio-reaktive Synthese, generative Visuals, OSC/MIDI. **Beat-making ist mit #166/#167 gelöscht · Video-EDIT mit #121 Slice 3 · RTMP war nie verlinkt · MPE hat keinen Schreiber · Multi-Track-Recording ist gebaut, aber flag-gated aus und türlos.** Fünf falsche Behauptungen in einem Satz, aus dem Marketing-Text entsteht — #184 hat genau solche zwölf aus dem App-Store-Text entfernt, wo eine falsche Behauptung eine 2.3-Ablehnung ist. **Die wahre Fassung ist die Zeile, die mit „Capabilities (all routed through one typed bus)" beginnt**; von dort zitieren, nicht von hier. Die Identität ist **das Instrument**, nicht ein Konkurrent, den es ersetzt.
 
 **Biofeedback is core, not wellness.** Echoel treats physiology as a first-class, science-based modulation source (HRV resonance, peer-reviewed bio-signal processing). It is NOT a wellness, soundscape, or therapy product.
 
@@ -662,9 +662,11 @@ the old list named eeg/{band}, audio/rms, audio/pitch which are NEVER sent):
 ```
 /echoelmusic/bio/heart/bpm       float
 /echoelmusic/bio/heart/hrv       float [0-1] (normalized)
-/echoelmusic/bio/heart/rmssd     float ms   (only when source provides >0)
-/echoelmusic/bio/heart/sdnn      float ms   (   "   )
-/echoelmusic/bio/heart/pnn50     float      (   "   )
+/echoelmusic/bio/heart/rmssd     float ms   OPT-IN, default OFF (#1292); sentinel gate
+/echoelmusic/bio/heart/sdnn      float ms   unchanged (>0 AND a pulse). Door: Routing →
+/echoelmusic/bio/heart/pnn50     float      "Send clinical HRV detail". The split and
+                                 why: `BioEgressPolicy.FieldClass` (.derived/.clinical/.raw;
+                                 `.raw` cannot be permitted, the frame is scalar-only).
 /echoelmusic/bio/breath/rate     float
 /echoelmusic/bio/breath/phase    float [0-1]
 /echoelmusic/bio/coherence       float [0-1]
