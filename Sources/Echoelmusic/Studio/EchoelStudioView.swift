@@ -8017,18 +8017,17 @@ struct EchoelStudioView: View {
     // MARK: Panel 3 — Effects (production character)
 
     private var effectsPanel: some View {
-        // #620 (GUI-Board Zeile 10 / UX#12): the subtitle NAMES "Follow the key" — the
-        // harmonizer's in-key toggle sits TWO levels deep (this panel → "All parameters"
-        // sheet → Harmonizer section), and no surface above it named it. The words are
-        // the TOGGLE's words (`EchoelFXView`'s `Toggle("Follow the key"`, #616's
-        // vocabulary law). Rename the toggle → rename this token in the same commit; the
-        // guard couples both sites. ⛔ #620b (review W3): the first version claimed
+        // ⛔ THE SUBTITLE NAMED "Follow the key" (#620) UNTIL #1305 DELETED THE HARMONIZER
+        // AND ITS TOGGLE. #616's VOCABULARY LAW is why the subtitle changed in the SAME
+        // commit and is kept here: a subtitle that names a deep control must use the
+        // CONTROL'S OWN WORDS, and when the control goes the subtitle goes with it —
+        // otherwise the panel advertises a toggle two levels down that is not there. ⛔ #620b (review W3): the first version claimed
         // `TheFXDoorNamesAControlThatExistsTests` "scans only hint lines" — half wrong
         // (its slider check scans EVERY line of its window). The two reasons this line is
         // actually safe: that guard's `doorWindow` runs FORWARD from the `showAllFX`
         // button, ~68 lines below here, so this line never enters it — and the subtitle
         // contains neither "slider" nor an `effectSection("…")` stage title anyway.
-        panel("Effects", "Production character · Follow the key", isExpanded: $showEffects) {
+        panel("Effects", "Production character", isExpanded: $showEffects) {
             labeledRow("Character") {
                 Picker("Effect", selection: $fxCharacter) {
                     ForEach(FXCharacter.allCases) { c in Text(c.displayName).tag(c) }
@@ -8070,7 +8069,9 @@ struct EchoelStudioView: View {
             // `EchoelFXView`, out of fourteen AT THE TIME. Missing: Saturation · Tape / VHS ·
             // Bitcrush · Harmonizer · Reverb · Stereo Width.
             // ⛔ #693: that count said "the FOURTEEN" in the present tense until #692 added
-            // Granular. The MISSING list is what carries the argument and it is still complete
+            // Granular — and #1305 then removed Granular AND Harmonizer, so the dated
+            // denominator is now two stages off in the other direction. Exactly the reason it
+            // is dated and not maintained. The MISSING list is what carries the argument and it is still complete
             // for the hint being retracted; the denominator was decoration that had to be
             // re-counted forever. It is now dated instead of dropped, because a subset-of-eight
             // means nothing without knowing what it was eight OF. The live count is derived by
@@ -8208,7 +8209,8 @@ struct EchoelStudioView: View {
     ///     (`GenreFX.swift`), `applyFX()` stamps that preset, and then called this function
     ///     immediately after, which switched the delay straight back on. FIVE of the twelve
     ///     characters were affected: `.clean`, `.telephone` and `.vinyl` say
-    ///     `delayEnabled: false` outright; `.harmonizer` and `.room` get it from
+    ///     `delayEnabled: false` outright; `.harmonizer` (deleted with the stage, #1305)
+    ///     and `.room` get it from
     ///     `GenreFXPreset.init`'s default by omitting the parameter. (NOT the genre presets
     ///     — every `MusicStyle.fxPreset` enables delay, pinned by `GenreFXTests`. An earlier
     ///     draft of this comment said "every genre preset that ships with delay off", which

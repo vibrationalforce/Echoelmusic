@@ -985,7 +985,8 @@ struct BioStripView: View {
 /// door, the honest replacement for a dead end when camera access is off. The audio-input
 /// removal took its host file and the compiler named the orphan; nothing about the DECLARATION
 /// said what it served. Second instance of the same class in one slice (`VoiceHarmony` →
-/// `KeyHarmony` was the first): **a file name is not a scope, and a general helper parked in a
+/// `KeyHarmony` was the first — itself deleted with the harmonizer in #1305, which does not
+/// weaken the lesson): **a file name is not a scope, and a general helper parked in a
 /// feature's file dies with that feature.** Moved here, next to the one thing that calls it.
 @MainActor
 func openAppSettings() {

@@ -54,14 +54,10 @@ public struct GenreFXPreset: Sendable, Equatable {
     // thin and digital. 0 disables (a truly dry "Clean").
     public var saturation: Float
 
-    // Harmonizer — pitch-shifted harmony voices. Off in every genre preset; the
-    // `.harmonizer` character turns it on. Carried here so every preset apply
-    // explicitly settles the harmonizer state (no sticky-on when switching).
-    public var harmonizerEnabled: Bool
-    public var harmonizerInterval1: Float
-    public var harmonizerInterval2: Float
-    public var harmonizerVoice2: Bool
-    public var harmonizerMix: Float
+    // ⛔ FIVE `harmonizer*` FIELDS STOOD HERE AND WENT WITH #1305. The LAW they were
+    // carried for outlives them and applies to every field in this type: a preset must
+    // explicitly SETTLE a stage's state, not merely turn its own on — otherwise a stage
+    // enabled by one character stays sticky-on when the user switches to another.
 
     // Reverb — real algorithmic room/hall space. The additive source has no
     // reverb of its own, so this is where a take gets its "produced" depth.
@@ -93,11 +89,6 @@ public struct GenreFXPreset: Sendable, Equatable {
         phaserDepth: Float = 0.6,
         phaserMix: Float = 0.4,
         saturation: Float = 0.30,
-        harmonizerEnabled: Bool = false,
-        harmonizerInterval1: Float = 4,
-        harmonizerInterval2: Float = 7,
-        harmonizerVoice2: Bool = true,
-        harmonizerMix: Float = 0.5,
         reverbEnabled: Bool = false,
         reverbMix: Float = 0.0,
         reverbRoom: Float = 0.72,
@@ -125,11 +116,6 @@ public struct GenreFXPreset: Sendable, Equatable {
         self.phaserDepth = phaserDepth
         self.phaserMix = phaserMix
         self.saturation = saturation
-        self.harmonizerEnabled = harmonizerEnabled
-        self.harmonizerInterval1 = harmonizerInterval1
-        self.harmonizerInterval2 = harmonizerInterval2
-        self.harmonizerVoice2 = harmonizerVoice2
-        self.harmonizerMix = harmonizerMix
         self.reverbEnabled = reverbEnabled
         self.reverbMix = reverbMix
         self.reverbRoom = reverbRoom
@@ -266,11 +252,6 @@ public struct GenreFXPreset: Sendable, Equatable {
         chain.saturationEnabled = saturation > 0
         chain.saturationDrive = saturation
 
-        chain.harmonizerEnabled = harmonizerEnabled
-        chain.harmonizer.interval1 = harmonizerInterval1
-        chain.harmonizer.interval2 = harmonizerInterval2
-        chain.harmonizer.voice2Enabled = harmonizerVoice2
-        chain.harmonizer.mix = harmonizerMix
 
         chain.reverbEnabled = reverbEnabled
         chain.reverb.mix = reverbMix
@@ -1086,7 +1067,13 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
     case dream
     case megaphone
     case blurry
-    case harmonizer
+    // ⛔ `case harmonizer` STOOD HERE AND WENT WITH #1305 (founder 2026-09-12). Removing a
+    // case from THIS enum is decode-safe and that was checked, not assumed: both readers go
+    // through a failable init with a fallback — `Project.fxCharacter` is
+    // `FXCharacter(rawValue:) ?? .auto`, and `@AppStorage("studio.fxCharacter")` falls back
+    // to its declared default. A project or a phone that stored "harmonizer" now opens on
+    // `.auto`, which is the genre's own effect space. (This is NOT the `LaneVoiceKind.drums`
+    // situation, where a case is kept precisely because its decoder had no such fallback.)
     case room
     case hall
 
@@ -1103,7 +1090,6 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
         case .dream:      return "Dream"
         case .megaphone:  return "Megaphone"
         case .blurry:     return "Blurry"
-        case .harmonizer: return "Harmonizer"
         case .room:       return "Room"
         case .hall:       return "Hall"
         }
@@ -1121,7 +1107,6 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
         case .dream:      return "Wide and bright: lush chorus + long ping-pong"
         case .megaphone:  return "Barking band-pass + saturated slap"
         case .blurry:     return "Soft-focus wash: low-pass + deep chorus + smeared echo"
-        case .harmonizer: return "Adds harmony voices: a third + fifth above the melody"
         case .room:       return "Tight, natural room — adds depth without washing out"
         case .hall:       return "Large, lush concert hall — long, bright reverb tail"
         }
@@ -1137,7 +1122,7 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
             // ⚠️ THIS PRESET IS ONLY HALF OF "CLEAN", and the comment that stood here said
             // "Everything off — a dry reset" as if it were all of it. `GenreFXPreset` can
             // express seven of the chain's fifteen enables; the other seven (tape, bitcrush,
-            // flanger, tremolo, granular, widener, compressor) are written by `apply(to:bpm:
+            // flanger, tremolo, widener, compressor) are written by `apply(to:bpm:
             // genre:)` BELOW, for `.clean` only (#694). (⛔ #695: this said "above". `apply` is
             // ~120 lines further DOWN the file; a pointer that sends the reader the wrong way
             // is worse than none, and it shipped in the slice whose subject was an invented
@@ -1199,15 +1184,6 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
                 delayMix: 0.30, delayFeedback: 0.50, delayTone: 0.35, delaySpread: 0.55,
                 delayWow: 0.55, delayDrive: 0.15,
                 chorusEnabled: true, chorusRate: 0.45, chorusDepth: 0.9, chorusMix: 0.6)
-        case .harmonizer:
-            // Stacked third + fifth over a lightly-driven dry tone, with a touch
-            // of chorus to glue the harmony voices into an ensemble.
-            return GenreFXPreset(
-                chorusEnabled: true, chorusRate: 0.3, chorusDepth: 0.4, chorusMix: 0.25,
-                saturation: 0.25,
-                harmonizerEnabled: true,
-                harmonizerInterval1: 4, harmonizerInterval2: 7,
-                harmonizerVoice2: true, harmonizerMix: 0.55)
         case .room:
             // A tight, natural space — short tail, gentle warmth, no delay wash.
             return GenreFXPreset(
@@ -1229,13 +1205,13 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
     ///
     /// ⛔ #694 — `.clean` NEEDED A SECOND STEP, because `GenreFXPreset` cannot express the
     /// whole chain. The struct declares SIX `*Enabled` fields (filter · delay · chorus ·
-    /// phaser · harmonizer · reverb) and one `saturation: Float` that `apply` converts into a
+    /// phaser · reverb) and one `saturation: Float` that `apply` converts into a
     /// seventh write (`saturationEnabled = saturation > 0`); `EchoelFXChain` has FIFTEEN
     /// enables. (⛔ #695: this read "the struct carries SEVEN enables", which is the WRITE
     /// count wearing the DECLARATION's name — anyone re-deriving it counts six and concludes
     /// the prose is stale. Two quantities, two sentences.) So a character
     /// subtitled *"No effects — reset to a dry signal"* left SEVEN stages running — tape,
-    /// bitcrush, flanger, tremolo, granular, widener, compressor — and the more of them a
+    /// bitcrush, flanger, tremolo, widener, compressor — and the more of them a
     /// player had switched on by hand, the less dry "dry" was.
     ///
     /// ⚠️ WHY HERE AND NOT IN `GenreFXPreset.apply`. Putting the reset there would make
@@ -1251,8 +1227,8 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
     /// ⚠️ THE CONSEQUENCE, STATED RATHER THAN DISCOVERED: `.clean` is re-stamped
     /// AUTOMATICALLY, not only from the character menu — `applyFX()`, generate, and
     /// `open(_:)` all re-apply the persisted `fxCharacter`. So a player who has `.clean`
-    /// selected and then hand-dials granular in the FX panel loses it at the next generate.
-    /// That was ALREADY true of delay, filter, chorus, phaser, saturation, harmonizer and
+    /// selected and then hand-dials a stage in the FX panel loses it at the next generate.
+    /// That was ALREADY true of delay, filter, chorus, phaser, saturation and
     /// reverb; this makes the behaviour uniform instead of arbitrary — seven stages wiped and
     /// seven kept, with nothing distinguishing the two groups but which fields a struct
     /// happens to carry. Uniform-and-documented beats arbitrary-and-silent, and if the
@@ -1278,7 +1254,6 @@ public enum FXCharacter: String, CaseIterable, Sendable, Identifiable {
         chain.bitcrushEnabled = false
         chain.flangerEnabled = false
         chain.tremoloEnabled = false
-        chain.granularEnabled = false
         chain.widenerEnabled = false
         chain.compressorEnabled = false
     }

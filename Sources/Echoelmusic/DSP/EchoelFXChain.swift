@@ -3,7 +3,15 @@ import Foundation
 /// Ordered, audio-thread-safe composition of the EchoelFX processors — the unit
 /// the render block, UI, and (later) AUv3 wrapper drive. Signal flow:
 ///
-///   in → filter → saturation → tape → bitcrush → harmonizer → chorus → flanger → phaser → tremolo → granular → delay → reverb → widener → compressor → limiter → out
+///   in → filter → saturation → tape → bitcrush → chorus → flanger → phaser → tremolo → delay → reverb → widener → compressor → limiter → out
+///
+/// ⛔ TWO STAGES STOOD IN THAT LINE AND WENT WITH #1305 (founder 2026-09-12, wörtlich
+/// "Kein … Autotune, Harmonizer, granularsynthese"): `harmonizer` sat after bitcrush,
+/// `granular` after tremolo. Their ORDER carried an argument worth keeping if anything
+/// pitched or grain-based ever returns — harmony belonged BEFORE the modulation and time
+/// effects so the copies inherited nothing, and granular belonged AFTER them and BEFORE
+/// delay/reverb so grains inherited the pitch and movement above and were then placed in a
+/// room. Put granular last and it only smears a finished mix.
 ///
 /// The filter sits first so its colour (muffled "underwater" low-pass, telephone
 /// band-pass) shapes the source before the echoes and modulation inherit it.
@@ -27,16 +35,10 @@ public final class EchoelFXChain: @unchecked Sendable {
     /// and dull colour the source before the echoes/modulation inherit it.
     public let tape: EchoelTape
     public let bitcrush: EchoelBitcrush
-    public let harmonizer: EchoelHarmonizer
     public let chorus: EchoelChorus
     public let flanger: EchoelFlanger
     public let phaser: EchoelPhaser
     public let tremolo: EchoelTremolo
-    /// Granular texture. Sits AFTER harmony and modulation and BEFORE the time
-    /// effects on purpose: grains inherit the pitch and movement above them, and
-    /// the delay/reverb below then place those grains in a room. Put it last and
-    /// it would only smear a finished mix.
-    public let granular: EchoelGranular
     public let delay: EchoelDelay
     public let reverb: EchoelReverb
     public let widener: EchoelStereoWidener
@@ -83,11 +85,6 @@ public final class EchoelFXChain: @unchecked Sendable {
     public var bitcrushEnabled: Bool = false {
         willSet { if newValue && !bitcrushEnabled { bitcrush.reset() } }
     }
-    /// Pitch-shift harmony voices. Off by default — a character effect surfaced
-    /// via the Effects picker (`.harmonizer`).
-    public var harmonizerEnabled: Bool = false {
-        willSet { if newValue && !harmonizerEnabled { harmonizer.reset() } }
-    }
     /// Subtle ensemble chorus. On by default at a gentle setting (see init) so
     /// the additive pad/lead reads as lush and wide rather than thin and centred;
     /// the `.clean` character and the sound editor can switch it off.
@@ -96,11 +93,6 @@ public final class EchoelFXChain: @unchecked Sendable {
     }
     public var flangerEnabled: Bool = false {
         willSet { if newValue && !flangerEnabled { flanger.reset() } }
-    }
-    /// Granular texture. Off by default, and its own `mix` also defaults to 0, so
-    /// the stage is inert twice over until something deliberately opens both.
-    public var granularEnabled: Bool = false {
-        willSet { if newValue && !granularEnabled { granular.reset() } }
     }
     public var phaserEnabled: Bool = false {
         willSet { if newValue && !phaserEnabled { phaser.reset() } }
@@ -199,7 +191,9 @@ public final class EchoelFXChain: @unchecked Sendable {
 
     public init(sampleRate: Float = 48000) {
         // ONE sanitised value for the whole chain. Before #1172 this line computed a guarded
-        // rate for `sampleRateHz` and then handed the RAW `sampleRate` to all fifteen stages —
+        // rate for `sampleRateHz` and then handed the RAW `sampleRate` to all fifteen stages
+        // (thirteen since #1305 removed the harmonizer and granular; the live count is pinned
+        // by `ANonFiniteControlCannotReachTheRenderTests`, which is where to correct it) —
         // its own guard protected the field it stored and nothing it constructed.
         // ⚠️ `isFinite` here is REDUNDANT and kept on purpose — measured, not assumed: deleting
         // it leaves every degenerate case still covered, because `NaN > 0` is false and
@@ -214,8 +208,6 @@ public final class EchoelFXChain: @unchecked Sendable {
         self.filterR = EchoelSVFilter(sampleRate: rate)
         self.tape = EchoelTape(sampleRate: rate)
         self.bitcrush = EchoelBitcrush(sampleRate: rate)
-        self.harmonizer = EchoelHarmonizer(sampleRate: rate)
-        self.granular = EchoelGranular(sampleRate: rate)
         self.chorus = EchoelChorus(sampleRate: rate)
         // Gentle default: low wet mix + modest depth + slow rate → ensemble
         // warmth and width without an obvious "seasick" wobble.
@@ -341,8 +333,9 @@ public final class EchoelFXChain: @unchecked Sendable {
     /// ship blocker, and this paragraph exists so the "obvious" one-liner is not written a
     /// second time. `reset()` is documented CONTROL PLANE ONLY ninety lines above
     /// (`snapFilterToTarget`: "two threads snapping the same `ParamGlide` structs is a race with
-    /// no guard on it"), and it resets ALL FOURTEEN stages UNCONDITIONALLY (thirteen
-    /// until #687 added granular; `filterL`/`filterR` count as one). The second half is
+    /// no guard on it"), and it resets EVERY stage UNCONDITIONALLY (measure, do not quote:
+    /// the `.reset()` calls inside `reset()`, with `filterL`/`filterR` counting as one — it
+    /// read "FOURTEEN" until #1305 removed harmonizer and granular). The second half is
     /// the worse one: the SWITCH-CRACKLE RULE at the top of this file is safe only because the
     /// control thread resets a stage exclusively while its flag is still FALSE — i.e. exactly
     /// when the audio thread is not touching it. An unconditional reset from the audio thread
@@ -378,12 +371,14 @@ public final class EchoelFXChain: @unchecked Sendable {
     /// `EchoelDelay` DOMINATES at 262,144 floats (two `EchoelDelayLine`s, each rounding
     /// ceil(2.0 s × 48 k) + 4 up to the next power of two = 131,072), which is 9.5× the reverb's
     /// 27,688 (8 combs + 4 all-passes × 2 channels, Freeverb tunings scaled from 44.1 k).
-    /// **Granular 131,072** (two lines × 65,536, one second per side — the SECOND largest
-    /// entry, 4.7× the reverb and half the delay; an enabled granular takes the everyday
-    /// bill from ~36 k stores to ~167 k) · harmonizer 32,768 · tape 8,192 · chorus 8,192 ·
-    /// flanger 2,048. Granular was added to the drain by #687 and to THIS TABLE only by
-    /// #688 — adding a stage to the drain without adding its line here is exactly the
-    /// failure the ⛔ below was written to prevent.
+    /// Then tape 8,192 · chorus 8,192 · flanger 2,048.
+    /// ⛔ TWO ENTRIES LEFT THIS TABLE WITH #1305: **granular 131,072** (two lines × 65,536,
+    /// one second per side — it had been the SECOND largest, 4.7× the reverb, and an enabled
+    /// granular took the everyday bill from ~36 k stores to ~167 k) and **harmonizer 32,768**.
+    /// The LAW they were added for survives them and is why this sentence stays: granular was
+    /// added to the drain by #687 and to THIS TABLE only by #688 — **adding a stage to the
+    /// drain without adding its line here** is exactly the failure the ⛔ below was written to
+    /// prevent, and removing one without removing its line is the same defect mirrored.
     ///
     /// ⛔ THE FIRST VERSION OF THAT COUNT READ "the dominant cost is `EchoelReverb`, ≈40 k float
     /// stores, tens of microseconds against a ~5 ms deadline". Three numbers, three wrong: 40 k
@@ -400,26 +395,21 @@ public final class EchoelFXChain: @unchecked Sendable {
         if filterEnabled     { filterL.reset(); filterR.reset() }
         if tapeEnabled       { tape.reset() }
         if bitcrushEnabled   { bitcrush.reset() }
-        if harmonizerEnabled { harmonizer.reset() }
         if chorusEnabled     { chorus.reset() }
         if flangerEnabled    { flanger.reset() }
         if phaserEnabled     { phaser.reset() }
         if tremoloEnabled    { tremolo.reset() }
-        // ⚠️ THE SITE A CARELESS WIRING MISSES. This stage holds a one-second ring buffer,
-        // the SECOND largest in the chain — 131,072 floats against the delay's 262,144.
-        //
-        // ⛔ The first version called it "the longest in the chain" and said the drain
-        // "matters here more than anywhere else". Both false, neither measured: `EchoelDelay`
-        // defaults to `maxDelaySeconds: 2.0` and the chain takes that default. Worse on the
-        // AUDIBLE reading, which is the one that matters — what a woken stage sprays is how
-        // far BACK it reads, and granular's grains sit `1 + rand·spray` behind the head with
-        // spray defaulting to 0.05 s, so it wakes with ~50 ms of stale audio while a typical
-        // delay wakes with hundreds. The ⛔ block in the doc above is a retraction of an
-        // EARLIER wrong version of this same arithmetic, whose stated lesson was that naming
-        // the wrong dominant stage is the dangerous half. Written directly beneath it, and
-        // then repeated in three files. The drain line is right; only the superlative was
-        // invented, and inventing one is easier than checking two constructor defaults.
-        if granularEnabled   { granular.reset() }
+        // ⛔ A FIFTEEN-LINE ⚠️ BLOCK STOOD HERE FOR THE GRANULAR DRAIN AND WENT WITH IT
+        // (#1305). Its LESSON is general and is kept: it called granular's ring "the longest
+        // in the chain", which was false on both readings — `EchoelDelay` takes its
+        // `maxDelaySeconds: 2.0` default (262,144 floats against granular's 131,072), and on
+        // the AUDIBLE reading, the one that matters, what a woken stage sprays is how far BACK
+        // it reads: granular sat `1 + rand·spray` behind the head with spray defaulting to
+        // 0.05 s, so it woke with ~50 ms of stale audio while a typical delay wakes with
+        // hundreds. That superlative was written DIRECTLY BENEATH the ⛔ retraction of an
+        // earlier wrong version of the same arithmetic, and then repeated in three files.
+        // **Inventing a superlative is easier than checking two constructor defaults** — and
+        // the drain line itself was right the whole time, which is why nothing went red.
         if delayEnabled      { delay.reset() }
         if reverbEnabled     { reverb.reset() }
         if widenerEnabled    { widener.reset() }
@@ -493,12 +483,10 @@ public final class EchoelFXChain: @unchecked Sendable {
         if saturationEnabled { (l, r) = saturate(l, r) }
         if tapeEnabled       { (l, r) = tape.processStereo(l, r) }
         if bitcrushEnabled   { (l, r) = bitcrush.processStereo(l, r) }
-        if harmonizerEnabled { (l, r) = harmonizer.processStereo(l, r) }
         if chorusEnabled     { (l, r) = chorus.processStereo(l, r) }
         if flangerEnabled    { (l, r) = flanger.processStereo(l, r) }
         if phaserEnabled     { (l, r) = phaser.processStereo(l, r) }
         if tremoloEnabled    { (l, r) = tremolo.processStereo(l, r) }
-        if granularEnabled   { (l, r) = granular.processStereo(l, r) }
         if delayEnabled      { (l, r) = delay.processStereo(l, r) }
         if reverbEnabled     { (l, r) = reverb.processStereo(l, r) }
         if widenerEnabled    { (l, r) = widener.processStereo(l, r) }
@@ -599,12 +587,10 @@ public final class EchoelFXChain: @unchecked Sendable {
         filterR.reset()
         tape.reset()
         bitcrush.reset()
-        harmonizer.reset()
         chorus.reset()
         flanger.reset()
         phaser.reset()
         tremolo.reset()
-        granular.reset()
         delay.reset()
         reverb.reset()
         widener.reset()

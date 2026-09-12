@@ -290,7 +290,17 @@ of them surfaced: the pipeline reports `failure` on every push, so a genuinely r
 indistinguishable from the host dying. **Run it in the same breath as `dead-needles.py`.**
 ⚠️ Its output prints a denominator on purpose (`N of M pins it can SEE`) — M is NOT the
 bundle's universe of count pins, and a clean run proves the ARITHMETIC only, never that a
-pin is anchored on the right token (#367/#408). Five limits in its docstring; it is
+pin is anchored on the right token (#367/#408).
+⛔ **AND "cannot SEE" INCLUDES A PIN IT FULLY PARSED (#1305).** `ANonFiniteControlCannotReach
+TheRenderTests` pins `(sampleRate: rate)` at N inside `EchoelFXChain.init`; removing two stages
+made the real count 13 while the pin said 15 — red on a correct tree — and the tool **exited 0**.
+It had read the pin: `--all` lists it as *"`body` not bound to a path inside this test"*, because
+the receiver is a SLICE of the file rather than a bound path, so it sits outside the verdict's
+denominator rather than in it. `moved-needles.py` is what caught it, from the other side: the
+diff removed two lines carrying that literal, and it asked which guard names them.
+⭐ **So after a `Sources/` change, a bare `count-pins.py` is not a clearance.** Run `--all` and
+read the UNRESOLVED list for any needle your diff touched — and run `moved-needles.py`, which
+answers the same question from the diff instead of from the pin. Five limits in its docstring; it is
 validated against the tree that carried the #903 defect, per §4's known-positive rule.
 
 ```

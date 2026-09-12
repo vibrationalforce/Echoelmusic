@@ -5957,21 +5957,6 @@ tot erklärt, ist die teuerste Sorte) plus ein Zeiger hierher. Nichts ist gekür
 
 ## F — `AdaptiveCardGrid` / reflowende Panels: die vier Fassungen einer Zahl
 
-**Verschoben aus `CLAUDE.md` am 2026-08-22 (#746), wörtlich** (vier Absätze, in ihrer
-ursprünglichen Reihenfolge). In der immer-geladenen Datei bleibt nur, was eine Sitzung beim MESSEN
-braucht: die Zahl (beim Verschieben 4 von 10, seit #292 Slice 5 fünf — MESSEN, nicht von hier
-abschreiben), das `grep -c` für ihren Nenner, dessen ZWEI bekannte Abweichungen und die
-Abgrenzung zum Nachbar-Befehl (der ODERt `weatherRow` hinein und liefert 11, nicht 10)
-und die zwei Regeln zum Benutzen: ein Gitter kann in einem `private var` liegen, das kein
-Panel ist (dem AUFRUFER folgen, nicht der Dateireihenfolge), und `spacing` ist ein
-ARGUMENT, weil ein einspaltiges Gitter den Abstand seines Wirts ERSETZT.
-⛔ Diese Beschreibung war von #746 bis #912 falsch — sie beschrieb die ABSICHT, während der
-Absatz die Provenienz weiter mittrug; siehe F.4.
-
-⚠️ Der Nenner-Hinweis dazu steht weiterhin in `CLAUDE.md` an der Zahl: der Befehl misst die
-NAMENSFORM, zählt also `menuPanelHost` mit (Wirt, kein Panel) und übersieht `utilityRow` (ein
-Panel, das nicht reflowt). Die Zehn stimmt, die MENGE ist um je einen daneben.
-
 ### F.1 — die drei geerbten Fehlnennungen
 
 ⛔ **Diese Zeile hat DREIMAL hintereinander dasselbe Panel falsch genannt, und jede Korrektur hat den Fehler geerbt.** Sie stand als „2 von 11" (gezählt: `mixerPanel` + `soundPanel`), wurde auf „3 von 11" mit `sessionPanel` korrigiert — und **dieses Panel hatte nie ein Gitter**. Der Träger sitzt in `weatherRow`; `sessionPanel` hat es bloß GERENDERT. Zwei bereits im Repo stehende Korrekturen sagen das ausdrücklich (`EchoelStudioView.swift`: „NOT `sessionPanel`, which merely renders `weatherRow` and contains no grid at all"; `Tests/CISmoke/SoundPanelReflowsTests.swift`: „⛔ The first version wrote `sessionPanel` here and in three other places — wrong"), und #359 Schritt 1 ist trotzdem ein drittes Mal hineingelaufen.
@@ -6014,6 +5999,35 @@ sondern um doppelt bezahlte Bytes in der Datei, die JEDE Sitzung lädt.
 **Der verschobene Absatz, wörtlich, in seiner letzten Fassung vor der Kürzung:**
 
 > **Kein „nie".** Die großen Flächen sind die Zukunft als **AUSGABE** — externer Bildschirm/Beamer (#206), ADM-OSC-Raum —, nicht als zweite App-Oberfläche. Kommt iPad als Instrumenten-Fläche zurück, braucht es eine dort funktionierende Bio-Quelle (der BLE-Gurt ist gebaut und verdrahtet) plus den Adaptivitäts-Durchgang #292. **Der Durchgang passiert ohnehin:** iPhone allein spannt 375–440 pt, erlaubt Querformat und läuft mit ungedeckeltem Dynamic Type — heute reflowen **5 von 10** Panels: `mixerPanel`, `soundPanel` (mit sieben Gittern), seit #292 Slice 3 `moodPanel` (mit zwei), seit #292 Slice 4 `visualPanel` (mit zwei) und seit #292 Slice 5 `masterPanel` (mit EINEM Gitter für das Target/Tone-Paar — bewusst nur die zwei gleich hohen Parameter-Zeilen; die Leaf-Views und Vollbreiten-Zeilen des Panels bleiben absichtlich draußen, Wächter `Tests/CISmoke/MasterPanelReflowsTests.swift`). Die anderen fünf — `menuPanelHost`, `bioPanel`, `videoPanel`, `tempoToolsPanel`, `effectsPanel` — stapeln weiter starr. ⚠️ **`visualPanel` ist der erste Eintrag dieser Liste, der seine Gitter NICHT im eigenen Rumpf hat**, und das ist genau die Falle, vor der der ⛔-Absatz unter diesem warnt: sie sitzen in `visualAdjustFields(spacing:)`, das der Rumpf aufruft. Wer die Liste per `grep` über Panel-Rümpfe nachführt, findet `visualPanel` nicht — man folgt dem AUFRUFER, sonst zählt man es beim nächsten Mal wieder als starr. ⭐ Und Slice 4 hat als erste eine Fläche mitgenommen, die gar kein Panel ist: `visualVJOverlay` rendert dieselbe Definition und reflowt seither ebenfalls — es steht bewusst nicht im Zähler, weil der Nenner Panels zählt, aber es ist der Grund, warum `spacing` dort ein ARGUMENT ist (14 im Panel, 8 im Overlay; in einer Spalte ERSETZT das Gitter den Abstand des Wirts, ein Literal hätte also eine der beiden Flächen im Hochformat still umgesetzt). Wächter: `Tests/CISmoke/VisualFineTuneReflowsTests.swift`. ⛔ **UND DIESE ZWEITE FLÄCHE HAT KEINE TÜR — der Satz oben liest sich, als hätte sie eine, und das ist die Sorte Lücke, die keine Zahl anzeigt** (gemessen 2026-08-08, #505): `visualVJOverlay` ist an genau EINER Stelle montiert, im `.fullScreenCover(isPresented: $showVisual)`, und `showVisual` hatte in `Sources/` KEINEN Schreiber von `true` — wortgrenzen-genau zwei Schreiber im Code, der eigene `@State`-Initialisierer und der Schließen-Knopf, beide `false`. ⭐ **#747 hat die Tür gebaut** („Full screen" im `visualPanel`), offene Aufgabe #270 ist geschlossen, und damit ist die ASYMMETRIE weg: `spacing` verteidigt jetzt ZWEI erreichbare Flächen. Beide Sätze — „reflowt ebenfalls" und „tote Zweitkopie" — sind wörtlich WAHR, und nebeneinandergelegt widersprechen sie sich nur scheinbar; das REGISTER war irreführend, weil nur einer von beiden hier stand. ⭐ Die Folge ist eine ASYMMETRIE, keine Abschwächung: ein hartes **8** würde das ERREICHBARE Panel umsetzen (lebende Kosten, heute), ein hartes **14** nur eine Fläche, die niemand öffnen kann. Das Argument verteidigt also in genau EINER Richtung etwas Lebendes und ist in der anderen Buchführung für den Tag, an dem die Tür zurückkommt. ⛔ Und der teuerste Einzelbefund saß im Wächter selbst: seine Grenzen-Notiz BAT den Founder um eine Querformat-Geräteprobe „des VJ-Overlays" — eine Bitte, die niemand erfüllen kann, in dem Register, aus dem der NEEDS-FOUNDER-VERIFY-Rückstand triagiert wird. Zurückgezogen statt umformuliert; Claim 6 desselben Wächters wird rot, sobald die Tür zurückkommt, und nennt die neun Dateien, deren „türlos"-Prosa dann im selben Commit mitzuziehen ist. (Der Nenner war bis #359 Schritt 3 elf; `sessionPanel` ist mit diesem Schritt gelöscht, sein einziger Inhalt `placeRow` sitzt jetzt in „Save & Export". Zähl mit `grep -c "private var \w*Panel\w*: some View"`, nicht aus dem Kopf — genau diese Zeile trägt vier Absätze über ihre eigenen Zählfehler. ⚠️ Und der Befehl misst die NAMENSFORM, nicht die Sache: er zählt `menuPanelHost` mit, das der Wirt ist und kein Panel, und übersieht `utilityRow`, das eines der Dropdown-Panels IST und nicht reflowt. Die zehn stimmen als Zahl, die MENGE ist um je einen daneben — wer die Panels einzeln durchgeht, muss beide Abweichungen kennen.)
+
+### F.5 — die ZWEI-STELLEN-Lehre (#359, hierher verschoben aus CLAUDE.md mit #1305)
+
+Die iPad-Tabellenzelle stand auf „2 von 11", während die Zeile „Kein ‚nie'" 12 Zeilen tiefer
+schon „2 von 10" sagte — DIESELBE Tatsache, zwei Zahlen, weil #359 Schritt 3 nur die untere
+nachführte. Der Absatz unter jener Tabelle trug fünf Lehren über seine eigenen Zählfehler und
+keine davon lautete „such nach der ZWEITEN Stelle". Seither steht sie in CLAUDE.md als eine
+Zeile; die Herleitung steht hier.
+
+⭐ **Und sie hat sich #1305 bewährt:** der Video-Rückzug musste denselben Satz („heute reflowen
+**5 von 10** Panels") an beiden Stellen ändern, und das Ersetzungs-Skript brach mit
+`AssertionError: (2, …)` ab — weil es auf genau EIN Vorkommen bestand. Ein Skript, das auf die
+Anzahl besteht, FINDET die zweite Stelle; eines, das blind `replace()` ruft, hätte sie
+stillschweigend mitgeändert und beim nächsten Mal wieder auseinanderlaufen lassen.
+
+**Verschoben aus `CLAUDE.md` am 2026-08-22 (#746), wörtlich** (vier Absätze, in ihrer
+ursprünglichen Reihenfolge). In der immer-geladenen Datei bleibt nur, was eine Sitzung beim MESSEN
+braucht: die Zahl (beim Verschieben 4 von 10, seit #292 Slice 5 fünf — MESSEN, nicht von hier
+abschreiben), das `grep -c` für ihren Nenner, dessen ZWEI bekannte Abweichungen und die
+Abgrenzung zum Nachbar-Befehl (der ODERt `weatherRow` hinein und liefert 11, nicht 10)
+und die zwei Regeln zum Benutzen: ein Gitter kann in einem `private var` liegen, das kein
+Panel ist (dem AUFRUFER folgen, nicht der Dateireihenfolge), und `spacing` ist ein
+ARGUMENT, weil ein einspaltiges Gitter den Abstand seines Wirts ERSETZT.
+⛔ Diese Beschreibung war von #746 bis #912 falsch — sie beschrieb die ABSICHT, während der
+Absatz die Provenienz weiter mittrug; siehe F.4.
+
+⚠️ Der Nenner-Hinweis dazu steht weiterhin in `CLAUDE.md` an der Zahl: der Befehl misst die
+NAMENSFORM, zählt also `menuPanelHost` mit (Wirt, kein Panel) und übersieht `utilityRow` (ein
+Panel, das nicht reflowt). Die Zehn stimmt, die MENGE ist um je einen daneben.
 
 ## G — Die „Donuts"-Pille und der tote Tools-Katalog (#227 → #747 → #751)
 
@@ -6626,3 +6640,21 @@ opt-in geworden) und stieß dabei an die 150 000-B-Decke — `CLAUDE.md` stand b
 also 247 B Luft, und die ehrliche Korrektur brauchte mehr. Genau der Handel, für den die
 Decke existiert: Gesetz bleibt, Provenienz zieht um.
 
+
+
+## W — `EchoelModalBank`: das abgelaufene Rezept (verschoben aus CLAUDE.md, #1305)
+
+CLAUDE.md schrieb im `DSP/`-Block: *„`git grep -l EchoelModalBank -- Sources` liefert heute NUR
+die eigene Datei"*. Am 2026-08-07 lieferte derselbe Befehl **DREI** — zusätzlich
+`LaneVoiceRack.swift` und `TakeDistance.swift`. **Beide Zusatztreffer sind KOMMENTARE:** der eine
+erklärt, warum ein Wächter seine Begründung verloren hat, der andere zitiert genau jenen
+CLAUDE.md-Absatz als Warnung.
+
+Die SCHLUSSFOLGERUNG überlebte unverändert (null Instanziierer, null Produktionspfad); das REZEPT
+nicht. Ein Rezept, das man ausführt und das „3" sagt, wo die Prosa „1" verspricht, wird als
+WIDERSPRUCH gelesen, nicht als veraltete Formulierung — und eine Sitzung, die daraufhin die
+Schlussfolgerung verwirft, verwirft eine wahre Aussage wegen eines ungenauen Befehls.
+
+**Das GESETZ steht weiter in CLAUDE.md**, weil es beim Schreiben gebraucht wird: ein Vermerk, der
+ein `grep` ZITIERT, altert schneller als einer, der eine Tatsache behauptet. Der Befehl, der die
+Sache misst, fragt nach der BENUTZUNG (`EchoelModalBank(`), nicht nach der NENNUNG.

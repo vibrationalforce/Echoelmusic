@@ -35,10 +35,11 @@
 //  ⭐ AND THE FIRST #480 PASS TRADED THE FALSE CLAIM FOR A DIFFERENT FALSE CLAIM — found by the
 //  reviewer, measured before repairing. The replacement hint read "Open every effect stage —
 //  filter, delay, modulation and dynamics, with every parameter exposed". `EchoelFXView` declares
-//  FOURTEEN `effectSection(` calls AT THE TIME (fifteen since #692 added Granular — the
+//  FOURTEEN `effectSection(` calls AT THE TIME (fifteen after #692 added Granular, then
+//  thirteen after #1305 removed Granular AND Harmonizer — the
 //  denominator is dated, not re-bumped, because it describes a hint that no longer exists);
 //  those four categories covered eight. Saturation, Tape / VHS,
-//  Bitcrush, Harmonizer, Reverb and Stereo Width fell outside all four, and Reverb is the one a
+//  Bitcrush, Reverb and Stereo Width fell outside all four, and Reverb is the one a
 //  musician notices missing. Worse, the order was wrong as well: `EchoelFXChain.processStereo`
 //  runs modulation BEFORE delay. A sighted user can glance at the sheet and see the rest; a
 //  VoiceOver user has only that sentence. So `testTheDoorDoesNotEnumerateTheStages` derives the
@@ -188,6 +189,10 @@ final class TheFXDoorNamesAControlThatExistsTests: XCTestCase {
     /// ⭐ #693 — AND THAT PROMISE WAS KEPT, WHICH IS WHY IT IS WORTH RECORDING. This line said
     /// "adding a FIFTEENTH stage automatically extends the ban"; #692 added the fifteenth
     /// (Granular) and this test needed no edit — `stageNames()` picked it up and the hint was
+    /// ⭐ AND #1305 REMOVED TWO STAGES WITH THE SAME NON-EVENT: `stageNames()` simply returned
+    /// two fewer titles. A derived list survives both directions; a hand-written one survives
+    /// neither.
+    /// The original sentence continued: the hint was
     /// re-checked against it for free. Every hand-written count in the same file DID have to be
     /// walked. A derived list survives the change that dates a literal; that is the whole
     /// argument for #416 in one commit.

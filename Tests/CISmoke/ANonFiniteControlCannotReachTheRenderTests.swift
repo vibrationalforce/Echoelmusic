@@ -227,7 +227,7 @@
 // matches the census regex and is one of the hits. Run the command; do not read a number here.
 //
 // What is DURABLE, and is why the census is mentioned at all: many hits are already closed by
-// an explicit `isFinite` ternary in the same expression (`EchoelGranular`, `EchoelFDNReverb`,
+// an explicit `isFinite` ternary in the same expression (`EchoelFDNReverb`,
 // `ChannelInsertFX`, `SubCharacter`, `EchoelDDSP`), and several are COMMENTS quoting the idiom
 // in order to warn about it — in `EchoelDelayLine`, in `EchoelDelay`, and now here. So the
 // count is an upper bound on CANDIDATES, never a count of defects: read the hits.
@@ -430,8 +430,9 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     /// `Int.max`. The parent computed
     /// `Swift.max(4, Int((maxDelaySeconds * sampleRate).rounded(.up)) + 4)` — `Swift.max`
     /// runs AFTER the conversion, so the net hung behind the hole. FIVE stage initialisers
-    /// reach this site with a rate they never checked (`EchoelTape`, `EchoelHarmonizer`,
-    /// `EchoelChorus`, `EchoelDelay`); `EchoelGranular` was the only one that guarded, and
+    /// reach this site with a rate they never checked (`EchoelTape`, `EchoelChorus`,
+    /// `EchoelDelay`); `EchoelGranular` was the only one that guarded (until #1305 removed it,
+    /// which makes the guard IN `EchoelDelayLine` the last one standing), and
     /// its own comment names this exact line as the thing that TRAPS. #937 — one form
     /// repaired, four twins left broken — so the repair went to the shared site.
     ///
@@ -463,7 +464,7 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     /// COUNTERWEIGHT (#343): the repair's whole claim is "bit-identical for every request the
     /// shipped stages actually make". These are those requests, with the capacities the
     /// PARENT produced — so if the clamp ever changes a real line, this goes red, not the
-    /// test above. 0.05 s is Tape and Chorus, 0.12 s the Harmonizer, 1.0 s Granular, 2.0 s
+    /// test above. 0.05 s is Tape and Chorus, 2.0 s
     /// the Delay default.
     func testEveryRealDelayRequestKeepsItsParentCapacity() {
         for (seconds, rate, expected) in [(Float(0.05), Float(48000), 4096),
@@ -534,6 +535,17 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
     /// constructions of fourteen distinct types. The number was written from a partial read of
     /// the initialiser, not from a count — the #1163 lesson one level up: a survey is a memory
     /// of one look, and only the executable count is the measurement.
+    ///
+    /// ⛔ AND THE PIN WENT STALE ANYWAY, WHICH IS THE MORE USEFUL HALF (#1305). Removing the
+    /// harmonizer and granular stages took the count from 15 to **13**, and the pin stayed at
+    /// 15 — red on a correct tree, the #903/#904 shape. `count-pins.py` DID parse this pin and
+    /// still exited 0: `body` is a SLICE of the file, not a bound path, so the tool lists it
+    /// under `--all` as *"`body` not bound to a path inside this test"* and excludes it from
+    /// the verdict. What found it was `moved-needles.py`, from the other direction — the diff
+    /// removed two `(sampleRate: rate)` lines and it asked which guard names that text.
+    /// ⭐ THE RULE: after a `Sources/` change, `count-pins.py` alone is not a clearance. Run
+    /// it with `--all` and read the UNRESOLVED list for any needle your diff touched — a pin
+    /// the tool can PARSE but cannot RESOLVE is silently outside its denominator.
     func testTheFXChainHandsTheSanitisedRateToEveryStage() throws {
         let src = try source("Sources/Echoelmusic/DSP/EchoelFXChain.swift")
         guard let start = src.range(of: "public init(sampleRate: Float = 48000) {"),
@@ -544,10 +556,12 @@ final class ANonFiniteControlCannotReachTheRenderTests: XCTestCase {
                 """)
         }
         let body = String(src[start.upperBound..<end.lowerBound])
-        XCTAssertEqual(body.components(separatedBy: "(sampleRate: rate)").count - 1, 15, """
-            EchoelFXChain.init no longer builds fifteen stages from the sanitised `rate`. If a \
-            stage was added, give it `rate`; if one was removed, correct this count and the \
-            "fifteen" in the initialiser's own comment.
+        XCTAssertEqual(body.components(separatedBy: "(sampleRate: rate)").count - 1, 13, """
+            EchoelFXChain.init no longer builds thirteen stages from the sanitised `rate`. If a \
+            stage was added, give it `rate`; if one was removed, correct this count AND the \
+            number in the initialiser's own comment — both, in this commit. It read 15 until \
+            #1305 removed the harmonizer and granular stages, and see this test's doc for why \
+            no checker caught that.
             """)
         XCTAssertFalse(body.contains("(sampleRate: sampleRate)"), """
             A stage is being built from the RAW `sampleRate` again. That is the #1172 defect: \

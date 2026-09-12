@@ -70,8 +70,25 @@ der Defekt, den die Zeile darüber benennt.
 | # | Inhalt | Stand |
 |---|---|---|
 | 1 | Plan-Dokumente (oben) | DIESE |
-| 2 | Video-Capture: `VisualRecorder` · `VideoRecorder` · `VideoMuxer` · `VideoMuxAlignment` · REC-Taste · `videoPanel`/`VideoLibraryPanelContent` · Wächter · Store-/Website-Zeilen · die fünf Video-Pläne | offen |
-| 3 | Autotune/Harmonizer/Granular: `EchoelHarmonizer` · `EchoelGranular` · `DiatonicHarmony` · `DiatonicHarmonyFollower` (mit `KeyHarmony`) · `HarmonyInterval` · ihre Stufen in `EchoelFXChain`/`FXPreset`/`GenreFX`/`GenrePatches`/`FXCuratedLibrary`/`EchoelFXView` · Wächter · Store-Zeile „Harmonizer effect" | offen |
+| 2 | Video-Capture: `VisualRecorder` · `VideoRecorder` · `VideoMuxer` · `VideoMuxAlignment` · REC-Taste · `videoPanel`/`VideoLibraryPanelContent` · Wächter · Store-/Website-Zeilen · die fünf Video-Pläne | **FERTIG `122724d` (#1304)** |
+| 3 | Autotune/Harmonizer/Granular: `EchoelHarmonizer` · `EchoelGranular` · `DiatonicHarmony` · `DiatonicHarmonyFollower` (mit `KeyHarmony`) · `HarmonyInterval` · ihre Stufen in `EchoelFXChain`/`FXPreset`/`GenreFX`/`FXCuratedLibrary`/`EchoelFXView` · Wächter · Store-Zeile „Harmonizer effect" | **FERTIG (#1305)** |
+
+**NACHTRAG zur Scheibe-3-Zeile, weil zwei Namen darin nicht stimmten:** `GenrePatches` trägt
+gar keine Harmonizer-/Granular-Stufe (der Treffer war das Wort „granularity"), und **Autotune war
+schon mit #1302 weg** — `VoicePitchCorrector` ging mit dem Audio-Eingang. Was #1305 zusätzlich
+finden musste und in keinem Plan stand: `FXCharacter.harmonizer` (ein PERSISTIERTER
+`rawValue` — decode-sicher, weil beide Leser über eine failable Init mit Rückfall gehen), die
+zwei Kuratier-Presets „Octave Lead"/„Fifth Stack" (ganz auf dem Harmonizer gebaut), der
+Panel-Untertitel „Follow the key", und **eine Zähl-Nadel bei 15, die 13 hätte sein müssen**
+(`ANonFiniteControlCannotReachTheRenderTests`). ⭐ **Die Nadel fand `moved-needles.py`, NICHT
+`count-pins.py`** — das hatte sie geparst, konnte ihren Empfänger aber nicht auf einen Pfad
+auflösen und ließ sie darum aus dem Verdikt fallen. Steht als Regel jetzt in
+`Tests/CISmoke/CLAUDE.md` §4.
+
+**`Sequencer/MicrotonalTuning` BLEIBT** und ist der Fall, der beim nächsten „Autotune raus"
+wieder auftaucht: sein Dateikopf nennt sich selbst das Autotune-ZIEL, aber es ist das Tonsystem
+JEDER gestimmten Stimme (`EveryPitchedVoiceFollowsTheToneSystemTests`). **Ein Name im Dateikopf
+ist keine Zugehörigkeit.**
 
 **Vor jedem `git rm` gilt der #1302-Spielplan:** die DEKLARIERTEN SYMBOLE der Opfer-Dateien
 (alle Deklarationsformen, nicht nur Typen) gegen einen kommentar- und stringbereinigten

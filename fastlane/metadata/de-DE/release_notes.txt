@@ -10,7 +10,6 @@ Komposition
 
 Klang
 - Algorithmischer Reverb mit Raum- und Hallen-Presets für echte Tiefe pro Genre
-- Harmonizer-Effekt: Terz- und Quint-Stimmen über der Melodie — optional „Follow the key": die Terz atmet diatonisch mit der Tonart
 - Per-Genre-Sättigung — von klarem Klassik-Klang bis stark angezerrt
 - Anti-Aliasing-Glättung für sauberere hohe Töne und Vibrato
 

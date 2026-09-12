@@ -341,7 +341,7 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
     /// it calls, and says nothing about how long they take.
     ///
     /// MEASURED WORST CASE. `EchoelDelay` takes `maxDelaySeconds: 2.0`, so one delay line is
-    /// 131 072 floats per channel; granular, harmonizer, chorus, flanger and tape all bottom
+    /// 131 072 floats per channel; chorus, flanger and tape all bottom
     /// out in the SAME `EchoelDelayLine.reset()`; the reverb tank adds ~26 000 through a
     /// NESTED array-of-arrays loop. A full drain is on the order of 1.8 MB of Array-subscript
     /// stores — each with a bounds check, the loop with a uniqueness check — inside a 10.67 ms
@@ -379,7 +379,7 @@ final class SleepingChainDoesNotHoardAudioTests: XCTestCase {
         XCTAssertTrue(delay.contains("buffer.withUnsafeMutableBufferPointer { $0.update(repeating: 0) }"), """
             `EchoelDelayLine.reset()` is back to an element-by-element zero loop. It is called \
             from the audio thread by `noteRenderSleeping`, for up to 131 072 floats per \
-            channel, and it is the shared bottom of delay, granular, harmonizer, chorus, \
+            channel, and it is the shared bottom of delay, chorus, \
             flanger and tape (#1196b).
             """)
         let reverb = try codeLines("Sources/Echoelmusic/DSP/EchoelReverb.swift").joined(separator: "\n")

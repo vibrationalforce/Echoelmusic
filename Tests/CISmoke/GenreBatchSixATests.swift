@@ -263,7 +263,6 @@ final class GenreBatchSixATests: XCTestCase {
                 """)
             XCTAssertTrue(p.reverbEnabled)
             XCTAssertFalse(p.filterEnabled, "`acidTechno` is the only genre arm that enables the chain filter")
-            XCTAssertFalse(p.harmonizerEnabled)
             XCTAssertLessThan(p.reverbRoom, contemplation.reverbRoom,
                               "\(style.rawValue) took contemplation's \"biggest hall in the roster\"")
             XCTAssertLessThan(p.reverbRoom, drift.reverbRoom, "\(style.rawValue) outgrew drift's hall")

@@ -133,12 +133,14 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// `Swift.max` runs AFTER the conversion, so the net hung behind the hole.
     ///
     /// FIVE stage initialisers build a line from a rate they did not check —
-    /// `EchoelTape`, `EchoelHarmonizer`, `EchoelChorus`, `EchoelDelay` all store
-    /// `self.sr = sampleRate` raw. `EchoelGranular` is the ONLY one that guards, and its
+    /// `EchoelTape`, `EchoelChorus`, `EchoelDelay` all store
+    /// `self.sr = sampleRate` raw. `EchoelGranular` was the ONLY one that guarded, and its
     /// comment names this exact site: "reaches `Int((inf * sr).rounded(.up))` inside
     /// `EchoelDelayLine.init`, which TRAPS". That is #937 — one form repaired, four twins
     /// left broken — so the repair belongs at the shared site, not at five call sites.
-    /// `EchoelGranular`'s guard stays: it is now belt-and-braces, and correct.
+    /// ⛔ `EchoelGranular` went with #1305, so the ONE guarding caller is gone and this
+    /// line is now the only place the sample rate is sanitised. That makes the guard HERE
+    /// load-bearing rather than belt-and-braces — do not "simplify" it back out.
     ///
     /// BIT-IDENTICAL FOR EVERY PREVIOUSLY-VALID INPUT. The clamp keeps the old SHAPE —
     /// `Swift.max(4, Int(...) + 4)` — and only bounds what feeds the conversion, so a
@@ -270,8 +272,8 @@ public final class EchoelDelayLine: @unchecked Sendable {
 
     /// ⚠️ THIS RUNS ON THE AUDIO THREAD, and that is why the fill is bulk (#1196b).
     /// `PolySynthVoice.renderOnAudioThread` calls `EchoelFXChain.noteRenderSleeping()` 2.5 s
-    /// after a voice goes quiet, and that drains every ENABLED stage — delay, granular,
-    /// harmonizer, chorus, flanger and tape all bottom out HERE. `EchoelDelay` alone takes
+    /// after a voice goes quiet, and that drains every ENABLED stage — delay, chorus,
+    /// flanger and tape all bottom out HERE (granular and harmonizer did too, until #1305). `EchoelDelay` alone takes
     /// `maxDelaySeconds: 2.0`, so one `reset()` can clear 131 072 floats per channel; a whole
     /// drain is on the order of 1.8 MB, inside a 10.67 ms render deadline — and four voices
     /// go quiet in the SAME block when the composer stops, so it convoys.

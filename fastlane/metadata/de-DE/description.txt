@@ -23,7 +23,7 @@ ERSCHAFFEN
 - Eigene Patches gestalten und speichern
 - Komposition: Genre und Tonart wählen; Dein Körper erzeugt Material in der Tonart, das Du mit Klang- und Charakter-Reglern formst
 - Kammerton (A4) auf den Cent genau; BPM für tighte Loops sperren oder sync-frei bleiben
-- Effekte: Reverb, Delay, Chorus, Flanger, Phaser, Tremolo, Sättigung, Harmonizer und mehr
+- Effekte: Reverb, Delay, Chorus, Flanger, Phaser, Tremolo, Sättigung und mehr
 - Immersives Visual: Deine Noten werden in Echtzeit zu Farbe (Tonfrequenz oktavweise ins Licht transponiert) und folgen Musik und Körper
 - Rückwirkend aufnehmen: den Loop behalten, den Du gerade gespielt hast
 - Export des Loops als Audio (WAV) oder MIDI (.mid) für Deine DAW — die MIDI-Datei trägt Tempo, 4/4 und Tonart, in ganzen Takten

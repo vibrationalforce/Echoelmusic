@@ -61,7 +61,7 @@ final class GenreDelaySyncResolvabilityTests: XCTestCase {
     /// One reusable chain per TEST METHOD (XCTest builds a fresh instance for each, which is
     /// what makes this bleed-free across methods — the property does the sharing, not a static).
     /// A fresh `EchoelFXChain` allocates ≥1 MB of delay-line buffers plus tape/chorus/flanger/
-    /// harmonizer/reverb lines, and the sweeps below call `stamped` ~90 times: 90 chains would
+    /// reverb lines, and the sweeps below call `stamped` ~90 times: 90 chains would
     /// churn ~100 MB inside the bundle that gates every merge, for no added coverage.
     ///
     /// ⚠️ EQUIVALENT FOR WHAT THIS FILE READS, AND NOT IN GENERAL — the first version claimed

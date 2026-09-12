@@ -12,7 +12,8 @@
 //   1. Choosing **Clean** could not produce a dry signal. `FXCharacter.clean`'s preset sets
 //      `delayEnabled: false` under the comment *"Everything off — a dry reset"*, and that value
 //      survived for exactly one statement. Five of the twelve characters were affected —
-//      `.clean`, `.telephone` and `.vinyl` say so outright, `.harmonizer` and `.room` inherit it
+//      `.clean`, `.telephone` and `.vinyl` say so outright, `.room` inherits it (`.harmonizer`
+//      did too, and went with the stage in #1305)
 //      from `GenreFXPreset.init`'s default by omitting the parameter. No GENRE preset is
 //      affected: every `MusicStyle.fxPreset` enables delay (`GenreFXTests`).
 //   2. The **Delay switch** in the "All parameters" panel could not stay off. Switching it off
@@ -59,6 +60,11 @@ final class CleanIsDryTests: XCTestCase {
     /// RESET: tape, bitcrush, flanger, tremolo, granular, widener, compressor, exactly the ones
     /// `GenreFXPreset` cannot express. (`harmonizer` and `reverb` are the other two: unchecked,
     /// but written false by the preset, so they were correct by luck rather than by assertion.)
+    /// ⚠️ THE NUMBERS ABOVE ARE #694's AND ARE DELIBERATELY NOT RE-COUNTED: #1305 removed
+    /// `harmonizerEnabled` and `granularEnabled`, so "fifteen flags" and "nine" describe the
+    /// tree #694 measured, not this one. The FINDING is what is kept, and it is general — a
+    /// guard whose PROSE is complete while its ASSERTIONS are a subset reads as covered and is
+    /// not. The live list is `switchable` below, which the derived test keeps honest.
     /// A guard whose PROSE is complete and whose ASSERTIONS are a subset reads as covered and is
     /// not; that is the same defect shape as an enumerating hint under the word "every".
     ///
@@ -173,7 +179,7 @@ final class CleanIsDryTests: XCTestCase {
     /// list honest.
     private static let switchable = [
         "filterEnabled", "saturationEnabled", "tapeEnabled", "bitcrushEnabled",
-        "harmonizerEnabled", "chorusEnabled", "flangerEnabled", "granularEnabled",
+        "chorusEnabled", "flangerEnabled",
         "phaserEnabled", "tremoloEnabled", "delayEnabled", "reverbEnabled",
         "widenerEnabled", "compressorEnabled",
     ]
@@ -184,10 +190,8 @@ final class CleanIsDryTests: XCTestCase {
         case "saturationEnabled": chain.saturationEnabled = value
         case "tapeEnabled":       chain.tapeEnabled = value
         case "bitcrushEnabled":   chain.bitcrushEnabled = value
-        case "harmonizerEnabled": chain.harmonizerEnabled = value
         case "chorusEnabled":     chain.chorusEnabled = value
         case "flangerEnabled":    chain.flangerEnabled = value
-        case "granularEnabled":   chain.granularEnabled = value
         case "phaserEnabled":     chain.phaserEnabled = value
         case "tremoloEnabled":    chain.tremoloEnabled = value
         case "delayEnabled":      chain.delayEnabled = value
@@ -204,10 +208,8 @@ final class CleanIsDryTests: XCTestCase {
         case "saturationEnabled": return chain.saturationEnabled
         case "tapeEnabled":       return chain.tapeEnabled
         case "bitcrushEnabled":   return chain.bitcrushEnabled
-        case "harmonizerEnabled": return chain.harmonizerEnabled
         case "chorusEnabled":     return chain.chorusEnabled
         case "flangerEnabled":    return chain.flangerEnabled
-        case "granularEnabled":   return chain.granularEnabled
         case "phaserEnabled":     return chain.phaserEnabled
         case "tremoloEnabled":    return chain.tremoloEnabled
         case "delayEnabled":      return chain.delayEnabled
@@ -222,8 +224,9 @@ final class CleanIsDryTests: XCTestCase {
     /// Clean is not the only dry configuration, so it is not the only thing the removed write
     /// broke. `.telephone` is a bandpass with the delay deliberately off — proof that
     /// `delayEnabled: false` is a real, reachable preset value and not a one-off in `.clean`.
-    /// (`.vinyl` says the same outright; `.harmonizer` and `.room` inherit it by omitting the
-    /// parameter. Five of twelve characters in total — deliberately NOT enumerated as assertions
+    /// (`.vinyl` says the same outright; `.room` inherits it by omitting the parameter —
+    /// `.harmonizer` did too until #1305 deleted the character with its stage.
+    /// Five of twelve characters at the time — deliberately NOT enumerated as assertions
     /// here, because a per-character table would go stale the moment a character is re-voiced,
     /// and the rule being pinned is about `applyDelaySync`, not about any one preset.)
     func testADryCharacterPresetIsNotAnEmptySet() {

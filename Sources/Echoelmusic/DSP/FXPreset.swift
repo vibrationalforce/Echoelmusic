@@ -61,23 +61,17 @@ public struct FXPreset: Codable, Identifiable, Sendable, Equatable {
     public var widenerEnabled: Bool
     public var widenerWidth: Float
 
-    // Harmonizer
-    public var harmonizerEnabled: Bool
-    public var harmonizerInterval1: Float
-    public var harmonizerInterval2: Float
-    public var harmonizerVoice2Enabled: Bool
-    public var harmonizerMix: Float
-    /// Granular texture (#690). Seven fields, because persisting SOME of a stage is
-    /// the trap: a preset that restores the grain size but not the mix recalls a sound
-    /// nobody saved. All are `try?`-with-default on decode, so an older document loads
-    /// with the stage off and nothing shifts under an existing user.
-    public var granularEnabled: Bool
-    public var granularMix: Float
-    public var granularGrainMs: Float
-    public var granularDensity: Float
-    public var granularSpraySeconds: Float
-    public var granularPitchSemitones: Float
-    public var granularStereoSpread: Float
+    // ⛔ TWELVE FIELDS STOOD HERE AND WENT WITH #1305 (founder 2026-09-12, "Kein …
+    // Autotune, Harmonizer, granularsynthese"): five `harmonizer*` and seven `granular*`.
+    // DECODE IS SAFE AND THAT IS NOT AN ACCIDENT — every field in this type is decoded
+    // `try?`-with-default through `b`/`f`/`s`, and `CodingKeys` is SYNTHESIZED from the
+    // stored properties, so a document written by an older build simply carries keys this
+    // type no longer asks for and they are ignored. The stages cannot sound either way:
+    // `EchoelFXChain` no longer has them.
+    // ⭐ THE LAW THE GRANULAR BLOCK CARRIED SURVIVES ITS STAGE, because it is about
+    // PERSISTENCE, not about grains: **persisting SOME of a stage is the trap** — a preset
+    // that restores the grain size but not the mix recalls a sound nobody saved. Seven
+    // fields were persisted for one stage for exactly that reason.
 
     // Chorus
     public var chorusEnabled: Bool
@@ -183,19 +177,6 @@ public struct FXPreset: Codable, Identifiable, Sendable, Equatable {
         widenerEnabled = b(.widenerEnabled, false)
         widenerWidth = f(.widenerWidth, 1.0)
 
-        harmonizerEnabled = b(.harmonizerEnabled, false)
-        harmonizerInterval1 = f(.harmonizerInterval1, 4)
-        harmonizerInterval2 = f(.harmonizerInterval2, 7)
-        harmonizerVoice2Enabled = b(.harmonizerVoice2Enabled, true)
-        harmonizerMix = f(.harmonizerMix, 0.5)
-        granularEnabled = b(.granularEnabled, false)
-        granularMix = f(.granularMix, 0)
-        granularGrainMs = f(.granularGrainMs, 80)
-        granularDensity = f(.granularDensity, 0.5)
-        granularSpraySeconds = f(.granularSpraySeconds, 0.05)
-        granularPitchSemitones = f(.granularPitchSemitones, 0)
-        granularStereoSpread = f(.granularStereoSpread, 0.5)
-
         chorusEnabled = b(.chorusEnabled, true)
         chorusRate = f(.chorusRate, 0.45)
         chorusDepth = f(.chorusDepth, 0.35)
@@ -271,11 +252,6 @@ public struct FXPreset: Codable, Identifiable, Sendable, Equatable {
         tapeEnabled: Bool, tapeDepth: Float, tapeSaturation: Float, tapeTone: Float,
         bitcrushEnabled: Bool, bitcrushBits: Float, bitcrushDownsample: Float, bitcrushMix: Float,
         widenerEnabled: Bool, widenerWidth: Float,
-        harmonizerEnabled: Bool, harmonizerInterval1: Float, harmonizerInterval2: Float,
-        harmonizerVoice2Enabled: Bool, harmonizerMix: Float,
-        granularEnabled: Bool, granularMix: Float, granularGrainMs: Float,
-        granularDensity: Float, granularSpraySeconds: Float,
-        granularPitchSemitones: Float, granularStereoSpread: Float,
         chorusEnabled: Bool, chorusRate: Float, chorusDepth: Float, chorusMix: Float,
         flangerEnabled: Bool, flangerRate: Float, flangerDepth: Float, flangerFeedback: Float, flangerMix: Float,
         phaserEnabled: Bool, phaserRate: Float, phaserDepth: Float, phaserFeedback: Float, phaserMix: Float,
@@ -305,14 +281,6 @@ public struct FXPreset: Codable, Identifiable, Sendable, Equatable {
         self.bitcrushEnabled = bitcrushEnabled; self.bitcrushBits = bitcrushBits
         self.bitcrushDownsample = bitcrushDownsample; self.bitcrushMix = bitcrushMix
         self.widenerEnabled = widenerEnabled; self.widenerWidth = widenerWidth
-        self.harmonizerEnabled = harmonizerEnabled
-        self.harmonizerInterval1 = harmonizerInterval1; self.harmonizerInterval2 = harmonizerInterval2
-        self.harmonizerVoice2Enabled = harmonizerVoice2Enabled; self.harmonizerMix = harmonizerMix
-        self.granularEnabled = granularEnabled; self.granularMix = granularMix
-        self.granularGrainMs = granularGrainMs; self.granularDensity = granularDensity
-        self.granularSpraySeconds = granularSpraySeconds
-        self.granularPitchSemitones = granularPitchSemitones
-        self.granularStereoSpread = granularStereoSpread
         self.chorusEnabled = chorusEnabled; self.chorusRate = chorusRate; self.chorusDepth = chorusDepth; self.chorusMix = chorusMix
         self.flangerEnabled = flangerEnabled; self.flangerRate = flangerRate; self.flangerDepth = flangerDepth
         self.flangerFeedback = flangerFeedback; self.flangerMix = flangerMix
@@ -367,18 +335,6 @@ public extension FXPreset {
             bitcrushMix: chain.bitcrush.mix,
             widenerEnabled: chain.widenerEnabled,
             widenerWidth: chain.widener.width,
-            harmonizerEnabled: chain.harmonizerEnabled,
-            harmonizerInterval1: chain.harmonizer.interval1,
-            harmonizerInterval2: chain.harmonizer.interval2,
-            harmonizerVoice2Enabled: chain.harmonizer.voice2Enabled,
-            harmonizerMix: chain.harmonizer.mix,
-            granularEnabled: chain.granularEnabled,
-            granularMix: chain.granular.mix,
-            granularGrainMs: chain.granular.grainMilliseconds,
-            granularDensity: chain.granular.density,
-            granularSpraySeconds: chain.granular.spraySeconds,
-            granularPitchSemitones: chain.granular.pitchSemitones,
-            granularStereoSpread: chain.granular.stereoSpread,
             chorusEnabled: chain.chorusEnabled,
             chorusRate: chain.chorus.rate,
             chorusDepth: chain.chorus.depth,
@@ -445,18 +401,6 @@ public extension FXPreset {
         chain.bitcrush.mix = bitcrushMix
         chain.widenerEnabled = widenerEnabled
         chain.widener.width = widenerWidth
-        chain.harmonizerEnabled = harmonizerEnabled
-        chain.harmonizer.interval1 = harmonizerInterval1
-        chain.harmonizer.interval2 = harmonizerInterval2
-        chain.harmonizer.voice2Enabled = harmonizerVoice2Enabled
-        chain.harmonizer.mix = harmonizerMix
-        chain.granularEnabled = granularEnabled
-        chain.granular.mix = granularMix
-        chain.granular.grainMilliseconds = granularGrainMs
-        chain.granular.density = granularDensity
-        chain.granular.spraySeconds = granularSpraySeconds
-        chain.granular.pitchSemitones = granularPitchSemitones
-        chain.granular.stereoSpread = granularStereoSpread
         chain.chorusEnabled = chorusEnabled
         chain.chorus.rate = chorusRate
         chain.chorus.depth = chorusDepth
@@ -590,18 +534,6 @@ public extension FXPreset {
             bitcrushMix: L(bitcrushMix, other.bitcrushMix),
             widenerEnabled: B(widenerEnabled, other.widenerEnabled),
             widenerWidth: L(widenerWidth, other.widenerWidth),
-            harmonizerEnabled: B(harmonizerEnabled, other.harmonizerEnabled),
-            harmonizerInterval1: L(harmonizerInterval1, other.harmonizerInterval1),
-            harmonizerInterval2: L(harmonizerInterval2, other.harmonizerInterval2),
-            harmonizerVoice2Enabled: B(harmonizerVoice2Enabled, other.harmonizerVoice2Enabled),
-            harmonizerMix: L(harmonizerMix, other.harmonizerMix),
-            granularEnabled: B(granularEnabled, other.granularEnabled),
-            granularMix: L(granularMix, other.granularMix),
-            granularGrainMs: L(granularGrainMs, other.granularGrainMs),
-            granularDensity: L(granularDensity, other.granularDensity),
-            granularSpraySeconds: L(granularSpraySeconds, other.granularSpraySeconds),
-            granularPitchSemitones: L(granularPitchSemitones, other.granularPitchSemitones),
-            granularStereoSpread: L(granularStereoSpread, other.granularStereoSpread),
             chorusEnabled: B(chorusEnabled, other.chorusEnabled),
             chorusRate: L(chorusRate, other.chorusRate),
             chorusDepth: L(chorusDepth, other.chorusDepth),

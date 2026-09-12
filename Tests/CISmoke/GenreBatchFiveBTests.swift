@@ -262,7 +262,6 @@ final class GenreBatchFiveBTests: XCTestCase {
                 \(style.rawValue) enabled the chain filter. `acidTechno`'s arm claims to be the \
                 only genre that does, and that is a roster-wide claim.
                 """)
-            XCTAssertFalse(p.harmonizerEnabled)
             if style.beatArchetype == .fourOnFloor {
                 XCTAssertLessThan(p.delayFeedback, minimal.delayFeedback, """
                     \(style.rawValue) took `minimalTechno`'s "longest tail of the four-on-floor \

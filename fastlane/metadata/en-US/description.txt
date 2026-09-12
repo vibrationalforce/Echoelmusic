@@ -23,7 +23,7 @@ CREATE
 - Design and save your own patches
 - Composition: pick a genre and a key; your body generates in-key material you shape with the sound and character controls
 - Concert pitch (A4 / Kammerton) set exactly to the cent; lock a BPM for tight loops or stay sync-free
-- Effects: reverb, delay, chorus, flanger, phaser, tremolo, saturation, harmonizer and more
+- Effects: reverb, delay, chorus, flanger, phaser, tremolo, saturation and more
 - Immersive visual: the notes you play become color in real time — each tone's frequency transposed by whole octaves into visible light — reacting to the music and your body
 - Retroactive capture: keep the loop you just played
 - Export the loop as audio (WAV) or MIDI (.mid) for your DAW — the MIDI file carries tempo, 4/4 and the key signature, in whole bars

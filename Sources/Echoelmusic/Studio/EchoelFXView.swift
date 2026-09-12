@@ -186,12 +186,6 @@ final class FXViewModel {
         compKnee = c.compressor.kneeDb
         limiterEnabled = c.limiterEnabled; limiterCeiling = c.limiter.ceilingDb
         saturationEnabled = c.saturationEnabled; saturationDrive = c.saturationDrive; saturationMix = c.saturationMix
-        harmonizerEnabled = c.harmonizerEnabled; harmInterval1 = c.harmonizer.interval1
-        harmInterval2 = c.harmonizer.interval2; harmVoice2 = c.harmonizer.voice2Enabled; harmMix = c.harmonizer.mix
-        granularEnabled = c.granularEnabled; granularMix = c.granular.mix
-        granularGrainMs = c.granular.grainMilliseconds; granularDensity = c.granular.density
-        granularSpray = c.granular.spraySeconds; granularPitch = c.granular.pitchSemitones
-        granularSpread = c.granular.stereoSpread
         reverbEnabled = c.reverbEnabled; reverbRoomSize = c.reverb.roomSize
         reverbDamping = c.reverb.damping; reverbMix = c.reverb.mix; reverbWidth = c.reverb.width
         tapeEnabled = c.tapeEnabled; tapeDepth = c.tape.depth
@@ -294,35 +288,14 @@ final class FXViewModel {
     var widenerEnabled: Bool { didSet { for c in allChains { c.widenerEnabled = widenerEnabled } } }
     var widenerWidth: Float { didSet { for c in allChains { c.widener.width = widenerWidth } } }
 
-    // Harmonizer (added harmony voices above the melody)
-    var harmonizerEnabled: Bool { didSet { for c in allChains { c.harmonizerEnabled = harmonizerEnabled } } }
-    var harmInterval1: Float { didSet { for c in allChains { c.harmonizer.interval1 = harmInterval1 } } }
-    var harmInterval2: Float { didSet { for c in allChains { c.harmonizer.interval2 = harmInterval2 } } }
-    var harmVoice2: Bool { didSet { for c in allChains { c.harmonizer.voice2Enabled = harmVoice2 } } }
-    var harmMix: Float { didSet { for c in allChains { c.harmonizer.mix = harmMix } } }
-
-    // Granular (#692 — the door for the stage wired in #687 and persisted in #690)
-    var granularEnabled: Bool { didSet { for c in allChains { c.granularEnabled = granularEnabled } } }
-    var granularMix: Float { didSet { for c in allChains { c.granular.mix = granularMix } } }
-    var granularGrainMs: Float { didSet { for c in allChains { c.granular.grainMilliseconds = granularGrainMs } } }
-    var granularDensity: Float { didSet { for c in allChains { c.granular.density = granularDensity } } }
-    var granularSpray: Float { didSet { for c in allChains { c.granular.spraySeconds = granularSpray } } }
-    var granularPitch: Float { didSet { for c in allChains { c.granular.pitchSemitones = granularPitch } } }
-    var granularSpread: Float { didSet { for c in allChains { c.granular.stereoSpread = granularSpread } } }
-
-    /// #599b — the RESTORE half of "Follow the key". While following, the
-    /// DiatonicHarmonyFollower rewrites the chains' intervals every tick and this
-    /// view-model's stored values stay the user's source of truth, untouched. The
-    /// toggle's OFF action calls this to re-fan them onto every chain — a
-    /// re-assignment through a local, because Swift fires `didSet` on it (a direct
-    /// self-assignment would warn, and warnings are load here), and the didSets
-    /// above are the ONE fan-out path (#416; a second `for c in allChains` loop
-    /// here would be a second spelling of it).
-    func refanHarmonizerIntervals() {
-        let i1 = harmInterval1, i2 = harmInterval2
-        harmInterval1 = i1
-        harmInterval2 = i2
-    }
+    // ⛔ TWELVE MIRRORS AND THE "Follow the key" RESTORE STOOD HERE AND WENT WITH #1305
+    // (founder 2026-09-12). Two LAWS they carried are general and outlive them:
+    //   · the `didSet` fan-out above is the ONE path onto the chains (#416) — a second
+    //     `for c in allChains` loop anywhere in this type is a second spelling of it;
+    //   · a parameter a live follower REWRITES every tick must be HIDDEN, not disabled,
+    //     and the OFF action must restore from the VIEW-MODEL, never from a baseline
+    //     captured at enable time — so a preset recalled mid-follow restores to ITS
+    //     values. Whatever follows a key next inherits both.
 
     // Reverb (room / hall space)
     var reverbEnabled: Bool { didSet { for c in allChains { c.reverbEnabled = reverbEnabled } } }
@@ -377,12 +350,6 @@ final class FXViewModel {
         compKnee = c.compressor.kneeDb
         limiterEnabled = c.limiterEnabled; limiterCeiling = c.limiter.ceilingDb
         saturationEnabled = c.saturationEnabled; saturationDrive = c.saturationDrive; saturationMix = c.saturationMix
-        harmonizerEnabled = c.harmonizerEnabled; harmInterval1 = c.harmonizer.interval1
-        harmInterval2 = c.harmonizer.interval2; harmVoice2 = c.harmonizer.voice2Enabled; harmMix = c.harmonizer.mix
-        granularEnabled = c.granularEnabled; granularMix = c.granular.mix
-        granularGrainMs = c.granular.grainMilliseconds; granularDensity = c.granular.density
-        granularSpray = c.granular.spraySeconds; granularPitch = c.granular.pitchSemitones
-        granularSpread = c.granular.stereoSpread
         reverbEnabled = c.reverbEnabled; reverbRoomSize = c.reverb.roomSize
         reverbDamping = c.reverb.damping; reverbMix = c.reverb.mix; reverbWidth = c.reverb.width
         tapeEnabled = c.tapeEnabled; tapeDepth = c.tape.depth
@@ -406,16 +373,12 @@ final class FXViewModel {
     /// `apply(_:)` would still stamp it onto every chain as a new base. Fanning the modulator
     /// out did not close that; it is a property of modulating a live parameter at all.
     func snapshot(name: String, tags: [String] = []) -> FXPreset {
-        var p = FXPreset.capture(from: chain, fxEnabled: fxEnabled, name: name, tags: tags)
-        // #599b review M2: the harmonizer intervals are captured from THIS view-model,
-        // not the chain — while "Follow the key" runs, the chain's intervals are the
-        // follower's transient scratchpad (the diatonic values of whatever note happened
-        // to sound at save time), and baking those into a preset would freeze one
-        // accidental moment as the user's choice. Unconditional: when not following,
-        // the VM and the chain are equal, so this changes nothing.
-        p.harmonizerInterval1 = harmInterval1
-        p.harmonizerInterval2 = harmInterval2
-        return p
+        // ⛔ #599b REVIEW M2's REPAIR STOOD HERE AND WENT WITH #1305. Its LAW is general and
+        // is why this note stays: when a live follower is writing a parameter on the chain,
+        // a SNAPSHOT must read that parameter from the VIEW-MODEL, not the chain — the chain
+        // holds the follower's transient scratchpad, and baking it into a preset freezes one
+        // accidental moment as the user's choice.
+        return FXPreset.capture(from: chain, fxEnabled: fxEnabled, name: name, tags: tags)
     }
 
     /// Apply a saved/community preset to every live chain, flip the master gate to
@@ -446,10 +409,6 @@ struct EchoelFXView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(FXBioModulator.self) private var modulator
-    // #599b — read in body only as `enabled` (flips on user action; the follower's
-    // ~10 Hz tick writes exclusively @ObservationIgnored members and chain params,
-    // so no per-tick observation churn reaches this body — freeze law).
-    @Environment(DiatonicHarmonyFollower.self) private var harmonyFollower
     @State private var vm: FXViewModel
     /// The user's own saved presets (local). The curated community set is bundled.
     @State private var presetStore = FXPresetStore()
@@ -492,10 +451,6 @@ struct EchoelFXView: View {
     // seeds its fresh VM from the chain (diatonic scratch values), so `.onAppear`
     // repairs the two interval mirrors from the baseline. Without the repair,
     // toggling off after a reopen re-fanned scratch values as the user's choice.
-    private func rebaselineFollowerFromVM() {
-        guard harmonyFollower.enabled else { return }
-        harmonyFollower.rebaseline(interval1: vm.harmInterval1, interval2: vm.harmInterval2)
-    }
 
     var body: some View {
         NavigationStack {
@@ -526,11 +481,11 @@ struct EchoelFXView: View {
                 } footer: {
                     // ⛔ #480 follow-up: this read "the EchoelFX chain: filter → modulation →
                     // delay → dynamics", which is FOUR of the `effectSection(` calls below it —
-                    // Saturation, Tape / VHS, Bitcrush, Harmonizer, Reverb and Stereo Width fell
+                    // Saturation, Tape / VHS, Bitcrush, Reverb and Stereo Width fell
                     // outside all four, and Reverb is the one a musician notices missing.
                     // (The count of stages is deliberately NOT written here. It said "fourteen"
-                    // until #692 added Granular, and a number in a comment that nothing
-                    // re-derives is a date. The ONE derived count lives in
+                    // until #692 added Granular, and #1305 then removed Granular AND the
+                    // Harmonizer — a number in a comment that nothing re-derives is a date. The ONE derived count lives in
                     // `TheFXDoorNamesAControlThatExistsTests.stageNames()`, which reads the
                     // section titles out of this file — ask it, do not re-count here (#416).
                     // ⛔ The first version of this note quoted a `grep -c` recipe instead, and
@@ -560,10 +515,6 @@ struct EchoelFXView: View {
                 // (the user's truth) so the rows and the OFF-restore never show or
                 // re-fan a value nobody chose. The assignments fan through the
                 // didSets; the follower overwrites the chains again on its next tick.
-                if harmonyFollower.enabled, let b = harmonyFollower.baseline {
-                    vm.harmInterval1 = b.interval1
-                    vm.harmInterval2 = b.interval2
-                }
             }
             // The one place the live tempo is read. It renders nothing; it exists so the read
             // sits in a LEAF and this body — which hosts the Sync menus — stays still.
@@ -609,20 +560,25 @@ struct EchoelFXView: View {
 
     // MARK: - Effect rows
 
-    // ⭐ #936 — THE FIFTEEN `effectSection` CALLS MOVED OUT OF `body`. The order is unchanged
-    // and every call is unchanged; the whole block was re-indented one level and nothing else.
+    // ⭐ #936 — THE `effectSection` CALLS MOVED OUT OF `body`. The order is unchanged and
+    // every call is unchanged; the whole block was re-indented one level and nothing else.
     //   A: Filter · Saturation · Tape/VHS · Bitcrush
-    //   B: Harmonizer · Granular · Reverb · Stereo Width · Delay
+    //   B: Reverb · Stereo Width · Delay
     //   C: Chorus · Flanger · Phaser · Tremolo · Compressor · Limiter
+    // (⛔ Group B opened with Harmonizer · Granular until #1305 removed both stages. The
+    // count of calls is deliberately NOT written here — it read "FIFTEEN" and would now be
+    // wrong twice over; `TheFXDoorNamesAControlThatExistsTests.stageNames()` derives it from
+    // these section titles, ask it (#416/#818).)
     //
     // ⛔ THE NAMES ARE A · B · C ON PURPOSE (#936b renamed them from three semantic ones), and
     // the reason is worth keeping: a semantic name ASSERTS a taxonomy, and a disclaimer saying
     // "this is not a taxonomy" does not survive contact with it. #692, twenty lines below,
     // already says this panel is ordered by FAMILIARITY and not by the signal chain. Group B
-    // held Granular under a name about voice and space — Granular is neither; it sits there
+    // held Granular under a name about voice and space — Granular was neither; it sat there
     // because the ORDER IS FROZEN. The honest reading of that name was "someone should move
     // Granular", i.e. an invitation to reorder the panel the header forbids. A · B · C invites
-    // nothing. Do not re-christen them without moving #692 too.
+    // nothing. Do not re-christen them. (Granular itself went with #1305; the naming argument
+    // is kept because it is about GROUP NAMES, not about that stage.)
     //
     // WHY THE SPLIT: `Form` held 21 direct children. `ViewBuilder`'s fixed overloads stop at 10,
     // so 21 resolves through the variadic generic pack, and the compiler reported `var body` at
@@ -641,7 +597,7 @@ struct EchoelFXView: View {
     // experiment. Re-check with `python3 scripts/gh-test-verdict.py`, which prints the warning
     // list (#933e) — that is one command, not a guess.
     //
-    // ⚠️ THIS IS NOT AN OBSERVATION BOUNDARY. `vm.delayMode`, `harmonyFollower.enabled` and the
+    // ⚠️ THIS IS NOT AN OBSERVATION BOUNDARY. `vm.delayMode` and the
     // rest are still read while `body` evaluates — a computed property is no more a boundary
     // than `AnyView` is (CLAUDE.md 10.76.41/50). Nothing here changes what this view observes.
     //
@@ -681,62 +637,15 @@ struct EchoelFXView: View {
 
     @ViewBuilder
     private var effectRowsB: some View {
-        effectSection("Harmonizer", isOn: $vm.harmonizerEnabled) {
-            // #599b — "Follow the key": the two voices become the diatonic
-            // third + fifth over the sounding lead (VoiceHarmony maths; the
-            // app-owned DiatonicHarmonyFollower ticks ~10 Hz). While ON the
-            // interval rows are HIDDEN, not disabled — the follower rewrites
-            // them every tick, and a control that lies is worse than none.
-            // The OFF action owns the restore (re-fan of the VM's stored
-            // values), so a preset recalled mid-follow restores to ITS
-            // intervals, not a stale baseline — the follower holds no state.
-            Toggle("Follow the key", isOn: Binding(
-                get: { harmonyFollower.enabled },
-                set: { on in
-                    harmonyFollower.enabled = on
-                    if !on { vm.refanHarmonizerIntervals() }
-                }
-            )).tint(EchoelTheme.accent)
-            if harmonyFollower.enabled {
-                Text("Voices sing a third and a fifth above the lead — IN the session key. A third above E in C major is G, not G sharp.")
-                    .font(EchoelTheme.font(10))
-                    .foregroundStyle(EchoelTheme.dim)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                intervalRow("Voice 1", $vm.harmInterval1)
-                intervalRow("Voice 2 interval", $vm.harmInterval2)
-            }
-            Toggle("Voice 2", isOn: $vm.harmVoice2).tint(EchoelTheme.accent)
-            field("Mix", $vm.harmMix, 0...1, decimals: 2)
-        }
-
-        // #692 — the granular door, and the reason it sits HERE. This panel is
-        // ordered by familiarity, NOT by the signal chain (Reverb precedes Delay,
-        // the modulation group follows both), so "move it to match the chain" is a
-        // change nobody asked for. It goes after Harmonizer because both are
-        // pitch/texture character, which is how a player looks for it.
-        //
-        // ⚠️ EVERY RANGE BELOW MUST EQUAL THE STAGE'S OWN CLAMP, and the numbers are
-        // deliberately NOT restated in this comment — `AGrainCannotClickOrRunAwayTests`
-        // claim 6 reads them out of `EchoelGranular.swift` and compares, so moving a
-        // clamp without moving its row fails in CI (#442/#416). A row wider than its
-        // clamp lets a player dial a value the engine silently ignores; the control
-        // then lies about what it does, which is the failure the whole
-        // `EchoelValueField` law exists to prevent. Both sides are `Float`, so nothing
-        // else would catch it.
-        effectSection("Granular", isOn: $vm.granularEnabled) {
-            Text("Sprays short grains of the last second back over the sound. Small grains stutter, long ones smear. Mix starts at 0 — turn it up to hear anything.")
-                .font(EchoelTheme.font(10))
-                .foregroundStyle(EchoelTheme.dim)
-                .fixedSize(horizontal: false, vertical: true)
-            field("Mix", $vm.granularMix, 0...1, decimals: 2)
-            field("Grain", $vm.granularGrainMs, 10...500, unit: "ms", decimals: 0)
-            field("Density", $vm.granularDensity, 0...1, decimals: 2)
-            field("Spray", $vm.granularSpray, 0...0.5, unit: "s", decimals: 3)
-            field("Pitch", $vm.granularPitch, -24...24, unit: "st", decimals: 0)
-            field("Spread", $vm.granularSpread, 0...1, decimals: 2)
-        }
-
+        // ⛔ THE "Harmonizer" AND "Granular" SECTIONS OPENED THIS GROUP AND WENT WITH #1305
+        // (founder 2026-09-12, "Kein … Autotune, Harmonizer, granularsynthese"). One LAW from
+        // the granular block is general and is kept, because the next parameter row will need
+        // it: **every range on a row MUST equal the stage's own clamp.** A row wider than its
+        // clamp lets a player dial a value the engine silently ignores — the control then lies
+        // about what it does, which is the whole reason the `EchoelValueField` law exists, and
+        // both sides being `Float` means nothing else would catch it. The way it was enforced
+        // is the part to copy: a guard READ the clamps out of the stage's own file and compared
+        // (#442/#416), rather than restating the numbers in a comment.
         effectSection("Reverb", isOn: $vm.reverbEnabled) {
             field("Size", $vm.reverbRoomSize, 0...1, decimals: 2)
             field("Damping", $vm.reverbDamping, 0...1, decimals: 2)
@@ -1092,49 +1001,23 @@ struct EchoelFXView: View {
         EchoelValueField(label: title, value: value, range: range, unit: unit, decimals: decimals)
     }
 
-    /// A harmony-voice row: NAMED intervals instead of a semitone number.
-    ///
-    /// Founder 2026-07-29: *"Harmonizer mit 5th etc? Keine semitone Schritte sondern sinnvolle
-    /// harmonische."* The number field offered 25 whole semitones, of which the seconds (±1, ±2),
-    /// the tritone (±6) and the sevenths (±10, ±11) are not parallel harmony — held under every
-    /// note of a melody they beat. `HarmonyInterval` is the curated fifteen, each saying its own
-    /// name, with MAJOR/MINOR spelled out where the interval has both forms.
-    ///
-    /// ⚠️ This is deliberately NOT the app-wide `EchoelValueField`. That rule ("no raw
-    /// `Slider`/`Stepper` for parameters") exists so every *numeric* parameter reads and behaves
-    /// identically — and the whole point of this change is that a harmony interval stops being a
-    /// number the performer has to decode. A `Picker` over a named set is the choice the filter
-    /// mode and the delay mode rows already make; `.menu` rather than their `.segmented` because
-    /// fifteen entries do not fit a segmented control (the bio-mod carrier row is the `.menu`
-    /// precedent). If a future parameter wants to diverge from `EchoelValueField`, it goes to The
-    /// Council first.
-    ///
-    /// The binding writes `Float` semitones straight through, so `EchoelHarmonizer`, `FXPreset`
-    /// and every saved preset keep the exact format they already have — no migration.
-    private func intervalRow(_ title: String, _ semitones: Binding<Float>) -> some View {
-        // An off-grid stored value maps to `nil`, which shows as itself rather than snapping to a
-        // neighbour. That is not theoretical: the macro-morph fader LERPs both intervals
-        // continuously (`FXPreset.morphed(to:amount:)`), so a value like 5.5 is reachable in the
-        // shipping app and must be able to display.
-        let selection = Binding<HarmonyInterval?>(
-            get: { HarmonyInterval.curated(forSemitones: semitones.wrappedValue) },
-            // Picking the custom entry is a no-op: it is a readout of where the sound already is,
-            // not a value anyone should be able to choose deliberately.
-            set: { if let picked = $0 { semitones.wrappedValue = picked.semitones } }
-        )
-        return Picker(title, selection: selection) {
-            ForEach(HarmonyInterval.choices(includingSemitones: semitones.wrappedValue),
-                    id: \.self) { choice in
-                if let choice {
-                    Text(choice.displayName).tag(HarmonyInterval?.some(choice))
-                } else {
-                    Text(HarmonyInterval.customLabel(forSemitones: semitones.wrappedValue))
-                        .tag(HarmonyInterval?.none)
-                }
-            }
-        }
-        .pickerStyle(.menu).tint(EchoelTheme.text)
-    }
+    // ⛔ `intervalRow` STOOD HERE AND WENT WITH THE HARMONIZER (#1305). Its ~30-line doc
+    // block carried the founder decision of 2026-07-29 — *"Harmonizer mit 5th etc? Keine
+    // semitone Schritte sondern sinnvolle harmonische"* — and the READING OF THE
+    // `EchoelValueField` LAW that came out of it, which survives its only instance and is
+    // therefore kept here and in CLAUDE.md's UI DESIGN CONSTRAINTS:
+    //
+    //   **"Every adjustable NUMERIC parameter uses `EchoelValueField`" does not mean "every
+    //   parameter is a number field."** A parameter whose values have NAMES is a `Picker`,
+    //   and always was: the filter mode and delay mode rows are `.pickerStyle(.segmented)`,
+    //   the bio-mod carrier/target/curve rows `.pickerStyle(.menu)`. The point of naming a
+    //   value is that the performer stops decoding a number. Obeying the law's letter against
+    //   its purpose — turning a named choice back into a raw count — is the defect.
+    //
+    // Two smaller facts are kept because they generalise: a curated set must be able to
+    // DISPLAY an off-grid stored value rather than snapping it to a neighbour (the macro-morph
+    // fader LERPs continuously, so off-grid values are reachable in the shipping app), and the
+    // custom entry must be a READOUT, not something anyone can deliberately pick.
 }
 
 // MARK: - Bio-reactive modulation section

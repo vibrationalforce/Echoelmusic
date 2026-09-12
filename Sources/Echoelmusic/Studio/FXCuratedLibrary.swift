@@ -25,7 +25,7 @@ public extension FXPreset {
         // Production characters captured as presets (founder-ranked order).
         let featured: [FXCharacter] = [
             .dream, .hall, .room, .cassette, .vinyl,
-            .underwater, .blurry, .telephone, .megaphone, .harmonizer
+            .underwater, .blurry, .telephone, .megaphone
         ]
         let fromCharacters = featured.map { ch -> FXPreset in
             let chain = EchoelFXChain()
@@ -47,11 +47,10 @@ public extension FXPreset {
                 c.delayEnabled = true; c.delay.mode = .tape; c.delay.timeSeconds = 0.28
                 c.delay.feedback = 0.25; c.delay.wow = 0.3
             },
-            make("Octave Lead", ["harmony", "lead"]) { c in
-                c.harmonizerEnabled = true; c.harmonizer.interval1 = 12
-                c.harmonizer.voice2Enabled = true; c.harmonizer.interval2 = 7; c.harmonizer.mix = 0.45
-                c.delayEnabled = true; c.delay.timeSeconds = 0.18; c.delay.feedback = 0.2; c.delay.mix = 0.2
-            },
+            // ⛔ "Octave Lead" STOOD HERE AND WENT WITH #1305 — both its harmony voices were
+            // `EchoelHarmonizer`, so what remained would have been a short slap delay under a
+            // name promising an octave. A preset whose NAME survives its stage is worse than
+            // no preset: the user hears something that is not what the label says.
             make("Dub Chamber", ["dub", "delay", "space"]) { c in
                 c.delayEnabled = true; c.delay.mode = .tape; c.delay.timeSeconds = 0.5
                 c.delay.feedback = 0.65; c.delay.tone = 0.4; c.delay.mix = 0.4
@@ -73,11 +72,8 @@ public extension FXPreset {
                 c.delay.feedback = 0.15; c.delay.mix = 0.25
                 c.reverbEnabled = true; c.reverb.roomSize = 0.5; c.reverb.mix = 0.18
             },
-            make("Fifth Stack", ["harmony", "thick", "lead"]) { c in
-                c.harmonizerEnabled = true; c.harmonizer.interval1 = 7
-                c.harmonizer.voice2Enabled = true; c.harmonizer.interval2 = 12; c.harmonizer.mix = 0.4
-                c.chorusEnabled = true; c.chorus.mix = 0.18
-            },
+            // ⛔ "Fifth Stack" STOOD HERE AND WENT WITH #1305, same reason as "Octave Lead"
+            // above: strip the harmonizer and a light chorus is all that is left.
             make("Tape Wobble", ["lofi", "tape", "warble"]) { c in
                 c.saturationEnabled = true; c.saturationDrive = 0.6; c.saturationMix = 0.6
                 c.delayEnabled = true; c.delay.mode = .tape; c.delay.wow = 0.7
@@ -122,7 +118,6 @@ private extension FXCharacter {
         case .blurry:     return ["soft", "wash", "ambient"]
         case .telephone:  return ["lofi", "vocal", "filter"]
         case .megaphone:  return ["gritty", "vocal"]
-        case .harmonizer: return ["harmony", "thick"]
         default:          return []
         }
     }

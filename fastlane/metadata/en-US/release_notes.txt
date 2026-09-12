@@ -10,7 +10,6 @@ Composition
 
 Sound
 - Algorithmic reverb with room and hall presets for real depth per genre
-- Harmonizer effect: third and fifth harmony voices above the melody — optional "Follow the key": the third breathes diatonically with the key
 - Per-genre saturation, from clean classical to heavily driven
 - Anti-aliasing smoothing for cleaner high notes and vibrato
 

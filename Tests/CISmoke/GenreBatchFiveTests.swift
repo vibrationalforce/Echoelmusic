@@ -194,7 +194,6 @@ final class GenreBatchFiveTests: XCTestCase {
             XCTAssertTrue(preset.chorusEnabled, "the chorus is what widens the stack")
             XCTAssertFalse(preset.filterEnabled)
             XCTAssertFalse(preset.phaserEnabled)
-            XCTAssertFalse(preset.harmonizerEnabled)
         }
 
         // `contemplation`'s arm says "the BIGGEST hall in the roster"; `drift`'s says "the

@@ -51,7 +51,8 @@ Full LIVE/ROADMAP/NORTH-STAR detail in [`vision.md`](../../memory/vision.md) and
 ## 2. Status snapshot — shipped this cycle (2026-06-19, branch `claude/piano-roll-clip-view-wozlie`)
 
 **Sound dimension hardened end-to-end** (all CI-green):
-- FX: attack-knack fix · every parameter exposed (incl. Saturation/Harmonizer/Reverb).
+- FX: attack-knack fix · every parameter exposed (incl. Saturation/Reverb). ⛔ This read
+  "Saturation/Harmonizer/Reverb" until #1305 removed the harmonizer stage (founder 2026-09-12).
 - Presets: save/recall your own · 16 curated · search by name+tag · favorites + recents (on-device ranking).
 - **Community loop:** in-app "Submit" → GitHub issue → `community-triage` Action validates JSON & opens a PR to `community/curated/`.
 - **Sound/patch parity:** same community + favorites/recents on `SynthPatch`.
