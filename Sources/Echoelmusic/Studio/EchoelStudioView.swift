@@ -6844,6 +6844,10 @@ struct EchoelStudioView: View {
             // lifecycle owner that killed a running strap on an unrelated edit — nothing here
             // calls `faceExpression.start`/`stop` directly.
             //
+            // ⚠️ ASYMMETRIC ON PURPOSE (#1300). ON goes through the full owner, so on an idle
+            // instrument it ACTIVATES — "Play with your face" is an invitation to play, the
+            // same contract the pulse pill's menu has. OFF does not: see the branch below.
+            //
             // ⚠️ IT IS A SWITCH BETWEEN SOURCES, NOT AN ADDITIONAL LAYER, and that is measured
             // rather than chosen: `FaceExpressionBioPublisher` publishes `heartRateBPM: 0`
             // under `// faceCam carries NO pulse (coexistence deferred)`. Running it BESIDE a
@@ -6858,8 +6862,19 @@ struct EchoelStudioView: View {
                             bioSourceBeforeFace = bioSourceRaw
                         }
                         selectBioSource(BioSourceKind.face.rawValue)
-                    } else {
+                    } else if running || bodyOnly {
                         selectBioSource(bioSourceBeforeFace)
+                    } else {
+                        // #1300 — OFF MUST NOT START ANYTHING, and #1298 shipped it doing
+                        // exactly that. `selectBioSource`'s third branch is
+                        // `else { startBiofeedback() }` — correct for the pulse pill, where
+                        // picking a source IS the invitation to play, and wrong for a switch
+                        // in a VISUAL panel: turning the face layer OFF on an idle instrument
+                        // would have started the music. Idle means nothing is publishing, so
+                        // there is nothing to hand back; restoring the SELECTION is the whole
+                        // job, and it is the one line `selectBioSource` itself runs before it
+                        // branches — not a second owner, the same write without the activation.
+                        bioSourceRaw = bioSourceBeforeFace
                     }
                 })) {
                 Text("Play with your face")

@@ -32,8 +32,8 @@
 // owner, and remembers the right thing.
 //
 // ⚠️ HONEST GRADING (#433/#464) — transcribed in Python against the parent (7390b9e) and this
-// tree. 8 assertions in 5 tests: claims 1 (1) + 2 (2) + 3 (1) + 4 (1) + 5 (3), plus the
-// anchor XCTFail in claim 1. Against the PARENT exactly FOUR are red — 1a, 2a, 2b and 4a —
+// tree. 10 assertions in 6 tests: claims 1 (1) + 2 (2) + 3 (1) + 4 (1) + 5 (3) + 6 (2), plus
+// the anchor XCTFail in claim 1. Against the #1298 PARENT exactly FOUR were red — 1a, 2a, 2b, 4a —
 // as ONE finding (#486), all FORWARD, naming lines born with this commit. The other FOUR are
 // COUNTERWEIGHTS, green on BOTH trees: the studio already called `faceExpression.start(`
 // exactly once, the row was already device-gated, `selectBioSource` already had this
@@ -45,8 +45,13 @@
 // publisher) and is now something a future edit can plausibly break, because there is a
 // second control in a second file-region that obviously WANTS to call start directly. The
 // mutation "ON bypasses owner" reddens 2a and 3a together, which is exactly the shape of the
-// mistake it is there to catch. Six mutations driven; each reddened its own claim.
-// `SourceText.codeOnly` is PROPHYLAKTISCH, MEASURED: 0 of 16 verdicts flip raw-vs-stripped.
+// mistake it is there to catch. Eight mutations driven; each reddened its own claim.
+// `SourceText.codeOnly` is PROPHYLAKTISCH, MEASURED: 0 of 20 verdicts flip raw-vs-stripped.
+//
+// ⭐ CLAIM 6 WAS ADDED ONE COMMIT LATER (#1300) AND IS THE MOST HONEST LINE IN THIS FILE: the
+// slice above shipped a routing defect that none of claims 1-5 could see, because all five ask
+// "does the switch reach the one owner" and the defect was in WHICH BRANCH of that owner an
+// idle instrument takes. A guard that pins the call site does not pin the callee's behaviour.
 //
 // ⛔ WHAT THIS FILE DELIBERATELY DOES NOT ASSERT (#364). It does NOT forbid the pulse pill's
 // menu from continuing to offer the face entry. Removing that entry is its own slice — it
@@ -124,6 +129,24 @@ final class TheFieldTurnsTheFaceOnTests: XCTestCase {
             face ON while it is already the source stores "face" as the source to return to — \
             and OFF then hands the bus back to the front camera, stranding the performer on it \
             with no way back except the menu this slice exists to stop needing.
+            """)
+    }
+
+    // MARK: - claim 6 — OFF never starts the instrument (#1300)
+
+    /// ⛔ THIS CLAIM EXISTS BECAUSE #1298 SHIPPED THE BUG IT NOW FORBIDS, one commit earlier,
+    /// found by re-reading the owner rather than by any test. `selectBioSource`'s third branch
+    /// is `else { startBiofeedback() }` — right for the pulse pill, where picking a source IS
+    /// the invitation to play, and wrong for a switch inside a VISUAL panel: turning the face
+    /// layer OFF on an idle instrument started the music. The founder had just asked for
+    /// "issues im routing" to be avoided; this was one, in the slice written to answer him.
+    func testTurningTheFaceOffOnAnIdleInstrumentStartsNothing() throws {
+        let code = try source(Self.studio)
+        XCTAssertTrue(code.contains("} else if running || bodyOnly {"), """
+            The OFF path lost its liveness gate and calls `selectBioSource` unconditionally             again. On an idle instrument that reaches `else { startBiofeedback() }` — so             switching the camera layer OFF starts the music. A control in a visual panel must             never be able to start the transport.
+            """)
+        XCTAssertTrue(code.contains("bioSourceRaw = bioSourceBeforeFace"), """
+            The idle OFF path no longer restores the stored SELECTION. Idle means nothing is             publishing, so there is nothing to hand back and the whole job is putting the             previous source back where the next Start will read it. Without this line, OFF             leaves "face" selected and the next Start comes up on the front camera.
             """)
     }
 
