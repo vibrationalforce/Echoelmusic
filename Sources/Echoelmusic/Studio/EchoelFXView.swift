@@ -467,7 +467,6 @@ struct EchoelFXView: View {
                         ForEach(FXCharacter.allCases.filter { $0 != .auto }) { ch in
                             Button {
                                 vm.applyCharacter(ch)
-                                rebaselineFollowerFromVM()
                             } label: {
                                 Text(ch.displayName)
                             }
@@ -808,7 +807,6 @@ struct EchoelFXView: View {
                 ForEach(presetStore.sortedPresets.filter { $0.matches(presetQuery) }) { preset in
                     Button {
                         vm.apply(preset)
-                        rebaselineFollowerFromVM()
                         presetStore.markUsed(id: preset.id)
                     } label: {
                         HStack {
@@ -865,7 +863,6 @@ struct EchoelFXView: View {
             ForEach(FXPreset.curatedCommunity.filter { $0.matches(presetQuery) }) { preset in
                 Button {
                     vm.apply(preset)
-                    rebaselineFollowerFromVM()
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(preset.name).foregroundStyle(EchoelTheme.text)

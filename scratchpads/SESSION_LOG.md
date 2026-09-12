@@ -31208,3 +31208,90 @@ Literal `"private func logEngineLifecycle"` und wäre auf einem KORREKTEN Baum r
 `dead-needles.py` sieht das nicht — die Nadel hängt an einem Tupel-Element statt an einem Inline-
 Literal, die #937-Form noch einmal. Notiert, nicht umgangen; die Form zu weiten ist eine eigene,
 gemessene Änderung.
+
+
+## 2026-09-12 — #1303/#1304/#1305: die DRITTE Rücknahme des Tages, in drei Scheiben
+
+Founder, wörtlich: *„Der ganze Plan mit shimmer reverb und face Input soll weg. Kein Video
+Capture . Kein audioninout kein Autotune, Harmonizer, granularsynthese. Das hat leider
+nichtbgeklappt. Komplett aufräumen"* — nach #1301 (Face) und #1302 (Audio-Eingang) am selben Tag.
+Geplant und ausgeführt als drei Scheiben, weil eine Teil-Entfernung nicht kompiliert und eine
+Ein-Commit-Entfernung von allem dreien nicht mehr lesbar wäre.
+
+| Scheibe | Inhalt | Commit | Gate |
+|---|---|---|---|
+| 1 (#1303) | die zurückgenommenen PLAN-Dokumente | `63f1737` | kein Lauf (nur `scratchpads/`) |
+| 2 (#1304) | Video Capture ganz | `122724d` | **Compile Check #2600 grün** |
+| 3 (#1305) | Harmonizer · Granular · Autotune | `0127665` | #2601 |
+
+### Was Scheibe 2 gekostet hat, das kein Plan vorhergesagt hatte
+
+⭐ **`Sources/Echoelmusic/Video/` mischt ZWEI Dinge, und das Verzeichnis sagt es nicht.** Der
+rPPG-PULSPFAD (`CameraCapture`, `CameraAnalyzer`, `RPPGConditioning`, `PulsePeriodEstimator`)
+wohnt neben dem Video-RECORDER. Wer „Kein Video Capture" nach Verzeichnis ausführt, löscht die
+Flaggschiff-Bio-Quelle. Steht jetzt an DREI Stellen, an denen eine Sitzung es liest: im Plan, im
+REPO-STRUCTURE-Block von CLAUDE.md und in der Commit-Nachricht. **Dieselbe Familie wie
+`VoiceHarmony` und `openAppSettings` (#1302), nur eine Ebene höher: ein VERZEICHNISname ist so
+wenig ein Geltungsbereich wie ein Dateiname.**
+
+⭐ **Das Chrome-Budget wurde LOCKERER, und das war eine Zusicherung zum VERSCHÄRFEN.** Ohne
+REC-Taste und Still-Auslöser ist die Leiste zwei Icon-Tasten und zwei Abstände leichter, also
+überlebt der `studioChip` in ALLEN Zuständen. `ChromeBudgetFitsTests` erwartete vorher eine
+Abwurf-Liste; sie steht jetzt auf `[]` — genau wie es die eigene Fehlermeldung des Wächters
+anwies. **Eine Löschung, die eine Zusicherung leichter erfüllbar macht, ist die Gelegenheit, sie
+enger zu ziehen; sonst driftet sie grün.**
+
+### Was Scheibe 3 gekostet hat
+
+⛔ **EIN ZÄHL-PIN WÄRE AUF KORREKTEM BAUM ROT GEWESEN, und `count-pins.py` meldete Exit 0.**
+`ANonFiniteControlCannotReachTheRenderTests` pinnt die `(sampleRate: rate)`-Konstruktionen in
+`EchoelFXChain.init`. Zwei Stufen weniger = 15 → 13. Das Werkzeug hatte den Pin **geparst** und
+ihn trotzdem nicht bewertet: sein Empfänger ist ein SLICE der Datei, keine gebundene Pfadangabe,
+also landet er unter `--all` in der Liste *„`body` not bound to a path inside this test"* und
+fällt aus dem Nenner. **Gefunden hat ihn `moved-needles.py`** — aus der Gegenrichtung: der Diff
+entfernt zwei Zeilen mit diesem Literal, und es fragt, welcher Wächter den Text nennt.
+⭐ **REGEL, nachgetragen in `Tests/CISmoke/CLAUDE.md` §4: nach einer `Sources/`-Änderung ist ein
+blankes `count-pins.py` keine Entlastung.** `--all` fahren und die UNAUFGELÖSTE Liste auf jede
+Nadel lesen, die der Diff berührt — ein Pin, den das Werkzeug lesen, aber nicht auflösen kann,
+ist still außerhalb seines Nenners.
+
+⭐ **Ein Wächter, der nach einer BITTE armiert, läuft mit der Bitte ab.**
+`TheChainPointerEntryMatchesTheArrayEntryTests` armierte „die zwei Stufen, die der Founder für die
+Stimme genannt hat" (Harmonizer + Granular). Beide weg, der Anlass (Monitor-Insert) auch — aber
+`processInPlace` ist weiter `public`, und das GESETZ (eine Definition für Zeiger- und
+Array-Eingang) gilt unverändert. Jetzt armiert es nach EIGENSCHAFT: nichtlinear, moduliert-nass,
+langer Ring. **Nicht der Name der Stufe entscheidet, sondern welcher Codepfad abgedeckt wird.**
+
+⭐ **`Sequencer/MicrotonalTuning` nennt sich selbst „das Autotune-Ziel" und bleibt.** Es ist das
+Tonsystem JEDER gestimmten Stimme. **Ein Name im Dateikopf ist keine Zugehörigkeit** — die
+`VoiceHarmony`-Lehre in ihrer Umkehrung, und der Fall, der beim nächsten „X raus" wieder auftaucht.
+
+⛔ **`ContentPipeline/CLAIMS.md` trug ZWEI Ausnahmen, die den Musik-Harmonizer ausdrücklich
+weiter erlaubten** („Was BLEIBT und weiter behauptet werden darf: ‚Follow the key'"). Beide
+gestrichen. **Eine Ausnahme in dieser Datei zeigt auf einen Codepfad und muss mitsterben, wenn
+der Pfad stirbt** — ein überlebender „darf weiter behauptet werden"-Satz ist die 2.3-Klasse und
+liest sich wie eine Erlaubnis, nicht wie eine Ruine.
+
+### CLAUDE.md stieß an die Decke und wurde nicht gekürzt, sondern umgezogen
+
+Die Scheibe-3-Edits hoben die Datei auf **150 524 B**, über die 150 000er Decke. Reparatur genau
+so, wie die Fehlermeldung des Decken-Wächters es vorschreibt: zwei **PROVENIENZ**-Blöcke nach
+`memory/LEDGER_COUNTS.md` (§F.5 die Zwei-Stellen-Lehre, §W das abgelaufene
+`EchoelModalBank`-Rezept), GESETZ bleibt. Endstand **149 493 B**. Selbst-benotet (#1176: ein
+Commit, der nur `CLAUDE.md` anfasst, löst keinen Lauf aus — hier lief einer, weil derselbe Commit
+`Sources/` anfasst).
+
+⚠️ **Die Zwei-Stellen-Lehre hat sich in derselben Stunde bewährt:** der Video-Rückzug musste
+„heute reflowen **5 von 10** Panels" an ZWEI Stellen ändern, und das Skript brach mit
+`AssertionError: (2, …)` ab, weil es auf genau ein Vorkommen bestand. **Ein Skript, das auf die
+ANZAHL besteht, findet die zweite Stelle; eines, das blind `replace()` ruft, ändert sie
+stillschweigend mit und lässt sie beim nächsten Mal wieder auseinanderlaufen.**
+
+### Founder-gated — berichten, nicht editieren
+
+`Resources/iOS/Info.plist` trägt drei Einträge ohne Code dahinter:
+`NSMicrophoneUsageDescription` (seit #1302), `NSPhotoLibraryAddUsageDescription` (seit #1304) und
+`NSCameraUsageDescription`, das weiterhin BEIDE Linsen nennt, obwohl die Frontkamera mit #1301
+gegangen ist. `EveryPermissionPromptHasACapabilityTests` führt die Waisen seit #1304 in einer
+eigenen Tabelle mit eigenem Anspruch: rot, wenn ein Schlüssel die plist verlässt ODER seine Nadel
+nach `Sources/` zurückkehrt.

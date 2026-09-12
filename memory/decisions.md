@@ -1738,3 +1738,38 @@ an (#95/#527) · (2) `RecordRouteOwner` als LEERES Enum samt Refcount (#299) · 
   dass sie KEINE Stimm-Fähigkeit verkaufen — das fand sofort zwei echte Treffer in `faq.html`.
 
 **Offen, founder-gated:** `Resources/iOS/Info.plist` trägt weiter `NSMicrophoneUsageDescription`.
+
+### 2026-09-12 — Die drei Rücknahmen eines Tages (#1301–#1305) und was sie über Löschen lehren
+
+Der Founder hat am 2026-09-12 dreimal zurückgenommen: Face-Input (#1301), Audio-Eingang (#1302)
+und dann *"Der ganze Plan mit shimmer reverb und face Input soll weg. Kein Video Capture . Kein
+audioninout kein Autotune, Harmonizer, granularsynthese. Das hat leider nichtbgeklappt. Komplett
+aufräumen"* (#1303/#1304/#1305). Jedes Mal war der Grund derselbe und er ist keine technische
+Frage: die Kette funktionierte auf seinem Gerät nicht, über mehrere Builds. Gebaute,
+unerreichbare Teilsysteme werden entfernt, nicht mitgeschleppt.
+
+**Vier Lehren, die über diese Features hinausgehen und darum hier stehen:**
+
+1. **Ein VERZEICHNISname ist so wenig ein Geltungsbereich wie ein Dateiname.**
+   `Sources/Echoelmusic/Video/` hält den rPPG-Pulspfad neben dem Video-Recorder. Der Auftrag
+   "Kein Video Capture" nach Verzeichnis ausgeführt hätte die Flaggschiff-Bio-Quelle gelöscht.
+   Dieselbe Familie wie `VoiceHarmony` und `openAppSettings` aus #1302, eine Ebene höher.
+   Konsequenz: vor jedem `git rm` über mehrere Dateien ein Sweep über die DEKLARIERTEN SYMBOLE
+   (alle Formen, kommentar- und stringbereinigt) gegen den überlebenden Baum.
+
+2. **Ein Name im Dateikopf ist keine Zugehörigkeit.** `Sequencer/MicrotonalTuning` nennt sich
+   selbst "das Autotune-Ziel" und ist das Tonsystem JEDER gestimmten Stimme. Es bleibt. Die
+   Umkehrung der `VoiceHarmony`-Lehre, und der Fall, der beim nächsten "X raus" wieder auftaucht.
+
+3. **Ein Wächter wird nach dem CODEPFAD armiert, den er abdeckt, nie nach dem Feature, das
+   jemand angefragt hat.** `TheChainPointerEntryMatchesTheArrayEntryTests` armierte "die zwei
+   Stufen, die der Founder für die Stimme genannt hat" — beide sind weg, sein Gesetz nicht.
+
+4. **Eine Ausnahme in `ContentPipeline/CLAIMS.md` zeigt auf einen Codepfad und muss mitsterben,
+   wenn der Pfad stirbt.** Dort standen zwei Sätze, die den Musik-Harmonizer ausdrücklich weiter
+   erlaubten. Ein überlebender "darf weiter behauptet werden"-Satz ist die 2.3-Klasse und liest
+   sich wie eine Erlaubnis, nicht wie eine Ruine.
+
+**Review:** 2026-10-12. Die offene Frage ist nicht technisch: nach drei Rücknahmen an einem Tag
+ist zu klären, ob der nächste Bau-Zyklus wieder eine Eingangs-Fähigkeit angeht oder die
+verbliebene Kette (Körper → Klang → Bild → Licht → Raum) vertieft.

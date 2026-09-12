@@ -85,6 +85,23 @@ Panel-Untertitel „Follow the key", und **eine Zähl-Nadel bei 15, die 13 hätt
 auflösen und ließ sie darum aus dem Verdikt fallen. Steht als Regel jetzt in
 `Tests/CISmoke/CLAUDE.md` §4.
 
+⛔ **DER SWEEP HATTE EINE LÜCKE UND SIE KOSTETE EINEN CI-UMLAUF (#1305b).** Compile Check
+#2601 meldete vier Fehlerzeilen, per #689 auf EINE Ursache zurückgeführt: drei Aufrufstellen von
+`rebaselineFollowerFromVM()` in `EchoelFXView` (die vierte, „unable to type-check", ist deren
+Kaskade). **Der Spielplan sweept die deklarierten Symbole der GELÖSCHTEN DATEIEN — diese Methode
+stand in einer BEARBEITETEN Datei und wurde mit ihrem Umfeld entfernt, ihre drei Aufrufer aber
+nicht.** Die Sache ist dieselbe Klasse („ein Dateiname ist kein Geltungsbereich"), nur eine Stufe
+kleiner: nicht die Datei verschwindet, sondern eine Deklaration IN ihr.
+
+⭐ **ERWEITERTE FORM, hier als Rezept, weil sie billig ist und dieser Commit sie gefahren hat:**
+die ENTFERNTEN Deklarationszeilen aus dem Diff über `Sources` und `Tests` ziehen
+(`git diff <basis> -- Sources Tests | grep '^-' | grep -oE '(func|var|let|case|struct|enum|class) +[A-Za-z_][A-Za-z0-9_]*'`),
+auf unterscheidbare Namen filtern und fragen, welche davon im kommentar- und stringbereinigten
+Rest-Baum noch REFERENZIERT, aber nicht mehr DEKLARIERT sind. Nachgefahren: 307 unterscheidbare
+Namen, 3 Treffer, alle drei belegbar falsch (`pitchSemitones` und `selection` sind
+Argument-Labels, `videoSettings` eine `AVCaptureVideoDataOutput`-Eigenschaft). Der echte Treffer
+war nach der Reparatur weg — der Sweep wurde also gegen ein bekanntes Positiv validiert.
+
 **`Sequencer/MicrotonalTuning` BLEIBT** und ist der Fall, der beim nächsten „Autotune raus"
 wieder auftaucht: sein Dateikopf nennt sich selbst das Autotune-ZIEL, aber es ist das Tonsystem
 JEDER gestimmten Stimme (`EveryPitchedVoiceFollowsTheToneSystemTests`). **Ein Name im Dateikopf
