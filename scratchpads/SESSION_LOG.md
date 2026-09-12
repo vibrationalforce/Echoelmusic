@@ -31167,3 +31167,44 @@ ausgelegt: **148.376 B**.
 
 **Founder-gated, BERICHTET statt editiert:** `Resources/iOS/Info.plist` trägt weiter
 `NSMicrophoneUsageDescription` für eine Fähigkeit, die es nicht mehr gibt.
+
+### Gate-Lesung #1302 → #1302c: zwei rote Runden, DREI Ursachen, und was sie über die Scheibe sagen
+
+**Compile #2597 (`a86d571`): 30 Fehlerzeilen, DREI Ursachen** (#689 — Ursachen zählen, nicht
+Zeilen). **#2598 (`bc3ee66`): 2 Fehler, eine übrige Hälfte derselben Ursache. #2599
+(`5530748`): GRÜN.**
+
+1. **`RecordRouteOwner: String` mit null Fällen — ELF Fehler aus EINER Ursache.** Swift verbietet
+   „an enum with no cases cannot declare a raw type"; die gescheiterte `RawRepresentable`-Synthese
+   nimmt `Hashable` mit, das nimmt das `Set`, den `map(\.rawValue)`-KeyPath und drei
+   String-Verkettungen. ⭐ **Und die Reparatur hatte eine zweite Hälfte, die erst #2598 zeigte:
+   ein Roh-Typ ist nicht nur ein Rohwert, sondern ein BÜNDEL synthetisierter Konformanzen.** Ohne
+   ihn synthetisiert Swift `Hashable` für ein fall-loses Enum nur, wenn man es HINSCHREIBT.
+2. **`logEngineLifecycle` war VERSEHENTLICH gelöscht — 19 Fehler.** Es steht unmittelbar hinter
+   `logMonitorOutcome`, dessen Text durchgehend vom Monitoring handelt; der Schnitt las sich als
+   EINE Region und lief eine Deklaration zu weit. **Gesetz: ein Schnitt, der von PROSA begrenzt
+   wird statt von einer Deklaration, nimmt den Nachbarn mit** — auf der `func`-Zeile begrenzen und
+   die erste überlebende Zeile nachlesen.
+3. **`openAppSettings()` — DRITTE Instanz der `VoiceHarmony`-Form in zwei Commits.** File-scope
+   in `MicrophoneManager.swift`, und es hat nichts mit dem Mikrofon zu tun: der einzige Aufrufer
+   ist `BioStripView.openSettingsButton`, die KAMERA-Tür bei verweigertem Zugriff. ⭐ **EIN
+   DATEINAME IST KEIN GÜLTIGKEITSBEREICH.** Ein allgemeiner Helfer, der in der Datei eines
+   Features geparkt ist, stirbt mit diesem Feature, und die DEKLARATION sagt nirgends, wem er
+   dient.
+
+⭐ **DER SWEEP, DER DAS FINDET, UND SEIN EIGENER FEHLER.** Vor dem Push habe ich die
+TOP-LEVEL-TYPEN der gelöschten Dateien gegen den überlebenden Baum geprüft — das fing
+`VoiceHarmony`. Es fing `openAppSettings` NICHT, weil mein `grep` nur `class|struct|enum`-Zeilen
+sammelte und die Funktion auf Dateiebene stand; und es fing es beim zweiten Lauf auch fast nicht,
+weil mein erster Kommentar-Stripper nur KOMMENTARZEILEN verwarf, nicht Kommentare am Zeilenende —
+24 Treffer, 22 davon gewöhnliche englische Wörter aus Prosa. **Mit einem echten Kommentar- UND
+String-Stripper: 2 Treffer, beide belegbar falsch** (`bypass` ist eine AVAudioUnitEQ-Eigenschaft,
+`portName` ein Argument-Label). Der Sweep gehört ins Playbook, aber mit dem richtigen Stripper und
+über ALLE Deklarationsformen, nicht nur Typen.
+
+⚠️ **Und eine der drei wäre KEIN Compile-Fehler allein gewesen:**
+`TheEngineLifecycleSpeaksInTheDiagLogTests.testTheDurableSinkIsWrittenFirst` ankert auf dem
+Literal `"private func logEngineLifecycle"` und wäre auf einem KORREKTEN Baum rot geworden.
+`dead-needles.py` sieht das nicht — die Nadel hängt an einem Tupel-Element statt an einem Inline-
+Literal, die #937-Form noch einmal. Notiert, nicht umgangen; die Form zu weiten ist eine eigene,
+gemessene Änderung.
