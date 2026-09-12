@@ -1,4 +1,4 @@
-build: v10.79.470 — Der Absturz beim Monitoring ist raus; das blockierende Bundle kompiliert wieder (#1269, #1272, #1273, #1295)
+build: v10.79.471 — Das Gesicht wird im Field angeschaltet und ist in der Größe einstellbar; die leere Eingangsliste nennt das Gerät (#1296, #1297, #1298, #1299, #1300)
 branch: claude/echoelmusic-review-optimize-u5jjpd (tokenless deploy via .deploy/release bump)
 notes: |
 
@@ -50,7 +50,101 @@ notes: |
   `.github/workflows/**` = berichten, nicht editieren. Bis dahin ist diese Zeile die
   einzige Bremse. Wächter: `TheDeployNoteNamesRealDoorsTests`, Anspruch 5.
 
-  Der Vorgänger ist 10.79.468 (und davor 10.79.467).
+  Der Vorgänger ist 10.79.470 (und davor 10.79.469).
+
+  ── WAS IN DIESEM BUILD NEU IST (v10.79.471) ──────────────────────────────
+
+  Fünf Scheiben, alle aus Deinem Gerätebericht zu 470 und Deiner Korrektur danach.
+  Drei davon haben dieselbe Form: die Fähigkeit war GEBAUT und der Weg hinein war
+  woanders. Das ist an einem Tag dreimal passiert, und es ist die Lehre dieses Builds.
+
+  #1296 — DIE LEERE EINGANGSLISTE NENNT JETZT DAS GERÄT.
+  Du hast berichtet: "Apogee hypemic wird in dieser Version nicht erkannt". Die
+  Hardware war in Ordnung und der Code verhielt sich wie entworfen.
+  `AVAudioSession.availableInputs` ist `nil`, solange die Kategorie kein Recording
+  erlaubt; die Session steht per Default auf `.playback` (bewusst — `.playAndRecord`
+  erzwingt bei Bluetooth die HFP-Abwertung), und die Tür geht gegen genau diesen
+  Default auf. Die Liste war also für JEDEN Eingang leer, nicht für Deinen.
+  Repariert ist die AUSSAGE, nicht die Route: die App kannte den Gerätenamen die
+  ganze Zeit (Deine Kopfhörer hängen an der HypeMiC, also IST die USB-Box die
+  Ausgabe-Route) und hat ihn nicht gesagt. Jetzt steht dort "Echoel can see …".
+
+  ⚠️ WAS DAS HEISST, WENN DU ES TESTEST: die HypeMiC erscheint als ZEILE weiterhin
+  erst, wenn Du "Live monitoring" einschaltest. Das ist keine Ausrede, das ist die
+  Reihenfolge, die iOS vorschreibt. Wenn sie danach IMMER NOCH nicht erscheint, steht
+  jetzt der zweite Satz auf dem Schirm ("Echoel plays through … Unplug and replug") —
+  und DANN ist es ein echter Enumerationsfehler, den ich als solchen jagen kann.
+
+  #1297 — DIE FRONTKAMERA WAR NICHT AUS, SIE WAR DURCHSICHTIG.
+  Die ganze Kette steht seit K5: ARKit → Frame-Slot → Kamera-Durchgang im Renderer.
+  Nur die Deckkraft lag gespeichert auf 0, und die einzige Tür dafür war ein
+  Zahlenfeld tief im Field-Blatt. Jetzt hebt der ERSTE Face-Start sie einmalig auf
+  0,6. Nicht den gespeicherten Default (sonst läge Dein Gesicht über einer
+  Kameralicht-Aufnahme, einer Gurt-Aufnahme und der Simulation), und nicht bei jedem
+  Start (sonst überschriebe ich Dich, wenn Du sie bewusst auf 0 drehst).
+
+  #1298 — DER FACE-SCHALTER SITZT JETZT IM FIELD.
+  Deine Korrektur, wörtlich: "es soll nicht dort angeschaltet werden sondern im
+  Field". Der Schalter "Play with your face" steht jetzt direkt über den
+  Kamera-Reglern. Er ruft NICHT den Publisher direkt, sondern geht durch denselben
+  einen Besitzer wie das Menü der Puls-Pille — zwei TÜREN auf einen Besitzer sind
+  harmlos, zwei BESITZER wären der Fehler, der einmal einen laufenden Gurt mitten in
+  einer Performance abgeräumt hat.
+
+  ⚠️ EHRLICH ZUR HÄLFTE, DIE FEHLT: er SCHALTET die Quelle um, er legt keine Ebene
+  dazu. Der Face-Publisher schreibt `heartRateBPM: 0` unter dem Kommentar
+  "coexistence deferred" — ihn NEBEN einer Pulsquelle laufen zu lassen schriebe diese
+  Null mit 10 Hz in den einen Bio-Slot. Also nimmt Face die Quelle, und AUS gibt sie
+  an die zurück, die vorher lief. Dein "den Field Sound modulieren" ist damit zur
+  Hälfte erfüllt; die volle Fassung heisst, das Gesicht von einer Bio-Quelle zu einem
+  reinen Modulations-Erzeuger zu machen, und steht als eigene Scheibe im Plan.
+
+  #1299 — GESICHTSGRÖSSE: "Camera size", 0,5 bis 2,5, direkt unter "Camera layer".
+  Die Skalierung läuft auf der CPU in die Viewport-Affine hinein; der Shader bleibt
+  unangetastet und kostet keinen Pixel mehr. Sie wird bei JEDEM Bild neu komponiert,
+  nicht nur wenn ein Kamerabild ankommt — sonst wäre eine Drehung am Regler bei
+  thermischer Drosselung erst beim nächsten Bild sichtbar, und genau dann greift man
+  zum Regler.
+
+  #1300 — EIN ROUTING-DEFEKT, DEN ICH SELBST EINEN COMMIT ZUVOR EINGEBAUT HATTE.
+  Du hast in derselben Runde "issues im routing" zu vermeiden verlangt. Es war einer,
+  in der Scheibe, die Dich beantworten sollte: der Face-Schalter AUS hätte bei
+  STEHENDEM Instrument die Musik gestartet, weil der Besitzer in diesem Fall
+  `startBiofeedback()` nimmt — richtig für die Puls-Pille, falsch für einen Schalter
+  in einer visuellen Fläche. AN aktiviert weiterhin (das ist die Einladung zum
+  Spielen), AUS tut jetzt nichts als die vorherige Quelle zurückzustellen.
+
+  ── ZU "ALLES KNISTERFREI" — WAS ICH PRÜFEN KONNTE UND WAS NICHT ───────────
+
+  GEMESSEN, ohne Gerät, und darum als Tatsache formulierbar:
+  · KEINE Allokation kann heute den Audio-Thread erreichen. Der Sweep über alle
+    `render`/`process`-Rümpfe in `DSP/`, `Tools/`, `Audio/` und `SamplerVoice` findet
+    neun allokations-förmige Zeilen in VIER Dateien — und alle vier sind unerreichbar:
+    `EchoelFDNReverb`, `EchoelSpaceReverb` und `EchoelWSOLA` haben NULL
+    Konstruktionsstellen in `Sources/`, und `EchoelConvolution` (das einzige, das
+    konstruiert wird, in `EchoelDDSP`) sitzt hinter `useConvolutionReverb`, das `false`
+    ist und in ganz `Sources/` keinen Schreiber hat.
+    ⚠️ Beim Messen wäre mir fast derselbe Fehler wie bei #1293 passiert:
+    `EchoelVDSPKit` ist ein DATEINAME, kein Typ. `git grep "EchoelVDSPKit("` liefert
+    null und liest sich wie "unbenutzt" — die Typen darin heissen `EchoelConvolution`,
+    `EchoelRealFFT`, `EchoelBiquadCascade` und drei weitere, und EINER davon ist sehr
+    wohl konstruiert. Wer hier misst, misst die TYPEN.
+  · Die Kamera-Kette bricht das 10.76.48-Gesetz nicht: `CameraFrameSlot` ist
+    `@unchecked Sendable` mit `NSLock`, der ARKit-Delegate hüpft NICHT pro Bild auf den
+    MainActor, und ein 10-Hz-Lauf zieht ab. Das neue Kamerabild im Feld kostet also
+    GPU-Zeit, aber keine Actor-Flut.
+  · Die Face-Sitzung fasst die Audio-Session NICHT an (`providesAudioData` wird nie
+    gesetzt, kein `AVAudioSession` in der Datei). Sie kann Deiner HypeMiC also nicht
+    die Route wegnehmen.
+  · Der Default-Puffer ist weiterhin `normal` = 512 Frames (~10,7 ms) — die
+    knisterfeste Stufe. Nichts in diesem Build verschiebt ihn.
+
+  NICHT GEPRÜFT, und das kann nur Dein Gerät: ob es bei Dir HÖRBAR knistert. Ein
+  statischer Beweis, dass keine verbotene Operation im Render-Block steht, ist kein
+  Beweis, dass die USB-Kette bei Deiner Puffergrösse durchhält. Wenn es knistert:
+  Master → "Audio input" → die Latenz-Stufe steht dort, und `echoel_diag.log` trägt
+  die Lebenszyklus-Leiter (`on 1/5` … `on 5/5`) — STILLE zwischen zwei Sprossen ist
+  der Befund, nicht das Fehlen einer Fehlermeldung.
 
   ── WARUM DIESER BUILD ÜBERHAUPT NÖTIG IST ────────────────────────────────
 
@@ -243,3 +337,65 @@ notes: |
   10.79.469 — Der Audio-Eingang, sauber aufgesetzt (#1246–#1256)
   10.79.468 — Das Bild kostet weniger, wo das Gerät es braucht (#1216–#1245)
   10.79.467 — dreizehn Reparaturen seit 466 (#1203–#1215)
+
+  ── PRÜF-BITTEN, DIE DIESER BUILD NEU BEANTWORTBAR MACHT ───────────────────
+  (gedruckt mit `python3 scripts/founder-verify.py --since b415af7`)
+
+  Founder device-session checklist — 4 NEW or REWORDED since `b415af7`, of 184 open, none answered yet
+     'New' means the marker LINE was added or changed. An ask that only moved (lines edited above it) is deliberately NOT here — it did not change.
+     ⚠️ It sees TEXT, not capability: a REWORDED ask is an old ask whose sentence was polished, not one that became newly answerable. Read the sentence.
+  
+  ── UI  (4)
+     Studio/AudioInputPickerView.swift:521
+        NEEDS-FOUNDER-VERIFY: HypeMiC per USB einstecken, Kopfhörer in die Buchse der HypeMiC, Master → „Audio input" …
+     Studio/EchoelStudioView.swift:6829
+        NEEDS-FOUNDER-VERIFY: Field → „Play with your face" anschalten. Erwartet: das Gesicht erscheint, die Puls-Pill…
+     Studio/EchoelStudioView.swift:6886
+        NEEDS-FOUNDER-VERIFY: Field → „Camera size" von 0,5 bis 2,5 durchfahren, während die Face-Quelle läuft. Erwart…
+     Studio/EchoelStudioView.swift:9803
+        NEEDS-FOUNDER-VERIFY: Quelle „Face" wählen. Erwartet: das eigene Gesicht ist im Visual zu sehen (Deckkraft 0,6…
+  
+  ── NOT ASKS (18) — the marker used as a noun, nobody can perform these
+     CISmoke/GenreBassGrammarTests.swift:12   ("the" in front of it — prose about the backlog)
+     CISmoke/GenreDeepTechTests.swift:26   ("the" in front of it — prose about the backlog)
+     CISmoke/OnboardingPagesScrollTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/SoundRowsCanReachTheShippedPatchesTests.swift:74   ("the" in front of it — prose about the backlog)
+     CISmoke/TheADMOSCLeavesAreTheSpecsTests.swift:29   ("the" in front of it — prose about the backlog)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:40   ("the" in front of it — prose about the backlog)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:166   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:185   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:198   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift:247   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheExportFailureSpeaksAtTheButtonTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheFaceSourceHasADoorTests.swift:142   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/TheLockNeedsFramesTests.swift:19   ("the" in front of it — prose about the backlog)
+     CISmoke/TheStillSaysWhetherItWasSavedTests.swift:15   ("the" in front of it — prose about the backlog)
+     CISmoke/TheTakeSaysWhetherItWasWrittenTests.swift:14   ("the" in front of it — prose about the backlog)
+     CISmoke/TheVariationNarrowsAsTheBodySettlesTests.swift:110   (the marker IS the whole string literal — a guard asserting the convention)
+     CISmoke/VisualFineTuneReflowsTests.swift:109   ("the" in front of it — prose about the backlog)
+     CLAUDE.md:35   ("jeden" in front of it — prose about the backlog)
+  
+  ── HOW TO RETIRE AN ASK once you have done it on a device
+     Put the date on the SAME line as the marker, then commit:
+       // NEEDS-FOUNDER-VERIFY VERIFIED-YYYY-MM-DD: <the original instruction>
+     Keep the instruction. The line stays as the record of WHAT was confirmed and
+       WHEN — deleting it also deletes the date, which is the first thing you want
+       back when the behaviour regresses.
+  
+  ── LIMITS (read before treating this as a work queue)
+     ANSWERED depends on somebody writing the mark. An ask you did on a device but
+       never marked stays in the open list — the tool reads the tree, not your
+       memory. It fails toward noise on purpose: a half-typed mark leaves the ask
+       OPEN, because showing a settled ask costs a glance and hiding an open one
+       costs a device session.
+     The AREA is derived from the file path, never from the words. A layout ask living in a
+       bio file lands under 'bio'. Order the walk yourself; this only makes the queue visible.
+     It reads RAW text on purpose — every marker is a comment.
+     The NOT-ASKS split keys on a determiner in front of the marker, and can only
+       REMOVE from the list above. A sentence about the backlog phrased without one
+       stays counted as an ask — noise, never a hidden job.
+     BLOCKED is a HAND-WRITTEN mark, not a derivation. Nothing here can tell that a
+       door was removed; somebody has to notice and write BLOCKED-BY-#<slice> on the
+       marker line. So this list under-reports: an ask whose door died unnoticed is
+       still shown as open, which is the safe direction and not a clean bill.
+  
