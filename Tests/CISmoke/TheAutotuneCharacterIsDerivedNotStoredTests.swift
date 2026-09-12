@@ -147,7 +147,19 @@ final class TheAutotuneCharacterIsDerivedNotStoredTests: XCTestCase {
     /// selection that can disagree with the numbers it claims to describe.
     func testTheDoorHoldsNoStoredCharacterSelection() throws {
         let view = try source("Sources/Echoelmusic/Studio/AudioInputPickerView.swift")
-        XCTAssertTrue(view.contains("selection: voiceTuneCharacterBinding"), """
+        // ⛔ #1277 — THIS ANCHOR WAS `"selection: voiceTuneCharacterBinding"` AND #1274 KILLED
+        // IT, in the blocking bundle, on a correct tree. That commit moved the character block
+        // out of `monitoringSection` into the `VoiceTuneCharacterControls` leaf (the 10.76.50
+        // freeze law: a hot read in a body that also hosts a `.menu` Picker tears the popover
+        // down), and the two members it anchored on — `voiceTuneCharacter` and its
+        // `voiceTuneCharacterBinding` — went with it under new names. §4 is exactly this: a
+        // commit that MOVES a control must move the guards over it in the SAME commit, and the
+        // failure is silent because §5 makes a genuinely red guard indistinguishable from the
+        // host dying. `dead-needles.py` is what found it.
+        // The replacement anchors on the PICKER, not on whatever binds it: the user-visible
+        // label survives a rename of the binding, an inline `Binding(get:set:)` and a hoisted
+        // helper alike — which is the #943b preference for an invariant over a spelling.
+        XCTAssertTrue(view.contains("Picker(\"Character\", selection:"), """
             The character picker is gone or renamed. Re-anchor this scan rather than \
             letting it pass vacuously (#454) — the negative below proves nothing without it.
             """)
@@ -212,9 +224,35 @@ final class TheAutotuneCharacterIsDerivedNotStoredTests: XCTestCase {
             A `nil` tag is a "Custom" segment. Selecting it cannot change either number, \
             so it is an inert control; the caption under the picker reports Custom instead.
             """)
-        XCTAssertTrue(view.contains("if voiceTuneCharacter == nil {"), """
-            The Custom caption is gone. Without it a cleared picker is indistinguishable \
-            from a broken one.
+        // ⛔ #1277 — SECOND CASUALTY OF THE SAME #1274 MOVE (see claim 5). The literal was
+        // `"if voiceTuneCharacter == nil {"`; the leaf calls the same derived value
+        // `character`. Re-anchored as TWO facts instead of one spelling, because the claim's
+        // own message is about the CAPTION and the old needle only proved the `if`:
+        //   · the caption text exists — that is the user-visible invariant, and it cannot be
+        //     renamed without changing what the app says;
+        //   · and it is GATED on a nil character, under any identifier.
+        // A future rename of the derived property therefore cannot make this go quiet again.
+        guard let caption = view.range(of: "Custom — your own Amount and Tune.") else {
+            XCTFail("""
+                The Custom caption is gone. Without it a cleared picker is indistinguishable \
+                from a broken one.
+                """)
+            return
+        }
+        // ⚠️ THE GATE IS CHECKED BY PROXIMITY, NOT BY IDENTIFIER, and that choice is the whole
+        // repair. A first draft matched `if\s+\w*[Cc]haracter\s*==\s*nil` — which is green on
+        // both trees, because #1274 renamed `voiceTuneCharacter` to `character` and both end in
+        // the same word. Driving a fourth mutant (rename to `tuneShape`) turned it RED on code
+        // that is entirely correct: #364, one rename later, i.e. the same trap this claim just
+        // fell into. Proximity has neither failure: the window is over COMMENT-STRIPPED text
+        // (measured: 21 chars here, 33 before the move), so it cannot be satisfied by an
+        // unrelated nil-check elsewhere in the file, and it survives any identifier.
+        let before = String(view[..<caption.lowerBound].suffix(200))
+        XCTAssertNotNil(before.range(of: #"if\s+[A-Za-z_][\w.]*\s*==\s*nil"#,
+                                     options: .regularExpression), """
+            The Custom caption is no longer gated on a nil character — it either always shows \
+            or never does. Showing it under a NAMED character is the worse half: the sheet \
+            then says "Custom" while the picker highlights "Tight".
             """)
     }
 
