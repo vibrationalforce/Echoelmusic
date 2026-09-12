@@ -30231,3 +30231,64 @@ kompilieren). Run Tests 6028–6030 in_progress. 6024 (K5a) Run Tests gelesen: `
 durch `TheShippedShaderActuallyCompilesTests` geprüft, dessen Name steht NICHT im Fenster (#445: nicht belegbar,
 weder rot noch grün). Der Kamera-Epic ist damit auf dem Branch abgeschlossen; offen bleibt nur das Gerät
 (`python3 scripts/founder-verify.py --since 1438077`, 14 Bitten) und der 6b-Fallback nach Gerätesondierung.
+
+## 2026-09-12 — Audio-Input-Epos A1–A3 (#1272 · #1273 · #1274)
+
+Founder-Prompt: „Intelligentes absturzsicheres Audio Input, Monitoring (nur erlauben bzw.
+hochrecken, wenn kein Feedback) und Weiterverarbeitung in granularsynthese, Harmonizer und
+Visuals." Zuerst gemessen, dann geschnitten — der Prompt enthält drei verschiedene Zustände,
+und nur einer davon war „fehlt".
+
+**A1 #1272 `fea1adc` — der Eingang wird auf der LAUFENDEN Engine gelesen (Hypothese #6).**
+Das v10.79.469-Gerätelog widerlegt Hypothese #5: es trägt `on: prepared before format read
+(#1251)` und in der NÄCHSTEN Zeile `node unusable — node 0.0 Hz/2 ch, session 48000.0 Hz/1 ch`.
+`prepare()` baut den Input-Scope also NICHT. Damit ist die im Quelltext seit #954b notierte
+Bedingung („nur versuchen, wenn ein Gerätelog zeigt, dass #5 die Familie nicht geschlossen
+hat") eingetreten, und #6 ist an derselben Stelle gebaut: Start zwischen Route-Claim und
+Format-Lesung. #823s eigene Begründung sagt es voraus — eine aus dem Playback-Startgraphen
+gestartete Engine hat keinen Input-Scope, also baut ihn der Start UNTER der Record-Route; der
+Stop an Sprosse 1/5 und der Claim waren immer die ersten zwei Drittel dieses Satzes.
+Die Chirurgie läuft dadurch auf einer laufenden Engine — das Gegenteil von #831/#835, im
+Quelltext ausdrücklich so benannt, damit das nächste Log unterscheidet (Absturz bei `on 2/5`
+oder `on 3/5` statt `on 4/5` ⇒ diese Zeile hat ihn verschoben). Ein fehlgeschlagener Vorstart
+KEHRT NICHT UM, sondern fällt auf den alten Pfad zurück — sonst wäre `on 4/5 SKIPPED` unerreichbar
+und Anspruch 16 von `TheEngineLifecycleSpeaksInTheDiagLogTests` auf sauberem Baum rot (#364).
+Sprosse 4/5 nimmt `|| monitorPreStarted` dazu, sonst meldet der gesunde neue Pfad einen Skip,
+während die Engine nachweislich läuft. Wächter `TheInputIsReadOnARunningEngineTests` (5), 4 von 5
+Urteilen kippen gegen `0610210`.
+
+**A2 #1273 `bd168cc` — das Monitoring verdient seinen Pegel, statt zurückgeduckt zu werden.**
+Bisher: Einschalten auf voller Nutzerlautstärke, dann warten, bis der Duck rettet — der braucht
+acht Pegelproben über der Decke, also bereits hörbares Heulen, und lässt sofort wieder los. Das
+ist das Pumpen. Neu ist ein ERLAUBNIS-Tor: der Anteil von `inputMonitorGain`, den der Monitor
+gerade benutzen darf. Beim Einschalten GESCHLOSSEN, steigt pro ~15-Hz-Sprosse nur, wenn der Raum
+auf allen drei Signalen frei ist (kein Duck · kein `HowlDetector`-Kandidat · kein Notch, der
+noch beißt oder hält — ein stiller Raum und ein stillgehaltener Raum sind nicht dasselbe), und
+fällt schneller, als es steigt, sobald eines feuert. Es konvergiert auf den lautesten Pegel, den
+DIESER Raum erlaubt. Duck, Notches und die Änderungs-Gatterung von `feedbackGuardActive` bleiben
+unangetastet; sie multiplizieren. BEIDE Schreiber der Monitor-Lautstärke gehen durchs Tor, auch
+`inputMonitorGain.didSet` — ein roher Schreiber dort ließe einen Fingerzug am Feld genau an dem
+Tor vorbeispringen, das der Tick eben geschlossen hat. Der UI-Spiegel ist auf 5 % quantisiert,
+nur bei Änderung geschrieben, und die Anzeige ist ein eigenes Blatt (10.76.50). Wächter
+`TheMonitorEarnsItsLevelTests` (6), 5 von 6 Urteilen kippen.
+⛔ Nachlese: Anspruch 5 trug zuerst die OFF-Pfad-Nadel und war damit auf dem Elternteil rot —
+also kein Gegengewicht, obwohl sein Docstring das behauptete. Nach Anspruch 1 verschoben.
+
+**A3 #1274 `851aa8b` — eine Körper-Route darf das Harmonie-Menü nicht zuklappen.**
+Gemessen statt gebaut: Harmonizer (#841), Granular (#849) und Eingang→Bild (#1248, arbeitet bei
+Monitor-Pegel 0, trägt also gar kein Feedback-Risiko) existieren alle und sind erreichbar; #1249/
+#1250 haben zusätzlich vier Stimm-Parameter zu Modulationszielen gemacht. Der ehrliche Rest ist
+der Preis dieser Kombination: SECHS heiße `@Observable`-Lesungen standen im Rumpf von
+`monitoringSection`, drei Zeilen neben zwei `.pickerStyle(.menu)`-Pickern. Eine Körper-Route
+schreibt ~1×/s, `updateHarmonyInKey` pro gesungener Note — das 10.76.41/48/50-Gesetz wörtlich.
+Reparatur in der ausgelieferten Form: vier Blätter (`VoiceTuneCharacterControls`,
+`VoiceHarmonyIntervalPickers`, `VoiceHarmonyMixField`, `VoiceGranularFields`); die Picker ziehen
+MIT den Werten um, die sie lesen. Der Sektionsrumpf ist jetzt auf allen zehn heißen Namen kalt
+(gemessen). Wächter `TheVoiceSheetSurvivesABodyRouteTests` (5), darunter ein dateiweiter Anspruch,
+der auch eine in ein anderes Nicht-Blatt verschobene Lesung rot macht.
+⭐ Das Fahren der Transkription fand `FeedbackGuardStatusRow` — ein Blatt, das das Gesetz längst
+befolgt und das meine handgeschriebene Erlaubnisliste nicht kannte: ein korrekter Baum, den der
+erste Entwurf rot nannte (#453 → #477).
+
+**Gates:** Xcode Compile Check SUCCESS auf `fea1adc` (#2566-Klasse) und `bd168cc`; `851aa8b`
+beim Schreiben noch `queued`. Gerät: nichts — alle drei Scheiben tragen NEEDS-FOUNDER-VERIFY.
