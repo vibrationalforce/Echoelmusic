@@ -549,19 +549,43 @@ wird `esotericMeditation` falsch-rot. **Im selben Commit:** `trap`/`jazz`-lineag
 `oriental`-displayName, sonst ist die geweitete Liste auf korrektem Baum rot.
 **Verify:** Picker öffnen — neun Rubriken mit ihren Regalen lesbar und nicht zu lang?
 
-**G2 — PADGRAMMAR** (neu `Sequencer/PadGrammar.swift`; `BioComposer.swift` für die zwei `if let` bei `:2483` und
+**G2 — PADGRAMMAR** ⭐ **AUSGELIEFERT #1281 `cdf9ede`** (neu `Sequencer/PadGrammar.swift`; `BioComposer.swift` für die zwei `if let` bei `:2483` und
 `:2550`). Alle Genres nil ⇒ byte-identisch. NEU `ThePadGrammarLeavesTheNilPathAloneTests` (golden) +
 `GenrePadGrammarTests` (aufsteigend, nicht überlappend, im Takt, `length >= 1` = #205/#176; `owned ∪ authoredAhead
 == allCases`, `GenreBassGrammarTests:94-99`-Form). ⚠️ **`authoredAhead` startet VOLL und leert sich über G5…G15** —
 in das Doc des Tests schreiben, sonst liest der erste Batch wie ein Wächterbruch statt wie eine eingelöste
 Reservierung (`BassGrammar:112-113` dokumentiert dieselbe Form). **Verify:** keiner.
 
-**G3 — GENREIDIOM + VARIATIONS-ENGINE + TÜR** (neu `Sequencer/GenreIdiom.swift`; `BioComposer.swift` für
+**G3 — GENREIDIOM + VARIATIONS-ENGINE + TÜR** ⭐ **G3a AUSGELIEFERT #1283 `cb4913e`; G3b OFFEN** (neu `Sequencer/GenreIdiom.swift`; `BioComposer.swift` für
 `Input.idiomVariation`, `idiomControl`, vier Haken; `EchoelStudioView.swift` für `variationNonce`, „Vary" in
 `variationsCard`, `idiomVariation: true` bei `:10192`). Idiom nil ⇒ byte-identisch AUCH bei gesetzter Flagge.
 NEU: die vier Wächter aus §3. **AMEND:** keiner. **Verify (`NEEDS-FOUNDER-VERIFY` auf der `varyFloor`-Zeile):**
 „Zweimal dasselbe Genre bei ruhigem Körper — dasselbe Stück in neuer Aufnahme (richtig) oder ein anderes Stück
-(Floor zu hoch)? Und bewegt es sich bei unruhigem Körper hörbar mehr?"
+(Floor zu hoch)? Und bewegt es sich bei unruhigem Körper hörbar mehr?
+
+⭐ **G3 IST GETEILT, und das ist eine Abweichung von dieser Zeile, keine Nachlässigkeit.**
+**G3a (#1283)** liefert `Sequencer/GenreIdiom.swift` (`GenreIdiom` · `VariationEnvelope` ·
+`GenreIdiomProfile` · `IdiomControl` mit reiner Hash-Auswahl), `Input.idiomVariation` +
+`variationNonce`, `BioComposer.idiomControl(for:)` und **HAKEN (a)** — den einzigen, den jedes
+Genre ausführt. Tabelle leer, `varyFloor = 0.25` mit `NEEDS-FOUNDER-VERIFY` auf der eigenen
+Deklarationszeile. Drei Wächter: `TheIdiomVariationLeavesTheNilPathAlone` (fünf Ansprüche, und
+er pinnt **ZWEI** Nil-Pfade — Flagge aus UND Flagge an bei hüllenlosem Genre) ·
+`TheIdiomVariationDrawsNoRNG` (über UUID-SEQUENZEN) · `TheVariationNarrowsAsTheBodySettles`
+(Polarität in beide Richtungen + Negativ-Pin auf `arpeggiated`/`sustained`/`leadDensity`).
+**G3b OFFEN:** Haken (b) Sayr-Substitution · (c) Arp-Permutation · (d) Zellwahl an beiden
+Stellen · die „Vary"-Tür in `variationsCard` · `TheVariationEnvelopesNeverCollide`.
+**Der Grund für den Schnitt:** eine Tür, die einen Nonce hebt, auf den nichts reagieren kann,
+ist ein lügendes Bedienelement (die #1024-Klasse), und ein Kollisions-Sweep über eine Achse mit
+EINEM Haken ist vakuum-grün, also kein Pass (#806). Beides landet zusammen.
+
+⚠️ **ZWEITE ABWEICHUNG, aus G2:** die `PadGrammar`-Fälle heißen NICHT wie in §3 entworfen
+(`pedalDrone` · `iqaWahdah` · `iqaMaqsum` · `gongCycle` · `kotekanInterlock` · `maSpacing` ·
+`additive332`). Jene Namen gehören zu Genres, die erst ab G5 existieren — eine Figur für ein
+Genre zu schreiben, das es noch nicht gibt, hätte in G2 nichts prüfen können. Geliefert sind
+vier GENERISCHE Figuren, die auf die heutigen 36 anwendbar sind: `pushedOffbeats` ·
+`tresilloChops` · `charleston` · `sweptSwell`. Die Entwurfsnamen bleiben als Reservierung für
+die Kulturkreis-Batches; sie treten als weitere Fälle hinzu, sie ersetzen nichts.
+`GenrePadGrammarTests`' `authoredAhead` startet deshalb VOLL und leert sich über G5…G15."
 
 **G4 — TONSYSTEM-VORSCHLAG, TABELLE LEER** (`MusicStyle.swift` nil-Default-Tabelle; `EchoelStudioView.swift` das
 EINE `if let` bei `:4604`). Null Verhaltensänderung. NEU `TheGenreSuggestsTheToneSystemTests`: (1) jeder

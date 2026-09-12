@@ -30370,3 +30370,71 @@ deinem Ohr? — Empfehlung portionsweise; blockiert G5) · §5-2 (Tonsystem-Besi
 §5-4 (`oriental` → „Modal Near East", und erst dann das Ban-Wort) · §5-5 (Instrumenten- und
 Traditionsnamen im displayName, vor G9). Dazu weiterhin angeboten: ein TestFlight-Deploy, weil
 #1269–#1280 auf keinem Gerät sind.
+
+## 2026-09-12 — Genre-Welt G2 (#1281), zwei rote Wächter (#1282), G3a (#1283)
+
+**#1281 = G2, die Pad-Achse.** `Sequencer/PadGrammar.swift`: vier authored Ein-Takt-Figuren
+(`pushedOffbeats` · `tresilloChops` · `charleston` · `sweptSwell`), `Hit(phase:length:level:)`,
+`onsets(secStart:secLen:)` in der `appendBass`-Phasensuche. Der Grund steht gemessen im
+Dateikopf: die Pad-Achse, die es schon gibt, ist `ChordArticulation` — VIER Fälle, ABGELEITET
+(`.halfTime`/`.none`/`.signature` landen alle auf `.sustained`), und ihr Gitter ist eine Funktion
+des KÖRPERS. Sechsunddreißig Genres teilen sich vier körper-modulierte Gitter; eine vorgezogene
+Achtel, ein 3+3+2-Tresillo, ein Charleston sind darin nicht ausdrückbar. Die Figur IST das Genre,
+der Körper behält den PEGEL (`padVelocity` + `hVel`). Ein `else if` zwischen Arp-Pfad und
+`profile.sustained` — **die POSITION ist die Präzedenz**, es gibt keine Flagge. Tabelle leer,
+also byte-identisch. Wächter: `GenrePadGrammarTests` (5) + `ThePadGrammarLeavesTheNilPathAlone`
+(4). ⚠️ Zwei Mutanten mussten neu gefahren werden, weil sie den Anspruch aus dem FALSCHEN Grund
+rot machten (#367): M3 setzte `rng.next()` VOR den Anker und zerstörte ihn; M5 entfernte nur eine
+von zwei Aufrufstellen und ließ alles grün.
+
+**#1282 = die §4-Lehre, zum dritten Mal bezahlt (#937, #960, jetzt hier).** #1271 hat den
+Kohärenz-Blend aus `tempo(for:)` gestrichen — und ZWEI Wächter behaupteten das gestrichene
+Gesetz weiter. Einer war in CI sichtbar (`ThePaceIsTiltedInsideTheGenreTests`
+`.testCoherenceErasesTheBodyEntirely`, Lauf 6039), **der andere nicht**:
+`UnmeasuredPulseIsNotZeroTests` behauptete `tempo(for: hr=0) == 40` und lag außerhalb des
+`tail -200`-Fensters (#807). Reparatur: der erste GELÖSCHT mit ⛔-Vermerk (das lebende Gesetz ist
+`TempoInvariantTests.testCoherenceDoesNotMoveTheFlowTempo`, eine zweite Schreibweise wäre #416),
+der zweite neu gerechnet — `resonancePulseBPM` statt Klammerboden 40, Kontemplation 66 statt 44,
+Default-Genre 72 statt 78. Neun umgeschriebene Zusicherungen, unter dem ausgelieferten Gesetz
+grün, unter dem zurückgezogenen sechs von neun rot: DAS ist die Messung, dass die alte Datei die
+rote war. **Gesetz: nach einer Verhaltensänderung nach jedem Wächter über die geänderte TATSACHE
+suchen, nicht über den geänderten CODE.**
+
+**#1283 = G3a, die Variations-Achse.** `Sequencer/GenreIdiom.swift`: `GenreIdiom` (sechs),
+`VariationEnvelope` (die ENDLICHE legale Menge), `GenreIdiomProfile`, `IdiomControl` mit reiner
+Hash-Auswahl. Dazu `Input.idiomVariation`/`variationNonce`, `BioComposer.idiomControl(for:)` und
+HAKEN (a) — der einzige, den JEDES Genre ausführt: die Aufnahme betritt die EIGENE Progression an
+anderer legaler Stelle (#77/#81/#125 unberührt, kein geliehener Akkord).
+⭐ **Die Diagnose zuerst, und sie widerlegt die naheliegende Lesart:** Zufall fehlt NICHT —
+`structureSeed` unterscheidet sich mit lebendem Körper bei fast jedem Generate. Dünn ist das
+AUTHORED Material: der Studio-Pfad nimmt `suggestJourney`, also werden die drei
+`structureRNG`-Züge im `else` nie konsumiert, der Lead-Block schläft, und jedes `sustained`-Genre
+teilt EINEN Onset-Erzeuger. Mehr Entropie machte die Aufnahme SCHLECHTER; gebraucht wird Breite
+legaler Bewegung. `amount = max(varyFloor, 1 − coherence)` — die `genreAnchorCount`-Polarität:
+**der ruhige Körper hört die kanonische Antwort.**
+⚠️ **ZWEI Nil-Pfade, nicht einer** — und das ist der Unterschied zum G2-Wächter: die Flagge kann
+AN sein und muss trotzdem nichts kosten, weil kein Genre eine Hülle besitzt. Wer später die
+„Vary"-Tür verdrahtet, schaltet sie für JEDE Aufnahme an; wäre nur der Flagge-aus-Pfad gepinnt,
+würde genau dieser Commit still der sein, der 36 Genres anders klingen lässt.
+Wächter: `TheIdiomVariationLeavesTheNilPathAlone` (5) · `TheIdiomVariationDrawsNoRNG` (4, über
+**UUID-SEQUENZEN** statt Notenzahlen — ein verirrter `rng.next()` nummeriert jede Note um und
+ändert sonst nichts) · `TheVariationNarrowsAsTheBodySettles` (6, inkl. dem NEGATIV-Pin auf die
+drei verbotenen `HarmonicProfile`-Felder).
+
+**Abweichung vom Plan, festgehalten statt still:** §4 sieht G3 ganz vor (Typ + vier Haken + Tür).
+Ausgeliefert ist Typ + Ableitung + Haken (a). Haken (b)–(d) und die Tür sind G3b — eine Tür, die
+einen Nonce hebt, auf den nichts reagieren kann, ist ein lügendes Bedienelement, und
+`TheVariationEnvelopesNeverCollide` wäre ein Sweep über eine Achse mit einem Haken, also vakuum-
+grün (#806). Zweite Abweichung, aus G2: die `PadGrammar`-Fälle heißen nicht wie in §3 entworfen
+(`pedalDrone`/`iqaWahdah`/…) — jene Namen gehören zu Genres, die erst ab G5 existieren; die vier
+gelieferten Figuren sind generisch und für die heutigen 36 anwendbar.
+
+**Gates:** CI/CD 6042 (`3607c87`) `Build for Testing` = **success** — das blockierende Bundle
+kompiliert seit #1279 wieder, und die #1282-Reparatur ist darin. `Run Tests` lief bei Redaktion
+noch. G3a-Transkription: 14 Quelltext-Ansprüche gegen `3607c87` und den Arbeitsbaum — 13 rot auf
+dem Elternteil aus ihrem GENANNTEN Grund, einer auf beiden grün (die Anti-Default-Negation),
+14/14 grün im Arbeitsbaum; die Auswahl-Arithmetik zusätzlich numerisch über 400 Keime je
+Richtung. Fünf Nadel-Prüfer sauber. Gerät: nichts.
+
+**Offen, Founder (unverändert):** §5-1 (blockiert G5) · §5-2 (blockiert G7) · §5-4 · §5-5. Dazu
+der angebotene TestFlight-Deploy — #1269–#1283 sind auf keinem Gerät.
