@@ -830,7 +830,13 @@ public extension MusicStyle {
                 delayMix: 0.20, delayFeedback: 0.28, delayTone: 0.45, delaySpread: 0.25,
                 delayWow: 0.35, delayDrive: 0.10)
         case .heavyMetal:
-            // High-gain rig — the most driven preset.
+            // High-gain rig.
+            // ⛔ "the most driven preset" stood here and is false by inspection of this same
+            // file: `doom` is 0.55 against this 0.50, four arms below, and `rock` TIES at 0.50.
+            // Third instance found by the #1286 sweep (techHouse carried the other two), and the
+            // shape is always the same — THE ARM THAT BREAKS A SUPERLATIVE DOES NOT CARRY IT, so
+            // nothing ever goes red. No superlative is claimed here any more; re-derive from the
+            // arms if a rank is ever needed.
             return GenreFXPreset(
                 delayEnabled: true, delayMode: .digital,
                 delaySync: TempoSyncOption(.sixteenth),

@@ -1754,9 +1754,16 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     public var harmonicProfile: HarmonicProfile {
         switch self {
         case .industrialTechno:
-            // [0, 1, 5] of locrian: root, flat second, diminished fifth. The semitone and the
-            // tritone in one chord — the harshness is the HARMONY, which is why this preset does
-            // not need to out-distort anything to read as metallic. Two roots, low register.
+            // DEGREES, not semitones: [0, 1, 5] of locrian `[0,1,3,5,6,8,10]` resolves to
+            // 0, 1 and 8 — root, ♭2 and ♭6, a semitone cluster with a minor sixth on top and NO
+            // FIFTH AT ALL. The harshness is the HARMONY, which is why this preset does not need
+            // to out-distort anything to read as metallic. Two roots, low register.
+            //
+            // ⛔ This comment read "root, flat second, diminished fifth … the semitone and the
+            // tritone in one chord" — the same false reading #1286 corrected at the enum case,
+            // left standing HERE. A repair goes to every home of the claim, not just the one
+            // being edited (#456/#937/#960); found by the very sweep this batch's rule asks for.
+            // Voicing the ♭5 would need `[0, 1, 4]`, which is `glacialField`'s array.
             return HarmonicProfile(progression: [0, 1], chordTones: [0, 1, 5],
                                    padOctave: 3, leadOctave: 5, arpeggiated: false,
                                    leadDensity: 0.0)
