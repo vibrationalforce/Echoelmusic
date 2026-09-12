@@ -1710,3 +1710,31 @@ zurückgenommenen Satz innerhalb ihrer eigenen ⛔-Rücknahme zitiert.
 **Entscheidung.** Gelöscht vor dem ersten Lauf, mit der vollständigen Begründung im
 Wächter-Kopf statt als stille Streichung — der gelöschte Anspruch ist die Sorte, die eine
 nächste Sitzung sonst neu erfindet. **Review:** 2026-10-12.
+
+### 2026-09-12 — Face und Audio Input komplett entfernt (#1301/#1302)
+
+**Entscheidung (Founder, wörtlich):** *„OK Face und Audio Input komplett entfernen. Keine Tests
+davon sollen im Repo bleiben."* Das nimmt #1296–#1300 derselben Sitzung und die ganze
+EchoelVoice-Woche zurück.
+
+**Begründung:** der Monitorpfad hat auf dem Gerät über sieben Builds nie funktioniert; die
+`isInputConnToConverter`-Absturzfamilie hat nie einen Namen bekommen; #1024 nahm alle drei
+Mikrofon-Türen, #1247 machte eine wieder auf. Ein gebautes, unerreichbares, absturzgefährdetes
+Subsystem zu tragen kostet jede Sitzung Lesezeit und jede Kampagne eine falsche Behauptung.
+
+**Was das FÜR EINE KÜNFTIGE SITZUNG heißt — drei Dinge sind absichtlich geblieben und dürfen
+nicht als Reste aufgeräumt werden:** (1) die PATCH-Hälfte der Stimmfarbe
+(`SynthPatch.voiceProfileTaps`/`-Label`/`-Blend`, `PolySynthVoice.applyVoiceProfile`,
+`VoiceTimbreProfiler`) — ein von einem älteren Build gespeicherter Patch trägt sie und wendet sie
+an (#95/#527) · (2) `RecordRouteOwner` als LEERES Enum samt Refcount (#299) · (3)
+`RetroCapture`/`SingleExport`, die den EIGENEN Ausgang mitschneiden, nie ein Mikrofon.
+
+**Zwei Verfahrens-Lehren, die über diese Scheibe hinausgehen:**
+- **Vor einer Massenlöschung die DEKLARIERTEN TYPEN der Opfer gegen den Rest greppen, nicht ihre
+  Dateinamen.** `VoiceHarmony` lag in `VoicePitchCorrector.swift`, ist reine Tonleiter-Arithmetik
+  und wird vom MUSIK-Harmonizer gebraucht. Umgezogen und zu `KeyHarmony` umbenannt.
+- **Ein Wächter, dessen Prämisse mit dem Feature verschwindet, wird UMGEDREHT statt gelöscht,
+  solange die Gegenfrage beantwortbar ist** (#926). Store-Text und Website müssen jetzt beweisen,
+  dass sie KEINE Stimm-Fähigkeit verkaufen — das fand sofort zwei echte Treffer in `faq.html`.
+
+**Offen, founder-gated:** `Resources/iOS/Info.plist` trägt weiter `NSMicrophoneUsageDescription`.

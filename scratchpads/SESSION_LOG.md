@@ -31116,3 +31116,54 @@ eine Oszillator-Eigenschaft, und Genre-Prosa). Plan:
 `Xcode Compile Check` (Concurrency-Group) — 2591, 2593, 2594 sind so gestorben, nicht an
 Fehlern. Ein Push, der NUR `scratchpads/`, `memory/` oder `decisions.csv` anfasst, löst dagegen
 gar keinen Lauf aus (gemessen an `7390b9e`), ist also während eines laufenden Gates sicher.
+
+## 2026-09-12 — #1301/#1302: Face UND Audio Input komplett entfernt (Founder-Ansage)
+
+**Der Founder hat den Auftrag dieser Runde ZURÜCKGENOMMEN, bevor er fertig war:** „OK Face und
+Audio Input komplett entfernen. Keine Tests davon sollen im Repo bleiben." Das streicht #1296–
+#1300 dieser Sitzung und die ganze EchoelVoice-Woche. Zwei Scheiben: **#1301 `fab8054`** (Face,
+67 Dateien, −5132) und **#1302 `a86d571`** (Audio Input, 94 Dateien, −19671). Compile #2596 auf
+`fab8054` **grün**; #2597 auf `a86d571` lief beim Schreiben noch.
+
+**Die Klassifikations-Regel, die die Scheibe getragen hat, und der Fehler davor.** Mein erstes
+`git rm` über `Tests/` wählte **49 Dateien aus, weil sie einen entfernten Typ ERWÄHNEN** —
+darunter echte, fremde Gesetze. Zurückgenommen (`git reset` + `git checkout -- Tests/`) und nach
+**SUBJEKT** neu sortiert: gelöscht wird ein Wächter, DESSEN THEMA der Eingang ist (46 + 1 später);
+ein Wächter, der `AudioInputPickerView` nur in einem Kommentar nennt, wird EDITIERT. „Keine Tests
+davon" heißt Tests DER Sache, nicht jede Datei, die ihren Namen fallen lässt.
+
+**⭐ DER BEINAHE-FEHLER, und gefunden hat ihn ein Sweep, kein `grep` nach Namen.** Ich habe die
+TOP-LEVEL-TYPEN jeder gelöschten Datei gegen den überlebenden Baum geprüft — und genau ein
+Treffer: **`VoiceHarmony`** lag in `Sequencer/VoicePitchCorrector.swift`, ist aber reine
+Tonleiter-Arithmetik und der einzige Aufrufer ist `DiatonicHarmonyFollower`, der MUSIK-Harmonizer
+hinter der FX-Fläche. Die Datei zu löschen hätte den Build gebrochen. Nach
+`Tools/DiatonicHarmonyFollower.swift` umgezogen und zu **`KeyHarmony`** umbenannt — die
+#1293-Form („Dateiname ≠ Typname") in ihrer teuersten Variante: ein Name, der VOICE sagt, in einer
+Runde, in der alles mit VOICE gelöscht wird. **Playbook: vor einer Massenlöschung die DEKLARIERTEN
+TYPEN der Opfer gegen den Rest greppen, nicht ihre Dateinamen.**
+
+**ZWEI WÄCHTER SIND UMGEDREHT STATT GELÖSCHT, und das ist der #926-Punkt.** „Eine Stimm-Behauptung
+muss ihren Kein-Ton-Qualifier tragen" wählt nach der Löschung NICHTS mehr aus — ein vakuum-grüner
+Wächter, durch den eine spätere Kampagne die Fähigkeit wieder verkaufen könnte. Die Frage kippt und
+bleibt beantwortbar: **der Store-Text und die Website müssen jetzt beweisen, dass sie KEINE
+Stimm-Fähigkeit verkaufen.** Die Python-Transkription der Website-Hälfte fand sofort einen echten
+Treffer — `faq.html` verkaufte die Capture an ZWEI Stellen (JSON-LD + sichtbarer Text), die mein
+Handlauf über `docs/*.html` vorher übersehen hatte.
+
+**`TheBufferPolicyHasADoorTests` → `TheBufferPolicyIsNeverAutomaticTests`** (#374): der alte Name
+beschrieb eine Tür, die es nicht mehr gibt. Zwei Ansprüche (die Caveat-Sätze, das Freeze-Gesetz am
+`MonitorLatencyRow`) gingen mit dem Sheet; das NEGATIVE Gesetz — der Puffer folgt nie der Thermik,
+dem Motorzustand oder einer Route — trägt die Datei weiter und gibt ihr den neuen Namen.
+
+**Absichtlich BEHALTEN, mit Begründung im Quelltext, weil eine spätere Aufräumrunde sie plausibel
+nähme:** die PATCH-Hälfte der Stimmfarbe (ein von einem älteren Build gespeicherter Patch trägt
+sie und wendet sie an, #95/#527) · `RecordRouteOwner` als LEERES Enum samt Refcount (#299) ·
+`RetroCapture`/`SingleExport`, die den EIGENEN Ausgang mitschneiden.
+
+**CLAUDE.md war 150.106 B, also 106 B ÜBER der Decke, bevor diese Scheibe anfing** — und
+`TheLawFileStaysUnderItsCeilingTests` wäre rot geworden, ohne dass ein reiner CLAUDE.md-Commit den
+Wächter je ausgelöst hätte (#1176). Jede Prosa-Änderung dieser Runde war deshalb auf NETTO-SCHRUMPF
+ausgelegt: **148.376 B**.
+
+**Founder-gated, BERICHTET statt editiert:** `Resources/iOS/Info.plist` trägt weiter
+`NSMicrophoneUsageDescription` für eine Fähigkeit, die es nicht mehr gibt.
