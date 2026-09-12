@@ -30886,3 +30886,57 @@ würden den Plan sonst auf eine unbelegbare Behauptung stellen:
 Geräte-Session mit OSC-Monitor (Protokol/TouchDesigner/`oscdump 8000`) — sie verifiziert das
 Fundament UND #1292 in einem Durchgang: bei AUS fehlen `/heart/rmssd`, `/sdnn`, `/pnn50`, bei AN
 sind sie da, `/heart/bpm` und `/coherence` fließen in beiden Zuständen.
+
+## 2026-09-12 — #1293: die Feldklasse galt an EINEM von sechs Egress-Punkten, jetzt ist die Asymmetrie gemessen
+
+**Ausgangslage.** ADM-OSC bleibt geblockt (Founder-Vorbedingung, Eintrag darüber). Statt zu
+warten: die Asymmetrie, die ich selbst einen Zyklus vorher erzeugt habe. #1292 gab
+`BioEgressPolicy` ein Vokabular für WELCHE Werte das Gerät verlassen dürfen
+(`.derived`/`.clinical`/`.raw`) und wandte es an **genau einer** der sechs Stellen an, an
+denen ein Bio-Frame zu Bytes wird: `OSCSender.send(frame:)`.
+
+**Die Zählung (gelesen an jeder Abbildung, nicht angenommen).** Die anderen fünf sind
+BEREITS klinik-frei: ADM-OSC fährt `/azim`·`/elev`·`/dist` aus Atemphase, normalisierter HRV
+und Kohärenz · Art-Nets vier DMX-Kanäle lesen Herzrate, Kohärenz, normalisierte HRV,
+Atemphase · **sACN ruft genau diese Art-Net-Funktion** (`SACNSender.swift:231`, GEMESSEN, nicht
+aus dem Nachbarkommentar geschlossen — #867) · `ColabPayload.egressible` projiziert einen
+Fünf-Feld-`BioPeek` · der Modulations-Tap trägt bereits angewandte Werte. **Nichts zu
+reparieren — und nichts, das die Regression bemerken würde.** Ein fünfter DMX-Kanal „HRV-Detail
+in ms" ist exakt, wie eine Lichtpult-Bitte klingt.
+
+**Gebaut:** `Tests/CISmoke/TheWholeEgressSurfaceIsClinicalFreeTests.swift`, 8 Ansprüche,
+1–7 END-TO-END BEHAVIOUR (jede Abbildung ist eine reine statische Funktion über
+Foundation-Werttypen; zwei Frames, die sich NUR in rMSSD/SDNN/pNN50 unterscheiden), 8
+SOURCE-TEXT SCAN. **Anspruch 5 ist die #367-Kontrolle**, ohne die 1–4 nichts beweisen: dieselben
+vier Abbildungen MÜSSEN sich bewegen, wenn die Kohärenz sich bewegt — „gleichgültig gegenüber
+den klinischen Feldern" gilt sonst auch für einen Sender, den niemand verdrahtet hat.
+Anspruch 7 hält das Opt-in ehrlich (bei AN trägt der OSC-Batch die drei weiterhin).
+
+**DREI Compile-Tatsachen beim Schreiben gemessen, jede wäre ein `TEST BUILD FAILED` gewesen,
+den `Xcode Compile Check` strukturell nicht sehen kann (§5):**
+· `#if canImport(Network)` — `ArtNetSender`, `ADMOSCSender` und `OSCSender` liegen alle drei
+  darin.
+· `@MainActor` auf der Klasse — `ArtNetSender` ist eine `@MainActor`-Klasse und `dmxChannels`
+  trägt KEIN `nonisolated`; seine drei Geschwister (`admMessages`, `bioMessages`, `egressible`)
+  schon. `ArtNetSenderTests` in der anderen Suite markiert aus genau dem Grund die ganze Klasse.
+· ⛔ **Die Nachbar-Behauptung in meinem ersten Kopf war FALSCH** (#867 in eigener Sache):
+  sie sagte, `TheBreathRateAndItsWaveformAreTwoGatesTests` fahre `ArtNetSender.dmxChannels`
+  ungeschützt. Die Datei NENNT es nur, in einem Kommentar. Gemessen: **vor dieser Datei fuhr
+  KEIN Wächter des blockierenden Bundles diese Funktion überhaupt.** Der einzige Fahrer steht
+  in `Tests/EchoelmusicTests/ArtNetSenderTests.swift` — der Suite, die **kein Gate kompiliert**
+  (#208). Das ist ein STÄRKERES Argument für die Datei als das, das ich zuerst aufschrieb.
+
+**Benotung (§3), ehrlich:** alle 15 Zusicherungen sind **COUNTERWEIGHTS** — grün auf Elternbaum
+(`b120086`) UND auf diesem, weil die Scheibe keinen Produktionscode hinzufügt. Der Wert ist
+ganz nach vorn gerichtet. Transkribiert (§0) gegen beide Bäume, mit einem **Quell-Quercheck**,
+der jeden Swift-Rumpf nach den Frame-Feldern parst, die er wirklich liest — damit das
+Python-Modell nicht von dem Code wegdriften kann, den es zu spiegeln behauptet (alle vier:
+`none`). **Sechs Mutationen gefahren, jede rot auf genau ihrem eigenen Anspruch und keinem
+anderen:** klinisches Feld in `dmxChannels` → 1a · in `dmxChannels16` → 1b · in `admMessages`
+→ 2a+2b · in `BioPeek` → 3 · Art-Net taub gestellt → **nur 5a** (und NICHT 1a — genau das
+#367-Argument, warum 5 existiert) · sACN forkt seine eigene Abbildung → 8a.
+**Stripper: PROPHYLAKTISCH, gemessen statt behauptet** (0 von 2 Verdikten kippen; die Nadel
+steht einmal im Code, die drei Feldnamen kommen in `SACNSender.swift` gar nicht vor).
+Alle fünf Nadel-Prüfer exit 0.
+
+**Treiber:** `$SP/t1293.py` (Transkription + Mutationsgeschirr in einem, `--mutate NAME`).
