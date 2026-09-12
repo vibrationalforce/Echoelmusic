@@ -57,7 +57,27 @@ final class TheGenreVocabularyStaysNeutralTests: XCTestCase {
     /// are all in use — the ban is on claims about states, energies and cures, not on stillness.
     private static let banned = [
         "chakra", "solfeggio", "healing", "heal ", "aura", "esoteric", "third eye",
-        "vibrational force", "manifest", "cleanse", "detox", "cure", "therapy", "therapeutic"
+        "vibrational force", "manifest", "cleanse", "detox", "cure", "therapy", "therapeutic",
+        // ⭐ #1276 — PROPHYLACTIC, added with the world-genre epic and measured to match NOTHING
+        // in today's copy. That is deliberate, not a weakness: the next eleven batches file
+        // genres from traditions where the off-brand phrasing is the FIRST thing a model
+        // reaches for ("shamanic drone", "astral pad", "altered state"), and a ban that arrives
+        // after the copy is written arrives too late to be cheap. The list still names only
+        // CLAIMS about states, energies and cures — "drone", "chant", "devotional", "ritual"
+        // and "trance" stay legal, and `upliftingTrance`/`psytrance` prove the last one is in
+        // shipped use.
+        "hypnagog", "hypnotic", "altered state", "astral", "shamanic", "kundalini",
+        "mantra", "sacred geometry",
+        // A dated euphemism rather than an esoteric claim, and on the list for the same reason:
+        // it describes a marketing category, never a sound.
+        "urban"
+        // ⛔ "oriental" IS NOT ON THIS LIST YET, and leaving it off is the point. It is the one
+        // proposed word that MATCHES shipped copy today — `MusicStyle.oriental.displayName` is
+        // "Oriental" — so banning it here would turn a correct tree red for a change that is
+        // the founder's to make (`PLAN_GENRE_WELT_2026-09-11.md` §5-4: the rename to "Modal
+        // Near East", raw value pinned, "nur dein Ja fehlt"). A guard that forbids what only
+        // someone else can fix is the #364 shape. The word joins this list in the SAME commit
+        // as the rename, never before it.
     ]
 
     // MARK: - claim 1 (COUNTERWEIGHT, END-TO-END) — nothing a user reads carries the vocabulary
@@ -67,7 +87,31 @@ final class TheGenreVocabularyStaysNeutralTests: XCTestCase {
     /// token is pinned to the legacy string "esotericMeditation" on purpose (claim 2), and
     /// "esoteric" is on the list below. The distinction this file rests on is exactly that one —
     /// a STORAGE TOKEN is not copy. `displayName` and `lineage` are what the picker renders.
+    /// ⭐ #1276: THE SECTION HEADERS ARE SWEPT TOO. #1275 gave the picker seventeen shelf titles
+    /// and eight rubric titles — shipped copy that did not exist when this claim was written,
+    /// rendered ABOVE the genre names it groups, and reached by no other guard. Additive, so a
+    /// correct tree stays green (#364).
     func testNoShippedGenreStringUsesEsotericVocabulary() {
+        var shipped: [(String, String)] = []
+        for rubric in MusicStyle.Category.allCases {
+            shipped.append(("Category.\(rubric.rawValue).title", rubric.title))
+        }
+        for shelf in MusicStyle.Subcategory.allCases {
+            shipped.append(("Subcategory.\(shelf.rawValue).title", shelf.title))
+        }
+        for (label, text) in shipped {
+            let lowered = text.lowercased()
+            for word in Self.banned {
+                XCTAssertFalse(lowered.contains(word), """
+                    `MusicStyle.\(label)` contains "\(word.trimmingCharacters(in: .whitespaces))": \
+                    "\(text)"
+                    A picker section header is shipped copy — it is rendered above the genre \
+                    names, so it is the FIRST thing read. Same rule, same list, same escape \
+                    hatch: if a shelf genuinely needs one of these words, that is a founder \
+                    decision and the list moves with it in the same commit (#1276).
+                    """)
+            }
+        }
         for style in MusicStyle.allCases {
             for (label, text) in [("displayName", style.displayName), ("lineage", style.lineage)] {
                 let lowered = text.lowercased()
