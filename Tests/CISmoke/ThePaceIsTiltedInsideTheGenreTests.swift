@@ -199,7 +199,8 @@ final class ThePaceIsTiltedInsideTheGenreTests: XCTestCase {
         }
         let worst = byOutput.values.map(\.count).max() ?? 0
         let message = "The genre fold no longer collapses distinct habitual hearts onto one "
-            + "tempo on the SHIPPED DEFAULT genre. That is one of the three justifications "
+            + "tempo on the SHIPPED DEFAULT genre. That is one of the TWO surviving "
+            + "justifications "
             + "for tilting after the fold — re-read `StudioCalculator.tilted`'s doc."
         XCTAssertGreaterThanOrEqual(worst, 4, message)
 
@@ -213,20 +214,34 @@ final class ThePaceIsTiltedInsideTheGenreTests: XCTestCase {
                              + "gone, re-read the tilt's rationale.")
     }
 
-    func testCoherenceErasesTheBodyEntirely() {
-        // THE STRONGEST OF THE THREE JUSTIFICATIONS, and the one that is not genre-dependent:
-        // `BioComposer.tempo(for:)` pulls toward the resonance pulse as coherence rises, so at
-        // full coherence a calm room full of different people gets ONE suggested tempo. No
-        // fold is involved. Everything downstream of that has already lost the person; the
-        // tilt is the only thing that still knows who is playing.
-        let calm = BioComposer.Input(heartRateBPM: 52, coherence: 1, mode: .flowFree)
-        let busy = BioComposer.Input(heartRateBPM: 88, coherence: 1, mode: .flowFree)
-        let message = "Two very different hearts no longer converge to one tempo at full "
-            + "coherence. If the entrainment pull changed, the tilt's primary justification "
-            + "changed with it and the doc on `StudioCalculator.tilted` needs re-reading."
-        XCTAssertEqual(BioComposer.tempo(for: calm), BioComposer.tempo(for: busy),
-                       accuracy: 0.0001, message)
-    }
+    // ⛔ `testCoherenceErasesTheBodyEntirely` STOOD HERE AND IS DELETED (#1282), because the
+    // behaviour it asserted was REMOVED on purpose. It composed two very different hearts at
+    // full coherence and required them to converge on one tempo — true while
+    // `BioComposer.tempo(for:)` carried the blend `hr*(1-coherence) + 72*coherence`, and false
+    // since #1271 took that blend out by founder decision ("entweder direkt an die Herzrate
+    // gekoppelt oder man stellt sie selbst ein"). It was RED ON A CORRECT TREE from that commit
+    // until this one, and CI said so in run 6039 — the one test failure in the window.
+    //
+    // ⭐ THE LESSON IS §4's, PAID FOR A THIRD TIME (#937/#960 are the other two): one behaviour
+    // change, TWO guards asserting it, and the sibling stays red. #1271 knew it had to move a
+    // guard — it rewrote `TempoInvariantTests` claim 2 into something strictly stronger, and it
+    // retracted reason 1 of `StudioCalculator.tilted`'s doc in the same commit — and still
+    // missed this file, because the search was for the code that changed rather than for every
+    // guard over the FACT that changed. `git grep` the behaviour across the whole blocking
+    // bundle, not the file you happen to be editing.
+    //
+    // NOTHING IS LOST BY THE DELETION, and that was checked rather than assumed:
+    // `TempoInvariantTests.testCoherenceDoesNotMoveTheFlowTempo` is the live law and is
+    // STRICTLY STRONGER — it drives four heart rates against four coherences and requires the
+    // tempo not to move at all, where this one pinned a single converged pair. Re-asserting it
+    // here would be a second spelling of one decision (#416).
+    //
+    // ⚠️ WHAT THE DELETION COSTS IS A JUSTIFICATION, NOT COVERAGE, and that is recorded because
+    // it changes what the tilt rests on: reason 1 ("coherence erases the body, so only the tilt
+    // still knows who is playing") is GONE. Reasons 2 and 3 stand and are still pinned in this
+    // file — `testTheFoldReallyDoesCollapseDistinctBodies` is reason 2, and the non-monotonic
+    // half of it is reason 3. A future session re-reading `StudioCalculator.tilted` will find
+    // reason 1 retracted there too; the two homes agree.
 
     // MARK: - The tilt is a body, not a dice roll
 

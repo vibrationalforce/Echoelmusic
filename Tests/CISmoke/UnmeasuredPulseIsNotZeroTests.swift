@@ -18,11 +18,27 @@
 //      (`heldCoh`, a few lines above in the same function, already applies the `> 0` rule to
 //      coherence, and the comment on the very next line describes exactly this bug for HRV. Heart
 //      rate was the one field left unguarded — and the one that sets the tempo.)
-//   3. `BioComposer.tempo(for:)` in `.flowFree` computes `hr·(1−calm) + 72·calm`, so a zero heart
-//      at zero coherence yields 0, which its own `min(max(·, 40), 160)` lifts to 40.
+//   3. `BioComposer.tempo(for:)` in `.flowFree` computed `hr·(1−calm) + 72·calm`, so a zero heart
+//      at zero coherence yielded 0, which its own `min(max(·, 40), 160)` lifted to 40.
 //      `StudioCalculator.genreTempo(40, into: 44...66)` folds 40 up to 80, finds 80 above the
 //      ceiling, and picks the FLOOR because 80 sits proportionally further above 66 than 44 does
 //      above 40. Result: exactly 44.
+//
+// ⭐ LINK 3 NO LONGER EXISTS, AND THAT IS WHY THIS FILE WAS REWRITTEN (#1282). #1271 replaced the
+// coherence blend with `guard hr.isFinite, hr > 0 else { return resonancePulseBPM }` — so a zero
+// heart does not become 40 any more, it becomes 72, a deliberate musical default instead of a
+// clamp floor. The device log's 44 is therefore UNREACHABLE AT THE SOURCE, not merely blocked at
+// the call site, and this file's assertions were pinning the retired chain: it was RED ON A
+// CORRECT TREE from #1271 until this commit. CI could not show it — the job log is `tail -200`
+// (#807) and the failure was outside the window; what found it was a `git grep` across the whole
+// blocking bundle for the behaviour that changed, run because the SAME change had already left
+// `ThePaceIsTiltedInsideTheGenreTests` red and visible.
+//
+// ⚠️ THE FIX IS NOW BELT AND BRACES, AND BOTH BELONG. Link 2's call-site guard (asserted below,
+// unchanged) stops a zero being handed over as a measurement; link 3's fallback decides what to
+// play when no reading exists at all. Removing either because "the other one covers it" would
+// re-open the defect from the opposite end — the call-site guard cannot choose a tempo, and the
+// fallback cannot tell an unread body from a body the view has decided is real.
 //
 // ⚠️ AND THE OBVIOUS SUMMARY IS WRONG, which is why the numbers are computed here instead of
 // described. "An unread body makes the music too slow" holds for Contemplation and for NOTHING
@@ -58,48 +74,92 @@ final class UnmeasuredPulseIsNotZeroTests: XCTestCase {
 
     // MARK: - The device log, reproduced
 
-    /// ⛔ THE 44, EXACTLY. Reproduced from the two pure functions, so the device evidence and the
-    /// code are pinned to each other. If this stops holding, the log no longer explains the code
-    /// and this file's rationale must be rewritten — not the number adjusted.
-    func testTheDeviceLogsFortyFourIsReproducible() {
+    /// ⛔ THE 44 IS NO LONGER REPRODUCIBLE, AND THE FILE TOOK ITS OWN ADVICE. The previous version
+    /// of this test said: "If this stops holding, the log no longer explains the code and this
+    /// file's rationale must be rewritten — not the number adjusted." #1271 stopped it holding.
+    /// So the rationale is rewritten above and this test now pins the REPLACEMENT: an unread
+    /// pulse takes the resonance fallback, a chosen musical default, instead of falling through a
+    /// clamp floor. The device evidence stays in the header as history, where it explains WHY the
+    /// fallback exists.
+    func testAnUnreadPulseTakesTheResonanceFallbackNotAClampFloor() {
         XCTAssertEqual(BioComposer.tempo(for: .init(heartRateBPM: 0, coherence: 0,
                                                     style: .contemplation, mode: .flowFree)),
-                       40, accuracy: 0.001,
-                       "the mapping's own clamp floor is what a zero heart becomes")
-        XCTAssertEqual(mapped(hr: 0, .contemplation), 44, accuracy: 0.001,
-                       "device log 2476 read `tempo=44` on Contemplation (44…66) — that is a "
-                       + "zero heart rate folded onto the genre floor, not a musical decision")
+                       BioComposer.resonancePulseBPM, accuracy: 0.001, """
+                       An unread pulse no longer resolves to the resonance default. The old \
+                       answer was 40 — `min(max(0, 40), 160)`, the mapping's clamp FLOOR, chosen \
+                       by the absence of information rather than by anything musical — and that \
+                       is what put `tempo=44` in device log 2476.
+                       """)
+        XCTAssertNotEqual(BioComposer.tempo(for: .init(heartRateBPM: 0, coherence: 0,
+                                                       style: .contemplation, mode: .flowFree)),
+                          40, accuracy: 0.001, """
+                          The clamp floor is back. 40 is what a zero heart became before #1271, \
+                          and on Contemplation it folded to the genre's floor of 44 — the \
+                          measured defect this file exists for.
+                          """)
+        // And the fold no longer lands on the floor: 72 into 44…66 sits ABOVE the ceiling, and
+        // the proportional rule picks the ceiling rather than halving to 36. Computed, not
+        // described — this file's own standing rule.
+        XCTAssertEqual(mapped(hr: 0, .contemplation), 66, accuracy: 0.001,
+                       "an unread body on Contemplation now lands at the ceiling, not the floor")
     }
 
     /// …and the resting neutral lands at the other end of the same window: 66. A resting body is
     /// at the fast end of a contemplative window, which is the honest answer — the convergence
     /// then walks the tempo down as the real (slower) pulse arrives, continuously, with no jump.
-    func testTheRestingNeutralLandsAtTheOppositeEnd() {
+    func testTheRestingNeutralAndTheUnreadBodyNowAgreeOnContemplation() {
         XCTAssertEqual(mapped(hr: 70, .contemplation), 66, accuracy: 0.001)
+        // ⭐ THE FACTOR IS 1.0 NOW, AND THAT IS THE FIX RATHER THAN A LOSS. This assertion used
+        // to read `1.5` and called it "the audible size of the defect on the genre the founder
+        // was actually using". #1271 removed the sentinel path entirely: an unread body takes the
+        // 72 bpm resonance default, which folds to the same 66 a resting 70 does. So on this
+        // genre the music no longer changes character when the camera finally locks — it was
+        // already playing what a resting body plays.
+        //
+        // ⚠️ DO NOT READ THIS AS "the reading stopped mattering" — that claim is measured one
+        // test down and still holds for 16 genres. Contemplation's window is narrow enough
+        // (44…66) that both inputs fold onto its ceiling; that is a property of this window, not
+        // of the law.
         XCTAssertEqual(mapped(hr: 70, .contemplation) / mapped(hr: 0, .contemplation),
-                       1.5, accuracy: 0.001,
-                       "44 → 66 bpm is the audible size of the defect on the genre the founder "
-                       + "was actually using — a factor of 1.5, not a nuance")
+                       1.0, accuracy: 0.001, """
+                       An unread body and a resting body no longer agree on Contemplation. If \
+                       this moved, the resonance fallback or the window changed — check which \
+                       before adjusting the number, because a factor greater than 1 here is the \
+                       shape of the ORIGINAL defect (#1282).
+                       """)
     }
 
     /// ⚠️ THE DEFAULT GENRE WENT THE OTHER WAY, and this is the assertion that stops the fix from
     /// being remembered as "it was too slow". On `.selfObservation` (46…78) a zero body produced
     /// the CEILING. Whatever genre you were on, the tempo was decided by a sentinel instead of by
     /// a body — sometimes too slow, sometimes too fast.
-    func testOnTheDefaultGenreTheSameBugMadeItTooFast() {
-        XCTAssertEqual(mapped(hr: 0, .selfObservation), 78, accuracy: 0.001,
-                       "a zero heart hit .selfObservation's CEILING, not its floor")
+    /// ⚠️ THE HISTORICAL POINT SURVIVES AND THE NUMBERS DO NOT. On `.selfObservation` (46…78) a
+    /// zero body used to produce the CEILING, 78 — which is why the defect must never be
+    /// remembered as "the music was too slow"; whatever genre you were on, a sentinel decided the
+    /// tempo, sometimes too slow and sometimes too fast. Since #1271 an unread body takes 72,
+    /// which sits INSIDE this window and needs no fold at all, so the ceiling is no longer
+    /// reached and the remaining gap to a resting 70 is two bpm rather than eight.
+    func testOnTheDefaultGenreTheUnreadBodySitsInsideTheWindow() {
+        XCTAssertEqual(mapped(hr: 0, .selfObservation), BioComposer.resonancePulseBPM,
+                       accuracy: 0.001, """
+                       An unread body on the DEFAULT genre no longer lands on the resonance \
+                       default. 72 falls inside 46…78, so no octave fold applies — if this \
+                       changed, either the fallback or the window moved.
+                       """)
         XCTAssertEqual(mapped(hr: 70, .selfObservation), 70, accuracy: 0.001,
                        "a resting body lands inside the window at its own pulse")
-        XCTAssertGreaterThan(mapped(hr: 0, .selfObservation), mapped(hr: 70, .selfObservation),
-                             "the direction of the error is genre-dependent — do not describe "
-                             + "this defect as 'the music was too slow'")
+        XCTAssertTrue(MusicStyle.selfObservation.tempoRange.contains(mapped(hr: 0, .selfObservation)),
+                      "the fallback escaped the default genre's own window")
     }
 
     // MARK: - The invariant that actually holds everywhere
 
-    /// THE READING MUST MATTER. For most genres a zero body and a resting body produce different
-    /// tempi, which is the whole point; the window still contains the result in every case.
+    /// THE READING MUST MATTER — and since #1271 that claim is WEAKER on purpose, so read the
+    /// bound before trusting the name. An unread body now takes the 72 bpm resonance default
+    /// rather than a clamp floor, and 72 is close to a resting pulse, so the two COINCIDING on a
+    /// given genre is the fallback working rather than the sentinel returning. Measured: 16 of
+    /// the 36 genres still distinguish them, where 20 did before. The floor below is unchanged
+    /// and still passes; what changed is why a genre may legitimately fail to differ.
     ///
     /// The bound is a LOWER bound, not an exact count, and deliberately so: SOME windows are
     /// arranged such that both inputs fold to the same tempo (dubTechno, eighties, disco,
