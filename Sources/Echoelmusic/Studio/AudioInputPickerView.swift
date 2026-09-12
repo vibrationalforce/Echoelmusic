@@ -103,27 +103,15 @@ struct AudioInputPickerView: View {
 
     // MARK: - Live monitoring + feedback guard
 
-    /// The character the LIVE values sit on, or nil once a field has been dragged off
-    /// every named point. Hoisted out of `monitoringSection` for two reasons: #287 (a
-    /// `Binding<Optional>` built inline inside a `Picker` inside a body this size is the
-    /// shape that has taken this bundle red on type-check time), and because the caption
-    /// below the picker asks the same question — one spelling, not two (#416).
-    private var voiceTuneCharacter: VoiceTuneCharacter? {
-        VoiceTuneCharacter.matching(strength: Double(audioEngine.voiceTuneStrength),
-                                    retuneSpeed: Double(audioEngine.voiceTuneRetune))
-    }
-
-    /// Derived selection: reads back from the two fields, writes both on a pick. No stored
-    /// selection anywhere — see the note at the picker.
-    private var voiceTuneCharacterBinding: Binding<VoiceTuneCharacter?> {
-        Binding(
-            get: { voiceTuneCharacter },
-            set: { choice in
-                guard let choice else { return }
-                audioEngine.voiceTuneStrength = Float(choice.strength)
-                audioEngine.voiceTuneRetune = Float(choice.retuneSpeed)
-            })
-    }
+    // ⛔ #1274 — `voiceTuneCharacter` AND `voiceTuneCharacterBinding` STOOD HERE AND ARE
+    // GONE, into `VoiceTuneCharacterControls` at the bottom of this file. Not a tidy-up:
+    // both READ `voiceTuneStrength`, which #1249 made a modulation destination, so as
+    // members of THIS type they registered the whole sheet as an observer of a value a body
+    // route rewrites about once a second — three lines from two `.menu` pickers. Their #287
+    // reason (an inline `Binding<Optional>` inside a `Picker` inside a body this size is what
+    // has taken this bundle red on type-check time) and their #416 reason (the caption asks
+    // the same question — one spelling, not two) BOTH survive the move: the leaf holds one
+    // spelling and builds the binding outside the picker's own argument list.
 
     // ⚠️ THE ATTRIBUTE BELONGS TO THIS DECLARATION, and #681 briefly gave it away. Two
     // computed members were inserted above `private var monitoringSection`, anchored on
@@ -359,33 +347,11 @@ struct AudioInputPickerView: View {
                     // segment is highlighted and the caption below says why. That is also why
                     // there is no "Custom" segment: choosing it could only be a no-op, which is
                     // exactly the inert control this shape exists to avoid.
-                    Text("Character")
-                        .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
-                    Picker("Character", selection: voiceTuneCharacterBinding) {
-                        ForEach(VoiceTuneCharacter.allCases) { character in
-                            Text(character.label).tag(VoiceTuneCharacter?.some(character))
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .accessibilityLabel("Autotune character")
-                    if voiceTuneCharacter == nil {
-                        Text("Custom — your own Amount and Tune. Pick a character to return to a named setting.")
-                            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    EchoelValueField(
-                        label: "Amount",
-                        value: Binding(get: { audioEngine.voiceTuneStrength },
-                                       set: { audioEngine.voiceTuneStrength = $0 }),
-                        range: 0...1, decimals: 2)
-                    EchoelValueField(
-                        label: "Tune",
-                        value: Binding(get: { audioEngine.voiceTuneRetune },
-                                       set: { audioEngine.voiceTuneRetune = $0 }),
-                        range: 0...1, decimals: 2)
-                    Text("Tune 1.00 is the classic hard-snap vocal effect; low values drift gently. The pitch stage adds a little latency to the monitor only — the music is untouched.")
-                        .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
-                        .fixedSize(horizontal: false, vertical: true)
+                    // #1274 — LEAF. `voiceTuneStrength` is a registered modulation
+                    // destination since #1249, so a body route rewrites it about once a
+                    // second; read here it would rebuild this whole sheet at that rate and
+                    // tear down the harmony `.menu` popovers below (10.76.41/50).
+                    VoiceTuneCharacterControls()
                 }
                 // #841 (V1b-2) — the first AUDIBLE stage on the monitor insert. Hidden
                 // entirely when the insert factory failed (`voiceHarmonyAvailable`):
@@ -426,33 +392,14 @@ struct AudioInputPickerView: View {
                         }
                         .tint(EchoelTheme.accent)
                         .accessibilityHint("On: the harmony intervals are chosen from the key for each sung note. Off: the two pickers below choose them.")
-                        Picker("First voice", selection: Binding(
-                            get: { HarmonyInterval(rawValue: Int(audioEngine.voiceHarmonyInterval1)) ?? .majorThirdUp },
-                            set: { audioEngine.voiceHarmonyInterval1 = $0.semitones }
-                        )) {
-                            ForEach(HarmonyInterval.allCases) { interval in
-                                Text(interval.displayName).tag(interval)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .disabled(audioEngine.voiceHarmonyFollowsKey)
-                        .accessibilityLabel("First harmony voice")
-                        Picker("Second voice", selection: Binding(
-                            get: { HarmonyInterval(rawValue: Int(audioEngine.voiceHarmonyInterval2)) ?? .fifthUp },
-                            set: { audioEngine.voiceHarmonyInterval2 = $0.semitones }
-                        )) {
-                            ForEach(HarmonyInterval.allCases) { interval in
-                                Text(interval.displayName).tag(interval)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .disabled(audioEngine.voiceHarmonyFollowsKey)
-                        .accessibilityLabel("Second harmony voice")
-                        EchoelValueField(
-                            label: "Mix",
-                            value: Binding(get: { audioEngine.voiceHarmonyMix },
-                                           set: { audioEngine.voiceHarmonyMix = $0 }),
-                            range: 0...1, decimals: 2)
+                        // #1274 — TWO LEAVES, and the split between them is the point.
+                        // `voiceHarmonyInterval1/2` are rewritten per sung note while
+                        // "Harmony in key" is on (`updateHarmonyInKey`), and
+                        // `voiceHarmonyMix` about once a second whenever a body route
+                        // targets it (#1249). Read in this body, either would rebuild the
+                        // sheet under an OPEN interval menu.
+                        VoiceHarmonyIntervalPickers()
+                        VoiceHarmonyMixField()
                     }
                 }
                 // #849 (V1b-3) — the second audible stage: the granular texture the
@@ -479,21 +426,9 @@ struct AudioInputPickerView: View {
                         .accessibilityLabel("Granular texture")
                     }
                     if audioEngine.voiceGranularEnabled {
-                        EchoelValueField(
-                            label: "Mix",
-                            value: Binding(get: { audioEngine.voiceGranularMix },
-                                           set: { audioEngine.voiceGranularMix = $0 }),
-                            range: 0...1, decimals: 2)
-                        EchoelValueField(
-                            label: "Grain",
-                            value: Binding(get: { audioEngine.voiceGranularGrainMs },
-                                           set: { audioEngine.voiceGranularGrainMs = $0 }),
-                            range: 10...500, unit: "ms", decimals: 0)
-                        EchoelValueField(
-                            label: "Pitch",
-                            value: Binding(get: { audioEngine.voiceGranularPitch },
-                                           set: { audioEngine.voiceGranularPitch = $0 }),
-                            range: -24...24, unit: "st", decimals: 0)
+                        // #1274 — LEAF: `voiceGranularMix` and `voiceGranularPitch` are
+                        // both registered modulation destinations (#1249).
+                        VoiceGranularFields()
                     }
                 }
                 // #663 — THE NUMBER, next to the warning that motivates it. The founder asked
@@ -838,6 +773,132 @@ private struct RouteCodecRow: View {
                 codec = AudioConfiguration.latencySnapshot().codec
             }
         #endif
+    }
+}
+
+/// ⭐ #1274 — THE FOUR MODULATED VOICE PARAMETERS, EACH IN ITS OWN `View`.
+///
+/// #1249/#1250 gave the body a route to `voiceHarmonyMix`, `voiceGranularMix`,
+/// `voiceGranularPitch` and `voiceTuneStrength`; `updateHarmonyInKey` rewrites
+/// `voiceHarmonyInterval1/2` per sung note. All six are plain `@Observable` stores on
+/// `AudioEngine`, so every one of them is a HOT read — and until this slice they were all
+/// read in `monitoringSection`'s own body, three lines from two `.pickerStyle(.menu)`
+/// pickers. That is the 10.76.41/50 law exactly: a high-frequency read in a body that hosts
+/// a menu tears the popover down while the finger is in it, and the founder reports it as
+/// "kann plötzlich nicht mehr auswählen".
+///
+/// ⚠️ It had not bitten yet only because the routes are one day old (#1250, 2026-09-11) —
+/// the mechanism is the one this repo has already paid for four times. The leaves below are
+/// the shipped repair shape (`BioStripView`, `PulseMonitorMiniLive`, `MasterVolumeField`).
+/// A new field for any of these parameters belongs in a leaf, never in the section body.
+private struct VoiceTuneCharacterControls: View {
+    @Environment(AudioEngine.self) private var audioEngine
+
+    /// The named character whose pair matches the current values, or nil = Custom. Lives
+    /// here, not on the parent, for the same reason the fields do: it READS both hot values.
+    private var character: VoiceTuneCharacter? {
+        VoiceTuneCharacter.matching(strength: Double(audioEngine.voiceTuneStrength),
+                                    retuneSpeed: Double(audioEngine.voiceTuneRetune))
+    }
+
+    var body: some View {
+        Text("Character")
+            .font(EchoelTheme.font(13)).foregroundStyle(EchoelTheme.text)
+        Picker("Character", selection: Binding(
+            get: { character },
+            set: { choice in
+                guard let choice else { return }
+                audioEngine.voiceTuneStrength = Float(choice.strength)
+                audioEngine.voiceTuneRetune = Float(choice.retuneSpeed)
+            }
+        )) {
+            ForEach(VoiceTuneCharacter.allCases) { character in
+                Text(character.label).tag(VoiceTuneCharacter?.some(character))
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel("Autotune character")
+        if character == nil {
+            Text("Custom — your own Amount and Tune. Pick a character to return to a named setting.")
+                .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        EchoelValueField(
+            label: "Amount",
+            value: Binding(get: { audioEngine.voiceTuneStrength },
+                           set: { audioEngine.voiceTuneStrength = $0 }),
+            range: 0...1, decimals: 2)
+        EchoelValueField(
+            label: "Tune",
+            value: Binding(get: { audioEngine.voiceTuneRetune },
+                           set: { audioEngine.voiceTuneRetune = $0 }),
+            range: 0...1, decimals: 2)
+        Text("Tune 1.00 is the classic hard-snap vocal effect; low values drift gently. The pitch stage adds a little latency to the monitor only — the music is untouched.")
+            .font(EchoelTheme.font(11)).foregroundStyle(EchoelTheme.dim)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+private struct VoiceHarmonyIntervalPickers: View {
+    @Environment(AudioEngine.self) private var audioEngine
+
+    var body: some View {
+        Picker("First voice", selection: Binding(
+            get: { HarmonyInterval(rawValue: Int(audioEngine.voiceHarmonyInterval1)) ?? .majorThirdUp },
+            set: { audioEngine.voiceHarmonyInterval1 = $0.semitones }
+        )) {
+            ForEach(HarmonyInterval.allCases) { interval in
+                Text(interval.displayName).tag(interval)
+            }
+        }
+        .pickerStyle(.menu)
+        .disabled(audioEngine.voiceHarmonyFollowsKey)
+        .accessibilityLabel("First harmony voice")
+        Picker("Second voice", selection: Binding(
+            get: { HarmonyInterval(rawValue: Int(audioEngine.voiceHarmonyInterval2)) ?? .fifthUp },
+            set: { audioEngine.voiceHarmonyInterval2 = $0.semitones }
+        )) {
+            ForEach(HarmonyInterval.allCases) { interval in
+                Text(interval.displayName).tag(interval)
+            }
+        }
+        .pickerStyle(.menu)
+        .disabled(audioEngine.voiceHarmonyFollowsKey)
+        .accessibilityLabel("Second harmony voice")
+    }
+}
+
+private struct VoiceHarmonyMixField: View {
+    @Environment(AudioEngine.self) private var audioEngine
+
+    var body: some View {
+        EchoelValueField(
+            label: "Mix",
+            value: Binding(get: { audioEngine.voiceHarmonyMix },
+                           set: { audioEngine.voiceHarmonyMix = $0 }),
+            range: 0...1, decimals: 2)
+    }
+}
+
+private struct VoiceGranularFields: View {
+    @Environment(AudioEngine.self) private var audioEngine
+
+    var body: some View {
+        EchoelValueField(
+            label: "Mix",
+            value: Binding(get: { audioEngine.voiceGranularMix },
+                           set: { audioEngine.voiceGranularMix = $0 }),
+            range: 0...1, decimals: 2)
+        EchoelValueField(
+            label: "Grain",
+            value: Binding(get: { audioEngine.voiceGranularGrainMs },
+                           set: { audioEngine.voiceGranularGrainMs = $0 }),
+            range: 10...500, unit: "ms", decimals: 0)
+        EchoelValueField(
+            label: "Pitch",
+            value: Binding(get: { audioEngine.voiceGranularPitch },
+                           set: { audioEngine.voiceGranularPitch = $0 }),
+            range: -24...24, unit: "st", decimals: 0)
     }
 }
 
