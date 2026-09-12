@@ -30829,3 +30829,60 @@ ist der Grund, warum keiner existiert.
 **Gerät: nichts.** NEEDS-FOUNDER-VERIFY an `StudioDefaultKeys.oscClinicalDetail` — mit einem
 OSC-Monitor prüfen, dass `/heart/rmssd`, `/sdnn` und `/pnn50` bei AUS fehlen und bei AN da sind,
 während `/heart/bpm` und `/coherence` in beiden Zuständen fließen.
+
+**Gate-Lesung #1292 (`193712a`), Stand 10:35 UTC:** `Xcode Compile Check` **#2587 = success**
+(Lauf 34688055931, Job 103538423241, Schritt 7, 10:17:43→10:22:22) → `Sources/` kompiliert ·
+CI/CD 6052, `Build for Testing` **= success** (Job 103538501031, Schritt 9, 10:18:36→10:22:21)
+→ **das blockierende Bündel kompiliert, inklusive `TheClinicalDetailIsOptInTests`** · `SwiftLint`
+**= success** (Job 103538423304, Schritt 6) — die „SwiftLint clean"-Forderung des Founder-Briefs
+ist damit erfüllt, nur eben auf CI und nicht lokal. `Run Tests` lief um 10:35 noch (Start
+10:22:21); Conclusion sagt wegen #396 ohnehin nichts, der Verdikt-Leser wird nachgeholt. Ehrliche
+Formulierung bleibt **„kompiliert nachweislich, Ausführung unbelegt"** (#445/#807) — die zehn
+Ansprüche des neuen Wächters sind hier NIE gelaufen, nur transkribiert und mutations-getrieben.
+
+---
+
+## 2026-09-12 — ADM-OSC: Precondition-Check gelaufen, ZWEI von vier durchgefallen, Phase 1 NICHT begonnen
+
+**Der Founder hat den ADM-OSC-Zyklus eingereicht und ihn selbst konditioniert:** „der läuft erst,
+wenn V1 gemerged und die OSC-Ausgabe an einem echten Empfänger verifiziert ist. Sonst baust du
+eine Spatial-Schicht auf ein Fundament, das noch nicht steht." Dazu ein Phase-0-Block mit der
+Anweisung: *„If any precondition fails, STOP and report. Do not proceed."*
+
+| Vorbedingung | Ergebnis | Beleg |
+|---|---|---|
+| V1 (OSC out) in `main` | **PASS** | `git merge-base --is-ancestor 193712a origin/main` → ja; `origin/main` HEAD **ist** `193712a`. Sender: `Sync/OSCSender.swift:197`, `:577` |
+| `BioEgressPolicy` implementiert **und raw-field-Test besteht** | **HALB** | Implementiert: `Core/BioEgressPolicy.swift:91/117/172`. Test: `Tests/CISmoke/TheClinicalDetailIsOptInTests.swift:95/199`. **Kompiliert** (Build for Testing grün) — **Ausführung unbelegt** |
+| `swift build` grün, Suite grün, Counts | **FAIL** | `swift`, `swiftc`, `swiftlint`, `xcodebuild` alle MISSING. Strukturell unerfüllbar in einer Web-Session |
+| *(Founder-eigene)* OSC an echtem Empfänger verifiziert | **FAIL** | Nie geschehen. NEEDS-FOUNDER-VERIFY an `StudioDefaultKeys.oscClinicalDetail` |
+
+⛔ **DREI VORAUSSETZUNGEN DES BRIEFS EXISTIEREN NICHT, und das ist kein Formfehler, sondern der
+Grund, warum der Brief nachgeladen werden wollte:**
+1. **Keinen „merged V1 PR".** Jüngster PR im Repo ist **#419 vom 2026-08-26**. `auto-merge-claude.yml`
+   schiebt `claude/**` direkt nach `main`, ohne PR und ohne Gate — der ⛔-Absatz unter der
+   Workflow-Tabelle in `CLAUDE.md` beschreibt genau das. Der Adressraum IST dokumentiert, nur
+   nicht in einem PR: `CLAUDE.md` OSC-Abschnitt · `docs/integrations.html:98–106` ·
+   `docs/dev/VJ_BRIDGE.md:44`.
+2. **`scratchpads/PLAN_FOUNDATION_SEQUENCE.md` existiert nicht** (dritte Nennung in zwei Briefen).
+3. **„Cycle V1" gab es nie als Zyklus.** OSC out liegt seit Monaten; was am 2026-09-12 merged, ist
+   #1292 — die VERENGUNG der Ausgabe, nicht ihr Bau.
+
+⚠️ **ZWEI SACHEN FÜR DIE NÄCHSTE SITZUNG, BEVOR SIE ADM-OSC PLANT** — beide gemessen, beide
+würden den Plan sonst auf eine unbelegbare Behauptung stellen:
+· **Die ADM-OSC-Spec v1.0 ist ein AES-Paper hinter der Paywall (#786, steht schon im
+  OSC-Abschnitt der `CLAUDE.md`).** Der Brief verlangt „Name the version you target and cite it.
+  Do not invent addresses." — eine Konformitätsbehauptung gegen ein Dokument, das hier niemand
+  lesen kann, ist genau die Sorte Über-Behauptung, die #158/#184/#192 dreimal zurücknehmen
+  mussten. **Zitierbar ist das öffentliche Referenz-Repo
+  `github.com/immersive-audio-live/ADM-OSC`** (in `memory/people.md` unter Roman/Adamson schon
+  verlinkt). Gegen DAS spezifizieren und es so benennen — nicht „ADM-OSC v1.0 konform".
+· **Die Achsenfrage hat zwei Ebenen, nicht eine.** Der Founder warnt vor dem vertauschten
+  Vorzeichen; davor liegt aber die Wahl des Koordinatensystems überhaupt — ADM kennt kartesisch
+  (`/adm/obj/{n}/xyz`) UND polar (`/azim` `/elev` `/dist`) nebeneinander, das sind zwei
+  verschiedene Verträge. Der Wächter, den der Brief zu Recht nach OBEN stellt, muss BEIDES
+  pinnen: welches System, und welche Richtung ist +x.
+
+**Status: gestoppt, gemeldet, kein Code geschrieben.** Was den Block löst, ist eine
+Geräte-Session mit OSC-Monitor (Protokol/TouchDesigner/`oscdump 8000`) — sie verifiziert das
+Fundament UND #1292 in einem Durchgang: bei AUS fehlen `/heart/rmssd`, `/sdnn`, `/pnn50`, bei AN
+sind sie da, `/heart/bpm` und `/coherence` fließen in beiden Zuständen.
