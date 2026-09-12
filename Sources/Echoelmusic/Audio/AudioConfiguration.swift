@@ -398,7 +398,12 @@ enum AudioConfiguration {
     /// re-measure; the other ten had nothing wrong with them). The log token now comes from
     /// `String(describing:)`, which prints a case's own name — so the day a case is added the
     /// breadcrumbs read exactly as they did before, with no raw values to keep in sync.
-    enum RecordRouteOwner: CaseIterable, Sendable {}
+    /// ⚠️ `Hashable` IS DECLARED EXPLICITLY, and that is the second half of the same language
+    /// rule. Swift synthesises `Hashable` for a case-less enum only when the conformance is
+    /// WRITTEN; the raw type used to supply it for free, so dropping `: String` silently took
+    /// it with it and the `Set` below stopped compiling — two errors left over from the eleven,
+    /// in the same cause. An empty enum satisfies it trivially.
+    enum RecordRouteOwner: Hashable, CaseIterable, Sendable {}
 
     /// `nonisolated(unsafe)`, matching `isSessionConfigured` and `recordingRouteNeeded` above.
     ///
