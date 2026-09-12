@@ -124,6 +124,12 @@ public extension MusicStyle {
         // own patch, and `darkPsyTrance` is the SECOND owner of `rollingSixteenths`. Psy-prog
         // remains its FIRST owner, which is what its doc claims — and every owner has its own
         // `bassPatch`, which is the part that actually keeps two genres apart.
+        // #1288 G6a — three more co-owners. `drivingEighths` goes to three and four owners;
+        // `offbeatEighths` to three. Each brings its OWN bass patch, which is the licence's whole
+        // shape (#1286): share the figure, never the voice.
+        case .blackMetal:       return .drivingEighths
+        case .modalJazz:        return .drivingEighths
+        case .soulBallad:       return .offbeatEighths
         case .industrialTechno: return .sparseSub
         case .afroHouse:        return .offbeatEighths
         case .darkPsyTrance:    return .rollingSixteenths

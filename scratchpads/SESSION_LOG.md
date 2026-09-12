@@ -30514,3 +30514,75 @@ Fünf Nadel-Prüfer sauber. **Gerät: nichts** — zwei NEEDS-FOUNDER-VERIFY im 
 
 **Offen, Founder (unverändert):** §5-2 (blockiert G7) · §5-4 · §5-5 · `varyFloor`-Hörprobe.
 Dazu der angebotene TestFlight-Deploy — #1269–#1286 sind auf keinem Gerät.
+
+---
+
+## 2026-09-12 — #1287 (zwei falsche Superlative) + Genre-Welt G6a (#1288)
+
+**#1287 — die Hälfte, die #1286 liegen ließ, plus eine ältere.** #1286 korrigierte die
+Lesart von `[0, 1, 5]` am ENUM-CASE und ließ die identische Behauptung 1100 Zeilen
+weiter in `harmonicProfile` stehen („root, flat second, diminished fifth … Tritonus").
+**Eine Reparatur geht in JEDES Zuhause der Behauptung** — vierte Zahlung derselben
+§4-Lehre (#937, #960, #1282). Die zweite fand die Regel, die #1286 geschrieben hatte:
+`heavyMetal`s FX-Arm behauptete „the most driven preset" bei 0,50, während `doom` in
+derselben Datei 0,55 trägt und `rock` gleichzieht. **Drittes Vorkommen EINER Form: der
+Arm, der eine Superlative bricht, trägt sie nicht, also wird nie etwas rot.**
+
+**G6a — Black Metal · Modal Jazz · Soul Ballad.** Der Inhalt sind nicht drei Genres,
+sondern DREI RUBRIKEN, die einen Arm und keine Tür hatten: `.rock` (fünf dunkle Arme),
+`.jazz` (einer) und Soul, das als Regal gar nicht existierte. Die Picker-Kopfzeilen
+nannten drei Räume, die niemand betreten konnte. `.soul` kommt MIT seinem ersten
+Bewohner — das Leeres-Regal-Gesetz, das `GenreSubcategoryTests` erzwingt.
+
+⭐ **DAS EIGENTLICHE ERGEBNIS IST EIN WERKZEUG: `$SP/prebatch.py`.** Es rechnet vor dem
+Schreiben aus dem ausgelieferten Baum plus einer Kandidaten-JSON alles, was der
+Batch-Template „vorher zu RECHNEN" nennt. **Es hat fünf Blocker gefunden, von denen VIER
+kein Wächter gesehen hätte:** der Entwurfs-Lead „Deep Sub" für `blackMetal` (Decke 6 bei
+34 lead-tragend, Deep Sub und Pluck standen schon auf 6 — das hätte
+`GenreBatchFourVoicingTests` rot gemacht, der einzige mit Wächter) · Bass „Round Sub"
+schon von `afroHouse` vergeben (→ „Velvet Sub") · „Walk Sub" cutoff 420 hätte `Minimal
+Sub` die Behauptung „lowest cutoff, darkest in the file" genommen, die zwei Nachbararme
+zitieren und die nur PAARWEISE gepinnt ist (→ 540) · „Cold Sub" 1100 hätte `Psy Bass`
+GLEICHGEZOGEN, wo die Prosa „the highest" sagen wollte (→ 1180) · und seine Hüllkurve
+wäre auf Decay UND Release KÜRZER gewesen als `Psy Bass`, dessen Arm „shortest envelope
+of every bass patch here" behauptet (→ 0,003/0,15/0,085). `$SP/poststate.py` fährt
+dieselben Invarianten NACH dem Schreiben gegen den Baum.
+
+⚠️ **Und `poststate.py` selbst lief eine Fassung lang falsch-grün:** sein Regal-Scan
+schnitt mit `index("public var id…")`, das zuerst in `Category` steht, also über einen
+LEEREN Bereich — „18 Regale" wurde als **0** gemeldet, ohne Fehler. Seither bricht er ab,
+wenn der Scan nichts trifft (`.claude/rules/context.md` §2).
+
+**Zwei weitere Falschbehauptungen beim Transkribieren gefunden, beide meine:**
+`modalJazz`s Doc sagte, die Artikulation `.comp` trenne es von jedem angebotenen
+dorischen Genre — `detroitTechno` ist dorisch UND `.backbeat`. Korrigiert auf die drei
+Eigenschaften, die wirklich trennen (zwei Wurzeln gegen drei, Moll-Septime gegen
+None-Shell, Swing 0,30 gegen 0,10), und der Wächter pinnt jetzt diese statt der falschen
+Ausschließlichkeit. Und die Tempo-Ordnung war STRIKT, während sich Jazz und Metal bei 160
+absichtlich BERÜHREN — dieselbe Stelle wie G5b bei 145, auf `<=` gelockert (#364).
+
+**Roster jetzt: 44 Genres, 27 angeboten, 18 Regale, keines leer.** Acht Kopie-Stellen auf
+„Twenty-seven"/„Siebenundzwanzig" und `architecture.html` auf „33 of 44".
+
+**Wächter:** `Tests/CISmoke/GenreBatchSixATests.swift`, 7 Ansprüche. Anspruch 4 pinnt DREI
+Nachbar-Superlative roster-weit, die dieser Batch beinahe genommen hätte — inklusive der
+`Minimal Sub`-Behauptung, die bisher nur paarweise gepinnt war.
+⚠️ Voicing-Eindeutigkeit wird bewusst NICHT behauptet: `blackMetal` teilt `[0, 4, 7]`
+absichtlich mit punk/rock/heavyMetal/doom (ein Metal-Genre, das keinen Powerchord
+spielt, trennt sich auf der falschen Achse), `modalJazz`/`soulBallad` teilen
+`[0, 2, 4, 6]` mit acht Armen. Gepinnt ist, was jedes Doc wirklich sagt.
+
+**Grading (§0/§3):** die Datei nennt drei neue Symbole, kompiliert also gegen den
+Elternteil nicht — **kein Anspruch hat dort ein Verdikt** (#486). Transkribiert
+(`$SP/t1288.py`) gegen den Arbeitsbaum: nach den zwei Korrekturen **0 von ~90
+Zusicherungen rot**. Sechs Mutationen, jede trifft ihre benannte Zusicherung: Skala →
+phrygian · Lead → „Deep Sub" (Decke) · Swing → 0,12 · Walk-Sub-Cutoff → 420 · Delay auf
+soulBallad · Soul-Regal geleert. Fünf Nadel-Prüfer sauber. **Gerät: nichts** — drei
+NEEDS-FOUNDER-VERIFY-Ohrfragen im Wächter-Kopf.
+
+**Gates:** CI/CD 6044 (`db5bca0`, G4) und 6045 (`f184b3d`, G5a) `Build for Testing` =
+**success** — das blockierende Bundle kompiliert mit beiden neuen Wächter-Dateien.
+`Run Tests` = failure auf beiden, die chronische #396/#1174-Form.
+
+**Offen, Founder (unverändert):** §5-2 (blockiert G7) · §5-4 · §5-5 · `varyFloor`-Hörprobe.
+Dazu der angebotene TestFlight-Deploy — #1269–#1288 sind auf keinem Gerät.

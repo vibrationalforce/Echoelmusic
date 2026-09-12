@@ -303,6 +303,51 @@ public extension MusicStyle {
 
     private var rawFXPreset: GenreFXPreset {
         switch self {
+        case .blackMetal:
+            // #1288 G6a — LONG THIN HALL, NO DELAY. The delay is absent for a reason, not by
+            // omission: an echo repeats an EVENT, and a tremolo wall is continuous — echoing a
+            // continuous texture is inaudible and only thickens what the genre wants thin.
+            //
+            // ⚠️ EVERY NUMBER AGAINST A NAMED NEIGHBOUR, measured from the arms: room 0.88 under
+            // `contemplation`'s 0.96 ("the BIGGEST hall in the roster"), under `drift`'s 0.95 and
+            // under the 0.94 `deepDrone`/`selfObservation` share · damping 0.42 ABOVE `drift`'s
+            // 0.35, so its "brightest, least-damped big hall" survives, and under `deepDrone`'s
+            // 0.68 ("the most DAMPED hall in the roster") · saturation 0.52 between `rock`/
+            // `heavyMetal`'s 0.50 and `doom`'s 0.55, claiming nothing — that arm's "most driven
+            // preset" line was retracted in #1287 because doom already broke it. Mix 0.26 is what
+            // makes the hall THIN: a big room heard quietly.
+            // No chorus — width on a power chord is mud, not size.
+            return GenreFXPreset(
+                saturation: 0.52,
+                reverbEnabled: true, reverbMix: 0.26, reverbRoom: 0.88, reverbDamping: 0.42)
+        case .modalJazz:
+            // #1288 G6a — MID WARM ROOM, NO DELAY. Again absent on purpose: a comped chord at
+            // swing 0.30 echoes into the space BETWEEN the swung eighths, which is precisely
+            // where the groove lives. The room is the only space this genre gets.
+            //
+            // Neighbour checks: room 0.62 well under the big halls above · damping 0.44 above
+            // drift's 0.35 and under techHouse's 0.58 · saturation 0.26 above `minimalTechno`'s
+            // 0.14 ("cleanest beat-driven chain" holds) and under `dubTechno`'s 0.30. A slow,
+            // shallow chorus widens the seventh stack — the un-offered `jazz` arm chorused too,
+            // and this is the one thing the two deliberately share.
+            return GenreFXPreset(
+                chorusEnabled: true, chorusRate: 0.22, chorusDepth: 0.28, chorusMix: 0.20,
+                saturation: 0.26,
+                reverbEnabled: true, reverbMix: 0.24, reverbRoom: 0.62, reverbDamping: 0.44)
+        case .soulBallad:
+            // #1288 G6a — WARM PLATE, LONG TAIL, NO DELAY. The plate IS the tail; a delay on top
+            // of a long plate at 72 BPM is mud, and the third absence in this batch is the third
+            // time the reason is the genre's own and not a convention.
+            //
+            // Neighbour checks: room 0.80 under every big hall named above · damping 0.48 between
+            // drift's 0.35 and techHouse's 0.58 · mix 0.34 under `contemplation`/`glacialField`'s
+            // 0.48 and `drift`'s 0.46, so no wettest claim moves · saturation 0.22 above
+            // minimal's 0.14, under dubTechno's 0.30 — tape warmth, not drive. Wide slow chorus
+            // for the maj7 stack.
+            return GenreFXPreset(
+                chorusEnabled: true, chorusRate: 0.14, chorusDepth: 0.38, chorusMix: 0.26,
+                saturation: 0.22,
+                reverbEnabled: true, reverbMix: 0.34, reverbRoom: 0.80, reverbDamping: 0.48)
         case .industrialTechno:
             // #1286 G5b — SHORT METAL PLATE. A dry, tight digital echo (mix 0.14) into a small,
             // bright-ish room: the harmony is already harsh, so the space is what keeps it

@@ -51,6 +51,45 @@ public extension MusicStyle {
         // genre keeps its character, cleaner. SOUND CYCLE 1 layers real instrument
         // spectra + unison width + a breath/air noise floor on top (see header).
         switch self {
+        case .blackMetal:
+            // #1288 G6a — COLD STACK. A power chord wants to be a WALL, so this is the opposite
+            // of the iron stab it stands beside: a slower attack (0.05) and a long release (1.6)
+            // so consecutive chords bleed into one continuous plane. Harmonics high and
+            // brightness high, but the spectral shape is Bright rather than Metallic — the cold
+            // is in the MODE (see the case doc), and a metallic timbre on top of a raised-fourth
+            // scale reads as digital rather than as glacial. Wide unison and heavy detune are
+            // the closest this synth gets to a tremolo-picked wall.
+            return patch("48", "Cold Stack",
+                a: 0.05, d: 0.90, s: 0.72, r: 1.60,
+                harm: 0.82, hl: 0.66, bright: 0.52, noise: 0.04, color: "White", shape: "Bright",
+                cutoff: 3200, res: 0.18, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.24, revDecay: 3.00, vibRate: 0, vibDepth: 0,
+                uni: 5, det: 16)
+        case .modalJazz:
+            // #1288 G6a — WARM COMP KEYS. A comped chord is struck and let go, so the envelope is
+            // an electric-piano shape: quick but not hard, a long decay into a low sustain, and a
+            // release just short of the swung eighth at 120 (0.25 s) so successive comps do not
+            // smear. Low brightness with a Natural shape and rich low harmonics — the warmth is
+            // in the spectrum, not in a filter sweep, and there is no LFO at all because a
+            // vibrato on a comped chord is an organ, not a Rhodes.
+            return patch("49", "Warm Comp Keys",
+                a: 0.008, d: 0.70, s: 0.26, r: 0.22,
+                harm: 0.88, hl: 0.30, bright: 0.30, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 2000, res: 0.10, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.16, revDecay: 1.60, vibRate: 0, vibDepth: 0,
+                uni: 3, det: 8)
+        case .soulBallad:
+            // #1288 G6a — WARM KEYS. The ballad relative of the comp patch above, and every
+            // difference is deliberate rather than a tweak: a softer attack (0.02 vs 0.008), a
+            // HIGHER sustain (0.48 vs 0.26) and a release more than twice as long, because a
+            // maj7 at 72 BPM is held, not struck. Slight vibrato — the one place in this batch
+            // where an LFO belongs, since a soul keyboard part does breathe.
+            return patch("50", "Warm Keys",
+                a: 0.02, d: 0.80, s: 0.48, r: 0.55,
+                harm: 0.90, hl: 0.28, bright: 0.28, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 1900, res: 0.08, lfoAmt: 0.06, lfoRate: 4.6, lfoDepth: 0.05,
+                revMix: 0.24, revDecay: 2.20, vibRate: 4.6, vibDepth: 0.04,
+                uni: 3, det: 9)
         case .industrialTechno:
             // #1286 G5b — IRON. A hard, near-instant attack and a short decay so the cluster
             // reads as a HIT, not a pad; low sustain, short release, so nothing rings into the
@@ -459,6 +498,54 @@ public extension MusicStyle {
     /// (`SoundRowsCanReachTheShippedPatchesTests`) so a founder edit never rounds them.
     var bassPatch: SynthPatch? {
         switch self {
+        case .blackMetal:
+            // #1288 G6a — the THIRD owner of `drivingEighths` (after `techHouse` and `deepTech`),
+            // on its own voice: figure shared, voice never. At 180 BPM an eighth is 0.167 s, and
+            // 0.003 + 0.15 + 0.085 fits inside it, so every note re-articulates — and the cutoff is the HIGHEST of any
+            // bass patch in this file (1180) on purpose: under a power chord the sub has to be
+            // heard as a line, not felt as weight.
+            // ⛔ TWO drafting errors here, both caught by measuring the arms rather than reading
+            // them. The cutoff was 1100, which TIES "Psy Bass" — and a tie is the shape a
+            // "highest" sentence breaks on without anything going red (#1287). And the envelope
+            // was 0.002/0.12/0.30/0.07, SHORTER than "Psy Bass" on decay and release, which would
+            // have taken that patch's "shortest envelope of every bass patch here" — a claim
+            // quoted one arm away and pinned by nothing. Both stages now sit strictly between
+            // Psy Bass and "Void Sub", so the ordering that was there survives.
+            return patch("51", "Cold Sub",
+                a: 0.003, d: 0.15, s: 0.30, r: 0.085,
+                harm: 0.86, hl: 0.50, bright: 0.30, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 1180, res: 0.20, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .modalJazz:
+            // #1288 G6a — the FOURTH `drivingEighths` owner, and the opposite end of that figure
+            // from "Cold Sub": an upright-leaning walk wants LENGTH, so decay and sustain are
+            // long and the release lets one note lean into the next. Darkest cutoff of the three
+            // patches this batch adds (540), no resonance at all.
+            // ⛔ Drafted at 420, which would have TAKEN "Minimal Sub"'s "lowest cutoff, darkest
+            // in the file" — a claim carried by that patch and quoted in two neighbouring arms,
+            // pinned only PAIRWISE by `GenreDarkMinimalTests`, so a roster-wide break would not
+            // have reddened anything. 540 keeps it, and keeps Minimal Sub's 520 un-tied.
+            return patch("52", "Walk Sub",
+                a: 0.010, d: 0.60, s: 0.70, r: 0.20,
+                harm: 0.92, hl: 0.26, bright: 0.12, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 540, res: 0.06, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .soulBallad:
+            // #1288 G6a — the THIRD owner of `offbeatEighths` (after `deepHouse` and
+            // `afroHouse`). Rounder and softer than either: at 72 BPM the offbeat has a whole
+            // half-beat to itself, so the attack can be slow enough to read as fingered.
+            //
+            // ⚠️ NOT named "Round Sub" as the design sheet drafted — `afroHouse` (#1286) already
+            // ships that name, and the pre-batch check caught it. Same class as "Dark Sub" one
+            // batch earlier; the preset list is keyed by id and READ by name.
+            return patch("53", "Velvet Sub",
+                a: 0.014, d: 0.58, s: 0.66, r: 0.24,
+                harm: 0.90, hl: 0.24, bright: 0.14, noise: 0.0, color: "Pink", shape: "Dark",
+                cutoff: 620, res: 0.08, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
         case .industrialTechno:
             // #1286 G5b — shares `minimalTechno`'s `sparseSub` FIGURE, so the patch is where the
             // two differ: a higher cutoff than "Minimal Sub" (600 vs 520, which keeps that

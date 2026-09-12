@@ -640,7 +640,8 @@ enthält die 7 · `swing` 0 oder ≥0.06 · `padOctave` ≥3.
 |---|---|---|---|
 | G5a ⭐ #1285 | Still Pads · Moving Ambient | glacialField, slowBloom | 1 lead-tragend ⇒ 27→28, Decke BLEIBT 5 — Deep Sub/Pluck/Soft Keys standen schon auf 5, Hollow Reed und Warm Strings auf 4 |
 | G5b ⭐ #1286 | Techno · House · Trance | industrialTechno, afroHouse, darkPsyTrance | 3 lead-tragend ⇒ 28→31, Decke 5→**6** (gemessen, nicht geschätzt). Vier Abweichungen vom Entwurf, alle gemessen: (1) `darkPsyTrance` nimmt **Pluck** statt Deep Sub — zwei Deep Subs wären 7 gegen eine Decke von 6 gewesen; (2) sein Bass-Patch heißt **„Void Sub"**, weil `darkMinimal` schon ein „Dark Sub" ausliefert; (3) sein Delay ist `.digital`, NICHT das Familien-Ping-Pong — `GenrePsyProgHouseTests` pinnt, dass kein anderes angebotenes Four-on-Floor-Genre Ping-Pong nimmt, und diese Pinnung ist mehr wert als die Familienähnlichkeit; (4) der `rollingSixteenths`-Sweep IST amendiert worden, genau wie diese Zeile vorgeschlagen hat — er verbot einen zweiten Besitzer, während das Doc nur „ERSTER Besitzer" behauptet, also hätte er auf korrektem Baum rot gestanden (#364) |
-| G6 | Metal · Jazz · Soul · Hip-Hop · R&B · Caribbean | blackMetal, modalJazz, soulBallad, boomBapHipHop, electroFunk, rootsReggae | Detroit-Kommentar (§2b-7) an `GenreBatchFour:192`; `MusicStyleTests:130` mitlesen |
+| G6a ⭐ #1288 | Metal · Jazz · Soul | blackMetal, modalJazz, soulBallad | **Aufgeteilt**, weil sechs Genres die #1286-Fehlerfläche verdoppelt hätten. Drei RUBRIKEN hatten einen Arm und keine Tür (`.rock`, `.jazz`, und das Soul-Regal existierte nicht) — das ist der eigentliche Inhalt. Decke 6 bei 34 lead-tragend ⇒ Entwurf „Deep Sub" für `blackMetal` war rot (Deep Sub und Pluck standen schon auf 6) → **Warm Strings**. Vier weitere Entwurfsfehler vom neuen `$SP/prebatch.py` gefangen: Bass „Round Sub" schon vergeben (→ **Velvet Sub**), „Walk Sub" cutoff 420 hätte `Minimal Sub` die „niedrigste/dunkelste"-Behauptung genommen (→ 540), „Cold Sub" 1100 hätte `Psy Bass` GLEICHGEZOGEN (→ 1180) und seine Hüllkurve wäre KÜRZER gewesen als `Psy Bass` (→ 0.003/0.15/0.085) |
+| G6b OFFEN | Hip-Hop · R&B · Caribbean | boomBapHipHop, electroFunk, rootsReggae | Decke wird 7 bei 37 lead-tragend; danach frei: Soft Keys 6, Pluck 6, Hollow Reed 5, Choir Vox 6, Deep Sub 6, Warm Strings 5. `electroFunk` → `.popular`, NICHT `.electronic` (§2b-7). Patch-Suffixe ab 54. **Vor dem Schreiben `python3 $SP/prebatch.py` fahren** — es hat in G6a fünf Blocker gefunden, von denen vier kein Wächter gesehen hätte |
 | G7 | Baroque · Classical & Romantic · Impressionist | baroqueCounterpoint, romanticNocturne, impressionistColour, contemporaryClassical | 3× `.flowFree`; `meantone-quarter` = erster Tonsystem-Vorschlag ⇒ §5-2 muss beantwortet sein |
 | G8 | Chant & Polyphony | plainchant, byzantineChant, choralPolyphony | AnchorFloor +plainchant; `pythagorean`/`edo24`/`just-major` |
 | G9 | Devotional Modal · Court Ensembles | sufiDevotional, qawwaliModal, malkaunsDrone, gamelanPelog, gagakuCourt | AnchorFloor +malkaunsDrone; Kollaps-Wächter wird TRAGEND (5↔5-Kardinalität) |
@@ -673,6 +674,19 @@ Vorgefunden, beide in `techHouse`s FX-Arm, beide seit Monaten:
    nichts rot.
 5. **„0,58 ist SECHSTER"** — die Liste, die den Rang begründen sollte, ließ `minimalTechno`s 0,66 aus; es ist der
    siebte. Derselbe Arm trägt bereits zwei ⛔-Rücknahmen über genau diese Art Rang.
+
+⭐ **UND SEIT G6a GIBT ES DAFÜR EIN WERKZEUG STATT EINER REGEL: `$SP/prebatch.py <kandidaten.json>`.**
+Es rechnet aus dem AUSGELIEFERTEN Baum plus einer Kandidaten-Datei: Lead-Decke (`ceil(bearing/6)` über die
+FESTE Sechser-Palette, vorher/nachher je Name), den 7-Tupel-Fingerabdruck über `offered` + Kandidaten,
+Patch-Namen-Kollisionen und die nächsten freien Suffixe, die Akkord-Auflösung in HALBTÖNEN samt „wer trägt
+dasselbe Array / dieselbe Skala / dieselbe Progression", die Delay-Decke (2,0 s) je Teilung, die
+Sub-Oktav-Falle (`hi/lo ≥ 2` schaltet `GenreTempoFoldTests` still ab), den Register-Boden und die
+Grammatik-Mitbesitzer. **In G6a hat es fünf Blocker gefunden, von denen VIER kein Wächter gesehen hätte** —
+drei davon Superlative eines Nachbarn, die still gebrochen worden wären. `$SP/poststate.py` fährt dieselben
+roster-weiten Invarianten NACH dem Schreiben, gegen den Baum, ohne Kandidatenliste.
+⚠️ Sein eigener Regal-Scan lief eine Fassung lang auf einem LEEREN Schnitt (`index()` fand `public var id`
+zuerst in `Category`) und meldete „18 Regale" als **0**, grün. Seither bricht er ab, wenn der Scan NICHTS
+trifft — `.claude/rules/context.md` §2: ein Parser, der nichts trifft, ist ein Befund, kein Pass.
 
 ⭐ **REGEL FÜR JEDEN WEITEREN BATCH, in dieser Reihenfolge auszuführen:**
 · **Stufen immer durch `MusicalKey.degree` auflösen**, bevor man sie im Doc beschreibt (`$SP/t1286.py` kann das).
