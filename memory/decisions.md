@@ -1619,3 +1619,32 @@ eine andere Risikoklasse als die eigene Regie-Leitung, und eine eigene Scheibe.
 
 **Review 2026-10-12:** hat jemand den Schalter je gebraucht? Wenn nein, ist die ehrliche
 Fortsetzung, die drei Adressen ganz zu streichen statt einen ungenutzten Schalter zu pflegen.
+
+### 2026-09-12 — Ein Absturz-Fix ist erst ausgeliefert, wenn er in einem Build ist
+
+**Entscheidung.** Jeder Zyklus, der einen auf dem GERÄT gemeldeten Absturz schließt, endet
+mit `git merge-base --is-ancestor <letzter .deploy/release-Commit> <fix-Commit>`. Ist die
+Antwort `true`, ist der Fix in keinem Build des Founders, und der Zyklus ist nicht fertig.
+
+**Warum.** #1269 hat den Monitoring-Absturz am 2026-09-11 repariert. Der letzte Deploy
+(`eecf800`, v10.79.469) liegt davor. Drei Zyklen lang stand „behoben" im Log, während das
+Gerät in der Hand des Founders unverändert abstürzte — und der nächste Geräte-Test wäre
+wieder auf demselben Absturz gelandet. **Eine Reparatur, die im Baum liegt, ist für den
+Nutzer nicht passiert.** Der Check kostet einen Befehl.
+
+**Review:** 2026-10-12.
+
+### 2026-09-12 — Eine Transkription löst den Empfänger auf, sie baut ihn nicht nach
+
+**Entscheidung.** Ein Transkriptions-Treiber darf die aufgerufene Funktion nie in Python
+re-implementieren. Er muss den Empfänger aus dem Quelltext auflösen (Brace-Matching des
+deklarierenden Typs) und verlangen, dass Test und Produktionsaufrufer denselben nennen.
+
+**Warum.** #1293s Treiber baute `peek()` nach, statt `BioPeek` von `ColabPayload` zu
+unterscheiden — er prüfte mein Modell gegen mein Modell, alle sechs Mutationen liefen durch,
+und das blockierende 548-Datei-Bundle kompilierte zwei Tage lang nicht, auf dem Branch UND
+auf `main`. `Xcode Compile Check` blieb die ganze Zeit grün, weil er nur `Sources/` baut.
+**Eine Transkription, die den Aufgerufenen neu implementiert, kann einen falschen
+Aufgerufenen nicht sehen.** Muster: `$SP/t1295.py`.
+
+**Review:** 2026-10-12.

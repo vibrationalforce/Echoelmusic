@@ -30940,3 +30940,63 @@ steht einmal im Code, die drei Feldnamen kommen in `SACNSender.swift` gar nicht 
 Alle fünf Nadel-Prüfer exit 0.
 
 **Treiber:** `$SP/t1293.py` (Transkription + Mutationsgeschirr in einem, `--mutate NAME`).
+
+## 2026-09-12 — #1295 + Deploy v10.79.470: der Absturz war repariert und in keinem Build
+
+**Founder-Mandat:** „Alles Ready machen für TestFlight deploy? … Vermeide Abstürze etc zum
+Beispiel beim Spielen einschalten des Monitorings. Ich werde testen mit Apogee HypeMiC —
+per USB und angeschlossenen Kopfhörer." Danach: „volle Entscheidungsgewalt … Loop bis zum
+erfolgreichen TestFlight deploy."
+
+**Der Befund, der den Deploy nötig machte — und er war eine MESSUNG, keine Vermutung.**
+`AudioEngine.swift:2938` trägt den Satz des Founders als Marker: *„v10.79.469 (2589) stürzte
+hier ab. Master → ‚Audio input' → Live monitoring AN."* Die Reparatur dafür existiert seit
+dem 11.09. — und `git merge-base --is-ancestor eecf800 101055f` sagt **true**: alle drei
+Audio-Fixes kamen NACH dem 469er-Deploy und waren in KEINEM Build, den der Founder hat.
+
+    101055f  #1269  never connect an input node that has no hardware format   ← DER Absturz
+    fea1adc  #1272  read the input node on a RUNNING engine (Hypothese #6)
+    bd168cc  #1273  monitoring engages with the gate CLOSED, opens over ~1,5 s ← das Pfeifen
+
+**Lehre, und sie ist neu in dieser Datei: eine Reparatur, die im Baum liegt, ist für den
+Nutzer nicht passiert.** Drei Zyklen lang stand „behoben" im Log, während das Gerät in seiner
+Hand unverändert abstürzte. Der billige Test dagegen ist EIN Befehl — `git merge-base
+--is-ancestor <letzter deploy> <fix>` — und er gehört an das Ende jedes Zyklus, der einen
+Geräte-Absturz schließt, nicht an den Anfang des nächsten Deploys.
+
+**#1295 (`cea3b4f`) — mein eigener Fehler aus #1293, und der Mechanismus ist die Lehre.**
+`TheWholeEgressSurfaceIsClinicalFreeTests` rief `ColabPayload.egressible` an fünf Stellen plus
+einmal in Prosa. Das Mitglied gehört `BioPeek` (`Sync/ColabPayload.swift:135`, im `struct` ab
+`:14`); `ColabPayload` ist ein anderer `struct` 92 Zeilen weiter unten ab `:227`. Ich hatte
+den DATEI-Namen für den TYP-Namen genommen.
+**Seit #1293 hat das blockierende Bundle (548 Dateien) GAR NICHT kompiliert — auf dem Branch
+und auf `main` —, und `Xcode Compile Check` blieb grün, weil er nur `Sources/` baut.**
+⚠️ **Und die Transkription, die das hätte fangen müssen, hat `peek()` in Python NACHGEBAUT
+statt den Swift-Empfänger aufzulösen: sie prüfte mein Modell gegen mein Modell, und alle sechs
+Mutationen liefen durch.** Eine Transkription, die den AUFGERUFENEN neu implementiert, kann
+einen falschen AUFGERUFENEN nicht sehen. Die Reparatur ist deshalb der TREIBER, nicht der
+Rename: `$SP/t1295.py` brace-matcht beide `struct`s, findet jedes `static func egressible(`
+und verlangt, dass Test UND Produktionsaufrufer (`MultipeerSession.swift:253`) denselben
+Empfänger nennen (#416). Parent 6× rot, Worktree grün, R3/R4/R5 als Gegengewichte (#343).
+
+**Gate-Lesung, gegen die API statt aus dem Gedächtnis:** `Build for Testing` = **SUCCESS** auf
+`cea3b4f`, CI/CD 6055, Job **103569351723**, Schritt 9. Das ist die einzige Aussage, die
+beweist, dass das blockierende Bundle kompiliert (§5). SwiftLint/Format/Security grün.
+`Run Tests` = failure wie bei jedem Push (#396).
+
+**Deploy `b415af7` = v10.79.470.** Notiz mit sechsstufigem Geräte-Skript für die HypeMiC-USB-
+Sitzung, der Leiter-Anleitung (`on N/5`; Stille zwischen zwei Sprossen ist ein Befund) und der
+GEDRUCKTEN `founder-verify.py --since eecf800`-Liste (27 neu/umformuliert von 180 offen, 8 in
+AUDIO). Wächter `TheDeployNoteNamesRealDoorsTests` vor dem Commit transkribiert: Anker ok,
+Pfad-Tokens `Bio · Master · Save/Export` alle echte Chips, Diagnostics/`--since`/„NICHT NUR EIN
+BUMP" vorhanden — **5 von 5 grün**. `TheShippedVersionComesFromTheReleaseFileTests`: erster
+Treffer `v10.79.470` in Zeile 1. Fünf Nadel-Prüfer exit 0. `CLAUDE.md` 149 748 B.
+
+**Was ich NICHT anfassen durfte und gemeldet habe** (`.github/workflows/**` founder-gated,
+beide älter als diese Runde): neun Build-Schritte in `ci.yml`/`benchmark.yml`/`full-tests.yml`
+schlucken Build-Fehler (`|| true`, fehlendes `set -o pipefail`); `ci.yml:290-291` filtert auf
+`ComprehensiveTestSuite` — diese Klasse existiert nicht, der Schritt testet nichts.
+
+**Geräteverifiziert: nichts.** Der Monitoring-Pfad ist code-verifiziert; die
+`isInputConnToConverter`-Familie ist nicht geschlossen, sie ist an dieser einen Stelle
+entschärft. „Kein Absturz" ist der Fix; „Monitoring läuft" ist die nächste Frage.
