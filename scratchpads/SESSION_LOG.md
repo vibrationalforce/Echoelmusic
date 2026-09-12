@@ -31438,3 +31438,84 @@ Falsch-Positive: „Harmonizität", zweimal „VoiceOver").
 RTMP-Rest, `_echoelmusic._tcp` tote Markenschreibweise — Multipeers echter Typ ist
 `echoel-colab`, und dessen zwei Einträge SIND korrekt da). Beides kosmetische Ehrlichkeit, keine
 Ablehnung: der Schlüssel ist eine Beschränkungsliste, Extra-Einträge sind erlaubt.
+
+## 2026-09-12 (spät) — #1311: die vier Wächter, die die Rücknahmen rot hinterlassen haben, und der Deploy v10.79.472
+
+Fortsetzung der Aufräumrunde. #1306–#1310 hatten fünf Reparaturen gefunden; der Sweep, den ich
+am Ende von #1310 angekündigt hatte („nach zwei Funden in derselben Stunde will ich wissen, ob
+es einen dritten gibt, bevor der Build rausgeht"), hat **fünf** geliefert, vier davon neu.
+
+### Was #1311 repariert
+
+1. **`EveryFlagSaysWhatItGatesTests`, beide Hälften.** `FeatureFlags.audioLaneRecording` ging mit
+   dem `MultiTrackRecorder` (#1302). Die `branches`-Tabelle zeigte auf eine gelöschte
+   Verzweigung in `EchoelmusicApp.swift`, und `expectedUnread` stand auf zehn statt elf.
+   `FeatureFlags.swift` trug dieselbe Zählung im Dateikopf und ist mitgezogen (#456).
+2. **`ASwiftUIBodyStaysUnderTheBuilderOverloadsTests`.** Der Boden `XCTAssertGreaterThanOrEqual(total, 15)`
+   über der `effectSection`; nach dem Wegfall der zwei FX-Stufen (#1305) sind es 13. Ein
+   `GreaterThanOrEqual`-Boden ist gegen WACHSTUM #364-sicher und gegen SCHRUMPFUNG eine
+   hand-geschriebene Pinnung wie jede andere — das steht jetzt an der Zeile.
+3. **`TheDoorsAreIndividualButtonsTests`.** Die einzige nicht-vakuöse Zusicherung prüfte
+   `case "video"` im Empfänger. Ersetzt durch eine Schleife über die ÜBERLEBENDE Menge
+   (`routing`, `bio`) — damit der nächste Wegfall nicht wieder genau die eine Zusicherung trifft,
+   die etwas beweist.
+4. **`TheLawFileCitesGuardsThatExistTests`.** Zwei backtick-zitierte `…Tests`-Namen in den IMMER
+   geladenen Dateien zeigten ins Leere: ein Grabstein in `CLAUDE.md` (`TheMicrophoneHasOneDoorTests`,
+   mit der Tür gegangen) und ein PLATZHALTER in `.claude/rules/swift-audio.md` (`TheXDoesYTests` —
+   ein Platzhalter kann per Definition nie auflösen; rot seit #1232). Beide entzitiert.
+
+Nebenarbeiten im selben Commit: `MasterPanelReflowsTests` zitierte den veralteten Reflow-Stand
+„5 von 10" (ersetzt durch die Mess-Anweisung, #818), und `CLAUDE.md` ging von 149.868 B auf
+148.847 B — zwei datierte Changelog-Absätze (2026-06-18 Ship, 2026-06-23 Arbeit, zusammen
+1.865 B) nach `memory/LEDGER_COUNTS.md` §X, die Quality-Knopf-Hälfte bleibt gekürzt als GESETZ
+oben. Genau die Reparatur, die Anspruch 2 von `TheLawFileStaysUnderItsCeilingTests` vorschreibt.
+
+### Das Gesetz aus dieser Runde
+
+**Eine hand-geschriebene LISTE, die gegen etwas aus dem Baum GEPARSTES gehalten wird, ist für
+alle fünf Nadel-Checker und für `count-pins.py` unsichtbar** — die einen lesen Zeichenketten,
+der andere Zahlen, keiner MITGLIEDSCHAFT. Nach einer Löschung gehört jede solche Erwartung neu
+hergeleitet.
+
+Der Sweep ist danach **abgeschlossen**: acht Kandidaten in `Tests/CISmoke` tragen ein
+Literal-Kollektiv neben einem Datei-Read, und die vier verbleibenden sind alle sauber —
+`CleanIsDryTests.switchable` vergleicht gegen einen zur LAUFZEIT gelesenen Chain-Zustand
+(ein falscher Name wäre ein Compile-Fehler), `TheClinicalDetailIsOptInTests.clinical` ruft
+`BioEgressPolicy.fieldClass`, `TheSignKeysSayWhatTheyDoTests.signed` ist ein „irgendeines
+davon" und alle drei Grenzen stehen noch in `EchoelFXView`, `expectedRegistered` = 3 stimmt
+gegen die drei kommentar-gestrippten `register(defaults:`-Zeilen, und
+`WebsitePagesAreFindableAndHonestTests.describes` findet alle drei Phrasen in `docs/privacy.html`.
+
+### Gate-Lesung
+
+`Xcode Compile Check` #2607 auf `67ae0d2`: **success** — `Sources/` kompiliert durch #1310.
+CI/CD #6072 auf `67ae0d2`: `Build for Testing` = **success** (das Bundle kompiliert),
+`Run Tests` = failure mit `** TEST EXECUTE FAILED **`. Das 200-Zeilen-Tail (#807) zeigt nur
+bestandene Fälle und nennt keinen einzigen fehlgeschlagenen Namen — **genau der Grund, warum
+die fünf roten Zusicherungen nur durch Transkription gefunden werden konnten.**
+
+### Deploy v10.79.472
+
+Gemessen auf `0c66337`, dem Baum, den der Build trägt: `Xcode Compile Check` **success**,
+CI/CD `Build for Testing` **success**. Beide Häkchen auf demselben Commit — nicht auf einem
+früheren, was in vorigen Runden schon einmal die schwächere Lesart war.
+
+`.deploy/release` neu geschrieben (16.612 B), alle fünf Ansprüche von
+`TheDeployNoteNamesRealDoorsTests` gegen die GESCHRIEBENE Datei transkribiert und grün.
+`python3 scripts/founder-verify.py --since 27acabe` im SELBEN Commit (#1151): **1 neue oder
+umformulierte Prüf-Bitte von 132 offenen**, keine beantwortet. Die Datei wird danach nicht
+noch einmal angefasst — ein zweiter Touch schickt einen zweiten Build.
+
+⚠️ Beim Entwurf hätte die Notiz ihren EIGENEN Wächter rot gemacht: ich schrieb „der
+**Video-Chip** ist weg", und `pathTokens(in:)` zieht das Wort VOR `-Chip` heraus — „Video"
+ist seit #1304 kein Chip mehr. Umformuliert zu „der Eintrag „Video"". **Eine Notiz, die eine
+Löschung BESCHREIBT, kann durch genau dieses Beschreiben gegen den Wächter verstoßen, der
+über der Löschung wacht.**
+
+Founder-gated, unverändert BERICHTET (`Resources/iOS/Info.plist`):
+`NSMicrophoneUsageDescription` (seit #1302 ohne Code und nachweislich unerreichbar),
+`NSPhotoLibraryAddUsageDescription` (seit #1304 ohne Code), `NSCameraUsageDescription`
+(nennt weiter beide Linsen, die vordere ging mit #1301), `NSLocalNetworkUsageDescription`
+(„external audio interfaces" ohne Code), `NSBonjourServices` (sieben von neun Einträgen ohne
+Backing). Keiner ist eine Ablehnung. Das Compile-Gate geht seit #1308 nicht mehr rot, wenn
+der Founder sie entfernt.

@@ -1824,3 +1824,41 @@ zum Löschen dazu.
 **Review:** 2026-10-12. Offene Frage an den Founder: #396 zu reparieren wäre
 `.github/workflows/**` und damit seine Entscheidung — solange es steht, kostet jede Löschung
 diese Hand-Nachrechnung.
+
+### 2026-09-12 — #1311: der Sweep zu Ende geführt, und das Gesetz dahinter
+
+Die vorige Runde (#1306–#1310) endete mit einer offenen Frage: nach zwei Wächtern derselben
+Bauart in einer Stunde — hand-geschriebene Erwartung gegen etwas aus dem Baum Geparstes —
+wollte ich wissen, ob es einen dritten gibt, BEVOR der Build rausgeht. Es waren fünf.
+
+**Das Gesetz, allgemein:** eine hand-geschriebene LISTE, die gegen etwas aus dem Baum
+GEPARSTES gehalten wird, ist für alle fünf Nadel-Checker und für `count-pins.py` unsichtbar.
+Die einen lesen Zeichenketten, der andere liest Zahlen; **keiner liest MITGLIEDSCHAFT.** Nach
+einer Löschung gehört jede solche Erwartung neu hergeleitet — das ist kein Aufräumen, das ist
+Teil des Löschens.
+
+Repariert in #1311: die Feature-Flaggen-Zählung (`audioLaneRecording` verlor mit dem
+`MultiTrackRecorder` seinen letzten Leser — beide Hälften des Wächters waren falsch), der
+Zahlen-Boden über der `effectSection` (15 → 13 nach dem Wegfall der zwei FX-Stufen), die
+Menü-Prüfung, deren einzige inhaltliche Zusicherung auf dem gelöschten `case "video"` saß, und
+zwei backtick-zitierte Wächter-Namen in den IMMER geladenen Dateien.
+
+⭐ **Der zweite dieser Namen ist die interessantere Hälfte: ein PLATZHALTER.**
+`.claude/rules/swift-audio.md` führte `TheXDoesYTests` als Beispiel für das Namensschema.
+`TheLawFileCitesGuardsThatExistTests` liest jeden backtick-zitierten `…Tests`-Namen dort und
+verlangt eine Datei dazu — ein Platzhalter kann per Definition nie auflösen. Er war rot seit
+#1232 und wäre es für immer geblieben. **Backticks sind in diesen Dateien keine Typografie,
+sie sind eine Behauptung**; ein Grabstein und ein Platzhalter stehen ohne.
+
+**Der Sweep ist abgeschlossen, nicht abgebrochen** — acht Kandidaten in `Tests/CISmoke`, vier
+rot (repariert), vier nachweislich sauber, jeder einzeln transkribiert. Das steht hier, weil
+„ich habe gesucht" ohne den Nenner dieselbe Sorte Halbwahrheit ist, die diese Runde repariert.
+
+**Nebenentscheidung:** `CLAUDE.md` stand bei 149.868 B von 150.000 B Decke. Statt die eigene
+Ergänzung zu kürzen sind die zwei datierten Changelog-Absätze (2026-06-18 Ship, 2026-06-23
+Arbeit, 1.865 B) nach `memory/LEDGER_COUNTS.md` §X gegangen; die eine lebende Regel darin —
+der Quality-Governor treibt DETAIL, nie die Bildrate — bleibt gekürzt oben. 148.847 B,
+1.153 B Kopfraum. Das ist wörtlich die Reparatur, die Anspruch 2 des Decken-Wächters in seiner
+eigenen Fehlermeldung vorschreibt: Provenienz ins Ledger, Gesetz nach oben.
+
+**Review:** 2026-10-12.
