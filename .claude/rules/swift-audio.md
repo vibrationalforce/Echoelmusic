@@ -39,8 +39,11 @@ nonisolated(unsafe) property access — Atomic-width reads
 - Types: `PascalCase` (`VocalDSPKernel`, `EchoelVoiceAudioUnit`)
 - Functions/Properties: `camelCase` (`processBlock`, `detectedPitch`)
 - Constants: `camelCase` (`defaultSampleRate`)
-- Test methods: **sentence-style** in the blocking bundle — `testTheXDoesY` in a
-  `TheXDoesYTests` file, per `Tests/CISmoke/CLAUDE.md` §2 (#374). ⛔ The underscore form
+- Test methods: **sentence-style** in the blocking bundle — a method `testTheXDoesY` in a
+  file named TheXDoesYTests, per `Tests/CISmoke/CLAUDE.md` §2 (#374). ⚠️ Those two names are
+  PLACEHOLDERS and deliberately carry no backticks: `TheLawFileCitesGuardsThatExistTests`
+  requires every backtick-quoted `…Tests` name in the always-loaded files to resolve to a file,
+  and a placeholder never can — it was red here from #1232 until #1311. ⛔ The underscore form
   `test[Unit]_[Scenario]_[Expected]` stood here alone and is followed by 0 of the bundle's
   methods (#1232, audit `tests-guards-7`; measure:
   `git grep -ho 'func test[A-Za-z0-9]*_[A-Za-z0-9]*_[A-Za-z0-9_]*' -- 'Tests/CISmoke/*.swift' | wc -l`

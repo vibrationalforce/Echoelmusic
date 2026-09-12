@@ -6658,3 +6658,28 @@ Schlussfolgerung verwirft, verwirft eine wahre Aussage wegen eines ungenauen Bef
 **Das GESETZ steht weiter in CLAUDE.md**, weil es beim Schreiben gebraucht wird: ein Vermerk, der
 ein `grep` ZITIERT, altert schneller als einer, der eine Tatsache behauptet. Der Befehl, der die
 Sache misst, fragt nach der BENUTZUNG (`EchoelModalBank(`), nicht nach der NENNUNG.
+
+## X — Zwei datierte Changelog-Absätze (2026-06-18 Ship, 2026-06-23 Arbeit), verschoben aus CLAUDE.md (#1311)
+
+Beide standen als Aufzählungspunkte in `CURRENT STATE` und wogen zusammen 1.865 B in der
+IMMER geladenen Datei — dieselbe Klasse wie der 07-12-Absatz, den der 2026-09-02-Audit
+nach §P gezogen hat: datierte Historie, die jede Sitzung bezahlt und keine Entscheidung
+mehr trägt. Was davon GESETZ ist (der Absatz über die Quality-Knöpfe), steht gekürzt
+weiter in CLAUDE.md; alles andere ist hier.
+
+### X.1 — wörtlich, wie sie am 2026-09-12 in CLAUDE.md standen
+
+- **Latest work (2026-06-23, on branch, gates green):** **Adaptive Quality** (AdaptiveQuality core + ResourceGovernor: thermal/battery/measured-FPS → tier → MetalBioView detail/reduce-motion **+ OSCSender's bio-egress rate via `PollingRateCeiling`, a CEILING and not a target** — corrected 2026-07-28 twice over: the governor never drove MetalBioView's frame RATE (`MetalBioView.swift:399` (Stand 2026-08-14) pins `preferredFramesPerSecond = 60` statically, and `AdaptiveQuality.swift` says so itself), and the one consumer wired since — `bioHz` → `OSCSender` (34e2355) — was missing. `targetFPS` / `oscHz` / `allowSpectralDonuts` have NO consumer, by design. This is the line a session reads before touching a quality knob, so both halves being wrong was the dangerous kind of stale) · **camera-session resilience** (runtime-error/interruption observers + frame-stall watchdog — fixes the silent ~68–200 s rPPG freeze) · **rPPG saturation-hold** · **composition cohesion** (BioComposer structure/detail RNG split — "homogener klingen") · **master −1 dBFS true-peak trim** · **EchoelFX bio-reactive modulation** (FXModulation core in `Core/` + FXBioModulator ~30 Hz; body→FX-param routing, UI section) · **EchoelFX Bitcrush + Stereo Widener** stages (wired chain/VM/UI/FXPreset/bio-mod) · **VJ visuals** (live in-fullscreen control overlay + shader hue/saturation palette, physical-colour default preserved). EchoelFX deepening = 4 workstreams (1 bio-mod + 2 algorithms shipped; 3 macro-morph + 4 CI-polish pending).
+- **Prior TestFlight ship (2026-06-18):** rPPG fix (torch + exposure lock), real frequency-domain HRV coherence (Lomb-Scargle + Welch), resonance breath guide, tap-to-learn bio metrics, Art-Net flash-safety. Base build 1543 (app + Widget + AUv3, camera rPPG, universal BLE, ADM-OSC, EchoelLux Art-Net, launch silence).
+
+### X.2 — warum nur die Quality-Hälfte oben bleibt
+
+Die 06-23-Zeile trug zwei Rücknahmen, die beim BAUEN gebraucht werden und darum als Gesetz
+überleben: der Governor treibt NICHT die Bildrate (`MetalBioView` pinnt `preferredFramesPerSecond`
+statisch auf 60, `AdaptiveQuality.swift` sagt es selbst), und der eine verdrahtete Verbraucher
+ist `bioHz` → `OSCSender` als DECKE, nicht als Ziel. `targetFPS` / `oscHz` / `allowSpectralDonuts`
+haben bewusst keinen Verbraucher. Der Rest der Zeile — Bitcrush, Stereo Widener, VJ-Overlay,
+rPPG-Sättigungshalt, BioComposer-RNG-Split, −1 dBFS True-Peak-Trim — ist Lieferhistorie:
+wahr, gebaut, und in `SESSION_LOG` sowie im Quelltext selbst nachlesbar. Die 06-18-Zeile ist
+ganz Lieferhistorie (Build 1543 nennt außerdem ein AUv3-Target, das am 2026-07-24 entfernt wurde —
+ein weiterer Grund, sie nicht in der Datei stehen zu lassen, die eine Sitzung als Bestandsangabe liest).

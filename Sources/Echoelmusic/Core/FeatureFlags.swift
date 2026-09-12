@@ -11,23 +11,29 @@
 //  BUILD IT IS WRONG. Counted 2026-08-12 over `Sources/` with comments stripped, so a flag
 //  merely NAMED in prose does not count as consulted:
 //
-//  · TEN of the fifteen have ZERO deciding readers — `spatialEngine`, `bioSpace`,
+//  · ELEVEN of the fifteen have ZERO deciding readers — `spatialEngine`, `bioSpace`,
 //    `echoelRender`, `motionEngine`, `showControl`, `avObjects`, `performerTracking`,
-//    `liveCollab`, `headTracking`, `echoelAI`. Nothing branches on any
-//    of them. **A flag with no reader gates nothing**, so for these ten the sentence
+//    `liveCollab`, `headTracking`, `echoelAI`, `audioLaneRecording`. Nothing branches on any
+//    of them. **A flag with no reader gates nothing**, so for these eleven the sentence
 //    above describes an intention: whatever sits behind them is inert because nothing
 //    CALLS it, never because a flag holds it back. CLAUDE.md already carries exactly this
-//    correction — for `echoelAI` alone, as if it were the singular case. It is one of ten.
-//  · FIVE are really consulted: `storeKit` (EchoelStore + EchoelmusicApp), `multiRoll`
-//    (EchoelmusicApp, 3 sites), `voiceKindRouting` (LaneVoiceRack), `audioLaneRecording`
-//    (EchoelmusicApp), `instrumentHome` (WorkspaceView). Only for these five is "ships
-//    behind a flag" a property of the build rather than a plan.
+//    correction — for `echoelAI` alone, as if it were the singular case. It is one of eleven.
+//  · FOUR are really consulted: `storeKit` (EchoelStore + EchoelmusicApp), `multiRoll`
+//    (EchoelmusicApp, 3 sites), `voiceKindRouting` (LaneVoiceRack), `instrumentHome`
+//    (WorkspaceView). Only for these four is "ships behind a flag" a property of the build
+//    rather than a plan.
+//    ⛔ `audioLaneRecording` (EchoelmusicApp) STOOD IN THIS LIST AND MOVED UP INTO THE
+//    UNREAD ONE WITH #1311. #1302 deleted the audio input and took its single deciding
+//    reader; the surviving mention in `EchoelmusicApp` is a ⛔ comment, which is exactly
+//    what `SourceText.codeOnly` blanks. The flag still exists and `MultiTrackRecorder`
+//    still does not — so what it "gates" today is nothing at all.
 //
 //  ⭐ AND THE OFF-BY-DEFAULT HALF HAS A SECOND LIMIT THIS FILE NEVER STATED: `FeatureFlags.set`
 //  has **zero** production call sites. No shipped surface can flip any flag. The twelve
 //  default-OFF flags are therefore not "off until deliberately turned on" — they are off with
-//  no door, and for the two of them that a branch really consults (`storeKit`,
-//  `audioLaneRecording`) that means built, compiling code no user or tester can reach. This is
+//  no door, and for the ONE of them that a branch really consults (`storeKit`) that means
+//  built, compiling code no user or tester can reach. (⛔ It read "the two … (`storeKit`,
+//  `audioLaneRecording`)" until #1311; the second lost its branch with the audio input.) This is
 //  the same deadlock the founder named when multiRoll/voiceKindRouting/instrumentHome were
 //  registered ON instead: a default-OFF flag with no UI can never be device-verified, so its
 //  gate can never be lifted. Adding a reader — or a door — is welcome work; see the guard for

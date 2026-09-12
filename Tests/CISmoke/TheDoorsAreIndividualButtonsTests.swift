@@ -196,13 +196,27 @@ final class TheDoorsAreIndividualButtonsTests: XCTestCase {
                 never ahead of it.
                 """)
         }
-        XCTAssertTrue(receiver.contains("case \"video\""), """
-            The `.echoelChromeDoor` receiver lost its REAL producers' cases too.
+        // ⛔ #1311 — THIS ANCHORED ON `case "video"` AND WENT RED WITH #1304. The founder
+        // withdrew video capture ("Kein Video Capture"); that slice deleted the header clips
+        // tile, which was this case's only producer, and the case with it — correctly, by this
+        // guard's own rule that a case and its control move together. The ANCHOR was the
+        // casualty: it named one of three producers, and it named the one that died.
+        //
+        // ⭐ Anchor a non-vacuous half on the WHOLE surviving set, not on one member of it.
+        // Both remaining producers are asserted below, so the #343 trap this half exists for
+        // (a receiver that quietly loses everything) is still covered, and losing EITHER one
+        // now names itself.
+        for live in ["case \"routing\"", "case \"bio\""] {
+            XCTAssertTrue(receiver.contains(live), """
+                The `.echoelChromeDoor` receiver lost `\(live)`, a case with a LIVE producer.
 
-            The header monitor tiles still post `"video"`, `"routing"` and `"bio"`. #492 removed \
-            two dead cases; it did not retire the notification, and a scan that only forbids \
-            things is green on a receiver that lost everything (the #343 trap).
-            """)
+                The header monitor tiles still post `"routing"` and `"bio"` (`"video"` went \
+                with the clips tile in #1304). #492 removed two dead cases; it did not retire \
+                the notification, and a scan that only forbids things is green on a receiver \
+                that lost everything (the #343 trap). If the tile that posts this really was \
+                removed, drop the case AND this entry in the same commit.
+                """)
+        }
     }
 
     // MARK: - 6. counterweight: the doors themselves still open

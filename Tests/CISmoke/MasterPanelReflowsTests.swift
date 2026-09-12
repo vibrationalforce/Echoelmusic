@@ -48,7 +48,9 @@ final class MasterPanelReflowsTests: XCTestCase {
         XCTAssertEqual(grids.count, 1, """
         `masterPanel` has \(grids.count) `AdaptiveCardGrid` groups, expected exactly 1 (the
         Target · Tone delivery pair). Zero = the reflow was reverted — pull the two CLAUDE.md
-        counters ("5 von 10") back down in the same commit. Two or more = a leaf or a
+        counters back down in the same commit (⛔ they read "5 von 10" here until #1311; the
+        denominator fell to 9 when #1304 deleted `videoPanel`, so quote the PHRASE
+        "heute reflowen" and re-read the number rather than trusting this one). Two or more = a leaf or a
         full-measure row was probably swept into a grid; read the header's WHY ONLY TWO ROWS
         before raising this number.
         """)

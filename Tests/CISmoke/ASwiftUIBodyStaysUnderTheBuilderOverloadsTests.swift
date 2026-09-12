@@ -135,12 +135,27 @@ final class ASwiftUIBodyStaysUnderTheBuilderOverloadsTests: XCTestCase {
         // FLOOR, not a style rule". The check and its own explanation disagreed, and the
         // explanation was the honest half: adding a sixteenth effect is correct work and must
         // not go red (#364), while LOSING one is the case worth reading twice.
-        XCTAssertGreaterThanOrEqual(total, 15, """
-            The FX panel declares \(total) effect rows, fewer than the 15 that #936 moved.
+        // ⛔ #1311 — THE FLOOR WAS 15 AND THE TREE HAS 13 SINCE #1305, so this claim was RED
+        // on a correct tree for as long as the founder's withdrawal had been in it. He struck
+        // the Harmonizer and Granular stages by name ("Kein audioninout kein Autotune,
+        // Harmonizer, granularsynthese"), which is precisely the "founder ask" the message
+        // below tells the reader to check for — and the check could not be performed, because
+        // the floor went red before anyone read the sentence.
+        //
+        // ⭐ THE LESSON IS ABOUT FLOORS, NOT ABOUT FX: a `GreaterThanOrEqual` floor is a
+        // #364-safe shape for GROWTH and a hand-written pin for SHRINKAGE. Every deliberate
+        // removal has to lower it in the same commit, exactly like an equality would — the
+        // asymmetry buys nothing when the change is a deletion. Lowered to 13 (Filter,
+        // Saturation, Tape/VHS, Bitcrush, Reverb, Stereo Width, Delay, Chorus, Flanger,
+        // Phaser, Tremolo, Compressor, Limiter).
+        XCTAssertGreaterThanOrEqual(total, 13, """
+            The FX panel declares \(total) effect rows, fewer than the 13 that survive after
+            #1305 removed the Harmonizer and Granular stages on founder order.
 
             A row disappeared. Check it was a founder ask and not a casualty of a refactor —
             claim 1 in this file is satisfied by an EMPTY body, so nothing else here notices.
-            Adding rows is fine and deliberately does not redden this.
+            Adding rows is fine and deliberately does not redden this; REMOVING one has to
+            lower this floor in the same commit, or the guard goes red on a correct tree.
             """)
     }
 

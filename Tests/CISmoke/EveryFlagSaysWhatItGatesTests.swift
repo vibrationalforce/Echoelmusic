@@ -70,9 +70,24 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
 
     /// The ten with no deciding reader (measured 2026-08-12; `cameraExpression` left the set
     /// with the face source it never actually gated, #1301).
+    /// ⛔ `audioLaneRecording` JOINED THIS SET IN #1311, AND BOTH HALVES OF THIS FILE WERE RED
+    /// UNTIL IT DID. #1302 deleted the audio input, which took the flag's ONE deciding reader
+    /// (`EchoelmusicApp`) with it — the surviving occurrence in that file is a ⛔ comment, and
+    /// `SourceText.codeOnly` blanks it, exactly as intended. So the census claim computed
+    /// eleven against a hand-written ten, and the branches counterweight below asserted a read
+    /// that no longer exists. Neither could be seen: `Run Tests` reports `failure` on EVERY
+    /// push (#396) and the job log is a 200-line tail (#807).
+    ///
+    /// ⚠️ #1301 TOUCHED THIS FILE AND FIXED ONLY THE OTHER HALF. It removed `cameraExpression`
+    /// when the face source went and did not ask the same question about the audio input one
+    /// commit later. **When a removal retires a flag's last reader, BOTH lists here move** —
+    /// this set gains the name, the `branches` table loses its row, and the header census in
+    /// `FeatureFlags.swift` has to say so too (#456). Re-derive rather than trust this comment:
+    /// the set is `flagsWithoutDecidingReaders()`, which is ten lines of Python to transcribe.
     private static let expectedUnread: Set<String> = [
         "spatialEngine", "bioSpace", "echoelRender", "motionEngine", "showControl",
-        "avObjects", "performerTracking", "liveCollab", "headTracking", "echoelAI"
+        "avObjects", "performerTracking", "liveCollab", "headTracking", "echoelAI",
+        "audioLaneRecording"
     ]
 
     /// The three `register(defaults:)` keys — the only way a flag is ON in a shipped build.
@@ -149,8 +164,6 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
              "the LaneVoiceRack fan-out is what MultiRoll gates"),
             ("Sequencer/LaneVoiceRack.swift", "if FeatureFlags.voiceKindRouting",
              "heterogeneous rack voices are what VoiceKindRouting gates"),
-            ("EchoelmusicApp.swift", "FeatureFlags.audioLaneRecording",
-             "the mic-capture wiring is what AudioLaneRecording gates"),
             ("Studio/WorkspaceView.swift", "if FeatureFlags.instrumentHome",
              "the instrument front door is what InstrumentHome gates")
         ]
@@ -158,8 +171,11 @@ final class EveryFlagSaysWhatItGatesTests: XCTestCase {
             let code = SourceText.codeOnly(try rawText("\(Self.sourcesRoot)/\(branch.file)"))
             XCTAssertTrue(code.contains(branch.needle), """
                 `\(branch.file)` no longer branches on `\(branch.needle)`. \(branch.what). \
-                Five of fifteen flags actually decide something in this build; removing one \
-                makes the header's census wrong in the direction that reads as harmless.
+                FOUR of the fifteen flags actually decide something in this build (it was five \
+                until #1302 took `audioLaneRecording`'s last reader with the audio input); \
+                removing one more makes the header's census wrong in the direction that reads \
+                as harmless. Measure, do not quote: the live set is this table's complement \
+                against `expectedUnread`.
                 """)
         }
     }
