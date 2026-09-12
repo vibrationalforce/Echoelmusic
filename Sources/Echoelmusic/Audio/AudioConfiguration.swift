@@ -389,7 +389,16 @@ enum AudioConfiguration {
     /// harmless. The day anything records again it gets a case here rather than a counter, and
     /// the empty enum is what makes that the obvious move. An empty `CaseIterable` enum is
     /// legal Swift and `allCases` is simply `[]`.
-    enum RecordRouteOwner: String, CaseIterable, Sendable {}
+    ///
+    /// ⛔ #1302b — NO `: String` RAW TYPE, AND THAT IS A LANGUAGE RULE, NOT A PREFERENCE:
+    /// *"an enum with no cases cannot declare a raw type"*. The first draft kept `String` from
+    /// the populated version and produced ELEVEN compile errors from ONE cause — the failed
+    /// `RawRepresentable` synthesis takes `Hashable` with it, which takes the `Set` below, the
+    /// `map(\.rawValue)` key path and three string concatenations (#689: fix the FIRST error and
+    /// re-measure; the other ten had nothing wrong with them). The log token now comes from
+    /// `String(describing:)`, which prints a case's own name — so the day a case is added the
+    /// breadcrumbs read exactly as they did before, with no raw values to keep in sync.
+    enum RecordRouteOwner: CaseIterable, Sendable {}
 
     /// `nonisolated(unsafe)`, matching `isSessionConfigured` and `recordingRouteNeeded` above.
     ///
@@ -424,7 +433,7 @@ enum AudioConfiguration {
     private static func list(_ owners: Set<RecordRouteOwner>) -> String {
         owners.isEmpty
             ? "none"
-            : owners.map(\.rawValue).sorted().joined(separator: "+")
+            : owners.map { String(describing: $0) }.sorted().joined(separator: "+")
     }
 
     /// Register `owner` as needing the mic and raise the shared session to `.playAndRecord`.
@@ -450,7 +459,7 @@ enum AudioConfiguration {
         // The rung stands BEFORE the risky call, not before the Set insert: the insert cannot
         // fail, `upgradeToPlayAndRecord()` can (and does AVAudioSession work). Placing it here
         // also lets the line name the RESULTING owner set, which is the whole diagnostic value.
-        EchoelCrashLog.breadcrumb("route: claim \(owner.rawValue) → holders \(list(recordRouteOwners))")
+        EchoelCrashLog.breadcrumb("route: claim \(String(describing: owner)) → holders \(list(recordRouteOwners))")
         try upgradeToPlayAndRecord()
     }
 
@@ -476,10 +485,10 @@ enum AudioConfiguration {
         let remaining = recordRouteOwners
         guard remaining.isEmpty else {
             EchoelCrashLog.breadcrumb(
-                "route: release \(owner.rawValue) → holders \(list(remaining)), route stays up")
+                "route: release \(String(describing: owner)) → holders \(list(remaining)), route stays up")
             return false
         }
-        EchoelCrashLog.breadcrumb("route: release \(owner.rawValue) → holders none, lowering")
+        EchoelCrashLog.breadcrumb("route: release \(String(describing: owner)) → holders none, lowering")
         // #902 — THE THROWN OUTCOME. #888 gave this method two lines for two exits; a THROWN
         // downgrade shared the "lowering" line with the successful one, and **nine of the twelve
         // release call sites are `try?`** (every #299 failure path), so the error was swallowed
@@ -550,7 +559,7 @@ enum AudioConfiguration {
             try downgradeToPlaybackAfterRecording()
         } catch {
             EchoelCrashLog.breadcrumb(
-                "route: release \(owner.rawValue) → lowering FAILED ("
+                "route: release \(String(describing: owner)) → lowering FAILED ("
                 + sanitisedRoute(error.localizedDescription) + "),"
                 + " category still raised, nobody holds it")
             throw error

@@ -10,6 +10,12 @@
 
 #if canImport(SwiftUI)
 import SwiftUI
+// #1302b — for `openAppSettings()` at the foot of this file (`UIApplication`). It arrived here
+// from `MicrophoneManager.swift`, which got `UIApplication` transitively through AVFoundation;
+// this file imports only SwiftUI, so the import is explicit and guarded, per the repo rule.
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 struct BioStripView: View {
@@ -970,4 +976,24 @@ struct BioStripView: View {
         }
     }
 }
+// MARK: - Settings utility
+
+/// Open iOS Settings so the user can re-enable a denied permission.
+///
+/// ⛔ #1302b — THIS FUNCTION LIVED IN `MicrophoneManager.swift` AND IS NOT ABOUT THE
+/// MICROPHONE. It is file-scope, and its ONE caller is `openSettingsButton` above — the CAMERA
+/// door, the honest replacement for a dead end when camera access is off. The audio-input
+/// removal took its host file and the compiler named the orphan; nothing about the DECLARATION
+/// said what it served. Second instance of the same class in one slice (`VoiceHarmony` →
+/// `KeyHarmony` was the first): **a file name is not a scope, and a general helper parked in a
+/// feature's file dies with that feature.** Moved here, next to the one thing that calls it.
+@MainActor
+func openAppSettings() {
+    #if os(iOS)
+    if let url = URL(string: UIApplication.openSettingsURLString) {
+        UIApplication.shared.open(url)
+    }
+    #endif
+}
+
 #endif

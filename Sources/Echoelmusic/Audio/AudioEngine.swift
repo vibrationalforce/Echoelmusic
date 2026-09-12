@@ -1891,6 +1891,31 @@ public final class AudioEngine {
         log.audio("Input monitoring: \(message)", level: level)
     }
 
+    /// #859 — the engine-lifecycle twin of `logMonitorOutcome`. Six device crash logs in, and
+    /// the sixth (v10.79.428) died 24 s after launch with NOTHING in the exported diag file:
+    /// the async lifecycle paths (interruption, route loss, media reset, self-heal restart)
+    /// spoke only os_log, which the export never carries. Every one of them now leaves a line,
+    /// so the NEXT log names the path even when the crash is an ObjC assert no Swift catch
+    /// sees. These are rare, discrete events (an interruption, a capped recovery), never drag-
+    /// or tick-rate (#856b M1 does not apply).
+    ///
+    /// ⛔ #1302 — THIS METHOD WAS DELETED BY ACCIDENT AND THE COMPILER CAUGHT IT, which is the
+    /// lesson worth keeping. The audio-input removal cut a block that ENDED here: it sits
+    /// immediately after `logMonitorOutcome`, whose text is all about monitoring, so the cut
+    /// read as one region. Twenty-odd callers survived it and `Xcode Compile Check` named them
+    /// — but `TheEngineLifecycleSpeaksInTheDiagLogTests.testTheDurableSinkIsWrittenFirst`
+    /// anchors on `"private func logEngineLifecycle"` and would have gone red on a CORRECT
+    /// tree with no compile error to explain it, and `dead-needles.py` could not see that
+    /// (its needle is bound to a tuple element, not an inline literal — the #937 shape again).
+    /// **A removal bounded by PROSE rather than by a declaration is the cut that takes a
+    /// neighbour with it; bound it on the `func` line, and re-read the first surviving line.**
+    ///
+    /// ⛔ #860b — durable sink FIRST, same reason as `logMonitorOutcome` above (#416).
+    private func logEngineLifecycle(_ message: String, level: LogLevel = .info) {
+        EchoelCrashLog.breadcrumb("engine: \(message)")
+        log.audio("Engine lifecycle: \(message)", level: level)
+    }
+
     // MARK: - Source Node Registration
 
     /// #611 (mic-sweep CRITICAL, found at all four pause/mutate/restart sites): a graph
