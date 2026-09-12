@@ -153,10 +153,17 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// deliberate: `Swift.max(0, NaN)` returns 0 because `NaN >= 0` is false, while the
     /// reversed `Swift.max(NaN, 0)` returns NaN and traps one line later.
     ///
-    /// ⚠️ LATENT, NOT LIVE: every caller today passes a literal 48 kHz, or is guarded
-    /// upstream (`MonitorInsertAU` checks `negotiated.isFinite, negotiated > 0`). Closed on
-    /// engineering.md's boundary rule — non-finite at a DSP boundary is an edge case, not an
-    /// impossibility — and because a trap is a crash, not a degraded sound.
+    /// ⚠️ LATENT, NOT LIVE. ⛔ The reason given here until #1306 was "every caller today
+    /// passes a literal 48 kHz, or is guarded upstream (`MonitorInsertAU` checks
+    /// `negotiated.isFinite, negotiated > 0`)" — that second half is gone with the monitor
+    /// insert (#1302), so half a justification was standing in for a whole one. Re-measured:
+    /// `git grep -n "EchoelDelayLine(" -- Sources` gives ten construction sites in four
+    /// files, and NONE of them passes a literal — `EchoelDelay`, `EchoelFDNReverb`,
+    /// `EchoelLoFiFX` and `EchoelModFX` each forward the `sampleRate` their own `init`
+    /// received. The literal 48 kHz is this file's DEFAULT ARGUMENT, not the callers'
+    /// habit. The clamp is therefore MORE load-bearing than the old note implied, not less.
+    /// Closed on engineering.md's boundary rule — non-finite at a DSP boundary is an edge
+    /// case, not an impossibility — and because a trap is a crash, not a degraded sound.
     public init(maxDelaySeconds: Float = 2.0, sampleRate: Float = 48000) {
         let rate = (sampleRate.isFinite && sampleRate > 0) ? sampleRate : 48000
         let seconds = (maxDelaySeconds.isFinite && maxDelaySeconds > 0) ? maxDelaySeconds : 2.0
@@ -301,11 +308,15 @@ public final class EchoelDelayLine: @unchecked Sendable {
     /// `fxEnabled` is a plain non-atomic `Bool` with no fence, and the control-plane drain is
     /// reachable from a live user control (the FX sheet) — and, less obviously, from
     /// `FXBioModulator`, which raises enable flags from the modulation loop, so that store
-    /// happens far more often than a finger does. A THIRD control-plane path resets stages
-    /// unconditionally and is NOT covered by the enable-flag rule at all:
-    /// `MonitorInsertAU.allocateRenderResources()`, safe by the AU contract that the node is
-    /// not rendering during (re)allocation, on a different chain instance. Under the element
-    /// loop this
+    /// happens far more often than a finger does. ⛔ A THIRD control-plane path stood here,
+    /// `MonitorInsertAU.allocateRenderResources()`, and it is gone with the audio input
+    /// (#1302) — `git grep -n "allocateRenderResources" -- Sources` now returns nothing but
+    /// this very sentence. It was the ONLY path that reset stages unconditionally, i.e. the
+    /// only one the enable-flag rule did not cover, so the exposure named below is NARROWER
+    /// than it was; the two paths above are unchanged. ⚠️ It is retracted, not deleted,
+    /// because the exception it recorded is what a re-introduced AudioUnit insert would
+    /// recreate: an allocation callback that resets a chain instance the render thread may
+    /// still hold. Under the element loop this
     /// degraded to a HALF-CLEARED BUFFER — an audible click. `withUnsafeMutableBufferPointer`
     /// swaps the array for the empty-storage singleton for the duration of the closure, so a
     /// concurrent `read(delaySamples:)` would index a ZERO-COUNT array: `Index out of range`,

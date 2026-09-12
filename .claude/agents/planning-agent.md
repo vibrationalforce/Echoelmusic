@@ -77,11 +77,19 @@ date,decision,reasoning,expected_outcome,review_date,status
   declares five targets, none an extension), and `AUParameterGroup` / `AUViewController` /
   `fullState` occur **zero** times in `Sources/`. A plan built on those lines plans a
   product that does not exist — `e2e-test-agent` carries the same retraction since 2026-08-12.
-- What DOES exist, and is the only AudioUnit shape to plan against: ONE in-process
-  `AUAudioUnit` subclass, `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`, #832/#839)
-  on the microphone monitor rail — a graph node, not a plugin, and doorless since #1024.
-  Its `internalRenderBlock` is real; `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift`
-  drives it. Measure before extending: `git grep -n "class .*: AUAudioUnit" -- Sources`.
+- ⛔ AND THE REPLACEMENT THAT STOOD HERE IS ITSELF GONE (2026-09-12, #1302). It named
+  `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) as "the only AudioUnit shape to plan
+  against" and pointed at a guard that was deleted with it — the path
+  `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` was deleted in that commit.
+  A planner reading the old text went looking for two files that are not there. The founder
+  removed the whole microphone monitor rail, so **there is no `AUAudioUnit` in `Sources/` at
+  all**: `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0.
+- What DOES exist, and is the audio shape to plan against, is the `AVAudioSourceNode` render
+  closure: `Audio/AudioEngine.swift`, `DSP/EchoelDDSP.swift`, `Tools/PolySynthVoice.swift`,
+  `Sequencer/SamplerVoice.swift`. The end-to-end render guard to plan a test against is
+  `Tests/CISmoke/TheDDSPRenderIsDeterministicAndBoundedTests.swift`, which asserts on the
+  SAMPLES rather than on the source text — most of this bundle scans text, and a plan that
+  only adds another text scan does not test the audio it claims to test.
 
 ## Parallel Agent Strategy
 For large tasks, recommend 3-agent parallel audits:

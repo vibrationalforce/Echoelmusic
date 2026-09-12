@@ -23,12 +23,20 @@ For DSP/Audio tests:
 - Pre-allocate buffers (simulate audio thread constraints)
 - Test with known input signals (sine waves, impulses)
 
-For the one in-process audio unit (⛔ "For AUv3 tests" until #1112):
+For the render path (⛔ "For AUv3 tests" until #1112, "for the one in-process audio unit"
+until #1306):
 - There is no AUv3 target (removed 2026-07-24, #121 Slice 2) and no parameter tree, factory
-  preset or `fullState` to test — those four bullets tested nothing. The one `AUAudioUnit` is
-  `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`); the shape that drives its render
-  block end to end is `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` —
-  copy that, and pin bit-neutrality (all stages off → output == input) before any audible stage.
+  preset or `fullState` to test — those four bullets tested nothing.
+- ⛔ The 2026-08 repair named `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) and told
+  you to copy a guard that was deleted with it —
+  `Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` was removed by #1302
+  (founder 2026-09-12) together with the audio input. **No `AUAudioUnit` remains in
+  `Sources/`**: `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0.
+- The live render is an `AVAudioSourceNode` closure. Copy
+  `Tests/CISmoke/TheDDSPRenderIsDeterministicAndBoundedTests.swift` (asserts on rendered
+  SAMPLES) for a voice, and `Tests/CISmoke/TheChainPointerEntryMatchesTheArrayEntryTests.swift`
+  for the FX chain's two entry points. The bit-neutrality law survives its origin: all stages
+  off → output == input, pinned before any audible stage.
 
 ### Step 3: Verify RED — and be honest about what that costs here
 

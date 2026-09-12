@@ -32,10 +32,15 @@ HealthKit compliance, and audio plugin safety.
   Audio Components (**zero** occurrences anywhere in the repo), `fullState` sanitisation
   (**zero** in `Sources/`) and "parameter ranges in the parameter tree" (there is no
   `AUParameterGroup`). The extension target went 2026-07-24 (#121 Slice 2). A scan that
-  reports ✅ on them reports on nothing. The one `AUAudioUnit` in the tree is the in-process
-  `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) — audit ITS render block against
-  the two render-thread rules above; the parameter-range law for everything else is
-  `clamped(to:)` at the DSP boundary (`Core/FloatingPointClamp.swift`).
+  reports ✅ on them reports on nothing.
+- ⛔ AND THE REPAIR NAMED HERE IS GONE TOO (2026-09-12, #1302): it sent you to audit the render
+  block of `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`), which the founder removed
+  with the whole microphone rail. **No `AUAudioUnit` is left in `Sources/`** —
+  `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0. Audit the `AVAudioSourceNode` render
+  closures instead (`Audio/AudioEngine.swift`, `DSP/EchoelDDSP.swift`,
+  `Tools/PolySynthVoice.swift`, `Sequencer/SamplerVoice.swift`) against the two render-thread
+  rules above; the parameter-range law for everything else is `clamped(to:)` at the DSP
+  boundary (`Core/FloatingPointClamp.swift`).
 
 ### 4. Input Validation
 - All user inputs validated at system boundaries

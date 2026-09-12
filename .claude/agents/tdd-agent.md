@@ -59,11 +59,20 @@ func testCoherenceToHarmonicity() {
 with `fourCharCode("evoc")` and asserting on `parameterTree` / `inputBusses`. **That type
 occurs zero times in `Sources/` or `Tests/`**, and the AUv3 extension target it belonged to
 went 2026-07-24 (#121 Slice 2). A test written from that pattern would not compile, and this
-repo has no local compiler to say so before CI. The ONE `AUAudioUnit` in the tree is the
-in-process `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`, #832/#839); the pattern
-that actually exercises its render block, end to end, is
-`Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift` — copy THAT shape, not a
-memory of an AUv3 checklist.
+repo has no local compiler to say so before CI.
+
+⛔ AND THE FIX THAT REPLACED IT WENT STALE THE SAME WAY (2026-09-12, #1302). It said the one
+`AUAudioUnit` in the tree is `MonitorInsertAudioUnit` and told you to copy
+`Tests/CISmoke/TheMonitorInsertCarriesTheNeutralChainTests.swift`; both were deleted with the
+audio input. **There is no `AUAudioUnit` in `Sources/` any more** —
+`git grep -nE ": *AUAudioUnit\b" -- Sources` → 0. Two retractions in one paragraph is the
+point: a replacement citation is a claim with an expiry date, so name the measuring command
+beside it, never the name alone.
+
+The live render shape is the `AVAudioSourceNode` closure (`DSP/EchoelDDSP.swift`,
+`Tools/PolySynthVoice.swift`, `Sequencer/SamplerVoice.swift`), and the end-to-end pattern to
+copy is `Tests/CISmoke/TheDDSPRenderIsDeterministicAndBoundedTests.swift` — it builds the
+voice the way `BioReactiveSynthVoice` does and asserts on the rendered SAMPLES.
 
 ## Rules
 - NEVER skip the RED step

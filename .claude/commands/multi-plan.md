@@ -28,9 +28,14 @@ Agent 3: UI/Visual     — SwiftUI leaf view (no hot @Observable read in an ance
 ⛔ "Agent 2: AUv3 Shell — AudioUnit, parameter tree, state, presets" stood here until #1112
 (and Agent 3 said "ViewController"). The AUv3 extension target went 2026-07-24 (#121 Slice 2);
 `AUParameterGroup` / `fullState` occur zero times in `Sources/`. A decomposition with an AUv3
-agent hands one third of every feature to a product that does not exist. The ONE `AUAudioUnit`
-in the tree is the in-process `MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) — a
-graph node on the mic rail, owned by the DSP/audio agent when a feature touches it, not a shell.
+agent hands one third of every feature to a product that does not exist.
+
+⛔ AND THE SENTENCE THAT REPLACED IT IS GONE TOO (2026-09-12, #1302): it named
+`MonitorInsertAudioUnit` (`Audio/MonitorInsertAU.swift`) as "the ONE `AUAudioUnit` in the
+tree", and the founder removed it with the whole microphone rail. **There is no `AUAudioUnit`
+in `Sources/`** — `git grep -nE ": *AUAudioUnit\b" -- Sources` → 0. Audio work is owned by
+the DSP/audio agent through the `AVAudioSourceNode` render closures, never through a plugin
+shell.
 
 For audits:
 ```
