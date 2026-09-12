@@ -7,7 +7,7 @@ tooling that does **not** ship.
 > Not legal advice. This is standard open-source attribution hygiene maintained by the
 > developer. A final review by counsel is recommended before release.
 
-_Last reviewed: 2026-06-26._
+_Last reviewed: 2026-09-12._
 
 ---
 
@@ -36,8 +36,15 @@ _Last reviewed: 2026-06-26._
 
 ### Apple system frameworks
 - AVFoundation, Accelerate, Metal/MetalKit, CoreMIDI, HealthKit, CoreBluetooth, Network,
-  SwiftUI, SwiftData, VideoToolbox, CoreHaptics, MultipeerConnectivity, etc.
+  SwiftUI, CoreHaptics, MultipeerConnectivity, etc.
 - Used under the Apple SDK / developer-program terms. No separate attribution required.
+- ⛔ **`SwiftData` and `VideoToolbox` stood in this list and are imported NOWHERE** (measured
+  2026-09-12: `git grep -l "^import <X>$\|canImport(<X>)" -- Sources` → **0** for both, while
+  the other eleven names return 4–65 files each). `CLAUDE.md`'s tech-stack table had already
+  struck the same two phantoms on 2026-07-31 and this file was not pulled along — the #456
+  shape: a correction goes to EVERY home of the claim, not only the one being edited.
+  Harmless legally (naming a framework you do not use creates no obligation), but this is the
+  document counsel reads first, and a list with two invented entries is not one to audit from.
 
 ### Light/colour mapping — physically-derived (no third-party concept)
 - The immersive visual colours a tone by transposing it up whole octaves into the visible
@@ -72,8 +79,13 @@ The Echoel source is MIT-licensed — see `LICENSE` (© 2024–2025 Echoelmusic)
 ---
 
 ## Action items (compliance checklist)
-- [ ] Ensure `Resources/Fonts/OFL.txt` is a **bundled resource** (ships with the app), so
-      the font license travels with the font (OFL §2).
+- [x] **DONE — verified 2026-09-12.** `Resources/Fonts/OFL.txt` ships: `project.yml:142-144`
+      adds `Resources/Fonts` as a `type: group` with `buildPhase: resources`, and the OFL text
+      lives in that directory, so the whole folder (three .ttf + the licence) is copied into the
+      bundle (OFL §2 satisfied). ⚠️ That is the strongest claim available without opening a built
+      `.app`; a device/archive check would settle it beyond the project file. The box stood
+      unticked while the work was already done — a checklist that overstates the backlog costs
+      the same attention as one that understates it.
 - [ ] Add an in-app **Acknowledgments** screen surfacing this file (font OFL notice).
       Nice-to-have for OFL; standard for App Store apps.
 - [ ] Re-add HaishinKit's MIT notice here **if/when** streaming is enabled.
