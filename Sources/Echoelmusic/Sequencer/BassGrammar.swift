@@ -131,6 +131,12 @@ public extension MusicStyle {
         case .boomBapHipHop:    return .sparseSub
         case .electroFunk:      return .drivingEighths
         case .rootsReggae:      return .offbeatEighths
+        // #1290 G11a — the SIXTH `drivingEighths` owner. `celticAir` gets NO figure: it is
+        // `.none`-archetype with no bass patch, so it keeps the pre-grammar walk exactly as it
+        // was. ⛔ The design sheet gave `nordicFiddle` a `pedalDrone` figure; that case does not
+        // exist in this enum, and authoring a figure is its own slice (one case, one `hits` arm,
+        // one map arm, one guard) — so that genre is NOT in this batch.
+        case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths
         case .soulBallad:       return .offbeatEighths

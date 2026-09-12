@@ -120,16 +120,30 @@ final class GenreBatchFiveBTests: XCTestCase {
         XCTAssertEqual(semitoneStack(of: .afroHouse), [0, 3, 7], "a plain minor triad, stated plainly")
     }
 
-    /// The psy separation is the MODE and the arpeggio, never the array — this is the assertion
-    /// that replaces the uniqueness sweep the header refuses, and it is a COUNTERWEIGHT: it is
-    /// green today and names the exact sharer, so a future uniqueness claim cannot be written
-    /// without this going red first.
-    func testTheDarkPsyModeIsItsOwnAndItsVoicingIsNot() {
+    /// ⛔ THIS CLAIM FORBADE A SECOND `phrygianDominant` GENRE AND WAS THE #364 SHAPE — the
+    /// exact defect this same commit's `rollingSixteenths` retraction had fixed one claim
+    /// earlier, rewritten here on a different property. #1290's `andalusianCadence` is a
+    /// legitimate second user of the mode, and this sweep would have been RED ON A CORRECT
+    /// TREE. What replaces it is the property that actually keeps two genres apart, and it is
+    /// the same sentence the figure retraction settled on: **the MODE may be shared, the
+    /// IDENTITY may not.** Every other `phrygianDominant` genre must differ from dark psy on
+    /// the arpeggio, the archetype, the register and the tempo window — all four, not one.
+    func testTheDarkPsyModeIsSharedButItsIdentityIsNot() {
         XCTAssertEqual(MusicStyle.darkPsyTrance.scale, .phrygianDominant)
+        let psy = MusicStyle.darkPsyTrance
         let otherPD = MusicStyle.allCases.filter {
             $0 != .darkPsyTrance && $0.scale == .phrygianDominant
         }
-        XCTAssertTrue(otherPD.isEmpty, "\(otherPD.map(\.rawValue)) also use phrygianDominant")
+        for other in otherPD {
+            XCTAssertNotEqual(other.harmonicProfile.arpeggiated, psy.harmonicProfile.arpeggiated,
+                              "\(other.rawValue) shares the mode AND the arpeggio with dark psy")
+            XCTAssertNotEqual(other.beatArchetype, psy.beatArchetype,
+                              "\(other.rawValue) shares the mode AND the groove skeleton")
+            XCTAssertNotEqual(other.harmonicProfile.padOctave, psy.harmonicProfile.padOctave,
+                              "\(other.rawValue) shares the mode AND the register")
+            XCTAssertFalse(other.tempoRange.overlaps(psy.tempoRange),
+                           "\(other.rawValue) shares the mode AND a tempo window with dark psy")
+        }
         XCTAssertTrue(MusicStyle.darkPsyTrance.harmonicProfile.arpeggiated,
                       "the psy identity is a pitch figure walking the voicing, not a chord")
         XCTAssertFalse(MusicStyle.psyProgHouse.harmonicProfile.arpeggiated,

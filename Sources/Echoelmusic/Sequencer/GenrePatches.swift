@@ -75,6 +75,30 @@ public extension MusicStyle {
                 cutoff: 3400, res: 0.26, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.10, revDecay: 0.90, vibRate: 0, vibDepth: 0,
                 uni: 2, det: 5)
+        case .celticAir:
+            // #1290 G11a — AIR REED. A soft-edged reed with a breath of noise in it, held rather
+            // than struck: `celticAir` is `.none`-archetype, so nothing chops this chord and the
+            // patch itself has to carry the phrasing. Attack 0.12 and release 0.90 are slow for
+            // a non-Fläche patch and nowhere near `deepDrone`'s "Drone Bed" (1.8 / 7.5), which
+            // holds both the slowest-attack and longest-release claims in this file — measured
+            // before the numbers were chosen, not after.
+            return patch("60", "Air Reed",
+                a: 0.12, d: 0.45, s: 0.70, r: 0.90,
+                harm: 0.56, hl: 0.40, bright: 0.30, noise: 0.06, color: "Pink", shape: "Natural",
+                cutoff: 2100, res: 0.10, lfoAmt: 0.06, lfoRate: 3.4, lfoDepth: 0.05,
+                revMix: 0.22, revDecay: 2.20, vibRate: 4.6, vibDepth: 0.05,
+                uni: 2, det: 6)
+        case .andalusianCadence:
+            // #1290 G11a — NYLON PLUCK. A struck nylon string: near-instant attack, a decay that
+            // is gone before the next offbeat at 108 BPM, almost no sustain. ⚠️ 0.003 is FAST but
+            // deliberately not the fastest — "Snap Keys", "Iron Stab" and "Dark Arp" all sit at
+            // 0.002 and no claim is taken from them.
+            return patch("61", "Nylon Pluck",
+                a: 0.003, d: 0.28, s: 0.20, r: 0.40,
+                harm: 0.80, hl: 0.55, bright: 0.42, noise: 0.02, color: "Pink", shape: "Natural",
+                cutoff: 3200, res: 0.12, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.14, revDecay: 1.10, vibRate: 5.6, vibDepth: 0.05,
+                uni: 2, det: 8)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -561,6 +585,18 @@ public extension MusicStyle {
                 a: 0.004, d: 0.17, s: 0.22, r: 0.10,
                 harm: 0.80, hl: 0.52, bright: 0.26, noise: 0.0, color: "Pink", shape: "Dark",
                 cutoff: 940, res: 0.24, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .andalusianCadence:
+            // #1290 G11a — the SIXTH `drivingEighths` owner, on its own voice: figure shared,
+            // voice never. Cutoff 820 is free and sits between "Deep Sub" and "Void Sub"; it is
+            // well above "Minimal Sub"'s 520, which holds the lowest-cutoff claim. The envelope
+            // sums to 0.326, comfortably longer than "Psy Bass"'s 0.222 — that arm claims the
+            // shortest envelope of every bass patch here and keeps it.
+            return patch("62", "Cadence Sub",
+                a: 0.006, d: 0.22, s: 0.38, r: 0.10,
+                harm: 0.88, hl: 0.30, bright: 0.16, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 820, res: 0.16, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

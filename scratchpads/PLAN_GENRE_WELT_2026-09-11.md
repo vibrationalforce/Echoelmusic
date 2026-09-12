@@ -646,7 +646,7 @@ enthält die 7 · `swing` 0 oder ≥0.06 · `padOctave` ≥3.
 | G8 | Chant & Polyphony | plainchant, byzantineChant, choralPolyphony | AnchorFloor +plainchant; `pythagorean`/`edo24`/`just-major` |
 | G9 | Devotional Modal · Court Ensembles | sufiDevotional, qawwaliModal, malkaunsDrone, gamelanPelog, gagakuCourt | AnchorFloor +malkaunsDrone; Kollaps-Wächter wird TRAGEND (5↔5-Kardinalität) |
 | G10 | Gospel · Drone & Overtone | gospelChoir, overtoneDrone, lowBreathDrone | AnchorFloor +beide Bordune |
-| G11 | European Folk | celticAir, nordicFiddle, balkanModal, andalusianCadence, rebetikoModal | `GenrePsyProgHouse`-Paar prüfen (`nordicFiddle` nutzt `[0,6,5]`) |
+| G11a ⭐ #1290 | European Folk | celticAir, andalusianCadence | **Zwei statt fünf**, und die Aufteilung ist gemessen, nicht gewählt: `rebetikoModal` nennt `maqam-hijaz` (⇒ §5-2, blockiert), `nordicFiddle` nennt `pedalDrone` — **einen `BassGrammar`-Fall, den es nicht gibt** (vier sind ausgeliefert). `balkanModal` folgt als G11b. Damit hat `.folk` als LETZTE Rubrik eine Tür, also gilt die Richtungs-Zusicherung aus #1289 jetzt mit `doorless == []`. Lead: `Pluck` war schon auf 7 ⇒ `andalusianCadence` nimmt **Choir Vox**. `celticAir` ist das ERSTE `.flowFree`-Genre außerhalb der Ambient-Regale. **Zwei fremde Wächter wurden davon rot** — siehe §4 darunter |
 | G12 | Near East & Central Asia · South Asia | maqamBayati, persianModal, turkishMakam, carnaticMela | AnchorFloor +maqamBayati; 3× `S` |
 | G13 | East & Southeast Asia | zhiMode, japaneseKoto, koreanModal, slendroModal | Pentatonik-Anspruch (siehe unten) |
 | G14 | Africa · Latin America | koraOstinato, gnawaGuembri, andeanHighland, cumbia, tangoMarcato | — |
@@ -674,6 +674,44 @@ Vorgefunden, beide in `techHouse`s FX-Arm, beide seit Monaten:
    nichts rot.
 5. **„0,58 ist SECHSTER"** — die Liste, die den Rang begründen sollte, ließ `minimalTechno`s 0,66 aus; es ist der
    siebte. Derselbe Arm trägt bereits zwei ⛔-Rücknahmen über genau diese Art Rang.
+
+⛔ **G11a — ZWEI FREMDE WÄCHTER WURDEN ROT, UND EINER DAVON WAR ES SCHON SEIT FÜNF COMMITS.**
+Das ist die wertvollste Lehre dieser Scheibe, weil nur EINE der beiden meine war.
+
+1. **`GenreBatchFiveBTests.testTheDarkPsyModeIsItsOwnAndItsVoicingIsNot`** verbot ein zweites
+   `phrygianDominant`-Genre. `andalusianCadence` ist ein legitimer zweiter Nutzer, also wäre der
+   Wächter auf korrektem Baum rot gewesen — die #364-Form. ⭐ **Und es ist EXAKT der Defekt, den
+   #1286 eine Zusicherung FRÜHER in derselben Datei repariert hatte:** dort musste der
+   `rollingSixteenths`-Sweep seine Exklusivität zurücknehmen, hier stand die gleiche Exklusivität
+   auf einer anderen Eigenschaft, im selben Commit geschrieben. **Eine Lehre, die man in einer
+   Datei anwendet, ist nicht in der Datei angewendet.** Ersatz ist derselbe Satz wie damals: die
+   EIGENSCHAFT darf geteilt werden, die IDENTITÄT nicht — jedes andere `phrygianDominant`-Genre
+   muss sich auf Arpeggio, Archetyp, Register UND Tempofenster unterscheiden, alle vier.
+
+2. **`GenreDelaySyncResolvabilityTests.testTheDrumFreeOfferedGenresOccupyTheDelayAxis`** verlangte,
+   dass JEDES trommelfreie angebotene Genre ein Delay trägt. `glacialField` und `slowBloom` haben
+   seit **#1285** keins — absichtlich. Der Wächter war also **seit fünf Commits rot**, und
+   **#1285s eigene Commit-Nachricht behauptete das Gegenteil**, wörtlich: *„both presets have no
+   delay at all, so `GenreDelaySyncResolvabilityTests` skips them by construction"*. Er
+   überspringt sie nicht; diese Zusicherung ZÄHLTE sie. ⭐ **GESETZ: ein Verifikations-Satz, der
+   aus dem geschrieben ist, was ein Wächter TUN SOLLTE, ist keine Messung dessen, was er tut** —
+   und nichts hat es gezeigt, weil CI/CD auf jedem Push `failure` meldet (#396) und das Job-Log
+   `tail -200` ist (#807). Ersetzt durch eine RATSCHE: ein BODEN auf die Anzahl der Delay-tragenden
+   trommelfreien Genres (heute 7). Ein Echo wegzunehmen wird weiterhin rot, ein ruhiges Genre ohne
+   Echo hinzuzufügen nicht.
+
+⚠️ **Und `prebatch.py` hatte selbst zwei Defekte derselben Klasse, beide in dieser Scheibe
+gefunden und repariert:** (a) es benutzte `sustained` als Stellvertreter für „hat einen Beat" und
+druckte *„beat-driven on .flowFree"* für ein `.none`-Archetyp-Genre — eine Form, die zweimal
+ausgeliefert ist (`ambientPulse`, `slowBloom`); (b) es meldete für `pedalDrone`
+*„existing owners: — (first)"*, obwohl der Fall **gar nicht existiert** — es konnte eine LEERE
+Figur nicht von einer ABWESENDEN unterscheiden, und „(first)" liest sich wie Ermutigung. Jetzt
+liest es die ausgelieferten Fälle aus dem Enum und `assert`et, dass der Parser etwas findet
+(`.claude/rules/context.md` §2). ⚠️ Dazu ein DRITTER: **`$SP/t1286.py` las eine zwischengespeicherte
+Tabelle** und meldete `FAILS 0` gegen einen Baum, den es nicht gelesen hatte — nach G11a sah es 47
+Genres, während der Baum 49 hatte. **Ein Treiber, der sein Prüfobjekt zwischenspeichert, ist keine
+Messung des Prüfobjekts**; er erzeugt jetzt die Tabelle bei jedem Lauf neu, und erst DANN fiel der
+`phrygianDominant`-Rot auf.
 
 ⛔ **G6b — DIE FALSCHBEHAUPTUNG DIESER SCHEIBE SASS IM WÄCHTER, und sie war doppelt falsch.**
 Der Kopf von `GenreBatchSixBTests` schrieb: *„after this commit EVERY rubric in the picker has at

@@ -30645,3 +30645,78 @@ aufzählenden Kopie-Stelle.
 
 **Offen, Founder (unverändert):** §5-2 (blockiert G7) · §5-4 · §5-5 · `varyFloor`-Hörprobe.
 Dazu der angebotene TestFlight-Deploy — #1269–#1289 sind auf keinem Gerät.
+
+## 2026-09-12 — Genre-Welt G11a (#1290): die letzte türlose Rubrik, und zwei fremde rote Wächter
+
+**Was:** `celticAir` + `andalusianCadence`, die `.folk`-Rubrik. `klezmer` hatte das European-Folk-
+Regal für sich und war dunkel. Roster 30→**32** angeboten, Taxonomie 47→**49**. **`.folk` war die
+LETZTE Rubrik ohne Tür** — die Richtungs-Zusicherung, die #1289 gestern mit `allSatisfy { $0 ==
+.folk }` geschrieben hat, steht damit auf `doorless == []`, und #1290 sichert die Tatsache zu,
+während #1289 die Ratsche bleibt.
+
+**Warum nur ZWEI von fünf geplanten:** gemessen, nicht gewählt. `rebetikoModal` nennt
+`maqam-hijaz` ⇒ §5-2 (Founder) blockiert. `nordicFiddle` nennt `pedalDrone` — **einen
+`BassGrammar`-Fall, den es nicht gibt**; vier Figuren sind ausgeliefert, und eine zu schreiben ist
+eine eigene Scheibe (ein Enum-Fall, ein `hits`-Arm, ein Karten-Arm, ein Wächter). `balkanModal`
+folgt mit G11b.
+
+⭐ **`celticAir` ist das erste `.flowFree`-Genre außerhalb der Ambient-Regale** — ein Air hat kein
+festes Tempo, und alle bisherigen Flow-Genres sind Bordune oder Flächen. `.none`-Archetyp, aber
+NICHT `sustained`: der Atem-Onset-Generator läuft (die `ambientPulse`/`slowBloom`-Form). Voicing
+`[0, 3, 7]` auf dorisch = **0, 5, 12** — Quarte, kein Terz, die Tonart lebt in der Melodie darüber.
+
+⭐ **`andalusianCadence` heißt nach der KADENZ, nicht nach der Tradition, und das ist Absicht.**
+Der Katalog entwarf „Flamenco Cante"; `leadDensity` ist überall 0 (keine Stimme) und der Takt ist
+hart 4/4×16 (kein Compás) — Flamenco zu behaupten hieße, genau die zwei Dinge zu behaupten, die
+die Engine nicht kann. `[0, 2, 1]` steht bewusst auf der Tonika: `composeHarmonic` rotiert über
+`progressionPhase`, ein als `[2, 1, 0]` geschriebener Abstieg würde nie in seiner Reihenfolge
+gespielt — der ♭2→Tonika-Schritt ist die SCHLEIFEN-NAHT.
+
+⛔ **ZWEI FREMDE WÄCHTER WURDEN ROT, UND EINER WAR ES SCHON SEIT FÜNF COMMITS.**
+1. `GenreBatchFiveBTests` verbot ein zweites `phrygianDominant`-Genre — die #364-Form, und **exakt
+   der Defekt, den #1286 eine Zusicherung FRÜHER in DERSELBEN Datei für `rollingSixteenths`
+   repariert hatte**. Lehre: eine Lehre, die man in einer Datei anwendet, ist nicht in der Datei
+   angewendet. Ersatz ist derselbe Satz wie damals — die Eigenschaft darf geteilt werden, die
+   Identität nicht (Arpeggio · Archetyp · Register · Tempofenster, alle vier). `darkPsyTrance`s
+   Case-Doc („`phrygianDominant` is this genre's alone") ist im selben Commit mitgezogen (§4).
+2. `GenreDelaySyncResolvabilityTests.testTheDrumFreeOfferedGenresOccupyTheDelayAxis` verlangte ein
+   Delay von JEDEM trommelfreien angebotenen Genre. `glacialField`/`slowBloom` haben seit **#1285**
+   absichtlich keins — **also war der Wächter seit fünf Commits rot, und #1285s eigene
+   Commit-Nachricht behauptete wörtlich das Gegenteil** („skips them by construction"). ⭐ **GESETZ:
+   ein Verifikations-Satz, der aus dem geschrieben ist, was ein Wächter TUN SOLLTE, ist keine
+   Messung dessen, was er tut.** Unsichtbar aus dem §5-Grund. Ersetzt durch eine RATSCHE: Boden auf
+   die Anzahl Delay-tragender trommelfreier Genres (7). Echo wegnehmen = rot, ruhiges Genre ohne
+   Echo dazu = grün (#364).
+
+⚠️ **Und die WERKZEUGE hatten drei Defekte derselben Klasse, alle hier gefunden:** `prebatch.py`
+nannte ein `.none`-Archetyp-Genre „beat-driven" (es benutzte `sustained` als Stellvertreter) und
+meldete für den nicht existierenden `pedalDrone` „existing owners: — (first)" — es konnte eine
+LEERE Figur nicht von einer ABWESENDEN unterscheiden. `$SP/t1286.py` las eine zwischengespeicherte
+Tabelle und meldete `FAILS 0` gegen einen Baum mit zwei Genres mehr; **erst nach der Reparatur fiel
+der `phrygianDominant`-Rot auf.** Ein Treiber, der sein Prüfobjekt zwischenspeichert, ist keine
+Messung des Prüfobjekts.
+
+**Wächter:** `Tests/CISmoke/GenreBatchElevenATests.swift`, 7 Ansprüche. Anspruch 3 pinnt die fünf
+Trennachsen zum ersten `phrygianDominant`-Genre PLUS ein Gegengewicht (`allPD.count > 1`), damit die
+zurückgenommene Exklusivität nicht still wieder eingeführt werden kann. Anspruch 6 pinnt die
+Delay-Ratsche von der anderen Seite.
+
+**Grading (§0/§3):** die Datei nennt zwei neue Symbole, kompiliert also gegen den Elternteil nicht —
+**kein Anspruch hat dort ein Verdikt** (#486). Transkribiert (`$SP/t1290.py`): **0 rot** auf dem
+Arbeitsbaum. Sieben Mutationen, jede trifft ihre benannte Zusicherung — beide un-angeboten (Tür +
+türlose Rubrik), Celtic-Voicing → Dreiklang, Register → 3, Flow-Arm entfernt, Lead → „Pluck"
+(Decke 8>7), Andalusian bekommt ein Echo, contemplation verliert seins (Boden 6<7). `prebatch` und
+`poststate` beide OK, `t1286`/`t1288`/`t1289` roster-weit nachgefahren, alle 0. Fünf Nadel-Prüfer
+sauber. **Gerät: nichts** — zwei NEEDS-FOUNDER-VERIFY-Ohrfragen im Wächter-Kopf.
+
+**Kopie (acht Stellen, `$SP/copycount.py 32 49` = 0 mismatches):** „Thirty-two"/„Zweiunddreißig",
+`architecture.html` auf „38 of 49" (nachgemessen). Alle 32 displayNames stehen in jeder
+aufzählenden Stelle.
+
+**Gates gelesen:** CI/CD 6046 (`735f21f`, #1286) und 6047 (`d53141b`, #1287) `Build for Testing` =
+**success**; `Run Tests` = failure, Clone 2 stirbt mit `NSMachErrorDomain Code=-308`, **null**
+fehlgeschlagene Testzeilen im Fenster — die chronische #396-Form. 6048 (#1288) und 6049 (#1289)
+liefen zum Zeitpunkt des Schreibens noch.
+
+**Offen, Founder (unverändert):** §5-2 (blockiert G7 UND `rebetikoModal`) · §5-4 · §5-5 ·
+`varyFloor`-Hörprobe. Dazu der angebotene TestFlight-Deploy — #1269–#1290 sind auf keinem Gerät.

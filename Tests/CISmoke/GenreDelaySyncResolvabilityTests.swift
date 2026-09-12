@@ -166,7 +166,24 @@ final class GenreDelaySyncResolvabilityTests: XCTestCase {
     /// an ear, not two — a distinct-values count would score the pre-fix state 4 and call it
     /// spread.
     ///
-    /// ⚠️ 5 clusters, not 7 (there are 7 such genres), and the two ties are MEASURED and
+    /// ⛔ **THIS CLAIM DEMANDED THAT EVERY DRUM-FREE OFFERED GENRE CARRY A DELAY, AND IT WAS RED
+    /// ON A CORRECT TREE FROM #1285 UNTIL #1290.** That batch shipped `glacialField` and
+    /// `slowBloom` as offered `.none`-archetype genres with no delay at all — deliberately, an
+    /// echo repeats an event and neither has one — so `times.count` was 7 against a
+    /// `drumFree.count` of 9 and the equality could not hold. Nothing surfaced it: CI/CD reports
+    /// `failure` on every push (#396) and the job log is `tail -200` (#807), and #1285's own
+    /// commit message asserted the opposite in as many words — *"both presets have no delay at
+    /// all, so `GenreDelaySyncResolvabilityTests` skips them by construction"*. It does not skip
+    /// them; this claim counted them. **A verification sentence written from what a guard was
+    /// MEANT to do is not a measurement of what it does.**
+    ///
+    /// ⭐ The equality is replaced by a RATCHET, which is what the assertion was actually for: a
+    /// FLOOR on how many drum-free offered genres carry a delay. Removing an echo to game the
+    /// cluster count still reddens it; adding a calm genre that legitimately has none does not
+    /// (#364). The floor is the measured count, so it only ever moves up, by hand, in a commit
+    /// that says why.
+    ///
+    /// ⚠️ 5 clusters, and the two ties are MEASURED and
     /// deliberate: `selfObservation` 2.000 s (clamped) ≈ `stillMeditation` 2.000 s (a half
     /// note at 60 BPM, exactly on the ceiling, so no clamp fires) coincide by AUTHORSHIP — same
     /// division, near-identical default tempo; and `ambientPulse` 0.706 s ≈ `classical` 0.714 s
@@ -189,8 +206,13 @@ final class GenreDelaySyncResolvabilityTests: XCTestCase {
             .filter { $0.fxPreset.delayEnabled }
             .map { stamped($0, bpm: $0.defaultTempo).got }
             .sorted()
-        XCTAssertEqual(times.count, drumFree.count,
-                       "a drum-free genre with no delay at all would silently shrink this metric")
+        XCTAssertGreaterThanOrEqual(times.count, 7, """
+            Only \(times.count) of the \(drumFree.count) drum-free offered genres carry a delay \
+            at all (\(drumFree.filter { !$0.fxPreset.delayEnabled }.map(\.rawValue).sorted()) \
+            have none). Seven is the measured floor: a calm genre may legitimately ship without \
+            an echo, but taking an echo AWAY shrinks the axis this file exists to keep open, and \
+            it is the cheapest way to make the cluster count below look healthy.
+            """)
 
         // `guard` and not just the assertion above: `XCTAssert*` does not halt the method, and
         // `1..<0` TRAPS ("Range requires lowerBound <= upperBound"). A future `beatArchetype`

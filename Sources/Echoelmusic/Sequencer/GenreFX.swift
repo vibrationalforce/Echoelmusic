@@ -341,6 +341,39 @@ public extension MusicStyle {
                 delayMix: 0.14, delayFeedback: 0.20, delayTone: 0.60, delaySpread: 0.34,
                 saturation: 0.38,
                 reverbEnabled: true, reverbMix: 0.12, reverbRoom: 0.39, reverbDamping: 0.50)
+        case .celticAir:
+            // #1290 G11a — MID NATURAL HALL, NO DELAY. An air is a single unhurried line; an
+            // echo would repeat a phrase that has not finished. The room IS the effect.
+            //
+            // ⚠️ Every number against a named neighbour, measured: room 0.70 well under
+            // `contemplation`'s 0.96 (the biggest hall), `drift`'s 0.95 and `deepDrone`'s 0.94 ·
+            // damping 0.44 above `drift`'s 0.35 ("brightest, least-damped big hall") and far
+            // under `deepDrone`'s 0.68 ("the most DAMPED hall in the roster") · saturation 0.16
+            // above `minimalTechno`'s 0.14, so that arm's scoped "cleanest beat-driven chain"
+            // is untouched in both halves — and this genre is `.none`-archetype anyway, so it
+            // does not compete for that scope · tone 0.40 above `deepDrone`'s 0.14 ("darkest
+            // tone in the roster") · spread 0.30 under `detroitTechno`'s 0.60 · `filterEnabled`
+            // false, which `acidTechno` owns alone across the whole roster.
+            return GenreFXPreset(
+                delayEnabled: false, delayTone: 0.40, delaySpread: 0.30,
+                saturation: 0.16,
+                reverbEnabled: true, reverbMix: 0.26, reverbRoom: 0.70, reverbDamping: 0.44)
+        case .andalusianCadence:
+            // #1290 G11a — SMALL BRIGHT ROOM, NO DELAY. The cadence is a chord sequence you must
+            // hear land; a repeat smears the ♭2 into the tonic, which is the one interval this
+            // genre exists for. Nylon strings in a small room, nothing else.
+            //
+            // ⚠️ Neighbours, measured: room 0.44 above `darkPsyTrance`'s 0.32, the smallest in
+            // the file · damping 0.40 above `upliftingTrance`'s 0.30 (the least-damped) and
+            // above `drift`'s 0.35 · saturation 0.22 above `minimalTechno`'s 0.14 — REQUIRED,
+            // because unlike `celticAir` this genre IS beat-driven and therefore inside the
+            // scope of that claim — and far under `doom`'s 0.55 · tone 0.52 under
+            // `futuristic`'s 0.82 and above `deepDrone`'s 0.14 · spread 0.28 under
+            // `detroitTechno`'s 0.60.
+            return GenreFXPreset(
+                delayEnabled: false, delayTone: 0.52, delaySpread: 0.28,
+                saturation: 0.22,
+                reverbEnabled: true, reverbMix: 0.22, reverbRoom: 0.44, reverbDamping: 0.40)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

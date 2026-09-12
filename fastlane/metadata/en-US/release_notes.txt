@@ -3,7 +3,7 @@ Echoel is in active development. Feedback and collaborators welcome: echoel@trop
 New in this build
 
 Composition
-- Thirty curated genres: Self-Observation, Deep Ambient, Drift, Contemplation, Vaporwave, Sci-Fi, Classical, Dub Techno, Acid Techno, Deep House, Deep Tech, Dark Minimal, Psy Prog House, Uplifting Trance, Tech House, Minimal Techno, Detroit Techno, Still Drone, Ambient Pulse, Glacial Field, Slow Bloom, Industrial Techno, Afro House, Dark Psy, Black Metal, Modal Jazz, Soul Ballad, Boom Bap, Electro Funk and Roots Reggae
+- Thirty-two curated genres: Self-Observation, Deep Ambient, Drift, Contemplation, Vaporwave, Sci-Fi, Classical, Dub Techno, Acid Techno, Deep House, Deep Tech, Dark Minimal, Psy Prog House, Uplifting Trance, Tech House, Minimal Techno, Detroit Techno, Still Drone, Ambient Pulse, Glacial Field, Slow Bloom, Industrial Techno, Afro House, Dark Psy, Black Metal, Modal Jazz, Soul Ballad, Boom Bap, Electro Funk, Roots Reggae, Celtic Air and Andalusian Cadence
   (every genre is drum-free by design — they differ in harmony, timbre and motion, not in percussion)
 - Eight character controls: Liveliness, Darkness, Tension, Romance, Weird, Virtuosity, Syncopation, Humanize
 - Concert pitch (A4) set exactly to the cent; key selection and optional BPM lock
