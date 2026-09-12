@@ -30752,3 +30752,80 @@ Clone 2 stirbt (`NSMachErrorDomain Code=-308` bzw. Launch-Fehler), die chronisch
 `gh-test-verdict.py` auf 6048: **0 compile-error lines, 0 TEST FAILURES, 0 TESTS SKIPPED, 133
 Tests beobachtet bestanden** — im `tail -200`-Fenster, also **„kompiliert nachweislich, Ausführung
 unbelegt"** (#445/#807), nicht „grün".
+
+---
+
+## 2026-09-12 — #1292 Egress-Feldklasse: die Regel gilt dem ROHSIGNAL (Founder: „Du entscheidest alles")
+
+**Der Founder hat einen strukturierten Brief geschickt** (Phase 0 Kontext · sechs HARD RULES ·
+Phase 1 Audit read-only · Phase 2 Plan · Phase 3 Umsetzung) und danach auf die Blocker-Meldung
+mit **„Du entscheidest alles"** geantwortet. Der Brief pausiert die Genre-Welt-Reihe.
+
+**Phase 0 + Phase 1 wurden geliefert und ergaben VIER Blocker**, alle gemessen:
+1. Drei der acht genannten Kontext-Dateien existieren nicht (`PLAN_FOUNDATION_SEQUENCE.md`,
+   `DEEP_AUDIT_CONNECTION_MAP_2026-05-22.md`, `STRATEGY_2026-05-18.md`).
+2. Kein `swift`, kein `swiftc`, kein `swiftlint`, kein `xcodebuild` in dieser Umgebung — „run the
+   build, paste the output" ist hier unerfüllbar; „anti-esoterik lint" existiert als Skript gar nicht.
+3. **HARD RULE 5 war durch ausgelieferten Code verletzt** (`OSCSender.swift:352/395/396/406/435`).
+4. Phase 2s Prämisse („kleinste Scheibe OSC-out") war bereits gebaut — OSC · ADM-OSC · Art-Net ·
+   sACN senden alle echte Bytes; die ehrliche Scheibe war eine VERENGUNG, kein neuer Sender.
+
+⭐ **DIE ENTSCHEIDUNG, in einem Satz: was das Instrument SPIELT darf raus, was ein ARZT ablesen
+würde nicht — es sei denn, der Spieler bittet darum.** Herleitung in `memory/decisions.md`
+(2026-09-12) und `decisions.csv`.
+
+**Der Befund, der sie entschied, und er war eine TYP-Tatsache statt einer Policy:**
+`BioSampleFrame` ist **skalar-only** — kein Array, kein Puffer, kein `Data`. Rohsignal (RR-Serie,
+PPG-Wellenform, Kamerabild) kann `OSCSender.encode` also gar nicht erreichen. Regel 5 war in
+ihrem Kern längst erfüllt; offen war nur die ABGELEITETE Hälfte. Dort ist die Linie: BPM,
+normalisierte HRV, Kohärenz, Atem, Gesten SIND die Ausgabe (Lichtpult, Resolume, ADM) — sie zu
+streichen bricht das Produkt. Die drei Millisekunden-Statistiken treiben nichts davon.
+
+**Gebaut (#1292):** `BioEgressPolicy.FieldClass` (`.derived`/`.clinical`/`.raw`) · `.raw` ohne
+erlaubende Einstellung · unbekannte Adresse fällt **geschlossen** aus · `StudioDefaultKeys
+.oscClinicalDetail` default AUS · `OSCSender.applyEgressPreferences()` als EINZIGER Besitzer des
+gecachten Flags · Filter in `send(frame:)`, der einen Stelle, an der eine Nachricht ein Datagramm
+wird · Tür im `networkOutSection` der Routing-Fläche. Wächter
+`Tests/CISmoke/TheClinicalDetailIsOptInTests.swift`, 10 Ansprüche.
+
+⚠️ **`bioMessages(for:)` behält seine Signatur mit Absicht** — SIEBEN Wächter des blockierenden
+Bündels treiben sie; ein Pflicht-Argument dort hätte jeden einzelnen im selben Commit rot gemacht
+(#666). Deshalb sitzt der Filter im Aufrufer, nicht im Erzeuger.
+
+**Verifikation (§0, kein Compiler hier):** Logik in Python nachgebaut und gegen Eltern (`3e04e93`)
+und Arbeitsbaum gefahren — Eltern rot genau dort, wo die Datei neue Symbole nennt (EINE
+Abwesenheit, #486); Gegengewichte auf beiden grün. **SIEBEN Mutationen, alle rot:** `.raw` folgt
+dem Schalter · `[Float]`-RR-Serie im Frame · Default auf AN · Filter entfernt · zweiter Schreiber ·
+Tür entfernt · neue unklassifizierte Adresse. Alle fünf Nadel-Prüfer exit 0.
+
+⛔ **ZWEI SELBST-KORREKTUREN, beide vom eigenen Antrieb gefunden und beide in der schmeichelnden
+Richtung:** (a) Anspruch 8 zählte den INITIALISIERER der Deklaration als Schreiber, las also 2 und
+wäre grün geblieben, wenn die Zuweisung je umgezogen wäre (#367). Ersetzt durch die direkte Frage:
+Applier-Rumpf entfernen, was übrig bleibt darf nur die Deklaration sein. (b) Die Stripper-Note im
+Kopf behauptete **TRAGEND** („die Feld-Docs sagen `[0..1]`") — gemessen ist sie **PROPHYLAKTISCH,
+0 von 3**, weil der Scan nur Zeilen mit `public let`/`public var` ansieht und eine Doc-Zeile keine
+davon enthält. Beides steht jetzt im Kopf, nicht stillschweigend repariert.
+
+**Decken-Handel:** `CLAUDE.md` stand bei 149 753 B, also **247 B Luft** unter 150 000, und die
+ehrliche Korrektur des OSC-Blocks brauchte mehr. Sanktionierter Weg genommen: EIN rein
+historischer Provenienz-Satz (der „Zeile 18"-Rückzug im BRAND-Absatz) ist nach
+`memory/LEDGER_COUNTS.md` **§V** gezogen — sein GESETZ steht in `CLAUDE.md` ohnehin zweimal
+(#416/#538). Ergebnis **149 748 B**, also 5 B KLEINER als vorher. Genau der Handel, für den die
+Decke existiert.
+
+**Prosa-Heimaten mitgezogen (§4):** `CLAUDE.md` OSC-Adresssatz · `docs/integrations.html` ·
+`docs/dev/VJ_BRIDGE.md`.
+
+⚠️ **NICHT angefasst, und ausdrücklich benannt, damit es nicht als abgedeckt gilt: die
+Multipeer-Hälfte.** `ColabPayload.egressible` schickt `BioPeek(bpm, coherence, hrvNormalized,
+breathRate, synthetic)` an FREMDE Telefone — andere Risikoklasse als die eigene Regie-Leitung,
+eigene Scheibe.
+
+⚠️ **Kein PR.** `auto-merge-claude.yml` hat `193712a` wie dokumentiert SOFORT nach `main` gefahren,
+ohne auf ein Gate zu warten (der ⛔-Absatz unter der Workflow-Tabelle in `CLAUDE.md` beschreibt
+genau das). Ein PR wäre gegenstandslos gewesen; der Founder-Brief hatte einen verlangt, und das
+ist der Grund, warum keiner existiert.
+
+**Gerät: nichts.** NEEDS-FOUNDER-VERIFY an `StudioDefaultKeys.oscClinicalDetail` — mit einem
+OSC-Monitor prüfen, dass `/heart/rmssd`, `/sdnn` und `/pnn50` bei AUS fehlen und bei AN da sind,
+während `/heart/bpm` und `/coherence` in beiden Zuständen fließen.
