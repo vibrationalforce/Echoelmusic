@@ -703,10 +703,79 @@ def shape3_findings(chunk, corpus, helpers, consts, allow_legacy):
 # function of such a file that does not bind `anchor` locally resolves against an arbitrary
 # sibling. Restricting the fallback to type-level declarations is the repair; until then the
 # comment says what the code does.
+# #1278 — the RECEIVER is captured now, by NAME so that adding it cannot drift the needle's
+# group number (the silent mis-index class this file has already paid for twice).
 GUARD_LIT = re.compile(
-    r'\bguard\s+let\s+\w+\s*=\s*[A-Za-z_][\w.]*\.range\(of:\s*"((?:[^"\\]|\\.)+)"')
+    r'\bguard\s+let\s+\w+\s*=\s*(?P<recv>[A-Za-z_][\w.]*)\.range\(of:\s*"(?P<needle>(?:[^"\\]|\\.)+)"')
 GUARD_VAR = re.compile(
-    r'\bguard\s+let\s+\w+\s*=\s*[A-Za-z_][\w.]*\.range\(of:\s*([A-Za-z_]\w*)\s*[,)]')
+    r'\bguard\s+let\s+\w+\s*=\s*(?P<recv>[A-Za-z_][\w.]*)\.range\(of:\s*(?P<needle>[A-Za-z_]\w*)\s*[,)]')
+
+# A concrete repo file path, used ONLY to decide that a receiver is NOT Swift source under
+# `Sources/`. Deliberately narrow: an argument that is not a recognisable path is left alone,
+# because this set SILENCES, and silencing on a guess costs a true positive that says nothing.
+FOREIGN_PATH = re.compile(
+    r'^[\w./-]+\.(?:swift|md|yml|yaml|plist|html|csv|sh|json|txt|resolved|entitlements)$')
+FOREIGN_BIND = re.compile(
+    r'\blet\s+([A-Za-z_]\w*)\s*=\s*(?:try\s+)?(?:XCTUnwrap\()?\s*'
+    r'(?:Self\.)?[A-Za-z_]\w*\(\s*(?:Self\.)?([A-Za-z_"][^),]*)')
+DERIVED_BIND = re.compile(r'\blet\s+([A-Za-z_]\w*)\s*=\s*([^\n]+)')
+
+
+def foreign_receivers(chunk, consts):
+    """Local names PROVABLY holding the text of a file that is NOT under `Sources/`.
+
+    ⭐ #1278 — THIS IS THE NEGATIVE OF #944's RECEIVER PROOF, AND THE ASYMMETRY IS THE POINT.
+    Shape 3 proves a receiver IS `Sources/` text before speaking. Shape 6 never could —
+    `legacy_allowed`'s docstring says so in as many words and predicted the cost: *"Two files
+    are live today where shape 6 speaks and the file also reads non-`Sources/` text … The next
+    one that does not gets one."* `TheFaceSourceHasADoorTests` is that one: it reads
+    `Resources/iOS/Info.plist` AND a `Sources/` file, so the mixed set looked like "Sources
+    only", the file was allowed, and two plist literals were hunted under `Sources/` and
+    reported dead on a correct tree.
+
+    ⛔ THE OBVIOUS FIX WAS TRIED FIRST AND MEASURED AND THROWN AWAY. Widening `SOURCE_PATH` to
+    recognise `Resources/` and the root-level files makes `legacy_allowed` deny the mixed file —
+    and **51 guard files** flip from allowed to denied with it, because most of them name
+    `Package.swift` as a repo-root MARKER in an `XCTSkipUnless`, not as a thing they read. A
+    gate that can only REMOVE findings, silencing 51 files to fix 2 needles, is not a repair;
+    it is the false-GREEN direction, and it would have been invisible.
+
+    So the proof runs per RECEIVER and only in the negative: a name bound from a call whose
+    argument resolves to a concrete non-`Sources/` file path. Anything unproven behaves exactly
+    as before. The binder does NOT require a stripping helper (unlike shape 3's), because for
+    the negative direction it does not matter whether the text was stripped — text from
+    `Info.plist` is not text from `Sources/` either way.
+    """
+    out = set()
+    for match in FOREIGN_BIND.finditer(chunk):
+        argument = match.group(2).strip()
+        if argument.startswith('"'):
+            resolved = argument[1:].split('"')[0]
+        else:
+            resolved = consts.get(argument, "")
+        if not resolved or not FOREIGN_PATH.match(resolved):
+            continue
+        if not resolved.startswith("Sources/"):
+            out.add(match.group(1))
+    # ⚠️ ONE MORE STEP, AND IT IS NOT OPTIONAL: text DERIVED from foreign text is foreign too.
+    # The direct binder above cleared claim 5's `plist` and left claim 5's `tail` — bound as
+    # `String(plist[keyRange.upperBound...])`, i.e. the usual "find the key, then read the
+    # value after it" idiom. Half a fix here is worse than none: it reads as "the tool was
+    # repaired" while the same guard still reports a false alarm one line down.
+    # Fixpoint rather than one pass, because a chain of two slices is ordinary.
+    if not out:
+        return out
+    grew = True
+    while grew:
+        grew = False
+        for match in DERIVED_BIND.finditer(chunk):
+            name, rhs = match.group(1), match.group(2)
+            if name in out:
+                continue
+            if any(re.search(r'\b%s\b' % re.escape(f), rhs) for f in out):
+                out.add(name)
+                grew = True
+    return out
 
 
 def code_positions(chunk, start=0):
@@ -838,7 +907,7 @@ def guard_else_fails(chunk, after):
     return "XCTFail" in body
 
 
-def shape6_findings(chunk, corpus, class_binds):
+def shape6_findings(chunk, corpus, class_binds, foreign=frozenset()):
     """(match, needle) for every fatal `guard let … range(of: …) else { XCTFail }` gone dead.
 
     Pure, and driven by the selftest as a COMPOSITION rather than piecewise — the #914/#941
@@ -848,19 +917,23 @@ def shape6_findings(chunk, corpus, class_binds):
     binds = {m.group(1): m.group(2) for m in LOCAL_BIND.finditer(chunk)}
     out = []
     for match in GUARD_LIT.finditer(chunk):
+        if match.group("recv").split(".")[0] in foreign:
+            continue                      # reads a non-`Sources/` file — not this corpus (#1278)
         if not guard_else_fails(chunk, match.end()):
             continue
-        needle = decode_needle(match.group(1))
+        needle = decode_needle(match.group("needle"))
         if needle is None or len(needle) < MIN_NEEDLE:
             continue
         if needle not in corpus:
             out.append((match, needle))
     for match in GUARD_VAR.finditer(chunk):
+        if match.group("recv").split(".")[0] in foreign:
+            continue                      # reads a non-`Sources/` file — not this corpus (#1278)
         if not guard_else_fails(chunk, match.end()):
             continue
-        raw = binds.get(match.group(1))
+        raw = binds.get(match.group("needle"))
         if raw is None:
-            raw = class_binds.get(match.group(1))
+            raw = class_binds.get(match.group("needle"))
         if raw is None:
             continue                      # computed or out of scope — skipped, not reported
         needle = decode_needle(raw)
@@ -998,7 +1071,8 @@ def main(root="."):
         if allow_legacy:
             class_binds = {m.group(1): m.group(2) for m in LOCAL_BIND.finditer(guard_code)}
             for chunk in function_chunks(guard_code):
-                for match, needle in shape6_findings(chunk, corpus, class_binds):
+                foreign = foreign_receivers(chunk, class_binds)
+                for match, needle in shape6_findings(chunk, corpus, class_binds, foreign):
                     offset = guard_code.find(chunk)
                     line = guard_code[:offset + match.start()].count("\n") + 1
                     dead.append((os.path.relpath(guard, root), line, needle))
@@ -1199,6 +1273,60 @@ def selftest():
               "string. `#\"…\"#` needs no escapes, so an odd inner quote opens a literal that "
               "never closes and the rest of the function is swallowed (#965).", file=sys.stderr)
         ok = False
+    # ⭐ #1278 — THE FOREIGN-RECEIVER GATE, DRIVEN AS A COMPOSITION. The #941b/#914 lesson this
+    # file has paid for twice: exercising `foreign_receivers` on literals passes while the code
+    # that JOINS it to `shape6_findings` is the broken part, so the fixture goes through BOTH,
+    # exactly as `main` calls them. Four cases, and the third is the one that matters — a gate
+    # that can only remove findings is worth nothing if it removes the real ones too.
+    GONE8 = "let plistOnlyThing = 8"    # needle in a NON-Sources receiver → must stay silent
+    GONE9 = "let derivedPlistThing = 9" # needle in text DERIVED from it  → must stay silent
+    GONE10 = "let realSourceThing = 10" # needle in a Sources receiver     → must still report
+    s6_foreign = (
+        '    func e() {\n'
+        '        let plist = try file(Self.plistFile)\n'
+        '        let tail = String(plist[plist.startIndex...])\n'
+        '        let code = try file(Self.publisherFile)\n'
+        '        guard let a = plist.range(of: "' + GONE8 + '") else {\n'
+        '            XCTFail("plist")\n'
+        '            return\n'
+        '        }\n'
+        '        guard let b = tail.range(of: "' + GONE9 + '") else {\n'
+        '            XCTFail("derived")\n'
+        '            return\n'
+        '        }\n'
+        '        guard let c = code.range(of: "' + GONE10 + '") else {\n'
+        '            XCTFail("source")\n'
+        '            return\n'
+        '        }\n'
+        '    }\n')
+    s6_foreign_consts = {"plistFile": "Resources/iOS/Info.plist",
+                         "publisherFile": "Sources/Echoelmusic/Bio/FaceExpressionBioPublisher.swift"}
+    s6_foreign_set = foreign_receivers(s6_foreign, s6_foreign_consts)
+    found_foreign = {n for _, n in shape6_findings(s6_foreign, ALIVE, s6_foreign_consts,
+                                                   s6_foreign_set)}
+    if GONE8 in found_foreign:
+        print("selftest: shape 6 reported a needle whose receiver reads Resources/iOS/Info.plist. "
+              "That is the #1278 false alarm — a plist literal hunted under Sources/.",
+              file=sys.stderr)
+        ok = False
+    if GONE9 in found_foreign:
+        print("selftest: shape 6 reported a needle whose receiver is DERIVED from non-Sources "
+              "text by slicing. The fixpoint in `foreign_receivers` is not running, so the fix "
+              "covers the bind and not the `String(plist[…])` idiom one line down (#1278).",
+              file=sys.stderr)
+        ok = False
+    if GONE10 not in found_foreign:
+        print("selftest: shape 6 MISSED a dead needle in a receiver bound from a Sources/ path, "
+              "in a function that ALSO reads a plist. The foreign set is over-reaching and the "
+              "gate now silences the shape it was meant to keep (#1278).", file=sys.stderr)
+        ok = False
+    if foreign_receivers(s6_foreign, {}) - {"plist", "tail"} != set() or \
+       "code" in foreign_receivers(s6_foreign, s6_foreign_consts):
+        print("selftest: `foreign_receivers` classified a Sources-bound receiver as foreign, or "
+              "resolved a path it cannot see. Unproven receivers must be left ALONE — this set "
+              "only ever silences (#1278).", file=sys.stderr)
+        ok = False
+
     for label, snippet, expect in (
             ("raw, odd inner quote", '#"a " b"# ; { }', " ; { }"),
             ("multi-hash raw", '##"x " y"## ; { }', " ; { }"),
