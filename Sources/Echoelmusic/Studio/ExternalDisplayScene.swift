@@ -170,6 +170,7 @@ private struct ExternalStageView: View {
     @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var cameraMirror = StudioDefaultKeys.visualCameraMirror.value
     @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var cameraBlend = StudioDefaultKeys.visualCameraBlend.value
     @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var cameraCutout = StudioDefaultKeys.visualCameraCutout.value
+    @AppStorage(StudioDefaultKeys.visualCameraSize.key) private var cameraSize = StudioDefaultKeys.visualCameraSize.value
 
     // MARK: - Accessibility (#1118)
 
@@ -277,7 +278,8 @@ private struct ExternalStageView: View {
                              cameraOpacity: Float(cameraOpacity),
                              cameraMirror: cameraMirror,
                              cameraBlend: cameraBlend,
-                             cameraCutout: cameraCutout)
+                             cameraCutout: cameraCutout,
+                             cameraSize: Float(cameraSize))
                     .environment(bus)
                     .environment(governor)
                     .environment(recorder)

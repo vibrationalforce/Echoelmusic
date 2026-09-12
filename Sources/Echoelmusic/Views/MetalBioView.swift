@@ -535,6 +535,11 @@ struct MetalBioView: UIViewRepresentable {
     /// K7 — cut the person out of the camera layer with ARKit's segmentation matte (only
     /// where `FaceExpressionBioPublisher.supportsSegmentation`; otherwise the flag is inert).
     var cameraCutout: Bool = false
+    /// #1299 — how BIG the face is in the field (founder 2026-09-12: "das Gesicht kann in der
+    /// Größe angepasst werden"). 1 = the frame as the camera delivers it; >1 magnifies about
+    /// the centre, <1 pulls back. Applied as a scale composed into the viewport→image affine
+    /// on the CPU, so the shader is untouched and a size change costs nothing per pixel.
+    var cameraSize: Float = 1
 
     func makeCoordinator() -> MetalBioRenderer { MetalBioRenderer() }
 
@@ -618,7 +623,7 @@ struct MetalBioView: UIViewRepresentable {
                   style: style, styleB: styleB, blend: blend, reduceMotionAccessibility: reduceMotion,
                   autoAttuned: autoAttuned, entrainmentPulseHz: entrainmentPulseHz,
                   cameraOpacity: cameraOpacity, cameraMirror: cameraMirror, cameraBlend: cameraBlend,
-                  cameraCutout: cameraCutout)
+                  cameraCutout: cameraCutout, cameraSize: cameraSize)
     }
 }
 
@@ -868,6 +873,14 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
     private var lookCameraMirror = true
     private var lookCameraBlend = 0
     private var lookCameraCutout = false
+    /// #1299 — the size dial, already clamped by `setLook`. 1 = untouched.
+    private var lookCameraSize: Float = 1
+    /// #1299 — the RAW viewport→image affine of the bound frame, before the size scale.
+    /// Stored rather than consumed on arrival because the scale must be re-applied on EVERY
+    /// frame: the transform is only refreshed when a NEW camera frame lands, so composing the
+    /// scale in there would leave a size change invisible until the next frame — and at the
+    /// `.low` tier, or with the session momentarily stalled, that is not "immediately".
+    private var cameraRawTransform: CGAffineTransform = .identity
     /// True while the governor's tier is `.low` or below (thermal `.serious`, Low Power Mode,
     /// battery < 20 %): the layer stands down — two full-drawable plane samples per pixel are
     /// its whole cost, and that is the cost the tier exists to shed. Written in the governor
@@ -963,7 +976,8 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                  style: Int, styleB: Int,
                  blend: Float, reduceMotionAccessibility: Bool, autoAttuned: Bool,
                  entrainmentPulseHz: Double = 0,
-                 cameraOpacity: Float, cameraMirror: Bool, cameraBlend: Int, cameraCutout: Bool) {
+                 cameraOpacity: Float, cameraMirror: Bool, cameraBlend: Int, cameraCutout: Bool,
+                 cameraSize: Float) {
         lookToneFallbackHz = toneFallbackHz
         lookIntensity = intensity
         lookRingDensity = ringDensity
@@ -984,6 +998,9 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
         lookCameraMirror = cameraMirror
         lookCameraBlend = cameraBlend
         lookCameraCutout = cameraCutout
+        // #1299 — clamped here, at the ONE boundary the value crosses into the renderer, so a
+        // NaN or a zero from a corrupted default can never divide the affine below.
+        lookCameraSize = (cameraSize.isFinite && cameraSize > 0) ? min(max(cameraSize, 0.25), 4) : 1
     }
 
     func configure(device: MTLDevice) {
@@ -1900,10 +1917,7 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                     ? latest.matte.flatMap { Self.makeMatteTexture(from: $0, cache: cache) } : nil
                 uniforms.camYOffset = made.videoRange ? 16.0 / 255.0 : 0
                 uniforms.camYScale = made.videoRange ? 255.0 / 219.0 : 1
-                let t = latest.viewportToImage
-                uniforms.camA = Float(t.a); uniforms.camB = Float(t.b)
-                uniforms.camC = Float(t.c); uniforms.camD = Float(t.d)
-                uniforms.camTx = Float(t.tx); uniforms.camTy = Float(t.ty)
+                cameraRawTransform = latest.viewportToImage
             }
         }
         if wantsCapture {
@@ -1925,6 +1939,17 @@ final class MetalBioRenderer: NSObject, MTKViewDelegate {
                 uniforms.camOpacity = 0
             }
         }
+        // #1299 — the size dial, composed into the viewport→image affine EVERY frame (see
+        // `cameraRawTransform`). The transform lands in normalised image space, so magnifying
+        // the picture by `s` means sampling a smaller box about the centre: uv' = (uv−½)/s + ½.
+        // Scaling the affine's linear part and re-centring its translation is exactly that,
+        // and it costs six multiplies on the CPU instead of a shader branch per pixel.
+        let camScale = Double(lookCameraSize)
+        let t = cameraRawTransform
+        uniforms.camA = Float(t.a / camScale); uniforms.camB = Float(t.b / camScale)
+        uniforms.camC = Float(t.c / camScale); uniforms.camD = Float(t.d / camScale)
+        uniforms.camTx = Float((t.tx - 0.5) / camScale + 0.5)
+        uniforms.camTy = Float((t.ty - 0.5) / camScale + 0.5)
         uniforms.camPresent = cameraTexturesCurrent == nil ? 0 : 1
         uniforms.camMirror = lookCameraMirror ? 1 : 0
         uniforms.camBlend = Float(min(max(lookCameraBlend, 0), 2))

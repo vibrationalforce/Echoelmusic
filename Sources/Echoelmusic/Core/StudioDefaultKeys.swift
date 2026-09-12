@@ -279,6 +279,10 @@ public enum StudioDefaultKeys {
     /// K7 (#1265) — cut the person out of the camera layer (ARKit person segmentation; inert
     /// where the device cannot segment — the row disables the toggle there, never simulates).
     public static let visualCameraCutout = StudioDefault(key: "visual.camera.cutout", value: false)
+    /// #1299 — how big the face is in the field (founder 2026-09-12: "das Gesicht kann in der
+    /// Größe angepasst werden"). 1 = the frame as the camera delivers it; the renderer clamps
+    /// to 0.25…4 at its own boundary, so a corrupted default can never divide by zero.
+    public static let visualCameraSize = StudioDefault(key: "visual.camera.size", value: 1.0)
     /// #1297 — has the Face source ever introduced the camera layer? FALSE until the first
     /// `.face` start, which then raises `visualCameraOpacity` to `visualCameraIntroOpacity`
     /// and sets this, once and for all.

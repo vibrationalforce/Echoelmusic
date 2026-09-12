@@ -1021,6 +1021,7 @@ struct EchoelStudioView: View {
     @AppStorage(StudioDefaultKeys.visualCameraMirror.key) private var visualCameraMirror = StudioDefaultKeys.visualCameraMirror.value
     @AppStorage(StudioDefaultKeys.visualCameraBlend.key) private var visualCameraBlend = StudioDefaultKeys.visualCameraBlend.value
     @AppStorage(StudioDefaultKeys.visualCameraCutout.key) private var visualCameraCutout = StudioDefaultKeys.visualCameraCutout.value
+    @AppStorage(StudioDefaultKeys.visualCameraSize.key) private var visualCameraSize = StudioDefaultKeys.visualCameraSize.value
     /// #1297 — the one-shot latch that lets the FIRST Face start show the camera layer.
     @AppStorage(StudioDefaultKeys.visualCameraIntroduced.key) private var visualCameraIntroduced = StudioDefaultKeys.visualCameraIntroduced.value
     /// The floating visual window's show/hide state — SHARED with WorkspaceView's header
@@ -6867,6 +6868,16 @@ struct EchoelStudioView: View {
             .tint(EchoelTheme.accent)
             .accessibilityHint("Tracks your face with the front camera and drives the field. Off hands the pulse back to the source that was playing before.")
             EchoelValueField(label: "Camera layer", value: $visualCameraOpacity, range: 0...1, decimals: 2)
+            // NEEDS-FOUNDER-VERIFY: Field → „Camera size" von 0,5 bis 2,5 durchfahren, während
+            // die Face-Quelle läuft. Erwartet: das Gesicht wächst UM DIE MITTE, rutscht nicht
+            // in eine Ecke, und die Größenänderung ist SOFORT sichtbar (nicht erst beim
+            // nächsten Kamerabild). Sagen, ob 2,5 gross genug und 0,5 klein genug ist.
+            //
+            // #1299 — "das Gesicht kann in der Größe angepasst werden". A NUMBER, so an
+            // `EchoelValueField` and never a `Slider` (the one-control law). The range stops
+            // short of the renderer's own 0.25…4 clamp on purpose: the clamp is the safety net
+            // for a corrupted default, this is the musical range.
+            EchoelValueField(label: "Camera size", value: $visualCameraSize, range: 0.5...2.5, decimals: 2)
             labeledRow("Blend") {
                 Picker("Blend", selection: $visualCameraBlend) {
                     Text("Screen").tag(0)
