@@ -188,6 +188,28 @@ public enum BioComposer {
         /// already on this Input (see `chordSuggestControl`). `false` (default)
         /// keeps today's path byte-identical (pinned in ChordSuggestTests).
         public var suggestJourney: Bool
+        /// G3 — MAY THIS TAKE REACH FOR ANOTHER LEGAL OPTION INSIDE ITS GENRE?
+        /// (founder 2026-09-11: *"es soll nie gleich klingen aber trotzdem sehr musikalisch und
+        /// authentisch"*.)
+        ///
+        /// **`false` (default) = byte-identical**, the same Golden law `voiceLeading` /
+        /// `humanize` / `suggestJourney` above are held to — and here it holds in a second,
+        /// stronger sense: with the flag ON and a genre that owns no envelope
+        /// (`MusicStyle.idiomProfile == nil`, i.e. every genre today) the take is byte-identical
+        /// too, because the hooks read `idiom?.…` and the optional chain touches no RNG.
+        /// `TheIdiomVariationLeavesTheNilPathAloneTests` measures both halves.
+        ///
+        /// A BOOL and not a spec struct, for the reason `voiceLeading` gives: the STRENGTH is
+        /// derived from the body (coherence → `amount`, see `idiomControl`), so the caller flips
+        /// one switch and the body decides how far the take moves. A dial here would be a second
+        /// owner of a quantity the biofeedback already owns.
+        public var idiomVariation: Bool
+        /// G3 — "the same piece, a new take". Mixed into the idiom seed (never into `seed` or
+        /// `structureSeed`), so raising it re-rolls WHICH legal option the take reaches for while
+        /// the skeleton, the journey and every note identity stay derived from the same streams.
+        /// This is what a re-generate button changes; 0 (default) = the take this seed has always
+        /// produced.
+        public var variationNonce: UInt64
         /// #253 A3 — WHICH RHYTHM THE BASS WALKS IN (founder 2026-07-30: *"Alle Soundrubriken von
         /// Pads, Bass bis arp etc. brauchen noch verschiedene Rhythmus Regler … interessante,
         /// treibende, hypnotische, dynamische etc."*).
@@ -290,6 +312,8 @@ public enum BioComposer {
             voiceLeading: Bool = false,
             humanize: Bool = false,
             suggestJourney: Bool = false,
+            idiomVariation: Bool = false,
+            variationNonce: UInt64 = 0,
             bassRhythm: RoleRhythm.Character? = nil,
             padRhythm: RoleRhythm.Character? = nil,
             signatureDynamicTilt: Double = 0,
@@ -313,6 +337,8 @@ public enum BioComposer {
             self.voiceLeading = voiceLeading
             self.humanize = humanize
             self.suggestJourney = suggestJourney
+            self.idiomVariation = idiomVariation
+            self.variationNonce = variationNonce
             self.bassRhythm = bassRhythm
             self.padRhythm = padRhythm
             self.signatureDynamicTilt = signatureDynamicTilt
@@ -367,6 +393,38 @@ public enum BioComposer {
         guard input.suggestJourney else { return nil }
         return ChordSuggestControl(coherence: clamp01(input.coherence),
                                    seed: input.structureSeed ?? input.seed)
+    }
+
+    /// G3 — the FLOOR under `IdiomControl.amount`: how much a take may differ from the canonical
+    /// one even when the body is perfectly settled. `0` would make a calm session produce exactly
+    /// the same take every time (the founder's complaint); `1` would make the genre stop being a
+    /// place. 0.25 = a quarter of the envelope is always in play.
+    ///
+    /// NEEDS-FOUNDER-VERIFY: generate the same genre twice with a calm body — is it the SAME
+    /// piece in a new take (right) or a DIFFERENT piece (floor too high)? And with an unsettled
+    /// body, does it audibly move more? This is the one value in this file no test can decide.
+    static let varyFloor: Float = 0.25
+
+    /// G3 bio → variation mapping:
+    ///   `amount = max(varyFloor, 1 - coherence)` — the `genreAnchorCount` POLARITY (a settling
+    ///     body gets the genre's own answer; an unsettled one gets the breadth), stated once in
+    ///     `GenreIdiom.swift` and computed once here.
+    ///   `seed` = the SKELETON stream salted with the take's nonce, mixed exactly the way
+    ///     `chordSeed` is mixed in `composeHarmonic` — "derived WITHOUT consuming either RNG
+    ///     stream". A draw here would shift every later note's identity in the take.
+    ///
+    /// Returns `nil` when the flag is off OR the genre owns no envelope. Both are the
+    /// byte-identical path, and the hooks below cannot tell them apart — which is the point:
+    /// turning the flag on for a genre that has not been given an envelope must do nothing.
+    static func idiomControl(for input: Input) -> IdiomControl? {
+        guard input.idiomVariation else { return nil }
+        guard let profile = input.style.idiomProfile else { return nil }
+        let coh = clamp01(input.coherence)
+        let seed = ((input.structureSeed ?? input.seed) &* 0x9E3779B97F4A7C15) &+ input.variationNonce
+        return IdiomControl(idiom: profile.idiom,
+                            envelope: profile.envelope,
+                            seed: seed,
+                            amount: Swift.max(varyFloor, 1 - coh))
     }
 
     /// H2: the journey repeats after this many chords — `progressionPhase` is
@@ -895,6 +953,11 @@ public enum BioComposer {
         // see `chordSuggestControl`. nil = the legacy progression logic.
         let suggest = chordSuggestControl(for: input)
 
+        // G3 idiom variation (opt-in): WHICH legal option inside the genre's envelope this take
+        // reaches for — see `idiomControl`. nil = the flag is off OR the genre owns no envelope
+        // (every genre today), and both are the byte-identical path.
+        let idiom = idiomControl(for: input)
+
         let notes: [Note]
         let drumSteps: [[Bool]]
         let drumAccents: [[Bool]]
@@ -925,6 +988,7 @@ public enum BioComposer {
                                     padRhythm: input.padRhythm,
                                     bassGrammar: input.style.bassGrammar,
                                     padGrammar: input.style.padGrammar,
+                                    idiom: idiom,
                                     padGate: input.padGate, padAccent: input.padAccent,
                                     padEvolve: input.padEvolve,
                                     rng: &rng, structureRNG: &structureRNG)
@@ -961,6 +1025,7 @@ public enum BioComposer {
                                     padRhythm: input.padRhythm,
                                     bassGrammar: input.style.bassGrammar,
                                     padGrammar: input.style.padGrammar,
+                                    idiom: idiom,
                                     padGate: input.padGate, padAccent: input.padAccent,
                                     padEvolve: input.padEvolve,
                                     rng: &rng, structureRNG: &structureRNG)
@@ -2167,6 +2232,13 @@ public enum BioComposer {
                                         // be indistinguishable from a caller that forgot, and the
                                         // day a genre claims a figure the forgetting is silent.
                                         padGrammar: PadGrammar?,
+                                        // G3 — this take's position inside the genre's variation
+                                        // envelope (`MusicStyle.idiomProfile`). NO DEFAULT, the
+                                        // third parameter here to carry that rule (#431/#440/#443):
+                                        // a defaulted `nil` is exactly what a caller that forgot
+                                        // looks like, and the day a genre owns an envelope the
+                                        // forgetting would silently flatten it back to one take.
+                                        idiom: IdiomControl?,
                                         // #581 — the pad's chord shape, threaded through to
                                         // `roleRhythmOnsets`. NO DEFAULTS, same reason as there
                                         // (#431/#440/#443): both call sites below must be forced
@@ -2243,7 +2315,22 @@ public enum BioComposer {
                 // silently returned 0 for n == 1, i.e. for the default genre.
                 let k = Self.genreAnchorCount(sections: n, coherence: sc.coherence)
                 if k > 0 {
-                    let rotBase = ((progressionPhase % baseProg.count) + baseProg.count) % baseProg.count
+                    // G3 HOOK (a) — the take ENTERS the genre's own progression at another
+                    // legal place. The anchored roots still come ONLY from `baseProg` (#77/#81/
+                    // #125 untouched: no borrowed chord, no chromatic, no new degree), and the
+                    // offset comes from a FINITE list the genre itself wrote
+                    // (`VariationEnvelope.rootOffsets`). `nil` ⇒ `0` ⇒ the expression is the one
+                    // that shipped, character for character, and the optional chain draws no RNG.
+                    //
+                    // ⚠️ THIS IS THE HOOK EVERY GENRE EXECUTES, which makes it the one worth
+                    // testing hardest — the block right above carries its own note that an inline
+                    // `genreAnchorCount` silently returned 0 for `n == 1` for weeks. The double
+                    // modulo is kept rather than simplified: `rootOffset` is non-negative today,
+                    // but `progressionPhase` can be negative and the second `% + %` is what makes
+                    // that safe. Removing it because "offsets are positive" would be reasoning
+                    // about the wrong summand.
+                    let rotSeed = progressionPhase + (idiom?.rootOffset ?? 0)
+                    let rotBase = ((rotSeed % baseProg.count) + baseProg.count) % baseProg.count
                     for i in 0..<k {
                         prog[i] = baseProg[(rotBase + i) % baseProg.count]
                         sectionAlterations?[i] = [0, 0, 0]
