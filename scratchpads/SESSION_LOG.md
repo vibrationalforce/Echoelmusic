@@ -30292,3 +30292,81 @@ erste Entwurf rot nannte (#453 → #477).
 
 **Gates:** Xcode Compile Check SUCCESS auf `fea1adc` (#2566-Klasse) und `bd168cc`; `851aa8b`
 beim Schreiben noch `queued`. Gerät: nichts — alle drei Scheiben tragen NEEDS-FOUNDER-VERIFY.
+
+## 2026-09-12 — Genre-Welt G1b (#1276) + drei Reparaturen, die daraus fielen (#1277–#1280)
+
+**#1276 (G1b).** Zwei Wächter-Dateien, kein `Sources/`-Eingriff.
+`TheGenreTokensNeverChangeTests` pinnt alle 36 persistierten `MusicStyle`-rawValues gegen ein
+LITERAL — der Nachbar-Wächter prüft nur Round-Trip und Eindeutigkeit, und beide überleben eine
+UMBENENNUNG: `"dubTechno"` → `"dub_techno"` rundet sauber und ist eindeutig, während die Daten
+auf der Platte (`@AppStorage(studio.genre)`, `Project.styleRaw`, `TimelineLane.genreOverride`)
+still auf den Default zurückfallen. Der Pin ist ein BODEN, kein Gleichheitszeichen (Anspruch 3),
+sonst wäre er beim dritten Genre-Batch gelöscht statt befolgt. Die Ban-Liste bekam neun
+prophylaktische Wörter, die HEUTE nichts treffen, und Anspruch 1 fegt jetzt auch die acht
+Rubrik- und siebzehn Regal-Titel aus #1275 — ausgelieferte Kopie ÜBER den Genre-Namen, von
+keinem anderen Wächter erreicht. `"oriental"` bleibt bewusst draußen: es trifft heutige Kopie,
+und ein Verbot dessen, was nur der Founder reparieren darf, ist die #364-Form (Plan §5-4).
+Messung: 36/36 gepinnt, sortiert, eindeutig, Differenz in beide Richtungen leer · Ban-Sweep 97
+ausgelieferte Zeichenketten (8 + 17 + 36×2), 0 Treffer auf drei Bäumen — mit Kommentar-Stripper,
+und der ist tragend: roh meldet er zwei, beide in Prosa, die erklärt, warum die Wörter fehlen.
+
+**#1277.** `dead-needles.py` fand ZWEI Ansprüche von `TheAutotuneCharacterIsDerivedNotStored`
+rot auf einem KORREKTEN Baum, seit meinem eigenen #1274: die Zeichen `selection:
+voiceTuneCharacterBinding` und `if voiceTuneCharacter == nil {` sind mit dem Block ins
+`VoiceTuneCharacterControls`-Blatt gezogen und heißen dort anders. §4 wörtlich — wer ein
+Bedienelement VERSCHIEBT, zieht die Wächter im SELBEN Commit mit; §5 ist, warum es niemand sah.
+Neu verankert auf INVARIANTEN, nicht auf den neuen Schreibweisen: der Picker über sein
+nutzersichtbares Label, die Custom-Bildunterschrift über ihren TEXT plus eine Nil-Prüfung per
+NÄHE (21 Zeichen hier, 33 vor dem Umzug, über kommentar-gestripptem Text). Beide Ansprüche sind
+jetzt auf BEIDEN Bäumen grün — sie überleben genau den Umzug, der die alte Schreibweise tötete.
+⚠️ Der erste Entwurf nahm `if\s+\w*[Cc]haracter\s*==\s*nil`, was auf beiden Bäumen grün ist,
+weil beide Namen auf dasselbe Wort enden — und eine vierte Mutante (Umbenennung auf `tuneShape`)
+machte ihn ROT auf korrektem Code: #364, eine Umbenennung später, dieselbe Falle.
+
+**#1278.** Die Fehlalarm-Hälfte derselben Lesung: `TheFaceSourceHasADoor` liest
+`Resources/iOS/Info.plist` UND eine `Sources/`-Datei, also sah der Datei-weite Filter „nur
+Sources" und zwei plist-Literale wurden unter `Sources/` gesucht. Der Docstring von
+`legacy_allowed` hatte das wörtlich vorhergesagt („The next one that does not gets one").
+⛔ **Die naheliegende Reparatur wurde gebaut, GEMESSEN und weggeworfen:** `SOURCE_PATH` zu
+weiten ist eine Zeile — und **51 Wächter-Dateien** kippen mit, weil die meisten `Package.swift`
+als Repo-Wurzel-MARKER in einem `XCTSkipUnless` nennen, nicht als Lesequelle. Ein Tor, das nur
+Befunde ENTFERNEN kann, 51 Dateien stumm zu schalten, um 2 Nadeln zu retten, ist die
+Falsch-GRÜN-Richtung. Geliefert ist stattdessen das NEGATIV von #944s Empfänger-Beweis, pro
+Empfänger: ein Name, der aus einem Aufruf mit auflösbarem Nicht-`Sources/`-Pfad stammt, wird
+übersprungen; Unbewiesenes verhält sich wie zuvor. Plus ein Fixpunkt, weil `tail` aus
+`String(plist[…])` abgeleitet ist — eine halbe Reparatur hätte im selben Anspruch eine Zeile
+tiefer weiter fehlalarmiert.
+
+**#1279 — der teuerste Befund des Tages, und er kam vom GATE, nicht von einem Werkzeug.**
+`Build for Testing` auf Lauf 6038 = `failure` mit einer Diagnose, die eine Repo-Datei nennt
+(#667-Diskriminator): `GenreSubcategoryTests.swift:197: invalid escape sequence in literal`.
+Die Nadel ist ein Swift-KEY-PATH — `subcategories.flatMap(\.genres)` — in einem einfachen
+`"…"`-Literal, geschrieben von #1275. **Das blockierende Bundle hat seit `0934dbc` nicht
+kompiliert, drei Commits (#1275–#1277): deren Wächter sind compile-UNBEWIESEN, nicht grün.**
+⭐ **Und der Grund, warum nichts es fing, ist strukturell:** jede Prüfung dieser Sitzung ist eine
+INHALTS-Prüfung. Die Transkription belegte, dass alle vier Ableitungs-Zeichenketten in
+`MusicStyle.swift` vorkommen (tun sie), dead-needles/count-pins/foreign-needles lesen Nadeln als
+DATEN, und der Mutantenlauf prüfte die Logik. Keine davon parst das SWIFT, das die Nadel TRÄGT.
+Das ist #808 eine Ebene tiefer.
+
+**#1280.** Also `scripts/swift-escapes.py` — EINE Fehlerklasse, kein Swift-Parser: die, die
+(a) für alle obigen Werkzeuge wie gewöhnlicher Text aussieht, (b) ohne Typprüfer entscheidbar
+ist und (c) bereits einen CI-Umlauf gekostet hat. ⚠️ **Beide Fehlalarm-Klassen sind LEGALES
+Swift und sehen exakt wie der Defekt aus, und beide sind in einem Entwurf ausgeliefert worden,
+bevor ich die Ausgabe LAS statt sie anzunehmen:** `\` vor einem Zeilenumbruch ist die
+Fortsetzung eines `"""`-Textes (Entwurf 1 druckte 1,3 MB), und `\.` innerhalb einer
+`\( … )`-Interpolation ist ein Key-Path im CODE (Entwurf 2 druckte 28, jeder korrekt). Validiert
+am bekannten Positiv: genau 1 Befund auf `3f0b7ed`, 0 nach der Reparatur. Selbsttest mit 13
+Fällen plus einem KOMPOSITIONS-Fall (beide Fehlalarm-Klassen und der echte Defekt in EINEM
+Stück), vier Mutationen je rot.
+
+**Gates:** Compile Check grün auf `0934dbc` (#1275). CI/CD 6038 (`7a1bc5d`) = `TEST BUILD
+FAILED`, echt, siehe #1279; 6039 (`b795c88`) ist die Gegenprobe. #1278 und #1280 fassen
+`scripts/` an, das in KEINEM Pfadfilter steht — #1280 läuft nur, weil es zusätzlich
+`Tests/CISmoke/CLAUDE.md` anfasst (#1176). Gerät: nichts.
+
+**Offen, Founder:** Plan §5-1 (treten alle neuen Genres in den Picker, oder portionsweise nach
+deinem Ohr? — Empfehlung portionsweise; blockiert G5) · §5-2 (Tonsystem-Besitz, blockiert G7) ·
+§5-4 (`oriental` → „Modal Near East", und erst dann das Ban-Wort) · §5-5 (Instrumenten- und
+Traditionsnamen im displayName, vor G9). Dazu weiterhin angeboten: ein TestFlight-Deploy, weil
+#1269–#1280 auf keinem Gerät sind.
