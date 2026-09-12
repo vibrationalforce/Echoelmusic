@@ -35,8 +35,28 @@ import XCTest
 final class TheDeployNoteNamesRealDoorsTests: XCTestCase {
 
     /// The chip strip as shipped. Pinned here so a rename cannot silently make claim 2 weaker.
+    ///
+    /// ⛔ "Video" STOOD HERE AND MADE CLAIM 1 RED FOR FOUR COMMITS (#1304 → #1309). The founder
+    /// withdrew video capture on 2026-09-12 ("Kein Video Capture"); that slice deleted the
+    /// `videoPanel`, the `.video` menu case and the chip — and left this list at ten while the
+    /// strip shipped nine. Claim 1 asserts ARRAY EQUALITY, so it went red on a correct tree
+    /// immediately, exactly as its own message demands ("this list with it, in the SAME
+    /// commit"). The message was right; nobody read it, because `Run Tests` reports `failure`
+    /// on EVERY push (#396) and the job log is a 200-line tail (#807).
+    ///
+    /// ⭐ WHY NO NEEDLE CHECKER CAUGHT IT, which is the transferable part. The expectation is a
+    /// hand-written Swift ARRAY compared against a list PARSED out of `EchoelStudioView`, not a
+    /// string literal asserted to be present in a file — so `dead-needles.py`,
+    /// `moved-needles.py` and `foreign-needles.py` have nothing to bind, and `count-pins.py`
+    /// reads counts, not membership. **A list pin is a pin.** After a removal, re-derive every
+    /// hand-written expectation whose other side is parsed from the tree; the cheap form here is
+    /// the state machine in `shippedLabels()`, transcribed in Python.
+    ///
+    /// ⚠️ It stays HAND-WRITTEN on purpose — deriving it from the same parse would make the file
+    /// agree with itself and never fail. The literal IS the second opinion (the argument
+    /// `scripts/check-infoplist.sh` states for its own list).
     private static let expectedLabels = [
-        "Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field", "Video"
+        "Bio", "Tempo", "Sound", "Mix", "FX", "Master", "Mood", "Save/Export", "Field"
     ]
 
     private func root() -> URL {
