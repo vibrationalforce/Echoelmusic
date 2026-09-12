@@ -53,21 +53,25 @@
             </array>
         </dict>
 
-        <!-- File Timestamp API -->
-        <dict>
-            <key>NSPrivacyAccessedAPIType</key>
-            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
-
-            <key>NSPrivacyAccessedAPITypeReasons</key>
-            <array>
-                <string>C617.1</string>  <!-- Accessing files created by user:
-                                              `.creationDateKey` in VideoLibraryPanel -->
-                <!-- 0A2A.1 stood here ("session data timestamps") and is REMOVED (#1234,
-                     audit 2026-09-10 `ship-path-6`): Apple defines it as "your third-party
-                     SDK provides a wrapper around file-timestamp APIs" — a first-party app
-                     manifest cannot claim it, and the one real caller is covered by C617.1. -->
-            </array>
-        </dict>
+        <!-- File Timestamp API: NOT declared. The whole dict (C617.1, "accessing files
+             created by the user") stood here and is REMOVED (#1307), because its ONE cited
+             caller was `.creationDateKey` in `VideoLibraryPanel`, and the founder withdrew
+             video capture on 2026-09-12 (#1304) — the file is gone.
+             Re-measured over every symbol Apple lists for this category, comments stripped:
+               creationDate(Key) · contentModificationDateKey · NSURLCreationDateKey ·
+               NSURLContentModificationDateKey · modificationDate · fileModificationDate ·
+               NSFileCreationDate · NSFileModificationDate · getattrlist* · stat/fstat/lstat
+             → ZERO hits in Sources/. The only survivor is
+             `CrashSafeStatePersistence.swift:430`, `attributesOfItem(atPath:)[.size]` — a file
+             SIZE, and `attributesOfItem` is not on Apple's list for this category at all.
+             ⚠️ THIS IS THE #1234 SHAPE, DELIBERATELY REPEATED: that commit removed the
+             DiskSpace dict and the 0A2A.1 reason on the same argument, two days before this
+             one, and the builds after it uploaded. A declaration whose reason string names a
+             use the app no longer has is an INACCURATE declaration, not a harmless extra.
+             ⭐ If a timestamp is ever read again (a take list sorted by date, an export
+             pre-flight), re-declare with C617.1 AND add the category back to
+             `requiredCategories` in ThePrivacyManifestIsDeclaredForBothTargetsTests — claim 4
+             asserts SET EQUALITY, so the two move together or the blocking bundle goes red. -->
 
         <!-- System Boot Time API -->
         <dict>

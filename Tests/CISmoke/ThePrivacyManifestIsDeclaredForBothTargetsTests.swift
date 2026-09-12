@@ -37,12 +37,27 @@ import XCTest
 final class ThePrivacyManifestIsDeclaredForBothTargetsTests: XCTestCase {
 
     private static let manifestEntry = "- path: Resources/PrivacyInfo.xcprivacy"
-    /// The categories with a measured caller in `Sources/` (2026-09-10): `systemUptime` (rPPG
-    /// frame path), `UserDefaults` (app + widget), `.creationDateKey` (video library).
+    /// The categories with a measured caller in `Sources/`: `systemUptime` (rPPG frame path)
+    /// and `UserDefaults` (app + widget).
+    ///
+    /// ⛔ `NSPrivacyAccessedAPICategoryFileTimestamp` stood here until #1307 with the note
+    /// "`.creationDateKey` (video library)". That caller was deleted with video capture
+    /// (#1304, founder 2026-09-12), so the list was asserting a measurement that had expired
+    /// four commits earlier — and claim 4's SET EQUALITY made it load-bearing: the manifest
+    /// could not be corrected without this line moving in the same commit, which is exactly
+    /// the coupling it exists for. Both moved in #1307.
+    ///
+    /// ⚠️ RE-MEASURE, DO NOT TRUST THIS COMMENT. The sweep that decides an entry is over the
+    /// SYMBOLS Apple lists for the category, comments stripped — not over a plausible file
+    /// name. For FileTimestamp that is `creationDate(Key)`, `contentModificationDateKey`,
+    /// `NSURLCreationDateKey`, `NSURLContentModificationDateKey`, `modificationDate`,
+    /// `fileModificationDate`, `NSFileCreationDate`, `NSFileModificationDate`, `getattrlist*`
+    /// and `stat`/`fstat`/`lstat`. `FileManager.attributesOfItem(atPath:)` is NOT on that list,
+    /// so the one survivor in `CrashSafeStatePersistence` (which reads `[.size]`) does not
+    /// re-earn the category.
     private static let requiredCategories = [
         "NSPrivacyAccessedAPICategorySystemBootTime",
         "NSPrivacyAccessedAPICategoryUserDefaults",
-        "NSPrivacyAccessedAPICategoryFileTimestamp",
     ]
 
     /// Claim 1 — two declarations, each in the one shape XcodeGen honours.
