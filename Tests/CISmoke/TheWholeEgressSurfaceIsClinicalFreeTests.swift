@@ -13,7 +13,7 @@
 //               `ArtNetSender.dmxChannels(for:resolution:)`) — measured, not inferred from
 //               the neighbouring comment (#867: a register line claimed over a NEIGHBOUR
 //               measures the neighbour).
-//   · Multipeer `ColabPayload.egressible(from:)` → `BioPeek(bpm, coherence,
+//   · Multipeer `BioPeek.egressible(from:)` → `BioPeek(bpm, coherence,
 //               hrvNormalized, breathRate, synthetic)`.  All derived.
 //   · Mod tap   `ModulationEngine` → `/echoelmusic/mod/*`, already-applied values.
 //
@@ -135,8 +135,8 @@ final class TheWholeEgressSurfaceIsClinicalFreeTests: XCTestCase {
     /// phone rather than the performer's own rig, so it is the one where a leak is least
     /// recoverable: the holder of the receiving device never agreed to anything.
     func testThePeerRowIgnoresTheClinicalTriplet() throws {
-        let a = try XCTUnwrap(ColabPayload.egressible(from: base()))
-        let b = try XCTUnwrap(ColabPayload.egressible(from: clinicalLoaded()))
+        let a = try XCTUnwrap(BioPeek.egressible(from: base()))
+        let b = try XCTUnwrap(BioPeek.egressible(from: clinicalLoaded()))
         XCTAssertEqual(a, b, """
             `BioPeek` changed on a clinical-only edit, so a millisecond HRV statistic now \
             travels to someone else's phone. `BioPeek` carries bpm, coherence, normalized \
@@ -173,8 +173,8 @@ final class TheWholeEgressSurfaceIsClinicalFreeTests: XCTestCase {
         let admA = ADMOSCSender.admMessages(for: base(), object: 1).map(\.1)
         let admB = ADMOSCSender.admMessages(for: derivedMoved(), object: 1).map(\.1)
         XCTAssertNotEqual(admA, admB, "ADM `/dist` stopped following coherence (#1293 control)")
-        let peekA = try XCTUnwrap(ColabPayload.egressible(from: base()))
-        let peekB = try XCTUnwrap(ColabPayload.egressible(from: derivedMoved()))
+        let peekA = try XCTUnwrap(BioPeek.egressible(from: base()))
+        let peekB = try XCTUnwrap(BioPeek.egressible(from: derivedMoved()))
         XCTAssertNotEqual(peekA, peekB, "`BioPeek` stopped carrying coherence (#1293 control)")
     }
 
@@ -183,7 +183,7 @@ final class TheWholeEgressSurfaceIsClinicalFreeTests: XCTestCase {
     /// Claim 6 — 5.1.3 is untouched by all of this: a Health-sourced frame still reaches
     /// no peer at all. The field question never gets asked, because the source answer is no.
     func testTheSourceGateStillRefusesHealthKitEverywhere() {
-        XCTAssertNil(ColabPayload.egressible(from: base(.healthKit)),
+        XCTAssertNil(BioPeek.egressible(from: base(.healthKit)),
                      "a HealthKit-sourced frame reached a peer row — 5.1.3 (#186)")
         for s in [BioSource.healthKit, .watch, .oura] {
             XCTAssertFalse(BioEgressPolicy.allowsEgress(s), "\(s) is Health-store data")
