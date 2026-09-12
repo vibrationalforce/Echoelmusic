@@ -262,6 +262,12 @@ struct AudioInputPickerView: View {
                     .font(EchoelTheme.font(10))
                     .foregroundStyle(EchoelTheme.dim)
                     .fixedSize(horizontal: false, vertical: true)
+                // #1273 — a LEAF, and that is the point: `monitorGateCeiling` moves while the
+                // gate ramps, and a read in THIS body would make the whole sheet — the
+                // draggable "Monitor level" field included — rebuild with it. Same law as
+                // 10.76.50, one sheet over (the engine's own note at `feedbackGuardActive`
+                // records the near miss).
+                FeedbackGateLine()
                 // #829 — Megaphone Mode: a named binary → Toggle (law; like monitoring
                 // and "Tune to key"). The boost value in the copy is DERIVED from the
                 // one constant, never re-typed (#416). Distinct from the "Megaphone"
@@ -832,6 +838,29 @@ private struct RouteCodecRow: View {
                 codec = AudioConfiguration.latencySnapshot().codec
             }
         #endif
+    }
+}
+
+/// ⭐ #1273 — WHY THE MONITOR IS QUIETER THAN THE FIELD SAYS. The feedback gate converges on
+/// the loudest level this room allows; without a readout the founder sees a "Monitor level"
+/// of 0.60 and hears less, with nothing on screen to explain it — the shape of every
+/// "funktioniert nicht" report in this family. Its own `View` so the ramp's writes churn
+/// eight words and not the sheet (see the call site).
+private struct FeedbackGateLine: View {
+    @Environment(AudioEngine.self) private var audioEngine
+
+    var body: some View {
+        let gate = audioEngine.monitorGateCeiling
+        // Silent when there is nothing to explain: monitoring off, or the gate fully open
+        // (and not ducking). A line that is always on screen stops being read.
+        if audioEngine.isInputMonitoring && (gate < 1 || audioEngine.feedbackGuardActive) {
+            Text(audioEngine.feedbackGuardActive
+                 ? "Feedback guard active — monitor held at \(Int(gate * 100))% of your level."
+                 : "Feedback gate \(Int(gate * 100))% — raising while the room stays clear.")
+                .font(EchoelTheme.font(10))
+                .foregroundStyle(audioEngine.feedbackGuardActive ? EchoelTheme.warning : EchoelTheme.dim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

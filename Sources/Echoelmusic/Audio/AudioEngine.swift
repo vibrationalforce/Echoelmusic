@@ -433,9 +433,48 @@ public final class AudioEngine {
     var inputMonitorGain: Float = 0.6 {
         didSet {
             let g = min(max(inputMonitorGain, 0), 1)
-            if isInputMonitoring && !feedbackGuardActive { monitorMixer.outputVolume = g }
+            // #1273: the REQUEST is what the field sets; what reaches the speaker is the
+            // request times the feedback gate. Writing `g` raw here would jump straight past
+            // a gate the guard tick had deliberately closed — one drag and the room howls
+            // again, with the gate's own state still saying it was holding.
+            if isInputMonitoring && !feedbackGuardActive {
+                monitorMixer.outputVolume = g * monitorGateFraction
+            }
         }
     }
+    /// ⭐ #1273 — THE FEEDBACK GATE (founder 2026-09-11: „Monitoring … nur erlauben bzw.
+    /// hochrecken, wenn kein Feedback"). The fraction of `inputMonitorGain` the monitor is
+    /// currently ALLOWED to use. It starts CLOSED on every engage and rises only on ticks
+    /// where the room shows no feedback at all; the moment the duck fires, the detector
+    /// reports a howl candidate or a defence notch is biting, it falls — faster than it rose.
+    ///
+    /// ⚠️ WHY THIS IS NOT THE DUCK WRITTEN TWICE. The duck (`FeedbackGuard.gainReductionDB`)
+    /// is REACTIVE and broadband: it needs a runaway that is already over the ceiling, i.e.
+    /// audible, and it lets go as soon as the level drops — straight back into the same gain
+    /// that caused it. That is why the founder heard it "pump". The gate is PERMISSION: it
+    /// converges on the loudest monitor level THIS room allows and stays there, so the duck
+    /// stops being the thing that holds the system together. They multiply; neither replaces
+    /// the other, and the notch half (#847/#848) still keeps the howl inaudible per band.
+    ///
+    /// ⚠️ NOT PERSISTED, like monitoring and the megaphone: a gate value carried across a
+    /// relaunch would describe a room that is no longer there.
+    @ObservationIgnored private var monitorGateFraction: Float = 0
+    /// The gate as the UI reads it, quantised to 5 % and written ONLY on change. The raw
+    /// fraction moves on every one of the ~15 guard ticks per second; a plain `@Observable`
+    /// mirror of it would make every view that shows it a 15 Hz observer — the 10.76.50
+    /// mechanism, one sheet over (the #298 Nachlese at `feedbackGuardActive` is the same
+    /// note). Quantising costs ~20 writes during a ramp and none in steady state.
+    public private(set) var monitorGateCeiling: Float = 0
+    /// ~1.5 s from closed to open at the ~15 Hz guard tick, and ~0.55 s back down. The
+    /// asymmetry is the whole design: slow to trust the room, quick to stop feeding it.
+    nonisolated static let monitorGateRiseStep: Float = 0.045
+    nonisolated static let monitorGateFallStep: Float = 0.12
+    /// Latches the gate's last LOGGED state so the tick writes one line per transition
+    /// instead of fifteen per second. ⚠️ An all-caps word must never enter that line:
+    /// `scripts/diag-ladder.py` reads any all-caps token after a ladder prefix as a
+    /// terminator, and its four are SKIPPED/REFUSED/FAILED/OK (the same trap
+    /// `TheBufferFollowsTheGrantedRateTests` pins one diag line over).
+    @ObservationIgnored private var monitorGateOpen = false
     /// #829 — Megaphone Mode (founder: "On Device mic directly Verstärkung mit
     /// intelligenter Rückkopplungsunterdrückung"). Amplifies the monitored mic by
     /// `megaphoneBoostDB` through the EXISTING `notchEQ`'s `globalGain` (−96…+24 dB) —
@@ -3402,7 +3441,16 @@ public final class AudioEngine {
                 logMonitorOutcome("on 5/5 SKIPPED: tap already installed", level: .info)
             }
             isInputMonitoring = true
-            monitorMixer.outputVolume = min(max(inputMonitorGain, 0), 1)
+            // #1273: engage with the gate CLOSED. This line used to jump straight to the
+            // user's level, which in a speaker-monitoring room is a howl that exists before
+            // any defence has seen a single sample — the duck needs eight level samples
+            // (~0.5 s) and the detector a full FFT window. The guard tick opens the gate over
+            // ~1.5 s if, and only if, the room stays clear, so the worst case is now a swell
+            // that stops where the room stops it instead of a squeal that gets ducked.
+            monitorGateFraction = 0
+            monitorGateCeiling = 0
+            monitorGateOpen = false
+            monitorMixer.outputVolume = 0
             // #829: monitoring ON re-applies the megaphone choice — the flag can be
             // flipped while monitoring is off, and the OFF path resets globalGain.
             notchEQ.globalGain = megaphoneMode ? Self.megaphoneBoostDB : 0
@@ -3496,6 +3544,12 @@ public final class AudioEngine {
             if offWasRunning { masterEngine.stop() }
             masterEngine.reset()
             monitorMixer.outputVolume = 0
+            // #1273: the gate closes with the monitor. It describes ONE room in ONE session;
+            // carrying a fraction across an off/on cycle would let the next engage start at a
+            // level the defence has not re-earned — the same jump the engage site just lost.
+            monitorGateFraction = 0
+            monitorGateCeiling = 0
+            monitorGateOpen = false
             logMonitorOutcome("off 2/5: removing tap", level: .info)
             if monitorTapInstalled {
                 masterEngine.inputNode.removeTap(onBus: 0)
@@ -3709,7 +3763,6 @@ public final class AudioEngine {
             : FeedbackGuard.gainReductionDB(rmsHistory: monitorLevelHistory)
         let base = Swift.min(Swift.max(inputMonitorGain, 0), 1)
         let factor: Float = duckDB > 0 ? powf(10, -duckDB / 20) : 1
-        monitorMixer.outputVolume = base * factor
         // ⚠️ GATED ON CHANGE, NOT ASSIGNED EVERY TICK (#298 Nachlese). `feedbackGuardActive` is
         // a plain `@Observable` stored property, and **assigning an equal value still
         // notifies** — the rule this file already states at `emitTimingWindowIfDue`. Assigning
@@ -3744,6 +3797,36 @@ public final class AudioEngine {
                 inputFeatures.analyze(samples: monitorSpectrumBuffer, magnitudes: magnitudes,
                                       sampleRate: monitorTapSampleRate,
                                       timestamp: CFAbsoluteTimeGetCurrent()))
+        }
+        // ⭐ #1273 — THE GATE STEP, and it sits HERE, after the spectrum, on purpose: the
+        // three risk signals it reads are only knowable once this tick's FFT has run.
+        //   · `duckDB > 0`        — the broadband runaway is already happening;
+        //   · `!candidates.isEmpty` — the detector sees a howl BEFORE it is audible (#847);
+        //   · a biting defence band — `notchBands` still holds a notch from an earlier
+        //     detection, so the room has not actually gone quiet, it is being held quiet.
+        // The third is read BEFORE `applyNotchDefence` advances the slew, i.e. it is the
+        // state the previous tick left behind. That is deliberate and it is the safe
+        // direction: a band that releases this tick keeps the gate shut for one more 66 ms.
+        let notchBiting = notchBands.contains { $0.gainDB < 0 || $0.holdTicks > 0 }
+        let clear = duckDB <= 0 && candidates.isEmpty && !notchBiting
+        monitorGateFraction = clear
+            ? Swift.min(1, monitorGateFraction + Self.monitorGateRiseStep)
+            : Swift.max(0, monitorGateFraction - Self.monitorGateFallStep)
+        monitorMixer.outputVolume = base * factor * monitorGateFraction
+        // Quantised mirror, written only on change (see the property's own note).
+        let quantised = (monitorGateFraction * 20).rounded() / 20
+        if quantised != monitorGateCeiling { monitorGateCeiling = quantised }
+        // ONE line per transition, never per tick: the log is the founder's only instrument
+        // for "why is it quieter than I asked" and a 15 Hz stream of it would bury the
+        // lifecycle ladder this file exists to keep readable (#859).
+        let open = monitorGateFraction >= 1
+        if open != monitorGateOpen {
+            monitorGateOpen = open
+            logMonitorOutcome(open
+                ? "feedback gate open — the room allows the full monitor level (#1273)"
+                : "feedback gate holding at \(Int(quantised * 100))% — "
+                  + "duck \(duckDB > 0) candidates \(candidates.count) notch \(notchBiting) (#1273)",
+                level: .info)
         }
         applyNotchDefence(candidates: candidates)
     }
