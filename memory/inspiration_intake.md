@@ -743,3 +743,64 @@ Acht Teile EINZELN gescort — **nichts davon wurde gebaut**; acht Zeilen in `in
 Vorschlag, der ein „Grundgerüst" ANBIETET, ist die teuerste Sorte — er klingt nach Fundament und ist
 in diesem Repo dreimal ein Abriss (CMake/JUCE 06-19, AUv3 07-24, DAW-Hälfte 07-25). Gegen die
 GESCHICHTE prüfen, nicht nur gegen die Regel.
+
+## 2026-09-13 — Founder-Screenshots: 4-teiliger Purple-Cow-Prompt-Satz (Seth Godin)
+
+Vier Karten ohne Begleittext, nacheinander geschickt: Rolle/Task/Steps/Rules/Context/Output je
+Prompt. (1) „What's Making You Forgettable", (2) „What You've Been Downplaying", (3) „Turn It
+Into Your Purple Cow". Fremder Autor, Marketing-Werkzeug.
+
+**Tier: ADOPT→PIPELINE.** Nie in `Sources/`, nie in der App. Der Grund, warum es überhaupt
+adoptiert wird statt beobachtet: die Kette arbeitet auf dem **WORTLAUT** statt auf
+Branchen-Annahmen — dieselbe Disziplin, die dieses Repo ohnehin erzwingt („Base the diagnosis
+on what I actually describe, not assumptions about my industry in general").
+
+### Angewendet — drei belegbare Befunde, keine Meinungen
+
+1. **Die H1 verletzt die eigene Marken-Regel.** `docs/index.html:636-639` sagt „Create from
+   Within"; `CLAUDE.md` BRAND sagt hart *„NOT a wellness, soundscape, or therapy product"*.
+   Das ist kein Positionierungs-Streit, das ist ein Widerspruch im eigenen Haus — auflösbar
+   ohne jede Kundenstimme, indem die BEREITS AUSGELIEFERTE Store-Zeile dort steht.
+2. **Die Ehrlichkeits-Mechanik ist vorn vollständig unterdrückt.** 34 Wächter im
+   blockierenden Bundle lesen `docs/`, `fastlane/metadata` oder `CLAIMS.md` — der Build fällt,
+   wenn die Werbung lügt. Gemessen trägt `index.html` „honest" **1×** und „claim" **0×**; die
+   Sprache lebt auf `architecture.html`, `faq.html`, `terms.html`. Sie existiert, nur nicht
+   dort, wo entschieden wird.
+3. **Feld 3 des Prompts ist LEER.** „Was Kunden über mich gesagt haben" — `grep` über `docs/`
+   und `fastlane/` findet **kein einziges Zitat**. Die ganze Methode steht auf dem, was andere
+   sagen, und genau der Teil fehlt. Das ist der billigste offene Hebel nach dem
+   TestFlight-Build von v10.79.472.
+
+### Was daraus ein Vorhaben wurde
+
+`docs/claims.html` — die ⛔-Hälfte von `ContentPipeline/CLAIMS.md` (360 Zeilen, 14 begründete
+Streichungen, liegt fertig und unveröffentlicht) als öffentliche Seite, **aus der Fußzeile
+verlinkt, nicht aus der H1**. Damit ist sie ein TEST der Position statt einer Wette auf sie:
+wird sie geteilt, ohne dass der Founder sie geteilt hat, ist die Position verdient.
+
+⚠️ **Risiko, benannt statt überspielt:** ohne eine dritte Spalte — *was tragend ist und nicht
+entfernt wird* — liest sich eine öffentliche Streichliste als Instabilität für jemanden, der
+eine Show um das Werkzeug herum plant. Die Spalte ist Teil des Vorhabens, nicht Zierde.
+
+## 2026-09-13 — Founder-Ansage: „Nächster big step TestFlight für Watch"
+
+**Tier: WATCH — messen statt bauen.** Kein REJECT: die Richtung ist Founder-Wille und deckt
+sich mit dem Plattform-Ziel. Aber der Schritt ist kein Schalter.
+
+Gemessen, nicht zitiert: Target **auskommentiert** (`project.yml:224`), **`import
+WatchConnectivity` = 0** (die drei `WCSession`-Treffer sind der Warnkommentar in
+`EchoelWatchApp.swift` selbst — genau die `EchoelModalBank`-Falle, ein `grep`, der seine eigene
+Beschreibung trifft), und die Uhr liest den App-Group-Container **dieses Geräts**.
+
+⛔ **Der Ausfall ist bauartbedingt STILL.** `refreshFromSharedStore()` gibt bei leerem Container
+`nil`, die Uhr rendert den plausiblen Leerzustand „Start a session on iPhone." — **eine
+verdrahtete Route, die nichts überträgt, sieht identisch aus wie eine unverdrahtete.** Ein
+TestFlight-Build wäre eine Uhr-App, die installiert, startet, fertig aussieht und nie einen
+Herzschlag zeigt.
+
+⭐ **Der Wendepunkt:** Handgelenk-Herzfrequenz erreicht das Instrument mutmaßlich **heute schon**
+über Apple Health — `HealthKitBioPublisher` ist live, der Store-Text behauptet es. Wenn das
+stimmt, ist die Watch-App **Anzeige plus Latenz, keine Fähigkeit**, und der Umfang des Projekts
+ändert sich um den Faktor zehn. Das wird im Code verifiziert, bevor irgendetwas geplant wird.
+
+`WCSession` ist ein **neues Framework** ⇒ Council/Founder **vor** der ersten Zeile.
