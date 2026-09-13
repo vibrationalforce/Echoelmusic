@@ -32,8 +32,10 @@ repo — **no tokens, keys or passwords, ever.**
 
 ## 2. How the site actually deploys — and the sentence that says otherwise
 
-Two deploy paths exist. **One works, one has been dead for eleven weeks, and a workflow prints
-the dead one's name.**
+**THREE deploy paths exist** (⛔ "two" stood here until #1314 — the third, Cloudflare Pages, is
+not a workflow and so was invisible to the grep this section trusted; see the ⛔ block below the
+table). Of the two IN the table: **one works, one has been dead for eleven weeks, and a workflow
+prints the dead one's name.**
 
 | path | runs | newest | event |
 |---|---|---|---|
@@ -58,12 +60,38 @@ pages.yml workflow."* The deployment does follow; **not via `pages.yml`.** The s
 wrong about the mechanism, which is exactly the thing you need to be right when debugging.
 Founder-gated (`.github/workflows/**`): **report, do not edit.**
 
-**Cloudflare is not in the loop.** `git grep -c wrangler -- .github/workflows/` → **zero**.
-`_headers` and `_redirects` are Cloudflare-Pages files sitting on a GitHub-Pages host, so they
-are almost certainly inert — GitHub Pages honours neither. **UNVERIFIED from this container**
-(the agent proxy 403s `echoelmusic.com`); one command settles it:
+⛔ **"Cloudflare is not in the loop" STOOD HERE AND IS FALSE (corrected 2026-09-13, #1314).**
+Cloudflare Pages builds and deploys THIS repo. Measured, not inferred — on `17eedab` the commit
+carries two check runs from the app `cloudflare-workers-and-pages`: *Cloudflare Pages* with
+output *"Deployed successfully … Latest commit: `17eedab`"*, and *Workers Builds: echoelmusic*.
+Re-derive on any commit:
+
+```
+curl -s "https://api.github.com/repos/vibrationalforce/Echoelmusic/commits/<sha>/check-runs" \
+  | python3 -c "import json,sys; [print(r['name'], r.get('app',{}).get('slug')) \
+                for r in json.load(sys.stdin)['check_runs']]"
+```
+
+⭐ **THE EVIDENCE THAT WAS QUOTED IS STILL CORRECT AND STILL DOES NOT ANSWER THE QUESTION.**
+`git grep -c wrangler -- .github/workflows/` really is zero, and it stays zero: Cloudflare Pages
+is a **GitHub App integration**, not a workflow — it watches pushes and reports a check run, so
+it leaves no trace in `.github/`. A workflow-scoped grep cannot see a third deploy path by
+construction, and answering "who deploys this" with it is the defect class
+`.claude/rules/context.md` §2 names: a measurement that can only return LESS than the truth.
+**Three deploy paths now exist, not two** (the two in the table above plus this one).
+
+⚠️ **WHAT IS STILL OPEN, and it is a different question from the one that was answered wrongly:**
+which host serves the APEX `echoelmusic.com`. Cloudflare deploying the repo does not prove the
+domain points at it. So `_headers` and `_redirects` are **plausibly live, not provably** — do not
+write them off as decoration (the old paragraph invited exactly that, and `docs/_headers` is
+where `microphone=()` is closed after #1302). Still UNVERIFIED from this container: the agent
+proxy 403s `echoelmusic.com`, re-measured today. One command from anywhere else settles it:
 `curl -sI https://echoelmusic.com/hilfe` — a `301` means something honours them, a `404` means
 they are decoration.
+
+⚠️ **This correction deliberately gets NO guard.** A negative text scan for the struck sentence
+would go red on this very retraction (#491), and the live fact lives in the GitHub API, not in a
+repo file, so nothing in the tree can pin it.
 
 ⚠️ **`git log -- docs/` lies here.** This is a shallow clone grafted onto `545b19e`
 (`.git/shallow` exists; `git rev-list --count origin/main` → **3**). Local history reaches back
