@@ -86,6 +86,77 @@ final class WebsitePagesAreFindableAndHonestTests: XCTestCase {
         return try names.map { ($0, try String(contentsOf: docs.appendingPathComponent($0), encoding: .utf8)) }
     }
 
+    // MARK: - The one published file that is not a page
+
+    /// ⭐ #1313 — `docs/manifest.json` IS PUBLISHED COPY AND WAS IN NO SCAN.
+    ///
+    /// Every honesty claim in this file runs over `pages()`, which is `docs/*.html`. The PWA
+    /// manifest is JSON, so it was invisible to all of them — and it shipped, from
+    /// `index.html:56`, a description reading *"10 unified Echoel* tools — your body's
+    /// vibrations become music, visuals, film, and light"*. Two false claims in one string on
+    /// an install surface: the tool count matches NO era the repo records (`docs/version.json`
+    /// retires the **twelve**-tool framing; ten appears nowhere else in the tree), and `film`
+    /// outlived #1304, which took video capture out entirely.
+    ///
+    /// ⚠️ THE FINDING IS THE GAP, NOT THE SENTENCE. A file can be published, linked from the
+    /// home page, and still sit outside every guard in the directory that exists to check
+    /// published copy — because the scan was defined by an extension. This claim closes that
+    /// for the manifest; `docs/og-image.svg` is the other non-HTML published claim surface and
+    /// is covered by `TheSocialCardIsDerivedFromItsArtworkTests` (#1312).
+    ///
+    /// ⛔ IT FORBIDS NOTHING THE APP CAN DO (#364). If video ever ships, the repair is to write
+    /// it in the manifest and delete the word from this needle set in the same commit — the
+    /// message says so. What it bans is a MEDIUM the app does not have and a unit count nothing
+    /// re-derives.
+    ///
+    /// ⚠️ LIMIT (§1): a source-text scan over one JSON string. It proves what the manifest says,
+    /// never what an installed PWA shows.
+    ///
+    /// ⚠️ GRADING (§0, no local toolchain). Seven assertions, transcribed in Python against both
+    /// trees. On the parent (`17eedab`) two are red — `film` and `unified` — which are the two
+    /// false claims this slice removed. The other five are green on both: four medium bans that
+    /// never matched, and the bio-reactive counterweight. That split is correct, not padding
+    /// (#343); the bans are what stops the next medium walking back in.
+    func testThePWAManifestClaimsOnlyWhatShips() throws {
+        let url = try repoRoot().appendingPathComponent("docs/manifest.json")
+        guard let raw = try? Data(contentsOf: url),
+              let parsed = try? JSONSerialization.jsonObject(with: raw) as? [String: Any] else {
+            XCTFail("ANCHOR MISSING: docs/manifest.json is absent or not valid JSON — a missing "
+                    + "anchor is a finding, not a pass (#454).")
+            return
+        }
+        guard let description = parsed["description"] as? String, !description.isEmpty else {
+            XCTFail("docs/manifest.json has no non-empty `description` — the needles below would "
+                    + "then pass on nothing (#367).")
+            return
+        }
+
+        // A medium the app does not have. Video capture went with #1304, the cut with #121
+        // Slice 3, and RTMP was never linked (`Package.swift` `dependencies: []`).
+        for word in ["film", "video", "AUv3", "RTMP", "stream"] {
+            XCTAssertFalse(
+                description.localizedCaseInsensitiveContains(word),
+                """
+                docs/manifest.json's description claims "\(word)". The app has no video and no                 stream; this string is the PWA install prompt, i.e. published copy, and it is                 linked from index.html:56. If that capability ever ships, write it here AND                 remove the word from this needle set in the same commit.
+                """)
+        }
+
+        // A unit count nothing re-derives. "12 unified tools" is retired
+        // (`docs/version.json`), and the ten that stood here matched no era at all.
+        XCTAssertFalse(
+            description.localizedCaseInsensitiveContains("unified"),
+            """
+            docs/manifest.json's description sells a "unified <n> tools/engines" framing. That             count is not derived from anything and was already retired once; the product is one             instrument (`docs/dev/PRODUCT_DEFINITION.md`), not a bundle of numbered tools.
+            """)
+
+        // Counterweight (#343): the string is still the real description, so the bans above
+        // cannot be a vacuous green on an emptied or renamed field.
+        XCTAssertTrue(
+            description.localizedCaseInsensitiveContains("bio-reactive"),
+            "docs/manifest.json no longer describes Echoel as bio-reactive — the needles above "
+            + "then prove nothing about published copy.")
+    }
+
     // MARK: - The wire's own numbers
 
     /// ⭐ #1049 — THE SITE'S OSC ADDRESS COUNTS ARE DERIVED FROM `OSCSender`, NOT TYPED.
