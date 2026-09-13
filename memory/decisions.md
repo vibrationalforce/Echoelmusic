@@ -1862,3 +1862,41 @@ der Quality-Governor treibt DETAIL, nie die Bildrate — bleibt gekürzt oben. 1
 eigenen Fehlermeldung vorschreibt: Provenienz ins Ledger, Gesetz nach oben.
 
 **Review:** 2026-10-12.
+
+### 2026-09-13 — Veröffentlichte Nicht-Text-Flächen sind Behauptungsflächen (#1312–#1314)
+
+**Entscheidung:** Ein veröffentlichtes Rasterbild oder eine veröffentlichte Nicht-HTML-Datei
+ist Behauptungsfläche wie jede Seite — und braucht denselben Wächter-Anspruch. Konkret:
+`docs/og-cover.png` wird ab jetzt aus `docs/og-image.svg` GERENDERT
+(`scripts/render-og-cover.py`), nie von Hand editiert; `docs/manifest.json` ist in den
+Website-Ehrlichkeits-Wächter aufgenommen.
+
+**Begründung:** Die Karte zeigte das Abzeichen „AUv3" — eine Behauptung, deren Entfernung
+#158 und #192 je einen ganzen Zyklus und #184 zwölf Zeilen App-Store-Text gekostet hat — auf
+dem `og:image` von zwanzig Seiten, also in jeder Link-Vorschau. Kein Werkzeug konnte es sehen:
+Text-Wächter lesen kein Raster, und `docs/CLAUDE.md` §5 weist die nächste Sitzung ausdrücklich
+an, AUv3-Treffer in `docs/` NICHT anzufassen, weil sie dort Richtigstellungen sind.
+
+**Erwartetes Ergebnis:** Drift zwischen Vorlage und Auslieferung wird beim nächsten Mal rot,
+nicht beim übernächsten Screenshot. Der Abdruck sitzt auf der QUELLE, nicht auf dem PNG — ein
+korrektes Re-Render auf einem anderen Rechner darf nicht rot werden (#364).
+
+**Review:** 2026-10-13.
+
+### 2026-09-13 — Watch: Kadenz ist das Problem, nicht Transport (#1315)
+
+**Entscheidung:** Vor jedem Watch-Target wird „Health" eine WÄHLBARE Quelle auf dem iPhone
+(Scheibe A). Einbetten des Targets, `HKWorkoutSession` und `WCSession` bleiben
+HOLD-FOR-FOUNDER.
+
+**Begründung:** Das Handgelenk erreicht heute schon klingenden Ton — HealthKit ist der
+Transport, er ist verdrahtet, und ein `.healthKit`-Rahmen geht ungefiltert in `PolySynthVoice`
+und im Flow ins Tempo. Was fehlt, ist die Schreibkadenz der Uhr (im Ruhezustand minutenweit;
+`HKWorkoutSession` kommt in `Sources/` nullmal vor). Die Richtung Telefon → Uhr hat wirklich
+keinen Kanal — das ist eine ANDERE Frage, und die alte Zeile faltete beide in eine.
+
+**Erwartetes Ergebnis:** Der Founder kann die Uhr absichtlich einschalten und sehen, dass sie
+wirkt, bevor irgendetwas signiert oder eingebettet wird. Risiko benannt: ein eingebettetes
+Watch-Target kann den heute grünen iPhone-Upload brechen.
+
+**Review:** 2026-10-13.

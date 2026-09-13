@@ -31532,3 +31532,114 @@ sechs Wächter-Reparaturen dahinter (#1306–#1311) und der Deploy sind in EINEM
 Gerät des Founders angekommen. Offen bleibt allein die Geräte-Sitzung — die 8-Punkte-Checkliste
 in der Notiz und die 132 `NEEDS-FOUNDER-VERIFY`-Bitten, die `python3 scripts/founder-verify.py`
 druckt.
+
+---
+
+## 2026-09-13 — Die Wahrheits-Runde auf den VERÖFFENTLICHTEN Flächen (#1312–#1315)
+
+Ausgangspunkt: ein Ultracode-Workflow (27 Agenten, drei Dimensionen — `website`, `claims`,
+`watch`) mit adversarischer Widerlegungsstufe. **18 Befunde überlebten, 6 wurden widerlegt.**
+Zwei der widerlegten waren MEINE EIGENEN Plan-Punkte, und das hat die Reihenfolge dieser
+Sitzung bestimmt.
+
+### Was der Workflow an meinem eigenen Plan widerlegt hat
+
+1. **„Create from Within" ist keine Website-Zeile, sondern die MARKEN-Zeile des Repos.**
+   `OneStartControlTests.swift:258` nennt sie namentlich so, sie war die Beschriftung des
+   Start-Knopfs (`BioStripView.swift:685`), und sie steht in ~15 weiteren Stellen unter
+   `Sources/`, in `README.md:30` und in `Resources/AppIcon.swift:345`. Sie zu ersetzen ist eine
+   Marken-Entscheidung bis ins App-Icon — **Founder/Council, kein Ein-Datei-Fix.** Mein „das ist
+   nur ein Widerspruch, keine Wette" war falsch.
+2. **Die App ist NICHT im App Store.** Ich habe mehrfach „die schon ausgelieferte Store-Zeile"
+   gesagt. `Bio-Reactive Instrument` ist der VORBEREITETE fastlane-Untertitel;
+   `docs/index.html:661` sagt selbst „The App Store release is coming".
+3. **„multidimensional" ist im Repo UMSTRITTEN, nicht zurückgezogen.**
+   `.claude/skills/echoel-marketing/SKILL.md:42` schreibt die Formel vor, und `decisions.csv:79`
+   trägt eine Positionierungs-Entscheidung von 2026-06-17, die **weiterhin ACTIVE** ist. Nur
+   `memory/user.md:10` zieht sie zurück. Ein Edit an `index.html` allein lässt Generator und
+   aktive Entscheidung stehen — die Formulierung wächst nach.
+4. **`hero-claim` ist nicht die H1.** Die H1 sind drei `<span>` (`Create`/`from`/`Within`);
+   die Behauptungs-Zeile ist ein `<p>` daneben. Eine Anweisung „ersetze die sichtbare H1" hätte
+   Zeilen editiert, die die Behauptung gar nicht enthalten.
+
+**U1 steht damit auf HOLD-FOR-FOUNDER** — nicht weil es schwer ist, sondern weil es eine
+Marken- und eine noch aktive Entscheidung berührt.
+
+### #1312 — die Social-Card behauptete AUv3, als PIXEL
+
+Der unbestrittene, sofort machbare Befund, der U1 ersetzt. `docs/og-cover.png` ist das
+`og:image` von **20** Seiten. Sie war eine handgemachte Binärdatei OHNE Generator und darum
+still an ihrer eigenen Vorlage vorbeigedriftet: viertes Abzeichen „AUv3", während
+`docs/og-image.svg` an derselben Stelle längst „MIDI" sagte. Dazu „motion" in der Strapline.
+
+⭐ **Kein Werkzeug konnte das melden** — ein Text-Wächter liest kein Rasterbild, und
+`docs/CLAUDE.md` §5 sagt der nächsten Sitzung zu Recht, dass ein AUv3-Treffer in `docs/` eine
+RICHTIGSTELLUNG ist und nicht angefasst werden darf. Das eine Wort, das man stehen lassen soll,
+war hier ein Werbe-Abzeichen.
+
+Repariert ist die ABLEITBARKEIT, nicht der Treffer: `scripts/render-og-cover.py` rendert die SVG
+mit Headless-Chromium auf 1200×630 und schreibt `docs/og-cover.source.sha256` — den Abdruck der
+VORLAGE. Der Wächter vergleicht diesen Quell-Abdruck, **nicht den des PNG**: zwei korrekte
+Renders auf zwei Rechnern liefern verschiedene PNG-Bytes, ein PNG-Abdruck wäre auf dem Mac des
+Founders rot (#364). Design unverändert, nur „Sequencer" → „Generative" (Beat-Maker ist mit
+#166/#167 gelöscht; die Schwestervorlage `og-image.html` hatte diese Wahl schon getroffen).
+
+⛔ **Ehrliche Grenze, ausdrücklich notiert:** dieser Wächter hätte den Auslöser NICHT gefunden.
+Auf dem Elternbaum stand AUv3 in Pixeln, und der Abdruck entsteht erst mit dieser Scheibe. Er
+kauft die NÄCHSTE Abweichung.
+
+### #1313 — `docs/manifest.json` stand in KEINEM Scan
+
+Die PWA-Beschreibung (von `index.html:56` verlinkt, also der Text der Installations-Aufforderung)
+verkaufte „10 unified Echoel* tools … music, visuals, **film**, and light". Zwei falsche
+Behauptungen: Video ist mit #1304 ganz zurückgenommen, und die Zehn passt zu **keiner** Epoche
+(`docs/version.json` nimmt die ZWÖLF zurück; die Zehn kommt sonst nirgends vor).
+
+⭐ **Der Befund ist die LÜCKE, nicht der Satz.** Jeder Ehrlichkeits-Anspruch in
+`WebsitePagesAreFindableAndHonestTests` läuft über `pages()` = `docs/*.html`. Die Manifest-Datei
+ist JSON und war damit für ALLE unsichtbar — veröffentlicht, von der Startseite verlinkt, und
+trotzdem außerhalb jedes Wächters, der genau für veröffentlichte Kopie existiert. **Eine
+Scan-Menge, die über die Dateiendung definiert ist, hat solche Löcher per Konstruktion.** Die
+zweite veröffentlichte Nicht-HTML-Fläche ist `docs/og-image.svg` (deckt #1312 ab).
+
+### #1314 — „Cloudflare ist nicht im Spiel" war falsch: es gibt einen DRITTEN Deploy-Pfad
+
+`docs/CLAUDE.md` §2 behauptete das und belegte es mit `git grep -c wrangler --
+.github/workflows/` → null. **Der Befehl stimmt und bleibt null; die Schlussfolgerung stimmt
+nicht.** Cloudflare Pages baut und deployt dieses Repo als GitHub-**App**-Integration, also ohne
+jede Datei in `.github/`. Gemessen an den Check-Runs von `17eedab`: die App
+`cloudflare-workers-and-pages` postet „Cloudflare Pages — Deployed successfully, Latest commit:
+17eedab" und „Workers Builds: echoelmusic".
+
+⭐ **Die Fehlerklasse steht schon in `.claude/rules/context.md` §2: eine Messung, die
+strukturell nur WENIGER als die Wahrheit liefern kann.** Ein Grep über Workflows kann einen
+App-basierten Pfad nicht sehen — nicht weil er veraltet, sondern per Konstruktion. Folge, die
+nicht kosmetisch ist: `_headers`/`_redirects` sind **plausibel lebendig** statt „mit ziemlicher
+Sicherheit wirkungslos", und in `docs/_headers` wird nach #1302 `microphone=()` geschlossen.
+Weiter OFFEN und eine ANDERE Frage: welcher Host die Apex-Domain bedient (der Proxy dieses
+Containers 403t sie, heute erneut gemessen).
+
+### #1315 — Watch: die Uhr braucht keinen Transport, sie braucht KADENZ
+
+Plan + Council in `scratchpads/PLAN_WATCH_2026-09-13.md`, **kein Code** (neues Framework ⇒ Regel).
+
+⭐ **Das Handgelenk erreicht heute schon klingenden Ton, ohne Watch-App.**
+`HealthKitBioPublisher` wird beim App-Start konstruiert und gestartet, sein Rahmen trägt
+`source: .healthKit`, `PolySynthVoice` liest `bus.latestBio` OHNE Quellenfilter, und im
+Flow-Modus lässt `bodyTempoTrustworthy` einen HealthKit-Rahmen im ERSTEN Auftreten ans Tempo
+(nur `.cameraPPG` wird auf `isSettled` gegatet). Gegenprobe: `bioVoice` ist NICHT der hörbare
+Pfad (`guard hasEverSounded`), und `.watch` als Quellen-Case hat null Produzenten.
+
+⛔ **Die Watch-Zeile in CLAUDE.md faltete ZWEI RICHTUNGEN in eine Frage.** „Was fehlt: ein
+TRANSPORT" gilt für **Telefon → Uhr** (Anzeige; App-Group-Container pro Gerät, `WCSession` = 0
+Treffer). Für **Uhr → Telefon**, die Bio-Quelle, gibt es kein Transportproblem — HealthKit IST
+der Transport. Dort fehlt die KADENZ: im Ruhezustand schreibt die Uhr minutenweit
+(`HealthKitBioPublisher.swift:43`), `HKWorkoutSession` kommt in `Sources/` **null**mal vor.
+Mit-korrigiert: „4–5 s" ist die LATENZ, nicht die Kadenz — dieselbe Verwechslung wie im
+`beatTimes`-Absatz (Schreibrate gegen Leserate).
+
+Council-Ergebnis: **PROCEED nur für Scheibe A** — „Health" als WÄHLBARE Quelle im
+Puls-Pillen-Menü (`BioSourceKind` kennt heute nur `camera, ble, sim`). iPhone-Änderung, kein
+neues Framework, keine founder-gated Datei. B misst die Kadenz, bevor jemand sie erhöht.
+C (Target einbetten) / D (`HKWorkoutSession`) / E (`WCSession`) sind HOLD-FOR-FOUNDER; C kann
+den heute grünen iPhone-Upload brechen.
