@@ -109,7 +109,25 @@ let package = Package(
                 .enableExperimentalFeature("StrictConcurrency=targeted")
             ]),
 
-        // Test target for unit tests
+        // ⚠️ ONE NAME, TWO DIRECTORIES — read this before trusting any sentence that says
+        // "EchoelmusicTests is green" (#1316).
+        //
+        // This SwiftPM test target carries no `path:`, so it resolves to the SwiftPM default
+        // `Tests/EchoelmusicTests` — the NON-blocking suite. The Xcode target of the SAME NAME,
+        // declared in `project.yml`, lists `sources: - path: Tests/CISmoke` and is the BLOCKING
+        // bundle every CI gate actually builds. The name therefore means a different directory
+        // depending on which build system is asking, and the two suites differ in size by
+        // hundreds of files.
+        //
+        // Consequence that is easy to get wrong in both directions: no CI gate runs SwiftPM at
+        // all (`grep -n "swift build\|swift test" .github/workflows/ci.yml` → nothing; every
+        // step is `xcodebuild`), so `Tests/EchoelmusicTests` is compiled by NO gate — but it IS
+        // compiled by `swift test` on the founder's Mac, which is step 5 of the Ralph loop. A
+        // break there is invisible to CI and visible to exactly one person.
+        //
+        // Renaming either side is NOT a free rename: `.github/workflows/**` names these targets
+        // and is founder-gated (report, do not edit). Guard:
+        // `Tests/CISmoke/TheTestTargetNameMeansTwoDirectoriesTests.swift`.
         .testTarget(
             name: "EchoelmusicTests",
             dependencies: ["Echoelmusic"]),
