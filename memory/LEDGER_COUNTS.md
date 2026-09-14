@@ -6683,3 +6683,30 @@ rPPG-Sättigungshalt, BioComposer-RNG-Split, −1 dBFS True-Peak-Trim — ist Li
 wahr, gebaut, und in `SESSION_LOG` sowie im Quelltext selbst nachlesbar. Die 06-18-Zeile ist
 ganz Lieferhistorie (Build 1543 nennt außerdem ein AUv3-Target, das am 2026-07-24 entfernt wurde —
 ein weiterer Grund, sie nicht in der Datei stehen zu lassen, die eine Sitzung als Bestandsangabe liest).
+
+
+## Y — Die ~1-Hz-Zeile: die VIERTE und FÜNFTE Auflage (Schreib- gegen Leserate), verschoben aus CLAUDE.md (#1316)
+
+Die Architektur-Zeile in `CLAUDE.md` behält das GESETZ („eine Rate gehört zu genau EINER
+Operation") und gibt die Herleitung hierher ab. Wörtlich, wie sie dort stand:
+
+> ⛔ **UND ES GIBT EINE VIERTE UND FÜNFTE AUFLAGE, in einer Richtung, die dieser Absatz bisher
+> nicht abdeckte** (gefunden in der #459-Nachlese, 2026-08-07, beide in `CameraAnalyzer.swift`):
+> der `beatTimes`-Doc-Kommentar und danach der `rrSegments`-Doc-Kommentar schrieben „wird etwa
+> einmal pro Sekunde neu geschrieben". Die ~1 Hz ist die **LESE**-Rate des Publishers;
+> **geschrieben** werden beide Arrays in `detectPeaks`, das hinter `peakTick % 4` auf einem
+> 15-fps-Feed sitzt — **~3,75 Hz**. Der Fehler ist also nicht Poll-gegen-Anwendung derselben
+> Größe, sondern **SCHREIB-Rate gegen LESE-Rate zweier verschiedener Größen**, und er ist in der
+> SICHEREN Richtung passiert (die reale Rate ist höher, die `@ObservationIgnored`-Begründung wird
+> damit stärker) — weshalb nichts ihn je rot gemacht hätte.
+
+⚠️ Warum die Verschiebung und nicht die Löschung: die Auflagen eins bis drei (#315/#332/#336)
+stehen weiter in `CLAUDE.md`, weil sie eine LEBENDE Zahl begründen (die ~1-Hz-Decke des Busses).
+Vier und fünf begründen nichts Lebendes mehr — sie sind der BELEG dafür, dass die Regel nötig ist,
+und ein Beleg gehört in die Provenienz. Die Regel selbst ist geblieben.
+
+⚠️ Vor dem Verschieben geprüft (die #746-Lehre — ein Verschieben ist erst eines, wenn beide Seiten
+gemessen sind): `git grep -lF` auf „VIERTE UND FÜNFTE AUFLAGE", „3,75", „peakTick",
+„SCHREIB-Rate gegen LESE-Rate" und den Regelsatz über `Tests/CISmoke` und `scripts` liefert
+NICHTS — kein Wächter las ein Literal aus diesem Segment. Quelle 974 B, Ersatz 383 B,
+Netto −591 B in der immer geladenen Datei.
