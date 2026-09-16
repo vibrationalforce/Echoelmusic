@@ -85,7 +85,14 @@ final class TheBodyPlaysThePictureWithoutSoundTests: XCTestCase {
                       "`bodyDrive` is gone — a silent take opens on a mirror again (#1246)")
         XCTAssertTrue(src.contains("$0.hasMeasuredBreathWaveform ? 0.4 * $0.breathPhaseForSound"),
                       "the body drive must be gated on the measured WAVEFORM — `breathPhaseForSound` is a frozen 0.5 on HealthKit (#1140/#1246)")
-        XCTAssertTrue(src.contains("dishDriveTarget = min(max(musicLevel + 0.5 * touchE, bodyDrive), 1)"),
+        // ⛔ #1322 — THIS PINNED THE WHOLE EXPRESSION AND WENT RED ON A `touchE` → `liveE`
+        // RENAME THAT DID NOT TOUCH ITS SUBJECT. The claim here is the FLOOR — that the body
+        // drive is the lower bound — not which energy term is added on top. Pinning the two
+        // ends leaves the middle free to change, so the next energy edit stays green and
+        // losing the floor still goes red (#364).
+        XCTAssertTrue(src.contains("dishDriveTarget = min(max(musicLevel + 0.5 *"),
+                      "the dish drive is no longer master level plus an energy term (#1246)")
+        XCTAssertTrue(src.contains(", bodyDrive), 1)"),
                       "the dish no longer takes the body drive as its floor (#1246)")
     }
 

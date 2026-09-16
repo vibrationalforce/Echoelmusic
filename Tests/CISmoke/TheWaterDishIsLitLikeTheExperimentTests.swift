@@ -68,9 +68,14 @@ final class TheWaterDishIsLitLikeTheExperimentTests: XCTestCase {
             The threshold comparison in `FaradayDish` is what makes a quiet bar a mirror; feed \
             it a constant and every pitch below the reach ripples forever.
             """)
-        XCTAssertTrue(c.contains("dishDriveTarget = min(max(musicLevel + 0.5 * touchE, 0), 1)"), """
-            the drive is no longer the live master level plus half the finger energy, clamped \
-            0…1. `FaradayDish.response` clamps too, but the CHANNEL is the claim: the dish must \
+        // ⛔ #1322 — THIS PINNED THE WHOLE EXPRESSION AND TWO LATER COMMITS WALKED PAST IT:
+        // `touchE` became `liveE` (the finger energy now also carries the onset energy) and the
+        // `0` floor became `bodyDrive` (#1246, a silent body take). Neither touched this claim,
+        // which is the CHANNEL — master level plus half an energy term — and both made it red.
+        // Pin the channel, leave the term and the floor to the guards that own them (#416).
+        XCTAssertTrue(c.contains("dishDriveTarget = min(max(musicLevel + 0.5 *"), """
+            the drive is no longer the live master level plus half an energy term. \
+            `FaradayDish.response` clamps too, but the CHANNEL is the claim: the dish must \
             follow what actually sounds, not a dial.
             """)
         XCTAssertTrue(c.contains("uniforms.dishStrength = Self.ease(uniforms.dishStrength,"), """
@@ -98,14 +103,19 @@ final class TheWaterDishIsLitLikeTheExperimentTests: XCTestCase {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { $0.hasPrefix("var ") }
             .map { String($0.dropFirst(4).prefix { $0 != ":" }) }
-        XCTAssertEqual(Array(swiftVars.suffix(4)), ["structureAmt", "dishK", "dishStrength", "dishHex"], """
-            the Swift `BioUniforms` no longer ends with structureAmt · dishK · dishStrength · \
-            dishHex, in that order; found \(swiftVars.suffix(4)). The MSL struct is pinned to \
+        // ⛔ #1322 — THE TAIL MOVED AND NEITHER HALF OF THE PAIR WAS UPDATED. `fieldPhase` was
+        // APPENDED after `dishHex` on both sides in the same commit, so the layout stayed
+        // correct and this pin — whose whole job is to notice a layout change — was red on a
+        // correct tree. That is the failure mode #367 names: red for a reason the message does
+        // not describe. The pairing with the MSL tail below is unchanged and is still the claim.
+        XCTAssertEqual(Array(swiftVars.suffix(4)), ["dishK", "dishStrength", "dishHex", "fieldPhase"], """
+            the Swift `BioUniforms` no longer ends with dishK · dishStrength · dishHex · \
+            fieldPhase, in that order; found \(swiftVars.suffix(4)). The MSL struct is pinned to \
             the same tail below — move both or the GPU reads the wrong floats.
             """)
         // MSL side: the same three names close the `Uniforms` struct.
-        XCTAssertTrue(r.contains("float textureAmt; float glitterAmt; float structureAmt;\n                      float dishK; float dishStrength; float dishHex; };"), """
-            the MSL `Uniforms` no longer ends with `structureAmt; dishK; dishStrength; dishHex; };`. \
+        XCTAssertTrue(r.contains("float dishK; float dishStrength; float dishHex;\n                      float fieldPhase; };"), """
+            the MSL `Uniforms` no longer ends with `dishK; dishStrength; dishHex; fieldPhase; };`. \
             Metal has no layout check against `MemoryLayout<BioUniforms>.stride` — a mismatch \
             here silently renders garbage on device.
             """)
@@ -202,12 +212,25 @@ final class TheWaterDishIsLitLikeTheExperimentTests: XCTestCase {
             """)
         // The non-blocking budget table must carry the row; a blocking pin is what makes a
         // silently dropped row visible, since `Tests/EchoelmusicTests` red costs nothing (#208).
+        // ⛔ #1322 — THIS READ A HAND-TYPED TUPLE OUT OF THE NON-BLOCKING SUITE, AND #1123 MOVED
+        // THAT TABLE INTO THE SHIPPED LAW (`FlashGuard.fieldBudgets`). The literal has been
+        // absent ever since, so this assertion was red on a tree where the row is not merely
+        // present but AUTHORITATIVE. Asserting the VALUE instead of a spelling cannot rot on a
+        // re-format, and it now reads the same constant the app renders from.
+        let dish = FlashGuard.fieldBudgets.first { $0.name == "Dish" }
+        XCTAssertEqual(dish?.phaseMultiplier, 0.40, """
+            `FlashGuard.fieldBudgets` lost the Dish row or changed its multiplier. The 0.40 is \
+            derived from the shader's single phase term (claim 4 here); if that term changed, \
+            re-derive the row — do not delete it.
+            """)
+        XCTAssertEqual(dish?.folds, false, """
+            The Dish budget now claims its phase term FOLDS. Folding doubles the effective \
+            flash rate; claim 4 above measures a single monotone term, so these two must agree \
+            or one of them is wrong about the shader.
+            """)
         let table = try String(contentsOfFile: repoRoot()
             .appendingPathComponent("Tests/EchoelmusicTests/FlashGuardTests.swift").path, encoding: .utf8)
         let code = SourceText.codeOnly(table)
-        XCTAssertTrue(code.contains("(\"Dish\",   0.40, false)"), """
-            `FlashGuardTests.testEveryReachableLookObeysTheThreeHzLaw` lost its Dish row             `("Dish",   0.40, false)`. The multiplier is derived from the shader's single phase             term (claim 4 here); if that term changed, re-derive the row — do not delete it.
-            """)
         XCTAssertTrue(code.contains("[\"Rings\", \"Dish\", \"Water\", \"Aurora\", \"Depth\"]"), """
             `FlashGuardTests.testReachableLookSetIsExactlyTheBudgetedOne` no longer names Dish             in the reachable set — the non-blocking suite would go red and nobody would see it.
             """)

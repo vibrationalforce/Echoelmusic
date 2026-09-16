@@ -78,7 +78,23 @@ final class TheCoherenceBlendHasNoFaderTests: XCTestCase {
 
     func testBothProductionCallSitesSitAtLombScargle() throws {
         let camera = SourceText.codeOnly(try rawText(Self.cameraFile))
-        XCTAssertTrue(camera.contains("HRVCoherence.compute(rrMs: rrMs, blend: 1.0)"), """
+        // ⛔ #1322 — THIS PINNED `rrMs: rrMs`, A SPELLING #1220 REPLACED, and a SIBLING GUARD in
+        // this same bundle (`TheCameraCoherenceAccumulatesTests`) asserts that spelling must be
+        // ABSENT from the same file, read through the same stripper. Two guards in one blocking
+        // bundle cannot both be satisfied; one of them was red on every run, invisible because
+        // `Run Tests` reports failure on every push anyway (#396).
+        //
+        // ⭐ THE REPAIR IS NOT THE NEW SPELLING, IT IS A SMALLER CLAIM. This file's subject is
+        // the BLEND, not where the intervals come from — #1220 changed the rr SOURCE (a rolling
+        // per-take history instead of a fixed 10 s window) and had no business reddening a
+        // blend guard. Pinning `blend: 1.0)` alone keeps the claim and stops this file owning a
+        // decision that belongs to its neighbour (#416).
+        XCTAssertTrue(camera.contains("HRVCoherence.compute("), """
+            The camera path no longer computes coherence at all. That is a bigger change than \
+            this file's subject — re-anchor here AND in `TheCameraCoherenceAccumulatesTests`, \
+            which owns where the intervals come from.
+            """)
+        XCTAssertTrue(camera.contains("blend: 1.0)"), """
             The camera path no longer computes coherence at blend 1.0. If it now uses a different \
             blend, the claim that BOTH shipped paths are pure Lomb–Scargle is stale — and that \
             claim is what the prose in Bio/HRVCoherence.swift rests on.

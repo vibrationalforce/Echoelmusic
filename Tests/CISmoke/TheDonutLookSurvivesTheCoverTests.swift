@@ -38,7 +38,13 @@ final class TheDonutLookSurvivesTheCoverTests: XCTestCase {
     // that only ever wrote `false` is what `lookScrub` already had, and it is why the flag was
     // one-way.
     func testAWordedSwitchCanEnterTheDonutLook() throws {
-        let studio = try studioSource()
+        // ⛔ #1322 — `studioSource()` RETURNS RAW TEXT, AND BOTH CASES IN THIS FILE READ IT THAT
+        // WAY. The needle below occurs in a DOC COMMENT at the top of `EchoelStudioView` as
+        // well as on the control, so a tree that deleted the switch and kept the sentence about
+        // it would still pass here. The counterweight at the end of case 2 already strips —
+        // for the same reason, recorded in its own ⛔ block — and the two halves of one file
+        // disagreed about it for a release.
+        let studio = SourceText.codeOnly(try studioSource())
         XCTAssertTrue(studio.contains("Toggle(isOn: $spectralDonuts)"), """
             No two-way switch for the donut look outside the cover's glyph. Measured before \
             #1065: the cover's top bar was the ONLY writer that could produce `true`. If the \
@@ -56,7 +62,13 @@ final class TheDonutLookSurvivesTheCoverTests: XCTestCase {
     // actually survives S3: an ordering check, because the panel is declared far below the
     // cover's block and stays there when the cover goes.
     func testTheSwitchIsBelowThePanelDeclarationAndNotInTheCover() throws {
-        let studio = try studioSource()
+        // ⛔ #1322 — AND HERE THE RAW READ DID NOT MERELY WEAKEN THE CLAIM, IT INVERTED IT. The
+        // FIRST occurrence of the toggle needle in raw text is the doc comment ~4,750 lines
+        // ABOVE `visualPanel`'s declaration, so `toggle.lowerBound < panel.lowerBound` held on a
+        // perfectly correct tree and this assertion was RED for a reason its message does not
+        // describe (#367). Stripping comments makes the two anchors the two pieces of CODE the
+        // claim is about.
+        let studio = SourceText.codeOnly(try studioSource())
         guard let panel = studio.range(of: "private var visualPanel: some View"),
               let toggle = studio.range(of: "Toggle(isOn: $spectralDonuts)") else {
             XCTFail("""
