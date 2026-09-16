@@ -641,6 +641,20 @@ die ihre eigene ABDECKUNG nicht nennen kann, ist keine Messung.** ⚠️ Und die
 zweimal fast bezahlt: wer einen BESTEHENDEN Vermerk widerlegen will, misst zuerst sein eigenes Werkzeug —
 ein `$`-Anker verwarf eine Zeile mit Trailing-Kommentar und hätte beinahe eine RICHTIGE Notiz
 („fünfter `sparseSub`-Besitzer“) „korrigiert“.
+⭐ **(f) DIE ECHO-ZAHL KOMMT AUS ABSCHNITT 5, UND ZWAR VON DEM ENDE DES TEMPOFENSTERS, DAS BINDET (#1353).**
+Der Abschnitt druckte eine einzige Zahl — die Verzögerung beim SCHNELLSTEN Tempo, also die KÜRZESTE, die das
+Genre je erreicht — und schrieb `ok` daneben. Das beantwortet die ausgelieferte Invariante („löst die Teilung
+überhaupt irgendwo auf") und liest sich wie die Antwort auf eine andere Frage („passt dieses Echo"). Er druckt
+jetzt langsames Ende · Default · schnelles Ende, nennt das bindende Ende, und misst den Kandidaten gegen die
+DREI Budgets aus `Tests/CISmoke/GenreDelaySyncResolvabilityTests` — **alle drei stehen heute exakt auf ihrer
+Grenze**: höchstens EIN angebotenes Genre am eigenen Default abgeschnitten (verbraucht von `selfObservation`),
+mindestens SIEBEN schlagzeugfreie angebotene Genres mit Echo, mindestens FÜNF hörbar verschiedene Echozeiten
+bei 5 %. ⚠️ **Das schärfste ist die dritte: eine eingefügte Zeit kann zwei Cluster VERSCHMELZEN, die vorher
+weit genug auseinander lagen — ein neues Genre kann eine Ratsche also nach UNTEN bewegen.** Das findet keine
+Lektüre eines einzelnen Kandidaten; es braucht die Nachbarn, und das ist #1352s Gesetz eine Datei weiter.
+⚠️ **Hart verweigert wird weiterhin nur das SCHNELLE Ende** — Klemmen am langsamen Ende ist gewollt
+(`stillMeditation` sitzt bei 60 BPM exakt auf der Decke und klemmt gar nicht); ein Fehlschlag darauf verböte
+richtige Arbeit (#364).
 **Nicht antasten (sichere Richtung):** `GenreSwingReachesTheClock` · `GenreFamilyDistinctness:318` ·
 `TheOfferedRosterIsTheRoster`. **Design-Zwänge statt Wächter-Edits:** ≤3 Progressionswurzeln · kein Mixolydisch ·
 keine Dyade · kein `.signature` · kein `filterEnabled` · jede vierstimmige Stimmführung ist `[0,2,4,6]` UND

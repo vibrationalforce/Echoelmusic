@@ -18,6 +18,17 @@ neighbour happened to be inside the 31. **A measurement that cannot state its ow
 is not a measurement**; this mode prints `parsed N of M` and REFUSES to report when N != M.
 Write a patch doc comment from ITS output, never from a parser typed for the occasion.
 
+⭐ SECTION 5 REPORTS THE BINDING END OF A TEMPO WINDOW, NOT THE FLATTERING ONE (#1353).
+It used to print one number — the delay at the genre's FASTEST tempo, which is the SHORTEST
+it can ever be — and label it `ok`. That answers the shipped invariant ("does this division
+resolve anywhere at all") and reads like an answer to a different question ("does this delay
+fit"). It now prints the time at the slow end, the default and the fast end, says which end
+binds, and measures the candidate against the three budgets in
+`Tests/CISmoke/GenreDelaySyncResolvabilityTests` — all three of which sit exactly on their
+bound. The sharpest is the drum-free cluster ratchet: an inserted echo time can MERGE two
+clusters that were far enough apart, so a new genre can move a ratchet DOWN. No amount of
+reading one candidate in isolation finds that; it needs the neighbours.
+
 ⭐ WHY THIS FILE IS IN THE REPO (#1320). It was authored inside a SESSION SCRATCHPAD and
 lived there through G6a…G11b, while `scratchpads/PLAN_GENRE_WELT_2026-09-11.md` cited it
 by that path as the measurement every remaining batch must run first. A scratchpad dies
@@ -197,6 +208,67 @@ gp=code(io.open(SRC+'GenrePatches.swift',encoding='utf-8').read())
 PATCHES=re.findall(r'patch\(\s*"([^"]*)"\s*,\s*"([^"]*)"', gp)
 SUFFIX={i for i,_ in PATCHES}; PNAMES=[nm for _,nm in PATCHES]
 
+# ── GenreFX arms: the delay landscape a candidate is about to join ────────────
+# ⭐ #1353. Section 5 used to answer ONE question — "does this division resolve at the
+# genre's FASTEST tempo" — and print `ok`, which reads as "the delay fits". Three
+# SHIPPED budgets in `Tests/CISmoke/GenreDelaySyncResolvabilityTests` say more than
+# that, and all three sit EXACTLY on their bound today, so a candidate can redden one
+# with no warning from here:
+#   · at most ONE offered genre truncated at its own default tempo — spent by
+#     `selfObservation` (2.069 s at 46 BPM),
+#   · at least SEVEN drum-free offered genres carrying a delay at all,
+#   · at least FIVE audibly distinct echo times among them, clustered at 5%.
+# The third is the trap: adding a time can MERGE two clusters that were >5% apart, so a
+# new genre can LOWER a ratchet that only ever moves up. That is not reachable by
+# reading one candidate in isolation — it needs the neighbours, which is #1352's law
+# one file over: measure the neighbour with the tool before claiming a separation.
+#
+# ⚠️ The FAST end stays the only hard FAIL, because that is the shipped invariant
+# (`testEveryGenresDivisionResolvesAtItsFastestAllowedTempo`) — a division that resolves
+# NOWHERE is a lie in the source. Clamping at the SLOW end is tolerated by design:
+# `stillMeditation` sits exactly on the ceiling at 60 BPM and does not clamp at all.
+# Failing on it would forbid correct work (#364); reporting it is the whole point.
+QUARTERS={'whole':4.0,'half':2.0,'quarter':1.0,'eighth':0.5,
+          'sixteenth':0.25,'thirtySecond':0.125,'sixtyFourth':0.0625}
+MODFACTOR={'straight':1.0,'dotted':1.5,'triplet':2.0/3.0}
+DELAY_CEILING=2.0
+
+def fx_table():
+    """{genre: {'enabled':bool,'quarters':float|None}} plus (resolved, arms) coverage.
+
+    The arm block is [this `case` line, next `case` line) inside the FIRST `switch self {`
+    of GenreFX.swift — the same block-cut `--patch` uses, for the same reason (#1350): a
+    line-collecting parser silently reports only what it matched."""
+    lines=code(io.open(SRC+'GenreFX.swift',encoding='utf-8').read()).split('\n')
+    starts=[i for i,l in enumerate(lines) if l.strip()=='switch self {']
+    if len(starts) < 2: return {}, 0
+    region=lines[starts[0]:starts[1]]
+    arms=[]
+    for i,l in enumerate(region):
+        m=re.match(r'\s*case ((?:\.\w+\s*,?\s*)+):\s*$', l)
+        if m: arms.append((i,[x.strip().lstrip('.') for x in m.group(1).split(',') if x.strip()]))
+    out={}
+    for j,(i,names) in enumerate(arms):
+        end = arms[j+1][0] if j+1 < len(arms) else len(region)
+        blk="\n".join(region[i:end])
+        en=re.search(r'delayEnabled:\s*(true|false)', blk)
+        sy=re.search(r'delaySync:\s*TempoSyncOption\(\s*\.(\w+)\s*(?:,\s*\.(\w+))?\s*\)', blk)
+        v={'enabled': (en.group(1)=='true') if en else False,
+           'quarters': (QUARTERS[sy.group(1)]*MODFACTOR.get(sy.group(2) or 'straight'))
+                        if sy and sy.group(1) in QUARTERS else None}
+        for n in names: out[n]=v
+    return out, len(arms)
+
+def delay_seconds(quarters, bpm): return quarters*60.0/bpm
+def heard_seconds(quarters, bpm): return min(delay_seconds(quarters,bpm), DELAY_CEILING)
+def cluster_count(times, spread=1.05):
+    ts=sorted(times)
+    if not ts: return 0
+    n=1
+    for i in range(1,len(ts)):
+        if ts[i] > ts[i-1]*spread: n+=1
+    return n
+
 ART={'offbeat':'skank','fourOnFloor':'stab','backbeat':'comp',
      'halfTime':'sustained','none':'sustained','signature':'sustained'}
 def fingerprint(n):
@@ -282,6 +354,69 @@ def selftest():
     if not ok:
         failures += 1
         print(f"        exit={r.returncode} expected {want!r} in output")
+
+    # #1353 — section 5's two hard refusals, driven. Both candidates are the SAME clone with
+    # one field moved, so a red here is about the delay arithmetic and nothing else.
+    #
+    # ⚠️ Case B's expected message depends on the TREE, not on the candidate: the truncation
+    # budget is `at most one`, so the identical draft must FAIL while some offered genre
+    # already spends it and merely WARN while none does. Hard-coding either message would
+    # make this case a liar the day the tree moves — so it is derived, and the print says
+    # which branch the tree put it on.
+    st_fx, st_arms = fx_table()
+    spent_now = [n for n in OFFERED
+                 if st_fx.get(n, {}).get('enabled') and st_fx.get(n, {}).get('quarters')
+                 and delay_seconds(st_fx[n]['quarters'],
+                                   float(ints(g('defaultTempo', n))[0])) > DELAY_CEILING]
+    sec5 = [("a division over the ceiling at the FASTEST tempo resolves nowhere",
+             dict(base, tempoRange=[120, 140], defaultTempo=130, delayDivisionQuarters=6.0),
+             "resolves nowhere", True)]
+    if spent_now:
+        sec5.append((f"truncation at the candidate's OWN default is refused while {spent_now} "
+                     "spends the budget",
+                     dict(base, tempoRange=[100, 120], defaultTempo=105,
+                          delayDivisionQuarters=4.0),
+                     "budget of one is already spent", True))
+    else:
+        sec5.append(("truncation at the candidate's OWN default warns while the budget is free",
+                     dict(base, tempoRange=[100, 120], defaultTempo=105,
+                          delayDivisionQuarters=4.0),
+                     "spends the truncation budget", False))
+    for title, cand, needle, must_fail in sec5:
+        path = tempfile.mktemp(suffix=".json")
+        json.dump([cand], open(path, "w"))
+        r = subprocess.run([sys.executable, os.path.abspath(__file__), path],
+                           capture_output=True, text=True)
+        os.unlink(path)
+        ok = needle in r.stdout and ((r.returncode != 0) if must_fail else True)
+        print(("   ok   " if ok else "   FAIL ") + title)
+        if not ok:
+            failures += 1
+            print(f"        exit={r.returncode} needle={needle!r} not found in output")
+
+    # The cluster-merge refusal cannot be provoked from the shipped tree — every gap on the
+    # drum-free axis is wider than 10%, so no single insertion can bridge one. Asserting it
+    # through the CLI would therefore be a needle that can never match (#808 in its other
+    # direction). It is driven as arithmetic instead, on a base built to have one narrow gap.
+    merge_base = [1.00, 1.04, 1.30, 1.40]          # 1.30→1.40 is 7.7% apart: two clusters
+    ok = (cluster_count(merge_base) == 3
+          and cluster_count(merge_base + [1.35]) == 2
+          and cluster_count(merge_base + [2.00]) == 4)
+    print(("   ok   " if ok else "   FAIL ") + "an inserted time can MERGE two clusters "
+          "(the ratchet moves DOWN) and a distant one cannot")
+    if not ok:
+        failures += 1
+        print(f"        got {cluster_count(merge_base)} / "
+              f"{cluster_count(merge_base + [1.35])} / {cluster_count(merge_base + [2.00])}, "
+              "expected 3 / 2 / 4")
+
+    # Coverage, the #1350 law in its second file: a green delay landscape means nothing if
+    # the arm parser silently read a subset.
+    ok = st_arms > 0 and len(st_fx) == st_arms and all(n in st_fx for n in OFFERED)
+    print(("   ok   " if ok else "   FAIL ")
+          + f"GenreFX arms parse at full coverage ({len(st_fx)} of {st_arms})")
+    if not ok:
+        failures += 1
 
     print(f"SELFTEST (cloned from .{twin}):", "OK" if failures == 0 else f"{failures} BROKEN CHECK(S)")
     return 1 if failures else 0
@@ -428,19 +563,64 @@ for c in cands:
 print()
 
 # 5 — tempo windows, defaults, octave fold and the delay ceiling
-print("5 TEMPO + DELAY CEILING (maxDelaySeconds = 2.0)")
+print(f"5 TEMPO + DELAY CEILING (maxDelaySeconds = {DELAY_CEILING})")
+FXT, FXARMS = fx_table()
+print(f"   arms parsed {len(FXT)} of {FXARMS} in GenreFX.swift's fxPreset switch")
+if not FXARMS or len(FXT) != FXARMS or any(n not in FXT for n in OFFERED):
+    missing=[n for n in OFFERED if n not in FXT]
+    fail("GenreFX coverage incomplete — REFUSED to report the delay landscape "
+         f"(arms {len(FXT)}/{FXARMS}, offered without an arm: {missing[:6]}). "
+         "Fix the parser before deriving anything from it (#1350).")
+    FXT=None
 for c in cands:
     lo,hi=c['tempoRange']
     if not lo<=c['defaultTempo']<=hi: fail(f"{c['name']}: default {c['defaultTempo']} outside {lo}…{hi}")
     if hi/lo>=2.0: fail(f"{c['name']}: window {lo}…{hi} spans an octave — GenreTempoFoldTests' sub-octave half switches OFF")
     q=c.get('delayDivisionQuarters')
-    if q:
-        secs=q*60.0/hi
-        mark="ok" if secs<=2.0 else "OVER"
-        if secs>2.0: fail(f"{c['name']}: delay {q} quarters at {hi} BPM = {secs:.2f}s > 2.0s ceiling")
-        else: print(f"   {c['name']:18s} delay {q} q at hi={hi} = {secs:.2f}s  {mark}")
-    else:
+    if not q:
         print(f"   {c['name']:18s} no delay")
+        continue
+    fast=delay_seconds(q,hi); slow=delay_seconds(q,lo); dflt=delay_seconds(q,c['defaultTempo'])
+    # the shipped invariant: resolve un-clamped at the FASTEST tempo, or it resolves nowhere
+    if fast > DELAY_CEILING:
+        fail(f"{c['name']}: delay {q} quarters is {fast:.3f}s even at its FASTEST tempo {hi} "
+             f"BPM — over the {DELAY_CEILING}s ceiling at EVERY tempo it can reach, so the "
+             "notated division resolves nowhere (GenreDelaySyncResolvabilityTests claim 1)")
+        continue
+    binds = "slow end" if slow > fast else "—"
+    over  = " CLAMPS" if slow > DELAY_CEILING else ""
+    print(f"   {c['name']:18s} delay {q} q: {slow:.3f}s @{lo} … {dflt:.3f}s @{c['defaultTempo']} "
+          f"… {fast:.3f}s @{hi}   binding={binds}{over}")
+    if slow > DELAY_CEILING:
+        print(f"      note: clamps to {DELAY_CEILING}s below "
+              f"{q*60.0/DELAY_CEILING:.1f} BPM. Tolerated (stillMeditation sits exactly on the "
+              "ceiling by design) — but the echo stops tracking tempo there.")
+    if FXT is None: continue
+    # budget 1 — at most ONE offered genre truncated at its own default tempo
+    spent=[n for n in OFFERED
+           if FXT[n]['enabled'] and FXT[n]['quarters']
+           and delay_seconds(FXT[n]['quarters'], float(ints(g('defaultTempo',n))[0])) > DELAY_CEILING]
+    if dflt > DELAY_CEILING:
+        if spent:
+            fail(f"{c['name']}: truncated at its OWN default tempo ({dflt:.3f}s) and the budget of "
+                 f"one is already spent by {spent} — GenreDelaySyncResolvabilityTests claim 3 "
+                 "asserts at most one. Give it a division that fits its window.")
+        else:
+            print(f"      warn: spends the truncation budget (claim 3 allows exactly one)")
+    else:
+        print(f"      truncation budget: {len(spent)}/1 spent by {spent or '—'}, candidate clear")
+    # budget 2+3 — the drum-free echo axis, which a NEW time can MERGE
+    if c['beatArchetype'] != 'none': continue
+    df=[n for n in OFFERED if g('beatArchetype',n).strip()=='.none']
+    base=[heard_seconds(FXT[n]['quarters'], float(ints(g('defaultTempo',n))[0]))
+          for n in df if FXT[n]['enabled'] and FXT[n]['quarters']]
+    before=cluster_count(base); after=cluster_count(base+[heard_seconds(q,c['defaultTempo'])])
+    print(f"      drum-free axis: {len(base)}→{len(base)+1} carrying a delay, "
+          f"clusters {before}→{after} at 5%")
+    if after < before:
+        fail(f"{c['name']}: its {heard_seconds(q,c['defaultTempo']):.3f}s echo MERGES two clusters "
+             f"of the drum-free axis ({before}→{after}) — claim 4 is a ratchet that only moves "
+             "up, and it sits on its bound. Move the division or the default tempo.")
 print()
 
 # 6 — register floor and mode
