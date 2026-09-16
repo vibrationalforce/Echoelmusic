@@ -171,6 +171,11 @@ public extension MusicStyle {
         //   figure safe to leave sitting: the day someone takes it, the list goes red on the
         //   right line rather than the figure quietly acquiring an owner.
         case .nordicFiddle:     return .heldRoot
+        // #1295b G11d — the SIXTH owner of `drivingEighths`, and shared on purpose: a
+        // figure is shareable, a VOICE never is. `balkanModal` gets its own patch
+        // ("Brass Sub"), and that patch is built to stop inside its eighth — the exact
+        // opposite of the `heldRoot` voice one line above.
+        case .balkanModal:      return .drivingEighths
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths

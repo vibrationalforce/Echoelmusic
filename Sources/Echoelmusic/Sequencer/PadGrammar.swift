@@ -62,6 +62,13 @@ public enum PadGrammar: String, CaseIterable, Sendable, Codable {
     /// 3+3+2 over each half-bar (phases 0 · 3 · 6, then 8 · 11 · 14) — the tresillo that underlies
     /// most Caribbean and Latin pulse. The cell repeats, so the second half answers the first
     /// rather than restating the bar.
+    ///
+    /// ⚠️ **THE SAME CELL CARRIES OTHER NAMES IN OTHER TRADITIONS, and that is not a reason
+    /// for a second case (#1295b).** The Balkan design sheet asked for an `additive332`
+    /// grammar; 3+3+2 grouped over eight is *aksak* there and *tresillo* here — one figure,
+    /// two names. Adding the case would have been a second implementation of this `hits`
+    /// array (#416), separated only by the word. If a future tradition needs a genuinely
+    /// DIFFERENT grouping (3+2+3, or 2+3+3), that is a new case; a rename is not.
     case tresilloChops
     /// Charleston: the downbeat long, then ONE push on the "&" of 2 (phase 6), and nothing else.
     /// The jazz/soul comp figure a four-case bucket rounds off into `.comp`'s busier grid.

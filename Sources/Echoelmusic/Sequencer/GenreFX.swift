@@ -374,6 +374,33 @@ public extension MusicStyle {
                 delayEnabled: false, delayTone: 0.46, delaySpread: 0.26,
                 saturation: 0.24,
                 reverbEnabled: true, reverbMix: 0.20, reverbRoom: 0.56, reverbDamping: 0.50)
+        case .balkanModal:
+            // #1295b G11d — A SHORT ROOM WITH A DOTTED-EIGHTH ECHO. The genre is runs, so the
+            // delay has to answer between notes rather than smear them. A DOTTED EIGHTH
+            // (`TempoSyncOption(.eighth, .dotted)` = 0.75 quarters) at the fastest allowed
+            // 170 BPM is 0.26 s, far under the 2.0 s ceiling
+            // `GenreDelaySyncResolvabilityTests` sweeps at exactly that tempo.
+            // ⚠️ The preset takes `delaySync:`, NOT a raw quarter count — the design sheet's
+            // "0.75 q" column is a MEASUREMENT, not the API.
+            //
+            // ⚠️ THE CONTRAST WITH ITS SHELF-MATE IS THE POINT, and it is the inverse of the
+            // reasoning one arm up: `nordicFiddle` gets NO delay because a bordun already fills
+            // every sixteenth. Here nothing is held, so the space has to come from somewhere.
+            //
+            // ⚠️ Every number against a named neighbour, measured over the whole file: room 0.48
+            // is a FREE value between 0.45 and 0.52, well under `contemplation`'s 0.96 (the
+            // biggest hall) and above `darkPsyTrance`'s 0.32 (the smallest) · damping 0.52 is
+            // FREE between 0.50 and 0.54, inside `upliftingTrance`'s 0.30 and `deepDrone`'s 0.68
+            // · saturation 0.26 clears `minimalTechno`'s 0.14 — REQUIRED here, because that
+            // claim is scoped to beat-driven chains and this genre is `.backbeat` — and stays
+            // under `doom`'s 0.55 · tone 0.54 is FREE between 0.52 and 0.55 · spread 0.32 is
+            // FREE between 0.30 and 0.34, under `detroitTechno`'s 0.60.
+            return GenreFXPreset(
+                delayEnabled: true, delayMode: .digital,
+                delaySync: TempoSyncOption(.eighth, .dotted),
+                delayMix: 0.16, delayFeedback: 0.28, delayTone: 0.54, delaySpread: 0.32,
+                saturation: 0.26,
+                reverbEnabled: true, reverbMix: 0.17, reverbRoom: 0.48, reverbDamping: 0.52)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

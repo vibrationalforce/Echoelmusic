@@ -117,6 +117,25 @@ public extension MusicStyle {
                 cutoff: 2300, res: 0.14, lfoAmt: 0.05, lfoRate: 2.8, lfoDepth: 0.04,
                 revMix: 0.24, revDecay: 2.60, vibRate: 5.2, vibDepth: 0.06,
                 uni: 3, det: 9)
+        case .balkanModal:
+            // #1295b G11d — BRASS REED. The reed edge the genre's own description claims: a
+            // narrow, buzzy double-reed rather than the soft `Air Reed` it shares a lead PATCH
+            // NAME bucket with. The identity is harmonics 0.78 against a low harmonic level
+            // (0.62) — bright partials that do not sit on a fat body.
+            //
+            // ⚠️ Every number against a measured neighbour, and nothing takes a file-wide claim:
+            // cutoff 2350 is FREE and sits exactly between "Warm Rhodes" (2300, taken by
+            // "Sympathetic Bow"'s neighbour) and "House Shell" (2400) · attack 0.03 is fast but
+            // well above the file's fastest onsets, so it claims nothing · the envelope sums to
+            // 1.06, nowhere near "Drone Bed"'s 15.30 (slowest attack 1.8, longest release 7.5) ·
+            // noise 0.08 is the reed's breath and sits ABOVE "Air Reed"'s 0.06 on purpose:
+            // a double reed is noisier than a flute, and that is the separation.
+            return patch("65", "Brass Reed",
+                a: 0.03, d: 0.26, s: 0.70, r: 0.77,
+                harm: 0.78, hl: 0.62, bright: 0.66, noise: 0.08, color: "White", shape: "Natural",
+                cutoff: 2350, res: 0.22, lfoAmt: 0.07, lfoRate: 5.4, lfoDepth: 0.05,
+                revMix: 0.18, revDecay: 1.30, vibRate: 6.1, vibDepth: 0.09,
+                uni: 2, det: 7)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -636,6 +655,22 @@ public extension MusicStyle {
                 a: 0.09, d: 0.40, s: 0.92, r: 0.60,
                 harm: 0.94, hl: 0.34, bright: 0.14, noise: 0.0, color: "Pink", shape: "Natural",
                 cutoff: 660, res: 0.10, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .balkanModal:
+            // #1295b G11d — BRASS SUB. `drivingEighths` under a tune with runs: the note has to
+            // start and STOP inside its eighth, which is the exact opposite of "Drone Sub" one
+            // arm above (envelope 1.09, sustain 0.92, built never to finish inside a bar).
+            //
+            // ⚠️ Nothing here takes a claim anyone holds: the envelope sums to 0.41, comfortably
+            // between "Psy Bass" (0.222, the file's SHORTEST, untouched) and "Velvet Sub"
+            // (0.834) · cutoff 740 is FREE, between "Round Sub" (720) and the next used value
+            // (760) · sustain 0.44 is ordinary. The brightness (0.30) is what carries the brass
+            // edge down into the bass without the cutoff having to climb into the lead's range.
+            return patch("66", "Brass Sub",
+                a: 0.005, d: 0.16, s: 0.44, r: 0.245,
+                harm: 0.70, hl: 0.42, bright: 0.30, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 740, res: 0.16, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:
