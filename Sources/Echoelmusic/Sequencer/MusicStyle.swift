@@ -159,6 +159,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // commit for the reason every batch above gives: a genre left only in the taxonomy
         // is a doorless genre.
         .balkanModal,
+        // #1349 G10a — the FIRST resident of the `.chant` rubric and of the `Gospel & Spiritual`
+        // shelf, offered from the first commit for the reason every batch above gives, and for
+        // one more that is specific to this slice: a rubric added WITHOUT an offered genre would
+        // be the empty drawer its own retraction block forbids.
+        .gospelChoir,
         .selfObservation, .stillMeditation, .drift, .contemplation,
         .vaporwave, .sciFi, .classical, .dubTechno,
         // #254 batch 1 (founder 2026-07-30: "mehr Genres der elektronischen Musik benötigt,
@@ -227,6 +232,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case jazz          // jazz, blues & soul
         case popular       // hip-hop, R&B, pop, Caribbean
         case classical     // written art music
+        /// #1349 G10a. Arrives WITH its first genre (`gospelChoir`), which is the rule the ⛔
+        /// block below used to state as the reason for its absence — see there for why the
+        /// block is a retraction rather than a deletion.
+        case chant         // sacred & devotional voice traditions
         case folk          // regional & traditional repertoires
         case underground   // dub, lo-fi, fringe scenes
 
@@ -237,18 +246,44 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         /// `klezmer`/`oriental` → `.folk`. No genre, no `offered` entry and no stored value
         /// changes: `Category` is a computed grouping, is not `Codable`, and reaches no disk.
         ///
-        /// ⛔ AND THE NINTH RUBRIC THE PLAN NAMES — `.chant` ("Chant, Choir & Drone") — IS
-        /// DELIBERATELY NOT HERE. It has zero existing members: every genre the plan files
-        /// under it is still unwritten. An enum case with an empty shelf is the lying-`toolItems`
-        /// shape this repo has paid for repeatedly — the picker would skip it, so nothing would
-        /// look wrong, and the next session would read nine rubrics and plan from a drawer that
-        /// holds nothing. The law the file already states is the answer: **a case is added ONLY
-        /// together with its door.** `.chant` arrives in the batch that writes its first genre.
-        /// `GenreSubcategoryTests` pins the general rule (no empty rubric, no empty shelf), so
-        /// this is not a promise in prose — the day someone adds an empty one, it is red.
+        /// ⛔ THIS BLOCK SAID `.chant` WAS "DELIBERATELY NOT HERE", AND #1349 G10a MET ITS OWN
+        /// CONDITION RATHER THAN OVERRULING IT. Its argument was: an enum case with an empty
+        /// shelf is the lying-`toolItems` shape, so **a case is added ONLY together with its
+        /// door** — and `.chant` "arrives in the batch that writes its first genre". That batch
+        /// is G10a: `gospelChoir` is offered, `.gospelSpiritual` holds it, and neither the
+        /// rubric nor the shelf is empty for one commit. The text is kept rather than deleted
+        /// because the RULE it states is the live one and `GenreSubcategoryTests` claim 4
+        /// enforces it for every future rubric.
+        ///
+        /// ⚠️ AND THE HONEST HALF: "Chant, Choir & Drone" names three families and holds exactly
+        /// ONE genre today, a gospel CHOIR. Chant (G8: plainchant · byzantineChant ·
+        /// choralPolyphony) and Drone (G10's `overtoneDrone` · `lowBreathDrone`) are both
+        /// BLOCKED on the tone-system question (plan §5-2: `pythagorean`, `edo24`,
+        /// `just-major`), not merely unwritten. The title is the name settled in plan §2b-8 for
+        /// the whole family; if §5-2 is answered NO, it is the line to revisit.
+        ///
+        /// ⚠️ AND THE REASON THAT IS A SMALL DEBT RATHER THAN A SHIPPED OVER-CLAIM WAS MEASURED,
+        /// NOT ASSUMED — the first draft of this block said a rubric title "is a picker header a
+        /// player reads", and it is not. **`Category.title` has ZERO production readers.** The
+        /// genre menu in `WorkspaceView` loops `Subcategory.allCases` and puts the SHELF title
+        /// in its section header; the only other titled section on that screen belongs to
+        /// `Scale.Family`, a different type in a different picker. No surface reads a rubric
+        /// title. ⚠️ Deliberately no `grep` recipe is quoted for this: every needle short enough
+        /// to write here matches THIS SENTENCE and would print hits next to a prose that says
+        /// none — the `EchoelModalBank` trap (a vermerk that cites a command ages faster than
+        /// one that states a fact). Re-derive it by reading the two `Section(` call sites in
+        /// `WorkspaceView`'s pickers. So this
+        /// whole level is a FILING structure today, read by `Category.genres`,
+        /// `Category.subcategories` and two guards, and shown to nobody. Anyone who mounts a
+        /// rubric header later inherits the incompleteness above as a real one — that is the
+        /// commit in which the title has to earn its three nouns.
         public var id: String { rawValue }
 
-        /// Picker section header.
+        /// ⛔ THIS LINE READ "Picker section header." AND NO PICKER RENDERS IT (measured #1349;
+        /// the derivation is in the `id` block above). It is a rubric NAME — read by
+        /// `GenreSubcategoryTests` and by the vocabulary sweep, and by no surface. The
+        /// String-Catalog argument below is unaffected and is the reason the wording still
+        /// matters: whatever stands here on the day the catalog is generated becomes a key.
         ///
         /// ⛔ These four were GERMAN until 2026-07-29 ("Meditativ & Ambient", "Elektronisch &
         /// Beats", "Rock & Energie", "Akustisch & Global") and shipped that way inside a bundle
@@ -266,6 +301,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .jazz:        return "Jazz, Blues & Soul"
             case .popular:     return "Popular & Contemporary"
             case .classical:   return "Classical & Orchestral"
+            case .chant:       return "Chant, Choir & Drone"
             case .folk:        return "Folk & Regional"
             case .underground: return "Underground & Fringe"
             }
@@ -340,10 +376,19 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case caribbean
         // 6 · Classical & Orchestral
         case classicalRomantic
-        // 7 · Folk & Regional
+        // 7 · Chant, Choir & Drone
+        /// #1349 G10a. Added TOGETHER with `gospelChoir`, its only resident — the same law
+        /// `.soul` (#1288) and `.rnbPop` (#1289) were added under: a shelf with nothing on it
+        /// is skipped by the picker, so nothing LOOKS wrong and the next session plans from an
+        /// empty drawer. ⚠️ It is declared HERE, between `.classicalRomantic` and
+        /// `.europeanFolk`, because `Category.subcategories` filters `allCases` and claim 6 of
+        /// `GenreSubcategoryTests` requires each rubric's shelves to be CONTIGUOUS — a shelf in
+        /// the wrong place splits its own rubric across the menu.
+        case gospelSpiritual
+        // 8 · Folk & Regional
         case europeanFolk
         case nearEastCentralAsia
-        // 8 · Underground & Fringe
+        // 9 · Underground & Fringe
         case loFiHazy
 
         public var id: String { rawValue }
@@ -359,6 +404,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .jazzCore, .soul:                                  return .jazz
             case .hipHop, .rnbPop, .caribbean:                      return .popular
             case .classicalRomantic:                                return .classical
+            case .gospelSpiritual:                                  return .chant
             case .europeanFolk, .nearEastCentralAsia:               return .folk
             case .loFiHazy:                                         return .underground
             }
@@ -386,6 +432,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             case .rnbPop:               return "R&B & Pop"
             case .caribbean:            return "Caribbean"
             case .classicalRomantic:    return "Classical & Romantic"
+            case .gospelSpiritual:      return "Gospel & Spiritual"
             case .europeanFolk:         return "European Folk"
             case .nearEastCentralAsia:  return "Near East & C. Asia"
             case .loFiHazy:             return "Lo-Fi & Hazy"
@@ -441,6 +488,12 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1290 G11a — both join `klezmer` on the existing European Folk shelf; no new shelf.
         case .celticAir, .andalusianCadence, .nordicFiddle, .balkanModal:
             return .europeanFolk
+        // #1349 G10a — the shelf and the rubric are BOTH new, and both arrive here with this
+        // one genre. Gospel is filed under `.chant` rather than beside `soulBallad` on `.soul`
+        // because that is where plan §2b-8 settled the family; the two genres are separated on
+        // four measured axes, not by the shelf (see the case doc).
+        case .gospelChoir:
+            return .gospelSpiritual
         case .sciFi:
             return .cinematicAtmospheres
         case .dubTechno, .minimalTechno, .detroitTechno, .acidTechno, .deepTech, .darkMinimal:
@@ -897,6 +950,58 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
     /// for a dance tune and is the omission a compiler cannot catch, so the batch guard asserts
     /// it (the same shape as `nordicFiddle` above).
     case balkanModal
+    /// #1349 G10a — GOSPEL, and the first resident of a new RUBRIC as well as a new shelf. The
+    /// batch the plan calls G10 ("Gospel · Drone & Overtone") ships as ONE genre, and the split
+    /// is measured rather than chosen: `overtoneDrone` and `lowBreathDrone` both name the tone
+    /// system `just-major`, which is plan §5-2 and unanswered, AND both name a `pedalDrone` pad
+    /// figure — a `PadGrammar` case that does not exist (four are shipped, and `MusicStyle
+    /// .padGrammar` returns `nil` for EVERY genre, so the first arm there is a mechanism debut,
+    /// not a genre property). Two independent blockers, neither of which touches this genre.
+    ///
+    /// ⚠️ THE NEAREST NEIGHBOUR IS `soulBallad` AND IT IS CLOSE — measured before writing, not
+    /// recalled. The two share `major`, share `[0, 2, 4, 6]` (= 0, 4, 7, 11, the MAJOR seventh),
+    /// share `.backbeat` → `.comp`, and share `padOctave: 4`. On the weaker key that
+    /// `MusicStyleTests.testEveryGenreHasADistinctMusicalIdentity` uses they differ on exactly
+    /// ONE axis, the progression. That is legal and it is not enough by ear, so THREE deviations
+    /// from the design sheet were made deliberately and each one separates the pair:
+    ///
+    ///   · **tempo 88…112 @ 96**, where the sheet said 72…100 @ 84. The sheet's window sits
+    ///     INSIDE `soulBallad`'s 64…86 at the bottom and its default 84 is twelve BPM from that
+    ///     genre's 72. 88…112 is DISJOINT from 64…86 — the one axis here that is a clean cut
+    ///     rather than a difference of degree. (⚠️ Disjointness is claimed against `soulBallad`
+    ///     ALONE. The window overlaps eight other offered genres — `boomBapHipHop` 84…96,
+    ///     `synthwave`, `jazz`, `oriental`, `rocksteady`, `futuristic`, `earlySynth`,
+    ///     `andalusianCadence` — and that is fine: tempo is a hint, not an identity, and
+    ///     `GenreFamilyDistinctnessTests` does not read it.)
+    ///   · **`bassGrammar: .drivingEighths`**, where the sheet said `offbeatEighths` — which is
+    ///     `soulBallad`'s own figure. Two genres this close must not also walk alike.
+    ///   · **`leadPatchName: "Warm Strings"`**, where the sheet said Choir Vox. This one is
+    ///     ARITHMETIC, not taste: `scripts/genre-prebatch.py` reports Choir Vox at 7 of a
+    ///     pigeonhole ceiling of 7 before this genre, so an eighth owner is over it, and the
+    ///     palette is fixed at six names by `GenreBatchFourVoicingTests` (adding a seventh is a
+    ///     palette decision, not a per-genre one). Warm Strings at 6 was the only free slot —
+    ///     the #1288 precedent exactly. The SOUND is still its own: `synthPatch` is "Church
+    ///     Choir", `soulBallad`'s is "Warm Keys". Sharing a bucket is not sharing a voice.
+    ///
+    /// KEPT from the sheet: `progression: [0, 3, 4]` — I → IV → V, the gospel cadence, against
+    /// `soulBallad`'s `[0, 3, 5]` (I → IV → vi). The fifth degree as a ROOT is what lifts; the
+    /// sixth is what settles. `[0, 3, 4]` is shared with SIX other genres (`punk`, `ska`,
+    /// `electroFunk`, `disco`, `klezmer`, `rocknroll`) and nothing is claimed about it.
+    ///
+    /// ⚠️ THE SECOND NEAR NEIGHBOUR, and it was found by the same measurement rather than by
+    /// ear: `punk` matches on THREE axes — `major`, `[0, 3, 4]`, `.backbeat`. It separates on
+    /// the two that carry this genre's identity: its stack is `[0, 4, 7]`, a power chord with
+    /// no third and no seventh, and its `padOctave` is 3. Named here so the next batch does not
+    /// discover it as a surprise; no claim is made about `punk` and none is needed.
+    ///
+    /// ⚠️ `leadDensity: 0.0` and `arpeggiated: false` — the CHOIR IS THE PAD. The four-note
+    /// stack is the whole voicing, and this genre has no melodic line of its own, exactly like
+    /// `soulBallad`. The `lineage` line therefore names harmony and cadence only, per plan
+    /// §2b-9: a genre whose `leadDensity` is identically zero must not advertise singing.
+    /// ⚠️ `defaultMode` takes NO arm — it inherits `default: .studioLocked`, which is right for
+    /// a driven backbeat and is the omission a compiler cannot catch, so the batch guard asserts
+    /// it (the same shape as `nordicFiddle` and `balkanModal` above).
+    case gospelChoir
     /// #983 S5 (same founder sentence: "psy prog House"). The roster has `psytrance` (un-offered,
     /// ~145, phrygian, ARPEGGIATED, padOctave 2) and nothing between it and house. This is the
     /// house-tempo, non-arpeggiated relative — progressive, not Goa — and it is separated from
@@ -1108,6 +1213,8 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // #1294 G11c — European Folk, third door.
         case .nordicFiddle:       return "Nordic Fiddle"
         case .balkanModal:        return "Balkan Modal"
+        // #1349 G10a — Chant, Choir & Drone.
+        case .gospelChoir:        return "Gospel Choir"
         case .blackMetal:         return "Black Metal"
         case .modalJazz:          return "Modal Jazz"
         case .soulBallad:         return "Soul Ballad"
@@ -1183,6 +1290,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return "Open-fourth minor tune over a bowed drone"
         case .balkanModal:
             return "Raised-fourth minor runs with a reed edge"
+        // #1349 G10a. HARMONY AND CADENCE ONLY (plan §2b-9): `leadDensity` is identically 0
+        // here, so no word in this line may advertise a sung or played melodic line. The stack
+        // and the lift are what the generator actually produces.
+        case .gospelChoir:
+            return "Stacked major sevenths · rising church cadence"
         case .blackMetal:
             return "Tremolo-cold raised-fourth minor"
         case .modalJazz:
@@ -1295,6 +1407,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // tune, unlike the air on the same shelf. That is also why its saturation must clear
         // `minimalTechno`'s "cleanest beat-driven chain" floor, which `celticAir` sat outside.
         case .nordicFiddle, .balkanModal:           return .backbeat
+        // #1349 G10a. `.backbeat` → `.comp` articulation and `isBeatDriven == true`. It is
+        // ALSO `soulBallad`'s archetype — one of the four axes the two genres share, which is
+        // why the separation had to be bought on tempo, figure and voice (see the case doc).
+        case .gospelChoir:                          return .backbeat
         case .industrialTechno, .darkPsyTrance:   return .fourOnFloor
         case .afroHouse:                          return .offbeat
         // #1285 G5 — both are drum-free by design; `.none` also derives `.sustained`
@@ -1544,6 +1660,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // by everything except the number.
         case .nordicFiddle:       return 108...136
         case .balkanModal:        return 120...170
+        // #1349 G10a. 88…112 is DISJOINT from `soulBallad`'s 64…86, and that is the point:
+        // the design sheet said 72…100, which sits inside it. It overlaps eight other
+        // offered windows and nothing is claimed about those (the case doc names them).
+        case .gospelChoir:        return 88...112
         case .blackMetal:         return 160...200
         case .modalJazz:          return 100...160
         case .soulBallad:         return 64...86
@@ -1681,6 +1801,7 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         case .andalusianCadence:  return 108
         case .nordicFiddle:       return 120
         case .balkanModal:        return 140
+        case .gospelChoir:        return 96
         case .blackMetal:         return 180
         case .modalJazz:          return 120
         case .soulBallad:         return 72
@@ -1757,6 +1878,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // Straight: the asymmetry of this music lives in the PHRASE, not in a swung
         // eighth, and a swing value here would fight the runs instead of carrying them.
         case .balkanModal:                        return 0.0
+        // #1349 G10a — 0.20, the shuffle under a gospel backbeat. Ties `rootsReggae`;
+        // nothing is claimed. Well under `modalJazz`'s 0.30, the largest offered swing
+        // (pinned by a blocking guard), and a notch over `soulBallad`'s 0.18.
+        case .gospelChoir:                        return 0.20
         case .boomBapHipHop:                      return 0.16
         case .electroFunk:                        return 0.08
         case .modalJazz:                          return 0.30
@@ -1896,6 +2021,11 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // Hollow Reed goes 6 -> 7, which is exactly the ceiling. Measured, not guessed:
         // `scripts/genre-prebatch.py` prints the per-patch bearing before and after.
         case .balkanModal:        return "Hollow Reed"
+        // #1349 G10a. FORCED BY ARITHMETIC, not chosen: the design sheet said Choir Vox and
+        // `scripts/genre-prebatch.py` reports it already at 7 against a pigeonhole ceiling of
+        // 7. Warm Strings was the only name under the ceiling (6 → 7). The palette itself is
+        // fixed at six by `GenreBatchFourVoicingTests`; a seventh name is a palette decision.
+        case .gospelChoir:        return "Warm Strings"
         case .blackMetal:         return "Warm Strings"
         case .modalJazz:          return "Soft Keys"
         case .soulBallad:         return "Choir Vox"
@@ -2013,6 +2143,10 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // Lead forward of the bordun genre beside it and the pad further back: this is a
         // tune with runs, not a drone piece.
         case .balkanModal:                        return (1.18, 0.94, 0.90)
+        // #1349 G10a. Pad-led — the four-note stack IS the piece — over a bass that has to
+        // drive its eighths. The pad 1.10 TIES `soulBallad`'s, the most forward pad in the
+        // file; a tie claims nothing, 1.12 would have taken a rank. The triple is free.
+        case .gospelChoir:                        return (1.08, 1.10, 0.88)
         case .blackMetal:                         return (1.10, 1.04, 0.88)
         case .modalJazz:                          return (1.00, 1.08, 0.88)
         case .soulBallad:                         return (1.00, 1.10, 0.88)
@@ -2059,6 +2193,9 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
         // the separation from its shelf-mates is archetype, mode, register and the drone.
         case .nordicFiddle:       return .minor
         case .balkanModal:        return .hungarianMinor
+        // #1349 G10a. `major` is shared with seven genres, three of them offered
+        // (`soulBallad`, `vaporwave`, `classical`), and is claimed as nothing.
+        case .gospelChoir:        return .major
         case .blackMetal:         return .hungarianMinor
         case .modalJazz:          return .dorian
         case .soulBallad:         return .major
@@ -2228,6 +2365,27 @@ public enum MusicStyle: String, Codable, CaseIterable, Sendable, Identifiable {
             return HarmonicProfile(progression: [0, 4, 3], chordTones: [0, 2, 4],
                                    padOctave: 4, leadOctave: 5, arpeggiated: true,
                                    leadDensity: 0.55)
+        case .gospelChoir:
+            // #1349 G10a — DEGREES, never semitones (the #1286 trap). `[0, 2, 4, 6]` on `major`
+            // `[0,2,4,5,7,9,11]` resolves to 0, 4, 7, 11: the MAJOR seventh. Twelve arms carry
+            // that array and `soulBallad` is one of them — identical stack, identical scale,
+            // identical register. The stack is NOT what separates these two, and saying so here
+            // is the point: the separation is tempo (disjoint windows), bass figure, lead bucket
+            // and voice, all named at the case doc.
+            //
+            // `progression: [0, 3, 4]` walks I → IV → V. The DOMINANT as a third root is the
+            // gospel lift, and it is the single axis on which this genre differs from
+            // `soulBallad`'s `[0, 3, 5]` (I → IV → vi) under `MusicStyleTests`' weaker identity
+            // key. ⚠️ `composeHarmonic` ROTATES over `progressionPhase`, so an authored cadence
+            // is never played in the order it is written — this array is a SET of roots with a
+            // tonic opening, not a score (the #1290 `andalusianCadence` lesson).
+            //
+            // ⚠️ `arpeggiated: false` and `leadDensity: 0.0` — the choir is the PAD. A rolled
+            // stack would turn the genre's one gesture into a figure, and there is no melodic
+            // voice to carry a line; `lineage` is worded to match (plan §2b-9).
+            return HarmonicProfile(progression: [0, 3, 4], chordTones: [0, 2, 4, 6],
+                                   padOctave: 4, leadOctave: 5, arpeggiated: false,
+                                   leadDensity: 0.0)
         case .andalusianCadence:
             // `[0, 2, 4]` on phrygianDominant `[0,1,4,5,7,8,10]` = 0, 4, 7 — a MAJOR triad over
             // a phrygian mode, which is the cadence's whole character. `[0, 2, 1]` is unique in

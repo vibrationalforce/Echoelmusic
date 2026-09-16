@@ -401,6 +401,35 @@ public extension MusicStyle {
                 delayMix: 0.16, delayFeedback: 0.28, delayTone: 0.54, delaySpread: 0.32,
                 saturation: 0.26,
                 reverbEnabled: true, reverbMix: 0.17, reverbRoom: 0.48, reverbDamping: 0.52)
+        case .gospelChoir:
+            // #1349 G10a — A BRIGHT CHURCH PLATE AND A LIGHT CHORUS, NO DELAY. The plate IS the
+            // tail, exactly as `soulBallad` argues one batch earlier; a delay on top of a comped
+            // seventh stack at 96 is mud, and this is the fourth genre in the roster whose
+            // "no delay" has its own reason rather than a convention.
+            //
+            // ⚠️ THE CHORUS IS THE HALF THAT SEPARATES IT FROM `soulBallad`'s SPACE, and it runs
+            // the other way on purpose: that genre takes a WIDE, SLOW chorus (rate 0.14, depth
+            // 0.38) for a ballad's maj7 pad. Here it is faster and shallower (0.18 / 0.32) — the
+            // massing already lives in the patch's four-voice unison, so the modulation only has
+            // to keep it from reading as one organ.
+            //
+            // ⚠️ Every number against a named neighbour, measured over the whole file: room 0.84
+            // is FREE between the 0.82 group (`dubTechno`, `futuristic`, `classical`) and the
+            // 0.86 group (`doom`, `sciFi`, `ambientPulse`, `dream`), under `contemplation`'s
+            // 0.96 (the biggest hall) · damping 0.36 is FREE
+            // between `drift`'s 0.35 and `glacialField`'s 0.38, above `upliftingTrance`'s 0.30
+            // (the least damped) and far under `deepDrone`'s 0.68 (the most) — a plate is bright,
+            // which is the whole word · mix 0.36 is FREE between `soulBallad`'s 0.34 and
+            // `hall`'s 0.38, under `contemplation`'s 0.48 so no wettest rank moves · saturation
+            // 0.21 is FREE and clears `minimalTechno`'s 0.14, which it must: that claim is
+            // scoped to BEAT-DRIVEN chains and this genre is `.backbeat` (the #1286 scope
+            // lesson). It stays far under `doom`'s 0.55 · chorus mix 0.23 is FREE between 0.22
+            // and 0.24, and above `modalJazz`/`jazz`'s 0.20 so the lightest-chorus rank stays
+            // theirs.
+            return GenreFXPreset(
+                chorusEnabled: true, chorusRate: 0.18, chorusDepth: 0.32, chorusMix: 0.23,
+                saturation: 0.21,
+                reverbEnabled: true, reverbMix: 0.36, reverbRoom: 0.84, reverbDamping: 0.36)
         case .rootsReggae:
             // #1289 G6b — THE LONG ECHO, and it is the genre rather than a decoration: a QUARTER
             // on tape with high feedback and audible wow. At the fastest allowed 84 BPM that is

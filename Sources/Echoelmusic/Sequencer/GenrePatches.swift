@@ -142,6 +142,35 @@ public extension MusicStyle {
                 cutoff: 2350, res: 0.22, lfoAmt: 0.07, lfoRate: 5.4, lfoDepth: 0.05,
                 revMix: 0.18, revDecay: 1.30, vibRate: 6.1, vibDepth: 0.09,
                 uni: 2, det: 7)
+        case .gospelChoir:
+            // #1349 G10a — CHURCH CHOIR. A four-note major-seventh stack with a soft onset and
+            // a long tail: the pad IS the choir here (`leadDensity: 0.0`), so the voice has to
+            // carry the whole harmonic body on its own.
+            //
+            // ⚠️ TWO DIFFERENT THINGS ARE CALLED "the patch", and this genre is the sharpest
+            // example in the file. `leadPatchName` is the CEILING BUCKET and it is "Warm
+            // Strings", FORCED by the pigeonhole arithmetic after the design sheet's Choir Vox
+            // came in at 8 against a ceiling of 7. `synthPatch` is THIS, the actual voice, and
+            // it is its own — `soulBallad`, the near neighbour on every harmonic axis, plays
+            // "Warm Keys" (patch 50). Sharing a bucket is not sharing a sound.
+            //
+            // ⚠️ Every number against a measured neighbour; nothing takes a file-wide claim:
+            // cutoff 2500 is FREE, between "Chamber Strings" (2450) and the pair that shares
+            // 2600 ("Iron Stab", "Clarinet Reed"), and nowhere near "Glacier Pad"'s 4200 (the
+            // brightest) · attack 0.14 is FREE and takes NOTHING — it is the sixth-slowest onset
+            // in the file, just over "Air Reed"'s 0.12, well under "Chamber Strings"' 0.35, and
+            // an order of magnitude under "Drone Bed"/"Still Pad"'s 1.8, which hold the
+            // file-wide slowest-attack claim · the envelope sums to 2.24, a FREE
+            // value between "Berlin Seq"'s 2.12 and "Neon Lead"'s 2.32, and far from "Glacier
+            // Pad"'s 15.60 · noise 0.03 is choir breath, under "Brass Reed"'s 0.08 (the most)
+            // · `uni: 4` is the one number that is about the WORD "choir": a stack of detuned
+            // voices is what a massed sound is. It stays under the file's maximum of 5.
+            return patch("67", "Church Choir",
+                a: 0.14, d: 0.55, s: 0.86, r: 1.55,
+                harm: 0.74, hl: 0.76, bright: 0.40, noise: 0.03, color: "Pink", shape: "Natural",
+                cutoff: 2500, res: 0.10, lfoAmt: 0.04, lfoRate: 4.6, lfoDepth: 0.03,
+                revMix: 0.28, revDecay: 2.90, vibRate: 4.8, vibDepth: 0.05,
+                uni: 4, det: 12)
         case .rootsReggae:
             // #1289 G6b — ROOTS ORGAN. ⚠️ NOT "Skank Organ": `ska` (un-offered) already ships
             // that name, and the pre-batch check caught it — the third name collision in three
@@ -677,6 +706,29 @@ public extension MusicStyle {
                 a: 0.005, d: 0.16, s: 0.44, r: 0.245,
                 harm: 0.70, hl: 0.42, bright: 0.30, noise: 0.0, color: "Pink", shape: "Natural",
                 cutoff: 740, res: 0.16, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
+                revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
+                uni: 1, det: 0)
+        case .gospelChoir:
+            // #1349 G10a — CHURCH SUB. `drivingEighths` under a comped choir at 96: the note has
+            // to land and clear before the next eighth, but rounder than "Brass Sub" one arm
+            // above, because nothing here is playing runs it would have to get out of the way of.
+            //
+            // ⚠️ THE SEPARATION FROM `soulBallad` IS HALF IN THIS FILE. That genre walks
+            // `offbeatEighths` on "Velvet Sub" (envelope 0.834, sustain 0.66); this one walks
+            // straight eighths on a shorter, brighter voice. Two genres sharing scale, stack,
+            // register and groove archetype must not also share a bass.
+            //
+            // ⚠️ Nothing takes a claim anyone holds: the envelope sums to 0.566, FREE between
+            // "Iron Stab"'s 0.542 and "Roots Organ"'s 0.608, and nowhere near "Psy Bass"'s 0.222
+            // (the file's SHORTEST, untouched) · cutoff 780 is FREE, between "Deep Bass" (760)
+            // and "Cadence Sub" (820), and well clear of "Minimal Sub"'s 520 (the LOWEST) —
+            // measured over EVERY patch in the file, not only the `patch()`-helper ones, because
+            // the older literal-bodied voices hold three of the four extremes · `uni: 1` like
+            // every bass here — a detuned unison smears the fundamental.
+            return patch("68", "Church Sub",
+                a: 0.006, d: 0.36, s: 0.58, r: 0.20,
+                harm: 0.92, hl: 0.36, bright: 0.20, noise: 0.0, color: "Pink", shape: "Natural",
+                cutoff: 780, res: 0.12, lfoAmt: 0.0, lfoRate: 0.0, lfoDepth: 0.0,
                 revMix: 0.0, revDecay: 0.5, vibRate: 0, vibDepth: 0,
                 uni: 1, det: 0)
         case .rootsReggae:

@@ -12,10 +12,14 @@ import XCTest
 /// invisible in exactly the way a genre outside `offered` is — built, filed, unreachable. Claim 3
 /// pins the set equality against the NEW root, so the trap cannot reopen without a red.
 ///
-/// ⚠️ WHY `.chant` IS NOT IN `Category` even though the plan names nine rubrics: every genre it
-/// would hold is still unwritten, so the case would ship with an empty shelf. Claims 4 forbid
-/// that in general rather than naming `.chant` — a rule beats a note, and this one fires the day
-/// anyone adds an empty rubric or an empty shelf, whichever comes first.
+/// ⛔ THIS HEADER SAID `.chant` WAS NOT IN `Category` "even though the plan names nine rubrics:
+/// every genre it would hold is still unwritten". #1349 G10a wrote one — `gospelChoir` — so
+/// `.chant` and its `.gospelSpiritual` shelf now exist, each with exactly that one resident.
+/// The note is retracted, the RULE is untouched and is the point: claim 4 forbids an empty
+/// rubric and an empty shelf IN GENERAL rather than naming `.chant`, which is why this slice
+/// needed no guard change to stay honest — a rule beats a note, and this one fires the day
+/// anyone adds an empty rubric or an empty shelf, whichever comes first. The rubric-specific
+/// assertions live with their slice, in `GenreBatchTenATests`.
 ///
 /// SOURCE-TEXT SCAN in claim 7 only; everything else runs the real types.
 ///
@@ -28,6 +32,8 @@ import XCTest
 ///   M2 a shelf whose parent contradicts its genres → claim 6 red (the split it causes)
 ///   M3 a genre filed nowhere                   → claim 1 red (a Swift COMPILE error too)
 ///   M4 an empty rubric (`.chant` added early)  → claim 4 red
+///      ⚠️ Read M4 as a MUTATION, not as a statement about today: `.chant` is real since #1349
+///      and is not empty. The mutant that still bites is "a rubric with no offered genre".
 ///   M5 a rubric's shelves split across the menu → claim 6 red
 ///   M6 a `default:` arm in the filing switch   → claims 1, 4 and 7 red
 ///   M7 a shelf title of 26 characters          → claim 5 red
@@ -101,9 +107,12 @@ final class GenreSubcategoryTests: XCTestCase {
                        "a genre is offered from two shelves — it would show twice in the picker (#1275)")
     }
 
-    /// Claim 4 — no empty shelf and no empty rubric. This is the rule that keeps `.chant` out
-    /// until it has a genre, and it is written as a rule rather than a note on purpose: an empty
-    /// drawer reads as a promise to the next session and shows nothing to the player.
+    /// Claim 4 — no empty shelf and no empty rubric. It is written as a RULE rather than a note
+    /// on purpose: an empty drawer reads as a promise to the next session and shows nothing to
+    /// the player. ⛔ It used to add "this is the rule that keeps `.chant` out until it has a
+    /// genre" — #1349 gave `.chant` a genre, so the example is spent while the rule is not. An
+    /// example that has been met is worth replacing, not keeping: a reader who checks it finds
+    /// `.chant` present and has to work out whether the rule broke or the sentence aged.
     func testNoRubricAndNoShelfIsEmpty() {
         for shelf in MusicStyle.Subcategory.allCases {
             XCTAssertFalse(shelf.genres.isEmpty, """

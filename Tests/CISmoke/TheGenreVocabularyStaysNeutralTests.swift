@@ -87,10 +87,16 @@ final class TheGenreVocabularyStaysNeutralTests: XCTestCase {
     /// token is pinned to the legacy string "esotericMeditation" on purpose (claim 2), and
     /// "esoteric" is on the list below. The distinction this file rests on is exactly that one —
     /// a STORAGE TOKEN is not copy. `displayName` and `lineage` are what the picker renders.
-    /// ⭐ #1276: THE SECTION HEADERS ARE SWEPT TOO. #1275 gave the picker seventeen shelf titles
-    /// and eight rubric titles — shipped copy that did not exist when this claim was written,
-    /// rendered ABOVE the genre names it groups, and reached by no other guard. Additive, so a
-    /// correct tree stays green (#364).
+    /// ⭐ #1276: THE SECTION HEADERS ARE SWEPT TOO. #1275 gave the picker a shelf title per
+    /// shelf and a rubric title per rubric — copy that did not exist when this claim was
+    /// written and is reached by no other guard. Additive, so a correct tree stays green (#364).
+    /// ⛔ The counts "seventeen shelf titles and eight rubric titles" stood here and #1349 made
+    /// both stale in one commit (a new shelf AND a new rubric). Deleted rather than refreshed
+    /// (#818): the loop below reads `allCases`, so the numbers were decoration the code never
+    /// needed. ⚠️ And only the SHELF half is rendered — `Category.title` has no production
+    /// reader (measured #1349, see the `Category` doc). The sweep covers it anyway, on purpose:
+    /// it is copy the moment anyone mounts a rubric header, and a ban that arrives after the
+    /// copy is written arrives too late to be cheap.
     func testNoShippedGenreStringUsesEsotericVocabulary() {
         var shipped: [(String, String)] = []
         for rubric in MusicStyle.Category.allCases {

@@ -171,11 +171,23 @@ public extension MusicStyle {
         //   figure safe to leave sitting: the day someone takes it, the list goes red on the
         //   right line rather than the figure quietly acquiring an owner.
         case .nordicFiddle:     return .heldRoot
-        // #1295b G11d — the SIXTH owner of `drivingEighths`, and shared on purpose: a
+        // #1295b G11d — the SEVENTH owner of `drivingEighths`, and shared on purpose: a
         // figure is shareable, a VOICE never is. `balkanModal` gets its own patch
         // ("Brass Sub"), and that patch is built to stop inside its eighth — the exact
         // opposite of the `heldRoot` voice one line above.
+        // ⛔ This read "SIXTH" until #1349 COUNTED the arms instead of copying the neighbour
+        // four lines up: `andalusianCadence` WAS the sixth, and `balkanModal` landed after it.
+        // One ordinal, inherited rather than measured — the cheapest possible instance of the
+        // defect this file's own docs keep naming. Command: the `drivingEighths` owner list
+        // printed by `python3 scripts/genre-prebatch.py <candidates.json>` under `7 BASS
+        // GRAMMAR`, which prints the names and not a number, so it cannot go stale the same way.
         case .balkanModal:      return .drivingEighths
+        // #1349 G10a — the EIGHTH owner of `drivingEighths`, and the sharing is the point one
+        // more time: the design sheet gave this genre `offbeatEighths`, which is `soulBallad`'s
+        // figure, and those two already share scale, stack, register and groove archetype. A
+        // figure is shareable; two genres that close must not share THIS one. The voice is its
+        // own ("Church Sub"), which is the half that never shares.
+        case .gospelChoir:      return .drivingEighths
         case .andalusianCadence: return .drivingEighths
         case .blackMetal:       return .drivingEighths
         case .modalJazz:        return .drivingEighths
