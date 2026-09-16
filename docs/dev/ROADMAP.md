@@ -65,7 +65,7 @@ Full LIVE/ROADMAP/NORTH-STAR detail in [`vision.md`](../../memory/vision.md) and
 Each item: **[dimension]** description → *plan doc if any*. Pick from **Now** first.
 
 ### NOW (this + next few cycles — verifiable, low risk, on-vision)
-1. **[Sound]** Push a **TestFlight build** so the founder hears the whole preset/FX/community package on device. *(DoD step; do before adding more.)*
+1. ⛔ **ERLEDIGT UND ZURÜCKGENOMMEN (#1344, 2026-09-16) — Wortlaut erhalten:** *„[Sound] Push a **TestFlight build** so the founder hears the whole preset/FX/community package on device. (DoD step; do before adding more.)“* Der Einfrierzustand, den dieser Posten voraussetzte, ist seit 2026-07-17/07-31 aufgehoben; seither geht **jede grüne Runde** raus (`git log --oneline -- .deploy/release` — zuletzt v10.79.472). **Warum das nicht nur veraltet, sondern SCHÄDLICH war:** der Klammerzusatz „do before adding more“ macht daraus ein GATE auf jede weitere Arbeit, und er stand an Position 1 der NOW-Liste — die erste Zeile, die eine planende Sitzung liest. Ein erledigter Posten, der noch als Sperre formuliert ist, kostet mehr als ein fehlender.
 2. ✅ **[Sound]** ~~In-app community loader~~ — DONE 2026-06-19: `CommunityLibrary` loads
    `Resources/Community/{fx,patches}/*.json` via `Bundle.module`, merged into the FX library
    (appended) + a "Community" section in the Sound editor. Best-effort (empty on failure → no
@@ -150,17 +150,21 @@ Grouped by theme so nothing is lost. **Status legend:** 🟢 active input · �
 - ~~Live Broadcast~~ — the gate ANSWERED (⛔ this line kept the oscillation alive past the verdict): CUT by Editor ≠ Workstation (2026-07-25) and struck from the identity line 2026-07-31. WATCH tier; re-entry needs a founder ask.
 - ✅ ~~CLAUDE.md "v10 Target" diagram drift~~ — RECONCILED 2026-06-19: relabeled as superseded
   + honest banner, "Studio sections" table now reflects the as-built single `EchoelStudioView`.
-- **Bus `bioFrames`/`bioEvents`** reserved but undrained (snapshot path is the live one).
+- ⛔ **HALB FALSCH, und dies ist das VIERTE Zuhause derselben Reparatur (#1344, 2026-09-16).** Hier stand: *„Bus `bioFrames`/`bioEvents` reserved but undrained (snapshot path is the live one)“*. `bioEvents` HAT einen Verbraucher — `EngineBus.swift` sagt es selbst: „the SOLE consumer (`OSCSender.drainAndSendEvents`)“. Nur **`bioFrames`** ist reserviert und ungedraint; der Snapshot-Pfad (`latestBio`/`latestBioEvent`) ist weiterhin der lebende. **Die Lehre ist nicht die Bus-Tatsache, sondern das #456-Gesetz an sich selbst:** dieselbe Falschstelle wurde am 2026-08-28 in DREI Dateien zugleich korrigiert — `CLAUDE.md` schreibt das wörtlich so hin — und ausgerechnet die Ehrlichkeits-Liste, die „review every session“ im eigenen Überschriftstext trägt, war keine der drei. **Eine Reparatur reist in JEDES Zuhause; welche es sind, misst man, statt sie sich zu merken.**
 - **No device-to-device clock sync**; OSC is single-target (item #9).
 - **⚠️ CI verification gap (structural):** `ci.yml` uses `swift build` (SPM), which does NOT
-  catch Xcode/Tuist-only build errors — `Bundle.module`, resource bundling, `Project.swift`
-  issues only surface in the TestFlight (XcodeGen) build. This bit v10.34.0 (Bundle.module).
+  catch **XcodeGen**-only build errors — `Bundle.module`, resource bundling and `project.yml`
+  issues only surface in the TestFlight (XcodeGen) build. ⛔ **Hier stand „Xcode/Tuist-only“ und „`Project.swift` issues“ (#1344):**
+  dieses Repo benutzt **Tuist nicht** — der Generator ist XcodeGen und sein Manifest heißt `project.yml`.
+  ⚠️ Und `Project.swift` ist hier besonders teuer, weil es eine **lebende Echoel-Datei** ist (`Sources/Echoelmusic/Core/Project.swift`):
+  wer dem Vermerk folgt, öffnet eine echte Datei, die mit dem Build-System nichts zu tun hat, und findet den Fehler nicht.
+  Dieselbe Form wie die `BioModulation`-Falle in `CLAUDE.md` — der naheliegende Griff landet auf einer gleichnamigen Nachbarin. This bit v10.34.0 (Bundle.module).
   **Rule:** SPM-only APIs MUST be `#if SWIFT_PACKAGE`-guarded (see BeatPlayer/CommunityLibrary).
   **MITIGATED 2026-06-19:** added `.github/workflows/xcode-compile-check.yml` (macos, xcodegen +
   `xcodebuild build`, no-sign) on every code push — it caught the AUv3 `FXCharacter` error in ~30s.
   **Standing rule:** keep `Sources/Echoelmusic/DSP/` self-contained — no `Core/`/`Sequencer/` types
   in `DSP/` files. (The original reason was that the AUv3 target compiled `DSP/` in isolation; that
-  target is gone since #121, but the rule stays: it is what keeps the DSP layer portable.) And
+  target is gone since #121, but the rule stays.) ⛔ **„it is what keeps the DSP layer portable“ stand hier und widerspricht einer IMMER GELADENEN Regeldatei (#1344):** `.claude/rules/swift-audio.md` sagt ausdrücklich *„Reason = hygiene + one-way dependency, **not** portability and **not** AUv3“* und verbietet die Formulierung „Linux-testable“ mit einem Gegenbeispiel (`EchoelWSOLA.swift` importiert Accelerate ungeguarded). Ein Planungsregister, das einer immer geladenen Regel eine ANDERE Begründung unterschiebt, ist die gefährlichere Hälfte: die Regel bleibt richtig, aber wer sie aus dem falschen Grund befolgt, wendet sie am falschen Ort an. And
   guard SPM-only APIs with `#if SWIFT_PACKAGE`.
 - **Community loader on-device verification pending** — `CommunityLibraryTests` proves the SPM
   bundling in CI, but the Xcode/TestFlight bundle path should be confirmed once on device.
