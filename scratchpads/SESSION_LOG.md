@@ -31795,3 +31795,103 @@ existierende Suite `ComprehensiveTestSuite`. Die C-Liste — **9 türlose View-T
 tote Modal-Flaggen** — ist vollständig im Register von `CLAUDE.md` verzeichnet; kein neuer
 undokumentierter Waise. „Unerreichbar" ist dort kein Defekt, „unerreichbar UND nicht
 aufgeschrieben" wäre einer.
+
+## 2026-09-16 — Der Ultracode-Sweep: #1321–#1336, sechzehn Scheiben, ein wiederkehrender Defekt
+
+Sechzehn Scheiben in einem Zug, jede mit Wächter und §0-Transkription gegen beide Bäume.
+Die Zusammenfassung gehört hierher, weil **dreizehn der sechzehn dasselbe Muster haben** und
+das Muster teurer ist als jede Einzelscheibe.
+
+### DAS MUSTER: eine Founder-Löschung reist nicht von allein
+
+`#1301`/`#1302`/`#1304`/`#1305` (12. September) haben Gesicht, Audio-Eingang, Video und die
+Harmonizer-Kette entfernt. Jede Löschung hat die Datei nachgezogen, die sie gerade bearbeitete
+— und **in jedem einzelnen Fall standen Nachbarn im Präsens weiter da**:
+
+| Scheibe | Wo die Löschung NICHT ankam |
+|---|---|
+| #1324 | Routing-Karte bot Modulations-Ziele an, die mit dem Monitor-Insert gingen |
+| #1325 | Audio→Bild-Pfad: drei Dateiköpfe behaupteten ankommende Merkmale, null Erzeuger |
+| #1326 | **die IDENTITÄTS-Zeile in `CLAUDE.md`** — Multitrack-Recorder als „gebaut, flag-gated" |
+| #1330 | `README.md`-Karte nannte fünf gelöschte Dinge; `Tools/` „breath/vocal tools" |
+| #1332 | Website verkaufte eine gelöschte Vollbild-Tür + erfundene Streaming-Historie |
+| #1333 | Routing-Karte versprach `/echoelmusic/gesture/*` ohne Erzeuger |
+| #1336 | `AudioConfiguration`: **fünf** Prosa-Stellen über eine Route mit null Aufrufern |
+
+⭐ **GESETZ, das diese Sitzung dreimal bezahlt hat und das in keiner Regel-Datei stand: eine
+KORREKTUR veraltet exakt wie die Behauptung, die sie korrigierte (#1326).** Nichts prüft einen
+⛔-Block so nach wie einen Originalsatz — ein ⛔ liest sich wie erledigte Arbeit. #1336 ist der
+schärfste Beleg: #902 argumentierte aus einer Zählung, #903 fand beide Zahlen erfunden und
+ersetzte sie durch ein gemessenes „14 Treffer = 12 Aufrufstellen … neun sind `try?`", und
+#1302 löschte alle zwölf. Die Korrektur der Korrektur war drei Tage später falsch.
+
+⭐ **UND DIE SCHÄRFERE FORM: ein Vermerk, der ein `grep` ZITIERT, veraltet schneller als einer,
+der eine Tatsache behauptet** — er pinnt eine AUSGABE, und jede spätere Bearbeitung (auch die
+Korrektur selbst) ändert die Ausgabe. Seit #1336 steht in `AudioConfiguration` der BEFEHL statt
+der Zahl. Dieselbe `EchoelModalBank`-Lehre, zum zweiten Mal, in einer anderen Datei.
+
+### DIE VIER, DIE KEINE PROSA WAREN
+
+- **#1331** — die Puffer-Stufe hat ihre Tür zurück. `audio.latencyMode` wird PERSISTIERT, und
+  sein einziges Bedienelement starb mit #1302: eine gespeicherte Audio-Einstellung ohne
+  Schalter. Genau das Gesetz, das `CLAUDE.md` selbst formuliert („vor dem Löschen eines
+  UI-Blocks prüfen, welche Modelle er als EINZIGER schreibt"). `AudioLatencyRow` sitzt jetzt im
+  `masterPanel`, zeigt was die Sitzung GEWÄHRT hat und fällt bei Ablehnung zurück.
+- **#1334** — `EchoelDDSP`s Kopf beschrieb „65-band frequency-domain multiplication via
+  vDSP_DFT". Es gab nie eine Transformation; die Schleife fährt Ein-Pol-IIR-Filter. Und der Kopf
+  hatte PHYSISCHE FOLGEN: drei Arrays in der Größe der beschriebenen Overlap-Add-Stufe wurden
+  pro Stimme belegt und nie gelesen. **Ein falscher Kopf ist die teure Sorte, weil er
+  VORSCHREIBEND ist** — `swift-audio.md` schickt jeden, der `DSP/` anfasst, zuerst in die
+  umgebende Datei.
+- **#1335** — der Export warf ein `Task { @MainActor }` pro dekodiertem Sample-Puffer. Offline-
+  Export (`expectsMediaDataInRealTime = false`), also Tausende in Sekunden: die 10.76.48-Form,
+  schneller als der Kamera-Präzedenzfall. Gedrosselt auf eine Einreichung pro PROZENT. Die
+  Drossel brauchte `clamped(to:)` statt `min(max(…))`, weil `Int(NaN * 100)` ein TRAP ist, der
+  von außen wie #396 aussieht (#1174).
+- **#1321/#1323** — drei `Int(Float)`-Fallen an Eingängen von außen (eine per Datagramm
+  fernauslösbar) und die Atem-PHASE, die an der Atem-RATE hing.
+
+### #1322 IST DIE UNANGENEHME
+
+Sieben Behauptungen im BLOCKIERENDEN Bündel waren auf korrektem Baum rot — und niemand hat es
+gemerkt, aus dem §5-Grund: CI/CD meldet auf jedem Push `failure`, also ist ein echt roter
+Wächter von einem sterbenden Host nicht zu unterscheiden. Das ist der dritte protokollierte
+Fall dieser Klasse (#650/#655/#656, #937, jetzt #1322).
+
+### EHRLICHE BENOTUNG — was diese Sitzung an sich selbst korrigieren musste
+
+**Sechs von sechzehn Wächter-Köpfen benoteten sich falsch, und die Transkription fing jeden.**
+#1324 (sagte 20/5, gemessen 21/6) · #1328 (1 rot, gemessen 2) · #1330 (3 rot + Anspruch 3 als
+Gegengewicht; gemessen 4, und Anspruch 3 ist ein VORWÄRTS-Wächter — genau der
+schmeichelnde-Richtung-Defekt #433/#464) · #1331 (9/7, gemessen 10/6, zwei Negative gingen
+VAKUUM durch einen fehlenden Anker) · #1332 (pinnte die RTMP-Absage in `faq.html`, die sie auf
+dem Elternbaum gar nicht trug) · #1334 (sagte „4 rot, EIN Befund" und zählte eine Zusicherung
+mit, **die es nicht gab** — Anspruch 1s Doc behauptete „no transform claimed in code" und prüfte
+nur die drei Puffer) · #1335 (sagte 2 rot; es ist 1 rot + 2 UNERREICHT, weil der `guard`
+zurückkehrt — und unerreicht ist nicht grün).
+
+⭐ **Die Lehre ist NICHT „sorgfältiger schätzen". Es ist: §0 ist nicht optional, und die
+Richtung des Fehlers ist verräterisch** — fünf der sieben liefen in die schmeichelnde Richtung.
+#1336 fand die Transkription zusätzlich einen echten Fehlgriff im QUELLCODE-Edit: der falsche
+Satz lief über ZWEI Zeilen, die erste Fassung bearbeitete nur die zweite.
+
+### Gates — und ein Befund über den Durchsatz
+
+⚠️ **Es gibt für #1324–#1336 bis jetzt KEIN Compile-Verdikt.** Gemessen: jeder
+`Xcode Compile Check` dieser Kette wurde vom nächsten Push per Concurrency-Gruppe abgebrochen
+(`c983830` run 35111926805 `cancelled`, `854793c` run 35113475876 `cancelled`), und die
+macOS-Runner stehen im Rückstau — `c983830`s CI/CD war um 14:56 eingereiht und lief um 15:30
+noch nicht. **Nicht** die Stale-Page-Falle (#1180): `total_count` STIEG (554 → 560) und die
+neueste Zeile ist der eigene Push.
+
+⚠️ **Zusammen mit #683 ist das der eigentliche Befund:** `auto-merge-claude.yml` wartet auf kein
+Gate, hat bei jeder dieser sechzehn Scheiben `success` gemeldet, und **alle sechzehn stehen auf
+`main` ohne je kompiliert worden zu sein**. Das ist nicht neu und nicht mein Fehler — es ist
+founder-gated —, aber es ist der Tag, an dem es sechzehnmal hintereinander passiert ist.
+Konsequenz für die Sprache: **keine dieser Scheiben darf als „grün" berichtet werden.** Ehrlich
+ist „sieben Checker exit 0, Kompilat unbelegt" (#445).
+
+### Nicht angefasst, mit Grund
+
+`Core/AudioFeatureChannel.swift` — Sperre + `exp()` pro Rahmen, gemessen ~1,5 µs/s. Eine
+Optimierung ohne messbaren Nutzen ist Churn; stattdessen in #1325 dokumentiert.

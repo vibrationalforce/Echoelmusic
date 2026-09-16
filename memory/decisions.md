@@ -1939,3 +1939,48 @@ gehört der Uhr (im Ruhezustand minutenweit), das Etikett sagt „at its own pac
 `HKWorkoutSession` bleibt HOLD-FOR-FOUNDER.
 
 **Review:** 2026-10-16.
+
+### 2026-09-16 — Eine KORREKTUR veraltet exakt wie die Behauptung, die sie korrigierte (#1326/#1336)
+
+**Entscheidung:** Eine Wahrheits-Runde prüft ab jetzt auch die ⛔-Rücknahme-Blöcke, nicht nur
+die Originalsätze.
+
+**Begründung:** Dreimal in einem Zug belegt. Der schärfste Fall ist #1336: #902 argumentierte
+aus einer Zählung; #903 fand beide Zahlen erfunden und ersetzte sie durch ein gemessenes
+„14 Treffer = 12 Aufrufstellen … neun sind `try?`"; #1302 löschte alle zwölf Aufrufstellen mit
+dem Audio-Eingang — und niemand las die Korrektur noch einmal. **Ein ⛔-Symbol liest sich wie
+erledigte Arbeit.** #1326 fand dasselbe in der IDENTITÄTS-Zeile von `CLAUDE.md`, also in der
+ersten Zeile, die eine Sitzung liest.
+
+**Warum kein Wächter:** ein Negativ-Scan auf die gestrichene Behauptung träfe die Rücknahme
+selbst (#491). Das ist eine Lese-Disziplin, keine Testfläche. Was ein Wächter KANN, ist die
+TATSACHE pinnen statt der Prosa — `TheRecordRouteHasNoClaimantTests` wird rot, wenn ein
+Aufrufer zurückkommt, und nennt in seiner Meldung die fünf Prosa-Stellen, die dann mitziehen.
+
+**Schwesterregel, zweiter Beleg:** ein Vermerk, der ein `grep` ZITIERT, veraltet schneller als
+einer, der eine Tatsache behauptet — er pinnt eine AUSGABE, und jede spätere Bearbeitung ändert
+sie. Der BEFEHL ersetzt die Zahl (gleiche Form wie #818).
+
+**Review:** 2026-10-16.
+
+### 2026-09-16 — Sechzehn Scheiben erreichten `main`, ohne je kompiliert worden zu sein (#683-Folge)
+
+**Befund, gemessen:** jeder `Xcode Compile Check` der Kette #1321–#1336 wurde vom nächsten Push
+per Concurrency-Gruppe abgebrochen (`c983830` run 35111926805, `854793c` run 35113475876, beide
+`cancelled`), während die macOS-Runner im Rückstau standen. `auto-merge-claude.yml` wartet auf
+kein Gate (#683) und meldete jedes Mal `success`.
+
+**Ausgeschlossen:** die Stale-Page-Falle (#1180) — `total_count` STIEG (554 → 560) und die
+neueste Zeile war der eigene Push.
+
+**Entscheidung (sofort wirksam, in meiner Hand):** keine dieser Scheiben wird als „grün"
+berichtet. Ehrlich ist *„sieben Checker exit 0, Kompilat unbelegt"* (#445). Und: nicht schneller
+pushen, als ein Gate laufen kann — der letzte Kopf muss ein Verdikt bekommen, auch wenn die
+Zwischenstände keines bekommen.
+
+**Reparatur: founder-gated** (`.github/workflows/**` = berichten, nicht editieren). Eine
+Gate-Bedingung im Auto-Merge. ⚠️ Schwere heute gedämpft, weil der TestFlight-Dispatch im selben
+Workflow auf `if: false` steht — ein ungetesteter Merge erreicht `main`, aber nie einen Nutzer.
+Fällt dieses `if: false`, ändert sich die Schwere sofort.
+
+**Review:** 2026-10-16.
