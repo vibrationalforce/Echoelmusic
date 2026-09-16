@@ -31877,7 +31877,25 @@ Satz lief über ZWEI Zeilen, die erste Fassung bearbeitete nur die zweite.
 
 ### Gates — und ein Befund über den Durchsatz
 
-⚠️ **Es gibt für #1324–#1336 bis jetzt KEIN Compile-Verdikt.** Gemessen: jeder
+⭐ **NACHTRAG, 16:10 — DAS VERDIKT IST DA, und dieser Absatz ist damit die erste Anwendung
+seines eigenen Gesetzes: eine Korrektur veraltet wie die Behauptung, die sie korrigierte
+(#1326), und diese hier veraltete innerhalb EINER Stunde.** Gemessen:
+· `Xcode Compile Check` = **success** auf `797bc98` (Lauf 35116178693) ⇒ `Sources/` kompiliert
+  über die GANZE Kette #1321–#1339.
+· CI/CD auf `854793c` (Lauf 35113475796): Schritt **`Build for Testing` = success** ⇒ **das
+  BLOCKIERENDE Bündel kompiliert** (#1321–#1334, zwölf neue Wächter). `Run Tests` = failure ist
+  `** TEST EXECUTE FAILED **`, NICHT `TEST BUILD FAILED` — die chronische #396.
+· **NULL `failed on`-Zeilen im Fenster**, und `TheAudioFeaturePathHasNoProducerTests` steht mit
+  ALLEN VIER Fällen als `passed` im Log — nach §5b ist ein Testname im Log der Beweis, dass er
+  GELAUFEN ist. Ein #1325-Wächter ist damit nicht nur kompiliert, sondern beobachtet grün.
+⚠️ Grenze (#807): das Job-Log ist `tail -200 test.log`. „Null Fehler" heißt null IM FENSTER.
+⚠️ Offen bleibt das interessanteste Paar: `d78b249` (Wächter OHNE `@testable`-Reparatur) gegen
+`a68e289` (MIT) — beide CI/CD-Läufe stehen noch in der Warteschlange, und weil CI/CD NICHT
+cancel-in-progress fährt, laufen beide. Das ist ein Bekannt-Positiv/Bekannt-Negativ-Paar für
+#1337, das sich nicht absichtlich herstellen ließ.
+
+⛔ **Was hier stand und jetzt falsch ist:** „Es gibt für #1324–#1336 bis jetzt KEIN
+Compile-Verdikt."** Gemessen: jeder
 `Xcode Compile Check` dieser Kette wurde vom nächsten Push per Concurrency-Gruppe abgebrochen
 (`c983830` run 35111926805 `cancelled`, `854793c` run 35113475876 `cancelled`), und die
 macOS-Runner stehen im Rückstau — `c983830`s CI/CD war um 14:56 eingereiht und lief um 15:30
