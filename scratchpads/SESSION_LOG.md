@@ -32968,3 +32968,43 @@ war nie kaputt. Rot war ausschließlich `Build for Testing`, also genau das Gate
 (sie ist wegen #396 auf JEDEM Push `failure`), und der `tail -200 test.log`-Schritt zeigte einen
 Dateifehler statt der Ursache. Die Kette, die trägt, ist: Schritt 9 lesen → bei rot das Log
 DIESES Schritts holen → die genannte Datei reparieren.
+
+---
+
+## 2026-09-16 — #1356: die G14-Skizze kollidiert mit dem Genre von heute Abend
+
+**Keine Scheibe, eine MESSUNG — und sie hat zwei Blocker gefunden, die sonst erst als roter
+Wächter aufgetaucht wären.** Vor der Wahl der nächsten Scheibe die drei Latin-Kandidaten aus dem
+Plan (`cumbia`, `andeanHighland`, `tangoMarcato`) durch `genre-prebatch.py` getrieben, wie es die
+Batch-Vorlage verlangt.
+
+⛔ **`tangoMarcato` IST WIE SKIZZIERT NICHT BAUBAR.** Das Blatt sagt `harmonicMinor` +
+`[0, 2, 4, 6]` + `padOctave 3`. Das ergibt `[0, 3, 7, 11]` — den Moll-Dur-Septakkord, und genau
+den hat `slowedGothPop` heute Abend als **seine** Trennung bekommen, gesichert von Anspruch 2 des
+#1354-Wächters als SWEEP über `allCases`. Der Wächter ginge rot, und zwar zu Recht: zwei Genres
+mit demselben Tonika-Akkord auf derselben Skala sind ein Akkord mit zwei Etiketten. ⚠️ **Die
+Auflösung ist eine ENTSCHEIDUNG, keine Zahl** — entweder Tango bekommt eine andere
+Vierstimmigkeit (sein `[0, 3, 4]`-Vamp trägt die harmonisch-Moll-Farbe ohnehin), oder die
+Eindeutigkeits-Behauptung wird zurückgenommen und BEIDE Docs werden mitgezogen (die
+#1295b-Form, in der `blackMetal`s „von keinem anderen benutzt" fallen musste). Still eins von
+beidem zu tun wäre der Fehler.
+
+⛔ **Und die drei Zeilen zusammen SPRENGEN die Lead-Decke.** Gemessen: Tragweite 45→48, Decke
+bleibt 8, „Hollow Reed" stünde auf **9 von 48**. Auch „Deep Sub" und „Soft Keys" gingen 7→8 —
+nach dieser Scheibe hätten FÜNF der sechs Namen keinen Kopfraum mehr. Die Rubrik muss also
+geteilt werden, und die Lead-Wahl ist dabei erzwungen, nicht frei.
+
+⭐ **Gute Nachricht, ebenfalls gemessen und der erste Nutzen von #1353 im Feld:**
+`andeanHighland`s Viertel-Echo bewegt die schlagzeugfreie Cluster-Ratsche **5→6**, verschmilzt
+also nichts — genau die Frage, die Abschnitt 5 seit heute beantwortet und die vorher niemand
+gestellt hätte. `cumbia` ist auf allen sieben Achsen sauber, Fingerabdruck-Sweep leer, Echo weit
+unter der Decke. **`cumbia` allein ist die nächste baubare Scheibe** (Regal „Latin America" neu,
+Lead „Soft Keys" 7→8).
+
+⭐ **Die LEHRE ist über die Reihenfolge, nicht über Tango:** ein Entwurfsblatt, das vor der
+Epik geschrieben wurde, altert an jedem ausgelieferten Genre mit — und die Kollision entstand
+erst gestern Abend, zwischen zwei Zeilen, die im Plan zwei Rubriken auseinanderliegen. **Die
+Vorab-Messung gehört deshalb an den ANFANG jeder Scheibe, nicht ans Ende**, und sie muss die
+Kandidaten GEMEINSAM messen: einzeln wäre die Decken-Sprengung nicht aufgefallen.
+
+Beide Blocker stehen jetzt in der G14-Zeile des Plans, nicht nur hier.
