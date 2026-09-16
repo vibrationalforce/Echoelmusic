@@ -22,40 +22,47 @@ Diese Datei wiederholt sie nicht (#416: eine Entscheidung, ein Zuhause).
 
 ---
 
-## 1 · Der eine Handgriff — er blockiert die ganze Vokal-Kette
+## 1 · ⛔ DER BLOCKER IST WEG — DIESER ABSCHNITT IST GESTRICHEN (#1346, 2026-09-16)
 
-**Der Handgriff:** Mix-Panel → „Voice - your microphone" → „Choose input…" → **Live monitoring**.
+⭐ **Das ist die GUTE Nachricht dieser Datei, und sie stand bis heute als ihr Gegenteil da.**
+Der Abschnitt hieß „Der eine Handgriff — er blockiert die ganze Vokal-Kette" und nannte als
+Handgriff: *Mix-Panel → „Voice - your microphone" → „Choose input…" → **Live monitoring***.
+**Den Handgriff gibt es nicht mehr, und die Kette, die er blockierte, auch nicht** — Du hast
+den Audio-Eingang am 2026-09-12 selbst zurückgenommen (#1302, wörtlich „Face und Audio Input
+komplett entfernen") und die Stufen darauf einen Commit später (#1305, „Kein audioninout kein
+Autotune, Harmonizer, granularsynthese").
 
-⛔ **DIESER ABSATZ ZEIGTE AUF EINE DATEI, DIE DEN HANDGRIFF NICHT MEHR ENTHÄLT (korrigiert
-2026-09-05).** Er lautete: „Steht wörtlich in `.deploy/release` (heute v10.79.418) und wird hier
-nur VERORTET, nicht wiederholt". Gemessen am selben Tag: der ausgelieferte Build ist **447**, und
-`grep -in "monitoring\|Choose input" .deploy/release` liefert **nichts**. Der Zeiger war also seit
-irgendeinem Build zwischen 418 und 447 tot — und zwar ausgerechnet im Abschnitt, der „der eine
-Handgriff, der die ganze Vokal-Kette blockiert" heißt. Wer ihm folgte, las eine Notiz über etwas
-anderes und durfte schließen, der Blocker sei erledigt.
+Gemessen heute, nicht erinnert:
 
-⭐ **DER FEHLER IST NICHT DIE VERALTETE ZAHL, SONDERN DIE WAHL DES ZUHAUSES.** `.deploy/release`
-wird bei JEDEM Build neu geschrieben und trägt, was in DIESEM Build neu ist. Ein **stehender**
-Blocker gehört strukturell nicht dorthin: der Zeiger musste kaputtgehen, die einzige Frage war
-wann. #416 („eine Entscheidung, ein Zuhause") sagt, dass eine Bitte nicht zweimal steht — es sagt
-nicht, dass ihr Zuhause ein rotierendes Dokument sein darf.
+| Was der Abschnitt verlangte | Messung |
+|---|---|
+| Mix-Panel → „Choose input…" → Live monitoring | `AudioInputPickerView`, `MonitorInsertAU`, `MonitorTapWindow` sind als DATEIEN gelöscht (#1302). Es gibt keinen Schalter. |
+| Zeiger `Audio/MonitorInsertAU.swift:174` | `git ls-files 'Sources/**/MonitorInsertAU.swift' \| wc -l` → **0**. |
+| Zeiger `Audio/AudioConfiguration.swift:300` (Bluetooth) | Die Datei lebt, die Bitte sitzt bei **:343** — die Zeilennummer war zusätzlich abgelaufen. Die Bitte selbst ist seit #1302 nicht ausführbar und trägt jetzt `BLOCKED-BY-#1302` (siehe unten). |
+| V0 → V1a → V1b (`decisions.csv:398`), „Harmonizer und Granular auf die STIMME" | `EchoelHarmonizer`, `EchoelGranular`, `DiatonicHarmony`, `HarmonyInterval` sind als DATEIEN gelöscht (#1305). Es gibt keine V1a und keine V1b. |
 
-**Das haltbare Zuhause ist der Code-Marker**, und den gibt es längst — zwei sogar, beide vom
-Werkzeug gefunden: `Audio/MonitorInsertAU.swift:174` („Monitoring an, Log zeigt `insert in`,
-normal sprechen — klingt der Monitor UNVERÄNDERT?") und `Audio/AudioConfiguration.swift:300`
-(Bluetooth-Kopfhörer). Also:
+**Konsequenz, und sie ist der Punkt:** die Geräte-Sitzung hat **keinen Blocker mehr**. §2 bis §5
+sind heute vollständig ausführbar; nichts wartet mehr auf einen Handgriff, den niemand machen
+kann. Wer diese Datei von oben las, plante bis heute eine Sitzung um ein Bedienelement herum,
+das seit vier Tagen nicht existiert.
 
-```
-python3 scripts/founder-verify.py | grep -A1 "MonitorInsertAU\|AudioConfiguration"
-```
+⚠️ **DIE BITTE IST GESTRICHEN, DIE MASCHINE NICHT.** `recordOptions`, `routeCodec` und die
+`session:`-Sprossen in `AudioConfiguration` sind unangetastet — nur ruft seit #1302 **niemand**
+mehr `upgradeToPlayAndRecord()`, also wird `.playAndRecord` nie betreten und `recordOptions` nie
+angewandt (`git grep -n "upgradeToPlayAndRecord()" -- Sources` → nur die Deklaration). Kommt ein
+Eingang zurück, kommt die Bitte mit ihm zurück — deshalb steht sie als **BLOCKED**, nicht als
+gelöscht (`python3 scripts/founder-verify.py` druckt sie in einem eigenen Abschnitt).
 
-Die Menü-Zeile oben bleibt hier stehen, weil sie eine ORTSANGABE ist und keine zweite Fassung
-der Bitte — genau die Unterscheidung, die dieser Abschnitt vorher schon machen wollte.
-
-**Warum das ein Blocker ist und keine Fleißaufgabe:** `decisions.csv:398` staffelt die
-Vokal-Kette als V0 → V1a → V1b. V0 IST dieser Handgriff. Solange nicht feststeht, ob der
-Monitorpfad am Gerät überhaupt anläuft, würde jede weitere Stufe (Harmonizer und Granular
-auf die STIMME statt auf die Musik) auf einen unbewiesenen Pfad gebaut.
+⛔ **ZWEI FRÜHERE RÜCKNAHMEN DIESES ABSCHNITTS BLEIBEN LESBAR, weil sie zusammen die Lehre
+tragen.** (1) 2026-09-05: der Zeiger zeigte auf `.deploy/release` („heute v10.79.418"), während
+der ausgelieferte Build 447 war und `grep -in "monitoring\|Choose input" .deploy/release`
+**nichts** lieferte. Der Fehler war nicht die veraltete Zahl, sondern die **Wahl des Zuhauses**:
+`.deploy/release` wird bei jedem Build neu geschrieben, ein *stehender* Blocker gehört dort
+strukturell nicht hin — der Zeiger musste kaputtgehen, die einzige Frage war wann. (2) Die
+Reparatur verlegte ihn daraufhin auf **zwei Code-Marker** — und elf Tage später war der eine
+gelöscht und der andere um 43 Zeilen verrutscht. **Ein Code-Marker ist das richtige Zuhause und
+trotzdem kein unsterbliches: ein Zeiger ist nur so haltbar wie das, worauf er zeigt.** Das
+Werkzeug, nicht die Zeilennummer, ist die Adresse — `python3 scripts/founder-verify.py`.
 
 ---
 
@@ -114,9 +121,17 @@ ein Instrument in zehn Sekunden mit Auge und Ohr und bekommt einen Satz über ei
 Dateien zeigt, stellt ein totes graues Rechteck auf die LIVE-Seite. Das ist schlechter als die
 ehrliche Leere. Also wartet die Seite auf genau eine Datei.
 
-- [ ] **~8 Sekunden Bildschirmaufnahme** aus dem Vollbild-Visual, während ein Take läuft und Du
-      auf dem Bild spielst (die Wasserringe unter den Fingern sind der Punkt — das ist die eine
-      Geste, die kein Konkurrent hat).
+- [ ] **~8 Sekunden Bildschirmaufnahme** aus dem schwebenden Visual auf Größe **„Fullscreen"**
+      (Kopf-Monitor antippen → Fenster → Größe), während ein Take läuft und Du auf dem Bild
+      spielst (die Wasserringe unter den Fingern sind der Punkt — das ist die eine Geste, die
+      kein Konkurrent hat).
+
+      ⛔ Hier stand „aus dem **Vollbild-Visual**" und das war eine ANDERE Fläche: der
+      `.fullScreenCover(isPresented: $showVisual)` ist mit **#1069** gelöscht. Die Aufnahme
+      bleibt vollständig ausführbar — `FloatingVisualWindow` hat eine eigene
+      `.fullscreen`-Größe (`WindowSize.fullscreen`, Beschriftung „Fullscreen") —, nur der WEG
+      dorthin ist ein anderer. **Das ist eine Reparatur, keine Streichung** (#816: eine Bitte
+      wird nicht gestrichen, weil ihr Zeiger veraltet ist, sondern nur, wenn die Fläche fehlt).
 - [ ] **Ein Standbild aus derselben Aufnahme** als `poster` — dann zeigt die Seite auch etwas,
       wenn „Bewegung reduzieren" an ist oder das Video nicht lädt.
 - [ ] Bedingungen: **kein Blitzen über 3 Hz** (das Gesetz gilt auch für Marketing-Material),
@@ -138,9 +153,19 @@ bevor Du die Standbilder machst.
 
 ## 6 · Offene Frage an Dich
 
-- [x] **Voice clone — BEANTWORTET 2026-08-25: NEIN.** Zugleich beauftragt: Monitoring
-      direkt am Gerät, latenzfrei, mit Harmonizer- und Granular-Strategie auf der Stimme
-      (ressourcenschonend). Der Bau läuft (#822 ff.); die Hör-Bestätigung bleibt Punkt 1.
+- [x] **Voice clone — BEANTWORTET 2026-08-25: NEIN.** Die Antwort bleibt stehen; sie ist ein
+      Datum und kann von nichts Späterem zurückgenommen werden.
+
+      ⛔ **DER AUFTRAG DANEBEN IST VOM FOUNDER SELBST ZURÜCKGENOMMEN (#1346).** Er lautete:
+      „Zugleich beauftragt: Monitoring direkt am Gerät, latenzfrei, mit Harmonizer- und
+      Granular-Strategie auf der Stimme (ressourcenschonend). Der Bau läuft (#822 ff.); die
+      Hör-Bestätigung bleibt Punkt 1." Am 2026-09-12 wörtlich: „Kein audioninout kein Autotune,
+      Harmonizer, granularsynthese. Das hat leider nichtbgeklappt" (#1305), davor „Face und
+      Audio Input komplett entfernen" (#1302). Der Bau läuft nicht mehr, und **Punkt 1 gibt es
+      nicht mehr** — der Verweis zeigte auf den gestrichenen Abschnitt oben.
+      ⚠️ **Eine ANTWORT und ein AUFTRAG stehen hier in einer Zeile und altern verschieden.**
+      Die Antwort ist unverwüstlich, der Auftrag hing an einer Fähigkeit. Wer beides als eine
+      Einheit gelöscht hätte, hätte eine Founder-Entscheidung samt Datum verloren.
 
 ---
 
@@ -162,6 +187,27 @@ Probe, die nichts entscheiden kann** (dieselbe Lehre wie #525, nur auf Dokument-
 | **BLE-Gurt-Begründung** | Die PRÜFUNG bleibt gültig und gehört zu den `NEEDS-FOUNDER-VERIFY`-Markern (CLAUDE.md: „Gerät-Verify wartet auf Gurt-Eintreffen"). Gestrichen ist nur ihre BEGRÜNDUNG: die Listing-Zeile „Polar, Wahoo, Garmin" steht nicht mehr in `fastlane/metadata/`. |
 | **„352 geräte-unverifizierte Commits"** | Eine Zahl vom 2026-07-16 — ein Datum, keine Tatsache. Ersatzlos gestrichen statt fortgeschrieben (dieselbe Regel wie in `.claude/rules/context.md` §2). |
 | **Sheet-Chain: „12×.sheet + 2×.fullScreenCover auf 4360 Zeilen"** | Die Datei hat heute 11 749 Zeilen; die verbindliche Zahl der Kette steht an genau einer Stelle, im Präsentations-Absatz von CLAUDE.md. Hier zu wiederholen war #416. Die SACHLICHE Entscheidung bleibt: die Konsolidierung ist geräte-gepaart, nicht blind-autonom. |
+
+### Zweite Runde — gemessen am 2026-09-16 (#1346)
+
+Der Wächter unten sagt seinen eigenen Blindfleck in seinem Kopf: *„Die Nadelliste ist FEST und
+nennt fünf Flächen, von denen bekannt ist, dass sie weg sind. Eine veraltete Bitte über
+irgendeine SECHSTE gelöschte Fläche geht ungesehen durch."* **Genau das ist eingetreten** — vier
+Founder-Löschungen später (#1069, #1301, #1302, #1305) bat diese Datei wieder um Dinge, die
+niemand mehr tun kann, und diesmal war eines davon der **als Blocker bezeichnete erste Abschnitt**.
+
+| Gestrichener/reparierter Posten | wo die Messung steht |
+|---|---|
+| **§1 „Der eine Handgriff"** — Mix-Panel → „Choose input…" → Live monitoring, plus V0/V1a/V1b und „Harmonizer und Granular auf die STIMME" | GESTRICHEN. Tabelle in §1 oben (#1302, #1305) |
+| **§4b „aus dem Vollbild-Visual"** | REPARIERT, nicht gestrichen — die Aufnahme bleibt ausführbar, nur über die `.fullscreen`-Größe des schwebenden Fensters (#1069). Messung in §4b |
+| **§6 Auftrag neben der beantworteten Frage** | ZURÜCKGENOMMEN vom Founder selbst; die ANTWORT bleibt. Messung in §6 |
+| **`Audio/AudioConfiguration.swift:343`** (die einzige dieser Runde, die im WERKZEUG stand, nicht hier) | Trägt jetzt `BLOCKED-BY-#1302` und verlässt damit die offene Warteschlange, ohne gelöscht zu werden. Grund: `upgradeToPlayAndRecord()` hat seit #1302 **null** Produktions-Aufrufer, also wird `.playAndRecord` nie betreten und `recordOptions` nie angewandt |
+
+⭐ **Die Lehre ist NICHT „Nadelliste pflegen" — die altert wieder.** Sie ist: **eine Löschung
+durch den Founder ist ein Ereignis mit mehreren Zuhausen** (#456), und der Geräte-Zettel ist das
+Zuhause, an das beim Löschen niemand denkt, weil er nicht kompiliert und in keinem `paths:`-Filter
+steht. Wer das nächste Mal eine Fläche entfernt, greppt diese Datei UND
+`python3 scripts/founder-verify.py` nach ihrem Namen, im selben Commit.
 
 **Wächter:** `Tests/CISmoke/TheDeviceChecklistOnlyAsksWhatExistsTests.swift`. Er prüft nur die
 Ankreuz-Zeilen (`- [ ]`), nie die Prosa — ein negativer Scan über die ganze Datei träfe genau

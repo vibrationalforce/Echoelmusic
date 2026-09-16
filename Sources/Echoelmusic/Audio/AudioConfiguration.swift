@@ -340,10 +340,26 @@ enum AudioConfiguration {
     /// route on HFP — `routeCodec` below detects that case; we only guarantee
     /// Echoel is never the cause.
     /// `.mixWithOthers` keeps other apps audible even while we record.
-    /// NEEDS-FOUNDER-VERIFY: Bluetooth-Kopfhörer verbinden, spielen, Monitoring
-    /// EINschalten — die Musik muss Stereo/voll bleiben und der Routen-Marker
-    /// darf kein [HFP] zeigen. (Kein Simulator hat Bluetooth-Routing — nur am
-    /// Gerät prüfbar.)
+    /// ⛔ #1346 — DIESE BITTE IST NICHT AUSFÜHRBAR, SEIT DER EINGANG WEG IST, und sie
+    /// stand vier Tage lang als erster Posten des AUDIO-Bereichs in
+    /// `scripts/founder-verify.py`. `recordOptions` gilt ausschließlich in
+    /// `.playAndRecord`, dorthin kommt die Sitzung ausschließlich über
+    /// `upgradeToPlayAndRecord()` — und das hat seit #1302 **null**
+    /// Produktions-Aufrufer (`git grep -n "upgradeToPlayAndRecord()" -- Sources`
+    /// → nur die Deklaration; ebenso `claimRecordRoute(`/`releaseRecordRoute(`,
+    /// siehe `RecordRouteOwner` oben). Es gibt also weder einen
+    /// Monitoring-Schalter zum EINschalten noch einen Zustand, in dem die
+    /// A2DP-Option überhaupt angewandt wird.
+    /// ⭐ GELÖSCHT WIRD SIE TROTZDEM NICHT — die MASCHINE ist unangetastet
+    /// (`recordOptions`, `routeCodec`, die HFP-Erkennung), nur ihr TÜRSTEHER ist
+    /// fort. Kommt ein Eingang zurück, ist genau dies die Probe, die am ersten Tag
+    /// laufen muss. Die `BLOCKED-BY-`-Konvention des Werkzeugs hält sie sichtbar
+    /// und aus der offenen Warteschlange heraus; wer den Eingang zurückbaut,
+    /// entfernt die Marke im selben Commit.
+    /// NEEDS-FOUNDER-VERIFY BLOCKED-BY-#1302: Bluetooth-Kopfhörer verbinden, spielen,
+    /// Monitoring EINschalten — die Musik muss Stereo/voll bleiben und der
+    /// Routen-Marker darf kein [HFP] zeigen. (Kein Simulator hat
+    /// Bluetooth-Routing — nur am Gerät prüfbar.)
     private static let recordOptions: AVAudioSession.CategoryOptions =
         [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
     #endif

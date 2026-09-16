@@ -47,6 +47,27 @@
 // editor is rebuilt, claim 2 goes red on purpose and its message names the ⛔ table as the
 // prose to update in the same commit; the checklist may then ask for that probe again.
 //
+// ⛔ **THE HONEST LIMIT ABOVE CAME TRUE THREE WEEKS LATER, AND WORSE THAN IT PREDICTED
+// (#1346, 2026-09-16).** It said a stale ask about "some sixth deleted surface" would pass
+// unseen. Four founder deletions later (#1069 fullscreen visual, #1301 face, #1302 audio
+// input, #1305 harmonizer/granular) the document again asked for things nobody can do — and
+// the biggest one was invisible to claim 1 for a REASON THE LIMIT DID NOT NAME: **§1 was
+// never a checkbox.** It was a whole section, headed "Der eine Handgriff — er blockiert die
+// ganze Vokal-Kette", pointing at `Mix-Panel → "Choose input…" → Live monitoring`. Widening
+// the needle list would not have caught it; the SCOPE was the blind spot, not the list.
+//
+// ⭐ SO THE FIX IS A SECOND SCOPE, NOT A LONGER LIST (claim 7): section HEADINGS. A heading
+// is one line, it is what the founder plans the session from, and — unlike the ⛔ tables —
+// no retraction is ever written as one, so it can carry a negative scan without tripping
+// #491 on its own withdrawal. Claim 7 is red on the parent for exactly the one heading that
+// caused this.
+//
+// ⚠️ THE LIMIT THAT REMAINS IS NARROWER AND STILL REAL: rot in ordinary PROSE — a pointer
+// paragraph, a "why this is a blocker" argument — is caught by neither scope. §1's dead
+// pointers (`Audio/MonitorInsertAU.swift:174`, a line number 43 lines stale) were of that
+// kind. The document's answer to that is not a guard but an address: the checklist names
+// `scripts/founder-verify.py` as the way to reach a code ask, never a line number.
+//
 // KIND (§1): **REGRESSION, source-text scans.** Claim 1 would have fired on each deletion
 // commit — the document already named these surfaces, so the moment the code went, the guard
 // goes red. It is graded as a real regression guard for this defect, not a preventive one.
@@ -258,5 +279,119 @@ final class TheDeviceChecklistOnlyAsksWhatExistsTests: XCTestCase {
             + "plan is not in front of the founder while they hold the phone. Keep the "
             + "plan reference in the surrounding prose if it helps a future reader; just "
             + "do not make it the ask.")
+    }
+
+    // MARK: - #1346 — the rot claim 1 could not see, because it was never a checkbox
+
+    /// Capability words that name something a founder deletion removed. Each was measured
+    /// ABSENT from `Sources/` code on 2026-09-16 before it was written here.
+    ///
+    /// ⭐ THE SCOPE IS HEADINGS, AND THAT IS THE WHOLE POINT OF CLAIM 7. Claim 1 scans
+    /// `- [ ]` items, which is right for an ASK — and §1's rot was never an ask. It was a
+    /// SECTION, headed "Der eine Handgriff — er blockiert die ganze Vokal-Kette", naming a
+    /// handle (`Mix-Panel → "Choose input…" → Live monitoring`) that #1302 deleted. A
+    /// document that calls something its BLOCKER in a heading costs more than a stale
+    /// checkbox: the founder plans the whole session around it and never reaches §2.
+    ///
+    /// ⚠️ IT CANNOT BE A FILE-WIDE SCAN (#491). The ⛔ tables quote every struck name in
+    /// order to withdraw it, and §1 now quotes its own former heading — a naive negative
+    /// scan would go red on this very retraction. A heading is the narrowest scope that
+    /// still catches the defect: it is one line, it is what a reader sees first, and no
+    /// retraction is written as one.
+    private static let removedCapabilities = [
+        "Vokal-Kette",     // #1302 — the whole chain; the ONE known positive on the parent
+        "Vocal chain",
+        "Monitoring",      // #1302 — no monitor path, no switch
+        "Mikrofon",        // #1302
+        "Microphone",      // #1302
+        "Harmonizer",      // #1305
+        "Granular",        // #1305
+        "Autotune",        // #1302 (VoicePitchCorrector went with the input)
+        "Face-Tracking",   // #1301 — NOT the bare "Face": the match is case-insensitive
+        "Gesichts",        //         and substring, so "Face" would fire on "Interface"
+        "Video Capture"    // #1304
+    ]
+
+    // 7 — no SECTION HEADING names a capability the founder removed.
+    func testNoSectionHeadingNamesARemovedCapability() throws {
+        let doc = try text("scratchpads/FOUNDER_DEVICE_SESSION.md")
+        let headings = doc.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix("## ") || $0.hasPrefix("### ") }
+        XCTAssertGreaterThan(headings.count, 4,
+            "ANCHOR MISSING: fewer than five headings in FOUNDER_DEVICE_SESSION.md — the "
+            + "extraction found nothing and this claim would be vacuously green (#926).")
+
+        var offenders: [String] = []
+        for heading in headings {
+            for word in Self.removedCapabilities where heading.localizedCaseInsensitiveContains(word) {
+                offenders.append("\(word) → \(heading)")
+            }
+        }
+        XCTAssertTrue(offenders.isEmpty,
+            "A section of the founder's device checklist is HEADED with a capability that "
+            + "no longer exists: \(offenders). Device time is this project's scarcest "
+            + "resource and the heading is what he plans the session from. Either the "
+            + "capability came back — then strike this needle in the SAME commit and say so "
+            + "in the ⛔ index of that document (#364: nothing here forbids a return) — or "
+            + "the section is void and belongs in that index with its measurement, the way "
+            + "#1346 moved §1 there.")
+    }
+
+    // 8 — the one ask #1302 stranded is marked BLOCKED, not deleted, and its machine stands.
+    func testTheStrandedAskIsBlockedRatherThanDeleted() throws {
+        let file = "Sources/Echoelmusic/Audio/AudioConfiguration.swift"
+        let code = try text(file)
+
+        guard let line = code.components(separatedBy: "\n")
+            .first(where: { $0.contains("NEEDS-FOUNDER-VERIFY") && $0.contains("Bluetooth-Kopfhörer") })
+        else {
+            XCTFail("ANCHOR MISSING: no Bluetooth device ask in \(file). A missing anchor is "
+                    + "a finding, not a pass (§4).")
+            return
+        }
+        XCTAssertTrue(line.contains("BLOCKED-BY-#1302"),
+            "The Bluetooth/A2DP ask is back in the OPEN queue. It cannot be performed: "
+            + "`recordOptions` applies only in `.playAndRecord`, and the only way in is "
+            + "`upgradeToPlayAndRecord()`, which #1302 left without a production caller — so "
+            + "there is no monitoring switch to turn on. If an audio input came back, remove "
+            + "the mark deliberately and pull the ⛔ block above it plus §1 of "
+            + "scratchpads/FOUNDER_DEVICE_SESSION.md in the same commit (#456).")
+
+        // Counterweights (#343): BLOCKED means the door died, never that the machine did. If
+        // either of these goes, the honest move is to DELETE the ask, not to keep it blocked —
+        // and this assertion is what makes that decision visible instead of silent.
+        XCTAssertTrue(code.contains("static let recordOptions"),
+            "`recordOptions` is gone — the ask no longer has a machine to come back to.")
+        XCTAssertTrue(code.contains("static func routeCodec("),
+            "`routeCodec` is gone — the [HFP] half of the ask can no longer be answered even "
+            + "once a door returns.")
+    }
+
+    // 9 — the stranded ask has NO caller anywhere, which is the fact claim 8 rests on.
+    func testNothingRaisesTheRecordRouteAnyMore() {
+        var callers: [String] = []
+        let base = root().appendingPathComponent("Sources")
+        guard let walker = FileManager.default.enumerator(atPath: base.path) else {
+            XCTFail("ANCHOR MISSING: Sources/ could not be walked.")
+            return
+        }
+        for case let rel as String in walker where rel.hasSuffix(".swift") {
+            if rel.hasSuffix("AudioConfiguration.swift") { continue }   // its own declaration
+            let path = base.appendingPathComponent(rel).path
+            guard let body = try? String(contentsOfFile: path, encoding: .utf8) else { continue }
+            for (n, raw) in body.split(separator: "\n", omittingEmptySubsequences: false).enumerated() {
+                let line = raw.trimmingCharacters(in: .whitespaces)
+                if line.hasPrefix("//") || line.hasPrefix("///") { continue }
+                if line.contains("upgradeToPlayAndRecord(") { callers.append("\(rel):\(n + 1)") }
+            }
+        }
+        XCTAssertTrue(callers.isEmpty,
+            "Something raises the record route again: \(callers.sorted()). That is not a "
+            + "defect — it means an audio input is back. But then the Bluetooth ask in "
+            + "AudioConfiguration.swift is performable again and must LOSE its "
+            + "`BLOCKED-BY-#1302` mark, or the founder's queue hides a job he can now do. "
+            + "#364: this guard does not forbid the return, it names the prose that travels "
+            + "with it (claim 8's message lists the rest).")
     }
 }
